@@ -9,19 +9,6 @@ $dbname = "login";
 
 $conn = new mysqli($servername, $username, $password, $dbname);
 
-<<<<<<< HEAD
-if ($_SERVER["REQUEST_METHOD"] === "POST") {
-    $token = $_POST['token'];
-    $new_password = trim($_POST['password']);
-
-    if (empty($new_password)) {
-        die("Password is required.");
-    }
-
-    // Kontrollera token
-    $sql = "SELECT email, expires_at FROM password_resets WHERE token = ?";
-    $stmt = $conn->prepare($sql);
-=======
 if ($conn->connect_error) {
     die("Connection failed: " . $conn->connect_error);
 }
@@ -45,43 +32,14 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
     if (!$stmt) {
         die("SQL error: " . $conn->error);
     }
->>>>>>> 1197087 (uppdaterade. ändra inte sökvägarna.)
     $stmt->bind_param("s", $token);
     $stmt->execute();
     $result = $stmt->get_result();
 
-<<<<<<< HEAD
-    if ($result->num_rows > 0) {
-        $row = $result->fetch_assoc();
-
-        if (strtotime($row['expires_at']) > time()) {
-            $email = $row['email'];
-
-            // Uppdatera lösenordet (ingen hashing)
-            $sql = "UPDATE users SET password = ? WHERE email = ?";
-            $stmt = $conn->prepare($sql);
-            $stmt->bind_param("ss", $new_password, $email);
-            $stmt->execute();
-
-            // Ta bort token
-            $sql = "DELETE FROM password_resets WHERE token = ?";
-            $stmt = $conn->prepare($sql);
-            $stmt->bind_param("s", $token);
-            $stmt->execute();
-
-            echo "Password updated successfully! <a href='index.html'>Login here</a>";
-        } else {
-            echo "Token has expired.";
-        }
-    } else {
-        echo "Invalid token.";
-    }
-}
-=======
     if ($result->num_rows === 0) {
         echo "<script>
                 alert('Invalid or expired token.');
-                window.location.href = 'index.html';
+                window.location.href = '../index.html';
               </script>";
         exit;
     }
@@ -113,5 +71,4 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
 }
 
 $conn->close();
->>>>>>> 1197087 (uppdaterade. ändra inte sökvägarna.)
 ?>
