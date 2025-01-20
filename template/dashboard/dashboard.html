@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+ 
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Podcast Dashboard</title>
+<link rel="stylesheet" href="styles.css">
+</head>
+ 
+<body>
+<div class="dashboard">
+<header class="navbar">
+<div class="logo">Stereo</div>
+<div class="language-switcher">
+<button id="lang-en">EN</button>
+<button id="lang-ar">AR</button>
+<button id="lang-es">ES</button>
+<button id="lang-de">DE</button>
+<button id="lang-fr">FR</button>
+<button id="lang-zh">ZH</button>
+</div>
+<div class="user-info">
+<div class="profile-picture">
+<img src="placeholder-profile-picture.jpg" alt="User Profile Picture">
+</div>
+<span id="username" data-username></span>
+<div class="dropdown">
+<button class="menu-button">Menu</button>
+<div class="dropdown-content">
+<a href="/account">Account</a>
+<a href="/logout">Logout</a>
+</div>
+</div>
+</div>
+</header>
+ 
+        <main class="content">
+<section class="collections">
+<div class="collection neumorphic-box">
+<h2 data-i18n="collections.guests.title">Guests</h2>
+<p data-i18n="collections.guests.description">Manage and organize your guest profiles and interactions.</p>
+</div>
+<div class="collection neumorphic-box">
+<h2 data-i18n="collections.episodes.title">Episodes</h2>
+<p data-i18n="collections.episodes.description">Plan, record, and review podcast episodes effectively.</p>
+</div>
+<div class="collection neumorphic-box">
+<h2 data-i18n="collections.tasks.title">Tasks</h2>
+<p data-i18n="collections.tasks.description">Track your to-do list and progress for upcoming projects.</p>
+</div>
+<div class="collection neumorphic-box">
+<h2 data-i18n="collections.analytics.title">Analytics</h2>
+<p data-i18n="collections.analytics.description">Gain insights into your podcast performance and audience engagement.</p>
+</div>
+</section>
+ 
+        </main>
+ 
+        <div id="first-login-popup" class="popup hidden">
+<div class="popup-content neumorphic-box">
+<h2 data-i18n="popup.welcome">Welcome to Stereo</h2>
+<form id="podcast-info-form">
+<label for="podcast-name" data-i18n="popup.podcastName.label">What is the name of your Podcast?</label>
+<input type="text" id="podcast-name" name="podcast-name" placeholder="Enter Podcast Name" required>
+ 
+                    <label for="rss-feed" data-i18n="popup.rssFeed.label">What is your Podcast's RSS feed URL?</label>
+<input type="url" id="rss-feed" name="rss-feed" placeholder="Enter RSS Feed URL" required>
+ 
+                    <button type="submit" class="button-primary" data-i18n="popup.submit">Submit</button>
+</form>
+</div>
+</div>
+</div>
+ 
+    <script>
+        // Fetch the username dynamically
+        document.addEventListener('DOMContentLoaded', () => {
+            fetch('/api/get-username')
+                .then(response => response.json())
+                .then(data => {
+                    document.querySelector('[data-username]').textContent = data.username || "Hello, User";
+                })
+                .catch(error => console.error('Error fetching username:', error));
+ 
+            // Check if it's the user's first login
+            const isFirstLogin = true; // Replace with actual backend data
+ 
+            if (isFirstLogin) {
+                document.getElementById('first-login-popup').classList.remove('hidden');
+            }
+ 
+            document.getElementById('podcast-info-form').addEventListener('submit', (e) => {
+                e.preventDefault();
+ 
+                const podcastName = document.getElementById('podcast-name').value;
+                const rssFeed = document.getElementById('rss-feed').value;
+ 
+                console.log('Podcast Name:', podcastName);
+                console.log('RSS Feed URL:', rssFeed);
+ 
+                document.getElementById('first-login-popup').classList.add('hidden');
+            });
+        });
+ 
+        // Dark mode toggle
+        document.querySelector('#theme-toggle')?.addEventListener('click', () => {
+            document.body.classList.toggle('dark-mode');
+            localStorage.setItem('theme', document.body.classList.contains('dark-mode') ? 'dark' : 'light');
+        });
+</script>
+</body>
+ 
+</html>

@@ -30,7 +30,11 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
             if (password_verify($password, $row['password'])) {
                 $stmt->close();
                 $conn->close();
+<<<<<<< HEAD
                 header("Location: /dashboard");
+=======
+                header("Location: /PodManager111/The-authority-show--1/template/dashboard/dashboard.html");
+>>>>>>> 1197087 (uppdaterade. ändra inte sökvägarna.)
                 exit();
             }
         }

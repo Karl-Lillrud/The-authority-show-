@@ -32,7 +32,11 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
         // Skapa en unik kod och token
         $code = random_int(100000, 999999); // 6-siffrig kod
         $token = bin2hex(random_bytes(32));
+<<<<<<< HEAD
         $expires_at = date("Y-m-d H:i:s", strtotime("+1 hour"));
+=======
+        $expires_at = date("Y-m-d H:i:s", strtotime("+75 minutes"));
+>>>>>>> 1197087 (uppdaterade. ändra inte sökvägarna.)
 
         // Lägg till kod och token i databasen
         $sql = "INSERT INTO password_resets (email, code, token, expires_at) VALUES (?, ?, ?, ?)";
@@ -41,11 +45,18 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
         $stmt->execute();
 
         // Förbered återställningslänk
+<<<<<<< HEAD
         $reset_link = "http://localhost/PodManager/template/reset-password.php?token=" . $token;
 
         // Skicka e-post med PHPMailer
         $mail = new PHPMailer(true);
 
+=======
+        $reset_link = "http://localhost/PodManager111/The-authority-show--1/template/resetpassword/reset-password.php?token=" . $token;
+
+        // Skicka e-post med PHPMailer
+        $mail = new PHPMailer(true);
+>>>>>>> 1197087 (uppdaterade. ändra inte sökvägarna.)
         try {
             // Serverinställningar
             $mail->isSMTP();
