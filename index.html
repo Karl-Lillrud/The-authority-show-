@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The Authority Show - Guest Form</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles 1.css">
+</head>
+<body>
+<div class="container neumorphic">
+    <header>
+        <img src="Pod Manager logo.png" alt="Pod Manager Logo" class="logo">
+        <h1 class="main-title">The Authority Show</h1>
+        <p class="subtitle">Insightful Conversations with Visionary Leaders</p>
+        <p class="description">Please fill out the guest form below to submit your information. Fields marked with an asterisk (*) are required.</p>
+    </header>
+
+    <form id="guest-form" action="/submit" method="POST" enctype="multipart/form-data">
+        <div class="form-group left-align">
+            <p>We need you to connect with our audience and share valuable insights as a guest.</p>
+        </div>
+
+        <div class="form-group">
+            <label for="firstName">First Name*</label>
+            <input type="text" id="firstName" name="firstName" placeholder="Enter First Name" required>
+        </div>
+        <div class="form-group">
+            <label for="lastName">Last Name*</label>
+            <input type="text" id="lastName" name="lastName" placeholder="Enter Last Name" required>
+        </div>
+        <div class="form-group">
+            <label for="company">Company*</label>
+            <input type="text" id="company" name="company" placeholder="Enter Company Name" required>
+        </div>
+        <div class="form-group">
+            <label for="email">Email*</label>
+            <input type="email" id="email" name="email" placeholder="Enter Email Address" required>
+        </div>
+        <div class="form-group">
+            <label for="whatsapp">WhatsApp*</label>
+            <input type="text" id="whatsapp" name="whatsapp" placeholder="Enter WhatsApp Number" required>
+        </div>
+
+        <div class="form-group">
+            <label for="linkedin">LinkedIn</label>
+            <input type="url" id="linkedin" name="linkedin" placeholder="Enter LinkedIn URL">
+        </div>
+        <div class="form-group">
+            <label for="Instagram">Instagram</label>
+            <input type="url" id="Instagram" name="Instagram" placeholder="Enter Instagram URL">
+        </div>
+        <div class="form-group">
+            <label for="Twitter">Twitter/X</label>
+            <input type="url" id="Twitter" name="Twitter" placeholder="Enter Twitter/X URL">
+        </div>
+        <div class="form-group">
+            <label for="TikTok">TikTok</label>
+            <input type="url" id="TikTok" name="Tiktok" placeholder="Enter TikTok URL">
+        </div>
+
+        <div class="form-group">
+            <label for="bio">Bio in bullet form</label>
+            <textarea id="bio" name="bio" rows="4" placeholder="Enter Bio in bullet form"></textarea>
+        </div>
+
+        <div class="form-group">
+            <label for="profilePhoto">Profile Photo*</label>
+            <input type="file" id="profilePhoto" name="profilePhoto" accept="image/*" required>
+        </div>
+
+        <div class="form-group">
+            <label for="areas">3 Areas of Interest</label>
+            <textarea id="areas" name="areas" rows="3" placeholder="Enter 3 areas of interest"></textarea>
+        </div>
+        <div class="form-group">
+            <label for="guest1Email">E-mail of your first recommended guest</label>
+            <input type="email" id="guest1Email" name="guest1Email" placeholder="Enter email">
+        </div>
+        <div class="form-group">
+            <label for="guest1Name">Full name of the first suggested guest</label>
+            <input type="text" id="guest1Name" name="guest1Name" placeholder="Enter full name">
+        </div>
+        <div class="form-group">
+            <label for="guest2Email">E-mail of your second recommended guest</label>
+            <input type="email" id="guest2Email" name="guest2Email" placeholder="Enter email">
+        </div>
+        <div class="form-group">
+            <label for="guest2Name">Full name of the second suggested guest</label>
+            <input type="text" id="guest2Name" name="guest2Name" placeholder="Enter full name">
+        </div>
+        <div class="form-group">
+            <label for="guest3Name">Full name of the third suggested guest</label>
+            <input type="text" id="guest3Name" name="guest3Name" placeholder="Enter full name">
+        </div>
+
+        <div class="form-group">
+            <p class="description">
+                We need you to connect with Karl and the Show on LinkedIn for tagging you in posts about the episode. Visit 
+                <a href="https://www.linkedin.com/in/karllillrud" target="_blank">Karl's LinkedIn</a> and click "connect" and 
+                <a href="https://www.linkedin.com/company/the-authority-show/" target="_blank">The Authority Show</a>.
+            </p>
+            <div>
+                <input type="radio" id="connectedYes" name="connectWithKarl" value="Yes" required>
+                <label for="connectedYes">Yes, I have connected</label>
+            </div>
+            <div>
+                <input type="radio" id="connectedNo" name="connectWithKarl" value="No">
+                <label for="connectedNo">No, it does not work</label>
+            </div>
+        </div>
+
+        <div class="form-group">
+            <p class="terms-text">
+                By submitting this form, you agree to the 
+                <a href="#!" onclick="openTermsPopup()">terms and conditions</a>.
+            </p>
+        </div>
+
+        <button type="submit" class="btn-submit" id="book-time">Submit & Book Time</button>
+    </form>
+</div>
+
+<div id="terms-popup" class="popup hidden">
+    <div class="popup-content">
+        <p>By using this form, you agree to the following:</p>
+        <ul>
+            <li>Your data will be stored and processed for the purposes of the show.</li>
+            <li>You confirm that the information you provided is accurate.</li>
+            <li>Your profile photo and details may be used in promotional materials for the show.</li>
+        </ul>
+        <button class="btn-close" onclick="closeTermsPopup()">Close</button>
+    </div>
+</div>
+ 
+<script>
+    document.getElementById("guest-form").addEventListener("submit", async function (event) {
+        event.preventDefault();
+
+        const formData = new FormData(this);
+
+        try {
+            const response = await fetch("/submit", {
+                method: "POST",
+                body: formData,
+            });
+
+            if (response.ok) {
+                window.location.href = "https://calendar.google.com/calendar/u/0/appointments/schedules/AcZssZ1StAWY3QkvWg4Bd7AwjUX2FSsWBLNZ0Lo5-nILIiHj83z-768h9AC5qew89s8XHq9gzuHa62NV";
+            } else {
+                alert("Failed to submit form. Please try again.");
+            }
+        } catch (error) {
+            console.error("Error submitting form:", error);
+            alert("An unexpected error occurred. Please try again.");
+        }
+    });
+
+    function openTermsPopup() {
+        document.getElementById('terms-popup').classList.remove('hidden');
+    }
+
+    function closeTermsPopup() {
+        document.getElementById('terms-popup').classList.add('hidden');
+    }
+</script>
+</body>
+</html>
