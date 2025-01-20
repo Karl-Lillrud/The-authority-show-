@@ -1,0 +1,183 @@
+:root {
+    --bg-light: #EFF2F9;
+    --bg-dark: #1C1C1C;
+    --light-shadow: #FFFFFF;
+    --dark-shadow: rgba(22, 24, 29, 0.23);
+    --text-light: #6E7F8D;
+    --text-dark: #B3B3B3;
+    --highlight: #FF7F3F;
+    --font-primary: 'Campton', sans-serif;
+    --font-secondary: 'Avenir Next', sans-serif;
+    --border-radius: 20px;
+}
+ 
+body {
+    font-family: var(--font-primary);
+    background-color: var(--bg-light);
+    color: var(--text-light);
+    height: 100vh;
+    margin: 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    transition: background-color 0.3s ease, color 0.3s ease;
+}
+ 
+.dark-mode {
+    background-color: var(--bg-dark);
+    color: var(--text-dark);
+}
+ 
+.navbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px;
+    background: var(--bg-light);
+    box-shadow: -5px -5px 15px var(--light-shadow), 5px 5px 15px var(--dark-shadow);
+    border-radius: var(--border-radius);
+    width: 100%;
+    position: fixed;
+    top: 0;
+}
+ 
+.navbar .logo {
+    font-size: 24px;
+    font-weight: bold;
+    color: var(--text-light);
+}
+ 
+.language-switcher button {
+    margin: 0 5px;
+    padding: 8px 12px;
+    background: var(--bg-light);
+    border: none;
+    border-radius: var(--border-radius);
+    font-family: var(--font-secondary);
+    box-shadow: -3px -3px 8px var(--light-shadow), 3px 3px 8px var(--dark-shadow);
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+ 
+.language-switcher button:hover {
+    background: var(--highlight);
+    color: white;
+}
+ 
+.user-info {
+    display: flex;
+    align-items: center;
+}
+ 
+.profile-picture img {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    box-shadow: -3px -3px 8px var(--light-shadow), 3px 3px 8px var(--dark-shadow);
+    margin-right: 10px;
+}
+ 
+.menu-button {
+    background: var(--bg-light);
+    padding: 10px 20px;
+    border: none;
+    border-radius: var(--border-radius);
+    box-shadow: -3px -3px 8px var(--light-shadow), 3px 3px 8px var(--dark-shadow);
+    cursor: pointer;
+    font-family: var(--font-primary);
+    transition: all 0.3s ease;
+}
+ 
+.menu-button:hover {
+    box-shadow: -2px -2px 6px var(--light-shadow), 2px 2px 6px var(--dark-shadow);
+}
+ 
+.dropdown-content {
+    display: none;
+    position: absolute;
+    background: var(--bg-light);
+    box-shadow: -3px -3px 8px var(--light-shadow), 3px 3px 8px var(--dark-shadow);
+    padding: 10px;
+    border-radius: var(--border-radius);
+}
+ 
+.menu-button:hover + .dropdown-content,
+.dropdown-content:hover {
+    display: block;
+}
+ 
+.collection {
+    margin: 20px;
+    padding: 20px;
+    background: var(--bg-light);
+    border-radius: var(--border-radius);
+    box-shadow: -5px -5px 15px var(--light-shadow), 5px 5px 15px var(--dark-shadow);
+    text-align: center;
+    transition: transform 0.3s ease;
+}
+ 
+.collection:hover {
+    transform: translateY(-5px);
+    box-shadow: -3px -3px 10px var(--light-shadow), 3px 3px 10px var(--dark-shadow);
+}
+ 
+.collection h2 {
+    font-size: 18px;
+    color: var(--highlight);
+    margin: 0;
+}
+ 
+.collection p {
+    font-size: 14px;
+    color: var(--text-light);
+}
+ 
+.popup {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: var(--bg-light);
+    border-radius: var(--border-radius);
+    box-shadow: -5px -5px 15px var(--light-shadow), 5px 5px 15px var(--dark-shadow);
+    padding: 30px;
+    display: none;
+}
+ 
+.popup.hidden {
+    display: none;
+}
+ 
+.popup-content {
+    text-align: center;
+}
+ 
+.input {
+    margin: 15px 0;
+    padding: 10px;
+    border: none;
+    border-radius: var(--border-radius);
+    width: 80%;
+    box-shadow: inset -3px -3px 8px var(--light-shadow), inset 3px 3px 8px var(--dark-shadow);
+}
+ 
+.button-primary {
+    background: var(--highlight);
+    color: white;
+    padding: 10px 20px;
+    border: none;
+    border-radius: var(--border-radius);
+    box-shadow: -3px -3px 8px rgba(255, 127, 63, 0.5), 3px 3px 8px rgba(0, 0, 0, 0.2);
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+ 
+.button-primary:hover {
+    background: rgba(255, 127, 63, 0.8);
+    box-shadow: -3px -3px 10px rgba(255, 127, 63, 0.8), 3px 3px 10px rgba(0, 0, 0, 0.4);
+}
+ 
+:focus {
+    outline: 3px solid var(--highlight);
+    outline-offset: 2px;
+}

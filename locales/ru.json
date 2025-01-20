@@ -1,0 +1,16 @@
+{
+    "Email and password are required.": "Требуются электронная почта и пароль.",
+    "User already exists.": "Пользователь уже существует.",
+    "User registered successfully.": "Пользователь успешно зарегистрирован.",
+    "Invalid credentials.": "Неверные учетные данные.",
+    "Email not found.": "Электронная почта не найдена.",
+    "Password reset instructions sent to your email.": "Инструкции по сбросу пароля отправлены на вашу электронную почту.",
+    "Name and email are required.": "Требуются имя и электронная почта.",
+    "Guest added successfully.": "Гость успешно добавлен.",
+    "Title and scheduled date are required.": "Требуются название и запланированная дата.",
+    "Episode created successfully.": "Эпизод успешно создан.",
+    "Episode ID and description are required.": "Требуются ID эпизода и описание.",
+    "Task added successfully.": "Задача успешно добавлена.",
+    "Task not found.": "Задача не найдена.",
+    "Task updated successfully.": "Задача успешно обновлена."
+}

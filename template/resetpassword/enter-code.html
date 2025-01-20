@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Enter Reset Code</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="center-box">
+        <h1>Enter Reset Code</h1>
+        <p>Please enter the reset code you received via email to proceed.</p>
+        <form action="verify-code.php" method="POST">
+            <div class="input-group">
+                <label for="code">Reset Code:</label>
+                <input type="text" id="code" name="code" class="input" placeholder="Enter your code" required>
+            </div>
+            <button type="submit" class="button">Submit</button>
+        </form>
+        <p><a href="../index.html" class="link">Back to Login</a></p>
+    </div>
+</body>
+</html>
