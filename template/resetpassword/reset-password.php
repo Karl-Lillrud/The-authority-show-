@@ -20,11 +20,11 @@ $token = $_GET['token'];
         <form id="reset-password-form" action="update-password.php" method="POST">
             <input type="hidden" name="token" value="<?php echo htmlspecialchars($token); ?>">
             <div class="input-group">
-                <label for="password">New Password:</label>
+                <label for="password"></label>
                 <input type="password" id="password" name="password" class="input" placeholder="Enter your new password" required>
             </div>
             <div class="input-group">
-                <label for="confirm-password">Confirm Password:</label>
+                <label for="confirm-password"></label>
                 <input type="password" id="confirm-password" name="confirm_password" class="input" placeholder="Confirm your new password" required>
             </div>
             <button type="submit" class="button">Reset Password</button>

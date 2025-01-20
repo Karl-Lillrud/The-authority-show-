@@ -41,7 +41,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
         $stmt->execute();
 
         // Förbered återställningslänk
-        $reset_link = "http://localhost/PodManager111/The-authority-show--1/template/resetpassword/reset-password.php?token=" . $token;
+        $reset_link = "http://localhost/PodManager/template/resetpassword/reset-password.php?token=" . $token;
 
         // Skicka e-post med PHPMailer
         $mail = new PHPMailer(true);
