@@ -25,7 +25,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
     if ($stmt->execute()) {
         // Registreringen lyckades, omdirigera till index.html
-        header("Location: ../index.html");
+        header("Location: https://devpodmanager.s3.eu-north-1.amazonaws.com/waitinglist/index.html");
         exit;
     } else {
         echo "Error: " . $stmt->error;
