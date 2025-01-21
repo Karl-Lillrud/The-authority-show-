@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Send Invitation</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <h1>Invite Your Friends</h1>
+        <p>Enter their email address below to send an exclusive invitation:</p>
+        <form id="inviteForm">
+            <div class="input-group">
+                <label for="email">Email:</label>
+                <input type="email" id="email" name="email" placeholder="Enter email address" required>
+            </div>
+            <button type="submit" class="button">Send Invitation</button>
+        </form>
+        <div id="message" style="display: none;"></div>
+    </div>
+    <script src="../waitinglist/server.js"></script>
+</body>
+</html>
