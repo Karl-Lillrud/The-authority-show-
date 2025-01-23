@@ -1,8 +1,8 @@
 #!/bin/bash
 
 # Variables
-BUCKET_NAME="my-registration-app-bucket"
-REGION="us-east-1"
+BUCKET_NAME="devpodmanager"
+REGION="eu-north-1"
 APP_NAME="php-registration-app"
 ENV_NAME="php-registration-env"
 ZIP_FILE="php-registration-app.zip"
