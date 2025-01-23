@@ -1,122 +1,75 @@
 #!/bin/bash
 
+# Exit on error
+set -e
+
 # Variables
-BUCKET_NAME="devpodmanager"
-REGION="eu-north-1"
 APP_NAME="php-registration-app"
 ENV_NAME="php-registration-env"
+VERSION_LABEL="v1"
+S3_BUCKET="devpodmanager"
 ZIP_FILE="php-registration-app.zip"
-ROLE_NAME="eb-instance-role"
-POLICY_NAME="eb-instance-policy"
-INSTANCE_PROFILE_NAME="eb-instance-profile"
+ROLE_NAME="aws-elasticbeanstalk-ec2-role"
+INSTANCE_PROFILE="aws-elasticbeanstalk-ec2-role"
+REGION="eu-north-1"
 
-# Step 1: Create S3 Bucket for Static Files
-echo "Creating S3 bucket..."
-aws s3api create-bucket --bucket $BUCKET_NAME --region $REGION --create-bucket-configuration LocationConstraint=$REGION
+# Step 1: Create IAM Role and Instance Profile
+if ! aws iam get-role --role-name $ROLE_NAME > /dev/null 2>&1; then
+  echo "Creating IAM Role: $ROLE_NAME"
+  aws iam create-role \
+    --role-name $ROLE_NAME \
+    --assume-role-policy-document file://trust-policy.json
 
-# Enable Static Website Hosting
-echo "Enabling static website hosting on S3..."
-aws s3 website s3://$BUCKET_NAME/ --index-document register.html --error-document register.html
+  echo "Attaching policies to IAM Role"
+  aws iam attach-role-policy \
+    --role-name $ROLE_NAME \
+    --policy-arn arn:aws:iam::aws:policy/AWSElasticBeanstalkFullAccess
+fi
 
-# Upload Static Files to S3 Bucket
-echo "Uploading static files to S3..."
-aws s3 cp register.html s3://$BUCKET_NAME/
-aws s3 cp waitinglist/index.html s3://$BUCKET_NAME/waitinglist/
-aws s3 cp waitinglist/server.js s3://$BUCKET_NAME/waitinglist/
+if ! aws iam get-instance-profile --instance-profile-name $INSTANCE_PROFILE > /dev/null 2>&1; then
+  echo "Creating Instance Profile: $INSTANCE_PROFILE"
+  aws iam create-instance-profile --instance-profile-name $INSTANCE_PROFILE
+  aws iam add-role-to-instance-profile --instance-profile-name $INSTANCE_PROFILE --role-name $ROLE_NAME
+fi
 
-# Step 2: Create IAM Role for Elastic Beanstalk
-echo "Creating IAM role for Elastic Beanstalk..."
-aws iam create-role --role-name $ROLE_NAME --assume-role-policy-document file://<(cat <<EOF
-{
-    "Version": "2012-10-17",
-    "Statement": [
-        {
-            "Effect": "Allow",
-            "Principal": {
-                "Service": "ec2.amazonaws.com"
-            },
-            "Action": "sts:AssumeRole"
-        }
-    ]
-}
-EOF
-)
+# Step 2: Package Application
+if [ -f "$ZIP_FILE" ]; then
+  rm "$ZIP_FILE"
+fi
+echo "Packaging application into $ZIP_FILE"
+zip -r "$ZIP_FILE" . -x "*.git*" "deploy.sh" 
 
-echo "Attaching policy to IAM role..."
-aws iam put-role-policy --role-name $ROLE_NAME --policy-name $POLICY_NAME --policy-document file://<(cat <<EOF
-{
-    "Version": "2012-10-17",
-    "Statement": [
-        {
-            "Effect": "Allow",
-            "Action": [
-                "s3:*",
-                "logs:*",
-                "cloudwatch:*",
-                "autoscaling:*",
-                "elasticbeanstalk:*"
-            ],
-            "Resource": "*"
-        }
-    ]
-}
-EOF
-)
+# Step 3: Upload to S3
+if ! aws s3 ls "s3://$S3_BUCKET/" > /dev/null 2>&1; then
+  echo "Creating S3 bucket: $S3_BUCKET"
+  aws s3 mb "s3://$S3_BUCKET" --region $REGION
+fi
+echo "Uploading $ZIP_FILE to S3 bucket: $S3_BUCKET"
+aws s3 cp "$ZIP_FILE" "s3://$S3_BUCKET/"
 
-echo "Creating instance profile for Elastic Beanstalk..."
-aws iam create-instance-profile --instance-profile-name $INSTANCE_PROFILE_NAME
-aws iam add-role-to-instance-profile --instance-profile-name $INSTANCE_PROFILE_NAME --role-name $ROLE_NAME
+# Step 4: Create Elastic Beanstalk Application
+if ! aws elasticbeanstalk describe-applications --application-names $APP_NAME > /dev/null 2>&1; then
+  echo "Creating Elastic Beanstalk application: $APP_NAME"
+  aws elasticbeanstalk create-application --application-name $APP_NAME
+fi
 
-# Step 3: Prepare PHP Application for Elastic Beanstalk
-echo "Preparing PHP application..."
-mkdir -p php-app
-cp register.php php-app/
-cp waitinglist/send-invitation.php php-app/
-cd php-app
-zip -r ../$ZIP_FILE .
-cd ..
-
-# Step 4: Create Elastic Beanstalk Application and Environment
-echo "Creating Elastic Beanstalk application..."
-aws elasticbeanstalk create-application --application-name $APP_NAME
-
-echo "Creating Elastic Beanstalk environment..."
-aws elasticbeanstalk create-environment \
+# Step 5: Create Elastic Beanstalk Environment
+if ! aws elasticbeanstalk describe-environments --application-name $APP_NAME --environment-names $ENV_NAME > /dev/null 2>&1; then
+  echo "Creating Elastic Beanstalk environment: $ENV_NAME"
+  aws elasticbeanstalk create-environment \
     --application-name $APP_NAME \
     --environment-name $ENV_NAME \
-    --solution-stack-name "64bit Amazon Linux 2 v3.5.6 running PHP 8.0" \
-    --option-settings file://<(cat <<EOF
-[
-    {
-        "Namespace": "aws:autoscaling:launchconfiguration",
-        "OptionName": "IamInstanceProfile",
-        "Value": "$INSTANCE_PROFILE_NAME"
-    },
-    {
-        "Namespace": "aws:autoscaling:launchconfiguration",
-        "OptionName": "InstanceType",
-        "Value": "t2.micro"
-    },
-    {
-        "Namespace": "aws:elasticbeanstalk:application:environment",
-        "OptionName": "PHP_MAX_UPLOAD_SIZE",
-        "Value": "50M"
-    }
-]
-EOF
-)
-
-# Step 5: Deploy the Application
-echo "Deploying application to Elastic Beanstalk..."
-aws elasticbeanstalk create-application-version \
-    --application-name $APP_NAME \
-    --version-label "v1" \
-    --source-bundle S3Bucket=$BUCKET_NAME,S3Key=$ZIP_FILE
-
-aws elasticbeanstalk update-environment \
+    --solution-stack-name "64bit Amazon Linux 2 v3.3.6 running PHP 8.0" \
+    --version-label $VERSION_LABEL \
+    --option-settings file://option-settings.json
+else
+  echo "Updating Elastic Beanstalk environment: $ENV_NAME"
+  aws elasticbeanstalk update-environment \
     --environment-name $ENV_NAME \
-    --version-label "v1"
+    --version-label $VERSION_LABEL
+fi
 
-# Step 6: Output Elastic Beanstalk Environment URL
-echo "Elastic Beanstalk environment deployed. Access your application using:"
-aws elasticbeanstalk describe-environments --application-name $APP_NAME --query "Environments[0].CNAME" --output text
+# Step 6: Create API Gateway (if required)
+# Add your API Gateway setup logic here if it is still needed.
+
+echo "Deployment completed successfully. Access your application via Elastic Beanstalk."
