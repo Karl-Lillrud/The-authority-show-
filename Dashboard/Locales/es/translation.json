@@ -1,0 +1,27 @@
+{
+    "title": "Panel de Clasificación del Equipo",
+    "header": "Clasificación del Equipo",
+    "table": {
+        "badge": "Insignia",
+        "name": "Nombre",
+        "tasks": "Tareas Completadas",
+        "points": "Puntos Totales",
+        "months": "Meses Ganados",
+        "shadowGoal": "Meta Sombra"
+    },
+    "user": {
+        "sophia": "Sophia Zhang",
+        "karl": "Karl Lillrud",
+        "emma": "Emma Watson",
+        "simon": "Simon Walker",
+        "alice": "Alice Lee"
+    },
+    "nav": {
+        "home": "Inicio",
+        "features": "Características",
+        "contact": "Contacto"
+    },
+    "footer": {
+        "rights": "© 2025 Panel de Clasificación del Equipo. Todos los derechos reservados."
+    }
+}
