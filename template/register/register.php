@@ -1,40 +1,37 @@
 <?php
-if ($_SERVER["REQUEST_METHOD"] == "POST") {
-    // Kontrollera att alla fält är ifyllda
-    $email = isset($_POST['email']) ? trim($_POST['email']) : null;
-    $password = isset($_POST['password']) ? trim($_POST['password']) : null;
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    $email = $_POST['email'];
+    $password = $_POST['password'];
 
-    if (empty($email) || empty($password)) {
-        echo "All fields are required.";
-        exit;
-    }
+    // Example database connection
+    $servername = "localhost"; // Replace with your database server
+    $username = "root"; // Replace with your database username
+    $db_password = ""; // Replace with your database password
+    $dbname = "mydatabase"; // Replace with your database name
 
-    // Hasha lösenordet
-    $hashed_password = password_hash($password, PASSWORD_DEFAULT);
+    // Create connection
+    $conn = new mysqli($servername, $username, $db_password, $dbname);
 
-    // Databasanslutning
-    $conn = new mysqli("localhost", "root", "", "login");
-
+    // Check connection
     if ($conn->connect_error) {
         die("Connection failed: " . $conn->connect_error);
     }
 
-    // Spara användaren i databasen
+    // Insert into the database
     $stmt = $conn->prepare("INSERT INTO users (email, password) VALUES (?, ?)");
-    $stmt->bind_param("ss", $email, $hashed_password);
+    $stmt->bind_param("ss", $email, password_hash($password, PASSWORD_DEFAULT)); // Hash the password
 
     if ($stmt->execute()) {
-        // Registreringen lyckades, omdirigera till index.html
-        header("Location: https://devpodmanager.s3.eu-north-1.amazonaws.com/waitinglist/index.html");
-        exit;
+        // Redirect on successful registration
+        header("Location: /waitinglist/index.html");
+        exit();
     } else {
         echo "Error: " . $stmt->error;
     }
 
     $stmt->close();
     $conn->close();
+} else {
+    echo "Invalid request method.";
 }
 ?>
-
-
-
