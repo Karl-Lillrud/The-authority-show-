@@ -1,0 +1,553 @@
+/* Neumorphism Design Language - Updated Styles With Shadows */
+
+/* Root Variables */
+:root {
+    /* Color Variables */
+    --background-light: #EFF2F9;
+    --background-dark: #1C1C1C;
+    --text-color-light: #858d8d;
+    --text-color-dark: #B3B3B3;
+    --highlight-color: #56275f;
+    --success-color: #4CAF50;
+    --error-color: #FF3B30;
+    --font-primary: 'Campton', sans-serif;
+    --font-secondary: 'Avenir Next', sans-serif;
+    --spacing-xs: 4px;
+    --spacing-sm: 8px;
+    --spacing-md: 16px;
+    --spacing-lg: 24px;
+    --breakpoint-xs: 360px;
+    --breakpoint-sm: 576px;
+    --breakpoint-md: 768px;
+    --breakpoint-lg: 992px;
+    --breakpoint-xl: 1200px;
+    --transition-duration: 0.3s;
+    --transition-ease: ease;
+    --border-radius: 20px;
+    --border-color-light: #999696;
+    --border-color-dark: #444444;
+}
+
+/* Global Styles */
+body {
+    font-family: var(--font-primary);
+    background-color: var(--background-light);
+    color: var(--text-color-light);
+    transition: background-color var(--transition-duration) var(--transition-ease),
+                color var(--transition-duration) var(--transition-ease);
+    margin: 0;
+    padding: 0;
+}
+
+.dark-mode {
+    background-color: var(--background-dark);
+    color: var(--text-color-dark);
+}
+
+:focus {
+    outline: 3px solid var(--highlight-color);
+    outline-offset: 2px;
+}
+
+/* Navbar */
+.navbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: var(--spacing-sm) var(--spacing-md);
+    background: var(--background-light);
+    position: fixed;
+    width: 100%;
+    top: 0;
+    z-index: 1000;
+    border-radius: 0 0 var(--border-radius) var(--border-radius);
+    transition: background var(--transition-duration) var(--transition-ease);
+    
+    /* Added shadows */
+    box-shadow: 5px 5px 15px rgba(0, 0, 0, 0.1), -5px -5px 15px rgba(255, 255, 255, 0.7);
+}
+
+.dark-mode .navbar {
+    background: var(--background-dark);
+    
+    /* Added shadows for dark mode */
+    box-shadow: inset 5px 5px 15px rgba(0, 0, 0, 0.5), inset -5px -5px 15px rgba(255, 255, 255, 0.2);
+}
+
+.navbar .logo .icon {
+    width: 40px;
+    height: 40px;
+    transition: fill var(--transition-duration) var(--transition-ease);
+}
+
+/* Language Switcher */
+.language-switcher {
+    display: flex;
+    gap: var(--spacing-xs);
+}
+
+.language-switcher button {
+    background: var(--background-light);
+    color: var(--text-color-light);
+    border: 1px solid var(--border-color-light);
+    padding: var(--spacing-xs) var(--spacing-sm);
+    border-radius: 20px;
+    cursor: pointer;
+    transition: background var(--transition-duration) var(--transition-ease),
+                color var(--transition-duration) var(--transition-ease),
+                border-color var(--transition-duration) var(--transition-ease);
+    font-family: var(--font-secondary);
+    font-size: 0.875rem;
+    
+    /* Added shadows */
+    box-shadow: 5px 5px 10px rgba(0, 0, 0, 0.1), -5px -5px 10px rgba(255, 255, 255, 0.7);
+}
+
+.language-switcher button:hover {
+    background: var(--highlight-color);
+    color: #FFFFFF;
+    border-color: var(--highlight-color);
+}
+
+.dark-mode .language-switcher button {
+    background: var(--background-dark);
+    color: var(--text-color-dark);
+    border: 1px solid var(--border-color-dark);
+    
+    /* Added shadows for dark mode */
+    box-shadow: inset 5px 5px 10px rgba(0, 0, 0, 0.5), inset -5px -5px 10px rgba(255, 255, 255, 0.2);
+}
+
+.dark-mode .language-switcher button:hover {
+    background: var(--highlight-color);
+    color: #FFFFFF;
+    border-color: var(--highlight-color);
+}
+
+/* Leaderboard */
+.leaderboard {
+    max-width: 800px;
+    margin: var(--spacing-lg) auto var(--spacing-md) auto; /* Adjusted margin-top to account for fixed navbar */
+    border: 2px solid var(--border-color-light);
+    border-radius: var(--border-radius);
+    background: var(--background-light);
+    transition: background var(--transition-duration) var(--transition-ease),
+                border var(--transition-duration) var(--transition-ease);
+    
+    /* Added shadows */
+    box-shadow: 10px 10px 20px rgba(0, 0, 0, 0.1), -10px -10px 20px rgba(255, 255, 255, 0.7);
+}
+
+.dark-mode .leaderboard {
+    background: var(--background-dark);
+    border: 2px solid var(--border-color-dark);
+    
+    /* Added shadows for dark mode */
+    box-shadow: inset 10px 10px 20px rgba(0, 0, 0, 0.5), inset -10px -10px 20px rgba(255, 255, 255, 0.2);
+}
+
+/* Leaderboard Header */
+.leaderboard-header {
+    text-align: center;
+    padding: var(--spacing-md);
+    font-size: 1.5rem;
+    font-weight: 700;
+    border-bottom: 2px solid var(--border-color-light);
+    border-radius: var(--border-radius) var(--border-radius) 0 0;
+    background: var(--background-light);
+    transition: border-bottom var(--transition-duration) var(--transition-ease);
+    
+    /* Added shadows */
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.dark-mode .leaderboard-header {
+    border-bottom: 2px solid var(--border-color-dark);
+    
+    /* Added shadows for dark mode */
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.5);
+    
+    /* **Added this line to fix the dark mode background** */
+    background: var(--background-dark);
+}
+
+/* Table Styles */
+.table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: var(--spacing-md) 0;
+}
+
+.table th, .table td {
+    padding: var(--spacing-sm) var(--spacing-md);
+    text-align: left;
+    border: 1px solid var(--border-color-light);
+    border-radius: 5px;
+    background: var(--background-light);
+    transition: background var(--transition-duration) var(--transition-ease),
+                border-color var(--transition-duration) var(--transition-ease);
+    
+    /* Added shadows */
+    box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.05), -2px -2px 5px rgba(255, 255, 255, 0.7);
+}
+
+.dark-mode .table th, .dark-mode .table td {
+    background: var(--background-dark);
+    border: 1px solid var(--border-color-dark);
+    
+    /* Added shadows for dark mode */
+    box-shadow: inset 2px 2px 5px rgba(0, 0, 0, 0.5), inset -2px -2px 5px rgba(255, 255, 255, 0.2);
+}
+
+.table th {
+    font-weight: 700;
+    color: var(--text-color-light);
+    font-size: 1rem;
+    background: var(--highlight-color);
+    color: #FFFFFF;
+    
+    /* Added shadows */
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.dark-mode .table th {
+    background: var(--highlight-color);
+    color: #dfdada;
+    
+    /* Added shadows for dark mode */
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+}
+
+.table tr:nth-child(even) {
+    background-color: #f9f9f9;
+}
+
+.dark-mode .table tr:nth-child(even) {
+    background-color: #868080;
+}
+
+.table tr:hover {
+    background-color: var(--highlight-color);
+    color: #FFFFFF;
+    cursor: pointer;
+    transition: background var(--transition-duration) var(--transition-ease),
+                color var(--transition-duration) var(--transition-ease);
+    
+    /* Added shadows */
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+.dark-mode .table tr:hover {
+    background-color: var(--highlight-color);
+    color: #3b3b3b;
+    
+    /* Added shadows for dark mode */
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.7);
+}
+
+/* Badges */
+.badge {
+    font-size: 1.125rem;
+    font-weight: 700;
+    
+    /* Added shadows */
+    box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.1), -2px -2px 5px rgba(255, 255, 255, 0.7);
+}
+
+.badge.gold {
+    color: #FFD700;
+}
+
+.badge.silver {
+    color: #C0C0C0;
+}
+
+.badge.bronze {
+    color: #CD7F32;
+}
+
+.badge.clear {
+    color: #A9A9A9;
+}
+
+.dark-mode .badge {
+    /* Added shadows for dark mode */
+    box-shadow: inset 2px 2px 5px rgba(0, 0, 0, 0.5), inset -2px -2px 5px rgba(255, 255, 255, 0.2);
+}
+
+/* Shadow Goal */
+.shadow-goal {
+    font-size: 0.875rem;
+    color: var(--text-color-light);
+}
+
+.dark-mode .shadow-goal {
+    color: var(--text-color-dark);
+}
+
+/* Dark Mode Toggle */
+#dark-mode-toggle {
+    position: fixed;
+    bottom: var(--spacing-sm);
+    right: var(--spacing-sm);
+    background: var(--background-light);
+    color: var(--text-color-light);
+    border: none;
+    padding: var(--spacing-xs) var(--spacing-sm);
+    border-radius: 20px;
+    cursor: pointer;
+    transition: 
+        background var(--transition-duration) var(--transition-ease),
+        color var(--transition-duration) var(--transition-ease),
+        transform 0.3s ease;
+    font-size: 1.125rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    
+    /* Added shadows */
+    box-shadow: 5px 5px 15px rgba(0, 0, 0, 0.1), -5px -5px 15px rgba(255, 255, 255, 0.7);
+}
+
+#dark-mode-toggle:hover {
+    transform: scale(1.05);
+}
+
+.dark-mode #dark-mode-toggle {
+    background: var(--background-dark);
+    color: var(--text-color-dark);
+    
+    /* Added shadows for dark mode */
+    box-shadow: inset 5px 5px 15px rgba(0, 0, 0, 0.5), inset -5px -5px 15px rgba(255, 255, 255, 0.2);
+}
+
+.dark-mode #dark-mode-toggle:hover {
+    transform: scale(1.05);
+}
+
+/* Footer */
+.footer {
+    background: var(--background-light);
+    padding: var(--spacing-md);
+    text-align: center;
+    border-radius: 0 var(--border-radius) var(--border-radius) var(--border-radius);
+    transition: background var(--transition-duration) var(--transition-ease);
+    margin-top: var(--spacing-md);
+    
+    /* Added shadows */
+    box-shadow: 0 -5px 15px rgba(0, 0, 0, 0.1), 0 5px 15px rgba(255, 255, 255, 0.7);
+}
+
+.dark-mode .footer {
+    background: var(--background-dark);
+    
+    /* Added shadows for dark mode */
+    box-shadow: inset 0 -5px 15px rgba(0, 0, 0, 0.5), inset 0 5px 15px rgba(255, 255, 255, 0.2);
+}
+
+/* Badge Variants */
+.badge.gold {
+    background: rgba(255, 215, 0, 0.1);
+    padding: var(--spacing-xs) var(--spacing-sm);
+    border-radius: 12px;
+}
+
+.badge.silver {
+    background: rgba(192, 192, 192, 0.1);
+    padding: var(--spacing-xs) var(--spacing-sm);
+    border-radius: 12px;
+}
+
+.badge.bronze {
+    background: rgba(205, 127, 50, 0.1);
+    padding: var(--spacing-xs) var(--spacing-sm);
+    border-radius: 12px;
+}
+
+.badge.clear {
+    background: rgba(169, 169, 169, 0.1);
+    padding: var(--spacing-xs) var(--spacing-sm);
+    border-radius: 12px;
+}
+
+/* Skeleton Loader */
+.skeleton {
+    background: linear-gradient(90deg, #e0e0e0 25%, #f0f0f0 50%, #e0e0e0 75%);
+    background-size: 200% 100%;
+    animation: loading 1.5s infinite;
+    border-radius: var(--border-radius);
+}
+
+@keyframes loading {
+    0% {
+        background-position: 200% 0;
+    }
+    100% {
+        background-position: -200% 0;
+    }
+}
+
+/* Responsive Design */
+
+/* Extra Large Devices */
+@media (max-width: var(--breakpoint-xl)) {
+    .navbar a {
+        margin: 0 var(--spacing-xs);
+        font-size: 1rem;
+    }
+
+    .leaderboard-header {
+        font-size: 1.375rem;
+    }
+}
+
+/* Large Devices */
+@media (max-width: var(--breakpoint-lg)) {
+    .navbar {
+        flex-direction: row;
+        flex-wrap: wrap;
+        padding: var(--spacing-xs) var(--spacing-sm);
+    }
+
+    .footer {
+        text-align: center;
+        font-size: 1rem;
+    }
+
+    .table th, .table td {
+        font-size: 0.95rem;
+        padding: var(--spacing-xs) var(--spacing-sm);
+    }
+
+    .leaderboard {
+        max-width: 90%;
+    }
+}
+
+/* Medium Devices */
+@media (max-width: var(--breakpoint-md)) {
+    .navbar {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .footer {
+        text-align: center;
+    }
+
+    .table th, .table td {
+        font-size: 0.85rem;
+        padding: var(--spacing-xs) var(--spacing-sm);
+    }
+
+    .leaderboard-header {
+        font-size: 1.25rem;
+    }
+
+    #dark-mode-toggle {
+        bottom: var(--spacing-xs);
+        right: var(--spacing-xs);
+        padding: var(--spacing-xs) var(--spacing-sm);
+        font-size: 1rem;
+    }
+}
+
+/* Small Devices */
+@media (max-width: var(--breakpoint-sm)) {
+    .button {
+        padding: var(--spacing-xs) var(--spacing-sm);
+        font-size: 0.875rem;
+    }
+
+    .navbar .nav-links {
+        flex-direction: column;
+        width: 100%;
+    }
+
+    .navbar .nav-links a {
+        margin: var(--spacing-xs) 0;
+    }
+
+    .leaderboard-header {
+        font-size: 1.125rem;
+    }
+
+    .table th, .table td {
+        font-size: 0.8rem;
+        padding: var(--spacing-xs);
+    }
+
+    #dark-mode-toggle {
+        padding: var(--spacing-xs) var(--spacing-sm);
+        font-size: 1rem;
+    }
+}
+
+/* Extra Small Devices */
+@media (max-width: var(--breakpoint-xs)) {
+    .navbar {
+        padding: var(--spacing-xs) var(--spacing-xs);
+    }
+
+    .footer {
+        font-size: 0.875rem;
+        padding: var(--spacing-xs);
+    }
+
+    .table th, .table td {
+        font-size: 0.75rem;
+        padding: var(--spacing-xs);
+    }
+
+    #dark-mode-toggle {
+        padding: var(--spacing-xs);
+        font-size: 0.875rem;
+    }
+
+    .leaderboard {
+        max-width: 100%;
+        margin: var(--spacing-sm) auto var(--spacing-xs) auto;
+    }
+}
+
+/* Icon Library Integration */
+.icon {
+    width: 24px;
+    height: 24px;
+    fill: var(--text-color-light);
+    transition: fill var(--transition-duration) var(--transition-ease);
+}
+
+.icon:hover {
+    fill: var(--highlight-color);
+}
+
+.dark-mode .icon {
+    fill: var(--text-color-dark);
+}
+
+.icon.fa {
+    font-size: 1.5rem;
+    margin-right: var(--spacing-xs);
+}
+
+.table thead th {
+    position: sticky;
+    top: 0;
+    background: var(--highlight-color);
+    z-index: 1;
+}
+
+.leaderboard {
+    overflow-x: auto;
+}
+
+.table {
+    min-width: 600px; /* Adjust based on your content */
+}
+
+
+/* Utility Classes (if needed for future components) */
+/* Add any additional utility classes here to support new components */
+
+/* End of Updated Styles for Table-Oriented Design */
