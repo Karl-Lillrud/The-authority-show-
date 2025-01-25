@@ -1,0 +1,16 @@
+{
+    "Email and password are required.": "Email and password are required.",
+    "User already exists.": "User already exists.",
+    "User registered successfully.": "User registered successfully.",
+    "Invalid credentials.": "Invalid credentials.",
+    "Email not found.": "Email not found.",
+    "Password reset instructions sent to your email.": "Password reset instructions sent to your email.",
+    "Name and email are required.": "Name and email are required.",
+    "Guest added successfully.": "Guest added successfully.",
+    "Title and scheduled date are required.": "Title and scheduled date are required.",
+    "Episode created successfully.": "Episode created successfully.",
+    "Episode ID and description are required.": "Episode ID and description are required.",
+    "Task added successfully.": "Task added successfully.",
+    "Task not found.": "Task not found.",
+    "Task updated successfully.": "Task updated successfully."
+}
