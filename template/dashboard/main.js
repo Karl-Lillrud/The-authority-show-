@@ -128,6 +128,7 @@ function fetchLeaderboard() {
             }
         }
     });
+    
 }
 
 // Function to populate the leaderboard table
@@ -195,6 +196,69 @@ function populateLeaderboard(leaderboard) {
 
         tbody.appendChild(tr);
     });
+
+    // Function to load HTML components
+function loadComponent(containerId, componentPath) {
+    fetch(componentPath)
+        .then(response => response.text())
+        .then(data => {
+            document.getElementById(containerId).innerHTML = data;
+        })
+        .catch(error => console.error(`Error loading ${componentPath}:`, error));
+}
+
+// Load Navbar and Footer
+document.addEventListener('DOMContentLoaded', () => {
+    loadComponent('navbar-container', 'components/navbar.html');
+    loadComponent('footer-container', 'components/footer.html');
+});
+
+// Google Calendar Integration
+function connectGoogleCalendar() {
+    const userApiKey = prompt('Please enter your Google API Key to connect your calendar:');
+
+    if (userApiKey) {
+        // Validate and use the API key
+        console.log('Google API Key provided:', userApiKey);
+        // Store API key securely (example: localStorage)
+        localStorage.setItem('googleApiKey', userApiKey);
+
+        // Simulate API call to connect calendar
+        fetch(`https://www.googleapis.com/calendar/v3/calendars/primary/events?key=${userApiKey}`)
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Invalid API Key or permissions.');
+                }
+                return response.json();
+            })
+            .then(data => {
+                alert('Calendar connected successfully!');
+                console.log('Calendar Events:', data);
+            })
+            .catch(error => {
+                alert('Failed to connect to Google Calendar. Please check your API Key.');
+                console.error('Error:', error);
+            });
+    } else {
+        const confirmRedirect = confirm('No API Key entered. Do you want to visit the Google Cloud Console to generate one?');
+        if (confirmRedirect) {
+            window.open('https://console.cloud.google.com/apis/credentials', '_blank');
+        }
+    }
+}
+
+// Event Listener for Button
+const connectButton = document.querySelector('#connect-calendar-btn');
+if (connectButton) {
+    connectButton.addEventListener('click', connectGoogleCalendar);
+}
+
+// Update HTML content for language support
+document.querySelectorAll('[data-i18n]').forEach(function (element) {
+    const key = element.getAttribute('data-i18n');
+    element.textContent = i18next.t(key);
+});
+
 
     // Add Load More button if there are more items
     if (currentLastKey) {

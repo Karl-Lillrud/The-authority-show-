@@ -31,11 +31,15 @@
     </div>
 
     <!-- Finalize Profile Section -->
-    <div id="finalize-profile" class="finalize-profile">
-        <h3>Finalize Your Profile</h3>
-        <ul>
-            <li id="setup-calendar-task">Connect your calendar <button onclick="connectGoogleCalendar()>Start</button></li>
+    <div id="finalize-profile" class="finalize-profile neumorphic">
+        <h3 class="finalize-profile-header">Finalize Your Profile</h3>
+        <ul class="finalize-profile-tasks">
+            <li class="profile-task" id="task-connect-calendar">
+                <span>Connect your calendar</span>
+                <button class="button connect-button" onclick="connectGoogleCalendar()">Start</button>
+            </li>
         </ul>
+        <button class="button add-task-button" onclick="addTask()">Add New Task</button>
     </div>
 
     <!-- Dark Mode Toggle -->
