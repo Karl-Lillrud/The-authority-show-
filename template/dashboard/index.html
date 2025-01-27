@@ -30,19 +30,16 @@
         </table>
     </div>
 
-  <!-- Dark Mode Toggle -->
-<button id="dark-mode-toggle" class="button" aria-label="Toggle Dark Mode">🌙</button>
+    <!-- Finalize Profile Section -->
+    <div id="finalize-profile" class="finalize-profile">
+        <h3>Finalize Your Profile</h3>
+        <ul>
+            <li id="setup-calendar-task">Connect your calendar <button onclick="connectGoogleCalendar()>Start</button></li>
+        </ul>
+    </div>
 
-<!-- Dark Mode Toggle Script -->
-<script>
-    const toggleButton = document.getElementById('dark-mode-toggle');
-    const body = document.body;
-
-    toggleButton.addEventListener('click', () => {
-        body.classList.toggle('dark-mode');
-        toggleButton.textContent = body.classList.contains('dark-mode') ? '☀️' : '🌙';
-    });
-</script>
+    <!-- Dark Mode Toggle -->
+    <button id="dark-mode-toggle" class="button" aria-label="Toggle Dark Mode">🌙</button>
 
     <!-- Footer Component -->
     <div id="footer-container"></div>
@@ -53,4 +50,3 @@
     <script type="module" src="main.js"></script>
 </body>
 </html>
-
