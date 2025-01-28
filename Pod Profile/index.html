@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title data-i18n="title.podProfile">Pod Profile</title>
+    <link rel="stylesheet" href="styles.css">
+    <!-- Font Awesome CDN -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" integrity="sha512-Fo3rlrZj/k7ujTnHq6v+8gEB/hA+0c3hHnJ6bYlqG+MVJj4y5fI3Hpo3ZcCmmg3xD9kKMlKLH0qVx9IovmYbKw==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+</head>
+<body>
+    <header>
+        <div class="header-container">
+            <button id="dark-mode-toggle" aria-label="Toggle Dark Mode">🌙</button>
+            <!-- Language Selector -->
+            <select id="language-selector" aria-label="Select Language">
+                <option value="en" selected>English</option>
+                <option value="es">Español</option>
+                <option value="de">Deutsch</option>
+                <option value="fr">Français</option>
+                <option value="ar">العربية</option> <!-- Arabic -->
+                <option value="zh">中文</option> <!-- Chinese -->
+                <!-- Add more languages as needed -->
+            </select>
+        </div>    
+    </header>
+    
+    </header>
+    <main>
+        <div class="container">
+            <h1 class="fancy-heading" data-i18n="headings.podProfile">Pod Profile</h1>
+            <form class="form" id="podProfileForm" novalidate>
+                <!-- Pod Name -->
+                <div class="form-group">
+                    <label for="podName" data-i18n="labels.podName">Pod Name</label>
+                    <input type="text" id="podName" name="podName" class="input-field" required aria-required="true" aria-describedby="podName-error">
+                    <span id="podName-error" class="validation-message sr-only" data-i18n="errors.podName">Please enter the pod name.</span>
+                </div>
+                <!-- Pod RSS -->
+                <div class="form-group">
+                    <label for="podRss" data-i18n="labels.podRss">Pod RSS</label>
+                    <input type="url" id="podRss" name="podRss" class="input-field" required aria-required="true" aria-describedby="podRss-error" placeholder="https://yourpodcast.com/rss">
+                    <span id="podRss-error" class="validation-message sr-only" data-i18n="errors.podRss">Please enter a valid RSS URL.</span>
+                </div>
+                <!-- Pod Logo -->
+                <div class="form-group">
+                    <label for="podLogo" data-i18n="labels.podLogo">Pod Logo</label>
+                    <input type="file" id="podLogo" name="podLogo" class="input-field" accept="image/*" aria-label="Upload Pod Logo">
+                </div>
+                <!-- Host Name -->
+                <div class="form-group">
+                    <label for="hostName" data-i18n="labels.hostName">Host Name</label>
+                    <input type="text" id="hostName" name="hostName" class="input-field" required aria-required="true" aria-describedby="hostName-error">
+                    <span id="hostName-error" class="validation-message sr-only" data-i18n="errors.hostName">Please enter the host name.</span>
+                </div>
+                <!-- Google Calendar Integration -->
+                <div class="form-group">
+                    <label for="googleCalendarToggle" data-i18n="labels.googleCalendar">Google Calendar Integration</label>
+                    <label class="switch">
+                        <input type="checkbox" id="googleCalendarToggle" aria-label="Toggle Google Calendar Integration">
+                        <span class="slider round"></span>
+                    </label>
+                </div>
+                <!-- Google Calendar URL -->
+                <div class="form-group">
+                    <label for="calendarUrl" data-i18n="labels.calendarUrl">Google Calendar Pick a Date URL</label>
+                    <input type="url" id="calendarUrl" name="calendarUrl" class="input-field" required aria-required="true" aria-describedby="calendarUrl-error" placeholder="https://calendar.google.com/calendar/embed?src=yourcalendar">
+                    <span id="calendarUrl-error" class="validation-message sr-only" data-i18n="errors.calendarUrl">Please enter a valid Calendar URL.</span>
+                </div>
+                <!-- Guest Form URL -->
+                <div class="form-group">
+                    <label for="guestForm" data-i18n="labels.guestForm">Guest Form URL</label>
+                    <div class="input-group">
+                        <input type="url" id="guestForm" name="guestForm" class="input-field" readonly aria-readonly="true" aria-describedby="guestForm-error" placeholder="https://yourpodcast.com/guest-form">
+                        <button type="button" class="button" id="copyGuestForm" data-i18n="buttons.copy">Copy <i class="fas fa-copy"></i></button>
+                    </div>
+                    <span id="guestForm-error" class="validation-message sr-only" data-i18n="errors.guestForm">Please enter a valid Guest Form URL.</span>
+                </div>
+                <!-- Podcast Social Media -->
+                <h2 class="fancy-heading-secondary" data-i18n="headings.socialMedia">Podcast Social Media</h2>
+                <!-- Facebook -->
+                <div class="form-group">
+                    <label for="facebook" data-i18n="labels.facebook">Facebook</label>
+                    <input type="url" id="facebook" name="facebook" class="input-field" placeholder="https://facebook.com/yourpodcast" aria-describedby="facebook-error">
+                    <span id="facebook-error" class="validation-message sr-only" data-i18n="errors.facebook">Please enter a valid Facebook URL.</span>
+                </div>
+                <!-- Instagram -->
+                <div class="form-group">
+                    <label for="instagram" data-i18n="labels.instagram">Instagram</label>
+                    <input type="url" id="instagram" name="instagram" class="input-field" placeholder="https://instagram.com/yourpodcast" aria-describedby="instagram-error">
+                    <span id="instagram-error" class="validation-message sr-only" data-i18n="errors.instagram">Please enter a valid Instagram URL.</span>
+                </div>
+                <!-- LinkedIn -->
+                <div class="form-group">
+                    <label for="linkedin" data-i18n="labels.linkedin">LinkedIn</label>
+                    <input type="url" id="linkedin" name="linkedin" class="input-field" placeholder="https://linkedin.com/in/yourpodcast" aria-describedby="linkedin-error">
+                    <span id="linkedin-error" class="validation-message sr-only" data-i18n="errors.linkedin">Please enter a valid LinkedIn URL.</span>
+                </div>
+                <!-- Twitter -->
+                <div class="form-group">
+                    <label for="twitter" data-i18n="labels.twitter">Twitter</label>
+                    <input type="url" id="twitter" name="twitter" class="input-field" placeholder="https://twitter.com/yourpodcast" aria-describedby="twitter-error">
+                    <span id="twitter-error" class="validation-message sr-only" data-i18n="errors.twitter">Please enter a valid Twitter URL.</span>
+                </div>
+                <!-- TikTok -->
+                <div class="form-group">
+                    <label for="tiktok" data-i18n="labels.tiktok">TikTok</label>
+                    <input type="url" id="tiktok" name="tiktok" class="input-field" placeholder="https://tiktok.com/@yourpodcast" aria-describedby="tiktok-error">
+                    <span id="tiktok-error" class="validation-message sr-only" data-i18n="errors.tiktok">Please enter a valid TikTok URL.</span>
+                </div>
+                <!-- Pinterest -->
+                <div class="form-group">
+                    <label for="pinterest" data-i18n="labels.pinterest">Pinterest</label>
+                    <input type="url" id="pinterest" name="pinterest" class="input-field" placeholder="https://pinterest.com/yourpodcast" aria-describedby="pinterest-error">
+                    <span id="pinterest-error" class="validation-message sr-only" data-i18n="errors.pinterest">Please enter a valid Pinterest URL.</span>
+                </div>
+                <!-- Podcast Website -->
+                <div class="form-group">
+                    <label for="website" data-i18n="labels.website">Podcast Website</label>
+                    <input type="url" id="website" name="website" class="input-field" placeholder="https://yourpodcast.com" aria-describedby="website-error">
+                    <span id="website-error" class="validation-message sr-only" data-i18n="errors.website">Please enter a valid website URL.</span>
+                </div>
+                <!-- Podcast Email Address -->
+                <div class="form-group">
+                    <label for="email" data-i18n="labels.email">Podcast Email Address</label>
+                    <input type="email" id="email" name="email" class="input-field" placeholder="youremail@domain.com" required aria-required="true" aria-describedby="email-error">
+                    <span id="email-error" class="validation-message sr-only" data-i18n="errors.email">Please enter a valid email address.</span>
+                </div>
+                <!-- Team Section -->
+                <h2 class="fancy-heading-secondary" data-i18n="headings.team">Team</h2>
+                <!-- Team Name -->
+                <div class="form-group">
+                    <label for="teamName" data-i18n="labels.teamName">Name</label>
+                    <input type="text" id="teamName" name="teamName" class="input-field" required aria-required="true" aria-describedby="teamName-error">
+                    <span id="teamName-error" class="validation-message sr-only" data-i18n="errors.teamName">Please enter the team member's name.</span>
+                </div>
+                <!-- Team Email -->
+                <div class="form-group">
+                    <label for="teamEmail" data-i18n="labels.teamEmail">Email</label>
+                    <input type="email" id="teamEmail" name="teamEmail" class="input-field" placeholder="teammember@domain.com" required aria-required="true" aria-describedby="teamEmail-error">
+                    <span id="teamEmail-error" class="validation-message sr-only" data-i18n="errors.teamEmail">Please enter a valid email address.</span>
+                </div>
+                <!-- Team Role -->
+                <div class="form-group">
+                    <label for="teamRole" data-i18n="labels.teamRole">Role</label>
+                    <select id="teamRole" name="teamRole" class="input-field" required aria-required="true" aria-describedby="teamRole-error">
+                        <option value="" disabled selected data-i18n="options.selectRole">Select Role</option>
+                        <option value="user" data-i18n="options.user">User</option>
+                        <option value="host" data-i18n="options.host">Host</option>
+                    </select>
+                    <span id="teamRole-error" class="validation-message sr-only" data-i18n="errors.teamRole">Please select a role.</span>
+                </div>
+                <!-- Invite and Block Buttons -->
+                <div class="form-group button-group">
+                    <button type="button" class="button button-primary" id="inviteButton" data-i18n="buttons.invite">Invite <i class="fas fa-user-plus"></i></button>
+                    <button type="button" class="button button-error" id="blockButton" data-i18n="buttons.block">Block <i class="fas fa-user-slash"></i></button>
+                </div>
+                <!-- Submit Button -->
+                <div class="form-group">
+                    <button type="submit" class="button button-primary" data-i18n="buttons.submit">Submit <i class="fas fa-paper-plane"></i></button>
+                </div>
+            </form>
+        </div>
+    </main>
+
+    <!-- Toast Notification -->
+    <div id="toast" class="toast" role="alert" aria-live="assertive" aria-atomic="true">
+      <span data-i18n="notifications.defaultToast">This is a toast message.</span>
+    </div>
+
+    <script src="https://unpkg.com/lazysizes@5.3.2/lazysizes.min.js" async></script>
+    <script src="i18n.js"></script>
+    <script src="main.js"></script>
+</body>
+</html>

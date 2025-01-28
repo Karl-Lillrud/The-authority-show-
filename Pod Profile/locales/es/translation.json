@@ -1,0 +1,77 @@
+{
+    "title": {
+      "podProfile": "Perfil del Pod"
+    },
+    "headings": {
+      "podProfile": "Perfil del Pod",
+      "socialMedia": "Redes Sociales del Podcast",
+      "team": "Equipo"
+    },
+    "labels": {
+      "podName": "Nombre del Pod",
+      "podRss": "RSS del Pod",
+      "podLogo": "Logo del Pod",
+      "hostName": "Nombre del Anfitrión",
+      "googleCalendar": "Integración con Google Calendar",
+      "calendarUrl": "URL para Elegir Fecha en Google Calendar",
+      "guestForm": "URL del Formulario de Invitados",
+      "facebook": "Facebook",
+      "instagram": "Instagram",
+      "linkedin": "LinkedIn",
+      "twitter": "Twitter",
+      "tiktok": "TikTok",
+      "pinterest": "Pinterest",
+      "website": "Sitio Web del Podcast",
+      "email": "Correo Electrónico del Podcast",
+      "teamName": "Nombre",
+      "teamEmail": "Correo Electrónico",
+      "teamRole": "Rol"
+    },
+    "buttons": {
+      "copy": "Copiar",
+      "invite": "Invitar",
+      "block": "Bloquear",
+      "submit": "Enviar"
+    },
+    "options": {
+      "selectRole": "Seleccionar Rol",
+      "user": "Usuario",
+      "host": "Anfitrión"
+    },
+    "errors": {
+      "podName": "Por favor, ingrese el nombre del pod.",
+      "podRss": "Por favor, ingrese una URL de RSS válida.",
+      "hostName": "Por favor, ingrese el nombre del anfitrión.",
+      "calendarUrl": "Por favor, ingrese una URL de Calendario válida.",
+      "guestForm": "Por favor, ingrese una URL del Formulario de Invitados válida.",
+      "email": "Por favor, ingrese una dirección de correo electrónico válida.",
+      "facebook": "Por favor, ingrese una URL de Facebook válida.",
+      "instagram": "Por favor, ingrese una URL de Instagram válida.",
+      "linkedin": "Por favor, ingrese una URL de LinkedIn válida.",
+      "twitter": "Por favor, ingrese una URL de Twitter válida.",
+      "tiktok": "Por favor, ingrese una URL de TikTok válida.",
+      "pinterest": "Por favor, ingrese una URL de Pinterest válida.",
+      "website": "Por favor, ingrese una URL de sitio web válida.",
+      "teamName": "Por favor, ingrese el nombre del miembro del equipo.",
+      "teamEmail": "Por favor, ingrese una dirección de correo electrónico válida.",
+      "teamRole": "Por favor, seleccione un rol."
+    },
+    "notifications": {
+      "defaultToast": "Este es un mensaje de notificación.",
+      "guestFormCopied": "¡URL del Formulario de Invitados copiada al portapapeles!",
+      "copyFailed": "Error al copiar la URL.",
+      "calendarActivated": "¡Integración con Google Calendar Activada!",
+      "calendarDeactivated": "¡Integración con Google Calendar Desactivada!",
+      "fillAllFields": "Por favor, complete todos los detalles del miembro del equipo.",
+      "fillAllTeamFields": "Por favor, complete todos los campos del miembro del equipo.",
+      "invitationSent": "Invitación enviada a",
+      "invitationFailed": "Error al enviar la invitación.",
+      "blocked": "Miembro del equipo con correo electrónico",
+      "blockFailed": "Error al bloquear al miembro del equipo.",
+      "submitting": "Enviando Perfil del Pod...",
+      "submissionSuccess": "¡Perfil del Pod enviado con éxito!",
+      "submissionFailed": "Error al enviar el Perfil del Pod.",
+      "correctErrors": "Por favor, corrija los errores en el formulario."
+    }
+  }
+  
