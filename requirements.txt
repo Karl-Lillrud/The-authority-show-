@@ -1,0 +1,1 @@
+azure-cosmos==4.3.0
