@@ -140,7 +140,7 @@
         const formData = new FormData(this);
 
         try {
-            const response = await fetch("/submit", {
+            const response = await fetch("localhost:8000/submit", {
                 method: "POST",
                 body: formData,
             });

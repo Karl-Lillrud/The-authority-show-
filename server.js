@@ -7,11 +7,11 @@ const { BlobServiceClient } = require("@azure/storage-blob");
 const { CosmosClient } = require("@azure/cosmos");
 
 // Azure configuration
-const AZURE_STORAGE_CONNECTION_STRING = "<YOUR_AZURE_STORAGE_CONNECTION_STRING>";
+const AZURE_STORAGE_CONNECTION_STRING = "https://podmanagerstorage.blob.core.windows.net/";
 const COSMOS_DB_ENDPOINT = "https://cosmosdbservice.documents.azure.com:443/;AccountKey=K9RahnO3WSXA6P1UaWu4RJOLmSwXweeVFqTrt6L6JBvVfFoMGRG4VaxqzzMcDEJTYuJ8P32Og0KbACDbOaVVLg==;";
 const COSMOS_DB_KEY = "K9RahnO3WSXA6P1UaWu4RJOLmSwXweeVFqTrt6L6JBvVfFoMGRG4VaxqzzMcDEJTYuJ8P32Og0KbACDbOaVVLg";
-const DATABASE_ID = "PodcastManagement";
-const CONTAINER_ID = "Guests";
+const DATABASE_ID = "PodcastDb";
+const CONTAINER_ID = "MainContainer";
 
 const app = express();
 const blobServiceClient = BlobServiceClient.fromConnectionString(AZURE_STORAGE_CONNECTION_STRING);
