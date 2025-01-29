@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title data-i18n="title.podProfile">Pod Profile</title>
+    <link rel="stylesheet" href="styles.css">
+    <!-- Font Awesome CDN for Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" integrity="sha512-Fo3rlrZj/k7ujTnHq6v+8gEB/hA+0c3hHnJ6bYlqG+MVJj4y5fI3Hpo3ZcCmmg3xD9kKMlKLH0qVx9IovmYbKw==" crossorigin="anonymous" referrerpolicy="no-referrer">
+</head>
+<body>
+    <header>
+        <div class="header-container">
+            <button id="dark-mode-toggle" aria-label="Toggle Dark Mode">🌙</button>
+            <select id="language-selector" aria-label="Select Language">
+                <option value="en" selected>English</option>
+                <option value="es">Español</option>
+                <option value="de">Deutsch</option>
+                <option value="fr">Français</option>
+                <option value="ar">العربية</option>
+                <option value="zh">中文</option>
+            </select>
+        </div>
+    </header>
+    <main>
+        <div class="container">
+            <h1 class="fancy-heading" data-i18n="headings.podProfile">Pod Profile</h1>
+            <form class="form" id="podProfileForm" novalidate>
+                <div class="form-group">
+                    <label for="podName" data-i18n="labels.podName">Pod Name</label>
+                    <input type="text" id="podName" name="podName" class="input-field" required>
+                </div>
+                <div class="form-group">
+                    <label for="podRss" data-i18n="labels.podRss">RSS Feed</label>
+                    <input type="url" id="podRss" name="podRss" class="input-field" required>
+                </div>
+                <button type="submit" class="button button-primary" data-i18n="buttons.submit">Submit</button>
+            </form>
+        </div>
+    </main>
+    <div id="toast" class="toast" role="alert" aria-live="assertive" aria-atomic="true">
+        <span data-i18n="notifications.defaultToast">This is a toast message.</span>
+    </div>
+    <script src="i18n.js"></script>
+    <script src="main.js"></script>
+</body>
+</html>
