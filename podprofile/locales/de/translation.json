@@ -1,0 +1,77 @@
+{
+    "title": {
+      "podProfile": "Pod Profil"
+    },
+    "headings": {
+      "podProfile": "Pod Profil",
+      "socialMedia": "Podcast Soziale Medien",
+      "team": "Team"
+    },
+    "labels": {
+      "podName": "Pod Name",
+      "podRss": "Pod RSS",
+      "podLogo": "Pod Logo",
+      "hostName": "Gastgeber Name",
+      "googleCalendar": "Google Kalender Integration",
+      "calendarUrl": "Google Kalender Datumsauswahl URL",
+      "guestForm": "Gastformular URL",
+      "facebook": "Facebook",
+      "instagram": "Instagram",
+      "linkedin": "LinkedIn",
+      "twitter": "Twitter",
+      "tiktok": "TikTok",
+      "pinterest": "Pinterest",
+      "website": "Podcast Webseite",
+      "email": "Podcast E-Mail Adresse",
+      "teamName": "Name",
+      "teamEmail": "E-Mail",
+      "teamRole": "Rolle"
+    },
+    "buttons": {
+      "copy": "Kopieren",
+      "invite": "Einladen",
+      "block": "Blockieren",
+      "submit": "Absenden"
+    },
+    "options": {
+      "selectRole": "Rolle auswählen",
+      "user": "Benutzer",
+      "host": "Gastgeber"
+    },
+    "errors": {
+      "podName": "Bitte geben Sie den Pod-Namen ein.",
+      "podRss": "Bitte geben Sie eine gültige RSS-URL ein.",
+      "hostName": "Bitte geben Sie den Gastgebernamen ein.",
+      "calendarUrl": "Bitte geben Sie eine gültige Kalender-URL ein.",
+      "guestForm": "Bitte geben Sie eine gültige Gastformular-URL ein.",
+      "email": "Bitte geben Sie eine gültige E-Mail-Adresse ein.",
+      "facebook": "Bitte geben Sie eine gültige Facebook-URL ein.",
+      "instagram": "Bitte geben Sie eine gültige Instagram-URL ein.",
+      "linkedin": "Bitte geben Sie eine gültige LinkedIn-URL ein.",
+      "twitter": "Bitte geben Sie eine gültige Twitter-URL ein.",
+      "tiktok": "Bitte geben Sie eine gültige TikTok-URL ein.",
+      "pinterest": "Bitte geben Sie eine gültige Pinterest-URL ein.",
+      "website": "Bitte geben Sie eine gültige Webseiten-URL ein.",
+      "teamName": "Bitte geben Sie den Namen des Teammitglieds ein.",
+      "teamEmail": "Bitte geben Sie eine gültige E-Mail-Adresse ein.",
+      "teamRole": "Bitte wählen Sie eine Rolle aus."
+    },
+    "notifications": {
+      "defaultToast": "Dies ist eine Toast-Nachricht.",
+      "guestFormCopied": "Gastformular-URL in die Zwischenablage kopiert!",
+      "copyFailed": "URL konnte nicht kopiert werden.",
+      "calendarActivated": "Google Kalender Integration aktiviert!",
+      "calendarDeactivated": "Google Kalender Integration deaktiviert!",
+      "fillAllFields": "Bitte füllen Sie alle Teammitgliedsdetails aus.",
+      "fillAllTeamFields": "Bitte füllen Sie alle Teammitgliedsfelder aus.",
+      "invitationSent": "Einladung gesendet an",
+      "invitationFailed": "Einladung konnte nicht gesendet werden.",
+      "blocked": "Teammitglied mit E-Mail",
+      "blockFailed": "Teammitglied konnte nicht blockiert werden.",
+      "submitting": "Pod Profil wird gesendet...",
+      "submissionSuccess": "Pod Profil erfolgreich gesendet!",
+      "submissionFailed": "Pod Profil konnte nicht gesendet werden.",
+      "correctErrors": "Bitte korrigieren Sie die Fehler im Formular."
+    }
+  }
+  
