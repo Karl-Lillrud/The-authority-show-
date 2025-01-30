@@ -166,3 +166,121 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     });
 });
+document.addEventListener("DOMContentLoaded", function () {
+    const pointsSystem = {
+        podName: 10,
+        podRss: 10,
+        podLogo: 10,
+        hostName: 10,
+        googleCalendar: 10,
+        calendarUrl: 10,
+        guestForm: 100,
+        facebook: 10,
+        instagram: 10,
+        linkedin: 10,
+        twitter: 10,
+        tiktok: 10,
+        pinterest: 10,
+        website: 10,
+        email: 10,
+        inviteUser: 50,
+        inviteHost: 50,
+        blockUser: 10
+    };
+
+    function getStoredPoints() {
+        return JSON.parse(localStorage.getItem("userPoints")) || 0;
+    }
+
+    function addPoints(field, points) {
+        let userPoints = getStoredPoints();
+        if (!localStorage.getItem(`points_${field}`)) {
+            userPoints += points;
+            localStorage.setItem("userPoints", JSON.stringify(userPoints));
+            localStorage.setItem(`points_${field}`, "true");
+        }
+    }
+
+    function trackInputField(fieldId, pointValue) {
+        const field = document.getElementById(fieldId);
+        if (field) {
+            field.addEventListener("input", function () {
+                addPoints(fieldId, pointValue);
+            });
+        }
+    }
+
+    function trackButtonClick(buttonId, fieldKey, pointValue) {
+        const button = document.getElementById(buttonId);
+        if (button) {
+            button.addEventListener("click", function () {
+                addPoints(fieldKey, pointValue);
+            });
+        }
+    }
+
+    async function fetchRSSData(rssUrl) {
+        if (!rssUrl) return;
+        try {
+            const response = await fetch(`https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(rssUrl)}`);
+            const data = await response.json();
+            if (data.status === "ok") {
+                document.getElementById("podName").value = data.feed.title || "";
+                document.getElementById("website").value = data.feed.link || "";
+                document.getElementById("facebook").value = extractSocialMediaLink(data.feed.description, "facebook");
+                document.getElementById("instagram").value = extractSocialMediaLink(data.feed.description, "instagram");
+                document.getElementById("twitter").value = extractSocialMediaLink(data.feed.description, "twitter");
+                document.getElementById("linkedin").value = extractSocialMediaLink(data.feed.description, "linkedin");
+                document.getElementById("pinterest").value = extractSocialMediaLink(data.feed.description, "pinterest");
+                document.getElementById("email").value = extractEmail(data.feed.description);
+                document.getElementById("podLogo").src = data.feed.image || "";
+                document.getElementById("hostName").value = data.feed.author || "";
+            }
+        } catch (error) {
+            console.error("Error fetching RSS feed:", error);
+        }
+    }
+
+    function extractSocialMediaLink(description, platform) {
+        const regex = new RegExp(`https?:\/\/www\.${platform}\.com\/[^\s]+`, "i");
+        const match = description ? description.match(regex) : null;
+        return match ? match[0] : "";
+    }
+
+    function extractEmail(description) {
+        const regex = /[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/;
+        const match = description ? description.match(regex) : null;
+        return match ? match[0] : "";
+    }
+
+    const podRssInput = document.getElementById("podRss");
+    if (podRssInput) {
+        podRssInput.addEventListener("input", function () {
+            const rssUrl = this.value.trim();
+            if (rssUrl) {
+                fetchRSSData(rssUrl);
+            }
+        });
+    }
+
+    trackInputField("podName", pointsSystem.podName);
+    trackInputField("podRss", pointsSystem.podRss);
+    trackInputField("podLogo", pointsSystem.podLogo);
+    trackInputField("hostName", pointsSystem.hostName);
+    trackButtonClick("googleCalendar", "googleCalendar", pointsSystem.googleCalendar);
+    trackInputField("calendarUrl", pointsSystem.calendarUrl);
+    trackInputField("guestForm", pointsSystem.guestForm);
+    trackInputField("facebook", pointsSystem.facebook);
+    trackInputField("instagram", pointsSystem.instagram);
+    trackInputField("linkedin", pointsSystem.linkedin);
+    trackInputField("twitter", pointsSystem.twitter);
+    trackInputField("tiktok", pointsSystem.tiktok);
+    trackInputField("pinterest", pointsSystem.pinterest);
+    trackInputField("website", pointsSystem.website);
+    trackInputField("email", pointsSystem.email);
+
+    trackButtonClick("goToPodProfile", "inviteUser", pointsSystem.inviteUser);
+    trackButtonClick("goToPodProfile", "inviteHost", pointsSystem.inviteHost);
+    trackButtonClick("blockUser", "blockUser", pointsSystem.blockUser);
+});
+
