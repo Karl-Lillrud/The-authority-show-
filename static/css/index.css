@@ -21,6 +21,18 @@ body {
     transition: background-color 0.3s ease, color 0.3s ease;
 }
  
+.logo-container {
+    position: absolute;
+    top: 20px;
+    left: 20px;
+    width: 120px; /* Adjust as needed */
+}
+
+.logo-container img {
+    width: 100%;
+    height: auto;
+}
+
 .center-box {
     background-color: var(--bg-light);
     width: 90%;
