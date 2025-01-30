@@ -4,11 +4,17 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Login</title>
-<link rel="stylesheet" href="styles.css">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/index.css') }}">
 </head>
 <body>
+
+<!-- Logo added here -->
+<div class="logo-container">
+    <img src="{{ url_for('static', filename='images/podmanagerlogo.png') }}" alt="PodManager Logo">
+</div>
+
 <div class="center-box">
-<h1 class="title">Sign In</h1>
+<h1 class="title">Sign in</h1>
 <div id="error-message" class="error-message" style="display: none;"></div>
 <form id="login-form" action="login.php" method="POST">
 <div class="input-group">
@@ -20,16 +26,17 @@
 <input type="password" id="password" name="password" class="input" placeholder="Password" required>
 </div>
 <div class="extra-links">
-<a href="resetpassword/forgot-password.html" class="link">Forgot Password?</a>
+<a href="{{ url_for('forgot_password') }}" class="link">Forgot Password?</a>
 </div>
 <div class="form-actions">
 <button type="submit" class="button button-primary">Login</button>
 </div>
 <div class="extra-links">
-<p>Don't have an account? <a href="register/register.html" class="link">Register here</a></p>
+<a href="{{ url_for('register') }}" class="link">Register here</a>
 </div>
 </form>
 </div>
+
 <script>
         const params = new URLSearchParams(window.location.search);
         if (params.has('error') && params.get('error') === '1') {

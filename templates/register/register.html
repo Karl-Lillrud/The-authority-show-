@@ -4,9 +4,14 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Register</title>
-    <link rel="stylesheet" href="/styles.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/register.css') }}">
 </head>
 <body>
+
+<!-- Logo added here -->
+<div class="logo-container">
+    <img src="{{ url_for('static', filename='images/podmanagerlogo.png') }}" alt="PodManager Logo">
+</div>
     <div class="center-box">
         <h1>Register</h1>
         <form id="register-form" action="/register.php" method="POST">
