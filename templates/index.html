@@ -26,13 +26,13 @@
 <input type="password" id="password" name="password" class="input" placeholder="Password" required>
 </div>
 <div class="extra-links">
-<a href="resetpassword/forgot-password.html" class="link">Forgot Password?</a>
+<a href="{{ url_for('forgot_password') }}" class="link">Forgot Password?</a>
 </div>
 <div class="form-actions">
 <button type="submit" class="button button-primary">Login</button>
 </div>
 <div class="extra-links">
-<p>Don't have an account? <a href="register/register.html" class="link">Register here</a></p>
+<a href="{{ url_for('register') }}" class="link">Register here</a>
 </div>
 </form>
 </div>

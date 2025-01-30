@@ -83,7 +83,8 @@ body {
     color: var(--highlight);
     text-decoration: none;
     font-size: 14px;
-    margin-top: 15px;
+    margin-top: 25px;
+    margin-bottom: 25px;
     margin: 30px;
 }
 
