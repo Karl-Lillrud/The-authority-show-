@@ -31,7 +31,19 @@ body {
     text-align: center;
     margin: 15px;
 }
- 
+
+.logo-container {
+    position: absolute;
+    top: 20px;
+    left: 20px;
+    width: 120px; /* Adjust as needed */
+}
+
+.logo-container img {
+    width: 100%;
+    height: auto;
+}
+
 .button {
     padding: 10px 20px;
     border-radius: 25px;

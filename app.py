@@ -7,8 +7,12 @@ def index():
     return render_template('index.html')
 
 @app.route('/register')
-def dashboard():
-    return render_template('register.html')
+def register():
+    return render_template('register/register.html')
+
+@app.route('/forgotpassword/forgot-password')
+def forgot_password():
+    return render_template('forgotpassword/forgot-password.html')
 
 @app.route('/dashboard')
 def dashboard():
