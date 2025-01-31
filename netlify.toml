@@ -1,0 +1,8 @@
+[build]
+  command = "echo 'No build step required'"
+  publish = "public"
+
+[[redirects]]
+  from = "/"
+  to = "/templates/index.html"
+  status = 200
