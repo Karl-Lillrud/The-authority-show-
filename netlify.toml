@@ -1,0 +1,3 @@
+[build]
+command = "python app.py"  # Modify based on your setup
+publish = "static"
