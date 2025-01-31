@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>User Profile</title>
+    
+    <style>
+        body {
+    font-family: Arial, sans-serif;
+    background-color: #f4f4f4;
+    text-align: center;
+    padding: 20px;
+}
+
+.profile-container {
+    background: white;
+    max-width: 400px;
+    margin: auto;
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+h2 {
+    margin-bottom: 15px;
+}
+
+.profile-pic-container {
+    position: relative;
+    text-align: center;
+    margin-bottom: 15px;
+}
+
+#profile-pic {
+    width: 120px;
+    height: 120px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 2px solid #ccc;
+}
+
+#upload-pic {
+    margin-top: 10px;
+}
+
+form {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+label {
+    text-align: left;
+    font-weight: bold;
+}
+
+input {
+    width: 95%;
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+}
+
+button {
+    background: #4CAF50;
+    color: white;
+    padding: 10px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: 0.3s;
+}
+
+button:hover {
+    background: #45a049;
+}
+
+.back-arrow {
+    position: absolute;
+    top: 20px;
+    left: 20px;
+    font-size: 18px;
+    font-weight: bold;
+    text-decoration: none;
+    color: #333;
+    background: #f0f0f0;
+    padding: 8px 15px;
+    border-radius: 5px;
+    transition: 0.3s ease-in-out;
+}
+
+.back-arrow:hover {
+    background: #ddd;
+}
+
+    </style>
+</head>
+<body>
+
+    <a href="dashboard.html" class="back-arrow">&#8592; Back</a>
+
+    <div class="profile-container">
+        <h2>Account Settings</h2>
+        
+        <!-- Profile Picture Upload -->
+        <div class="profile-pic-container">
+            <img id="profile-pic" src="default-avatar.png" alt="Profile Picture">
+            <input type="file" id="upload-pic" accept="image/*">
+        </div>
+
+        <!-- Profile Form -->
+        <form id="profile-form">
+            <label for="full-name">Full Name</label>
+            <input type="text" id="full-name" placeholder="Enter your full name">
+
+            <label for="email">Email</label>
+            <input type="email" id="email" placeholder="Enter your email">
+
+            <label for="password">Current Password</label>
+            <input type="password" id="password" placeholder="Enter current password">
+
+            <label for="password">New Password</label>
+            <input type="password" id="password" placeholder="Enter new password">
+
+            <label for="confirm-password">Confirm Password</label>
+            <input type="password" id="confirm-password" placeholder="Confirm new password">
+
+            <button type="submit">Save Changes</button>
+        </form>
+    </div>
+
+    <script>
+        document.getElementById("upload-pic").addEventListener("change", function(event) {
+            const file = event.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    document.getElementById("profile-pic").src = e.target.result;
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+
+        document.getElementById("profile-form").addEventListener("submit", function(event) {
+            event.preventDefault();
+            alert("Profile updated successfully!");
+        });
+
+        document.getElementById("profile-form").addEventListener("submit", function(event) {
+            event.preventDefault();
+
+            const password = document.getElementById("password").value;
+            const confirmPassword = document.getElementById("confirm-password").value;
+
+            if (password && password !== confirmPassword) {
+                alert("Passwords do not match!");
+                return;
+            }
+
+            alert("Profile updated successfully!");
+        });
+    </script>
+
+</body>
+</html>

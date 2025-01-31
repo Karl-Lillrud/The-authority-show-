@@ -1,0 +1,419 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Podcast Manager</title>
+    <style>
+        /* General Page Styling */
+/* Ensure the page uses full height and centers content */
+html, body {
+    height: 100%;
+    margin: 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background-color: #f0f0f5;
+    font-family: Arial, sans-serif;
+}
+
+/* Centering the form container */
+.container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+    height: 100vh;
+    padding-top: 20px;
+}
+
+/* Form Box Styling */
+.form-box {
+    background: #c4c4c4;
+    padding: 25px;
+    border-radius: 12px;
+    width: 550px;
+    box-shadow: 0px 6px 12px rgba(0, 0, 0, 0.2);
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+
+/* Podcast Logo */
+.form-group {
+    display: flex;
+    align-items: center; /* Aligns items vertically */
+    gap: 10px; /* Adds spacing between label and image */
+}
+
+.form-group label {
+    width: 150px; /* Adjust width to match other labels */
+    text-align: right; /* Aligns text to the right */
+    font-weight: bold;
+}
+
+.pod-logo {
+    width: 100px; /* Adjust width */
+    height: 90px;
+    border-radius: 8px; /* Optional: Rounded corners */
+    padding: 20px;
+}
+
+
+
+/* Form Fields */
+.form-fields {
+    width: 100%;
+}
+
+/* Labels */
+label {
+    font-size: 14px;
+    font-weight: bold;
+    color: black;
+    text-align: left;
+    width: 100%;
+}
+
+/* Aligning labels and fields horizontally */
+.field-group {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 10px;
+}
+
+.field-group label {
+    flex: 1;
+    text-align: left;
+}
+
+.field-group input,
+.field-group select {
+    flex: 2;
+    padding: 8px;
+    border: 1px solid #888;
+    border-radius: 5px;
+    background: white;
+}
+
+/* Inline fields like the calendar URL */
+.inline-field {
+    display: flex;
+    align-items: center;
+    background: white;
+    padding: 5px;
+    border-radius: 5px;
+    width: 100%;
+}
+
+.icon {
+    width: 18px;
+    margin-right: 5px;
+}
+
+/* Buttons */
+.connect-btn,
+.save-btn,
+.block-btn,
+.add-btn,
+.invite-btn {
+    background: #d9d9d9;
+    border: none;
+    padding: 8px 15px;
+    border-radius: 5px;
+    cursor: pointer;
+    margin-top: 10px;
+}
+
+.save-btn {
+    width: 100%;
+    font-size: 14px;
+}
+
+.block-btn {
+    width: 70px;
+    font-size: 12px;
+}
+
+select {
+    cursor: pointer;
+}
+
+/* Invite More Section */
+.invite-more {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 10px;
+}
+
+.add-btn {
+    font-size: 18px;
+}
+
+/* Popup Styling */
+.popup {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+}
+
+/* Popup Box */
+.popup-content {
+    background: white;
+    padding: 20px;
+    border-radius: 10px;
+    text-align: center;
+    width: 350px;
+    box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1);
+    position: relative;
+}
+
+/* Close Button */
+.close-btn {
+    position: absolute;
+    top: 10px;
+    right: 15px;
+    font-size: 24px;
+    cursor: pointer;
+}
+
+/* Input Fields */
+.popup-content input,
+.popup-content select {
+    width: 100%;
+    padding: 8px;
+    margin: 10px 0;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+}
+
+/* Save Button */
+.popup-button {
+    background: #4CAF50;
+    color: white;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+}
+
+.popup-button:hover {
+    background: #45a049;
+}
+
+.back-arrow {
+    position: absolute;
+    top: 20px;
+    left: 20px;
+    font-size: 18px;
+    font-weight: bold;
+    text-decoration: none;
+    color: #333;
+    background: #f0f0f0;
+    padding: 8px 15px;
+    border-radius: 5px;
+    transition: 0.3s ease-in-out;
+}
+
+.back-arrow:hover {
+    background: #ddd;
+}
+
+
+    </style>
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+    const addMemberBtn = document.getElementById("add-member-btn");
+    const popup = document.getElementById("add-member-popup");
+    const closePopup = document.getElementById("close-popup");
+
+    // Show Popup on Button Click
+    addMemberBtn.addEventListener("click", function () {
+        popup.style.display = "flex";
+    });
+
+    // Close Popup
+    closePopup.addEventListener("click", function () {
+        popup.style.display = "none";
+    });
+
+    // Close Popup on Outside Click
+    window.addEventListener("click", function (e) {
+        if (e.target === popup) {
+            popup.style.display = "none";
+        }
+    });
+});
+
+    </script>
+</head>
+<body>
+    <a href="dashboard.html" class="back-arrow">
+        &#8592; Back
+    </a>
+    <div class="container">
+        <div class="form-box">
+            <img src="podcast-image.jpg" alt="Podcast Logo" class="pod-logo">
+
+            <div class="form-fields">
+                <div class="form-group">
+                    <label for="pod-logo">Pod Logo</label>
+                    <img src="logo.png" alt="Pod Logo" class="pod-logo">
+                </div>                
+
+                <div class="field-group">
+                    <label>Pod Name</label>
+                    <input type="text">
+                </div>
+
+                <div class="field-group">
+                    <label>RSS Feed</label>
+                    <input type="text">
+                </div>
+
+                <div class="field-group">
+                    <label>Host(s) Name(s)</label>
+                    <input type="text">
+                </div>
+
+                <div class="field-group">
+                    <label>Google Calendar Integration</label>
+                    <button class="connect-btn">CONNECT</button>
+                </div>
+
+                <div class="field-group">
+                    <label>Google Calendar Pick a Date URL</label>
+                    <div class="inline-field">
+                        <img src="calendar-icon.png" alt="Calendar Icon" class="icon">
+                        <span>podmanager.com/?pod=TheAuthorityShow</span>
+                    </div>
+                </div>
+
+                <div class="field-group">
+                    <label>Guest Form URL</label>
+                    <input type="text">
+                </div>
+
+                <div class="field-group">
+                    <label>Facebook</label>
+                    <input type="text">
+                </div>
+
+                <div class="field-group">
+                    <label>Instagram</label>
+                    <input type="text">
+                </div>
+
+                <div class="field-group">
+                    <label>LinkedIn</label>
+                    <input type="text">
+                </div>
+
+                <div class="field-group">
+                    <label>Twitter</label>
+                    <input type="text">
+                </div>
+
+                <div class="field-group">
+                    <label>TikTok</label>
+                    <input type="text">
+                </div>
+
+                <div class="field-group">
+                    <label>Pinterest</label>
+                    <input type="text">
+                </div>
+
+                <div class="field-group">
+                    <label>Website</label>
+                    <input type="text">
+                </div>
+
+                <div class="field-group">
+                    <label>Email Address</label>
+                    <input type="text">
+                </div>
+
+                <button class="save-btn">SAVE</button>
+
+                <div class="team-section">
+                    <div class="field-group">
+                        <label>Name</label>
+                        <input type="text">
+                        <button class="block-btn">BLOCK</button>
+                    </div>
+
+                    <div class="field-group">
+                        <label>Email</label>
+                        <input type="text">
+                    </div>
+
+                    <div class="field-group">
+                        <label>Role</label>
+                        <select>
+                            <option>Select</option>
+                        </select>
+                    </div>
+
+                    <div class="field-group">
+                        <label>Name</label>
+                        <input type="text">
+                        <button class="block-btn">BLOCK</button>
+                    </div>
+
+                    <div class="field-group">
+                        <label>Email</label>
+                        <input type="text">
+                    </div>
+
+                    <div class="field-group">
+                        <label>Role</label>
+                        <select>
+                            <option>Select</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="invite-more">
+                    <span>Invite More Team Members</span>
+                    <button id="add-member-btn">+</button>
+                </div>
+
+                <button class="invite-btn">SAVE/INVITTE</button>
+            </div>
+        </div>
+<div id="add-member-popup" class="popup">
+    <div class="popup-content">
+        <span id="close-popup" class="close-btn">&times;</span>
+        <h2>Add Team Member</h2>
+        
+        <label for="member-name">Name:</label>
+        <input type="text" id="member-name" placeholder="Enter Name">
+
+        <label for="member-email">Email:</label>
+        <input type="email" id="member-email" placeholder="Enter Email">
+
+        <label for="member-role">Role:</label>
+        <select id="member-role">
+            <option value="admin">Admin</option>
+            <option value="editor">Editor</option>
+            <option value="viewer">Viewer</option>
+        </select>
+        <button id="save-member" class="popup-button">Save</button>
+    </div>
+</div>
+
+    </div>
+</body>
+</html>
