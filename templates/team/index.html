@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title data-i18n="page.title">Team Management</title>
+  <!-- Font Awesome CDN for Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" integrity="sha512-Fo3rlrZj/k7ujTnHq6v+8gEB/hA+0c3hHnJ6bYlqG+MVJj4y5fI3Hpo3ZcCmmg3xD9kKMlKLH0qVx9IovmYbKw==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+  <link rel="stylesheet" href="styles.css">
+  <script src="https://unpkg.com/i18next/dist/umd/i18next.min.js"></script>
+  <script src="https://unpkg.com/i18next-http-backend/i18nextHttpBackend.min.js"></script>
+   <script src="script.js" defer></script>
+
+</head>
+<body>
+  <div class="container">
+    <header class="header">
+      <h1 class="fancy-heading" data-i18n="header.title">TEAM</h1>
+      <div class="controls">
+        <div class="search-bar">
+          <input type="text" id="search" class="input-field" placeholder="" data-i18n-placeholder="placeholder.search" aria-label="Search">
+          <button id="filter" class="button" data-i18n="buttons.filter">Filter</button>
+        </div>
+        <div class="notifications">
+          <button class="icon-button" aria-label="Notifications">
+            <i class="fas fa-bell" aria-hidden="true"></i>
+          </button>
+          <button class="icon-button" aria-label="Messages">
+            <i class="fas fa-comments" aria-hidden="true"></i>
+          </button>
+        </div>
+        <!-- Dark Mode Toggle -->
+        <label class="switch">
+          <input type="checkbox" id="theme-toggle" aria-label="Toggle Dark Mode">
+          <span class="slider round"></span>
+        </label> 
+      
+        <!-- Language Switcher -->
+        <div class="language-switcher">
+          <button id="lang-en" aria-label="Switch to English">EN</button>
+          <button id="lang-es" aria-label="Switch to Spanish">ES</button>
+          <button id="lang-ar" aria-label="Switch to Arabic">AR</button>
+          <button id="lang-de" aria-label="Switch to German">DE</button>
+          <button id="lang-fr" aria-label="Switch to French">FR</button>
+          <button id="lang-zh" aria-label="Switch to Chinese">ZH</button>
+        </div>
+      </div> 
+    </header>
+
+    <table class="team-table table">
+      <thead>
+        <tr>
+          <th data-i18n="table.headers.name">Name</th>
+          <th data-i18n="table.headers.role">Role</th>
+          <th data-i18n="table.headers.email">Email</th>
+          <th data-i18n="table.headers.phone">Phone Number</th>
+          <th data-i18n="table.headers.tasks">Tasks Assigned</th>
+          <th data-i18n="table.headers.status">Status</th>
+          <th data-i18n="table.headers.actions">Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        <!-- Example Row -->
+        <tr>
+          <td>John Doe</td>
+          <td>Developer</td>
+          <td>john.doe@example.com</td>
+          <td>+1234567890</td>
+          <td>5</td>
+          <td>
+            <span class="status active" data-i18n="status.active">Active</span>
+          </td>
+          <td>
+            <button class="action-btn edit" aria-label="Edit Member">
+              <i class="fas fa-edit"></i>
+            </button>
+            <button class="action-btn disable" aria-label="Disable Member">
+              <i class="fas fa-user-slash"></i>
+            </button>
+            <button class="action-btn view-tasks" aria-label="View Tasks">
+              <i class="fas fa-tasks"></i>
+            </button>
+          </td>
+        </tr>
+        <!-- Additional rows will be populated dynamically -->
+      </tbody>
+    </table>
+
+    <button class="button add-member" data-i18n="buttons.addMember">Add New Member</button>
+  </div>
+
+  <!-- Modal for Adding New Member -->
+  <div id="addMemberModal" class="modal" aria-hidden="true" role="dialog" aria-labelledby="addMemberTitle">
+    <form id="addMemberForm" class="form" novalidate>
+      <h2 id="addMemberTitle" data-i18n="modal.addMemberTitle">Add New Member</h2>
+      <div class="form-group">
+        <label for="memberName" data-i18n="form.labels.name">Name</label>
+        <input type="text" id="memberName" class="input-field" required aria-required="true" aria-describedby="name-error" data-i18n-placeholder="placeholder.name">
+        <span id="name-error" class="validation-message sr-only" data-i18n="errors.name">Please enter a valid name.</span>
+      </div>
+      <div class="form-group">
+        <label for="memberRole" data-i18n="form.labels.role">Role</label>
+        <input type="text" id="memberRole" class="input-field" required aria-required="true" aria-describedby="role-error" data-i18n-placeholder="placeholder.role">
+        <span id="role-error" class="validation-message sr-only" data-i18n="errors.role">Please enter a valid role.</span>
+      </div>
+      <div class="form-group">
+        <label for="memberEmail" data-i18n="form.labels.email">Email</label>
+        <input type="email" id="memberEmail" class="input-field" required aria-required="true" aria-describedby="email-error" data-i18n-placeholder="placeholder.email">
+        <span id="email-error" class="validation-message sr-only" data-i18n="errors.email">Please enter a valid email.</span>
+      </div>
+      <div class="form-group">
+        <label for="memberPhone" data-i18n="form.labels.phone">Phone Number</label>
+        <input type="tel" id="memberPhone" class="input-field" aria-describedby="phone-error" data-i18n-placeholder="placeholder.phone">
+        <span id="phone-error" class="validation-message sr-only" data-i18n="errors.phone">Please enter a valid phone number.</span>
+      </div>
+      <button type="submit" class="button submit-btn" data-i18n="buttons.submit">Submit</button>
+      <button type="button" class="button close-btn" data-i18n="buttons.close">Close</button> 
+    </form>
+  </div>
+
+  <!-- Toast Notification -->
+  <div id="toast" class="toast" role="alert" aria-live="assertive" aria-atomic="true">
+    This is a toast message.
+  </div>
+  <div class="filters">
+    <label for="filter-role">Role:</label>
+    <select id="filter-role">
+      <option value="">All</option>
+      <option value="Admin">Admin</option>
+      <option value="Editor">Editor</option>
+      <option value="Team Member">Team Member</option>
+    </select>
+  
+    <label for="filter-status">Status:</label>
+    <select id="filter-status">
+      <option value="">All</option>
+      <option value="Active">Active</option>
+      <option value="Inactive">Inactive</option>
+    </select>
+  
+    <label for="filter-task">Task Count:</label>
+    <select id="filter-task">
+      <option value="">All</option>
+      <option value="most">Most Tasks</option>
+      <option value="least">Least Tasks</option>
+    </select>
+  </div>
+  </div>
+</body>
+</html>
