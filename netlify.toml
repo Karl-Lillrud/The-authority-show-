@@ -1,4 +1,3 @@
 [build]
   command = "echo 'No build step required'"
   publish = "templates"
-  publish = "."
