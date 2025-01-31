@@ -1,3 +1,4 @@
 [build]
-command = "python app.py"  # Modify based on your setup
-publish = "static"
+  command = "pip install -r requirements.txt && python app.py"  # Modify if needed
+  functions = "netlify/functions"
+  publish = "static"
