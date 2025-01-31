@@ -1,4 +1,3 @@
 [build]
-  command = "pip install -r requirements.txt && python app.py"  # Modify if needed
-  functions = "netlify/functions"
-  publish = "static"
+  command = "pip install -r requirements.txt && gunicorn app:app -b 0.0.0.0:5000"
+  publish = "public"  # Adjust this if your output directory is different
