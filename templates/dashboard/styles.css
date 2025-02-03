@@ -321,6 +321,29 @@ header {
   font-weight: bold;
 }
 
+/* Animate strikethrough and fade effect on task text */
+.task-text {
+  position: relative;
+  transition: opacity 0.5s ease;
+}
+
+.task-text::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 50%;
+  width: 0;
+  height: 2px;
+  background: currentColor;
+  transition: width 0.5s ease;
+}
+
+/* When task is completed, fade text and draw a line through it */
+.completed .task-text {
+  opacity: 0.6;
+  text-decoration: line-through;
+}
+
 /* Popup Overlay */
 .popup {
   display: none;
@@ -431,6 +454,8 @@ header {
   background-color: #e36f2f;
   transform: translateY(-2px);
 }
+
+
 
 /* Media Queries */
 @media (max-width: 992px) {
