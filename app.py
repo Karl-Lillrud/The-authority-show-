@@ -1,9 +1,11 @@
-from flask import Flask, render_template, request, jsonify
+from flask import Flask, render_template, request, jsonify, redirect, url_for 
+from azure.cosmos import CosmosClient
 from cosmos_routes import ( 
     cosmos_bp,  # Import the blueprint for routing the DB methods
     create_item,
     get_items
 )
+import os
 import uuid
 import hashlib
 
@@ -24,6 +26,15 @@ def test_db_connection():
     except Exception as e:
         return jsonify({"error": f"Database connection failed: {str(e)}"}), 500
 
+COSMOSDB_URI = os.getenv("COSMOSDB_URI")
+COSMOSDB_KEY = os.getenv("COSMOSDB_KEY")
+DATABASE_ID = "podmanagedb"
+CONTAINER_ID = "Users"
+
+# Initialize Cosmos client
+client = CosmosClient(COSMOSDB_URI, credential=COSMOSDB_KEY)
+database = client.get_database_client(DATABASE_ID)
+container = database.get_container_client(CONTAINER_ID)
 
 @app.route('/', methods=['GET', 'POST'])
 def signin():
@@ -60,9 +71,11 @@ def signin():
         if not user or user["password"] != hashed_password:
             return jsonify({"error": "Invalid email or password"}), 401
 
-        return jsonify({"message": "Login successful", "user_id": user["id"]}), 200
+        # ✅ Redirect the user to the dashboard upon successful login
+        return redirect(url_for('dashboard'))
     
-    return render_template('dashboard/dashboard.html'(user))
+    return render_template('signin.html')
+
 
 @app.route('/register', methods=['GET', 'POST'])
 def register():
@@ -112,12 +125,9 @@ def forgot_password():
 
     return jsonify({"message": "Password reset feature coming soon"}), 200  # ✅ Added a response for POST requests
 
-@app.route('/dashboard', methods=['GET', 'POST'])
-def dashboard(user):
-    if request.method == 'GET':
-        return render_template('dashboard/dashboard.html')  # ✅ Renders dashboard when accessed via GET
-
-    return jsonify({"message": "Dashboard update feature coming soon"}), 200  # ✅ Added a response for POST requests
+@app.route('/dashboard', methods=['GET'])
+def dashboard():
+    return render_template('dashboard/dashboard.html')  # ✅ Renders dashboard when accessed via GET
 
 if __name__ == "__main__":
     app.run(host='0.0.0.0', port=8000, debug=True)
