@@ -1,34 +1,38 @@
 import logging
+import os
 from flask import Blueprint, request, jsonify
 from azure.cosmos import CosmosClient, PartitionKey
 from datetime import datetime, timezone
-import os
 
 # Define the blueprint
 cosmos_bp = Blueprint('cosmos_bp', __name__)
 
-# Cosmos DB configuration
-COSMOS_ENDPOINT = os.environ.get("COSMOS_ENDPOINT", "https://podmanagedb.documents.azure.com:443/")
-COSMOS_KEY = os.environ.get("COSMOS_KEY", "MiLps5254nsIyfOquJ0NTPrGiPoVDbzMO8cFzUoc8EWimIbMVgjlOxl2rXFk4wjb8Xe6jzgt0tqWACDbUnMLqw==")
+# Retrieve Cosmos DB credentials from environment variables (set as GitHub secrets)
+COSMOS_ENDPOINT = os.environ.get("COSMOS_ENDPOINT")
+COSMOS_KEY = os.environ.get("COSMOS_KEY")
+
+if not COSMOS_ENDPOINT or not COSMOS_KEY:
+    raise ValueError("Cosmos DB credentials are missing. Ensure COSMOS_ENDPOINT and COSMOS_KEY are set as environment variables.")
+
 DATABASE_NAME = "podmanager"
 CONTAINER_NAME = "users"
 
-# Initialize Cosmos client and ensure DB and Container exist
+# Initialize Cosmos client securely
 def init_cosmos_db():
-    client = CosmosClient(COSMOS_ENDPOINT, COSMOS_KEY)
     try:
+        client = CosmosClient(COSMOS_ENDPOINT, COSMOS_KEY)
         database = client.create_database_if_not_exists(id=DATABASE_NAME)
         container = database.create_container_if_not_exists(
             id=CONTAINER_NAME,
             partition_key=PartitionKey(path="/id"),
             offer_throughput=400
         )
-        logging.info("Database and container initialized successfully.")
+        logging.info("✅ Cosmos DB connection initialized successfully.")
     except Exception as e:
-        logging.error(f"Error initializing Cosmos DB: {e}")
+        logging.error(f"❌ Error initializing Cosmos DB: {e}")
         raise e
 
-# Initialize DB and Container
+# Initialize the database on startup
 init_cosmos_db()
 
 # Logging setup
@@ -37,19 +41,8 @@ logging.basicConfig(level=logging.DEBUG)
 def current_timestamp():
     return datetime.now(timezone.utc).isoformat()
 
-def validate_json(data):
-    required_fields = {"id", "email", "password"}
-    if not all(field in data for field in required_fields):
-        return False, "Missing required fields: " + ", ".join(required_fields - data.keys())
-    if not isinstance(data["id"], str) or not isinstance(data["email"], str) or not isinstance(data["password"], str):
-        return False, "Invalid data types. 'id', 'email', and 'password' must be strings."
-    return True, None
-
 def create_item(data):
     try:
-        is_valid, error_message = validate_json(data)
-        if not is_valid:
-            return {"error": error_message}, 400
         data['created_at'] = current_timestamp()
         logging.debug(f"Creating item: {data}")
         client = CosmosClient(COSMOS_ENDPOINT, COSMOS_KEY)
@@ -66,21 +59,20 @@ def get_items():
         client = CosmosClient(COSMOS_ENDPOINT, COSMOS_KEY)
         database = client.get_database_client(DATABASE_NAME)
         container = database.get_container_client(CONTAINER_NAME)
-        items = list(container.read_all_items())
-        return items, 200
+        query = "SELECT * FROM c"
+        items = list(container.query_items(query=query, enable_cross_partition_query=True))
+        return jsonify(items), 200
     except Exception as e:
-        logging.error(f"Error fetching items: {e}")
+        logging.error(f"Error retrieving items: {e}")
         return {"error": str(e)}, 500
 
-@cosmos_bp.route('/items', methods=['POST'])
-def create_item_route():
-    if not request.is_json:
-        return jsonify({"error": "Invalid request format. Expected JSON."}), 400
-    data = request.get_json()
-    response, status = create_item(data)
-    return jsonify(response), status
-
 @cosmos_bp.route('/items', methods=['GET'])
-def get_items_route():
-    response, status = get_items()
-    return jsonify(response), status
+def handle_get_items():
+    return get_items()
+
+@cosmos_bp.route('/items', methods=['POST'])
+def handle_create_item():
+    data = request.get_json()
+    if not data:
+        return {"error": "Invalid or missing JSON data."}, 400
+    return create_item(data)
