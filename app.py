@@ -1,147 +1,78 @@
-
-from flask import Flask, render_template
-import os
-from flask import Flask, render_template, request, jsonify, redirect, url_for 
+from flask import Flask, render_template, request, jsonify, redirect, url_for
 from azure.cosmos import CosmosClient
-from cosmos_routes import (
-    cosmos_bp,  # Import the blueprint for routing the DB methods
-    create_item,
-    get_items
-)
+from dotenv import load_dotenv
 import os
-import uuid
 import hashlib
 
-app = Flask(__name__, template_folder='templates')
-app.register_blueprint(cosmos_bp, url_prefix='/api')
+# Load environment variables
+load_dotenv()
 
-<<<<<<< HEAD
-@app.route("/")
-def home():
-    return render_template("index.html")
-=======
-@app.route('/test-db', methods=['GET'])
-def test_db_connection():
-    try:
-        # ✅ Attempt to fetch an item from the database
-        test_data, status = get_items()
->>>>>>> main
-
-        if status != 200:
-            return jsonify({"error": "Failed to fetch data from database"}), 500
-
-        return jsonify({"message": "Database connection successful", "sample_data": test_data}), 200
-
-    except Exception as e:
-        return jsonify({"error": f"Database connection failed: {str(e)}"}), 500
-
-COSMOSDB_URI = os.getenv("COSMOSDB_URI")
-COSMOSDB_KEY = os.getenv("COSMOSDB_KEY")
+# Azure Cosmos DB configuration
+COSMOSDB_URI = os.getenv("COSMOS_ENDPOINT")
+COSMOSDB_KEY = os.getenv("COSMOS_KEY")
 DATABASE_ID = "podmanagedb"
-CONTAINER_ID = "Users"
+CONTAINER_ID = "users"
 
-# Initialize Cosmos client
-client = CosmosClient(COSMOSDB_URI, credential=COSMOSDB_KEY)
+if not COSMOSDB_URI or not COSMOSDB_KEY:
+    raise ValueError("Cosmos DB credentials are missing.")
+
+# Initialize Cosmos client (shared across app)
+client = CosmosClient(COSMOSDB_URI, COSMOSDB_KEY)
 database = client.get_database_client(DATABASE_ID)
 container = database.get_container_client(CONTAINER_ID)
 
+# Import and register Blueprints
+from register import register_bp
+
+app = Flask(__name__, template_folder='templates')
+app.register_blueprint(register_bp, url_prefix='/api')  # Register Blueprint under '/api/register'
+
+@app.route('/test-db', methods=['GET'])
+def test_db_connection():
+    try:
+        users = list(container.query_items(query="SELECT * FROM c", enable_cross_partition_query=True))
+        return jsonify({"message": "Database connection successful", "sample_data": users}), 200
+    except Exception as e:
+        return jsonify({"error": f"Database connection failed: {str(e)}"}), 500
+
+# ✅ Serves the registration page
+@app.route('/register', methods=['GET'])
+def register():
+    return render_template('register/register.html')
+
+# ✅ Serves the signin page and handles login
 @app.route('/', methods=['GET', 'POST'])
+@app.route('/signin', methods=['GET', 'POST'])
 def signin():
     if request.method == 'GET':
-        return render_template('signin.html')  # ✅ Loads signin.html when visiting root
-
-    # ✅ Handle login only when method is POST
-    if request.method == 'POST':
-        if not request.is_json:
-            return jsonify({"error": "Invalid request format. Expected JSON."}), 400
-
-        data = request.get_json()
-
-        # Ensure required fields exist
-        required_fields = {"email", "password"}
-        if not all(field in data for field in required_fields):
-            return jsonify({"error": "Missing required fields: email, password"}), 400
-
-        # Validate data types
-        if not isinstance(data["email"], str) or not isinstance(data["password"], str):
-            return jsonify({"error": "Invalid data types. 'email' and 'password' must be strings."}), 400
-
-        # Hash the input password to compare with the stored hashed password
-        hashed_password = hashlib.sha256(data["password"].encode()).hexdigest()
-
-        # Query the database for the user
-        users, status = get_items()
-
-        if status != 200:
-            return jsonify({"error": "Database query failed"}), 500
-
-        user = next((u for u in users if u["email"] == data["email"]), None)
-
-        if not user or user["password"] != hashed_password:
-            return jsonify({"error": "Invalid email or password"}), 401
-
-        # ✅ Redirect the user to the dashboard upon successful login
-        return redirect(url_for('dashboard'))
+        return render_template('signin.html')
     
-    return render_template('signin.html')
-
-
-@app.route('/register', methods=['GET', 'POST'])
-def register():
-    if request.method == 'GET':
-        return render_template('register/register.html')  # ✅ Shows registration form when accessed via GET
-
-    # ✅ Handle registration only when method is POST
-    if request.method == 'POST':
-        if not request.is_json:
-            return jsonify({"error": "Invalid request format. Expected JSON."}), 400
-
-        data = request.get_json()
-
-        # Ensure required fields exist
-        required_fields = {"email", "password"}
-        if not all(field in data for field in required_fields):
-            return jsonify({"error": "Missing required fields: email, password"}), 400
-
-        # Validate data types
-        if not isinstance(data["email"], str) or not isinstance(data["password"], str):
-            return jsonify({"error": "Invalid Entry. 'email' and 'password' must be strings."}), 400
-
-        # Hash the password before storing it
-        hashed_password = hashlib.sha256(data["password"].encode()).hexdigest()
-
-        # Generate a unique user ID
-        user_id = str(uuid.uuid4())
-
-        # Prepare user data for storage
-        user_data = {
-            "id": user_id,
-            "email": data["email"],
-            "password": hashed_password,  # Storing hashed password securely
-        }
-
-        # Store in Cosmos DB
-        response, status = create_item(user_data)
-
-        return jsonify(response), status
+    data = request.get_json()
+    if not data or 'email' not in data or 'password' not in data:
+        return redirect(url_for('signin'))
     
-    return render_template('signin.html')
+    email = data['email']
+    password = data['password']
+    hashed_password = hashlib.sha256(password.encode()).hexdigest()
+    
+    query = "SELECT * FROM c WHERE c.email = @email"
+    parameters = [{"name": "@email", "value": email}]
+    users = list(container.query_items(query=query, parameters=parameters, enable_cross_partition_query=True))
+    
+    if not users or users[0].get("passwordHash") != hashed_password:
+        return redirect(url_for('signin'))
+    
+    return redirect(url_for('dashboard'))
 
-@app.route('/forgotpassword', methods=['GET', 'POST'])
+# ✅ Serves forgot password page
+@app.route('/forgotpassword', methods=['GET'])
 def forgot_password():
-    if request.method == 'GET':
-        return render_template('forgotpassword/forgot-password.html')  # ✅ Renders form for password reset
+    return render_template('forgotpassword/forgot-password.html')
 
-    return jsonify({"message": "Password reset feature coming soon"}), 200  # ✅ Added a response for POST requests
-
+# ✅ Serves dashboard page
 @app.route('/dashboard', methods=['GET'])
 def dashboard():
-    return render_template('dashboard/dashboard.html')  # ✅ Renders dashboard when accessed via GET
+    return render_template('dashboard/dashboard.html')
 
 if __name__ == "__main__":
-<<<<<<< HEAD
-    port = int(os.environ.get("PORT", 5000))  # Netlify assigns a port dynamically
-    app.run(host="0.0.0.0", port=port)
-=======
     app.run(host='0.0.0.0', port=8000, debug=True)
->>>>>>> main
