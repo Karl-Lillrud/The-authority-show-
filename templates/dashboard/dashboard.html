@@ -75,7 +75,7 @@
     <!-- Homepage Popup -->
     <div id="homepage-popup" class="popup">
         <div class="popup-content">
-            <iframe id="homepage-iframe" src="homepage.html" width="100%" height="800px" style="border: none;"></iframe>
+            <iframe id="homepage-iframe" src="dashboard/homepage.html" width="100%" height="800px" style="border: none;"></iframe>
         </div>
     </div>
 
@@ -101,7 +101,7 @@
             <a href="profile.html">Account Settings</a>
             <a href="tasks.html">Task Management</a>
             <a href="settings.html">Podcast Management</a>
-            <a href="#tasks">Refer a Friend</a>
+            <a href="tasks">Refer a Friend</a>
         </div>
     </header>
     
@@ -141,7 +141,7 @@
 
             <section class="task-cards">
                 <div class="card">
-                    <img src="person1.jpg" class="profile-image">
+                    <img src="{{ url_for('static', filename='images/person1.jpg') }}" class="profile-image">
                     <h3>Ollina Olsson</h3>
                     <ul class="task-list">
                         <li><span class="task-text">Guest received pitch email to join the show as a guest</span><input type="checkbox" class="task-check"><span class="checkmark"></span></li>
@@ -177,7 +177,7 @@
                     </ul>                    
                 </div>
                 <div class="card">
-                    <img src="person2.jpg" class="profile-image">
+                    <img src="{{ url_for('static', filename='images/person2.jpg') }}" class="profile-image">
                     <h3>Olle Olsson</h3>
                     <ul class="task-list">
                         <li><span class="task-text">Guest received pitch email to join the show as a guest</span><input type="checkbox" class="task-check"><span class="checkmark"></span></li>
@@ -213,7 +213,7 @@
                     </ul>                    
                 </div>
                 <div class="card">
-                    <img src="person3.jpg" class="profile-image">
+                    <img src="{{ url_for('static', filename='images/person3.jpg') }}" class="profile-image">
                     <h3>Olga Olsson</h3>
                     <ul class="task-list">
                         <li><span class="task-text">Guest received pitch email to join the show as a guest</span><input type="checkbox" class="task-check"><span class="checkmark"></span></li>

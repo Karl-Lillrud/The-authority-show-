@@ -41,6 +41,7 @@
     <script>
         document.getElementById("login-form").addEventListener("submit", async function(event) {
             event.preventDefault();
+            
             const email = document.getElementById("email").value;
             const password = document.getElementById("password").value;
 
@@ -51,17 +52,22 @@
                     body: JSON.stringify({ email, password })
                 });
 
-                if (response.redirected) {
-                    window.location.href = response.url; // Redirect to dashboard
+                if (!response.ok) {
+                    throw new Error("Invalid email or password.");
+                }
+
+                const result = await response.json();
+                console.log("Server response:", result);
+
+                if (result.redirect_url) {
+                    window.location.href = result.redirect_url;
                 } else {
-                    const result = await response.json();
-                    const errorMessage = document.getElementById("error-message");
-                    errorMessage.textContent = result.error || "Invalid email or password.";
-                    errorMessage.style.display = "block";
+                    throw new Error(result.error || "Invalid email or password.");
                 }
             } catch (error) {
                 console.error("Error:", error);
-                alert("Something went wrong. Please try again.");
+                document.getElementById("error-message").textContent = error.message;
+                document.getElementById("error-message").style.display = "block";
             }
         });
     </script>
