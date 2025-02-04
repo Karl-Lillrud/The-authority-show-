@@ -92,6 +92,14 @@ body {
     text-decoration: underline;
 }
 
+.account-text {
+    font-size: 14px;
+    color: var(--text-light);
+    margin-top: 20px;
+    margin-bottom: 5px;
+    text-align: center;
+}
+
 .error-message {
     font-size: 14px;
     color: var(--highlight);
