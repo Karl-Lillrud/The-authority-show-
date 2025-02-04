@@ -14,7 +14,7 @@
 </div>
     <div class="center-box">
         <h1>Register</h1>
-        <form id="register-form" action="/register.php" method="POST">
+        <form id="register-form">
             <div class="input-group">
                 <label for="email"></label>
                 <input type="email" id="email" name="email" class="input" placeholder="Email" required>
@@ -27,5 +27,34 @@
         </form>
         <p>Already have an account? <a href="../index.html" class="link">Login here</a></p>
     </div>
+    <script>
+        document.getElementById("register-form").addEventListener("submit", async function(event) {
+            event.preventDefault(); // Prevent default form submission
+    
+            const email = document.getElementById("email").value;
+            const password = document.getElementById("password").value;
+    
+            try {
+                const response = await fetch("{{ url_for('register') }}", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify({ email, password })
+                });
+    
+                const result = await response.json();
+    
+                if (response.ok) {
+                    window.location.href = "{{ url_for('signin') }}"; // Redirect to sign-in page
+                } else {
+                    alert("Error: " + result.error);
+                }
+            } catch (error) {
+                console.error("Error:", error);
+                alert("Something went wrong. Please try again.");
+            }
+        });
+    </script>    
 </body>
 </html>
