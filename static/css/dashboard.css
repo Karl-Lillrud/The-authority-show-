@@ -1,167 +1,263 @@
-/* INDEX.HTML */
-
 :root {
   --background-light: #EFF2F9;
-  --text-dark: #333;
-  --text-light: #FFF;
-  --primary-color: #FF7F3F;
-  --secondary-color: #D3D3D3;
+  --background-dark: #1C1C1C;
+  --light-shadow-light: #FFFFFF;
+  --dark-shadow-light: rgba(22, 24, 29, 0.23);
+  --light-shadow-dark: rgba(255, 255, 255, 0.1);
+  --dark-shadow-dark: rgba(0, 0, 0, 0.8);
+
+  --text-color-light: #6E7F8D;
+  --text-color-dark: #B3B3B3;
   --highlight-color: #FF7F3F;
+  --error-color: #FF3B30;
+  --success-color: #4CAF50;
+
+  --font-primary: 'Inter', sans-serif;
+  --font-secondary: 'Avenir Next', sans-serif;
+
+  --spacing-xs: 4px;
+  --spacing-sm: 8px;
+  --spacing-md: 16px;
+  --spacing-lg: 24px;
+  --spacing-xl: 32px;
+
   --radius-large: 50px;
   --radius-medium: 25px;
   --radius-small: 12px;
-  --font-primary: 'Inter', sans-serif;
 }
 
-body {
-  font-family: var(--font-primary);
-  background-color: var(--background-light);
+html, body {
+  width: 100%;
+  max-width: 100%;
   margin: 0;
   padding: 0;
+  overflow-x: hidden;
+  box-sizing: border-box;
 }
 
+/* Global Resets/Adjustments */
+body {
+  margin: 0;
+  padding: 0;
+  font-family: var(--font-primary);
+  background-color: var(--background-light);
+  color: var(--text-color-light);
+  line-height: 1.6;
+}
+
+
+
+img {
+  max-width: 100%;
+  height: auto;
+  display: block;
+  border: none;
+}
+
+/* Container */
 .container {
   display: flex;
   flex-direction: column;
-  gap: 1rem;
+  gap: var(--spacing-md);
 }
 
-.logo img {
-  width: 50px;
-}
-
+/* Header */
 header {
   width: 100%;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 20px;
-  background: #EFF2F9;
-  position: relative;
+  padding: var(--spacing-md);
+  background: var(--background-light);
+  /* Remove extra positioning since we want a natural flow */
+  box-shadow: 
+    -5px -5px 10px var(--light-shadow-light),
+     5px 5px 10px var(--dark-shadow-light);
+  border-radius: var(--radius-small);
+  transition: background-color 0.3s ease, box-shadow 0.3s ease;
 }
 
+/* Logo – Removed absolute positioning so it stays on the far left */
+.logo-container {
+  /* Previously positioned absolutely; now let flex layout position it */
+  width: 120px; /* Adjust as needed */
+}
+
+.logo-container img {
+  width: 100%;
+  height: auto;
+}
+
+/* Header Nav (Menus on the far right) */
 .header-nav {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: var(--spacing-sm);
 }
 
+/* Podcast Selector */
 #podcast-selector {
-  font-size: 16px;
-  padding: 5px 10px;
-  border: 1px solid #ccc;
-  border-radius: 5px;
-  background: white;
+  font-size: 0.875rem;
+  padding: var(--spacing-xs) var(--spacing-sm);
+  border: none;
+  border-radius: 20px;
+  background: var(--background-light);
+  color: var(--text-color-light);
+  box-shadow:
+    inset 3px 3px 6px var(--dark-shadow-light),
+    inset -3px -3px 6px var(--light-shadow-light);
+  outline: none;
+  transition: box-shadow 0.3s ease, background-color 0.3s ease;
   cursor: pointer;
   height: 30px;
   display: flex;
   align-items: center;
-  margin-right: 10px; /* Ensures spacing between selector and menu */
 }
 
+#podcast-selector:hover {
+  box-shadow:
+    inset 2px 2px 4px rgba(255, 127, 63, 0.4),
+    inset -2px -2px 4px rgba(0, 0, 0, 0.1);
+}
+
+/* Menu Toggle (Hamburger) */
 .menu-toggle {
   display: flex;
   flex-direction: column;
   justify-content: space-between;
   width: 30px;
-  height: 24px; /* Match the height of the select dropdown */
+  height: 24px;
   cursor: pointer;
 }
 
 .menu-toggle span {
   display: block;
-  height: 4px;
+  height: 3px;
   width: 100%;
-  background: #000;
+  background: #333;
   border-radius: 2px;
 }
 
-
+/* Dropdown Menu */
 .menu {
   display: none;
   position: absolute;
-  top: 65px;
+  top: calc(100% + 10px);
   right: 10px;
-  background: white;
-  box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1);
-  border-radius: 8px;
-  padding: 10px;
+  background: var(--background-light);
+  box-shadow: 
+    -5px -5px 10px var(--light-shadow-light),
+     5px 5px 10px var(--dark-shadow-light);
+  border-radius: var(--radius-small);
+  padding: var(--spacing-md);
   flex-direction: column;
-  gap: 10px;
+  gap: var(--spacing-sm);
+  z-index: 1000;
 }
 
 .menu a {
   text-decoration: none;
-  color: black;
-  font-size: 16px;
-  padding: 10px;
-  display: block;
+  color: var(--text-color-light);
+  font-family: var(--font-secondary);
+  font-size: 0.9rem;
+  padding: var(--spacing-xs) 0;
+  transition: color 0.3s ease;
 }
 
 .menu a:hover {
-  background-color: #F0F0F0;
+  color: var(--highlight-color);
 }
 
-
+/* Leaderboard Section */
 .leaderboard-section {
-  width: 90%; /* Adjust the width to a suitable size */
-  max-width: auto;
-  margin: 0 auto; /* Center the section */
-  background: var(--secondary-color);
+  width: 90%;
+  margin: 0 auto;
+  background: var(--background-light);
   border-radius: var(--radius-medium);
-  padding: 1rem;
+  padding: var(--spacing-md);
   text-align: center;
-  border: 5px solid var(--text-dark);
+  box-shadow:
+    -5px -5px 10px var(--light-shadow-light),
+     5px 5px 10px var(--dark-shadow-light);
+  transition: background-color 0.3s ease, box-shadow 0.3s ease;
 }
 
+/* Leaderboard Table */
 .leaderboard-table {
   width: 100%;
   border-collapse: collapse;
-  margin: 0 auto;
+  margin: var(--spacing-md) auto 0 auto;
+  font-size: 0.95rem;
 }
 
-.leaderboard-table th, .leaderboard-table td {
-  padding: 1rem;
-  border: 1px solid #ccc;
+.leaderboard-table th,
+.leaderboard-table td {
+  padding: var(--spacing-sm);
   text-align: left;
+  border-bottom: 1px solid rgba(0,0,0,0.1);
 }
 
+.leaderboard-table thead tr {
+  background-color: var(--highlight-color);
+  color: #fff;
+}
+
+.leaderboard-table tbody tr:nth-child(even) {
+  background-color: rgba(0,0,0,0.03);
+}
+
+.leaderboard-table tbody tr:hover {
+  background-color: rgba(255,127,63,0.1);
+}
+
+/* Task Cards Container */
 .task-cards {
   display: flex;
   flex-wrap: wrap;
-  gap: 2rem;
+  gap: var(--spacing-lg);
   justify-content: center;
-  align-items: center;
+  align-items: flex-start;
   width: 90%;
-  margin: 2rem auto; /* Center horizontally */
+  margin: var(--spacing-lg) auto;
 }
 
+/* Card */
 .card {
   width: 380px;
-  background: var(--text-light);
+  background: var(--background-light);
   border-radius: var(--radius-medium);
-  padding: 1.5rem;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-  text-align: center;
-  border: 5px solid var(--text-dark);
+  padding: var(--spacing-md);
+  box-shadow:
+    -8px -8px 16px var(--light-shadow-light),
+     8px 8px 16px var(--dark-shadow-light);
   display: flex;
   flex-direction: column;
   align-items: center;
-  flex-grow: 1;
+  transition: box-shadow 0.3s ease, transform 0.3s ease;
 }
 
+/* Card Heading */
 .card h3 {
-  margin-bottom: 1rem;
+  margin-bottom: var(--spacing-md);
   text-align: center;
+  font-family: var(--font-secondary);
+  font-size: 1.2rem;
+  color: var(--text-color-light);
 }
 
+/* Profile Image */
 .profile-image {
-  width: 60px;
-  height: 60px;
+  width: 70px;
+  height: 70px;
   border-radius: 50%;
-  margin-bottom: 1rem;
+  margin-bottom: var(--spacing-sm);
+  object-fit: cover;
+  box-shadow:
+    inset -2px -2px 4px var(--light-shadow-light),
+    inset 2px 2px 4px var(--dark-shadow-light);
 }
 
+/* Task List */
 .task-list {
   list-style: none;
   padding: 0;
@@ -171,160 +267,270 @@ header {
   overflow-y: auto;
 }
 
+/* Single Task Row */
 .task-list li {
   display: flex;
-  justify-content: space-between;
   align-items: center;
-  padding: 0.75rem;
-  margin: 0.3rem 0;
+  justify-content: space-between;
+  padding: var(--spacing-xs);
+  margin-bottom: var(--spacing-xs);
   border-radius: var(--radius-small);
-  text-align: left;
-  box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
-  font-size: 1rem;
-  font-weight: 500;
-  color: #333;
-  transition: all 0.3s ease;
-  background: #f5f5f5;
-  min-height: 40px;
+  background-color: var(--background-light);
+  box-shadow:
+    inset -2px -2px 4px var(--light-shadow-light),
+    inset 2px 2px 4px var(--dark-shadow-light);
+  transition: background-color 0.3s ease, box-shadow 0.3s ease;
   cursor: pointer;
+  color: var(--text-color-light);
+  font-size: 0.9rem;
 }
 
+.task-list li:hover {
+  background-color: rgba(255,127,63,0.08);
+}
+
+/* Task Text */
 .task-text {
-  flex-grow: 1;
-  cursor: pointer;
+  flex: 1;
+  margin-right: var(--spacing-sm);
+  position: relative;
+  transition: opacity 0.5s ease;
 }
 
+.task-text::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 50%;
+  width: 0;
+  height: 2px;
+  background: currentColor;
+  transition: width 0.5s ease;
+}
+
+/* When task is completed, fade text and draw a line through it */
+.completed .task-text {
+  opacity: 0.6;
+  text-decoration: line-through;
+}
+
+/* Custom Checkboxes */
 .task-check {
-  min-width: 24px;
-  min-height: 24px;
+  -webkit-appearance: none;
+  appearance: none;
   width: 24px;
   height: 24px;
+  background-color: var(--background-light);
   border-radius: 50%;
-  background: #fff;
-  border: 2px solid #4CAF50;
+  box-shadow:
+    inset -2px -2px 4px var(--light-shadow-light),
+    inset 2px 2px 4px var(--dark-shadow-light);
   cursor: pointer;
-  appearance: none;
   position: relative;
+  outline: none;
+  border: none;
+  transition: background-color 0.3s ease, box-shadow 0.3s ease;
 }
 
 .task-check:checked {
-  background-color: #4CAF50;
+  background-color: var(--success-color);
+  box-shadow:
+    inset -2px -2px 4px rgba(255,255,255,0.6),
+    inset 2px 2px 4px rgba(0,0,0,0.2);
 }
 
 .task-check:checked::after {
-  content: '\2713'; /* Unicode checkmark */
-  color: white;
-  font-size: 16px;
-  font-weight: bold;
+  content: '✓';
   position: absolute;
   top: 50%;
   left: 50%;
-  transform: translate(-50%, -50%);
+  transform: translate(-50%,-50%);
+  color: #fff;
+  font-size: 16px;
+  font-weight: bold;
 }
 
-
-/* Updated Popup Styling */
+/* Popup Overlay */
 .popup {
   display: none;
   position: fixed;
-  top: 0;
+  top: 0; 
   left: 0;
   width: 100%;
   height: 100%;
-  background: rgba(0, 0, 0, 0.3); /* Softer overlay */
+  background: rgba(0, 0, 0, 0.3);
   justify-content: center;
   align-items: center;
-  z-index: 1000;
+  z-index: 2000;
 }
 
+/* Popup Content */
 .popup-content {
-  background: #E5E5E5; /* Light gray background */
-  padding: 25px;
-  border-radius: 12px;
-  text-align: left;
+  background: var(--background-light);
+  padding: var(--spacing-lg);
+  border-radius: var(--radius-medium);
   width: 480px;
-  box-shadow: 0px 6px 12px rgba(0, 0, 0, 0.2);
+  box-shadow:
+    -8px -8px 16px var(--light-shadow-light),
+     8px 8px 16px var(--dark-shadow-light);
   position: relative;
-  font-family: Arial, sans-serif;
+  font-family: var(--font-primary);
+  color: var(--text-color-light);
 }
 
+/* Popup Close Button */
 .close-btn {
   position: absolute;
-  top: 12px;
-  right: 15px;
-  font-size: 28px;
+  top: var(--spacing-sm);
+  right: var(--spacing-md);
+  font-size: 1.5rem;
   font-weight: bold;
   cursor: pointer;
   color: #555;
+  transition: color 0.3s ease;
 }
 
 .close-btn:hover {
-  color: black;
+  color: var(--highlight-color);
 }
 
-/* Title Styling */
+/* Popup Titles */
 .popup-content h2 {
-  font-size: 22px;
-  font-weight: bold;
-  color: black;
-  margin-bottom: 15px;
+  font-family: var(--font-secondary);
+  font-size: 1.2rem;
+  margin-bottom: var(--spacing-md);
+  color: var(--text-color-light);
 }
 
-/* Task Content */
+/* Task Popup Content */
 #popup-task-content {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  font-size: 16px;
-  background: white;
-  padding: 10px;
-  border-radius: 6px;
-  box-shadow: inset 0px 2px 5px rgba(0, 0, 0, 0.1);
-  margin-bottom: 20px;
+  font-size: 0.9rem;
+  background: var(--background-light);
+  padding: var(--spacing-sm);
+  border-radius: var(--radius-small);
+  box-shadow:
+    inset -2px -2px 4px var(--light-shadow-light),
+    inset 2px 2px 4px var(--dark-shadow-dark);
+  margin-bottom: var(--spacing-md);
 }
 
-.task-checkbox {
-  width: 18px;
-  height: 18px;
-  cursor: pointer;
-}
-
-/* Instructions Section */
+/* Popup Instructions */
 .popup-instructions {
-  font-size: 14px;
   font-weight: bold;
-  color: black;
-  margin-bottom: 10px;
+  font-size: 0.85rem;
+  margin-bottom: var(--spacing-xs);
 }
 
-/* Action Buttons */
+/* Popup Actions */
 .popup-actions {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: var(--spacing-sm);
 }
 
 .popup-actions p {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  font-size: 14px;
-  background: white;
-  padding: 10px;
-  border-radius: 6px;
-  box-shadow: inset 0px 2px 5px rgba(0, 0, 0, 0.1);
+  font-size: 0.85rem;
+  background: var(--background-light);
+  padding: var(--spacing-sm);
+  border-radius: var(--radius-small);
+  box-shadow:
+    inset -2px -2px 4px var(--light-shadow-light),
+    inset 2px 2px 4px var(--dark-shadow-dark);
 }
 
+/* Popup Buttons */
 .popup-button {
-  background: #ccc;
-  color: black;
-  padding: 5px 15px;
+  background: var(--highlight-color);
+  color: #fff;
+  padding: var(--spacing-xs) var(--spacing-sm);
   border: none;
-  border-radius: 5px;
+  border-radius: var(--radius-small);
   cursor: pointer;
-  font-size: 14px;
+  font-size: 0.8rem;
+  transition: background-color 0.3s ease, transform 0.3s ease;
 }
 
 .popup-button:hover {
-  background: #bbb;
+  background-color: #e36f2f;
+  transform: translateY(-2px);
+}
+
+/* Media Queries */
+@media (max-width: 992px) {
+  .card {
+    width: 300px;
+  }
+
+  .leaderboard-section {
+    width: 95%;
+    margin-top: var(--spacing-sm);
+  }
+}
+
+@media (max-width: 768px) {
+  .task-cards {
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .card {
+    width: 90%;
+    margin: 0 auto;
+  }
+}
+
+@media (max-width: 576px) {
+  .card {
+    width: 100%;
+  }
+
+  .menu-toggle {
+    width: 24px;
+    height: 18px;
+  }
+
+  .menu-toggle span {
+    height: 2px;
+  }
+
+  #podcast-selector {
+    font-size: 0.75rem;
+    height: 24px;
+  }
+}
+
+/* Homepage Popup Specific */
+#homepage-popup {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.3);
+  justify-content: center;
+  align-items: center;
+  z-index: 3000;
+}
+
+#homepage-popup .popup-content {
+  width: 90%;
+  max-width: 800px;
+  background: var(--background-light);
+  border-radius: var(--radius-medium);
+  box-shadow:
+    -10px -10px 20px var(--light-shadow-light),
+     10px 10px 20px var(--dark-shadow-light);
+  padding: var(--spacing-lg);
+  position: relative;
+}
+
+#homepage-iframe {
+  border-radius: var(--radius-small);
 }
