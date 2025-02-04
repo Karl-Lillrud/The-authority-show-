@@ -28,13 +28,15 @@ container = database.get_container_client(CONTAINER_NAME)
 
 @register_bp.route('/register', methods=['POST'])
 def register():
-    # Retrieve input
+    if not request.is_json:
+        return jsonify({"error": "Invalid request format. Expected JSON."}), 400
+    
     data = request.get_json()
 
     # Validate input
     if not data or 'name' not in data or 'email' not in data or 'password' not in data:
-        return redirect(url_for('register'))  # Redirect to register page if fields are missing
-
+        return jsonify({"error": "Missing required fields: name, email, password."}), 400
+    
     name = data['name']
     email = data['email']
     password = data['password']
@@ -48,7 +50,7 @@ def register():
     existing_users = list(container.query_items(query=query, parameters=parameters, enable_cross_partition_query=True))
 
     if existing_users:
-        return redirect(url_for('register'))  # Redirect to register page if email already exists
+        return jsonify({"error": "Email already registered."}), 409
 
     # Create user document
     user_document = {
@@ -61,6 +63,6 @@ def register():
 
     try:
         container.create_item(body=user_document)
-        return redirect(url_for('show_signin'))  # Redirect to signin page after successful registration
+        return jsonify({"message": "User registered successfully."}), 201
     except exceptions.CosmosHttpResponseError as e:
-        return redirect(url_for('register'))  # Redirect back to register page if database error occurs
+        return jsonify({"error": str(e)}), 500
