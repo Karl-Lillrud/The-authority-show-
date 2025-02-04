@@ -14,7 +14,7 @@ COSMOS_KEY = os.environ.get("COSMOS_KEY")
 if not COSMOS_ENDPOINT or not COSMOS_KEY:
     raise ValueError("Cosmos DB credentials are missing. Ensure COSMOS_ENDPOINT and COSMOS_KEY are set as environment variables.")
 
-DATABASE_NAME = "podmanager"
+DATABASE_NAME = "podmanagedb"
 CONTAINER_NAME = "users"
 
 # Initialize Cosmos client securely
@@ -24,7 +24,7 @@ def init_cosmos_db():
         database = client.create_database_if_not_exists(id=DATABASE_NAME)
         container = database.create_container_if_not_exists(
             id=CONTAINER_NAME,
-            partition_key=PartitionKey(path="/id"),
+            partition_key=PartitionKey(path="/email"),
             offer_throughput=400
         )
         logging.info("✅ Cosmos DB connection initialized successfully.")

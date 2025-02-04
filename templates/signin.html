@@ -44,24 +44,29 @@
             const email = document.getElementById("email").value;
             const password = document.getElementById("password").value;
 
-            const response = await fetch("{{ url_for('signin') }}", {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json"
-                },
-                body: JSON.stringify({ email, password })
-            });
+            try {
+                const response = await fetch("{{ url_for('signin') }}", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify({ email, password })
+                });
 
-            const result = await response.json();
+                const result = await response.json();
 
-            if (response.ok) {
-                // ✅ Redirect to dashboard on successful login
-                window.location.href = result.redirect_url;
-            } else {
-                // Show error message
-                const errorMessage = document.getElementById("error-message");
-                errorMessage.textContent = result.error || "Invalid email or password.";
-                errorMessage.style.display = "block";
+                if (response.ok) {
+                    // ✅ Redirect to dashboard after successful login
+                    window.location.href = result.redirect_url;
+                } else {
+                    // Show error message
+                    const errorMessage = document.getElementById("error-message");
+                    errorMessage.textContent = result.error || "Invalid email or password.";
+                    errorMessage.style.display = "block";
+                }
+            } catch (error) {
+                console.error("Error:", error);
+                alert("Something went wrong. Please try again.");
             }
         });
     </script>

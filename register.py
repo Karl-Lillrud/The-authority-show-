@@ -1,50 +1,46 @@
+from flask import Flask, request, jsonify, url_for
+from azure.cosmos import CosmosClient, exceptions
 import os
 import uuid
-from datetime import datetime
-from flask import Blueprint, request, jsonify, redirect, url_for, render_template
-from azure.cosmos import CosmosClient, exceptions
 from werkzeug.security import generate_password_hash
 from dotenv import load_dotenv
+from datetime import datetime
 
 # Load environment variables
 load_dotenv()
 
-# Initialize Blueprint
-register_bp = Blueprint('register_bp', __name__)
+app = Flask(__name__)
 
-# Azure Cosmos DB configuration
-COSMOS_ENDPOINT = os.environ.get("COSMOS_ENDPOINT")
-COSMOS_KEY = os.environ.get("COSMOS_KEY")
-DATABASE_NAME = "podmanagedb"
-CONTAINER_NAME = "users"
+# Azure Cosmos DB Configuration
+COSMOSDB_URI = os.getenv("COSMOS_ENDPOINT")
+COSMOSDB_KEY = os.getenv("COSMOS_KEY")
+DATABASE_ID = "podmanagedb"
+CONTAINER_ID = "users"
 
-if not COSMOS_ENDPOINT or not COSMOS_KEY:
-    raise ValueError("Cosmos DB credentials are missing. Ensure COSMOS_ENDPOINT and COSMOS_KEY are set.")
+if not COSMOSDB_URI or not COSMOSDB_KEY:
+    raise ValueError("Cosmos DB credentials are missing.")
 
-# Initialize Cosmos DB client (used in app.py)
-client = CosmosClient(COSMOS_ENDPOINT, COSMOS_KEY)
-database = client.get_database_client(DATABASE_NAME)
-container = database.get_container_client(CONTAINER_NAME)
+# Initialize Cosmos DB client
+client = CosmosClient(COSMOSDB_URI, COSMOSDB_KEY)
+database = client.get_database_client(DATABASE_ID)
+container = database.get_container_client(CONTAINER_ID)
 
-@register_bp.route('/register', methods=['POST'])
+@app.route('/register', methods=['POST'])
 def register():
-    if not request.is_json:
+    """Handles user registration."""
+    if request.is_json:
+        data = request.get_json()
+    else:
         return jsonify({"error": "Invalid request format. Expected JSON."}), 400
-    
-    data = request.get_json()
 
-    # Validate input
-    if not data or 'name' not in data or 'email' not in data or 'password' not in data:
-        return jsonify({"error": "Missing required fields: name, email, password."}), 400
-    
-    name = data['name']
-    email = data['email']
-    password = data['password']
+    if "email" not in data or "password" not in data:
+        return jsonify({"error": "Missing email or password"}), 400
 
-    # Hash the password
-    password_hash = generate_password_hash(password)
+    email = data["email"].lower().strip()
+    password = data["password"]
+    hashed_password = generate_password_hash(password)  # ✅ Use proper password hashing
 
-    # Check if the user already exists
+    # Check if user already exists
     query = "SELECT * FROM c WHERE c.email = @email"
     parameters = [{"name": "@email", "value": email}]
     existing_users = list(container.query_items(query=query, parameters=parameters, enable_cross_partition_query=True))
@@ -55,14 +51,17 @@ def register():
     # Create user document
     user_document = {
         "id": str(uuid.uuid4()),
-        "name": name,
         "email": email,
-        "passwordHash": password_hash,
-        "createdAt": datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%SZ")
+        "passwordHash": hashed_password,  # ✅ Correct hashing method
+        "createdAt": datetime.utcnow().isoformat(),
+        "partitionKey": email
     }
 
     try:
         container.create_item(body=user_document)
-        return jsonify({"message": "User registered successfully."}), 201
+        return jsonify({"message": "Registration successful!"}), 201  # ✅ Show success message
     except exceptions.CosmosHttpResponseError as e:
-        return jsonify({"error": str(e)}), 500
+        return jsonify({"error": f"Database error: {str(e)}"}), 500
+
+if __name__ == "__main__":
+    app.run(host="0.0.0.0", port=8000, debug=True)
