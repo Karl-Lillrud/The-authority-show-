@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Login</title>
+<link rel="stylesheet" href="{{ url_for('static', filename='css/index.css') }}">
+</head>
+<body>
+
+<!-- Logo added here -->
+<div class="logo-container">
+    <img src="{{ url_for('static', filename='images/podmanagerlogo.png') }}" alt="PodManager Logo">
+</div>
+
+<div class="center-box">
+<h1 class="title">Sign in</h1>
+<div id="error-message" class="error-message" style="display: none;"></div>
+<form id="login-form" action="signin.php" method="POST">
+<div class="input-group">
+<label for="email" class="label"></label> 
+<input type="email" id="email" name="email" class="input" placeholder="Email" required>
+</div>
+<div class="input-group">
+<label for="password" class="label"></label>
+<input type="password" id="password" name="password" class="input" placeholder="Password" required>
+</div>
+<div class="extra-links">
+<a href="{{ url_for('forgot_password') }}" class="link">Forgot Password?</a>
+</div>
+<div class="form-actions">
+<button type="submit" class="button button-primary">Login</button>
+</div>
+<div class="extra-links">
+<a href="{{ url_for('register') }}" class="link">Register here</a>
+</div>
+</form>
+</div>
+
+<script>
+        const params = new URLSearchParams(window.location.search);
+        if (params.has('error') && params.get('error') === '1') {
+            const errorMessage = document.getElementById('error-message');
+            errorMessage.textContent = "Invalid email or password. Please try again.";
+            errorMessage.style.display = "block";
+        }
+</script>
+</body>
+</html>
