@@ -1,239 +1,429 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Task Management</title>
-    <style>
-        body {
-    font-family: Arial, sans-serif;
-    background-color: #f4f4f4;
-    padding: 20px;
-    text-align: center;
-}
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Task Management</title>
+  <style>
+    /* -----------------------------------------------------------
+       NEUMORPHIC DESIGN LANGUAGE FOR TASK MANAGEMENT PAGE
+       Adheres to the same functionality, applying a soft UI style.
+    ----------------------------------------------------------- */
 
-.task-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    max-width: 600px;
-    margin: auto;
-}
+    /* Root Variables */
+    :root {
+      --background-light: #EFF2F9;
+      --light-shadow-light: #FFFFFF;
+      --dark-shadow-light: rgba(22, 24, 29, 0.23);
 
-#task-list {
-    list-style: none;
-    padding: 0;
-    max-width: 600px;
-    margin: auto;
-}
+      --text-color-light: #6E7F8D;
+      --highlight-color: #FF7F3F;
+      --success-color: #4CAF50;
+      
+      --font-primary: 'Arial', sans-serif;
 
-#task-list li {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    background: white;
-    padding: 10px;
-    margin: 5px 0;
-    border-radius: 5px;
-    box-shadow: 0px 2px 4px rgba(0, 0, 0, 0.1);
-}
+      --spacing-sm: 8px;
+      --spacing-md: 16px;
+      --spacing-lg: 24px;
 
-.task-name {
-    flex-grow: 1;
-}
+      --radius-small: 5px;
+      --radius-medium: 10px;
+      --radius-large: 12px;
+    }
 
-button {
-    padding: 5px 10px;
-    margin-left: 5px;
-    border: none;
-    cursor: pointer;
-}
+    /* Body Reset */
+    body {
+      margin: 0;
+      padding: var(--spacing-md);
+      background-color: var(--background-light);
+      font-family: var(--font-primary);
+      text-align: center;
+      min-height: 100vh;
+      box-sizing: border-box;
+      position: relative; /* for the back arrow absolute pos */
+    }
 
-.edit-btn {
-    background: #f4a261;
-    color: white;
-}
+    /* Back Arrow */
+    .back-arrow {
+      position: absolute;
+      top: var(--spacing-md);
+      left: var(--spacing-md);
+      font-size: 0.9rem;
+      font-weight: bold;
+      text-decoration: none;
+      color: var(--text-color-light);
+      background: var(--background-light);
+      padding: var(--spacing-sm) var(--spacing-md);
+      border-radius: var(--radius-small);
+      box-shadow:
+        -3px -3px 6px var(--light-shadow-light),
+         3px 3px 6px var(--dark-shadow-light);
+      transition: background-color 0.3s ease, transform 0.3s ease;
+      z-index: 1000;
+    }
+    .back-arrow:hover {
+      transform: translateY(-3px);
+      background-color: rgba(255, 127, 63, 0.15);
+      color: var(--highlight-color);
+    }
 
-.delete-btn {
-    background: #e63946;
-    color: white;
-}
+    /* Task Header */
+    .task-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      max-width: 600px;
+      margin: 0 auto var(--spacing-md) auto;
+    }
 
-.modal {
-    display: none;
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: rgba(0, 0, 0, 0.5);
-    justify-content: center;
-    align-items: center;
-}
+    .task-header h2 {
+      margin: 0;
+      font-size: 1.2rem;
+      color: var(--text-color-light);
+    }
 
-.modal-content {
-    background: white;
-    padding: 20px;
-    border-radius: 10px;
-    text-align: left;
-    max-width: 400px;
-    box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1);
-    position: relative;
-}
+    /* Add Task Button */
+    #add-task-btn {
+      background: var(--background-light);
+      border: none;
+      padding: var(--spacing-sm) var(--spacing-md);
+      border-radius: var(--radius-small);
+      box-shadow:
+        -3px -3px 6px var(--light-shadow-light),
+         3px 3px 6px var(--dark-shadow-light);
+      cursor: pointer;
+      font-size: 0.9rem;
+      color: var(--text-color-light);
+      transition: transform 0.3s ease, background-color 0.3s ease;
+    }
+    #add-task-btn:hover {
+      background-color: rgba(255, 127, 63, 0.1);
+      transform: translateY(-2px);
+      color: var(--highlight-color);
+    }
 
-.close-btn {
-    position: absolute;
-    top: 10px;
-    right: 15px;
-    font-size: 24px;
-    cursor: pointer;
-}
+    /* Task List Container */
+    #task-list {
+      list-style: none;
+      padding: 0;
+      max-width: 600px;
+      margin: 0 auto;
+    }
 
-input, textarea, select {
-    width: 100%;
-    padding: 10px;
-    margin: 5px 0;
-    border: 1px solid #ccc;
-    border-radius: 5px;
-}
+    /* Individual Task Items */
+    #task-list li {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: var(--background-light);
+      padding: var(--spacing-sm);
+      margin: var(--spacing-sm) 0;
+      border-radius: var(--radius-small);
+      box-shadow:
+        -3px -3px 6px var(--light-shadow-light),
+         3px 3px 6px var(--dark-shadow-light);
+      transition: transform 0.3s ease;
+    }
+    #task-list li:hover {
+      transform: translateY(-2px);
+    }
 
-.modal-buttons {
-    display: flex;
-    justify-content: space-between;
-}
+    .task-name {
+      flex-grow: 1;
+      text-align: left;
+      margin-left: var(--spacing-sm);
+      font-size: 0.9rem;
+      color: var(--text-color-light);
+    }
 
-.cancel-btn {
-    background: #888;
-    color: white;
-}
+    /* Buttons inside the Task List Items */
+    button {
+      padding: var(--spacing-sm) var(--spacing-md);
+      margin-left: var(--spacing-sm);
+      border: none;
+      border-radius: var(--radius-small);
+      cursor: pointer;
+      font-size: 0.8rem;
+      color: #fff;
+    }
 
-.hidden {
-    display: none;
-}
+    .edit-btn {
+      background: #f4a261; /* Light orange */
+      box-shadow:
+        -2px -2px 4px rgba(255,255,255,0.6),
+         2px 2px 4px rgba(0,0,0,0.15);
+      transition: transform 0.3s ease, background-color 0.3s ease;
+    }
+    .edit-btn:hover {
+      background-color: #e8934f;
+      transform: translateY(-2px);
+    }
 
-    </style>
+    .delete-btn {
+      background: #e63946; /* Reddish */
+      box-shadow:
+        -2px -2px 4px rgba(255,255,255,0.6),
+         2px 2px 4px rgba(0,0,0,0.15);
+      transition: transform 0.3s ease, background-color 0.3s ease;
+    }
+    .delete-btn:hover {
+      background-color: #d62836;
+      transform: translateY(-2px);
+    }
+
+    /* Modal Overlay */
+    .modal {
+      display: none;
+      position: fixed;
+      top: 0; 
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.5);
+      justify-content: center;
+      align-items: center;
+      z-index: 2000;
+    }
+
+    /* Modal Content */
+    .modal-content {
+      background: var(--background-light);
+      padding: var(--spacing-md);
+      border-radius: var(--radius-medium);
+      text-align: left;
+      max-width: 400px;
+      width: 90%;
+      box-shadow:
+        -4px -4px 8px var(--light-shadow-light),
+         4px 4px 8px var(--dark-shadow-light);
+      position: relative;
+      margin: 0 var(--spacing-md);
+    }
+
+    .modal-content h2 {
+      margin: 0 0 var(--spacing-sm) 0;
+      font-size: 1rem;
+      color: var(--text-color-light);
+    }
+
+    /* Close Button in Modal */
+    .close-btn {
+      position: absolute;
+      top: var(--spacing-sm);
+      right: var(--spacing-md);
+      font-size: 1.5rem;
+      cursor: pointer;
+      color: #555;
+      transition: color 0.3s ease, transform 0.3s ease;
+    }
+    .close-btn:hover {
+      color: var(--highlight-color);
+      transform: scale(1.1);
+    }
+
+    /* Modal Form Fields */
+    label {
+      display: block;
+      margin-top: var(--spacing-sm);
+      font-size: 0.85rem;
+      font-weight: bold;
+      color: var(--text-color-light);
+    }
+
+    input, textarea, select {
+      width: 100%;
+      padding: var(--spacing-sm);
+      margin-top: var(--spacing-sm);
+      border: none;
+      border-radius: var(--radius-small);
+      box-shadow:
+        inset -2px -2px 4px var(--light-shadow-light),
+        inset 2px 2px 4px var(--dark-shadow-light);
+      outline: none;
+      font-size: 0.85rem;
+      background: var(--background-light);
+      color: var(--text-color-light);
+      transition: box-shadow 0.3s ease;
+    }
+    input:focus, textarea:focus, select:focus {
+      box-shadow:
+        inset 2px 2px 4px rgba(255,127,63,0.3),
+        inset -2px -2px 4px rgba(0,0,0,0.1);
+    }
+
+    /* Modal Buttons Container */
+    .modal-buttons {
+      display: flex;
+      justify-content: space-between;
+      margin-top: var(--spacing-md);
+    }
+
+    /* Modal Buttons */
+    #save-task-btn,
+    .cancel-btn {
+      background: var(--background-light);
+      color: var(--text-color-light);
+      padding: var(--spacing-sm) var(--spacing-md);
+      border: none;
+      border-radius: var(--radius-small);
+      cursor: pointer;
+      box-shadow:
+        -2px -2px 4px var(--light-shadow-light),
+         2px 2px 4px var(--dark-shadow-light);
+      transition: transform 0.3s ease, background-color 0.3s ease;
+      font-size: 0.85rem;
+    }
+    #save-task-btn:hover {
+      background-color: rgba(255,127,63,0.08);
+      transform: translateY(-2px);
+      color: var(--highlight-color);
+    }
+    .cancel-btn:hover {
+      background-color: rgba(0,0,0,0.1);
+      transform: translateY(-2px);
+    }
+
+    /* Submission-Required Checkbox */
+    input[type="checkbox"] {
+      width: auto;
+      margin-right: var(--spacing-sm);
+      box-shadow: none; /* remove shadow for checkboxes */
+    }
+
+    /* Hide/Show Fields */
+    .hidden {
+      display: none;
+    }
+
+  </style>
 </head>
 <body>
+  <!-- Back Arrow -->
+  <a href="dashboard.html" class="back-arrow">&#8592; Back</a>
 
-    <div class="task-header">
-        <h2>Podcast Task Management</h2>
-        <button id="add-task-btn">+ Add New Task</button>
+  <!-- Page Header -->
+  <div class="task-header">
+    <h2>Podcast Task Management</h2>
+    <button id="add-task-btn">+ Add New Task</button>
+  </div>
+
+  <!-- Task List -->
+  <ul id="task-list" class="sortable">
+    <!-- Dynamically injected tasks go here -->
+  </ul>
+
+  <!-- Task Modal -->
+  <div id="task-modal" class="modal">
+    <div class="modal-content">
+      <span class="close-btn" onclick="closeModal()">&times;</span>
+      <h2 id="modal-title">Create New Task</h2>
+
+      <label for="task-name">Task Name:</label>
+      <input type="text" id="task-name" placeholder="Enter task name">
+
+      <label for="task-dependencies">Dependent on Other Task(s):</label>
+      <select id="task-dependencies" multiple>
+        <!-- Dynamically populated options -->
+      </select>
+
+      <label for="task-type">Task Type & Action:</label>
+      <select id="task-type">
+        <option value="manual">Manual</option>
+        <option value="email">Automated - Email</option>
+        <option value="system">Automated - System Action</option>
+        <option value="ai">Automated - AI Script</option>
+      </select>
+
+      <div id="action-details" class="hidden">
+        <label for="action-details-input">Action Details:</label>
+        <input type="text" id="action-details-input" placeholder="Enter details">
+      </div>
+
+      <label for="due-time">Due Time Since Recording Date:</label>
+      <input type="text" id="action-link" placeholder="Enter days">
+
+      <label for="task-description">Task Description:</label>
+      <textarea id="task-description" placeholder="Enter task details"></textarea>
+
+      <label for="action-link">Action Link:</label>
+      <input type="text" id="action-link" placeholder="Enter external link">
+      <input type="text" id="action-link-desc" placeholder="Describe the link">
+
+      <label>
+        <input type="checkbox" id="submission-required"> Require Information Submission
+      </label>
+
+      <div class="modal-buttons">
+        <button id="save-task-btn">Save Task</button>
+        <button class="cancel-btn" onclick="closeModal()">Cancel</button>
+      </div>
     </div>
+  </div>
 
-    <ul id="task-list" class="sortable">
-        <!-- Tasks will be dynamically inserted here -->
-    </ul>
+  <!-- Script Section (Preserved Functionality) -->
+  <script>
+    document.getElementById("add-task-btn").addEventListener("click", openModal);
 
-    <!-- Task Modal -->
-    <div id="task-modal" class="modal">
-        <div class="modal-content">
-            <span class="close-btn" onclick="closeModal()">&times;</span>
-            <h2 id="modal-title">Create New Task</h2>
+    function openModal() {
+      document.getElementById("task-modal").style.display = "flex";
+      document.getElementById("modal-title").innerText = "Create New Task";
+      document.getElementById("save-task-btn").setAttribute("onclick", "saveTask()");
+    }
 
-            <label for="task-name">Task Name:</label>
-            <input type="text" id="task-name" placeholder="Enter task name">
+    function closeModal() {
+      document.getElementById("task-modal").style.display = "none";
+    }
 
-            <label for="task-dependencies">Dependent on Other Task(s):</label>
-            <select id="task-dependencies" multiple>
-                <!-- Dynamically populated options -->
-            </select>
+    function saveTask() {
+      let taskName = document.getElementById("task-name").value.trim();
+      if (taskName.length < 2) {
+        alert("Task name must be at least 2 characters.");
+        return;
+      }
 
-            <label for="task-type">Task Type & Action:</label>
-            <select id="task-type">
-                <option value="manual">Manual</option>
-                <option value="email">Automated - Email</option>
-                <option value="system">Automated - System Action</option>
-                <option value="ai">Automated - AI Script</option>
-            </select>
+      let newTask = document.createElement("li");
+      newTask.innerHTML = `
+        <span class="task-name">${taskName}</span>
+        <button class="edit-btn" onclick="editTask(this)">Edit</button>
+        <button class="delete-btn" onclick="deleteTask(this)">Delete</button>
+      `;
+      document.getElementById("task-list").appendChild(newTask);
+      closeModal();
+    }
 
-            <div id="action-details" class="hidden">
-                <label for="action-details-input">Action Details:</label>
-                <input type="text" id="action-details-input" placeholder="Enter details">
-            </div>
+    function editTask(button) {
+      let taskItem = button.parentElement;
+      let taskName = taskItem.querySelector(".task-name").textContent;
 
-            <label for="due-time">Due Time Since Recording Date:</label>
-            <input type="datetime-local" id="due-time">
+      document.getElementById("task-name").value = taskName;
+      document.getElementById("modal-title").innerText = "Edit Task";
+      document.getElementById("task-modal").style.display = "flex";
 
-            <label for="task-description">Task Description:</label>
-            <textarea id="task-description" placeholder="Enter task details"></textarea>
+      document
+        .getElementById("save-task-btn")
+        .setAttribute("onclick", `updateTask('${taskName}', this)`);
+    }
 
-            <label for="action-link">Action Link:</label>
-            <input type="text" id="action-link" placeholder="Enter external link">
-            <input type="text" id="action-link-desc" placeholder="Describe the link">
+    function updateTask(oldTaskName, button) {
+      let newTaskName = document.getElementById("task-name").value.trim();
+      if (newTaskName.length < 2) {
+        alert("Task name must be at least 2 characters.");
+        return;
+      }
 
-            <label>
-                <input type="checkbox" id="submission-required"> Require Information Submission
-            </label>
-
-            <div class="modal-buttons">
-                <button id="save-task-btn">Save Task</button>
-                <button class="cancel-btn" onclick="closeModal()">Cancel</button>
-            </div>
-        </div>
-    </div>
-
-    <script>
-        document.getElementById("add-task-btn").addEventListener("click", openModal);
-
-        function openModal() {
-            document.getElementById("task-modal").style.display = "flex";
-            document.getElementById("modal-title").innerText = "Create New Task";
-            document.getElementById("save-task-btn").setAttribute("onclick", "saveTask()");
+      let tasks = document.querySelectorAll(".task-name");
+      tasks.forEach(task => {
+        if (task.textContent === oldTaskName) {
+          task.textContent = newTaskName;
         }
+      });
 
-        function closeModal() {
-            document.getElementById("task-modal").style.display = "none";
-        }
+      closeModal();
+    }
 
-        function saveTask() {
-            let taskName = document.getElementById("task-name").value.trim();
-            if (taskName.length < 2) {
-                alert("Task name must be at least 2 characters.");
-                return;
-            }
-
-            let newTask = document.createElement("li");
-            newTask.innerHTML = `
-                <span class="task-name">${taskName}</span>
-                <button class="edit-btn" onclick="editTask(this)">Edit</button>
-                <button class="delete-btn" onclick="deleteTask(this)">Delete</button>
-            `;
-            document.getElementById("task-list").appendChild(newTask);
-            closeModal();
-        }
-
-        function editTask(button) {
-            let taskItem = button.parentElement;
-            let taskName = taskItem.querySelector(".task-name").textContent;
-
-            document.getElementById("task-name").value = taskName;
-            document.getElementById("modal-title").innerText = "Edit Task";
-            document.getElementById("task-modal").style.display = "flex";
-
-            document.getElementById("save-task-btn").setAttribute("onclick", `updateTask('${taskName}', this)`);
-        }
-
-        function updateTask(oldTaskName, button) {
-            let newTaskName = document.getElementById("task-name").value.trim();
-            if (newTaskName.length < 2) {
-                alert("Task name must be at least 2 characters.");
-                return;
-            }
-
-            let tasks = document.querySelectorAll(".task-name");
-            tasks.forEach(task => {
-                if (task.textContent === oldTaskName) {
-                    task.textContent = newTaskName;
-                }
-            });
-
-            closeModal();
-        }
-
-        function deleteTask(button) {
-            button.parentElement.remove();
-        }
-    </script>
-
+    function deleteTask(button) {
+      button.parentElement.remove();
+    }
+  </script>
 </body>
 </html>
