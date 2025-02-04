@@ -54,6 +54,7 @@ body {
     background: var(--bg-light);
     box-shadow: -5px -5px 10px white, 5px 5px 10px var(--shadow-light);
     transition: all 0.3s ease;
+    margin-bottom: 15px;
 }
 .button.button.button-primary {
     color: #6E7F8D;
