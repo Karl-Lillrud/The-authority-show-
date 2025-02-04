@@ -8,7 +8,7 @@
 </head>
 <body>
 
-    <!-- Logo added here -->
+    <!-- Logo -->
     <div class="logo-container">
         <img src="{{ url_for('static', filename='images/podmanagerlogo.png') }}" alt="PodManager Logo">
     </div>
@@ -16,6 +16,7 @@
     <div class="center-box">
         <h1 class="title">Sign in</h1>
         <div id="error-message" class="error-message" style="display: none;"></div>
+        
         <form id="login-form">
             <div class="input-group">
                 <label for="email" class="label"></label> 
@@ -32,34 +33,28 @@
                 <button type="submit" class="button button-primary">Login</button>
             </div>
             <div class="extra-links">
-                <a href="{{ url_for('register') }}" class="link">Register here</a>
+                <a href="{{ url_for('register_bp.register') }}" class="link">Register here</a>
             </div>
         </form>
     </div>
 
     <script>
         document.getElementById("login-form").addEventListener("submit", async function(event) {
-            event.preventDefault(); // Prevent default form submission
-
+            event.preventDefault();
             const email = document.getElementById("email").value;
             const password = document.getElementById("password").value;
 
             try {
-                const response = await fetch("{{ url_for('signin') }}", {
+                const response = await fetch("{{ url_for('signin', _external=True) }}", {
                     method: "POST",
-                    headers: {
-                        "Content-Type": "application/json"
-                    },
+                    headers: { "Content-Type": "application/json" },
                     body: JSON.stringify({ email, password })
                 });
 
-                const result = await response.json();
-
-                if (response.ok) {
-                    // ✅ Redirect to dashboard after successful login
-                    window.location.href = result.redirect_url;
+                if (response.redirected) {
+                    window.location.href = response.url; // Redirect to dashboard
                 } else {
-                    // Show error message
+                    const result = await response.json();
                     const errorMessage = document.getElementById("error-message");
                     errorMessage.textContent = result.error || "Invalid email or password.";
                     errorMessage.style.display = "block";
