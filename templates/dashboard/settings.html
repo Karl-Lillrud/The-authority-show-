@@ -38,6 +38,17 @@
       color: var(--text-color-light);
     }
 
+    .pod-logo {
+      width: 150px;
+      height: 155px;
+      object-fit: cover;
+      border-radius: var(--radius-small);
+      box-shadow:
+        inset -2px -2px 4px var(--light-shadow-light),
+        inset 2px 2px 4px var(--dark-shadow-light);
+      margin-bottom: 15px;
+    }
+
     .container {
       display: flex;
       justify-content: center;
@@ -79,10 +90,6 @@
       box-shadow:
         -8px -8px 16px var(--light-shadow-light),
          8px 8px 16px var(--dark-shadow-light);
-      text-align: center;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
       transition: box-shadow 0.3s ease;
     }
     .form-box:hover {
@@ -91,51 +98,21 @@
          4px 4px 8px var(--dark-shadow-light);
     }
 
-    /* Pod Logo */
-    .pod-logo {
-      width: 150px;       /* Adjust to your desired width */
-      height: 155px;      /* Adjust height accordingly */
-      object-fit: cover;  /* Scale the image proportionally */
-      border-radius: var(--radius-small);
-      box-shadow:
-        inset -2px -2px 4px var(--light-shadow-light),
-        inset 2px 2px 4px var(--dark-shadow-light);
-    }
-
-    /* The form-group still has label + a container for the logo */
-    .form-group {
+    .form-fields {
       display: flex;
-      align-items: center;
-      justify-content: space-between;
-      margin-bottom: var(--spacing-sm);
+      flex-direction: column;
+      width: 100%;
     }
 
-    .form-group label {
-      flex: 1;
-      text-align: left;
-      font-weight: bold;
-      font-size: 0.9rem;
-      color: var(--text-color-light);
-    }
-
-    /* This wrapper is where we center the logo itself */
-    .pod-logo-wrap {
-      flex: 2;
-      display: flex;
-      align-items: center;
-      justify-content: center; /* centers horizontally */
-      margin: 0 var(--spacing-sm);
-    }
-
-    /* Field Groups */
+    /* Adjusted Field Groups in a column layout */
     .field-group {
       display: flex;
       align-items: center;
-      justify-content: space-between;
       margin-bottom: var(--spacing-sm);
+      width: 100%;
     }
     .field-group label {
-      flex: 1;
+      width: 150px;
       text-align: left;
       font-weight: bold;
       font-size: 0.9rem;
@@ -143,7 +120,7 @@
     }
     .field-group input,
     .field-group select {
-      flex: 2;
+      flex: 1;
       padding: var(--spacing-sm);
       border: none;
       border-radius: var(--radius-small);
@@ -162,11 +139,16 @@
         inset 2px 2px 4px rgba(255,127,63,0.3),
         inset -2px -2px 4px rgba(0,0,0,0.1);
     }
+    /* Ensure buttons in field groups are on the right */
+    .field-group button {
+      margin-left: var(--spacing-sm);
+    }
 
-    /* Inline Field (Calendar) */
+    /* Inline Field (for Google Calendar Pick a Date URL) */
     .inline-field {
       display: flex;
       align-items: center;
+      flex: 1;
       border-radius: var(--radius-small);
       box-shadow:
         inset -3px -3px 6px var(--light-shadow-light),
@@ -175,17 +157,18 @@
       padding: var(--spacing-sm);
       font-size: 0.85rem;
       color: var(--text-color-light);
-      width: 100%;
     }
     .inline-field:hover {
       background-color: rgba(255,127,63,0.06);
     }
-    .icon {
-      width: 18px;
-      margin-right: var(--spacing-sm);
+    .inline-field span {
+      flex: 1;
+    }
+    .inline-field button {
+      margin-left: var(--spacing-sm);
     }
 
-    /* Buttons */
+    /* Buttons (existing styles remain) */
     .connect-btn,
     .save-btn,
     .block-btn,
@@ -202,7 +185,7 @@
       transition: transform 0.3s ease, background-color 0.3s ease;
       font-size: 0.85rem;
       color: var(--text-color-light);
-      margin: 5px;
+      margin: 5px 0;
     }
     .connect-btn:hover,
     .save-btn:hover,
@@ -237,6 +220,26 @@
       font-size: 0.9rem;
     }
 
+    /* Custom Copy Button (smaller size) */
+    .copy-btn {
+      background: var(--background-light);
+      border: none;
+      padding: 4px 8px;
+      border-radius: var(--radius-small);
+      cursor: pointer;
+      box-shadow:
+        -3px -3px 6px var(--light-shadow-light),
+         3px 3px 6px var(--dark-shadow-light);
+      transition: transform 0.3s ease, background-color 0.3s ease;
+      font-size: 0.75rem;
+      color: var(--text-color-light);
+    }
+    .copy-btn:hover {
+      background-color: rgba(255,127,63,0.08);
+      transform: translateY(-2px);
+      color: var(--highlight-color);
+    }
+
     /* Invite More Section */
     .invite-more {
       display: flex;
@@ -245,7 +248,7 @@
       margin-top: var(--spacing-md);
     }
 
-    /* Popup */
+    /* Popup Styles (unchanged) */
     .popup {
       display: none;
       position: fixed;
@@ -331,8 +334,8 @@
         width: 90%;
         padding: var(--spacing-md);
       }
-      .field-group label,
-      .form-group label {
+      .field-group label {
+        width: 100px;
         font-size: 0.8rem;
       }
       .field-group input,
@@ -384,30 +387,36 @@
         }
       });
     });
+
+    document.addEventListener("DOMContentLoaded", function() {
+      const copyBtn = document.getElementById("copy-guest-btn");
+      const guestInput = document.getElementById("guest-form-url");
+
+      copyBtn.addEventListener("click", function() {
+        navigator.clipboard.writeText(guestInput.value)
+          .then(() => {
+            copyBtn.textContent = "Copied!";
+            setTimeout(() => copyBtn.textContent = "Copy", 2000);
+          })
+          .catch(err => console.error("Copy failed:", err));
+      });
+    });
   </script>
 </head>
 <body>
   <a href="dashboard.html" class="back-arrow">&#8592; Back</a>
-<div class="container">
+  <div class="container">
     <div class="form-box">
-
       <div class="form-fields">
-        <!-- We wrap the logo in a centered flex container -->
+        <!-- Logo Section -->
         <div class="form-group">
-            <label for="pod-logo">Pod Logo</label>
-            
-            <!-- This div ensures the image is centered horizontally and vertically -->
-            <div style="
-                flex: 2; 
-                display: flex; 
-                align-items: center; 
-                justify-content: center;
-                margin: 0 var(--spacing-sm);
-            ">
-                <img src="logo.png" alt="Pod Logo" class="pod-logo pod-logo-inline" />
-            </div>
+          <label for="pod-logo">Pod Logo</label>
+          <div style="display: flex; align-items: center; justify-content: center;">
+            <img src="pod1.jpg" alt="Pod Logo" class="pod-logo pod-logo-inline" />
+          </div>
         </div>
 
+        <!-- Other Fields -->
         <div class="field-group">
           <label>Pod Name</label>
           <input type="text" />
@@ -431,14 +440,15 @@
         <div class="field-group">
           <label>Google Calendar Pick a Date URL</label>
           <div class="inline-field">
-            <img src="calendar-icon.png" alt="Calendar Icon" class="icon" />
             <span>podmanager.com/?pod=TheAuthorityShow</span>
           </div>
         </div>
 
+        <!-- Guest Form URL with Copy Button on the right -->
         <div class="field-group">
           <label>Guest Form URL</label>
-          <input type="text" />
+          <input type="text" id="guest-form-url" value="https://example.com/guest-form"/>
+          <button id="copy-guest-btn" class="copy-btn">Copy</button>
         </div>
 
         <div class="field-group">
@@ -481,8 +491,7 @@
           <input type="text" />
         </div>
 
-        <button class="save-btn">SAVE</button>
-
+        <!-- Team Section -->
         <div class="team-section">
           <div class="field-group">
             <label>Name</label>
@@ -510,7 +519,7 @@
 
           <div class="field-group">
             <label>Email</label>
-            <input type="text" />
+            <input type="text" required/>
           </div>
 
           <div class="field-group">
@@ -526,7 +535,7 @@
           <button id="add-member-btn">+</button>
         </div>
 
-        <button class="invite-btn">SAVE/INVITTE</button>
+        <button class="invite-btn">SAVE</button>
       </div>
     </div>
 
