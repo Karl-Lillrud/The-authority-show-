@@ -5,9 +5,12 @@ from cosmos_routes import (
     create_item,
     get_items
 )
+from dotenv import load_dotenv
 import os
 import uuid
 import hashlib
+
+load_dotenv()
 
 app = Flask(__name__, template_folder='templates')
 app.register_blueprint(cosmos_bp, url_prefix='/api')
@@ -26,10 +29,10 @@ def test_db_connection():
     except Exception as e:
         return jsonify({"error": f"Database connection failed: {str(e)}"}), 500
 
-COSMOSDB_URI = os.getenv("COSMOSDB_URI")
-COSMOSDB_KEY = os.getenv("COSMOSDB_KEY")
+COSMOSDB_URI = os.getenv("COSMOS_ENDPOINT")
+COSMOSDB_KEY = os.getenv("COSMOS_KEY")
 DATABASE_ID = "podmanagedb"
-CONTAINER_ID = "Users"
+CONTAINER_ID = "users"
 
 # Initialize Cosmos client
 client = CosmosClient(COSMOSDB_URI, credential=COSMOSDB_KEY)
