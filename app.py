@@ -40,7 +40,6 @@ def test_db_connection():
 def register():
     return render_template('register/register.html')
 
-# ✅ Serves the signin page and handles login
 @app.route('/', methods=['GET', 'POST'])
 @app.route('/signin', methods=['GET', 'POST'])
 def signin():
@@ -49,7 +48,7 @@ def signin():
     
     data = request.get_json()
     if not data or 'email' not in data or 'password' not in data:
-        return redirect(url_for('signin'))
+        return jsonify({"error": "Missing email or password."}), 400
     
     email = data['email']
     password = data['password']
@@ -60,9 +59,11 @@ def signin():
     users = list(container.query_items(query=query, parameters=parameters, enable_cross_partition_query=True))
     
     if not users or users[0].get("passwordHash") != hashed_password:
-        return redirect(url_for('signin'))
+        return jsonify({"error": "Invalid email or password."}), 401
     
-    return redirect(url_for('dashboard'))
+    # ✅ Return JSON response instead of redirect
+    return jsonify({"message": "Login successful", "redirect_url": url_for('dashboard')}), 200
+
 
 # ✅ Serves forgot password page
 @app.route('/forgotpassword', methods=['GET'])
