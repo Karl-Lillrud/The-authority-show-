@@ -15,6 +15,10 @@ app.config["SESSION_PERMANENT"] = False
 
 app.register_blueprint(register_bp)
 
+import os
+
+port = int(os.environ.get("PORT", 8080))  # Use the port Azure provides
+
 # Azure Cosmos DB Configuration
 COSMOSDB_URI = os.getenv("COSMOS_ENDPOINT")
 COSMOSDB_KEY = os.getenv("COSMOS_KEY")
@@ -28,7 +32,7 @@ if not COSMOSDB_URI or not COSMOSDB_KEY:
 client = CosmosClient(COSMOSDB_URI, COSMOSDB_KEY)
 database = client.get_database_client(DATABASE_ID)
 container = database.get_container_client(CONTAINER_ID)
-
+    
 @app.route('/', methods=['GET'])
 @app.route('/signin', methods=['GET', 'POST'])
 def signin():
@@ -110,4 +114,4 @@ def forgot_password():
     return render_template('forgotpassword/forgot-password.html')  # Remove extra subfolder
 
 if __name__ == "__main__":
-    app.run(host='0.0.0.0', port=8000, debug=True)
+    app.run(host="0.0.0.0", port=port)
