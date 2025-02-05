@@ -41,7 +41,7 @@ jobs:
           app-name: ${{ secrets.AZURE_WEBAPP_NAME }}
           settings-json: |
             {
-              "COSMOS_DB_URI": "${{ secrets.COSMOS_DB_URI }}",
-              "COSMOS_DB_KEY": "${{ secrets.COSMOS_DB_KEY }}",
-              "COSMOS_DB_DATABASE_NAME": "${{ secrets.COSMOS_DB_DATABASE_NAME }}"
+              "COSMOS_ENDPOINT": "${{ secrets.COSMOS_ENDPOINT }}",
+              "COSMOS_KEY": "${{ secrets.COSMOS_KEY }}",
+              "COSMOS_DATABASE": "${{ secrets.COSMOS_DATABASE }}"
             }
