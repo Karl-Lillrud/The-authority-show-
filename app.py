@@ -35,7 +35,7 @@ def force_https():
     if request.url.startswith("http://"):
         secure_url = request.url.replace("http://", "https://")
         return redirect(secure_url, code=301)
-
+    
 @app.route('/', methods=['GET'])
 @app.route('/signin', methods=['GET', 'POST'])
 def signin():
