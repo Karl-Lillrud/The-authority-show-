@@ -176,14 +176,14 @@
 </head>
 <body>
 
-  <a href="dashboard.html" class="back-arrow">&#8592; Back</a>
+  <a href="{{ url_for('dashboard') }}" class="back-arrow">&#8592; Back</a>
 
   <div class="profile-container">
     <h2>Account Settings</h2>
     
     <!-- Profile Picture Upload -->
     <div class="profile-pic-container">
-      <img id="profile-pic" src="profilepic.jpg" alt="Profile Picture">
+      <img id="profile-pic" src="{{ url_for('static', filename='images/profilepic.jpg') }}" alt="Profile Picture">
       <input type="file" id="upload-pic" accept="image/*">
     </div>
 

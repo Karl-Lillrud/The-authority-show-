@@ -39,9 +39,15 @@
             });
         });
         function toggleMenu() {
-            const menu = document.getElementById('menu');
-            menu.style.display = menu.style.display === 'flex' ? 'none' : 'flex';
-        }
+    const menu = document.getElementById('menu');
+    if (menu.style.display === 'flex') {
+        menu.style.display = 'none';
+    } else {
+        menu.style.display = 'flex';
+        menu.style.position = 'absolute';
+    }
+}
+
 
         document.addEventListener("DOMContentLoaded", function() {
   // Attach change event listener to all checkboxes
