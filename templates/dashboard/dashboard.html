@@ -3,6 +3,7 @@
 {% block title %}Team Leaderboard Dashboard{% endblock %}
 
 {% block content %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/dashboard.css') }}">
 <script>
     document.addEventListener("DOMContentLoaded", function () {
         // Check if the user has already seen the homepage popup
@@ -35,15 +36,6 @@
             taskPopup.style.display = "none";
         });
     });
-    function toggleMenu() {
-const menu = document.getElementById('menu');
-if (menu.style.display === 'flex') {
-    menu.style.display = 'none';
-} else {
-    menu.style.display = 'flex';
-    menu.style.position = 'absolute';
-}
-}
 
 
     document.addEventListener("DOMContentLoaded", function() {

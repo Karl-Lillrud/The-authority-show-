@@ -369,26 +369,6 @@ img {
 }
 
 @media (max-width: 768px) {
-  header {
-    flex-direction: column;
-    align-items: center;
-  }
-
-  .header-nav {
-    flex-direction: column;
-    width: 100%;
-    align-items: center;
-  }
-
-  .menu {
-    right: auto;
-    left: 50%;
-    transform: translateX(-50%);
-    width: 90%;
-  }
-}
-
-@media (max-width: 768px) {
   .task-cards {
     flex-direction: column;
     align-items: center;
@@ -403,20 +383,6 @@ img {
 @media (max-width: 576px) {
   .card {
     width: 100%;
-  }
-
-  .menu-toggle {
-    width: 24px;
-    height: 18px;
-  }
-
-  .menu-toggle span {
-    height: 2px;
-  }
-
-  #podcast-selector {
-    font-size: 0.75rem;
-    height: 24px;
   }
 }
 
