@@ -64,20 +64,21 @@ img {
 /* Header */
 header {
   width: 100%;
-  max-width: 1870px; /* Adjust as needed */
-  margin: 0 auto; /* Centers the header */
+  max-width: 100%;
+  margin: 0;
+  padding: var(--spacing-md);
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: var(--spacing-md);
   background: var(--background-light);
   box-shadow: 
     -5px -5px 10px var(--light-shadow-light),
      5px 5px 10px var(--dark-shadow-light);
-  border-radius: var(--radius-small);
+  border-radius: 0; /* Removes rounding for a full-width effect */
   transition: background-color 0.3s ease, box-shadow 0.3s ease;
   margin-bottom: 25px;
 }
+
 
 
 /* Logo – Removed absolute positioning so it stays on the far left */
