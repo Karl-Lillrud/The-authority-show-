@@ -5,6 +5,15 @@ from dotenv import load_dotenv
 import os
 import traceback  # Add this for error logging
 
+app = Flask(__name__)
+
+@app.before_request
+def force_https():
+    """Redirect all HTTP requests to HTTPS"""
+    if request.url.startswith("http://"):
+        secure_url = request.url.replace("http://", "https://")
+        return redirect(secure_url, code=301)
+
 # Load environment variables
 load_dotenv()
 
