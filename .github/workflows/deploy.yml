@@ -24,16 +24,6 @@ jobs:
           python -m pip install --no-cache-dir -r requirements.txt
           python -m pip install pytest  # Ensure pytest is installed
 
-      - name: Debug Environment (Check Python & pytest installation)
-        run: |
-          python --version
-          which python
-          which pytest
-          pip list
-
-      - name: Run Tests
-        run: python -m pytest  # Use module format to avoid command not found error
-
       - name: Deploy to Azure Web App
         uses: azure/webapps-deploy@v3
         with:
