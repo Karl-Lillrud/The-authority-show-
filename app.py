@@ -30,6 +30,11 @@ if not COSMOSDB_URI or not COSMOSDB_KEY:
 client = CosmosClient(COSMOSDB_URI, COSMOSDB_KEY)
 database = client.get_database_client(DATABASE_ID)
 container = database.get_container_client(CONTAINER_ID)
+
+@app.before_request
+def force_https():
+    if request.headers.get('X-Forwarded-Proto', 'http') != 'https':
+        return redirect(request.url.replace('http://', 'https://'), code=301)
     
 @app.route('/', methods=['GET'])
 @app.route('/signin', methods=['GET', 'POST'])
