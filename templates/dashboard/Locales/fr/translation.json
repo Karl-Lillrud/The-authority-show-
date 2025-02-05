@@ -1,0 +1,27 @@
+{
+    "title": "Tableau de Bord du Classement d'Équipe",
+    "header": "Classement d'Équipe",
+    "table": {
+        "badge": "Badge",
+        "name": "Nom",
+        "tasks": "Tâches Accomplies",
+        "points": "Total des Points",
+        "months": "Mois Gagnés",
+        "shadowGoal": "Objectif Caché"
+    },
+    "user": {
+        "sophia": "Sophia Zhang",
+        "karl": "Karl Lillrud",
+        "emma": "Emma Watson",
+        "simon": "Simon Walker",
+        "alice": "Alice Lee"
+    },
+    "nav": {
+        "home": "Accueil",
+        "features": "Fonctionnalités",
+        "contact": "Contact"
+    },
+    "footer": {
+        "rights": "© 2025 Tableau de Bord du Classement d'Équipe. Tous droits réservés."
+    }
+}
