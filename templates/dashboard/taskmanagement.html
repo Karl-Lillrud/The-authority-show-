@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Task Management</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/task.css') }}">
+</head>
+<body>
+  <!-- Back Arrow -->
+  <a href="{{ url_for('dashboard') }}" class="back-arrow">&#8592; Back</a>
+
+  <!-- Page Header -->
+  <div class="task-header">
+    <h2>Podcast Task Management</h2>
+    <button id="add-task-btn">+ Add New Task</button>
+  </div>
+
+  <!-- Task List -->
+  <ul id="task-list" class="sortable">
+    <!-- Dynamically injected tasks go here -->
+  </ul>
+
+  <!-- Task Modal -->
+  <div id="task-modal" class="modal">
+    <div class="modal-content">
+      <span class="close-btn" onclick="closeModal()">&times;</span>
+      <h2 id="modal-title">Create New Task</h2>
+
+      <label for="task-name">Task Name:</label>
+      <input type="text" id="task-name" placeholder="Enter task name">
+
+      <label for="task-dependencies">Dependent on Other Task(s):</label>
+      <select id="task-dependencies" multiple>
+        <!-- Dynamically populated options -->
+      </select>
+
+      <label for="task-type">Task Type & Action:</label>
+      <select id="task-type">
+        <option value="manual">Manual</option>
+        <option value="email">Automated - Email</option>
+        <option value="system">Automated - System Action</option>
+        <option value="ai">Automated - AI Script</option>
+      </select>
+
+      <div id="action-details" class="hidden">
+        <label for="action-details-input">Action Details:</label>
+        <input type="text" id="action-details-input" placeholder="Enter details">
+      </div>
+
+      <label for="due-time">Due Time Since Recording Date:</label>
+      <input type="text" id="action-link" placeholder="Enter days">
+
+      <label for="task-description">Task Description:</label>
+      <textarea id="task-description" placeholder="Enter task details"></textarea>
+
+      <label for="action-link">Action Link:</label>
+      <input type="text" id="action-link" placeholder="Enter external link">
+      <input type="text" id="action-link-desc" placeholder="Describe the link">
+
+      <label>
+        <input type="checkbox" id="submission-required"> Require Information Submission
+      </label>
+
+      <div class="modal-buttons">
+        <button id="save-task-btn">Save Task</button>
+        <button class="cancel-btn" onclick="closeModal()">Cancel</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Script Section (Preserved Functionality) -->
+  <script>
+    document.getElementById("add-task-btn").addEventListener("click", openModal);
+
+    function openModal() {
+      document.getElementById("task-modal").style.display = "flex";
+      document.getElementById("modal-title").innerText = "Create New Task";
+      document.getElementById("save-task-btn").setAttribute("onclick", "saveTask()");
+    }
+
+    function closeModal() {
+      document.getElementById("task-modal").style.display = "none";
+    }
+
+    function saveTask() {
+      let taskName = document.getElementById("task-name").value.trim();
+      if (taskName.length < 2) {
+        alert("Task name must be at least 2 characters.");
+        return;
+      }
+
+      let newTask = document.createElement("li");
+      newTask.innerHTML = `
+        <span class="task-name">${taskName}</span>
+        <button class="edit-btn" onclick="editTask(this)">Edit</button>
+        <button class="delete-btn" onclick="deleteTask(this)">Delete</button>
+      `;
+      document.getElementById("task-list").appendChild(newTask);
+      closeModal();
+    }
+
+    function editTask(button) {
+      let taskItem = button.parentElement;
+      let taskName = taskItem.querySelector(".task-name").textContent;
+
+      document.getElementById("task-name").value = taskName;
+      document.getElementById("modal-title").innerText = "Edit Task";
+      document.getElementById("task-modal").style.display = "flex";
+
+      document
+        .getElementById("save-task-btn")
+        .setAttribute("onclick", `updateTask('${taskName}', this)`);
+    }
+
+    function updateTask(oldTaskName, button) {
+      let newTaskName = document.getElementById("task-name").value.trim();
+      if (newTaskName.length < 2) {
+        alert("Task name must be at least 2 characters.");
+        return;
+      }
+
+      let tasks = document.querySelectorAll(".task-name");
+      tasks.forEach(task => {
+        if (task.textContent === oldTaskName) {
+          task.textContent = newTaskName;
+        }
+      });
+
+      closeModal();
+    }
+
+    function deleteTask(button) {
+      button.parentElement.remove();
+    }
+  </script>
+</body>
+</html>
