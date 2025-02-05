@@ -15,13 +15,6 @@ app.config["SESSION_PERMANENT"] = False
 
 app.register_blueprint(register_bp)
 
-@app.before_request
-def force_https():
-    """Redirect all HTTP requests to HTTPS"""
-    if request.url.startswith("http://"):
-        secure_url = request.url.replace("http://", "https://")
-        return redirect(secure_url, code=301)
-
 # Azure Cosmos DB Configuration
 COSMOSDB_URI = os.getenv("COSMOS_ENDPOINT")
 COSMOSDB_KEY = os.getenv("COSMOS_KEY")
@@ -35,6 +28,13 @@ if not COSMOSDB_URI or not COSMOSDB_KEY:
 client = CosmosClient(COSMOSDB_URI, COSMOSDB_KEY)
 database = client.get_database_client(DATABASE_ID)
 container = database.get_container_client(CONTAINER_ID)
+
+@app.before_request
+def force_https():
+    """Redirect all HTTP requests to HTTPS"""
+    if request.url.startswith("http://"):
+        secure_url = request.url.replace("http://", "https://")
+        return redirect(secure_url, code=301)
 
 @app.route('/', methods=['GET'])
 @app.route('/signin', methods=['GET', 'POST'])
