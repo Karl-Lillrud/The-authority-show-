@@ -115,7 +115,4 @@ def forgot_password():
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=port)
-<<<<<<< HEAD
-=======
 
->>>>>>> 230e7949367c674832fe6ec88c4482629885a2d8
