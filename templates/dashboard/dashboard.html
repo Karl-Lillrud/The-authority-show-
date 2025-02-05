@@ -73,19 +73,18 @@
 </head>
 <body>
     <!-- Homepage Popup -->
-    <div id="homepage-popup" class="popup">
-        <div class="popup-content">
-            <iframe id="homepage-iframe" src="dashboard/homepage.html" width="100%" height="800px" style="border: none;"></iframe>
-        </div>
+<div id="homepage-popup" class="popup">
+    <div class="popup-content">
+        <iframe id="homepage-iframe" src="{{ url_for('homepage') }}" width="100%" height="800px" style="border: none;"></iframe>
     </div>
-
-    <header>
-<!-- Logo added here -->
-<div class="logo-container">
-    <img src="{{ url_for('static', filename='images/podmanagerlogo.png') }}" alt="PodManager Logo">
 </div>
-        </div>
-        <nav class="header-nav">
+
+<header>
+    <!-- Logo -->
+    <div class="logo-container">
+        <img src="{{ url_for('static', filename='images/podmanagerlogo.png') }}" alt="PodManager Logo">
+    </div>
+    <nav class="header-nav">
         <select id="podcast-selector">
             <option value="">PodCasts</option>
             <option value="podcast1.html">Podcast 1</option>
@@ -97,13 +96,15 @@
             <span></span>
             <span></span>
         </div>
-        <div class="menu" id="menu"> 
-            <a href="profile.html">Account Settings</a>
-            <a href="tasks.html">Task Management</a>
-            <a href="settings.html">Podcast Management</a>
-            <a href="tasks">Refer a Friend</a>
+        <div class="menu" id="menu">
+            <a href="{{ url_for('profile') }}">Account Settings</a>
+            <a href="{{ url_for('tasks') }}">Task Management</a>
+            <a href="{{ url_for('settings') }}">Podcast Management</a>
+            <a href="#tasks">Refer a Friend</a>
         </div>
-    </header>
+    </nav>
+</header>
+
     
     <div class="container">
         <main class="main-content">
@@ -177,7 +178,7 @@
                     </ul>                    
                 </div>
                 <div class="card">
-                    <img src="{{ url_for('static', filename='images/person2.jpg') }}" class="profile-image">
+                    <img src="{{ url_for('static', filename='images/person2.jpg') }}"  class="profile-image">
                     <h3>Olle Olsson</h3>
                     <ul class="task-list">
                         <li><span class="task-text">Guest received pitch email to join the show as a guest</span><input type="checkbox" class="task-check"><span class="checkmark"></span></li>
@@ -213,7 +214,7 @@
                     </ul>                    
                 </div>
                 <div class="card">
-                    <img src="{{ url_for('static', filename='images/person3.jpg') }}" class="profile-image">
+                    <img src="{{ url_for('static', filename='images/person3.jpg') }}"  class="profile-image">
                     <h3>Olga Olsson</h3>
                     <ul class="task-list">
                         <li><span class="task-text">Guest received pitch email to join the show as a guest</span><input type="checkbox" class="task-check"><span class="checkmark"></span></li>
@@ -275,10 +276,3 @@
     </div>
 </body>
 </html>
-
-<!--A checkbox is clicked – A user clicks on an unchecked checkbox next to a task item.
-A strikethrough animation appears – A line smoothly draws over the task text.
-The text fades slightly – The task text likely becomes less prominent (e.g., reduced opacity).
-The checkbox is filled in – A checkmark appears inside the box.
-The task might move to the bottom – If sorting is implemented, the completed task shifts to the end of the list.
-This creates a smooth, visually appealing task completion effect, improving the user experience by clearly distinguishing completed tasks. Let me know if you need exact replication or refinements! -->

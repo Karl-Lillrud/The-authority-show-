@@ -83,6 +83,27 @@ def dashboard():
         return redirect(url_for('signin'))  # Redirect if not logged in
     return render_template('dashboard/dashboard.html')
 
+# ✅ Serves the homepage page
+@app.route('/homepage', methods=['GET'])
+def homepage():
+    return render_template('dashboard/homepage.html')
+
+# ✅ Serves the settings page
+@app.route('/settings', methods=['GET'])
+def settings():
+    return render_template('dashboard/settings.html')
+
+# ✅ Serves the profile page
+@app.route('/profile', methods=['GET'])
+def profile():
+    return render_template('dashboard/profile.html')
+
+# ✅ Serves the tasks page
+@app.route('/tasks', methods=['GET'])
+def tasks():
+    return render_template('dashboard/tasks.html')
+
+
 
 @app.route('/forgotpassword', methods=['GET', 'POST'])
 def forgot_password():
