@@ -32,6 +32,8 @@ if not COSMOSDB_URI or not COSMOSDB_KEY:
 client = CosmosClient(COSMOSDB_URI, COSMOSDB_KEY)
 database = client.get_database_client(DATABASE_ID)
 container = database.get_container_client(CONTAINER_ID)
+
+app.config['PREFERRED URL SCHEME'] = 'https'
     
 @app.route('/', methods=['GET'])
 @app.route('/signin', methods=['GET', 'POST'])
