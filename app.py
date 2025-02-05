@@ -5,15 +5,6 @@ from dotenv import load_dotenv
 import os
 import traceback  # Add this for error logging
 
-app = Flask(__name__)
-
-@app.before_request
-def force_https():
-    """Redirect all HTTP requests to HTTPS"""
-    if request.url.startswith("http://"):
-        secure_url = request.url.replace("http://", "https://")
-        return redirect(secure_url, code=301)
-
 # Load environment variables
 load_dotenv()
 
@@ -23,6 +14,13 @@ app.config["SESSION_TYPE"] = "filesystem"  # Store session data
 app.config["SESSION_PERMANENT"] = False
 
 app.register_blueprint(register_bp)
+
+@app.before_request
+def force_https():
+    """Redirect all HTTP requests to HTTPS"""
+    if request.url.startswith("http://"):
+        secure_url = request.url.replace("http://", "https://")
+        return redirect(secure_url, code=301)
 
 # Azure Cosmos DB Configuration
 COSMOSDB_URI = os.getenv("COSMOS_ENDPOINT")
@@ -98,19 +96,19 @@ def homepage():
     return render_template('dashboard/homepage.html')
 
 # ✅ Serves the settings page
-@app.route('/accountsettings', methods=['GET'])
-def accountsettings():
-    return render_template('dashboard/accountsettings.html')
+@app.route('/settings', methods=['GET'])
+def settings():
+    return render_template('dashboard/settings.html')
 
 # ✅ Serves the profile page
-@app.route('/podcastmanagement', methods=['GET'])
-def podcastmanagement():
-    return render_template('dashboard/podcastmanagement.html')
+@app.route('/profile', methods=['GET'])
+def profile():
+    return render_template('dashboard/profile.html')
 
 # ✅ Serves the tasks page
-@app.route('/taskmanagement', methods=['GET'])
-def taskmanagement():
-    return render_template('dashboard/taskmanagement.html')
+@app.route('/tasks', methods=['GET'])
+def tasks():
+    return render_template('dashboard/tasks.html')
 
 
 
