@@ -1,0 +1,16 @@
+{
+    "Email and password are required.": "Se requieren correo electrónico y contraseña.",
+    "User already exists.": "El usuario ya existe.",
+    "User registered successfully.": "Usuario registrado con éxito.",
+    "Invalid credentials.": "Credenciales inválidas.",
+    "Email not found.": "Correo electrónico no encontrado.",
+    "Password reset instructions sent to your email.": "Instrucciones para restablecer la contraseña enviadas a su correo electrónico.",
+    "Name and email are required.": "Se requieren nombre y correo electrónico.",
+    "Guest added successfully.": "Invitado agregado con éxito.",
+    "Title and scheduled date are required.": "Se requieren título y fecha programada.",
+    "Episode created successfully.": "Episodio creado con éxito.",
+    "Episode ID and description are required.": "Se requieren ID de episodio y descripción.",
+    "Task added successfully.": "Tarea añadida con éxito.",
+    "Task not found.": "Tarea no encontrada.",
+    "Task updated successfully.": "Tarea actualizada con éxito."
+}

@@ -1,0 +1,77 @@
+{
+    "title": {
+      "podProfile": "Pod Profile"
+    },
+    "headings": {
+      "podProfile": "Pod Profile",
+      "socialMedia": "Podcast Social Media",
+      "team": "Team"
+    },
+    "labels": {
+      "podName": "Pod Name",
+      "podRss": "Pod RSS",
+      "podLogo": "Pod Logo",
+      "hostName": "Host Name",
+      "googleCalendar": "Google Calendar Integration",
+      "calendarUrl": "Google Calendar Pick a Date URL",
+      "guestForm": "Guest Form URL",
+      "facebook": "Facebook",
+      "instagram": "Instagram",
+      "linkedin": "LinkedIn",
+      "twitter": "Twitter",
+      "tiktok": "TikTok",
+      "pinterest": "Pinterest",
+      "website": "Podcast Website",
+      "email": "Podcast Email Address",
+      "teamName": "Name",
+      "teamEmail": "Email",
+      "teamRole": "Role"
+    },
+    "buttons": {
+      "copy": "Copy",
+      "invite": "Invite",
+      "block": "Block",
+      "submit": "Submit"
+    },
+    "options": {
+      "selectRole": "Select Role",
+      "user": "User",
+      "host": "Host"
+    },
+    "errors": {
+      "podName": "Please enter the pod name.",
+      "podRss": "Please enter a valid RSS URL.",
+      "hostName": "Please enter the host name.",
+      "calendarUrl": "Please enter a valid Calendar URL.",
+      "guestForm": "Please enter a valid Guest Form URL.",
+      "email": "Please enter a valid email address.",
+      "facebook": "Please enter a valid Facebook URL.",
+      "instagram": "Please enter a valid Instagram URL.",
+      "linkedin": "Please enter a valid LinkedIn URL.",
+      "twitter": "Please enter a valid Twitter URL.",
+      "tiktok": "Please enter a valid TikTok URL.",
+      "pinterest": "Please enter a valid Pinterest URL.",
+      "website": "Please enter a valid website URL.",
+      "teamName": "Please enter the team member's name.",
+      "teamEmail": "Please enter a valid email address.",
+      "teamRole": "Please select a role."
+    },
+    "notifications": {
+      "defaultToast": "This is a toast message.",
+      "guestFormCopied": "Guest Form URL copied to clipboard!",
+      "copyFailed": "Failed to copy URL.",
+      "calendarActivated": "Google Calendar Integration Activated!",
+      "calendarDeactivated": "Google Calendar Integration Deactivated!",
+      "fillAllFields": "Please fill in all team member details.",
+      "fillAllTeamFields": "Please fill in all team member fields.",
+      "invitationSent": "Invitation sent to",
+      "invitationFailed": "Failed to send invitation.",
+      "blocked": "Team member with email",
+      "blockFailed": "Failed to block team member.",
+      "submitting": "Submitting Pod Profile...",
+      "submissionSuccess": "Pod Profile submitted successfully!",
+      "submissionFailed": "Failed to submit Pod Profile.",
+      "correctErrors": "Please correct the errors in the form."
+    }
+  }
+  

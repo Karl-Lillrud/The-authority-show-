@@ -1,0 +1,30 @@
+{
+    "title": "Team Leaderboard Dashboard",
+    "header": "Team Leaderboard",
+    "table": {
+        "badge": "Badge",
+        "name": "Name",
+        "tasks": "Tasks Completed",
+        "points": "Total Points",
+        "months": "Months Won",
+        "shadowGoal": "Shadow Goal"
+    },
+    "user": {
+        "sophia": "Sophia Zhang",
+        "karl": "Karl Lillrud",
+        "emma": "Emma Watson",
+        "simon": "Simon Walker",
+        "alice": "Alice Lee"
+    },
+    "nav": {
+        "home": "Home",
+        "features": "Features",
+        "contact": "Contact"
+    },
+    "footer": {
+        "rights": "© 2025 Team Leaderboard Dashboard. All rights reserved."
+    }
+}
+
+
+
