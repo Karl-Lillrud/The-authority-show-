@@ -1,4 +1,4 @@
-/* Root Variables */
+/*
 :root {
     --background-light: #EFF2F9;
     --light-shadow-light: #FFFFFF;
@@ -19,7 +19,7 @@
     --radius-large: 12px;
   }
 
-  /* Base Page Setup */
+  
   html, body {
     height: 100%;
     margin: 0;
@@ -30,7 +30,7 @@
     font-family: var(--font-primary);
     color: var(--text-color-light);
   }
-
+*/
   .pod-logo {
     width: 150px;
     height: 155px;

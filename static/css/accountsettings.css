@@ -1,4 +1,4 @@
-/* Root Variables for Neumorphism */
+/* Root Variables for Neumorphism 
 :root {
     --background-light: #EFF2F9;
     --light-shadow-light: #FFFFFF;
@@ -18,7 +18,7 @@
     --radius-medium: 10px;
   }
 
-  /* Body */
+  
   body {
     margin: 0;
     padding: var(--spacing-md);
@@ -28,7 +28,7 @@
     text-align: center;
     line-height: 1.6;
   }
-
+*/
   /* Container */
   .profile-container {
     background: var(--background-light);

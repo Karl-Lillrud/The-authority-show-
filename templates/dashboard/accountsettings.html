@@ -1,15 +1,11 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>User Profile</title>
-  <link rel="stylesheet" href="{{ url_for('static', filename='css/accountsettings.css') }}">
-</head>
+{% extends "dashboard/components/base.html" %}
+
+{% block title %}Team Leaderboard Dashboard{% endblock %}
+
+{% block content %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/accountsettings.css') }}">
 <body>
-
   <a href="{{ url_for('dashboard') }}" class="back-arrow">&#8592; Back</a>
-
   <div class="profile-container">
     <h2>Account Settings</h2>
     
@@ -68,6 +64,5 @@
       alert("Profile updated successfully!");
     });
   </script>
-
 </body>
-</html>
+{% endblock %}

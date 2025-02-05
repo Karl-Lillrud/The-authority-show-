@@ -1,9 +1,4 @@
-/* -----------------------------------------------------------
-       NEUMORPHIC DESIGN LANGUAGE FOR TASK MANAGEMENT PAGE
-       Adheres to the same functionality, applying a soft UI style.
-    ----------------------------------------------------------- */
-
-    /* Root Variables */
+    /* Root Variables 
     :root {
         --background-light: #EFF2F9;
         --light-shadow-light: #FFFFFF;
@@ -24,8 +19,8 @@
         --radius-large: 12px;
       }
   
-      /* Body Reset */
-      body {
+    
+      .body task {
         margin: 0;
         padding: var(--spacing-md);
         background-color: var(--background-light);
@@ -33,32 +28,11 @@
         text-align: center;
         min-height: 100vh;
         box-sizing: border-box;
-        position: relative; /* for the back arrow absolute pos */
+        position: relative; 
       }
-  
-      /* Back Arrow */
-      .back-arrow {
-        position: absolute;
-        top: var(--spacing-md);
-        left: var(--spacing-md);
-        font-size: 0.9rem;
-        font-weight: bold;
-        text-decoration: none;
-        color: var(--text-color-light);
-        background: var(--background-light);
-        padding: var(--spacing-sm) var(--spacing-md);
-        border-radius: var(--radius-small);
-        box-shadow:
-          -3px -3px 6px var(--light-shadow-light),
-           3px 3px 6px var(--dark-shadow-light);
-        transition: background-color 0.3s ease, transform 0.3s ease;
-        z-index: 1000;
-      }
-      .back-arrow:hover {
-        transform: translateY(-3px);
-        background-color: rgba(255, 127, 63, 0.15);
-        color: var(--highlight-color);
-      }
+
+      */
+    
   
       /* Task Header */
       .task-header {
@@ -222,9 +196,25 @@
         font-weight: bold;
         color: var(--text-color-light);
       }
+
+      #task-dependencies {
+        width: 99%;
+        padding: var(--spacing-sm);
+        margin-top: var(--spacing-sm);
+        border: none;
+        border-radius: var(--radius-small);
+        box-shadow:
+            inset -2px -2px 4px var(--light-shadow-light),
+            inset 2px 2px 4px var(--dark-shadow-light);
+        outline: none;
+        font-size: 0.85rem;
+        background: var(--background-light);
+        color: var(--text-color-light);
+        transition: box-shadow 0.3s ease;
+    }
   
-      input, textarea, select {
-        width: 100%;
+      input, textarea {
+        width: 99%;
         padding: var(--spacing-sm);
         margin-top: var(--spacing-sm);
         border: none;
@@ -275,7 +265,7 @@
         background-color: rgba(0,0,0,0.1);
         transform: translateY(-2px);
       }
-  
+      
       /* Submission-Required Checkbox */
       input[type="checkbox"] {
         width: auto;
