@@ -104,7 +104,6 @@ def taskmanagement():
     return render_template('dashboard/taskmanagement.html')
 
 
-
 @app.route('/forgotpassword', methods=['GET', 'POST'])
 def forgot_password():
     return render_template('forgotpassword/forgot-password.html')  # Remove extra subfolder

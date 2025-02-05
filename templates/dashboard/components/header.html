@@ -1,4 +1,4 @@
-
+<link rel="stylesheet" href="{{ url_for('static', filename='css/header.css') }}">
 <header>
     <!-- Logo -->
     <div class="logo-container">
@@ -17,9 +17,9 @@
             <span></span>
         </div>
         <div class="menu" id="menu">
-            <a href="{{ url_for('profile') }}">Account Settings</a>
-            <a href="{{ url_for('tasks') }}">Task Management</a>
-            <a href="{{ url_for('settings') }}">Podcast Management</a>
+            <a href="{{ url_for('accountsettings') }}">Account Settings</a>
+            <a href="{{ url_for('taskmanagement') }}">Task Management</a>
+            <a href="{{ url_for('podcastmanagement') }}">Podcast Management</a>
             <a href="#tasks">Refer a Friend</a>
         </div>
     </nav>
