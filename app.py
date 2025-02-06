@@ -3,6 +3,7 @@ from azure.cosmos import CosmosClient
 from register import register_bp  # ✅ Import register blueprint
 from dotenv import load_dotenv
 import os
+import traceback  # Add this for error logging
 
 # Load environment variables
 load_dotenv()
@@ -85,7 +86,6 @@ def dashboard():
     if "user_id" not in session:
         return redirect(url_for('signin'))  # Redirect if not logged in
     return render_template('dashboard/dashboard.html')
-    return render_template('dashboard/dashboard.html')
 
 # ✅ Serves the homepage page
 @app.route('/homepage', methods=['GET'])
@@ -93,19 +93,19 @@ def homepage():
     return render_template('dashboard/homepage.html')
 
 # ✅ Serves the settings page
-@app.route('/podcastmanagement', methods=['GET'])
-def podcastmanagement():
-    return render_template('dashboard/podcastmanagement.html')
+@app.route('/settings', methods=['GET'])
+def settings():
+    return render_template('dashboard/settings.html')
 
 # ✅ Serves the profile page
-@app.route('/accountsettings', methods=['GET'])
-def accountsettings():
-    return render_template('dashboard/accountsettings.html')
+@app.route('/profile', methods=['GET'])
+def profile():
+    return render_template('dashboard/profile.html')
 
 # ✅ Serves the tasks page
-@app.route('/taskmanagement', methods=['GET'])
-def taskmanagement():
-    return render_template('dashboard/taskmanagement.html')
+@app.route('/tasks', methods=['GET'])
+def tasks():
+    return render_template('dashboard/tasks.html')
 
 
 
