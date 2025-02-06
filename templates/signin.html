@@ -45,7 +45,7 @@
             const password = document.getElementById("password").value;
 
             try {
-                const response = await fetch("https://podmanager-ggevewegdfgwebcd.northeurope-01.azurewebsites.net/signin", {
+                const response = await fetch("https://app.podmanager.ai/signin", {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify({ email, password })
