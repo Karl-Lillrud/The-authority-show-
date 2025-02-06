@@ -17,8 +17,6 @@ app.register_blueprint(register_bp)
 
 import os
 
-port = int(os.environ.get("PORT", 8080))  # Use the port Azure provides
-
 # Azure Cosmos DB Configuration
 COSMOSDB_URI = os.getenv("COSMOS_ENDPOINT")
 COSMOSDB_KEY = os.getenv("COSMOS_KEY")
@@ -88,6 +86,7 @@ def dashboard():
     if "user_id" not in session:
         return redirect(url_for('signin'))  # Redirect if not logged in
     return render_template('dashboard/dashboard.html')
+    return render_template('dashboard/dashboard.html')
 
 # ✅ Serves the homepage page
 @app.route('/homepage', methods=['GET'])
@@ -95,19 +94,20 @@ def homepage():
     return render_template('dashboard/homepage.html')
 
 # ✅ Serves the settings page
-@app.route('/accountsettings', methods=['GET'])
-def accountsettings():
-    return render_template('dashboard/accountsettings.html')
+@app.route('/settings', methods=['GET'])
+def settings():
+    return render_template('dashboard/settings.html')
 
 # ✅ Serves the profile page
-@app.route('/podcastmanagement', methods=['GET'])
-def podcastmanagement():
-    return render_template('dashboard/podcastmanagement.html')
+@app.route('/profile', methods=['GET'])
+def profile():
+    return render_template('dashboard/profile.html')
 
 # ✅ Serves the tasks page
-@app.route('/taskmanagement', methods=['GET'])
-def taskmanagement():
-    return render_template('dashboard/taskmanagement.html')
+@app.route('/tasks', methods=['GET'])
+def tasks():
+    return render_template('dashboard/tasks.html')
+
 
 
 @app.route('/forgotpassword', methods=['GET', 'POST'])
@@ -115,5 +115,5 @@ def forgot_password():
     return render_template('forgotpassword/forgot-password.html')  # Remove extra subfolder
 
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=port)
+    app.run(host="0.0.0.0", port=8000, debug=True)
 
