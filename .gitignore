@@ -7,3 +7,5 @@ Thumbs.db
 
 # Ignore log files
 *.log
+
+.env
