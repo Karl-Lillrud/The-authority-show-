@@ -1,0 +1,565 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Podcast Manager</title>
+  <style>
+    /* Root Variables */
+    :root {
+      --background-light: #EFF2F9;
+      --light-shadow-light: #FFFFFF;
+      --dark-shadow-light: rgba(22, 24, 29, 0.23);
+
+      --text-color-light: #6E7F8D;
+      --highlight-color: #FF7F3F;
+      --success-color: #4CAF50;
+
+      --font-primary: 'Arial', sans-serif;
+
+      --spacing-sm: 8px;
+      --spacing-md: 16px;
+      --spacing-lg: 24px;
+
+      --radius-small: 5px;
+      --radius-medium: 10px;
+      --radius-large: 12px;
+    }
+
+    /* Base Page Setup */
+    html, body {
+      height: 100%;
+      margin: 0;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      background-color: var(--background-light);
+      font-family: var(--font-primary);
+      color: var(--text-color-light);
+    }
+
+    .pod-logo {
+      width: 150px;
+      height: 155px;
+      object-fit: cover;
+      border-radius: var(--radius-small);
+      box-shadow:
+        inset -2px -2px 4px var(--light-shadow-light),
+        inset 2px 2px 4px var(--dark-shadow-light);
+      margin-bottom: 15px;
+    }
+
+    .container {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      width: 100%;
+      height: 100vh;
+      padding-top: 250px;
+      box-sizing: border-box;
+    }
+
+    .back-arrow {
+      position: absolute;
+      top: var(--spacing-md);
+      left: var(--spacing-md);
+      font-size: 0.9rem;
+      font-weight: bold;
+      text-decoration: none;
+      color: var(--text-color-light);
+      background: var(--background-light);
+      padding: var(--spacing-sm) var(--spacing-md);
+      border-radius: var(--radius-small);
+      box-shadow:
+        -3px -3px 6px var(--light-shadow-light),
+         3px 3px 6px var(--dark-shadow-light);
+      transition: background-color 0.3s ease, transform 0.3s ease;
+      z-index: 1000;
+    }
+    .back-arrow:hover {
+      transform: translateY(-3px);
+      background-color: rgba(255, 127, 63, 0.15);
+      color: var(--highlight-color);
+    }
+
+    .form-box {
+      background: var(--background-light);
+      padding: var(--spacing-lg);
+      border-radius: var(--radius-large);
+      width: 550px;
+      box-shadow:
+        -8px -8px 16px var(--light-shadow-light),
+         8px 8px 16px var(--dark-shadow-light);
+      transition: box-shadow 0.3s ease;
+    }
+    .form-box:hover {
+      box-shadow:
+        -4px -4px 8px var(--light-shadow-light),
+         4px 4px 8px var(--dark-shadow-light);
+    }
+
+    .form-fields {
+      display: flex;
+      flex-direction: column;
+      width: 100%;
+    }
+
+    /* Adjusted Field Groups in a column layout */
+    .field-group {
+      display: flex;
+      align-items: center;
+      margin-bottom: var(--spacing-sm);
+      width: 100%;
+    }
+    .field-group label {
+      width: 150px;
+      text-align: left;
+      font-weight: bold;
+      font-size: 0.9rem;
+      color: var(--text-color-light);
+    }
+    .field-group input,
+    .field-group select {
+      flex: 1;
+      padding: var(--spacing-sm);
+      border: none;
+      border-radius: var(--radius-small);
+      box-shadow:
+        inset -3px -3px 6px var(--light-shadow-light),
+        inset 3px 3px 6px var(--dark-shadow-light);
+      outline: none;
+      font-size: 0.9rem;
+      color: var(--text-color-light);
+      background: var(--background-light);
+      transition: background-color 0.3s ease, box-shadow 0.3s ease;
+    }
+    .field-group input:focus,
+    .field-group select:focus {
+      box-shadow:
+        inset 2px 2px 4px rgba(255,127,63,0.3),
+        inset -2px -2px 4px rgba(0,0,0,0.1);
+    }
+    /* Ensure buttons in field groups are on the right */
+    .field-group button {
+      margin-left: var(--spacing-sm);
+    }
+
+    /* Inline Field (for Google Calendar Pick a Date URL) */
+    .inline-field {
+      display: flex;
+      align-items: center;
+      flex: 1;
+      border-radius: var(--radius-small);
+      box-shadow:
+        inset -3px -3px 6px var(--light-shadow-light),
+        inset 3px 3px 6px var(--dark-shadow-light);
+      background: var(--background-light);
+      padding: var(--spacing-sm);
+      font-size: 0.85rem;
+      color: var(--text-color-light);
+    }
+    .inline-field:hover {
+      background-color: rgba(255,127,63,0.06);
+    }
+    .inline-field span {
+      flex: 1;
+    }
+    .inline-field button {
+      margin-left: var(--spacing-sm);
+    }
+
+    /* Buttons (existing styles remain) */
+    .connect-btn,
+    .save-btn,
+    .block-btn,
+    #add-member-btn,
+    .invite-btn {
+      background: var(--background-light);
+      border: none;
+      padding: var(--spacing-sm) var(--spacing-md);
+      border-radius: var(--radius-small);
+      cursor: pointer;
+      box-shadow:
+        -3px -3px 6px var(--light-shadow-light),
+         3px 3px 6px var(--dark-shadow-light);
+      transition: transform 0.3s ease, background-color 0.3s ease;
+      font-size: 0.85rem;
+      color: var(--text-color-light);
+      margin: 5px 0;
+    }
+    .connect-btn:hover,
+    .save-btn:hover,
+    .block-btn:hover,
+    #add-member-btn:hover,
+    .invite-btn:hover {
+      background-color: rgba(255,127,63,0.08);
+      transform: translateY(-2px);
+      color: var(--highlight-color);
+    }
+
+    .save-btn {
+      width: 100%;
+      font-size: 0.9rem;
+      margin-top: var(--spacing-sm);
+    }
+    .block-btn {
+      width: 70px;
+      font-size: 0.75rem;
+      margin-left: var(--spacing-sm);
+    }
+    #add-member-btn {
+      width: 40px;
+      height: 40px;
+      font-size: 1.3rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .invite-btn {
+      margin-top: var(--spacing-md);
+      font-size: 0.9rem;
+    }
+
+    /* Custom Copy Button (smaller size) */
+    .copy-btn {
+      background: var(--background-light);
+      border: none;
+      padding: 4px 8px;
+      border-radius: var(--radius-small);
+      cursor: pointer;
+      box-shadow:
+        -3px -3px 6px var(--light-shadow-light),
+         3px 3px 6px var(--dark-shadow-light);
+      transition: transform 0.3s ease, background-color 0.3s ease;
+      font-size: 0.75rem;
+      color: var(--text-color-light);
+    }
+    .copy-btn:hover {
+      background-color: rgba(255,127,63,0.08);
+      transform: translateY(-2px);
+      color: var(--highlight-color);
+    }
+
+    /* Invite More Section */
+    .invite-more {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: var(--spacing-md);
+    }
+
+    /* Popup Styles (unchanged) */
+    .popup {
+      display: none;
+      position: fixed;
+      top: 0; 
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.5);
+      justify-content: center;
+      align-items: center;
+      z-index: 2000;
+    }
+    .popup-content {
+      background: var(--background-light);
+      padding: var(--spacing-lg);
+      border-radius: var(--radius-medium);
+      text-align: center;
+      width: 350px;
+      box-shadow:
+        -4px -4px 8px var(--light-shadow-light),
+         4px 4px 8px var(--dark-shadow-light);
+      position: relative;
+    }
+    .close-btn {
+      position: absolute;
+      top: var(--spacing-sm);
+      right: var(--spacing-md);
+      font-size: 1.5rem;
+      cursor: pointer;
+      color: #555;
+      transition: color 0.3s ease, transform 0.3s ease;
+    }
+    .close-btn:hover {
+      color: var(--highlight-color);
+      transform: scale(1.1);
+    }
+    .popup-content h2 {
+      margin-bottom: var(--spacing-md);
+      color: var(--text-color-light);
+      font-size: 1.1rem;
+    }
+    .popup-content input,
+    .popup-content select {
+      width: 100%;
+      padding: var(--spacing-sm);
+      margin: var(--spacing-sm) 0;
+      border-radius: var(--radius-small);
+      border: none;
+      box-shadow:
+        inset -3px -3px 6px var(--light-shadow-light),
+        inset 3px 3px 6px var(--dark-shadow-light);
+      outline: none;
+      font-size: 0.9rem;
+      color: var(--text-color-light);
+      background: var(--background-light);
+      transition: background-color 0.3s ease, box-shadow 0.3s ease;
+    }
+    .popup-content input:focus,
+    .popup-content select:focus {
+      box-shadow:
+        inset 2px 2px 4px rgba(255,127,63,0.3),
+        inset -2px -2px 4px rgba(0,0,0,0.1);
+    }
+    .popup-button {
+      background: var(--success-color);
+      color: #fff;
+      padding: var(--spacing-sm) var(--spacing-md);
+      border: none;
+      border-radius: var(--radius-small);
+      cursor: pointer;
+      font-size: 0.9rem;
+      transition: background-color 0.3s ease, transform 0.3s ease;
+      margin-top: var(--spacing-sm);
+    }
+    .popup-button:hover {
+      background-color: #3a9442; 
+      transform: translateY(-2px);
+    }
+
+    /* Responsive Adjustments */
+    @media (max-width: 576px) {
+      .form-box {
+        width: 90%;
+        padding: var(--spacing-md);
+      }
+      .field-group label {
+        width: 100px;
+        font-size: 0.8rem;
+      }
+      .field-group input,
+      .field-group select {
+        font-size: 0.8rem;
+      }
+      .pod-logo {
+        width: 60px;
+        height: 50px;
+      }
+      .save-btn,
+      .invite-btn {
+        font-size: 0.8rem;
+      }
+      .block-btn {
+        font-size: 0.7rem;
+        width: 60px;
+      }
+      #add-member-btn {
+        width: 35px;
+        height: 35px;
+        font-size: 1.1rem;
+      }
+      .popup-content {
+        width: 80%;
+      }
+    }
+  </style>
+  <script>
+    document.addEventListener("DOMContentLoaded", function () {
+      const addMemberBtn = document.getElementById("add-member-btn");
+      const popup = document.getElementById("add-member-popup");
+      const closePopup = document.getElementById("close-popup");
+
+      // Show Popup on Button Click
+      addMemberBtn.addEventListener("click", function () {
+        popup.style.display = "flex";
+      });
+
+      // Close Popup
+      closePopup.addEventListener("click", function () {
+        popup.style.display = "none";
+      });
+
+      // Close Popup on Outside Click
+      window.addEventListener("click", function (e) {
+        if (e.target === popup) {
+          popup.style.display = "none";
+        }
+      });
+    });
+
+    document.addEventListener("DOMContentLoaded", function() {
+      const copyBtn = document.getElementById("copy-guest-btn");
+      const guestInput = document.getElementById("guest-form-url");
+
+      copyBtn.addEventListener("click", function() {
+        navigator.clipboard.writeText(guestInput.value)
+          .then(() => {
+            copyBtn.textContent = "Copied!";
+            setTimeout(() => copyBtn.textContent = "Copy", 2000);
+          })
+          .catch(err => console.error("Copy failed:", err));
+      });
+    });
+  </script>
+</head>
+<body>
+  <a href="{{ url_for('dashboard') }}" class="back-arrow">&#8592; Back</a>
+  <div class="container">
+    <div class="form-box">
+      <div class="form-fields">
+        <!-- Logo Section -->
+        <div class="form-group">
+          <label for="pod-logo">Pod Logo</label>
+          <div style="display: flex; align-items: center; justify-content: center;">
+            <img src="{{ url_for('static', filename='images/pod1.jpg') }}" alt="Pod Logo" class="pod-logo pod-logo-inline" />
+          </div>
+        </div>
+
+        <!-- Other Fields -->
+        <div class="field-group">
+          <label>Pod Name</label>
+          <input type="text" />
+        </div>
+
+        <div class="field-group">
+          <label>RSS Feed</label>
+          <input type="text" />
+        </div>
+
+        <div class="field-group">
+          <label>Host(s) Name(s)</label>
+          <input type="text" />
+        </div>
+
+        <div class="field-group">
+          <label>Google Calendar Integration</label>
+          <button class="connect-btn">CONNECT</button>
+        </div>
+
+        <div class="field-group">
+          <label>Google Calendar Pick a Date URL</label>
+          <div class="inline-field">
+            <span>podmanager.com/?pod=TheAuthorityShow</span>
+          </div>
+        </div>
+
+        <!-- Guest Form URL with Copy Button on the right -->
+        <div class="field-group">
+          <label>Guest Form URL</label>
+          <input type="text" id="guest-form-url" value="https://example.com/guest-form"/>
+          <button id="copy-guest-btn" class="copy-btn">Copy</button>
+        </div>
+
+        <div class="field-group">
+          <label>Facebook</label>
+          <input type="text" />
+        </div>
+
+        <div class="field-group">
+          <label>Instagram</label>
+          <input type="text" />
+        </div>
+
+        <div class="field-group">
+          <label>LinkedIn</label>
+          <input type="text" />
+        </div>
+
+        <div class="field-group">
+          <label>Twitter</label>
+          <input type="text" />
+        </div>
+
+        <div class="field-group">
+          <label>TikTok</label>
+          <input type="text" />
+        </div>
+
+        <div class="field-group">
+          <label>Pinterest</label>
+          <input type="text" />
+        </div>
+
+        <div class="field-group">
+          <label>Website</label>
+          <input type="text" />
+        </div>
+
+        <div class="field-group">
+          <label>Email Address</label>
+          <input type="text" />
+        </div>
+
+        <!-- Team Section -->
+        <div class="team-section">
+          <div class="field-group">
+            <label>Name</label>
+            <input type="text" />
+            <button class="block-btn">BLOCK</button>
+          </div>
+
+          <div class="field-group">
+            <label>Email</label>
+            <input type="text" />
+          </div>
+
+          <div class="field-group">
+            <label>Role</label>
+            <select>
+              <option>Select</option>
+            </select>
+          </div>
+
+          <div class="field-group">
+            <label>Name</label>
+            <input type="text" />
+            <button class="block-btn">BLOCK</button>
+          </div>
+
+          <div class="field-group">
+            <label>Email</label>
+            <input type="text" required/>
+          </div>
+
+          <div class="field-group">
+            <label>Role</label>
+            <select>
+              <option>Select</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="invite-more">
+          <span>Invite More Team Members</span>
+          <button id="add-member-btn">+</button>
+        </div>
+
+        <button class="invite-btn">SAVE</button>
+      </div>
+    </div>
+
+    <!-- Popup -->
+    <div id="add-member-popup" class="popup">
+      <div class="popup-content">
+        <span id="close-popup" class="close-btn">&times;</span>
+        <h2>Add Team Member</h2>
+
+        <label for="member-name">Name:</label>
+        <input type="text" id="member-name" placeholder="Enter Name" />
+
+        <label for="member-email">Email:</label>
+        <input type="email" id="member-email" placeholder="Enter Email" />
+
+        <label for="member-role">Role:</label>
+        <select id="member-role">
+          <option value="admin">Admin</option>
+          <option value="editor">Editor</option>
+          <option value="viewer">Viewer</option>
+        </select>
+        <button id="save-member" class="popup-button">Save</button>
+      </div>
+    </div>
+  </div>
+</body>
+</html>
