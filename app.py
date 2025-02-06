@@ -3,7 +3,6 @@ from azure.cosmos import CosmosClient
 from register import register_bp  # ✅ Import register blueprint
 from dotenv import load_dotenv
 import os
-import traceback  # Add this for error logging
 
 # Load environment variables
 load_dotenv()
