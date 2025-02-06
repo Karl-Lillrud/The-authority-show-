@@ -93,19 +93,19 @@ def homepage():
     return render_template('dashboard/homepage.html')
 
 # ✅ Serves the settings page
-@app.route('/settings', methods=['GET'])
-def settings():
-    return render_template('dashboard/settings.html')
+@app.route('/podcastmanagement', methods=['GET'])
+def podcastmanagement():
+    return render_template('dashboard/podcastmanagement.html')
 
 # ✅ Serves the profile page
-@app.route('/profile', methods=['GET'])
-def profile():
-    return render_template('dashboard/profile.html')
+@app.route('/accountsettings', methods=['GET'])
+def accountsettings():
+    return render_template('dashboard/accountsettings.html')
 
 # ✅ Serves the tasks page
-@app.route('/tasks', methods=['GET'])
-def tasks():
-    return render_template('dashboard/tasks.html')
+@app.route('/taskmanagement', methods=['GET'])
+def taskmanagement():
+    return render_template('dashboard/taskmanagement.html')
 
 
 
