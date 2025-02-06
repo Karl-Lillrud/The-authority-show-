@@ -4,7 +4,7 @@
 
 {% block content %}
 <link rel="stylesheet" href="{{ url_for('static', filename='css/accountsettings.css') }}">
-<body>
+
   <a href="{{ url_for('dashboard') }}" class="back-arrow">&#8592; Back</a>
   <div class="profile-container">
     <h2>Account Settings</h2>
@@ -64,5 +64,4 @@
       alert("Profile updated successfully!");
     });
   </script>
-</body>
 {% endblock %}

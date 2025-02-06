@@ -1,17 +1,13 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}My Site{% endblock %}</title>
-    <!-- Other head content -->
+  <!-- head content -->
 </head>
-<body>
-    {% include 'dashboard/components/header.html' %}
-    
-    {% block content %}
-    {% endblock %}
-    
-    <!-- Scripts -->
+<body style="display: flex; flex-direction: column; min-height: 100vh;">
+  {% include 'dashboard/components/header.html' %}
+  <main style="flex: 1;">
+    {% block content %}{% endblock %}
+  </main>
+  {% include 'dashboard/components/footer.html' %}
 </body>
 </html>
