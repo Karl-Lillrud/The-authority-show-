@@ -64,4 +64,4 @@ jobs:
         with:
           app-name: 'podmanager'
           slot-name: 'Production'
-          publish-profile: ${{ secrets.AZUREAPPSERVICE_PUBLISHPROFILE_A9F3420C1C2C49DD87350E8EF93E93A8 }}
+          publish-profile: ${{ secrets.AZUREAPPSERVICE_PUBLISHPROFILE_D2FCF9F3045041488D7E5B2429F171B3 }}
