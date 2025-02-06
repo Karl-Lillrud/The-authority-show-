@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 <link rel="stylesheet" href="{{ url_for('static', filename='css/header.css') }}">
 <header>
     <script>
@@ -10,6 +11,9 @@
         menu.style.position = 'absolute';
     }}
     </script>
+=======
+<header>
+>>>>>>> origin/main
     <!-- Logo -->
     <div class="logo-container">
         <img src="{{ url_for('static', filename='images/podmanagerlogo.png') }}" alt="PodManager Logo">
@@ -27,9 +31,15 @@
             <span></span>
         </div>
         <div class="menu" id="menu">
+<<<<<<< HEAD
             <a href="{{ url_for('accountsettings') }}">Account Settings</a>
             <a href="{{ url_for('taskmanagement') }}">Task Management</a>
             <a href="{{ url_for('podcastmanagement') }}">Podcast Management</a>
+=======
+            <a href="{{ url_for('profile') }}">Account Settings</a>
+            <a href="{{ url_for('tasks') }}">Task Management</a>
+            <a href="{{ url_for('settings') }}">Podcast Management</a>
+>>>>>>> origin/main
             <a href="#tasks">Refer a Friend</a>
         </div>
     </nav>

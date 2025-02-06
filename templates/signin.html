@@ -10,9 +10,8 @@
 
     <!-- Logo -->
     <div class="logo-container">
-        <img src="https://podmanagerstorage.blob.core.windows.net/blob-container/podmanagerlogo.png" alt="PodManager Logo">
+        <img src="https://podmanagerstorage.blob.core.windows.net/blob-container/PodManagerLogo.png" alt="PodManager Logo">
     </div>
-
     <div class="center-box">
         <h1 class="title">Sign in</h1>
         <div id="error-message" class="error-message" style="display: none;"></div>
@@ -46,7 +45,7 @@
             const password = document.getElementById("password").value;
 
             try {
-                const response = await fetch("{{ url_for('signin', _external=True) }}", {
+                const response = await fetch("https://podmanager-ggevewegdfgwebcd.northeurope-01.azurewebsites.net/signin", {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify({ email, password })
