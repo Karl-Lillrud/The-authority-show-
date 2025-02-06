@@ -29,10 +29,17 @@
     line-height: 1.6;
   }
 */
+
+#profile-pic {
+  display: block;
+  margin: 0 auto;
+  /* existing styles… */
+}
+
   /* Container */
   .profile-container {
     background: var(--background-light);
-    max-width: 400px;
+    max-width: 500px;
     margin: auto;
     padding: var(--spacing-lg);
     border-radius: var(--radius-medium);
@@ -46,14 +53,16 @@
   h2 {
     margin-bottom: var(--spacing-md);
     color: var(--text-color-light);
+    text-align: center;
   }
 
   /* Back Arrow */
   .back-arrow {
     position: absolute;
-    top: var(--spacing-md);
+    top: 18%;
     left: var(--spacing-md);
     font-size: 0.9rem;
+    font-weight: bold;
     text-decoration: none;
     color: var(--text-color-light);
     background: var(--background-light);

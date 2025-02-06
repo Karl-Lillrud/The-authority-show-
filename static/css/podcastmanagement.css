@@ -53,7 +53,7 @@
 
   .back-arrow {
     position: absolute;
-    top: var(--spacing-md);
+    top: 18%;
     left: var(--spacing-md);
     font-size: 0.9rem;
     font-weight: bold;
