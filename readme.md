@@ -72,7 +72,7 @@ python -m venv venv
 # On macOS/Linux
 source venv/bin/activate
 
-# (If activation fails in PowerShell, run this command first)
+## (If activation fails in PowerShell, run this command first)
 Set-ExecutionPolicy -ExecutionPolicy Unrestricted -Scope Process
 
 3. Install Dependencies
