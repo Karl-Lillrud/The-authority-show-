@@ -59,7 +59,7 @@ git checkout dev
 
 ## 2. Set Up the Virtual Environment
 
-# Delete existing virtual environment if present
+## Delete existing virtual environment if present
 rm -rf venv  # On Linux/macOS
 del venv /s /q  # On Windows (Command Prompt)
 
