@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, jsonify, url_for, session
+from flask import Flask, render_template, request, jsonify, url_for, session, redirect
 from azure.cosmos import CosmosClient
 from dotenv import load_dotenv
 from werkzeug.security import generate_password_hash
@@ -15,7 +15,7 @@ app = Flask(__name__, template_folder='templates')
 app.secret_key = os.getenv("SECRET_KEY")
 app.register_blueprint(register_bp)
 app.config['PREFERRED URL SCHEME'] = 'https'
-exit
+
 # CosmosDB Configuration
 COSMOSDB_URI = os.getenv("COSMOS_ENDPOINT")
 COSMOSDB_KEY = os.getenv("COSMOS_KEY")
