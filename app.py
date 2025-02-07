@@ -40,13 +40,15 @@ EMAIL_PASS = os.getenv("EMAIL_PASS")
 # 📌 Step 1: User Requests Password Reset
 @app.route('/forgotpassword', methods=['GET','POST'])
 def forgot_password():
-    if not request.is_json:
-        return jsonify({"error": "Invalid Content-Type. Expected application/json"}), 415  # 415 = Unsupported Media Type
+    if request.content_type != 'application/json':
+        return jsonify({"error": "Invalid Content-Type. Expected application/json"}), 415  # Unsupported Media Type
 
     data = request.get_json()
+    if not data:
+        return jsonify({"error": "Invalid JSON format"}), 400
+
     email = data.get("email", "").strip().lower()
 
-    # Check if the user exists
     query = "SELECT * FROM c WHERE c.email = @email"
     parameters = [{"name": "@email", "value": email}]
     users = list(container.query_items(query=query, parameters=parameters, enable_cross_partition_query=True))
@@ -56,12 +58,10 @@ def forgot_password():
 
     reset_code = str(random.randint(100000, 999999))
 
-    # Store reset code in the database
     user = users[0]
     user["reset_code"] = reset_code
     container.upsert_item(user)
 
-    # Send reset code via email
     try:
         send_reset_email(email, reset_code)
         return jsonify({
@@ -72,17 +72,20 @@ def forgot_password():
         return jsonify({"error": str(e)}), 500
 
 
+
 # 📌 Step 2: User Enters Reset Code
 @app.route('/enter-code', methods=['POST'])
 def enter_code():
-    if not request.is_json:
+    if request.content_type != 'application/json':
         return jsonify({"error": "Invalid Content-Type. Expected application/json"}), 415
 
     data = request.get_json()
+    if not data:
+        return jsonify({"error": "Invalid JSON format"}), 400
+
     email = data.get("email", "").strip().lower()
     entered_code = data.get("code", "").strip()
 
-    # Retrieve user from the database
     query = "SELECT * FROM c WHERE c.email = @email"
     parameters = [{"name": "@email", "value": email}]
     users = list(container.query_items(query=query, parameters=parameters, enable_cross_partition_query=True))
@@ -96,18 +99,19 @@ def enter_code():
     }), 200
 
 
-
 # 📌 Step 3: User Resets Password
 @app.route('/reset-password', methods=['POST'])
 def reset_password():
-    if not request.is_json:
+    if request.content_type != 'application/json':
         return jsonify({"error": "Invalid Content-Type. Expected application/json"}), 415
 
     data = request.get_json()
+    if not data:
+        return jsonify({"error": "Invalid JSON format"}), 400
+
     email = data.get("email", "").strip().lower()
     new_password = data.get("password", "")
 
-    # Retrieve user from the database
     query = "SELECT * FROM c WHERE c.email = @email"
     parameters = [{"name": "@email", "value": email}]
     users = list(container.query_items(query=query, parameters=parameters, enable_cross_partition_query=True))
@@ -117,7 +121,7 @@ def reset_password():
 
     user = users[0]
     user["passwordHash"] = generate_password_hash(new_password)
-    user.pop("reset_code", None)  # Remove reset code after use
+    user.pop("reset_code", None)
     container.upsert_item(user)
 
     return jsonify({
