@@ -4,24 +4,37 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Enter Reset Code</title>
-    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/forgot.css') }}">
 </head>
 <body>
     <div class="center-box">
         <h1>Enter Reset Code</h1>
         <p>Please enter the reset code you received via email to proceed.</p>
+        
         <form id="enterCodeForm">
             <input type="email" id="email" placeholder="Enter your email" required>
             <input type="text" id="code" placeholder="Enter reset code" required>
             <button type="submit">Verify Code</button>
         </form>
-        
+
+        <button id="resendCode">Resend Code</button>  <!-- ✅ Added Resend Button -->
+
         <script>
+            document.addEventListener("DOMContentLoaded", function() {
+                const urlParams = new URLSearchParams(window.location.search);
+                const emailParam = urlParams.get("email");
+
+                if (emailParam) {
+                    document.getElementById("email").value = emailParam; // Autofill email if found in URL
+                }
+            });
+
             document.getElementById("enterCodeForm").addEventListener("submit", function(event) {
                 event.preventDefault();
+                
                 const email = document.getElementById("email").value.trim();
-                const code = document.getElementById("resetCode").value.trim();
-            
+                const code = document.getElementById("code").value.trim();
+
                 fetch("/enter-code", {
                     method: "POST",
                     headers: { 
@@ -32,17 +45,43 @@
                 })
                 .then(response => response.json())
                 .then(data => {
-                    alert(data.message || data.error);
-                    if (data.redirect_url) {
-                        window.location.href = data.redirect_url;
+                    console.log("Server Response:", data);
+                    if (data.error) {
+                        alert("Error: " + data.error);
+                    } else if (data.redirect_url) {
+                        window.location.href = data.redirect_url + "?email=" + encodeURIComponent(email);
+                    } else {
+                        alert("Unexpected response from the server.");
                     }
                 })
-                .catch(error => console.error("Error:", error));
+                .catch(error => console.error("Fetch Error:", error));
             });
-            </script>
-            
-            
-        
+
+            // ✅ Resend Code Logic
+            document.getElementById("resendCode").addEventListener("click", function() {
+                const email = document.getElementById("email").value.trim();
+                
+                if (!email) {
+                    alert("Please enter your email first.");
+                    return;
+                }
+
+                fetch("/resend-code", {  // ✅ Calls the new API route
+                    method: "POST",
+                    headers: { 
+                        "Accept": "application/json",
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify({ email: email })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    alert(data.message || data.error);
+                })
+                .catch(error => console.error("Fetch Error:", error));
+            });
+        </script>
+
         <p><a href="../index.html" class="link">Back to Login</a></p>
     </div>
 </body>

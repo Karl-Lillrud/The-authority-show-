@@ -79,19 +79,24 @@ def forgot_password():
 # 📌 Step 2: Enter Reset Code
 @app.route('/enter-code', methods=['GET', 'POST'])
 def enter_code():
+    print(f"🔍 Request Headers: {request.headers}")  # ✅ Debugging
+    print(f"🔍 Request Data: {request.data}")
+
     if request.method == 'GET':
-        return render_template('forgotpassword/enter-code.html')# ✅ Allow GET to load the page
+        return render_template('forgotpassword/enter-code.html')
 
     if request.content_type != "application/json":
         return jsonify({"error": "Invalid Content-Type. Expected application/json"}), 415
 
     try:
-        data = request.get_json(force=True)  # ✅ Ensure JSON format
+        data = request.get_json(force=True)
     except Exception:
         return jsonify({"error": "Invalid JSON format"}), 400
 
     email = data.get("email", "").strip().lower()
     entered_code = data.get("code", "").strip()
+
+    print(f"🔍 Checking Email: {email}, Code: {entered_code}")  # ✅ Debugging
 
     query = "SELECT * FROM c WHERE LOWER(c.email) = @email"
     parameters = [{"name": "@email", "value": email}]
@@ -100,15 +105,17 @@ def enter_code():
     if not users or users[0].get("reset_code") != entered_code:
         return jsonify({"error": "Invalid or expired reset code."}), 400
 
-    return jsonify({
-        "message": "Code verified. Redirecting...",
-        "redirect_url": "/reset-password?email=" + email
-    }), 200
+    print("✅ Code Verified, Redirecting to Reset Password")
+
+    return jsonify({"message": "Code is Valid.", "redirect_url": url_for('reset_password')}), 200
 
 
 # 📌 Step 3: Reset Password
-@app.route('/reset-password', methods=['POST'])
+@app.route('/reset-password', methods=['GET', 'POST'])
 def reset_password():
+    if request.method == 'GET':
+        return render_template('forgotpassword/reset-password.html')  # ✅ Allow GET request
+
     if not request.is_json:
         return jsonify({"error": "Invalid Content-Type. Expected application/json"}), 415
 
@@ -125,10 +132,11 @@ def reset_password():
 
     user = users[0]
     user["passwordHash"] = generate_password_hash(new_password)
-    user.pop("reset_code", None)  # Remove reset code
+    user.pop("reset_code", None)
     container.upsert_item(user)
 
     return jsonify({"message": "Password updated successfully.", "redirect_url": url_for('signin')}), 200
+
 
 # 📌 Send Reset Email
 def send_reset_email(email, reset_code):
@@ -147,36 +155,63 @@ def send_reset_email(email, reset_code):
         print(f"Error sending email: {e}")
         raise
 
-# 📌 Sign-in Route
-@app.route('/', methods=['GET'])
-@app.route('/signin', methods=['GET', 'POST'])
-def signin():
+@app.route('/resend-code', methods=['POST'])
+def resend_code():
     try:
-        if request.method == 'GET':
-            return render_template('signin.html')
+        if request.content_type != "application/json":
+            return jsonify({"error": "Invalid Content-Type. Expected application/json"}), 415  
 
         data = request.get_json()
         email = data.get("email", "").strip().lower()
-        password = data.get("password", "")
+
+        print(f"🔍 Resending code for email: {email}")
 
         query = "SELECT * FROM c WHERE LOWER(c.email) = @email"
         parameters = [{"name": "@email", "value": email}]
         users = list(container.query_items(query=query, parameters=parameters, enable_cross_partition_query=True))
 
         if not users:
-            return jsonify({"error": "Invalid email or password"}), 401
+            return jsonify({"error": "No account found with that email"}), 404
 
-        stored_hash = users[0].get("passwordHash", "")
-        if not check_password_hash(stored_hash, password):
-            return jsonify({"error": "Invalid email or password"}), 401
+        # Generate a new reset code
+        reset_code = str(random.randint(100000, 999999))
+        user = users[0]
+        user["reset_code"] = reset_code
+        container.upsert_item(user)
 
-        session["user_id"] = str(users[0]["id"])
-        session["email"] = users[0]["email"]
+        send_reset_email(email, reset_code)  # ✅ Send email
 
-        return jsonify({"message": "Login successful", "redirect_url": url_for('dashboard')}), 200
+        return jsonify({"message": "New reset code sent successfully."}), 200
 
     except Exception as e:
-        return jsonify({"error": str(e)}), 500
+        return jsonify({"error": f"Failed to resend code: {str(e)}"}), 500
+
+# 📌 Sign-in Route
+@app.route('/', methods=['GET'])
+@app.route('/signin', methods=['GET', 'POST'])
+def signin():
+    if request.method == 'GET':
+        return render_template('signin.html')
+
+    if request.content_type != "application/json":
+        return jsonify({"error": "Invalid Content-Type. Expected application/json"}), 415
+    
+    data = request.get_json()
+    email = data.get("email", "").strip().lower()
+    password = data.get("password", "")
+
+    query = "SELECT * FROM c WHERE LOWER(c.email) = @email"
+    parameters = [{"name": "@email", "value": email}]
+    users = list(container.query_items(query=query, parameters=parameters, enable_cross_partition_query=True))
+
+    if not users or not check_password_hash(users[0]["passwordHash"], password):
+        return jsonify({"error": "Invalid email or password"}), 401
+
+    session["user_id"] = str(users[0]["id"])
+    session["email"] = users[0]["email"]
+    session.permanent = True
+
+    return jsonify({"message": "Login successful", "redirect_url": "/dashboard"}), 200
 
 # 📌 Dashboard
 @app.route('/dashboard', methods=['GET'])
