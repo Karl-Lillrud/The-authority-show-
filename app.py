@@ -38,10 +38,13 @@ EMAIL_PASS = os.getenv("EMAIL_PASS")
 
 @app.route('/forgotpassword', methods=['POST'])
 def forgot_password():
-    if not request.is_json:
-        return jsonify({"error": "Invalid Content-Type. Expected application/json"}), 415  
+    if request.content_type != 'application/json':
+        return jsonify({"error": "Invalid Content-Type. Expected application/json"}), 415  # Unsupported Media Type
 
     data = request.get_json()
+    if not data:
+        return jsonify({"error": "Invalid JSON format"}), 400
+
     email = data.get("email", "").strip().lower()
 
     query = "SELECT * FROM c WHERE c.email = @email"
@@ -61,15 +64,19 @@ def forgot_password():
         send_reset_email(email, reset_code)
         return jsonify({"message": "Reset code sent successfully.", "redirect_url": url_for('enter_code')}), 200
     except Exception as e:
-        return jsonify({"error": f"Failed to send email: {str(e)}"}), 500
+        return jsonify({"error": str(e)}), 500
+
 
 
 @app.route('/enter-code', methods=['POST'])
 def enter_code():
-    if not request.is_json:
+    if request.content_type != 'application/json':
         return jsonify({"error": "Invalid Content-Type. Expected application/json"}), 415
 
     data = request.get_json()
+    if not data:
+        return jsonify({"error": "Invalid JSON format"}), 400
+
     email = data.get("email", "").strip().lower()
     entered_code = data.get("code", "").strip()
 
@@ -88,12 +95,16 @@ def enter_code():
     return jsonify({"message": "Code verified. You can now reset your password.", "redirect_url": url_for('reset_password')}), 200
 
 
+# 📌 Step 3: User Resets Password
 @app.route('/reset-password', methods=['POST'])
 def reset_password():
-    if not request.is_json:
+    if request.content_type != 'application/json':
         return jsonify({"error": "Invalid Content-Type. Expected application/json"}), 415
 
     data = request.get_json()
+    if not data:
+        return jsonify({"error": "Invalid JSON format"}), 400
+
     email = data.get("email", "").strip().lower()
     new_password = data.get("password", "")
 
@@ -106,7 +117,7 @@ def reset_password():
 
     user = users[0]
     user["passwordHash"] = generate_password_hash(new_password)
-    user.pop("reset_code", None)  # Remove reset code after use
+    user.pop("reset_code", None)
     container.upsert_item(user)
 
     return jsonify({"message": "Password updated successfully.", "redirect_url": url_for('signin')}), 200
