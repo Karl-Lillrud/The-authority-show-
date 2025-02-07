@@ -77,12 +77,19 @@ def forgot_password():
 
 
 # 📌 Step 2: Enter Reset Code
-@app.route('/enter-code', methods=['POST'])
+@app.route('/enter-code', methods=['GET', 'POST'])
 def enter_code():
-    if not request.is_json:
+    if request.method == 'GET':
+        return render_template('forgotpassword/enter-code.html')# ✅ Allow GET to load the page
+
+    if request.content_type != "application/json":
         return jsonify({"error": "Invalid Content-Type. Expected application/json"}), 415
 
-    data = request.get_json()
+    try:
+        data = request.get_json(force=True)  # ✅ Ensure JSON format
+    except Exception:
+        return jsonify({"error": "Invalid JSON format"}), 400
+
     email = data.get("email", "").strip().lower()
     entered_code = data.get("code", "").strip()
 
@@ -93,7 +100,11 @@ def enter_code():
     if not users or users[0].get("reset_code") != entered_code:
         return jsonify({"error": "Invalid or expired reset code."}), 400
 
-    return jsonify({"message": "Code verified. You can now reset your password.", "redirect_url": url_for('reset_password')}), 200
+    return jsonify({
+        "message": "Code verified. Redirecting...",
+        "redirect_url": "/reset-password?email=" + email
+    }), 200
+
 
 # 📌 Step 3: Reset Password
 @app.route('/reset-password', methods=['POST'])

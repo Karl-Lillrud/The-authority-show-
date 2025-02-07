@@ -19,13 +19,14 @@
         <script>
             document.getElementById("enterCodeForm").addEventListener("submit", function(event) {
                 event.preventDefault();
-                const email = document.getElementById("email").value;
-                const code = document.getElementById("code").value;
+                const email = document.getElementById("email").value.trim();
+                const code = document.getElementById("resetCode").value.trim();
             
                 fetch("/enter-code", {
                     method: "POST",
                     headers: { 
-                        "Content-Type": "application/json" 
+                        "Accept": "application/json",
+                        "Content-Type": "application/json"
                     },
                     body: JSON.stringify({ email: email, code: code })
                 })
@@ -33,12 +34,13 @@
                 .then(data => {
                     alert(data.message || data.error);
                     if (data.redirect_url) {
-                        window.location.href = "/reset-password?email=" + encodeURIComponent(email);
+                        window.location.href = data.redirect_url;
                     }
                 })
                 .catch(error => console.error("Error:", error));
             });
             </script>
+            
             
         
         <p><a href="../index.html" class="link">Back to Login</a></p>
