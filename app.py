@@ -213,9 +213,9 @@ def tasks():
     return render_template('dashboard/tasks.html')
 
 # ✅ Serves the pickadate
-@app.route('/pickadate/pickadate.html')
+@app.route('pickadate.html')
 def pickadate():
-    return render_template('pickadate.html')
+    return render_template('pickadate/pickadate.html')
 
 @app.route('/book', methods=['POST'])
 def book_route():
