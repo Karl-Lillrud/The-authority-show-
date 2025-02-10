@@ -17,6 +17,7 @@ app.secret_key = os.getenv("SECRET_KEY")
 app.config["SESSION_TYPE"] = "filesystem"  # Store session data
 app.config["SESSION_PERMANENT"] = False
 app.register_blueprint(register_bp)
+app.pickadate_blueprint(register_bp)
 app.config['PREFERRED_URL_SCHEME'] = 'https'
 
 # Determine environment (local or production)
@@ -212,9 +213,17 @@ def tasks():
     return render_template('dashboard/tasks.html')
 
 # ✅ Serves the pickadate
-@app.route('/pickadate', methods=['GET','POST'])
-def homepage():
-    return render_template('pickadate/pickadate.html')
+@app.route('/pickadate/pickadate.html')
+def pickadate():
+    return render_template('pickadate.html')
+
+@app.route('/book', methods=['POST'])
+def book_route():
+    return book()
+
+@app.route('/bookings', methods=['GET'])
+def bookings_route():
+    return get_bookings()
 
 
 if __name__ == "__main__":
