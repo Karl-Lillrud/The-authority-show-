@@ -83,59 +83,56 @@ def forgot_password():
         return jsonify({"error": str(e)}), 500
 
 
-@app.route('/enter-code', methods=['POST'])
+@app.route('/enter-code', methods=['GET', 'POST'])
 def enter_code():
-    if request.content_type != 'application/json':
+    if request.method == 'GET':
+        return render_template('forgotpassword/enter-code.html')# ✅ Allow GET to load the page
+ 
+    if request.content_type != "application/json":
         return jsonify({"error": "Invalid Content-Type. Expected application/json"}), 415
-
-    data = request.get_json()
-    if not data:
+ 
+    try:
+        data = request.get_json(force=True)  # ✅ Ensure JSON format
+    except Exception:
         return jsonify({"error": "Invalid JSON format"}), 400
-
+ 
     email = data.get("email", "").strip().lower()
     entered_code = data.get("code", "").strip()
-
-    query = "SELECT * FROM c WHERE c.email = @email"
+ 
+    query = "SELECT * FROM c WHERE LOWER(c.email) = @email"
     parameters = [{"name": "@email", "value": email}]
     users = list(container.query_items(query=query, parameters=parameters, enable_cross_partition_query=True))
-
-    if not users:
-        return jsonify({"error": "User not found"}), 404
-
-    user = users[0]
-
-    if "reset_code" not in user or user["reset_code"] != entered_code:
+ 
+    if not users or users[0].get("reset_code") != entered_code:
         return jsonify({"error": "Invalid or expired reset code."}), 400
-
-    return jsonify({"message": "Code verified. You can now reset your password.", "redirect_url": url_for('reset_password')}), 200
-
+ 
+    return jsonify({
+        "message": "Code verified. Redirecting...",
+        "redirect_url": "/reset-password?email=" + email
+    }), 200
 
 @app.route('/reset-password', methods=['POST'])
 def reset_password():
-    if request.content_type != 'application/json':
+    if not request.is_json:
         return jsonify({"error": "Invalid Content-Type. Expected application/json"}), 415
-
+ 
     data = request.get_json()
-    if not data:
-        return jsonify({"error": "Invalid JSON format"}), 400
-
     email = data.get("email", "").strip().lower()
     new_password = data.get("password", "")
-
-    query = "SELECT * FROM c WHERE c.email = @email"
+ 
+    query = "SELECT * FROM c WHERE LOWER(c.email) = @email"
     parameters = [{"name": "@email", "value": email}]
     users = list(container.query_items(query=query, parameters=parameters, enable_cross_partition_query=True))
-
+ 
     if not users:
         return jsonify({"error": "User not found."}), 404
-
+ 
     user = users[0]
     user["passwordHash"] = generate_password_hash(new_password)
-    user.pop("reset_code", None)
+    user.pop("reset_code", None)  # Remove reset code
     container.upsert_item(user)
-
+ 
     return jsonify({"message": "Password updated successfully.", "redirect_url": url_for('signin')}), 200
-
 
 def send_reset_email(email, reset_code):
     try:
@@ -143,12 +140,12 @@ def send_reset_email(email, reset_code):
         msg["Subject"] = "Password Reset Request"
         msg["From"] = EMAIL_USER
         msg["To"] = email
-
+ 
         with smtplib.SMTP(SMTP_SERVER, SMTP_PORT) as server:
             server.starttls()
             server.login(EMAIL_USER, EMAIL_PASS)
             server.sendmail(EMAIL_USER, email, msg.as_string())
-
+ 
     except Exception as e:
         print(f"Error sending email: {e}")
         raise
