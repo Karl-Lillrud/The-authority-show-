@@ -81,14 +81,26 @@ def pickadate():
 @pickadate_bp.route('/book', methods=['POST'])
 def book():
     try:
+        print("Received Form Data:")
+        print(request.form)  # Print the raw form data
+
         guest_name = request.form.get('guestName')
         email = request.form.get('email')
         preferred_time = request.form.get('preferredTime')
         file_url = request.form.get('fileUrl')  # Get uploaded file URL from frontend
 
+        print(f"Guest Name: {guest_name}")
+        print(f"Email: {email}")
+        print(f"Preferred Time: {preferred_time}")
+        print(f"File URL: {file_url}")  # This should NOT be None
+
         if not guest_name or not email or not preferred_time:
             print("Missing required fields!")
             return jsonify({'message': 'Missing required fields'}), 400
+
+        if not file_url:
+            print(" No file URL received! Make sure the upload is successful before submitting.")
+            return jsonify({'message': 'File upload required'}), 400
 
         booking_id = str(uuid.uuid4())
         item = {
@@ -104,7 +116,7 @@ def book():
 
         try:
             container.create_item(body=item)
-            print(f"Successfully saved booking {booking_id}")
+            print(f"✅ Successfully saved booking {booking_id}")
         except Exception as db_error:
             print(f"CosmosDB Save Error: {db_error}")
             return jsonify({'message': 'Database error', 'error': str(db_error)}), 500
@@ -118,7 +130,6 @@ def book():
     except Exception as e:
         print(f"Unexpected Error in `book()`: {e}")
         return jsonify({'message': 'Internal Server Error', 'error': str(e)}), 500
-
 
 
 @pickadate_bp.route('/bookings', methods=['GET'])
@@ -169,17 +180,23 @@ def send_booking_email(to_email, guest_name, preferred_time):
 def upload_file():
     """Handles file upload to Azure Blob Storage."""
     if 'file' not in request.files:
+        print(" No file found in request!")
         return jsonify({'error': 'No file uploaded'}), 400
 
     file = request.files['file']
     if file.filename == '':
+        print(" No file selected!")
         return jsonify({'error': 'No file selected'}), 400
 
     file_url = upload_to_azure(file)
     if file_url:
+        print(f" File successfully uploaded: {file_url}")
         return jsonify({'fileUrl': file_url}), 200
     else:
+        print("Upload failed!")
         return jsonify({'error': 'Upload failed'}), 500
+
+
 
 def upload_to_azure(file):
     """Uploads file to Azure Blob Storage and returns the file URL"""
@@ -190,7 +207,7 @@ def upload_to_azure(file):
 
         filename = secure_filename(f"{uuid.uuid4()}_{file.filename}")
         blob_client = blob_container_client.get_blob_client(filename)
-        
+
         print(f"⬆ Attempting to upload {filename} to Azure Blob Storage...")
 
         # Read file content to ensure it's being sent
@@ -199,15 +216,19 @@ def upload_to_azure(file):
             print("File data is empty! The file may not have been read properly.")
             return None
 
+        # Reset file pointer (important for re-uploading the same file)
+        file.seek(0)
+
         # Upload the file
-        blob_client.upload_blob(file_data, overwrite=True)
-        
+        blob_client.upload_blob(file, overwrite=True)
+
         file_url = f"https://{AZURE_STORAGE_ACCOUNT_NAME}.blob.core.windows.net/{AZURE_STORAGE_CONTAINER_NAME}/{filename}"
-        print(f"✅ Upload Successful! File URL: {file_url}")
+        print(f"Upload Successful! File URL: {file_url}")
         return file_url
     except Exception as e:
         print(f"Azure Blob Storage Upload Error: {e}")
         return None
+
 
 def send_host_notification(to_email, guest_name, guest_email, preferred_time):
     subject = "New Podcast Booking Received"
