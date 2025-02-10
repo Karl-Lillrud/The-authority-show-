@@ -68,49 +68,40 @@ def book():
     try:
         guest_name = request.form.get('guestName')
         email = request.form.get('email')
-        phone = request.form.get('phone')
-        social_media = request.form.get('socialMedia')
-        podcast_name = request.form.get('podcastName')
         preferred_time = request.form.get('preferredTime')
-        meeting_preferences = request.form.get('meetingPreferences')
-        file_url = None
 
-        if 'upload' in request.files:
-            file = request.files['upload']
-            if file.filename:
-                filename = secure_filename(f"{uuid.uuid4()}_{file.filename}")
-                filepath = os.path.join('uploads/', filename)
-                file.save(filepath)
-                file_url = filepath
+        if not guest_name or not email or not preferred_time:
+            print("Missing required fields!")
+            return jsonify({'message': 'Missing required fields'}), 400
 
         booking_id = str(uuid.uuid4())
         item = {
             'id': booking_id,
             'guestName': guest_name,
             'email': email,
-            'phone': phone,
-            'socialMedia': social_media,
-            'podcastName': podcast_name,
             'preferredTime': preferred_time,
-            'meetingPreferences': meeting_preferences,
-            'fileUrl': file_url,
             'createdAt': datetime.utcnow().isoformat()
         }
 
-        container.create_item(body=item)
+        print(f"Saving to CosmosDB: {item}")  # Debugging line
 
-        # Debugging - Print logs
-        print(f"📩 Sending email to Guest: {email}")
-        print(f"📩 Sending email to Host: {HOST_EMAIL}")
+        try:
+            container.create_item(body=item)
+            print(f"Successfully saved booking {booking_id}")
+        except Exception as db_error:
+            print(f"CosmosDB Save Error: {db_error}")
+            return jsonify({'message': 'Database error', 'error': str(db_error)}), 500
 
-        # Send email confirmation to Guest & Host
+        # Send confirmation emails
         send_booking_email(email, guest_name, preferred_time)
         send_host_notification(HOST_EMAIL, guest_name, email, preferred_time)
 
         return jsonify({'message': 'Booking Successful', 'bookingId': booking_id}), 201
+
     except Exception as e:
-        print(f"🚨 Error in book(): {e}")
+        print(f"Unexpected Error in `book()`: {e}")
         return jsonify({'message': 'Internal Server Error', 'error': str(e)}), 500
+
 
 @pickadate_bp.route('/bookings', methods=['GET'])
 def get_bookings():
@@ -144,7 +135,7 @@ def get_available_slots():
         return jsonify({'message': 'Error fetching available slots', 'error': str(e)}), 500
 
 def send_booking_email(to_email, guest_name, preferred_time):
-    subject = "📅 Podcast Booking Confirmation"
+    subject = "Podcast Booking Confirmation"
     message = f"""
     Hello {guest_name},
 
@@ -153,11 +144,10 @@ def send_booking_email(to_email, guest_name, preferred_time):
     Thank you!
     """
 
-    print(f"📨 Sending email to guest: {to_email}")  # Debugging
     send_email(to_email, subject, message)
 
 def send_host_notification(to_email, guest_name, guest_email, preferred_time):
-    subject = "🔔 New Podcast Booking Received"
+    subject = "New Podcast Booking Received"
     message = f"""
     Hello,
 
@@ -170,16 +160,16 @@ def send_host_notification(to_email, guest_name, guest_email, preferred_time):
     Please check the booking system for more details.
     """
 
-    print(f"📨 Sending email to host: {to_email}")  # Debugging
     send_email(to_email, subject, message)
 
 def send_email(to_email, subject, message):
     try:
+        print(f"Attempting to send email to {to_email}...")
         msg = f"Subject: {subject}\n\n{message}"
         with smtplib.SMTP(SMTP_SERVER, SMTP_PORT) as server:
             server.starttls()
             server.login(EMAIL_USER, EMAIL_PASS)
             server.sendmail(EMAIL_USER, to_email, msg)
-        print(f"✅ Email sent successfully to {to_email}")
+        print(f"Email sent successfully to {to_email}")
     except Exception as e:
-        print(f"🚨 Email sending error: {e}")
+        print(f"Email sending error: {e}")
