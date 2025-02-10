@@ -73,7 +73,7 @@
       }
   
       /* Add Task Button */
-      #add-task-btn {
+      #add-task-btn, #load-default-btn {
         background: var(--background-light);
         border: none;
         padding: var(--spacing-sm) var(--spacing-md);
@@ -86,7 +86,7 @@
         color: var(--text-color-light);
         transition: transform 0.3s ease, background-color 0.3s ease;
       }
-      #add-task-btn:hover {
+      #add-task-btn:hover, #load-default-btn:hover {
         background-color: rgba(255, 127, 63, 0.1);
         transform: translateY(-2px);
         color: var(--highlight-color);
@@ -94,7 +94,7 @@
   
       /* Task List Container */
       #task-list {
-        list-style: none;
+        list-style: decimal;
         padding: 0;
         max-width: 600px;
         margin: 0 auto;
@@ -117,7 +117,18 @@
       #task-list li:hover {
         transform: translateY(-2px);
       }
-  
+
+      .task-details {
+        display: flex;
+        align-items: center;
+        flex-wrap: nowrap;
+      }
+      
+      .task-actions {
+        display: flex;
+        gap: var(--spacing-sm);
+      }
+
       .task-name {
         flex-grow: 1;
         text-align: left;
@@ -134,7 +145,7 @@
         border-radius: var(--radius-small);
         cursor: pointer;
         font-size: 0.8rem;
-        color: #fff;
+        color: #666865;
       }
   
       .edit-btn {
@@ -300,3 +311,90 @@
       .hidden {
         display: none;
       }
+
+      .header {
+        width: 100%;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 20px;
+        position: absolute;
+        top: 0;
+        left: 0;
+    }
+    
+    .logo img {
+        width: 50px;
+    }
+    
+    .container {
+        display: flex;
+        gap: 20px;
+        justify-content: center;
+        flex-wrap: wrap;
+        margin-top: 80px;
+    }
+    
+    .card {
+        background: #FFFFFF;
+        border-radius: 12px;
+        padding: 16px;
+        box-shadow: 0px 2px 8px rgba(0, 0, 0, 0.1);
+        text-align: center;
+        width: 220px;
+        cursor: pointer;
+    }
+    
+    .card img {
+        width: 100%;
+        border-radius: 8px;
+    }
+    
+    .episode-count {
+        font-weight: 700;
+        font-size: 16px;
+        margin-top: 10px;
+    }
+    
+    .red { color: #DC3545; }
+    .orange { color: #FF7F00; }
+    .green { color: #28A745; }
+    
+    /* Popup-specific Styles for Guest Selection */
+    .popup {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.5); /* Semi-transparent overlay */
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 2000;
+    }
+    
+    .popup-content {
+        background: #FFF;
+        border-radius: 12px;
+        padding: 24px;
+        box-shadow: 0px 2px 8px rgba(0, 0, 0, 0.1);
+        max-width: 600px;
+        width: 90%;
+        text-align: center;
+    }
+    
+    /* Optional: Adjust guest selection container inside the popup */
+    .guest-selection {
+        margin-top: 20px;
+    }
+
+
+    .drag-ghost {
+      opacity: 0.7;                /* semi-transparent */
+      background-color: #f4a261;     /* light orange background */
+      border: 2px dashed #e63946;    /* dashed reddish border */
+      transform: scale(1.05);        /* slightly enlarged */
+    }
+
+    

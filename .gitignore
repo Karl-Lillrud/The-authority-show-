@@ -1,12 +1,2 @@
-# Ignore Python virtual environments
-./venv/
+venv
 __pycache__/
-
-# Ignore Windows system files
-Thumbs.db
-
-# Ignore log files
-*.log
-
-.env
-
