@@ -7,6 +7,7 @@ import random
 import smtplib
 from email.mime.text import MIMEText
 from register import register_bp
+from pickadate import pickadate_bp
 
 # Load environment variables
 load_dotenv()
@@ -17,7 +18,7 @@ app.secret_key = os.getenv("SECRET_KEY")
 app.config["SESSION_TYPE"] = "filesystem"  # Store session data
 app.config["SESSION_PERMANENT"] = False
 app.register_blueprint(register_bp)
-app.pickadate_blueprint(register_bp)
+app.register_blueprint(pickadate_bp)
 app.config['PREFERRED_URL_SCHEME'] = 'https'
 
 # Determine environment (local or production)
@@ -213,7 +214,7 @@ def tasks():
     return render_template('dashboard/tasks.html')
 
 # ✅ Serves the pickadate
-@app.route('pickadate.html')
+@app.route('/pickadate')
 def pickadate():
     return render_template('pickadate/pickadate.html')
 

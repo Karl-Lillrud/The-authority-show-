@@ -1,8 +1,11 @@
 import os
 import uuid
-from flask import request, jsonify
+from flask import Blueprint, request, jsonify, render_template
 from azure.cosmos import CosmosClient, PartitionKey
 from werkzeug.utils import secure_filename
+
+# Flask Blueprint
+pickadate_bp = Blueprint('pickadate_bp', __name__)
 
 # Cosmos DB Configuration
 COSMOS_ENDPOINT = os.getenv('COSMOS_ENDPOINT')
@@ -10,12 +13,15 @@ COSMOS_KEY = os.getenv('COSMOS_KEY')
 DATABASE_NAME = 'podmanagedb'
 CONTAINER_NAME = 'bookings'
 
-register_bp = Blueprint('pickadate_bp', __name__)
-
 client = CosmosClient(COSMOS_ENDPOINT, COSMOS_KEY)
 database = client.create_database_if_not_exists(DATABASE_NAME)
 container = database.create_container_if_not_exists(id=CONTAINER_NAME, partition_key=PartitionKey(path='/email'))
 
+@pickadate_bp.route('/pickadate')
+def pickadate():
+    return render_template('pickadate/pickadate.html')
+
+@pickadate_bp.route('/book', methods=['POST'])
 def book():
     try:
         guest_name = request.form.get('guestName')
@@ -54,6 +60,7 @@ def book():
     except Exception as e:
         return jsonify({'message': 'Internal Server Error', 'error': str(e)}), 500
 
+@pickadate_bp.route('/bookings', methods=['GET'])
 def get_bookings():
     try:
         bookings = list(container.read_all_items())
