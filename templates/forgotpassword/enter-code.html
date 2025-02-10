@@ -10,16 +10,40 @@
     <div class="center-box">
         <h1>Enter Reset Code</h1>
         <p>Please enter the reset code you received via email to proceed.</p>
-        <form action="verify-code.php" method="POST">
-            <div class="input-group">
-                <label for="code">Reset Code:</label>
-                <input type="text" id="code" name="code" class="input" placeholder="Enter your code" required>
-            </div>
-            <button type="submit" class="button">Submit</button>
+        <form id="enterCodeForm">
+            <input type="email" id="email" placeholder="Enter your email" required>
+            <input type="text" id="code" placeholder="Enter reset code" required>
+            <button type="submit">Verify Code</button>
         </form>
+       
+        <script>
+            document.getElementById("enterCodeForm").addEventListener("submit", function(event) {
+                event.preventDefault();
+                const email = document.getElementById("email").value.trim();
+                const code = document.getElementById("resetCode").value.trim();
+           
+                fetch("/enter-code", {
+                    method: "POST",
+                    headers: {
+                        "Accept": "application/json",
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify({ email: email, code: code })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    alert(data.message || data.error);
+                    if (data.redirect_url) {
+                        window.location.href = data.redirect_url;
+                    }
+                })
+                .catch(error => console.error("Error:", error));
+            });
+            </script>
+           
+           
+       
         <p><a href="../index.html" class="link">Back to Login</a></p>
     </div>
-     const email = document.getElementById("email").value.trim();
-                const code = document.getElementById("resetCode").value.trim();
 </body>
 </html>
