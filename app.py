@@ -6,9 +6,13 @@ from werkzeug.security import generate_password_hash, check_password_hash
 import os
 import random
 import smtplib
+import venvupdate
 from email.mime.text import MIMEText
 
-# Load environment variables
+# update the virtual environment and requirements
+
+venvupdate.update_venv_and_requirements()
+
 load_dotenv()
 
 app = Flask(__name__, template_folder='templates')
