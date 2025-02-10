@@ -22,6 +22,8 @@ HOW TO START THE WEB APP LOCALLY
 - To start the app, use the command:
     python .\app.py
 
+- To add/install packages: python pip_auto.py un/install package_name (This will auto update requirement.txt)
+
 Open a browser and visit "localhost:8000"
 
 ----------------------------------------------------------------------------
