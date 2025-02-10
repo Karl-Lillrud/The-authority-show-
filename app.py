@@ -1,5 +1,4 @@
 from flask import Flask, render_template, request, jsonify, url_for, session, redirect
-from flask_cors import CORS
 from azure.cosmos import CosmosClient
 from dotenv import load_dotenv
 from werkzeug.security import generate_password_hash, check_password_hash
@@ -46,13 +45,7 @@ EMAIL_PASS = os.getenv("EMAIL_PASS")
 # Determine API base URL based on environment
 API_BASE_URL = "http://127.0.0.1:8000" if APP_ENV == "local" else "https://app.podmanager.ai"
 
-# Enable CORS for local and production environments
-if APP_ENV == "local":
-    CORS(app, origins="http://127.0.0.1:8000")  # Allow localhost for local dev
-else:
-    CORS(app, origins="https://app.podmanager.ai")  # Only allow the production domain
-
-@app.route('/forgotpassword', methods=['POST'])
+@app.route('/forgotpassword', methods=['GET','POST'])
 def forgot_password():
     if request.content_type != 'application/json':
         return jsonify({"error": "Invalid Content-Type. Expected application/json"}), 415  # Unsupported Media Type
@@ -82,8 +75,7 @@ def forgot_password():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
-
-@app.route('/enter-code', methods=['GET', 'POST'])
+@app.route('/enter-code', methods=['GET','POST'])
 def enter_code():
     if request.method == 'GET':
         return render_template('forgotpassword/enter-code.html')# ✅ Allow GET to load the page
@@ -111,7 +103,7 @@ def enter_code():
         "redirect_url": "/reset-password?email=" + email
     }), 200
 
-@app.route('/reset-password', methods=['POST'])
+@app.route('/reset-password', methods=['GET','POST'])
 def reset_password():
     if not request.is_json:
         return jsonify({"error": "Invalid Content-Type. Expected application/json"}), 415
