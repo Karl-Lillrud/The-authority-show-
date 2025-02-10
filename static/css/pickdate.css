@@ -1,0 +1,143 @@
+/* css/styles.css */
+:root {
+    /* Color Variables */
+    --background-light: #EFF2F9;
+    --background-dark: #1C1C1C;
+    --light-shadow-light: #FFFFFF;
+    --dark-shadow-light: rgba(22, 24, 29, 0.23);
+    --light-shadow-dark: rgba(255, 255, 255, 0.1);
+    --dark-shadow-dark: rgba(0, 0, 0, 0.8);
+    --text-color-light: #6E7F8D;
+    --text-color-dark: #B3B3B3;
+    --highlight-color: #FF7F3F;
+    --error-color: #FF3B30;
+    --success-color: #4CAF50;
+    --font-primary: 'Campton', sans-serif;
+    --font-secondary: 'Avenir Next', sans-serif;
+    
+    /* Spacing */
+    --spacing-xs: 4px;
+    --spacing-sm: 8px;
+    --spacing-md: 16px;
+    --spacing-lg: 24px;
+    --spacing-xl: 32px;
+    
+    /* Breakpoints */
+    --breakpoint-xs: 360px;
+    --breakpoint-sm: 576px;
+    --breakpoint-md: 768px;
+    --breakpoint-lg: 992px;
+    --breakpoint-xl: 1200px;
+  }
+  
+  body {
+    margin: 0;
+    font-family: var(--font-primary);
+    background-color: var(--background-light);
+    color: var(--text-color-light);
+    transition: background-color 0.3s ease, color 0.3s ease;
+  }
+  
+  /* Header Styling using Neumorphism */
+  .neu-header {
+    background-color: var(--background-light);
+    padding: var(--spacing-lg) var(--spacing-md);
+    border-radius: var(--spacing-md);
+    box-shadow: -5px -5px 10px var(--light-shadow-light), 5px 5px 10px var(--dark-shadow-light);
+    text-align: center;
+    margin: var(--spacing-lg);
+  }
+  
+  .header-container h1 {
+    font-family: var(--font-secondary);
+    margin: var(--spacing-sm) 0;
+  }
+  
+  .header-container p {
+    margin: var(--spacing-xs) 0;
+    font-size: 1rem;
+  }
+  
+  /* Language Switcher */
+  .language-switcher {
+    margin-top: var(--spacing-sm);
+  }
+  .language-switcher button {
+    margin: 0 var(--spacing-xs);
+    padding: var(--spacing-xs) var(--spacing-sm);
+    border: none;
+    border-radius: var(--spacing-xs);
+    background-color: var(--background-light);
+    box-shadow: -3px -3px 6px var(--light-shadow-light), 3px 3px 6px var(--dark-shadow-light);
+    cursor: pointer;
+    transition: background-color 0.3s ease, transform 0.3s ease;
+  }
+  .language-switcher button:hover {
+    background-color: var(--highlight-color);
+    color: #fff;
+    transform: scale(1.05);
+  }
+  
+  /* Booking Form Section (Neu Card) */
+  .neu-card {
+    background-color: var(--background-light);
+    padding: var(--spacing-lg);
+    border-radius: var(--spacing-md);
+    box-shadow: -10px -10px 20px var(--light-shadow-light), 10px 10px 20px var(--dark-shadow-light);
+    margin: var(--spacing-lg) auto;
+    max-width: 600px;
+  }
+  
+  /* Form Groups */
+  .form-group {
+    margin-bottom: var(--spacing-md);
+    display: flex;
+    flex-direction: column;
+  }
+  .form-group label {
+    margin-bottom: var(--spacing-xs);
+    font-weight: 700;
+    font-family: var(--font-secondary);
+  }
+  .form-group input,
+  .form-group select {
+    padding: var(--spacing-sm);
+    border: none;
+    border-radius: var(--spacing-xs);
+    background-color: var(--background-light);
+    box-shadow: inset 3px 3px 6px var(--dark-shadow-light), inset -3px -3px 6px var(--light-shadow-light);
+    font-size: 14px;
+    transition: box-shadow 0.3s ease;
+  }
+  .form-group input:focus,
+  .form-group select:focus {
+    outline: none;
+    box-shadow: inset 2px 2px 4px var(--highlight-color), inset -2px -2px 4px var(--highlight-color);
+  }
+  
+  /* Button Styling */
+  .btn {
+    background: var(--highlight-color);
+    border: none;
+    padding: var(--spacing-sm) var(--spacing-md);
+    color: #fff;
+    border-radius: var(--spacing-md);
+    cursor: pointer;
+    box-shadow: -5px -5px 10px var(--light-shadow-light), 5px 5px 10px var(--dark-shadow-light);
+    transition: transform 0.3s ease, background-color 0.3s ease;
+    font-family: var(--font-secondary);
+    font-size: 1rem;
+  }
+  .btn:hover {
+    transform: scale(1.05);
+    background-color: #e0663e;
+  }
+  
+  /* Responsive Adjustments */
+  @media (max-width: 576px) {
+    .neu-card {
+      margin: var(--spacing-md);
+      padding: var(--spacing-md);
+    }
+  }
+  
