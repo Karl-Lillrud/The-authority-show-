@@ -211,6 +211,11 @@ def profile():
 def tasks():
     return render_template('dashboard/tasks.html')
 
+# ✅ Serves the pickadate
+@app.route('/pickadate', methods=['GET'])
+def homepage():
+    return render_template('pickadate/pickadate.html')
+
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=8000, debug=True)
