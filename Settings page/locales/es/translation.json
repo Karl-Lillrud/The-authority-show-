@@ -1,0 +1,68 @@
+{
+    "page": {
+      "title": "Configuración de Cuenta y Podcast"
+    },
+    "accountSettings": {
+      "title": "Configuración de la Cuenta",
+      "profilePicture": {
+        "alt": "Foto de Perfil",
+        "upload": "Subir"
+      },
+      "form": {
+        "nameLabel": "Nombre:",
+        "namePlaceholder": "Ingresa tu nombre completo",
+        "nameError": "Por favor, introduce un nombre válido (2-50 caracteres).",
+        "emailLabel": "Correo Electrónico:",
+        "emailPlaceholder": "Ingresa tu dirección de correo",
+        "emailError": "Por favor, introduce una dirección de correo válida.",
+        "passwordLabel": "Contraseña:",
+        "changePassword": "Cambiar Contraseña",
+        "save": "Guardar Cambios",
+        "saveSuccess": "¡Cuenta actualizada con éxito!"
+      }
+    },
+    "securitySettings": {
+      "title": "Configuración de Seguridad",
+      "enable2FA": "Habilitar 2FA:",
+      "off": "APAGADO",
+      "on": "ENCENDIDO",
+      "2faMethod": "Opciones:",
+      "sms": "SMS",
+      "authApp": "Aplicación Auth",
+      "scanQR": "Escanea el código QR",
+      "qrCode": {
+        "alt": "Código QR"
+      }
+    },
+    "recovery": {
+      "title": "Recuperación",
+      "lost2FA": "Perdí 2FA"
+    },
+    "podcastManagement": {
+      "title": "Gestión de Podcast",
+      "editPodcast": "Editar Detalles del Podcast",
+      "manageGuests": "Gestionar Invitados",
+      "manageTasks": "Gestionar Tareas",
+      "integrationSettings": "Configuración de Integraciones"
+    },
+    "subscriptions": {
+      "title": "Suscripciones",
+      "subscribe": "Suscribirse"
+    },
+    "permissions": {
+      "title": "Permisos y Roles",
+      "addRole": "Agregar Rol"
+    },
+    "nav": {
+      "accountSettings": "Configuración de Cuenta",
+      "securitySettings": "Configuración de Seguridad",
+      "recovery": "Recuperación",
+      "podcastManagement": "Gestión de Podcast",
+      "subscriptions": "Suscripciones",
+      "permissions": "Permisos y Roles"
+    },
+    "footer": {
+      "copy": "© 2025 Podcast Manager. Todos los derechos reservados."
+    }
+  }
+  
