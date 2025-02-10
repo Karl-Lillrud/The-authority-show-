@@ -7,6 +7,10 @@ from werkzeug.utils import secure_filename
 from datetime import datetime
 from google.oauth2 import service_account
 from googleapiclient.discovery import build
+from dotenv import load_dotenv
+
+# Load environment variables
+load_dotenv()
 
 # Flask Blueprint
 pickadate_bp = Blueprint('pickadate_bp', __name__)
@@ -17,18 +21,43 @@ COSMOS_KEY = os.getenv('COSMOS_KEY')
 DATABASE_NAME = 'podmanagedb'
 CONTAINER_NAME = 'bookings'
 
-client = CosmosClient(COSMOS_ENDPOINT, COSMOS_KEY)
-database = client.create_database_if_not_exists(DATABASE_NAME)
-container = database.create_container_if_not_exists(id=CONTAINER_NAME, partition_key=PartitionKey(path='/email'))
+if not COSMOS_ENDPOINT or not COSMOS_KEY:
+    raise ValueError("Missing CosmosDB credentials. Check your .env file.")
+
+# Initialize CosmosDB Client
+try:
+    client = CosmosClient(COSMOS_ENDPOINT, COSMOS_KEY)
+    database = client.get_database_client(DATABASE_NAME)
+    container = database.get_container_client(CONTAINER_NAME)
+except Exception as e:
+    raise RuntimeError(f"Failed to connect to CosmosDB: {e}")
 
 # Google Calendar Configuration
 SCOPES = ['https://www.googleapis.com/auth/calendar.readonly']
-SERVICE_ACCOUNT_FILE = "service-account.json"  # Ensure this file is configured correctly
+SERVICE_ACCOUNT_FILE = os.path.join(os.path.dirname(__file__), "service-account.json")
 
-creds = service_account.Credentials.from_service_account_file(SERVICE_ACCOUNT_FILE, scopes=SCOPES)
-calendar_service = build('calendar', 'v3', credentials=creds)
+if not os.path.exists(SERVICE_ACCOUNT_FILE):
+    raise FileNotFoundError("Missing service-account.json. Ensure it exists in the correct path.")
+
+try:
+    creds = service_account.Credentials.from_service_account_file(SERVICE_ACCOUNT_FILE, scopes=SCOPES)
+    calendar_service = build('calendar', 'v3', credentials=creds)
+except Exception as e:
+    raise RuntimeError(f"Failed to initialize Google Calendar API: {e}")
 
 CALENDAR_ID = os.getenv("GOOGLE_CALENDAR_ID")
+if not CALENDAR_ID:
+    raise ValueError("GOOGLE_CALENDAR_ID is missing. Set it in .env file.")
+
+# Email Configuration
+SMTP_SERVER = os.getenv("SMTP_SERVER")
+SMTP_PORT = int(os.getenv("SMTP_PORT", 587))
+EMAIL_USER = os.getenv("EMAIL_USER")
+EMAIL_PASS = os.getenv("EMAIL_PASS")
+HOST_EMAIL = os.getenv("HOST_EMAIL")  # Email of the host (admin)
+
+if not SMTP_SERVER or not EMAIL_USER or not EMAIL_PASS or not HOST_EMAIL:
+    raise ValueError("Missing SMTP or Host Email credentials. Check your .env file.")
 
 @pickadate_bp.route('/pickadate')
 def pickadate():
@@ -48,7 +77,7 @@ def book():
 
         if 'upload' in request.files:
             file = request.files['upload']
-            if file.filename != '':
+            if file.filename:
                 filename = secure_filename(f"{uuid.uuid4()}_{file.filename}")
                 filepath = os.path.join('uploads/', filename)
                 file.save(filepath)
@@ -65,12 +94,22 @@ def book():
             'preferredTime': preferred_time,
             'meetingPreferences': meeting_preferences,
             'fileUrl': file_url,
-            'createdAt': str(uuid.uuid1())
+            'createdAt': datetime.utcnow().isoformat()
         }
 
         container.create_item(body=item)
+
+        # Debugging - Print logs
+        print(f"📩 Sending email to Guest: {email}")
+        print(f"📩 Sending email to Host: {HOST_EMAIL}")
+
+        # Send email confirmation to Guest & Host
+        send_booking_email(email, guest_name, preferred_time)
+        send_host_notification(HOST_EMAIL, guest_name, email, preferred_time)
+
         return jsonify({'message': 'Booking Successful', 'bookingId': booking_id}), 201
     except Exception as e:
+        print(f"🚨 Error in book(): {e}")
         return jsonify({'message': 'Internal Server Error', 'error': str(e)}), 500
 
 @pickadate_bp.route('/bookings', methods=['GET'])
@@ -80,41 +119,67 @@ def get_bookings():
         return jsonify(bookings), 200
     except Exception as e:
         return jsonify({'message': 'Internal Server Error', 'error': str(e)}), 500
-    
+
 @pickadate_bp.route('/available-slots', methods=['GET'])
 def get_available_slots():
-    now = datetime.datetime.utcnow().isoformat() + 'Z'  # 'Z' indicates UTC time
-    events_result = calendar_service.events().list(
-        calendarId=CALENDAR_ID,
-        timeMin=now,
-        maxResults=10,
-        singleEvents=True,
-        orderBy='startTime'
-    ).execute()
-    events = events_result.get('items', [])
+    try:
+        now = datetime.utcnow().isoformat() + 'Z'  # 'Z' indicates UTC time
+        events_result = calendar_service.events().list(
+            calendarId=CALENDAR_ID,
+            timeMin=now,
+            maxResults=10,
+            singleEvents=True,
+            orderBy='startTime'
+        ).execute()
+        events = events_result.get('items', [])
 
-    available_slots = []
-    for event in events:
-        start_time = event['start'].get('dateTime', event['start'].get('date'))
-        end_time = event['end'].get('dateTime', event['end'].get('date'))
-        available_slots.append({"start": start_time, "end": end_time})
+        available_slots = []
+        for event in events:
+            start_time = event['start'].get('dateTime', event['start'].get('date'))
+            end_time = event['end'].get('dateTime', event['end'].get('date'))
+            available_slots.append({"start": start_time, "end": end_time})
 
-    return jsonify(available_slots), 200
+        return jsonify(available_slots), 200
+    except Exception as e:
+        return jsonify({'message': 'Error fetching available slots', 'error': str(e)}), 500
 
 def send_booking_email(to_email, guest_name, preferred_time):
-    SMTP_SERVER = os.getenv("SMTP_SERVER")
-    SMTP_PORT = int(os.getenv("SMTP_PORT", 587))
-    EMAIL_USER = os.getenv("EMAIL_USER")
-    EMAIL_PASS = os.getenv("EMAIL_PASS")
+    subject = "📅 Podcast Booking Confirmation"
+    message = f"""
+    Hello {guest_name},
 
-    subject = "Podcast Booking Confirmation"
-    message = f"Hello {guest_name},\n\nYour podcast booking for {preferred_time} has been confirmed.\n\nThank you!"
+    Your podcast booking for {preferred_time} has been confirmed.
 
+    Thank you!
+    """
+
+    print(f"📨 Sending email to guest: {to_email}")  # Debugging
+    send_email(to_email, subject, message)
+
+def send_host_notification(to_email, guest_name, guest_email, preferred_time):
+    subject = "🔔 New Podcast Booking Received"
+    message = f"""
+    Hello,
+
+    A new podcast booking has been made:
+
+    - Guest: {guest_name}
+    - Email: {guest_email}
+    - Time Slot: {preferred_time}
+
+    Please check the booking system for more details.
+    """
+
+    print(f"📨 Sending email to host: {to_email}")  # Debugging
+    send_email(to_email, subject, message)
+
+def send_email(to_email, subject, message):
     try:
         msg = f"Subject: {subject}\n\n{message}"
         with smtplib.SMTP(SMTP_SERVER, SMTP_PORT) as server:
             server.starttls()
             server.login(EMAIL_USER, EMAIL_PASS)
             server.sendmail(EMAIL_USER, to_email, msg)
+        print(f"✅ Email sent successfully to {to_email}")
     except Exception as e:
-        print(f"Error sending email: {e}")
+        print(f"🚨 Email sending error: {e}")
