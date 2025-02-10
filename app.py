@@ -212,7 +212,7 @@ def tasks():
     return render_template('dashboard/tasks.html')
 
 # ✅ Serves the pickadate
-@app.route('/pickadate', methods=['GET'])
+@app.route('/pickadate', methods=['GET','POST'])
 def homepage():
     return render_template('pickadate/pickadate.html')
 

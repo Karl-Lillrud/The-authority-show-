@@ -7,8 +7,8 @@ from werkzeug.utils import secure_filename
 # Cosmos DB Configuration
 COSMOS_ENDPOINT = os.getenv('COSMOS_ENDPOINT')
 COSMOS_KEY = os.getenv('COSMOS_KEY')
-DATABASE_NAME = 'PodcastDB'
-CONTAINER_NAME = 'Bookings'
+DATABASE_NAME = 'podmanagedb'
+CONTAINER_NAME = 'bookings'
 
 client = CosmosClient(COSMOS_ENDPOINT, COSMOS_KEY)
 database = client.create_database_if_not_exists(DATABASE_NAME)
