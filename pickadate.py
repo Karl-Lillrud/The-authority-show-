@@ -8,7 +8,7 @@ from datetime import datetime
 from google.oauth2 import service_account
 from googleapiclient.discovery import build
 from dotenv import load_dotenv
-
+from azure.storage.blob import BlobServiceClient
 # Load environment variables
 load_dotenv()
 
@@ -23,6 +23,21 @@ CONTAINER_NAME = 'bookings'
 
 if not COSMOS_ENDPOINT or not COSMOS_KEY:
     raise ValueError("Missing CosmosDB credentials. Check your .env file.")
+
+# Azure Blob Storage Configuration
+AZURE_STORAGE_ACCOUNT_NAME = os.getenv("AZURE_STORAGE_ACCOUNT_NAME")
+AZURE_STORAGE_ACCOUNT_KEY = os.getenv("AZURE_STORAGE_ACCOUNT_KEY")
+AZURE_STORAGE_CONTAINER_NAME = os.getenv("AZURE_STORAGE_CONTAINER_NAME")
+
+if not AZURE_STORAGE_ACCOUNT_NAME or not AZURE_STORAGE_ACCOUNT_KEY or not AZURE_STORAGE_CONTAINER_NAME:
+    raise ValueError("Missing Azure Storage credentials. Check your .env file.")
+
+# Initialize Blob Service Client
+blob_service_client = BlobServiceClient(
+    f"https://{AZURE_STORAGE_ACCOUNT_NAME}.blob.core.windows.net",
+    credential=AZURE_STORAGE_ACCOUNT_KEY
+)
+blob_container_client = blob_service_client.get_container_client(AZURE_STORAGE_CONTAINER_NAME)
 
 # Initialize CosmosDB Client
 try:
@@ -69,6 +84,7 @@ def book():
         guest_name = request.form.get('guestName')
         email = request.form.get('email')
         preferred_time = request.form.get('preferredTime')
+        file_url = request.form.get('fileUrl')  # Get uploaded file URL from frontend
 
         if not guest_name or not email or not preferred_time:
             print("Missing required fields!")
@@ -80,10 +96,11 @@ def book():
             'guestName': guest_name,
             'email': email,
             'preferredTime': preferred_time,
+            'fileUrl': file_url,  # Store uploaded file URL in CosmosDB
             'createdAt': datetime.utcnow().isoformat()
         }
 
-        print(f"Saving to CosmosDB: {item}")  # Debugging line
+        print(f"Saving to CosmosDB: {item}")
 
         try:
             container.create_item(body=item)
@@ -101,6 +118,7 @@ def book():
     except Exception as e:
         print(f"Unexpected Error in `book()`: {e}")
         return jsonify({'message': 'Internal Server Error', 'error': str(e)}), 500
+
 
 
 @pickadate_bp.route('/bookings', methods=['GET'])
@@ -133,6 +151,7 @@ def get_available_slots():
         return jsonify(available_slots), 200
     except Exception as e:
         return jsonify({'message': 'Error fetching available slots', 'error': str(e)}), 500
+    
 
 def send_booking_email(to_email, guest_name, preferred_time):
     subject = "Podcast Booking Confirmation"
@@ -145,6 +164,50 @@ def send_booking_email(to_email, guest_name, preferred_time):
     """
 
     send_email(to_email, subject, message)
+
+@pickadate_bp.route('/upload-file', methods=['POST'])
+def upload_file():
+    """Handles file upload to Azure Blob Storage."""
+    if 'file' not in request.files:
+        return jsonify({'error': 'No file uploaded'}), 400
+
+    file = request.files['file']
+    if file.filename == '':
+        return jsonify({'error': 'No file selected'}), 400
+
+    file_url = upload_to_azure(file)
+    if file_url:
+        return jsonify({'fileUrl': file_url}), 200
+    else:
+        return jsonify({'error': 'Upload failed'}), 500
+
+def upload_to_azure(file):
+    """Uploads file to Azure Blob Storage and returns the file URL"""
+    try:
+        if file.filename == "":
+            print("No file selected for upload!")
+            return None
+
+        filename = secure_filename(f"{uuid.uuid4()}_{file.filename}")
+        blob_client = blob_container_client.get_blob_client(filename)
+        
+        print(f"⬆ Attempting to upload {filename} to Azure Blob Storage...")
+
+        # Read file content to ensure it's being sent
+        file_data = file.read()
+        if not file_data:
+            print("File data is empty! The file may not have been read properly.")
+            return None
+
+        # Upload the file
+        blob_client.upload_blob(file_data, overwrite=True)
+        
+        file_url = f"https://{AZURE_STORAGE_ACCOUNT_NAME}.blob.core.windows.net/{AZURE_STORAGE_CONTAINER_NAME}/{filename}"
+        print(f"✅ Upload Successful! File URL: {file_url}")
+        return file_url
+    except Exception as e:
+        print(f"Azure Blob Storage Upload Error: {e}")
+        return None
 
 def send_host_notification(to_email, guest_name, guest_email, preferred_time):
     subject = "New Podcast Booking Received"
