@@ -3,6 +3,7 @@ from azure.cosmos import CosmosClient
 from register import register_bp
 from dotenv import load_dotenv
 from werkzeug.security import generate_password_hash, check_password_hash
+from datetime import datetime
 import os
 import random
 import smtplib
@@ -44,6 +45,8 @@ SMTP_SERVER = os.getenv("SMTP_SERVER")
 SMTP_PORT = int(os.getenv("SMTP_PORT", 587))
 EMAIL_USER = os.getenv("EMAIL_USER")
 EMAIL_PASS = os.getenv("EMAIL_PASS")
+
+user_id = session["user_id"]
 
 # 📌 Step 1: Forgot Password
 @app.route('/forgotpassword', methods=['GET', 'POST'])
@@ -256,8 +259,36 @@ def podprofile():
 def get_user_podcasts():
     if "user_id" not in session:
         return jsonify({"error": "Unauthorized"}), 401
+    
+@app.route('/register_podcast', methods=['POST'])
+def register_podcast():
+    if "user_id" not in session:
+        return jsonify({"error": "Unauthorized"}), 401
 
-    user_id = session["user_id"]
+    data = request.get_json()
+    if not data:
+        return jsonify({"error": "Invalid JSON format"}), 400
+
+    pod_name = data.get("podName", "").strip()
+    pod_rss = data.get("podRss", "").strip()
+
+    if not pod_name or not pod_rss:
+        return jsonify({"error": "Podcast Name and RSS URL are required"}), 400
+
+    # Prepare the podcast object
+    podcast_item = {
+        "id": str(random.randint(100000, 999999)),  # Generate a unique ID
+        "creator_id": session["user_id"],  # Store the user's ID
+        "podName": pod_name,
+        "podRss": pod_rss,
+        "created_at": datetime.utcnow().isoformat()
+    }
+
+    try:
+        container.upsert_item(podcast_item)
+        return jsonify({"message": "Podcast registered successfully", "redirect_url": "/production-team"}), 201
+    except Exception as e:
+        return jsonify({"error": f"Failed to register podcast: {str(e)}"}), 500
 
     # Query CosmosDB to fetch podcasts where the logged-in user is the creator
     query = "SELECT * FROM c WHERE c.creator_id = @user_id"

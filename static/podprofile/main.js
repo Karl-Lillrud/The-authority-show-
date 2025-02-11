@@ -262,6 +262,43 @@ document.addEventListener("DOMContentLoaded", function () {
         });
     }
 
+    document.addEventListener("DOMContentLoaded", function () {
+        const goToProductionTeam = document.getElementById("goToProductionTeam");
+    
+        if (goToProductionTeam) {
+            goToProductionTeam.addEventListener("click", async function () {
+                const podName = document.getElementById("podName").value.trim();
+                const podRss = document.getElementById("podRss").value.trim();
+    
+                if (!podName || !podRss) {
+                    alert("Please enter both Podcast Name and RSS URL.");
+                    return;
+                }
+    
+                try {
+                    const response = await fetch("/register_podcast", {
+                        method: "POST",
+                        headers: {
+                            "Content-Type": "application/json"
+                        },
+                        body: JSON.stringify({ podName, podRss })
+                    });
+    
+                    const result = await response.json();
+    
+                    if (response.ok) {
+                        window.location.href = result.redirect_url; // Redirect to Production Team Page
+                    } else {
+                        alert("Error: " + result.error);
+                    }
+                } catch (error) {
+                    console.error("Failed to register podcast:", error);
+                    alert("Something went wrong. Please try again.");
+                }
+            });
+        }
+    });
+    
     trackInputField("podName", pointsSystem.podName);
     trackInputField("podRss", pointsSystem.podRss);
     trackInputField("podLogo", pointsSystem.podLogo);
