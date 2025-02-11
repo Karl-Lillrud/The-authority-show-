@@ -1,15 +1,4 @@
-<link rel="stylesheet" href="{{ url_for('static', filename='css/header.css') }}">
 <header>
-    <script>
-        function toggleMenu() {
-    const menu = document.getElementById('menu');
-    if (menu.style.display === 'flex') {
-        menu.style.display = 'none';
-    } else {
-        menu.style.display = 'flex';
-        menu.style.position = 'absolute';
-    }}
-    </script>
     <!-- Logo -->
     <div class="logo-container">
         <img src="{{ url_for('static', filename='images/podmanagerlogo.png') }}" alt="PodManager Logo">
