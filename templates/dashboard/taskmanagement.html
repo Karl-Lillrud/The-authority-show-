@@ -27,6 +27,36 @@
 
 <link rel="stylesheet" href="{{ url_for('static', filename='css/task.css') }}">
 
+<!-- Inline CSS adjustments for proper flex behavior -->
+<style>
+  /* Ensure list items display as flex containers */
+  #task-list li {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  /* The details container will hold the task text and checkbox */
+  .task-details {
+    display: flex;
+    align-items: center;
+    flex: 1 1 auto;
+    min-width: 0; /* allows flex items to shrink properly */
+  }
+  /* Truncate long task names without pushing out buttons */
+  .task-name {
+    flex-grow: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    margin-right: 10px;
+  }
+  /* The actions container for buttons stays at the far right */
+  .task-actions {
+    display: flex;
+    gap: var(--spacing-sm);
+  }
+</style>
+
 <!-- Task Management Section (Initially Hidden) -->
 <div id="task-management" style="display:none;">
   <!-- Back Arrow -->
@@ -36,7 +66,6 @@
   <div class="task-header">
     <h2>Task Management for <span id="selected-guest"></span></h2>
     <div>
-      <!-- This button now opens the default tasks popup -->
       <button id="load-default-btn">Load Default Tasks</button>
       <button id="add-task-btn">+ Add New Task</button>
     </div>
@@ -47,7 +76,7 @@
     <!-- Dynamically injected tasks will appear here -->
   </ol>
   
-  <!-- Task Modal for creating/editing a task -->
+  <!-- Task Modal -->
   <div id="task-modal" class="modal">
     <div class="modal-content">
       <span class="close-btn" onclick="closeModal()">&times;</span>
@@ -96,45 +125,30 @@
   </div>
 </div>
 
-<!-- Default Tasks Popup for selecting which default tasks to add -->
-<div id="default-tasks-popup" class="popup" style="display:none;">
-  <div class="popup-content">
-    <span class="close-btn" onclick="closeDefaultTasksPopup()">&times;</span>
-    <h2>Select Default Tasks</h2>
-    <!-- Select All Button placed at the top-left above the default tasks list -->
-    <button id="select-all-default-btn" onclick="selectAllDefaultTasks()" style="display:block; margin-bottom:10px; text-align:left;">Select All</button>
-    <div id="default-tasks-list">
-      <!-- Default tasks will be dynamically populated here -->
-    </div>
-    <div class="modal-buttons">
-      <button id="add-default-tasks-btn" onclick="addSelectedDefaultTasks()">Add Selected Tasks</button>
-      <button class="cancel-btn" onclick="closeDefaultTasksPopup()">Cancel</button>
-    </div>
-  </div>
-</div>
-
 <!-- Include SortableJS Library for Drag & Drop -->
 <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
 <script>
-  // When a guest is selected, update header and show task management section.
+  // When a guest is selected, update the header and show the task management section.
   function selectGuest(guestName) {
     document.getElementById('selected-guest').textContent = guestName;
     document.getElementById('guest-popup').style.display = 'none';
     document.getElementById('task-management').style.display = 'block';
   }
 
-  // Open the Task Modal for creating a new task.
+  // Event listeners for task management buttons.
   document.getElementById("add-task-btn").addEventListener("click", openModal);
+  document.getElementById("load-default-btn").addEventListener("click", loadDefaultTasks);
+
   function openModal() {
     document.getElementById("task-modal").style.display = "flex";
     document.getElementById("modal-title").innerText = "Create New Task";
     document.getElementById("save-task-btn").setAttribute("onclick", "saveTask()");
   }
-  
+
   function closeModal() {
     document.getElementById("task-modal").style.display = "none";
   }
-  
+
   function saveTask() {
     let taskName = document.getElementById("task-name").value.trim();
     if (taskName.length < 2) {
@@ -154,7 +168,7 @@
     document.getElementById("task-list").appendChild(li);
     closeModal();
   }
-  
+
   function editTask(button) {
     let li = button.closest("li");
     let taskName = li.querySelector(".task-name").textContent;
@@ -163,7 +177,7 @@
     document.getElementById("task-modal").style.display = "flex";
     document.getElementById("save-task-btn").setAttribute("onclick", `updateTask('${taskName}', this)`);
   }
-  
+
   function updateTask(oldTaskName, button) {
     let newTaskName = document.getElementById("task-name").value.trim();
     if (newTaskName.length < 2) {
@@ -178,16 +192,12 @@
     });
     closeModal();
   }
-  
+
   function deleteTask(button) {
     button.closest("li").remove();
   }
-  
-  // Open the Default Tasks Popup when "Load Default Tasks" button is clicked.
-  document.getElementById("load-default-btn").addEventListener("click", openDefaultTasksPopup);
-  
-  function openDefaultTasksPopup() {
-    const defaultTasksPopup = document.getElementById("default-tasks-popup");
+
+  function loadDefaultTasks() {
     const defaultTasks = [
       "Guest received pitch email to join the show as a guest",
       "Guest filled out the guest form and picked a date",
@@ -220,70 +230,22 @@
       "Episode goes live soon or Now live announcement",
       "Mark episode as completed"
     ];
-    const listContainer = document.getElementById("default-tasks-list");
-    listContainer.innerHTML = "";
+    const taskList = document.getElementById("task-list");
     defaultTasks.forEach(task => {
-      const div = document.createElement("div");
-      div.className = "default-task-item";
-      const checkbox = document.createElement("input");
-      checkbox.type = "checkbox";
-      checkbox.value = task;
-      checkbox.className = "default-task-checkbox";
-      const label = document.createElement("label");
-      label.textContent = task;
-      div.appendChild(checkbox);
-      div.appendChild(label);
-      listContainer.appendChild(div);
+      let li = document.createElement("li");
+      li.innerHTML = `
+        <div class="task-details">
+          <span class="task-name">${task}</span>
+        </div>
+        <div class="task-actions">
+          <button class="edit-btn" onclick="editTask(this)">Edit</button>
+          <button class="delete-btn" onclick="deleteTask(this)">Delete</button>
+        </div>
+      `;
+      taskList.appendChild(li);
     });
-    // Reset the select-all button text when popup opens
-    document.getElementById("select-all-default-btn").textContent = "Select All";
-    defaultTasksPopup.style.display = "flex";
   }
-  
-  // Toggle Select All / Unselect All behavior.
-  function selectAllDefaultTasks() {
-    const checkboxes = document.querySelectorAll(".default-task-checkbox");
-    let allSelected = true;
-    checkboxes.forEach(checkbox => {
-      if (!checkbox.checked) {
-        allSelected = false;
-      }
-    });
-    if (allSelected) {
-      // If all are selected, unselect all.
-      checkboxes.forEach(checkbox => { checkbox.checked = false; });
-      document.getElementById("select-all-default-btn").textContent = "Select All";
-    } else {
-      // Otherwise, select all.
-      checkboxes.forEach(checkbox => { checkbox.checked = true; });
-      document.getElementById("select-all-default-btn").textContent = "Unselect All";
-    }
-  }
-  
-  function addSelectedDefaultTasks() {
-    const checkboxes = document.querySelectorAll(".default-task-checkbox");
-    checkboxes.forEach(checkbox => {
-      if (checkbox.checked) {
-        let li = document.createElement("li");
-        li.innerHTML = `
-          <div class="task-details">
-            <span class="task-name">${checkbox.value}</span>
-          </div>
-          <div class="task-actions">
-            <button class="edit-btn" onclick="editTask(this)">Edit</button>
-            <button class="delete-btn" onclick="deleteTask(this)">Delete</button>
-          </div>
-        `;
-        document.getElementById("task-list").appendChild(li);
-      }
-    });
-    closeDefaultTasksPopup();
-  }
-  
-  function closeDefaultTasksPopup() {
-    document.getElementById("default-tasks-popup").style.display = "none";
-  }
-  
+
   new Sortable(document.getElementById('task-list'), {
     animation: 150,
     ghostClass: 'drag-ghost'
