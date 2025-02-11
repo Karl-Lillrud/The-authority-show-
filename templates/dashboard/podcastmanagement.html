@@ -1,0 +1,203 @@
+{% extends "dashboard/components/base.html" %}
+{% block title %}Podcast Task Management{% endblock %}
+
+{% block content %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/podcastmanagement.css') }}">
+  <script>
+    document.addEventListener("DOMContentLoaded", function () {
+      const addMemberBtn = document.getElementById("add-member-btn");
+      const popup = document.getElementById("add-member-popup");
+      const closePopup = document.getElementById("close-popup");
+
+      // Show Popup on Button Click
+      addMemberBtn.addEventListener("click", function () {
+        popup.style.display = "flex";
+      });
+
+      // Close Popup
+      closePopup.addEventListener("click", function () {
+        popup.style.display = "none";
+      });
+
+      // Close Popup on Outside Click
+      window.addEventListener("click", function (e) {
+        if (e.target === popup) {
+          popup.style.display = "none";
+        }
+      });
+    });
+
+    document.addEventListener("DOMContentLoaded", function() {
+      const copyBtn = document.getElementById("copy-guest-btn");
+      const guestInput = document.getElementById("guest-form-url");
+
+      copyBtn.addEventListener("click", function() {
+        navigator.clipboard.writeText(guestInput.value)
+          .then(() => {
+            copyBtn.textContent = "Copied!";
+            setTimeout(() => copyBtn.textContent = "Copy", 2000);
+          })
+          .catch(err => console.error("Copy failed:", err));
+      });
+    });
+  </script>
+</head>
+<body>
+  <a href="{{ url_for('dashboard') }}" class="back-arrow">&#8592; Back</a>
+  <div class="container">
+    <div class="form-box">
+      <div class="form-fields">
+        <!-- Logo Section -->
+        <div class="form-group">
+          <label for="pod-logo">Pod Logo</label>
+          <div style="display: flex; align-items: center; justify-content: center;">
+            <img src="https://podmanagerstorage.blob.core.windows.net/blob-container/pod1.jpg" alt="Pod Logo" class="pod-logo pod-logo-inline" />
+          </div>
+        </div>
+
+        <!-- Other Fields -->
+        <div class="field-group">
+          <label>Pod Name</label>
+          <input type="text" />
+        </div>
+
+        <div class="field-group">
+          <label>RSS Feed</label>
+          <input type="text" />
+        </div>
+
+        <div class="field-group">
+          <label>Host(s) Name(s)</label>
+          <input type="text" />
+        </div>
+
+        <div class="field-group">
+          <label>Google Calendar Integration</label>
+          <button class="connect-btn">CONNECT</button>
+        </div>
+
+        <div class="field-group">
+          <label>Google Calendar Pick a Date URL</label>
+          <div class="inline-field">
+            <span>podmanager.com/?pod=TheAuthorityShow</span>
+          </div>
+        </div>
+
+        <!-- Guest Form URL with Copy Button on the right -->
+        <div class="field-group">
+          <label>Guest Form URL</label>
+          <input type="text" id="guest-form-url" value="https://example.com/guest-form"/>
+          <button id="copy-guest-btn" class="copy-btn">Copy</button>
+        </div>
+
+        <div class="field-group">
+          <label>Facebook</label>
+          <input type="text" />
+        </div>
+
+        <div class="field-group">
+          <label>Instagram</label>
+          <input type="text" />
+        </div>
+
+        <div class="field-group">
+          <label>LinkedIn</label>
+          <input type="text" />
+        </div>
+
+        <div class="field-group">
+          <label>Twitter</label>
+          <input type="text" />
+        </div>
+
+        <div class="field-group">
+          <label>TikTok</label>
+          <input type="text" />
+        </div>
+
+        <div class="field-group">
+          <label>Pinterest</label>
+          <input type="text" />
+        </div>
+
+        <div class="field-group">
+          <label>Website</label>
+          <input type="text" />
+        </div>
+
+        <div class="field-group">
+          <label>Email Address</label>
+          <input type="text" />
+        </div>
+
+        <!-- Team Section -->
+        <div class="team-section">
+          <div class="field-group">
+            <label>Name</label>
+            <input type="text" />
+            <button class="block-btn">BLOCK</button>
+          </div>
+
+          <div class="field-group">
+            <label>Email</label>
+            <input type="text" />
+          </div>
+
+          <div class="field-group">
+            <label>Role</label>
+            <select>
+              <option>Select</option>
+            </select>
+          </div>
+
+          <div class="field-group">
+            <label>Name</label>
+            <input type="text" />
+            <button class="block-btn">BLOCK</button>
+          </div>
+
+          <div class="field-group">
+            <label>Email</label>
+            <input type="text" required/>
+          </div>
+
+          <div class="field-group">
+            <label>Role</label>
+            <select>
+              <option>Select</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="invite-more">
+          <span>Invite More Team Members</span>
+          <button id="add-member-btn">+</button>
+        </div>
+
+        <button class="invite-btn">SAVE</button>
+      </div>
+    </div>
+
+    <!-- Popup -->
+    <div id="add-member-popup" class="popup">
+      <div class="popup-content">
+        <span id="close-popup" class="close-btn">&times;</span>
+        <h2>Add Team Member</h2>
+
+        <label for="member-name">Name:</label>
+        <input type="text" id="member-name" placeholder="Enter Name" />
+
+        <label for="member-email">Email:</label>
+        <input type="email" id="member-email" placeholder="Enter Email" />
+
+        <label for="member-role">Role:</label>
+        <select id="member-role">
+          <option value="admin">Admin</option>
+          <option value="editor">Editor</option>
+          <option value="viewer">Viewer</option>
+        </select>
+        <button id="save-member" class="popup-button">Save</button>
+      </div>
+    </div>
+  </div>
+  {% endblock %}

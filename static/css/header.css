@@ -1,0 +1,174 @@
+:root {
+    --background-light: #EFF2F9;
+    --background-dark: #1C1C1C;
+    --light-shadow-light: #FFFFFF;
+    --dark-shadow-light: rgba(22, 24, 29, 0.23);
+    --light-shadow-dark: rgba(255, 255, 255, 0.1);
+    --dark-shadow-dark: rgba(0, 0, 0, 0.8);
+  
+    --text-color-light: #6E7F8D;
+    --text-color-dark: #B3B3B3;
+    --highlight-color: #FF7F3F;
+    --error-color: #FF3B30;
+    --success-color: #4CAF50;
+  
+    --font-primary: 'Inter', sans-serif;
+    --font-secondary: 'Avenir Next', sans-serif;
+  
+    --spacing-xs: 4px;
+    --spacing-sm: 8px;
+    --spacing-md: 16px;
+    --spacing-lg: 24px;
+    --spacing-xl: 32px;
+  
+    --radius-large: 50px;
+    --radius-medium: 25px;
+    --radius-small: 12px;
+  }
+  
+  html, body {
+    width: 100%;
+    max-width: 100%;
+    margin: 0;
+    padding: 0;
+    overflow-x: hidden;
+    box-sizing: border-box;
+  }
+  
+  /* Global Resets/Adjustments */
+  body {
+    margin: 0;
+    padding: 0;
+    font-family: var(--font-primary);
+    background-color: var(--background-light);
+    color: var(--text-color-light);
+    line-height: 1.6;
+  }
+  
+  
+  
+  img {
+    max-width: 100%;
+    height: auto;
+    display: block;
+    border: none;
+  }
+  
+  /* Container */
+  .container {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-md);
+  }
+  
+  /* Header */
+  header {
+    width: 100%;
+    max-width: 1870px; /* Adjust as needed */
+    margin: 0 auto; /* Centers the header */
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: var(--spacing-md);
+    background: var(--background-light);
+    box-shadow: 
+      -5px -5px 10px var(--light-shadow-light),
+       5px 5px 10px var(--dark-shadow-light);
+    border-radius: var(--radius-small);
+    transition: background-color 0.3s ease, box-shadow 0.3s ease;
+    margin-bottom: 25px;
+  }
+  
+  
+  /* Logo – Removed absolute positioning so it stays on the far left */
+  .logo-container {
+    /* Previously positioned absolutely; now let flex layout position it */
+    width: 120px; /* Adjust as needed */
+  }
+  
+  .logo-container img {
+    width: 100%;
+    height: auto;
+  }
+  
+  /* Header Nav (Menus on the far right) */
+  .header-nav {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+  }
+  
+  /* Podcast Selector */
+  #podcast-selector {
+    font-size: 0.875rem;
+    padding: var(--spacing-xs) var(--spacing-sm);
+    border: none;
+    border-radius: 20px;
+    background: var(--background-light);
+    color: var(--text-color-light);
+    box-shadow:
+      inset 3px 3px 6px var(--dark-shadow-light),
+      inset -3px -3px 6px var(--light-shadow-light);
+    outline: none;
+    transition: box-shadow 0.3s ease, background-color 0.3s ease;
+    cursor: pointer;
+    height: 30px;
+    display: flex;
+    align-items: center;
+  }
+  
+  #podcast-selector:hover {
+    box-shadow:
+      inset 2px 2px 4px rgba(255, 127, 63, 0.4),
+      inset -2px -2px 4px rgba(0, 0, 0, 0.1);
+  }
+  
+  /* Menu Toggle (Hamburger) */
+  .menu-toggle {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    width: 30px;
+    height: 24px;
+    cursor: pointer;
+  }
+  
+  .menu-toggle span {
+    display: block;
+    height: 3px;
+    width: 100%;
+    background: #333;
+    border-radius: 2px;
+  }
+  
+  /* Dropdown Menu */
+  .menu {
+    display: none;
+    position: absolute;
+    top: 100px; /* Adjust the dropdown position below the toggle button */
+    right: 0;
+    min-width: 200px; /* Ensure proper width */
+    background: var(--background-light);
+    box-shadow: 
+      -5px -5px 10px var(--light-shadow-light),
+       5px 5px 10px var(--dark-shadow-light);
+    border-radius: var(--radius-small);
+    padding: var(--spacing-md);
+    flex-direction: column;
+    gap: var(--spacing-sm);
+    z-index: 1000;
+  }
+  
+  
+  .menu a {
+    text-decoration: none;
+    color: var(--text-color-light);
+    font-family: var(--font-secondary);
+    font-size: 0.9rem;
+    padding: var(--spacing-xs) 0;
+    transition: color 0.3s ease;
+  }
+  
+  .menu a:hover {
+    color: var(--highlight-color);
+  }
