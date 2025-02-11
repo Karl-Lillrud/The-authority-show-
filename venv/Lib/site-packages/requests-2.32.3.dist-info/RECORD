@@ -2,6 +2,7 @@ requests-2.32.3.dist-info/INSTALLER,sha256=zuuue4knoyJ-UwPPXg8fezS7VCrXJQrAP7zeN
 requests-2.32.3.dist-info/LICENSE,sha256=CeipvOyAZxBGUsFoaFqwkx54aPnIKEtm9a5u2uXxEws,10142
 requests-2.32.3.dist-info/METADATA,sha256=ZY7oRUweLnb7jCEnEW9hFWs7IpQbNVnAA4ncpwA4WBo,4610
 requests-2.32.3.dist-info/RECORD,,
+requests-2.32.3.dist-info/REQUESTED,sha256=47DEQpj8HBSa-_TImW-5JCeuQeRkm5NMpJWZG3hSuFU,0
 requests-2.32.3.dist-info/WHEEL,sha256=GJ7t_kWBFywbagK5eo9IoUwLW6oyOeTKmQ-9iHFVNxQ,92
 requests-2.32.3.dist-info/top_level.txt,sha256=fMSVmHfb5rbGOo6xv-O_tUX6j-WyixssE-SnwcDRxNQ,9
 requests/__init__.py,sha256=4xaAERmPDIBPsa2PsjpU9r06yooK-2mZKHTZAhWRWts,5072
