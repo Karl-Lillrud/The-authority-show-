@@ -1,0 +1,403 @@
+/* Root Variables 
+    :root {
+        --background-light: #EFF2F9;
+        --light-shadow-light: #FFFFFF;
+        --dark-shadow-light: rgba(22, 24, 29, 0.23);
+  
+        --text-color-light: #6E7F8D;
+        --highlight-color: #FF7F3F;
+        --success-color: #4CAF50;
+        
+        --font-primary: 'Arial', sans-serif;
+  
+        --spacing-sm: 8px;
+        --spacing-md: 16px;
+        --spacing-lg: 24px;
+  
+        --radius-small: 5px;
+        --radius-medium: 10px;
+        --radius-large: 12px;
+      }
+  
+    
+      .body task {
+        margin: 0;
+        padding: var(--spacing-md);
+        background-color: var(--background-light);
+        font-family: var(--font-primary);
+        text-align: center;
+        min-height: 100vh;
+        box-sizing: border-box;
+        position: relative; 
+      }
+      */
+      .back-arrow {
+        position: absolute;
+        top: 18%;
+        left: var(--spacing-md);
+        font-size: 0.9rem;
+        font-weight: bold;
+        text-decoration: none;
+        color: var(--text-color-light);
+        background: var(--background-light);
+        padding: var(--spacing-sm) var(--spacing-md);
+        border-radius: var(--radius-small);
+        box-shadow:
+          -3px -3px 6px var(--light-shadow-light),
+           3px 3px 6px var(--dark-shadow-light);
+        transition: background-color 0.3s ease, transform 0.3s ease;
+        z-index: 1000;
+      }
+      .back-arrow:hover {
+        transform: translateY(-3px);
+        background-color: rgba(255, 127, 63, 0.15);
+        color: var(--highlight-color);
+      }
+    
+  
+      /* Task Header */
+      .task-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        max-width: 650px;
+        margin: 0 auto var(--spacing-md) auto;
+      }
+  
+      .task-header h2 {
+        margin: 0;
+        font-size: 1.2rem;
+        color: var(--text-color-light);
+      }
+
+      /* Add Task Button */
+      #add-task-btn, #load-default-btn {
+        background: var(--background-light);
+        border: none;
+        padding: var(--spacing-sm) var(--spacing-md);
+        border-radius: var(--radius-small);
+        box-shadow:
+          -3px -3px 6px var(--light-shadow-light),
+           3px 3px 6px var(--dark-shadow-light);
+        cursor: pointer;
+        font-size: 0.9rem;
+        color: var(--text-color-light);
+        transition: transform 0.3s ease, background-color 0.3s ease;
+      }
+      #add-task-btn:hover, #load-default-btn:hover {
+        background-color: rgba(255, 127, 63, 0.1);
+        transform: translateY(-2px);
+        color: var(--highlight-color);
+      }
+
+      /* Task List Container */
+      #task-list {
+        list-style: decimal;
+        padding: 0;
+        max-width: 600px;
+        margin: 0 auto;
+
+      }
+  
+      /* Individual Task Items */
+      #task-list li {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        background: var(--background-light);
+        padding: var(--spacing-sm);
+        margin: var(--spacing-sm) 0;
+        border-radius: var(--radius-small);
+        box-shadow:
+          -3px -3px 6px var(--light-shadow-light),
+           3px 3px 6px var(--dark-shadow-light);
+        transition: transform 0.3s ease;
+      }
+      #task-list li:hover {
+        transform: translateY(-2px);
+      }
+
+      .task-details {
+        display: flex;
+        align-items: center;
+        flex-wrap: nowrap;
+      }
+
+      .task-actions {
+        display: flex;
+        gap: var(--spacing-sm);
+      }
+
+      .task-name {
+        flex-grow: 1;
+        text-align: left;
+        margin-left: var(--spacing-sm);
+        font-size: 0.9rem;
+        color: var(--text-color-light);
+      }
+  
+      /* Buttons inside the Task List Items */
+      button {
+        padding: var(--spacing-sm) var(--spacing-md);
+        margin-left: var(--spacing-sm);
+        border: none;
+        border-radius: var(--radius-small);
+        cursor: pointer;
+        font-size: 0.8rem;
+        color: #666865;
+      }
+
+      .edit-btn {
+        background: #f4a261; /* Light orange */
+        box-shadow:
+          -2px -2px 4px rgba(255,255,255,0.6),
+           2px 2px 4px rgba(0,0,0,0.15);
+        transition: transform 0.3s ease, background-color 0.3s ease;
+      }
+      .edit-btn:hover {
+        background-color: #e8934f;
+        transform: translateY(-2px);
+      }
+  
+      .delete-btn {
+        background: #e63946; /* Reddish */
+        box-shadow:
+          -2px -2px 4px rgba(255,255,255,0.6),
+           2px 2px 4px rgba(0,0,0,0.15);
+        transition: transform 0.3s ease, background-color 0.3s ease;
+      }
+      .delete-btn:hover {
+        background-color: #d62836;
+        transform: translateY(-2px);
+      }
+  
+      /* Modal Overlay */
+      .modal {
+        display: none;
+        position: fixed;
+        top: 0; 
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.5);
+        justify-content: center;
+        align-items: center;
+        z-index: 2000;
+      }
+  
+      /* Modal Content */
+      .modal-content {
+        background: var(--background-light);
+        padding: var(--spacing-md);
+        border-radius: var(--radius-medium);
+        text-align: left;
+        max-width: 400px;
+        width: 90%;
+        box-shadow:
+          -4px -4px 8px var(--light-shadow-light),
+           4px 4px 8px var(--dark-shadow-light);
+        position: relative;
+        margin: 0 var(--spacing-md);
+      }
+  
+      .modal-content h2 {
+        margin: 0 0 var(--spacing-sm) 0;
+        font-size: 1rem;
+        color: var(--text-color-light);
+      }
+  
+      /* Close Button in Modal */
+      .close-btn {
+        position: absolute;
+        top: var(--spacing-sm);
+        right: var(--spacing-md);
+        font-size: 1.5rem;
+        cursor: pointer;
+        color: #555;
+        transition: color 0.3s ease, transform 0.3s ease;
+      }
+      .close-btn:hover {
+        color: var(--highlight-color);
+        transform: scale(1.1);
+      }
+  
+      /* Modal Form Fields */
+      label {
+        display: block;
+        margin-top: var(--spacing-sm);
+        font-size: 0.85rem;
+        font-weight: bold;
+        color: var(--text-color-light);
+      }
+      #task-dependencies {
+        width: 99%;
+        padding: var(--spacing-sm);
+        margin-top: var(--spacing-sm);
+        border: none;
+        border-radius: var(--radius-small);
+        box-shadow:
+            inset -2px -2px 4px var(--light-shadow-light),
+            inset 2px 2px 4px var(--dark-shadow-light);
+        outline: none;
+        font-size: 0.85rem;
+        background: var(--background-light);
+        color: var(--text-color-light);
+        transition: box-shadow 0.3s ease;
+    }
+  
+      input, textarea {
+        width: 99%;
+        padding: var(--spacing-sm);
+        margin-top: var(--spacing-sm);
+        border: none;
+        border-radius: var(--radius-small);
+        box-shadow:
+          inset -2px -2px 4px var(--light-shadow-light),
+          inset 2px 2px 4px var(--dark-shadow-light);
+        outline: none;
+        font-size: 0.85rem;
+        background: var(--background-light);
+        color: var(--text-color-light);
+        transition: box-shadow 0.3s ease;
+      }
+      input:focus, textarea:focus, select:focus {
+        box-shadow:
+          inset 2px 2px 4px rgba(255,127,63,0.3),
+          inset -2px -2px 4px rgba(0,0,0,0.1);
+      }
+  
+      /* Modal Buttons Container */
+      .modal-buttons {
+        display: flex;
+        justify-content: space-between;
+        margin-top: var(--spacing-md);
+      }
+  
+      /* Modal Buttons */
+      #save-task-btn,
+      .cancel-btn {
+        background: var(--background-light);
+        color: var(--text-color-light);
+        padding: var(--spacing-sm) var(--spacing-md);
+        border: none;
+        border-radius: var(--radius-small);
+        cursor: pointer;
+        box-shadow:
+          -2px -2px 4px var(--light-shadow-light),
+           2px 2px 4px var(--dark-shadow-light);
+        transition: transform 0.3s ease, background-color 0.3s ease;
+        font-size: 0.85rem;
+      }
+      #save-task-btn:hover {
+        background-color: rgba(255,127,63,0.08);
+        transform: translateY(-2px);
+        color: var(--highlight-color);
+      }
+      .cancel-btn:hover {
+        background-color: rgba(0,0,0,0.1);
+        transform: translateY(-2px);
+      }
+      
+      /* Submission-Required Checkbox */
+      input[type="checkbox"] {
+        width: auto;
+        margin-right: var(--spacing-sm);
+        box-shadow: none; /* remove shadow for checkboxes */
+      }
+  
+      /* Hide/Show Fields */
+      .hidden {
+        display: none;
+      }
+
+    .logo img {
+        width: 50px;
+    }
+
+    .container {
+        display: flex;
+        gap: 20px;
+        justify-content: center;
+        flex-wrap: wrap;
+        margin-top: 80px;
+    }
+
+    .popup-content header, h1 {
+      position: relative;
+      width: 100%;
+      padding: 10px 0;
+      text-align: center;
+      margin-bottom: 20px;
+  }
+
+    .card img {
+      width: 100%;
+      height: 200px;
+      border-radius: 8px;
+      object-fit: cover;
+  }
+
+    .episode-count {
+        font-weight: 700;
+        font-size: 16px;
+        margin-top: 10px;
+    }
+
+    .red { color: #DC3545; }
+    .orange { color: #FF7F00; }
+    .green { color: #28A745; }
+
+    /* Popup-specific Styles for Guest Selection */
+    .popup {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.5); /* Semi-transparent overlay */
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 2000;
+    }
+
+    .popup-content {
+      background: #FFF;
+      border-radius: 12px;
+      padding: 24px;
+      box-shadow: 0px 2px 8px rgba(0, 0, 0, 0.1);
+      max-width: 800px;  /* Increased width to fit multiple cards side by side */
+      width: 90%;
+      text-align: center;
+      max-height: 90vh;  /* Limit height to viewport */
+      
+    }
+
+    /* Optional: Adjust guest selection container inside the popup */
+    .guest-selection {
+      display: flex;
+      flex-wrap: nowrap; /* Prevents wrapping */
+      justify-content: center;
+      align-items: flex-start;
+      gap: 20px;
+      overflow-x: auto; /* Allows horizontal scrolling if space is tight */
+      padding: 10px;
+      max-width: 100%; /* Ensures it adapts to popup width */
+      white-space: nowrap; /* Prevents items from stacking */
+  }
+  
+  .card {
+      display: inline-block; /* Prevents stacking */
+      width: 220px;
+      flex: 0 0 auto; /* Prevents shrinking */
+      text-align: center;
+      white-space: normal; /* Ensures text wraps inside cards */
+  }
+  
+
+    .drag-ghost {
+      opacity: 0.7;                /* semi-transparent */
+      background-color: #f4a261;     /* light orange background */
+      border: 2px dashed #e63946;    /* dashed reddish border */
+      transform: scale(1.05);        /* slightly enlarged */
+    }
