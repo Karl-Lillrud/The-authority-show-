@@ -64,7 +64,7 @@
   /* Header */
   header {
     width: 100%;
-    max-width: 1870px; /* Adjust as needed */
+    max-width: 98%; /* Adjust as needed */
     margin: 0 auto; /* Centers the header */
     display: flex;
     justify-content: space-between;
