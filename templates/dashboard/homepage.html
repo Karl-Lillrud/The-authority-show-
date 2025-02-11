@@ -1,72 +1,5 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Podcast Manager</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap" rel="stylesheet">
-    <style>
-        body {
-            font-family: 'Inter', sans-serif;
-            background-color: #F7F8FA;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            height: 100vh;
-            margin: 0;
-            position: relative;
-        }
 
-        .header {
-            width: 100%;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 20px;
-            position: absolute;
-            top: 0;
-            left: 0;
-        }
-
-        .logo img {
-            width: 50px;
-        }
-
-        .container {
-            display: flex;
-            gap: 20px;
-            justify-content: center;
-            flex-wrap: wrap;
-            margin-top: 80px;
-        }
-
-        .card {
-            background: #FFFFFF;
-            border-radius: 12px;
-            padding: 16px;
-            box-shadow: 0px 2px 8px rgba(0, 0, 0, 0.1);
-            text-align: center;
-            width: 220px;
-        }
-
-        .card img {
-            width: 100%;
-            border-radius: 8px;
-        }
-
-        .episode-count {
-            font-weight: 700;
-            font-size: 16px;
-            margin-top: 10px;
-        }
-
-        .red { color: #DC3545; }
-        .orange { color: #FF7F00; }
-        .green { color: #28A745; }
-    </style>
-</head>
-<body>
+<link rel="stylesheet" href="{{ url_for('static', filename='css/homepage.css') }}">
     <header>
         <h1> Your Podcasts:</h1>
     </header>
@@ -87,6 +20,4 @@
             <p class="episode-count green">0 Open Episodes</p>
         </div>
     </div>
-</body>
-</html>
-
+  
