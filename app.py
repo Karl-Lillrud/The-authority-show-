@@ -16,6 +16,7 @@ venvupdate.update_venv_and_requirements()
 load_dotenv()
 
 app = Flask(__name__, template_folder='templates')
+app = Flask(__name__, static_folder='static')
 app.secret_key = os.getenv("SECRET_KEY")
 app.config['PREFERRED URL SCHEME'] = 'https'
 app.register_blueprint(register_bp)
@@ -246,6 +247,24 @@ def podcastmanagement():
 @app.route('/taskmanagement', methods=['GET'])
 def taskmanagement():
     return render_template('dashboard/taskmanagement.html')
+
+@app.route('/podprofile', methods=['GET','POST'])
+def podprofile():
+    return render_template('podprofile/index.html')
+
+@app.route('/get_user_podcasts', methods=['GET'])
+def get_user_podcasts():
+    if "user_id" not in session:
+        return jsonify({"error": "Unauthorized"}), 401
+
+    user_id = session["user_id"]
+
+    # Query CosmosDB to fetch podcasts where the logged-in user is the creator
+    query = "SELECT * FROM c WHERE c.creator_id = @user_id"
+    parameters = [{"name": "@user_id", "value": user_id}]
+    podcasts = list(container.query_items(query=query, parameters=parameters, enable_cross_partition_query=True))
+
+    return jsonify(podcasts)
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=8000, debug=True)
