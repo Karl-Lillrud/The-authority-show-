@@ -19,6 +19,31 @@
         --radius-large: 12px;
       }
   
+      #task-list li {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  /* The details container will hold the task text and checkbox */
+  .task-details {
+    display: flex;
+    align-items: center;
+    flex: 1 1 auto;
+    min-width: 0; /* allows flex items to shrink properly */
+  }
+  /* Truncate long task names without pushing out buttons */
+  .task-name {
+    flex-grow: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    margin-right: 10px;
+  }
+  /* The actions container for buttons stays at the far right */
+  .task-actions {
+    display: flex;
+    gap: var(--spacing-sm);
+  }
     
       .body task {
         margin: 0;
