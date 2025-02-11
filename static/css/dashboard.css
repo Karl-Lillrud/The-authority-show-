@@ -117,9 +117,9 @@ img {
   align-items: center;
   justify-content: space-between;
   padding: var(--spacing-xs);
-  margin-bottom: var(--spacing-xs);
+  margin-bottom: 10px;
   border-radius: var(--radius-small);
-  background-color: var(--background-light);
+  background-color: whitesmoke;
   box-shadow:
     inset -2px -2px 4px var(--light-shadow-light),
     inset 2px 2px 4px var(--dark-shadow-light);
