@@ -2,6 +2,7 @@ idna-3.10.dist-info/INSTALLER,sha256=zuuue4knoyJ-UwPPXg8fezS7VCrXJQrAP7zeNuwvFQg
 idna-3.10.dist-info/LICENSE.md,sha256=pZ8LDvNjWHQQmkRhykT_enDVBpboFHZ7-vch1Mmw2w8,1541
 idna-3.10.dist-info/METADATA,sha256=URR5ZyDfQ1PCEGhkYoojqfi2Ra0tau2--lhwG4XSfjI,10158
 idna-3.10.dist-info/RECORD,,
+idna-3.10.dist-info/REQUESTED,sha256=47DEQpj8HBSa-_TImW-5JCeuQeRkm5NMpJWZG3hSuFU,0
 idna-3.10.dist-info/WHEEL,sha256=EZbGkh7Ie4PoZfRQ8I0ZuP9VklN_TvcZ6DSE5Uar4z4,81
 idna/__init__.py,sha256=MPqNDLZbXqGaNdXxAFhiqFPKEQXju2jNQhCey6-5eJM,868
 idna/__pycache__/__init__.cpython-312.pyc,,
