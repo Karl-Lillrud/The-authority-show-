@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Pod Profile</title>
-    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/podprofile.css') }}">
 </head>
 <div class="language-selector">
     <select id="language-selector">
@@ -132,7 +132,7 @@
         </div>
     </main>
     <script src="https://unpkg.com/lazysizes@5.3.2/lazysizes.min.js" async></script>
-    <script src="i18n.js"></script>
-    <script src="main.js"></script>
+    <script src="{{ url_for('static', filename='podprofile/i18n.js') }}"></script>
+    <script src="{{ url_for('static', filename='podprofile/main.js') }}"></script>  
 </body>
 </html>

@@ -223,23 +223,22 @@ document.addEventListener("DOMContentLoaded", function () {
         if (!rssUrl) return;
         try {
             const response = await fetch(`https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(rssUrl)}`);
-            const data = await response.json();
-            if (data.status === "ok") {
-                document.getElementById("podName").value = data.feed.title || "";
-                document.getElementById("website").value = data.feed.link || "";
-                document.getElementById("facebook").value = extractSocialMediaLink(data.feed.description, "facebook");
-                document.getElementById("instagram").value = extractSocialMediaLink(data.feed.description, "instagram");
-                document.getElementById("twitter").value = extractSocialMediaLink(data.feed.description, "twitter");
-                document.getElementById("linkedin").value = extractSocialMediaLink(data.feed.description, "linkedin");
-                document.getElementById("pinterest").value = extractSocialMediaLink(data.feed.description, "pinterest");
-                document.getElementById("email").value = extractEmail(data.feed.description);
-                document.getElementById("podLogo").src = data.feed.image || "";
-                document.getElementById("hostName").value = data.feed.author || "";
+            const text = await response.text(); // Read response as text first
+            
+            try {
+                const data = JSON.parse(text); // Attempt to parse JSON
+                if (data.status === "ok") {
+                    document.getElementById("podName").value = data.feed.title || "";
+                    document.getElementById("website").value = data.feed.link || "";
+                }
+            } catch (jsonError) {
+                console.error("Invalid JSON:", text);
             }
         } catch (error) {
             console.error("Error fetching RSS feed:", error);
         }
     }
+    
 
     function extractSocialMediaLink(description, platform) {
         const regex = new RegExp(`https?:\/\/www\.${platform}\.com\/[^\s]+`, "i");
