@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, jsonify, url_for, session, redirect
+from flask import Flask, render_template, request, jsonify, url_for, session, redirect, g
 from azure.cosmos import CosmosClient
 from register import register_bp
 from dotenv import load_dotenv
@@ -11,13 +11,11 @@ import venvupdate
 from email.mime.text import MIMEText
 
 # update the virtual environment and requirements
-
 venvupdate.update_venv_and_requirements()
 
 load_dotenv()
 
-app = Flask(__name__, template_folder='templates')
-app = Flask(__name__, static_folder='static')
+app = Flask(__name__, template_folder='templates', static_folder='static')
 app.secret_key = os.getenv("SECRET_KEY")
 app.config['PREFERRED URL SCHEME'] = 'https'
 app.register_blueprint(register_bp)
@@ -46,16 +44,16 @@ SMTP_PORT = int(os.getenv("SMTP_PORT", 587))
 EMAIL_USER = os.getenv("EMAIL_USER")
 EMAIL_PASS = os.getenv("EMAIL_PASS")
 
-user_id = session["user_id"]
+@app.before_request
+def load_user():
+    g.user_id = session.get("user_id")
 
 # 📌 Step 1: Forgot Password
 @app.route('/forgotpassword', methods=['GET', 'POST'])
 def forgot_password():
     if request.method == 'GET':
-        # Render the forgot password page if accessed via GET
         return render_template('forgotpassword/forgot-password.html')
 
-    # Ensure proper content type
     if request.content_type != "application/json":
         return jsonify({"error": "Invalid Content-Type. Expected application/json"}), 415  
 
@@ -64,8 +62,7 @@ def forgot_password():
         return jsonify({"error": "Invalid JSON format"}), 400
 
     email = data.get("email", "").strip().lower()
-
-    print(f"🔍 Checking for email: {email}")  # Debugging log
+    print(f"🔍 Checking for email: {email}")
 
     query = "SELECT * FROM c WHERE LOWER(c.email) = @email"
     parameters = [{"name": "@email", "value": email}]
@@ -75,7 +72,6 @@ def forgot_password():
         return jsonify({"error": "No account found with that email"}), 404
 
     reset_code = str(random.randint(100000, 999999))
-
     user = users[0]
     user["reset_code"] = reset_code
     container.upsert_item(user)
@@ -86,11 +82,10 @@ def forgot_password():
     except Exception as e:
         return jsonify({"error": f"Failed to send email: {str(e)}"}), 500
 
-
 # 📌 Step 2: Enter Reset Code
 @app.route('/enter-code', methods=['GET', 'POST'])
 def enter_code():
-    print(f"🔍 Request Headers: {request.headers}")  # ✅ Debugging
+    print(f"🔍 Request Headers: {request.headers}")
     print(f"🔍 Request Data: {request.data}")
 
     if request.method == 'GET':
@@ -106,8 +101,7 @@ def enter_code():
 
     email = data.get("email", "").strip().lower()
     entered_code = data.get("code", "").strip()
-
-    print(f"🔍 Checking Email: {email}, Code: {entered_code}")  # ✅ Debugging
+    print(f"🔍 Checking Email: {email}, Code: {entered_code}")
 
     query = "SELECT * FROM c WHERE LOWER(c.email) = @email"
     parameters = [{"name": "@email", "value": email}]
@@ -117,15 +111,13 @@ def enter_code():
         return jsonify({"error": "Invalid or expired reset code."}), 400
 
     print("✅ Code Verified, Redirecting to Reset Password")
-
     return jsonify({"message": "Code is Valid.", "redirect_url": url_for('reset_password')}), 200
-
 
 # 📌 Step 3: Reset Password
 @app.route('/reset-password', methods=['GET', 'POST'])
 def reset_password():
     if request.method == 'GET':
-        return render_template('forgotpassword/reset-password.html')  # ✅ Allow GET request
+        return render_template('forgotpassword/reset-password.html')
 
     if not request.is_json:
         return jsonify({"error": "Invalid Content-Type. Expected application/json"}), 415
@@ -148,7 +140,6 @@ def reset_password():
 
     return jsonify({"message": "Password updated successfully.", "redirect_url": url_for('signin')}), 200
 
-
 # 📌 Send Reset Email
 def send_reset_email(email, reset_code):
     try:
@@ -168,32 +159,28 @@ def send_reset_email(email, reset_code):
 
 @app.route('/resend-code', methods=['POST'])
 def resend_code():
+    if request.content_type != "application/json":
+        return jsonify({"error": "Invalid Content-Type. Expected application/json"}), 415  
+
+    data = request.get_json()
+    email = data.get("email", "").strip().lower()
+    print(f"🔍 Resending code for email: {email}")
+
+    query = "SELECT * FROM c WHERE LOWER(c.email) = @email"
+    parameters = [{"name": "@email", "value": email}]
+    users = list(container.query_items(query=query, parameters=parameters, enable_cross_partition_query=True))
+
+    if not users:
+        return jsonify({"error": "No account found with that email"}), 404
+
+    reset_code = str(random.randint(100000, 999999))
+    user = users[0]
+    user["reset_code"] = reset_code
+    container.upsert_item(user)
+
     try:
-        if request.content_type != "application/json":
-            return jsonify({"error": "Invalid Content-Type. Expected application/json"}), 415  
-
-        data = request.get_json()
-        email = data.get("email", "").strip().lower()
-
-        print(f"🔍 Resending code for email: {email}")
-
-        query = "SELECT * FROM c WHERE LOWER(c.email) = @email"
-        parameters = [{"name": "@email", "value": email}]
-        users = list(container.query_items(query=query, parameters=parameters, enable_cross_partition_query=True))
-
-        if not users:
-            return jsonify({"error": "No account found with that email"}), 404
-
-        # Generate a new reset code
-        reset_code = str(random.randint(100000, 999999))
-        user = users[0]
-        user["reset_code"] = reset_code
-        container.upsert_item(user)
-
-        send_reset_email(email, reset_code)  # ✅ Send email
-
+        send_reset_email(email, reset_code)
         return jsonify({"message": "New reset code sent successfully."}), 200
-
     except Exception as e:
         return jsonify({"error": f"Failed to resend code: {str(e)}"}), 500
 
@@ -227,42 +214,56 @@ def signin():
 # 📌 Dashboard
 @app.route('/dashboard', methods=['GET'])
 def dashboard():
-    if "user_id" not in session:
+    if not g.user_id:
         return redirect(url_for('signin'))
     return render_template('dashboard/dashboard.html')
 
 # ✅ Serves the homepage page
 @app.route('/homepage', methods=['GET'])
 def homepage():
+    if not g.user_id:
+        return redirect(url_for('signin'))
     return render_template('dashboard/homepage.html')
 
 # ✅ Serves the settings page
 @app.route('/accountsettings', methods=['GET'])
 def accountsettings():
+    if not g.user_id:
+        return redirect(url_for('signin'))
     return render_template('dashboard/accountsettings.html')
 
 # ✅ Serves the profile page
 @app.route('/podcastmanagement', methods=['GET'])
 def podcastmanagement():
+    if not g.user_id:
+        return redirect(url_for('signin'))
     return render_template('dashboard/podcastmanagement.html')
 
 # ✅ Serves the tasks page
 @app.route('/taskmanagement', methods=['GET'])
 def taskmanagement():
+    if not g.user_id:
+        return redirect(url_for('signin'))
     return render_template('dashboard/taskmanagement.html')
 
 @app.route('/podprofile', methods=['GET','POST'])
 def podprofile():
+    if not g.user_id:
+        return redirect(url_for('signin'))
     return render_template('podprofile/index.html')
 
 @app.route('/get_user_podcasts', methods=['GET'])
 def get_user_podcasts():
-    if "user_id" not in session:
+    if not g.user_id:
         return jsonify({"error": "Unauthorized"}), 401
-    
+    query = "SELECT * FROM c WHERE c.creator_id = @user_id"
+    parameters = [{"name": "@user_id", "value": g.user_id}]
+    podcasts = list(container.query_items(query=query, parameters=parameters, enable_cross_partition_query=True))
+    return jsonify(podcasts)
+
 @app.route('/register_podcast', methods=['POST'])
 def register_podcast():
-    if "user_id" not in session:
+    if not g.user_id:
         return jsonify({"error": "Unauthorized"}), 401
 
     data = request.get_json()
@@ -275,10 +276,9 @@ def register_podcast():
     if not pod_name or not pod_rss:
         return jsonify({"error": "Podcast Name and RSS URL are required"}), 400
 
-    # Prepare the podcast object
     podcast_item = {
-        "id": str(random.randint(100000, 999999)),  # Generate a unique ID
-        "creator_id": session["user_id"],  # Store the user's ID
+        "id": str(random.randint(100000, 999999)),
+        "creator_id": g.user_id,
         "podName": pod_name,
         "podRss": pod_rss,
         "created_at": datetime.utcnow().isoformat()
@@ -289,13 +289,6 @@ def register_podcast():
         return jsonify({"message": "Podcast registered successfully", "redirect_url": "/production-team"}), 201
     except Exception as e:
         return jsonify({"error": f"Failed to register podcast: {str(e)}"}), 500
-
-    # Query CosmosDB to fetch podcasts where the logged-in user is the creator
-    query = "SELECT * FROM c WHERE c.creator_id = @user_id"
-    parameters = [{"name": "@user_id", "value": user_id}]
-    podcasts = list(container.query_items(query=query, parameters=parameters, enable_cross_partition_query=True))
-
-    return jsonify(podcasts)
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=8000, debug=True)
