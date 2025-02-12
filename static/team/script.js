@@ -283,30 +283,28 @@ function initializeLocalization() {
     if (!filterMenu) {
       filterMenu = document.createElement('div');
       filterMenu.innerHTML = `
-        <div class="filter-menu">
-          <label for="filter-role">Role:</label>
-          <select id="filter-role">
-            <option value="">All</option>
-            <option value="Admin">Admin</option>
-            <option value="Editor">Editor</option>
-            <option value="Team Member">Team Member</option>
-          </select>
-
-          <label for="filter-status">Status:</label>
-          <select id="filter-status">
-            <option value="">All</option>
-            <option value="Active">Active</option>
-            <option value="Inactive">Inactive</option>
-          </select>
-
-          <label for="filter-task">Task Count:</label>
-          <select id="filter-task">
-            <option value="">All</option>
-            <option value="most">Most Tasks</option>
-            <option value="least">Least Tasks</option>
-          </select>
-        </div>
-      `;
+      <div class="filters">
+        <label for="filter-role">Role:</label>
+        <select id="filter-role">
+          <option value="">All</option>
+          <option value="Admin">Admin</option>
+          <option value="Editor">Editor</option>
+          <option value="Team Member">Team Member</option>
+        </select>
+        <label for="filter-status">Status:</label>
+        <select id="filter-status">
+          <option value="">All</option>
+          <option value="Active">Active</option>
+          <option value="Inactive">Inactive</option>
+        </select>
+        <label for="filter-task">Task Count:</label>
+        <select id="filter-task">
+          <option value="">All</option>
+          <option value="most">Most Tasks</option>
+          <option value="least">Least Tasks</option>
+        </select>
+      </div>
+    `;
       filterMenu.classList.add('filter-menu-wrapper');
       filterButton.parentNode.appendChild(filterMenu);
 

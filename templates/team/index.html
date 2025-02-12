@@ -3,23 +3,336 @@
 {% block title %}Team Leaderboard Dashboard{% endblock %}
 
 {% block content %}
-  <!-- Font Awesome CDN for Icons -->
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" integrity="sha512-Fo3rlrZj/k7ujTnHq6v+8gEB/hA+0c3hHnJ6bYlqG+MVJj4y5fI3Hpo3ZcCmmg3xD9kKMlKLH0qVx9IovmYbKw==" crossorigin="anonymous" referrerpolicy="no-referrer" />
-  <link rel="stylesheet" href="{{ url_for('static', filename='css/team.css') }}">
-  <script src="https://unpkg.com/i18next/dist/umd/i18next.min.js"></script>
-  <script src="https://unpkg.com/i18next-http-backend/i18nextHttpBackend.min.js"></script>
-  <script src="{{ url_for('static', filename='team/script.js') }}"></script>
+<!-- Include external resources -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" integrity="sha512-Fo3rlrZj/k7ujTnHq6v+8gEB/hA+0c3hHnJ6bYlqG+MVJj4y5fI3Hpo3ZcCmmg3xD9kKMlKLH0qVx9IovmYbKw==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+<link rel="stylesheet" href="{{ url_for('static', filename='css/team.css') }}">
+<script src="https://unpkg.com/i18next/dist/umd/i18next.min.js"></script>
+<script src="https://unpkg.com/i18next-http-backend/i18nextHttpBackend.min.js"></script>
 
-</head>
-<body>
-  <div class="container">
-    <header class="header">
-      <h1 class="fancy-heading" data-i18n="header.title">TEAM</h1>
-      <div class="controls">
-        <div class="search-bar">
-          <input type="text" id="search" class="input-field" placeholder="" data-i18n-placeholder="placeholder.search" aria-label="Search">
-          <button id="filter" class="button" data-i18n="buttons.filter">Filter</button>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  // === Insert Filter CSS into Head so it always applies ===
+  if (!document.getElementById('filter-menu-styles')) {
+    var styleEl = document.createElement('style');
+    styleEl.id = 'filter-menu-styles';
+    styleEl.innerHTML = `
+      .filters {
+        display: flex;
+        align-items: center;
+        gap: var(--spacing-lg);
+        margin-top: var(--spacing-lg);
+      }
+      .filters label {
+        font-weight: bold;
+      }
+      .filters select {
+        padding: var(--spacing-sm);
+        border-radius: 10px;
+        border: none;
+        background-color: var(--background-light);
+        color: var(--text-color-light);
+        box-shadow: -5px -5px 10px var(--light-shadow-light),
+                    5px 5px 10px var(--dark-shadow-light);
+        transition: box-shadow 0.3s ease;
+      }
+      .filters select:focus {
+        outline: none;
+        box-shadow: inset 3px 3px 6px var(--highlight-color),
+                    inset -3px -3px 6px var(--highlight-color);
+      }
+      .hidden {
+        display: none !important;
+      }
+    `;
+    document.head.appendChild(styleEl);
+  }
+
+  // === Localization Setup ===
+  function initializeLocalization() {
+    i18next
+      .use(i18nextHttpBackend)
+      .init({
+        lng: 'en',
+        fallbackLng: 'en',
+        backend: {
+          loadPath: '/locales/{{lng}}/translation.json'
+        }
+      }, function(err, t) {
+        if (err) return console.error(err);
+        updateContent();
+      });
+  }
+  function updateContent() {
+    document.querySelectorAll('[data-i18n]').forEach(function(el) {
+      const key = el.getAttribute('data-i18n');
+      el.textContent = i18next.t(key);
+    });
+    document.querySelectorAll('[data-i18n-placeholder]').forEach(function(el) {
+      const key = el.getAttribute('data-i18n-placeholder');
+      el.setAttribute('placeholder', i18next.t(key));
+    });
+  }
+  function changeLanguage(lng) {
+    i18next.changeLanguage(lng, function(err, t) {
+      if (err) return console.error(err);
+      updateContent();
+    });
+  }
+  function setupLanguageSwitcher() {
+    document.querySelectorAll('.language-switcher button').forEach(function(btn) {
+      btn.addEventListener('click', function() {
+        const lang = btn.id.replace('lang-', '');
+        changeLanguage(lang);
+      });
+    });
+  }
+
+  // === Dark Mode Setup ===
+  const themeToggle = document.getElementById('theme-toggle');
+  themeToggle.addEventListener('change', function() {
+    if (this.checked) {
+      document.body.classList.add('dark-mode');
+      localStorage.setItem('theme', 'dark');
+    } else {
+      document.body.classList.remove('dark-mode');
+      localStorage.setItem('theme', 'light');
+    }
+  });
+  const savedTheme = localStorage.getItem('theme');
+  if (savedTheme === 'dark') {
+    document.body.classList.add('dark-mode');
+    themeToggle.checked = true;
+  }
+
+  // === Modal Toggle for "Add New Member" ===
+  const addMemberBtn = document.querySelector('.add-member');
+  const addMemberModal = document.getElementById('addMemberModal');
+  const closeModalBtn = document.querySelector('.close-btn');
+  if (addMemberBtn) {
+    addMemberBtn.addEventListener('click', function() {
+      addMemberModal.classList.add('show');
+      addMemberModal.setAttribute('aria-hidden', 'false');
+    });
+  }
+  if (closeModalBtn) {
+    closeModalBtn.addEventListener('click', function() {
+      addMemberModal.classList.remove('show');
+      addMemberModal.setAttribute('aria-hidden', 'true');
+    });
+  }
+  window.addEventListener('click', function(event) {
+    if (event.target === addMemberModal) {
+      addMemberModal.classList.remove('show');
+      addMemberModal.setAttribute('aria-hidden', 'true');
+    }
+  });
+
+  // === Form Submission with Validation ===
+  document.getElementById('addMemberForm').addEventListener('submit', function(event) {
+    event.preventDefault();
+    const name = document.getElementById('memberName');
+    const role = document.getElementById('memberRole');
+    const email = document.getElementById('memberEmail');
+    const phone = document.getElementById('memberPhone');
+    let isValid = true;
+    if (!validateName(name.value)) {
+      name.classList.add('input-field--error');
+      document.getElementById('name-error').classList.remove('sr-only');
+      isValid = false;
+    } else {
+      name.classList.remove('input-field--error');
+      document.getElementById('name-error').classList.add('sr-only');
+    }
+    if (!validateRole(role.value)) {
+      role.classList.add('input-field--error');
+      document.getElementById('role-error').classList.remove('sr-only');
+      isValid = false;
+    } else {
+      role.classList.remove('input-field--error');
+      document.getElementById('role-error').classList.add('sr-only');
+    }
+    if (!validateEmail(email.value)) {
+      email.classList.add('input-field--error');
+      document.getElementById('email-error').classList.remove('sr-only');
+      isValid = false;
+    } else {
+      email.classList.remove('input-field--error');
+      document.getElementById('email-error').classList.add('sr-only');
+    }
+    if (phone.value && !validatePhone(phone.value)) {
+      phone.classList.add('input-field--error');
+      document.getElementById('phone-error').classList.remove('sr-only');
+      isValid = false;
+    } else {
+      phone.classList.remove('input-field--error');
+      document.getElementById('phone-error').classList.add('sr-only');
+    }
+    if (isValid) {
+      const submitButton = this.querySelector('.submit-btn');
+      submitButton.textContent = i18next.t('buttons.submitting');
+      setTimeout(function() {
+        submitButton.textContent = i18next.t('buttons.submit');
+        showToast(i18next.t('notifications.memberAdded'));
+        document.getElementById('addMemberForm').reset();
+        addMemberModal.classList.remove('show');
+        addMemberModal.setAttribute('aria-hidden', 'true');
+      }, 2000);
+    }
+  });
+  function validateEmail(email) {
+    const re = /\S+@\S+\.\S+/;
+    return re.test(email);
+  }
+  function validateName(name) {
+    return name.trim().length > 0;
+  }
+  function validateRole(role) {
+    return role.trim().length > 0;
+  }
+  function validatePhone(phone) {
+    const re = /^\+?[0-9]{7,15}$/;
+    return re.test(phone);
+  }
+  function showToast(message) {
+    const toast = document.getElementById('toast');
+    toast.textContent = message;
+    toast.classList.add('show');
+    setTimeout(function() {
+      toast.classList.remove('show');
+    }, 3000);
+  }
+
+  // === Search Functionality for Table Rows ===
+  const searchInput = document.getElementById('search');
+  const tableRows = document.querySelectorAll('.team-table tbody tr');
+  searchInput.addEventListener('input', function(event) {
+    const searchValue = event.target.value.toLowerCase();
+    tableRows.forEach(function(row) {
+      row.style.display = row.textContent.toLowerCase().includes(searchValue) ? '' : 'none';
+    });
+  });
+
+  // === Action Buttons in Table ===
+  tableRows.forEach(function(row) {
+    const editButton = row.querySelector('.action-btn.edit');
+    const disableButton = row.querySelector('.action-btn.disable');
+    const viewTasksButton = row.querySelector('.action-btn.view-tasks');
+    if (editButton) {
+      editButton.addEventListener('click', function() {
+        alert('Edit functionality not implemented yet.');
+      });
+    }
+    if (disableButton) {
+      disableButton.addEventListener('click', function() {
+        const statusSpan = row.querySelector('.status');
+        if (statusSpan.textContent.trim() === 'Active') {
+          statusSpan.textContent = 'Inactive';
+          statusSpan.classList.remove('active');
+          statusSpan.classList.add('inactive');
+        } else {
+          statusSpan.textContent = 'Active';
+          statusSpan.classList.remove('inactive');
+          statusSpan.classList.add('active');
+        }
+      });
+    }
+    if (viewTasksButton) {
+      viewTasksButton.addEventListener('click', function() {
+        alert('View tasks functionality not implemented yet.');
+      });
+    }
+  });
+
+  // === Filter Menu Functionality with Search Bar Adjustment ===
+  const filterButton = document.getElementById('filter');
+  let filterMenu;
+  const searchBar = document.querySelector('.search-bar');
+
+  filterButton.addEventListener('click', function() {
+    if (!filterMenu) {
+      filterMenu = document.createElement('div');
+      // Create filter menu HTML using the "filters" class
+      filterMenu.innerHTML = `
+        <div class="filters">
+          <label for="filter-role">Role:</label>
+          <select id="filter-role">
+            <option value="">All</option>
+            <option value="Admin">Admin</option>
+            <option value="Editor">Editor</option>
+            <option value="Team Member">Team Member</option>
+          </select>
+          <label for="filter-status">Status:</label>
+          <select id="filter-status">
+            <option value="">All</option>
+            <option value="Active">Active</option>
+            <option value="Inactive">Inactive</option>
+          </select>
+          <label for="filter-task">Task Count:</label>
+          <select id="filter-task">
+            <option value="">All</option>
+            <option value="most">Most Tasks</option>
+            <option value="least">Least Tasks</option>
+          </select>
         </div>
+      `;
+      // Append the filter menu next to the filter button
+      filterButton.parentNode.appendChild(filterMenu);
+      // Set a fixed flex basis for the search bar so it doesn't shrink too much
+      searchBar.style.flex = "0 0 500px";
+
+      // Set up event listeners for the filter dropdowns
+      const roleFilter = document.getElementById('filter-role');
+      const statusFilter = document.getElementById('filter-status');
+      const taskFilter = document.getElementById('filter-task');
+
+      function filterRows() {
+        const selectedRole = roleFilter.value;
+        const selectedStatus = statusFilter.value;
+        const selectedTaskFilter = taskFilter.value;
+        tableRows.forEach(function(row) {
+          const role = row.querySelector('td:nth-child(2)').textContent.trim();
+          const status = row.querySelector('.status').textContent.trim();
+          const taskCount = parseInt(row.querySelector('td:nth-child(5)').textContent.trim());
+          const matchesRole = !selectedRole || role === selectedRole;
+          const matchesStatus = !selectedStatus || status === selectedStatus;
+          const matchesTask = !selectedTaskFilter ||
+            (selectedTaskFilter === 'most' && taskCount >= 5) ||
+            (selectedTaskFilter === 'least' && taskCount < 5);
+          row.style.display = (matchesRole && matchesStatus && matchesTask) ? '' : 'none';
+        });
+      }
+
+      roleFilter.addEventListener('change', filterRows);
+      statusFilter.addEventListener('change', filterRows);
+      taskFilter.addEventListener('change', filterRows);
+    } else {
+      // Toggle the filter menu's visibility
+      if (filterMenu.classList.contains('hidden')) {
+        filterMenu.classList.remove('hidden');
+        // Keep the search bar at fixed width when the menu is visible
+        searchBar.style.flex = "0 0 500px";
+      } else {
+        filterMenu.classList.add('hidden');
+        // Clear the fixed style so the search bar reverts to its default size
+        searchBar.style.flex = "";
+      }
+    }
+  });
+
+  setupLanguageSwitcher();
+  initializeLocalization();
+});
+</script>
+
+<div class="container">
+  <header class="header">
+    <h1 class="fancy-heading" data-i18n="header.title">TEAM</h1>
+    <div class="controls">
+      <div class="search-bar">
+        <input type="text" id="search" class="input-field" placeholder="" data-i18n-placeholder="placeholder.search" aria-label="Search">
+        <button id="filter" class="button" data-i18n="buttons.filter">Filter</button>
+      </div>
+      <div class="actions">
         <div class="notifications">
           <button class="icon-button" aria-label="Notifications">
             <i class="fas fa-bell" aria-hidden="true"></i>
@@ -29,11 +342,10 @@
           </button>
         </div>
         <!-- Dark Mode Toggle -->
-        <label class="switch">
-          <input type="checkbox" id="theme-toggle" aria-label="Toggle Dark Mode">
+        <label class="switch" aria-label="Toggle Dark Mode">
+          <input type="checkbox" id="theme-toggle">
           <span class="slider round"></span>
-        </label> 
-      
+        </label>
         <!-- Language Switcher -->
         <div class="language-switcher">
           <button id="lang-en" aria-label="Switch to English">EN</button>
@@ -43,10 +355,12 @@
           <button id="lang-fr" aria-label="Switch to French">FR</button>
           <button id="lang-zh" aria-label="Switch to Chinese">ZH</button>
         </div>
-      </div> 
-    </header>
+      </div>
+    </div>
+  </header>
 
-    <table class="team-table table">
+  <main>
+    <table class="team-table neu-table">
       <thead>
         <tr>
           <th data-i18n="table.headers.name">Name</th>
@@ -69,7 +383,7 @@
           <td>
             <span class="status active" data-i18n="status.active">Active</span>
           </td>
-          <td>
+          <td class="actions-cell">
             <button class="action-btn edit" aria-label="Edit Member">
               <i class="fas fa-edit"></i>
             </button>
@@ -84,9 +398,8 @@
         <!-- Additional rows will be populated dynamically -->
       </tbody>
     </table>
-
     <button class="button add-member" data-i18n="buttons.addMember">Add New Member</button>
-  </div>
+  </main>
 
   <!-- Modal for Adding New Member -->
   <div id="addMemberModal" class="modal" aria-hidden="true" role="dialog" aria-labelledby="addMemberTitle">
@@ -112,8 +425,10 @@
         <input type="tel" id="memberPhone" class="input-field" aria-describedby="phone-error" data-i18n-placeholder="placeholder.phone">
         <span id="phone-error" class="validation-message sr-only" data-i18n="errors.phone">Please enter a valid phone number.</span>
       </div>
-      <button type="submit" class="button submit-btn" data-i18n="buttons.submit">Submit</button>
-      <button type="button" class="button close-btn" data-i18n="buttons.close">Close</button> 
+      <div class="modal-actions">
+        <button type="submit" class="button submit-btn" data-i18n="buttons.submit">Submit</button>
+        <button type="button" class="button close-btn" data-i18n="buttons.close">Close</button>
+      </div>
     </form>
   </div>
 
@@ -121,28 +436,5 @@
   <div id="toast" class="toast" role="alert" aria-live="assertive" aria-atomic="true">
     This is a toast message.
   </div>
-  <div class="filters">
-    <label for="filter-role">Role:</label>
-    <select id="filter-role">
-      <option value="">All</option>
-      <option value="Admin">Admin</option>
-      <option value="Editor">Editor</option>
-      <option value="Team Member">Team Member</option>
-    </select>
-  
-    <label for="filter-status">Status:</label>
-    <select id="filter-status">
-      <option value="">All</option>
-      <option value="Active">Active</option>
-      <option value="Inactive">Inactive</option>
-    </select>
-  
-    <label for="filter-task">Task Count:</label>
-    <select id="filter-task">
-      <option value="">All</option>
-      <option value="most">Most Tasks</option>
-      <option value="least">Least Tasks</option>
-    </select>
-  </div>
-  </div>
-  {% endblock %}
+</div>
+{% endblock %}
