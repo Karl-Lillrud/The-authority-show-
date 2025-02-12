@@ -1,45 +1,36 @@
 document.addEventListener("DOMContentLoaded", function () {
+    // Prevent default form submissions to avoid page reloads.
+    const podNameForm = document.getElementById("podNameForm");
+    if (podNameForm) {
+      podNameForm.addEventListener("submit", function (event) {
+        event.preventDefault();
+      });
+    }
+  
+    const productionTeamForm = document.getElementById("productionTeamForm");
+    if (productionTeamForm) {
+      productionTeamForm.addEventListener("submit", function (event) {
+        event.preventDefault();
+      });
+    }
+  
     /* ==================================================
        COMMON FUNCTIONS (Used Across Sections)
     ================================================== */
-    function getEmailProviderUrl(hostEmail, toEmail, subject, body) {
-      const domain = hostEmail.split("@")[1].toLowerCase();
-      if (domain.includes("gmail")) {
-        return `https://mail.google.com/mail/?view=cm&fs=1&to=${encodeURIComponent(
-          toEmail
-        )}&su=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
-      } else if (
-        domain.includes("outlook") ||
-        domain.includes("hotmail") ||
-        domain.includes("live")
-      ) {
-        return `https://outlook.live.com/mail/0/deeplink/compose?to=${encodeURIComponent(
-          toEmail
-        )}&subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
-      } else if (domain.includes("yahoo")) {
-        return `https://compose.mail.yahoo.com/?to=${encodeURIComponent(
-          toEmail
-        )}&subj=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
-      }
-      return `mailto:${encodeURIComponent(toEmail)}?subject=${encodeURIComponent(
-        subject
-      )}&body=${encodeURIComponent(body)}`;
-    }
-  
+    // Invitation link generator remains the same.
     function generateInvitationLink(inviteeEmail, podcastName, hostEmail) {
-      // In production, include a secure token in the link.
       return `https://app.podmanager.ai/invite?invitee=${encodeURIComponent(
         inviteeEmail
       )}&podcast=${encodeURIComponent(podcastName)}&host=${encodeURIComponent(hostEmail)}`;
     }
   
+    // Updated sendInvitations function that posts to a backend endpoint.
     function sendInvitations() {
       const teamMembers = document.querySelectorAll(".team-member");
       const podcastName = document.getElementById("podName").value || "your podcast";
       const hostName = document.getElementById("hostName").value || "the host";
-      // Ensure window.hostEmail is set via a script tag in your template:
-      // <script>window.hostEmail = "{{ session.email }}";</script>
-      const hostEmail = window.hostEmail || "";
+      // Hardcode the from address.
+      const fromEmail = "theauthorityshow@gmail.com";
   
       teamMembers.forEach(member => {
         const inviteeNameField = member.querySelector(".team-name");
@@ -48,25 +39,43 @@ document.addEventListener("DOMContentLoaded", function () {
           const inviteeName = inviteeNameField.value.trim();
           const inviteeEmail = inviteeEmailField.value.trim();
           if (inviteeEmail) {
-            const invitationLink = generateInvitationLink(inviteeEmail, podcastName, hostEmail);
+            const invitationLink = generateInvitationLink(inviteeEmail, podcastName, fromEmail);
             const emailBody = `Dear ${inviteeName}!
   
-  You are hereby invited to the production team page of PodManager for your PodCast ${podcastName} by the PodCast host ${hostName}!
+  You are hereby invited to the production team page of PodManager for your PodCast ${podcastName} by the PodCast host!
   
   Click this link to accept the invitation and join the wonderful world of PodManager!
   ${invitationLink}
   
   Thank you for choosing PodManager!
   
-  PodManager Crew`;
+  The PodManager Crew`;
             const subject = `Invitation to join the ${podcastName} Production Team`;
-            let composeUrl;
-            if (hostEmail) {
-              composeUrl = getEmailProviderUrl(hostEmail, inviteeEmail, subject, emailBody);
-            } else {
-              composeUrl = `mailto:${encodeURIComponent(inviteeEmail)}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(emailBody)}`;
-            }
-            window.open(composeUrl, "_blank");
+  
+            // POST to backend so that email credentials in .env are used.
+            fetch("/send_invite", {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json"
+              },
+              body: JSON.stringify({
+                from: fromEmail,
+                to: inviteeEmail,
+                subject: subject,
+                body: emailBody
+              })
+            })
+              .then(response => response.json())
+              .then(data => {
+                if (data.success) {
+                  console.log(`Invitation sent to ${inviteeEmail}`);
+                } else {
+                  console.error(`Failed to send invitation to ${inviteeEmail}: ${data.error}`);
+                }
+              })
+              .catch(error => {
+                console.error("Error sending invitation:", error);
+              });
           }
         }
       });
@@ -74,8 +83,6 @@ document.addEventListener("DOMContentLoaded", function () {
   
     /* ==================================================
        POD NAME SECTION
-       - Handles RSS feed fetching and auto-generates Pod Name and Website.
-       - Handles podcast registration.
     ================================================== */
     async function fetchRSSData(rssUrl) {
       if (!rssUrl) return;
@@ -103,7 +110,6 @@ document.addEventListener("DOMContentLoaded", function () {
       }
     }
   
-    // RSS input listener for the Pod Name Section.
     const podRssInput = document.getElementById("podRss");
     if (podRssInput) {
       podRssInput.addEventListener("input", function () {
@@ -114,7 +120,6 @@ document.addEventListener("DOMContentLoaded", function () {
       });
     }
   
-    // Podcast registration (Go button) in the Pod Name Section.
     const goToProductionTeam = document.getElementById("goToProductionTeam");
     if (goToProductionTeam) {
       goToProductionTeam.addEventListener("click", async function () {
@@ -132,8 +137,8 @@ document.addEventListener("DOMContentLoaded", function () {
           });
           const result = await response.json();
           if (response.ok) {
-            // Use the redirect URL returned from the backend (make sure it matches your app routes)
-            window.location.href = result.redirect_url;
+            document.getElementById("pod-name-section").classList.add("hidden");
+            document.getElementById("production-team-section").classList.remove("hidden");
           } else {
             alert("Error: " + result.error);
           }
@@ -146,7 +151,6 @@ document.addEventListener("DOMContentLoaded", function () {
   
     /* ==================================================
        PRODUCTION TEAM SECTION
-       - Handles navigation and invitation functionality.
     ================================================== */
     function setupProductionTeamSection() {
       const goToPodProfile = document.getElementById("goToPodProfile");
@@ -157,7 +161,6 @@ document.addEventListener("DOMContentLoaded", function () {
       if (goToPodProfile) {
         goToPodProfile.addEventListener("click", () => {
           sendInvitations();
-          // Hide Production Team Section and show Pod Profile Section.
           document.getElementById("production-team-section").classList.add("hidden");
           document.getElementById("pod-profile-section").classList.remove("hidden");
         });
@@ -170,7 +173,7 @@ document.addEventListener("DOMContentLoaded", function () {
         });
       }
   
-      // This function adds a new team member form group.
+      // Each press adds one new team member input group.
       if (addTeamMemberButton && teamMembersContainer) {
         addTeamMemberButton.addEventListener("click", () => {
           const newMember = document.createElement("div");
@@ -200,7 +203,6 @@ document.addEventListener("DOMContentLoaded", function () {
   
     /* ==================================================
        POD PROFILE SECTION
-       - Handles pod profile form submission and navigation.
     ================================================== */
     function setupPodProfileSection() {
       const backToProductionTeam = document.getElementById("backToProductionTeam");
@@ -222,37 +224,19 @@ document.addEventListener("DOMContentLoaded", function () {
     }
   
     /* ==================================================
-       SETUP FOR ADDING TEAM MEMBERS (if not already defined)
+       GOOGLE CALENDAR INTEGRATION SETUP
+       - Opens a new tab to connect the user's Google Calendar.
     ================================================== */
-    function setupAddTeamMember() {
-      const addButton = document.getElementById("addTeamMember");
-      if (addButton) {
-        addButton.addEventListener("click", () => {
-          const container = document.getElementById("teamMembersContainer");
-          const newMember = document.createElement("div");
-          newMember.classList.add("team-member");
-          newMember.innerHTML = `
-              <div class="form-group">
-                  <label>Name</label>
-                  <input type="text" class="team-name" required>
-              </div>
-              <div class="form-group">
-                  <label>Email</label>
-                  <input type="email" class="team-email" required>
-              </div>
-              <div class="form-group">
-                  <label>Role</label>
-                  <select class="team-role" required>
-                      <option value="" disabled selected>Select Role</option>
-                      <option value="user">User</option>
-                      <option value="host">Host</option>
-                  </select>
-              </div>
-          `;
-          container.appendChild(newMember);
-        });
+        function setupGoogleCalendarIntegration() {
+        const googleCalendarButton = document.getElementById("googleCalendar");
+        if (googleCalendarButton) {
+          googleCalendarButton.addEventListener("click", function () {
+            // This opens the /google_calendar_connect endpoint in a new tab.
+            window.open("/google_calendar_connect", "_blank");
+          });
+        }
       }
-    }
+      
   
     /* ==================================================
        GENERAL UI SETUP (Dark Mode, Language, Points, etc.)
@@ -302,7 +286,7 @@ document.addEventListener("DOMContentLoaded", function () {
         podRss: 10,
         podLogo: 10,
         hostName: 10,
-        googleCalendar: 10,
+        // Removed googleCalendar tracking from here so it does not conflict with calendar integration.
         calendarUrl: 10,
         guestForm: 100,
         facebook: 10,
@@ -353,7 +337,7 @@ document.addEventListener("DOMContentLoaded", function () {
       trackInputField("podRss", pointsSystem.podRss);
       trackInputField("podLogo", pointsSystem.podLogo);
       trackInputField("hostName", pointsSystem.hostName);
-      trackButtonClick("googleCalendar", "googleCalendar", pointsSystem.googleCalendar);
+      // Removed the googleCalendar button tracking here.
       trackInputField("calendarUrl", pointsSystem.calendarUrl);
       trackInputField("guestForm", pointsSystem.guestForm);
       trackInputField("facebook", pointsSystem.facebook);
@@ -369,18 +353,10 @@ document.addEventListener("DOMContentLoaded", function () {
       trackButtonClick("blockUser", "blockUser", pointsSystem.blockUser);
     }
   
-    /* ==================================================
-       INITIALIZE GENERAL UI SETUPS
-    ================================================== */
     setupDarkMode();
     setupLanguageSettings();
     setupPointsSystem();
-  
-    /* ==================================================
-       INITIALIZE SECTION-SPECIFIC SETUPS
-    ================================================== */
     setupProductionTeamSection();
     setupPodProfileSection();
-    setupAddTeamMember();
+    setupGoogleCalendarIntegration(); // Initialize Google Calendar connection handler.
   });
-  

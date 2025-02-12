@@ -1,6 +1,7 @@
 # app.py
 from flask import Flask, render_template, request, jsonify, url_for, session, redirect, g
 from azure.cosmos import CosmosClient, PartitionKey
+from google_auth_oauthlib.flow import Flow
 from register import register_bp
 from dotenv import load_dotenv
 from werkzeug.security import generate_password_hash, check_password_hash
@@ -344,6 +345,60 @@ def podprofile():
 
     return jsonify({"message": "Podcast profile submitted successfully.", "redirect_url": "/dashboard"}), 200
 
+@app.route('/google_calendar_connect')
+def google_calendar_connect():
+    # Set up the OAuth flow using your Google credentials.
+    flow = Flow.from_client_config({
+        "web": {
+            "client_id": os.getenv("GOOGLE_CLIENT_ID"),
+            "client_secret": os.getenv("GOOGLE_CLIENT_SECRET"),
+            "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+            "token_uri": "https://oauth2.googleapis.com/token",
+            "redirect_uris": [url_for('google_calendar_callback', _external=True)],
+            "project_id": os.getenv("GOOGLE_PROJECT_ID")
+        }
+    },
+    scopes=["https://www.googleapis.com/auth/calendar"],
+    redirect_uri=url_for('google_calendar_callback', _external=True)
+    )
+    authorization_url, state = flow.authorization_url(
+        access_type="offline",
+        include_granted_scopes="true"
+    )
+    session["google_oauth_state"] = state
+    return redirect(authorization_url)
+
+@app.route('/google_calendar_callback')
+def google_calendar_callback():
+    state = session.get("google_oauth_state")
+    flow = Flow.from_client_config({
+        "web": {
+            "client_id": os.getenv("GOOGLE_CLIENT_ID"),
+            "client_secret": os.getenv("GOOGLE_CLIENT_SECRET"),
+            "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+            "token_uri": "https://oauth2.googleapis.com/token",
+            "redirect_uris": [url_for('google_calendar_callback', _external=True)],
+            "project_id": os.getenv("GOOGLE_PROJECT_ID")
+        }
+    },
+    scopes=["https://www.googleapis.com/auth/calendar"],
+    state=state,
+    redirect_uri=url_for('google_calendar_callback', _external=True)
+    )
+    flow.fetch_token(authorization_response=request.url)
+    credentials = flow.credentials
+    # (Optional) Save credentials in session or database for future API calls.
+    session["google_credentials"] = {
+         "token": credentials.token,
+         "refresh_token": credentials.refresh_token,
+         "token_uri": credentials.token_uri,
+         "client_id": credentials.client_id,
+         "client_secret": credentials.client_secret,
+         "scopes": credentials.scopes
+    }
+    # Redirect back to your app (e.g., dashboard or pod profile page)
+    return redirect(url_for('podprofile'))
+
 @app.route('/get_user_podcasts', methods=['GET'])
 def get_user_podcasts():
     if not g.user_id:
@@ -376,6 +431,35 @@ def register_podcast():
         return jsonify({"message": "Podcast registered successfully", "redirect_url": "/podprofile"}), 201
     except Exception as e:
         return jsonify({"error": f"Failed to register podcast: {str(e)}"}), 500
+    
+@app.route('/send_invite', methods=['POST'])
+def send_invite():
+    if request.content_type != "application/json":
+        return jsonify({"error": "Invalid Content-Type. Expected application/json"}), 415
+    data = request.get_json()
+    # Ensure all required fields are provided.
+    from_email = data.get("from")
+    to_email = data.get("to")
+    subject = data.get("subject")
+    body = data.get("body")
+    if not (from_email and to_email and subject and body):
+        return jsonify({"error": "Missing required email parameters."}), 400
+
+    try:
+        msg = MIMEText(body)
+        msg["Subject"] = subject
+        msg["From"] = from_email
+        msg["To"] = to_email
+
+        with smtplib.SMTP(SMTP_SERVER, SMTP_PORT) as server:
+            server.starttls()
+            server.login(EMAIL_USER, EMAIL_PASS)
+            server.sendmail(from_email, to_email, msg.as_string())
+
+        return jsonify({"success": True})
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
 
 @app.route('/taskmanagement', methods=['GET'])
 def taskmanagement():
