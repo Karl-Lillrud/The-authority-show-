@@ -41,7 +41,7 @@ document.addEventListener("DOMContentLoaded", function () {
         if (podProfileForm) {
             podProfileForm.addEventListener("submit", (event) => {
                 event.preventDefault();
-                window.location.href = "placeholder.html"; // Change this to the actual destination later
+                window.location.href = "dashboard"; // Change this to the actual destination later
             });
         }
 
