@@ -11,6 +11,54 @@ document.addEventListener("DOMContentLoaded", function () {
         }
       });
     }
+
+    /* -----------------------
+       Fetch User's Podcasts & Fix Undefined URL
+    ------------------------- */
+    async function fetchUserPodcasts() {
+      try {
+          console.log("Fetching podcasts from /get_user_podcasts...");
+          const response = await fetch("/get_user_podcasts");
+  
+          if (!response.ok) {
+              throw new Error(`HTTP error! Status: ${response.status}`);
+          }
+  
+          const data = await response.json();
+          console.log("API Response:", data);
+  
+          if (!data || data.length === 0) {
+              console.warn("No podcasts found.");
+              return;
+          }
+  
+          const podcastListContainer = document.getElementById("podcastList");
+          if (!podcastListContainer) {
+              console.error("Podcast list container not found.");
+              return;
+          }
+  
+          podcastListContainer.innerHTML = "";
+          data.forEach(podcast => {
+              const podLogo = podcast.podLogo && podcast.podLogo !== "undefined" ? podcast.podLogo : "/static/images/PodManagerLogo.png";
+              const podName = podcast.podName ? podcast.podName : "Unknown Podcast";
+  
+              podcastListContainer.innerHTML += `
+                  <div class="podcast-item">
+                      <img src="${podLogo}" alt="${podName}" />
+                      <h3>${podName}</h3>
+                  </div>
+              `;
+          });
+      } catch (error) {
+          console.error("Error fetching user podcasts:", error);
+      }
+  }
+  
+  
+  // Run this after the page loads
+  document.addEventListener("DOMContentLoaded", fetchUserPodcasts);
+  
   
     /* -----------------------
        Prevent Default Form Submissions

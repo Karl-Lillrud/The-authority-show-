@@ -30,6 +30,7 @@ if not COSMOSDB_URI or not COSMOSDB_KEY:
 
 client = CosmosClient(COSMOSDB_URI, COSMOSDB_KEY)
 database = client.get_database_client(DATABASE_ID)
+print("✅ Connected to Cosmos DB!")
 
 # Create containers if they don't exist
 users_container = database.create_container_if_not_exists(
@@ -277,75 +278,83 @@ def podcastmanagement():
     return render_template('dashboard/podcastmanagement.html')
 
 # Modified Pod Profile Endpoint to Handle GET and POST
-@app.route('/podprofile', methods=['GET', 'POST'])
+@app.route("/podprofile", methods=["GET", "POST"])
 def podprofile():
+    """Handles creating and storing podcast profiles in Cosmos DB."""
     if not g.user_id:
-        return redirect(url_for('signin'))
-    if request.method == 'GET':
-        return render_template('podprofile/index.html')
-    # Expect JSON data from the podprofile form submission
-    if not request.is_json:
-        return jsonify({"error": "Invalid Content-Type. Expected application/json"}), 415
-    data = request.get_json()
-    # Extract fields from the submitted data
-    pod_name      = data.get("podName", "").strip()
-    pod_rss       = data.get("podRss", "").strip()
-    pod_logo      = data.get("podLogo", "").strip()
-    host_name     = data.get("hostName", "").strip()
-    calendar_url  = data.get("calendarUrl", "").strip()
-    guest_form    = data.get("guestForm", "").strip()
-    facebook      = data.get("facebook", "").strip()
-    instagram     = data.get("instagram", "").strip()
-    linkedin      = data.get("linkedin", "").strip()
-    twitter       = data.get("twitter", "").strip()
-    tiktok        = data.get("tiktok", "").strip()
-    pinterest     = data.get("pinterest", "").strip()
-    website       = data.get("website", "").strip()
-    podcast_email = data.get("email", "").strip()
-    production_team = data.get("productionTeam", [])  # Expect a list of team member objects
+        return redirect(url_for("signin"))
 
-    # Validate required fields (customize as needed)
-    if not pod_name or not pod_rss or not host_name or not podcast_email:
-        return jsonify({"error": "Missing required fields"}), 400
+    if request.method == "GET":
+        return render_template("podprofile/index.html")
 
-    podcast_profile = {
-        "id": str(random.randint(100000, 999999)),
-        "creator_id": g.user_id,
-        "podName": pod_name,
-        "podRss": pod_rss,
-        "podLogo": pod_logo,
-        "hostName": host_name,
-        "calendarUrl": calendar_url,
-        "guestForm": guest_form,
-        "facebook": facebook,
-        "instagram": instagram,
-        "linkedin": linkedin,
-        "twitter": twitter,
-        "tiktok": tiktok,
-        "pinterest": pinterest,
-        "website": website,
-        "email": podcast_email,
-        "productionTeam": production_team,
-        "created_at": datetime.utcnow().isoformat()
-    }
     try:
+        # ✅ Debug: Log the incoming request
+        print("Receiving podcast profile submission...")
+
+        # Handle file uploads for podcast logo
+        pod_logo_url = "/static/images/default-podcast.png"
+        if "podLogo" in request.files:
+            uploaded_logo = request.files["podLogo"]
+            if uploaded_logo.filename:
+                pod_logo_url = upload_podcast_logo(uploaded_logo)
+
+        # Convert form data to a dictionary
+        data = request.form.to_dict()
+        data["podLogo"] = pod_logo_url  # Ensure the logo is stored
+
+        # Validate required fields
+        required_fields = ["podName", "podRss", "hostName", "email"]
+        missing_fields = [field for field in required_fields if not data.get(field)]
+        if missing_fields:
+            return jsonify({"error": f"Missing required fields: {', '.join(missing_fields)}"}), 400
+
+        # Prepare podcast profile data
+        podcast_profile = {
+            "id": str(random.randint(100000, 999999)),
+            "creator_id": g.user_id,
+            "podName": data["podName"].strip(),
+            "podRss": data["podRss"].strip(),
+            "podLogo": pod_logo_url,
+            "hostName": data["hostName"].strip(),
+            "calendarUrl": data.get("calendarUrl", "").strip(),
+            "guestForm": data.get("guestForm", "").strip(),
+            "socialLinks": {
+                "facebook": data.get("facebook", "").strip(),
+                "instagram": data.get("instagram", "").strip(),
+                "linkedin": data.get("linkedin", "").strip(),
+                "twitter": data.get("twitter", "").strip(),
+                "tiktok": data.get("tiktok", "").strip(),
+                "pinterest": data.get("pinterest", "").strip(),
+                "website": data.get("website", "").strip(),
+            },
+            "email": data["email"].strip(),
+            "productionTeam": data.get("productionTeam", []),
+            "created_at": datetime.utcnow().isoformat(),
+        }
+
+        # ✅ Debug: Print the final data before saving
+        print("Prepared Podcast Profile:", podcast_profile)
+
+        # ✅ Save the podcast profile in Cosmos DB
         podcasts_container.upsert_item(podcast_profile)
-    except Exception as e:
-        return jsonify({"error": f"Failed to save podcast profile: {str(e)}"}), 500
+        print("Podcast profile saved successfully!")
 
-    # Update user document to mark pod profile as completed
-    try:
+        # Update user profile to mark podprofile as completed
         query = "SELECT * FROM c WHERE LOWER(c.email) = @email"
         parameters = [{"name": "@email", "value": session["email"].lower()}]
-        user_docs = list(users_container.query_items(query=query, parameters=parameters, enable_cross_partition_query=True))
-        if user_docs:
-            user_doc = user_docs[0]
+        users = list(users_container.query_items(query=query, parameters=parameters, enable_cross_partition_query=True))
+        if users:
+            user_doc = users[0]
             user_doc["podprofile_completed"] = True
+            user_doc["podLogo"] = pod_logo_url  # Ensure logo is linked to user
             users_container.upsert_item(user_doc)
-    except Exception as e:
-        return jsonify({"error": f"Failed to update user profile: {str(e)}"}), 500
+            print(" User profile updated with podcast info!")
 
-    return jsonify({"message": "Podcast profile submitted successfully.", "redirect_url": "/dashboard"}), 200
+        return jsonify({"message": "Podcast profile submitted successfully.", "redirect_url": "/dashboard"}), 200
+
+    except Exception as e:
+        print(f" Error saving podcast profile: {e}")
+        return jsonify({"error": f"Failed to save profile: {str(e)}"}), 500
 
 @app.route('/calendar_connect')
 def calendar_connect():
@@ -371,6 +380,8 @@ def calendar_connect():
         # Replace with your registered Google OAuth client ID.
         client_id = "284426805702-be7g0vc6gs54f9tf3iop00v7mpklqjpb.apps.googleusercontent.com"
         redirect_uri = url_for('google_calendar_callback', _external=True)
+        print(f"Redirect URI used: {redirect_uri}")
+
         params = {
             "client_id": client_id,
             "redirect_uri": redirect_uri,
@@ -428,38 +439,77 @@ def outlook_calendar_callback():
 def yahoo_calendar_callback():
     code = request.args.get("code")
     return "Yahoo Calendar callback received code: " + str(code)
-@app.route('/get_user_podcasts', methods=['GET'])
+
+@app.route("/get_user_podcasts", methods=["GET"])
 def get_user_podcasts():
     if not g.user_id:
         return jsonify({"error": "Unauthorized"}), 401
+
+    print(f"📌 Fetching podcasts for user_id: {g.user_id}")
+
     query = "SELECT * FROM c WHERE c.creator_id = @user_id"
     parameters = [{"name": "@user_id", "value": g.user_id}]
     podcasts = list(podcasts_container.query_items(query=query, parameters=parameters, enable_cross_partition_query=True))
-    return jsonify(podcasts)
 
-@app.route('/register_podcast', methods=['POST'])
+    print(f"📢 API Response from Cosmos DB: {podcasts}")
+
+    if not podcasts:
+        return jsonify({"error": "No podcasts found"}), 404
+
+    # Ensure frontend gets valid data
+    formatted_podcasts = []
+    for podcast in podcasts:
+        formatted_podcasts.append({
+            "id": podcast.get("id", ""),
+            "podName": podcast.get("podName", "Unknown Podcast"),
+            "podRss": podcast.get("podRss", ""),
+            "podLogo": podcast.get("podLogo", "/static/images/default-podcast.png"),
+            "created_at": podcast.get("created_at", ""),
+        })
+
+    print(f"📢 Sending response to frontend: {formatted_podcasts}")
+    return jsonify(formatted_podcasts), 200
+
+@app.route("/register_podcast", methods=["POST"])
 def register_podcast():
+    """Handles podcast registration and stores it in Cosmos DB."""
     if not g.user_id:
         return jsonify({"error": "Unauthorized"}), 401
-    data = request.get_json()
-    if not data:
-        return jsonify({"error": "Invalid JSON format"}), 400
-    pod_name = data.get("podName", "").strip()
-    pod_rss = data.get("podRss", "").strip()
-    if not pod_name or not pod_rss:
-        return jsonify({"error": "Podcast Name and RSS URL are required"}), 400
-    podcast_item = {
-        "id": str(random.randint(100000, 999999)),
-        "creator_id": g.user_id,
-        "podName": pod_name,
-        "podRss": pod_rss,
-        "created_at": datetime.utcnow().isoformat()
-    }
+
     try:
-        podcasts_container.upsert_item(podcast_item)
+        data = request.get_json()
+        print("📌 Incoming register_podcast data:", data)
+
+        if not data:
+            return jsonify({"error": "Invalid JSON format"}), 400
+
+        # Validate required fields
+        required_fields = ["podName", "podRss"]
+        missing_fields = [field for field in required_fields if not data.get(field)]
+        if missing_fields:
+            return jsonify({"error": f"Missing required fields: {', '.join(missing_fields)}"}), 400
+
+        # Prepare podcast data
+        podcast_data = {
+            "id": str(random.randint(100000, 999999)),
+            "creator_id": g.user_id,
+            "podName": data["podName"].strip(),
+            "podRss": data["podRss"].strip(),
+            "created_at": datetime.utcnow().isoformat()
+        }
+
+        print("📌 Prepared Podcast Data:", podcast_data)
+
+        # ✅ Store in Cosmos DB
+        podcasts_container.upsert_item(podcast_data)
+        print("✅ Podcast successfully saved to Cosmos DB!")
+
         return jsonify({"message": "Podcast registered successfully", "redirect_url": "/podprofile"}), 201
+
     except Exception as e:
+        print(f"❌ Error registering podcast: {e}")
         return jsonify({"error": f"Failed to register podcast: {str(e)}"}), 500
+
     
 @app.route('/send_invite', methods=['POST'])
 def send_invite():

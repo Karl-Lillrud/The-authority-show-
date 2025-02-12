@@ -8,33 +8,48 @@
 </div>
 
 <script>
-document.addEventListener("DOMContentLoaded", function () {
-    fetch("/get_user_podcasts")
-        .then(response => response.json())
-        .then(data => {
-            const podcastList = document.getElementById("podcast-list");
-            podcastList.innerHTML = "";
-
-            if (data.error) {
-                podcastList.innerHTML = `<p>${data.error}</p>`;
-                return;
-            }
-
-            data.forEach(podcast => {
-                let podcastCard = document.createElement("div");
-                podcastCard.classList.add("card");
-
-                podcastCard.innerHTML = `
-                    <a href="/dashboard"
-                        onclick="window.parent.document.getElementById('homepage-popup').style.display='none';">
-                        <img src="${podcast.image_url}" alt="${podcast.name}">
-                    </a>
-                    <p class="episode-count">${podcast.open_episodes} Open Episodes</p>
-                `;
-
-                podcastList.appendChild(podcastCard);
-            });
-        })
-        .catch(error => console.error("Error loading podcasts:", error));
-});
-</script>
+    document.addEventListener("DOMContentLoaded", function () {
+        fetch("/get_user_podcasts")
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`HTTP error! Status: ${response.status}`);
+                }
+                return response.json();
+            })
+            .then(data => {
+                const podcastList = document.getElementById("podcast-list");
+                if (!podcastList) {
+                    console.error("podcast-list container not found.");
+                    return;
+                }
+                podcastList.innerHTML = "";
+    
+                if (data.error) {
+                    podcastList.innerHTML = `<p>${data.error}</p>`;
+                    return;
+                }
+    
+                data.forEach(podcast => {
+                    // Ensure `image_url` is defined, else use a default image
+                    const imageUrl = podcast.image_url && podcast.image_url !== "undefined" ? podcast.image_url : "/static/images/default-podcast.png";
+                    const podName = podcast.name ? podcast.name : "Unknown Podcast";
+                    const openEpisodes = podcast.open_episodes ? podcast.open_episodes : 0;
+    
+                    let podcastCard = document.createElement("div");
+                    podcastCard.classList.add("card");
+    
+                    podcastCard.innerHTML = `
+                        <a href="/dashboard"
+                            onclick="window.parent.document.getElementById('homepage-popup').style.display='none';">
+                            <img src="${imageUrl}" alt="${podName}">
+                        </a>
+                        <p class="episode-count">${openEpisodes} Open Episodes</p>
+                    `;
+    
+                    podcastList.appendChild(podcastCard);
+                });
+            })
+            .catch(error => console.error("❌ Error loading podcasts:", error));
+    });
+    </script>
+    
