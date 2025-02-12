@@ -150,7 +150,7 @@
 
   /* Buttons */
   button {
-    background: #faa406;
+    background: var(--highlight-color);
     color: #fff;
     padding: var(--spacing-sm);
     border: none;

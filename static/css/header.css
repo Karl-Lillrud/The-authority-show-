@@ -172,3 +172,46 @@
   .menu a:hover {
     color: var(--highlight-color);
   }
+
+  .modal {
+    display: none;
+    position: fixed;
+    z-index: 9999;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0,0,0,0.5);
+    align-items: center;
+    justify-content: center;
+  }
+  .modal-cnt {
+    background: #fff;
+    border-radius: 12px;
+    padding: 20px;
+    text-align: center;
+    width: 90%;
+    max-width: 320px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+  }
+  .modal-cnt p {
+    font-size: 16px;
+    margin-bottom: 20px;
+    font-weight: 500;
+  }
+  .modal-btns button {
+    padding: 10px 20px;
+    margin: 0 10px;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 14px;
+  }
+  #cancel-logout {
+    background: #f1f1f1;
+    color: #333;
+  }
+  #confirm-logout {
+    background: var(--highlight-color);
+    color: #fff;
+  }

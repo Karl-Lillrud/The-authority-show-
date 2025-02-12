@@ -252,6 +252,12 @@ def podprofile():
         return redirect(url_for('signin'))
     return render_template('podprofile/index.html')
 
+@app.route('/team', methods=['GET','POST'])
+def team():
+    if not g.user_id:
+        return redirect(url_for('signin'))
+    return render_template('team/index.html')
+
 @app.route('/get_user_podcasts', methods=['GET'])
 def get_user_podcasts():
     if not g.user_id:
