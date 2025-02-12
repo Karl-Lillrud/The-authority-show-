@@ -3,7 +3,6 @@ import os, random, smtplib, venvupdate, urllib.parse
 from flask import Flask, render_template, request, jsonify, url_for, session, redirect, g
 from azure.cosmos import CosmosClient, PartitionKey
 from azure.storage.blob import BlobServiceClient
-
 from google_auth_oauthlib.flow import Flow
 from register import register_bp
 from dotenv import load_dotenv
