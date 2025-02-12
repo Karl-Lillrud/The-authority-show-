@@ -1,8 +1,7 @@
 # register.py
 from flask import Blueprint, request, jsonify, url_for, render_template
 from azure.cosmos import CosmosClient, PartitionKey, exceptions
-import os
-import uuid
+import os, uuid
 from werkzeug.security import generate_password_hash
 from dotenv import load_dotenv
 from datetime import datetime
@@ -31,10 +30,8 @@ users_container = database.create_container_if_not_exists(
 def register():
     if request.method == 'GET':
         return render_template('register/register.html')
-    if request.content_type == "application/json":
-        data = request.get_json()
-    else:
-        data = request.form  
+    # Accept JSON or form data
+    data = request.get_json() if request.content_type == "application/json" else request.form
     if "email" not in data or "password" not in data:
         return jsonify({"error": "Missing email or password"}), 400
     email = data["email"].lower().strip()
@@ -52,7 +49,8 @@ def register():
         "email": email,
         "passwordHash": hashed_password,
         "createdAt": datetime.utcnow().isoformat(),
-        "partitionKey": email
+        "partitionKey": email,
+        "podprofile_completed": False  # Mark pod profile as incomplete by default
     }
     try:
         users_container.create_item(body=user_document)

@@ -5,10 +5,7 @@ from register import register_bp
 from dotenv import load_dotenv
 from werkzeug.security import generate_password_hash, check_password_hash
 from datetime import datetime
-import os
-import random
-import smtplib
-import venvupdate
+import os, random, smtplib, venvupdate
 from email.mime.text import MIMEText
 
 # Update virtual environment and requirements
@@ -79,7 +76,6 @@ def forgot_password():
     if not data:
         return jsonify({"error": "Invalid JSON format"}), 400
     email = data.get("email", "").strip().lower()
-    print(f"🔍 Checking for email: {email}")
     query = "SELECT * FROM c WHERE LOWER(c.email) = @email"
     parameters = [{"name": "@email", "value": email}]
     users = list(users_container.query_items(query=query, parameters=parameters, enable_cross_partition_query=True))
@@ -97,8 +93,6 @@ def forgot_password():
 
 @app.route('/enter-code', methods=['GET', 'POST'])
 def enter_code():
-    print(f"🔍 Request Headers: {request.headers}")
-    print(f"🔍 Request Data: {request.data}")
     if request.method == 'GET':
         return render_template('forgotpassword/enter-code.html')
     if request.content_type != "application/json":
@@ -109,13 +103,11 @@ def enter_code():
         return jsonify({"error": "Invalid JSON format"}), 400
     email = data.get("email", "").strip().lower()
     entered_code = data.get("code", "").strip()
-    print(f"🔍 Checking Email: {email}, Code: {entered_code}")
     query = "SELECT * FROM c WHERE LOWER(c.email) = @email"
     parameters = [{"name": "@email", "value": email}]
     users = list(users_container.query_items(query=query, parameters=parameters, enable_cross_partition_query=True))
     if not users or users[0].get("reset_code") != entered_code:
         return jsonify({"error": "Invalid or expired reset code."}), 400
-    print("✅ Code Verified, Redirecting to Reset Password")
     return jsonify({"message": "Code is Valid.", "redirect_url": url_for('reset_password')}), 200
 
 @app.route('/reset-password', methods=['GET', 'POST'])
@@ -158,7 +150,6 @@ def resend_code():
         return jsonify({"error": "Invalid Content-Type. Expected application/json"}), 415  
     data = request.get_json()
     email = data.get("email", "").strip().lower()
-    print(f"🔍 Resending code for email: {email}")
     query = "SELECT * FROM c WHERE LOWER(c.email) = @email"
     parameters = [{"name": "@email", "value": email}]
     users = list(users_container.query_items(query=query, parameters=parameters, enable_cross_partition_query=True))
@@ -173,6 +164,8 @@ def resend_code():
         return jsonify({"message": "New reset code sent successfully."}), 200
     except Exception as e:
         return jsonify({"error": f"Failed to resend code: {str(e)}"}), 500
+
+# ----------------- Sign-in and Redirect Based on Pod Profile Completion -----------------
 
 @app.route('/', methods=['GET'])
 @app.route('/signin', methods=['GET', 'POST'])
@@ -189,10 +182,13 @@ def signin():
     users = list(users_container.query_items(query=query, parameters=parameters, enable_cross_partition_query=True))
     if not users or not check_password_hash(users[0]["passwordHash"], password):
         return jsonify({"error": "Invalid email or password"}), 401
-    session["user_id"] = str(users[0]["id"])
-    session["email"] = users[0]["email"]
+    user_doc = users[0]
+    session["user_id"] = str(user_doc["id"])
+    session["email"] = user_doc["email"]
     session.permanent = True
-    return jsonify({"message": "Login successful", "redirect_url": "/dashboard"}), 200
+    # Redirect first-time users to podprofile; others to dashboard.
+    redirect_url = "/podprofile" if not user_doc.get("podprofile_completed") else "/dashboard"
+    return jsonify({"message": "Login successful", "redirect_url": redirect_url}), 200
 
 @app.route('/dashboard', methods=['GET'])
 def dashboard():
@@ -212,7 +208,7 @@ def accountsettings():
         return redirect(url_for('signin'))
     return render_template('dashboard/accountsettings.html')
 
-# ----------------- Podcast Endpoints (using "podcasts" container) -----------------
+# ----------------- Podcast Endpoints -----------------
 
 @app.route('/podcastmanagement', methods=['GET'])
 def podcastmanagement():
@@ -220,11 +216,76 @@ def podcastmanagement():
         return redirect(url_for('signin'))
     return render_template('dashboard/podcastmanagement.html')
 
-@app.route('/podprofile', methods=['GET','POST'])
+# Modified Pod Profile Endpoint to Handle GET and POST
+@app.route('/podprofile', methods=['GET', 'POST'])
 def podprofile():
     if not g.user_id:
         return redirect(url_for('signin'))
-    return render_template('podprofile/index.html')
+    if request.method == 'GET':
+        return render_template('podprofile/index.html')
+    # Expect JSON data from the podprofile form submission
+    if not request.is_json:
+        return jsonify({"error": "Invalid Content-Type. Expected application/json"}), 415
+    data = request.get_json()
+    # Extract fields from the submitted data
+    pod_name      = data.get("podName", "").strip()
+    pod_rss       = data.get("podRss", "").strip()
+    pod_logo      = data.get("podLogo", "").strip()
+    host_name     = data.get("hostName", "").strip()
+    calendar_url  = data.get("calendarUrl", "").strip()
+    guest_form    = data.get("guestForm", "").strip()
+    facebook      = data.get("facebook", "").strip()
+    instagram     = data.get("instagram", "").strip()
+    linkedin      = data.get("linkedin", "").strip()
+    twitter       = data.get("twitter", "").strip()
+    tiktok        = data.get("tiktok", "").strip()
+    pinterest     = data.get("pinterest", "").strip()
+    website       = data.get("website", "").strip()
+    podcast_email = data.get("email", "").strip()
+    production_team = data.get("productionTeam", [])  # Expect a list of team member objects
+
+    # Validate required fields (customize as needed)
+    if not pod_name or not pod_rss or not host_name or not podcast_email:
+        return jsonify({"error": "Missing required fields"}), 400
+
+    podcast_profile = {
+        "id": str(random.randint(100000, 999999)),
+        "creator_id": g.user_id,
+        "podName": pod_name,
+        "podRss": pod_rss,
+        "podLogo": pod_logo,
+        "hostName": host_name,
+        "calendarUrl": calendar_url,
+        "guestForm": guest_form,
+        "facebook": facebook,
+        "instagram": instagram,
+        "linkedin": linkedin,
+        "twitter": twitter,
+        "tiktok": tiktok,
+        "pinterest": pinterest,
+        "website": website,
+        "email": podcast_email,
+        "productionTeam": production_team,
+        "created_at": datetime.utcnow().isoformat()
+    }
+    try:
+        podcasts_container.upsert_item(podcast_profile)
+    except Exception as e:
+        return jsonify({"error": f"Failed to save podcast profile: {str(e)}"}), 500
+
+    # Update user document to mark pod profile as completed
+    try:
+        query = "SELECT * FROM c WHERE LOWER(c.email) = @email"
+        parameters = [{"name": "@email", "value": session["email"].lower()}]
+        user_docs = list(users_container.query_items(query=query, parameters=parameters, enable_cross_partition_query=True))
+        if user_docs:
+            user_doc = user_docs[0]
+            user_doc["podprofile_completed"] = True
+            users_container.upsert_item(user_doc)
+    except Exception as e:
+        return jsonify({"error": f"Failed to update user profile: {str(e)}"}), 500
+
+    return jsonify({"message": "Podcast profile submitted successfully.", "redirect_url": "/dashboard"}), 200
 
 @app.route('/get_user_podcasts', methods=['GET'])
 def get_user_podcasts():
