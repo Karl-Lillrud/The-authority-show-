@@ -1,9 +1,10 @@
 # app.py
-import os, random, smtplib, venvupdate, urllib.parse
+import os, random, smtplib, venvupdate, urllib.parse, json
 from flask import Flask, render_template, request, jsonify, url_for, session, redirect, g
 from azure.cosmos import CosmosClient, PartitionKey
 from azure.storage.blob import BlobServiceClient
 from azure.keyvault.secrets import SecretClient
+from azure.identity import DefaultAzureCredential
 from google_auth_oauthlib.flow import Flow
 from register import register_bp
 from dotenv import load_dotenv
