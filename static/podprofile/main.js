@@ -1,35 +1,40 @@
 document.addEventListener("DOMContentLoaded", function () {
-    // Prevent default form submissions to avoid page reloads.
-    const podNameForm = document.getElementById("podNameForm");
-    if (podNameForm) {
-      podNameForm.addEventListener("submit", function (event) {
-        event.preventDefault();
+    // Helper to show one section and hide the others.
+    function showSection(sectionId) {
+      const sections = ["pod-name-section", "production-team-section", "pod-profile-section"];
+      sections.forEach(id => {
+        const section = document.getElementById(id);
+        if (section) {
+          if (id === sectionId) {
+            section.classList.remove("hidden");
+          } else {
+            section.classList.add("hidden");
+          }
+        }
       });
     }
   
+    // Prevent default form submissions.
+    const podNameForm = document.getElementById("podNameForm");
+    if (podNameForm) {
+      podNameForm.addEventListener("submit", event => event.preventDefault());
+    }
     const productionTeamForm = document.getElementById("productionTeamForm");
     if (productionTeamForm) {
-      productionTeamForm.addEventListener("submit", function (event) {
-        event.preventDefault();
-      });
+      productionTeamForm.addEventListener("submit", event => event.preventDefault());
     }
   
     /* ==================================================
-       COMMON FUNCTIONS (Used Across Sections)
+       COMMON FUNCTIONS
     ================================================== */
-    // Invitation link generator remains the same.
     function generateInvitationLink(inviteeEmail, podcastName, hostEmail) {
-      return `https://app.podmanager.ai/invite?invitee=${encodeURIComponent(
-        inviteeEmail
-      )}&podcast=${encodeURIComponent(podcastName)}&host=${encodeURIComponent(hostEmail)}`;
+      return `https://app.podmanager.ai/invite?invitee=${encodeURIComponent(inviteeEmail)}&podcast=${encodeURIComponent(podcastName)}&host=${encodeURIComponent(hostEmail)}`;
     }
   
-    // Updated sendInvitations function that posts to a backend endpoint.
     function sendInvitations() {
       const teamMembers = document.querySelectorAll(".team-member");
       const podcastName = document.getElementById("podName").value || "your podcast";
       const hostName = document.getElementById("hostName").value || "the host";
-      // Hardcode the from address.
       const fromEmail = "theauthorityshow@gmail.com";
   
       teamMembers.forEach(member => {
@@ -42,7 +47,7 @@ document.addEventListener("DOMContentLoaded", function () {
             const invitationLink = generateInvitationLink(inviteeEmail, podcastName, fromEmail);
             const emailBody = `Dear ${inviteeName}!
   
-  You are hereby invited to the production team page of PodManager for your PodCast ${podcastName} by the PodCast host!
+  You are hereby invited to the production team page of PodManager for your PodCast ${podcastName} by your podcast's host!
   
   Click this link to accept the invitation and join the wonderful world of PodManager!
   ${invitationLink}
@@ -52,18 +57,10 @@ document.addEventListener("DOMContentLoaded", function () {
   The PodManager Crew`;
             const subject = `Invitation to join the ${podcastName} Production Team`;
   
-            // POST to backend so that email credentials in .env are used.
             fetch("/send_invite", {
               method: "POST",
-              headers: {
-                "Content-Type": "application/json"
-              },
-              body: JSON.stringify({
-                from: fromEmail,
-                to: inviteeEmail,
-                subject: subject,
-                body: emailBody
-              })
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ from: fromEmail, to: inviteeEmail, subject, body: emailBody })
             })
               .then(response => response.json())
               .then(data => {
@@ -81,9 +78,6 @@ document.addEventListener("DOMContentLoaded", function () {
       });
     }
   
-    /* ==================================================
-       POD NAME SECTION
-    ================================================== */
     async function fetchRSSData(rssUrl) {
       if (!rssUrl) return;
       try {
@@ -92,18 +86,14 @@ document.addEventListener("DOMContentLoaded", function () {
         if (data.status === "ok") {
           if (data.feed && data.feed.title) {
             const podNameInput = document.getElementById("podName");
-            if (podNameInput) {
-              podNameInput.value = data.feed.title;
-            }
+            if (podNameInput) podNameInput.value = data.feed.title;
           }
           if (data.feed && data.feed.link) {
             const websiteInput = document.getElementById("website");
-            if (websiteInput) {
-              websiteInput.value = data.feed.link;
-            }
+            if (websiteInput) websiteInput.value = data.feed.link;
           }
         } else {
-          console.error("RSS API returned an error:", data);
+          console.error("RSS API error:", data);
         }
       } catch (error) {
         console.error("Error fetching RSS feed:", error);
@@ -114,9 +104,7 @@ document.addEventListener("DOMContentLoaded", function () {
     if (podRssInput) {
       podRssInput.addEventListener("input", function () {
         const rssUrl = this.value.trim();
-        if (rssUrl) {
-          fetchRSSData(rssUrl);
-        }
+        if (rssUrl) fetchRSSData(rssUrl);
       });
     }
   
@@ -137,8 +125,7 @@ document.addEventListener("DOMContentLoaded", function () {
           });
           const result = await response.json();
           if (response.ok) {
-            document.getElementById("pod-name-section").classList.add("hidden");
-            document.getElementById("production-team-section").classList.remove("hidden");
+            showSection("production-team-section");
           } else {
             alert("Error: " + result.error);
           }
@@ -150,7 +137,7 @@ document.addEventListener("DOMContentLoaded", function () {
     }
   
     /* ==================================================
-       PRODUCTION TEAM SECTION
+       PRODUCTION TEAM SECTION SETUP
     ================================================== */
     function setupProductionTeamSection() {
       const goToPodProfile = document.getElementById("goToPodProfile");
@@ -161,19 +148,16 @@ document.addEventListener("DOMContentLoaded", function () {
       if (goToPodProfile) {
         goToPodProfile.addEventListener("click", () => {
           sendInvitations();
-          document.getElementById("production-team-section").classList.add("hidden");
-          document.getElementById("pod-profile-section").classList.remove("hidden");
+          showSection("pod-profile-section");
         });
       }
   
       if (backToPodName) {
         backToPodName.addEventListener("click", () => {
-          document.getElementById("production-team-section").classList.add("hidden");
-          document.getElementById("pod-name-section").classList.remove("hidden");
+          showSection("pod-name-section");
         });
       }
   
-      // Each press adds one new team member input group.
       if (addTeamMemberButton && teamMembersContainer) {
         addTeamMemberButton.addEventListener("click", () => {
           const newMember = document.createElement("div");
@@ -202,7 +186,7 @@ document.addEventListener("DOMContentLoaded", function () {
     }
   
     /* ==================================================
-       POD PROFILE SECTION
+       POD PROFILE SECTION SETUP
     ================================================== */
     function setupPodProfileSection() {
       const backToProductionTeam = document.getElementById("backToProductionTeam");
@@ -210,13 +194,12 @@ document.addEventListener("DOMContentLoaded", function () {
   
       if (backToProductionTeam) {
         backToProductionTeam.addEventListener("click", () => {
-          document.getElementById("pod-profile-section").classList.add("hidden");
-          document.getElementById("production-team-section").classList.remove("hidden");
+          showSection("production-team-section");
         });
       }
   
       if (podProfileForm) {
-        podProfileForm.addEventListener("submit", (event) => {
+        podProfileForm.addEventListener("submit", event => {
           event.preventDefault();
           window.location.href = "/dashboard";
         });
@@ -225,18 +208,15 @@ document.addEventListener("DOMContentLoaded", function () {
   
     /* ==================================================
        GOOGLE CALENDAR INTEGRATION SETUP
-       - Opens a new tab to connect the user's Google Calendar.
     ================================================== */
-        function setupGoogleCalendarIntegration() {
-        const googleCalendarButton = document.getElementById("googleCalendar");
-        if (googleCalendarButton) {
-          googleCalendarButton.addEventListener("click", function () {
-            // This opens the /google_calendar_connect endpoint in a new tab.
-            window.open("/google_calendar_connect", "_blank");
-          });
-        }
+    function setupGoogleCalendarIntegration() {
+      const googleCalendarButton = document.getElementById("googleCalendar");
+      if (googleCalendarButton) {
+        googleCalendarButton.addEventListener("click", function () {
+          window.open("/google_calendar_connect", "_blank");
+        });
       }
-      
+    }
   
     /* ==================================================
        GENERAL UI SETUP (Dark Mode, Language, Points, etc.)
@@ -244,36 +224,31 @@ document.addEventListener("DOMContentLoaded", function () {
     function setupDarkMode() {
       const darkModeToggle = document.getElementById("dark-mode-toggle");
       const body = document.body;
-      const isDarkMode = localStorage.getItem("darkMode") === "enabled";
-      if (isDarkMode) {
+      if (localStorage.getItem("darkMode") === "enabled") {
         body.classList.add("dark-mode");
         darkModeToggle.textContent = "☀️";
       }
       darkModeToggle.addEventListener("click", () => {
         body.classList.toggle("dark-mode");
-        const darkModeEnabled = body.classList.contains("dark-mode");
-        darkModeToggle.textContent = darkModeEnabled ? "☀️" : "🌙";
-        localStorage.setItem("darkMode", darkModeEnabled ? "enabled" : "disabled");
+        const enabled = body.classList.contains("dark-mode");
+        darkModeToggle.textContent = enabled ? "☀️" : "🌙";
+        localStorage.setItem("darkMode", enabled ? "enabled" : "disabled");
       });
     }
   
     function setupLanguageSettings() {
       const savedLang = localStorage.getItem("selectedLanguage") || "en";
-      if (window.i18n) {
-        window.i18n.changeLanguage(savedLang);
-      }
+      if (window.i18n) window.i18n.changeLanguage(savedLang);
       const languageButton = document.getElementById("language-button");
       const languageList = document.getElementById("language-list");
       if (languageButton && languageList) {
         languageButton.addEventListener("click", () => {
           languageList.classList.toggle("hidden");
         });
-        languageList.addEventListener("click", (event) => {
+        languageList.addEventListener("click", event => {
           if (event.target.tagName === "LI") {
             const selectedLang = event.target.getAttribute("data-lang");
-            if (window.i18n) {
-              window.i18n.changeLanguage(selectedLang);
-            }
+            if (window.i18n) window.i18n.changeLanguage(selectedLang);
             languageList.classList.add("hidden");
           }
         });
@@ -282,24 +257,10 @@ document.addEventListener("DOMContentLoaded", function () {
   
     function setupPointsSystem() {
       const pointsSystem = {
-        podName: 10,
-        podRss: 10,
-        podLogo: 10,
-        hostName: 10,
-        // Removed googleCalendar tracking from here so it does not conflict with calendar integration.
-        calendarUrl: 10,
-        guestForm: 100,
-        facebook: 10,
-        instagram: 10,
-        linkedin: 10,
-        twitter: 10,
-        tiktok: 10,
-        pinterest: 10,
-        website: 10,
-        email: 10,
-        inviteUser: 50,
-        inviteHost: 50,
-        blockUser: 10
+        podName: 10, podRss: 10, podLogo: 10, hostName: 10,
+        calendarUrl: 10, guestForm: 100, facebook: 10, instagram: 10,
+        linkedin: 10, twitter: 10, tiktok: 10, pinterest: 10,
+        website: 10, email: 10, inviteUser: 50, inviteHost: 50, blockUser: 10
       };
   
       function getStoredPoints() {
@@ -318,18 +279,14 @@ document.addEventListener("DOMContentLoaded", function () {
       function trackInputField(fieldId, pointValue) {
         const field = document.getElementById(fieldId);
         if (field) {
-          field.addEventListener("input", function () {
-            addPoints(fieldId, pointValue);
-          });
+          field.addEventListener("input", () => addPoints(fieldId, pointValue));
         }
       }
   
       function trackButtonClick(buttonId, fieldKey, pointValue) {
         const button = document.getElementById(buttonId);
         if (button) {
-          button.addEventListener("click", function () {
-            addPoints(fieldKey, pointValue);
-          });
+          button.addEventListener("click", () => addPoints(fieldKey, pointValue));
         }
       }
   
@@ -337,7 +294,6 @@ document.addEventListener("DOMContentLoaded", function () {
       trackInputField("podRss", pointsSystem.podRss);
       trackInputField("podLogo", pointsSystem.podLogo);
       trackInputField("hostName", pointsSystem.hostName);
-      // Removed the googleCalendar button tracking here.
       trackInputField("calendarUrl", pointsSystem.calendarUrl);
       trackInputField("guestForm", pointsSystem.guestForm);
       trackInputField("facebook", pointsSystem.facebook);
@@ -353,10 +309,15 @@ document.addEventListener("DOMContentLoaded", function () {
       trackButtonClick("blockUser", "blockUser", pointsSystem.blockUser);
     }
   
+    // Initialize all setups.
     setupDarkMode();
     setupLanguageSettings();
     setupPointsSystem();
     setupProductionTeamSection();
     setupPodProfileSection();
-    setupGoogleCalendarIntegration(); // Initialize Google Calendar connection handler.
+    setupGoogleCalendarIntegration();
+  
+    // Start by showing only the Pod Name section.
+    showSection("pod-name-section");
   });
+  
