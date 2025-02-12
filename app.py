@@ -1,4 +1,5 @@
 # app.py
+import os, random, smtplib, venvupdate, urllib.parse
 from flask import Flask, render_template, request, jsonify, url_for, session, redirect, g
 from azure.cosmos import CosmosClient, PartitionKey
 from google_auth_oauthlib.flow import Flow
@@ -6,7 +7,6 @@ from register import register_bp
 from dotenv import load_dotenv
 from werkzeug.security import generate_password_hash, check_password_hash
 from datetime import datetime
-import os, random, smtplib, venvupdate
 from email.mime.text import MIMEText
 
 # Update virtual environment and requirements
@@ -63,7 +63,9 @@ EMAIL_PASS = os.getenv("EMAIL_PASS")
 
 @app.before_request
 def load_user():
+    # Load user information from session into g
     g.user_id = session.get("user_id")
+    g.email = session.get("email")  
 
 # ----------------- User Endpoints (using "users" container) -----------------
 
@@ -345,60 +347,87 @@ def podprofile():
 
     return jsonify({"message": "Podcast profile submitted successfully.", "redirect_url": "/dashboard"}), 200
 
-@app.route('/google_calendar_connect')
-def google_calendar_connect():
-    # Set up the OAuth flow using your Google credentials.
-    flow = Flow.from_client_config({
-        "web": {
-            "client_id": os.getenv("GOOGLE_CLIENT_ID"),
-            "client_secret": os.getenv("GOOGLE_CLIENT_SECRET"),
-            "auth_uri": "https://accounts.google.com/o/oauth2/auth",
-            "token_uri": "https://oauth2.googleapis.com/token",
-            "redirect_uris": [url_for('google_calendar_callback', _external=True)],
-            "project_id": os.getenv("GOOGLE_PROJECT_ID")
+@app.route('/calendar_connect')
+def calendar_connect():
+    # Use g to get the current user's email.
+    user_email = g.email
+    if not user_email:
+        return jsonify({"error": "User email not available."}), 400
+
+    # Derive the calendar provider based on the email domain.
+    domain = user_email.split("@")[-1].lower()
+    if domain in ["gmail.com", "googlemail.com"]:
+        provider = "google"
+    elif domain in ["outlook.com", "hotmail.com", "live.com"]:
+        provider = "outlook"
+    elif domain in ["yahoo.com"]:
+        provider = "yahoo"
+    else:
+        # Fallback: default to Google if domain is unknown.
+        provider = "google"
+
+    # Build the authorization URL for the chosen provider.
+    if provider == "google":
+        # Replace with your registered Google OAuth client ID.
+        client_id = "284426805702-be7g0vc6gs54f9tf3iop00v7mpklqjpb.apps.googleusercontent.com"
+        redirect_uri = url_for('google_calendar_callback', _external=True)
+        params = {
+            "client_id": client_id,
+            "redirect_uri": redirect_uri,
+            "response_type": "code",
+            "scope": "https://www.googleapis.com/auth/calendar",
+            "access_type": "offline",
+            "include_granted_scopes": "true"
         }
-    },
-    scopes=["https://www.googleapis.com/auth/calendar"],
-    redirect_uri=url_for('google_calendar_callback', _external=True)
-    )
-    authorization_url, state = flow.authorization_url(
-        access_type="offline",
-        include_granted_scopes="true"
-    )
-    session["google_oauth_state"] = state
-    return redirect(authorization_url)
+        auth_url = "https://accounts.google.com/o/oauth2/auth?" + urllib.parse.urlencode(params)
+        return redirect(auth_url)
+
+    elif provider == "outlook":
+        # Replace with your registered Outlook OAuth client ID.
+        client_id = "YOUR_OUTLOOK_CLIENT_ID"
+        redirect_uri = url_for('outlook_calendar_callback', _external=True)
+        params = {
+            "client_id": client_id,
+            "redirect_uri": redirect_uri,
+            "response_type": "code",
+            "scope": "Calendars.Read offline_access",
+            "response_mode": "query"
+        }
+        auth_url = "https://login.microsoftonline.com/common/oauth2/v2.0/authorize?" + urllib.parse.urlencode(params)
+        return redirect(auth_url)
+
+    elif provider == "yahoo":
+        # Replace with your registered Yahoo OAuth client ID.
+        client_id = "YOUR_YAHOO_CLIENT_ID"
+        redirect_uri = url_for('yahoo_calendar_callback', _external=True)
+        params = {
+            "client_id": client_id,
+            "redirect_uri": redirect_uri,
+            "response_type": "code",
+            "language": "en-us",
+            "scope": "sdct-w"  # Adjust the scope as needed.
+        }
+        auth_url = "https://api.login.yahoo.com/oauth2/request_auth?" + urllib.parse.urlencode(params)
+        return redirect(auth_url)
+
+    else:
+        return jsonify({"error": "Unsupported provider."}), 400
 
 @app.route('/google_calendar_callback')
 def google_calendar_callback():
-    state = session.get("google_oauth_state")
-    flow = Flow.from_client_config({
-        "web": {
-            "client_id": os.getenv("GOOGLE_CLIENT_ID"),
-            "client_secret": os.getenv("GOOGLE_CLIENT_SECRET"),
-            "auth_uri": "https://accounts.google.com/o/oauth2/auth",
-            "token_uri": "https://oauth2.googleapis.com/token",
-            "redirect_uris": [url_for('google_calendar_callback', _external=True)],
-            "project_id": os.getenv("GOOGLE_PROJECT_ID")
-        }
-    },
-    scopes=["https://www.googleapis.com/auth/calendar"],
-    state=state,
-    redirect_uri=url_for('google_calendar_callback', _external=True)
-    )
-    flow.fetch_token(authorization_response=request.url)
-    credentials = flow.credentials
-    # (Optional) Save credentials in session or database for future API calls.
-    session["google_credentials"] = {
-         "token": credentials.token,
-         "refresh_token": credentials.refresh_token,
-         "token_uri": credentials.token_uri,
-         "client_id": credentials.client_id,
-         "client_secret": credentials.client_secret,
-         "scopes": credentials.scopes
-    }
-    # Redirect back to your app (e.g., dashboard or pod profile page)
-    return redirect(url_for('podprofile'))
+    # For demonstration, simply return the code.
+    code = request.args.get("code")
+    return "Google Calendar callback received code: " + str(code)
 
+@app.route('/outlook_calendar_callback')
+def outlook_calendar_callback():
+    code = request.args.get("code")
+    return "Outlook Calendar callback received code: " + str(code)
+
+@app.route('/yahoo_calendar_callback')
+def yahoo_calendar_callback():
+    code = request.args.get("code")
+    return "Yahoo Calendar callback received code: " + str(code)
 @app.route('/get_user_podcasts', methods=['GET'])
 def get_user_podcasts():
     if not g.user_id:

@@ -1,40 +1,37 @@
 document.addEventListener("DOMContentLoaded", function () {
-    // Helper to show one section and hide the others.
+    /* -----------------------
+       Utility: Show Only One Section
+    ------------------------- */
     function showSection(sectionId) {
       const sections = ["pod-name-section", "production-team-section", "pod-profile-section"];
       sections.forEach(id => {
         const section = document.getElementById(id);
         if (section) {
-          if (id === sectionId) {
-            section.classList.remove("hidden");
-          } else {
-            section.classList.add("hidden");
-          }
+          section.classList.toggle("hidden", id !== sectionId);
         }
       });
     }
   
-    // Prevent default form submissions.
+    /* -----------------------
+       Prevent Default Form Submissions
+    ------------------------- */
     const podNameForm = document.getElementById("podNameForm");
-    if (podNameForm) {
-      podNameForm.addEventListener("submit", event => event.preventDefault());
-    }
-    const productionTeamForm = document.getElementById("productionTeamForm");
-    if (productionTeamForm) {
-      productionTeamForm.addEventListener("submit", event => event.preventDefault());
-    }
+    if (podNameForm) podNameForm.addEventListener("submit", e => e.preventDefault());
   
-    /* ==================================================
+    const productionTeamForm = document.getElementById("productionTeamForm");
+    if (productionTeamForm) productionTeamForm.addEventListener("submit", e => e.preventDefault());
+  
+    /* -----------------------
        COMMON FUNCTIONS
-    ================================================== */
+    ------------------------- */
     function generateInvitationLink(inviteeEmail, podcastName, hostEmail) {
       return `https://app.podmanager.ai/invite?invitee=${encodeURIComponent(inviteeEmail)}&podcast=${encodeURIComponent(podcastName)}&host=${encodeURIComponent(hostEmail)}`;
     }
   
     function sendInvitations() {
       const teamMembers = document.querySelectorAll(".team-member");
-      const podcastName = document.getElementById("podName").value || "your podcast";
-      const hostName = document.getElementById("hostName").value || "the host";
+      const podcastName = document.getElementById("podName").value.trim() || "your podcast";
+      const hostName = document.getElementById("hostName").value.trim() || "the host";
       const fromEmail = "theauthorityshow@gmail.com";
   
       teamMembers.forEach(member => {
@@ -47,7 +44,7 @@ document.addEventListener("DOMContentLoaded", function () {
             const invitationLink = generateInvitationLink(inviteeEmail, podcastName, fromEmail);
             const emailBody = `Dear ${inviteeName}!
   
-  You are hereby invited to the production team page of PodManager for your PodCast ${podcastName} by your podcast's host!
+  You are hereby invited to the production team page of PodManager for your podcast ${podcastName} by your podcast's host!
   
   Click this link to accept the invitation and join the wonderful world of PodManager!
   ${invitationLink}
@@ -70,9 +67,7 @@ document.addEventListener("DOMContentLoaded", function () {
                   console.error(`Failed to send invitation to ${inviteeEmail}: ${data.error}`);
                 }
               })
-              .catch(error => {
-                console.error("Error sending invitation:", error);
-              });
+              .catch(error => console.error("Error sending invitation:", error));
           }
         }
       });
@@ -84,11 +79,11 @@ document.addEventListener("DOMContentLoaded", function () {
         const response = await fetch(`https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(rssUrl)}`);
         const data = await response.json();
         if (data.status === "ok") {
-          if (data.feed && data.feed.title) {
+          if (data.feed?.title) {
             const podNameInput = document.getElementById("podName");
             if (podNameInput) podNameInput.value = data.feed.title;
           }
-          if (data.feed && data.feed.link) {
+          if (data.feed?.link) {
             const websiteInput = document.getElementById("website");
             if (websiteInput) websiteInput.value = data.feed.link;
           }
@@ -108,6 +103,9 @@ document.addEventListener("DOMContentLoaded", function () {
       });
     }
   
+    /* -----------------------
+       Navigation: Pod Name -> Production Team
+    ------------------------- */
     const goToProductionTeam = document.getElementById("goToProductionTeam");
     if (goToProductionTeam) {
       goToProductionTeam.addEventListener("click", async function () {
@@ -136,9 +134,9 @@ document.addEventListener("DOMContentLoaded", function () {
       });
     }
   
-    /* ==================================================
-       PRODUCTION TEAM SECTION SETUP
-    ================================================== */
+    /* -----------------------
+       Production Team Section Setup
+    ------------------------- */
     function setupProductionTeamSection() {
       const goToPodProfile = document.getElementById("goToPodProfile");
       const backToPodName = document.getElementById("backToPodName");
@@ -151,53 +149,45 @@ document.addEventListener("DOMContentLoaded", function () {
           showSection("pod-profile-section");
         });
       }
-  
       if (backToPodName) {
-        backToPodName.addEventListener("click", () => {
-          showSection("pod-name-section");
-        });
+        backToPodName.addEventListener("click", () => showSection("pod-name-section"));
       }
-  
       if (addTeamMemberButton && teamMembersContainer) {
         addTeamMemberButton.addEventListener("click", () => {
           const newMember = document.createElement("div");
           newMember.classList.add("team-member");
           newMember.innerHTML = `
             <div class="form-group">
-                <label>Name</label>
-                <input type="text" class="team-name" required>
+              <label>Name</label>
+              <input type="text" class="team-name" required>
             </div>
             <div class="form-group">
-                <label>Email</label>
-                <input type="email" class="team-email" required>
+              <label>Email</label>
+              <input type="email" class="team-email" required>
             </div>
             <div class="form-group">
-                <label>Role</label>
-                <select class="team-role" required>
-                    <option value="" disabled selected>Select Role</option>
-                    <option value="user">User</option>
-                    <option value="host">Host</option>
-                </select>
-            </div>
-          `;
+              <label>Role</label>
+              <select class="team-role" required>
+                <option value="" disabled selected>Select Role</option>
+                <option value="user">User</option>
+                <option value="host">Host</option>
+              </select>
+            </div>`;
           teamMembersContainer.appendChild(newMember);
         });
       }
     }
   
-    /* ==================================================
-       POD PROFILE SECTION SETUP
-    ================================================== */
+    /* -----------------------
+       Pod Profile Section Setup
+    ------------------------- */
     function setupPodProfileSection() {
       const backToProductionTeam = document.getElementById("backToProductionTeam");
       const podProfileForm = document.getElementById("podProfileForm");
   
       if (backToProductionTeam) {
-        backToProductionTeam.addEventListener("click", () => {
-          showSection("production-team-section");
-        });
+        backToProductionTeam.addEventListener("click", () => showSection("production-team-section"));
       }
-  
       if (podProfileForm) {
         podProfileForm.addEventListener("submit", event => {
           event.preventDefault();
@@ -206,21 +196,21 @@ document.addEventListener("DOMContentLoaded", function () {
       }
     }
   
-    /* ==================================================
-       GOOGLE CALENDAR INTEGRATION SETUP
-    ================================================== */
+    /* -----------------------
+       Google Calendar Integration Setup
+    ------------------------- */
     function setupGoogleCalendarIntegration() {
-      const googleCalendarButton = document.getElementById("googleCalendar");
-      if (googleCalendarButton) {
-        googleCalendarButton.addEventListener("click", function () {
-          window.open("/google_calendar_connect", "_blank");
+      const calendarConnectButton = document.getElementById("calendarConnectButton");
+      if (calendarConnectButton) {
+        calendarConnectButton.addEventListener("click", function () {
+          window.open("/calendar_connect", "_blank");
         });
       }
     }
   
-    /* ==================================================
-       GENERAL UI SETUP (Dark Mode, Language, Points, etc.)
-    ================================================== */
+    /* -----------------------
+       General UI Setup: Dark Mode, Language, Points System
+    ------------------------- */
     function setupDarkMode() {
       const darkModeToggle = document.getElementById("dark-mode-toggle");
       const body = document.body;
@@ -242,9 +232,7 @@ document.addEventListener("DOMContentLoaded", function () {
       const languageButton = document.getElementById("language-button");
       const languageList = document.getElementById("language-list");
       if (languageButton && languageList) {
-        languageButton.addEventListener("click", () => {
-          languageList.classList.toggle("hidden");
-        });
+        languageButton.addEventListener("click", () => languageList.classList.toggle("hidden"));
         languageList.addEventListener("click", event => {
           if (event.target.tagName === "LI") {
             const selectedLang = event.target.getAttribute("data-lang");
@@ -257,10 +245,23 @@ document.addEventListener("DOMContentLoaded", function () {
   
     function setupPointsSystem() {
       const pointsSystem = {
-        podName: 10, podRss: 10, podLogo: 10, hostName: 10,
-        calendarUrl: 10, guestForm: 100, facebook: 10, instagram: 10,
-        linkedin: 10, twitter: 10, tiktok: 10, pinterest: 10,
-        website: 10, email: 10, inviteUser: 50, inviteHost: 50, blockUser: 10
+        podName: 10,
+        podRss: 10,
+        podLogo: 10,
+        hostName: 10,
+        calendarUrl: 10,
+        guestForm: 100,
+        facebook: 10,
+        instagram: 10,
+        linkedin: 10,
+        twitter: 10,
+        tiktok: 10,
+        pinterest: 10,
+        website: 10,
+        email: 10,
+        inviteUser: 50,
+        inviteHost: 50,
+        blockUser: 10
       };
   
       function getStoredPoints() {
@@ -278,16 +279,12 @@ document.addEventListener("DOMContentLoaded", function () {
   
       function trackInputField(fieldId, pointValue) {
         const field = document.getElementById(fieldId);
-        if (field) {
-          field.addEventListener("input", () => addPoints(fieldId, pointValue));
-        }
+        if (field) field.addEventListener("input", () => addPoints(fieldId, pointValue));
       }
   
       function trackButtonClick(buttonId, fieldKey, pointValue) {
         const button = document.getElementById(buttonId);
-        if (button) {
-          button.addEventListener("click", () => addPoints(fieldKey, pointValue));
-        }
+        if (button) button.addEventListener("click", () => addPoints(fieldKey, pointValue));
       }
   
       trackInputField("podName", pointsSystem.podName);
@@ -306,10 +303,12 @@ document.addEventListener("DOMContentLoaded", function () {
       trackInputField("email", pointsSystem.email);
       trackButtonClick("goToPodProfile", "inviteUser", pointsSystem.inviteUser);
       trackButtonClick("goToPodProfile", "inviteHost", pointsSystem.inviteHost);
-      trackButtonClick("blockUser", "blockUser", pointsSystem.blockUser);
+      // Note: Ensure there is an element with id "blockUser" if you're tracking that.
     }
   
-    // Initialize all setups.
+    /* -----------------------
+       Initialize Setups & Show First Section
+    ------------------------- */
     setupDarkMode();
     setupLanguageSettings();
     setupPointsSystem();
