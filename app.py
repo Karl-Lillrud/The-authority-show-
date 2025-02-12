@@ -2,6 +2,8 @@
 import os, random, smtplib, venvupdate, urllib.parse
 from flask import Flask, render_template, request, jsonify, url_for, session, redirect, g
 from azure.cosmos import CosmosClient, PartitionKey
+from azure.storage.blob import BlobServiceClient
+
 from google_auth_oauthlib.flow import Flow
 from register import register_bp
 from dotenv import load_dotenv
@@ -37,6 +39,9 @@ users_container = database.create_container_if_not_exists(
     id="users",
     partition_key=PartitionKey(path="/email"),
     offer_throughput=400
+)
+podcasts_container = database.create_container_if_not_exists(
+    id="podcasts", partition_key=PartitionKey(path="/creator_id"), offer_throughput=400
 )
 bookings_container = database.create_container_if_not_exists(
     id="bookings",
@@ -277,10 +282,44 @@ def podcastmanagement():
         return redirect(url_for('signin'))
     return render_template('dashboard/podcastmanagement.html')
 
+# Azure Storage Configuration
+AZURE_STORAGE_CONNECTION_STRING = os.getenv("AZURE_STORAGE_CONNECTION_STRING")
+BLOB_CONTAINER_NAME = "podcastlogos"  # Ensure this matches your Azure storage
+
+blob_service_client = BlobServiceClient.from_connection_string(AZURE_STORAGE_CONNECTION_STRING)
+container_client = blob_service_client.get_container_client(BLOB_CONTAINER_NAME)
+
+def upload_podcast_logo(file):
+    """Uploads podcast logo to Azure Blob Storage and saves metadata."""
+    if file.filename == "":
+        return None  # No file uploaded
+
+    filename = secure_filename(file.filename)
+    blob_client = container_client.get_blob_client(filename)
+
+    # Upload file to Azure Blob Storage
+    blob_client.upload_blob(file.stream, overwrite=True)
+
+    # Generate public URL (Adjust based on your storage settings)
+    file_url = f"https://{blob_service_client.account_name}.blob.core.windows.net/{BLOB_CONTAINER_NAME}/{filename}"
+
+    # Save metadata in Cosmos DB (attachments container)
+    pod_id = str(random.randint(100000, 999999))
+    attachment_data = {
+        "id": pod_id,
+        "pod_id": g.user_id,
+        "filename": filename,
+        "file_url": file_url,
+        "created_at": datetime.utcnow().isoformat()
+    }
+    attachments_container.upsert_item(attachment_data)
+
+    return file_url  # This URL should be stored as `podLogo`
+
 # Modified Pod Profile Endpoint to Handle GET and POST
 @app.route("/podprofile", methods=["GET", "POST"])
 def podprofile():
-    """Handles creating and storing podcast profiles in Cosmos DB."""
+    """Handles creating and storing podcast profiles."""
     if not g.user_id:
         return redirect(url_for("signin"))
 
@@ -288,34 +327,28 @@ def podprofile():
         return render_template("podprofile/index.html")
 
     try:
-        # ✅ Debug: Log the incoming request
-        print("Receiving podcast profile submission...")
-
-        # Handle file uploads for podcast logo
-        pod_logo_url = "/static/images/default-podcast.png"
-        if "podLogo" in request.files:
-            uploaded_logo = request.files["podLogo"]
-            if uploaded_logo.filename:
-                pod_logo_url = upload_podcast_logo(uploaded_logo)
-
-        # Convert form data to a dictionary
+        # Ensure form data is captured
         data = request.form.to_dict()
-        data["podLogo"] = pod_logo_url  # Ensure the logo is stored
 
-        # Validate required fields
-        required_fields = ["podName", "podRss", "hostName", "email"]
-        missing_fields = [field for field in required_fields if not data.get(field)]
-        if missing_fields:
-            return jsonify({"error": f"Missing required fields: {', '.join(missing_fields)}"}), 400
+        # Upload the podcast logo if provided
+        pod_logo_url = None
+        if "podLogo" in request.files:
+            file = request.files["podLogo"]
+            if file.filename:
+                pod_logo_url = upload_podcast_logo(file)  # Store and return the URL
 
-        # Prepare podcast profile data
+        # If no logo was uploaded, use a default
+        if not pod_logo_url:
+            pod_logo_url = "/static/images/default-podcast.png"
+
+        # Ensure all required fields are included
         podcast_profile = {
             "id": str(random.randint(100000, 999999)),
             "creator_id": g.user_id,
-            "podName": data["podName"].strip(),
-            "podRss": data["podRss"].strip(),
-            "podLogo": pod_logo_url,
-            "hostName": data["hostName"].strip(),
+            "podName": data.get("podName", "").strip(),
+            "podRss": data.get("podRss", "").strip(),
+            "podLogo": pod_logo_url,  # ✅ Ensure logo is linked
+            "hostName": data.get("hostName", "").strip(),
             "calendarUrl": data.get("calendarUrl", "").strip(),
             "guestForm": data.get("guestForm", "").strip(),
             "socialLinks": {
@@ -327,34 +360,40 @@ def podprofile():
                 "pinterest": data.get("pinterest", "").strip(),
                 "website": data.get("website", "").strip(),
             },
-            "email": data["email"].strip(),
+            "email": data.get("email", "").strip(),
             "productionTeam": data.get("productionTeam", []),
             "created_at": datetime.utcnow().isoformat(),
         }
 
-        # ✅ Debug: Print the final data before saving
-        print("Prepared Podcast Profile:", podcast_profile)
-
-        # ✅ Save the podcast profile in Cosmos DB
+        # ✅ Store the podcast profile in `podcasts` container
         podcasts_container.upsert_item(podcast_profile)
-        print("Podcast profile saved successfully!")
 
-        # Update user profile to mark podprofile as completed
+        # ✅ Ensure user profile updates in `users` container
         query = "SELECT * FROM c WHERE LOWER(c.email) = @email"
         parameters = [{"name": "@email", "value": session["email"].lower()}]
         users = list(users_container.query_items(query=query, parameters=parameters, enable_cross_partition_query=True))
+        
         if users:
             user_doc = users[0]
-            user_doc["podprofile_completed"] = True
-            user_doc["podLogo"] = pod_logo_url  # Ensure logo is linked to user
+            user_doc["podprofile_completed"] = True  # Mark as complete
+            user_doc["podLogo"] = pod_logo_url  # Store logo in user profile
             users_container.upsert_item(user_doc)
-            print(" User profile updated with podcast info!")
+
+        # ✅ Save logo to `attachments` container
+        attachment_data = {
+            "id": str(random.randint(100000, 999999)),
+            "pod_id": g.user_id,
+            "filename": file.filename if "podLogo" in request.files else "default-logo.png",
+            "file_url": pod_logo_url,
+            "created_at": datetime.utcnow().isoformat()
+        }
+        attachments_container.upsert_item(attachment_data)
 
         return jsonify({"message": "Podcast profile submitted successfully.", "redirect_url": "/dashboard"}), 200
 
     except Exception as e:
-        print(f" Error saving podcast profile: {e}")
-        return jsonify({"error": f"Failed to save profile: {str(e)}"}), 500
+        return jsonify({"error": f"Failed to save podcast profile: {str(e)}"}), 500
+
 
 @app.route('/calendar_connect')
 def calendar_connect():
