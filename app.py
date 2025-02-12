@@ -202,11 +202,68 @@ def homepage():
         return redirect(url_for('signin'))
     return render_template('dashboard/homepage.html')
 
-@app.route('/accountsettings', methods=['GET'])
+@app.route('/accountsettings', methods=['GET', 'POST'])
 def accountsettings():
     if not g.user_id:
         return redirect(url_for('signin'))
-    return render_template('dashboard/accountsettings.html')
+    if request.method == 'GET':
+        # Load current user profile from the "users" container
+        current_email = session.get("email").lower()
+        query = "SELECT * FROM c WHERE c.email = @email"
+        parameters = [{"name": "@email", "value": current_email}]
+        users = list(users_container.query_items(query=query, parameters=parameters, enable_cross_partition_query=True))
+        user_doc = users[0] if users else {}
+        return render_template('dashboard/accountsettings.html', user=user_doc)
+    else:
+        # Handle profile update submission
+        # Accept either JSON or form data:
+        if request.content_type == "application/json":
+            data = request.get_json()
+        else:
+            data = request.form
+
+        # Expected fields (update your HTML form to use these names/IDs)
+        # For example, use: name="full-name", name="email", name="current-password",
+        # name="new-password", name="confirm-password".
+        full_name       = data.get("full-name", "").strip()
+        # NOTE: Updating email is not recommended if email is used as the partition key.
+        # new_email      = data.get("email", "").strip().lower()
+        current_password= data.get("current-password", "")
+        new_password    = data.get("new-password", "")
+        confirm_password= data.get("confirm-password", "")
+
+        if new_password and new_password != confirm_password:
+            return jsonify({"error": "New password and confirmation do not match."}), 400
+
+        # Retrieve the current user document from the database using session email.
+        current_email = session.get("email").lower()
+        query = "SELECT * FROM c WHERE c.email = @email"
+        parameters = [{"name": "@email", "value": current_email}]
+        users = list(users_container.query_items(query=query, parameters=parameters, enable_cross_partition_query=True))
+        if not users:
+            return jsonify({"error": "User not found."}), 404
+
+        user_doc = users[0]
+
+        # If the user wants to change their password, verify the current password.
+        if new_password:
+            if not current_password:
+                return jsonify({"error": "Current password is required to change password."}), 400
+            if not check_password_hash(user_doc.get("passwordHash", ""), current_password):
+                return jsonify({"error": "Current password is incorrect."}), 401
+            user_doc["passwordHash"] = generate_password_hash(new_password)
+
+        # Update the full name if provided.
+        if full_name:
+            user_doc["fullName"] = full_name
+
+        # (Optional) If you want to update other fields (e.g. profile picture URL), do so here.
+
+        try:
+            users_container.upsert_item(user_doc)
+            return jsonify({"message": "Profile updated successfully.", "redirect_url": "/dashboard"}), 200
+        except Exception as e:
+            return jsonify({"error": f"Failed to update profile: {str(e)}"}), 500
 
 # ----------------- Podcast Endpoints -----------------
 
@@ -316,7 +373,7 @@ def register_podcast():
     }
     try:
         podcasts_container.upsert_item(podcast_item)
-        return jsonify({"message": "Podcast registered successfully", "redirect_url": "/production-team"}), 201
+        return jsonify({"message": "Podcast registered successfully", "redirect_url": "/podprofile"}), 201
     except Exception as e:
         return jsonify({"error": f"Failed to register podcast: {str(e)}"}), 500
 
