@@ -19,6 +19,10 @@
     <form id="register-form">
         <input class="input" type="email" id="email" placeholder="Email" required>
         <input class="input" type="password" id="password" placeholder="Password" required>
+        
+        <!-- 🟢 Referral Code (Hidden Field) -->
+        <input type="hidden" id="referral" name="referral">
+        
         <button class="button" type="submit">Register</button>
     </form>
 
@@ -39,11 +43,23 @@
             return;
         }
 
+        // 🟢 Hämta referral-kod från URL och fyll i fältet
+        const urlParams = new URLSearchParams(window.location.search);
+        const referralCode = urlParams.get("referral");
+
+        if (referralCode) {
+            console.log("✅ Referral Code Found in URL:", referralCode);
+            document.getElementById("referral").value = referralCode;
+        } else {
+            console.log("❌ No Referral Code Found in URL");
+        }
+
         form.addEventListener("submit", async function(event) {
             event.preventDefault();
 
             const email = document.getElementById("email").value;
             const password = document.getElementById("password").value;
+            const referral = document.getElementById("referral").value; // 🟢 Skicka referral-koden också
 
             try {
                 const response = await fetch("/register", {   
@@ -51,7 +67,7 @@
                     headers: {
                         "Content-Type": "application/json"
                     },
-                    body: JSON.stringify({ email, password })
+                    body: JSON.stringify({ email, password, referral }) // 🟢 Referral-koden inkluderas
                 });
 
                 const result = await response.json();

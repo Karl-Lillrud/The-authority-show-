@@ -382,3 +382,85 @@
 #homepage-iframe {
   border-radius: var(--radius-small);
 }
+
+
+.credits-badge {
+  position: absolute;
+  top: 90px;
+  left: 160px; 
+  background: var(--background-light); 
+  color: black;
+  padding: 12px 18px;
+  border-radius: var(--radius-medium);
+  font-weight: bold;
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.credits-badge:hover {
+  transform: scale(1.05);
+}
+
+.credits-badge span {
+  display: flex;
+  align-items: center;
+}
+
+.credits-badge::before {
+  content: "★";
+  font-size: 18px;
+  margin-right: 6px;
+  color: var(--highlight-color); 
+}
+
+
+
+.referral-section {
+  background: var(--background-dark); 
+  padding: 20px;
+  border-radius: var(--radius-medium);
+  box-shadow: -4px -4px 8px var(--light-shadow-dark), 4px 4px 8px var(--dark-shadow-dark);
+  text-align: center;
+  margin-top: 20px;
+}
+
+.referral-section h3 {
+  color: var(--text-light);
+  font-size: 18px;
+  margin-bottom: 10px;
+}
+
+.referral-section p {
+  color: var(--text-light);
+  font-size: 14px;
+}
+
+.referral-section input {
+  width: 80%;
+  padding: 8px;
+  border: none;
+  background: var(--background-light);
+  color: black;
+  border-radius: var(--radius-small);
+  font-size: 14px;
+  text-align: center;
+  margin-top: 10px;
+}
+
+.referral-section button {
+  background: var(--highlight-color);
+  color: white;
+  padding: 10px 16px;
+  border: none;
+  border-radius: var(--radius-small);
+  cursor: pointer;
+  margin-top: 10px;
+  font-weight: bold;
+  transition: transform 0.2s ease-in-out;
+}
+
+.referral-section button:hover {
+  transform: scale(1.05);
+}

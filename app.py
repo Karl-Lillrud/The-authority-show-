@@ -9,6 +9,7 @@ import random
 import smtplib
 import venvupdate
 from email.mime.text import MIMEText
+import requests
 
 # update the virtual environment and requirements
 venvupdate.update_venv_and_requirements()
@@ -214,9 +215,34 @@ def signin():
 # 📌 Dashboard
 @app.route('/dashboard', methods=['GET'])
 def dashboard():
-    if not g.user_id:
+    if "user_id" not in session:
         return redirect(url_for('signin'))
-    return render_template('dashboard/dashboard.html')
+
+    user_email = session.get("email")
+    credits = 0
+    referral_code = ""
+
+    if user_email:
+        try:
+            # Hämta användarens credits
+            response = requests.get(f"http://127.0.0.1:8000/credits/{user_email}")
+            if response.status_code == 200:
+                credits = response.json().get("credits", 0)
+
+            # Hämta användarens referral-kod från databasen
+            query = "SELECT * FROM c WHERE c.email = @user_email"
+            params = [{"name": "@user_email", "value": user_email}]
+            users = list(container.query_items(
+                query=query, parameters=params, enable_cross_partition_query=True
+            ))
+
+            if users:
+                referral_code = users[0].get("referral_code", "")
+
+        except Exception as e:
+            print(f"❌ Error fetching data: {e}")
+
+    return render_template('dashboard/dashboard.html', credits=credits, referral_code=referral_code)
 
 # ✅ Serves the homepage page
 @app.route('/homepage', methods=['GET'])
@@ -295,6 +321,36 @@ def register_podcast():
         return jsonify({"message": "Podcast registered successfully", "redirect_url": "/production-team"}), 201
     except Exception as e:
         return jsonify({"error": f"Failed to register podcast: {str(e)}"}), 500
+    
+
+    # 📌 SHOW CREDITS:
+@app.route('/credits/<email>', methods=['GET'])
+def get_credits(email):
+    """
+    Hämtar en användares credits från Cosmos DB.
+    """
+    try:
+        query = "SELECT * FROM c WHERE c.email = @email"
+        params = [{"name": "@email", "value": email}]
+
+        users = list(container.query_items(
+            query=query,
+            parameters=params,
+            enable_cross_partition_query=True
+        ))
+
+        if not users:
+            return jsonify({"error": "User not found"}), 404
+
+        user = users[0]
+        return jsonify({
+            "email": email,
+            "credits": user.get("credits", 0),
+            "credits_expires_at": user.get("credits_expires_at", "N/A")
+        })
+    except Exception as e:
+        return jsonify({"error": f"Database error: {str(e)}"}), 500
+    
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=8000, debug=True)

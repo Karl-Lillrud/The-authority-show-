@@ -235,6 +235,22 @@ tasks.forEach(task => taskList.appendChild(task));
       </div>
     </div>
     </div>
+
+    <section class="referral-section">
+      <h3>Refer a Friend & Earn 200 Credits! 🎉</h3>
+      <p>Share your referral link and earn extra credits when a friend signs up.</p>
+      <input type="text" id="referralLink" value="http://127.0.0.1:8000/register?referral={{ referral_code }}" readonly>
+      <button onclick="copyReferral()">Copy Link</button>
+  </section>
+  
+  <script>
+  function copyReferral() {
+      var copyText = document.getElementById("referralLink");
+      copyText.select();
+      document.execCommand("copy");
+      alert("Referral link copied!");
+  }
+  </script>
   
     </main>
 </div>
