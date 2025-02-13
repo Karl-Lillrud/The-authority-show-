@@ -4,12 +4,9 @@ from routes.register import register_bp
 from routes.forgot_pass import forgotpass_bp
 from routes.signin import signin_bp
 from dotenv import load_dotenv
-from werkzeug.security import generate_password_hash, check_password_hash
 from datetime import datetime
 import os
 import random
-import smtplib
-import utils.venvupdate as venvupdate
 from email.mime.text import MIMEText
 from database.cosmos_connection import container
 from utils import venvupdate
@@ -35,56 +32,56 @@ def load_user():
     g.user_id = session.get("user_id")
 
 # 📌 Dashboard
-@app.route('/dashboard', methods=['GET'],) #BP ROUTE?
+@app.route('/dashboard', methods=['GET'])
 def dashboard():
     if not g.user_id:
-        return redirect(signin_bp)
+        return redirect(url_for('signin_bp.signin'))  # Fix: redirect using the blueprint route
     return render_template('dashboard/dashboard.html')
 
 # ✅ Serves the homepage page
 @app.route('/homepage', methods=['GET'])
 def homepage():
     if not g.user_id:
-        return redirect(url_for('signin'))
+        return redirect(url_for('signin_bp.signin'))  # Fix: redirect using the blueprint route
     return render_template('dashboard/homepage.html')
 
 # ✅ Serves the settings page
 @app.route('/accountsettings', methods=['GET'])
 def accountsettings():
     if not g.user_id:
-        return redirect(url_for('signin'))
+        return redirect(url_for('signin_bp.signin'))  # Fix: redirect using the blueprint route
     return render_template('dashboard/accountsettings.html')
 
 # ✅ Serves the profile page
 @app.route('/podcastmanagement', methods=['GET'])
 def podcastmanagement():
     if not g.user_id:
-        return redirect(url_for('signin'))
+        return redirect(url_for('signin_bp.signin'))  # Fix: redirect using the blueprint route
     return render_template('dashboard/podcastmanagement.html')
 
 # ✅ Serves the tasks page
 @app.route('/taskmanagement', methods=['GET'])
 def taskmanagement():
     if not g.user_id:
-        return redirect(url_for('signin'))
+        return redirect(url_for('signin_bp.signin'))  # Fix: redirect using the blueprint route
     return render_template('dashboard/taskmanagement.html')
 
-@app.route('/podprofile', methods=['GET','POST'])
+@app.route('/podprofile', methods=['GET', 'POST'])
 def podprofile():
     if not g.user_id:
-        return redirect(url_for('signin'))
+        return redirect(url_for('signin_bp.signin'))  # Fix: redirect using the blueprint route
     return render_template('podprofile/index.html')
 
-@app.route('/team', methods=['GET','POST'])
+@app.route('/team', methods=['GET', 'POST'])
 def team():
     if not g.user_id:
-        return redirect(url_for('signin'))
+        return redirect(url_for('signin_bp.signin'))  # Fix: redirect using the blueprint route
     return render_template('team/index.html')
 
-@app.route('/guest', methods=['GET','POST'])
+@app.route('/guest', methods=['GET', 'POST'])
 def guest():
     if not g.user_id:
-        return redirect(url_for('signin'))
+        return redirect(url_for('signin_bp.signin'))  # Fix: redirect using the blueprint route
     return render_template('guest/index.html')
 
 @app.route('/profile/<guest_id>', methods=['GET'])
@@ -97,12 +94,10 @@ def guest_profile(guest_id):
         return "Guest not found", 404
     return render_template('guest/profile.html', guest=guest)
 
-
-
-@app.route('/settings', methods=['GET','POST'])
+@app.route('/settings', methods=['GET', 'POST'])
 def settings():
     if not g.user_id:
-        return redirect(url_for('signin'))
+        return redirect(url_for('signin_bp.signin'))  # Fix: redirect using the blueprint route
     return render_template('settings/index.html')
 
 @app.route('/get_user_podcasts', methods=['GET'])
