@@ -1,10 +1,12 @@
 
-from flask import render_template, request, jsonify, url_for
+from flask import render_template, request, jsonify, url_for, Blueprint
 import os
 import random
 import smtplib
 from email.mime.text import MIMEText
 from database.cosmos_connection import container
+
+forgotpass_bp = Blueprint('forgotpass_bp', __name__)
 
 # Email Configuration
 SMTP_SERVER = os.getenv("SMTP_SERVER")
@@ -12,7 +14,7 @@ SMTP_PORT = int(os.getenv("SMTP_PORT", 587))
 EMAIL_USER = os.getenv("EMAIL_USER")
 EMAIL_PASS = os.getenv("EMAIL_PASS")
 
-forgotpass_bp = Blueprint('forgotpass_bp', __name__)
+
 
 @forgotpass_bp.route('/forgotpassword', methods=['GET', 'POST'])
 def forgot_password():
@@ -48,7 +50,8 @@ def forgot_password():
         return jsonify({"error": f"Failed to send email: {str(e)}"}), 500
 
 # 📌 Step 2: Enter Reset Code
-@app.route('/enter-code', methods=['GET', 'POST'])
+
+@forgotpass_bp.route('/enter-code', methods=['GET', 'POST'])
 def enter_code():
     print(f"🔍 Request Headers: {request.headers}")
     print(f"🔍 Request Data: {request.data}")
@@ -79,7 +82,8 @@ def enter_code():
     return jsonify({"message": "Code is Valid.", "redirect_url": url_for('reset_password')}), 200
 
 # 📌 Step 3: Reset Password
-@app.route('/reset-password', methods=['GET', 'POST'])
+
+@forgotpass_bp.route('/reset-password', methods=['GET', 'POST'])
 def reset_password():
     if request.method == 'GET':
         return render_template('forgotpassword/reset-password.html')
@@ -122,7 +126,8 @@ def send_reset_email(email, reset_code):
         print(f"Error sending email: {e}")
         raise
 
-@app.route('/resend-code', methods=['POST'])
+
+@forgotpass_bp.route('/resend-code', methods=['POST'])
 def resend_code():
     if request.content_type != "application/json":
         return jsonify({"error": "Invalid Content-Type. Expected application/json"}), 415  
