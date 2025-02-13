@@ -1,0 +1,1024 @@
+Metadata-Version: 2.1
+Name: azure-keyvault-keys
+Version: 4.10.0
+Summary: Microsoft Azure Key Vault Keys Client Library for Python
+Home-page: https://github.com/Azure/azure-sdk-for-python/tree/main/sdk/keyvault/azure-keyvault-keys
+Author: Microsoft Corporation
+Author-email: azurekeyvault@microsoft.com
+License: MIT License
+Keywords: azure,azure sdk
+Classifier: Development Status :: 5 - Production/Stable
+Classifier: Programming Language :: Python
+Classifier: Programming Language :: Python :: 3 :: Only
+Classifier: Programming Language :: Python :: 3
+Classifier: Programming Language :: Python :: 3.8
+Classifier: Programming Language :: Python :: 3.9
+Classifier: Programming Language :: Python :: 3.10
+Classifier: Programming Language :: Python :: 3.11
+Classifier: Programming Language :: Python :: 3.12
+Classifier: License :: OSI Approved :: MIT License
+Requires-Python: >=3.8
+Description-Content-Type: text/markdown
+License-File: LICENSE
+Requires-Dist: azure-core >=1.31.0
+Requires-Dist: cryptography >=2.1.4
+Requires-Dist: isodate >=0.6.1
+Requires-Dist: typing-extensions >=4.0.1
+
+# Azure Key Vault Keys client library for Python
+Azure Key Vault helps solve the following problems:
+- Cryptographic key management (this library) - create, store, and control
+access to the keys used to encrypt your data
+- Secrets management
+([azure-keyvault-secrets](https://github.com/Azure/azure-sdk-for-python/tree/main/sdk/keyvault/azure-keyvault-secrets)) -
+securely store and control access to tokens, passwords, certificates, API keys,
+and other secrets
+- Certificate management
+([azure-keyvault-certificates](https://github.com/Azure/azure-sdk-for-python/tree/main/sdk/keyvault/azure-keyvault-certificates)) -
+create, manage, and deploy public and private SSL/TLS certificates
+- Vault administration ([azure-keyvault-administration](https://github.com/Azure/azure-sdk-for-python/tree/main/sdk/keyvault/azure-keyvault-administration)) - role-based access control (RBAC), and vault-level backup and restore options
+
+[Source code][library_src]
+| [Package (PyPI)][pypi_package_keys]
+| [Package (Conda)](https://anaconda.org/microsoft/azure-keyvault/)
+| [API reference documentation][reference_docs]
+| [Product documentation][azure_keyvault]
+| [Samples][key_samples]
+
+## _Disclaimer_
+
+_Azure SDK Python packages support for Python 2.7 has ended 01 January 2022. For more information and questions, please refer to https://github.com/Azure/azure-sdk-for-python/issues/20691_.
+
+_Python 3.8 or later is required to use this package. For more details, please refer to [Azure SDK for Python version support policy](https://github.com/Azure/azure-sdk-for-python/wiki/Azure-SDKs-Python-version-support-policy)._
+
+## Getting started
+### Install the package
+Install [azure-keyvault-keys][pypi_package_keys] and
+[azure-identity][azure_identity_pypi] with [pip][pip]:
+```Bash
+pip install azure-keyvault-keys azure-identity
+```
+[azure-identity][azure_identity] is used for Azure Active Directory authentication as demonstrated below.
+
+### Prerequisites
+* An [Azure subscription][azure_sub]
+* Python 3.8 or later
+* An existing [Azure Key Vault][azure_keyvault]. If you need to create one, you can do so using the Azure CLI by following the steps in [this document][azure_keyvault_cli].
+* If using Managed HSM, an existing [Key Vault Managed HSM][managed_hsm]. If you need to create a Managed HSM, you can do so using the Azure CLI by following the steps in [this document][managed_hsm_cli].
+
+### Authenticate the client
+In order to interact with the Azure Key Vault service, you will need an instance of a [KeyClient][key_client_docs], as
+well as a **vault URL** and a credential object. This document demonstrates using a
+[DefaultAzureCredential][default_cred_ref], which is appropriate for most scenarios. We recommend using a
+[managed identity][managed_identity] for authentication in production environments.
+
+See [azure-identity][azure_identity] documentation for more information about other methods of authentication and their
+corresponding credential types.
+
+#### Create a client
+After configuring your environment for the [DefaultAzureCredential][default_cred_ref] to use a suitable method of
+authentication, you can do the following to create a key client (replacing the value of `VAULT_URL` with your vault's
+URL):
+
+<!-- SNIPPET:hello_world.create_a_key_client -->
+
+```python
+from azure.identity import DefaultAzureCredential
+from azure.keyvault.keys import KeyClient
+
+VAULT_URL = os.environ["VAULT_URL"]
+credential = DefaultAzureCredential()
+client = KeyClient(vault_url=VAULT_URL, credential=credential)
+```
+
+<!-- END SNIPPET -->
+
+> **NOTE:** For an asynchronous client, import `azure.keyvault.keys.aio`'s `KeyClient` instead.
+
+## Key concepts
+### Keys
+Azure Key Vault can create and store RSA and elliptic curve keys. Both can optionally be protected by hardware security
+modules (HSMs). Azure Key Vault can also perform cryptographic operations with them. For more information about keys
+and supported operations and algorithms, see the
+[Key Vault documentation](https://docs.microsoft.com/azure/key-vault/keys/about-keys).
+
+[KeyClient][key_client_docs] can create keys in the vault, get existing keys
+from the vault, update key metadata, and delete keys, as shown in the
+[examples](#examples) below.
+
+## Examples
+This section contains code snippets covering common tasks:
+* [Create a key](#create-a-key)
+* [Retrieve a key](#retrieve-a-key)
+* [Update an existing key](#update-an-existing-key)
+* [Delete a key](#delete-a-key)
+* [Configure automatic key rotation](#configure-automatic-key-rotation)
+* [List keys](#list-keys)
+* [Perform cryptographic operations](#cryptographic-operations)
+* [Async API](#async-api)
+* [Asynchronously create a key](#asynchronously-create-a-key)
+* [Asynchronously list keys](#asynchronously-list-keys)
+
+### Create a key
+The [create_key](https://aka.ms/azsdk/python/keyvault-keys/docs#azure.keyvault.keys.KeyClient.create_key) method can be
+used by a `KeyClient` to create a key of any type -- alternatively, specific helpers such as
+[create_rsa_key](https://aka.ms/azsdk/python/keyvault-keys/docs#azure.keyvault.keys.KeyClient.create_rsa_key) and
+[create_ec_key](https://aka.ms/azsdk/python/keyvault-keys/docs#azure.keyvault.keys.KeyClient.create_ec_key)
+create RSA and elliptic curve keys in the vault, respectively. If a key with the same name already exists, a new version
+of that key is created.
+
+```python
+from azure.identity import DefaultAzureCredential
+from azure.keyvault.keys import KeyClient
+
+credential = DefaultAzureCredential()
+
+key_client = KeyClient(vault_url="https://my-key-vault.vault.azure.net/", credential=credential)
+
+# Create an RSA key
+rsa_key = key_client.create_rsa_key("rsa-key-name", size=2048)
+print(rsa_key.name)
+print(rsa_key.key_type)
+
+# Create an elliptic curve key
+ec_key = key_client.create_ec_key("ec-key-name", curve="P-256")
+print(ec_key.name)
+print(ec_key.key_type)
+```
+
+### Retrieve a key
+[get_key](https://aka.ms/azsdk/python/keyvault-keys/docs#azure.keyvault.keys.KeyClient.get_key) retrieves a key
+previously stored in the Vault.
+```python
+from azure.identity import DefaultAzureCredential
+from azure.keyvault.keys import KeyClient
+
+credential = DefaultAzureCredential()
+
+key_client = KeyClient(vault_url="https://my-key-vault.vault.azure.net/", credential=credential)
+key = key_client.get_key("key-name")
+print(key.name)
+```
+
+### Update an existing key
+[update_key_properties](https://aka.ms/azsdk/python/keyvault-keys/docs#azure.keyvault.keys.KeyClient.update_key_properties)
+updates the properties of a key previously stored in the Key Vault.
+```python
+from azure.identity import DefaultAzureCredential
+from azure.keyvault.keys import KeyClient
+
+credential = DefaultAzureCredential()
+
+key_client = KeyClient(vault_url="https://my-key-vault.vault.azure.net/", credential=credential)
+
+# we will now disable the key for further use
+updated_key = key_client.update_key_properties("key-name", enabled=False)
+
+print(updated_key.name)
+print(updated_key.properties.enabled)
+```
+
+### Delete a key
+[begin_delete_key](https://aka.ms/azsdk/python/keyvault-keys/docs#azure.keyvault.keys.KeyClient.begin_delete_key)
+requests Key Vault delete a key, returning a poller which allows you to wait for the deletion to finish. Waiting is
+helpful when the vault has [soft-delete][soft_delete] enabled, and you want to purge (permanently delete) the key as
+soon as possible. When [soft-delete][soft_delete] is disabled, `begin_delete_key` itself is permanent.
+
+```python
+from azure.identity import DefaultAzureCredential
+from azure.keyvault.keys import KeyClient
+
+credential = DefaultAzureCredential()
+
+key_client = KeyClient(vault_url="https://my-key-vault.vault.azure.net/", credential=credential)
+deleted_key = key_client.begin_delete_key("key-name").result()
+
+print(deleted_key.name)
+print(deleted_key.deleted_date)
+```
+
+### Configure automatic key rotation
+[update_key_rotation_policy](https://aka.ms/azsdk/python/keyvault-keys/docs#azure.keyvault.keys.KeyClient.update_key_rotation_policy)
+can be used by a `KeyClient` to configure automatic key rotation for a key by specifying a rotation policy.
+
+<!-- SNIPPET:key_rotation.update_a_rotation_policy -->
+
+```python
+from azure.keyvault.keys import KeyRotationLifetimeAction, KeyRotationPolicy, KeyRotationPolicyAction
+
+# Here we set the key's automated rotation policy to rotate the key two months after the key was created.
+# If you pass an empty KeyRotationPolicy() as the `policy` parameter, the rotation policy will be set to the
+# default policy. Any keyword arguments will update specified properties of the policy.
+actions = [KeyRotationLifetimeAction(KeyRotationPolicyAction.rotate, time_after_create="P2M")]
+updated_policy = client.update_key_rotation_policy(
+    "rotation-sample-key", policy=KeyRotationPolicy(), expires_in="P90D", lifetime_actions=actions
+)
+assert updated_policy.expires_in == "P90D"
+```
+
+<!-- END SNIPPET -->
+
+In addition,
+[rotate_key](https://aka.ms/azsdk/python/keyvault-keys/docs#azure.keyvault.keys.KeyClient.rotate_key)
+allows you to rotate a key on-demand by creating a new version of the given key.
+
+<!-- SNIPPET:key_rotation.rotate_key -->
+
+```python
+rotated_key = client.rotate_key("rotation-sample-key")
+print(f"Rotated the key on-demand; new version is {rotated_key.properties.version}")
+```
+
+<!-- END SNIPPET -->
+
+### List keys
+[list_properties_of_keys](https://aka.ms/azsdk/python/keyvault-keys/docs#azure.keyvault.keys.KeyClient.list_properties_of_keys)
+lists the properties of all of the keys in the client's vault.
+
+```python
+from azure.identity import DefaultAzureCredential
+from azure.keyvault.keys import KeyClient
+
+credential = DefaultAzureCredential()
+
+key_client = KeyClient(vault_url="https://my-key-vault.vault.azure.net/", credential=credential)
+keys = key_client.list_properties_of_keys()
+
+for key in keys:
+    # the list doesn't include values or versions of the keys
+    print(key.name)
+```
+
+### Cryptographic operations
+[CryptographyClient](https://aka.ms/azsdk/python/keyvault-keys/crypto/docs#azure.keyvault.keys.crypto.CryptographyClient)
+enables cryptographic operations (encrypt/decrypt, wrap/unwrap, sign/verify) using a particular key.
+
+```python
+from azure.identity import DefaultAzureCredential
+from azure.keyvault.keys import KeyClient
+from azure.keyvault.keys.crypto import CryptographyClient, EncryptionAlgorithm
+
+credential = DefaultAzureCredential()
+key_client = KeyClient(vault_url="https://my-key-vault.vault.azure.net/", credential=credential)
+
+key = key_client.get_key("key-name")
+crypto_client = CryptographyClient(key, credential=credential)
+plaintext = b"plaintext"
+
+result = crypto_client.encrypt(EncryptionAlgorithm.rsa_oaep, plaintext)
+decrypted = crypto_client.decrypt(result.algorithm, result.ciphertext)
+```
+
+See the
+[package documentation][crypto_client_docs]
+for more details of the cryptography API.
+
+### Async API
+This library includes a complete set of async APIs. To use them, you must
+first install an async transport, such as [aiohttp](https://pypi.org/project/aiohttp/).
+See
+[azure-core documentation](https://github.com/Azure/azure-sdk-for-python/blob/main/sdk/core/azure-core/CLIENT_LIBRARY_DEVELOPER.md#transport)
+for more information.
+
+Async clients and credentials should be closed when they're no longer needed. These
+objects are async context managers and define async `close` methods. For
+example:
+
+```python
+from azure.identity.aio import DefaultAzureCredential
+from azure.keyvault.keys.aio import KeyClient
+
+credential = DefaultAzureCredential()
+
+# call close when the client and credential are no longer needed
+client = KeyClient(vault_url="https://my-key-vault.vault.azure.net/", credential=credential)
+...
+await client.close()
+await credential.close()
+
+# alternatively, use them as async context managers (contextlib.AsyncExitStack can help)
+client = KeyClient(vault_url="https://my-key-vault.vault.azure.net/", credential=credential)
+async with client:
+  async with credential:
+    ...
+```
+
+### Asynchronously create a key
+[create_rsa_key](https://aka.ms/azsdk/python/keyvault-keys/aio/docs#azure.keyvault.keys.aio.KeyClient.create_rsa_key) and
+[create_ec_key](https://aka.ms/azsdk/python/keyvault-keys/aio/docs#azure.keyvault.keys.aio.KeyClient.create_ec_key)
+create RSA and elliptic curve keys in the vault, respectively. If a key with the same name already exists, a new
+version of the key is created.
+
+```python
+from azure.identity.aio import DefaultAzureCredential
+from azure.keyvault.keys.aio import KeyClient
+
+credential = DefaultAzureCredential()
+key_client = KeyClient(vault_url="https://my-key-vault.vault.azure.net/", credential=credential)
+
+# Create an RSA key
+rsa_key = await key_client.create_rsa_key("rsa-key-name", size=2048)
+print(rsa_key.name)
+print(rsa_key.key_type)
+
+# Create an elliptic curve key
+ec_key = await key_client.create_ec_key("ec-key-name", curve="P-256")
+print(ec_key.name)
+print(ec_key.key_type)
+```
+
+### Asynchronously list keys
+[list_properties_of_keys](https://aka.ms/azsdk/python/keyvault-keys/aio/docs#azure.keyvault.keys.aio.KeyClient.list_properties_of_keys)
+lists the properties of all of the keys in the client's vault.
+
+```python
+from azure.identity.aio import DefaultAzureCredential
+from azure.keyvault.keys.aio import KeyClient
+
+credential = DefaultAzureCredential()
+key_client = KeyClient(vault_url="https://my-key-vault.vault.azure.net/", credential=credential)
+keys = key_client.list_properties_of_keys()
+
+async for key in keys:
+    print(key.name)
+```
+
+## Troubleshooting
+
+See the `azure-keyvault-keys`
+[troubleshooting guide](https://github.com/Azure/azure-sdk-for-python/tree/main/sdk/keyvault/azure-keyvault-keys/TROUBLESHOOTING.md)
+for details on how to diagnose various failure scenarios.
+
+### General
+Key Vault clients raise exceptions defined in [azure-core][azure_core_exceptions].
+For example, if you try to get a key that doesn't exist in the vault, [KeyClient][key_client_docs]
+raises [ResourceNotFoundError](https://aka.ms/azsdk-python-core-exceptions-resource-not-found-error):
+
+```python
+from azure.identity import DefaultAzureCredential
+from azure.keyvault.keys import KeyClient
+from azure.core.exceptions import ResourceNotFoundError
+
+credential = DefaultAzureCredential()
+key_client = KeyClient(vault_url="https://my-key-vault.vault.azure.net/", credential=credential)
+
+try:
+    key_client.get_key("which-does-not-exist")
+except ResourceNotFoundError as e:
+    print(e.message)
+```
+
+### Logging
+This library uses the standard
+[logging](https://docs.python.org/3/library/logging.html) library for logging.
+Basic information about HTTP sessions (URLs, headers, etc.) is logged at INFO
+level.
+
+Detailed DEBUG level logging, including request/response bodies and unredacted
+headers, can be enabled on a client with the `logging_enable` argument:
+```python
+from azure.identity import DefaultAzureCredential
+from azure.keyvault.keys import KeyClient
+import sys
+import logging
+
+# Create a logger for the 'azure' SDK
+logger = logging.getLogger('azure')
+logger.setLevel(logging.DEBUG)
+
+# Configure a console output
+handler = logging.StreamHandler(stream=sys.stdout)
+logger.addHandler(handler)
+
+credential = DefaultAzureCredential()
+
+# This client will log detailed information about its HTTP sessions, at DEBUG level
+client = KeyClient(vault_url="https://my-key-vault.vault.azure.net/", credential=credential, logging_enable=True)
+```
+
+Similarly, `logging_enable` can enable detailed logging for a single operation,
+even when it isn't enabled for the client:
+```python
+client.get_key("my-key", logging_enable=True)
+```
+
+## Next steps
+Several samples are available in the Azure SDK for Python GitHub repository.
+These provide example code for additional Key Vault scenarios:
+
+- [Create/get/update/delete keys][hello_world_sample] ([async version][hello_world_async_sample])
+- [Basic list operations for keys][list_operations_sample] ([async version][list_operations_async_sample])
+- [Back up and recover keys][backup_operations_sample] ([async version][backup_operations_async_sample])
+- [Recover and purge keys][recover_purge_sample] ([async version][recover_purge_async_sample])
+- [Create/update key rotation policies and rotate keys on-demand][key_rotation_sample] ([async version][key_rotation_async_sample])
+- [Use the `send_request` client method][send_request_sample]
+
+###  Additional documentation
+For more extensive documentation on Azure Key Vault, see the
+[API reference documentation][reference_docs].
+
+## Contributing
+This project welcomes contributions and suggestions. Most contributions require
+you to agree to a Contributor License Agreement (CLA) declaring that you have
+the right to, and actually do, grant us the rights to use your contribution.
+For details, visit https://cla.microsoft.com.
+
+When you submit a pull request, a CLA-bot will automatically determine whether
+you need to provide a CLA and decorate the PR appropriately (e.g., label,
+comment). Simply follow the instructions provided by the bot. You will only
+need to do this once across all repos using our CLA.
+
+This project has adopted the [Microsoft Open Source Code of Conduct][code_of_conduct].
+For more information, see the
+[Code of Conduct FAQ](https://opensource.microsoft.com/codeofconduct/faq/) or
+contact opencode@microsoft.com with any additional questions or comments.
+
+
+<!-- LINKS -->
+[azure_core_exceptions]: https://github.com/Azure/azure-sdk-for-python/tree/main/sdk/core/azure-core#azure-core-library-exceptions
+[azure_identity]: https://github.com/Azure/azure-sdk-for-python/tree/main/sdk/identity/azure-identity
+[azure_identity_pypi]: https://pypi.org/project/azure-identity/
+[azure_keyvault]: https://docs.microsoft.com/azure/key-vault/
+[azure_keyvault_cli]: https://docs.microsoft.com/azure/key-vault/general/quick-create-cli
+[azure_sub]: https://azure.microsoft.com/free/
+
+[backup_operations_sample]: https://github.com/Azure/azure-sdk-for-python/blob/main/sdk/keyvault/azure-keyvault-keys/samples/backup_restore_operations.py
+[backup_operations_async_sample]: https://github.com/Azure/azure-sdk-for-python/blob/main/sdk/keyvault/azure-keyvault-keys/samples/backup_restore_operations_async.py
+
+[code_of_conduct]: https://opensource.microsoft.com/codeofconduct/
+[crypto_client_docs]: https://aka.ms/azsdk/python/keyvault-keys/crypto/docs
+
+[default_cred_ref]: https://aka.ms/azsdk/python/identity/docs#azure.identity.DefaultAzureCredential
+
+[hello_world_sample]: https://github.com/Azure/azure-sdk-for-python/blob/main/sdk/keyvault/azure-keyvault-keys/samples/hello_world.py
+[hello_world_async_sample]: https://github.com/Azure/azure-sdk-for-python/blob/main/sdk/keyvault/azure-keyvault-keys/samples/hello_world_async.py
+
+[key_client_docs]: https://aka.ms/azsdk/python/keyvault-keys/docs#azure.keyvault.keys.KeyClient
+[key_rotation_sample]: https://github.com/Azure/azure-sdk-for-python/tree/main/sdk/keyvault/azure-keyvault-keys/samples/key_rotation.py
+[key_rotation_async_sample]: https://github.com/Azure/azure-sdk-for-python/tree/main/sdk/keyvault/azure-keyvault-keys/samples/key_rotation_async.py
+[key_samples]: https://github.com/Azure/azure-sdk-for-python/tree/main/sdk/keyvault/azure-keyvault-keys/samples
+
+[library_src]: https://github.com/Azure/azure-sdk-for-python/tree/main/sdk/keyvault/azure-keyvault-keys/azure/keyvault/keys
+[list_operations_sample]: https://github.com/Azure/azure-sdk-for-python/blob/main/sdk/keyvault/azure-keyvault-keys/samples/list_operations.py
+[list_operations_async_sample]: https://github.com/Azure/azure-sdk-for-python/blob/main/sdk/keyvault/azure-keyvault-keys/samples/list_operations_async.py
+
+[managed_hsm]: https://docs.microsoft.com/azure/key-vault/managed-hsm/overview
+[managed_hsm_cli]: https://docs.microsoft.com/azure/key-vault/managed-hsm/quick-create-cli
+[managed_identity]: https://docs.microsoft.com/azure/active-directory/managed-identities-azure-resources/overview
+
+[pip]: https://pypi.org/project/pip/
+[pypi_package_keys]: https://pypi.org/project/azure-keyvault-keys/
+
+[recover_purge_sample]: https://github.com/Azure/azure-sdk-for-python/blob/main/sdk/keyvault/azure-keyvault-keys/samples/recover_purge_operations.py
+[recover_purge_async_sample]: https://github.com/Azure/azure-sdk-for-python/blob/main/sdk/keyvault/azure-keyvault-keys/samples/recover_purge_operations_async.py
+[reference_docs]: https://aka.ms/azsdk/python/keyvault-keys/docs
+
+[send_request_sample]: https://github.com/Azure/azure-sdk-for-python/tree/main/sdk/keyvault/azure-keyvault-keys/samples/send_request.py
+[soft_delete]: https://docs.microsoft.com/azure/key-vault/general/soft-delete-overview
+
+![Impressions](https://azure-sdk-impressions.azurewebsites.net/api/impressions/azure-sdk-for-python%2Fsdk%2Fkeyvault%2Fazure-keyvault-keys%2FREADME.png)
+
+
+# Release History
+
+## 4.10.0 (2024-10-17)
+
+### Features Added
+- Added support for Continuous Access Evaluation (CAE). `enable_cae=True` is passed to all `get_token` requests.
+
+### Bugs Fixed
+- Typing errors from using Key Vault clients as context managers have been fixed
+  ([#34744](https://github.com/Azure/azure-sdk-for-python/issues/34744))
+
+### Other Changes
+- Updated minimum `azure-core` version to 1.31.0
+
+## 4.9.0 (2024-02-22)
+- Added support for service API version `7.5`
+- (From 4.9.0b2) The `cryptography` library's `RSAPrivateKey` and `RSAPublicKey` interfaces are now implemented by
+  `KeyVaultRSAPrivateKey` and `KeyVaultRSAPublicKey` classes that can use keys managed by Key Vault
+- (From 4.9.0b2) `CryptographyClient` has `create_rsa_private_key` and `create_rsa_public_key` methods that return a
+  `KeyVaultRSAPrivateKey` and `KeyVaultRSAPublicKey`, respectively
+- (From 4.9.0b3) Added `KeyProperties.hsm_platform` to get the underlying HSM platform
+
+### Bugs Fixed
+- (From 4.9.0b1) Token requests made during AD FS authentication no longer specify an erroneous "adfs" tenant ID
+  ([#29888](https://github.com/Azure/azure-sdk-for-python/issues/29888))
+
+### Other Changes
+- Python 3.7 is no longer supported. Please use Python version 3.8 or later.
+- `asyncio` is no longer directly referenced by the library
+  ([#33819](https://github.com/Azure/azure-sdk-for-python/pull/33819))
+- Updated minimum `azure-core` version to 1.29.5
+- Dropped `azure-common` requirement
+
+## 4.9.0b3 (2023-11-03)
+
+### Features Added
+- Added support for service API version `7.5-preview.1`
+- Added `KeyProperties.hsm_platform` to get the underlying HSM platform
+
+### Other Changes
+- Key Vault API version `7.5-preview.1` is now the default
+
+## 4.9.0b2 (2023-10-12)
+
+### Features Added
+- The `cryptography` library's `RSAPrivateKey` and `RSAPublicKey` interfaces are now implemented by
+  `KeyVaultRSAPrivateKey` and `KeyVaultRSAPublicKey` classes that can use keys managed by Key Vault
+- `CryptographyClient` has `create_rsa_private_key` and `create_rsa_public_key` methods that return a
+  `KeyVaultRSAPrivateKey` and `KeyVaultRSAPublicKey`, respectively
+
+## 4.9.0b1 (2023-05-16)
+
+### Bugs Fixed
+- Token requests made during AD FS authentication no longer specify an erroneous "adfs" tenant ID
+  ([#29888](https://github.com/Azure/azure-sdk-for-python/issues/29888))
+
+## 4.8.0 (2023-03-16)
+
+### Features Added
+- Added support for service API version `7.4`
+- Clients each have a `send_request` method that can be used to send custom requests using the
+  client's existing pipeline ([#25172](https://github.com/Azure/azure-sdk-for-python/issues/25172))
+- (From 4.8.0b1) An attempt will be made to generate an IV if one isn't provided for local encryption
+  ([#25380](https://github.com/Azure/azure-sdk-for-python/pull/25380))
+
+### Breaking Changes
+> These changes do not impact the API of stable versions such as 4.7.0. Only code written against a beta version such as 4.8.0b2 may be affected.
+- Removed support for octet key pair (OKP) keys and operations
+
+### Other Changes
+- Key Vault API version `7.4` is now the default
+- (From 4.8.0b1) Python 3.6 is no longer supported. Please use Python version 3.7 or later.
+- (From 4.8.0b1) Updated minimum `azure-core` version to 1.24.0
+- (From 4.8.0b1) Updated minimum `msrest` version to 0.7.1
+- (From 4.8.0b2) Dropped `msrest` requirement
+- (From 4.8.0b2) Dropped `six` requirement
+- (From 4.8.0b2) Added requirement for `isodate>=0.6.1` (`isodate` was required by `msrest`)
+- (From 4.8.0b2) Added requirement for `typing-extensions>=4.0.1`
+
+## 4.8.0b2 (2022-11-15)
+
+### Features Added
+- Added support for service API version `7.4-preview.1`
+- `KeyClient` has a `create_okp_key` method to create an octet key pair (OKP) on Managed HSM
+- Added `eddsa` to `SignatureAlgorithm` enum to support signing and verifying using an
+  Edwards-Curve Digital Signature Algorithm (EdDSA) on Managed HSM
+- Added `okp` and `okp_hsm` to `KeyType` enum for octet key pairs
+- Added `ed25519` to `KeyCurveName` enum to support use of the Ed25519 Edwards curve
+
+### Other Changes
+- Key Vault API version `7.4-preview.1` is now the default
+- Dropped `msrest` requirement
+- Dropped `six` requirement
+- Added requirement for `isodate>=0.6.1` (`isodate` was required by `msrest`)
+- Added requirement for `typing-extensions>=4.0.1`
+
+## 4.8.0b1 (2022-09-22)
+
+### Features Added
+- An attempt will be made to generate an IV if one isn't provided for local encryption
+  ([#25380](https://github.com/Azure/azure-sdk-for-python/pull/25380))
+
+### Other Changes
+- Python 3.6 is no longer supported. Please use Python version 3.7 or later.
+- Updated minimum `azure-core` version to 1.24.0
+- Updated minimum `msrest` version to 0.7.1
+
+## 4.7.0 (2022-09-19)
+
+### Breaking Changes
+- Clients verify the challenge resource matches the vault domain. This should affect few customers,
+  who can provide `verify_challenge_resource=False` to client constructors to disable.
+  See https://aka.ms/azsdk/blog/vault-uri for more information.
+
+### Other Changes
+- Changes from version 4.7.0b1 have been reverted and will be included in version 4.8.0b1
+
+## 4.7.0b1 (2022-08-12)
+
+### Features Added
+- An attempt will be made to generate an IV if one isn't provided for local encryption
+  ([#25380](https://github.com/Azure/azure-sdk-for-python/pull/25380))
+
+### Other Changes
+- The most recent release was version 4.6.1 instead of the intended version, 4.5.2.
+  The next stable release is planned to be version 4.7.0.
+- Python 3.6 is no longer supported. Please use Python version 3.7 or later.
+- Updated minimum `azure-core` version to 1.24.0
+
+## 4.6.1 (2022-08-11)
+
+### Other Changes
+- Documentation improvements 
+  ([#25039](https://github.com/Azure/azure-sdk-for-python/issues/25039))
+
+## 4.6.0b1 (2022-06-07)
+
+### Bugs Fixed
+- If a key's ID contains a port number, this port will now be preserved in the vault URL of a
+  `CryptographyClient` instance created from this key
+  ([#24446](https://github.com/Azure/azure-sdk-for-python/issues/24446))
+  - Port numbers are now preserved in the `vault_url` property of a `KeyVaultKeyIdentifier`
+
+## 4.5.1 (2022-04-18)
+
+### Bugs Fixed
+- Fixed error that could occur when fetching a key rotation policy that has no defined
+  `lifetime_actions`.
+
+## 4.5.0 (2022-03-28)
+
+### Features Added
+- Key Vault API version 7.3 is now the default
+- Added support for multi-tenant authentication when using `azure-identity`
+  1.8.0 or newer ([#20698](https://github.com/Azure/azure-sdk-for-python/issues/20698))
+- (From 4.5.0b1) `KeyClient` has a `get_random_bytes` method for getting a requested number of
+  random bytes from a managed HSM
+- (From 4.5.0b2) Added support for secure key release from a Managed HSM
+  ([#19588](https://github.com/Azure/azure-sdk-for-python/issues/19588))
+  - Added `release_key` method to `KeyClient` for releasing the private component of a key
+  - Added `exportable` and `release_policy` keyword-only arguments to key creation and import
+    methods
+  - Added `KeyExportEncryptionAlgorithm` enum for specifying an encryption algorithm to be used
+    in key release
+- (From 4.5.0b4) Added `KeyClient.get_cryptography_client`, which provides a simple way to
+  create a `CryptographyClient` for a key, given its name and optionally a version
+  ([#20621](https://github.com/Azure/azure-sdk-for-python/issues/20621))
+- (From 4.5.0b4) Added support for automated and on-demand key rotation in Azure Key Vault
+  ([#19840](https://github.com/Azure/azure-sdk-for-python/issues/19840))
+  - Added `KeyClient.rotate_key` to rotate a key on-demand
+  - Added `KeyClient.update_key_rotation_policy` to update a key's automated rotation policy
+- (From 4.5.0b6) Added `immutable` keyword-only argument and property to `KeyReleasePolicy` to
+  support immutable release policies. Once a release policy is marked as immutable, it can no
+  longer be modified.
+
+### Breaking Changes
+> These changes do not impact the API of stable versions such as 4.4.0.
+> Only code written against a beta version such as 4.5.0b1 may be affected.
+- `KeyClient.update_key_rotation_policy` accepts a required `policy` argument
+  ([#22981](https://github.com/Azure/azure-sdk-for-python/issues/22981))
+- The optional `version` parameter in `KeyClient.release_key` is now a keyword-only argument
+  ([#22981](https://github.com/Azure/azure-sdk-for-python/issues/22981))
+- Renamed the `name` parameter in `KeyClient.get_key_rotation_policy` and
+  `KeyClient.update_key_rotation_policy` to `key_name`
+  ([#22981](https://github.com/Azure/azure-sdk-for-python/issues/22981))
+- Enum values in `azure-keyvault-keys` are now uniformly lower-cased
+  ([#22981](https://github.com/Azure/azure-sdk-for-python/issues/22981))
+
+### Bugs Fixed
+- `KeyType` now ignores casing during declaration, which resolves a scenario where Key Vault
+  keys created with non-standard casing could not be fetched with the SDK
+  ([#22797](https://github.com/Azure/azure-sdk-for-python/issues/22797))
+
+### Other Changes
+- (From 4.5.0b6) Python 2.7 is no longer supported. Please use Python version 3.6 or later.
+- (From 4.5.0b6) Updated minimum `azure-core` version to 1.20.0
+- (From 4.5.0b3) Updated type hints to fix mypy errors
+  ([#19158](https://github.com/Azure/azure-sdk-for-python/issues/19158))
+- (From 4.5.0b4) `CryptographyClient` no longer requires a key version when providing a key ID to its constructor
+  (though providing a version is still recommended)
+- (From 4.5.0b5) To support multi-tenant authentication, `get_token` calls during challenge
+  authentication requests now pass in a `tenant_id` keyword argument
+  ([#20698](https://github.com/Azure/azure-sdk-for-python/issues/20698)). See
+  https://aka.ms/azsdk/python/identity/tokencredential for more details on how to integrate
+  this parameter if `get_token` is implemented by a custom credential.
+- (From 4.5.0b6) Updated type hints for `KeyProperties` model's `managed`, `exportable`, and
+  `release_policy` properties ([#22368](https://github.com/Azure/azure-sdk-for-python/pull/22368))
+
+## 4.5.0b6 (2022-02-08)
+
+### Features Added
+- Added `immutable` keyword-only argument and property to `KeyReleasePolicy` to support immutable
+  release policies. Once a release policy is marked as immutable, it can no longer be modified.
+
+### Breaking Changes
+> These changes do not impact the API of stable versions such as 4.4.0.
+> Only code written against a beta version such as 4.5.0b1 may be affected.
+- Renamed the required argument `data` in `KeyReleasePolicy`'s constructor to
+  `encoded_policy`
+
+### Other Changes
+- Python 2.7 is no longer supported. Please use Python version 3.6 or later.
+- Updated minimum `azure-core` version to 1.20.0
+- Updated type hints for `KeyProperties` model's `managed`, `exportable`, and `release_policy`
+  properties ([#22368](https://github.com/Azure/azure-sdk-for-python/pull/22368))
+- (From 4.5.0b5) To support multi-tenant authentication, `get_token` calls during challenge
+  authentication requests now pass in a `tenant_id` keyword argument
+  ([#20698](https://github.com/Azure/azure-sdk-for-python/issues/20698))
+
+## 4.5.0b5 (2021-11-11)
+
+### Features Added
+- Added support for multi-tenant authentication when using `azure-identity` 1.7.1 or newer
+  ([#20698](https://github.com/Azure/azure-sdk-for-python/issues/20698))
+
+### Breaking Changes
+> These changes do not impact the API of stable versions such as 4.4.0.
+> Only code written against a beta version such as 4.5.0b1 may be affected.
+- `KeyClient.get_random_bytes` now returns bytes instead of RandomBytes. The RandomBytes class
+  has been removed
+- Renamed the `version` keyword-only argument in `KeyClient.get_cryptography_client` to
+  `key_version`
+- Renamed `KeyReleasePolicy.data` to `KeyReleasePolicy.encoded_policy`
+- Renamed the `target` parameter in `KeyClient.release_key` to `target_attestation_token`
+
+### Other Changes
+- Updated minimum `azure-core` version to 1.15.0
+
+## 4.5.0b4 (2021-10-07)
+
+### Features Added
+- Added `KeyClient.get_cryptography_client`, which provides a simple way to create a
+  `CryptographyClient` for a key, given its name and optionally a version
+  ([#20621](https://github.com/Azure/azure-sdk-for-python/issues/20621))
+- Added support for automated and on-demand key rotation in Azure Key Vault
+  ([#19840](https://github.com/Azure/azure-sdk-for-python/issues/19840))
+  - Added `KeyClient.rotate_key` to rotate a key on-demand
+  - Added `KeyClient.update_key_rotation_policy` to update a key's automated rotation policy
+
+### Other Changes
+- `CryptographyClient` no longer requires a key version when providing a key ID to its constructor
+  (though providing a version is still recommended)
+
+## 4.5.0b3 (2021-09-09)
+
+### Other Changes
+- Updated type hints to fix mypy errors
+  ([#19158](https://github.com/Azure/azure-sdk-for-python/issues/19158))
+
+## 4.5.0b2 (2021-08-10)
+
+### Features Added
+- Added support for secure key release from a Managed HSM
+  ([#19588](https://github.com/Azure/azure-sdk-for-python/issues/19588))
+  - Added `release_key` method to `KeyClient` for releasing the private component of a key
+  - Added `exportable` and `release_policy` keyword-only arguments to key creation and import
+    methods
+  - Added `KeyExportEncryptionAlgorithm` enum for specifying an encryption algorithm to be used
+    in key release
+
+### Breaking Changes
+> These changes do not impact the API of stable versions such as 4.4.0.
+> Only code written against a beta version such as 4.5.0b1 may be affected.
+- `KeyClient.get_random_bytes` now returns a `RandomBytes` model with bytes in a `value`
+  property, rather than returning the bytes directly
+  ([#19895](https://github.com/Azure/azure-sdk-for-python/issues/19895))
+
+## 4.5.0b1 (2021-07-08)
+Beginning with this release, this library requires Python 2.7 or 3.6+.
+
+### Features Added
+- Key Vault API version 7.3-preview is now the default
+- `KeyClient` has a `get_random_bytes` method for getting a requested number of random
+  bytes from a managed HSM
+
+## 4.4.0 (2021-06-22)
+This is the last version to support Python 3.5. The next version will require Python 2.7 or 3.6+.
+### Changed
+- Key Vault API version 7.2 is now the default
+- (From 4.4.0b1) Updated minimum `msrest` version to 0.6.21
+
+### Added
+- `KeyClient` has a `create_oct_key` method for creating symmetric keys
+- `KeyClient`'s `create_key` and `create_rsa_key` methods now accept a `public_exponent`
+  keyword-only argument ([#18016](https://github.com/Azure/azure-sdk-for-python/issues/18016))
+- (From 4.4.0b1) Added support for Key Vault API version 7.2
+  ([#16566](https://github.com/Azure/azure-sdk-for-python/pull/16566))
+  - Added `oct_hsm` to `KeyType`
+  - Added 128-, 192-, and 256-bit AES-GCM, AES-CBC, and AES-CBCPAD encryption
+    algorithms to `EncryptionAlgorithm`
+  - Added 128- and 192-bit AES-KW key wrapping algorithms to `KeyWrapAlgorithm`
+  - `CryptographyClient`'s `encrypt` method accepts `iv` and
+    `additional_authenticated_data` keyword arguments
+  - `CryptographyClient`'s `decrypt` method accepts `iv`,
+    `additional_authenticated_data`, and `authentication_tag` keyword arguments
+  - Added `iv`, `aad`, and `tag` properties to `EncryptResult`
+- (From 4.4.0b3) `CryptographyClient` will perform all operations locally if initialized with
+  the `.from_jwk` factory method
+  ([#16565](https://github.com/Azure/azure-sdk-for-python/pull/16565))
+- (From 4.4.0b3) Added requirement for `six`>=1.12.0
+- (From 4.4.0b4) `CryptographyClient` can perform AES-CBCPAD encryption and decryption locally
+  ([#17762](https://github.com/Azure/azure-sdk-for-python/pull/17762))
+
+### Breaking Changes
+> These changes do not impact the API of stable versions such as 4.3.1.
+> Only code written against a beta version such as 4.4.0b1 may be affected.
+- `parse_key_vault_key_id` and `KeyVaultResourceId` have been replaced by a
+  `KeyVaultKeyIdentifier` class, which can be initialized with a key ID
+
+## 4.4.0b4 (2021-04-06)
+### Added
+- `CryptographyClient` can perform AES-CBCPAD encryption and decryption locally
+  ([#17762](https://github.com/Azure/azure-sdk-for-python/pull/17762))
+
+## 4.4.0b3 (2021-03-11)
+### Added
+- `CryptographyClient` will perform all operations locally if initialized with
+  the `.from_jwk` factory method
+  ([#16565](https://github.com/Azure/azure-sdk-for-python/pull/16565))
+- Added requirement for six>=1.12.0
+
+## 4.4.0b2 (2021-02-10)
+### Fixed
+- API versions older than 7.2-preview no longer raise `ImportError` when
+  performing async operations ([#16680](https://github.com/Azure/azure-sdk-for-python/pull/16680))
+
+## 4.4.0b1 (2021-02-10)
+### Changed
+- Key Vault API version 7.2-preview is now the default
+- Updated msrest requirement to >=0.6.21
+
+### Added
+- Support for Key Vault API version 7.2-preview
+  ([#16566](https://github.com/Azure/azure-sdk-for-python/pull/16566))
+  - Added `oct_hsm` to `KeyType`
+  - Added 128-, 192-, and 256-bit AES-GCM, AES-CBC, and AES-CBCPAD encryption
+    algorithms to `EncryptionAlgorithm`
+  - Added 128- and 192-bit AES-KW key wrapping algorithms to `KeyWrapAlgorithm`
+  - `CryptographyClient`'s `encrypt` method accepts `iv` and
+    `additional_authenticated_data` keyword arguments
+  - `CryptographyClient`'s `decrypt` method accepts `iv`,
+    `additional_authenticated_data`, and `authentication_tag` keyword arguments
+  - Added `iv`, `aad`, and `tag` properties to `EncryptResult`
+- Added method `parse_key_vault_key_id` that parses out a full ID returned by
+Key Vault, so users can easily access the key's `name`, `vault_url`, and `version`.
+
+## 4.3.1 (2020-12-03)
+### Fixed
+- `CryptographyClient` operations no longer raise `AttributeError` when
+  the client was constructed with a key ID
+  ([#15608](https://github.com/Azure/azure-sdk-for-python/issues/15608))
+
+## 4.3.0 (2020-10-06)
+### Changed
+- `CryptographyClient` can perform decrypt and sign operations locally
+  ([#9754](https://github.com/Azure/azure-sdk-for-python/issues/9754))
+
+### Fixed
+- Correct typing for async paging methods
+
+## 4.2.0 (2020-08-11)
+### Fixed
+- Values of `x-ms-keyvault-region` and `x-ms-keyvault-service-version` headers
+  are no longer redacted in logging output
+- `CryptographyClient` will no longer perform encrypt or wrap operations when
+  its key has expired or is not yet valid
+
+### Changed
+- Key Vault API version 7.1 is now the default
+- Updated minimum `azure-core` version to 1.7.0
+
+### Added
+- At construction, clients accept a `CustomHookPolicy` through the optional
+  keyword argument `custom_hook_policy`
+- All client requests include a unique ID in the header `x-ms-client-request-id`
+- Dependency on `azure-common` for multiapi support
+
+## 4.2.0b1 (2020-03-10)
+- Support for Key Vault API version 7.1-preview
+([#10124](https://github.com/Azure/azure-sdk-for-python/pull/10124))
+  - Added `import_key` to `KeyOperation`
+  - Added `recoverable_days` to `CertificateProperties`
+  - Added `ApiVersion` enum identifying Key Vault versions supported by this package
+
+## 4.1.0 (2020-03-10)
+- `KeyClient` instances have a `close` method which closes opened sockets. Used
+as a context manager, a `KeyClient` closes opened sockets on exit.
+([#9906](https://github.com/Azure/azure-sdk-for-python/pull/9906))
+- Pollers no longer sleep after operation completion
+([#9991](https://github.com/Azure/azure-sdk-for-python/pull/9991))
+
+## 4.0.1 (2020-02-11)
+- `azure.keyvault.keys` defines `__version__`
+- Challenge authentication policy preserves request options
+([#8999](https://github.com/Azure/azure-sdk-for-python/pull/8999))
+- Updated `msrest` requirement to >=0.6.0
+- Challenge authentication policy requires TLS
+([#9457](https://github.com/Azure/azure-sdk-for-python/pull/9457))
+- Methods no longer raise the internal error `KeyVaultErrorException`
+([#9690](https://github.com/Azure/azure-sdk-for-python/issues/9690))
+- Fix `AttributeError` in async CryptographyClient when verifying signatures remotely
+([#9734](https://github.com/Azure/azure-sdk-for-python/pull/9734))
+
+## 4.0.0 (2019-10-31)
+### Breaking changes:
+- Removed `KeyClient.get_cryptography_client()` and `CryptographyClient.get_key()`
+- Moved the optional parameters of several methods into kwargs (
+[docs](https://azuresdkdocs.blob.core.windows.net/$web/python/azure-keyvault-keys/4.0.0/index.html)
+detail the new keyword arguments):
+  - `create_key` now has positional parameters `name` and `key_type`
+  - `create_ec_key` and `create_rsa_key` now have one positional parameter, `name`
+  - `update_key_properties` now has two positional parameters, `name` and
+     (optional) `version`
+  - `import_key` now has positional parameters `name` and `key`
+- `CryptographyClient` operations return class instances instead of tuples and renamed the following
+properties
+    - Renamed the `decrypted_bytes` property of `DecryptResult` to `plaintext`
+    - Renamed the `unwrapped_bytes` property of `UnwrapResult` to `key`
+    - Renamed the `result` property of `VerifyResult` to `is_valid`
+- Renamed the `UnwrapKeyResult` and `WrapKeyResult` classes to `UnwrapResult` and `WrapResult`
+- Renamed `list_keys` to `list_properties_of_keys`
+- Renamed `list_key_versions` to `list_properties_of_key_versions`
+- Renamed sync method `delete_key` to `begin_delete_key`
+- The sync method `begin_delete_key` and async `delete_key` now return pollers that return a `DeletedKey`
+- Renamed `Key` to `KeyVaultKey`
+- `KeyVaultKey` properties `created`, `expires`, and `updated` renamed to `created_on`,
+`expires_on`, and `updated_on`
+- The `vault_endpoint` parameter of `KeyClient` has been renamed to `vault_url`
+- The property `vault_endpoint` has been renamed to `vault_url` in all models
+
+### New features:
+- Now all `CryptographyClient` returns include `key_id` and `algorithm` properties
+
+
+## 4.0.0b4 (2019-10-08)
+- Enums `JsonWebKeyCurveName`, `JsonWebKeyOperation`, and `JsonWebKeyType` have
+been renamed to `KeyCurveName`, `KeyOperation`, and `KeyType`, respectively.
+- `Key` now has attribute `properties`, which holds certain properties of the
+key, such as `version`. This changes the shape of the returned `Key` type,
+as certain properties of `Key` (such as `version`) have to be accessed
+through the `properties` property.
+
+- `update_key` has been renamed to `update_key_properties`
+- The `vault_url` parameter of `KeyClient` has been renamed to `vault_endpoint`
+- The property `vault_url` has been renamed to `vault_endpoint` in all models
+
+### Fixes and improvements:
+- The `key` argument to `import_key` should be an instance of `azure.keyvault.keys.JsonWebKey`
+([#7590](https://github.com/Azure/azure-sdk-for-python/pull/7590))
+
+
+## 4.0.0b3 (2019-09-11)
+### Breaking changes:
+- `CryptographyClient` methods `wrap` and `unwrap` are renamed `wrap_key` and
+`unwrap_key`, respectively.
+
+### New features:
+- `CryptographyClient` performs encrypt, verify and wrap operations locally
+when its key's public material is available (i.e., when it has keys/get
+permission).
+
+## 4.0.0b2 (2019-08-06)
+### Breaking changes:
+- Removed `azure.core.Configuration` from the public API in preparation for a
+revamped configuration API. Static `create_config` methods have been renamed
+`_create_config`, and will be removed in a future release.
+- Removed `wrap_key` and `unwrap_key` from `KeyClient`. These are now available
+through `CryptographyClient`.
+- This version of the library requires `azure-core` 1.0.0b2
+  - If you later want to revert to a version requiring azure-core 1.0.0b1,
+  of this or another Azure SDK library, you must explicitly install azure-core
+  1.0.0b1 as well. For example:
+  `pip install azure-core==1.0.0b1 azure-keyvault-keys==4.0.0b1`
+
+### New features:
+- Added `CryptographyClient`, a client for performing cryptographic operations
+(encrypt/decrypt, wrap/unwrap, sign/verify) with a key.
+- Distributed tracing framework OpenCensus is now supported
+- Added support for HTTP challenge based authentication, allowing clients to
+interact with vaults in sovereign clouds.
+
+### Other changes:
+- Async clients use [aiohttp](https://pypi.org/project/aiohttp/) for transport
+by default. See
+[azure-core documentation](https://github.com/Azure/azure-sdk-for-python/blob/main/sdk/core/azure-core/README.md/#transport)
+for more information about using other transports.
+
+## 4.0.0b1 (2019-06-28)
+Version 4.0.0b1 is the first preview of our efforts to create a user-friendly
+and Pythonic client library for Azure Key Vault. For more information about
+preview releases of other Azure SDK libraries, please visit
+https://aka.ms/azure-sdk-preview1-python.
+
+This library is not a direct replacement for `azure-keyvault`. Applications
+using that library would require code changes to use `azure-keyvault-keys`.
+This package's
+[documentation](https://github.com/Azure/azure-sdk-for-python/tree/main/sdk/keyvault/azure-keyvault-keys/README.md)
+and
+[samples](https://github.com/Azure/azure-sdk-for-python/tree/main/sdk/keyvault/azure-keyvault-keys/samples)
+demonstrate the new API.
+
+### Major changes from `azure-keyvault`
+- Packages scoped by functionality
+    - `azure-keyvault-keys` contains a client for key operations,
+    `azure-keyvault-secrets` contains a client for secret operations
+- Client instances are scoped to vaults (an instance interacts with one vault
+only)
+- Asynchronous API supported on Python 3.5.3+
+    - the `azure.keyvault.keys.aio` namespace contains an async equivalent of
+    the synchronous client in `azure.keyvault.keys`
+- Authentication using `azure-identity` credentials
+  - see this package's
+  [documentation](https://github.com/Azure/azure-sdk-for-python/tree/main/sdk/keyvault/azure-keyvault-keys/README.md)
+  , and the
+  [Azure Identity documentation](https://github.com/Azure/azure-sdk-for-python/blob/main/sdk/identity/azure-identity/README.md)
+  for more information
+
+### `azure-keyvault` features not implemented in this release
+- Certificate management APIs
+- Cryptographic operations, e.g. sign, un/wrap_key, verify, en- and
+decrypt
+- National cloud support. This release supports public global cloud vaults,
+    e.g. https://{vault-name}.vault.azure.net
