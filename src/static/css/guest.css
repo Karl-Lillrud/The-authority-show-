@@ -1,0 +1,226 @@
+body.guest {
+  font-family: var(--font-primary);
+  background: var(--background-light);
+  color: var(--text-color-light);
+  text-align: center;
+  padding: var(--spacing-md);
+}
+
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.title {
+  font-size: 24px;
+  font-weight: bold;
+  margin-bottom: var(--spacing-lg);
+}
+
+#search-bar {
+  width: 80%;
+  max-width: 400px;
+  padding: var(--spacing-sm) var(--spacing-md);
+  border: none;
+  border-radius: var(--radius-medium);
+  box-shadow: inset 5px 5px 10px var(--dark-shadow-light),
+              inset -5px -5px 10px var(--light-shadow-light);
+  margin-bottom: var(--spacing-lg);
+  font-size: 16px;
+}
+
+.guest-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: var(--spacing-lg);
+  padding: var(--spacing-lg);
+}
+
+.guest-card {
+  position: relative;
+  background: var(--background-light);
+  border-radius: var(--radius-medium);
+  box-shadow: 5px 5px 10px var(--dark-shadow-light),
+              -5px -5px 10px var(--light-shadow-light);
+  padding: var(--spacing-md);
+  transition: transform 0.3s ease;
+}
+
+.guest-card:hover {
+  transform: scale(1.05);
+}
+
+.guest-card img {
+  width: 100px;
+  height: 100px;
+  border-radius: 50%;
+  object-fit: cover;
+  margin-bottom: var(--spacing-sm);
+}
+
+.guest-card h3 {
+  margin: var(--spacing-sm) 0;
+  font-size: 18px;
+}
+
+.tags span {
+  display: inline-block;
+  background: var(--highlight-color);
+  color: #fff;
+  padding: 5px 10px;
+  border-radius: var(--radius-small);
+  font-size: 12px;
+  margin: 3px;
+}
+
+.guest-hover {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.8);
+  color: #fff;
+  border-radius: var(--radius-medium);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.guest-card:hover .guest-hover {
+  opacity: 1;
+}
+
+.guest-hover p {
+  margin-bottom: var(--spacing-sm);
+  font-size: 14px;
+  padding: var(--spacing-sm);
+}
+
+.view-profile {
+  background: var(--highlight-color);
+  color: #fff;
+  padding: var(--spacing-sm) var(--spacing-md);
+  border-radius: var(--radius-small);
+  text-decoration: none;
+  font-size: 14px;
+}
+
+.popup {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: var(--background-light);
+  padding: var(--spacing-lg);
+  border-radius: var(--radius-medium);
+  box-shadow: 8px 8px 16px var(--dark-shadow-light),
+              -8px -8px 16px var(--light-shadow-light);
+  display: none;
+  z-index: 1000;
+  flex-direction: column;
+  align-items: center;
+  width: 300px;
+}
+
+.popup-content {
+  width: 100%;
+  text-align: left;
+}
+
+.close-button {
+  float: right;
+  font-size: 20px;
+  cursor: pointer;
+  color: var(--text-color-light);
+}
+
+.popup label {
+  display: block;
+  width: 90%;
+  margin: var(--spacing-sm) auto var(--spacing-xs);
+  text-align: left;
+  font-size: 14px;
+  color: var(--text-color-light);
+}
+
+.popup input {
+  width: 90%;
+  padding: 8px;
+  margin: 0 auto var(--spacing-sm);
+  display: block;
+  border: none;
+  border-radius: var(--radius-medium);
+  background: var(--background-light);
+  box-shadow: inset 5px 5px 10px var(--dark-shadow-light),
+              inset -5px -5px 10px var(--light-shadow-light);
+  color: var(--text-color-light);
+  font-size: 14px;
+}
+
+.popup button {
+  background: var(--background-light);
+  border: none;
+  padding: 10px 20px;
+  border-radius: var(--radius-medium);
+  box-shadow: 5px 5px 10px var(--dark-shadow-light),
+              -5px -5px 10px var(--light-shadow-light);
+  cursor: pointer;
+  margin-top: var(--spacing-sm);
+  display: block;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.popup button:hover {
+  box-shadow: inset 5px 5px 10px var(--dark-shadow-light),
+              inset -5px -5px 10px var(--light-shadow-light);
+}
+
+.badge {
+  display: inline-block;
+  padding: 5px 10px;
+  border-radius: var(--radius-small);
+  font-size: 12px;
+  color: #fff;
+}
+
+.badge.scheduled {
+  background: blue;
+}
+
+.badge.completed {
+  background: green;
+}
+
+.profile {
+  margin-bottom: var(--spacing-lg);
+}
+
+.profile img {
+  width: 100px;
+  height: 100px;
+  border-radius: 50%;
+  margin-bottom: var(--spacing-sm);
+}
+
+.profile-actions {
+  margin-top: var(--spacing-lg);
+}
+
+.profile-actions button {
+  padding: 8px 12px;
+  margin: 0 var(--spacing-sm);
+  border: none;
+  border-radius: var(--radius-medium);
+  background: var(--highlight-color);
+  color: #fff;
+  cursor: pointer;
+}
+
+.profile-actions button:hover {
+  opacity: 0.9;
+}
