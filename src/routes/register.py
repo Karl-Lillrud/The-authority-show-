@@ -5,7 +5,7 @@ import uuid
 from werkzeug.security import generate_password_hash
 from dotenv import load_dotenv
 from datetime import datetime
-from Database.db import container
+from src.Database.cosmos_connection import container
 
 
 # ✅ Define Blueprint

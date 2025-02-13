@@ -9,7 +9,7 @@ import random
 import smtplib
 from utils import venvupdate
 from email.mime.text import MIMEText
-from Database.db import container
+from src.Database.cosmos_connection import container
 
 # update the virtual environment and requirements
 venvupdate.update_venv_and_requirements()
