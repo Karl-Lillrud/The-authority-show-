@@ -1,0 +1,1087 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title data-i18n="page.title">Account & Podcast Settings</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/settings.css') }}">
+    <!-- Font Awesome CDN for Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" 
+    crossorigin="anonymous" referrerpolicy="no-referrer" />
+</head>
+<body>
+    <!-- Header Component -->
+    <header>
+        <nav aria-label="Main Navigation" class="sidebar">
+            <a href="#account-settings" data-i18n="nav.accountSettings">Account Settings</a>
+            <a href="#security-settings" data-i18n="nav.securitySettings">Security Settings</a>
+            <a href="#recovery" data-i18n="nav.recovery">Recovery</a>
+            <a href="#podcast-management" data-i18n="nav.podcastManagement">Podcast Management</a>
+            <a href="#subscriptions" data-i18n="nav.subscriptions">Subscriptions</a>
+            <a href="#permissions" data-i18n="nav.permissions">Permissions & Roles</a>
+        </nav>
+        <div class="language-switcher">
+            <button data-lang="en" aria-label="Switch to English">EN</button>
+            <button data-lang="es" aria-label="Switch to Spanish">ES</button>
+            <button data-lang="fr" aria-label="Switch to French">FR</button>
+            <button data-lang="ar" aria-label="Switch to Arabic">AR</button>
+            <button data-lang="de" aria-label="Switch to German">DE</button>
+            <button data-lang="zh" aria-label="Switch to Chinese">ZH</button>
+            <!-- Dark Mode Toggle -->
+            <label class="switch" aria-label="Toggle Dark Mode">
+                <input type="checkbox" id="theme-toggle" aria-checked="false">
+                <span class="slider round"></span>
+            </label>
+        </div>
+    </header>
+
+    <main class="container">
+        <!-- User Account Settings -->
+        <section class="account-settings card" id="account-settings" aria-labelledby="account-settings-title">
+            <h2 id="account-settings-title" data-i18n="accountSettings.title">Account Settings</h2>
+            <div class="profile-pic">
+                <img src="images/default-profile.png" alt="Profile Picture" data-i18n="accountSettings.profilePicture.alt">
+                <input type="file" id="profile-upload" accept="image/*" aria-label="Upload Profile Picture">
+                <label for="profile-upload" class="button button-secondary" data-i18n="accountSettings.profilePicture.upload">Upload</label>
+            </div>
+            <form id="account-form" class="form" novalidate>
+                <div class="form-group">
+                    <label for="name" data-i18n="accountSettings.form.nameLabel">Name:</label>
+                    <input type="text" id="name" class="input-field" required aria-required="true" minlength="2" maxlength="50" data-i18n-placeholder="accountSettings.form.namePlaceholder" placeholder="Enter your full name" aria-describedby="name-error">
+                    <span id="name-error" class="validation-message sr-only" data-i18n="accountSettings.form.nameError">Please enter a valid name (2-50 characters).</span>
+                </div>
+
+                <div class="form-group">
+                    <label for="email" data-i18n="accountSettings.form.emailLabel">Email:</label>
+                    <input type="email" id="email" class="input-field" required aria-required="true" data-i18n-placeholder="accountSettings.form.emailPlaceholder" placeholder="Enter your email address" aria-describedby="email-error">
+                    <span id="email-error" class="validation-message sr-only" data-i18n="accountSettings.form.emailError">Please enter a valid email address.</span>
+                </div>
+
+                <div class="form-group">
+                    <label for="password" data-i18n="accountSettings.form.passwordLabel">Password:</label>
+                    <button type="button" id="change-password" class="button button-primary" data-i18n="accountSettings.form.changePassword" aria-haspopup="dialog">Change Password</button>
+                </div>
+            </form>
+        </section>
+        <main class="container">
+            <!-- Security Settings -->
+            <section class="security-settings card" id="security-settings" aria-labelledby="security-settings-title">
+                <h2 id="security-settings-title" data-i18n="securitySettings.title">Security Settings</h2>
+                <div class="toggle-container">
+                    <span data-i18n="securitySettings.enable2FA">Two-Factor Authentication:</span>
+                    <label class="switch" aria-label="Toggle Two-Factor Authentication">
+                        <input type="checkbox" id="2fa-toggle" aria-checked="false">
+                        <span class="slider round"></span>
+                    </label>
+                </div>
+                
+                <!-- 2FA Options: Hidden by Default -->
+                <div id="2fa-options" style="display: none;">
+                    <span data-i18n="securitySettings.2faMethod">Options:</span>
+                    <label>
+                        <input type="radio" name="2fa-method" id="2fa-sms" data-i18n="securitySettings.sms" value="sms" checked>
+                        <span data-i18n="securitySettings.sms">SMS</span>
+                    </label>
+                    <label>
+                        <input type="radio" name="2fa-method" id="2fa-auth" data-i18n="securitySettings.authApp" value="authApp">
+                        <span data-i18n="securitySettings.authApp">Authenticator App</span>
+                    </label>
+                    
+                    <!-- QR Code Container, Hidden by Default -->
+                    <div id="qr-code-container" class="qr-code" style="display: none;">
+                        <canvas id="qr-code"></canvas>
+                        <p data-i18n="securitySettings.scanQR">Scan QR code</p>
+                    </div>
+                </div>
+            </section>
+        <!-- Recovery Section -->
+        <section class="recovery card" id="recovery" aria-labelledby="recovery-title">
+            <h2 id="recovery-title" data-i18n="recovery.title">Recovery</h2>
+            <button type="button" id="lost-2fa" class="button button-secondary" data-i18n="recovery.lost2FA">Lost Two-Factor Authentication</button>
+        </section>
+
+       <!-- Podcast Management Section -->
+<section class="podcast-management card" id="podcast-management" aria-labelledby="podcast-management-title">
+    <h2 id="podcast-management-title" data-i18n="podcastManagement.title">Podcast Management</h2>
+    
+    <button type="button" id="edit-podcast" class="button button-primary" data-i18n="podcastManagement.editPodcast">Edit Podcast Details</button>
+
+    <!-- Podcast Details Modal -->
+    <div id="podcast-modal" class="modal">
+        <div class="modal-content">
+            <span class="close-button" id="close-podcast-modal">&times;</span>
+            <h2>Pod Profile</h2>
+            <form id="podcast-form">
+                <label for="podcast-name">POD Name</label>
+                <input type="text" id="podcast-name" required>
+                <label for="rss-feed">RSS Feed</label>
+                <input type="text" id="rss-feed" required>
+                <button type="submit">Save Changes</button>
+            </form>
+        </div>
+    </div>
+
+    <button id="manage-guests" class="button button-secondary">Manage Guests</button>
+    <div id="guest-modal" class="modal">
+        <div class="modal-content">
+            <span class="close-button" id="close-guest-modal">&times;</span>
+            <h2>Guests</h2>
+            <button id="podcast-link" class="button">URL Link</button>
+            <table id="guest-table">
+                <thead>
+                    <tr>
+                        <th>Guest Name</th>
+                        <th>Email</th>
+                        <th>Social Links</th>
+                        <th>Date</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody></tbody>
+            </table>
+            <button id="add-guest" class="button">Add Guest</button>
+            <button id="close-modal" class="button">Close</button>
+        </div>
+    </div>
+    <button type="button" id="manage-tasks" class="button button-primary" data-i18n="podcastManagement.manageTasks">Manage Tasks</button>
+    <div id="task-modal" class="modal">
+        <div class="modal-content">
+            <span class="close-button" id="close-task-modal">&times;</span>
+            <h2>Task Management</h2>
+            <button id="add-episode" class="button">Add Episode</button>
+            <button id="remove-episodes" class="button">Remove Episodes</button>
+            <div class="task-dropdown">
+                <button class="task-toggle" data-target="task-1">Episode 1 <i class="fas fa-chevron-down"></i></button>
+                <span class="remove-episode hidden" data-target="task-1">❌</span>
+                <div id="task-1" class="task-details">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Task</th>
+                                <th>Deadline</th>
+                                <th>Team Member</th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                    <button class="add-task" data-target="task-1">Add Task</button>
+                </div>
+            </div>
+            <button id="save-task" class="button">Save</button>
+        </div>
+    </div>
+    <button type="button" id="integration-settings" class="button button-secondary" data-i18n="podcastManagement.integrationSettings">Integration Settings</button>
+</section>
+
+
+        <!-- Subscriptions Section -->
+        <section class="subscriptions card" id="subscriptions" aria-labelledby="subscriptions-title">
+            <h2 id="subscriptions-title" data-i18n="subscriptions.title">Subscriptions</h2>
+            <button type="button" id="subscribe" class="button button-primary" data-i18n="subscriptions.subscribe">Subscribe</button>
+        </section>
+
+        <!-- Permissions & Roles Section -->
+        <section class="permissions card" id="permissions" aria-labelledby="permissions-title">
+            <h2 id="permissions-title" data-i18n="permissions.title">Permissions & Roles</h2>
+            <button type="button" id="add-role" class="button button-secondary" data-i18n="permissions.addRole">Team Members</button>
+        </section>
+    </main>
+
+    <!-- Footer Component -->
+    <footer>
+        <div class="social-icons">
+            <a href="https://www.facebook.com/yourprofile" aria-label="Facebook"><i class="fab fa-facebook-f"></i></a>
+            <a href="https://twitter.com/yourprofile" aria-label="Twitter"><i class="fab fa-twitter"></i></a>
+            <a href="https://www.instagram.com/yourprofile" aria-label="Instagram"><i class="fab fa-instagram"></i></a>
+            <a href="https://www.linkedin.com/in/yourprofile" aria-label="LinkedIn"><i class="fab fa-linkedin-in"></i></a>
+        </div>
+        <p data-i18n="footer.copy">© 2025 Podcast Manager. All rights reserved.</p>
+    </footer>
+
+    <!-- Toast Notification Container -->
+    <div id="toast" class="toast" role="alert" aria-live="assertive" aria-atomic="true">
+        <!-- Toast messages will appear here -->
+    </div>
+    <div id="change-password-modal" class="modal">
+        <div class="modal-content">
+            <span class="close-button" id="close-modal">&times;</span>
+            <h2>Change Password</h2>
+            <form id="change-password-form">
+                <label for="current-password">Current Password:</label>
+                <input type="password" id="current-password" required>
+                <label for="new-password">New Password:</label>
+                <input type="password" id="new-password" required>
+                <label for="confirm-password">Confirm New Password:</label>
+                <input type="password" id="confirm-password" required>
+                <button type="submit">Save New Password</button>
+            </form>
+        </div>
+    </div>
+    
+
+    <!-- Localization and Script Files -->
+    <!-- Load i18next and i18next-http-backend BEFORE your script.js -->
+   <!-- Load i18next first -->
+<!-- Load i18next first -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/i18next/21.6.14/i18next.min.js"></script>
+
+<!-- Load i18next-http-backend -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/i18next-http-backend/1.4.3/i18nextHttpBackend.min.js"></script>
+
+<!-- Ensure the backend is available before loading script.js -->
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        if (typeof i18nextHttpBackend === "undefined") {
+            console.error("i18nextHttpBackend is not loaded correctly.");
+        } else {
+            console.log("i18nextHttpBackend loaded successfully.");
+        }
+    });
+</script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<!-- Finally, load your script.js -->
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+  if (typeof i18next === "undefined" || typeof i18nextHttpBackend === "undefined") {
+    console.error("i18next or i18nextHttpBackend is not loaded correctly.");
+    return;
+  }
+
+  console.log("Initializing i18next...");
+
+  const isLocalhost = window.location.protocol === "file:";
+
+  i18next
+    .use(i18nextHttpBackend)
+    .init({
+      lng: 'en', // Default language
+      debug: true,
+      backend: isLocalhost ? {} : {
+        loadPath: '/locales/{{lng}}.json'
+      }
+    })
+    .then(() => console.log("i18next initialized successfully"))
+    .catch(err => console.error("Error initializing i18next:", err));
+
+  // Modal Functionality for Change Password
+  const changePasswordButton = document.getElementById("change-password");
+  const passwordModal = document.getElementById("change-password-modal");
+  const closeModalButton = document.getElementById("close-modal");
+  const passwordForm = document.getElementById("change-password-form");
+
+  if (!changePasswordButton || !passwordModal || !closeModalButton || !passwordForm) {
+    console.error("One or more modal-related elements not found. Check your HTML IDs.");
+    return;
+  }
+
+  passwordModal.style.display = "none";
+
+  changePasswordButton.addEventListener("click", function () {
+    passwordModal.style.display = "flex";
+  });
+
+  closeModalButton.addEventListener("click", function () {
+    passwordModal.style.display = "none";
+  });
+
+  window.addEventListener("click", function (event) {
+    if (event.target === passwordModal) {
+      passwordModal.style.display = "none";
+    }
+  });
+
+  passwordForm.addEventListener("submit", function (event) {
+    event.preventDefault();
+    const currentPassword = document.getElementById("current-password").value;
+    const newPassword = document.getElementById("new-password").value;
+    const confirmPassword = document.getElementById("confirm-password").value;
+
+    if (newPassword !== confirmPassword) {
+      alert("Passwords do not match.");
+      return;
+    }
+
+    if (newPassword.length < 8) {
+      alert("New password must be at least 8 characters long.");
+      return;
+    }
+
+    alert("Password changed successfully!");
+    passwordModal.style.display = "none";
+    passwordForm.reset();
+  });
+});
+
+// i18next Content & Direction Updater & Language Switcher
+function updateContent() {
+  document.querySelectorAll('[data-i18n]').forEach(function(element) {
+    const key = element.getAttribute('data-i18n');
+    element.textContent = i18next.t(key);
+  });
+
+  document.querySelectorAll('[data-i18n-placeholder]').forEach(function(element) {
+    const key = element.getAttribute('data-i18n-placeholder');
+    element.setAttribute('placeholder', i18next.t(key));
+  });
+
+  document.title = i18next.t('page.title');
+}
+
+function setDocumentDirection(lang) {
+  const rtlLanguages = ['ar', 'he', 'fa', 'ur'];
+  if (rtlLanguages.includes(lang)) {
+    document.documentElement.setAttribute('dir', 'rtl');
+  } else {
+    document.documentElement.setAttribute('dir', 'ltr');
+  }
+}
+
+document.querySelectorAll('.language-switcher button').forEach(button => {
+  button.addEventListener('click', () => {
+    const lang = button.getAttribute('data-lang');
+    i18next.changeLanguage(lang, (err, t) => {
+      if (err) return console.error(err);
+      updateContent();
+      setDocumentDirection(lang);
+    });
+  });
+});
+
+// Dark Mode Toggle Functionality
+const toggleSwitch = document.getElementById('theme-toggle');
+
+toggleSwitch.addEventListener('change', () => {
+  document.body.classList.toggle('dark-mode');
+  localStorage.setItem('theme', document.body.classList.contains('dark-mode') ? 'dark' : 'light');
+});
+
+document.addEventListener('DOMContentLoaded', () => {
+  const theme = localStorage.getItem('theme');
+  const toggle = document.getElementById('theme-toggle');
+  if (theme === 'dark') {
+    document.body.classList.add('dark-mode');
+    toggle.checked = true;
+  }
+
+  initializeFormValidation();
+  handleProfilePictureUpload();
+  initializeChangePasswordModal();
+});
+
+// Simulated Password Change API
+function simulateChangePassword(currentPassword, newPassword) {
+  return new Promise((resolve, reject) => {
+    setTimeout(() => {
+      if (currentPassword === 'Password123!') {
+        resolve({ success: true });
+      } else {
+        resolve({ success: false });
+      }
+    }, 1500);
+  });
+}
+
+// Profile Picture Upload Handler
+function handleProfilePictureUpload() {
+  const fileInput = document.getElementById('profile-upload');
+  const profileImage = document.querySelector('.profile-pic img');
+  const MAX_SIZE_MB = 5;
+
+  fileInput.addEventListener('change', (event) => {
+    const file = event.target.files[0];
+
+    if (file) {
+      const validImageTypes = ['image/jpeg', 'image/png', 'image/gif'];
+      if (!validImageTypes.includes(file.type)) {
+        showToast(i18next.t('toast.invalidFileType'), 'error');
+        fileInput.value = '';
+        return;
+      }
+
+      const fileSizeMB = file.size / (1024 * 1024);
+      if (fileSizeMB > MAX_SIZE_MB) {
+        showToast(i18next.t('toast.fileSizeExceeds', { maxSize: MAX_SIZE_MB }), 'error');
+        fileInput.value = '';
+        return;
+      }
+
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        profileImage.src = e.target.result;
+        showToast(i18next.t('toast.profileUpdateSuccess'), 'success');
+      };
+      reader.onerror = function() {
+        showToast(i18next.t('toast.profileUpdateError'), 'error');
+      };
+      reader.readAsDataURL(file);
+    }
+  });
+}
+
+// Form Validation for Account Form
+function initializeFormValidation() {
+  const form = document.getElementById('account-form');
+  const nameInput = document.getElementById('name');
+  const emailInput = document.getElementById('email');
+
+  form.addEventListener('submit', function(event) {
+    event.preventDefault();
+
+    let isValid = true;
+
+    if (!validateName(nameInput.value)) {
+      nameInput.classList.add('input-field--error');
+      document.getElementById('name-error').classList.remove('sr-only');
+      isValid = false;
+    } else {
+      nameInput.classList.remove('input-field--error');
+      document.getElementById('name-error').classList.add('sr-only');
+    }
+
+    if (!validateEmail(emailInput.value)) {
+      emailInput.classList.add('input-field--error');
+      document.getElementById('email-error').classList.remove('sr-only');
+      isValid = false;
+    } else {
+      emailInput.classList.remove('input-field--error');
+      document.getElementById('email-error').classList.add('sr-only');
+    }
+
+    if (isValid) {
+      showToast(i18next.t('accountSettings.form.saveSuccess'), 'success');
+      form.reset();
+    }
+  });
+
+  nameInput.addEventListener('input', () => {
+    if (validateName(nameInput.value)) {
+      nameInput.classList.remove('input-field--error');
+      document.getElementById('name-error').classList.add('sr-only');
+    }
+  });
+
+  emailInput.addEventListener('input', () => {
+    if (validateEmail(emailInput.value)) {
+      emailInput.classList.remove('input-field--error');
+      document.getElementById('email-error').classList.add('sr-only');
+    }
+  });
+}
+
+function validateName(name) {
+  return name.trim().length >= 2 && name.trim().length <= 50;
+}
+
+function validateEmail(email) {
+  const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  return re.test(email);
+}
+
+// Toast Notification Function
+function showToast(message, type = 'info') {
+  const toast = document.getElementById('toast');
+  toast.textContent = message;
+  toast.className = 'toast';
+  toast.classList.add('show');
+  if (type === 'success') {
+    toast.classList.add('toast-success');
+  } else if (type === 'error') {
+    toast.classList.add('toast-error');
+  } else {
+    toast.classList.add('toast-info');
+  }
+  setTimeout(() => {
+    toast.classList.remove('show', 'toast-success', 'toast-error', 'toast-info');
+  }, 3000);
+}
+
+// 2FA Functionality
+document.addEventListener("DOMContentLoaded", function () {
+  const twoFAToggle = document.getElementById("2fa-toggle");
+  const twoFAOptions = document.getElementById("2fa-options");
+  const authAppRadio = document.getElementById("2fa-auth");
+  const smsRadio = document.getElementById("2fa-sms");
+  const qrCodeContainer = document.getElementById("qr-code-container");
+  const qrCodeCanvas = document.getElementById("qr-code");
+
+  if (!twoFAToggle || !twoFAOptions || !authAppRadio || !smsRadio || !qrCodeContainer || !qrCodeCanvas) {
+    console.error("One or more 2FA elements not found.");
+    return;
+  }
+
+  twoFAToggle.addEventListener("change", function () {
+    if (twoFAToggle.checked) {
+      twoFAOptions.style.display = "block";
+    } else {
+      twoFAOptions.style.display = "none";
+      qrCodeContainer.style.display = "none";
+    }
+  });
+
+  function generateQRCode() {
+    qrCodeContainer.style.display = "block";
+    qrCodeCanvas.innerHTML = "";
+    new QRCode(qrCodeCanvas, {
+      text: "otpauth://totp/MyApp?secret=JBSWY3DPEHPK3PXP&issuer=MyApp",
+      width: 128,
+      height: 128
+    });
+  }
+
+  authAppRadio.addEventListener("change", function () {
+    if (authAppRadio.checked) {
+      generateQRCode();
+    }
+  });
+
+  smsRadio.addEventListener("change", function () {
+    if (smsRadio.checked) {
+      qrCodeContainer.style.display = "none";
+    }
+  });
+});
+
+// Podcast Modal Functionality
+document.addEventListener("DOMContentLoaded", function () {
+  const editPodcastButton = document.getElementById("edit-podcast");
+  const podcastModal = document.getElementById("podcast-modal");
+  const closePodcastModalButton = document.getElementById("close-podcast-modal");
+  const podcastForm = document.getElementById("podcast-form");
+  const podcastNameInput = document.getElementById("podcast-name");
+  const rssFeedInput = document.getElementById("rss-feed");
+
+  if (!editPodcastButton || !podcastModal || !closePodcastModalButton || !podcastForm || !podcastNameInput || !rssFeedInput) {
+    console.error("One or more podcast modal elements not found.");
+    return;
+  }
+
+  editPodcastButton.addEventListener("click", function () {
+    podcastModal.style.display = "flex";
+  });
+
+  closePodcastModalButton.addEventListener("click", function () {
+    podcastModal.style.display = "none";
+  });
+
+  window.addEventListener("click", function (event) {
+    if (event.target === podcastModal) {
+      podcastModal.style.display = "none";
+    }
+  });
+
+  podcastForm.addEventListener("submit", function (event) {
+    event.preventDefault();
+    const newPodcastName = podcastNameInput.value.trim();
+    const newRSSFeed = rssFeedInput.value.trim();
+
+    if (newPodcastName === "" || newRSSFeed === "") {
+      alert("Please fill in all fields.");
+      return;
+    }
+
+    alert("Podcast details updated successfully!");
+    podcastModal.style.display = "none";
+    podcastForm.reset();
+  });
+});
+
+// Guest Modal Functionality
+document.addEventListener("DOMContentLoaded", function () {
+  const modal = document.getElementById("guest-modal");
+  const openModal = document.getElementById("manage-guests");
+  const closeModal = document.getElementById("close-modal");
+  const closeModalX = document.getElementById("close-guest-modal");
+  const guestTable = document.getElementById("guest-table").getElementsByTagName("tbody")[0];
+  const addGuestButton = document.getElementById("add-guest");
+
+  openModal.addEventListener("click", () => modal.style.display = "flex");
+  closeModal.addEventListener("click", () => modal.style.display = "none");
+  closeModalX.addEventListener("click", () => modal.style.display = "none");
+
+  function addGuestRow(name = "", email = "", social = "", date = "") {
+    let row = guestTable.insertRow();
+    row.innerHTML = `
+      <td contenteditable="true">${name}</td>
+      <td contenteditable="true">${email}</td>
+      <td contenteditable="true">${social}</td>
+      <td><input type="date" class="date-picker" value="${date}"></td>
+      <td><button class="status-toggle" data-status="incomplete">🔴</button></td>
+    `;
+  }
+
+  addGuestButton.addEventListener("click", () => addGuestRow());
+
+  guestTable.addEventListener("click", function (e) {
+    if (e.target.classList.contains("status-toggle")) {
+      let button = e.target;
+      let currentStatus = button.getAttribute("data-status");
+      if (currentStatus === "incomplete") {
+        button.textContent = "🟢";
+        button.setAttribute("data-status", "complete");
+      } else {
+        button.textContent = "🔴";
+        button.setAttribute("data-status", "incomplete");
+      }
+    }
+  });
+
+  function sendEmailReminder(email, daysLeft) {
+    console.log(`Sending email to ${email}: Reminder - Your podcast appearance is in ${daysLeft} days.`);
+  }
+
+  setInterval(() => {
+    let today = new Date();
+    document.querySelectorAll(".date-picker").forEach(input => {
+      let selectedDate = new Date(input.value);
+      let daysLeft = Math.ceil((selectedDate - today) / (1000 * 60 * 60 * 24));
+      let email = input.parentElement.parentElement.cells[1].textContent;
+      if (daysLeft === 5 || daysLeft === 1) {
+        sendEmailReminder(email, daysLeft);
+      }
+    });
+  }, 86400000);
+});
+// Tasks & Episodes Functionality (Updated for Custom Episode Name with Remove Icon Toggle and Drag-and-Drop Task Arrangement)
+// Starts with an empty episode list (no default episode)
+// Team member select uses a placeholder option to be dynamically populated later.
+document.addEventListener("DOMContentLoaded", function () {
+  const taskModal = document.getElementById("task-modal");
+  const openTaskModal = document.getElementById("manage-tasks");
+  const closeTaskModal = document.getElementById("close-task-modal");
+  const addEpisodeButton = document.getElementById("add-episode");
+  const removeEpisodesButton = document.getElementById("remove-episodes");
+  const taskDropdown = document.querySelector(".task-dropdown");
+
+  // Ensure the episode list starts empty
+  taskDropdown.innerHTML = "";
+
+  openTaskModal.addEventListener("click", () => {
+    taskModal.style.display = "flex";
+  });
+  closeTaskModal.addEventListener("click", () => {
+    taskModal.style.display = "none";
+  });
+
+  // Global variable for drag-and-drop
+  let draggedRow = null;
+
+  // Drag-and-Drop Handlers for task rows
+  function dragStart(e) {
+    draggedRow = this;
+    e.dataTransfer.effectAllowed = 'move';
+    // Optional: Add visual cue
+    this.style.opacity = '0.5';
+  }
+
+  function dragOver(e) {
+    if (e.preventDefault) {
+      e.preventDefault();
+    }
+    e.dataTransfer.dropEffect = 'move';
+    return false;
+  }
+
+  function drop(e) {
+    if (e.stopPropagation) {
+      e.stopPropagation();
+    }
+    if (draggedRow !== this && draggedRow.parentNode === this.parentNode) {
+      const tbody = this.parentNode;
+      const rows = Array.from(tbody.children);
+      const draggedIndex = rows.indexOf(draggedRow);
+      const targetIndex = rows.indexOf(this);
+      if (draggedIndex < targetIndex) {
+        tbody.insertBefore(draggedRow, this.nextSibling);
+      } else {
+        tbody.insertBefore(draggedRow, this);
+      }
+    }
+    return false;
+  }
+
+  function dragEnd(e) {
+    // Reset visual cue
+    this.style.opacity = '1';
+    draggedRow = null;
+  }
+
+  // Function to add drag-and-drop event listeners to a task row
+  function addDragAndDropHandlers(row) {
+    row.setAttribute("draggable", true);
+    row.addEventListener("dragstart", dragStart);
+    row.addEventListener("dragover", dragOver);
+    row.addEventListener("drop", drop);
+    row.addEventListener("dragend", dragEnd);
+  }
+
+  // Delegate events within the taskDropdown container
+  taskDropdown.addEventListener("click", function (e) {
+    // Toggle episode details visibility
+    const toggleBtn = e.target.closest(".task-toggle");
+    if (toggleBtn) {
+      const targetId = toggleBtn.getAttribute("data-target");
+      const targetDiv = document.getElementById(targetId);
+      targetDiv.style.display =
+        targetDiv.style.display === "none" || targetDiv.style.display === ""
+          ? "block"
+          : "none";
+      const icon = toggleBtn.querySelector("i");
+      if (icon) {
+        icon.classList.toggle("fa-chevron-down");
+        icon.classList.toggle("fa-chevron-up");
+      }
+      return;
+    }
+
+    // Add task to episode
+    if (e.target.classList.contains("add-task")) {
+      const button = e.target;
+      const targetId = button.getAttribute("data-target");
+      const taskTable = document.querySelector(`#${targetId} table tbody`);
+      if (taskTable) {
+        let row = taskTable.insertRow();
+        row.innerHTML = `
+          <td contenteditable="true">New Task</td>
+          <td><input type="date" class="task-date"></td>
+          <td>
+            <select class="team-member">
+              <option disabled selected>Select Team Member</option>
+            </select>
+          </td>
+        `;
+        // Add drag-and-drop handlers to the new row
+        addDragAndDropHandlers(row);
+      }
+      return;
+    }
+
+    // Remove episode when remove icon is clicked
+    if (e.target.classList.contains("remove-episode")) {
+      const episodeToRemove = e.target.getAttribute("data-target");
+      const confirmation = confirm("Are you sure you want to delete this episode?");
+      if (confirmation) {
+        const episodeDiv = document.getElementById(episodeToRemove);
+        if (episodeDiv && episodeDiv.parentElement) {
+          episodeDiv.parentElement.remove();
+        }
+      }
+    }
+  });
+
+  addEpisodeButton.addEventListener("click", function () {
+    let episodeName = prompt("Enter the episode name:");
+    if (!episodeName) return; // Do nothing if canceled or empty
+
+    let episodeCount = document.querySelectorAll(".task-toggle").length + 1;
+    let newEpisode = document.createElement("div");
+    newEpisode.innerHTML = `
+      <button class="task-toggle" data-target="task-${episodeCount}">${episodeName} <i class="fas fa-chevron-down"></i></button>
+      <span class="remove-episode" data-target="task-${episodeCount}" style="display: none;">❌</span>
+      <div id="task-${episodeCount}" class="task-details" style="display: none;">
+        <table>
+          <thead>
+            <tr>
+              <th>Task</th>
+              <th>Deadline</th>
+              <th>Team Member</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+        <button class="add-task" data-target="task-${episodeCount}">Add Task</button>
+      </div>
+    `;
+    taskDropdown.appendChild(newEpisode);
+  });
+
+  removeEpisodesButton.addEventListener("click", function () {
+    document.querySelectorAll(".remove-episode").forEach(element => {
+      // Toggle display between none and inline-block
+      element.style.display =
+        element.style.display === "none" || element.style.display === ""
+          ? "inline-block"
+          : "none";
+    });
+  });
+});
+document.addEventListener("DOMContentLoaded", function () {
+  // -------------------------------
+  // Integration Settings Modal (unchanged)
+  // -------------------------------
+  const integrationSettingsButton = document.getElementById("integration-settings");
+  const integrationModal = document.createElement("div");
+  integrationModal.id = "integration-modal";
+  integrationModal.classList.add("modal");
+  integrationModal.innerHTML = `
+      <div class="modal-content">
+          <span class="close-button" id="close-integration-modal">&times;</span>
+          <h2>Integration Settings</h2>
+          <form id="integration-form">
+              <div class="form-group">
+                  <label for="email-api-key">Email API Key</label>
+                  <input type="text" id="email-api-key" class="input-field" placeholder="Enter your email API key" required>
+              </div>
+              <div class="form-group">
+                  <label for="calendar-api-key">Calendar API Key</label>
+                  <input type="text" id="calendar-api-key" class="input-field" placeholder="Enter your calendar API key" required>
+              </div>
+              <div class="form-group">
+                  <label for="linkedin-oauth">LinkedIn OAuth Token</label>
+                  <input type="text" id="linkedin-oauth" class="input-field" placeholder="Enter your LinkedIn OAuth token" required>
+              </div>
+              <div class="toggle-container">
+                  <label for="email-sync">Enable Email Sync</label>
+                  <input type="checkbox" id="email-sync">
+              </div>
+              <div class="toggle-container">
+                  <label for="calendar-sync">Enable Calendar Sync</label>
+                  <input type="checkbox" id="calendar-sync">
+              </div>
+              <button type="submit" class="button button-primary">Save Settings</button>
+          </form>
+          <div id="sync-status">
+              <p>Email Sync Status: <span id="email-sync-status">Not Synced</span></p>
+              <p>Calendar Sync Status: <span id="calendar-sync-status">Not Synced</span></p>
+          </div>
+      </div>
+  `;
+  document.body.appendChild(integrationModal);
+  
+  integrationSettingsButton.addEventListener("click", function () {
+      integrationModal.style.display = "flex";
+  });
+  
+  document.getElementById("close-integration-modal").addEventListener("click", function () {
+      integrationModal.style.display = "none";
+  });
+  
+  document.getElementById("integration-form").addEventListener("submit", function (event) {
+      event.preventDefault();
+      document.getElementById("email-sync-status").textContent = document.getElementById("email-sync").checked ? "Synced" : "Not Synced";
+      document.getElementById("calendar-sync-status").textContent = document.getElementById("calendar-sync").checked ? "Synced" : "Not Synced";
+      alert("Integration settings saved successfully.");
+      integrationModal.style.display = "none";
+  });
+  
+  // -------------------------------
+  // Payment Method Functionality Using a Drop‑Down
+  // -------------------------------
+  let paymentMethods = []; // Global array to store payment methods
+  
+  // Update the drop‑down with the current payment methods
+  function updatePaymentMethodsDisplay() {
+    const dropdown = document.getElementById("payment-methods-dropdown");
+    dropdown.innerHTML = "";
+    if (paymentMethods.length === 0) {
+      const opt = document.createElement("option");
+      opt.value = "";
+      opt.textContent = "No payment methods added";
+      dropdown.appendChild(opt);
+      dropdown.disabled = true;
+    } else {
+      dropdown.disabled = false;
+      paymentMethods.forEach((pm, index) => {
+        const opt = document.createElement("option");
+        opt.value = index;
+        const cardInfo = pm.cardNumber ? `Card ending in ${pm.cardNumber.slice(-4)}` : "Unknown Card";
+        opt.textContent = `${index + 1}. ${cardInfo} | Exp: ${pm.expiry} | Holder: ${pm.holderName}`;
+        dropdown.appendChild(opt);
+      });
+    }
+  }
+  
+  // Show Payment Method Form (for add or update)
+  // mode: "add" or "update"; if "update", paymentMethodIndex is provided.
+  function showPaymentMethodForm(mode, paymentMethodIndex = null) {
+    const formOverlay = document.createElement("div");
+    formOverlay.id = "payment-method-form-overlay";
+    Object.assign(formOverlay.style, {
+      position: "fixed",
+      top: "0",
+      left: "0",
+      width: "100%",
+      height: "100%",
+      backgroundColor: "rgba(0, 0, 0, 0.5)",
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "center",
+      zIndex: "1000"
+    });
+  
+    const formDiv = document.createElement("div");
+    Object.assign(formDiv.style, {
+      backgroundColor: "#fff",
+      padding: "20px",
+      borderRadius: "5px",
+      width: "300px"
+    });
+    formDiv.innerHTML = `
+      <h3>${mode === "add" ? "Add" : "Update"} Payment Method</h3>
+      <form id="payment-method-form">
+        <div class="form-group">
+          <label for="card-number">Card Number</label>
+          <input type="text" id="card-number" class="input-field" placeholder="Enter card number" required>
+        </div>
+        <div class="form-group">
+          <label for="expiry">Expiry Date</label>
+          <input type="text" id="expiry" class="input-field" placeholder="MM/YY" required>
+        </div>
+        <div class="form-group">
+          <label for="holder-name">Card Holder Name</label>
+          <input type="text" id="holder-name" class="input-field" placeholder="Enter card holder name" required>
+        </div>
+        <button type="submit" class="button button-primary">${mode === "add" ? "Add" : "Update"}</button>
+        <button type="button" id="cancel-payment-form" class="button">Cancel</button>
+      </form>
+    `;
+    formOverlay.appendChild(formDiv);
+    document.body.appendChild(formOverlay);
+  
+    // If updating, pre-fill fields
+    if (mode === "update" && paymentMethodIndex !== null) {
+      const pm = paymentMethods[paymentMethodIndex];
+      document.getElementById("card-number").value = pm.cardNumber || "";
+      document.getElementById("expiry").value = pm.expiry || "";
+      document.getElementById("holder-name").value = pm.holderName || "";
+    }
+  
+    document.getElementById("payment-method-form").addEventListener("submit", function (e) {
+      e.preventDefault();
+      const cardNumber = document.getElementById("card-number").value.trim();
+      const expiry = document.getElementById("expiry").value.trim();
+      const holderName = document.getElementById("holder-name").value.trim();
+  
+      if (mode === "add") {
+        paymentMethods.push({ cardNumber, expiry, holderName });
+      } else if (mode === "update" && paymentMethodIndex !== null) {
+        paymentMethods[paymentMethodIndex] = { cardNumber, expiry, holderName };
+      }
+      updatePaymentMethodsDisplay();
+      document.body.removeChild(formOverlay);
+    });
+  
+    document.getElementById("cancel-payment-form").addEventListener("click", function () {
+      document.body.removeChild(formOverlay);
+    });
+  }
+  
+  // -------------------------------
+  // Subscription Modal with Payment Methods Drop‑Down
+  // -------------------------------
+  const subscriptionButton = document.getElementById("subscribe");
+  const subscriptionModal = document.createElement("div");
+  subscriptionModal.id = "subscription-modal";
+  subscriptionModal.classList.add("modal");
+  subscriptionModal.innerHTML = `
+      <div class="modal-content">
+          <span class="close-button" id="close-subscription-modal">&times;</span>
+          <h2>Subscription Plans</h2>
+          <!-- Info Bars -->
+          <div class="info-bars">
+              <div class="info-bar">
+                  <strong>1. Free (1 Month)</strong>
+                  <p><span style="color: black;">&#8226;</span> [Placeholder]</p>
+                  <p><span style="color: black;">&#8226;</span> [Placeholder]</p>
+              </div>
+              <div class="info-bar">
+                  <strong>2. Paid user</strong>
+                  <p><span style="color: black;">&#8226;</span> [Placeholder]</p>
+                  <p><span style="color: black;">&#8226;</span> [Placeholder]</p>
+              </div>
+              <div class="info-bar">
+                  <strong>3. Paid corporate</strong>
+                  <p><span style="color: black;">&#8226;</span> [Placeholder]</p>
+                  <p><span style="color: black;">&#8226;</span> [Placeholder]</p>
+              </div>
+          </div>
+          <form id="subscription-form">
+              <div class="form-group">
+                  <label for="subscription-type">Select Subscription Plan</label>
+                  <select id="subscription-type" class="input-field">
+                      <option value="free">Free (1 month)</option>
+                      <option value="paid-user">Paid User (1 Podcast)</option>
+                      <option value="corporate">Paid Corporate (Studios & Production Companies)</option>
+                  </select>
+              </div>
+              <!-- Payment Methods Section (with drop-down) -->
+              <div id="payment-methods-section">
+                  <h3>Payment Methods</h3>
+                  <select id="payment-methods-dropdown" class="input-field">
+                      <option value="">No payment methods added</option>
+                  </select>
+                  <div class="payment-method-buttons">
+                      <button type="button" id="btn-add-payment" class="button">Add Payment Method</button>
+                      <button type="button" id="btn-update-payment" class="button">Update Payment Method</button>
+                      <button type="button" id="btn-remove-payment" class="button">Remove Payment Method</button>
+                  </div>
+              </div>
+              <button type="submit" class="button button-primary">Save Subscription</button>
+          </form>
+          <div id="billing-history">
+              <h3>Billing History</h3>
+              <table>
+                  <thead>
+                      <tr>
+                          <th>Date</th>
+                          <th>Plan</th>
+                          <th>Amount</th>
+                          <th>Invoice</th>
+                      </tr>
+                  </thead>
+                  <tbody id="billing-entries">
+                      <tr><td colspan="4">No billing history available</td></tr>
+                  </tbody>
+              </table>
+          </div>
+      </div>
+  `;
+  document.body.appendChild(subscriptionModal);
+  
+  // Open/close subscription modal
+  subscriptionButton.addEventListener("click", function () {
+      subscriptionModal.style.display = "flex";
+  });
+  document.getElementById("close-subscription-modal").addEventListener("click", function () {
+      subscriptionModal.style.display = "none";
+  });
+  document.getElementById("subscription-form").addEventListener("submit", function (event) {
+      event.preventDefault();
+      alert("Subscription updated successfully.");
+      subscriptionModal.style.display = "none";
+  });
+  
+  // Payment Method buttons event listeners using the drop‑down
+  document.getElementById("btn-add-payment").addEventListener("click", function () {
+      showPaymentMethodForm("add");
+  });
+  document.getElementById("btn-update-payment").addEventListener("click", function () {
+      const dropdown = document.getElementById("payment-methods-dropdown");
+      const index = dropdown.value;
+      if (index === "" || index === null) {
+          alert("No payment method selected.");
+          return;
+      }
+      showPaymentMethodForm("update", index);
+  });
+  document.getElementById("btn-remove-payment").addEventListener("click", function () {
+      const dropdown = document.getElementById("payment-methods-dropdown");
+      const index = dropdown.value;
+      if (index === "" || index === null) {
+          alert("No payment method selected.");
+          return;
+      }
+      const confirmation = confirm("Are you sure you want to remove this payment method?");
+      if (confirmation) {
+          paymentMethods.splice(index, 1);
+          updatePaymentMethodsDisplay();
+      }
+  });
+  
+  // Initialize drop-down on load (in case any payment methods exist)
+  updatePaymentMethodsDisplay();
+});
+
+</script>
+</script>
+    
+</html>
