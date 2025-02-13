@@ -5,6 +5,7 @@ import uuid
 from werkzeug.security import generate_password_hash
 from dotenv import load_dotenv
 from datetime import datetime
+from Database.db import container
 
 
 # ✅ Define Blueprint
@@ -13,19 +14,6 @@ register_bp = Blueprint('register_bp', __name__)
 # Load environment variables
 load_dotenv()
 
-# Azure Cosmos DB Configuration
-COSMOSDB_URI = os.getenv("COSMOS_ENDPOINT")
-COSMOSDB_KEY = os.getenv("COSMOS_KEY")
-DATABASE_ID = "podmanagedb"
-CONTAINER_ID = "users"
-
-if not COSMOSDB_URI or not COSMOSDB_KEY:
-    raise ValueError("Cosmos DB credentials are missing.")
-
-# Initialize Cosmos DB client
-client = CosmosClient(COSMOSDB_URI, COSMOSDB_KEY)
-database = client.get_database_client(DATABASE_ID)
-container = database.get_container_client(CONTAINER_ID)
 
 @register_bp.route('/register', methods=['GET', 'POST'])
 def register():
