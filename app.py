@@ -258,6 +258,24 @@ def team():
         return redirect(url_for('signin'))
     return render_template('team/index.html')
 
+@app.route('/guest', methods=['GET','POST'])
+def guest():
+    if not g.user_id:
+        return redirect(url_for('signin'))
+    return render_template('guest/index.html')
+
+@app.route('/profile', methods=['GET','POST'])
+def profile():
+    if not g.user_id:
+        return redirect(url_for('signin'))
+    return render_template('guest/profile.html')
+
+@app.route('/settings', methods=['GET','POST'])
+def settings():
+    if not g.user_id:
+        return redirect(url_for('signin'))
+    return render_template('settings/index.html')
+
 @app.route('/get_user_podcasts', methods=['GET'])
 def get_user_podcasts():
     if not g.user_id:
