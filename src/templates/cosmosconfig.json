@@ -1,0 +1,17 @@
+[
+    {
+        "id": "29663491-D2E9-47B4-83AE-D9459B6B5B67",
+        "email": "alice@example.com",
+        "password": "$2y$10$EixZaYVK1fsbw1ZfbX3OXePaWxn96p36fE7Rjv8UIbEo8Jqv6S0yG" // Hashed password for "password123"
+    },
+    {
+        "id": "39663491-D2E9-47B4-83AE-D9459B6B5B68",
+        "email": "bob@example.com",
+        "password": "$2y$10$7Q8oFzK1VbG5lT6hE9sUve.T1YjJ3mCqH0KxR5D6eP9aF4bV3C1mW" // Hashed password for "securePass!"
+    },
+    {
+        "id": "49663491-D2E9-47B4-83AE-D9459B6B5B69",
+        "email": "carol@example.com",
+        "password": "$2y$10$4HjK5mN6oP7qR8sT9uV1wXyZ2aB3cD4eF5gH6iJ7kL8mN9oP0qR2S" // Hashed password for "myPassword!"
+    }
+]

@@ -1,0 +1,49 @@
+{
+    "page": {
+      "title": "Gestion d'équipe"
+    },
+    "header": {
+      "title": "ÉQUIPE"
+    },
+    "buttons": {
+      "filter": "Filtrer",
+      "addMember": "Ajouter un nouveau membre",
+      "submit": "Soumettre",
+      "submitting": "Soumission...",
+      "close": "Fermer"
+    },
+    "placeholder": {
+      "search": "Rechercher",
+      "name": "Entrez le nom",
+      "role": "Entrez le rôle",
+      "email": "Entrez l'e-mail",
+      "phone": "Entrez le numéro de téléphone"
+    },
+    "table": {
+      "headers": {
+        "name": "Nom",
+        "role": "Rôle",
+        "email": "E-mail",
+        "phone": "Numéro de téléphone",
+        "tasks": "Tâches assignées",
+        "status": "Statut",
+        "actions": "Actions"
+      }
+    },
+    "errors": {
+      "name": "Veuillez entrer un nom valide.",
+      "role": "Veuillez entrer un rôle valide.",
+      "email": "Veuillez entrer un e-mail valide.",
+      "phone": "Veuillez entrer un numéro de téléphone valide."
+    },
+    "notifications": {
+      "memberAdded": "Nouveau membre ajouté avec succès!"
+    },
+    "status": {
+      "active": "Actif",
+      "inactive": "Inactif"
+    },
+    "modal": {
+      "addMemberTitle": "Ajouter un nouveau membre"
+    }
+  }
