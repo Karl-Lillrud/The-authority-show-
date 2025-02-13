@@ -30,4 +30,3 @@ def signin():
     session.permanent = True
 
     return jsonify({"message": "Login successful", "redirect_url": 'dashboard'}), 200
-

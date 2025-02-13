@@ -26,7 +26,7 @@
     
     <!-- Moved the text above the Sign-in link -->
     <p class="account-text">Already have an account?</p>
-    <a class="link" href="{{ url_for('signin') }}">Sign in</a>
+    <a class="link" href="{{ url_for('signin_bp.signin') }}">Sign in</a>
 </div>
 
 <script>
@@ -57,7 +57,7 @@
                 const result = await response.json();
 
                 if (response.ok) {
-                    window.location.href = "{{ url_for('signin') }}"; // Redirect to sign-in page
+                    window.location.href = "{{ url_for('signin_bp.signin') }}"; // Redirect to sign-in page
                 } else {
                     errorMessage.textContent = result.error || "An error occurred. Please try again.";
                 }
