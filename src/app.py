@@ -2,6 +2,7 @@ from flask import Flask, render_template, request, jsonify, url_for, session, re
 from azure.cosmos import CosmosClient
 from routes.register import register_bp
 from routes.forgot_pass import forgotpass_bp
+from routes.signin import signin_bp
 from dotenv import load_dotenv
 from werkzeug.security import generate_password_hash, check_password_hash
 from datetime import datetime
@@ -23,6 +24,7 @@ app.secret_key = os.getenv("SECRET_KEY")
 app.config['PREFERRED URL SCHEME'] = 'https'
 app.register_blueprint(register_bp)
 app.register_blueprint(forgotpass_bp)
+app.register_blueprint(signin_bp)
 
 APP_ENV = os.getenv("APP_ENV", "production")  # Default to production
 
@@ -32,40 +34,11 @@ PI_BASE_URL = "http://127.0.0.1:8000" if APP_ENV == "local" else "https://app.po
 def load_user():
     g.user_id = session.get("user_id")
 
-
-
-# 📌 Sign-in Route
-@app.route('/', methods=['GET'])
-@app.route('/signin', methods=['GET', 'POST'])
-def signin():
-    if request.method == 'GET':
-        return render_template('signin.html')
-
-    if request.content_type != "application/json":
-        return jsonify({"error": "Invalid Content-Type. Expected application/json"}), 415
-    
-    data = request.get_json()
-    email = data.get("email", "").strip().lower()
-    password = data.get("password", "")
-
-    query = "SELECT * FROM c WHERE LOWER(c.email) = @email"
-    parameters = [{"name": "@email", "value": email}]
-    users = list(container.query_items(query=query, parameters=parameters, enable_cross_partition_query=True))
-
-    if not users or not check_password_hash(users[0]["passwordHash"], password):
-        return jsonify({"error": "Invalid email or password"}), 401
-
-    session["user_id"] = str(users[0]["id"])
-    session["email"] = users[0]["email"]
-    session.permanent = True
-
-    return jsonify({"message": "Login successful", "redirect_url": "/dashboard"}), 200
-
 # 📌 Dashboard
-@app.route('/dashboard', methods=['GET'])
+@app.route('/dashboard', methods=['GET'],) #BP ROUTE?
 def dashboard():
     if not g.user_id:
-        return redirect(url_for('signin'))
+        return redirect(signin_bp)
     return render_template('dashboard/dashboard.html')
 
 # ✅ Serves the homepage page
