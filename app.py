@@ -264,11 +264,17 @@ def guest():
         return redirect(url_for('signin'))
     return render_template('guest/index.html')
 
-@app.route('/profile', methods=['GET','POST'])
-def profile():
-    if not g.user_id:
-        return redirect(url_for('signin'))
-    return render_template('guest/profile.html')
+@app.route('/profile/<guest_id>', methods=['GET'])
+def guest_profile(guest_id):
+    # Replace this with your actual data retrieval logic,
+    # for example, querying your database or another data source.
+    guests = load_all_guests()  # This should return a list/dictionary of guest info.
+    guest = next((g for g in guests if g["id"] == guest_id), None)
+    if guest is None:
+        return "Guest not found", 404
+    return render_template('guest/profile.html', guest=guest)
+
+
 
 @app.route('/settings', methods=['GET','POST'])
 def settings():
