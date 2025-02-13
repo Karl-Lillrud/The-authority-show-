@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, jsonify, url_for, session, redirect, g
+from flask import Flask, render_template, request, jsonify, url_for, session, redirect, g, Blueprint
 from azure.cosmos import CosmosClient
 from routes.register import register_bp
 from routes.forgot_pass import forgotpass_bp
@@ -22,12 +22,11 @@ app = Flask(__name__, template_folder='templates', static_folder='static')
 app.secret_key = os.getenv("SECRET_KEY")
 app.config['PREFERRED URL SCHEME'] = 'https'
 app.register_blueprint(register_bp)
+app.register_blueprint(forgotpass_bp)
 
 APP_ENV = os.getenv("APP_ENV", "production")  # Default to production
 
 PI_BASE_URL = "http://127.0.0.1:8000" if APP_ENV == "local" else "https://app.podmanager.ai"
-
-
 
 @app.before_request
 def load_user():
