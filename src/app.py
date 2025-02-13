@@ -1,7 +1,7 @@
 from flask import Flask, render_template, request, jsonify, url_for, session, redirect, g
 from azure.cosmos import CosmosClient
 from routes.register import register_bp
-from routes.forgot_pass import forgot_password
+from routes.forgot_pass import forgotpass_bp
 from dotenv import load_dotenv
 from werkzeug.security import generate_password_hash, check_password_hash
 from datetime import datetime
