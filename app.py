@@ -1,9 +1,10 @@
 # app.py
-import os, random, smtplib, venvupdate, urllib.parse
+import os, random, smtplib, venvupdate, urllib.parse, json
 from flask import Flask, render_template, request, jsonify, url_for, session, redirect, g
 from azure.cosmos import CosmosClient, PartitionKey
 from azure.storage.blob import BlobServiceClient
-
+from azure.keyvault.secrets import SecretClient
+from azure.identity import DefaultAzureCredential
 from google_auth_oauthlib.flow import Flow
 from register import register_bp
 from dotenv import load_dotenv
@@ -21,6 +22,7 @@ app.config['PREFERRED URL SCHEME'] = 'https'
 app.register_blueprint(register_bp)
 
 APP_ENV = os.getenv("APP_ENV", "production")
+PI_BASE_URL = "http://127.0.0.1:8000" if APP_ENV == "local" else "https://app.podmanager.ai"
 
 # Cosmos DB Configuration
 COSMOSDB_URI = os.getenv("COSMOS_ENDPOINT")
@@ -59,13 +61,19 @@ podcasts_container = database.create_container_if_not_exists(
     offer_throughput=400
 )
 
-PI_BASE_URL = "http://127.0.0.1:8000" if APP_ENV == "local" else "https://app.podmanager.ai"
-
 # Email Configuration
 SMTP_SERVER = os.getenv("SMTP_SERVER")
 SMTP_PORT = int(os.getenv("SMTP_PORT", 587))
 EMAIL_USER = os.getenv("EMAIL_USER")
 EMAIL_PASS = os.getenv("EMAIL_PASS")
+
+def get_client_config_from_key_vault():
+    key_vault_url = os.getenv("KEY_VAULT_URL")
+    secret_name = os.getenv("CLIENT_SECRET_NAME", "google-client-secret")
+    credential = DefaultAzureCredential()
+    client = SecretClient(vault_url=key_vault_url, credential=credential)
+    secret = client.get_secret(secret_name)
+    return json.loads(secret.value)
 
 @app.before_request
 def load_user():
@@ -445,9 +453,32 @@ def calendar_connect():
 
 @app.route('/google_calendar_callback')
 def google_calendar_callback():
-    # For demonstration, simply return the code.
     code = request.args.get("code")
-    return "Google Calendar callback received code: " + str(code)
+    if not code:
+        return "No code provided", 400
+
+    client_config = get_client_config_from_key_vault()
+    flow = Flow.from_client_config(
+        client_config,
+        scopes=["https://www.googleapis.com/auth/calendar"],
+        redirect_uri=url_for('google_calendar_callback', _external=True)
+    )
+    flow.fetch_token(code=code)
+    credentials = flow.credentials
+
+    # Prepare token data to save in your database.
+    token_data = {
+        "access_token": credentials.token,
+        "refresh_token": credentials.refresh_token,
+        "token_uri": credentials.token_uri,
+        "client_id": credentials.client_id,
+        "client_secret": credentials.client_secret,
+        "scopes": list(credentials.scopes),
+        "expiry": credentials.expiry.isoformat() if credentials.expiry else None
+    }
+
+    # Save token_data associated with the user in your database here.
+    return "Google Calendar integration successful!"
 
 @app.route('/outlook_calendar_callback')
 def outlook_calendar_callback():
