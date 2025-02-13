@@ -1,5 +1,8 @@
-<!DOCTYPE html>
-<html lang="en" dir="ltr">
+{% extends "dashboard/components/base.html" %}
+
+{% block title %}Team Leaderboard Dashboard{% endblock %}
+
+{% block content %}
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -9,7 +12,7 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" 
     crossorigin="anonymous" referrerpolicy="no-referrer" />
 </head>
-<body>
+<body class="settings">
     <!-- Header Component -->
     <header>
         <nav aria-label="Main Navigation" class="sidebar">
@@ -34,7 +37,6 @@
             </label>
         </div>
     </header>
-
     <main class="container">
         <!-- User Account Settings -->
         <section class="account-settings card" id="account-settings" aria-labelledby="account-settings-title">
@@ -186,17 +188,7 @@
             <button type="button" id="add-role" class="button button-secondary" data-i18n="permissions.addRole">Team Members</button>
         </section>
     </main>
-
-    <!-- Footer Component -->
-    <footer>
-        <div class="social-icons">
-            <a href="https://www.facebook.com/yourprofile" aria-label="Facebook"><i class="fab fa-facebook-f"></i></a>
-            <a href="https://twitter.com/yourprofile" aria-label="Twitter"><i class="fab fa-twitter"></i></a>
-            <a href="https://www.instagram.com/yourprofile" aria-label="Instagram"><i class="fab fa-instagram"></i></a>
-            <a href="https://www.linkedin.com/in/yourprofile" aria-label="LinkedIn"><i class="fab fa-linkedin-in"></i></a>
-        </div>
-        <p data-i18n="footer.copy">© 2025 Podcast Manager. All rights reserved.</p>
-    </footer>
+  
 
     <!-- Toast Notification Container -->
     <div id="toast" class="toast" role="alert" aria-live="assertive" aria-atomic="true">
@@ -1084,4 +1076,4 @@ document.addEventListener("DOMContentLoaded", function () {
 </script>
 </script>
     
-</html>
+{% endblock %}
