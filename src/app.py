@@ -43,12 +43,6 @@ def guest_profile(guest_id):
         return "Guest not found", 404
     return render_template('guest/profile.html', guest=guest)
 
-@app.route('/settings', methods=['GET', 'POST'])
-def settings():
-    if not g.user_id:
-        return redirect(url_for('signin_bp.signin'))  # Fix: redirect using the blueprint route
-    return render_template('settings/index.html')
-
 @app.route('/get_user_podcasts', methods=['GET'])
 def get_user_podcasts():
     if not g.user_id:
