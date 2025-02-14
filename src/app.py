@@ -7,7 +7,7 @@ from .routes.dashboard import dashboard_bp
 from .routes.pod_management import dashboardmanagement_bp
 from dotenv import load_dotenv
 import os
-from .database.cosmos_connection import container
+from database.cosmos_connection import container
 from utils import venvupdate
 
 # update the virtual environment and requirements
