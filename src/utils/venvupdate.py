@@ -44,7 +44,10 @@ def update_venv_and_requirements(venv_path="venv"):
     # Step 6: Install dependencies from requirements.txt (if it exists)
     if os.path.exists("requirements.txt") and os.path.getsize("requirements.txt") > 0:
         print("📦 Installing dependencies from requirements.txt...")
-        subprocess.run([pip_exec, "install", "-r", "requirements.txt"], check=True)
+        result = subprocess.run([pip_exec, "install", "-r", "requirements.txt"], capture_output=True, text=True)
+        for line in result.stdout.splitlines():
+            if "Requirement already satisfied" not in line:
+                print(line)
     else:
         print("⚠️ No valid requirements.txt found. Skipping installation.")
 
