@@ -1,0 +1,68 @@
+{
+    "page": {
+      "title": "Account & Podcast Settings"
+    },
+    "accountSettings": {
+      "title": "Account Settings",
+      "profilePicture": {
+        "alt": "Profile Picture",
+        "upload": "Upload"
+      },
+      "form": {
+        "nameLabel": "Name:",
+        "namePlaceholder": "Enter your full name",
+        "nameError": "Please enter a valid name (2-50 characters).",
+        "emailLabel": "Email:",
+        "emailPlaceholder": "Enter your email address",
+        "emailError": "Please enter a valid email address.",
+        "passwordLabel": "Password:",
+        "changePassword": "Change Password",
+        "save": "Save Changes",
+        "saveSuccess": "Account updated successfully!"
+      }
+    },
+    "securitySettings": {
+      "title": "Security Settings",
+      "enable2FA": "Enable 2FA:",
+      "off": "OFF",
+      "on": "ON",
+      "2faMethod": "Options:",
+      "sms": "SMS",
+      "authApp": "Auth App",
+      "scanQR": "Scan QR code",
+      "qrCode": {
+        "alt": "QR Code"
+      }
+    },
+    "recovery": {
+      "title": "Recovery",
+      "lost2FA": "Lost 2FA"
+    },
+    "podcastManagement": {
+      "title": "Podcast Management",
+      "editPodcast": "Edit Podcast Details",
+      "manageGuests": "Manage Guests",
+      "manageTasks": "Manage Tasks",
+      "integrationSettings": "Integration Settings"
+    },
+    "subscriptions": {
+      "title": "Subscriptions",
+      "subscribe": "Subscribe"
+    },
+    "permissions": {
+      "title": "Permissions & Roles",
+      "addRole": "Add Role"
+    },
+    "nav": {
+      "accountSettings": "Account Settings",
+      "securitySettings": "Security Settings",
+      "recovery": "Recovery",
+      "podcastManagement": "Podcast Management",
+      "subscriptions": "Subscriptions",
+      "permissions": "Permissions & Roles"
+    },
+    "footer": {
+      "copy": "© 2025 Podcast Manager. All rights reserved."
+    }
+  }
+  
