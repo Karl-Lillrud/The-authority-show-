@@ -1,7 +1,7 @@
-
-from flask import request, jsonify, Blueprint
+from flask import request, jsonify, Blueprint, g  # Add g import
 import random
 from database.cosmos_connection import container
+from datetime import datetime, timezone  # Update import
 
 registerpodcast_bp = Blueprint('registerpodcast_bp', __name__)
 
@@ -25,7 +25,7 @@ def register_podcast():
         "creator_id": g.user_id,
         "podName": pod_name,
         "podRss": pod_rss,
-        "created_at": datetime.utcnow().isoformat()
+        "created_at": datetime.now(timezone.utc).isoformat()  # Update datetime usage
     }
 
     try:
