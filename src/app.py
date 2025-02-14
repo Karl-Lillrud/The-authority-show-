@@ -1,13 +1,13 @@
 from flask import Flask, render_template, request, jsonify, url_for, session, redirect, g, Blueprint
-from routes.register import register_bp
-from routes.forgot_pass import forgotpass_bp
-from routes.signin import signin_bp
-from routes.register_podcast import registerpodcast_bp
-from routes.dashboard import dashboard_bp
-from routes.pod_management import dashboardmanagement_bp
+from .routes.register import register_bp
+from .routes.forgot_pass import forgotpass_bp
+from .routes.signin import signin_bp
+from .routes.register_podcast import registerpodcast_bp
+from .routes.dashboard import dashboard_bp
+from .routes.pod_management import dashboardmanagement_bp
 from dotenv import load_dotenv
 import os
-from database.cosmos_connection import container
+from .database.cosmos_connection import container
 from utils import venvupdate
 
 # update the virtual environment and requirements
