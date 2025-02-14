@@ -4,6 +4,7 @@ import os
 import random
 import smtplib
 from email.mime.text import MIMEText
+from werkzeug.security import generate_password_hash
 from database.cosmos_connection import container
 
 forgotpass_bp = Blueprint('forgotpass_bp', __name__)
@@ -114,12 +115,17 @@ def send_reset_email(email, reset_code):
     try:
         msg = MIMEText(f"Your password reset code is: {reset_code}\nUse this code to reset your password.")
         msg["Subject"] = "Password Reset Request"
-        msg["From"] = EMAIL_USER
+        msg["From"] = EMAIL_USER if EMAIL_USER else "no-reply@example.com"
         msg["To"] = email
 
+        if not SMTP_SERVER or not SMTP_PORT:
+            raise ValueError("SMTP_SERVER and SMTP_PORT must be set")
         with smtplib.SMTP(SMTP_SERVER, SMTP_PORT) as server:
             server.starttls()
-            server.login(EMAIL_USER, EMAIL_PASS)
+            if EMAIL_USER and EMAIL_PASS:
+                server.login(EMAIL_USER, EMAIL_PASS)
+            else:
+                raise ValueError("EMAIL_USER and EMAIL_PASS must be set")
             server.sendmail(EMAIL_USER, email, msg.as_string())
 
     except Exception as e:
