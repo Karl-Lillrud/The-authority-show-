@@ -3,15 +3,20 @@ from database.cosmos_connection import container
 
 dashboardmanagement_bp = Blueprint('dashboardmanagement_bp', __name__)
 
+@dashboardmanagement_bp.route('/load_all_guests', methods=['GET'])
+def load_all_guests():
+    query = "SELECT * FROM c WHERE c.type = 'guest'"
+    guests = list(container.query_items(query=query, enable_cross_partition_query=True))
+    return jsonify(guests)
+
 @dashboardmanagement_bp.route('/profile/<guest_id>', methods=['GET'])
 def guest_profile(guest_id):
-    # Replace this with your actual data retrieval logic,
-    # for example, querying your database or another data source.
-    guests = load_all_guests()  # This should return a list/dictionary of guest info.
+    guests = load_all_guests().get_json()  # This should return a list/dictionary of guest info.
     guest = next((g for g in guests if g["id"] == guest_id), None)
     if guest is None:
         return "Guest not found", 404
     return render_template('guest/profile.html', guest=guest)
+
 
 @dashboardmanagement_bp.route('/get_user_podcasts', methods=['GET'])
 def get_user_podcasts():
