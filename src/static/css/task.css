@@ -69,7 +69,6 @@
         font-size: 1.2rem;
         color: var(--text-color-light);
       }
-
       /* Add Task Button */
       #add-task-btn, #load-default-btn {
         background: var(--background-light);
@@ -89,14 +88,12 @@
         transform: translateY(-2px);
         color: var(--highlight-color);
       }
-
       /* Task List Container */
       #task-list {
         list-style: decimal;
         padding: 0;
         max-width: 600px;
         margin: 0 auto;
-
       }
   
       /* Individual Task Items */
@@ -116,18 +113,15 @@
       #task-list li:hover {
         transform: translateY(-2px);
       }
-
       .task-details {
         display: flex;
         align-items: center;
         flex-wrap: nowrap;
       }
-
       .task-actions {
         display: flex;
         gap: var(--spacing-sm);
       }
-
       .task-name {
         flex-grow: 1;
         text-align: left;
@@ -146,7 +140,6 @@
         font-size: 0.8rem;
         color: #666865;
       }
-
       .edit-btn {
         background: #f4a261; /* Light orange */
         box-shadow:
@@ -309,11 +302,9 @@
       .hidden {
         display: none;
       }
-
     .logo img {
         width: 50px;
     }
-
     .container {
         display: flex;
         gap: 20px;
@@ -321,7 +312,6 @@
         flex-wrap: wrap;
         margin-top: 80px;
     }
-
     .popup-content header, h1 {
       position: relative;
       width: 100%;
@@ -329,24 +319,20 @@
       text-align: center;
       margin-bottom: 20px;
   }
-
     .card img {
       width: 100%;
       height: 200px;
       border-radius: 8px;
       object-fit: cover;
   }
-
     .episode-count {
         font-weight: 700;
         font-size: 16px;
         margin-top: 10px;
     }
-
     .red { color: #DC3545; }
     .orange { color: #FF7F00; }
     .green { color: #28A745; }
-
     /* Popup-specific Styles for Guest Selection */
     .popup {
         position: fixed;
@@ -360,7 +346,6 @@
         justify-content: center;
         z-index: 2000;
     }
-
     .popup-content {
       background: #FFF;
       border-radius: 12px;
@@ -372,7 +357,6 @@
       max-height: 90vh;  /* Limit height to viewport */
       
     }
-
     /* Optional: Adjust guest selection container inside the popup */
     .guest-selection {
       display: flex;
@@ -394,10 +378,77 @@
       white-space: normal; /* Ensures text wraps inside cards */
   }
   
-
     .drag-ghost {
       opacity: 0.7;                /* semi-transparent */
       background-color: #f4a261;     /* light orange background */
       border: 2px dashed #e63946;    /* dashed reddish border */
       transform: scale(1.05);        /* slightly enlarged */
+    }
+
+    /* ---------------- Task List Popup Styling ---------------- */
+    #default-tasks-popup {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.6);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 2100;
+    }
+    /* Default Tasks Popup Content */
+    #default-tasks-popup .popup-content {
+      background: #ffffff;
+      border-radius: 10px;
+      padding: 20px;
+      width: 80%;
+      max-width: 600px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    }
+    #default-tasks-popup h2 {
+      margin-top: 0;
+      font-size: 1.8rem;
+      color: #333;
+    }
+    /* Container for the default tasks list */
+    #default-tasks-list {
+      max-height: 300px;
+      overflow-y: auto;
+      margin: 20px 0;
+    }
+    /* Each default task item */
+    .default-task-item {
+      display: flex;
+      align-items: center;
+      margin-bottom: 10px;
+      padding: 5px;
+      border-bottom: 1px solid #ddd;
+    }
+    .default-task-item:last-child {
+      border-bottom: none;
+    }
+    .default-task-item label {
+      margin-left: 8px;
+      font-size: 1rem;
+      color: #555;
+    }
+    /* Modal buttons for the popup */
+    .modal-buttons {
+      display: flex;
+      justify-content: flex-end;
+      gap: 10px;
+    }
+    .modal-buttons button {
+      background-color: #ff7f3f;
+      color: #fff;
+      padding: 8px 16px;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      transition: background 0.3s ease;
+    }
+    .modal-buttons button:hover {
+      background-color: #e66a32;
     }
