@@ -18,7 +18,7 @@ def homepage():
     return render_template('dashboard/homepage.html')
 
 # ✅ Serves the settings page
-@dashboard_bp.route('/dashboard_bp.accountsettings', methods=['GET'])
+@dashboard_bp.route('/accountsettings', methods=['GET'])
 def accountsettings():
     if not g.user_id:
         return redirect(url_for('signin_bp.signin'))  # Fix: redirect using the blueprint route
