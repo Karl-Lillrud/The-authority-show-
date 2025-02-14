@@ -45,7 +45,7 @@ def forgot_password():
 
     try:
         send_reset_email(email, reset_code)
-        return jsonify({"message": "Reset code sent successfully.", "redirect_url": url_for('enter_code')}), 200
+        return jsonify({"message": "Reset code sent successfully.", "redirect_url": url_for('forgotpass_bp.enter_code')}), 200
     except Exception as e:
         return jsonify({"error": f"Failed to send email: {str(e)}"}), 500
 
