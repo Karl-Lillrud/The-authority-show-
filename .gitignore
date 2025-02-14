@@ -2,3 +2,9 @@ src/__pycache__/
 src/venv/
 readme.md
 venv/
+
+# Ignore Python bytecode files
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
