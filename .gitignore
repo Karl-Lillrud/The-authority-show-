@@ -1,5 +1,4 @@
+src/__pycache__/
+src/venv/
+readme.md
 venv/
-__pycache__/
-
-
-
