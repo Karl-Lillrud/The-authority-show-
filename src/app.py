@@ -18,6 +18,7 @@ from routes.dashboard import dashboard_bp
 from routes.pod_management import dashboardmanagement_bp
 from dotenv import load_dotenv
 import os
+import logging
 from utils import venvupdate
 
 # update the virtual environment and requirements
@@ -48,6 +49,10 @@ PI_BASE_URL = (
     "http://127.0.0.1:8000" if APP_ENV == "local" else "https://app.podmanager.ai"
 )
 
+# Adjust logging level for pymongo to suppress heartbeat logs
+logging.getLogger("pymongo").setLevel(logging.WARNING)
+logging.getLogger("pymongo.topology").setLevel(logging.ERROR)
+
 
 @app.before_request
 def load_user():
@@ -56,5 +61,5 @@ def load_user():
 
 if __name__ == "__main__":
     app.run(
-        host="0.0.0.0", port=5000, debug=True
+        host="0.0.0.0", port=5000, debug=False
     )  # Ensure the port matches your request URL
