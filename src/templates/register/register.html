@@ -41,6 +41,15 @@
 
       <p class="error-message" id="error-message"></p>
 
+      <!-- Success Message Modal -->
+      <div id="success-modal" class="modal">
+        <div class="modal-content">
+          <h2>Registration Successful!</h2>
+          <p>Click OK to go to the login page.</p>
+          <button id="success-ok-button" class="button">OK</button>
+        </div>
+      </div>
+
       <!-- Moved the text above the Sign-in link -->
       <p class="account-text">Already have an account?</p>
       <a class="link" href="{{ url_for('signin_bp.signin') }}">Sign in</a>
@@ -59,6 +68,8 @@
       document.addEventListener("DOMContentLoaded", function () {
         const form = document.getElementById("register-form");
         const errorMessage = document.getElementById("error-message");
+        const successModal = document.getElementById("success-modal");
+        const successOkButton = document.getElementById("success-ok-button");
 
         if (!form) {
           console.error("❌ ERROR: #register-form not found in the DOM.");
@@ -80,11 +91,13 @@
               body: JSON.stringify({ email, password })
             });
 
-            const result = await response.json();
-
             if (response.ok) {
-              window.location.href = "{{ url_for('signin_bp.signin') }}"; // Redirect to sign-in page
+              successModal.style.display = "block";
+              successOkButton.addEventListener("click", function () {
+                window.location.href = "{{ url_for('signin_bp.signin') }}";
+              });
             } else {
+              const result = await response.json();
               errorMessage.textContent =
                 result.error || "An error occurred. Please try again.";
             }
