@@ -43,6 +43,8 @@ CORS(
         r"/*": {"origins": ["http://192.168.0.4:8000", "https://app.podmanager.ai"]}
     },
     supports_credentials=True,
+    allow_headers=["Content-Type", "Authorization"],
+    methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
 )
 
 APP_ENV = os.getenv("APP_ENV", "production")  # Default to production

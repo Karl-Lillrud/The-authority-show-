@@ -33,8 +33,8 @@ def settings():
         )  # Fix: redirect using the blueprint route
 
     user = collection.find_one({"_id": g.user_id})
-    email = user.get("email", "")
-    full_name = user.get("full_name", "")
+    email = user.get("email", "") if user else ""
+    full_name = user.get("full_name", "") if user else ""
 
     return render_template("dashboard/settings.html", email=email, full_name=full_name)
 
