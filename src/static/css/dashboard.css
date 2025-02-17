@@ -1,8 +1,8 @@
 
-
 /* Leaderboard Section */
 .leaderboard-section {
-  width: 90%;
+  width: 100%;
+  max-width: 1200px; /* Adjust based on the actual width of task cards */
   margin: 0 auto;
   background: var(--background-light);
   border-radius: var(--radius-medium);
@@ -13,6 +13,7 @@
      5px 5px 10px var(--dark-shadow-light);
   transition: background-color 0.3s ease, box-shadow 0.3s ease;
 }
+
 
 /* Leaderboard Table */
 .leaderboard-table {
