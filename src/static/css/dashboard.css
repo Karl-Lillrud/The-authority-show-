@@ -4,14 +4,6 @@
   width: 100%;
   max-width: 1200px; /* Adjust based on the actual width of task cards */
   margin: 0 auto;
-  background: var(--background-light);
-  border-radius: var(--radius-medium);
-  padding: var(--spacing-md);
-  text-align: center;
-  box-shadow:
-    -5px -5px 10px var(--light-shadow-light),
-     5px 5px 10px var(--dark-shadow-light);
-  transition: background-color 0.3s ease, box-shadow 0.3s ease;
 }
 
 
@@ -292,8 +284,8 @@
 
 /* Media Queries */
 @media (max-width: 992px) {
-  .card {
-    width: 300px;
+  .leaderboard-section {
+    width: 92%;
   }
 
   .leaderboard-section {
