@@ -78,6 +78,12 @@
         const successModal = document.getElementById("success-modal");
         const successOkButton = document.getElementById("success-ok-button");
 
+        const API_BASE_URL =
+          window.location.hostname === "127.0.0.1" ||
+          window.location.hostname === "localhost"
+            ? "http://127.0.0.1:8000"
+            : "https://app.podmanager.ai";
+
         if (!form) {
           console.error("❌ ERROR: #register-form not found in the DOM.");
           return;
@@ -91,7 +97,7 @@
           const password = document.getElementById("password").value;
 
           try {
-            const response = await fetch("/register", {
+            const response = await fetch(`${API_BASE_URL}/register`, {
               method: "POST",
               headers: {
                 "Content-Type": "application/json"
@@ -102,7 +108,7 @@
             if (response.ok) {
               successModal.style.display = "block";
               successOkButton.addEventListener("click", function () {
-                window.location.href = "{{ url_for('signin_bp.signin') }}";
+                window.location.href = `${API_BASE_URL}/signin`;
               });
             } else {
               const result = await response.json();

@@ -1,4 +1,15 @@
-from flask import Flask, render_template, request, jsonify, url_for, session, redirect, g, Blueprint
+from flask import (
+    Flask,
+    render_template,
+    request,
+    jsonify,
+    url_for,
+    session,
+    redirect,
+    g,
+    Blueprint,
+)
+from flask_cors import CORS  # Import CORS
 from routes.register import register_bp
 from routes.forgot_pass import forgotpass_bp
 from routes.signin import signin_bp
@@ -7,7 +18,7 @@ from routes.dashboard import dashboard_bp
 from routes.pod_management import dashboardmanagement_bp
 from dotenv import load_dotenv
 import os
-from database.cosmos_connection import container
+from database.mongo_connection import collection
 from utils import venvupdate
 
 # update the virtual environment and requirements
@@ -15,9 +26,9 @@ venvupdate.update_venv_and_requirements()
 
 load_dotenv()
 
-app = Flask(__name__, template_folder='templates', static_folder='static')
+app = Flask(__name__, template_folder="templates", static_folder="static")
 app.secret_key = os.getenv("SECRET_KEY")
-app.config['PREFERRED URL SCHEME'] = 'https'
+app.config["PREFERRED URL SCHEME"] = "https"
 app.register_blueprint(register_bp)
 app.register_blueprint(forgotpass_bp)
 app.register_blueprint(signin_bp)
@@ -25,13 +36,50 @@ app.register_blueprint(registerpodcast_bp)
 app.register_blueprint(dashboard_bp)
 app.register_blueprint(dashboardmanagement_bp)
 
+# Enable CORS for specific origins
+CORS(
+    app,
+    resources={
+        r"/*": {"origins": ["http://192.168.0.4:8000", "https://app.podmanager.ai"]}
+    },
+    supports_credentials=True,
+    allow_headers=["Content-Type", "Authorization"],
+    methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+)
+
 APP_ENV = os.getenv("APP_ENV", "production")  # Default to production
 
-PI_BASE_URL = "http://127.0.0.1:8000" if APP_ENV == "local" else "https://app.podmanager.ai"
+PI_BASE_URL = (
+    "http://127.0.0.1:8000" if APP_ENV == "local" else "https://app.podmanager.ai"
+)
+
 
 @app.before_request
 def load_user():
     g.user_id = session.get("user_id")
+
+
+@app.route("/test_mongo_connection", methods=["GET"])
+def test_mongo_connection():
+    try:
+        # Attempt to retrieve a document from the collection
+        test_doc = collection.find_one()
+        if test_doc:
+            return (
+                jsonify(
+                    {"message": "MongoDB connection successful", "document": test_doc}
+                ),
+                200,
+            )
+        else:
+            return (
+                jsonify(
+                    {"message": "MongoDB connection successful, but no documents found"}
+                ),
+                200,
+            )
+    except Exception as e:
+        return jsonify({"error": f"Failed to connect to MongoDB: {str(e)}"}), 500
 
 
 if __name__ == "__main__":
