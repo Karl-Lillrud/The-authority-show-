@@ -1,18 +1,35 @@
-{% extends "dashboard/components/base.html" %}
-{% block title %}Podcast Task Management{% endblock %}
-
-{% block content %}
-<link rel="stylesheet" href="{{ url_for('static', filename='css/accountsettings.css') }}">
+{% extends "dashboard/components/base.html" %} {% block title %}Podcast Task
+Management{% endblock %} {% block content %}
+<link
+  rel="stylesheet"
+  href="{{ url_for('static', filename='css/accountsettings.css') }}"
+/>
 
 <div class="account-settings-wrapper">
   <!-- Sidebar Menu -->
   <aside class="sidebar">
     <nav>
       <ul>
-        <li class="sidebar-item active" data-target="profile-section" tabindex="0">Profile</li>
-        <li class="sidebar-item" data-target="security-section" tabindex="0">Security</li>
-        <li class="sidebar-item" data-target="recovery-section" tabindex="0">Recovery</li>
-        <li class="sidebar-item" data-target="subscriptions-section" tabindex="0">Subscriptions</li>
+        <li
+          class="sidebar-item active"
+          data-target="profile-section"
+          tabindex="0"
+        >
+          Profile
+        </li>
+        <li class="sidebar-item" data-target="security-section" tabindex="0">
+          Security
+        </li>
+        <li class="sidebar-item" data-target="recovery-section" tabindex="0">
+          Recovery
+        </li>
+        <li
+          class="sidebar-item"
+          data-target="subscriptions-section"
+          tabindex="0"
+        >
+          Subscriptions
+        </li>
       </ul>
     </nav>
   </aside>
@@ -21,54 +38,92 @@
   <section class="main-content">
     <!-- Profile Section -->
     <div id="profile-section" class="settings-section">
-      <a href="{{ url_for('dashboard_bp.dashboard') }}" class="back-arrow">&#8592; Back</a>
+      <a href="{{ url_for('dashboard_bp.dashboard') }}" class="back-arrow"
+        >&#8592; Back</a
+      >
       <div class="profile-container">
         <h2>Account Settings</h2>
         <!-- Profile Picture Upload -->
         <div class="profile-pic-container">
-          <img id="profile-pic" src="https://podmanagerstorage.blob.core.windows.net/blob-container//profilepic.jpg" alt="Profile Picture">
-          <input type="file" id="upload-pic" accept="image/*">
+          <img
+            id="profile-pic"
+            src="https://podmanagerstorage.blob.core.windows.net/blob-container//profilepic.jpg"
+            alt="Profile Picture"
+          />
+          <input type="file" id="upload-pic" accept="image/*" />
         </div>
         <!-- Profile Form -->
         <form id="profile-form">
           <label for="full-name">Full Name</label>
-          <input type="text" id="full-name" placeholder="Enter your full name">
+          <input
+            type="text"
+            id="full-name"
+            value="{{ full_name }}"
+            placeholder="Enter your full name"
+          />
           <label for="email">Email</label>
-          <input type="email" id="email" placeholder="Enter your email">
+          <input type="email" id="email" value="{{ email }}" readonly />
           <label for="password">Current Password</label>
-          <input type="password" id="password" placeholder="Enter current password">
+          <input
+            type="password"
+            id="password"
+            placeholder="Enter current password"
+          />
           <label for="new-password">New Password</label>
-          <input type="password" id="new-password" placeholder="Enter new password">
+          <input
+            type="password"
+            id="new-password"
+            placeholder="Enter new password"
+          />
           <label for="confirm-password">Confirm Password</label>
-          <input type="password" id="confirm-password" placeholder="Confirm new password">
+          <input
+            type="password"
+            id="confirm-password"
+            placeholder="Confirm new password"
+          />
           <button type="submit">Save Changes</button>
         </form>
       </div>
     </div>
 
     <!-- Security Section -->
-    <div id="security-section" class="settings-section" style="display: none;">
+    <div id="security-section" class="settings-section" style="display: none">
       <h2 data-i18n="securitySettings.title">Security Settings</h2>
       <div class="toggle-container">
-        <span data-i18n="securitySettings.enable2FA">Two-Factor Authentication:</span>
+        <span data-i18n="securitySettings.enable2FA"
+          >Two-Factor Authentication:</span
+        >
         <label class="switch" aria-label="Toggle Two-Factor Authentication">
-          <input type="checkbox" id="2fa-toggle" aria-checked="false">
+          <input type="checkbox" id="2fa-toggle" aria-checked="false" />
           <span class="slider round"></span>
         </label>
       </div>
       <!-- 2FA Options -->
-      <div id="2fa-options" style="display: none;">
+      <div id="2fa-options" style="display: none">
         <span data-i18n="securitySettings.2faMethod">Options:</span>
         <label>
-          <input type="radio" name="2fa-method" id="2fa-sms" data-i18n="securitySettings.sms" value="sms" checked>
+          <input
+            type="radio"
+            name="2fa-method"
+            id="2fa-sms"
+            data-i18n="securitySettings.sms"
+            value="sms"
+            checked
+          />
           <span data-i18n="securitySettings.sms">SMS</span>
         </label>
         <label>
-          <input type="radio" name="2fa-method" id="2fa-auth" data-i18n="securitySettings.authApp" value="authApp">
+          <input
+            type="radio"
+            name="2fa-method"
+            id="2fa-auth"
+            data-i18n="securitySettings.authApp"
+            value="authApp"
+          />
           <span data-i18n="securitySettings.authApp">Authenticator App</span>
         </label>
         <!-- QR Code Container -->
-        <div id="qr-code-container" class="qr-code" style="display: none;">
+        <div id="qr-code-container" class="qr-code" style="display: none">
           <canvas id="qr-code"></canvas>
           <p data-i18n="securitySettings.scanQR">Scan QR code</p>
         </div>
@@ -76,36 +131,56 @@
     </div>
 
     <!-- Recovery Section -->
-    <div id="recovery-section" class="settings-section" style="display: none;">
+    <div id="recovery-section" class="settings-section" style="display: none">
       <h2 id="recovery-title" data-i18n="recovery.title">Recovery</h2>
-      <button type="button" id="lost-2fa" class="button button-secondary" data-i18n="recovery.lost2FA">Lost Two-Factor Authentication</button>
+      <button
+        type="button"
+        id="lost-2fa"
+        class="button button-secondary"
+        data-i18n="recovery.lost2FA"
+      >
+        Lost Two-Factor Authentication
+      </button>
     </div>
 
     <!-- Subscriptions Section -->
-    <div id="subscriptions-section" class="settings-section" style="display: none;">
+    <div
+      id="subscriptions-section"
+      class="settings-section"
+      style="display: none"
+    >
       <h2 data-i18n="subscriptions.title">Subscriptions</h2>
-      <button type="button" id="subscribe" class="button button-primary" data-i18n="subscriptions.subscribe">Subscribe</button>
-      
+      <button
+        type="button"
+        id="subscribe"
+        class="button button-primary"
+        data-i18n="subscriptions.subscribe"
+      >
+        Subscribe
+      </button>
+
       <!-- Subscription Modal -->
       <div id="subscription-modal" class="modal">
         <div class="modal-content">
-          <span class="close-button" id="close-subscription-modal">&times;</span>
+          <span class="close-button" id="close-subscription-modal"
+            >&times;</span
+          >
           <h2>Subscription Plans</h2>
           <div class="info-bars">
             <div class="info-bar">
               <strong>1. Free (1 Month)</strong>
-              <p><span style="color: black;">&#8226;</span> [Placeholder]</p>
-              <p><span style="color: black;">&#8226;</span> [Placeholder]</p>
+              <p><span style="color: black">&#8226;</span> [Placeholder]</p>
+              <p><span style="color: black">&#8226;</span> [Placeholder]</p>
             </div>
             <div class="info-bar">
               <strong>2. Paid User</strong>
-              <p><span style="color: black;">&#8226;</span> [Placeholder]</p>
-              <p><span style="color: black;">&#8226;</span> [Placeholder]</p>
+              <p><span style="color: black">&#8226;</span> [Placeholder]</p>
+              <p><span style="color: black">&#8226;</span> [Placeholder]</p>
             </div>
             <div class="info-bar">
               <strong>3. Paid Corporate</strong>
-              <p><span style="color: black;">&#8226;</span> [Placeholder]</p>
-              <p><span style="color: black;">&#8226;</span> [Placeholder]</p>
+              <p><span style="color: black">&#8226;</span> [Placeholder]</p>
+              <p><span style="color: black">&#8226;</span> [Placeholder]</p>
             </div>
           </div>
           <form id="subscription-form">
@@ -114,7 +189,9 @@
               <select id="subscription-type" class="input-field">
                 <option value="free">Free (1 month)</option>
                 <option value="paid-user">Paid User (1 Podcast)</option>
-                <option value="corporate">Paid Corporate (Studios & Production Companies)</option>
+                <option value="corporate">
+                  Paid Corporate (Studios & Production Companies)
+                </option>
               </select>
             </div>
             <!-- Payment Methods Section -->
@@ -124,12 +201,20 @@
                 <option value="">No payment methods added</option>
               </select>
               <div class="payment-method-buttons">
-                <button type="button" id="btn-add-payment" class="button">Add Payment Method</button>
-                <button type="button" id="btn-update-payment" class="button">Update Payment Method</button>
-                <button type="button" id="btn-remove-payment" class="button">Remove Payment Method</button>
+                <button type="button" id="btn-add-payment" class="button">
+                  Add Payment Method
+                </button>
+                <button type="button" id="btn-update-payment" class="button">
+                  Update Payment Method
+                </button>
+                <button type="button" id="btn-remove-payment" class="button">
+                  Remove Payment Method
+                </button>
               </div>
             </div>
-            <button type="submit" class="button button-primary">Save Subscription</button>
+            <button type="submit" class="button button-primary">
+              Save Subscription
+            </button>
           </form>
           <div id="billing-history">
             <h3>Billing History</h3>
@@ -143,7 +228,9 @@
                 </tr>
               </thead>
               <tbody id="billing-entries">
-                <tr><td colspan="4">No billing history available</td></tr>
+                <tr>
+                  <td colspan="4">No billing history available</td>
+                </tr>
               </tbody>
             </table>
           </div>
@@ -155,46 +242,55 @@
 
 <script>
   // Sidebar navigation functionality
-  document.querySelectorAll('.sidebar-item').forEach(item => {
-    item.addEventListener('click', function() {
+  document.querySelectorAll(".sidebar-item").forEach((item) => {
+    item.addEventListener("click", function () {
       // Remove active class from all items
-      document.querySelectorAll('.sidebar-item').forEach(i => i.classList.remove('active'));
+      document
+        .querySelectorAll(".sidebar-item")
+        .forEach((i) => i.classList.remove("active"));
       // Add active class to selected item
-      this.classList.add('active');
+      this.classList.add("active");
       // Hide all settings sections
-      document.querySelectorAll('.settings-section').forEach(section => section.style.display = 'none');
+      document
+        .querySelectorAll(".settings-section")
+        .forEach((section) => (section.style.display = "none"));
       // Show selected section
-      const target = this.getAttribute('data-target');
-      document.getElementById(target).style.display = 'block';
+      const target = this.getAttribute("data-target");
+      document.getElementById(target).style.display = "block";
       // Adjust the main content container's height to match the sidebar height if needed
-      const sidebarHeight = document.querySelector('.sidebar').offsetHeight;
-      document.querySelector('.main-content').style.minHeight = sidebarHeight + 'px';
+      const sidebarHeight = document.querySelector(".sidebar").offsetHeight;
+      document.querySelector(".main-content").style.minHeight =
+        sidebarHeight + "px";
     });
   });
 
   // Profile Picture Preview
-  document.getElementById("upload-pic").addEventListener("change", function(event) {
-    const file = event.target.files[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onload = function(e) {
-        document.getElementById("profile-pic").src = e.target.result;
-      };
-      reader.readAsDataURL(file);
-    }
-  });
+  document
+    .getElementById("upload-pic")
+    .addEventListener("change", function (event) {
+      const file = event.target.files[0];
+      if (file) {
+        const reader = new FileReader();
+        reader.onload = function (e) {
+          document.getElementById("profile-pic").src = e.target.result;
+        };
+        reader.readAsDataURL(file);
+      }
+    });
 
   // Profile Form Submission
-  document.getElementById("profile-form").addEventListener("submit", function(event) {
-    event.preventDefault();
-    const password = document.getElementById("password").value;
-    const confirmPassword = document.getElementById("confirm-password").value;
-    if (password && password !== confirmPassword) {
-      alert("Passwords do not match!");
-      return;
-    }
-    alert("Profile updated successfully!");
-  });
+  document
+    .getElementById("profile-form")
+    .addEventListener("submit", function (event) {
+      event.preventDefault();
+      const password = document.getElementById("password").value;
+      const confirmPassword = document.getElementById("confirm-password").value;
+      if (password && password !== confirmPassword) {
+        alert("Passwords do not match!");
+        return;
+      }
+      alert("Profile updated successfully!");
+    });
 
   // SECURITY (2FA) Functionality
   document.addEventListener("DOMContentLoaded", function () {
@@ -205,7 +301,14 @@
     const qrCodeContainer = document.getElementById("qr-code-container");
     const qrCodeCanvas = document.getElementById("qr-code");
 
-    if (!twoFAToggle || !twoFAOptions || !authAppRadio || !smsRadio || !qrCodeContainer || !qrCodeCanvas) {
+    if (
+      !twoFAToggle ||
+      !twoFAOptions ||
+      !authAppRadio ||
+      !smsRadio ||
+      !qrCodeContainer ||
+      !qrCodeCanvas
+    ) {
       console.error("One or more 2FA elements not found.");
       return;
     }
@@ -246,16 +349,20 @@
   const subscriptionButton = document.getElementById("subscribe");
   const subscriptionModal = document.getElementById("subscription-modal");
   subscriptionButton.addEventListener("click", function () {
-      subscriptionModal.style.display = "flex";
+    subscriptionModal.style.display = "flex";
   });
-  document.getElementById("close-subscription-modal").addEventListener("click", function () {
+  document
+    .getElementById("close-subscription-modal")
+    .addEventListener("click", function () {
       subscriptionModal.style.display = "none";
-  });
-  document.getElementById("subscription-form").addEventListener("submit", function (event) {
+    });
+  document
+    .getElementById("subscription-form")
+    .addEventListener("submit", function (event) {
       event.preventDefault();
       alert("Subscription updated successfully.");
       subscriptionModal.style.display = "none";
-  });
+    });
 
   let paymentMethods = [];
   function updatePaymentMethodsDisplay() {
@@ -272,8 +379,12 @@
       paymentMethods.forEach((pm, index) => {
         const opt = document.createElement("option");
         opt.value = index;
-        const cardInfo = pm.cardNumber ? `Card ending in ${pm.cardNumber.slice(-4)}` : "Unknown Card";
-        opt.textContent = `${index + 1}. ${cardInfo} | Exp: ${pm.expiry} | Holder: ${pm.holderName}`;
+        const cardInfo = pm.cardNumber
+          ? `Card ending in ${pm.cardNumber.slice(-4)}`
+          : "Unknown Card";
+        opt.textContent = `${index + 1}. ${cardInfo} | Exp: ${
+          pm.expiry
+        } | Holder: ${pm.holderName}`;
         dropdown.appendChild(opt);
       });
     }
@@ -315,7 +426,9 @@
           <label for="holder-name">Card Holder Name</label>
           <input type="text" id="holder-name" class="input-field" placeholder="Enter card holder name" required>
         </div>
-        <button type="submit" class="button button-primary">${mode === "add" ? "Add" : "Update"}</button>
+        <button type="submit" class="button button-primary">${
+          mode === "add" ? "Add" : "Update"
+        }</button>
         <button type="button" id="cancel-payment-form" class="button">Cancel</button>
       </form>
     `;
@@ -327,47 +440,61 @@
       document.getElementById("expiry").value = pm.expiry || "";
       document.getElementById("holder-name").value = pm.holderName || "";
     }
-    document.getElementById("payment-method-form").addEventListener("submit", function (e) {
-      e.preventDefault();
-      const cardNumber = document.getElementById("card-number").value.trim();
-      const expiry = document.getElementById("expiry").value.trim();
-      const holderName = document.getElementById("holder-name").value.trim();
-      if (mode === "add") {
-        paymentMethods.push({ cardNumber, expiry, holderName });
-      } else if (mode === "update" && paymentMethodIndex !== null) {
-        paymentMethods[paymentMethodIndex] = { cardNumber, expiry, holderName };
-      }
-      updatePaymentMethodsDisplay();
-      document.body.removeChild(formOverlay);
-    });
-    document.getElementById("cancel-payment-form").addEventListener("click", function () {
-      document.body.removeChild(formOverlay);
-    });
+    document
+      .getElementById("payment-method-form")
+      .addEventListener("submit", function (e) {
+        e.preventDefault();
+        const cardNumber = document.getElementById("card-number").value.trim();
+        const expiry = document.getElementById("expiry").value.trim();
+        const holderName = document.getElementById("holder-name").value.trim();
+        if (mode === "add") {
+          paymentMethods.push({ cardNumber, expiry, holderName });
+        } else if (mode === "update" && paymentMethodIndex !== null) {
+          paymentMethods[paymentMethodIndex] = {
+            cardNumber,
+            expiry,
+            holderName
+          };
+        }
+        updatePaymentMethodsDisplay();
+        document.body.removeChild(formOverlay);
+      });
+    document
+      .getElementById("cancel-payment-form")
+      .addEventListener("click", function () {
+        document.body.removeChild(formOverlay);
+      });
   }
-  document.getElementById("btn-add-payment").addEventListener("click", function () {
-    showPaymentMethodForm("add");
-  });
-  document.getElementById("btn-update-payment").addEventListener("click", function () {
-    const dropdown = document.getElementById("payment-methods-dropdown");
-    const index = dropdown.value;
-    if (index === "" || index === null) {
-      alert("No payment method selected.");
-      return;
-    }
-    showPaymentMethodForm("update", index);
-  });
-  document.getElementById("btn-remove-payment").addEventListener("click", function () {
-    const dropdown = document.getElementById("payment-methods-dropdown");
-    const index = dropdown.value;
-    if (index === "" || index === null) {
-      alert("No payment method selected.");
-      return;
-    }
-    if (confirm("Are you sure you want to remove this payment method?")) {
-      paymentMethods.splice(index, 1);
-      updatePaymentMethodsDisplay();
-    }
-  });
+  document
+    .getElementById("btn-add-payment")
+    .addEventListener("click", function () {
+      showPaymentMethodForm("add");
+    });
+  document
+    .getElementById("btn-update-payment")
+    .addEventListener("click", function () {
+      const dropdown = document.getElementById("payment-methods-dropdown");
+      const index = dropdown.value;
+      if (index === "" || index === null) {
+        alert("No payment method selected.");
+        return;
+      }
+      showPaymentMethodForm("update", index);
+    });
+  document
+    .getElementById("btn-remove-payment")
+    .addEventListener("click", function () {
+      const dropdown = document.getElementById("payment-methods-dropdown");
+      const index = dropdown.value;
+      if (index === "" || index === null) {
+        alert("No payment method selected.");
+        return;
+      }
+      if (confirm("Are you sure you want to remove this payment method?")) {
+        paymentMethods.splice(index, 1);
+        updatePaymentMethodsDisplay();
+      }
+    });
   updatePaymentMethodsDisplay();
 </script>
 {% endblock %}
