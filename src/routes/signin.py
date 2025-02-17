@@ -1,5 +1,5 @@
 # 📌 Sign-in Route
-from flask import Flask, render_template, request, jsonify, url_for, session, redirect, g, Blueprint
+from flask import Flask, render_template, request, jsonify, session, Blueprint
 from werkzeug.security import check_password_hash
 from database.cosmos_connection import container
 
