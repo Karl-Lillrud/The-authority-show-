@@ -62,27 +62,27 @@ example_subscription = {
 }
 
 example_clip = {
-    "_id": str(uuid.uuid4()),
-    "Podcast": str(uuid.uuid4()),
+    "_id": 1,
+    "Podcast": 1,
     "ClipName": "Sample Clip",
 }
 
 example_podcast = {
-    "_id": str(uuid.uuid4()),
+    "_id": 1,
     "UserID": example_user["_id"],
     "Field1": "Value1",
     "Field2": "Value2",
 }
 
 example_team = {
-    "_id": str(uuid.uuid4()),
+    "_id": 1,
     "UserID": example_user["_id"],
     "Name": "Sample Team",
 }
 
 example_podtask = {
-    "_id": str(uuid.uuid4()),
-    "PodcastID": str(uuid.uuid4()),
+    "_id": 1,
+    "PodcastID": 1,
     "Field1": "Value1",
     "Field2": "Value2",
 }
