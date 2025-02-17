@@ -1,108 +1,137 @@
 :root {
-    --bg-light: #EFF2F9;
-    --bg-dark: #1C1C1C;
-    --shadow-light: rgba(22, 24, 29, 0.23);
-    --shadow-dark: rgba(0, 0, 0, 0.8);
-    --text-light: #6E7F8D;
-    --text-dark: #B3B3B3;
-    --highlight: #FF7F3F;
-    --font-primary: 'Campton', sans-serif;
+  --bg-light: #eff2f9;
+  --bg-dark: #1c1c1c;
+  --shadow-light: rgba(22, 24, 29, 0.23);
+  --shadow-dark: rgba(0, 0, 0, 0.8);
+  --text-light: #6e7f8d;
+  --text-dark: #b3b3b3;
+  --highlight: #ff7f3f;
+  --font-primary: "Campton", sans-serif;
 }
- 
+
 body {
-    font-family: var(--font-primary);
-    background-color: var(--bg-light);
-    color: var(--text-light);
-    height: 100vh;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    margin: 0;
-    transition: background-color 0.3s ease, color 0.3s ease;
+  font-family: var(--font-primary);
+  background-color: var(--bg-light);
+  color: var(--text-light);
+  height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin: 0;
+  transition: background-color 0.3s ease, color 0.3s ease;
 }
- 
+
 .center-box {
-    background-color: var(--bg-light);
-    width: 90%;
-    max-width: 250px;
-    padding: 20px;
-    border-radius: 20px;
-    box-shadow: -5px -5px 15px white, 5px 5px 15px var(--shadow-light);
-    text-align: center;
-    margin: 15px;
+  background-color: var(--bg-light);
+  width: 90%;
+  max-width: 250px;
+  padding: 20px;
+  border-radius: 20px;
+  box-shadow: -5px -5px 15px white, 5px 5px 15px var(--shadow-light);
+  text-align: center;
+  margin: 15px;
 }
 
 .logo-container {
-    position: absolute;
-    top: 20px;
-    left: 20px;
-    width: 120px; /* Adjust as needed */
+  position: absolute;
+  top: 20px;
+  left: 20px;
+  width: 120px; /* Adjust as needed */
 }
 
 .logo-container img {
-    width: 100%;
-    height: auto;
+  width: 100%;
+  height: auto;
 }
 
 .button {
-    padding: 10px 20px;
-    border-radius: 25px;
-    margin-top: 15px;
-    border: none;
-    cursor: pointer;
-    font-family: var(--font-primary);
-    background: var(--bg-light);
-    box-shadow: -5px -5px 10px white, 5px 5px 10px var(--shadow-light);
-    transition: all 0.3s ease;
+  padding: 10px 20px;
+  border-radius: 25px;
+  margin-top: 15px;
+  border: none;
+  cursor: pointer;
+  font-family: var(--font-primary);
+  background: var(--bg-light);
+  box-shadow: -5px -5px 10px white, 5px 5px 10px var(--shadow-light);
+  transition: all 0.3s ease;
 }
 .button.button {
-    color: #6E7F8D;
+  color: #6e7f8d;
 }
 
 .button:hover {
-    box-shadow: -3px -3px 6px white, 3px 3px 6px var(--shadow-light);
-}
- 
-.input {
-    padding: 10px;
-    border: none;
-    border-radius: 10px;
-    width: 70%;
-    background: var(--bg-light);
-    box-shadow: inset -5px -5px 10px white, inset 5px 5px 10px var(--shadow-light);
-    transition: all 0.3s ease;
-    margin: 15px;
-}
- 
-.input:focus {
-    outline: none;
-    box-shadow: inset -3px -3px 6px white, inset 3px 3px 6px var(--shadow-light);
-}
- 
-.link {
-    color: var(--highlight);
-    text-decoration: none;
-    font-size: 14px;
-    margin-top: 15px;
-    margin: 30px;
+  box-shadow: -3px -3px 6px white, 3px 3px 6px var(--shadow-light);
 }
 
+.input {
+  padding: 10px;
+  border: none;
+  border-radius: 10px;
+  width: 70%;
+  background: var(--bg-light);
+  box-shadow: inset -5px -5px 10px white, inset 5px 5px 10px var(--shadow-light);
+  transition: all 0.3s ease;
+  margin: 15px;
+}
+
+.input:focus {
+  outline: none;
+  box-shadow: inset -3px -3px 6px white, inset 3px 3px 6px var(--shadow-light);
+}
+
+.link {
+  color: var(--highlight);
+  text-decoration: none;
+  font-size: 14px;
+  margin-top: 15px;
+  margin: 30px;
+}
 
 .link:hover {
-    text-decoration: underline;
+  text-decoration: underline;
 }
 
 .account-text {
-    font-size: 14px;
-    color: var(--text-light);
-    margin-top: 20px;
-    margin-bottom: 5px;
-    text-align: center;
+  font-size: 14px;
+  color: var(--text-light);
+  margin-top: 20px;
+  margin-bottom: 5px;
+  text-align: center;
 }
 
 .error-message {
-    font-size: 14px;
-    color: var(--highlight);
-    margin-bottom: 15px;
-    text-align: center;
+  font-size: 14px;
+  color: var(--highlight);
+  margin-bottom: 15px;
+  text-align: center;
+}
+.success-message {
+  font-size: 14px;
+  color: var(--highlight);
+  margin-bottom: 15px;
+  text-align: center;
+  display: none;
+}
+
+.modal {
+  display: none;
+  position: fixed;
+  z-index: 1;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  overflow: auto;
+  background-color: rgba(0, 0, 0, 0.4);
+}
+
+.modal-content {
+  background-color: var(--bg-light);
+  margin: 15% auto;
+  padding: 20px;
+  border-radius: 20px;
+  box-shadow: -5px -5px 15px white, 5px 5px 15px var(--shadow-light);
+  text-align: center;
+  width: 90%;
+  max-width: 250px;
 }

@@ -1,6 +1,9 @@
 from azure.cosmos import CosmosClient
+from flask import Blueprint
 import os
 from dotenv import load_dotenv
+
+cosmos_bp = Blueprint('cosmos_bp', __name__)
 
 # Load environment variables
 load_dotenv()

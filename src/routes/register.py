@@ -1,6 +1,5 @@
-from flask import Blueprint, request, jsonify, url_for, render_template, flash
-from azure.cosmos import CosmosClient, exceptions
-import os
+from flask import Blueprint, request, jsonify, url_for, render_template
+from azure.cosmos import exceptions
 import uuid
 from werkzeug.security import generate_password_hash
 from dotenv import load_dotenv
@@ -55,7 +54,6 @@ def register():
 
     try:
         container.create_item(body=user_document)
-
         return (
             jsonify(
                 {
