@@ -54,7 +54,6 @@ def register():
 
     try:
         container.create_item(body=user_document)
-
         return (
             jsonify(
                 {

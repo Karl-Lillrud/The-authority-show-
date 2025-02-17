@@ -8,3 +8,10 @@ __pycache__/
 *.pyc
 *.pyo
 *.pyd
+
+
+
+# Ignore build artifacts
+build/
+dist/
+*.egg-info/
