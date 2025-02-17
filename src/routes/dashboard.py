@@ -40,8 +40,11 @@ def accountsettings():
         )
     )[0]
     email = user.get("email", "")
+    full_name = user.get("full_name", "")
 
-    return render_template("dashboard/accountsettings.html", email=email)
+    return render_template(
+        "dashboard/accountsettings.html", email=email, full_name=full_name
+    )
 
 
 # ✅ Serves the profile page
