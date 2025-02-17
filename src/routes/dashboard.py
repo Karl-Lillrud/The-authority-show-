@@ -25,8 +25,8 @@ def homepage():
 
 
 # ✅ Serves the settings page
-@dashboard_bp.route("/accountsettings", methods=["GET"])
-def accountsettings():
+@dashboard_bp.route("/settings", methods=["GET"])
+def settings():
     if not g.user_id:
         return redirect(
             url_for("signin_bp.signin")
@@ -43,7 +43,7 @@ def accountsettings():
     full_name = user.get("full_name", "")
 
     return render_template(
-        "dashboard/accountsettings.html", email=email, full_name=full_name
+        "dashboard/settings.html", email=email, full_name=full_name
     )
 
 
@@ -82,7 +82,7 @@ def team():
         return redirect(
             url_for("signin_bp.signin")
         )  # Fix: redirect using the blueprint route
-    return render_template("team/index.html")
+    return render_template("team/team.html")
 
 
 @dashboard_bp.route("/guest", methods=["GET", "POST"])
@@ -91,4 +91,4 @@ def guest():
         return redirect(
             url_for("signin_bp.signin")
         )  # Fix: redirect using the blueprint route
-    return render_template("guest/index.html")
+    return render_template("guest/guest.html")
