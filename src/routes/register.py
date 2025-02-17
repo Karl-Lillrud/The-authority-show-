@@ -4,7 +4,7 @@ import uuid
 from werkzeug.security import generate_password_hash
 from dotenv import load_dotenv
 from datetime import datetime
-from database.cosmos_connection import container
+from database.mongo_connection import collection
 
 # ✅ Define Blueprint
 register_bp = Blueprint("register_bp", __name__)
@@ -33,27 +33,21 @@ def register():
     password = data["password"]
     hashed_password = generate_password_hash(password)
 
-    query = "SELECT * FROM c WHERE c.email = @email"
-    parameters = [{"name": "@email", "value": email}]
-    existing_users = list(
-        container.query_items(
-            query=query, parameters=parameters, enable_cross_partition_query=True
-        )
-    )
+    query = {"email": email}
+    existing_user = collection.find_one(query)
 
-    if existing_users:
+    if existing_user:
         return jsonify({"error": "Email already registered."}), 409
 
     user_document = {
-        "id": str(uuid.uuid4()),
+        "_id": str(uuid.uuid4()),
         "email": email,
         "passwordHash": hashed_password,
         "createdAt": datetime.utcnow().isoformat(),
-        "partitionKey": email,
     }
 
     try:
-        container.create_item(body=user_document)
+        collection.insert_one(user_document)
         return (
             jsonify(
                 {
@@ -63,5 +57,5 @@ def register():
             ),
             201,
         )
-    except exceptions.CosmosHttpResponseError as e:
+    except Exception as e:
         return jsonify({"error": f"Database error: {str(e)}"}), 500

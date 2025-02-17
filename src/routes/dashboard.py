@@ -1,5 +1,5 @@
-from flask import g, redirect, render_template, url_for, Blueprint
-from database.cosmos_connection import container  # Add import
+from flask import Blueprint, render_template, session, redirect, url_for, g
+from database.mongo_connection import collection
 
 dashboard_bp = Blueprint("dashboard_bp", __name__)
 
@@ -11,7 +11,11 @@ def dashboard():
         return redirect(
             url_for("signin_bp.signin")
         )  # Fix: redirect using the blueprint route
-    return render_template("dashboard/dashboard.html")
+
+    query = {"creator_id": g.user_id}
+    user_podcasts = list(collection.find(query))
+
+    return render_template("dashboard/dashboard.html", podcasts=user_podcasts)
 
 
 # ✅ Serves the homepage page
@@ -32,13 +36,11 @@ def accountsettings():
             url_for("signin_bp.signin")
         )  # Fix: redirect using the blueprint route
 
-    query = "SELECT * FROM c WHERE c.id = @user_id"
-    parameters = [{"name": "@user_id", "value": g.user_id}]
-    user = list(
-        container.query_items(
-            query=query, parameters=parameters, enable_cross_partition_query=True
-        )
-    )[0]
+    query = {"_id": g.user_id}
+    user = collection.find_one(query)
+    if not user:
+        return redirect(url_for("signin_bp.signin"))
+
     email = user.get("email", "")
     full_name = user.get("full_name", "")
 

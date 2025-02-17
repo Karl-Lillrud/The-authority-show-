@@ -1,35 +1,38 @@
-from flask import request, jsonify, Blueprint, g  # Add g import
-import random
-from database.cosmos_connection import container
-from datetime import datetime, timezone  # Update import
+from flask import Blueprint, request, jsonify, render_template
+from database.mongo_connection import collection
+import uuid
+from datetime import datetime
 
-registerpodcast_bp = Blueprint('registerpodcast_bp', __name__)
+registerpodcast_bp = Blueprint("registerpodcast_bp", __name__)
 
-@registerpodcast_bp.route('/register_podcast', methods=['POST'])
+
+@registerpodcast_bp.route("/register_podcast", methods=["GET", "POST"])
 def register_podcast():
-    if not g.user_id:
-        return jsonify({"error": "Unauthorized"}), 401
+    if request.method == "GET":
+        return render_template("register_podcast.html")
+
+    if request.content_type != "application/json":
+        return (
+            jsonify({"error": "Invalid Content-Type. Expected application/json"}),
+            415,
+        )
 
     data = request.get_json()
-    if not data:
-        return jsonify({"error": "Invalid JSON format"}), 400
+    if "title" not in data or "description" not in data:
+        return jsonify({"error": "Missing title or description"}), 400
 
-    pod_name = data.get("podName", "").strip()
-    pod_rss = data.get("podRss", "").strip()
+    title = data["title"].strip()
+    description = data["description"].strip()
 
-    if not pod_name or not pod_rss:
-        return jsonify({"error": "Podcast Name and RSS URL are required"}), 400
-
-    podcast_item = {
-        "id": str(random.randint(100000, 999999)),
-        "creator_id": g.user_id,
-        "podName": pod_name,
-        "podRss": pod_rss,
-        "created_at": datetime.now(timezone.utc).isoformat()  # Update datetime usage
+    podcast_document = {
+        "_id": str(uuid.uuid4()),
+        "title": title,
+        "description": description,
+        "createdAt": datetime.utcnow().isoformat(),
     }
 
     try:
-        container.upsert_item(podcast_item)
-        return jsonify({"message": "Podcast registered successfully", "redirect_url": "/production-team"}), 201
+        collection.insert_one(podcast_document)
+        return jsonify({"message": "Podcast registered successfully!"}), 201
     except Exception as e:
-        return jsonify({"error": f"Failed to register podcast: {str(e)}"}), 500
+        return jsonify({"error": f"Database error: {str(e)}"}), 500
