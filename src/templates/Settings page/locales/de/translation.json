@@ -1,0 +1,68 @@
+{
+    "page": {
+      "title": "Konto- & Podcast-Einstellungen"
+    },
+    "accountSettings": {
+      "title": "Kontoeinstellungen",
+      "profilePicture": {
+        "alt": "Profilbild",
+        "upload": "Hochladen"
+      },
+      "form": {
+        "nameLabel": "Name:",
+        "namePlaceholder": "Geben Sie Ihren vollständigen Namen ein",
+        "nameError": "Bitte geben Sie einen gültigen Namen ein (2-50 Zeichen).",
+        "emailLabel": "E-Mail:",
+        "emailPlaceholder": "Geben Sie Ihre E-Mail-Adresse ein",
+        "emailError": "Bitte geben Sie eine gültige E-Mail-Adresse ein.",
+        "passwordLabel": "Passwort:",
+        "changePassword": "Passwort ändern",
+        "save": "Änderungen speichern",
+        "saveSuccess": "Konto erfolgreich aktualisiert!"
+      }
+    },
+    "securitySettings": {
+      "title": "Sicherheitseinstellungen",
+      "enable2FA": "2FA aktivieren:",
+      "off": "AUS",
+      "on": "EIN",
+      "2faMethod": "Optionen:",
+      "sms": "SMS",
+      "authApp": "Auth App",
+      "scanQR": "QR-Code scannen",
+      "qrCode": {
+        "alt": "QR-Code"
+      }
+    },
+    "recovery": {
+      "title": "Wiederherstellung",
+      "lost2FA": "2FA verloren"
+    },
+    "podcastManagement": {
+      "title": "Podcast-Verwaltung",
+      "editPodcast": "Podcast-Details bearbeiten",
+      "manageGuests": "Gäste verwalten",
+      "manageTasks": "Aufgaben verwalten",
+      "integrationSettings": "Integrations-Einstellungen"
+    },
+    "subscriptions": {
+      "title": "Abonnements",
+      "subscribe": "Abonnieren"
+    },
+    "permissions": {
+      "title": "Berechtigungen & Rollen",
+      "addRole": "Rolle hinzufügen"
+    },
+    "nav": {
+      "accountSettings": "Kontoeinstellungen",
+      "securitySettings": "Sicherheitseinstellungen",
+      "recovery": "Wiederherstellung",
+      "podcastManagement": "Podcast-Verwaltung",
+      "subscriptions": "Abonnements",
+      "permissions": "Berechtigungen & Rollen"
+    },
+    "footer": {
+      "copy": "© 2025 Podcast Manager. Alle Rechte vorbehalten."
+    }
+  }
+  

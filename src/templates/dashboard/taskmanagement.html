@@ -95,6 +95,21 @@
   </div>
 </div>
 
+<div id="default-tasks-popup" class="popup" style="display:none;">
+  <div class="popup-content">
+    <h2>Select Default Tasks</h2>
+    <!-- Select All Button placed at the top-left above the default tasks list -->
+    <button id="select-all-default-btn" onclick="selectAllDefaultTasks()" style="display:block; margin-bottom:10px; text-align:left;">Select All</button>
+    <div id="default-tasks-list">
+      <!-- Default tasks will be dynamically populated here -->
+    </div>
+    <div class="modal-buttons">
+      <button id="add-default-tasks-btn" onclick="addSelectedDefaultTasks()">Add Selected Tasks</button>
+      <button class="cancel-btn" onclick="closeDefaultTasksPopup()">Cancel</button>
+    </div>
+  </div>
+</div>
+
 <!-- Include SortableJS Library for Drag & Drop -->
 <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
 <script>
@@ -107,7 +122,7 @@
 
   // Event listeners for task management buttons.
   document.getElementById("add-task-btn").addEventListener("click", openModal);
-  document.getElementById("load-default-btn").addEventListener("click", loadDefaultTasks);
+  
 
   function openModal() {
     document.getElementById("task-modal").style.display = "flex";
@@ -167,7 +182,10 @@
     button.closest("li").remove();
   }
 
-  function loadDefaultTasks() {
+  document.getElementById("load-default-btn").addEventListener("click", openDefaultTasksPopup);
+  
+  function openDefaultTasksPopup() {
+    const defaultTasksPopup = document.getElementById("default-tasks-popup");
     const defaultTasks = [
       "Guest received pitch email to join the show as a guest",
       "Guest filled out the guest form and picked a date",
@@ -200,20 +218,68 @@
       "Episode goes live soon or Now live announcement",
       "Mark episode as completed"
     ];
-    const taskList = document.getElementById("task-list");
+    const listContainer = document.getElementById("default-tasks-list");
+    listContainer.innerHTML = "";
     defaultTasks.forEach(task => {
-      let li = document.createElement("li");
-      li.innerHTML = `
-        <div class="task-details">
-          <span class="task-name">${task}</span>
-        </div>
-        <div class="task-actions">
-          <button class="edit-btn" onclick="editTask(this)">Edit</button>
-          <button class="delete-btn" onclick="deleteTask(this)">Delete</button>
-        </div>
-      `;
-      taskList.appendChild(li);
+      const div = document.createElement("div");
+      div.className = "default-task-item";
+      const checkbox = document.createElement("input");
+      checkbox.type = "checkbox";
+      checkbox.value = task;
+      checkbox.className = "default-task-checkbox";
+      const label = document.createElement("label");
+      label.textContent = task;
+      div.appendChild(checkbox);
+      div.appendChild(label);
+      listContainer.appendChild(div);
     });
+    // Reset the select-all button text when popup opens
+    document.getElementById("select-all-default-btn").textContent = "Select All";
+    document.getElementById("default-tasks-popup").style.display = "flex";
+  }
+  
+  // Toggle Select All / Unselect All behavior.
+  function selectAllDefaultTasks() {
+    const checkboxes = document.querySelectorAll(".default-task-checkbox");
+    let allSelected = true;
+    checkboxes.forEach(checkbox => {
+      if (!checkbox.checked) {
+        allSelected = false;
+      }
+    });
+    if (allSelected) {
+      // If all are selected, unselect all.
+      checkboxes.forEach(checkbox => { checkbox.checked = false; });
+      document.getElementById("select-all-default-btn").textContent = "Select All";
+    } else {
+      // Otherwise, select all.
+      checkboxes.forEach(checkbox => { checkbox.checked = true; });
+      document.getElementById("select-all-default-btn").textContent = "Unselect All";
+    }
+  }
+  
+  function addSelectedDefaultTasks() {
+    const checkboxes = document.querySelectorAll(".default-task-checkbox");
+    checkboxes.forEach(checkbox => {
+      if (checkbox.checked) {
+        let li = document.createElement("li");
+        li.innerHTML = `
+          <div class="task-details">
+            <span class="task-name">${checkbox.value}</span>
+          </div>
+          <div class="task-actions">
+            <button class="edit-btn" onclick="editTask(this)">Edit</button>
+            <button class="delete-btn" onclick="deleteTask(this)">Delete</button>
+          </div>
+        `;
+        document.getElementById("task-list").appendChild(li);
+      }
+    });
+    closeDefaultTasksPopup();
+  }
+  
+  function closeDefaultTasksPopup() {
+    document.getElementById("default-tasks-popup").style.display = "none";
   }
 
   new Sortable(document.getElementById('task-list'), {
