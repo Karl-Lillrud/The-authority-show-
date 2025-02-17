@@ -1,11 +1,12 @@
 from flask import request, jsonify, Blueprint, g  # Add g import
 import random
-from database.cosmos_connection import container
+from database.mongo_connection import collection
 from datetime import datetime, timezone  # Update import
 
-registerpodcast_bp = Blueprint('registerpodcast_bp', __name__)
+registerpodcast_bp = Blueprint("registerpodcast_bp", __name__)
 
-@registerpodcast_bp.route('/register_podcast', methods=['POST'])
+
+@registerpodcast_bp.route("/register_podcast", methods=["POST"])
 def register_podcast():
     if not g.user_id:
         return jsonify({"error": "Unauthorized"}), 401
@@ -21,15 +22,23 @@ def register_podcast():
         return jsonify({"error": "Podcast Name and RSS URL are required"}), 400
 
     podcast_item = {
-        "id": str(random.randint(100000, 999999)),
+        "_id": str(random.randint(100000, 999999)),
         "creator_id": g.user_id,
         "podName": pod_name,
         "podRss": pod_rss,
-        "created_at": datetime.now(timezone.utc).isoformat()  # Update datetime usage
+        "created_at": datetime.now(timezone.utc).isoformat(),  # Update datetime usage
     }
 
     try:
-        container.upsert_item(podcast_item)
-        return jsonify({"message": "Podcast registered successfully", "redirect_url": "/production-team"}), 201
+        collection.insert_one(podcast_item)
+        return (
+            jsonify(
+                {
+                    "message": "Podcast registered successfully",
+                    "redirect_url": "/production-team",
+                }
+            ),
+            201,
+        )
     except Exception as e:
         return jsonify({"error": f"Failed to register podcast: {str(e)}"}), 500
