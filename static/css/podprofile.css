@@ -60,22 +60,24 @@ body {
 }
 
 .fancy-heading {
-    font-size: 1.8rem;
+    font-size: 2rem;
     font-weight: bold;
     text-align: center;
-    margin-bottom: 1rem;
+    margin-bottom: 1.5rem;
+    color: var(--highlight-color);
 }
 
 /* Forms */
 .form {
     display: flex;
     flex-direction: column;
-    gap: 1.2rem;
+    gap: 1.5rem;
 }
 
 .form-group {
     display: flex;
     flex-direction: column;
+    margin-bottom: 1rem;
 }
 
 label {
@@ -89,12 +91,13 @@ input, select {
     border: 1px solid #ccc;
     border-radius: 8px;
     font-size: 1rem;
-    transition: border-color var(--transition-speed);
+    transition: border-color var(--transition-speed), box-shadow var(--transition-speed);
 }
 
 input:focus, select:focus {
     border-color: var(--highlight-color);
     outline: none;
+    box-shadow: 0 0 5px rgba(0, 123, 255, 0.5);
 }
 
 input:hover, select:hover {
