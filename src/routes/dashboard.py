@@ -1,5 +1,5 @@
 from flask import g, redirect, render_template, url_for, Blueprint
-from database.cosmos_connection import container  # Add import
+from database.mongo_connection import collection  # Add import
 
 dashboard_bp = Blueprint("dashboard_bp", __name__)
 
@@ -32,19 +32,11 @@ def settings():
             url_for("signin_bp.signin")
         )  # Fix: redirect using the blueprint route
 
-    query = "SELECT * FROM c WHERE c.id = @user_id"
-    parameters = [{"name": "@user_id", "value": g.user_id}]
-    user = list(
-        container.query_items(
-            query=query, parameters=parameters, enable_cross_partition_query=True
-        )
-    )[0]
-    email = user.get("email", "")
-    full_name = user.get("full_name", "")
+    user = collection.find_one({"_id": g.user_id})
+    email = user.get("email", "") if user else ""
+    full_name = user.get("full_name", "") if user else ""
 
-    return render_template(
-        "dashboard/settings.html", email=email, full_name=full_name
-    )
+    return render_template("dashboard/settings.html", email=email, full_name=full_name)
 
 
 # ✅ Serves the profile page
