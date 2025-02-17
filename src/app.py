@@ -9,6 +9,7 @@ from flask import (
     g,
     Blueprint,
 )
+from flask_cors import CORS  # Import CORS
 from routes.register import register_bp
 from routes.forgot_pass import forgotpass_bp
 from routes.signin import signin_bp
@@ -35,6 +36,15 @@ app.register_blueprint(registerpodcast_bp)
 app.register_blueprint(dashboard_bp)
 app.register_blueprint(dashboardmanagement_bp)
 
+# Enable CORS for specific origins
+CORS(
+    app,
+    resources={
+        r"/*": {"origins": ["http://192.168.0.4:8000", "https://app.podmanager.ai"]}
+    },
+    supports_credentials=True,
+)
+
 APP_ENV = os.getenv("APP_ENV", "production")  # Default to production
 
 PI_BASE_URL = (
@@ -45,6 +55,29 @@ PI_BASE_URL = (
 @app.before_request
 def load_user():
     g.user_id = session.get("user_id")
+
+
+@app.route("/test_mongo_connection", methods=["GET"])
+def test_mongo_connection():
+    try:
+        # Attempt to retrieve a document from the collection
+        test_doc = collection.find_one()
+        if test_doc:
+            return (
+                jsonify(
+                    {"message": "MongoDB connection successful", "document": test_doc}
+                ),
+                200,
+            )
+        else:
+            return (
+                jsonify(
+                    {"message": "MongoDB connection successful, but no documents found"}
+                ),
+                200,
+            )
+    except Exception as e:
+        return jsonify({"error": f"Failed to connect to MongoDB: {str(e)}"}), 500
 
 
 if __name__ == "__main__":

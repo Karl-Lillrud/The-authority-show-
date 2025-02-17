@@ -10,7 +10,7 @@ load_dotenv()
 
 # MongoDB Configuration
 MONGO_URI = os.getenv("MONGO_URI")
-DATABASE_NAME = "podmanagedb"
+DATABASE_NAME = "Podmanager"
 COLLECTION_NAME = "users"
 
 if not MONGO_URI:
