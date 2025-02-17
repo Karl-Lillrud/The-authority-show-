@@ -24,6 +24,13 @@
       <form id="register-form">
         <input
           class="input"
+          type="name"
+          id="name"
+          placeholder="Full Name"
+          required
+        />
+        <input
+          class="input"
           type="email"
           id="email"
           placeholder="Email"
@@ -85,6 +92,7 @@
         form.addEventListener("submit", async function (event) {
           event.preventDefault();
 
+          const name = document.getElementById("name").value;
           const email = document.getElementById("email").value;
           const password = document.getElementById("password").value;
 
@@ -94,7 +102,7 @@
               headers: {
                 "Content-Type": "application/json"
               },
-              body: JSON.stringify({ email, password })
+              body: JSON.stringify({ name, email, password })
             });
 
             if (response.ok) {
