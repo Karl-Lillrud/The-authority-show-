@@ -24,6 +24,9 @@ def is_url_reachable(url):
     except requests.exceptions.RequestException:
         return False
 
+def load_database():
+    return collection
+
 if os.getenv('FLASK_ENV') == 'production' and is_url_reachable(os.getenv("PROD_BASE_URL")):
     app.config['API_BASE_URL'] = os.getenv("PROD_BASE_URL")
 else:
