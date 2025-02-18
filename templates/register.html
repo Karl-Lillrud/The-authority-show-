@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Register</title>
+</head>
+<body>
+    <form id="register-form">
+        <!-- form fields -->
+    </form>
+    <script>
+        document.getElementById('register-form').addEventListener('submit', function(event) {
+            event.preventDefault();
+            const apiUrl = "{{ API_BASE_URL }}/register";
+            fetch(apiUrl, {
+                method: 'POST',
+                // ...other fetch options...
+            })
+            .then(response => response.json())
+            .then(data => {
+                // handle response data
+            })
+            .catch(error => {
+                console.error('Error:', error);
+            });
+        });
+    </script>
+</body>
+</html>
