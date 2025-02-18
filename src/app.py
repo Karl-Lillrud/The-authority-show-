@@ -7,8 +7,6 @@ from database.mongo_connection import collection
 from utils import venvupdate
 from blueprint_register import register_blueprints  # Correct import statement
 
-# Add the src directory to the Python path
-sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 venvupdate.update_venv_and_requirements()
 
