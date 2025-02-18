@@ -19,7 +19,9 @@ CORS(app)
 # Pass API_BASE_URL to templates
 @app.context_processor
 def inject_api_base_url():
-    return dict(API_BASE_URL=os.getenv("API_BASE_URL"))
+    return dict(
+        API_BASE_URL=os.getenv("LOCAL_BASE_URL")
+    )  # Updated to use LOCAL_BASE_URL
 
 
 @app.before_request
