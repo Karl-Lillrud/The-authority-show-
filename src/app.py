@@ -4,11 +4,8 @@ from dotenv import load_dotenv
 import os
 import sys
 import requests
-from database.mongo_connection import collection
 from utils import venvupdate
 from blueprint_register import register_blueprints  # Correct import statement
-
-sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 venvupdate.update_venv_and_requirements()
 
@@ -26,9 +23,6 @@ def is_url_reachable(url):
         return response.status_code == 200
     except requests.exceptions.RequestException:
         return False
-
-def load_database():
-    return collection
 
 if os.getenv('FLASK_ENV') == 'production' and is_url_reachable(os.getenv("PROD_BASE_URL")):
     app.config['API_BASE_URL'] = os.getenv("PROD_BASE_URL")
