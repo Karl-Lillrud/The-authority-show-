@@ -6,7 +6,7 @@ from database.mongo_connection import collection
 from utils import venvupdate
 from blueprint_register import register_blueprints  # Correct import statement
  
-#venvupdate.update_venv_and_requirements()
+venvupdate.update_venv_and_requirements()
  
 load_dotenv()
  
