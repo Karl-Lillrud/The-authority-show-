@@ -15,9 +15,6 @@ from utils import venvupdate
 if os.getenv("SKIP_VENV_UPDATE", "false").lower() not in ("true", "1", "yes"):
     venvupdate.update_venv_and_requirements()
 
-# update the virtual environment and requirements
-venvupdate.update_venv_and_requirements()
-
 load_dotenv()
 
 app = Flask(__name__, template_folder="templates", static_folder="static")
