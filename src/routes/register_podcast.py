@@ -28,7 +28,7 @@ def register_podcast():
 
         podcast_item = {
             "_id": podcast_id,  
-            "creator_id": user_id,  
+            "userid": user_id,  
             "podName": data.get("podName", "").strip(),
             "podRss": data.get("podRss", "").strip(),
             "socialMedia": social_media_links,  # Array
@@ -42,7 +42,7 @@ def register_podcast():
             return jsonify({"error": "User not found"}), 404
 
         print("📝 Inserting podcast into database:", podcast_item)
-        result = collection.database.podcasts.insert_one(podcast_item)
+        result = collection.database.podcast.insert_one(podcast_item)
 
         print("✅ Podcast registered successfully!")
 
@@ -58,24 +58,24 @@ def register_podcast():
         print(f"❌ ERROR: {e}")  
         return jsonify({"error": f"Failed to register podcast: {str(e)}"}), 500
     
-@registerpodcast_bp.route("/get_podcasts", methods=["GET"])
-def get_podcasts():
+@registerpodcast_bp.route("/get_podcast", methods=["GET"])
+def get_podcast():
     if not g.user_id:
         return jsonify({"error": "Unauthorized"}), 401
 
     try:
         user_id = str(g.user_id)  
 
-        podcasts = list(collection.database.podcasts.find({"creator_id": user_id}))
+        podcast = list(collection.database.podcast.find({"userid": user_id}))
 
-        for podcast in podcasts:
+        for podcast in podcast:
             podcast["_id"] = str(podcast["_id"])
 
-        return jsonify({"podcasts": podcasts}), 200
+        return jsonify({"podcast": podcast}), 200
 
     except Exception as e:
         print(f"❌ ERROR: {e}")
-        return jsonify({"error": f"Failed to fetch podcasts: {str(e)}"}), 500
+        return jsonify({"error": f"Failed to fetch podcast: {str(e)}"}), 500
     
 @registerpodcast_bp.route("/delete_podcast/<podcast_id>", methods=["DELETE"])
 def delete_podcast(podcast_id):
@@ -86,17 +86,17 @@ def delete_podcast(podcast_id):
         user_id = str(g.user_id)
 
         # Find the podcast
-        podcast = collection.database.podcasts.find_one({"_id": podcast_id})
+        podcast = collection.database.podcast.find_one({"_id": podcast_id})
 
         if not podcast:
             return jsonify({"error": "Podcast not found"}), 404
 
         # Check if the user is the owner of the podcast
-        if podcast["creator_id"] != user_id:
+        if podcast["userid"] != user_id:
             return jsonify({"error": "Permission denied"}), 403
 
         # Delete the podcast
-        result = collection.database.podcasts.delete_one({"_id": podcast_id})
+        result = collection.database.podcast.delete_one({"_id": podcast_id})
 
         if result.deleted_count == 1:
             return jsonify({"message": "Podcast deleted successfully"}), 200
@@ -117,13 +117,13 @@ def edit_podcast(podcast_id):
         user_id = str(g.user_id)
 
         # Fetch the podcast by ID
-        podcast = collection.database.podcasts.find_one({"_id": podcast_id})
+        podcast = collection.database.podcast.find_one({"_id": podcast_id})
 
         if not podcast:
             return jsonify({"error": "Podcast not found"}), 404
 
         # Check if the user is the owner of the podcast
-        if podcast["creator_id"] != user_id:
+        if podcast["userid"] != user_id:
             return jsonify({"error": "Permission denied"}), 403
 
         # Get new data from the request
@@ -142,7 +142,7 @@ def edit_podcast(podcast_id):
         if "guestUrl" in data:
             update_data["guestUrl"] = data["guestUrl"]
 
-        result = collection.database.podcasts.update_one(
+        result = collection.database.podcast.update_one(
             {"_id": podcast_id},
             {"$set": update_data} 
         )
