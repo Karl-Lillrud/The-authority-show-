@@ -1,33 +1,57 @@
-import sys
-import os
-from flask import Flask, session, g, render_template
-from flask_cors import CORS  # Import CORS
+from flask import (
+    Flask,
+    render_template,
+    request,
+    jsonify,
+    url_for,
+    session,
+    redirect,
+    g,
+    Blueprint,
+)
+from flask_cors import CORS
+from routes.register import register_bp
+from routes.forgot_pass import forgotpass_bp
+from routes.signin import signin_bp
+from routes.register_podcast import registerpodcast_bp
+from routes.dashboard import dashboard_bp
+from routes.pod_management import dashboardmanagement_bp
 from dotenv import load_dotenv
-from database.mongo_connection import collection
+import os
+import logging
 from utils import venvupdate
-from blueprint_register import register_blueprints  # Correct import statement
 
-
+# update the virtual environment and requirements
 venvupdate.update_venv_and_requirements()
 
 load_dotenv()
+
 app = Flask(__name__, template_folder="templates", static_folder="static")
+CORS(
+    app,
+    resources={
+        r"/*": {"origins": ["http://192.168.0.4:5000", "https://app.podmanager.ai"]}
+    },
+)  # Enable CORS for specific origins
+
 app.secret_key = os.getenv("SECRET_KEY")
 app.config["PREFERRED URL SCHEME"] = "https"
-register_blueprints(app, "routes", [os.path.dirname(__file__) + "/routes"])
-CORS(app)
+app.register_blueprint(register_bp)
+app.register_blueprint(forgotpass_bp)
+app.register_blueprint(signin_bp)
+app.register_blueprint(registerpodcast_bp)
+app.register_blueprint(dashboard_bp)
+app.register_blueprint(dashboardmanagement_bp)
 
-# Determine the correct API_BASE_URL based on the environment
-if os.getenv("FLASK_ENV") == "production":
-    api_base_url = os.getenv("PROD_BASE_URL")
-else:
-    api_base_url = os.getenv("LOCAL_BASE_URL")
+APP_ENV = os.getenv("APP_ENV", "production")  # Default to production
 
+API_BASE_URL = (
+    "http://127.0.0.1:8000" if APP_ENV == "local" else "https://app.podmanager.ai"
+)
 
-# Pass API_BASE_URL to templates
-@app.context_processor
-def inject_api_base_url():
-    return dict(API_BASE_URL=api_base_url)
+# Adjust logging level for pymongo to suppress heartbeat logs
+logging.getLogger("pymongo").setLevel(logging.WARNING)
+logging.getLogger("pymongo.topology").setLevel(logging.ERROR)
 
 
 @app.before_request
@@ -36,4 +60,6 @@ def load_user():
 
 
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=8000, debug=True, threaded=True, use_reloader=False)
+    app.run(
+        host="0.0.0.0", port=5000, debug=False
+    )  # Ensure the port matches your request URL
