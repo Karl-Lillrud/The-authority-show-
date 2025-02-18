@@ -30,7 +30,12 @@ app = Flask(__name__, template_folder="templates", static_folder="static")
 CORS(
     app,
     resources={
-        r"/*": {"origins": ["http://192.168.0.4:5000", "https://app.podmanager.ai"]}
+        r"/*": {
+            "origins": [
+                "http://192.168.0.4:5000",
+                "https://podmanager-ggevewegdfgwebcd.northeurope-01.azurewebsites.net/",
+            ]
+        }
     },
 )  # Enable CORS for specific origins
 
@@ -46,7 +51,9 @@ app.register_blueprint(dashboardmanagement_bp)
 APP_ENV = os.getenv("APP_ENV", "production")  # Default to production
 
 API_BASE_URL = (
-    "http://127.0.0.1:8000" if APP_ENV == "local" else "https://app.podmanager.ai"
+    "http://127.0.0.1:8000"
+    if APP_ENV == "local"
+    else "https://podmanager-ggevewegdfgwebcd.northeurope-01.azurewebsites.net/"
 )
 
 # Adjust logging level for pymongo to suppress heartbeat logs
