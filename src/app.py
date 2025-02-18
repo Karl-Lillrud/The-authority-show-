@@ -40,6 +40,8 @@ CORS(
     },
 )  # Enable CORS for specific origins
 
+
+# These can cause  GET https://app.podmanager.ai/ 503 (Service Unavailable) error in the browser if not set
 app.secret_key = os.getenv("SECRET_KEY")
 app.config["PREFERRED URL SCHEME"] = "https"
 app.register_blueprint(register_bp)
