@@ -4,7 +4,7 @@ from dotenv import load_dotenv
 import os
 from database.mongo_connection import collection
 from utils import venvupdate
-from utils.blueprint_register import register_blueprints  # Import the utility function
+from blueprint_register import register_blueprints  # Correct import statement
 
 venvupdate.update_venv_and_requirements()
 
