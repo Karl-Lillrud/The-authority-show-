@@ -78,11 +78,7 @@
         const successModal = document.getElementById("success-modal");
         const successOkButton = document.getElementById("success-ok-button");
 
-        const API_BASE_URL =
-          window.location.hostname === "127.0.0.1" ||
-          window.location.hostname === "localhost"
-            ? "http://127.0.0.1:8000"
-            : "https://app.podmanager.ai";
+        const API_BASE_URL = "{{ API_BASE_URL }}";
 
         if (!form) {
           console.error("❌ ERROR: #register-form not found in the DOM.");
