@@ -33,7 +33,7 @@ CORS(
     resources={
         r"/*": {
             "origins": [
-                "http://192.168.0.4:5000",
+                "http://192.168.0.4:8000",
                 "https://app.podmanager.ai/",
             ]
         }
