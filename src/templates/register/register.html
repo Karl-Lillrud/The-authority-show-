@@ -78,7 +78,11 @@
         const successModal = document.getElementById("success-modal");
         const successOkButton = document.getElementById("success-ok-button");
 
-        const API_BASE_URL = "{{ API_BASE_URL }}";
+        const API_BASE_URL =
+          window.location.hostname === "127.0.0.1" ||
+          window.location.hostname === "localhost"
+            ? "{{ LOCAL_BASE_URL }}"
+            : "{{ PROD_BASE_URL }}"; // Use LOCAL_BASE_URL for localhost and PROD_BASE_URL for production
 
         if (!form) {
           console.error("❌ ERROR: #register-form not found in the DOM.");

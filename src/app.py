@@ -35,7 +35,14 @@ CORS(app)
 
 @app.context_processor
 def inject_api_base_url():
+<<<<<<< HEAD
+    return dict(
+        API_BASE_URL=os.getenv("LOCAL_BASE_URL")
+    )  # Updated to use LOCAL_BASE_URL
+
+=======
     return dict(API_BASE_URL=app.config['API_BASE_URL'])
+>>>>>>> 32fdda558be3813c99412c9487a847b91ee4ed60
 
 @app.before_request
 def load_user():
