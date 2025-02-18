@@ -12,35 +12,32 @@
       e.preventDefault(); // Prevent the form from submitting the traditional way
 
       // Collect form data
-      const podName = document.getElementById("pod-name").value;
-      const podRss = document.getElementById("pod-rss").value;
-      const podHost = document.getElementById("pod-host").value;
-      const guestFormUrl = document.getElementById("guest-form-url").value;
-      const facebook = document.getElementById("facebook").value;
-      const instagram = document.getElementById("instagram").value;
-      const linkedin = document.getElementById("linkedin").value;
-      const twitter = document.getElementById("twitter").value;
-      const tiktok = document.getElementById("tiktok").value;
-      const pinterest = document.getElementById("pinterest").value;
-      const website = document.getElementById("website").value;
-      const email = document.getElementById("email").value;
+      const podName = document.getElementById("pod-name").value.trim();
+      const podRss = document.getElementById("pod-rss").value.trim();
+      const podHost = document.getElementById("pod-host").value.trim();
+      const guestUrl = document.getElementById("guest-form-url").value.trim();
+      const podEmail = document.getElementById("email").value.trim();
+
+      // Collect social media links into an array
+      const socialMedia = [
+        document.getElementById("facebook").value.trim(),
+        document.getElementById("instagram").value.trim(),
+        document.getElementById("linkedin").value.trim(),
+        document.getElementById("twitter").value.trim(),
+        document.getElementById("tiktok").value.trim(),
+        document.getElementById("pinterest").value.trim(),
+        document.getElementById("website").value.trim()
+      ].filter(link => link !== ""); // Remove empty entries
 
       const data = {
         podName,
         podRss,
         podHost,
-        guestFormUrl,
-        facebook,
-        instagram,
-        linkedin,
-        twitter,
-        tiktok,
-        pinterest,
-        website,
-        email,
+        guestUrl,
+        podEmail,
+        socialMedia // array
       };
 
-      // Send data to backend via fetch API
       fetch("/register_podcast", {
         method: "POST",
         headers: {
@@ -54,7 +51,7 @@
             alert(`Error: ${data.error}`);
           } else {
             alert("Podcast registered successfully!");
-            window.location.href = data.redirect_url; // Redirect to the production team page
+            window.location.href = data.redirect_url;
           }
         })
         .catch(error => {
@@ -64,6 +61,7 @@
     });
   });
 </script>
+
 
 </head>
 <body>
