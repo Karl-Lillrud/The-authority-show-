@@ -2,10 +2,13 @@ from flask import Flask, session, g, render_template
 from flask_cors import CORS  # Import CORS
 from dotenv import load_dotenv
 import os
+import sys
 import requests
 from database.mongo_connection import collection
 from utils import venvupdate
 from blueprint_register import register_blueprints  # Correct import statement
+
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 venvupdate.update_venv_and_requirements()
 
