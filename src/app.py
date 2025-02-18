@@ -1,79 +1,31 @@
-from flask import (
-    Flask,
-    render_template,
-    request,
-    jsonify,
-    url_for,
-    session,
-    redirect,
-    g,
-    Blueprint,
-)
-from flask_cors import CORS
-from routes.register import register_bp
-from routes.forgot_pass import forgotpass_bp
-from routes.signin import signin_bp
-from routes.register_podcast import registerpodcast_bp
-from routes.dashboard import dashboard_bp
-from routes.pod_management import dashboardmanagement_bp
+from flask import Flask, session, g, render_template
+from flask_cors import CORS  # Import CORS
 from dotenv import load_dotenv
 import os
-import logging
+from database.mongo_connection import collection
 from utils import venvupdate
+from blueprint_register import register_blueprints  # Correct import statement
 
-# Checking if the environment variable is set to skip the virtual environment update
-if os.getenv("SKIP_VENV_UPDATE", "false").lower() not in ("true", "1", "yes"):
-    venvupdate.update_venv_and_requirements()
+venvupdate.update_venv_and_requirements()
 
 load_dotenv()
-
 app = Flask(__name__, template_folder="templates", static_folder="static")
-CORS(
-    app,
-    resources={
-        r"/*": {
-            "origins": [
-                "http://192.168.0.4:5000",
-                "https://app.podmanager.ai/",
-            ]
-        }
-    },
-)  # Enable CORS for specific origins
-
 app.secret_key = os.getenv("SECRET_KEY")
 app.config["PREFERRED URL SCHEME"] = "https"
-app.register_blueprint(register_bp)
-app.register_blueprint(forgotpass_bp)
-app.register_blueprint(signin_bp)
-app.register_blueprint(registerpodcast_bp)
-app.register_blueprint(dashboard_bp)
-app.register_blueprint(dashboardmanagement_bp)
-
-APP_ENV = os.getenv("APP_ENV", "production")  # Default to production
-
-API_BASE_URL = (
-    "http://127.0.0.1:8000" if APP_ENV == "local" else "https://app.podmanager.ai/"
-)
+register_blueprints(app, "routes", [os.path.dirname(__file__) + "/routes"])
+CORS(app)
 
 
-# Configure logging
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
+# Pass API_BASE_URL to templates
+@app.context_processor
+def inject_api_base_url():
+    return dict(API_BASE_URL=os.getenv("API_BASE_URL"))
 
 
 @app.before_request
 def load_user():
     g.user_id = session.get("user_id")
-    logger.info(f"Request to {request.path} by user {g.user_id}")
-
-
-@app.route("/health")
-def health_check():
-    logger.info("Health check endpoint called")
-    return jsonify({"status": "healthy"}), 200
 
 
 if __name__ == "__main__":
-    app.run(
-        host="0.0.0.0", port=8000, debug=False
-    )  # Ensure the port matches your request URL
+    app.run(host="0.0.0.0", port=8000, debug=True, threaded=True, use_reloader=False)
