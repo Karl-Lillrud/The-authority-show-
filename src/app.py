@@ -1,14 +1,4 @@
-from flask import (
-    Flask,
-    render_template,
-    request,
-    jsonify,
-    url_for,
-    session,
-    redirect,
-    g,
-    Blueprint,
-)
+from flask import Flask, render_template, request, jsonify, url_for, session, redirect, g, Blueprint
 from flask_cors import CORS
 from routes.register import register_bp
 from routes.forgot_pass import forgotpass_bp
@@ -20,6 +10,10 @@ from dotenv import load_dotenv
 import os
 import logging
 from utils import venvupdate
+
+# Checking if the environment variable is set to skip the virtual environment update 
+if os.getenv("SKIP_VENV_UPDATE", "false").lower() not in ("true", "1", "yes"):
+    venvupdate.update_venv_and_requirements()
 
 # update the virtual environment and requirements
 venvupdate.update_venv_and_requirements()
