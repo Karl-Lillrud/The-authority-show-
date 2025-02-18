@@ -23,10 +23,10 @@ jobs:
         python -m pip install --upgrade pip
         pip install -r requirements.txt
 
-    - name: Deploy to Azure Web App
+    - name: Deploy to Azure Web Apps
       uses: azure/webapps-deploy@v3
       with:
-        app-name: <your-app-name>
+        app-name: 'podmanager'
         slot-name: 'production'
         publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }}
         startup-command: 'bash startup.sh'
