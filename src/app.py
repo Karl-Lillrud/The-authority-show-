@@ -52,14 +52,9 @@ app.register_blueprint(dashboardmanagement_bp)
 APP_ENV = os.getenv("APP_ENV", "production")  # Default to production
 
 API_BASE_URL = (
-    "http://127.0.0.1:8000"
-    if APP_ENV == "local"
-    else "https://app.podmanager.ai/"
+    "http://127.0.0.1:8000" if APP_ENV == "local" else "https://app.podmanager.ai/"
 )
 
-# Adjust logging level for pymongo to suppress heartbeat logs
-logging.getLogger("pymongo").setLevel(logging.WARNING)
-logging.getLogger("pymongo.topology").setLevel(logging.ERROR)
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
