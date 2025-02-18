@@ -1,4 +1,14 @@
-from flask import Flask, render_template, request, jsonify, url_for, session, redirect, g, Blueprint
+from flask import (
+    Flask,
+    render_template,
+    request,
+    jsonify,
+    url_for,
+    session,
+    redirect,
+    g,
+    Blueprint,
+)
 from flask_cors import CORS
 from routes.register import register_bp
 from routes.forgot_pass import forgotpass_bp
@@ -11,7 +21,7 @@ import os
 import logging
 from utils import venvupdate
 
-# Checking if the environment variable is set to skip the virtual environment update 
+# Checking if the environment variable is set to skip the virtual environment update
 if os.getenv("SKIP_VENV_UPDATE", "false").lower() not in ("true", "1", "yes"):
     venvupdate.update_venv_and_requirements()
 
@@ -51,10 +61,21 @@ API_BASE_URL = (
 logging.getLogger("pymongo").setLevel(logging.WARNING)
 logging.getLogger("pymongo.topology").setLevel(logging.ERROR)
 
+# Configure logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
 
 @app.before_request
 def load_user():
     g.user_id = session.get("user_id")
+    logger.info(f"Request to {request.path} by user {g.user_id}")
+
+
+@app.route("/health")
+def health_check():
+    logger.info("Health check endpoint called")
+    return jsonify({"status": "healthy"}), 200
 
 
 if __name__ == "__main__":
