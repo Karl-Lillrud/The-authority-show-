@@ -24,7 +24,7 @@ CORS(
         r"/*": {
             "origins": [
                 "http://192.168.0.4:5000",
-                "https://podmanager-ggevewegdfgwebcd.northeurope-01.azurewebsites.net/",
+                "https://app.podmanager.ai/",
             ]
         }
     },
@@ -44,7 +44,7 @@ APP_ENV = os.getenv("APP_ENV", "production")  # Default to production
 API_BASE_URL = (
     "http://127.0.0.1:8000"
     if APP_ENV == "local"
-    else "https://podmanager-ggevewegdfgwebcd.northeurope-01.azurewebsites.net/"
+    else "https://app.podmanager.ai/"
 )
 
 # Adjust logging level for pymongo to suppress heartbeat logs
@@ -59,5 +59,5 @@ def load_user():
 
 if __name__ == "__main__":
     app.run(
-        host="0.0.0.0", port=5000, debug=False
+        host="0.0.0.0", port=8000, debug=False
     )  # Ensure the port matches your request URL
