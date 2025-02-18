@@ -29,4 +29,5 @@ jobs:
         app-name: 'podmanager'
         slot-name: 'production'
         publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }}
+        package: .
         startup-command: 'bash startup.sh'
