@@ -24,6 +24,13 @@
       <form id="register-form">
         <input
           class="input"
+          type="name"
+          id="name"
+          placeholder="Full Name"
+          required
+        />
+        <input
+          class="input"
           type="email"
           id="email"
           placeholder="Email"
@@ -40,6 +47,15 @@
       </form>
 
       <p class="error-message" id="error-message"></p>
+
+      <!-- Success Message Modal -->
+      <div id="success-modal" class="modal">
+        <div class="modal-content">
+          <h2>Registration Successful!</h2>
+          <p>Click OK to go to the login page.</p>
+          <button id="success-ok-button" class="button">OK</button>
+        </div>
+      </div>
 
       <!-- Moved the text above the Sign-in link -->
       <p class="account-text">Already have an account?</p>
@@ -59,6 +75,10 @@
       document.addEventListener("DOMContentLoaded", function () {
         const form = document.getElementById("register-form");
         const errorMessage = document.getElementById("error-message");
+        const successModal = document.getElementById("success-modal");
+        const successOkButton = document.getElementById("success-ok-button");
+
+        const API_BASE_URL = "{{ API_BASE_URL }}";
 
         if (!form) {
           console.error("❌ ERROR: #register-form not found in the DOM.");
@@ -68,23 +88,26 @@
         form.addEventListener("submit", async function (event) {
           event.preventDefault();
 
+          const name = document.getElementById("name").value;
           const email = document.getElementById("email").value;
           const password = document.getElementById("password").value;
 
           try {
-            const response = await fetch("/register", {
+            const response = await fetch(`${API_BASE_URL}/register`, {
               method: "POST",
               headers: {
                 "Content-Type": "application/json"
               },
-              body: JSON.stringify({ email, password })
+              body: JSON.stringify({ name, email, password })
             });
 
-            const result = await response.json();
-
             if (response.ok) {
-              window.location.href = "{{ url_for('signin_bp.signin') }}"; // Redirect to sign-in page
+              successModal.style.display = "block";
+              successOkButton.addEventListener("click", function () {
+                window.location.href = `${API_BASE_URL}/signin`;
+              });
             } else {
+              const result = await response.json();
               errorMessage.textContent =
                 result.error || "An error occurred. Please try again.";
             }
