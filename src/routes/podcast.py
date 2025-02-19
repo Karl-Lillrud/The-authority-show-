@@ -4,10 +4,10 @@ from datetime import datetime, timezone
 import uuid
 
 # Define Blueprint
-registerpodcast_bp = Blueprint("registerpodcast_bp", __name__)
+podcast_bp = Blueprint("podcast_bp", __name__)
 
-@registerpodcast_bp.route("/register_podcast", methods=["POST"])
-def register_podcast():
+@podcast_bp.route("/add_podcast", methods=["POST"])
+def podcast():
     if not g.user_id:
         return jsonify({"error": "Unauthorized"}), 401
 
@@ -44,11 +44,11 @@ def register_podcast():
         print("📝 Inserting podcast into database:", podcast_item)
         result = collection.database.podcast.insert_one(podcast_item)
 
-        print("✅ Podcast registered successfully!")
+        print("✅ Podcast added successfully!")
 
         return jsonify(
             {
-                "message": "Podcast registered successfully",
+                "message": "Podcast added successfully",
                 "podcast_id": podcast_id,  
                 "redirect_url": "/index.html",
             }
@@ -56,9 +56,9 @@ def register_podcast():
 
     except Exception as e:
         print(f"❌ ERROR: {e}")  
-        return jsonify({"error": f"Failed to register podcast: {str(e)}"}), 500
+        return jsonify({"error": f"Failed to add podcast: {str(e)}"}), 500
     
-@registerpodcast_bp.route("/get_podcast", methods=["GET"])
+@podcast_bp.route("/get_podcast", methods=["GET"])
 def get_podcast():
     if not g.user_id:
         return jsonify({"error": "Unauthorized"}), 401
@@ -77,7 +77,7 @@ def get_podcast():
         print(f"❌ ERROR: {e}")
         return jsonify({"error": f"Failed to fetch podcast: {str(e)}"}), 500
     
-@registerpodcast_bp.route("/delete_podcast/<podcast_id>", methods=["DELETE"])
+@podcast_bp.route("/delete_podcast/<podcast_id>", methods=["DELETE"])
 def delete_podcast(podcast_id):
     if not g.user_id:
         return jsonify({"error": "Unauthorized"}), 401
@@ -108,7 +108,7 @@ def delete_podcast(podcast_id):
         return jsonify({"error": f"Failed to delete podcast: {str(e)}"}), 500
 
     
-@registerpodcast_bp.route("/edit_podcast/<podcast_id>", methods=["PUT"])
+@podcast_bp.route("/edit_podcast/<podcast_id>", methods=["PUT"])
 def edit_podcast(podcast_id):
     if not g.user_id:
         return jsonify({"error": "Unauthorized"}), 401

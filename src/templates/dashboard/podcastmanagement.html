@@ -6,7 +6,7 @@
 
 <script>
   document.addEventListener("DOMContentLoaded", function () {
-    const form = document.getElementById("register-podcast-form");
+    const form = document.getElementById("add-podcast-form");
 
     form.addEventListener("submit", function (e) {
       e.preventDefault(); // Prevent the form from submitting the traditional way
@@ -38,7 +38,7 @@
         socialMedia // array
       };
 
-      fetch("/register_podcast", {
+      fetch("/add_podcast", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -50,7 +50,7 @@
           if (data.error) {
             alert(`Error: ${data.error}`);
           } else {
-            alert("Podcast registered successfully!");
+            alert("Podcast added successfully!");
             window.location.href = data.redirect_url;
           }
         })
@@ -69,7 +69,7 @@
   <div class="container">
     <div class="form-box">
       <div class="form-fields">
-        <form id="register-podcast-form">
+        <form id="add-podcast-form">
           <!-- Logo Section -->
           <div class="form-group">
             <label for="pod-logo">Pod Logo</label>
