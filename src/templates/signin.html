@@ -42,6 +42,10 @@
             required
           />
         </div>
+        <div class="input-group">
+          <input type="checkbox" id="remember-me" name="remember_me" />
+          <label for="remember-me">Remember Me</label>
+        </div>
 
         <div class="extra-links">
           <a href="/forgotpassword" class="link">Forgot Password?</a>
@@ -73,12 +77,13 @@
 
           const email = document.getElementById("email").value;
           const password = document.getElementById("password").value;
+          const rememberMe = document.getElementById("remember-me").checked;
 
           try {
             const response = await fetch(`${API_BASE_URL}/signin`, {
               method: "POST",
               headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ email, password })
+              body: JSON.stringify({ email, password, remember_me: rememberMe })
             });
 
             if (!response.ok) {
