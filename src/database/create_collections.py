@@ -30,11 +30,9 @@ except Exception as e:
 collections = {
     "Credit": {
         "ID": str,
-        "user_id": str,
         "credits": int,
         "unclaimed_credits": int,
         "referral_bonus": int,
-        "referrals": int,
         "last_3_referrals": [],
         "vip_status": bool,
         "credits_expires_at": "date",
@@ -47,6 +45,15 @@ collections = {
         "Email": str,
         "Phone": str,
     },
+    "Clips": {"ID": str, "Podcast": int, "ClipName": str},
+    "Subscription": {
+        "ID": str,
+        "user_id": str,
+        "last_3_referrals": [],
+        "vip_status": bool,
+        "credits_expires_at": "date",
+    },
+    "Team": {"ID": str, "UserID": str, "Name": str, "Role": "array", "Email": str},
     "Clips": {"ID": str, "Podcast": int, "ClipName": str},
     "Subscription": {
         "ID": str,
