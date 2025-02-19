@@ -33,13 +33,15 @@ CORS(
     resources={
         r"/*": {
             "origins": [
-                "http://192.168.0.4:5000",
+                "http://192.168.0.4:8000",
                 "https://app.podmanager.ai/",
             ]
         }
     },
 )  # Enable CORS for specific origins
 
+
+# These can cause  GET https://app.podmanager.ai/ 503 (Service Unavailable) error in the browser if not set
 app.secret_key = os.getenv("SECRET_KEY")
 app.config["PREFERRED URL SCHEME"] = "https"
 app.register_blueprint(register_bp)
@@ -52,14 +54,9 @@ app.register_blueprint(dashboardmanagement_bp)
 APP_ENV = os.getenv("APP_ENV", "production")  # Default to production
 
 API_BASE_URL = (
-    "http://127.0.0.1:8000"
-    if APP_ENV == "local"
-    else "https://app.podmanager.ai/"
+    "http://127.0.0.1:8000" if APP_ENV == "local" else "https://app.podmanager.ai/"
 )
 
-# Adjust logging level for pymongo to suppress heartbeat logs
-logging.getLogger("pymongo").setLevel(logging.WARNING)
-logging.getLogger("pymongo.topology").setLevel(logging.ERROR)
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
