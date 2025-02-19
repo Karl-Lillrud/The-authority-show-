@@ -67,6 +67,27 @@ def register_podtask():
         print(f"❌ ERROR: {e}")  
         return jsonify({"error": f"Failed to register podtask: {str(e)}"}), 500
     
+@podtask_bp.route("/get_podtask/<task_id>", methods=["GET"])
+def get_podtask(task_id):
+    if not g.user_id:
+        return jsonify({"error": "Unauthorized"}), 401
+
+    try:
+        user_id = str(g.user_id)
+
+        # Fetch the task using the string task_id
+        task = collection.database.podtask.find_one({"_id": task_id, "userid": user_id})
+
+        if not task:
+            return jsonify({"error": "Task not found"}), 404
+
+        return jsonify(task), 200
+
+    except Exception as e:
+        print(f"❌ ERROR: {e}")
+        return jsonify({"error": f"Failed to fetch task: {str(e)}"}), 500
+
+    
 @podtask_bp.route("/get_podtasks", methods=["GET"])
 def get_podtasks():
     if not g.user_id:
