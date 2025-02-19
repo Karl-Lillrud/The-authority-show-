@@ -1,7 +1,43 @@
-from flask import g, redirect, render_template, url_for, Blueprint
+from flask import (
+    g,
+    redirect,
+    render_template,
+    url_for,
+    Blueprint,
+    request,
+    make_response,
+)
 from database.mongo_connection import collection  # Add import
+from .signin import verify_token
 
 dashboard_bp = Blueprint("dashboard_bp", __name__)
+
+
+@dashboard_bp.before_request
+def load_user():
+    g.user_id = None
+    user_id = request.cookies.get("user_id")
+    if user_id:
+        g.user_id = user_id
+    else:
+        token = request.cookies.get("remember_token")
+        if token:
+            try:
+                email = verify_token(token)
+                print(f"Verified Email from Token: {email}")  # Debug log
+                if email:
+                    user = collection.find_one({"email": email})
+                    if user:
+                        g.user_id = str(user["_id"])
+                        print(f"User logged in with token: {g.user_id}")  # Debug log
+            except Exception as e:
+                print(f"Token verification error: {e}")  # Debug log
+        else:
+            # Clear cookies if no valid token
+            response = make_response(redirect(url_for("signin_bp.signin")))
+            response.set_cookie("user_id", "", expires=0)
+            response.set_cookie("remember_token", "", expires=0)
+            return response
 
 
 # 📌 Dashboard
