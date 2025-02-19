@@ -22,11 +22,12 @@ import os
 import logging
 from utils import venvupdate
 
+# Load environment variables from .env file
+load_dotenv()
+
 # Checking if the environment variable is set to skip the virtual environment update
 if os.getenv("SKIP_VENV_UPDATE", "false").lower() not in ("true", "1", "yes"):
     venvupdate.update_venv_and_requirements()
-
-load_dotenv()
 
 app = Flask(__name__, template_folder="templates", static_folder="static")
 CORS(
@@ -41,10 +42,13 @@ CORS(
     },
 )  # Enable CORS for specific origins
 
-
 # These can cause  GET https://app.podmanager.ai/ 503 (Service Unavailable) error in the browser if not set
 app.secret_key = os.getenv("SECRET_KEY")
 app.config["PREFERRED URL SCHEME"] = "https"
+app.config["SECURITY_PASSWORD_SALT"] = os.getenv(
+    "SECURITY_PASSWORD_SALT"
+)  # Ensure this line is present
+
 app.register_blueprint(register_bp)
 app.register_blueprint(forgotpass_bp)
 app.register_blueprint(signin_bp)
@@ -58,7 +62,6 @@ APP_ENV = os.getenv("APP_ENV", "production")  # Default to production
 API_BASE_URL = (
     "http://127.0.0.1:8000" if APP_ENV == "local" else "https://app.podmanager.ai/"
 )
-
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)

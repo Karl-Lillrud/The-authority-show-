@@ -1,40 +1,64 @@
-
-<link rel="stylesheet" href="{{ url_for('static', filename='css/homepage.css') }}">
+<link
+  rel="stylesheet"
+  href="{{ url_for('static', filename='css/homepage.css') }}"
+/>
 <header>
-    <h1> Your Podcasts:</h1>
+  <h1>Your Podcasts:</h1>
 </header>
 <div class="container" id="podcast-list">
-    <!-- Dynamically populated podcasts -->
+  <!-- Dynamically populated podcasts -->
 </div>
 
 <script>
-document.addEventListener("DOMContentLoaded", function () {
+  document.addEventListener("DOMContentLoaded", function () {
+    const podcastList = document.getElementById("podcast-list");
+    const closePodcastBtn = document.getElementById("close-podcast-btn");
+
+    // Hämta användarens podcasts och visa dem
     fetch("/get_user_podcasts")
-        .then(response => response.json())
-        .then(data => {
-            const podcastList = document.getElementById("podcast-list");
-            podcastList.innerHTML = "";
+      .then((response) => response.json())
+      .then((data) => {
+        if (data.error) {
+          podcastList.innerHTML += `<p>${data.error}</p>`;
+          return;
+        }
 
-            if (data.error) {
-                podcastList.innerHTML = `<p>${data.error}</p>`;
-                return;
-            }
+        data.forEach((podcast) => {
+          let podcastCard = document.createElement("div");
+          podcastCard.classList.add("card");
 
-            data.forEach(podcast => {
-                let podcastCard = document.createElement("div");
-                podcastCard.classList.add("card");
-
-                podcastCard.innerHTML = `
-                    <a href="/dashboard"
-                        onclick="window.parent.document.getElementById('homepage-popup').style.display='none';">
+          podcastCard.innerHTML = `
+                    <a href="/dashboard">
                         <img src="${podcast.image_url}" alt="${podcast.name}">
                     </a>
                     <p class="episode-count">${podcast.open_episodes} Open Episodes</p>
                 `;
 
-                podcastList.appendChild(podcastCard);
-            });
-        })
-        .catch(error => console.error("Error loading podcasts:", error));
-});
+          podcastList.appendChild(podcastCard);
+        });
+
+        // Lägg till eventlyssnare på knappen (igen, eftersom vi rensade innerHTML)
+        document
+          .getElementById("close-podcast-btn")
+          .addEventListener("click", function () {
+            podcastList.style.display = "none";
+          });
+      })
+      .catch((error) => console.error("Error loading podcasts:", error));
+
+    // Stäng rutan när man klickar utanför
+    document.addEventListener("click", function (event) {
+      if (
+        !podcastList.contains(event.target) &&
+        event.target !== closePodcastBtn
+      ) {
+        podcastList.style.display = "none";
+      }
+    });
+
+    // Lägg till eventlyssnare på knappen för att stänga podcast-listan
+    closePodcastBtn.addEventListener("click", function () {
+      podcastList.style.display = "none";
+    });
+  });
 </script>
