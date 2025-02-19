@@ -46,12 +46,14 @@ def register_podtask():
             "created_at": datetime.now(timezone.utc),
         }
 
-        user = collection.database.users.find_one({"_id": user_id})
+        # Correctly querying the User collection
+        user = collection.database.User.find_one({"_id": user_id})
         if not user:
             return jsonify({"error": "User not found"}), 404
 
+        # Correctly inserting into the Podtask collection
         print("📝 Inserting podtask into database:", podtask_item)
-        result = collection.database["podtask"].insert_one(podtask_item)  # Insert into podtask collection
+        result = collection.database["Podtask"].insert_one(podtask_item)  # Ensure "Podtask" is correct
 
         print("✅ Podtask registered successfully!")
 
@@ -64,8 +66,9 @@ def register_podtask():
         ), 201
 
     except Exception as e:
-        print(f"❌ ERROR: {e}")  
+        print(f"❌ ERROR: {e}")
         return jsonify({"error": f"Failed to register podtask: {str(e)}"}), 500
+
     
 @podtask_bp.route("/get_podtask/<task_id>", methods=["GET"])
 def get_podtask(task_id):
@@ -75,10 +78,14 @@ def get_podtask(task_id):
     try:
         user_id = str(g.user_id)
 
+        # Debugging: Print task_id and user_id
+        print(f"Fetching task with task_id: {task_id} for user_id: {user_id}")
+
         # Fetch the task using the string task_id
-        task = collection.database.podtask.find_one({"_id": task_id, "userid": user_id})
+        task = collection.database.Podtask.find_one({"_id": task_id, "userid": user_id})
 
         if not task:
+            print(f"Task with task_id: {task_id} and user_id: {user_id} not found.")
             return jsonify({"error": "Task not found"}), 404
 
         return jsonify(task), 200
@@ -86,6 +93,7 @@ def get_podtask(task_id):
     except Exception as e:
         print(f"❌ ERROR: {e}")
         return jsonify({"error": f"Failed to fetch task: {str(e)}"}), 500
+
 
     
 @podtask_bp.route("/get_podtasks", methods=["GET"])
@@ -95,7 +103,7 @@ def get_podtasks():
 
     try:
         user_id = str(g.user_id)  
-        podtasks = list(collection.database.podtask.find({"userid": user_id}))
+        podtasks = list(collection.database.Podtask.find({"userid": user_id}))
 
         for task in podtasks:
             task["_id"] = str(task["_id"])
@@ -113,7 +121,7 @@ def delete_podtask(task_id):
 
     try:
         user_id = str(g.user_id)
-        task = collection.database.podtask.find_one({"_id": task_id})
+        task = collection.database.Podtask.find_one({"_id": task_id})
 
         if not task:
             return jsonify({"error": "Task not found"}), 404
@@ -121,7 +129,7 @@ def delete_podtask(task_id):
         if task["userid"] != user_id:
             return jsonify({"error": "Permission denied"}), 403
 
-        result = collection.database.podtask.delete_one({"_id": task_id})
+        result = collection.database.Podtask.delete_one({"_id": task_id})
 
         if result.deleted_count == 1:
             return jsonify({"message": "Task deleted successfully"}), 200
@@ -144,7 +152,7 @@ def update_podtask(task_id):
         data = request.get_json()
         user_id = str(g.user_id)
 
-        existing_task = collection.database.podtask.find_one({"_id": task_id})
+        existing_task = collection.database.Podtask.find_one({"_id": task_id})
         if not existing_task:
             return jsonify({"error": "Task not found"}), 404
 
@@ -163,7 +171,7 @@ def update_podtask(task_id):
             "updated_at": datetime.now(timezone.utc),
         }
 
-        result = collection.database.podtask.update_one(
+        result = collection.database.Podtask.update_one(
             {"_id": task_id}, {"$set": update_fields}
         )
 

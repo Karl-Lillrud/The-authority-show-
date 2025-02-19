@@ -37,12 +37,12 @@ def podcast():
             "created_at": datetime.now(timezone.utc),
         }
 
-        user = collection.database.users.find_one({"_id": user_id})
+        user = collection.database.User.find_one({"_id": user_id})
         if not user:
             return jsonify({"error": "User not found"}), 404
 
         print("📝 Inserting podcast into database:", podcast_item)
-        result = collection.database.podcast.insert_one(podcast_item)
+        result = collection.database.Podcast.insert_one(podcast_item)
 
         print("✅ Podcast added successfully!")
 
@@ -66,7 +66,7 @@ def get_podcast():
     try:
         user_id = str(g.user_id)  
 
-        podcast = list(collection.database.podcast.find({"userid": user_id}))
+        podcast = list(collection.database.Podcast.find({"userid": user_id}))
 
         for podcast in podcast:
             podcast["_id"] = str(podcast["_id"])
@@ -86,7 +86,7 @@ def delete_podcast(podcast_id):
         user_id = str(g.user_id)
 
         # Find the podcast
-        podcast = collection.database.podcast.find_one({"_id": podcast_id})
+        podcast = collection.database.Podcast.find_one({"_id": podcast_id})
 
         if not podcast:
             return jsonify({"error": "Podcast not found"}), 404
@@ -96,7 +96,7 @@ def delete_podcast(podcast_id):
             return jsonify({"error": "Permission denied"}), 403
 
         # Delete the podcast
-        result = collection.database.podcast.delete_one({"_id": podcast_id})
+        result = collection.database.Podcast.delete_one({"_id": podcast_id})
 
         if result.deleted_count == 1:
             return jsonify({"message": "Podcast deleted successfully"}), 200
@@ -117,7 +117,7 @@ def edit_podcast(podcast_id):
         user_id = str(g.user_id)
 
         # Fetch the podcast by ID
-        podcast = collection.database.podcast.find_one({"_id": podcast_id})
+        podcast = collection.database.Podcast.find_one({"_id": podcast_id})
 
         if not podcast:
             return jsonify({"error": "Podcast not found"}), 404
@@ -142,7 +142,7 @@ def edit_podcast(podcast_id):
         if "guestUrl" in data:
             update_data["guestUrl"] = data["guestUrl"]
 
-        result = collection.database.podcast.update_one(
+        result = collection.database.Podcast.update_one(
             {"_id": podcast_id},
             {"$set": update_data} 
         )
