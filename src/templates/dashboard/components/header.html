@@ -1,32 +1,39 @@
-<link rel="stylesheet" href="{{ url_for('static', filename='css/header.css') }}">
+<link
+  rel="stylesheet"
+  href="{{ url_for('static', filename='css/header.css') }}"
+/>
 <header>
-    <!-- Logo -->
-    <div class="logo-container">
-        <img src="https://podmanagerstorage.blob.core.windows.net/blob-container/PodManagerLogo.png" alt="PodManager Logo">
+  <!-- Logo -->
+  <div class="logo-container">
+    <img
+      src="https://podmanagerstorage.blob.core.windows.net/blob-container/PodManagerLogo.png"
+      alt="PodManager Logo"
+    />
+  </div>
+  <nav class="header-nav">
+    <select id="podcast-selector">
+      <option value="">PodCasts</option>
+      <option value="podcast1.html">Podcast 1</option>
+      <option value="podcast2.html">Podcast 2</option>
+      <option value="podcast3.html">Podcast 3</option>
+    </select>
+    <div class="menu-toggle" onclick="toggleMenu()">
+      <span></span>
+      <span></span>
+      <span></span>
     </div>
-    <nav class="header-nav">
-        <select id="podcast-selector">
-            <option value="">PodCasts</option>
-            <option value="podcast1.html">Podcast 1</option>
-            <option value="podcast2.html">Podcast 2</option>
-            <option value="podcast3.html">Podcast 3</option>
-        </select>
-        <div class="menu-toggle" onclick="toggleMenu()">
-            <span></span>
-            <span></span>
-            <span></span>
-        </div>
-        <div class="menu" id="menu">
-            <a href="{{ url_for('dashboard_bp.settings') }}">Settings</a>
-            <a href="{{ url_for('dashboard_bp.taskmanagement') }}">Task Management</a>
-            <a href="{{ url_for('dashboard_bp.podcastmanagement') }}">Podcast Management</a>
-            <a href="{{ url_for('dashboard_bp.team') }}">Team Members</a>
-           
-            <a href="{{ url_for('dashboard_bp.guest') }}">Guest View</a>
-            <a href="{{ url_for('signin_bp.signin') }}" id="logout-link">Log out</a>
-        
-        </div>
-    </nav>
+    <div class="menu" id="menu">
+      <a href="{{ url_for('dashboard_bp.settings') }}">Settings</a>
+      <a href="{{ url_for('dashboard_bp.taskmanagement') }}">Task Management</a>
+      <a href="{{ url_for('dashboard_bp.podcastmanagement') }}"
+        >Podcast Management</a
+      >
+      <a href="{{ url_for('dashboard_bp.team') }}">Team Members</a>
+
+      <a href="{{ url_for('dashboard_bp.guest') }}">Guest View</a>
+      <a href="{{ url_for('signin_bp.logout') }}" id="logout-link">Log out</a>
+    </div>
+  </nav>
 </header>
 
 <!-- Custom Logout Modal (TikTok-style) -->
@@ -42,35 +49,35 @@
 
 <script>
   function toggleMenu() {
-    const menu = document.getElementById('menu');
-    menu.style.display = (menu.style.display === 'flex') ? 'none' : 'flex';
-    if (menu.style.display === 'flex') {
-      menu.style.position = 'absolute';
+    const menu = document.getElementById("menu");
+    menu.style.display = menu.style.display === "flex" ? "none" : "flex";
+    if (menu.style.display === "flex") {
+      menu.style.position = "absolute";
     }
   }
 
-  const logoutLink = document.getElementById('logout-link');
-  const logoutModal = document.getElementById('logout-modal');
-  const cancelLogout = document.getElementById('cancel-logout');
-  const confirmLogout = document.getElementById('confirm-logout');
+  const logoutLink = document.getElementById("logout-link");
+  const logoutModal = document.getElementById("logout-modal");
+  const cancelLogout = document.getElementById("cancel-logout");
+  const confirmLogout = document.getElementById("confirm-logout");
 
-  logoutLink.addEventListener('click', function(e) {
+  logoutLink.addEventListener("click", function (e) {
     e.preventDefault();
-    logoutModal.style.display = 'flex';
+    logoutModal.style.display = "flex";
   });
 
-  cancelLogout.addEventListener('click', function() {
-    logoutModal.style.display = 'none';
+  cancelLogout.addEventListener("click", function () {
+    logoutModal.style.display = "none";
   });
 
-  confirmLogout.addEventListener('click', function() {
+  confirmLogout.addEventListener("click", function () {
     window.location.href = logoutLink.href;
   });
 
   // Close modal if clicking outside of the modal content
-  window.addEventListener('click', function(e) {
+  window.addEventListener("click", function (e) {
     if (e.target === logoutModal) {
-      logoutModal.style.display = 'none';
+      logoutModal.style.display = "none";
     }
   });
 </script>
