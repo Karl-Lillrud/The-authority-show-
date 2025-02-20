@@ -26,7 +26,7 @@
   --breakpoint-lg: 992px;
   --breakpoint-xl: 1200px;
 }
-
+*/
 
 body {
   font-family: var(--font-primary);
@@ -37,7 +37,6 @@ body {
   margin: 0;
   padding: 0;
 }
-  */
 
 .dark-mode {
   background-color: var(--background-dark);
@@ -46,7 +45,6 @@ body {
 
 /* Container */
 .container {
-  
   margin: 0 auto;
   padding: var(--spacing-lg);
 }
@@ -71,7 +69,7 @@ body {
 }
 
 .search-bar {
-  display: flex;
+  display: fix;
   align-items: center;
   flex-grow: 1;
   max-width: 400px;
@@ -96,13 +94,6 @@ body {
               inset -3px -3px 6px var(--highlight-color);
 }
 
-/* Action Buttons & Language Switcher */
-.actions {
-  display: flex;
-  align-items: center;
-  gap: var(--spacing-md);
-}
-
 .icon-button {
   background-color: var(--background-light);
   border: none;
@@ -116,30 +107,6 @@ body {
 
 .icon-button:hover {
   background-color: var(--highlight-color);
-  transform: translateY(-2px);
-}
-
-.language-switcher {
-  display: flex;
-  gap: var(--spacing-sm);
-}
-
-.language-switcher button {
-  background-color: var(--background-light);
-  border: none;
-  border-radius: 50%;
-  padding: var(--spacing-sm);
-  cursor: pointer;
-  box-shadow: -5px -5px 10px var(--light-shadow-light),
-              5px 5px 10px var(--dark-shadow-light);
-  transition: all 0.3s ease;
-  font-weight: bold;
-  color: var(--text-color-light);
-}
-
-.language-switcher button:hover {
-  background-color: var(--highlight-color);
-  color: #fff;
   transform: translateY(-2px);
 }
 
@@ -302,29 +269,6 @@ input:focus + .slider {
   transition: all 0.3s ease;
 }
 
-.modal {
-  position: fixed;
-  z-index: 1000;
-  left: 50%;
-  top: 50%;
-  transform: translate(-50%, -50%);
-  background-color: var(--background-light);
-  padding: var(--spacing-lg);
-  border-radius: 20px;
-  box-shadow: -10px -10px 20px var(--light-shadow-light),
-              10px 10px 20px var(--dark-shadow-light);
-  display: none;
-}
-
-.modal.show {
-  display: block;
-}
-
-.modal h2 {
-  font-family: var(--font-secondary);
-  margin-bottom: var(--spacing-md);
-}
-
 /* Form Group */
 .form-group {
   margin-bottom: var(--spacing-md);
@@ -350,16 +294,9 @@ input:focus + .slider {
 }
 
 .validation-message {
-  color: var(--error-color);
+  color: red;
   font-size: 0.875rem;
-  margin-top: var(--spacing-xs);
-}
-
-/* Modal Actions */
-.modal-actions {
-  display: flex;
-  justify-content: space-between;
-  margin-top: var(--spacing-lg);
+  margin-top: 4px;
 }
 
 /* Toast Notification */
@@ -425,7 +362,50 @@ input:focus + .slider {
   .search-bar {
     max-width: 100%;
   }
-  .language-switcher {
-    margin-top: var(--spacing-sm);
-  }
+}
+
+/* Modal Popup & Overlay */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(10, 10, 10, 0.5);
+  z-index: 900;
+  display: none;
+}
+
+.modal-overlay.show {
+  display: block;
+}
+
+.modal {
+  position: fixed;
+  z-index: 1000;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  background-color: var(--background-light);
+  padding: var(--spacing-lg);
+  border-radius: 20px;
+  box-shadow: -10px -10px 20px var(--light-shadow-light),
+              10px 10px 20px var(--dark-shadow-light);
+  display: none;
+}
+
+.modal.show {
+  display: block;
+}
+.team-table {
+  overflow: visible !important;
+}
+
+.team-table .actions-cell {
+  position: relative;
+  overflow: visible !important;
+}
+
+.actions-dropdown .dropdown-menu {
+  z-index: 9999; /* ensures the menu appears on top */
 }
