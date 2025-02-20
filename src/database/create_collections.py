@@ -84,15 +84,17 @@ collections = {
         "Email": str,
     },
     "Podtask": {
-        "ID": int,
-        "podcast_id": int,
-        "Name": str,
-        "Action": "array",
-        "DayCount": int,
-        "Description": str,
-        "ActionUrl": str,
-        "UrlDescribe": str,
-        "SubimissionReq": bool,
+    "ID": int,              # Om du vill ha ett numeriskt ID, annars kan du använda str
+    "podcast_id": str,      # Om PodcastId kommer som str (annars använd int)
+    "Name": str,
+    "Action": "array",      # Här kan du ange "array" eller list om du vill dokumentera
+    "DayCount": int,
+    "Description": str,
+    "ActionUrl": str,
+    "UrlDescribe": str,
+    "SubimissionReq": bool,
+
+
     },
 }
 
