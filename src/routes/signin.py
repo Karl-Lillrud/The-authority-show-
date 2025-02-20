@@ -31,4 +31,24 @@ def signin():
     session["email"] = users[0]["email"]
     session.permanent = True
 
-    return jsonify({"message": "Login successful", "redirect_url": "dashboard"}), 200
+    # Check the number of podcasts registered
+    user_id = session["user_id"]
+    podcasts = list(collection.database.Podcast.find({"userid": user_id}))
+
+    if not podcasts:
+        return jsonify({
+            "message": "Login successful",
+            "redirect_url": "/podprofile"
+        }), 200
+    elif len(podcasts) == 1:
+        return jsonify({
+            "message": "Login successful",
+            "redirect_url": "/dashboard"
+        }), 200
+    else:
+        return jsonify({
+            "message": "Login successful",
+            "redirect_url": "/homepage"
+        }), 200
+    
+ 
