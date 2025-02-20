@@ -31,4 +31,4 @@ def signin():
     session["email"] = users[0]["email"]
     session.permanent = True
 
-    return jsonify({"message": "Login successful", "redirect_url": "podprofile"}), 200
+    return jsonify({"message": "Login successful", "redirect_url": "dashboard"}), 200
