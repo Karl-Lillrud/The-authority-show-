@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -7,28 +8,32 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="{{ url_for('static', filename='css/guest.css') }}">
 </head>
+
 <body>
   <div class="container">
-    <button onclick="window.location.href='{{ url_for(&#39;guest&#39;) }}'" style="margin-bottom:20px;">&larr; Back to Guest List</button>
+    <button onclick="window.location.href='{{ url_for(&#39;guest&#39;) }}'" style="margin-bottom:20px;">&larr; Back to
+      Guest List</button>
     <div class="profile neumorphic-card" id="profile">
-      <img src="{{ url_for('static', filename='images/' ~ guest.image) }}" alt="{{ guest.name }}'s Profile Picture" id="profile-pic" />
+      <img src="{{ url_for('static', filename='images/' ~ guest.image) }}" alt="{{ guest.name }}'s Profile Picture"
+        id="profile-pic" />
       <h1 id="guest-name">{{ guest.name }}</h1>
       <p id="guest-bio">{{ guest.bio }}</p>
       <div class="tags" id="guest-tags">
         {% for tag in guest.tags %}
-          <span>{{ tag }}</span>
+        <span>{{ tag }}</span>
         {% endfor %}
       </div>
       <p id="areas-of-interest">
         {% if guest.areasOfInterest and guest.areasOfInterest|length > 0 %}
-          Areas of Interest: {{ guest.areasOfInterest|join(', ') }}
+        Areas of Interest: {{ guest.areasOfInterest|join(', ') }}
         {% endif %}
       </p>
       <div id="communication-status">
         <span class="badge" id="status-badge">{{ guest.status|capitalize }}</span>
       </div>
       <p id="guest-email">Email: <a href="mailto:{{ guest.email }}" id="email-link">{{ guest.email }}</a></p>
-      <p id="guest-social">Social: <a href="{{ guest.linkedin }}">LinkedIn</a> | <a href="{{ guest.twitter }}">Twitter</a></p>
+      <p id="guest-social">Social: <a href="{{ guest.linkedin }}">LinkedIn</a> | <a
+          href="{{ guest.twitter }}">Twitter</a></p>
     </div>
 
     <!-- Bio Section with Inline Editing -->
@@ -65,4 +70,5 @@
   </div>
   <script src="{{ url_for('static', filename='guest/main.js') }}"></script>
 </body>
+
 </html>

@@ -3,10 +3,11 @@
 {% block title %}Team Leaderboard Dashboard{% endblock %}
 
 {% block content %}
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="{{ url_for('static', filename='css/guest.css') }}">
-  <script src="{{ url_for('static', filename='guest/main.js') }}"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="{{ url_for('static', filename='css/guest.css') }}">
+<script src="{{ url_for('static', filename='guest/main.js') }}"></script>
 </head>
+
 <body class="guest">
   <div class="container">
     <h1 class="title">Discover Guests for Your Podcast</h1>
@@ -24,4 +25,4 @@
       <form id="popup-form"></form>
     </div>
   </div>
-{% endblock %}
+  {% endblock %}

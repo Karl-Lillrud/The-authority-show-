@@ -5,10 +5,13 @@
 <link rel="stylesheet" href="{{ url_for('static', filename='css/podcastmanagement.css') }}">
 
 <script>
+
   document.addEventListener("DOMContentLoaded", function () {
-    const form = document.getElementById("register-podcast-form");
+
+    const form = document.getElementById("add-podcast-form");
 
     form.addEventListener("submit", function (e) {
+
       e.preventDefault(); // Prevent the form from submitting the traditional way
 
       // Collect form data
@@ -20,6 +23,7 @@
 
       // Collect social media links into an array
       const socialMedia = [
+
         document.getElementById("facebook").value.trim(),
         document.getElementById("instagram").value.trim(),
         document.getElementById("linkedin").value.trim(),
@@ -27,54 +31,73 @@
         document.getElementById("tiktok").value.trim(),
         document.getElementById("pinterest").value.trim(),
         document.getElementById("website").value.trim()
+
       ].filter(link => link !== ""); // Remove empty entries
 
       const data = {
+
         podName,
         podRss,
         podHost,
         guestUrl,
         podEmail,
-        socialMedia // array
+        socialMedia
+
       };
 
-      fetch("/register_podcast", {
+      fetch("/add_podcast", {
+
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
+
         body: JSON.stringify(data),
+
       })
         .then(response => response.json())
         .then(data => {
+
           if (data.error) {
+
             alert(`Error: ${data.error}`);
+
           } else {
-            alert("Podcast registered successfully!");
+
+            alert("Podcast added successfully!");
             window.location.href = data.redirect_url;
+
           }
+
         })
         .catch(error => {
+
           console.error("Error:", error);
           alert("There was an error with the registration process.");
+
         });
+
     });
+
   });
+
 </script>
 
 
 </head>
+
 <body>
   <a href="{{ url_for('dashboard_bp.dashboard') }}" class="back-arrow">&#8592; Back</a>
   <div class="container">
     <div class="form-box">
       <div class="form-fields">
-        <form id="register-podcast-form">
+        <form id="add-podcast-form">
           <!-- Logo Section -->
           <div class="form-group">
             <label for="pod-logo">Pod Logo</label>
             <div style="display: flex; align-items: center; justify-content: center;">
-              <img src="https://podmanagerstorage.blob.core.windows.net/blob-container/pod1.jpg" alt="Pod Logo" class="pod-logo pod-logo-inline" />
+              <img src="https://podmanagerstorage.blob.core.windows.net/blob-container/pod1.jpg" alt="Pod Logo"
+                class="pod-logo pod-logo-inline" />
             </div>
           </div>
 
@@ -98,7 +121,7 @@
             <label>Google Calendar Integration</label>
             <button class="connect-btn">CONNECT</button>
           </div>
-  
+
           <div class="field-group">
             <label>Google Calendar Pick a Date URL</label>
             <div class="inline-field">
@@ -156,4 +179,4 @@
       </div>
     </div>
   </div>
-{% endblock %}
+  {% endblock %}

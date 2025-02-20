@@ -8,7 +8,7 @@
     --highlight: #FF7F3F;
     --font-primary: 'Campton', sans-serif;
 }
- 
+
 body {
     font-family: var(--font-primary);
     background-color: var(--bg-light);
@@ -20,7 +20,7 @@ body {
     margin: 0;
     transition: background-color 0.3s ease, color 0.3s ease;
 }
- 
+
 .center-box {
     background-color: var(--bg-light);
     width: 90%;
@@ -36,14 +36,15 @@ body {
     position: absolute;
     top: 20px;
     left: 20px;
-    width: 120px; /* Adjust as needed */
+    width: 120px;
+    /* Adjust as needed */
 }
 
 .logo-container img {
     width: 100%;
     height: auto;
 }
- 
+
 .button {
     padding: 10px 20px;
     border-radius: 25px;
@@ -55,6 +56,7 @@ body {
     box-shadow: -5px -5px 10px white, 5px 5px 10px var(--shadow-light);
     transition: all 0.3s ease;
 }
+
 .button.button.button-primary {
     color: #6E7F8D;
 }
@@ -62,7 +64,7 @@ body {
 .button:hover {
     box-shadow: -3px -3px 6px white, 3px 3px 6px var(--shadow-light);
 }
- 
+
 .input {
     padding: 10px;
     border: none;
@@ -73,12 +75,12 @@ body {
     transition: all 0.3s ease;
     margin: 15px;
 }
- 
+
 .input:focus {
     outline: none;
     box-shadow: inset -3px -3px 6px white, inset 3px 3px 6px var(--shadow-light);
 }
- 
+
 .link {
     color: var(--highlight);
     text-decoration: none;

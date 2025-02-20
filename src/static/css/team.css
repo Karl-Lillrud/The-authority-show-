@@ -46,7 +46,7 @@ body {
 
 /* Container */
 .container {
-  
+
   margin: 0 auto;
   padding: var(--spacing-lg);
 }
@@ -85,7 +85,7 @@ body {
   background-color: var(--background-light);
   color: var(--text-color-light);
   box-shadow: inset 5px 5px 10px var(--dark-shadow-dark),
-              inset -5px -5px 10px var(--light-shadow-light);
+    inset -5px -5px 10px var(--light-shadow-light);
   transition: box-shadow 0.3s ease;
   margin-right: var(--spacing-sm);
 }
@@ -93,7 +93,7 @@ body {
 .search-bar .input-field:focus {
   outline: none;
   box-shadow: inset 3px 3px 6px var(--highlight-color),
-              inset -3px -3px 6px var(--highlight-color);
+    inset -3px -3px 6px var(--highlight-color);
 }
 
 /* Action Buttons & Language Switcher */
@@ -110,7 +110,7 @@ body {
   padding: var(--spacing-sm);
   cursor: pointer;
   box-shadow: -5px -5px 10px var(--light-shadow-light),
-              5px 5px 10px var(--dark-shadow-light);
+    5px 5px 10px var(--dark-shadow-light);
   transition: all 0.3s ease;
 }
 
@@ -131,7 +131,7 @@ body {
   padding: var(--spacing-sm);
   cursor: pointer;
   box-shadow: -5px -5px 10px var(--light-shadow-light),
-              5px 5px 10px var(--dark-shadow-light);
+    5px 5px 10px var(--dark-shadow-light);
   transition: all 0.3s ease;
   font-weight: bold;
   color: var(--text-color-light);
@@ -151,7 +151,7 @@ body {
   height: 34px;
 }
 
-.switch input { 
+.switch input {
   opacity: 0;
   width: 0;
   height: 0;
@@ -168,7 +168,7 @@ body {
   transition: 0.4s;
   border-radius: 34px;
   box-shadow: inset 5px 5px 10px var(--dark-shadow-light),
-              inset -5px -5px 10px var(--light-shadow-light);
+    inset -5px -5px 10px var(--light-shadow-light);
 }
 
 .slider::before {
@@ -181,19 +181,19 @@ body {
   background-color: white;
   transition: 0.4s;
   border-radius: 50%;
-  box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
 }
 
-input:checked + .slider {
+input:checked+.slider {
   background-color: var(--highlight-color);
 }
 
-input:checked + .slider::before {
+input:checked+.slider::before {
   transform: translateX(26px);
   background-color: var(--background-dark);
 }
 
-input:focus + .slider {
+input:focus+.slider {
   box-shadow: 0 0 3px var(--highlight-color);
 }
 
@@ -206,10 +206,11 @@ input:focus + .slider {
   border-radius: 20px;
   overflow: hidden;
   box-shadow: -5px -5px 10px var(--light-shadow-light),
-              5px 5px 10px var(--dark-shadow-light);
+    5px 5px 10px var(--dark-shadow-light);
 }
 
-.neu-table th, .neu-table td {
+.neu-table th,
+.neu-table td {
   padding: var(--spacing-md);
   text-align: left;
   border: none;
@@ -222,7 +223,7 @@ input:focus + .slider {
 }
 
 .neu-table tbody tr:nth-child(even) {
-  background-color: rgba(255,255,255,0.05);
+  background-color: rgba(255, 255, 255, 0.05);
 }
 
 .neu-table tbody tr:hover {
@@ -260,14 +261,14 @@ input:focus + .slider {
   background-color: var(--background-light);
   color: var(--text-color-light);
   box-shadow: -5px -5px 10px var(--light-shadow-light),
-              5px 5px 10px var(--dark-shadow-light);
+    5px 5px 10px var(--dark-shadow-light);
   transition: all 0.3s ease;
 }
 
 .button:hover {
   transform: translateY(-2px);
   box-shadow: -3px -3px 6px var(--light-shadow-light),
-              3px 3px 6px var(--dark-shadow-light);
+    3px 3px 6px var(--dark-shadow-light);
 }
 
 /* Action Buttons (inside table) */
@@ -278,7 +279,7 @@ input:focus + .slider {
   padding: var(--spacing-sm);
   cursor: pointer;
   box-shadow: -5px -5px 10px var(--light-shadow-light),
-              5px 5px 10px var(--dark-shadow-light);
+    5px 5px 10px var(--dark-shadow-light);
   transition: all 0.3s ease;
   margin-right: var(--spacing-xs);
 }
@@ -298,7 +299,7 @@ input:focus + .slider {
   border-radius: 20px;
   padding: var(--spacing-lg);
   box-shadow: -10px -10px 20px var(--light-shadow-light),
-              10px 10px 20px var(--dark-shadow-light);
+    10px 10px 20px var(--dark-shadow-light);
   transition: all 0.3s ease;
 }
 
@@ -312,7 +313,7 @@ input:focus + .slider {
   padding: var(--spacing-lg);
   border-radius: 20px;
   box-shadow: -10px -10px 20px var(--light-shadow-light),
-              10px 10px 20px var(--dark-shadow-light);
+    10px 10px 20px var(--dark-shadow-light);
   display: none;
 }
 
@@ -338,7 +339,7 @@ input:focus + .slider {
   background-color: var(--background-light);
   color: var(--text-color-light);
   box-shadow: inset 5px 5px 10px var(--dark-shadow-dark),
-              inset -5px -5px 10px var(--light-shadow-light);
+    inset -5px -5px 10px var(--light-shadow-light);
   transition: box-shadow 0.3s ease;
   margin-top: var(--spacing-xs);
 }
@@ -346,7 +347,7 @@ input:focus + .slider {
 .input-field:focus {
   outline: none;
   box-shadow: inset 3px 3px 6px var(--highlight-color),
-              inset -3px -3px 6px var(--highlight-color);
+    inset -3px -3px 6px var(--highlight-color);
 }
 
 .validation-message {
@@ -406,14 +407,14 @@ input:focus + .slider {
   background-color: var(--background-light);
   color: var(--text-color-light);
   box-shadow: -5px -5px 10px var(--light-shadow-light),
-              5px 5px 10px var(--dark-shadow-light);
+    5px 5px 10px var(--dark-shadow-light);
   transition: box-shadow 0.3s ease;
 }
 
 .filters select:focus {
   outline: none;
   box-shadow: inset 3px 3px 6px var(--highlight-color),
-              inset -3px -3px 6px var(--highlight-color);
+    inset -3px -3px 6px var(--highlight-color);
 }
 
 /* Responsive Adjustments */
@@ -422,9 +423,11 @@ input:focus + .slider {
     flex-direction: column;
     align-items: center;
   }
+
   .search-bar {
     max-width: 100%;
   }
+
   .language-switcher {
     margin-top: var(--spacing-sm);
   }

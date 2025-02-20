@@ -24,7 +24,7 @@ body.guest {
   border: none;
   border-radius: var(--radius-medium);
   box-shadow: inset 5px 5px 10px var(--dark-shadow-light),
-              inset -5px -5px 10px var(--light-shadow-light);
+    inset -5px -5px 10px var(--light-shadow-light);
   margin-bottom: var(--spacing-lg);
   font-size: 16px;
 }
@@ -41,7 +41,7 @@ body.guest {
   background: var(--background-light);
   border-radius: var(--radius-medium);
   box-shadow: 5px 5px 10px var(--dark-shadow-light),
-              -5px -5px 10px var(--light-shadow-light);
+    -5px -5px 10px var(--light-shadow-light);
   padding: var(--spacing-md);
   transition: transform 0.3s ease;
 }
@@ -118,7 +118,7 @@ body.guest {
   padding: var(--spacing-lg);
   border-radius: var(--radius-medium);
   box-shadow: 8px 8px 16px var(--dark-shadow-light),
-              -8px -8px 16px var(--light-shadow-light);
+    -8px -8px 16px var(--light-shadow-light);
   display: none;
   z-index: 1000;
   flex-direction: column;
@@ -156,7 +156,7 @@ body.guest {
   border-radius: var(--radius-medium);
   background: var(--background-light);
   box-shadow: inset 5px 5px 10px var(--dark-shadow-light),
-              inset -5px -5px 10px var(--light-shadow-light);
+    inset -5px -5px 10px var(--light-shadow-light);
   color: var(--text-color-light);
   font-size: 14px;
 }
@@ -167,7 +167,7 @@ body.guest {
   padding: 10px 20px;
   border-radius: var(--radius-medium);
   box-shadow: 5px 5px 10px var(--dark-shadow-light),
-              -5px -5px 10px var(--light-shadow-light);
+    -5px -5px 10px var(--light-shadow-light);
   cursor: pointer;
   margin-top: var(--spacing-sm);
   display: block;
@@ -177,7 +177,7 @@ body.guest {
 
 .popup button:hover {
   box-shadow: inset 5px 5px 10px var(--dark-shadow-light),
-              inset -5px -5px 10px var(--light-shadow-light);
+    inset -5px -5px 10px var(--light-shadow-light);
 }
 
 .badge {

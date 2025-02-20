@@ -2,62 +2,117 @@ import os
 import subprocess
 import sys
 import shutil
+from pathlib import Path
 
-def check_venv_files(venv_path="venv"):
-    """
-    Checks if the virtual environment has the necessary files (Scripts or bin).
-    Returns True if the venv folder is valid, False if not.
-    """
+# Define the virtual environment path
+VENV_PATH = Path("venv")
+
+"""
+    Checks if the virtual environment contains necessary activation files.
+    Returns True if valid, False otherwise.
+"""
+def check_venv_files():
+    
     if os.name == "nt":
-        # For Windows, check the 'Scripts' folder
-        return os.path.exists(os.path.join(venv_path, "Scripts", "activate.bat"))
+
+        return (VENV_PATH / "Scripts" / "activate.bat").exists()
+    
     else:
-        # For non-Windows (Unix-like), check the 'bin' folder
-        return os.path.exists(os.path.join(venv_path, "bin", "activate"))
 
-def update_venv_and_requirements(venv_path="venv"):
-    """
-    Ensures the virtual environment exists. If missing or corrupted, recreates it.
-    Installs dependencies from requirements.txt and updates the requirements file.
-    """
+        return (VENV_PATH / "bin" / "activate").exists()
 
-    # Step 1: Check if the venv exists and has necessary files
-    if os.path.exists(venv_path) and check_venv_files(venv_path):
-        print("📦 Valid virtual environment found. Skipping recreation...")
-    else:
-        # Step 2: If venv doesn't exist or is missing necessary files, delete the existing venv
-        if os.path.exists(venv_path):
-            print("🗑️ Removing invalid or incomplete virtual environment...")
-            shutil.rmtree(venv_path)  # Deletes the entire venv folder
+""" Creates a new virtual environment. """
+def create_virtual_environment():
+    
+    try:
 
-        # Step 3: Create a new virtual environment (only the relevant files)
-        print("📦 Creating a new virtual environment...")
-        subprocess.run([sys.executable, "-m", "venv", venv_path], check=True)
+        print("Creating a new virtual environment...")
+        subprocess.run([sys.executable, "-m", "venv", str(VENV_PATH)], check=True)
+        
+    except subprocess.CalledProcessError:
 
-    # Step 4: Determine the correct pip executable inside venv
-    pip_exec = os.path.join(venv_path, "bin", "pip") if os.name != "nt" else os.path.join(venv_path, "Scripts", "pip.exe")
+        print("Failed to create virtual environment.")
+        sys.exit(1)
 
-    # Step 5: Ensure pip is installed
-    print("🚀 Ensuring pip is installed...")
-    subprocess.run([sys.executable, "-m", "ensurepip"], check=True)
+""" Removes an invalid or incomplete virtual environment. """
+def remove_invalid_venv():
+    
+    if VENV_PATH.exists():
 
-    # Step 6: Install dependencies from requirements.txt (if it exists)
-    if os.path.exists("requirements.txt") and os.path.getsize("requirements.txt") > 0:
-        print("📦 Installing dependencies from requirements.txt...")
-        result = subprocess.run([pip_exec, "install", "-r", "requirements.txt"], capture_output=True, text=True)
-        for line in result.stdout.splitlines():
-            if "Requirement already satisfied" not in line:
-                print(line)
-    else:
-        print("⚠️ No valid requirements.txt found. Skipping installation.")
+        print("Removing invalid virtual environment...")
+        shutil.rmtree(VENV_PATH)
 
-    # Step 7: Update requirements.txt with installed packages
-    print("🔄 Updating requirements.txt...")
+""" Installs dependencies from `requirements.txt` if it exists. """
+def install_dependencies():
+
+    req_file = Path("requirements.txt")
+
+    pip_exec = (
+
+        VENV_PATH / "Scripts" / "pip.exe"
+        if os.name == "nt"
+        else VENV_PATH / "bin" / "pip"
+        
+    )
+
+    if not req_file.exists() or req_file.stat().st_size == 0:
+
+        print("No valid requirements.txt found. Skipping installation.")
+        return
+
+    print("Installing dependencies from requirements.txt...")
+    result = subprocess.run([str(pip_exec), "install", "-r", str(req_file)], capture_output=True, text=True)
+
+    for line in result.stdout.splitlines():
+
+        if "Requirement already satisfied" not in line:
+            print(line)
+
+""" Updates `requirements.txt` with installed packages. """
+def update_requirements():
+    
+    pip_exec = (
+        VENV_PATH / "Scripts" / "pip.exe"
+        if os.name == "nt"
+        else VENV_PATH / "bin" / "pip"
+    )
+
+    print("Updating requirements.txt...")
+
     with open("requirements.txt", "w") as req_file:
-        subprocess.run([pip_exec, "freeze"], stdout=req_file, check=True)
 
-    print("✅ Virtual environment is up to date!")
+        subprocess.run([str(pip_exec), "freeze"], stdout=req_file, check=True)
 
-# Run the function when the script is executed
+"""
+    Ensures the virtual environment exists.
+    - If missing or invalid, it will be recreated.
+    - Installs dependencies.
+    - Updates `requirements.txt`.
+"""
+def update_venv_and_requirements():
+    
+    print("Checking virtual environment...")
+    
+    # Check if virtual environment exists
+    if VENV_PATH.exists() and check_venv_files():
+
+        print("Valid virtual environment found. Skipping recreation...")
+
+    else:
+
+        # Remove and recreate the virtual environment if invalid
+        remove_invalid_venv()
+        create_virtual_environment()
+
+    # Install required dependencies
+    install_dependencies()
+    
+    # Update the requirements.txt file with installed packages
+    update_requirements()
+    
+    print("Virtual environment is up to date!")
+
+# Run the virtual environment update process
 if __name__ == "__main__":
+    
     update_venv_and_requirements()

@@ -1,8 +1,8 @@
-
 /* Leaderboard Section */
 .leaderboard-section {
   width: 100%;
-  max-width: 1200px; /* Adjust based on the actual width of task cards */
+  max-width: 1200px;
+  /* Adjust based on the actual width of task cards */
   margin: 0 auto;
 }
 
@@ -19,7 +19,7 @@
 .leaderboard-table td {
   padding: var(--spacing-sm);
   text-align: left;
-  border-bottom: 1px solid rgba(0,0,0,0.1);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.1);
 }
 
 .leaderboard-table thead tr {
@@ -28,11 +28,11 @@
 }
 
 .leaderboard-table tbody tr:nth-child(even) {
-  background-color: rgba(0,0,0,0.03);
+  background-color: rgba(0, 0, 0, 0.03);
 }
 
 .leaderboard-table tbody tr:hover {
-  background-color: rgba(255,127,63,0.1);
+  background-color: rgba(255, 127, 63, 0.1);
 }
 
 /* Task Cards Container */
@@ -54,7 +54,7 @@
   padding: var(--spacing-md);
   box-shadow:
     -8px -8px 16px var(--light-shadow-light),
-     8px 8px 16px var(--dark-shadow-light);
+    8px 8px 16px var(--dark-shadow-light);
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -111,7 +111,7 @@
 }
 
 .task-list li:hover {
-  background-color: rgba(255,127,63,0.08);
+  background-color: rgba(255, 127, 63, 0.08);
 }
 
 /* Task Text */
@@ -160,8 +160,8 @@
 .task-check:checked {
   background-color: var(--success-color);
   box-shadow:
-    inset -2px -2px 4px rgba(255,255,255,0.6),
-    inset 2px 2px 4px rgba(0,0,0,0.2);
+    inset -2px -2px 4px rgba(255, 255, 255, 0.6),
+    inset 2px 2px 4px rgba(0, 0, 0, 0.2);
 }
 
 .task-check:checked::after {
@@ -169,7 +169,7 @@
   position: absolute;
   top: 50%;
   left: 50%;
-  transform: translate(-50%,-50%);
+  transform: translate(-50%, -50%);
   color: #fff;
   font-size: 16px;
   font-weight: bold;
@@ -182,7 +182,8 @@
   left: 0;
   width: 100%;
   height: 100%;
-  background: rgba(0, 0, 0, 0.5); /* Semi-transparent overlay */
+  background: rgba(0, 0, 0, 0.5);
+  /* Semi-transparent overlay */
   display: flex;
   align-items: center;
   justify-content: center;
@@ -367,7 +368,7 @@
   border-radius: var(--radius-medium);
   box-shadow:
     -10px -10px 20px var(--light-shadow-light),
-     10px 10px 20px var(--dark-shadow-light);
+    10px 10px 20px var(--dark-shadow-light);
   padding: var(--spacing-lg);
   position: relative;
 }

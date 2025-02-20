@@ -309,89 +309,139 @@ const translations = {
 
 // Function to load translation file asynchronously
 async function loadTranslations(lang) {
+
     // If translations for the language are already loaded, return them
     if (translations[lang]) {
+
         return translations[lang];
+
     }
 
     // Dynamically fetch translation files
     try {
+
         const response = await fetch(`locales/${lang}/translation.json`);
+
         if (!response.ok) {
+
             throw new Error(`Could not load translations for language: ${lang}`);
+
         }
+
         const data = await response.json();
         translations[lang] = data;
         return data;
+
     } catch (error) {
+
         console.error(error);
+
         // Fallback to English if translation fails
         return translations['en'];
+
     }
 }
 
 // Function to initialize i18n with dynamic language
 async function initializeI18n(lang = 'en') {
+
     const currentTranslations = await loadTranslations(lang);
+
     document.querySelectorAll('[data-i18n]').forEach(element => {
+
         const keys = element.getAttribute('data-i18n').split('.');
         let text = currentTranslations;
+
         keys.forEach(key => {
+
             if (text[key] !== undefined) {
                 text = text[key];
+
             } else {
+
                 // Fallback to English
                 text = translations['en'];
+
                 keys.forEach(k => {
+
                     text = text[k];
+
                 });
+
             }
+
         });
+
         element.textContent = text;
+
     });
 
     // Update HTML lang and dir attributes for RTL languages
     const htmlTag = document.documentElement;
+
     htmlTag.setAttribute('lang', lang);
     if (lang === 'ar') {
+
         htmlTag.setAttribute('dir', 'rtl');
+
     } else {
+
         htmlTag.setAttribute('dir', 'ltr');
+
     }
 }
 
 // Function to get translation
 async function getTranslation(key, lang = 'en') {
+
     const currentTranslations = await loadTranslations(lang);
     const keys = key.split('.');
     let text = currentTranslations;
+
     for (let k of keys) {
+
         if (text[k] !== undefined) {
             text = text[k];
+
         } else {
+
             // Fallback to English
             text = translations['en'];
+
             for (let keyPart of keys) {
+
                 text = text[keyPart];
+
             }
+
             break;
+
         }
+
     }
+
     return text;
+
 }
 
 // Function to set language and save preference
 async function setLanguage(lang) {
+
     localStorage.setItem('preferredLanguage', lang);
     await initializeI18n(lang);
+
 }
 
 // On page load, set the language based on localStorage or default
 document.addEventListener('DOMContentLoaded', async () => {
+
     const languageSelector = document.getElementById('language-selector');
+
     if (!languageSelector) {
+
         console.error("Language selector element with ID 'language-selector' not found.");
         return;
+
     }
 
     const savedLang = localStorage.getItem('preferredLanguage') || 'en';
@@ -400,7 +450,10 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // Add event listener for language selector change
     languageSelector.addEventListener('change', async (event) => {
+
         const selectedLang = event.target.value;
         await setLanguage(selectedLang);
+
     });
+
 });

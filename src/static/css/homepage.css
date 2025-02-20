@@ -54,6 +54,14 @@ body {
     margin-top: 10px;
 }
 
-.red { color: #DC3545; }
-.orange { color: #FF7F00; }
-.green { color: #28A745; }
+.red {
+    color: #DC3545;
+}
+
+.orange {
+    color: #FF7F00;
+}
+
+.green {
+    color: #28A745;
+}

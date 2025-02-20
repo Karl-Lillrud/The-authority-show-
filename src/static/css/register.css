@@ -36,7 +36,8 @@ body {
   position: absolute;
   top: 20px;
   left: 20px;
-  width: 120px; /* Adjust as needed */
+  width: 120px;
+  /* Adjust as needed */
 }
 
 .logo-container img {
@@ -55,6 +56,7 @@ body {
   box-shadow: -5px -5px 10px white, 5px 5px 10px var(--shadow-light);
   transition: all 0.3s ease;
 }
+
 .button.button {
   color: #6e7f8d;
 }
@@ -105,6 +107,7 @@ body {
   margin-bottom: 15px;
   text-align: center;
 }
+
 .success-message {
   font-size: 14px;
   color: var(--highlight);
