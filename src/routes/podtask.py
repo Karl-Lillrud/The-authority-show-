@@ -37,6 +37,7 @@ def register_podtask():
            "_id": podtask_id,
            "podcast_id": data.get("PodcastId", "").strip(),  # Mappas om
            "userid": user_id,
+           "taskname": task_name,                             # Ändrat fältnamn
            "DayCount": day_count,                             # Ändrat fältnamn
            "Description": description,
            "Action": action,
@@ -159,15 +160,14 @@ def update_podtask(task_id):
         if existing_task["userid"] != user_id:
             return jsonify({"error": "Permission denied"}), 403
 
-        # Fields to update (only update provided fields)
         update_fields = {
             "taskname": data.get("taskname", existing_task["taskname"]).strip(),
             "Description": data.get("Description", existing_task["Description"]).strip(),
-            "Daycount": data.get("Daycount", existing_task["Daycount"]),
-            "action": data.get("action", existing_task["action"]),
-            "actionurl": data.get("actionurl", existing_task["actionurl"]).strip(),
-            "externalurl": data.get("externalurl", existing_task["externalurl"]).strip(),
-            "submission": data.get("submission", existing_task["submission"]).strip(),
+            "DayCount": data.get("DayCount", existing_task["DayCount"]),
+            "Action": data.get("action", existing_task["Action"]),
+            "ActionUrl": data.get("actionurl", existing_task["ActionUrl"]).strip(),
+            "UrlDescribe": data.get("externalurl", existing_task["UrlDescribe"]).strip(),
+            "SubimissionReq": True if data.get("submission", "Optional") == "Required" else False,
             "updated_at": datetime.now(timezone.utc),
         }
 
@@ -183,6 +183,7 @@ def update_podtask(task_id):
     except Exception as e:
         print(f"❌ ERROR: {e}")
         return jsonify({"error": f"Failed to update task: {str(e)}"}), 500
+
 
 
 
