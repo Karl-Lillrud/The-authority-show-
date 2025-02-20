@@ -33,18 +33,18 @@ def register_podtask():
 
         # Construct the podtask document
         podtask_item = {
-            "_id": podtask_id,  
-            "PodcastId": data.get("PodcastId", "").strip(),
-            "userid": user_id,  
-            "Daycount": day_count,
-            "Description": description,
-            "action": action,
-            "actionurl": action_url,
-            "externalurl": external_url,
-            "submission": submission,
-            "taskname": task_name,
-            "created_at": datetime.now(timezone.utc),
-        }
+
+           "_id": podtask_id,
+           "podcast_id": data.get("PodcastId", "").strip(),  # Mappas om
+           "userid": user_id,
+           "DayCount": day_count,                             # Ändrat fältnamn
+           "Description": description,
+           "Action": action,
+           "ActionUrl": action_url,
+           "UrlDescribe": external_url,
+          "SubimissionReq": True if submission == "Required" else False,
+          "created_at": datetime.now(timezone.utc),
+}
 
         # Correctly querying the User collection
         user = collection.database.User.find_one({"_id": user_id})
