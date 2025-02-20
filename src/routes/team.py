@@ -55,15 +55,9 @@ def add_team_member():
 
 @team_bp.route("/get_team", methods=["GET"])
 def get_team_members():
-    if not g.user_id:
-        return jsonify({"error": "Unauthorized"}), 401
     try:
-        user_id = str(g.user_id)
-        team_members = list(collection.database.Team.find({"UserID": user_id}))
-        # Convert datetime objects to ISO format for JSON serialization
-        for member in team_members:
-            if "created_at" in member and member["created_at"]:
-                member["created_at"] = member["created_at"].isoformat()
-        return jsonify({"team_members": team_members}), 200
+        team_members = list(collection.database.Team.find({}, {"_id": 0, "UserID": 0, "created_at": 0}))
+        return jsonify(team_members), 200
     except Exception as e:
-        return jsonify({"error": f"Failed to retrieve team members: {str(e)}"}), 500
+        print(f"❌ ERROR: {e}")
+        return jsonify({"error": f"Failed to fetch team members: {str(e)}"}), 500
