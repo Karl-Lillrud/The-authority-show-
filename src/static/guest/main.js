@@ -2,12 +2,12 @@ document.addEventListener("DOMContentLoaded", function() {
   // ---------------------------
   // Utility Functions
   // ---------------------------
-  function loadGuests() {
+  // Fallback localStorage functions if needed
+  function loadGuestsFromLocalStorage() {
     const stored = localStorage.getItem("guests");
     if (stored) {
       return JSON.parse(stored);
     } else {
-      // Initial array without engagement, pending, or social media fields.
       const initialGuests = [
         {
           id: "jonathan",
@@ -20,9 +20,9 @@ document.addEventListener("DOMContentLoaded", function() {
           linkedin: "https://linkedin.com/in/jonathan",
           twitter: "https://twitter.com/jonathan",
           areasOfInterest: ["Fitness", "Health"],
-          inCalendar: true,  // guest is in the user's calendar
-          scheduled: "5",
-          completed: "10",
+          status: "scheduled",
+          scheduled: 0,
+          completed: 0,
           profileLink: "profile.html?id=jonathan"
         },
         {
@@ -36,9 +36,9 @@ document.addEventListener("DOMContentLoaded", function() {
           linkedin: "https://linkedin.com/in/sardor",
           twitter: "https://twitter.com/sardor",
           areasOfInterest: ["Business", "Technology", "AI"],
-          inCalendar: false, // guest is not in the user's calendar
-          scheduled: "0",
-          completed: "0",
+          status: "scheduled",
+          scheduled: 0,
+          completed: 0,
           profileLink: "profile.html?id=sardor"
         }
       ];
@@ -47,72 +47,94 @@ document.addEventListener("DOMContentLoaded", function() {
     }
   }
 
-  function saveGuests(guests) {
-    localStorage.setItem("guests", JSON.stringify(guests));
+  function openPopup() {
+    const popup = document.getElementById("popup");
+    popup.style.display = "flex";
+    popup.classList.remove("hidden");
   }
 
-  function generateId() {
-    return '_' + Math.random().toString(36).substr(2, 9);
+  function closePopup() {
+    const popup = document.getElementById("popup");
+    popup.style.display = "none";
+    popup.classList.add("hidden");
+    document.getElementById("popup-form").innerHTML = "";
+    document.getElementById("popup-body").innerHTML = "";
+  }
+
+  const closeButton = document.querySelector(".close-button");
+  if (closeButton) {
+    closeButton.addEventListener("click", closePopup);
   }
 
   // ---------------------------
-  // Popup Functionality
+  // Dynamic Guest Profile Popup
   // ---------------------------
-  function openPopup(title, fields, callback) {
+  function openProfilePopup(guest) {
     const popup = document.getElementById("popup");
     const popupTitle = document.getElementById("popup-title");
-    const popupForm = document.getElementById("popup-form");
-    popupTitle.textContent = title;
-    popupForm.innerHTML = "";
-    popup.style.display = "block";
-    popup.classList.remove("hidden");
+    const popupBody = document.getElementById("popup-body");
 
-    fields.forEach(field => {
-      const label = document.createElement("label");
-      label.textContent = field.label;
-      const input = document.createElement("input");
-      input.type = field.type;
-      input.id = field.id;
-      if (field.value) {
-        input.value = field.value;
-      }
-      popupForm.appendChild(label);
-      popupForm.appendChild(input);
-    });
-
-    const submitButton = document.createElement("button");
-    submitButton.textContent = "Submit";
-    submitButton.type = "button";
-    submitButton.addEventListener("click", function(e) {
-      e.preventDefault();
-      callback();
-      closePopup();
-    });
-    popupForm.appendChild(submitButton);
+    popupTitle.textContent = guest.name + "'s Profile";
+    popupBody.innerHTML = `
+      <div style="text-align:center;">
+        <img src="${guest.image}" alt="${guest.name}" style="width:100px;height:100px;border-radius:50%;">
+        <h2>${guest.name}</h2>
+        <p>${guest.bio}</p>
+        <div>
+          ${guest.tags.map(tag => `<span style="margin:2px;padding:4px;background:#007BFF;color:#fff;border-radius:4px;">${tag}</span>`).join(" ")}
+        </div>
+        <p>Email: <a href="mailto:${guest.email}">${guest.email}</a></p>
+        <p>LinkedIn: <a href="${guest.linkedin}" target="_blank">${guest.linkedin}</a></p>
+        <p>Twitter: <a href="${guest.twitter}" target="_blank">${guest.twitter}</a></p>
+        <p>Areas of Interest: ${guest.areasOfInterest.join(", ")}</p>
+        <p>Status: ${guest.status}</p>
+        <p>Scheduled: ${guest.scheduled} | Completed: ${guest.completed}</p>
+      </div>
+      <button id="close-profile-popup" style="margin-top:10px;">Close</button>
+    `;
+    openPopup();
+    document.getElementById("close-profile-popup").addEventListener("click", closePopup);
   }
 
-  // Custom Add Guest Popup with Profile Pic Uploader (Index Page)
+  // ---------------------------
+  // Add Guest Popup & Submission
+  // ---------------------------
   function openAddGuestPopup() {
     const popup = document.getElementById("popup");
     const popupTitle = document.getElementById("popup-title");
     const popupForm = document.getElementById("popup-form");
+    const popupBody = document.getElementById("popup-body");
+
     popupTitle.textContent = "Add Guest";
     popupForm.innerHTML = "";
-    popup.style.display = "flex";
-    popup.classList.remove("hidden");
+    popupBody.innerHTML = "";
+    openPopup();
 
-    // Profile Pic Uploader
-    const picUploader = document.createElement("div");
-    picUploader.id = "popup-profile-pic";
-    picUploader.className = "profile-pic-uploader";
-    picUploader.textContent = "Upload";
+    const formHtml = `
+      <div id="popup-profile-pic" class="profile-pic-uploader" style="cursor:pointer;text-align:center;padding:10px;border:1px dashed #ccc;">
+        Upload
+      </div>
+      <input type="file" id="popup-profile-pic-input" accept="image/*" style="display:none;">
+      <label>Guest Name:</label>
+      <input type="text" id="guest-name-input">
+      <label>Guest Description:</label>
+      <input type="text" id="guest-description-input">
+      <label>Tags (comma separated):</label>
+      <input type="text" id="guest-tags-input">
+      <label>Areas of Interest (comma separated):</label>
+      <input type="text" id="guest-areas-input">
+      <label>Email:</label>
+      <input type="email" id="guest-email-input">
+      <label>LinkedIn:</label>
+      <input type="text" id="guest-linkedin-input">
+      <label>Twitter:</label>
+      <input type="text" id="guest-twitter-input">
+      <button type="submit">Add Guest</button>
+    `;
+    popupForm.innerHTML = formHtml;
 
-    const picInput = document.createElement("input");
-    picInput.type = "file";
-    picInput.accept = "image/*";
-    picInput.id = "popup-profile-pic-input";
-    picInput.style.display = "none";
-
+    const picUploader = document.getElementById("popup-profile-pic");
+    const picInput = document.getElementById("popup-profile-pic-input");
     picUploader.addEventListener("click", function() {
       picInput.click();
     });
@@ -128,94 +150,111 @@ document.addEventListener("DOMContentLoaded", function() {
         reader.readAsDataURL(file);
       }
     });
-    popupForm.appendChild(picUploader);
-    popupForm.appendChild(picInput);
 
-    // Additional fields
-    const fields = [
-      { label: "Guest Name:", type: "text", id: "guest-name-input" },
-      { label: "Guest Description:", type: "text", id: "guest-description-input" },
-      { label: "Tags (comma separated):", type: "text", id: "guest-tags-input" },
-      { label: "Areas of Interest (comma separated):", type: "text", id: "guest-areas-input" },
-      { label: "Email:", type: "email", id: "guest-email-input" },
-      { label: "LinkedIn:", type: "text", id: "guest-linkedin-input" },
-      { label: "Twitter:", type: "text", id: "guest-twitter-input" }
-    ];
-    fields.forEach(field => {
-      const label = document.createElement("label");
-      label.textContent = field.label;
-      const input = document.createElement("input");
-      input.type = field.type;
-      input.id = field.id;
-      popupForm.appendChild(label);
-      popupForm.appendChild(input);
-    });
+    popupForm.onsubmit = function(e) {
+      e.preventDefault();
+      const name = document.getElementById("guest-name-input").value;
+      const description = document.getElementById("guest-description-input").value;
+      const tags = document.getElementById("guest-tags-input").value.split(",").map(tag => tag.trim()).filter(Boolean);
+      const areasText = document.getElementById("guest-areas-input").value;
+      const areasOfInterest = areasText ? areasText.split(",").map(s => s.trim()).filter(Boolean) : [];
+      const email = document.getElementById("guest-email-input").value;
+      const linkedin = document.getElementById("guest-linkedin-input").value;
+      const twitter = document.getElementById("guest-twitter-input").value;
 
-    const submitButton = document.createElement("button");
-    submitButton.type = "submit";
-    submitButton.textContent = "Add Guest";
-    popupForm.appendChild(submitButton);
-  }
+      let image;
+      if (picUploader && picUploader.style.backgroundImage) {
+        image = picUploader.style.backgroundImage.slice(5, -2);
+      } else {
+        image = "default-profile.png";
+      }
 
-  function closePopup() {
-    const popup = document.getElementById("popup");
-    popup.style.display = "none";
-    popup.classList.add("hidden");
-    const popupForm = document.getElementById("popup-form");
-    if (popupForm.reset) popupForm.reset();
-  }
+      const payload = {
+        name: name,
+        image: image,
+        tags: tags,
+        description: description,
+        bio: description,
+        areasOfInterest: areasOfInterest,
+        email: email,
+        linkedin: linkedin,
+        twitter: twitter
+      };
 
-  const closeButton = document.querySelector(".close-button");
-  if (closeButton) {
-    closeButton.addEventListener("click", closePopup);
+      fetch("/guest/add_guest", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify(payload)
+      })
+      .then(response => response.json())
+      .then(data => {
+        if (data.guest_id) {
+          alert("Guest added successfully");
+          renderGuestList();
+        } else {
+          alert("Error adding guest: " + data.error);
+        }
+        closePopup();
+      })
+      .catch(err => {
+        console.error(err);
+        alert("Error adding guest");
+        closePopup();
+      });
+    }
   }
 
   // ---------------------------
-  // INDEX PAGE CODE
+  // Fetch Guests from Server
   // ---------------------------
-  const guestListEl = document.getElementById("guest-list");
-  if (guestListEl) {
-    function renderGuestList(filterText = "") {
-      const guests = loadGuests();
-      guestListEl.innerHTML = "";
+  function fetchGuestsFromServer() {
+    return fetch("/guest/get_guests")
+      .then(response => response.json())
+      .then(data => {
+        if (data.guests) {
+          return data.guests;
+        }
+        return [];
+      })
+      .catch(err => {
+        console.error(err);
+        // Fallback to localStorage if server fails
+        return loadGuestsFromLocalStorage();
+      });
+  }
 
-      // Split search input by commas for multi-tag search
-      const searchTerms = filterText
-        .split(",")
-        .map(term => term.trim().toLowerCase())
-        .filter(Boolean);
-
-      guests
-        .filter(guest => {
-          // Combine guest fields into one searchable string
-          const combinedText = (
-            guest.name + " " +
-            guest.description + " " +
-            guest.tags.join(" ") + " " +
-            (guest.areasOfInterest ? guest.areasOfInterest.join(" ") : "")
-          ).toLowerCase();
-
-          if (searchTerms.length === 0) return true;
-          // All search terms must appear (AND logic)
-          return searchTerms.every(term => combinedText.includes(term));
-        })
-        .forEach(guest => {
-          const card = document.createElement("div");
-          card.classList.add("guest-card");
-          card.innerHTML = `
-            <img src="${guest.image}" alt="${guest.name}" />
-            <h3>${guest.name}</h3>
-            <div class="tags">
-              ${guest.tags.map(tag => `<span>${tag}</span>`).join("")}
-            </div>
-            <div class="guest-hover">
-              <p>${guest.description}</p>
-              <a href="profile.html?id=${guest.id}" class="view-profile">View Profile</a>
-            </div>
-          `;
-          guestListEl.appendChild(card);
+  // ---------------------------
+  // Render Guest List
+  // ---------------------------
+  function renderGuestList(filterText = "") {
+    const guestListEl = document.getElementById("guest-list");
+    if (!guestListEl) return;
+    guestListEl.innerHTML = "";
+    fetchGuestsFromServer().then(guests => {
+      const searchTerms = filterText.split(",").map(term => term.trim().toLowerCase()).filter(Boolean);
+      guests.filter(guest => {
+        const combinedText = (guest.name + " " + guest.description + " " + guest.tags.join(" ") + " " + (guest.areasOfInterest ? guest.areasOfInterest.join(" ") : "")).toLowerCase();
+        if (searchTerms.length === 0) return true;
+        return searchTerms.every(term => combinedText.includes(term));
+      }).forEach(guest => {
+        const card = document.createElement("div");
+        card.classList.add("guest-card");
+        card.innerHTML = `
+          <img src="${guest.image}" alt="${guest.name}">
+          <h3>${guest.name}</h3>
+          <div class="tags">
+            ${guest.tags.map(tag => `<span>${tag}</span>`).join("")}
+          </div>
+        `;
+        card.addEventListener("click", function() {
+          openProfilePopup(guest);
         });
+        guestListEl.appendChild(card);
+      });
 
+      // Add card to trigger Add Guest popup.
       const addCard = document.createElement("div");
       addCard.classList.add("guest-card", "add-guest-card");
       addCard.innerHTML = `
@@ -224,375 +263,14 @@ document.addEventListener("DOMContentLoaded", function() {
       `;
       addCard.addEventListener("click", openAddGuestPopup);
       guestListEl.appendChild(addCard);
-    }
-
-    const searchBar = document.getElementById("search-bar");
-    if (searchBar) {
-      searchBar.addEventListener("input", (e) => {
-        renderGuestList(e.target.value);
-      });
-    }
-
-    renderGuestList();
-
-    const popupFormEl = document.getElementById("popup-form");
-    if (popupFormEl) {
-      popupFormEl.addEventListener("submit", function(e) {
-        e.preventDefault();
-        const name = document.getElementById("guest-name-input").value;
-        const description = document.getElementById("guest-description-input").value;
-        const tags = document.getElementById("guest-tags-input").value
-          .split(",")
-          .map(tag => tag.trim())
-          .filter(Boolean);
-        const areasText = document.getElementById("guest-areas-input").value;
-        const areasOfInterest = areasText
-          ? areasText.split(",").map(s => s.trim()).filter(Boolean)
-          : [];
-        const email = document.getElementById("guest-email-input").value;
-        const linkedin = document.getElementById("guest-linkedin-input").value;
-        const twitter = document.getElementById("guest-twitter-input").value;
-
-        const picUploader = document.getElementById("popup-profile-pic");
-        let image;
-        if (picUploader && picUploader.style.backgroundImage) {
-          image = picUploader.style.backgroundImage.slice(5, -2);
-        } else {
-          image = "default-profile.png";
-        }
-
-        const id = generateId();
-        const profileLink = `profile.html?id=${id}`;
-        const guests = loadGuests();
-        // Default status is now "scheduled" with zeroed calendar counts.
-        guests.push({ 
-          id, 
-          name, 
-          image, 
-          tags, 
-          description, 
-          areasOfInterest, 
-          email, 
-          linkedin, 
-          twitter, 
-          profileLink, 
-          status: "scheduled", 
-          scheduled: "0", 
-          completed: "0", 
-          bio: description 
-        });
-        saveGuests(guests);
-        renderGuestList(document.getElementById("search-bar").value);
-        popupFormEl.reset();
-        if (picUploader) {
-          picUploader.style.backgroundImage = "";
-          picUploader.textContent = "Upload";
-        }
-        closePopup();
-      });
-    }
-  }
-
-  // ---------------------------
-  // PROFILE PAGE CODE
-  // ---------------------------
-  const profileEl = document.getElementById("profile");
-  if (profileEl) {
-    const urlParams = new URLSearchParams(window.location.search);
-    const guestId = urlParams.get("id");
-    const guests = loadGuests();
-    const data = guests.find(g => g.id === guestId) || {
-      name: "Default Guest",
-      bio: "No bio available.",
-      image: "default-profile.png",
-      tags: [],
-      areasOfInterest: [],
-      email: "guest@example.com",
-      linkedin: "#",
-      twitter: "#",
-      status: "scheduled",
-      scheduled: "0",
-      completed: "0",
-      profileLink: "profile.html?id=default"
-    };
-
-    // Immediately hide engagement section if guest not in calendar
-    if (!data.inCalendar) {
-      const engagementSection = document.querySelector(".engagement");
-      if (engagementSection) {
-        engagementSection.style.display = "none";
-      }
-    }
-
-    document.getElementById("guest-name").textContent = data.name;
-    document.getElementById("guest-bio").textContent = data.description;
-    document.getElementById("profile-pic").src = data.image;
-    document.getElementById("guest-email").innerHTML = `Email: <a href="mailto:${data.email}" id="email-link">${data.email}</a>`;
-    document.getElementById("linkedin-link").href = data.linkedin;
-    document.getElementById("twitter-link").href = data.twitter;
-
-    const tagsContainer = document.getElementById("guest-tags");
-    tagsContainer.innerHTML = "";
-    data.tags.forEach(tag => {
-      const span = document.createElement("span");
-      span.textContent = tag;
-      tagsContainer.appendChild(span);
-    });
-
-    let areasContainer = document.getElementById("areas-of-interest");
-    if (areasContainer) {
-      const areas = data.areasOfInterest || [];
-      areasContainer.textContent = areas.length ? "Areas of Interest: " + areas.join(", ") : "";
-    }
-
-    // Bio Section with inline editing
-    const bioTextElement = document.getElementById("guest-bio-text");
-    bioTextElement.textContent = data.bio || "No bio available.";
-    const editBioIcon = document.getElementById("edit-bio-icon");
-    if (editBioIcon) {
-      editBioIcon.addEventListener("click", function() {
-        bioTextElement.contentEditable = true;
-        bioTextElement.style.border = "1px dashed #ccc";
-        bioTextElement.focus();
-      });
-      bioTextElement.addEventListener("blur", function() {
-        bioTextElement.contentEditable = false;
-        bioTextElement.style.border = "none";
-        const updatedBio = bioTextElement.textContent;
-        const guests = loadGuests();
-        const updatedGuests = guests.map(g => {
-          if (g.id === data.id) {
-            return { ...g, bio: updatedBio };
-          }
-          return g;
-        });
-        saveGuests(updatedGuests);
-      });
-    }
-
-    // Communication Status Badge (using a safe fallback)
-    const statusBadge = document.getElementById("status-badge");
-    let status = data.status;
-    if (status === "pending") { // default pending to scheduled
-      status = "scheduled";
-    }
-    const statusSelectEl = document.getElementById("edit-guest-status");
-    const updatedStatus = statusSelectEl && statusSelectEl.value ? statusSelectEl.value : "scheduled";
-    statusBadge.textContent = updatedStatus.charAt(0).toUpperCase() + updatedStatus.slice(1);
-
-    // Profile Actions
-    const editProfileBtn = document.getElementById("edit-profile-btn");
-    const removeProfileBtn = document.getElementById("remove-profile-btn");
-
-    if (editProfileBtn) {
-      editProfileBtn.addEventListener("click", openEditProfilePopup);
-    }
-    if (removeProfileBtn) {
-      removeProfileBtn.addEventListener("click", function() {
-        if (confirm("Are you sure you want to remove your profile?")) {
-          const guests = loadGuests();
-          const updatedGuests = guests.filter(g => g.id !== data.id);
-          saveGuests(updatedGuests);
-          window.location.href = "index.html";
-        }
-      });
-    }
-
-    function openEditProfilePopup() {
-      const popup = document.getElementById("popup");
-      const popupTitle = document.getElementById("popup-title");
-      const popupForm = document.getElementById("popup-form");
-      popupTitle.textContent = "Edit Profile";
-      popupForm.innerHTML = "";
-      popup.style.display = "flex";
-      popup.classList.remove("hidden");
-
-      // Profile Pic Uploader for Editing
-      const picUploader = document.createElement("div");
-      picUploader.id = "popup-edit-profile-pic";
-      picUploader.className = "profile-pic-uploader";
-      picUploader.style.backgroundImage = `url(${data.image})`;
-      picUploader.textContent = "";
-
-      const picInput = document.createElement("input");
-      picInput.type = "file";
-      picInput.accept = "image/*";
-      picInput.id = "popup-edit-profile-pic-input";
-      picInput.style.display = "none";
-
-      picUploader.addEventListener("click", function() {
-        picInput.click();
-      });
-      picInput.addEventListener("change", function() {
-        const file = this.files[0];
-        if (file) {
-          const reader = new FileReader();
-          reader.onload = function(e) {
-            picUploader.style.backgroundImage = `url(${e.target.result})`;
-          };
-          reader.readAsDataURL(file);
-        }
-      });
-      popupForm.appendChild(picUploader);
-      popupForm.appendChild(picInput);
-
-      // Add the remaining editable fields only.
-      const fields = [
-        { label: "Guest Name:", type: "text", id: "edit-guest-name", value: data.name },
-        { label: "Guest Description:", type: "text", id: "edit-guest-description", value: data.description },
-        { label: "Tags (comma separated):", type: "text", id: "edit-guest-tags", value: data.tags.join(", ") },
-        { label: "Areas of Interest (comma separated):", type: "text", id: "edit-guest-areas", value: data.areasOfInterest ? data.areasOfInterest.join(", ") : "" },
-        { label: "Email:", type: "email", id: "edit-guest-email", value: data.email },
-        { label: "LinkedIn:", type: "text", id: "edit-guest-linkedin", value: data.linkedin },
-        { label: "Twitter:", type: "text", id: "edit-guest-twitter", value: data.twitter }
-      ];
-
-      fields.forEach(field => {
-        const label = document.createElement("label");
-        label.textContent = field.label;
-        const input = document.createElement("input");
-        input.type = field.type;
-        input.id = field.id;
-        input.value = field.value;
-        popupForm.appendChild(label);
-        popupForm.appendChild(input);
-      });
-
-      // Do NOT add the schedule/completed select since these values are managed via calendar integration.
-
-      const submitButton = document.createElement("button");
-      submitButton.type = "submit";
-      submitButton.textContent = "Save Changes";
-      popupForm.appendChild(submitButton);
-
-      popupForm.onsubmit = function(e) {
-        e.preventDefault();
-        const updatedName = document.getElementById("edit-guest-name").value;
-        const updatedDescription = document.getElementById("edit-guest-description").value;
-        const updatedTags = document.getElementById("edit-guest-tags").value
-          .split(",")
-          .map(t => t.trim())
-          .filter(Boolean);
-        const updatedAreasText = document.getElementById("edit-guest-areas").value;
-        const updatedAreas = updatedAreasText
-          ? updatedAreasText.split(",").map(s => s.trim()).filter(Boolean)
-          : [];
-        const updatedEmail = document.getElementById("edit-guest-email").value;
-        const updatedLinkedin = document.getElementById("edit-guest-linkedin").value;
-        const updatedTwitter = document.getElementById("edit-guest-twitter").value;
-        let updatedImage;
-        if (picUploader && picUploader.style.backgroundImage) {
-          updatedImage = picUploader.style.backgroundImage.slice(5, -2);
-        } else {
-          updatedImage = data.image;
-        }
-        const guests = loadGuests();
-        const updatedGuests = guests.map(g => {
-          if (g.id === data.id) {
-            return {
-              ...g,
-              name: updatedName,
-              description: updatedDescription,
-              tags: updatedTags,
-              areasOfInterest: updatedAreas,
-              image: updatedImage,
-              email: updatedEmail,
-              linkedin: updatedLinkedin,
-              twitter: updatedTwitter,
-              // Do not change schedule/completed values here.
-              profileLink: `profile.html?id=${g.id}`,
-              bio: updatedDescription
-            };
-          }
-          return g;
-        });
-        saveGuests(updatedGuests);
-        // Update displayed fields on the profile page.
-        document.getElementById("guest-name").textContent = updatedName;
-        document.getElementById("guest-bio").textContent = updatedDescription;
-        document.getElementById("profile-pic").src = updatedImage;
-        document.getElementById("guest-email").innerHTML = `Email: <a href="mailto:${updatedEmail}" id="email-link">${updatedEmail}</a>`;
-        document.getElementById("linkedin-link").href = updatedLinkedin;
-        document.getElementById("twitter-link").href = updatedTwitter;
-        const tagsContainer = document.getElementById("guest-tags");
-        tagsContainer.innerHTML = "";
-        updatedTags.forEach(tag => {
-          const span = document.createElement("span");
-          span.textContent = tag;
-          tagsContainer.appendChild(span);
-        });
-        let areasContainer = document.getElementById("areas-of-interest");
-        if (areasContainer) {
-          areasContainer.textContent = updatedAreas.length ? "Areas of Interest: " + updatedAreas.join(", ") : "";
-        }
-        closePopup();
-      }
-    }
-
-    // ---------------------------
-    // Azure Calendar Placeholder
-    // ---------------------------
-    function updateCalendarMetrics() {
-      // Placeholder: simulate fetching scheduled & completed counts from Azure Calendar.
-      const scheduledCount = Math.floor(Math.random() * 10) + 1;
-      const completedCount = Math.floor(Math.random() * 10);
-      const scheduledEl = document.getElementById("scheduled-count");
-      const completedEl = document.getElementById("completed-count");
-      if (scheduledEl) scheduledEl.textContent = scheduledCount;
-      if (completedEl) completedEl.textContent = completedCount;
-    }
-
-    // Initial call and periodic update (every 60 seconds)
-    updateCalendarMetrics();
-    setInterval(updateCalendarMetrics, 60000);
-  }
-
-  // ---------------------------
-  // Additional Common Event Listeners
-  // ---------------------------
-  const exportDataEl = document.getElementById("export-data");
-  if (exportDataEl) {
-    exportDataEl.addEventListener("click", function() {
-      alert("Exporting data...");
     });
   }
 
-  const trackEngagementEl = document.getElementById("track-engagement");
-  if (trackEngagementEl) {
-    trackEngagementEl.addEventListener("click", function() {
-      alert("Tracking engagement metrics...");
+  const searchBar = document.getElementById("search-bar");
+  if (searchBar) {
+    searchBar.addEventListener("input", function(e) {
+      renderGuestList(e.target.value);
     });
   }
-
-  async function sendEmail(to, subject, body) {
-    await fetch("https://api.sendgrid.com/v3/mail/send", {
-      method: "POST",
-      headers: {
-        "Authorization": "Bearer YOUR_SENDGRID_API_KEY",
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify({
-        personalizations: [{ to: [{ email: to }] }],
-        from: { email: "your@email.com" },
-        subject: subject,
-        content: [{ type: "text/plain", value: body }]
-      })
-    });
-    const openRate = Math.floor(Math.random() * 100) + "%";
-    emailHistory.push({ to, subject, body, date: new Date(), openRate });
-  }
-
-  const viewEmailHistoryEl = document.getElementById("view-email-history");
-  if (viewEmailHistoryEl) {
-    viewEmailHistoryEl.addEventListener("click", function() {
-      if (emailHistory.length === 0) {
-        alert("No emails sent yet.");
-      } else {
-        let historyText = emailHistory
-          .map(email => `${email.date.toLocaleString()}: To ${email.to} – ${email.subject} (Open Rate: ${email.openRate})`)
-          .join("\n");
-        alert(historyText);
-      }
-    });
-  }
+  renderGuestList();
 });
