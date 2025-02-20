@@ -11,10 +11,10 @@
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-  // === Insert Filter CSS into Head so it always applies ===
-  if (!document.getElementById('filter-menu-styles')) {
+  // === Insert CSS for Filter, Modal, Dropdown, and fix dropdown overflow ===
+  if (!document.getElementById('custom-styles')) {
     var styleEl = document.createElement('style');
-    styleEl.id = 'filter-menu-styles';
+    styleEl.id = 'custom-styles';
     styleEl.innerHTML = `
       .filters {
         display: flex;
@@ -42,6 +42,75 @@ document.addEventListener('DOMContentLoaded', function() {
       }
       .hidden {
         display: none !important;
+      }
+      /* Modal common styles */
+      .modal {
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        background: var(--background-light);
+        padding: var(--spacing-lg);
+        border-radius: 10px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+        z-index: 1000;
+        display: none;
+      }
+      .modal.show {
+        display: block;
+      }
+      .modal .form-group {
+        margin-bottom: var(--spacing-md);
+      }
+      .modal .modal-actions {
+        display: flex;
+        gap: var(--spacing-md);
+        justify-content: flex-end;
+      }
+      .modal-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0,0,0,0.5);
+        z-index: 999;
+        display: none;
+      }
+      .modal-overlay.show {
+        display: block;
+      }
+      /* Dropdown styles */
+      .actions-dropdown {
+        position: relative;
+        display: inline-block;
+      }
+      .actions-dropdown .dropdown-menu {
+        position: absolute;
+        top: 100%;
+        right: 0;
+        background: var(--background-light);
+        box-shadow: 0 2px 5px rgba(0,0,0,0.15);
+        border-radius: 5px;
+        padding: 5px 0;
+        z-index: 100;
+        min-width: 120px;
+      }
+      .actions-dropdown .dropdown-menu button {
+        background: none;
+        border: none;
+        width: 100%;
+        text-align: left;
+        padding: 8px 12px;
+        cursor: pointer;
+      }
+      .actions-dropdown .dropdown-menu button:hover {
+        background-color: var(--background-dark);
+      }
+      /* Ensure dropdown isn't clipped by container */
+      .team-table .actions-cell {
+        position: relative;
+        overflow: visible;
       }
     `;
     document.head.appendChild(styleEl);
@@ -72,126 +141,169 @@ document.addEventListener('DOMContentLoaded', function() {
       el.setAttribute('placeholder', i18next.t(key));
     });
   }
-  function changeLanguage(lng) {
-    i18next.changeLanguage(lng, function(err, t) {
-      if (err) return console.error(err);
-      updateContent();
-    });
-  }
-  function setupLanguageSwitcher() {
-    document.querySelectorAll('.language-switcher button').forEach(function(btn) {
-      btn.addEventListener('click', function() {
-        const lang = btn.id.replace('lang-', '');
-        changeLanguage(lang);
-      });
-    });
-  }
-
-  // === Dark Mode Setup ===
-  const themeToggle = document.getElementById('theme-toggle');
-  themeToggle.addEventListener('change', function() {
-    if (this.checked) {
-      document.body.classList.add('dark-mode');
-      localStorage.setItem('theme', 'dark');
-    } else {
-      document.body.classList.remove('dark-mode');
-      localStorage.setItem('theme', 'light');
-    }
-  });
-  const savedTheme = localStorage.getItem('theme');
-  if (savedTheme === 'dark') {
-    document.body.classList.add('dark-mode');
-    themeToggle.checked = true;
-  }
 
   // === Modal Toggle for "Add New Member" ===
   const addMemberBtn = document.querySelector('.add-member');
   const addMemberModal = document.getElementById('addMemberModal');
-  const closeModalBtn = document.querySelector('.close-btn');
-  if (addMemberBtn) {
-    addMemberBtn.addEventListener('click', function() {
-      addMemberModal.classList.add('show');
-      addMemberModal.setAttribute('aria-hidden', 'false');
-    });
-  }
-  if (closeModalBtn) {
-    closeModalBtn.addEventListener('click', function() {
-      addMemberModal.classList.remove('show');
-      addMemberModal.setAttribute('aria-hidden', 'true');
-    });
-  }
+  const addCloseModalBtn = addMemberModal.querySelector('.close-btn');
+  const modalOverlay = document.getElementById('modalOverlay');
+
+  addMemberBtn.addEventListener('click', function() {
+    addMemberModal.classList.add('show');
+    addMemberModal.setAttribute('aria-hidden', 'false');
+    modalOverlay.classList.add('show');
+  });
+  addCloseModalBtn.addEventListener('click', function() {
+    addMemberModal.classList.remove('show');
+    addMemberModal.setAttribute('aria-hidden', 'true');
+    modalOverlay.classList.remove('show');
+  });
   window.addEventListener('click', function(event) {
     if (event.target === addMemberModal) {
       addMemberModal.classList.remove('show');
       addMemberModal.setAttribute('aria-hidden', 'true');
+      modalOverlay.classList.remove('show');
+    }
+    if (event.target === editRoleModal) {
+      editRoleModal.classList.remove('show');
+      editRoleModal.setAttribute('aria-hidden', 'true');
+      modalOverlay.classList.remove('show');
+      currentEditingRow = null;
     }
   });
 
-  // === Form Submission with Validation ===
+  addMemberBtn.addEventListener('click', function() {
+    ['name-error', 'role-error', 'email-error', 'phone-error'].forEach(function(id) {
+      const el = document.getElementById(id);
+      el.textContent = "";
+      el.classList.add('sr-only');
+    });
+  });
+
+  // Add new team member to MongoDB
   document.getElementById('addMemberForm').addEventListener('submit', function(event) {
     event.preventDefault();
-    const name = document.getElementById('memberName');
-    const role = document.getElementById('memberRole');
-    const email = document.getElementById('memberEmail');
-    const phone = document.getElementById('memberPhone');
-    let isValid = true;
-    if (!validateName(name.value)) {
-      name.classList.add('input-field--error');
-      document.getElementById('name-error').classList.remove('sr-only');
-      isValid = false;
-    } else {
-      name.classList.remove('input-field--error');
-      document.getElementById('name-error').classList.add('sr-only');
-    }
-    if (!validateRole(role.value)) {
-      role.classList.add('input-field--error');
-      document.getElementById('role-error').classList.remove('sr-only');
-      isValid = false;
-    } else {
-      role.classList.remove('input-field--error');
-      document.getElementById('role-error').classList.add('sr-only');
-    }
-    if (!validateEmail(email.value)) {
-      email.classList.add('input-field--error');
-      document.getElementById('email-error').classList.remove('sr-only');
-      isValid = false;
-    } else {
-      email.classList.remove('input-field--error');
-      document.getElementById('email-error').classList.add('sr-only');
-    }
-    if (phone.value && !validatePhone(phone.value)) {
-      phone.classList.add('input-field--error');
-      document.getElementById('phone-error').classList.remove('sr-only');
-      isValid = false;
-    } else {
-      phone.classList.remove('input-field--error');
-      document.getElementById('phone-error').classList.add('sr-only');
-    }
-    if (isValid) {
-      const submitButton = this.querySelector('.submit-btn');
-      submitButton.textContent = i18next.t('buttons.submitting');
-      setTimeout(function() {
-        submitButton.textContent = i18next.t('buttons.submit');
-        showToast(i18next.t('notifications.memberAdded'));
+    const member = {
+      name: document.getElementById('memberName').value,
+      role: document.getElementById('memberRole').value,
+      email: document.getElementById('memberEmail').value,
+      phone: document.getElementById('memberPhone').value
+    };
+
+    const isNameValid = validateName(member.name);
+    const isRoleValid = validateRole(member.role);
+    const isEmailValid = validateEmail(member.email);
+    const isPhoneValid = validatePhone(member.phone);
+
+    if (isNameValid && isRoleValid && isEmailValid && isPhoneValid) {
+      fetch('/add_team', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(member)
+      })
+      .then(response => {
+        if (!response.ok) {
+          throw new Error('Network response was not ok');
+        }
+        return response.json();
+      })
+      .then(data => {
+        showToast(data.message);
+        fetchTeamMembers();
         document.getElementById('addMemberForm').reset();
         addMemberModal.classList.remove('show');
         addMemberModal.setAttribute('aria-hidden', 'true');
-      }, 2000);
+        modalOverlay.classList.remove('show');
+      })
+      .catch(error => console.error('Error adding team member:', error));
     }
   });
-  function validateEmail(email) {
+
+  // Fetch and display team members from MongoDB
+  function fetchTeamMembers() {
+    fetch('/get_team')
+      .then(response => response.json())
+      .then(data => {
+        const tbody = document.querySelector('.team-table tbody');
+        tbody.innerHTML = '';
+        data.forEach(team => {
+          const newRow = document.createElement('tr');
+          newRow.innerHTML = `
+            <td>${team.Name}</td>
+            <td>${team.Role}</td>
+            <td><a href="mailto:${team.Email}" class="email-link">${team.Email}</a></td>
+            <td>${team.Phone || ''}</td>
+            <td>0</td>
+            <td>
+              <span class="status active" data-i18n="status.active">Active</span>
+            </td>
+            <td class="actions-cell">
+              <div class="actions-dropdown">
+                <button class="icon-button action-btn cog" aria-label="Member Actions">⚙️</button>
+                <div class="dropdown-menu hidden">
+                  <button class="dropdown-item edit-role">Edit Role</button>
+                  <button class="dropdown-item disable-member">Disable Member</button>
+                </div>
+              </div>
+            </td>
+          `;
+          tbody.appendChild(newRow);
+          attachRowActions(newRow);
+        });
+      })
+      .catch(error => console.error('Error fetching team members:', error));
+  }
+
+  // Initial fetch of team members
+  fetchTeamMembers();
+
+  function validateName(nameValue) {
+    const valid = nameValue.trim().length > 0;
+    const errorEl = document.getElementById('name-error');
+    if (valid) {
+      errorEl.classList.add('sr-only');
+    } else {
+      errorEl.textContent = "Please put in a valid name.";
+      errorEl.classList.remove('sr-only');
+    }
+    return valid;
+  }
+  function validateRole(roleValue) {
+    const valid = roleValue.trim().length > 0;
+    const errorEl = document.getElementById('role-error');
+    if (valid) {
+      errorEl.classList.add('sr-only');
+    } else {
+      errorEl.textContent = "Please put in a valid role.";
+      errorEl.classList.remove('sr-only');
+    }
+    return valid;
+  }
+  function validateEmail(emailValue) {
     const re = /\S+@\S+\.\S+/;
-    return re.test(email);
+    const valid = re.test(emailValue);
+    const errorEl = document.getElementById('email-error');
+    if (valid) {
+      errorEl.classList.add('sr-only');
+    } else {
+      errorEl.textContent = "Please put in a valid email.";
+      errorEl.classList.remove('sr-only');
+    }
+    return valid;
   }
-  function validateName(name) {
-    return name.trim().length > 0;
-  }
-  function validateRole(role) {
-    return role.trim().length > 0;
-  }
-  function validatePhone(phone) {
+  function validatePhone(phoneValue) {
     const re = /^\+?[0-9]{7,15}$/;
-    return re.test(phone);
+    const valid = phoneValue === "" || re.test(phoneValue);
+    const errorEl = document.getElementById('phone-error');
+    if (valid) {
+      errorEl.classList.add('sr-only');
+    } else {
+      errorEl.textContent = "Please put in a valid phone.";
+      errorEl.classList.remove('sr-only');
+    }
+    return valid;
   }
   function showToast(message) {
     const toast = document.getElementById('toast');
@@ -202,56 +314,74 @@ document.addEventListener('DOMContentLoaded', function() {
     }, 3000);
   }
 
-  // === Search Functionality for Table Rows ===
   const searchInput = document.getElementById('search');
-  const tableRows = document.querySelectorAll('.team-table tbody tr');
   searchInput.addEventListener('input', function(event) {
     const searchValue = event.target.value.toLowerCase();
-    tableRows.forEach(function(row) {
+    const currentRows = document.querySelectorAll('.team-table tbody tr');
+    currentRows.forEach(function(row) {
       row.style.display = row.textContent.toLowerCase().includes(searchValue) ? '' : 'none';
     });
   });
 
-  // === Action Buttons in Table ===
-  tableRows.forEach(function(row) {
-    const editButton = row.querySelector('.action-btn.edit');
-    const disableButton = row.querySelector('.action-btn.disable');
-    const viewTasksButton = row.querySelector('.action-btn.view-tasks');
-    if (editButton) {
-      editButton.addEventListener('click', function() {
-        alert('Edit functionality not implemented yet.');
-      });
-    }
-    if (disableButton) {
-      disableButton.addEventListener('click', function() {
-        const statusSpan = row.querySelector('.status');
-        if (statusSpan.textContent.trim() === 'Active') {
-          statusSpan.textContent = 'Inactive';
-          statusSpan.classList.remove('active');
-          statusSpan.classList.add('inactive');
-        } else {
-          statusSpan.textContent = 'Active';
-          statusSpan.classList.remove('inactive');
-          statusSpan.classList.add('active');
-        }
-      });
-    }
-    if (viewTasksButton) {
-      viewTasksButton.addEventListener('click', function() {
-        alert('View tasks functionality not implemented yet.');
-      });
-    }
-  });
+  // === Action Buttons in Table (Dropdown) ===
+  function attachRowActions(row) {
+    const dropdown = row.querySelector('.actions-dropdown');
+    const cogButton = dropdown.querySelector('.action-btn.cog');
+    const dropdownMenu = dropdown.querySelector('.dropdown-menu');
+    const editRoleBtn = dropdown.querySelector('.dropdown-item.edit-role');
+    const disableMemberBtn = dropdown.querySelector('.dropdown-item.disable-member');
 
-  // === Filter Menu Functionality with Search Bar Adjustment ===
+    // Toggle dropdown visibility when clicking the cog
+    cogButton.addEventListener('click', function(event) {
+      event.stopPropagation();
+      dropdownMenu.classList.toggle('hidden');
+    });
+
+    // Clicking outside dropdown closes any open dropdown menus
+    document.addEventListener('click', function() {
+      dropdownMenu.classList.add('hidden');
+    });
+
+    // Prevent click inside dropdown from closing it immediately
+    dropdownMenu.addEventListener('click', function(event) {
+      event.stopPropagation();
+    });
+
+    // Edit Role functionality
+    editRoleBtn.addEventListener('click', function() {
+      currentEditingRow = row;
+      const currentRole = row.querySelector('td:nth-child(2)').textContent.trim();
+      document.getElementById('newRole').value = currentRole;
+      editRoleModal.classList.add('show');
+      editRoleModal.setAttribute('aria-hidden', 'false');
+      modalOverlay.classList.add('show');
+      dropdownMenu.classList.add('hidden');
+    });
+
+    // Disable Member functionality
+    disableMemberBtn.addEventListener('click', function() {
+      const statusSpan = row.querySelector('.status');
+      if (statusSpan.textContent.trim() === 'Active') {
+        statusSpan.textContent = 'Inactive';
+        statusSpan.classList.remove('active');
+        statusSpan.classList.add('inactive');
+      } else {
+        statusSpan.textContent = 'Active';
+        statusSpan.classList.remove('inactive');
+        statusSpan.classList.add('active');
+      }
+      dropdownMenu.classList.add('hidden');
+    });
+  }
+  // Attach actions for existing rows
+  document.querySelectorAll('.team-table tbody tr').forEach(attachRowActions);
+
+  // === Filter Menu Handler ===
   const filterButton = document.getElementById('filter');
   let filterMenu;
-  const searchBar = document.querySelector('.search-bar');
-
   filterButton.addEventListener('click', function() {
     if (!filterMenu) {
       filterMenu = document.createElement('div');
-      // Create filter menu HTML using the "filters" class
       filterMenu.innerHTML = `
         <div class="filters">
           <label for="filter-role">Role:</label>
@@ -275,51 +405,80 @@ document.addEventListener('DOMContentLoaded', function() {
           </select>
         </div>
       `;
-      // Append the filter menu next to the filter button
       filterButton.parentNode.appendChild(filterMenu);
-      // Set a fixed flex basis for the search bar so it doesn't shrink too much
-      searchBar.style.flex = "0 0 500px";
-
-      // Set up event listeners for the filter dropdowns
       const roleFilter = document.getElementById('filter-role');
       const statusFilter = document.getElementById('filter-status');
       const taskFilter = document.getElementById('filter-task');
+
+      roleFilter.addEventListener('change', filterRows);
+      statusFilter.addEventListener('change', filterRows);
+      taskFilter.addEventListener('change', filterRows);
 
       function filterRows() {
         const selectedRole = roleFilter.value;
         const selectedStatus = statusFilter.value;
         const selectedTaskFilter = taskFilter.value;
-        tableRows.forEach(function(row) {
+        const rows = Array.from(document.querySelectorAll('.team-table tbody tr'));
+
+        let filteredRows = rows.filter(row => {
           const role = row.querySelector('td:nth-child(2)').textContent.trim();
           const status = row.querySelector('.status').textContent.trim();
-          const taskCount = parseInt(row.querySelector('td:nth-child(5)').textContent.trim());
-          const matchesRole = !selectedRole || role === selectedRole;
-          const matchesStatus = !selectedStatus || status === selectedStatus;
-          const matchesTask = !selectedTaskFilter ||
-            (selectedTaskFilter === 'most' && taskCount >= 5) ||
-            (selectedTaskFilter === 'least' && taskCount < 5);
-          row.style.display = (matchesRole && matchesStatus && matchesTask) ? '' : 'none';
+          return (!selectedRole || role === selectedRole) &&
+                 (!selectedStatus || status === selectedStatus);
+        });
+
+        if (selectedTaskFilter === 'most') {
+          filteredRows.sort((a, b) => {
+            const aCount = parseInt(a.querySelector('td:nth-child(5)').textContent.trim(), 10);
+            const bCount = parseInt(b.querySelector('td:nth-child(5)').textContent.trim(), 10);
+            return bCount - aCount;
+          });
+        } else if (selectedTaskFilter === 'least') {
+          filteredRows.sort((a, b) => {
+            const aCount = parseInt(a.querySelector('td:nth-child(5)').textContent.trim(), 10);
+            const bCount = parseInt(b.querySelector('td:nth-child(5)').textContent.trim(), 10);
+            return aCount - bCount;
+          });
+        }
+
+        const tbody = document.querySelector('.team-table tbody');
+        rows.forEach(row => {
+          row.style.display = filteredRows.includes(row) ? '' : 'none';
+        });
+        filteredRows.forEach(row => {
+          tbody.appendChild(row);
         });
       }
-
-      roleFilter.addEventListener('change', filterRows);
-      statusFilter.addEventListener('change', filterRows);
-      taskFilter.addEventListener('change', filterRows);
     } else {
-      // Toggle the filter menu's visibility
-      if (filterMenu.classList.contains('hidden')) {
-        filterMenu.classList.remove('hidden');
-        // Keep the search bar at fixed width when the menu is visible
-        searchBar.style.flex = "0 0 500px";
-      } else {
-        filterMenu.classList.add('hidden');
-        // Clear the fixed style so the search bar reverts to its default size
-        searchBar.style.flex = "";
-      }
+      filterMenu.classList.toggle('hidden');
     }
   });
 
-  setupLanguageSwitcher();
+  // === Edit Role Modal Functionality ===
+  let currentEditingRow = null;
+  const editRoleModal = document.getElementById('editRoleModal');
+  const editRoleForm = document.getElementById('editRoleForm');
+  const editCloseBtn = editRoleModal.querySelector('.close-btn');
+
+  editRoleForm.addEventListener('submit', function(event) {
+    event.preventDefault();
+    const newRole = document.getElementById('newRole').value;
+    if (newRole.trim() !== "" && currentEditingRow) {
+      currentEditingRow.querySelector('td:nth-child(2)').textContent = newRole;
+      showToast("Role updated successfully.");
+    }
+    editRoleModal.classList.remove('show');
+    editRoleModal.setAttribute('aria-hidden', 'true');
+    modalOverlay.classList.remove('show');
+    currentEditingRow = null;
+  });
+  editCloseBtn.addEventListener('click', function() {
+    editRoleModal.classList.remove('show');
+    editRoleModal.setAttribute('aria-hidden', 'true');
+    modalOverlay.classList.remove('show');
+    currentEditingRow = null;
+  });
+
   initializeLocalization();
 });
 </script>
@@ -334,26 +493,8 @@ document.addEventListener('DOMContentLoaded', function() {
       </div>
       <div class="actions">
         <div class="notifications">
-          <button class="icon-button" aria-label="Notifications">
-            <i class="fas fa-bell" aria-hidden="true"></i>
-          </button>
-          <button class="icon-button" aria-label="Messages">
-            <i class="fas fa-comments" aria-hidden="true"></i>
-          </button>
-        </div>
-        <!-- Dark Mode Toggle -->
-        <label class="switch" aria-label="Toggle Dark Mode">
-          <input type="checkbox" id="theme-toggle">
-          <span class="slider round"></span>
-        </label>
-        <!-- Language Switcher -->
-        <div class="language-switcher">
-          <button id="lang-en" aria-label="Switch to English">EN</button>
-          <button id="lang-es" aria-label="Switch to Spanish">ES</button>
-          <button id="lang-ar" aria-label="Switch to Arabic">AR</button>
-          <button id="lang-de" aria-label="Switch to German">DE</button>
-          <button id="lang-fr" aria-label="Switch to French">FR</button>
-          <button id="lang-zh" aria-label="Switch to Chinese">ZH</button>
+          <button class="icon-button" aria-label="Notifications">🔔</button>
+          <button class="icon-button" aria-label="Messages">💬</button>
         </div>
       </div>
     </div>
@@ -373,26 +514,23 @@ document.addEventListener('DOMContentLoaded', function() {
         </tr>
       </thead>
       <tbody>
-        <!-- Example Row -->
         <tr>
           <td>John Doe</td>
           <td>Developer</td>
-          <td>john.doe@example.com</td>
+          <td><a href="mailto:john.doe@example.com" class="email-link">john.doe@example.com</a></td>
           <td>+1234567890</td>
           <td>5</td>
           <td>
             <span class="status active" data-i18n="status.active">Active</span>
           </td>
           <td class="actions-cell">
-            <button class="action-btn edit" aria-label="Edit Member">
-              <i class="fas fa-edit"></i>
-            </button>
-            <button class="action-btn disable" aria-label="Disable Member">
-              <i class="fas fa-user-slash"></i>
-            </button>
-            <button class="action-btn view-tasks" aria-label="View Tasks">
-              <i class="fas fa-tasks"></i>
-            </button>
+            <div class="actions-dropdown">
+              <button class="icon-button action-btn cog" aria-label="Member Actions">⚙️</button>
+              <div class="dropdown-menu hidden">
+                <button class="dropdown-item edit-role">Edit Role</button>
+                <button class="dropdown-item disable-member">Disable Member</button>
+              </div>
+            </div>
           </td>
         </tr>
         <!-- Additional rows will be populated dynamically -->
@@ -401,6 +539,9 @@ document.addEventListener('DOMContentLoaded', function() {
     <button class="button add-member" data-i18n="buttons.addMember">Add New Member</button>
   </main>
 
+  <!-- Overlay -->
+  <div id="modalOverlay" class="modal-overlay"></div>
+
   <!-- Modal for Adding New Member -->
   <div id="addMemberModal" class="modal" aria-hidden="true" role="dialog" aria-labelledby="addMemberTitle">
     <form id="addMemberForm" class="form" novalidate>
@@ -408,26 +549,41 @@ document.addEventListener('DOMContentLoaded', function() {
       <div class="form-group">
         <label for="memberName" data-i18n="form.labels.name">Name</label>
         <input type="text" id="memberName" class="input-field" required aria-required="true" aria-describedby="name-error" data-i18n-placeholder="placeholder.name">
-        <span id="name-error" class="validation-message sr-only" data-i18n="errors.name">Please enter a valid name.</span>
+        <span id="name-error" class="validation-message sr-only" data-i18n="errors.name"></span>
       </div>
       <div class="form-group">
         <label for="memberRole" data-i18n="form.labels.role">Role</label>
         <input type="text" id="memberRole" class="input-field" required aria-required="true" aria-describedby="role-error" data-i18n-placeholder="placeholder.role">
-        <span id="role-error" class="validation-message sr-only" data-i18n="errors.role">Please enter a valid role.</span>
+        <span id="role-error" class="validation-message sr-only" data-i18n="errors.role"></span>
       </div>
       <div class="form-group">
         <label for="memberEmail" data-i18n="form.labels.email">Email</label>
         <input type="email" id="memberEmail" class="input-field" required aria-required="true" aria-describedby="email-error" data-i18n-placeholder="placeholder.email">
-        <span id="email-error" class="validation-message sr-only" data-i18n="errors.email">Please enter a valid email.</span>
+        <span id="email-error" class="validation-message sr-only" data-i18n="errors.email"></span>
       </div>
       <div class="form-group">
         <label for="memberPhone" data-i18n="form.labels.phone">Phone Number</label>
         <input type="tel" id="memberPhone" class="input-field" aria-describedby="phone-error" data-i18n-placeholder="placeholder.phone">
-        <span id="phone-error" class="validation-message sr-only" data-i18n="errors.phone">Please enter a valid phone number.</span>
+        <span id="phone-error" class="validation-message sr-only" data-i18n="errors.phone"></span>
       </div>
       <div class="modal-actions">
         <button type="submit" class="button submit-btn" data-i18n="buttons.submit">Submit</button>
         <button type="button" class="button close-btn" data-i18n="buttons.close">Close</button>
+      </div>
+    </form>
+  </div>
+
+  <!-- Modal for Editing Role -->
+  <div id="editRoleModal" class="modal" aria-hidden="true" role="dialog" aria-labelledby="editRoleTitle">
+    <form id="editRoleForm" class="form" novalidate>
+      <h2 id="editRoleTitle">Edit Role</h2>
+      <div class="form-group">
+        <label for="newRole">New Role:</label>
+        <input type="text" id="newRole" class="input-field" required>
+      </div>
+      <div class="modal-actions">
+        <button type="submit" class="button submit-btn">Save</button>
+        <button type="button" class="button close-btn">Cancel</button>
       </div>
     </form>
   </div>
