@@ -95,6 +95,22 @@ collections = {
 
 
     },
+    "Guest": {
+  "ID": str,
+  "name": str,
+  "image": str,
+  "tags": "array",
+  "description": str,
+  "bio": str,
+  "email": str,
+  "linkedin": str,
+  "twitter": str,
+  "areasOfInterest": "array",
+  "status": str,
+  "scheduled": int,
+  "completed": int,
+  "created_at": "date",
+},
 }
 
 # Create collections
