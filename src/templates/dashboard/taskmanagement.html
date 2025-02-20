@@ -124,10 +124,10 @@
       document.getElementById("add-task-btn").addEventListener("click", openModal);
   }
   
-
   function openModal() {
       document.getElementById("task-modal").style.display = "flex";
       document.getElementById("modal-title").innerText = "Create New Task";
+      // Set default action for save button to create new task
       document.getElementById("save-task-btn").setAttribute("onclick", "saveTask()");
   }
 
@@ -185,182 +185,166 @@
       }
   }
 
-  function editTask(button) {
-    let li = button.closest("li");
-    let taskName = li.querySelector(".task-name").textContent;
-    document.getElementById("task-name").value = taskName;
-    document.getElementById("modal-title").innerText = "Edit Task";
-    document.getElementById("task-modal").style.display = "flex";
-    document.getElementById("save-task-btn").setAttribute("onclick", `updateTask('${taskName}', this)`);
+  // Fetch task data and open edit modal with pre-filled fields
+  async function editTask(taskId) {
+    try {
+      const response = await fetch(`/get_podtask/${taskId}`);
+      if (!response.ok) {
+        alert("Failed to fetch task data");
+        return;
+      }
+      const task = await response.json();
+
+      // Pre-fill the modal fields with fetched task data
+      document.getElementById("task-name").value = task.taskname || task.task_name;
+      document.getElementById("task-description").value = task.Description || "";
+      document.getElementById("due-time").value = task.DayCount || "";
+      document.getElementById("action-link").value = task.ActionUrl || "";
+      document.getElementById("action-link-desc").value = task.UrlDescribe || "";
+      document.getElementById("submission-required").checked = task.SubimissionReq || false;
+
+      // Set modal title and update button action
+      document.getElementById("modal-title").innerText = "Edit Task";
+      document.getElementById("task-modal").style.display = "flex";
+      document.getElementById("save-task-btn").setAttribute("onclick", `updateTask('${task._id}')`);
+    } catch (error) {
+      alert("Error fetching task details");
+    }
   }
 
-  async function updateTask(oldTaskName, button) {
-    let newTaskName = document.getElementById("task-name").value.trim();
-    if (newTaskName.length < 2) {
-        alert("Task name must be at least 2 characters.");
-        return;
-    }
+  // Update task data after editing
+  async function updateTask(taskId) {
+    const taskName = document.getElementById("task-name").value.trim();
+    const taskDescription = document.getElementById("task-description").value.trim();
+    const dueTime = document.getElementById("due-time").value.trim();
+    const actionLink = document.getElementById("action-link").value.trim();
+    const actionLinkDesc = document.getElementById("action-link-desc").value.trim();
+    const submissionRequired = document.getElementById("submission-required").checked;
 
-    // Update the task in the frontend
-    let tasks = document.querySelectorAll(".task-name");
-    tasks.forEach(task => {
-        if (task.textContent === oldTaskName) {
-            task.textContent = newTaskName;
-        }
-    });
-
-    // Now update the task on the backend
-    const taskData = {
-        taskname: newTaskName,
-        oldTaskName: oldTaskName,  // Send the original name to identify which task to update
-        // Include other necessary data for the task update
+    const updatedTask = {
+      taskname: taskName,
+      Description: taskDescription,
+      DayCount: parseInt(dueTime) || 0,
+      actionurl: actionLink,
+      externalurl: actionLinkDesc,
+      submission: submissionRequired ? "Required" : "Optional"
     };
 
     try {
-        const response = await fetch("/update_task", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(taskData),
-        });
-
-        const result = await response.json();
-        if (response.ok) {
-            alert("Task updated successfully!");
-            closeModal();
-        } else {
-            alert("Error: " + result.error);
-        }
+      const response = await fetch(`/update_podtask/${taskId}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(updatedTask)
+      });
+      const result = await response.json();
+      if (response.ok) {
+        alert("Task updated successfully!");
+        closeModal();
+        fetchTasks(); // Refresh the task list to reflect changes
+      } else {
+        alert("Error: " + result.error);
+      }
     } catch (error) {
-        console.error("Error:", error);
-        alert("Failed to update task.");
+      alert("Error updating task: " + error.message);
     }
-}
+  }
 
-async function deleteTask(button) {
-    const taskElement = button.closest("li");
-    const taskName = taskElement.querySelector(".task-name").textContent;
-
-    // Send request to delete the task from the backend
-    const taskData = { taskName };
-
+  async function deleteTask(taskId) {
     try {
-        const response = await fetch("/delete_task", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(taskData),
-        });
+      const response = await fetch(`/delete_podtask/${taskId}`, {
+          method: "DELETE"
+      });
 
-        const result = await response.json();
-        if (response.ok) {
-            alert("Task deleted successfully!");
-            taskElement.remove(); // Remove task from DOM
-        } else {
-            alert("Error: " + result.error);
-        }
+      const result = await response.json();
+      if (response.ok) {
+          alert("Task deleted successfully!");
+          fetchTasks(); // Refresh tasks
+      } else {
+          alert("Error deleting task: " + result.error);
+      }
     } catch (error) {
-        console.error("Error:", error);
-        alert("Failed to delete task.");
+      console.error("Error deleting task:", error);
+      alert("Failed to delete task.");
     }
-}
+  }
 
-async function fetchTasks() {
-    try {
-        const response = await fetch("/get_podtasks");
-        const data = await response.json();
+  async function fetchTasks() {
+      try {
+          const response = await fetch("/get_podtasks");
+          const data = await response.json();
 
-        if (response.ok) {
-            const taskList = document.getElementById("task-list");
-            taskList.innerHTML = ""; // Clear existing tasks
+          if (response.ok) {
+              const taskList = document.getElementById("task-list");
+              taskList.innerHTML = ""; // Clear existing tasks
 
-            data.podtasks.forEach(task => {
-                let li = document.createElement("li");
-                li.innerHTML = `
-                    <div class="task-details">
-                        <span class="task-name">${task.taskname}</span>
-                    </div>
-                    <div class="task-actions">
-                        <button class="edit-btn" onclick="editTask('${task._id}')">Edit</button>
-                        <button class="delete-btn" onclick="deleteTask('${task._id}')">Delete</button>
-                    </div>
-                `;
-                taskList.appendChild(li);
-            });
-        } else {
-            alert("Failed to fetch tasks: " + data.error);
-        }
-    } catch (error) {
-        console.error("Error fetching tasks:", error);
-        alert("Failed to fetch tasks.");
-    }
-}
+              data.podtasks.forEach(task => {
+                  let li = document.createElement("li");
+                  li.innerHTML = `
+                      <div class="task-details">
+                          <span class="task-name">${task.taskname}</span>
+                      </div>
+                      <div class="task-actions">
+                          <button class="edit-btn" onclick="editTask('${task._id}')">Edit</button>
+                          <button class="delete-btn" onclick="deleteTask('${task._id}')">Delete</button>
+                      </div>
+                  `;
+                  taskList.appendChild(li);
+              });
+          } else {
+              alert("Failed to fetch tasks: " + data.error);
+          }
+      } catch (error) {
+          console.error("Error fetching tasks:", error);
+          alert("Failed to fetch tasks.");
+      }
+  }
 
-// Fetch tasks on page load
-document.addEventListener("DOMContentLoaded", fetchTasks);
+  // Fetch tasks on page load
+  document.addEventListener("DOMContentLoaded", fetchTasks);
 
-// Delete Task
-async function deleteTask(taskId) {
-    try {
-        const response = await fetch(`/delete_podtask/${taskId}`, {
-            method: "DELETE"
-        });
+  // Open Default Tasks Popup
+  function openDefaultTasksPopup() {
+      document.getElementById("default-tasks-popup").style.display = "flex";
+  }
 
-        const result = await response.json();
-        if (response.ok) {
-            alert("Task deleted successfully!");
-            fetchTasks(); // Refresh tasks
-        } else {
-            alert("Error deleting task: " + result.error);
-        }
-    } catch (error) {
-        console.error("Error deleting task:", error);
-        alert("Failed to delete task.");
-    }
-}
+  // Close Default Tasks Popup
+  function closeDefaultTasksPopup() {
+      document.getElementById("default-tasks-popup").style.display = "none";
+  }
 
-// Open Default Tasks Popup
-function openDefaultTasksPopup() {
-    document.getElementById("default-tasks-popup").style.display = "flex";
-}
+  // Add Selected Default Tasks
+  async function addSelectedDefaultTasks() {
+      const checkboxes = document.querySelectorAll(".default-task-checkbox:checked");
+      const selectedTasks = Array.from(checkboxes).map(checkbox => ({
+          taskname: checkbox.value,
+          Description: "", // Can be filled later
+          Daycount: 0, // Default
+          action: [],
+          submission: "Optional"
+      }));
 
-// Close Default Tasks Popup
-function closeDefaultTasksPopup() {
-    document.getElementById("default-tasks-popup").style.display = "none";
-}
+      try {
+          for (const task of selectedTasks) {
+              await fetch("/register_podtask", {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify(task)
+              });
+          }
+          alert("Selected tasks added successfully!");
+          fetchTasks(); // Refresh tasks
+      } catch (error) {
+          console.error("Error adding tasks:", error);
+          alert("Failed to add tasks.");
+      }
 
-// Add Selected Default Tasks
-async function addSelectedDefaultTasks() {
-    const checkboxes = document.querySelectorAll(".default-task-checkbox:checked");
-    const selectedTasks = Array.from(checkboxes).map(checkbox => ({
-        taskname: checkbox.value,
-        Description: "", // Can be filled later
-        Daycount: 0, // Default
-        action: [],
-        submission: "Optional"
-    }));
+      closeDefaultTasksPopup();
+  }
 
-    try {
-        for (const task of selectedTasks) {
-            await fetch("/register_podtask", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(task)
-            });
-        }
-        alert("Selected tasks added successfully!");
-        fetchTasks(); // Refresh tasks
-    } catch (error) {
-        console.error("Error adding tasks:", error);
-        alert("Failed to add tasks.");
-    }
-
-    closeDefaultTasksPopup();
-}
-
-// Enable Drag & Drop Sorting
-new Sortable(document.getElementById("task-list"), {
-    animation: 150,
-    ghostClass: "drag-ghost"
-});
-
+  // Enable Drag & Drop Sorting
+  new Sortable(document.getElementById("task-list"), {
+      animation: 150,
+      ghostClass: "drag-ghost"
+  });
 </script>
 {% endblock %}
