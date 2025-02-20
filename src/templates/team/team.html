@@ -228,13 +228,13 @@ document.addEventListener('DOMContentLoaded', function() {
       .then(data => {
         const tbody = document.querySelector('.team-table tbody');
         tbody.innerHTML = '';
-        data.forEach(team => {
+        data.forEach(member => {
           const newRow = document.createElement('tr');
           newRow.innerHTML = `
-            <td>${team.Name}</td>
-            <td>${team.Role}</td>
-            <td><a href="mailto:${team.Email}" class="email-link">${team.Email}</a></td>
-            <td>${team.Phone || ''}</td>
+            <td>${member.Name}</td>
+            <td>${member.Role}</td>
+            <td><a href="mailto:${member.Email}" class="email-link">${member.Email}</a></td>
+            <td>${member.Phone || ''}</td>
             <td>0</td>
             <td>
               <span class="status active" data-i18n="status.active">Active</span>

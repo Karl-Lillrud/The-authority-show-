@@ -275,7 +275,7 @@ input:focus + .slider {
 }
 
 .input-field {
-  width: 100%;
+  width: 95%;
   padding: var(--spacing-sm) var(--spacing-md);
   border: none;
   border-radius: 20px;
