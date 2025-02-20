@@ -4,10 +4,10 @@ from datetime import datetime, timezone
 import uuid
 
 # Define Blueprint
-registerpodcast_bp = Blueprint("registerpodcast_bp", __name__)
+podcast_bp = Blueprint("podcast_bp", __name__)
 
-@registerpodcast_bp.route("/register_podcast", methods=["POST"])
-def register_podcast():
+@podcast_bp.route("/add_podcast", methods=["POST"])
+def podcast():
     if not g.user_id:
         return jsonify({"error": "Unauthorized"}), 401
 
@@ -37,18 +37,18 @@ def register_podcast():
             "created_at": datetime.now(timezone.utc),
         }
 
-        user = collection.database.users.find_one({"_id": user_id})
+        user = collection.database.User.find_one({"_id": user_id})
         if not user:
             return jsonify({"error": "User not found"}), 404
 
         print("📝 Inserting podcast into database:", podcast_item)
-        result = collection.database.podcast.insert_one(podcast_item)
+        result = collection.database.Podcast.insert_one(podcast_item)
 
-        print("✅ Podcast registered successfully!")
+        print("✅ Podcast added successfully!")
 
         return jsonify(
             {
-                "message": "Podcast registered successfully",
+                "message": "Podcast added successfully",
                 "podcast_id": podcast_id,  
                 "redirect_url": "/index.html",
             }
@@ -56,9 +56,9 @@ def register_podcast():
 
     except Exception as e:
         print(f"❌ ERROR: {e}")  
-        return jsonify({"error": f"Failed to register podcast: {str(e)}"}), 500
+        return jsonify({"error": f"Failed to add podcast: {str(e)}"}), 500
     
-@registerpodcast_bp.route("/get_podcast", methods=["GET"])
+@podcast_bp.route("/get_podcast", methods=["GET"])
 def get_podcast():
     if not g.user_id:
         return jsonify({"error": "Unauthorized"}), 401
@@ -66,7 +66,7 @@ def get_podcast():
     try:
         user_id = str(g.user_id)  
 
-        podcast = list(collection.database.podcast.find({"userid": user_id}))
+        podcast = list(collection.database.Podcast.find({"userid": user_id}))
 
         for podcast in podcast:
             podcast["_id"] = str(podcast["_id"])
@@ -77,7 +77,7 @@ def get_podcast():
         print(f"❌ ERROR: {e}")
         return jsonify({"error": f"Failed to fetch podcast: {str(e)}"}), 500
     
-@registerpodcast_bp.route("/delete_podcast/<podcast_id>", methods=["DELETE"])
+@podcast_bp.route("/delete_podcast/<podcast_id>", methods=["DELETE"])
 def delete_podcast(podcast_id):
     if not g.user_id:
         return jsonify({"error": "Unauthorized"}), 401
@@ -86,7 +86,7 @@ def delete_podcast(podcast_id):
         user_id = str(g.user_id)
 
         # Find the podcast
-        podcast = collection.database.podcast.find_one({"_id": podcast_id})
+        podcast = collection.database.Podcast.find_one({"_id": podcast_id})
 
         if not podcast:
             return jsonify({"error": "Podcast not found"}), 404
@@ -96,7 +96,7 @@ def delete_podcast(podcast_id):
             return jsonify({"error": "Permission denied"}), 403
 
         # Delete the podcast
-        result = collection.database.podcast.delete_one({"_id": podcast_id})
+        result = collection.database.Podcast.delete_one({"_id": podcast_id})
 
         if result.deleted_count == 1:
             return jsonify({"message": "Podcast deleted successfully"}), 200
@@ -108,7 +108,7 @@ def delete_podcast(podcast_id):
         return jsonify({"error": f"Failed to delete podcast: {str(e)}"}), 500
 
     
-@registerpodcast_bp.route("/edit_podcast/<podcast_id>", methods=["PUT"])
+@podcast_bp.route("/edit_podcast/<podcast_id>", methods=["PUT"])
 def edit_podcast(podcast_id):
     if not g.user_id:
         return jsonify({"error": "Unauthorized"}), 401
@@ -117,7 +117,7 @@ def edit_podcast(podcast_id):
         user_id = str(g.user_id)
 
         # Fetch the podcast by ID
-        podcast = collection.database.podcast.find_one({"_id": podcast_id})
+        podcast = collection.database.Podcast.find_one({"_id": podcast_id})
 
         if not podcast:
             return jsonify({"error": "Podcast not found"}), 404
@@ -142,7 +142,7 @@ def edit_podcast(podcast_id):
         if "guestUrl" in data:
             update_data["guestUrl"] = data["guestUrl"]
 
-        result = collection.database.podcast.update_one(
+        result = collection.database.Podcast.update_one(
             {"_id": podcast_id},
             {"$set": update_data} 
         )
