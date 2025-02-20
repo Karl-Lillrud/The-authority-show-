@@ -74,23 +74,6 @@ def load_user():
     logger.info(f"Request to {request.path} by user {g.user_id}")
 
 
-@app.route("/health")
-def health_check():
-    logger.info("Health check endpoint called")
-    return jsonify({"status": "healthy"}), 200
-
-
-@app.route('/team', methods=['GET', 'POST'])
-def manage_team():
-    if request.method == 'GET':
-        team_members = list(team_collection.find({}, {'_id': 0}))
-        return jsonify(team_members)
-    elif request.method == 'POST':
-        new_member = request.json
-        team_collection.insert_one(new_member)
-        return jsonify({"message": "Team member added successfully"}), 201
-
-
 if __name__ == "__main__":
     app.run(
         host="0.0.0.0", port=8000, debug=False
