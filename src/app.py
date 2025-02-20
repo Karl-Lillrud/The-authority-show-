@@ -17,10 +17,12 @@ from routes.podcast import podcast_bp
 from routes.dashboard import dashboard_bp
 from routes.pod_management import dashboardmanagement_bp
 from routes.podtask import podtask_bp
+from routes.team import team_bp
 from dotenv import load_dotenv
 import os
 import logging
 from utils import venvupdate
+from database.mongo_connection import collection as team_collection
 
 # Checking if the environment variable is set to skip the virtual environment update
 if os.getenv("SKIP_VENV_UPDATE", "false").lower() not in ("true", "1", "yes"):
@@ -52,6 +54,7 @@ app.register_blueprint(podcast_bp)
 app.register_blueprint(dashboard_bp)
 app.register_blueprint(dashboardmanagement_bp)
 app.register_blueprint(podtask_bp)
+app.register_blueprint(team_bp)
 
 APP_ENV = os.getenv("APP_ENV", "production")  # Default to production
 
@@ -75,6 +78,17 @@ def load_user():
 def health_check():
     logger.info("Health check endpoint called")
     return jsonify({"status": "healthy"}), 200
+
+
+@app.route('/team', methods=['GET', 'POST'])
+def manage_team():
+    if request.method == 'GET':
+        team_members = list(team_collection.find({}, {'_id': 0}))
+        return jsonify(team_members)
+    elif request.method == 'POST':
+        new_member = request.json
+        team_collection.insert_one(new_member)
+        return jsonify({"message": "Team member added successfully"}), 201
 
 
 if __name__ == "__main__":
