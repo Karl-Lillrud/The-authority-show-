@@ -1,5 +1,4 @@
 from pymongo import MongoClient
-from bson import ObjectId
 import os
 from dotenv import load_dotenv
 import logging
@@ -31,12 +30,26 @@ except Exception as e:
 collections = {
     "Credit": {
         "ID": str,
-        "user_id": ObjectId,
         "credits": int,
         "unclaimed_credits": int,
         "referral_bonus": int,
-        "referrals": int,
-        "last_3_referrals": [ObjectId],
+        "last_3_referrals": [],
+        "vip_status": bool,
+        "credits_expires_at": "date",
+    },
+    "Team": {
+        "ID": str,
+        "UserID": str,
+        "Name": str,
+        "Role": "array",
+        "Email": str,
+        "Phone": str,
+    },
+    "Clips": {"ID": str, "Podcast": int, "ClipName": str},
+    "Subscription": {
+        "ID": str,
+        "user_id": str,
+        "last_3_referrals": [],
         "vip_status": bool,
         "credits_expires_at": "date",
     },
@@ -44,7 +57,7 @@ collections = {
     "Clips": {"ID": str, "Podcast": int, "ClipName": str},
     "Subscription": {
         "ID": str,
-        "user_id": ObjectId,
+        "user_id": str,
         "subscription_plan": str,
         "subscription_start": "date",
         "subscription_end": "date",
@@ -61,14 +74,14 @@ collections = {
     },
     "Podcast": {
         "ID": str,
-        "UserID": int,
+        "UserID": str,
         "Podname": str,
         "RSSFeed": str,
         "GoogleCal": "connect",
         "PadURl": str,
         "GuestURL": str,
         "Social_media": "array",
-        "PodEmail": str,
+        "Email": str,
     },
     "Podtask": {
         "ID": int,
