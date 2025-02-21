@@ -160,8 +160,10 @@
 #task-list {
   list-style: decimal;
   padding: 0;
-  max-width: 600px;
+  max-width: 1200px;
   margin: 0 auto;
+  max-height: 520px; /* Set maximum height for 13 tasks */
+  overflow-y: auto; /* Enable vertical scrolling */
 }
 
 /* Current Tasks Header */
@@ -180,7 +182,7 @@
   background: var(--background-light);
   padding: var(--spacing-sm);
   margin: var(--spacing-sm) 0;
-  border-radius: var(--radius-small);
+  border-radius: var (--radius-small);
   box-shadow: -3px -3px 6px var(--light-shadow-light),
     3px 3px 6px var(--dark-shadow-light);
   transition: transform 0.3s ease;
