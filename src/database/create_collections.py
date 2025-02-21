@@ -82,7 +82,7 @@ collections = {
         "Social_media": "array",
         "Email": str,
     },
-    "UsersTask": {
+    "PodTask": {
         "id": int,
         "task_name": str,
         "dependency": str,
