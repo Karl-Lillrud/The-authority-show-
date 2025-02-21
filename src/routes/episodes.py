@@ -11,26 +11,14 @@ def get_open_episodes():
         return jsonify({"error": "Unauthorized"}), 401
 
     try:
-        ollina_episodes = collection.database.Episodes.count_documents(
-            {"guest_id": "GUEST_ID_1"}
-        )
-        olle_episodes = collection.database.Episodes.count_documents(
-            {"guest_id": "GUEST_ID_2"}
-        )
-        olga_episodes = collection.database.Episodes.count_documents(
-            {"guest_id": "GUEST_ID_3"}
-        )
+        guests = collection.database.Guest.find()
+        open_episodes = {}
+        for guest in guests:
+            guest_id = guest["ID"]
+            count = collection.database.Episodes.count_documents({"guest_id": guest_id})
+            open_episodes[guest_id] = count
 
-        return (
-            jsonify(
-                {
-                    "ollina": ollina_episodes,
-                    "olle": olle_episodes,
-                    "olga": olga_episodes,
-                }
-            ),
-            200,
-        )
+        return jsonify(open_episodes), 200
 
     except Exception as e:
         print(f"❌ ERROR: {e}")
