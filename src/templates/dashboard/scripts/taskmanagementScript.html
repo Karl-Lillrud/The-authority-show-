@@ -378,20 +378,20 @@
       if (response.ok) {
         document.getElementById(
           "ollina-episodes"
-        ).textContent = `${data.GUEST_ID_1} Open Episodes`;
+        ).textContent = `${data.GUEST_ID_1} Episodes`;
         document.getElementById(
           "olle-episodes"
-        ).textContent = `${data.GUEST_ID_2} Open Episodes`;
+        ).textContent = `${data.GUEST_ID_2} Episodes`;
         document.getElementById(
           "olga-episodes"
-        ).textContent = `${data.GUEST_ID_3} Open Episodes`;
+        ).textContent = `${data.GUEST_ID_3} Episodes`;
       } else {
-        console.error("Failed to fetch open episodes:", data.error);
-        alert("Failed to fetch open episodes: " + data.error);
+        console.error("Failed to fetch episodes:", data.error);
+        alert("Failed to fetch episodes: " + data.error);
       }
     } catch (error) {
-      console.error("Error fetching open episodes:", error);
-      alert("Failed to fetch open episodes.");
+      console.error("Error fetching episodes:", error);
+      alert("Failed to fetch episodes.");
     }
   }
 
