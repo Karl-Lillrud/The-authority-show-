@@ -37,25 +37,31 @@ Management{% endblock %} {% block content %}
 </div>
 
 <!-- Task Management Section (Initially Hidden) -->
-<div id="task-management" style="display: none">
+<div
+  id="task-management"
+  class="responsive-task-management"
+  style="display: none"
+>
   <!-- Back Arrow -->
   <a href="{{ url_for('dashboard_bp.dashboard') }}" class="back-arrow"
     >&#8592; Back</a
   >
 
   <!-- Page Header -->
-  <div class="task-header">
-    <h2>Task Management for <span id="selected-guest"></span></h2>
-    <div class="task-header-buttons">
-      <button id="load-default-btn" onclick="openDefaultTasksPopup()">
-        Add Default Tasks
-      </button>
-      <button id="add-task-btn">+ Add Custom Task</button>
+  <div class="task-header" style="text-align: center">
+    <h2>Guest : <span id="selected-guest"></span></h2>
+    <div class="task-header-buttons" style="justify-content: center">
+      <div class="button-group">
+        <button id="load-default-btn" onclick="openDefaultTasksPopup()">
+          Add Default Tasks
+        </button>
+        <button id="add-task-btn">+ Add Custom Task</button>
+      </div>
 
       <!-- Wrapper för att flytta Select Episode till höger -->
       <div class="dropdown-wrapper">
         <div class="dropdown view-episode-dropdown">
-          <button class="dropbtn">View Episode</button>
+          <button class="dropbtn">View Episodes</button>
           <div class="dropdown-content" id="episode-dropdown">
             <!-- Episodes will be dynamically populated here -->
           </div>
@@ -66,10 +72,10 @@ Management{% endblock %} {% block content %}
 
   <div class="task-list-container">
     <!-- Current Tasks Header -->
-    <h3 class="current-tasks-header">Current Tasks</h3>
+    <h3 class="current-tasks-header">Tasks to add</h3>
 
     <!-- Ordered Task List -->
-    <ol id="task-list" class="sortable">
+    <ol id="task-list" class="sortable responsive-task-list">
       <!-- Dynamically injected tasks will appear here -->
     </ol>
 

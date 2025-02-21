@@ -56,25 +56,59 @@
 /* Task Header */
 .task-header {
   display: flex;
-  justify-content: space-between;
+  flex-direction: column;
   align-items: center;
   max-width: 650px;
   margin: 0 auto var(--spacing-md) auto;
+  text-align: center;
 }
 .task-header-buttons {
   display: flex;
   align-items: center;
   gap: var(--spacing-sm);
   white-space: nowrap; /* Ensure elements stay on one line */
+  flex-wrap: nowrap; /* Prevent wrapping */
+  justify-content: center; /* Center the buttons */
 }
 
-.task-header h2 {
-  justify-self: start;
-  white-space: nowrap; /* Förhindra radbrytning */
-  margin: 4;
-  font-size: 1.2rem;
-  color: var(--text-color-light);
+.button-group {
+  display: flex;
+  gap: var(--spacing-sm);
 }
+
+.dropdown-wrapper {
+  display: flex;
+  gap: var(--spacing-sm); /* Add spacing between buttons */
+}
+
+/* Media Queries for Responsiveness */
+@media (max-width: 768px) {
+  .task-header {
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .task-header-buttons {
+    justify-content: center; /* Center the buttons */
+    width: 100%;
+    margin-top: var(--spacing-sm);
+  }
+
+  .task-header h2 {
+    text-align: center;
+    width: 100%;
+    margin-bottom: var(--spacing-sm);
+  }
+
+  .button-group {
+    flex-wrap: nowrap; /* Prevent wrapping */
+  }
+
+  .dropdown-wrapper {
+    flex-wrap: nowrap; /* Prevent wrapping */
+  }
+}
+
 /* Add Task Button */
 #add-task-btn,
 #load-default-btn {
@@ -168,7 +202,7 @@ button {
 
 .delete-btn {
   background: red; /* Reddish */
-  color: #ffffff; /* Vit text */
+  color: #ffffff; /* White text */
   box-shadow: -2px -2px 4px rgba(255, 255, 255, 0.6),
     2px 2px 4px rgba(0, 0, 0, 0.15);
   transition: transform 0.3s ease, background-color 0.3s ease;
@@ -236,6 +270,21 @@ label {
   color: var(--text-color-light);
 }
 #task-dependencies {
+  width: 99%;
+  padding: var(--spacing-sm);
+  margin-top: var(--spacing-sm);
+  border: none;
+  border-radius: var(--radius-small);
+  box-shadow: inset -2px -2px 4px var(--light-shadow-light),
+    inset 2px 2px 4px var(--dark-shadow-light);
+  outline: none;
+  font-size: 0.85rem;
+  background: var(--background-light);
+  color: var(--text-color-light);
+  transition: box-shadow 0.3s ease;
+}
+
+#task-priority {
   width: 99%;
   padding: var(--spacing-sm);
   margin-top: var(--spacing-sm);
@@ -473,9 +522,8 @@ h1 {
 
 /* Lägg till en wrapper för att skjuta "Select Episode" och "Add Tasks to Episode" till höger */
 .dropdown-wrapper {
-  margin-left: auto; /* Trycker den till höger */
   display: flex;
-  gap: var(--spacing-sm); /* Lägger till mellanrum mellan knapparna */
+  gap: var(--spacing-sm); /* Add spacing between buttons */
 }
 
 /* Drop-down styling */
@@ -523,7 +571,7 @@ h1 {
   color: var(--highlight-color);
 }
 
-/* Visa dropdown-menyn vid hover */
+/* Show dropdown menu on hover */
 .dropdown:hover .dropdown-content {
   display: block;
 }
@@ -543,14 +591,25 @@ h1 {
 .add-tasks-dropdown .dropbtn {
   background: var(--background-light);
   border: none;
-  padding: var(--spacing-sm) var(--spacing-md);
+  padding: var(--spacing-md) calc(var(--spacing-lg) + 20px); /* Increase right padding */
   border-radius: var(--radius-small);
   box-shadow: -3px -3px 6px var(--light-shadow-light),
     3px 3px 6px var(--dark-shadow-light);
   cursor: pointer;
-  font-size: 0.9rem;
+  font-size: 1rem; /* Increase font size */
+  font-weight: bold; /* Make text bold */
   color: var(--text-color-light);
   transition: transform 0.3s ease, background-color 0.3s ease;
+  position: relative; /* For positioning the arrow */
+}
+
+.add-tasks-dropdown .dropbtn::after {
+  content: " ▼"; /* Add down arrow */
+  font-size: 0.8rem; /* Adjust arrow size */
+  position: absolute;
+  right: var(--spacing-sm);
+  top: 50%;
+  transform: translateY(-50%);
 }
 
 .add-tasks-dropdown .dropbtn:hover {
@@ -562,32 +621,14 @@ h1 {
 .add-tasks-dropdown .dropdown-content {
   display: none;
   position: absolute;
-  left: 50%;
+  left: 52%;
   transform: translateX(-50%);
   background-color: var(--background-light);
-  width: auto; /* Adjust width to fit content */
+  min-width: 100%; /* Ensure dropdown is as wide as the button */
   box-shadow: 0px 8px 16px 0px rgba(0, 0, 0, 0.2);
   z-index: 1;
   border-radius: var(--radius-small);
   overflow: hidden;
-}
-
-.add-tasks-dropdown .dropdown-content a {
-  color: var(--text-color-light);
-  padding: var(--spacing-sm) var(--spacing-md);
-  text-decoration: none;
-  display: block;
-  transition: background-color 0.3s ease;
-  white-space: nowrap; /* Ensure text does not wrap */
-}
-
-.add-tasks-dropdown .dropdown-content a:hover {
-  background-color: rgba(255, 127, 63, 0.1);
-  color: var(--highlight-color);
-}
-
-.add-tasks-dropdown:hover .dropdown-content {
-  display: block;
 }
 
 /* Add Tasks to Episode Button */
@@ -606,7 +647,7 @@ h1 {
 #add-tasks-to-episode-btn:hover {
   background-color: rgba(255, 127, 63, 0.1);
   transform: translateY(-2px);
-  color: var(--highlight-color);
+  color: var (--highlight-color);
 }
 
 /* View Episode Button Container */
@@ -642,8 +683,8 @@ h1 {
 
 .view-episode-dropdown .dropdown-content {
   display: none;
-  position: absolute;
-  left: 50%;
+  position: center;
+  left: 55%;
   transform: translateX(-50%);
   background-color: var(--background-light);
   width: auto; /* Adjust width to fit content */
@@ -669,4 +710,57 @@ h1 {
 
 .view-episode-dropdown:hover .dropdown-content {
   display: block;
+}
+
+.responsive-task-management {
+  padding: var(--spacing-md);
+  background-color: var(--background-light);
+  font-family: var(--font-primary);
+  text-align: center;
+  min-height: 100vh;
+  box-sizing: border-box;
+  position: relative;
+}
+
+.responsive-task-list {
+  list-style: decimal;
+  padding: 0;
+  max-width: 100%;
+  margin: 0 auto;
+}
+
+/* Media Queries for Responsiveness */
+@media (max-width: 768px) {
+  .responsive-task-management {
+    padding: var(--spacing-sm);
+  }
+
+  .responsive-task-list {
+    padding: var(--spacing-sm);
+  }
+
+  .task-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .task-header-buttons {
+    justify-content: flex-start; /* Align buttons to the start */
+    width: 100%;
+    margin-top: var(--spacing-sm);
+  }
+
+  .task-header h2 {
+    text-align: center;
+    width: 100%;
+    margin-bottom: var(--spacing-sm);
+  }
+
+  .button-group {
+    flex-wrap: nowrap; /* Prevent wrapping */
+  }
+
+  .dropdown-wrapper {
+    flex-wrap: nowrap; /* Prevent wrapping */
+  }
 }
