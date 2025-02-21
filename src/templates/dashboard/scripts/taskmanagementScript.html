@@ -1,6 +1,8 @@
 <!-- Include SortableJS Library for Drag & Drop -->
 <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
 <script>
+  let initialTasks = [];
+
   // When a guest is selected, update the header and show the task management section.
   async function selectGuest(guestId, guestName) {
     document.getElementById("selected-guest").textContent = guestName;
@@ -29,13 +31,19 @@
           let a = document.createElement("a");
           a.textContent = episode.title;
           a.href = "#";
-          a.onclick = () => selectEpisodeForView(episode.episode_id);
+          a.onclick = (event) => {
+            event.preventDefault();
+            selectEpisodeForView(episode.episode_id, episode.title);
+          };
           viewEpisodeDropdown.appendChild(a);
 
           let b = document.createElement("a");
           b.textContent = episode.title;
           b.href = "#";
-          b.onclick = () => selectEpisode(episode.episode_id, guestId);
+          b.onclick = (event) => {
+            event.preventDefault();
+            selectEpisode(episode.episode_id, guestId);
+          };
           addTasksEpisodeDropdown.appendChild(b);
         });
 
@@ -55,7 +63,7 @@
     addTasksToEpisode(episodeId, guestId);
   }
 
-  async function viewEpisodeTasks(episodeId) {
+  async function viewEpisodeTasks(episodeId, episodeTitle) {
     try {
       const response = await fetch(
         `/episodes/view_tasks_by_episode/${episodeId}`
@@ -66,6 +74,16 @@
         const taskList = document.getElementById("task-list");
         taskList.innerHTML = ""; // Clear existing tasks
 
+        // Update the header text to display the selected episode's title
+        const header = document.querySelector(".current-tasks-header");
+        header.textContent = `${episodeTitle} Tasks`;
+
+        // Hide the "Add Tasks to Episode" button
+        document.querySelector(".add-tasks-dropdown").style.display = "none";
+
+        // Show the "Back" button
+        document.getElementById("back-button").style.display = "inline-block";
+
         data.tasks.forEach((task) => {
           let li = document.createElement("li");
           li.innerHTML = `
@@ -74,7 +92,7 @@
             </div>
             <div class="task-actions">
                 <button class="edit-btn" onclick="editTask('${task._id}')">Edit</button>
-                <button class="delete-btn" onclick="deleteTask('${task._id}', true)">Delete</button>
+                <button class="delete-btn" onclick="deleteTask('${task._id}', true, '${episodeId}')">Delete</button>
             </div>
         `;
           taskList.appendChild(li);
@@ -91,9 +109,44 @@
     }
   }
 
-  function selectEpisodeForView(episodeId) {
+  function selectEpisodeForView(episodeId, episodeTitle) {
     console.log("Selected episode ID for view:", episodeId);
-    viewEpisodeTasks(episodeId);
+    viewEpisodeTasks(episodeId, episodeTitle);
+  }
+
+  function goBack() {
+    // Show the "Add Tasks to Episode" button
+    document.querySelector(".add-tasks-dropdown").style.display =
+      "inline-block";
+
+    // Hide the "Back" button
+    document.getElementById("back-button").style.display = "none";
+
+    // Reset the header text
+    const header = document.querySelector(".current-tasks-header");
+    header.textContent = "Tasks";
+
+    // Restore the initial tasks
+    const taskList = document.getElementById("task-list");
+    taskList.innerHTML = "";
+    initialTasks.forEach((task) => {
+      let li = document.createElement("li");
+      li.innerHTML = `
+        <div class="task-details">
+            <span class="task-name">${task.taskname}</span>
+        </div>
+        <div class="task-actions">
+            <button class="edit-btn" onclick="editTask('${task._id}')">Edit</button>
+            <button class="delete-btn" onclick="deleteTask('${task._id}')">Delete</button>
+        </div>
+      `;
+      taskList.appendChild(li);
+    });
+
+    // Scroll to the "Tasks" section
+    document
+      .querySelector(".current-tasks-header")
+      .scrollIntoView({ behavior: "smooth" });
   }
 
   // Ensure "Add Task" button exists before adding event listener
@@ -255,7 +308,7 @@
     }
   }
 
-  async function deleteTask(taskId, isEpisodeTask = false) {
+  async function deleteTask(taskId, isEpisodeTask = false, episodeId = null) {
     try {
       const endpoint = isEpisodeTask
         ? `/episodes/delete_episode_task/${taskId}`
@@ -267,7 +320,11 @@
       const result = await response.json();
       if (response.ok) {
         alert("Task deleted successfully!");
-        fetchTasks(); // Refresh tasks
+        if (isEpisodeTask && episodeId) {
+          viewEpisodeTasks(episodeId); // Refresh tasks for the episode
+        } else {
+          fetchTasks(); // Refresh tasks
+        }
       } else {
         console.error("Error deleting task:", result.error);
         alert("Error deleting task: " + result.error);
@@ -306,6 +363,8 @@
       if (response.ok) {
         const taskList = document.getElementById("task-list");
         taskList.innerHTML = ""; // Clear existing tasks
+
+        initialTasks = data.podtasks; // Store the initial tasks
 
         data.podtasks.forEach((task) => {
           let li = document.createElement("li");

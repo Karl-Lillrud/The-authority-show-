@@ -74,14 +74,14 @@ Management{% endblock %} {% block content %}
 
   <div class="task-list-container">
     <!-- Current Tasks Header -->
-    <h3 class="current-tasks-header">Tasks to add</h3>
+    <h3 class="current-tasks-header">Tasks</h3>
 
     <!-- Ordered Task List -->
     <ol id="task-list" class="sortable responsive-task-list">
       <!-- Dynamically injected tasks will appear here -->
     </ol>
 
-    <!-- Add Tasks to Episode Dropdown -->
+    <!-- Add Tasks to Episode and Back Button Container -->
     <div class="add-tasks-button-container">
       <div class="dropdown add-tasks-dropdown">
         <button class="dropbtn">Add Tasks to Episode</button>
@@ -89,6 +89,14 @@ Management{% endblock %} {% block content %}
           <!-- Episodes will be dynamically populated here -->
         </div>
       </div>
+      <button
+        id="back-button"
+        class="dropbtn"
+        style="display: none"
+        onclick="goBack()"
+      >
+        Back
+      </button>
     </div>
   </div>
 

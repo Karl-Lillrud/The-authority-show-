@@ -53,6 +53,33 @@
   color: var(--highlight-color);
 }
 
+.back-button-container {
+  text-align: center;
+  margin-top: var(--spacing-md);
+}
+
+#back-button {
+  display: none;
+  background: var(--background-light);
+  border: none;
+  padding: var(--spacing-md) calc(var(--spacing-lg) + 40px); /* Increase padding */
+  border-radius: var(--radius-small);
+  box-shadow: -3px -3px 6px var(--light-shadow-light),
+    3px 3px 6px var(--dark-shadow-light);
+  cursor: pointer;
+  font-size: 1.2rem; /* Increase font size */
+  font-weight: bold; /* Make text bold */
+  color: var(--text-color-light);
+  transition: transform 0.3s ease, background-color 0.3s ease;
+  position: relative; /* For positioning the arrow */
+}
+
+#back-button:hover {
+  background-color: rgba(255, 127, 63, 0.1);
+  transform: translateY(-2px);
+  color: var(--highlight-color);
+}
+
 /* Task Header */
 .task-header {
   display: flex;
@@ -295,7 +322,7 @@ label {
   outline: none;
   font-size: 0.85rem;
   background: var(--background-light);
-  color: var(--text-color-light);
+  color: var (--text-color-light);
   transition: box-shadow 0.3s ease;
 }
 
@@ -503,33 +530,6 @@ h1 {
 }
 /* Modal buttons for the popup */
 .modal-buttons {
-  display: flex;
-  justify-content: flex-end;
-  gap: 10px;
-}
-.modal-buttons button {
-  background-color: #f4a261;
-  color: #fff;
-  padding: 8px 16px;
-  border: none;
-  border-radius: 5px;
-  cursor: pointer;
-  transition: background 0.3s ease;
-}
-.modal-buttons button:hover {
-  background-color: #e66a32;
-}
-
-/* Lägg till en wrapper för att skjuta "Select Episode" och "Add Tasks to Episode" till höger */
-.dropdown-wrapper {
-  display: flex;
-  gap: var(--spacing-sm); /* Add spacing between buttons */
-}
-
-/* Drop-down styling */
-.dropbtn {
-  background: var(--background-light);
-  border: none;
   padding: var(--spacing-sm) var(--spacing-md);
   border-radius: var(--radius-small);
   box-shadow: -3px -3px 6px var(--light-shadow-light),
@@ -621,7 +621,7 @@ h1 {
 .add-tasks-dropdown .dropdown-content {
   display: none;
   position: absolute;
-  left: 52%;
+  left: 5%;
   transform: translateX(-50%);
   background-color: var(--background-light);
   min-width: 100%; /* Ensure dropdown is as wide as the button */
