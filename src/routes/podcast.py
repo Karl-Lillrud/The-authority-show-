@@ -2,6 +2,7 @@ from flask import request, jsonify, Blueprint, g
 from database.mongo_connection import collection
 from datetime import datetime, timezone
 import uuid
+import feedparser
 
 # Define Blueprint
 podcast_bp = Blueprint("podcast_bp", __name__)
@@ -19,21 +20,38 @@ def podcast():
         data = request.get_json()
         print("📩 Received Data:", data)
 
-        podcast_id = str(uuid.uuid4())  
-        user_id = str(g.user_id)  
+        # Validate and process the RSS feed
+        pod_rss = data.get("podRss", "").strip()
+        if not pod_rss:
+            return jsonify({"error": "RSS feed is required"}), 400
+
+        # Check if a podcast with this RSS already exists.
+        existing_podcast = collection.database.Podcast.find_one({"podRss": pod_rss})
+        if existing_podcast:
+            return jsonify({"error": "Podcast with this RSS already exists"}), 400
+
+        # Validate the RSS by attempting to parse it.
+        feed = feedparser.parse(pod_rss)
+        if feed.bozo:
+            return jsonify({"error": "Invalid RSS feed. Please enter a valid RSS feed."}), 400
+        if not feed.entries:
+            return jsonify({"error": "The provided RSS feed contains no entries. Please enter a valid RSS feed."}), 400
+
+        podcast_id = str(uuid.uuid4())
+        user_id = str(g.user_id)
 
         social_media_links = data.get("socialMedia", [])  # Expecting an array
         pod_email = data.get("podEmail", "").strip()
         guest_url = data.get("guestUrl", "").strip()
 
         podcast_item = {
-            "_id": podcast_id,  
-            "userid": user_id,  
+            "_id": podcast_id,
+            "userid": user_id,
             "podName": data.get("podName", "").strip(),
-            "podRss": data.get("podRss", "").strip(),
+            "podRss": pod_rss,
             "socialMedia": social_media_links,  # Array
-            "podEmail": pod_email,  
-            "guestUrl": guest_url,  
+            "podEmail": pod_email,
+            "guestUrl": guest_url,
             "created_at": datetime.now(timezone.utc),
         }
 
@@ -46,16 +64,14 @@ def podcast():
 
         print("✅ Podcast added successfully!")
 
-        return jsonify(
-            {
-                "message": "Podcast added successfully",
-                "podcast_id": podcast_id,  
-                "redirect_url": "/index.html",
-            }
-        ), 201
+        return jsonify({
+            "message": "Podcast added successfully",
+            "podcast_id": podcast_id,
+            "redirect_url": "/index.html",
+        }), 201
 
     except Exception as e:
-        print(f"❌ ERROR: {e}")  
+        print(f"❌ ERROR: {e}")
         return jsonify({"error": f"Failed to add podcast: {str(e)}"}), 500
     
 @podcast_bp.route("/get_podcast", methods=["GET"])
