@@ -8,7 +8,6 @@
     document.getElementById("task-management").style.display = "block";
     await fetchEpisodes(guestId);
     await fetchTasks();
-    await fetchEpisodesForDropdown(guestId); // Fetch episodes for the dropdown
   }
 
   async function fetchEpisodes(guestId) {
@@ -19,44 +18,28 @@
       const data = await response.json();
 
       if (response.ok) {
-        const dropdown = document.getElementById("episode-dropdown");
-        dropdown.innerHTML = ""; // Clear existing episodes
+        const viewEpisodeDropdown = document.getElementById("episode-dropdown");
+        const addTasksEpisodeDropdown = document.getElementById(
+          "add-tasks-episode-dropdown"
+        );
+        viewEpisodeDropdown.innerHTML = ""; // Clear existing episodes
+        addTasksEpisodeDropdown.innerHTML = ""; // Clear existing episodes
 
         data.episodes.forEach((episode) => {
           let a = document.createElement("a");
           a.textContent = episode.title;
           a.href = "#";
           a.onclick = () => selectEpisode(episode.episode_id);
-          dropdown.appendChild(a);
+          viewEpisodeDropdown.appendChild(a);
+
+          let b = document.createElement("a");
+          b.textContent = episode.title;
+          b.href = "#";
+          b.onclick = () => selectEpisode(episode.episode_id);
+          addTasksEpisodeDropdown.appendChild(b);
         });
-      } else {
-        console.error("Failed to fetch episodes:", data.error);
-        alert("Failed to fetch episodes: " + data.error);
-      }
-    } catch (error) {
-      console.error("Error fetching episodes:", error);
-      alert("Failed to fetch episodes.");
-    }
-  }
 
-  async function fetchEpisodesForDropdown(guestId) {
-    try {
-      const response = await fetch(
-        `/episodes/get_episodes_by_guest/${guestId}`
-      );
-      const data = await response.json();
-
-      if (response.ok) {
-        const dropdown = document.getElementById("add-tasks-episode-dropdown");
-        dropdown.innerHTML = ""; // Clear existing episodes
-
-        data.episodes.forEach((episode) => {
-          let a = document.createElement("a");
-          a.textContent = episode.title;
-          a.href = "#";
-          a.onclick = () => addTasksToEpisode(episode.episode_id);
-          dropdown.appendChild(a);
-        });
+        console.log("Episodes fetched and added to dropdowns:", data.episodes);
       } else {
         console.error("Failed to fetch episodes:", data.error);
         alert("Failed to fetch episodes: " + data.error);
@@ -70,11 +53,6 @@
   function selectEpisode(episodeId) {
     console.log("Selected episode ID:", episodeId);
     // Implement logic to handle episode selection
-  }
-
-  function addTasksToEpisode(episodeId) {
-    console.log("Adding tasks to episode ID:", episodeId);
-    // Implement logic to handle adding tasks to the selected episode
   }
 
   // Ensure "Add Task" button exists before adding event listener
@@ -325,6 +303,11 @@
             <input type="checkbox" class="default-task-checkbox" value="${task.task_name}">
         `;
           defaultTasksList.appendChild(div);
+
+          console.log(
+            "Default tasks fetched and added to list:",
+            data.default_tasks
+          );
         });
       } else {
         console.error("Failed to fetch default tasks:", data.error);
@@ -395,13 +378,13 @@
       if (response.ok) {
         document.getElementById(
           "ollina-episodes"
-        ).textContent = `${data.ollina} Open Episodes`;
+        ).textContent = `${data.GUEST_ID_1} Open Episodes`;
         document.getElementById(
           "olle-episodes"
-        ).textContent = `${data.olle} Open Episodes`;
+        ).textContent = `${data.GUEST_ID_2} Open Episodes`;
         document.getElementById(
           "olga-episodes"
-        ).textContent = `${data.olga} Open Episodes`;
+        ).textContent = `${data.GUEST_ID_3} Open Episodes`;
       } else {
         console.error("Failed to fetch open episodes:", data.error);
         alert("Failed to fetch open episodes: " + data.error);
