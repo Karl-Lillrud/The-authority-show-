@@ -32,8 +32,8 @@
       }
       */
 .back-arrow {
-  position: absolute;
-  top: 18%;
+  position: fixed; /* Change to fixed position */
+  top: calc(32%); /* Move down by 1cm */
   left: var(--spacing-md);
   font-size: 0.9rem;
   font-weight: bold;

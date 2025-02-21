@@ -55,8 +55,11 @@ Management{% endblock %} {% block content %}
   style="display: none"
 >
   <!-- Back Arrow -->
-  <a href="{{ url_for('dashboard_bp.dashboard') }}" class="back-arrow"
-    >&#8592; Back</a
+  <a
+    href="{{ url_for('dashboard_bp.dashboard') }}"
+    class="back-arrow"
+    id="dashboard-button"
+    >&#8592; Dashboard</a
   >
 
   <!-- Page Header -->
@@ -98,7 +101,7 @@ Management{% endblock %} {% block content %}
 
   <div class="task-list-container">
     <!-- Current Tasks Header -->
-    <h3 class="current-tasks-header">Tasks</h3>
+    <h3 class="current-tasks-header">Pod Tasks</h3>
 
     <!-- Ordered Task List -->
     <ol id="task-list" class="sortable responsive-task-list">
@@ -113,14 +116,6 @@ Management{% endblock %} {% block content %}
           <!-- Episodes will be dynamically populated here -->
         </div>
       </div>
-      <button
-        id="back-button"
-        class="dropbtn"
-        style="display: none"
-        onclick="goBack()"
-      >
-        Back
-      </button>
     </div>
   </div>
 

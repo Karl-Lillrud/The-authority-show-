@@ -83,8 +83,14 @@
         // Hide the "Add Tasks to Episode" button
         document.querySelector(".add-tasks-dropdown").style.display = "none";
 
-        // Show the "Back" button
-        document.getElementById("back-button").style.display = "inline-block";
+        // Change the "Dashboard" button to "Back"
+        const dashboardButton = document.getElementById("dashboard-button");
+        dashboardButton.innerHTML = "&#8592; Pod Tasks";
+        dashboardButton.href = "#";
+        dashboardButton.onclick = (event) => {
+          event.preventDefault();
+          goBack();
+        };
 
         data.tasks.forEach((task) => {
           let li = document.createElement("li");
@@ -121,12 +127,9 @@
     document.querySelector(".add-tasks-dropdown").style.display =
       "inline-block";
 
-    // Hide the "Back" button
-    document.getElementById("back-button").style.display = "none";
-
     // Reset the header text
     const header = document.querySelector(".current-tasks-header");
-    header.textContent = "Tasks";
+    header.textContent = "Pod Tasks";
 
     // Restore the initial tasks
     const taskList = document.getElementById("task-list");
@@ -149,6 +152,12 @@
     document
       .querySelector(".current-tasks-header")
       .scrollIntoView({ behavior: "smooth" });
+
+    // Change the "Back" button to "Dashboard"
+    const dashboardButton = document.getElementById("dashboard-button");
+    dashboardButton.innerHTML = "&#8592; Dashboard";
+    dashboardButton.href = "{{ url_for('dashboard_bp.dashboard') }}";
+    dashboardButton.onclick = null;
   }
 
   // Ensure "Add Task" button exists before adding event listener
