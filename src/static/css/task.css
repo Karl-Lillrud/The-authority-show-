@@ -103,6 +103,14 @@
   margin: 0 auto;
 }
 
+/* Current Tasks Header */
+.current-tasks-header {
+  text-align: center;
+  font-size: 1.5rem;
+  color: var(--text-color-light);
+  margin-bottom: var(--spacing-md);
+}
+
 /* Individual Task Items */
 #task-list li {
   display: flex;
@@ -451,7 +459,7 @@ h1 {
   gap: 10px;
 }
 .modal-buttons button {
-  background-color: #ff7f3f;
+  background-color: #f4a261;
   color: #fff;
   padding: 8px 16px;
   border: none;
@@ -517,5 +525,148 @@ h1 {
 
 /* Visa dropdown-menyn vid hover */
 .dropdown:hover .dropdown-content {
+  display: block;
+}
+
+/* Add Tasks to Episode Button Container */
+.add-tasks-button-container {
+  text-align: center;
+  margin-top: var(--spacing-md);
+}
+
+/* Add Tasks to Episode Dropdown */
+.add-tasks-dropdown {
+  display: inline-block;
+  position: relative;
+}
+
+.add-tasks-dropdown .dropbtn {
+  background: var(--background-light);
+  border: none;
+  padding: var(--spacing-sm) var(--spacing-md);
+  border-radius: var(--radius-small);
+  box-shadow: -3px -3px 6px var(--light-shadow-light),
+    3px 3px 6px var(--dark-shadow-light);
+  cursor: pointer;
+  font-size: 0.9rem;
+  color: var(--text-color-light);
+  transition: transform 0.3s ease, background-color 0.3s ease;
+}
+
+.add-tasks-dropdown .dropbtn:hover {
+  background-color: rgba(255, 127, 63, 0.1);
+  transform: translateY(-2px);
+  color: var(--highlight-color);
+}
+
+.add-tasks-dropdown .dropdown-content {
+  display: none;
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  background-color: var(--background-light);
+  width: auto; /* Adjust width to fit content */
+  box-shadow: 0px 8px 16px 0px rgba(0, 0, 0, 0.2);
+  z-index: 1;
+  border-radius: var(--radius-small);
+  overflow: hidden;
+}
+
+.add-tasks-dropdown .dropdown-content a {
+  color: var(--text-color-light);
+  padding: var(--spacing-sm) var(--spacing-md);
+  text-decoration: none;
+  display: block;
+  transition: background-color 0.3s ease;
+  white-space: nowrap; /* Ensure text does not wrap */
+}
+
+.add-tasks-dropdown .dropdown-content a:hover {
+  background-color: rgba(255, 127, 63, 0.1);
+  color: var(--highlight-color);
+}
+
+.add-tasks-dropdown:hover .dropdown-content {
+  display: block;
+}
+
+/* Add Tasks to Episode Button */
+#add-tasks-to-episode-btn {
+  background: var(--background-light);
+  border: none;
+  padding: var(--spacing-sm) var(--spacing-md);
+  border-radius: var(--radius-small);
+  box-shadow: -3px -3px 6px var(--light-shadow-light),
+    3px 3px 6px var(--dark-shadow-light);
+  cursor: pointer;
+  font-size: 0.9rem;
+  color: var(--text-color-light);
+  transition: transform 0.3s ease, background-color 0.3s ease;
+}
+#add-tasks-to-episode-btn:hover {
+  background-color: rgba(255, 127, 63, 0.1);
+  transform: translateY(-2px);
+  color: var(--highlight-color);
+}
+
+/* View Episode Button Container */
+.view-episode-button-container {
+  text-align: center;
+  margin-top: var(--spacing-md);
+}
+
+/* View Episode Dropdown */
+.view-episode-dropdown {
+  display: inline-block;
+  position: relative;
+}
+
+.view-episode-dropdown .dropbtn {
+  background: var(--background-light);
+  border: none;
+  padding: var(--spacing-sm) var(--spacing-md);
+  border-radius: var(--radius-small);
+  box-shadow: -3px -3px 6px var(--light-shadow-light),
+    3px 3px 6px var(--dark-shadow-light);
+  cursor: pointer;
+  font-size: 0.9rem;
+  color: var(--text-color-light);
+  transition: transform 0.3s ease, background-color 0.3s ease;
+}
+
+.view-episode-dropdown .dropbtn:hover {
+  background-color: rgba(255, 127, 63, 0.1);
+  transform: translateY(-2px);
+  color: var(--highlight-color);
+}
+
+.view-episode-dropdown .dropdown-content {
+  display: none;
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  background-color: var(--background-light);
+  width: auto; /* Adjust width to fit content */
+  box-shadow: 0px 8px 16px 0px rgba(0, 0, 0, 0.2);
+  z-index: 1;
+  border-radius: var(--radius-small);
+  overflow: hidden;
+}
+
+.view-episode-dropdown .dropdown-content a {
+  color: var(--text-color-light);
+  padding: var(--spacing-sm) var(--spacing-md);
+  text-decoration: none;
+  display: block;
+  transition: background-color 0.3s ease;
+  white-space: nowrap; /* Ensure text does not wrap */
+}
+
+.view-episode-dropdown .dropdown-content a:hover {
+  background-color: rgba(255, 127, 63, 0.1);
+  color: var(--highlight-color);
+}
+
+.view-episode-dropdown:hover .dropdown-content {
   display: block;
 }

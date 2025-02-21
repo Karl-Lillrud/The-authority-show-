@@ -48,31 +48,41 @@ Management{% endblock %} {% block content %}
     <h2>Task Management for <span id="selected-guest"></span></h2>
     <div class="task-header-buttons">
       <button id="load-default-btn" onclick="openDefaultTasksPopup()">
-        Load Default Tasks
+        Add Default Tasks
       </button>
-      <button id="add-task-btn">+ Add New Task</button>
+      <button id="add-task-btn">+ Add Custom Task</button>
 
-      <!-- Wrapper för att flytta Select Episode och Add Tasks to Episode till höger -->
+      <!-- Wrapper för att flytta Select Episode till höger -->
       <div class="dropdown-wrapper">
-        <div class="dropdown">
-          <button class="dropbtn">Select Episode</button>
+        <div class="dropdown view-episode-dropdown">
+          <button class="dropbtn">View Episode</button>
           <div class="dropdown-content" id="episode-dropdown">
             <!-- Episodes will be dynamically populated here -->
           </div>
-        </div>
-        <div class="dropdown">
-          <button class="dropbtn" onclick="openEpisodesPopup()">
-            Add Tasks to Episode
-          </button>
         </div>
       </div>
     </div>
   </div>
 
-  <!-- Ordered Task List -->
-  <ol id="task-list" class="sortable">
-    <!-- Dynamically injected tasks will appear here -->
-  </ol>
+  <div class="task-list-container">
+    <!-- Current Tasks Header -->
+    <h3 class="current-tasks-header">Current Tasks</h3>
+
+    <!-- Ordered Task List -->
+    <ol id="task-list" class="sortable">
+      <!-- Dynamically injected tasks will appear here -->
+    </ol>
+
+    <!-- Add Tasks to Episode Dropdown -->
+    <div class="add-tasks-button-container">
+      <div class="dropdown add-tasks-dropdown">
+        <button class="dropbtn">Add Tasks to Episode</button>
+        <div class="dropdown-content" id="add-tasks-episode-dropdown">
+          <!-- Episodes will be dynamically populated here -->
+        </div>
+      </div>
+    </div>
+  </div>
 
   <!-- Task Modal -->
   <div id="task-modal" class="modal">
