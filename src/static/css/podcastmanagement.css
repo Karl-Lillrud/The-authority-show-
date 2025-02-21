@@ -241,6 +241,33 @@
     margin-top: var(--spacing-md);
   }
 
+  
+   #custom-alert {
+    display: none;
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: var(--background-light) !important; /* Ljusgrå bakgrund*/ 
+    padding: 25px 25px;
+    border-radius: 8px;
+    box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.2);
+    z-index: 1000;
+    text-align: center;
+    font-size: 16px;
+    font-family: Arial, sans-serif;
+    opacity: 1;
+    transition: opacity 0.5s ease-out;
+    color: #333 !important; /* Textfärg (kan justeras)*/ 
+}
+
+#custom-alert p {
+    margin: 0;
+    font-size: 1rem;
+    font-weight: 600;
+    color: #333 !important; /* Textfärg*/ 
+}
+
   /* Responsive Adjustments */
   @media (max-width: 576px) {
     .form-box {
