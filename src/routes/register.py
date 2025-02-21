@@ -30,13 +30,12 @@ def register():
         data = request.get_json()
         print("📩 Received Data:", data)
 
-        if "email" not in data or "password" not in data or "name" not in data:
-            print("❌ Missing email, password, or name")
-            return jsonify({"error": "Missing email, password, or name"}), 400
+        if "email" not in data or "password" not in data:
+            print("❌ Missing email or password")
+            return jsonify({"error": "Missing email or password"}), 400
 
         email = data["email"].lower().strip()
         password = data["password"]
-        full_name = data["name"].strip()
         hashed_password = generate_password_hash(password)
 
         print("🔍 Checking if user already exists...")
@@ -50,7 +49,6 @@ def register():
             "_id": str(uuid.uuid4()),
             "email": email,
             "passwordHash": hashed_password,
-            "full_name": full_name,
             "createdAt": datetime.utcnow().isoformat(),
         }
 
