@@ -61,7 +61,9 @@ Management{% endblock %} {% block content %}
       <!-- Wrapper för att flytta Select Episode till höger -->
       <div class="dropdown-wrapper">
         <div class="dropdown view-episode-dropdown">
-          <button class="dropbtn">View Episodes</button>
+          <button class="dropbtn" onclick="viewEpisodes()">
+            View Episodes
+          </button>
           <div class="dropdown-content" id="episode-dropdown">
             <!-- Episodes will be dynamically populated here -->
           </div>

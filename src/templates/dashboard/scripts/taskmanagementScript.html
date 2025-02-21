@@ -29,7 +29,7 @@
           let a = document.createElement("a");
           a.textContent = episode.title;
           a.href = "#";
-          a.onclick = () => selectEpisode(episode.episode_id, guestId);
+          a.onclick = () => selectEpisodeForView(episode.episode_id);
           viewEpisodeDropdown.appendChild(a);
 
           let b = document.createElement("a");
@@ -53,6 +53,47 @@
   function selectEpisode(episodeId, guestId) {
     console.log("Selected episode ID:", episodeId);
     addTasksToEpisode(episodeId, guestId);
+  }
+
+  async function viewEpisodeTasks(episodeId) {
+    try {
+      const response = await fetch(
+        `/episodes/view_tasks_by_episode/${episodeId}`
+      );
+      const data = await response.json();
+
+      if (response.ok) {
+        const taskList = document.getElementById("task-list");
+        taskList.innerHTML = ""; // Clear existing tasks
+
+        data.tasks.forEach((task) => {
+          let li = document.createElement("li");
+          li.innerHTML = `
+            <div class="task-details">
+                <span class="task-name">${task.task_name}</span>
+            </div>
+            <div class="task-actions">
+                <button class="edit-btn" onclick="editTask('${task._id}')">Edit</button>
+                <button class="delete-btn" onclick="deleteTask('${task._id}', true)">Delete</button>
+            </div>
+        `;
+          taskList.appendChild(li);
+        });
+
+        console.log("Tasks fetched and displayed:", data.tasks);
+      } else {
+        console.error("Failed to fetch tasks:", data.error);
+        alert("Failed to fetch tasks: " + data.error);
+      }
+    } catch (error) {
+      console.error("Error fetching tasks:", error);
+      alert("Failed to fetch tasks.");
+    }
+  }
+
+  function selectEpisodeForView(episodeId) {
+    console.log("Selected episode ID for view:", episodeId);
+    viewEpisodeTasks(episodeId);
   }
 
   // Ensure "Add Task" button exists before adding event listener
@@ -214,9 +255,12 @@
     }
   }
 
-  async function deleteTask(taskId) {
+  async function deleteTask(taskId, isEpisodeTask = false) {
     try {
-      const response = await fetch(`/delete_podtask/${taskId}`, {
+      const endpoint = isEpisodeTask
+        ? `/episodes/delete_episode_task/${taskId}`
+        : `/delete_podtask/${taskId}`;
+      const response = await fetch(endpoint, {
         method: "DELETE"
       });
 
