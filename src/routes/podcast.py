@@ -7,6 +7,7 @@ import feedparser
 # Define Blueprint
 podcast_bp = Blueprint("podcast_bp", __name__)
 
+
 @podcast_bp.route("/add_podcast", methods=["POST"])
 def podcast():
     if not g.user_id:
@@ -14,7 +15,10 @@ def podcast():
 
     # Validate Content-Type
     if request.content_type != "application/json":
-        return jsonify({"error": "Invalid Content-Type. Expected application/json"}), 415
+        return (
+            jsonify({"error": "Invalid Content-Type. Expected application/json"}),
+            415,
+        )
 
     try:
         data = request.get_json()
@@ -33,9 +37,19 @@ def podcast():
         # Validate the RSS by attempting to parse it.
         feed = feedparser.parse(pod_rss)
         if feed.bozo:
-            return jsonify({"error": "Invalid RSS feed. Please enter a valid RSS feed."}), 400
+            return (
+                jsonify({"error": "Invalid RSS feed. Please enter a valid RSS feed."}),
+                400,
+            )
         if not feed.entries:
-            return jsonify({"error": "The provided RSS feed contains no entries. Please enter a valid RSS feed."}), 400
+            return (
+                jsonify(
+                    {
+                        "error": "The provided RSS feed contains no entries. Please enter a valid RSS feed."
+                    }
+                ),
+                400,
+            )
 
         podcast_id = str(uuid.uuid4())
         user_id = str(g.user_id)
@@ -64,23 +78,29 @@ def podcast():
 
         print("✅ Podcast added successfully!")
 
-        return jsonify({
-            "message": "Podcast added successfully",
-            "podcast_id": podcast_id,
-            "redirect_url": "/index.html",
-        }), 201
+        return (
+            jsonify(
+                {
+                    "message": "Podcast added successfully",
+                    "podcast_id": podcast_id,
+                    "redirect_url": "/index.html",
+                }
+            ),
+            201,
+        )
 
     except Exception as e:
         print(f"❌ ERROR: {e}")
         return jsonify({"error": f"Failed to add podcast: {str(e)}"}), 500
-    
+
+
 @podcast_bp.route("/get_podcast", methods=["GET"])
 def get_podcast():
     if not g.user_id:
         return jsonify({"error": "Unauthorized"}), 401
 
     try:
-        user_id = str(g.user_id)  
+        user_id = str(g.user_id)
 
         podcast = list(collection.database.Podcast.find({"userid": user_id}))
 
@@ -92,7 +112,8 @@ def get_podcast():
     except Exception as e:
         print(f"❌ ERROR: {e}")
         return jsonify({"error": f"Failed to fetch podcast: {str(e)}"}), 500
-    
+
+
 @podcast_bp.route("/delete_podcast/<podcast_id>", methods=["DELETE"])
 def delete_podcast(podcast_id):
     if not g.user_id:
@@ -123,7 +144,7 @@ def delete_podcast(podcast_id):
         print(f"❌ ERROR: {e}")
         return jsonify({"error": f"Failed to delete podcast: {str(e)}"}), 500
 
-    
+
 @podcast_bp.route("/edit_podcast/<podcast_id>", methods=["PUT"])
 def edit_podcast(podcast_id):
     if not g.user_id:
@@ -159,8 +180,7 @@ def edit_podcast(podcast_id):
             update_data["guestUrl"] = data["guestUrl"]
 
         result = collection.database.Podcast.update_one(
-            {"_id": podcast_id},
-            {"$set": update_data} 
+            {"_id": podcast_id}, {"$set": update_data}
         )
 
         if result.modified_count == 1:
@@ -171,5 +191,3 @@ def edit_podcast(podcast_id):
     except Exception as e:
         print(f"❌ ERROR: {e}")
         return jsonify({"error": f"Failed to update podcast: {str(e)}"}), 500
-
-

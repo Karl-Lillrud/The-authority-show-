@@ -2,6 +2,8 @@ from pymongo import MongoClient
 import os
 from dotenv import load_dotenv
 import logging
+from datetime import datetime, timezone
+import uuid
 
 # Load environment variables
 load_dotenv()
@@ -522,6 +524,163 @@ default_tasks = [
     },
 ]
 
+default_episodes = [
+    {
+        "episode_id": str(uuid.uuid4()),
+        "podcast_id": "PODCAST_ID_1",
+        "guest_id": "GUEST_ID_1",
+        "title": "Episode 1",
+        "description": "Description for Episode 1",
+        "recording_date": datetime.now(timezone.utc),
+        "release_date": datetime.now(timezone.utc),
+        "status": "Scheduled",
+        "created_at": datetime.now(timezone.utc),
+        "updated_at": datetime.now(timezone.utc),
+    },
+    {
+        "episode_id": str(uuid.uuid4()),
+        "podcast_id": "PODCAST_ID_2",
+        "guest_id": "GUEST_ID_2",
+        "title": "Episode 2",
+        "description": "Description for Episode 2",
+        "recording_date": datetime.now(timezone.utc),
+        "release_date": datetime.now(timezone.utc),
+        "status": "Scheduled",
+        "created_at": datetime.now(timezone.utc),
+        "updated_at": datetime.now(timezone.utc),
+    },
+    {
+        "episode_id": str(uuid.uuid4()),
+        "podcast_id": "PODCAST_ID_3",
+        "guest_id": "GUEST_ID_3",
+        "title": "Episode 3",
+        "description": "Description for Episode 3",
+        "recording_date": datetime.now(timezone.utc),
+        "release_date": datetime.now(timezone.utc),
+        "status": "Scheduled",
+        "created_at": datetime.now(timezone.utc),
+        "updated_at": datetime.now(timezone.utc),
+    },
+    {
+        "episode_id": str(uuid.uuid4()),
+        "podcast_id": "PODCAST_ID_1",
+        "guest_id": "GUEST_ID_1",
+        "title": "Episode 4",
+        "description": "Description for Episode 4",
+        "recording_date": datetime.now(timezone.utc),
+        "release_date": datetime.now(timezone.utc),
+        "status": "Scheduled",
+        "created_at": datetime.now(timezone.utc),
+        "updated_at": datetime.now(timezone.utc),
+    },
+    {
+        "episode_id": str(uuid.uuid4()),
+        "podcast_id": "PODCAST_ID_2",
+        "guest_id": "GUEST_ID_2",
+        "title": "Episode 5",
+        "description": "Description for Episode 5",
+        "recording_date": datetime.now(timezone.utc),
+        "release_date": datetime.now(timezone.utc),
+        "status": "Scheduled",
+        "created_at": datetime.now(timezone.utc),
+        "updated_at": datetime.now(timezone.utc),
+    },
+    {
+        "episode_id": str(uuid.uuid4()),
+        "podcast_id": "PODCAST_ID_3",
+        "guest_id": "GUEST_ID_3",
+        "title": "Episode 6",
+        "description": "Description for Episode 6",
+        "recording_date": datetime.now(timezone.utc),
+        "release_date": datetime.now(timezone.utc),
+        "status": "Scheduled",
+        "created_at": datetime.now(timezone.utc),
+        "updated_at": datetime.now(timezone.utc),
+    },
+]
+
+default_episode_tasks = [
+    {
+        "episode_id": "EPISODE_ID_1",
+        "guest_id": "GUEST_ID_1",
+        "task_name": "Task 1 for Episode 1",
+        "dependency": None,
+        "checkmark": False,
+        "type": "Manual",
+        "action": "Action 1",
+        "duration": 30,
+        "assigned_to": "User 1",
+        "notes": "Notes for Task 1",
+        "automation_details": "",
+        "additional_links": "",
+    },
+    {
+        "episode_id": "EPISODE_ID_2",
+        "guest_id": "GUEST_ID_2",
+        "task_name": "Task 1 for Episode 2",
+        "dependency": None,
+        "checkmark": False,
+        "type": "Manual",
+        "action": "Action 1",
+        "duration": 30,
+        "assigned_to": "User 2",
+        "notes": "Notes for Task 1",
+        "automation_details": "",
+        "additional_links": "",
+    },
+]
+
+default_guests = [
+    {
+        "ID": "GUEST_ID_1",
+        "name": "Guest 1",
+        "image": "https://example.com/guest1.jpg",
+        "tags": ["tag1", "tag2"],
+        "description": "Description for Guest 1",
+        "bio": "Bio for Guest 1",
+        "email": "guest1@example.com",
+        "linkedin": "https://linkedin.com/in/guest1",
+        "twitter": "https://twitter.com/guest1",
+        "areasOfInterest": ["Interest 1", "Interest 2"],
+        "status": "Active",
+        "scheduled": 2,
+        "completed": 0,
+        "created_at": datetime.now(timezone.utc),
+    },
+    {
+        "ID": "GUEST_ID_2",
+        "name": "Guest 2",
+        "image": "https://example.com/guest2.jpg",
+        "tags": ["tag3", "tag4"],
+        "description": "Description for Guest 2",
+        "bio": "Bio for Guest 2",
+        "email": "guest2@example.com",
+        "linkedin": "https://linkedin.com/in/guest2",
+        "twitter": "https://twitter.com/guest2",
+        "areasOfInterest": ["Interest 3", "Interest 4"],
+        "status": "Active",
+        "scheduled": 2,
+        "completed": 0,
+        "created_at": datetime.now(timezone.utc),
+    },
+    {
+        "ID": "GUEST_ID_3",
+        "name": "Guest 3",
+        "image": "https://example.com/guest3.jpg",
+        "tags": ["tag5", "tag6"],
+        "description": "Description for Guest 3",
+        "bio": "Bio for Guest 3",
+        "email": "guest3@example.com",
+        "linkedin": "https://linkedin.com/in/guest3",
+        "twitter": "https://twitter.com/guest3",
+        "areasOfInterest": ["Interest 5", "Interest 6"],
+        "status": "Active",
+        "scheduled": 2,
+        "completed": 0,
+        "created_at": datetime.now(timezone.utc),
+    },
+]
+
 # Insert default documents
 try:
     podcast_tasks_collection = database["DefaultTasks"]
@@ -533,6 +692,35 @@ try:
             logger.info(
                 f"Task '{task['task_name']}' already exists. Skipping insertion."
             )
+
+    episodes_collection = database["Episodes"]
+    for episode in default_episodes:
+        if not episodes_collection.find_one({"episode_id": episode["episode_id"]}):
+            episodes_collection.insert_one(episode)
+            logger.info(f"Episode '{episode['title']}' inserted successfully.")
+        else:
+            logger.info(
+                f"Episode '{episode['title']}' already exists. Skipping insertion."
+            )
+
+    episode_tasks_collection = database["EpisodeTasks"]
+    for task in default_episode_tasks:
+        if not episode_tasks_collection.find_one({"task_name": task["task_name"]}):
+            episode_tasks_collection.insert_one(task)
+            logger.info(f"Episode Task '{task['task_name']}' inserted successfully.")
+        else:
+            logger.info(
+                f"Episode Task '{task['task_name']}' already exists. Skipping insertion."
+            )
+
+    guests_collection = database["Guest"]
+    for guest in default_guests:
+        if not guests_collection.find_one({"ID": guest["ID"]}):
+            guests_collection.insert_one(guest)
+            logger.info(f"Guest '{guest['name']}' inserted successfully.")
+        else:
+            logger.info(f"Guest '{guest['name']}' already exists. Skipping insertion.")
+
 except Exception as e:
     logger.error(f"Failed to insert default tasks: {e}")
     raise

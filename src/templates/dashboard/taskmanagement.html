@@ -4,29 +4,32 @@ Management{% endblock %} {% block content %}
 <div id="guest-popup" class="popup">
   <div class="popup-content">
     <header>
-      <h1>Select a Guest's Task</h1>
+      <h1>Select a Guest</h1>
     </header>
     <div class="guest-selection">
-      <div class="card" onclick="selectGuest('Ollina Olsson')">
+      <div class="card" onclick="selectGuest('GUEST_ID_1', 'Ollina Olsson')">
         <img
           src="https://podmanagerstorage.blob.core.windows.net/blob-container/person1.jpg"
           alt="Guest A"
+          style="cursor: pointer"
         />
-        <p class="episode-count orange">3 Open Tasks</p>
+        <p class="episode-count orange" id="ollina-episodes">0 Episodes</p>
       </div>
-      <div class="card" onclick="selectGuest('Olle Olsson')">
+      <div class="card" onclick="selectGuest('GUEST_ID_2', 'Olle Olsson')">
         <img
           src="https://podmanagerstorage.blob.core.windows.net/blob-container/person2.jpg"
           alt="Guest B"
+          style="cursor: pointer"
         />
-        <p class="episode-count red">8 Open Tasks</p>
+        <p class="episode-count red" id="olle-episodes">0 Episodes</p>
       </div>
-      <div class="card" onclick="selectGuest('Olga Olsson')">
+      <div class="card" onclick="selectGuest('GUEST_ID_3', 'Olga Olsson')">
         <img
           src="https://podmanagerstorage.blob.core.windows.net/blob-container/person3.jpg"
           alt="Guest C"
+          style="cursor: pointer"
         />
-        <p class="episode-count green">0 Open Tasks</p>
+        <p class="episode-count green" id="olga-episodes">0 Episodes</p>
       </div>
     </div>
   </div>
@@ -43,15 +46,26 @@ Management{% endblock %} {% block content %}
   <a href="{{ url_for('dashboard_bp.dashboard') }}" class="back-arrow"
     >&#8592; Back</a
   >
+  
 
   <!-- Page Header -->
-  <div class="task-header">
+  <div class="task-header" >
     <h2>Task Management for <span id="selected-guest"></span></h2>
-    <div>
+    <div class="task-header-buttons">
       <button id="load-default-btn" onclick="openDefaultTasksPopup()">
         Load Default Tasks
       </button>
       <button id="add-task-btn">+ Add New Task</button>
+
+      <!-- Wrapper för att flytta Select Episode till höger -->
+      <div class="dropdown-wrapper">
+        <div class="dropdown">
+          <button class="dropbtn">Select Episode</button>
+          <div class="dropdown-content" id="episode-dropdown">
+            <!-- Episodes will be dynamically populated here -->
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 
@@ -101,21 +115,27 @@ Management{% endblock %} {% block content %}
       ></textarea>
 
       <label for="action-link">Action Link:</label>
-      <input type="text" id="action-link" placeholder="Enter external link" />
+      <input
+        type="text"
+        id="action-link"
+        placeholder="Enter external link"
+      />
       <input
         type="text"
         id="action-link-desc"
         placeholder="Describe the link"
       />
 
-      <label>
-        <input type="checkbox" id="submission-required" /> Require Information
-        Submission
+      <label></label>
+        <input type="checkbox" id="submission-required" /> Require
+        Information Submission
       </label>
 
       <div class="modal-buttons">
         <button id="save-task-btn">Save Task</button>
-        <button class="cancel-btn" onclick="closeModal()">Cancel</button>
+        <button class="cancel-btn" onclick="closeModal()">
+          Cancel
+        </button>
       </div>
     </div>
   </div>
@@ -124,14 +144,20 @@ Management{% endblock %} {% block content %}
   <div id="default-tasks-popup" class="popup" style="display: none">
     <div class="popup-content">
       <h2>Select Default Tasks</h2>
-      <button id="select-all-default-btn" onclick="selectAllDefaultTasks()">
+      <button
+        id="select-all-default-btn"
+        onclick="selectAllDefaultTasks()"
+      >
         Select All
       </button>
       <div id="default-tasks-list">
         <!-- Default tasks will be dynamically populated -->
       </div>
       <div class="modal-buttons">
-        <button id="add-default-tasks-btn" onclick="addSelectedDefaultTasks()">
+        <button
+          id="add-default-tasks-btn"
+          onclick="addSelectedDefaultTasks()"
+        >
           Add Selected Tasks
         </button>
         <button class="cancel-btn" onclick="closeDefaultTasksPopup()">
@@ -145,10 +171,46 @@ Management{% endblock %} {% block content %}
   <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
   <script>
     // When a guest is selected, update the header and show the task management section.
-    function selectGuest(guestName) {
+    async function selectGuest(guestId, guestName) {
       document.getElementById("selected-guest").textContent = guestName;
       document.getElementById("guest-popup").style.display = "none";
-      document.getElementById("task-management").style.display = "block";
+      document.getElementById("task-management").style.display =
+        "block";
+      await fetchEpisodes(guestId);
+      await fetchTasks();
+    }
+
+    async function fetchEpisodes(guestId) {
+      try {
+        const response = await fetch(
+          `/episodes/get_episodes_by_guest/${guestId}`
+        );
+        const data = await response.json();
+
+        if (response.ok) {
+          const dropdown = document.getElementById("episode-dropdown");
+          dropdown.innerHTML = ""; // Clear existing episodes
+
+          data.episodes.forEach((episode) => {
+            let a = document.createElement("a");
+            a.textContent = episode.title;
+            a.href = "#";
+            a.onclick = () => selectEpisode(episode.episode_id);
+            dropdown.appendChild(a);
+          });
+        } else {
+          console.error("Failed to fetch episodes:", data.error);
+          alert("Failed to fetch episodes: " + data.error);
+        }
+      } catch (error) {
+        console.error("Error fetching episodes:", error);
+        alert("Failed to fetch episodes.");
+      }
+    }
+
+    function selectEpisode(episodeId) {
+      console.log("Selected episode ID:", episodeId);
+      // Implement logic to handle episode selection
     }
 
     // Ensure "Add Task" button exists before adding event listener
@@ -160,7 +222,8 @@ Management{% endblock %} {% block content %}
 
     function openModal() {
       document.getElementById("task-modal").style.display = "flex";
-      document.getElementById("modal-title").innerText = "Create New Task";
+      document.getElementById("modal-title").innerText =
+        "Create New Task";
       // Set default action for save button to create new task
       document
         .getElementById("save-task-btn")
@@ -181,7 +244,9 @@ Management{% endblock %} {% block content %}
       let taskDescription = document
         .getElementById("task-description")
         .value.trim();
-      let actionLink = document.getElementById("action-link").value.trim();
+      let actionLink = document
+        .getElementById("action-link")
+        .value.trim();
       let actionLinkDesc = document
         .getElementById("action-link-desc")
         .value.trim();
@@ -204,7 +269,9 @@ Management{% endblock %} {% block content %}
         taskDependencies: taskDependencies,
         taskType: taskType,
         Daycount: parseInt(dueTime) || 0,
-        action: [{ actionurl: actionLink, externalurl: actionLinkDesc }],
+        action: [
+          { actionurl: actionLink, externalurl: actionLinkDesc }
+        ],
         submission: submissionRequired ? "Required" : "Optional"
       };
 
@@ -221,6 +288,7 @@ Management{% endblock %} {% block content %}
           closeModal();
           fetchTasks(); // Refresh the task list
         } else {
+          console.error("Error adding task:", result.error);
           alert("Error: " + result.error);
         }
       } catch (error) {
@@ -234,6 +302,7 @@ Management{% endblock %} {% block content %}
       try {
         const response = await fetch(`/get_podtask/${taskId}`);
         if (!response.ok) {
+          console.error("Failed to fetch task data");
           alert("Failed to fetch task data");
           return;
         }
@@ -245,7 +314,8 @@ Management{% endblock %} {% block content %}
         document.getElementById("task-description").value =
           task.Description || "";
         document.getElementById("due-time").value = task.DayCount || "";
-        document.getElementById("action-link").value = task.ActionUrl || "";
+        document.getElementById("action-link").value =
+          task.ActionUrl || "";
         document.getElementById("action-link-desc").value =
           task.UrlDescribe || "";
         document.getElementById("submission-required").checked =
@@ -258,18 +328,23 @@ Management{% endblock %} {% block content %}
           .getElementById("save-task-btn")
           .setAttribute("onclick", `updateTask('${task._id}')`);
       } catch (error) {
+        console.error("Error fetching task details:", error);
         alert("Error fetching task details");
       }
     }
 
     // Update task data after editing
     async function updateTask(taskId) {
-      const taskName = document.getElementById("task-name").value.trim();
+      const taskName = document
+        .getElementById("task-name")
+        .value.trim();
       const taskDescription = document
         .getElementById("task-description")
         .value.trim();
       const dueTime = document.getElementById("due-time").value.trim();
-      const actionLink = document.getElementById("action-link").value.trim();
+      const actionLink = document
+        .getElementById("action-link")
+        .value.trim();
       const actionLinkDesc = document
         .getElementById("action-link-desc")
         .value.trim();
@@ -298,9 +373,11 @@ Management{% endblock %} {% block content %}
           closeModal();
           fetchTasks(); // Refresh the task list to reflect changes
         } else {
+          console.error("Error updating task:", result.error);
           alert("Error: " + result.error);
         }
       } catch (error) {
+        console.error("Error updating task:", error);
         alert("Error updating task: " + error.message);
       }
     }
@@ -316,6 +393,7 @@ Management{% endblock %} {% block content %}
           alert("Task deleted successfully!");
           fetchTasks(); // Refresh tasks
         } else {
+          console.error("Error deleting task:", result.error);
           alert("Error deleting task: " + result.error);
         }
       } catch (error) {
@@ -335,6 +413,7 @@ Management{% endblock %} {% block content %}
           alert("Default task deleted successfully!");
           fetchDefaultTasks(); // Refresh default tasks
         } else {
+          console.error("Error deleting default task:", result.error);
           alert("Error deleting default task: " + result.error);
         }
       } catch (error) {
@@ -355,17 +434,18 @@ Management{% endblock %} {% block content %}
           data.podtasks.forEach((task) => {
             let li = document.createElement("li");
             li.innerHTML = `
-                      <div class="task-details">
-                          <span class="task-name">${task.taskname}</span>
-                      </div>
-                      <div class="task-actions">
-                          <button class="edit-btn" onclick="editTask('${task._id}')">Edit</button>
-                          <button class="delete-btn" onclick="deleteTask('${task._id}')">Delete</button>
-                      </div>
-                  `;
+              <div class="task-details">
+                  <span class="task-name">${task.taskname}</span>
+              </div>
+              <div class="task-actions">
+                  <button class="edit-btn" onclick="editTask('${task._id}')">Edit</button>
+                  <button class="delete-btn" onclick="deleteTask('${task._id}')">Delete</button>
+              </div>
+          `;
             taskList.appendChild(li);
           });
         } else {
+          console.error("Failed to fetch tasks:", data.error);
           alert("Failed to fetch tasks: " + data.error);
         }
       } catch (error) {
@@ -388,12 +468,13 @@ Management{% endblock %} {% block content %}
             let div = document.createElement("div");
             div.className = "default-task-item";
             div.innerHTML = `
-                      <span class="task-name">${task.task_name}</span>
-                      <input type="checkbox" class="default-task-checkbox" value="${task.task_name}">
-                  `;
+              <span class="task-name">${task.task_name}</span>
+              <input type="checkbox" class="default-task-checkbox" value="${task.task_name}">
+          `;
             defaultTasksList.appendChild(div);
           });
         } else {
+          console.error("Failed to fetch default tasks:", data.error);
           alert("Failed to fetch default tasks: " + data.error);
         }
       } catch (error) {
@@ -407,13 +488,15 @@ Management{% endblock %} {% block content %}
 
     // Open Default Tasks Popup
     function openDefaultTasksPopup() {
-      document.getElementById("default-tasks-popup").style.display = "flex";
+      document.getElementById("default-tasks-popup").style.display =
+        "flex";
       fetchDefaultTasks();
     }
 
     // Close Default Tasks Popup
     function closeDefaultTasksPopup() {
-      document.getElementById("default-tasks-popup").style.display = "none";
+      document.getElementById("default-tasks-popup").style.display =
+        "none";
     }
 
     // Add Selected Default Tasks
@@ -452,6 +535,34 @@ Management{% endblock %} {% block content %}
       animation: 150,
       ghostClass: "drag-ghost"
     });
+
+    async function fetchOpenEpisodes() {
+      try {
+        const response = await fetch("/episodes/get_open_episodes");
+        const data = await response.json();
+
+        if (response.ok) {
+          document.getElementById(
+            "ollina-episodes"
+          ).textContent = `${data.ollina} Open Episodes`;
+          document.getElementById(
+            "olle-episodes"
+          ).textContent = `${data.olle} Open Episodes`;
+          document.getElementById(
+            "olga-episodes"
+          ).textContent = `${data.olga} Open Episodes`;
+        } else {
+          console.error("Failed to fetch open episodes:", data.error);
+          alert("Failed to fetch open episodes: " + data.error);
+        }
+      } catch (error) {
+        console.error("Error fetching open episodes:", error);
+        alert("Failed to fetch open episodes.");
+      }
+    }
+
+    // Fetch open episodes on page load
+    document.addEventListener("DOMContentLoaded", fetchOpenEpisodes);
   </script>
   {% endblock %}
 </div>

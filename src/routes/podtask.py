@@ -209,7 +209,7 @@ def get_default_tasks():
         return jsonify({"error": "Unauthorized"}), 401
 
     try:
-        default_tasks = list(collection.database.PodcastTasks.find({}))
+        default_tasks = list(collection.database.DefaultTasks.find({}))
 
         for task in default_tasks:
             task["_id"] = str(task["_id"])
@@ -237,3 +237,29 @@ def delete_default_task(task_id):
     except Exception as e:
         print(f"❌ ERROR: {e}")
         return jsonify({"error": f"Failed to delete default task: {str(e)}"}), 500
+
+
+@podtask_bp.route("/add_selected_default_tasks", methods=["POST"])
+def add_selected_default_tasks():
+    if not g.user_id:
+        return jsonify({"error": "Unauthorized"}), 401
+
+    try:
+        data = request.get_json()
+        user_id = str(g.user_id)
+
+        tasks_to_add = data.get("tasks", [])
+
+        for task in tasks_to_add:
+            podtask_id = str(uuid.uuid4())
+            task["userid"] = user_id
+            task["_id"] = podtask_id
+            task["created_at"] = datetime.now(timezone.utc)
+
+            collection.database.Podtask.insert_one(task)
+
+        return jsonify({"message": "Selected tasks added successfully"}), 201
+
+    except Exception as e:
+        print(f"❌ ERROR: {e}")
+        return jsonify({"error": f"Failed to add selected tasks: {str(e)}"}), 500
