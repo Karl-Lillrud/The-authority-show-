@@ -1,7 +1,5 @@
-{% extends "dashboard/components/base.html" %}
-{% block title %}Podcast Task Management{% endblock %}
-
-{% block content %}
+{% extends "dashboard/components/base.html" %} {% block title %}Podcast Task
+Management{% endblock %} {% block content %}
 <!-- Guest Selection Popup -->
 <div id="guest-popup" class="popup">
   <div class="popup-content">
@@ -10,276 +8,353 @@
     </header>
     <div class="guest-selection">
       <div class="card" onclick="selectGuest('Ollina Olsson')">
-        <img src="https://podmanagerstorage.blob.core.windows.net/blob-container/person1.jpg" alt="Guest A">
+        <img
+          src="https://podmanagerstorage.blob.core.windows.net/blob-container/person1.jpg"
+          alt="Guest A"
+        />
         <p class="episode-count orange">3 Open Tasks</p>
       </div>
       <div class="card" onclick="selectGuest('Olle Olsson')">
-        <img src="https://podmanagerstorage.blob.core.windows.net/blob-container/person2.jpg" alt="Guest B">
+        <img
+          src="https://podmanagerstorage.blob.core.windows.net/blob-container/person2.jpg"
+          alt="Guest B"
+        />
         <p class="episode-count red">8 Open Tasks</p>
       </div>
       <div class="card" onclick="selectGuest('Olga Olsson')">
-        <img src="https://podmanagerstorage.blob.core.windows.net/blob-container/person3.jpg" alt="Guest C">
+        <img
+          src="https://podmanagerstorage.blob.core.windows.net/blob-container/person3.jpg"
+          alt="Guest C"
+        />
         <p class="episode-count green">0 Open Tasks</p>
       </div>
     </div>
   </div>
 </div>
 
-<link rel="stylesheet" href="{{ url_for('static', filename='css/task.css') }}">
+<link
+  rel="stylesheet"
+  href="{{ url_for('static', filename='css/task.css') }}"
+/>
 
 <!-- Task Management Section (Initially Hidden) -->
-<div id="task-management" style="display:none;">
+<div id="task-management" style="display: none">
   <!-- Back Arrow -->
-  <a href="{{ url_for('dashboard_bp.dashboard') }}" class="back-arrow">&#8592; Back</a>
-  
+  <a href="{{ url_for('dashboard_bp.dashboard') }}" class="back-arrow"
+    >&#8592; Back</a
+  >
+
   <!-- Page Header -->
   <div class="task-header">
     <h2>Task Management for <span id="selected-guest"></span></h2>
     <div>
-      <button id="load-default-btn">Load Default Tasks</button>
+      <button id="load-default-btn" onclick="openDefaultTasksPopup()">
+        Load Default Tasks
+      </button>
       <button id="add-task-btn">+ Add New Task</button>
     </div>
   </div>
-  
+
   <!-- Ordered Task List -->
   <ol id="task-list" class="sortable">
     <!-- Dynamically injected tasks will appear here -->
   </ol>
-  
-<!-- Task Modal -->
-<div id="task-modal" class="modal">
-  <div class="modal-content">
+
+  <!-- Task Modal -->
+  <div id="task-modal" class="modal">
+    <div class="modal-content">
       <span class="close-btn" onclick="closeModal()">&times;</span>
       <h2 id="modal-title">Create New Task</h2>
-      
+
       <label for="task-name">Task Name:</label>
-      <input type="text" id="task-name" placeholder="Enter task name">
-      
+      <input type="text" id="task-name" placeholder="Enter task name" />
+
       <label for="task-dependencies">Dependent on Other Task(s):</label>
       <select id="task-dependencies" multiple>
-          <!-- Options dynamically populated -->
+        <!-- Options dynamically populated -->
       </select>
-      
+
       <label for="task-type">Task Type & Action:</label>
       <select id="task-type">
-          <option value="manual">Manual</option>
-          <option value="email">Automated - Email</option>
-          <option value="system">Automated - System Action</option>
-          <option value="ai">Automated - AI Script</option>
+        <option value="manual">Manual</option>
+        <option value="email">Automated - Email</option>
+        <option value="system">Automated - System Action</option>
+        <option value="ai">Automated - AI Script</option>
       </select>
-      
+
       <div id="action-details" class="hidden">
-          <label for="action-details-input">Action Details:</label>
-          <input type="text" id="action-details-input" placeholder="Enter details">
+        <label for="action-details-input">Action Details:</label>
+        <input
+          type="text"
+          id="action-details-input"
+          placeholder="Enter details"
+        />
       </div>
-      
+
       <label for="due-time">Due Time Since Recording Date:</label>
-      <input type="text" id="due-time" placeholder="Enter days">
-      
+      <input type="text" id="due-time" placeholder="Enter days" />
+
       <label for="task-description">Task Description:</label>
-      <textarea id="task-description" placeholder="Enter task details"></textarea>
-      
+      <textarea
+        id="task-description"
+        placeholder="Enter task details"
+      ></textarea>
+
       <label for="action-link">Action Link:</label>
-      <input type="text" id="action-link" placeholder="Enter external link">
-      <input type="text" id="action-link-desc" placeholder="Describe the link">
-      
+      <input type="text" id="action-link" placeholder="Enter external link" />
+      <input
+        type="text"
+        id="action-link-desc"
+        placeholder="Describe the link"
+      />
+
       <label>
-          <input type="checkbox" id="submission-required"> Require Information Submission
+        <input type="checkbox" id="submission-required" /> Require Information
+        Submission
       </label>
-      
-      <div class="modal-buttons">
-          <button id="save-task-btn">Save Task</button>
-          <button class="cancel-btn" onclick="closeModal()">Cancel</button>
-      </div>
-  </div>
-</div>
 
-<!-- Default Tasks Popup -->
-<div id="default-tasks-popup" class="popup" style="display:none;">
-  <div class="popup-content">
+      <div class="modal-buttons">
+        <button id="save-task-btn">Save Task</button>
+        <button class="cancel-btn" onclick="closeModal()">Cancel</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Default Tasks Popup -->
+  <div id="default-tasks-popup" class="popup" style="display: none">
+    <div class="popup-content">
       <h2>Select Default Tasks</h2>
-      <button id="select-all-default-btn" onclick="selectAllDefaultTasks()">Select All</button>
+      <button id="select-all-default-btn" onclick="selectAllDefaultTasks()">
+        Select All
+      </button>
       <div id="default-tasks-list">
-          <!-- Default tasks will be dynamically populated -->
+        <!-- Default tasks will be dynamically populated -->
       </div>
       <div class="modal-buttons">
-          <button id="add-default-tasks-btn" onclick="addSelectedDefaultTasks()">Add Selected Tasks</button>
-          <button class="cancel-btn" onclick="closeDefaultTasksPopup()">Cancel</button>
+        <button id="add-default-tasks-btn" onclick="addSelectedDefaultTasks()">
+          Add Selected Tasks
+        </button>
+        <button class="cancel-btn" onclick="closeDefaultTasksPopup()">
+          Cancel
+        </button>
       </div>
+    </div>
   </div>
-</div>
 
-<!-- Include SortableJS Library for Drag & Drop -->
-<script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
-<script>
-  // When a guest is selected, update the header and show the task management section.
-  function selectGuest(guestName) {
-    document.getElementById('selected-guest').textContent = guestName;
-    document.getElementById('guest-popup').style.display = 'none';
-    document.getElementById('task-management').style.display = 'block';
-  }
+  <!-- Include SortableJS Library for Drag & Drop -->
+  <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
+  <script>
+    // When a guest is selected, update the header and show the task management section.
+    function selectGuest(guestName) {
+      document.getElementById("selected-guest").textContent = guestName;
+      document.getElementById("guest-popup").style.display = "none";
+      document.getElementById("task-management").style.display = "block";
+    }
 
-  // Ensure "Add Task" button exists before adding event listener
-  if (document.getElementById("add-task-btn")) {
-      document.getElementById("add-task-btn").addEventListener("click", openModal);
-  }
-  
-  function openModal() {
+    // Ensure "Add Task" button exists before adding event listener
+    if (document.getElementById("add-task-btn")) {
+      document
+        .getElementById("add-task-btn")
+        .addEventListener("click", openModal);
+    }
+
+    function openModal() {
       document.getElementById("task-modal").style.display = "flex";
       document.getElementById("modal-title").innerText = "Create New Task";
       // Set default action for save button to create new task
-      document.getElementById("save-task-btn").setAttribute("onclick", "saveTask()");
-  }
+      document
+        .getElementById("save-task-btn")
+        .setAttribute("onclick", "saveTask()");
+    }
 
-  function closeModal() {
+    function closeModal() {
       document.getElementById("task-modal").style.display = "none";
-  }
+    }
 
-  async function saveTask() {
+    async function saveTask() {
       let taskName = document.getElementById("task-name").value.trim();
-      let taskDependencies = Array.from(document.getElementById("task-dependencies").selectedOptions).map(option => option.value);
+      let taskDependencies = Array.from(
+        document.getElementById("task-dependencies").selectedOptions
+      ).map((option) => option.value);
       let taskType = document.getElementById("task-type").value;
       let dueTime = document.getElementById("due-time").value.trim();
-      let taskDescription = document.getElementById("task-description").value.trim();
+      let taskDescription = document
+        .getElementById("task-description")
+        .value.trim();
       let actionLink = document.getElementById("action-link").value.trim();
-      let actionLinkDesc = document.getElementById("action-link-desc").value.trim();
-      let submissionRequired = document.getElementById("submission-required").checked;
+      let actionLinkDesc = document
+        .getElementById("action-link-desc")
+        .value.trim();
+      let submissionRequired = document.getElementById(
+        "submission-required"
+      ).checked;
 
       // Dummy Podcast ID (Replace dynamically)
       const podcastId = "YOUR_PODCAST_ID";
 
       if (!taskName || !podcastId) {
-          alert("Task name and PodcastId are required!");
-          return;
+        alert("Task name and PodcastId are required!");
+        return;
       }
 
       const taskData = {
-          PodcastId: podcastId,
-          taskname: taskName,
-          Description: taskDescription,
-          taskDependencies: taskDependencies,
-          taskType: taskType,
-          Daycount: parseInt(dueTime) || 0,
-          action: [{ actionurl: actionLink, externalurl: actionLinkDesc }],
-          submission: submissionRequired ? "Required" : "Optional",
+        PodcastId: podcastId,
+        taskname: taskName,
+        Description: taskDescription,
+        taskDependencies: taskDependencies,
+        taskType: taskType,
+        Daycount: parseInt(dueTime) || 0,
+        action: [{ actionurl: actionLink, externalurl: actionLinkDesc }],
+        submission: submissionRequired ? "Required" : "Optional"
       };
 
       try {
-          const response = await fetch("/register_podtask", {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify(taskData),
-          });
+        const response = await fetch("/register_podtask", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(taskData)
+        });
 
-          const result = await response.json();
-          if (response.ok) {
-              alert("Task added successfully!");
-              closeModal();
-              fetchTasks(); // Refresh the task list
-          } else {
-              alert("Error: " + result.error);
-          }
+        const result = await response.json();
+        if (response.ok) {
+          alert("Task added successfully!");
+          closeModal();
+          fetchTasks(); // Refresh the task list
+        } else {
+          alert("Error: " + result.error);
+        }
       } catch (error) {
-          console.error("Error:", error);
-          alert("Failed to add task.");
+        console.error("Error:", error);
+        alert("Failed to add task.");
       }
-  }
-
-  // Fetch task data and open edit modal with pre-filled fields
-  async function editTask(taskId) {
-    try {
-      const response = await fetch(`/get_podtask/${taskId}`);
-      if (!response.ok) {
-        alert("Failed to fetch task data");
-        return;
-      }
-      const task = await response.json();
-
-      // Pre-fill the modal fields with fetched task data
-      document.getElementById("task-name").value = task.taskname || task.task_name;
-      document.getElementById("task-description").value = task.Description || "";
-      document.getElementById("due-time").value = task.DayCount || "";
-      document.getElementById("action-link").value = task.ActionUrl || "";
-      document.getElementById("action-link-desc").value = task.UrlDescribe || "";
-      document.getElementById("submission-required").checked = task.SubimissionReq || false;
-
-      // Set modal title and update button action
-      document.getElementById("modal-title").innerText = "Edit Task";
-      document.getElementById("task-modal").style.display = "flex";
-      document.getElementById("save-task-btn").setAttribute("onclick", `updateTask('${task._id}')`);
-    } catch (error) {
-      alert("Error fetching task details");
     }
-  }
 
-  // Update task data after editing
-  async function updateTask(taskId) {
-    const taskName = document.getElementById("task-name").value.trim();
-    const taskDescription = document.getElementById("task-description").value.trim();
-    const dueTime = document.getElementById("due-time").value.trim();
-    const actionLink = document.getElementById("action-link").value.trim();
-    const actionLinkDesc = document.getElementById("action-link-desc").value.trim();
-    const submissionRequired = document.getElementById("submission-required").checked;
+    // Fetch task data and open edit modal with pre-filled fields
+    async function editTask(taskId) {
+      try {
+        const response = await fetch(`/get_podtask/${taskId}`);
+        if (!response.ok) {
+          alert("Failed to fetch task data");
+          return;
+        }
+        const task = await response.json();
 
-    const updatedTask = {
-      taskname: taskName,
-      Description: taskDescription,
-      DayCount: parseInt(dueTime) || 0,
-      actionurl: actionLink,
-      externalurl: actionLinkDesc,
-      submission: submissionRequired ? "Required" : "Optional"
-    };
+        // Pre-fill the modal fields with fetched task data
+        document.getElementById("task-name").value =
+          task.taskname || task.task_name;
+        document.getElementById("task-description").value =
+          task.Description || "";
+        document.getElementById("due-time").value = task.DayCount || "";
+        document.getElementById("action-link").value = task.ActionUrl || "";
+        document.getElementById("action-link-desc").value =
+          task.UrlDescribe || "";
+        document.getElementById("submission-required").checked =
+          task.SubimissionReq || false;
 
-    try {
-      const response = await fetch(`/update_podtask/${taskId}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(updatedTask)
-      });
-      const result = await response.json();
-      if (response.ok) {
-        alert("Task updated successfully!");
-        closeModal();
-        fetchTasks(); // Refresh the task list to reflect changes
-      } else {
-        alert("Error: " + result.error);
+        // Set modal title and update button action
+        document.getElementById("modal-title").innerText = "Edit Task";
+        document.getElementById("task-modal").style.display = "flex";
+        document
+          .getElementById("save-task-btn")
+          .setAttribute("onclick", `updateTask('${task._id}')`);
+      } catch (error) {
+        alert("Error fetching task details");
       }
-    } catch (error) {
-      alert("Error updating task: " + error.message);
     }
-  }
 
-  async function deleteTask(taskId) {
-    try {
-      const response = await fetch(`/delete_podtask/${taskId}`, {
+    // Update task data after editing
+    async function updateTask(taskId) {
+      const taskName = document.getElementById("task-name").value.trim();
+      const taskDescription = document
+        .getElementById("task-description")
+        .value.trim();
+      const dueTime = document.getElementById("due-time").value.trim();
+      const actionLink = document.getElementById("action-link").value.trim();
+      const actionLinkDesc = document
+        .getElementById("action-link-desc")
+        .value.trim();
+      const submissionRequired = document.getElementById(
+        "submission-required"
+      ).checked;
+
+      const updatedTask = {
+        taskname: taskName,
+        Description: taskDescription,
+        DayCount: parseInt(dueTime) || 0,
+        actionurl: actionLink,
+        externalurl: actionLinkDesc,
+        submission: submissionRequired ? "Required" : "Optional"
+      };
+
+      try {
+        const response = await fetch(`/update_podtask/${taskId}`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(updatedTask)
+        });
+        const result = await response.json();
+        if (response.ok) {
+          alert("Task updated successfully!");
+          closeModal();
+          fetchTasks(); // Refresh the task list to reflect changes
+        } else {
+          alert("Error: " + result.error);
+        }
+      } catch (error) {
+        alert("Error updating task: " + error.message);
+      }
+    }
+
+    async function deleteTask(taskId) {
+      try {
+        const response = await fetch(`/delete_podtask/${taskId}`, {
           method: "DELETE"
-      });
+        });
 
-      const result = await response.json();
-      if (response.ok) {
+        const result = await response.json();
+        if (response.ok) {
           alert("Task deleted successfully!");
           fetchTasks(); // Refresh tasks
-      } else {
+        } else {
           alert("Error deleting task: " + result.error);
+        }
+      } catch (error) {
+        console.error("Error deleting task:", error);
+        alert("Failed to delete task.");
       }
-    } catch (error) {
-      console.error("Error deleting task:", error);
-      alert("Failed to delete task.");
     }
-  }
 
-  async function fetchTasks() {
+    async function deleteDefaultTask(taskId) {
       try {
-          const response = await fetch("/get_podtasks");
-          const data = await response.json();
+        const response = await fetch(`/delete_default_task/${taskId}`, {
+          method: "DELETE"
+        });
 
-          if (response.ok) {
-              const taskList = document.getElementById("task-list");
-              taskList.innerHTML = ""; // Clear existing tasks
+        const result = await response.json();
+        if (response.ok) {
+          alert("Default task deleted successfully!");
+          fetchDefaultTasks(); // Refresh default tasks
+        } else {
+          alert("Error deleting default task: " + result.error);
+        }
+      } catch (error) {
+        console.error("Error deleting default task:", error);
+        alert("Failed to delete default task.");
+      }
+    }
 
-              data.podtasks.forEach(task => {
-                  let li = document.createElement("li");
-                  li.innerHTML = `
+    async function fetchTasks() {
+      try {
+        const response = await fetch("/get_podtasks");
+        const data = await response.json();
+
+        if (response.ok) {
+          const taskList = document.getElementById("task-list");
+          taskList.innerHTML = ""; // Clear existing tasks
+
+          data.podtasks.forEach((task) => {
+            let li = document.createElement("li");
+            li.innerHTML = `
                       <div class="task-details">
                           <span class="task-name">${task.taskname}</span>
                       </div>
@@ -288,63 +363,95 @@
                           <button class="delete-btn" onclick="deleteTask('${task._id}')">Delete</button>
                       </div>
                   `;
-                  taskList.appendChild(li);
-              });
-          } else {
-              alert("Failed to fetch tasks: " + data.error);
-          }
+            taskList.appendChild(li);
+          });
+        } else {
+          alert("Failed to fetch tasks: " + data.error);
+        }
       } catch (error) {
-          console.error("Error fetching tasks:", error);
-          alert("Failed to fetch tasks.");
+        console.error("Error fetching tasks:", error);
+        alert("Failed to fetch tasks.");
       }
-  }
+    }
 
-  // Fetch tasks on page load
-  document.addEventListener("DOMContentLoaded", fetchTasks);
+    async function fetchDefaultTasks() {
+      try {
+        const response = await fetch("/get_default_tasks");
+        const data = await response.json();
 
-  // Open Default Tasks Popup
-  function openDefaultTasksPopup() {
+        if (response.ok) {
+          const defaultTasksList =
+            document.getElementById("default-tasks-list");
+          defaultTasksList.innerHTML = ""; // Clear existing tasks
+
+          data.default_tasks.forEach((task) => {
+            let div = document.createElement("div");
+            div.className = "default-task-item";
+            div.innerHTML = `
+                      <span class="task-name">${task.task_name}</span>
+                      <input type="checkbox" class="default-task-checkbox" value="${task.task_name}">
+                  `;
+            defaultTasksList.appendChild(div);
+          });
+        } else {
+          alert("Failed to fetch default tasks: " + data.error);
+        }
+      } catch (error) {
+        console.error("Error fetching default tasks:", error);
+        alert("Failed to fetch default tasks.");
+      }
+    }
+
+    // Fetch tasks on page load
+    document.addEventListener("DOMContentLoaded", fetchTasks);
+
+    // Open Default Tasks Popup
+    function openDefaultTasksPopup() {
       document.getElementById("default-tasks-popup").style.display = "flex";
-  }
+      fetchDefaultTasks();
+    }
 
-  // Close Default Tasks Popup
-  function closeDefaultTasksPopup() {
+    // Close Default Tasks Popup
+    function closeDefaultTasksPopup() {
       document.getElementById("default-tasks-popup").style.display = "none";
-  }
+    }
 
-  // Add Selected Default Tasks
-  async function addSelectedDefaultTasks() {
-      const checkboxes = document.querySelectorAll(".default-task-checkbox:checked");
-      const selectedTasks = Array.from(checkboxes).map(checkbox => ({
-          taskname: checkbox.value,
-          Description: "", // Can be filled later
-          Daycount: 0, // Default
-          action: [],
-          submission: "Optional"
+    // Add Selected Default Tasks
+    async function addSelectedDefaultTasks() {
+      const checkboxes = document.querySelectorAll(
+        ".default-task-checkbox:checked"
+      );
+      const selectedTasks = Array.from(checkboxes).map((checkbox) => ({
+        taskname: checkbox.value,
+        Description: "", // Can be filled later
+        Daycount: 0, // Default
+        action: [],
+        submission: "Optional"
       }));
 
       try {
-          for (const task of selectedTasks) {
-              await fetch("/register_podtask", {
-                  method: "POST",
-                  headers: { "Content-Type": "application/json" },
-                  body: JSON.stringify(task)
-              });
-          }
-          alert("Selected tasks added successfully!");
-          fetchTasks(); // Refresh tasks
+        for (const task of selectedTasks) {
+          await fetch("/register_podtask", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(task)
+          });
+        }
+        alert("Selected tasks added successfully!");
+        fetchTasks(); // Refresh tasks
       } catch (error) {
-          console.error("Error adding tasks:", error);
-          alert("Failed to add tasks.");
+        console.error("Error adding tasks:", error);
+        alert("Failed to add tasks.");
       }
 
       closeDefaultTasksPopup();
-  }
+    }
 
-  // Enable Drag & Drop Sorting
-  new Sortable(document.getElementById("task-list"), {
+    // Enable Drag & Drop Sorting
+    new Sortable(document.getElementById("task-list"), {
       animation: 150,
       ghostClass: "drag-ghost"
-  });
-</script>
-{% endblock %}
+    });
+  </script>
+  {% endblock %}
+</div>
