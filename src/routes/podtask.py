@@ -263,3 +263,51 @@ def add_selected_default_tasks():
     except Exception as e:
         print(f"❌ ERROR: {e}")
         return jsonify({"error": f"Failed to add selected tasks: {str(e)}"}), 500
+
+
+@podtask_bp.route("/add_tasks_to_episode", methods=["POST"])
+def add_tasks_to_episode():
+    if not g.user_id:
+        return jsonify({"error": "Unauthorized"}), 401
+
+    if request.content_type != "application/json":
+        return (
+            jsonify({"error": "Invalid Content-Type. Expected application/json"}),
+            415,
+        )
+
+    try:
+        data = request.get_json()
+        episode_id = data.get("episode_id")
+        guest_id = data.get("guest_id")
+
+        # Fetch all tasks from the PodTask collection
+        tasks = list(collection.database.Podtask.find({"userid": str(g.user_id)}))
+
+        for task in tasks:
+            task_id = str(uuid.uuid4())
+            episode_task = {
+                "task_id": task_id,
+                "episode_id": episode_id,
+                "guest_id": guest_id,
+                "task_name": task["taskname"],
+                "dependency": task.get("dependency", ""),
+                "checkmark": task.get("checkmark", False),
+                "type": task.get("type", ""),
+                "action": task.get("action", ""),
+                "duration": task.get("duration", 0),
+                "assigned_to": task.get("assigned_to", ""),
+                "notes": task.get("notes", ""),
+                "automation_details": task.get("automation_details", ""),
+                "additional_links": task.get("additional_links", ""),
+                "created_at": datetime.now(timezone.utc),
+                "userid": str(g.user_id),
+            }
+
+            collection.database.EpisodeTasks.insert_one(episode_task)
+
+        return jsonify({"message": "Tasks added to episode successfully"}), 201
+
+    except Exception as e:
+        print(f"❌ ERROR: {e}")
+        return jsonify({"error": f"Failed to add tasks to episode: {str(e)}"}), 500

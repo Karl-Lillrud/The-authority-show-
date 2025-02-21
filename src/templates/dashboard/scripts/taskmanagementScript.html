@@ -29,13 +29,13 @@
           let a = document.createElement("a");
           a.textContent = episode.title;
           a.href = "#";
-          a.onclick = () => selectEpisode(episode.episode_id);
+          a.onclick = () => selectEpisode(episode.episode_id, guestId);
           viewEpisodeDropdown.appendChild(a);
 
           let b = document.createElement("a");
           b.textContent = episode.title;
           b.href = "#";
-          b.onclick = () => selectEpisode(episode.episode_id);
+          b.onclick = () => selectEpisode(episode.episode_id, guestId);
           addTasksEpisodeDropdown.appendChild(b);
         });
 
@@ -50,9 +50,9 @@
     }
   }
 
-  function selectEpisode(episodeId) {
+  function selectEpisode(episodeId, guestId) {
     console.log("Selected episode ID:", episodeId);
-    // Implement logic to handle episode selection
+    addTasksToEpisode(episodeId, guestId);
   }
 
   // Ensure "Add Task" button exists before adding event listener
@@ -397,4 +397,36 @@
 
   // Fetch open episodes on page load
   document.addEventListener("DOMContentLoaded", fetchOpenEpisodes);
+
+  async function addTasksToEpisode(episodeId, guestId) {
+    console.log("Adding tasks to episode ID:", episodeId);
+    const taskList = document.getElementById("task-list");
+    const tasks = Array.from(taskList.children).map((li) => ({
+      taskname: li.querySelector(".task-name").textContent,
+      episode_id: episodeId
+    }));
+
+    try {
+      const response = await fetch("/add_tasks_to_episode", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          tasks,
+          episode_id: episodeId,
+          guest_id: guestId
+        })
+      });
+
+      const result = await response.json();
+      if (response.ok) {
+        alert("Tasks added to episode successfully!");
+      } else {
+        console.error("Error adding tasks to episode:", result.error);
+        alert("Error: " + result.error);
+      }
+    } catch (error) {
+      console.error("Error adding tasks to episode:", error);
+      alert("Failed to add tasks to episode.");
+    }
+  }
 </script>
