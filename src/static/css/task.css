@@ -605,7 +605,8 @@ h1 {
 
 .add-tasks-dropdown .dropbtn::after {
   content: " ▼"; /* Add down arrow */
-  font-size: 0.8rem; /* Adjust arrow size */
+  font-size: 1rem; /* Increase arrow size */
+  color: var(--text-color-light); /* Ensure arrow color matches text color */
   position: absolute;
   right: var(--spacing-sm);
   top: 50%;
@@ -621,10 +622,10 @@ h1 {
 .add-tasks-dropdown .dropdown-content {
   display: none;
   position: absolute;
-  left: 5%;
+  left: calc(50% + 2mm); /* Center the dropdown and move 2mm to the right */
   transform: translateX(-50%);
   background-color: var(--background-light);
-  min-width: 100%; /* Ensure dropdown is as wide as the button */
+  min-width: 60%; /* Ensure dropdown is as wide as the button */
   box-shadow: 0px 8px 16px 0px rgba(0, 0, 0, 0.2);
   z-index: 1;
   border-radius: var(--radius-small);
