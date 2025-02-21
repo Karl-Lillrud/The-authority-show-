@@ -78,3 +78,71 @@ def get_guests():
     except Exception as e:
         print(f"❌ ERROR: {e}")
         return jsonify({"error": f"Failed to fetch guests: {str(e)}"}), 500
+    
+@guest_bp.route("/guest/edit_guest", methods=["PUT"])
+def edit_guest():
+    if not g.user_id:
+        return jsonify({"error": "Unauthorized"}), 401
+
+    if request.content_type != "application/json":
+        return jsonify({"error": "Invalid Content-Type. Expected application/json"}), 415
+
+    try:
+        data = request.get_json()
+        guest_id = data.get("id")
+        if not guest_id:
+            return jsonify({"error": "Guest ID is required"}), 400
+
+        user_id = str(g.user_id)
+        update_fields = {
+            "name": data.get("name", "").strip(),
+            "image": data.get("image", "default-profile.png"),
+            "tags": data.get("tags", []),
+            "description": data.get("description", ""),
+            "bio": data.get("bio", data.get("description", "")),
+            "email": data.get("email", "").strip(),
+            "linkedin": data.get("linkedin", "").strip(),
+            "twitter": data.get("twitter", "").strip(),
+            "areasOfInterest": data.get("areasOfInterest", []),
+        }
+
+        result = collection.database.Guest.update_one(
+            {"_id": guest_id, "userid": user_id},
+            {"$set": update_fields}
+        )
+
+        if result.matched_count == 0:
+            return jsonify({"error": "Guest not found or unauthorized"}), 404
+
+        return jsonify({"message": "Guest updated successfully"}), 200
+
+    except Exception as e:
+        print(f"❌ ERROR: {e}")
+        return jsonify({"error": f"Failed to update guest: {str(e)}"}), 500
+
+
+@guest_bp.route("/guest/delete_guest", methods=["DELETE"])
+def delete_guest():
+    if not g.user_id:
+        return jsonify({"error": "Unauthorized"}), 401
+
+    if request.content_type != "application/json":
+        return jsonify({"error": "Invalid Content-Type. Expected application/json"}), 415
+
+    try:
+        data = request.get_json()
+        guest_id = data.get("id")
+        if not guest_id:
+            return jsonify({"error": "Guest ID is required"}), 400
+
+        user_id = str(g.user_id)
+        result = collection.database.Guest.delete_one({"_id": guest_id, "userid": user_id})
+        if result.deleted_count == 0:
+            return jsonify({"error": "Guest not found or unauthorized"}), 404
+
+        return jsonify({"message": "Guest deleted successfully"}), 200
+
+    except Exception as e:
+        print(f"❌ ERROR: {e}")
+        return jsonify({"error": f"Failed to delete guest: {str(e)}"}), 500
+
