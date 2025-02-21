@@ -4,8 +4,10 @@
   let initialTasks = [];
 
   // When a guest is selected, update the header and show the task management section.
-  async function selectGuest(guestId, guestName) {
+  async function selectGuest(guestId, guestName, guestImage) {
     document.getElementById("selected-guest").textContent = guestName;
+    document.getElementById("selected-guest-image").src = guestImage;
+    document.getElementById("selected-guest-image").style.display = "block";
     document.getElementById("guest-popup").style.display = "none";
     document.getElementById("task-management").style.display = "block";
     await fetchEpisodes(guestId);

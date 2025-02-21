@@ -11,26 +11,38 @@ Management{% endblock %} {% block content %}
       <h1>Select a Guest</h1>
     </header>
     <div class="guest-selection">
-      <div class="card" onclick="selectGuest('GUEST_ID_1', 'Ollina Olsson')">
+      <div
+        class="card"
+        onclick="selectGuest('GUEST_ID_1', 'Ollina Olsson', 'https://podmanagerstorage.blob.core.windows.net/blob-container/person1.jpg')"
+      >
         <img
           src="https://podmanagerstorage.blob.core.windows.net/blob-container/person1.jpg"
           alt="Guest A"
         />
         <p class="episode-count orange" id="ollina-episodes"></p>
+        <p class="guest-name">Ollina Olsson</p>
       </div>
-      <div class="card" onclick="selectGuest('GUEST_ID_2', 'Olle Olsson')">
+      <div
+        class="card"
+        onclick="selectGuest('GUEST_ID_2', 'Olle Olsson', 'https://podmanagerstorage.blob.core.windows.net/blob-container/person2.jpg')"
+      >
         <img
           src="https://podmanagerstorage.blob.core.windows.net/blob-container/person2.jpg"
           alt="Guest B"
         />
         <p class="episode-count red" id="olle-episodes"></p>
+        <p class="guest-name">Olle Olsson</p>
       </div>
-      <div class="card" onclick="selectGuest('GUEST_ID_3', 'Olga Olsson')">
+      <div
+        class="card"
+        onclick="selectGuest('GUEST_ID_3', 'Olga Olsson', 'https://podmanagerstorage.blob.core.windows.net/blob-container/person3.jpg')"
+      >
         <img
           src="https://podmanagerstorage.blob.core.windows.net/blob-container/person3.jpg"
           alt="Guest C"
         />
         <p class="episode-count green" id="olga-episodes"></p>
+        <p class="guest-name">Olga Olsson</p>
       </div>
     </div>
   </div>
@@ -49,6 +61,18 @@ Management{% endblock %} {% block content %}
 
   <!-- Page Header -->
   <div class="task-header" style="text-align: center">
+    <img
+      id="selected-guest-image"
+      src=""
+      alt="Selected Guest"
+      style="
+        display: none;
+        width: 100px;
+        height: 100px;
+        border-radius: 50%;
+        margin-bottom: 10px;
+      "
+    />
     <h2>Guest : <span id="selected-guest"></span></h2>
     <div class="task-header-buttons" style="justify-content: center">
       <div class="button-group">
@@ -84,7 +108,7 @@ Management{% endblock %} {% block content %}
     <!-- Add Tasks to Episode and Back Button Container -->
     <div class="add-tasks-button-container">
       <div class="dropdown add-tasks-dropdown">
-        <button class="dropbtn">Add Tasks to Episode</button>
+        <button class="dropbtn">Add Tasks To Episode</button>
         <div class="dropdown-content" id="add-tasks-episode-dropdown">
           <!-- Episodes will be dynamically populated here -->
         </div>
