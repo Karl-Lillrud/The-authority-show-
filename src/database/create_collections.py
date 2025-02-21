@@ -53,7 +53,6 @@ collections = {
         "vip_status": bool,
         "credits_expires_at": "date",
     },
-    "Team": {"ID": str, "UserID": str, "Name": str, "Role": "array", "Email": str},
     "Clips": {"ID": str, "Podcast": int, "ClipName": str},
     "Subscription": {
         "ID": str,
@@ -96,6 +95,22 @@ collections = {
 
 
     },
+    "Guest": {
+  "ID": str,
+  "name": str,
+  "image": str,
+  "tags": "array",
+  "description": str,
+  "bio": str,
+  "email": str,
+  "linkedin": str,
+  "twitter": str,
+  "areasOfInterest": "array",
+  "status": str,
+  "scheduled": int,
+  "completed": int,
+  "created_at": "date",
+},
 }
 
 # Create collections

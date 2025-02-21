@@ -17,10 +17,13 @@ from routes.podcast import podcast_bp
 from routes.dashboard import dashboard_bp
 from routes.pod_management import dashboardmanagement_bp
 from routes.podtask import podtask_bp
+from routes.team import team_bp
+from routes.guest import guest_bp
 from dotenv import load_dotenv
 import os
 import logging
 from utils import venvupdate
+from database.mongo_connection import collection as team_collection
 
 # Checking if the environment variable is set to skip the virtual environment update
 if os.getenv("SKIP_VENV_UPDATE", "false").lower() not in ("true", "1", "yes"):
@@ -52,6 +55,8 @@ app.register_blueprint(podcast_bp)
 app.register_blueprint(dashboard_bp)
 app.register_blueprint(dashboardmanagement_bp)
 app.register_blueprint(podtask_bp)
+app.register_blueprint(team_bp)
+app.register_blueprint(guest_bp)
 
 APP_ENV = os.getenv("APP_ENV", "production")  # Default to production
 
@@ -69,15 +74,13 @@ logger = logging.getLogger(__name__)
 def load_user():
     g.user_id = session.get("user_id")
     logger.info(f"Request to {request.path} by user {g.user_id}")
-
-
-@app.route("/health")
-def health_check():
-    logger.info("Health check endpoint called")
-    return jsonify({"status": "healthy"}), 200
+    if g.user_id and request.endpoint not in ("static", "signin_bp.signin"):
+        session.permanent = True
+    if request.cookies.get("remember_me") == "true" and request.path == "/":
+        return redirect("/dashboard")
 
 
 if __name__ == "__main__":
     app.run(
-        host="0.0.0.0", port=8000, debug=False
+        host="0.0.0.0", port=8000, debug=True
     )  # Ensure the port matches your request URL
