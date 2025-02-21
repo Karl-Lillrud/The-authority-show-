@@ -108,6 +108,11 @@
   gap: var(--spacing-sm); /* Add spacing between buttons */
 }
 
+/* Guest Header */
+.task-header h2 {
+  color: darkgreen; /* Apply dark green color */
+}
+
 /* Media Queries for Responsiveness */
 @media (max-width: 768px) {
   .task-header {
@@ -156,6 +161,14 @@
   transform: translateY(-2px);
   color: var(--highlight-color);
 }
+
+/* Add Tasks to Episode Button */
+.add-tasks-dropdown .dropbtn:hover {
+  background-color: rgba(255, 127, 63, 0.1); /* Light gray on hover */
+  transform: translateY(-2px);
+  color: var(--highlight-color);
+}
+
 /* Task List Container */
 #task-list {
   list-style: decimal;
@@ -218,26 +231,26 @@ button {
   color: #666865;
 }
 .edit-btn {
-  background: #f4a261; /* Light orange */
+  background: darkgreen; /* Light orange */
   color: white;
   box-shadow: -2px -2px 4px rgba(255, 255, 255, 0.6),
     2px 2px 4px rgba(0, 0, 0, 0.15);
   transition: transform 0.3s ease, background-color 0.3s ease;
 }
 .edit-btn:hover {
-  background-color: #e8934f;
+  background-color: green;
   transform: translateY(-2px);
 }
 
 .delete-btn {
-  background: red; /* Reddish */
+  background: darkgray; /* Reddish */
   color: #ffffff; /* White text */
   box-shadow: -2px -2px 4px rgba(255, 255, 255, 0.6),
     2px 2px 4px rgba(0, 0, 0, 0.15);
   transition: transform 0.3s ease, background-color 0.3s ease;
 }
 .delete-btn:hover {
-  background-color: #d62836;
+  background-color: gray;
   transform: translateY(-2px);
 }
 
@@ -552,12 +565,15 @@ h1 {
 .dropdown-content {
   display: none;
   position: absolute;
+  left: 50%; /* Center the dropdown */
+  transform: translateX(-50%); /* Center the dropdown */
   background-color: var(--background-light);
-  max-width: fit-content;
+  min-width: 200px; /* Set a minimum width */
   box-shadow: 0px 8px 16px 0px rgba(0, 0, 0, 0.2);
   z-index: 1;
   border-radius: var(--radius-small);
   overflow: hidden;
+  text-align: center; /* Center the text */
 }
 
 .dropdown-content a {
@@ -591,16 +607,16 @@ h1 {
 }
 
 .add-tasks-dropdown .dropbtn {
-  background: var(--background-light);
+  background: var(--background-light); /* White background */
+  color: var(--text-color-light); /* Gray text */
   border: none;
   padding: var(--spacing-md) calc(var(--spacing-lg) + 20px); /* Increase right padding */
-  border-radius: var(--radius-small);
+  border-radius: var(--radius-small); /* Keep the original border radius */
   box-shadow: -3px -3px 6px var(--light-shadow-light),
     3px 3px 6px var(--dark-shadow-light);
   cursor: pointer;
-  font-size: 1rem; /* Increase font size */
-  font-weight: bold; /* Make text bold */
-  color: var(--text-color-light);
+  font-size: 1rem; /* Keep the original font size */
+  font-weight: bold; /* Keep the text bold */
   transition: transform 0.3s ease, background-color 0.3s ease;
   position: relative; /* For positioning the arrow */
 }
@@ -615,28 +631,9 @@ h1 {
   transform: translateY(-50%);
 }
 
-.add-tasks-dropdown .dropbtn:hover {
-  background-color: rgba(255, 127, 63, 0.1);
-  transform: translateY(-2px);
-  color: var(--highlight-color);
-}
-
-.add-tasks-dropdown .dropdown-content {
-  display: none;
-  position: absolute;
-  left: calc(50% + 2mm); /* Center the dropdown and move 2mm to the right */
-  transform: translateX(-50%);
-  background-color: var(--background-light);
-  min-width: 60%; /* Ensure dropdown is as wide as the button */
-  box-shadow: 0px 8px 16px 0px rgba(0, 0, 0, 0.2);
-  z-index: 1;
-  border-radius: var(--radius-small);
-  overflow: hidden;
-}
-
 /* Add Tasks to Episode Button */
 #add-tasks-to-episode-btn {
-  background: var(--background-light);
+  background: var();
   border: none;
   padding: var(--spacing-sm) var(--spacing-md);
   border-radius: var(--radius-small);
