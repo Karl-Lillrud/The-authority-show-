@@ -42,6 +42,11 @@
             required
           />
         </div>
+        <div class="input-group">
+          <label for="remember" class="label"></label>
+          <input type="checkbox" id="remember" name="remember" class="input" />
+          <label for="remember">Remember Me</label>
+        </div>
 
         <div class="extra-links">
           <a href="/forgotpassword" class="link">Forgot Password?</a>
@@ -73,12 +78,13 @@
 
           const email = document.getElementById("email").value;
           const password = document.getElementById("password").value;
+          const remember = document.getElementById("remember").checked;
 
           try {
             const response = await fetch(`${API_BASE_URL}/signin`, {
               method: "POST",
               headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ email, password })
+              body: JSON.stringify({ email, password, remember })
             });
 
             if (!response.ok) {
@@ -89,7 +95,7 @@
             if (result.redirect_url) {
               window.location.href = result.redirect_url;
             } else {
-              throw new Error(result.error || "Invalid email or password.");
+              window.location.href = remember ? "/dashboard" : "/";
             }
           } catch (error) {
             document.getElementById("error-message").textContent =
