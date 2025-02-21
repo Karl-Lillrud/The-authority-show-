@@ -463,9 +463,11 @@ h1 {
   background-color: #e66a32;
 }
 
-/* Lägg till en wrapper för att skjuta "Select Episode" till höger */
+/* Lägg till en wrapper för att skjuta "Select Episode" och "Add Tasks to Episode" till höger */
 .dropdown-wrapper {
   margin-left: auto; /* Trycker den till höger */
+  display: flex;
+  gap: var(--spacing-sm); /* Lägger till mellanrum mellan knapparna */
 }
 
 /* Drop-down styling */

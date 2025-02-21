@@ -52,13 +52,18 @@ Management{% endblock %} {% block content %}
       </button>
       <button id="add-task-btn">+ Add New Task</button>
 
-      <!-- Wrapper för att flytta Select Episode till höger -->
+      <!-- Wrapper för att flytta Select Episode och Add Tasks to Episode till höger -->
       <div class="dropdown-wrapper">
         <div class="dropdown">
           <button class="dropbtn">Select Episode</button>
           <div class="dropdown-content" id="episode-dropdown">
             <!-- Episodes will be dynamically populated here -->
           </div>
+        </div>
+        <div class="dropdown">
+          <button class="dropbtn" onclick="openEpisodesPopup()">
+            Add Tasks to Episode
+          </button>
         </div>
       </div>
     </div>
@@ -144,6 +149,21 @@ Management{% endblock %} {% block content %}
           Add Selected Tasks
         </button>
         <button class="cancel-btn" onclick="closeDefaultTasksPopup()">
+          Cancel
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Episodes Popup -->
+  <div id="episodes-popup" class="popup" style="display: none">
+    <div class="popup-content">
+      <h2>Select Episode</h2>
+      <div id="episodes-list">
+        <!-- Episodes will be dynamically populated here -->
+      </div>
+      <div class="modal-buttons">
+        <button class="cancel-btn" onclick="closeEpisodesPopup()">
           Cancel
         </button>
       </div>
