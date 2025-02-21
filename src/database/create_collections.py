@@ -26,7 +26,7 @@ except Exception as e:
     logger.error(f"Failed to connect to MongoDB: {e}")
     raise
 
-# Define collections and their schema
+# Define collections and enforce unique IDs
 collections = {
     "Credit": {
         "ID": str,
@@ -52,11 +52,6 @@ collections = {
         "last_3_referrals": [],
         "vip_status": bool,
         "credits_expires_at": "date",
-    },
-    "Clips": {"ID": str, "Podcast": int, "ClipName": str},
-    "Subscription": {
-        "ID": str,
-        "user_id": str,
         "subscription_plan": str,
         "subscription_start": "date",
         "subscription_end": "date",
@@ -83,35 +78,23 @@ collections = {
         "Email": str,
     },
     "Podtask": {
-    "ID": int,              # Om du vill ha ett numeriskt ID, annars kan du använda str
-    "podcast_id": str,      # Om PodcastId kommer som str (annars använd int)
-    "Name": str,
-    "Action": "array",      # Här kan du ange "array" eller list om du vill dokumentera
-    "DayCount": int,
-    "Description": str,
-    "ActionUrl": str,
-    "UrlDescribe": str,
-    "SubimissionReq": bool,
-
-
+        "ID": int,  
+        "podcast_id": str,
+        "Name": str,
+        "Action": "array",
+        "DayCount": int,
+        "Description": str,
+        "ActionUrl": str,
+        "UrlDescribe": str,
+        "SubimissionReq": bool,
     },
-    "Guest": {
-  "ID": str,
-  "name": str,
-  "image": str,
-  "tags": "array",
-  "description": str,
-  "bio": str,
-  "email": str,
-  "linkedin": str,
-  "twitter": str,
-  "areasOfInterest": "array",
-  "status": str,
-  "scheduled": int,
-  "completed": int,
-  "created_at": "date",
-},
 }
+
+# Delete existing collections only if they are in the defined schema
+for collection_name in database.list_collection_names():
+    if collection_name in collections:
+        database[collection_name].drop()
+        logger.info(f"Collection '{collection_name}' deleted.")
 
 # Create collections
 for collection_name, schema in collections.items():
@@ -120,3 +103,9 @@ for collection_name, schema in collections.items():
         logger.info(f"Collection '{collection_name}' created successfully.")
     else:
         logger.info(f"Collection '{collection_name}' already exists.")
+
+# Ensure 'ID' is unique in collections that have 'ID' field
+for collection_name in collections.keys():
+    if "ID" in collections[collection_name]:  # Apply only to collections with an "ID" field
+        database[collection_name].create_index("ID", unique=True)
+        logger.info(f"Unique index created for 'ID' in '{collection_name}' collection.")
