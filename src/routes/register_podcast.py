@@ -1,6 +1,6 @@
 from flask import request, jsonify, Blueprint, g  # Add g import
 import random
-from database.mongo_connection import collection
+from database.mongo_connection import users_collection, credits_collection
 from datetime import datetime, timezone  # Update import
 
 registerpodcast_bp = Blueprint("registerpodcast_bp", __name__)

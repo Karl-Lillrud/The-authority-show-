@@ -1,7 +1,7 @@
 # 📌 Sign-in Route
 from flask import Flask, render_template, request, jsonify, session, Blueprint
 from werkzeug.security import check_password_hash
-from database.mongo_connection import collection
+from database.mongo_connection import users_collection, credits_collection
 
 signin_bp = Blueprint("signin_bp", __name__)
 
@@ -22,7 +22,7 @@ def signin():
     email = data.get("email", "").strip().lower()
     password = data.get("password", "")
 
-    users = list(collection.find({"email": email}))
+    users = list(users_collection.find({"email": email}))
 
     if not users or not check_password_hash(users[0]["passwordHash"], password):
         return jsonify({"error": "Invalid email or password"}), 401

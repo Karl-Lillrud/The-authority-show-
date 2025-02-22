@@ -239,6 +239,486 @@ tasks.forEach(task => taskList.appendChild(task));
       </div>
     </div>
     </div>
+
+      <!-- REFERAL SECTION -->
+<section class="referral-section">
+  <h3>Refer a Friend & Earn 200 Credits!</h3>
+  <p>Share your referral link and earn extra credits when a friend signs up.</p>
+
+  <!-- Referral link -->
+  <input type="text" id="referralLink" value="http://127.0.0.1:8000/register?referral={{ referral_code }}" readonly>
+  <button onclick="copyReferral()">Copy Link</button>
+
+  <!-- Invite Friends Form -->
+  <h4>Invite Friends via Email 📩</h4>
+  <form id="inviteForm">
+      <input type="email" id="friendEmail" placeholder="Enter friend's email" required>
+      <button type="submit">Send Invite</button>
+  </form>
+
+          <!-- Referral Progress Tracker -->
+<div class="referral-progress">
+  <h4>🤝 Referral Bonuses</h4>
+  <p id="referralMilestone">You have referred 0/3 friends for 1,500 bonus credits!</p>
+  <progress id="referralProgress" value="0" max="3"></progress>
+  <p id="referralCount">
+</div>
+
+  <p id="inviteMessage" style="display: none;"></p>
+</section>
+
+<!-- Referral Popup Reminder -->
+<div id="referral-popup" class="popup" style="display: none;">
+  <div class="popup-content">
+      <h3>⚠️ Low Credits! Invite Friends & Earn More! 🎁</h3>
+      <p>You have less than 500 credits left. Invite friends to earn extra!</p>
+      <button onclick="openInviteForm()">Invite Now</button>
+      <button onclick="closeReferralPopup()">Close</button>
+  </div>
+</div>
+
+<script>
+  function copyReferral() {
+      var copyText = document.getElementById("referralLink");
+      copyText.select();
+      document.execCommand("copy");
+      alert("Referral link copied!");
+  }
+
+  document.getElementById("inviteForm").addEventListener("submit", async function(event) {
+      event.preventDefault();
+      const emailInput = document.getElementById("friendEmail");
+      const email = emailInput.value;
+      const referralCode = "{{ referral_code }}";
+      const inviteMessage = document.getElementById("inviteMessage");
+
+      try {
+          const response = await fetch("/send-invite", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ email, referralCode })
+          });
+
+          const result = await response.json();
+
+          if (response.ok) {
+              inviteMessage.textContent = "✅ Invite sent successfully!";
+              inviteMessage.style.color = "green";
+              inviteMessage.style.display = "block";
+
+
+
+              // Clear input field after sending
+              emailInput.value = "";
+
+              // Remove success message after 3 seconds
+              setTimeout(() => {
+                  inviteMessage.style.display = "none";
+              }, 3000);
+          } else {
+              inviteMessage.textContent = "❌ Failed to send invite.";
+              inviteMessage.style.color = "red";
+              inviteMessage.style.display = "block";
+          }
+      } catch (error) {
+          console.error("Error:", error);
+          inviteMessage.textContent = "❌ An error occurred.";
+          inviteMessage.style.color = "red";
+          inviteMessage.style.display = "block";
+      }
+  });
+
+  // Show referral popup if credits are low
+  document.addEventListener("DOMContentLoaded", function() {
+      const credits = parseInt("{{ credits }}", 10);
+      if (credits < 500) {
+          document.getElementById("referral-popup").style.display = "flex";
+      }
+  });
+
+  function openInviteForm() {
+      document.getElementById("referral-popup").style.display = "none";
+      document.getElementById("inviteForm").scrollIntoView({ behavior: "smooth" });
+  }
+
+  function closeReferralPopup() {
+      document.getElementById("referral-popup").style.display = "none";
+  }
+</script>
+
+<style>
+    /* Popup styling */
+    .popup {
+        position: fixed;
+        top: 0; left: 0;
+        width: 100%; height: 100%;
+        background: rgba(0, 0, 0, 0.5);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    .popup-content {
+        background: white;
+        padding: 20px;
+        border-radius: 10px;
+        text-align: center;
+    }
+</style>
+
+<!-- Gamification Widget Section -->
+<style>
+  /* Gamification Widget Section */
+  .gamification-widget {
+      background: #f9f9f9;
+      padding: 20px;
+      border-radius: 10px;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+      text-align: center;
+      margin-top: 20px;
+  }
+
+  .gamification-widget h3 {
+      font-size: 22px;
+      font-weight: bold;
+      color: #333;
+  }
+
+  .progress-item {
+      margin: 15px 0;
+  }
+
+  .progress-item p {
+      font-size: 16px;
+      margin-bottom: 8px;
+      color: #555;
+  }
+
+  progress {
+      width: 100%;
+      height: 12px;
+      border-radius: 6px;
+      overflow: hidden;
+      background: #ddd;
+  }
+
+  progress::-webkit-progress-bar {
+      background: #ddd;
+  }
+
+  progress::-webkit-progress-value {
+      background: #4CAF50;
+      border-radius: 6px;
+  }
+
+  progress::-moz-progress-bar {
+      background: #4CAF50;
+      border-radius: 6px;
+  }
+
+  .leaderboard-preview {
+      margin-top: 20px;
+      padding: 15px;
+      background: white;
+      border-radius: 10px;
+      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+  }
+
+  .leaderboard-preview h4 {
+      font-size: 18px;
+      font-weight: bold;
+      color: #444;
+      margin-bottom: 10px;
+  }
+
+  .leaderboard-preview ul {
+      list-style: none;
+      padding: 0;
+  }
+
+  .leaderboard-preview li {
+      font-size: 16px;
+      margin: 5px 0;
+      color: #666;
+  }
+
+
+  .claim-button {
+      display: block;
+      margin: 20px auto; /* Centers the button horizontally */
+      padding: 10px 20px;
+      background-color: #4CAF50;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      font-size: 16px;
+      cursor: pointer;
+      transition: background 0.3s;
+  }
+
+  .claim-button:hover {
+      background-color: #45a049;
+  }
+
+  #unclaimedCreditsDisplay {
+      margin-top: 10px;
+      font-size: 16px;
+      color: #333;
+      font-weight: bold;
+  }
+</style>
+
+<section class="gamification-widget">
+  <h3>🎯 Progress & Rewards</h3>
+
+
+  <div class="progress-item">
+      <p>You're <span id="episodes-left">2</span>/3 episodes away from unlocking 500 credits!</p>
+      <progress id="episode-progress" value="2" max="3"></progress>
+  </div>
+
+  <div class="progress-item">
+      <p>🔥 <span id="streak-days">4</span>-Day Streak – Keep going for an extra 500 credits!</p>
+  </div>
+
+  <div class="leaderboard-preview">
+      <h4>🏆 Top 3 Podcasters This Week</h4>
+      <ul id="leaderboard">
+          <li>1. Marcus - 2,342,255 points</li>
+          <li>2. Tommy - 1,239,993 points</li>
+          <li>3. Ollina - 900,000 points</li>
+      </ul>
+  </div>
+
+  <button id="claimCreditsButton" onclick="claimCredits()" class="claim-button" style="display: none;">
+      🎁 Claim Your Credits
+  </button>
+
+  <p id="unclaimedCreditsDisplay"></p>
+</section>
+
+<script>
+  function claimCredits() {
+    const userEmail = "{{ user_email }}";  // Get user email from Jinja
+
+    if (!userEmail) {
+        alert("❌ Error: No email found!");
+        return;
+    }
+
+    fetch("/claim-reward", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: userEmail })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert("🎉 " + data.message);
+            
+            // ✅ Update Header Credits Immediately
+            updateCredits();
+            
+            // ✅ Hide the claim button and unclaimed credits display immediately
+            updateClaimButton(0); // 🔹 This will instantly remove unclaimed credits display
+
+        } else {
+            alert("❌ " + data.error);
+        }
+    })
+    .catch(error => console.error("❌ Error claiming credits:", error));
+}
+
+
+
+function updateClaimButton(unclaimedCredits) {
+    console.log("🔍 Checking Claim Button Visibility..."); // ✅ Debug Log
+    console.log("📊 Unclaimed Credits Received:", unclaimedCredits); // ✅ Debug Log
+
+    const claimButton = document.getElementById("claimCreditsButton");
+    const unclaimedDisplay = document.getElementById("unclaimedCreditsDisplay");
+
+    if (!claimButton || !unclaimedDisplay) {
+        console.error("❌ ERROR: Claim button or display not found in DOM!");
+        return;
+    }
+
+    if (unclaimedCredits > 0) {
+        console.log("✅ Showing Claim Button!");
+        claimButton.style.display = "block";
+        claimButton.textContent = `🎁 Claim Your ${unclaimedCredits} Credits`;
+        unclaimedDisplay.textContent = `${unclaimedCredits} Unclaimed Credits`;
+        unclaimedDisplay.style.display = "block";  // 🔹 Make sure it's visible when needed
+    } else {
+        console.log("❌ Hiding Claim Button - No unclaimed credits.");
+        claimButton.style.display = "none";
+
+        // ✅ **Also hide the unclaimed credits text**
+        unclaimedDisplay.style.display = "none";  // 🔹 This will remove "1500 Unclaimed Credits"
+        unclaimedDisplay.textContent = "";  // Optional: Reset the text just in case
+    }   
+}
+
+
+
+
+//clai reward autorfresh and referall
+
+document.addEventListener("DOMContentLoaded", function () {
+    const userEmail = "{{ user_email|safe }}"; // Get user email
+    if (!userEmail || userEmail.trim() === "") {
+        console.error("⚠️ No user email found in session!");
+        return;
+    }
+
+    let lastReferralCount = parseInt(localStorage.getItem("lastReferralCount")) || 0;
+
+    function connectSSE() {
+        console.log("🔄 Connecting to SSE...");
+        const eventSource = new EventSource(`/stream-referral-updates?email=${encodeURIComponent(userEmail)}`);
+
+        eventSource.onmessage = function(event) {
+            const data = JSON.parse(event.data);
+            console.log("🔄 Live update received:", data);
+
+            // ✅ Update Referral UI
+            updateReferralUI(data.referrals);
+
+            // ✅ Update Credits in Header
+            updateCredits();
+
+            // ✅ Make sure Claim Button Updates when `referral_bonus` changes
+            updateClaimButton(data.referral_bonus); // 🔹 Changed from `unclaimed_credits` to `referral_bonus`
+
+            // ✅ Refresh UI only if referral count increases
+            if (data.referrals > lastReferralCount) {
+                lastReferralCount = data.referrals;
+                localStorage.setItem("lastReferralCount", lastReferralCount);
+            }
+        };
+
+        eventSource.onerror = function(error) {
+            console.error("❌ SSE Connection Error. Retrying in 5s...", error);
+            eventSource.close();
+            setTimeout(connectSSE, 5000); // Retry SSE connection after 5 seconds
+        };
+    }
+
+    // ✅ Function to update claim button dynamically
+    function updateClaimButton(referralBonus) {
+        console.log("🔍 Checking Claim Button Visibility..."); // ✅ Debug Log
+        console.log("📊 Referral Bonus Received:", referralBonus); // ✅ Debug Log
+
+        const claimButton = document.getElementById("claimCreditsButton");
+        const unclaimedDisplay = document.getElementById("unclaimedCreditsDisplay");
+
+        if (!claimButton || !unclaimedDisplay) {
+            console.error("❌ ERROR: Claim button or display not found in DOM!");
+            return;
+        }
+
+        if (referralBonus > 0) { // ✅ Now checking `referral_bonus` instead
+            console.log("✅ Showing Claim Button!");
+            claimButton.style.display = "block";
+            claimButton.textContent = `🎁 Claim Your ${referralBonus} Credits`;
+            unclaimedDisplay.textContent = `${referralBonus} Unclaimed Credits`;
+        } else {
+            console.log("❌ Hiding Claim Button - No referral bonus.");
+            claimButton.style.display = "none";
+        }
+    }
+
+    // ✅ Update UI Immediately for Referral Progress
+    function updateReferralUI(referrals) {
+        console.log("🔄 Updating Referral UI with count:", referrals);
+
+        const referralProgressElement = document.getElementById("referralProgress");
+        const referralMilestoneElement = document.getElementById("referralMilestone");
+
+        if (referralProgressElement) {
+            referralProgressElement.value = referrals;
+            referralProgressElement.max = 10; // Ensure max is always 10
+        }
+
+        if (referralMilestoneElement) {
+            let nextMilestone = 3;
+            let bonusAmount = 1500;
+            let vipText = "";
+
+            if (referrals >= 3 && referrals < 5) {
+                nextMilestone = 5;
+                bonusAmount = 1000;
+            } else if (referrals >= 5 && referrals < 10) {
+                nextMilestone = 10;
+                bonusAmount = 2500;
+                vipText = " + VIP-status 🏅";
+            } else if (referrals >= 10) {
+                nextMilestone = 10;
+                bonusAmount = 2500;
+                vipText = " VIP-status 🏅 unlocked!";
+            }
+
+            referralMilestoneElement.textContent = `🔥 Referral Bonuses: ${referrals}/${nextMilestone} friends for ${bonusAmount} bonus credits${vipText}`;
+        }
+
+        console.log("✅ Referral UI Updated!");
+    }
+
+    async function updateUserProgress() {
+        console.log("🔄 Fetching updated user progress...");
+
+        try {
+            const response = await fetch(`/user-progress?email=${encodeURIComponent(userEmail)}`);
+            const data = await response.json();
+
+            console.log("✅ Updated User Progress:", data);
+
+            if (!data || Object.keys(data).length === 0) {
+                console.error("❌ No user progress data received!");
+                return;
+            }
+
+            document.getElementById("episodes-left").textContent = 3 - data.episodes_published;
+            document.getElementById("episode-progress").value = data.episodes_published;
+            document.getElementById("streak-days").textContent = data.streak_days;
+
+            const referralBonus = data.referral_bonus; // ✅ Now using `referral_bonus`
+            updateClaimButton(referralBonus); // ✅ Ensure claim button updates dynamically
+
+            // ✅ Ensure referral updates happen instantly
+            updateReferralUI(data.referrals);
+        } catch (error) {
+            console.error("❌ Error fetching user progress:", error);
+        }
+    }
+
+    // ✅ Function to update credits in the header dynamically
+    async function updateCredits() {
+        try {
+            console.log("🔄 Fetching updated credits...");
+            const response = await fetch(`/credits/${encodeURIComponent(userEmail)}`);
+            const data = await response.json();
+
+            if (data.credits !== undefined) {
+                console.log("✅ Updated credits:", data.credits);
+                document.querySelector(".credits-badge span").textContent = `${data.credits} Credits`;
+            } else {
+                console.error("❌ Failed to fetch credits!");
+            }
+        } catch (error) {
+            console.error("❌ Error fetching credits:", error);
+        }
+    }
+
+    // ✅ Start SSE Connection
+    connectSSE();
+
+    // ✅ Initial fetch on page load to make sure UI is updated
+    updateUserProgress();
+    updateCredits();
+});
+
+
+</script>
   
     </main>
 </div>

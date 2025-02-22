@@ -1,17 +1,35 @@
-from flask import g, redirect, render_template, url_for, Blueprint
-from database.mongo_connection import collection  # Add import
+from flask import Blueprint, render_template, session, redirect, url_for, g
+from database.mongo_connection import users_collection, credits_collection
 
-dashboard_bp = Blueprint("dashboard_bp", __name__)
+dashboard_bp = Blueprint('dashboard_bp', __name__)
 
-
-# 📌 Dashboard
-@dashboard_bp.route("/dashboard", methods=["GET"])
+@dashboard_bp.route('/dashboard', methods=['GET'])
 def dashboard():
     if not g.user_id:
-        return redirect(
-            url_for("signin_bp.signin")
-        )  # Fix: redirect using the blueprint route
-    return render_template("dashboard/dashboard.html")
+        return redirect(url_for('signin_bp.signin'))  
+
+    user_email = session.get("email")
+    credits = 0
+    referral_code = ""
+    referrals = 0
+
+    if user_email:
+        user = users_collection.find_one({"email": user_email})
+        if user:
+            referral_code = user.get("referral_code", "")
+            user_id = user["_id"]
+            
+            credits_data = credits_collection.find_one({"user_id": user_id})
+            if credits_data:
+                credits = credits_data.get("credits", 0)
+                referrals = credits_data.get("referrals", 0)
+
+    return render_template('dashboard/dashboard.html', 
+                           user_email=user_email, 
+                           credits=credits, 
+                           referral_code=referral_code, 
+                           referrals=referrals)
+
 
 
 # ✅ Serves the homepage page

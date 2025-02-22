@@ -2,7 +2,7 @@ from flask import Flask, session, g, render_template
 from flask_cors import CORS  # Import CORS
 from dotenv import load_dotenv
 import os
-from database.mongo_connection import collection
+from database.mongo_connection import users_collection, credits_collection
 from utils import venvupdate
 from blueprint_register import register_blueprints  # Correct import statement
 

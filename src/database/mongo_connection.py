@@ -12,10 +12,9 @@ load_dotenv()
 # MongoDB Configuration
 MONGODB_URI = os.getenv("MONGODB_URI")
 DATABASE_NAME = "Podmanager"
-COLLECTION_NAME = "users"
 
 if not MONGODB_URI:
-    raise ValueError("MongoDB URI is missing.")
+    raise ValueError("❌ MongoDB URI saknas. Kontrollera din .env-fil.")
 
 # Initialize logging
 logging.basicConfig(level=logging.INFO)
@@ -25,8 +24,29 @@ logger = logging.getLogger(__name__)
 try:
     client = MongoClient(MONGODB_URI)
     database = client[DATABASE_NAME]
-    collection = database[COLLECTION_NAME]
-    logger.info("MongoDB connection established successfully.")
+
+    # 📌 Definiera collections
+    users_collection = database["users"]
+    credits_collection = database["credits"]
+
+    logger.info("✅ MongoDB-anslutning upprättad.")
+
+    # 📌 Kontrollera om `credits_collection` finns
+    existing_collections = database.list_collection_names()
+    if "credits" not in existing_collections:
+        logger.warning("⚠️ Credits-collection saknas. Skapar ett testdokument för att initiera den...")
+        credits_collection.insert_one({
+            "user_id": "init_test",
+            "credits": 0,
+            "unclaimed_credits": 0,
+            "referral_bonus": 0,
+            "referrals": 0,
+            "last_3_referrals": [],
+            "vip_status": False,
+            "credits_expires_at": "N/A"
+        })
+        logger.info("✅ Credits-collection skapad.")
+
 except Exception as e:
-    logger.error(f"Failed to connect to MongoDB: {e}")
+    logger.error(f"❌ Misslyckades att ansluta till MongoDB: {e}")
     raise
