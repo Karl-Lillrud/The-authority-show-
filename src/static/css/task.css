@@ -175,7 +175,7 @@
   padding: 0;
   max-width: 1200px;
   margin: 0 auto;
-  max-height: 520px; /* Set maximum height for 13 tasks */
+  max-height: 540px; /* Set maximum height for 13 tasks */
   overflow-y: auto; /* Enable vertical scrolling */
 }
 
