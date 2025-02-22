@@ -28,6 +28,8 @@ try:
     # 📌 Definiera collections
     users_collection = database["users"]
     credits_collection = database["credits"]
+    podcasts_collection = database["podcasts"]
+    guests_collection = database["guests"]
 
     logger.info("✅ MongoDB-anslutning upprättad.")
 
