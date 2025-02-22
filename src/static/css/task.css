@@ -1,6 +1,6 @@
 .back-arrow {
   position: fixed; /* Change to fixed position */
-  top: calc(32%); /* Move down by 1cm */
+  top: calc(60%); /* Move down by 1cm */
   left: var(--spacing-md);
   font-size: 0.9rem;
   font-weight: bold;
@@ -144,7 +144,8 @@
 #task-list {
   list-style: decimal;
   padding: 0;
-  max-width: 1200px;
+  width: 100%; /* Ensure the task list takes full width */
+  max-width: 1400px; /* Increase the max width */
   margin: 0 auto;
   max-height: 540px; /* Set maximum height for 13 tasks */
   overflow-y: auto; /* Enable vertical scrolling */
@@ -156,6 +157,65 @@
   font-size: 1.5rem;
   color: var(--text-color-light);
   margin-bottom: var(--spacing-md);
+}
+
+.task-list-container {
+  position: relative; /* Ensure the container is positioned relative */
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start; /* Align items to the left */
+  width: 100%; /* Ensure the container takes full width */
+  max-width: 1400px; /* Increase the max width */
+  margin: 0 auto; /* Center the container within the page */
+}
+
+.current-tasks-header {
+  font-size: 1.5rem;
+  color: var(--text-color-light);
+  margin-bottom: var(--spacing-md);
+  margin-left: var(--spacing-sm); /* Add left margin */
+  align-self: flex-start; /* Align the header to the left */
+}
+
+/* Media Queries for Responsiveness */
+@media (max-width: 768px) {
+  .current-tasks-header {
+    margin-left: var(--spacing-sm); /* Adjust left margin for smaller screens */
+    text-align: left; /* Ensure text is aligned to the left */
+  }
+
+  .responsive-task-management {
+    padding: var(--spacing-sm);
+  }
+
+  .responsive-task-list {
+    padding: var(--spacing-sm);
+  }
+
+  .task-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .task-header-buttons {
+    justify-content: flex-start; /* Align buttons to the start */
+    width: 100%;
+    margin-top: var(--spacing-sm);
+  }
+
+  .task-header h2 {
+    text-align: center;
+    width: 100%;
+    margin-bottom: var(--spacing-sm);
+  }
+
+  .button-group {
+    flex-wrap: nowrap; /* Prevent wrapping */
+  }
+
+  .dropdown-wrapper {
+    flex-wrap: nowrap; /* Prevent wrapping */
+  }
 }
 
 /* Individual Task Items */
