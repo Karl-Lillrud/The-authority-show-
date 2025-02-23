@@ -34,13 +34,13 @@ def signin():
     password = data.get("password", "")
     remember = data.get("remember", False)
 
-    users = list(collection.find({"email": email}))
+    user = collection.database.Users.find_one({"email": email})
 
-    if not users or not check_password_hash(users[0]["passwordHash"], password):
+    if not user or not check_password_hash(user["passwordHash"], password):
         return jsonify({"error": "Invalid email or password"}), 401
 
-    session["user_id"] = str(users[0]["_id"])
-    session["email"] = users[0]["email"]
+    session["user_id"] = str(user["_id"])
+    session["email"] = user["email"]
     session.permanent = remember
 
     response = jsonify({"message": "Login successful", "redirect_url": "dashboard"})
