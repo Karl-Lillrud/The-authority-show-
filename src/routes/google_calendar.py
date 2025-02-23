@@ -36,7 +36,6 @@ flow = Flow.from_client_secrets_file(
 def connect_google_calendar():
     authorization_url, state = flow.authorization_url(access_type='offline', include_granted_scopes='true')
     session['state'] = state
-    print("Redirecting to Google OAuth2 authorization URL:", authorization_url)
     return redirect(authorization_url)
 
 @google_calendar_bp.route('/oauth2callback')
