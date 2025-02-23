@@ -2,7 +2,7 @@ from flask import request, jsonify, Blueprint, g
 from database.mongo_connection import collection
 from datetime import datetime, timezone
 import uuid
-import feedparser
+from Entities.podcasts import PodcastSchema
 
 # Define Blueprint
 podcast_bp = Blueprint("podcast_bp", __name__)
@@ -17,62 +17,69 @@ def podcast():
         return jsonify({"error": "Invalid Content-Type. Expected application/json"}), 415
 
     try:
+        # Get the data from the request
         data = request.get_json()
         print("📩 Received Data:", data)
 
-        # Validate and process the RSS feed
-        pod_rss = data.get("podRss", "").strip()
-        if not pod_rss:
-            return jsonify({"error": "RSS feed is required"}), 400
+        # Validate data using PodcastSchema
+        schema = PodcastSchema()
+        errors = schema.validate(data)
+        if errors:
+            return jsonify({"error": "Invalid data", "details": errors}), 400
 
-        # Check if a podcast with this RSS already exists.
-        existing_podcast = collection.database.Podcast.find_one({"podRss": pod_rss})
-        if existing_podcast:
-            return jsonify({"error": "Podcast with this RSS already exists"}), 400
+        validated_data = schema.load(data)
 
-        # Validate the RSS by attempting to parse it.
-        feed = feedparser.parse(pod_rss)
-        if feed.bozo:
-            return jsonify({"error": "Invalid RSS feed. Please enter a valid RSS feed."}), 400
-        if not feed.entries:
-            return jsonify({"error": "The provided RSS feed contains no entries. Please enter a valid RSS feed."}), 400
+        # Check if accountId is associated with the user
+        account_id = validated_data.get("accountId")
+        print(f"🧩 Checking if account {account_id} belongs to user {g.user_id}")
 
-        podcast_id = str(uuid.uuid4())
-        user_id = str(g.user_id)
+        # Ensure that the account exists and belongs to the user
+        account = collection.database.Accounts.find_one({"id": account_id, "userId": g.user_id})
+        if not account:
+            return jsonify({"error": "Invalid account ID or you do not have permission to add a podcast to this account."}), 403
 
-        social_media_links = data.get("socialMedia", [])  # Expecting an array
-        pod_email = data.get("podEmail", "").strip()
-        guest_url = data.get("guestUrl", "").strip()
+        podcast_id = str(uuid.uuid4())  # Generate unique ID for the podcast
 
+        # Create the podcast item for insertion into the database
         podcast_item = {
-            "_id": podcast_id,
-            "userid": user_id,
-            "podName": data.get("podName", "").strip(),
-            "podRss": pod_rss,
-            "socialMedia": social_media_links,  # Array
-            "podEmail": pod_email,
-            "guestUrl": guest_url,
+            "id": podcast_id,
+            "teamId": validated_data.get("teamId"),
+            "accountId": account_id,  # Use accountId, which is validated above
+            "podName": validated_data.get("podName"),
+            "ownerName": validated_data.get("ownerName"),
+            "hostName": validated_data.get("hostName"),
+            "rssFeed": validated_data.get("rssFeed"),
+            "googleCal": validated_data.get("googleCal"),
+            "podUrl": validated_data.get("podUrl"),
+            "guestUrl": validated_data.get("guestUrl"),
+            "socialMedia": validated_data.get("socialMedia", []),
+            "email": validated_data.get("email"),
+            "description": validated_data.get("description"),
+            "logoUrl": validated_data.get("logoUrl"),
+            "category": validated_data.get("category"),
+            "defaultTasks": validated_data.get("defaultTasks", []),
             "created_at": datetime.now(timezone.utc),
         }
 
-        user = collection.database.User.find_one({"_id": user_id})
-        if not user:
-            return jsonify({"error": "User not found"}), 404
-
+        # Insert the podcast item into the database
         print("📝 Inserting podcast into database:", podcast_item)
-        result = collection.database.Podcast.insert_one(podcast_item)
+        result = collection.database.Podcasts.insert_one(podcast_item)
 
-        print("✅ Podcast added successfully!")
-
-        return jsonify({
-            "message": "Podcast added successfully",
-            "podcast_id": podcast_id,
-            "redirect_url": "/index.html",
-        }), 201
+        if result.acknowledged:
+            print("✅ Podcast added successfully!")
+            return jsonify({
+                "message": "Podcast added successfully",
+                "podcast_id": podcast_id,
+                "redirect_url": "/index.html",
+            }), 201
+        else:
+            return jsonify({"error": "Failed to add podcast to the database."}), 500
 
     except Exception as e:
         print(f"❌ ERROR: {e}")
         return jsonify({"error": f"Failed to add podcast: {str(e)}"}), 500
+
+
     
 @podcast_bp.route("/get_podcast", methods=["GET"])
 def get_podcast():
@@ -80,18 +87,59 @@ def get_podcast():
         return jsonify({"error": "Unauthorized"}), 401
 
     try:
-        user_id = str(g.user_id)  
+        user_id = str(g.user_id)
 
-        podcast = list(collection.database.Podcast.find({"userid": user_id}))
+        # Find all accounts owned by the user
+        user_accounts = list(collection.database.Account.find({"userId": user_id}, {"id": 1}))  # Get only `id`
+        user_account_ids = [account["id"] for account in user_accounts]
 
-        for podcast in podcast:
+        if not user_account_ids:
+            return jsonify({"podcast": []}), 200  # No accounts, return empty list
+
+        # Find podcasts linked to any of the user's accounts
+        podcasts = list(collection.database.Podcasts.find({"accountId": {"$in": user_account_ids}}))
+
+        # Convert `_id` fields to strings
+        for podcast in podcasts:
             podcast["_id"] = str(podcast["_id"])
+
+        return jsonify({"podcast": podcasts}), 200
+
+    except Exception as e:
+        print(f"❌ ERROR: {e}")
+        return jsonify({"error": f"Failed to fetch podcasts: {str(e)}"}), 500
+    
+@podcast_bp.route("/get_podcast/<podcast_id>", methods=["GET"])
+def get_podcast_by_id(podcast_id):
+    if not g.user_id:
+        return jsonify({"error": "Unauthorized"}), 401
+
+    try:
+        user_id = str(g.user_id)
+
+        # Find all accounts owned by the user
+        user_accounts = list(collection.database.Accounts.find({"userId": user_id}, {"id": 1}))
+        user_account_ids = [account["id"] for account in user_accounts]
+
+        if not user_account_ids:
+            return jsonify({"error": "No accounts found for user"}), 403
+
+        # Find the podcast by ID and check if it belongs to one of the user's accounts
+        podcast = collection.database.Podcasts.find_one({"id": podcast_id, "accountId": {"$in": user_account_ids}})
+
+        if not podcast:
+            return jsonify({"error": "Podcast not found or unauthorized"}), 404
+
+        # Convert `_id` to string for JSON compatibility
+        podcast["_id"] = str(podcast["_id"])
 
         return jsonify({"podcast": podcast}), 200
 
     except Exception as e:
         print(f"❌ ERROR: {e}")
         return jsonify({"error": f"Failed to fetch podcast: {str(e)}"}), 500
+
+
     
 @podcast_bp.route("/delete_podcast/<podcast_id>", methods=["DELETE"])
 def delete_podcast(podcast_id):
@@ -101,27 +149,28 @@ def delete_podcast(podcast_id):
     try:
         user_id = str(g.user_id)
 
-        # Find the podcast
-        podcast = collection.database.Podcast.find_one({"_id": podcast_id})
+        # Find all accounts owned by the user
+        user_accounts = list(collection.database.Account.find({"userId": user_id}, {"id": 1}))  # Get only `id`
+        user_account_ids = [account["id"] for account in user_accounts]
+
+        if not user_account_ids:
+            return jsonify({"error": "No accounts found for user"}), 403
+
+        # Check if the podcast belongs to one of the user's accounts
+        podcast = collection.database.Podcast.find_one({"id": podcast_id, "accountId": {"$in": user_account_ids}})
 
         if not podcast:
-            return jsonify({"error": "Podcast not found"}), 404
-
-        # Check if the user is the owner of the podcast
-        if podcast["userid"] != user_id:
-            return jsonify({"error": "Permission denied"}), 403
+            return jsonify({"error": "Podcast not found or unauthorized"}), 404
 
         # Delete the podcast
-        result = collection.database.Podcast.delete_one({"_id": podcast_id})
+        collection.database.Podcasts.delete_one({"id": podcast_id})
 
-        if result.deleted_count == 1:
-            return jsonify({"message": "Podcast deleted successfully"}), 200
-        else:
-            return jsonify({"error": "Failed to delete podcast"}), 500
+        return jsonify({"message": "Podcast deleted successfully"}), 200
 
     except Exception as e:
         print(f"❌ ERROR: {e}")
         return jsonify({"error": f"Failed to delete podcast: {str(e)}"}), 500
+
 
     
 @podcast_bp.route("/edit_podcast/<podcast_id>", methods=["PUT"])
@@ -132,41 +181,41 @@ def edit_podcast(podcast_id):
     try:
         user_id = str(g.user_id)
 
-        # Fetch the podcast by ID
-        podcast = collection.database.Podcast.find_one({"_id": podcast_id})
+        # Fetch all accounts owned by the user
+        user_accounts = list(collection.database.Account.find({"userId": user_id}, {"id": 1}))
+        user_account_ids = [account["id"] for account in user_accounts]
+
+        if not user_account_ids:
+            return jsonify({"error": "No accounts found for user"}), 403
+
+        # Find the podcast by ID and check if it belongs to one of the user's accounts
+        podcast = collection.database.Podcasts.find_one({"id": podcast_id, "accountId": {"$in": user_account_ids}})
 
         if not podcast:
-            return jsonify({"error": "Podcast not found"}), 404
-
-        # Check if the user is the owner of the podcast
-        if podcast["userid"] != user_id:
-            return jsonify({"error": "Permission denied"}), 403
+            return jsonify({"error": "Podcast not found or unauthorized"}), 404
 
         # Get new data from the request
         data = request.get_json()
 
-        # Create the update dictionary with the fields that can be modified
-        update_data = {}
-        if "podName" in data:
-            update_data["podName"] = data["podName"]
-        if "podRss" in data:
-            update_data["podRss"] = data["podRss"]
-        if "socialMedia" in data:
-            update_data["socialMedia"] = data["socialMedia"]
-        if "podEmail" in data:
-            update_data["podEmail"] = data["podEmail"]
-        if "guestUrl" in data:
-            update_data["guestUrl"] = data["guestUrl"]
+        # Validate data using PodcastSchema
+        schema = PodcastSchema(partial=True)  # Allow partial updates
+        errors = schema.validate(data)
+        if errors:
+            return jsonify({"error": "Invalid data", "details": errors}), 400
 
+        # Prepare update data
+        update_data = {key: value for key, value in data.items() if value is not None}
+
+        # Update the podcast
         result = collection.database.Podcast.update_one(
-            {"_id": podcast_id},
-            {"$set": update_data} 
+            {"id": podcast_id},
+            {"$set": update_data}
         )
 
         if result.modified_count == 1:
             return jsonify({"message": "Podcast updated successfully"}), 200
         else:
-            return jsonify({"error": "Failed to update podcast"}), 500
+            return jsonify({"error": "No changes made to the podcast"}), 200
 
     except Exception as e:
         print(f"❌ ERROR: {e}")
