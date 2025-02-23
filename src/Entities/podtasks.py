@@ -3,7 +3,7 @@ from marshmallow import Schema, fields
 class PodtaskSchema(Schema):
     id = fields.Str()
     podcastId = fields.Str(required=True)
-    name = fields.Str(required=True)
+    name = fields.Str()
     action = fields.List(fields.Str())
     dayCount = fields.Int()
     description = fields.Str()

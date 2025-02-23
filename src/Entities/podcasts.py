@@ -3,7 +3,7 @@ from marshmallow import Schema, fields
 class PodcastSchema(Schema):
     id = fields.Str()
     teamId = fields.Str()
-    accountId = fields.Str()
+    accountId = fields.Str(required=True)
     podName = fields.Str(required=True)
     ownerName = fields.Str()
     hostName = fields.Str()
