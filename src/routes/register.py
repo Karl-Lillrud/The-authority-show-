@@ -10,6 +10,7 @@ register_bp = Blueprint("register_bp", __name__)
 
 load_dotenv()
 
+
 @register_bp.route("/register", methods=["GET", "POST"])
 def register():
     if request.method == "GET":
@@ -19,7 +20,10 @@ def register():
 
     if request.content_type != "application/json":
         print("❌ Invalid Content-Type:", request.content_type)
-        return jsonify({"error": "Invalid Content-Type. Expected application/json"}), 415
+        return (
+            jsonify({"error": "Invalid Content-Type. Expected application/json"}),
+            415,
+        )
 
     try:
         data = request.get_json()
@@ -60,27 +64,42 @@ def register():
             "email": email,
             "companyName": data.get("companyName", ""),
             "isCompany": data.get("isCompany", False),
+            "ownerId": user_id,  # Set ownerId to user_id
         }
 
         # Make a POST request to the /create_account endpoint in account.py
-        account_response = requests.post("http://127.0.0.1:8000/create_account", json=account_data)
+        account_response = requests.post(
+            "http://127.0.0.1:8000/create_account", json=account_data
+        )
 
         # Check if account creation was successful
         if account_response.status_code != 201:
-            return jsonify({"error": "Failed to create account", "details": account_response.json()}), 500
+            return (
+                jsonify(
+                    {
+                        "error": "Failed to create account",
+                        "details": account_response.json(),
+                    }
+                ),
+                500,
+            )
 
         # Get the account ID from the response of the account creation
         account_data = account_response.json()
         account_id = account_data["accountId"]
 
-   
         print("✅ Registration successful!")
-        return jsonify({
-            "message": "Registration successful!",
-            "userId": user_id,
-            "accountId": account_id,
-            "redirect_url": url_for("signin_bp.signin", _external=True),
-        }), 201
+        return (
+            jsonify(
+                {
+                    "message": "Registration successful!",
+                    "userId": user_id,
+                    "accountId": account_id,
+                    "redirect_url": url_for("signin_bp.signin", _external=True),
+                }
+            ),
+            201,
+        )
 
     except Exception as e:
         print(f"❌ ERROR: {e}")
