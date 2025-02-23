@@ -1,8 +1,9 @@
 from marshmallow import Schema, fields
 
-class AccountSchema(Schema): 
+
+class AccountSchema(Schema):
     id = fields.Str()
-    ownerId = fields.Str()
+    ownerId = fields.Str()  # Add ownerId field
     subscriptionId = fields.Str()
     creditId = fields.Str()
     email = fields.Email(required=True)

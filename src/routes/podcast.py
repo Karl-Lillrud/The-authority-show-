@@ -108,7 +108,7 @@ def get_podcast():
 
         # Find all accounts owned by the user
         user_accounts = list(
-            collection.database.Account.find({"userId": user_id}, {"id": 1})
+            collection.database.Accounts.find({"userId": user_id}, {"id": 1})
         )  # Get only `id`
         user_account_ids = [account["id"] for account in user_accounts]
 
@@ -176,7 +176,7 @@ def delete_podcast(podcast_id):
 
         # Find all accounts owned by the user
         user_accounts = list(
-            collection.database.Account.find({"userId": user_id}, {"id": 1})
+            collection.database.Accounts.find({"userId": user_id}, {"id": 1})
         )  # Get only `id`
         user_account_ids = [account["id"] for account in user_accounts]
 
@@ -184,7 +184,7 @@ def delete_podcast(podcast_id):
             return jsonify({"error": "No accounts found for user"}), 403
 
         # Check if the podcast belongs to one of the user's accounts
-        podcast = collection.database.Podcast.find_one(
+        podcast = collection.database.Podcasts.find_one(
             {"id": podcast_id, "accountId": {"$in": user_account_ids}}
         )
 
@@ -211,7 +211,7 @@ def edit_podcast(podcast_id):
 
         # Fetch all accounts owned by the user
         user_accounts = list(
-            collection.database.Account.find({"userId": user_id}, {"id": 1})
+            collection.database.Accounts.find({"userId": user_id}, {"id": 1})
         )
         user_account_ids = [account["id"] for account in user_accounts]
 
@@ -239,7 +239,7 @@ def edit_podcast(podcast_id):
         update_data = {key: value for key, value in data.items() if value is not None}
 
         # Update the podcast
-        result = collection.database.Podcast.update_one(
+        result = collection.database.Podcasts.update_one(
             {"id": podcast_id}, {"$set": update_data}
         )
 
