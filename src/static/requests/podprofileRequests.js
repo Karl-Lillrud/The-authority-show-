@@ -88,7 +88,7 @@ document.addEventListener("DOMContentLoaded", function () {
                 if (newTab) {
                     newTab.focus();
                 } else {
-                    console.error("Failed to open new tab. Please check your browser settings.");
+                    alert("Failed to open new tab. Please check your browser settings.");
                 }
             });
         }
