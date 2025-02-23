@@ -67,6 +67,7 @@
                 <button type="button" class="button-secondary" id="addTeamMember">Add More Members</button>
                 <button type="button" class="button-secondary" id="backToPodName">Back</button>
                 <button type="button" class="button-primary" id="goToPodProfile">Invite</button>
+                <input type="hidden" id="invitationLink" value="{{ url_for('pod_management.invite', _external=True) }}">
             </form>
         </div>
 
@@ -132,7 +133,7 @@
         </div>
     </main>
     <script src="https://unpkg.com/lazysizes@5.3.2/lazysizes.min.js" async></script>
-    <script src="{{ url_for('static', filename='podprofile/i18n.js') }}"></script>
-    <script src="{{ url_for('static', filename='podprofile/main.js') }}"></script>  
+    <script src="{{ url_for('static', filename='requests/podprofile-languageRequests.js') }}"></script>
+    <script src="{{ url_for('static', filename='requests/podprofileRequests.js') }}"></script>  
 </body>
 </html>
