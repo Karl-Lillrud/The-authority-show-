@@ -2,7 +2,7 @@ from marshmallow import Schema, fields
 
 class AccountSchema(Schema): 
     id = fields.Str()
-    userId = fields.Str()
+    ownerId = fields.Str()
     subscriptionId = fields.Str()
     creditId = fields.Str()
     email = fields.Email(required=True)

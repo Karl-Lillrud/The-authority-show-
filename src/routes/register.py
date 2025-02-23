@@ -73,12 +73,7 @@ def register():
         account_data = account_response.json()
         account_id = account_data["accountId"]
 
-        # Link the accountId to the user document (use 'id' field, not '_id')
-        collection.database.Users.update_one(
-            {"_id": user_id},  # Match using the '_id' field (UUID string)
-            {"$set": {"accountId": account_id}}
-        )
-
+   
         print("✅ Registration successful!")
         return jsonify({
             "message": "Registration successful!",

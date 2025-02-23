@@ -34,7 +34,8 @@ def signin():
     password = data.get("password", "")
     remember = data.get("remember", False)
 
-    users = list(collection.find({"email": email}))
+    # users = list(collection.find({"email": email}))
+    users = collection.database.Users.find_one({"email": email})
 
     if not users or not check_password_hash(users[0]["passwordHash"], password):
         return jsonify({"error": "Invalid email or password"}), 401

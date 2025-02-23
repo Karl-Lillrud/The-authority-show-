@@ -9,7 +9,6 @@ podcast_bp = Blueprint("podcast_bp", __name__)
 
 @podcast_bp.route("/add_podcast", methods=["POST"])
 def podcast():
-    # Ensure the user is authorized by checking g.user_id
     if not g.user_id:
         return jsonify({"error": "Unauthorized"}), 401
 
@@ -36,7 +35,6 @@ def podcast():
 
         # Ensure that the account exists and belongs to the user
         account = collection.database.Accounts.find_one({"id": account_id, "userId": g.user_id})
-
         if not account:
             return jsonify({"error": "Invalid account ID or you do not have permission to add a podcast to this account."}), 403
 
@@ -80,6 +78,8 @@ def podcast():
     except Exception as e:
         print(f"❌ ERROR: {e}")
         return jsonify({"error": f"Failed to add podcast: {str(e)}"}), 500
+
+
     
 @podcast_bp.route("/get_podcast", methods=["GET"])
 def get_podcast():
