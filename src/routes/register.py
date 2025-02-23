@@ -72,6 +72,13 @@ def register():
             "http://127.0.0.1:8000/create_account", json=account_data
         )
 
+        # Log the response from the account creation endpoint
+        print(
+            "🔍 Account creation response:",
+            account_response.status_code,
+            account_response.json(),
+        )
+
         # Check if account creation was successful
         if account_response.status_code != 201:
             return (

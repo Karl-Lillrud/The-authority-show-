@@ -45,7 +45,6 @@ CORS(
     },
 )  # Enable CORS for specific origins
 
-
 # These can cause  GET https://app.podmanager.ai/ 503 (Service Unavailable) error in the browser if not set
 app.secret_key = os.getenv("SECRET_KEY")
 app.config["PREFERRED URL SCHEME"] = "https"
@@ -65,7 +64,6 @@ APP_ENV = os.getenv("APP_ENV", "production")  # Default to production
 API_BASE_URL = (
     "http://127.0.0.1:8000" if APP_ENV == "local" else "https://app.podmanager.ai/"
 )
-
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
