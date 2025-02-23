@@ -49,17 +49,12 @@ collections = {
     "Subscription": {
         "ID": str,
         "user_id": str,
-        "last_3_referrals": [],
-        "vip_status": bool,
-        "credits_expires_at": "date",
-    },
-    "Clips": {"ID": str, "Podcast": int, "ClipName": str},
-    "Subscription": {
-        "ID": str,
-        "user_id": str,
         "subscription_plan": str,
         "subscription_start": "date",
         "subscription_end": "date",
+        "last_3_referrals": [],
+        "vip_status": bool,
+        "credits_expires_at": "date",
         "is_active": bool,
     },
     "User": {
