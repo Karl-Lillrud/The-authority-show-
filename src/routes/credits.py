@@ -1,3 +1,4 @@
+# credits.py
 from flask import Blueprint, jsonify, request, Response, stream_with_context
 from database.mongo_connection import users_collection, credits_collection
 import smtplib
@@ -150,7 +151,7 @@ def event_stream(email):
             last_referral_bonus = new_referral_bonus
             yield f"data: {json.dumps({'referral_bonus': new_referral_bonus, 'referrals': get_referral_count(email)})}\n\n"
         else:
-            yield "data: ping\n\n"
+            yield 'data: {"ping": true}\n\n'
 
 def get_referral_count(email):
     user = get_user_by_email(email)
