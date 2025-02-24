@@ -97,7 +97,7 @@
   background-color: rgba(255, 127, 63, 0.1);
   color: var(--highlight-color);
   box-shadow: -3px -3px 8px var(--light-shadow-light),
-    3px 3px 8px var(--dark-shadow-dark);
+    3px 3px 8px var (--dark-shadow-dark);
 }
 
 .add-tasks-dropdown {
@@ -121,7 +121,7 @@
 
 .add-tasks-dropdown .dropbtn:hover {
   background-color: rgba(255, 127, 63, 0.1);
-  color: var(--highlight-color);
+  color: var (--highlight-color);
   box-shadow: -3px -3px 8px var(--light-shadow-light),
     3px 3px 8px var(--dark-shadow-dark);
 }
@@ -528,14 +528,37 @@ select:focus {
   transition: background-color 0.3s ease, box-shadow 0.3s ease;
   font-size: 0.85rem;
 }
-#save-task-btn:hover {
+#save-task-btn:hover,
+.cancel-btn:hover {
   background-color: rgba(255, 127, 63, 0.08);
   color: var(--highlight-color);
   box-shadow: -2px -2px 6px var(--light-shadow-light),
     2px 2px 6px var(--dark-shadow-dark);
 }
+
+.modal-buttons {
+  display: flex;
+  justify-content: space-between;
+  margin-top: var(--spacing-md);
+}
+
+#save-task-btn,
+.cancel-btn {
+  background: var(--background-light);
+  color: var(--text-color-light);
+  padding: var(--spacing-sm) var(--spacing-md);
+  border: none;
+  border-radius: var(--radius-small);
+  cursor: pointer;
+  box-shadow: -2px -2px 4px var(--light-shadow-light),
+    2px 2px 4px var(--dark-shadow-dark);
+  transition: background-color 0.3s ease, box-shadow 0.3s ease;
+  font-size: 0.85rem;
+}
+#save-task-btn:hover,
 .cancel-btn:hover {
-  background-color: rgba(0, 0, 0, 0.1);
+  background-color: rgba(255, 127, 63, 0.08);
+  color: var(--highlight-color);
   box-shadow: -2px -2px 6px var(--light-shadow-light),
     2px 2px 6px var(--dark-shadow-dark);
 }
@@ -599,6 +622,7 @@ h1 {
   justify-content: center;
   z-index: 2000;
 }
+
 .popup-content {
   background: #fff;
   border-radius: 12px;
@@ -608,7 +632,10 @@ h1 {
   width: 90%;
   text-align: center;
   max-height: 90vh;
+  overflow-y: auto; /* Ensure content is scrollable if it exceeds max height */
+  margin: 0 20px; /* Add margin to ensure it doesn't touch the edges */
 }
+
 .guest-selection {
   display: flex;
   flex-wrap: nowrap;
@@ -692,8 +719,6 @@ h1 {
 .modal-buttons {
   padding: var(--spacing-sm) var(--spacing-md);
   border-radius: var(--radius-small);
-  box-shadow: -3px -3px 6px var(--light-shadow-light),
-    3px 3px 6px var(--dark-shadow-dark);
   cursor: pointer;
   font-size: 0.9rem;
   color: var(--text-color-light);
@@ -705,4 +730,26 @@ h1 {
   color: var(--highlight-color);
   box-shadow: -3px -3px 8px var(--light-shadow-light),
     3px 3px 8px var(--dark-shadow-dark);
+}
+#add-tasks-episode-popup {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2000;
+}
+#add-tasks-episode-popup .popup-content {
+  background: #fff;
+  border-radius: 12px;
+  padding: 24px;
+  box-shadow: 0px 2px 8px rgba(0, 0, 0, 0.1);
+  max-width: 800px;
+  width: 90%;
+  text-align: center;
+  max-height: 90vh;
 }
