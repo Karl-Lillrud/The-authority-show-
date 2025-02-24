@@ -6,7 +6,7 @@ import uuid
 # Define Blueprint
 team_bp = Blueprint("team_bp", __name__)
 
-@team_bp.route("/add_team", methods=["POST"])
+@team_bp.route("/add_teams", methods=["POST"])
 def add_team_member():
     if not g.user_id:
         return jsonify({"error": "Unauthorized"}), 401
@@ -24,7 +24,6 @@ def add_team_member():
 
         team_item = {
             "_id": team_id,
-            "UserID": user_id,
             "Name": data.get("name", "").strip(),
             "Role": data.get("role", "").strip(),
             "Email": data.get("email", "").strip(),
@@ -32,12 +31,12 @@ def add_team_member():
             "created_at": datetime.now(timezone.utc),
         }
 
-        user = collection.database.User.find_one({"_id": user_id})
+        user = collection.database.Users.find_one({"_id": user_id})
         if not user:
             return jsonify({"error": "User not found"}), 404
 
         print("📝 Inserting team member into database:", team_item)
-        result = collection.database.Team.insert_one(team_item)
+        result = collection.database.Teams.insert_one(team_item)
 
         print("✅ Team member added successfully!")
 
@@ -53,10 +52,18 @@ def add_team_member():
         print(f"❌ ERROR: {e}")
         return jsonify({"error": f"Failed to add team member: {str(e)}"}), 500
 
-@team_bp.route("/get_team", methods=["GET"])
+@team_bp.route("/get_teams", methods=["GET"])
 def get_team_members():
     try:
-        team_members = list(collection.database.Team.find({}, {"_id": 0, "UserID": 0, "created_at": 0}))
+        # Fetch all teams and exclude the unnecessary fields (_id and created_at, if needed)
+        team_members = list(collection.database.Teams.find({}, {"_id": 0, "created_at": 0})) 
+
+        # Debug: Print the fetched team members to verify the data
+        print("Fetched team members:", team_members)
+
+        if not team_members:
+            return jsonify({"error": "No team members found"}), 404
+
         return jsonify(team_members), 200
     except Exception as e:
         print(f"❌ ERROR: {e}")
