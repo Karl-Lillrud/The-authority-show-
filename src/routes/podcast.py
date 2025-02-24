@@ -7,9 +7,23 @@ from Entities.podcasts import PodcastSchema
 # Define Blueprint
 podcast_bp = Blueprint("podcast_bp", __name__)
 
+from flask import Blueprint, request, jsonify, g
+from datetime import datetime, timezone
+import uuid
+from database.mongo_connection import collection
+from Entities.podcasts import PodcastSchema  # Ensure this schema exists
+
+from flask import Blueprint, request, jsonify, g
+from datetime import datetime, timezone
+import uuid
+from database.mongo_connection import collection
+from Entities.podcasts import PodcastSchema
+
+podcast_bp = Blueprint("podcast_bp", __name__)
+
 @podcast_bp.route("/add_podcast", methods=["POST"])
 def podcast():
-    if not g.user_id:
+    if not hasattr(g, "user_id") or not g.user_id:
         return jsonify({"error": "Unauthorized"}), 401
 
     # Validate Content-Type
@@ -17,6 +31,14 @@ def podcast():
         return jsonify({"error": "Invalid Content-Type. Expected application/json"}), 415
 
     try:
+        # 🔍 Fetch account ID from MongoDB (assuming `id` is stored as a STRING, not ObjectId)
+        user_account = collection.database.Accounts.find_one({"userId": g.user_id})
+        if not user_account:
+            return jsonify({"error": "No account associated with this user"}), 403
+
+        account_id = user_account["id"]  # Keep as string
+        print(f"🧩 Found account {account_id} for user {g.user_id}")
+
         # Get the data from the request
         data = request.get_json()
         print("📩 Received Data:", data)
@@ -29,22 +51,19 @@ def podcast():
 
         validated_data = schema.load(data)
 
-        # Check if accountId is associated with the user
-        account_id = validated_data.get("accountId")
-        print(f"🧩 Checking if account {account_id} belongs to user {g.user_id}")
-
-        # Ensure that the account exists and belongs to the user
+        # Ensure `accountId` exists and belongs to the user
         account = collection.database.Accounts.find_one({"id": account_id, "userId": g.user_id})
         if not account:
             return jsonify({"error": "Invalid account ID or you do not have permission to add a podcast to this account."}), 403
 
-        podcast_id = str(uuid.uuid4())  # Generate unique ID for the podcast
+        # Generate unique podcast ID
+        podcast_id = str(uuid.uuid4())
 
-        # Create the podcast item for insertion into the database
+        # Create podcast document
         podcast_item = {
-            "id": podcast_id,
+            "_id": podcast_id,
             "teamId": validated_data.get("teamId"),
-            "accountId": account_id,  # Use accountId, which is validated above
+            "accountId": account_id,  # Use the fetched string accountId
             "podName": validated_data.get("podName"),
             "ownerName": validated_data.get("ownerName"),
             "hostName": validated_data.get("hostName"),
@@ -61,11 +80,11 @@ def podcast():
             "created_at": datetime.now(timezone.utc),
         }
 
-        # Insert the podcast item into the database
+        # Insert into database
         print("📝 Inserting podcast into database:", podcast_item)
         result = collection.database.Podcasts.insert_one(podcast_item)
 
-        if result.acknowledged:
+        if result.inserted_id:
             print("✅ Podcast added successfully!")
             return jsonify({
                 "message": "Podcast added successfully",
@@ -78,6 +97,7 @@ def podcast():
     except Exception as e:
         print(f"❌ ERROR: {e}")
         return jsonify({"error": f"Failed to add podcast: {str(e)}"}), 500
+
 
 
     
