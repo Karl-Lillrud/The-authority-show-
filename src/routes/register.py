@@ -52,6 +52,7 @@ def register():
     users_collection.insert_one(user_document)
     logger.info(f"✅ Registered user: {email} with ID {new_user_id}")
 
+    # Skapa ett kreditdokument med 3000 krediter för alla nya användare
     existing_credits = credits_collection.find_one({"user_id": new_user_id})
     if not existing_credits:
         logger.info(f"📝 Creating credits for user: {new_user_id}")
@@ -73,14 +74,16 @@ def register():
     else:
         logger.info(f"⚠️ User {new_user_id} already has credits, skipping creation.")
 
+    # Om en referral code används, uppdatera referrer (men se till att inte användaren refererar sig själv)
+    referrer = None
     if referrer_code:
         referrer = users_collection.find_one({"referral_code": referrer_code})
-        if referrer:
+        if referrer and referrer["_id"] != new_user_id:
             referrer_id = referrer["_id"]
             logger.info(f"🎉 Referral detected! Updating credits for {referrer_id}")
             credits_collection.update_one(
                 {"user_id": referrer_id},
-                {"$inc": {"referral_bonus": 200, "referrals": 1},
+                {"$inc": {"credits": 200, "referral_bonus": 200, "referrals": 1},
                  "$push": {"last_3_referrals": datetime.utcnow().isoformat()}}
             )
 
