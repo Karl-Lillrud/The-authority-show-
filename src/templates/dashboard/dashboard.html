@@ -277,12 +277,12 @@ document.addEventListener("DOMContentLoaded", function() {
         </div>
 
         <script>
-          function copyReferral() {
-              var copyText = document.getElementById("referralLink");
-              copyText.select();
+            function copyReferral() {
+              const referralInput = document.getElementById("referralLink");
+              referralInput.select();
               document.execCommand("copy");
               alert("Referral link copied!");
-          }
+            }
 
           document.getElementById("inviteForm").addEventListener("submit", async function(event) {
               event.preventDefault();

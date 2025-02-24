@@ -4,48 +4,24 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Register</title>
-    <link
-      rel="stylesheet"
-      href="{{ url_for('static', filename='css/register.css') }}"
-    />
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/register.css') }}" />
   </head>
   <body>
     <!-- Logo -->
     <div class="logo-container">
-      <img
-        src="https://podmanagerstorage.blob.core.windows.net/blob-container/PodManagerLogo.png"
-        alt="PodManager Logo"
-      />
+      <img src="https://podmanagerstorage.blob.core.windows.net/blob-container/PodManagerLogo.png" alt="PodManager Logo" />
     </div>
 
     <div class="center-box">
       <h2>Register</h2>
-
       <form id="register-form">
-        <input
-          class="input"
-          type="name"
-          id="name"
-          placeholder="Full Name"
-          required
-        />
-        <input
-          class="input"
-          type="email"
-          id="email"
-          placeholder="Email"
-          required
-        />
-        <input
-          class="input"
-          type="password"
-          id="password"
-          placeholder="Password"
-          required
-        />
+        <input class="input" type="text" id="name" placeholder="Full Name" required />
+        <input class="input" type="email" id="email" placeholder="Email" required />
+        <input class="input" type="password" id="password" placeholder="Password" required />
+        <!-- Hidden field to capture referral code passed via URL -->
+        <input type="hidden" id="referred_by" value="{{ referral }}">
         <button class="button" type="submit">Register</button>
       </form>
-
       <p class="error-message" id="error-message"></p>
 
       <!-- Success Message Modal -->
@@ -57,19 +33,19 @@
         </div>
       </div>
 
-      <!-- Moved the text above the Sign-in link -->
       <p class="account-text">Already have an account?</p>
       <a class="link" href="{{ url_for('signin_bp.signin') }}">Sign in</a>
     </div>
 
-    {% with messages = get_flashed_messages(with_categories=true) %} {% if
-    messages %}
-    <ul class="flashes">
-      {% for category, message in messages %}
-      <li class="{{ category }}">{{ message }}</li>
-      {% endfor %}
-    </ul>
-    {% endif %} {% endwith %}
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        <ul class="flashes">
+          {% for category, message in messages %}
+            <li class="{{ category }}">{{ message }}</li>
+          {% endfor %}
+        </ul>
+      {% endif %}
+    {% endwith %}
 
     <script>
       document.addEventListener("DOMContentLoaded", function () {
@@ -77,7 +53,6 @@
         const errorMessage = document.getElementById("error-message");
         const successModal = document.getElementById("success-modal");
         const successOkButton = document.getElementById("success-ok-button");
-
         const API_BASE_URL = "{{ API_BASE_URL }}";
 
         if (!form) {
@@ -87,18 +62,17 @@
 
         form.addEventListener("submit", async function (event) {
           event.preventDefault();
-
           const name = document.getElementById("name").value;
           const email = document.getElementById("email").value;
           const password = document.getElementById("password").value;
+          // Get the referral code from the hidden field
+          const referred_by = document.getElementById("referred_by").value;
 
           try {
             const response = await fetch(`${API_BASE_URL}/register`, {
               method: "POST",
-              headers: {
-                "Content-Type": "application/json"
-              },
-              body: JSON.stringify({ name, email, password })
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ name, email, password, referred_by })
             });
 
             if (response.ok) {
@@ -108,13 +82,11 @@
               });
             } else {
               const result = await response.json();
-              errorMessage.textContent =
-                result.error || "An error occurred. Please try again.";
+              errorMessage.textContent = result.error || "An error occurred. Please try again.";
             }
           } catch (error) {
             console.error("Error:", error);
-            errorMessage.textContent =
-              "Something went wrong. Please try again.";
+            errorMessage.textContent = "Something went wrong. Please try again.";
           }
         });
       });

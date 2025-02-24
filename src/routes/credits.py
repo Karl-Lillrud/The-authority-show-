@@ -1,4 +1,3 @@
-# credits.py
 from flask import Blueprint, jsonify, request, Response, stream_with_context
 from database.mongo_connection import users_collection, credits_collection
 import smtplib
@@ -32,6 +31,27 @@ def get_credits():
         "credits_expires_at": credits.get("credits_expires_at", "N/A")
     })
 
+@credits_bp.route('/user-progress', methods=['GET'])
+def user_progress():
+    email = request.args.get("email")
+    if not email:
+        return jsonify({"error": "Email is required"}), 400
+    user = get_user_by_email(email)
+    if not user:
+        return jsonify({"error": "User not found"}), 404
+    credits = credits_collection.find_one({"user_id": user["_id"]})
+    if not credits:
+        return jsonify({"error": "No credits found"}), 404
+    return jsonify({
+        "user_id": user["_id"],
+        "credits": credits.get("credits", 0),
+        "unclaimed_credits": credits.get("unclaimed_credits", 0),
+        "referral_bonus": credits.get("referral_bonus", 0),
+        "referrals": credits.get("referrals", 0),
+        "episodes_published": credits.get("episodes_published", 0),
+        "streak_days": credits.get("streak_days", 0)
+    })
+
 @credits_bp.route("/claim-reward", methods=["POST"])
 def claim_reward():
     data = request.json
@@ -53,45 +73,7 @@ def claim_reward():
         {"$inc": {"credits": total_claimable},
          "$set": {"unclaimed_credits": 0, "referral_bonus": 0}}
     )
-    return jsonify({"success": True, "message": f"{total_claimable} credits claimed!"}), 200
-
-@credits_bp.route('/user-progress', methods=['GET'])
-def user_progress():
-    email = request.args.get("email")
-    if not email:
-        return jsonify({"error": "Email is required"}), 400
-    user = get_user_by_email(email)
-    if not user:
-        return jsonify({"error": "User not found"}), 404
-    credits = credits_collection.find_one({"user_id": user["_id"]})
-    if not credits:
-        return jsonify({"error": "No credits found"}), 404
-    return jsonify({
-        "user_id": user["_id"],
-        "credits": credits.get("credits", 0),
-        "unclaimed_credits": credits.get("unclaimed_credits", 0),
-        "referral_bonus": credits.get("referral_bonus", 0),
-        "referrals": credits.get("referrals", 0),
-        "episodes_published": credits.get("episodes_published", 0),
-        "streak_days": credits.get("streak_days", 0),
-        "last_3_referrals": credits.get("last_3_referrals", [])
-    })
-
-def send_email(to_email, subject, message):
-    try:
-        msg = MIMEMultipart()
-        msg["From"] = os.getenv("EMAIL_USER")
-        msg["To"] = to_email
-        msg["Subject"] = subject
-        msg.attach(MIMEText(message, "html"))
-        context = ssl.create_default_context()
-        with smtplib.SMTP(os.getenv("SMTP_SERVER"), int(os.getenv("SMTP_PORT", 587))) as server:
-            server.starttls(context=context)
-            server.login(os.getenv("EMAIL_USER"), os.getenv("EMAIL_PASS"))
-            server.sendmail(os.getenv("EMAIL_USER"), to_email, msg.as_string())
-        return True
-    except Exception:
-        return False
+    return jsonify({"message": f"{total_claimable} credits claimed!"}), 200
 
 @credits_bp.route("/send-invite", methods=["POST"])
 def send_invite():
@@ -107,16 +89,32 @@ def send_invite():
     subject = f"🎉 {sender_email} has invited you to PodManager!"
     message = f"""
     <h2>🚀 {sender_email} has invited you to PodManager!</h2>
-    <p>Hey! <b>{sender_email}</b> has invited you to join PodManager. Sign up now and get <b>3,000 free credits</b>!</p>
+    <p>Join now and get <b>3,000 free credits</b> to kickstart your podcast!</p>
     <a href="http://127.0.0.1:8000/register?referral={referral_code}">
         Register Now
     </a>
     """
-    success = send_email(friend_email, subject, message)
-    if success:
-        return jsonify({"success": True, "message": "Invite sent!"}), 200
+    if send_email(friend_email, subject, message):
+        return jsonify({"message": "Invite sent!"}), 200
     else:
         return jsonify({"error": "Failed to send invite"}), 500
+
+def send_email(to_email, subject, message):
+    try:
+        msg = MIMEMultipart()
+        msg["From"] = os.getenv("EMAIL_USER")
+        msg["To"] = to_email
+        msg["Subject"] = subject
+        msg.attach(MIMEText(message, "html"))
+        context = ssl.create_default_context()
+        with smtplib.SMTP(os.getenv("SMTP_SERVER"), int(os.getenv("SMTP_PORT", 587))) as server:
+            server.starttls(context=context)
+            server.login(os.getenv("EMAIL_USER"), os.getenv("EMAIL_PASS"))
+            server.sendmail(os.getenv("EMAIL_USER"), to_email, msg.as_string())
+        return True
+    except Exception as e:
+        print("Email send error:", e)
+        return False
 
 @credits_bp.route("/get-referral-status", methods=["GET"])
 def get_referral_status():
@@ -130,7 +128,6 @@ def get_referral_status():
     if not credits:
         return jsonify({"error": "No credits found"}), 404
     return jsonify({
-        "success": True,
         "referrals": credits.get("referrals", 0),
         "redirect": credits.get("referrals", 0) > 0
     })
@@ -139,7 +136,7 @@ def get_referral_status():
 def stream_referral_updates():
     email = request.args.get("email")
     if not email:
-        return jsonify(success=False, error="No email provided"), 400
+        return jsonify({"error": "No email provided"}), 400
     return Response(stream_with_context(event_stream(email)), content_type="text/event-stream")
 
 def event_stream(email):
