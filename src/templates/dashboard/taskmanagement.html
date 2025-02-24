@@ -389,7 +389,7 @@ Management{% endblock %} {% block content %}
     document.getElementById("task-management").style.display = "block";
 
     // Load and display default tasks
-    fetch("{{ url_for('static', filename='data/default_tasks.json') }}")
+    fetch("{{ url_for('static', filename='defaultData/default_tasks.json') }}")
       .then((response) => response.json())
       .then((defaultTasks) => {
         const taskList = document.getElementById("task-list");
