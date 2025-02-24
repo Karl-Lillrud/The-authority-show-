@@ -84,7 +84,7 @@ def update_team_member(team_id):
             "Email": data.get("email", "").strip(),
             "Phone": data.get("phone", "").strip()
         }
-        result = collection.database.Team.update_one({"_id": team_id}, {"$set": update_fields})
+        result = collection.database.Teams.update_one({"_id": team_id}, {"$set": update_fields})
         if result.modified_count == 0:
             return jsonify({"error": "Team member not found or no changes made"}), 404
         return jsonify({"message": "Team member updated successfully"}), 200
@@ -104,7 +104,7 @@ def delete_team(team_id):
             return jsonify({"error": "Team not found"}), 404
         
         # Then, remove any references to this team in the UserTeams collection
-        result_user_team = collection.database.UserTeams.delete_many({"teamId": team_id})
+        result_user_team = collection.database.Teams.delete_many({"teamId": team_id})
         
         if result_user_team.deleted_count > 0: # If any usertoteam associations were removed
             print(f"🧹 Removed {result_user_team.deleted_count} user-team associations.")
