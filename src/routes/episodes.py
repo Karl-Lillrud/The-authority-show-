@@ -22,3 +22,14 @@ def count_episodes_by_guest(guest_id):
         return jsonify({"count": count}), 200
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+
+
+@episodes_bp.route("/episodes/get_episodes_by_guest/<guest_id>", methods=["GET"])
+def get_episodes_by_guest(guest_id):
+    try:
+        episodes = list(database.episodes.find({"guestId": guest_id}))
+        for episode in episodes:
+            episode["_id"] = str(episode["_id"])
+        return jsonify({"episodes": episodes}), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500

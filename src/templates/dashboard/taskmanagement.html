@@ -93,9 +93,6 @@ Management{% endblock %} {% block content %}
           <button class="dropbtn" onclick="viewEpisodes()">
             View Episodes
           </button>
-          <div class="dropdown-content" id="episode-dropdown">
-            <!-- Episodes will be dynamically populated here -->
-          </div>
         </div>
       </div>
     </div>
@@ -382,6 +379,7 @@ Management{% endblock %} {% block content %}
   // Define the selectGuest function
   window.selectGuest = function (guestId, guestName, guestImage) {
     document.getElementById("selected-guest").textContent = guestName;
+    document.getElementById("selected-guest").dataset.guestId = guestId; // Set guestId
     const guestImageElement = document.getElementById("selected-guest-image");
     guestImageElement.src = guestImage;
     guestImageElement.style.display = "block";
@@ -416,6 +414,62 @@ Management{% endblock %} {% block content %}
       });
   };
 
+  window.viewEpisodes = async function () {
+    const guestId = document.getElementById("selected-guest").dataset.guestId;
+    const episodes = await fetchEpisodes(guestId);
+    const episodesList = document.getElementById("episodes-list");
+    episodesList.innerHTML = ""; // Clear existing episodes
+
+    if (episodes.length === 0) {
+      let noEpisodesItem = document.createElement("p");
+      noEpisodesItem.textContent = "No episodes found";
+      episodesList.appendChild(noEpisodesItem);
+    } else {
+      episodes.forEach((episode) => {
+        let episodeItem = document.createElement("a");
+        episodeItem.href = "#";
+        episodeItem.textContent = episode.title;
+        episodeItem.onclick = async (event) => {
+          event.preventDefault();
+          await viewEpisodeTasks(episode._id);
+        };
+        episodesList.appendChild(episodeItem);
+      });
+    }
+
+    document.getElementById("episodes-popup").style.display = "flex";
+  };
+
+  window.viewEpisodeTasks = async function (episodeId) {
+    const tasks = await fetchEpisodeTasks(episodeId);
+    const taskList = document.getElementById("task-list");
+    taskList.innerHTML = ""; // Clear existing tasks
+
+    if (tasks.length === 0) {
+      let noTasksItem = document.createElement("li");
+      noTasksItem.classList.add("task-item");
+      noTasksItem.textContent = "No tasks found";
+      taskList.appendChild(noTasksItem);
+    } else {
+      tasks.forEach((task) => {
+        let li = document.createElement("li");
+        li.classList.add("task-item");
+        li.innerHTML = `
+          <div class="task-details">
+            <span class="task-name">${task.taskname}</span>
+            <div class="task-actions">
+              <button class="edit-btn" onclick="editTask('${task._id}')">Edit</button>
+              <button class="delete-btn" onclick="deleteTask('${task._id}')">Delete</button>
+            </div>
+          </div>
+        `;
+        taskList.appendChild(li);
+      });
+    }
+
+    document.getElementById("episodes-popup").style.display = "none";
+  };
+
   window.openTaskModal = function () {
     document.getElementById("task-modal").style.display = "flex";
   };
@@ -444,6 +498,10 @@ Management{% endblock %} {% block content %}
 
   window.closeDefaultTasksPopup = function () {
     document.getElementById("default-tasks-popup").style.display = "none";
+  };
+
+  window.closeEpisodesPopup = function () {
+    document.getElementById("episodes-popup").style.display = "none";
   };
 </script>
 {% endblock %}

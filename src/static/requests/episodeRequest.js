@@ -1,17 +1,38 @@
 export async function fetchEpisodes(guestId) {
   try {
     const response = await fetch(`/episodes/get_episodes_by_guest/${guestId}`);
-    const data = await response.json();
+    if (response.status === 404) {
+      console.error("Endpoint not found:", response.url);
+      alert("Failed to fetch episodes: Endpoint not found.");
+      return [];
+    }
+
+    const text = await response.text();
+    let data;
+
+    try {
+      data = JSON.parse(text);
+    } catch (error) {
+      console.error("Failed to parse JSON:", text);
+      alert("Failed to fetch episodes: Invalid JSON response.");
+      return [];
+    }
 
     if (response.ok) {
       return data.episodes;
-    } else {
+    } else if (data.error) {
       console.error("Failed to fetch episodes:", data.error);
       alert("Failed to fetch episodes: " + data.error);
+      return [];
+    } else {
+      console.error("Unexpected response:", data);
+      alert("Unexpected response while fetching episodes.");
+      return [];
     }
   } catch (error) {
     console.error("Error fetching episodes:", error);
     alert("Failed to fetch episodes.");
+    return [];
   }
 }
 
@@ -24,9 +45,12 @@ export async function viewEpisodeTasks(episodeId) {
 
     if (response.ok) {
       return data.tasks;
-    } else {
+    } else if (data.error) {
       console.error("Failed to fetch tasks:", data.error);
       alert("Failed to fetch tasks: " + data.error);
+    } else {
+      console.error("Unexpected response:", data);
+      alert("Unexpected response while fetching tasks.");
     }
   } catch (error) {
     console.error("Error fetching tasks:", error);
@@ -50,9 +74,12 @@ export async function addTasksToEpisode(episodeId, guestId, tasks) {
     if (response.ok) {
       alert("Tasks added to episode successfully!");
       return result;
-    } else {
+    } else if (result.error) {
       console.error("Error adding tasks to episode:", result.error);
       alert("Error: " + result.error);
+    } else {
+      console.error("Unexpected response:", result);
+      alert("Unexpected response while adding tasks to episode.");
     }
   } catch (error) {
     console.error("Error adding tasks to episode:", error);
@@ -67,9 +94,12 @@ export async function fetchEpisodeCountByGuest(guestId) {
 
     if (response.ok) {
       return data.count;
-    } else {
+    } else if (data.error) {
       console.error("Failed to fetch episode count:", data.error);
       alert("Failed to fetch episode count: " + data.error);
+    } else {
+      console.error("Unexpected response:", data);
+      alert("Unexpected response while fetching episode count.");
     }
   } catch (error) {
     console.error("Error fetching episode count:", error);
