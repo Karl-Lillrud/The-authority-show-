@@ -30,15 +30,14 @@ def add_user_to_team():
         except ValidationError as err:
             return jsonify({"error": "Invalid data", "details": err.messages}), 400
 
-        # Generate a unique string-based _id (UUID)
         user_to_team_id = str(uuid4())
-
-        # Create the user-to-team relationship document with the string _id
+  
         user_to_team_item = {
-            "_id": user_to_team_id,  # Set the _id to the generated UUID
-            "userId": validated_data["userId"],  # User ID
-            "teamId": validated_data["teamId"],  # Team ID
-            "assignedAt": datetime.utcnow(),     # Timestamp when the user was added to the team
+            "_id": user_to_team_id,  
+            "userId": validated_data["userId"],  
+            "teamId": validated_data["teamId"],  
+            "role": validated_data["role"],  
+            "assignedAt": datetime.utcnow(), 
         }
 
         # Insert the user-team relationship into the database
@@ -83,7 +82,7 @@ def remove_user_from_team():
             return jsonify({"error": "Invalid data", "details": err.messages}), 400
 
         # Check if the user is actually assigned to this team
-        user_team_relation = collection.database.UserTeams.find_one({
+        user_team_relation = collection.database.UsersToTeams.find_one({
             "userId": validated_data["userId"],  # The user to be removed
             "teamId": validated_data["teamId"],  # From the specified team
         })
@@ -92,7 +91,7 @@ def remove_user_from_team():
             return jsonify({"error": "User not found in this team."}), 404
 
         # Delete the user-team relationship document
-        result = collection.database.UserTeams.delete_one({
+        result = collection.database.UsersToTeams.delete_one({
             "userId": validated_data["userId"],  # The user to be removed
             "teamId": validated_data["teamId"],  # From the specified team
         })
@@ -109,5 +108,72 @@ def remove_user_from_team():
     except Exception as e:
         print(f"❌ ERROR: {e}")
         return jsonify({"error": f"Failed to remove user from team: {str(e)}"}), 500
+
+    
+@usertoteam_bp.route("/get_teams_members/<team_id>", methods=["GET"])
+def get_team_members(team_id):
+    if not hasattr(g, "user_id") or not g.user_id:
+        return jsonify({"error": "Unauthorized"}), 401
+
+    try:
+        # Find all users linked to the given teamId
+        team_members = list(collection.database.UsersToTeams.find({"teamId": team_id}, {"_id": 0}))
+
+        if not team_members:
+            return jsonify({"message": "No members found for this team"}), 404
+
+        # Fetch user details for each member
+        members_details = []
+        for member in team_members:
+            user_id = member["userId"]
+            user_details = collection.database.Users.find_one({"_id": user_id}, {"_id": 0})  # Assuming Users collection holds user details
+            
+            if user_details:
+                # Add role and other details to the user data
+                user_details["role"] = member.get("role", "member")  # Default to 'member' if no role is assigned
+                members_details.append(user_details)
+
+        return jsonify({"teamId": team_id, "members": members_details}), 200
+
+    except Exception as e:
+        print(f"❌ ERROR: {e}")
+        return jsonify({"error": f"Failed to retrieve team members: {str(e)}"}), 500
+
+    
+@usertoteam_bp.route("/get_team_member/<team_id>/<user_id>", methods=["GET"])
+def get_team_member(team_id, user_id):
+    if not hasattr(g, "user_id") or not g.user_id:
+        return jsonify({"error": "Unauthorized"}), 401
+
+    try:
+        # Find the specific team member in UserToTeams collection
+        team_member = collection.database.UsersToTeams.find_one(
+            {"teamId": team_id, "userId": user_id},
+            {"_id": 0}  # Exclude MongoDB ObjectId if necessary
+        )
+
+        if not team_member:
+            return jsonify({"message": "Team member not found"}), 404
+
+        # Fetch user details from the Users collection using userId
+        user_details = collection.database.Users.find_one(
+            {"userId": user_id},
+            {"_id": 0}  # Exclude MongoDB ObjectId if necessary
+        )
+
+        if not user_details:
+            return jsonify({"error": "User details not found"}), 404
+
+        # Merge team member and user details
+        team_member["userDetails"] = user_details
+
+        return jsonify({"teamMember": team_member}), 200
+
+    except Exception as e:
+        print(f"❌ ERROR: {e}")
+        return jsonify({"error": f"Failed to retrieve team member: {str(e)}"}), 500
+
+
+
     
     
