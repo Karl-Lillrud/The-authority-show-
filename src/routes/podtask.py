@@ -7,7 +7,7 @@ from Entities.podtasks import PodtaskSchema
 # Define Blueprint
 podtask_bp = Blueprint("podtask_bp", __name__)
 
-@podtask_bp.route("/register_podtask", methods=["POST"])
+@podtask_bp.route("/register_podtasks", methods=["POST"])
 def register_podtask():
     if not g.user_id:
         return jsonify({"error": "Unauthorized"}), 401
@@ -76,13 +76,13 @@ def register_podtask():
             "assignedAt": validated_data.get("assignedAt"),
             "dueDate": validated_data.get("dueDate"),
             "priority": validated_data.get("priority"),
-            "userid": validated_data["userid"],
+            "userid": validated_data["userid"], #not neccessary, Lazy way to test user session correctness #can be removed
             "created_at": validated_data["created_at"],
         }
 
         # Insert the podtask into the database
         print("📝 Inserting podtask into database:", podtask_document)
-        result = collection.database["Podtask"].insert_one(podtask_document)
+        result = collection.database["Podtasks"].insert_one(podtask_document)
 
         if result.inserted_id:
             print("✅ Podtask registered successfully!")
@@ -97,7 +97,6 @@ def register_podtask():
         print(f"❌ ERROR: {e}")
         return jsonify({"error": f"Failed to register podtask: {str(e)}"}), 500
 
-
     
 @podtask_bp.route("/get_podtasks", methods=["GET"])
 def get_podtasks():
@@ -106,10 +105,10 @@ def get_podtasks():
 
     try:
         user_id = str(g.user_id)  
-        podtasks = list(collection.database.Podtask.find({"userid": user_id}))
+        podtasks = list(collection.database.Podtasks.find({"userid": user_id}))
 
         for task in podtasks:
-            task["_id"] = str(task["_id"])
+            task["_id"] = str(task["_id"])  # Ensure IDs are converted to string
 
         return jsonify({"podtasks": podtasks}), 200
 
@@ -117,14 +116,23 @@ def get_podtasks():
         print(f"❌ ERROR: {e}")
         return jsonify({"error": f"Failed to fetch tasks: {str(e)}"}), 500
     
-@podtask_bp.route("/delete_podtask/<task_id>", methods=["DELETE"])
+
+@podtask_bp.route("/delete_podtasks/<task_id>", methods=["DELETE"])
 def delete_podtask(task_id):
     if not g.user_id:
         return jsonify({"error": "Unauthorized"}), 401
 
     try:
         user_id = str(g.user_id)
-        task = collection.database.Podtask.find_one({"_id": task_id})
+
+        # Debug: Print the task_id being passed in the route
+        print(f"Deleting task with ID: {task_id}")
+
+        # Fetch task using string task_id, assuming task_id is a string in the database
+        task = collection.database.Podtasks.find_one({"_id": task_id})  # Use "id" instead of "_id"
+        
+        # Debug: Check if the task was found
+        print(f"Found task: {task}")
 
         if not task:
             return jsonify({"error": "Task not found"}), 404
@@ -132,7 +140,9 @@ def delete_podtask(task_id):
         if task["userid"] != user_id:
             return jsonify({"error": "Permission denied"}), 403
 
-        result = collection.database.Podtask.delete_one({"_id": task_id})
+        # Debug: Log the deletion process
+        result = collection.database.Podtasks.delete_one({"_id": task_id})  # Use string ID for deletion
+        print(f"Delete result: {result.deleted_count}")
 
         if result.deleted_count == 1:
             return jsonify({"message": "Task deleted successfully"}), 200
@@ -142,6 +152,9 @@ def delete_podtask(task_id):
     except Exception as e:
         print(f"❌ ERROR: {e}")
         return jsonify({"error": f"Failed to delete task: {str(e)}"}), 500
+
+
+
     
 @podtask_bp.route("/update_podtask/<task_id>", methods=["PUT"])
 def update_podtask(task_id):
