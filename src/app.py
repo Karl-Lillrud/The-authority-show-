@@ -19,7 +19,6 @@ from routes.pod_management import dashboardmanagement_bp
 from routes.podtask import podtask_bp
 from routes.team import team_bp
 from routes.guest import guest_bp
-from routes.account import account_bp
 from dotenv import load_dotenv
 import os
 import logging
@@ -58,7 +57,6 @@ app.register_blueprint(dashboardmanagement_bp)
 app.register_blueprint(podtask_bp)
 app.register_blueprint(team_bp)
 app.register_blueprint(guest_bp)
-app.register_blueprint(account_bp)
 
 APP_ENV = os.getenv("APP_ENV", "production")  # Default to production
 
@@ -76,13 +74,9 @@ logger = logging.getLogger(__name__)
 def load_user():
     g.user_id = session.get("user_id")
     logger.info(f"Request to {request.path} by user {g.user_id}")
-    if g.user_id and request.endpoint not in ("static", "signin_bp.signin"):
-        session.permanent = True
-    if request.cookies.get("remember_me") == "true" and request.path == "/":
-        return redirect("/dashboard")
 
 
 if __name__ == "__main__":
     app.run(
-        host="0.0.0.0", port=8000, debug=True
+        host="0.0.0.0", port=8000, debug=False
     )  # Ensure the port matches your request URL

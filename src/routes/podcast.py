@@ -31,17 +31,22 @@ def podcast():
         return jsonify({"error": "Invalid Content-Type. Expected application/json"}), 415
 
     try:
-        # 🔍 Fetch account ID from MongoDB (assuming `id` is stored as a STRING, not ObjectId)
+        # 🔍 Fetch the account document from MongoDB for the logged-in user
         user_account = collection.database.Accounts.find_one({"userId": g.user_id})
         if not user_account:
             return jsonify({"error": "No account associated with this user"}), 403
 
-        account_id = user_account["id"]  # Keep as string
+        # Fetch the account ID that the user already has (do not override with a new one)
+        if "id" in user_account:
+            account_id = user_account["id"]
+        else:
+            account_id = str(user_account["_id"])
         print(f"🧩 Found account {account_id} for user {g.user_id}")
 
-        # Get the data from the request
+        # Get the data from the request and inject the accountId from the user's account
         data = request.get_json()
         print("📩 Received Data:", data)
+        data["accountId"] = account_id  # Populate the required field with the fetched accountId
 
         # Validate data using PodcastSchema
         schema = PodcastSchema()
@@ -51,19 +56,26 @@ def podcast():
 
         validated_data = schema.load(data)
 
-        # Ensure `accountId` exists and belongs to the user
-        account = collection.database.Accounts.find_one({"id": account_id, "userId": g.user_id})
+        # (Optional) Double-check that the account exists and belongs to the user
+        account_query = {"userId": g.user_id}
+        if "id" in user_account:
+            account_query["id"] = account_id
+        else:
+            account_query["_id"] = user_account["_id"]
+        account = collection.database.Accounts.find_one(account_query)
         if not account:
-            return jsonify({"error": "Invalid account ID or you do not have permission to add a podcast to this account."}), 403
+            return jsonify({
+                "error": "Invalid account ID or you do not have permission to add a podcast to this account."
+            }), 403
 
-        # Generate unique podcast ID
+        # Generate a unique podcast ID
         podcast_id = str(uuid.uuid4())
 
-        # Create podcast document
+        # Create the podcast document with the accountId from the account document
         podcast_item = {
             "_id": podcast_id,
             "teamId": validated_data.get("teamId"),
-            "accountId": account_id,  # Use the fetched string accountId
+            "accountId": account_id,  # Use the fetched accountId
             "podName": validated_data.get("podName"),
             "ownerName": validated_data.get("ownerName"),
             "hostName": validated_data.get("hostName"),
@@ -80,7 +92,7 @@ def podcast():
             "created_at": datetime.now(timezone.utc),
         }
 
-        # Insert into database
+        # Insert the podcast document into the database
         print("📝 Inserting podcast into database:", podcast_item)
         result = collection.database.Podcasts.insert_one(podcast_item)
 
@@ -97,6 +109,7 @@ def podcast():
     except Exception as e:
         print(f"❌ ERROR: {e}")
         return jsonify({"error": f"Failed to add podcast: {str(e)}"}), 500
+
 
 
 
