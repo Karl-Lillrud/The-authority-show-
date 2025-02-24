@@ -51,7 +51,9 @@ def register():
         user_document = {
             "_id": user_id,  # Explicitly set '_id' to string UUID
             "email": email,
-            "passwordHash": hashed_password,  # Hashed for security
+
+            "passwordHash": hashed_password,
+
             "createdAt": datetime.utcnow().isoformat(),
         }
 

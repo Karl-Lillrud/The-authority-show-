@@ -41,6 +41,7 @@ def signin():
 
     session["user_id"] = str(user["_id"])
     session["email"] = user["email"]
+
     session.permanent = remember
 
     response = jsonify({"message": "Login successful", "redirect_url": "dashboard"})
