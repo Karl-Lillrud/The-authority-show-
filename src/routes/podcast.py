@@ -112,27 +112,34 @@ def podcast():
 
 
 
-
-    
 @podcast_bp.route("/get_podcast", methods=["GET"])
 def get_podcast():
-    if not g.user_id:
+    if not hasattr(g, "user_id") or not g.user_id:
         return jsonify({"error": "Unauthorized"}), 401
 
     try:
         user_id = str(g.user_id)
 
-        # Find all accounts owned by the user
-        user_accounts = list(collection.database.Account.find({"userId": user_id}, {"id": 1}))  # Get only `id`
-        user_account_ids = [account["id"] for account in user_accounts]
+        # Find all accounts owned by the user.
+        # Using "Accounts" to be consistent with the POST endpoint.
+        user_accounts = list(
+            collection.database.Accounts.find({"userId": user_id}, {"id": 1, "_id": 1})
+        )
+        # Extract the account ids, preferring the custom "id" if available.
+        user_account_ids = [
+            account["id"] if "id" in account else str(account["_id"])
+            for account in user_accounts
+        ]
 
         if not user_account_ids:
-            return jsonify({"podcast": []}), 200  # No accounts, return empty list
+            return jsonify({"podcast": []}), 200  # No accounts found; return empty list
 
-        # Find podcasts linked to any of the user's accounts
-        podcasts = list(collection.database.Podcasts.find({"accountId": {"$in": user_account_ids}}))
+        # Find podcasts linked to any of the user's accounts.
+        podcasts = list(
+            collection.database.Podcasts.find({"accountId": {"$in": user_account_ids}})
+        )
 
-        # Convert `_id` fields to strings
+        # Convert MongoDB ObjectId fields to strings for JSON serialization.
         for podcast in podcasts:
             podcast["_id"] = str(podcast["_id"])
 
@@ -141,29 +148,38 @@ def get_podcast():
     except Exception as e:
         print(f"❌ ERROR: {e}")
         return jsonify({"error": f"Failed to fetch podcasts: {str(e)}"}), 500
+
     
 @podcast_bp.route("/get_podcast/<podcast_id>", methods=["GET"])
 def get_podcast_by_id(podcast_id):
-    if not g.user_id:
+    if not hasattr(g, "user_id") or not g.user_id:
         return jsonify({"error": "Unauthorized"}), 401
 
     try:
         user_id = str(g.user_id)
 
-        # Find all accounts owned by the user
-        user_accounts = list(collection.database.Accounts.find({"userId": user_id}, {"id": 1}))
-        user_account_ids = [account["id"] for account in user_accounts]
+        # Find all accounts owned by the user, retrieving both "id" and "_id" fields.
+        user_accounts = list(
+            collection.database.Accounts.find({"userId": user_id}, {"id": 1, "_id": 1})
+        )
+        user_account_ids = [
+            account["id"] if "id" in account else str(account["_id"])
+            for account in user_accounts
+        ]
 
         if not user_account_ids:
             return jsonify({"error": "No accounts found for user"}), 403
 
-        # Find the podcast by ID and check if it belongs to one of the user's accounts
-        podcast = collection.database.Podcasts.find_one({"id": podcast_id, "accountId": {"$in": user_account_ids}})
+        # Find the podcast by its _id (not "id") and ensure it belongs to one of the user's accounts.
+        podcast = collection.database.Podcasts.find_one({
+            "_id": podcast_id,
+            "accountId": {"$in": user_account_ids}
+        })
 
         if not podcast:
             return jsonify({"error": "Podcast not found or unauthorized"}), 404
 
-        # Convert `_id` to string for JSON compatibility
+        # Convert MongoDB's ObjectId to a string for JSON compatibility.
         podcast["_id"] = str(podcast["_id"])
 
         return jsonify({"podcast": podcast}), 200
@@ -173,36 +189,48 @@ def get_podcast_by_id(podcast_id):
         return jsonify({"error": f"Failed to fetch podcast: {str(e)}"}), 500
 
 
+
     
 @podcast_bp.route("/delete_podcast/<podcast_id>", methods=["DELETE"])
 def delete_podcast(podcast_id):
-    if not g.user_id:
+    if not hasattr(g, "user_id") or not g.user_id:
         return jsonify({"error": "Unauthorized"}), 401
 
     try:
         user_id = str(g.user_id)
 
-        # Find all accounts owned by the user
-        user_accounts = list(collection.database.Account.find({"userId": user_id}, {"id": 1}))  # Get only `id`
-        user_account_ids = [account["id"] for account in user_accounts]
+        # Find all accounts owned by the user (fetching both "id" and "_id")
+        user_accounts = list(
+            collection.database.Accounts.find({"userId": user_id}, {"id": 1, "_id": 1})
+        )
+        user_account_ids = [
+            account["id"] if "id" in account else str(account["_id"])
+            for account in user_accounts
+        ]
 
         if not user_account_ids:
             return jsonify({"error": "No accounts found for user"}), 403
 
-        # Check if the podcast belongs to one of the user's accounts
-        podcast = collection.database.Podcast.find_one({"id": podcast_id, "accountId": {"$in": user_account_ids}})
+        # Check if the podcast belongs to one of the user's accounts using _id
+        podcast = collection.database.Podcasts.find_one({
+            "_id": podcast_id,
+            "accountId": {"$in": user_account_ids}
+        })
 
         if not podcast:
             return jsonify({"error": "Podcast not found or unauthorized"}), 404
 
         # Delete the podcast
-        collection.database.Podcasts.delete_one({"id": podcast_id})
-
-        return jsonify({"message": "Podcast deleted successfully"}), 200
+        result = collection.database.Podcasts.delete_one({"_id": podcast_id})
+        if result.deleted_count == 1:
+            return jsonify({"message": "Podcast deleted successfully"}), 200
+        else:
+            return jsonify({"error": "Failed to delete podcast"}), 500
 
     except Exception as e:
         print(f"❌ ERROR: {e}")
         return jsonify({"error": f"Failed to delete podcast: {str(e)}"}), 500
+
 
 
     
