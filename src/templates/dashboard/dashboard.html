@@ -695,7 +695,8 @@ document.addEventListener("DOMContentLoaded", function () {
     async function updateCredits() {
         try {
             console.log("🔄 Fetching updated credits...");
-            const response = await fetch(`/credits/${encodeURIComponent(userEmail)}`);
+            const response = await fetch(`/credits?email=${encodeURIComponent(userEmail)}`);
+
             const data = await response.json();
 
             if (data.credits !== undefined) {
