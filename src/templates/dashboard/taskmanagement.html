@@ -222,7 +222,8 @@ Management{% endblock %} {% block content %}
     fetchDefaultTasks,
     deleteDefaultTask,
     addSelectedDefaultTasks,
-    addTasksToEpisode
+    addTasksToEpisode,
+    fetchLocalDefaultTasks
   } from "{{ url_for('static', filename='requests/podtaskRequest.js') }}";
   import {
     fetchEpisodes,
@@ -423,29 +424,22 @@ Management{% endblock %} {% block content %}
     document.getElementById("task-modal").style.display = "none";
   };
 
-  window.openDefaultTasksPopup = function () {
+  window.openDefaultTasksPopup = async function () {
     document.getElementById("default-tasks-popup").style.display = "flex";
 
-    fetch("{{ url_for('static', filename='data/default_tasks.json') }}")
-      .then((response) => response.json())
-      .then((defaultTasks) => {
-        const defaultTasksList = document.getElementById("default-tasks-list");
-        defaultTasksList.innerHTML = ""; // Clear existing tasks
+    const defaultTasks = await fetchLocalDefaultTasks();
+    const defaultTasksList = document.getElementById("default-tasks-list");
+    defaultTasksList.innerHTML = ""; // Clear existing tasks
 
-        defaultTasks.forEach((task, index) => {
-          let div = document.createElement("div");
-          div.classList.add("default-task-item");
-          div.innerHTML = `
-            <span>${task}</span>
-            <input type="checkbox" id="default-task-${index}" value="${task}">
-          `;
-          defaultTasksList.appendChild(div);
-        });
-      })
-      .catch((error) => {
-        console.error("Error loading default tasks:", error);
-        alert("Failed to load default tasks.");
-      });
+    defaultTasks.forEach((task, index) => {
+      let div = document.createElement("div");
+      div.classList.add("default-task-item");
+      div.innerHTML = `
+        <span>${task}</span>
+        <input type="checkbox" id="default-task-${index}" value="${task}">
+      `;
+      defaultTasksList.appendChild(div);
+    });
   };
 
   window.closeDefaultTasksPopup = function () {
