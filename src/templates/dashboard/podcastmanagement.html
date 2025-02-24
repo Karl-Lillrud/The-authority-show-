@@ -29,28 +29,28 @@
 
         const data = { podName, podRss, podHost, guestUrl, podEmail, socialMedia };
 
-        fetch("/register_podcast", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(data),
-        })
-        .then(response => response.json())
-        .then(data => {
-            console.log("Error" + data);
-            if (data.error) {
-                showAlert(`Error: ${data.error}`, "red");
-            } else {
-                showAlert("Podcast registered successfully!", "green");
-                setTimeout(() => {
-                    window.location.href = data.redirect_url;
-                }, 2500);
-            }
-        })
-        .catch(error => {
-            
-            showAlert("There was an error with the registration process.", "red");
-        });
+        fetch("/add_podcast", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+      })
+      .then(response => response.json())
+      .then(data => {
+        if (data.error) {
+          showAlert(`Error: ${data.error}`, "red");
+        } else {
+          showAlert("Podcast added successfully!", "green");
+          setTimeout(() => {
+            window.location.href = data.redirect_url;
+          }, 2500);
+        }
+      })
+      .catch(error => {
+        console.error("Error:", error);
+        showAlert("There was an error with the registration process.", "red");
+      });
     });
+
 
     function showAlert(message, color) {
         const alertBox = document.getElementById("custom-alert");
