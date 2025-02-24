@@ -117,6 +117,8 @@
   font-size: 0.9rem;
   color: var(--text-color-light);
   transition: background-color 0.3s ease, box-shadow 0.3s ease;
+
+  height: 50px; /* Increase height */
 }
 
 .add-tasks-dropdown .dropbtn:hover {
@@ -346,15 +348,85 @@
 }
 
 .task-actions button {
-  padding: 5px 10px;
-  margin-right: 10px;
-  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  outline: none;
   cursor: pointer;
-  border-radius: 3px;
+  width: 80px; /* Adjusted width */
+  height: 30px; /* Adjusted height */
+  background-image: linear-gradient(to top, #d8d9db 0%, #fff 80%, #fdfdfd 100%);
+  border-radius: 0; /* Make buttons square */
+  border: 1px solid #8f9092;
+  font-family: "Source Sans Pro", sans-serif;
+  font-size: 14px;
+  font-weight: 600;
+  color: #606060;
+  text-shadow: 0 1px #fff;
 }
 
 .task-actions button:hover {
-  /* ...existing code... */
+  box-shadow: 0 4px 3px 1px #fcfcfc, 0 6px 8px #d6d7d9, 0 -4px 4px #cecfd1,
+    0 -6px 4px #fefefe, inset 0 0 3px 3px #cecfd1;
+}
+
+.task-actions button:active {
+  box-shadow: 0 4px 3px 1px #fcfcfc, 0 6px 8px #d6d7d9, 0 -4px 4px #cecfd1,
+    0 -6px 4px #fefefe, inset 0 0 5px 3px #999, inset 0 0 30px #aaa;
+}
+
+.task-actions button:focus {
+  box-shadow: 0 4px 3px 1px #fcfcfc, 0 6px 8px #d6d7d9, 0 -4px 4px #cecfd1,
+    0 -6px 4px #fefefe, inset 0 0 5px 3px #999, inset 0 0 30px #aaa;
+}
+
+#load-default-btn,
+#add-task-btn,
+.view-episode-dropdown .dropbtn,
+.add-tasks-dropdown .dropbtn,
+.edit-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  outline: none;
+  cursor: pointer;
+  width: auto; /* Make buttons as wide as their text content */
+  padding: 0.5em 1em; /* Adjust padding if necessary */
+  background-image: linear-gradient(to top, #d8d9db 0%, #fff 80%, #fdfdfd 100%);
+  border-radius: 0; /* Make buttons square */
+  border: 1px solid #8f9092;
+  font-family: "Source Sans Pro", sans-serif;
+  font-size: 14px;
+  font-weight: 600;
+  color: #606060;
+  text-shadow: 0 1px #fff;
+}
+
+#load-default-btn:hover,
+#add-task-btn:hover,
+.view-episode-dropdown .dropbtn:hover,
+.add-tasks-dropdown .dropbtn:hover,
+.edit-btn:hover {
+  box-shadow: 0 4px 3px 1px #fcfcfc, 0 6px 8px #d6d7d9, 0 -4px 4px #cecfd1,
+    0 -6px 4px #fefefe, inset 0 0 3px 3px #cecfd1;
+}
+
+#load-default-btn:active,
+#add-task-btn:active,
+.view-episode-dropdown .dropbtn:active,
+.add-tasks-dropdown .dropbtn:active,
+.edit-btn:active {
+  box-shadow: 0 4px 3px 1px #fcfcfc, 0 6px 8px #d6d7d9, 0 -4px 4px #cecfd1,
+    0 -6px 4px #fefefe, inset 0 0 5px 3px #999, inset 0 0 30px #aaa;
+}
+
+#load-default-btn:focus,
+#add-task-btn:focus,
+.view-episode-dropdown .dropbtn:focus,
+.add-tasks-dropdown .dropbtn:focus,
+.edit-btn:focus {
+  box-shadow: 0 4px 3px 1px #fcfcfc, 0 6px 8px #d6d7d9, 0 -4px 4px #cecfd1,
+    0 -6px 4px #fefefe, inset 0 0 5px 3px #999, inset 0 0 30px #aaa;
 }
 
 .task-item {
@@ -364,45 +436,6 @@
   padding: 10px;
   border-bottom: 1px solid #ddd;
   width: 100%;
-}
-
-button {
-  padding: var(--spacing-sm) var(--spacing-md);
-  margin-left: var(--spacing-sm);
-  border: none;
-  border-radius: var(--radius-small);
-  cursor: pointer;
-  font-size: 0.8rem;
-  color: #666865;
-}
-.edit-btn {
-  background: darkgreen;
-  color: white;
-  box-shadow: -2px -2px 4px rgba(255, 255, 255, 0.6),
-    2px 2px 4px rgba(0, 0, 0, 0.15);
-  transition: background-color 0.3s ease, box-shadow 0.3s ease,
-    transform 0.3s ease;
-}
-.edit-btn:hover {
-  background-color: darkgreen;
-  box-shadow: -2px -2px 6px rgba(255, 255, 255, 0.6),
-    2px 2px 6px rgba(0, 0, 0, 0.15);
-  transform: scale(1.1);
-}
-
-.delete-btn {
-  background: gray;
-  color: #ffffff;
-  box-shadow: -2px -2px 4px rgba(255, 255, 255, 0.6),
-    2px 2px 4px rgba(0, 0, 0, 0.15);
-  transition: background-color 0.3s ease, box-shadow 0.3s ease,
-    transform 0.3s ease;
-}
-.delete-btn:hover {
-  background-color: darkgray;
-  box-shadow: -2px -2px 6px rgba(255, 255, 255, 0.6),
-    2px 2px 6px rgba(0, 0, 0, 0.15);
-  transform: scale(1.1);
 }
 
 .modal {
