@@ -236,21 +236,29 @@ def delete_podcast(podcast_id):
     
 @podcast_bp.route("/edit_podcast/<podcast_id>", methods=["PUT"])
 def edit_podcast(podcast_id):
-    if not g.user_id:
+    if not hasattr(g, "user_id") or not g.user_id:
         return jsonify({"error": "Unauthorized"}), 401
 
     try:
         user_id = str(g.user_id)
 
-        # Fetch all accounts owned by the user
-        user_accounts = list(collection.database.Account.find({"userId": user_id}, {"id": 1}))
-        user_account_ids = [account["id"] for account in user_accounts]
+        # Fetch all accounts owned by the user (retrieving both "id" and "_id")
+        user_accounts = list(
+            collection.database.Accounts.find({"userId": user_id}, {"id": 1, "_id": 1})
+        )
+        user_account_ids = [
+            account["id"] if "id" in account else str(account["_id"])
+            for account in user_accounts
+        ]
 
         if not user_account_ids:
             return jsonify({"error": "No accounts found for user"}), 403
 
-        # Find the podcast by ID and check if it belongs to one of the user's accounts
-        podcast = collection.database.Podcasts.find_one({"id": podcast_id, "accountId": {"$in": user_account_ids}})
+        # Find the podcast by its _id and ensure it belongs to one of the user's accounts
+        podcast = collection.database.Podcasts.find_one({
+            "_id": podcast_id,
+            "accountId": {"$in": user_account_ids}
+        })
 
         if not podcast:
             return jsonify({"error": "Podcast not found or unauthorized"}), 404
@@ -258,28 +266,32 @@ def edit_podcast(podcast_id):
         # Get new data from the request
         data = request.get_json()
 
-        # Validate data using PodcastSchema
-        schema = PodcastSchema(partial=True)  # Allow partial updates
+        # Validate data using PodcastSchema (allowing partial updates)
+        schema = PodcastSchema(partial=True)
         errors = schema.validate(data)
         if errors:
             return jsonify({"error": "Invalid data", "details": errors}), 400
 
-        # Prepare update data
+        # Prepare update data (ignoring keys with None values)
         update_data = {key: value for key, value in data.items() if value is not None}
 
-        # Update the podcast
-        result = collection.database.Podcast.update_one(
-            {"id": podcast_id},
+        if not update_data:
+            return jsonify({"message": "No update data provided"}), 200
+
+        # Update the podcast document
+        result = collection.database.Podcasts.update_one(
+            {"_id": podcast_id},
             {"$set": update_data}
         )
 
         if result.modified_count == 1:
             return jsonify({"message": "Podcast updated successfully"}), 200
         else:
-            return jsonify({"error": "No changes made to the podcast"}), 200
+            return jsonify({"message": "No changes made to the podcast"}), 200
 
     except Exception as e:
         print(f"❌ ERROR: {e}")
         return jsonify({"error": f"Failed to update podcast: {str(e)}"}), 500
+
 
 
