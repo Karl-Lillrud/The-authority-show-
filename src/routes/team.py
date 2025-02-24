@@ -68,3 +68,36 @@ def get_team_members():
     except Exception as e:
         print(f"❌ ERROR: {e}")
         return jsonify({"error": f"Failed to fetch team members: {str(e)}"}), 500
+
+@team_bp.route("/update_team/<team_id>", methods=["PUT"])
+def update_team_member(team_id):
+    if not g.user_id:
+        return jsonify({"error": "Unauthorized"}), 401
+    if request.content_type != "application/json":
+        return jsonify({"error": "Invalid Content-Type. Expected application/json"}), 415
+    try:
+        data = request.get_json()
+        update_fields = {
+            "Name": data.get("name", "").strip(),
+            "Role": data.get("role", "").strip(),
+            "Email": data.get("email", "").strip(),
+            "Phone": data.get("phone", "").strip()
+        }
+        result = collection.database.Team.update_one({"_id": team_id}, {"$set": update_fields})
+        if result.modified_count == 0:
+            return jsonify({"error": "Team member not found or no changes made"}), 404
+        return jsonify({"message": "Team member updated successfully"}), 200
+    except Exception as e:
+        return jsonify({"error": f"Failed to update team member: {str(e)}"}), 500
+
+@team_bp.route("/delete_team/<team_id>", methods=["DELETE"])
+def delete_team_member(team_id):
+    if not g.user_id:
+        return jsonify({"error": "Unauthorized"}), 401
+    try:
+        result = collection.database.Team.delete_one({"_id": team_id})
+        if result.deleted_count == 0:
+            return jsonify({"error": "Team member not found"}), 404
+        return jsonify({"message": "Team member deleted successfully"}), 200
+    except Exception as e:
+        return jsonify({"error": f"Failed to delete team member: {str(e)}"}), 500
