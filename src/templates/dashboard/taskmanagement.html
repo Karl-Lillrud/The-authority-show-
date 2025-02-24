@@ -82,7 +82,9 @@ Management{% endblock %} {% block content %}
         <button id="load-default-btn" onclick="openDefaultTasksPopup()">
           Add Default Tasks
         </button>
-        <button id="add-task-btn">+ Add Custom Task</button>
+        <button id="add-task-btn" onclick="openTaskModal()">
+          + Add Custom Task
+        </button>
       </div>
 
       <!-- Wrapper för att flytta Select Episode till höger -->
@@ -410,6 +412,14 @@ Management{% endblock %} {% block content %}
         console.error("Error loading default tasks:", error);
         alert("Failed to load default tasks.");
       });
+  };
+
+  window.openTaskModal = function () {
+    document.getElementById("task-modal").style.display = "flex";
+  };
+
+  window.closeModal = function () {
+    document.getElementById("task-modal").style.display = "none";
   };
 </script>
 {% endblock %}

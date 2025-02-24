@@ -269,7 +269,16 @@
 }
 
 .task-actions button {
-  padding: 5px 10px;
+  padding: 5px 10px; /* Task List Container */
+  #task-list {
+    list-style: georgian;
+    padding: 0;
+    width: 100%; /* Ensure the task list takes full width */
+    max-width: 1500px; /* Increase the max width */
+    margin: 0 auto;
+    max-height: 540px; /* Set maximum height for 13 tasks */
+  }
+
   margin-right: 10px;
   border: none;
   cursor: pointer;
@@ -300,7 +309,7 @@ button {
   color: #666865;
 }
 .edit-btn {
-  background: green; /* Green background */
+  background: darkgreen; /* Green background */
   color: white;
   box-shadow: -2px -2px 4px rgba(255, 255, 255, 0.6),
     2px 2px 4px rgba(0, 0, 0, 0.15);
