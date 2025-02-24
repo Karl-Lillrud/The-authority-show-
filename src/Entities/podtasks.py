@@ -2,8 +2,8 @@ from marshmallow import Schema, fields
 
 class PodtaskSchema(Schema):
     id = fields.Str()
-    podcastId = fields.Str(required=True)
-    name = fields.Str()
+    podcastId = fields.Str() #not required if they wanna create general tasks for all podcasts
+    name = fields.Str()      #Option is to select podcast to assign task to or not
     action = fields.List(fields.Str())
     dayCount = fields.Int()
     description = fields.Str()

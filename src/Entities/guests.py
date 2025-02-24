@@ -2,7 +2,7 @@ from marshmallow import Schema, fields
 
 class GuestSchema(Schema):
     id = fields.Str()
-    podcastId = fields.Str(required=True)
+    podcastId = fields.Str(required=True) #Guest should be linked to a podcast
     name = fields.Str(required=True)
     image = fields.Url()
     tags = fields.List(fields.Str())
