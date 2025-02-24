@@ -110,7 +110,9 @@ Management{% endblock %} {% block content %}
     <!-- Add Tasks to Episode and Back Button Container -->
     <div class="add-tasks-button-container">
       <div class="dropdown add-tasks-dropdown">
-        <button class="dropbtn">Add Tasks To Episode</button>
+        <button class="dropbtn" onclick="openAddTasksEpisodePopup()">
+          Add Tasks To Episode
+        </button>
         <div class="dropdown-content" id="add-tasks-episode-dropdown"></div>
         <!-- Episodes will be dynamically populated here -->
       </div>
@@ -119,8 +121,8 @@ Management{% endblock %} {% block content %}
 </div>
 
 <!-- Task Modal -->
-<div id="task-modal" class="modal">
-  <div class="modal-content">
+<div id="task-modal" class="popup" style="display: none">
+  <div class="popup-content">
     <span class="close-btn" onclick="closeModal()">&times;</span>
     <h2 id="modal-title">Create New Task</h2>
 
@@ -173,7 +175,7 @@ Management{% endblock %} {% block content %}
 
 <!-- Default Tasks Popup -->
 <div id="default-tasks-popup" class="popup" style="display: none">
-  <div class="popup-content" style="max-width: 800px">
+  <div class="popup-content">
     <span class="close-btn" onclick="closeDefaultTasksPopup()">&times;</span>
     <h2>Select Default Tasks</h2>
     <button id="select-all-default-btn" onclick="selectAllDefaultTasks()">
@@ -202,6 +204,20 @@ Management{% endblock %} {% block content %}
     </div>
     <div class="modal-buttons">
       <button class="cancel-btn" onclick="closeEpisodesPopup()">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<div id="add-tasks-episode-popup" class="popup" style="display: none">
+  <div class="popup-content">
+    <h2>Select Episode to Add Tasks</h2>
+    <div id="add-tasks-episode-list">
+      <!-- Episodes will be dynamically populated here -->
+    </div>
+    <div class="modal-buttons">
+      <button class="cancel-btn" onclick="closeAddTasksEpisodePopup()">
+        Cancel
+      </button>
     </div>
   </div>
 </div>
@@ -502,6 +518,36 @@ Management{% endblock %} {% block content %}
 
   window.closeEpisodesPopup = function () {
     document.getElementById("episodes-popup").style.display = "none";
+  };
+
+  window.openAddTasksEpisodePopup = async function () {
+    const guestId = document.getElementById("selected-guest").dataset.guestId;
+    const episodes = await fetchEpisodes(guestId);
+    const episodesList = document.getElementById("add-tasks-episode-list");
+    episodesList.innerHTML = ""; // Clear existing episodes
+
+    if (episodes.length === 0) {
+      let noEpisodesItem = document.createElement("p");
+      noEpisodesItem.textContent = "No episodes found";
+      episodesList.appendChild(noEpisodesItem);
+    } else {
+      episodes.forEach((episode) => {
+        let episodeItem = document.createElement("a");
+        episodeItem.href = "#";
+        episodeItem.textContent = episode.title;
+        episodeItem.onclick = async (event) => {
+          event.preventDefault();
+          await addTasksToEpisode(episode._id, guestId, []); // Pass an empty array for tasks for now
+        };
+        episodesList.appendChild(episodeItem);
+      });
+    }
+
+    document.getElementById("add-tasks-episode-popup").style.display = "flex";
+  };
+
+  window.closeAddTasksEpisodePopup = function () {
+    document.getElementById("add-tasks-episode-popup").style.display = "none";
   };
 </script>
 {% endblock %}

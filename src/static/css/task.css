@@ -1,6 +1,6 @@
 .back-arrow {
-  position: fixed; /* Change to fixed position */
-  top: calc(60%); /* Move down by 1cm */
+  position: fixed;
+  top: calc(60%);
   left: var(--spacing-md);
   font-size: 0.9rem;
   font-weight: bold;
@@ -21,35 +21,6 @@
     3px 3px 8px var(--dark-shadow-dark);
 }
 
-.back-button-container {
-  text-align: center;
-  margin-top: var(--spacing-md);
-}
-
-#back-button {
-  display: none;
-  background: var(--background-light);
-  border: none;
-  padding: var(--spacing-md) calc(var(--spacing-lg) + 40px); /* Increase padding */
-  border-radius: var(--radius-small);
-  box-shadow: -3px -3px 6px var(--light-shadow-light),
-    3px 3px 6px var(--dark-shadow-dark);
-  cursor: pointer;
-  font-size: 1.2rem; /* Increase font size */
-  font-weight: bold; /* Make text bold */
-  color: var(--text-color-light);
-  transition: background-color 0.3s ease, box-shadow 0.3s ease;
-  position: relative; /* For positioning the arrow */
-}
-
-#back-button:hover {
-  background-color: rgba(255, 127, 63, 0.1);
-  color: var(--highlight-color);
-  box-shadow: -3px -3px 8px var(--light-shadow-light),
-    3px 3px 8px var(--dark-shadow-dark);
-}
-
-/* Task Header */
 .task-header {
   display: flex;
   flex-direction: column;
@@ -62,9 +33,9 @@
   display: flex;
   align-items: center;
   gap: var(--spacing-sm);
-  white-space: nowrap; /* Ensure elements stay on one line */
-  flex-wrap: nowrap; /* Prevent wrapping */
-  justify-content: center; /* Center the buttons */
+  white-space: nowrap;
+  flex-wrap: nowrap;
+  justify-content: center;
 }
 
 .button-group {
@@ -74,15 +45,13 @@
 
 .dropdown-wrapper {
   display: flex;
-  gap: var(--spacing-sm); /* Add spacing between buttons */
+  gap: var(--spacing-sm);
 }
 
-/* Guest Header */
 .task-header h2 {
-  color: darkgreen; /* Apply dark green color */
+  color: darkgreen;
 }
 
-/* Media Queries for Responsiveness */
 @media (max-width: 768px) {
   .task-header {
     flex-direction: column;
@@ -90,7 +59,7 @@
   }
 
   .task-header-buttons {
-    justify-content: center; /* Center the buttons */
+    justify-content: center;
     width: 100%;
     margin-top: var(--spacing-sm);
   }
@@ -102,15 +71,14 @@
   }
 
   .button-group {
-    flex-wrap: nowrap; /* Prevent wrapping */
+    flex-wrap: nowrap;
   }
 
   .dropdown-wrapper {
-    flex-wrap: nowrap; /* Prevent wrapping */
+    flex-wrap: nowrap;
   }
 }
 
-/* Add Task Button */
 #add-task-btn,
 #load-default-btn {
   background: var(--background-light);
@@ -132,27 +100,138 @@
     3px 3px 8px var(--dark-shadow-dark);
 }
 
-/* Add Tasks to Episode Button */
+.add-tasks-dropdown {
+  display: inline-block;
+  position: relative;
+  margin-top: 3mm; /* Move down by 3mm */
+}
+
+.add-tasks-dropdown .dropbtn {
+  background: var(--background-light);
+  border: none;
+  padding: var(--spacing-sm) var(--spacing-md);
+  border-radius: var(--radius-small);
+  box-shadow: -3px -3px 6px var(--light-shadow-light),
+    3px 3px 6px var(--dark-shadow-dark);
+  cursor: pointer;
+  font-size: 0.9rem;
+  color: var(--text-color-light);
+  transition: background-color 0.3s ease, box-shadow 0.3s ease;
+}
+
 .add-tasks-dropdown .dropbtn:hover {
-  background-color: rgba(255, 127, 63, 0.1); /* Light gray on hover */
+  background-color: rgba(255, 127, 63, 0.1);
   color: var(--highlight-color);
   box-shadow: -3px -3px 8px var(--light-shadow-light),
     3px 3px 8px var(--dark-shadow-dark);
 }
 
-/* Task List Container */
+.add-tasks-dropdown .dropdown-content {
+  display: none;
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  background-color: var(--background-light);
+  min-width: 200px;
+  box-shadow: 0px 8px 16px 0px rgba(0, 0, 0, 0.2);
+  z-index: 1;
+  border-radius: var(--radius-small);
+  overflow: hidden;
+  text-align: center;
+}
+
+.add-tasks-dropdown .dropdown-content a {
+  color: var(--text-color-light);
+  padding: var(--spacing-sm) var(--spacing-md);
+  text-decoration: none;
+  display: block;
+  transition: background-color 0.3s ease;
+}
+
+.add-tasks-dropdown .dropdown-content a:hover {
+  background-color: rgba(255, 127, 63, 0.1);
+  color: var(--highlight-color);
+}
+
+.add-tasks-dropdown:hover .dropdown-content {
+  display: block;
+}
+
+.add-tasks-dropdown .dropbtn:hover {
+  background-color: rgba(255, 127, 63, 0.1);
+  color: var(--highlight-color);
+  box-shadow: -3px -3px 8px var(--light-shadow-light),
+    3px 3px 8px var(--dark-shadow-dark);
+}
+
+.view-episode-dropdown .dropbtn,
+.add-tasks-dropdown .dropbtn {
+  background: var(--background-light);
+  border: none;
+  padding: var(--spacing-sm) var(--spacing-md);
+  border-radius: var(--radius-small);
+  box-shadow: -3px -3px 6px var(--light-shadow-light),
+    3px 3px 6px var(--dark-shadow-dark);
+  cursor: pointer;
+  font-size: 0.9rem;
+  color: var(--text-color-light);
+  transition: background-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+.view-episode-dropdown .dropbtn:hover,
+.add-tasks-dropdown .dropbtn:hover {
+  background-color: rgba(255, 127, 63, 0.1);
+  color: var(--highlight-color);
+  box-shadow: -3px -3px 8px var(--light-shadow-light),
+    3px 3px 8px var(--dark-shadow-dark);
+}
+
+.view-episode-dropdown .dropdown-content,
+.add-tasks-dropdown .dropdown-content {
+  display: none;
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  background-color: var(--background-light);
+  min-width: 200px;
+  box-shadow: 0px 8px 16px 0px rgba(0, 0, 0, 0.2);
+  z-index: 1;
+  border-radius: var(--radius-small);
+  overflow: hidden;
+  text-align: center;
+}
+
+.view-episode-dropdown .dropdown-content a,
+.add-tasks-dropdown .dropdown-content a {
+  color: var(--text-color-light);
+  padding: var(--spacing-sm) var(--spacing-md);
+  text-decoration: none;
+  display: block;
+  transition: background-color 0.3s ease;
+}
+
+.view-episode-dropdown .dropdown-content a:hover,
+.add-tasks-dropdown .dropdown-content a:hover {
+  background-color: rgba(255, 127, 63, 0.1);
+  color: var(--highlight-color);
+}
+
+.view-episode-dropdown:hover .dropdown-content,
+.add-tasks-dropdown:hover .dropdown-content {
+  display: block;
+}
+
 #task-list {
   list-style: georgian;
   padding: 0;
-  width: 100%; /* Ensure the task list takes full width */
-  max-width: 1500px; /* Increase the max width */
+  width: 100%;
+  max-width: 1500px;
   margin: 0 auto;
-  max-height: 540px; /* Set maximum height for 13 tasks */
-  overflow-y: auto; /* Enable vertical scrolling */
-  overflow-x: hidden; /* Disable horizontal scrolling */
+  max-height: 500px;
+  overflow-y: auto;
+  overflow-x: hidden;
 }
 
-/* Current Tasks Header */
 .current-tasks-header {
   text-align: center;
   font-size: 1.5rem;
@@ -161,28 +240,27 @@
 }
 
 .task-list-container {
-  position: relative; /* Ensure the container is positioned relative */
+  position: relative;
   display: flex;
   flex-direction: column;
-  align-items: flex-start; /* Align items to the left */
-  width: 100%; /* Ensure the container takes full width */
-  max-width: 1400px; /* Increase the max width */
-  margin: 0 auto; /* Center the container within the page */
+  align-items: flex-start;
+  width: 100%;
+  max-width: 1400px;
+  margin: 0 auto;
 }
 
 .current-tasks-header {
   font-size: 1.5rem;
   color: var(--text-color-light);
   margin-bottom: var(--spacing-md);
-  margin-left: var(--spacing-sm); /* Add left margin */
-  align-self: flex-start; /* Align the header to the left */
+  margin-left: var(--spacing-sm);
+  align-self: flex-start;
 }
 
-/* Media Queries for Responsiveness */
 @media (max-width: 768px) {
   .current-tasks-header {
-    margin-left: var(--spacing-sm); /* Adjust left margin for smaller screens */
-    text-align: left; /* Ensure text is aligned to the left */
+    margin-left: var(--spacing-sm);
+    text-align: left;
   }
 
   .responsive-task-management {
@@ -199,7 +277,7 @@
   }
 
   .task-header-buttons {
-    justify-content: flex-start; /* Align buttons to the start */
+    justify-content: flex-start;
     width: 100%;
     margin-top: var(--spacing-sm);
   }
@@ -211,15 +289,14 @@
   }
 
   .button-group {
-    flex-wrap: nowrap; /* Prevent wrapping */
+    flex-wrap: nowrap;
   }
 
   .dropdown-wrapper {
-    flex-wrap: nowrap; /* Prevent wrapping */
+    flex-wrap: nowrap;
   }
 }
 
-/* Individual Task Items */
 #task-list li {
   display: flex;
   justify-content: space-between;
@@ -231,7 +308,7 @@
   box-shadow: -3px -3px 6px var(--light-shadow-light),
     3px 3px 6px var(--dark-shadow-dark);
   transition: background-color 0.3s ease, box-shadow 0.3s ease;
-  overflow: hidden; /* Prevent horizontal overflow */
+  overflow: hidden;
 }
 #task-list li:hover {
   background-color: rgba(255, 127, 63, 0.1);
@@ -249,8 +326,8 @@
   display: flex;
   gap: var(--spacing-sm);
   justify-content: flex-end;
-  flex-shrink: 0; /* Prevent shrinking */
-  margin-right: 2mm; /* Move buttons 2mm inward */
+  flex-shrink: 0;
+  margin-right: 2mm;
 }
 .task-name {
   flex-grow: 1;
@@ -258,9 +335,9 @@
   margin-left: var(--spacing-sm);
   font-size: 0.9rem;
   color: var(--text-color-light);
-  white-space: nowrap; /* Prevent text from wrapping */
-  overflow: hidden; /* Hide overflow text */
-  text-overflow: ellipsis; /* Add ellipsis for overflow text */
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .task-actions {
@@ -269,16 +346,7 @@
 }
 
 .task-actions button {
-  padding: 5px 10px; /* Task List Container */
-  #task-list {
-    list-style: georgian;
-    padding: 0;
-    width: 100%; /* Ensure the task list takes full width */
-    max-width: 1500px; /* Increase the max width */
-    margin: 0 auto;
-    max-height: 540px; /* Set maximum height for 13 tasks */
-  }
-
+  padding: 5px 10px;
   margin-right: 10px;
   border: none;
   cursor: pointer;
@@ -298,7 +366,6 @@
   width: 100%;
 }
 
-/* Buttons inside the Task List Items */
 button {
   padding: var(--spacing-sm) var(--spacing-md);
   margin-left: var(--spacing-sm);
@@ -309,7 +376,7 @@ button {
   color: #666865;
 }
 .edit-btn {
-  background: darkgreen; /* Green background */
+  background: darkgreen;
   color: white;
   box-shadow: -2px -2px 4px rgba(255, 255, 255, 0.6),
     2px 2px 4px rgba(0, 0, 0, 0.15);
@@ -320,12 +387,12 @@ button {
   background-color: darkgreen;
   box-shadow: -2px -2px 6px rgba(255, 255, 255, 0.6),
     2px 2px 6px rgba(0, 0, 0, 0.15);
-  transform: scale(1.1); /* Slightly enlarge the button */
+  transform: scale(1.1);
 }
 
 .delete-btn {
-  background: gray; /* Gray background */
-  color: #ffffff; /* White text */
+  background: gray;
+  color: #ffffff;
   box-shadow: -2px -2px 4px rgba(255, 255, 255, 0.6),
     2px 2px 4px rgba(0, 0, 0, 0.15);
   transition: background-color 0.3s ease, box-shadow 0.3s ease,
@@ -335,10 +402,9 @@ button {
   background-color: darkgray;
   box-shadow: -2px -2px 6px rgba(255, 255, 255, 0.6),
     2px 2px 6px rgba(0, 0, 0, 0.15);
-  transform: scale(1.1); /* Slightly enlarge the button */
+  transform: scale(1.1);
 }
 
-/* Modal Overlay */
 .modal {
   display: none;
   position: fixed;
@@ -351,7 +417,6 @@ button {
   z-index: 2000;
 }
 
-/* Modal Content */
 .modal-content {
   background: var(--background-light);
   padding: var(--spacing-md);
@@ -371,7 +436,6 @@ button {
   color: var(--text-color-light);
 }
 
-/* Close Button in Modal */
 .close-btn {
   position: absolute;
   top: var(--spacing-sm);
@@ -386,7 +450,6 @@ button {
   transform: scale(1.1);
 }
 
-/* Modal Form Fields */
 label {
   display: block;
   margin-top: var(--spacing-sm);
@@ -446,14 +509,12 @@ select:focus {
     inset -2px -2px 4px rgba(0, 0, 0, 0.1);
 }
 
-/* Modal Buttons Container */
 .modal-buttons {
   display: flex;
   justify-content: space-between;
   margin-top: var(--spacing-md);
 }
 
-/* Modal Buttons */
 #save-task-btn,
 .cancel-btn {
   background: var(--background-light);
@@ -479,14 +540,12 @@ select:focus {
     2px 2px 6px var(--dark-shadow-dark);
 }
 
-/* Submission-Required Checkbox */
 input[type="checkbox"] {
   width: auto;
   margin-right: var(--spacing-sm);
-  box-shadow: none; /* remove shadow for checkboxes */
+  box-shadow: none;
 }
 
-/* Hide/Show Fields */
 .hidden {
   display: none;
 }
@@ -528,14 +587,13 @@ h1 {
 .green {
   color: #28a745;
 }
-/* Popup-specific Styles for Guest Selection */
 .popup {
   position: fixed;
   top: 0;
   left: 0;
   width: 100%;
   height: 100%;
-  background: rgba(0, 0, 0, 0.5); /* Semi-transparent overlay */
+  background: rgba(0, 0, 0, 0.5);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -546,39 +604,38 @@ h1 {
   border-radius: 12px;
   padding: 24px;
   box-shadow: 0px 2px 8px rgba(0, 0, 0, 0.1);
-  max-width: 800px; /* Increased width to fit multiple cards side by side */
+  max-width: 800px;
   width: 90%;
   text-align: center;
-  max-height: 90vh; /* Limit height to viewport */
+  max-height: 90vh;
 }
 .guest-selection {
   display: flex;
-  flex-wrap: nowrap; /* Prevents wrapping */
+  flex-wrap: nowrap;
   justify-content: center;
   align-items: flex-start;
   gap: 20px;
-  overflow-x: auto; /* Allows horizontal scrolling if space is tight */
+  overflow-x: auto;
   padding: 10px;
-  max-width: 100%; /* Ensures it adapts to popup width */
-  white-space: nowrap; /* Prevents items from stacking */
+  max-width: 100%;
+  white-space: nowrap;
 }
 
 .card {
-  display: inline-block; /* Prevents stacking */
+  display: inline-block;
   width: 220px;
-  flex: 0 0 auto; /* Prevents shrinking */
+  flex: 0 0 auto;
   text-align: center;
-  white-space: normal; /* Ensures text wraps inside cards */
+  white-space: normal;
 }
 
 .drag-ghost {
-  opacity: 0.7; /* semi-transparent */
-  background-color: #f4a261; /* light orange background */
-  border: 2px dashed #e63946; /* dashed reddish border */
-  transform: scale(1.05); /* slightly enlarged */
+  opacity: 0.7;
+  background-color: #f4a261;
+  border: 2px dashed #e63946;
+  transform: scale(1.05);
 }
 
-/* ---------------- Task List Popup Styling ---------------- */
 #default-tasks-popup {
   position: fixed;
   top: 0;
@@ -596,7 +653,7 @@ h1 {
   border-radius: 10px;
   padding: 20px;
   width: 80%;
-  max-width: 800px; /* Increase width */
+  max-width: 800px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
 #default-tasks-popup h2 {
@@ -611,7 +668,7 @@ h1 {
 }
 .default-task-item {
   display: flex;
-  justify-content: space-between; /* Move checkbox to the right */
+  justify-content: space-between;
   align-items: center;
   margin-bottom: 10px;
   padding: 5px;
@@ -626,11 +683,11 @@ h1 {
   color: #555;
 }
 .default-task-item span {
-  flex-grow: 1; /* Ensure text takes up available space */
-  text-align: left; /* Align text to the left */
+  flex-grow: 1;
+  text-align: left;
 }
 .default-task-item input[type="checkbox"] {
-  margin-left: 10px; /* Add some space between text and checkbox */
+  margin-left: 10px;
 }
 .modal-buttons {
   padding: var(--spacing-sm) var(--spacing-md);
@@ -648,305 +705,4 @@ h1 {
   color: var(--highlight-color);
   box-shadow: -3px -3px 8px var(--light-shadow-light),
     3px 3px 8px var(--dark-shadow-dark);
-}
-
-/* Dropdown Content */
-.dropdown-content {
-  display: none;
-  position: absolute;
-  left: 50%; /* Center the dropdown */
-  transform: translateX(-50%); /* Center the dropdown */
-  background-color: var(--background-light);
-  min-width: 200px; /* Set a minimum width */
-  box-shadow: 0px 8px 16px 0px rgba(0, 0, 0, 0.2);
-  z-index: 1;
-  border-radius: var(--radius-small);
-  overflow: hidden;
-  text-align: center; /* Center the text */
-}
-
-.dropdown-content a {
-  color: var(--text-color-light);
-  padding: var(--spacing-sm) var(--spacing-md);
-  text-decoration: none;
-  display: block;
-  transition: background-color 0.3s ease;
-}
-
-.dropdown-content a:hover {
-  background-color: rgba(255, 127, 63, 0.1);
-  color: var(--highlight-color);
-}
-
-/* Show dropdown menu on hover */
-.dropdown:hover .dropdown-content {
-  display: block;
-}
-
-/* Add Tasks to Episode Button Container */
-.add-tasks-button-container {
-  text-align: center;
-  margin-top: var(--spacing-md);
-}
-
-/* Add Tasks to Episode Dropdown */
-.add-tasks-dropdown {
-  display: inline-block;
-  position: relative;
-}
-
-.add-tasks-dropdown .dropbtn {
-  background: var(--background-light); /* White background */
-  color: var(--text-color-light); /* Gray text */
-  border: none;
-  padding: var(--spacing-md) calc(var(--spacing-lg) + 20px); /* Increase right padding */
-  border-radius: var(--radius-small); /* Keep the original border radius */
-  box-shadow: -3px -3px 6px var(--light-shadow-light),
-    3px 3px 6px var(--dark-shadow-dark);
-  cursor: pointer;
-  font-size: 1rem; /* Keep the original font size */
-  font-weight: bold; /* Keep the text bold */
-  transition: background-color 0.3s ease, box-shadow 0.3s ease;
-  position: relative; /* For positioning the arrow */
-}
-
-.add-tasks-dropdown .dropbtn::after {
-  content: " ▼"; /* Add down arrow */
-  font-size: 1rem; /* Increase arrow size */
-  color: var(--text-color-light); /* Ensure arrow color matches text color */
-  position: absolute;
-  right: var(--spacing-sm);
-  top: 50%;
-  transform: translateY(-50%);
-}
-
-/* Add Tasks to Episode Button */
-#add-tasks-to-episode-btn {
-  background: var();
-  border: none;
-  padding: var(--spacing-sm) var(--spacing-md);
-  border-radius: var(--radius-small);
-  box-shadow: -3px -3px 6px var(--light-shadow-light),
-    3px 3px 6px var(--dark-shadow-dark);
-  cursor: pointer;
-  font-size: 0.9rem;
-  color: var(--text-color-light);
-  transition: background-color 0.3s ease, box-shadow 0.3s ease;
-}
-#add-tasks-to-episode-btn:hover {
-  background-color: rgba(255, 127, 63, 0.1);
-  color: var (--highlight-color);
-  box-shadow: -3px -3px 8px var(--light-shadow-light),
-    3px 3x 8px var(--dark-shadow-dark);
-}
-
-/* View Episode Button Container */
-.view-episode-button-container {
-  text-align: center;
-  margin-top: var(--spacing-md);
-}
-
-/* View Episode Dropdown */
-.view-episode-dropdown {
-  display: inline-block;
-  position: relative;
-}
-
-.view-episode-dropdown .dropbtn {
-  background: var(--background-light);
-  border: none;
-  padding: var(--spacing-sm) var(--spacing-md);
-  border-radius: var(--radius-small);
-  box-shadow: -3px -3px 6px var(--light-shadow-light),
-    3px 3px 6px var(--dark-shadow-dark);
-  cursor: pointer;
-  font-size: 0.9rem;
-  color: var(--text-color-light);
-  transition: background-color 0.3s ease, box-shadow 0.3s ease;
-}
-
-.view-episode-dropdown .dropbtn:hover {
-  background-color: rgba(255, 127, 63, 0.1);
-  color: var(--highlight-color);
-  box-shadow: -3px -3px 8px var(--light-shadow-light),
-    3px 3px 8px var(--dark-shadow-dark);
-}
-
-.view-episode-dropdown .dropdown-content {
-  display: none;
-  position: center;
-  left: 55%;
-  transform: translateX(-50%);
-  background-color: var(--background-light);
-  width: auto; /* Adjust width to fit content */
-  box-shadow: 0px 8px 16px 0px rgba(0, 0, 0, 0.2);
-  z-index: 1;
-  border-radius: var(--radius-small);
-  overflow: hidden;
-}
-
-.view-episode-dropdown .dropdown-content a {
-  color: var(--text-color-light);
-  padding: var(--spacing-sm) var(--spacing-md);
-  text-decoration: none;
-  display: block;
-  transition: background-color 0.3s ease;
-  white-space: nowrap; /* Ensure text does not wrap */
-}
-
-.view-episode-dropdown .dropdown-content a:hover {
-  background-color: rgba(255, 127, 63, 0.1);
-  color: var(--highlight-color);
-}
-
-.view-episode-dropdown:hover .dropdown-content {
-  display: block;
-}
-
-.responsive-task-management {
-  padding: var(--spacing-md);
-  background-color: var(--background-light);
-  font-family: var(--font-primary);
-  text-align: center;
-  min-height: 100vh;
-  box-sizing: border-box;
-  position: relative;
-}
-
-.responsive-task-list {
-  list-style: decimal;
-  padding: 0;
-  max-width: 100%;
-  margin: 0 auto;
-}
-
-/* Media Queries for Responsiveness */
-@media (max-width: 768px) {
-  .responsive-task-management {
-    padding: var(--spacing-sm);
-  }
-
-  .responsive-task-list {
-    padding: var(--spacing-sm);
-  }
-
-  .task-header {
-    flex-direction: column;
-    align-items: flex-start;
-  }
-
-  .task-header-buttons {
-    justify-content: flex-start; /* Align buttons to the start */
-    width: 100%;
-    margin-top: var(--spacing-sm);
-  }
-
-  .task-header h2 {
-    text-align: center;
-    width: 100%;
-    margin-bottom: var(--spacing-sm);
-  }
-
-  .button-group {
-    flex-wrap: nowrap; /* Prevent wrapping */
-  }
-
-  .dropdown-wrapper {
-    flex-wrap: nowrap; /* Prevent wrapping */
-  }
-}
-
-/* Custom Task Popup */
-#custom-task-popup {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: rgba(0, 0, 0, 0.5);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 2000;
-}
-
-#custom-task-popup .popup-content {
-  background: #fff;
-  border-radius: 12px;
-  padding: 24px;
-  box-shadow: 0px 2px 8px rgba(0, 0, 0, 0.1);
-  max-width: 500px;
-  width: 90%;
-  text-align: center;
-}
-
-#custom-task-popup .close-btn {
-  position: absolute;
-  top: 10px;
-  right: 10px;
-  font-size: 1.5rem;
-  cursor: pointer;
-  color: #555;
-  transition: color 0.3s ease, transform 0.3s ease;
-}
-
-#custom-task-popup .close-btn:hover {
-  color: var(--highlight-color);
-  transform: scale(1.1);
-}
-
-#custom-task-popup label {
-  display: block;
-  margin-top: var(--spacing-sm);
-  font-size: 0.85rem;
-  font-weight: bold;
-  color: var(--text-color-light);
-}
-
-#custom-task-popup input,
-#custom-task-popup textarea {
-  width: 99%;
-  padding: var(--spacing-sm);
-  margin-top: var(--spacing-sm);
-  border: none;
-  border-radius: var(--radius-small);
-  box-shadow: inset -2px -2px 4px var(--light-shadow-light),
-    inset 2px 2px 4px var(--dark-shadow-dark);
-  outline: none;
-  font-size: 0.85rem;
-  background: var(--background-light);
-  color: var(--text-color-light);
-  transition: box-shadow 0.3s ease;
-}
-
-#custom-task-popup input:focus,
-#custom-task-popup textarea:focus {
-  box-shadow: inset 2px 2px 4px rgba(255, 127, 63, 0.3),
-    inset -2px -2px 4px rgba(0, 0, 0, 0.1);
-}
-
-#custom-task-popup .modal-buttons {
-  display: flex;
-  justify-content: space-between;
-  margin-top: var(--spacing-md);
-}
-
-#custom-task-popup .modal-buttons button {
-  background: var(--background-light);
-  color: var(--text-color-light);
-  padding: var(--spacing-sm) var(--spacing-md);
-  border: none;
-  border-radius: var(--radius-small);
-  cursor: pointer;
-  box-shadow: -2px -2px 4px var(--light-shadow-light),
-    2px 2px 4px var(--dark-shadow-dark);
-  transition: background-color 0.3s ease, box-shadow 0.3s ease;
-  font-size: 0.85rem;
-}
-
-#custom-task-popup .modal-buttons button:hover {
-  background-color: rgba(255, 127, 63, 0.08);
-  color: var(--highlight-color);
-  box-shadow: -2px -2px 6px var(--light-shadow-light),
-    2px 2px 6px var(--dark-shadow-dark);
 }
