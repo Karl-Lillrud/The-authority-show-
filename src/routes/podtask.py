@@ -31,7 +31,7 @@ def register_podtask():
         user_id = str(g.user_id)  # Get the user ID
 
         # Fetch accounts associated with the user using the correct field `userId`
-        user_accounts = list(collection.database.Accounts.find({"userId": user_id}, {"_id": 1}))  # Notice the _id here
+        user_accounts = list(collection.database.Accounts.find({"userId": user_id}, {"_id": 1}))
         print(f"Found accounts: {user_accounts}")
 
         if not user_accounts:
@@ -58,12 +58,12 @@ def register_podtask():
         validated_data["userid"] = user_id
         validated_data["created_at"] = datetime.now(timezone.utc)
 
-        # Generate a unique `id` for the podtask manually
-        podtask_id = str(uuid.uuid4())  # Manually generate the `id` field
+        # Generate a unique `id` for the podtask manually (UUID as string)
+        podtask_id = str(uuid.uuid4())  # Manually generate the `id` field as a string
 
         # Insert the podtask into the database
         podtask_document = {
-            "id": podtask_id,  # Use the manually generated ID
+            "_id": podtask_id,  # Set the UUID as the explicit _id field
             "podcastId": validated_data["podcastId"],
             "name": validated_data.get("name"),
             "action": validated_data.get("action"),
