@@ -9,7 +9,7 @@ from Entities.accounts import AccountSchema  # Make sure to import the schema
 # Define Blueprint
 account_bp = Blueprint("account_bp", __name__)
 
-@account_bp.route("/create_account", methods=["POST"])
+@account_bp.route("/create_accounts", methods=["POST"])
 def create_account():
     try:
         data = request.get_json()
@@ -50,7 +50,7 @@ def create_account():
         return jsonify({"error": f"Error creating account: {str(e)}"}), 500
 
 
-@account_bp.route("/get_account/<account_id>", methods=["GET"])
+@account_bp.route("/get_accounts/<account_id>", methods=["GET"])
 def get_account(account_id):
     try:
         # Fetch account from the database using account_id

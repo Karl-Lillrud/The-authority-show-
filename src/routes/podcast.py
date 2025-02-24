@@ -21,7 +21,7 @@ from Entities.podcasts import PodcastSchema
 
 podcast_bp = Blueprint("podcast_bp", __name__)
 
-@podcast_bp.route("/add_podcast", methods=["POST"])
+@podcast_bp.route("/add_podcasts", methods=["POST"])
 def podcast():
     if not hasattr(g, "user_id") or not g.user_id:
         return jsonify({"error": "Unauthorized"}), 401
@@ -112,7 +112,7 @@ def podcast():
 
 
 
-@podcast_bp.route("/get_podcast", methods=["GET"])
+@podcast_bp.route("/get_podcasts", methods=["GET"])
 def get_podcast():
     if not hasattr(g, "user_id") or not g.user_id:
         return jsonify({"error": "Unauthorized"}), 401
@@ -150,7 +150,7 @@ def get_podcast():
         return jsonify({"error": f"Failed to fetch podcasts: {str(e)}"}), 500
 
     
-@podcast_bp.route("/get_podcast/<podcast_id>", methods=["GET"])
+@podcast_bp.route("/get_podcasts/<podcast_id>", methods=["GET"])
 def get_podcast_by_id(podcast_id):
     if not hasattr(g, "user_id") or not g.user_id:
         return jsonify({"error": "Unauthorized"}), 401
@@ -191,7 +191,7 @@ def get_podcast_by_id(podcast_id):
 
 
     
-@podcast_bp.route("/delete_podcast/<podcast_id>", methods=["DELETE"])
+@podcast_bp.route("/delete_podcasts/<podcast_id>", methods=["DELETE"])
 def delete_podcast(podcast_id):
     if not hasattr(g, "user_id") or not g.user_id:
         return jsonify({"error": "Unauthorized"}), 401
@@ -234,7 +234,7 @@ def delete_podcast(podcast_id):
 
 
     
-@podcast_bp.route("/edit_podcast/<podcast_id>", methods=["PUT"])
+@podcast_bp.route("/edit_podcasts/<podcast_id>", methods=["PUT"])
 def edit_podcast(podcast_id):
     if not hasattr(g, "user_id") or not g.user_id:
         return jsonify({"error": "Unauthorized"}), 401
