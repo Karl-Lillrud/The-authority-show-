@@ -18,7 +18,10 @@ def generate_referral_code(name):
 @register_bp.route("/register", methods=["GET", "POST"])
 def register():
     if request.method == "GET":
-        return render_template("register/register.html")
+        # Retrieve referral code from URL query (if any)
+        referral = request.args.get("referral", "")
+        logger.info(f"Referral code from query: {referral}")
+        return render_template("register/register.html", referral=referral)
 
     data = request.get_json()
     if "email" not in data or "password" not in data or "name" not in data:
@@ -29,16 +32,19 @@ def register():
     password = data["password"]
     full_name = data["name"].strip()
     hashed_password = generate_password_hash(password)
-    referrer_code = data.get("referred_by", "").strip()
+    # Get referral code from POST data; if missing, try URL query parameter
+    referrer_code = data.get("referred_by", "").strip() or request.args.get("referral", "").strip()
 
     existing_user = users_collection.find_one({"email": email})
     if existing_user:
         logger.warning(f"⚠️ Email {email} already registered.")
         return jsonify({"error": "Email already registered."}), 409
 
+    # Generate a unique user ID and referral code for the new user
     new_user_id = str(uuid.uuid4())
     referral_code = generate_referral_code(full_name)
 
+    # Create the user document with the referral code stored
     user_document = {
         "_id": new_user_id,
         "email": email,
@@ -52,7 +58,7 @@ def register():
     users_collection.insert_one(user_document)
     logger.info(f"✅ Registered user: {email} with ID {new_user_id}")
 
-    # Skapa ett kreditdokument med 3000 krediter för alla nya användare
+    # Create a credits document with 3000 credits for the new user
     existing_credits = credits_collection.find_one({"user_id": new_user_id})
     if not existing_credits:
         logger.info(f"📝 Creating credits for user: {new_user_id}")
@@ -74,18 +80,39 @@ def register():
     else:
         logger.info(f"⚠️ User {new_user_id} already has credits, skipping creation.")
 
-    # Om en referral code används, uppdatera referrer (men se till att inte användaren refererar sig själv)
+    # If a referral code is provided, update the referrer's credits document (if referrer exists and isn't the new user)
     referrer = None
     if referrer_code:
         referrer = users_collection.find_one({"referral_code": referrer_code})
         if referrer and referrer["_id"] != new_user_id:
             referrer_id = referrer["_id"]
             logger.info(f"🎉 Referral detected! Updating credits for {referrer_id}")
-            credits_collection.update_one(
+            # Ensure the referrer has a credits document; if not, create one
+            ref_credits = credits_collection.find_one({"user_id": referrer_id})
+            if not ref_credits:
+                logger.info(f"📝 Creating credits document for referrer: {referrer_id}")
+                new_ref_credits = {
+                    "_id": str(uuid.uuid4()),
+                    "user_id": referrer_id,
+                    "credits": 3000,  # Referrer's starting credits
+                    "unclaimed_credits": 0,
+                    "referral_bonus": 0,
+                    "referrals": 0,
+                    "last_3_referrals": [],
+                    "vip_status": False,
+                    "credits_expires_at": datetime.utcnow().isoformat(),
+                    "episodes_published": 0,
+                    "streak_days": 0
+                }
+                credits_collection.insert_one(new_ref_credits)
+                logger.info(f"✅ Credits document created for referrer: {referrer_id}")
+            # Update the referrer's credits document with bonus
+            result = credits_collection.update_one(
                 {"user_id": referrer_id},
                 {"$inc": {"credits": 200, "referral_bonus": 200, "referrals": 1},
                  "$push": {"last_3_referrals": datetime.utcnow().isoformat()}}
             )
+            logger.info(f"Update result: Matched {result.matched_count}, Modified {result.modified_count}")
 
     return jsonify({
         "message": "Registration successful!",
