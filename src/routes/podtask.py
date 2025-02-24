@@ -156,7 +156,7 @@ def delete_podtask(task_id):
 
 
     
-@podtask_bp.route("/update_podtask/<task_id>", methods=["PUT"])
+@podtask_bp.route("/update_podtasks/<task_id>", methods=["PUT"])
 def update_podtask(task_id):
     if not g.user_id:
         return jsonify({"error": "Unauthorized"}), 401
@@ -165,29 +165,37 @@ def update_podtask(task_id):
         return jsonify({"error": "Invalid Content-Type. Expected application/json"}), 415
 
     try:
+        # Parse the request data as JSON
         data = request.get_json()
+
+        # Debugging: log the incoming data to see its structure
+        print("Incoming data:", data)
+
         user_id = str(g.user_id)
 
-        existing_task = collection.database.Podtask.find_one({"_id": task_id})
+        # Query the task using the task_id (ensure it's a string match)
+        existing_task = collection.database.Podtasks.find_one({"_id": task_id})
         if not existing_task:
             return jsonify({"error": "Task not found"}), 404
 
         if existing_task["userid"] != user_id:
             return jsonify({"error": "Permission denied"}), 403
 
+        # Prepare the fields to update
         update_fields = {
-            "taskname": data.get("taskname", existing_task["taskname"]).strip(),
-            "Description": data.get("Description", existing_task["Description"]).strip(),
-            "DayCount": data.get("DayCount", existing_task["DayCount"]),
-            "Action": data.get("action", existing_task["Action"]),
-            "ActionUrl": data.get("actionurl", existing_task["ActionUrl"]).strip(),
-            "UrlDescribe": data.get("externalurl", existing_task["UrlDescribe"]).strip(),
-            "SubimissionReq": True if data.get("submission", "Optional") == "Required" else False,
+            "name": data.get("taskname", existing_task.get("name", "")).strip(),
+            "description": data.get("Description", existing_task.get("description", "")).strip(),
+            "dayCount": data.get("DayCount", existing_task.get("dayCount")),
+            "action": data.get("action", existing_task.get("action", [])),
+            "actionUrl": data.get("actionurl", existing_task.get("actionUrl", "")).strip(),
+            "urlDescribe": data.get("externalurl", existing_task.get("urlDescribe", "")).strip(),
+            "submissionReq": True if data.get("submission", "Optional") == "Required" else False,
             "updated_at": datetime.now(timezone.utc),
         }
 
-        result = collection.database.Podtask.update_one(
-            {"_id": task_id}, {"$set": update_fields}
+        # Update the task in the database
+        result = collection.database.Podtasks.update_one(
+            {"_id": task_id}, {"$set": update_fields}  # Match on "_id" field (string)
         )
 
         if result.modified_count == 1:
@@ -198,6 +206,9 @@ def update_podtask(task_id):
     except Exception as e:
         print(f"❌ ERROR: {e}")
         return jsonify({"error": f"Failed to update task: {str(e)}"}), 500
+
+
+
 
 
 
