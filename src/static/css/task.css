@@ -346,7 +346,6 @@ button {
   left: 0;
   width: 100%;
   height: 100%;
-  background: rgba(0, 0, 0, 0.5);
   justify-content: center;
   align-items: center;
   z-index: 2000;
@@ -597,7 +596,7 @@ h1 {
   border-radius: 10px;
   padding: 20px;
   width: 80%;
-  max-width: 600px;
+  max-width: 800px; /* Increase width */
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
 #default-tasks-popup h2 {
@@ -612,6 +611,7 @@ h1 {
 }
 .default-task-item {
   display: flex;
+  justify-content: space-between; /* Move checkbox to the right */
   align-items: center;
   margin-bottom: 10px;
   padding: 5px;
@@ -624,6 +624,13 @@ h1 {
   margin-left: 8px;
   font-size: 1rem;
   color: #555;
+}
+.default-task-item span {
+  flex-grow: 1; /* Ensure text takes up available space */
+  text-align: left; /* Align text to the left */
+}
+.default-task-item input[type="checkbox"] {
+  margin-left: 10px; /* Add some space between text and checkbox */
 }
 .modal-buttons {
   padding: var(--spacing-sm) var(--spacing-md);
@@ -847,4 +854,99 @@ h1 {
   .dropdown-wrapper {
     flex-wrap: nowrap; /* Prevent wrapping */
   }
+}
+
+/* Custom Task Popup */
+#custom-task-popup {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2000;
+}
+
+#custom-task-popup .popup-content {
+  background: #fff;
+  border-radius: 12px;
+  padding: 24px;
+  box-shadow: 0px 2px 8px rgba(0, 0, 0, 0.1);
+  max-width: 500px;
+  width: 90%;
+  text-align: center;
+}
+
+#custom-task-popup .close-btn {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  font-size: 1.5rem;
+  cursor: pointer;
+  color: #555;
+  transition: color 0.3s ease, transform 0.3s ease;
+}
+
+#custom-task-popup .close-btn:hover {
+  color: var(--highlight-color);
+  transform: scale(1.1);
+}
+
+#custom-task-popup label {
+  display: block;
+  margin-top: var(--spacing-sm);
+  font-size: 0.85rem;
+  font-weight: bold;
+  color: var(--text-color-light);
+}
+
+#custom-task-popup input,
+#custom-task-popup textarea {
+  width: 99%;
+  padding: var(--spacing-sm);
+  margin-top: var(--spacing-sm);
+  border: none;
+  border-radius: var(--radius-small);
+  box-shadow: inset -2px -2px 4px var(--light-shadow-light),
+    inset 2px 2px 4px var(--dark-shadow-dark);
+  outline: none;
+  font-size: 0.85rem;
+  background: var(--background-light);
+  color: var(--text-color-light);
+  transition: box-shadow 0.3s ease;
+}
+
+#custom-task-popup input:focus,
+#custom-task-popup textarea:focus {
+  box-shadow: inset 2px 2px 4px rgba(255, 127, 63, 0.3),
+    inset -2px -2px 4px rgba(0, 0, 0, 0.1);
+}
+
+#custom-task-popup .modal-buttons {
+  display: flex;
+  justify-content: space-between;
+  margin-top: var(--spacing-md);
+}
+
+#custom-task-popup .modal-buttons button {
+  background: var(--background-light);
+  color: var(--text-color-light);
+  padding: var(--spacing-sm) var(--spacing-md);
+  border: none;
+  border-radius: var(--radius-small);
+  cursor: pointer;
+  box-shadow: -2px -2px 4px var(--light-shadow-light),
+    2px 2px 4px var(--dark-shadow-dark);
+  transition: background-color 0.3s ease, box-shadow 0.3s ease;
+  font-size: 0.85rem;
+}
+
+#custom-task-popup .modal-buttons button:hover {
+  background-color: rgba(255, 127, 63, 0.08);
+  color: var(--highlight-color);
+  box-shadow: -2px -2px 6px var(--light-shadow-light),
+    2px 2px 6px var(--dark-shadow-dark);
 }

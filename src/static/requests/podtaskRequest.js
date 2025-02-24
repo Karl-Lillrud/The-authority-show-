@@ -180,3 +180,16 @@ export async function addTasksToEpisode(episodeId, guestId, tasks) {
     alert("Failed to add tasks to episode.");
   }
 }
+
+export async function fetchLocalDefaultTasks() {
+  try {
+    const response = await fetch(
+      "{{ url_for('static', filename='data/default_tasks.json') }}"
+    );
+    const data = await response.json();
+    return data;
+  } catch (error) {
+    console.error("Error fetching local default tasks:", error);
+    alert("Failed to fetch local default tasks.");
+  }
+}

@@ -176,7 +176,8 @@ Management{% endblock %} {% block content %}
 
 <!-- Default Tasks Popup -->
 <div id="default-tasks-popup" class="popup" style="display: none">
-  <div class="popup-content">
+  <div class="popup-content" style="max-width: 800px">
+    <span class="close-btn" onclick="closeDefaultTasksPopup()">&times;</span>
     <h2>Select Default Tasks</h2>
     <button id="select-all-default-btn" onclick="selectAllDefaultTasks()">
       Select All
@@ -420,6 +421,35 @@ Management{% endblock %} {% block content %}
 
   window.closeModal = function () {
     document.getElementById("task-modal").style.display = "none";
+  };
+
+  window.openDefaultTasksPopup = function () {
+    document.getElementById("default-tasks-popup").style.display = "flex";
+
+    fetch("{{ url_for('static', filename='data/default_tasks.json') }}")
+      .then((response) => response.json())
+      .then((defaultTasks) => {
+        const defaultTasksList = document.getElementById("default-tasks-list");
+        defaultTasksList.innerHTML = ""; // Clear existing tasks
+
+        defaultTasks.forEach((task, index) => {
+          let div = document.createElement("div");
+          div.classList.add("default-task-item");
+          div.innerHTML = `
+            <span>${task}</span>
+            <input type="checkbox" id="default-task-${index}" value="${task}">
+          `;
+          defaultTasksList.appendChild(div);
+        });
+      })
+      .catch((error) => {
+        console.error("Error loading default tasks:", error);
+        alert("Failed to load default tasks.");
+      });
+  };
+
+  window.closeDefaultTasksPopup = function () {
+    document.getElementById("default-tasks-popup").style.display = "none";
   };
 </script>
 {% endblock %}
