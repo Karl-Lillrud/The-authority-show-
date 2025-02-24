@@ -13,25 +13,31 @@ account_bp = Blueprint("account_bp", __name__)
 def create_account():
     try:
         data = request.get_json()
-
-        user_id = data["userId"]  # This would be the userId from the registration process
-        subscription_id = str(uuid.uuid4())  # Generate a unique subscription ID
+        
+        if not data:
+            raise ValueError("No data received or invalid JSON.")
+        
+        # Check for required fields
+        if "userId" not in data or "email" not in data:
+            raise ValueError("Missing required fields: userId and email")
+        
+        user_id = data["userId"]
         email = data["email"]
         company_name = data.get("companyName", "")
         is_company = data.get("isCompany", False)
-
-        # Generate unique account ID (string UUID)
-        account_id = str(uuid.uuid4())
-
-        # Create the account document (set '_id' to string UUID)
+        
+        subscription_id = str(uuid.uuid4())  # Generate unique subscription ID
+        account_id = str(uuid.uuid4())  # Generate unique account ID
+        
+        # Create account document
         account_document = {
             "_id": account_id,  # Explicitly set '_id' to string UUID
-            "userId": user_id,  # Associate with the user ID
+            "userId": user_id,
             "subscriptionId": subscription_id,
             "email": email,
             "isCompany": is_company,
             "companyName": company_name,
-            "paymentInfo": "",  # This would be set once payment info is available
+            "paymentInfo": "",  # Placeholder for payment info
             "subscriptionStatus": "active",
             "createdAt": datetime.utcnow().isoformat(),
             "referralBonus": 0,
@@ -41,13 +47,24 @@ def create_account():
         }
 
         # Insert account into the Accounts collection (with custom _id)
+        print("🔍 Inserting account into the database:", account_document)
         collection.database.Accounts.insert_one(account_document)
 
-        return jsonify({"message": "Account created successfully", "accountId": account_document["_id"]}), 201
+        # Return success response
+        response = {
+            "message": "Account created successfully",
+            "accountId": account_document["_id"]
+        }
+        print("✅ Account created successfully:", response)
+        return jsonify(response), 201
 
+    except ValueError as ve:
+        print(f"❌ ValueError: {ve}")
+        return jsonify({"error": str(ve)}), 400
     except Exception as e:
-        print(f"❌ ERROR: {e}")
+        print(f"❌ Error: {e}")
         return jsonify({"error": f"Error creating account: {str(e)}"}), 500
+
 
 
 @account_bp.route("/get_accounts/<account_id>", methods=["GET"])
