@@ -20,6 +20,7 @@ from routes.podtask import podtask_bp
 from routes.team import team_bp
 from routes.guest import guest_bp
 from routes.account import account_bp
+from routes.episodes import episodes_bp  # Use relative import
 from dotenv import load_dotenv
 import os
 import logging
@@ -58,6 +59,7 @@ app.register_blueprint(podtask_bp)
 app.register_blueprint(team_bp)
 app.register_blueprint(guest_bp)
 app.register_blueprint(account_bp)
+app.register_blueprint(episodes_bp)
 
 APP_ENV = os.getenv("APP_ENV", "production")  # Default to production
 

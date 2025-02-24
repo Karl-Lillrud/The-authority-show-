@@ -26,136 +26,160 @@ except Exception as e:
     logger.error(f"Failed to connect to MongoDB: {e}")
     raise
 
-# Define collections and their schema
-collections = {
-    "Credit": {
-        "ID": str,
-        "credits": int,
-        "unclaimed_credits": int,
-        "referral_bonus": int,
-        "last_3_referrals": [],
-        "vip_status": bool,
-        "credits_expires_at": "date",
-    },
-    "Team": {
-        "ID": str,
-        "UserID": str,
-        "Name": str,
-        "Role": "array",
-        "Email": str,
-        "Phone": str,
-    },
-    "Clips": {"ID": str, "Podcast": int, "ClipName": str},
-    "Subscription": {
-        "ID": str,
-        "user_id": str,
-        "last_3_referrals": [],
-        "vip_status": bool,
-        "credits_expires_at": "date",
-    },
-    "Clips": {"ID": str, "Podcast": int, "ClipName": str},
-    "Subscription": {
-        "ID": str,
-        "user_id": str,
-        "subscription_plan": str,
-        "subscription_start": "date",
-        "subscription_end": "date",
-        "is_active": bool,
-    },
-    "User": {
-        "ID": str,
-        "email": str,
-        "passwordHash": str,
-        "createdAt": "date",
-        "partitionKey": str,
-        "referral_code": str,
-        "referred_by": "string_or_null",
-    },
-    "Podcast": {
-        "ID": str,
-        "UserID": str,
-        "Podname": str,
-        "RSSFeed": str,
-        "GoogleCal": "connect",
-        "PadURl": str,
-        "GuestURL": str,
-        "Social_media": "array",
-        "Email": str,
-    },
-    "PodTask": {
-        "id": int,
-        "task_name": str,
-        "dependency": str,
-        "checkmark": bool,
-        "type": str,
-        "action": str,
-        "duration": int,
-        "assigned_to": str,
-        "notes": str,
-        "automation_details": str,
-        "additional_links": str,
-    },
-    "Guest": {
-        "ID": str,
-        "name": str,
-        "image": str,
-        "tags": "array",
-        "description": str,
-        "bio": str,
-        "email": str,
-        "linkedin": str,
-        "twitter": str,
-        "areasOfInterest": "array",
-        "status": str,
-        "scheduled": int,
-        "completed": int,
-        "created_at": "date",
-    },
-    "DefaultTasks": {
-        "id": int,
-        "task_name": str,
-        "dependency": str,
-        "checkmark": bool,
-        "type": str,
-        "action": str,
-        "duration": int,
-        "assigned_to": str,
-        "notes": str,
-        "automation_details": str,
-        "additional_links": str,
-    },
-    "Episodes": {
-        "episode_id": str,
-        "podcast_id": str,
-        "guest_id": str,
-        "title": str,
-        "description": str,
-        "recording_date": "date",
-        "release_date": "date",
-        "status": str,
-        "created_at": "date",
-        "updated_at": "date",
-    },
-    "EpisodeTasks": {
-        "episode_id": str,
-        "guest_id": str,
-        "task_name": str,
-        "dependency": str,
-        "checkmark": bool,
-        "type": str,
-        "action": str,
-        "duration": int,
-        "assigned_to": str,
-        "notes": str,
-        "automation_details": str,
-        "additional_links": str,
-    },
-}
 
-# Create collections
-for collection_name, schema in collections.items():
-    if collection_name not in database.list_collection_names():
-        database.create_collection(collection_name)
-        logger.info(f"Collection '{collection_name}' created successfully.")
-    else:
-        logger.info(f"Collection '{collection_name}' already exists.")
+def create_collections():
+    collections = {
+        "users_to_teams": [{"id": "1", "userId": "user1", "teamId": "team1"}],
+        "teams": [
+            {
+                "id": "1",
+                "name": "Team A",
+                "role": "owner",
+                "email": "team@example.com",
+                "phone": "1234567890",
+                "isActive": True,
+                "joinedAt": "2023-01-01",
+                "lastActive": "2023-01-02",
+            }
+        ],
+        "subscriptions": [
+            {
+                "id": "1",
+                "subscriptionPlan": "Basic",
+                "autoRenew": True,
+                "discountCode": "DISCOUNT2023",
+            }
+        ],
+        "podtasks": [
+            {
+                "id": "1",
+                "podcastId": "podcast1",
+                "name": "Task 1",
+                "action": "action1",
+                "dayCount": 5,
+                "description": "Description 1",
+                "actionUrl": "http://example.com",
+                "urlDescribe": "URL Description",
+                "submissionReq": True,
+                "status": "Pending",
+                "assignedAt": "2023-01-01",
+                "dueDate": "2023-01-10",
+                "priority": "High",
+            }
+        ],
+        "podcasts": [
+            {
+                "id": "1",
+                "teamId": "team1",
+                "accountId": "account1",
+                "podName": "Podcast 1",
+                "ownerName": "Owner 1",
+                "hostName": "Host 1",
+                "rssFeed": "http://rssfeed.com",
+                "googleCal": "http://googlecal.com",
+                "podUrl": "http://podurl.com",
+                "guestUrl": "http://guesturl.com",
+                "socialMedia": "http://socialmedia.com",
+                "email": "podcast@example.com",
+                "description": "Description 1",
+                "logoUrl": "http://logourl.com",
+                "category": "Category 1",
+                "defaultTasks": "Task 1",
+            }
+        ],
+        "guests": [
+            {
+                "id": "1",
+                "podcastId": "podcast1",
+                "name": "Guest 1",
+                "image": "http://image.com",
+                "tags": "tag1",
+                "description": "Description 1",
+                "bio": "Bio 1",
+                "email": "guest@example.com",
+                "linkedin": "http://linkedin.com",
+                "twitter": "http://twitter.com",
+                "areasOfInterest": "Interest 1",
+                "status": "Active",
+                "scheduled": 1,
+                "completed": 1,
+                "createdAt": "2023-01-01",
+                "notes": "Notes 1",
+            }
+        ],
+        "episodes": [
+            {
+                "id": "1",
+                "guestId": "guest1",
+                "podcastId": "podcast1",
+                "title": "Episode 1",
+                "description": "Description 1",
+                "publishDate": "2023-01-01",
+                "duration": 60,
+                "status": "Published",
+                "createdAt": "2023-01-01",
+                "updatedAt": "2023-01-02",
+            }
+        ],
+        "clips": [
+            {
+                "id": "1",
+                "podcastId": "podcast1",
+                "clipName": "Clip 1",
+                "duration": 30,
+                "createdAt": "2023-01-01",
+                "editedBy": "editor1",
+                "clipUrl": "http://clipurl.com",
+                "status": "Completed",
+                "tags": "tag1",
+            }
+        ],
+        "credits": [
+            {
+                "id": "1",
+                "availableCredits": 100,
+                "usedCredits": 50,
+                "lastUpdated": "2023-01-01",
+                "creditsHistory": "History 1",
+                "creditLimit": 200,
+            }
+        ],
+        "accounts": [
+            {
+                "id": "1",
+                "ownerId": "owner1",
+                "subscriptionId": "subscription1",
+                "creditId": "credit1",
+                "email": "account@example.com",
+                "isCompany": True,
+                "companyName": "Company 1",
+                "paymentInfo": "Payment Info",
+                "subscriptionStatus": "Active",
+                "createdAt": "2023-01-01",
+                "referralBonus": 10,
+                "subscriptionStart": "2023-01-01",
+                "subscriptionEnd": "2023-12-31",
+                "isActive": True,
+            }
+        ],
+        "users": [
+            {
+                "id": "1",
+                "name": "User 1",
+                "email": "user1@example.com",
+                "passwordHash": "hashed_password",
+                "createdAt": "2023-01-01",
+                "referralCode": "REF123",
+                "referredBy": None,
+            }
+        ],
+    }
+
+    for collection_name, documents in collections.items():
+        collection = database[collection_name]
+        collection.insert_many(documents)
+        logger.info(f"Inserted documents into {collection_name} collection.")
+
+
+if __name__ == "__main__":
+    create_collections()

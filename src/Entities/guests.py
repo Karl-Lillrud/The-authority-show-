@@ -1,5 +1,6 @@
 from marshmallow import Schema, fields
 
+
 class GuestSchema(Schema):
     id = fields.Str()
     podcastId = fields.Str(required=True)
