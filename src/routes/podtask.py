@@ -7,7 +7,7 @@ from Entities.podtasks import PodtaskSchema
 # Define Blueprint
 podtask_bp = Blueprint("podtask_bp", __name__)
 
-@podtask_bp.route("/register_podtasks", methods=["POST"])
+@podtask_bp.route("/add_podtasks", methods=["POST"])
 def register_podtask():
     if not g.user_id:
         return jsonify({"error": "Unauthorized"}), 401
