@@ -43,6 +43,27 @@ def signin():
     session["email"] = users[0]["email"]
     session.permanent = remember
 
+    # Check the number of podcasts registered
+    user_id = session["user_id"]
+    podcasts = list(collection.database.Podcast.find({"userid": user_id}))
+
+    if not podcasts:
+        return jsonify({
+            "message": "Login successful",
+            "redirect_url": "/podprofile"
+        }), 200
+    elif len(podcasts) == 1:
+        return jsonify({
+            "message": "Login successful",
+            "redirect_url": "/dashboard"
+        }), 200
+    else:
+        return jsonify({
+            "message": "Login successful",
+            "redirect_url": "/homepage"
+        }), 200
+    
+ 
     response = jsonify({"message": "Login successful", "redirect_url": "dashboard"})
     if remember:
         response.set_cookie("remember_me", "true", max_age=30 * 24 * 60 * 60)  # 30 days
@@ -58,3 +79,4 @@ def logout():
     response = redirect(url_for("signin_bp.signin"))
     response.delete_cookie("remember_me")
     return response
+
