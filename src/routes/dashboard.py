@@ -50,7 +50,7 @@ def settings():
             url_for("signin_bp.signin")
         )  # Fix: redirect using the blueprint route
 
-    user = collection.find_one({"_id": g.user_id})
+    user = users_collection.find_one({"_id": g.user_id})
     email = user.get("email", "") if user else ""
     full_name = user.get("full_name", "") if user else ""
 
