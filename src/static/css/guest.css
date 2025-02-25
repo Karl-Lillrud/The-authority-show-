@@ -1,14 +1,10 @@
-body.guest {
-  font-family: var(--font-primary);
-  background: var(--background-light);
-  color: var(--text-color-light);
-  text-align: center;
-  padding: var(--spacing-md);
-}
+/* guest.css */
 
+/* Container & Title */
 .container {
   max-width: 1200px;
   margin: 0 auto;
+  text-align: center;
 }
 
 .title {
@@ -17,6 +13,7 @@ body.guest {
   margin-bottom: var(--spacing-lg);
 }
 
+/* Search Bar */
 #search-bar {
   width: 80%;
   max-width: 400px;
@@ -25,10 +22,11 @@ body.guest {
   border-radius: var(--radius-medium);
   box-shadow: inset 5px 5px 10px var(--dark-shadow-light),
               inset -5px -5px 10px var(--light-shadow-light);
-  margin-bottom: var(--spacing-lg);
+  margin: var(--spacing-lg) auto;
   font-size: 16px;
 }
 
+/* Guest List Grid & Cards */
 .guest-list {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
@@ -55,7 +53,7 @@ body.guest {
   height: 100px;
   border-radius: 50%;
   object-fit: cover;
-  margin-bottom: var(--spacing-sm);
+  margin: 0 auto var(--spacing-sm);
 }
 
 .guest-card h3 {
@@ -73,42 +71,7 @@ body.guest {
   margin: 3px;
 }
 
-.guest-hover {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: rgba(0, 0, 0, 0.8);
-  color: #fff;
-  border-radius: var(--radius-medium);
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-  opacity: 0;
-  transition: opacity 0.3s ease;
-}
-
-.guest-card:hover .guest-hover {
-  opacity: 1;
-}
-
-.guest-hover p {
-  margin-bottom: var(--spacing-sm);
-  font-size: 14px;
-  padding: var(--spacing-sm);
-}
-
-.view-profile {
-  background: var(--highlight-color);
-  color: #fff;
-  padding: var(--spacing-sm) var(--spacing-md);
-  border-radius: var(--radius-small);
-  text-decoration: none;
-  font-size: 14px;
-}
-
+/* Popup Modal */
 .popup {
   position: fixed;
   top: 50%;
@@ -123,12 +86,13 @@ body.guest {
   z-index: 1000;
   flex-direction: column;
   align-items: center;
-  width: 300px;
+  width: 400px;
+  transition: all 0.3s ease;
 }
 
 .popup-content {
   width: 100%;
-  text-align: left;
+  text-align: center;
 }
 
 .close-button {
@@ -180,47 +144,34 @@ body.guest {
               inset -5px -5px 10px var(--light-shadow-light);
 }
 
-.badge {
-  display: inline-block;
-  padding: 5px 10px;
-  border-radius: var(--radius-small);
-  font-size: 12px;
-  color: #fff;
-}
-
-.badge.scheduled {
-  background: blue;
-}
-
-.badge.completed {
-  background: green;
-}
-
-.profile {
-  margin-bottom: var(--spacing-lg);
-}
-
-.profile img {
-  width: 100px;
-  height: 100px;
-  border-radius: 50%;
-  margin-bottom: var(--spacing-sm);
-}
-
-.profile-actions {
+/* Popup Actions for Edit & Delete */
+.popup-actions {
   margin-top: var(--spacing-lg);
+  display: flex;
+  justify-content: space-between;
+  width: 100%;
 }
 
-.profile-actions button {
+.popup-actions button {
   padding: 8px 12px;
-  margin: 0 var(--spacing-sm);
   border: none;
   border-radius: var(--radius-medium);
   background: var(--highlight-color);
   color: #fff;
   cursor: pointer;
+  flex: 1;
+  margin: 0 var(--spacing-sm);
 }
 
-.profile-actions button:hover {
+.popup-actions button.delete {
+  background: red;
+}
+
+.popup-actions button:hover {
   opacity: 0.9;
+}
+
+/* Center profile picture uploader in popup */
+.profile-pic-uploader {
+  margin: 0 auto;
 }
