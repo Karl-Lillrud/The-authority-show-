@@ -147,7 +147,8 @@ function setupInvitationEmails() {
 
 function sendInvitations() {
     const teamMembers = document.querySelectorAll(".team-member");
-    const podName = document.getElementById("podName") ? document.getElementById("podName").value : "your podcast";
+    const podNameElement = document.getElementById("podName");
+    const podName = podNameElement ? podNameElement.value : "your podcast";
     const joinLinkBase = "https://app.podmanager.ai/register"; // Updated base URL
 
     teamMembers.forEach(member => {
