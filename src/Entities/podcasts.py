@@ -1,0 +1,23 @@
+from marshmallow import Schema, fields
+
+
+#teamId is optional, because not all podcasts are part of a team
+#accountId is required, because all podcasts are linked to an account
+class PodcastSchema(Schema): #""
+    id = fields.Str()
+    teamId = fields.Str()
+    accountId = fields.Str(required=True)  # Ensure account is provided
+    podName = fields.Str(required=True)  # Podcast name must be required
+    ownerName = fields.Str()
+    hostName = fields.Str()
+    rssFeed = fields.Url(allow_none=True)  # Allow missing RSS Feed
+    googleCal = fields.Url(allow_none=True)  # Allow missing Google Calendar link
+    podUrl = fields.Url(required=True)  # Podcast URL should always be provided
+    guestUrl = fields.Url(allow_none=True)  # Guest URL can be missing
+    socialMedia = fields.List(fields.Url(), allow_none=True)  # Allow empty social media
+    email = fields.Email()
+    description = fields.Str()
+    logoUrl = fields.Url(allow_none=True)  # Allow missing logo
+    category = fields.Str()
+    defaultTasks = fields.List(fields.Str(), allow_none=True)  # Allow empty default tasks
+
