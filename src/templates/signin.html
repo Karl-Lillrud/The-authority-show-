@@ -19,11 +19,12 @@
       />
     </div>
     <div class="imagePhoto">
-      <img src="podcastbild.jpeg" alt="Beskrivning av bilden">
-    </div>
-
+      <img src="{{ url_for('static', filename='podcastimage.jpeg') }}" alt="Podcast bild">
+  </div>
+  
     <div class="center-box">
-      <h1 class="title">Sign in</h1>
+      <h1 class="title2">Welcome to PodManager</h1>
+      
       <div id="error-message" class="error-message" style="display: none"></div>
 
       <form id="login-form">
@@ -38,6 +39,9 @@
             required
           />
         </div>
+        
+        <div class="text">
+
         <div class="input-group">
           <label for="password" class="label"></label>
           <input
@@ -49,6 +53,11 @@
             required
           />
         </div>
+        <div class="form-actions">
+          <button type="submit" class="button button-primary">Sign In</button>
+        </div>
+
+
         <div class="input-group">
           <label for="remember" class="label">
             <input
@@ -60,14 +69,13 @@
             Remember Me
           </label>
         </div>
+      
 
         <div class="extra-links">
           <a href="/forgotpassword" class="link">Forgot Password?</a>
         </div>
 
-        <div class="form-actions">
-          <button type="submit" class="button button-primary">Login</button>
-        </div>
+      
 
         <div class="extra-links">
           <a href="/register" class="link">Register here</a>
@@ -75,6 +83,7 @@
       </form>
     </div>
 
+    
     <script>
       document.addEventListener("DOMContentLoaded", function () {
         const form = document.getElementById("login-form");

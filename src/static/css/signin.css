@@ -8,7 +8,7 @@
     --highlight: #FF7F3F;
     --font-primary: 'Campton', sans-serif;
 }
- 
+
 body {
     font-family: var(--font-primary);
     background-color: var(--bg-light);
@@ -20,13 +20,25 @@ body {
     margin: 0;
     transition: background-color 0.3s ease, color 0.3s ease;
 }
- 
+
 .logo-container {
     position: absolute;
     top: 20px;
     left: 20px;
-    width: 120px; /* Adjust as needed */
+    width: 120px;
+    /* Adjust as needed */
 }
+
+.imagePhoto img {
+    width: 400px;
+    mix-blend-mode: multiply;
+    /* Gör bilden mer naturlig på ljusa bakgrunder */
+    position: relative;
+    left: 27.4rem;
+    zoom: 190%;
+    border-radius: 1px;
+}
+
 
 .logo-container img {
     width: 100%;
@@ -36,16 +48,30 @@ body {
 .center-box {
     background-color: var(--bg-light);
     width: 90%;
-    border: 3px dodgerblue solid;
-
-    max-width: 250px;
-    padding: 20px;
-    border-radius: 20px;
+    position: relative;
+    right: 40rem;
+    zoom: 120%;
+    /* Ökar storleken med 20% */
+    max-width: 400px;
+    /* Ändra detta om du vill ha den ännu större */
+    padding: 30px;
+    /* Ger mer utrymme inuti boxen */
+    border-radius: 25px;
     box-shadow: -5px -5px 15px white, 5px 5px 15px var(--shadow-light);
     text-align: center;
-    margin: 15px;
+    margin: 20px auto;
+    /* Centrerar och ökar avståndet */
 }
- 
+
+.title3 {
+    color: #FF7F3F;
+
+}
+
+
+
+
+
 .button {
     padding: 10px 20px;
     border-radius: 25px;
@@ -58,14 +84,19 @@ body {
     transition: all 0.3s ease;
     margin-bottom: 15px;
 }
+
 .button.button.button-primary {
     color: #6E7F8D;
+    width: 300px;
+    border-radius: 10px;
+
+
 }
 
 .button:hover {
     box-shadow: -3px -3px 6px white, 3px 3px 6px var(--shadow-light);
 }
- 
+
 .input {
     padding: 10px;
     border: none;
@@ -76,19 +107,17 @@ body {
     transition: all 0.3s ease;
     margin: 15px;
 }
- 
+
 .input:focus {
+
     outline: none;
     box-shadow: inset -3px -3px 6px white, inset 3px 3px 6px var(--shadow-light);
 }
- 
+
 .link {
     color: var(--highlight);
     text-decoration: none;
     font-size: 14px;
-    margin-top: 25px;
-    margin-bottom: 25px;
-    margin: 30px;
 }
 
 
