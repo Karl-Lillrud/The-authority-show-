@@ -4,12 +4,14 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Pod Profile</title>
-    <!-- ...existing code... -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/podprofile.css') }}">
     <script src="{{ url_for('static', filename='requests/podprofileRequests.js') }}"></script>
     <script src="{{ url_for('static', filename='requests/podprofile_languageRequests.js') }}"></script>
-    <!-- ...existing code... -->
 </head>
 <body>
+    <!-- ...existing code... -->
+    <input type="hidden" id="userEmail" value="{{ user_email }}">
+    <button id="googleCalendar">Connect Google Calendar</button>
     <!-- ...existing code... -->
 </body>
 </html>
