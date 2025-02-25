@@ -70,7 +70,7 @@ def podprofile():
         return redirect(
             url_for("signin_bp.signin")
         )  # Fix: redirect using the blueprint route
-    return render_template("podprofile/index.html")
+    return render_template("podprofile/podprofile.html")
 
 
 @dashboard_bp.route("/team", methods=["GET", "POST"])
