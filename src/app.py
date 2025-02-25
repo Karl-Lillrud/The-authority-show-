@@ -11,17 +11,20 @@ from routes.forgot_pass import forgotpass_bp
 from routes.signin import signin_bp
 from routes.podcast import podcast_bp
 from routes.dashboard import dashboard_bp
-from routes.pod_management import dashboardmanagement_bp
+from routes.pod_management import pod_management_bp
 from routes.podtask import podtask_bp
 from routes.account import account_bp
 from routes.team import team_bp
 from routes.guest import guest_bp
 from routes.userstoteams import userstoteams_bp
+from routes.invitation import invitation_bp
+from routes.google_calendar import google_calendar_bp
 from dotenv import load_dotenv
 import os
 import logging
 from utils import venvupdate
 from database.mongo_connection import collection as team_collection
+from utils.email_utils import send_email
 
 # Checking if the environment variable is set to skip the virtual environment update
 if os.getenv("SKIP_VENV_UPDATE", "false").lower() not in ("true", "1", "yes"):
@@ -51,12 +54,14 @@ app.register_blueprint(forgotpass_bp)
 app.register_blueprint(signin_bp)
 app.register_blueprint(podcast_bp)
 app.register_blueprint(dashboard_bp)
-app.register_blueprint(dashboardmanagement_bp)
+app.register_blueprint(pod_management_bp)
 app.register_blueprint(podtask_bp)
 app.register_blueprint(team_bp)
 app.register_blueprint(guest_bp)
 app.register_blueprint(account_bp)
 app.register_blueprint(userstoteams_bp)
+app.register_blueprint(invitation_bp)
+app.register_blueprint(google_calendar_bp)
 
 APP_ENV = os.getenv("APP_ENV", "production")  # Default to production
 

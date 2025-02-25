@@ -8,6 +8,9 @@ document.addEventListener("DOMContentLoaded", function () {
         const darkModeToggle = document.getElementById("dark-mode-toggle");
         const addTeamMemberButton = document.getElementById("addTeamMember");
         const teamMembersContainer = document.getElementById("teamMembersContainer");
+        const googleCalendarButton = document.getElementById("googleCalendar");
+
+        console.log("Setting up navigation");
 
         if (goToProductionTeam) {
             goToProductionTeam.addEventListener("click", () => {
@@ -78,53 +81,100 @@ document.addEventListener("DOMContentLoaded", function () {
                 teamMembersContainer.appendChild(newMember);
             });
         }
+
+        // Handle Google Calendar connection
+        console.log("Checking for Google Calendar button");
+        console.log("googleCalendarButton:", googleCalendarButton);
+        if (googleCalendarButton) {
+            console.log("Google Calendar button found");
+            googleCalendarButton.addEventListener("click", () => {
+                console.log("Google Calendar button clicked");
+                const userEmail = document.getElementById("userEmail").value;
+                console.log("User email:", userEmail);
+                if (userEmail.endsWith("@gmail.com")) {
+                    console.log("Redirecting to Google Calendar connection");
+                    window.location.href = "/connect_google_calendar";
+                } else {
+                    alert("Google Calendar integration is only available for Gmail accounts.");
+                }
+            });
+        } else {
+            console.error("Google Calendar button not found");
+        }
     }
 
     setupNavigation();
 });
 
 function setupAddTeamMember() {
-    document.getElementById("addTeamMember").addEventListener("click", () => {
-        const container = document.getElementById("teamMembersContainer");
-        const newMember = document.createElement("div");
-        newMember.classList.add("team-member");
-        newMember.innerHTML = `
-            <div class="form-group">
-                <label>Name</label>
-                <input type="text" class="team-name" required>
-            </div>
-            <div class="form-group">
-                <label>Email</label>
-                <input type="email" class="team-email" required>
-            </div>
-            <div class="form-group">
-                <label>Role</label>
-                <select class="team-role" required>
-                    <option value="" disabled selected>Select Role</option>
-                    <option value="user">User</option>
-                    <option value="host">Host</option>
-                </select>
-            </div>
-        `;
-        container.appendChild(newMember);
-    });
+    const addTeamMemberButton = document.getElementById("addTeamMember");
+    if (addTeamMemberButton) {
+        addTeamMemberButton.addEventListener("click", () => {
+            const container = document.getElementById("teamMembersContainer");
+            if (container) {
+                const newMember = document.createElement("div");
+                newMember.classList.add("team-member");
+                newMember.innerHTML = `
+                    <div class="form-group">
+                        <label>Name</label>
+                        <input type="text" class="team-name" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Email</label>
+                        <input type="email" class="team-email" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Role</label>
+                        <select class="team-role" required>
+                            <option value="" disabled selected>Select Role</option>
+                            <option value="user">User</option>
+                            <option value="host">Host</option>
+                        </select>
+                    </div>
+                `;
+                container.appendChild(newMember);
+            }
+        });
+    }
 }
 
 function setupInvitationEmails() {
-    document.getElementById("goToPodProfile").addEventListener("click", sendInvitations);
+    const goToPodProfile = document.getElementById("goToPodProfile");
+    if (goToPodProfile) {
+        goToPodProfile.addEventListener("click", sendInvitations);
+    }
 }
 
 function sendInvitations() {
     const teamMembers = document.querySelectorAll(".team-member");
-    const podName = document.getElementById("podName").value || "your podcast";
-    const joinLink = "https://www.podmanager.ai";
+    const podNameElement = document.getElementById("podName");
+    const podName = podNameElement ? podNameElement.value : "your podcast";
+    const joinLinkBase = "https://app.podmanager.ai/register"; // Updated base URL
 
     teamMembers.forEach(member => {
         const email = member.querySelector(".team-email").value;
+        const name = member.querySelector(".team-name").value;
+        const role = member.querySelector(".team-role").value;
         if (email) {
-            const subject = encodeURIComponent(`Join the ${podName} team`);
-            const body = encodeURIComponent(`Hi.\n\nPlease join me in producing the ${podName}. We use www.podmanager.ai to organize all work. Click here to join the team: ${joinLink}\n\nJust enter your email address to join the team.`);
-            window.open(`mailto:${email}?subject=${subject}&body=${body}`, '_blank');
+            const joinLink = `${joinLinkBase}?email=${encodeURIComponent(email)}&name=${encodeURIComponent(name)}&role=${encodeURIComponent(role)}`;
+            const subject = `Join the ${podName} team`;
+            const body = `Hi ${name}!\n\nYou are hereby invited by PodManager.ai to join the team of ${podName}.\n\nClick here to join the team: <a href="${joinLink}">${joinLink}</a>\n\nWelcome to PodManager.ai!`;
+            fetch('/send_invitation', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ email, subject, body })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    console.log(`Invitation sent to ${email}`);
+                } else {
+                    console.error(`Failed to send invitation to ${email}`);
+                }
+            })
+            .catch(error => console.error('Error sending invitation:', error));
         }
     });
 }
@@ -139,33 +189,43 @@ function setupDarkMode() {
         darkModeToggle.textContent = "☀️";
     }
 
-    darkModeToggle.addEventListener("click", () => {
-        body.classList.toggle("dark-mode");
-        const darkModeEnabled = body.classList.contains("dark-mode");
-        darkModeToggle.textContent = darkModeEnabled ? "☀️" : "🌙";
-        localStorage.setItem("darkMode", darkModeEnabled ? "enabled" : "disabled");
-    });
+    if (darkModeToggle) {
+        darkModeToggle.addEventListener("click", () => {
+            body.classList.toggle("dark-mode");
+            const darkModeEnabled = body.classList.contains("dark-mode");
+            darkModeToggle.textContent = darkModeEnabled ? "☀️" : "🌙";
+            localStorage.setItem("darkMode", darkModeEnabled ? "enabled" : "disabled");
+        });
+    }
 }
+
 document.addEventListener("DOMContentLoaded", () => {
     const savedLang = localStorage.getItem("selectedLanguage") || "en";
     if (window.i18n) {
         window.i18n.changeLanguage(savedLang);
     }
 
-    document.getElementById("language-button").addEventListener("click", () => {
-        document.getElementById("language-list").classList.toggle("hidden");
-    });
+    const languageButton = document.getElementById("language-button");
+    if (languageButton) {
+        languageButton.addEventListener("click", () => {
+            document.getElementById("language-list").classList.toggle("hidden");
+        });
+    }
 
-    document.getElementById("language-list").addEventListener("click", (event) => {
-        if (event.target.tagName === "LI") {
-            const selectedLang = event.target.getAttribute("data-lang");
-            if (window.i18n) {
-                window.i18n.changeLanguage(selectedLang);
+    const languageList = document.getElementById("language-list");
+    if (languageList) {
+        languageList.addEventListener("click", (event) => {
+            if (event.target.tagName === "LI") {
+                const selectedLang = event.target.getAttribute("data-lang");
+                if (window.i18n) {
+                    window.i18n.changeLanguage(selectedLang);
+                }
+                languageList.classList.add("hidden");
             }
-            document.getElementById("language-list").classList.add("hidden");
-        }
-    });
+        });
+    }
 });
+
 document.addEventListener("DOMContentLoaded", function () {
     const pointsSystem = {
         podName: 10,

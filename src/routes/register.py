@@ -12,10 +12,9 @@ load_dotenv()
 
 @register_bp.route("/register", methods=["GET", "POST"])
 def register():
+    email = request.args.get('email', '')
     if request.method == "GET":
-        return render_template("register/register.html")
-
-    print("🔍 Received a POST request at /register")
+        return render_template("register/register.html", email=email)
 
     if request.content_type != "application/json":
         print("❌ Invalid Content-Type:", request.content_type)
@@ -23,10 +22,8 @@ def register():
 
     try:
         data = request.get_json()
-        print("📩 Received Data:", data)
 
         if "email" not in data or "password" not in data:
-            print("❌ Missing email or password")
             return jsonify({"error": "Missing email or password"}), 400
 
         email = data["email"].lower().strip()
@@ -37,7 +34,6 @@ def register():
         existing_users = list(collection.database.Users.find({"email": email}))
 
         if existing_users:
-            print("⚠️ Email already registered:", email)
             return jsonify({"error": "Email already registered."}), 409
 
         # ✅ Generate unique user ID (string UUID)

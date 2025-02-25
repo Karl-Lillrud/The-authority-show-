@@ -8,6 +8,8 @@
       rel="stylesheet"
       href="{{ url_for('static', filename='css/register.css') }}"
     />
+    <script src="{{ url_for('static', filename='requests/podprofileRequests.js') }}"></script>
+    <script src="{{ url_for('static', filename='requests/podprofile_languageRequests.js') }}"></script>
   </head>
   <body>
     <!-- Logo -->
@@ -21,14 +23,19 @@
     <div class="center-box">
       <h2>Register</h2>
 
-      <form id="register-form">
-        <input
-          class="input"
-          type="email"
-          id="email"
-          placeholder="Email"
-          required
-        />
+      <form id="register-form" method="POST" action="{{ url_for('register_bp.register') }}">
+        <div class="form-group">
+          <label for="email">Email</label>
+          <input
+            class="input"
+            type="email"
+            id="email"
+            name="email"
+            value="{{ email }}"
+            placeholder="Email"
+            required
+          />
+        </div>
         <input
           class="input"
           type="password"
