@@ -106,7 +106,7 @@ body {
 }
 
 .icon-button:hover {
-  background-color: var(--highlight-color);
+  background-color: #d6d4d4e8;
   transform: translateY(-2px);
 }
 
@@ -409,3 +409,9 @@ input:focus + .slider {
 .actions-dropdown .dropdown-menu {
   z-index: 9999; /* ensures the menu appears on top */
 }
+
+.actions-dropdown .dropdown-menu button:hover {
+  background-color: var(--highlight-color);
+  color: #fff;
+}
+
