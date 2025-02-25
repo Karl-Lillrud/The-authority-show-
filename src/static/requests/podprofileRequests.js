@@ -10,6 +10,8 @@ document.addEventListener("DOMContentLoaded", function () {
         const teamMembersContainer = document.getElementById("teamMembersContainer");
         const googleCalendarButton = document.getElementById("googleCalendar");
 
+        console.log("Setting up navigation");
+
         if (goToProductionTeam) {
             goToProductionTeam.addEventListener("click", () => {
                 document.getElementById("pod-name-section").classList.add("hidden");
@@ -81,16 +83,23 @@ document.addEventListener("DOMContentLoaded", function () {
         }
 
         // Handle Google Calendar connection
+        console.log("Checking for Google Calendar button");
+        console.log("googleCalendarButton:", googleCalendarButton);
         if (googleCalendarButton) {
+            console.log("Google Calendar button found");
             googleCalendarButton.addEventListener("click", () => {
                 console.log("Google Calendar button clicked");
-                const newTab = window.open("/connect_google_calendar", "_blank");
-                if (newTab) {
-                    newTab.focus();
+                const userEmail = document.getElementById("userEmail").value;
+                console.log("User email:", userEmail);
+                if (userEmail.endsWith("@gmail.com")) {
+                    console.log("Redirecting to Google Calendar connection");
+                    window.location.href = "/connect_google_calendar";
                 } else {
-                    alert("Failed to open new tab. Please check your browser settings.");
+                    alert("Google Calendar integration is only available for Gmail accounts.");
                 }
             });
+        } else {
+            console.error("Google Calendar button not found");
         }
     }
 
@@ -147,7 +156,7 @@ function sendInvitations() {
         const role = member.querySelector(".team-role").value;
         if (email) {
             const joinLink = `${joinLinkBase}?email=${encodeURIComponent(email)}&name=${encodeURIComponent(name)}&role=${encodeURIComponent(role)}`;
-            const subject = `Join the ${podName} team`;x
+            const subject = `Join the ${podName} team`;
             const body = `Hi ${name}!\n\nYou are hereby invited by PodManager.ai to join the team of ${podName}.\n\nClick here to join the team: <a href="${joinLink}">${joinLink}</a>\n\nWelcome to PodManager.ai!`;
             fetch('/send_invitation', {
                 method: 'POST',
