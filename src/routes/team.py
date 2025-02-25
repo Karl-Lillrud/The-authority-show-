@@ -21,9 +21,10 @@ def add_team():
         except ValidationError as err:
             return jsonify({"error": "Invalid data", "details": err.messages}), 400
 
-        team_id = str(uuid.uuid4())  # Generate a unique team ID
+        # Generate a unique team ID
+        team_id = str(uuid.uuid4()) #NÄR ETT TEAM SKA BORT SKA ALL USRTOTEAMS MED DETTA TEAMET OCKSÅ BORT
 
-        # Insert team data into the database (without user roles)
+        # Prepare team data
         team_item = {
             "_id": team_id,
             "name": validated_data.get("name", "").strip(),
@@ -32,17 +33,44 @@ def add_team():
             "isActive": validated_data.get("isActive", True),
             "joinedAt": validated_data.get("joinedAt", datetime.now(timezone.utc)),
             "lastActive": validated_data.get("lastActive", datetime.now(timezone.utc)),
-            "members": []  # Start with an empty list of members
+            "members": []  
         }
 
-        # Insert into Teams collection
+        # Insert the team into the Teams collection
         result = collection.database.Teams.insert_one(team_item)
+        if result.inserted_id:
+            print("✅ Team added successfully!")
 
-        print("✅ Team added successfully!")
+        users_data = validated_data.get("users", [])  
+
+        for user in users_data:
+            user_id = user.get("userId")
+            role = user.get("role", "member")  
+
+        
+            user_to_team_item = {
+                "userId": user_id,
+                "teamId": team_id,
+                "role": role,
+                "assignedAt": datetime.now(timezone.utc())
+            }
+
+            collection.database.UsersToTeams.insert_one(user_to_team_item)
+
+            team_item["members"].append({
+                "userId": user_id,
+                "role": role
+            })
+
+        # Update the team with its members (this step can be skipped if not needed)
+        collection.database.Teams.update_one(
+            {"_id": team_id},
+            {"$set": {"members": team_item["members"]}}
+        )
 
         return jsonify(
             {
-                "message": "Team added successfully",
+                "message": "Team and members added successfully",
                 "team_id": team_id,
                 "redirect_url": "/team.html",  # Example URL to redirect to after adding team
             }
@@ -68,23 +96,62 @@ def get_teams():
         user_ids = [ut["userId"] for ut in user_team_links]
         users = list(collection.database.Users.find({"userId": {"$in": user_ids}}, {"_id": 0}))
 
-        # 4️⃣ Merge users into their respective teams
+        # 4️⃣ Create a dictionary of users for faster lookup by userId
+        user_dict = {user["userId"]: user for user in users}
+
+        # 5️⃣ Group user-to-team relationships by teamId for faster processing
+        team_members_map = {}
+        for user_team in user_team_links:
+            team_id = user_team["teamId"]
+            if team_id not in team_members_map:
+                team_members_map[team_id] = []
+            # Attach role to the user from the UserToTeams collection
+            user = user_dict.get(user_team["userId"])
+            if user:
+                user["role"] = user_team.get("role", "member")  # Default to "member" if role is not set
+                team_members_map[team_id].append(user)
+
+        # 6️⃣ Merge users into their respective teams
         for team in teams:
             team_id = team["_id"]
-            team_members = []
-
-            # Find all users for this team
-            for user_team in user_team_links:
-                if user_team["teamId"] == team_id:
-                    user = next((u for u in users if u["userId"] == user_team["userId"]), None)
-                    if user:
-                        user["role"] = user_team.get("role", "member")  # Assign role from UserToTeams
-                        team_members.append(user)
-
-            team["members"] = team_members  # Add members list
+            # Set the members for the team from the map
+            team["members"] = team_members_map.get(team_id, [])
 
         return jsonify(teams), 200
 
     except Exception as e:
         print(f"❌ ERROR: {e}")
-        return jsonify({"error": f"Failed to fetch teams: {str(e)}"}), 500
+        return jsonify({"error": f"Failed to retrieve teams: {str(e)}"}), 500
+    
+@team_bp.route("/delete_team/<team_id>", methods=["DELETE"])
+def delete_team(team_id):
+    try:
+        # Step 1: Check if the team exists
+        team = collection.database.Teams.find_one({"_id": team_id})
+        
+        if not team:
+            return jsonify({"error": "Team not found"}), 404
+
+        # Step 2: Delete associated user-team relationships
+        user_team_relations = collection.database.UserToTeams.find({"teamId": team_id})
+        
+        if user_team_relations:
+            # Remove all user-team relationships for the team
+            collection.database.UsersToTeams.delete_many({"teamId": team_id})
+            print(f"✅ Deleted all user-team relationships for team {team_id}!")
+
+        # Step 3: Delete the team itself from the Teams collection
+        result = collection.database.Teams.delete_one({"_id": team_id})
+
+        if result.deleted_count == 0:
+            return jsonify({"error": "Failed to delete the team"}), 500
+        
+        print(f"✅ Team {team_id} and all members deleted successfully!")
+
+        return jsonify({"message": f"Team {team_id} and all members deleted successfully!"}), 200
+
+    except Exception as e:
+        print(f"❌ ERROR: {e}")
+        return jsonify({"error": f"Failed to delete the team: {str(e)}"}), 500
+
+

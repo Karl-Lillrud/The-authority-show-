@@ -5,12 +5,12 @@ from uuid import uuid4
 from marshmallow import ValidationError
 from Entities.users_to_teams import UserToTeamSchema
 
-usertoteam_bp = Blueprint("usertoteam_bp", __name__)
+userstoteams_bp = Blueprint("userstoteams_bp", __name__)
 
 #Use TeamSchema when you're dealing with information specific to a team, such as the team's name, role, email, and other properties related to the team itself.
 #Use UserToTeamSchema when you're dealing with the relationship between a user and a team, such as adding a user to a team or querying which teams a particular user belongs to.
 
-@usertoteam_bp.route("/add_users_to_teams", methods=["POST"])
+@userstoteams_bp.route("/add_users_to_teams", methods=["POST"])
 def add_user_to_team():
     if not hasattr(g, "user_id") or not g.user_id:
         return jsonify({"error": "Unauthorized"}), 401
@@ -61,7 +61,7 @@ def add_user_to_team():
         return jsonify({"error": f"Failed to add user to team: {str(e)}"}), 500
 
     
-@usertoteam_bp.route("/remove_users_from_teams", methods=["POST"])
+@userstoteams_bp.route("/remove_users_from_teams", methods=["POST"])
 def remove_user_from_team():
     if not g.user_id:  # Assuming user_id is stored in the global `g` object
         return jsonify({"error": "Unauthorized"}), 401
@@ -110,7 +110,7 @@ def remove_user_from_team():
         return jsonify({"error": f"Failed to remove user from team: {str(e)}"}), 500
 
     
-@usertoteam_bp.route("/get_teams_members/<team_id>", methods=["GET"])
+@userstoteams_bp.route("/get_teams_members/<team_id>", methods=["GET"])
 def get_team_members(team_id):
     if not hasattr(g, "user_id") or not g.user_id:
         return jsonify({"error": "Unauthorized"}), 401
@@ -139,39 +139,9 @@ def get_team_members(team_id):
         print(f"❌ ERROR: {e}")
         return jsonify({"error": f"Failed to retrieve team members: {str(e)}"}), 500
 
-    
-@usertoteam_bp.route("/get_team_member/<team_id>/<user_id>", methods=["GET"])
-def get_team_member(team_id, user_id):
-    if not hasattr(g, "user_id") or not g.user_id:
-        return jsonify({"error": "Unauthorized"}), 401
 
-    try:
-        # Find the specific team member in UserToTeams collection
-        team_member = collection.database.UsersToTeams.find_one(
-            {"teamId": team_id, "userId": user_id},
-            {"_id": 0}  # Exclude MongoDB ObjectId if necessary
-        )
 
-        if not team_member:
-            return jsonify({"message": "Team member not found"}), 404
 
-        # Fetch user details from the Users collection using userId
-        user_details = collection.database.Users.find_one(
-            {"userId": user_id},
-            {"_id": 0}  # Exclude MongoDB ObjectId if necessary
-        )
-
-        if not user_details:
-            return jsonify({"error": "User details not found"}), 404
-
-        # Merge team member and user details
-        team_member["userDetails"] = user_details
-
-        return jsonify({"teamMember": team_member}), 200
-
-    except Exception as e:
-        print(f"❌ ERROR: {e}")
-        return jsonify({"error": f"Failed to retrieve team member: {str(e)}"}), 500
 
 
 
