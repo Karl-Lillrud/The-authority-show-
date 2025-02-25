@@ -1,30 +1,32 @@
-
-<link rel="stylesheet" href="{{ url_for('static', filename='css/homepage.css') }}">
+<link
+  rel="stylesheet"
+  href="{{ url_for('static', filename='css/homepage.css') }}"
+/>
 <header>
-    <h1> Your Podcasts:</h1>
+  <h1>Select a Podcast:</h1>
 </header>
 <div class="container" id="podcast-list">
-    <!-- Dynamically populated podcasts -->
+  <!-- Dynamically populated podcasts -->
 </div>
 
 <script>
-document.addEventListener("DOMContentLoaded", function () {
+  document.addEventListener("DOMContentLoaded", function () {
     fetch("/get_user_podcasts")
-        .then(response => response.json())
-        .then(data => {
-            const podcastList = document.getElementById("podcast-list");
-            podcastList.innerHTML = "";
+      .then((response) => response.json())
+      .then((data) => {
+        const podcastList = document.getElementById("podcast-list");
+        podcastList.innerHTML = "";
 
-            if (data.error) {
-                podcastList.innerHTML = `<p>${data.error}</p>`;
-                return;
-            }
+        if (data.error) {
+          podcastList.innerHTML = `<p>${data.error}</p>`;
+          return;
+        }
 
-            data.forEach(podcast => {
-                let podcastCard = document.createElement("div");
-                podcastCard.classList.add("card");
+        data.forEach((podcast) => {
+          let podcastCard = document.createElement("div");
+          podcastCard.classList.add("card");
 
-                podcastCard.innerHTML = `
+          podcastCard.innerHTML = `
                     <a href="/dashboard"
                         onclick="window.parent.document.getElementById('homepage-popup').style.display='none';">
                         <img src="${podcast.image_url}" alt="${podcast.name}">
@@ -32,9 +34,9 @@ document.addEventListener("DOMContentLoaded", function () {
                     <p class="episode-count">${podcast.open_episodes} Open Episodes</p>
                 `;
 
-                podcastList.appendChild(podcastCard);
-            });
-        })
-        .catch(error => console.error("Error loading podcasts:", error));
-});
+          podcastList.appendChild(podcastCard);
+        });
+      })
+      .catch((error) => console.error("Error loading podcasts:", error));
+  });
 </script>
