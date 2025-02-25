@@ -30,75 +30,58 @@ def dashboard():
                            referral_code=referral_code, 
                            referrals=referrals)
 
-
-
 # ✅ Serves the homepage page
 @dashboard_bp.route("/homepage", methods=["GET"])
 def homepage():
     if not g.user_id:
-        return redirect(
-            url_for("signin_bp.signin")
-        )  # Fix: redirect using the blueprint route
-    return render_template("dashboard/homepage.html")
-
+        return redirect(url_for("signin_bp.signin"))
+    user_email = session.get("email")
+    return render_template("dashboard/homepage.html", user_email=user_email)
 
 # ✅ Serves the settings page
 @dashboard_bp.route("/settings", methods=["GET"])
 def settings():
     if not g.user_id:
-        return redirect(
-            url_for("signin_bp.signin")
-        )  # Fix: redirect using the blueprint route
-
+        return redirect(url_for("signin_bp.signin"))
     user = users_collection.find_one({"_id": g.user_id})
     email = user.get("email", "") if user else ""
     full_name = user.get("full_name", "") if user else ""
+    user_email = session.get("email")
+    return render_template("dashboard/settings.html", email=email, full_name=full_name, user_email=user_email)
 
-    return render_template("dashboard/settings.html", email=email, full_name=full_name)
-
-
-# ✅ Serves the profile page
+# ✅ Serves the profile page (podcast management)
 @dashboard_bp.route("/podcastmanagement", methods=["GET"])
 def podcastmanagement():
     if not g.user_id:
-        return redirect(
-            url_for("signin_bp.signin")
-        )  # Fix: redirect using the blueprint route
-    return render_template("dashboard/podcastmanagement.html")
-
+        return redirect(url_for("signin_bp.signin"))
+    user_email = session.get("email")
+    return render_template("dashboard/podcastmanagement.html", user_email=user_email)
 
 # ✅ Serves the tasks page
 @dashboard_bp.route("/taskmanagement", methods=["GET"])
 def taskmanagement():
     if not g.user_id:
-        return redirect(
-            url_for("signin_bp.signin")
-        )  # Fix: redirect using the blueprint route
-    return render_template("dashboard/taskmanagement.html")
-
+        return redirect(url_for("signin_bp.signin"))
+    user_email = session.get("email")
+    return render_template("dashboard/taskmanagement.html", user_email=user_email)
 
 @dashboard_bp.route("/podprofile", methods=["GET", "POST"])
 def podprofile():
     if not g.user_id:
-        return redirect(
-            url_for("signin_bp.signin")
-        )  # Fix: redirect using the blueprint route
-    return render_template("podprofile/index.html")
-
+        return redirect(url_for("signin_bp.signin"))
+    user_email = session.get("email")
+    return render_template("podprofile/index.html", user_email=user_email)
 
 @dashboard_bp.route("/team", methods=["GET", "POST"])
 def team():
     if not g.user_id:
-        return redirect(
-            url_for("signin_bp.signin")
-        )  # Fix: redirect using the blueprint route
-    return render_template("team/team.html")
-
+        return redirect(url_for("signin_bp.signin"))
+    user_email = session.get("email")
+    return render_template("team/team.html", user_email=user_email)
 
 @dashboard_bp.route("/guest", methods=["GET", "POST"])
 def guest():
     if not g.user_id:
-        return redirect(
-            url_for("signin_bp.signin")
-        )  # Fix: redirect using the blueprint route
-    return render_template("guest/guest.html")
+        return redirect(url_for("signin_bp.signin"))
+    user_email = session.get("email")
+    return render_template("guest/guest.html", user_email=user_email)
