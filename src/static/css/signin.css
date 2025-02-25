@@ -36,6 +36,8 @@ body {
 .center-box {
     background-color: var(--bg-light);
     width: 90%;
+    border: 3px dodgerblue solid;
+
     max-width: 250px;
     padding: 20px;
     border-radius: 20px;
