@@ -529,6 +529,7 @@ document.addEventListener("DOMContentLoaded", function() {
                   const eventSource = new EventSource(`/stream-referral-updates?email=${encodeURIComponent(userEmail)}`);
                   eventSource.onmessage = function(event) {
                       const data = JSON.parse(event.data);
+                      if (data.ping) return;
                       console.log("🔄 Live update received:", data);
                       updateReferralUI(data.referrals);
                       updateCredits();
