@@ -2,11 +2,12 @@ from flask import request, jsonify, Blueprint, g
 from database.mongo_connection import collection
 from datetime import datetime, timezone
 import uuid
+from Entities.podtasks import PodtaskSchema
 
 # Define Blueprint
 podtask_bp = Blueprint("podtask_bp", __name__)
 
-@podtask_bp.route("/register_podtask", methods=["POST"])
+@podtask_bp.route("/add_podtasks", methods=["POST"])
 def register_podtask():
     if not g.user_id:
         return jsonify({"error": "Unauthorized"}), 401
@@ -19,82 +20,82 @@ def register_podtask():
         data = request.get_json()
         print("📩 Received Podtask Data:", data)
 
-        podtask_id = str(uuid.uuid4())  # Generate unique ID
-        user_id = str(g.user_id)  
+        # Validate data using PodtaskSchema
+        schema = PodtaskSchema()
+        errors = schema.validate(data)
+        if errors:
+            return jsonify({"error": "Invalid data", "details": errors}), 400
 
-        # Extracting data fields
-        day_count = data.get("Daycount", 0)
-        description = data.get("Description", "").strip()
-        action = data.get("action", [])  # Expecting an array
-        action_url = data.get("actionurl", "").strip()
-        external_url = data.get("externalurl", "").strip()
-        submission = data.get("submission", "").strip()
-        task_name = data.get("taskname", "").strip()
+        validated_data = schema.load(data)
 
-        # Construct the podtask document
-        podtask_item = {
+        user_id = str(g.user_id)  # Get the user ID
 
-           "_id": podtask_id,
-           "podcast_id": data.get("PodcastId", "").strip(),  # Mappas om
-           "userid": user_id,
-           "taskname": task_name,                             # Ändrat fältnamn
-           "DayCount": day_count,                             # Ändrat fältnamn
-           "Description": description,
-           "Action": action,
-           "ActionUrl": action_url,
-           "UrlDescribe": external_url,
-          "SubimissionReq": True if submission == "Required" else False,
-          "created_at": datetime.now(timezone.utc),
-}
+        # Fetch accounts associated with the user using the correct field `userId`
+        user_accounts = list(collection.database.Accounts.find({"userId": user_id}, {"_id": 1}))
+        print(f"Found accounts: {user_accounts}")
 
-        # Correctly querying the User collection
-        user = collection.database.User.find_one({"_id": user_id})
-        if not user:
-            return jsonify({"error": "User not found"}), 404
+        if not user_accounts:
+            return jsonify({"error": "No accounts found for user"}), 403
 
-        # Correctly inserting into the Podtask collection
-        print("📝 Inserting podtask into database:", podtask_item)
-        result = collection.database["Podtask"].insert_one(podtask_item)  # Ensure "Podtask" is correct
+        # Extract account IDs
+        user_account_ids = [str(account["_id"]) for account in user_accounts]  # Use _id as account ID
 
-        print("✅ Podtask registered successfully!")
+        # Fetch the podcasts associated with these account IDs
+        podcasts = list(collection.database.Podcasts.find({"accountId": {"$in": user_account_ids}}))
+        print(f"Found podcasts for the user: {podcasts}")
 
-        return jsonify(
-            {
+        if not podcasts:
+            return jsonify({"error": "No podcasts found for user"}), 404
+
+        # Assume we link the first podcast, or you could add logic to select one
+        selected_podcast = podcasts[0]
+        podcast_id = str(selected_podcast["_id"])  # Get the podcast ID
+
+        # Set the podcastId for the podtask
+        validated_data["podcastId"] = podcast_id
+
+        # Add metadata to the podtask document
+        validated_data["userid"] = user_id
+        validated_data["created_at"] = datetime.now(timezone.utc)
+
+        # Generate a unique `id` for the podtask manually (UUID as string)
+        podtask_id = str(uuid.uuid4())  # Manually generate the `id` field as a string
+
+        # Insert the podtask into the database
+        podtask_document = {
+            "_id": podtask_id,  # Set the UUID as the explicit _id field
+            "podcastId": validated_data["podcastId"],
+            "name": validated_data.get("name"),
+            "action": validated_data.get("action"),
+            "dayCount": validated_data.get("dayCount"),
+            "description": validated_data.get("description"),
+            "actionUrl": validated_data.get("actionUrl"),
+            "urlDescribe": validated_data.get("urlDescribe"),
+            "submissionReq": validated_data.get("submissionReq"),
+            "status": validated_data.get("status"),
+            "assignedAt": validated_data.get("assignedAt"),
+            "dueDate": validated_data.get("dueDate"),
+            "priority": validated_data.get("priority"),
+            "userid": validated_data["userid"], #not neccessary, Lazy way to test user session correctness #can be removed
+            "created_at": validated_data["created_at"],
+        }
+
+        # Insert the podtask into the database
+        print("📝 Inserting podtask into database:", podtask_document)
+        result = collection.database["Podtasks"].insert_one(podtask_document)
+
+        if result.inserted_id:
+            print("✅ Podtask registered successfully!")
+            return jsonify({
                 "message": "Podtask registered successfully",
-                "podtask_id": podtask_id,  
-                "redirect_url": "/index.html",
-            }
-        ), 201
+                "podtask_id": podtask_id,
+            }), 201
+        else:
+            return jsonify({"error": "Failed to register podtask"}), 500
 
     except Exception as e:
         print(f"❌ ERROR: {e}")
         return jsonify({"error": f"Failed to register podtask: {str(e)}"}), 500
-
-    
-@podtask_bp.route("/get_podtask/<task_id>", methods=["GET"])
-def get_podtask(task_id):
-    if not g.user_id:
-        return jsonify({"error": "Unauthorized"}), 401
-
-    try:
-        user_id = str(g.user_id)
-
-        # Debugging: Print task_id and user_id
-        print(f"Fetching task with task_id: {task_id} for user_id: {user_id}")
-
-        # Fetch the task using the string task_id
-        task = collection.database.Podtask.find_one({"_id": task_id, "userid": user_id})
-
-        if not task:
-            print(f"Task with task_id: {task_id} and user_id: {user_id} not found.")
-            return jsonify({"error": "Task not found"}), 404
-
-        return jsonify(task), 200
-
-    except Exception as e:
-        print(f"❌ ERROR: {e}")
-        return jsonify({"error": f"Failed to fetch task: {str(e)}"}), 500
-
 
     
 @podtask_bp.route("/get_podtasks", methods=["GET"])
@@ -104,10 +105,10 @@ def get_podtasks():
 
     try:
         user_id = str(g.user_id)  
-        podtasks = list(collection.database.Podtask.find({"userid": user_id}))
+        podtasks = list(collection.database.Podtasks.find({"userid": user_id}))
 
         for task in podtasks:
-            task["_id"] = str(task["_id"])
+            task["_id"] = str(task["_id"])  # Ensure IDs are converted to string
 
         return jsonify({"podtasks": podtasks}), 200
 
@@ -115,14 +116,23 @@ def get_podtasks():
         print(f"❌ ERROR: {e}")
         return jsonify({"error": f"Failed to fetch tasks: {str(e)}"}), 500
     
-@podtask_bp.route("/delete_podtask/<task_id>", methods=["DELETE"])
+
+@podtask_bp.route("/delete_podtasks/<task_id>", methods=["DELETE"])
 def delete_podtask(task_id):
     if not g.user_id:
         return jsonify({"error": "Unauthorized"}), 401
 
     try:
         user_id = str(g.user_id)
-        task = collection.database.Podtask.find_one({"_id": task_id})
+
+        # Debug: Print the task_id being passed in the route
+        print(f"Deleting task with ID: {task_id}")
+
+        # Fetch task using string task_id, assuming task_id is a string in the database
+        task = collection.database.Podtasks.find_one({"_id": task_id})  # Use "id" instead of "_id"
+        
+        # Debug: Check if the task was found
+        print(f"Found task: {task}")
 
         if not task:
             return jsonify({"error": "Task not found"}), 404
@@ -130,7 +140,9 @@ def delete_podtask(task_id):
         if task["userid"] != user_id:
             return jsonify({"error": "Permission denied"}), 403
 
-        result = collection.database.Podtask.delete_one({"_id": task_id})
+        # Debug: Log the deletion process
+        result = collection.database.Podtasks.delete_one({"_id": task_id})  # Use string ID for deletion
+        print(f"Delete result: {result.deleted_count}")
 
         if result.deleted_count == 1:
             return jsonify({"message": "Task deleted successfully"}), 200
@@ -140,8 +152,11 @@ def delete_podtask(task_id):
     except Exception as e:
         print(f"❌ ERROR: {e}")
         return jsonify({"error": f"Failed to delete task: {str(e)}"}), 500
+
+
+
     
-@podtask_bp.route("/update_podtask/<task_id>", methods=["PUT"])
+@podtask_bp.route("/update_podtasks/<task_id>", methods=["PUT"])
 def update_podtask(task_id):
     if not g.user_id:
         return jsonify({"error": "Unauthorized"}), 401
@@ -150,29 +165,37 @@ def update_podtask(task_id):
         return jsonify({"error": "Invalid Content-Type. Expected application/json"}), 415
 
     try:
+        # Parse the request data as JSON
         data = request.get_json()
+
+        # Debugging: log the incoming data to see its structure
+        print("Incoming data:", data)
+
         user_id = str(g.user_id)
 
-        existing_task = collection.database.Podtask.find_one({"_id": task_id})
+        # Query the task using the task_id (ensure it's a string match)
+        existing_task = collection.database.Podtasks.find_one({"_id": task_id})
         if not existing_task:
             return jsonify({"error": "Task not found"}), 404
 
         if existing_task["userid"] != user_id:
             return jsonify({"error": "Permission denied"}), 403
 
+        # Prepare the fields to update
         update_fields = {
-            "taskname": data.get("taskname", existing_task["taskname"]).strip(),
-            "Description": data.get("Description", existing_task["Description"]).strip(),
-            "DayCount": data.get("DayCount", existing_task["DayCount"]),
-            "Action": data.get("action", existing_task["Action"]),
-            "ActionUrl": data.get("actionurl", existing_task["ActionUrl"]).strip(),
-            "UrlDescribe": data.get("externalurl", existing_task["UrlDescribe"]).strip(),
-            "SubimissionReq": True if data.get("submission", "Optional") == "Required" else False,
+            "name": data.get("taskname", existing_task.get("name", "")).strip(),
+            "description": data.get("Description", existing_task.get("description", "")).strip(),
+            "dayCount": data.get("DayCount", existing_task.get("dayCount")),
+            "action": data.get("action", existing_task.get("action", [])),
+            "actionUrl": data.get("actionurl", existing_task.get("actionUrl", "")).strip(),
+            "urlDescribe": data.get("externalurl", existing_task.get("urlDescribe", "")).strip(),
+            "submissionReq": True if data.get("submission", "Optional") == "Required" else False,
             "updated_at": datetime.now(timezone.utc),
         }
 
-        result = collection.database.Podtask.update_one(
-            {"_id": task_id}, {"$set": update_fields}
+        # Update the task in the database
+        result = collection.database.Podtasks.update_one(
+            {"_id": task_id}, {"$set": update_fields}  # Match on "_id" field (string)
         )
 
         if result.modified_count == 1:
@@ -183,6 +206,9 @@ def update_podtask(task_id):
     except Exception as e:
         print(f"❌ ERROR: {e}")
         return jsonify({"error": f"Failed to update task: {str(e)}"}), 500
+
+
+
 
 
 
