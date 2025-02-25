@@ -73,7 +73,8 @@ def claim_reward():
         {"$inc": {"credits": total_claimable},
          "$set": {"unclaimed_credits": 0, "referral_bonus": 0}}
     )
-    return jsonify({"message": f"{total_claimable} credits claimed!"}), 200
+    return jsonify({"success": True, "message": f"{total_claimable} credits claimed!"}), 200
+
 
 @credits_bp.route("/send-invite", methods=["POST"])
 def send_invite():
