@@ -12,7 +12,8 @@ load_dotenv()
 # MongoDB Configuration
 MONGODB_URI = os.getenv("MONGODB_URI")
 DATABASE_NAME = "Podmanager"
-COLLECTION_NAME = "User"
+COLLECTION_NAME = "Team"
+
 
 if not MONGODB_URI:
     raise ValueError("MongoDB URI is missing.")
