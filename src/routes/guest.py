@@ -68,32 +68,46 @@ def add_guest():
         return jsonify({"error": f"Failed to add guest: {str(e)}"}), 500
 
 
-@guest_bp.route("/get_guests", methods=["GET"])
-def get_guests():
-    if not g.user_id:
+@guest_bp.route("/get_guests", methods=["GET"]) #http://127.0.0.1:8000/get_guests?podcastId=<podcastId>
+def get_guests():                               #If guest is booked to podcast it should have a podcastId       
+    # Check if podcastId is provided in the query parameters
+    podcast_id = request.args.get("podcastId")
+    if not podcast_id:
+        return jsonify({"error": "podcastId is required"}), 400
+
+    # Check if user_id is present in the session (g.user_id)
+    if not hasattr(g, "user_id") or not g.user_id:
         return jsonify({"error": "Unauthorized"}), 401
 
     try:
-        user_id = str(g.user_id)  # Ensure we filter by logged-in user
-        guests_cursor = collection.database.Guests.find({"userid": user_id})  # Correct field name "userid"
+        user_id = str(g.user_id)
+
+        # Query for guests associated with the podcastId
+        guests_cursor = collection.database.Guests.find({"podcastId": podcast_id})
 
         guests = []
         for guest in guests_cursor:
-            guest["id"] = guest["_id"]  # Keep ID for reference
+            guest["id"] = str(guest["_id"])  # Convert MongoDB ObjectId to string for JSON serialization
             if "created_at" in guest:
-                guest["created_at"] = guest["created_at"].isoformat()
+                guest["created_at"] = guest["created_at"].isoformat()  # Convert datetime to ISO format string
             guest.pop("_id", None)  # Remove MongoDB-specific _id field
             guests.append(guest)
 
+        if not guests:
+            return jsonify({"guests": []}), 200  # Return empty list if no guests are found
+
         return jsonify({"guests": guests}), 200
+
     except Exception as e:
         print(f"❌ ERROR: {e}")
         return jsonify({"error": f"Failed to fetch guests: {str(e)}"}), 500
 
+
+
     
-@guest_bp.route("/edit_guests/<guest_id>", methods=["PUT"])
-def edit_guest(guest_id):  # guest_id will be automatically passed to this function
-    if not g.user_id:
+@guest_bp.route("/edit_guests/<guest_id>", methods=["PUT"]) #Need som polishing
+def edit_guest(guest_id):
+    if not g.user_id: 
         return jsonify({"error": "Unauthorized"}), 401
 
     if request.content_type != "application/json":
@@ -101,8 +115,6 @@ def edit_guest(guest_id):  # guest_id will be automatically passed to this funct
 
     try:
         data = request.get_json()
-
-        # Debug: Print received data
         print("📩 Received Data:", data)
 
         if not guest_id:
@@ -138,18 +150,21 @@ def edit_guest(guest_id):  # guest_id will be automatically passed to this funct
         return jsonify({"error": f"Failed to update guest: {str(e)}"}), 500
 
 
-@guest_bp.route("/delete_guests/<guest_id>", methods=["DELETE"])
+@guest_bp.route("/delete_guests/<guest_id>", methods=["DELETE"]) #probably need some polishing aswell
 def delete_guest(guest_id):
+    # Check for authentication
     if not g.user_id:
         return jsonify({"error": "Unauthorized"}), 401
 
-    if request.content_type != "application/json":
+    # (Optional) Content-Type check: DELETE requests might not always have a JSON body.
+    # If your client doesn't send a Content-Type header for DELETE, you can remove this check.
+    if request.content_type and request.content_type != "application/json":
         return jsonify({"error": "Invalid Content-Type. Expected application/json"}), 415
 
     try:
         user_id = str(g.user_id)
         
-        # Delete the guest
+        # Delete the guest that belongs to the current user
         result = collection.database.Guests.delete_one({"_id": guest_id, "userid": user_id})
         
         if result.deleted_count == 0:
@@ -160,5 +175,6 @@ def delete_guest(guest_id):
     except Exception as e:
         print(f"❌ ERROR: {e}")
         return jsonify({"error": f"Failed to delete guest: {str(e)}"}), 500
+
 
 
