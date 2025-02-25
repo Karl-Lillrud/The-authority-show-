@@ -88,7 +88,6 @@ def podcast():
             "description": validated_data.get("description"),
             "logoUrl": validated_data.get("logoUrl"),
             "category": validated_data.get("category"),
-            "defaultTasks": validated_data.get("defaultTasks", []),
             "created_at": datetime.now(timezone.utc),
         }
 
