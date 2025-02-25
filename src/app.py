@@ -19,6 +19,8 @@ from routes.pod_management import dashboardmanagement_bp
 from routes.podtask import podtask_bp
 from routes.team import team_bp
 from routes.guest import guest_bp
+from routes.account import account_bp
+from routes.episodes import episodes_bp  # Use relative import
 from dotenv import load_dotenv
 import os
 import logging
@@ -44,7 +46,6 @@ CORS(
     },
 )  # Enable CORS for specific origins
 
-
 # These can cause  GET https://app.podmanager.ai/ 503 (Service Unavailable) error in the browser if not set
 app.secret_key = os.getenv("SECRET_KEY")
 app.config["PREFERRED URL SCHEME"] = "https"
@@ -57,13 +58,14 @@ app.register_blueprint(dashboardmanagement_bp)
 app.register_blueprint(podtask_bp)
 app.register_blueprint(team_bp)
 app.register_blueprint(guest_bp)
+app.register_blueprint(account_bp)
+app.register_blueprint(episodes_bp)
 
 APP_ENV = os.getenv("APP_ENV", "production")  # Default to production
 
 API_BASE_URL = (
     "http://127.0.0.1:8000" if APP_ENV == "local" else "https://app.podmanager.ai/"
 )
-
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
