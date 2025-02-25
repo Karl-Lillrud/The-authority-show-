@@ -1,8 +1,8 @@
-from flask import render_template, jsonify, Blueprint, g
-from database.mongo_connection import collection
+from flask import render_template, jsonify, Blueprint, g, request, redirect, url_for, flash
+from database.mongo_connection import collection, collection as team_collection
 
 dashboardmanagement_bp = Blueprint("dashboardmanagement_bp", __name__)
-
+pod_management_bp = Blueprint('pod_management', __name__)
 
 @dashboardmanagement_bp.route("/load_all_guests", methods=["GET"])
 def load_all_guests():
@@ -27,3 +27,19 @@ def get_user_podcasts():
         return jsonify({"error": "Unauthorized"}), 401
     podcasts = list(collection.find({"creator_id": g.user_id}))
     return jsonify(podcasts)
+
+@pod_management_bp.route('/invite')
+def invite():
+    email = request.args.get('email')
+    name = request.args.get('name')
+    role = request.args.get('role')
+    if email and name and role:
+        # Add the team member to the database
+        team_collection.insert_one({
+            "Email": email,
+            "Name": name,
+            "Role": role,
+            "Status": "Pending"
+        })
+        flash('You have successfully joined the team!', 'success')
+    return redirect(url_for('register_bp.register', email=email))

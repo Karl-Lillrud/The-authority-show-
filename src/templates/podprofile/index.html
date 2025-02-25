@@ -51,41 +51,36 @@
         </form>
       </div>
 
-      <!-- Production Team Section -->
-      <div class="container hidden" id="production-team-section">
-        <h1 class="fancy-heading">Production Team</h1>
-        <form id="productionTeamForm">
-          <div id="teamMembersContainer">
-            <div class="team-member">
-              <div class="form-group">
-                <label>Name</label>
-                <input type="text" class="team-name" required />
-              </div>
-              <div class="form-group">
-                <label>Email</label>
-                <input type="email" class="team-email" required />
-              </div>
-              <div class="form-group">
-                <label>Role</label>
-                <select class="team-role" required>
-                  <option value="" disabled selected>Select Role</option>
-                  <option value="user">User</option>
-                  <option value="host">Host</option>
-                </select>
-              </div>
-            </div>
-          </div>
-          <button type="button" class="button-secondary" id="addTeamMember">
-            Add More Members
-          </button>
-          <button type="button" class="button-secondary" id="backToPodName">
-            Back
-          </button>
-          <button type="button" class="button-primary" id="goToPodProfile">
-            Invite
-          </button>
-        </form>
-      </div>
+        <!-- Production Team Section -->
+        <div class="container hidden" id="production-team-section">
+            <h1 class="fancy-heading">Production Team</h1>
+            <form id="productionTeamForm">
+                <div id="teamMembersContainer">
+                    <div class="team-member">
+                        <div class="form-group">
+                            <label>Name</label>
+                            <input type="text" class="team-name" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Email</label>
+                            <input type="email" class="team-email" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Role</label>
+                            <select class="team-role" required>
+                                <option value="" disabled selected>Select Role</option>
+                                <option value="user">User</option>
+                                <option value="host">Host</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                <button type="button" class="button-secondary" id="addTeamMember">Add More Members</button>
+                <button type="button" class="button-secondary" id="backToPodName">Back</button>
+                <button type="button" class="button-primary" id="goToPodProfile">Invite</button>
+                <input type="hidden" id="invitationLink" value="{{ url_for('pod_management.invite', _external=True) }}">
+            </form>
+        </div>
 
       <!-- Pod Profile Section -->
       <div class="container hidden" id="pod-profile-section">
@@ -154,11 +149,8 @@
         </form>
       </div>
     </main>
-    <script
-      src="https://unpkg.com/lazysizes@5.3.2/lazysizes.min.js"
-      async
-    ></script>
-    <script src="{{ url_for('static', filename='podprofile/i18n.js') }}"></script>
-    <script src="{{ url_for('static', filename='podprofile/main.js') }}"></script>
-  </body>
+    <script src="https://unpkg.com/lazysizes@5.3.2/lazysizes.min.js" async></script>
+    <script src="{{ url_for('static', filename='requests/podprofile-languageRequests.js') }}"></script>
+    <script src="{{ url_for('static', filename='requests/podprofileRequests.js') }}"></script>  
+</body>
 </html>
