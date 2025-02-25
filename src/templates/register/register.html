@@ -18,7 +18,7 @@
         <input class="input" type="text" id="name" placeholder="Full Name" required />
         <input class="input" type="email" id="email" placeholder="Email" required />
         <input class="input" type="password" id="password" placeholder="Password" required />
-        <!-- Hidden field to capture referral code passed via URL -->
+        <!-- Hidden field to capture referral code from URL -->
         <input type="hidden" id="referred_by" value="{{ referral }}">
         <button class="button" type="submit">Register</button>
       </form>
@@ -65,7 +65,7 @@
           const name = document.getElementById("name").value;
           const email = document.getElementById("email").value;
           const password = document.getElementById("password").value;
-          // Get the referral code from the hidden field
+          // Get referral code from the hidden field
           const referred_by = document.getElementById("referred_by").value;
 
           try {

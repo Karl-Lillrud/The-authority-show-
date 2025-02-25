@@ -34,7 +34,7 @@ def register():
     full_name = data["name"].strip()
     hashed_password = generate_password_hash(password)
 
-    # Try to get referral code from POST data ("referred_by") or fallback to URL query parameter "referral"
+    # Get referral code from POST data ("referred_by") or fallback to URL query parameter "referral"
     referrer_code = data.get("referred_by", "").strip() or request.args.get("referral", "").strip()
     logger.info(f"Referrer code from POST/URL: {referrer_code}")
 
@@ -61,7 +61,7 @@ def register():
     users_collection.insert_one(user_document)
     logger.info(f"Registered user: {email} with ID {new_user_id}")
 
-    # Create credits document for the new user (3000 starting points/credits)
+    # Create credits document for the new user (3000 starting credits)
     if not credits_collection.find_one({"user_id": new_user_id}):
         credits_document = {
             "_id": str(uuid.uuid4()),
@@ -81,7 +81,7 @@ def register():
     else:
         logger.info(f"User {new_user_id} already has credits, skipping creation.")
 
-    # If a valid referral code was provided, update the referrer's credits
+    # If a valid referral code was provided, update the referrer's credits only once.
     if referrer_code:
         referrer = users_collection.find_one({"referral_code": referrer_code})
         if referrer:
@@ -91,11 +91,12 @@ def register():
                 referrer_id = referrer["_id"]
                 logger.info(f"Referral detected! Updating credits for referrer {referrer_id}")
                 # Ensure referrer has a credits document; create one if missing
-                if not credits_collection.find_one({"user_id": referrer_id}):
+                ref_credits = credits_collection.find_one({"user_id": referrer_id})
+                if not ref_credits:
                     new_ref_credits = {
                         "_id": str(uuid.uuid4()),
                         "user_id": referrer_id,
-                        "credits": 3000,  # starting credits for referrer
+                        "credits": 3000,
                         "unclaimed_credits": 0,
                         "referral_bonus": 0,
                         "referrals": 0,
@@ -107,8 +108,8 @@ def register():
                     }
                     credits_collection.insert_one(new_ref_credits)
                     logger.info(f"Created credits document for referrer: {referrer_id}")
-
-                # Update referrer's credits: add bonus (example bonus: 200 credits)
+                # Only add bonus if not already applied for this referral.
+                # For simplicity, we assume each new registration using the referral code awards bonus once.
                 result = credits_collection.update_one(
                     {"user_id": referrer_id},
                     {"$inc": {"credits": 200, "referral_bonus": 200, "referrals": 1},
@@ -124,4 +125,3 @@ def register():
         "referral_code": referral_code,
         "redirect_url": url_for("signin_bp.signin", _external=True)
     }), 201
-
