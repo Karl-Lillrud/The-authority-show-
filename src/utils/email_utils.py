@@ -1,8 +1,8 @@
 import smtplib
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
-import os
 from dotenv import load_dotenv
+import os
 
 load_dotenv()
 
@@ -11,13 +11,14 @@ EMAIL_PASS = os.getenv("EMAIL_PASS")
 SMTP_SERVER = os.getenv("SMTP_SERVER")
 SMTP_PORT = os.getenv("SMTP_PORT")
 
+
 def send_email(to_email, subject, body):
     msg = MIMEMultipart()
-    msg['From'] = EMAIL_USER
-    msg['To'] = to_email
-    msg['Subject'] = subject
+    msg["From"] = EMAIL_USER
+    msg["To"] = to_email
+    msg["Subject"] = subject
 
-    msg.attach(MIMEText(body, 'html'))
+    msg.attach(MIMEText(body, "html"))
 
     try:
         server = smtplib.SMTP(SMTP_SERVER, SMTP_PORT)

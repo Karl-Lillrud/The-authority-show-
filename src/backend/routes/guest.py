@@ -1,16 +1,13 @@
 from flask import request, jsonify, Blueprint, g
 from database.mongo_connection import collection
 from datetime import datetime, timezone
-import uuid
-guest_bp = Blueprint("guest_bp", __name__)
-from flask import Blueprint, request, jsonify, g
-import uuid
-from datetime import datetime, timezone
 from marshmallow import ValidationError
-from Entities.guests import GuestSchema  # Import your GuestSchema here
+from backend.models.guests import GuestSchema  # Import your GuestSchema here
+import uuid
 
 
-guest_bp = Blueprint("guest", __name__)
+guest_bp = Blueprint("guest_bp", __name__)
+
 
 @guest_bp.route("/add_guests", methods=["POST"])
 def add_guest():
@@ -18,7 +15,10 @@ def add_guest():
         return jsonify({"error": "Unauthorized"}), 401
 
     if request.content_type != "application/json":
-        return jsonify({"error": "Invalid Content-Type. Expected application/json"}), 415
+        return (
+            jsonify({"error": "Invalid Content-Type. Expected application/json"}),
+            415,
+        )
 
     try:
         # Validate incoming data using the schema
@@ -35,12 +35,14 @@ def add_guest():
         user_id = str(g.user_id)
 
         # Check if the podcast exists
-        podcast = collection.database.Podcasts.find_one({"_id": guest_data["podcastId"]})
+        podcast = collection.database.Podcasts.find_one(
+            {"_id": guest_data["podcastId"]}
+        )
         if not podcast:
             return jsonify({"error": "Podcast not found"}), 404
 
         guest_item = {
-            "_id": guest_id,  
+            "_id": guest_id,
             "podcastId": guest_data["podcastId"],
             "name": guest_data["name"].strip(),
             "image": guest_data.get("image", ""),
@@ -61,7 +63,10 @@ def add_guest():
         collection.database.Guests.insert_one(guest_item)
 
         print("✅ Guest added successfully!")
-        return jsonify({"message": "Guest added successfully", "guest_id": guest_id}), 201
+        return (
+            jsonify({"message": "Guest added successfully", "guest_id": guest_id}),
+            201,
+        )
 
     except Exception as e:
         print(f"❌ ERROR: {e}")
@@ -111,7 +116,10 @@ def edit_guest(guest_id):
         return jsonify({"error": "Unauthorized"}), 401
 
     if request.content_type != "application/json":
-        return jsonify({"error": "Invalid Content-Type. Expected application/json"}), 415
+        return (
+            jsonify({"error": "Invalid Content-Type. Expected application/json"}),
+            415,
+        )
 
     try:
         data = request.get_json()
@@ -136,8 +144,7 @@ def edit_guest(guest_id):
         print("📝 Update Fields:", update_fields)
 
         result = collection.database.Guests.update_one(
-            {"_id": guest_id, "userid": user_id},
-            {"$set": update_fields}
+            {"_id": guest_id, "userid": user_id}, {"$set": update_fields}
         )
 
         if result.matched_count == 0:
