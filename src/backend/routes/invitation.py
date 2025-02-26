@@ -1,5 +1,5 @@
 from flask import Blueprint, request, jsonify
-from utils.email_utils import send_email
+from backend.utils.email_utils import send_email
 
 invitation_bp = Blueprint('invitation_bp', __name__)
 
