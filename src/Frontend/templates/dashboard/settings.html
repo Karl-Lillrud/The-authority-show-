@@ -30,6 +30,10 @@ Management{% endblock %} {% block content %}
         >
           Subscriptions
         </li>
+        <li 
+          class="sidebar-item" data-target="delete-section" tabindex="0" style="color: red;">
+          Delete account
+        </li>
       </ul>
     </nav>
   </aside>
@@ -206,6 +210,119 @@ Management{% endblock %} {% block content %}
         </div>
       </div>
     </div>
+<!--
+            <!-- Delete account Section -->
+    <div id="profile-section" class="settings-section">
+      <div class="profile-container">
+        <h2>Delete account</h2>
+ 
+    Profile Picture Upload 
+    <div class="profile-pic-container">
+      <img
+        id="profile-pic"
+        src="https://podmanagerstorage.blob.core.windows.net/blob-container/profile_icon.jpg"
+        alt="Profile Picture"
+      />
+      <input type="file" id="upload-pic" accept="image/*" />
+    </div> 
+
+
+        <!-- Profile Form -->
+        <form id="profile-form">
+          <label for="full-name">Full Name</label>
+          <input
+            type="text"
+            id="full-name"
+            placeholder="Enter your full name"
+            value="{{ full_name }}"
+          />
+          <label for="email">Email</label>
+          <input
+            type="email"
+            id="email"
+            placeholder="Enter your email"
+            value="{{ email }}"
+          />
+          <label for="password">Current Password</label>
+          <input
+            type="password"
+            id="password"
+            placeholder="Enter current password"
+          />
+          <label for="new-password">New Password</label>
+          <input
+            type="password"
+            id="new-password"
+            placeholder="Enter new password"
+          />
+          <label for="confirm-password">Confirm Password</label>
+          <input
+            type="password"
+            id="confirm-password"
+            placeholder="Confirm new password"
+          />
+          <button type="submit">Save Changes</button>
+        </form>
+      </div>
+    </div>
+
+    <!-- Delete Account Section (Hidden by Default) -->
+    <div id="delete_account-section" class="settings-section" style="display: none">
+      <h2>Delete Account</h2>
+      <p>
+        Warning: Deleting your account is irreversible. All your data will be permanently removed.
+      </p>
+      <label for="delete-confirm">Type "DELETE" to confirm:</label>
+      <input type="text" id="delete-confirm" placeholder="DELETE" />
+      <button id="confirm-delete" class="button danger">Delete Account</button>
+    </div>
+  </section>
+</div>
+-->
+<!-- SETTINGS SECTION: Delete Account -->
+<section id="delete-account-section" class="settings-section is-hidden">
+  <h2>Delete Account</h2>
+  <p class="delete-warning" id="delete-account-description">
+    Warning: Deleting your account is irreversible. All of your data will be permanently removed.
+  </p>
+
+  <!-- DELETE ACCOUNT FORM -->
+  <form
+    id="delete-account-form"
+    aria-describedby="delete-account-description"
+    novalidate
+  >
+    <label for="delete-confirm">
+      Please type <strong>DELETE</strong> to confirm:
+    </label>
+    <input
+      type="text"
+      id="delete-confirm"
+      name="deleteConfirm"
+      placeholder="DELETE"
+      required
+      aria-required="true"
+    />
+
+    <div class="delete-account-actions">
+      <button
+        id="confirm-delete"
+        class="button button--danger"
+        type="submit"
+      >
+        Delete Account
+      </button>
+      <button
+        id="cancel-delete"
+        class="button button--secondary"
+        type="button"
+      >
+        Cancel
+      </button>
+    </div>
+  </form>
+</section>
+
     
 
 <!-- Include QRCode library -->
@@ -457,5 +574,17 @@ Management{% endblock %} {% block content %}
       }
     });
   updatePaymentMethodsDisplay();
+
+  
+  // Delete Account Functionality
+  document.getElementById("confirm-delete").addEventListener("click", function () {
+    const confirmInput = document.getElementById("delete-confirm").value;
+    if (confirmInput === "DELETE") {
+      alert("Your account has been deleted.");
+      // Here, you would trigger the backend deletion logic
+    } else {
+      alert("Incorrect confirmation input. Please type 'DELETE'.");
+    }
+  });
 </script>
 {% endblock %}
