@@ -21,9 +21,9 @@ from backend.routes.google_calendar import google_calendar_bp
 from dotenv import load_dotenv
 import os
 import logging
-from utils import venvupdate
+from backend.utils import venvupdate
 from backend.database.mongo_connection import collection
-from utils.email_utils import send_email
+from backend.utils.email_utils import send_email
 
 if os.getenv("SKIP_VENV_UPDATE", "false").lower() not in ("true", "1", "yes"):
     venvupdate.update_venv_and_requirements()
