@@ -1,0 +1,836 @@
+{% extends "dashboard/components/base.html" %} {% block title %}Team Leaderboard
+Dashboard{% endblock %} {% block content %}
+<link
+  rel="stylesheet"
+  href="{{ url_for('static', filename='css/dashboard.css') }}"
+/>
+<style>
+  .cards-container {
+    display: flex;
+    flex-wrap: wrap;
+  }
+  .card {
+    flex: 1 1 30%;
+    margin: 0.5em;
+    box-sizing: border-box;
+  }
+</style>
+<script src="{{ url_for('static', filename='requests/podprofileRequests.js') }}"></script>
+<script src="{{ url_for('static', filename='requests/podprofile_languageRequests.js') }}"></script>
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+  // Hämta podcast-info först
+  fetch("/get_user_podcasts")
+    .then(response => response.json())
+    .then(data => {
+      // Om servern säger "redirect" => exakt 1 podd
+      if (data.redirect) {
+        //window.location.href = data.redirect;
+        //^^ skapar en öändlig loop, så den får vara såhär tills att vi har skapat en podcast management
+        console.log("redirecting to dashboard2");
+        return;
+      }
+
+      // Om data.message => 0 poddar
+      if (data.message) {
+        // Gör inget mer; visa inte popup
+        return;
+      }
+
+      // Annars förväntar vi oss en array av podcasts
+      if (Array.isArray(data) && data.length > 1) {
+        // 2 eller fler poddar => OK att visa popup
+        if (!sessionStorage.getItem("homepageViewed")) {
+          document.getElementById("homepage-popup").style.display = "flex";
+          sessionStorage.setItem("homepageViewed", "true");
+        }
+      }
+    })
+    .catch(error => console.error("Error loading podcasts:", error));
+
+  // --- Därefter: all task-popup-logik osv. ---
+
+  // ... Exempel: stäng-knapp för homepage-popup
+  const homePageCloseButton = document.getElementById("close-homepage-popup");
+  homePageCloseButton.addEventListener("click", function () {
+    document.getElementById("homepage-popup").style.display = "none";
+  });
+
+  // Lägg till "klicka-utanför-stänger" för homepage-popup
+  const homePagePopup = document.getElementById("homepage-popup");
+  homePagePopup.addEventListener("click", function(e) {
+    if (e.target === homePagePopup) {
+      homePagePopup.style.display = "none";
+    }
+  });
+
+  // TASK-POPUP
+  const taskPopup = document.getElementById("task-popup");
+  const closeTaskPopup = document.getElementById("close-popup");
+  // Hide popup initially
+  taskPopup.style.display = "none";
+
+  document.addEventListener("click", function (e) {
+    if (e.target.closest(".task-text")) {
+      e.stopPropagation();
+      taskPopup.style.display = "flex";
+    }
+  });
+
+  closeTaskPopup.addEventListener("click", function () {
+    taskPopup.style.display = "none";
+  });
+
+  // "Klick utanför" stänger task-popup
+  taskPopup.addEventListener("click", function (e) {
+    if (e.target === taskPopup) {
+      taskPopup.style.display = "none";
+    }
+  });
+
+  // CHECKBOX-hantering
+  document.querySelectorAll(".task-check").forEach((checkbox) => {
+    checkbox.addEventListener("change", function () {
+      const listItem = this.closest("li");
+      if (this.checked) {
+        listItem.classList.add("completed");
+        setTimeout(() => {
+          sortTasks(listItem.parentElement);
+        }, 500);
+      } else {
+        listItem.classList.remove("completed");
+      }
+    });
+  });
+
+    function sortTasks(taskList) {
+      const tasks = Array.from(taskList.children);
+      tasks.sort((a, b) => {
+        return (
+          a.querySelector(".task-check").checked -
+          b.querySelector(".task-check").checked
+        );
+      });
+      tasks.forEach((task) => taskList.appendChild(task));
+    }
+  });
+</script>
+<!-- Homepage Popup -->
+<div id="homepage-popup" class="popup">
+  <div class="popup-content">
+    <iframe
+      id="homepage-iframe"
+      src="{{ url_for('dashboard_bp.homepage') }}"
+      width="100%"
+      height="800px"
+      style="border: none"
+    ></iframe>
+  </div>
+</div>
+
+<div class="container">
+  <main class="main-content">
+    <section class="leaderboard-section">
+      <h2>Team Leaderboard</h2>
+      <div class="team-leaderboard">
+        <table class="leaderboard-table">
+          <thead>
+            <tr>
+              <th>Name</th>
+              <th>Tasks Completed</th>
+              <th>Total Points</th>
+              <th>Months Won</th>
+              <th>Shadow Goal</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Marcus</td>
+              <td>-1</td>
+              <td>2,342,255</td>
+              <td>11</td>
+              <td>3,000,000</td>
+            </tr>
+            <tr>
+              <td>Tommy</td>
+              <td>9,222</td>
+              <td>1,239,993</td>
+              <td>4</td>
+              <td>1,500,000</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="task-cards">
+      <div class="cards-container">
+        <div class="card">
+          <img
+            src="https://podmanagerstorage.blob.core.windows.net/blob-container/person1.jpg"
+            class="profile-image"
+          />
+          <h3>Ollina Olsson</h3>
+          <ul class="task-list">
+            <li>
+              <span class="task-text"
+                >Guest received pitch email to join the show as a guest</span
+              ><input type="checkbox" class="task-check" /><span
+                class="checkmark"
+              ></span>
+            </li>
+            <li>
+              <span class="task-text"
+                >Guest filled out the guest form and picked a date</span
+              ><input type="checkbox" class="task-check" /><span
+                class="checkmark"
+              ></span>
+            </li>
+            <li>
+              <span class="task-text"
+                >Create episode in the system with all predefined tickets</span
+              ><input type="checkbox" class="task-check" /><span
+                class="checkmark"
+              ></span>
+            </li>
+            <li>
+              <span class="task-text">Scheduling confirmation email sent</span
+              ><input type="checkbox" class="task-check" /><span
+                class="checkmark"
+              ></span>
+            </li>
+            <li>
+              <span class="task-text">Guest preparation email sent</span
+              ><input type="checkbox" class="task-check" /><span
+                class="checkmark"
+              ></span>
+            </li>
+            <li>
+              <span class="task-text"
+                >Email sent to guest with cover art and suggestion to post in
+                social media</span
+              ><input type="checkbox" class="task-check" /><span
+                class="checkmark"
+              ></span>
+            </li>
+            <li>
+              <span class="task-text">Create cover art</span
+              ><input type="checkbox" class="task-check" /><span
+                class="checkmark"
+              ></span>
+            </li>
+            <li>
+              <span class="task-text">Recording Scheduled</span
+              ><input type="checkbox" class="task-check" /><span
+                class="checkmark"
+              ></span>
+            </li>
+            <li>
+              <span class="task-text">Recording in Riverside</span
+              ><input type="checkbox" class="task-check" /><span
+                class="checkmark"
+              ></span>
+            </li>
+            <li>
+              <span class="task-text"
+                >Check the transcript and make corrections</span
+              ><input type="checkbox" class="task-check" /><span
+                class="checkmark"
+              ></span>
+            </li>
+            <li>
+              <span class="task-text"
+                >Extract the transcript from Riverside and Save to the episode
+                database</span
+              ><input type="checkbox" class="task-check" /><span
+                class="checkmark"
+              ></span>
+            </li>
+            <li>
+              <span class="task-text"
+                >Suggest exact parts to remove which would improve the
+                episode</span
+              ><input type="checkbox" class="task-check" /><span
+                class="checkmark"
+              ></span>
+            </li>
+            <li>
+              <span class="task-text"
+                >Cut and edit the recording by removing parts in the
+                script</span
+              ><input type="checkbox" class="task-check" /><span
+                class="checkmark"
+              ></span>
+            </li>
+            <li>
+              <span class="task-text"
+                >Extract the final transcript from Riverside and Save to the
+                episode database</span
+              ><input type="checkbox" class="task-check" /><span
+                class="checkmark"
+              ></span>
+            </li>
+            <li>
+              <span class="task-text"
+                >Implement the background sound suggestions where they add
+                value</span
+              ><input type="checkbox" class="task-check" /><span
+                class="checkmark"
+              ></span>
+            </li>
+            <li>
+              <span class="task-text"
+                >Improve audio (Final step for Riverside episode to be
+                completed)</span
+              ><input type="checkbox" class="task-check" /><span
+                class="checkmark"
+              ></span>
+            </li>
+            <li>
+              <span class="task-text">Release date decided</span
+              ><input type="checkbox" class="task-check" /><span
+                class="checkmark"
+              ></span>
+            </li>
+            <li>
+              <span class="task-text">Generate shorts with OPUS</span
+              ><input type="checkbox" class="task-check" /><span
+                class="checkmark"
+              ></span>
+            </li>
+            <li>
+              <span class="task-text">Shorts saved to cloud drive</span
+              ><input type="checkbox" class="task-check" /><span
+                class="checkmark"
+              ></span>
+            </li>
+            <li>
+              <span class="task-text">Generate quotes</span
+              ><input type="checkbox" class="task-check" /><span
+                class="checkmark"
+              ></span>
+            </li>
+            <li>
+              <span class="task-text"
+                >Send Email with link to download shorts and quote images to the
+                guest</span
+              ><input type="checkbox" class="task-check" /><span
+                class="checkmark"
+              ></span>
+            </li>
+            <li>
+              <span class="task-text"
+                >Guest follow-up ask for recommendations of other guests</span
+              ><input type="checkbox" class="task-check" /><span
+                class="checkmark"
+              ></span>
+            </li>
+            <li>
+              <span class="task-text">Upload and Schedule podcast release</span
+              ><input type="checkbox" class="task-check" /><span
+                class="checkmark"
+              ></span>
+            </li>
+            <li>
+              <span class="task-text"
+                >Schedule Social Media Posts (Metricool)</span
+              ><input type="checkbox" class="task-check" /><span
+                class="checkmark"
+              ></span>
+            </li>
+            <li>
+              <span class="task-text">Generate FAQ</span
+              ><input type="checkbox" class="task-check" /><span
+                class="checkmark"
+              ></span>
+            </li>
+            <li>
+              <span class="task-text">Review and approve as OK to publish</span
+              ><input type="checkbox" class="task-check" /><span
+                class="checkmark"
+              ></span>
+            </li>
+            <li>
+              <span class="task-text"
+                >Review and combine with the FAQ and publish on LinkedIn</span
+              ><input type="checkbox" class="task-check" /><span
+                class="checkmark"
+              ></span>
+            </li>
+            <li>
+              <span class="task-text">Review and publish on website</span
+              ><input type="checkbox" class="task-check" /><span
+                class="checkmark"
+              ></span>
+            </li>
+            <li>
+              <span class="task-text"
+                >Episode goes live soon or Now live announcement</span
+              ><input type="checkbox" class="task-check" /><span
+                class="checkmark"
+              ></span>
+            </li>
+            <li>
+              <span class="task-text">Mark episode as completed</span
+              ><input type="checkbox" class="task-check" /><span
+                class="checkmark"
+              ></span>
+            </li>
+          </ul>
+        </div>
+        <div class="card">
+          <img
+            src="https://podmanagerstorage.blob.core.windows.net/blob-container/person2.jpg"
+            class="profile-image"
+          />
+          <h3>Olle Olsson</h3>
+          <ul class="task-list">
+            <li>
+              <span class="task-text"
+                >Guest received pitch email to join the show as a guest</span
+              ><input type="checkbox" class="task-check" /><span
+                class="checkmark"
+              ></span>
+            </li>
+            <li>
+              <span class="task-text"
+                >Guest filled out the guest form and picked a date</span
+              ><input type="checkbox" class="task-check" /><span
+                class="checkmark"
+              ></span>
+            </li>
+            <li>
+              <span class="task-text"
+                >Create episode in the system with all predefined tickets</span
+              ><input type="checkbox" class="task-check" /><span
+                class="checkmark"
+              ></span>
+            </li>
+            <li>
+              <span class="task-text">Scheduling confirmation email sent</span
+              ><input type="checkbox" class="task-check" /><span
+                class="checkmark"
+              ></span>
+            </li>
+            <li>
+              <span class="task-text">Guest preparation email sent</span
+              ><input type="checkbox" class="task-check" /><span
+                class="checkmark"
+              ></span>
+            </li>
+            <li>
+              <span class="task-text"
+                >Email sent to guest with cover art and suggestion to post in
+                social media</span
+              ><input type="checkbox" class="task-check" /><span
+                class="checkmark"
+              ></span>
+            </li>
+            <li>
+              <span class="task-text">Create cover art</span
+              ><input type="checkbox" class="task-check" /><span
+                class="checkmark"
+              ></span>
+            </li>
+            <li>
+              <span class="task-text">Recording Scheduled</span
+              ><input type="checkbox" class="task-check" /><span
+                class="checkmark"
+              ></span>
+            </li>
+            <li>
+              <span class="task-text">Recording in Riverside</span
+              ><input type="checkbox" class="task-check" /><span
+                class="checkmark"
+              ></span>
+            </li>
+            <li>
+              <span class="task-text"
+                >Check the transcript and make corrections</span
+              ><input type="checkbox" class="task-check" /><span
+                class="checkmark"
+              ></span>
+            </li>
+            <li>
+              <span class="task-text"
+                >Extract the transcript from Riverside and Save to the episode
+                database</span
+              ><input type="checkbox" class="task-check" /><span
+                class="checkmark"
+              ></span>
+            </li>
+            <li>
+              <span class="task-text"
+                >Suggest exact parts to remove which would improve the
+                episode</span
+              ><input type="checkbox" class="task-check" /><span
+                class="checkmark"
+              ></span>
+            </li>
+            <li>
+              <span class="task-text"
+                >Cut and edit the recording by removing parts in the
+                script</span
+              ><input type="checkbox" class="task-check" /><span
+                class="checkmark"
+              ></span>
+            </li>
+            <li>
+              <span class="task-text"
+                >Extract the final transcript from Riverside and Save to the
+                episode database</span
+              ><input type="checkbox" class="task-check" /><span
+                class="checkmark"
+              ></span>
+            </li>
+            <li>
+              <span class="task-text"
+                >Implement the background sound suggestions where they add
+                value</span
+              ><input type="checkbox" class="task-check" /><span
+                class="checkmark"
+              ></span>
+            </li>
+            <li>
+              <span class="task-text"
+                >Improve audio (Final step for Riverside episode to be
+                completed)</span
+              ><input type="checkbox" class="task-check" /><span
+                class="checkmark"
+              ></span>
+            </li>
+            <li>
+              <span class="task-text">Release date decided</span
+              ><input type="checkbox" class="task-check" /><span
+                class="checkmark"
+              ></span>
+            </li>
+            <li>
+              <span class="task-text">Generate shorts with OPUS</span
+              ><input type="checkbox" class="task-check" /><span
+                class="checkmark"
+              ></span>
+            </li>
+            <li>
+              <span class="task-text">Shorts saved to cloud drive</span
+              ><input type="checkbox" class="task-check" /><span
+                class="checkmark"
+              ></span>
+            </li>
+            <li>
+              <span class="task-text">Generate quotes</span
+              ><input type="checkbox" class="task-check" /><span
+                class="checkmark"
+              ></span>
+            </li>
+            <li>
+              <span class="task-text"
+                >Send Email with link to download shorts and quote images to the
+                guest</span
+              ><input type="checkbox" class="task-check" /><span
+                class="checkmark"
+              ></span>
+            </li>
+            <li>
+              <span class="task-text"
+                >Guest follow-up ask for recommendations of other guests</span
+              ><input type="checkbox" class="task-check" /><span
+                class="checkmark"
+              ></span>
+            </li>
+            <li>
+              <span class="task-text">Upload and Schedule podcast release</span
+              ><input type="checkbox" class="task-check" /><span
+                class="checkmark"
+              ></span>
+            </li>
+            <li>
+              <span class="task-text"
+                >Schedule Social Media Posts (Metricool)</span
+              ><input type="checkbox" class="task-check" /><span
+                class="checkmark"
+              ></span>
+            </li>
+            <li>
+              <span class="task-text">Generate FAQ</span
+              ><input type="checkbox" class="task-check" /><span
+                class="checkmark"
+              ></span>
+            </li>
+            <li>
+              <span class="task-text">Review and approve as OK to publish</span
+              ><input type="checkbox" class="task-check" /><span
+                class="checkmark"
+              ></span>
+            </li>
+            <li>
+              <span class="task-text"
+                >Review and combine with the FAQ and publish on LinkedIn</span
+              ><input type="checkbox" class="task-check" /><span
+                class="checkmark"
+              ></span>
+            </li>
+            <li>
+              <span class="task-text">Review and publish on website</span
+              ><input type="checkbox" class="task-check" /><span
+                class="checkmark"
+              ></span>
+            </li>
+            <li>
+              <span class="task-text"
+                >Episode goes live soon or Now live announcement</span
+              ><input type="checkbox" class="task-check" /><span
+                class="checkmark"
+              ></span>
+            </li>
+            <li>
+              <span class="task-text">Mark episode as completed</span
+              ><input type="checkbox" class="task-check" /><span
+                class="checkmark"
+              ></span>
+            </li>
+          </ul>
+        </div>
+        <div class="card">
+          <img
+            src="https://podmanagerstorage.blob.core.windows.net/blob-container/person3.jpg"
+            class="profile-image"
+          />
+          <h3>Olga Olsson</h3>
+          <ul class="task-list">
+            <li>
+              <span class="task-text"
+                >Guest received pitch email to join the show as a guest</span
+              ><input type="checkbox" class="task-check" /><span
+                class="checkmark"
+              ></span>
+            </li>
+            <li>
+              <span class="task-text"
+                >Guest filled out the guest form and picked a date</span
+              ><input type="checkbox" class="task-check" /><span
+                class="checkmark"
+              ></span>
+            </li>
+            <li>
+              <span class="task-text"
+                >Create episode in the system with all predefined tickets</span
+              ><input type="checkbox" class="task-check" /><span
+                class="checkmark"
+              ></span>
+            </li>
+            <li>
+              <span class="task-text">Scheduling confirmation email sent</span
+              ><input type="checkbox" class="task-check" /><span
+                class="checkmark"
+              ></span>
+            </li>
+            <li>
+              <span class="task-text">Guest preparation email sent</span
+              ><input type="checkbox" class="task-check" /><span
+                class="checkmark"
+              ></span>
+            </li>
+            <li>
+              <span class="task-text"
+                >Email sent to guest with cover art and suggestion to post in
+                social media</span
+              ><input type="checkbox" class="task-check" /><span
+                class="checkmark"
+              ></span>
+            </li>
+            <li>
+              <span class="task-text">Create cover art</span
+              ><input type="checkbox" class="task-check" /><span
+                class="checkmark"
+              ></span>
+            </li>
+            <li>
+              <span class="task-text">Recording Scheduled</span
+              ><input type="checkbox" class="task-check" /><span
+                class="checkmark"
+              ></span>
+            </li>
+            <li>
+              <span class="task-text">Recording in Riverside</span
+              ><input type="checkbox" class="task-check" /><span
+                class="checkmark"
+              ></span>
+            </li>
+            <li>
+              <span class="task-text"
+                >Check the transcript and make corrections</span
+              ><input type="checkbox" class="task-check" /><span
+                class="checkmark"
+              ></span>
+            </li>
+            <li>
+              <span class="task-text"
+                >Extract the transcript from Riverside and Save to the episode
+                database</span
+              ><input type="checkbox" class="task-check" /><span
+                class="checkmark"
+              ></span>
+            </li>
+            <li>
+              <span class="task-text"
+                >Suggest exact parts to remove which would improve the
+                episode</span
+              ><input type="checkbox" class="task-check" /><span
+                class="checkmark"
+              ></span>
+            </li>
+            <li>
+              <span class="task-text"
+                >Cut and edit the recording by removing parts in the
+                script</span
+              ><input type="checkbox" class="task-check" /><span
+                class="checkmark"
+              ></span>
+            </li>
+            <li>
+              <span class="task-text"
+                >Extract the final transcript from Riverside and Save to the
+                episode database</span
+              ><input type="checkbox" class="task-check" /><span
+                class="checkmark"
+              ></span>
+            </li>
+            <li>
+              <span class="task-text"
+                >Implement the background sound suggestions where they add
+                value</span
+              ><input type="checkbox" class="task-check" /><span
+                class="checkmark"
+              ></span>
+            </li>
+            <li>
+              <span class="task-text"
+                >Improve audio (Final step for Riverside episode to be
+                completed)</span
+              ><input type="checkbox" class="task-check" /><span
+                class="checkmark"
+              ></span>
+            </li>
+            <li>
+              <span class="task-text">Release date decided</span
+              ><input type="checkbox" class="task-check" /><span
+                class="checkmark"
+              ></span>
+            </li>
+            <li>
+              <span class="task-text">Generate shorts with OPUS</span
+              ><input type="checkbox" class="task-check" /><span
+                class="checkmark"
+              ></span>
+            </li>
+            <li>
+              <span class="task-text">Shorts saved to cloud drive</span
+              ><input type="checkbox" class="task-check" /><span
+                class="checkmark"
+              ></span>
+            </li>
+            <li>
+              <span class="task-text">Generate quotes</span
+              ><input type="checkbox" class="task-check" /><span
+                class="checkmark"
+              ></span>
+            </li>
+            <li>
+              <span class="task-text"
+                >Send Email with link to download shorts and quote images to the
+                guest</span
+              ><input type="checkbox" class="task-check" /><span
+                class="checkmark"
+              ></span>
+            </li>
+            <li>
+              <span class="task-text"
+                >Guest follow-up ask for recommendations of other guests</span
+              ><input type="checkbox" class="task-check" /><span
+                class="checkmark"
+              ></span>
+            </li>
+            <li>
+              <span class="task-text">Upload and Schedule podcast release</span
+              ><input type="checkbox" class="task-check" /><span
+                class="checkmark"
+              ></span>
+            </li>
+            <li>
+              <span class="task-text"
+                >Schedule Social Media Posts (Metricool)</span
+              ><input type="checkbox" class="task-check" /><span
+                class="checkmark"
+              ></span>
+            </li>
+            <li>
+              <span class="task-text">Generate FAQ</span
+              ><input type="checkbox" class="task-check" /><span
+                class="checkmark"
+              ></span>
+            </li>
+            <li>
+              <span class="task-text">Review and approve as OK to publish</span
+              ><input type="checkbox" class="task-check" /><span
+                class="checkmark"
+              ></span>
+            </li>
+            <li>
+              <span class="task-text"
+                >Review and combine with the FAQ and publish on LinkedIn</span
+              ><input type="checkbox" class="task-check" /><span
+                class="checkmark"
+              ></span>
+            </li>
+            <li>
+              <span class="task-text">Review and publish on website</span
+              ><input type="checkbox" class="task-check" /><span
+                class="checkmark"
+              ></span>
+            </li>
+            <li>
+              <span class="task-text"
+                >Episode goes live soon or Now live announcement</span
+              ><input type="checkbox" class="task-check" /><span
+                class="checkmark"
+              ></span>
+            </li>
+            <li>
+              <span class="task-text">Mark episode as completed</span
+              ><input type="checkbox" class="task-check" /><span
+                class="checkmark"
+              ></span>
+            </li>
+          </ul>
+        </div>
+      </div>
+    </section>
+    <!-- Place this outside the card markup -->
+    <div id="task-popup" class="popup" style="display: none">
+      <div class="popup-content">
+        <span id="close-popup" class="close-btn"></span>
+        <h2>Social Schedule</h2>
+        <div id="popup-task-content">
+          SM SCHEDULE.
+          <input type="checkbox" class="task-checkbox" />
+        </div>
+        <p class="popup-instructions">INSTRUCTIONS:</p>
+        <p class="popup-instructions">
+          SCHEDULE THE PREPARED SOCIAL MEDIA MATERIAL
+        </p>
+        <div class="popup-actions">
+          <p>
+            GO TO THE SOCIAL MEDIA SCHEDULE
+            <button class="popup-button">OPEN</button>
+          </p>
+          <p>
+            OPEN THE EPISODE CONTENT FOLDER
+            <button class="popup-button">OPEN</button>
+          </p>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>
+{% endblock %}

@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pod Profile</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/podprofile.css') }}">
+</head>
+<body>
+    <header>
+        <div class="header-container">
+            <button id="dark-mode-toggle" class="dark-mode-button" aria-label="Toggle Dark Mode">🌙</button>
+        </div>
+    </header>
+    <main>
+        <!-- Pod Name Section -->
+        <div class="container" id="pod-name-section">
+            <h1 class="fancy-heading">Pod Name</h1>
+            <form id="podNameForm">
+                <div class="form-group">
+                    <label for="podRss">RSS Feed</label>
+                    <input type="url" id="podRss" name="podRss" required>
+                </div>
+                <div class="form-group">
+                    <label for="podName">Pod Name</label>
+                    <input type="text" id="podName" name="podName" required>
+                </div>
+                <button type="button" class="button-primary" id="goToProductionTeam">GO</button>
+            </form>            
+        </div>
+
+        <!-- Production Team Section -->
+        <div class="container hidden" id="production-team-section">
+            <h1 class="fancy-heading">Production Team</h1>
+            <form id="productionTeamForm">
+                <div id="teamMembersContainer">
+                    <div class="team-member">
+                        <div class="form-group">
+                            <label>Name</label>
+                            <input type="text" class="team-name" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Email</label>
+                            <input type="email" class="team-email" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Role</label>
+                            <select class="team-role" required>
+                                <option value="" disabled selected>Select Role</option>
+                                <option value="user">User</option>
+                                <option value="host">Host</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                <button type="button" class="button-secondary" id="addTeamMember">Add More Members</button>
+                <button type="button" class="button-secondary" id="backToPodName">Back</button>
+                <button type="button" class="button-primary" id="goToPodProfile">Invite</button>
+                <input type="hidden" id="invitationLink" value="{{ url_for('pod_management.invite', _external=True) }}">
+            </form>
+        </div>
+
+        <!-- Pod Profile Section -->
+        <div class="container hidden" id="pod-profile-section">
+            <h1 class="fancy-heading">Pod Profile</h1>
+            <form id="podProfileForm">
+                <div class="form-group">
+                    <label>Pod Logo</label>
+                    <input type="file" id="podLogo">
+                </div>
+                <div class="form-group">
+                    <label>Host(s) Name(s)</label>
+                    <input type="text" id="hostName">
+                </div>
+                <div class="form-group">
+                    <label>Google Calendar Integration</label>
+                    <button type="button" class="button-primary" id="googleCalendar">Connect</button>
+                </div>
+                <div class="form-group">
+                    <label>Google Calendar Pick a Date URL</label>
+                    <input type="url" id="calendarUrl">
+                </div>
+                <div class="form-group">
+                    <label>Guest Form URL</label>
+                    <input type="url" id="guestForm">
+                </div>
+                <div class="form-group">
+                    <label>Facebook</label>
+                    <input type="url" id="facebook">
+                </div>
+                <div class="form-group">
+                    <label>Instagram</label>
+                    <input type="url" id="instagram">
+                </div>
+                <div class="form-group">
+                    <label>LinkedIn</label>
+                    <input type="url" id="linkedin">
+                </div>
+                <div class="form-group">
+                    <label>Twitter</label>
+                    <input type="url" id="twitter">
+                </div>
+                <div class="form-group">
+                    <label>TikTok</label>
+                    <input type="url" id="tiktok">
+                </div>
+                <div class="form-group">
+                    <label>Pinterest</label>
+                    <input type="url" id="pinterest">
+                </div>
+                <div class="form-group">
+                    <label>Website</label>
+                    <input type="url" id="website">
+                </div>
+                <div class="form-group">
+                    <label>Email Address</label>
+                    <input type="email" id="email">
+                </div>
+                <button type="button" class="button-secondary" id="backToProductionTeam">Back</button>
+                <button type="submit" class="button-primary">Done</button>
+            </form>
+        </div>
+    </main>
+    <script src="https://unpkg.com/lazysizes@5.3.2/lazysizes.min.js" async></script>
+    <script src="{{ url_for('static', filename='requests/podprofileRequests.js') }}"></script>  
+</body>
+</html>

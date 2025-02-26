@@ -18,10 +18,15 @@ def dashboard():
 @dashboard_bp.route("/homepage", methods=["GET"])
 def homepage():
     if not g.user_id:
-        return redirect(
-            url_for("signin_bp.signin")
-        )  # Fix: redirect using the blueprint route
-    return render_template("dashboard/homepage.html")
+        return redirect(url_for("signin_bp.signin"))
+
+    user_id = str(g.user_id)
+    podcasts = list(collection.database.Podcast.find({"userid": user_id}))
+
+    for podcast in podcasts:
+        podcast["_id"] = str(podcast["_id"])
+
+    return render_template("dashboard/homepage.html", podcasts=podcasts)
 
 
 # ✅ Serves the settings page
@@ -65,7 +70,7 @@ def podprofile():
         return redirect(
             url_for("signin_bp.signin")
         )  # Fix: redirect using the blueprint route
-    return render_template("podprofile/index.html")
+    return render_template("podprofile/podprofile.html")
 
 
 @dashboard_bp.route("/team", methods=["GET", "POST"])
