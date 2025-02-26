@@ -33,7 +33,7 @@ load_dotenv()
 template_folder = os.path.join(
     os.path.abspath(os.path.dirname(__file__)), "Frontend", "templates"
 )
-static_folder = os.path.join(os.path.abspath(os.path.dirname(__file__)), "static")
+static_folder = os.path.join(os.path.abspath(os.path.dirname(__file__)), "frontend", "static")
 
 app = Flask(__name__, template_folder=template_folder, static_folder=static_folder)
 
