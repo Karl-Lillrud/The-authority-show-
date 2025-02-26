@@ -1,9 +1,4 @@
-from flask import (
-    Flask,
-    request,
-    session,
-    g,
-)
+from flask import Flask, request, session, g
 from flask_cors import CORS
 from backend.routes.register import register_bp
 from backend.routes.forgot_pass import forgotpass_bp
