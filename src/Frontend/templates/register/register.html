@@ -23,7 +23,11 @@
     <div class="center-box">
       <h2>Register</h2>
 
-      <form id="register-form" method="POST" action="{{ url_for('register_bp.register') }}">
+      <form
+        id="register-form"
+        method="POST"
+        action="{{ url_for('register_bp.register') }}"
+      >
         <div class="form-group">
           <label for="email">Email</label>
           <input
@@ -45,7 +49,6 @@
         />
         <button class="button" type="submit">Register</button>
       </form>
-
       <p class="error-message" id="error-message"></p>
 
       <!-- Success Message Modal -->
@@ -57,7 +60,6 @@
         </div>
       </div>
 
-      <!-- Moved the text above the Sign-in link -->
       <p class="account-text">Already have an account?</p>
       <a class="link" href="{{ url_for('signin_bp.signin') }}">Sign in</a>
     </div>
@@ -91,9 +93,10 @@
 
         form.addEventListener("submit", async function (event) {
           event.preventDefault();
-
           const email = document.getElementById("email").value;
           const password = document.getElementById("password").value;
+          // Get referral code from the hidden field
+          const referred_by = document.getElementById("referred_by").value;
 
           try {
             const response = await fetch(`${API_BASE_URL}/register`, {

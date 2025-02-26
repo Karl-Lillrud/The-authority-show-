@@ -15,7 +15,7 @@ DATABASE_NAME = "Podmanager"
 COLLECTION_NAME = "Users"
 
 if not MONGODB_URI:
-    raise ValueError("MongoDB URI is missing.")
+    raise ValueError("❌ MongoDB URI saknas. Kontrollera din .env-fil.")
 
 # Initialize logging
 logging.basicConfig(level=logging.INFO)
@@ -28,5 +28,5 @@ try:
     collection = database[COLLECTION_NAME]
     logger.info("MongoDB connection established successfully.")
 except Exception as e:
-    logger.error(f"Failed to connect to MongoDB: {e}")
+    logger.error(f"❌ Misslyckades att ansluta till MongoDB: {e}")
     raise

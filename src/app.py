@@ -31,14 +31,18 @@ if os.getenv("SKIP_VENV_UPDATE", "false").lower() not in ("true", "1", "yes"):
 
 load_dotenv()
 
-template_folder = os.path.join(os.path.abspath(os.path.dirname(__file__)), "Frontend", "templates")
-static_folder = os.path.join(os.path.abspath(os.path.dirname(__file__)), "Frontend", "static")
+template_folder = os.path.join(
+    os.path.abspath(os.path.dirname(__file__)), "Frontend", "templates"
+)
+static_folder = os.path.join(
+    os.path.abspath(os.path.dirname(__file__)), "Frontend", "static"
+)
 
 app = Flask(__name__, template_folder=template_folder, static_folder=static_folder)
 
 CORS(
     app,
-    resources={ 
+    resources={
         r"/*": {
             "origins": [
                 "http://192.168.0.4:8000",
@@ -79,11 +83,13 @@ API_BASE_URL = (
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
+
 # Log the request with user info
 @app.before_request
 def load_user():
     g.user_id = session.get("user_id")
     logger.info(f"Request to {request.path} by user {g.user_id}")
+
 
 # Run the app
 if __name__ == "__main__":

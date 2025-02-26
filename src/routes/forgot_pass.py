@@ -4,7 +4,7 @@ import random
 import smtplib
 from email.mime.text import MIMEText
 from werkzeug.security import generate_password_hash
-from database.mongo_connection import collection
+from database.mongo_connection import users_collection, credits_collection
 
 forgotpass_bp = Blueprint("forgotpass_bp", __name__)
 
