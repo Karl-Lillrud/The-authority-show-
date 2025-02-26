@@ -1,5 +1,5 @@
 from flask import g, redirect, render_template, url_for, Blueprint
-from database.mongo_connection import collection  # Add import
+from backend.database.mongo_connection import collection  # Add import
 
 dashboard_bp = Blueprint("dashboard_bp", __name__)
 

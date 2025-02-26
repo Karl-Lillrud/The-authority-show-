@@ -1,10 +1,9 @@
 from flask import Blueprint, request, jsonify
 from datetime import datetime
-import uuid
-from database.mongo_connection import collection
+from backend.database.mongo_connection import collection
 from marshmallow import ValidationError
-from database.mongo_connection import collection
 from backend.models.accounts import AccountSchema  # Make sure to import the schema
+import uuid
 
 # Define Blueprint
 account_bp = Blueprint("account_bp", __name__)

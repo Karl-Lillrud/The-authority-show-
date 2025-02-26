@@ -1,5 +1,5 @@
 from flask import request, jsonify, Blueprint, g
-from database.mongo_connection import collection
+from backend.database.mongo_connection import collection
 from datetime import datetime, timezone
 from marshmallow import ValidationError
 from backend.models.guests import GuestSchema  # Import your GuestSchema here
