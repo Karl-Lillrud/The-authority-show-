@@ -47,7 +47,7 @@ def signin():
     if not podcasts:
         return jsonify({
             "message": "Login successful",
-            "redirect_url": "/podprofile"
+            "redirect_url": "/dashboard" # Change this to the URL of the page where the user can create a podcast
         }), 200
     elif len(podcasts) == 1:
         return jsonify({
