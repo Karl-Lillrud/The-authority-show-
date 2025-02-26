@@ -1,24 +1,53 @@
-from flask import render_template, jsonify, Blueprint, g
-from database.mongo_connection import users_collection, credits_collection, podcasts_collection, guests_collection  # 🔥 Lägg till guests_collection
+from flask import (
+    render_template,
+    jsonify,
+    Blueprint,
+    g,
+    request,
+    redirect,
+    url_for,
+    flash,
+)
+from database.mongo_connection import collection, collection as team_collection
 
 dashboardmanagement_bp = Blueprint("dashboardmanagement_bp", __name__)
+pod_management_bp = Blueprint("pod_management", __name__)
+
 
 @dashboardmanagement_bp.route("/load_all_guests", methods=["GET"])
 def load_all_guests():
-    guests = list(guests_collection.find({"type": "guest"}))  # 🔥 Ändrat från collection till guests_collection
+    guests = list(collection.find({"type": "guest"}))
     return jsonify(guests)
+
 
 @dashboardmanagement_bp.route("/profile/<guest_id>", methods=["GET"])
 def guest_profile(guest_id):
-    guests = load_all_guests().get_json()  # Detta bör returnera en lista/dictionary med gästinfo.
+    guests = (
+        load_all_guests().get_json()
+    )  # This should return a list/dictionary of guest info.
     guest = next((g for g in guests if g["id"] == guest_id), None)
     if guest is None:
         return "Guest not found", 404
     return render_template("guest/profile.html", guest=guest)
 
+
 @dashboardmanagement_bp.route("/get_user_podcasts", methods=["GET"])
 def get_user_podcasts():
     if not g.user_id:
         return jsonify({"error": "Unauthorized"}), 401
-    podcasts = list(podcasts_collection.find({"creator_id": g.user_id}))  # 🔥 Ändrat från collection till podcasts_collection
+    podcasts = list(collection.find({"creator_id": g.user_id}))
     return jsonify(podcasts)
+
+
+@pod_management_bp.route("/invite")
+def invite():
+    email = request.args.get("email")
+    name = request.args.get("name")
+    role = request.args.get("role")
+    if email and name and role:
+        # Add the team member to the database
+        team_collection.insert_one(
+            {"Email": email, "Name": name, "Role": role, "Status": "Pending"}
+        )
+        flash("You have successfully joined the team!", "success")
+    return redirect(url_for("register_bp.register", email=email))
