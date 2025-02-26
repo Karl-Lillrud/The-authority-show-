@@ -1,10 +1,5 @@
 from marshmallow import Schema, fields
 
-
-#teamId is optional, because not all podcasts are part of a team
-#accountId is required, because all podcasts are linked to an account
-from marshmallow import Schema, fields
-
 class PodcastSchema(Schema):
     id = fields.Str()
     teamId = fields.Str()
