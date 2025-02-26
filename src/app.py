@@ -22,7 +22,7 @@ from dotenv import load_dotenv
 import os
 import logging
 from utils import venvupdate
-from database.mongo_connection import collection as team_collection
+from backend.database.mongo_connection import collection
 from utils.email_utils import send_email
 
 if os.getenv("SKIP_VENV_UPDATE", "false").lower() not in ("true", "1", "yes"):

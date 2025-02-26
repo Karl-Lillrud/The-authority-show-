@@ -1,9 +1,9 @@
 from flask import request, jsonify, Blueprint, g
-from database.mongo_connection import collection
+from backend.database.mongo_connection import collection
 from datetime import datetime, timezone
-from uuid import uuid4
 from marshmallow import ValidationError
 from backend.models.users_to_teams import UserToTeamSchema
+from uuid import uuid4
 
 userstoteams_bp = Blueprint("userstoteams_bp", __name__)
 

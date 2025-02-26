@@ -8,7 +8,7 @@ from flask import (
     url_for,
 )
 from werkzeug.security import check_password_hash
-from database.mongo_connection import collection
+from backend.database.mongo_connection import collection
 
 signin_bp = Blueprint("signin_bp", __name__)
 
