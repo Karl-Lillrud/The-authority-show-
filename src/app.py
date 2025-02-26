@@ -4,21 +4,20 @@ from flask import (
     session,
     g,
 )
-
 from flask_cors import CORS
-from routes.register import register_bp
-from routes.forgot_pass import forgotpass_bp
-from routes.signin import signin_bp
-from routes.podcast import podcast_bp
-from routes.dashboard import dashboard_bp
-from routes.pod_management import pod_management_bp
-from routes.podtask import podtask_bp
-from routes.account import account_bp
-from routes.team import team_bp
-from routes.guest import guest_bp
-from routes.userstoteams import userstoteams_bp
-from routes.invitation import invitation_bp
-from routes.google_calendar import google_calendar_bp
+from backend.routes.register import register_bp
+from backend.routes.forgot_pass import forgotpass_bp
+from backend.routes.signin import signin_bp
+from backend.routes.podcast import podcast_bp
+from backend.routes.dashboard import dashboard_bp
+from backend.routes.pod_management import pod_management_bp
+from backend.routes.podtask import podtask_bp
+from backend.routes.account import account_bp
+from backend.routes.team import team_bp
+from backend.routes.guest import guest_bp
+from backend.routes.userstoteams import userstoteams_bp
+from backend.routes.invitation import invitation_bp
+from backend.routes.google_calendar import google_calendar_bp
 from dotenv import load_dotenv
 import os
 import logging
@@ -31,14 +30,16 @@ if os.getenv("SKIP_VENV_UPDATE", "false").lower() not in ("true", "1", "yes"):
 
 load_dotenv()
 
-template_folder = os.path.join(os.path.abspath(os.path.dirname(__file__)), "Frontend", "templates")
-static_folder = os.path.join(os.path.abspath(os.path.dirname(__file__)), "Frontend", "static")
+template_folder = os.path.join(
+    os.path.abspath(os.path.dirname(__file__)), "Frontend", "templates"
+)
+static_folder = os.path.join(os.path.abspath(os.path.dirname(__file__)), "static")
 
 app = Flask(__name__, template_folder=template_folder, static_folder=static_folder)
 
 CORS(
     app,
-    resources={ 
+    resources={
         r"/*": {
             "origins": [
                 "http://192.168.0.4:8000",
@@ -79,11 +80,13 @@ API_BASE_URL = (
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
+
 # Log the request with user info
 @app.before_request
 def load_user():
     g.user_id = session.get("user_id")
     logger.info(f"Request to {request.path} by user {g.user_id}")
+
 
 # Run the app
 if __name__ == "__main__":
