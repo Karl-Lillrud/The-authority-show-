@@ -14,10 +14,15 @@
             .then(data => {
                 const podcastList = document.getElementById("podcast-list");
     
-                // Kolla om API:t returnerar "redirect"
+                //Kolla om API:t returnerar "redirect"
+                // if (data.redirect) {
+                //     // Endast en podd → gå direkt till dashboard
+                //     window.location.href = data.redirect;
+                //     return;
+                // }
+                // ^^ fungerar inte temporär lösning nedan
                 if (data.redirect) {
-                    // Endast en podd → gå direkt till dashboard
-                    window.location.href = data.redirect;
+                    console.log("redirecting to dashboard");
                     return;
                 }
     
