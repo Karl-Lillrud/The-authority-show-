@@ -11,6 +11,7 @@ document.addEventListener("DOMContentLoaded", function () {
         const addTeamMemberButton = document.getElementById("addTeamMember");
         const teamMembersContainer = document.getElementById("teamMembersContainer");
         const googleCalendarButton = document.getElementById("googleCalendar");
+        const skipToDashboard = document.getElementById("skipToDashboard");
 
         console.log("Setting up navigation");
 
@@ -115,6 +116,12 @@ document.addEventListener("DOMContentLoaded", function () {
             });
         } else {
             console.error("Google Calendar button not found");
+        }
+
+        if (skipToDashboard) {
+            skipToDashboard.addEventListener("click", () => {
+                window.location.href = "dashboard"; // Redirect to dashboard
+            });
         }
     }
 
