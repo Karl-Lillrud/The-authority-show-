@@ -10,13 +10,13 @@ from backend.routes.podtask import podtask_bp
 from backend.routes.account import account_bp
 from backend.routes.team import team_bp
 from backend.routes.guest import guest_bp
-from backend.routes.userstoteams import userstoteams_bp
+from backend.routes.user_to_team import usertoteam_bp
 from backend.routes.invitation import invitation_bp
 from backend.routes.google_calendar import google_calendar_bp
-from backend.routes.episodes import episodes_bp
 from backend.routes.episode import episode_bp
 from backend.routes.podprofile import podprofile_bp  # Import the podprofile blueprint
 from backend.routes.frontend import frontend_bp  # Import the frontend blueprint
+from backend.routes.guest_to_eposide import guesttoepisode_bp
 from dotenv import load_dotenv
 import os
 import logging
@@ -67,14 +67,13 @@ app.register_blueprint(
     guest_bp
 )  # Ensure this line is present and has the correct prefix
 app.register_blueprint(account_bp)
-app.register_blueprint(userstoteams_bp)
+app.register_blueprint(usertoteam_bp)
 app.register_blueprint(invitation_bp)
 app.register_blueprint(google_calendar_bp)
-app.register_blueprint(episodes_bp)
 app.register_blueprint(episode_bp)
 app.register_blueprint(podprofile_bp)  # Register the podprofile blueprint
 app.register_blueprint(frontend_bp)  # Register the frontend blueprint
-
+app.register_blueprint(guesttoepisode_bp)
 # Set the application environment (defaults to production)
 APP_ENV = os.getenv("APP_ENV", "production")
 

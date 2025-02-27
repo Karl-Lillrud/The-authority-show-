@@ -1,5 +1,5 @@
 from flask import request, jsonify, Blueprint, g
-from backend.database.mongo_connection import collection
+from backend.database.mongo_connection import collection, database
 from datetime import datetime, timezone
 import uuid
 
@@ -56,9 +56,9 @@ def register_episode():
 
         # Correctly inserting into the Episode collection
         print("📝 Inserting episode into database:", episode_item)
-        result = collection.database["Episode"].insert_one(
+        result = collection.database["Episodes"].insert_one(
             episode_item
-        )  # Ensure "Episode" is correct
+        )  # Ensure "Episodes" is correct
 
         print("✅ Episode registered successfully!")
 
@@ -78,7 +78,7 @@ def register_episode():
         return jsonify({"error": f"Failed to register episode: {str(e)}"}), 500
 
 
-@episode_bp.route("/get_episode/<episode_id>", methods=["GET"])
+@episode_bp.route("/get_episodes/<episode_id>", methods=["GET"])
 def get_episode(episode_id):
     if not g.user_id:
         return jsonify({"error": "Unauthorized"}), 401
@@ -90,7 +90,7 @@ def get_episode(episode_id):
         print(f"Fetching episode with episode_id: {episode_id} for user_id: {user_id}")
 
         # Fetch the episode using the string episode_id
-        episode = collection.database.Episode.find_one(
+        episode = collection.database.Episodes.find_one(
             {"_id": episode_id, "userid": user_id}
         )
 
@@ -114,7 +114,7 @@ def get_episodes():
 
     try:
         user_id = str(g.user_id)
-        episodes = list(collection.database.Episode.find({"userid": user_id}))
+        episodes = list(collection.database.Episodes.find({"userid": user_id}))
 
         for episode in episodes:
             episode["_id"] = str(episode["_id"])
@@ -126,14 +126,14 @@ def get_episodes():
         return jsonify({"error": f"Failed to fetch episodes: {str(e)}"}), 500
 
 
-@episode_bp.route("/delete_episode/<episode_id>", methods=["DELETE"])
+@episode_bp.route("/delete_episods/<episode_id>", methods=["DELETE"])
 def delete_episode(episode_id):
     if not g.user_id:
         return jsonify({"error": "Unauthorized"}), 401
 
     try:
         user_id = str(g.user_id)
-        episode = collection.database.Episode.find_one({"_id": episode_id})
+        episode = collection.database.Episodes.find_one({"_id": episode_id})
 
         if not episode:
             return jsonify({"error": "Episode not found"}), 404
@@ -141,7 +141,7 @@ def delete_episode(episode_id):
         if episode["userid"] != user_id:
             return jsonify({"error": "Permission denied"}), 403
 
-        result = collection.database.Episode.delete_one({"_id": episode_id})
+        result = collection.database.Episodes.delete_one({"_id": episode_id})
 
         if result.deleted_count == 1:
             return jsonify({"message": "Episode deleted successfully"}), 200
@@ -153,7 +153,7 @@ def delete_episode(episode_id):
         return jsonify({"error": f"Failed to delete episode: {str(e)}"}), 500
 
 
-@episode_bp.route("/update_episode/<episode_id>", methods=["PUT"])
+@episode_bp.route("/update_episodes/<episode_id>", methods=["PUT"])
 def update_episode(episode_id):
     if not g.user_id:
         return jsonify({"error": "Unauthorized"}), 401
@@ -168,7 +168,7 @@ def update_episode(episode_id):
         data = request.get_json()
         user_id = str(g.user_id)
 
-        existing_episode = collection.database.Episode.find_one({"_id": episode_id})
+        existing_episode = collection.database.Episodes.find_one({"_id": episode_id})
         if not existing_episode:
             return jsonify({"error": "Episode not found"}), 404
 
@@ -187,7 +187,7 @@ def update_episode(episode_id):
             "updated_at": datetime.now(timezone.utc),
         }
 
-        result = collection.database.Episode.update_one(
+        result = collection.database.Episodes.update_one(
             {"_id": episode_id}, {"$set": update_fields}
         )
 
@@ -201,7 +201,7 @@ def update_episode(episode_id):
         return jsonify({"error": f"Failed to update episode: {str(e)}"}), 500
 
 
-@episode_bp.route("/count_by_guest/<guest_id>", methods=["GET"])
+@episode_bp.route("/count_by_guests/<guest_id>", methods=["GET"])
 def count_by_guest(guest_id):
     if not g.user_id:
         return jsonify({"error": "Unauthorized"}), 401
@@ -210,7 +210,7 @@ def count_by_guest(guest_id):
         user_id = str(g.user_id)
 
         # Count the number of episodes for the given guest
-        count = collection.database.Episode.count_documents(
+        count = collection.database.Episodes.count_documents(
             {"guestId": guest_id, "userid": user_id}
         )
 
@@ -219,3 +219,23 @@ def count_by_guest(guest_id):
     except Exception as e:
         print(f"❌ ERROR: {e}")
         return jsonify({"error": f"Failed to fetch episode count: {str(e)}"}), 500
+    
+@episode_bp.route("/episodes/count_by_guest/<guest_id>", methods=["GET"])
+def count_episodes_by_guest(guest_id):
+    try:
+        count = collection.database.Episodes.count_documents({"guestId": guest_id})
+        return jsonify({"count": count}), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+@episode_bp.route("/episodes/get_episodes_by_guest/<guest_id>", methods=["GET"])
+def get_episodes_by_guest(guest_id):
+    try:
+        episodes = list(database.Episodes.find({"guestId": guest_id}))
+        for episode in episodes:
+            episode["_id"] = str(episode["_id"])
+        return jsonify({"episodes": episodes}), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
