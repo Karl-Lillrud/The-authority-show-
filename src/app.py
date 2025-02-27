@@ -58,7 +58,7 @@ app.register_blueprint(dashboard_bp)
 app.register_blueprint(pod_management_bp)
 app.register_blueprint(podtask_bp)
 app.register_blueprint(team_bp)
-app.register_blueprint(guest_bp)
+app.register_blueprint(guest_bp)  # Ensure this line is present and has the correct prefix
 app.register_blueprint(account_bp)
 app.register_blueprint(userstoteams_bp)
 app.register_blueprint(invitation_bp)
