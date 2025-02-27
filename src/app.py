@@ -13,6 +13,8 @@ from backend.routes.guest import guest_bp
 from backend.routes.userstoteams import userstoteams_bp
 from backend.routes.invitation import invitation_bp
 from backend.routes.google_calendar import google_calendar_bp
+from backend.routes.episodes import episodes_bp
+from backend.routes.episode import episode_bp
 from dotenv import load_dotenv
 import os
 import logging
@@ -28,7 +30,9 @@ load_dotenv()
 template_folder = os.path.join(
     os.path.abspath(os.path.dirname(__file__)), "Frontend", "templates"
 )
-static_folder = os.path.join(os.path.abspath(os.path.dirname(__file__)), "frontend", "static")
+static_folder = os.path.join(
+    os.path.abspath(os.path.dirname(__file__)), "frontend", "static"
+)
 
 app = Flask(__name__, template_folder=template_folder, static_folder=static_folder)
 
@@ -62,6 +66,8 @@ app.register_blueprint(account_bp)
 app.register_blueprint(userstoteams_bp)
 app.register_blueprint(invitation_bp)
 app.register_blueprint(google_calendar_bp)
+app.register_blueprint(episodes_bp)
+app.register_blueprint(episode_bp)
 
 # Set the application environment (defaults to production)
 APP_ENV = os.getenv("APP_ENV", "production")

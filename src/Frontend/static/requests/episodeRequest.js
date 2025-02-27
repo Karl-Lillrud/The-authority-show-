@@ -36,7 +36,7 @@ export async function viewEpisodeTasks(episodeId) {
 
 export async function addTasksToEpisode(episodeId, guestId, tasks) {
   try {
-    const response = await fetch("/add_tasks_to_episode", {
+    const response = await fetch("/episodes/add_tasks_to_episode", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
