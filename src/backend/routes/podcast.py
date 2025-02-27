@@ -1,4 +1,4 @@
-from flask import request, jsonify, Blueprint, g
+from flask import request, jsonify, Blueprint, g, session
 from backend.database.mongo_connection import collection
 from datetime import datetime, timezone
 import uuid
@@ -285,3 +285,22 @@ def edit_podcast(podcast_id):
     except Exception as e:
         print(f"❌ ERROR: {e}")
         return jsonify({"error": f"Failed to update podcast: {str(e)}"}), 500
+
+
+@podcast_bp.route('/get_user_podcasts', methods=['GET'])
+def get_user_podcasts():
+    user_id = session.get('user_id')
+    if not user_id:
+        return jsonify({"error": "User not logged in"}), 401
+
+    # Fetch podcasts for the user from the database
+    podcasts = collection.find({"user_id": user_id})
+    podcast_list = []
+    for podcast in podcasts:
+        podcast_list.append({
+            "name": podcast.get("name"),
+            "image_url": podcast.get("image_url"),
+            "open_episodes": podcast.get("open_episodes", 0)
+        })
+
+    return jsonify(podcast_list)
