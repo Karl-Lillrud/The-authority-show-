@@ -50,7 +50,7 @@ def signin():
 
     if not podcasts:
         return (
-            jsonify({"message": "Login successful", "redirect_url": "/dashboard"}),
+            jsonify({"message": "Login successful", "redirect_url": "/podprofile"}),
             200,
         )
     elif len(podcasts) == 1:

@@ -16,6 +16,8 @@ client = MongoClient(MONGODB_URI)
 database = client[DATABASE_NAME]
 
 # Example data for each model
+guest_ids = ["GUEST_ID_1", "GUEST_ID_2", "GUEST_ID_3"]
+
 teams = [
     {
         "id": str(uuid.uuid4()),
@@ -174,7 +176,7 @@ podcasts = [
 
 guests = [
     {
-        "id": str(uuid.uuid4()),
+        "id": guest_ids[0],
         "podcastId": str(uuid.uuid4()),
         "name": "Guest Alpha",
         "image": "http://example.com/image1",
@@ -192,7 +194,7 @@ guests = [
         "notes": "Guest Alpha notes",
     },
     {
-        "id": str(uuid.uuid4()),
+        "id": guest_ids[1],
         "podcastId": str(uuid.uuid4()),
         "name": "Guest Beta",
         "image": "http://example.com/image2",
@@ -210,7 +212,7 @@ guests = [
         "notes": "Guest Beta notes",
     },
     {
-        "id": str(uuid.uuid4()),
+        "id": guest_ids[2],
         "podcastId": str(uuid.uuid4()),
         "name": "Guest Gamma",
         "image": "http://example.com/image3",
@@ -232,7 +234,7 @@ guests = [
 episodes = [
     {
         "id": str(uuid.uuid4()),
-        "guestId": str(uuid.uuid4()),
+        "guestId": guest_ids[0],
         "podcastId": str(uuid.uuid4()),
         "title": "Episode 1",
         "description": "Episode 1 description",
@@ -244,7 +246,7 @@ episodes = [
     },
     {
         "id": str(uuid.uuid4()),
-        "guestId": str(uuid.uuid4()),
+        "guestId": guest_ids[1],
         "podcastId": str(uuid.uuid4()),
         "title": "Episode 2",
         "description": "Episode 2 description",
@@ -256,7 +258,7 @@ episodes = [
     },
     {
         "id": str(uuid.uuid4()),
-        "guestId": str(uuid.uuid4()),
+        "guestId": guest_ids[2],
         "podcastId": str(uuid.uuid4()),
         "title": "Episode 3",
         "description": "Episode 3 description",
