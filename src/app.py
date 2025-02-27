@@ -1,9 +1,4 @@
-from flask import (
-    Flask,
-    request,
-    session,
-    g,
-)
+from flask import Flask, request, session, g
 from flask_cors import CORS
 from backend.routes.register import register_bp
 from backend.routes.forgot_pass import forgotpass_bp
@@ -33,7 +28,7 @@ load_dotenv()
 template_folder = os.path.join(
     os.path.abspath(os.path.dirname(__file__)), "Frontend", "templates"
 )
-static_folder = os.path.join(os.path.abspath(os.path.dirname(__file__)), "static")
+static_folder = os.path.join(os.path.abspath(os.path.dirname(__file__)), "frontend", "static")
 
 app = Flask(__name__, template_folder=template_folder, static_folder=static_folder)
 
