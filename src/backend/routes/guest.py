@@ -131,8 +131,9 @@ def edit_guest(guest_id):
 
         print("📝 Update Fields:", update_fields)
 
+        # Use "user_id" (with underscore) to match the field set in add_guest
         result = collection.database.Guests.update_one(
-            {"_id": guest_id, "userid": user_id}, {"$set": update_fields}
+            {"_id": guest_id, "user_id": user_id}, {"$set": update_fields}
         )
 
         if result.matched_count == 0:
@@ -144,6 +145,7 @@ def edit_guest(guest_id):
         print(f"❌ ERROR: {e}")
         return jsonify({"error": f"Failed to update guest: {str(e)}"}), 500
 
+
 @guest_bp.route("/delete_guests/<guest_id>", methods=["DELETE"])
 def delete_guest(guest_id):
     if not g.user_id:
@@ -154,7 +156,8 @@ def delete_guest(guest_id):
 
     try:
         user_id = str(g.user_id)
-        result = collection.database.Guests.delete_one({"_id": guest_id, "userid": user_id})
+        # Use "user_id" to ensure proper matching
+        result = collection.database.Guests.delete_one({"_id": guest_id, "user_id": user_id})
         if result.deleted_count == 0:
             return jsonify({"error": "Guest not found or unauthorized"}), 404
 
