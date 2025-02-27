@@ -21,7 +21,8 @@
         </button>
       </div>
     </header>
-    <input type="hidden" id="loggedInUserEmail" value="{{ user_email }}"> <!-- Hidden input for user email -->
+    <input type="hidden" id="loggedInUserEmail" value="{{ user_email }}" />
+    <!-- Hidden input for user email -->
     <main>
       <!-- Pod Name Section -->
       <div class="container" id="pod-name-section">
@@ -155,17 +156,11 @@
         </form>
       </div>
     </main>
+    <script src="{{ url_for('static', filename='requests/podprofileRequests.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/podprofile.js') }}"></script>
     <script
       src="https://unpkg.com/lazysizes@5.3.2/lazysizes.min.js"
       async
-    ></script>
-    <script
-      type="module"
-      src="{{ url_for('frontend.template_files', filename='podprofile/podprofile.js') }}"
-    ></script>
-    <script
-      type="module"
-      src="{{ url_for('frontend.static_files', filename='requests/podprofileRequests.js') }}"
     ></script>
   </body>
 </html>

@@ -15,6 +15,8 @@ from backend.routes.invitation import invitation_bp
 from backend.routes.google_calendar import google_calendar_bp
 from backend.routes.episodes import episodes_bp
 from backend.routes.episode import episode_bp
+from backend.routes.podprofile import podprofile_bp  # Import the podprofile blueprint
+from backend.routes.frontend import frontend_bp  # Import the frontend blueprint
 from dotenv import load_dotenv
 import os
 import logging
@@ -70,6 +72,8 @@ app.register_blueprint(invitation_bp)
 app.register_blueprint(google_calendar_bp)
 app.register_blueprint(episodes_bp)
 app.register_blueprint(episode_bp)
+app.register_blueprint(podprofile_bp)  # Register the podprofile blueprint
+app.register_blueprint(frontend_bp)  # Register the frontend blueprint
 
 # Set the application environment (defaults to production)
 APP_ENV = os.getenv("APP_ENV", "production")
