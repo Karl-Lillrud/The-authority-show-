@@ -3,7 +3,8 @@
 {% block content %}
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="{{ url_for('static', filename='css/guest.css') }}">
-  <script src="{{ url_for('static', filename='guest/main.js') }}"></script>
+  <script src="{{ url_for('static', filename='requests/guestRequests.js') }}"></script>
+  <script src="{{ url_for('frontend.serve_template', filename='guest/guest.js') }}"></script>
   <div class="container">
     <h1 class="title">Discover Guests for Your Podcast</h1>
     <!-- Search Bar -->
