@@ -7,13 +7,17 @@ import uuid
 
 guest_bp = Blueprint("guest_bp", __name__)
 
+
 @guest_bp.route("/add_guests", methods=["POST"])
 def add_guest():
     if not g.user_id:
         return jsonify({"error": "Unauthorized"}), 401
 
     if request.content_type != "application/json":
-        return jsonify({"error": "Invalid Content-Type. Expected application/json"}), 415
+        return (
+            jsonify({"error": "Invalid Content-Type. Expected application/json"}),
+            415,
+        )
 
     try:
         data = request.get_json()
@@ -28,7 +32,9 @@ def add_guest():
         user_id = str(g.user_id)
 
         # Check if the podcast exists
-        podcast = collection.database.Podcasts.find_one({"_id": guest_data["podcastId"]})
+        podcast = collection.database.Podcasts.find_one(
+            {"_id": guest_data["podcastId"]}
+        )
         if not podcast:
             return jsonify({"error": "Podcast not found"}), 404
 
@@ -48,21 +54,25 @@ def add_guest():
             "scheduled": 0,
             "completed": 0,
             "created_at": datetime.now(timezone.utc),
-            "user_id": user_id
+            "user_id": user_id,
         }
 
         collection.database.Guests.insert_one(guest_item)
 
         print("✅ Guest added successfully!")
-        return jsonify({"message": "Guest added successfully", "guest_id": guest_id}), 201
+        return (
+            jsonify({"message": "Guest added successfully", "guest_id": guest_id}),
+            201,
+        )
 
     except Exception as e:
         print(f"❌ ERROR: {e}")
         return jsonify({"error": f"Failed to add guest: {str(e)}"}), 500
 
-@guest_bp.route('/get_guests', methods=['GET'])
+
+@guest_bp.route("/get_guests", methods=["GET"])
 def get_guests():
-    user_id = session.get('user_id')
+    user_id = session.get("user_id")
     if not user_id:
         return jsonify({"error": "User not logged in"}), 401
 
@@ -87,19 +97,22 @@ def get_guests():
     guests_cursor = collection.database.Guests.find({"podcastId": podcast_id})
     guest_list = []
     for guest in guests_cursor:
-        guest_list.append({
-            "id": str(guest.get("_id")),
-            "name": guest.get("name"),
-            "image": guest.get("image"),
-            "bio": guest.get("bio"),
-            "tags": guest.get("tags", []),
-            "email": guest.get("email"),
-            "linkedin": guest.get("linkedin"),
-            "twitter": guest.get("twitter"),
-            "areasOfInterest": guest.get("areasOfInterest", [])
-        })
+        guest_list.append(
+            {
+                "id": str(guest.get("_id")),
+                "name": guest.get("name"),
+                "image": guest.get("image"),
+                "bio": guest.get("bio"),
+                "tags": guest.get("tags", []),
+                "email": guest.get("email"),
+                "linkedin": guest.get("linkedin"),
+                "twitter": guest.get("twitter"),
+                "areasOfInterest": guest.get("areasOfInterest", []),
+            }
+        )
 
     return jsonify({"guests": guest_list})
+
 
 @guest_bp.route("/edit_guests/<guest_id>", methods=["PUT"])
 def edit_guest(guest_id):
@@ -107,7 +120,10 @@ def edit_guest(guest_id):
         return jsonify({"error": "Unauthorized"}), 401
 
     if request.content_type != "application/json":
-        return jsonify({"error": "Invalid Content-Type. Expected application/json"}), 415
+        return (
+            jsonify({"error": "Invalid Content-Type. Expected application/json"}),
+            415,
+        )
 
     try:
         data = request.get_json()
@@ -152,12 +168,17 @@ def delete_guest(guest_id):
         return jsonify({"error": "Unauthorized"}), 401
 
     if request.content_type and request.content_type != "application/json":
-        return jsonify({"error": "Invalid Content-Type. Expected application/json"}), 415
+        return (
+            jsonify({"error": "Invalid Content-Type. Expected application/json"}),
+            415,
+        )
 
     try:
         user_id = str(g.user_id)
         # Use "user_id" to ensure proper matching
-        result = collection.database.Guests.delete_one({"_id": guest_id, "user_id": user_id})
+        result = collection.database.Guests.delete_one(
+            {"_id": guest_id, "user_id": user_id}
+        )
         if result.deleted_count == 0:
             return jsonify({"error": "Guest not found or unauthorized"}), 404
 
