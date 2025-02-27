@@ -1,4 +1,4 @@
-import { postPodcastData } from '../../static/requests/podprofileRequests.js';
+import { postPodcastData, savePodProfile, sendInvitation } from '../../static/requests/podprofileRequests.js';
 
 document.addEventListener("DOMContentLoaded", function () {
     function setupNavigation() {
@@ -58,9 +58,22 @@ document.addEventListener("DOMContentLoaded", function () {
         }
 
         if (podProfileForm) {
-            podProfileForm.addEventListener("submit", (event) => {
+            podProfileForm.addEventListener("submit", async (event) => {
                 event.preventDefault();
-                window.location.href = "dashboard"; // Change this to the actual destination later
+                const formData = new FormData(podProfileForm);
+                const data = Object.fromEntries(formData.entries());
+
+                try {
+                    const success = await savePodProfile(data);
+                    if (success) {
+                        window.location.href = "dashboard"; // Redirect to dashboard
+                    } else {
+                        alert("Something went wrong. Please try again.");
+                    }
+                } catch (error) {
+                    console.error("Error saving pod profile:", error);
+                    alert("Something went wrong. Please try again.");
+                }
             });
         }
 
@@ -187,22 +200,7 @@ function sendInvitations() {
             const joinLink = `${joinLinkBase}?email=${encodeURIComponent(email)}&name=${encodeURIComponent(name)}&role=${encodeURIComponent(role)}`;
             const subject = `Join the ${podName} team`;
             const body = `Hi ${name}!\n\nYou are hereby invited by PodManager.ai to join the team of ${podName}.\n\nClick here to join the team: <a href="${joinLink}">${joinLink}</a>\n\nWelcome to PodManager.ai!`;
-            fetch('/send_invitation', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({ email, subject, body })
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    console.log(`Invitation sent to ${email}`);
-                } else {
-                    console.error(`Failed to send invitation to ${email}`);
-                }
-            })
-            .catch(error => console.error('Error sending invitation:', error));
+            sendInvitation(email, subject, body);
         }
     });
 }
