@@ -105,13 +105,19 @@ document.addEventListener("DOMContentLoaded", function () {
             console.log("Google Calendar button found");
             googleCalendarButton.addEventListener("click", () => {
                 console.log("Google Calendar button clicked");
-                const userEmail = document.getElementById("userEmail").value;
-                console.log("User email:", userEmail);
-                if (userEmail.endsWith("@gmail.com")) {
-                    console.log("Redirecting to Google Calendar connection");
-                    window.location.href = "/connect_google_calendar";
+                const hostEmailElement = document.querySelector(".team-email"); // Fetch the email entered by the host
+                if (hostEmailElement) {
+                    const hostEmail = hostEmailElement.value;
+                    console.log("Host email:", hostEmail);
+                    if (hostEmail.endsWith("@gmail.com")) {
+                        console.log("Redirecting to Google Calendar OAuth2 connection");
+                        const oauth2Url = `https://accounts.google.com/o/oauth2/auth?client_id=YOUR_CLIENT_ID&redirect_uri=YOUR_REDIRECT_URI&response_type=code&scope=https://www.googleapis.com/auth/calendar`;
+                        window.open(oauth2Url, "_blank"); // Open Google Calendar OAuth2 in a new tab
+                    } else {
+                        alert("Google Calendar integration is only available for Gmail accounts.");
+                    }
                 } else {
-                    alert("Google Calendar integration is only available for Gmail accounts.");
+                    alert("Host email element not found.");
                 }
             });
         } else {
