@@ -1,3 +1,5 @@
+import { postPodcastData } from '../../static/requests/podprofileRequests.js';
+
 document.addEventListener("DOMContentLoaded", function () {
     function setupNavigation() {
         const goToProductionTeam = document.getElementById("goToProductionTeam");
@@ -23,8 +25,9 @@ document.addEventListener("DOMContentLoaded", function () {
                 }
 
                 try {
-                    const redirectUrl = await postPodcastData(podName, podRss);
-                    window.location.href = redirectUrl; // Redirect to Production Team Page
+                    await postPodcastData(podName, podRss);
+                    document.getElementById("pod-name-section").classList.add("hidden");
+                    document.getElementById("production-team-section").classList.remove("hidden");
                 } catch (error) {
                     alert("Something went wrong. Please try again.");
                 }
