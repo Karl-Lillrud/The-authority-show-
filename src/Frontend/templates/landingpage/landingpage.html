@@ -1,0 +1,396 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Podcast Website</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="stylesheet" href="../../static/css/landingpage.css">
+</head>
+<body>
+  <header>
+    <nav class="navbar">
+      <div class="container">
+        <div class="logo">Podcast</div>
+        <ul class="nav-links" id="nav-links">
+          <li><a href="#podcast-header">Home</a></li>
+          <li><a href="#about-section">About</a></li>
+          <li><a href="#latest-episodes-section">Episodes</a></li>
+          <li><a href="#guest-booking">Guest Booking</a></li>
+          <li><a href="#extra-section">Extra</a></li>
+        </ul>
+        <button class="subscribe-btn">Subscribe</button>
+      </div>
+    </nav>
+  </header>
+  <main>
+    <!-- Podcast Header Section -->
+    <section class="podcast-header section-svart" id="podcast-header">
+      <img id="podcast-cover" src="#" alt="Podcast Cover" class="podcast-cover">
+      <div class="podcast-info">
+        <h1 id="podcast-title">Podcast Title</h1>
+        <p id="podcast-tagline">Your podcast tagline goes here.</p>
+        <div id="subscribe-buttons">
+          <button>Subscribe on Apple</button>
+          <button>Subscribe on Spotify</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- About Section -->
+    <section class="about-section section-svartgrå" id="about-section">
+      <h2>About the Podcast</h2>
+      <p id="podcast-description">
+        A brief description of the podcast goes here. <br>Learn more about our journey and what inspires us.
+      </p>
+      <div class="host-info">
+        <img id="host-image" src="/Media/Karl-Lillrud_bok_nvidia.jpg" alt="Host Image" class="host-image">
+        <div class="host-details">
+          <h3 id="host-name">Host Name</h3>
+          <p id="host-bio">
+            Host biography goes here. Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nulla ac ultrices libero.
+          </p>
+          <div id="host-social">
+            <a href="https://twitter.com/host" target="_blank" class="twitter"><i class="fab fa-twitter"></i></a>
+            <a href="https://instagram.com/host" target="_blank" class="instagram"><i class="fab fa-instagram"></i></a>
+            <a href="https://linkedin.com/in/host" target="_blank" class="linkedin"><i class="fab fa-linkedin"></i></a>
+            <a href="https://facebook.com/host" target="_blank" class="facebook"><i class="fab fa-facebook-f"></i></a>
+            <a href="https://youtube.com/host" target="_blank" class="youtube"><i class="fab fa-youtube"></i></a>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  <!-- Latest Episodes List Section -->
+  <section class="latest-episodes-section section-svart" id="latest-episodes-section">
+    <h2>Latest Episodes</h2>
+    <ul class="episode-list">
+      <!-- Episod 1 -->
+      <li class="episode-item">
+        <div class="episode-card">
+          <div class="episode-thumbnail">
+            <img src="/Media/Karl-Lillrud_bok_nvidia.jpg" alt="Episode 1 Thumbnail">
+          </div>
+          <div class="episode-details">
+            <button class="play-btn">&#9658;</button>
+            <h3>Episode 1: Introduction</h3>
+            <p>Learn about the podcast and get to know our journey.</p>
+            <div class="episode-links">
+              <a href="https://open.spotify.com/" target="_blank" class="spotify-link">
+                <img src="/Media/spotify.png" alt="Spotify" class="podcast-icon">
+                <span class="listen-btn spotify-btn">Spotify</span>
+              </a>
+              <a href="https://podcasts.apple.com/" target="_blank" class="apple-link">
+                <img src="/Media/apple.svg" alt="Apple Podcasts" class="podcast-icon">
+                <span class="listen-btn apple-btn">Apple</span>
+              </a>
+            </div>
+          </div>
+        </div>
+      </li>
+
+      <!-- Episod 2 -->
+      <li class="episode-item">
+        <div class="episode-card">
+          <div class="episode-thumbnail">
+            <img src="/Media/Hero_Sektion.png" alt="Episode 2 Thumbnail">
+          </div>
+          <div class="episode-details">
+            <button class="play-btn">&#9658;</button>
+            <h3>Episode 2: Deep Dive</h3>
+            <p>Dive deep into fascinating topics with expert insights.</p>
+            <div class="episode-links">
+              <a href="https://open.spotify.com/" target="_blank" class="spotify-link">
+                <img src="/Media/spotify.png" alt="Spotify" class="podcast-icon">
+                <span class="listen-btn spotify-btn">Spotify</span>
+              </a>
+              <a href="https://podcasts.apple.com/" target="_blank" class="apple-link">
+                <img src="/Media/apple.svg" alt="Apple Podcasts" class="podcast-icon">
+                <span class="listen-btn apple-btn">Apple</span>
+              </a>
+            </div>
+          </div>
+        </div>
+      </li>
+
+      <!-- Episod 3 -->
+      <li class="episode-item">
+        <div class="episode-card">
+          <div class="episode-thumbnail">
+            <img src="/Media/spotify.png" alt="Episode 3 Thumbnail">
+          </div>
+          <div class="episode-details">
+            <button class="play-btn">&#9658;</button>
+            <h3>Episode 3: Guest Interview</h3>
+            <p>Join us for an exclusive interview with a special guest.</p>
+            <div class="episode-links">
+              <a href="https://open.spotify.com/" target="_blank" class="spotify-link">
+                <img src="/Media/spotify.png" alt="Spotify" class="podcast-icon">
+                <span class="listen-btn spotify-btn">Spotify</span>
+              </a>
+              <a href="https://podcasts.apple.com/" target="_blank" class="apple-link">
+                <img src="/Media/apple.svg" alt="Apple Podcasts" class="podcast-icon">
+                <span class="listen-btn apple-btn">Apple</span>
+              </a>
+            </div>
+          </div>
+        </div>
+      </li>
+      <!-- Episod 1 -->
+      <li class="episode-item">
+        <div class="episode-card">
+          <div class="episode-thumbnail">
+            <img src="/Media/Karl-Lillrud_bok_nvidia.jpg" alt="Episode 1 Thumbnail">
+          </div>
+          <div class="episode-details">
+            <button class="play-btn">&#9658;</button>
+            <h3>Episode 1: Introduction</h3>
+            <p>Learn about the podcast and get to know our journey.</p>
+            <div class="episode-links">
+              <a href="https://open.spotify.com/" target="_blank" class="spotify-link">
+                <img src="/Media/spotify.png" alt="Spotify" class="podcast-icon">
+                <span class="listen-btn spotify-btn">Spotify</span>
+              </a>
+              <a href="https://podcasts.apple.com/" target="_blank" class="apple-link">
+                <img src="/Media/apple.svg" alt="Apple Podcasts" class="podcast-icon">
+                <span class="listen-btn apple-btn">Apple</span>
+              </a>
+            </div>
+          </div>
+        </div>
+      </li>
+
+      <!-- Episod 2 -->
+      <li class="episode-item">
+        <div class="episode-card">
+          <div class="episode-thumbnail">
+            <img src="/Media/Hero_Sektion.png" alt="Episode 2 Thumbnail">
+          </div>
+          <div class="episode-details">
+            <button class="play-btn">&#9658;</button>
+            <h3>Episode 2: Deep Dive</h3>
+            <p>Dive deep into fascinating topics with expert insights.</p>
+            <div class="episode-links">
+              <a href="https://open.spotify.com/" target="_blank" class="spotify-link">
+                <img src="/Media/spotify.png" alt="Spotify" class="podcast-icon">
+                <span class="listen-btn spotify-btn">Spotify</span>
+              </a>
+              <a href="https://podcasts.apple.com/" target="_blank" class="apple-link">
+                <img src="/Media/apple.svg" alt="Apple Podcasts" class="podcast-icon">
+                <span class="listen-btn apple-btn">Apple</span>
+              </a>
+            </div>
+          </div>
+        </div>
+      </li>
+
+      <!-- Episod 3 -->
+      <li class="episode-item">
+        <div class="episode-card">
+          <div class="episode-thumbnail">
+            <img src="/Media/spotify.png" alt="Episode 3 Thumbnail">
+          </div>
+          <div class="episode-details">
+            <button class="play-btn">&#9658;</button>
+            <h3>Episode 3: Guest Interview</h3>
+            <p>Join us for an exclusive interview with a special guest.</p>
+            <div class="episode-links">
+              <a href="https://open.spotify.com/" target="_blank" class="spotify-link">
+                <img src="/Media/spotify.png" alt="Spotify" class="podcast-icon">
+                <span class="listen-btn spotify-btn">Spotify</span>
+              </a>
+              <a href="https://podcasts.apple.com/" target="_blank" class="apple-link">
+                <img src="/Media/apple.svg" alt="Apple Podcasts" class="podcast-icon">
+                <span class="listen-btn apple-btn">Apple</span>
+              </a>
+            </div>
+          </div>
+        </div>
+      </li>
+    </ul>
+  </section>
+
+    <!-- Exclusive Episodes Section (Glass Card) -->
+    <section class="exclusive-episodes-section section-svart" id="exclusive-episodes-section">
+      <div class="episodes-glass-card">
+        <h2>Get Exclusive Episodes &amp; Updates</h2>
+        <p class="episodes-subtext">
+          Join our community to receive new episodes, stay updated, and connect with like-minded listeners.
+        </p>
+        <div class="episodes-divider"></div>
+        <div class="episodes-feature-list">
+          <div class="episodes-feature">
+            <i class="fab fa-discord"></i>
+            <span>Join our Discord Group</span>
+          </div>
+          <div class="episodes-feature">
+            <i class="fas fa-star"></i>
+            <span>Leave a Review</span>
+          </div>
+          <div class="episodes-feature">
+            <i class="fas fa-bell"></i>
+            <span>Enable Notifications</span>
+          </div>
+          <div class="episodes-feature">
+            <i class="fas fa-user-friends"></i>
+            <span>Exclusive Community Access</span>
+          </div>
+        </div>
+        <div class="episodes-divider"></div>
+        <div class="episodes-subscribe">
+          <a href="#" class="subscribe-btn apple"><i class="fab fa-apple"></i> Apple</a>
+          <a href="#" class="subscribe-btn spotify"><i class="fab fa-spotify"></i> Spotify</a>
+          <a href="#" class="subscribe-btn google"><i class="fab fa-google"></i> Google</a>
+          <a href="#" class="subscribe-btn podcaster"><i class="fas fa-podcast"></i> Podcaster</a>
+        </div>
+      </div>
+    </section>
+    
+    <!-- Guest Booking & Sponsorships Section -->
+    <section class="guest-sponsor-section" id="guest-booking">
+      <div class="guest-sponsor-glass-card">
+        <h2>Be a Guest &amp; Sponsorships</h2>
+        <p class="guest-sponsor-subtext">
+          Join us as a guest or become a sponsor to reach our growing audience. Share your expertise or brand with our community.
+        </p>
+
+    <!-- Guest & Sponsorship Tabs / Headings -->
+    <div class="guest-sponsor-tabs">
+      <button class="tab-btn active" data-tab="guests">Guest Appearances</button>
+      <button class="tab-btn" data-tab="sponsorships">Sponsorships</button>
+    </div>
+
+    <div class="guest-sponsor-divider"></div>
+
+    <!-- GUEST APPEARANCES CONTENT -->
+    <div class="guest-content active" id="guests">
+      <h3>Become a Guest Speaker</h3>
+      <div class="guest-features">
+        <div class="guest-feature">
+          <i class="fas fa-robot"></i>
+          <span>AI &amp; Tech Experts</span>
+        </div>
+        <div class="guest-feature">
+          <i class="fas fa-calendar-check"></i>
+          <span>Flexible Scheduling</span>
+        </div>
+        <div class="guest-feature">
+          <i class="fas fa-headset"></i>
+          <span>Remote Interviews</span>
+        </div>
+        <div class="guest-feature">
+          <i class="fas fa-users"></i>
+          <span>Engaged Audience</span>
+        </div>
+      </div>
+      <!-- Guest Signup -->
+      <div class="guest-signup">
+        <h3>Apply to be a Guest</h3>
+        <form id="guest-signup-form" action="#" method="post">
+          <input type="email" id="guest-email" placeholder="Enter your email" required>
+          <button type="submit">Apply</button>
+        </form>
+      </div>
+    </div>
+
+    <!-- SPONSORSHIP CONTENT -->
+    <div class="sponsor-content" id="sponsorships">
+      <h3>Partner with Us</h3>
+      <div class="sponsor-features">
+        <div class="sponsor-feature">
+          <img src="sponsor1.png" alt="Sponsor Logo" />
+          <span>Brand Integration</span>
+        </div>
+        <div class="sponsor-feature">
+          <img src="sponsor2.png" alt="Sponsor Logo" />
+          <span>Episode Shoutouts</span>
+        </div>
+        <div class="sponsor-feature">
+          <img src="sponsor3.png" alt="Sponsor Logo" />
+          <span>Ad Spots</span>
+        </div>
+        <div class="sponsor-feature">
+          <img src="sponsor4.png" alt="Sponsor Logo" />
+          <span>Special Collaborations</span>
+        </div>
+      </div>
+      <button class="sponsor-btn" onclick="window.location.href='sponsor.html'">
+        Sponsor Us
+      </button>
+    </div>
+  </div>
+</section>
+
+    <!-- Extra Section -->
+    <section class="extra-section section-svart" id="extra-section">
+      <h2>Stay Connected</h2>
+      <!-- Newsletter Signup -->
+      <div class="newsletter-signup">
+        <h3>Newsletter Signup</h3>
+        <form id="newsletter-form" action="#" method="post">
+          <input type="email" id="newsletter-email" placeholder="Enter your email" required>
+          <button type="submit">Subscribe</button>
+        </form>
+      </div>
+
+      <div class="social-media-carousel">
+        <!-- Twitter Box -->
+        <div class="social-box twitter-box">
+          <h3>Twitter</h3>
+          <div class="carousel">
+            <img src="/Media/Karl-Lillrud_bok_nvidia.jpg" alt="Twitter 1">
+            <img src="/Media/Profile.png" alt="Twitter 2">
+            <img src="/Media/Karl-Lillrud_bok_nvidia.jpg" alt="Twitter 3">
+          </div>
+        </div>
+    
+        <!-- Instagram Box -->
+        <div class="social-box instagram-box">
+          <h3>Instagram</h3>
+          <div class="carousel">
+            <img src="/Media/Karl-Lillrud_bok_nvidia.jpg" alt="Instagram 1">
+            <img src="/Media/Karl-Lillrud_bok_nvidia.jpg" alt="Instagram 2">
+            <img src="/Media/Profile.png" alt="Instagram 3">
+          </div>
+        </div>
+    
+        <!-- LinkedIn Box -->
+        <div class="social-box linkedin-box">
+          <h3>LinkedIn</h3>
+          <div class="carousel">
+            <img src="/Media/Profile.png" alt="LinkedIn 1">
+            <img src="/Media/Karl-Lillrud_bok_nvidia.jpg" alt="LinkedIn 2">
+            <img src="/Media/Karl-Lillrud_bok_nvidia.jpg" alt="LinkedIn 3">
+          </div>
+        </div>
+      </div>
+
+      <!-- Merch / Patreon Links -->
+      <div class="merch-patreon">
+        <h3>Merch & Patreon</h3>
+        <a href="#" target="_blank">Visit our Merch Store</a>
+        <a href="#" target="_blank">Support us on Patreon</a>
+      </div>
+      <!-- Press Kit -->
+      <div class="press-kit">
+        <h3>Press Kit</h3>
+        <a href="press-kit.zip" download>Download Media Assets</a>
+      </div>
+    </section>
+  
+  <footer class="section-svartgrå">
+    <p>&copy; <span id="current-year">2025</span> Podcast Website. All rights reserved.</p>
+    <p id="powered-by">Powered by PodManager.AI</p>
+    <p id="custom-domain">Custom Domain: podcastname.com</p>
+  </footer>
+
+  <!-- Audio Player -->
+  <audio id="audio-player" controls style="display: none;">
+    Your browser does not support the audio element.
+  </audio>
+
+  <!-- Loading Indicator -->
+  <div id="loading" style="display: none;">Loading...</div>
+</body>
+</html>
