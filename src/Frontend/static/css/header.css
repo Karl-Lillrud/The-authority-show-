@@ -64,19 +64,20 @@
   /* Header */
   header {
     width: 100%;
-    max-width: 98%; /* Adjust as needed */
-    margin: 0 auto; /* Centers the header */
+  
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: var(--spacing-md);
-    background: var(--background-light);
+    background-color: var(--background-light);
     box-shadow: 
       -5px -5px 10px var(--light-shadow-light),
        5px 5px 10px var(--dark-shadow-light);
-    border-radius: var(--radius-small);
+    
+    border-bottom-left-radius: 5px;
+    border-bottom-right-radius: 5px;
     transition: background-color 0.3s ease, box-shadow 0.3s ease;
     margin-bottom: 25px;
+   
   }
   
   
@@ -131,13 +132,14 @@
     width: 30px;
     height: 24px;
     cursor: pointer;
+    margin-right: 10px;
   }
   
   .menu-toggle span {
     display: block;
     height: 3px;
     width: 100%;
-    background: #333;
+    background: black;
     border-radius: 2px;
   }
   
@@ -215,3 +217,28 @@
     background: var(--highlight-color);
     color: #fff;
   }
+
+  /* Podcast Covers */
+.podcast-covers {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+}
+
+.podcast-cover {
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  object-fit: cover;
+  box-shadow:
+    inset 3px 3px 6px var(--dark-shadow-light),
+    inset -3px -3px 6px var(--light-shadow-light);
+  transition: box-shadow 0.3s ease, transform 0.3s ease;
+}
+
+.podcast-cover:hover {
+  box-shadow:
+    inset 2px 2px 4px rgba(255, 127, 63, 0.4),
+    inset -2px -2px 4px rgba(0, 0, 0, 0.1);
+  transform: scale(1.1);
+}

@@ -3,20 +3,21 @@
     padding: var(--spacing-lg);
     text-align: center;
     background: var(--background-light);
-    color: var(--text-color-light);
+    background-color: #FF7F3F;
     box-shadow: 
         -5px -5px 10px var(--light-shadow-light),
          5px 5px 10px var(--dark-shadow-light);
-    border-radius: var(--radius-medium);
     position: relative;
-    width: 100%;
     transition: background-color 0.3s ease, box-shadow 0.3s ease;
+    border-top-left-radius: 5px;
+    border-top-right-radius: 5px;
+    box-shadow: 0 -5px 10px rgba(0, 0, 0, 0.2);
+
 }
 
 .footer p {
     font-family: var(--font-primary);
-    color: var(--text-color-light);
-    margin: 0;
+    color: white;
     font-size: 0.9rem;
 }
 
