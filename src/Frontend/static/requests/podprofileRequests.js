@@ -1,6 +1,6 @@
-async function postPodcastData(podName, podRss) {
+export async function postPodcastData(podName, podRss) {
     try {
-        const response = await fetch("/add_podcasts", {
+        const response = await fetch("/post_podcast_data", {
             method: "POST",
             headers: {
                 "Content-Type": "application/json"
@@ -11,7 +11,7 @@ async function postPodcastData(podName, podRss) {
         const result = await response.json();
 
         if (response.ok) {
-            return result.redirect_url; // Return the redirect URL
+            return result.redirectUrl; // Return the redirect URL
         } else {
             throw new Error(result.error);
         }

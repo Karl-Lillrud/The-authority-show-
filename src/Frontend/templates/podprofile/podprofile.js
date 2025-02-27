@@ -1,3 +1,5 @@
+import { postPodcastData } from '../../static/requests/podprofileRequests.js';
+
 document.addEventListener("DOMContentLoaded", function () {
     function setupNavigation() {
         const goToProductionTeam = document.getElementById("goToProductionTeam");

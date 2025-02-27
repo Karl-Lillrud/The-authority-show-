@@ -1,9 +1,9 @@
-from flask import Flask, request, session, g
+from flask import Flask, request, session, g, jsonify
 from flask_cors import CORS
 from backend.routes.register import register_bp
 from backend.routes.forgot_pass import forgotpass_bp
 from backend.routes.signin import signin_bp
-from backend.routes.podcast import podcast_bp
+from backend.routes.podcast import podcast_bp  # Import the podcast blueprint
 from backend.routes.dashboard import dashboard_bp
 from backend.routes.pod_management import pod_management_bp
 from backend.routes.podtask import podtask_bp
@@ -13,6 +13,7 @@ from backend.routes.guest import guest_bp
 from backend.routes.userstoteams import userstoteams_bp
 from backend.routes.invitation import invitation_bp
 from backend.routes.google_calendar import google_calendar_bp
+from backend.routes.frontend import frontend_bp  # Import the frontend blueprint
 from dotenv import load_dotenv
 import os
 import logging
@@ -28,7 +29,7 @@ load_dotenv()
 template_folder = os.path.join(
     os.path.abspath(os.path.dirname(__file__)), "Frontend", "templates"
 )
-static_folder = os.path.join(os.path.abspath(os.path.dirname(__file__)), "frontend", "static")
+static_folder = os.path.join(os.path.abspath(os.path.dirname(__file__)), "Frontend", "static")  # Ensure this path is correct
 
 app = Flask(__name__, template_folder=template_folder, static_folder=static_folder)
 
@@ -52,7 +53,7 @@ app.config["PREFERRED URL SCHEME"] = "https"
 app.register_blueprint(register_bp)
 app.register_blueprint(forgotpass_bp)
 app.register_blueprint(signin_bp)
-app.register_blueprint(podcast_bp)
+app.register_blueprint(podcast_bp)  # Register the podcast blueprint
 app.register_blueprint(dashboard_bp)
 app.register_blueprint(pod_management_bp)
 app.register_blueprint(podtask_bp)
@@ -62,6 +63,7 @@ app.register_blueprint(account_bp)
 app.register_blueprint(userstoteams_bp)
 app.register_blueprint(invitation_bp)
 app.register_blueprint(google_calendar_bp)
+app.register_blueprint(frontend_bp)  # Register the frontend blueprint
 
 # Set the application environment (defaults to production)
 APP_ENV = os.getenv("APP_ENV", "production")
