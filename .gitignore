@@ -12,6 +12,8 @@ build/
 dist/
 *.egg-info/
 
+.env
+
 # Ignore __pycache__ directories in database and routes
 __pycache__/
 src/__pycache__/
