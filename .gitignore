@@ -1,7 +1,21 @@
-venv
+src/venv/
+readme.md
+venv/
+
+# Ignore Python bytecode files
+*.pyc
+*.pyo
+*.pyd
+
+# Ignore build artifacts
+build/
+dist/
+*.egg-info/
+
+.env
+
+# Ignore __pycache__ directories in database and routes
 __pycache__/
-
-.\WhatsApp Bild 2025-02-06 kl. 16.25.44_8781e7bc.jpg
-
-.\readme.md
-
+src/__pycache__/
+src/database/__pycache__/
+src/routes/__pycache__/
