@@ -5,13 +5,13 @@ from marshmallow import ValidationError
 from backend.models.users_to_teams import UserToTeamSchema
 from uuid import uuid4
 
-userstoteams_bp = Blueprint("userstoteams_bp", __name__)
+usertoteam_bp = Blueprint("usertoteam_bp", __name__)
 
 # Use TeamSchema when you're dealing with information specific to a team, such as the team's name, role, email, and other properties related to the team itself.
 # Use UserToTeamSchema when you're dealing with the relationship between a user and a team, such as adding a user to a team or querying which teams a particular user belongs to.
 
 
-@userstoteams_bp.route("/add_users_to_teams", methods=["POST"])
+@usertoteam_bp.route("/add_users_to_teams", methods=["POST"])
 def add_user_to_team():
     if not hasattr(g, "user_id") or not g.user_id:
         return jsonify({"error": "Unauthorized"}), 401
@@ -72,7 +72,7 @@ def add_user_to_team():
         return jsonify({"error": f"Failed to add user to team: {str(e)}"}), 500
 
 
-@userstoteams_bp.route("/remove_users_from_teams", methods=["POST"])
+@usertoteam_bp.route("/remove_users_from_teams", methods=["POST"])
 def remove_user_from_team():
     if not g.user_id:  # Assuming user_id is stored in the global `g` object
         return jsonify({"error": "Unauthorized"}), 401
@@ -137,7 +137,7 @@ def remove_user_from_team():
         return jsonify({"error": f"Failed to remove user from team: {str(e)}"}), 500
 
 
-@userstoteams_bp.route("/get_teams_members/<team_id>", methods=["GET"])
+@usertoteam_bp.route("/get_teams_members/<team_id>", methods=["GET"])
 def get_team_members(team_id):
     if not hasattr(g, "user_id") or not g.user_id:
         return jsonify({"error": "Unauthorized"}), 401
