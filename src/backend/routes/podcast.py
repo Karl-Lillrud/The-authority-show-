@@ -1,21 +1,36 @@
-from flask import request, jsonify, Blueprint, g
+from flask import request, jsonify, Blueprint, g, redirect, url_for
 from backend.database.mongo_connection import collection
 from datetime import datetime, timezone
 import uuid
 from backend.models.podcasts import PodcastSchema
+import logging
 
 # Define Blueprint
 podcast_bp = Blueprint("podcast_bp", __name__)
 
-@podcast_bp.route("/add_podcasts", methods=["POST"])
-def add_podcasts():
-    data = request.get_json()
-    podName = data.get('podName')
-    podRss = data.get('podRss')
-    # Add your logic to handle the podcast data here
-    # For example, save to the database and generate a redirect URL
-    redirect_url = "/production_team"  # Change this to your actual redirect URL
-    return jsonify(success=True, redirectUrl=redirect_url)
+# Configure logging
+logger = logging.getLogger(__name__)
+logging.basicConfig(level=logging.INFO)
+
+@podcast_bp.route("/post_podcast_data", methods=["POST"])
+def post_podcast_data():
+    try:
+        data = request.get_json()
+        podName = data.get('podName')
+        podRss = data.get('podRss')
+        # Add your logic to handle the podcast data here
+        # For example, save to the database and generate a redirect URL
+        logger.info(f"Received podcast data: podName={podName}, podRss={podRss}")
+        redirect_url = url_for('frontend.podprofile') + '#production-team-section'  # Ensure this matches the actual route
+        return jsonify(success=True, redirectUrl=redirect_url)
+    except Exception as e:
+        logger.error(f"Error in post_podcast_data: {e}")
+        return jsonify(success=False, error=str(e)), 500
+
+@podcast_bp.route("/production_team", methods=["GET"])
+def production_team():
+    # Define the logic for the production team route
+    return "Production Team Page"
 
 @podcast_bp.route("/get_podcasts", methods=["GET"])
 def get_podcast():

@@ -27,9 +27,9 @@ if os.getenv("SKIP_VENV_UPDATE", "false").lower() not in ("true", "1", "yes"):
 load_dotenv()
 
 template_folder = os.path.join(
-    os.path.abspath(os.path.dirname(__file__)), "Frontend", "templates"
+    os.path.abspath(os.path.dirname(__file__)), "frontend", "templates"
 )
-static_folder = os.path.join(os.path.abspath(os.path.dirname(__file__)), "Frontend", "static")  # Ensure this path is correct
+static_folder = os.path.join(os.path.abspath(os.path.dirname(__file__)), "frontend", "static")  # Ensure this path is correct
 
 app = Flask(__name__, template_folder=template_folder, static_folder=static_folder)
 
