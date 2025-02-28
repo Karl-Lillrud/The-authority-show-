@@ -6,12 +6,17 @@ import uuid
 import requests
 from backend.database.mongo_connection import collection
 import os
+import logging
 
 register_bp = Blueprint("register_bp", __name__)
 
 load_dotenv()
 
 API_BASE_URL = os.getenv("API_BASE_URL", "http://127.0.0.1:8000")
+
+# Configure logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 
 @register_bp.route("/register", methods=["GET", "POST"])
@@ -21,7 +26,7 @@ def register():
         return render_template("register/register.html", email=email)
 
     if request.content_type != "application/json":
-        print("❌ Invalid Content-Type:", request.content_type)
+        logger.error("Invalid Content-Type: %s", request.content_type)
         return (
             jsonify({"error": "Invalid Content-Type. Expected application/json"}),
             415,
@@ -37,13 +42,13 @@ def register():
         password = data["password"]
         hashed_password = generate_password_hash(password)
 
-        print("🔍 Checking if user already exists...")
+        logger.info("Checking if user already exists...")
         existing_users = list(collection.database.Users.find({"email": email}))
 
         if existing_users:
             return jsonify({"error": "Email already registered."}), 409
 
-        # ✅ Generate unique user ID (string UUID)
+        # Generate unique user ID (string UUID)
         user_id = str(uuid.uuid4())
 
         # Create the User document (set '_id' as the string UUID)
@@ -55,7 +60,7 @@ def register():
         }
 
         # Insert user into the Users collection with the correct '_id'
-        print("📝 Inserting user into database:", user_document)
+        logger.info("Inserting user into database: %s", user_document)
         collection.database.Users.insert_one(user_document)
 
         account_data = {
@@ -72,7 +77,7 @@ def register():
 
         # Check if account creation was successful
         if account_response.status_code != 201:
-            print(f"❌ Error response content: {account_response.content}")
+            logger.error("Error response content: %s", account_response.content)
             return (
                 jsonify(
                     {
@@ -84,10 +89,14 @@ def register():
             )
 
         # Get the account ID from the response of the account creation
-        account_data = account_response.json()
-        account_id = account_data["accountId"]
+        try:
+            account_data = account_response.json()
+            account_id = account_data["accountId"]
+        except ValueError as ve:
+            logger.error("Failed to parse JSON response: %s", account_response.content)
+            return jsonify({"error": "Failed to parse JSON response"}), 500
 
-        print("✅ Registration successful!")
+        logger.info("Registration successful!")
         return (
             jsonify(
                 {
@@ -101,5 +110,5 @@ def register():
         )
 
     except Exception as e:
-        print(f"❌ ERROR: {e}")
+        logger.error("Error: %s", e, exc_info=True)
         return jsonify({"error": f"Database error: {str(e)}"}), 500
