@@ -11,6 +11,8 @@ register_bp = Blueprint("register_bp", __name__)
 
 load_dotenv()
 
+API_BASE_URL = os.getenv("API_BASE_URL", "http://127.0.0.1:8000")
+
 
 @register_bp.route("/register", methods=["GET", "POST"])
 def register():
@@ -64,9 +66,8 @@ def register():
         }
 
         # Make a POST request to the /create_account endpoint in account.py
-        api_base_url = os.getenv("API_BASE_URL", "http://127.0.0.1:8000")
         account_response = requests.post(
-            f"{api_base_url}/create_accounts", json=account_data
+            f"{API_BASE_URL}/create_accounts", json=account_data
         )
 
         # Check if account creation was successful
