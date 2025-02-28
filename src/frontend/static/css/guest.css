@@ -1,0 +1,177 @@
+/* guest.css */
+
+/* Container & Title */
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  text-align: center;
+}
+
+.title {
+  font-size: 24px;
+  font-weight: bold;
+  margin-bottom: var(--spacing-lg);
+}
+
+/* Search Bar */
+#search-bar {
+  width: 80%;
+  max-width: 400px;
+  padding: var(--spacing-sm) var(--spacing-md);
+  border: none;
+  border-radius: var(--radius-medium);
+  box-shadow: inset 5px 5px 10px var(--dark-shadow-light),
+              inset -5px -5px 10px var(--light-shadow-light);
+  margin: var(--spacing-lg) auto;
+  font-size: 16px;
+}
+
+/* Guest List Grid & Cards */
+.guest-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: var(--spacing-lg);
+  padding: var(--spacing-lg);
+}
+
+.guest-card {
+  position: relative;
+  background: var(--background-light);
+  border-radius: var(--radius-medium);
+  box-shadow: 5px 5px 10px var(--dark-shadow-light),
+              -5px -5px 10px var(--light-shadow-light);
+  padding: var(--spacing-md);
+  transition: transform 0.3s ease;
+}
+
+.guest-card:hover {
+  transform: scale(1.05);
+}
+
+.guest-card img {
+  width: 100px;
+  height: 100px;
+  border-radius: 50%;
+  object-fit: cover;
+  margin: 0 auto var(--spacing-sm);
+}
+
+.guest-card h3 {
+  margin: var(--spacing-sm) 0;
+  font-size: 18px;
+}
+
+.tags span {
+  display: inline-block;
+  background: var(--highlight-color);
+  color: #fff;
+  padding: 5px 10px;
+  border-radius: var(--radius-small);
+  font-size: 12px;
+  margin: 3px;
+}
+
+/* Popup Modal */
+.popup {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: var(--background-light);
+  padding: var(--spacing-lg);
+  border-radius: var(--radius-medium);
+  box-shadow: 8px 8px 16px var(--dark-shadow-light),
+              -8px -8px 16px var(--light-shadow-light);
+  display: none;
+  z-index: 1000;
+  flex-direction: column;
+  align-items: center;
+  width: 400px;
+  transition: all 0.3s ease;
+}
+
+.popup-content {
+  width: 100%;
+  text-align: center;
+}
+
+.close-button {
+  float: right;
+  font-size: 20px;
+  cursor: pointer;
+  color: var(--text-color-light);
+}
+
+.popup label {
+  display: block;
+  width: 90%;
+  margin: var(--spacing-sm) auto var(--spacing-xs);
+  text-align: left;
+  font-size: 14px;
+  color: var(--text-color-light);
+}
+
+.popup input {
+  width: 90%;
+  padding: 8px;
+  margin: 0 auto var(--spacing-sm);
+  display: block;
+  border: none;
+  border-radius: var(--radius-medium);
+  background: var(--background-light);
+  box-shadow: inset 5px 5px 10px var(--dark-shadow-light),
+              inset -5px -5px 10px var(--light-shadow-light);
+  color: var(--text-color-light);
+  font-size: 14px;
+}
+
+.popup button {
+  background: var(--background-light);
+  border: none;
+  padding: 10px 20px;
+  border-radius: var(--radius-medium);
+  box-shadow: 5px 5px 10px var(--dark-shadow-light),
+              -5px -5px 10px var(--light-shadow-light);
+  cursor: pointer;
+  margin-top: var(--spacing-sm);
+  display: block;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.popup button:hover {
+  box-shadow: inset 5px 5px 10px var(--dark-shadow-light),
+              inset -5px -5px 10px var(--light-shadow-light);
+}
+
+/* Popup Actions for Edit & Delete */
+.popup-actions {
+  margin-top: var(--spacing-lg);
+  display: flex;
+  justify-content: space-between;
+  width: 100%;
+}
+
+.popup-actions button {
+  padding: 8px 12px;
+  border: none;
+  border-radius: var(--radius-medium);
+  background: var(--highlight-color);
+  color: #fff;
+  cursor: pointer;
+  flex: 1;
+  margin: 0 var(--spacing-sm);
+}
+
+.popup-actions button.delete {
+  background: red;
+}
+
+.popup-actions button:hover {
+  opacity: 0.9;
+}
+
+/* Center profile picture uploader in popup */
+.profile-pic-uploader {
+  margin: 0 auto;
+}
