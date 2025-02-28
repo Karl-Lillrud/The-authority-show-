@@ -78,9 +78,7 @@ app.register_blueprint(guesttoepisode_bp)
 APP_ENV = os.getenv("APP_ENV", "production")
 
 # Set the API base URL depending on the environment
-API_BASE_URL = (
-    "http://127.0.0.1:8000" if APP_ENV == "local" else "https://app.podmanager.ai/"
-)
+API_BASE_URL = os.getenv("API_BASE_URL", "http://127.0.0.1:8000")
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
