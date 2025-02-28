@@ -64,7 +64,7 @@ def register():
 
         # Make a POST request to the /create_account endpoint in account.py
         account_response = requests.post(
-            "http://127.0.0.1:8000/create_accounts", json=account_data
+            "https://the-authority-show.onrender.com/create_accounts", json=account_data
         )
 
         # Check if account creation was successful
