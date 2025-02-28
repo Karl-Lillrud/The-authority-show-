@@ -4,9 +4,14 @@ from backend.database.mongo_connection import collection
 from marshmallow import ValidationError
 from backend.models.accounts import AccountSchema  # Make sure to import the schema
 import uuid
+import logging
 
 # Define Blueprint
 account_bp = Blueprint("account_bp", __name__)
+
+# Configure logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 
 @account_bp.route("/create_accounts", methods=["POST"])
@@ -47,7 +52,7 @@ def create_account():
         }
 
         # Insert account into the Accounts collection (with custom _id)
-        print("🔍 Inserting account into the database:", account_document)
+        logger.info("Inserting account into the database: %s", account_document)
         collection.database.Accounts.insert_one(account_document)
 
         # Return success response
@@ -55,14 +60,14 @@ def create_account():
             "message": "Account created successfully",
             "accountId": account_document["_id"],
         }
-        print("✅ Account created successfully:", response)
+        logger.info("Account created successfully: %s", response)
         return jsonify(response), 201
 
     except ValueError as ve:
-        print(f"❌ ValueError: {ve}")
+        logger.error("ValueError: %s", ve)
         return jsonify({"error": str(ve)}), 400
     except Exception as e:
-        print(f"❌ Error: {e}")
+        logger.error("Error: %s", e, exc_info=True)
         return jsonify({"error": f"Error creating account: {str(e)}"}), 500
 
 
