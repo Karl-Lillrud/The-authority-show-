@@ -1,5 +1,6 @@
-{% extends "dashboard/components/base.html" %} {% block title %}Podcast Task
-Management{% endblock %} {% block content %}
+{% extends "dashboard/components/base.html" %}
+{% block title %}Podcast Task Management{% endblock %}
+{% block content %}
 <link
   rel="stylesheet"
   href="{{ url_for('static', filename='css/settings.css') }}"
@@ -207,7 +208,7 @@ Management{% endblock %} {% block content %}
     </div>
 
     <!-- DELETE ACCOUNT SECTION (Initially Hidden) -->
-    <div id="delete-account-section" class="settings-section is-hidden">
+    <div id="delete-account-section" class="settings-section" style="display: none">
       <div class="profile-container">
         <h2>Delete Account</h2>
         <p style="color: red;">
