@@ -5,6 +5,7 @@ from datetime import datetime
 import uuid
 import requests
 from backend.database.mongo_connection import collection
+import os
 
 register_bp = Blueprint("register_bp", __name__)
 
@@ -63,8 +64,9 @@ def register():
         }
 
         # Make a POST request to the /create_account endpoint in account.py
+        api_base_url = os.getenv("API_BASE_URL", "http://127.0.0.1:8000")
         account_response = requests.post(
-            "http://127.0.0.1:8000/create_accounts", json=account_data
+            f"{api_base_url}/create_accounts", json=account_data
         )
 
         # Check if account creation was successful
