@@ -183,7 +183,7 @@ export async function addTasksToEpisode(episodeId, guestId, tasks) {
 
 export async function fetchLocalDefaultTasks() {
   try {
-    const response = await fetch("/static/data/default_tasks.json");
+    const response = await fetch("/static/defaulttaskdata/default_tasks.json");
     const data = await response.json();
     return data;
   } catch (error) {
