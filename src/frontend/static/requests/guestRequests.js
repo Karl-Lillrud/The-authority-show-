@@ -22,7 +22,7 @@ function deleteGuestRequest(guestId) {
 }
 
 function fetchGuestsRequest() {
-  return fetch("/get_guests", { method: "GET" })
+  return fetch("/guest/get_guests", { method: "GET" })
     .then(res => {
       if (!res.ok) {
         throw new Error("Failed to fetch guests");
