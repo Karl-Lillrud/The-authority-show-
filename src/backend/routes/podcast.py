@@ -12,25 +12,94 @@ podcast_bp = Blueprint("podcast_bp", __name__)
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO)
 
-@podcast_bp.route("/post_podcast_data", methods=["POST"])
-def post_podcast_data():
-    try:
-        data = request.get_json()
-        podName = data.get('podName')
-        podRss = data.get('podRss')
-        # Add your logic to handle the podcast data here
-        # For example, save to the database and generate a redirect URL
-        logger.info(f"Received podcast data: podName={podName}, podRss={podRss}")
-        redirect_url = url_for('frontend.podprofile') + '#production-team-section'  # Ensure this matches the actual route
-        return jsonify(success=True, redirectUrl=redirect_url)
-    except Exception as e:
-        logger.error(f"Error in post_podcast_data: {e}")
-        return jsonify(success=False, error=str(e)), 500
+@podcast_bp.route("/add_podcasts", methods=["POST"])
+def podcast():
+    if not hasattr(g, "user_id") or not g.user_id:
+        return jsonify({"error": "Unauthorized"}), 401
 
-@podcast_bp.route("/production_team", methods=["GET"])
-def production_team():
-    # Define the logic for the production team route
-    return "Production Team Page"
+    # Validate Content-Type
+    if request.content_type != "application/json":
+        return jsonify({"error": "Invalid Content-Type. Expected application/json"}), 415
+
+    try:
+        # 🔍 Fetch the account document from MongoDB for the logged-in user
+        user_account = collection.database.Accounts.find_one({"userId": g.user_id})
+        if not user_account:
+            return jsonify({"error": "No account associated with this user"}), 403
+
+        # Fetch the account ID that the user already has (do not override with a new one)
+        if "id" in user_account:
+            account_id = user_account["id"]
+        else:
+            account_id = str(user_account["_id"])
+        print(f"🧩 Found account {account_id} for user {g.user_id}")
+
+        # Get the data from the request and inject the accountId from the user's account
+        data = request.get_json()
+        print("📩 Received Data:", data)
+        data["accountId"] = account_id  # Populate the required field with the fetched accountId
+
+        # Validate data using PodcastSchema
+        schema = PodcastSchema()
+        errors = schema.validate(data)
+        if errors:
+            return jsonify({"error": "Invalid data", "details": errors}), 400
+
+        validated_data = schema.load(data)
+
+        # (Optional) Double-check that the account exists and belongs to the user
+        account_query = {"userId": g.user_id}
+        if "id" in user_account:
+            account_query["id"] = account_id
+        else:
+            account_query["_id"] = user_account["_id"]
+        account = collection.database.Accounts.find_one(account_query)
+        if not account:
+            return jsonify({
+                "error": "Invalid account ID or you do not have permission to add a podcast to this account."
+            }), 403
+
+        # Generate a unique podcast ID
+        podcast_id = str(uuid.uuid4())
+
+        # Create the podcast document with the accountId from the account document
+        podcast_item = {
+            "_id": podcast_id,
+            "teamId": validated_data.get("teamId"),
+            "accountId": account_id,  # Use the fetched accountId
+            "podName": validated_data.get("podName"),
+            "ownerName": validated_data.get("ownerName"),
+            "hostName": validated_data.get("hostName"),
+            "rssFeed": validated_data.get("rssFeed"),
+            "googleCal": validated_data.get("googleCal"),
+            "podUrl": validated_data.get("podUrl"),
+            "guestUrl": validated_data.get("guestUrl"),
+            "socialMedia": validated_data.get("socialMedia", []),
+            "email": validated_data.get("email"),
+            "description": validated_data.get("description"),
+            "logoUrl": validated_data.get("logoUrl"),
+            "category": validated_data.get("category"),
+            "defaultTasks": validated_data.get("defaultTasks", []),
+            "created_at": datetime.now(timezone.utc),
+        }
+
+        # Insert the podcast document into the database
+        print("📝 Inserting podcast into database:", podcast_item)
+        result = collection.database.Podcasts.insert_one(podcast_item)
+
+        if result.inserted_id:
+            print("✅ Podcast added successfully!")
+            return jsonify({
+                "message": "Podcast added successfully",
+                "podcast_id": podcast_id,
+                "redirect_url": "/index.html",
+            }), 201
+        else:
+            return jsonify({"error": "Failed to add podcast to the database."}), 500
+
+    except Exception as e:
+        print(f"❌ ERROR: {e}")
+        return jsonify({"error": f"Failed to add podcast: {str(e)}"}), 500
 
 @podcast_bp.route("/get_podcasts", methods=["GET"])
 def get_podcast():
