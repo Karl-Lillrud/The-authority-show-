@@ -28,41 +28,30 @@ except Exception as e:
 
 # Define collections and their schema
 collections = {
-    "credits": {
-        "ID": str,
+    "Credits": {
+        "id": str,
         "availableCredits": int,
         "usedCredits": int,
         "lastUpdated": "date",
         "creditsHistory": "array",
         "creditLimit": int,
     },
-    "teams": {
-        "ID": str,
+    "Teams": {
+        "id": str,
         "UserID": str,
         "Name": str,
         "Role": "array",
         "Email": str,
         "Phone": str,
     },
-    "clips": {
-        "ID": str,
-        "podcastId": str,
-        "clipName": str,
-        "duration": int,
-        "createdAt": "date",
-        "editedBy": "array",
-        "clipUrl": str,
-        "status": str,
-        "tags": "array",
-    },
-    "subscriptions": {
-        "ID": str,
+    "Subscriptions": {
+        "id": str,
         "subscriptionPlan": str,
         "autoRenew": bool,
         "discountCode": str,
     },
-    "users": {
-        "ID": str,
+    "Users": {
+        "id": str,
         "email": str,
         "passwordHash": str,
         "createdAt": "date",
@@ -70,8 +59,8 @@ collections = {
         "referral_code": str,
         "referred_by": "string_or_null",
     },
-    "podcasts": {
-        "ID": str,
+    "Podcasts": {
+        "id": str,
         "teamId": str,
         "accountId": str,
         "podName": str,
@@ -87,8 +76,8 @@ collections = {
         "category": str,
         "podUrl": str,
     },
-    "podtasks": {
-        "ID": str,
+    "Podtasks": {
+        "id": str,
         "podcastId": str,
         "name": str,
         "action": "array",
@@ -102,8 +91,8 @@ collections = {
         "dueDate": "date",
         "priority": str,
     },
-    "guests": {
-        "ID": str,
+    "Guests": {
+        "id": str,
         "podcastId": str,
         "name": str,
         "image": str,
@@ -120,13 +109,13 @@ collections = {
         "createdAt": "date",
         "notes": str,
     },
-    "guests_to_episodes": {
-        "ID": str,
+    "GuestsToEpisodes": {
+        "id": str,
         "episodeId": str,
         "guestId": str,
     },
-    "episodes": {
-        "ID": str,
+    "Episodes": {
+        "id": str,
         "guestId": str,
         "podcastId": str,
         "title": str,
@@ -137,8 +126,8 @@ collections = {
         "createdAt": "date",
         "updatedAt": "date",
     },
-    "accounts": {
-        "ID": str,
+    "Accounts": {
+        "id": str,
         "ownerId": str,
         "subscriptionId": str,
         "creditId": str,
@@ -153,8 +142,8 @@ collections = {
         "subscriptionEnd": "date",
         "isActive": bool,
     },
-    "users_to_teams": {
-        "ID": str,
+    "UsersToTeams": {
+        "id": str,
         "userId": str,
         "teamId": str,
         "role": str,
@@ -165,7 +154,7 @@ collections = {
 # Create collections
 for collection_name, schema in collections.items():
     if collection_name not in database.list_collection_names():
-        database.create_collection(collection_name)
+        database.create_collection(name=collection_name)
         logger.info(f"Collection '{collection_name}' created successfully.")
     else:
         logger.info(f"Collection '{collection_name}' already exists.")
@@ -173,5 +162,5 @@ for collection_name, schema in collections.items():
 # Ensure indexes to avoid duplicates
 for collection_name in collections.keys():
     collection = database[collection_name]
-    collection.create_index("ID", unique=True)
-    logger.info(f"Index on 'ID' created for collection '{collection_name}'.")
+    collection.create_index("id", unique=True)
+    logger.info(f"Index on 'id' created for collection '{collection_name}'.")
