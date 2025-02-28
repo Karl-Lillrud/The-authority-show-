@@ -8,8 +8,16 @@
       rel="stylesheet"
       href="{{ url_for('static', filename='css/register.css') }}"
     />
-    <script src="{{ url_for('static', filename='requests/podprofileRequests.js') }}"></script>
-    <script src="{{ url_for('static', filename='requests/podprofile_languageRequests.js') }}"></script>
+    <style>
+      /* Adjusted styling for a larger Terms of Service modal */
+      #tos-modal .modal-content {
+        width: 90%;
+        max-width: 600px;       /* Increased from 500px to 600px */
+        max-height: 90vh;       /* Increased from 80vh to 90vh */
+        overflow-y: auto;
+        text-align: left;
+      }
+    </style>
   </head>
   <body>
     <!-- Logo -->
@@ -22,8 +30,7 @@
 
     <div class="center-box">
       <h2>Register</h2>
-
-      <form id="register-form" method="POST" action="{{ url_for('register_bp.register') }}">
+      <form id="register-form">
         <div class="form-group">
           <label for="email">Email</label>
           <input
@@ -46,6 +53,72 @@
         <button class="button" type="submit">Register</button>
       </form>
 
+      <!-- Terms of Service Modal -->
+      <div id="tos-modal" class="modal">
+        <div class="modal-content">
+          <h2>Terms of Service</h2>
+          <div style="text-align: left; max-height: 300px; overflow-y: auto; border: 1px solid #ccc; padding: 10px;">
+            <p><strong>Last Updated: [2025]</strong></p>
+            Välkommen till PodManager! Dessa användarvillkor ("Villkor") reglerar din användning av vår webbplats och tjänster. Genom att använda PodManager godkänner du dessa Villkor. Om du inte godkänner dem, ber vi dig att inte använda vår tjänst.
+          </p>
+          <hr />
+          <h3>1. Definitioner</h3>
+          <ul>
+            <li><strong>"Tjänsten"</strong> avser PodManager och dess funktioner för att hantera och distribuera poddar.</li>
+            <li><strong>"Användare"</strong> avser alla personer som besöker eller använder PodManager.</li>
+            <li><strong>"Innehåll"</strong> avser allt material som läggs upp på PodManager, inklusive poddavsnitt, text, bilder och ljudfiler.</li>
+          </ul>
+          <hr />
+          <h3>2. Användarkonton</h3>
+          <ul>
+            <li>För att använda vissa funktioner i PodManager kan du behöva skapa ett konto.</li>
+            <li>Du är ansvarig för att hålla din kontoinformation konfidentiell och för alla aktiviteter som sker via ditt konto.</li>
+            <li>Vi förbehåller oss rätten att stänga av eller ta bort konton som bryter mot dessa Villkor.</li>
+          </ul>
+          <hr />
+          <h3>3. Användarens Ansvar</h3>
+          <ul>
+            <li>Du får inte använda PodManager för att publicera olagligt, skadligt, eller kränkande innehåll.</li>
+            <li>Du får inte bryta mot upphovsrätt eller andra immateriella rättigheter.</li>
+            <li>Du får inte använda tjänsten för spam, bedrägeri eller annan otillåten aktivitet.</li>
+          </ul>
+          <hr />
+          <h3>4. Immateriella Rättigheter</h3>
+          <ul>
+            <li>Alla rättigheter till PodManager och dess innehåll ägs av PodManager eller dess licensgivare.</li>
+            <li>Genom att ladda upp innehåll ger du PodManager en icke-exklusiv licens att distribuera och visa det inom tjänsten.</li>
+          </ul>
+          <hr />
+          <h3>5. Ansvarsbegränsning</h3>
+          <ul>
+            <li>PodManager tillhandahålls "i befintligt skick" utan garantier.</li>
+            <li>Vi tar inget ansvar för skador som uppstår genom användning av tjänsten.</li>
+            <li>Vi kan inte garantera oavbruten eller felfri tjänst.</li>
+          </ul>
+          <hr />
+          <h3>6. Uppsägning</h3>
+          <ul>
+            <li>Du kan avsluta ditt konto när som helst.</li>
+            <li>Vi förbehåller oss rätten att avsluta eller begränsa tillgång till tjänsten vid brott mot dessa Villkor.</li>
+          </ul>
+          <hr />
+          <h3>7. Ändringar av Villkor</h3>
+          <p>
+            Vi kan uppdatera dessa Villkor vid behov. Fortsatt användning av tjänsten efter en uppdatering innebär att du godkänner de nya Villkoren.
+          </p>
+          <hr />
+          <h3>8. Kontakt</h3>
+          <p>
+            Om du har frågor om dessa Villkor, kontakta oss på [App.podmanager@Ai.com].
+          </p>
+          <p>Tack för att du använder PodManager!</p>
+        </div>
+        <br />
+        <button id="tos-accept" class="button">Accept</button>
+        <button id="tos-decline" class="button">Decline</button>
+      </div>
+    </div>
+      
       <p class="error-message" id="error-message"></p>
 
       <!-- Success Message Modal -->
@@ -57,19 +130,19 @@
         </div>
       </div>
 
-      <!-- Moved the text above the Sign-in link -->
       <p class="account-text">Already have an account?</p>
       <a class="link" href="{{ url_for('signin_bp.signin') }}">Sign in</a>
     </div>
 
-    {% with messages = get_flashed_messages(with_categories=true) %} {% if
-    messages %}
-    <ul class="flashes">
-      {% for category, message in messages %}
-      <li class="{{ category }}">{{ message }}</li>
-      {% endfor %}
-    </ul>
-    {% endif %} {% endwith %}
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+      <ul class="flashes">
+        {% for category, message in messages %}
+        <li class="{{ category }}">{{ message }}</li>
+        {% endfor %}
+      </ul>
+      {% endif %}
+    {% endwith %}
 
     <script>
       document.addEventListener("DOMContentLoaded", function () {
@@ -77,33 +150,28 @@
         const errorMessage = document.getElementById("error-message");
         const successModal = document.getElementById("success-modal");
         const successOkButton = document.getElementById("success-ok-button");
+        const tosModal = document.getElementById("tos-modal");
+        const tosAcceptButton = document.getElementById("tos-accept");
+        const tosDeclineButton = document.getElementById("tos-decline");
 
         const API_BASE_URL =
           window.location.hostname === "127.0.0.1" ||
           window.location.hostname === "localhost"
             ? "{{ LOCAL_BASE_URL }}"
-            : "{{ PROD_BASE_URL }}"; // Use LOCAL_BASE_URL for localhost and PROD_BASE_URL for production
+            : "{{ PROD_BASE_URL }}";
 
-        if (!form) {
-          console.error("❌ ERROR: #register-form not found in the DOM.");
-          return;
-        }
+        let termsAccepted = false;
 
-        form.addEventListener("submit", async function (event) {
-          event.preventDefault();
-
+        // Function to send registration using fetch
+        async function registerUser() {
           const email = document.getElementById("email").value;
           const password = document.getElementById("password").value;
-
           try {
             const response = await fetch(`${API_BASE_URL}/register`, {
               method: "POST",
-              headers: {
-                "Content-Type": "application/json"
-              },
+              headers: { "Content-Type": "application/json" },
               body: JSON.stringify({ email, password })
             });
-
             if (response.ok) {
               successModal.style.display = "block";
               successOkButton.addEventListener("click", function () {
@@ -116,9 +184,31 @@
             }
           } catch (error) {
             console.error("Error:", error);
-            errorMessage.textContent =
-              "Something went wrong. Please try again.";
+            errorMessage.textContent = "Something went wrong. Please try again.";
           }
+        }
+
+        form.addEventListener("submit", function (event) {
+          event.preventDefault();
+          if (!termsAccepted) {
+            tosModal.style.display = "block";
+            console.log("Popup visas – villkoren ej accepterade än.");
+            return;
+          }
+          registerUser();
+        });
+
+        tosAcceptButton.addEventListener("click", function () {
+          termsAccepted = true;
+          tosModal.style.display = "none";
+          console.log("Villkoren accepterade, skickar formuläret.");
+          registerUser();
+        });
+
+        tosDeclineButton.addEventListener("click", function () {
+          termsAccepted = false;
+          tosModal.style.display = "none";
+          console.log("Användaren valde att avvisa villkoren.");
         });
       });
     </script>
