@@ -1,6 +1,6 @@
 from flask import Flask, request, session, g, jsonify
 from flask_cors import CORS
-from .backend.routes.register import register_bp
+from backend.routes.register import register_bp
 from backend.routes.forgot_pass import forgotpass_bp
 from backend.routes.signin import signin_bp
 from backend.routes.podcast import podcast_bp  # Import the podcast blueprint
