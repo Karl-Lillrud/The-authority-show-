@@ -5,6 +5,9 @@ from datetime import datetime
 import uuid
 import requests
 from backend.database.mongo_connection import collection
+from backend.services.account_service import (
+    create_account,
+)  # Import the account creation function
 import os
 import logging
 
@@ -70,31 +73,24 @@ def register():
             "isCompany": data.get("isCompany", False),
         }
 
-        # Make a POST request to the /create_account endpoint in account.py
-        account_response = requests.post(
-            f"{API_BASE_URL}/create_accounts", json=account_data
-        )
+        # Call the account creation function directly
+        account_response = create_account(account_data)
 
         # Check if account creation was successful
-        if account_response.status_code != 201:
-            logger.error("Error response content: %s", account_response.content)
+        if not account_response["success"]:
+            logger.error("Error response content: %s", account_response["details"])
             return (
                 jsonify(
                     {
                         "error": "Failed to create account",
-                        "details": account_response.json(),
+                        "details": account_response["details"],
                     }
                 ),
                 500,
             )
 
         # Get the account ID from the response of the account creation
-        try:
-            account_data = account_response.json()
-            account_id = account_data["accountId"]
-        except ValueError as ve:
-            logger.error("Failed to parse JSON response: %s", account_response.content)
-            return jsonify({"error": "Failed to parse JSON response"}), 500
+        account_id = account_response["accountId"]
 
         logger.info("Registration successful!")
         return (
