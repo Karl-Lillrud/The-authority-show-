@@ -44,7 +44,7 @@ CORS(
         r"/*": {
             "origins": [
                 "http://192.168.0.4:8000",
-                "https://app.podmanager.ai/",
+                "https://the-authority-show.onrender.com/",
             ]
         }
     },
@@ -74,6 +74,7 @@ app.register_blueprint(episode_bp)
 app.register_blueprint(podprofile_bp)  # Register the podprofile blueprint
 app.register_blueprint(frontend_bp)  # Register the frontend blueprint
 app.register_blueprint(guesttoepisode_bp)
+
 # Set the application environment (defaults to production)
 APP_ENV = os.getenv("APP_ENV", "production")
 
