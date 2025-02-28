@@ -1,277 +1,8 @@
-document.addEventListener("DOMContentLoaded", function () {
-  function setupNavigation() {
-    const goToProductionTeam = document.getElementById("goToProductionTeam");
-    const goToPodProfile = document.getElementById("goToPodProfile");
-    const backToPodName = document.getElementById("backToPodName");
-    const backToProductionTeam = document.getElementById(
-      "backToProductionTeam"
-    );
-    const podProfileForm = document.getElementById("podProfileForm");
-    const darkModeToggle = document.getElementById("dark-mode-toggle");
-    const addTeamMemberButton = document.getElementById("addTeamMember");
-    const teamMembersContainer = document.getElementById(
-      "teamMembersContainer"
-    );
-    const googleCalendarButton = document.getElementById("googleCalendar");
-    const skipToDashboard = document.getElementById("skipToDashboard");
-
-    console.log("Setting up navigation");
-
-    if (goToProductionTeam) {
-      goToProductionTeam.addEventListener("click", async () => {
-        const podName = document.getElementById("podName").value.trim();
-        const podRss = document.getElementById("podRss").value.trim();
-
-        if (!podName || !podRss) {
-          alert("Please enter both Podcast Name and RSS URL.");
-          return;
-        }
-
-        try {
-          await postPodcastData(podName, podRss);
-          document.getElementById("pod-name-section").classList.add("hidden");
-          document
-            .getElementById("production-team-section")
-            .classList.remove("hidden");
-        } catch (error) {
-          alert("Something went wrong. Please try again.");
-        }
-      });
-    }
-
-    if (goToPodProfile) {
-      goToPodProfile.addEventListener("click", () => {
-        sendInvitations();
-        document
-          .getElementById("production-team-section")
-          .classList.add("hidden");
-        document
-          .getElementById("pod-profile-section")
-          .classList.remove("hidden");
-      });
-    }
-
-    if (backToPodName) {
-      backToPodName.addEventListener("click", () => {
-        document
-          .getElementById("production-team-section")
-          .classList.add("hidden");
-        document.getElementById("pod-name-section").classList.remove("hidden");
-      });
-    }
-
-    if (backToProductionTeam) {
-      backToProductionTeam.addEventListener("click", () => {
-        document.getElementById("pod-profile-section").classList.add("hidden");
-        document
-          .getElementById("production-team-section")
-          .classList.remove("hidden");
-      });
-    }
-
-    if (podProfileForm) {
-      podProfileForm.addEventListener("submit", async (event) => {
-        event.preventDefault();
-        const formData = new FormData(podProfileForm);
-        const data = Object.fromEntries(formData.entries());
-
-        try {
-          const success = await savePodProfile(data);
-          if (success) {
-            window.location.href = "dashboard"; // Redirect to dashboard
-          } else {
-            alert("Something went wrong. Please try again.");
-          }
-        } catch (error) {
-          console.error("Error saving pod profile:", error);
-          alert("Something went wrong. Please try again.");
-        }
-      });
-    }
-
-    // Fix Dark Mode Toggle
-    if (darkModeToggle) {
-      darkModeToggle.addEventListener("click", () => {
-        document.body.classList.toggle("dark-mode");
-      });
-    }
-
-    // Fix Add More Members Function
-    if (addTeamMemberButton && teamMembersContainer) {
-      addTeamMemberButton.addEventListener("click", () => {
-        const newMember = document.createElement("div");
-        newMember.classList.add("team-member");
-        newMember.innerHTML = `
-                    <div class="form-group">
-                        <label>Name</label>
-                        <input type="text" class="team-name" required>
-                    </div>
-                    <div class="form-group">
-                        <label>Email</label>
-                        <input type="email" class="team-email" required>
-                    </div>
-                    <div class="form-group">
-                        <label>Role</label>
-                        <select class="team-role" required>
-                            <option value="" disabled selected>Select Role</option>
-                            <option value="user">User</option>
-                            <option value="host">Host</option>
-                        </select>
-                    </div>
-                `;
-        teamMembersContainer.appendChild(newMember);
-      });
-    }
-
-    // Handle Google Calendar connection
-    console.log("Checking for Google Calendar button");
-    console.log("googleCalendarButton:", googleCalendarButton);
-    if (googleCalendarButton) {
-      console.log("Google Calendar button found");
-      googleCalendarButton.addEventListener("click", () => {
-        console.log("Google Calendar button clicked");
-        const hostEmailElement = document.querySelector(".team-email"); // Fetch the email entered by the host
-        if (hostEmailElement) {
-          const hostEmail = hostEmailElement.value;
-          console.log("Host email:", hostEmail);
-          if (hostEmail.endsWith("@gmail.com")) {
-            console.log("Redirecting to Google Calendar OAuth2 connection");
-            const oauth2Url = `https://accounts.google.com/o/oauth2/auth?client_id=YOUR_CLIENT_ID&redirect_uri=YOUR_REDIRECT_URI&response_type=code&scope=https://www.googleapis.com/auth/calendar`;
-            window.open(oauth2Url, "_blank"); // Open Google Calendar OAuth2 in a new tab
-          } else {
-            alert(
-              "Google Calendar integration is only available for Gmail accounts."
-            );
-          }
-        } else {
-          alert("Host email element not found.");
-        }
-      });
-    } else {
-      console.error("Google Calendar button not found");
-    }
-
-    if (skipToDashboard) {
-      skipToDashboard.addEventListener("click", () => {
-        window.location.href = "dashboard"; // Redirect to dashboard
-      });
-    }
-  }
-
-  setupNavigation();
-});
-
-function setupAddTeamMember() {
-  const addTeamMemberButton = document.getElementById("addTeamMember");
-  if (addTeamMemberButton) {
-    addTeamMemberButton.addEventListener("click", () => {
-      const container = document.getElementById("teamMembersContainer");
-      if (container) {
-        const newMember = document.createElement("div");
-        newMember.classList.add("team-member");
-        newMember.innerHTML = `
-                    <div class="form-group">
-                        <label>Name</label>
-                        <input type="text" class="team-name" required>
-                    </div>
-                    <div class="form-group">
-                        <label>Email</label>
-                        <input type="email" class="team-email" required>
-                    </div>
-                    <div class="form-group">
-                        <label>Role</label>
-                        <select class="team-role" required>
-                            <option value="" disabled selected>Select Role</option>
-                            <option value="user">User</option>
-                            <option value="host">Host</option>
-                        </select>
-                    </div>
-                `;
-        container.appendChild(newMember);
-      }
-    });
-  }
-}
-
-function setupInvitationEmails() {
-  const goToPodProfile = document.getElementById("goToPodProfile");
-  if (goToPodProfile) {
-    goToPodProfile.addEventListener("click", sendInvitations);
-  }
-}
-
-function sendInvitations() {
-  const teamMembers = document.querySelectorAll(".team-member");
-  const podNameElement = document.getElementById("podName");
-  const podName = podNameElement ? podNameElement.value : "your podcast";
-  const joinLinkBase = "https://app.podmanager.ai/register"; // Updated base URL
-
-  teamMembers.forEach((member) => {
-    const email = member.querySelector(".team-email").value;
-    const name = member.querySelector(".team-name").value;
-    const role = member.querySelector(".team-role").value;
-    if (email) {
-      const joinLink = `${joinLinkBase}?email=${encodeURIComponent(
-        email
-      )}&name=${encodeURIComponent(name)}&role=${encodeURIComponent(role)}`;
-      const subject = `Join the ${podName} team`;
-      const body = `Hi ${name}!\n\nYou are hereby invited by PodManager.ai to join the team of ${podName}.\n\nClick here to join the team: <a href="${joinLink}">${joinLink}</a>\n\nWelcome to PodManager.ai!`;
-      sendInvitation(email, subject, body);
-    }
-  });
-}
-
-function setupDarkMode() {
-  const darkModeToggle = document.getElementById("dark-mode-toggle");
-  const body = document.body;
-  const isDarkMode = localStorage.getItem("darkMode") === "enabled";
-
-  if (isDarkMode) {
-    body.classList.add("dark-mode");
-    darkModeToggle.textContent = "☀️";
-  }
-
-  if (darkModeToggle) {
-    darkModeToggle.addEventListener("click", () => {
-      body.classList.toggle("dark-mode");
-      const darkModeEnabled = body.classList.contains("dark-mode");
-      darkModeToggle.textContent = darkModeEnabled ? "☀️" : "🌙";
-      localStorage.setItem(
-        "darkMode",
-        darkModeEnabled ? "enabled" : "disabled"
-      );
-    });
-  }
-}
+// Use require instead of import
+const { postPodcastData, savePodProfile, sendInvitation, fetchRSSData } = require('./podprofileRequests.js');
 
 document.addEventListener("DOMContentLoaded", () => {
-  const savedLang = localStorage.getItem("selectedLanguage") || "en";
-  if (window.i18n) {
-    window.i18n.changeLanguage(savedLang);
-  }
-
-  const languageButton = document.getElementById("language-button");
-  if (languageButton) {
-    languageButton.addEventListener("click", () => {
-      document.getElementById("language-list").classList.toggle("hidden");
-    });
-  }
-
-  const languageList = document.getElementById("language-list");
-  if (languageList) {
-    languageList.addEventListener("click", (event) => {
-      if (event.target.tagName === "LI") {
-        const selectedLang = event.target.getAttribute("data-lang");
-        if (window.i18n) {
-          window.i18n.changeLanguage(selectedLang);
-        }
-        languageList.classList.add("hidden");
-      }
-    });
-  }
-});
-
-document.addEventListener("DOMContentLoaded", function () {
+  // Points System
   const pointsSystem = {
     podName: 10,
     podRss: 10,
@@ -290,12 +21,12 @@ document.addEventListener("DOMContentLoaded", function () {
     email: 10,
     inviteUser: 50,
     inviteHost: 50,
-    blockUser: 10
+    blockUser: 10,
   };
 
-  function getStoredPoints() {
-    return JSON.parse(localStorage.getItem("userPoints")) || 0;
-  }
+  // Utility functions for points tracking
+  const getStoredPoints = () =>
+    JSON.parse(localStorage.getItem("userPoints")) || 0;
 
   function addPoints(field, points) {
     let userPoints = getStoredPoints();
@@ -309,92 +40,380 @@ document.addEventListener("DOMContentLoaded", function () {
   function trackInputField(fieldId, pointValue) {
     const field = document.getElementById(fieldId);
     if (field) {
-      field.addEventListener("input", function () {
-        addPoints(fieldId, pointValue);
-      });
+      field.addEventListener("input", () => addPoints(fieldId, pointValue));
     }
   }
 
   function trackButtonClick(buttonId, fieldKey, pointValue) {
     const button = document.getElementById(buttonId);
     if (button) {
-      button.addEventListener("click", function () {
-        addPoints(fieldKey, pointValue);
+      button.addEventListener("click", () => addPoints(fieldKey, pointValue));
+    }
+  }
+
+  // Setup navigation and event handlers
+  function setupNavigation() {
+    // DOM Elements
+    const elements = {
+      goToProductionTeam: document.getElementById("goToProductionTeam"),
+      goToPodProfile: document.getElementById("goToPodProfile"),
+      backToPodName: document.getElementById("backToPodName"),
+      backToProductionTeam: document.getElementById("backToProductionTeam"),
+      podProfileForm: document.getElementById("podProfileForm"),
+      darkModeToggle: document.getElementById("dark-mode-toggle"),
+      addTeamMemberButton: document.getElementById("addTeamMember"),
+      teamMembersContainer: document.getElementById("teamMembersContainer"),
+      googleCalendarButton: document.getElementById("googleCalendar"),
+      skipToDashboard: document.getElementById("skipToDashboard"),
+      goToPodcastSocial: document.getElementById("goToPodcastSocial"),
+      goToPodcastCalendar: document.getElementById("goToPodcastCalendar"),
+      goToPodcastTeam: document.getElementById("goToPodcastTeam"),
+      backToPodcastInfo: document.getElementById("backToPodcastInfo"),
+      backToPodcastSocial: document.getElementById("backToPodcastSocial"),
+      backToPodcastCalendar: document.getElementById("backToPodcastCalendar"),
+      goToDashboard: document.getElementById("goToDashboard"),
+      inviteTeamMembers: document.getElementById("inviteTeamMembers"),
+      podRssInput: document.getElementById("podRss"),
+    };
+
+    console.log("Setting up navigation");
+
+    // Production team navigation
+    elements.goToProductionTeam &&
+      elements.goToProductionTeam.addEventListener("click", async () => {
+        const podName = document.getElementById("podName").value.trim();
+        const podRss = document.getElementById("podRss").value.trim();
+        if (!podName || !podRss) {
+          alert("Please enter both Podcast Name and RSS URL.");
+          return;
+        }
+        try {
+          await postPodcastData(podName, podRss);
+          document
+            .getElementById("pod-name-section")
+            .classList.add("hidden");
+          document
+            .getElementById("production-team-section")
+            .classList.remove("hidden");
+        } catch (error) {
+          alert("Something went wrong. Please try again.");
+        }
+      });
+
+    // Podcast profile navigation
+    elements.goToPodProfile &&
+      elements.goToPodProfile.addEventListener("click", () => {
+        sendInvitations();
+        document
+          .getElementById("production-team-section")
+          .classList.add("hidden");
+        document
+          .getElementById("pod-profile-section")
+          .classList.remove("hidden");
+      });
+
+    // Back navigation
+    elements.backToPodName &&
+      elements.backToPodName.addEventListener("click", () => {
+        document
+          .getElementById("production-team-section")
+          .classList.add("hidden");
+        document
+          .getElementById("pod-name-section")
+          .classList.remove("hidden");
+      });
+
+    elements.backToProductionTeam &&
+      elements.backToProductionTeam.addEventListener("click", () => {
+        document
+          .getElementById("pod-profile-section")
+          .classList.add("hidden");
+        document
+          .getElementById("production-team-section")
+          .classList.remove("hidden");
+      });
+
+    // Form submission
+    elements.podProfileForm &&
+      elements.podProfileForm.addEventListener("submit", async (event) => {
+        event.preventDefault();
+        const formData = new FormData(elements.podProfileForm);
+        const data = Object.fromEntries(formData.entries());
+        try {
+          const success = await savePodProfile(data);
+          success
+            ? (window.location.href = "dashboard")
+            : alert("Something went wrong. Please try again.");
+        } catch (error) {
+          console.error("Error saving pod profile:", error);
+          alert("Something went wrong. Please try again.");
+        }
+      });
+
+    // Dark Mode Toggle
+    elements.darkModeToggle &&
+      elements.darkModeToggle.addEventListener("click", () => {
+        document.body.classList.toggle("dark-mode");
+      });
+
+    // Add Team Member
+    elements.addTeamMemberButton &&
+      elements.teamMembersContainer &&
+      elements.addTeamMemberButton.addEventListener("click", () => {
+        const newMember = document.createElement("div");
+        newMember.classList.add("team-member");
+        newMember.innerHTML = `
+          <div class="form-group">
+            <label>Name</label>
+            <input type="text" class="team-name" required>
+          </div>
+          <div class="form-group">
+            <label>Email</label>
+            <input type="email" class="team-email" required>
+          </div>
+          <div class="form-group">
+            <label>Role</label>
+            <select class="team-role" required>
+              <option value="" disabled selected>Select Role</option>
+              <option value="user">User</option>
+              <option value="host">Host</option>
+            </select>
+          </div>
+        `;
+        elements.teamMembersContainer.appendChild(newMember);
+      });
+
+    // Google Calendar integration
+    if (elements.googleCalendarButton) {
+      elements.googleCalendarButton.addEventListener("click", () => {
+        const podcastEmail = document.getElementById("podEmail").value;
+        if (podcastEmail.endsWith("@gmail.com")) {
+          const oauth2Url = `https://accounts.google.com/o/oauth2/auth?client_id=YOUR_CLIENT_ID&redirect_uri=YOUR_REDIRECT_URI&response_type=code&scope=https://www.googleapis.com/auth/calendar`;
+          window.open(oauth2Url, "_blank");
+        } else {
+          alert("Google Calendar integration is only available for Gmail accounts.");
+        }
+      });
+    } else {
+      console.error("Google Calendar button not found");
+    }
+
+    // Skip to Dashboard
+    elements.skipToDashboard &&
+      elements.skipToDashboard.addEventListener("click", () => {
+        window.location.href = "dashboard";
+      });
+
+    // Podcast Social navigation
+    elements.goToPodcastSocial &&
+      elements.goToPodcastSocial.addEventListener("click", () => {
+        const podName = document.getElementById("podName").value.trim();
+        if (!podName) {
+          alert("Please enter the Podcast Name.");
+          return;
+        }
+        document
+          .getElementById("podcastinfo-section")
+          .classList.add("hidden");
+        document
+          .getElementById("podcastsocial-section")
+          .classList.remove("hidden");
+      });
+
+    // Podcast Calendar navigation
+    elements.goToPodcastCalendar &&
+      elements.goToPodcastCalendar.addEventListener("click", () => {
+        document
+          .getElementById("podcastsocial-section")
+          .classList.add("hidden");
+        document
+          .getElementById("podcastcalendar-section")
+          .classList.remove("hidden");
+      });
+
+    // Podcast Team navigation
+    elements.goToPodcastTeam &&
+      elements.goToPodcastTeam.addEventListener("click", async () => {
+        const podcastInfoForm = document.getElementById("podcastInfoForm");
+        const formData = new FormData(podcastInfoForm);
+        const data = Object.fromEntries(formData.entries());
+        try {
+          const success = await savePodProfile(data);
+          if (success) {
+            document
+              .getElementById("podcastcalendar-section")
+              .classList.add("hidden");
+            document
+              .getElementById("podcastteam-section")
+              .classList.remove("hidden");
+          } else {
+            alert("Something went wrong. Please try again.");
+          }
+        } catch (error) {
+          console.error("Error saving pod profile:", error);
+          alert("Something went wrong. Please try again.");
+        }
+      });
+
+    // Back navigation for podcast sections
+    elements.backToPodcastInfo &&
+      elements.backToPodcastInfo.addEventListener("click", () => {
+        document
+          .getElementById("podcastsocial-section")
+          .classList.add("hidden");
+        document
+          .getElementById("podcastinfo-section")
+          .classList.remove("hidden");
+      });
+
+    elements.backToPodcastSocial &&
+      elements.backToPodcastSocial.addEventListener("click", () => {
+        document
+          .getElementById("podcastcalendar-section")
+          .classList.add("hidden");
+        document
+          .getElementById("podcastsocial-section")
+          .classList.remove("hidden");
+      });
+
+    elements.backToPodcastCalendar &&
+      elements.backToPodcastCalendar.addEventListener("click", () => {
+        document
+          .getElementById("podcastteam-section")
+          .classList.add("hidden");
+        document
+          .getElementById("podcastcalendar-section")
+          .classList.remove("hidden");
+      });
+
+    // Dashboard navigation
+    elements.goToDashboard &&
+      elements.goToDashboard.addEventListener("click", () => {
+        window.location.href = "dashboard";
+      });
+
+    // Invite team members and redirect to dashboard
+    elements.inviteTeamMembers &&
+      elements.inviteTeamMembers.addEventListener("click", () => {
+        sendInvitations();
+        window.location.href = "dashboard";
+      });
+
+    // Auto-fetch podcast data from RSS feed
+    elements.podRssInput &&
+      elements.podRssInput.addEventListener("input", async function () {
+        const rssUrl = this.value.trim();
+        if (rssUrl) {
+          try {
+            const feedData = await fetchRSSData(rssUrl);
+            if (feedData && feedData.title) {
+              const podNameInput = document.getElementById("podName");
+              if (podNameInput) {
+                podNameInput.value = feedData.title;
+              }
+            }
+          } catch (error) {
+            console.error("Failed to fetch RSS data:", error);
+          }
+        }
+      });
+  }
+
+  // Setup dark mode with persistent state
+  function setupDarkMode() {
+    const darkModeToggle = document.getElementById("dark-mode-toggle");
+    const body = document.body;
+    if (localStorage.getItem("darkMode") === "enabled") {
+      body.classList.add("dark-mode");
+      if (darkModeToggle) darkModeToggle.textContent = "☀️";
+    }
+    if (darkModeToggle) {
+      darkModeToggle.addEventListener("click", () => {
+        body.classList.toggle("dark-mode");
+        const darkEnabled = body.classList.contains("dark-mode");
+        darkModeToggle.textContent = darkEnabled ? "☀️" : "🌙";
+        localStorage.setItem("darkMode", darkEnabled ? "enabled" : "disabled");
       });
     }
   }
 
-  const podRssInput = document.getElementById("podRss");
-  if (podRssInput) {
-    podRssInput.addEventListener("input", function () {
-      const rssUrl = this.value.trim();
-      if (rssUrl) {
-        fetchRSSData(rssUrl);
+  // Setup language selection
+  function setupLanguage() {
+    const savedLang = localStorage.getItem("selectedLanguage") || "en";
+    if (window.i18n) window.i18n.changeLanguage(savedLang);
+
+    const languageButton = document.getElementById("language-button");
+    const languageList = document.getElementById("language-list");
+
+    languageButton &&
+      languageButton.addEventListener("click", () =>
+        languageList.classList.toggle("hidden")
+      );
+
+    languageList &&
+      languageList.addEventListener("click", (event) => {
+        if (event.target.tagName === "LI") {
+          const selectedLang = event.target.getAttribute("data-lang");
+          if (window.i18n) window.i18n.changeLanguage(selectedLang);
+          languageList.classList.add("hidden");
+        }
+      });
+  }
+
+  // Send invitations to team members
+  function sendInvitations() {
+    const teamMembers = document.querySelectorAll(".team-member");
+    const podName =
+      (document.getElementById("podName") &&
+        document.getElementById("podName").value) ||
+      "your podcast";
+    const joinLinkBase = "https://app.podmanager.ai/register";
+
+    teamMembers.forEach((member) => {
+      const email = member.querySelector(".team-email").value;
+      const name = member.querySelector(".team-name").value;
+      const role = member.querySelector(".team-role").value;
+      if (email) {
+        const joinLink = `${joinLinkBase}?email=${encodeURIComponent(
+          email
+        )}&name=${encodeURIComponent(name)}&role=${encodeURIComponent(role)}`;
+        const subject = `Join the ${podName} team`;
+        const body = `
+          <p>Hi ${name}!</p>
+          <p>You are hereby invited by PodManager.ai to join the team of ${podName}.</p>
+          <p>Click here to join the team: <a href="${joinLink}">${joinLink}</a></p>
+          <p>Welcome to PodManager.ai!</p>
+        `;
+        sendInvitation(email, subject, body);
       }
     });
   }
 
-  trackInputField("podName", pointsSystem.podName);
-  trackInputField("podRss", pointsSystem.podRss);
-  trackInputField("podLogo", pointsSystem.podLogo);
-  trackInputField("hostName", pointsSystem.hostName);
-  trackButtonClick(
-    "googleCalendar",
-    "googleCalendar",
-    pointsSystem.googleCalendar
-  );
-  trackInputField("calendarUrl", pointsSystem.calendarUrl);
-  trackInputField("guestForm", pointsSystem.guestForm);
-  trackInputField("facebook", pointsSystem.facebook);
-  trackInputField("instagram", pointsSystem.instagram);
-  trackInputField("linkedin", pointsSystem.linkedin);
-  trackInputField("twitter", pointsSystem.twitter);
-  trackInputField("tiktok", pointsSystem.tiktok);
-  trackInputField("pinterest", pointsSystem.pinterest);
-  trackInputField("website", pointsSystem.website);
-  trackInputField("email", pointsSystem.email);
-
-  trackButtonClick("goToPodProfile", "inviteUser", pointsSystem.inviteUser);
-  trackButtonClick("goToPodProfile", "inviteHost", pointsSystem.inviteHost);
-  trackButtonClick("blockUser", "blockUser", pointsSystem.blockUser);
-});
-
-async function fetchRSSData(rssUrl) {
-  if (!rssUrl) return;
-  try {
-    const response = await fetch(
-      `https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(
-        rssUrl
-      )}`
-    );
-    const text = await response.text(); // Read response as text first
-
-    try {
-      const data = JSON.parse(text); // Attempt to parse JSON
-      if (data.status === "ok") {
-        document.getElementById("podName").value = data.feed.title || "";
-        document.getElementById("website").value = data.feed.link || "";
-      }
-    } catch (jsonError) {
-      console.error("Invalid JSON:", text);
-    }
-  } catch (error) {
-    console.error("Error fetching RSS feed:", error);
+  // Points tracking setup for input fields and buttons
+  function setupPointsTracking() {
+    trackInputField("podName", pointsSystem.podName);
+    trackInputField("podRss", pointsSystem.podRss);
+    trackInputField("podLogo", pointsSystem.podLogo);
+    trackInputField("hostName", pointsSystem.hostName);
+    trackButtonClick("googleCalendar", "googleCalendar", pointsSystem.googleCalendar);
+    trackInputField("calendarUrl", pointsSystem.calendarUrl);
+    trackInputField("guestForm", pointsSystem.guestForm);
+    trackInputField("facebook", pointsSystem.facebook);
+    trackInputField("instagram", pointsSystem.instagram);
+    trackInputField("linkedin", pointsSystem.linkedin);
+    trackInputField("twitter", pointsSystem.twitter);
+    trackInputField("tiktok", pointsSystem.tiktok);
+    trackInputField("pinterest", pointsSystem.pinterest);
+    trackInputField("website", pointsSystem.website);
+    trackInputField("email", pointsSystem.email);
+    trackButtonClick("goToPodProfile", "inviteUser", pointsSystem.inviteUser);
+    trackButtonClick("goToPodProfile", "inviteHost", pointsSystem.inviteHost);
+    trackButtonClick("blockUser", "blockUser", pointsSystem.blockUser);
   }
-}
 
-document.addEventListener("DOMContentLoaded", function () {
-  const goToProductionTeam = document.getElementById("goToProductionTeam");
-
-  if (goToProductionTeam) {
-    goToProductionTeam.addEventListener("click", async function () {
-      const podName = document.getElementById("podName").value.trim();
-      const podRss = document.getElementById("podRss").value.trim();
-
-      if (!podName || !podRss) {
-        alert("Please enter both Podcast Name and RSS URL.");
-        return;
-      }
-    });
-  }
+  // Initialize all setups
+  setupNavigation();
+  setupDarkMode();
+  setupLanguage();
+  setupPointsTracking();
 });

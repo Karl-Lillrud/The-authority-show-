@@ -24,95 +24,48 @@
     <input type="hidden" id="loggedInUserEmail" value="{{ user_email }}" />
     <!-- Hidden input for user email -->
     <main>
-      <!-- Pod Name Section -->
-      <div class="container" id="pod-name-section">
-        <h1 class="fancy-heading">Pod Name</h1>
-        <form id="podNameForm">
+      <!-- Podcast Info Section -->
+      <div class="container" id="podcastinfo-section">
+        <h1 class="fancy-heading">Your Podcast</h1>
+        <form id="podcastInfoForm">
+          <div class="form-group">
+            <label for="podProfilePic">Pod Profile Pic</label>
+            <input type="file" id="podProfilePic" name="podProfilePic" />
+          </div>
           <div class="form-group">
             <label for="podRss">RSS Feed</label>
-            <input type="url" id="podRss" name="podRss" required />
+            <input type="url" id="podRss" name="podRss" />
           </div>
           <div class="form-group">
             <label for="podName">Pod Name</label>
             <input type="text" id="podName" name="podName" required />
           </div>
-          <button type="button" class="button-primary" id="goToProductionTeam">
-            GO
+          <div class="form-group">
+            <label for="podOwner">Pod Owner</label>
+            <input type="text" id="podOwner" name="podOwner" />
+          </div>
+          <div class="form-group">
+            <label for="podHost">Pod Host</label>
+            <input type="text" id="podHost" name="podHost" />
+          </div>
+          <div class="form-group">
+            <label for="podDescription">Description</label>
+            <textarea id="podDescription" name="podDescription"></textarea>
+          </div>
+          <div class="form-group">
+            <label for="podEmail">Podcast Email</label>
+            <input type="email" id="podEmail" name="podEmail" />
+          </div>
+          <button type="button" class="button-primary" id="goToPodcastSocial">
+            Next
           </button>
-          <button type="button" class="button-secondary" id="skipToDashboard">
-            Skip
-          </button>
-          <!-- New Skip Button -->
         </form>
       </div>
 
-      <!-- Production Team Section -->
-      <div class="container hidden" id="production-team-section">
-        <h1 class="fancy-heading">Production Team</h1>
-        <form id="productionTeamForm">
-          <div id="teamMembersContainer">
-            <div class="team-member">
-              <div class="form-group">
-                <label>Name</label>
-                <input type="text" class="team-name" required />
-              </div>
-              <div class="form-group">
-                <label>Email</label>
-                <input type="email" class="team-email" required />
-              </div>
-              <div class="form-group">
-                <label>Role</label>
-                <select class="team-role" required>
-                  <option value="" disabled selected>Select Role</option>
-                  <option value="user">User</option>
-                  <option value="host">Host</option>
-                </select>
-              </div>
-            </div>
-          </div>
-          <button type="button" class="button-secondary" id="addTeamMember">
-            Add More Members
-          </button>
-          <button type="button" class="button-secondary" id="backToPodName">
-            Back
-          </button>
-          <button type="button" class="button-primary" id="goToPodProfile">
-            Invite
-          </button>
-          <input
-            type="hidden"
-            id="invitationLink"
-            value="{{ url_for('pod_management.invite', _external=True) }}"
-          />
-        </form>
-      </div>
-
-      <!-- Pod Profile Section -->
-      <div class="container hidden" id="pod-profile-section">
-        <h1 class="fancy-heading">Pod Profile</h1>
-        <form id="podProfileForm">
-          <div class="form-group">
-            <label>Pod Logo</label>
-            <input type="file" id="podLogo" />
-          </div>
-          <div class="form-group">
-            <label>Host(s) Name(s)</label>
-            <input type="text" id="hostName" />
-          </div>
-          <div class="form-group">
-            <label>Google Calendar Integration</label>
-            <button type="button" class="button-primary" id="googleCalendar">
-              Connect
-            </button>
-          </div>
-          <div class="form-group">
-            <label>Google Calendar Pick a Date URL</label>
-            <input type="url" id="calendarUrl" />
-          </div>
-          <div class="form-group">
-            <label>Guest Form URL</label>
-            <input type="url" id="guestForm" />
-          </div>
+      <!-- Podcast Social Section -->
+      <div class="container hidden" id="podcastsocial-section">
+        <h1 class="fancy-heading">Social Feeds</h1>
+        <form id="podcastSocialForm">
           <div class="form-group">
             <label>Facebook</label>
             <input type="url" id="facebook" />
@@ -141,18 +94,71 @@
             <label>Website</label>
             <input type="url" id="website" />
           </div>
-          <div class="form-group">
-            <label>Email Address</label>
-            <input type="email" id="email" />
-          </div>
-          <button
-            type="button"
-            class="button-secondary"
-            id="backToProductionTeam"
-          >
+          <button type="button" class="button-secondary" id="backToPodcastInfo">
             Back
           </button>
-          <button type="submit" class="button-primary">Done</button>
+          <button type="button" class="button-primary" id="goToPodcastCalendar">
+            Next
+          </button>
+        </form>
+      </div>
+
+      <!-- Podcast Calendar Section -->
+      <div class="container hidden" id="podcastcalendar-section">
+        <h1 class="fancy-heading">Connect Your Calendar</h1>
+        <form id="podcastCalendarForm">
+          <div class="form-group">
+            <label>Google Calendar Integration</label>
+            <button type="button" class="button-primary" id="googleCalendar">
+              Connect
+            </button>
+          </div>
+          <div class="form-group">
+            <label>Google Calendar Pick a Date URL</label>
+            <input type="url" id="calendarUrl" />
+          </div>
+          <button type="button" class="button-secondary" id="backToPodcastSocial">
+            Back
+          </button>
+          <button type="button" class="button-primary" id="goToPodcastTeam">
+            Next
+          </button>
+        </form>
+      </div>
+
+      <!-- Podcast Team Section -->
+      <div class="container hidden" id="podcastteam-section">
+        <h1 class="fancy-heading">Your Team</h1>
+        <form id="podcastTeamForm">
+          <div id="teamMembersContainer">
+            <div class="team-member">
+              <div class="form-group">
+                <label>Name</label>
+                <input type="text" class="team-name" required />
+              </div>
+              <div class="form-group">
+                <label>Email</label>
+                <input type="email" class="team-email" required />
+              </div>
+              <div class="form-group">
+                <label>Role</label>
+                <select class="team-role" required>
+                  <option value="" disabled selected>Select Role</option>
+                  <option value="user">User</option>
+                  <option value="host">Host</option>
+                </select>
+              </div>
+            </div>
+          </div>
+          <button type="button" class="button-secondary" id="addTeamMember">
+            Add More Members
+          </button>
+          <button type="button" class="button-secondary" id="backToPodcastCalendar">
+            Back
+          </button>
+          <button type="button" class="button-primary" id="inviteTeamMembers">
+            Invite
+          </button>
         </form>
       </div>
     </main>
