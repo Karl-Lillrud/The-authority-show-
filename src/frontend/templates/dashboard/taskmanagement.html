@@ -404,7 +404,7 @@ Management{% endblock %} {% block content %}
 
     // Load and display default tasks
     fetch(
-      "{{ url_for('static', filename='defaulttaskData/default_tasks.json') }}"
+      "{{ url_for('static', filename='defaulttaskdata/default_tasks.json') }}"
     )
       .then((response) => response.json())
       .then((defaultTasks) => {
