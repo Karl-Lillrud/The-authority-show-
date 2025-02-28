@@ -44,7 +44,7 @@ CORS(
         r"/*": {
             "origins": [
                 "http://192.168.0.4:8000",
-                "https://app.podmanager.ai/",
+                "https://the-authority-show.onrender.com/",
             ]
         }
     },
@@ -78,11 +78,16 @@ app.register_blueprint(guesttoepisode_bp)
 APP_ENV = os.getenv("APP_ENV", "production")
 
 # Set the API base URL depending on the environment
-API_BASE_URL = os.getenv("API_BASE_URL", "http://127.0.0.1:8000")
+API_BASE_URL = os.getenv("API_BASE_URL")
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
+
+# Log the configuration
+logger.info(f"API_BASE_URL: {API_BASE_URL}")
+logger.info(f"MONGODB_URI: {os.getenv('MONGODB_URI')}")
+logger.info(f"APP_ENV: {APP_ENV}")
 
 
 # Log the request with user info
