@@ -72,6 +72,7 @@ def register():
 
         # Check if account creation was successful
         if account_response.status_code != 201:
+            print(f"❌ Error response content: {account_response.content}")
             return (
                 jsonify(
                     {
