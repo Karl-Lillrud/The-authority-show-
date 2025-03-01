@@ -1,4 +1,4 @@
-from flask import Flask, request, session, g, jsonify
+from flask import Flask, request, session, g, jsonify, render_template
 from flask_cors import CORS
 from backend.routes.register import register_bp
 from backend.routes.forgot_pass import forgotpass_bp
@@ -95,6 +95,16 @@ logger.info(f"APP_ENV: {APP_ENV}")
 def load_user():
     g.user_id = session.get("user_id")
     logger.info(f"Request to {request.path} by user {g.user_id}")
+
+
+@app.route("/privacy-policy")
+def privacy_policy():
+    return render_template("privacy-policy/privacy-policy.html")
+
+
+@app.route("/terms-of-service")
+def terms_of_service():
+    return render_template("terms-of-service/terms-of-service.html")
 
 
 # Run the app
