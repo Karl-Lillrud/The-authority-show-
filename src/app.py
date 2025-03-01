@@ -43,8 +43,8 @@ CORS(
     resources={
         r"/*": {
             "origins": [
-                "http://192.168.0.4:8000",
                 "https://the-authority-show.onrender.com/",
+                "https://app.podmanager.ai",
             ]
         }
     },
