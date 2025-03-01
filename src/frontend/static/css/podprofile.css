@@ -269,4 +269,10 @@
   .hidden {
     display: none;
   }
-  
+
+  .email-message {
+    color: var(--highlight-color);
+    text-align: center;
+    font-size: 1.5rem;
+    margin-top: var(--spacing-lg);
+  }
