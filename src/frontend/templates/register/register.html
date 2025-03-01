@@ -15,17 +15,19 @@
     <!-- Logo -->
     <div class="logo-container">
       <img
-        src="https://podmanagerstorage.blob.core.windows.net/blob-container/PodManagerLogo.png"
-        alt="PodManager Logo"
+        src="{{ url_for('static', filename='images/PodManagerLogo.png') }}"
       />
     </div>
 
     <div class="center-box">
       <h2>Register</h2>
 
-      <form id="register-form" method="POST" action="{{ url_for('register_bp.register') }}">
+      <form
+        id="register-form"
+        method="POST"
+        action="{{ url_for('register_bp.register') }}"
+      >
         <div class="form-group">
-          <label for="email">Email</label>
           <input
             class="input"
             type="email"
