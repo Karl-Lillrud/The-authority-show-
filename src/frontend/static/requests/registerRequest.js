@@ -1,6 +1,20 @@
 document.addEventListener("DOMContentLoaded", function () {
   const form = document.getElementById("register-form");
   const errorMessage = document.getElementById("error-message");
+  const emailExistsModal = document.getElementById("email-exists-modal");
+  const emailExistsOkButton = document.getElementById("email-exists-ok-button");
+  const successModal = document.getElementById("success-modal");
+  const successOkButton = document.getElementById("success-ok-button");
+
+  if (
+    !emailExistsModal ||
+    !emailExistsOkButton ||
+    !successModal ||
+    !successOkButton
+  ) {
+    console.error("Modal elements not found in the DOM.");
+    return;
+  }
 
   const API_BASE_URL = window.API_BASE_URL;
 
@@ -18,14 +32,25 @@ document.addEventListener("DOMContentLoaded", function () {
       });
 
       if (!response.ok) {
-        throw new Error("Registration failed.");
-      }
-
-      const result = await response.json();
-      if (result.redirect_url) {
-        window.location.href = result.redirect_url;
+        const result = await response.json();
+        if (result.error === "Email already registered.") {
+          emailExistsModal.style.display = "block";
+          emailExistsOkButton.addEventListener("click", function () {
+            emailExistsModal.style.display = "none";
+          });
+        } else {
+          throw new Error(result.error || "Registration failed.");
+        }
       } else {
-        window.location.href = "/signin";
+        successModal.style.display = "block";
+        successOkButton.addEventListener("click", async function () {
+          const result = await response.json();
+          if (result.redirect_url) {
+            window.location.href = result.redirect_url;
+          } else {
+            window.location.href = "/signin";
+          }
+        });
       }
     } catch (error) {
       errorMessage.textContent = error.message;

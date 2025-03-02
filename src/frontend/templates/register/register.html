@@ -16,7 +16,7 @@
     <div class="container">
       <div class="logo-container">
         <img
-          src="https://podmanagerstorage.blob.core.windows.net/blob-container/PodManagerLogo.png"
+          src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/PodManagerLogo-3iXye1zlSkpc8u6zD88XTnG09EkfDx.png"
           alt="PodManager Logo"
           class="logo"
         />
@@ -76,6 +76,27 @@
             <a href="/signin" class="register-link">Sign in</a>
           </p>
         </div>
+      </div>
+    </div>
+
+    <!-- Modal for existing email error -->
+    <div id="email-exists-modal" class="modal">
+      <div class="modal-content">
+        <h2>Email Already Registered</h2>
+        <p>
+          This email is already registered. Please use a different email or sign
+          in.
+        </p>
+        <button id="email-exists-ok-button" class="button">OK</button>
+      </div>
+    </div>
+
+    <!-- Modal for successful registration -->
+    <div id="success-modal" class="modal">
+      <div class="modal-content">
+        <h2>Registration Successful!</h2>
+        <p>Your account has been created successfully. Click OK to sign in.</p>
+        <button id="success-ok-button" class="button">OK</button>
       </div>
     </div>
   </body>
