@@ -57,7 +57,9 @@ document.addEventListener("DOMContentLoaded", function () {
     }
 
     if (goToEmailSection) {
-      goToEmailSection.addEventListener("click", () => {
+      goToEmailSection.addEventListener("click", async (event) => {
+        event.preventDefault();
+        await sendInvitations();
         document.getElementById("production-team-section").classList.add("hidden");
         document.getElementById("email-section").classList.remove("hidden");
       });
