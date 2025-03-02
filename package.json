@@ -1,0 +1,6 @@
+{
+  "dependencies": {
+    "dotenv-webpack": "^8.1.0",
+    "tailwindcss-animate": "^1.0.7"
+  }
+}

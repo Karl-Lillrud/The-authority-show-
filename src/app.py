@@ -17,6 +17,7 @@ from backend.routes.episode import episode_bp
 from backend.routes.podprofile import podprofile_bp  # Import the podprofile blueprint
 from backend.routes.frontend import frontend_bp  # Import the frontend blueprint
 from backend.routes.guest_to_eposide import guesttoepisode_bp
+from backend.routes.config import config_bp  # Import the config blueprint
 from dotenv import load_dotenv
 import os
 import logging
@@ -74,6 +75,7 @@ app.register_blueprint(episode_bp)
 app.register_blueprint(podprofile_bp)  # Register the podprofile blueprint
 app.register_blueprint(frontend_bp)  # Register the frontend blueprint
 app.register_blueprint(guesttoepisode_bp)
+app.register_blueprint(config_bp)  # Register the config blueprint
 # Set the application environment (defaults to production)
 APP_ENV = os.getenv("APP_ENV", "production")
 
