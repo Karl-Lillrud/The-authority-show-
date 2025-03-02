@@ -34,8 +34,8 @@ body.dark-mode {
 
 .container {
   width: 100%;
-  max-width: 400px;
-  padding: 20px;
+  max-width: 500px; /* Increased from 400px to 500px */
+  padding: 30px; /* Increased padding */
   box-sizing: border-box;
 }
 
@@ -74,6 +74,7 @@ body.dark-mode {
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
   overflow: hidden;
   transition: box-shadow 0.3s;
+  padding: 30px; /* Added padding to the card */
 }
 
 .dark-mode .card {
@@ -117,13 +118,13 @@ label {
 
 input[type="email"],
 input[type="password"] {
-  width: 100%;
-  padding: 10px;
+  width: 92%; /* Ensure full width */
+  padding: 12px; /* Match padding with the sign-in button */
   border: 1px solid var(--input-border-light);
   border-radius: 4px;
   font-size: 16px;
   background-color: var(--input-bg-light);
-  transition: border-color 0.3s, box-shadow 0.3s;
+  transition: border-color 0.3s, box-shadow 0.3s, background-color 0.3s;
 }
 
 .dark-mode input[type="email"],
@@ -138,6 +139,29 @@ input[type="password"]:focus {
   outline: none;
   border-color: var(--primary);
   box-shadow: 0 0 0 2px rgba(255, 127, 63, 0.2);
+  background-color: var(
+    --input-bg-light
+  ); /* Ensure background color remains consistent */
+}
+
+.dark-mode input[type="email"]:focus,
+.dark-mode input[type="password"]:focus {
+  background-color: var(
+    --input-bg-dark
+  ); /* Ensure background color remains consistent */
+}
+
+/* Autofill background color */
+input[type="email"]:-webkit-autofill,
+input[type="password"]:-webkit-autofill {
+  -webkit-box-shadow: 0 0 0 30px var(--input-bg-light) inset !important;
+  -webkit-text-fill-color: var(--text-light) !important;
+}
+
+.dark-mode input[type="email"]:-webkit-autofill,
+.dark-mode input[type="password"]:-webkit-autofill {
+  -webkit-box-shadow: 0 0 0 30px var(--input-bg-dark) inset !important;
+  -webkit-text-fill-color: var(--text-dark) !important;
 }
 
 .password-label {
@@ -165,7 +189,7 @@ input[type="password"]:focus {
 }
 
 .submit-button {
-  width: 100%;
+  width: 100%; /* Ensure full width */
   padding: 12px;
   background-color: var(--primary);
   color: white;
@@ -174,6 +198,7 @@ input[type="password"]:focus {
   font-size: 16px;
   cursor: pointer;
   transition: background-color 0.3s;
+  margin-top: 20px; /* Add margin to move the button down */
 }
 
 .submit-button:hover {

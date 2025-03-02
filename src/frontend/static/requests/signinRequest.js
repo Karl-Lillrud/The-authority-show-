@@ -9,7 +9,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
     const email = document.getElementById("email").value;
     const password = document.getElementById("password").value;
-    const remember = document.getElementById("remember").checked;
+    const remember = true; // Always set remember to true
 
     try {
       const response = await fetch(`${API_BASE_URL}/signin`, {
