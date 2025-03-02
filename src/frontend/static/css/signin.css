@@ -161,24 +161,7 @@ input[type="password"]:focus {
 }
 
 .toggle-password {
-  position: absolute;
-  right: 10px;
-  top: 50%;
-  transform: translateY(-50%);
-  background: none;
-  border: none;
-  color: #777;
-  cursor: pointer;
-}
-
-.checkbox-group {
-  display: flex;
-  align-items: center;
-  margin-bottom: 20px;
-}
-
-.checkbox-group input[type="checkbox"] {
-  margin-right: 10px;
+  display: none;
 }
 
 .submit-button {
