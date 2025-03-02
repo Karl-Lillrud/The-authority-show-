@@ -10,7 +10,6 @@ document.addEventListener("DOMContentLoaded", function () {
     const teamMembersContainer = document.getElementById("teamMembersContainer");
     const googleCalendarButton = document.getElementById("googleCalendar");
     const skipToDashboard = document.getElementById("skipToDashboard");
-    const emailForm = document.getElementById("emailForm");
     const goToEmailSection = document.getElementById("goToEmailSection");
 
     console.log("Setting up navigation");
@@ -218,13 +217,13 @@ function setupInvitationEmails() {
   }
 }
 
-function sendInvitations() {
+async function sendInvitations() {
   const teamMembers = document.querySelectorAll(".team-member");
   const podNameElement = document.getElementById("podName");
   const podName = podNameElement ? podNameElement.value : "your podcast";
   const joinLinkBase = "https://app.podmanager.ai/register"; // Updated base URL
 
-  teamMembers.forEach((member) => {
+  for (const member of teamMembers) {
     const email = member.querySelector(".team-email").value;
     const name = member.querySelector(".team-name").value;
     const role = member.querySelector(".team-role").value;
@@ -234,9 +233,9 @@ function sendInvitations() {
       )}&name=${encodeURIComponent(name)}&role=${encodeURIComponent(role)}`;
       const subject = `Join the ${podName} team`;
       const body = `Hi ${name}!\n\nYou are hereby invited by PodManager.ai to join the team of ${podName}.\n\nClick here to join the team: <a href="${joinLink}">${joinLink}</a>\n\nWelcome to PodManager.ai!`;
-      sendInvitation(email, subject, body);
+      await sendInvitation(email, subject, body);
     }
-  });
+  }
 }
 
 function setupDarkMode() {
