@@ -3,22 +3,18 @@ document.addEventListener("DOMContentLoaded", function () {
     const goToProductionTeam = document.getElementById("goToProductionTeam");
     const goToPodProfile = document.getElementById("goToPodProfile");
     const backToPodName = document.getElementById("backToPodName");
-    const backToProductionTeam = document.getElementById(
-      "backToProductionTeam"
-    );
+    const backToProductionTeam = document.getElementById("backToProductionTeam");
     const podProfileForm = document.getElementById("podProfileForm");
     const darkModeToggle = document.getElementById("dark-mode-toggle");
     const addTeamMemberButton = document.getElementById("addTeamMember");
-    const teamMembersContainer = document.getElementById(
-      "teamMembersContainer"
-    );
-    const googleCalendarButton = document.getElementById("googleCalendar");
+    const teamMembersContainer = document.getElementById("teamMembersContainer");
     const skipToDashboard = document.getElementById("skipToDashboard");
+    const goToEmailSection = document.getElementById("goToEmailSection");
 
     console.log("Setting up navigation");
 
-    if (goToProductionTeam) {
-      goToProductionTeam.addEventListener("click", async () => {
+    if (goToPodProfile) {
+      goToPodProfile.addEventListener("click", async () => {
         const podName = document.getElementById("podName").value.trim();
         const podRss = document.getElementById("podRss").value.trim();
 
@@ -30,42 +26,40 @@ document.addEventListener("DOMContentLoaded", function () {
         try {
           await postPodcastData(podName, podRss);
           document.getElementById("pod-name-section").classList.add("hidden");
-          document
-            .getElementById("production-team-section")
-            .classList.remove("hidden");
+          document.getElementById("pod-profile-section").classList.remove("hidden");
         } catch (error) {
           alert("Something went wrong. Please try again.");
         }
       });
     }
 
-    if (goToPodProfile) {
-      goToPodProfile.addEventListener("click", () => {
-        sendInvitations();
-        document
-          .getElementById("production-team-section")
-          .classList.add("hidden");
-        document
-          .getElementById("pod-profile-section")
-          .classList.remove("hidden");
+    if (goToProductionTeam) {
+      goToProductionTeam.addEventListener("click", () => {
+        document.getElementById("pod-profile-section").classList.add("hidden");
+        document.getElementById("production-team-section").classList.remove("hidden");
       });
     }
 
     if (backToPodName) {
       backToPodName.addEventListener("click", () => {
-        document
-          .getElementById("production-team-section")
-          .classList.add("hidden");
+        document.getElementById("pod-profile-section").classList.add("hidden");
         document.getElementById("pod-name-section").classList.remove("hidden");
       });
     }
 
     if (backToProductionTeam) {
       backToProductionTeam.addEventListener("click", () => {
-        document.getElementById("pod-profile-section").classList.add("hidden");
-        document
-          .getElementById("production-team-section")
-          .classList.remove("hidden");
+        document.getElementById("production-team-section").classList.add("hidden");
+        document.getElementById("pod-profile-section").classList.remove("hidden");
+      });
+    }
+
+    if (goToEmailSection) {
+      goToEmailSection.addEventListener("click", async (event) => {
+        event.preventDefault();
+        await sendInvitations();
+        document.getElementById("production-team-section").classList.add("hidden");
+        document.getElementById("email-section").classList.remove("hidden");
       });
     }
 
@@ -78,7 +72,8 @@ document.addEventListener("DOMContentLoaded", function () {
         try {
           const success = await savePodProfile(data);
           if (success) {
-            window.location.href = "dashboard"; // Redirect to dashboard
+            document.getElementById("production-team-section").classList.add("hidden");
+            document.getElementById("email-section").classList.remove("hidden");
           } else {
             alert("Something went wrong. Please try again.");
           }
@@ -102,53 +97,25 @@ document.addEventListener("DOMContentLoaded", function () {
         const newMember = document.createElement("div");
         newMember.classList.add("team-member");
         newMember.innerHTML = `
-                    <div class="form-group">
-                        <label>Name</label>
-                        <input type="text" class="team-name" required>
-                    </div>
-                    <div class="form-group">
-                        <label>Email</label>
-                        <input type="email" class="team-email" required>
-                    </div>
-                    <div class="form-group">
-                        <label>Role</label>
-                        <select class="team-role" required>
-                            <option value="" disabled selected>Select Role</option>
-                            <option value="user">User</option>
-                            <option value="host">Host</option>
-                        </select>
-                    </div>
-                `;
+          <div class="form-group">
+            <label>Name</label>
+            <input type="text" class="team-name" required>
+          </div>
+          <div class="form-group">
+            <label>Email</label>
+            <input type="email" class="team-email" required>
+          </div>
+          <div class="form-group">
+            <label>Role</label>
+            <select class="team-role" required>
+              <option value="" disabled selected>Select Role</option>
+              <option value="user">User</option>
+              <option value="host">Host</option>
+            </select>
+          </div>
+        `;
         teamMembersContainer.appendChild(newMember);
       });
-    }
-
-    // Handle Google Calendar connection
-    console.log("Checking for Google Calendar button");
-    console.log("googleCalendarButton:", googleCalendarButton);
-    if (googleCalendarButton) {
-      console.log("Google Calendar button found");
-      googleCalendarButton.addEventListener("click", () => {
-        console.log("Google Calendar button clicked");
-        const hostEmailElement = document.querySelector(".team-email"); // Fetch the email entered by the host
-        if (hostEmailElement) {
-          const hostEmail = hostEmailElement.value;
-          console.log("Host email:", hostEmail);
-          if (hostEmail.endsWith("@gmail.com")) {
-            console.log("Redirecting to Google Calendar OAuth2 connection");
-            const oauth2Url = `https://accounts.google.com/o/oauth2/auth?client_id=YOUR_CLIENT_ID&redirect_uri=YOUR_REDIRECT_URI&response_type=code&scope=https://www.googleapis.com/auth/calendar`;
-            window.open(oauth2Url, "_blank"); // Open Google Calendar OAuth2 in a new tab
-          } else {
-            alert(
-              "Google Calendar integration is only available for Gmail accounts."
-            );
-          }
-        } else {
-          alert("Host email element not found.");
-        }
-      });
-    } else {
-      console.error("Google Calendar button not found");
     }
 
     if (skipToDashboard) {
@@ -200,13 +167,13 @@ function setupInvitationEmails() {
   }
 }
 
-function sendInvitations() {
+async function sendInvitations() {
   const teamMembers = document.querySelectorAll(".team-member");
   const podNameElement = document.getElementById("podName");
   const podName = podNameElement ? podNameElement.value : "your podcast";
   const joinLinkBase = "https://app.podmanager.ai/register"; // Updated base URL
 
-  teamMembers.forEach((member) => {
+  for (const member of teamMembers) {
     const email = member.querySelector(".team-email").value;
     const name = member.querySelector(".team-name").value;
     const role = member.querySelector(".team-role").value;
@@ -215,10 +182,18 @@ function sendInvitations() {
         email
       )}&name=${encodeURIComponent(name)}&role=${encodeURIComponent(role)}`;
       const subject = `Join the ${podName} team`;
-      const body = `Hi ${name}!\n\nYou are hereby invited by PodManager.ai to join the team of ${podName}.\n\nClick here to join the team: <a href="${joinLink}">${joinLink}</a>\n\nWelcome to PodManager.ai!`;
-      sendInvitation(email, subject, body);
+      try {
+        const response = await fetch('/beta-email/podmanager-beta-invite.html');
+        if (!response.ok) {
+          throw new Error('Network response was not ok');
+        }
+        const body = await response.text();
+        await sendInvitation(email, subject, body);
+      } catch (error) {
+        console.error("Error fetching invitation template:", error);
+      }
     }
-  });
+  }
 }
 
 function setupDarkMode() {
