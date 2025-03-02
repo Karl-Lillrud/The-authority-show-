@@ -3,22 +3,20 @@ document.addEventListener("DOMContentLoaded", function () {
     const goToProductionTeam = document.getElementById("goToProductionTeam");
     const goToPodProfile = document.getElementById("goToPodProfile");
     const backToPodName = document.getElementById("backToPodName");
-    const backToProductionTeam = document.getElementById(
-      "backToProductionTeam"
-    );
+    const backToProductionTeam = document.getElementById("backToProductionTeam");
     const podProfileForm = document.getElementById("podProfileForm");
     const darkModeToggle = document.getElementById("dark-mode-toggle");
     const addTeamMemberButton = document.getElementById("addTeamMember");
-    const teamMembersContainer = document.getElementById(
-      "teamMembersContainer"
-    );
+    const teamMembersContainer = document.getElementById("teamMembersContainer");
     const googleCalendarButton = document.getElementById("googleCalendar");
     const skipToDashboard = document.getElementById("skipToDashboard");
+    const emailForm = document.getElementById("emailForm");
+    const goToEmailSection = document.getElementById("goToEmailSection");
 
     console.log("Setting up navigation");
 
-    if (goToProductionTeam) {
-      goToProductionTeam.addEventListener("click", async () => {
+    if (goToPodProfile) {
+      goToPodProfile.addEventListener("click", async () => {
         const podName = document.getElementById("podName").value.trim();
         const podRss = document.getElementById("podRss").value.trim();
 
@@ -30,42 +28,38 @@ document.addEventListener("DOMContentLoaded", function () {
         try {
           await postPodcastData(podName, podRss);
           document.getElementById("pod-name-section").classList.add("hidden");
-          document
-            .getElementById("production-team-section")
-            .classList.remove("hidden");
+          document.getElementById("pod-profile-section").classList.remove("hidden");
         } catch (error) {
           alert("Something went wrong. Please try again.");
         }
       });
     }
 
-    if (goToPodProfile) {
-      goToPodProfile.addEventListener("click", () => {
-        sendInvitations();
-        document
-          .getElementById("production-team-section")
-          .classList.add("hidden");
-        document
-          .getElementById("pod-profile-section")
-          .classList.remove("hidden");
+    if (goToProductionTeam) {
+      goToProductionTeam.addEventListener("click", () => {
+        document.getElementById("pod-profile-section").classList.add("hidden");
+        document.getElementById("production-team-section").classList.remove("hidden");
       });
     }
 
     if (backToPodName) {
       backToPodName.addEventListener("click", () => {
-        document
-          .getElementById("production-team-section")
-          .classList.add("hidden");
+        document.getElementById("pod-profile-section").classList.add("hidden");
         document.getElementById("pod-name-section").classList.remove("hidden");
       });
     }
 
     if (backToProductionTeam) {
       backToProductionTeam.addEventListener("click", () => {
-        document.getElementById("pod-profile-section").classList.add("hidden");
-        document
-          .getElementById("production-team-section")
-          .classList.remove("hidden");
+        document.getElementById("production-team-section").classList.add("hidden");
+        document.getElementById("pod-profile-section").classList.remove("hidden");
+      });
+    }
+
+    if (goToEmailSection) {
+      goToEmailSection.addEventListener("click", () => {
+        document.getElementById("production-team-section").classList.add("hidden");
+        document.getElementById("email-section").classList.remove("hidden");
       });
     }
 
@@ -78,12 +72,34 @@ document.addEventListener("DOMContentLoaded", function () {
         try {
           const success = await savePodProfile(data);
           if (success) {
-            window.location.href = "dashboard"; // Redirect to dashboard
+            document.getElementById("production-team-section").classList.add("hidden");
+            document.getElementById("email-section").classList.remove("hidden");
           } else {
             alert("Something went wrong. Please try again.");
           }
         } catch (error) {
           console.error("Error saving pod profile:", error);
+          alert("Something went wrong. Please try again.");
+        }
+      });
+    }
+
+    if (emailForm) {
+      emailForm.addEventListener("submit", async (event) => {
+        event.preventDefault();
+        const emailSubject = document.getElementById("emailSubject").value.trim();
+        const emailBody = document.getElementById("emailBody").value.trim();
+
+        if (!emailSubject || !emailBody) {
+          alert("Please enter both subject and body.");
+          return;
+        }
+
+        try {
+          await sendEmail(emailSubject, emailBody);
+          alert("Email sent successfully!");
+        } catch (error) {
+          console.error("Error sending email:", error);
           alert("Something went wrong. Please try again.");
         }
       });
@@ -102,23 +118,23 @@ document.addEventListener("DOMContentLoaded", function () {
         const newMember = document.createElement("div");
         newMember.classList.add("team-member");
         newMember.innerHTML = `
-                    <div class="form-group">
-                        <label>Name</label>
-                        <input type="text" class="team-name" required>
-                    </div>
-                    <div class="form-group">
-                        <label>Email</label>
-                        <input type="email" class="team-email" required>
-                    </div>
-                    <div class="form-group">
-                        <label>Role</label>
-                        <select class="team-role" required>
-                            <option value="" disabled selected>Select Role</option>
-                            <option value="user">User</option>
-                            <option value="host">Host</option>
-                        </select>
-                    </div>
-                `;
+          <div class="form-group">
+            <label>Name</label>
+            <input type="text" class="team-name" required>
+          </div>
+          <div class="form-group">
+            <label>Email</label>
+            <input type="email" class="team-email" required>
+          </div>
+          <div class="form-group">
+            <label>Role</label>
+            <select class="team-role" required>
+              <option value="" disabled selected>Select Role</option>
+              <option value="user">User</option>
+              <option value="host">Host</option>
+            </select>
+          </div>
+        `;
         teamMembersContainer.appendChild(newMember);
       });
     }

@@ -26,33 +26,29 @@
     <main>
       <!-- Pod Name Section -->
       <div class="container" id="pod-name-section">
-        <h1 class="fancy-heading">Your Podcast</h1>
+        <h1 class="fancy-heading">Pod Name</h1>
         <form id="podNameForm">
           <div class="form-group">
             <label for="podRss">RSS Feed</label>
-            <input type="url" id="podRss" name="podRss"/>
+            <input type="url" id="podRss" name="podRss" required />
           </div>
           <div class="form-group">
-            <label for="podName">Podcast's Name</label>
+            <label for="podName">Pod Name</label>
             <input type="text" id="podName" name="podName" required />
           </div>
-          <div class="form-group">
-            <label>Email Address</label>
-            <input type="email" id="email" />
-          </div>
-        </button>
-        <button type="button" class="button-secondary" id="skipToDashboard">
-          Skip
-        </button>
-        <!-- New Skip Button -->
           <button type="button" class="button-primary" id="goToProductionTeam">
-            Next
+            GO
+          </button>
+          <button type="button" class="button-secondary" id="skipToDashboard">
+            Skip
+          </button>
+          <!-- New Skip Button -->
         </form>
       </div>
 
       <!-- Production Team Section -->
       <div class="container hidden" id="production-team-section">
-        <h1 class="fancy-heading">Your Team</h1>
+        <h1 class="fancy-heading">Production Team</h1>
         <form id="productionTeamForm">
           <div id="teamMembersContainer">
             <div class="team-member">
@@ -93,7 +89,7 @@
 
       <!-- Pod Profile Section -->
       <div class="container hidden" id="pod-profile-section">
-        <h1 class="fancy-heading">Your Socials</h1>
+        <h1 class="fancy-heading">Pod Profile</h1>
         <form id="podProfileForm">
           <div class="form-group">
             <label>Pod Logo</label>
@@ -145,6 +141,10 @@
             <label>Website</label>
             <input type="url" id="website" />
           </div>
+          <div class="form-group">
+            <label>Email Address</label>
+            <input type="email" id="email" />
+          </div>
           <button
             type="button"
             class="button-secondary"
@@ -164,4 +164,3 @@
     ></script>
   </body>
 </html>
-

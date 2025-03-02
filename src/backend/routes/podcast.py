@@ -289,3 +289,21 @@ def get_user_podcasts():
         })
 
     return jsonify(podcast_list)
+
+@podcast_bp.route('/post_podcast_data', methods=['POST'])
+def post_podcast_data():
+    try:
+        data = request.json
+        pod_name = data.get('podName')
+        pod_rss = data.get('podRss')
+
+        # Save podcast data to the database
+        podcast_data = {
+            "podName": pod_name,
+            "podRss": pod_rss
+        }
+        collection["Podcast"].insert_one(podcast_data)
+
+        return jsonify({"success": True, "redirectUrl": "/production_team"})
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
