@@ -295,7 +295,6 @@ body {
   font-size: 1rem;
   font-family: var(--font-primary);
   color: var(--text-color-light);
-  width: 60%; /* Make the popup narrower */
 }
 .popup .popup-content {
   display: flex;
@@ -351,6 +350,172 @@ body {
   background-color: rgba(255, 127, 63, 0.08);
   transform: translateY(-2px);
   color: var(--highlight-color);
+}
+
+/* Podcast List Container */
+#podcasts-list {
+  width: 100%;
+  max-height: 400px;
+  overflow-y: auto;
+  margin: 15px 0;
+  padding: 10px;
+  border-radius: var(--radius-medium);
+  box-shadow: inset -3px -3px 6px var(--light-shadow-light),
+    inset 3px 3px 6px var(--dark-shadow-light);
+}
+
+/* Podcast Item */
+.podcast-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+  padding: 12px 15px;
+  border-radius: var(--radius-medium);
+  background: var(--background-light);
+  box-shadow: -3px -3px 6px var(--light-shadow-light),
+    3px 3px 6px var(--dark-shadow-light);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.podcast-item:hover {
+  transform: translateY(-2px);
+  box-shadow: -4px -4px 8px var(--light-shadow-light),
+    4px 4px 8px var(--dark-shadow-light);
+}
+
+/* Podcast Button */
+.podcast-btn {
+  flex: 1;
+  text-align: left;
+  background: transparent;
+  border: none;
+  padding: 8px 12px;
+  border-radius: var(--radius-small);
+  cursor: pointer;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--text-color-light);
+  transition: color 0.2s ease;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  box-shadow: none;
+}
+
+.podcast-btn:hover {
+  color: var(--highlight-color);
+  background: transparent;
+  transform: none;
+}
+
+/* Delete Button */
+.delete-btn {
+  background: rgba(255, 127, 63, 0.1);
+  border: none;
+  padding: 6px 12px;
+  border-radius: var(--radius-small);
+  cursor: pointer;
+  box-shadow: -2px -2px 4px var(--light-shadow-light),
+    2px 2px 4px var(--dark-shadow-light);
+  transition: background-color 0.2s ease, transform 0.2s ease;
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: #e74c3c;
+  margin-left: 10px;
+}
+
+.delete-btn:hover {
+  background-color: rgba(231, 76, 60, 0.15);
+  transform: translateY(-2px);
+  color: #e74c3c;
+}
+
+/* Popup Header */
+.popup-content h2 {
+  color: var(--text-color-light);
+  font-size: 1.5rem;
+  margin-bottom: 20px;
+  position: relative;
+  padding-bottom: 10px;
+}
+
+.popup-content h2::after {
+  content: "";
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 60px;
+  height: 3px;
+  background: var(--highlight-color);
+  border-radius: 3px;
+}
+
+/* Improved Close Button */
+.close-btn {
+  position: absolute;
+  top: 15px;
+  right: 15px;
+  width: 30px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--background-light);
+  border: none;
+  border-radius: 50%;
+  cursor: pointer;
+  box-shadow: -2px -2px 4px var(--light-shadow-light),
+    2px 2px 4px var(--dark-shadow-light);
+  transition: background-color 0.2s ease, transform 0.2s ease;
+  font-size: 1.2rem;
+  color: var(--text-color-light);
+}
+
+.close-btn:hover {
+  background-color: rgba(255, 127, 63, 0.1);
+  transform: rotate(90deg);
+  color: var(--highlight-color);
+}
+
+/* Modal Buttons */
+.modal-buttons {
+  display: flex;
+  justify-content: center;
+  gap: 15px;
+  margin-top: 20px;
+  width: 100%;
+}
+
+.modal-buttons button {
+  padding: 10px 20px;
+  border-radius: var(--radius-small);
+  font-weight: 600;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.cancel-btn {
+  background: var(--background-light);
+  border: none;
+  box-shadow: -3px -3px 6px var(--light-shadow-light),
+    3px 3px 6px var(--dark-shadow-light);
+  color: var(--text-color-light);
+  cursor: pointer;
+}
+
+.cancel-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: -4px -4px 8px var(--light-shadow-light),
+    4px 4px 8px var(--dark-shadow-light);
+}
+
+/* Empty State */
+.empty-state {
+  padding: 30px 20px;
+  text-align: center;
+  color: var(--text-color-light);
+  font-style: italic;
 }
 
 /* Responsive Adjustments */

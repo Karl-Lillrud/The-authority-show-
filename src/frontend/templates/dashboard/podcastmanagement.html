@@ -395,9 +395,13 @@ Management{% endblock %} {% block content %}
   <div id="podcasts-popup" class="popup">
     <div class="popup-content">
       <span id="close-popup-btn" class="close-btn">&times;</span>
-      <h2>Select Podcasts to Delete</h2>
-      <div id="podcasts-list" class="popup-list"></div>
-      <div class="modal-buttons">
+      <h2 style="text-align: center">Select Podcasts to Delete</h2>
+      <div
+        id="podcasts-list"
+        class="popup-list"
+        style="text-align: center"
+      ></div>
+      <div class="modal-buttons" style="justify-content: center">
         <button id="delete-selected-podcasts-btn" class="crud-btn">
           Delete Selected
         </button>
