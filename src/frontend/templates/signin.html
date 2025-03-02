@@ -3,114 +3,108 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Login</title>
+    <title>PodManager - Sign In</title>
     <link rel="stylesheet" href="/static/css/signin.css" />
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script>
+      window.API_BASE_URL = "{{ API_BASE_URL }}";
+    </script>
+    <script src="/static/requests/signinRequest.js" defer></script>
+    <script src="/static/js/signin.js" defer></script>
   </head>
   <body>
-    <!-- Logo -->
-    <div class="logo-container">
-      <img
-        src="{{ url_for('static', filename='images/PodManagerLogo.png') }}"
-        alt="PodManager Logo"
-      />
+    <div class="container">
+      <button
+        id="theme-toggle"
+        class="theme-toggle"
+        aria-label="Toggle dark mode"
+      >
+        <i data-lucide="moon"></i>
+      </button>
+
+      <div class="logo-container">
+        <img
+          src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/PodManagerLogo-3iXye1zlSkpc8u6zD88XTnG09EkfDx.png"
+          alt="PodManager Logo"
+          class="logo"
+        />
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <h1 class="card-title">Sign in</h1>
+          <p class="card-description">
+            Enter your credentials to access your account
+          </p>
+        </div>
+
+        <div class="card-content">
+          <div
+            id="error-message"
+            class="error-message"
+            style="display: none"
+          ></div>
+
+          <form id="login-form">
+            <div class="input-group">
+              <label for="email">Email</label>
+              <input
+                type="email"
+                id="email"
+                name="email"
+                placeholder="name@example.com"
+                required
+              />
+            </div>
+
+            <div class="input-group">
+              <div class="password-label">
+                <label for="password">Password</label>
+                <a href="/forgotpassword" class="forgot-password"
+                  >Forgot password?</a
+                >
+              </div>
+              <div class="password-input">
+                <input
+                  type="password"
+                  id="password"
+                  name="password"
+                  placeholder="••••••••"
+                  required
+                />
+                <button
+                  type="button"
+                  id="toggle-password"
+                  class="toggle-password"
+                  aria-label="Show password"
+                >
+                  <i data-lucide="eye"></i>
+                </button>
+              </div>
+            </div>
+
+            <div class="checkbox-group">
+              <input type="checkbox" id="remember" name="remember" />
+              <label for="remember">Remember me</label>
+            </div>
+
+            <button type="submit" class="submit-button">
+              <span class="button-text">Sign in</span>
+              <span class="button-loader" style="display: none">
+                <div class="spinner"></div>
+                Signing in...
+              </span>
+            </button>
+          </form>
+        </div>
+
+        <div class="card-footer">
+          <p>
+            Don't have an account?
+            <a href="/register" class="register-link">Register here</a>
+          </p>
+        </div>
+      </div>
     </div>
-
-    <div class="center-box">
-      <h1 class="title">Sign in</h1>
-      <div id="error-message" class="error-message" style="display: none"></div>
-
-      <form id="login-form">
-        <div class="input-group">
-          <label for="email" class="label"></label>
-          <input
-            type="email"
-            id="email"
-            name="email"
-            class="input"
-            placeholder="Email"
-            required
-          />
-        </div>
-        <div class="input-group">
-          <label for="password" class="label"></label>
-          <input
-            type="password"
-            id="password"
-            name="password"
-            class="input"
-            placeholder="Password"
-            required
-          />
-        </div>
-        <div class="input-group">
-          <label for="remember" class="label">
-            <input
-              type="checkbox"
-              id="remember"
-              name="remember"
-              class="input-checkbox"
-            />
-            Remember Me
-          </label>
-        </div>
-
-        <div class="extra-links">
-          <a href="/forgotpassword" class="link">Forgot Password?</a>
-        </div>
-
-        <div class="form-actions">
-          <button type="submit" class="button button-primary">Login</button>
-        </div>
-
-        <div class="extra-links">
-          <a href="/register" class="link">Register here</a>
-        </div>
-      </form>
-    </div>
-
-    <script>
-      document.addEventListener("DOMContentLoaded", function () {
-        const form = document.getElementById("login-form");
-        const errorMessage = document.getElementById("error-message");
-
-        const API_BASE_URL =
-          window.location.hostname === "127.0.0.1" ||
-          window.location.hostname === "localhost"
-            ? "{{ LOCAL_BASE_URL }}"
-            : "{{ PROD_BASE_URL }}"; // Use LOCAL_BASE_URL for localhost and PROD_BASE_URL for production
-
-        form.addEventListener("submit", async function (event) {
-          event.preventDefault();
-
-          const email = document.getElementById("email").value;
-          const password = document.getElementById("password").value;
-          const remember = document.getElementById("remember").checked;
-
-          try {
-            const response = await fetch(`${API_BASE_URL}/signin`, {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ email, password, remember })
-            });
-
-            if (!response.ok) {
-              throw new Error("Invalid email or password.");
-            }
-
-            const result = await response.json();
-            if (result.redirect_url) {
-              window.location.href = result.redirect_url;
-            } else {
-              window.location.href = remember ? "/dashboard" : "/";
-            }
-          } catch (error) {
-            document.getElementById("error-message").textContent =
-              error.message;
-            document.getElementById("error-message").style.display = "block";
-          }
-        });
-      });
-    </script>
   </body>
 </html>
-
