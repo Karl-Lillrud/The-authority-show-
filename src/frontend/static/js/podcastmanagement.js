@@ -181,7 +181,10 @@ document.addEventListener("DOMContentLoaded", function () {
               console.log("Fetched Podcast:", podcast);
               displayPodcastDetails(podcast.podcast);
               selectedPodcastId = podcastId;
-              document.querySelector(".invite-btn").textContent = "UPDATE";
+              const inviteBtn = document.querySelector(".invite-btn");
+              inviteBtn.textContent = "Update";
+              inviteBtn.classList.add("update-btn");
+              addBackButton();
             } catch (error) {
               console.error("Error fetching podcast (ignored):", error);
               // Do not show error alert for this operation.
@@ -196,8 +199,9 @@ document.addEventListener("DOMContentLoaded", function () {
             const podcastId = e.target.getAttribute("data-id");
             try {
               await deletePodcast(podcastId);
-              showAlert("Deleted podcast successfully!", "green");
-              e.target.parentElement.remove();
+              // Remove the entire podcast item from the popup list
+              const podcastItem = e.target.closest(".podcast-item");
+              if (podcastItem) podcastItem.remove();
             } catch (error) {
               showAlert("Failed to delete podcast.", "red");
             }
@@ -256,6 +260,31 @@ document.addEventListener("DOMContentLoaded", function () {
 
     formContainer.style.display = "block";
     document.getElementById("podcasts-popup").style.display = "none";
+  }
+
+  function addBackButton() {
+    const inviteBtn = document.querySelector(".invite-btn");
+    if (!document.getElementById("back-btn")) {
+      const backBtn = document.createElement("button");
+      backBtn.id = "back-btn";
+      backBtn.className = "crud-btn";
+      backBtn.textContent = "Back";
+      backBtn.style.marginRight = "10px";
+      backBtn.style.width = inviteBtn.offsetWidth + "px"; // Match the width of the invite button
+      inviteBtn.parentNode.insertBefore(backBtn, inviteBtn);
+
+      backBtn.addEventListener("click", () => {
+        resetForm();
+        backBtn.remove();
+        inviteBtn.textContent = "SAVE";
+        inviteBtn.classList.remove("update-btn");
+        selectedPodcastId = null;
+      });
+    }
+  }
+
+  function resetForm() {
+    form.reset();
   }
 
   document
@@ -349,9 +378,7 @@ document.addEventListener("DOMContentLoaded", function () {
     )}" class="back-arrow">&#8592; Back</a>
     <div class="crud-buttons">
       <button id="fetch-podcasts-btn" class="crud-btn">Fetch All Podcasts</button>
-      <button id="fetch-podcast-btn" class="crud-btn">Fetch Podcast by ID</button>
-      <button id="update-podcast-btn" class="crud-btn">Update Podcast</button>
-      <button id="delete-podcast-btn" class="crud-btn">Delete Podcast</button>
+
     </div>
     <div class="form-box">
       <div class="form-fields">

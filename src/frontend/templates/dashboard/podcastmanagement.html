@@ -15,10 +15,9 @@ Management{% endblock %} {% block content %}
 >
 <div class="container">
   <div class="crud-buttons">
-    <button id="fetch-podcasts-btn" class="crud-btn">Fetch All Podcasts</button>
-    <button id="fetch-podcast-btn" class="crud-btn">Fetch Podcast by ID</button>
-    <button id="update-podcast-btn" class="crud-btn">Update Podcast</button>
-    <button id="delete-podcast-btn" class="crud-btn">Delete Podcast</button>
+    <button id="fetch-podcasts-btn" class="crud-btn">
+      View / Delete Podcasts
+    </button>
   </div>
   <div class="form-box">
     <div class="form-fields">
@@ -144,9 +143,7 @@ Management{% endblock %} {% block content %}
         style="text-align: center"
       ></div>
       <div class="modal-buttons" style="justify-content: center">
-        <button id="delete-selected-podcasts-btn" class="crud-btn">
-          Delete Selected
-        </button>
+        <!-- Removed delete-selected button -->
         <button
           class="cancel-btn"
           onclick="document.getElementById('podcasts-popup').style.display='none'"
