@@ -215,6 +215,7 @@ Management{% endblock %} {% block content %}
           This action cannot be undone. Once you delete your account, all associated data will be permanently removed.
         </p>
         <!-- Set action to javascript:void(0) to prevent default submission -->
+         <!---
         <form id="delete-account-form" action="javascript:void(0)" novalidate>
           <label for="delete-email">Email</label>
           <input type="email" id="delete-email" name="deleteEmail" placeholder="Enter your email" required />
@@ -223,10 +224,35 @@ Management{% endblock %} {% block content %}
           <label for="confirm-delete-password">Confirm Password</label>
           <input type="password" id="confirm-delete-password" name="confirmDeletePassword" placeholder="Re-enter your current password" required />
           <label for="delete-confirm">Please type <strong>DELETE</strong> to confirm:</label>
-          <input type="text" id="delete-confirm" name="deleteConfirm" placeholder="DELETE" required aria-required="true" />
+          <input type="text" id="delete-confirm" name="deleteConfirm" placeholder="print DELETE co confirm" required aria-required="true" />
           <button type="submit" class="button button--danger">Delete Account</button>
           <button type="button" id="cancel-delete" class="button button--secondary">Cancel</button>
         </form>
+      -->
+      <form id="delete-account-form" action="javascript:void(0)" novalidate>
+        <label for="delete-email">Email</label>
+        <input type="email" id="delete-email" name="deleteEmail" placeholder="Enter your email" required />
+      
+        <label for="delete-password">Current Password</label>
+        <input type="password" id="delete-password" name="deletePassword" placeholder="Enter your current password" required />
+      
+        <label for="confirm-delete-password">Confirm Password</label>
+        <input type="password" id="confirm-delete-password" name="confirmDeletePassword" placeholder="Re-enter your current password" required />
+      
+        <label for="delete-confirm">Please type <strong>DELETE</strong> to confirm:</label>
+        <input 
+          type="text" 
+          id="delete-confirm" 
+          name="deleteConfirm" 
+          placeholder="Type DELETE to confirm" 
+          pattern="DELETE" 
+          title="You must type DELETE exactly to confirm account deletion." 
+          required 
+          aria-required="true" />
+      
+        <button type="submit" class="button button--danger">Delete Account</button>
+        <button type="button" id="cancel-delete" class="button button--secondary">Cancel</button>
+      </form>
       </div>
     </div>
   </section>
@@ -510,11 +536,15 @@ if (deleteForm) {
       alert("Email and password are required.");
       return;
     }
+    if (confirmPassword === "") {
+      alert("Please, confirm your password.");
+      return;
+    }
     if (password !== confirmPassword) {
       alert("Passwords do not match.");
       return;
     }
-    if (deleteConfirm.toUpperCase() !== "DELETE") {
+    if (deleteConfirm !== "DELETE") {
       alert("You must type DELETE exactly to confirm account deletion.");
       return;
     }
@@ -548,6 +578,7 @@ if (deleteForm) {
 } else {
   console.error("Delete account form not found in the DOM!");
 }
+
 </script>
 
 {% endblock %}
