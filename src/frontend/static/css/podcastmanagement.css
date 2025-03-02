@@ -431,6 +431,34 @@ body {
   color: #e74c3c;
 }
 
+/* New style for select button in popup */
+.select-btn {
+  background: rgba(76, 175, 80, 0.1);
+  border: none;
+  padding: var(--spacing-sm) var(--spacing-md);
+  border-radius: var(--radius-small);
+  cursor: pointer;
+  box-shadow: -2px -2px 4px var(--light-shadow-light),
+    2px 2px 4px var(--dark-shadow-light);
+  transition: background-color 0.2s ease, transform 0.2s ease;
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: #4caf50;
+  margin-right: 10px; /* spacing between buttons */
+}
+
+.select-btn:hover {
+  background-color: rgba(76, 175, 80, 0.15);
+  transform: translateY(-2px);
+  color: #4caf50;
+}
+
+/* Optional: For grouping the two action buttons */
+.action-buttons {
+  display: inline-flex;
+  align-items: center;
+}
+
 /* Popup Header */
 .popup-content h2 {
   color: var(--text-color-light);

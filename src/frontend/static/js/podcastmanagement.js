@@ -4,7 +4,7 @@ import {
   fetchPodcast,
   updatePodcast,
   deletePodcast
-} from "{{ url_for('static', filename='requests/podcastRequest.js') }}";
+} from "../requests/podcastRequest.js";
 
 document.addEventListener("DOMContentLoaded", function () {
   console.log("DOM fully loaded and parsed");
@@ -12,6 +12,7 @@ document.addEventListener("DOMContentLoaded", function () {
   const formContainer = document.querySelector(".form-box");
   const podcastsContainer = document.querySelector(".podcasts-container");
   const form = document.getElementById("register-podcast-form");
+  let selectedPodcastId = null;
 
   form.addEventListener("submit", async function (e) {
     e.preventDefault();
@@ -89,7 +90,13 @@ document.addEventListener("DOMContentLoaded", function () {
     });
 
     try {
-      const responseData = await addPodcast(data);
+      let responseData;
+      if (selectedPodcastId) {
+        responseData = await updatePodcast(selectedPodcastId, data);
+      } else {
+        responseData = await addPodcast(data);
+      }
+
       if (responseData.error) {
         showAlert(
           `Error: ${
@@ -100,7 +107,12 @@ document.addEventListener("DOMContentLoaded", function () {
           "red"
         );
       } else {
-        showAlert("Podcast added successfully!", "green");
+        showAlert(
+          selectedPodcastId
+            ? "Podcast updated successfully!"
+            : "Podcast added successfully!",
+          "green"
+        );
         setTimeout(
           () => (window.location.href = responseData.redirect_url),
           2500
@@ -108,7 +120,12 @@ document.addEventListener("DOMContentLoaded", function () {
       }
     } catch (error) {
       console.error("Error:", error);
-      showAlert("There was an error with the registration process.", "red");
+      showAlert(
+        selectedPodcastId
+          ? "There was an error with the update process."
+          : "There was an error with the registration process.",
+        "red"
+      );
     }
   });
 
@@ -143,7 +160,10 @@ document.addEventListener("DOMContentLoaded", function () {
           podcastItem.className = "podcast-item";
           podcastItem.innerHTML = `
             <span>${podcast.podName}</span>
-            <input type="checkbox" id="podcast-${podcast._id}" value="${podcast._id}">
+            <div class="action-buttons">
+              <button class="select-btn" data-id="${podcast._id}">Select</button>
+              <button class="delete-btn" data-id="${podcast._id}">Delete</button>
+            </div>
           `;
           podcastsList.appendChild(podcastItem);
         });
@@ -151,36 +171,91 @@ document.addEventListener("DOMContentLoaded", function () {
         // Show popup
         const popup = document.getElementById("podcasts-popup");
         popup.style.display = "flex";
+
+        // Add event listeners for select and delete buttons
+        document.querySelectorAll(".select-btn").forEach((button) => {
+          button.addEventListener("click", async (e) => {
+            const podcastId = e.target.getAttribute("data-id");
+            try {
+              const podcast = await fetchPodcast(podcastId);
+              console.log("Fetched Podcast:", podcast);
+              displayPodcastDetails(podcast.podcast);
+              selectedPodcastId = podcastId;
+              document.querySelector(".invite-btn").textContent = "UPDATE";
+            } catch (error) {
+              console.error("Error fetching podcast (ignored):", error);
+              // Do not show error alert for this operation.
+            }
+            const popup = document.getElementById("podcasts-popup");
+            popup.style.display = "none";
+          });
+        });
+
+        document.querySelectorAll(".delete-btn").forEach((button) => {
+          button.addEventListener("click", async (e) => {
+            const podcastId = e.target.getAttribute("data-id");
+            try {
+              await deletePodcast(podcastId);
+              showAlert("Deleted podcast successfully!", "green");
+              e.target.parentElement.remove();
+            } catch (error) {
+              showAlert("Failed to delete podcast.", "red");
+            }
+          });
+        });
       } catch (error) {
         showAlert("Failed to fetch podcasts.", "red");
       }
     });
 
   function displayPodcastDetails(podcast) {
-    // Populate form with podcast details
-    document.getElementById("pod-name").value = podcast.podName || "";
-    document.getElementById("pod-owner").value = podcast.ownerName || "";
-    document.getElementById("pod-host").value = podcast.hostName || "";
-    document.getElementById("pod-rss").value = podcast.rssFeed || "";
-    document.getElementById("google-cal").value = podcast.googleCal || "";
-    document.getElementById("guest-form-url").value = podcast.guestUrl || "";
-    document.getElementById("email").value = podcast.email || "";
-    document.getElementById("description").value = podcast.description || "";
-    document.getElementById("category").value = podcast.category || "";
-    document.getElementById("facebook").value = podcast.socialMedia[0] || "";
-    document.getElementById("instagram").value = podcast.socialMedia[1] || "";
-    document.getElementById("linkedin").value = podcast.socialMedia[2] || "";
-    document.getElementById("twitter").value = podcast.socialMedia[3] || "";
-    document.getElementById("tiktok").value = podcast.socialMedia[4] || "";
-    document.getElementById("pinterest").value = podcast.socialMedia[5] || "";
+    const podNameEl = document.getElementById("pod-name");
+    if (podNameEl) podNameEl.value = podcast.podName || "";
 
-    // Show form container and hide podcasts container
+    const podOwnerEl = document.getElementById("pod-owner");
+    if (podOwnerEl) podOwnerEl.value = podcast.ownerName || "";
+
+    const podHostEl = document.getElementById("pod-host");
+    if (podHostEl) podHostEl.value = podcast.hostName || "";
+
+    const podRssEl = document.getElementById("pod-rss");
+    if (podRssEl) podRssEl.value = podcast.rssFeed || "";
+
+    const googleCalEl = document.getElementById("google-cal");
+    if (googleCalEl) googleCalEl.value = podcast.googleCal || "";
+
+    const guestFormUrlEl = document.getElementById("guest-form-url");
+    if (guestFormUrlEl) guestFormUrlEl.value = podcast.guestUrl || "";
+
+    const emailEl = document.getElementById("email");
+    if (emailEl) emailEl.value = podcast.email || "";
+
+    const descriptionEl = document.getElementById("description");
+    if (descriptionEl) descriptionEl.value = podcast.description || "";
+
+    const categoryEl = document.getElementById("category");
+    if (categoryEl) categoryEl.value = podcast.category || "";
+
+    const facebookEl = document.getElementById("facebook");
+    if (facebookEl) facebookEl.value = podcast.socialMedia?.[0] || "";
+
+    const instagramEl = document.getElementById("instagram");
+    if (instagramEl) instagramEl.value = podcast.socialMedia?.[1] || "";
+
+    const linkedinEl = document.getElementById("linkedin");
+    if (linkedinEl) linkedinEl.value = podcast.socialMedia?.[2] || "";
+
+    const twitterEl = document.getElementById("twitter");
+    if (twitterEl) twitterEl.value = podcast.socialMedia?.[3] || "";
+
+    const tiktokEl = document.getElementById("tiktok");
+    if (tiktokEl) tiktokEl.value = podcast.socialMedia?.[4] || "";
+
+    const pinterestEl = document.getElementById("pinterest");
+    if (pinterestEl) pinterestEl.value = podcast.socialMedia?.[5] || "";
+
     formContainer.style.display = "block";
-    podcastsContainer.style.display = "none";
-
-    // Hide popup
-    const popup = document.getElementById("podcasts-popup");
-    popup.style.display = "none";
+    document.getElementById("podcasts-popup").style.display = "none";
   }
 
   document
@@ -192,6 +267,8 @@ document.addEventListener("DOMContentLoaded", function () {
           const podcast = await fetchPodcast(podcastId);
           console.log("Fetched Podcast:", podcast);
           displayPodcastDetails(podcast.podcast);
+          selectedPodcastId = podcastId;
+          document.querySelector(".invite-btn").textContent = "UPDATE";
         } catch (error) {
           showAlert("Failed to fetch podcast.", "red");
         }
@@ -267,6 +344,9 @@ document.addEventListener("DOMContentLoaded", function () {
   container.insertAdjacentHTML(
     "afterbegin",
     `
+    <a href="${url_for(
+      "dashboard_bp.dashboard"
+    )}" class="back-arrow">&#8592; Back</a>
     <div class="crud-buttons">
       <button id="fetch-podcasts-btn" class="crud-btn">Fetch All Podcasts</button>
       <button id="fetch-podcast-btn" class="crud-btn">Fetch Podcast by ID</button>
