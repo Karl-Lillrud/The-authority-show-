@@ -253,3 +253,19 @@ input[type="password"]:-webkit-autofill {
 .dark-mode .modal-content {
   background-color: var(--card-bg-dark);
 }
+
+.modal .button {
+  padding: 12px 24px;
+  background-color: var(--primary);
+  color: white;
+  border: none;
+  border-radius: 4px;
+  font-size: 16px;
+  cursor: pointer;
+  transition: background-color 0.3s;
+  margin-top: 20px;
+}
+
+.modal .button:hover {
+  background-color: var(--primary-hover);
+}
