@@ -8,7 +8,6 @@ document.addEventListener("DOMContentLoaded", function () {
     const darkModeToggle = document.getElementById("dark-mode-toggle");
     const addTeamMemberButton = document.getElementById("addTeamMember");
     const teamMembersContainer = document.getElementById("teamMembersContainer");
-    const googleCalendarButton = document.getElementById("googleCalendar");
     const skipToDashboard = document.getElementById("skipToDashboard");
     const goToEmailSection = document.getElementById("goToEmailSection");
 
@@ -85,27 +84,6 @@ document.addEventListener("DOMContentLoaded", function () {
       });
     }
 
-    if (emailForm) {
-      emailForm.addEventListener("submit", async (event) => {
-        event.preventDefault();
-        const emailSubject = document.getElementById("emailSubject").value.trim();
-        const emailBody = document.getElementById("emailBody").value.trim();
-
-        if (!emailSubject || !emailBody) {
-          alert("Please enter both subject and body.");
-          return;
-        }
-
-        try {
-          await sendEmail(emailSubject, emailBody);
-          alert("Email sent successfully!");
-        } catch (error) {
-          console.error("Error sending email:", error);
-          alert("Something went wrong. Please try again.");
-        }
-      });
-    }
-
     // Fix Dark Mode Toggle
     if (darkModeToggle) {
       darkModeToggle.addEventListener("click", () => {
@@ -138,34 +116,6 @@ document.addEventListener("DOMContentLoaded", function () {
         `;
         teamMembersContainer.appendChild(newMember);
       });
-    }
-
-    // Handle Google Calendar connection
-    console.log("Checking for Google Calendar button");
-    console.log("googleCalendarButton:", googleCalendarButton);
-    if (googleCalendarButton) {
-      console.log("Google Calendar button found");
-      googleCalendarButton.addEventListener("click", () => {
-        console.log("Google Calendar button clicked");
-        const hostEmailElement = document.querySelector(".team-email"); // Fetch the email entered by the host
-        if (hostEmailElement) {
-          const hostEmail = hostEmailElement.value;
-          console.log("Host email:", hostEmail);
-          if (hostEmail.endsWith("@gmail.com")) {
-            console.log("Redirecting to Google Calendar OAuth2 connection");
-            const oauth2Url = `https://accounts.google.com/o/oauth2/auth?client_id=YOUR_CLIENT_ID&redirect_uri=YOUR_REDIRECT_URI&response_type=code&scope=https://www.googleapis.com/auth/calendar`;
-            window.open(oauth2Url, "_blank"); // Open Google Calendar OAuth2 in a new tab
-          } else {
-            alert(
-              "Google Calendar integration is only available for Gmail accounts."
-            );
-          }
-        } else {
-          alert("Host email element not found.");
-        }
-      });
-    } else {
-      console.error("Google Calendar button not found");
     }
 
     if (skipToDashboard) {
@@ -232,8 +182,16 @@ async function sendInvitations() {
         email
       )}&name=${encodeURIComponent(name)}&role=${encodeURIComponent(role)}`;
       const subject = `Join the ${podName} team`;
-      const body = `Hi ${name}!\n\nYou are hereby invited by PodManager.ai to join the team of ${podName}.\n\nClick here to join the team: <a href="${joinLink}">${joinLink}</a>\n\nWelcome to PodManager.ai!`;
-      await sendInvitation(email, subject, body);
+      try {
+        const response = await fetch('/beta-email/podmanager-beta-invite.html');
+        if (!response.ok) {
+          throw new Error('Network response was not ok');
+        }
+        const body = await response.text();
+        await sendInvitation(email, subject, body);
+      } catch (error) {
+        console.error("Error fetching invitation template:", error);
+      }
     }
   }
 }
