@@ -1,6 +1,5 @@
-{% extends "dashboard/components/base.html" %}
-{% block title %}Podcast Task Management{% endblock %}
-{% block content %}
+{% extends "dashboard/components/base.html" %} {% block title %}Podcast Task
+Management{% endblock %} {% block content %}
 <link
   rel="stylesheet"
   href="{{ url_for('static', filename='css/settings.css') }}"
@@ -188,96 +187,56 @@
             </div>
           </div>
         </div>
-    
-        <!-- Right Column: Billing & Payment -->
+     
+        <!-- Right Column: Billing & Payment-->
         <div class="billing-section">
           <h2 class="header-title">Billing & Payment</h2>
     
           <form id="subscription-form">
-            <!-- Primary CTA Button -->
-            <button class="primary-cta">Save Subscription</button>
-    
+             <!--Primary CTA Button--> 
+            <button class="primary-cta">Save Subscription</button>   
+
             <div class="payment-methods">
-              <button class="payment-button primary">Add Payment Method</button>
-              <button class="payment-button secondary">Update Payment Method</button>
-              <button class="payment-button danger">Remove Payment Method</button>
+              <button id="btn-add-payment" class="payment-button primary">Add Payment Method</button>
+              <button id="btn-update-payment" class="payment-button secondary">Update Payment Method</button>
+              <button id="btn-remove-payment" class="payment-button danger">Remove Payment Method</button>
+              <select id="payment-methods-dropdown"></select>
             </div>
           </form>
         </div>
       </div>
-    </div>
-
+    </div>  
+        
     <!-- DELETE ACCOUNT SECTION (Initially Hidden) -->
-    <div id="delete-account-section" class="settings-section" style="display: none">
-      <div class="profile-container">
+    <div id="delete-section" class="settings-section" style="display: none">
+      <div class="delete-account-container">
         <h2>Delete Account</h2>
         <p style="color: red;">
-          This action cannot be undone. Once you delete your account,
-          all associated data will be permanently removed.
+          This action cannot be undone. Once you delete your account, all associated data will be permanently removed.
         </p>
-        
-        <!-- DELETE ACCOUNT FORM -->
-        <form id="delete-account-form" novalidate>
-          <!-- Email -->
+        <!-- Set action to javascript:void(0) to prevent default submission -->
+        <form id="delete-account-form" action="javascript:void(0)" novalidate>
           <label for="delete-email">Email</label>
-          <input
-            type="email"
-            id="delete-email"
-            name="deleteEmail"
-            placeholder="Enter your email"
-            required
-          />
-
-          <!-- Current Password -->
+          <input type="email" id="delete-email" name="deleteEmail" placeholder="Enter your email" required />
           <label for="delete-password">Current Password</label>
-          <input
-            type="password"
-            id="delete-password"
-            name="deletePassword"
-            placeholder="Enter your current password"
-            required
-          />
-
-          <!-- Confirm Password -->
+          <input type="password" id="delete-password" name="deletePassword" placeholder="Enter your current password" required />
           <label for="confirm-delete-password">Confirm Password</label>
-          <input
-            type="password"
-            id="confirm-delete-password"
-            name="confirmDeletePassword"
-            placeholder="Re-enter your current password"
-            required
-          />
-
-          <!-- Type "DELETE" to confirm -->
-          <label for="delete-confirm">
-            Please type <strong>DELETE</strong> to confirm:
-          </label>
-          <input
-            type="text"
-            id="delete-confirm"
-            name="deleteConfirm"
-            placeholder="DELETE"
-            required
-            aria-required="true"
-          />
-
-          <!-- DELETE & CANCEL ACTIONS -->
-          <button type="submit" class="button button--danger">
-            Delete Account
-          </button>
-          <button type="button" id="cancel-delete" class="button button--secondary">
-            Cancel
-          </button>
+          <input type="password" id="confirm-delete-password" name="confirmDeletePassword" placeholder="Re-enter your current password" required />
+          <label for="delete-confirm">Please type <strong>DELETE</strong> to confirm:</label>
+          <input type="text" id="delete-confirm" name="deleteConfirm" placeholder="DELETE" required aria-required="true" />
+          <button type="submit" class="button button--danger">Delete Account</button>
+          <button type="button" id="cancel-delete" class="button button--secondary">Cancel</button>
         </form>
       </div>
     </div>
   </section>
-</div>    
+</div>
 
 <!-- Include QRCode library -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 
 <script>
+  console.log("DEBUG: Delete-section script loaded");
   // Sidebar navigation functionality
   document.querySelectorAll(".sidebar-item").forEach((item) => {
     item.addEventListener("click", function () {
@@ -394,7 +353,7 @@
   let paymentMethods = [];
   function updatePaymentMethodsDisplay() {
     const dropdown = document.getElementById("payment-methods-dropdown");
-    dropdown.innerHTML = "";
+        dropdown.innerHTML = "";
     if (paymentMethods.length === 0) {
       const opt = document.createElement("option");
       opt.value = "";
@@ -522,6 +481,73 @@
         updatePaymentMethodsDisplay();
       }
     });
-  updatePaymentMethodsDisplay();
+  updatePaymentMethodsDisplay();  
+  
+//  DELETE ACCOUNT Functionality 
+// Cancel button event listener
+const cancelButton = document.getElementById("cancel-delete");
+if (cancelButton) {
+  cancelButton.addEventListener("click", function () {
+    window.location.href = "/settings";
+  });
+} else {
+  console.error("Cancel button not found in the DOM!");
+}
+
+// DELETE ACCOUNT: Validate inputs and send DELETE request to /delete_user
+const deleteForm = document.getElementById("delete-account-form");
+if (deleteForm) {
+  deleteForm.addEventListener("submit", function (event) {
+    event.preventDefault();
+
+    const email = document.getElementById("delete-email").value.trim();
+    const password = document.getElementById("delete-password").value;
+    const confirmPassword = document.getElementById("confirm-delete-password").value;
+    const deleteConfirm = document.getElementById("delete-confirm").value.trim();
+
+    // Basic client-side validation
+    if (!email || !password) {
+      alert("Email and password are required.");
+      return;
+    }
+    if (password !== confirmPassword) {
+      alert("Passwords do not match.");
+      return;
+    }
+    if (deleteConfirm.toUpperCase() !== "DELETE") {
+      alert("You must type DELETE exactly to confirm account deletion.");
+      return;
+    }
+
+    const payload = {
+      deleteEmail: email,
+      deletePassword: password,
+      deleteConfirm: deleteConfirm
+    };
+
+    fetch(`/delete_user`, {
+      method: "DELETE",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload)
+    })
+      .then(response => response.json().then(data => ({ status: response.status, data })))
+      .then(result => {
+        if (result.status === 200) {
+          alert(result.data.message);
+          // Redirect to login page on successful deletion
+          window.location.href = result.data.redirect;
+        } else {
+          alert("Error deleting account: " + result.data.error);
+        }
+      })
+      .catch(error => {
+        console.error("Error during deletion:", error);
+        alert("An error occurred while deleting your account.");
+      });
+  });
+} else {
+  console.error("Delete account form not found in the DOM!");
+}
 </script>
+
 {% endblock %}
