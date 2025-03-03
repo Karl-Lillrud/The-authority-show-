@@ -39,6 +39,7 @@ def add_guest():
 
         guest_item = {
             "_id": guest_id,
+            "id": guest_id,  # Assigned generated guest_id to id field
             "podcastId": guest_data["podcastId"],
             "name": guest_data["name"].strip(),
             "image": guest_data.get("image", ""),
@@ -67,6 +68,7 @@ def add_guest():
     except Exception as e:
         print(f"❌ ERROR: {e}")
         return jsonify({"error": f"Failed to add guest: {str(e)}"}), 500
+
 
 
 @guest_bp.route("/get_guests", methods=["GET"])
