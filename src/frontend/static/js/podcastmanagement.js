@@ -622,17 +622,176 @@ document
   .getElementById("fetch-podcasts-btn")
   .addEventListener("click", renderPodcastList);
 
+// Update viewPodcast to use the new detail layout
 async function viewPodcast(podcastId) {
   try {
     const response = await fetchPodcast(podcastId);
-    // Assuming your API returns the podcast in response.podcast
-    const podcast = response.podcast;
-    // Use your pre-existing function to pre-populate the form fields
-    displayPodcastDetails(podcast);
-    // Show the form with details and hide the podcast list
-    document.querySelector(".form-box").style.display = "block";
+    const podcast = response.podcast; // assuming API returns it here
+    renderPodcastDetail(podcast);
     document.getElementById("podcast-list").style.display = "none";
+    document.getElementById("podcast-detail").style.display = "block";
   } catch (error) {
     showAlert("Podcast not found", "red");
   }
+}
+
+// New function: renders the podcast detail view using your design
+function renderPodcastDetail(podcast) {
+  const podcastDetailElement = document.getElementById("podcast-detail");
+  podcastDetailElement.innerHTML = `
+    <div class="detail-header">
+      <button class="back-btn" id="back-to-list">
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="m12 19-7-7 7-7"></path>
+          <path d="M19 12H5"></path>
+        </svg>
+        Back to podcasts
+      </button>
+    </div>
+    <div class="detail-content">
+      <div class="detail-image" style="background-image: url('${
+        podcast.logoUrl
+      }')"></div>
+      <div class="detail-info">
+        <h1 class="detail-title">${podcast.podName}</h1>
+        <p class="detail-category">${podcast.category}</p>
+        <div class="detail-section">
+          <h2>About</h2>
+          <p>${podcast.description || "No description available."}</p>
+        </div>
+        <div class="separator"></div>
+        <div class="detail-grid">
+          <div class="detail-item">
+            <h3>Podcast Owner</h3>
+            <p>${podcast.ownerName || "Not specified"}</p>
+          </div>
+          <div class="detail-item">
+            <h3>Host(s)</h3>
+            <p>${podcast.hostName || "Not specified"}</p>
+          </div>
+          <div class="detail-item">
+            <h3>Email Address</h3>
+            <p>${podcast.email || "Not specified"}</p>
+          </div>
+          <div class="detail-item">
+            <h3>RSS Feed</h3>
+            ${
+              podcast.rssFeed
+                ? `<a href="${podcast.rssFeed}" target="_blank">${podcast.rssFeed}</a>`
+                : "<p>Not specified</p>"
+            }
+          </div>
+        </div>
+        <div class="separator"></div>
+        <div class="detail-section">
+          <h2>Scheduling</h2>
+          <div class="detail-grid">
+            <div class="detail-item">
+              <h3>Google Calendar</h3>
+              ${
+                podcast.googleCal
+                  ? `
+                <a href="${podcast.googleCal}" target="_blank" style="display: flex; align-items: center; gap: 0.5rem;">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <rect width="18" height="18" x="3" y="4" rx="2" ry="2"></rect>
+                    <line x1="16" x2="16" y1="2" y2="6"></line>
+                    <line x1="8" x2="8" y1="2" y2="6"></line>
+                    <line x1="3" x2="21" y1="10" y2="10"></line>
+                  </svg>
+                  Calendar Link
+                </a>`
+                  : `
+                <p style="display: flex; align-items: center; gap: 0.5rem;">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <rect width="18" height="18" x="3" y="4" rx="2" ry="2"></rect>
+                    <line x1="16" x2="16" y1="2" y2="6"></line>
+                    <line x1="8" x2="8" y1="2" y2="6"></line>
+                    <line x1="3" x2="21" y1="10" y2="10"></line>
+                  </svg>
+                  Not connected
+                </p>`
+              }
+            </div>
+            <div class="detail-item">
+              <h3>Calendar URL</h3>
+              <p>podmanager.com/?pod=${podcast.podName.replace(/\s+/g, "")}</p>
+            </div>
+            <div class="detail-item">
+              <h3>Guest Form URL</h3>
+              ${
+                podcast.guestUrl
+                  ? `<a href="${podcast.guestUrl}" target="_blank">${podcast.guestUrl}</a>`
+                  : "<p>Not specified</p>"
+              }
+            </div>
+          </div>
+        </div>
+        <div class="separator"></div>
+        <div class="detail-section">
+          <h2>Social Media</h2>
+          <div class="social-links">
+            ${
+              podcast.socialMedia && podcast.socialMedia[0]
+                ? `<a href="${podcast.socialMedia[0]}" target="_blank" class="social-link">
+              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"></path>
+              </svg>
+              Facebook
+            </a>`
+                : ""
+            }
+            ${
+              podcast.socialMedia && podcast.socialMedia[1]
+                ? `<a href="${podcast.socialMedia[1]}" target="_blank" class="social-link">
+              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <rect width="20" height="20" x="2" y="2" rx="5" ry="5"></rect>
+                <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path>
+                <line x1="17.5" x2="17.51" y1="6.5" y2="6.5"></line>
+              </svg>
+              Instagram
+            </a>`
+                : ""
+            }
+            ${
+              podcast.socialMedia && podcast.socialMedia[2]
+                ? `<a href="${podcast.socialMedia[2]}" target="_blank" class="social-link">
+              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"></path>
+                <rect width="4" height="12" x="2" y="9"></rect>
+                <circle cx="4" cy="4" r="2"></circle>
+              </svg>
+              LinkedIn
+            </a>`
+                : ""
+            }
+            ${
+              podcast.socialMedia && podcast.socialMedia[3]
+                ? `<a href="${podcast.socialMedia[3]}" target="_blank" class="social-link">
+              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M22 4s-.7 2.1-2 3.4c1.6 10-9.4 17.3-18 11.6 2.2.1 4.4-.6 6-2C3 15.5.5 9.6 3 5c2.2 2.6 5.6 4.1 9 4-.9-4.2 4-6.6 7-3.8 1.1 0 3-1.2 3-1.2z"></path>
+              </svg>
+              Twitter
+            </a>`
+                : ""
+            }
+            ${
+              podcast.socialMedia && podcast.socialMedia[4]
+                ? `<a href="${podcast.socialMedia[4]}" target="_blank" class="social-link">
+              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M22 4s-.7 2.1-2 3.4c1.6 10-9.4 17.3-18 11.6 2.2.1 4.4-.6 6-2C3 15.5.5 9.6 3 5c2.2 2.6 5.6 4.1 9 4-.9-4.2 4-6.6 7-3.8 1.1 0 3-1.2 3-1.2z"></path>
+              </svg>
+              TikTok
+            </a>`
+                : ""
+            }
+          </div>
+        </div>
+      </div>
+    </div>
+  `;
+
+  document.getElementById("back-to-list").addEventListener("click", () => {
+    document.getElementById("podcast-detail").style.display = "none";
+    document.getElementById("podcast-list").style.display = "flex";
+  });
 }
