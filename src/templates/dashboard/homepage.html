@@ -1,0 +1,56 @@
+
+<link rel="stylesheet" href="{{ url_for('static', filename='css/homepage.css') }}">
+<header>
+    <h1> Your Podcasts:</h1>
+</header>
+<div class="container" id="podcast-list">
+    <!-- Dynamically populated podcasts -->
+</div>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        fetch("/get_user_podcasts")
+            .then(response => response.json())
+            .then(data => {
+                const podcastList = document.getElementById("podcast-list");
+    
+                //Kolla om API:t returnerar "redirect"
+                // if (data.redirect) {
+                //     // Endast en podd → gå direkt till dashboard
+                //     window.location.href = data.redirect;
+                //     return;
+                // }
+                // ^^ fungerar inte temporär lösning nedan
+                if (data.redirect) {
+                    console.log("redirecting to dashboard");
+                    return;
+                }
+    
+                // Kolla om vi fick ett "message" (t.ex. "You have no active...")
+                if (data.message) {
+                    podcastList.innerHTML = `<p>${data.message}</p>`;
+                    return;
+                }
+    
+                // Annars förväntar vi oss en lista av poddar
+                podcastList.innerHTML = "";
+                data.forEach(podcast => {
+                    let podcastCard = document.createElement("div");
+                    podcastCard.classList.add("card");
+                    
+                    // Du kan byta 'podcast._id' till det ID som din DB sätter
+                    // Samma sak med 'podcast.podName' (eller vad du använder)
+                    podcastCard.innerHTML = `
+                        <a href="/dashboard?podcast_id=${podcast._id}"
+                           onclick="window.parent.document.getElementById('homepage-popup').style.display='none';">
+                            <img src="${podcast.image_url || '/static/img/default.png'}" alt="${podcast.podName || 'Podcast'}">
+                        </a>
+                        <p class="episode-count">${podcast.open_episodes || 0} Open Episodes</p>
+                    `;
+    
+                    podcastList.appendChild(podcastCard);
+                });
+            })
+            .catch(error => console.error("Error loading podcasts:", error));
+    });
+</script>
