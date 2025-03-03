@@ -5,56 +5,20 @@ from backend.database.mongo_connection import collection
 from marshmallow import ValidationError
 from backend.database.mongo_connection import collection
 from backend.models.accounts import AccountSchema  # Make sure to import the schema
+from backend.services.accountsService import (
+    create_account,
+)  # Import the create_account function from the service
 
 # Define Blueprint
 account_bp = Blueprint("account_bp", __name__)
 
 
 @account_bp.route("/create_account", methods=["POST"])
-def create_account():
+def create_account_route():
     try:
         data = request.get_json()
-
-        user_id = data[
-            "userId"
-        ]  # This would be the userId from the registration process
-        subscription_id = str(uuid.uuid4())  # Generate a unique subscription ID
-        email = data["email"]
-        company_name = data.get("companyName", "")
-        is_company = data.get("isCompany", False)
-
-        # Generate unique account ID (string UUID)
-        account_id = str(uuid.uuid4())
-
-        # Create the account document (set '_id' to string UUID)
-        account_document = {
-            "_id": account_id,  # Explicitly set '_id' to string UUID
-            "userId": user_id,  # Associate with the user ID
-            "subscriptionId": subscription_id,
-            "email": email,
-            "isCompany": is_company,
-            "companyName": company_name,
-            "paymentInfo": "",  # This would be set once payment info is available
-            "subscriptionStatus": "active",
-            "createdAt": datetime.utcnow().isoformat(),
-            "referralBonus": 0,
-            "subscriptionStart": datetime.utcnow().isoformat(),
-            "subscriptionEnd": "",
-            "isActive": True,
-        }
-
-        # Insert account into the Accounts collection (with custom _id)
-        collection.database.Accounts.insert_one(account_document)
-
-        return (
-            jsonify(
-                {
-                    "message": "Account created successfully",
-                    "accountId": account_document["_id"],
-                }
-            ),
-            201,
-        )
+        response, status_code = create_account(data)
+        return jsonify(response), status_code
 
     except Exception as e:
         print(f"❌ ERROR: {e}")

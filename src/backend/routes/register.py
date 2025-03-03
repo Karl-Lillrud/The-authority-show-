@@ -3,8 +3,8 @@ from werkzeug.security import generate_password_hash
 from dotenv import load_dotenv
 from datetime import datetime
 import uuid
-import requests
 from backend.database.mongo_connection import collection
+from backend.services.accountsService import create_account  # Correct the import path
 
 register_bp = Blueprint("register_bp", __name__)
 
@@ -67,26 +67,20 @@ def register():
             "ownerId": user_id,  # Set ownerId to user_id
         }
 
-        # Make a POST request to the /create_account endpoint in account.py
-        account_response = requests.post(
-            "http://127.0.0.1:8000/create_account", json=account_data
-        )
+        # Directly call the create_account function
+        account_response, status_code = create_account(account_data)
 
         # Check if account creation was successful
-        if account_response.status_code != 201:
+        if status_code != 201:
             return (
                 jsonify(
-                    {
-                        "error": "Failed to create account",
-                        "details": account_response.json(),
-                    }
+                    {"error": "Failed to create account", "details": account_response}
                 ),
                 500,
             )
 
         # Get the account ID from the response of the account creation
-        account_data = account_response.json()
-        account_id = account_data["accountId"]
+        account_id = account_response["accountId"]
 
         print("✅ Registration successful!")
         return (
