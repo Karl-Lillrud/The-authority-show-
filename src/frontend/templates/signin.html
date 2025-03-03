@@ -10,7 +10,7 @@
     <!-- Logo -->
     <div class="logo-container">
       <img
-        src="https://podmanagerstorage.blob.core.windows.net/blob-container/PodManagerLogo.png"
+        src="{{ url_for('static', filename='images/PodManagerLogo.png') }}"
         alt="PodManager Logo"
       />
     </div>
@@ -113,3 +113,4 @@
     </script>
   </body>
 </html>
+

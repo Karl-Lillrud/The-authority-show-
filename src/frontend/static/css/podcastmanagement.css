@@ -1,305 +1,605 @@
-/* 
 :root {
-    --background-light: #EFF2F9;
-    --light-shadow-light: #FFFFFF;
-    --dark-shadow-light: rgba(22, 24, 29, 0.23);
+  --background-light: #eff2f9;
+  --light-shadow-light: #ffffff;
+  --dark-shadow-light: rgba(22, 24, 29, 0.23);
 
-    --text-color-light: #6E7F8D;
-    --highlight-color: #FF7F3F;
-    --success-color: #4CAF50;
+  --text-color-light: #6e7f8d;
+  --highlight-color: #ff7f3f;
+  --success-color: #4caf50;
 
-    --font-primary: 'Arial', sans-serif;
+  --font-primary: "Arial", sans-serif;
 
-    --spacing-sm: 8px;
-    --spacing-md: 16px;
-    --spacing-lg: 24px;
+  --spacing-sm: 8px;
+  --spacing-md: 16px;
+  --spacing-lg: 24px;
 
-    --radius-small: 5px;
-    --radius-medium: 10px;
-    --radius-large: 12px;
-  }
+  --radius-small: 5px;
+  --radius-medium: 10px;
+  --radius-large: 12px;
+}
 
-  html, body {
-    height: 100%;
-    margin: 0;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    background-color: var(--background-light);
-    font-family: var(--font-primary);
-    color: var(--text-color-light);
-  }
-*/
-  .pod-logo {
-    width: 150px;
-    height: 155px;
-    object-fit: cover;
-    border-radius: var(--radius-small);
-    box-shadow:
-      inset -2px -2px 4px var(--light-shadow-light),
-      inset 2px 2px 4px var(--dark-shadow-light);
-    margin-bottom: 15px;
-  }
+html,
+body {
+  height: 100%;
+  margin: 0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background-color: var(--background-light);
+  font-family: var(--font-primary);
+  color: var(--text-color-light);
+}
 
-  .container {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    width: 100%;
-    min-height: 100vh; /* Changed from height: 100vh */
-    padding-top: 50px;
-    padding-bottom: 50px;
-    box-sizing: border-box;
-  }
+.pod-logo {
+  width: 150px;
+  height: 155px;
+  object-fit: cover;
+  border-radius: var(--radius-small);
+  box-shadow: inset -2px -2px 4px var(--light-shadow-light),
+    inset 2px 2px 4px var(--dark-shadow-light);
+  margin-bottom: 15px;
+}
 
-  .back-arrow {
-    position: absolute;
-    top: 180px;
-    left: var(--spacing-md);
-    font-size: 0.9rem;
-    font-weight: bold;
-    text-decoration: none;
-    color: var(--text-color-light);
-    background: var(--background-light);
-    padding: var(--spacing-sm) var(--spacing-md);
-    border-radius: var(--radius-small);
-    box-shadow:
-      -3px -3px 6px var(--light-shadow-light),
-       3px 3px 6px var(--dark-shadow-light);
-    transition: background-color 0.3s ease, transform 0.3s ease;
-    z-index: 1000;
-  }
-  .back-arrow:hover {
-    transform: translateY(-3px);
-    background-color: rgba(255, 127, 63, 0.15);
-    color: var(--highlight-color);
-  }
+.container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+  min-height: 100vh; /* Changed from height: 100vh */
+  padding-top: 50px;
+  padding-bottom: 50px;
+  box-sizing: border-box;
+}
 
-  .form-box {
-    background: var(--background-light);
-    padding: var(--spacing-lg);
-    border-radius: var(--radius-large);
-    width: 550px;
-    box-shadow:
-      -8px -8px 16px var(--light-shadow-light),
-       8px 8px 16px var(--dark-shadow-light);
-    transition: box-shadow 0.3s ease;
-  }
-  .form-box:hover {
-    box-shadow:
-      -4px -4px 8px var(--light-shadow-light),
-       4px 4px 8px var(--dark-shadow-light);
-  }
+.back-arrow {
+  position: absolute;
+  top: 180px;
+  left: var(--spacing-md);
+  font-size: 0.9rem;
+  font-weight: bold;
+  text-decoration: none;
+  color: var(--text-color-light);
+  background: var(--background-light);
+  padding: var(--spacing-sm) var(--spacing-md);
+  border-radius: var(--radius-small);
+  box-shadow: -3px -3px 6px var(--light-shadow-light),
+    3px 3px 6px var(--dark-shadow-light);
+  transition: background-color 0.3s ease, transform 0.3s ease;
+  z-index: 1000;
+}
+.back-arrow:hover {
+  transform: translateY(-3px);
+  background-color: rgba(255, 127, 63, 0.15);
+  color: var(--highlight-color);
+}
 
-  .form-fields {
-    display: flex;
-    flex-direction: column;
-    width: 100%;
-  }
+.form-box {
+  background: var(--background-light);
+  padding: var(--spacing-lg);
+  border-radius: var(--radius-large);
+  width: 550px;
+  box-shadow: -8px -8px 16px var(--light-shadow-light),
+    8px 8px 16px var(--dark-shadow-light);
+  transition: box-shadow 0.3s ease;
+}
+.form-box:hover {
+  box-shadow: -4px -4px 8px var(--light-shadow-light),
+    4px 4px 8px var(--dark-shadow-light);
+}
 
-  /* Adjusted Field Groups in a column layout */
-  .field-group {
-    display: flex;
-    align-items: center;
-    margin-bottom: var(--spacing-sm);
-    width: 100%;
-  }
-  .field-group label {
-    width: 150px;
-    text-align: left;
-    font-weight: bold;
-    font-size: 0.9rem;
-    color: var(--text-color-light);
-  }
-  .field-group input,
-  .field-group select {
-    flex: 1;
-    padding: var(--spacing-sm);
-    border: none;
-    border-radius: var(--radius-small);
-    box-shadow:
-      inset -3px -3px 6px var(--light-shadow-light),
-      inset 3px 3px 6px var(--dark-shadow-light);
-    outline: none;
-    font-size: 0.9rem;
-    color: var(--text-color-light);
-    background: var(--background-light);
-    transition: background-color 0.3s ease, box-shadow 0.3s ease;
-  }
-  .field-group input:focus,
-  .field-group select:focus {
-    box-shadow:
-      inset 2px 2px 4px rgba(255,127,63,0.3),
-      inset -2px -2px 4px rgba(0,0,0,0.1);
-  }
-  /* Ensure buttons in field groups are on the right */
-  .field-group button {
-    margin-left: var(--spacing-sm);
-  }
+.form-fields {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+}
 
-  /* Inline Field (for Google Calendar Pick a Date URL) */
-  .inline-field {
-    display: flex;
-    align-items: center;
-    flex: 1;
-    border-radius: var(--radius-small);
-    box-shadow:
-      inset -3px -3px 6px var(--light-shadow-light),
-      inset 3px 3px 6px var(--dark-shadow-light);
-    background: var(--background-light);
-    padding: var(--spacing-sm);
-    font-size: 0.85rem;
-    color: var(--text-color-light);
-  }
-  .inline-field:hover {
-    background-color: rgba(255,127,63,0.06);
-  }
-  .inline-field span {
-    flex: 1;
-  }
-  .inline-field button {
-    margin-left: var(--spacing-sm);
-  }
+/* Adjusted Field Groups in a column layout */
+.field-group {
+  display: flex;
+  align-items: center;
+  margin-bottom: var(--spacing-sm);
+  width: 100%;
+}
+.field-group label {
+  width: 150px;
+  text-align: left;
+  font-weight: bold;
+  font-size: 0.9rem;
+  color: var(--text-color-light);
+}
+.field-group input,
+.field-group select {
+  flex: 1;
+  padding: var(--spacing-sm);
+  border: none;
+  border-radius: var(--radius-small);
+  box-shadow: inset -3px -3px 6px var(--light-shadow-light),
+    inset 3px 3px 6px var(--dark-shadow-light);
+  outline: none;
+  font-size: 0.9rem;
+  color: var(--text-color-light);
+  background: var(--background-light);
+  transition: background-color 0.3s ease, box-shadow 0.3s ease;
+}
+.field-group input:focus,
+.field-group select:focus {
+  box-shadow: inset 2px 2px 4px rgba(255, 127, 63, 0.3),
+    inset -2px -2px 4px rgba(0, 0, 0, 0.1);
+}
+/* Ensure buttons in field groups are on the right */
+.field-group button {
+  margin-left: var(--spacing-sm);
+}
 
-  /* Buttons (existing styles remain) */
-  .connect-btn,
-  .save-btn,
-  .block-btn,
-  #add-member-btn,
-  .invite-btn {
-    background: var(--background-light);
-    border: none;
-    padding: var(--spacing-sm) var(--spacing-md);
-    border-radius: var(--radius-small);
-    cursor: pointer;
-    box-shadow:
-      -3px -3px 6px var(--light-shadow-light),
-       3px 3px 6px var(--dark-shadow-light);
-    transition: transform 0.3s ease, background-color 0.3s ease;
-    font-size: 0.85rem;
-    color: var(--text-color-light);
-    margin: 5px 0;
-  }
-  .connect-btn:hover,
-  .save-btn:hover,
-  .block-btn:hover,
-  #add-member-btn:hover,
-  .invite-btn:hover {
-    background-color: rgba(255,127,63,0.08);
-    transform: translateY(-2px);
-    color: var(--highlight-color);
-  }
+/* Inline Field (for Google Calendar Pick a Date URL) */
+.inline-field {
+  display: flex;
+  align-items: center;
+  flex: 1;
+  border-radius: var(--radius-small);
+  box-shadow: inset -3px -3px 6px var(--light-shadow-light),
+    inset 3px 3px 6px var(--dark-shadow-light);
+  background: var(--background-light);
+  padding: var(--spacing-sm);
+  font-size: 0.85rem;
+  color: var(--text-color-light);
+}
+.inline-field:hover {
+  background-color: rgba(255, 127, 63, 0.06);
+}
+.inline-field span {
+  flex: 1;
+}
+.inline-field button {
+  margin-left: var(--spacing-sm);
+}
 
-  .save-btn {
-    width: 100%;
-    font-size: 0.9rem;
-    margin-top: var(--spacing-sm);
-  }
-  .block-btn {
-    width: 70px;
-    font-size: 0.75rem;
-    margin-left: var(--spacing-sm);
-  }
-  #add-member-btn {
-    width: 40px;
-    height: 40px;
-    font-size: 1.3rem;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-  }
-  .invite-btn {
-    margin-top: var(--spacing-md);
-    font-size: 0.9rem;
-  }
+/* Buttons (existing styles remain) */
+.connect-btn,
+.save-btn,
+.block-btn,
+#add-member-btn,
+.invite-btn {
+  background: var(--background-light);
+  border: none;
+  padding: var(--spacing-sm) var(--spacing-md);
+  border-radius: var(--radius-small);
+  cursor: pointer;
+  box-shadow: -3px -3px 6px var(--light-shadow-light),
+    3px 3px 6px var(--dark-shadow-light);
+  transition: transform 0.3s ease, background-color 0.3s ease;
+  font-size: 0.85rem;
+  color: var(--text-color-light);
+  margin: 5px 0;
+}
+.connect-btn:hover,
+.save-btn:hover,
+.block-btn:hover,
+#add-member-btn:hover,
+.invite-btn:hover {
+  background-color: rgba(255, 127, 63, 0.08);
+  transform: translateY(-2px);
+  color: var(--highlight-color);
+}
 
-  /* Custom Copy Button (smaller size) */
-  .copy-btn {
-    background: var(--background-light);
-    border: none;
-    padding: 4px 8px;
-    border-radius: var(--radius-small);
-    cursor: pointer;
-    box-shadow:
-      -3px -3px 6px var(--light-shadow-light),
-       3px 3px 6px var(--dark-shadow-light);
-    transition: transform 0.3s ease, background-color 0.3s ease;
-    font-size: 0.75rem;
-    color: var(--text-color-light);
-  }
-  .copy-btn:hover {
-    background-color: rgba(255,127,63,0.08);
-    transform: translateY(-2px);
-    color: var(--highlight-color);
-  }
+.save-btn {
+  width: 100%;
+  font-size: 0.9rem;
+  margin-top: var(--spacing-sm);
+}
+.block-btn {
+  width: 70px;
+  font-size: 0.75rem;
+  margin-left: var(--spacing-sm);
+}
+#add-member-btn {
+  width: 40px;
+  height: 40px;
+  font-size: 1.3rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.invite-btn {
+  margin-top: var(--spacing-md);
+  font-size: 0.9rem;
+}
 
-  /* Invite More Section */
-  .invite-more {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-top: var(--spacing-md);
-  }
+/* Custom Copy Button (smaller size) */
+.copy-btn {
+  background: var(--background-light);
+  border: none;
+  padding: 4px 8px;
+  border-radius: var(--radius-small);
+  cursor: pointer;
+  box-shadow: -3px -3px 6px var(--light-shadow-light),
+    3px 3px 6px var (--dark-shadow-light);
+  transition: transform 0.3s ease, background-color 0.3s ease;
+  font-size: 0.75rem;
+  color: var(--text-color-light);
+}
+.copy-btn:hover {
+  background-color: rgba(255, 127, 63, 0.08);
+  transform: translateY(-2px);
+  color: var(--highlight-color);
+}
 
-  
-   #custom-alert {
-    display: none;
-    position: fixed;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    background: var(--background-light) !important; /* Ljusgrå bakgrund*/ 
-    padding: 25px 25px;
-    border-radius: 8px;
-    box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.2);
-    z-index: 1000;
-    text-align: center;
-    font-size: 16px;
-    font-family: Arial, sans-serif;
-    opacity: 1;
-    transition: opacity 0.5s ease-out;
-    color: #333 !important; /* Textfärg (kan justeras)*/ 
+/* Invite More Section */
+.invite-more {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: var(--spacing-md);
+}
+
+#custom-alert {
+  display: none;
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: var(--background-light) !important; /* Ljusgrå bakgrund*/
+  padding: 25px 25px;
+  border-radius: 8px;
+  box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.2);
+  z-index: 1000;
+  text-align: center;
+  font-size: 16px;
+  font-family: Arial, sans-serif;
+  opacity: 1;
+  transition: opacity 0.5s ease-out;
+  color: #333 !important; /* Textfärg (kan justeras)*/
 }
 
 #custom-alert p {
-    margin: 0;
-    font-size: 1rem;
-    font-weight: 600;
-    color: #333 !important; /* Textfärg*/ 
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 600;
+  color: #333 !important; /* Textfärg*/
 }
 
-  /* Responsive Adjustments */
-  @media (max-width: 576px) {
-    .form-box {
-      width: 90%;
-      padding: var(--spacing-md);
-    }
-    .field-group label {
-      width: 100px;
-      font-size: 0.8rem;
-    }
-    .field-group input,
-    .field-group select {
-      font-size: 0.8rem;
-    }
-    .pod-logo {
-      width: 60px;
-      height: 50px;
-    }
-    .save-btn,
-    .invite-btn {
-      font-size: 0.8rem;
-    }
-    .block-btn {
-      font-size: 0.7rem;
-      width: 60px;
-    }
-    #add-member-btn {
-      width: 35px;
-      height: 35px;
-      font-size: 1.1rem;
-    }
-    .popup-content {
-      width: 80%;
-    }
+/* CRUD Buttons */
+.crud-btn {
+  background: var(--background-light);
+  border: none;
+  padding: var(--spacing-sm) var(--spacing-md);
+  border-radius: var(--radius-small);
+  cursor: pointer;
+  box-shadow: -3px -3px 6px var(--light-shadow-light),
+    3px 3px 6px var(--dark-shadow-light);
+  transition: transform 0.3s ease, background-color 0.3s ease;
+  font-size: 0.85rem;
+  color: var(--text-color-light);
+  margin: 5px 0;
+}
+.crud-btn:hover {
+  background-color: rgba(255, 127, 63, 0.08);
+  transform: translateY(-2px);
+  color: var(--highlight-color);
+}
+
+/* Popup */
+.popup {
+  display: none;
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: var(--background-light);
+  padding: var(--spacing-lg);
+  border-radius: var(--radius-large);
+  box-shadow: -8px -8px 16px var(--light-shadow-light),
+    8px 8px 16px var(--dark-shadow-light);
+  z-index: 1000;
+  text-align: center;
+  font-size: 1rem;
+  font-family: var(--font-primary);
+  color: var(--text-color-light);
+}
+.popup .popup-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+.popup .close-btn {
+  position: absolute;
+  top: var(--spacing-sm);
+  right: var(--spacing-sm);
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  cursor: pointer;
+  color: var(--text-color-light);
+}
+
+/* Podcast Buttons in Popup */
+.podcast-btn {
+  background: var(--background-light);
+  border: none;
+  padding: var(--spacing-sm) var(--spacing-md);
+  border-radius: var(--radius-small);
+  cursor: pointer;
+  box-shadow: -3px -3px 6px var(--light-shadow-light),
+    3px 3px 6px var(--dark-shadow-light);
+  transition: transform 0.3s ease, background-color 0.3s ease;
+  font-size: 0.85rem;
+  color: var(--text-color-light);
+  margin: 5px 0;
+}
+.podcast-btn:hover {
+  background-color: rgba(255, 127, 63, 0.08);
+  transform: translateY(-2px);
+  color: var(--highlight-color);
+}
+
+/* Delete Button for Podcasts */
+.delete-btn {
+  background: var(--background-light);
+  border: none;
+  padding: var(--spacing-sm) var(--spacing-md);
+  border-radius: var(--radius-small);
+  cursor: pointer;
+  box-shadow: -3px -3px 6px var(--light-shadow-light),
+    3px 3px 6px var(--dark-shadow-light);
+  transition: transform 0.3s ease, background-color 0.3s ease;
+  font-size: 0.85rem;
+  color: var(--text-color-light);
+  margin: 5px 0;
+}
+.delete-btn:hover {
+  background-color: rgba(255, 127, 63, 0.08);
+  transform: translateY(-2px);
+  color: var(--highlight-color);
+}
+
+/* Podcast List Container */
+#podcasts-list {
+  width: 100%;
+  max-height: 400px;
+  overflow-y: auto;
+  margin: 15px 0;
+  padding: 10px;
+  border-radius: var(--radius-medium);
+  box-shadow: inset -3px -3px 6px var(--light-shadow-light),
+    inset 3px 3px 6px var(--dark-shadow-light);
+}
+
+/* Podcast Item */
+.podcast-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+  padding: 12px 15px;
+  border-radius: var(--radius-medium);
+  background: var(--background-light);
+  box-shadow: -3px -3px 6px var(--light-shadow-light),
+    3px 3px 6px var(--dark-shadow-light);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.podcast-item:hover {
+  transform: translateY(-2px);
+  box-shadow: -4px -4px 8px var(--light-shadow-light),
+    4px 4px 8px var(--dark-shadow-light);
+}
+
+/* Podcast Button */
+.podcast-btn {
+  flex: 1;
+  text-align: left;
+  background: transparent;
+  border: none;
+  padding: 8px 12px;
+  border-radius: var(--radius-small);
+  cursor: pointer;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--text-color-light);
+  transition: color 0.2s ease;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  box-shadow: none;
+}
+
+.podcast-btn:hover {
+  color: var(--highlight-color);
+  background: transparent;
+  transform: none;
+}
+
+/* Delete Button */
+.delete-btn {
+  background: rgba(255, 127, 63, 0.1);
+  border: none;
+  padding: 6px 12px;
+  border-radius: var(--radius-small);
+  cursor: pointer;
+  box-shadow: -2px -2px 4px var(--light-shadow-light),
+    2px 2px 4px var(--dark-shadow-light);
+  transition: background-color 0.2s ease, transform 0.2s ease;
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: #e74c3c;
+  margin-left: 10px;
+}
+
+.delete-btn:hover {
+  background-color: rgba(231, 76, 60, 0.15);
+  transform: translateY(-2px);
+  color: #e74c3c;
+}
+
+/* New style for select button in popup */
+.select-btn {
+  background: rgba(76, 175, 80, 0.1);
+  border: none;
+  padding: var(--spacing-sm) var(--spacing-md);
+  border-radius: var(--radius-small);
+  cursor: pointer;
+  box-shadow: -2px -2px 4px var(--light-shadow-light),
+    2px 2px 4px var(--dark-shadow-light);
+  transition: background-color 0.2s ease, transform 0.2s ease;
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: #4caf50;
+  margin-right: 10px; /* spacing between buttons */
+}
+
+.select-btn:hover {
+  background-color: rgba(76, 175, 80, 0.15);
+  transform: translateY(-2px);
+  color: #4caf50;
+}
+
+/* New style for update button */
+.update-btn {
+  background: rgba(76, 175, 80, 0.1);
+  border: none;
+  padding: var(--spacing-sm) var(--spacing-md);
+  border-radius: var(--radius-small);
+  cursor: pointer;
+  box-shadow: -2px -2px 4px var(--light-shadow-light),
+    2px 2px 4px var(--dark-shadow-light);
+  transition: background-color 0.2s ease, transform 0.2s ease;
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: #4caf50;
+  margin-right: 10px; /* spacing between buttons */
+}
+
+.update-btn:hover {
+  background-color: rgba(76, 175, 80, 0.15);
+  transform: translateY(-2px);
+  color: #4caf50;
+}
+
+/* Optional: For grouping the two action buttons */
+.action-buttons {
+  display: inline-flex;
+  align-items: center;
+}
+
+/* Popup Header */
+.popup-content h2 {
+  color: var(--text-color-light);
+  font-size: 1.5rem;
+  margin-bottom: 20px;
+  position: relative;
+  padding-bottom: 10px;
+}
+
+.popup-content h2::after {
+  content: "";
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 60px;
+  height: 3px;
+  background: var(--highlight-color);
+  border-radius: 3px;
+}
+
+/* Improved Close Button */
+.close-btn {
+  position: absolute;
+  top: 15px;
+  right: 15px;
+  width: 30px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--background-light);
+  border: none;
+  border-radius: 50%;
+  cursor: pointer;
+  box-shadow: -2px -2px 4px var(--light-shadow-light),
+    2px 2px 4px var(--dark-shadow-light);
+  transition: background-color 0.2s ease, transform 0.2s ease;
+  font-size: 1.2rem;
+  color: var(--text-color-light);
+}
+
+.close-btn:hover {
+  background-color: rgba(255, 127, 63, 0.1);
+  transform: rotate(90deg);
+  color: var(--highlight-color);
+}
+
+/* Modal Buttons */
+.modal-buttons {
+  display: flex;
+  justify-content: center;
+  gap: 15px;
+  margin-top: 20px;
+  width: 100%;
+}
+
+.modal-buttons button {
+  padding: 10px 20px;
+  border-radius: var(--radius-small);
+  font-weight: 600;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.cancel-btn {
+  background: var(--background-light);
+  border: none;
+  box-shadow: -3px -3px 6px var(--light-shadow-light),
+    3px 3px 6px var(--dark-shadow-light);
+  color: var(--text-color-light);
+  cursor: pointer;
+}
+
+.cancel-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: -4px -4px 8px var(--light-shadow-light),
+    4px 4px 8px var(--dark-shadow-light);
+}
+
+/* Empty State */
+.empty-state {
+  padding: 30px 20px;
+  text-align: center;
+  color: var(--text-color-light);
+  font-style: italic;
+}
+
+/* Responsive Adjustments */
+@media (max-width: 576px) {
+  .form-box {
+    width: 90%;
+    padding: var(--spacing-md);
+  }
+  .field-group label {
+    width: 100px;
+    font-size: 0.8rem;
+  }
+  .field-group input,
+  .field-group select {
+    font-size: 0.8rem;
+  }
+  .pod-logo {
+    width: 60px;
+    height: 50px;
+  }
+  .save-btn,
+  .invite-btn {
+    font-size: 0.8rem;
+  }
+  .block-btn {
+    font-size: 0.7rem;
+    width: 60px;
+  }
+  #add-member-btn {
+    width: 35px;
+    height: 35px;
+    font-size: 1.1rem;
+  }
+  .popup-content {
+    width: 80%;
+  }
 }
