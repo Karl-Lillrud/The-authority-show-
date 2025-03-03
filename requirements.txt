@@ -58,5 +58,7 @@ zope.deprecation==5.1
 zope.event==5.0
 zope.hookable==7.0
 zope.interface==7.2
+marshmallow==3.19.0
 zope.lifecycleevent==5.1
 zope.proxy==6.1
+

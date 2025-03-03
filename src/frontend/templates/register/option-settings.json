@@ -1,0 +1,38 @@
+[
+    {
+      "Namespace": "aws:autoscaling:launchconfiguration",
+      "OptionName": "IamInstanceProfile",
+      "Value": "aws-elasticbeanstalk-ec2-role"
+    },
+    {
+      "Namespace": "aws:elasticbeanstalk:environment",
+      "OptionName": "EnvironmentType",
+      "Value": "SingleInstance"
+    },
+    {
+      "Namespace": "aws:elasticbeanstalk:application:environment",
+      "OptionName": "AWS_REGION",
+      "Value": "eu-north-1"
+    },
+    {
+      "Namespace": "aws:elasticbeanstalk:healthreporting:system",
+      "OptionName": "SystemType",
+      "Value": "enhanced"
+    },
+    {
+      "Namespace": "aws:elasticbeanstalk:container:php:phpini",
+      "OptionName": "document_root",
+      "Value": "/public"
+    },
+    {
+      "Namespace": "aws:elasticbeanstalk:container:php:phpini",
+      "OptionName": "memory_limit",
+      "Value": "256M"
+    },
+    {
+      "Namespace": "aws:elasticbeanstalk:container:php:phpini",
+      "OptionName": "display_errors",
+      "Value": "Off"
+    }
+  ]
+  

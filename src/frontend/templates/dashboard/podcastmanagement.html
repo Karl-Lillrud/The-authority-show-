@@ -1,0 +1,162 @@
+{% extends "dashboard/components/base.html" %} {% block title %}Podcast Task
+Management{% endblock %} {% block content %}
+<link
+  rel="stylesheet"
+  href="{{ url_for('static', filename='css/podcastmanagement.css') }}"
+/>
+
+<script
+  type="module"
+  src="{{ url_for('static', filename='js/podcastmanagement.js') }}"
+></script>
+
+<a href="{{ url_for('dashboard_bp.dashboard') }}" class="back-arrow"
+  >&#8592; Back</a
+>
+<div class="container">
+  <div class="crud-buttons">
+    <button id="fetch-podcasts-btn" class="crud-btn">
+      View / Delete Podcasts
+    </button>
+  </div>
+  <div class="form-box">
+    <div class="form-fields">
+      <form id="register-podcast-form">
+        <!-- Pod Logo -->
+        <div class="form-group">
+          <label for="pod-logo">Pod Logo</label>
+          <div
+            style="display: flex; align-items: center; justify-content: center"
+          >
+            <img
+              src="https://podmanagerstorage.blob.core.windows.net/blob-container/pod1.jpg"
+              alt="Pod Logo"
+              class="pod-logo pod-logo-inline"
+            />
+          </div>
+        </div>
+
+        <!-- Podcast Name -->
+        <div class="field-group">
+          <label for="pod-name">Podcast Name</label>
+          <input type="text" id="pod-name" name="podName" autocomplete="off" />
+        </div>
+
+        <!-- RSS Feed -->
+        <div class="field-group">
+          <label for="pod-rss">RSS Feed</label>
+          <input type="url" id="pod-rss" name="rssFeed" />
+        </div>
+
+        <!-- Podcast Owner -->
+        <div class="field-group">
+          <label for="pod-owner">Podcast Owner</label>
+          <input type="text" id="pod-owner" name="ownerName" />
+        </div>
+
+        <!-- Host Name -->
+        <div class="field-group">
+          <label for="pod-host">Host(s) Name(s)</label>
+          <input type="text" id="pod-host" name="hostName" />
+        </div>
+
+        <!-- Description -->
+        <div class="field-group">
+          <label for="description">Podcast Description</label>
+          <textarea id="description" name="description"></textarea>
+        </div>
+
+        <!-- Category -->
+        <div class="field-group">
+          <label for="category">Category (Required)</label>
+          <input type="text" id="category" name="category" required />
+        </div>
+
+        <!-- Email Address -->
+        <div class="field-group">
+          <label for="email">Email Address</label>
+          <input type="email" id="email" name="email" />
+        </div>
+
+        <!-- Google Calendar Integration -->
+        <div class="field-group">
+          <label>Google Calendar Integration</label>
+          <button type="button" class="connect-btn">CONNECT</button>
+        </div>
+
+        <!-- Google Calendar Link -->
+        <div class="field-group">
+          <label>Google Calendar Pick a Date URL</label>
+          <div class="inline-field">
+            <span>podmanager.com/?pod=TheAuthorityShow</span>
+          </div>
+        </div>
+
+        <!-- Guest Form URL -->
+        <div class="field-group">
+          <label for="guest-form-url">Guest Form URL</label>
+          <input type="url" id="guest-form-url" name="guestUrl" />
+        </div>
+
+        <!-- Social Media Links -->
+        <div class="field-group">
+          <label for="facebook">Facebook</label>
+          <input type="url" id="facebook" name="socialMedia[]" />
+        </div>
+
+        <div class="field-group">
+          <label for="instagram">Instagram</label>
+          <input type="url" id="instagram" name="socialMedia[]" />
+        </div>
+
+        <div class="field-group">
+          <label for="linkedin">LinkedIn</label>
+          <input type="url" id="linkedin" name="socialMedia[]" />
+        </div>
+
+        <div class="field-group">
+          <label for="twitter">Twitter</label>
+          <input type="url" id="twitter" name="socialMedia[]" />
+        </div>
+
+        <div class="field-group">
+          <label for="tiktok">TikTok</label>
+          <input type="url" id="tiktok" name="socialMedia[]" />
+        </div>
+
+        <div class="field-group">
+          <label for="pinterest">Pinterest</label>
+          <input type="url" id="pinterest" name="socialMedia[]" />
+        </div>
+
+        <button type="submit" class="invite-btn">SAVE</button>
+      </form>
+    </div>
+  </div>
+  <div id="podcasts-popup" class="popup">
+    <div class="popup-content">
+      <span id="close-popup-btn" class="close-btn">&times;</span>
+      <h2 style="text-align: center">Select Podcasts to Delete</h2>
+      <div
+        id="podcasts-list"
+        class="popup-list"
+        style="text-align: center"
+      ></div>
+      <div class="modal-buttons" style="justify-content: center">
+        <!-- Removed delete-selected button -->
+        <button
+          class="cancel-btn"
+          onclick="document.getElementById('podcasts-popup').style.display='none'"
+        >
+          Cancel
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="custom-alert">
+  <p id="alert-message"></p>
+</div>
+
+{% endblock %}
