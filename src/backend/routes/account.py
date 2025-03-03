@@ -1,77 +1,31 @@
 from flask import Blueprint, request, jsonify
 from datetime import datetime
+import uuid
 from backend.database.mongo_connection import collection
 from marshmallow import ValidationError
+from backend.database.mongo_connection import collection
 from backend.models.accounts import AccountSchema  # Make sure to import the schema
-import uuid
-import logging
+from backend.services.accountsService import (
+    create_account,
+)  # Import the create_account function from the service
 
 # Define Blueprint
 account_bp = Blueprint("account_bp", __name__)
 
-# Configure logging
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
 
-
-@account_bp.route("/create_accounts", methods=["POST"])
-def create_account():
+@account_bp.route("/create_account", methods=["POST"])
+def create_account_route():
     try:
         data = request.get_json()
+        response, status_code = create_account(data)
+        return jsonify(response), status_code
 
-        if not data:
-            raise ValueError("No data received or invalid JSON.")
-
-        # Check for required fields
-        if "userId" not in data or "email" not in data:
-            raise ValueError("Missing required fields: userId and email")
-
-        user_id = data["userId"]
-        email = data["email"]
-        company_name = data.get("companyName", "")
-        is_company = data.get("isCompany", False)
-
-        subscription_id = str(uuid.uuid4())  # Generate unique subscription ID
-        account_id = str(uuid.uuid4())  # Generate unique account ID
-
-        # Create account document
-        account_document = {
-            "_id": account_id,  # Explicitly set '_id' to string UUID
-            "userId": user_id,
-            "subscriptionId": subscription_id,
-            "email": email,
-            "isCompany": is_company,
-            "companyName": company_name,
-            "paymentInfo": "",  # Placeholder for payment info
-            "subscriptionStatus": "active",
-            "createdAt": datetime.utcnow().isoformat(),
-            "referralBonus": 0,
-            "subscriptionStart": datetime.utcnow().isoformat(),
-            "subscriptionEnd": "",
-            "isActive": True,
-        }
-
-        # Insert account into the Accounts collection (with custom _id)
-        logger.info("Inserting account into the database: %s", account_document)
-        collection.database.Accounts.insert_one(account_document)
-
-        # Return success response
-        response = {
-            "message": "Account created successfully",
-            "accountId": account_document["_id"],
-        }
-        logger.info("Account created successfully: %s", response)
-        return jsonify(response), 201
-
-    except ValueError as ve:
-        logger.error("ValueError: %s", ve)
-        return jsonify({"error": str(ve)}), 400
     except Exception as e:
-        logger.error("Error: %s", e, exc_info=True)
+        print(f"❌ ERROR: {e}")
         return jsonify({"error": f"Error creating account: {str(e)}"}), 500
 
 
-@account_bp.route("/get_accounts/<account_id>", methods=["GET"])
+@account_bp.route("/get_account/<account_id>", methods=["GET"])
 def get_account(account_id):
     try:
         # Fetch account from the database using account_id
