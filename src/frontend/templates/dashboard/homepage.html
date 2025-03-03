@@ -11,28 +11,41 @@
 
 <script>
   document.addEventListener("DOMContentLoaded", function () {
-    fetch("/get_user_podcasts")
+    fetch("/get_podcasts")
       .then((response) => response.json())
       .then((data) => {
-        const podcastList = document.getElementById("podcast-list");
-        podcastList.innerHTML = "";
-
+        // data should have the shape: { podcast: [...] }
         if (data.error) {
-          podcastList.innerHTML = `<p>${data.error}</p>`;
+          document.getElementById("podcast-list").innerHTML = `<p>${data.error}</p>`;
           return;
         }
 
-        data.forEach((podcast) => {
+        const podcasts = data.podcast || [];
+        // If only 0 or 1 podcast, hide popup / skip logic
+        if (podcasts.length <= 1) {
+          // Example: just hide popup or auto-redirect, etc.
+          // window.parent.document.getElementById('homepage-popup').style.display = 'none';
+          return;
+        }
+
+        // Otherwise, build your podcast cards
+        const podcastList = document.getElementById("podcast-list");
+        podcastList.innerHTML = "";
+
+        podcasts.forEach((pod) => {
           let podcastCard = document.createElement("div");
           podcastCard.classList.add("card");
 
+          // Example image fallback if none
+          let imgUrl = pod.image_url || "https://via.placeholder.com/150";
+
           podcastCard.innerHTML = `
-                    <a href="/dashboard"
-                        onclick="window.parent.document.getElementById('homepage-popup').style.display='none';">
-                        <img src="${podcast.image_url}" alt="${podcast.name}">
-                    </a>
-                    <p class="episode-count">${podcast.open_episodes} Open Episodes</p>
-                `;
+            <a href="/dashboard"
+               onclick="window.parent.document.getElementById('homepage-popup').style.display='none';">
+              <img src="${imgUrl}" alt="${pod.name || 'Podcast'}">
+            </a>
+            <p class="episode-count">${pod.open_episodes || 0} Open Episodes</p>
+          `;
 
           podcastList.appendChild(podcastCard);
         });

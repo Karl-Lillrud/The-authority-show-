@@ -49,17 +49,10 @@ def signin():
     podcasts = list(collection.database.Podcast.find({"userid": user_id}))
 
     if not podcasts:
-<<<<<<< HEAD:src/routes/signin.py
-        return jsonify({
-            "message": "Login successful",
-            "redirect_url": "/dashboard" # Change this to the URL of the page where the user can create a podcast
-        }), 200
-=======
         return (
             jsonify({"message": "Login successful", "redirect_url": "/podprofile"}),
             200,
         )
->>>>>>> 24276364b4ddb6b3e6ff6badbf227a37fae8fa89:src/backend/routes/signin.py
     elif len(podcasts) == 1:
         return (
             jsonify({"message": "Login successful", "redirect_url": "/dashboard"}),

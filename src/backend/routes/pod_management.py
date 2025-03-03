@@ -36,29 +36,6 @@ def get_user_podcasts():
     if not g.user_id:
         return jsonify({"error": "Unauthorized"}), 401
 
-<<<<<<< HEAD:src/routes/pod_management.py
-    # Hämta poddar för just denna användare. 
-    # OBS! Använd samma fält som i din DB (du verkar använda "userid" i Podcast-tabellen).
-    user_id = str(g.user_id)
-    podcasts = list(collection.database.Podcast.find({"userid": user_id}))
-
-    # Om inga poddar
-    if len(podcasts) == 0:
-        return jsonify({"message": "You have no active or registered podcasts."})
-
-    # Om exakt 1 podd
-    if len(podcasts) == 1:
-        # Returnera en 'redirect' som din JavaScript kan fånga upp och vidarebefordra
-        single_podcast_id = str(podcasts[0]["_id"])
-        return jsonify({"redirect": f"/dashboard?podcast_id={single_podcast_id}"})
-
-    # Flera poddar → returnera själva listan
-    # Tips: konvertera _id till str om du vill undvika ObjectId i frontend
-    for p in podcasts:
-        p["_id"] = str(p["_id"])
-
-    return jsonify(podcasts)
-=======
 
 @pod_management_bp.route("/invite")
 def invite():
@@ -72,4 +49,3 @@ def invite():
         )
         flash("You have successfully joined the team!", "success")
     return redirect(url_for("register_bp.register", email=email))
->>>>>>> 24276364b4ddb6b3e6ff6badbf227a37fae8fa89:src/backend/routes/pod_management.py
