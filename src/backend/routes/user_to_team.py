@@ -1,6 +1,6 @@
 from flask import request, jsonify, Blueprint, g
 from backend.database.mongo_connection import collection
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from marshmallow import ValidationError
 from backend.models.users_to_teams import UserToTeamSchema
 from uuid import uuid4
@@ -70,6 +70,62 @@ def add_user_to_team():
     except Exception as e:
         print(f"❌ ERROR: {e}")
         return jsonify({"error": f"Failed to add user to team: {str(e)}"}), 500
+    
+    # This is for inviting a user to a team (pending invite)
+@usertoteam_bp.route("/invite_user_to_team", methods=["POST"])
+def invite_user_to_team():
+    if not hasattr(g, "user_id") or not g.user_id:
+        return jsonify({"error": "Unauthorized"}), 401
+
+    if request.content_type != "application/json":
+        return jsonify({"error": "Invalid Content-Type. Expected application/json"}), 415
+
+    try:
+        data = request.get_json()
+        print("📩 Received Invite Data:", data)
+
+        # Validate invitation
+        user_to_team_schema = UserToTeamSchema()
+        validated_data = user_to_team_schema.load(data)
+
+        # Check if the team exists
+        team = collection.database.Teams.find_one({"_id": validated_data["teamId"]})
+        if not team:
+            return jsonify({"error": "Team not found"}), 404
+
+        # Check if there's an existing pending invite or user already in team
+        existing_invite = collection.database.UsersToTeams.find_one({
+            "userId": validated_data["userId"],
+            "teamId": validated_data["teamId"],
+            "status": "pending"
+        })
+        if existing_invite:
+            return jsonify({"error": "User is already invited or in this team."}), 400
+
+        # Generate an invite ID and expiration date
+        invite_id = str(uuid4())
+        expiration_date = datetime.utcnow() + timedelta(hours=100) 
+
+        invite_item = {
+            "_id": invite_id,
+            "userId": validated_data["userId"],
+            "teamId": validated_data["teamId"],
+            "role": validated_data["role"],
+            "status": "pending",  # Invitation status
+            "expiration_date": expiration_date,
+            "assignedAt": datetime.utcnow(),
+        }
+
+        result = collection.database.UsersToTeams.insert_one(invite_item)
+
+        if result.inserted_id:
+            return jsonify({"message": "User invited to team successfully", "invite_id": invite_id}), 201
+        else:
+            return jsonify({"error": "Failed to send team invite."}), 500
+
+    except Exception as e:
+        print(f"❌ ERROR: {e}")
+        return jsonify({"error": f"Failed to invite user: {str(e)}"}), 500
 
 
 @usertoteam_bp.route("/remove_users_from_teams", methods=["POST"])
@@ -164,54 +220,6 @@ def get_team_members(team_id):
     except Exception as e:
         print(f"❌ ERROR: {e}")
         return jsonify({"error": f"Failed to retrieve team members: {str(e)}"}), 500
-
-
-@usertoteam_bp.route("/invite_user_to_team", methods=["POST"])
-def invite_user_to_team():
-    """Invite a user to join a team (instead of directly adding them)."""
-    if not hasattr(g, "user_id") or not g.user_id:
-        return jsonify({"error": "Unauthorized"}), 401
-
-    if request.content_type != "application/json":
-        return jsonify({"error": "Invalid Content-Type. Expected application/json"}), 415
-
-    try:
-        data = request.get_json()
-        print("📩 Received Invite Data:", data)
-
-        user_to_team_schema = UserToTeamSchema()
-        validated_data = user_to_team_schema.load(data)
-
-        existing_invite = collection.database.UsersToTeams.find_one({
-            "userId": validated_data["userId"],
-            "teamId": validated_data["teamId"]
-        })
-
-        if existing_invite:
-            return jsonify({"error": "User is already in this team or has a pending invite."}), 400
-
-        invite_id = str(uuid4())
-
-        invite_item = {
-            "_id": invite_id,
-            "userId": validated_data["userId"],
-            "teamId": validated_data["teamId"],
-            "role": validated_data["role"],
-            "status": "pending",  # New field: Track invite status
-            "assignedAt": datetime.utcnow(),
-        }
-
-        result = collection.database.UsersToTeams.insert_one(invite_item)
-
-        if result.inserted_id:
-            print("✅ User invited successfully!")
-            return jsonify({"message": "User invited to team successfully", "invite_id": invite_id}), 201
-        else:
-            return jsonify({"error": "Failed to send team invite."}), 500
-
-    except Exception as e:
-        print(f"❌ ERROR: {e}")
-        return jsonify({"error": f"Failed to invite user: {str(e)}"}), 500
     
 @usertoteam_bp.route("/respond_invite", methods=["POST"])
 def respond_invite():
@@ -233,7 +241,11 @@ def respond_invite():
         if response not in ["accepted", "declined"]:
             return jsonify({"error": "Invalid response. Use 'accepted' or 'declined'."}), 400
 
-        invite = collection.database.UsersToTeams.find_one({"userId": user_id, "teamId": team_id, "status": "pending"})
+        invite = collection.database.UsersToTeams.find_one({
+            "userId": user_id,
+            "teamId": team_id,
+            "status": "pending"
+        })
 
         if not invite:
             return jsonify({"error": "No pending invite found."}), 404
@@ -242,13 +254,20 @@ def respond_invite():
             collection.database.UsersToTeams.delete_one({"_id": invite["_id"]})
             return jsonify({"message": "Invite declined successfully."}), 200
 
-        # Update status to "accepted"
-        collection.database.UsersToTeams.update_one({"_id": invite["_id"]}, {"$set": {"status": "accepted"}})
+        # Update status to "accepted" and assign user to team
+        collection.database.UsersToTeams.update_one(
+            {"_id": invite["_id"]}, 
+            {"$set": {"status": "accepted"}}
+        )
+
+        # Optionally, add the user to the team's member list (if applicable)
+        # Additional code to assign the user as a member of the team.
 
         return jsonify({"message": "Invite accepted successfully!"}), 200
 
     except Exception as e:
         print(f"❌ ERROR: {e}")
         return jsonify({"error": f"Failed to respond to invite: {str(e)}"}), 500
+
 
 

@@ -1,122 +1,61 @@
+async function handleRequest(url, method, body = null) {
+  try {
+    const options = {
+      method: method,
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    };
+
+    if (body) {
+      options.body = JSON.stringify(body);
+    }
+
+    const response = await fetch(url, options);
+
+    if (response.ok) {
+      const data = await response.json();
+      console.log(data.message || 'Request was successful');
+      return data; // Returning data if needed for further processing
+    } else {
+      const errorData = await response.json();
+      console.error('Error:', errorData.error || 'Unknown error');
+      return null;
+    }
+  } catch (error) {
+    console.error('Request failed:', error);
+    return null;
+  }
+}
+
+// Add User to Team
 async function addUserToTeam(userId, teamId, role) {
-    try {
-      const response = await fetch('/add_users_to_teams', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          userId: userId,
-          teamId: teamId,
-          role: role,
-        }),
-      });
-  
-      if (response.ok) {
-        const data = await response.json();
-        console.log(data.message); // Success message
-      } else {
-        const errorData = await response.json();
-        console.error(errorData.error); // Error message
-      }
-    } catch (error) {
-      console.error('Error:', error);
-    }
-  }
+  const body = { userId, teamId, role };
+  await handleRequest('/add_users_to_teams', 'POST', body);
+}
 
-  async function removeUserFromTeam(userId, teamId) {
-    try {
-      const response = await fetch('/remove_users_from_teams', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          userId: userId,
-          teamId: teamId,
-        }),
-      });
-  
-      if (response.ok) {
-        const data = await response.json();
-        console.log(data.message); // Success message
-      } else {
-        const errorData = await response.json();
-        console.error(errorData.error); // Error message
-      }
-    } catch (error) {
-      console.error('Error:', error);
-    }
-  }
+// Remove User from Team
+async function removeUserFromTeam(userId, teamId) {
+  const body = { userId, teamId };
+  await handleRequest('/remove_users_from_teams', 'POST', body);
+}
 
-  async function getTeamMembers(teamId) {
-    try {
-      const response = await fetch(`/get_teams_members/${teamId}`);
-  
-      if (response.ok) {
-        const data = await response.json();
-        console.log('Team Members:', data.members);
-      } else {
-        const errorData = await response.json();
-        console.error(errorData.error); // Error message
-      }
-    } catch (error) {
-      console.error('Error:', error);
-    }
+// Get Team Members
+async function getTeamMembers(teamId) {
+  const data = await handleRequest(`/get_teams_members/${teamId}`, 'GET');
+  if (data && data.members) {
+    console.log('Team Members:', data.members);
   }
+}
 
-  async function inviteUserToTeam(userId, teamId, role) {
-    try {
-      const response = await fetch('/invite_user_to_team', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          userId: userId,
-          teamId: teamId,
-          role: role,
-        }),
-      });
-  
-      if (response.ok) {
-        const data = await response.json();
-        console.log(data.message); // Success message
-      } else {
-        const errorData = await response.json();
-        console.error(errorData.error); // Error message
-      }
-    } catch (error) {
-      console.error('Error:', error);
-    }
-  }
+// Invite User to Team
+async function inviteUserToTeam(userId, teamId, role) {
+  const body = { userId, teamId, role };
+  await handleRequest('/invite_user_to_team', 'POST', body);
+}
 
-  async function respondToInvite(teamId, response) {
-    try {
-      const response = await fetch('/respond_invite', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          teamId: teamId,
-          response: response, // 'accepted' or 'declined'
-        }),
-      });
-  
-      if (response.ok) {
-        const data = await response.json();
-        console.log(data.message); // Success message
-      } else {
-        const errorData = await response.json();
-        console.error(errorData.error); // Error message
-      }
-    } catch (error) {
-      console.error('Error:', error);
-    }
-  }
-  
-
-  
-  
-  
+// Respond to Invite
+async function respondToInvite(teamId, response) {
+  const body = { teamId, response }; // 'accepted' or 'declined'
+  await handleRequest('/respond_invite', 'POST', body);
+}

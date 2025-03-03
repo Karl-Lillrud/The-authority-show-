@@ -81,6 +81,13 @@ def team():
         )  # Fix: redirect using the blueprint route
     return render_template("team/team.html")
 
+@dashboard_bp.route('/team-member-invite', methods=["GET"])
+def team_member_invite():
+    if not g.user_id:
+        return redirect(url_for("signin_bp.signin"))
+    return render_template('team/team-member-invite.html')
+
+
 
 @dashboard_bp.route("/guest", methods=["GET", "POST"])
 def guest():
