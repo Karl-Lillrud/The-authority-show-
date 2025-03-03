@@ -415,3 +415,10 @@ input:focus + .slider {
   color: #fff;
 }
 
+#teamNameRow th {
+  text-align: center;
+  background-color: var(--highlight-color);
+  color: #fff;
+  padding: var(--spacing-md);
+}
+
