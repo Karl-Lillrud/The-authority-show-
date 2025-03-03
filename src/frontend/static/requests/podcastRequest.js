@@ -6,9 +6,6 @@ export async function addPodcast(data) {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(data)
     });
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
     return await response.json();
   } catch (error) {
     console.error("Error adding podcast:", error);

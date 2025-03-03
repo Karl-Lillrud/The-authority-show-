@@ -4,10 +4,371 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Podcast Management</title>
-    <link
-      rel="stylesheet"
-      href="{{ url_for('static', filename='css/podcastmanagement.css') }}"
-    />
+    <style>
+      /* Base styles */
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+          Oxygen, Ubuntu, Cantarell, "Open Sans", "Helvetica Neue", sans-serif;
+      }
+
+      body {
+        background-color: #f5f5f5;
+        color: #333;
+        line-height: 1.6;
+      }
+
+      .container {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 2rem;
+      }
+
+      h1 {
+        text-align: center;
+        margin-bottom: 2rem;
+        color: #333;
+      }
+
+      /* Podcast list styles */
+      .podcast-list {
+        display: flex;
+        flex-direction: column;
+        gap: 1.5rem;
+      }
+
+      .podcast-card {
+        background-color: white;
+        border-radius: 8px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        overflow: hidden;
+        transition: all 0.3s ease;
+      }
+
+      .podcast-card:hover {
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+      }
+
+      .podcast-content {
+        display: flex;
+        flex-direction: column;
+      }
+
+      @media (min-width: 768px) {
+        .podcast-content {
+          flex-direction: row;
+        }
+      }
+
+      .podcast-image {
+        width: 100%;
+        height: 200px;
+        background-size: cover;
+        background-position: center;
+        background-repeat: no-repeat;
+      }
+
+      @media (min-width: 768px) {
+        .podcast-image {
+          width: 200px;
+          height: auto;
+          flex-shrink: 0;
+        }
+      }
+
+      .podcast-info {
+        padding: 1.5rem;
+        flex-grow: 1;
+      }
+
+      .podcast-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        margin-bottom: 1rem;
+      }
+
+      .podcast-title {
+        font-size: 1.5rem;
+        font-weight: bold;
+        margin-bottom: 0.5rem;
+      }
+
+      .podcast-meta {
+        color: #666;
+        font-size: 0.875rem;
+        margin-bottom: 0.25rem;
+      }
+
+      .podcast-meta span {
+        font-weight: 500;
+      }
+
+      .podcast-description {
+        margin-top: 1rem;
+        color: #555;
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+      }
+
+      .podcast-actions {
+        display: flex;
+        gap: 0.5rem;
+      }
+
+      .action-btn {
+        width: 36px;
+        height: 36px;
+        border-radius: 50%;
+        border: none;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        transition: background-color 0.2s;
+      }
+
+      .view-btn {
+        background-color: rgba(59, 130, 246, 0.1);
+        color: #3b82f6;
+      }
+
+      .view-btn:hover {
+        background-color: rgba(59, 130, 246, 0.2);
+      }
+
+      .edit-btn {
+        background-color: rgba(245, 158, 11, 0.1);
+        color: #f59e0b;
+      }
+
+      .edit-btn:hover {
+        background-color: rgba(245, 158, 11, 0.2);
+      }
+
+      .delete-btn {
+        background-color: rgba(239, 68, 68, 0.1);
+        color: #ef4444;
+      }
+
+      .delete-btn:hover {
+        background-color: rgba(239, 68, 68, 0.2);
+      }
+
+      .podcast-footer {
+        padding: 1rem 1.5rem;
+        border-top: 1px solid #eee;
+        display: flex;
+        justify-content: flex-end;
+      }
+
+      .view-details-btn {
+        background: none;
+        border: none;
+        color: #3b82f6;
+        font-weight: 500;
+        cursor: pointer;
+      }
+
+      .view-details-btn:hover {
+        text-decoration: underline;
+      }
+
+      /* Podcast detail styles */
+      .podcast-detail {
+        background-color: white;
+        border-radius: 8px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        overflow: hidden;
+        display: none;
+      }
+
+      .detail-header {
+        padding: 1.5rem;
+      }
+
+      .back-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        background: none;
+        border: none;
+        color: #3b82f6;
+        font-weight: 500;
+        cursor: pointer;
+        margin-bottom: 1.5rem;
+        padding: 0;
+      }
+
+      .back-btn:hover {
+        color: #2563eb;
+      }
+
+      .detail-content {
+        padding: 0 1.5rem 1.5rem;
+        display: flex;
+        flex-direction: column;
+        gap: 2rem;
+      }
+
+      @media (min-width: 768px) {
+        .detail-content {
+          flex-direction: row;
+        }
+      }
+
+      .detail-image {
+        width: 100%;
+        max-width: 300px;
+        height: 300px;
+        border-radius: 8px;
+        background-size: cover;
+        background-position: center;
+        background-repeat: no-repeat;
+        margin: 0 auto;
+      }
+
+      @media (min-width: 768px) {
+        .detail-image {
+          margin: 0;
+        }
+      }
+
+      .detail-info {
+        flex-grow: 1;
+      }
+
+      .detail-title {
+        font-size: 2rem;
+        font-weight: bold;
+        margin-bottom: 0.5rem;
+      }
+
+      .detail-category {
+        color: #666;
+        font-size: 1.125rem;
+        margin-bottom: 1.5rem;
+      }
+
+      .detail-section {
+        margin-bottom: 1.5rem;
+      }
+
+      .detail-section h2 {
+        font-size: 1.25rem;
+        margin-bottom: 0.75rem;
+      }
+
+      .detail-section p {
+        color: #555;
+      }
+
+      .detail-grid {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 1rem;
+      }
+
+      @media (min-width: 768px) {
+        .detail-grid {
+          grid-template-columns: 1fr 1fr;
+        }
+      }
+
+      .detail-item h3 {
+        font-size: 0.875rem;
+        color: #666;
+        font-weight: 500;
+        margin-bottom: 0.25rem;
+      }
+
+      .detail-item a {
+        color: #3b82f6;
+        text-decoration: none;
+      }
+
+      .detail-item a:hover {
+        text-decoration: underline;
+      }
+
+      .separator {
+        height: 1px;
+        background-color: #eee;
+        margin: 1.5rem 0;
+      }
+
+      .social-links {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 1rem;
+      }
+
+      @media (min-width: 768px) {
+        .social-links {
+          grid-template-columns: 1fr 1fr;
+        }
+      }
+
+      .social-link {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        color: #3b82f6;
+        text-decoration: none;
+      }
+
+      .social-link:hover {
+        text-decoration: underline;
+      }
+
+      .loading {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 200px;
+      }
+
+      .spinner {
+        width: 40px;
+        height: 40px;
+        border: 3px solid rgba(59, 130, 246, 0.2);
+        border-radius: 50%;
+        border-top-color: #3b82f6;
+        animation: spin 1s ease-in-out infinite;
+      }
+
+      @keyframes spin {
+        to {
+          transform: rotate(360deg);
+        }
+      }
+
+      /* Alert styles */
+      .alert {
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        padding: 1rem;
+        border-radius: 4px;
+        color: white;
+        max-width: 300px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        z-index: 1000;
+        display: none;
+      }
+
+      .alert-success {
+        background-color: #10b981;
+      }
+
+      .alert-error {
+        background-color: #ef4444;
+      }
+    </style>
   </head>
   <body>
     <div class="container">
@@ -24,9 +385,425 @@
 
     <div id="alert" class="alert"></div>
 
-    <script
-      type="module"
-      src="{{ url_for('static', filename='js/podcastmanagement.js') }}"
-    ></script>
+    <script>
+      // Mock data for podcasts
+      const podcasts = [
+        {
+          _id: "1",
+          podName: "The Authority Show",
+          ownerName: "John Smith",
+          hostName: "John Smith, Jane Doe",
+          rssFeed: "https://example.com/feed.rss",
+          googleCal:
+            "https://calendar.google.com/calendar/embed?src=example.com",
+          guestUrl: "https://forms.example.com/guest",
+          email: "contact@theauthorityshow.com",
+          description:
+            "A podcast about leadership and authority in various industries.",
+          logoUrl:
+            "https://podmanagerstorage.blob.core.windows.net/blob-container/pod1.jpg",
+          category: "Business",
+          socialMedia: [
+            "https://facebook.com/theauthorityshow",
+            "https://instagram.com/theauthorityshow",
+            "https://linkedin.com/company/theauthorityshow",
+            "https://twitter.com/authorityshow",
+            "https://tiktok.com/@theauthorityshow",
+            ""
+          ]
+        },
+        {
+          _id: "2",
+          podName: "Tech Insights",
+          ownerName: "Sarah Johnson",
+          hostName: "Sarah Johnson",
+          rssFeed: "https://techinsights.com/feed.rss",
+          googleCal:
+            "https://calendar.google.com/calendar/embed?src=techinsights.com",
+          guestUrl: "https://forms.techinsights.com/guest",
+          email: "info@techinsights.com",
+          description:
+            "Weekly discussions about the latest in technology and innovation.",
+          logoUrl:
+            "https://podmanagerstorage.blob.core.windows.net/blob-container/pod1.jpg",
+          category: "Technology",
+          socialMedia: [
+            "https://facebook.com/techinsights",
+            "https://instagram.com/techinsights",
+            "https://linkedin.com/company/techinsights",
+            "https://twitter.com/techinsights",
+            "",
+            ""
+          ]
+        },
+        {
+          _id: "3",
+          podName: "Health Matters",
+          ownerName: "Dr. Michael Brown",
+          hostName: "Dr. Michael Brown, Dr. Lisa White",
+          rssFeed: "https://healthmatters.com/feed.rss",
+          googleCal: "",
+          guestUrl: "https://forms.healthmatters.com/guest",
+          email: "contact@healthmatters.com",
+          description: "Expert advice on health, wellness, and medical topics.",
+          logoUrl:
+            "https://podmanagerstorage.blob.core.windows.net/blob-container/pod1.jpg",
+          category: "Health & Wellness",
+          socialMedia: [
+            "https://facebook.com/healthmatters",
+            "https://instagram.com/healthmatters",
+            "",
+            "https://twitter.com/healthmatters",
+            "",
+            ""
+          ]
+        }
+      ];
+
+      // DOM elements
+      const loadingElement = document.getElementById("loading");
+      const podcastListElement = document.getElementById("podcast-list");
+      const podcastDetailElement = document.getElementById("podcast-detail");
+      const alertElement = document.getElementById("alert");
+
+      // Helper functions
+      function showAlert(message, type) {
+        alertElement.textContent = message;
+        alertElement.className = `alert alert-${type}`;
+        alertElement.style.display = "block";
+
+        setTimeout(() => {
+          alertElement.style.display = "none";
+        }, 3000);
+      }
+
+      function renderPodcastList() {
+        podcastListElement.innerHTML = "";
+
+        if (podcasts.length === 0) {
+          podcastListElement.innerHTML = `
+          <div style="text-align: center; padding: 3rem; background-color: white; border-radius: 8px;">
+            <p style="color: #666;">No podcasts found</p>
+          </div>
+        `;
+          return;
+        }
+
+        podcasts.forEach((podcast) => {
+          const podcastCard = document.createElement("div");
+          podcastCard.className = "podcast-card";
+          podcastCard.innerHTML = `
+          <div class="podcast-content">
+            <div class="podcast-image" style="background-image: url('${
+              podcast.logoUrl
+            }')"></div>
+            <div class="podcast-info">
+              <div class="podcast-header">
+                <div>
+                  <h2 class="podcast-title">${podcast.podName}</h2>
+                  <p class="podcast-meta"><span>Category:</span> ${
+                    podcast.category
+                  }</p>
+                  <p class="podcast-meta"><span>Host:</span> ${
+                    podcast.hostName || "Not specified"
+                  }</p>
+                  <p class="podcast-meta"><span>Owner:</span> ${
+                    podcast.ownerName || "Not specified"
+                  }</p>
+                </div>
+                <div class="podcast-actions">
+                  <button class="action-btn view-btn" title="View podcast details" data-id="${
+                    podcast._id
+                  }">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"></path>
+                      <circle cx="12" cy="12" r="3"></circle>
+                    </svg>
+                  </button>
+                  <button class="action-btn edit-btn" title="Edit podcast" data-id="${
+                    podcast._id
+                  }">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"></path>
+                    </svg>
+                  </button>
+                  <button class="action-btn delete-btn" title="Delete podcast" data-id="${
+                    podcast._id
+                  }">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M3 6h18"></path>
+                      <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"></path>
+                      <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"></path>
+                    </svg>
+                  </button>
+                </div>
+              </div>
+              <p class="podcast-description">${
+                podcast.description || "No description available."
+              }</p>
+            </div>
+          </div>
+          <div class="podcast-footer">
+            <button class="view-details-btn" data-id="${
+              podcast._id
+            }">View Details</button>
+          </div>
+        `;
+
+          podcastListElement.appendChild(podcastCard);
+        });
+
+        // Add event listeners
+        document
+          .querySelectorAll(".view-btn, .view-details-btn")
+          .forEach((button) => {
+            button.addEventListener("click", (e) => {
+              const podcastId = e.target.closest("button").dataset.id;
+              viewPodcast(podcastId);
+            });
+          });
+
+        document.querySelectorAll(".edit-btn").forEach((button) => {
+          button.addEventListener("click", (e) => {
+            const podcastId = e.target.closest("button").dataset.id;
+            updatePodcast(podcastId);
+          });
+        });
+
+        document.querySelectorAll(".delete-btn").forEach((button) => {
+          button.addEventListener("click", (e) => {
+            const podcastId = e.target.closest("button").dataset.id;
+            deletePodcast(podcastId);
+          });
+        });
+      }
+
+      function renderPodcastDetail(podcast) {
+        podcastDetailElement.innerHTML = `
+        <div class="detail-header">
+          <button class="back-btn" id="back-to-list">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="m12 19-7-7 7-7"></path>
+              <path d="M19 12H5"></path>
+            </svg>
+            Back to podcasts
+          </button>
+        </div>
+        
+        <div class="detail-content">
+          <div class="detail-image" style="background-image: url('${
+            podcast.logoUrl
+          }')"></div>
+          
+          <div class="detail-info">
+            <h1 class="detail-title">${podcast.podName}</h1>
+            <p class="detail-category">${podcast.category}</p>
+            
+            <div class="detail-section">
+              <h2>About</h2>
+              <p>${podcast.description || "No description available."}</p>
+            </div>
+            
+            <div class="separator"></div>
+            
+            <div class="detail-grid">
+              <div class="detail-item">
+                <h3>Podcast Owner</h3>
+                <p>${podcast.ownerName || "Not specified"}</p>
+              </div>
+              <div class="detail-item">
+                <h3>Host(s)</h3>
+                <p>${podcast.hostName || "Not specified"}</p>
+              </div>
+              <div class="detail-item">
+                <h3>Email Address</h3>
+                <p>${podcast.email || "Not specified"}</p>
+              </div>
+              <div class="detail-item">
+                <h3>RSS Feed</h3>
+                ${
+                  podcast.rssFeed
+                    ? `<a href="${podcast.rssFeed}" target="_blank">${podcast.rssFeed}</a>`
+                    : "<p>Not specified</p>"
+                }
+              </div>
+            </div>
+            
+            <div class="separator"></div>
+            
+            <div class="detail-section">
+              <h2>Scheduling</h2>
+              <div class="detail-grid">
+                <div class="detail-item">
+                  <h3>Google Calendar</h3>
+                  ${
+                    podcast.googleCal
+                      ? `<a href="${podcast.googleCal}" target="_blank" style="display: flex; align-items: center; gap: 0.5rem;">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <rect width="18" height="18" x="3" y="4" rx="2" ry="2"></rect>
+                        <line x1="16" x2="16" y1="2" y2="6"></line>
+                        <line x1="8" x2="8" y1="2" y2="6"></line>
+                        <line x1="3" x2="21" y1="10" y2="10"></line>
+                      </svg>
+                      Calendar Link
+                    </a>`
+                      : `<p style="display: flex; align-items: center; gap: 0.5rem;">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <rect width="18" height="18" x="3" y="4" rx="2" ry="2"></rect>
+                        <line x1="16" x2="16" y1="2" y2="6"></line>
+                        <line x1="8" x2="8" y1="2" y2="6"></line>
+                        <line x1="3" x2="21" y1="10" y2="10"></line>
+                      </svg>
+                      Not connected
+                    </p>`
+                  }
+                </div>
+                <div class="detail-item">
+                  <h3>Calendar URL</h3>
+                  <p>podmanager.com/?pod=${podcast.podName.replace(
+                    /\s+/g,
+                    ""
+                  )}</p>
+                </div>
+                <div class="detail-item">
+                  <h3>Guest Form URL</h3>
+                  ${
+                    podcast.guestUrl
+                      ? `<a href="${podcast.guestUrl}" target="_blank">${podcast.guestUrl}</a>`
+                      : "<p>Not specified</p>"
+                  }
+                </div>
+              </div>
+            </div>
+            
+            <div class="separator"></div>
+            
+            <div class="detail-section">
+              <h2>Social Media</h2>
+              <div class="social-links">
+                ${
+                  podcast.socialMedia && podcast.socialMedia[0]
+                    ? `<a href="${podcast.socialMedia[0]}" target="_blank" class="social-link">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"></path>
+                    </svg>
+                    Facebook
+                  </a>`
+                    : ""
+                }
+                ${
+                  podcast.socialMedia && podcast.socialMedia[1]
+                    ? `<a href="${podcast.socialMedia[1]}" target="_blank" class="social-link">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <rect width="20" height="20" x="2" y="2" rx="5" ry="5"></rect>
+                      <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path>
+                      <line x1="17.5" x2="17.51" y1="6.5" y2="6.5"></line>
+                    </svg>
+                    Instagram
+                  </a>`
+                    : ""
+                }
+                ${
+                  podcast.socialMedia && podcast.socialMedia[2]
+                    ? `<a href="${podcast.socialMedia[2]}" target="_blank" class="social-link">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"></path>
+                      <rect width="4" height="12" x="2" y="9"></rect>
+                      <circle cx="4" cy="4" r="2"></circle>
+                    </svg>
+                    LinkedIn
+                  </a>`
+                    : ""
+                }
+                ${
+                  podcast.socialMedia && podcast.socialMedia[3]
+                    ? `<a href="${podcast.socialMedia[3]}" target="_blank" class="social-link">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M22 4s-.7 2.1-2 3.4c1.6 10-9.4 17.3-18 11.6 2.2.1 4.4-.6 6-2C3 15.5.5 9.6 3 5c2.2 2.6 5.6 4.1 9 4-.9-4.2 4-6.6 7-3.8 1.1 0 3-1.2 3-1.2z"></path>
+                    </svg>
+                    Twitter
+                  </a>`
+                    : ""
+                }
+                ${
+                  podcast.socialMedia && podcast.socialMedia[4]
+                    ? `<a href="${podcast.socialMedia[4]}" target="_blank" class="social-link">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M22 4s-.7 2.1-2 3.4c1.6 10-9.4 17.3-18 11.6 2.2.1 4.4-.6 6-2C3 15.5.5 9.6 3 5c2.2 2.6 5.6 4.1 9 4-.9-4.2 4-6.6 7-3.8 1.1 0 3-1.2 3-1.2z"></path>
+                    </svg>
+                    TikTok
+                  </a>`
+                    : ""
+                }
+              </div>
+            </div>
+          </div>
+        </div>
+      `;
+
+        document
+          .getElementById("back-to-list")
+          .addEventListener("click", () => {
+            podcastDetailElement.style.display = "none";
+            podcastListElement.style.display = "flex";
+          });
+      }
+
+      // CRUD operations
+      function viewPodcast(podcastId) {
+        const podcast = podcasts.find((p) => p._id === podcastId);
+        if (podcast) {
+          renderPodcastDetail(podcast);
+          podcastListElement.style.display = "none";
+          podcastDetailElement.style.display = "block";
+        } else {
+          showAlert("Podcast not found", "error");
+        }
+      }
+
+      function updatePodcast(podcastId) {
+        const podcast = podcasts.find((p) => p._id === podcastId);
+        if (podcast) {
+          // In a real app, this would navigate to an edit form or open a modal
+          // For this demo, we'll just show an alert
+          showAlert(`Editing podcast: ${podcast.podName}`, "success");
+
+          // You would typically redirect to an edit form or open a modal here
+          viewPodcast(podcastId);
+        } else {
+          showAlert("Podcast not found", "error");
+        }
+      }
+
+      function deletePodcast(podcastId) {
+        if (confirm("Are you sure you want to delete this podcast?")) {
+          const podcastIndex = podcasts.findIndex((p) => p._id === podcastId);
+          if (podcastIndex !== -1) {
+            // Remove the podcast from the array
+            const deletedPodcast = podcasts.splice(podcastIndex, 1)[0];
+
+            // Re-render the list
+            renderPodcastList();
+
+            showAlert(`Deleted podcast: ${deletedPodcast.podName}`, "success");
+          } else {
+            showAlert("Podcast not found", "error");
+          }
+        }
+      }
+
+      // Initialize the app
+      function init() {
+        // Simulate loading data
+        setTimeout(() => {
+          loadingElement.style.display = "none";
+          renderPodcastList();
+          podcastListElement.style.display = "flex";
+        }, 1000);
+      }
+
+      // Start the app
+      init();
+    </script>
   </body>
 </html>
