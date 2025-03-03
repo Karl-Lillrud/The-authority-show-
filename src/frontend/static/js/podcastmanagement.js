@@ -16,6 +16,13 @@ document.addEventListener("DOMContentLoaded", function () {
   const form = document.getElementById("register-podcast-form");
   let selectedPodcastId = null;
 
+  // New event: show form for adding a podcast
+  document.getElementById("add-podcast-btn").addEventListener("click", () => {
+    resetForm();
+    selectedPodcastId = null;
+    formContainer.style.display = "block";
+  });
+
   form.addEventListener("submit", async function (e) {
     e.preventDefault();
     console.log("Form submitted");
@@ -499,3 +506,133 @@ document.addEventListener("DOMContentLoaded", function () {
     `
   );
 });
+
+async function renderPodcastList() {
+  try {
+    // Fetch podcasts from your backend
+    const response = await fetchPodcasts();
+    const podcasts = response.podcast; // adjust if needed
+
+    const podcastListElement = document.getElementById("podcast-list");
+    podcastListElement.innerHTML = "";
+
+    if (podcasts.length === 0) {
+      podcastListElement.innerHTML = `
+        <div style="text-align: center; padding: 3rem; background-color: white; border-radius: 8px;">
+          <p style="color: #666;">No podcasts found</p>
+        </div>
+      `;
+      return;
+    }
+
+    podcasts.forEach((podcast) => {
+      const podcastCard = document.createElement("div");
+      podcastCard.className = "podcast-card";
+      podcastCard.innerHTML = `
+        <div class="podcast-content">
+          <div class="podcast-image" style="background-image: url('${
+            podcast.logoUrl
+          }')"></div>
+          <div class="podcast-info">
+            <div class="podcast-header">
+              <div>
+                <h2 class="podcast-title">${podcast.podName}</h2>
+                <p class="podcast-meta"><span>Category:</span> ${
+                  podcast.category
+                }</p>
+                <p class="podcast-meta"><span>Host:</span> ${
+                  podcast.hostName || "Not specified"
+                }</p>
+                <p class="podcast-meta"><span>Owner:</span> ${
+                  podcast.ownerName || "Not specified"
+                }</p>
+              </div>
+              <div class="podcast-actions">
+                <button class="action-btn view-btn" title="View podcast details" data-id="${
+                  podcast._id
+                }">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"></path>
+                    <circle cx="12" cy="12" r="3"></circle>
+                  </svg>
+                </button>
+                <button class="action-btn edit-btn" title="Edit podcast" data-id="${
+                  podcast._id
+                }">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"></path>
+                  </svg>
+                </button>
+                <button class="action-btn delete-btn" title="Delete podcast" data-id="${
+                  podcast._id
+                }">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M3 6h18"></path>
+                    <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"></path>
+                    <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"></path>
+                  </svg>
+                </button>
+              </div>
+            </div>
+            <p class="podcast-description">${
+              podcast.description || "No description available."
+            }</p>
+          </div>
+        </div>
+        <div class="podcast-footer">
+          <button class="view-details-btn" data-id="${
+            podcast._id
+          }">View Details</button>
+        </div>
+      `;
+      podcastListElement.appendChild(podcastCard);
+    });
+
+    // Add event listeners for action buttons
+    document
+      .querySelectorAll(".view-btn, .view-details-btn")
+      .forEach((button) => {
+        button.addEventListener("click", (e) => {
+          const btn = e.target.closest("button");
+          const podcastId = btn ? btn.getAttribute("data-id") : null;
+          if (podcastId) {
+            viewPodcast(podcastId);
+          }
+        });
+      });
+    document.querySelectorAll(".edit-btn").forEach((button) => {
+      button.addEventListener("click", (e) => {
+        const podcastId = e.target.closest("button").dataset.id;
+        updatePodcast(podcastId);
+      });
+    });
+    document.querySelectorAll(".delete-btn").forEach((button) => {
+      button.addEventListener("click", (e) => {
+        const podcastId = e.target.closest("button").dataset.id;
+        deletePodcast(podcastId);
+      });
+    });
+  } catch (error) {
+    console.error("Error rendering podcast list:", error);
+  }
+}
+
+// Example usage: call renderPodcastList() after adding/updating or on "Fetch All Podcasts" click
+document
+  .getElementById("fetch-podcasts-btn")
+  .addEventListener("click", renderPodcastList);
+
+async function viewPodcast(podcastId) {
+  try {
+    const response = await fetchPodcast(podcastId);
+    // Assuming your API returns the podcast in response.podcast
+    const podcast = response.podcast;
+    // Use your pre-existing function to pre-populate the form fields
+    displayPodcastDetails(podcast);
+    // Show the form with details and hide the podcast list
+    document.querySelector(".form-box").style.display = "block";
+    document.getElementById("podcast-list").style.display = "none";
+  } catch (error) {
+    showAlert("Podcast not found", "red");
+  }
+}
