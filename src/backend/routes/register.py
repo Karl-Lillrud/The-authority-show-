@@ -1,4 +1,4 @@
-from flask import Blueprint, request, jsonify, url_for, render_template, redirect
+from flask import Blueprint, request, jsonify, url_for, render_template
 from werkzeug.security import generate_password_hash
 from dotenv import load_dotenv
 from datetime import datetime
@@ -26,9 +26,7 @@ logger = logging.getLogger(__name__)
 def register():
     email = request.args.get("email", "")
     if request.method == "GET":
-        if request.headers.get("X-Requested-With") == "XMLHttpRequest":
-            return render_template("register/register.html", email=email)
-        return redirect(url_for("signin_bp.signin"))
+        return render_template("register/register.html", email=email)
 
     if request.content_type != "application/json":
         logger.error("Invalid Content-Type: %s", request.content_type)
