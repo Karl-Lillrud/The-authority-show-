@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Team Management</title>
+  <script src="teamMemberRequest.js" defer></script>
+</head>
+<body>
+
+  <h1>Team Management</h1>
+
+  <div>
+    <h2>Add User to Team</h2>
+    <input type="text" id="userId" placeholder="User ID" />
+    <input type="text" id="teamId" placeholder="Team ID" />
+    <input type="text" id="role" placeholder="Role" />
+    <button onclick="addUserToTeam(document.getElementById('userId').value, document.getElementById('teamId').value, document.getElementById('role').value)">
+      Add User
+    </button>
+  </div>
+
+  <div>
+    <h2>Remove User from Team</h2>
+    <input type="text" id="removeUserId" placeholder="User ID" />
+    <input type="text" id="removeTeamId" placeholder="Team ID" />
+    <button onclick="removeUserFromTeam(document.getElementById('removeUserId').value, document.getElementById('removeTeamId').value)">
+      Remove User
+    </button>
+  </div>
+
+  <div>
+    <h2>Get Team Members</h2>
+    <input type="text" id="getTeamId" placeholder="Team ID" />
+    <button onclick="getTeamMembers(document.getElementById('getTeamId').value)">
+      Get Members
+    </button>
+    <ul id="team-members-list"></ul>
+  </div>
+
+  <div>
+    <h2>Invite User to Team</h2>
+    <input type="text" id="inviteUserId" placeholder="User ID" />
+    <input type="text" id="inviteTeamId" placeholder="Team ID" />
+    <input type="text" id="inviteRole" placeholder="Role" />
+    <button onclick="inviteUserToTeam(document.getElementById('inviteUserId').value, document.getElementById('inviteTeamId').value, document.getElementById('inviteRole').value)">
+      Invite User
+    </button>
+  </div>
+
+  <div>
+    <h2>Respond to Invite</h2>
+    <input type="text" id="inviteResponseTeamId" placeholder="Team ID" />
+    <select id="response">
+      <option value="accepted">Accept</option>
+      <option value="declined">Decline</option>
+    </select>
+    <button onclick="respondToInvite(document.getElementById('inviteResponseTeamId').value, document.getElementById('response').value)">
+      Respond to Invite
+    </button>
+  </div>
+
+</body>
+</html>
