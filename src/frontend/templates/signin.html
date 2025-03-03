@@ -68,6 +68,8 @@
       </form>
     </div>
 
+    <div id="register-container" style="display: none"></div>
+
     <script>
       document.addEventListener("DOMContentLoaded", function () {
         const form = document.getElementById("login-form");
@@ -87,7 +89,7 @@
           const remember = document.getElementById("remember").checked;
 
           try {
-            const response = await fetch(`${API_BASE_URL}/signin`, {
+            const response = await fetch(`${API_BASE_URL}`, {
               method: "POST",
               headers: { "Content-Type": "application/json" },
               body: JSON.stringify({ email, password, remember })
@@ -109,8 +111,28 @@
             document.getElementById("error-message").style.display = "block";
           }
         });
+
+        const registerLink = document.querySelector('a[href="/register"]');
+        const registerContainer = document.getElementById("register-container");
+        const centerBox = document.querySelector(".center-box");
+
+        registerLink.addEventListener("click", async function (event) {
+          event.preventDefault();
+          try {
+            const response = await fetch("/register", {
+              headers: {
+                "X-Requested-With": "XMLHttpRequest"
+              }
+            });
+            const registerHtml = await response.text();
+            registerContainer.innerHTML = registerHtml;
+            centerBox.style.display = "none";
+            registerContainer.style.display = "block";
+          } catch (error) {
+            console.error("Error loading registration form:", error);
+          }
+        });
       });
     </script>
   </body>
 </html>
-

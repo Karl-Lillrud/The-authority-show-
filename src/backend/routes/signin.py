@@ -13,8 +13,7 @@ from backend.database.mongo_connection import collection
 signin_bp = Blueprint("signin_bp", __name__)
 
 
-@signin_bp.route("/", methods=["GET"])
-@signin_bp.route("/signin", methods=["GET", "POST"])
+@signin_bp.route("/", methods=["GET", "POST"])
 def signin():
     if request.method == "GET":
         if request.cookies.get("remember_me") == "true":
