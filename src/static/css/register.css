@@ -21,23 +21,56 @@ body {
   transition: background-color 0.3s ease, color 0.3s ease;
 }
 
+
+
+
+.imagePhoto {
+  display: flex;
+  justify-content: center; /* Centrerar bilden horisontellt */
+  align-items: center; /* Centrerar bilden vertikalt */
+  overflow: hidden; /* Förhindrar att bilden sträcker sig utanför */
+  border-radius: 10px; /* Valfri, för runda hörn */
+}
+
+.imagePhoto img {
+  display: flex;
+  position:absolute;
+  left: 0rem;
+  height: 100%;
+  width:100%; /* Gör att bilden fyller sin container */
+  object-fit: cover; /* Säkerställer att bilden täcker sin container */
+}
+
 .center-box {
   background-color: var(--bg-light);
-  width: 90%;
-  max-width: 250px;
-  padding: 20px;
-  border-radius: 20px;
-  box-shadow: -5px -5px 15px white, 5px 5px 15px var(--shadow-light);
+  position: fixed;
+  left: 5vw; /* Anpassar sig efter skärmens bredd */
+  top: 15vh;
+  width: 23vw; /* Blir mindre när skärmen krymper */
+  height: 60vh; /* Anpassar sig dynamiskt */
+  padding: 2vw; /* Padding minskar också med skärmen */
+  border-radius: 2vw; /* Rundade hörn justeras proportionellt */
+  box-shadow: -0.5vw -0.5vw 2vw #FF7F3F, 2.5vw 1.5vw 1vw var(--shadow-light);
   text-align: center;
-  margin: 15px;
+  transition: all 0.3s ease-in-out;
 }
+
 
 .logo-container {
   position: absolute;
-  top: 20px;
-  left: 20px;
-  width: 120px; /* Adjust as needed */
+  width: 120px;
+  /* Adjust as needed */
 }
+
+.logo-container {
+  position: relative;
+  left: 6vh;
+  bottom: 40vh;
+  width: 120px;
+  z-index: 1000;
+}
+
+
 
 .logo-container img {
   width: 100%;
@@ -50,13 +83,21 @@ body {
   margin-top: 15px;
   border: none;
   cursor: pointer;
+  position: relative;
+  top: 7vh;
   font-family: var(--font-primary);
   background: var(--bg-light);
   box-shadow: -5px -5px 10px white, 5px 5px 10px var(--shadow-light);
   transition: all 0.3s ease;
 }
+
+
 .button.button {
-  color: #6e7f8d;
+  color: white;
+  width: 75%;
+  background-color: #FF7F3F;
+  border-radius: 10px;
+  top: 5vh;
 }
 
 .button:hover {
@@ -64,14 +105,17 @@ body {
 }
 
 .input {
-  padding: 10px;
-  border: none;
-  border-radius: 10px;
-  width: 70%;
-  background: var(--bg-light);
-  box-shadow: inset -5px -5px 10px white, inset 5px 5px 10px var(--shadow-light);
-  transition: all 0.3s ease;
-  margin: 15px;
+   padding: 2vh;
+    border: none;
+    border-radius: 1.5vh;
+    width: 75%;
+    position: relative;
+    top: 3vh;
+    background: var(--bg-light);
+    border: #FF7F3F 1px solid;
+    box-shadow: -5px -5px 15px white, 5px 5px 15px var(--shadow-light);
+    transition: all 0.3s ease;
+    margin: 2vh;
 }
 
 .input:focus {
@@ -82,7 +126,7 @@ body {
 .link {
   color: var(--highlight);
   text-decoration: none;
-  font-size: 14px;
+  font-size: 19px;
   margin-top: 15px;
   margin: 30px;
 }
@@ -92,10 +136,10 @@ body {
 }
 
 .account-text {
-  font-size: 14px;
+  font-size: 3vh;
   color: var(--text-light);
-  margin-top: 20px;
-  margin-bottom: 5px;
+  margin-top: 9vh;
+  margin-bottom: 5vh;
   text-align: center;
 }
 
@@ -135,3 +179,5 @@ body {
   width: 90%;
   max-width: 250px;
 }
+
+

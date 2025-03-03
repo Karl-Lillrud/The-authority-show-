@@ -8,7 +8,7 @@
     --highlight: #FF7F3F;
     --font-primary: 'Campton', sans-serif;
 }
- 
+
 body {
     font-family: var(--font-primary);
     background-color: var(--bg-light);
@@ -20,30 +20,58 @@ body {
     margin: 0;
     transition: background-color 0.3s ease, color 0.3s ease;
 }
- 
+
+.imagePhoto {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    overflow: hidden;
+    border-radius: 10px;
+}
+
+.imagePhoto img {
+    display: flex;
+    position: absolute;
+    left: 0rem;
+    height: 100%;
+    width: 100%;
+    object-fit: cover;
+}
+
 .center-box {
     background-color: var(--bg-light);
-    width: 90%;
-    max-width: 250px;
-    padding: 20px;
-    border-radius: 20px;
-    box-shadow: -5px -5px 15px white, 5px 5px 15px var(--shadow-light);
+    position: fixed;
+    left: 5vw;
+    top: 15vh;
+    width: 23vw;
+    height: 60vh;
+    padding: 2vw;
+    border-radius: 2vw;
+    box-shadow: -0.5vw -0.5vw 2vw #FF7F3F, 2.5vw 1.5vw 1vw var(--shadow-light);
     text-align: center;
-    margin: 15px;
+    transition: all 0.3s ease-in-out;
 }
+
 
 .logo-container {
     position: absolute;
-    top: 20px;
-    left: 20px;
-    width: 120px; /* Adjust as needed */
+    width: 120px;
 }
+
+.logo-container {
+    position: relative;
+    left: 6vh;
+    bottom: 40vh;
+    width: 120px;
+    z-index: 1000;
+}
+
 
 .logo-container img {
     width: 100%;
     height: auto;
 }
- 
+
 .button {
     padding: 10px 20px;
     border-radius: 25px;
@@ -55,36 +83,78 @@ body {
     box-shadow: -5px -5px 10px white, 5px 5px 10px var(--shadow-light);
     transition: all 0.3s ease;
 }
-.button.button.button-primary {
-    color: #6E7F8D;
+
+
+#email {
+    border: #FF7F3F 1px solid;
+    width: 78%;
+    background: var(--bg-light);
+    padding: 2.3vh;
+    margin: 3vh;
+    padding-right: 0;
+    border-radius: 10px;
+    box-shadow: -5px -5px 15px white, 5px 5px 15px var(--shadow-light);
 }
+
+
+
+
+
+
+#code {
+    border: #FF7F3F 1px solid;
+    width: 78%;
+    background-color: #FF7F3F;
+    color: white;
+    padding: 1.3vh;
+    margin: 3vh;
+    border-radius: 10px;
+    box-shadow: -5px -5px 15px white, 5px 5px 15px var(--shadow-light);
+}
+
+
+
+
+
+#code:hover {
+    box-shadow: -3px -3px 6px white, 3px 3px 6px var(--shadow-light);
+}
+
+
+
 
 .button:hover {
     box-shadow: -3px -3px 6px white, 3px 3px 6px var(--shadow-light);
 }
- 
+
 .input {
     padding: 10px;
-    border: none;
     border-radius: 10px;
     width: 70%;
     background: var(--bg-light);
     box-shadow: inset -5px -5px 10px white, inset 5px 5px 10px var(--shadow-light);
     transition: all 0.3s ease;
     margin: 15px;
+    border: 2px solid transparent; /* Gör kanten osynlig */
+
 }
- 
-.input:focus {
+
+
+  #email:focus {
     outline: none;
+    color: gray;
     box-shadow: inset -3px -3px 6px white, inset 3px 3px 6px var(--shadow-light);
-}
- 
+  }
+  
+
+
+
 .link {
     color: var(--highlight);
     text-decoration: none;
-    font-size: 14px;
-    margin-top: 15px;
-    margin: 30px;
+    font-size: 2vh;
+    position: relative;
+    top: 19vh;
 }
 
 
