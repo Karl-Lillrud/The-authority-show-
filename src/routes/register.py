@@ -3,12 +3,18 @@ from werkzeug.security import generate_password_hash
 from dotenv import load_dotenv
 from datetime import datetime
 import uuid
+import re
 import requests
 from database.mongo_connection import collection
 
 register_bp = Blueprint("register_bp", __name__)
 
 load_dotenv()
+
+# Function to validate email format
+def is_valid_email(email):
+    email_regex = r"(^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$)"
+    return re.match(email_regex, email) is not None
 
 @register_bp.route("/register", methods=["GET", "POST"])
 def register():
@@ -27,7 +33,17 @@ def register():
             return jsonify({"error": "Missing email or password"}), 400
 
         email = data["email"].lower().strip()
+
+        # Validate email format
+        if not is_valid_email(email):
+            return jsonify({"error": "Invalid email format"}), 400
+
         password = data["password"]
+
+        # Validate password strength (minimum length of 8 characters)
+        if len(password) < 8:
+            return jsonify({"error": "Password must be at least 8 characters long"}), 400
+
         hashed_password = generate_password_hash(password)
 
         print("🔍 Checking if user already exists...")
@@ -61,7 +77,6 @@ def register():
         # Make a POST request to the /create_account endpoint in account.py
         account_response = requests.post("http://127.0.0.1:8000/create_accounts", json=account_data)
 
-
         # Check if account creation was successful
         if account_response.status_code != 201:
             return jsonify({"error": "Failed to create account", "details": account_response.json()}), 500
@@ -70,7 +85,6 @@ def register():
         account_data = account_response.json()
         account_id = account_data["accountId"]
 
-   
         print("✅ Registration successful!")
         return jsonify({
             "message": "Registration successful!",

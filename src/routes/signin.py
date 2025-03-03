@@ -7,11 +7,11 @@ from flask import (
     redirect,
     url_for,
 )
+from datetime import datetime, timezone
 from werkzeug.security import check_password_hash
 from database.mongo_connection import collection
 
 signin_bp = Blueprint("signin_bp", __name__)
-
 @signin_bp.route("/", methods=["GET"])
 @signin_bp.route("/signin", methods=["GET", "POST"])
 def signin():
@@ -34,6 +34,12 @@ def signin():
     # ✅ Proper user validation
     if not users or not check_password_hash(users["passwordHash"], password):
         return jsonify({"error": "Invalid email or password"}), 401
+
+    # ✅ Uppdatera lastLogin efter lyckad inloggning
+    collection.update_one(
+        {"_id": users["_id"]},
+        {"$set": {"lastLogin": datetime.now(timezone.utc)}}
+    )
 
     # ✅ Storing session values correctly
     session["user_id"] = str(users["_id"])
@@ -60,9 +66,8 @@ def signin():
             "redirect_url": "/homepage"
         }), 200
     
- 
     response = jsonify({"message": "Login successful", "redirect_url": "dashboard"})
-    
+
     # ✅ Correct cookie handling
     if remember:
         response.set_cookie("remember_me", "true", max_age=30 * 24 * 60 * 60)  # 30 days
