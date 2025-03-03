@@ -1,0 +1,557 @@
+:root {
+    --bg-light: #EFF2F9;
+    --bg-dark: #1C1C1C;
+    --shadow-light: rgba(22, 24, 29, 0.23);
+    --shadow-dark: rgba(0, 0, 0, 0.8);
+    --text-light: #6E7F8D;
+    --text-dark: #B3B3B3;
+    --highlight: #FF7F3F;
+    --font-primary: 'Campton', sans-serif;
+}
+
+body {
+    font-family: var(--font-primary);
+    background-color: var(--bg-light);
+    color: var(--text-light);
+    height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin: 0;
+    transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+.imagePhoto {
+    display: flex;
+    justify-content: center;
+    /* Centrerar bilden horisontellt */
+    align-items: center;
+    /* Centrerar bilden vertikalt */
+    overflow: hidden;
+    /* Förhindrar att bilden sträcker sig utanför */
+    border-radius: 10px;
+    /* Valfri, för runda hörn */
+}
+
+.imagePhoto img {
+    display: flex;
+    position: fixed;
+    left: 0rem;
+    height: 100%;
+    width: 100%;
+    /* Gör att bilden fyller sin container */
+    object-fit: cover;
+    /* Säkerställer att bilden täcker sin container */
+}
+
+.center-box {
+    background-color: var(--bg-light);
+    position: fixed;
+    left: 5vw;
+    top: 15vh;
+    width: 23vw;
+    height: 60vh;
+    padding: 2vw;
+    border-radius: 2vw;
+    box-shadow: -0.5vw -0.5vw 2vw #FF7F3F, 2.5vw 1.5vw 1vw var(--shadow-light);
+    text-align: center;
+    transition: all 0.3s ease-in-out;
+}
+
+
+.logo-container {
+    position: absolute;
+    width: 120px;
+    /* Adjust as needed */
+}
+
+.logo-container {
+    position: fixed;
+    left: 105vh;
+    bottom: 80vh;
+    width: 120px;
+    z-index: 1000;
+}
+
+
+
+.logo-container img {
+    width: 100%;
+    height: auto;
+}
+
+
+
+.title3 {
+    color: #FF7F3F;
+    margin-bottom: 3vh;
+
+}
+
+
+
+
+
+.button {
+    padding: 10px 20px;
+    border-radius: 25px;
+    margin-top: 5vh;
+    border: none;
+    cursor: pointer;
+    font-family: var(--font-primary);
+    background: var(--bg-light);
+    box-shadow: -5px -5px 10px white, 5px 5px 10px var(--shadow-light);
+    transition: all 0.3s ease;
+    margin-bottom: 15px;
+    margin: 3vh;
+
+
+}
+
+.button.button.button-primary {
+    color: white;
+    width: 80%;
+
+    background-color: #FF7F3F;
+    border-radius: 10px;
+
+
+
+}
+
+.button:hover {
+    box-shadow: -3px -3px 6px white, 3px 3px 6px var(--shadow-light);
+}
+
+.input {
+    padding: 2vh;
+    border: none;
+    border-radius: 10px;
+    width: 70%;
+    background: var(--bg-light);
+    border: #FF7F3F 1px solid;
+    box-shadow: -5px -5px 15px white, 5px 5px 15px var(--shadow-light);
+    transition: all 0.3s ease;
+    margin: 2vh;
+}
+
+
+
+
+
+.input:focus {
+
+    outline: none;
+    box-shadow: inset -3px -3px 6px white, inset 3px 3px 6px var(--shadow-light);
+}
+
+.link {
+    color: var(--highlight);
+    text-decoration: none;
+    font-size: 16px;
+
+}
+
+.text {
+    margin-bottom: 3vh;
+}
+
+
+.text2 {
+    margin-bottom: 30px;
+}
+
+.center-box h1 {
+    font-size: 4vh;
+}
+
+
+
+.link:hover {
+    text-decoration: underline;
+}
+
+.error-message {
+    font-size: 14px;
+    color: var(--highlight);
+    margin-bottom: 15px;
+    text-align: center;
+}
+
+
+
+
+/* MOBILE (max-width: 767px) */
+  
+@media (max-width: 767px) {
+
+    .imagePhoto img {
+        width: 100%;
+        height: 110vh;
+        position: fixed;
+        top:3vh;
+        object-fit: cover;
+        object-position: 56% top;
+        transform: translateY(-90px); /* Flytta uppåt */
+    }
+    
+
+
+    .center-box {
+
+        padding: 1px;
+        width: 70%;
+        height: 54vh;
+        padding-top: 4vh;
+        top: 40vh;
+        position: fixed;
+        left: 10vh;
+    }
+    
+
+
+
+    .logo-container {
+        position: fixed;
+        left: 28vh;
+        bottom: 80vh;
+        margin-top: 2vh;
+        width: 18vh;
+    }
+
+    .button {
+        width: 70%;
+    }
+
+    .input {
+        width: 60%;
+        font-size: 14px;
+        padding: 1.5vh;
+    }
+
+    .center-box h1 {
+        font-size: 3vh;
+        color: black;
+    }
+
+.input-group{
+    font-size: 2vh;
+    color: black;
+}
+.text2{
+    font-size: 2vh;
+    color: black;
+}
+
+
+.link{
+    font-size: 2vh;
+    color: black;
+}
+}
+
+
+@media screen and (min-width: 1024px) {
+
+
+
+    .imagePhoto {
+        display: flex;
+        justify-content: center;
+        /* Centrerar bilden horisontellt */
+        align-items: center;
+        /* Centrerar bilden vertikalt */
+        overflow: hidden;
+        /* Förhindrar att bilden sträcker sig utanför */
+        border-radius: 10px;
+        /* Valfri, för runda hörn */
+    }
+    
+    .imagePhoto img {
+        display: flex;
+        position: fixed;
+        left: 0rem;
+        height: 100%;
+        width: 100%;
+        object-position: 20% top;
+
+        /* Gör att bilden fyller sin container */
+        object-fit: cover;
+        /* Säkerställer att bilden täcker sin container */
+    }
+    
+    .center-box {
+        background-color: var(--bg-light);
+        position: fixed;
+        left: 3vw;
+        top: 15vh;
+        width: 40vh;
+        max-height: 60vh;
+        padding: 2vw;
+        border-radius: 2vw;
+        box-shadow: -0.5vw -0.5vw 2vw #FF7F3F, 2.5vw 1.5vw 1vw var(--shadow-light);
+        text-align: center;
+        transition: all 0.3s ease-in-out;
+    }
+    
+    
+    .logo-container {
+        position: absolute;
+        width: 120px;
+        /* Adjust as needed */
+    }
+    
+    .logo-container {
+        position: fixed;
+        left: 75vh;
+        bottom: 80vh;
+        width: 120px;
+        z-index: 1000;
+    }
+    
+    
+    
+    .logo-container img {
+        width: 100%;
+        height: auto;
+    }
+    
+    
+    
+    .title3 {
+        color: #FF7F3F;
+        margin-bottom: 3vh;
+    
+    }
+    
+    
+    
+    
+    
+    .button {
+        padding: 10px 20px;
+        border-radius: 25px;
+        margin-top: 5vh;
+        border: none;
+        cursor: pointer;
+        font-family: var(--font-primary);
+        background: var(--bg-light);
+        box-shadow: -5px -5px 10px white, 5px 5px 10px var(--shadow-light);
+        transition: all 0.3s ease;
+        margin-bottom: 15px;
+        margin: 3vh;
+    
+    
+    }
+    
+    .button.button.button-primary {
+        color: white;
+        width: 80%;
+    
+        background-color: #FF7F3F;
+        border-radius: 10px;
+    
+    
+    
+    }
+    
+    .button:hover {
+        box-shadow: -3px -3px 6px white, 3px 3px 6px var(--shadow-light);
+    }
+    
+    .input {
+        padding: 2vh;
+        border: none;
+        border-radius: 10px;
+        width: 70%;
+        background: var(--bg-light);
+        border: #FF7F3F 1px solid;
+        box-shadow: -5px -5px 15px white, 5px 5px 15px var(--shadow-light);
+        transition: all 0.3s ease;
+        margin: 2vh;
+    }
+    
+    
+    
+    
+    
+    .input:focus {
+    
+        outline: none;
+        box-shadow: inset -3px -3px 6px white, inset 3px 3px 6px var(--shadow-light);
+    }
+    
+    .link {
+        color: var(--highlight);
+        text-decoration: none;
+        font-size: 16px;
+    
+    }
+    
+    .text {
+        margin-bottom: 3vh;
+    }
+    
+    
+    .text2 {
+        margin-bottom: 30px;
+    }
+    
+    .center-box h1 {
+        font-size: 4vh;
+    }
+    
+    
+    
+    .link:hover {
+        text-decoration: underline;
+    }
+    
+    .error-message {
+        font-size: 14px;
+        color: var(--highlight);
+        margin-bottom: 15px;
+        text-align: center;
+    }
+    
+
+
+}
+/* TABLETS (min-width: 768px) */
+
+@media screen and (min-width: 481px) and (max-width: 768px) {
+
+    .imagePhoto img {
+        width: 100%;
+        height: 110vh;
+        position: fixed;
+        top:3vh;
+        object-fit: cover;
+        object-position: 56% top;
+        transform: translateY(-90px); /* Flytta uppåt */
+    }
+    
+
+
+    .center-box {
+
+        padding: 1px;
+        width: 59%;
+        height: 54vh;
+        padding-top: 4vh;
+        top: 40vh;
+        position: fixed;
+        left: 14vh;
+    }
+    
+
+
+    .logo-container {
+        position: fixed;
+        left: 50%; /* Placera mitten av logotypen i mitten av skärmen */
+        bottom: 80vh; /* Justera hur högt upp logotypen ska vara */
+        width: 18vh; /* Behåll storlek */
+        transform: translateX(-50%); /* Justera så att mitten av logotypen hamnar exakt i mitten */
+    }
+    
+
+    .button {
+        width: 70%;
+    }
+
+    .input {
+        width: 60%;
+        font-size: 14px;
+        padding: 1.5vh;
+    }
+
+    .center-box h1 {
+        font-size: 3vh;
+        color: black;
+    }
+
+.input-group{
+    font-size: 2vh;
+    color: black;
+}
+.text2{
+    font-size: 2vh;
+    color: black;
+}
+
+
+.link{
+    font-size: 2vh;
+    color: black;
+}
+
+}
+
+@media screen and (min-width: 768px) and (max-width: 1024px) {
+
+    .imagePhoto img {
+        width: 100%;
+        height: 110vh;
+        position: fixed;
+        top:3vh;
+        object-fit: cover;
+        object-position: 56% top;
+        transform: translateY(-90px); /* Flytta uppåt */
+    }
+    
+
+    .center-box {
+        position: fixed;
+        width: 50%;
+        height: 54vh;
+        padding: 1px;
+        padding-top: 4vh;
+        top: 40vh; /* Styr höjden */
+        left: 50%; /* Flyttar mitten av boxen till mitten av skärmen */
+        transform: translateX(-50%); /* Justerar så att boxen blir helt centrerad */
+    }
+    
+
+
+    .logo-container {
+        position: fixed;
+        left: 50%; /* Placera mitten av logotypen i mitten av skärmen */
+        bottom: 80vh; /* Justera hur högt upp logotypen ska vara */
+        width: 18vh; /* Behåll storlek */
+        transform: translateX(-50%); /* Justera så att mitten av logotypen hamnar exakt i mitten */
+    }
+    
+
+    .button {
+        width: 70%;
+    }
+
+    .input {
+        width: 60%;
+        font-size: 14px;
+        padding: 1.5vh;
+    }
+
+    .center-box h1 {
+        font-size: 3vh;
+        color: black;
+    }
+
+.input-group{
+    font-size: 2vh;
+    color: black;
+}
+.text2{
+    font-size: 2vh;
+    color: black;
+}
+
+
+.link{
+    font-size: 2vh;
+    color: black;
+}
+
+
+
+}
