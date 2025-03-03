@@ -1,128 +1,38 @@
-{% extends "dashboard/components/base.html" %}
-{% block title %}Podcast Task Management{% endblock %}
+{% extends "dashboard/components/base.html" %} {% block title %}Podcast Task
+Management{% endblock %} {% block content %}
+<link
+  rel="stylesheet"
+  href="{{ url_for('static', filename='css/podcastmanagement.css') }}"
+/>
 
-{% block content %}
-<link rel="stylesheet" href="{{ url_for('static', filename='css/podcastmanagement.css') }}">
+<script
+  type="module"
+  src="{{ url_for('static', filename='js/podcastmanagement.js') }}"
+></script>
 
-<link rel="stylesheet" href="{{ url_for('static', filename='css/podcastmanagement.css') }}">
-
-<script>
-  document.addEventListener("DOMContentLoaded", function () {
-      const form = document.getElementById("register-podcast-form");
-
-      form.addEventListener("submit", function (e) {
-          e.preventDefault();
-
-          // Retrieve the form elements
-          const podName = document.getElementById("pod-name")?.value.trim() || "";
-          const email = document.getElementById("email")?.value.trim() || "";
-          const category = document.getElementById("category")?.value.trim() || "";
-
-          // Initialize error message
-          let errorMessage = "";
-
-          // Check if required fields are empty
-          const requiredFields = [
-              { name: "podName", value: podName },
-              { name: "email", value: email },
-              { name: "category", value: category }
-          ];
-
-          requiredFields.forEach(field => {
-              if (!field.value) {
-                  errorMessage += `Please fill in the ${field.name}.<br>`;
-              }
-          });
-
-          // If there is any missing required field, show an alert
-          if (errorMessage) {
-              showAlert(errorMessage, "red");
-              return;
-          }
-
-          // Collect social media values, ensuring empty strings are included but only if they are not empty
-          const socialMedia = [
-              document.getElementById("facebook")?.value.trim(),
-              document.getElementById("instagram")?.value.trim(),
-              document.getElementById("linkedin")?.value.trim(),
-              document.getElementById("twitter")?.value.trim(),
-              document.getElementById("tiktok")?.value.trim(),
-              document.getElementById("pinterest")?.value.trim()
-          ].filter(link => link); // Remove empty strings
-
-          // Collect URLs for optional fields, remove if empty
-          const googleCal = document.getElementById("google-cal")?.value.trim() || null;
-          const guestUrl = document.getElementById("guest-form-url")?.value.trim() || null;
-
-          // Build the data object
-          const data = {
-              teamId: "",
-              podName,
-              ownerName: document.getElementById("pod-owner")?.value.trim() || "",
-              hostName: document.getElementById("pod-host")?.value.trim() || "",
-              rssFeed: document.getElementById("pod-rss")?.value.trim() || "",
-              googleCal: googleCal,
-              guestUrl: guestUrl,
-              email,
-              description: document.getElementById("description")?.value.trim() || "",
-              logoUrl: "https://podmanagerstorage.blob.core.windows.net/blob-container/pod1.jpg",
-              category,
-              socialMedia
-          };
-
-          // Remove any keys with null or empty values
-          Object.keys(data).forEach(key => {
-              if (data[key] === null || (Array.isArray(data[key]) && data[key].length === 0) || data[key] === "") {
-                  delete data[key];
-              }
-          });
-
-          // Send data to server via fetch API
-          fetch("/add_podcasts", {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify(data),
-          })
-          .then(response => response.json())
-          .then(responseData => {
-              if (responseData.error) {
-                  showAlert(`Error: ${responseData.details ? JSON.stringify(responseData.details) : responseData.error}`, "red");
-              } else {
-                  showAlert("Podcast added successfully!", "green");
-                  setTimeout(() => window.location.href = responseData.redirect_url, 2500);
-              }
-          })
-          .catch(error => {
-              console.error("Error:", error);
-              showAlert("There was an error with the registration process.", "red");
-          });
-      });
-
-      function showAlert(message, color) {
-          const alertBox = document.getElementById("custom-alert");
-          const alertMessage = document.getElementById("alert-message");
-
-          alertMessage.textContent = message;
-          alertBox.style.background = color;
-          alertBox.style.display = "block";
-
-          setTimeout(() => { alertBox.style.display = "none"; }, 2500);
-      }
-  });
-</script>
-
-
-<a href="{{ url_for('dashboard_bp.dashboard') }}" class="back-arrow">&#8592; Back</a>
+<a href="{{ url_for('dashboard_bp.dashboard') }}" class="back-arrow"
+  >&#8592; Back</a
+>
 <div class="container">
+  <div class="crud-buttons">
+    <button id="fetch-podcasts-btn" class="crud-btn">
+      View / Delete Podcasts
+    </button>
+  </div>
   <div class="form-box">
     <div class="form-fields">
       <form id="register-podcast-form">
         <!-- Pod Logo -->
         <div class="form-group">
           <label for="pod-logo">Pod Logo</label>
-          <div style="display: flex; align-items: center; justify-content: center;">
-            <img src="https://podmanagerstorage.blob.core.windows.net/blob-container/pod1.jpg" 
-              alt="Pod Logo" class="pod-logo pod-logo-inline" />
+          <div
+            style="display: flex; align-items: center; justify-content: center"
+          >
+            <img
+              src="https://podmanagerstorage.blob.core.windows.net/blob-container/pod1.jpg"
+              alt="Pod Logo"
+              class="pod-logo pod-logo-inline"
+            />
           </div>
         </div>
 
@@ -221,6 +131,26 @@
 
         <button type="submit" class="invite-btn">SAVE</button>
       </form>
+    </div>
+  </div>
+  <div id="podcasts-popup" class="popup">
+    <div class="popup-content">
+      <span id="close-popup-btn" class="close-btn">&times;</span>
+      <h2 style="text-align: center">Select Podcasts to Delete</h2>
+      <div
+        id="podcasts-list"
+        class="popup-list"
+        style="text-align: center"
+      ></div>
+      <div class="modal-buttons" style="justify-content: center">
+        <!-- Removed delete-selected button -->
+        <button
+          class="cancel-btn"
+          onclick="document.getElementById('podcasts-popup').style.display='none'"
+        >
+          Cancel
+        </button>
+      </div>
     </div>
   </div>
 </div>

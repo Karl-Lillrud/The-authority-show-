@@ -3,7 +3,7 @@ Management{% endblock %} {% block content %}
 <!-- Guest Selection Popup -->
 <link
   rel="stylesheet"
-  href="{{ url_for('static', filename='css/task.css') }}"
+  href="{{ url_for('static', filename='css/taskmanagement.css') }}"
 />
 <div id="guest-popup" class="popup">
   <div class="popup-content">
@@ -404,7 +404,7 @@ Management{% endblock %} {% block content %}
 
     // Load and display default tasks
     fetch(
-      "{{ url_for('static', filename='defaulttaskData/default_tasks.json') }}"
+      "{{ url_for('static', filename='defaulttaskdata/default_tasks.json') }}"
     )
       .then((response) => response.json())
       .then((defaultTasks) => {
