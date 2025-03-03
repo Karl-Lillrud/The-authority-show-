@@ -14,6 +14,13 @@ def create_account(account_data):
             "isCompany": account_data.get("isCompany", False),
             "createdAt": datetime.utcnow().isoformat(),
             "isActive": True,
+            "subscriptionId": str(uuid.uuid4()),  # Add subscriptionId
+            "creditId": str(uuid.uuid4()),  # Add creditId
+            "paymentInfo": account_data.get("paymentInfo", ""),
+            "subscriptionStatus": "active",
+            "referralBonus": 0,
+            "subscriptionStart": datetime.utcnow().isoformat(),
+            "subscriptionEnd": "",
         }
         collection.database.Accounts.insert_one(account_document)
         return {"success": True, "accountId": account_id}

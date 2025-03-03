@@ -1,9 +1,7 @@
 from flask import Blueprint, request, jsonify
-from datetime import datetime
-from backend.database.mongo_connection import collection
+from backend.services.account_service import create_account as create_account_service
 from marshmallow import ValidationError
 from backend.models.accounts import AccountSchema  # Make sure to import the schema
-import uuid
 import logging
 
 # Define Blueprint
@@ -26,42 +24,18 @@ def create_account():
         if "userId" not in data or "email" not in data:
             raise ValueError("Missing required fields: userId and email")
 
-        user_id = data["userId"]
-        email = data["email"]
-        company_name = data.get("companyName", "")
-        is_company = data.get("isCompany", False)
+        # Call the service function to create the account
+        result = create_account_service(data)
 
-        subscription_id = str(uuid.uuid4())  # Generate unique subscription ID
-        account_id = str(uuid.uuid4())  # Generate unique account ID
-
-        # Create account document
-        account_document = {
-            "_id": account_id,  # Explicitly set '_id' to string UUID
-            "userId": user_id,
-            "subscriptionId": subscription_id,
-            "email": email,
-            "isCompany": is_company,
-            "companyName": company_name,
-            "paymentInfo": "",  # Placeholder for payment info
-            "subscriptionStatus": "active",
-            "createdAt": datetime.utcnow().isoformat(),
-            "referralBonus": 0,
-            "subscriptionStart": datetime.utcnow().isoformat(),
-            "subscriptionEnd": "",
-            "isActive": True,
-        }
-
-        # Insert account into the Accounts collection (with custom _id)
-        logger.info("Inserting account into the database: %s", account_document)
-        collection.database.Accounts.insert_one(account_document)
-
-        # Return success response
-        response = {
-            "message": "Account created successfully",
-            "accountId": account_document["_id"],
-        }
-        logger.info("Account created successfully: %s", response)
-        return jsonify(response), 201
+        if result["success"]:
+            response = {
+                "message": "Account created successfully",
+                "accountId": result["accountId"],
+            }
+            logger.info("Account created successfully: %s", response)
+            return jsonify(response), 201
+        else:
+            raise Exception(result["details"])
 
     except ValueError as ve:
         logger.error("ValueError: %s", ve)
