@@ -7,6 +7,7 @@ import logging
 logger = logging.getLogger(__name__)
 
 
+# DO NOT RECREATE THIS IN OTHER SERVICES!!!
 def create_account(data):
     try:
         if not data:
