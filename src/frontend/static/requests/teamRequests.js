@@ -22,3 +22,13 @@ async function getTeamsRequest() {
   const res = await fetch("/get_teams", { method: "GET" });
   return res.json();
 }
+
+async function editTeamRequest(teamId, payload) {
+  const res = await fetch(`/edit_team/${teamId}`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload)
+  });
+  return res.json();
+}
+
