@@ -4,7 +4,7 @@ from backend.routes.register import register_bp
 from backend.routes.forgot_pass import forgotpass_bp
 from backend.routes.signin import signin_bp
 from backend.routes.podcast import podcast_bp  # Import the podcast blueprint
-from backend.routes.dashboard import dashboard_bp
+from backend.routes.dashboard import dashboard_bp  # Ensure this import is present
 from backend.routes.pod_management import pod_management_bp
 from backend.routes.podtask import podtask_bp
 from backend.routes.account import account_bp
@@ -17,6 +17,7 @@ from backend.routes.episode import episode_bp
 from backend.routes.podprofile import podprofile_bp  # Import the podprofile blueprint
 from backend.routes.frontend import frontend_bp  # Import the frontend blueprint
 from backend.routes.guest_to_eposide import guesttoepisode_bp
+from backend.routes.credits import credits_bp
 from dotenv import load_dotenv
 import os
 import logging
@@ -56,10 +57,11 @@ app.config["PREFERRED URL SCHEME"] = "https"
 
 # Register blueprints for different routes
 app.register_blueprint(register_bp)
+app.register_blueprint(credits_bp)
 app.register_blueprint(forgotpass_bp)
 app.register_blueprint(signin_bp)
 app.register_blueprint(podcast_bp)  # Register the podcast blueprint
-app.register_blueprint(dashboard_bp)
+app.register_blueprint(dashboard_bp)  # Ensure this line is present
 app.register_blueprint(pod_management_bp)
 app.register_blueprint(podtask_bp)
 app.register_blueprint(team_bp)

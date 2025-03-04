@@ -5,7 +5,7 @@ import uuid
 import random
 from backend.database.mongo_connection import collection
 
-register_bp = Blueprint("register_bp", __name__)
+credits_bp = Blueprint("credits_bp", __name__)
 
 # Constants
 INITIAL_CREDITS = 3000
@@ -15,11 +15,11 @@ def generate_referral_code(email):
     clean_email = ''.join(e for e in email if e.isalnum()).lower()
     return f"{random.randint(1000, 9999)}{clean_email}"
 
-@register_bp.route("/register", methods=["GET", "POST"])
+@credits_bp.route("/register", methods=["GET", "POST"])
 def register():
     if request.method == "GET":
         referral = request.args.get("referral", "").strip()
-        return render_template("register/register.html", referral=referral)
+        return render_template("register/register.html", referral=referral)  # Pass referral code to frontend
 
     # Handle POST request (user registration)
     data = request.get_json(silent=True) or request.form.to_dict()
@@ -78,10 +78,10 @@ def register():
         referrer = collection.database.Users.find_one({"referral_code": referrer_code})
         if referrer:
             if referrer["_id"] == new_user_id:
-                logger.warning("User attempted to refer themselves. Ignoring referral bonus.")
-
                 return jsonify({"error": "User cannot refer themselves."}), 400
             referrer_id = referrer["_id"]
+            
+            # Increase the credits of the referrer
             collection.database.Users.update_one({"_id": referrer_id}, {"$inc": {"credits": INVITE_CREDIT_REWARD}})
             collection.database.Credits.update_one(
                 {"user_id": referrer_id},
@@ -97,7 +97,6 @@ def register():
         "isCompany": data.get("isCompany", False),
         "ownerId": new_user_id,
     }
-
     # Directly insert into the Accounts collection
     collection.database.Accounts.insert_one(account_data)
 
@@ -105,6 +104,5 @@ def register():
     return jsonify({
         "message": "Registration successful!",
         "user_id": new_user_id,
-        "referral_code": referral_code,
-        "redirect_url": url_for("signin_bp.signin", _external=True)
+        "referral_code": referral_code,  # Send referral code back to the user
     }), 201

@@ -15,7 +15,6 @@ signin_bp = Blueprint("signin_bp", __name__)
 
 API_BASE_URL = os.getenv("API_BASE_URL", "http://127.0.0.1:8000")
 
-
 @signin_bp.route("/", methods=["GET"])
 @signin_bp.route("/signin", methods=["GET", "POST"])
 def signin():
@@ -47,23 +46,37 @@ def signin():
     user_id = session["user_id"]
     podcasts = list(collection.database.Podcast.find({"userid": user_id}))
 
+    user_credits = users.get("credits", 0)
+
     if not podcasts:
         return (
-            jsonify({"message": "Login successful", "redirect_url": "/podprofile"}),
+            jsonify({
+                "message": "Login successful",
+                "redirect_url": "/podprofile",
+                "credits": user_credits
+            }),
             200,
         )
     elif len(podcasts) == 1:
         return (
-            jsonify({"message": "Login successful", "redirect_url": "/dashboard"}),
+            jsonify({
+                "message": "Login successful",
+                "redirect_url": "/dashboard",
+                "credits": user_credits
+            }),
             200,
         )
     else:
         return (
-            jsonify({"message": "Login successful", "redirect_url": "/homepage"}),
+            jsonify({
+                "message": "Login successful",
+                "redirect_url": "/homepage",
+                "credits": user_credits
+            }),
             200,
         )
 
-    response = jsonify({"message": "Login successful", "redirect_url": "dashboard"})
+    response = jsonify({"message": "Login successful", "redirect_url": "dashboard", "credits": user_credits})
 
     if remember:
         response.set_cookie("remember_me", "true", max_age=30 * 24 * 60 * 60)  # 30 days
