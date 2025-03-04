@@ -35,8 +35,6 @@ def guest_profile(guest_id):
 def get_user_podcasts():
     if not g.user_id:
         return jsonify({"error": "Unauthorized"}), 401
-    podcasts = list(collection.find({"creator_id": g.user_id}))
-    return jsonify(podcasts)
 
 
 @pod_management_bp.route("/invite")
