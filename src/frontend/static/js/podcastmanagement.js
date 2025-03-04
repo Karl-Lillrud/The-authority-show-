@@ -120,10 +120,6 @@ form.addEventListener("submit", async function (e) {
           : "Podcast added successfully!",
         "green"
       );
-      setTimeout(
-        () => (window.location.href = responseData.redirect_url),
-        2500
-      );
     }
   } catch (error) {
     console.error("Error:", error);
@@ -604,9 +600,16 @@ async function renderPodcastList() {
       });
     });
     document.querySelectorAll(".delete-btn").forEach((button) => {
-      button.addEventListener("click", (e) => {
-        const podcastId = e.target.closest("button").dataset.id;
-        deletePodcast(podcastId);
+      button.addEventListener("click", async (e) => {
+        const podcastId = e.target.closest("button").getAttribute("data-id");
+        try {
+          await deletePodcast(podcastId);
+          // Remove the podcast card from the UI
+          e.target.closest(".podcast-card")?.remove();
+          showAlert("Podcast deleted successfully!", "green");
+        } catch (error) {
+          showAlert("Failed to delete podcast.", "red");
+        }
       });
     });
   } catch (error) {
