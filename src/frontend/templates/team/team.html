@@ -1,113 +1,96 @@
+<!-- team.html -->
 {% extends "dashboard/components/base.html" %}
-
 {% block title %}Team Leaderboard Dashboard{% endblock %}
-
 {% block content %}
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" integrity="sha512-Fo3rlrZj/k7ujTnHq6v+8gEB/hA+0c3hHnJ6bYlqG+MVJj4y5fI3Hpo3ZcCmmg3xD9kKMlKLH0qVx9IovmYbKw==" crossorigin="anonymous" referrerpolicy="no-referrer" />
 <link rel="stylesheet" href="{{ url_for('static', filename='css/team.css') }}">
-<script src="{{ url_for('static', filename='requests/teamRequests.js') }}"></script>
 
 <div class="container">
-  <header class="header">
-    <h1 class="fancy-heading" data-i18n="header.title">TEAM</h1>
-    <div class="controls">
-      <div class="search-bar">
-        <input type="text" id="search" class="input-field" placeholder="" data-i18n-placeholder="placeholder.search" aria-label="Search">
-        <button id="filter" class="button" data-i18n="buttons.filter">Filter</button>
+  <h1>Teams</h1>
+  <!-- Button to open the Add Team modal -->
+  <button type="button" id="openModalBtn" class="btn">Add New Team</button>
+  
+  <!-- Flash messages -->
+  {% with messages = get_flashed_messages() %}
+    {% if messages %}
+      <div class="alert">
+        {% for message in messages %}
+          <div>{{ message }}</div>
+        {% endfor %}
       </div>
-      <div class="actions">
-        <div class="notifications">
-          <button class="icon-button" aria-label="Notifications">🔔</button>
-          <button class="icon-button" aria-label="Messages">💬</button>
+    {% endif %}
+  {% endwith %}
+
+  <!-- Always render an empty container for teams -->
+  <div class="card-container"></div>
+</div>
+
+<!-- Add Team Modal -->
+<div class="modal" id="addTeamModal" tabindex="-1" role="dialog" aria-labelledby="addTeamModalLabel" aria-hidden="true">
+  <div class="modal-dialog" role="document">
+    <form method="post" action="{{ url_for('team_bp.add_team') }}">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 id="addTeamModalLabel">Add New Team</h5>
+          <button type="button" class="close" aria-label="Close" id="modalCloseBtn">&times;</button>
+        </div>
+        <div class="modal-body">
+          <div class="form-group">
+              <label for="name">Team Name:</label>
+              <input type="text" class="form-control" name="name" required>
+          </div>
+          <div class="form-group">
+              <label for="email">Email:</label>
+              <input type="email" class="form-control" name="email">
+          </div>
+          <div class="form-group">
+              <label for="description">Description:</label>
+              <textarea class="form-control" name="description"></textarea>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn" id="modalCloseBtn2">Close</button>
+          <button type="submit" class="btn">Add Team</button>
         </div>
       </div>
-    </div>
-  </header>
-
-  <main>
-    <table class="team-table neu-table">
-      <thead>
-        <tr>
-          <th data-i18n="table.headers.name">Name</th>
-          <th data-i18n="table.headers.role">Role</th>
-          <th data-i18n="table.headers.email">Email</th>
-          <th data-i18n="table.headers.phone">Phone Number</th>
-          <th data-i18n="table.headers.tasks">Tasks Assigned</th>
-          <th data-i18n="table.headers.status">Status</th>
-          <th data-i18n="table.headers.actions">Actions</th>
-        </tr>
-      </thead>
-      <tbody>
-        <!-- Team members will be populated dynamically from the database -->
-      </tbody>
-    </table>
-    <button class="button add-member" data-i18n="buttons.addMember" href="team-invite.html">Add New Member</button>
-  </main>
-
-  <!-- Overlay -->
-  <div id="modalOverlay" class="modal-overlay"></div>
-
-  <!-- Modal for Adding New Member -->
-  <div id="addMemberModal" class="modal" aria-hidden="true" role="dialog" aria-labelledby="addMemberTitle">
-    <form id="addMemberForm" class="form" novalidate>
-      <h2 id="addMemberTitle" data-i18n="modal.addMemberTitle">Add New Member</h2>
-      <div class="form-group">
-        <label for="memberName" data-i18n="form.labels.name">Name</label>
-        <input type="text" id="memberName" class="input-field" required aria-required="true" aria-describedby="name-error" data-i18n-placeholder="placeholder.name">
-        <span id="name-error" class="validation-message sr-only" data-i18n="errors.name"></span>
-      </div>
-      <div class="form-group">
-        <label for="memberRole" data-i18n="form.labels.role">Role</label>
-        <input type="text" id="memberRole" class="input-field" required aria-required="true" aria-describedby="role-error" data-i18n-placeholder="placeholder.role">
-        <span id="role-error" class="validation-message sr-only" data-i18n="errors.role"></span>
-      </div>
-      <div class="form-group">
-        <label for="memberEmail" data-i18n="form.labels.email">Email</label>
-        <input type="email" id="memberEmail" class="input-field" required aria-required="true" aria-describedby="email-error" data-i18n-placeholder="placeholder.email">
-        <span id="email-error" class="validation-message sr-only" data-i18n="errors.email"></span>
-      </div>
-      <div class="form-group">
-        <label for="memberPhone" data-i18n="form.labels.phone">Phone Number</label>
-        <input type="tel" id="memberPhone" class="input-field" aria-describedby="phone-error" data-i18n-placeholder="placeholder.phone">
-        <span id="phone-error" class="validation-message sr-only" data-i18n="errors.phone"></span>
-      </div>
-      <div class="modal-actions">
-        <button type="submit" class="button submit-btn" data-i18n="buttons.submit">Submit</button>
-        <button type="button" class="button close-btn" data-i18n="buttons.close">Close</button>
-      </div>
     </form>
-  </div>
-
-  <!-- Modal for Editing Member -->
-  <div id="editModal" class="modal" aria-hidden="true" role="dialog" aria-labelledby="editMemberTitle">
-    <form id="editMemberForm" class="form" novalidate>
-      <h2 id="editMemberTitle">Edit Member Info</h2>
-      <div class="form-group">
-        <label for="editMemberName">Name</label>
-        <input type="text" id="editMemberName" class="input-field" required>
-      </div>
-      <div class="form-group">
-        <label for="editMemberRole">Role</label>
-        <input type="text" id="editMemberRole" class="input-field" required>
-      </div>
-      <div class="form-group">
-        <label for="editMemberEmail">Email</label>
-        <input type="email" id="editMemberEmail" class="input-field" required>
-      </div>
-      <div class="form-group">
-        <label for="editMemberPhone">Phone Number</label>
-        <input type="tel" id="editMemberPhone" class="input-field">
-      </div>
-      <div class="modal-actions">
-        <button type="submit" class="button submit-btn">Save</button>
-        <button type="button" class="button close-btn" id="editModalClose">Cancel</button>
-      </div>
-    </form>
-  </div>
-
-  <!-- Toast Notification -->
-  <div id="toast" class="toast" role="alert" aria-live="assertive" aria-atomic="true">
-    This is a toast message.
   </div>
 </div>
+
+<!-- Team Detail Modal -->
+<div class="modal" id="teamDetailModal" tabindex="-1" role="dialog" aria-hidden="true">
+  <div class="modal-dialog" role="document">
+    <form id="teamDetailForm">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 id="teamDetailModalLabel">Team Details</h5>
+          <button type="button" class="close" aria-label="Close" id="teamDetailCloseBtn">&times;</button>
+        </div>
+        <div class="modal-body">
+          <div class="form-group">
+            <label for="detailName">Name:</label>
+            <input type="text" class="form-control" id="detailName" name="name">
+          </div>
+          <div class="form-group">
+            <label for="detailEmail">Email:</label>
+            <input type="email" class="form-control" id="detailEmail" name="email">
+          </div>
+          <div class="form-group">
+            <label for="detailDescription">Description:</label>
+            <textarea class="form-control" id="detailDescription" name="description"></textarea>
+          </div>
+          <div class="form-group">
+            <label>Members:</label>
+            <p id="detailMembers" class="form-control-plaintext"></p>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn" id="saveTeamBtn">Save</button>
+          <button type="button" class="btn" id="deleteTeamBtn">Delete</button>
+        </div>
+      </div>
+    </form>
+  </div>
+</div>
+<script src="{{ url_for('static', filename='requests/teamRequests.js') }}"></script>
+<script src="{{ url_for('static', filename='js/team.js') }}"></script>
 {% endblock %}
