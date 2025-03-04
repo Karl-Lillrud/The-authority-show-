@@ -35,7 +35,8 @@
   max-width: 1000px;
   margin: 40px auto;
   gap: 24px;
-  align-items: stretch; /* Ensures sidebar and main content are equal height */
+  align-items: stretch;
+  /* Ensures sidebar and main content are equal height */
 }
 
 /* Sidebar styling */
@@ -110,14 +111,16 @@
     4px 4px 8px var(--dark-shadow-light);
   transition: background-color 0.3s ease, color 0.3s ease, transform 0.3s ease;
 }
+
 .back-arrow:hover {
   transform: translateY(-3px);
   background-color: rgba(255, 127, 63, 0.1);
   color: var(--highlight-color);
 }
 
-/* Profile Container */
-.profile-container {
+/* Profile Container; DeleteAccount Container*/
+.profile-container,
+.delete-account-container {
   background: var(--background-light);
   max-width: 400px;
   margin: auto;
@@ -237,7 +240,8 @@ button:hover {
   align-items: center;
   justify-content: center;
   gap: 10px;
-  margin: 10px auto; /* Centers the container */
+  margin: 10px auto;
+  /* Centers the container */
   padding: 10px;
   background: #f9f9f9;
   border: 1px solid #ddd;
@@ -250,7 +254,7 @@ button:hover {
   height: 128px;
 }
 
-/* Modal Styling (used for Recovery and Subscription modals) */
+/* Modal Styling (used for Recovery, Subscription and DeleteAccount modals) */
 .modal {
   display: none;
   position: fixed;
@@ -272,6 +276,38 @@ button:hover {
   text-align: center;
   box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.2);
   position: relative;
+}
+
+/* Modal Styling used for DeleteAccount modal messages) */
+.modal-message {
+  display: none;
+  padding: 3px;
+  margin-top: 3px;
+  border-radius: 6px;
+  font-weight: bold;
+  text-align: center;
+  width: 100%;
+  max-width: 400px;
+  transition: opacity 0.3s ease-in-out;
+  font-size: 0.9rem;
+}
+
+/* Success Style */
+.modal-message.success {
+  color: var(--text-color-light);
+  border: none;
+  box-shadow:
+    inset -3px -3px 6px var(--light-shadow-light),
+    inset 3px 3px 6px var(--dark-shadow-light);
+}
+
+/* Error Style */
+.modal-message.error {
+  color: var(--text-color-light);
+  border: none;
+  box-shadow:
+    inset -3px -3px 6px var(--light-shadow-light),
+    inset 3px 3px 6px var(--dark-shadow-light);
 }
 
 /* Additional layout adjustments (if needed) */
@@ -298,6 +334,7 @@ button:hover {
     flex-direction: column;
     margin: var(--spacing-md);
   }
+
   .sidebar {
     width: 100%;
   }
