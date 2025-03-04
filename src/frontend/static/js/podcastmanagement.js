@@ -6,109 +6,12 @@ import {
   deletePodcast
 } from "../requests/podcastRequest.js";
 
-const defaultPodcasts = [
-  {
-    podName: "Welcome Podcast",
-    ownerName: "Admin",
-    hostName: "Alice",
-    rssFeed: "https://example.com/rss/welcome",
-    googleCal:
-      "https://calendar.google.com/calendar/embed?src=welcome@example.com",
-    guestUrl: "https://example.com/welcome-guest",
-    email: "welcome@example.com",
-    description: "This is our welcome podcast.",
-    logoUrl:
-      "/d:/createaccount/The-authority-show-/src/frontend/static/images/example.jpg",
-    category: "General",
-    // Order: Facebook, LinkedIn, TikTok, Twitter, Instagram
-    socialMedia: [
-      "https://facebook.com/welcomepodcast",
-      "https://linkedin.com/in/welcomepodcast",
-      "https://tiktok.com/@welcomepodcast",
-      "https://twitter.com/welcomepodcast",
-      "https://instagram.com/welcomepodcast"
-    ]
-  },
-  {
-    podName: "Tech Trends",
-    ownerName: "Admin",
-    hostName: "Bob",
-    rssFeed: "https://example.com/rss/tech",
-    googleCal:
-      "https://calendar.google.com/calendar/embed?src=tech@example.com",
-    guestUrl: "https://example.com/tech-guest",
-    email: "tech@example.com",
-    description: "Latest in technology.",
-    logoUrl:
-      "/d:/createaccount/The-authority-show-/src/frontend/static/images/example.jpg",
-    category: "Technology",
-    socialMedia: [
-      "https://facebook.com/techtrends",
-      "https://linkedin.com/in/techtrends",
-      "https://tiktok.com/@techtrends",
-      "https://twitter.com/techtrends",
-      "https://instagram.com/techtrends"
-    ]
-  },
-  {
-    podName: "Health Hub",
-    ownerName: "Admin",
-    hostName: "Carol",
-    rssFeed: "https://example.com/rss/health",
-    googleCal:
-      "https://calendar.google.com/calendar/embed?src=health@example.com",
-    guestUrl: "https://example.com/health-guest",
-    email: "health@example.com",
-    description: "Your daily health tips.",
-    logoUrl:
-      "/d:/createaccount/The-authority-show-/src/frontend/static/images/example.jpg",
-    category: "Health",
-    socialMedia: [
-      "https://facebook.com/healthhub",
-      "https://linkedin.com/in/healthhub"
-    ]
-  }
-];
-
-async function addDefaultPodcasts() {
-  try {
-    const response = await fetchPodcasts();
-    const existingPodcasts = response.podcast || [];
-    for (const defPod of defaultPodcasts) {
-      // If no podcast in database has the same podName (case-insensitive), add it.
-      if (
-        !existingPodcasts.some(
-          (p) => p.podName.toLowerCase() === defPod.podName.toLowerCase()
-        )
-      ) {
-        await addPodcast(defPod);
-      }
-    }
-  } catch (error) {
-    console.error("Error adding default podcasts:", error);
-  }
-}
-
 console.log("podcastmanagement.js loaded");
 
-document.addEventListener("DOMContentLoaded", async function () {
+document.addEventListener("DOMContentLoaded", function () {
   console.log("DOM fully loaded and parsed");
 
-  // Add default podcasts if not present and then render list
-  await addDefaultPodcasts();
   renderPodcastList();
-
-  // Add listener to close the form (new functionality)
-  const closeFormBtn = document.getElementById("close-form-btn");
-  if (closeFormBtn) {
-    closeFormBtn.addEventListener("click", () => {
-      const formContainer = document.querySelector(".form-box");
-      formContainer.style.display = "none";
-      // Restore main view elements
-      document.querySelector(".crud-buttons").style.display = "flex";
-      document.getElementById("podcast-list").style.display = "flex";
-    });
-  }
 });
 
 const formContainer = document.querySelector(".form-box");
@@ -120,12 +23,7 @@ let selectedPodcastId = null;
 document.getElementById("add-podcast-btn").addEventListener("click", () => {
   resetForm();
   selectedPodcastId = null;
-  // Hide main view elements
-  document.querySelector(".crud-buttons").style.display = "none";
-  document.getElementById("podcast-list").style.display = "none";
-  // Show the form container as a full view and update header
   formContainer.style.display = "block";
-  document.getElementById("form-title").textContent = "Add Podcast";
 });
 
 form.addEventListener("submit", async function (e) {
@@ -181,10 +79,7 @@ form.addEventListener("submit", async function (e) {
     guestUrl: guestUrl,
     email,
     description: document.getElementById("description")?.value.trim() || "",
-    // Updated logoUrl: use input field value if provided, otherwise fallback to default.
-    logoUrl:
-      document.getElementById("pod-logo-url")?.value.trim() ||
-      "https://podmanagerstorage.blob.core.windows.net/blob-container/pod1.jpg",
+    logoUrl: document.getElementById("description")?.value.trim(),
     category,
     socialMedia
   };
@@ -224,12 +119,6 @@ form.addEventListener("submit", async function (e) {
           : "Podcast added successfully!",
         "green"
       );
-      // Hide form and restore main view after successful save
-      formContainer.style.display = "none";
-      document.querySelector(".crud-buttons").style.display = "flex";
-      document.getElementById("podcast-list").style.display = "flex";
-      // Optionally, refresh the podcast list
-      renderPodcastList();
     }
   } catch (error) {
     console.error("Error:", error);
@@ -241,90 +130,6 @@ form.addEventListener("submit", async function (e) {
     );
   }
 });
-
-function showAlert(message, color) {
-  // Use the existing alert element from your HTML (id="alert")
-  const alertBox = document.getElementById("alert");
-  if (!alertBox) return; // if not found, exit
-
-  alertBox.innerHTML = message;
-  alertBox.style.background = color;
-  alertBox.style.display = "block";
-
-  setTimeout(() => {
-    alertBox.style.display = "none";
-  }, 2500);
-}
-
-// CRUD operation buttons
-document
-  .getElementById("fetch-podcasts-btn")
-  .addEventListener("click", async () => {
-    console.log("Fetch All Podcasts button clicked");
-    try {
-      const response = await fetchPodcasts();
-      const podcasts = response.podcast;
-      console.log("Fetched Podcasts:", podcasts);
-
-      // Populate podcasts container
-      const podcastsList = document.getElementById("podcasts-list");
-      podcastsList.innerHTML = "";
-      podcasts.forEach((podcast) => {
-        const podcastItem = document.createElement("div");
-        podcastItem.className = "podcast-item";
-        podcastItem.innerHTML = `
-            <span>${podcast.podName}</span>
-            <div class="action-buttons">
-              <button class="select-btn" data-id="${podcast._id}">Select</button>
-              <button class="delete-btn" data-id="${podcast._id}">Delete</button>
-            </div>
-          `;
-        podcastsList.appendChild(podcastItem);
-      });
-
-      // Show popup
-      const popup = document.getElementById("podcasts-popup");
-      popup.style.display = "flex";
-
-      // Add event listeners for select and delete buttons
-      document.querySelectorAll(".select-btn").forEach((button) => {
-        button.addEventListener("click", async (e) => {
-          const podcastId = e.target.getAttribute("data-id");
-          try {
-            const podcast = await fetchPodcast(podcastId);
-            console.log("Fetched Podcast:", podcast);
-            displayPodcastDetails(podcast.podcast);
-            selectedPodcastId = podcastId;
-            const inviteBtn = document.querySelector(".invite-btn");
-            inviteBtn.textContent = "Update";
-            inviteBtn.classList.add("update-btn");
-            addBackButton();
-          } catch (error) {
-            console.error("Error fetching podcast (ignored):", error);
-            // Do not show error alert for this operation.
-          }
-          const popup = document.getElementById("podcasts-popup");
-          popup.style.display = "none";
-        });
-      });
-
-      document.querySelectorAll(".delete-btn").forEach((button) => {
-        button.addEventListener("click", async (e) => {
-          const podcastId = e.target.getAttribute("data-id");
-          try {
-            await deletePodcast(podcastId);
-            // Remove the entire podcast item from the popup list
-            const podcastItem = e.target.closest(".podcast-item");
-            if (podcastItem) podcastItem.remove();
-          } catch (error) {
-            showAlert("Failed to delete podcast.", "red");
-          }
-        });
-      });
-    } catch (error) {
-      showAlert("Failed to fetch podcasts.", "red");
-    }
-  });
 
 function displayPodcastDetails(podcast) {
   const podNameEl = document.getElementById("pod-name");
@@ -401,65 +206,6 @@ function resetForm() {
   form.reset();
 }
 
-document
-  .getElementById("fetch-podcast-btn")
-  .addEventListener("click", async () => {
-    const podcastId = prompt("Enter Podcast ID:");
-    if (podcastId) {
-      try {
-        const podcast = await fetchPodcast(podcastId);
-        console.log("Fetched Podcast:", podcast);
-        displayPodcastDetails(podcast.podcast);
-        selectedPodcastId = podcastId;
-        document.querySelector(".invite-btn").textContent = "UPDATE";
-      } catch (error) {
-        showAlert("Failed to fetch podcast.", "red");
-      }
-    }
-  });
-
-document
-  .getElementById("update-podcast-btn")
-  .addEventListener("click", async () => {
-    const podcastId = prompt("Enter Podcast ID:");
-    if (podcastId) {
-      const updateData = prompt("Enter update data in JSON format:");
-      if (updateData) {
-        try {
-          const updatedPodcast = await updatePodcast(
-            podcastId,
-            JSON.parse(updateData)
-          );
-          console.log("Updated Podcast:", updatedPodcast);
-          showAlert("Updated podcast successfully!", "green");
-        } catch (error) {
-          showAlert("Failed to update podcast.", "red");
-        }
-      }
-    }
-  });
-
-document
-  .getElementById("delete-podcast-btn")
-  .addEventListener("click", async () => {
-    const podcastId = prompt("Enter Podcast ID:");
-    if (podcastId) {
-      try {
-        const deletedPodcast = await deletePodcast(podcastId);
-        console.log("Deleted Podcast:", deletedPodcast);
-        showAlert("Deleted podcast successfully!", "green");
-      } catch (error) {
-        showAlert("Failed to delete podcast.", "red");
-      }
-    }
-  });
-
-// Close popup
-document.getElementById("close-popup-btn").addEventListener("click", () => {
-  const popup = document.getElementById("podcasts-popup");
-  popup.style.display = "none";
-});
-
 // Delete selected podcasts
 document
   .getElementById("delete-selected-podcasts-btn")
@@ -481,135 +227,6 @@ document
       showAlert("Failed to delete selected podcasts.", "red");
     }
   });
-
-// Add HTML content dynamically
-const container = document.querySelector(".container");
-container.insertAdjacentHTML(
-  "afterbegin",
-  `
-    <a href="${url_for(
-      "dashboard_bp.dashboard"
-    )}" class="back-arrow">&#8592; Back</a>
-    <div class="crud-buttons">
-      <button id="fetch-podcasts-btn" class="crud-btn">Fetch All Podcasts</button>
-
-    </div>
-    <div class="form-box">
-      <div class="form-fields">
-        <form id="register-podcast-form">
-          <!-- Pod Logo -->
-          <div class="form-group">
-            <label for="pod-logo">Pod Logo</label>
-            <div
-              style="display: flex; align-items: center; justify-content: center"
-            >
-              <img
-                src="https://podmanagerstorage.blob.core.windows.net/blob-container/pod1.jpg"
-                alt="Pod Logo"
-                class="pod-logo pod-logo-inline"
-              />
-            </div>
-          </div>
-
-          <!-- Podcast Name -->
-          <div class="field-group">
-            <label for="pod-name">Podcast Name</label>
-            <input type="text" id="pod-name" name="podName" autocomplete="off" />
-          </div>
-
-          <!-- RSS Feed -->
-          <div class="field-group">
-            <label for="pod-rss">RSS Feed</label>
-            <input type="url" id="pod-rss" name="rssFeed" />
-          </div>
-
-          <!-- Podcast Owner -->
-          <div class="field-group">
-            <label for="pod-owner">Podcast Owner</label>
-            <input type="text" id="pod-owner" name="ownerName" />
-          </div>
-
-          <!-- Host Name -->
-          <div class="field-group">
-            <label for="pod-host">Host(s) Name(s)</label>
-            <input type="text" id="pod-host" name="hostName" />
-          </div>
-
-          <!-- Description -->
-          <div class="field-group">
-            <label for="description">Podcast Description</label>
-            <textarea id="description" name="description"></textarea>
-          </div>
-
-          <!-- Category -->
-          <div class="field-group">
-            <label for="category">Category (Required)</label>
-            <input type="text" id="category" name="category" required />
-          </div>
-
-          <!-- Email Address -->
-          <div class="field-group">
-            <label for="email">Email Address</label>
-            <input type="email" id="email" name="email" />
-          </div>
-
-          <!-- Google Calendar Integration -->
-          <div class="field-group">
-            <label>Google Calendar Integration</label>
-            <button type="button" class="connect-btn">CONNECT</button>
-          </div>
-
-          <!-- Google Calendar Link -->
-          <div class="field-group">
-            <label>Google Calendar Pick a Date URL</label>
-            <div class="inline-field">
-              <span>podmanager.com/?pod=TheAuthorityShow</span>
-            </div>
-          </div>
-
-          <!-- Guest Form URL -->
-          <div class="field-group">
-            <label for="guest-form-url">Guest Form URL</label>
-            <input type="url" id="guest-form-url" name="guestUrl" />
-          </div>
-
-          <!-- Social Media Links -->
-          <div class="field-group">
-            <label for="facebook">Facebook</label>
-            <input type="url" id="facebook" name="socialMedia[]" />
-          </div>
-
-          <div class="field-group">
-            <label for="instagram">Instagram</label>
-            <input type="url" id="instagram" name="socialMedia[]" />
-          </div>
-
-          <div class="field-group">
-            <label for="linkedin">LinkedIn</label>
-            <input type="url" id="linkedin" name="socialMedia[]" />
-          </div>
-
-          <div class="field-group">
-            <label for="twitter">Twitter</label>
-            <input type="url" id="twitter" name="socialMedia[]" />
-          </div>
-
-          <div class="field-group">
-            <label for="tiktok">TikTok</label>
-            <input type="url" id="tiktok" name="socialMedia[]" />
-          </div>
-
-          <div class="field-group">
-            <label for="pinterest">Pinterest</label>
-            <input type="url" id="pinterest" name="socialMedia[]" />
-          </div>
-
-          <button type="submit" class="invite-btn">SAVE</button>
-        </form>
-      </div>
-    </div>
-    `
-);
 
 async function renderPodcastList() {
   try {
@@ -738,11 +355,6 @@ async function renderPodcastList() {
     console.error("Error rendering podcast list:", error);
   }
 }
-
-// Example usage: call renderPodcastList() after adding/updating or on "Fetch All Podcasts" click
-document
-  .getElementById("fetch-podcasts-btn")
-  .addEventListener("click", renderPodcastList);
 
 // Update viewPodcast to use the new detail layout
 async function viewPodcast(podcastId) {

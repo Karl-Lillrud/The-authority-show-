@@ -4,25 +4,28 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Podcast Management</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/podcastmanagement.css') }}" />
+    <link
+      rel="stylesheet"
+      href="{{ url_for('static', filename='css/podcastmanagement.css') }}"
+    />
   </head>
   <body>
     <div class="container">
+      <a href="{{ url_for('dashboard_bp.dashboard') }}" class="back-arrow"
+        >&#8592; Back</a
+      >
       <h1>Podcast Management</h1>
 
       <!-- Toolbar for CRUD buttons -->
       <div class="crud-buttons">
         <button id="add-podcast-btn" class="crud-btn">Add Podcast</button>
-
-     
-      
       </div>
 
       <!-- Container for popup list used in selection -->
       <div id="podcasts-popup" style="display: none">
         <div id="podcasts-list"><!-- Popup list inserted dynamically --></div>
         <button id="close-popup-btn" class="crud-btn">Close</button>
-        <button id="delete-selected-podcasts-btn" class="crud-btn"
+        <button id="delete-selected-podcasts-btn" class="crud-btn">
           Delete Selected
         </button>
       </div>
@@ -37,8 +40,29 @@
           <form id="register-podcast-form">
             <div class="detail-grid">
               <div class="detail-item">
+                <label for="pod-logo">Pod Logo</label>
+                <div
+                  style="
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                  "
+                >
+                  <img
+                    src="https://podmanagerstorage.blob.core.windows.net/blob-container/pod1.jpg"
+                    alt="Pod Logo"
+                    class="pod-logo pod-logo-inline"
+                  />
+                </div>
+              </div>
+              <div class="detail-item">
                 <label for="pod-name">Podcast Name</label>
-                <input type="text" id="pod-name" name="podName" autocomplete="off" />
+                <input
+                  type="text"
+                  id="pod-name"
+                  name="podName"
+                  autocomplete="off"
+                />
               </div>
               <div class="detail-item">
                 <label for="pod-logo-url">Logo URL</label>
@@ -74,7 +98,17 @@
               </div>
               <div class="detail-item">
                 <label for="category">Category (Required)</label>
-                <input type="text" id="category" name="category" />
+                <input type="text" id="category" name="category" required />
+              </div>
+              <div class="detail-item">
+                <label>Google Calendar Integration</label>
+                <button type="button" class="connect-btn">CONNECT</button>
+              </div>
+              <div class="detail-item">
+                <label>Google Calendar Pick a Date URL</label>
+                <div class="inline-field">
+                  <span>podmanager.com/?pod=TheAuthorityShow</span>
+                </div>
               </div>
               <div class="detail-item">
                 <label for="facebook">Facebook</label>
