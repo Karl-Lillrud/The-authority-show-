@@ -6,10 +6,98 @@ import {
   deletePodcast
 } from "../requests/podcastRequest.js";
 
+// Replace the defaultPodcasts constant with the following:
+const defaultPodcasts = [
+  {
+    podName: "Welcome Podcast",
+    ownerName: "Admin",
+    hostName: "Alice",
+    rssFeed: "https://example.com/rss/welcome",
+    googleCal:
+      "https://calendar.google.com/calendar/embed?src=welcome@example.com",
+    guestUrl: "https://example.com/welcome-guest",
+    email: "welcome@example.com",
+    description: "This is our welcome podcast.",
+    logoUrl:
+      "https://podmanagerstorage.blob.core.windows.net/blob-container/pod1.jpg",
+    category: "General",
+    // Order: Facebook, LinkedIn, TikTok, Twitter, Instagram
+    socialMedia: [
+      "https://facebook.com/welcomepodcast",
+      "https://linkedin.com/in/welcomepodcast",
+      "https://tiktok.com/@welcomepodcast",
+      "https://twitter.com/welcomepodcast",
+      "https://instagram.com/welcomepodcast"
+    ]
+  },
+  {
+    podName: "Tech Trends",
+    ownerName: "Admin",
+    hostName: "Bob",
+    rssFeed: "https://example.com/rss/tech",
+    googleCal:
+      "https://calendar.google.com/calendar/embed?src=tech@example.com",
+    guestUrl: "https://example.com/tech-guest",
+    email: "tech@example.com",
+    description: "Latest in technology.",
+    logoUrl:
+      "https://podmanagerstorage.blob.core.windows.net/blob-container/pod2.jpg",
+    category: "Technology",
+    socialMedia: [
+      "https://facebook.com/techtrends",
+      "https://linkedin.com/in/techtrends",
+      "https://tiktok.com/@techtrends",
+      "https://twitter.com/techtrends",
+      "https://instagram.com/techtrends"
+    ]
+  },
+  {
+    podName: "Health Hub",
+    ownerName: "Admin",
+    hostName: "Carol",
+    rssFeed: "https://example.com/rss/health",
+    googleCal:
+      "https://calendar.google.com/calendar/embed?src=health@example.com",
+    guestUrl: "https://example.com/health-guest",
+    email: "health@example.com",
+    description: "Your daily health tips.",
+    logoUrl:
+      "https://podmanagerstorage.blob.core.windows.net/blob-container/pod3.jpg",
+    category: "Health",
+    socialMedia: [
+      "https://facebook.com/healthhub",
+      "https://linkedin.com/in/healthhub"
+    ]
+  }
+];
+
+async function addDefaultPodcasts() {
+  try {
+    const response = await fetchPodcasts();
+    const existingPodcasts = response.podcast || [];
+    for (const defPod of defaultPodcasts) {
+      // If no podcast in database has the same podName (case-insensitive), add it.
+      if (
+        !existingPodcasts.some(
+          (p) => p.podName.toLowerCase() === defPod.podName.toLowerCase()
+        )
+      ) {
+        await addPodcast(defPod);
+      }
+    }
+  } catch (error) {
+    console.error("Error adding default podcasts:", error);
+  }
+}
+
 console.log("podcastmanagement.js loaded");
 
-document.addEventListener("DOMContentLoaded", function () {
+document.addEventListener("DOMContentLoaded", async function () {
   console.log("DOM fully loaded and parsed");
+
+  // Add default podcasts if not present and then render list
+  await addDefaultPodcasts();
+  renderPodcastList();
 
   // Add listener to close the form (new functionality)
   const closeFormBtn = document.getElementById("close-form-btn");
@@ -22,8 +110,6 @@ document.addEventListener("DOMContentLoaded", function () {
       document.getElementById("podcast-list").style.display = "flex";
     });
   }
-
-  renderPodcastList();
 });
 
 const formContainer = document.querySelector(".form-box");
