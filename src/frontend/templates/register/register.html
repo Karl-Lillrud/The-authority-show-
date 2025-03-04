@@ -6,61 +6,74 @@
     <title>Register</title>
     <link
       rel="stylesheet"
-      href="{{ url_for('static', filename='css/register.css') }}"
+      href="{{ url_for('static', filename='css/signin.css') }}"
     />
     <script src="{{ url_for('static', filename='requests/podprofileRequests.js') }}"></script>
     <script src="{{ url_for('static', filename='requests/podprofile_languageRequests.js') }}"></script>
   </head>
   <body>
- 
     <!-- Logo -->
     <div class="logo-container">
       <img
-        src="https://podmanagerstorage.blob.core.windows.net/blob-container/PodManagerLogo.png"
+        src="{{ url_for('static', filename='images/PodManagerLogo.png') }}"
         alt="PodManager Logo"
       />
     </div>
 
-    <div class="center-box">
-      <h2>Register</h2>
+    <div class="image">
+      <img
+        src="{{ url_for('static', filename='images/WhatsApp Image.jpeg') }}"
+        alt="Beskrivning av bilden"
+      />
+    </div>
 
-      <form id="register-form" method="POST" action="{{ url_for('register_bp.register') }}">
-        <div class="form-group">
-          <label for="email">Email</label>
+    <div class="center-box">
+      <h1 class="title">Register</h1>
+      <div id="error-message" class="error-message" style="display: none"></div>
+
+      <form id="register-form">
+        <div class="input-group">
+          <label for="email" class="label"></label>
           <input
-            class="input"
             type="email"
             id="email"
             name="email"
-            value="{{ email }}"
+            class="input"
             placeholder="Email"
             required
           />
         </div>
-        <input
-          class="input"
-          type="password"
-          id="password"
-          placeholder="Password"
-          required
-        />
-        <button class="button" type="submit">Register</button>
-      </form>
-
-      <p class="error-message" id="error-message"></p>
-
-      <!-- Success Message Modal -->
-      <div id="success-modal" class="modal">
-        <div class="modal-content">
-          <h2>Registration Successful!</h2>
-          <p>Click OK to go to the login page.</p>
-          <button id="success-ok-button" class="button">OK</button>
+        <div class="input-group">
+          <label for="password" class="label"></label>
+          <input
+            type="password"
+            id="password"
+            name="password"
+            class="input"
+            placeholder="Password"
+            required
+          />
         </div>
-      </div>
 
-      <!-- Moved the text above the Sign-in link -->
-      <p class="account-text">Already have an account?</p>
-      <a class="link" href="{{ url_for('signin_bp.signin') }}">Sign in</a>
+        <div class="extra-links">
+          <a href="{{ url_for('signin_bp.signin') }}" class="link">Sign in</a>
+        </div>
+
+        <div class="form-actions">
+          <button type="submit" class="button button-primary">Register</button>
+        </div>
+      </form>
+    </div>
+
+    <!-- User Exists Modal -->
+    <div id="user-exists-modal" class="modal">
+      <div class="modal-content">
+        <h2>User Already Exists</h2>
+        <p>
+          The email you entered is already registered. Please try logging in.
+        </p>
+        <button id="user-exists-ok-button" class="button">OK</button>
+      </div>
     </div>
 
     {% with messages = get_flashed_messages(with_categories=true) %} {% if
@@ -76,8 +89,10 @@
       document.addEventListener("DOMContentLoaded", function () {
         const form = document.getElementById("register-form");
         const errorMessage = document.getElementById("error-message");
-        const successModal = document.getElementById("success-modal");
-        const successOkButton = document.getElementById("success-ok-button");
+        const userExistsModal = document.getElementById("user-exists-modal");
+        const userExistsOkButton = document.getElementById(
+          "user-exists-ok-button"
+        );
 
         const API_BASE_URL =
           window.location.hostname === "127.0.0.1" ||
@@ -106,19 +121,25 @@
             });
 
             if (response.ok) {
-              successModal.style.display = "block";
-              successOkButton.addEventListener("click", function () {
-                window.location.href = `${API_BASE_URL}/signin`;
-              });
+              window.location.href = `${API_BASE_URL}/signin?message=Registration successful. Please log in.`;
             } else {
               const result = await response.json();
-              errorMessage.textContent =
-                result.error || "An error occurred. Please try again.";
+              if (result.error === "User already exists") {
+                userExistsModal.style.display = "block";
+                userExistsOkButton.addEventListener("click", function () {
+                  userExistsModal.style.display = "none";
+                });
+              } else {
+                errorMessage.textContent =
+                  result.error || "An error occurred. Please try again.";
+                errorMessage.style.display = "block";
+              }
             }
           } catch (error) {
             console.error("Error:", error);
             errorMessage.textContent =
               "Something went wrong. Please try again.";
+            errorMessage.style.display = "block";
           }
         });
       });

@@ -12,16 +12,23 @@
       <img
         src="{{ url_for('static', filename='images/PodManagerLogo.png') }}"
         alt="PodManager Logo"
-        
       />
     </div>
 
     <div class="image">
-      <img src="{{ url_for('static', filename='images/WhatsApp Image.jpeg') }}" alt="Beskrivning av bilden">
+      <img
+        src="{{ url_for('static', filename='images/WhatsApp Image.jpeg') }}"
+        alt="Beskrivning av bilden"
+      />
     </div>
 
     <div class="center-box">
       <h1 class="title">Welcome</h1>
+      <div
+        id="success-message"
+        class="success-message"
+        style="display: none"
+      ></div>
       <div id="error-message" class="error-message" style="display: none"></div>
 
       <form id="login-form">
@@ -47,35 +54,33 @@
             required
           />
         </div>
-        <div class="input-group">
-          <label for="remember" class="label">
-            <input
-              type="checkbox"
-              id="remember"
-              name="remember"
-              class="input-checkbox"
-            />
-            Remember Me
-          </label>
+
+        <div class="extra-links">
+          <a href="/register" class="link">Register here</a>
         </div>
 
         <div class="extra-links">
           <a href="/forgotpassword" class="link">Forgot Password?</a>
         </div>
 
-
         <div class="form-actions">
-          <button type="submit" class="button button-primary">GO</button>
-        </div>
-
-        <div class="extra-links">
-          <a href="/register" class="link">Register here</a>
+          <button type="submit" class="button button-primary">Sign in</button>
         </div>
       </form>
     </div>
 
     <script>
       document.addEventListener("DOMContentLoaded", function () {
+        const urlParams = new URLSearchParams(window.location.search);
+        const message = urlParams.get("message");
+        const successMessage = document.getElementById("success-message");
+
+        if (message) {
+          successMessage.textContent = message;
+          successMessage.style.display = "block";
+          successMessage.style.color = "var(--highlight)"; // Match error message color
+        }
+
         const form = document.getElementById("login-form");
         const errorMessage = document.getElementById("error-message");
 
@@ -119,4 +124,3 @@
     </script>
   </body>
 </html>
-
