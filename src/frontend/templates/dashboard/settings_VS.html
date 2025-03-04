@@ -36,9 +36,9 @@ Management{% endblock %} {% block content %}
   <!-- Main Content Area -->
   <section class="main-content">
     <!-- Back Arrow common for all sections -->
-    <a href="{{ url_for('dashboard_bp.dashboard') }}" class="back-arrow"
-      >&#8592; Back</a
-    >
+    <a href="{{ url_for('dashboard_bp.dashboard') }}" class="back-arrow">
+      &#8592; Back
+    </a>
 
     <!-- Profile Section -->
     <div id="profile-section" class="settings-section">
@@ -195,7 +195,7 @@ Management{% endblock %} {% block content %}
           <form id="subscription-form">
             <!-- Primary CTA Button -->
             <button class="primary-cta">Save Subscription</button>
-    
+
             <div class="payment-methods">
               <button id="btn-add-payment" class="payment-button primary">Add Payment Method</button>
               <button id="btn-update-payment" class="payment-button secondary">Update Payment Method</button>
@@ -207,7 +207,6 @@ Management{% endblock %} {% block content %}
       </div>
     </div>
 
-    
     <!-- DELETE ACCOUNT SECTION -->
     <div id="delete-section" class="settings-section" style="display: none">
       <div class="delete-account-container">    
@@ -500,7 +499,7 @@ Management{% endblock %} {% block content %}
       }
     });
   updatePaymentMethodsDisplay();
- 
+  
 // DELETE ACCOUNT Functionality 
 
 // Cancel button event listener

@@ -278,7 +278,7 @@ button:hover {
   position: relative;
 }
 
-/* Modal Styling used for DeleteAccount modal messages) */
+/* Modal Styling used for DeleteAccount messages) */
 .modal-message {
   display: none;
   padding: 3px;
@@ -294,7 +294,7 @@ button:hover {
 
 /* Success Style */
 .modal-message.success {
-  color: var(--text-color-light);
+  color: rgba(20, 164, 46, 0.8);
   border: none;
   box-shadow:
     inset -3px -3px 6px var(--light-shadow-light),
@@ -303,7 +303,7 @@ button:hover {
 
 /* Error Style */
 .modal-message.error {
-  color: var(--text-color-light);
+  color: rgba(181, 26, 26, 0.8);
   border: none;
   box-shadow:
     inset -3px -3px 6px var(--light-shadow-light),
