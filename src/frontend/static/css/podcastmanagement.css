@@ -2,55 +2,352 @@
   --background-light: #eff2f9;
   --light-shadow-light: #ffffff;
   --dark-shadow-light: rgba(22, 24, 29, 0.23);
-
   --text-color-light: #6e7f8d;
   --highlight-color: #ff7f3f;
   --success-color: #4caf50;
-
   --font-primary: "Arial", sans-serif;
-
   --spacing-sm: 8px;
   --spacing-md: 16px;
   --spacing-lg: 24px;
-
   --radius-small: 5px;
   --radius-medium: 10px;
   --radius-large: 12px;
 }
 
+/* Base styles */
 html,
 body {
   height: 100%;
   margin: 0;
-  display: flex;
-  justify-content: center;
-  align-items: center;
   background-color: var(--background-light);
   font-family: var(--font-primary);
   color: var(--text-color-light);
 }
-
-.pod-logo {
-  width: 150px;
-  height: 155px;
-  object-fit: cover;
-  border-radius: var(--radius-small);
-  box-shadow: inset -2px -2px 4px var(--light-shadow-light),
-    inset 2px 2px 4px var(--dark-shadow-light);
-  margin-bottom: 15px;
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 2rem;
+}
+h1 {
+  text-align: center;
+  margin-bottom: 2rem;
+  color: #333;
 }
 
-.container {
+/* Loading */
+.loading {
   display: flex;
   justify-content: center;
   align-items: center;
-  width: 100%;
-  min-height: 100vh; /* Changed from height: 100vh */
-  padding-top: 50px;
-  padding-bottom: 50px;
-  box-sizing: border-box;
+  height: 200px;
+}
+.spinner {
+  width: 40px;
+  height: 40px;
+  border: 3px solid rgba(59, 130, 246, 0.2);
+  border-radius: 50%;
+  border-top-color: #3b82f6;
+  animation: spin 1s ease-in-out infinite;
+}
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
 }
 
+/* Podcast List */
+.podcast-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-lg);
+}
+
+/* Podcast card styles */
+.podcast-card {
+  background-color: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+  transition: all 0.3s ease;
+}
+.podcast-card:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+.podcast-content {
+  display: flex;
+  flex-direction: column;
+}
+@media (min-width: 768px) {
+  .podcast-content {
+    flex-direction: row;
+  }
+}
+.podcast-image {
+  width: 100%;
+  height: 200px;
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+}
+@media (min-width: 768px) {
+  .podcast-image {
+    width: 200px;
+    height: auto;
+    flex-shrink: 0;
+  }
+}
+.podcast-info {
+  padding: 1.5rem;
+  flex-grow: 1;
+}
+.podcast-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 1rem;
+}
+.podcast-title {
+  font-size: 1.5rem;
+  font-weight: bold;
+  margin-bottom: 0.5rem;
+}
+.podcast-meta {
+  color: #666;
+  font-size: 0.875rem;
+  margin-bottom: 0.25rem;
+}
+.podcast-meta span {
+  font-weight: 500;
+}
+.podcast-description {
+  margin-top: 1rem;
+  color: #555;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.podcast-actions {
+  display: flex;
+  gap: 0.5rem;
+}
+.action-btn {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+.view-btn {
+  background-color: rgba(59, 130, 246, 0.1);
+  color: #3b82f6;
+}
+.view-btn:hover {
+  background-color: rgba(59, 130, 246, 0.2);
+}
+.edit-btn {
+  background-color: rgba(245, 158, 11, 0.1);
+  color: #f59e0b;
+}
+.edit-btn:hover {
+  background-color: rgba(245, 158, 11, 0.2);
+}
+.delete-btn {
+  background-color: rgba(239, 68, 68, 0.1);
+  color: #ef4444;
+}
+.delete-btn:hover {
+  background-color: rgba(239, 68, 68, 0.2);
+}
+.podcast-footer {
+  padding: 1rem 1.5rem;
+  border-top: 1px solid #eee;
+  display: flex;
+  justify-content: flex-end;
+}
+.view-details-btn {
+  background: none;
+  border: none;
+  color: #3b82f6;
+  font-weight: 500;
+  cursor: pointer;
+}
+.view-details-btn:hover {
+  text-decoration: underline;
+}
+
+/* Podcast detail styles */
+.podcast-detail {
+  background-color: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+  display: none;
+}
+.detail-header {
+  padding: 1.5rem;
+}
+.back-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: none;
+  border: none;
+  color: #3b82f6;
+  font-weight: 500;
+  cursor: pointer;
+  margin-bottom: 1.5rem;
+  padding: 0;
+}
+.back-btn:hover {
+  color: #2563eb;
+}
+.detail-content {
+  padding: 0 1.5rem 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+@media (min-width: 768px) {
+  .detail-content {
+    flex-direction: row;
+  }
+}
+.detail-image {
+  width: 100%;
+  max-width: 300px;
+  height: 300px;
+  border-radius: 8px;
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  margin: 0 auto;
+}
+@media (min-width: 768px) {
+  .detail-image {
+    margin: 0;
+  }
+}
+.detail-info {
+  flex-grow: 1;
+}
+.detail-title {
+  font-size: 2rem;
+  font-weight: bold;
+  margin-bottom: 0.5rem;
+}
+.detail-category {
+  color: #666;
+  font-size: 1.125rem;
+  margin-bottom: 1.5rem;
+}
+.detail-section {
+  margin-bottom: 1.5rem;
+}
+.detail-section h2 {
+  font-size: 1.25rem;
+  margin-bottom: 0.75rem;
+}
+.detail-section p {
+  color: #555;
+}
+.detail-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1rem;
+}
+@media (min-width: 768px) {
+  .detail-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+.detail-item h3 {
+  font-size: 0.875rem;
+  color: #666;
+  font-weight: 500;
+  margin-bottom: 0.25rem;
+}
+.detail-item a {
+  color: #3b82f6;
+  text-decoration: none;
+}
+.detail-item a:hover {
+  text-decoration: underline;
+}
+.separator {
+  height: 1px;
+  background-color: #eee;
+  margin: 1.5rem 0;
+}
+.social-links {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1rem;
+}
+@media (min-width: 768px) {
+  .social-links {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+.social-link {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: #3b82f6;
+  text-decoration: none;
+}
+.social-link:hover {
+  text-decoration: underline;
+}
+
+/* Alert styles */
+.alert {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  padding: 1rem;
+  border-radius: 4px;
+  color: white;
+  max-width: 300px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  z-index: 1000;
+  display: none;
+}
+.alert-success {
+  background-color: #10b981;
+}
+.alert-error {
+  background-color: #ef4444;
+}
+
+/* Custom Alert Styles */
+#custom-alert {
+  display: none;
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: var(--background-light);
+  padding: 25px;
+  border-radius: var(--radius-medium);
+  box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.2);
+  z-index: 1000;
+  text-align: center;
+  font-size: 16px;
+  color: #333;
+  transition: opacity 0.5s ease-out;
+}
+#custom-alert p {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+/* Back Arrow */
 .back-arrow {
   position: absolute;
   top: 180px;
@@ -73,6 +370,7 @@ body {
   color: var(--highlight-color);
 }
 
+/* Form Box */
 .form-box {
   background: var(--background-light);
   padding: var(--spacing-lg);
@@ -87,13 +385,14 @@ body {
     4px 4px 8px var(--dark-shadow-light);
 }
 
+/* Form Fields */
 .form-fields {
   display: flex;
   flex-direction: column;
   width: 100%;
 }
 
-/* Adjusted Field Groups in a column layout */
+/* Field Groups */
 .field-group {
   display: flex;
   align-items: center;
@@ -117,7 +416,7 @@ body {
     inset 3px 3px 6px var(--dark-shadow-light);
   outline: none;
   font-size: 0.9rem;
-  color: var(--text-color-light);
+  color: var (--text-color-light);
   background: var(--background-light);
   transition: background-color 0.3s ease, box-shadow 0.3s ease;
 }
@@ -126,12 +425,11 @@ body {
   box-shadow: inset 2px 2px 4px rgba(255, 127, 63, 0.3),
     inset -2px -2px 4px rgba(0, 0, 0, 0.1);
 }
-/* Ensure buttons in field groups are on the right */
 .field-group button {
   margin-left: var(--spacing-sm);
 }
 
-/* Inline Field (for Google Calendar Pick a Date URL) */
+/* Inline Field */
 .inline-field {
   display: flex;
   align-items: center;
@@ -154,7 +452,7 @@ body {
   margin-left: var(--spacing-sm);
 }
 
-/* Buttons (existing styles remain) */
+/* Buttons */
 .connect-btn,
 .save-btn,
 .block-btn,
@@ -181,7 +479,6 @@ body {
   transform: translateY(-2px);
   color: var(--highlight-color);
 }
-
 .save-btn {
   width: 100%;
   font-size: 0.9rem;
@@ -190,7 +487,7 @@ body {
 .block-btn {
   width: 70px;
   font-size: 0.75rem;
-  margin-left: var(--spacing-sm);
+  margin-left: var (--spacing-sm);
 }
 #add-member-btn {
   width: 40px;
@@ -205,7 +502,7 @@ body {
   font-size: 0.9rem;
 }
 
-/* Custom Copy Button (smaller size) */
+/* Copy Button */
 .copy-btn {
   background: var(--background-light);
   border: none;
@@ -230,52 +527,6 @@ body {
   justify-content: space-between;
   align-items: center;
   margin-top: var(--spacing-md);
-}
-
-#custom-alert {
-  display: none;
-  position: fixed;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  background: var(--background-light) !important; /* Ljusgrå bakgrund*/
-  padding: 25px 25px;
-  border-radius: 8px;
-  box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.2);
-  z-index: 1000;
-  text-align: center;
-  font-size: 16px;
-  font-family: Arial, sans-serif;
-  opacity: 1;
-  transition: opacity 0.5s ease-out;
-  color: #333 !important; /* Textfärg (kan justeras)*/
-}
-
-#custom-alert p {
-  margin: 0;
-  font-size: 1rem;
-  font-weight: 600;
-  color: #333 !important; /* Textfärg*/
-}
-
-/* CRUD Buttons */
-.crud-btn {
-  background: var(--background-light);
-  border: none;
-  padding: var(--spacing-sm) var(--spacing-md);
-  border-radius: var(--radius-small);
-  cursor: pointer;
-  box-shadow: -3px -3px 6px var(--light-shadow-light),
-    3px 3px 6px var(--dark-shadow-light);
-  transition: transform 0.3s ease, background-color 0.3s ease;
-  font-size: 0.85rem;
-  color: var(--text-color-light);
-  margin: 5px 0;
-}
-.crud-btn:hover {
-  background-color: rgba(255, 127, 63, 0.08);
-  transform: translateY(-2px);
-  color: var(--highlight-color);
 }
 
 /* Popup */
@@ -474,77 +725,6 @@ body {
   transform: translateY(-2px);
   color: #4caf50;
 }
-
-/* Optional: For grouping the two action buttons */
-.action-buttons {
-  display: inline-flex;
-  align-items: center;
-}
-
-/* Popup Header */
-.popup-content h2 {
-  color: var(--text-color-light);
-  font-size: 1.5rem;
-  margin-bottom: 20px;
-  position: relative;
-  padding-bottom: 10px;
-}
-
-.popup-content h2::after {
-  content: "";
-  position: absolute;
-  bottom: 0;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 60px;
-  height: 3px;
-  background: var(--highlight-color);
-  border-radius: 3px;
-}
-
-/* Improved Close Button */
-.close-btn {
-  position: absolute;
-  top: 15px;
-  right: 15px;
-  width: 30px;
-  height: 30px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: var(--background-light);
-  border: none;
-  border-radius: 50%;
-  cursor: pointer;
-  box-shadow: -2px -2px 4px var(--light-shadow-light),
-    2px 2px 4px var(--dark-shadow-light);
-  transition: background-color 0.2s ease, transform 0.2s ease;
-  font-size: 1.2rem;
-  color: var(--text-color-light);
-}
-
-.close-btn:hover {
-  background-color: rgba(255, 127, 63, 0.1);
-  transform: rotate(90deg);
-  color: var(--highlight-color);
-}
-
-/* Modal Buttons */
-.modal-buttons {
-  display: flex;
-  justify-content: center;
-  gap: 15px;
-  margin-top: 20px;
-  width: 100%;
-}
-
-.modal-buttons button {
-  padding: 10px 20px;
-  border-radius: var(--radius-small);
-  font-weight: 600;
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
-}
-
 .cancel-btn {
   background: var(--background-light);
   border: none;
@@ -602,4 +782,20 @@ body {
   .popup-content {
     width: 80%;
   }
+}
+
+/* Add Podcast Button */
+#add-podcast-btn {
+  background-color: #ff7f3f;
+  color: #ffffff;
+  font-weight: bold;
+  border: none;
+  padding: 12px 24px;
+  border-radius: var(--radius-medium);
+  cursor: pointer;
+  transition: background-color 0.3s ease, transform 0.3s ease;
+}
+#add-podcast-btn:hover {
+  background-color: #e0662c;
+  transform: translateY(-3px);
 }

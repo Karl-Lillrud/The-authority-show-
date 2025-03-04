@@ -1,6 +1,6 @@
 async function postPodcastData(podName, podRss) {
   try {
-    const response = await fetch("/add_podcasts", {
+    const response = await fetch("/post_podcast_data", {
       method: "POST",
       headers: {
         "Content-Type": "application/json"
@@ -48,8 +48,7 @@ async function sendInvitation(email, subject, body) {
     const response = await fetch("/send_invitation", {
       method: "POST",
       headers: {
-        "Content-Type": "application/json",
-        "Accept": "text/html" // Add this header to handle HTML content
+        "Content-Type": "application/json"
       },
       body: JSON.stringify({ email, subject, body })
     });
@@ -62,27 +61,5 @@ async function sendInvitation(email, subject, body) {
     }
   } catch (error) {
     console.error("Error sending invitation:", error);
-  }
-}
-
-async function fetchRSSData(rssUrl) {
-  if (!rssUrl) return;
-  try {
-    const response = await fetch(
-      `https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(
-        rssUrl
-      )}`
-    );
-    const data = await response.json(); // Parse JSON directly
-
-    if (data.status === "ok") {
-      document.getElementById("podcastNameInput").value = data.feed.title; // Update the input field with the podcast name
-      return data.feed; // Return the feed data
-    } else {
-      throw new Error("Failed to fetch RSS data");
-    }
-  } catch (error) {
-    console.error("Error fetching RSS feed:", error);
-    throw error;
   }
 }
