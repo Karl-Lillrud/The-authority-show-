@@ -324,9 +324,7 @@ h1 {
   background-color: #ef4444;
 }
 
-/* ... Add additional podcast card, detail and button styles as required ... */
-
-/* Alert Styles */
+/* Custom Alert Styles */
 #custom-alert {
   display: none;
   position: fixed;
@@ -348,48 +346,8 @@ h1 {
   font-size: 1rem;
   font-weight: 600;
 }
-.back-arrow {
-  position: absolute;
-  top: 180px;
-  left: var(--spacing-md);
-  font-size: 0.9rem;
-  text-decoration: none;
-  color: var(--text-color-light);
-  padding: var(--spacing-sm) var(--spacing-md);
-  border-radius: var(--radius-small);
-  box-shadow: -3px -3px 6px var(--light-shadow-light),
-    3px 3px 6px var(--dark-shadow-light);
-  transition: transform 0.3s ease;
-  z-index: 1000;
-}
-.back-arrow:hover {
-  transform: translateY(-3px);
-  color: var(--highlight-color);
-}
 
-/* ... Additional styles for form, buttons, podcast cards and details ... */
-
-.pod-logo {
-  width: 150px;
-  height: 155px;
-  object-fit: cover;
-  border-radius: var(--radius-small);
-  box-shadow: inset -2px -2px 4px var(--light-shadow-light),
-    inset 2px 2px 4px var(--dark-shadow-light);
-  margin-bottom: 15px;
-}
-
-.container {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  width: 100%;
-  min-height: 100vh; /* Changed from height: 100vh */
-  padding-top: 50px;
-  padding-bottom: 50px;
-  box-sizing: border-box;
-}
-
+/* Back Arrow */
 .back-arrow {
   position: absolute;
   top: 180px;
@@ -412,6 +370,7 @@ h1 {
   color: var(--highlight-color);
 }
 
+/* Form Box */
 .form-box {
   background: var(--background-light);
   padding: var(--spacing-lg);
@@ -426,13 +385,14 @@ h1 {
     4px 4px 8px var(--dark-shadow-light);
 }
 
+/* Form Fields */
 .form-fields {
   display: flex;
   flex-direction: column;
   width: 100%;
 }
 
-/* Adjusted Field Groups in a column layout */
+/* Field Groups */
 .field-group {
   display: flex;
   align-items: center;
@@ -465,12 +425,11 @@ h1 {
   box-shadow: inset 2px 2px 4px rgba(255, 127, 63, 0.3),
     inset -2px -2px 4px rgba(0, 0, 0, 0.1);
 }
-/* Ensure buttons in field groups are on the right */
 .field-group button {
   margin-left: var(--spacing-sm);
 }
 
-/* Inline Field (for Google Calendar Pick a Date URL) */
+/* Inline Field */
 .inline-field {
   display: flex;
   align-items: center;
@@ -493,7 +452,7 @@ h1 {
   margin-left: var(--spacing-sm);
 }
 
-/* Buttons (existing styles remain) */
+/* Buttons */
 .connect-btn,
 .save-btn,
 .block-btn,
@@ -520,7 +479,6 @@ h1 {
   transform: translateY(-2px);
   color: var(--highlight-color);
 }
-
 .save-btn {
   width: 100%;
   font-size: 0.9rem;
@@ -544,7 +502,7 @@ h1 {
   font-size: 0.9rem;
 }
 
-/* Custom Copy Button (smaller size) */
+/* Copy Button */
 .copy-btn {
   background: var(--background-light);
   border: none;
@@ -569,49 +527,6 @@ h1 {
   justify-content: space-between;
   align-items: center;
   margin-top: var(--spacing-md);
-}
-
-#custom-alert {
-  display: none;
-  position: fixed;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  background: var(--background-light);
-  padding: 25px;
-  border-radius: var(--radius-medium);
-  box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.2);
-  z-index: 1000;
-  text-align: center;
-  font-size: 16px;
-  color: #333;
-  transition: opacity 0.5s ease-out;
-}
-
-#custom-alert p {
-  margin: 0;
-  font-size: 1rem;
-  font-weight: 600;
-}
-
-/* CRUD Buttons */
-.crud-btn {
-  background: var(--background-light);
-  border: none;
-  padding: var(--spacing-sm) var(--spacing-md);
-  border-radius: var(--radius-small);
-  cursor: pointer;
-  box-shadow: -3px -3px 6px var(--light-shadow-light),
-    3px 3px 6px var(--dark-shadow-light);
-  transition: transform 0.3s ease, background-color 0.3s ease;
-  font-size: 0.85rem;
-  color: var(--text-color-light);
-  margin: 5px 0;
-}
-.crud-btn:hover {
-  background-color: rgba(255, 127, 63, 0.08);
-  transform: translateY(-2px);
-  color: var(--highlight-color);
 }
 
 /* Popup */
