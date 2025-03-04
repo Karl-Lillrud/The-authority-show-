@@ -18,13 +18,15 @@ body {
   border-radius: 20px;
   background: var(--background-light);
   color: var(--text-color-light);
-  box-shadow: -5px -5px 10px var(--light-shadow-light), 5px 5px 10px var(--dark-shadow-light);
+  box-shadow: -5px -5px 10px var(--light-shadow-light),
+    5px 5px 10px var(--dark-shadow-light);
   border: none;
   cursor: pointer;
   transition: all 0.3s ease;
 }
 .btn:hover {
-  box-shadow: -2px -2px 5px var(--light-shadow-light), 2px 2px 5px var(--dark-shadow-light);
+  box-shadow: -2px -2px 5px var(--light-shadow-light),
+    2px 2px 5px var(--dark-shadow-light);
 }
 
 /* Card Styles for Teams Display */
@@ -38,12 +40,14 @@ body {
   background: var(--background-light);
   border-radius: 20px;
   padding: var(--spacing-md);
-  box-shadow: 0 4px 8px var(--dark-shadow-light), 0 6px 20px var(--light-shadow-light);
+  box-shadow: 0 4px 8px var(--dark-shadow-light),
+    0 6px 20px var(--light-shadow-light);
   transition: transform 0.3s ease, box-shadow 0.3s ease;
 }
 .card:hover {
   transform: translateY(-5px);
-  box-shadow: 0 8px 16px var(--dark-shadow-light), 0 12px 24px var(--light-shadow-light);
+  box-shadow: 0 8px 16px var(--dark-shadow-light),
+    0 12px 24px var(--light-shadow-light);
 }
 .card h4 {
   margin: 0 0 var(--spacing-sm) 0;
@@ -64,7 +68,7 @@ body {
   width: 100%;
   height: 100%;
   overflow: auto;
-  background-color: rgba(0,0,0,0.4);
+  background-color: rgba(0, 0, 0, 0.4);
   transition: opacity 0.3s ease-in-out;
 }
 .modal.show {
@@ -79,7 +83,8 @@ body {
   background: var(--background-light);
   padding: var(--spacing-lg);
   border-radius: 20px;
-  box-shadow: -10px -10px 20px var(--light-shadow-light), 10px 10px 20px var(--dark-shadow-light);
+  box-shadow: -10px -10px 20px var(--light-shadow-light),
+    10px 10px 20px var(--dark-shadow-light);
   position: relative;
 }
 .modal-header {
@@ -114,14 +119,16 @@ body {
   border-radius: 20px;
   background: var(--background-light);
   color: var(--text-color-light);
-  box-shadow: inset 5px 5px 10px var(--dark-shadow-light), inset -5px -5px 10px var(--light-shadow-light);
+  box-shadow: inset 5px 5px 10px var(--dark-shadow-light),
+    inset -5px -5px 10px var(--light-shadow-light);
   transition: box-shadow 0.3s ease;
 }
 .modal-body input[type="text"]:focus,
 .modal-body input[type="email"]:focus,
 .modal-body textarea:focus {
   outline: none;
-  box-shadow: inset 3px 3px 6px var(--highlight-color), inset -3px -3px 6px var(--highlight-color);
+  box-shadow: inset 3px 3px 6px var(--highlight-color),
+    inset -3px -3px 6px var(--highlight-color);
 }
 .modal-body .form-check {
   display: flex;
