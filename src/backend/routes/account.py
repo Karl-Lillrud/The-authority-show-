@@ -7,7 +7,6 @@ from backend.models.accounts import AccountSchema  # Make sure to import the sch
 from backend.services.accountsService import (
     create_account,
 )  # Import the create_account function from the service
-from backend.models.accounts import AccountSchema
 from werkzeug.security import check_password_hash
 from bson import ObjectId
 
