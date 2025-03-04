@@ -18,11 +18,55 @@
       />
     </div>
 
+    <div class="image">
+      <img
+        src="{{ url_for('static', filename='images/WhatsApp Image.jpeg') }}"
+        alt="Beskrivning av bilden"
+      />
+    </div>
+
     <div class="center-box">
+
+      <h1 class="title">Welcome</h1>
+      <div
+        id="success-message"
+        class="success-message"
+        style="display: none"
+      ></div>
+      <div id="error-message" class="error-message" style="display: none"></div>
+
+      <form id="login-form">
+        <div class="input-group">
+          <label for="email" class="label"></label>
+          <input
+            type="email"
+            id="email"
+            name="email"
+            class="input"
+            placeholder="Email"
+            required
+          />
+        </div>
+        <div class="input-group">
+          <label for="password" class="label"></label>
+          <input
+            type="password"
+            id="password"
+            name="password"
+            class="input"
+            placeholder="Password"
+            required
+          />
+        </div>
+
+        <div class="extra-links">
+          <a href="/register" class="link">Register here</a>
+
       <div class="tabs">
         <div class="tab-header">
           <div class="tab-item active" data-tab="signin">Sign In</div>
           <div class="tab-item" data-tab="register">Register</div>
+
         </div>
 
         <div
@@ -35,6 +79,10 @@
           class="success-message"
           style="display: none"
         ></div>
+
+
+        <div class="form-actions">
+          <button type="submit" class="button button-primary">Sign in</button>
 
         <!-- Sign In Form -->
         <div class="tab-content active" id="signin-tab">
@@ -99,9 +147,64 @@
               </button>
             </div>
           </form>
+
         </div>
       </div>
     </div>
+
+
+    <script>
+      document.addEventListener("DOMContentLoaded", function () {
+        const urlParams = new URLSearchParams(window.location.search);
+        const message = urlParams.get("message");
+        const successMessage = document.getElementById("success-message");
+
+        if (message) {
+          successMessage.textContent = message;
+          successMessage.style.display = "block";
+          successMessage.style.color = "var(--highlight)"; // Match error message color
+        }
+
+        const form = document.getElementById("login-form");
+        const errorMessage = document.getElementById("error-message");
+
+        const API_BASE_URL =
+          window.location.hostname === "127.0.0.1" ||
+          window.location.hostname === "localhost"
+            ? "{{ LOCAL_BASE_URL }}"
+            : "{{ PROD_BASE_URL }}"; // Use LOCAL_BASE_URL for localhost and PROD_BASE_URL for production
+
+        form.addEventListener("submit", async function (event) {
+          event.preventDefault();
+
+          const email = document.getElementById("email").value;
+          const password = document.getElementById("password").value;
+          // Removed 'remember' as it is not needed
+
+          try {
+            const response = await fetch(`${API_BASE_URL}/signin`, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ email, password })
+            });
+
+            if (!response.ok) {
+              throw new Error("Invalid email or password.");
+            }
+
+            const result = await response.json();
+            if (result.redirect_url) {
+              window.location.href = result.redirect_url;
+            } else {
+              window.location.href = "/dashboard";
+            }
+          } catch (error) {
+            errorMessage.textContent = error.message;
+            errorMessage.style.display = "block";
+          }
+        });
+      });
+    </script>
 
     <!-- Success Message Modal -->
     <div id="success-modal" class="modal">
@@ -113,5 +216,6 @@
     </div>
 
     <script src="{{ url_for('static', filename='js/auth.js') }}"></script>
+
   </body>
 </html>

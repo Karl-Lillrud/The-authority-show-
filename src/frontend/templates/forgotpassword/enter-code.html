@@ -1,88 +1,138 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Enter Reset Code</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/forgot.css') }}">
-</head>
-<body>
-    <div class="center-box">
-        <h1>Enter Reset Code</h1>
-        <p>Please enter the reset code you received via email to proceed.</p>
-        
-        <form id="enterCodeForm">
-            <input type="email" id="email" placeholder="Enter your email" required>
-            <input type="text" id="code" placeholder="Enter reset code" required>
-            <button type="submit">Verify Code</button>
-        </form>
-
-        <button id="resendCode">Resend Code</button>  <!-- ✅ Added Resend Button -->
-
-        <script>
-            document.addEventListener("DOMContentLoaded", function() {
-                const urlParams = new URLSearchParams(window.location.search);
-                const emailParam = urlParams.get("email");
-
-                if (emailParam) {
-                    document.getElementById("email").value = emailParam; // Autofill email if found in URL
-                }
-            });
-
-            document.getElementById("enterCodeForm").addEventListener("submit", function(event) {
-                event.preventDefault();
-                
-                const email = document.getElementById("email").value.trim();
-                const code = document.getElementById("code").value.trim();
-
-                fetch("/enter-code", {
-                    method: "POST",
-                    headers: { 
-                        "Accept": "application/json",
-                        "Content-Type": "application/json"
-                    },
-                    body: JSON.stringify({ email: email, code: code })
-                })
-                .then(response => response.json())
-                .then(data => {
-                    console.log("Server Response:", data);
-                    if (data.error) {
-                        alert("Error: " + data.error);
-                    } else if (data.redirect_url) {
-                        window.location.href = data.redirect_url + "?email=" + encodeURIComponent(email);
-                    } else {
-                        alert("Unexpected response from the server.");
-                    }
-                })
-                .catch(error => console.error("Fetch Error:", error));
-            });
-
-            // ✅ Resend Code Logic
-            document.getElementById("resendCode").addEventListener("click", function() {
-                const email = document.getElementById("email").value.trim();
-                
-                if (!email) {
-                    alert("Please enter your email first.");
-                    return;
-                }
-
-                fetch("/resend-code", {  // ✅ Calls the new API route
-                    method: "POST",
-                    headers: { 
-                        "Accept": "application/json",
-                        "Content-Type": "application/json"
-                    },
-                    body: JSON.stringify({ email: email })
-                })
-                .then(response => response.json())
-                .then(data => {
-                    alert(data.message || data.error);
-                })
-                .catch(error => console.error("Fetch Error:", error));
-            });
-        </script>
-
-        <p><a href="../index.html" class="link">Back to Login</a></p>
+    <link
+      rel="stylesheet"
+      href="{{ url_for('static', filename='css/forgot-password.css') }}"
+    />
+  </head>
+  <body>
+    <div class="logo-container">
+      <img
+        src="{{ url_for('static', filename='images/PodManagerLogo.png') }}"
+        alt="PodManager Logo"
+      />
     </div>
-</body>
+    <div class="image">
+      <img
+        src="{{ url_for('static', filename='images/WhatsApp Image.jpeg') }}"
+        alt="Beskrivning av bilden"
+      />
+    </div>
+    <div class="center-box">
+      <h1 class="title">Enter Reset Code</h1>
+      <p>Please enter the reset code you received via email to proceed.</p>
+
+      <div
+        id="success-message"
+        class="success-message"
+        style="display: none"
+      ></div>
+      <div id="error-message" class="error-message" style="display: none"></div>
+
+      <form id="enterCodeForm">
+        <div class="input-group">
+          <input
+            type="email"
+            id="email"
+            class="input"
+            placeholder="Enter your email"
+            required
+          />
+        </div>
+        <div class="input-group">
+          <input
+            type="text"
+            id="code"
+            class="input"
+            placeholder="Enter reset code"
+            required
+          />
+        </div>
+        <div class="form-actions" style="margin-top: 40px">
+          <button type="submit" class="button button-primary">
+            Verify Code
+          </button>
+        </div>
+      </form>
+
+      <div class="form-actions">
+        <button id="resendCode" class="button">Resend Code</button>
+      </div>
+
+      <script>
+        document.addEventListener("DOMContentLoaded", function () {
+          const urlParams = new URLSearchParams(window.location.search);
+          const emailParam = urlParams.get("email");
+
+          if (emailParam) {
+            document.getElementById("email").value = emailParam; // Autofill email if found in URL
+          }
+        });
+
+        document
+          .getElementById("enterCodeForm")
+          .addEventListener("submit", function (event) {
+            event.preventDefault();
+
+            const email = document.getElementById("email").value.trim();
+            const code = document.getElementById("code").value.trim();
+
+            fetch("/enter-code", {
+              method: "POST",
+              headers: {
+                Accept: "application/json",
+                "Content-Type": "application/json"
+              },
+              body: JSON.stringify({ email: email, code: code })
+            })
+              .then((response) => response.json())
+              .then((data) => {
+                console.log("Server Response:", data);
+                if (data.error) {
+                  alert("Error: " + data.error);
+                } else if (data.redirect_url) {
+                  window.location.href =
+                    data.redirect_url + "?email=" + encodeURIComponent(email);
+                } else {
+                  alert("Unexpected response from the server.");
+                }
+              })
+              .catch((error) => console.error("Fetch Error:", error));
+          });
+
+        // ✅ Resend Code Logic
+        document
+          .getElementById("resendCode")
+          .addEventListener("click", function () {
+            const email = document.getElementById("email").value.trim();
+
+            if (!email) {
+              alert("Please enter your email first.");
+              return;
+            }
+
+            fetch("/resend-code", {
+              // ✅ Calls the new API route
+              method: "POST",
+              headers: {
+                Accept: "application/json",
+                "Content-Type": "application/json"
+              },
+              body: JSON.stringify({ email: email })
+            })
+              .then((response) => response.json())
+              .then((data) => {
+                alert(data.message || data.error);
+              })
+              .catch((error) => console.error("Fetch Error:", error));
+          });
+      </script>
+
+      <p><a href="/" class="link">Back to Login</a></p>
+    </div>
+  </body>
 </html>
