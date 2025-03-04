@@ -27,79 +27,75 @@
         </button>
       </div>
 
-      <!-- Form container for adding/updating a podcast -->
+      <!-- Updated Form Container -->
       <div class="form-box" style="display: none">
-        <div id="custom-alert" style="display: none">
-          <span id="alert-message"></span>
+        <div class="detail-header">
+          <h1 id="form-title">Podcast Form</h1>
+          <button id="close-form-btn" class="crud-btn">Close</button>
         </div>
-        <div class="form-fields">
+        <div class="detail-content">
           <form id="register-podcast-form">
-            <!-- Include your form fields -->
-            <div class="field-group">
-              <label for="pod-name">Podcast Name</label>
-              <input
-                type="text"
-                id="pod-name"
-                name="podName"
-                autocomplete="off"
-              />
-            </div>
-            <div class="field-group">
-              <label for="pod-owner">Podcast Owner</label>
-              <input type="text" id="pod-owner" name="ownerName" />
-            </div>
-            <div class="field-group">
-              <label for="pod-host">Host(s) Name(s)</label>
-              <input type="text" id="pod-host" name="hostName" />
-            </div>
-            <div class="field-group">
-              <label for="pod-rss">RSS Feed</label>
-              <input type="url" id="pod-rss" name="rssFeed" />
-            </div>
-            <div class="field-group">
-              <label for="google-cal">Google Calendar URL</label>
-              <input type="url" id="google-cal" name="googleCal" />
-            </div>
-            <div class="field-group">
-              <label for="guest-form-url">Guest Form URL</label>
-              <input type="url" id="guest-form-url" name="guestUrl" />
-            </div>
-            <div class="field-group">
-              <label for="email">Email Address</label>
-              <input type="email" id="email" name="email" />
-            </div>
-            <div class="field-group">
-              <label for="description">Podcast Description</label>
-              <textarea id="description" name="description"></textarea>
-            </div>
-            <div class="field-group">
-              <label for="category">Category (Required)</label>
-              <input type="text" id="category" name="category" />
-            </div>
-            <!-- Social Media Links -->
-            <div class="field-group">
-              <label for="facebook">Facebook</label>
-              <input type="url" id="facebook" name="socialMedia[]" />
-            </div>
-            <div class="field-group">
-              <label for="instagram">Instagram</label>
-              <input type="url" id="instagram" name="socialMedia[]" />
-            </div>
-            <div class="field-group">
-              <label for="linkedin">LinkedIn</label>
-              <input type="url" id="linkedin" name="socialMedia[]" />
-            </div>
-            <div class="field-group">
-              <label for="twitter">Twitter</label>
-              <input type="url" id="twitter" name="socialMedia[]" />
-            </div>
-            <div class="field-group">
-              <label for="tiktok">TikTok</label>
-              <input type="url" id="tiktok" name="socialMedia[]" />
-            </div>
-            <div class="field-group">
-              <label for="pinterest">Pinterest</label>
-              <input type="url" id="pinterest" name="socialMedia[]" />
+            <div class="detail-grid">
+              <div class="detail-item">
+                <label for="pod-name">Podcast Name</label>
+                <input type="text" id="pod-name" name="podName" autocomplete="off" />
+              </div>
+              <div class="detail-item">
+                <label for="pod-owner">Podcast Owner</label>
+                <input type="text" id="pod-owner" name="ownerName" />
+              </div>
+              <div class="detail-item">
+                <label for="pod-host">Host(s) Name(s)</label>
+                <input type="text" id="pod-host" name="hostName" />
+              </div>
+              <div class="detail-item">
+                <label for="pod-rss">RSS Feed</label>
+                <input type="url" id="pod-rss" name="rssFeed" />
+              </div>
+              <div class="detail-item">
+                <label for="google-cal">Google Calendar URL</label>
+                <input type="url" id="google-cal" name="googleCal" />
+              </div>
+              <div class="detail-item">
+                <label for="guest-form-url">Guest Form URL</label>
+                <input type="url" id="guest-form-url" name="guestUrl" />
+              </div>
+              <div class="detail-item">
+                <label for="email">Email Address</label>
+                <input type="email" id="email" name="email" />
+              </div>
+              <div class="detail-item">
+                <label for="description">Podcast Description</label>
+                <textarea id="description" name="description"></textarea>
+              </div>
+              <div class="detail-item">
+                <label for="category">Category (Required)</label>
+                <input type="text" id="category" name="category" />
+              </div>
+              <div class="detail-item">
+                <label for="facebook">Facebook</label>
+                <input type="url" id="facebook" name="socialMedia[]" />
+              </div>
+              <div class="detail-item">
+                <label for="instagram">Instagram</label>
+                <input type="url" id="instagram" name="socialMedia[]" />
+              </div>
+              <div class="detail-item">
+                <label for="linkedin">LinkedIn</label>
+                <input type="url" id="linkedin" name="socialMedia[]" />
+              </div>
+              <div class="detail-item">
+                <label for="twitter">Twitter</label>
+                <input type="url" id="twitter" name="socialMedia[]" />
+              </div>
+              <div class="detail-item">
+                <label for="tiktok">TikTok</label>
+                <input type="url" id="tiktok" name="socialMedia[]" />
+              </div>
+              <div class="detail-item">
+                <label for="pinterest">Pinterest</label>
+                <input type="url" id="pinterest" name="socialMedia[]" />
+              </div>
             </div>
             <button type="submit" class="invite-btn">SAVE</button>
           </form>

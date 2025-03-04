@@ -11,6 +11,18 @@ console.log("podcastmanagement.js loaded");
 document.addEventListener("DOMContentLoaded", function () {
   console.log("DOM fully loaded and parsed");
 
+  // Add listener to close the form (new functionality)
+  const closeFormBtn = document.getElementById("close-form-btn");
+  if (closeFormBtn) {
+    closeFormBtn.addEventListener("click", () => {
+      const formContainer = document.querySelector(".form-box");
+      formContainer.style.display = "none";
+      // Restore main view elements
+      document.querySelector(".crud-buttons").style.display = "flex";
+      document.getElementById("podcast-list").style.display = "flex";
+    });
+  }
+
   renderPodcastList();
 });
 
@@ -23,7 +35,12 @@ let selectedPodcastId = null;
 document.getElementById("add-podcast-btn").addEventListener("click", () => {
   resetForm();
   selectedPodcastId = null;
+  // Hide main view elements
+  document.querySelector(".crud-buttons").style.display = "none";
+  document.getElementById("podcast-list").style.display = "none";
+  // Show the form container as a full view and update header
   formContainer.style.display = "block";
+  document.getElementById("form-title").textContent = "Add Podcast";
 });
 
 form.addEventListener("submit", async function (e) {
@@ -120,6 +137,12 @@ form.addEventListener("submit", async function (e) {
           : "Podcast added successfully!",
         "green"
       );
+      // Hide form and restore main view after successful save
+      formContainer.style.display = "none";
+      document.querySelector(".crud-buttons").style.display = "flex";
+      document.getElementById("podcast-list").style.display = "flex";
+      // Optionally, refresh the podcast list
+      renderPodcastList();
     }
   } catch (error) {
     console.error("Error:", error);
@@ -133,10 +156,11 @@ form.addEventListener("submit", async function (e) {
 });
 
 function showAlert(message, color) {
-  const alertBox = document.getElementById("custom-alert");
-  const alertMessage = document.getElementById("alert-message");
+  // Use the existing alert element from your HTML (id="alert")
+  const alertBox = document.getElementById("alert");
+  if (!alertBox) return; // if not found, exit
 
-  alertMessage.innerHTML = message;
+  alertBox.innerHTML = message;
   alertBox.style.background = color;
   alertBox.style.display = "block";
 
