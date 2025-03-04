@@ -17,7 +17,53 @@ Dashboard{% endblock %} {% block content %}
 </style>
 <script src="{{ url_for('static', filename='requests/podprofileRequests.js') }}"></script>
 <script src="{{ url_for('static', filename='requests/podprofile_languageRequests.js') }}"></script>
+<script src="{{ url_for('static', filename='requests/podcastRequest.js') }}"></script>
 <script>
+ 
+  document.addEventListener("DOMContentLoaded", function () {
+    console.log("Fetching podcasts...");
+    fetchPodcasts()
+      .then(data => {
+        console.log("Received data:", data);
+        if (data.error) {
+          console.error("Server error:", data.error);
+          throw new Error(data.error);
+        }
+        if (data.redirect) {
+          console.log("Redirecting to:", data.redirect);
+          window.location.href = data.redirect;
+          return;
+        }
+        if (data.message) {
+          console.log("Message received:", data.message);
+          document.getElementById("podcast-list").innerHTML = 
+            `<p class="info">${data.message}</p>`;
+          return;
+        }
+
+        // Show popup if multiple podcasts
+        if (Array.isArray(data) && data.length > 1) {
+          if (!sessionStorage.getItem("homepageViewed")) {
+            const popup = document.getElementById("homepage-popup");
+            if (popup) {
+              popup.style.display = "flex";
+              sessionStorage.setItem("homepageViewed", "true");
+            } else {
+              console.error("Homepage popup element not found");
+            }
+          }
+        }
+      })
+      .catch(error => {
+        console.error("Error loading podcasts:", error);
+        const podcastList = document.getElementById("podcast-list");
+        if (podcastList) {
+          podcastList.innerHTML = 
+            '<p class="error">Failed to load podcasts. Please try again later.</p>';
+        }
+      });
+  });
+
   document.addEventListener("DOMContentLoaded", function () {
     // Homepage popup remains unchanged
     if (!sessionStorage.getItem("homepageViewed")) {
