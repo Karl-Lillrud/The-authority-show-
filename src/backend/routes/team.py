@@ -87,51 +87,39 @@ def add_team():
 @team_bp.route("/get_teams", methods=["GET"])
 def get_teams():
     try:
-        # 1️⃣ Fetch all teams
-        teams = list(
-            collection.database.Teams.find({}, {"created_at": 0})
-        )  # Exclude created_at
-
+        teams = list(collection.database.Teams.find({}, {"created_at": 0}))
         if not teams:
             return jsonify({"error": "No teams found"}), 404
 
-        # 2️⃣ Fetch all user-to-team relationships
-        user_team_links = list(collection.database.UserToTeams.find({}))
+        user_team_links = list(collection.database.UsersToTeams.find({}))  # use UsersToTeams
 
-        # 3️⃣ Fetch all users from Users collection
         user_ids = [ut["userId"] for ut in user_team_links]
-        users = list(
-            collection.database.Users.find({"userId": {"$in": user_ids}}, {"_id": 0})
-        )
-
-        # 4️⃣ Create a dictionary of users for faster lookup by userId
+        users = list(collection.database.Users.find({"userId": {"$in": user_ids}}, {"_id": 0}))
         user_dict = {user["userId"]: user for user in users}
 
-        # 5️⃣ Group user-to-team relationships by teamId for faster processing
         team_members_map = {}
         for user_team in user_team_links:
+            # Assign team_id from the user-team link
             team_id = user_team["teamId"]
             if team_id not in team_members_map:
                 team_members_map[team_id] = []
-            # Attach role to the user from the UserToTeams collection
             user = user_dict.get(user_team["userId"])
             if user:
-                user["role"] = user_team.get(
-                    "role", "member"
-                )  # Default to "member" if role is not set
+                user["role"] = user_team.get("role", "member")
                 team_members_map[team_id].append(user)
 
-        # 6️⃣ Merge users into their respective teams
+        # Merge users into their respective teams and convert _id to string
         for team in teams:
             team_id = team["_id"]
-            # Set the members for the team from the map
             team["members"] = team_members_map.get(team_id, [])
+            team["_id"] = str(team["_id"])  # convert ObjectId to string
 
         return jsonify(teams), 200
 
     except Exception as e:
         print(f"❌ ERROR: {e}")
         return jsonify({"error": f"Failed to retrieve teams: {str(e)}"}), 500
+
 
 
 @team_bp.route("/delete_team/<team_id>", methods=["DELETE"])
@@ -169,3 +157,43 @@ def delete_team(team_id):
     except Exception as e:
         print(f"❌ ERROR: {e}")
         return jsonify({"error": f"Failed to delete the team: {str(e)}"}), 500
+
+@team_bp.route("/edit_team/<team_id>", methods=["PUT"])
+def edit_team(team_id):
+    try:
+        data = request.get_json()
+        team = collection.database.Teams.find_one({"_id": team_id})
+        if not team:
+            return jsonify({"error": "Team not found"}), 404
+
+        try:
+            team_schema = TeamSchema()
+            # Allow partial update
+            validated_data = team_schema.load(data, partial=True)
+        except ValidationError as err:
+            return jsonify({"error": "Invalid data", "details": err.messages}), 400
+
+        update_fields = {}
+        if "name" in validated_data:
+            update_fields["name"] = validated_data["name"].strip()
+        if "email" in validated_data:
+            update_fields["email"] = validated_data["email"].strip()
+        if "description" in validated_data:
+            update_fields["description"] = validated_data["description"].strip()
+        if "members" in validated_data:
+            update_fields["members"] = validated_data["members"]
+
+        if update_fields:
+            result = collection.database.Teams.update_one(
+                {"_id": team_id}, {"$set": update_fields}
+            )
+            if result.modified_count > 0:
+                return jsonify({"message": "Team updated successfully!"}), 200
+            else:
+                return jsonify({"message": "No changes made to the team."}), 200
+        else:
+            return jsonify({"message": "No valid fields provided for update."}), 400
+
+    except Exception as e:
+        print(f"❌ ERROR: {e}")
+        return jsonify({"error": f"Failed to edit team: {str(e)}"}), 500

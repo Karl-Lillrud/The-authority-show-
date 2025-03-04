@@ -1,7 +1,9 @@
 from flask import Blueprint, render_template, session, request, jsonify, current_app
 from backend.database.mongo_connection import collection
+from backend.models.podcasts import PodcastSchema
 
 podprofile_bp = Blueprint('podprofile_bp', __name__)
+podcast_schema = PodcastSchema()
 
 @podprofile_bp.route('/podprofile')
 def podprofile():

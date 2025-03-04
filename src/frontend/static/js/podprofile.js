@@ -309,67 +309,31 @@ document.addEventListener("DOMContentLoaded", function () {
     });
   }
 
-  trackInputField("podName", pointsSystem.podName);
-  trackInputField("podRss", pointsSystem.podRss);
-  trackInputField("podLogo", pointsSystem.podLogo);
-  trackInputField("hostName", pointsSystem.hostName);
-  trackButtonClick(
-    "googleCalendar",
-    "googleCalendar",
-    pointsSystem.googleCalendar
-  );
-  trackInputField("calendarUrl", pointsSystem.calendarUrl);
-  trackInputField("guestForm", pointsSystem.guestForm);
-  trackInputField("facebook", pointsSystem.facebook);
-  trackInputField("instagram", pointsSystem.instagram);
-  trackInputField("linkedin", pointsSystem.linkedin);
-  trackInputField("twitter", pointsSystem.twitter);
-  trackInputField("tiktok", pointsSystem.tiktok);
-  trackInputField("pinterest", pointsSystem.pinterest);
-  trackInputField("website", pointsSystem.website);
-  trackInputField("email", pointsSystem.email);
-
-  trackButtonClick("goToPodProfile", "inviteUser", pointsSystem.inviteUser);
-  trackButtonClick("goToPodProfile", "inviteHost", pointsSystem.inviteHost);
-  trackButtonClick("blockUser", "blockUser", pointsSystem.blockUser);
-});
-
-async function fetchRSSData(rssUrl) {
-  if (!rssUrl) return;
-  try {
-    const response = await fetch(
-      `https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(
-        rssUrl
-      )}`
-    );
-    const text = await response.text(); // Read response as text first
-
-    try {
-      const data = JSON.parse(text); // Attempt to parse JSON
-      if (data.status === "ok") {
-        document.getElementById("podName").value = data.feed.title || "";
-        document.getElementById("website").value = data.feed.link || "";
-      }
-    } catch (jsonError) {
-      console.error("Invalid JSON:", text);
-    }
-  } catch (error) {
-    console.error("Error fetching RSS feed:", error);
+  // Points tracking setup for input fields and buttons
+  function setupPointsTracking() {
+    trackInputField("podName", pointsSystem.podName);
+    trackInputField("podRss", pointsSystem.podRss);
+    trackInputField("podLogo", pointsSystem.podLogo);
+    trackInputField("hostName", pointsSystem.hostName);
+    trackButtonClick("googleCalendar", "googleCalendar", pointsSystem.googleCalendar);
+    trackInputField("calendarUrl", pointsSystem.calendarUrl);
+    trackInputField("guestForm", pointsSystem.guestForm);
+    trackInputField("facebook", pointsSystem.facebook);
+    trackInputField("instagram", pointsSystem.instagram);
+    trackInputField("linkedin", pointsSystem.linkedin);
+    trackInputField("twitter", pointsSystem.twitter);
+    trackInputField("tiktok", pointsSystem.tiktok);
+    trackInputField("pinterest", pointsSystem.pinterest);
+    trackInputField("website", pointsSystem.website);
+    trackInputField("email", pointsSystem.email);
+    trackButtonClick("goToPodProfile", "inviteUser", pointsSystem.inviteUser);
+    trackButtonClick("goToPodProfile", "inviteHost", pointsSystem.inviteHost);
+    trackButtonClick("blockUser", "blockUser", pointsSystem.blockUser);
   }
-}
 
-document.addEventListener("DOMContentLoaded", function () {
-  const goToProductionTeam = document.getElementById("goToProductionTeam");
-
-  if (goToProductionTeam) {
-    goToProductionTeam.addEventListener("click", async function () {
-      const podName = document.getElementById("podName").value.trim();
-      const podRss = document.getElementById("podRss").value.trim();
-
-      if (!podName || !podRss) {
-        alert("Please enter both Podcast Name and RSS URL.");
-        return;
-      }
-    });
-  }
+  // Initialize all setups
+  setupNavigation();
+  setupDarkMode();
+  setupLanguage();
+  setupPointsTracking();
 });

@@ -31,9 +31,19 @@
       <h1 class="title">Register</h1>
       <div id="error-message" class="error-message" style="display: none"></div>
 
+
       <form id="register-form">
         <div class="input-group">
           <label for="email" class="label"></label>
+
+      <form
+        id="register-form"
+        method="POST"
+        action="{{ url_for('register_bp.register') }}"
+      >
+        <div class="form-group">
+          <label for="email">Email</label>
+
           <input
             type="email"
             id="email"
