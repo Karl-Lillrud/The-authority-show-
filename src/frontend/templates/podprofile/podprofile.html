@@ -30,7 +30,7 @@
         <form id="podNameForm">
           <div class="form-group">
             <label for="podRss">RSS Feed</label>
-            <input type="url" id="podRss" name="podRss"/>
+            <input type="url" id="podRss" name="podRss" />
           </div>
           <div class="form-group">
             <label for="podName">Podcast's Name</label>
@@ -54,8 +54,8 @@
         <h1 class="fancy-heading">Your Socials</h1>
         <form id="podProfileForm">
           <div class="form-group">
-            <label for="podHost">Pod Host</label>
-            <input type="text" id="podHost" name="podHost" />
+            <label>Host(s) Name(s)</label>
+            <input type="text" id="hostName" />
           </div>
           <div class="form-group">
             <label>Facebook</label>
@@ -85,11 +85,7 @@
             <label>Website</label>
             <input type="url" id="website" />
           </div>
-          <button
-            type="button"
-            class="button-secondary"
-            id="backToPodName"
-          >
+          <button type="button" class="button-secondary" id="backToPodName">
             Back
           </button>
           <button type="button" class="button-primary" id="goToProductionTeam">
@@ -128,7 +124,9 @@
           <button type="button" class="button-secondary" id="backToPodProfile">
             Back
           </button>
-          <button type="submit" class="button-primary" id="goToEmailSection">Invite</button>
+          <button type="submit" class="button-primary" id="goToEmailSection">
+            Invite
+          </button>
           <input
             type="hidden"
             id="invitationLink"
@@ -140,9 +138,13 @@
       <!-- Email Section -->
       <div class="container hidden" id="email-section">
         <h1 class="fancy-heading">Welcome to PodManager.ai!</h1>
-        <p>🚀 You're In! 🚀<br><br>
+        <p>
+          🚀 You're In! 🚀<br /><br />
 
-          You've officially secured a spot in the Beta Tester queue! 🎉 Check your email now to get a sneak peek at what's coming your way soon. Big things are on the horizon—stay tuned! 🔥✨</p>
+          You've officially secured a spot in the Beta Tester queue! 🎉 Check
+          your email now to get a sneak peek at what's coming your way soon. Big
+          things are on the horizon—stay tuned! 🔥✨
+        </p>
       </div>
     </main>
     <script src="{{ url_for('static', filename='requests/podprofileRequests.js') }}"></script>

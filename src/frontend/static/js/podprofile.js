@@ -3,11 +3,15 @@ document.addEventListener("DOMContentLoaded", function () {
     const goToProductionTeam = document.getElementById("goToProductionTeam");
     const goToPodProfile = document.getElementById("goToPodProfile");
     const backToPodName = document.getElementById("backToPodName");
-    const backToProductionTeam = document.getElementById("backToProductionTeam");
+    const backToProductionTeam = document.getElementById(
+      "backToProductionTeam"
+    );
     const podProfileForm = document.getElementById("podProfileForm");
     const darkModeToggle = document.getElementById("dark-mode-toggle");
     const addTeamMemberButton = document.getElementById("addTeamMember");
-    const teamMembersContainer = document.getElementById("teamMembersContainer");
+    const teamMembersContainer = document.getElementById(
+      "teamMembersContainer"
+    );
     const skipToDashboard = document.getElementById("skipToDashboard");
     const goToEmailSection = document.getElementById("goToEmailSection");
 
@@ -26,7 +30,9 @@ document.addEventListener("DOMContentLoaded", function () {
         try {
           await postPodcastData(podName, podRss);
           document.getElementById("pod-name-section").classList.add("hidden");
-          document.getElementById("pod-profile-section").classList.remove("hidden");
+          document
+            .getElementById("pod-profile-section")
+            .classList.remove("hidden");
         } catch (error) {
           alert("Something went wrong. Please try again.");
         }
@@ -36,7 +42,9 @@ document.addEventListener("DOMContentLoaded", function () {
     if (goToProductionTeam) {
       goToProductionTeam.addEventListener("click", () => {
         document.getElementById("pod-profile-section").classList.add("hidden");
-        document.getElementById("production-team-section").classList.remove("hidden");
+        document
+          .getElementById("production-team-section")
+          .classList.remove("hidden");
       });
     }
 
@@ -49,8 +57,12 @@ document.addEventListener("DOMContentLoaded", function () {
 
     if (backToProductionTeam) {
       backToProductionTeam.addEventListener("click", () => {
-        document.getElementById("production-team-section").classList.add("hidden");
-        document.getElementById("pod-profile-section").classList.remove("hidden");
+        document
+          .getElementById("production-team-section")
+          .classList.add("hidden");
+        document
+          .getElementById("pod-profile-section")
+          .classList.remove("hidden");
       });
     }
 
@@ -58,7 +70,9 @@ document.addEventListener("DOMContentLoaded", function () {
       goToEmailSection.addEventListener("click", async (event) => {
         event.preventDefault();
         await sendInvitations();
-        document.getElementById("production-team-section").classList.add("hidden");
+        document
+          .getElementById("production-team-section")
+          .classList.add("hidden");
         document.getElementById("email-section").classList.remove("hidden");
       });
     }
@@ -72,7 +86,9 @@ document.addEventListener("DOMContentLoaded", function () {
         try {
           const success = await savePodProfile(data);
           if (success) {
-            document.getElementById("production-team-section").classList.add("hidden");
+            document
+              .getElementById("production-team-section")
+              .classList.add("hidden");
             document.getElementById("email-section").classList.remove("hidden");
           } else {
             alert("Something went wrong. Please try again.");
@@ -183,9 +199,9 @@ async function sendInvitations() {
       )}&name=${encodeURIComponent(name)}&role=${encodeURIComponent(role)}`;
       const subject = `Join the ${podName} team`;
       try {
-        const response = await fetch('/beta-email/podmanager-beta-invite.html');
+        const response = await fetch("/beta-email/podmanager-beta-invite.html");
         if (!response.ok) {
-          throw new Error('Network response was not ok');
+          throw new Error("Network response was not ok");
         }
         const body = await response.text();
         await sendInvitation(email, subject, body);
@@ -309,31 +325,67 @@ document.addEventListener("DOMContentLoaded", function () {
     });
   }
 
-  // Points tracking setup for input fields and buttons
-  function setupPointsTracking() {
-    trackInputField("podName", pointsSystem.podName);
-    trackInputField("podRss", pointsSystem.podRss);
-    trackInputField("podLogo", pointsSystem.podLogo);
-    trackInputField("hostName", pointsSystem.hostName);
-    trackButtonClick("googleCalendar", "googleCalendar", pointsSystem.googleCalendar);
-    trackInputField("calendarUrl", pointsSystem.calendarUrl);
-    trackInputField("guestForm", pointsSystem.guestForm);
-    trackInputField("facebook", pointsSystem.facebook);
-    trackInputField("instagram", pointsSystem.instagram);
-    trackInputField("linkedin", pointsSystem.linkedin);
-    trackInputField("twitter", pointsSystem.twitter);
-    trackInputField("tiktok", pointsSystem.tiktok);
-    trackInputField("pinterest", pointsSystem.pinterest);
-    trackInputField("website", pointsSystem.website);
-    trackInputField("email", pointsSystem.email);
-    trackButtonClick("goToPodProfile", "inviteUser", pointsSystem.inviteUser);
-    trackButtonClick("goToPodProfile", "inviteHost", pointsSystem.inviteHost);
-    trackButtonClick("blockUser", "blockUser", pointsSystem.blockUser);
-  }
+  trackInputField("podName", pointsSystem.podName);
+  trackInputField("podRss", pointsSystem.podRss);
+  trackInputField("podLogo", pointsSystem.podLogo);
+  trackInputField("hostName", pointsSystem.hostName);
+  trackButtonClick(
+    "googleCalendar",
+    "googleCalendar",
+    pointsSystem.googleCalendar
+  );
+  trackInputField("calendarUrl", pointsSystem.calendarUrl);
+  trackInputField("guestForm", pointsSystem.guestForm);
+  trackInputField("facebook", pointsSystem.facebook);
+  trackInputField("instagram", pointsSystem.instagram);
+  trackInputField("linkedin", pointsSystem.linkedin);
+  trackInputField("twitter", pointsSystem.twitter);
+  trackInputField("tiktok", pointsSystem.tiktok);
+  trackInputField("pinterest", pointsSystem.pinterest);
+  trackInputField("website", pointsSystem.website);
+  trackInputField("email", pointsSystem.email);
 
-  // Initialize all setups
-  setupNavigation();
-  setupDarkMode();
-  setupLanguage();
-  setupPointsTracking();
+  trackButtonClick("goToPodProfile", "inviteUser", pointsSystem.inviteUser);
+  trackButtonClick("goToPodProfile", "inviteHost", pointsSystem.inviteHost);
+  trackButtonClick("blockUser", "blockUser", pointsSystem.blockUser);
+});
+
+async function fetchRSSData(rssUrl) {
+  if (!rssUrl) return;
+  try {
+    const response = await fetch(
+      `https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(
+        rssUrl
+      )}`
+    );
+    const text = await response.text(); // Read response as text first
+
+    try {
+      const data = JSON.parse(text); // Attempt to parse JSON
+      if (data.status === "ok") {
+        document.getElementById("podName").value = data.feed.title || "";
+        document.getElementById("website").value = data.feed.link || "";
+      }
+    } catch (jsonError) {
+      console.error("Invalid JSON:", text);
+    }
+  } catch (error) {
+    console.error("Error fetching RSS feed:", error);
+  }
+}
+
+document.addEventListener("DOMContentLoaded", function () {
+  const goToProductionTeam = document.getElementById("goToProductionTeam");
+
+  if (goToProductionTeam) {
+    goToProductionTeam.addEventListener("click", async function () {
+      const podName = document.getElementById("podName").value.trim();
+      const podRss = document.getElementById("podRss").value.trim();
+
+      if (!podName || !podRss) {
+        alert("Please enter both Podcast Name and RSS URL.");
+        return;
+      }
+    });
+  }
 });
