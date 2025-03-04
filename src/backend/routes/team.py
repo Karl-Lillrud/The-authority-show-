@@ -18,16 +18,12 @@ def add_team():
         # Validate with TeamSchema
         try:
             team_schema = TeamSchema()
-            validated_data = team_schema.load(
-                data
-            )  # Validate and deserialize team data
+            validated_data = team_schema.load(data)  # Validate and deserialize team data
         except ValidationError as err:
             return jsonify({"error": "Invalid data", "details": err.messages}), 400
 
         # Generate a unique team ID
-        team_id = str(
-            uuid.uuid4()
-        )  # NÄR ETT TEAM SKA BORT SKA ALL USRTOTEAMS MED DETTA TEAMET OCKSÅ BORT
+        team_id = str(uuid.uuid4())
 
         # Prepare team data
         team_item = {
@@ -38,7 +34,7 @@ def add_team():
             "isActive": validated_data.get("isActive", True),
             "joinedAt": validated_data.get("joinedAt", datetime.now(timezone.utc)),
             "lastActive": validated_data.get("lastActive", datetime.now(timezone.utc)),
-            "members": [],
+            "members": [],  # Initially no members, we'll add the creator first
         }
 
         # Insert the team into the Teams collection
@@ -46,24 +42,25 @@ def add_team():
         if result.inserted_id:
             print("✅ Team added successfully!")
 
-        users_data = validated_data.get("users", [])
+        # Get current user ID (the creator)
+        user_id = str(g.user_id)  # Ensure this comes from the current logged-in user
+        print("👤 Team creator user ID:", user_id)
 
-        for user in users_data:
-            user_id = user.get("userId")
-            role = user.get("role", "member")
+        # Add the creator to the user_to_team collection
+        user_to_team_item = {
+            "userId": user_id,
+            "teamId": team_id,
+            "role": "creator",  # The role of the user who created the team
+            "assignedAt": datetime.now(timezone.utc),
+        }
 
-            user_to_team_item = {
-                "userId": user_id,
-                "teamId": team_id,
-                "role": role,
-                "assignedAt": datetime.now(timezone.utc()),
-            }
+        # Insert the user-team relationship into the UsersToTeams collection
+        collection.database.UsersToTeams.insert_one(user_to_team_item)
 
-            collection.database.UsersToTeams.insert_one(user_to_team_item)
+        # Update the team with its members, adding the creator to the team
+        team_item["members"].append({"userId": user_id, "role": "creator"})
 
-            team_item["members"].append({"userId": user_id, "role": role})
-
-        # Update the team with its members (this step can be skipped if not needed)
+        # Update the team document with its creator
         collection.database.Teams.update_one(
             {"_id": team_id}, {"$set": {"members": team_item["members"]}}
         )
@@ -71,7 +68,7 @@ def add_team():
         return (
             jsonify(
                 {
-                    "message": "Team and members added successfully",
+                    "message": "Team and creator added successfully",
                     "team_id": team_id,
                     "redirect_url": "/team.html",  # Example URL to redirect to after adding team
                 }
@@ -86,38 +83,30 @@ def add_team():
 
 @team_bp.route("/get_teams", methods=["GET"])
 def get_teams():
+    if not hasattr(g, "user_id") or not g.user_id:
+        return jsonify({"error": "Unauthorized"}), 401
+
     try:
-        teams = list(collection.database.Teams.find({}, {"created_at": 0}))
-        if not teams:
-            return jsonify({"error": "No teams found"}), 404
+        user_id = str(g.user_id)  # Get the logged-in user's ID
 
-        user_team_links = list(collection.database.UsersToTeams.find({}))  # use UsersToTeams
+        # Get teams created by the user
+        created_teams = list(collection.database.Teams.find({"createdBy": user_id}, {"created_at": 0}))
 
-        user_ids = [ut["userId"] for ut in user_team_links]
-        users = list(collection.database.Users.find({"userId": {"$in": user_ids}}, {"_id": 0}))
-        user_dict = {user["userId"]: user for user in users}
+        # Get teams where the user is a member (from UsersToTeams)
+        user_team_links = list(collection.database.UsersToTeams.find({"userId": user_id}, {"teamId": 1, "_id": 0}))
+        joined_team_ids = [ut["teamId"] for ut in user_team_links]
 
-        team_members_map = {}
-        for user_team in user_team_links:
-            # Assign team_id from the user-team link
-            team_id = user_team["teamId"]
-            if team_id not in team_members_map:
-                team_members_map[team_id] = []
-            user = user_dict.get(user_team["userId"])
-            if user:
-                user["role"] = user_team.get("role", "member")
-                team_members_map[team_id].append(user)
+        # Fetch those teams if not already included
+        joined_teams = list(collection.database.Teams.find({"_id": {"$in": joined_team_ids}}, {"created_at": 0}))
 
-        # Merge users into their respective teams and convert _id to string
-        for team in teams:
-            team_id = team["_id"]
-            team["members"] = team_members_map.get(team_id, [])
-            team["_id"] = str(team["_id"])  # convert ObjectId to string
+        # Merge and remove duplicates
+        teams = {str(team["_id"]): team for team in created_teams + joined_teams}  # Use dictionary to remove duplicates
+        for team in teams.values():
+            team["_id"] = str(team["_id"])  # Convert ObjectId to string
 
-        return jsonify(teams), 200
+        return jsonify(list(teams.values())), 200
 
     except Exception as e:
-        print(f"❌ ERROR: {e}")
         return jsonify({"error": f"Failed to retrieve teams: {str(e)}"}), 500
 
 
