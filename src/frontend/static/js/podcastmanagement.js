@@ -594,9 +594,20 @@ async function renderPodcastList() {
         });
       });
     document.querySelectorAll(".edit-btn").forEach((button) => {
-      button.addEventListener("click", (e) => {
-        const podcastId = e.target.closest("button").dataset.id;
-        updatePodcast(podcastId);
+      button.addEventListener("click", async (e) => {
+        const podcastId = e.target.closest("button").getAttribute("data-id");
+        try {
+          const podcast = await fetchPodcast(podcastId);
+          displayPodcastDetails(podcast.podcast);
+          selectedPodcastId = podcastId;
+          const inviteBtn = document.querySelector(".invite-btn");
+          inviteBtn.textContent = "Update";
+          inviteBtn.classList.add("update-btn");
+          // Optionally, hide list view if needed:
+          document.getElementById("podcast-list").style.display = "none";
+        } catch (error) {
+          showAlert("Failed to fetch podcast details", "red");
+        }
       });
     });
     document.querySelectorAll(".delete-btn").forEach((button) => {
