@@ -6,7 +6,6 @@ import {
   deletePodcast
 } from "../requests/podcastRequest.js";
 
-// Replace the defaultPodcasts constant with the following:
 const defaultPodcasts = [
   {
     podName: "Welcome Podcast",
@@ -19,7 +18,7 @@ const defaultPodcasts = [
     email: "welcome@example.com",
     description: "This is our welcome podcast.",
     logoUrl:
-      "https://podmanagerstorage.blob.core.windows.net/blob-container/pod1.jpg",
+      "/d:/createaccount/The-authority-show-/src/frontend/static/images/example.jpg",
     category: "General",
     // Order: Facebook, LinkedIn, TikTok, Twitter, Instagram
     socialMedia: [
@@ -41,7 +40,7 @@ const defaultPodcasts = [
     email: "tech@example.com",
     description: "Latest in technology.",
     logoUrl:
-      "https://podmanagerstorage.blob.core.windows.net/blob-container/pod2.jpg",
+      "/d:/createaccount/The-authority-show-/src/frontend/static/images/example.jpg",
     category: "Technology",
     socialMedia: [
       "https://facebook.com/techtrends",
@@ -62,7 +61,7 @@ const defaultPodcasts = [
     email: "health@example.com",
     description: "Your daily health tips.",
     logoUrl:
-      "https://podmanagerstorage.blob.core.windows.net/blob-container/pod3.jpg",
+      "/d:/createaccount/The-authority-show-/src/frontend/static/images/example.jpg",
     category: "Health",
     socialMedia: [
       "https://facebook.com/healthhub",
@@ -182,7 +181,9 @@ form.addEventListener("submit", async function (e) {
     guestUrl: guestUrl,
     email,
     description: document.getElementById("description")?.value.trim() || "",
+    // Updated logoUrl: use input field value if provided, otherwise fallback to default.
     logoUrl:
+      document.getElementById("pod-logo-url")?.value.trim() ||
       "https://podmanagerstorage.blob.core.windows.net/blob-container/pod1.jpg",
     category,
     socialMedia

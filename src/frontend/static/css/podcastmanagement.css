@@ -783,3 +783,19 @@ h1 {
     width: 80%;
   }
 }
+
+/* Add Podcast Button */
+#add-podcast-btn {
+  background-color: #ff7f3f;
+  color: #ffffff;
+  font-weight: bold;
+  border: none;
+  padding: 12px 24px;
+  border-radius: var(--radius-medium);
+  cursor: pointer;
+  transition: background-color 0.3s ease, transform 0.3s ease;
+}
+#add-podcast-btn:hover {
+  background-color: #e0662c;
+  transform: translateY(-3px);
+}
