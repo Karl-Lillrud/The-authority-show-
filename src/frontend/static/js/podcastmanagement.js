@@ -79,7 +79,7 @@ form.addEventListener("submit", async function (e) {
     guestUrl: guestUrl,
     email,
     description: document.getElementById("description")?.value.trim() || "",
-    logoUrl: document.getElementById("pod-logo-url")?.value.trim() || "",
+    logoUrl: document.getElementById("description")?.value.trim(),
     category,
     socialMedia
   };

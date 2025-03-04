@@ -4,7 +4,10 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Podcast Management</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/podcastmanagement.css') }}" />
+    <link
+      rel="stylesheet"
+      href="{{ url_for('static', filename='css/podcastmanagement.css') }}"
+    />
   </head>
   <body>
     <div class="container">
@@ -13,25 +16,20 @@
       <!-- Toolbar for CRUD buttons -->
       <div class="crud-buttons">
         <button id="add-podcast-btn" class="crud-btn">Add Podcast</button>
-
-     
-      
       </div>
 
       <!-- Container for popup list used in selection -->
       <div id="podcasts-popup" style="display: none">
         <div id="podcasts-list"><!-- Popup list inserted dynamically --></div>
         <button id="close-popup-btn" class="crud-btn">Close</button>
-        <button id="delete-selected-podcasts-btn" class="crud-btn"
+        <button id="delete-selected-podcasts-btn" class="crud-btn">
           Delete Selected
         </button>
       </div>
 
       <!-- Form container for adding/updating a podcast -->
       <div class="form-box" style="display: none">
-        <div id="custom-alert" style="display: none">
-          <span id="alert-message"></span>
-        </div>
+        <div id="custom-alert" class="alert"></div>
         <div class="form-fields">
           <form id="register-podcast-form">
             <!-- Include your form fields -->
