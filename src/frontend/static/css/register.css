@@ -53,12 +53,11 @@ body {
   /* Perfekt vertikal centrering */
   padding: 20px;
   border-radius: 40px;
-  box-shadow: -5px -5px 45px #FF7F3F, 35px 5px 15px var(--shadow-light);
+  box-shadow: -5px -5px 45px #ff7f3f, 35px 5px 15px var(--shadow-light);
   text-align: center;
   margin: 0;
   /* Tar bort onödig marginal */
 }
-
 
 .logo-container {
   position: absolute;

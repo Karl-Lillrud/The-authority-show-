@@ -3,13 +3,10 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>PodManager - Authentication</title>
-    <link
-      rel="stylesheet"
-      href="{{ url_for('static', filename='css/signin.css') }}"
-    />
+    <title>Login</title>
+    <link rel="stylesheet" href="/static/css/signin.css" />
   </head>
-  <body data-api-base-url="{{ API_BASE_URL }}">
+  <body>
     <!-- Logo -->
     <div class="logo-container">
       <img
@@ -26,7 +23,6 @@
     </div>
 
     <div class="center-box">
-
       <h1 class="title">Welcome</h1>
       <div
         id="success-message"
@@ -61,97 +57,17 @@
 
         <div class="extra-links">
           <a href="/register" class="link">Register here</a>
-
-      <div class="tabs">
-        <div class="tab-header">
-          <div class="tab-item active" data-tab="signin">Sign In</div>
-          <div class="tab-item" data-tab="register">Register</div>
-
         </div>
 
-        <div
-          id="error-message"
-          class="error-message"
-          style="display: none"
-        ></div>
-        <div
-          id="success-message"
-          class="success-message"
-          style="display: none"
-        ></div>
-
+        <div class="extra-links">
+          <a href="/forgotpassword" class="link">Forgot Password?</a>
+        </div>
 
         <div class="form-actions">
           <button type="submit" class="button button-primary">Sign in</button>
-
-        <!-- Sign In Form -->
-        <div class="tab-content active" id="signin-tab">
-          <form id="login-form">
-            <div class="input-group">
-              <input
-                type="email"
-                id="email"
-                name="email"
-                class="input"
-                placeholder="Email"
-                required
-              />
-            </div>
-            <div class="input-group">
-              <input
-                type="password"
-                id="password"
-                name="password"
-                class="input"
-                placeholder="Password"
-                required
-              />
-            </div>
-
-            <div class="extra-links">
-              <a href="/forgotpassword" class="link">Forgot Password?</a>
-            </div>
-
-            <div class="form-actions">
-              <button type="submit" class="button button-primary">Login</button>
-            </div>
-          </form>
         </div>
-
-        <!-- Register Form -->
-        <div class="tab-content" id="register-tab">
-          <form id="register-form">
-            <div class="input-group">
-              <input
-                type="email"
-                id="reg-email"
-                name="email"
-                class="input"
-                placeholder="Email"
-                required
-              />
-            </div>
-            <div class="input-group">
-              <input
-                type="password"
-                id="reg-password"
-                name="password"
-                class="input"
-                placeholder="Password"
-                required
-              />
-            </div>
-            <div class="form-actions">
-              <button type="submit" class="button button-primary">
-                Register
-              </button>
-            </div>
-          </form>
-
-        </div>
-      </div>
+      </form>
     </div>
-
 
     <script>
       document.addEventListener("DOMContentLoaded", function () {
@@ -205,17 +121,5 @@
         });
       });
     </script>
-
-    <!-- Success Message Modal -->
-    <div id="success-modal" class="modal">
-      <div class="modal-content">
-        <h2>Registration Successful!</h2>
-        <p>Click OK to sign in with your new account.</p>
-        <button id="success-ok-button" class="button">OK</button>
-      </div>
-    </div>
-
-    <script src="{{ url_for('static', filename='js/auth.js') }}"></script>
-
   </body>
 </html>

@@ -12,48 +12,54 @@ body {
 }
 */
 .header {
-    width: 100%;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 20px;
-    position: absolute;
-    top: 0;
-    left: 0;
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px;
+  position: absolute;
+  top: 0;
+  left: 0;
 }
 
 .logo img {
-    width: 50px;
+  width: 50px;
 }
 
 .container {
-    display: flex;
-    gap: 20px;
-    justify-content: center;
-    flex-wrap: wrap;
-    margin-top: 80px;
+  display: flex;
+  gap: 20px;
+  justify-content: center;
+  flex-wrap: wrap;
+  margin-top: 80px;
 }
 
 .card {
-    background: #FFFFFF;
-    border-radius: 12px;
-    padding: 16px;
-    box-shadow: 0px 2px 8px rgba(0, 0, 0, 0.1);
-    text-align: center;
-    width: 220px;
+  background: #ffffff;
+  border-radius: 12px;
+  padding: 16px;
+  box-shadow: 0px 2px 8px rgba(0, 0, 0, 0.1);
+  text-align: center;
+  width: 220px;
 }
 
 .card img {
-    width: 100%;
-    border-radius: 8px;
+  width: 100%;
+  border-radius: 8px;
 }
 
 .episode-count {
-    font-weight: 700;
-    font-size: 16px;
-    margin-top: 10px;
+  font-weight: 700;
+  font-size: 16px;
+  margin-top: 10px;
 }
 
-.red { color: #DC3545; }
-.orange { color: #FF7F00; }
-.green { color: #28A745; }
+.red {
+  color: #dc3545;
+}
+.orange {
+  color: #ff7f00;
+}
+.green {
+  color: #28a745;
+}
