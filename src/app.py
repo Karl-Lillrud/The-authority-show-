@@ -51,7 +51,6 @@ CORS(
     },
 )
 
-# These can cause  GET https://app.podmanager.ai/ 503 (Service Unavailable) error in the browser if not set
 app.secret_key = os.getenv("SECRET_KEY")
 app.config["PREFERRED URL SCHEME"] = "https"
 
@@ -60,47 +59,46 @@ app.register_blueprint(register_bp)
 app.register_blueprint(credits_bp)
 app.register_blueprint(forgotpass_bp)
 app.register_blueprint(signin_bp)
-app.register_blueprint(podcast_bp)  # Register the podcast blueprint
-app.register_blueprint(dashboard_bp)  # Ensure this line is present
+app.register_blueprint(podcast_bp)
+app.register_blueprint(dashboard_bp)
 app.register_blueprint(pod_management_bp)
 app.register_blueprint(podtask_bp)
 app.register_blueprint(team_bp)
-app.register_blueprint(
-    guest_bp
-)  # Ensure this line is present and has the correct prefix
+app.register_blueprint(guest_bp)
 app.register_blueprint(account_bp)
 app.register_blueprint(usertoteam_bp)
 app.register_blueprint(invitation_bp)
 app.register_blueprint(google_calendar_bp)
 app.register_blueprint(episode_bp)
-app.register_blueprint(podprofile_bp)  # Register the podprofile blueprint
-app.register_blueprint(frontend_bp)  # Register the frontend blueprint
+app.register_blueprint(podprofile_bp)
+app.register_blueprint(frontend_bp)
 app.register_blueprint(guesttoepisode_bp)
-# Set the application environment (defaults to production)
-APP_ENV = os.getenv("APP_ENV", "production")
 
-# Set the API base URL depending on the environment
+APP_ENV = os.getenv("APP_ENV", "production")
 API_BASE_URL = os.getenv("API_BASE_URL")
 
-# Configure logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-# Log the configuration
 logger.info(f"API_BASE_URL: {API_BASE_URL}")
 logger.info(f"MONGODB_URI: {os.getenv('MONGODB_URI')}")
 logger.info(f"APP_ENV: {APP_ENV}")
 
-
-# Log the request with user info
 @app.before_request
 def load_user():
     g.user_id = session.get("user_id")
     logger.info(f"Request to {request.path} by user {g.user_id}")
 
+@app.context_processor
+def inject_user_data():
+    user_email = session.get("user_email")
+    credits = None
+    if user_email:
+        user = collection.database.Users.find_one({"email": user_email.lower().strip()})
+        if user:
+            credits_doc = collection.database.Credits.find_one({"user_id": user["_id"]})
+            credits = credits_doc.get("credits", 0) if credits_doc else 0
+    return dict(user_email=user_email, credits=credits)
 
-# Run the app
 if __name__ == "__main__":
-    app.run(
-        host="0.0.0.0", port=8000, debug=False
-    )  # Ensure the port matches your request URL
+    app.run(host="0.0.0.0", port=8000, debug=False)
