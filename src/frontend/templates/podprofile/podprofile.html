@@ -43,97 +43,15 @@
           <button type="button" class="button-secondary" id="skipToDashboard">
             Skip
           </button>
-          <button type="button" class="button-primary" id="goToPodProfile">
+          <button type="button" class="button-primary" id="goToEmailSection">
             Next
           </button>
         </form>
       </div>
 
-      <!-- Pod Profile Section -->
-      <div class="container hidden" id="pod-profile-section">
-        <h1 class="fancy-heading">Your Socials</h1>
-        <form id="podProfileForm">
-          <div class="form-group">
-            <label>Host(s) Name(s)</label>
-            <input type="text" id="hostName" />
-          </div>
-          <div class="form-group">
-            <label>Facebook</label>
-            <input type="url" id="facebook" />
-          </div>
-          <div class="form-group">
-            <label>Instagram</label>
-            <input type="url" id="instagram" />
-          </div>
-          <div class="form-group">
-            <label>LinkedIn</label>
-            <input type="url" id="linkedin" />
-          </div>
-          <div class="form-group">
-            <label>Twitter</label>
-            <input type="url" id="twitter" />
-          </div>
-          <div class="form-group">
-            <label>TikTok</label>
-            <input type="url" id="tiktok" />
-          </div>
-          <div class="form-group">
-            <label>Pinterest</label>
-            <input type="url" id="pinterest" />
-          </div>
-          <div class="form-group">
-            <label>Website</label>
-            <input type="url" id="website" />
-          </div>
-          <button type="button" class="button-secondary" id="backToPodName">
-            Back
-          </button>
-          <button type="button" class="button-primary" id="goToProductionTeam">
-            Next
-          </button>
-        </form>
-      </div>
+      <!-- Removed Pod Profile (Socials) Section -->
 
-      <!-- Production Team Section -->
-      <div class="container hidden" id="production-team-section">
-        <h1 class="fancy-heading">Your Team</h1>
-        <form id="productionTeamForm">
-          <div id="teamMembersContainer">
-            <div class="team-member">
-              <div class="form-group">
-                <label>Name</label>
-                <input type="text" class="team-name" required />
-              </div>
-              <div class="form-group">
-                <label>Email</label>
-                <input type="email" class="team-email" required />
-              </div>
-              <div class="form-group">
-                <label>Role</label>
-                <select class="team-role" required>
-                  <option value="" disabled selected>Select Role</option>
-                  <option value="user">User</option>
-                  <option value="host">Host</option>
-                </select>
-              </div>
-            </div>
-          </div>
-          <button type="button" class="button-secondary" id="addTeamMember">
-            Add More Members
-          </button>
-          <button type="button" class="button-secondary" id="backToPodProfile">
-            Back
-          </button>
-          <button type="submit" class="button-primary" id="goToEmailSection">
-            Invite
-          </button>
-          <input
-            type="hidden"
-            id="invitationLink"
-            value="{{ url_for('pod_management.invite', _external=True) }}"
-          />
-        </form>
-      </div>
+      <!-- Removed Production Team Section -->
 
       <!-- Email Section -->
       <div class="container hidden" id="email-section">

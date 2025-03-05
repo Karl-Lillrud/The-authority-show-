@@ -358,16 +358,12 @@ async function fetchRSSData(rssUrl) {
         rssUrl
       )}`
     );
-    const text = await response.text(); // Read response as text first
+    const data = await response.json(); // Directly parse JSON response
 
-    try {
-      const data = JSON.parse(text); // Attempt to parse JSON
-      if (data.status === "ok") {
-        document.getElementById("podName").value = data.feed.title || "";
-        document.getElementById("website").value = data.feed.link || "";
-      }
-    } catch (jsonError) {
-      console.error("Invalid JSON:", text);
+    if (data.status === "ok") {
+      document.getElementById("podName").value = data.feed.title || "";
+    } else {
+      console.error("Error fetching RSS feed:", data);
     }
   } catch (error) {
     console.error("Error fetching RSS feed:", error);
@@ -389,3 +385,44 @@ document.addEventListener("DOMContentLoaded", function () {
     });
   }
 });
+
+document.addEventListener("DOMContentLoaded", function () {
+  // Updated navigation: Only Pod Name and Email Sections are now active.
+  const goToEmailSection = document.getElementById("goToEmailSection");
+  const skipToDashboard = document.getElementById("skipToDashboard");
+  const podNameForm = document.getElementById("podNameForm");
+
+  if (goToEmailSection) {
+    goToEmailSection.addEventListener("click", async () => {
+      const podName = document.getElementById("podName").value.trim();
+      const podRss = document.getElementById("podRss").value.trim();
+      if (!podName || !podRss) {
+        alert("Please enter both Podcast Name and RSS URL.");
+        return;
+      }
+      try {
+        await postPodcastData(podName, podRss);
+        document.getElementById("pod-name-section").classList.add("hidden");
+        document.getElementById("email-section").classList.remove("hidden");
+      } catch (error) {
+        alert("Something went wrong. Please try again.");
+      }
+    });
+  }
+
+  if (skipToDashboard) {
+    skipToDashboard.addEventListener("click", () => {
+      window.location.href = "dashboard";
+    });
+  }
+
+  // Removed: Event listeners and functions related to socials and production team.
+  // ...existing code for dark mode and language selection remains...
+});
+
+document.addEventListener("DOMContentLoaded", () => {
+  // Removed: Code related to team member management, sending invitations, and tracking socials.
+  // ...existing code for dark mode, language switch, and points tracking (if unrelated) remains...
+});
+
+// ...existing code for fetchRSSData and dark mode remains unchanged...
