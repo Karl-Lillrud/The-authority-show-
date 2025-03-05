@@ -40,6 +40,58 @@ body {
   /* Hide horizontal scrollbar */
 }
 
+
+.help-container {
+  position: absolute;
+  left: 95vh; /* Justera detta värde efter behov */
+  bottom: 61vh;
+  transform: translateY(-50%);
+}
+.help-button {
+  background-color: #ffaa00;
+  color: white;
+margin-top: 0vh;
+border: 3px dodgerblue solid;
+  border: none;
+  padding: 5px;
+  border-radius: 100%;
+  cursor: pointer;
+  font-size: 14px;
+  width: 24px;
+  height: 24px;
+  z-index: 9999; /* Ser till att knappen alltid är över andra element */
+}
+
+
+body.dark-mode .help-button, .help-text   {
+  background-color: #ffaa00;
+  color: black;
+  
+
+}
+
+
+.help-text {
+  display: none;
+  position: absolute;
+  top: 5vh; /* Justera detta för att placera texten på vänster sida nedanför knappen */
+  right: 100%; /* Flytta texten till vänster om knappen */
+  transform: translateX(10px); /* Lägg till lite mellanrum mellan texten och knappen */
+  background-color: white;
+  color: black;
+  padding: 9px;
+  width:50vh; /* Justera bredden beroende på skärmstorlek */
+  height: 19vh; /* Sätt höjd lika med bredd för att göra det kvadratiskt */
+  font-size: 17px; /* Justera textstorlek för att få plats med texten */
+  text-align: left; /* Texten kommer nu att börja från vänster */
+  white-space: normal; /* Tillåt text att brytas i flera rader */
+  border: 1px solid black; /* Lägg till en kant om du vill */
+}
+
+.help-container:hover .help-text {
+  display: block;
+}
+
 body.dark-mode {
   background-color: var(--background-dark);
   color: var(--text-color-dark);
@@ -128,7 +180,7 @@ body.dark-mode .container {
 
 .form-group {
   display: flex;
-  font-size: 2vh;
+  font-size: 22px;
   margin-top: 3vh;
   flex-direction: column;
   margin-bottom: var(--spacing-sm);
@@ -144,7 +196,7 @@ input[type="email"] {
   /* Gör fälten så breda som deras föräldrar tillåter */
   padding: 20px;
   /* Ökar inre marginalen för att ge mer utrymme för texten */
-  margin-top: 2vh;
+  margin-top: 5vh;
   border: 1px solid #ccc;
   /* Standard kantlinje */
   border-radius: 15px;
@@ -208,12 +260,13 @@ button {
   transition: background-color 0.3s ease, box-shadow 0.3s ease;
 }
 
-.button-secondary,
+
 .button-primary {
   border: 1px double orange;
   height: 6vh;
   position: relative;
   top: 9vh;
+  right: 4vh;
   margin: 2vh;
   width: 40%;
 }
@@ -321,4 +374,20 @@ body.dark-mode .toast {
 /* Duplicate .hidden Class (ensured consistency) */
 .hidden {
   display: none;
+}
+
+#skipToDashboard {
+  background-color: transparent;
+  border: none;
+  color: gray;
+  font-size: 14px;
+  cursor: pointer;
+  position: relative;
+  top: 28vh;
+  right: 10vh;
+  text-align: center;
+}
+
+#skipToDashboard:hover {
+  color: black;
 }

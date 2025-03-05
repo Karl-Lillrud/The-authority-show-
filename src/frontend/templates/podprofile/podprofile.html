@@ -29,16 +29,13 @@
     <main>
       <!-- Pod Name Section -->
       <div class="container" id="pod-name-section">
-        <h1 class="fancy-heading">Your Podcast</h1>
+        <h1 class="fancy-heading">POD INFO</h1>
         <form id="podNameForm">
           <div class="form-group">
-            <label for="podRss">RSS Feed</label>
+            <label for="podRss">RSS</label>
             <input type="url" id="podRss" name="podRss" />
           </div>
-          <div class="form-group">
-            <label for="podName">Podcast's Name</label>
-            <input type="text" id="podName" name="podName" required />
-          </div>
+         
         
           <button type="button" class="button-secondary" id="skipToDashboard">
             Skip
@@ -49,6 +46,11 @@
         </form>
       </div>
 
+      <div class="help-container">
+        <button class="help-button">?</button>
+        <span class="help-text">To find your podcast's RSS feed URL, log in to your podcast hosting platform, navigate to your podcast settings or distribution options, and look for the "RSS Feed" section and paste that URL here.</span>
+    </div>
+    
       <!-- Pod Profile Section -->
       <div class="container hidden" id="pod-profile-section">
         <h1 class="fancy-heading">Your Socials</h1>
