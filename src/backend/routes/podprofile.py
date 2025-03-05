@@ -25,7 +25,6 @@ def save_podprofile():
             "email": user_email,
             "podName": data.get("podName"),
             "podRss": data.get("podRss"),
-            "email": data.get("email"),
         }
         collection["User"].insert_one(user_data)
 
@@ -34,7 +33,6 @@ def save_podprofile():
             "UserID": user_email,
             "Podname": data.get("podName"),
             "RSSFeed": data.get("podRss"),
-            "Email": data.get("email"),
         }
         collection["Podcast"].insert_one(podcast_data)
 
