@@ -45,25 +45,18 @@ document.addEventListener('DOMContentLoaded', function() {
     const deleteBtn = document.getElementById('deleteTeamBtn');
     deleteBtn.onclick = async () => {
       try {
-        const podcastId = team.podcastId; // Assuming the podcastId is available in the team object
-        const updatePayload = { teamId: null };
-    
-        // First, update the podcast's teamId to null
-        const editPodcastResult = await updatePodcastTeamRequest(podcastId, updatePayload);
-        console.log(editPodcastResult);
-    
-        // Now delete the team
-        const result = await deleteTeamRequest(team._id);
-        alert(result.message || "Team deleted successfully!");
-    
-        modal.classList.remove('show');
-        modal.setAttribute('aria-hidden', 'true');
-        const teams = await getTeamsRequest();
-        updateTeamsUI(teams);
+          // Now delete the team
+          const result = await deleteTeamRequest(team._id);
+          alert(result.message || "Team deleted successfully!");
+      
+          modal.classList.remove('show');
+          modal.setAttribute('aria-hidden', 'true');
+          const teams = await getTeamsRequest();
+          updateTeamsUI(teams);
       } catch (error) {
-        console.error("Error deleting team:", error);
+          console.error("Error deleting team:", error);
       }
-    };
+  };
     
 
     // Set save action to update team data based on current input values
