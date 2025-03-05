@@ -262,94 +262,6 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 });
 
-document.addEventListener("DOMContentLoaded", function () {
-  const pointsSystem = {
-    podName: 10,
-    podRss: 10,
-    podLogo: 10,
-    hostName: 10,
-    googleCalendar: 10,
-    calendarUrl: 10,
-    guestForm: 100,
-    facebook: 10,
-    instagram: 10,
-    linkedin: 10,
-    twitter: 10,
-    tiktok: 10,
-    pinterest: 10,
-    website: 10,
-    email: 10,
-    inviteUser: 50,
-    inviteHost: 50,
-    blockUser: 10
-  };
-
-  function getStoredPoints() {
-    return JSON.parse(localStorage.getItem("userPoints")) || 0;
-  }
-
-  function addPoints(field, points) {
-    let userPoints = getStoredPoints();
-    if (!localStorage.getItem(`points_${field}`)) {
-      userPoints += points;
-      localStorage.setItem("userPoints", JSON.stringify(userPoints));
-      localStorage.setItem(`points_${field}`, "true");
-    }
-  }
-
-  function trackInputField(fieldId, pointValue) {
-    const field = document.getElementById(fieldId);
-    if (field) {
-      field.addEventListener("input", function () {
-        addPoints(fieldId, pointValue);
-      });
-    }
-  }
-
-  function trackButtonClick(buttonId, fieldKey, pointValue) {
-    const button = document.getElementById(buttonId);
-    if (button) {
-      button.addEventListener("click", function () {
-        addPoints(fieldKey, pointValue);
-      });
-    }
-  }
-
-  const podRssInput = document.getElementById("podRss");
-  if (podRssInput) {
-    podRssInput.addEventListener("input", function () {
-      const rssUrl = this.value.trim();
-      if (rssUrl) {
-        fetchRSSData(rssUrl);
-      }
-    });
-  }
-
-  trackInputField("podName", pointsSystem.podName);
-  trackInputField("podRss", pointsSystem.podRss);
-  trackInputField("podLogo", pointsSystem.podLogo);
-  trackInputField("hostName", pointsSystem.hostName);
-  trackButtonClick(
-    "googleCalendar",
-    "googleCalendar",
-    pointsSystem.googleCalendar
-  );
-  trackInputField("calendarUrl", pointsSystem.calendarUrl);
-  trackInputField("guestForm", pointsSystem.guestForm);
-  trackInputField("facebook", pointsSystem.facebook);
-  trackInputField("instagram", pointsSystem.instagram);
-  trackInputField("linkedin", pointsSystem.linkedin);
-  trackInputField("twitter", pointsSystem.twitter);
-  trackInputField("tiktok", pointsSystem.tiktok);
-  trackInputField("pinterest", pointsSystem.pinterest);
-  trackInputField("website", pointsSystem.website);
-  trackInputField("email", pointsSystem.email);
-
-  trackButtonClick("goToPodProfile", "inviteUser", pointsSystem.inviteUser);
-  trackButtonClick("goToPodProfile", "inviteHost", pointsSystem.inviteHost);
-  trackButtonClick("blockUser", "blockUser", pointsSystem.blockUser);
-});
-
 async function fetchRSSData(rssUrl) {
   if (!rssUrl) return;
   try {
@@ -409,20 +321,4 @@ document.addEventListener("DOMContentLoaded", function () {
       }
     });
   }
-
-  if (skipToDashboard) {
-    skipToDashboard.addEventListener("click", () => {
-      window.location.href = "dashboard";
-    });
-  }
-
-  // Removed: Event listeners and functions related to socials and production team.
-  // ...existing code for dark mode and language selection remains...
 });
-
-document.addEventListener("DOMContentLoaded", () => {
-  // Removed: Code related to team member management, sending invitations, and tracking socials.
-  // ...existing code for dark mode, language switch, and points tracking (if unrelated) remains...
-});
-
-// ...existing code for fetchRSSData and dark mode remains unchanged...
