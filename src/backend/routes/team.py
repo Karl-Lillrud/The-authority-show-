@@ -103,6 +103,9 @@ def get_teams():
         teams = {str(team["_id"]): team for team in created_teams + joined_teams}  # Use dictionary to remove duplicates
         for team in teams.values():
             team["_id"] = str(team["_id"])  # Convert ObjectId to string
+            # Fetch the podcast that belongs to this team by matching the teamId in the Podcasts collection
+            podcast = collection.database.Podcasts.find_one({"teamId": team["_id"]})
+            team["podName"] = podcast.get("podName") if podcast else "N/A"
 
         return jsonify(list(teams.values())), 200
 

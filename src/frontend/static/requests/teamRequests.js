@@ -32,3 +32,12 @@ async function editTeamRequest(teamId, payload) {
   return res.json();
 }
 
+async function updatePodcastTeamRequest(podcastId, payload) {
+  const res = await fetch(`/edit_podcasts/${podcastId}`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload)
+  });
+  return res.json();
+}
+
