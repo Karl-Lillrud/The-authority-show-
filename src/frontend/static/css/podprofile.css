@@ -1,272 +1,274 @@
 /* Neumorphism Design Language & Global Variables */
 :root {
-    /* Color Palette */
-    --background-light: #EFF2F9;
-    --background-dark: #1C1C1C;
-    --light-shadow-light: #FFFFFF;
-    --dark-shadow-light: rgba(22, 24, 29, 0.23);
-    --light-shadow-dark: rgba(255, 255, 255, 0.1);
-    --dark-shadow-dark: rgba(0, 0, 0, 0.8);
-    --text-color-light: #6E7F8D;
-    --text-color-dark: #B3B3B3;
-    --highlight-color: #FF7F3F;
-    --error-color: #FF3B30;
-    --success-color: #4CAF50;
-  
-    /* Typography */
-    --font-primary: 'Campton', sans-serif;
-    --font-secondary: 'Avenir Next', sans-serif;
-  
-    /* Spacing */
-    --spacing-xs: 4px;
-    --spacing-sm: 8px;
-    --spacing-md: 16px;
-    --spacing-lg: 24px;
-    --spacing-xl: 32px;
-  }
-  
-  /* Global Styles */
-  body {
-    font-family: var(--font-primary);
-    background-color: var(--background-light);
-    color: var(--text-color-light);
-    line-height: 1.6;
-    margin: var(--spacing-lg);
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    transition: background-color 0.3s ease, color 0.3s ease;
-    overflow-x: hidden; /* Hide horizontal scrollbar */
-  }
-  
-  body.dark-mode {
-    background-color: var(--background-dark);
-    color: var(--text-color-dark);
-  }
-  
-  /* Header & Dark Mode Toggle */
-  .header-container {
-    width: 100%;
-    display: flex;
-    justify-content: flex-end;
-    padding: var(--spacing-md);
-    position: absolute;
-    top: 1%;
-    left: -2%;
+  /* Color Palette */
+  --background-light: #eff2f9;
+  --background-dark: #1c1c1c;
+  --light-shadow-light: #ffffff;
+  --dark-shadow-light: rgba(22, 24, 29, 0.23);
+  --light-shadow-dark: rgba(255, 255, 255, 0.1);
+  --dark-shadow-dark: rgba(0, 0, 0, 0.8);
+  --text-color-light: #6e7f8d;
+  --text-color-dark: #b3b3b3;
+  --highlight-color: #ff7f3f;
+  --error-color: #ff3b30;
+  --success-color: #4caf50;
 
-  }
-  
-  .dark-mode-button {
-    position: absolute;
-    top: var(--spacing-sm);
-    right: var(--spacing-sm);
-    font-size: 1.5rem;
-    background: none;
-    border: none;
-    cursor: pointer;
-  }
-  
-  /* Containers (Cards) */
-  .container {
-    width: 100%;
-    max-width: 600px;
-    background: var(--background-light);
-    padding: var(--spacing-lg);
-    border-radius: 20px;
-    box-shadow: -5px -5px 10px var(--light-shadow-light),
-                5px 5px 10px var(--dark-shadow-light);
-    margin-bottom: var(--spacing-lg);
-    margin-top: 5%;
-    transition: background-color 0.3s ease, box-shadow 0.3s ease;
-  }
-  
-  body.dark-mode .container {
-    background: var(--background-dark);
-    box-shadow: -5px -5px 10px var(--light-shadow-dark),
-                5px 5px 10px var(--dark-shadow-dark);
-  }
-  
-  /* Utility Class */
-  .hidden {
-    display: none;
-  }
-  
-  /* Headings */
-  .fancy-heading {
-    font-size: 1.8rem;
-    font-weight: bold;
-    text-align: center;
-    margin-bottom: var(--spacing-md);
-    font-family: var(--font-secondary);
-  }
-  
-  /* Form Layout */
-  .form {
-    display: flex;
-    flex-direction: column;
-    gap: var(--spacing-md);
-  }
-  
-  .form-group {
-    display: flex;
-    flex-direction: column;
-    margin-bottom: var(--spacing-sm);
-  }
-  
-  label {
-    font-weight: bold;
-    margin-bottom: var(--spacing-xs);
-  }
-  
-  /* Inputs, Selects & Textareas */
-  input, select, textarea {
-    width: 90%;
-    padding: var(--spacing-sm) var(--spacing-md);
-    border: 1px solid #ccc;
-    border-radius: 20px;
-    font-size: 1rem;
-    background: var(--background-light);
-    color: var(--text-color-light);
-    box-shadow: inset 5px 5px 10px var(--dark-shadow-light),
-                inset -5px -5px 10px var(--light-shadow-light);
-    transition: background-color 0.3s ease, box-shadow 0.3s ease;
-  }
-  
-  body.dark-mode input,
-  body.dark-mode select,
-  body.dark-mode textarea {
-    background: var(--background-dark);
-    color: var(--text-color-dark);
-    border: 1px solid #666;
-    box-shadow: inset 5px 5px 10px var(--dark-shadow-dark),
-                inset -5px -5px 10px var(--light-shadow-dark);
-  }
-  
-  input:focus, select:focus, textarea:focus {
-    outline: none;
-    box-shadow: inset 3px 3px 6px var(--highlight-color),
-                inset -3px -3px 6px var(--highlight-color);
-  }
-  
-  /* Buttons */
-  button {
-    padding: var(--spacing-sm) var(--spacing-md);
-    font-size: 1rem;
-    font-weight: bold;
-    border: none;
-    border-radius: 20px;
-    cursor: pointer;
-    background: var(--background-light);
-    color: var(--text-color-light);
-    box-shadow: -5px -5px 10px var(--light-shadow-light),
-                5px 5px 10px var(--dark-shadow-light);
-    transition: background-color 0.3s ease, box-shadow 0.3s ease;
-  }
-  
-  .button-primary {
-    background: var(--highlight-color);
-    color: #FFFFFF;
-    box-shadow: -5px -5px 10px rgba(255,127,63,0.3),
-                5px 5px 10px rgba(0,0,0,0.3);
-  }
-  
-  button:hover {
-    box-shadow: -2px -2px 5px var(--light-shadow-light),
-                2px 2px 5px var(--dark-shadow-light);
-  }
-  
-  .button-primary:hover {
-    box-shadow: -3px -3px 7px rgba(255,127,63,0.5),
-                3px 3px 7px rgba(0,0,0,0.5);
-  }
-  
-  body.dark-mode button {
-    background: var(--background-dark);
-    color: var(--text-color-dark);
-    box-shadow: -5px -5px 10px var(--light-shadow-dark),
-                5px 5px 10px var(--dark-shadow-dark);
-  }
-  
-  body.dark-mode .button-primary {
-    /* Maintain primary button highlight in dark mode */
-    box-shadow: -5px -5px 10px rgba(255,127,63,0.3),
-                5px 5px 10px rgba(0,0,0,0.8);
-  }
-  
-  /* Toast Notifications */
-  .toast {
-    position: fixed;
-    bottom: var(--spacing-lg);
-    left: 50%;
-    transform: translateX(-50%);
-    background-color: var(--background-light);
-    color: var(--text-color-light);
-    padding: var(--spacing-sm) var(--spacing-md);
-    border-radius: 10px;
-    box-shadow: 5px 5px 15px var(--dark-shadow-dark);
-    opacity: 0;
-    transition: opacity 0.5s ease, transform 0.5s ease;
-    z-index: 1002;
-  }
-  
-  .toast.show {
-    opacity: 1;
-    transform: translateX(-50%) translateY(-10px);
-  }
-  
-  body.dark-mode .toast {
-    background-color: var(--background-dark);
-    color: var(--text-color-dark);
-  }
-  
-  /* Language Selector */
-  .language-selector {
-    position: relative;
-    display: inline-block;
-    margin-left: var(--spacing-sm);
-  }
-  
-  #language-button {
-    padding: var(--spacing-xs) var(--spacing-sm);
-    font-size: 0.5rem;
-    cursor: pointer;
-    background-color: var(--highlight-color);
-    color: #FFFFFF;
-    border: none;
-    border-radius: 5px;
-  }
-  
-  #language-list {
-    position: absolute;
-    top: 100%;
-    left: 0;
-    background: var(--background-light);
-    border: 1px solid #ccc;
-    border-radius: 5px;
-    list-style: none;
-    padding: 0;
-    margin: 0;
-    display: none;
-    box-shadow: 0px 4px 10px rgba(0,0,0,0.1);
-    z-index: 1000;
-  }
-  
-  #language-list li {
-    padding: var(--spacing-sm);
-    cursor: pointer;
-    transition: background-color 0.3s ease;
-  }
-  
-  #language-list li:hover {
-    background: #f0f0f0;
-  }
-  
-  #language-list.show {
-    display: block;
-  }
-  
-  /* Duplicate .hidden Class (ensured consistency) */
-  .hidden {
-    display: none;
-  }
-  
+  /* Typography */
+  --font-primary: "Campton", sans-serif;
+  --font-secondary: "Avenir Next", sans-serif;
+
+  /* Spacing */
+  --spacing-xs: 4px;
+  --spacing-sm: 8px;
+  --spacing-md: 16px;
+  --spacing-lg: 24px;
+  --spacing-xl: 32px;
+}
+
+/* Global Styles */
+body {
+  font-family: var(--font-primary);
+  background-color: var(--background-light);
+  color: var(--text-color-light);
+  line-height: 1.6;
+  margin: var(--spacing-lg);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  transition: background-color 0.3s ease, color 0.3s ease;
+  overflow-x: hidden; /* Hide horizontal scrollbar */
+}
+
+body.dark-mode {
+  background-color: var(--background-dark);
+  color: var(--text-color-dark);
+}
+
+/* Header & Dark Mode Toggle */
+.header-container {
+  width: 100%;
+  display: flex;
+  justify-content: flex-end;
+  padding: var(--spacing-md);
+  position: absolute;
+  top: 1%;
+  left: -2%;
+}
+
+.dark-mode-button {
+  position: absolute;
+  top: var(--spacing-sm);
+  right: var(--spacing-sm);
+  font-size: 1.5rem;
+  background: none;
+  border: none;
+  cursor: pointer;
+}
+
+/* Containers (Cards) */
+.container {
+  width: 100%;
+  max-width: 600px;
+  background: var(--background-light);
+  padding: var(--spacing-lg);
+  border-radius: 20px;
+  box-shadow: -5px -5px 10px var(--light-shadow-light),
+    5px 5px 10px var(--dark-shadow-light);
+  margin-bottom: var(--spacing-lg);
+  margin-top: 5%;
+  transition: background-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+body.dark-mode .container {
+  background: var(--background-dark);
+  box-shadow: -5px -5px 10px var(--light-shadow-dark),
+    5px 5px 10px var(--dark-shadow-dark);
+}
+
+/* Utility Class */
+.hidden {
+  display: none;
+}
+
+/* Headings */
+.fancy-heading {
+  font-size: 1.8rem;
+  font-weight: bold;
+  text-align: center;
+  margin-bottom: var(--spacing-md);
+  font-family: var(--font-secondary);
+}
+
+/* Form Layout */
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-md);
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  margin-bottom: var(--spacing-sm);
+}
+
+label {
+  font-weight: bold;
+  margin-bottom: var(--spacing-xs);
+}
+
+/* Inputs, Selects & Textareas */
+input,
+select,
+textarea {
+  width: 90%;
+  padding: var(--spacing-sm) var(--spacing-md);
+  border: 1px solid #ccc;
+  border-radius: 20px;
+  font-size: 1rem;
+  background: var(--background-light);
+  color: var(--text-color-light);
+  box-shadow: inset 5px 5px 10px var(--dark-shadow-light),
+    inset -5px -5px 10px var(--light-shadow-light);
+  transition: background-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+body.dark-mode input,
+body.dark-mode select,
+body.dark-mode textarea {
+  background: var(--background-dark);
+  color: var(--text-color-dark);
+  border: 1px solid #666;
+  box-shadow: inset 5px 5px 10px var(--dark-shadow-dark),
+    inset -5px -5px 10px var(--light-shadow-dark);
+}
+
+input:focus,
+select:focus,
+textarea:focus {
+  outline: none;
+  box-shadow: inset 3px 3px 6px var(--highlight-color),
+    inset -3px -3px 6px var(--highlight-color);
+}
+
+/* Buttons */
+button {
+  padding: var(--spacing-sm) var(--spacing-md);
+  font-size: 1rem;
+  font-weight: bold;
+  border: none;
+  border-radius: 20px;
+  cursor: pointer;
+  background: var(--background-light);
+  color: var(--text-color-light);
+  box-shadow: -5px -5px 10px var(--light-shadow-light),
+    5px 5px 10px var(--dark-shadow-light);
+  transition: background-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+.button-primary {
+  background: var(--highlight-color);
+  color: #ffffff;
+  box-shadow: -5px -5px 10px rgba(255, 127, 63, 0.3),
+    5px 5px 10px rgba(0, 0, 0, 0.3);
+}
+
+button:hover {
+  box-shadow: -2px -2px 5px var(--light-shadow-light),
+    2px 2px 5px var(--dark-shadow-light);
+}
+
+.button-primary:hover {
+  box-shadow: -3px -3px 7px rgba(255, 127, 63, 0.5),
+    3px 3px 7px rgba(0, 0, 0, 0.5);
+}
+
+body.dark-mode button {
+  background: var(--background-dark);
+  color: var(--text-color-dark);
+  box-shadow: -5px -5px 10px var(--light-shadow-dark),
+    5px 5px 10px var(--dark-shadow-dark);
+}
+
+body.dark-mode .button-primary {
+  /* Maintain primary button highlight in dark mode */
+  box-shadow: -5px -5px 10px rgba(255, 127, 63, 0.3),
+    5px 5px 10px rgba(0, 0, 0, 0.8);
+}
+
+/* Toast Notifications */
+.toast {
+  position: fixed;
+  bottom: var(--spacing-lg);
+  left: 50%;
+  transform: translateX(-50%);
+  background-color: var(--background-light);
+  color: var(--text-color-light);
+  padding: var(--spacing-sm) var(--spacing-md);
+  border-radius: 10px;
+  box-shadow: 5px 5px 15px var(--dark-shadow-dark);
+  opacity: 0;
+  transition: opacity 0.5s ease, transform 0.5s ease;
+  z-index: 1002;
+}
+
+.toast.show {
+  opacity: 1;
+  transform: translateX(-50%) translateY(-10px);
+}
+
+body.dark-mode .toast {
+  background-color: var(--background-dark);
+  color: var(--text-color-dark);
+}
+
+/* Language Selector */
+.language-selector {
+  position: relative;
+  display: inline-block;
+  margin-left: var(--spacing-sm);
+}
+
+#language-button {
+  padding: var(--spacing-xs) var(--spacing-sm);
+  font-size: 0.5rem;
+  cursor: pointer;
+  background-color: var(--highlight-color);
+  color: #ffffff;
+  border: none;
+  border-radius: 5px;
+}
+
+#language-list {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  background: var(--background-light);
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: none;
+  box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1);
+  z-index: 1000;
+}
+
+#language-list li {
+  padding: var(--spacing-sm);
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+#language-list li:hover {
+  background: #f0f0f0;
+}
+
+#language-list.show {
+  display: block;
+}
+
+/* Duplicate .hidden Class (ensured consistency) */
+.hidden {
+  display: none;
+}

@@ -20,23 +20,13 @@ body {
   margin: 0;
   transition: background-color 0.3s ease, color 0.3s ease;
 }
-
-.center-box {
-  background-color: var(--bg-light);
-  width: 90%;
-  max-width: 280px;
-  padding: 20px;
-  border-radius: 20px;
-  box-shadow: -5px -5px 15px white, 5px 5px 15px var(--shadow-light);
-  text-align: center;
-  margin: 15px;
-}
-
 .logo-container {
-  position: absolute;
+  position: fixed;
   top: 20px;
-  left: 20px;
+  left: 50%;
   width: 120px;
+  z-index: 999; /* Högt värde för att hamna över andra element */
+  background-color: transparent;
 }
 
 .logo-container img {
@@ -44,57 +34,69 @@ body {
   height: auto;
 }
 
-/* Tab styling */
-.tabs {
-  width: 100%;
+.title {
+  color: rgba(0, 0, 0, 0.543);
 }
 
-.tab-header {
-  display: flex;
-  margin-bottom: 20px;
-  border-radius: 15px;
+.image {
+  width: 100vw;
+  /* Full bredd */
+  height: 100vh;
+  /* Full höjd */
   overflow: hidden;
-  box-shadow: -3px -3px 7px white, 3px 3px 7px var(--shadow-light);
+  /* Hindrar att något sticker ut */
+  position: relative;
+  /* Viktigt för att positionera boxen */
 }
 
-.tab-item {
-  flex: 1;
-  padding: 10px;
+.image img {
+  position: fixed;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  /* Täcker hela ytan */
+  object-position: center;
+  /* Centrerar bilden */
+}
+
+.center-box {
+  background-color: var(--bg-light);
+  height: 65vh;
+  width: 25%;
+  position: fixed;
+  top: 48%;
+  left: 2%;
+  transform: translateY(-50%);
+  /* Perfekt vertikal centrering */
+  padding: 20px;
+  border-radius: 40px;
+  box-shadow: -5px -5px 45px #ff7f3f, 35px 5px 15px var(--shadow-light);
   text-align: center;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  font-weight: 500;
-}
-
-.tab-item.active {
-  color: var(--highlight);
-  box-shadow: inset -3px -3px 7px white, inset 3px 3px 7px var(--shadow-light);
-}
-
-.tab-content {
-  display: none;
-}
-
-.tab-content.active {
-  display: block;
+  margin: 0;
+  /* Tar bort onödig marginal */
 }
 
 .button {
   padding: 10px 20px;
   border-radius: 25px;
-  margin-top: 15px;
+  margin-top: 5vh;
   border: none;
   cursor: pointer;
   font-family: var(--font-primary);
   background: var(--bg-light);
   box-shadow: -5px -5px 10px white, 5px 5px 10px var(--shadow-light);
   transition: all 0.3s ease;
-  width: 100%;
   margin-bottom: 15px;
 }
 
-.button.button-primary {
-  color: #6e7f8d;
+.button.button.button-primary {
+  background-color: #ff7f3f;
+  color: white;
+  position: relative;
+  bottom: 8vh;
+  border-radius: 14px;
+  height: 6vh;
+  width: 83%;
 }
 
 .button:hover {
@@ -102,15 +104,16 @@ body {
 }
 
 .input {
-  padding: 10px;
+  padding: 24px;
   border: none;
-  border-radius: 10px;
-  width: 100%;
+  border-radius: 20px;
+  width: 70%;
+  border: #ff7f3f 1.3px solid;
   background: var(--bg-light);
-  box-shadow: inset -5px -5px 10px white, inset 5px 5px 10px var(--shadow-light);
+  box-shadow: inset -5px -5px 10px white,
+    inset 15px 5px 10px var(--shadow-light);
   transition: all 0.3s ease;
-  margin: 10px 0;
-  box-sizing: border-box;
+  margin: 19px;
 }
 
 .input:focus {
@@ -118,27 +121,23 @@ body {
   box-shadow: inset -3px -3px 6px white, inset 3px 3px 6px var(--shadow-light);
 }
 
-.input-group {
-  margin-bottom: 15px;
-}
-
-.label {
-  display: flex;
-  align-items: center;
-  font-size: 14px;
-  margin-left: 5px;
-}
-
-.input-checkbox {
-  margin-right: 8px;
-}
-
 .link {
   color: var(--highlight);
   text-decoration: none;
-  font-size: 14px;
-  display: inline-block;
-  margin: 10px 0;
+  font-size: 19px;
+  position: relative;
+  top: 14vh;
+  padding: 0;
+  margin: 10px;
+}
+.extra-links {
+  color: var(--highlight);
+  text-decoration: none;
+  font-size: 19px;
+  position: relative;
+  top: 1vh;
+  padding: 0;
+  margin: 10px;
 }
 
 .link:hover {
@@ -146,46 +145,23 @@ body {
 }
 
 .error-message {
-  font-size: 14px;
+  font-size: 18px;
   color: var(--highlight);
   margin-bottom: 15px;
   text-align: center;
 }
 
-.success-message {
-  font-size: 14px;
-  color: #4caf50;
-  margin-bottom: 15px;
+.extra-links {
   text-align: center;
-}
-
-.modal {
-  display: none;
-  position: fixed;
-  z-index: 1;
-  left: 0;
-  top: 0;
-  width: 100%;
-  height: 100%;
-  overflow: auto;
-  background-color: rgba(0, 0, 0, 0.4);
-}
-
-.modal-content {
-  background-color: var(--bg-light);
-  margin: 15% auto;
-  padding: 20px;
-  border-radius: 20px;
-  box-shadow: -5px -5px 15px white, 5px 5px 15px var(--shadow-light);
-  text-align: center;
-  width: 90%;
-  max-width: 280px;
+  position: relative;
+  bottom: 23vh;
 }
 
 .form-actions {
-  margin-top: 20px;
+  margin-bottom: -12vh; /* Minskar avståndet mellan knappen och länkarna */
 }
 
-.extra-links {
-  margin: 15px 0;
+.extra-links a {
+  display: block;
+  margin: 2px 0; /* Justerar vertikalt mellanrum mellan länkarna */
 }
