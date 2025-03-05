@@ -25,19 +25,6 @@ def save_podprofile():
             "email": user_email,
             "podName": data.get("podName"),
             "podRss": data.get("podRss"),
-            "podLogo": data.get("podLogo"),
-            "hostName": data.get("hostName"),
-            "googleCalendar": data.get("googleCalendar"),
-            "calendarUrl": data.get("calendarUrl"),
-            "guestForm": data.get("guestForm"),
-            "facebook": data.get("facebook"),
-            "instagram": data.get("instagram"),
-            "linkedin": data.get("linkedin"),
-            "twitter": data.get("twitter"),
-            "tiktok": data.get("tiktok"),
-            "pinterest": data.get("pinterest"),
-            "website": data.get("website"),
-            "email": data.get("email"),
         }
         collection["User"].insert_one(user_data)
 
@@ -46,41 +33,8 @@ def save_podprofile():
             "UserID": user_email,
             "Podname": data.get("podName"),
             "RSSFeed": data.get("podRss"),
-            "GoogleCal": data.get("googleCalendar"),
-            "PadURl": data.get("calendarUrl"),
-            "GuestURL": data.get("guestForm"),
-            "Social_media": {
-                "facebook": data.get("facebook"),
-                "instagram": data.get("instagram"),
-                "linkedin": data.get("linkedin"),
-                "twitter": data.get("twitter"),
-                "tiktok": data.get("tiktok"),
-                "pinterest": data.get("pinterest"),
-                "website": data.get("website"),
-            },
-            "Email": data.get("email"),
         }
         collection["Podcast"].insert_one(podcast_data)
-
-        # Save to Guest collection
-        guest_data = {
-            "email": data.get("email"),
-            "name": data.get("hostName"),
-            "description": data.get("guestForm"),
-            "linkedin": data.get("linkedin"),
-            "twitter": data.get("twitter"),
-            "areasOfInterest": [
-                data.get("facebook"),
-                data.get("instagram"),
-                data.get("linkedin"),
-                data.get("twitter"),
-                data.get("tiktok"),
-                data.get("pinterest"),
-                data.get("website"),
-            ],
-            "status": "active",
-        }
-        collection["Guest"].insert_one(guest_data)
 
         return jsonify({"success": True})
     except Exception as e:
