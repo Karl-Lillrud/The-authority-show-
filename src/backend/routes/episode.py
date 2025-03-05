@@ -1,7 +1,9 @@
-from flask import request, jsonify, Blueprint, g
+from flask import request, jsonify, Blueprint, g, send_file, render_template
 from backend.database.mongo_connection import collection, database
 from datetime import datetime, timezone
 import uuid
+from bson import ObjectId
+import io
 
 # Define Blueprint
 episode_bp = Blueprint("episode_bp", __name__)
@@ -239,3 +241,91 @@ def get_episodes_by_guest(guest_id):
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
+
+# === Serve All Episodes (Prepare for Dynamic Pages) ===
+@episode_bp.route("/episodes", methods=["GET"])
+def get_latest_episode():
+    """ Fetch and display the latest published episode """
+    episode = episodes_collection.find_one(sort=[("_id", -1)])
+    
+    if not episode:
+        return "No episode found", 404
+
+    transcript = transcripts_collection.find_one({"episodeId": str(episode["_id"])})
+    transcript_data = transcript["transcript"] if transcript else []
+
+    return render_template("episode.html", episode=episode, transcript=transcript_data)
+
+
+# === Serve Audio File for an Episode ===
+@episode_bp.route("/<audio_id>", methods=["GET"])
+def get_audio(audio_id):
+    """ Serve podcast audio from GridFS """
+    try:
+        # TODO: Replace this with actual Azure Blob Storage retrieval
+        return jsonify({"message": f"Fetch audio with ID: {audio_id} from Azure"}), 200
+        
+        
+    except Exception as e:
+        print("Error serving audio:", str(e))
+        return jsonify({"error": "Audio not found"}), 404
+
+
+
+# === Serve Video File from Azure Blob Storage ===
+@episode_bp.route("/<video_id>", methods=["GET"])
+def get_video(video_id):
+    """ Serve video shorts from GridFS """
+    try:
+    # TODO: Replace this with actual Azure Blob Storage retrieval
+        return jsonify({"message": f"Fetch video with ID: {video_id} from Azure"}), 200
+    except Exception as e:
+        print("Error serving video:", str(e))
+        return jsonify({"error": "Video not found"}), 404
+
+
+# === Get Transcript for a Specific Episode ===
+#get trancript from db
+@episode_bp.route("/transcript", methods=["GET"])
+def get_transcript():
+    """ Retrieve the transcript for a specific episode """
+    episode_id = request.args.get("episode_id")
+
+    if not episode_id:
+        return jsonify({"error": "Missing episode ID"}), 400
+
+    transcript = transcripts_collection.find_one({"episodeId": episode_id})
+    
+    if transcript:
+        return jsonify(transcript["transcript"]), 200
+    else:
+        return jsonify({"error": "Transcript not found"}), 404
+
+
+# === Fetch and Display a Specific Episode ===
+@episode_bp.route("/episode/<episode_id>", methods=["GET"])
+def get_episode_details(episode_id):
+    """ Fetch and display details of a specific episode """
+    try:
+        episode = episodes_collection.find_one({"_id": ObjectId(episode_id)})
+        if not episode:
+            return "Episode not found", 404
+
+        # Ensure all required data exists
+        guest = episode.get("guest", {})
+        key_learnings = episode.get("key_learnings", [])
+        faq = episode.get("faq", [])
+        shorts = episode.get("shorts", [])
+
+        return render_template(
+            "episode.html",
+            episode=episode,
+            guest=guest,
+            key_learnings=key_learnings,
+            faq=faq,
+            shorts=shorts
+        )
+
+    except Exception as e:
+        print("Error fetching episode details:", str(e))
+        return jsonify({"error": "Failed to retrieve episode details"}), 500
