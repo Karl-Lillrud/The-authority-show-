@@ -8,12 +8,16 @@ document.addEventListener("DOMContentLoaded", function () {
     goToEmailSection.addEventListener("click", async () => {
       const podName = document.getElementById("podName").value.trim();
       const podRss = document.getElementById("podRss").value.trim();
+      const userEmail = document.getElementById("loggedInUserEmail").value.trim();
+      console.log("User email:", userEmail); // Add this line to log the user email
       if (!podName || !podRss) {
         alert("Please enter both Podcast Name and RSS URL.");
         return;
       }
       try {
         await postPodcastData(podName, podRss);
+        console.log("Sending invitation email to:", userEmail);
+        await sendInvitationEmail(userEmail);
         // Hide the Pod Name section and show the Email section.
         document.getElementById("pod-name-section").classList.add("hidden");
         document.getElementById("email-section").classList.remove("hidden");
@@ -46,5 +50,25 @@ document.addEventListener("DOMContentLoaded", function () {
 
   // ...existing code for dark mode, language selection, and fetchRSSData remains unchanged...
 });
+
+async function sendInvitationEmail(email) {
+  try {
+    const response = await fetch("/send_invitation", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        email: email,
+        subject: "Welcome to PodManager.ai!",
+      }),
+    });
+    if (!response.ok) {
+      throw new Error("Failed to send invitation email.");
+    }
+  } catch (error) {
+    console.error("Error sending invitation email:", error);
+  }
+}
 
 // ...additional functions such as dark mode toggle remain unchanged...

@@ -1,4 +1,4 @@
-from flask import request, jsonify, Blueprint, g, redirect, url_for
+from flask import request, jsonify, Blueprint, g, redirect, url_for, render_template
 from backend.database.mongo_connection import collection
 from datetime import datetime, timezone
 import uuid
@@ -270,3 +270,16 @@ def edit_podcast(podcast_id):
     except Exception as e:
         print(f"❌ ERROR: {e}")
         return jsonify({"error": f"Failed to update podcast: {str(e)}"}), 500
+
+@podcast_bp.route("/podprofile", methods=["GET"])
+def podprofile():
+    if not hasattr(g, "user_id") or not g.user_id:
+        return redirect(url_for("login"))
+
+    # Fetch the user's email from the database
+    user_account = collection.database.Accounts.find_one({"userId": g.user_id}, {"email": 1})
+    if not user_account or "email" not in user_account:
+        return redirect(url_for("login"))
+
+    user_email = user_account["email"]
+    return render_template("podprofile/podprofile.html", user_email=user_email)
