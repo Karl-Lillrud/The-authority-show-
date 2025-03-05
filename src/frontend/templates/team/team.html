@@ -21,7 +21,14 @@
   {% endwith %}
 
   <!-- Always render an empty container for teams -->
-  <div class="card-container"></div>
+  <div class="card-container">
+    <!-- Example team card -->
+    <div class="team-card"></div>
+      <h2>Team Name</h2>
+      <p>Podcast: <span class="podcast-name">Podcast Name</span></p>
+      <!-- Other team details -->
+    </div>
+  </div>
 </div>
 
 <!-- Add Team Modal -->
@@ -34,6 +41,13 @@
           <button type="button" class="close" aria-label="Close" id="modalCloseBtn">&times;</button>
         </div>
         <div class="modal-body">
+          <div class="form-group">
+            <label for="podcast">Podcast:</label>
+            <select class="form-control" name="podcastId" id="podcastDropdown" required>
+              <option value="">Select a Podcast</option>
+              <!-- Populate options with podcasts -->
+            </select>
+        </div>
           <div class="form-group">
               <label for="name">Team Name:</label>
               <input type="text" class="form-control" name="name" required>
@@ -66,6 +80,10 @@
           <button type="button" class="close" aria-label="Close" id="teamDetailCloseBtn">&times;</button>
         </div>
         <div class="modal-body">
+          <div class="form-group">
+            <label for="detailPodcast">Podcast:</label>
+            <input type="text" class="form-control" id="detailPodcast" name="podName" readonly>
+          </div>
           <div class="form-group">
             <label for="detailName">Name:</label>
             <input type="text" class="form-control" id="detailName" name="name">
