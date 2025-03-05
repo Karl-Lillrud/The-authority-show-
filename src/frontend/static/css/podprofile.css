@@ -28,7 +28,7 @@
 /* Global Styles */
 body {
   font-family: var(--font-primary);
-  background-color: var(--background-light);
+  background-color: #e5e0e0;
   color: var(--text-color-light);
   line-height: 1.6;
   margin: var(--spacing-lg);
@@ -36,7 +36,8 @@ body {
   flex-direction: column;
   align-items: center;
   transition: background-color 0.3s ease, color 0.3s ease;
-  overflow-x: hidden; /* Hide horizontal scrollbar */
+  overflow-x: hidden;
+  /* Hide horizontal scrollbar */
 }
 
 body.dark-mode {
@@ -55,6 +56,21 @@ body.dark-mode {
   left: -2%;
 }
 
+.logo-container {
+  position: fixed;
+  top: 20px;
+  left: 45%;
+  width: 18vh;
+  z-index: 999;
+  /* Högt värde för att hamna över andra element */
+  background-color: transparent;
+}
+
+.logo-container img {
+  width: 100%;
+  height: auto;
+}
+
 .dark-mode-button {
   position: absolute;
   top: var(--spacing-sm);
@@ -67,16 +83,19 @@ body.dark-mode {
 
 /* Containers (Cards) */
 .container {
-  width: 100%;
-  max-width: 600px;
-  background: var(--background-light);
-  padding: var(--spacing-lg);
-  border-radius: 20px;
-  box-shadow: -5px -5px 10px var(--light-shadow-light),
-    5px 5px 10px var(--dark-shadow-light);
-  margin-bottom: var(--spacing-lg);
-  margin-top: 5%;
-  transition: background-color 0.3s ease, box-shadow 0.3s ease;
+  background-color: #e5e0e0;
+  height: 65vh;
+  width: 25%;
+  position: fixed;
+  top: 54%;
+  left: 36%;
+  transform: translateY(-50%);
+  padding: 20px;
+  border-radius: 40px;
+  border: 1px solid;
+  box-shadow: 0 0 100px 5px rgba(66, 5, 5, 0.5);
+  text-align: center;
+  margin: 0;
 }
 
 body.dark-mode .container {
@@ -93,6 +112,7 @@ body.dark-mode .container {
 /* Headings */
 .fancy-heading {
   font-size: 1.8rem;
+
   font-weight: bold;
   text-align: center;
   margin-bottom: var(--spacing-md);
@@ -108,12 +128,34 @@ body.dark-mode .container {
 
 .form-group {
   display: flex;
+  font-size: 2vh;
+  margin-top: 3vh;
   flex-direction: column;
   margin-bottom: var(--spacing-sm);
 }
 
+
+
+/* Större input-fält */
+input[type="text"],
+input[type="url"],
+input[type="email"] {
+  width: 90%;
+  /* Gör fälten så breda som deras föräldrar tillåter */
+  padding: 20px;
+  /* Ökar inre marginalen för att ge mer utrymme för texten */
+  margin-top: 2vh;
+  border: 1px solid #ccc;
+  /* Standard kantlinje */
+  border-radius: 15px;
+  /* Runda hörn för input-fältet */
+}
+
+
+
 label {
   font-weight: bold;
+  margin: 2vh;
   margin-bottom: var(--spacing-xs);
 }
 
@@ -166,6 +208,16 @@ button {
   transition: background-color 0.3s ease, box-shadow 0.3s ease;
 }
 
+.button-secondary,
+.button-primary {
+  border: 1px double orange;
+  height: 6vh;
+  position: relative;
+  top: 9vh;
+  margin: 2vh;
+  width: 40%;
+}
+
 .button-primary {
   background: var(--highlight-color);
   color: #ffffff;
@@ -191,12 +243,10 @@ body.dark-mode button {
 }
 
 body.dark-mode .button-primary {
-  /* Maintain primary button highlight in dark mode */
   box-shadow: -5px -5px 10px rgba(255, 127, 63, 0.3),
     5px 5px 10px rgba(0, 0, 0, 0.8);
 }
 
-/* Toast Notifications */
 .toast {
   position: fixed;
   bottom: var(--spacing-lg);

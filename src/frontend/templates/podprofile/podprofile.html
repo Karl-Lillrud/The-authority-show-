@@ -10,6 +10,9 @@
     />
   </head>
   <body>
+    <div class="logo-container">
+      <img src="{{ url_for('static', filename='images/PodManagerLogo.png') }}" alt="PodManager Logo"/>
+    </div>
     <header>
       <div class="header-container">
         <button
@@ -36,10 +39,7 @@
             <label for="podName">Podcast's Name</label>
             <input type="text" id="podName" name="podName" required />
           </div>
-          <div class="form-group">
-            <label>Podcast's Official Email</label>
-            <input type="email" id="email" />
-          </div>
+        
           <button type="button" class="button-secondary" id="skipToDashboard">
             Skip
           </button>
