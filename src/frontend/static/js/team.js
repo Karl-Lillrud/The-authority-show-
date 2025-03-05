@@ -45,8 +45,17 @@ document.addEventListener('DOMContentLoaded', function() {
     const deleteBtn = document.getElementById('deleteTeamBtn');
     deleteBtn.onclick = async () => {
       try {
+        const podcastId = team.podcastId; // Assuming the podcastId is available in the team object
+        const updatePayload = { teamId: null };
+    
+        // First, update the podcast's teamId to null
+        const editPodcastResult = await updatePodcastTeamRequest(podcastId, updatePayload);
+        console.log(editPodcastResult);
+    
+        // Now delete the team
         const result = await deleteTeamRequest(team._id);
         alert(result.message || "Team deleted successfully!");
+    
         modal.classList.remove('show');
         modal.setAttribute('aria-hidden', 'true');
         const teams = await getTeamsRequest();
@@ -55,6 +64,7 @@ document.addEventListener('DOMContentLoaded', function() {
         console.error("Error deleting team:", error);
       }
     };
+    
 
     // Set save action to update team data based on current input values
     const saveBtn = document.getElementById('saveTeamBtn');
@@ -119,6 +129,13 @@ document.addEventListener('DOMContentLoaded', function() {
   }
   populatePodcastDropdown();
 
+  // New function to check if a podcast already has a team
+  async function checkPodcastHasTeam(podcastId) {
+    const res = await fetch(`/get_podcasts/${podcastId}`, { method: "GET" });
+    const data = await res.json();
+    return data.podcast && data.podcast.teamId; // Returns true if podcast already has a teamId
+  }
+
   // Add team modal and form handling
   const addTeamModal = document.getElementById('addTeamModal');
   const addTeamForm = addTeamModal ? addTeamModal.querySelector('form') : document.querySelector('form');
@@ -134,6 +151,14 @@ document.addEventListener('DOMContentLoaded', function() {
       };
       // Get the selected podcast ID from the dropdown
       const podcastId = formData.get('podcastId');
+      
+      // Check if the selected podcast already has a team
+      const hasTeam = await checkPodcastHasTeam(podcastId);
+      if (hasTeam) {
+        alert("This podcast already has a team. You cannot create a new team for it.");
+        return; // Stop the form submission
+      }
+
       try {
         // Create the team
         const response = await addTeamRequest(payload);
