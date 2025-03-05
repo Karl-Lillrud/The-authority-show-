@@ -63,3 +63,27 @@ async function sendInvitation(email, subject, body) {
     console.error("Error sending invitation:", error);
   }
 }
+
+async function fetchRSSData(rssUrl) {
+  if (!rssUrl) return;
+  try {
+    const response = await fetch(
+      `https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(
+        rssUrl
+      )}`
+    );
+    const data = await response.json();
+    if (data.status === "ok") {
+      return data.feed; // Return feed data for further processing
+    } else {
+      console.error("Error fetching RSS feed:", data);
+      throw new Error("Error fetching RSS feed");
+    }
+  } catch (error) {
+    console.error("Error fetching RSS feed:", error);
+    throw error;
+  }
+}
+
+// Optionally export the function if you're using modules:
+// export { fetchRSSData };
