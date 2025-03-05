@@ -124,7 +124,7 @@ def delete_team(team_id):
             return jsonify({"error": "Team not found"}), 404
 
         # Step 2: Delete associated user-team relationships
-        user_team_relations = collection.database.UserToTeams.find({"teamId": team_id})
+        user_team_relations = collection.database.UsersToTeams.find({"teamId": team_id})
 
         if user_team_relations:
             # Remove all user-team relationships for the team
@@ -139,6 +139,15 @@ def delete_team(team_id):
 
         print(f"✅ Team {team_id} and all members deleted successfully!")
 
+        # Step 4: Remove the teamId from the corresponding podcast
+        podcast = collection.database.Podcasts.find_one({"teamId": team_id})
+        if podcast:
+            collection.database.Podcasts.update_one(
+                {"_id": podcast["_id"]},
+                {"$set": {"teamId": None}}  # Remove the teamId from the podcast
+            )
+            print(f"✅ Removed teamId from podcast {podcast['_id']}")
+
         return (
             jsonify(
                 {"message": f"Team {team_id} and all members deleted successfully!"}
@@ -148,7 +157,8 @@ def delete_team(team_id):
 
     except Exception as e:
         print(f"❌ ERROR: {e}")
-        return jsonify({"error": f"Failed to delete the team: {str(e)}"}), 500
+        return jsonify({"error": f"Failed to delete podcast or team: {str(e)}"}), 500
+
 
 @team_bp.route("/edit_team/<team_id>", methods=["PUT"])
 def edit_team(team_id):
