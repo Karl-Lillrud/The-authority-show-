@@ -171,3 +171,10 @@ body {
   display: block;
   margin: 2px 0; /* Justerar vertikalt mellanrum mellan länkarna */
 }
+
+.forgot-password {
+  text-align: center;
+
+  position: relative;
+  bottom: 0;
+}
