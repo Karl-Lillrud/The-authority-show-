@@ -1,8 +1,9 @@
 const API_BASE_URL =
   window.location.hostname === "127.0.0.1" || window.location.hostname === "localhost"
-    ? "http://127.0.0.1:8000" // Use LOCAL_BASE_URL for localhost and PROD_BASE_URL for production
-    : "https://the-authority-show-live.onrender.com/"; // Use LOCAL_BASE_URL for localhost and PROD_BASE_URL for production
-
+    ? "http://127.0.0.1:8000" // Use LOCAL_BASE_URL for localhost
+    : window.location.hostname === "the-authority-show-test.onrender.com"
+    ? "https://the-authority-show-test.onrender.com" // Use for test environment
+    : "https://app.podmanager.ai"; // Use for production environment
 
 export async function signin(email, password, remember) {
   try {
