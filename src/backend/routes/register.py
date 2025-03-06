@@ -1,7 +1,9 @@
-from flask import Blueprint, request, jsonify, render_template
+from flask import Blueprint, request, jsonify, render_template, url_for
 from werkzeug.security import generate_password_hash
 from datetime import datetime
 import uuid
+import secrets, string
+
 import random
 from backend.database.mongo_connection import collection
 
@@ -12,8 +14,9 @@ INITIAL_CREDITS = 3000
 INVITE_CREDIT_REWARD = 200  # Bonus for referring a new user
 
 def generate_referral_code(email):
-    clean_email = ''.join(e for e in email if e.isalnum()).lower()
-    return f"{random.randint(1000, 9999)}{clean_email}"
+    # Generate an 6-character referral code using uppercase letters and digits
+    alphabet = string.ascii_uppercase + string.digits
+    return ''.join(secrets.choice(alphabet) for _ in range(6))
 
 @register_bp.route("/register", methods=["GET", "POST"])
 def register():
@@ -75,19 +78,20 @@ def register():
 
     # Award bonus credits if the user was referred by someone
     if referrer_code:
-        referrer = collection.database.Users.find_one({"referral_code": referrer_code})
-        if referrer:
+       referrer = collection.database.Users.find_one({"referral_code": referrer_code})
+       if referrer:
             if referrer["_id"] == new_user_id:
-                logger.warning("User attempted to refer themselves. Ignoring referral bonus.")
-
-                return jsonify({"error": "User cannot refer themselves."}), 400
+               return jsonify({"error": "User cannot refer themselves."}), 400
             referrer_id = referrer["_id"]
-            collection.database.Users.update_one({"_id": referrer_id}, {"$inc": {"credits": INVITE_CREDIT_REWARD}})
             collection.database.Credits.update_one(
-                {"user_id": referrer_id},
-                {"$inc": {"referrals": 1, "referral_bonus": INVITE_CREDIT_REWARD}},
-                upsert=True
-            )
+            {"user_id": referrer_id},
+            {
+                "$inc": {"credits": INVITE_CREDIT_REWARD, "referrals": 1, "referral_bonus": INVITE_CREDIT_REWARD},
+                "$setOnInsert": {"user_id": referrer_id}
+            },
+            upsert=True
+        )
+
 
     # Create account entry in the Accounts collection
     account_data = {
@@ -97,7 +101,6 @@ def register():
         "isCompany": data.get("isCompany", False),
         "ownerId": new_user_id,
     }
-
     # Directly insert into the Accounts collection
     collection.database.Accounts.insert_one(account_data)
 

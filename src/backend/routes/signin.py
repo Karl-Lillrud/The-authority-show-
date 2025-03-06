@@ -42,7 +42,7 @@ def signin():
 
     # Set session data for the logged-in user
     session["user_id"] = str(users["_id"])
-    session["email"] = users["email"]
+    session["user_email"] = users["email"]
     session.permanent = remember
 
     user_id = session["user_id"]

@@ -118,3 +118,7 @@ def get_credits():
         "episodes_published": user_credits.get("episodes_published", 0),
         "streak_days": user_credits.get("streak_days", 0)
     }), 200
+@dashboard_bp.route("/get_user_podcasts", methods=["GET"])
+def get_user_podcasts():
+    # Dummy implementation; return an empty list or sample data
+    return jsonify([])
