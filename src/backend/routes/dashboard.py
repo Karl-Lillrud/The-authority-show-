@@ -89,3 +89,11 @@ def guest():
             url_for("signin_bp.signin")
         )  # Fix: redirect using the blueprint route
     return render_template("guest/guest.html")
+
+@dashboard_bp.route("/addmember", methods=["GET"])
+def addmember():
+    if not g.user_id:
+        return redirect(
+            url_for("signin_bp.signin")
+        )  # Fix: redirect using the blueprint route
+    return render_template("team/addmember.html")
