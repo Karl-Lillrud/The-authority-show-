@@ -23,7 +23,7 @@ logger = logging.getLogger(__name__)
 
 # Initialize MongoDB Client
 try:
-    client = MongoClient(MONGODB_URI)
+    client = MongoClient(MONGODB_URI, ssl=True, ssl_cert_reqs="CERT_NONE")
     database = client[DATABASE_NAME]
     collection = database[COLLECTION_NAME]
     logger.info("MongoDB connection established successfully.")
