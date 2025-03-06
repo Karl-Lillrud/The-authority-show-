@@ -17,7 +17,7 @@ document.addEventListener('DOMContentLoaded', function() {
       const card = document.createElement('div');
       card.className = 'card';
       card.innerHTML = `
-        <p><strong>Podcast:</strong> ${team.podName || 'N/A'}</p>
+        <p><strong>Podcast:</strong> ${team.podNames || 'N/A'}</p>
         <h4>${team.name}</h4>
         <p><strong>Email:</strong> ${team.email}</p>
         <p><strong>Description:</strong> ${team.description}</p>
@@ -29,13 +29,44 @@ document.addEventListener('DOMContentLoaded', function() {
     });
   }
 
+  // New function to populate multi‑select dropdown for podcasts in team details modal
+  async function populatePodcastMultiDropdown(currentTeamId) {
+    const podcastSelect = document.getElementById('detailPodcastSelect');
+    if (podcastSelect) {
+      podcastSelect.innerHTML = '';
+      // Optional default disabled option
+      const defaultOption = document.createElement('option');
+      defaultOption.textContent = 'Select Podcasts';
+      defaultOption.disabled = true;
+      podcastSelect.appendChild(defaultOption);
+      try {
+        const res = await fetch("/get_podcasts", { method: "GET" });
+        const data = await res.json();
+        const podcasts = data.podcast || [];
+        podcasts.forEach(podcast => {
+          const option = document.createElement('option');
+          option.value = podcast._id;
+          option.textContent = podcast.podName;
+          // Pre-select if the podcast is already assigned to this team
+          if (podcast.teamId === currentTeamId) {
+            option.selected = true;
+          }
+          podcastSelect.appendChild(option);
+        });
+      } catch (err) {
+        console.error("Error fetching podcasts:", err);
+      }
+    }
+  }
+
   function showTeamDetailModal(team) {
     // Pre-populate modal input fields with team data
     document.getElementById('detailName').value = team.name;
     document.getElementById('detailEmail').value = team.email;
     document.getElementById('detailDescription').value = team.description;
     document.getElementById('detailMembers').textContent = team.members.map(m => m.userId).join(", ");
-    document.getElementById('detailPodcast').value = team.podName || "N/A";
+    // Instead of a readonly podcast input, we use a multi‑select dropdown
+    populatePodcastMultiDropdown(team._id);
 
     const modal = document.getElementById('teamDetailModal');
     modal.classList.add('show');
@@ -45,21 +76,19 @@ document.addEventListener('DOMContentLoaded', function() {
     const deleteBtn = document.getElementById('deleteTeamBtn');
     deleteBtn.onclick = async () => {
       try {
-          // Now delete the team
-          const result = await deleteTeamRequest(team._id);
-          alert(result.message || "Team deleted successfully!");
-      
-          modal.classList.remove('show');
-          modal.setAttribute('aria-hidden', 'true');
-          const teams = await getTeamsRequest();
-          updateTeamsUI(teams);
-      } catch (error) {
-          console.error("Error deleting team:", error);
-      }
-  };
+        const result = await deleteTeamRequest(team._id);
+        alert(result.message || "Team deleted successfully!");
     
-
-    // Set save action to update team data based on current input values
+        modal.classList.remove('show');
+        modal.setAttribute('aria-hidden', 'true');
+        const teams = await getTeamsRequest();
+        updateTeamsUI(teams);
+      } catch (error) {
+        console.error("Error deleting team:", error);
+      }
+    };
+    
+    // Set save action to update team data and podcast assignments based on current input values
     const saveBtn = document.getElementById('saveTeamBtn');
     saveBtn.onclick = async () => {
       const payload = {
@@ -70,12 +99,23 @@ document.addEventListener('DOMContentLoaded', function() {
       try {
         const result = await editTeamRequest(team._id, payload);
         alert(result.message || "Team updated successfully!");
+
+        // Get selected podcasts from multi‑select
+        const selectedPodcasts = Array.from(document.getElementById('detailPodcastSelect').selectedOptions)
+                                      .map(opt => opt.value);
+        // For each selected podcast, assign this team.
+        for (const podcastId of selectedPodcasts) {
+          await updatePodcastTeamRequest(podcastId, { teamId: team._id });
+        }
+        // Optionally, implement logic here to remove team assignment from podcasts
+        // that are not selected but were previously assigned to this team.
+
         modal.classList.remove('show');
         modal.setAttribute('aria-hidden', 'true');
         const teams = await getTeamsRequest();
         updateTeamsUI(teams);
       } catch (error) {
-        console.error("Error editing team:", error);
+        console.error("Error editing team or updating podcasts:", error);
       }
     };
 
@@ -104,10 +144,8 @@ document.addEventListener('DOMContentLoaded', function() {
     const podcastDropdown = document.getElementById('podcastDropdown');
     if (podcastDropdown) {
       try {
-        // Fetch podcasts using the /get_podcasts endpoint
         const res = await fetch("/get_podcasts", { method: "GET" });
         const data = await res.json();
-        // Assuming the returned data structure is { podcast: [...] }
         const podcasts = data.podcast || [];
         podcasts.forEach(podcast => {
           const option = document.createElement('option');
@@ -126,7 +164,7 @@ document.addEventListener('DOMContentLoaded', function() {
   async function checkPodcastHasTeam(podcastId) {
     const res = await fetch(`/get_podcasts/${podcastId}`, { method: "GET" });
     const data = await res.json();
-    return data.podcast && data.podcast.teamId; // Returns true if podcast already has a teamId
+    return data.podcast && data.podcast.teamId;
   }
 
   // Add team modal and form handling
@@ -142,28 +180,23 @@ document.addEventListener('DOMContentLoaded', function() {
         email: formData.get('email'),
         description: formData.get('description')
       };
-      // Get the selected podcast ID from the dropdown
       const podcastId = formData.get('podcastId');
       
-      // Check if the selected podcast already has a team
       const hasTeam = await checkPodcastHasTeam(podcastId);
       if (hasTeam) {
         alert("This podcast already has a team. You cannot create a new team for it.");
-        return; // Stop the form submission
+        return;
       }
 
       try {
-        // Create the team
         const response = await addTeamRequest(payload);
         const teamId = response.team_id;
         alert("Team successfully created!");
-        // If a podcast is selected, update it with the new teamId
         if (podcastId && teamId) {
           const updatePayload = { teamId: teamId };
           const updateResponse = await updatePodcastTeamRequest(podcastId, updatePayload);
           console.log("Podcast updated:", updateResponse);
         }
-        // Close the Add Team modal after adding a team
         addTeamModal.classList.remove('show');
         addTeamModal.setAttribute('aria-hidden', 'true');
         const teams = await getTeamsRequest();
