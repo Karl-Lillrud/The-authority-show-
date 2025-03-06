@@ -95,8 +95,6 @@ def guest():
             url_for("signin_bp.signin")
         )  # Fix: redirect using the blueprint route
     return render_template("guest/guest.html")
-
-
 @dashboard_bp.route("/get_credits", methods=["GET"])
 def get_credits():
     user_id = request.args.get("user_id")
@@ -122,3 +120,12 @@ def get_credits():
 def get_user_podcasts():
     # Dummy implementation; return an empty list or sample data
     return jsonify([])
+
+@dashboard_bp.route("/addmember", methods=["GET"])
+def addmember():
+    if not g.user_id:
+        return redirect(
+            url_for("signin_bp.signin")
+        )  # Fix: redirect using the blueprint route
+    return render_template("team/addmember.html")
+

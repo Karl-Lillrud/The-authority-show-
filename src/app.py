@@ -1,3 +1,5 @@
+import os
+import logging
 from flask import Flask, request, session, g, jsonify
 from flask_cors import CORS
 from backend.routes.register import register_bp
@@ -19,8 +21,6 @@ from backend.routes.frontend import frontend_bp  # Import the frontend blueprint
 from backend.routes.guest_to_eposide import guesttoepisode_bp
 from backend.routes.credits import credits_bp
 from dotenv import load_dotenv
-import os
-import logging
 from backend.utils import venvupdate
 from backend.database.mongo_connection import collection
 from backend.utils.email_utils import send_email
@@ -44,8 +44,10 @@ CORS(
     resources={
         r"/*": {
             "origins": [
-                "https://the-authority-show.onrender.com/",
-                "https://app.podmanager.ai",
+
+                "https://devapp.podmanager.ai" # Test Branch (testMain)
+                "https://app.podmanager.ai", # Live branch (Main)
+                "http://127.0.0.1:8000", # Localhost
             ]
         }
     },
@@ -64,7 +66,11 @@ app.register_blueprint(dashboard_bp)
 app.register_blueprint(pod_management_bp)
 app.register_blueprint(podtask_bp)
 app.register_blueprint(team_bp)
+
 app.register_blueprint(guest_bp)
+=======
+app.register_blueprint(guest_bp)  # Ensure this line is present and has the correct prefix
+
 app.register_blueprint(account_bp)
 app.register_blueprint(usertoteam_bp)
 app.register_blueprint(invitation_bp)
