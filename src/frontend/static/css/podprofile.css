@@ -25,118 +25,122 @@
   --spacing-xl: 32px;
 }
 
-/* Global Styles */
+/* Ta bort margin, padding och border från alla element */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+/* Gör att både html och body täcker hela skärmen */
+html, body {
+  height: 100%; /* Se till att body täcker hela skärmen */
+  width: 100%; /* Se till att body täcker hela skärmen */
+  overflow-x: hidden; /* Förhindra horisontell scroll */
+}
+
 body {
   font-family: var(--font-primary);
-  background-color: #e5e0e0;
+  background-color: white; /* Bakgrundsfärg för hela sidan */
   color: var(--text-color-light);
   line-height: 1.6;
-  margin: var(--spacing-lg);
+  margin: 0; /* Ta bort margin */
+  padding: 0; /* Ta bort padding */
   display: flex;
   flex-direction: column;
   align-items: center;
-  transition: background-color 0.3s ease, color 0.3s ease;
-  overflow-x: hidden;
-  /* Hide horizontal scrollbar */
+  justify-content: flex-start; /* Innehållet börjar från toppen av sidan */
+  min-height: 100vh; /* Gör så att body alltid täcker hela skärmen */
+  overflow: hidden; /* Förhindra horisontell scroll */
 }
 
 
+
+
+/* Help Button */
 .help-container {
-  position: absolute;
-  left: 95vh; /* Justera detta värde efter behov */
-  bottom: 61vh;
-  transform: translateY(-50%);
+  position: fixed;
+  right: 2vw;
+  bottom: 10vh;
 }
+
 .help-button {
   background-color: #ffaa00;
   color: white;
-margin-top: 0vh;
-border: 3px dodgerblue solid;
   border: none;
   padding: 5px;
-  border-radius: 100%;
+  border-radius: 50%;
   cursor: pointer;
   font-size: 14px;
   width: 24px;
   height: 24px;
-  z-index: 9999; /* Ser till att knappen alltid är över andra element */
+  z-index: 9999;
 }
-
-
-body.dark-mode .help-button, .help-text   {
-  background-color: #ffaa00;
-  color: black;
-  
-
-}
-
 
 .help-text {
   display: none;
   position: absolute;
-  top: 5vh; /* Justera detta för att placera texten på vänster sida nedanför knappen */
-  right: 100%; /* Flytta texten till vänster om knappen */
-  transform: translateX(10px); /* Lägg till lite mellanrum mellan texten och knappen */
+  top: -60px;
+  left: -10px;
   background-color: white;
   color: black;
-  padding: 9px;
-  width:50vh; /* Justera bredden beroende på skärmstorlek */
-  height: 19vh; /* Sätt höjd lika med bredd för att göra det kvadratiskt */
-  font-size: 17px; /* Justera textstorlek för att få plats med texten */
-  text-align: left; /* Texten kommer nu att börja från vänster */
-  white-space: normal; /* Tillåt text att brytas i flera rader */
-  border: 1px solid black; /* Lägg till en kant om du vill */
+  padding: 10px;
+  width: 30vh;
+  height: 30vh;
+  font-size: 14px;
+  text-align: left;
+  white-space: normal;
+  border: 1px solid black;
+  border-radius: 8px;
 }
 
 .help-container:hover .help-text {
   display: block;
 }
 
+/* Dark Mode */
 body.dark-mode {
   background-color: var(--background-dark);
   color: var(--text-color-dark);
 }
 
-/* Header & Dark Mode Toggle */
+body.dark-mode .help-button,
+body.dark-mode .help-text {
+  background-color: #ffaa00;
+  color: black;
+}
+
+/* Header */
 .header-container {
   width: 100%;
   display: flex;
   justify-content: flex-end;
   padding: var(--spacing-md);
-  position: absolute;
-  top: 1%;
-  left: -2%;
+  position: fixed;
+  top: 0;
+  left: 0;
+  background: rgba(255, 255, 255, 0.9);
 }
 
 .logo-container {
   position: fixed;
   top: 20px;
-  left: 45%;
-  width: 18vh;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 10%;
   z-index: 999;
-  /* Högt värde för att hamna över andra element */
-  background-color: transparent;
 }
 
 .logo-container img {
   width: 100%;
   height: auto;
+  -webkit-user-select: none;
+  user-select: none;
 }
-
-.dark-mode-button {
-  position: absolute;
-  top: var(--spacing-sm);
-  right: var(--spacing-sm);
-  font-size: 1.5rem;
-  background: none;
-  border: none;
-  cursor: pointer;
-}
-
 /* Containers (Cards) */
 .container {
   background-color: #e5e0e0;
-  height: 65vh;
+  height: 49vh;
   width: 25%;
   position: fixed;
   top: 54%;
@@ -144,33 +148,35 @@ body.dark-mode {
   transform: translateY(-50%);
   padding: 20px;
   border-radius: 40px;
-  border: 1px solid;
-  box-shadow: 0 0 100px 5px rgba(66, 5, 5, 0.5);
+  border: 1px solid rgba(0, 0, 0, 0.2);
+  box-shadow: 0px 5px 15px rgba(0, 0, 0, 0.2);
   text-align: center;
   margin: 0;
+  -webkit-transform: translateY(-50%); /* Safari fix */
+  -webkit-border-radius: 40px; /* Safari fix */
 }
 
-body.dark-mode .container {
+/* Input Fields */
+input,
+select,
+textarea {
+  width: 90%;
+  padding: var(--spacing-sm) var(--spacing-md);
+  border: 1px solid #ccc;
+  border-radius: 20px;
+  font-size: 1rem;
+  background: var(--background-light);
+  color: var(--text-color-light);
+  transition: all 0.3s ease;
+}
+
+body.dark-mode input,
+body.dark-mode select,
+body.dark-mode textarea {
   background: var(--background-dark);
-  box-shadow: -5px -5px 10px var(--light-shadow-dark),
-    5px 5px 10px var(--dark-shadow-dark);
+  color: var(--text-color-dark);
+  border: 1px solid #666;
 }
-
-/* Utility Class */
-.hidden {
-  display: none;
-}
-
-/* Headings */
-.fancy-heading {
-  font-size: 1.8rem;
-
-  font-weight: bold;
-  text-align: center;
-  margin-bottom: var(--spacing-md);
-  font-family: var(--font-secondary);
-}
-
 /* Form Layout */
 .form {
   display: flex;
@@ -187,62 +193,11 @@ body.dark-mode .container {
 }
 
 
-
-/* Större input-fält */
-input[type="text"],
-input[type="url"],
-input[type="email"] {
-  width: 90%;
-  /* Gör fälten så breda som deras föräldrar tillåter */
-  padding: 20px;
-  /* Ökar inre marginalen för att ge mer utrymme för texten */
-  margin-top: 5vh;
-  border: 1px solid #ccc;
-  /* Standard kantlinje */
-  border-radius: 15px;
-  /* Runda hörn för input-fältet */
-}
-
-
-
-label {
-  font-weight: bold;
-  margin: 2vh;
-  margin-bottom: var(--spacing-xs);
-}
-
-/* Inputs, Selects & Textareas */
-input,
-select,
-textarea {
-  width: 90%;
-  padding: var(--spacing-sm) var(--spacing-md);
-  border: 1px solid #ccc;
-  border-radius: 20px;
-  font-size: 1rem;
-  background: var(--background-light);
-  color: var(--text-color-light);
-  box-shadow: inset 5px 5px 10px var(--dark-shadow-light),
-    inset -5px -5px 10px var(--light-shadow-light);
-  transition: background-color 0.3s ease, box-shadow 0.3s ease;
-}
-
-body.dark-mode input,
-body.dark-mode select,
-body.dark-mode textarea {
-  background: var(--background-dark);
-  color: var(--text-color-dark);
-  border: 1px solid #666;
-  box-shadow: inset 5px 5px 10px var(--dark-shadow-dark),
-    inset -5px -5px 10px var(--light-shadow-dark);
-}
-
 input:focus,
 select:focus,
 textarea:focus {
   outline: none;
-  box-shadow: inset 3px 3px 6px var(--highlight-color),
-    inset -3px -3px 6px var(--highlight-color);
+  box-shadow: 0 0 5px var(--highlight-color);
 }
 
 /* Buttons */
@@ -255,49 +210,43 @@ button {
   cursor: pointer;
   background: var(--background-light);
   color: var(--text-color-light);
-  box-shadow: -5px -5px 10px var(--light-shadow-light),
-    5px 5px 10px var(--dark-shadow-light);
-  transition: background-color 0.3s ease, box-shadow 0.3s ease;
+  transition: all 0.3s ease;
 }
 
-
 .button-primary {
-  border: 1px double orange;
+  border: 1px solid orange;
   height: 6vh;
-  position: relative;
-  top: 9vh;
-  right: 4vh;
-  margin: 2vh;
   width: 40%;
-}
-
-.button-primary {
+  margin: 2vh;
   background: var(--highlight-color);
   color: #ffffff;
-  box-shadow: -5px -5px 10px rgba(255, 127, 63, 0.3),
-    5px 5px 10px rgba(0, 0, 0, 0.3);
 }
 
 button:hover {
-  box-shadow: -2px -2px 5px var(--light-shadow-light),
-    2px 2px 5px var(--dark-shadow-light);
-}
-
-.button-primary:hover {
-  box-shadow: -3px -3px 7px rgba(255, 127, 63, 0.5),
-    3px 3px 7px rgba(0, 0, 0, 0.5);
+  box-shadow: 0 0 10px var(--highlight-color);
 }
 
 body.dark-mode button {
   background: var(--background-dark);
   color: var(--text-color-dark);
-  box-shadow: -5px -5px 10px var(--light-shadow-dark),
-    5px 5px 10px var(--dark-shadow-dark);
 }
 
-body.dark-mode .button-primary {
-  box-shadow: -5px -5px 10px rgba(255, 127, 63, 0.3),
-    5px 5px 10px rgba(0, 0, 0, 0.8);
+#skipToDashboard {
+  background-color: transparent;
+  border: none;
+  color: gray;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+#skipToDashboard:hover {
+  color: black;
+}
+
+/* Image Optimization */
+img {
+  -webkit-user-drag: none;
+  image-rendering: -webkit-optimize-contrast;
 }
 
 .toast {
@@ -376,18 +325,3 @@ body.dark-mode .toast {
   display: none;
 }
 
-#skipToDashboard {
-  background-color: transparent;
-  border: none;
-  color: gray;
-  font-size: 14px;
-  cursor: pointer;
-  position: relative;
-  top: 28vh;
-  right: 10vh;
-  text-align: center;
-}
-
-#skipToDashboard:hover {
-  color: black;
-}
