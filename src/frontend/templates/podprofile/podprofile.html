@@ -13,6 +13,9 @@
     <div class="logo-container">
       <img src="{{ url_for('static', filename='images/PodManagerLogo.png') }}" alt="PodManager Logo"/>
     </div>
+    <div class="logo-container">
+      <img src="{{ url_for('static', filename='images/PodManagerLogo.png') }}" alt="PodManager Logo"/>
+    </div>
     <header>
       <div class="header-container">
         <button
@@ -31,6 +34,7 @@
         <h1 class="fancy-heading">POD INFO</h1>
         <form id="podNameForm">
           <div class="form-group">
+            <label for="podRss">RSS</label>
             <label for="podRss">RSS</label>
             <input type="url" id="podRss" name="podRss" />
           </div>

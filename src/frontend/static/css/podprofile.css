@@ -122,6 +122,21 @@ body.dark-mode .help-text {
   background: rgba(255, 255, 255, 0.9);
 }
 
+.dark-mode-button {
+  position: absolute;
+  top: var(--spacing-sm);
+  right: var(--spacing-sm);
+  font-size: 1.5rem;
+  background: none;
+  border: none;
+  cursor: pointer;
+}
+/* Containers (Cards) */
+.container {
+  width: 100%;
+  height: auto;
+}
+
 .logo-container {
   position: fixed;
   top: 20px;
@@ -211,6 +226,17 @@ button {
   background: var(--background-light);
   color: var(--text-color-light);
   transition: all 0.3s ease;
+}
+
+
+.button-primary {
+  border: 1px double orange;
+  height: 6vh;
+  position: relative;
+  top: 9vh;
+  right: 4vh;
+  margin: 2vh;
+  width: 40%;
 }
 
 .button-primary {
@@ -325,3 +351,21 @@ body.dark-mode .toast {
   display: none;
 }
 
+
+
+
+#skipToDashboard {
+  background-color: transparent;
+  border: none;
+  color: gray;
+  font-size: 14px;
+  cursor: pointer;
+  position: relative;
+  top: 28vh;
+  right: 10vh;
+  text-align: center;
+}
+
+#skipToDashboard:hover {
+  color: black;
+}
