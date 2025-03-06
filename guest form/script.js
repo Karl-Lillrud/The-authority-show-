@@ -310,8 +310,11 @@ document.addEventListener("DOMContentLoaded", function () {
     let currentMonth = new Date().getMonth();
     let currentYear = new Date().getFullYear();
 
-    // Load saved data on page load
-    loadSavedData();
+    // Define unavailable dates
+    const unavailableDates = [
+        "2025-03-10", "2025-03-15", "2025-03-20", // Example unavailable dates
+        "2025-04-05", "2025-04-12", "2025-04-18"  // More blocked days
+    ];
 
     // Open/Close the inline date & time picker
     openDatePickerBtn.addEventListener("click", (e) => {
@@ -320,25 +323,6 @@ document.addEventListener("DOMContentLoaded", function () {
         generateCalendar();
         populateYearDropdown();
     });
-
-    // Save input data immediately on change
-    function saveData() {
-        localStorage.setItem("recordingDate", selectedDate ? selectedDate.toISOString().split('T')[0] : "");
-        localStorage.setItem("recordingTime", timePicker.value);
-        localStorage.setItem("selectedDateText", selectedDate ? selectedDate.toDateString() : "");
-    }
-
-    function loadSavedData() {
-        const savedDate = localStorage.getItem("recordingDate");
-        const savedTime = localStorage.getItem("recordingTime");
-        const savedDateText = localStorage.getItem("selectedDateText");
-
-        if (savedDate && savedTime) {
-            document.getElementById("recordingDate").value = savedDate;
-            document.getElementById("recordingTime").value = savedTime;
-            selectedDateTime.textContent = `Selected: ${savedDateText} at ${savedTime}`;
-        }
-    }
 
     // Populate the year dropdown (10 years forward & back)
     function populateYearDropdown() {
@@ -380,7 +364,7 @@ document.addEventListener("DOMContentLoaded", function () {
         generateCalendar();
     });
 
-    // Generate a simple inline calendar
+    // Generate a simple inline calendar with unavailable dates
     function generateCalendar() {
         calendarPicker.innerHTML = "";
         const firstDay = new Date(currentYear, currentMonth, 1).getDay();
@@ -412,8 +396,11 @@ document.addEventListener("DOMContentLoaded", function () {
             dayEl.classList.add("p-2", "text-center", "rounded", "hover:bg-blue-200");
 
             const fullDate = new Date(currentYear, currentMonth, day);
-            if (fullDate.getDay() === 0 || fullDate.getDay() === 6) { // Disable weekends
-                dayEl.classList.add("text-gray-400", "cursor-not-allowed");
+            const formattedDate = fullDate.toISOString().split('T')[0]; // Format as YYYY-MM-DD
+
+            // Check if the date is unavailable
+            if (fullDate.getDay() === 0 || fullDate.getDay() === 6 || unavailableDates.includes(formattedDate)) {
+                dayEl.classList.add("text-gray-400", "cursor-not-allowed", "line-through");
             } else {
                 dayEl.classList.add("bg-blue-100", "cursor-pointer");
                 dayEl.addEventListener("click", (e) => {
@@ -445,7 +432,7 @@ document.addEventListener("DOMContentLoaded", function () {
         confirmDateTimeBtn.classList.remove("hidden");
     }
 
-    // Confirm selection & save it
+    // Confirm selection & prevent unwanted validation
     confirmDateTimeBtn.addEventListener("click", (e) => {
         e.preventDefault();
         const selectedTime = timePicker.value;
@@ -455,18 +442,7 @@ document.addEventListener("DOMContentLoaded", function () {
             document.getElementById("recordingTime").value = selectedTime;
             selectedDateTime.textContent = `Selected: ${selectedDate.toDateString()} at ${selectedTime}`;
             dateTimeContainer.classList.add("hidden");
-
-            saveData(); // Save selection
         }
     });
-
-    // Auto-save form inputs
-    document.querySelectorAll("input, textarea").forEach(input => {
-        input.addEventListener("input", () => localStorage.setItem(input.id, input.value));
-    });
-
-    // Load all saved form data on refresh
-    ["recordingDate", "recordingTime"].forEach(id => {
-        if (localStorage.getItem(id)) document.getElementById(id).value = localStorage.getItem(id);
-    });
 });
+
