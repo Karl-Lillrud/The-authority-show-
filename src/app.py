@@ -43,7 +43,7 @@ CORS(
     resources={
         r"/*": {
             "origins": [
-                "https://the-authority-show-test.onrender.com/" # Test Branch (testMain)
+                "https://devapp.podmanager.ai" # Test Branch (testMain)
                 "https://app.podmanager.ai", # Live branch (Main)
                 "127.0.0.1:8000", # Localhost
             ]
