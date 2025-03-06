@@ -130,6 +130,12 @@ body {
   padding: 0;
   margin: 10px;
 }
+
+.link.login-link {
+  /* Override top to remove unwanted offset */
+  top: 0 !important;
+}
+
 .extra-links {
   color: var(--highlight);
   text-decoration: none;
