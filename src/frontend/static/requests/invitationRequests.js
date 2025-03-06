@@ -1,4 +1,4 @@
-export async function sendInvitationEmail(email, podName, podRss) {
+export async function sendInvitationEmail(podName, podRss) {
   try {
     const response = await fetch("/send_invitation", {
       method: "POST",
@@ -6,7 +6,6 @@ export async function sendInvitationEmail(email, podName, podRss) {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        email: email,
         subject: "Welcome to PodManager.ai!",
         podName: podName,
         podRss: podRss,

@@ -11,23 +11,20 @@ document.addEventListener("DOMContentLoaded", function () {
     goToEmailSection.addEventListener("click", async () => {
       const podNameElement = document.getElementById("podName");
       const podRssElement = document.getElementById("podRss");
-      const userEmailElement = document.getElementById("loggedInUserEmail");
 
       const podName = podNameElement ? podNameElement.value.trim() : "";
       const podRss = podRssElement ? podRssElement.value.trim() : "";
-      const userEmail = userEmailElement ? userEmailElement.value.trim() : "";
 
-      console.log("User email:", userEmail);
       console.log("Podcast Name:", podName);
       console.log("Podcast RSS:", podRss);
 
-      if (!userEmail || !podName || !podRss) {
-        alert("Please enter all required fields: Email, Podcast Name, and RSS URL.");
+      if (!podName || !podRss) {
+        alert("Please enter all required fields: Podcast Name and RSS URL.");
         return;
       }
       try {
-        console.log("Sending invitation email to:", userEmail);
-        await sendInvitationEmail(userEmail, podName, podRss);
+        console.log("Sending invitation email");
+        await sendInvitationEmail(podName, podRss);
         // Hide the Pod Name section and show the Email section.
         document.getElementById("pod-name-section").classList.add("hidden");
         document.getElementById("email-section").classList.remove("hidden");

@@ -16,12 +16,11 @@ logging.basicConfig(level=logging.INFO)
 def send_invitation():
     data = request.get_json()
     logger.info(f"Received data for invitation: {data}")
-    email = data.get('email', "").strip()
     subject = data.get('subject', "").strip()
     pod_name = data.get('podName', "").strip()
     pod_rss = data.get('podRss', "").strip()
 
-    if not email or not subject or not pod_name or not pod_rss:
+    if not subject or not pod_name or not pod_rss:
         logger.error("Missing required fields for sending invitation email.")
         return jsonify({'success': False, 'error': 'Missing required fields'}), 400
 
@@ -46,7 +45,6 @@ def send_invitation():
             "accountId": account_id,
             "podName": pod_name,
             "rssFeed": pod_rss,
-            "email": email,
             "created_at": datetime.now(timezone.utc),
         }
 
@@ -60,7 +58,7 @@ def send_invitation():
 
         # Send the invitation email
         body = render_template('beta-email/podmanager-beta-invite.html')
-        send_email(email, subject, body)
+        send_email(user_account["email"], subject, body)
         logger.info("Invitation email sent successfully")
         return jsonify({'success': True, 'message': 'Podcast added and invitation email sent successfully'}), 201
 
