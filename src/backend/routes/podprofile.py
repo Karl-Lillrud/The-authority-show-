@@ -1,5 +1,6 @@
 from flask import Blueprint, render_template, g, redirect, url_for, session, request, jsonify, current_app
 from backend.database.mongo_connection import collection
+import requests
 
 podprofile_bp = Blueprint("podprofile_bp", __name__)
 
@@ -8,12 +9,17 @@ def podprofile():
     if not hasattr(g, "user_id") or not g.user_id:
         return redirect(url_for("signin"))
 
-    # Fetch the user's email from the database
-    user_account = collection.database.Accounts.find_one({"userId": g.user_id}, {"email": 1})
-    if not user_account or "email" not in user_account:
+    # Fetch the user's email using the /get_email endpoint
+    try:
+        response = requests.get(url_for("register_bp.get_email", _external=True), cookies=request.cookies)
+        response.raise_for_status()
+        user_email = response.json().get("email")
+        if not user_email:
+            return redirect(url_for("signin"))
+    except requests.RequestException as e:
+        current_app.logger.error(f"Error fetching email: {e}")
         return redirect(url_for("signin"))
 
-    user_email = user_account["email"]
     session["user_email"] = user_email  # Store the email in the session
     return render_template("podprofile/podprofile.html", user_email=user_email)
 

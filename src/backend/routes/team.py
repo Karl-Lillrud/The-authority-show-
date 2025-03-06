@@ -8,7 +8,6 @@ import uuid
 # Define Blueprint
 team_bp = Blueprint("team_bp", __name__)
 
-
 @team_bp.route("/add_teams", methods=["POST"])
 def add_team():
     try:
@@ -80,7 +79,6 @@ def add_team():
         print(f"❌ ERROR: {e}")
         return jsonify({"error": f"Failed to add team: {str(e)}"}), 500
 
-
 @team_bp.route("/get_teams", methods=["GET"])
 def get_teams():
     if not hasattr(g, "user_id") or not g.user_id:
@@ -115,7 +113,6 @@ def get_teams():
     except Exception as e:
         return jsonify({"error": f"Failed to retrieve teams: {str(e)}"}), 500
 
-
 @team_bp.route("/delete_team/<team_id>", methods=["DELETE"])
 def delete_team(team_id):
     try:
@@ -147,7 +144,6 @@ def delete_team(team_id):
     except Exception as e:
         print(f"❌ ERROR: {e}")
         return jsonify({"error": f"Failed to delete podcast or team: {str(e)}"}), 500
-
 
 @team_bp.route("/edit_team/<team_id>", methods=["PUT"])
 def edit_team(team_id):
