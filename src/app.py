@@ -43,8 +43,9 @@ CORS(
     resources={
         r"/*": {
             "origins": [
-                "https://the-authority-show.onrender.com/",
+                "https://devapp.podmanager.ai",
                 "https://app.podmanager.ai",
+                "http://localhost:3000"
             ]
         }
     },
