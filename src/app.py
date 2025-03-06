@@ -45,7 +45,7 @@ CORS(
             "origins": [
                 "https://devapp.podmanager.ai",
                 "https://app.podmanager.ai",
-                "http://localhost:3000"
+                "http://localhost:8000"
             ]
         }
     },
