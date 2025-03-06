@@ -1,4 +1,4 @@
-from flask import request, jsonify, Blueprint, g, redirect, url_for, render_template
+from flask import request, jsonify, Blueprint, g, redirect, url_for
 from backend.database.mongo_connection import collection
 from datetime import datetime, timezone
 import uuid
@@ -38,6 +38,7 @@ def podcast():
         data = request.get_json()
         print("📩 Received Data:", data)
         data["accountId"] = account_id  # Populate the required field with the fetched accountId
+        data["email"] = session.get("user_email", "")  # Add the user's email to the data
 
         # Validate data using PodcastSchema
         schema = PodcastSchema()
@@ -65,20 +66,20 @@ def podcast():
         # Create the podcast document with the accountId from the account document
         podcast_item = {
             "_id": podcast_id,
-            "teamId": validated_data.get("teamId"),
+            "teamId": validated_data.get("teamId", ""),
             "accountId": account_id,  # Use the fetched accountId
-            "podName": validated_data.get("podName"),
-            "ownerName": validated_data.get("ownerName"),
-            "hostName": validated_data.get("hostName"),
-            "rssFeed": validated_data.get("rssFeed"),
-            "googleCal": validated_data.get("googleCal"),
-            "podUrl": validated_data.get("podUrl"),
-            "guestUrl": validated_data.get("guestUrl"),
+            "podName": validated_data.get("podName", "") or "",
+            "ownerName": validated_data.get("ownerName", "") or "",
+            "hostName": validated_data.get("hostName", "") or "",
+            "rssFeed": validated_data.get("rssFeed", "") or "",
+            "googleCal": validated_data.get("googleCal", "") or "",
+            "podUrl": validated_data.get("podUrl", "") or "",
+            "guestUrl": validated_data.get("guestUrl", "") or "",
             "socialMedia": validated_data.get("socialMedia", []),
-            "email": validated_data.get("email"),
-            "description": validated_data.get("description"),
-            "logoUrl": validated_data.get("logoUrl"),
-            "category": validated_data.get("category"),
+            "email": validated_data.get("email", "") or "",
+            "description": validated_data.get("description", "") or "",
+            "logoUrl": validated_data.get("logoUrl", "") or "",
+            "category": validated_data.get("category", "") or "",
             "defaultTasks": validated_data.get("defaultTasks", []),
             "created_at": datetime.now(timezone.utc),
         }
@@ -270,16 +271,3 @@ def edit_podcast(podcast_id):
     except Exception as e:
         print(f"❌ ERROR: {e}")
         return jsonify({"error": f"Failed to update podcast: {str(e)}"}), 500
-
-@podcast_bp.route("/podprofile", methods=["GET"])
-def podprofile():
-    if not hasattr(g, "user_id") or not g.user_id:
-        return redirect(url_for("login"))
-
-    # Fetch the user's email from the database
-    user_account = collection.database.Accounts.find_one({"userId": g.user_id}, {"email": 1})
-    if not user_account or "email" not in user_account:
-        return redirect(url_for("login"))
-
-    user_email = user_account["email"]
-    return render_template("podprofile/podprofile.html", user_email=user_email)
