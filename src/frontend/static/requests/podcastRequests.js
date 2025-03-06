@@ -91,3 +91,30 @@ export async function fetchRSSData(rssUrl) {
     throw error;
   }
 }
+
+export async function schedulePodcastRecording(podcastId, guestData) {
+  try {
+      const response = await fetch('/schedule_podcast_recording', {
+          method: 'POST',
+          headers: {
+              'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+              podcast_id: podcastId,
+              guest_email: guestData.email,
+              recording_date: guestData.date,
+              recording_time: guestData.time,
+              platform: guestData.platform
+          })
+      });
+
+      const data = await response.json();
+      if (!response.ok) {
+          throw new Error(data.error);
+      }
+      return data;
+  } catch (error) {
+      console.error('Error scheduling podcast:', error);
+      throw error;
+  }
+}

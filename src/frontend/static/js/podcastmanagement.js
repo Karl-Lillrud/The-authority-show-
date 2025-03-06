@@ -5,6 +5,7 @@ import {
   updatePodcast,
   deletePodcast
 } from "../requests/podcastRequest.js";
+import { schedulePodcastRecording } from '../requests/podcastRequests.js';
 
 console.log("podcastmanagement.js loaded");
 
@@ -528,4 +529,35 @@ function renderPodcastDetail(podcast) {
     document.getElementById("podcast-detail").style.display = "none";
     document.getElementById("podcast-list").style.display = "flex";
   });
+
 }
+// Add this function
+async function scheduleRecording(podcastId) {
+  try {
+      const guestData = {
+          email: document.getElementById('guest-email').value,
+          date: document.getElementById('recording-date').value,
+          time: document.getElementById('recording-time').value,
+          platform: document.getElementById('platform').value
+      };
+
+      const result = await schedulePodcastRecording(podcastId, guestData);
+      showAlert('Recording scheduled and confirmation sent!', 'green');
+      return result;
+  } catch (error) {
+      showAlert('Failed to schedule recording: ' + error.message, 'red');
+      throw error;
+  }
+}
+
+// Add an event listener for the schedule button
+document.getElementById('schedule-recording-btn').addEventListener('click', async (e) => {
+  e.preventDefault();
+  if (selectedPodcastId) {
+      try {
+          await scheduleRecording(selectedPodcastId);
+      } catch (error) {
+          console.error('Error scheduling recording:', error);
+      }
+  }
+});

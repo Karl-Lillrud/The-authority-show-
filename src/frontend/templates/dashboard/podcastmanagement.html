@@ -101,6 +101,28 @@
             </div>
             <button type="submit" class="invite-btn">SAVE</button>
           </form>
+          <!-- Add this inside the form-fields div -->
+          <div class="field-group">
+            <label for="guest-email">Guest Email</label>
+            <input type="email" id="guest-email" name="guestEmail" required />
+          </div>
+          <div class="field-group">
+            <label for="recording-date">Recording Date</label>
+            <input type="date" id="recording-date" name="recordingDate" required />
+          </div>
+          <div class="field-group">
+            <label for="recording-time">Recording Time</label>
+            <input type="time" id="recording-time" name="recordingTime" required />
+          </div>
+          <div class="field-group">
+            <label for="platform">Platform</label>
+            <select id="platform" name="platform">
+                <option value="Zoom">Zoom</option>
+                <option value="Google Meet">Google Meet</option>
+                <option value="Skype">Skype</option>
+                <option value="Other">Other</option>
+            </select>
+          </div>
         </div>
       </div>
 

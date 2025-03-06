@@ -271,3 +271,55 @@ def edit_podcast(podcast_id):
     except Exception as e:
         print(f"❌ ERROR: {e}")
         return jsonify({"error": f"Failed to update podcast: {str(e)}"}), 500
+    
+
+@podcast_bp.route("/schedule_podcast_recording", methods=["POST"])
+def schedule_recording():
+    if not g.user_id:
+        return jsonify({"error": "Unauthorized"}), 401
+
+    try:
+        data = request.get_json()
+        
+        # Validate required fields
+        required_fields = ['podcast_id', 'guest_email', 'recording_date', 'recording_time']
+        if not all(field in data for field in required_fields):
+            return jsonify({"error": "Missing required fields"}), 400
+
+        # Get podcast details
+        podcast = collection.database.Podcasts.find_one({"_id": data['podcast_id']})
+        if not podcast:
+            return jsonify({"error": "Podcast not found"}), 404
+
+        # Prepare data for email
+        email_data = {
+            "podName": podcast['podName'],
+            "recordingDate": data['recording_date'],
+            "recordingTime": data['recording_time'],
+            "platform": data.get('platform', 'Zoom'),
+            "hostEmail": podcast.get('email', 'contact@podmanager.ai')
+        }
+
+        # Send confirmation email
+        from backend.utils.email_utils import send_guest_confirmation_email
+        send_guest_confirmation_email(data['guest_email'], email_data)
+
+        # Save recording schedule to database
+        schedule_data = {
+            "_id": str(uuid.uuid4()),
+            "podcastId": data['podcast_id'],
+            "guestEmail": data['guest_email'],
+            "recordingDate": data['recording_date'],
+            "recordingTime": data['recording_time'],
+            "platform": data.get('platform', 'Zoom'),
+            "status": "scheduled",
+            "created_at": datetime.now(timezone.utc)
+        }
+        
+        collection.database.PodcastSchedule.insert_one(schedule_data)
+
+        return jsonify({"message": "Recording scheduled and confirmation sent"}), 200
+
+    except Exception as e:
+        print(f"❌ ERROR: {e}")
+        return jsonify({"error": f"Failed to schedule recording: {str(e)}"}), 500
