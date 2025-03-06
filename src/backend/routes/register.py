@@ -3,46 +3,54 @@ from werkzeug.security import generate_password_hash
 from datetime import datetime
 import uuid
 import secrets, string
-
-import random
+import logging
 from backend.database.mongo_connection import collection
+
+# Ställ in logger
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.DEBUG)
 
 register_bp = Blueprint("register_bp", __name__)
 
-# Constants
+# Konstanter
 INITIAL_CREDITS = 3000
-INVITE_CREDIT_REWARD = 200  # Bonus for referring a new user
+INVITE_CREDIT_REWARD = 200  # Bonus per enskild referral
 
 def generate_referral_code(email):
-    # Generate an 6-character referral code using uppercase letters and digits
     alphabet = string.ascii_uppercase + string.digits
-    return ''.join(secrets.choice(alphabet) for _ in range(6))
+    code = ''.join(secrets.choice(alphabet) for _ in range(6))
+    logger.debug(f"Generated referral code {code} for email {email}")
+    return code
 
 @register_bp.route("/register", methods=["GET", "POST"])
 def register():
+    logger.debug("Entered register endpoint")
     if request.method == "GET":
         referral = request.args.get("referral", "").strip()
+        logger.debug(f"GET request with referral: {referral}")
         return render_template("register/register.html", referral=referral)
 
-    # Handle POST request (user registration)
     data = request.get_json(silent=True) or request.form.to_dict()
+    logger.debug(f"POST data received: {data}")
     if not data or "email" not in data or "password" not in data:
+        logger.error("Missing required fields: email and password")
         return jsonify({"error": "Missing required fields (email and password)"}), 400
 
     email = data["email"].lower().strip()
     password = data["password"]
     hashed_password = generate_password_hash(password)
+    logger.debug(f"Email: {email}, password hash generated.")
 
-    # Check if email already exists in the database
     existing_user = collection.database.Users.find_one({"email": email})
     if existing_user:
+        logger.error(f"User already exists with email: {email}")
         return jsonify({"error": "User already registered with this email"}), 409
 
-    # Get referral code
+    # Hämta referral-kod från data eller query-parameter
     referrer_code = data.get("referred_by", "").strip() or request.args.get("referral", "").strip()
+    logger.debug(f"Referral code from request: {referrer_code}")
     referral_code = generate_referral_code(email)
 
-    # Create User document
     new_user_id = str(uuid.uuid4())
     user_document = {
         "_id": new_user_id,
@@ -52,13 +60,11 @@ def register():
         "referral_code": referral_code,
         "referred_by": referrer_code if referrer_code else None
     }
-
-    # Insert user into Users collection
+    logger.debug(f"Inserting new user: {user_document}")
     collection.database.Users.insert_one(user_document)
 
-    # Create Credits document for the new user
     credits_document = {
-        "_id": str(uuid.uuid4()),  # Use a separate UUID for credits
+        "_id": str(uuid.uuid4()),
         "user_id": new_user_id,
         "credits": INITIAL_CREDITS,
         "unclaimed_credits": 0,
@@ -70,30 +76,48 @@ def register():
         "episodes_published": 0,
         "streak_days": 0
     }
-
-    # Check if user already has a credits document
+    logger.debug(f"Inserting credits document: {credits_document}")
     existing_credits = collection.database.Credits.find_one({"user_id": new_user_id})
     if not existing_credits:
         collection.database.Credits.insert_one(credits_document)
 
-    # Award bonus credits if the user was referred by someone
+    # Om referral-kod angavs, uppdatera referrarens credits
     if referrer_code:
-       referrer = collection.database.Users.find_one({"referral_code": referrer_code})
-       if referrer:
+        logger.debug(f"Referral code provided: {referrer_code}")
+        referrer = collection.database.Users.find_one({"referral_code": referrer_code})
+        logger.debug(f"Found referrer: {referrer}")
+        if referrer:
             if referrer["_id"] == new_user_id:
-               return jsonify({"error": "User cannot refer themselves."}), 400
+                logger.error("User attempted to refer themselves")
+                return jsonify({"error": "User cannot refer themselves."}), 400
             referrer_id = referrer["_id"]
+            # Öka per referral
             collection.database.Credits.update_one(
-            {"user_id": referrer_id},
-            {
-                "$inc": {"credits": INVITE_CREDIT_REWARD, "referrals": 1, "referral_bonus": INVITE_CREDIT_REWARD},
-                "$setOnInsert": {"user_id": referrer_id}
-            },
-            upsert=True
-        )
+                {"user_id": referrer_id},
+                {
+                    "$inc": {"credits": INVITE_CREDIT_REWARD, "referrals": 1, "referral_bonus": INVITE_CREDIT_REWARD}
+                },
+                upsert=True
+            )
+            logger.debug(f"Incremented referral stats for user_id {referrer_id}")
 
+            # Hämta uppdaterat dokument för att kontrollera referrals-count
+            ref_credits = collection.database.Credits.find_one({"user_id": referrer_id})
+            logger.debug(f"Referrer credits document after update: {ref_credits}")
+            if ref_credits.get("referrals", 0) == 3 and not ref_credits.get("milestone_awarded", False):
+                # När 3 referrals uppnåtts, ge extra bonus på 1500 credits
+                collection.database.Credits.update_one(
+                    {"user_id": referrer_id},
+                    {
+                        "$inc": {"credits": 1500},
+                        "$set": {"milestone_awarded": True}
+                    }
+                )
+                logger.info(f"Milestone bonus awarded: 1500 credits to user_id {referrer_id}, result: {milestone_result.raw_result}")
+        else:
+            logger.error(f"Referrer with code {referrer_code} not found.")
 
-    # Create account entry in the Accounts collection
+    # Skapa konto i Accounts-samlingen
     account_data = {
         "userId": new_user_id,
         "email": email,
@@ -101,10 +125,10 @@ def register():
         "isCompany": data.get("isCompany", False),
         "ownerId": new_user_id,
     }
-    # Directly insert into the Accounts collection
+    logger.debug(f"Inserting account data: {account_data}")
     collection.database.Accounts.insert_one(account_data)
 
-    # Return success response
+    logger.info(f"User registration successful for {email} with user_id {new_user_id} and referral_code {referral_code}")
     return jsonify({
         "message": "Registration successful!",
         "user_id": new_user_id,

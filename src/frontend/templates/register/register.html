@@ -4,27 +4,18 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Register</title>
-    <link
-      rel="stylesheet"
-      href="{{ url_for('static', filename='css/signin.css') }}"
-    />
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/signin.css') }}" />
     <script src="{{ url_for('static', filename='requests/podprofileRequests.js') }}"></script>
     <script src="{{ url_for('static', filename='requests/podprofile_languageRequests.js') }}"></script>
   </head>
   <body>
     <!-- Logo -->
     <div class="logo-container">
-      <img
-        src="{{ url_for('static', filename='images/PodManagerLogo.png') }}"
-        alt="PodManager Logo"
-      />
+      <img src="{{ url_for('static', filename='images/PodManagerLogo.png') }}" alt="PodManager Logo" />
     </div>
 
     <div class="image">
-      <img
-        src="{{ url_for('static', filename='images/WhatsApp Image.jpeg') }}"
-        alt="Beskrivning av bilden"
-      />
+      <img src="{{ url_for('static', filename='images/WhatsApp Image.jpeg') }}" alt="Beskrivning av bilden" />
     </div>
 
     <div class="center-box">
@@ -32,6 +23,8 @@
       <div id="error-message" class="error-message" style="display: none"></div>
 
       <form id="register-form">
+        <!-- Lägg in referral-koden som ett dolt fält -->
+        <input type="hidden" name="referred_by" value="{{ referral }}">
         <div class="input-group">
           <label for="email" class="label"></label>
           <input
@@ -76,8 +69,7 @@
       </div>
     </div>
 
-    {% with messages = get_flashed_messages(with_categories=true) %} {% if
-    messages %}
+    {% with messages = get_flashed_messages(with_categories=true) %} {% if messages %}
     <ul class="flashes">
       {% for category, message in messages %}
       <li class="{{ category }}">{{ message }}</li>
@@ -90,9 +82,7 @@
         const form = document.getElementById("register-form");
         const errorMessage = document.getElementById("error-message");
         const userExistsModal = document.getElementById("user-exists-modal");
-        const userExistsOkButton = document.getElementById(
-          "user-exists-ok-button"
-        );
+        const userExistsOkButton = document.getElementById("user-exists-ok-button");
 
         const API_BASE_URL =
           window.location.hostname === "127.0.0.1" ||
@@ -110,6 +100,8 @@
 
           const email = document.getElementById("email").value;
           const password = document.getElementById("password").value;
+          // Hämta referral-koden från det dolda fältet
+          const referredBy = document.querySelector('input[name="referred_by"]').value;
 
           try {
             const response = await fetch(`${API_BASE_URL}/register`, {
@@ -117,7 +109,8 @@
               headers: {
                 "Content-Type": "application/json"
               },
-              body: JSON.stringify({ email, password })
+              // Skicka med även "referred_by" i POST-data
+              body: JSON.stringify({ email, password, referred_by: referredBy })
             });
 
             if (response.ok) {
