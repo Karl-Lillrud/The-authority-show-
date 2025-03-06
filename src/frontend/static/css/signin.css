@@ -93,7 +93,7 @@ body {
   background-color: #ff7f3f;
   color: white;
   position: relative;
-  bottom: 8vh;
+  bottom: 4vh;
   border-radius: 14px;
   height: 6vh;
   width: 83%;
@@ -126,18 +126,17 @@ body {
   text-decoration: none;
   font-size: 19px;
   position: relative;
-  top: 14vh;
+  top: 20vh;
   padding: 0;
   margin: 10px;
 }
 
 .link.login-link {
-  /* Override top to remove unwanted offset */
-  top: 0 !important;
+  top: 30vh !important;
   border: none !important;
   background: none !important;
   box-shadow: none !important;
-  padding: 0; /* Remove extra padding if any */
+  padding: 0; 
 }
 
 .link.login-link:focus {
@@ -147,16 +146,24 @@ body {
 .link.login-link:hover {
   cursor: pointer;
 }
-
-.extra-links {
-  color: var(--highlight);
-  text-decoration: none;
-  font-size: 19px;
+.extra-links .button.button-secondary {
+  background: transparent;
+  border: none;
+  box-shadow: none;
+  border-radius: 0;
+  color: #ff7f3f ;
+  font: inherit;
   position: relative;
-  top: 1vh;
+  top: 3vh;
+  text-decoration: none;
   padding: 0;
-  margin: 10px;
+  font-size: 20px;
+  cursor: pointer;
 }
+.extra-links .button.button-secondary:hover {
+  text-decoration: underline;
+}
+
 
 .link:hover {
   text-decoration: underline;
@@ -169,23 +176,19 @@ body {
   text-align: center;
 }
 
-.extra-links {
-  text-align: center;
-  position: relative;
-  bottom: 23vh;
-}
 
 .form-actions {
-  margin-bottom: -12vh; /* Minskar avståndet mellan knappen och länkarna */
+  margin-bottom: -12vh; 
 }
 
 .extra-links a {
   display: block;
-  margin: 2px 0; /* Justerar vertikalt mellanrum mellan länkarna */
+  margin: 2px 0; 
 }
 
-.forgot-password {
-  text-align: center;
-  position: relative;
-  bottom: 15px;
+.forgot-link {
+  cursor: pointer;
+  color: #f6921e;
+  text-decoration: underline;
+  z-index: 999; /* om något annat blockar */
 }
