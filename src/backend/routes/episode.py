@@ -8,6 +8,8 @@ import io
 # Define Blueprint
 episode_bp = Blueprint("episode_bp", __name__)
 
+episodes_collection = database["episodes"]
+transcripts_collection = database["transcripts"]
 
 @episode_bp.route("/register_episode", methods=["POST"])
 def register_episode():
