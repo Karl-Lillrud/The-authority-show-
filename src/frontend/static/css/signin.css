@@ -134,6 +134,18 @@ body {
 .link.login-link {
   /* Override top to remove unwanted offset */
   top: 0 !important;
+  border: none !important;
+  background: none !important;
+  box-shadow: none !important;
+  padding: 0; /* Remove extra padding if any */
+}
+
+.link.login-link:focus {
+  outline: none !important;
+}
+
+.link.login-link:hover {
+  cursor: pointer;
 }
 
 .extra-links {
@@ -174,7 +186,6 @@ body {
 
 .forgot-password {
   text-align: center;
-
   position: relative;
-  bottom: 0;
+  bottom: 15px;
 }
