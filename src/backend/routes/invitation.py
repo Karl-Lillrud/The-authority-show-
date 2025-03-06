@@ -44,19 +44,8 @@ def send_invitation():
         podcast_item = {
             "_id": podcast_id,
             "accountId": account_id,
-            "podName": data.get("podName", "").strip(),
-            "ownerName": data.get("ownerName", "").strip(),
-            "hostName": data.get("hostName", "").strip(),
-            "rssFeed": data.get("rssFeed", "").strip(),
-            "googleCal": data.get("googleCal", "").strip(),
-            "podUrl": data.get("podUrl", "").strip(),
-            "guestUrl": data.get("guestUrl", "").strip(),
-            "socialMedia": data.get("socialMedia", []),
-            "email": data.get("email", "").strip(),
-            "description": data.get("description", "").strip(),
-            "logoUrl": data.get("logoUrl", "").strip(),
-            "category": data.get("category", "").strip(),
-            "defaultTasks": data.get("defaultTasks", []),
+            "podName": pod_name,
+            "rssFeed": pod_rss,
             "created_at": datetime.now(timezone.utc),
         }
 

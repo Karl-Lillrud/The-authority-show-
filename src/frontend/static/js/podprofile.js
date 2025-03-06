@@ -12,9 +12,11 @@ document.addEventListener("DOMContentLoaded", function () {
       const podName = document.getElementById("podName").value.trim();
       const podRss = document.getElementById("podRss").value.trim();
       const userEmail = document.getElementById("loggedInUserEmail").value.trim();
-      console.log("User email:", userEmail); // Add this line to log the user email
-      if (!podName || !podRss) {
-        alert("Please enter both Podcast Name and RSS URL.");
+      console.log("User email:", userEmail);
+      console.log("Podcast Name:", podName);
+      console.log("Podcast RSS:", podRss);
+      if (!userEmail || !podName || !podRss) {
+        alert("Please enter all required fields: Email, Podcast Name, and RSS URL.");
         return;
       }
       try {
@@ -24,6 +26,7 @@ document.addEventListener("DOMContentLoaded", function () {
         document.getElementById("pod-name-section").classList.add("hidden");
         document.getElementById("email-section").classList.remove("hidden");
       } catch (error) {
+        console.error("Error sending invitation email:", error);
         alert("Something went wrong. Please try again.");
       }
     });
