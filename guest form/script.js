@@ -1,4 +1,4 @@
-emailjs.init("your_user_id"); // Initializes EmailJS
+emailjs.init("your_user_id"); // Initializes EmailJS (If you want to use it)
 
 const form = document.getElementById("guestForm");
 const availableDates = ["2025-03-10", "2025-03-15", "2025-03-20"];
@@ -7,7 +7,7 @@ const availableDates = ["2025-03-10", "2025-03-15", "2025-03-20"];
 let socialMediaCount = 0;
 const maxSocialMedia = 3;
 
-// Load saved social media on page load
+// Loads saved social media on page load
 document.addEventListener("DOMContentLoaded", loadSavedSocialMedia);
 
 function addSocialMedia(selectedPlatform = "", profileLink = "") {
@@ -102,7 +102,7 @@ let recommendedGuestCount = 0;
 const maxRecommendedGuests = 3;
 
 document.addEventListener("DOMContentLoaded", () => {
-    loadSavedRecommendedGuests(); // Load saved guests
+    loadSavedRecommendedGuests(); // Loads saved guests
 });
 
 function addRecommendedGuest(name = "", email = "", reason = "") {
@@ -131,7 +131,7 @@ function addRecommendedGuest(name = "", email = "", reason = "") {
     emailInput.value = email;
     emailInput.addEventListener("input", saveRecommendedGuests);
 
-    // Textarea for reason
+    // Textarea for reasons
     const reasonInput = document.createElement("textarea");
     reasonInput.classList.add("w-full", "border", "p-2", "rounded");
     reasonInput.placeholder = "Why do you recommend this guest?";
@@ -217,7 +217,7 @@ function previewImage() {
     if (fileInput.files.length > 0) {
       const file = fileInput.files[0];
 
-      // Validate file type
+      // Validates file type
       if (!file.type.startsWith("image/")) {
         photoError.textContent = "Please upload a valid image file.";
         fileInput.value = ""; // Clear the input
@@ -235,10 +235,10 @@ function previewImage() {
         return;
       }
 
-      // Clear error message
+      // Clears error message
       photoError.textContent = "";
 
-      // Display file name
+      // Display files name
       fileNameDisplay.textContent = `Selected file: ${file.name}`;
 
       // Show image preview
@@ -268,14 +268,13 @@ function removeImage() {
     const previewContainer = document.getElementById("imagePreviewContainer");
     const imagePreview = document.getElementById("imagePreview");
 
-    fileInput.value = ""; // Clear the file input
+    fileInput.value = ""; // Clear the files input
     fileNameDisplay.textContent = "";
     previewContainer.classList.add("hidden");
 
     // Remove image from localStorage
     localStorage.removeItem("imageData");
 
-    // Optionally, clear the image preview
     imagePreview.src = "";
 }
 
@@ -310,13 +309,13 @@ document.addEventListener("DOMContentLoaded", function () {
     let currentMonth = new Date().getMonth();
     let currentYear = new Date().getFullYear();
 
-    // Define unavailable dates
+    // Unavailable dates
     const unavailableDates = [
-        "2025-03-10", "2025-03-15", "2025-03-20", // Example unavailable dates
-        "2025-04-05", "2025-04-12", "2025-04-18"  // More blocked days
+        "2025-03-10", "2025-03-15", "2025-03-20",
+        "2025-04-05", "2025-04-12", "2025-04-18"
     ];
 
-    // Open/Close the inline date & time picker
+    // Open/Closes the inline date & time picker
     openDatePickerBtn.addEventListener("click", (e) => {
         e.preventDefault();
         dateTimeContainer.classList.toggle("hidden");
@@ -324,7 +323,7 @@ document.addEventListener("DOMContentLoaded", function () {
         populateYearDropdown();
     });
 
-    // Populate the year dropdown (10 years forward & back)
+    // Populates the year dropdown
     function populateYearDropdown() {
         yearSelector.innerHTML = "";
         for (let i = currentYear - 10; i <= currentYear + 10; i++) {
@@ -336,7 +335,7 @@ document.addEventListener("DOMContentLoaded", function () {
         }
     }
 
-    // Handle month navigation
+    // Handles month navigation
     prevMonthBtn.addEventListener("click", (e) => {
         e.preventDefault();
         currentMonth--;
@@ -357,14 +356,14 @@ document.addEventListener("DOMContentLoaded", function () {
         generateCalendar();
     });
 
-    // Handle year change
+    // Handles year change
     yearSelector.addEventListener("change", (e) => {
         e.preventDefault();
         currentYear = parseInt(yearSelector.value);
         generateCalendar();
     });
 
-    // Generate a simple inline calendar with unavailable dates
+    // Generates a simple inline calendar
     function generateCalendar() {
         calendarPicker.innerHTML = "";
         const firstDay = new Date(currentYear, currentMonth, 1).getDay();
@@ -374,7 +373,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
         const daysOfWeek = ["S", "M", "T", "W", "T", "F", "S"];
 
-        // Display days of the week
+        // Displays days of the week
         daysOfWeek.forEach(day => {
             const dayEl = document.createElement("div");
             dayEl.classList.add("text-center", "font-bold");
@@ -382,13 +381,13 @@ document.addEventListener("DOMContentLoaded", function () {
             calendarPicker.appendChild(dayEl);
         });
 
-        // Fill in empty days at start of month
+        // Fills in empty days at start of month
         for (let i = 0; i < firstDay; i++) {
             const emptyDiv = document.createElement("div");
             calendarPicker.appendChild(emptyDiv);
         }
 
-        // Fill in days
+        // Fills in days
         for (let day = 1; day <= daysInMonth; day++) {
             const dayEl = document.createElement("button");
             dayEl.type = "button"; // Prevent it from submitting
@@ -396,9 +395,9 @@ document.addEventListener("DOMContentLoaded", function () {
             dayEl.classList.add("p-2", "text-center", "rounded", "hover:bg-blue-200");
 
             const fullDate = new Date(currentYear, currentMonth, day);
-            const formattedDate = fullDate.toISOString().split('T')[0]; // Format as YYYY-MM-DD
+            const formattedDate = fullDate.toISOString().split('T')[0];
 
-            // Check if the date is unavailable
+            // Checks if the date is unavailable
             if (fullDate.getDay() === 0 || fullDate.getDay() === 6 || unavailableDates.includes(formattedDate)) {
                 dayEl.classList.add("text-gray-400", "cursor-not-allowed", "line-through");
             } else {
@@ -415,7 +414,7 @@ document.addEventListener("DOMContentLoaded", function () {
         }
     }
 
-    // Populate time slots (only full hours & half hours)
+    // Populates time slots
     function populateTimeSlots() {
         timePicker.innerHTML = "";
         timePickerContainer.classList.remove("hidden");
@@ -432,7 +431,7 @@ document.addEventListener("DOMContentLoaded", function () {
         confirmDateTimeBtn.classList.remove("hidden");
     }
 
-    // Confirm selection & prevent unwanted validation
+    // Confirms selection & prevents unwanted validation
     confirmDateTimeBtn.addEventListener("click", (e) => {
         e.preventDefault();
         const selectedTime = timePicker.value;
