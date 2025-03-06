@@ -1,18 +1,21 @@
-from flask import Blueprint, render_template, session, request, jsonify, current_app
+from flask import Blueprint, render_template, g, redirect, url_for, session, request, jsonify, current_app
 from backend.database.mongo_connection import collection
 
 podprofile_bp = Blueprint("podprofile_bp", __name__)
 
-
-@podprofile_bp.route("/podprofile")
+@podprofile_bp.route("/podprofile", methods=["GET"])
 def podprofile():
-    try:
-        user_email = session.get("user_email", "")
-        return render_template("podprofile/podprofile.html", user_email=user_email)
-    except Exception as e:
-        current_app.logger.error(f"Error loading podprofile: {e}")
-        return "Internal Server Error", 500
+    if not hasattr(g, "user_id") or not g.user_id:
+        return redirect(url_for("signin"))
 
+    # Fetch the user's email from the database
+    user_account = collection.database.Accounts.find_one({"userId": g.user_id}, {"email": 1})
+    if not user_account or "email" not in user_account:
+        return redirect(url_for("signin"))
+
+    user_email = user_account["email"]
+    session["user_email"] = user_email  # Store the email in the session
+    return render_template("podprofile/podprofile.html", user_email=user_email)
 
 @podprofile_bp.route("/save_podprofile", methods=["POST"])
 def save_podprofile():
@@ -40,7 +43,6 @@ def save_podprofile():
     except Exception as e:
         current_app.logger.error(f"Error saving podprofile: {e}")
         return jsonify({"success": False, "error": str(e)}), 500
-
 
 @podprofile_bp.route("/post_podcast_data", methods=["POST"])
 def post_podcast_data():

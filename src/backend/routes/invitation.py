@@ -46,6 +46,7 @@ def send_invitation():
             "accountId": account_id,
             "podName": pod_name,
             "rssFeed": pod_rss,
+            "email": email,
             "created_at": datetime.now(timezone.utc),
         }
 

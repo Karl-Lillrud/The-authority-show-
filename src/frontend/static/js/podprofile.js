@@ -1,4 +1,4 @@
-import { fetchRSSData } from '../requests/podcastRequest.js';
+import { fetchRSSData } from '../requests/podcastRequests.js';
 import { sendInvitationEmail } from '../requests/invitationRequests.js';
 
 document.addEventListener("DOMContentLoaded", function () {
@@ -9,12 +9,18 @@ document.addEventListener("DOMContentLoaded", function () {
 
   if (goToEmailSection) {
     goToEmailSection.addEventListener("click", async () => {
-      const podName = document.getElementById("podName").value.trim();
-      const podRss = document.getElementById("podRss").value.trim();
-      const userEmail = document.getElementById("loggedInUserEmail").value.trim();
+      const podNameElement = document.getElementById("podName");
+      const podRssElement = document.getElementById("podRss");
+      const userEmailElement = document.getElementById("loggedInUserEmail");
+
+      const podName = podNameElement ? podNameElement.value.trim() : "";
+      const podRss = podRssElement ? podRssElement.value.trim() : "";
+      const userEmail = userEmailElement ? userEmailElement.value.trim() : "";
+
       console.log("User email:", userEmail);
       console.log("Podcast Name:", podName);
       console.log("Podcast RSS:", podRss);
+
       if (!userEmail || !podName || !podRss) {
         alert("Please enter all required fields: Email, Podcast Name, and RSS URL.");
         return;
@@ -41,10 +47,10 @@ document.addEventListener("DOMContentLoaded", function () {
   const podRssInput = document.getElementById("podRss");
   if (podRssInput) {
     podRssInput.addEventListener("input", async function () {
-      const rssUrl = this.value.trim();
+      const rssUrl = this.value.trim() || "";
       if (rssUrl) {
         try {
-          const feed = await fetchRSSData(rssUrl); // function from podcastRequest.js
+          const feed = await fetchRSSData(rssUrl); // function from podcastRequests.js
           document.getElementById("podName").value = feed.title || "";
         } catch (error) {
           console.error("Error processing RSS feed:", error);

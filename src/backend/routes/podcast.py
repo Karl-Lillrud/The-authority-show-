@@ -38,6 +38,7 @@ def podcast():
         data = request.get_json()
         print("📩 Received Data:", data)
         data["accountId"] = account_id  # Populate the required field with the fetched accountId
+        data["email"] = session.get("user_email", "")  # Add the user's email to the data
 
         # Validate data using PodcastSchema
         schema = PodcastSchema()
