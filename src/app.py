@@ -1,3 +1,5 @@
+import os
+import logging
 from flask import Flask, request, session, g, jsonify
 from flask_cors import CORS
 from backend.routes.register import register_bp
@@ -18,8 +20,6 @@ from backend.routes.podprofile import podprofile_bp  # Import the podprofile blu
 from backend.routes.frontend import frontend_bp  # Import the frontend blueprint
 from backend.routes.guest_to_eposide import guesttoepisode_bp
 from dotenv import load_dotenv
-import os
-import logging
 from backend.utils import venvupdate
 from backend.database.mongo_connection import collection
 from backend.utils.email_utils import send_email
@@ -63,9 +63,7 @@ app.register_blueprint(dashboard_bp)
 app.register_blueprint(pod_management_bp)
 app.register_blueprint(podtask_bp)
 app.register_blueprint(team_bp)
-app.register_blueprint(
-    guest_bp
-)  # Ensure this line is present and has the correct prefix
+app.register_blueprint(guest_bp)  # Ensure this line is present and has the correct prefix
 app.register_blueprint(account_bp)
 app.register_blueprint(usertoteam_bp)
 app.register_blueprint(invitation_bp)

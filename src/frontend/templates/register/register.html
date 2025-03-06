@@ -56,7 +56,7 @@
         </div>
 
         <div class="extra-links">
-          <a href="{{ url_for('signin_bp.signin') }}" class="link"
+          <a href="{{ url_for('signin_bp.signin_get') }}" class="link"
             >Already have an account? Sign in</a
           >
         </div>
@@ -87,20 +87,14 @@
     </ul>
     {% endif %} {% endwith %}
 
-    <script>
+    <script type="module">
+      import { register } from "{{ url_for('static', filename='requests/authRequests.js') }}";
+
       document.addEventListener("DOMContentLoaded", function () {
         const form = document.getElementById("register-form");
         const errorMessage = document.getElementById("error-message");
         const userExistsModal = document.getElementById("user-exists-modal");
-        const userExistsOkButton = document.getElementById(
-          "user-exists-ok-button"
-        );
-
-        const API_BASE_URL =
-          window.location.hostname === "127.0.0.1" ||
-          window.location.hostname === "localhost"
-            ? "{{ LOCAL_BASE_URL }}"
-            : "{{ PROD_BASE_URL }}"; // Use LOCAL_BASE_URL for localhost and PROD_BASE_URL for production
+        const userExistsOkButton = document.getElementById("user-exists-ok-button");
 
         if (!form) {
           console.error("❌ ERROR: #register-form not found in the DOM.");
@@ -114,34 +108,18 @@
           const password = document.getElementById("password").value;
 
           try {
-            const response = await fetch(`${API_BASE_URL}/register`, {
-              method: "POST",
-              headers: {
-                "Content-Type": "application/json"
-              },
-              body: JSON.stringify({ email, password })
-            });
-
-            if (response.ok) {
-              window.location.href = `${API_BASE_URL}/signin?message=Registration successful. Please log in.`;
-            } else {
-              const result = await response.json();
-              if (result.error === "User already exists") {
-                userExistsModal.style.display = "block";
-                userExistsOkButton.addEventListener("click", function () {
-                  userExistsModal.style.display = "none";
-                });
-              } else {
-                errorMessage.textContent =
-                  result.error || "An error occurred. Please try again.";
-                errorMessage.style.display = "block";
-              }
-            }
+            const redirectUrl = await register(email, password);
+            window.location.href = redirectUrl;
           } catch (error) {
-            console.error("Error:", error);
-            errorMessage.textContent =
-              "Something went wrong. Please try again.";
-            errorMessage.style.display = "block";
+            if (error.message === "User already exists") {
+              userExistsModal.style.display = "block";
+              userExistsOkButton.addEventListener("click", function () {
+                userExistsModal.style.display = "none";
+              });
+            } else {
+              errorMessage.textContent = error.message;
+              errorMessage.style.display = "block";
+            }
           }
         });
       });

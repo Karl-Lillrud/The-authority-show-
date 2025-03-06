@@ -1,4 +1,4 @@
-from flask import request, jsonify, Blueprint, g, redirect, url_for
+from flask import request, jsonify, Blueprint, g, session
 from backend.database.mongo_connection import collection
 from datetime import datetime, timezone
 import uuid

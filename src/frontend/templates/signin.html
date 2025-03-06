@@ -78,7 +78,9 @@
       </form>
     </div>
 
-    <script>
+    <script type="module">
+      import { signin } from "{{ url_for('static', filename='requests/authRequests.js') }}";
+
       document.addEventListener("DOMContentLoaded", function () {
         const urlParams = new URLSearchParams(window.location.search);
         const message = urlParams.get("message");
@@ -93,36 +95,15 @@
         const form = document.getElementById("login-form");
         const errorMessage = document.getElementById("error-message");
 
-        const API_BASE_URL =
-          window.location.hostname === "127.0.0.1" ||
-          window.location.hostname === "localhost"
-            ? "{{ LOCAL_BASE_URL }}"
-            : "{{ PROD_BASE_URL }}"; // Use LOCAL_BASE_URL for localhost and PROD_BASE_URL for production
-
         form.addEventListener("submit", async function (event) {
           event.preventDefault();
 
           const email = document.getElementById("email").value;
           const password = document.getElementById("password").value;
-          // Removed 'remember' as it is not needed
 
           try {
-            const response = await fetch(`${API_BASE_URL}/signin`, {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ email, password })
-            });
-
-            if (!response.ok) {
-              throw new Error("Invalid email or password.");
-            }
-
-            const result = await response.json();
-            if (result.redirect_url) {
-              window.location.href = result.redirect_url;
-            } else {
-              window.location.href = "/dashboard";
-            }
+            const redirectUrl = await signin(email, password);
+            window.location.href = redirectUrl;
           } catch (error) {
             errorMessage.textContent = error.message;
             errorMessage.style.display = "block";
