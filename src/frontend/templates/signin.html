@@ -55,16 +55,25 @@
           />
         </div>
 
-        <div class="extra-links">
-          <a href="/register" class="link">Register here</a>
+        <!-- Sign in becomes a text link in form-actions -->
+        <div class="form-actions">
+          <button type="submit" class="link login-link">Sign in</button>
         </div>
 
-        <div class="extra-links">
+        <!-- Moved Forgot Password link directly under Sign in -->
+        <div class="forgot-password">
           <a href="/forgotpassword" class="link">Forgot Password?</a>
         </div>
 
-        <div class="form-actions">
-          <button type="submit" class="button button-primary">Sign in</button>
+        <!-- Moved Register here as a button in extra-links, pushed further down -->
+        <div class="extra-links" style="margin-top: 300px">
+          <button
+            type="button"
+            class="button button-primary"
+            onclick="window.location.href='/register'"
+          >
+            Register here
+          </button>
         </div>
       </form>
     </div>
