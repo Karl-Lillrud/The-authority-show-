@@ -1,3 +1,6 @@
+import { fetchRSSData } from '../requests/podcastRequest.js';
+import { sendInvitationEmail } from '../requests/invitationRequests.js';
+
 document.addEventListener("DOMContentLoaded", function () {
   // Only using the Pod Name and Email sections.
   const goToEmailSection = document.getElementById("goToEmailSection");
@@ -15,9 +18,8 @@ document.addEventListener("DOMContentLoaded", function () {
         return;
       }
       try {
-        await postPodcastData(podName, podRss);
         console.log("Sending invitation email to:", userEmail);
-        await sendInvitationEmail(userEmail);
+        await sendInvitationEmail(userEmail, podName, podRss);
         // Hide the Pod Name section and show the Email section.
         document.getElementById("pod-name-section").classList.add("hidden");
         document.getElementById("email-section").classList.remove("hidden");
@@ -39,7 +41,7 @@ document.addEventListener("DOMContentLoaded", function () {
       const rssUrl = this.value.trim();
       if (rssUrl) {
         try {
-          const feed = await fetchRSSData(rssUrl); // function from podprofileRequests.js
+          const feed = await fetchRSSData(rssUrl); // function from podcastRequest.js
           document.getElementById("podName").value = feed.title || "";
         } catch (error) {
           console.error("Error processing RSS feed:", error);
@@ -50,25 +52,5 @@ document.addEventListener("DOMContentLoaded", function () {
 
   // ...existing code for dark mode, language selection, and fetchRSSData remains unchanged...
 });
-
-async function sendInvitationEmail(email) {
-  try {
-    const response = await fetch("/send_invitation", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        email: email,
-        subject: "Welcome to PodManager.ai!",
-      }),
-    });
-    if (!response.ok) {
-      throw new Error("Failed to send invitation email.");
-    }
-  } catch (error) {
-    console.error("Error sending invitation email:", error);
-  }
-}
 
 // ...additional functions such as dark mode toggle remain unchanged...
