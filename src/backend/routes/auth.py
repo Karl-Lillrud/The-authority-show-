@@ -1,20 +1,95 @@
-from flask import Blueprint, request, jsonify, url_for, render_template, g
-from werkzeug.security import generate_password_hash
+from flask import render_template, request, jsonify, session, Blueprint, redirect, url_for, g
+from werkzeug.security import check_password_hash, generate_password_hash
+from backend.database.mongo_connection import collection
 from dotenv import load_dotenv
 from datetime import datetime
+import os
 import uuid
-from backend.database.mongo_connection import collection
-from backend.services.accountsService import create_account  # Correct the import path
+from backend.services.accountsService import create_account
 
-register_bp = Blueprint("register_bp", __name__)
+auth_bp = Blueprint("auth_bp", __name__)
 
 load_dotenv()
 
-@register_bp.route("/register", methods=["GET"])
+API_BASE_URL = os.getenv("API_BASE_URL", "http://127.0.0.1:8000")
+
+
+# Sign In Routes
+@auth_bp.route("/signin", methods=["GET"])
+@auth_bp.route("/", methods=["GET"])
+def signin_get():
+    if request.cookies.get("remember_me") == "true":
+        return redirect("/dashboard")
+    return render_template("signin.html", API_BASE_URL=API_BASE_URL)
+
+
+@auth_bp.route("/signin", methods=["POST"])
+@auth_bp.route("/", methods=["POST"])
+def signin_post():
+    if request.content_type != "application/json":
+        return (
+            jsonify({"error": "Invalid Content-Type. Expected application/json"}),
+            415,
+        )
+
+    data = request.get_json()
+    email = data.get("email", "").strip().lower()
+    password = data.get("password", "")
+    remember = data.get("remember", False)
+
+    users = collection.find_one({"email": email})
+
+    if not users or not check_password_hash(users["passwordHash"], password):
+        return jsonify({"error": "Invalid email or password"}), 401
+
+    session["user_id"] = str(users["_id"])
+    session["email"] = users["email"]
+    session.permanent = remember
+
+    user_id = session["user_id"]
+    podcasts = list(collection.database.Podcast.find({"userid": user_id}))
+
+    if not podcasts:
+        return (
+            jsonify({"message": "Login successful", "redirect_url": "/podprofile"}),
+            200,
+        )
+    elif len(podcasts) == 1:
+        return (
+            jsonify({"message": "Login successful", "redirect_url": "/dashboard"}),
+            200,
+        )
+    else:
+        return (
+            jsonify({"message": "Login successful", "redirect_url": "/homepage"}),
+            200,
+        )
+
+    response = jsonify({"message": "Login successful", "redirect_url": "dashboard"})
+
+    if remember:
+        response.set_cookie("remember_me", "true", max_age=30 * 24 * 60 * 60)  # 30 days
+    else:
+        response.delete_cookie("remember_me")
+
+    return response, 200
+
+
+@auth_bp.route("/logout", methods=["GET"])
+def logout():
+    session.clear()
+    response = redirect(url_for("auth_bp.signin_get"))
+    response.delete_cookie("remember_me")
+    return response
+
+
+# Register Routes
+@auth_bp.route("/register", methods=["GET"])
 def register_get():
     return render_template("register/register.html")
 
-@register_bp.route("/register", methods=["POST"])
+
+@auth_bp.route("/register", methods=["POST"])
 def register_post():
     print("🔍 Received a POST request at /register")
 
@@ -73,9 +148,7 @@ def register_post():
         # Check if account creation was successful
         if status_code != 201:
             return (
-                jsonify(
-                    {"error": "Failed to create account", "details": account_response}
-                ),
+                jsonify({"error": "Failed to create account", "details": account_response}),
                 500,
             )
 
@@ -89,7 +162,7 @@ def register_post():
                     "message": "Registration successful!",
                     "userId": user_id,
                     "accountId": account_id,
-                    "redirect_url": url_for("signin_bp.signin_get", _external=True),
+                    "redirect_url": url_for("auth_bp.signin_get", _external=True),
                 }
             ),
             201,
@@ -99,7 +172,8 @@ def register_post():
         print(f"❌ ERROR: {e}")
         return jsonify({"error": f"Database error: {str(e)}"}), 500
 
-@register_bp.route("/get_email", methods=["GET"])
+
+@auth_bp.route("/get_email", methods=["GET"])
 def get_email():
     if not hasattr(g, "user_id") or not g.user_id:
         return jsonify({"error": "Unauthorized"}), 401
