@@ -120,3 +120,10 @@ def logout():
     response = redirect(url_for("signin_bp.signin_get"))
     response.delete_cookie("remember_me")
     return response
+
+
+
+@signin_bp.route("/signin", methods=["GET"])
+def signin_get_alias():
+    return signin_get()
+

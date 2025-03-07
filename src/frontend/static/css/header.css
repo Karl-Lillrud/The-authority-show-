@@ -96,7 +96,7 @@ header {
 }
 
 /* Podcast Selector */
-#podcast-selector {
+#headerPodcastDropdown {
   font-size: 0.875rem;
   padding: var(--spacing-xs) var(--spacing-sm);
   border: none;
@@ -113,7 +113,7 @@ header {
   align-items: center;
 }
 
-#podcast-selector:hover {
+#headerPodcastDropdown:hover {
   box-shadow: inset 2px 2px 4px rgba(255, 127, 63, 0.4),
     inset -2px -2px 4px rgba(0, 0, 0, 0.1);
 }
