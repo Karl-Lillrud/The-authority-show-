@@ -3,8 +3,10 @@ from werkzeug.security import generate_password_hash
 from dotenv import load_dotenv
 from datetime import datetime
 import uuid
+import re
 from backend.database.mongo_connection import collection
 from backend.services.accountsService import create_account  # Correct the import path
+from backend.utils.email_utils import check_gmail_existence  # Function to verify Gmail existence
 
 register_bp = Blueprint("register_bp", __name__)
 
@@ -20,10 +22,7 @@ def register_post():
 
     if request.content_type != "application/json":
         print("❌ Invalid Content-Type:", request.content_type)
-        return (
-            jsonify({"error": "Invalid Content-Type. Expected application/json"}),
-            415,
-        )
+        return jsonify({"error": "Invalid Content-Type. Expected application/json"}), 415
 
     try:
         data = request.get_json()
@@ -35,6 +34,17 @@ def register_post():
 
         email = data["email"].lower().strip()
         password = data["password"]
+
+        # Validate password: at least 8 characters and must contain at least one letter and one number.
+        if len(password) < 8:
+            return jsonify({"error": "Password must be at least 8 characters long."}), 400
+        if not re.search(r"[A-Za-z]", password) or not re.search(r"\d", password):
+            return jsonify({"error": "Password must contain at least one letter and one number."}), 400
+
+        # If it's a Gmail address, verify that it exists.
+        if email.endswith("@gmail.com") and not check_gmail_existence(email):
+            return jsonify({"error": "Provided Gmail address does not exist."}), 400
+
         hashed_password = generate_password_hash(password)
 
         print("🔍 Checking if user already exists...")
@@ -49,51 +59,37 @@ def register_post():
 
         # Create the User document (set '_id' as the string UUID)
         user_document = {
-            "_id": user_id,  # Explicitly set '_id' to string UUID
+            "_id": user_id,
             "email": email,
-            "passwordHash": hashed_password,  # Hashed for security
+            "passwordHash": hashed_password,
             "createdAt": datetime.utcnow().isoformat(),
         }
 
-        # Insert user into the Users collection with the correct '_id'
         print("📝 Inserting user into database:", user_document)
         collection.database.Users.insert_one(user_document)
 
         account_data = {
-            "userId": user_id,  # Use string user ID
+            "userId": user_id,
             "email": email,
             "companyName": data.get("companyName", ""),
             "isCompany": data.get("isCompany", False),
-            "ownerId": user_id,  # Set ownerId to user_id
+            "ownerId": user_id,
         }
 
-        # Directly call the create_account function
         account_response, status_code = create_account(account_data)
 
-        # Check if account creation was successful
         if status_code != 201:
-            return (
-                jsonify(
-                    {"error": "Failed to create account", "details": account_response}
-                ),
-                500,
-            )
+            return jsonify({"error": "Failed to create account", "details": account_response}), 500
 
-        # Get the account ID from the response of the account creation
         account_id = account_response["accountId"]
 
         print("✅ Registration successful!")
-        return (
-            jsonify(
-                {
-                    "message": "Registration successful!",
-                    "userId": user_id,
-                    "accountId": account_id,
-                    "redirect_url": url_for("signin_bp.signin_get", _external=True),
-                }
-            ),
-            201,
-        )
+        return jsonify({
+            "message": "Registration successful!",
+            "userId": user_id,
+            "accountId": account_id,
+            "redirect_url": url_for("signin_bp.signin_get", _external=True)
+        }), 201
 
     except Exception as e:
         print(f"❌ ERROR: {e}")

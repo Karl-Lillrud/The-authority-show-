@@ -58,9 +58,6 @@ def forgot_password():
         return jsonify({"error": f"Failed to send email: {str(e)}"}), 500
 
 
-# 📌 Step 2: Enter Reset Code
-
-
 @forgotpass_bp.route("/enter-code", methods=["GET", "POST"])
 def enter_code():
     print(f"🔍 Request Headers: {request.headers}")
@@ -92,13 +89,10 @@ def enter_code():
     print("✅ Code Verified, Redirecting to Reset Password")
     return (
         jsonify(
-            {"message": "Code is Valid.", "redirect_url": url_for("reset_password")}
+            {"message": "Code is Valid.", "redirect_url": url_for("forgotpass_bp.reset_password")}
         ),
         200,
     )
-
-
-# 📌 Step 3: Reset Password
 
 
 @forgotpass_bp.route("/reset-password", methods=["GET", "POST"])
@@ -130,14 +124,13 @@ def reset_password():
         jsonify(
             {
                 "message": "Password updated successfully.",
-                "redirect_url": url_for("signin"),
+                "redirect_url": url_for("signin_bp.signin_get"),
             }
         ),
         200,
     )
 
 
-# 📌 Send Reset Email
 def send_reset_email(email, reset_code):
     try:
         msg = MIMEText(
