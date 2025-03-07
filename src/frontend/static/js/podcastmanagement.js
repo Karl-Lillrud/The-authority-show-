@@ -18,7 +18,12 @@ document.addEventListener("DOMContentLoaded", function () {
   document.getElementById("add-podcast-btn").addEventListener("click", () => {
     resetForm();
     selectedPodcastId = null;
-    formContainer.style.display = "block";
+    // Show the form popup instead of an inline form
+    document.getElementById("form-popup").style.display = "flex";
+  });
+  // Add event listener to close the form popup
+  document.getElementById("close-form-popup").addEventListener("click", () => {
+    document.getElementById("form-popup").style.display = "none";
   });
 });
 

@@ -799,3 +799,33 @@ h1 {
   background-color: #e0662c;
   transform: translateY(-3px);
 }
+
+/* Styles for the form popup */
+#form-popup {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background-color: rgba(0, 0, 0, 0.5);
+  z-index: 1100;
+  transform: none; /* overridden to cancel .popup transform */
+}
+#form-popup .form-box {
+  background: var(--background-light);
+  padding: var(--spacing-lg);
+  border-radius: var(--radius-large);
+  box-shadow: 0 0 5px rgba(0, 0, 0, 0.2); /* reduced shadow size */
+  position: relative;
+}
+/* Close button inside the popup */
+#close-form-popup {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  font-size: 1.5rem;
+  cursor: pointer;
+}
