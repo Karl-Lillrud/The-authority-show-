@@ -7,6 +7,7 @@ dashboard_bp = Blueprint("dashboard_bp", __name__)
 # 📌 Dashboard
 @dashboard_bp.route("/dashboard", methods=["GET"])
 def dashboard():
+
     user_id = session.get("user_id")
     if not user_id:
         return redirect(url_for("signin"))
@@ -19,12 +20,11 @@ def dashboard():
     return render_template("dashboard/dashboard.html", user=user, credits=credits)
 
 
-
 # ✅ Serves the homepage page
 @dashboard_bp.route("/homepage", methods=["GET"])
 def homepage():
     if not g.user_id:
-        return redirect(url_for("signin_bp.signin"))
+        return redirect(url_for("signin_bp.signin_get"))
 
     user_id = str(g.user_id)
     podcasts = list(collection.database.Podcast.find({"userid": user_id}))
@@ -40,7 +40,7 @@ def homepage():
 def settings():
     if not g.user_id:
         return redirect(
-            url_for("signin_bp.signin")
+            url_for("signin_bp.signin_get")
         )  # Fix: redirect using the blueprint route
 
     user = collection.find_one({"_id": g.user_id})
@@ -55,7 +55,7 @@ def settings():
 def podcastmanagement():
     if not g.user_id:
         return redirect(
-            url_for("signin_bp.signin")
+            url_for("signin_bp.signin_get")
         )  # Fix: redirect using the blueprint route
     return render_template("dashboard/podcastmanagement.html")
 
@@ -65,7 +65,7 @@ def podcastmanagement():
 def taskmanagement():
     if not g.user_id:
         return redirect(
-            url_for("signin_bp.signin")
+            url_for("signin_bp.signin_get")
         )  # Fix: redirect using the blueprint route
     return render_template("dashboard/taskmanagement.html")
 
@@ -74,7 +74,7 @@ def taskmanagement():
 def podprofile():
     if not g.user_id:
         return redirect(
-            url_for("signin_bp.signin")
+            url_for("signin_bp.signin_get")
         )  # Fix: redirect using the blueprint route
     return render_template("podprofile/podprofile.html")
 
@@ -83,7 +83,7 @@ def podprofile():
 def team():
     if not g.user_id:
         return redirect(
-            url_for("signin_bp.signin")
+            url_for("signin_bp.signin_get")
         )  # Fix: redirect using the blueprint route
     return render_template("team/team.html")
 
@@ -92,7 +92,7 @@ def team():
 def guest():
     if not g.user_id:
         return redirect(
-            url_for("signin_bp.signin")
+            url_for("signin_bp.signin_get")
         )  # Fix: redirect using the blueprint route
     return render_template("guest/guest.html")
 @dashboard_bp.route("/get_credits", methods=["GET"])
@@ -121,11 +121,12 @@ def get_user_podcasts():
     # Dummy implementation; return an empty list or sample data
     return jsonify([])
 
+
 @dashboard_bp.route("/addmember", methods=["GET"])
 def addmember():
     if not g.user_id:
         return redirect(
-            url_for("signin_bp.signin")
+            url_for("signin_bp.signin_get")
         )  # Fix: redirect using the blueprint route
     return render_template("team/addmember.html")
 
