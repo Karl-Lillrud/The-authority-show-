@@ -72,22 +72,23 @@ export async function deletePodcast(podcastId) {
 
 // Function to fetch RSS data
 export async function fetchRSSData(rssUrl) {
-  if (!rssUrl) return;
   try {
-    const response = await fetch(
-      `https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(
-        rssUrl
-      )}`
-    );
-    const data = await response.json();
-    if (data.status === "ok") {
-      return data.feed; // Return feed data for further processing
-    } else {
-      console.error("Error fetching RSS feed:", data);
-      throw new Error("Error fetching RSS feed");
+    const response = await fetch(rssUrl);
+    if (!response.ok) {
+      throw new Error("Failed to fetch RSS feed.");
     }
+
+    const rssText = await response.text();
+    const parser = new DOMParser();
+    const rssDoc = parser.parseFromString(rssText, "application/xml");
+
+    const titleElement = rssDoc.querySelector("channel > title");
+    if (!titleElement) {
+      throw new Error("RSS feed does not contain a title.");
+    }
+
+    return titleElement.textContent;
   } catch (error) {
-    console.error("Error fetching RSS feed:", error);
-    throw error;
+    throw new Error(`Error fetching RSS feed: ${error.message}`);
   }
 }
