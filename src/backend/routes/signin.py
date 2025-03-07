@@ -15,6 +15,9 @@ signin_bp = Blueprint("signin_bp", __name__)
 
 API_BASE_URL = os.getenv("API_BASE_URL", "http://127.0.0.1:8000")
 
+@signin_bp.route("/signin", methods=["GET"])
+
+
 
 @signin_bp.route("/signin", methods=["GET"])
 def signin_get():
@@ -43,26 +46,54 @@ def signin_post():
     password = data.get("password", "")
     remember = data.get("remember", False)
 
-    users = collection.find_one({"email": email})
+    # Find user by email
+    users = collection.database.Users.find_one({"email": email})
 
     if not users or not check_password_hash(users["passwordHash"], password):
         return jsonify({"error": "Invalid email or password"}), 401
 
+    # Set session data for the logged-in user
     session["user_id"] = str(users["_id"])
-    session["email"] = users["email"]
+    session["user_email"] = users["email"]
     session.permanent = remember
 
     user_id = session["user_id"]
     podcasts = list(collection.database.Podcast.find({"userid": user_id}))
 
-    if not podcasts:
-        redirect_url = "/podprofile"
-    elif len(podcasts) == 1:
-        redirect_url = "/dashboard"
-    else:
-        redirect_url = "/homepage"
+    # Get user credits
+    user_credits = collection.database.Credits.find_one({"user_id": user_id})
+    user_credits = user_credits["credits"] if user_credits else 0
 
-    response = jsonify({"message": "Login successful", "redirect_url": redirect_url})
+    if not podcasts:
+        return (
+            jsonify({
+                "message": "Login successful",
+                "redirect_url": "/podprofile",
+                "credits": user_credits,
+            }),
+            200,
+        )
+    elif len(podcasts) == 1:
+        return (
+            jsonify({
+                "message": "Login successful",
+                "redirect_url": "/dashboard",
+                "credits": user_credits,
+            }),
+            200,
+        )
+    else:
+        return (
+            jsonify({
+                "message": "Login successful",
+                "redirect_url": "/homepage",
+                "credits": user_credits,
+            }),
+            200,
+        )
+
+    # Response for successful login
+    response = jsonify({"message": "Login successful", "redirect_url": "dashboard", "credits": user_credits})
 
     if remember:
         response.set_cookie("remember_me", "true", max_age=30 * 24 * 60 * 60)  # 30 days
