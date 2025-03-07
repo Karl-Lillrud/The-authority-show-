@@ -296,3 +296,14 @@ body.dark-mode .button-secondary {
     padding: 0.5rem 0.75rem;
   }
 }
+
+#skipToDashboard,
+#dark-mode-toggle {
+  display: none;
+}
+
+#goToEmailSection {
+  margin: 0 auto;
+  display: block;
+  width: 250px; /* Fast bredd, ändra vid behov */
+}

@@ -1,4 +1,5 @@
 import { fetchRSSData } from "../requests/podcastRequests.js";
+import { sendInvitationEmail } from "../requests/invitationRequests.js";
 
 document.addEventListener("DOMContentLoaded", function () {
   // DOM Elements
@@ -53,8 +54,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
       try {
         console.log("Sending invitation email");
-        // Simulate API call - replace with your actual sendInvitationEmail function
-        await new Promise((resolve) => setTimeout(resolve, 500));
+        await sendInvitationEmail(podName, podRss);
 
         // Hide the Pod Name section and show the Email section
         podNameSection.classList.add("hidden");
