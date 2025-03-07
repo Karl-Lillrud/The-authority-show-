@@ -24,13 +24,14 @@ document.addEventListener("DOMContentLoaded", function () {
     }
   });
 
+  // RSS Feed Input Handler
   if (podRssInput) {
     podRssInput.addEventListener("input", async function () {
-      const rssUrl = this.value.trim() || "";
+      const rssUrl = this.value.trim();
       if (rssUrl) {
         try {
-          const feed = await fetchRSSData(rssUrl); // function from podcastRequests.js
-          document.getElementById("podName").value = feed.title || "";
+          const podcastName = await fetchRSSData(rssUrl);
+          podNameInput.value = podcastName;
         } catch (error) {
           console.error("Error processing RSS feed:", error);
         }
