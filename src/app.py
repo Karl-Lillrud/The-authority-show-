@@ -43,6 +43,7 @@ CORS(
     resources={
         r"/*": {
             "origins": [
+
                 "https://devapp.podmanager.ai" # Test Branch (testMain)
                 "https://app.podmanager.ai", # Live branch (Main)
                 "http://127.0.0.1:8000", # Localhost
