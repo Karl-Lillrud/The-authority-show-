@@ -1,4 +1,3 @@
-/* Neumorphism Design Language & Global Variables */
 :root {
   /* Color Palette */
   --background-light: #eff2f9;
@@ -41,7 +40,7 @@ html, body {
 
 body {
   font-family: var(--font-primary);
-  background-color: white; /* Bakgrundsfärg för hela sidan */
+  background-color:#eff2f9;
   color: var(--text-color-light);
   line-height: 1.6;
   margin: 0; /* Ta bort margin */
@@ -57,7 +56,7 @@ body {
 
 .help-container {
   position: fixed;
-  bottom: 20px; /* Justera höjden */
+  bottom: 40px; /* Justera höjden */
   right: 20px; /* Justera avstånd från höger */
   z-index: 1000;
 }
@@ -67,7 +66,7 @@ body {
   width: 40px;
   height: 40px;
   background: none;
-  color: orange;
+  color: gray;
   position: absolute;
   bottom: 36.5vh;
   right: 1vh;
@@ -149,48 +148,51 @@ body.dark-mode .help-text {
 .logo-container {
   position: fixed;
   top: 20px;
-  left: 50%;
+  left: 9%;
   transform: translateX(-50%);
-  width: 10%;
+  width: 15%;
   z-index: 999;
 }
 
 .logo-container img {
-  width: 100%;
+  width: 30%;
   height: auto;
   -webkit-user-select: none;
   user-select: none;
 }
 /* Containers (Cards) */
 .container {
-  background-color: white;
-  height: 59vh;
-  width: 25%;
+  background-color: #eff2f9;
+  height: 57vh;
+  width: 26%;
   position: fixed;
   top: 50%;
   left: 37%;
   transform: translateY(-50%);
   border-radius: 40px;
   border: 1px solid rgba(0, 0, 0, 0.2);
-  box-shadow: 0px 0px  30px 0px rgb(255, 135, 84);
+  box-shadow: 0px 0px  50px 0px rgb(213, 61, 6);
   text-align: center;
   margin: 0;
   -webkit-transform: translateY(-50%); /* Safari fix */
   -webkit-border-radius: 40px; /* Safari fix */
 }
+
 .container  h1{
-  margin-top: 5vh;
+  margin-top: 2vh;
 }
 /* Input Fields */
 input,
 select,
 textarea {
-  width: 90%;
-  margin-left: 2.3vh;
+  width: 80%;
+ 
+  height: 6vh;
+  margin-left: 5.3vh;
   padding: var(--spacing-sm) var(--spacing-md);
-  border: 2px solid #cccccc;
-  border-radius: 19px;
-  font-size: 1rem;
+  border: 1px solid #cccccc;
+  border-radius: 29px;
+  box-shadow: inset #c2bcbc 1px 5px 20px 0px; /* Inre skugga */  font-size: 1rem;
   background: var(--background-light);
   color: var(--text-color-light);
   transition: all 0.3s ease;
@@ -212,10 +214,12 @@ body.dark-mode textarea {
 
 .form-group {
   display: flex;
+  position: relative;
+  bottom: 2vh;
   font-size: 22px;
-  margin-top: 5vh;
+  margin-top: 1vh;
+  padding-top: 4vh;
   flex-direction: column;
-  margin-bottom: var(--spacing-sm);
 }
 
 
@@ -242,22 +246,16 @@ button {
 
 .button-primary {
   border: 1px double orange;
+  width: 80%;
+  background-color: #ff7f3f;
   height: 6vh;
+  color: white;
   position: relative;
-  top: 3vh;
-  right: 4vh;
+  bottom: 3vh;
+  right: 0vh;
   margin: 2vh;
-  width: 40%;
 }
 
-.button-primary {
-  border: 1px solid orange;
-  height: 6vh;
-  width: 40%;
-  margin: 2vh;
-  background: var(--highlight-color);
-  color: #ffffff;
-}
 
 button:hover {
   box-shadow: 0 0 10px var(--highlight-color);
@@ -362,8 +360,8 @@ body.dark-mode .toast {
   font-size: 14px;
   cursor: pointer;
   position: relative;
-  top: 8vh;
-  right: 8vh;
+  top: 12vh;
+  left: 0vh;
   text-align: center;
 }
 
