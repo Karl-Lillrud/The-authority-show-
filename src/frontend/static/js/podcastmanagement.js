@@ -4,7 +4,7 @@ import {
   fetchPodcast,
   updatePodcast,
   deletePodcast
-} from "../requests/podcastRequest.js";
+} from "../requests/podcastRequests.js"; // corrected import path
 
 console.log("podcastmanagement.js loaded");
 
@@ -12,19 +12,19 @@ document.addEventListener("DOMContentLoaded", function () {
   console.log("DOM fully loaded and parsed");
 
   renderPodcastList();
+
+  // New event: show form for adding a podcast
+  document.getElementById("add-podcast-btn").addEventListener("click", () => {
+    resetForm();
+    selectedPodcastId = null;
+    formContainer.style.display = "block";
+  });
 });
 
 const formContainer = document.querySelector(".form-box");
 const podcastsContainer = document.querySelector(".podcasts-container");
 const form = document.getElementById("register-podcast-form");
 let selectedPodcastId = null;
-
-// New event: show form for adding a podcast
-document.getElementById("add-podcast-btn").addEventListener("click", () => {
-  resetForm();
-  selectedPodcastId = null;
-  formContainer.style.display = "block";
-});
 
 form.addEventListener("submit", async function (e) {
   e.preventDefault();
