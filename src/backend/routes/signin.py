@@ -122,8 +122,6 @@ def logout():
     return response
 
 
-
 @signin_bp.route("/signin", methods=["GET"])
 def signin_get_alias():
     return signin_get()
-
