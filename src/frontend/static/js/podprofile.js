@@ -1,3 +1,6 @@
+import { fetchRSSData } from "../requests/podcastRequests.js";
+import { sendInvitationEmail } from "../requests/invitationRequests.js";
+
 document.addEventListener("DOMContentLoaded", function () {
   // DOM Elements
   const darkModeToggle = document.getElementById("dark-mode-toggle");
@@ -21,20 +24,13 @@ document.addEventListener("DOMContentLoaded", function () {
     }
   });
 
-  // RSS Feed Input Handler
   if (podRssInput) {
     podRssInput.addEventListener("input", async function () {
-      const rssUrl = this.value.trim();
+      const rssUrl = this.value.trim() || "";
       if (rssUrl) {
         try {
-          // In a real implementation, you would call your API to fetch RSS data
-          console.log("Fetching RSS data from:", rssUrl);
-
-          // Simulate API call with mock data
-          // Replace this with your actual fetchRSSData function
-          setTimeout(() => {
-            podNameInput.value = "Sample Podcast Name"; // Mock data
-          }, 500);
+          const feed = await fetchRSSData(rssUrl); // function from podcastRequests.js
+          document.getElementById("podName").value = feed.title || "";
         } catch (error) {
           console.error("Error processing RSS feed:", error);
         }
@@ -58,8 +54,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
       try {
         console.log("Sending invitation email");
-        // Simulate API call - replace with your actual sendInvitationEmail function
-        await new Promise((resolve) => setTimeout(resolve, 500));
+        await sendInvitationEmail(podName, podRss);
 
         // Hide the Pod Name section and show the Email section
         podNameSection.classList.add("hidden");
