@@ -13,6 +13,19 @@
     <div class="app-container">
       <header>
         <div class="header-container">
+          <img
+            src="{{ url_for('static', filename='images/PodManagerLogo.png') }}"
+            alt="PodManager Logo"
+            class="logo"
+          />
+          <div class="credits-container hidden">
+            <img
+              src="{{ url_for('static', filename='images/coins.png') }}"
+              alt="Coins"
+              class="coins"
+            />
+            <span class="credits">3500</span>
+          </div>
           <button
             id="dark-mode-toggle"
             class="dark-mode-button"
@@ -62,7 +75,8 @@
           <div class="success-message">
             <p>
             🚀 You're In! 🚀<br /><br />
-            Congratulations 🎉 — your spot in the Beta Tester queue is locked in! Get ready for an exclusive sneak peek. <br><br>✨ Check your email right now for all the exciting details!
+            Congratulations 🎉 — your spot in the Beta Tester queue is locked in! Get ready for an exclusive sneak peek. And as a Thank You, we've added 3500 coins to your account! 
+            <br><br>✨ Check your email right now for all the exciting details!
             <br><br>🚀 Big things are on the horizon, and you won’t want to miss a moment of the action!
             </p>
           </div>

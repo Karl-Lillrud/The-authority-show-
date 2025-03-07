@@ -70,11 +70,43 @@ body.dark-mode .app-container {
 .header-container {
   width: 100%;
   display: flex;
-  justify-content: flex-end;
-  padding: var(--spacing-md);
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 20px;
+  background-color: #fff;
+  border-bottom: 1px solid #ddd;
   position: absolute;
   top: 0;
   right: 0;
+}
+
+.logo {
+  height: 50px;
+}
+
+.credits-container {
+  display: flex;
+  align-items: center;
+  visibility: hidden; /* Initially hidden */
+}
+
+.credits-container.hidden {
+  visibility: hidden;
+}
+
+.credits-container.visible {
+  visibility: visible;
+}
+
+.coins {
+  height: 30px;
+  margin-right: 5px;
+}
+
+.credits {
+  font-size: 1rem;
+  font-weight: bold;
+  color: var(--text-color-light);
 }
 
 .dark-mode-button {
@@ -90,6 +122,10 @@ body.dark-mode .app-container {
 }
 
 body.dark-mode .dark-mode-button {
+  color: var(--text-color-dark);
+}
+
+body.dark-mode .credits {
   color: var(--text-color-dark);
 }
 
@@ -229,7 +265,7 @@ button {
 
 button:hover {
   box-shadow: -2px -2px 5px var(--light-shadow-light),
-    2px 2px 5px var(--dark-shadow-light);
+    2px 2px 5px var (--dark-shadow-light);
 }
 
 .button-primary:hover {

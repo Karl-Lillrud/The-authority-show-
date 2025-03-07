@@ -11,6 +11,7 @@ document.addEventListener("DOMContentLoaded", function () {
   const podNameForm = document.getElementById("podNameForm");
   const podRssInput = document.getElementById("podRss");
   const podNameInput = document.getElementById("podName");
+  const creditsContainer = document.querySelector(".credits-container");
 
   // Dark Mode Toggle
   darkModeToggle.addEventListener("click", function () {
@@ -60,6 +61,10 @@ document.addEventListener("DOMContentLoaded", function () {
         // Hide the Pod Name section and show the Email section
         podNameSection.classList.add("hidden");
         emailSection.classList.remove("hidden");
+
+        // Show the credits container
+        creditsContainer.classList.remove("hidden");
+        creditsContainer.classList.add("visible");
       } catch (error) {
         console.error("Error sending invitation email:", error);
         alert("Something went wrong. Please try again.");

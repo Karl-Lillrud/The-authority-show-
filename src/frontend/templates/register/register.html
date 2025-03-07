@@ -6,7 +6,7 @@
     <title>Register</title>
     <link
       rel="stylesheet"
-      href="{{ url_for('static', filename='css/signin.css') }}"
+      href="{{ url_for('static', filename='css/register.css') }}"
     />
     <script src="{{ url_for('static', filename='requests/podprofileRequests.js') }}"></script>
     <script src="{{ url_for('static', filename='requests/podprofile_languageRequests.js') }}"></script>
@@ -55,14 +55,12 @@
           />
         </div>
 
-        <div class="extra-links">
-          <a href="{{ url_for('signin_bp.signin_get') }}" class="link"
-            >Already have an account? Sign in</a
-          >
-        </div>
-
         <div class="form-actions">
           <button type="submit" class="button button-primary">Register</button>
+        </div>
+        
+        <div class="signin-link">
+          <a href="{{ url_for('signin_bp.signin_get') }}" class="link">Sign in</a>
         </div>
       </form>
     </div>
@@ -126,3 +124,4 @@
     </script>
   </body>
 </html>
+
