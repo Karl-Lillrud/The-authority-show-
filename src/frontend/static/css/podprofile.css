@@ -55,48 +55,72 @@ body {
 }
 
 
-
-
-/* Help Button */
 .help-container {
   position: fixed;
-  right: 2vw;
-  bottom: 10vh;
+  bottom: 20px; /* Justera höjden */
+  right: 20px; /* Justera avstånd från höger */
+  z-index: 1000;
 }
 
+/* Frågetecken-knapp */
 .help-button {
-  background-color: #ffaa00;
-  color: white;
+  width: 40px;
+  height: 40px;
+  background: none;
+  color: orange;
+  position: absolute;
+  bottom: 36.5vh;
+  right: 1vh;
+  font-size: 20px;
+  font-weight: bold;
   border: none;
-  padding: 5px;
   border-radius: 50%;
   cursor: pointer;
-  font-size: 14px;
-  width: 24px;
-  height: 24px;
-  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
+/* Hjälp-text */
 .help-text {
   display: none;
   position: absolute;
-  top: -60px;
-  left: -10px;
-  background-color: white;
-  color: black;
-  padding: 10px;
-  width: 30vh;
-  height: 30vh;
+  bottom: 39vh; /* Så texten hamnar ovanför knappen */
+  right: 50%;
+  transform: translateX(50%);
+  background-color: #333;
+  color: white;
+  padding: 8px 12px;
+  border-radius: 5px;
+  white-space: nowrap;
   font-size: 14px;
-  text-align: left;
-  white-space: normal;
-  border: 1px solid black;
-  border-radius: 8px;
+  box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.2);
 }
 
+/* Visa text vid hover */
 .help-container:hover .help-text {
   display: block;
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 /* Dark Mode */
 body.dark-mode {
@@ -110,17 +134,6 @@ body.dark-mode .help-text {
   color: black;
 }
 
-/* Header */
-.header-container {
-  width: 100%;
-  display: flex;
-  justify-content: flex-end;
-  padding: var(--spacing-md);
-  position: fixed;
-  top: 0;
-  left: 0;
-  background: rgba(255, 255, 255, 0.9);
-}
 
 .dark-mode-button {
   position: absolute;
@@ -132,10 +145,6 @@ body.dark-mode .help-text {
   cursor: pointer;
 }
 /* Containers (Cards) */
-.container {
-  width: 100%;
-  height: auto;
-}
 
 .logo-container {
   position: fixed;
@@ -154,31 +163,33 @@ body.dark-mode .help-text {
 }
 /* Containers (Cards) */
 .container {
-  background-color: #e5e0e0;
-  height: 49vh;
+  background-color: white;
+  height: 59vh;
   width: 25%;
   position: fixed;
-  top: 54%;
-  left: 36%;
+  top: 50%;
+  left: 37%;
   transform: translateY(-50%);
-  padding: 20px;
   border-radius: 40px;
   border: 1px solid rgba(0, 0, 0, 0.2);
-  box-shadow: 0px 5px 15px rgba(0, 0, 0, 0.2);
+  box-shadow: 0px 0px  30px 0px rgb(255, 135, 84);
   text-align: center;
   margin: 0;
   -webkit-transform: translateY(-50%); /* Safari fix */
   -webkit-border-radius: 40px; /* Safari fix */
 }
-
+.container  h1{
+  margin-top: 5vh;
+}
 /* Input Fields */
 input,
 select,
 textarea {
   width: 90%;
+  margin-left: 2.3vh;
   padding: var(--spacing-sm) var(--spacing-md);
-  border: 1px solid #ccc;
-  border-radius: 20px;
+  border: 2px solid #cccccc;
+  border-radius: 19px;
   font-size: 1rem;
   background: var(--background-light);
   color: var(--text-color-light);
@@ -202,7 +213,7 @@ body.dark-mode textarea {
 .form-group {
   display: flex;
   font-size: 22px;
-  margin-top: 3vh;
+  margin-top: 5vh;
   flex-direction: column;
   margin-bottom: var(--spacing-sm);
 }
@@ -233,7 +244,7 @@ button {
   border: 1px double orange;
   height: 6vh;
   position: relative;
-  top: 9vh;
+  top: 3vh;
   right: 4vh;
   margin: 2vh;
   width: 40%;
@@ -257,17 +268,7 @@ body.dark-mode button {
   color: var(--text-color-dark);
 }
 
-#skipToDashboard {
-  background-color: transparent;
-  border: none;
-  color: gray;
-  font-size: 14px;
-  cursor: pointer;
-}
 
-#skipToDashboard:hover {
-  color: black;
-}
 
 /* Image Optimization */
 img {
@@ -355,14 +356,14 @@ body.dark-mode .toast {
 
 
 #skipToDashboard {
-  background-color: transparent;
+  background: none;
   border: none;
   color: gray;
   font-size: 14px;
   cursor: pointer;
   position: relative;
-  top: 28vh;
-  right: 10vh;
+  top: 8vh;
+  right: 8vh;
   text-align: center;
 }
 
