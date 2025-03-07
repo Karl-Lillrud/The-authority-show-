@@ -4,7 +4,8 @@ import {
   fetchPodcast,
   updatePodcast,
   deletePodcast
-} from "../requests/podcastRequest.js";
+} from "../requests/podcastRequests.js";
+import { svgIcons } from "./svgIcons.js"; // import SVG icons
 
 console.log("podcastmanagement.js loaded");
 
@@ -12,19 +13,24 @@ document.addEventListener("DOMContentLoaded", function () {
   console.log("DOM fully loaded and parsed");
 
   renderPodcastList();
+
+  // New event: show form for adding a podcast
+  document.getElementById("add-podcast-btn").addEventListener("click", () => {
+    resetForm();
+    selectedPodcastId = null;
+    // Show the form popup instead of an inline form
+    document.getElementById("form-popup").style.display = "flex";
+  });
+  // Add event listener to close the form popup
+  document.getElementById("close-form-popup").addEventListener("click", () => {
+    document.getElementById("form-popup").style.display = "none";
+  });
 });
 
 const formContainer = document.querySelector(".form-box");
 const podcastsContainer = document.querySelector(".podcasts-container");
 const form = document.getElementById("register-podcast-form");
 let selectedPodcastId = null;
-
-// New event: show form for adding a podcast
-document.getElementById("add-podcast-btn").addEventListener("click", () => {
-  resetForm();
-  selectedPodcastId = null;
-  formContainer.style.display = "block";
-});
 
 form.addEventListener("submit", async function (e) {
   e.preventDefault();
@@ -272,26 +278,17 @@ async function renderPodcastList() {
                 <button class="action-btn view-btn" title="View podcast details" data-id="${
                   podcast._id
                 }">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"></path>
-                    <circle cx="12" cy="12" r="3"></circle>
-                  </svg>
+                  ${svgIcons.view}
                 </button>
                 <button class="action-btn edit-btn" title="Edit podcast" data-id="${
                   podcast._id
                 }">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"></path>
-                  </svg>
+                  ${svgIcons.edit}
                 </button>
                 <button class="action-btn delete-btn" title="Delete podcast" data-id="${
                   podcast._id
                 }">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M3 6h18"></path>
-                    <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"></path>
-                    <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"></path>
-                  </svg>
+                  ${svgIcons.delete}
                 </button>
               </div>
             </div>
@@ -375,10 +372,7 @@ function renderPodcastDetail(podcast) {
   podcastDetailElement.innerHTML = `
     <div class="detail-header">
       <button class="back-btn" id="back-to-list">
-        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <path d="m12 19-7-7 7-7"></path>
-          <path d="M19 12H5"></path>
-        </svg>
+        ${svgIcons.back}
         Back to podcasts
       </button>
     </div>
@@ -424,26 +418,14 @@ function renderPodcastDetail(podcast) {
               <h3>Google Calendar</h3>
               ${
                 podcast.googleCal
-                  ? `
-                <a href="${podcast.googleCal}" target="_blank" style="display: flex; align-items: center; gap: 0.5rem;">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <rect width="18" height="18" x="3" y="4" rx="2" ry="2"></rect>
-                    <line x1="16" x2="16" y1="2" y2="6"></line>
-                    <line x1="8" x2="8" y1="2" y2="6"></line>
-                    <line x1="3" x2="21" y1="10" y2="10"></line>
-                  </svg>
-                  Calendar Link
-                </a>`
-                  : `
-                <p style="display: flex; align-items: center; gap: 0.5rem;">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <rect width="18" height="18" x="3" y="4" rx="2" ry="2"></rect>
-                    <line x1="16" x2="16" y1="2" y2="6"></line>
-                    <line x1="8" x2="8" y1="2" y2="6"></line>
-                    <line x1="3" x2="21" y1="10" y2="10"></line>
-                  </svg>
-                  Not connected
-                </p>`
+                  ? `<a href="${podcast.googleCal}" target="_blank" style="display: flex; align-items: center; gap: 0.5rem;">
+                      ${svgIcons.calendar}
+                      Calendar Link
+                    </a>`
+                  : `<p style="display: flex; align-items: center; gap: 0.5rem;">
+                      ${svgIcons.calendar}
+                      Not connected
+                    </p>`
               }
             </div>
             <div class="detail-item">
@@ -467,55 +449,41 @@ function renderPodcastDetail(podcast) {
             ${
               podcast.socialMedia && podcast.socialMedia[0]
                 ? `<a href="${podcast.socialMedia[0]}" target="_blank" class="social-link">
-              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"></path>
-              </svg>
-              Facebook
-            </a>`
+                    ${svgIcons.facebook}
+                    Facebook
+                  </a>`
                 : ""
             }
             ${
               podcast.socialMedia && podcast.socialMedia[1]
                 ? `<a href="${podcast.socialMedia[1]}" target="_blank" class="social-link">
-              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <rect width="20" height="20" x="2" y="2" rx="5" ry="5"></rect>
-                <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path>
-                <line x1="17.5" x2="17.51" y1="6.5" y2="6.5"></line>
-              </svg>
-              Instagram
-            </a>`
+                    ${svgIcons.instagram}
+                    Instagram
+                  </a>`
                 : ""
             }
             ${
               podcast.socialMedia && podcast.socialMedia[2]
                 ? `<a href="${podcast.socialMedia[2]}" target="_blank" class="social-link">
-              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"></path>
-                <rect width="4" height="12" x="2" y="9"></rect>
-                <circle cx="4" cy="4" r="2"></circle>
-              </svg>
-              LinkedIn
-            </a>`
+                    ${svgIcons.linkedin}
+                    LinkedIn
+                  </a>`
                 : ""
             }
             ${
               podcast.socialMedia && podcast.socialMedia[3]
                 ? `<a href="${podcast.socialMedia[3]}" target="_blank" class="social-link">
-              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M22 4s-.7 2.1-2 3.4c1.6 10-9.4 17.3-18 11.6 2.2.1 4.4-.6 6-2C3 15.5.5 9.6 3 5c2.2 2.6 5.6 4.1 9 4-.9-4.2 4-6.6 7-3.8 1.1 0 3-1.2 3-1.2z"></path>
-              </svg>
-              Twitter
-            </a>`
+                    ${svgIcons.twitter}
+                    Twitter
+                  </a>`
                 : ""
             }
             ${
               podcast.socialMedia && podcast.socialMedia[4]
                 ? `<a href="${podcast.socialMedia[4]}" target="_blank" class="social-link">
-              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M22 4s-.7 2.1-2 3.4c1.6 10-9.4 17.3-18 11.6 2.2.1 4.4-.6 6-2C3 15.5.5 9.6 3 5c2.2 2.6 5.6 4.1 9 4-.9-4.2 4-6.6 7-3.8 1.1 0 3-1.2 3-1.2z"></path>
-              </svg>
-              TikTok
-            </a>`
+                    ${svgIcons.tiktok}
+                    TikTok
+                  </a>`
                 : ""
             }
           </div>
