@@ -24,10 +24,10 @@ def signin_get():
 
 # Explicit GET route for "/signin" to handle redirects properly
 @signin_bp.route("/signin", methods=["GET"])
-def signin_get_signin():
+def signin_get_alias():
     return signin_get()
 
-# POST routes for signin
+# POST routes for signin: both "/" and "/signin" will use this function
 @signin_bp.route("/signin", methods=["POST"])
 @signin_bp.route("/", methods=["POST"])
 def signin_post():
