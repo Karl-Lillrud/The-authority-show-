@@ -16,64 +16,20 @@ signin_bp = Blueprint("signin_bp", __name__)
 API_BASE_URL = os.getenv("API_BASE_URL", "http://127.0.0.1:8000")
 
 
-@signin_bp.route("/signin", methods=["GET"])
+@signin_bp.route("/", methods=["GET"])
 def signin_get():
     if request.cookies.get("remember_me") == "true":
         return redirect("/dashboard")
     return render_template("signin.html", API_BASE_URL=API_BASE_URL)
 
 
-@signin_bp.route("/", methods=["GET"])
-def root_get():
-    if request.cookies.get("remember_me") == "true":
-        return redirect("/dashboard")
-    return render_template("signin.html", API_BASE_URL=API_BASE_URL)
+# Add alias for backward compatibility
+signin_bp.add_url_rule("/", endpoint="signin", view_func=signin_get)
 
 
 @signin_bp.route("/signin", methods=["POST"])
-def signin_post():
-    if request.content_type != "application/json":
-        return (
-            jsonify({"error": "Invalid Content-Type. Expected application/json"}),
-            415,
-        )
-
-    data = request.get_json()
-    email = data.get("email", "").strip().lower()
-    password = data.get("password", "")
-    remember = data.get("remember", False)
-
-    users = collection.find_one({"email": email})
-
-    if not users or not check_password_hash(users["passwordHash"], password):
-        return jsonify({"error": "Invalid email or password"}), 401
-
-    session["user_id"] = str(users["_id"])
-    session["email"] = users["email"]
-    session.permanent = remember
-
-    user_id = session["user_id"]
-    podcasts = list(collection.database.Podcast.find({"userid": user_id}))
-
-    if not podcasts:
-        redirect_url = "/podprofile"
-    elif len(podcasts) == 1:
-        redirect_url = "/dashboard"
-    else:
-        redirect_url = "/homepage"
-
-    response = jsonify({"message": "Login successful", "redirect_url": redirect_url})
-
-    if remember:
-        response.set_cookie("remember_me", "true", max_age=30 * 24 * 60 * 60)  # 30 days
-    else:
-        response.delete_cookie("remember_me")
-
-    return response, 200
-
-
 @signin_bp.route("/", methods=["POST"])
-def root_post():
+def signin_post():
     if request.content_type != "application/json":
         return (
             jsonify({"error": "Invalid Content-Type. Expected application/json"}),
@@ -120,8 +76,3 @@ def logout():
     response = redirect(url_for("signin_bp.signin_get"))
     response.delete_cookie("remember_me")
     return response
-
-
-@signin_bp.route("/signin", methods=["GET"])
-def signin_get_alias():
-    return signin_get()

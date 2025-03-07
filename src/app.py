@@ -43,10 +43,9 @@ CORS(
     resources={
         r"/*": {
             "origins": [
-
-                "https://devapp.podmanager.ai" # Test Branch (testMain)
-                "https://app.podmanager.ai", # Live branch (Main)
-                "http://127.0.0.1:8000", # Localhost
+                "https://devapp.podmanager.ai"  # Test Branch (testMain)
+                "https://app.podmanager.ai",  # Live branch (Main)
+                "http://127.0.0.1:8000",  # Localhost
             ]
         }
     },
@@ -65,7 +64,9 @@ app.register_blueprint(dashboard_bp)
 app.register_blueprint(pod_management_bp)
 app.register_blueprint(podtask_bp)
 app.register_blueprint(team_bp)
-app.register_blueprint(guest_bp)  # Ensure this line is present and has the correct prefix
+app.register_blueprint(
+    guest_bp
+)  # Ensure this line is present and has the correct prefix
 app.register_blueprint(account_bp)
 app.register_blueprint(usertoteam_bp)
 app.register_blueprint(invitation_bp)
