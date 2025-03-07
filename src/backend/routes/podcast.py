@@ -20,10 +20,7 @@ def podcast():
 
     # Validate Content-Type
     if request.content_type != "application/json":
-        return (
-            jsonify({"error": "Invalid Content-Type. Expected application/json"}),
-            415,
-        )
+        return jsonify({"error": "Invalid Content-Type. Expected application/json"}), 415
 
     try:
         # 🔍 Fetch the account document from MongoDB for the logged-in user
@@ -41,9 +38,7 @@ def podcast():
         # Get the data from the request and inject the accountId from the user's account
         data = request.get_json()
         print("📩 Received Data:", data)
-        data["accountId"] = (
-            account_id  # Populate the required field with the fetched accountId
-        )
+        data["accountId"] = account_id  # Populate the required field with the fetched accountId
 
         # Validate data using PodcastSchema
         schema = PodcastSchema()
@@ -61,14 +56,9 @@ def podcast():
             account_query["_id"] = user_account["_id"]
         account = collection.database.Accounts.find_one(account_query)
         if not account:
-            return (
-                jsonify(
-                    {
-                        "error": "Invalid account ID or you do not have permission to add a podcast to this account."
-                    }
-                ),
-                403,
-            )
+            return jsonify({
+                "error": "Invalid account ID or you do not have permission to add a podcast to this account."
+            }), 403
 
         # Generate a unique podcast ID
         podcast_id = str(uuid.uuid4())
@@ -76,20 +66,20 @@ def podcast():
         # Create the podcast document with the accountId from the account document
         podcast_item = {
             "_id": podcast_id,
-            "teamId": validated_data.get("teamId", ""),
+            "teamId": validated_data.get("teamId"),
             "accountId": account_id,  # Use the fetched accountId
-            "podName": validated_data.get("podName", "") or "",
-            "ownerName": validated_data.get("ownerName", "") or "",
-            "hostName": validated_data.get("hostName", "") or "",
-            "rssFeed": validated_data.get("rssFeed", "") or "",
-            "googleCal": validated_data.get("googleCal", "") or "",
-            "podUrl": validated_data.get("podUrl", "") or "",
-            "guestUrl": validated_data.get("guestUrl", "") or "",
+            "podName": validated_data.get("podName"),
+            "ownerName": validated_data.get("ownerName"),
+            "hostName": validated_data.get("hostName"),
+            "rssFeed": validated_data.get("rssFeed"),
+            "googleCal": validated_data.get("googleCal"),
+            "podUrl": validated_data.get("podUrl"),
+            "guestUrl": validated_data.get("guestUrl"),
             "socialMedia": validated_data.get("socialMedia", []),
-            "email": validated_data.get("email", "") or "",
-            "description": validated_data.get("description", "") or "",
-            "logoUrl": validated_data.get("logoUrl", "") or "",
-            "category": validated_data.get("category", "") or "",
+            "email": validated_data.get("email"),
+            "description": validated_data.get("description"),
+            "logoUrl": validated_data.get("logoUrl"),
+            "category": validated_data.get("category"),
             "defaultTasks": validated_data.get("defaultTasks", []),
             "created_at": datetime.now(timezone.utc),
         }
@@ -100,16 +90,11 @@ def podcast():
 
         if result.inserted_id:
             print("✅ Podcast added successfully!")
-            return (
-                jsonify(
-                    {
-                        "message": "Podcast added successfully",
-                        "podcast_id": podcast_id,
-                        "redirect_url": "/index.html",
-                    }
-                ),
-                201,
-            )
+            return jsonify({
+                "message": "Podcast added successfully",
+                "podcast_id": podcast_id,
+                "redirect_url": "/index.html",
+            }), 201
         else:
             return jsonify({"error": "Failed to add podcast to the database."}), 500
 
