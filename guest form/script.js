@@ -309,13 +309,16 @@ document.addEventListener("DOMContentLoaded", function () {
     let currentMonth = new Date().getMonth();
     let currentYear = new Date().getFullYear();
 
-    // Unavailable dates
+    // Define unavailable dates
     const unavailableDates = [
-        "2025-03-10", "2025-03-15", "2025-03-20",
-        "2025-04-05", "2025-04-12", "2025-04-18"
+        "2025-03-10", "2025-03-15", "2025-03-20", // Example unavailable dates
+        "2025-04-05", "2025-04-12", "2025-04-18"  // More blocked days
     ];
 
-    // Open/Closes the inline date & time picker
+    // Load saved selection from localStorage
+    loadSavedDateTime();
+
+    // Open/Close the inline date & time picker
     openDatePickerBtn.addEventListener("click", (e) => {
         e.preventDefault();
         dateTimeContainer.classList.toggle("hidden");
@@ -323,7 +326,34 @@ document.addEventListener("DOMContentLoaded", function () {
         populateYearDropdown();
     });
 
-    // Populates the year dropdown
+    // Save selected date & time
+    function saveDateTime() {
+        if (selectedDate) {
+            localStorage.setItem("recordingDate", selectedDate.toISOString().split('T')[0]);
+            localStorage.setItem("selectedDateText", selectedDate.toDateString());
+        }
+        localStorage.setItem("recordingTime", timePicker.value);
+    }
+
+    // Load saved date & time from localStorage
+    function loadSavedDateTime() {
+        const savedDate = localStorage.getItem("recordingDate");
+        const savedTime = localStorage.getItem("recordingTime");
+        const savedDateText = localStorage.getItem("selectedDateText");
+
+        if (savedDate) {
+            selectedDate = new Date(savedDate);
+            document.getElementById("recordingDate").value = savedDate;
+            selectedDateTime.textContent = `Selected: ${savedDateText} at ${savedTime}`;
+            generateCalendar(); // Refresh calendar with the selected date
+        }
+
+        if (savedTime) {
+            document.getElementById("recordingTime").value = savedTime;
+        }
+    }
+
+    // Populate the year dropdown (10 years forward & back)
     function populateYearDropdown() {
         yearSelector.innerHTML = "";
         for (let i = currentYear - 10; i <= currentYear + 10; i++) {
@@ -335,7 +365,7 @@ document.addEventListener("DOMContentLoaded", function () {
         }
     }
 
-    // Handles month navigation
+    // Handle month navigation
     prevMonthBtn.addEventListener("click", (e) => {
         e.preventDefault();
         currentMonth--;
@@ -356,14 +386,14 @@ document.addEventListener("DOMContentLoaded", function () {
         generateCalendar();
     });
 
-    // Handles year change
+    // Handle year change
     yearSelector.addEventListener("change", (e) => {
         e.preventDefault();
         currentYear = parseInt(yearSelector.value);
         generateCalendar();
     });
 
-    // Generates a simple inline calendar
+    // Generate a simple inline calendar with unavailable dates
     function generateCalendar() {
         calendarPicker.innerHTML = "";
         const firstDay = new Date(currentYear, currentMonth, 1).getDay();
@@ -373,7 +403,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
         const daysOfWeek = ["S", "M", "T", "W", "T", "F", "S"];
 
-        // Displays days of the week
+        // Display days of the week
         daysOfWeek.forEach(day => {
             const dayEl = document.createElement("div");
             dayEl.classList.add("text-center", "font-bold");
@@ -381,13 +411,13 @@ document.addEventListener("DOMContentLoaded", function () {
             calendarPicker.appendChild(dayEl);
         });
 
-        // Fills in empty days at start of month
+        // Fill in empty days at start of month
         for (let i = 0; i < firstDay; i++) {
             const emptyDiv = document.createElement("div");
             calendarPicker.appendChild(emptyDiv);
         }
 
-        // Fills in days
+        // Fill in days
         for (let day = 1; day <= daysInMonth; day++) {
             const dayEl = document.createElement("button");
             dayEl.type = "button"; // Prevent it from submitting
@@ -395,13 +425,19 @@ document.addEventListener("DOMContentLoaded", function () {
             dayEl.classList.add("p-2", "text-center", "rounded", "hover:bg-blue-200");
 
             const fullDate = new Date(currentYear, currentMonth, day);
-            const formattedDate = fullDate.toISOString().split('T')[0];
+            const formattedDate = fullDate.toISOString().split('T')[0]; // Format as YYYY-MM-DD
 
-            // Checks if the date is unavailable
+            // Check if the date is unavailable
             if (fullDate.getDay() === 0 || fullDate.getDay() === 6 || unavailableDates.includes(formattedDate)) {
                 dayEl.classList.add("text-gray-400", "cursor-not-allowed", "line-through");
             } else {
                 dayEl.classList.add("bg-blue-100", "cursor-pointer");
+
+                // Restore selected date after refresh
+                if (formattedDate === localStorage.getItem("recordingDate")) {
+                    dayEl.classList.add("bg-blue-500", "text-white");
+                }
+
                 dayEl.addEventListener("click", (e) => {
                     e.preventDefault();
                     selectedDate = fullDate;
@@ -414,7 +450,7 @@ document.addEventListener("DOMContentLoaded", function () {
         }
     }
 
-    // Populates time slots
+    // Populate time slots (only full hours & half hours)
     function populateTimeSlots() {
         timePicker.innerHTML = "";
         timePickerContainer.classList.remove("hidden");
@@ -429,9 +465,15 @@ document.addEventListener("DOMContentLoaded", function () {
         }
 
         confirmDateTimeBtn.classList.remove("hidden");
+
+        // Restore the selected time after refresh
+        const savedTime = localStorage.getItem("recordingTime");
+        if (savedTime) {
+            timePicker.value = savedTime;
+        }
     }
 
-    // Confirms selection & prevents unwanted validation
+    // Confirm selection & prevent unwanted validation
     confirmDateTimeBtn.addEventListener("click", (e) => {
         e.preventDefault();
         const selectedTime = timePicker.value;
@@ -441,7 +483,8 @@ document.addEventListener("DOMContentLoaded", function () {
             document.getElementById("recordingTime").value = selectedTime;
             selectedDateTime.textContent = `Selected: ${selectedDate.toDateString()} at ${selectedTime}`;
             dateTimeContainer.classList.add("hidden");
+
+            saveDateTime(); // Save selection to localStorage
         }
     });
 });
-
