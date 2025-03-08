@@ -10,6 +10,18 @@ import { svgIcons } from "./svgIcons.js"; // import SVG icons
 
 console.log("podcastmanagement.js loaded");
 
+// Function to show alerts
+function showAlert(message, type) {
+  const alertBox = document.createElement("div");
+  alertBox.className = `alert alert-${type}`;
+  alertBox.textContent = message;
+  document.body.appendChild(alertBox);
+
+  setTimeout(() => {
+    alertBox.remove();
+  }, 3000);
+}
+
 document.addEventListener("DOMContentLoaded", function () {
   console.log("DOM fully loaded and parsed");
 
@@ -376,8 +388,8 @@ async function renderPodcastList() {
           const inviteBtn = document.querySelector(".invite-btn");
           inviteBtn.textContent = "Update";
           inviteBtn.classList.add("update-btn");
-          // Optionally, hide list view if needed:
-          document.getElementById("podcast-list").style.display = "none";
+          // Show the form popup for editing
+          document.getElementById("form-popup").style.display = "flex";
         } catch (error) {
           showAlert("Failed to fetch podcast details", "red");
         }
