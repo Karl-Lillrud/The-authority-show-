@@ -235,12 +235,11 @@ form.addEventListener("submit", async function (e) {
   e.preventDefault();
   console.log("Form submitted");
 
-  // Retrieve the form elements
+  // Retrieve regular input values
   const podName = document.getElementById("pod-name")?.value.trim() || "";
   const email = document.getElementById("email")?.value.trim() || "";
   const category = document.getElementById("category")?.value.trim() || "";
 
-  // Check if required fields are empty
   if (!podName) {
     showNotification(
       "Missing Field",
@@ -250,17 +249,7 @@ form.addEventListener("submit", async function (e) {
     return;
   }
 
-  // Collect social media values, filtering out empty ones
-  const socialMedia = [
-    document.getElementById("facebook")?.value.trim(),
-    document.getElementById("instagram")?.value.trim(),
-    document.getElementById("linkedin")?.value.trim(),
-    document.getElementById("twitter")?.value.trim(),
-    document.getElementById("tiktok")?.value.trim(),
-    document.getElementById("pinterest")?.value.trim()
-  ].filter((link) => link);
-
-  // Build the data object
+  // Build the data object from other form fields
   const data = {
     teamId: "",
     podName,
@@ -271,9 +260,17 @@ form.addEventListener("submit", async function (e) {
     guestUrl: document.getElementById("guest-form-url")?.value.trim() || null,
     email,
     description: document.getElementById("description")?.value.trim() || "",
-    logoUrl: "https://via.placeholder.com/300", // Placeholder image
+    // the logoUrl field will be replaced if a logo is uploaded
+    logoUrl: "https://via.placeholder.com/300",
     category,
-    socialMedia
+    socialMedia: [
+      document.getElementById("facebook")?.value.trim(),
+      document.getElementById("instagram")?.value.trim(),
+      document.getElementById("linkedin")?.value.trim(),
+      document.getElementById("twitter")?.value.trim(),
+      document.getElementById("tiktok")?.value.trim(),
+      document.getElementById("pinterest")?.value.trim()
+    ].filter((link) => link)
   };
 
   // Remove any keys with null or empty values
@@ -287,47 +284,66 @@ form.addEventListener("submit", async function (e) {
     }
   });
 
-  try {
-    let responseData;
-    if (selectedPodcastId) {
-      responseData = await updatePodcast(selectedPodcastId, data);
-      if (!responseData.error) {
-        showNotification("Success", "Podcast updated successfully!", "success");
+  // Function to continue submission after processing the logo (if any)
+  async function submitPodcast(updatedData) {
+    try {
+      let responseData;
+      if (selectedPodcastId) {
+        responseData = await updatePodcast(selectedPodcastId, updatedData);
+        if (!responseData.error) {
+          showNotification(
+            "Success",
+            "Podcast updated successfully!",
+            "success"
+          );
+        }
+      } else {
+        responseData = await addPodcast(updatedData);
+        if (!responseData.error) {
+          showNotification("Success", "Podcast added successfully!", "success");
+        }
       }
-    } else {
-      responseData = await addPodcast(data);
-      if (!responseData.error) {
-        showNotification("Success", "Podcast added successfully!", "success");
-      }
-    }
 
-    if (responseData.error) {
-      showNotification(
-        "Error",
-        `${
+      if (responseData.error) {
+        showNotification(
+          "Error",
           responseData.details
             ? JSON.stringify(responseData.details)
-            : responseData.error
-        }`,
+            : responseData.error,
+          "error"
+        );
+      } else {
+        document.getElementById("form-popup").style.display = "none";
+        document.getElementById("podcast-detail").style.display = "none";
+        document.getElementById("podcast-list").style.display = "flex";
+        resetForm();
+        renderPodcastList();
+      }
+    } catch (error) {
+      console.error("Error:", error);
+      showNotification(
+        "Error",
+        selectedPodcastId
+          ? "Failed to update podcast."
+          : "Failed to add podcast.",
         "error"
       );
-    } else {
-      document.getElementById("form-popup").style.display = "none";
-      // Added lines to hide detail view and show main list
-      document.getElementById("podcast-detail").style.display = "none";
-      document.getElementById("podcast-list").style.display = "flex";
-      resetForm();
-      renderPodcastList();
     }
-  } catch (error) {
-    console.error("Error:", error);
-    showNotification(
-      "Error",
-      selectedPodcastId
-        ? "Failed to update podcast."
-        : "Failed to add podcast.",
-      "error"
-    );
+  }
+
+  // Check for a logo file and convert it to a Base64 string if one is selected
+  const logoInput = document.getElementById("logo");
+  if (logoInput && logoInput.files[0]) {
+    const file = logoInput.files[0];
+    const reader = new FileReader();
+    reader.onloadend = async function () {
+      data.logoUrl = reader.result; // This is a Base64 encoded string
+      await submitPodcast(data);
+    };
+    reader.readAsDataURL(file);
+  } else {
+    // No logo file selected – continue with the placeholder or existing logoUrl
+    await submitPodcast(data);
   }
 });
 
