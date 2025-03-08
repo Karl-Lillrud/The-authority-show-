@@ -443,7 +443,7 @@ async function renderPodcastList() {
                 }">
                   ${svgIcons.edit}
                 </button>
-                <button class="action-btn delete-btn" title="Delete podcast" data-id="${
+                <button class="action-btn delete-btn-home" title="Delete podcast" data-id="${
                   podcast._id
                 }">
                   <span class="icon">${svgIcons.delete}</span>
@@ -507,6 +507,29 @@ async function renderPodcastList() {
             // Check if there are no more podcasts
             if (document.querySelectorAll(".podcast-card").length === 0) {
               renderPodcastList(); // This will show the empty state
+            }
+          } catch (error) {
+            showNotification("Error", "Failed to delete podcast.", "error");
+          }
+        }
+      });
+    });
+
+    // Added event listener for elements with class "delete-btn-home"
+    document.querySelectorAll(".delete-btn-home").forEach((button) => {
+      button.addEventListener("click", async (e) => {
+        const podcastId = e.target.closest("button").getAttribute("data-id");
+        if (confirm("Are you sure you want to delete this podcast?")) {
+          try {
+            await deletePodcast(podcastId);
+            showNotification(
+              "Success",
+              "Podcast deleted successfully!",
+              "success"
+            );
+            e.target.closest(".podcast-card")?.remove();
+            if (document.querySelectorAll(".podcast-card").length === 0) {
+              renderPodcastList();
             }
           } catch (error) {
             showNotification("Error", "Failed to delete podcast.", "error");

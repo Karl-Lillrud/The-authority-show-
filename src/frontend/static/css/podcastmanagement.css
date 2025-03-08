@@ -763,24 +763,6 @@ body {
   gap: var(--spacing-sm);
 }
 
-.select-btn {
-  background-color: rgba(76, 175, 80, 0.1);
-  color: var(--success-color);
-  border: none;
-  padding: var(--spacing-sm) var(--spacing-md);
-  border-radius: var(--radius-small);
-  font-weight: 500;
-  cursor: pointer;
-  box-shadow: -2px -2px 4px var(--light-shadow-light),
-    2px 2px 4px var(--dark-shadow-light);
-  transition: all 0.3s ease;
-}
-
-.select-btn:hover {
-  background-color: rgba(76, 175, 80, 0.2);
-  transform: translateY(-2px);
-}
-
 /* Notification */
 .notification {
   position: fixed;
@@ -957,8 +939,15 @@ body {
 
   .save-btn,
   .cancel-btn,
-  .delete-btn {
+  .delete-btn-home {
     width: 100%;
+  }
+
+  .delete-btn-home {
+    background-color: rgba(231, 76, 60, 0.2);
+    color: var(--danger-color);
+    box-shadow: -3px -3px 6px var(--light-shadow-light),
+      3px 3px 6px var(--dark-shadow-light);
   }
 
   .close-btn {
