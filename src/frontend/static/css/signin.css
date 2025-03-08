@@ -163,3 +163,177 @@ body {
 .form-actions {
   margin: 10px 0;
 }
+
+/* Responsiva media queries - behåller alltid vänsterposition */
+@media screen and (max-width: 1200px) {
+  .center-box {
+    width: 35%;
+    /* Behåller left: 2% från originalet */
+  }
+}
+
+@media screen and (max-width: 992px) {
+  .center-box {
+    width: 45%;
+    /* Behåller left: 2% från originalet */
+  }
+
+  .input {
+    width: 65%;
+  }
+}
+
+@media screen and (max-width: 768px) {
+  .center-box {
+    width: 60%;
+    height: auto;
+    min-height: 60vh;
+    padding: 25px 15px;
+    /* Behåller left: 2% från originalet */
+  }
+
+  .input {
+    padding: 20px;
+    margin: 15px;
+    width: 75%;
+  }
+
+  .button.button-primary {
+    width: 85%;
+    height: auto;
+    padding: 12px;
+  }
+
+  .forgot-password-link {
+    margin-right: 10%;
+  }
+}
+
+@media screen and (max-width: 576px) {
+  .center-box {
+    width: 80%;
+    border-radius: 30px;
+    padding: 20px 10px;
+    /* Behåller left: 2% från originalet */
+  }
+
+  .logo-container {
+    width: 100px;
+    top: 15px;
+  }
+
+  .input {
+    width: 80%;
+    padding: 15px;
+    margin: 10px;
+  }
+
+  .title {
+    font-size: 24px;
+    margin-bottom: 15px;
+  }
+
+  .button.button-primary {
+    width: 90%;
+  }
+
+  .forgot-password-link {
+    margin-right: 8%;
+  }
+
+  .link {
+    font-size: 14px;
+  }
+}
+
+@media screen and (max-width: 480px) {
+  .center-box {
+    width: 90%;
+    padding: 15px 10px;
+    left: 5%; /* Lite justering för att inte gå utanför skärmen */
+  }
+
+  .input {
+    width: 85%;
+    padding: 12px;
+    margin: 8px;
+  }
+
+  .logo-container {
+    width: 90px;
+  }
+
+  .button.button-primary {
+    width: 95%;
+  }
+}
+
+/* För mycket små skärmar */
+@media screen and (max-width: 375px) {
+  .center-box {
+    width: 92%;
+    padding: 15px 8px;
+    left: 4%; /* Lite justering för att inte gå utanför skärmen */
+  }
+
+  .input {
+    width: 85%;
+    padding: 10px;
+    margin: 6px;
+  }
+}
+
+/* För höjdjusteringar på mindre skärmar */
+@media screen and (max-height: 700px) {
+  .center-box {
+    height: auto;
+    min-height: 65vh;
+  }
+
+  .input {
+    padding: 15px;
+    margin: 10px;
+  }
+
+  .button.button-primary {
+    height: auto;
+    padding: 10px;
+  }
+}
+
+/* För enheter i landskapsläge */
+@media screen and (max-height: 500px) {
+  .center-box {
+    height: auto;
+    min-height: 80vh;
+    overflow-y: auto;
+  }
+
+  .input {
+    padding: 10px;
+    margin: 8px;
+  }
+
+  .title {
+    margin-bottom: 10px;
+  }
+
+  .forgot-password-link {
+    margin-bottom: 10px;
+  }
+}
+
+/* För att säkerställa att formuläret är användbart på mycket små enheter */
+@media screen and (max-width: 320px) {
+  .center-box {
+    width: 94%;
+    padding: 10px 5px;
+    left: 3%; /* Minimal justering för att inte gå utanför skärmen */
+  }
+
+  .input {
+    width: 90%;
+    padding: 10px;
+    margin: 6px;
+  }
+}
