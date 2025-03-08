@@ -443,7 +443,7 @@ async function renderPodcastList() {
                 <button class="action-btn delete-btn" title="Delete podcast" data-id="${
                   podcast._id
                 }">
-                  ${svgIcons.delete}
+                  <span class="icon">${svgIcons.delete}</span>
                 </button>
               </div>
             </div>
@@ -687,7 +687,7 @@ function renderPodcastDetail(podcast) {
           <button class="delete-btn" id="delete-podcast-btn" data-id="${
             podcast._id
           }">
-            ${svgIcons.delete}
+            <span class="icon">${svgIcons.delete}</span>
             Delete Podcast
           </button>
         </div>
