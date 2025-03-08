@@ -316,6 +316,9 @@ form.addEventListener("submit", async function (e) {
       );
     } else {
       document.getElementById("form-popup").style.display = "none";
+      // Added lines to hide detail view and show main list
+      document.getElementById("podcast-detail").style.display = "none";
+      document.getElementById("podcast-list").style.display = "flex";
       resetForm();
       renderPodcastList();
     }
