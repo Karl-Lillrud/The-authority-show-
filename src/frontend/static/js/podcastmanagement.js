@@ -337,12 +337,15 @@ form.addEventListener("submit", async function (e) {
     const file = logoInput.files[0];
     const reader = new FileReader();
     reader.onloadend = async function () {
-      data.logoUrl = reader.result; // This is a Base64 encoded string
+      data.logoUrl = reader.result; // update with new image
       await submitPodcast(data);
     };
     reader.readAsDataURL(file);
   } else {
-    // No logo file selected – continue with the placeholder or existing logoUrl
+    // If editing and no new image is selected, do not overwrite the existing logoUrl
+    if (selectedPodcastId) {
+      delete data.logoUrl;
+    }
     await submitPodcast(data);
   }
 });
