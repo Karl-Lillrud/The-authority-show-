@@ -6,7 +6,7 @@ import {
   deletePodcast
 } from "../requests/podcastRequests.js";
 import { registerEpisode } from "../requests/episodeRequest.js";
-import { svgIcons } from "./svgIcons.js";
+import { svgpodcastmanagement } from "../svg/svgpodcastmanagement.js"; // Updated import path
 
 console.log("podcastmanagement.js loaded");
 
@@ -25,14 +25,11 @@ function showNotification(title, message, type = "info") {
   // Icon based on type
   let iconSvg = "";
   if (type === "success") {
-    iconSvg =
-      '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>';
+    iconSvg = svgpodcastmanagement.success;
   } else if (type === "error") {
-    iconSvg =
-      '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="15" y1="9" x2="9" y2="15"></line><line x1="9" y1="9" x2="15" y2="15"></line></svg>';
+    iconSvg = svgpodcastmanagement.error;
   } else {
-    iconSvg =
-      '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>';
+    iconSvg = svgpodcastmanagement.defaultIcon;
   }
 
   notification.innerHTML = `
@@ -436,17 +433,17 @@ async function renderPodcastList() {
                 <button class="action-btn view-btn" title="View podcast details" data-id="${
                   podcast._id
                 }">
-                  ${svgIcons.view}
+                  ${svgpodcastmanagement.view}
                 </button>
                 <button class="action-btn edit-btn" title="Edit podcast" data-id="${
                   podcast._id
                 }">
-                  ${svgIcons.edit}
+                  ${svgpodcastmanagement.edit}
                 </button>
                 <button class="action-btn delete-btn-home" title="Delete podcast" data-id="${
                   podcast._id
                 }">
-                  <span class="icon">${svgIcons.delete}</span>
+                  <span class="icon">${svgpodcastmanagement.delete}</span>
                 </button>
               </div>
             </div>
@@ -583,7 +580,7 @@ function renderPodcastDetail(podcast) {
   podcastDetailElement.innerHTML = `
     <div class="detail-header">
       <button class="back-btn" id="back-to-list">
-        ${svgIcons.back}
+        ${svgpodcastmanagement.back}
         Back to podcasts
       </button>
     </div>
@@ -635,11 +632,11 @@ function renderPodcastDetail(podcast) {
               ${
                 podcast.googleCal
                   ? `<a href="${podcast.googleCal}" target="_blank" style="display: flex; align-items: center; gap: 0.5rem;">
-                    ${svgIcons.calendar}
+                    ${svgpodcastmanagement.calendar}
                     Calendar Link
                   </a>`
                   : `<p style="display: flex; align-items: center; gap: 0.5rem;">
-                    ${svgIcons.calendar}
+                    ${svgpodcastmanagement.calendar}
                     Not connected
                   </p>`
               }
@@ -663,7 +660,7 @@ function renderPodcastDetail(podcast) {
             ${
               podcast.socialMedia && podcast.socialMedia[0]
                 ? `<a href="${podcast.socialMedia[0]}" target="_blank" class="social-link">
-                  ${svgIcons.facebook}
+                  ${svgpodcastmanagement.facebook}
                   Facebook
                 </a>`
                 : ""
@@ -671,7 +668,7 @@ function renderPodcastDetail(podcast) {
             ${
               podcast.socialMedia && podcast.socialMedia[1]
                 ? `<a href="${podcast.socialMedia[1]}" target="_blank" class="social-link">
-                  ${svgIcons.instagram}
+                  ${svgpodcastmanagement.instagram}
                   Instagram
                 </a>`
                 : ""
@@ -679,7 +676,7 @@ function renderPodcastDetail(podcast) {
             ${
               podcast.socialMedia && podcast.socialMedia[2]
                 ? `<a href="${podcast.socialMedia[2]}" target="_blank" class="social-link">
-                  ${svgIcons.linkedin}
+                  ${svgpodcastmanagement.linkedin}
                   LinkedIn
                 </a>`
                 : ""
@@ -687,7 +684,7 @@ function renderPodcastDetail(podcast) {
             ${
               podcast.socialMedia && podcast.socialMedia[3]
                 ? `<a href="${podcast.socialMedia[3]}" target="_blank" class="social-link">
-                  ${svgIcons.twitter}
+                  ${svgpodcastmanagement.twitter}
                   Twitter
                 </a>`
                 : ""
@@ -695,7 +692,7 @@ function renderPodcastDetail(podcast) {
             ${
               podcast.socialMedia && podcast.socialMedia[4]
                 ? `<a href="${podcast.socialMedia[4]}" target="_blank" class="social-link">
-                  ${svgIcons.tiktok}
+                  ${svgpodcastmanagement.tiktok}
                   TikTok
                 </a>`
                 : ""
@@ -707,13 +704,13 @@ function renderPodcastDetail(podcast) {
           <button class="back-btn" id="edit-podcast-btn" data-id="${
             podcast._id
           }">
-            ${svgIcons.edit}
+            ${svgpodcastmanagement.edit}
             Edit Podcast
           </button>
           <button class="delete-btn" id="delete-podcast-btn" data-id="${
             podcast._id
           }">
-            <span class="icon">${svgIcons.delete}</span>
+            <span class="icon">${svgpodcastmanagement.delete}</span>
             Delete Podcast
           </button>
         </div>
