@@ -815,11 +815,68 @@ h1 {
   transform: none; /* overridden to cancel .popup transform */
 }
 #form-popup .form-box {
-  background: var(--background-light);
+  background: white; /* Match the white background */
   padding: var(--spacing-lg);
   border-radius: var(--radius-large);
-  box-shadow: 0 0 5px rgba(0, 0, 0, 0.2); /* reduced shadow size */
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1); /* Match the box shadow */
   position: relative;
+  width: 100%;
+  max-width: 600px;
+  text-align: left;
+}
+#form-popup .close-btn {
+  position: absolute;
+  top: var(--spacing-sm);
+  right: var(--spacing-sm);
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  cursor: pointer;
+  color: var(--text-color-light);
+}
+#form-popup .field-group {
+  margin-bottom: var(--spacing-md);
+}
+#form-popup .field-group label {
+  display: block;
+  margin-bottom: var(--spacing-sm);
+  font-weight: bold;
+  color: var(--text-color-light);
+}
+#form-popup .field-group input,
+#form-popup .field-group textarea {
+  width: 100%;
+  padding: var(--spacing-sm);
+  border: none;
+  border-radius: var(--radius-small);
+  box-shadow: inset -3px -3px 6px var(--light-shadow-light),
+    inset 3px 3px 6px var(--dark-shadow-light);
+  outline: none;
+  font-size: 0.9rem;
+  color: var(--text-color-light);
+  background: var(--background-light);
+  transition: background-color 0.3s ease, box-shadow 0.3s ease;
+}
+#form-popup .field-group input:focus,
+#form-popup .field-group textarea:focus {
+  box-shadow: inset 2px 2px 4px rgba(255, 127, 63, 0.3),
+    inset -2px -2px 4px rgba(0, 0, 0, 0.1);
+}
+#form-popup .invite-btn {
+  background: var(--highlight-color);
+  color: #ffffff;
+  font-weight: bold;
+  border: none;
+  padding: var(--spacing-sm) var (--spacing-md);
+  border-radius: var(--radius-medium);
+  cursor: pointer;
+  transition: background-color 0.3s ease, transform 0.3s ease;
+  width: 100%;
+  font-size: 1rem;
+}
+#form-popup .invite-btn:hover {
+  background-color: #e0662c;
+  transform: translateY(-3px);
 }
 /* Close button inside the popup */
 #close-form-popup {
@@ -828,4 +885,85 @@ h1 {
   right: 10px;
   font-size: 1.5rem;
   cursor: pointer;
+}
+
+/* Styles for the episode form popup */
+#episode-form-popup {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background-color: rgba(0, 0, 0, 0.5);
+  z-index: 1100;
+  transform: none; /* overridden to cancel .popup transform */
+}
+#episode-form-popup .form-box {
+  background: white; /* Match the white background */
+  padding: var(--spacing-lg);
+  border-radius: var(--radius-large);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1); /* Match the box shadow */
+  position: relative;
+  width: 100%;
+  max-width: 600px;
+  text-align: left;
+}
+#episode-form-popup .close-btn {
+  position: absolute;
+  top: var(--spacing-sm);
+  right: var(--spacing-sm);
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  cursor: pointer;
+  color: var(--text-color-light);
+}
+#episode-form-popup .field-group {
+  margin-bottom: var(--spacing-md);
+}
+#episode-form-popup .field-group label {
+  display: block;
+  margin-bottom: var(--spacing-sm);
+  font-weight: bold;
+  color: var(--text-color-light);
+}
+#episode-form-popup .field-group input,
+#episode-form-popup .field-group textarea,
+#episode-form-popup .field-group select {
+  width: 100%;
+  padding: var(--spacing-sm);
+  border: none;
+  border-radius: var(--radius-small);
+  box-shadow: inset -3px -3px 6px var(--light-shadow-light),
+    inset 3px 3px 6px var(--dark-shadow-light);
+  outline: none;
+  font-size: 0.9rem;
+  color: var(--text-color-light);
+  background: var(--background-light);
+  transition: background-color 0.3s ease, box-shadow 0.3s ease;
+}
+#episode-form-popup .field-group input:focus,
+#episode-form-popup .field-group textarea:focus,
+#episode-form-popup .field-group select:focus {
+  box-shadow: inset 2px 2px 4px rgba(255, 127, 63, 0.3),
+    inset -2px -2px 4px rgba(0, 0, 0, 0.1);
+}
+#episode-form-popup .invite-btn {
+  background: var(--highlight-color);
+  color: #ffffff;
+  font-weight: bold;
+  border: none;
+  padding: var(--spacing-sm) var(--spacing-md);
+  border-radius: var(--radius-medium);
+  cursor: pointer;
+  transition: background-color 0.3s ease, transform 0.3s ease;
+  width: 100%;
+  font-size: 1rem;
+}
+#episode-form-popup .invite-btn:hover {
+  background-color: #e0662c;
+  transform: translateY(-3px);
 }
