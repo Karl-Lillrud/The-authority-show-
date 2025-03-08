@@ -219,7 +219,8 @@ def count_by_guest(guest_id):
     except Exception as e:
         print(f"❌ ERROR: {e}")
         return jsonify({"error": f"Failed to fetch episode count: {str(e)}"}), 500
-    
+
+
 @episode_bp.route("/episodes/count_by_guest/<guest_id>", methods=["GET"])
 def count_episodes_by_guest(guest_id):
     try:
@@ -238,4 +239,3 @@ def get_episodes_by_guest(guest_id):
         return jsonify({"episodes": episodes}), 200
     except Exception as e:
         return jsonify({"error": str(e)}), 500
-

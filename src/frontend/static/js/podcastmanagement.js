@@ -25,6 +25,21 @@ document.addEventListener("DOMContentLoaded", function () {
   document.getElementById("close-form-popup").addEventListener("click", () => {
     document.getElementById("form-popup").style.display = "none";
   });
+
+  // New event: show form for creating a new episode
+  document
+    .getElementById("create-episode-btn")
+    .addEventListener("click", async () => {
+      const podcasts = await fetchPodcasts();
+      renderPodcastSelection(podcasts.podcast); // Adjusted to match the existing API response
+      document.getElementById("episode-form-popup").style.display = "flex";
+    });
+  // Add event listener to close the episode form popup
+  document
+    .getElementById("close-episode-form-popup")
+    .addEventListener("click", () => {
+      document.getElementById("episode-form-popup").style.display = "none";
+    });
 });
 
 const formContainer = document.querySelector(".form-box");
@@ -351,6 +366,19 @@ async function renderPodcastList() {
   } catch (error) {
     console.error("Error rendering podcast list:", error);
   }
+}
+
+// New function: render podcast selection for creating a new episode
+function renderPodcastSelection(podcasts) {
+  const podcastSelectElement = document.getElementById("podcast-select");
+  podcastSelectElement.innerHTML = "";
+
+  podcasts.forEach((podcast) => {
+    const option = document.createElement("option");
+    option.value = podcast._id;
+    option.textContent = podcast.podName;
+    podcastSelectElement.appendChild(option);
+  });
 }
 
 // Update viewPodcast to use the new detail layout

@@ -16,6 +16,9 @@
       <!-- Toolbar for CRUD buttons -->
       <div class="crud-buttons">
         <button id="add-podcast-btn" class="crud-btn">Add Podcast</button>
+        <button id="create-episode-btn" class="crud-btn">
+          Create New Episode
+        </button>
       </div>
 
       <!-- Container for popup list used in selection -->
@@ -101,6 +104,49 @@
               <input type="url" id="pinterest" name="socialMedia[]" />
             </div>
             <button type="submit" class="invite-btn">SAVE</button>
+          </form>
+        </div>
+      </div>
+
+      <!-- Form popup container for creating a new episode -->
+      <div id="episode-form-popup" class="popup" style="display: none">
+        <div class="form-box">
+          <!-- Close button for popup -->
+          <span id="close-episode-form-popup" class="close-btn">&times;</span>
+          <form id="create-episode-form">
+            <div class="field-group">
+              <label for="podcast-select">Select Podcast</label>
+              <select id="podcast-select" name="podcastId" required></select>
+            </div>
+            <div class="field-group">
+              <label for="episode-title">Episode Title</label>
+              <input type="text" id="episode-title" name="title" required />
+            </div>
+            <div class="field-group">
+              <label for="episode-description">Description</label>
+              <textarea id="episode-description" name="description"></textarea>
+            </div>
+            <div class="field-group">
+              <label for="publish-date">Publish Date</label>
+              <input
+                type="datetime-local"
+                id="publish-date"
+                name="publishDate"
+              />
+            </div>
+            <div class="field-group">
+              <label for="duration">Duration (minutes)</label>
+              <input type="number" id="duration" name="duration" />
+            </div>
+            <div class="field-group">
+              <label for="guest-id">Guest ID</label>
+              <input type="text" id="guest-id" name="guestId" />
+            </div>
+            <div class="field-group">
+              <label for="status">Status</label>
+              <input type="text" id="status" name="status" />
+            </div>
+            <button type="submit" class="invite-btn">Create Episode</button>
           </form>
         </div>
       </div>
