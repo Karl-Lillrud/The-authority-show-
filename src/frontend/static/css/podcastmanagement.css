@@ -42,8 +42,8 @@ body {
 .logo-container {
   position: fixed;
   top: 20px;
-  left: 50%;
-  transform: translateX(-50%);
+  left: 20px; /* Changed from 50% to 20px so the logo stays left */
+  transform: none; /* Remove centering transform */
   width: 120px;
   z-index: 999;
   background-color: transparent;
@@ -82,7 +82,7 @@ body {
 .action-button:hover {
   transform: translateY(-3px);
   box-shadow: -7px -7px 14px var(--light-shadow-light),
-    7px 7px 14px var(--dark-shadow-light);
+    7px 7px 14px var (--dark-shadow-light);
   color: var(--highlight-color);
 }
 
@@ -847,27 +847,6 @@ body {
   color: var(--text-color-light);
 }
 
-/* Responsive Styles */
-@media (max-width: 992px) {
-  .detail-content {
-    grid-template-columns: 1fr;
-  }
-
-  .detail-image {
-    height: 250px;
-    margin-bottom: var(--spacing-md);
-  }
-
-  .podcast-content {
-    flex-direction: column;
-  }
-
-  .podcast-image {
-    width: 100%;
-    height: 180px;
-  }
-}
-
 @media (max-width: 768px) {
   .form-grid {
     grid-template-columns: 1fr;
@@ -956,5 +935,11 @@ body {
     width: 32px;
     height: 32px;
     font-size: 1.2rem;
+  }
+
+  .logo-container {
+    width: 80px;
+    top: 10px;
+    left: 10px;
   }
 }

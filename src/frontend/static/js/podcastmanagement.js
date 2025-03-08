@@ -429,7 +429,7 @@ async function renderPodcastList() {
       podcastCard.innerHTML = `
         <div class="podcast-content">
           <div class="podcast-image" style="background-image: url('${
-            podcast.logoUrl || "https://via.placeholder.com/300"
+            podcast.logoUrl
           }')"></div>
           <div class="podcast-info">
             <div class="podcast-header">
