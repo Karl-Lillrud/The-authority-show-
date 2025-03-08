@@ -261,7 +261,7 @@ form.addEventListener("submit", async function (e) {
     email,
     description: document.getElementById("description")?.value.trim() || "",
     // the logoUrl field will be replaced if a logo is uploaded
-    logoUrl: "https://via.placeholder.com/300",
+
     category,
     socialMedia: [
       document.getElementById("facebook")?.value.trim(),
@@ -602,7 +602,7 @@ function renderPodcastDetail(podcast) {
     </div>
     <div class="detail-content">
       <div class="detail-image" style="background-image: url('${
-        podcast.logoUrl || "https://via.placeholder.com/300"
+        podcast.logoUrl
       }')"></div>
       <div class="detail-info">
         <h1 class="detail-title">${podcast.podName}</h1>
