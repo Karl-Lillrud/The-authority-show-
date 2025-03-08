@@ -5,6 +5,7 @@ import {
   updatePodcast,
   deletePodcast
 } from "../requests/podcastRequests.js";
+import { registerEpisode } from "../requests/episodeRequest.js"; // Import the new function
 import { svgIcons } from "./svgIcons.js"; // import SVG icons
 
 console.log("podcastmanagement.js loaded");
@@ -39,6 +40,38 @@ document.addEventListener("DOMContentLoaded", function () {
     .getElementById("close-episode-form-popup")
     .addEventListener("click", () => {
       document.getElementById("episode-form-popup").style.display = "none";
+    });
+
+  // Add event listener for episode form submission
+  document
+    .getElementById("create-episode-form")
+    .addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const formData = new FormData(e.target);
+      const data = Object.fromEntries(formData.entries());
+
+      // Check for missing required fields
+      if (!data.podcastId || !data.title) {
+        showAlert("Please fill in all required fields.", "red");
+        return;
+      }
+
+      // Logga vald podcast för debug
+      console.log("Skickar episoddata med podcastId:", data.podcastId);
+
+      try {
+        const result = await registerEpisode(data); // Use the new function
+        console.log("Result from registerEpisode:", result); // Added log
+        if (result.message) {
+          showAlert("Episode created successfully!", "green");
+          document.getElementById("episode-form-popup").style.display = "none";
+        } else {
+          showAlert(`Error: ${result.error}`, "red");
+        }
+      } catch (error) {
+        console.error("Error creating episode:", error);
+        showAlert("Failed to create episode.", "red");
+      }
     });
 });
 
@@ -411,7 +444,7 @@ function renderPodcastDetail(podcast) {
       <div class="detail-info">
         <h1 class="detail-title">${podcast.podName}</h1>
         <p class="detail-category">${podcast.category}</p>
-        <div class="detail-section">
+        <div class="detail-section"></div>
           <h2>About</h2>
           <p>${podcast.description || "No description available."}</p>
         </div>
