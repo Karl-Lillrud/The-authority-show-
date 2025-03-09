@@ -250,7 +250,7 @@ body {
   .center-box {
     width: 90%;
     padding: 15px 10px;
-    left: 5%; /* Lite justering för att inte gå utanför skärmen */
+    /* Lite justering för att inte gå utanför skärmen */
   }
 
   .input {
@@ -273,7 +273,6 @@ body {
   .center-box {
     width: 92%;
     padding: 15px 8px;
-    left: 4%; /* Lite justering för att inte gå utanför skärmen */
   }
 
   .input {
@@ -328,7 +327,6 @@ body {
   .center-box {
     width: 94%;
     padding: 10px 5px;
-    left: 3%; /* Minimal justering för att inte gå utanför skärmen */
   }
 
   .input {
