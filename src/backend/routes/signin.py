@@ -16,15 +16,18 @@ signin_bp = Blueprint("signin_bp", __name__)
 API_BASE_URL = os.getenv("API_BASE_URL", "http://127.0.0.1:8000")
 
 
-@signin_bp.route("/", methods=["GET"])
+@signin_bp.route("/signin", methods=["GET"], endpoint="signin")
 def signin_get():
     if request.cookies.get("remember_me") == "true":
         return redirect("/dashboard")
     return render_template("signin.html", API_BASE_URL=API_BASE_URL)
 
 
-# Add alias for backward compatibility
-signin_bp.add_url_rule("/", endpoint="signin", view_func=signin_get)
+@signin_bp.route("/", methods=["GET"])
+def root_get():
+    if request.cookies.get("remember_me") == "true":
+        return redirect("/dashboard")
+    return render_template("signin.html", API_BASE_URL=API_BASE_URL)
 
 
 @signin_bp.route("/signin", methods=["POST"])
@@ -73,6 +76,6 @@ def signin_post():
 @signin_bp.route("/logout", methods=["GET"])
 def logout():
     session.clear()
-    response = redirect(url_for("signin_bp.signin_get"))
+    response = redirect(url_for("signin_bp.signin"))
     response.delete_cookie("remember_me")
     return response
