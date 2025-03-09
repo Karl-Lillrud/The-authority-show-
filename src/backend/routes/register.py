@@ -10,9 +10,11 @@ register_bp = Blueprint("register_bp", __name__)
 
 load_dotenv()
 
+
 @register_bp.route("/register", methods=["GET"])
 def register_get():
     return render_template("register/register.html")
+
 
 @register_bp.route("/register", methods=["POST"])
 def register_post():
@@ -89,7 +91,9 @@ def register_post():
                     "message": "Registration successful!",
                     "userId": user_id,
                     "accountId": account_id,
-                    "redirect_url": url_for("signin_bp.signin_get", _external=True),
+                    "redirect_url": url_for(
+                        "signin_bp.signin", _external=True
+                    ),  # Updated endpoint here
                 }
             ),
             201,
@@ -99,6 +103,7 @@ def register_post():
         print(f"❌ ERROR: {e}")
         return jsonify({"error": f"Database error: {str(e)}"}), 500
 
+
 @register_bp.route("/get_email", methods=["GET"])
 def get_email():
     if not hasattr(g, "user_id") or not g.user_id:
@@ -106,7 +111,9 @@ def get_email():
 
     try:
         user_id = str(g.user_id)
-        user = collection.database.Users.find_one({"_id": user_id}, {"email": 1, "_id": 0})
+        user = collection.database.Users.find_one(
+            {"_id": user_id}, {"email": 1, "_id": 0}
+        )
 
         if not user:
             return jsonify({"error": "User not found"}), 404

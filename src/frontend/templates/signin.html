@@ -3,8 +3,14 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Login</title>
+    <title>Sign In</title>
     <link rel="stylesheet" href="/static/css/signin.css" />
+    <link
+      rel="icon"
+      type="image/x-icon"
+      href="{{ url_for('static', filename='favicon/favicon.ico') }}"
+    />
+    <link rel="canonical" href="https://app.podmanager.ai" />
   </head>
   <body>
     <!-- Logo -->
@@ -23,7 +29,7 @@
     </div>
 
     <div class="center-box">
-      <h1 class="title">Welcome</h1>
+      <h1 class="title">Sign In</h1>
       <div
         id="success-message"
         class="success-message"
@@ -31,7 +37,7 @@
       ></div>
       <div id="error-message" class="error-message" style="display: none"></div>
 
-      <form id="login-form">
+      <form id="signin-form">
         <div class="input-group">
           <label for="email" class="label"></label>
           <input
@@ -55,25 +61,18 @@
           />
         </div>
 
-        <!-- Sign in becomes a text link in form-actions -->
-        <div class="form-actions">
-          <button type="submit" class="link login-link">Sign in</button>
-        </div>
-
-        <!-- Moved Forgot Password link directly under Sign in -->
-        <div class="forgot-password">
+        <div class="forgot-password-link">
           <a href="/forgotpassword" class="link">Forgot Password?</a>
         </div>
 
-        <!-- Moved Register here as a button in extra-links, pushed further down -->
-        <div class="extra-links" style="margin-top: 300px">
-          <button
-            type="button"
-            class="button button-primary"
-            onclick="window.location.href='/register'"
+        <div class="form-actions">
+          <button type="submit" class="button button-primary">Sign In</button>
+        </div>
+
+        <div class="register-link">
+          <a href="{{ url_for('register_bp.register_get') }}" class="link"
+            >Don't Have an Account? Register Here</a
           >
-            Register here
-          </button>
         </div>
       </form>
     </div>
@@ -92,8 +91,13 @@
           successMessage.style.color = "var(--highlight)"; // Match error message color
         }
 
-        const form = document.getElementById("login-form");
+        const form = document.getElementById("signin-form");
         const errorMessage = document.getElementById("error-message");
+
+        if (!form) {
+          console.error("❌ ERROR: #signin-form not found in the DOM.");
+          return;
+        }
 
         form.addEventListener("submit", async function (event) {
           event.preventDefault();
