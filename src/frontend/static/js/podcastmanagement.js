@@ -10,6 +10,7 @@ import {
   fetchEpisodesByPodcast
 } from "../requests/episodeRequest.js"; // Updated import
 import { svgpodcastmanagement } from "../svg/svgpodcastmanagement.js"; // Updated import path
+import { fetchGuestsRequest } from "../requests/guestRequests.js"; // Added import for fetching guests
 
 console.log("podcastmanagement.js loaded");
 
@@ -83,51 +84,99 @@ function showNotification(title, message, type = "info") {
 // New function to fetch and render guest options into a select element
 async function renderGuestSelection(selectElement, selectedGuestId = "") {
   try {
-    const response = await fetch("/get_guests");
-    const data = await response.json();
-    if (response.ok && data.guests) {
-      selectElement.innerHTML = "";
-      const defaultOption = document.createElement("option");
-      defaultOption.value = "";
-      defaultOption.textContent = "Select Guest"; // Changed text
-      selectElement.appendChild(defaultOption);
-      data.guests.forEach((guest) => {
-        const option = document.createElement("option");
-        option.value = guest.id || guest._id;
-        option.textContent = guest.name;
-        if ((guest.id || guest._id) === selectedGuestId) {
-          option.selected = true;
-        }
-        selectElement.appendChild(option);
-      });
-    }
+    const guests = await fetchGuestsRequest(); // Use guestRequests for fetching guests
+    selectElement.innerHTML = "";
+    const defaultOption = document.createElement("option");
+    defaultOption.value = "";
+    defaultOption.textContent = "Select Guest"; // Changed text
+    selectElement.appendChild(defaultOption);
+    guests.forEach((guest) => {
+      const option = document.createElement("option");
+      option.value = guest.id || guest._id;
+      option.textContent = guest.name;
+      if ((guest.id || guest._id) === selectedGuestId) {
+        option.selected = true;
+      }
+      selectElement.appendChild(option);
+    });
     // Remove any existing manual guest button if present
-    let manualBtn =
-      selectElement.parentElement.querySelector(".manual-guest-btn");
-    if (manualBtn) {
-      manualBtn.remove();
+    let manualField = selectElement.parentElement.querySelector(
+      ".manual-guest-field"
+    );
+    if (manualField) {
+      manualField.remove();
     }
-    // Append a separate button below the dropdown for manual guest entry.
-    manualBtn = document.createElement("button");
-    manualBtn.type = "button";
-    manualBtn.className = "manual-guest-btn";
-    manualBtn.textContent = "Add Guest Manually";
-    // Append the button after the select element.
-    selectElement.parentElement.appendChild(manualBtn);
-    manualBtn.addEventListener("click", () => {
-      const guestName = prompt("Enter guest name:");
-      if (!guestName) return;
-      const guestEmail = prompt("Enter guest email:");
-      if (!guestEmail) return;
+    // Append a separate field below the dropdown for manual guest entry.
+    manualField = document.createElement("div");
+    manualField.className = "manual-guest-field";
+    manualField.innerHTML = `
+      <label for="manual-guest">Add Guest Manually</label>
+      <input type="text" id="manual-guest" placeholder="Click to add guest manually" readonly />
+    `;
+    // Append the field after the select element.
+    selectElement.parentElement.appendChild(manualField);
+    manualField.addEventListener("click", () => {
+      showManualGuestPopup(selectElement);
+    });
+  } catch (error) {
+    console.error("Error fetching guests:", error);
+  }
+}
+
+function showManualGuestPopup(selectElement) {
+  const popup = document.createElement("div");
+  popup.className = "popup";
+  popup.style.display = "flex";
+
+  const popupContent = document.createElement("div");
+  popupContent.className = "form-box";
+  popupContent.innerHTML = `
+    <span id="close-manual-guest-popup" class="close-btn">&times;</span>
+    <h2 class="form-title">Add Guest Manually</h2>
+    <form id="manual-guest-form">
+      <div class="field-group full-width">
+        <label for="manual-guest-name">Guest Name</label>
+        <input type="text" id="manual-guest-name" name="guestName" required />
+      </div>
+      <div class="field-group full-width">
+        <label for="manual-guest-email">Guest Email</label>
+        <input type="email" id="manual-guest-email" name="guestEmail" required />
+      </div>
+      <div class="form-actions">
+        <button type="button" id="cancel-manual-guest" class="cancel-btn">Cancel</button>
+        <button type="submit" class="save-btn">Add Guest</button>
+      </div>
+    </form>
+  `;
+  popup.appendChild(popupContent);
+  document.body.appendChild(popup);
+
+  // Close popup events
+  popup
+    .querySelector("#close-manual-guest-popup")
+    .addEventListener("click", () => {
+      document.body.removeChild(popup);
+    });
+  popup.querySelector("#cancel-manual-guest").addEventListener("click", () => {
+    document.body.removeChild(popup);
+  });
+
+  // Manual guest form submission
+  popup.querySelector("#manual-guest-form").addEventListener("submit", (e) => {
+    e.preventDefault();
+    const guestName = document.getElementById("manual-guest-name").value.trim();
+    const guestEmail = document
+      .getElementById("manual-guest-email")
+      .value.trim();
+    if (guestName && guestEmail) {
       const newOption = document.createElement("option");
       newOption.value = "manual-" + Date.now();
       newOption.textContent = `${guestName} (${guestEmail})`;
       selectElement.appendChild(newOption);
       newOption.selected = true;
-    });
-  } catch (error) {
-    console.error("Error fetching guests:", error);
-  }
+      document.body.removeChild(popup);
+    }
+  });
 }
 
 document.addEventListener("DOMContentLoaded", function () {
