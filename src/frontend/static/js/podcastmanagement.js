@@ -89,7 +89,7 @@ async function renderGuestSelection(selectElement, selectedGuestId = "") {
       selectElement.innerHTML = "";
       const defaultOption = document.createElement("option");
       defaultOption.value = "";
-      defaultOption.textContent = "Invite Guest";
+      defaultOption.textContent = "Select Guest"; // Changed text
       selectElement.appendChild(defaultOption);
       data.guests.forEach((guest) => {
         const option = document.createElement("option");
@@ -100,39 +100,30 @@ async function renderGuestSelection(selectElement, selectedGuestId = "") {
         }
         selectElement.appendChild(option);
       });
-      // Append extra option for manual adding
-      const manualOption = document.createElement("option");
-      manualOption.value = "manual";
-      manualOption.textContent = "Add Guest Manually";
-      selectElement.appendChild(manualOption);
     }
-    // Remove any existing manual input if present
-    let manualInput = selectElement.parentElement.querySelector(
-      ".manual-guest-input"
-    );
-    if (manualInput) {
-      manualInput.remove();
+    // Remove any existing manual guest button if present
+    let manualBtn =
+      selectElement.parentElement.querySelector(".manual-guest-btn");
+    if (manualBtn) {
+      manualBtn.remove();
     }
-    // Add listener to handle manual guest entry
-    selectElement.addEventListener("change", (e) => {
-      if (e.target.value === "manual") {
-        // Create an input field for manual guest entry if not already present
-        if (!selectElement.parentElement.querySelector(".manual-guest-input")) {
-          manualInput = document.createElement("input");
-          manualInput.type = "text";
-          manualInput.className = "manual-guest-input";
-          manualInput.placeholder = "Enter guest name manually";
-          // Append the manual input right after the select element
-          selectElement.parentElement.appendChild(manualInput);
-        }
-      } else {
-        // Remove manual guest input if existing
-        if (selectElement.parentElement.querySelector(".manual-guest-input")) {
-          selectElement.parentElement
-            .querySelector(".manual-guest-input")
-            .remove();
-        }
-      }
+    // Append a separate button below the dropdown for manual guest entry.
+    manualBtn = document.createElement("button");
+    manualBtn.type = "button";
+    manualBtn.className = "manual-guest-btn";
+    manualBtn.textContent = "Add Guest Manually";
+    // Append the button after the select element.
+    selectElement.parentElement.appendChild(manualBtn);
+    manualBtn.addEventListener("click", () => {
+      const guestName = prompt("Enter guest name:");
+      if (!guestName) return;
+      const guestEmail = prompt("Enter guest email:");
+      if (!guestEmail) return;
+      const newOption = document.createElement("option");
+      newOption.value = "manual-" + Date.now();
+      newOption.textContent = `${guestName} (${guestEmail})`;
+      selectElement.appendChild(newOption);
+      newOption.selected = true;
     });
   } catch (error) {
     console.error("Error fetching guests:", error);

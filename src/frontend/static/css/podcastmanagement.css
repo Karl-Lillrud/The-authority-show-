@@ -869,6 +869,27 @@ body {
   cursor: pointer;
 }
 
+.manual-guest-btn {
+  display: inline-block;
+  margin-top: var(--spacing-sm);
+  padding: var(--spacing-md) calc(var(--spacing-lg) * 1.2);
+  border: none;
+  border-radius: var(--radius-medium);
+  background-color: var(--highlight-color);
+  color: white;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-size: 1rem;
+  box-shadow: -3px -3px 6px rgba(255, 255, 255, 0.1),
+    3px 3px 6px rgba(0, 0, 0, 0.2);
+}
+
+.manual-guest-btn:hover {
+  background-color: #e0662c;
+  transform: translateY(-2px);
+}
+
 @media (max-width: 768px) {
   .form-grid {
     grid-template-columns: 1fr;
