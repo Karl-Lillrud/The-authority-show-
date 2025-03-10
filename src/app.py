@@ -20,8 +20,7 @@ from backend.routes.frontend import frontend_bp  # Import the frontend blueprint
 from backend.routes.guest_to_eposide import guesttoepisode_bp
 from dotenv import load_dotenv
 from backend.utils import venvupdate
-from backend.database.mongo_connection import collection
-from backend.utils.email_utils import send_email
+from backend.routes.user import user_bp
 
 if os.getenv("SKIP_VENV_UPDATE", "false").lower() not in ("true", "1", "yes"):
     venvupdate.update_venv_and_requirements()
@@ -56,6 +55,7 @@ app.config["PREFERRED URL SCHEME"] = "https"
 
 # Register blueprints for different routes
 app.register_blueprint(auth_bp)
+app.register_blueprint(user_bp)
 app.register_blueprint(forgotpass_bp)
 app.register_blueprint(podcast_bp)  # Register the podcast blueprint
 app.register_blueprint(dashboard_bp)

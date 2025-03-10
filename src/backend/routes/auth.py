@@ -20,7 +20,7 @@ auth_bp = Blueprint("auth_bp", __name__)
 
 API_BASE_URL = os.getenv("API_BASE_URL", "http://127.0.0.1:8000")
 
-#USE FOR AUTHENTICATION SECURITY PURPOSES REGISTER, SIGNIN, LOGOUT
+#USE FOR AUTHENTICATION SECURITY PURPOSES REGISTER, SIGNIN, LOGOUT/ users collection
 #USER.PY Can be used for user specific data
 #ACCOUNT.PY Can be used for account specific data
 
@@ -145,20 +145,3 @@ def register_submit():
         print(f"❌ ERROR: {e}")
         return jsonify({"error": f"Database error: {str(e)}"}), 500
 
-
-@auth_bp.route("/get_email", methods=["GET"])
-def fetch_user_email():
-    if not hasattr(g, "user_id") or not g.user_id:
-        return jsonify({"error": "Unauthorized"}), 401
-
-    try:
-        user_id = str(g.user_id)
-        user = collection.database.Users.find_one({"_id": user_id}, {"email": 1, "_id": 0})
-
-        if not user:
-            return jsonify({"error": "User not found"}), 404
-
-        return jsonify({"email": user["email"]}), 200
-
-    except Exception as e:
-        return jsonify({"error": f"Failed to fetch email: {str(e)}"}), 500
