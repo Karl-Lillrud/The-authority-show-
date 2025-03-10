@@ -129,9 +129,8 @@ body {
 }
 
 .forgot-password-link {
-  display: flex;
-  justify-content: flex-end;
-  margin-right: 0;
+  text-align: right;
+  margin-right: 15%;
   margin-bottom: 20px;
 }
 
@@ -169,16 +168,14 @@ body {
 @media screen and (max-width: 1200px) {
   .center-box {
     width: 35%;
-    left: 2%;
-    transform: translateY(-50%); /* ...existing code... */
+    /* Behåller left: 2% från originalet */
   }
 }
 
 @media screen and (max-width: 992px) {
   .center-box {
     width: 45%;
-    left: 2%;
-    transform: translateY(-50%); /* ...existing code... */
+    /* Behåller left: 2% från originalet */
   }
 
   .input {
@@ -188,10 +185,11 @@ body {
 
 @media screen and (max-width: 768px) {
   .center-box {
+    width: 60%;
     height: auto;
-
-    left: 50%; /* center horizontally */
-    transform: translate(-50%, -50%); /* center vertically & horizontally */
+    min-height: 60vh;
+    padding: 25px 15px;
+    /* Behåller left: 2% från originalet */
   }
 
   .input {
@@ -207,23 +205,52 @@ body {
   }
 
   .forgot-password-link {
-    display: flex;
-    justify-content: flex-end;
-    margin-right: 0;
+    margin-right: 10%;
+  }
+}
+
+@media screen and (max-width: 576px) {
+  .center-box {
+    width: 80%;
+    border-radius: 30px;
+    padding: 20px 10px;
+    /* Behåller left: 2% från originalet */
   }
 
-  .register-link {
-    text-align: center;
-    margin-top: 20px;
+  .logo-container {
+    width: 100px;
+    top: 15px;
+  }
+
+  .input {
+    width: 80%;
+    padding: 15px;
+    margin: 10px;
+  }
+
+  .title {
+    font-size: 24px;
+    margin-bottom: 15px;
+  }
+
+  .button.button-primary {
+    width: 90%;
+  }
+
+  .forgot-password-link {
+    margin-right: 8%;
+  }
+
+  .link {
+    font-size: 14px;
   }
 }
 
 @media screen and (max-width: 480px) {
   .center-box {
-    width: 60%; /* full width for very small screens */
-    padding: 15px; /* adjusted padding */
-    left: 50%; /* center horizontally */
-    transform: translate(-50%, -50%); /* center vertically & horizontally */
+    width: 90%;
+    padding: 15px 10px;
+    /* Lite justering för att inte gå utanför skärmen */
   }
 
   .input {
@@ -244,7 +271,7 @@ body {
 /* För mycket små skärmar */
 @media screen and (max-width: 375px) {
   .center-box {
-    width: 80%;
+    width: 92%;
     padding: 15px 8px;
   }
 
@@ -300,5 +327,11 @@ body {
   .center-box {
     width: 94%;
     padding: 10px 5px;
+  }
+
+  .input {
+    width: 90%;
+    padding: 10px;
+    margin: 6px;
   }
 }
