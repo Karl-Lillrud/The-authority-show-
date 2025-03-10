@@ -4,61 +4,43 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Register</title>
-    <link
-      rel="stylesheet"
-      href="{{ url_for('static', filename='css/signin.css') }}"
-    />
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/register.css') }}" />
+
     <script src="{{ url_for('static', filename='requests/podprofileRequests.js') }}"></script>
     <script src="{{ url_for('static', filename='requests/podprofile_languageRequests.js') }}"></script>
   </head>
   <body>
+    
     <!-- Logo -->
     <div class="logo-container">
-      <img
-        src="{{ url_for('static', filename='images/PodManagerLogo.png') }}"
-        alt="PodManager Logo"
-      />
+      <img src="{{ url_for('static', filename='images/PodManagerLogo.png') }}" alt="PodManager Logo" />
     </div>
 
+    <!-- Background image -->
     <div class="image">
-      <img
-        src="{{ url_for('static', filename='images/WhatsApp Image.jpeg') }}"
-        alt="Beskrivning av bilden"
-      />
+      <img src="{{ url_for('static', filename='images/WhatsApp Image.jpeg') }}" alt="Background Image" />
     </div>
 
+    <!-- Centered Register Form -->
     <div class="center-box">
       <h1 class="title">Register</h1>
       <div id="error-message" class="error-message" style="display: none"></div>
 
       <form id="register-form">
         <div class="input-group">
-          <label for="email" class="label"></label>
-          <input
-            type="email"
-            id="email"
-            name="email"
-            class="input"
-            placeholder="Email"
-            required
-          />
+          <input type="email" id="email" name="email" class="input" placeholder="Email" required />
         </div>
         <div class="input-group">
-          <label for="password" class="label"></label>
-          <input
-            type="password"
-            id="password"
-            name="password"
-            class="input"
-            placeholder="Password"
-            required
-          />
+          <input type="password" id="password" name="password" class="input" placeholder="Password" required />
+        </div>
+
+        <!-- Terms of Service -->
+        <div class="tos-container">
+          I accept the <span id="terms-text" class="tos-text" style="color: #ff7f3f; cursor: pointer;">Terms of Service</span>
         </div>
 
         <div class="extra-links">
-          <a href="{{ url_for('signin_bp.signin_get') }}" class="link"
-            >Already have an account? Sign in</a
-          >
+          <a href="{{ url_for('signin_bp.signin_get') }}" class="link">Already have an account? Sign in</a>
         </div>
 
         <div class="form-actions">
@@ -67,41 +49,74 @@
       </form>
     </div>
 
+    <!-- Terms of Service Modal -->
+    <div id="termsModal" class="modal" style="display: none;">
+      <div class="modal-content">
+        <h2>Terms of Service</h2>
+        <div class="terms-text">
+          <p>Welcome to PodManager! By using our service, you agree to the following terms:</p>
+          <ul>
+            <li>Account Security: You are responsible for maintaining your account security.</li>
+            <li>Age Requirement: Users must be at least 13 years old.</li>
+            <li>Data Privacy: We protect your data according to our privacy policy.</li>
+            <li>Account Usage: You agree to use the service responsibly.</li>
+            <li>Termination: We may suspend accounts that violate our terms.</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
     <!-- User Exists Modal -->
-    <div id="user-exists-modal" class="modal">
+    <div id="user-exists-modal" class="modal" style="display: none;">
       <div class="modal-content">
         <h2>User Already Exists</h2>
-        <p>
-          The email you entered is already registered. Please try logging in.
-        </p>
+        <p>The email you entered is already registered. Please try logging in.</p>
         <button id="user-exists-ok-button" class="button">OK</button>
       </div>
     </div>
 
-    {% with messages = get_flashed_messages(with_categories=true) %} {% if
-    messages %}
-    <ul class="flashes">
-      {% for category, message in messages %}
-      <li class="{{ category }}">{{ message }}</li>
-      {% endfor %}
-    </ul>
-    {% endif %} {% endwith %}
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        <ul class="flashes">
+          {% for category, message in messages %}
+            <li class="{{ category }}">{{ message }}</li>
+          {% endfor %}
+        </ul>
+      {% endif %}
+    {% endwith %}
 
-    <script type="module">
-      import { register } from "{{ url_for('static', filename='requests/authRequests.js') }}";
-
-      document.addEventListener("DOMContentLoaded", function () {
+    <!-- JavaScript -->
+    <script>
+      document.addEventListener("DOMContentLoaded", () => {
+        // Get DOM elements
         const form = document.getElementById("register-form");
         const errorMessage = document.getElementById("error-message");
         const userExistsModal = document.getElementById("user-exists-modal");
         const userExistsOkButton = document.getElementById("user-exists-ok-button");
+        const termsText = document.getElementById('terms-text');
+        const termsModal = document.getElementById('termsModal');
 
-        if (!form) {
-          console.error("❌ ERROR: #register-form not found in the DOM.");
-          return;
+        // Check if the termsText element exists
+        if (termsText) {
+          // Terms of Service Modal functionality
+          termsText.addEventListener('click', (e) => {
+            e.preventDefault();  // Prevent the default action of the link
+            console.log('Terms link clicked');
+            termsModal.style.display = 'block'; // Show the modal
+          });
+        } else {
+          console.error("❌ ERROR: Terms text not found.");
         }
 
-        form.addEventListener("submit", async function (event) {
+        // Close modal when clicking outside modal content
+        window.addEventListener("click", (e) => {
+          if (e.target === termsModal) {
+            termsModal.style.display = "none"; // Close the modal when clicking outside
+          }
+        });
+
+        // Form submission handling
+        form.addEventListener("submit", async (event) => {
           event.preventDefault();
 
           const email = document.getElementById("email").value;
@@ -113,7 +128,7 @@
           } catch (error) {
             if (error.message === "User already exists") {
               userExistsModal.style.display = "block";
-              userExistsOkButton.addEventListener("click", function () {
+              userExistsOkButton.addEventListener("click", () => {
                 userExistsModal.style.display = "none";
               });
             } else {
@@ -122,7 +137,13 @@
             }
           }
         });
+
+        // Close user exists modal when clicking OK
+        userExistsOkButton.addEventListener("click", () => {
+          userExistsModal.style.display = "none";
+        });
       });
+
     </script>
   </body>
 </html>
