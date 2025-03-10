@@ -4,7 +4,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Guest Registration</title>
+  <title>GUEST REGISTRATION</title>
   <!-- Other -->
   <link rel="stylesheet" href="/static/css/guest-form.css"> <!-- Link to the CSS file -->
   <script src="https://cdn.jsdelivr.net/npm/emailjs-com@2.6.4/dist/email.min.js"></script>
@@ -23,18 +23,43 @@
     <h2 class="text-2xl font-bold text-center text-gray-700 mb-4">Guest Registration</h2>
     <form id="guestForm" class="space-y-4">
 
+            <!-- Image section -->
+      <div class="mb-6">
+        <label class="block text-gray-600 font-medium">
+          Profile photo <span class="text-red-500">*</span>
+        </label>
+        <p class="text-sm text-gray-500">
+          Preferably with a neutral background so we can make it transparent for the episode cover.
+        </p>
+        <p class="text-sm text-gray-500">Upload a Profile Image: <br><br>Image (Max 10 MB).</p>
+
+        <!-- Hidden default file input -->
+        <input type="file" id="profilePhoto" accept="image/*" class="hidden" onchange="previewImage()">
+
+        <!-- Custom styled button -->
+        <label for="profilePhoto" class="bg-[#ff3b30] text-white px-4 py-2 rounded cursor-pointer inline-block mt-2">
+          Browse
+        </label>
+
+        <!-- File name display -->
+        <p id="fileName" class="text-sm text-gray-700 mt-2"></p>
+
+        <!-- Image preview initially hidden -->
+        <div id="imagePreviewContainer" class="hidden mt-4">
+          <img id="imagePreview" class="w-32 h-32 object-cover rounded-lg border" alt="Image Preview">
+          <button type="button" class="mt-2 bg-red-500 text-white px-3 py-1 rounded"
+            onclick="removeImage()">Remove</button>
+        </div>
+
+        <!-- Error message placeholder -->
+        <p id="photoError" class="text-red-500 text-sm mt-1"></p>
+      </div>
+
       <!--- Asks for Full Name -->
       <div>
         <label class="block text-gray-600 font-medium">Name *</label>
         <input type="text" id="first name" class="input-field" placeholder="Enter your First name" required>
         <p id="firstnameError" class="error-message"></p>
-      </div>
-
-      <!--- Asks for company -->
-      <div>
-        <label class="block text-gray-600 font-medium">Company *</label>
-        <input type="text" id="company" class="input-field" placeholder="Enter your Company name" required>
-        <p id="companyError" class="error-message"></p>
       </div>
 
       <!--- Asks for email adress -->
@@ -44,24 +69,7 @@
         <p id="emailError" class="error-message"></p>
       </div>
 
-      <!--- Asks for phone number -->
-      <div>
-        <label class="block text-gray-600 font-medium">Phone *</label>
-        <input type="text" id="phone" class="input-field" placeholder="Enter your phone number" required>
-        <p id="phoneError" class="error-message"></p>
-      </div>
-
-      <!-- asks if you have a social media account -->
-      <label class="block text-gray-600 font-medium mb-2">Do you wish to add a social media account?</label>
-
-      <!-- Button to add social media -->
-      <button id="addSocialButton" type="button" class="bg-[#ff3b30] text-white px-4 py-2 rounded"
-        onclick="addSocialMedia()">Link Social Media</button>
-
-      <!-- Container where social media fields will be added -->
-      <div id="socialMediaContainer" class="mt-4 space-y-4"></div>
-
-      <!--- Bio -->
+            <!--- Bio -->
       <div>
         <label class="block text-gray-600 font-medium">Short Bio *</label>
         <textarea id="bio" class="input-field" placeholder="Tell us about yourself" required></textarea>
@@ -124,6 +132,30 @@
         <input type="hidden" id="recordingTime" required>
       </div>
 
+      <!--- Asks for company -->
+      <div>
+        <label class="block text-gray-600 font-medium">Company</label>
+        <input type="text" id="company" class="input-field" placeholder="Enter your Company name">
+        <p id="companyError" class="error-message"></p>
+      </div>
+
+      <!--- Asks for phone number -->
+      <div>
+        <label class="block text-gray-600 font-medium">Phone</label>
+        <input type="text" id="phone" class="input-field" placeholder="Enter your phone number">
+        <p id="phoneError" class="error-message"></p>
+      </div>
+
+      <!-- asks if you have a social media account -->
+      <label class="block text-gray-600 font-medium mb-2">Do you wish to add a social media account?</label>
+
+      <!-- Button to add social media -->
+      <button id="addSocialButton" type="button" class="bg-[#ff3b30] text-white px-4 py-2 rounded"
+        onclick="addSocialMedia()">Link Social Media</button>
+
+      <!-- Container where social media fields will be added -->
+      <div id="socialMediaContainer" class="mt-4 space-y-4"></div>
+
       <!-- Adds recommended guests part -->
       <label class="block text-gray-600 font-medium mb-2">Do you want to recommend a guest?</label>
 
@@ -135,49 +167,19 @@
       <div id="recommendedGuestContainer" class="mt-4 space-y-4"></div>
       <!-- list of other people -->
       <div>
-        <label class="block text-gray-600 font-medium">List of other people you think we should invite *</label>
+        <label class="block text-gray-600 font-medium">List of other people you think we should invite</label>
         <textarea id="list" class="input-field" placeholder="List them here"></textarea>
       </div>
 
-      <!-- Image section -->
-      <div class="mb-6">
-        <label class="block text-gray-600 font-medium">
-          Profile photo <span class="text-red-500">*</span>
-        </label>
-        <p class="text-sm text-gray-500">
-          Preferably with a neutral background so we can make it transparent for the episode cover.
-        </p>
-        <p class="text-sm text-gray-500">Upload 1 supported file: image (Max 10 MB).</p>
-
-        <!-- Hidden default file input -->
-        <input type="file" id="profilePhoto" accept="image/*" class="hidden" onchange="previewImage()">
-
-        <!-- Custom styled button -->
-        <label for="profilePhoto" class="bg-[#ff3b30] text-white px-4 py-2 rounded cursor-pointer inline-block mt-2">
-          Browse
-        </label>
-
-        <!-- File name display -->
-        <p id="fileName" class="text-sm text-gray-700 mt-2"></p>
-
-        <!-- Image preview initially hidden -->
-        <div id="imagePreviewContainer" class="hidden mt-4">
-          <img id="imagePreview" class="w-32 h-32 object-cover rounded-lg border" alt="Image Preview">
-          <button type="button" class="mt-2 bg-red-500 text-white px-3 py-1 rounded"
-            onclick="removeImage()">Remove</button>
-        </div>
-
-        <!-- Error message placeholder -->
-        <p id="photoError" class="text-red-500 text-sm mt-1"></p>
-      </div>
       <!-- General added notes etc -->
       <div>
         <label class="block text-gray-600 font-medium">Comments</label>
         <textarea id="notes" class="input-field" placeholder="Write you notes here"></textarea>
       </div>
 
+      <!--- Question about future opportunities -->
       <label class="block text-gray-600 font-medium">Would you be interested in future opportunities? Like live events,
-        guest panel discussions, or special episodes. I’d love to keep the collaboration going!</label>
+      guest panel discussions, or special episodes. We’d love to keep the collaboration going!</label>
 
       <!-- Yes/No Radio Buttons -->
       <div class="flex gap-4 mt-2">
