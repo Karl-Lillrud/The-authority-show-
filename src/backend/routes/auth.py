@@ -10,6 +10,7 @@ from flask import (
 )
 from werkzeug.security import check_password_hash, generate_password_hash
 from backend.database.mongo_connection import collection
+from backend.services.authService import validate_password, validate_email, check_gmail_existence
 import os
 import uuid
 from datetime import datetime
@@ -100,6 +101,17 @@ def register_submit():
 
         email = data["email"].lower().strip()
         password = data["password"]
+
+        # Validate email using the function from authService
+        email_error = validate_email(email)
+        if email_error:
+            return email_error  # If there's an error with the email validation, return it.
+
+        # Validate password using the function from authService
+        password_error = validate_password(password)
+        if password_error:
+            return password_error  # If there's an error with the password validation, return it.
+
         hashed_password = generate_password_hash(password)
 
         print("🔍 Checking if user already exists...")
@@ -144,4 +156,3 @@ def register_submit():
     except Exception as e:
         print(f"❌ ERROR: {e}")
         return jsonify({"error": f"Database error: {str(e)}"}), 500
-
