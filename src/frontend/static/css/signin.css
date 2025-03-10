@@ -20,12 +20,14 @@ body {
   margin: 0;
   transition: background-color 0.3s ease, color 0.3s ease;
 }
+
 .logo-container {
   position: fixed;
   top: 20px;
   left: 50%;
+  transform: translateX(-50%);
   width: 120px;
-  z-index: 999; /* Högt värde för att hamna över andra element */
+  z-index: 999;
   background-color: transparent;
 }
 
@@ -36,17 +38,14 @@ body {
 
 .title {
   color: rgba(0, 0, 0, 0.543);
+  margin-bottom: 20px;
 }
 
 .image {
   width: 100vw;
-  /* Full bredd */
   height: 100vh;
-  /* Full höjd */
   overflow: hidden;
-  /* Hindrar att något sticker ut */
   position: relative;
-  /* Viktigt för att positionera boxen */
 }
 
 .image img {
@@ -54,9 +53,7 @@ body {
   width: 100%;
   height: 100%;
   object-fit: cover;
-  /* Täcker hela ytan */
   object-position: center;
-  /* Centrerar bilden */
 }
 
 .center-box {
@@ -67,19 +64,18 @@ body {
   top: 48%;
   left: 2%;
   transform: translateY(-50%);
-  /* Perfekt vertikal centrering */
   padding: 20px;
   border-radius: 40px;
   box-shadow: -5px -5px 45px #ff7f3f, 35px 5px 15px var(--shadow-light);
   text-align: center;
   margin: 0;
-  /* Tar bort onödig marginal */
+  display: flex;
+  flex-direction: column;
 }
 
 .button {
   padding: 10px 20px;
   border-radius: 25px;
-  margin-top: 5vh;
   border: none;
   cursor: pointer;
   font-family: var(--font-primary);
@@ -89,14 +85,13 @@ body {
   margin-bottom: 15px;
 }
 
-.button.button.button-primary {
+.button.button-primary {
   background-color: #ff7f3f;
   color: white;
-  position: relative;
-  bottom: 8vh;
   border-radius: 14px;
   height: 6vh;
   width: 83%;
+  margin: 10px auto;
 }
 
 .button:hover {
@@ -124,42 +119,25 @@ body {
 .link {
   color: var(--highlight);
   text-decoration: none;
-  font-size: 19px;
-  position: relative;
-  top: 14vh;
-  padding: 0;
-  margin: 10px;
-}
-
-.link.login-link {
-  /* Override top to remove unwanted offset */
-  top: 0 !important;
-  border: none !important;
-  background: none !important;
-  box-shadow: none !important;
-  padding: 0; /* Remove extra padding if any */
-}
-
-.link.login-link:focus {
-  outline: none !important;
-}
-
-.link.login-link:hover {
-  cursor: pointer;
-}
-
-.extra-links {
-  color: var(--highlight);
-  text-decoration: none;
-  font-size: 19px;
-  position: relative;
-  top: 1vh;
+  font-size: 16px;
   padding: 0;
   margin: 10px;
 }
 
 .link:hover {
   text-decoration: underline;
+}
+
+.forgot-password-link {
+  text-align: right;
+  margin-right: 15%;
+  margin-bottom: 20px;
+}
+
+.register-link {
+  margin-top: auto;
+  text-align: center;
+  padding-bottom: 20px;
 }
 
 .error-message {
@@ -169,23 +147,191 @@ body {
   text-align: center;
 }
 
-.extra-links {
+.success-message {
+  font-size: 18px;
+  color: var(--highlight);
+  margin-bottom: 15px;
   text-align: center;
-  position: relative;
-  bottom: 23vh;
+}
+
+#signin-form {
+  display: flex;
+  flex-direction: column;
+  flex-grow: 1;
 }
 
 .form-actions {
-  margin-bottom: -12vh; /* Minskar avståndet mellan knappen och länkarna */
+  margin: 10px 0;
 }
 
-.extra-links a {
-  display: block;
-  margin: 2px 0; /* Justerar vertikalt mellanrum mellan länkarna */
+/* Responsiva media queries - behåller alltid vänsterposition */
+@media screen and (max-width: 1200px) {
+  .center-box {
+    width: 35%;
+    /* Behåller left: 2% från originalet */
+  }
 }
 
-.forgot-password {
-  text-align: center;
-  position: relative;
-  bottom: 15px;
+@media screen and (max-width: 992px) {
+  .center-box {
+    width: 45%;
+    /* Behåller left: 2% från originalet */
+  }
+
+  .input {
+    width: 65%;
+  }
+}
+
+@media screen and (max-width: 768px) {
+  .center-box {
+    width: 60%;
+    height: auto;
+    min-height: 60vh;
+    padding: 25px 15px;
+    /* Behåller left: 2% från originalet */
+  }
+
+  .input {
+    padding: 20px;
+    margin: 15px;
+    width: 75%;
+  }
+
+  .button.button-primary {
+    width: 85%;
+    height: auto;
+    padding: 12px;
+  }
+
+  .forgot-password-link {
+    margin-right: 10%;
+  }
+}
+
+@media screen and (max-width: 576px) {
+  .center-box {
+    width: 80%;
+    border-radius: 30px;
+    padding: 20px 10px;
+    /* Behåller left: 2% från originalet */
+  }
+
+  .logo-container {
+    width: 100px;
+    top: 15px;
+  }
+
+  .input {
+    width: 80%;
+    padding: 15px;
+    margin: 10px;
+  }
+
+  .title {
+    font-size: 24px;
+    margin-bottom: 15px;
+  }
+
+  .button.button-primary {
+    width: 90%;
+  }
+
+  .forgot-password-link {
+    margin-right: 8%;
+  }
+
+  .link {
+    font-size: 14px;
+  }
+}
+
+@media screen and (max-width: 480px) {
+  .center-box {
+    width: 90%;
+    padding: 15px 10px;
+    /* Lite justering för att inte gå utanför skärmen */
+  }
+
+  .input {
+    width: 85%;
+    padding: 12px;
+    margin: 8px;
+  }
+
+  .logo-container {
+    width: 90px;
+  }
+
+  .button.button-primary {
+    width: 95%;
+  }
+}
+
+/* För mycket små skärmar */
+@media screen and (max-width: 375px) {
+  .center-box {
+    width: 92%;
+    padding: 15px 8px;
+  }
+
+  .input {
+    width: 85%;
+    padding: 10px;
+    margin: 6px;
+  }
+}
+
+/* För höjdjusteringar på mindre skärmar */
+@media screen and (max-height: 700px) {
+  .center-box {
+    height: auto;
+    min-height: 65vh;
+  }
+
+  .input {
+    padding: 15px;
+    margin: 10px;
+  }
+
+  .button.button-primary {
+    height: auto;
+    padding: 10px;
+  }
+}
+
+/* För enheter i landskapsläge */
+@media screen and (max-height: 500px) {
+  .center-box {
+    height: auto;
+    min-height: 80vh;
+    overflow-y: auto;
+  }
+
+  .input {
+    padding: 10px;
+    margin: 8px;
+  }
+
+  .title {
+    margin-bottom: 10px;
+  }
+
+  .forgot-password-link {
+    margin-bottom: 10px;
+  }
+}
+
+/* För att säkerställa att formuläret är användbart på mycket små enheter */
+@media screen and (max-width: 320px) {
+  .center-box {
+    width: 94%;
+    padding: 10px 5px;
+  }
+
+  .input {
+    width: 90%;
+    padding: 10px;
+    margin: 6px;
+  }
 }

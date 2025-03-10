@@ -17,6 +17,7 @@ html {
   color: #ffffff;
   padding: 40px 20px;
 }
+
 .section-svartgrå {
   background-color: #1c1c1c;
   color: #ffffff;
@@ -85,6 +86,7 @@ html {
   background-size: cover;
   min-height: 500px;
 }
+
 .podcast-header::before {
   content: "";
   position: absolute;
@@ -95,24 +97,29 @@ html {
   background: rgba(0, 0, 0, 0.5);
   z-index: 1;
 }
+
 /* Hide img element since background is used */
 #podcast-cover {
   display: none;
 }
+
 .podcast-info {
   position: relative;
   z-index: 2;
   text-align: center;
   color: #ffffff;
 }
+
 .podcast-info h1 {
   margin: 0;
   font-size: 32px;
 }
+
 .podcast-info p {
   margin: 10px 0;
   font-size: 18px;
 }
+
 #subscribe-buttons button {
   display: inline-block;
   background: #ff4500;
@@ -227,6 +234,7 @@ html {
   background-color: #000;
   text-align: center;
 }
+
 .latest-episodes-section h2 {
   margin-bottom: 30px;
   font-size: 36px;
@@ -243,11 +251,6 @@ html {
   max-width: 1200px;
 }
 
-/* Episod-item */
-.episode-item {
-  /* Inga extra marginer behövs tack vare grid-gap */
-}
-
 /* Episodkort med thumbnail och detaljer i rad */
 .episode-card {
   display: flex;
@@ -256,8 +259,10 @@ html {
   overflow: hidden;
   box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5);
   transition: transform 0.3s, box-shadow 0.3s;
-  height: 120px; /* Kompakt höjd */
+  height: 120px;
+  /* Kompakt höjd */
 }
+
 .episode-card:hover {
   transform: translateY(-3px);
   box-shadow: 0 6px 15px rgba(0, 0, 0, 0.7);
@@ -269,6 +274,7 @@ html {
   height: 120px;
   overflow: hidden;
 }
+
 .episode-thumbnail img {
   width: 100%;
   height: 100%;
@@ -283,10 +289,12 @@ html {
   flex-direction: column;
   justify-content: center;
 }
+
 .episode-details h3 {
   margin: 0 0 5px;
   font-size: 18px;
 }
+
 .episode-details p {
   font-size: 14px;
   line-height: 1.4;
@@ -303,6 +311,7 @@ html {
   margin-top: 5px;
   padding: 5px;
 }
+
 .episode-links a {
   display: inline-flex;
   align-items: center;
@@ -334,19 +343,24 @@ html {
   align-items: center;
   justify-content: center;
 }
+
 .listen-btn:hover {
   background: #e03d00;
   transform: scale(1.05);
 }
+
 .spotify-btn {
   background: #1db954;
 }
+
 .spotify-btn:hover {
   background: #1aa34a;
 }
+
 .apple-btn {
   background: #a2aaad;
 }
+
 .apple-btn:hover {
   background: #8c9497;
 }
@@ -361,6 +375,7 @@ html {
   transition: transform 0.3s;
   margin-bottom: 5px;
 }
+
 .play-btn:hover {
   transform: scale(1.1);
 }
@@ -474,12 +489,15 @@ html {
 .subscribe-btn.apple i {
   color: #ffffff;
 }
+
 .subscribe-btn.spotify i {
   color: #1db954;
 }
+
 .subscribe-btn.google i {
   color: #ea4335;
 }
+
 .subscribe-btn.podcaster i {
   color: #ffffff;
 }
@@ -562,7 +580,8 @@ html {
 
 /* GUEST CONTENT */
 .guest-content {
-  display: none; /* Dölj som standard, visas endast om .active */
+  display: none;
+  /* Dölj som standard, visas endast om .active */
 }
 
 .guest-content.active {
@@ -618,6 +637,7 @@ html {
   font-size: 18px;
   transition: transform 0.3s, background 0.3s;
 }
+
 #apply-guest-btn:hover {
   background: #e03d00;
   transform: scale(1.05);
@@ -625,7 +645,8 @@ html {
 
 /* SPONSOR CONTENT */
 .sponsor-content {
-  display: none; /* Dölj som standard, visas endast om .active */
+  display: none;
+  /* Dölj som standard, visas endast om .active */
 }
 
 .sponsor-content.active {
@@ -683,6 +704,7 @@ html {
   font-size: 18px;
   transition: transform 0.3s, background 0.3s;
 }
+
 .sponsor-btn:hover {
   background: #e03d00;
   transform: scale(1.05);
@@ -762,7 +784,8 @@ html {
   position: relative;
   overflow: hidden;
   border-radius: 10px;
-  background-color: #000; /* Fallback-bakgrund */
+  background-color: #000;
+  /* Fallback-bakgrund */
 }
 
 /* Rubrik för varje box */
@@ -798,9 +821,11 @@ html {
 .carousel img:nth-child(1) {
   animation-delay: 0s;
 }
+
 .carousel img:nth-child(2) {
   animation-delay: 3s;
 }
+
 .carousel img:nth-child(3) {
   animation-delay: 6s;
 }
@@ -810,15 +835,19 @@ html {
   0% {
     opacity: 0;
   }
+
   10% {
     opacity: 1;
   }
+
   33% {
     opacity: 1;
   }
+
   43% {
     opacity: 0;
   }
+
   100% {
     opacity: 0;
   }
@@ -860,6 +889,7 @@ footer {
   background: #1f1f1f;
   color: #ffffff;
 }
+
 footer p {
   margin: 5px 0;
 }

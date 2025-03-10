@@ -127,6 +127,20 @@ body.dark-mode {
   color: var(--text-color-dark);
 }
 
+.app-container {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  padding: 1rem;
+  background-color: var(--background-light);
+}
+
+body.dark-mode .app-container {
+  background-color: var(--background-dark);
+}
+
 body.dark-mode .help-button,
 body.dark-mode .help-text {
   background-color: #ffaa00;
@@ -135,9 +149,6 @@ body.dark-mode .help-text {
 
 
 .dark-mode-button {
-  position: absolute;
-  top: var(--spacing-sm);
-  right: var(--spacing-sm);
   font-size: 1.5rem;
   background: none;
   border: none;
