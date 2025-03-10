@@ -349,6 +349,12 @@ body.dark-mode .button-secondary {
   }
 }
 
+@media screen and (max-width: 576px) {
+  .logo {
+    margin-top: -10px;
+  }
+}
+
 #skipToDashboard,
 #dark-mode-toggle {
   display: none;
