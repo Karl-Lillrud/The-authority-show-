@@ -126,6 +126,8 @@ async function renderGuestSelection(selectElement, selectedGuestId = "") {
   }
 }
 
+let selectedPodcastId = null; // Ensure this variable is declared globally
+
 function showManualGuestPopup(selectElement) {
   const popup = document.createElement("div");
   popup.className = "popup";
@@ -175,7 +177,13 @@ function showManualGuestPopup(selectElement) {
       const guestEmail = document
         .getElementById("manual-guest-email")
         .value.trim();
-      const podcastId = document.getElementById("podcast-select").value; // Get selected podcast ID
+      const podcastId =
+        selectedPodcastId || document.getElementById("podcast-select")?.value; // Use selectedPodcastId if available
+
+      console.log("Guest Name:", guestName); // Log guest name
+      console.log("Guest Email:", guestEmail); // Log guest email
+      console.log("Podcast ID:", podcastId); // Log podcast ID
+
       if (guestName && guestEmail && podcastId) {
         try {
           const guest = await addGuestRequest({
@@ -352,7 +360,6 @@ document.addEventListener("DOMContentLoaded", function () {
 });
 
 const form = document.getElementById("register-podcast-form");
-let selectedPodcastId = null;
 
 form.addEventListener("submit", async function (e) {
   e.preventDefault();
@@ -651,7 +658,13 @@ async function renderPodcastList() {
         try {
           const podcast = await fetchPodcast(podcastId);
           displayPodcastDetails(podcast.podcast);
-          selectedPodcastId = podcastId;
+          selectedPodcastId = podcastId; // Set the selected podcast ID
+
+          // Fetch podcasts to ensure the podcast ID is available
+          const response = await fetchPodcasts();
+          const podcasts = response.podcast;
+          renderPodcastSelection(podcasts);
+
           document.getElementById("form-popup").style.display = "flex";
         } catch (error) {
           showNotification("Error", "Failed to fetch podcast details", "error");
@@ -939,7 +952,7 @@ function renderPodcastDetail(podcast) {
 }
 
 // New function to display the episode popup for viewing/updating an episode
-function showEpisodePopup(episode) {
+async function showEpisodePopup(episode) {
   const popup = document.createElement("div");
   popup.className = "popup";
   popup.style.display = "flex";
@@ -1004,6 +1017,11 @@ function showEpisodePopup(episode) {
   // Populate guest dropdown in update popup with the current guest selected.
   const updGuestSelect = document.getElementById("upd-guest-id");
   renderGuestSelection(updGuestSelect, episode.guestId || "");
+
+  // Fetch podcasts to ensure the podcast ID is available
+  const response = await fetchPodcasts();
+  const podcasts = response.podcast;
+  renderPodcastSelection(podcasts);
 
   // Close popup events
   popup.querySelector("#close-episode-popup").addEventListener("click", () => {
