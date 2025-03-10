@@ -168,14 +168,16 @@ body {
 @media screen and (max-width: 1200px) {
   .center-box {
     width: 35%;
-    /* Behåller left: 2% från originalet */
+    left: 2%;
+    transform: translateY(-50%); /* ...existing code... */
   }
 }
 
 @media screen and (max-width: 992px) {
   .center-box {
     width: 45%;
-    /* Behåller left: 2% från originalet */
+    left: 2%;
+    transform: translateY(-50%); /* ...existing code... */
   }
 
   .input {
@@ -185,11 +187,11 @@ body {
 
 @media screen and (max-width: 768px) {
   .center-box {
-    width: 90%; /* changed from 60% */
+    width: 45%; /* changed to match register.css */
     height: auto;
-    /* Removed min-height to allow container to shrink */
     padding: 20px; /* adjusted padding */
-    /* Behåller left: 2% från originalet */
+    left: 50%; /* center horizontally */
+    transform: translate(-50%, -50%); /* center vertically & horizontally */
   }
 
   .input {
@@ -207,13 +209,19 @@ body {
   .forgot-password-link {
     margin-right: 10%;
   }
+
+  .register-link {
+    text-align: center;
+    margin-top: 20px;
+  }
 }
 
 @media screen and (max-width: 480px) {
   .center-box {
-    width: 90%;
-    padding: 15px 10px;
-    /* Lite justering för att inte gå utanför skärmen */
+    width: 60%; /* full width for very small screens */
+    padding: 15px; /* adjusted padding */
+    left: 50%; /* center horizontally */
+    transform: translate(-50%, -50%); /* center vertically & horizontally */
   }
 
   .input {
@@ -234,7 +242,7 @@ body {
 /* För mycket små skärmar */
 @media screen and (max-width: 375px) {
   .center-box {
-    width: 92%;
+    width: 80%;
     padding: 15px 8px;
   }
 

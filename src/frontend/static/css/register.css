@@ -185,6 +185,11 @@ body {
     width: 90%;
     height: auto;
     padding: 20px;
+    left: 50%; /* center horizontally */
+    transform: translate(
+      -50%,
+      -50%
+    ); /* adjust to center vertically & horizontally */
   }
 
   .input {
@@ -245,7 +250,7 @@ body {
 
 @media screen and (max-width: 576px) {
   .center-box {
-    width: 80%;
+    width: 50%;
     border-radius: 30px;
     padding: 20px 10px;
     /* Behåller left: 2% från originalet */
@@ -270,13 +275,16 @@ body {
 
 @media screen and (max-width: 375px) {
   .center-box {
-    width: 92%;
+    width: 80%;
     padding: 15px 8px;
   }
   .input {
     width: 85%;
     padding: 10px;
     margin: 6px;
+  }
+  .button.button-primary {
+    height: 5vh; /* reduced register button height */
   }
 }
 
