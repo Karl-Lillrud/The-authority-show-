@@ -203,14 +203,28 @@ def update_episode(episode_id):
             return jsonify({"error": "Permission denied"}), 403
 
         update_fields = {
-            "title": data.get("title", existing_episode["title"]).strip(),
-            "description": data.get(
-                "description", existing_episode["description"]
-            ).strip(),
+            "title": (
+                data.get("title", existing_episode["title"]).strip()
+                if data.get("title")
+                else existing_episode["title"]
+            ),
+            "description": (
+                data.get("description", existing_episode["description"]).strip()
+                if data.get("description")
+                else existing_episode["description"]
+            ),
             "publishDate": data.get("publishDate", existing_episode["publishDate"]),
             "duration": data.get("duration", existing_episode["duration"]),
-            "guestId": data.get("guestId", existing_episode["guestId"]).strip(),
-            "status": data.get("status", existing_episode["status"]).strip(),
+            "guestId": (
+                data.get("guestId", existing_episode["guestId"]).strip()
+                if data.get("guestId")
+                else existing_episode["guestId"]
+            ),
+            "status": (
+                data.get("status", existing_episode["status"]).strip()
+                if data.get("status")
+                else existing_episode["status"]
+            ),
             "updated_at": datetime.now(timezone.utc),
         }
 
