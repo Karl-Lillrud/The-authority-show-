@@ -77,7 +77,7 @@ if (podcastDropdown) {
     console.log("Selected podcast:", this.value);
     // Save the selected podcast ID to localStorage
     localStorage.setItem('selectedPodcastId', this.value);
-    window.location.href = "podcast.html"; // Redirect to podcast.html
+    window.location.href = "/podcast"; // Redirect to podcast.html
   });
   // Set the initial value based on localStorage (if available)
   if (podcastDropdown.value) {
