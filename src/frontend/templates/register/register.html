@@ -4,17 +4,33 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Register</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/register.css') }}" />
-    <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='favicon/favicon.ico') }}" />
+    <link
+      rel="stylesheet"
+      href="{{ url_for('static', filename='css/register.css') }}"
+    />
+    <link
+      rel="icon"
+      type="image/x-icon"
+      href="{{ url_for('static', filename='favicon/favicon.ico') }}"
+    />
     <link rel="canonical" href="https://app.podmanager.ai" />
-    
+
     <!-- Open Graph Meta Tags -->
-    <meta property="og:title" content="PodManager.AI – Streamline Your Podcast Workflow">
-    <meta property="og:description" content="PodManager.AI is a toolkit designed to optimize podcast production by automating workflows, guest management, and team collaboration, so creators can focus on content.">
-    <meta property="og:image" content="https://app.podmanager.ai/static/images/PodManager-AI-Background.jpeg">
-    <meta property="og:url" content="https://podmanager.ai">
-    <meta property="og:type" content="website">
-  
+    <meta
+      property="og:title"
+      content="PodManager.AI – Streamline Your Podcast Workflow"
+    />
+    <meta
+      property="og:description"
+      content="PodManager.AI is a toolkit designed to optimize podcast production by automating workflows, guest management, and team collaboration, so creators can focus on content."
+    />
+    <meta
+      property="og:image"
+      content="https://app.podmanager.ai/static/images/PodManager-AI-Background.jpeg"
+    />
+    <meta property="og:url" content="https://podmanager.ai" />
+    <meta property="og:type" content="website" />
+
     <script src="{{ url_for('static', filename='requests/podprofileRequests.js') }}"></script>
     <script src="{{ url_for('static', filename='requests/podprofile_languageRequests.js') }}"></script>
   </head>
@@ -65,9 +81,11 @@
         <div class="form-actions">
           <button type="submit" class="button button-primary">Register</button>
         </div>
-        
+
         <div class="signin-link">
-          <a href="{{ url_for('signin_bp.signin_get') }}" class="link">Sign in</a>
+          <a href="{{ url_for('signin_bp.signin_get') }}" class="link"
+            >Sign in here!</a
+          >
         </div>
       </form>
     </div>
@@ -99,7 +117,9 @@
         const form = document.getElementById("register-form");
         const errorMessage = document.getElementById("error-message");
         const userExistsModal = document.getElementById("user-exists-modal");
-        const userExistsOkButton = document.getElementById("user-exists-ok-button");
+        const userExistsOkButton = document.getElementById(
+          "user-exists-ok-button"
+        );
 
         if (!form) {
           console.error("❌ ERROR: #register-form not found in the DOM.");
@@ -131,4 +151,3 @@
     </script>
   </body>
 </html>
-
