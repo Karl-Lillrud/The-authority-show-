@@ -1,10 +1,6 @@
 from flask import Blueprint, request, jsonify, url_for, g
-import uuid
 from backend.database.mongo_connection import collection
-from backend.models.users import UserSchema  # Make sure to import the schema
-from backend.services.accountsService import (
-    create_account,
-)  # Import the create_account function from the service
+from backend.models.users import UserSchema  
 from werkzeug.security import check_password_hash
 
 user_bp = Blueprint("user_bp", __name__)

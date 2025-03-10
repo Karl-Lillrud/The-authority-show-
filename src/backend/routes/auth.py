@@ -15,7 +15,7 @@ import os
 import uuid
 from datetime import datetime
 
-from backend.services.accountsService import create_account
+from backend.repository.account_repository import create_account
 
 auth_bp = Blueprint("auth_bp", __name__)
 

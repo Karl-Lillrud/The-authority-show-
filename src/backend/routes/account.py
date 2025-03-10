@@ -4,7 +4,7 @@ import uuid
 from backend.database.mongo_connection import collection
 from marshmallow import ValidationError
 from backend.models.accounts import AccountSchema  # Make sure to import the schema
-from backend.services.accountsService import (
+from backend.repository.account_repository import (
     create_account,
 )  # Import the create_account function from the service
 from werkzeug.security import check_password_hash
