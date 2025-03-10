@@ -6,6 +6,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Guest Registration</title>
   <!-- Other -->
+  <link rel="stylesheet" href="/static/css/guest-form.css"> <!-- Link to the CSS file -->
   <script src="https://cdn.jsdelivr.net/npm/emailjs-com@2.6.4/dist/email.min.js"></script>
   <script src="https://cdn.tailwindcss.com"></script>
 </head>
@@ -14,32 +15,25 @@
 
   <div class="bg-[#eff2f9] p-6 rounded-lg shadow-xl w-full max-w-xl">
     <!--- Top Image -->
-    <div class="w-full h-32 bg-cover bg-center mb-4 rounded-lg"
-      style="background-image: url(https://lh6.googleusercontent.com/sZ1ZpgYP63wmq-aU1aFfRc26re88jNGePQWWqhTm2WTNq76cs_UWR1zIBJzDYOnN2QH9-1g3I3gBnu20tzzzsl_4rwHDQXsDnmKKWXCl6tDzuSpvqszA4zY5KJPbaL1Y6E0wZiRkdUY=w2996);">
+    <div class="w-full h-32 mb-4 rounded-lg flex items-center justify-center">
+      <img src="/static/images/PodManagerLogo.png" alt="PodManager Logo" class="h-full object-contain">
     </div>
 
     <!--- Title -->
     <h2 class="text-2xl font-bold text-center text-gray-700 mb-4">Guest Registration</h2>
     <form id="guestForm" class="space-y-4">
 
-      <!--- Asks for firstname -->
+      <!--- Asks for Full Name -->
       <div>
-        <label class="block text-gray-600 font-medium">First name *</label>
+        <label class="block text-gray-600 font-medium">Name *</label>
         <input type="text" id="first name" class="input-field" placeholder="Enter your First name" required>
         <p id="firstnameError" class="error-message"></p>
-      </div>
-
-      <!--- Asks for lastname -->
-      <div>
-        <label class="block text-gray-600 font-medium">Last name *</label>
-        <input type="text" id="last name" class="input-field" placeholder="Enter your Last name" required>
-        <p id="lastnameError" class="error-message"></p>
       </div>
 
       <!--- Asks for company -->
       <div>
         <label class="block text-gray-600 font-medium">Company *</label>
-        <input type="text" id="last name" class="input-field" placeholder="Enter your Company name" required>
+        <input type="text" id="company" class="input-field" placeholder="Enter your Company name" required>
         <p id="companyError" class="error-message"></p>
       </div>
 
@@ -207,36 +201,7 @@
   </div>
 
   <!--- Link to script -->
-  <script src="script.js"></script>
-
-  <!--- Simple css code -->
-  <style>
-    #calendarPicker {
-      display: grid;
-      grid-template-columns: repeat(7, 1fr);
-    }
-
-    .input-field {
-      width: 100%;
-      padding: 10px;
-      margin-top: 5px;
-      border: 1px solid #ccc;
-      border-radius: 5px;
-      outline: none;
-      transition: all 0.3s;
-    }
-
-    .input-field:focus {
-      border-color: #007bff;
-      box-shadow: 0 0 5px rgba(0, 123, 255, 0.5);
-    }
-
-    .error-message {
-      color: red;
-      font-size: 14px;
-      margin-top: 5px;
-    }
-  </style>
+  <script src="/static/js/guest-form.js"></script>
 
 </body>
 

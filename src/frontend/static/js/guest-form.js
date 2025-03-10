@@ -488,3 +488,48 @@ document.addEventListener("DOMContentLoaded", function () {
         }
     });
 });
+
+// Submit form data to the backend
+form.addEventListener("submit", function(event) {
+    event.preventDefault();
+
+    const formData = {
+        name: document.getElementById("name").value,
+        company: document.getElementById("company").value,
+        email: document.getElementById("email").value,
+        phone: document.getElementById("phone").value,
+        socialMedia: JSON.parse(localStorage.getItem("socialMediaData")) || [],
+        bio: document.getElementById("bio").value,
+        interest: document.getElementById("interest").value,
+        recordingDate: document.getElementById("recordingDate").value,
+        recordingTime: document.getElementById("recordingTime").value,
+        recommendedGuests: JSON.parse(localStorage.getItem("recommendedGuestData")) || [],
+        list: document.getElementById("list").value,
+        imageData: localStorage.getItem("imageData"),
+        notes: document.getElementById("notes").value,
+        updatesOption: document.querySelector('input[name="updatesOption"]:checked').value
+    };
+
+    fetch('/guest-form', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(formData)
+    })
+    .then(response => response.json())
+    .then(data => {
+        alert(data.message);
+        form.reset();
+        localStorage.clear();
+        document.getElementById("socialMediaContainer").innerHTML = "";
+        document.getElementById("recommendedGuestContainer").innerHTML = "";
+        document.getElementById("imagePreviewContainer").classList.add("hidden");
+        document.getElementById("fileName").textContent = "";
+        document.getElementById("selectedDateTime").textContent = "";
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('An error occurred while submitting the form.');
+    });
+});
