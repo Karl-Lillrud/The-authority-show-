@@ -80,6 +80,65 @@ function showNotification(title, message, type = "info") {
   }, 5000);
 }
 
+// New function to fetch and render guest options into a select element
+async function renderGuestSelection(selectElement, selectedGuestId = "") {
+  try {
+    const response = await fetch("/get_guests");
+    const data = await response.json();
+    if (response.ok && data.guests) {
+      selectElement.innerHTML = "";
+      const defaultOption = document.createElement("option");
+      defaultOption.value = "";
+      defaultOption.textContent = "Invite Guest";
+      selectElement.appendChild(defaultOption);
+      data.guests.forEach((guest) => {
+        const option = document.createElement("option");
+        option.value = guest.id || guest._id;
+        option.textContent = guest.name;
+        if ((guest.id || guest._id) === selectedGuestId) {
+          option.selected = true;
+        }
+        selectElement.appendChild(option);
+      });
+      // Append extra option for manual adding
+      const manualOption = document.createElement("option");
+      manualOption.value = "manual";
+      manualOption.textContent = "Add Guest Manually";
+      selectElement.appendChild(manualOption);
+    }
+    // Remove any existing manual input if present
+    let manualInput = selectElement.parentElement.querySelector(
+      ".manual-guest-input"
+    );
+    if (manualInput) {
+      manualInput.remove();
+    }
+    // Add listener to handle manual guest entry
+    selectElement.addEventListener("change", (e) => {
+      if (e.target.value === "manual") {
+        // Create an input field for manual guest entry if not already present
+        if (!selectElement.parentElement.querySelector(".manual-guest-input")) {
+          manualInput = document.createElement("input");
+          manualInput.type = "text";
+          manualInput.className = "manual-guest-input";
+          manualInput.placeholder = "Enter guest name manually";
+          // Append the manual input right after the select element
+          selectElement.parentElement.appendChild(manualInput);
+        }
+      } else {
+        // Remove manual guest input if existing
+        if (selectElement.parentElement.querySelector(".manual-guest-input")) {
+          selectElement.parentElement
+            .querySelector(".manual-guest-input")
+            .remove();
+        }
+      }
+    });
+  } catch (error) {
+    console.error("Error fetching guests:", error);
+  }
+}
+
 document.addEventListener("DOMContentLoaded", function () {
   console.log("DOM fully loaded and parsed");
 
@@ -123,6 +182,9 @@ document.addEventListener("DOMContentLoaded", function () {
 
         renderPodcastSelection(podcasts);
         document.getElementById("episode-form-popup").style.display = "flex";
+        // Populate guest select for the create episode form
+        const guestSelect = document.getElementById("guest-id");
+        renderGuestSelection(guestSelect);
       } catch (error) {
         console.error("Error fetching podcasts:", error);
         showNotification(
@@ -857,10 +919,9 @@ function showEpisodePopup(episode) {
         }" />
       </div>
       <div class="field-group">
-        <label for="upd-guest-id">Guest ID</label>
-        <input type="text" id="upd-guest-id" name="guestId" value="${
-          episode.guestId || ""
-        }" />
+        <label for="upd-guest-id">Guest</label>
+        <!-- Change guest field to a select -->
+        <select id="upd-guest-id" name="guestId"></select>
       </div>
       <div class="field-group">
         <label for="upd-status">Status</label>
@@ -876,6 +937,10 @@ function showEpisodePopup(episode) {
   `;
   popup.appendChild(popupContent);
   document.body.appendChild(popup);
+
+  // Populate guest dropdown in update popup with the current guest selected.
+  const updGuestSelect = document.getElementById("upd-guest-id");
+  renderGuestSelection(updGuestSelect, episode.guestId || "");
 
   // Close popup events
   popup.querySelector("#close-episode-popup").addEventListener("click", () => {
@@ -899,7 +964,7 @@ function showEpisodePopup(episode) {
           .value.trim(),
         publishDate: document.getElementById("upd-publish-date").value,
         duration: document.getElementById("upd-duration").value,
-        guestId: document.getElementById("upd-guest-id").value.trim(),
+        guestId: document.getElementById("upd-guest-id").value, // value from select
         status: document.getElementById("upd-status").value.trim()
       };
       Object.keys(updatedData).forEach((key) => {
