@@ -980,6 +980,11 @@ function showEpisodePopup(episode) {
         <label for="upd-guest-id">Guest</label>
         <!-- Change guest field to a select -->
         <select id="upd-guest-id" name="guestId"></select>
+        <!-- Add field for manual guest entry -->
+        <div class="manual-guest-field">
+          <label for="manual-guest">Add Guest Manually</label>
+          <input type="text" id="manual-guest" placeholder="Click to add guest manually" readonly />
+        </div>
       </div>
       <div class="field-group">
         <label for="upd-status">Status</label>
@@ -988,7 +993,7 @@ function showEpisodePopup(episode) {
         }" />
       </div>
       <div class="form-actions">
-        <button type="button" id="cancel-episode-update" class="cancel-btn">Cancel</button>
+        <button type="button" id="cancel-episode-update" class="cancel-btn">Cancel</button></div>
         <button type="submit" class="save-btn">Update Episode</button>
       </div>
     </form>
@@ -1009,6 +1014,12 @@ function showEpisodePopup(episode) {
     .addEventListener("click", () => {
       document.body.removeChild(popup);
     });
+
+  // Manual guest entry
+  const manualGuestField = document.querySelector(".manual-guest-field");
+  manualGuestField.addEventListener("click", () => {
+    showManualGuestPopup(updGuestSelect);
+  });
 
   // Update episode form submission
   popup
