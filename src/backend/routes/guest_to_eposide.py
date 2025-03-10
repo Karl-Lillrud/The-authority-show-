@@ -6,6 +6,8 @@ import uuid
 guesttoepisode_bp = Blueprint("guesttoepisode_bp", __name__)
 
 #NEED CHANGES ADDED AS EXAMPLE, NOT FINAL. DISPLAY IS THAT "2 GUEST CAN BE ASSIGNED TO 1 EPISODE"
+#SHOULD ONLY BE USED FOR SPECIFIC DATA CRUD OPERATIONS
+#EXTRA FUNCTIONALITY BESIDES CRUD OPERATIONS SHOULD BE IN SERVICES
 
 # Route to assign a guest to an episode
 @guesttoepisode_bp.route('/add-guest-to-episode', methods=['POST'])

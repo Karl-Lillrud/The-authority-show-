@@ -4,84 +4,273 @@ import {
   fetchPodcast,
   updatePodcast,
   deletePodcast
-} from "../requests/podcastRequest.js";
+} from "../requests/podcastRequests.js";
+import { registerEpisode } from "../requests/episodeRequest.js";
+import { svgpodcastmanagement } from "../svg/svgpodcastmanagement.js"; // Updated import path
 
 console.log("podcastmanagement.js loaded");
+
+// Notification system
+function showNotification(title, message, type = "info") {
+  // Remove any existing notification
+  const existingNotification = document.querySelector(".notification");
+  if (existingNotification) {
+    existingNotification.remove();
+  }
+
+  // Create notification elements
+  const notification = document.createElement("div");
+  notification.className = `notification ${type}`;
+
+  // Icon based on type
+  let iconSvg = "";
+  if (type === "success") {
+    iconSvg = svgpodcastmanagement.success;
+  } else if (type === "error") {
+    iconSvg = svgpodcastmanagement.error;
+  } else {
+    iconSvg = svgpodcastmanagement.defaultIcon;
+  }
+
+  notification.innerHTML = `
+    <div class="notification-icon">${iconSvg}</div>
+    <div class="notification-content">
+      <div class="notification-title">${title}</div>
+      <div class="notification-message">${message}</div>
+    </div>
+    <div class="notification-close">
+      <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <line x1="18" y1="6" x2="6" y2="18"></line>
+        <line x1="6" y1="6" x2="18" y2="18"></line>
+      </svg>
+    </div>
+  `;
+
+  // Add to DOM
+  document.body.appendChild(notification);
+
+  // Add event listener to close button
+  notification
+    .querySelector(".notification-close")
+    .addEventListener("click", () => {
+      notification.classList.remove("show");
+      setTimeout(() => {
+        notification.remove();
+      }, 500);
+    });
+
+  // Show notification with animation
+  setTimeout(() => {
+    notification.classList.add("show");
+  }, 10);
+
+  // Auto hide after 5 seconds
+  setTimeout(() => {
+    if (document.body.contains(notification)) {
+      notification.classList.remove("show");
+      setTimeout(() => {
+        if (document.body.contains(notification)) {
+          notification.remove();
+        }
+      }, 500);
+    }
+  }, 5000);
+}
 
 document.addEventListener("DOMContentLoaded", function () {
   console.log("DOM fully loaded and parsed");
 
   renderPodcastList();
+
+  // Show form for adding a podcast
+  document.getElementById("add-podcast-btn").addEventListener("click", () => {
+    resetForm();
+    selectedPodcastId = null;
+    document.getElementById("form-popup").style.display = "flex";
+    document.querySelector(".form-title").textContent = "Add New Podcast";
+    document.querySelector(".save-btn").textContent = "Save Podcast";
+  });
+
+  // Close the form popup
+  document.getElementById("close-form-popup").addEventListener("click", () => {
+    document.getElementById("form-popup").style.display = "none";
+  });
+
+  // Cancel button in form
+  document.getElementById("cancel-form-btn").addEventListener("click", () => {
+    document.getElementById("form-popup").style.display = "none";
+  });
+
+  // Show form for creating a new episode
+  document
+    .getElementById("create-episode-btn")
+    .addEventListener("click", async () => {
+      try {
+        const response = await fetchPodcasts();
+        const podcasts = response.podcast;
+
+        if (!podcasts || podcasts.length === 0) {
+          showNotification(
+            "No Podcasts",
+            "You need to create a podcast first before adding episodes.",
+            "info"
+          );
+          return;
+        }
+
+        renderPodcastSelection(podcasts);
+        document.getElementById("episode-form-popup").style.display = "flex";
+      } catch (error) {
+        console.error("Error fetching podcasts:", error);
+        showNotification(
+          "Error",
+          "Failed to load podcasts for episode creation.",
+          "error"
+        );
+      }
+    });
+
+  // Close the episode form popup
+  document
+    .getElementById("close-episode-form-popup")
+    .addEventListener("click", () => {
+      document.getElementById("episode-form-popup").style.display = "none";
+    });
+
+  // Cancel button in episode form
+  document
+    .getElementById("cancel-episode-form-btn")
+    .addEventListener("click", () => {
+      document.getElementById("episode-form-popup").style.display = "none";
+    });
+
+  // Episode form submission
+  document
+    .getElementById("create-episode-form")
+    .addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const formData = new FormData(e.target);
+      const data = Object.fromEntries(formData.entries());
+
+      // Check for missing required fields
+      if (!data.podcastId || !data.title) {
+        showNotification(
+          "Missing Fields",
+          "Please fill in all required fields.",
+          "error"
+        );
+        return;
+      }
+
+      try {
+        const result = await registerEpisode(data);
+        console.log("Result from registerEpisode:", result);
+        if (result.message) {
+          showNotification(
+            "Success",
+            "Episode created successfully!",
+            "success"
+          );
+          document.getElementById("episode-form-popup").style.display = "none";
+          document.getElementById("create-episode-form").reset();
+        } else {
+          showNotification("Error", result.error, "error");
+        }
+      } catch (error) {
+        console.error("Error creating episode:", error);
+        showNotification("Error", "Failed to create episode.", "error");
+      }
+    });
+
+  // Close popup button
+  document.getElementById("close-popup-btn").addEventListener("click", () => {
+    document.getElementById("podcasts-popup").style.display = "none";
+  });
+
+  // Delete selected podcasts
+  document
+    .getElementById("delete-selected-podcasts-btn")
+    .addEventListener("click", async () => {
+      const selectedPodcasts = document.querySelectorAll(
+        "#podcasts-list input[type='checkbox']:checked"
+      );
+      const podcastIds = Array.from(selectedPodcasts).map(
+        (checkbox) => checkbox.value
+      );
+
+      if (podcastIds.length === 0) {
+        showNotification(
+          "No Selection",
+          "Please select at least one podcast to delete.",
+          "info"
+        );
+        return;
+      }
+
+      try {
+        for (const podcastId of podcastIds) {
+          await deletePodcast(podcastId);
+        }
+        showNotification(
+          "Success",
+          "Selected podcasts deleted successfully!",
+          "success"
+        );
+        document.getElementById("podcasts-popup").style.display = "none";
+        renderPodcastList();
+      } catch (error) {
+        showNotification(
+          "Error",
+          "Failed to delete selected podcasts.",
+          "error"
+        );
+      }
+    });
 });
 
-const formContainer = document.querySelector(".form-box");
-const podcastsContainer = document.querySelector(".podcasts-container");
 const form = document.getElementById("register-podcast-form");
 let selectedPodcastId = null;
-
-// New event: show form for adding a podcast
-document.getElementById("add-podcast-btn").addEventListener("click", () => {
-  resetForm();
-  selectedPodcastId = null;
-  formContainer.style.display = "block";
-});
 
 form.addEventListener("submit", async function (e) {
   e.preventDefault();
   console.log("Form submitted");
 
-  // Retrieve the form elements
+  // Retrieve regular input values
   const podName = document.getElementById("pod-name")?.value.trim() || "";
   const email = document.getElementById("email")?.value.trim() || "";
   const category = document.getElementById("category")?.value.trim() || "";
 
-  // Initialize error message
-  let errorMessage = "";
-
-  // Check if required fields are empty
-  const requiredFields = [{ name: "podName", value: podName }];
-
-  requiredFields.forEach((field) => {
-    if (!field.value) {
-      errorMessage += `Please fill in the ${field.name}.<br>`;
-    }
-  });
-
-  // If there is any missing required field, show an alert
-  if (errorMessage) {
-    showAlert(errorMessage, "red");
+  if (!podName) {
+    showNotification(
+      "Missing Field",
+      "Please fill in the Podcast Name field.",
+      "error"
+    );
     return;
   }
 
-  // Collect social media values, ensuring empty strings are included but only if they are not empty
-  const socialMedia = [
-    document.getElementById("facebook")?.value.trim(),
-    document.getElementById("instagram")?.value.trim(),
-    document.getElementById("linkedin")?.value.trim(),
-    document.getElementById("twitter")?.value.trim(),
-    document.getElementById("tiktok")?.value.trim(),
-    document.getElementById("pinterest")?.value.trim()
-  ].filter((link) => link); // Remove empty strings
-
-  // Collect URLs for optional fields, remove if empty
-  const googleCal = document.getElementById("google-cal")?.value.trim() || null;
-  const guestUrl =
-    document.getElementById("guest-form-url")?.value.trim() || null;
-
-  // Build the data object
+  // Build the data object from other form fields
   const data = {
     teamId: "",
     podName,
     ownerName: document.getElementById("pod-owner")?.value.trim() || "",
     hostName: document.getElementById("pod-host")?.value.trim() || "",
     rssFeed: document.getElementById("pod-rss")?.value.trim() || "",
-    googleCal: googleCal,
-    guestUrl: guestUrl,
+    googleCal: document.getElementById("google-cal")?.value.trim() || null,
+    guestUrl: document.getElementById("guest-form-url")?.value.trim() || null,
     email,
     description: document.getElementById("description")?.value.trim() || "",
-    logoUrl: document.getElementById("description")?.value.trim(),
+    // the logoUrl field will be replaced if a logo is uploaded
+
     category,
-    socialMedia
+    socialMedia: [
+      document.getElementById("facebook")?.value.trim(),
+      document.getElementById("instagram")?.value.trim(),
+      document.getElementById("linkedin")?.value.trim(),
+      document.getElementById("twitter")?.value.trim(),
+      document.getElementById("tiktok")?.value.trim(),
+      document.getElementById("pinterest")?.value.trim()
+    ].filter((link) => link)
   };
 
   // Remove any keys with null or empty values
@@ -95,43 +284,78 @@ form.addEventListener("submit", async function (e) {
     }
   });
 
-  try {
-    let responseData;
-    if (selectedPodcastId) {
-      responseData = await updatePodcast(selectedPodcastId, data);
-    } else {
-      responseData = await addPodcast(data);
-    }
+  // Function to continue submission after processing the logo (if any)
+  async function submitPodcast(updatedData) {
+    try {
+      let responseData;
+      if (selectedPodcastId) {
+        responseData = await updatePodcast(selectedPodcastId, updatedData);
+        if (!responseData.error) {
+          showNotification(
+            "Success",
+            "Podcast updated successfully!",
+            "success"
+          );
+        }
+      } else {
+        responseData = await addPodcast(updatedData);
+        if (!responseData.error) {
+          showNotification("Success", "Podcast added successfully!", "success");
+        }
+      }
 
-    if (responseData.error) {
-      showAlert(
-        `Error: ${
+      if (responseData.error) {
+        showNotification(
+          "Error",
           responseData.details
             ? JSON.stringify(responseData.details)
-            : responseData.error
-        }`,
-        "red"
-      );
-    } else {
-      showAlert(
+            : responseData.error,
+          "error"
+        );
+      } else {
+        document.getElementById("form-popup").style.display = "none";
+        document.getElementById("podcast-detail").style.display = "none";
+        document.getElementById("podcast-list").style.display = "flex";
+        resetForm();
+        renderPodcastList();
+      }
+    } catch (error) {
+      console.error("Error:", error);
+      showNotification(
+        "Error",
         selectedPodcastId
-          ? "Podcast updated successfully!"
-          : "Podcast added successfully!",
-        "green"
+          ? "Failed to update podcast."
+          : "Failed to add podcast.",
+        "error"
       );
     }
-  } catch (error) {
-    console.error("Error:", error);
-    showAlert(
-      selectedPodcastId
-        ? "There was an error with the update process."
-        : "There was an error with the registration process.",
-      "red"
-    );
+  }
+
+  // Check for a logo file and convert it to a Base64 string if one is selected
+  const logoInput = document.getElementById("logo");
+  if (logoInput && logoInput.files[0]) {
+    const file = logoInput.files[0];
+    const reader = new FileReader();
+    reader.onloadend = async function () {
+      data.logoUrl = reader.result; // update with new image
+      await submitPodcast(data);
+    };
+    reader.readAsDataURL(file);
+  } else {
+    // If editing and no new image is selected, do not overwrite the existing logoUrl
+    if (selectedPodcastId) {
+      delete data.logoUrl;
+    }
+    await submitPodcast(data);
   }
 });
 
 function displayPodcastDetails(podcast) {
+  // Set form title for editing
+  document.querySelector(".form-title").textContent = "Edit Podcast";
+  document.querySelector(".save-btn").textContent = "Update Podcast";
+
+  // Fill in form fields
   const podNameEl = document.getElementById("pod-name");
   if (podNameEl) podNameEl.value = podcast.podName || "";
 
@@ -159,6 +383,7 @@ function displayPodcastDetails(podcast) {
   const categoryEl = document.getElementById("category");
   if (categoryEl) categoryEl.value = podcast.category || "";
 
+  // Social media links
   const facebookEl = document.getElementById("facebook");
   if (facebookEl) facebookEl.value = podcast.socialMedia?.[0] || "";
 
@@ -176,57 +401,12 @@ function displayPodcastDetails(podcast) {
 
   const pinterestEl = document.getElementById("pinterest");
   if (pinterestEl) pinterestEl.value = podcast.socialMedia?.[5] || "";
-
-  formContainer.style.display = "block";
-  document.getElementById("podcasts-popup").style.display = "none";
-}
-
-function addBackButton() {
-  const inviteBtn = document.querySelector(".invite-btn");
-  if (!document.getElementById("back-btn")) {
-    const backBtn = document.createElement("button");
-    backBtn.id = "back-btn";
-    backBtn.className = "crud-btn";
-    backBtn.textContent = "Back";
-    backBtn.style.marginRight = "10px";
-    backBtn.style.width = inviteBtn.offsetWidth + "px"; // Match the width of the invite button
-    inviteBtn.parentNode.insertBefore(backBtn, inviteBtn);
-
-    backBtn.addEventListener("click", () => {
-      resetForm();
-      backBtn.remove();
-      inviteBtn.textContent = "SAVE";
-      inviteBtn.classList.remove("update-btn");
-      selectedPodcastId = null;
-    });
-  }
 }
 
 function resetForm() {
   form.reset();
+  selectedPodcastId = null;
 }
-
-// Delete selected podcasts
-document
-  .getElementById("delete-selected-podcasts-btn")
-  .addEventListener("click", async () => {
-    const selectedPodcasts = document.querySelectorAll(
-      "#podcasts-list input[type='checkbox']:checked"
-    );
-    const podcastIds = Array.from(selectedPodcasts).map(
-      (checkbox) => checkbox.value
-    );
-
-    try {
-      for (const podcastId of podcastIds) {
-        await deletePodcast(podcastId);
-      }
-      showAlert("Selected podcasts deleted successfully!", "green");
-      document.getElementById("podcasts-popup").style.display = "none";
-    } catch (error) {
-      showAlert("Failed to delete selected podcasts.", "red");
-    }
-  });
 
 async function renderPodcastList() {
   try {
@@ -239,8 +419,8 @@ async function renderPodcastList() {
 
     if (podcasts.length === 0) {
       podcastListElement.innerHTML = `
-        <div style="text-align: center; padding: 3rem; background-color: white; border-radius: 8px;">
-          <p style="color: #666;">No podcasts found</p>
+        <div class="empty-state">
+          <p>No podcasts found. Click "Add Podcast" to create your first podcast.</p>
         </div>
       `;
       return;
@@ -259,7 +439,7 @@ async function renderPodcastList() {
               <div>
                 <h2 class="podcast-title">${podcast.podName}</h2>
                 <p class="podcast-meta"><span>Category:</span> ${
-                  podcast.category
+                  podcast.category || "Uncategorized"
                 }</p>
                 <p class="podcast-meta"><span>Host:</span> ${
                   podcast.hostName || "Not specified"
@@ -272,26 +452,17 @@ async function renderPodcastList() {
                 <button class="action-btn view-btn" title="View podcast details" data-id="${
                   podcast._id
                 }">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"></path>
-                    <circle cx="12" cy="12" r="3"></circle>
-                  </svg>
+                  ${svgpodcastmanagement.view}
                 </button>
                 <button class="action-btn edit-btn" title="Edit podcast" data-id="${
                   podcast._id
                 }">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"></path>
-                  </svg>
+                  ${svgpodcastmanagement.edit}
                 </button>
-                <button class="action-btn delete-btn" title="Delete podcast" data-id="${
+                <button class="action-btn delete-btn-home" title="Delete podcast" data-id="${
                   podcast._id
                 }">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M3 6h18"></path>
-                    <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"></path>
-                    <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"></path>
-                  </svg>
+                  <span class="icon">${svgpodcastmanagement.delete}</span>
                 </button>
               </div>
             </div>
@@ -321,6 +492,7 @@ async function renderPodcastList() {
           }
         });
       });
+
     document.querySelectorAll(".edit-btn").forEach((button) => {
       button.addEventListener("click", async (e) => {
         const podcastId = e.target.closest("button").getAttribute("data-id");
@@ -328,57 +500,106 @@ async function renderPodcastList() {
           const podcast = await fetchPodcast(podcastId);
           displayPodcastDetails(podcast.podcast);
           selectedPodcastId = podcastId;
-          const inviteBtn = document.querySelector(".invite-btn");
-          inviteBtn.textContent = "Update";
-          inviteBtn.classList.add("update-btn");
-          // Optionally, hide list view if needed:
-          document.getElementById("podcast-list").style.display = "none";
+          document.getElementById("form-popup").style.display = "flex";
         } catch (error) {
-          showAlert("Failed to fetch podcast details", "red");
+          showNotification("Error", "Failed to fetch podcast details", "error");
         }
       });
     });
+
     document.querySelectorAll(".delete-btn").forEach((button) => {
       button.addEventListener("click", async (e) => {
         const podcastId = e.target.closest("button").getAttribute("data-id");
-        try {
-          await deletePodcast(podcastId);
-          // Remove the podcast card from the UI
-          e.target.closest(".podcast-card")?.remove();
-          showAlert("Podcast deleted successfully!", "green");
-        } catch (error) {
-          showAlert("Failed to delete podcast.", "red");
+        if (confirm("Are you sure you want to delete this podcast?")) {
+          try {
+            await deletePodcast(podcastId);
+            showNotification(
+              "Success",
+              "Podcast deleted successfully!",
+              "success"
+            );
+            e.target.closest(".podcast-card")?.remove();
+
+            // Check if there are no more podcasts
+            if (document.querySelectorAll(".podcast-card").length === 0) {
+              renderPodcastList(); // This will show the empty state
+            }
+          } catch (error) {
+            showNotification("Error", "Failed to delete podcast.", "error");
+          }
+        }
+      });
+    });
+
+    // Added event listener for elements with class "delete-btn-home"
+    document.querySelectorAll(".delete-btn-home").forEach((button) => {
+      button.addEventListener("click", async (e) => {
+        const podcastId = e.target.closest("button").getAttribute("data-id");
+        if (confirm("Are you sure you want to delete this podcast?")) {
+          try {
+            await deletePodcast(podcastId);
+            showNotification(
+              "Success",
+              "Podcast deleted successfully!",
+              "success"
+            );
+            e.target.closest(".podcast-card")?.remove();
+            if (document.querySelectorAll(".podcast-card").length === 0) {
+              renderPodcastList();
+            }
+          } catch (error) {
+            showNotification("Error", "Failed to delete podcast.", "error");
+          }
         }
       });
     });
   } catch (error) {
     console.error("Error rendering podcast list:", error);
+    showNotification("Error", "Failed to load podcasts.", "error");
   }
 }
 
-// Update viewPodcast to use the new detail layout
+// Render podcast selection for creating a new episode
+function renderPodcastSelection(podcasts) {
+  const podcastSelectElement = document.getElementById("podcast-select");
+  podcastSelectElement.innerHTML = "";
+
+  if (podcasts.length === 0) {
+    const option = document.createElement("option");
+    option.value = "";
+    option.textContent = "No podcasts available";
+    podcastSelectElement.appendChild(option);
+    return;
+  }
+
+  podcasts.forEach((podcast) => {
+    const option = document.createElement("option");
+    option.value = podcast._id;
+    option.textContent = podcast.podName;
+    podcastSelectElement.appendChild(option);
+  });
+}
+
+// View podcast details
 async function viewPodcast(podcastId) {
   try {
     const response = await fetchPodcast(podcastId);
-    const podcast = response.podcast; // assuming API returns it here
+    const podcast = response.podcast;
     renderPodcastDetail(podcast);
     document.getElementById("podcast-list").style.display = "none";
     document.getElementById("podcast-detail").style.display = "block";
   } catch (error) {
-    showAlert("Podcast not found", "red");
+    showNotification("Error", "Failed to load podcast details", "error");
   }
 }
 
-// New function: renders the podcast detail view using your design
+// Render the podcast detail view
 function renderPodcastDetail(podcast) {
   const podcastDetailElement = document.getElementById("podcast-detail");
   podcastDetailElement.innerHTML = `
     <div class="detail-header">
       <button class="back-btn" id="back-to-list">
-        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <path d="m12 19-7-7 7-7"></path>
-          <path d="M19 12H5"></path>
-        </svg>
+        ${svgpodcastmanagement.back}
         Back to podcasts
       </button>
     </div>
@@ -388,12 +609,15 @@ function renderPodcastDetail(podcast) {
       }')"></div>
       <div class="detail-info">
         <h1 class="detail-title">${podcast.podName}</h1>
-        <p class="detail-category">${podcast.category}</p>
+        <p class="detail-category">${podcast.category || "Uncategorized"}</p>
+        
         <div class="detail-section">
           <h2>About</h2>
           <p>${podcast.description || "No description available."}</p>
         </div>
+        
         <div class="separator"></div>
+        
         <div class="detail-grid">
           <div class="detail-item">
             <h3>Podcast Owner</h3>
@@ -416,7 +640,9 @@ function renderPodcastDetail(podcast) {
             }
           </div>
         </div>
+        
         <div class="separator"></div>
+        
         <div class="detail-section">
           <h2>Scheduling</h2>
           <div class="detail-grid">
@@ -424,31 +650,15 @@ function renderPodcastDetail(podcast) {
               <h3>Google Calendar</h3>
               ${
                 podcast.googleCal
-                  ? `
-                <a href="${podcast.googleCal}" target="_blank" style="display: flex; align-items: center; gap: 0.5rem;">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <rect width="18" height="18" x="3" y="4" rx="2" ry="2"></rect>
-                    <line x1="16" x2="16" y1="2" y2="6"></line>
-                    <line x1="8" x2="8" y1="2" y2="6"></line>
-                    <line x1="3" x2="21" y1="10" y2="10"></line>
-                  </svg>
-                  Calendar Link
-                </a>`
-                  : `
-                <p style="display: flex; align-items: center; gap: 0.5rem;">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <rect width="18" height="18" x="3" y="4" rx="2" ry="2"></rect>
-                    <line x1="16" x2="16" y1="2" y2="6"></line>
-                    <line x1="8" x2="8" y1="2" y2="6"></line>
-                    <line x1="3" x2="21" y1="10" y2="10"></line>
-                  </svg>
-                  Not connected
-                </p>`
+                  ? `<a href="${podcast.googleCal}" target="_blank" style="display: flex; align-items: center; gap: 0.5rem;">
+                    ${svgpodcastmanagement.calendar}
+                    Calendar Link
+                  </a>`
+                  : `<p style="display: flex; align-items: center; gap: 0.5rem;">
+                    ${svgpodcastmanagement.calendar}
+                    Not connected
+                  </p>`
               }
-            </div>
-            <div class="detail-item">
-              <h3>Calendar URL</h3>
-              <p>podmanager.com/?pod=${podcast.podName.replace(/\s+/g, "")}</p>
             </div>
             <div class="detail-item">
               <h3>Guest Form URL</h3>
@@ -460,72 +670,118 @@ function renderPodcastDetail(podcast) {
             </div>
           </div>
         </div>
+        
         <div class="separator"></div>
+        
         <div class="detail-section">
           <h2>Social Media</h2>
           <div class="social-links">
             ${
               podcast.socialMedia && podcast.socialMedia[0]
                 ? `<a href="${podcast.socialMedia[0]}" target="_blank" class="social-link">
-              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"></path>
-              </svg>
-              Facebook
-            </a>`
+                  ${svgpodcastmanagement.facebook}
+                  Facebook
+                </a>`
                 : ""
             }
             ${
               podcast.socialMedia && podcast.socialMedia[1]
                 ? `<a href="${podcast.socialMedia[1]}" target="_blank" class="social-link">
-              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <rect width="20" height="20" x="2" y="2" rx="5" ry="5"></rect>
-                <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path>
-                <line x1="17.5" x2="17.51" y1="6.5" y2="6.5"></line>
-              </svg>
-              Instagram
-            </a>`
+                  ${svgpodcastmanagement.instagram}
+                  Instagram
+                </a>`
                 : ""
             }
             ${
               podcast.socialMedia && podcast.socialMedia[2]
                 ? `<a href="${podcast.socialMedia[2]}" target="_blank" class="social-link">
-              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"></path>
-                <rect width="4" height="12" x="2" y="9"></rect>
-                <circle cx="4" cy="4" r="2"></circle>
-              </svg>
-              LinkedIn
-            </a>`
+                  ${svgpodcastmanagement.linkedin}
+                  LinkedIn
+                </a>`
                 : ""
             }
             ${
               podcast.socialMedia && podcast.socialMedia[3]
                 ? `<a href="${podcast.socialMedia[3]}" target="_blank" class="social-link">
-              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M22 4s-.7 2.1-2 3.4c1.6 10-9.4 17.3-18 11.6 2.2.1 4.4-.6 6-2C3 15.5.5 9.6 3 5c2.2 2.6 5.6 4.1 9 4-.9-4.2 4-6.6 7-3.8 1.1 0 3-1.2 3-1.2z"></path>
-              </svg>
-              Twitter
-            </a>`
+                  ${svgpodcastmanagement.twitter}
+                  Twitter
+                </a>`
                 : ""
             }
             ${
               podcast.socialMedia && podcast.socialMedia[4]
                 ? `<a href="${podcast.socialMedia[4]}" target="_blank" class="social-link">
-              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M22 4s-.7 2.1-2 3.4c1.6 10-9.4 17.3-18 11.6 2.2.1 4.4-.6 6-2C3 15.5.5 9.6 3 5c2.2 2.6 5.6 4.1 9 4-.9-4.2 4-6.6 7-3.8 1.1 0 3-1.2 3-1.2z"></path>
-              </svg>
-              TikTok
-            </a>`
+                  ${svgpodcastmanagement.tiktok}
+                  TikTok
+                </a>`
                 : ""
             }
           </div>
+        </div>
+        
+        <div class="detail-actions" style="margin-top: 2rem; display: flex; gap: 1rem;">
+          <button class="back-btn" id="edit-podcast-btn" data-id="${
+            podcast._id
+          }">
+            ${svgpodcastmanagement.edit}
+            Edit Podcast
+          </button>
+          <button class="delete-btn" id="delete-podcast-btn" data-id="${
+            podcast._id
+          }">
+            <span class="icon">${svgpodcastmanagement.delete}</span>
+            Delete Podcast
+          </button>
         </div>
       </div>
     </div>
   `;
 
+  // Back button event listener
   document.getElementById("back-to-list").addEventListener("click", () => {
     document.getElementById("podcast-detail").style.display = "none";
     document.getElementById("podcast-list").style.display = "flex";
   });
+
+  // Edit button event listener
+  document
+    .getElementById("edit-podcast-btn")
+    .addEventListener("click", async () => {
+      try {
+        const podcastId = document
+          .getElementById("edit-podcast-btn")
+          .getAttribute("data-id");
+        const response = await fetchPodcast(podcastId);
+        displayPodcastDetails(response.podcast);
+        selectedPodcastId = podcastId;
+        document.getElementById("form-popup").style.display = "flex";
+        document.getElementById("podcast-detail").style.display = "none";
+      } catch (error) {
+        showNotification("Error", "Failed to fetch podcast details", "error");
+      }
+    });
+
+  // Delete button event listener
+  document
+    .getElementById("delete-podcast-btn")
+    .addEventListener("click", async () => {
+      if (confirm("Are you sure you want to delete this podcast?")) {
+        try {
+          const podcastId = document
+            .getElementById("delete-podcast-btn")
+            .getAttribute("data-id");
+          await deletePodcast(podcastId);
+          showNotification(
+            "Success",
+            "Podcast deleted successfully!",
+            "success"
+          );
+          document.getElementById("podcast-detail").style.display = "none";
+          renderPodcastList();
+          document.getElementById("podcast-list").style.display = "flex";
+        } catch (error) {
+          showNotification("Error", "Failed to delete podcast.", "error");
+        }
+      }
+    });
 }

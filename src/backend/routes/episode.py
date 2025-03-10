@@ -2,14 +2,21 @@ from flask import request, jsonify, Blueprint, g
 from backend.database.mongo_connection import collection, database
 from datetime import datetime, timezone
 import uuid
+import logging
+from backend.models.episodes import EpisodeSchema
 
 # Define Blueprint
 episode_bp = Blueprint("episode_bp", __name__)
 
+#SHOULD ONLY BE USED FOR SPECIFIC DATA CRUD OPERATIONS
+#EXTRA FUNCTIONALITY BESIDES CRUD OPERATIONS SHOULD BE IN SERVICES
+
+logger = logging.getLogger(__name__)
+
 
 @episode_bp.route("/register_episode", methods=["POST"])
 def register_episode():
-    if not g.user_id:
+    if not hasattr(g, "user_id") or not g.user_id:
         return jsonify({"error": "Unauthorized"}), 401
 
     # Validate Content-Type
@@ -21,21 +28,48 @@ def register_episode():
 
     try:
         data = request.get_json()
-        print("📩 Received Episode Data:", data)
+        logger.info("📩 Received raw episode data: %s", data)  # Added log
 
-        episode_id = str(uuid.uuid4())  # Generate unique ID
+        # Fetch the account document from MongoDB for the logged-in user
+        user_account = collection.database.Accounts.find_one({"userId": g.user_id})
+        if not user_account:
+            return jsonify({"error": "No account associated with this user"}), 403
+
+        # Fetch the account ID that the user already has (do not override with a new one)
+        if "id" in user_account:
+            account_id = user_account["id"]
+        else:
+            account_id = str(user_account["_id"])
+        logger.info(f"🧩 Found account {account_id} for user {g.user_id}")
+
+        # Validate data with schema
+        schema = EpisodeSchema()
+        errors = schema.validate(data)
+        if errors:
+            logger.error("Schema validation errors: %s", errors)
+            return jsonify({"error": "Invalid data", "details": errors}), 400
+        validated_data = schema.load(data)
+        logger.info("Validated data: %s", validated_data)  # Added log
+
+        podcast_id = validated_data.get("podcastId")
+        title = validated_data.get("title")
+        description = validated_data.get("description")
+        publish_date = validated_data.get("publishDate")
+        duration = validated_data.get("duration")
+        guest_id = validated_data.get("guestId")
+        status = validated_data.get("status")
+
+        # Validate required fields
+        if not podcast_id or not title:
+            return (
+                jsonify({"error": "Required fields missing: podcastId and title"}),
+                400,
+            )
+
+        episode_id = str(uuid.uuid4())
         user_id = str(g.user_id)
 
-        # Extracting data fields
-        podcast_id = data.get("podcastId", "").strip()
-        title = data.get("title", "").strip()
-        description = data.get("description", "").strip()
-        publish_date = data.get("publishDate")
-        duration = data.get("duration", 0)
-        guest_id = data.get("guestId", "").strip()
-        status = data.get("status", "").strip()
-
-        # Construct the episode document
+        # Construct the episode document with the handled values
         episode_item = {
             "_id": episode_id,
             "podcast_id": podcast_id,
@@ -45,22 +79,18 @@ def register_episode():
             "duration": duration,
             "guestId": guest_id,
             "status": status,
+            "userid": user_id,
+            "accountId": account_id,  # Add the accountId from the user's account
             "created_at": datetime.now(timezone.utc),
             "updated_at": datetime.now(timezone.utc),
         }
 
-        # Correctly querying the User collection
-        user = collection.database.User.find_one({"_id": user_id})
-        if not user:
-            return jsonify({"error": "User not found"}), 404
-
         # Correctly inserting into the Episode collection
-        print("📝 Inserting episode into database:", episode_item)
+        logger.info("📝 Inserting episode into database: %s", episode_item)
         result = collection.database["Episodes"].insert_one(
             episode_item
         )  # Ensure "Episodes" is correct
-
-        print("✅ Episode registered successfully!")
+        logger.info("✅ Episode registered successfully with ID: %s", episode_id)
 
         return (
             jsonify(
@@ -74,7 +104,7 @@ def register_episode():
         )
 
     except Exception as e:
-        print(f"❌ ERROR: {e}")
+        logger.error("❌ ERROR: %s", e)
         return jsonify({"error": f"Failed to register episode: {str(e)}"}), 500
 
 
@@ -219,7 +249,8 @@ def count_by_guest(guest_id):
     except Exception as e:
         print(f"❌ ERROR: {e}")
         return jsonify({"error": f"Failed to fetch episode count: {str(e)}"}), 500
-    
+
+
 @episode_bp.route("/episodes/count_by_guest/<guest_id>", methods=["GET"])
 def count_episodes_by_guest(guest_id):
     try:
@@ -238,4 +269,3 @@ def get_episodes_by_guest(guest_id):
         return jsonify({"episodes": episodes}), 200
     except Exception as e:
         return jsonify({"error": str(e)}), 500
-

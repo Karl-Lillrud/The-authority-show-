@@ -1,4 +1,3 @@
-/* Neumorphism Design Language & Global Variables */
 :root {
   /* Color Palette */
   --background-light: #eff2f9;
@@ -25,28 +24,104 @@
   --spacing-xl: 32px;
 }
 
-/* Global Styles */
+/* Ta bort margin, padding och border från alla element */
 * {
-  box-sizing: border-box;
   margin: 0;
   padding: 0;
+  box-sizing: border-box;
 }
 
-html,
-body {
-  height: 100%;
-  width: 100%;
+/* Gör att både html och body täcker hela skärmen */
+html, body {
+  height: 100%; /* Se till att body täcker hela skärmen */
+  width: 100%; /* Se till att body täcker hela skärmen */
+  overflow-x: hidden; /* Förhindra horisontell scroll */
 }
 
 body {
   font-family: var(--font-primary);
-  background-color: var(--background-light);
+  background-color:#eff2f9;
   color: var(--text-color-light);
-  margin: 0;
-  transition: background-color 0.3s ease, color 0.3s ease;
-  overflow-x: hidden; /* Hide horizontal scrollbar */
+  line-height: 1.6;
+  margin: 0; /* Ta bort margin */
+  padding: 0; /* Ta bort padding */
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start; /* Innehållet börjar från toppen av sidan */
+  min-height: 100vh; /* Gör så att body alltid täcker hela skärmen */
+  overflow: hidden; /* Förhindra horisontell scroll */
 }
 
+
+.help-container {
+  position: fixed;
+  bottom: 40px; /* Justera höjden */
+  right: 20px; /* Justera avstånd från höger */
+  z-index: 1000;
+}
+
+/* Frågetecken-knapp */
+.help-button {
+  width: 40px;
+  height: 40px;
+  background: none;
+  color: gray;
+  position: absolute;
+  bottom: 36.5vh;
+  right: 1vh;
+  font-size: 20px;
+  font-weight: bold;
+  border: none;
+  border-radius: 50%;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Hjälp-text */
+.help-text {
+  display: none;
+  position: absolute;
+  bottom: 39vh; /* Så texten hamnar ovanför knappen */
+  right: 50%;
+  transform: translateX(50%);
+  background-color: #333;
+  color: white;
+  padding: 8px 12px;
+  border-radius: 5px;
+  white-space: nowrap;
+  font-size: 14px;
+  box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.2);
+}
+
+/* Visa text vid hover */
+.help-container:hover .help-text {
+  display: block;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+/* Dark Mode */
 body.dark-mode {
   background-color: var(--background-dark);
   color: var(--text-color-dark);
@@ -66,107 +141,72 @@ body.dark-mode .app-container {
   background-color: var(--background-dark);
 }
 
-/* Header & Dark Mode Toggle */
-.header-container {
-  width: 100%;
-  display: flex;
-  justify-content: flex-end;
-  padding: var(--spacing-md);
-  position: absolute;
-  top: 0;
-  right: 0;
+body.dark-mode .help-button,
+body.dark-mode .help-text {
+  background-color: #ffaa00;
+  color: black;
 }
+
 
 .dark-mode-button {
   font-size: 1.5rem;
   background: none;
   border: none;
   cursor: pointer;
-  color: var(--text-color-light);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 0.5rem;
+}
+/* Containers (Cards) */
+
+.logo-container {
+  position: fixed;
+  top: 20px;
+  left: 9%;
+  transform: translateX(-50%);
+  width: 15%;
+  z-index: 999;
 }
 
-body.dark-mode .dark-mode-button {
-  color: var(--text-color-dark);
+.logo-container img {
+  width: 30%;
+  height: auto;
+  -webkit-user-select: none;
+  user-select: none;
 }
-
 /* Containers (Cards) */
 .container {
-  background-color: var(--background-light);
-  width: 100%;
-  max-width: 450px;
-  padding: 2rem;
+  background-color: #eff2f9;
+  height: 57vh;
+  width: 26%;
+  position: fixed;
+  top: 50%;
+  left: 37%;
+  transform: translateY(-50%);
   border-radius: 40px;
-  box-shadow: -5px -5px 45px var(--highlight-color),
-    35px 5px 15px var(--dark-shadow-light);
+  border: 1px solid rgba(0, 0, 0, 0.2);
+  box-shadow: 0px 0px  50px 0px rgb(213, 61, 6);
   text-align: center;
-  margin: 2rem 0;
-  transition: background-color 0.3s ease, box-shadow 0.3s ease;
+  margin: 0;
+  -webkit-transform: translateY(-50%); /* Safari fix */
+  -webkit-border-radius: 40px; /* Safari fix */
 }
 
-body.dark-mode .container {
-  background: var(--background-dark);
-  box-shadow: -5px -5px 10px var(--light-shadow-dark),
-    5px 5px 10px var(--dark-shadow-dark);
+.container  h1{
+  margin-top: 2vh;
 }
-
-/* Utility Class */
-.hidden {
-  display: none;
-}
-
-/* Headings */
-.fancy-heading {
-  color: rgba(0, 0, 0, 0.543);
-  font-size: 1.8rem;
-  font-weight: bold;
-  text-align: center;
-  margin-bottom: var(--spacing-md);
-  font-family: var(--font-secondary);
-}
-
-body.dark-mode .fancy-heading {
-  color: rgba(255, 255, 255, 0.8);
-}
-
-/* Form Layout */
-form {
-  display: flex;
-  flex-direction: column;
-  gap: var(--spacing-md);
-  width: 100%;
-}
-
-.form-group {
-  display: flex;
-  flex-direction: column;
-  margin-bottom: var(--spacing-md);
-  width: 100%;
-  text-align: left;
-}
-
-label {
-  font-weight: bold;
-  margin-bottom: var(--spacing-xs);
-}
-
-/* Inputs, Selects & Textareas */
+/* Input Fields */
 input,
 select,
 textarea {
-  width: 100%;
+  width: 80%;
+ 
+  height: 6vh;
+  margin-left: 5.3vh;
   padding: var(--spacing-sm) var(--spacing-md);
-  border: 1px solid #ccc;
-  border-radius: 20px;
-  font-size: 1rem;
+  border: 1px solid #cccccc;
+  border-radius: 29px;
+  box-shadow: inset #c2bcbc 1px 5px 20px 0px; /* Inre skugga */  font-size: 1rem;
   background: var(--background-light);
   color: var(--text-color-light);
-  box-shadow: inset 5px 5px 10px var(--dark-shadow-light),
-    inset -5px -5px 10px var(--light-shadow-light);
-  transition: background-color 0.3s ease, box-shadow 0.3s ease;
+  transition: all 0.3s ease;
 }
 
 body.dark-mode input,
@@ -175,16 +215,30 @@ body.dark-mode textarea {
   background: var(--background-dark);
   color: var(--text-color-dark);
   border: 1px solid #666;
-  box-shadow: inset 5px 5px 10px var(--dark-shadow-dark),
-    inset -5px -5px 10px var(--light-shadow-dark);
 }
+/* Form Layout */
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-md);
+}
+
+.form-group {
+  display: flex;
+  position: relative;
+  bottom: 2vh;
+  font-size: 22px;
+  margin-top: 1vh;
+  padding-top: 4vh;
+  flex-direction: column;
+}
+
 
 input:focus,
 select:focus,
 textarea:focus {
   outline: none;
-  box-shadow: inset 3px 3px 6px var(--highlight-color),
-    inset -3px -3px 6px var(--highlight-color);
+  box-shadow: 0 0 5px var(--highlight-color);
 }
 
 /* Buttons */
@@ -197,113 +251,131 @@ button {
   cursor: pointer;
   background: var(--background-light);
   color: var(--text-color-light);
-  box-shadow: -5px -5px 10px var(--light-shadow-light),
-    5px 5px 10px var(--dark-shadow-light);
-  transition: background-color 0.3s ease, box-shadow 0.3s ease;
+  transition: all 0.3s ease;
 }
 
-.button-group {
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-  width: 100%;
-  margin-top: 1rem;
-}
 
 .button-primary {
-  background-color: var(--highlight-color);
+  border: 1px double orange;
+  width: 80%;
+  background-color: #ff7f3f;
+  height: 6vh;
   color: white;
-  border-radius: 14px;
-  padding: 0.75rem 1rem;
-  width: 100%;
+  position: relative;
+  bottom: 3vh;
+  right: 0vh;
+  margin: 2vh;
 }
 
-.button-secondary {
-  background-color: transparent;
-  color: var(--text-color-light);
-  border: 1px solid var(--text-color-light);
-  border-radius: 14px;
-  padding: 0.75rem 1rem;
-  width: 100%;
-}
 
 button:hover {
-  box-shadow: -2px -2px 5px var(--light-shadow-light),
-    2px 2px 5px var(--dark-shadow-light);
-}
-
-.button-primary:hover {
-  box-shadow: -3px -3px 7px rgba(255, 127, 63, 0.5),
-    3px 3px 7px rgba(0, 0, 0, 0.5);
+  box-shadow: 0 0 10px var(--highlight-color);
 }
 
 body.dark-mode button {
   background: var(--background-dark);
   color: var(--text-color-dark);
-  box-shadow: -5px -5px 10px var(--light-shadow-dark),
-    5px 5px 10px var(--dark-shadow-dark);
 }
 
-body.dark-mode .button-primary {
-  /* Maintain primary button highlight in dark mode */
+
+
+/* Image Optimization */
+img {
+  -webkit-user-drag: none;
+  image-rendering: -webkit-optimize-contrast;
+}
+
+.toast {
+  position: fixed;
+  bottom: var(--spacing-lg);
+  left: 50%;
+  transform: translateX(-50%);
+  background-color: var(--background-light);
+  color: var(--text-color-light);
+  padding: var(--spacing-sm) var(--spacing-md);
+  border-radius: 10px;
+  box-shadow: 5px 5px 15px var(--dark-shadow-dark);
+  opacity: 0;
+  transition: opacity 0.5s ease, transform 0.5s ease;
+  z-index: 1002;
+}
+
+.toast.show {
+  opacity: 1;
+  transform: translateX(-50%) translateY(-10px);
+}
+
+body.dark-mode .toast {
+  background-color: var(--background-dark);
+  color: var(--text-color-dark);
+}
+
+/* Language Selector */
+.language-selector {
+  position: relative;
+  display: inline-block;
+  margin-left: var(--spacing-sm);
+}
+
+#language-button {
+  padding: var(--spacing-xs) var(--spacing-sm);
+  font-size: 0.5rem;
+  cursor: pointer;
   background-color: var(--highlight-color);
-  color: white;
-  box-shadow: -5px -5px 10px rgba(255, 127, 63, 0.3),
-    5px 5px 10px rgba(0, 0, 0, 0.8);
+  color: #ffffff;
+  border: none;
+  border-radius: 5px;
 }
 
-body.dark-mode .button-secondary {
-  border: 1px solid var(--text-color-dark);
+#language-list {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  background: var(--background-light);
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: none;
+  box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1);
+  z-index: 1000;
 }
 
-/* Success Message */
-.success-message {
-  padding: 1rem;
-  line-height: 1.6;
-  text-align: center;
+#language-list li {
+  padding: var(--spacing-sm);
+  cursor: pointer;
+  transition: background-color 0.3s ease;
 }
 
-/* Media Queries for Responsiveness */
-@media (min-width: 768px) {
-  .container {
-    padding: 2.5rem;
-  }
-
-  .button-group {
-    flex-direction: row;
-    justify-content: space-between;
-  }
-
-  .button-primary,
-  .button-secondary {
-    width: 48%;
-  }
+#language-list li:hover {
+  background: #f0f0f0;
 }
 
-@media (max-width: 480px) {
-  .container {
-    padding: 1.5rem;
-    border-radius: 30px;
-  }
-
-  .fancy-heading {
-    font-size: 1.5rem;
-  }
-
-  input,
-  select,
-  textarea {
-    padding: 0.5rem 0.75rem;
-  }
+#language-list.show {
+  display: block;
 }
 
-#skipToDashboard,
-#dark-mode-toggle {
+/* Duplicate .hidden Class (ensured consistency) */
+.hidden {
   display: none;
 }
 
-#goToEmailSection {
-  margin: 0 auto;
-  display: block;
-  width: 250px; /* Fast bredd, ändra vid behov */
+
+
+
+#skipToDashboard {
+  background: none;
+  border: none;
+  color: gray;
+  font-size: 14px;
+  cursor: pointer;
+  position: relative;
+  top: 12vh;
+  left: 0vh;
+  text-align: center;
+}
+
+#skipToDashboard:hover {
+  color: black;
 }

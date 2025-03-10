@@ -76,3 +76,23 @@ export async function fetchEpisodeCountByGuest(guestId) {
     alert("Failed to fetch episode count.");
   }
 }
+
+export async function registerEpisode(data) {
+  try {
+    if (!data.podcastId || !data.title) {
+      throw new Error("Missing required fields: podcastId or title");
+    }
+    console.log("Sending data to /register_episode:", data); // Added log
+    const response = await fetch("/register_episode", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(data)
+    });
+    const responseData = await response.json();
+    console.log("Received response from /register_episode:", responseData); // Added log
+    return responseData;
+  } catch (error) {
+    console.error("Error registering episode:", error);
+    throw error;
+  }
+}

@@ -1,0 +1,21 @@
+{% extends "dashboard/components/base.html" %}
+{% block title %}Podcast Task Management{% endblock %}
+{% block content %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/podcast.css') }}" />
+<script src="{{ url_for('static', filename='js/podcast.js') }}"></script>
+
+<div id="podcast-container" class="container">
+    <h2>Podcast Details</h2>
+    <div id="podcast-details"></div>
+  </div>
+  
+  <div id="guests-container" class="container">
+    <h2>Guests</h2>
+    <div id="guests"></div>
+  </div>
+  
+  <div id="episodes-container" class="container">
+    <h2>Episodes</h2>
+    <div id="episodes"></div>
+  </div>
+{% endblock %}

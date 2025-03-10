@@ -9,7 +9,8 @@ usertoteam_bp = Blueprint("usertoteam_bp", __name__)
 
 # Use TeamSchema when you're dealing with information specific to a team, such as the team's name, role, email, and other properties related to the team itself.
 # Use UserToTeamSchema when you're dealing with the relationship between a user and a team, such as adding a user to a team or querying which teams a particular user belongs to.
-
+#SHOULD ONLY BE USED FOR SPECIFIC DATA CRUD OPERATIONS
+#EXTRA FUNCTIONALITY BESIDES CRUD OPERATIONS SHOULD BE IN SERVICES
 
 @usertoteam_bp.route("/add_users_to_teams", methods=["POST"])
 def add_user_to_team():
