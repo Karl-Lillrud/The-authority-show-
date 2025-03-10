@@ -192,11 +192,6 @@ body {
     ); /* adjust to center vertically & horizontally */
   }
 
-  .input {
-    width: 100%;
-    padding: 15px;
-  }
-
   .button {
     width: 100%;
     margin-top: 10px;
@@ -215,12 +210,6 @@ body {
   }
 
   .input {
-    width: 100%;
-    padding: 10px;
-  }
-
-  .button {
-    width: 100%;
     padding: 10px;
   }
 
@@ -243,9 +232,6 @@ body {
     width: 45%;
     /* Behåller left: 2% från originalet */
   }
-  .input {
-    width: 65%;
-  }
 }
 
 @media screen and (max-width: 576px) {
@@ -264,9 +250,6 @@ body {
     font-size: 24px;
     margin-bottom: 15px;
   }
-  .button.button-primary {
-    width: 90%;
-  }
 }
 
 @media screen and (max-width: 375px) {
@@ -275,7 +258,6 @@ body {
     padding: 15px 8px;
   }
   .input {
-    width: 85%;
     padding: 10px;
     margin: 6px;
   }
