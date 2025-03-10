@@ -5,15 +5,28 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Sign In</title>
     <link rel="stylesheet" href="/static/css/signin.css" />
-    <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='favicon/favicon.ico') }}" />
+    <link
+      rel="icon"
+      type="image/x-icon"
+      href="{{ url_for('static', filename='favicon/favicon.ico') }}"
+    />
     <link rel="canonical" href="https://app.podmanager.ai" />
-  
+
     <!-- Open Graph Meta Tags -->
-    <meta property="og:title" content="PodManager.AI – Streamline Your Podcast Workflow">
-    <meta property="og:description" content="PodManager.AI is a toolkit designed to optimize podcast production by automating workflows, guest management, and team collaboration, so creators can focus on content.">
-    <meta property="og:image" content="https://app.podmanager.ai/static/images/WhatsApp%20Image.jpeg">
-    <meta property="og:url" content="https://podmanager.ai">
-    <meta property="og:type" content="website">
+    <meta
+      property="og:title"
+      content="PodManager.AI – Streamline Your Podcast Workflow"
+    />
+    <meta
+      property="og:description"
+      content="PodManager.AI is a toolkit designed to optimize podcast production by automating workflows, guest management, and team collaboration, so creators can focus on content."
+    />
+    <meta
+      property="og:image"
+      content="https://app.podmanager.ai/static/images/WhatsApp%20Image.jpeg"
+    />
+    <meta property="og:url" content="https://podmanager.ai" />
+    <meta property="og:type" content="website" />
   </head>
   <body>
     <!-- Logo -->
@@ -33,7 +46,11 @@
 
     <div class="center-box">
       <h1 class="title">Sign In</h1>
-      <div id="success-message" class="success-message" style="display: none"></div>
+      <div
+        id="success-message"
+        class="success-message"
+        style="display: none"
+      ></div>
       <div id="error-message" class="error-message" style="display: none"></div>
 
       <form id="signin-form">
@@ -69,7 +86,9 @@
         </div>
 
         <div class="register-link">
-          <a href="{{ url_for('register_bp.register_get') }}" class="link">Don't Have an Account? Register Here</a>
+          <a href="{{ url_for('register_bp.register_get') }}" class="link"
+            >Don't Have an Account? Register Here</a
+          >
         </div>
       </form>
     </div>
@@ -114,4 +133,3 @@
     </script>
   </body>
 </html>
-
