@@ -118,7 +118,7 @@ def delete_user():
 
         return jsonify({
             "message": "User account and associated data deleted successfully.",
-            "redirect": url_for("signin_bp.signin")
+            "redirect": url_for("auth_bp.signin")
         }), 200
 
     except Exception as e:

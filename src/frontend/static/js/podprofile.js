@@ -66,12 +66,10 @@ document.addEventListener("DOMContentLoaded", function () {
     });
   }
 
-  // Skip to Dashboard Button
   if (skipToDashboard) {
     skipToDashboard.addEventListener("click", () => {
-      console.log("Navigating to dashboard");
-      // In a real implementation, you would redirect to the dashboard page
-      // window.location.href = "dashboard";
+        console.log("Navigating to dashboard");
+        window.location.href = "/dashboard";  // Redirects to the dashboard
     });
-  }
+}
 });

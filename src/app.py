@@ -2,9 +2,8 @@ import os
 import logging
 from flask import Flask, request, session, g, jsonify
 from flask_cors import CORS
-from backend.routes.register import register_bp
+from backend.routes.auth import auth_bp
 from backend.routes.forgot_pass import forgotpass_bp
-from backend.routes.signin import signin_bp
 from backend.routes.podcast import podcast_bp  # Import the podcast blueprint
 from backend.routes.dashboard import dashboard_bp
 from backend.routes.pod_management import pod_management_bp
@@ -56,9 +55,8 @@ app.secret_key = os.getenv("SECRET_KEY")
 app.config["PREFERRED URL SCHEME"] = "https"
 
 # Register blueprints for different routes
-app.register_blueprint(register_bp)
+app.register_blueprint(auth_bp)
 app.register_blueprint(forgotpass_bp)
-app.register_blueprint(signin_bp)
 app.register_blueprint(podcast_bp)  # Register the podcast blueprint
 app.register_blueprint(dashboard_bp)
 app.register_blueprint(pod_management_bp)
