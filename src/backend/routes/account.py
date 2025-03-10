@@ -13,6 +13,9 @@ from bson import ObjectId
 # Define Blueprint
 account_bp = Blueprint("account_bp", __name__)
 
+#SHOULD ONLY BE USED FOR SPECIFIC DATA CRUD OPERATIONS
+#EXTRA FUNCTIONALITY BESIDES CRUD OPERATIONS SHOULD BE IN SERVICES
+#
 
 @account_bp.route("/create_account", methods=["POST"])
 def create_account_route():

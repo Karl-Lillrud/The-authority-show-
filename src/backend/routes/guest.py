@@ -7,6 +7,9 @@ import uuid
 
 guest_bp = Blueprint("guest_bp", __name__)
 
+#SHOULD ONLY BE USED FOR SPECIFIC DATA CRUD OPERATIONS
+#EXTRA FUNCTIONALITY BESIDES CRUD OPERATIONS SHOULD BE IN SERVICES
+
 @guest_bp.route("/add_guests", methods=["POST"])
 def add_guest():
     if not g.user_id:
