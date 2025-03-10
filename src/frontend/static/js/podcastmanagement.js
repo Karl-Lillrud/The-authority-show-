@@ -186,9 +186,10 @@ function showManualGuestPopup(selectElement) {
           document.body.removeChild(popup);
           // Fetch and render the updated guest list
           await renderGuestSelection(selectElement, guest.guest_id);
+          showNotification("Success", "Guest added successfully!", "success"); // Show success notification
         } catch (error) {
           console.error("Error adding guest:", error);
-          alert("Failed to add guest.");
+          showNotification("Error", "Failed to add guest.", "error"); // Show error notification
         }
       } else {
         alert("Please fill in all required fields.");
