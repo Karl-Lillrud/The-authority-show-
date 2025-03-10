@@ -6,6 +6,10 @@ import logging
 
 logger = logging.getLogger(__name__)
 
+#THIS GETS IMPORTED INTO ROUTES
+#USE FOR CRUD OPERATIONS ONLY
+#SERVICES SHOULD BE USED FOR EXTRA FUNCTIONALITY INTO REPOSITORY
+
 class AccountRepository:
     def __init__(self):
         self.collection = collection.database.Accounts  # Use the Accounts collection
