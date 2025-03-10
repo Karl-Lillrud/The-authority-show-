@@ -232,7 +232,7 @@ button {
   border-radius: 20px;
   cursor: pointer;
   background: var(--background-light);
-  color: var(--text-color-light);
+  color: var (--text-color-light);
   box-shadow: -5px -5px 10px var(--light-shadow-light),
     5px 5px 10px var(--dark-shadow-light);
   transition: background-color 0.3s ease, box-shadow 0.3s ease;
@@ -313,6 +313,60 @@ body.dark-mode .button-secondary {
   .button-primary,
   .button-secondary {
     width: 48%;
+  }
+}
+
+@media (max-width: 768px) {
+  .container {
+    padding: 1.5rem;
+    border-radius: 30px;
+  }
+
+  .fancy-heading {
+    font-size: 1.5rem;
+  }
+
+  input,
+  select,
+  textarea {
+    padding: 0.5rem 0.75rem;
+  }
+
+  .button-primary,
+  .button-secondary {
+    width: 100%;
+    margin-top: 10px;
+  }
+
+  .logo {
+    height: 40px;
+  }
+}
+
+@media (max-width: 480px) {
+  .container {
+    padding: 1rem;
+    border-radius: 20px;
+  }
+
+  .fancy-heading {
+    font-size: 1.2rem;
+  }
+
+  input,
+  select,
+  textarea {
+    padding: 0.5rem;
+  }
+
+  .button-primary,
+  .button-secondary {
+    width: 100%;
+    padding: 0.5rem;
+  }
+
+  .logo {
+    height: 30px;
   }
 }
 
