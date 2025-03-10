@@ -183,12 +183,9 @@ function showManualGuestPopup(selectElement) {
             email: guestEmail,
             podcastId
           });
-          const newOption = document.createElement("option");
-          newOption.value = guest.id || guest._id;
-          newOption.textContent = `${guest.name} (${guest.email})`;
-          selectElement.appendChild(newOption);
-          newOption.selected = true;
           document.body.removeChild(popup);
+          // Fetch and render the updated guest list
+          await renderGuestSelection(selectElement, guest.guest_id);
         } catch (error) {
           console.error("Error adding guest:", error);
           alert("Failed to add guest.");

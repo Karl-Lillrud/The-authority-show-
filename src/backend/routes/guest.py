@@ -40,7 +40,6 @@ def add_guest():
 
         guest_item = {
             "_id": guest_id,
-            "id": guest_id,  # Assigned generated guest_id to id field
             "podcastId": guest_data["podcastId"],
             "name": guest_data["name"].strip(),
             "image": guest_data.get("image", ""),
@@ -51,7 +50,7 @@ def add_guest():
             "linkedin": guest_data.get("linkedin", "").strip(),
             "twitter": guest_data.get("twitter", "").strip(),
             "areasOfInterest": guest_data.get("areasOfInterest", []),
-            "status": "scheduled",
+            "status": "Pending",
             "scheduled": 0,
             "completed": 0,
             "created_at": datetime.now(timezone.utc),
