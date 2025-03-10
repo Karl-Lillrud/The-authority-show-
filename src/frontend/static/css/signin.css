@@ -129,8 +129,9 @@ body {
 }
 
 .forgot-password-link {
-  text-align: right;
-  margin-right: 15%;
+  display: flex;
+  justify-content: flex-end;
+  margin-right: 0;
   margin-bottom: 20px;
 }
 
@@ -187,9 +188,8 @@ body {
 
 @media screen and (max-width: 768px) {
   .center-box {
-    width: 45%; /* changed to match register.css */
     height: auto;
-    padding: 20px; /* adjusted padding */
+
     left: 50%; /* center horizontally */
     transform: translate(-50%, -50%); /* center vertically & horizontally */
   }
@@ -207,7 +207,9 @@ body {
   }
 
   .forgot-password-link {
-    margin-right: 10%;
+    display: flex;
+    justify-content: flex-end;
+    margin-right: 0;
   }
 
   .register-link {
