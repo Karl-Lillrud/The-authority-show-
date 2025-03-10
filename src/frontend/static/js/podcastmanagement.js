@@ -10,7 +10,10 @@ import {
   fetchEpisodesByPodcast
 } from "../requests/episodeRequest.js"; // Updated import
 import { svgpodcastmanagement } from "../svg/svgpodcastmanagement.js"; // Updated import path
-import { fetchGuestsRequest } from "../requests/guestRequests.js"; // Added import for fetching guests
+import {
+  fetchGuestsRequest,
+  addGuestRequest
+} from "../requests/guestRequests.js"; // Added import for addGuestRequest
 
 console.log("podcastmanagement.js loaded");
 
@@ -161,22 +164,39 @@ function showManualGuestPopup(selectElement) {
     document.body.removeChild(popup);
   });
 
-  // Manual guest form submission
-  popup.querySelector("#manual-guest-form").addEventListener("submit", (e) => {
-    e.preventDefault();
-    const guestName = document.getElementById("manual-guest-name").value.trim();
-    const guestEmail = document
-      .getElementById("manual-guest-email")
-      .value.trim();
-    if (guestName && guestEmail) {
-      const newOption = document.createElement("option");
-      newOption.value = "manual-" + Date.now();
-      newOption.textContent = `${guestName} (${guestEmail})`;
-      selectElement.appendChild(newOption);
-      newOption.selected = true;
-      document.body.removeChild(popup);
-    }
-  });
+  // Manual guest form submission using addGuestRequest
+  popup
+    .querySelector("#manual-guest-form")
+    .addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const guestName = document
+        .getElementById("manual-guest-name")
+        .value.trim();
+      const guestEmail = document
+        .getElementById("manual-guest-email")
+        .value.trim();
+      const podcastId = document.getElementById("podcast-select").value; // Get selected podcast ID
+      if (guestName && guestEmail && podcastId) {
+        try {
+          const guest = await addGuestRequest({
+            name: guestName,
+            email: guestEmail,
+            podcastId
+          });
+          const newOption = document.createElement("option");
+          newOption.value = guest.id || guest._id;
+          newOption.textContent = `${guest.name} (${guest.email})`;
+          selectElement.appendChild(newOption);
+          newOption.selected = true;
+          document.body.removeChild(popup);
+        } catch (error) {
+          console.error("Error adding guest:", error);
+          alert("Failed to add guest.");
+        }
+      } else {
+        alert("Please fill in all required fields.");
+      }
+    });
 }
 
 document.addEventListener("DOMContentLoaded", function () {

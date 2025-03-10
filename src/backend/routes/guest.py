@@ -7,6 +7,7 @@ import uuid
 
 guest_bp = Blueprint("guest_bp", __name__)
 
+
 @guest_bp.route("/add_guests", methods=["POST"])
 def add_guest():
     if not g.user_id:
@@ -70,7 +71,6 @@ def add_guest():
         return jsonify({"error": f"Failed to add guest: {str(e)}"}), 500
 
 
-
 @guest_bp.route("/get_guests", methods=["GET"])
 def get_guests():
     user_id = session.get("user_id")
@@ -96,17 +96,19 @@ def get_guests():
     guests_cursor = collection.database.Guests.find({"podcastId": podcast_id})
     guest_list = []
     for guest in guests_cursor:
-        guest_list.append({
-            "id": str(guest.get("_id")),
-            "name": guest.get("name"),
-            "image": guest.get("image"),
-            "bio": guest.get("bio"),
-            "tags": guest.get("tags", []),
-            "email": guest.get("email"),
-            "linkedin": guest.get("linkedin"),
-            "twitter": guest.get("twitter"),
-            "areasOfInterest": guest.get("areasOfInterest", []),
-        })
+        guest_list.append(
+            {
+                "id": str(guest.get("_id")),
+                "name": guest.get("name"),
+                "image": guest.get("image"),
+                "bio": guest.get("bio"),
+                "tags": guest.get("tags", []),
+                "email": guest.get("email"),
+                "linkedin": guest.get("linkedin"),
+                "twitter": guest.get("twitter"),
+                "areasOfInterest": guest.get("areasOfInterest", []),
+            }
+        )
 
     return jsonify({"guests": guest_list})
 
