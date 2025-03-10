@@ -8,6 +8,9 @@ from backend.models.episodes import EpisodeSchema
 # Define Blueprint
 episode_bp = Blueprint("episode_bp", __name__)
 
+#SHOULD ONLY BE USED FOR SPECIFIC DATA CRUD OPERATIONS
+#EXTRA FUNCTIONALITY BESIDES CRUD OPERATIONS SHOULD BE IN SERVICES
+
 logger = logging.getLogger(__name__)
 
 

@@ -8,6 +8,10 @@ import uuid
 guest_bp = Blueprint("guest_bp", __name__)
 
 
+#SHOULD ONLY BE USED FOR SPECIFIC DATA CRUD OPERATIONS
+#EXTRA FUNCTIONALITY BESIDES CRUD OPERATIONS SHOULD BE IN SERVICES
+
+
 @guest_bp.route("/add_guests", methods=["POST"])
 def add_guest():
     if not g.user_id:
@@ -70,31 +74,20 @@ def add_guest():
         return jsonify({"error": f"Failed to add guest: {str(e)}"}), 500
 
 
+
+
+# In guest.py, update the get_guests route to return all guests for the logged-in user
+
 @guest_bp.route("/get_guests", methods=["GET"])
 def get_guests():
     user_id = session.get("user_id")
     if not user_id:
         return jsonify({"error": "User not logged in"}), 401
 
-    user_account = collection.database.Accounts.find_one({"userId": user_id})
-    if not user_account:
-        return jsonify({"error": "Account not found for this user"}), 404
-
-    if "id" in user_account:
-        account_id = user_account["id"]
-    else:
-        account_id = str(user_account["_id"])
-
-    # Instead of returning 404 if no podcast is found, return an empty list.
-    podcast = collection.database.Podcasts.find_one({"accountId": account_id})
-    if not podcast:
-        return jsonify({"guests": []}), 200
-
-    podcast_id = podcast["_id"]
-
-    guests_cursor = collection.database.Guests.find({"podcastId": podcast_id})
+    guests_cursor = collection.database.Guests.find({"user_id": user_id})
     guest_list = []
     for guest in guests_cursor:
+
         guest_list.append(
             {
                 "id": str(guest.get("_id")),
@@ -109,7 +102,22 @@ def get_guests():
             }
         )
 
+        guest_list.append({
+            "id": str(guest.get("_id")),
+            "name": guest.get("name"),
+            "image": guest.get("image"),
+            "bio": guest.get("bio"),
+            "tags": guest.get("tags", []),
+            "email": guest.get("email"),
+            "linkedin": guest.get("linkedin"),
+            "twitter": guest.get("twitter"),
+            "areasOfInterest": guest.get("areasOfInterest", []),
+            "podcastId": guest.get("podcastId"),
+        })
+
+
     return jsonify({"guests": guest_list})
+
 
 
 @guest_bp.route("/edit_guests/<guest_id>", methods=["PUT"])
