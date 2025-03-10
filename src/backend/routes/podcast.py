@@ -8,9 +8,13 @@ import logging
 # Define Blueprint
 podcast_bp = Blueprint("podcast_bp", __name__)
 
+#SHOULD ONLY BE USED FOR SPECIFIC DATA CRUD OPERATIONS
+#EXTRA FUNCTIONALITY BESIDES CRUD OPERATIONS SHOULD BE IN SERVICES
+
 # Configure logging
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO)
+
 
 @podcast_bp.route("/add_podcasts", methods=["POST"])
 def podcast():
@@ -38,7 +42,6 @@ def podcast():
         data = request.get_json()
         print("📩 Received Data:", data)
         data["accountId"] = account_id  # Populate the required field with the fetched accountId
-        data["email"] = session.get("user_email", "")  # Add the user's email to the data
 
         # Validate data using PodcastSchema
         schema = PodcastSchema()
@@ -66,20 +69,20 @@ def podcast():
         # Create the podcast document with the accountId from the account document
         podcast_item = {
             "_id": podcast_id,
-            "teamId": validated_data.get("teamId", ""),
+            "teamId": validated_data.get("teamId"),
             "accountId": account_id,  # Use the fetched accountId
-            "podName": validated_data.get("podName", "") or "",
-            "ownerName": validated_data.get("ownerName", "") or "",
-            "hostName": validated_data.get("hostName", "") or "",
-            "rssFeed": validated_data.get("rssFeed", "") or "",
-            "googleCal": validated_data.get("googleCal", "") or "",
-            "podUrl": validated_data.get("podUrl", "") or "",
-            "guestUrl": validated_data.get("guestUrl", "") or "",
+            "podName": validated_data.get("podName"),
+            "ownerName": validated_data.get("ownerName"),
+            "hostName": validated_data.get("hostName"),
+            "rssFeed": validated_data.get("rssFeed"),
+            "googleCal": validated_data.get("googleCal"),
+            "podUrl": validated_data.get("podUrl"),
+            "guestUrl": validated_data.get("guestUrl"),
             "socialMedia": validated_data.get("socialMedia", []),
-            "email": validated_data.get("email", "") or "",
-            "description": validated_data.get("description", "") or "",
-            "logoUrl": validated_data.get("logoUrl", "") or "",
-            "category": validated_data.get("category", "") or "",
+            "email": validated_data.get("email"),
+            "description": validated_data.get("description"),
+            "logoUrl": validated_data.get("logoUrl"),
+            "category": validated_data.get("category"),
             "defaultTasks": validated_data.get("defaultTasks", []),
             "created_at": datetime.now(timezone.utc),
         }
@@ -101,6 +104,7 @@ def podcast():
     except Exception as e:
         print(f"❌ ERROR: {e}")
         return jsonify({"error": f"Failed to add podcast: {str(e)}"}), 500
+
 
 @podcast_bp.route("/get_podcasts", methods=["GET"])
 def get_podcast():
@@ -139,6 +143,7 @@ def get_podcast():
         print(f"❌ ERROR: {e}")
         return jsonify({"error": f"Failed to fetch podcasts: {str(e)}"}), 500
 
+
 @podcast_bp.route("/get_podcasts/<podcast_id>", methods=["GET"])
 def get_podcast_by_id(podcast_id):
     if not hasattr(g, "user_id") or not g.user_id:
@@ -175,6 +180,7 @@ def get_podcast_by_id(podcast_id):
     except Exception as e:
         print(f"❌ ERROR: {e}")
         return jsonify({"error": f"Failed to fetch podcast: {str(e)}"}), 500
+
 
 @podcast_bp.route("/delete_podcasts/<podcast_id>", methods=["DELETE"])
 def delete_podcast(podcast_id):
@@ -214,6 +220,7 @@ def delete_podcast(podcast_id):
     except Exception as e:
         print(f"❌ ERROR: {e}")
         return jsonify({"error": f"Failed to delete podcast: {str(e)}"}), 500
+
 
 @podcast_bp.route("/edit_podcasts/<podcast_id>", methods=["PUT"])
 def edit_podcast(podcast_id):

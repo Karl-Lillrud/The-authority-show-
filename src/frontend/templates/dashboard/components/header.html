@@ -1,21 +1,13 @@
-<link
-  rel="stylesheet"
-  href="{{ url_for('static', filename='css/header.css') }}"
-/>
+<link rel="stylesheet" href="{{ url_for('static', filename='css/header.css') }}" />
 <header>
   <!-- Logo -->
   <div class="logo-container">
-    <img
-      src="{{ url_for('static', filename='images/PodManagerLogo.png') }}"
-      alt="PodManager Logo"
-    />
+    <img src="{{ url_for('static', filename='images/PodManagerLogo.png') }}" alt="PodManager Logo" />
   </div>
   <nav class="header-nav">
-    <select id="podcast-selector">
-      <option value="">PodCasts</option>
-      <option value="podcast1.html">Podcast 1</option>
-      <option value="podcast2.html">Podcast 2</option>
-      <option value="podcast3.html">Podcast 3</option>
+    <select class="form-control" name="podcastId" id="headerPodcastDropdown" required>
+      <option value="">Select a Podcast</option>
+      <!-- Options will be populated dynamically -->
     </select>
     <div class="menu-toggle" onclick="toggleMenu()">
       <span></span>
@@ -25,13 +17,10 @@
     <div class="menu" id="menu">
       <a href="{{ url_for('dashboard_bp.settings') }}">Settings</a>
       <a href="{{ url_for('dashboard_bp.taskmanagement') }}">Task Management</a>
-      <a href="{{ url_for('dashboard_bp.podcastmanagement') }}"
-        >Podcast Management</a
-      >
+      <a href="{{ url_for('dashboard_bp.podcastmanagement') }}">Podcast Management</a>
       <a href="{{ url_for('dashboard_bp.team') }}">Team Members</a>
-
       <a href="{{ url_for('dashboard_bp.guest') }}">Guest View</a>
-      <a href="{{ url_for('signin_bp.signin') }}" id="logout-link">Log out</a>
+      <a href="{{ url_for('auth_bp.signin') }}" id="logout-link">Log out</a>
     </div>
   </nav>
 </header>
@@ -47,39 +36,5 @@
   </div>
 </div>
 
-<script>
-  function toggleMenu() {
-    const menu = document.getElementById("menu");
-    menu.style.display = menu.style.display === "flex" ? "none" : "flex";
-    if (menu.style.display === "flex") {
-      menu.style.position = "absolute";
-    }
-  }
-
-  const logoutLink = document.getElementById("logout-link");
-  const logoutModal = document.getElementById("logout-modal");
-  const cancelLogout = document.getElementById("cancel-logout");
-  const confirmLogout = document.getElementById("confirm-logout");
-
-  logoutLink.addEventListener("click", function (e) {
-    e.preventDefault();
-    logoutModal.style.display = "flex";
-  });
-
-  cancelLogout.addEventListener("click", function () {
-    logoutModal.style.display = "none";
-  });
-
-  confirmLogout.addEventListener("click", function () {
-    document.cookie =
-      "remember_me=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
-    window.location.href = logoutLink.href;
-  });
-
-  // Close modal if clicking outside of the modal content
-  window.addEventListener("click", function (e) {
-    if (e.target === logoutModal) {
-      logoutModal.style.display = "none";
-    }
-  });
-</script>
+<!-- Include header.js as a module -->
+<script type="module" src="{{ url_for('static', filename='js/header.js') }}"></script>
