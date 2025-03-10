@@ -1,8 +1,12 @@
 <link rel="stylesheet" href="{{ url_for('static', filename='css/header.css') }}" />
 <header>
-  <!-- Logo -->
   <div class="logo-container">
     <img src="{{ url_for('static', filename='images/PodManagerLogo.png') }}" alt="PodManager Logo" />
+    {% if user_email %}
+      <div class="credits-badge">
+        <span id="user-credits">{{ credits }} Credits</span>
+      </div>
+    {% endif %}
   </div>
   <nav class="header-nav">
     <select class="form-control" name="podcastId" id="headerPodcastDropdown" required>
