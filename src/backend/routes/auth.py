@@ -10,6 +10,7 @@ from flask import (
 )
 from werkzeug.security import check_password_hash, generate_password_hash
 from backend.database.mongo_connection import collection
+from backend.services.authService import validate_password, validate_email
 import os
 import uuid
 from datetime import datetime
@@ -20,7 +21,7 @@ auth_bp = Blueprint("auth_bp", __name__)
 
 API_BASE_URL = os.getenv("API_BASE_URL", "http://127.0.0.1:8000")
 
-#USE FOR AUTHENTICATION SECURITY PURPOSES REGISTER, SIGNIN, LOGOUT
+#USE FOR AUTHENTICATION SECURITY PURPOSES REGISTER, SIGNIN, LOGOUT/ users collection
 #USER.PY Can be used for user specific data
 #ACCOUNT.PY Can be used for account specific data
 
@@ -100,6 +101,17 @@ def register_submit():
 
         email = data["email"].lower().strip()
         password = data["password"]
+
+        # Validate email using the function from authService
+        email_error = validate_email(email)
+        if email_error:
+            return email_error  # If there's an error with the email validation, return it.
+
+        # Validate password using the function from authService
+        password_error = validate_password(password)
+        if password_error:
+            return password_error  # If there's an error with the password validation, return it.
+
         hashed_password = generate_password_hash(password)
 
         print("🔍 Checking if user already exists...")
@@ -144,21 +156,3 @@ def register_submit():
     except Exception as e:
         print(f"❌ ERROR: {e}")
         return jsonify({"error": f"Database error: {str(e)}"}), 500
-
-
-@auth_bp.route("/get_email", methods=["GET"])
-def fetch_user_email():
-    if not hasattr(g, "user_id") or not g.user_id:
-        return jsonify({"error": "Unauthorized"}), 401
-
-    try:
-        user_id = str(g.user_id)
-        user = collection.database.Users.find_one({"_id": user_id}, {"email": 1, "_id": 0})
-
-        if not user:
-            return jsonify({"error": "User not found"}), 404
-
-        return jsonify({"email": user["email"]}), 200
-
-    except Exception as e:
-        return jsonify({"error": f"Failed to fetch email: {str(e)}"}), 500
