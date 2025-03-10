@@ -11,7 +11,10 @@
 
 body {
   font-family: var(--font-primary);
-  background-color: var(--bg-light);
+  background-image: url('https://app.podmanager.ai/static/images/PodManager-AI-Background.jpeg');
+  background-size: cover;
+  background-position: center;
+  background-color: var(--bg-light); /* Fallback color */
   color: var(--text-light);
   height: 100vh;
   display: flex;
@@ -174,5 +177,50 @@ body {
   text-align: center;
   width: 90%;
   max-width: 250px;
+}
+
+/* Media Queries for Responsiveness */
+@media (max-width: 768px) {
+    .center-box {
+        width: 90%;
+        height: auto;
+        padding: 20px;
+    }
+
+    .input {
+        width: 100%;
+        padding: 15px;
+    }
+
+    .button {
+        width: 100%;
+        margin-top: 10px;
+    }
+
+    .logo-container {
+        width: 80px;
+    }
+}
+
+@media (max-width: 480px) {
+    .center-box {
+        width: 100%;
+        height: auto;
+        padding: 15px;
+    }
+
+    .input {
+        width: 100%;
+        padding: 10px;
+    }
+
+    .button {
+        width: 100%;
+        padding: 10px;
+    }
+
+    .logo-container {
+        width: 60px;
+    }
 }
 

@@ -1,0 +1,66 @@
+#calendarPicker {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+}
+
+.input-field {
+    width: 100%;
+    padding: 10px;
+    margin-top: 5px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    outline: none;
+    transition: all 0.3s;
+}
+
+.input-field:focus {
+    border-color: #007bff;
+    box-shadow: 0 0 5px rgba(0, 123, 255, 0.5);
+}
+
+.error-message {
+    color: orange;
+    font-size: 14px;
+    margin-top: 5px;
+}
+
+/* Media queries for responsiveness */
+@media (max-width: 768px) {
+    .container {
+        padding: 10px;
+    }
+
+    .input-field {
+        padding: 8px;
+    }
+
+    .button-primary, .button-secondary {
+        width: 100%;
+        margin-top: 10px;
+    }
+
+    .logo-container img {
+        width: 80%;
+        height: auto;
+    }
+
+    .center-box {
+        width: 90%;
+        margin: 0 auto;
+    }
+}
+
+@media (max-width: 480px) {
+    .input-field {
+        padding: 6px;
+    }
+
+    .button-primary, .button-secondary {
+        padding: 10px;
+    }
+
+    .logo-container img {
+        width: 70%;
+        height: auto;
+    }
+}
