@@ -266,3 +266,21 @@ def get_episodes_by_guest(guest_id):
         return jsonify({"episodes": episodes}), 200
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+
+
+@episode_bp.route("/episodes/by_podcast/<podcast_id>", methods=["GET"])
+def get_episodes_by_podcast(podcast_id):
+    if not g.user_id:
+        return jsonify({"error": "Unauthorized"}), 401
+    try:
+        user_id = str(g.user_id)
+        episodes = list(
+            collection.database.Episodes.find(
+                {"podcast_id": podcast_id, "userid": user_id}
+            )
+        )
+        for episode in episodes:
+            episode["_id"] = str(episode["_id"])
+        return jsonify({"episodes": episodes}), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500

@@ -5,7 +5,10 @@ import {
   updatePodcast,
   deletePodcast
 } from "../requests/podcastRequests.js";
-import { registerEpisode } from "../requests/episodeRequest.js";
+import {
+  registerEpisode,
+  fetchEpisodesByPodcast
+} from "../requests/episodeRequest.js"; // Updated import
 import { svgpodcastmanagement } from "../svg/svgpodcastmanagement.js"; // Updated import path
 
 console.log("podcastmanagement.js loaded");
@@ -466,18 +469,47 @@ async function renderPodcastList() {
                 </button>
               </div>
             </div>
-            <p class="podcast-description">${
+            <p class="podcast-description"><strong>Description: </strong>${
               podcast.description || "No description available."
             }</p>
+            <!-- Container for episodes -->
+            <div class="podcast-episodes"></div>
           </div>
         </div>
         <div class="podcast-footer">
           <button class="view-details-btn" data-id="${
             podcast._id
           }">View Details</button>
-        </div>
-      `;
+        </div>`;
       podcastListElement.appendChild(podcastCard);
+
+      // Fetch and display episodes for this podcast with heading "Episodes:"
+      fetchEpisodesByPodcast(podcast._id).then((episodes) => {
+        if (episodes && episodes.length) {
+          const epContainer = podcastCard.querySelector(".podcast-episodes");
+          const epHeading = document.createElement("h4");
+          epHeading.textContent = "Episodes:";
+          epContainer.appendChild(epHeading);
+
+          // Create a flex container to list episodes horizontally
+          const epList = document.createElement("div");
+          epList.style.display = "flex";
+          epList.style.flexDirection = "row";
+          epList.style.gap = "1rem";
+
+          episodes.forEach((ep) => {
+            const epItem = document.createElement("div");
+            epItem.textContent = ep.title;
+            epItem.classList.add("episode-label"); // added label class
+            // Attach click event to open the popup for editing
+            epItem.addEventListener("click", () => {
+              showEpisodePopup(ep);
+            });
+            epList.appendChild(epItem);
+          });
+          epContainer.appendChild(epList);
+        }
+      });
     });
 
     // Add event listeners for action buttons
@@ -782,6 +814,117 @@ function renderPodcastDetail(podcast) {
         } catch (error) {
           showNotification("Error", "Failed to delete podcast.", "error");
         }
+      }
+    });
+}
+
+// New function to display the episode popup for viewing/updating an episode
+function showEpisodePopup(episode) {
+  const popup = document.createElement("div");
+  popup.className = "popup";
+  popup.style.display = "flex";
+
+  const popupContent = document.createElement("div");
+  popupContent.className = "form-box";
+  popupContent.innerHTML = `
+    <span id="close-episode-popup" class="close-btn">&times;</span>
+    <h2 class="form-title">Edit Episode</h2>
+    <form id="update-episode-form">
+      <div class="field-group full-width">
+        <label for="upd-episode-title">Episode Title</label>
+        <input type="text" id="upd-episode-title" name="title" value="${
+          episode.title
+        }" required />
+      </div>
+      <div class="field-group full-width">
+        <label for="upd-episode-description">Description</label>
+        <textarea id="upd-episode-description" name="description" rows="3">${
+          episode.description || ""
+        }</textarea>
+      </div>
+      <div class="field-group">
+        <label for="upd-publish-date">Publish Date</label>
+        <input type="datetime-local" id="upd-publish-date" name="publishDate" value="${
+          episode.publishDate
+            ? new Date(episode.publishDate).toISOString().slice(0, 16)
+            : ""
+        }" />
+      </div>
+      <div class="field-group">
+        <label for="upd-duration">Duration (minutes)</label>
+        <input type="number" id="upd-duration" name="duration" value="${
+          episode.duration || ""
+        }" />
+      </div>
+      <div class="field-group">
+        <label for="upd-guest-id">Guest ID</label>
+        <input type="text" id="upd-guest-id" name="guestId" value="${
+          episode.guestId || ""
+        }" />
+      </div>
+      <div class="field-group">
+        <label for="upd-status">Status</label>
+        <input type="text" id="upd-status" name="status" value="${
+          episode.status || ""
+        }" />
+      </div>
+      <div class="form-actions">
+        <button type="button" id="cancel-episode-update" class="cancel-btn">Cancel</button>
+        <button type="submit" class="save-btn">Update Episode</button>
+      </div>
+    </form>
+  `;
+  popup.appendChild(popupContent);
+  document.body.appendChild(popup);
+
+  // Close popup events
+  popup.querySelector("#close-episode-popup").addEventListener("click", () => {
+    document.body.removeChild(popup);
+  });
+  popup
+    .querySelector("#cancel-episode-update")
+    .addEventListener("click", () => {
+      document.body.removeChild(popup);
+    });
+
+  // Update episode form submission
+  popup
+    .querySelector("#update-episode-form")
+    .addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const updatedData = {
+        title: document.getElementById("upd-episode-title").value.trim(),
+        description: document
+          .getElementById("upd-episode-description")
+          .value.trim(),
+        publishDate: document.getElementById("upd-publish-date").value,
+        duration: document.getElementById("upd-duration").value,
+        guestId: document.getElementById("upd-guest-id").value.trim(),
+        status: document.getElementById("upd-status").value.trim()
+      };
+      Object.keys(updatedData).forEach((key) => {
+        if (!updatedData[key]) delete updatedData[key];
+      });
+      try {
+        const response = await fetch(`/update_episodes/${episode._id}`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(updatedData)
+        });
+        const result = await response.json();
+        if (response.ok) {
+          showNotification(
+            "Success",
+            "Episode updated successfully!",
+            "success"
+          );
+          document.body.removeChild(popup);
+          renderPodcastList();
+        } else {
+          showNotification("Error", result.error || "Update failed", "error");
+        }
+      } catch (error) {
+        showNotification("Error", "Failed to update episode.", "error");
       }
     });
 }
