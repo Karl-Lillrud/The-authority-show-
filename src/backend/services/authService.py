@@ -1,7 +1,6 @@
-import dns
+import dns.resolver  # Added to correctly use dns resolver
 from flask import jsonify
 import re
-from flask import jsonify
 
 # Function to validate password
 def validate_password(password):
@@ -23,38 +22,28 @@ def validate_email(email):
     """
     Validate email format and check existence via MX records.
     """
-    # Check if the email ends with @gmail.com (or any other domain you'd like to verify)
-    if email.endswith("@gmail.com"):
-        if not check_gmail_existence(email):
-            return jsonify({"error": "The provided Gmail address does not exist or is not valid."}), 400
-    return None
-
-def check_gmail_existence(email):
-    """
-    Verifies that the provided email address is valid and that its domain
-    is configured to receive emails by checking for MX records.
-    This function is not limited to Gmail addresses; it works for any valid email.
-    """
-
     # Validate email format
     email_regex = r"^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$"
     if not re.match(email_regex, email):
-        return False
+        return jsonify({"error": "Invalid email format."}), 400
 
-    # Extract domain from email
-    try:
-        domain = email.split("@")[1]
-    except IndexError:
-        return False
-
+    # Extract domain from the email
+    domain = email.split('@')[1]
+    
     # Check for MX records for the domain
+    if not check_mx_record(domain):
+        return jsonify({"error": f"The provided email domain '{domain}' does not exist or is not valid."}), 400
+
+    return None  # Return None if validation passes
+
+def check_mx_record(domain):
+    """
+    Verifies that the domain of the email has valid MX records.
+    """
     try:
-        # Query for MX records
+        # Query MX records for the domain
         answers = dns.resolver.resolve(domain, 'MX')
-        if answers:
-            return True
-        else:
-            return False
+        return bool(answers)  # Return True if MX records are found, else False
     except Exception as e:
         print(f"MX record lookup failed for domain '{domain}': {e}")
-        return False
+        return False  # MX record lookup failed

@@ -10,7 +10,7 @@ from flask import (
 )
 from werkzeug.security import check_password_hash, generate_password_hash
 from backend.database.mongo_connection import collection
-from backend.services.authService import validate_password, validate_email, check_gmail_existence
+from backend.services.authService import validate_password, validate_email
 import os
 import uuid
 from datetime import datetime
