@@ -11,10 +11,16 @@
   </head>
   <body>
     <div class="logo-container">
-      <img src="{{ url_for('static', filename='images/PodManagerLogo.png') }}" alt="PodManager Logo"/>
+      <img
+        src="{{ url_for('static', filename='images/PodManagerLogo.png') }}"
+        alt="PodManager Logo"
+      />
     </div>
     <div class="logo-container">
-      <img src="{{ url_for('static', filename='images/PodManagerLogo.png') }}" alt="PodManager Logo"/>
+      <img
+        src="{{ url_for('static', filename='images/PodManagerLogo.png') }}"
+        alt="PodManager Logo"
+      />
     </div>
     <header>
       <div class="header-container">
@@ -33,6 +39,18 @@
       <div class="container" id="pod-name-section">
         <h1 class="fancy-heading">POD INFO</h1>
         <form id="podNameForm">
+          <div
+            class="help-container"
+            style="text-align: right; margin-bottom: 10px"
+          >
+            <button class="help-button">?</button>
+            <span class="help-text"
+              >To find your podcast's RSS feed URL, log in to your podcast
+              hosting platform, navigate to your podcast settings or
+              distribution options, and look for the "RSS Feed" section and
+              paste that URL here.</span
+            >
+          </div>
           <div class="form-group">
             <label for="podRss">RSS</label>
             <input type="url" id="podRss" name="podRss" />
@@ -47,33 +65,32 @@
           <button type="button" class="button-primary" id="goToEmailSection">
             Next
           </button>
-          <div class="help-container">
-            <button class="help-button">?</button>
-            <span class="help-text">To find your podcast's RSS feed URL, log in to your podcast hosting platform, navigate to your podcast settings or distribution options, and look for the "RSS Feed" section and paste that URL here.</span>
-        </div>
-        
         </form>
-       
       </div>
 
-        <!-- Email Section -->
-        <div class="container hidden" id="email-section">
-          <h1 class="fancy-heading">Welcome to PodManager.ai!</h1>
-          <div class="success-message">
-            <p>
-              🚀 You're In! 🚀<br /><br />
+      <!-- Email Section -->
+      <div class="container hidden" id="email-section">
+        <h1 class="fancy-heading">Welcome to PodManager.ai!</h1>
+        <p>
+          🚀 You're In! 🚀<br /><br />
 
-              You've officially secured a spot in the Beta Tester queue! 🎉
-              Check your email now to get a sneak peek at what's coming your way
-              soon. Big things are on the horizon—stay tuned! 🔥✨
-            </p>
-          </div>
-        </div>
-      </main>
-    </div>
+          You've officially secured a spot in the Beta Tester queue! 🎉 Check
+          your email now to get a sneak peek at what's coming your way soon. Big
+          things are on the horizon—stay tuned! 🔥✨
+        </p>
+      </div>
+    </main>
+    <script
+      type="module"
+      src="{{ url_for('static', filename='requests/podcastRequests.js') }}"
+    ></script>
     <script
       type="module"
       src="{{ url_for('static', filename='js/podprofile.js') }}"
+    ></script>
+    <script
+      src="https://unpkg.com/lazysizes@5.3.2/lazysizes.min.js"
+      async
     ></script>
   </body>
 </html>
