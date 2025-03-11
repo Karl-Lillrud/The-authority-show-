@@ -6,7 +6,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>GUEST REGISTRATION</title>
   <!-- Other -->
-  <link rel="stylesheet" href="/static/css/guest-form.css"> <!-- Link to the CSS file -->
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/guest-form.css') }}"> <!-- Link to the CSS file -->
   <script src="https://cdn.jsdelivr.net/npm/emailjs-com@2.6.4/dist/email.min.js"></script>
   <script src="https://cdn.tailwindcss.com"></script>
 </head>
@@ -16,7 +16,7 @@
   <div class="bg-[#eff2f9] p-6 rounded-lg shadow-xl w-full max-w-xl">
     <!--- Top Image -->
     <div class="w-full h-32 mb-4 rounded-lg flex items-center justify-center">
-      <img src="/static/images/PodManagerLogo.png" alt="PodManager Logo" class="h-full object-contain">
+      <img src="{{ url_for('static', filename='images/PodManagerLogo.png') }}" alt="PodManager Logo" class="h-full object-contain">
     </div>
 
     <!--- Title -->
@@ -203,7 +203,7 @@
   </div>
 
   <!--- Link to script -->
-  <script src="/static/js/guest-form.js"></script>
+  <script src="{{ url_for('static', filename='js/guest-form.js') }}"></script>
 
 </body>
 

@@ -1,6 +1,6 @@
 import os
 import logging
-from flask import Flask, request, session, g, jsonify
+from flask import Flask, request, session, g, jsonify, render_template
 from flask_cors import CORS
 from backend.routes.auth import auth_bp
 from backend.routes.forgot_pass import forgotpass_bp
@@ -72,7 +72,8 @@ app.register_blueprint(episode_bp)
 app.register_blueprint(podprofile_bp)  # Register the podprofile blueprint
 app.register_blueprint(frontend_bp)  # Register the frontend blueprint
 app.register_blueprint(guesttoepisode_bp)
-app.register_blueprint(guest_form_bp)  # Register the guest_form blueprint
+app.register_blueprint(guest_form_bp, url_prefix='/guest-form')  # Register the guest_form blueprint with URL prefix
+
 # Set the application environment (defaults to production)
 APP_ENV = os.getenv("APP_ENV", "production")
 

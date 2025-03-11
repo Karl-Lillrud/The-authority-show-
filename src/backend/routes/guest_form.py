@@ -2,7 +2,7 @@ from flask import Blueprint, request, jsonify, render_template
 
 guest_form_bp = Blueprint('guest_form', __name__)
 
-@guest_form_bp.route('/guest-form', methods=['POST', 'GET'])
+@guest_form_bp.route('/', methods=['POST', 'GET'])
 def guest_form():
     if request.method == 'POST':
         data = request.get_json()
