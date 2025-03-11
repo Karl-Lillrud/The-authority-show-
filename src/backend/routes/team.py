@@ -8,6 +8,9 @@ import uuid
 # Define Blueprint
 team_bp = Blueprint("team_bp", __name__)
 
+#SHOULD ONLY BE USED FOR SPECIFIC DATA CRUD OPERATIONS
+#EXTRA FUNCTIONALITY BESIDES CRUD OPERATIONS SHOULD BE IN SERVICES
+
 @team_bp.route("/add_teams", methods=["POST"])
 def add_team():
     try:
