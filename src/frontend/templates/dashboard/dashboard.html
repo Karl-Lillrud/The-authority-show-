@@ -3,20 +3,19 @@
 {% block title %}Team Leaderboard Dashboard{% endblock %}
 
 {% block content %}
-{% if user_email %}
 <link rel="stylesheet" href="{{ url_for('static', filename='css/dashboard.css') }}">
 
 <script>
-// Global functions available across the dashboard
-
+// Globala funktioner som nu är tillgängliga överallt
 function updateCredits() {
     console.log("🔄 Fetching updated credits...");
-    const userEmail = {{ user_email|tojson }};
+    const userEmail = "{{ user_email }}";
     fetch(`/credits?email=${encodeURIComponent(userEmail)}`)
       .then(response => response.json())
       .then(data => {
           if (data.credits !== undefined) {
               console.log("✅ Updated credits:", data.credits);
+              // Se till att .credits-badge finns i DOM
               const badge = document.querySelector(".credits-badge span");
               if (badge) {
                   badge.textContent = `${data.credits} Credits`;
@@ -30,6 +29,7 @@ function updateCredits() {
 
 function updateClaimButton(unclaimedCredits) {
     console.log("🔍 Checking Claim Button Visibility...");
+    console.log("📊 Unclaimed Credits Received:", unclaimedCredits);
     const claimButton = document.getElementById("claimCreditsButton");
     const unclaimedDisplay = document.getElementById("unclaimedCreditsDisplay");
     if (!claimButton || !unclaimedDisplay) {
@@ -37,11 +37,13 @@ function updateClaimButton(unclaimedCredits) {
         return;
     }
     if (unclaimedCredits > 0) {
+        console.log("✅ Showing Claim Button!");
         claimButton.style.display = "block";
         claimButton.textContent = `🎁 Claim Your ${unclaimedCredits} Credits`;
         unclaimedDisplay.textContent = `${unclaimedCredits} Unclaimed Credits`;
         unclaimedDisplay.style.display = "block";
     } else {
+        console.log("❌ Hiding Claim Button - No unclaimed credits.");
         claimButton.style.display = "none";
         unclaimedDisplay.style.display = "none";
         unclaimedDisplay.textContent = "";
@@ -49,54 +51,65 @@ function updateClaimButton(unclaimedCredits) {
 }
 
 document.addEventListener("DOMContentLoaded", function() {
-  // Show homepage popup once per session
+  // Homepage popup remains unchanged
   if (!sessionStorage.getItem("homepageViewed")) {
-    const popup = document.getElementById("homepage-popup");
-    if (popup) { popup.style.display = "flex"; }
+    document.getElementById("homepage-popup").style.display = "flex";
     sessionStorage.setItem("homepageViewed", "true");
   }
 
-  // Task popup handling
   const taskPopup = document.getElementById("task-popup");
   const closeTaskPopup = document.getElementById("close-popup");
-  if (taskPopup) { taskPopup.style.display = "none"; }
+  // Hide popup initially
+  taskPopup.style.display = "none";
+
+  // Use event delegation to show popup only when a .task-text is clicked
   document.addEventListener("click", function(e) {
     if (e.target.closest('.task-text')) {
       e.stopPropagation();
-      if (taskPopup) { taskPopup.style.display = "flex"; }
+      taskPopup.style.display = "flex";
     }
   });
-  if (closeTaskPopup) {
-    closeTaskPopup.addEventListener("click", function() {
-      if (taskPopup) { taskPopup.style.display = "none"; }
-    });
-  }
-  if (taskPopup) {
-    taskPopup.addEventListener("click", function(e) {
-      if (e.target === taskPopup) { taskPopup.style.display = "none"; }
-    });
-  }
+
+  // Close popup on clicking the close button
+  closeTaskPopup.addEventListener("click", function(e) {
+    taskPopup.style.display = "none";
+  });
+
+  // Optional: close popup if clicking outside the popup-content
+  taskPopup.addEventListener("click", function(e) {
+    if (e.target === taskPopup) {
+      taskPopup.style.display = "none";
+    }
+  });
 });
 
 document.addEventListener("DOMContentLoaded", function() {
-  // Attach change event listeners to all checkboxes
+  // Attach change event listener to all checkboxes
   document.querySelectorAll('.task-check').forEach(checkbox => {
     checkbox.addEventListener('change', function() {
       const listItem = this.closest('li');
       if (this.checked) {
         listItem.classList.add('completed');
-        setTimeout(() => { sortTasks(listItem.parentElement); }, 500);
+        // Delay sorting to allow the animation to play
+        setTimeout(() => {
+          sortTasks(listItem.parentElement);
+        }, 500);
       } else {
         listItem.classList.remove('completed');
       }
     });
   });
+
   function sortTasks(taskList) {
     const tasks = Array.from(taskList.children);
-    tasks.sort((a, b) => a.querySelector('.task-check').checked - b.querySelector('.task-check').checked);
+    tasks.sort((a, b) => {
+      return a.querySelector('.task-check').checked - b.querySelector('.task-check').checked;
+    });
     tasks.forEach(task => taskList.appendChild(task));
   }
 });
+
+// Homepage Popup
 </script>
 
 <div id="homepage-popup" class="popup">
@@ -142,10 +155,11 @@ document.addEventListener("DOMContentLoaded", function() {
 
         <section class="task-cards">
             <div class="cards-container">
-                <!-- Additional card content here -->
+                <!-- Din övriga kortkod här -->
             </div>
         </section>
 
+        <!-- Place this outside the card markup -->
         <div id="task-popup" class="popup" style="display: none;">
             <div class="popup-content">
               <span id="close-popup" class="close-btn"></span>
@@ -163,23 +177,31 @@ document.addEventListener("DOMContentLoaded", function() {
             </div>
         </div>
 
-        <!-- Referral Section -->
+        <!-- REFERAL SECTION -->
         <section class="referral-section">
           <h3>Refer a Friend & Earn 200 Credits!</h3>
           <p>Share your referral link and earn extra credits when a friend signs up.</p>
-          <input type="text" id="referralLink" value="http://127.0.0.1:8000/register?referral={{ user.referral_code }}" readonly>
+
+          <!-- Referral link -->
+          <input type="text" id="referralLink" value="http://127.0.0.1:8000/register?referral={{ referral_code }}" readonly>
+          
           <button onclick="copyReferral()">Copy Link</button>
+
+          <!-- Invite Friends Form -->
           <h4>Invite Friends via Email 📩</h4>
           <form id="inviteForm">
               <input type="email" id="friendEmail" placeholder="Enter friend's email" required>
               <button type="submit">Send Invite</button>
           </form>
+
+          <!-- Referral Progress Tracker -->
           <div class="referral-progress">
             <h4>🤝 Referral Bonuses</h4>
             <p id="referralMilestone">You have referred 0/3 friends for 1,500 bonus credits!</p>
             <progress id="referralProgress" value="0" max="3"></progress>
             <p id="referralCount"></p>
           </div>
+
           <p id="inviteMessage" style="display: none;"></p>
         </section>
 
@@ -194,18 +216,18 @@ document.addEventListener("DOMContentLoaded", function() {
         </div>
 
         <script>
-          function copyReferral() {
+            function copyReferral() {
               const referralInput = document.getElementById("referralLink");
               referralInput.select();
               document.execCommand("copy");
               alert("Referral link copied!");
-          }
+            }
 
           document.getElementById("inviteForm").addEventListener("submit", async function(event) {
               event.preventDefault();
               const emailInput = document.getElementById("friendEmail");
               const email = emailInput.value;
-              const referralCode = "{{ user.referral_code }}";
+              const referralCode = "{{ referral_code }}";
               const inviteMessage = document.getElementById("inviteMessage");
 
               try {
@@ -214,13 +236,17 @@ document.addEventListener("DOMContentLoaded", function() {
                       headers: { "Content-Type": "application/json" },
                       body: JSON.stringify({ email, referralCode })
                   });
+
                   const result = await response.json();
+
                   if (response.ok) {
                       inviteMessage.textContent = "✅ Invite sent successfully!";
                       inviteMessage.style.color = "green";
                       inviteMessage.style.display = "block";
                       emailInput.value = "";
-                      setTimeout(() => { inviteMessage.style.display = "none"; }, 3000);
+                      setTimeout(() => {
+                          inviteMessage.style.display = "none";
+                      }, 3000);
                   } else {
                       inviteMessage.textContent = "❌ Failed to send invite.";
                       inviteMessage.style.color = "red";
@@ -234,6 +260,7 @@ document.addEventListener("DOMContentLoaded", function() {
               }
           });
 
+          // Show referral popup if credits are low
           document.addEventListener("DOMContentLoaded", function() {
               const credits = parseInt("{{ credits }}", 10);
               if (credits < 500) {
@@ -252,6 +279,7 @@ document.addEventListener("DOMContentLoaded", function() {
         </script>
 
         <style>
+            /* Popup styling */
             .popup {
                 position: fixed;
                 top: 0; left: 0;
@@ -269,7 +297,9 @@ document.addEventListener("DOMContentLoaded", function() {
             }
         </style>
 
+        <!-- Gamification Widget Section -->
         <style>
+          /* Gamification Widget Section */
           .gamification-widget {
               background: #f9f9f9;
               padding: 20px;
@@ -298,9 +328,17 @@ document.addEventListener("DOMContentLoaded", function() {
               overflow: hidden;
               background: #ddd;
           }
-          progress::-webkit-progress-bar { background: #ddd; }
-          progress::-webkit-progress-value { background: #4CAF50; border-radius: 6px; }
-          progress::-moz-progress-bar { background: #4CAF50; border-radius: 6px; }
+          progress::-webkit-progress-bar {
+              background: #ddd;
+          }
+          progress::-webkit-progress-value {
+              background: #4CAF50;
+              border-radius: 6px;
+          }
+          progress::-moz-progress-bar {
+              background: #4CAF50;
+              border-radius: 6px;
+          }
           .leaderboard-preview {
               margin-top: 20px;
               padding: 15px;
@@ -335,7 +373,9 @@ document.addEventListener("DOMContentLoaded", function() {
               cursor: pointer;
               transition: background 0.3s;
           }
-          .claim-button:hover { background-color: #45a049; }
+          .claim-button:hover {
+              background-color: #45a049;
+          }
           #unclaimedCreditsDisplay {
               margin-top: 10px;
               font-size: 16px;
@@ -367,6 +407,18 @@ document.addEventListener("DOMContentLoaded", function() {
           <p id="unclaimedCreditsDisplay"></p>
         </section>
 
+        <div id="credits-info">
+            <h2>Your Credits</h2>
+            <p>Total Credits: {{ credits.credits }}</p>
+            <p>Unclaimed Credits: {{ credits.unclaimed_credits }}</p>
+            <p>Referral Bonus: {{ credits.referral_bonus }}</p>
+            <p>Referrals: {{ credits.referrals }}</p>
+            <p>VIP Status: {{ credits.vip_status }}</p>
+            <p>Credits Expire At: {{ credits.credits_expires_at }}</p>
+            <p>Episodes Published: {{ credits.episodes_published }}</p>
+            <p>Streak Days: {{ credits.streak_days }}</p>
+        </div>
+
         <script>
           function claimCredits() {
             const userEmail = "{{ user_email }}";
@@ -381,7 +433,7 @@ document.addEventListener("DOMContentLoaded", function() {
             })
             .then(response => response.json())
             .then(data => {
-                if (data.message) {
+                if (data.success) {
                     alert("🎉 " + data.message);
                     updateCredits();
                     updateClaimButton(0);
@@ -404,19 +456,15 @@ document.addEventListener("DOMContentLoaded", function() {
                   console.log("🔄 Connecting to SSE...");
                   const eventSource = new EventSource(`/stream-referral-updates?email=${encodeURIComponent(userEmail)}`);
                   eventSource.onmessage = function(event) {
-                      try {
-                        const data = JSON.parse(event.data);
-                        if (data.ping) return;
-                        console.log("🔄 Live update received:", data);
-                        updateReferralUI(data.referrals);
-                        updateCredits();
-                        updateClaimButton(data.referral_bonus);
-                        if (data.referrals > lastReferralCount) {
-                            lastReferralCount = data.referrals;
-                            localStorage.setItem("lastReferralCount", lastReferralCount);
-                        }
-                      } catch (err) {
-                        console.error("Error parsing SSE data:", err);
+                      const data = JSON.parse(event.data);
+                      if (data.ping) return;
+                      console.log("🔄 Live update received:", data);
+                      updateReferralUI(data.referrals);
+                      updateCredits();
+                      updateClaimButton(data.referral_bonus);
+                      if (data.referrals > lastReferralCount) {
+                          lastReferralCount = data.referrals;
+                          localStorage.setItem("lastReferralCount", lastReferralCount);
                       }
                   };
                   eventSource.onerror = function(error) {
@@ -452,6 +500,7 @@ document.addEventListener("DOMContentLoaded", function() {
               updateCredits();
           });
 
+          // Global updateReferralUI function with safe fallback
           function updateReferralUI(referrals) {
               console.log("🔄 Updating Referral UI with count:", referrals);
               const referralProgressElement = document.getElementById("referralProgress");
@@ -484,7 +533,4 @@ document.addEventListener("DOMContentLoaded", function() {
         </script>
     </main>
 </div>
-{% else %}
-<p>Error: You must be logged in to view the dashboard.</p>
-{% endif %}
 {% endblock %}
