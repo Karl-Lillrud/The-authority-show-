@@ -26,16 +26,15 @@ body {
 }
 
 header {
-  display: flex;
   justify-content: flex-end;
-  align-items: center;
-  height: 100px; /* Adjust height as needed */
+  height: 110px; /* Increased height */
+  min-height: 110px; /* Increased height */
 }
 
 .container {
   max-width: 1200px;
   margin: 0 auto;
-  padding: 2rem;
+  padding: 1rem;
 }
 
 .title {
@@ -954,11 +953,6 @@ header {
     grid-column: auto;
   }
 
-  .action-buttons {
-    flex-direction: column;
-    align-items: center;
-  }
-
   .action-button {
     width: 100%;
     max-width: 300px;
@@ -991,10 +985,6 @@ header {
 }
 
 @media (max-width: 576px) {
-  .container {
-    padding: 1rem;
-  }
-
   .title {
     font-size: 1.8rem;
   }
