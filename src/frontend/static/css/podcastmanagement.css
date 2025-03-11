@@ -25,6 +25,13 @@ body {
   color: var(--text-color-light);
 }
 
+header {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  height: 100px; /* Adjust height as needed */
+}
+
 .container {
   max-width: 1200px;
   margin: 0 auto;
@@ -41,7 +48,7 @@ body {
 /* Logo */
 .logo-container {
   position: fixed;
-  top: 20px;
+  top: 10px; /* Adjusted from 20px to 10px to move the logo up */
   left: 20px; /* Changed from 50% to 20px so the logo stays left */
   transform: none; /* Remove centering transform */
   width: 120px;
@@ -898,7 +905,7 @@ body {
   display: block;
   margin-bottom: var(--spacing-sm);
   font-weight: 600;
-  color: var(--text-color-light);
+  color: var (--text-color-light);
   transition: all 0.3s ease;
   font-size: 0.95rem;
   position: relative;
