@@ -3,16 +3,18 @@ from flask import Blueprint
 import os
 from dotenv import load_dotenv
 import logging
+from gridfs import GridFS
 
 mongo_bp = Blueprint("mongo_bp", __name__)
 
 # Load environment variables
 load_dotenv()
 
+
 # MongoDB Configuration
 MONGODB_URI = os.getenv("MONGODB_URI")
 DATABASE_NAME = "Podmanager"
-USERS_COLLECTION_NAME = "Users"
+COLLECTION_NAME = "Users"
 MAILING_LIST_COLLECTION_NAME = "MailingList"  # Add MailingList collection
 SUBSCRIPTIONS_LIST_COLLECTION = "subscriptions_collection"
 
@@ -27,13 +29,18 @@ logger = logging.getLogger(__name__)
 try:
     client = MongoClient(MONGODB_URI)
     database = client[DATABASE_NAME]
-    
-    # Initialize the collections (same name 'collection' for both)
-    collection = database[USERS_COLLECTION_NAME]  # Users collection
+    collection = database[COLLECTION_NAME]
     mailing_list_collection = database[MAILING_LIST_COLLECTION_NAME]  # MailingList collection
     subscriptions_collection = database[SUBSCRIPTIONS_LIST_COLLECTION]
-    
-    logger.info("MongoDB connection established successfully.")
+    fs = GridFS(database)  # Initialize GridFS
+    logger.info("MongoDB connection and GridFS initialized successfully.")
 except Exception as e:
-    logger.error(f"Failed to connect to MongoDB: {e}")
+    logger.error(f"Failed to connect to MongoDB or initialize GridFS: {e}")
     raise
+
+# Functions to access MongoDB and GridFS
+def get_db():
+    return database
+
+def get_fs():
+    return fs
