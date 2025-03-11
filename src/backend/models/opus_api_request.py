@@ -1,7 +1,12 @@
+import os
 import requests
+from dotenv import load_dotenv
 
-# Replace with your OPUS API key
-api_key = "your_api_key"
+# Load environment variables from .env file
+load_dotenv()
+
+# Get the OPUS API key from environment variables
+api_key = os.getenv("OPUS_API_KEY")
 
 # Define API URL
 url = "https://api.opus.com/v1/generate_short"
