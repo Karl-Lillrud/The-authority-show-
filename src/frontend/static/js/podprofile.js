@@ -59,6 +59,10 @@ document.addEventListener("DOMContentLoaded", function () {
         // Hide the Pod Name section and show the Email section
         podNameSection.classList.add("hidden");
         emailSection.classList.remove("hidden");
+
+        // Show the credits container after the invitation email is sent
+        document.querySelector(".credits-container").style.visibility =
+          "visible";
       } catch (error) {
         console.error("Error sending invitation email:", error);
         alert("Something went wrong. Please try again.");
@@ -68,8 +72,8 @@ document.addEventListener("DOMContentLoaded", function () {
 
   if (skipToDashboard) {
     skipToDashboard.addEventListener("click", () => {
-        console.log("Navigating to dashboard");
-        window.location.href = "/dashboard";  // Redirects to the dashboard
+      console.log("Navigating to dashboard");
+      window.location.href = "/dashboard"; // Redirects to the dashboard
     });
-}
+  }
 });
