@@ -20,6 +20,23 @@ body {
   margin: 0;
   transition: background-color 0.3s ease, color 0.3s ease;
 }
+.logo-container {
+  position: fixed;
+  top: 20px;
+  left: 50%;
+  width: 120px;
+  z-index: 999; /* Högt värde för att hamna över andra element */
+  background-color: transparent;
+}
+
+.logo-container img {
+  width: 100%;
+  height: auto;
+}
+
+.title {
+  color: rgba(0, 0, 0, 0.543);
+}
 
 .image {
   width: 100vw;
@@ -59,31 +76,27 @@ body {
   /* Tar bort onödig marginal */
 }
 
-.logo-container {
-  position: absolute;
-  top: 20px;
-  left: 20px;
-  width: 120px; /* Adjust as needed */
-}
-
-.logo-container img {
-  width: 100%;
-  height: auto;
-}
-
 .button {
   padding: 10px 20px;
   border-radius: 25px;
-  margin-top: 15px;
+  margin-top: 5vh;
   border: none;
   cursor: pointer;
   font-family: var(--font-primary);
   background: var(--bg-light);
   box-shadow: -5px -5px 10px white, 5px 5px 10px var(--shadow-light);
   transition: all 0.3s ease;
+  margin-bottom: 15px;
 }
-.button.button {
-  color: #6e7f8d;
+
+.button.button.button-primary {
+  background-color: #ff7f3f;
+  color: white;
+  position: relative;
+  bottom: 8vh;
+  border-radius: 14px;
+  height: 6vh;
+  width: 83%;
 }
 
 .button:hover {
@@ -91,14 +104,16 @@ body {
 }
 
 .input {
-  padding: 10px;
+  padding: 24px;
   border: none;
-  border-radius: 10px;
+  border-radius: 20px;
   width: 70%;
+  border: #ff7f3f 1.3px solid;
   background: var(--bg-light);
-  box-shadow: inset -5px -5px 10px white, inset 5px 5px 10px var(--shadow-light);
+  box-shadow: inset -5px -5px 10px white,
+    inset 15px 5px 10px var(--shadow-light);
   transition: all 0.3s ease;
-  margin: 15px;
+  margin: 19px;
 }
 
 .input:focus {
@@ -109,56 +124,123 @@ body {
 .link {
   color: var(--highlight);
   text-decoration: none;
-  font-size: 14px;
-  margin-top: 15px;
-  margin: 30px;
+  font-size: 19px;
+  position: relative;
+  top: 14vh;
+  padding: 0;
+  margin: 10px;
+}
+
+.link.login-link {
+  /* Override top to remove unwanted offset */
+  top: 0 !important;
+  border: none !important;
+  background: none !important;
+  box-shadow: none !important;
+  padding: 0; /* Remove extra padding if any */
+}
+
+.link.login-link:focus {
+  outline: none !important;
+}
+
+.link.login-link:hover {
+  cursor: pointer;
+}
+
+.extra-links {
+  color: var(--highlight);
+  text-decoration: none;
+  font-size: 19px;
+  position: relative;
+  top: 1vh;
+  padding: 0;
+  margin: 10px;
 }
 
 .link:hover {
   text-decoration: underline;
 }
 
-.account-text {
-  font-size: 14px;
-  color: var(--text-light);
-  margin-top: 20px;
-  margin-bottom: 5px;
-  text-align: center;
-}
-
 .error-message {
-  font-size: 14px;
+  font-size: 18px;
   color: var(--highlight);
   margin-bottom: 15px;
   text-align: center;
-}
-.success-message {
-  font-size: 14px;
-  color: var(--highlight);
-  margin-bottom: 15px;
-  text-align: center;
-  display: none;
 }
 
+.extra-links {
+  text-align: center;
+  position: relative;
+  bottom: 23vh;
+}
+
+.form-actions {
+  margin-bottom: -12vh; /* Minskar avståndet mellan knappen och länkarna */
+}
+
+.extra-links a {
+  display: block;
+  margin: 2px 0; /* Justerar vertikalt mellanrum mellan länkarna */
+}
 .modal {
   display: none;
   position: fixed;
-  z-index: 1;
+  z-index: 9999; /* Increased z-index to ensure modal is on top */
   left: 0;
   top: 0;
   width: 100%;
   height: 100%;
   overflow: auto;
-  background-color: rgba(0, 0, 0, 0.4);
+  background-color: rgba(0, 0, 0, 0.5); /* Slightly darker background to ensure text is visible */
 }
 
 .modal-content {
   background-color: var(--bg-light);
-  margin: 15% auto;
-  padding: 20px;
+  margin: 10% auto;
+  padding: 30px;
   border-radius: 20px;
   box-shadow: -5px -5px 15px white, 5px 5px 15px var(--shadow-light);
-  text-align: center;
+  text-align: left; /* Align text to the left for better readability */
   width: 90%;
-  max-width: 250px;
+  max-width: 500px;
+  color: var(--text-dark); /* Ensure text has a darker color for contrast */
+}
+
+.modal-content h2 {
+  font-size: 24px;
+  color: var(--highlight);
+  margin-bottom: 20px;
+}
+
+.terms-text ul {
+  list-style-type: none;
+  padding: 0;
+  margin: 0;
+}
+
+.terms-text li {
+  font-size: 16px;
+  color: var(--text-light);
+  margin-bottom: 10px;
+}
+
+.modal-content p {
+  font-size: 16px;
+  color: var(--text-light);
+}
+
+.modal-content button {
+  margin-top: 20px;
+  padding: 10px 20px;
+  background-color: var(--highlight);
+  color: white;
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.modal-content button:hover {
+  background-color: #e36c23;
 }
