@@ -166,6 +166,15 @@ body {
   margin-bottom: 0.25rem;
 }
 
+/* Add these rules to ensure the description and episodes text match */
+.podcast-description,
+.podcast-episodes,
+.podcast-episodes h4,
+.podcast-episodes ul,
+.podcast-episodes li {
+  font-size: 0.875rem;
+}
+
 .podcast-meta span {
   font-weight: 600;
 }
@@ -848,6 +857,87 @@ body {
   color: var(--text-color-light);
 }
 
+.episode-label {
+  background-color: var(--highlight-color);
+  color: white;
+  padding: 2px 6px;
+  border-radius: var(--radius-small);
+  font-size: 0.875rem;
+}
+
+.episode-label:hover {
+  cursor: pointer;
+}
+
+.manual-guest-btn {
+  display: inline-block;
+  margin-top: var(--spacing-sm);
+  padding: var(--spacing-md) calc(var(--spacing-lg) * 1.2);
+  border: none;
+  border-radius: var(--radius-medium);
+  background-color: var(--highlight-color);
+  color: white;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-size: 1rem;
+  box-shadow: -3px -3px 6px rgba(255, 255, 255, 0.1),
+    3px 3px 6px rgba(0, 0, 0, 0.2);
+}
+
+.manual-guest-btn:hover {
+  background-color: #e0662c;
+  transform: translateY(-2px);
+}
+
+.manual-guest-field {
+  margin-top: var(--spacing-md);
+}
+
+.manual-guest-field label {
+  display: block;
+  margin-bottom: var(--spacing-sm);
+  font-weight: 600;
+  color: var(--text-color-light);
+  transition: all 0.3s ease;
+  font-size: 0.95rem;
+  position: relative;
+  padding-left: 8px;
+}
+
+.manual-guest-field label::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 3px;
+  height: 14px;
+  background-color: var(--highlight-color);
+  border-radius: 2px;
+  opacity: 0.7;
+}
+
+.manual-guest-field input {
+  width: 100%;
+  padding: calc(var(--spacing-md) * 1.1);
+  border: none;
+  border-radius: var(--radius-medium);
+  background-color: var(--background-light);
+  color: var(--text-color-light);
+  font-size: 1rem;
+  box-shadow: inset -4px -4px 8px rgba(255, 255, 255, 0.8),
+    inset 4px 4px 8px rgba(22, 24, 29, 0.2);
+  transition: all 0.3s ease;
+  cursor: pointer;
+}
+
+.manual-guest-field input:focus {
+  outline: none;
+  box-shadow: inset -2px -2px 4px rgba(255, 255, 255, 0.8),
+    inset 2px 2px 4px rgba(22, 24, 29, 0.2), 0 0 0 2px rgba(255, 127, 63, 0.3);
+}
+
 @media (max-width: 768px) {
   .form-grid {
     grid-template-columns: 1fr;
@@ -936,7 +1026,7 @@ body {
 
   .delete-btn-home {
     background-color: rgba(231, 76, 60, 0.2);
-    color: var(--danger-color);
+    color: var (--danger-color);
     box-shadow: -3px -3px 6px var(--light-shadow-light),
       3px 3px 6px var(--dark-shadow-light);
   }

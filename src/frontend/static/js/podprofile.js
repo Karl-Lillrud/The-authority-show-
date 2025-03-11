@@ -11,6 +11,7 @@ document.addEventListener("DOMContentLoaded", function () {
   const podNameForm = document.getElementById("podNameForm");
   const podRssInput = document.getElementById("podRss");
   const podNameInput = document.getElementById("podName");
+  const creditsContainer = document.getElementById("creditsContainer");
 
   // Dark Mode Toggle
   darkModeToggle.addEventListener("click", function () {
@@ -59,6 +60,11 @@ document.addEventListener("DOMContentLoaded", function () {
         // Hide the Pod Name section and show the Email section
         podNameSection.classList.add("hidden");
         emailSection.classList.remove("hidden");
+
+        // Show the credits container if it exists
+        if (creditsContainer) {
+          creditsContainer.classList.remove("hidden");
+        }
       } catch (error) {
         console.error("Error sending invitation email:", error);
         alert("Something went wrong. Please try again.");
@@ -68,8 +74,8 @@ document.addEventListener("DOMContentLoaded", function () {
 
   if (skipToDashboard) {
     skipToDashboard.addEventListener("click", () => {
-        console.log("Navigating to dashboard");
-        window.location.href = "/dashboard";  // Redirects to the dashboard
+      console.log("Navigating to dashboard");
+      window.location.href = "/dashboard"; // Redirects to the dashboard
     });
-}
+  }
 });

@@ -19,10 +19,10 @@ from backend.routes.podprofile import podprofile_bp  # Import the podprofile blu
 from backend.routes.frontend import frontend_bp  # Import the frontend blueprint
 from backend.routes.guest_to_eposide import guesttoepisode_bp
 from backend.routes.guest_form import guest_form_bp  # Import the guest_form blueprint
+from backend.routes.transcription import transcription_bp
 from dotenv import load_dotenv
 from backend.utils import venvupdate
-from backend.database.mongo_connection import collection
-from backend.utils.email_utils import send_email
+from backend.routes.user import user_bp
 
 if os.getenv("SKIP_VENV_UPDATE", "false").lower() not in ("true", "1", "yes"):
     venvupdate.update_venv_and_requirements()
@@ -57,6 +57,7 @@ app.config["PREFERRED URL SCHEME"] = "https"
 
 # Register blueprints for different routes
 app.register_blueprint(auth_bp)
+app.register_blueprint(user_bp)
 app.register_blueprint(forgotpass_bp)
 app.register_blueprint(podcast_bp)  # Register the podcast blueprint
 app.register_blueprint(dashboard_bp)
@@ -73,6 +74,7 @@ app.register_blueprint(podprofile_bp)  # Register the podprofile blueprint
 app.register_blueprint(frontend_bp)  # Register the frontend blueprint
 app.register_blueprint(guesttoepisode_bp)
 app.register_blueprint(guest_form_bp, url_prefix='/guest-form')  # Register the guest_form blueprint with URL prefix
+app.register_blueprint(transcription_bp)
 
 # Set the application environment (defaults to production)
 APP_ENV = os.getenv("APP_ENV", "production")

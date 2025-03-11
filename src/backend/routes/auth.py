@@ -10,17 +10,19 @@ from flask import (
 )
 from werkzeug.security import check_password_hash, generate_password_hash
 from backend.database.mongo_connection import collection
+from backend.services.authService import validate_password, validate_email
+from backend.repository.account_repository import AccountRepository
 import os
 import uuid
 from datetime import datetime
 
-from backend.services.accountsService import create_account
+account_repo = AccountRepository()
 
 auth_bp = Blueprint("auth_bp", __name__)
 
 API_BASE_URL = os.getenv("API_BASE_URL", "http://127.0.0.1:8000")
 
-#USE FOR AUTHENTICATION SECURITY PURPOSES REGISTER, SIGNIN, LOGOUT
+#USE FOR AUTHENTICATION SECURITY PURPOSES REGISTER, SIGNIN, LOGOUT/ users collection
 #USER.PY Can be used for user specific data
 #ACCOUNT.PY Can be used for account specific data
 
@@ -81,7 +83,6 @@ def logout_user():
 def register_page():
     return render_template("register/register.html")
 
-
 @auth_bp.route("/register", methods=["POST"])
 def register_submit():
     print("🔍 Received a POST request at /register")
@@ -100,6 +101,17 @@ def register_submit():
 
         email = data["email"].lower().strip()
         password = data["password"]
+
+        # Validate email using the function from authService
+        email_error = validate_email(email)
+        if email_error:
+            return email_error  # If there's an error with the email validation, return it.
+
+        # Validate password using the function from authService
+        password_error = validate_password(password)
+        if password_error:
+            return password_error  # If there's an error with the password validation, return it.
+
         hashed_password = generate_password_hash(password)
 
         print("🔍 Checking if user already exists...")
@@ -107,6 +119,7 @@ def register_submit():
             print("⚠️ Email already registered:", email)
             return jsonify({"error": "Email already registered."}), 409
 
+        # Create User Document
         user_id = str(uuid.uuid4())
         user_document = {
             "_id": user_id,
@@ -118,16 +131,19 @@ def register_submit():
         print("📝 Inserting user into database:", user_document)
         collection.database.Users.insert_one(user_document)
 
+        # Create Account Data, passing it to the AccountRepository
         account_data = {
             "userId": user_id,
             "email": email,
             "companyName": data.get("companyName", ""),
             "isCompany": data.get("isCompany", False),
-            "ownerId": user_id,
         }
 
-        account_response, status_code = create_account(account_data)
+        # Create the account after user is created
+        account_repo = AccountRepository()  
+        account_response, status_code = account_repo.create_account(account_data)
 
+        # If account creation fails, return an error response
         if status_code != 201:
             return jsonify({"error": "Failed to create account", "details": account_response}), 500
 
@@ -144,21 +160,3 @@ def register_submit():
     except Exception as e:
         print(f"❌ ERROR: {e}")
         return jsonify({"error": f"Database error: {str(e)}"}), 500
-
-
-@auth_bp.route("/get_email", methods=["GET"])
-def fetch_user_email():
-    if not hasattr(g, "user_id") or not g.user_id:
-        return jsonify({"error": "Unauthorized"}), 401
-
-    try:
-        user_id = str(g.user_id)
-        user = collection.database.Users.find_one({"_id": user_id}, {"email": 1, "_id": 0})
-
-        if not user:
-            return jsonify({"error": "User not found"}), 404
-
-        return jsonify({"email": user["email"]}), 200
-
-    except Exception as e:
-        return jsonify({"error": f"Failed to fetch email: {str(e)}"}), 500

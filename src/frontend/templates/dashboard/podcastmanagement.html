@@ -178,8 +178,22 @@
                 <input type="number" id="duration" name="duration" />
               </div>
               <div class="field-group">
-                <label for="guest-id">Guest ID</label>
-                <input type="text" id="guest-id" name="guestId" />
+                <!-- Change label from "Invite Guest" to "Select Guest" -->
+                <label for="guest-id">Select Guest</label>
+                <select id="guest-id" name="guestId">
+                  <option value="">Select Guest</option>
+                  <!-- Ensure default option says "Select Guest" -->
+                </select>
+                <!-- Add field for manual guest entry -->
+                <div class="manual-guest-field">
+                  <label for="manual-guest">Add Guest Manually</label>
+                  <input
+                    type="text"
+                    id="manual-guest"
+                    placeholder="Click to add guest manually"
+                    readonly
+                  />
+                </div>
               </div>
               <div class="field-group">
                 <label for="status">Status</label>
