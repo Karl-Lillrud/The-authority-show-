@@ -8,19 +8,21 @@ from flask import (
     url_for,
 )
 from werkzeug.security import check_password_hash
-from backend.database.mongo_connection import collection
+from backend.database.mongo_connection import collection, mailing_list_collection
 import os
+import logging
+
+# Initialize logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 signin_bp = Blueprint("signin_bp", __name__)
 
 API_BASE_URL = os.getenv("API_BASE_URL", "http://127.0.0.1:8000")
 
 
-
 @signin_bp.route("/signin", methods=["GET"], endpoint="signin")
-
 @signin_bp.route("/", methods=["GET"])
-
 def signin_get():
     if request.cookies.get("remember_me") == "true":
         return redirect("/dashboard")
@@ -32,13 +34,9 @@ signin_bp.add_url_rule("/", endpoint="signin", view_func=signin_get)
 
 
 @signin_bp.route("/signin", methods=["POST"])
-@signin_bp.route("/", methods=["POST"])
 def signin_post():
     if request.content_type != "application/json":
-        return (
-            jsonify({"error": "Invalid Content-Type. Expected application/json"}),
-            415,
-        )
+        return jsonify({"error": "Invalid Content-Type. Expected application/json"}), 415
 
     data = request.get_json()
     email = data.get("email", "").strip().lower()
@@ -54,6 +52,9 @@ def signin_post():
     session["email"] = users["email"]
     session.permanent = remember
 
+    # No action for adding the user to mailing list here anymore.
+
+    # Your usual login logic and redirection
     user_id = session["user_id"]
     podcasts = list(collection.database.Podcast.find({"userid": user_id}))
 
