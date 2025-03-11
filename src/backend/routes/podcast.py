@@ -1,4 +1,4 @@
-from flask import request, jsonify, Blueprint, g, redirect, url_for
+from flask import request, jsonify, Blueprint, g, session
 from backend.database.mongo_connection import collection
 from datetime import datetime, timezone
 import uuid
@@ -8,9 +8,13 @@ import logging
 # Define Blueprint
 podcast_bp = Blueprint("podcast_bp", __name__)
 
+#SHOULD ONLY BE USED FOR SPECIFIC DATA CRUD OPERATIONS
+#EXTRA FUNCTIONALITY BESIDES CRUD OPERATIONS SHOULD BE IN SERVICES
+
 # Configure logging
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO)
+
 
 @podcast_bp.route("/add_podcasts", methods=["POST"])
 def podcast():
@@ -101,6 +105,7 @@ def podcast():
         print(f"❌ ERROR: {e}")
         return jsonify({"error": f"Failed to add podcast: {str(e)}"}), 500
 
+
 @podcast_bp.route("/get_podcasts", methods=["GET"])
 def get_podcast():
     if not hasattr(g, "user_id") or not g.user_id:
@@ -138,6 +143,7 @@ def get_podcast():
         print(f"❌ ERROR: {e}")
         return jsonify({"error": f"Failed to fetch podcasts: {str(e)}"}), 500
 
+
 @podcast_bp.route("/get_podcasts/<podcast_id>", methods=["GET"])
 def get_podcast_by_id(podcast_id):
     if not hasattr(g, "user_id") or not g.user_id:
@@ -174,6 +180,7 @@ def get_podcast_by_id(podcast_id):
     except Exception as e:
         print(f"❌ ERROR: {e}")
         return jsonify({"error": f"Failed to fetch podcast: {str(e)}"}), 500
+
 
 @podcast_bp.route("/delete_podcasts/<podcast_id>", methods=["DELETE"])
 def delete_podcast(podcast_id):
@@ -213,6 +220,7 @@ def delete_podcast(podcast_id):
     except Exception as e:
         print(f"❌ ERROR: {e}")
         return jsonify({"error": f"Failed to delete podcast: {str(e)}"}), 500
+
 
 @podcast_bp.route("/edit_podcasts/<podcast_id>", methods=["PUT"])
 def edit_podcast(podcast_id):

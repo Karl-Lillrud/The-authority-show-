@@ -43,8 +43,12 @@ def create_account(data):
         }
 
         # Insert account into the Accounts collection
-        logger.info("Inserting account into the database: %s", account_document)
-        collection.database.Accounts.insert_one(account_document)
+        try:
+            collection.database.Accounts.insert_one(account_document)
+            logger.info("Inserting account into the database: %s", account_document)
+        except Exception as db_error:
+            logger.error("Database insertion error: %s", db_error, exc_info=True)
+            return {"error": "Failed to insert account into the database"}, 500
 
         return {
             "message": "Account created successfully",

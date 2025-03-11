@@ -9,7 +9,8 @@ usertoteam_bp = Blueprint("usertoteam_bp", __name__)
 
 # Use TeamSchema when you're dealing with information specific to a team, such as the team's name, role, email, and other properties related to the team itself.
 # Use UserToTeamSchema when you're dealing with the relationship between a user and a team, such as adding a user to a team or querying which teams a particular user belongs to.
-
+#SHOULD ONLY BE USED FOR SPECIFIC DATA CRUD OPERATIONS
+#EXTRA FUNCTIONALITY BESIDES CRUD OPERATIONS SHOULD BE IN SERVICES
 
 @usertoteam_bp.route("/add_users_to_teams", methods=["POST"])
 def add_user_to_team():
@@ -17,10 +18,7 @@ def add_user_to_team():
         return jsonify({"error": "Unauthorized"}), 401
 
     if request.content_type != "application/json":
-        return (
-            jsonify({"error": "Invalid Content-Type. Expected application/json"}),
-            415,
-        )
+        return jsonify({"error": "Invalid Content-Type. Expected application/json"}), 415
 
     try:
         # Get incoming JSON data
@@ -29,22 +27,40 @@ def add_user_to_team():
 
         # Validate with UserToTeamSchema
         try:
-            user_to_team_schema = (
-                UserToTeamSchema()
-            )  # Validate relationship between user and team
-            validated_data = user_to_team_schema.load(
-                data
-            )  # Validate and deserialize the user-team data
+            user_to_team_schema = UserToTeamSchema()
+            validated_data = user_to_team_schema.load(data)  # Validate and deserialize the user-team data
         except ValidationError as err:
             return jsonify({"error": "Invalid data", "details": err.messages}), 400
 
-        user_to_team_id = str(uuid4())
+        user_id = validated_data.get("userId")
+        team_id = validated_data.get("teamId")
+        role = validated_data.get("role", "member")  # Default to "member" if no role provided
+
+        # Check if the team exists
+        team = collection.database.Teams.find_one({"_id": team_id})
+        if not team:
+            return jsonify({"error": "Team not found"}), 404
+
+        # Check if the user exists
+        user = collection.database.Users.find_one({"userId": user_id})
+        if not user:
+            return jsonify({"error": "User not found"}), 404
+
+        # Ensure that the user is not already a member of the team
+        existing_user_team = collection.database.UsersToTeams.find_one(
+            {"userId": user_id, "teamId": team_id}
+        )
+        if existing_user_team:
+            return jsonify({"error": "User is already a member of the team"}), 400
+
+        # Create the user-team relationship
+        user_to_team_id = str(uuid4())  # Generate a unique ID for this user-to-team relationship
 
         user_to_team_item = {
             "_id": user_to_team_id,
-            "userId": validated_data["userId"],
-            "teamId": validated_data["teamId"],
-            "role": validated_data["role"],
+            "userId": user_id,
+            "teamId": team_id,
+            "role": role,
             "assignedAt": datetime.utcnow(),
         }
 
@@ -54,15 +70,12 @@ def add_user_to_team():
         # Check if the insertion was successful
         if result.inserted_id:
             print("✅ User added to team successfully!")
-            return (
-                jsonify(
-                    {
-                        "message": "User added to team successfully",
-                        "user_to_team_id": user_to_team_id,  # Return the generated ID
-                    }
-                ),
-                201,
-            )
+            return jsonify(
+                {
+                    "message": "User added to team successfully",
+                    "user_to_team_id": user_to_team_id,  # Return the generated ID
+                }
+            ), 201
         else:
             print("❌ Failed to insert user-team relationship")
             return jsonify({"error": "Failed to add user to team."}), 500
