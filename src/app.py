@@ -17,12 +17,14 @@ from backend.routes.episode import episode_bp
 from backend.routes.podprofile import podprofile_bp  # Import the podprofile blueprint
 from backend.routes.frontend import frontend_bp  # Import the frontend blueprint
 from backend.routes.guest_to_eposide import guesttoepisode_bp
+from backend.routes.guest_recommendation import guest_bp  # Import the guest recommendation blueprint
 from dotenv import load_dotenv
 import os
 import logging
 from backend.utils import venvupdate
 from backend.database.mongo_connection import collection
 from backend.utils.email_utils import send_email
+from backend.utils.scheduler import start_scheduler
 
 if os.getenv("SKIP_VENV_UPDATE", "false").lower() not in ("true", "1", "yes"):
     venvupdate.update_venv_and_requirements()
@@ -63,9 +65,7 @@ app.register_blueprint(dashboard_bp)
 app.register_blueprint(pod_management_bp)
 app.register_blueprint(podtask_bp)
 app.register_blueprint(team_bp)
-app.register_blueprint(
-    guest_bp
-)  # Ensure this line is present and has the correct prefix
+app.register_blueprint(guest_bp)  # Ensure this line is present and has the correct prefix
 app.register_blueprint(account_bp)
 app.register_blueprint(usertoteam_bp)
 app.register_blueprint(invitation_bp)
@@ -89,13 +89,14 @@ logger.info(f"API_BASE_URL: {API_BASE_URL}")
 logger.info(f"MONGODB_URI: {os.getenv('MONGODB_URI')}")
 logger.info(f"APP_ENV: {APP_ENV}")
 
-
 # Log the request with user info
 @app.before_request
 def load_user():
     g.user_id = session.get("user_id")
     logger.info(f"Request to {request.path} by user {g.user_id}")
 
+# Start the scheduler
+start_scheduler()
 
 # Run the app
 if __name__ == "__main__":
