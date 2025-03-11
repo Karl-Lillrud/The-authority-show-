@@ -11,10 +11,7 @@
 
 body {
   font-family: var(--font-primary);
-  background-image: url('https://app.podmanager.ai/static/images/PodManager-AI-Background.jpeg');
-  background-size: cover;
-  background-position: center;
-  background-color: var(--bg-light); /* Fallback color */
+  background-color: var(--bg-light);
   color: var(--text-light);
   height: 100vh;
   display: flex;
@@ -108,7 +105,8 @@ body {
   width: 70%;
   border: #ff7f3f 1.3px solid;
   background: var(--bg-light);
-  box-shadow: inset -5px -5px 10px white, inset 15px 5px 10px var(--shadow-light);
+  box-shadow: inset -5px -5px 10px white,
+    inset 15px 5px 10px var(--shadow-light);
   transition: all 0.3s ease;
   margin: 19px;
 }
@@ -166,48 +164,180 @@ body {
   margin: 10px 0;
 }
 
-/* Media Queries for Responsiveness */
-@media (max-width: 768px) {
-    .center-box {
-        width: 90%;
-        height: auto;
-        padding: 20px;
-    }
-
-    .input {
-        width: 100%;
-        padding: 15px;
-    }
-
-    .button {
-        width: 100%;
-        margin-top: 10px;
-    }
-
-    .logo-container {
-        width: 80px;
-    }
+/* Responsiva media queries - behåller alltid vänsterposition */
+@media screen and (max-width: 1200px) {
+  .center-box {
+    width: 35%;
+    /* Behåller left: 2% från originalet */
+  }
 }
 
-@media (max-width: 480px) {
-    .center-box {
-        width: 100%;
-        height: auto;
-        padding: 15px;
-    }
+@media screen and (max-width: 992px) {
+  .center-box {
+    width: 45%;
+    /* Behåller left: 2% från originalet */
+  }
 
-    .input {
-        width: 100%;
-        padding: 10px;
-    }
-
-    .button {
-        width: 100%;
-        padding: 10px;
-    }
-
-    .logo-container {
-        width: 60px;
-    }
+  .input {
+    width: 65%;
+  }
 }
 
+@media screen and (max-width: 768px) {
+  .center-box {
+    width: 60%;
+    height: auto;
+    min-height: 60vh;
+    padding: 25px 15px;
+    /* Behåller left: 2% från originalet */
+  }
+
+  .input {
+    padding: 20px;
+    margin: 15px;
+    width: 75%;
+  }
+
+  .button.button-primary {
+    width: 85%;
+    height: auto;
+    padding: 12px;
+  }
+
+  .forgot-password-link {
+    margin-right: 10%;
+  }
+}
+
+@media screen and (max-width: 576px) {
+  .center-box {
+    width: 80%;
+    border-radius: 30px;
+    padding: 20px 10px;
+    /* Behåller left: 2% från originalet */
+  }
+
+  .logo-container {
+    width: 100px;
+    top: 15px;
+  }
+
+  .input {
+    width: 80%;
+    padding: 15px;
+    margin: 10px;
+  }
+
+  .title {
+    font-size: 24px;
+    margin-bottom: 15px;
+  }
+
+  .button.button-primary {
+    width: 90%;
+  }
+
+  .forgot-password-link {
+    margin-right: 8%;
+  }
+
+  .link {
+    font-size: 14px;
+  }
+}
+
+@media screen and (max-width: 576px) {
+  .logo-container {
+    top: 0px;
+  }
+}
+
+@media screen and (max-width: 480px) {
+  .center-box {
+    width: 90%;
+    padding: 15px 10px;
+    /* Lite justering för att inte gå utanför skärmen */
+  }
+
+  .input {
+    width: 85%;
+    padding: 12px;
+    margin: 8px;
+  }
+
+  .logo-container {
+    width: 90px;
+  }
+
+  .button.button-primary {
+    width: 95%;
+  }
+}
+
+/* För mycket små skärmar */
+@media screen and (max-width: 375px) {
+  .center-box {
+    width: 92%;
+    padding: 15px 8px;
+  }
+
+  .input {
+    width: 85%;
+    padding: 10px;
+    margin: 6px;
+  }
+}
+
+/* För höjdjusteringar på mindre skärmar */
+@media screen and (max-height: 700px) {
+  .center-box {
+    height: auto;
+    min-height: 65vh;
+  }
+
+  .input {
+    padding: 15px;
+    margin: 10px;
+  }
+
+  .button.button-primary {
+    height: auto;
+    padding: 10px;
+  }
+}
+
+/* För enheter i landskapsläge */
+@media screen and (max-height: 500px) {
+  .center-box {
+    height: auto;
+    min-height: 80vh;
+    overflow-y: auto;
+  }
+
+  .input {
+    padding: 10px;
+    margin: 8px;
+  }
+
+  .title {
+    margin-bottom: 10px;
+  }
+
+  .forgot-password-link {
+    margin-bottom: 10px;
+  }
+}
+
+/* För att säkerställa att formuläret är användbart på mycket små enheter */
+@media screen and (max-width: 320px) {
+  .center-box {
+    width: 94%;
+    padding: 10px 5px;
+  }
+
+  .input {
+    width: 90%;
+    padding: 10px;
+    margin: 6px;
+  }
+}

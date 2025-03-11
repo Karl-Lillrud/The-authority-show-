@@ -387,6 +387,28 @@ body.dark-mode .button-secondary {
   }
 }
 
+/* Additional responsiveness adjustments */
+@media screen and (max-width: 768px) {
+  .header-container {
+    flex-direction: column;
+    align-items: center;
+    padding: 10px;
+  }
+  .logo {
+    margin-bottom: 10px;
+  }
+  .container {
+    width: 95%;
+    padding: 1.5rem;
+  }
+}
+
+@media screen and (max-width: 576px) {
+  .logo {
+    margin-top: -10px;
+  }
+}
+
 #skipToDashboard,
 #dark-mode-toggle {
   display: none;
