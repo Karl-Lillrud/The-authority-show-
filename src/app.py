@@ -2,6 +2,7 @@ import os
 import logging
 from flask import Flask, request, session, g, jsonify
 from flask_cors import CORS
+from backend.database.mongo_connection import collection
 from backend.routes.auth import auth_bp
 from backend.routes.forgot_pass import forgotpass_bp
 from backend.routes.podcast import podcast_bp  # Import the podcast blueprint
@@ -70,6 +71,7 @@ app.register_blueprint(usertoteam_bp)
 app.register_blueprint(invitation_bp)
 app.register_blueprint(google_calendar_bp)
 app.register_blueprint(episode_bp)
+app.register_blueprint(credits_bp)
 app.register_blueprint(podprofile_bp)
 app.register_blueprint(frontend_bp)
 app.register_blueprint(guesttoepisode_bp)
