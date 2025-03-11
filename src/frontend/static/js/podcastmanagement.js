@@ -5,8 +5,15 @@ import {
   updatePodcast,
   deletePodcast
 } from "../requests/podcastRequests.js";
-import { registerEpisode } from "../requests/episodeRequest.js";
+import {
+  registerEpisode,
+  fetchEpisodesByPodcast
+} from "../requests/episodeRequest.js"; // Updated import
 import { svgpodcastmanagement } from "../svg/svgpodcastmanagement.js"; // Updated import path
+import {
+  fetchGuestsRequest,
+  addGuestRequest
+} from "../requests/guestRequests.js"; // Added import for addGuestRequest
 
 console.log("podcastmanagement.js loaded");
 
@@ -77,6 +84,127 @@ function showNotification(title, message, type = "info") {
   }, 5000);
 }
 
+// New function to fetch and render guest options into a select element
+async function renderGuestSelection(selectElement, selectedGuestId = "") {
+  try {
+    const guests = await fetchGuestsRequest(); // Use guestRequests for fetching guests
+    selectElement.innerHTML = "";
+    const defaultOption = document.createElement("option");
+    defaultOption.value = "";
+    defaultOption.textContent = "Select Guest"; // Changed text
+    selectElement.appendChild(defaultOption);
+    guests.forEach((guest) => {
+      const option = document.createElement("option");
+      option.value = guest.id || guest._id;
+      option.textContent = guest.name;
+      if ((guest.id || guest._id) === selectedGuestId) {
+        option.selected = true;
+      }
+      selectElement.appendChild(option);
+    });
+    // Remove any existing manual guest button if present
+    let manualField = selectElement.parentElement.querySelector(
+      ".manual-guest-field"
+    );
+    if (manualField) {
+      manualField.remove();
+    }
+    // Append a separate field below the dropdown for manual guest entry.
+    manualField = document.createElement("div");
+    manualField.className = "manual-guest-field";
+    manualField.innerHTML = `
+      <label for="manual-guest">Add Guest Manually</label>
+      <input type="text" id="manual-guest" placeholder="Click to add guest manually" readonly />
+    `;
+    // Append the field after the select element.
+    selectElement.parentElement.appendChild(manualField);
+    manualField.addEventListener("click", () => {
+      showManualGuestPopup(selectElement);
+    });
+  } catch (error) {
+    console.error("Error fetching guests:", error);
+  }
+}
+
+let selectedPodcastId = null; // Ensure this variable is declared globally
+
+function showManualGuestPopup(selectElement) {
+  const popup = document.createElement("div");
+  popup.className = "popup";
+  popup.style.display = "flex";
+
+  const popupContent = document.createElement("div");
+  popupContent.className = "form-box";
+  popupContent.innerHTML = `
+    <span id="close-manual-guest-popup" class="close-btn">&times;</span>
+    <h2 class="form-title">Add Guest Manually</h2>
+    <form id="manual-guest-form">
+      <div class="field-group full-width">
+        <label for="manual-guest-name">Guest Name</label>
+        <input type="text" id="manual-guest-name" name="guestName" required />
+      </div>
+      <div class="field-group full-width">
+        <label for="manual-guest-email">Guest Email</label>
+        <input type="email" id="manual-guest-email" name="guestEmail" required />
+      </div>
+      <div class="form-actions">
+        <button type="button" id="cancel-manual-guest" class="cancel-btn">Cancel</button>
+        <button type="submit" class="save-btn">Add Guest</button>
+      </div>
+    </form>
+  `;
+  popup.appendChild(popupContent);
+  document.body.appendChild(popup);
+
+  // Close popup events
+  popup
+    .querySelector("#close-manual-guest-popup")
+    .addEventListener("click", () => {
+      document.body.removeChild(popup);
+    });
+  popup.querySelector("#cancel-manual-guest").addEventListener("click", () => {
+    document.body.removeChild(popup);
+  });
+
+  // Manual guest form submission using addGuestRequest
+  popup
+    .querySelector("#manual-guest-form")
+    .addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const guestName = document
+        .getElementById("manual-guest-name")
+        .value.trim();
+      const guestEmail = document
+        .getElementById("manual-guest-email")
+        .value.trim();
+      const podcastId =
+        selectedPodcastId || document.getElementById("podcast-select")?.value; // Use selectedPodcastId if available
+
+      console.log("Guest Name:", guestName); // Log guest name
+      console.log("Guest Email:", guestEmail); // Log guest email
+      console.log("Podcast ID:", podcastId); // Log podcast ID
+
+      if (guestName && guestEmail && podcastId) {
+        try {
+          const guest = await addGuestRequest({
+            name: guestName,
+            email: guestEmail,
+            podcastId
+          });
+          document.body.removeChild(popup);
+          // Fetch and render the updated guest list
+          await renderGuestSelection(selectElement, guest.guest_id);
+          showNotification("Success", "Guest added successfully!", "success"); // Show success notification
+        } catch (error) {
+          console.error("Error adding guest:", error);
+          showNotification("Error", "Failed to add guest.", "error"); // Show error notification
+        }
+      } else {
+        alert("Please fill in all required fields.");
+      }
+    });
+}
+
 document.addEventListener("DOMContentLoaded", function () {
   console.log("DOM fully loaded and parsed");
 
@@ -120,6 +248,9 @@ document.addEventListener("DOMContentLoaded", function () {
 
         renderPodcastSelection(podcasts);
         document.getElementById("episode-form-popup").style.display = "flex";
+        // Populate guest select for the create episode form
+        const guestSelect = document.getElementById("guest-id");
+        renderGuestSelection(guestSelect);
       } catch (error) {
         console.error("Error fetching podcasts:", error);
         showNotification(
@@ -229,7 +360,6 @@ document.addEventListener("DOMContentLoaded", function () {
 });
 
 const form = document.getElementById("register-podcast-form");
-let selectedPodcastId = null;
 
 form.addEventListener("submit", async function (e) {
   e.preventDefault();
@@ -466,18 +596,47 @@ async function renderPodcastList() {
                 </button>
               </div>
             </div>
-            <p class="podcast-description">${
+            <p class="podcast-description"><strong>Description: </strong>${
               podcast.description || "No description available."
             }</p>
+            <!-- Container for episodes -->
+            <div class="podcast-episodes"></div>
           </div>
         </div>
         <div class="podcast-footer">
           <button class="view-details-btn" data-id="${
             podcast._id
           }">View Details</button>
-        </div>
-      `;
+        </div>`;
       podcastListElement.appendChild(podcastCard);
+
+      // Fetch and display episodes for this podcast with heading "Episodes:"
+      fetchEpisodesByPodcast(podcast._id).then((episodes) => {
+        if (episodes && episodes.length) {
+          const epContainer = podcastCard.querySelector(".podcast-episodes");
+          const epHeading = document.createElement("h4");
+          epHeading.textContent = "Episodes:";
+          epContainer.appendChild(epHeading);
+
+          // Create a flex container to list episodes horizontally
+          const epList = document.createElement("div");
+          epList.style.display = "flex";
+          epList.style.flexDirection = "row";
+          epList.style.gap = "1rem";
+
+          episodes.forEach((ep) => {
+            const epItem = document.createElement("div");
+            epItem.textContent = ep.title;
+            epItem.classList.add("episode-label"); // added label class
+            // Attach click event to open the popup for editing
+            epItem.addEventListener("click", () => {
+              showEpisodePopup(ep);
+            });
+            epList.appendChild(epItem);
+          });
+          epContainer.appendChild(epList);
+        }
+      });
     });
 
     // Add event listeners for action buttons
@@ -499,7 +658,13 @@ async function renderPodcastList() {
         try {
           const podcast = await fetchPodcast(podcastId);
           displayPodcastDetails(podcast.podcast);
-          selectedPodcastId = podcastId;
+          selectedPodcastId = podcastId; // Set the selected podcast ID
+
+          // Fetch podcasts to ensure the podcast ID is available
+          const response = await fetchPodcasts();
+          const podcasts = response.podcast;
+          renderPodcastSelection(podcasts);
+
           document.getElementById("form-popup").style.display = "flex";
         } catch (error) {
           showNotification("Error", "Failed to fetch podcast details", "error");
@@ -782,6 +947,136 @@ function renderPodcastDetail(podcast) {
         } catch (error) {
           showNotification("Error", "Failed to delete podcast.", "error");
         }
+      }
+    });
+}
+
+// New function to display the episode popup for viewing/updating an episode
+async function showEpisodePopup(episode) {
+  const popup = document.createElement("div");
+  popup.className = "popup";
+  popup.style.display = "flex";
+
+  const popupContent = document.createElement("div");
+  popupContent.className = "form-box";
+  popupContent.innerHTML = `
+    <span id="close-episode-popup" class="close-btn">&times;</span>
+    <h2 class="form-title">Edit Episode</h2>
+    <form id="update-episode-form">
+      <div class="field-group full-width">
+        <label for="upd-episode-title">Episode Title</label>
+        <input type="text" id="upd-episode-title" name="title" value="${
+          episode.title
+        }" required />
+      </div>
+      <div class="field-group full-width">
+        <label for="upd-episode-description">Description</label>
+        <textarea id="upd-episode-description" name="description" rows="3">${
+          episode.description || ""
+        }</textarea>
+      </div>
+      <div class="field-group">
+        <label for="upd-publish-date">Publish Date</label>
+        <input type="datetime-local" id="upd-publish-date" name="publishDate" value="${
+          episode.publishDate
+            ? new Date(episode.publishDate).toISOString().slice(0, 16)
+            : ""
+        }" />
+      </div>
+      <div class="field-group">
+        <label for="upd-duration">Duration (minutes)</label>
+        <input type="number" id="upd-duration" name="duration" value="${
+          episode.duration || ""
+        }" />
+      </div>
+      <div class="field-group">
+        <label for="upd-guest-id">Guest</label>
+        <!-- Change guest field to a select -->
+        <select id="upd-guest-id" name="guestId"></select>
+        <!-- Add field for manual guest entry -->
+        <div class="manual-guest-field">
+          <label for="manual-guest">Add Guest Manually</label>
+          <input type="text" id="manual-guest" placeholder="Click to add guest manually" readonly />
+        </div>
+      </div>
+      <div class="field-group">
+        <label for="upd-status">Status</label>
+        <input type="text" id="upd-status" name="status" value="${
+          episode.status || ""
+        }" />
+      </div>
+      <div class="form-actions">
+        <button type="button" id="cancel-episode-update" class="cancel-btn">Cancel</button></div>
+        <button type="submit" class="save-btn">Update Episode</button>
+      </div>
+    </form>
+  `;
+  popup.appendChild(popupContent);
+  document.body.appendChild(popup);
+
+  // Populate guest dropdown in update popup with the current guest selected.
+  const updGuestSelect = document.getElementById("upd-guest-id");
+  renderGuestSelection(updGuestSelect, episode.guestId || "");
+
+  // Fetch podcasts to ensure the podcast ID is available
+  const response = await fetchPodcasts();
+  const podcasts = response.podcast;
+  renderPodcastSelection(podcasts);
+
+  // Close popup events
+  popup.querySelector("#close-episode-popup").addEventListener("click", () => {
+    document.body.removeChild(popup);
+  });
+  popup
+    .querySelector("#cancel-episode-update")
+    .addEventListener("click", () => {
+      document.body.removeChild(popup);
+    });
+
+  // Manual guest entry
+  const manualGuestField = document.querySelector(".manual-guest-field");
+  manualGuestField.addEventListener("click", () => {
+    showManualGuestPopup(updGuestSelect);
+  });
+
+  // Update episode form submission
+  popup
+    .querySelector("#update-episode-form")
+    .addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const updatedData = {
+        title: document.getElementById("upd-episode-title").value.trim(),
+        description: document
+          .getElementById("upd-episode-description")
+          .value.trim(),
+        publishDate: document.getElementById("upd-publish-date").value,
+        duration: document.getElementById("upd-duration").value,
+        guestId: document.getElementById("upd-guest-id").value, // value from select
+        status: document.getElementById("upd-status").value.trim()
+      };
+      Object.keys(updatedData).forEach((key) => {
+        if (!updatedData[key]) delete updatedData[key];
+      });
+      try {
+        const response = await fetch(`/update_episodes/${episode._id}`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(updatedData)
+        });
+        const result = await response.json();
+        if (response.ok) {
+          showNotification(
+            "Success",
+            "Episode updated successfully!",
+            "success"
+          );
+          document.body.removeChild(popup);
+          renderPodcastList();
+        } else {
+          showNotification("Error", result.error || "Update failed", "error");
+        }
+      } catch (error) {
+        showNotification("Error", "Failed to update episode.", "error");
       }
     });
 }
