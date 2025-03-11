@@ -11,11 +11,12 @@ from flask import (
 from werkzeug.security import check_password_hash, generate_password_hash
 from backend.database.mongo_connection import collection
 from backend.services.authService import validate_password, validate_email
+from backend.repository.account_repository import AccountRepository
 import os
 import uuid
 from datetime import datetime
 
-from backend.services.accountsService import create_account
+account_repo = AccountRepository()
 
 auth_bp = Blueprint("auth_bp", __name__)
 
@@ -82,7 +83,6 @@ def logout_user():
 def register_page():
     return render_template("register/register.html")
 
-
 @auth_bp.route("/register", methods=["POST"])
 def register_submit():
     print("🔍 Received a POST request at /register")
@@ -119,6 +119,7 @@ def register_submit():
             print("⚠️ Email already registered:", email)
             return jsonify({"error": "Email already registered."}), 409
 
+        # Create User Document
         user_id = str(uuid.uuid4())
         user_document = {
             "_id": user_id,
@@ -130,16 +131,19 @@ def register_submit():
         print("📝 Inserting user into database:", user_document)
         collection.database.Users.insert_one(user_document)
 
+        # Create Account Data, passing it to the AccountRepository
         account_data = {
             "userId": user_id,
             "email": email,
             "companyName": data.get("companyName", ""),
             "isCompany": data.get("isCompany", False),
-            "ownerId": user_id,
         }
 
-        account_response, status_code = create_account(account_data)
+        # Create the account after user is created
+        account_repo = AccountRepository()  
+        account_response, status_code = account_repo.create_account(account_data)
 
+        # If account creation fails, return an error response
         if status_code != 201:
             return jsonify({"error": "Failed to create account", "details": account_response}), 500
 

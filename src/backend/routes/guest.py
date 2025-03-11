@@ -7,8 +7,10 @@ import uuid
 
 guest_bp = Blueprint("guest_bp", __name__)
 
+
 #SHOULD ONLY BE USED FOR SPECIFIC DATA CRUD OPERATIONS
 #EXTRA FUNCTIONALITY BESIDES CRUD OPERATIONS SHOULD BE IN SERVICES
+
 
 @guest_bp.route("/add_guests", methods=["POST"])
 def add_guest():
@@ -42,7 +44,6 @@ def add_guest():
 
         guest_item = {
             "_id": guest_id,
-            "id": guest_id,  # Assigned generated guest_id to id field
             "podcastId": guest_data["podcastId"],
             "name": guest_data["name"].strip(),
             "image": guest_data.get("image", ""),
@@ -53,7 +54,7 @@ def add_guest():
             "linkedin": guest_data.get("linkedin", "").strip(),
             "twitter": guest_data.get("twitter", "").strip(),
             "areasOfInterest": guest_data.get("areasOfInterest", []),
-            "status": "scheduled",
+            "status": "Pending",
             "scheduled": 0,
             "completed": 0,
             "created_at": datetime.now(timezone.utc),
@@ -74,7 +75,9 @@ def add_guest():
 
 
 
+
 # In guest.py, update the get_guests route to return all guests for the logged-in user
+
 @guest_bp.route("/get_guests", methods=["GET"])
 def get_guests():
     user_id = session.get("user_id")
@@ -84,6 +87,21 @@ def get_guests():
     guests_cursor = collection.database.Guests.find({"user_id": user_id})
     guest_list = []
     for guest in guests_cursor:
+
+        guest_list.append(
+            {
+                "id": str(guest.get("_id")),
+                "name": guest.get("name"),
+                "image": guest.get("image"),
+                "bio": guest.get("bio"),
+                "tags": guest.get("tags", []),
+                "email": guest.get("email"),
+                "linkedin": guest.get("linkedin"),
+                "twitter": guest.get("twitter"),
+                "areasOfInterest": guest.get("areasOfInterest", []),
+            }
+        )
+
         guest_list.append({
             "id": str(guest.get("_id")),
             "name": guest.get("name"),
@@ -96,6 +114,7 @@ def get_guests():
             "areasOfInterest": guest.get("areasOfInterest", []),
             "podcastId": guest.get("podcastId"),
         })
+
 
     return jsonify({"guests": guest_list})
 

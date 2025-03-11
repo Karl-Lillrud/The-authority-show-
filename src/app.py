@@ -19,7 +19,8 @@ from backend.routes.episode import episode_bp
 from backend.routes.podprofile import podprofile_bp  # Import the podprofile blueprint
 from backend.routes.frontend import frontend_bp  # Import the frontend blueprint
 from backend.routes.guest_to_eposide import guesttoepisode_bp
-from backend.routes.credits import credits_bp
+from backend.routes.credits import credits_bp  # Resolved conflict by adding credits_bp
+# from backend.routes.transcription import transcription_bp  # This remains commented
 from dotenv import load_dotenv
 from backend.utils import venvupdate
 from backend.routes.user import user_bp
@@ -43,7 +44,7 @@ CORS(
     resources={
         r"/*": {
             "origins": [
-                "https://devapp.podmanager.ai"  # Test Branch (testMain)
+                "https://devapp.podmanager.ai",  # Test Branch (testMain)
                 "https://app.podmanager.ai",  # Live branch (Main)
                 "http://127.0.0.1:8000",  # Localhost
             ]
@@ -63,19 +64,18 @@ app.register_blueprint(dashboard_bp)
 app.register_blueprint(pod_management_bp)
 app.register_blueprint(podtask_bp)
 app.register_blueprint(team_bp)
-app.register_blueprint(
-    guest_bp
-)  # Ensure this line is present and has the correct prefix
+app.register_blueprint(guest_bp)  # Ensure this line is present and has the correct prefix
 app.register_blueprint(account_bp)
 app.register_blueprint(usertoteam_bp)
 app.register_blueprint(invitation_bp)
 app.register_blueprint(google_calendar_bp)
 app.register_blueprint(episode_bp)
-app.register_blueprint(credits_bp)
+app.register_blueprint(credits_bp)  # Register the credits blueprint
 app.register_blueprint(podprofile_bp)
 app.register_blueprint(frontend_bp)
 app.register_blueprint(guesttoepisode_bp)
-
+# app.register_blueprint(transcription_bp)  # This remains commented
+# Set the application environment (defaults to production)
 APP_ENV = os.getenv("APP_ENV", "production")
 API_BASE_URL = os.getenv("API_BASE_URL")
 
