@@ -1,0 +1,32 @@
+.container {
+    margin-bottom: 30px;
+}
+
+h2 {
+    font-size: 2rem;
+    margin-bottom: 10px;
+}
+
+.podcast-section {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 20px;
+}
+
+.podcast-section .item {
+    width: calc(33% - 20px);
+    background-color: #f5f5f5;
+    padding: 15px;
+    border-radius: 8px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.podcast-section .item h3 {
+    font-size: 1.2rem;
+    margin-bottom: 10px;
+}
+
+.podcast-section .item p {
+    font-size: 1rem;
+    color: #555;
+}
