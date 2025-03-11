@@ -10,10 +10,6 @@
     />
   </head>
   <body>
-    <div class="logo-container">
-      <img src="{{ url_for('static', filename='images/PodManagerLogo.png') }}" alt="PodManager Logo"/>
-    </div>
-   
     <header>
       <div class="header-container">
         <button
@@ -23,14 +19,41 @@
         >
           🌙
         </button>
+        <div class="credits-container hidden">
+          <img
+            src="{{ url_for('static', filename='images/Coins.png') }}"
+            alt="Coins"
+            class="coins"
+          />
+          <span class="credits">3500</span>
+        </div>
       </div>
     </header>
     <input type="hidden" id="loggedInUserEmail" value="{{ user_email }}" />
     <main>
+      <!-- Logo Container -->
+      <div class="logo-container">
+        <img
+          src="{{ url_for('static', filename='images/PodManagerLogo.png') }}"
+          alt="PodManager Logo"
+        />
+      </div>
       <!-- Pod Name Section -->
       <div class="container" id="pod-name-section">
         <h1 class="fancy-heading">POD INFO</h1>
         <form id="podNameForm">
+          <div
+            class="help-container"
+            style="text-align: right; margin-bottom: 10px"
+          >
+            <button class="help-button">?</button>
+            <span class="help-text"
+              >To find your podcast's RSS feed URL, log in to your podcast
+              hosting platform, navigate to your podcast settings or
+              distribution options, and look for the "RSS Feed" section and
+              paste that URL here.</span
+            >
+          </div>
           <div class="form-group">
             <label for="podRss">RSS</label>
             <input type="url" id="podRss" name="podRss" />
@@ -39,39 +62,40 @@
             <label for="podName">Podcast's Name</label>
             <input type="text" id="podName" name="podName" required />
           </div>
-          <button type="button" class="button-secondary" id="skipToDashboard">
+          <button type="button" class="button-secondary " id="skipToDashboard">
             Skip
           </button>
           <button type="button" class="button-primary" id="goToEmailSection">
             Next
           </button>
-          <div class="help-container">
-            <button class="help-button">?</button>
-            <span class="help-text">To find your podcast's RSS feed URL, log in to your podcast hosting platform, navigate to your podcast settings or distribution options, and look for the "RSS Feed" section and paste that URL here.</span>
-        </div>
-        
         </form>
-       
       </div>
 
-        <!-- Email Section -->
-        <div class="container hidden" id="email-section">
-          <h1 class="fancy-heading">Welcome to PodManager.ai!</h1>
-          <div class="success-message">
-            <p>
-              🚀 You're In! 🚀<br /><br />
-
-              You've officially secured a spot in the Beta Tester queue! 🎉
-              Check your email now to get a sneak peek at what's coming your way
-              soon. Big things are on the horizon—stay tuned! 🔥✨
-            </p>
-          </div>
-        </div>
-      </main>
-    </div>
+      <!-- Email Section -->
+      <div class="container hidden" id="email-section">
+        <h1 class="fancy-heading">Welcome to PodManager.ai!</h1>
+        <div class="success-message">
+          <p>
+            🎉 Congratulations!<br><br>
+            Your spot in the Beta Tester queue is locked in! Get ready for your exclusive sneak peek...<br><br> 
+            💰 To kick things off, we’ve added 3,500 Credits to your account!<br><br>
+            PodManager.ai will revolutionize your podcasting with AI-powered workflow automation, seamless guest management, and faster episode production- so you can focus on creating amazing content!
+            <br><br>
+            ✨ Check your email right now for more exciting features!
+          </p>
+      </div>
+    </main>
+    <script
+      type="module"
+      src="{{ url_for('static', filename='requests/podcastRequests.js') }}"
+    ></script>
     <script
       type="module"
       src="{{ url_for('static', filename='js/podprofile.js') }}"
+    ></script>
+    <script
+      src="https://unpkg.com/lazysizes@5.3.2/lazysizes.min.js"
+      async
     ></script>
   </body>
 </html>
