@@ -342,22 +342,6 @@ body.dark-mode .help-button {
   }
 }
 
-/* Animation for Form Transitions */
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-    transform: translateY(20px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-.container {
-  animation: fadeIn 0.5s ease-out;
-}
-
 #email-section {
   padding: var(--spacing-xl);
   font-size: 1.1rem; /* Slightly larger text */
@@ -368,8 +352,4 @@ body.dark-mode .help-button {
   line-height: 1.8;
   text-align: center;
   font-size: 1.2rem; /* Slightly larger text */
-}
-
-#pod-name-section {
-  transform: translateY(-1cm); /* Move up by 1 cm */
 }
