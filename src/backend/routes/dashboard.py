@@ -82,3 +82,9 @@ def addmember():
     if not g.user_id:
         return redirect(url_for("signin_bp.signin"))  # Updated endpoint
     return render_template("team/addmember.html")
+
+@dashboard_bp.route('/landingpage', methods=['GET'])
+def landingpage():
+    if not g.user_id:
+        return redirect(url_for('signin_bp.signin'))
+    return render_template('landingpage/landingpage.html')

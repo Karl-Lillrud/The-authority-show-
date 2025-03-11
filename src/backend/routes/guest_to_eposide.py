@@ -2,7 +2,7 @@ from flask import request, jsonify, Blueprint, g
 from backend.database.mongo_connection import collection, database
 from datetime import datetime, timezone
 import uuid
-from backend.services.osint_gpt import get_osint_info, create_podcast_scripts,text_to_speech
+
 
 guesttoepisode_bp = Blueprint("guesttoepisode_bp", __name__)
 
@@ -117,17 +117,3 @@ def assign_to_active_podcast():
 
     return jsonify({"message": f"Guest {guest_id} is now active in podcast {podcast_id}."}), 200
 
-
-@guesttoepisode_bp.route('/api/osint', methods=['GET'])
-def osint_route():
-    person_name = request.args.get('name')
-    osint_info = get_osint_info(person_name)
-    return jsonify({"data": osint_info})
-
-@guesttoepisode_bp.route('/api/podcast', methods=['GET'])
-def podcast_route():
-    person_name = request.args.get('name')
-    osint_info = get_osint_info(person_name)
-    script = create_podcast_scripts(osint_info, person_name)
-    text_to_speech(script)
-    return jsonify({"message": "Podcast audio generated successfully!"})

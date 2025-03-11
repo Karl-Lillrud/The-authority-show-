@@ -5,10 +5,15 @@
     <img src="{{ url_for('static', filename='images/PodManagerLogo.png') }}" alt="PodManager Logo" />
   </div>
   <nav class="header-nav">
+    <a href="{{ url_for('dashboard_bp.landingpage') }}" >
+      Landing Page
+    </a>
     <select class="form-control" name="podcastId" id="headerPodcastDropdown" required>
       <option value="">Select a Podcast</option>
       <!-- Options will be populated dynamically -->
     </select>
+    
+    
     <div class="menu-toggle" onclick="toggleMenu()">
       <span></span>
       <span></span>
