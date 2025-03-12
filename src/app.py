@@ -19,10 +19,15 @@ from backend.routes.podprofile import podprofile_bp  # Import the podprofile blu
 from backend.routes.frontend import frontend_bp  # Import the frontend blueprint
 from backend.routes.guest_to_eposide import guesttoepisode_bp
 from backend.routes.guest_form import guest_form_bp  # Import the guest_form blueprint
-#from backend.routes.transcription import transcription_bp
+# from backend.routes.transcription import transcription_bp
+from backend.routes.landingpage import landingpage_bp
 from dotenv import load_dotenv
 from backend.utils import venvupdate
+from backend.database.mongo_connection import collection
+from backend.utils.email_utils import send_email
+from backend.routes.Mailing_list import Mailing_list_bp
 from backend.routes.user import user_bp
+
 
 if os.getenv("SKIP_VENV_UPDATE", "false").lower() not in ("true", "1", "yes"):
     venvupdate.update_venv_and_requirements()
@@ -37,6 +42,8 @@ static_folder = os.path.join(
 )
 
 app = Flask(__name__, template_folder=template_folder, static_folder=static_folder)
+
+
 
 CORS(
     app,
@@ -64,6 +71,7 @@ app.register_blueprint(dashboard_bp)
 app.register_blueprint(pod_management_bp)
 app.register_blueprint(podtask_bp)
 app.register_blueprint(team_bp)
+app.register_blueprint(Mailing_list_bp)
 app.register_blueprint(guest_bp)  # Ensure this line is present and has the correct prefix
 app.register_blueprint(account_bp)
 app.register_blueprint(usertoteam_bp)
@@ -73,8 +81,10 @@ app.register_blueprint(episode_bp)
 app.register_blueprint(podprofile_bp)  # Register the podprofile blueprint
 app.register_blueprint(frontend_bp)  # Register the frontend blueprint
 app.register_blueprint(guesttoepisode_bp)
+app.register_blueprint(guest_form_bp, url_prefix="/guest-form")  # Register the guest_form blueprint with URL prefix
+# app.register_blueprint(transcription_bp)
 app.register_blueprint(guest_form_bp, url_prefix='/guest-form')  # Register the guest_form blueprint with URL prefix
-#app.register_blueprint(transcription_bp)
+app.register_blueprint(landingpage_bp)
 
 # Set the application environment (defaults to production)
 APP_ENV = os.getenv("APP_ENV", "production")
@@ -97,7 +107,6 @@ logger.info(f"APP_ENV: {APP_ENV}")
 def load_user():
     g.user_id = session.get("user_id")
     logger.info(f"Request to {request.path} by user {g.user_id}")
-
 
 # Run the app
 if __name__ == "__main__":
