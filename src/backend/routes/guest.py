@@ -85,26 +85,35 @@ def get_guests():
     if not g.user_id:
         return jsonify({"error": "Unauthorized"}), 401
 
-    # Fetch guests for the logged-in user
-    guests_cursor = collection.database.Guests.find({"user_id": g.user_id})
-    guest_list = []
-    for guest in guests_cursor:
-        guest_list.append(
-            {
-                "id": str(guest.get("_id")),
-                "episodeId": guest.get("episodeId"),  # Correctly using episodeId
-                "name": guest.get("name"),
-                "image": guest.get("image"),
-                "bio": guest.get("bio"),
-                "tags": guest.get("tags", []),
-                "email": guest.get("email"),
-                "linkedin": guest.get("linkedin"),
-                "twitter": guest.get("twitter"),
-                "areasOfInterest": guest.get("areasOfInterest", []),
-            }
-        )
+    try:
+        # Fetch guests for the logged-in user from the database
+        guests_cursor = collection.database.Guests.find({"user_id": g.user_id}, {"_id": 1, "episodeId": 1, "name": 1, "image": 1, "bio": 1, "tags": 1, "email": 1, "linkedin": 1, "twitter": 1, "areasOfInterest": 1})
+        
+        # Prepare the guest list with necessary fields
+        guest_list = []
+        for guest in guests_cursor:
+            guest_list.append(
+                {
+                    "id": str(guest.get("_id")),
+                    "episodeId": guest.get("episodeId", None),  # Default to None if episodeId is missing
+                    "name": guest.get("name", "N/A"),  # Default to 'N/A' if name is missing
+                    "image": guest.get("image", ""),  # Default to empty string if image is missing
+                    "bio": guest.get("bio", ""),
+                    "tags": guest.get("tags", []),
+                    "email": guest.get("email", ""),
+                    "linkedin": guest.get("linkedin", ""),
+                    "twitter": guest.get("twitter", ""),
+                    "areasOfInterest": guest.get("areasOfInterest", []),
+                }
+            )
 
-    return jsonify({"message": "Guests fetched successfully", "guests": guest_list})
+        # Return the list of guests with a success message
+        return jsonify({"message": "Guests fetched successfully", "guests": guest_list}), 200
+
+    except Exception as e:
+        # Handle any errors during the database query or processing
+        return jsonify({"error": f"An error occurred while fetching guests: {str(e)}"}), 500
+
 
 
 @guest_bp.route("/edit_guests/<guest_id>", methods=["PUT"])
@@ -188,3 +197,38 @@ def delete_guest(guest_id):
     except Exception as e:
         print(f"❌ ERROR: {e}")
         return jsonify({"error": f"Failed to delete guest: {str(e)}"}), 500
+
+@guest_bp.route("/get_guests_by_episode/<episode_id>", methods=["GET"])
+def get_guests_by_episode(episode_id):
+    if not g.user_id:
+        return jsonify({"error": "Unauthorized"}), 401
+
+    try:
+        # Fetch guests for the specific episode
+        guests_cursor = collection.database.Guests.find({"episodeId": episode_id})
+        guest_list = []
+        for guest in guests_cursor:
+            guest_list.append(
+                {
+                    "id": str(guest.get("_id")),
+                    "episodeId": guest.get("episodeId"),
+                    "name": guest.get("name"),
+                    "image": guest.get("image"),
+                    "bio": guest.get("bio"),
+                    "tags": guest.get("tags", []),
+                    "email": guest.get("email"),
+                    "linkedin": guest.get("linkedin"),
+                    "twitter": guest.get("twitter"),
+                    "areasOfInterest": guest.get("areasOfInterest", []),
+                }
+            )
+
+        if not guest_list:
+            return jsonify({"message": "No guests found for this episode"}), 404
+
+        return jsonify({"message": "Guests fetched successfully", "guests": guest_list})
+
+    except Exception as e:
+        logger.exception("❌ ERROR: Failed to fetch guests for episode")
+        return jsonify({"error": f"Failed to fetch guests: {str(e)}"}), 500
+
