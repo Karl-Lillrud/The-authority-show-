@@ -9,7 +9,7 @@
       Landing Page
     </a>
     <select class="form-control" name="podcastId" id="headerPodcastDropdown" required>
-      <option value="">Select a Podcast</option>
+      <option value="" disabled selected>Select a Podcast</option> <!-- Placeholder option -->
       <!-- Options will be populated dynamically -->
     </select>
     
@@ -25,7 +25,7 @@
       <a href="{{ url_for('dashboard_bp.podcastmanagement') }}">Podcast Management</a>
       <a href="{{ url_for('dashboard_bp.team') }}">Team Members</a>
       <a href="{{ url_for('dashboard_bp.guest') }}">Guest View</a>
-      <a href="{{ url_for('signin_bp.signin') }}" id="logout-link">Log out</a>
+      <a href="{{ url_for('auth_bp.signin') }}" id="logout-link">Log out</a>
     </div>
   </nav>
 </header>

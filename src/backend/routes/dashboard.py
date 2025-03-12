@@ -8,7 +8,7 @@ dashboard_bp = Blueprint("dashboard_bp", __name__)
 @dashboard_bp.route("/dashboard", methods=["GET"])
 def dashboard():
     if not g.user_id:
-        return redirect(url_for("signin_bp.signin"))  # Updated endpoint
+        return redirect(url_for("auth_bp.signin"))  # Updated endpoint
     return render_template("dashboard/dashboard.html")
 
 
@@ -16,7 +16,7 @@ def dashboard():
 @dashboard_bp.route("/homepage", methods=["GET"])
 def homepage():
     if not g.user_id:
-        return redirect(url_for("signin_bp.signin"))  # Updated endpoint
+        return redirect(url_for("auth_bp.signin"))  # Updated endpoint
 
     user_id = str(g.user_id)
     podcasts = list(collection.database.Podcast.find({"userid": user_id}))
@@ -31,7 +31,7 @@ def homepage():
 @dashboard_bp.route("/settings", methods=["GET"])
 def settings():
     if not g.user_id:
-        return redirect(url_for("signin_bp.signin"))  # Updated endpoint
+        return redirect(url_for("auth_bp.signin"))  # Updated endpoint
 
     user = collection.find_one({"_id": g.user_id})
     email = user.get("email", "") if user else ""
@@ -44,7 +44,7 @@ def settings():
 @dashboard_bp.route("/podcastmanagement", methods=["GET"])
 def podcastmanagement():
     if not g.user_id:
-        return redirect(url_for("signin_bp.signin"))  # Updated endpoint
+        return redirect(url_for("auth_bp.signin"))  # Updated endpoint
     return render_template("dashboard/podcastmanagement.html")
 
 
@@ -52,39 +52,33 @@ def podcastmanagement():
 @dashboard_bp.route("/taskmanagement", methods=["GET"])
 def taskmanagement():
     if not g.user_id:
-        return redirect(url_for("signin_bp.signin"))  # Updated endpoint
+        return redirect(url_for("auth_bp.signin"))  # Updated endpoint
     return render_template("dashboard/taskmanagement.html")
 
 
 @dashboard_bp.route("/podprofile", methods=["GET", "POST"])
 def podprofile():
     if not g.user_id:
-        return redirect(url_for("signin_bp.signin"))  # Updated endpoint
+        return redirect(url_for("auth_bp.signin"))  # Updated endpoint
     return render_template("podprofile/podprofile.html")
 
 
 @dashboard_bp.route("/team", methods=["GET", "POST"])
 def team():
     if not g.user_id:
-        return redirect(url_for("signin_bp.signin"))  # Updated endpoint
+        return redirect(url_for("auth_bp.signin"))  # Updated endpoint
     return render_template("team/team.html")
 
 
 @dashboard_bp.route("/guest", methods=["GET", "POST"])
 def guest():
     if not g.user_id:
-        return redirect(url_for("signin_bp.signin"))  # Updated endpoint
+        return redirect(url_for("auth_bp.signin"))  # Updated endpoint
     return render_template("guest/guest.html")
 
 
 @dashboard_bp.route("/addmember", methods=["GET"])
 def addmember():
     if not g.user_id:
-        return redirect(url_for("signin_bp.signin"))  # Updated endpoint
+        return redirect(url_for("auth_bp.signin"))  # Updated endpoint
     return render_template("team/addmember.html")
-
-@dashboard_bp.route('/landingpage', methods=['GET'])
-def landingpage():
-    if not g.user_id:
-        return redirect(url_for('signin_bp.signin'))
-    return render_template('landingpage/landingpage.html')

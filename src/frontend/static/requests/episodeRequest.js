@@ -96,3 +96,19 @@ export async function registerEpisode(data) {
     throw error;
   }
 }
+
+export async function fetchEpisodesByPodcast(podcastId) {
+  try {
+    const response = await fetch(`/episodes/by_podcast/${podcastId}`);
+    const data = await response.json();
+    if (response.ok) {
+      return data.episodes;
+    } else {
+      console.error("Failed to fetch episodes:", data.error);
+      alert("Failed to fetch episodes: " + data.error);
+    }
+  } catch (error) {
+    console.error("Error fetching episodes:", error);
+    alert("Failed to fetch episodes.");
+  }
+}

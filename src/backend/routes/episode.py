@@ -8,6 +8,9 @@ from backend.models.episodes import EpisodeSchema
 # Define Blueprint
 episode_bp = Blueprint("episode_bp", __name__)
 
+#SHOULD ONLY BE USED FOR SPECIFIC DATA CRUD OPERATIONS
+#EXTRA FUNCTIONALITY BESIDES CRUD OPERATIONS SHOULD BE IN SERVICES
+
 logger = logging.getLogger(__name__)
 
 
@@ -203,14 +206,28 @@ def update_episode(episode_id):
             return jsonify({"error": "Permission denied"}), 403
 
         update_fields = {
-            "title": data.get("title", existing_episode["title"]).strip(),
-            "description": data.get(
-                "description", existing_episode["description"]
-            ).strip(),
+            "title": (
+                data.get("title", existing_episode["title"]).strip()
+                if data.get("title")
+                else existing_episode["title"]
+            ),
+            "description": (
+                data.get("description", existing_episode["description"]).strip()
+                if data.get("description")
+                else existing_episode["description"]
+            ),
             "publishDate": data.get("publishDate", existing_episode["publishDate"]),
             "duration": data.get("duration", existing_episode["duration"]),
-            "guestId": data.get("guestId", existing_episode["guestId"]).strip(),
-            "status": data.get("status", existing_episode["status"]).strip(),
+            "guestId": (
+                data.get("guestId", existing_episode["guestId"]).strip()
+                if data.get("guestId")
+                else existing_episode["guestId"]
+            ),
+            "status": (
+                data.get("status", existing_episode["status"]).strip()
+                if data.get("status")
+                else existing_episode["status"]
+            ),
             "updated_at": datetime.now(timezone.utc),
         }
 
@@ -261,6 +278,24 @@ def count_episodes_by_guest(guest_id):
 def get_episodes_by_guest(guest_id):
     try:
         episodes = list(database.Episodes.find({"guestId": guest_id}))
+        for episode in episodes:
+            episode["_id"] = str(episode["_id"])
+        return jsonify({"episodes": episodes}), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+@episode_bp.route("/episodes/by_podcast/<podcast_id>", methods=["GET"])
+def get_episodes_by_podcast(podcast_id):
+    if not g.user_id:
+        return jsonify({"error": "Unauthorized"}), 401
+    try:
+        user_id = str(g.user_id)
+        episodes = list(
+            collection.database.Episodes.find(
+                {"podcast_id": podcast_id, "userid": user_id}
+            )
+        )
         for episode in episodes:
             episode["_id"] = str(episode["_id"])
         return jsonify({"episodes": episodes}), 200

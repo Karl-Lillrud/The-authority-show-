@@ -127,7 +127,7 @@ def reset_password():
         jsonify(
             {
                 "message": "Password updated successfully.",
-                "redirect_url": url_for("signin_bp.signin"),
+                "redirect_url": url_for("auth_bp.signin"),
             }
         ),
         200,
