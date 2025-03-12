@@ -206,7 +206,7 @@ function showManualGuestPopup(selectElement) {
     });
 }
 
-// Updated showAddGuestPopup function:
+// Updated showAddGuestPopup function to clear the episode dropdown before populating
 async function showAddGuestPopup() {
   const popup = document.getElementById("guest-popup");
   popup.style.display = "flex";
@@ -227,11 +227,15 @@ async function showAddGuestPopup() {
     console.error("Error fetching podcasts:", error);
   }
 
+  // Remove existing event listener before adding a new one
+  const episodeSelect = document.getElementById("episode-id");
+  const newPodcastSelect = podcastSelect.cloneNode(true);
+  podcastSelect.parentNode.replaceChild(newPodcastSelect, podcastSelect);
+
   // When a podcast is selected, fetch episodes for that podcast using fetchEpisodesByPodcast
-  podcastSelect.addEventListener("change", async () => {
-    const selectedPodcast = podcastSelect.value;
-    const episodeSelect = document.getElementById("episode-id");
-    episodeSelect.innerHTML = "";
+  newPodcastSelect.addEventListener("change", async () => {
+    const selectedPodcast = newPodcastSelect.value;
+    episodeSelect.innerHTML = ""; // Clear the dropdown before populating
     try {
       const episodes = await fetchEpisodesByPodcast(selectedPodcast);
       episodes.forEach((episode) => {
@@ -245,7 +249,7 @@ async function showAddGuestPopup() {
     }
   });
   // Trigger the change event to populate episodes initially
-  podcastSelect.dispatchEvent(new Event("change"));
+  newPodcastSelect.dispatchEvent(new Event("change"));
 }
 
 // Function to close the Add Guest popup
@@ -687,7 +691,7 @@ async function renderPodcastList() {
         <div class="podcast-content">
           <div class="podcast-image" style="background-image: url('${
             podcast.logoUrl
-          }')"></div>
+          }')" data-id="${podcast._id}"></div>
           <div class="podcast-info">
             <div class="podcast-header">
               <div>
@@ -723,8 +727,6 @@ async function renderPodcastList() {
             <p class="podcast-description"><strong>Description: </strong>${
               podcast.description || "No description available."
             }</p>
-            <!-- Container for episodes -->
-            <div class="podcast-episodes"></div>
           </div>
         </div>
         <div class="podcast-footer">
@@ -734,32 +736,15 @@ async function renderPodcastList() {
         </div>`;
       podcastListElement.appendChild(podcastCard);
 
-      // Fetch and display episodes for this podcast with heading "Episodes:"
-      fetchEpisodesByPodcast(podcast._id).then((episodes) => {
-        if (episodes && episodes.length) {
-          const epContainer = podcastCard.querySelector(".podcast-episodes");
-          const epHeading = document.createElement("h4");
-          epHeading.textContent = "Episodes:";
-          epContainer.appendChild(epHeading);
-
-          // Always create a flex container for episode labels (dropdown removed)
-          const epList = document.createElement("div");
-          epList.style.display = "flex";
-          epList.style.flexDirection = "row";
-          epList.style.gap = "1rem";
-          episodes.forEach((ep) => {
-            const epItem = document.createElement("div");
-            epItem.textContent = ep.title;
-            epItem.classList.add("episode-label"); // added label class
-            // Attach click event to open the popup for editing
-            epItem.addEventListener("click", () => {
-              showEpisodePopup(ep);
-            });
-            epList.appendChild(epItem);
-          });
-          epContainer.appendChild(epList);
-        }
-      });
+      // Add event listener to the image to view details
+      podcastCard
+        .querySelector(".podcast-image")
+        .addEventListener("click", (e) => {
+          const podcastId = e.target.getAttribute("data-id");
+          if (podcastId) {
+            viewPodcast(podcastId);
+          }
+        });
     });
 
     // Add event listeners for action buttons
@@ -1365,7 +1350,7 @@ function renderEpisodeDetail(episode) {
       console.error("Error fetching guests:", error);
       const errorMsg = document.createElement("p");
       errorMsg.className = "error-message";
-      errorMsg.textContent = "Error loading guests. Please try again later.";
+      errorMsg.textContent = "This episode have no guests.";
       document.getElementById("guests-list").appendChild(errorMsg);
     });
 
