@@ -11,17 +11,21 @@ import logging
 guest_bp = Blueprint("guest_bp", __name__)
 
 
-#SHOULD ONLY BE USED FOR SPECIFIC DATA CRUD OPERATIONS
-#EXTRA FUNCTIONALITY BESIDES CRUD OPERATIONS SHOULD BE IN SERVICES
+# SHOULD ONLY BE USED FOR SPECIFIC DATA CRUD OPERATIONS
+# EXTRA FUNCTIONALITY BESIDES CRUD OPERATIONS SHOULD BE IN SERVICES
+
 
 @guest_bp.route("/add_guests", methods=["POST"])
 def add_guest():
-    """Adds a guest to the system without linking them to an episode initially."""
+    """Adds a guest to the system and optionally links them to an episode."""
     if not g.user_id:
         return jsonify({"error": "Unauthorized"}), 401
 
     if request.content_type != "application/json":
-        return jsonify({"error": "Invalid Content-Type. Expected application/json"}), 415
+        return (
+            jsonify({"error": "Invalid Content-Type. Expected application/json"}),
+            415,
+        )
 
     try:
         data = request.get_json()
@@ -36,10 +40,13 @@ def add_guest():
 
         guest_id = str(uuid.uuid4())
 
+        # Get the episodeId if provided
+        episode_id = data.get("episodeId")
+
         # Construct guest document
         guest_item = {
             "_id": guest_id,
-            "episodeId": None,  # Initially not linked to any episode
+            "episodeId": episode_id,  # Link to the episode if provided
             "name": guest_data["name"].strip(),
             "image": guest_data.get("image", ""),
             "tags": guest_data.get("tags", []),
@@ -53,26 +60,25 @@ def add_guest():
             "scheduled": 0,
             "completed": 0,
             "created_at": datetime.now(timezone.utc),
-            "user_id": g.user_id  # Storing the logged-in user ID
+            "user_id": g.user_id,  # Storing the logged-in user ID
         }
 
         # Insert guest into the database
         collection.database.Guests.insert_one(guest_item)
         logger.info("✅ Guest added successfully with ID: %s", guest_id)
 
-        return jsonify({
-            "message": "Guest added successfully",
-            "guest_id": guest_id
-        }), 201
+        return (
+            jsonify({"message": "Guest added successfully", "guest_id": guest_id}),
+            201,
+        )
 
     except Exception as e:
         logger.exception("❌ ERROR: Failed to add guest")
         return jsonify({"error": f"Failed to add guest: {str(e)}"}), 500
 
 
-
-
 # In guest.py, update the get_guests route to return all guests for the logged-in user
+
 
 @guest_bp.route("/get_guests", methods=["GET"])
 def get_guests():
@@ -83,25 +89,22 @@ def get_guests():
     guests_cursor = collection.database.Guests.find({"user_id": g.user_id})
     guest_list = []
     for guest in guests_cursor:
-        guest_list.append({
-            "id": str(guest.get("_id")),
-            "episodeId": guest.get("episodeId"),  # Correctly using episodeId
-            "name": guest.get("name"),
-            "image": guest.get("image"),
-            "bio": guest.get("bio"),
-            "tags": guest.get("tags", []),
-            "email": guest.get("email"),
-            "linkedin": guest.get("linkedin"),
-            "twitter": guest.get("twitter"),
-            "areasOfInterest": guest.get("areasOfInterest", []),
-        })
+        guest_list.append(
+            {
+                "id": str(guest.get("_id")),
+                "episodeId": guest.get("episodeId"),  # Correctly using episodeId
+                "name": guest.get("name"),
+                "image": guest.get("image"),
+                "bio": guest.get("bio"),
+                "tags": guest.get("tags", []),
+                "email": guest.get("email"),
+                "linkedin": guest.get("linkedin"),
+                "twitter": guest.get("twitter"),
+                "areasOfInterest": guest.get("areasOfInterest", []),
+            }
+        )
 
-    return jsonify({
-        "message": "Guests fetched successfully",
-        "guests": guest_list
-    })
-
-
+    return jsonify({"message": "Guests fetched successfully", "guests": guest_list})
 
 
 @guest_bp.route("/edit_guests/<guest_id>", methods=["PUT"])
@@ -111,7 +114,10 @@ def edit_guest(guest_id):
         return jsonify({"error": "Unauthorized"}), 401
 
     if request.content_type != "application/json":
-        return jsonify({"error": "Invalid Content-Type. Expected application/json"}), 415
+        return (
+            jsonify({"error": "Invalid Content-Type. Expected application/json"}),
+            415,
+        )
 
     try:
         data = request.get_json()
@@ -155,7 +161,6 @@ def edit_guest(guest_id):
     except Exception as e:
         logger.exception("❌ ERROR: Failed to update guest")
         return jsonify({"error": f"Failed to update guest: {str(e)}"}), 500
-
 
 
 @guest_bp.route("/delete_guests/<guest_id>", methods=["DELETE"])

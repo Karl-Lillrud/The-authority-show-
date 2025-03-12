@@ -298,7 +298,7 @@ document
     if (guestName && guestEmail && episodeId) {
       try {
         const guest = await addGuestRequest({
-          episodeId,
+          episodeId, // Ensure episodeId is correctly set
           name: guestName,
           description: guestDescription,
           tags: guestTags,
