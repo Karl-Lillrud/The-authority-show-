@@ -8,8 +8,9 @@ import uuid
 # Define Blueprint
 team_bp = Blueprint("team_bp", __name__)
 
-#SHOULD ONLY BE USED FOR SPECIFIC DATA CRUD OPERATIONS
-#EXTRA FUNCTIONALITY BESIDES CRUD OPERATIONS SHOULD BE IN SERVICES
+# SHOULD ONLY BE USED FOR SPECIFIC DATA CRUD OPERATIONS
+# EXTRA FUNCTIONALITY BESIDES CRUD OPERATIONS SHOULD BE IN SERVICES
+
 
 @team_bp.route("/add_teams", methods=["POST"])
 def add_team():
@@ -20,7 +21,9 @@ def add_team():
         # Validate with TeamSchema
         try:
             team_schema = TeamSchema()
-            validated_data = team_schema.load(data)  # Validate and deserialize team data
+            validated_data = team_schema.load(
+                data
+            )  # Validate and deserialize team data
         except ValidationError as err:
             return jsonify({"error": "Invalid data", "details": err.messages}), 400
 
@@ -37,6 +40,7 @@ def add_team():
             "joinedAt": validated_data.get("joinedAt", datetime.now(timezone.utc)),
             "lastActive": validated_data.get("lastActive", datetime.now(timezone.utc)),
             "members": [],  # Initially no members, we'll add the creator first
+            "podcastId": validated_data.get("podcastId"),  # Include podcast ID
         }
 
         # Insert the team into the Teams collection
@@ -82,6 +86,7 @@ def add_team():
         print(f"❌ ERROR: {e}")
         return jsonify({"error": f"Failed to add team: {str(e)}"}), 500
 
+
 @team_bp.route("/get_teams", methods=["GET"])
 def get_teams():
     if not hasattr(g, "user_id") or not g.user_id:
@@ -91,14 +96,24 @@ def get_teams():
         user_id = str(g.user_id)
 
         # Get teams created by the user
-        created_teams = list(collection.database.Teams.find({"createdBy": user_id}, {"created_at": 0}))
+        created_teams = list(
+            collection.database.Teams.find({"createdBy": user_id}, {"created_at": 0})
+        )
 
         # Get teams where the user is a member (from UsersToTeams)
-        user_team_links = list(collection.database.UsersToTeams.find({"userId": user_id}, {"teamId": 1, "_id": 0}))
+        user_team_links = list(
+            collection.database.UsersToTeams.find(
+                {"userId": user_id}, {"teamId": 1, "_id": 0}
+            )
+        )
         joined_team_ids = [ut["teamId"] for ut in user_team_links]
 
         # Fetch those teams if not already included
-        joined_teams = list(collection.database.Teams.find({"_id": {"$in": joined_team_ids}}, {"created_at": 0}))
+        joined_teams = list(
+            collection.database.Teams.find(
+                {"_id": {"$in": joined_team_ids}}, {"created_at": 0}
+            )
+        )
 
         # Merge and remove duplicates
         teams = {str(team["_id"]): team for team in created_teams + joined_teams}
@@ -107,7 +122,9 @@ def get_teams():
             # Fetch all podcasts connected to this team
             podcasts = list(collection.database.Podcasts.find({"teamId": team["_id"]}))
             if podcasts:
-                team["podNames"] = ", ".join([p.get("podName", "N/A") for p in podcasts])
+                team["podNames"] = ", ".join(
+                    [p.get("podName", "N/A") for p in podcasts]
+                )
             else:
                 team["podNames"] = "N/A"
 
@@ -115,6 +132,7 @@ def get_teams():
 
     except Exception as e:
         return jsonify({"error": f"Failed to retrieve teams: {str(e)}"}), 500
+
 
 @team_bp.route("/delete_team/<team_id>", methods=["DELETE"])
 def delete_team(team_id):
@@ -137,16 +155,23 @@ def delete_team(team_id):
 
         # Step 4: Remove the teamId from all podcasts connected to this team
         update_result = collection.database.Podcasts.update_many(
-            {"teamId": team_id},
-            {"$set": {"teamId": None}}
+            {"teamId": team_id}, {"$set": {"teamId": None}}
         )
-        print(f"✅ Removed teamId from {update_result.modified_count} podcasts for team {team_id}")
+        print(
+            f"✅ Removed teamId from {update_result.modified_count} podcasts for team {team_id}"
+        )
 
-        return jsonify({"message": f"Team {team_id} and all members deleted successfully!"}), 200
+        return (
+            jsonify(
+                {"message": f"Team {team_id} and all members deleted successfully!"}
+            ),
+            200,
+        )
 
     except Exception as e:
         print(f"❌ ERROR: {e}")
         return jsonify({"error": f"Failed to delete podcast or team: {str(e)}"}), 500
+
 
 @team_bp.route("/edit_team/<team_id>", methods=["PUT"])
 def edit_team(team_id):

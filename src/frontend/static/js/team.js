@@ -1,4 +1,4 @@
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener("DOMContentLoaded", function () {
   // Helper to fetch podcasts
   async function fetchPodcasts() {
     try {
@@ -13,53 +13,62 @@ document.addEventListener('DOMContentLoaded', function() {
 
   // Update the UI with retrieved teams
   function updateTeamsUI(teams) {
-    let container = document.querySelector('.card-container');
+    let container = document.querySelector(".card-container");
     if (!container) {
-      container = document.createElement('div');
-      container.className = 'card-container';
-      (document.querySelector('main') || document.body).appendChild(container);
+      container = document.createElement("div");
+      container.className = "card-container";
+      (document.querySelector("main") || document.body).appendChild(container);
     }
-    container.innerHTML = '';
+    container.innerHTML = "";
     if (teams.length === 0) {
-      container.innerHTML = '<p>No teams available.</p>';
+      container.innerHTML = "<p>No teams available.</p>";
       return;
     }
-    teams.forEach(team => {
-      const card = document.createElement('div');
-      card.className = 'card';
-      card.setAttribute('data-id', team._id);
+    teams.forEach((team) => {
+      const card = document.createElement("div");
+      card.className = "card";
+      card.setAttribute("data-id", team._id);
       card.innerHTML = `
-        <p><strong>Podcasts:</strong> ${team.podNames || 'N/A'}</p>
+        <p><strong>Podcasts:</strong> ${team.podNames || "N/A"}</p>
         <h4>${team.name}</h4>
         <p><strong>Email:</strong> ${team.email}</p>
-        <p><strong>Description:</strong> ${team.description || ''}</p>
-        <p><strong>Members:</strong> ${team.members.map(m => m.userId).join(", ")}</p>
+        <p><strong>Description:</strong> ${team.description || ""}</p>
+        <p><strong>Members:</strong> ${team.members
+          .map((m) => m.userId)
+          .join(", ")}</p>
       `;
-      card.addEventListener('click', () => showTeamDetailModal(team));
+      card.addEventListener("click", () => showTeamDetailModal(team));
       container.appendChild(card);
     });
   }
 
   // Helper to render assigned podcasts based on original assignments and pending changes.
-  function renderAssignedPodcasts(teamId, originalAssignedPodcasts, pendingPodcastChanges) {
-    const container = document.getElementById('assignedPodcasts');
+  function renderAssignedPodcasts(
+    teamId,
+    originalAssignedPodcasts,
+    pendingPodcastChanges
+  ) {
+    const container = document.getElementById("assignedPodcasts");
     container.innerHTML = "";
     const finalAssignments = {};
-    originalAssignedPodcasts.forEach(p => {
+    originalAssignedPodcasts.forEach((p) => {
       finalAssignments[p._id] = p;
     });
     for (const [podcastId, newTeam] of Object.entries(pendingPodcastChanges)) {
       if (newTeam === teamId) {
         if (!finalAssignments[podcastId]) {
-          finalAssignments[podcastId] = { _id: podcastId, podName: "Pending: " + podcastId };
+          finalAssignments[podcastId] = {
+            _id: podcastId,
+            podName: "Pending: " + podcastId
+          };
         }
       } else if (newTeam === "REMOVE") {
         delete finalAssignments[podcastId];
       }
     }
-    Object.values(finalAssignments).forEach(podcast => {
-      const chip = document.createElement('div');
-      chip.className = 'podcast-chip';
+    Object.values(finalAssignments).forEach((podcast) => {
+      const chip = document.createElement("div");
+      chip.className = "podcast-chip";
       chip.innerHTML = `${podcast.podName} <span class="remove-chip" data-id="${podcast._id}">&times;</span>`;
       container.appendChild(chip);
     });
@@ -67,10 +76,10 @@ document.addEventListener('DOMContentLoaded', function() {
 
   // Helper to populate the podcast dropdown for assignment based on pending changes.
   async function populatePodcastDropdownForTeam(teamId, pendingPodcastChanges) {
-    const dropdown = document.getElementById('podcastAssignmentDropdown');
+    const dropdown = document.getElementById("podcastAssignmentDropdown");
     dropdown.innerHTML = '<option value="">Select Podcast to Add</option>';
     const podcasts = await fetchPodcasts();
-    podcasts.forEach(podcast => {
+    podcasts.forEach((podcast) => {
       let isAssigned = false;
       if (podcast.teamId === teamId) {
         isAssigned = true;
@@ -82,7 +91,7 @@ document.addEventListener('DOMContentLoaded', function() {
         isAssigned = false;
       }
       if (!isAssigned) {
-        const option = document.createElement('option');
+        const option = document.createElement("option");
         option.value = podcast._id;
         option.textContent = podcast.podName;
         dropdown.appendChild(option);
@@ -92,8 +101,8 @@ document.addEventListener('DOMContentLoaded', function() {
 
   // Helper to close modals
   function closeModal(modal) {
-    modal.classList.remove('show');
-    modal.setAttribute('aria-hidden', 'true');
+    modal.classList.remove("show");
+    modal.setAttribute("aria-hidden", "true");
   }
 
   // The team detail modal logic
@@ -104,29 +113,39 @@ document.addEventListener('DOMContentLoaded', function() {
 
     async function initAssignments() {
       const podcasts = await fetchPodcasts();
-      originalAssignedPodcasts = podcasts.filter(p => p.teamId === team._id);
-      renderAssignedPodcasts(team._id, originalAssignedPodcasts, pendingPodcastChanges);
+      originalAssignedPodcasts = podcasts.filter((p) => p.teamId === team._id);
+      renderAssignedPodcasts(
+        team._id,
+        originalAssignedPodcasts,
+        pendingPodcastChanges
+      );
       populatePodcastDropdownForTeam(team._id, pendingPodcastChanges);
     }
     initAssignments();
 
     // Pre-populate team detail modal fields.
-    document.getElementById('detailName').value = team.name;
-    document.getElementById('detailEmail').value = team.email;
-    document.getElementById('detailDescription').value = team.description;
-    document.getElementById('detailMembers').textContent = team.members.map(m => m.userId).join(", ");
+    document.getElementById("detailName").value = team.name;
+    document.getElementById("detailEmail").value = team.email;
+    document.getElementById("detailDescription").value = team.description;
+    document.getElementById("detailMembers").textContent = team.members
+      .map((m) => m.userId)
+      .join(", ");
 
-    const modal = document.getElementById('teamDetailModal');
-    modal.classList.add('show');
-    modal.setAttribute('aria-hidden', 'false');
+    const modal = document.getElementById("teamDetailModal");
+    modal.classList.add("show");
+    modal.setAttribute("aria-hidden", "false");
 
     // Handle podcast addition via dropdown.
-    const dropdown = document.getElementById('podcastAssignmentDropdown');
+    const dropdown = document.getElementById("podcastAssignmentDropdown");
     dropdown.onchange = () => {
       const podcastId = dropdown.value;
       if (podcastId) {
         pendingPodcastChanges[podcastId] = team._id;
-        renderAssignedPodcasts(team._id, originalAssignedPodcasts, pendingPodcastChanges);
+        renderAssignedPodcasts(
+          team._id,
+          originalAssignedPodcasts,
+          pendingPodcastChanges
+        );
         populatePodcastDropdownForTeam(team._id, pendingPodcastChanges);
         dropdown.value = "";
         alert("Podcast addition pending. Press Save to finalize.");
@@ -134,19 +153,23 @@ document.addEventListener('DOMContentLoaded', function() {
     };
 
     // Handle removal of a podcast chip.
-    const assignedContainer = document.getElementById('assignedPodcasts');
+    const assignedContainer = document.getElementById("assignedPodcasts");
     assignedContainer.onclick = (event) => {
-      if (event.target.classList.contains('remove-chip')) {
-        const podcastId = event.target.getAttribute('data-id');
+      if (event.target.classList.contains("remove-chip")) {
+        const podcastId = event.target.getAttribute("data-id");
         pendingPodcastChanges[podcastId] = "REMOVE";
-        renderAssignedPodcasts(team._id, originalAssignedPodcasts, pendingPodcastChanges);
+        renderAssignedPodcasts(
+          team._id,
+          originalAssignedPodcasts,
+          pendingPodcastChanges
+        );
         populatePodcastDropdownForTeam(team._id, pendingPodcastChanges);
         alert("Podcast removal pending. Press Save to finalize.");
       }
     };
 
     // Delete button immediately deletes the team.
-    const deleteBtn = document.getElementById('deleteTeamBtn');
+    const deleteBtn = document.getElementById("deleteTeamBtn");
     deleteBtn.onclick = async () => {
       try {
         const result = await deleteTeamRequest(team._id);
@@ -162,16 +185,22 @@ document.addEventListener('DOMContentLoaded', function() {
     };
 
     // Save button finalizes pending podcast assignment changes and updates team details.
-    const saveBtn = document.getElementById('saveTeamBtn');
+    const saveBtn = document.getElementById("saveTeamBtn");
     saveBtn.onclick = async () => {
       try {
-        for (const [podcastId, newTeam] of Object.entries(pendingPodcastChanges)) {
+        for (const [podcastId, newTeam] of Object.entries(
+          pendingPodcastChanges
+        )) {
           if (newTeam === team._id) {
-            const res = await fetch(`/get_podcasts/${podcastId}`, { method: "GET" });
+            const res = await fetch(`/get_podcasts/${podcastId}`, {
+              method: "GET"
+            });
             const data = await res.json();
             const existingTeamId = data.podcast ? data.podcast.teamId : null;
             if (existingTeamId && existingTeamId !== team._id) {
-              alert(`Podcast "${data.podcast.podName}" is already assigned to another team.`);
+              alert(
+                `Podcast "${data.podcast.podName}" is already assigned to another team.`
+              );
               continue;
             }
             await updatePodcastTeamRequest(podcastId, { teamId: team._id });
@@ -184,13 +213,13 @@ document.addEventListener('DOMContentLoaded', function() {
         alert("Error updating podcast assignments.");
         return;
       }
-  
+
       const payload = {
-        name: document.getElementById('detailName').value,
-        email: document.getElementById('detailEmail').value,
-        description: document.getElementById('detailDescription').value
+        name: document.getElementById("detailName").value,
+        email: document.getElementById("detailEmail").value,
+        description: document.getElementById("detailDescription").value
       };
-  
+
       try {
         const result = await editTeamRequest(team._id, payload);
         alert(result.message || "Team updated successfully!");
@@ -201,10 +230,11 @@ document.addEventListener('DOMContentLoaded', function() {
         console.error("Error editing team:", error);
       }
     };
-  
+
     // Modal close handler.
-    document.getElementById('teamDetailCloseBtn').onclick = () => closeModal(modal);
-    window.addEventListener('click', (event) => {
+    document.getElementById("teamDetailCloseBtn").onclick = () =>
+      closeModal(modal);
+    window.addEventListener("click", (event) => {
       if (event.target === modal) {
         closeModal(modal);
       }
@@ -212,17 +242,17 @@ document.addEventListener('DOMContentLoaded', function() {
   }
 
   // Existing functions for adding a team remain unchanged.
-  getTeamsRequest().then(data => {
+  getTeamsRequest().then((data) => {
     updateTeamsUI(data);
   });
-  
+
   async function populatePodcastDropdown() {
-    const podcastDropdown = document.getElementById('podcastDropdown');
+    const podcastDropdown = document.getElementById("podcastDropdown");
     if (podcastDropdown) {
       try {
         const podcasts = await fetchPodcasts();
-        podcasts.forEach(podcast => {
-          const option = document.createElement('option');
+        podcasts.forEach((podcast) => {
+          const option = document.createElement("option");
           option.value = podcast._id;
           option.textContent = podcast.podName;
           podcastDropdown.appendChild(option);
@@ -233,40 +263,48 @@ document.addEventListener('DOMContentLoaded', function() {
     }
   }
   populatePodcastDropdown();
-  
+
   async function checkPodcastHasTeam(podcastId) {
     const res = await fetch(`/get_podcasts/${podcastId}`, { method: "GET" });
     const data = await res.json();
     return data.podcast && data.podcast.teamId;
   }
-  
-  const addTeamModal = document.getElementById('addTeamModal');
-  const addTeamForm = addTeamModal ? addTeamModal.querySelector('form') : document.querySelector('form');
-  
+
+  const addTeamModal = document.getElementById("addTeamModal");
+  const addTeamForm = addTeamModal
+    ? addTeamModal.querySelector("form")
+    : document.querySelector("form");
+
   if (addTeamForm) {
-    addTeamForm.addEventListener('submit', async function(event) {
+    addTeamForm.addEventListener("submit", async function (event) {
       event.preventDefault();
       const formData = new FormData(addTeamForm);
       const payload = {
-        name: formData.get('name'),
-        email: formData.get('email'),
-        description: formData.get('description')
+        name: formData.get("name"),
+        email: formData.get("email"),
+        description: formData.get("description"),
+        podcastId: formData.get("podcastId") // Include podcast ID
       };
-      const podcastId = formData.get('podcastId');
-      
+      const podcastId = formData.get("podcastId");
+
       const hasTeam = await checkPodcastHasTeam(podcastId);
       if (hasTeam) {
-        alert("This podcast already has a team. You cannot create a new team for it.");
+        alert(
+          "This podcast already has a team. You cannot create a new team for it."
+        );
         return;
       }
-  
+
       try {
         const response = await addTeamRequest(payload);
         const teamId = response.team_id;
         alert("Team successfully created!");
         if (podcastId && teamId) {
           const updatePayload = { teamId: teamId };
-          const updateResponse = await updatePodcastTeamRequest(podcastId, updatePayload);
+          const updateResponse = await updatePodcastTeamRequest(
+            podcastId,
+            updatePayload
+          );
           console.log("Podcast updated:", updateResponse);
         }
         closeModal(addTeamModal);
@@ -277,32 +315,34 @@ document.addEventListener('DOMContentLoaded', function() {
       }
     });
   }
-  
+
   if (addTeamModal) {
-    const openModalBtn = document.getElementById('openModalBtn');
-    const closeButtons = document.querySelectorAll('#modalCloseBtn, #modalCloseBtn2');
-  
+    const openModalBtn = document.getElementById("openModalBtn");
+    const closeButtons = document.querySelectorAll(
+      "#modalCloseBtn, #modalCloseBtn2"
+    );
+
     if (openModalBtn) {
-      openModalBtn.addEventListener('click', () => {
-        addTeamModal.classList.add('show');
-        addTeamModal.setAttribute('aria-hidden', 'false');
+      openModalBtn.addEventListener("click", () => {
+        addTeamModal.classList.add("show");
+        addTeamModal.setAttribute("aria-hidden", "false");
       });
     }
-  
-    closeButtons.forEach(btn => {
-      btn.addEventListener('click', () => {
+
+    closeButtons.forEach((btn) => {
+      btn.addEventListener("click", () => {
         closeModal(addTeamModal);
       });
     });
-  
-    window.addEventListener('click', (event) => {
+
+    window.addEventListener("click", (event) => {
       if (event.target === addTeamModal) {
         closeModal(addTeamModal);
       }
     });
-  
-    window.addEventListener('keydown', (event) => {
-      if (event.key === 'Escape' && addTeamModal.classList.contains('show')) {
+
+    window.addEventListener("keydown", (event) => {
+      if (event.key === "Escape" && addTeamModal.classList.contains("show")) {
         closeModal(addTeamModal);
       }
     });
