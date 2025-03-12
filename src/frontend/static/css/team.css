@@ -125,6 +125,11 @@ header {
   font-size: 0.9rem;
 }
 
+.team-card-body p strong {
+  display: block;
+  margin-bottom: 0.5rem;
+}
+
 .team-card-footer {
   display: flex;
   justify-content: flex-end;

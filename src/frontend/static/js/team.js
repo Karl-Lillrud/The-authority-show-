@@ -38,9 +38,12 @@ document.addEventListener("DOMContentLoaded", function () {
             team.description || "No description available"
           }</p>
           <p><strong>Podcasts:</strong> ${team.podNames || "N/A"}</p>
-          <p><strong>Members:</strong> ${team.members
-            .map((m) => m.email)
-            .join(", ")}</p>
+          <p><strong>Members:</strong></p>
+          <div class="member-chips">
+            ${team.members
+              .map((m) => `<span class="member-chip">${m.email}</span>`)
+              .join("")}
+          </div>
         </div>
         <div class="team-card-footer">
           <button class="btn edit-team-btn">Edit</button>
