@@ -264,10 +264,16 @@ document.addEventListener("DOMContentLoaded", function () {
         )) {
           if (newTeam === team._id) {
             // Podcast selected: update podcast with the teamId
-            await updatePodcastTeamRequest(podcastId, { teamId: team._id });
+            const updateResponse = await updatePodcastTeamRequest(podcastId, {
+              teamId: team._id
+            });
+            console.log("Update podcast response:", updateResponse); // Debugging line
           } else if (newTeam === "REMOVE") {
             // Podcast removal: set teamId to empty
-            await updatePodcastTeamRequest(podcastId, { teamId: "" });
+            const updateResponse = await updatePodcastTeamRequest(podcastId, {
+              teamId: ""
+            });
+            console.log("Update podcast response:", updateResponse); // Debugging line
           }
         }
       } catch (err) {
@@ -294,6 +300,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
       try {
         const result = await editTeamRequest(team._id, payload);
+        console.log("Edit team response:", result); // Debugging line
         alert(result.message || "Team updated successfully!");
         closeModal(modal);
         const teams = await getTeamsRequest();
@@ -356,13 +363,14 @@ document.addEventListener("DOMContentLoaded", function () {
       const podcastId = formData.get("podcastId");
       const payload = {
         name: formData.get("name"),
-        email: formData.get("email"),
+        email: formData.get("email"), // Make email required
         description: formData.get("description"),
         members: members // Include member details
       };
 
       try {
         const response = await addTeamRequest(payload);
+        console.log("Add team response:", response); // Debugging line
         const teamId = response.team_id;
         alert("Team successfully created!");
 
@@ -371,7 +379,7 @@ document.addEventListener("DOMContentLoaded", function () {
           const updateResponse = await updatePodcastTeamRequest(podcastId, {
             teamId: teamId
           });
-          console.log("Podcast updated with teamId:", updateResponse);
+          console.log("Podcast updated with teamId:", updateResponse); // Debugging line
         }
         closeModal(addTeamModal);
         const teams = await getTeamsRequest();
