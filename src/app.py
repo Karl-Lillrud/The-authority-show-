@@ -20,6 +20,7 @@ from backend.routes.frontend import frontend_bp  # Import the frontend blueprint
 from backend.routes.guest_to_eposide import guesttoepisode_bp
 from backend.routes.guest_form import guest_form_bp  # Import the guest_form blueprint
 from backend.routes.auto_publish import auto_publish_bp
+from backend.routes.spotify_oauth import spotify_oauth_bp
 
 #from backend.routes.transcription import transcription_bp
 from dotenv import load_dotenv
@@ -59,6 +60,7 @@ app.config["PREFERRED URL SCHEME"] = "https"
 
 # Register blueprints for different routes
 app.register_blueprint(auth_bp)
+app.register_blueprint(spotify_oauth_bp)
 app.register_blueprint(auto_publish_bp)
 app.register_blueprint(user_bp)
 app.register_blueprint(forgotpass_bp)
