@@ -102,19 +102,6 @@ def get_guests():
             }
         )
 
-        guest_list.append({
-            "id": str(guest.get("_id")),
-            "name": guest.get("name"),
-            "image": guest.get("image"),
-            "bio": guest.get("bio"),
-            "tags": guest.get("tags", []),
-            "email": guest.get("email"),
-            "linkedin": guest.get("linkedin"),
-            "twitter": guest.get("twitter"),
-            "areasOfInterest": guest.get("areasOfInterest", []),
-            "podcastId": guest.get("podcastId"),
-        })
-
 
     return jsonify({"guests": guest_list})
 
