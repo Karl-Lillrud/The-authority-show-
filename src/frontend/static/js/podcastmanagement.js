@@ -742,23 +742,36 @@ async function renderPodcastList() {
           epHeading.textContent = "Episodes:";
           epContainer.appendChild(epHeading);
 
-          // Create a flex container to list episodes horizontally
-          const epList = document.createElement("div");
-          epList.style.display = "flex";
-          epList.style.flexDirection = "row";
-          epList.style.gap = "1rem";
-
-          episodes.forEach((ep) => {
-            const epItem = document.createElement("div");
-            epItem.textContent = ep.title;
-            epItem.classList.add("episode-label"); // added label class
-            // Attach click event to open the popup for editing
-            epItem.addEventListener("click", () => {
-              showEpisodePopup(ep);
+          if (episodes.length > 5) {
+            // Create a dropdown if there are more than 5 episodes
+            const epDropdown = document.createElement("select");
+            epDropdown.classList.add("episode-dropdown");
+            episodes.forEach((ep) => {
+              const option = document.createElement("option");
+              option.value = ep._id;
+              option.textContent = ep.title;
+              epDropdown.appendChild(option);
             });
-            epList.appendChild(epItem);
-          });
-          epContainer.appendChild(epList);
+            epContainer.appendChild(epDropdown);
+          } else {
+            // Create a flex container to list episodes horizontally
+            const epList = document.createElement("div");
+            epList.style.display = "flex";
+            epList.style.flexDirection = "row";
+            epList.style.gap = "1rem";
+
+            episodes.forEach((ep) => {
+              const epItem = document.createElement("div");
+              epItem.textContent = ep.title;
+              epItem.classList.add("episode-label"); // added label class
+              // Attach click event to open the popup for editing
+              epItem.addEventListener("click", () => {
+                showEpisodePopup(ep);
+              });
+              epList.appendChild(epItem);
+            });
+            epContainer.appendChild(epList);
+          }
         }
       });
     });
