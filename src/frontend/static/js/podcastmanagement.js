@@ -895,17 +895,16 @@ function renderPodcastDetail(podcast) {
       <div class="detail-image" style="background-image: url('${
         podcast.logoUrl
       }')"></div>
+      <!-- New Episodes container moved under the image -->
+      <div id="episodes-list" class="episodes-list"></div>
       <div class="detail-info">
         <h1 class="detail-title">${podcast.podName}</h1>
         <p class="detail-category">${podcast.category || "Uncategorized"}</p>
-        
         <div class="detail-section">
           <h2>About</h2>
           <p>${podcast.description || "No description available."}</p>
         </div>
-        
         <div class="separator"></div>
-        
         <div class="detail-grid">
           <div class="detail-item">
             <h3>Podcast Owner</h3>
@@ -928,9 +927,7 @@ function renderPodcastDetail(podcast) {
             }
           </div>
         </div>
-        
         <div class="separator"></div>
-        
         <div class="detail-section">
           <h2>Scheduling</h2>
           <div class="detail-grid">
@@ -958,9 +955,7 @@ function renderPodcastDetail(podcast) {
             </div>
           </div>
         </div>
-        
         <div class="separator"></div>
-        
         <div class="detail-section">
           <h2>Social Media</h2>
           <div class="social-links">
@@ -1006,7 +1001,6 @@ function renderPodcastDetail(podcast) {
             }
           </div>
         </div>
-        
         <div class="detail-actions" style="margin-top: 2rem; display: flex; gap: 1rem;">
           <button class="back-btn" id="edit-podcast-btn" data-id="${
             podcast._id
@@ -1069,6 +1063,121 @@ function renderPodcastDetail(podcast) {
           document.getElementById("podcast-list").style.display = "flex";
         } catch (error) {
           showNotification("Error", "Failed to delete podcast.", "error");
+        }
+      }
+    });
+
+  // Render episodes vertically under the image container
+  fetchEpisodesByPodcast(podcast._id)
+    .then((episodes) => {
+      const episodesListEl = document.getElementById("episodes-list");
+      episodesListEl.innerHTML = "";
+      if (episodes && episodes.length) {
+        episodes.forEach((ep) => {
+          const epLabel = document.createElement("div");
+          epLabel.className = "episode-label";
+          epLabel.textContent = ep.title;
+          epLabel.style.marginBottom = "8px"; // vertical spacing
+          epLabel.addEventListener("click", () => {
+            renderEpisodeDetail(ep);
+          });
+          episodesListEl.appendChild(epLabel);
+        });
+      } else {
+        episodesListEl.textContent = "No episodes available.";
+      }
+    })
+    .catch((error) => {
+      console.error("Error fetching episodes:", error);
+    });
+}
+
+// New function to render episode details
+function renderEpisodeDetail(episode) {
+  const episodeDetailElement = document.getElementById("podcast-detail");
+  episodeDetailElement.innerHTML = `
+    <div class="detail-header">
+      <button class="back-btn" id="back-to-podcast">
+        ${svgpodcastmanagement.back}
+        Back to podcast
+      </button>
+    </div>
+    <div class="detail-content">
+      <div class="detail-image" style="background-image: url('${
+        episode.image || "default-image.png"
+      }')"></div>
+      <div class="detail-info">
+        <h1 class="detail-title">${episode.title}</h1>
+        <p class="detail-category">${episode.status || "Uncategorized"}</p>
+        <div class="detail-section">
+          <h2>About</h2>
+          <p>${episode.description || "No description available."}</p>
+        </div>
+        <div class="separator"></div>
+        <div class="detail-grid">
+          <div class="detail-item">
+            <h3>Publish Date</h3>
+            <p>${
+              new Date(episode.publishDate).toLocaleString() || "Not specified"
+            }</p>
+          </div>
+          <div class="detail-item">
+            <h3>Duration</h3>
+            <p>${episode.duration || "Not specified"} minutes</p>
+          </div>
+        </div>
+        <div class="separator"></div>
+        <div class="detail-actions" style="margin-top: 2rem; display: flex; gap: 1rem;">
+          <button class="back-btn" id="edit-episode-btn" data-id="${
+            episode._id
+          }">
+            ${svgpodcastmanagement.edit}
+            Edit Episode
+          </button>
+          <button class="delete-btn" id="delete-episode-btn" data-id="${
+            episode._id
+          }">
+            <span class="icon">${svgpodcastmanagement.delete}</span>
+            Delete Episode
+          </button>
+        </div>
+      </div>
+    </div>
+  `;
+
+  // Back button event listener
+  document.getElementById("back-to-podcast").addEventListener("click", () => {
+    viewPodcast(episode.podcast_id);
+  });
+
+  // Edit button event listener
+  document
+    .getElementById("edit-episode-btn")
+    .addEventListener("click", async () => {
+      try {
+        const response = await fetch(`/get_episodes/${episode._id}`);
+        const episodeData = await response.json();
+        showEpisodePopup(episodeData);
+      } catch (error) {
+        showNotification("Error", "Failed to fetch episode details", "error");
+      }
+    });
+
+  // Delete button event listener
+  document
+    .getElementById("delete-episode-btn")
+    .addEventListener("click", async () => {
+      if (confirm("Are you sure you want to delete this episode?")) {
+        try {
+          await fetch(`/delete_episods/${episode._id}`, { method: "DELETE" });
+          showNotification(
+            "Success",
+            "Episode deleted successfully!",
+            "success"
+          );
+          viewPodcast(episode.podcast_id);
+        } catch (error) {
+          showNotification("Error", "Failed to delete episode.", "error");
         }
       }
     });
