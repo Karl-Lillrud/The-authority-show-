@@ -87,7 +87,9 @@ app.register_blueprint(
     guest_form_bp, url_prefix="/guest-form"
 )  # Register the guest_form blueprint with URL prefix
 # app.register_blueprint(transcription_bp)
+
 # Register the guest_form blueprint with URL prefix
+
 app.register_blueprint(landingpage_bp)
 
 # Set the application environment (defaults to production)
