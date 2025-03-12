@@ -112,3 +112,57 @@ export async function fetchEpisodesByPodcast(podcastId) {
     alert("Failed to fetch episodes.");
   }
 }
+
+export async function fetchEpisode(episodeId) {
+  try {
+    const response = await fetch(`/get_episodes/${episodeId}`);
+    const data = await response.json();
+    if (response.ok) {
+      return data;
+    } else {
+      console.error("Failed to fetch episode:", data.error);
+      alert("Failed to fetch episode: " + data.error);
+    }
+  } catch (error) {
+    console.error("Error fetching episode:", error);
+    alert("Failed to fetch episode.");
+  }
+}
+
+export async function updateEpisode(episodeId, updatedData) {
+  try {
+    const response = await fetch(`/update_episodes/${episodeId}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(updatedData)
+    });
+    const result = await response.json();
+    if (response.ok) {
+      return result;
+    } else {
+      console.error("Failed to update episode:", result.error);
+      alert("Failed to update episode: " + result.error);
+    }
+  } catch (error) {
+    console.error("Error updating episode:", error);
+    alert("Failed to update episode.");
+  }
+}
+
+export async function deleteEpisode(episodeId) {
+  try {
+    const response = await fetch(`/delete_episods/${episodeId}`, {
+      method: "DELETE"
+    });
+    const result = await response.json();
+    if (response.ok) {
+      return result;
+    } else {
+      console.error("Failed to delete episode:", result.error);
+      alert("Failed to delete episode: " + result.error);
+    }
+  } catch (error) {
+    console.error("Error deleting episode:", error);
+    alert("Failed to delete episode.");
+  }
+}

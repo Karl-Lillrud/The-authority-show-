@@ -7,7 +7,10 @@ import {
 } from "../requests/podcastRequests.js";
 import {
   registerEpisode,
-  fetchEpisodesByPodcast
+  fetchEpisodesByPodcast,
+  fetchEpisode,
+  updateEpisode,
+  deleteEpisode
 } from "../requests/episodeRequest.js"; // Updated import
 import { svgpodcastmanagement } from "../svg/svgpodcastmanagement.js"; // Updated import path
 import {
@@ -1241,7 +1244,7 @@ function renderEpisodeDetail(episode) {
     .getElementById("edit-episode-btn")
     .addEventListener("click", async () => {
       try {
-        const response = await fetch(`/get_episodes/${episode._id}`);
+        const response = await fetchEpisode(episode._id);
         const episodeData = await response.json();
         showEpisodePopup(episodeData);
       } catch (error) {
@@ -1255,7 +1258,7 @@ function renderEpisodeDetail(episode) {
     .addEventListener("click", async () => {
       if (confirm("Are you sure you want to delete this episode?")) {
         try {
-          await fetch(`/delete_episods/${episode._id}`, { method: "DELETE" });
+          await deleteEpisode(episode._id);
           showNotification(
             "Success",
             "Episode deleted successfully!",
@@ -1619,13 +1622,8 @@ function renderEpisodeDetail(episode) {
           if (!updatedData[key]) delete updatedData[key];
         });
         try {
-          const response = await fetch(`/update_episodes/${episode._id}`, {
-            method: "PUT",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(updatedData)
-          });
-          const result = await response.json();
-          if (response.ok) {
+          const result = await updateEpisode(episode._id, updatedData); // Use updateEpisode from episodeRequest.js
+          if (result.message) {
             showNotification(
               "Success",
               "Episode updated successfully!",
