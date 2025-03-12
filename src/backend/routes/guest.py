@@ -1,9 +1,12 @@
+from venv import logger
 from flask import request, jsonify, Blueprint, g, session
 from backend.database.mongo_connection import collection
 from datetime import datetime, timezone
 from marshmallow import ValidationError
 from backend.models.guests import GuestSchema  # Import your GuestSchema here
 import uuid
+import logging
+
 
 guest_bp = Blueprint("guest_bp", __name__)
 
@@ -11,40 +14,32 @@ guest_bp = Blueprint("guest_bp", __name__)
 #SHOULD ONLY BE USED FOR SPECIFIC DATA CRUD OPERATIONS
 #EXTRA FUNCTIONALITY BESIDES CRUD OPERATIONS SHOULD BE IN SERVICES
 
-
 @guest_bp.route("/add_guests", methods=["POST"])
 def add_guest():
+    """Adds a guest to the system without linking them to an episode initially."""
     if not g.user_id:
         return jsonify({"error": "Unauthorized"}), 401
 
     if request.content_type != "application/json":
-        return (
-            jsonify({"error": "Invalid Content-Type. Expected application/json"}),
-            415,
-        )
+        return jsonify({"error": "Invalid Content-Type. Expected application/json"}), 415
 
     try:
         data = request.get_json()
-        print("📩 Received Data:", data)
+        logger.info("📩 Received guest data: %s", data)
 
+        # Validate guest data
         try:
             guest_data = GuestSchema().load(data)
         except ValidationError as err:
-            return jsonify({"error": f"Validation error: {err.messages}"}), 400
+            logger.error("Validation error: %s", err.messages)
+            return jsonify({"error": "Validation error", "details": err.messages}), 400
 
         guest_id = str(uuid.uuid4())
-        user_id = str(g.user_id)
 
-        # Check if the podcast exists
-        podcast = collection.database.Podcasts.find_one(
-            {"_id": guest_data["podcastId"]}
-        )
-        if not podcast:
-            return jsonify({"error": "Podcast not found"}), 404
-
+        # Construct guest document
         guest_item = {
             "_id": guest_id,
-            "podcastId": guest_data["podcastId"],
+            "episodeId": None,  # Initially not linked to any episode
             "name": guest_data["name"].strip(),
             "image": guest_data.get("image", ""),
             "tags": guest_data.get("tags", []),
@@ -58,19 +53,20 @@ def add_guest():
             "scheduled": 0,
             "completed": 0,
             "created_at": datetime.now(timezone.utc),
-            "user_id": user_id,
+            "user_id": g.user_id  # Storing the logged-in user ID
         }
 
+        # Insert guest into the database
         collection.database.Guests.insert_one(guest_item)
+        logger.info("✅ Guest added successfully with ID: %s", guest_id)
 
-        print("✅ Guest added successfully!")
-        return (
-            jsonify({"message": "Guest added successfully", "guest_id": guest_id}),
-            201,
-        )
+        return jsonify({
+            "message": "Guest added successfully",
+            "guest_id": guest_id
+        }), 201
 
     except Exception as e:
-        print(f"❌ ERROR: {e}")
+        logger.exception("❌ ERROR: Failed to add guest")
         return jsonify({"error": f"Failed to add guest: {str(e)}"}), 500
 
 
@@ -80,53 +76,53 @@ def add_guest():
 
 @guest_bp.route("/get_guests", methods=["GET"])
 def get_guests():
-    user_id = session.get("user_id")
-    if not user_id:
-        return jsonify({"error": "User not logged in"}), 401
+    if not g.user_id:
+        return jsonify({"error": "Unauthorized"}), 401
 
-    guests_cursor = collection.database.Guests.find({"user_id": user_id})
+    # Fetch guests for the logged-in user
+    guests_cursor = collection.database.Guests.find({"user_id": g.user_id})
     guest_list = []
     for guest in guests_cursor:
+        guest_list.append({
+            "id": str(guest.get("_id")),
+            "episodeId": guest.get("episodeId"),  # Correctly using episodeId
+            "name": guest.get("name"),
+            "image": guest.get("image"),
+            "bio": guest.get("bio"),
+            "tags": guest.get("tags", []),
+            "email": guest.get("email"),
+            "linkedin": guest.get("linkedin"),
+            "twitter": guest.get("twitter"),
+            "areasOfInterest": guest.get("areasOfInterest", []),
+        })
 
-        guest_list.append(
-            {
-                "id": str(guest.get("_id")),
-                "podcastId": guest.get("podcastId"),
-                "name": guest.get("name"),
-                "image": guest.get("image"),
-                "bio": guest.get("bio"),
-                "tags": guest.get("tags", []),
-                "email": guest.get("email"),
-                "linkedin": guest.get("linkedin"),
-                "twitter": guest.get("twitter"),
-                "areasOfInterest": guest.get("areasOfInterest", []),
-            }
-        )
+    return jsonify({
+        "message": "Guests fetched successfully",
+        "guests": guest_list
+    })
 
-
-    return jsonify({"guests": guest_list})
 
 
 
 @guest_bp.route("/edit_guests/<guest_id>", methods=["PUT"])
 def edit_guest(guest_id):
+    """Updates a guest's information, including the option to change the episode they are linked to."""
     if not g.user_id:
         return jsonify({"error": "Unauthorized"}), 401
 
     if request.content_type != "application/json":
-        return (
-            jsonify({"error": "Invalid Content-Type. Expected application/json"}),
-            415,
-        )
+        return jsonify({"error": "Invalid Content-Type. Expected application/json"}), 415
 
     try:
         data = request.get_json()
-        print("📩 Received Data:", data)
+        logger.info("📩 Received Data: %s", data)
 
         if not guest_id:
             return jsonify({"error": "Guest ID is required"}), 400
 
         user_id = str(g.user_id)
+
+        # Prepare update fields from the incoming request body
         update_fields = {
             "name": data.get("name", "").strip(),
             "image": data.get("image", "default-profile.png"),
@@ -139,9 +135,14 @@ def edit_guest(guest_id):
             "areasOfInterest": data.get("areasOfInterest", []),
         }
 
-        print("📝 Update Fields:", update_fields)
+        # If episodeId is provided, update the guest's episodeId
+        episode_id = data.get("episodeId")
+        if episode_id is not None:
+            update_fields["episodeId"] = episode_id
 
-        # Use "user_id" (with underscore) to match the field set in add_guest
+        logger.info("📝 Update Fields: %s", update_fields)
+
+        # Update the guest document based on guest_id and user_id to ensure the user can only edit their own guests
         result = collection.database.Guests.update_one(
             {"_id": guest_id, "user_id": user_id}, {"$set": update_fields}
         )
@@ -152,8 +153,9 @@ def edit_guest(guest_id):
         return jsonify({"message": "Guest updated successfully"}), 200
 
     except Exception as e:
-        print(f"❌ ERROR: {e}")
+        logger.exception("❌ ERROR: Failed to update guest")
         return jsonify({"error": f"Failed to update guest: {str(e)}"}), 500
+
 
 
 @guest_bp.route("/delete_guests/<guest_id>", methods=["DELETE"])
