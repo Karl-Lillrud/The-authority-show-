@@ -1198,9 +1198,14 @@ function renderEpisodeDetail(episode) {
           const guestItem = document.createElement("div");
           guestItem.className = "guest-item";
           guestItem.innerHTML = `
-            <div class="guest-name">${guest.name}</div>
+            <div class="guest-name" style="cursor: pointer; color: blue; text-decoration: underline;">${guest.name}</div>
             <div class="guest-email">${guest.email}</div>
           `;
+          guestItem
+            .querySelector(".guest-name")
+            .addEventListener("click", () => {
+              renderGuestDetail(guest);
+            });
           guestsListEl.appendChild(guestItem);
         });
       } else {
@@ -1210,6 +1215,64 @@ function renderEpisodeDetail(episode) {
     .catch((error) => {
       console.error("Error fetching guests:", error);
     });
+}
+
+// New function to render guest details
+function renderGuestDetail(guest) {
+  const guestDetailElement = document.getElementById("podcast-detail");
+  guestDetailElement.innerHTML = `
+    <div class="detail-header">
+      <button class="back-btn" id="back-to-episode">
+        ${svgpodcastmanagement.back}
+        Back to episode
+      </button>
+    </div>
+    <div class="detail-content">
+      <div class="detail-image" style="background-image: url('${
+        guest.image || "default-image.png"
+      }')"></div>
+      <div class="detail-info">
+        <h1 class="detail-title">${guest.name}</h1>
+        <p class="detail-category">${guest.email || "No email provided"}</p>
+        <div class="detail-section">
+          <h2>About</h2>
+          <p>${guest.bio || "No bio available."}</p>
+        </div>
+        <div class="separator"></div>
+        <div class="detail-grid">
+          <div class="detail-item">
+            <h3>LinkedIn</h3>
+            <p>${guest.linkedin || "Not specified"}</p>
+          </div>
+          <div class="detail-item">
+            <h3>Twitter</h3>
+            <p>${guest.twitter || "Not specified"}</p>
+          </div>
+          <div class="detail-item">
+            <h3>Areas of Interest</h3>
+            <p>${guest.areasOfInterest.join(", ") || "Not specified"}</p>
+          </div>
+        </div>
+        <div class="separator"></div>
+        <div class="detail-section">
+          <h2>Tags</h2>
+          <div>${guest.tags.join(", ") || "No tags available"}</div>
+        </div>
+      </div>
+    </div>
+  `;
+
+  // Back button event listener
+  document.getElementById("back-to-episode").addEventListener("click", () => {
+    fetch(`/get_episodes/${guest.episodeId}`)
+      .then((response) => response.json())
+      .then((episode) => {
+        renderEpisodeDetail(episode);
+      })
+      .catch((error) => {
+        console.error("Error fetching episode:", error);
+      });
+  });
 }
 
 // New function to display the episode popup for viewing/updating an episode

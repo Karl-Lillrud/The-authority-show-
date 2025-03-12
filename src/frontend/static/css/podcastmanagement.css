@@ -29,12 +29,19 @@ header {
   justify-content: flex-end;
   height: 110px; /* Increased height */
   min-height: 110px; /* Increased height */
+  position: fixed; /* Make header fixed */
+  width: 100%; /* Ensure header spans full width */
+  top: 0; /* Fix header to the top */
+  z-index: 1000; /* Ensure header is above other content */
+  background-color: var(--background-light); /* Match background color */
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); /* Add subtle shadow */
 }
 
 .container {
   max-width: 1200px;
   margin: 0 auto;
   padding: 1rem;
+  padding-top: 120px; /* Add padding to account for fixed header */
 }
 
 .title {
@@ -525,7 +532,12 @@ header {
 }
 
 .form-box::-webkit-scrollbar-thumb {
-  background-color: rgba(255, 127, 63, 0.3);
+  background-color: rgba(
+    0,
+    0,
+    0,
+    0.2
+  ); /* Changed from orange to a neutral color */
   border-radius: 10px;
   border: 2px solid var(--background-light);
 }
@@ -745,7 +757,12 @@ header {
 }
 
 .podcasts-list::-webkit-scrollbar-thumb {
-  background-color: rgba(255, 127, 63, 0.3);
+  background-color: rgba(
+    0,
+    0,
+    0,
+    0.2
+  ); /* Changed from orange to a neutral color */
   border-radius: 10px;
   border: 2px solid var(--background-light);
 }
