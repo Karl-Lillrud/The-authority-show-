@@ -216,11 +216,6 @@ def update_episode(episode_id):
             ),
             "publishDate": data.get("publishDate", existing_episode["publishDate"]),
             "duration": data.get("duration", existing_episode["duration"]),
-            "guestId": (
-                data.get("guestId", existing_episode["guestId"]).strip()
-                if data.get("guestId")
-                else existing_episode["guestId"]
-            ),
             "status": (
                 data.get("status", existing_episode["status"]).strip()
                 if data.get("status")
@@ -229,10 +224,12 @@ def update_episode(episode_id):
             "updated_at": datetime.now(timezone.utc),
         }
 
+        # Update the episode in the database
         result = collection.database.Episodes.update_one(
             {"_id": episode_id}, {"$set": update_fields}
         )
 
+        # Return the result of the update operation
         if result.modified_count == 1:
             return jsonify({"message": "Episode updated successfully"}), 200
         else:
@@ -241,46 +238,6 @@ def update_episode(episode_id):
     except Exception as e:
         print(f"❌ ERROR: {e}")
         return jsonify({"error": f"Failed to update episode: {str(e)}"}), 500
-
-
-@episode_bp.route("/count_by_guests/<guest_id>", methods=["GET"])
-def count_by_guest(guest_id):
-    if not g.user_id:
-        return jsonify({"error": "Unauthorized"}), 401
-
-    try:
-        user_id = str(g.user_id)
-
-        # Count the number of episodes for the given guest
-        count = collection.database.Episodes.count_documents(
-            {"guestId": guest_id, "userid": user_id}
-        )
-
-        return jsonify({"count": count}), 200
-
-    except Exception as e:
-        print(f"❌ ERROR: {e}")
-        return jsonify({"error": f"Failed to fetch episode count: {str(e)}"}), 500
-
-
-@episode_bp.route("/episodes/count_by_guest/<guest_id>", methods=["GET"])
-def count_episodes_by_guest(guest_id):
-    try:
-        count = collection.database.Episodes.count_documents({"guestId": guest_id})
-        return jsonify({"count": count}), 200
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
-
-
-@episode_bp.route("/episodes/get_episodes_by_guest/<guest_id>", methods=["GET"])
-def get_episodes_by_guest(guest_id):
-    try:
-        episodes = list(database.Episodes.find({"guestId": guest_id}))
-        for episode in episodes:
-            episode["_id"] = str(episode["_id"])
-        return jsonify({"episodes": episodes}), 200
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
 
 
 @episode_bp.route("/episodes/by_podcast/<podcast_id>", methods=["GET"])
