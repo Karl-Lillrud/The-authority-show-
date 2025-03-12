@@ -82,9 +82,3 @@ def addmember():
     if not g.user_id:
         return redirect(url_for("auth_bp.signin"))  # Updated endpoint
     return render_template("team/addmember.html")
-
-@dashboard_bp.route("/podcast", methods=["GET"])
-def podcast():
-    if not g.user_id:
-        return redirect(url_for("signin_bp.signin"))  # Updated endpoint
-    return render_template("dashboard/podcast.html")
