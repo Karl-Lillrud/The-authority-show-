@@ -3,7 +3,6 @@ from marshmallow import Schema, fields, pre_load
 
 class EpisodeSchema(Schema):
     id = fields.Str()
-    guestId = fields.Str(allow_none=True)  # Reference to the guest
     podcastId = fields.Str(required=True)
     title = fields.Str(required=True)
     description = fields.Str(allow_none=True)
