@@ -275,22 +275,52 @@ document.addEventListener("DOMContentLoaded", function () {
     ? addTeamModal.querySelector("form")
     : document.querySelector("form");
 
+  // Function to add a new member input row
+  function addMemberRow() {
+    const membersContainer = document.getElementById("members-container");
+    const memberRow = document.createElement("div");
+    memberRow.className = "member-row";
+    memberRow.innerHTML = `
+      <input type="email" name="memberEmail" placeholder="Email" class="form-control" required>
+      <select name="memberRole" class="form-control" required>
+        <option value="creator">Creator</option>
+        <option value="admin">Admin</option>
+        <option value="member">Member</option>
+      </select>
+      <button type="button" class="removeMemberBtn btn">Remove</button>
+    `;
+    membersContainer.appendChild(memberRow);
+
+    // Add event listener to the remove button
+    memberRow
+      .querySelector(".removeMemberBtn")
+      .addEventListener("click", () => {
+        membersContainer.removeChild(memberRow);
+      });
+  }
+
+  // Add event listener to the Add Member button
+  document
+    .getElementById("addMemberBtn")
+    .addEventListener("click", addMemberRow);
+
   if (addTeamForm) {
     addTeamForm.addEventListener("submit", async function (event) {
       event.preventDefault();
       const formData = new FormData(addTeamForm);
+      const members = [];
+      document.querySelectorAll(".member-row").forEach((row) => {
+        members.push({
+          email: row.querySelector("input[name='memberEmail']").value,
+          role: row.querySelector("select[name='memberRole']").value
+        });
+      });
       const payload = {
         name: formData.get("name"),
         email: formData.get("email"),
         description: formData.get("description"),
         podcastId: formData.get("podcastId"), // Include podcast ID
-        members: [
-          {
-            userId: formData.get("userId"), // Ensure this field is populated correctly
-            email: formData.get("email"), // Ensure this field is populated correctly
-            role: "creator"
-          }
-        ] // Include member details
+        members: members // Include member details
       };
       const podcastId = formData.get("podcastId");
 

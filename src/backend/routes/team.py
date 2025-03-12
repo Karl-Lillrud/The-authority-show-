@@ -45,7 +45,7 @@ def add_team():
             "isActive": validated_data.get("isActive", True),
             "joinedAt": validated_data.get("joinedAt", datetime.now(timezone.utc)),
             "lastActive": validated_data.get("lastActive", datetime.now(timezone.utc)),
-            "members": [],  # Initially no members, we'll add the creator first
+            "members": validated_data.get("members", []),  # Include members
             "podcastId": validated_data.get("podcastId"),  # Include podcast ID
         }
 
