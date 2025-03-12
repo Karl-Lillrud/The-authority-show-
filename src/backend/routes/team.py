@@ -1,4 +1,4 @@
-from flask import request, jsonify, Blueprint, g
+from flask import request, jsonify, Blueprint, g, session
 from backend.database.mongo_connection import collection
 from datetime import datetime, timezone
 from marshmallow import ValidationError
@@ -10,6 +10,12 @@ team_bp = Blueprint("team_bp", __name__)
 
 # SHOULD ONLY BE USED FOR SPECIFIC DATA CRUD OPERATIONS
 # EXTRA FUNCTIONALITY BESIDES CRUD OPERATIONS SHOULD BE IN SERVICES
+
+
+@team_bp.before_request
+def before_request():
+    g.user_id = session.get("user_id")
+    g.email = session.get("email")
 
 
 @team_bp.route("/add_teams", methods=["POST"])
@@ -50,6 +56,7 @@ def add_team():
 
         # Get current user ID (the creator)
         user_id = str(g.user_id)  # Ensure this comes from the current logged-in user
+        user_email = g.email  # Ensure this comes from the current logged-in user
         print("👤 Team creator user ID:", user_id)
 
         # Add the creator to the user_to_team collection
@@ -64,7 +71,9 @@ def add_team():
         collection.database.UsersToTeams.insert_one(user_to_team_item)
 
         # Update the team with its members, adding the creator to the team
-        team_item["members"].append({"userId": user_id, "role": "creator"})
+        team_item["members"].append(
+            {"userId": user_id, "email": user_email, "role": "creator"}
+        )
 
         # Update the team document with its creator
         collection.database.Teams.update_one(

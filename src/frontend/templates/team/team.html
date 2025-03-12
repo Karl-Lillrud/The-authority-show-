@@ -60,6 +60,9 @@
               <label for="description">Description:</label>
               <textarea class="form-control" name="description"></textarea>
           </div>
+          <!-- Add hidden input fields for userId and email -->
+          <input type="hidden" name="userId" value="{{ g.user_id }}">
+          <input type="hidden" name="email" value="{{ g.email }}">
         </div>
         <div class="modal-footer">
           <button type="button" class="btn" id="modalCloseBtn2">Close</button>

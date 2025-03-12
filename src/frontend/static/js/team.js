@@ -283,7 +283,14 @@ document.addEventListener("DOMContentLoaded", function () {
         name: formData.get("name"),
         email: formData.get("email"),
         description: formData.get("description"),
-        podcastId: formData.get("podcastId") // Include podcast ID
+        podcastId: formData.get("podcastId"), // Include podcast ID
+        members: [
+          {
+            userId: formData.get("userId"), // Ensure this field is populated correctly
+            email: formData.get("email"), // Ensure this field is populated correctly
+            role: "creator"
+          }
+        ] // Include member details
       };
       const podcastId = formData.get("podcastId");
 

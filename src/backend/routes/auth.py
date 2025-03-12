@@ -58,6 +58,10 @@ def signin_submit():
     session["email"] = user["email"]
     session.permanent = remember
 
+    # Set email in g object
+    g.user_id = session["user_id"]
+    g.email = user["email"]
+
     user_id = session["user_id"]
     user_account = collection.database.Accounts.find_one({"userId": user_id})
     if not user_account:
