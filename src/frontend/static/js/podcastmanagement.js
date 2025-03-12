@@ -1292,43 +1292,10 @@ function renderEpisodeDetail(episode) {
       if (guests && guests.length) {
         const guestsContainer = document.createElement("div");
         guestsContainer.className = "guests-container";
-        guestsContainer.style.display = "flex";
-        guestsContainer.style.flexDirection = "column";
-        guestsContainer.style.gap = "12px";
-        guestsContainer.style.marginTop = "10px";
 
         guests.forEach((guest) => {
           const guestCard = document.createElement("div");
           guestCard.className = "guest-card";
-          guestCard.style.padding = "15px";
-          guestCard.style.borderRadius = "var(--radius-medium)";
-          guestCard.style.backgroundColor = "var(--background-light)";
-          guestCard.style.boxShadow =
-            "-3px -3px 6px var(--light-shadow-light), 3px 3px 6px var(--dark-shadow-light)";
-          guestCard.style.transition = "all 0.3s ease";
-          guestCard.style.cursor = "pointer";
-          guestCard.style.display = "flex";
-          guestCard.style.justifyContent = "space-between";
-          guestCard.style.alignItems = "center";
-          guestCard.style.borderLeft = "3px solid #3b82f6"; // Different color from episodes
-
-          // Create content container for guest info
-          const contentDiv = document.createElement("div");
-          contentDiv.style.flex = "1";
-
-          // Add guest avatar placeholder (circle with initials)
-          const avatarDiv = document.createElement("div");
-          avatarDiv.style.width = "40px";
-          avatarDiv.style.height = "40px";
-          avatarDiv.style.borderRadius = "50%";
-          avatarDiv.style.backgroundColor = "#3b82f6";
-          avatarDiv.style.color = "white";
-          avatarDiv.style.display = "flex";
-          avatarDiv.style.alignItems = "center";
-          avatarDiv.style.justifyContent = "center";
-          avatarDiv.style.fontWeight = "bold";
-          avatarDiv.style.marginRight = "15px";
-          avatarDiv.style.flexShrink = "0";
 
           // Get initials from guest name
           const initials = guest.name
@@ -1338,62 +1305,39 @@ function renderEpisodeDetail(episode) {
             .substring(0, 2)
             .toUpperCase();
 
+          // Create content container for guest info
+          const contentDiv = document.createElement("div");
+          contentDiv.className = "guest-info";
+
+          // Add guest avatar placeholder (circle with initials)
+          const avatarDiv = document.createElement("div");
+          avatarDiv.className = "guest-avatar";
           avatarDiv.textContent = initials;
 
           // Create guest info with name and email
           const infoDiv = document.createElement("div");
-          infoDiv.style.display = "flex";
-          infoDiv.style.alignItems = "center";
+          infoDiv.className = "guest-content";
 
-          infoDiv.innerHTML = `
-          <div style="display: flex; flex-direction: column;">
-            <div class="guest-name" style="font-weight: 600; color: rgba(0, 0, 0, 0.7); font-size: 1rem;">${guest.name}</div>
-            <div class="guest-email" style="font-size: 0.85rem; color: var(--text-color-light);">${guest.email}</div>
-          </div>
-        `;
+          const nameDiv = document.createElement("div");
+          nameDiv.className = "guest-name";
+          nameDiv.textContent = guest.name;
+
+          const emailDiv = document.createElement("div");
+          emailDiv.className = "guest-email";
+          emailDiv.textContent = guest.email;
+
+          infoDiv.appendChild(nameDiv);
+          infoDiv.appendChild(emailDiv);
 
           // Create view profile button
           const viewProfileBtn = document.createElement("button");
           viewProfileBtn.className = "view-profile-btn";
           viewProfileBtn.textContent = "View Profile";
-          viewProfileBtn.style.backgroundColor = "#3b82f6";
-          viewProfileBtn.style.color = "white";
-          viewProfileBtn.style.border = "none";
-          viewProfileBtn.style.borderRadius = "var(--radius-small)";
-          viewProfileBtn.style.padding = "6px 12px";
-          viewProfileBtn.style.cursor = "pointer";
-          viewProfileBtn.style.fontWeight = "600";
-          viewProfileBtn.style.fontSize = "0.85rem";
-          viewProfileBtn.style.transition = "all 0.3s ease";
-
-          // Add hover effect to button
-          viewProfileBtn.addEventListener("mouseenter", () => {
-            viewProfileBtn.style.backgroundColor = "#2563eb";
-            viewProfileBtn.style.transform = "translateY(-2px)";
-          });
-
-          viewProfileBtn.addEventListener("mouseleave", () => {
-            viewProfileBtn.style.backgroundColor = "#3b82f6";
-            viewProfileBtn.style.transform = "translateY(0)";
-          });
 
           // Add click event to view button
           viewProfileBtn.addEventListener("click", (e) => {
             e.stopPropagation(); // Prevent triggering the card click
             renderGuestDetail(guest);
-          });
-
-          // Add hover effect to card
-          guestCard.addEventListener("mouseenter", () => {
-            guestCard.style.transform = "translateY(-2px)";
-            guestCard.style.boxShadow =
-              "-5px -5px 10px var(--light-shadow-light), 5px 5px 10px var(--dark-shadow-light)";
-          });
-
-          guestCard.addEventListener("mouseleave", () => {
-            guestCard.style.transform = "translateY(0)";
-            guestCard.style.boxShadow =
-              "-3px -3px 6px var(--light-shadow-light), 3px 3px 6px var(--dark-shadow-light)";
           });
 
           // Add click event to card
@@ -1402,7 +1346,7 @@ function renderEpisodeDetail(episode) {
           });
 
           // Assemble the card
-          infoDiv.prepend(avatarDiv);
+          contentDiv.appendChild(avatarDiv);
           contentDiv.appendChild(infoDiv);
           guestCard.appendChild(contentDiv);
           guestCard.appendChild(viewProfileBtn);
@@ -1412,37 +1356,34 @@ function renderEpisodeDetail(episode) {
         guestsListEl.appendChild(guestsContainer);
       } else {
         const noGuests = document.createElement("p");
+        noGuests.className = "no-guests-message";
         noGuests.textContent = "No guests available for this episode.";
-        noGuests.style.marginTop = "10px";
-        noGuests.style.fontStyle = "italic";
-        noGuests.style.color = "var(--text-color-light)";
         guestsListEl.appendChild(noGuests);
       }
     })
     .catch((error) => {
       console.error("Error fetching guests:", error);
       const errorMsg = document.createElement("p");
+      errorMsg.className = "error-message";
       errorMsg.textContent = "Error loading guests. Please try again later.";
-      errorMsg.style.color = "var(--danger-color)";
       document.getElementById("guests-list").appendChild(errorMsg);
     });
-}
 
-// Replace the renderGuestDetail function with this enhanced version:
+  // Replace the renderGuestDetail function with this enhanced version:
 
-// New function to render guest details
-function renderGuestDetail(guest) {
-  const guestDetailElement = document.getElementById("podcast-detail");
+  // New function to render guest details
+  function renderGuestDetail(guest) {
+    const guestDetailElement = document.getElementById("podcast-detail");
 
-  // Get initials from guest name for avatar
-  const initials = guest.name
-    .split(" ")
-    .map((word) => word[0])
-    .join("")
-    .substring(0, 2)
-    .toUpperCase();
+    // Get initials from guest name for avatar
+    const initials = guest.name
+      .split(" ")
+      .map((word) => word[0])
+      .join("")
+      .substring(0, 2)
+      .toUpperCase();
 
-  guestDetailElement.innerHTML = `
+    guestDetailElement.innerHTML = `
     <div class="detail-header">
       <button class="back-btn" id="back-to-episode">
         ${svgpodcastmanagement.back}
@@ -1566,29 +1507,33 @@ function renderGuestDetail(guest) {
     </div>
   `;
 
-  // Back button event listener
-  document.getElementById("back-to-episode").addEventListener("click", () => {
-    fetch(`/get_episodes/${guest.episodeId}`)
-      .then((response) => response.json())
-      .then((episode) => {
-        renderEpisodeDetail(episode);
-      })
-      .catch((error) => {
-        console.error("Error fetching episode:", error);
-        showNotification("Error", "Failed to return to episode view", "error");
-      });
-  });
-}
+    // Back button event listener
+    document.getElementById("back-to-episode").addEventListener("click", () => {
+      fetch(`/get_episodes/${guest.episodeId}`)
+        .then((response) => response.json())
+        .then((episode) => {
+          renderEpisodeDetail(episode);
+        })
+        .catch((error) => {
+          console.error("Error fetching episode:", error);
+          showNotification(
+            "Error",
+            "Failed to return to episode view",
+            "error"
+          );
+        });
+    });
+  }
 
-// New function to display the episode popup for viewing/updating an episode
-async function showEpisodePopup(episode) {
-  const popup = document.createElement("div");
-  popup.className = "popup";
-  popup.style.display = "flex";
+  // New function to display the episode popup for viewing/updating an episode
+  async function showEpisodePopup(episode) {
+    const popup = document.createElement("div");
+    popup.className = "popup";
+    popup.style.display = "flex";
 
-  const popupContent = document.createElement("div");
-  popupContent.className = "form-box";
-  popupContent.innerHTML = `
+    const popupContent = document.createElement("div");
+    popupContent.className = "form-box";
+    popupContent.innerHTML = `
     <span id="close-episode-popup" class="close-btn">&times;</span>
     <h2 class="form-title">Edit Episode</h2>
     <form id="update-episode-form">
@@ -1640,72 +1585,75 @@ async function showEpisodePopup(episode) {
       </div>
     </form>
   `;
-  popup.appendChild(popupContent);
-  document.body.appendChild(popup);
+    popup.appendChild(popupContent);
+    document.body.appendChild(popup);
 
-  // Populate guest dropdown in update popup with the current guest selected.
-  const updGuestSelect = document.getElementById("upd-guest-id");
-  renderGuestSelection(updGuestSelect, episode.guestId || "");
+    // Populate guest dropdown in update popup with the current guest selected.
+    const updGuestSelect = document.getElementById("upd-guest-id");
+    renderGuestSelection(updGuestSelect, episode.guestId || "");
 
-  // Fetch podcasts to ensure the podcast ID is available
-  const response = await fetchPodcasts();
-  const podcasts = response.podcast;
-  renderPodcastSelection(podcasts);
+    // Fetch podcasts to ensure the podcast ID is available
+    const response = await fetchPodcasts();
+    const podcasts = response.podcast;
+    renderPodcastSelection(podcasts);
 
-  // Close popup events
-  popup.querySelector("#close-episode-popup").addEventListener("click", () => {
-    document.body.removeChild(popup);
-  });
-  popup
-    .querySelector("#cancel-episode-update")
-    .addEventListener("click", () => {
-      document.body.removeChild(popup);
-    });
-
-  // Manual guest entry
-  const manualGuestField = document.querySelector(".manual-guest-field");
-  manualGuestField.addEventListener("click", () => {
-    showManualGuestPopup(updGuestSelect);
-  });
-
-  // Update episode form submission
-  popup
-    .querySelector("#update-episode-form")
-    .addEventListener("submit", async (e) => {
-      e.preventDefault();
-      const updatedData = {
-        title: document.getElementById("upd-episode-title").value.trim(),
-        description: document
-          .getElementById("upd-episode-description")
-          .value.trim(),
-        publishDate: document.getElementById("upd-publish-date").value,
-        duration: document.getElementById("upd-duration").value,
-        guestId: document.getElementById("upd-guest-id").value, // value from select
-        status: document.getElementById("upd-status").value.trim()
-      };
-      Object.keys(updatedData).forEach((key) => {
-        if (!updatedData[key]) delete updatedData[key];
+    // Close popup events
+    popup
+      .querySelector("#close-episode-popup")
+      .addEventListener("click", () => {
+        document.body.removeChild(popup);
       });
-      try {
-        const response = await fetch(`/update_episodes/${episode._id}`, {
-          method: "PUT",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(updatedData)
-        });
-        const result = await response.json();
-        if (response.ok) {
-          showNotification(
-            "Success",
-            "Episode updated successfully!",
-            "success"
-          );
-          document.body.removeChild(popup);
-          renderPodcastList();
-        } else {
-          showNotification("Error", result.error || "Update failed", "error");
-        }
-      } catch (error) {
-        showNotification("Error", "Failed to update episode.", "error");
-      }
+    popup
+      .querySelector("#cancel-episode-update")
+      .addEventListener("click", () => {
+        document.body.removeChild(popup);
+      });
+
+    // Manual guest entry
+    const manualGuestField = document.querySelector(".manual-guest-field");
+    manualGuestField.addEventListener("click", () => {
+      showManualGuestPopup(updGuestSelect);
     });
+
+    // Update episode form submission
+    popup
+      .querySelector("#update-episode-form")
+      .addEventListener("submit", async (e) => {
+        e.preventDefault();
+        const updatedData = {
+          title: document.getElementById("upd-episode-title").value.trim(),
+          description: document
+            .getElementById("upd-episode-description")
+            .value.trim(),
+          publishDate: document.getElementById("upd-publish-date").value,
+          duration: document.getElementById("upd-duration").value,
+          guestId: document.getElementById("upd-guest-id").value, // value from select
+          status: document.getElementById("upd-status").value.trim()
+        };
+        Object.keys(updatedData).forEach((key) => {
+          if (!updatedData[key]) delete updatedData[key];
+        });
+        try {
+          const response = await fetch(`/update_episodes/${episode._id}`, {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(updatedData)
+          });
+          const result = await response.json();
+          if (response.ok) {
+            showNotification(
+              "Success",
+              "Episode updated successfully!",
+              "success"
+            );
+            document.body.removeChild(popup);
+            renderPodcastList();
+          } else {
+            showNotification("Error", result.error || "Update failed", "error");
+          }
+        } catch (error) {
+          showNotification("Error", "Failed to update episode.", "error");
+        }
+      });
+  }
 }

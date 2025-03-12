@@ -227,7 +227,7 @@ header {
 }
 
 .view-btn {
-  color: #3b82f6;
+  color: var(--highlight-color);
 }
 
 .edit-btn {
@@ -838,7 +838,7 @@ header {
 }
 
 .notification.info {
-  border-left: 4px solid var(--font-primary);
+  border-left: 4px solid #3498db;
 }
 
 .notification.info .notification-icon {
@@ -1261,7 +1261,7 @@ header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  border-left: 3px solid var(--font-primary);
+  border-left: 3px solid var(--highlight-color);
 }
 
 .guest-card:hover {
@@ -1274,7 +1274,7 @@ header {
   width: 40px;
   height: 40px;
   border-radius: 50%;
-  background-color: var(--font-primary);
+  background-color: var(--highlight-color);
   color: white;
   display: flex;
   align-items: center;
@@ -1282,6 +1282,7 @@ header {
   font-weight: bold;
   margin-right: 15px;
   flex-shrink: 0;
+  font-family: var(--font-primary);
 }
 
 .guest-info {
@@ -1290,19 +1291,26 @@ header {
   flex: 1;
 }
 
+.guest-content {
+  display: flex;
+  flex-direction: column;
+}
+
 .guest-name {
   font-weight: 600;
   color: rgba(0, 0, 0, 0.7);
   font-size: 1rem;
+  font-family: var(--font-primary);
 }
 
 .guest-email {
   font-size: 0.85rem;
   color: var(--text-color-light);
+  font-family: var(--font-primary);
 }
 
 .view-profile-btn {
-  background-color: var(--font-primary);
+  background-color: var(--highlight-color);
   color: white;
   border: none;
   border-radius: var(--radius-small);
@@ -1311,10 +1319,11 @@ header {
   font-weight: 600;
   font-size: 0.85rem;
   transition: all 0.3s ease;
+  font-family: var(--highlight-color);
 }
 
 .view-profile-btn:hover {
-  background-color: var(--font-primary);
+  background-color: var(--highlight-color);
   transform: translateY(-2px);
 }
 
@@ -1329,7 +1338,7 @@ header {
   width: 80px;
   height: 80px;
   border-radius: 50%;
-  background-color: var(--font-primary);
+  background-color: var(--highlight-color);
   color: white;
   display: flex;
   align-items: center;
@@ -1337,6 +1346,7 @@ header {
   font-weight: bold;
   font-size: 2rem;
   margin-right: 20px;
+  font-family: var(--font-primary);
 }
 
 .guest-detail-info {
@@ -1348,11 +1358,13 @@ header {
   font-weight: bold;
   color: rgba(0, 0, 0, 0.8);
   margin-bottom: 5px;
+  font-family: var(--font-primary);
 }
 
 .guest-detail-email {
   font-size: 1rem;
   color: var(--text-color-light);
+  font-family: var(--font-primary);
 }
 
 .guest-detail-section {
@@ -1365,25 +1377,36 @@ header {
   margin-bottom: 10px;
   padding-bottom: 5px;
   border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+  font-family: var(--font-primary);
+}
+
+.guest-detail-section h4 {
+  font-size: 0.95rem;
+  color: var(--text-color-light);
+  margin-bottom: 5px;
+  font-weight: 600;
+  font-family: var(--font-primary);
 }
 
 .guest-tag {
   display: inline-block;
   background-color: rgba(59, 130, 246, 0.1);
-  color: var(--font-primary);
+  color: var(--highlight-color);
   padding: 4px 10px;
   border-radius: 20px;
   margin-right: 8px;
   margin-bottom: 8px;
   font-size: 0.85rem;
+  font-family: var(--font-primary);
 }
 
 .guest-social-link {
   display: flex;
   align-items: center;
-  color: var(--font-primary);
+  color: var(--highlight-color);
   text-decoration: none;
   margin-bottom: 10px;
+  font-family: var(--font-primary);
 }
 
 .guest-social-link:hover {
@@ -1392,4 +1415,16 @@ header {
 
 .guest-social-link svg {
   margin-right: 8px;
+}
+
+.no-guests-message {
+  margin-top: 10px;
+  font-style: italic;
+  color: var(--text-color-light);
+  font-family: var(--font-primary);
+}
+
+.error-message {
+  color: var(--danger-color);
+  font-family: var(--font-primary);
 }
