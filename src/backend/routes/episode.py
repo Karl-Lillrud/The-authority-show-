@@ -56,7 +56,6 @@ def register_episode():
         description = validated_data.get("description")
         publish_date = validated_data.get("publishDate")
         duration = validated_data.get("duration")
-        guest_id = validated_data.get("guestId")
         status = validated_data.get("status")
 
         # Validate required fields
@@ -77,7 +76,6 @@ def register_episode():
             "description": description,
             "publishDate": publish_date,
             "duration": duration,
-            "guestId": guest_id,
             "status": status,
             "userid": user_id,
             "accountId": account_id,  # Add the accountId from the user's account
@@ -92,12 +90,12 @@ def register_episode():
         )  # Ensure "Episodes" is correct
         logger.info("✅ Episode registered successfully with ID: %s", episode_id)
 
+        # Return success response
         return (
             jsonify(
                 {
                     "message": "Episode registered successfully",
                     "episode_id": episode_id,
-                    "redirect_url": "/index.html",
                 }
             ),
             201,

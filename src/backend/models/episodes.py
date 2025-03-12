@@ -15,7 +15,7 @@ class EpisodeSchema(Schema):
     @pre_load
     def process_empty_strings(self, data, **kwargs):
         # Convert empty strings to None for fields that expect specific types
-        for key in ["publishDate", "description", "duration", "status", "guestId"]:
+        for key in ["publishDate", "description", "duration", "status"]:
             if key in data and data[key] == "":
                 data[key] = None
         return data
