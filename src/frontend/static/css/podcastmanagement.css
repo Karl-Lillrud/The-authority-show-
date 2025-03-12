@@ -95,7 +95,7 @@ header {
 .action-button:hover {
   transform: translateY(-3px);
   box-shadow: -7px -7px 14px var(--light-shadow-light),
-    7px 7px 14px var (--dark-shadow-light);
+    7px 7px 14px var(--dark-shadow-light);
   color: var(--highlight-color);
 }
 
@@ -838,7 +838,7 @@ header {
 }
 
 .notification.info {
-  border-left: 4px solid #3498db;
+  border-left: 4px solid var(--font-primary);
 }
 
 .notification.info .notification-icon {
@@ -921,7 +921,7 @@ header {
   display: block;
   margin-bottom: var(--spacing-sm);
   font-weight: 600;
-  color: var (--text-color-light);
+  color: var(--text-color-light);
   transition: all 0.3s ease;
   font-size: 0.95rem;
   position: relative;
@@ -1060,7 +1060,7 @@ header {
 
   .delete-btn-home {
     background-color: rgba(231, 76, 60, 0.2);
-    color: var (--danger-color);
+    color: var(--danger-color);
     box-shadow: -3px -3px 6px var(--light-shadow-light),
       3px 3px 6px var(--dark-shadow-light);
   }
@@ -1078,4 +1078,318 @@ header {
     top: 10px;
     left: 10px;
   }
+}
+
+/* Add these styles for the episodes list in the podcast detail view */
+.episodes-list {
+  width: 100%;
+  padding: var(--spacing-md);
+  margin-top: var(--spacing-md);
+}
+
+.detail-section-title {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: rgba(0, 0, 0, 0.7);
+  margin-bottom: var(--spacing-md);
+  position: relative;
+  padding-bottom: 8px;
+}
+
+.detail-section-title::after {
+  content: "";
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 60px;
+  height: 2px;
+  background-color: var(--highlight-color);
+  border-radius: 2px;
+}
+
+.episodes-container {
+  max-height: 400px;
+  overflow-y: auto;
+  padding-right: var(--spacing-sm);
+  scrollbar-width: thin;
+  scrollbar-color: rgba(0, 0, 0, 0.2) var(--background-light);
+}
+
+.episodes-container::-webkit-scrollbar {
+  width: 8px;
+}
+
+.episodes-container::-webkit-scrollbar-track {
+  background: var(--background-light);
+  border-radius: 10px;
+}
+
+.episodes-container::-webkit-scrollbar-thumb {
+  background-color: rgba(0, 0, 0, 0.2);
+  border-radius: 10px;
+  border: 2px solid var(--background-light);
+}
+
+/* Add these styles for the episode view button */
+.view-episode-btn {
+  background-color: var(--highlight-color);
+  color: white;
+  border: none;
+  border-radius: var(--radius-small);
+  padding: 5px 12px;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 0.85rem;
+  transition: all 0.3s ease;
+  align-self: center;
+}
+
+.view-episode-btn:hover {
+  background-color: #e0662c;
+  transform: translateY(-2px);
+}
+
+/* Update episode card styles */
+.episode-card {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  padding: 12px;
+  border-radius: var(--radius-medium);
+  background-color: var(--background-light);
+  box-shadow: -3px -3px 6px var(--light-shadow-light),
+    3px 3px 6px var(--dark-shadow-light);
+  transition: all 0.3s ease;
+  cursor: pointer;
+  border-left: 3px solid var(--highlight-color);
+  margin-bottom: var(--spacing-sm);
+}
+
+.episode-title {
+  font-weight: 600;
+  color: rgba(0, 0, 0, 0.7);
+  margin-bottom: 5px;
+}
+
+.episode-meta {
+  font-size: 0.8rem;
+  color: var(--text-color-light);
+  margin-bottom: 5px;
+}
+
+.episode-description {
+  font-size: 0.85rem;
+  color: var(--text-color-light);
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.episode-content {
+  flex: 1;
+  margin-right: 10px;
+}
+
+.episode-card:last-child {
+  margin-bottom: 0;
+}
+
+/* Adjust the detail content grid to make room for episodes */
+.detail-content {
+  display: grid;
+  grid-template-columns: 300px 1fr;
+  grid-template-rows: auto 1fr;
+  gap: var(--spacing-lg);
+}
+
+.detail-image {
+  grid-column: 1;
+  grid-row: 1;
+}
+
+#episodes-list {
+  grid-column: 1;
+  grid-row: 2;
+}
+
+.detail-info {
+  grid-column: 2;
+  grid-row: 1 / span 2;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .detail-content {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto auto auto;
+  }
+
+  .detail-image {
+    grid-column: 1;
+    grid-row: 1;
+    height: 200px;
+  }
+
+  #episodes-list {
+    grid-column: 1;
+    grid-row: 2;
+  }
+
+  .detail-info {
+    grid-column: 1;
+    grid-row: 3;
+  }
+}
+
+/* Add these styles for the guest cards in the episode detail view */
+.guests-container {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 10px;
+}
+
+.guest-card {
+  padding: 15px;
+  border-radius: var(--radius-medium);
+  background-color: var(--background-light);
+  box-shadow: -3px -3px 6px var(--light-shadow-light),
+    3px 3px 6px var(--dark-shadow-light);
+  transition: all 0.3s ease;
+  cursor: pointer;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-left: 3px solid var(--font-primary);
+}
+
+.guest-card:hover {
+  transform: translateY(-2px);
+  box-shadow: -5px -5px 10px var(--light-shadow-light),
+    5px 5px 10px var(--dark-shadow-light);
+}
+
+.guest-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background-color: var(--font-primary);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+  margin-right: 15px;
+  flex-shrink: 0;
+}
+
+.guest-info {
+  display: flex;
+  align-items: center;
+  flex: 1;
+}
+
+.guest-name {
+  font-weight: 600;
+  color: rgba(0, 0, 0, 0.7);
+  font-size: 1rem;
+}
+
+.guest-email {
+  font-size: 0.85rem;
+  color: var(--text-color-light);
+}
+
+.view-profile-btn {
+  background-color: var(--font-primary);
+  color: white;
+  border: none;
+  border-radius: var(--radius-small);
+  padding: 6px 12px;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 0.85rem;
+  transition: all 0.3s ease;
+}
+
+.view-profile-btn:hover {
+  background-color: var(--font-primary);
+  transform: translateY(-2px);
+}
+
+/* Enhance the guest detail view */
+.guest-detail-header {
+  display: flex;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.guest-detail-avatar {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  background-color: var(--font-primary);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+  font-size: 2rem;
+  margin-right: 20px;
+}
+
+.guest-detail-info {
+  flex: 1;
+}
+
+.guest-detail-name {
+  font-size: 1.8rem;
+  font-weight: bold;
+  color: rgba(0, 0, 0, 0.8);
+  margin-bottom: 5px;
+}
+
+.guest-detail-email {
+  font-size: 1rem;
+  color: var(--text-color-light);
+}
+
+.guest-detail-section {
+  margin-top: 25px;
+}
+
+.guest-detail-section h3 {
+  font-size: 1.2rem;
+  color: rgba(0, 0, 0, 0.7);
+  margin-bottom: 10px;
+  padding-bottom: 5px;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+.guest-tag {
+  display: inline-block;
+  background-color: rgba(59, 130, 246, 0.1);
+  color: var(--font-primary);
+  padding: 4px 10px;
+  border-radius: 20px;
+  margin-right: 8px;
+  margin-bottom: 8px;
+  font-size: 0.85rem;
+}
+
+.guest-social-link {
+  display: flex;
+  align-items: center;
+  color: var(--font-primary);
+  text-decoration: none;
+  margin-bottom: 10px;
+}
+
+.guest-social-link:hover {
+  text-decoration: underline;
+}
+
+.guest-social-link svg {
+  margin-right: 8px;
 }

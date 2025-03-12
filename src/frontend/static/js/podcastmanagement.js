@@ -7,8 +7,7 @@ import {
 } from "../requests/podcastRequests.js";
 import {
   registerEpisode,
-  fetchEpisodesByPodcast,
-  fetchEpisodes
+  fetchEpisodesByPodcast
 } from "../requests/episodeRequest.js"; // Updated import
 import { svgpodcastmanagement } from "../svg/svgpodcastmanagement.js"; // Updated import path
 import {
@@ -273,7 +272,7 @@ document
 // Event listener for Add Guest form submission
 document
   .getElementById("add-guest-form")
-  .addEventListener("submit", async function (e) {
+  .addEventListener("submit", async (e) => {
     e.preventDefault();
     const episodeId = document.getElementById("episode-id").value.trim();
     const guestName = document.getElementById("guest-name").value.trim();
@@ -319,7 +318,7 @@ document
     }
   });
 
-document.addEventListener("DOMContentLoaded", function () {
+document.addEventListener("DOMContentLoaded", () => {
   console.log("DOM fully loaded and parsed");
 
   renderPodcastList();
@@ -486,7 +485,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
 const form = document.getElementById("register-podcast-form");
 
-form.addEventListener("submit", async function (e) {
+form.addEventListener("submit", async (e) => {
   e.preventDefault();
   console.log("Form submitted");
 
@@ -591,7 +590,7 @@ form.addEventListener("submit", async function (e) {
   if (logoInput && logoInput.files[0]) {
     const file = logoInput.files[0];
     const reader = new FileReader();
-    reader.onloadend = async function () {
+    reader.onloadend = async () => {
       data.logoUrl = reader.result; // update with new image
       await submitPodcast(data);
     };
@@ -1072,20 +1071,116 @@ function renderPodcastDetail(podcast) {
   fetchEpisodesByPodcast(podcast._id)
     .then((episodes) => {
       const episodesListEl = document.getElementById("episodes-list");
-      episodesListEl.innerHTML = "";
+      episodesListEl.innerHTML = `<h3 class="detail-section-title">Episodes</h3>`;
+
       if (episodes && episodes.length) {
+        const episodesContainer = document.createElement("div");
+        episodesContainer.className = "episodes-container";
+        episodesContainer.style.display = "flex";
+        episodesContainer.style.flexDirection = "column";
+        episodesContainer.style.gap = "10px";
+        episodesContainer.style.marginTop = "10px";
+
         episodes.forEach((ep) => {
-          const epLabel = document.createElement("div");
-          epLabel.className = "episode-label";
-          epLabel.textContent = ep.title;
-          epLabel.style.marginBottom = "8px"; // vertical spacing
-          epLabel.addEventListener("click", () => {
+          const episodeCard = document.createElement("div");
+          episodeCard.className = "episode-card";
+          episodeCard.style.padding = "12px";
+          episodeCard.style.borderRadius = "var(--radius-medium)";
+          episodeCard.style.backgroundColor = "var(--background-light)";
+          episodeCard.style.boxShadow =
+            "-3px -3px 6px var(--light-shadow-light), 3px 3px 6px var(--dark-shadow-light)";
+          episodeCard.style.transition = "all 0.3s ease";
+          episodeCard.style.cursor = "pointer";
+          episodeCard.style.borderLeft = "3px solid var(--highlight-color)";
+          episodeCard.style.display = "flex";
+          episodeCard.style.justifyContent = "space-between";
+
+          const publishDate = ep.publishDate
+            ? new Date(ep.publishDate).toLocaleDateString()
+            : "No date";
+          const description = ep.description
+            ? ep.description
+            : "No description available.";
+
+          // Create content container for title, date, and description
+          const contentDiv = document.createElement("div");
+          contentDiv.style.flex = "1";
+          contentDiv.style.marginRight = "10px";
+
+          contentDiv.innerHTML = `
+          <div class="episode-title" style="font-weight: 600; color: rgba(0, 0, 0, 0.7); margin-bottom: 5px;">${
+            ep.title
+          }</div>
+          <div class="episode-meta" style="font-size: 0.8rem; color: var(--text-color-light); margin-bottom: 5px;">
+            <span>Published: ${publishDate}</span>
+            ${ep.duration ? `<span> • ${ep.duration} min</span>` : ""}
+          </div>
+          <div class="episode-description" style="font-size: 0.85rem; color: var(--text-color-light); display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;">${description}</div>
+        `;
+
+          // Create view button
+          const viewButton = document.createElement("button");
+          viewButton.className = "view-episode-btn";
+          viewButton.textContent = "View";
+          viewButton.style.alignSelf = "center";
+          viewButton.style.backgroundColor = "var(--highlight-color)";
+          viewButton.style.color = "white";
+          viewButton.style.border = "none";
+          viewButton.style.borderRadius = "var(--radius-small)";
+          viewButton.style.padding = "5px 12px";
+          viewButton.style.cursor = "pointer";
+          viewButton.style.fontWeight = "600";
+          viewButton.style.fontSize = "0.85rem";
+          viewButton.style.transition = "all 0.3s ease";
+
+          // Add hover effect to button
+          viewButton.addEventListener("mouseenter", () => {
+            viewButton.style.backgroundColor = "#e0662c";
+            viewButton.style.transform = "translateY(-2px)";
+          });
+
+          viewButton.addEventListener("mouseleave", () => {
+            viewButton.style.backgroundColor = "var(--highlight-color)";
+            viewButton.style.transform = "translateY(0)";
+          });
+
+          // Add click event to view button
+          viewButton.addEventListener("click", (e) => {
+            e.stopPropagation(); // Prevent triggering the card click
             renderEpisodeDetail(ep);
           });
-          episodesListEl.appendChild(epLabel);
+
+          // Add elements to card
+          episodeCard.appendChild(contentDiv);
+          episodeCard.appendChild(viewButton);
+
+          // Add hover effect to card
+          episodeCard.addEventListener("mouseenter", () => {
+            episodeCard.style.transform = "translateY(-2px)";
+            episodeCard.style.boxShadow =
+              "-5px -5px 10px var(--light-shadow-light), 5px 5px 10px var(--dark-shadow-light)";
+          });
+
+          episodeCard.addEventListener("mouseleave", () => {
+            episodeCard.style.transform = "translateY(0)";
+            episodeCard.style.boxShadow =
+              "-3px -3px 6px var(--light-shadow-light), 3px 3px 6px var(--dark-shadow-light)";
+          });
+
+          // Add click event to card (excluding the button)
+          episodeCard.addEventListener("click", () => {
+            renderEpisodeDetail(ep);
+          });
+
+          episodesContainer.appendChild(episodeCard);
         });
+
+        episodesListEl.appendChild(episodesContainer);
       } else {
-        episodesListEl.textContent = "No episodes available.";
+        const noEpisodes = document.createElement("p");
+        noEpisodes.textContent = "No episodes available.";
+        noEpisodes.style.marginTop = "10px";
+        episodesListEl.appendChild(noEpisodes);
       }
     })
     .catch((error) => {
@@ -1193,33 +1288,160 @@ function renderEpisodeDetail(episode) {
     .then((guests) => {
       const guestsListEl = document.getElementById("guests-list");
       guestsListEl.innerHTML = "";
+
       if (guests && guests.length) {
+        const guestsContainer = document.createElement("div");
+        guestsContainer.className = "guests-container";
+        guestsContainer.style.display = "flex";
+        guestsContainer.style.flexDirection = "column";
+        guestsContainer.style.gap = "12px";
+        guestsContainer.style.marginTop = "10px";
+
         guests.forEach((guest) => {
-          const guestItem = document.createElement("div");
-          guestItem.className = "guest-item";
-          guestItem.innerHTML = `
-            <div class="guest-name" style="cursor: pointer; color: blue; text-decoration: underline;">${guest.name}</div>
-            <div class="guest-email">${guest.email}</div>
-          `;
-          guestItem
-            .querySelector(".guest-name")
-            .addEventListener("click", () => {
-              renderGuestDetail(guest);
-            });
-          guestsListEl.appendChild(guestItem);
+          const guestCard = document.createElement("div");
+          guestCard.className = "guest-card";
+          guestCard.style.padding = "15px";
+          guestCard.style.borderRadius = "var(--radius-medium)";
+          guestCard.style.backgroundColor = "var(--background-light)";
+          guestCard.style.boxShadow =
+            "-3px -3px 6px var(--light-shadow-light), 3px 3px 6px var(--dark-shadow-light)";
+          guestCard.style.transition = "all 0.3s ease";
+          guestCard.style.cursor = "pointer";
+          guestCard.style.display = "flex";
+          guestCard.style.justifyContent = "space-between";
+          guestCard.style.alignItems = "center";
+          guestCard.style.borderLeft = "3px solid #3b82f6"; // Different color from episodes
+
+          // Create content container for guest info
+          const contentDiv = document.createElement("div");
+          contentDiv.style.flex = "1";
+
+          // Add guest avatar placeholder (circle with initials)
+          const avatarDiv = document.createElement("div");
+          avatarDiv.style.width = "40px";
+          avatarDiv.style.height = "40px";
+          avatarDiv.style.borderRadius = "50%";
+          avatarDiv.style.backgroundColor = "#3b82f6";
+          avatarDiv.style.color = "white";
+          avatarDiv.style.display = "flex";
+          avatarDiv.style.alignItems = "center";
+          avatarDiv.style.justifyContent = "center";
+          avatarDiv.style.fontWeight = "bold";
+          avatarDiv.style.marginRight = "15px";
+          avatarDiv.style.flexShrink = "0";
+
+          // Get initials from guest name
+          const initials = guest.name
+            .split(" ")
+            .map((word) => word[0])
+            .join("")
+            .substring(0, 2)
+            .toUpperCase();
+
+          avatarDiv.textContent = initials;
+
+          // Create guest info with name and email
+          const infoDiv = document.createElement("div");
+          infoDiv.style.display = "flex";
+          infoDiv.style.alignItems = "center";
+
+          infoDiv.innerHTML = `
+          <div style="display: flex; flex-direction: column;">
+            <div class="guest-name" style="font-weight: 600; color: rgba(0, 0, 0, 0.7); font-size: 1rem;">${guest.name}</div>
+            <div class="guest-email" style="font-size: 0.85rem; color: var(--text-color-light);">${guest.email}</div>
+          </div>
+        `;
+
+          // Create view profile button
+          const viewProfileBtn = document.createElement("button");
+          viewProfileBtn.className = "view-profile-btn";
+          viewProfileBtn.textContent = "View Profile";
+          viewProfileBtn.style.backgroundColor = "#3b82f6";
+          viewProfileBtn.style.color = "white";
+          viewProfileBtn.style.border = "none";
+          viewProfileBtn.style.borderRadius = "var(--radius-small)";
+          viewProfileBtn.style.padding = "6px 12px";
+          viewProfileBtn.style.cursor = "pointer";
+          viewProfileBtn.style.fontWeight = "600";
+          viewProfileBtn.style.fontSize = "0.85rem";
+          viewProfileBtn.style.transition = "all 0.3s ease";
+
+          // Add hover effect to button
+          viewProfileBtn.addEventListener("mouseenter", () => {
+            viewProfileBtn.style.backgroundColor = "#2563eb";
+            viewProfileBtn.style.transform = "translateY(-2px)";
+          });
+
+          viewProfileBtn.addEventListener("mouseleave", () => {
+            viewProfileBtn.style.backgroundColor = "#3b82f6";
+            viewProfileBtn.style.transform = "translateY(0)";
+          });
+
+          // Add click event to view button
+          viewProfileBtn.addEventListener("click", (e) => {
+            e.stopPropagation(); // Prevent triggering the card click
+            renderGuestDetail(guest);
+          });
+
+          // Add hover effect to card
+          guestCard.addEventListener("mouseenter", () => {
+            guestCard.style.transform = "translateY(-2px)";
+            guestCard.style.boxShadow =
+              "-5px -5px 10px var(--light-shadow-light), 5px 5px 10px var(--dark-shadow-light)";
+          });
+
+          guestCard.addEventListener("mouseleave", () => {
+            guestCard.style.transform = "translateY(0)";
+            guestCard.style.boxShadow =
+              "-3px -3px 6px var(--light-shadow-light), 3px 3px 6px var(--dark-shadow-light)";
+          });
+
+          // Add click event to card
+          guestCard.addEventListener("click", () => {
+            renderGuestDetail(guest);
+          });
+
+          // Assemble the card
+          infoDiv.prepend(avatarDiv);
+          contentDiv.appendChild(infoDiv);
+          guestCard.appendChild(contentDiv);
+          guestCard.appendChild(viewProfileBtn);
+          guestsContainer.appendChild(guestCard);
         });
+
+        guestsListEl.appendChild(guestsContainer);
       } else {
-        guestsListEl.textContent = "No guests available.";
+        const noGuests = document.createElement("p");
+        noGuests.textContent = "No guests available for this episode.";
+        noGuests.style.marginTop = "10px";
+        noGuests.style.fontStyle = "italic";
+        noGuests.style.color = "var(--text-color-light)";
+        guestsListEl.appendChild(noGuests);
       }
     })
     .catch((error) => {
       console.error("Error fetching guests:", error);
+      const errorMsg = document.createElement("p");
+      errorMsg.textContent = "Error loading guests. Please try again later.";
+      errorMsg.style.color = "var(--danger-color)";
+      document.getElementById("guests-list").appendChild(errorMsg);
     });
 }
+
+// Replace the renderGuestDetail function with this enhanced version:
 
 // New function to render guest details
 function renderGuestDetail(guest) {
   const guestDetailElement = document.getElementById("podcast-detail");
+
+  // Get initials from guest name for avatar
+  const initials = guest.name
+    .split(" ")
+    .map((word) => word[0])
+    .join("")
+    .substring(0, 2)
+    .toUpperCase();
+
   guestDetailElement.innerHTML = `
     <div class="detail-header">
       <button class="back-btn" id="back-to-episode">
@@ -1228,36 +1450,118 @@ function renderGuestDetail(guest) {
       </button>
     </div>
     <div class="detail-content">
-      <div class="detail-image" style="background-image: url('${
-        guest.image || "default-image.png"
-      }')"></div>
       <div class="detail-info">
-        <h1 class="detail-title">${guest.name}</h1>
-        <p class="detail-category">${guest.email || "No email provided"}</p>
+        <div class="guest-detail-header">
+          <div class="guest-detail-avatar">${initials}</div>
+          <div class="guest-detail-info">
+            <h1 class="guest-detail-name">${guest.name}</h1>
+            <p class="guest-detail-email">${
+              guest.email || "No email provided"
+            }</p>
+          </div>
+        </div>
+        
         <div class="detail-section">
           <h2>About</h2>
-          <p>${guest.bio || "No bio available."}</p>
+          <p>${guest.bio || guest.description || "No bio available."}</p>
         </div>
+        
         <div class="separator"></div>
-        <div class="detail-grid">
-          <div class="detail-item">
-            <h3>LinkedIn</h3>
-            <p>${guest.linkedin || "Not specified"}</p>
-          </div>
-          <div class="detail-item">
-            <h3>Twitter</h3>
-            <p>${guest.twitter || "Not specified"}</p>
-          </div>
-          <div class="detail-item">
-            <h3>Areas of Interest</h3>
-            <p>${guest.areasOfInterest.join(", ") || "Not specified"}</p>
+        
+        <div class="guest-detail-section">
+          <h3>Contact Information</h3>
+          <div class="detail-grid">
+            <div class="detail-item">
+              <h4>Email</h4>
+              <p><a href="mailto:${
+                guest.email
+              }" style="color: var(--highlight-color);">${guest.email}</a></p>
+            </div>
+            ${
+              guest.phone
+                ? `
+            <div class="detail-item">
+              <h4>Phone</h4>
+              <p>${guest.phone}</p>
+            </div>
+            `
+                : ""
+            }
           </div>
         </div>
+        
         <div class="separator"></div>
-        <div class="detail-section">
-          <h2>Tags</h2>
-          <div>${guest.tags.join(", ") || "No tags available"}</div>
+        
+        <div class="guest-detail-section">
+          <h3>Social Media</h3>
+          <div>
+            ${
+              guest.linkedin
+                ? `
+            <a href="${guest.linkedin}" target="_blank" class="guest-social-link">
+              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"></path>
+                <rect x="2" y="9" width="4" height="12"></rect>
+                <circle cx="4" cy="4" r="2"></circle>
+              </svg>
+              LinkedIn Profile
+            </a>
+            `
+                : ""
+            }
+            
+            ${
+              guest.twitter
+                ? `
+            <a href="${guest.twitter}" target="_blank" class="guest-social-link">
+              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M23 3a10.9 10.9 0 0 1-3.14 1.53 4.48 4.48 0 0 0-7.86 3v1A10.66 10.66 0 0 1 3 4s-4 9 5 13a11.64 11.64 0 0 1-7 2c9 5 20 0 20-11.5a4.5 4.5 0 0 0-.08-.83A7.72 7.72 0 0 0 23 3z"></path>
+              </svg>
+              Twitter Profile
+            </a>
+            `
+                : ""
+            }
+            
+            ${
+              !guest.linkedin && !guest.twitter
+                ? "<p>No social media profiles available.</p>"
+                : ""
+            }
+          </div>
         </div>
+        
+        ${
+          guest.areasOfInterest && guest.areasOfInterest.length
+            ? `
+        <div class="separator"></div>
+        <div class="guest-detail-section">
+          <h3>Areas of Interest</h3>
+          <div>
+            ${guest.areasOfInterest
+              .map((area) => `<span class="guest-tag">${area}</span>`)
+              .join("")}
+          </div>
+        </div>
+        `
+            : ""
+        }
+        
+        ${
+          guest.tags && guest.tags.length
+            ? `
+        <div class="separator"></div>
+        <div class="guest-detail-section">
+          <h3>Tags</h3>
+          <div>
+            ${guest.tags
+              .map((tag) => `<span class="guest-tag">${tag}</span>`)
+              .join("")}
+          </div>
+        </div>
+        `
+            : ""
+        }
       </div>
     </div>
   `;
@@ -1271,6 +1575,7 @@ function renderGuestDetail(guest) {
       })
       .catch((error) => {
         console.error("Error fetching episode:", error);
+        showNotification("Error", "Failed to return to episode view", "error");
       });
   });
 }
