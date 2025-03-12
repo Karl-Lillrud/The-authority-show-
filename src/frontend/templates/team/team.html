@@ -1,13 +1,8 @@
-{% extends "dashboard/components/base.html" %} {% block title %}Team Leaderboard
-Dashboard{% endblock %} {% block content %}
-<link
-  rel="stylesheet"
-  href="{{ url_for('static', filename='css/team.css') }}"
-/>
+{% extends "dashboard/components/base.html" %} {% block title %}Team Leaderboard Dashboard{% endblock %} {% block content %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/team.css') }}" />
 
 <div class="container">
   <h1 class="title">Teams</h1>
-
   <!-- Toolbar for CRUD buttons -->
   <div class="action-buttons">
     <button id="openModalBtn" class="action-button">
@@ -23,29 +18,17 @@ Dashboard{% endblock %} {% block content %}
 </div>
 
 <!-- Add Team Modal -->
-<div
-  class="modal popup"
-  id="addTeamModal"
-  tabindex="-1"
-  role="dialog"
-  aria-labelledby="addTeamModalLabel"
-  aria-hidden="true"
->
+<div class="modal popup" id="addTeamModal" tabindex="-1" role="dialog" aria-labelledby="addTeamModalLabel" aria-hidden="true">
   <div class="modal-dialog form-box" role="document">
     <form method="post" action="{{ url_for('team_bp.add_team') }}">
-      <div class="modal-content">
+      <div class="modal-content"></div>
         <span id="modalCloseBtn" class="close-btn">&times;</span>
         <h2 class="form-title" id="addTeamModalLabel">Add New Team</h2>
         <div class="modal-body">
           <div class="form-grid">
             <div class="field-group full-width">
               <label for="podcast">Podcast:</label>
-              <select
-                class="form-control"
-                name="podcastId"
-                id="podcastDropdown"
-                required
-              >
+              <select class="form-control" name="podcastId" id="podcastDropdown" required>
                 <option value="">Select a Podcast</option>
                 <!-- Populate options with podcasts -->
               </select>
@@ -79,9 +62,7 @@ Dashboard{% endblock %} {% block content %}
           </div>
         </div>
         <div class="form-actions">
-          <button type="button" class="cancel-btn" id="modalCloseBtn2">
-            Close
-          </button>
+          <button type="button" class="cancel-btn" id="modalCloseBtn2">Close</button>
           <button type="submit" class="save-btn">Add Team</button>
         </div>
       </div>
@@ -90,13 +71,7 @@ Dashboard{% endblock %} {% block content %}
 </div>
 
 <!-- Team Detail Modal -->
-<div
-  class="modal popup"
-  id="teamDetailModal"
-  tabindex="-1"
-  role="dialog"
-  aria-hidden="true"
->
+<div class="modal popup" id="teamDetailModal" tabindex="-1" role="dialog" aria-hidden="true">
   <div class="modal-dialog form-box" role="document">
     <form id="teamDetailForm">
       <div class="modal-content">
@@ -117,30 +92,16 @@ Dashboard{% endblock %} {% block content %}
             </div>
             <!-- Team detail fields -->
             <div class="field-group">
-              <label for="detailName">Name:</label>
-              <input
-                type="text"
-                class="form-control"
-                id="detailName"
-                name="name"
-              />
+              <label for="detailName">Team Name:</label>
+              <input type="text" class="form-control" id="detailName" name="name" />
             </div>
             <div class="field-group">
               <label for="detailEmail">Email:</label>
-              <input
-                type="email"
-                class="form-control"
-                id="detailEmail"
-                name="email"
-              />
+              <input type="email" class="form-control" id="detailEmail" name="email" />
             </div>
             <div class="field-group full-width">
               <label for="detailDescription">Description:</label>
-              <textarea
-                class="form-control"
-                id="detailDescription"
-                name="description"
-              ></textarea>
+              <textarea class="form-control" id="detailDescription" name="description"></textarea>
             </div>
             <div class="field-group full-width">
               <label>Members:</label>
@@ -155,9 +116,7 @@ Dashboard{% endblock %} {% block content %}
           </div>
         </div>
         <div class="form-actions">
-          <button type="button" class="delete-btn" id="deleteTeamBtn">
-            Delete
-          </button>
+          <button type="button" class="delete-btn" id="deleteTeamBtn">Delete</button>
           <button type="button" class="save-btn" id="saveTeamBtn">Save</button>
         </div>
       </div>

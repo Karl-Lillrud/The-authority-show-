@@ -141,7 +141,6 @@ document.addEventListener("DOMContentLoaded", function () {
     memberRow.innerHTML = `
       <input type="email" name="memberEmail" placeholder="Email" class="form-control" required>
       <select name="memberRole" class="form-control" required>
-        <option value="creator">Creator</option>
         <option value="admin">Admin</option>
         <option value="member">Member</option>
       </select>

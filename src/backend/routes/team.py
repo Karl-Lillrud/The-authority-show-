@@ -39,6 +39,7 @@ def add_team():
         # Prepare team data
         team_item = {
             "_id": team_id,
+            "podcastId": validated_data.get("podcastId"),  # Include podcast ID
             "name": validated_data.get("name", "").strip(),
             "email": validated_data.get("email", "").strip(),
             "phone": validated_data.get("phone", "").strip(),
@@ -46,7 +47,6 @@ def add_team():
             "joinedAt": validated_data.get("joinedAt", datetime.now(timezone.utc)),
             "lastActive": validated_data.get("lastActive", datetime.now(timezone.utc)),
             "members": validated_data.get("members", []),  # Include members
-            "podcastId": validated_data.get("podcastId"),  # Include podcast ID
         }
 
         # Insert the team into the Teams collection
