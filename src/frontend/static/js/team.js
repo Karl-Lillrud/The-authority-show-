@@ -130,6 +130,40 @@ document.addEventListener("DOMContentLoaded", function () {
     modal.setAttribute("aria-hidden", "true");
   }
 
+  // Function to add a new member input row
+  function addMemberRow(containerId) {
+    const membersContainer = document.getElementById(containerId);
+    const memberRow = document.createElement("div");
+    memberRow.className = "member-row";
+    memberRow.innerHTML = `
+      <input type="email" name="memberEmail" placeholder="Email" class="form-control" required>
+      <select name="memberRole" class="form-control" required>
+        <option value="creator">Creator</option>
+        <option value="admin">Admin</option>
+        <option value="member">Member</option>
+      </select>
+      <button type="button" class="removeMemberBtn btn">Remove</button>
+    `;
+    membersContainer.appendChild(memberRow);
+
+    // Add event listener to the remove button
+    memberRow
+      .querySelector(".removeMemberBtn")
+      .addEventListener("click", () => {
+        membersContainer.removeChild(memberRow);
+      });
+  }
+
+  // Add event listener to the Add Member button in the Add Team modal
+  document.getElementById("addMemberBtn").addEventListener("click", () => {
+    addMemberRow("members-container");
+  });
+
+  // Add event listener to the Add Member button in the Edit Team modal
+  document.getElementById("addMemberBtnEdit").addEventListener("click", () => {
+    addMemberRow("members-container-edit");
+  });
+
   // The team detail modal logic
   function showTeamDetailModal(team) {
     // Local state for pending podcast assignment changes
@@ -152,9 +186,16 @@ document.addEventListener("DOMContentLoaded", function () {
     document.getElementById("detailName").value = team.name;
     document.getElementById("detailEmail").value = team.email;
     document.getElementById("detailDescription").value = team.description;
-    document.getElementById("detailMembers").textContent = team.members
-      .map((m) => m.email)
-      .join(", ");
+    document.getElementById("members-container-edit").innerHTML = "";
+    team.members.forEach((member) => {
+      addMemberRow("members-container-edit");
+      const memberRows = document.querySelectorAll(
+        "#members-container-edit .member-row"
+      );
+      const lastRow = memberRows[memberRows.length - 1];
+      lastRow.querySelector("input[name='memberEmail']").value = member.email;
+      lastRow.querySelector("select[name='memberRole']").value = member.role;
+    });
 
     const modal = document.getElementById("teamDetailModal");
     modal.classList.add("show");
@@ -199,7 +240,9 @@ document.addEventListener("DOMContentLoaded", function () {
       try {
         const result = await deleteTeamRequest(team._id);
         alert(result.message || "Team deleted successfully!");
-        const card = document.querySelector(`.card[data-id="${team._id}"]`);
+        const card = document.querySelector(
+          `.team-card[data-id="${team._id}"]`
+        );
         if (card) card.remove();
         closeModal(modal);
         const teams = await getTeamsRequest();
@@ -242,8 +285,18 @@ document.addEventListener("DOMContentLoaded", function () {
       const payload = {
         name: document.getElementById("detailName").value,
         email: document.getElementById("detailEmail").value,
-        description: document.getElementById("detailDescription").value
+        description: document.getElementById("detailDescription").value,
+        members: []
       };
+
+      document
+        .querySelectorAll("#members-container-edit .member-row")
+        .forEach((row) => {
+          payload.members.push({
+            email: row.querySelector("input[name='memberEmail']").value,
+            role: row.querySelector("select[name='memberRole']").value
+          });
+        });
 
       try {
         const result = await editTeamRequest(team._id, payload);
@@ -299,35 +352,6 @@ document.addEventListener("DOMContentLoaded", function () {
   const addTeamForm = addTeamModal
     ? addTeamModal.querySelector("form")
     : document.querySelector("form");
-
-  // Function to add a new member input row
-  function addMemberRow() {
-    const membersContainer = document.getElementById("members-container");
-    const memberRow = document.createElement("div");
-    memberRow.className = "member-row";
-    memberRow.innerHTML = `
-      <input type="email" name="memberEmail" placeholder="Email" class="form-control" required>
-      <select name="memberRole" class="form-control" required>
-        <option value="creator">Creator</option>
-        <option value="admin">Admin</option>
-        <option value="member">Member</option>
-      </select>
-      <button type="button" class="removeMemberBtn btn">Remove</button>
-    `;
-    membersContainer.appendChild(memberRow);
-
-    // Add event listener to the remove button
-    memberRow
-      .querySelector(".removeMemberBtn")
-      .addEventListener("click", () => {
-        membersContainer.removeChild(memberRow);
-      });
-  }
-
-  // Add event listener to the Add Member button
-  document
-    .getElementById("addMemberBtn")
-    .addEventListener("click", addMemberRow);
 
   if (addTeamForm) {
     addTeamForm.addEventListener("submit", async function (event) {

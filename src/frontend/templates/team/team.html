@@ -160,13 +160,15 @@ Dashboard{% endblock %} {% block content %}
           </div>
           <div class="form-group">
             <label>Members:</label>
-            <p id="detailMembers" class="form-control-plaintext"></p>
+            <div id="members-container-edit">
+              <!-- Members will be added here dynamically -->
+            </div>
+            <button type="button" id="addMemberBtnEdit" class="btn">
+              Add Member
+            </button>
           </div>
         </div>
         <div class="modal-footer">
-          <a href="{{ url_for('dashboard_bp.addmember') }}" class="btn"
-            >Add Member</a
-          >
           <button type="button" class="btn" id="saveTeamBtn">Save</button>
           <button type="button" class="btn" id="deleteTeamBtn">Delete</button>
         </div>
