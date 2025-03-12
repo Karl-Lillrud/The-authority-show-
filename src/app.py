@@ -22,6 +22,7 @@ from backend.routes.guest_form import guest_form_bp  # Import the guest_form blu
 from backend.routes.auto_publish import auto_publish_bp
 from backend.routes.spotify_oauth import spotify_oauth_bp
 
+
 #from backend.routes.transcription import transcription_bp
 from dotenv import load_dotenv
 from backend.utils import venvupdate

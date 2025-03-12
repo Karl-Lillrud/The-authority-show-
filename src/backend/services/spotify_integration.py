@@ -1,51 +1,30 @@
-import os
-import base64
 import requests
+import os
 from dotenv import load_dotenv
 
 load_dotenv()
 
-import os
-import base64
-import requests
-from dotenv import load_dotenv
-
-load_dotenv()
-
-# Hämta access token med hjälp av OAuth 2.0
-def get_spotify_access_token():
-    client_id = os.getenv("SPOTIFY_CLIENT_ID")
-    client_secret = os.getenv("SPOTIFY_CLIENT_SECRET")
-    refresh_token = os.getenv("SPOTIFY_REFRESH_TOKEN")
-    
-    if not client_id or not client_secret or not refresh_token:
-        raise ValueError("Spotify-uppgifter saknas i .env")
-    
-    token_url = 'https://accounts.spotify.com/api/token'
-    auth_str = f"{client_id}:{client_secret}"
+def upload_episode_to_spotify(access_token, podcast_title, podcast_description, podcast_audio_url):
+    # Den här URL:en kanske måste uppdateras beroende på rätt API
+    url = "https://api.spotify.com/v1/me/podcasts"  # Uppdatera med rätt URL för podcast publicering
     headers = {
-        'Authorization': f'Basic {base64.b64encode(auth_str.encode()).decode()}',
-        'Content-Type': 'application/x-www-form-urlencoded'
+        "Authorization": f"Bearer {access_token}",
+        "Content-Type": "application/json"
     }
     
-    data = {
-        'grant_type': 'refresh_token',
-        'refresh_token': refresh_token
+    metadata = {
+        "title": podcast_title,
+        "description": podcast_description,
+        "audio_url": podcast_audio_url,  # URL till podcastens ljudfil
+        "language": "sv",
+        "category": "Technology",  # Justera kategori om nödvändigt
     }
     
-    response = requests.post(token_url, headers=headers, data=data)
+    response = requests.post(url, json=metadata, headers=headers)
+    
     if response.status_code == 200:
-        return response.json().get('access_token')
+        print("Podcast publicerad framgångsrikt på Spotify.")
+        return response.json()  # Återvänd info om podcasten
     else:
-        raise Exception(f"Misslyckades att hämta access token: {response.content}")
-
-
-def upload_episode_to_spotify(episode_data):
-    access_token = get_spotify_access_token()
-    api_endpoint = 'https://api.spotify.com/v1/podcasts'
-    headers = {
-        'Authorization': f'Bearer {access_token}',
-        'Content-Type': 'application/json'
-    }
-    response = requests.post(api_endpoint, headers=headers, json=episode_data)
-    return response
+        print(f"Fel vid publicering: {response.status_code} - {response.text}")
+        return None
