@@ -26,18 +26,43 @@ document.addEventListener("DOMContentLoaded", function () {
     }
     teams.forEach((team) => {
       const card = document.createElement("div");
-      card.className = "card";
+      card.className = "team-card";
       card.setAttribute("data-id", team._id);
       card.innerHTML = `
-        <p><strong>Podcasts:</strong> ${team.podNames || "N/A"}</p>
-        <h4>${team.name}</h4>
-        <p><strong>Email:</strong> ${team.email}</p>
-        <p><strong>Description:</strong> ${team.description || ""}</p>
-        <p><strong>Members:</strong> ${team.members
-          .map((m) => m.email)
-          .join(", ")}</p>
+        <div class="team-card-header">
+          <h2>${team.name}</h2>
+          <p><strong>Email:</strong> ${team.email}</p>
+        </div>
+        <div class="team-card-body">
+          <p><strong>Description:</strong> ${
+            team.description || "No description available"
+          }</p>
+          <p><strong>Podcasts:</strong> ${team.podNames || "N/A"}</p>
+          <p><strong>Members:</strong> ${team.members
+            .map((m) => m.email)
+            .join(", ")}</p>
+        </div>
+        <div class="team-card-footer">
+          <button class="btn edit-team-btn">Edit</button>
+          <button class="btn delete-team-btn">Delete</button>
+        </div>
       `;
-      card.addEventListener("click", () => showTeamDetailModal(team));
+      card
+        .querySelector(".edit-team-btn")
+        .addEventListener("click", () => showTeamDetailModal(team));
+      card
+        .querySelector(".delete-team-btn")
+        .addEventListener("click", async () => {
+          try {
+            const result = await deleteTeamRequest(team._id);
+            alert(result.message || "Team deleted successfully!");
+            card.remove();
+            const teams = await getTeamsRequest();
+            updateTeamsUI(teams);
+          } catch (error) {
+            console.error("Error deleting team:", error);
+          }
+        });
       container.appendChild(card);
     });
   }

@@ -1,75 +1,91 @@
 <!-- team.html -->
-{% extends "dashboard/components/base.html" %}
-{% block title %}Team Leaderboard Dashboard{% endblock %}
-{% block content %}
-<link rel="stylesheet" href="{{ url_for('static', filename='css/team.css') }}">
+{% extends "dashboard/components/base.html" %} {% block title %}Team Leaderboard
+Dashboard{% endblock %} {% block content %}
+<link
+  rel="stylesheet"
+  href="{{ url_for('static', filename='css/team.css') }}"
+/>
 
 <div class="container">
   <h1>Teams</h1>
   <!-- Button to open the Add Team modal -->
   <button type="button" id="openModalBtn" class="btn">Add New Team</button>
-  
+
   <!-- Flash messages -->
-  {% with messages = get_flashed_messages() %}
-    {% if messages %}
-      <div class="alert">
-        {% for message in messages %}
-          <div>{{ message }}</div>
-        {% endfor %}
-      </div>
-    {% endif %}
-  {% endwith %}
+  {% with messages = get_flashed_messages() %} {% if messages %}
+  <div class="alert">
+    {% for message in messages %}
+    <div>{{ message }}</div>
+    {% endfor %}
+  </div>
+  {% endif %} {% endwith %}
 
   <!-- Always render an empty container for teams -->
   <div class="card-container">
-    <!-- Example team card -->
-    <div class="team-card"></div>
-      <h2>Team Name</h2>
-      <p>Podcasts: <span class="podcast-name">Podcast Names</span></p>
-      <!-- Other team details -->
-    </div>
+    <!-- New team card design will be inserted here dynamically -->
   </div>
 </div>
 
 <!-- Add Team Modal -->
-<div class="modal" id="addTeamModal" tabindex="-1" role="dialog" aria-labelledby="addTeamModalLabel" aria-hidden="true">
+<div
+  class="modal"
+  id="addTeamModal"
+  tabindex="-1"
+  role="dialog"
+  aria-labelledby="addTeamModalLabel"
+  aria-hidden="true"
+>
   <div class="modal-dialog" role="document">
     <form method="post" action="{{ url_for('team_bp.add_team') }}">
       <div class="modal-content">
         <div class="modal-header">
           <h5 id="addTeamModalLabel">Add New Team</h5>
-          <button type="button" class="close" aria-label="Close" id="modalCloseBtn">&times;</button>
+          <button
+            type="button"
+            class="close"
+            aria-label="Close"
+            id="modalCloseBtn"
+          >
+            &times;
+          </button>
         </div>
         <div class="modal-body">
           <div class="form-group">
             <label for="podcast">Podcast:</label>
-            <select class="form-control" name="podcastId" id="podcastDropdown" required>
+            <select
+              class="form-control"
+              name="podcastId"
+              id="podcastDropdown"
+              required
+            >
               <option value="">Select a Podcast</option>
               <!-- Populate options with podcasts -->
             </select>
           </div>
           <div class="form-group">
-              <label for="name">Team Name:</label>
-              <input type="text" class="form-control" name="name" required>
+            <label for="name">Team Name:</label>
+            <input type="text" class="form-control" name="name" required />
           </div>
           <div class="form-group">
-              <label for="email">Email:</label>
-              <input type="email" class="form-control" name="email">
+            <label for="email">Email:</label>
+            <input type="email" class="form-control" name="email" />
           </div>
           <div class="form-group">
-              <label for="description">Description:</label>
-              <textarea class="form-control" name="description"></textarea>
+            <label for="description">Description:</label>
+            <textarea class="form-control" name="description"></textarea>
           </div>
           <!-- Add hidden input fields for userId and email -->
-          <input type="hidden" name="userId" value="{{ session.user_id }}">
-          <input type="hidden" name="email" value="{{ session.email }}">
+          <input type="hidden" name="userId" value="{{ session.user_id }}" />
+          <input type="hidden" name="email" value="{{ session.email }}" />
           <!-- Section for adding members -->
           <div class="form-group">
             <label for="members">Members:</label>
             <div id="members-container">
               <!-- Members will be added here dynamically -->
             </div>
-            <button type="button" id="addMemberBtn" class="btn">Add Member</button>
+            <button type="button" id="addMemberBtn" class="btn">
+              Add Member
+            </button>
           </div>
         </div>
         <div class="modal-footer">
@@ -82,13 +98,26 @@
 </div>
 
 <!-- Team Detail Modal -->
-<div class="modal" id="teamDetailModal" tabindex="-1" role="dialog" aria-hidden="true">
+<div
+  class="modal"
+  id="teamDetailModal"
+  tabindex="-1"
+  role="dialog"
+  aria-hidden="true"
+>
   <div class="modal-dialog" role="document">
     <form id="teamDetailForm">
       <div class="modal-content">
         <div class="modal-header">
           <h5 id="teamDetailModalLabel">Team Details</h5>
-          <button type="button" class="close" aria-label="Close" id="teamDetailCloseBtn">&times;</button>
+          <button
+            type="button"
+            class="close"
+            aria-label="Close"
+            id="teamDetailCloseBtn"
+          >
+            &times;
+          </button>
         </div>
         <div class="modal-body">
           <!-- Dynamic podcast assignment section -->
@@ -105,15 +134,29 @@
           <!-- Team detail fields -->
           <div class="form-group">
             <label for="detailName">Name:</label>
-            <input type="text" class="form-control" id="detailName" name="name">
+            <input
+              type="text"
+              class="form-control"
+              id="detailName"
+              name="name"
+            />
           </div>
           <div class="form-group">
             <label for="detailEmail">Email:</label>
-            <input type="email" class="form-control" id="detailEmail" name="email">
+            <input
+              type="email"
+              class="form-control"
+              id="detailEmail"
+              name="email"
+            />
           </div>
           <div class="form-group">
             <label for="detailDescription">Description:</label>
-            <textarea class="form-control" id="detailDescription" name="description"></textarea>
+            <textarea
+              class="form-control"
+              id="detailDescription"
+              name="description"
+            ></textarea>
           </div>
           <div class="form-group">
             <label>Members:</label>
@@ -121,7 +164,9 @@
           </div>
         </div>
         <div class="modal-footer">
-          <a href="{{ url_for('dashboard_bp.addmember') }}" class="btn">Add Member</a>
+          <a href="{{ url_for('dashboard_bp.addmember') }}" class="btn"
+            >Add Member</a
+          >
           <button type="button" class="btn" id="saveTeamBtn">Save</button>
           <button type="button" class="btn" id="deleteTeamBtn">Delete</button>
         </div>

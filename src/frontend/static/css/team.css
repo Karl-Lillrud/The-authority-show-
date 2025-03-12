@@ -143,3 +143,51 @@ body {
   gap: var(--spacing-sm);
   margin-top: var(--spacing-md);
 }
+
+/* Team Card Styles */
+.team-card {
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  padding: 16px;
+  margin-bottom: 16px;
+  background-color: #fff;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.team-card-header {
+  border-bottom: 1px solid #ddd;
+  padding-bottom: 8px;
+  margin-bottom: 8px;
+}
+
+.team-card-header h2 {
+  margin: 0;
+  font-size: 1.5em;
+}
+
+.team-card-body {
+  padding: 8px 0;
+}
+
+.team-card-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.team-card-footer .btn {
+  padding: 8px 16px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.team-card-footer .btn.edit-team-btn {
+  background-color: #007bff;
+  color: #fff;
+}
+
+.team-card-footer .btn.delete-team-btn {
+  background-color: #dc3545;
+  color: #fff;
+}
