@@ -91,6 +91,7 @@ def get_guests():
         guest_list.append(
             {
                 "id": str(guest.get("_id")),
+                "podcastId": guest.get("podcastId"),
                 "name": guest.get("name"),
                 "image": guest.get("image"),
                 "bio": guest.get("bio"),
