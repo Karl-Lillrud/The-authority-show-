@@ -944,6 +944,26 @@ header {
     inset 2px 2px 4px rgba(22, 24, 29, 0.2), 0 0 0 2px rgba(255, 127, 63, 0.3);
 }
 
+.episode-dropdown {
+  width: auto; /* Adjust the width to be more appropriate */
+  max-width: 200px; /* Set a maximum width */
+  padding: calc(var(--spacing-md) * 1.1);
+  border: none;
+  border-radius: var(--radius-medium);
+  background-color: var(--background-light);
+  color: var(--text-color-light);
+  font-size: 1rem;
+  box-shadow: inset -4px -4px 8px rgba(255, 255, 255, 0.8),
+    inset 4px 4px 8px rgba(22, 24, 29, 0.2);
+  transition: all 0.3s ease;
+}
+
+.episode-dropdown:focus {
+  outline: none;
+  box-shadow: inset -2px -2px 4px rgba(255, 255, 255, 0.8),
+    inset 2px 2px 4px rgba(22, 24, 29, 0.2), 0 0 0 2px rgba(255, 127, 63, 0.3);
+}
+
 @media (max-width: 768px) {
   .form-grid {
     grid-template-columns: 1fr;
