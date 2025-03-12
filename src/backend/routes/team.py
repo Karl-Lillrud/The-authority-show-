@@ -39,7 +39,6 @@ def add_team():
         # Prepare team data
         team_item = {
             "_id": team_id,
-            "podcastId": validated_data.get("podcastId"),  # Include podcast ID
             "name": validated_data.get("name", "").strip(),
             "email": validated_data.get("email", "").strip(),
             "phone": validated_data.get("phone", "").strip(),

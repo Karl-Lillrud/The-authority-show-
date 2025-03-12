@@ -3,7 +3,6 @@ from marshmallow import Schema, fields
 
 class TeamSchema(Schema):
     id = fields.Str()  # Team ID
-    podcastId = fields.Str()  # Podcast ID
     name = fields.Str(required=True)  # Team Name
     email = fields.Email()  # Contact email for the team
     description = fields.Str()  # Description of the team

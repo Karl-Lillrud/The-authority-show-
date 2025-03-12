@@ -257,24 +257,16 @@ document.addEventListener("DOMContentLoaded", function () {
     // Save button finalizes pending podcast assignment changes and updates team details.
     const saveBtn = document.getElementById("saveTeamBtn");
     saveBtn.onclick = async () => {
+      // First update all pending podcast assignments with a PUT request.
       try {
         for (const [podcastId, newTeam] of Object.entries(
           pendingPodcastChanges
         )) {
           if (newTeam === team._id) {
-            const res = await fetch(`/get_podcasts/${podcastId}`, {
-              method: "GET"
-            });
-            const data = await res.json();
-            const existingTeamId = data.podcast ? data.podcast.teamId : null;
-            if (existingTeamId && existingTeamId !== team._id) {
-              alert(
-                `Podcast "${data.podcast.podName}" is already assigned to another team.`
-              );
-              continue;
-            }
+            // Podcast selected: update podcast with the teamId
             await updatePodcastTeamRequest(podcastId, { teamId: team._id });
           } else if (newTeam === "REMOVE") {
+            // Podcast removal: set teamId to empty
             await updatePodcastTeamRequest(podcastId, { teamId: "" });
           }
         }
@@ -344,12 +336,6 @@ document.addEventListener("DOMContentLoaded", function () {
   }
   populatePodcastDropdown();
 
-  async function checkPodcastHasTeam(podcastId) {
-    const res = await fetch(`/get_podcasts/${podcastId}`, { method: "GET" });
-    const data = await res.json();
-    return data.podcast && data.podcast.teamId;
-  }
-
   const addTeamModal = document.getElementById("addTeamModal");
   const addTeamForm = addTeamModal
     ? addTeamModal.querySelector("form")
@@ -366,40 +352,32 @@ document.addEventListener("DOMContentLoaded", function () {
           role: row.querySelector("select[name='memberRole']").value
         });
       });
+      // Extract the selected podcast ID from the form
+      const podcastId = formData.get("podcastId");
       const payload = {
         name: formData.get("name"),
         email: formData.get("email"),
         description: formData.get("description"),
-        podcastId: formData.get("podcastId"), // Include podcast ID
         members: members // Include member details
       };
-      const podcastId = formData.get("podcastId");
-
-      const hasTeam = await checkPodcastHasTeam(podcastId);
-      if (hasTeam) {
-        alert(
-          "This podcast already has a team. You cannot create a new team for it."
-        );
-        return;
-      }
 
       try {
         const response = await addTeamRequest(payload);
         const teamId = response.team_id;
         alert("Team successfully created!");
-        if (podcastId && teamId) {
-          const updatePayload = { teamId: teamId };
-          const updateResponse = await updatePodcastTeamRequest(
-            podcastId,
-            updatePayload
-          );
-          console.log("Podcast updated:", updateResponse);
+
+        // If a podcast was selected, update it with the new team ID using a PUT request.
+        if (podcastId) {
+          const updateResponse = await updatePodcastTeamRequest(podcastId, {
+            teamId: teamId
+          });
+          console.log("Podcast updated with teamId:", updateResponse);
         }
         closeModal(addTeamModal);
         const teams = await getTeamsRequest();
         updateTeamsUI(teams);
       } catch (error) {
-        console.error("Error adding team or updating podcast:", error);
+        console.error("Error adding team:", error);
       }
     });
   }
