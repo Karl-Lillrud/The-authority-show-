@@ -13,8 +13,9 @@ import {
 import { svgpodcastmanagement } from "../svg/svgpodcastmanagement.js"; // Updated import path
 import {
   fetchGuestsRequest,
-  addGuestRequest
-} from "../requests/guestRequests.js"; // Added import for addGuestRequest
+  addGuestRequest,
+  fetchGuestsByEpisode
+} from "../requests/guestRequests.js"; // Added import for fetchGuestsByEpisode
 
 console.log("podcastmanagement.js loaded");
 
@@ -1092,7 +1093,7 @@ function renderPodcastDetail(podcast) {
     });
 }
 
-// New function to render episode details
+// New function to render episode details and fetch guests
 function renderEpisodeDetail(episode) {
   const episodeDetailElement = document.getElementById("podcast-detail");
   episodeDetailElement.innerHTML = `
@@ -1125,6 +1126,11 @@ function renderEpisodeDetail(episode) {
             <h3>Duration</h3>
             <p>${episode.duration || "Not specified"} minutes</p>
           </div>
+        </div>
+        <div class="separator"></div>
+        <div class="detail-section">
+          <h2>Guests</h2>
+          <div id="guests-list"></div>
         </div>
         <div class="separator"></div>
         <div class="detail-actions" style="margin-top: 2rem; display: flex; gap: 1rem;">
@@ -1180,6 +1186,29 @@ function renderEpisodeDetail(episode) {
           showNotification("Error", "Failed to delete episode.", "error");
         }
       }
+    });
+
+  // Fetch and display guests for the episode
+  fetchGuestsByEpisode(episode._id)
+    .then((guests) => {
+      const guestsListEl = document.getElementById("guests-list");
+      guestsListEl.innerHTML = "";
+      if (guests && guests.length) {
+        guests.forEach((guest) => {
+          const guestItem = document.createElement("div");
+          guestItem.className = "guest-item";
+          guestItem.innerHTML = `
+            <div class="guest-name">${guest.name}</div>
+            <div class="guest-email">${guest.email}</div>
+          `;
+          guestsListEl.appendChild(guestItem);
+        });
+      } else {
+        guestsListEl.textContent = "No guests available.";
+      }
+    })
+    .catch((error) => {
+      console.error("Error fetching guests:", error);
     });
 }
 
