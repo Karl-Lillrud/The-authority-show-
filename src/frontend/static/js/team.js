@@ -34,7 +34,7 @@ document.addEventListener("DOMContentLoaded", function () {
         <p><strong>Email:</strong> ${team.email}</p>
         <p><strong>Description:</strong> ${team.description || ""}</p>
         <p><strong>Members:</strong> ${team.members
-          .map((m) => m.userId)
+          .map((m) => m.email)
           .join(", ")}</p>
       `;
       card.addEventListener("click", () => showTeamDetailModal(team));
@@ -128,7 +128,7 @@ document.addEventListener("DOMContentLoaded", function () {
     document.getElementById("detailEmail").value = team.email;
     document.getElementById("detailDescription").value = team.description;
     document.getElementById("detailMembers").textContent = team.members
-      .map((m) => m.userId)
+      .map((m) => m.email)
       .join(", ");
 
     const modal = document.getElementById("teamDetailModal");
