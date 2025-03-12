@@ -25,10 +25,16 @@ body {
   color: var(--text-color-light);
 }
 
+header {
+  justify-content: flex-end;
+  height: 110px; /* Increased height */
+  min-height: 110px; /* Increased height */
+}
+
 .container {
   max-width: 1200px;
   margin: 0 auto;
-  padding: 2rem;
+  padding: 1rem;
 }
 
 .title {
@@ -41,7 +47,7 @@ body {
 /* Logo */
 .logo-container {
   position: fixed;
-  top: 20px;
+  top: 10px; /* Adjusted from 20px to 10px to move the logo up */
   left: 20px; /* Changed from 50% to 20px so the logo stays left */
   transform: none; /* Remove centering transform */
   width: 120px;
@@ -898,7 +904,7 @@ body {
   display: block;
   margin-bottom: var(--spacing-sm);
   font-weight: 600;
-  color: var(--text-color-light);
+  color: var (--text-color-light);
   transition: all 0.3s ease;
   font-size: 0.95rem;
   position: relative;
@@ -947,11 +953,6 @@ body {
     grid-column: auto;
   }
 
-  .action-buttons {
-    flex-direction: column;
-    align-items: center;
-  }
-
   .action-button {
     width: 100%;
     max-width: 300px;
@@ -984,10 +985,6 @@ body {
 }
 
 @media (max-width: 576px) {
-  .container {
-    padding: 1rem;
-  }
-
   .title {
     font-size: 1.8rem;
   }

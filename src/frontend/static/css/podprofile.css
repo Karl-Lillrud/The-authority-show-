@@ -83,7 +83,7 @@ header {
 }
 
 .logo-container img {
-  width: 200px; /* Increase logo size */
+  width: 130px; /* Increase logo size */
   height: auto;
   display: block;
   margin: 0 auto;
@@ -125,8 +125,8 @@ main {
   border-radius: var(--border-radius-xl);
   border: 1px solid rgba(0, 0, 0, 0.2);
   box-shadow: 0px 0px 50px 0px rgb(213, 61, 6);
-  width: 90%;
-  max-width: 500px;
+  width: 18%;
+  min-width: 300px;
   padding: var(--spacing-xl);
   margin: var(--spacing-xl) auto;
   transition: background-color 0.3s ease;
@@ -321,35 +321,4 @@ body.dark-mode .help-button {
   font-size: 1.2rem;
   font-weight: bold;
   color: var(--highlight-color);
-}
-
-/* Responsive Design */
-@media (max-width: 768px) {
-  .container {
-    width: 95%;
-    padding: var(--spacing-lg);
-  }
-
-  .help-text {
-    width: 250px;
-  }
-}
-
-/* Larger Screens */
-@media (min-width: 1200px) {
-  .container {
-    max-width: 550px;
-  }
-}
-
-#email-section {
-  padding: var(--spacing-xl);
-  font-size: 1.1rem; /* Slightly larger text */
-}
-
-#email-section .success-message {
-  padding: 1.5rem; /* Increase padding */
-  line-height: 1.8;
-  text-align: center;
-  font-size: 1.2rem; /* Slightly larger text */
 }
