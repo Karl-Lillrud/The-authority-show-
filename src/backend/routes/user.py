@@ -1,13 +1,100 @@
 from flask import Blueprint, request, jsonify, url_for, g
 from backend.database.mongo_connection import collection
 from backend.models.users import UserSchema  
-from werkzeug.security import check_password_hash
+from werkzeug.security import check_password_hash, generate_password_hash  # Added generate_password_hash import
+
 
 user_bp = Blueprint("user_bp", __name__)
 
 #SHOULD ONLY BE USED FOR SPECIFIC DATA CRUD OPERATIONS, Users collection
 #EXTRA FUNCTIONALITY BESIDES CRUD OPERATIONS SHOULD BE IN SERVICES
 
+# Route to fetch user profile data (Full Name, Email)
+@user_bp.route("/get_profile", methods=["GET"])
+def get_profile():
+    if not hasattr(g, "user_id") or not g.user_id:
+        return jsonify({"error": "Unauthorized"}), 401
+
+    try:
+        user_id = str(g.user_id)
+        user = collection.database.Users.find_one({"_id": user_id}, {"email": 1, "full_name": 1})
+
+        if not user:
+            return jsonify({"error": "User not found"}), 404
+
+        return jsonify({
+            "full_name": user.get("full_name", ""),
+            "email": user.get("email", ""),
+        }), 200
+
+    except Exception as e:
+        return jsonify({"error": f"Failed to fetch profile: {str(e)}"}), 500
+
+
+# Route to update user profile data (Full Name, Email)
+@user_bp.route("/update_profile", methods=["PUT"])
+def update_profile():
+    if not hasattr(g, "user_id") or not g.user_id:
+        return jsonify({"error": "Unauthorized"}), 401
+
+    try:
+        data = request.get_json()
+        full_name = data.get("full_name")
+        email = data.get("email")
+        user_id = str(g.user_id)
+
+        updates = {}
+        if full_name:
+            updates["full_name"] = full_name
+        if email:
+            updates["email"] = email
+
+        # Update the user record in the database
+        collection.database.Users.update_one({"_id": user_id}, {"$set": updates})
+
+        return jsonify({"message": "Profile updated successfully!"}), 200
+
+    except Exception as e:
+        return jsonify({"error": f"Error updating profile: {str(e)}"}), 500
+
+
+# Route to update password
+@user_bp.route("/update_password", methods=["PUT"])
+def update_password():
+    if not hasattr(g, "user_id") or not g.user_id:
+        return jsonify({"error": "Unauthorized"}), 401
+
+    try:
+        data = request.get_json()
+        current_password = data.get("current_password")  # Current password entered by user
+        new_password = data.get("new_password")  # New password
+
+        # Validate the presence of both passwords
+        if not current_password or not new_password:
+            return jsonify({"error": "Both current and new passwords are required"}), 400
+
+        # Fetch the current user document from the database
+        user_id = str(g.user_id)
+        user = collection.database.Users.find_one({"_id": user_id})
+
+        if not user:
+            return jsonify({"error": "User not found"}), 404
+
+        # Check if the current password entered matches the stored hashed password using werkzeug
+        if not check_password_hash(user["passwordHash"], current_password):
+            return jsonify({"error": "Current password is incorrect"}), 400
+
+        # Hash the new password using werkzeug and save it to the database
+        hashed_new_password = generate_password_hash(new_password)  # Now correctly using generate_password_hash
+
+        # Update the password in the database
+        collection.database.Users.update_one({"_id": user_id}, {"$set": {"passwordHash": hashed_new_password}})
+
+        return jsonify({"message": "Password updated successfully!"}), 200
+
+    except Exception as e:
+        logging.error(f"Error updating password: {str(e)}")  # Properly logging the error
+        return jsonify({"error": f"Error updating password: {str(e)}"}), 500
 
 #Should delete all user data from the database and associated collections
 @user_bp.route("/delete_user", methods=["DELETE"])
@@ -68,20 +155,3 @@ def delete_user():
 
     except Exception as e:
         return jsonify({"error": f"Error during deletion: {str(e)}"}), 500
-    
-@user_bp.route("/get_email", methods=["GET"])
-def fetch_user_email():
-    if not hasattr(g, "user_id") or not g.user_id:
-        return jsonify({"error": "Unauthorized"}), 401
-
-    try:
-        user_id = str(g.user_id)
-        user = collection.database.Users.find_one({"_id": user_id}, {"email": 1, "_id": 0})
-
-        if not user:
-            return jsonify({"error": "User not found"}), 404
-
-        return jsonify({"email": user["email"]}), 200
-
-    except Exception as e:
-        return jsonify({"error": f"Failed to fetch email: {str(e)}"}), 500
