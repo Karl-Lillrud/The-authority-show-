@@ -1,10 +1,8 @@
 function registerEpisode(formData) {
     const url = "/register_episode";  // Endpoint for registering the episode
-    
+
     // Create a new FormData object to append the form fields
     const data = new FormData();
-
-    // Append regular fields to the form data
     data.append("podcastId", formData.podcastId);
     data.append("title", formData.title);
     data.append("description", formData.description);
@@ -13,9 +11,10 @@ function registerEpisode(formData) {
     data.append("guestId", formData.guestId);
     data.append("status", formData.status);
 
-    // Append files to the form data
+    // Append all files to the form data
     for (let i = 0; i < formData.audio.length; i++) {
-        data.append("audio[]", formData.audio[i]);  // 'audio[]' corresponds to the name of the file input in the form
+        console.log('Appending file:', formData.audio[i]); // Log each file being appended
+        data.append("audio", formData.audio[i]);  // 'audio' corresponds to the name of the file input in the form
     }
 
     // Send the POST request with multipart/form-data (automatically handled by FormData)

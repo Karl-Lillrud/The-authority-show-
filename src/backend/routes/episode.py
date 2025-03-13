@@ -28,20 +28,22 @@ episode_bp = Blueprint("episode_bp", __name__)
 # Initialize logger
 logger = logging.getLogger(__name__)
 
-# Allowed file extensions for audio/video files
-ALLOWED_EXTENSIONS = {'mp3', 'm4a', 'mp4'}
 
 # Directory to save uploaded files
 UPLOAD_FOLDER = '/path/to/upload/directory'  # Set your desired upload folder path
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
 def allowed_file(filename):
-    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+    return '.' in filename
 
 @episode_bp.route("/register_episode", methods=["POST"])
 def register_episode():
+        
     if not hasattr(g, "user_id") or not g.user_id:
         return jsonify({"error": "Unauthorized"}), 401
+    
+    print(f"Content-Type: {request.content_type}")
+    print(f"Request Files: {request.files}")
 
     # Validate Content-Type
     if 'multipart/form-data' not in request.content_type:
