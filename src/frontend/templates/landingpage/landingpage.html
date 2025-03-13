@@ -37,26 +37,24 @@
         <!-- Use the variable passed from Flask for the title -->
         <h1 id="podcast-title">{{ podcast_title }}</h1>
         <!-- Replace the static description with the dynamic one -->
-        <p id="podcast-description">{{ podcast_description }}</p>
+        <p id="podcast-tagline">tagline goes here</p>
         <div id="subscribe-buttons">
           <button>Subscribe on Apple</button>
           <button>Subscribe on Spotify</button>
         </div>
       </div>
-    </section>//
+    </section>
 
     <!-- About Section -->
     <section class="about-section section-darkgrey" id="about-section">
       <h2>About the Podcast</h2>
-      <p id="podcast-description">
-        A brief description of the podcast goes here. <br>Learn more about our journey and what inspires us.
-      </p>
+      <p id="podcast-description">{{ podcast_description }}</p>
       <div class="host-info">
         <img id="host-image" src="/Media/Karl-Lillrud_bok_nvidia.jpg" alt="Host Image" class="host-image">
         <div class="host-details">
           <h3 id="host-name">{{ host_name }}</h3>
           <p id="host-bio">
-            Host biography goes here. Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nulla ac ultrices libero.
+            Host biography goes here.
           </p>
           <div id="host-social">
             <a href="https://twitter.com/host" target="_blank" class="twitter"><i class="fab fa-twitter"></i></a>
