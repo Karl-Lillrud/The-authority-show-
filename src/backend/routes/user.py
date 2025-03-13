@@ -25,13 +25,14 @@ def delete_user():
         if not input_email or not input_password:
             return jsonify({"error": "Email and password are required."}), 400
 
+        print(f"Attempting to delete user: {input_email}")  # Debugging
         # Retrieve the user document by email (case-insensitive search)
         user = collection.database.Users.find_one({
             "email": {"$regex": f"^{input_email}$", "$options": "i"}
         })
         if not user:
             return jsonify({"error": "User does not exist in the database."}), 404
-
+        print(f"User not found: {input_email}")
         # Verify the provided password using Werkzeug's check_password_hash
         stored_hash = user.get("passwordHash")
         if not stored_hash:
@@ -41,7 +42,7 @@ def delete_user():
             return jsonify({"error": "Incorrect password."}), 400
 
         # Ensure the user's identifier exists (using "id" instead of "_id")
-        user_id = user.get("id")
+        user_id = user.get("_id")
         if not user_id:
             return jsonify({"error": "User identifier missing from record."}), 500
 
@@ -56,7 +57,7 @@ def delete_user():
 
         # Delete the user document from the Users collection
         user_result = collection.database.Users.delete_one({
-            "id": user_id
+            "_id": user_id
         })
         if user_result.deleted_count == 0:
             return jsonify({"error": "User deletion failed."}), 500
