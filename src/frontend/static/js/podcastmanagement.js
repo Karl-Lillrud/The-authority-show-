@@ -316,6 +316,8 @@ document
         });
         closeAddGuestPopup();
         showNotification("Success", "Guest added successfully!", "success");
+        // Refresh the guest list in episode details without refreshing the page
+        renderEpisodeDetail({ _id: episodeId });
       } catch (error) {
         console.error("Error adding guest:", error);
         showNotification("Error", "Failed to add guest.", "error");
