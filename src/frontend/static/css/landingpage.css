@@ -236,6 +236,27 @@ html {
   color: #e4405f;
 }
 
+#host-social a.pinterest {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 35px; /* Adjust as needed */
+  height: 35px; /* Adjust as needed */
+  background-color: #e60023; /* Pinterest red background */
+  color: #ffffff; /* White icon */
+  border-radius: 50%; /* Make it circular */
+  font-size: 18px; /* Adjust icon size */
+  text-decoration: none; /* Prevent unwanted underline */
+  line-height: 0; /* Fixes vertical alignment issues */
+  transition: background 0.3s ease-in-out, transform 0.3s ease-in-out;
+}
+
+#host-social a.pinterest i {
+  font-size: 20px; /* Match the icon size properly */
+  vertical-align: middle; /* Align the icon properly */
+}
+
+
 #host-social a.linkedin {
   color: #0077b5;
 }
