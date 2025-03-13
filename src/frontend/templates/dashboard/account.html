@@ -1,11 +1,8 @@
 {% extends "dashboard/components/base.html" %} 
 {% block title %}Podcast Task Management{% endblock %} 
 {% block content %}
-<link
-  rel="stylesheet"
-  href="{{ url_for('static', filename='css/settings.css') }}"
-/>
-
+<link rel="stylesheet" href="{{ url_for('static', filename='css/settings.css') }}" />
+<script type="module" src="{{ url_for('frontend.static_files', filename='js/settings.js') }}"></script>
 <div class="account-settings-wrapper">
   <!-- Sidebar Menu -->
   <aside class="sidebar">
@@ -223,6 +220,7 @@
     </div>   
   </section>
 </div>
+{% endblock %}
 
 <!-- Include QRCode library -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
