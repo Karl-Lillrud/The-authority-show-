@@ -14,58 +14,75 @@ episode_bp = Blueprint("episode_bp", __name__)
 logger = logging.getLogger(__name__)
 
 
+from flask import request, jsonify, Blueprint, g
+from backend.database.mongo_connection import collection, database
+from datetime import datetime, timezone
+import uuid
+import logging
+from werkzeug.utils import secure_filename
+import os
+
+# Define Blueprint
+episode_bp = Blueprint("episode_bp", __name__)
+
+# Initialize logger
+logger = logging.getLogger(__name__)
+
+# Allowed file extensions for audio/video files
+ALLOWED_EXTENSIONS = {'mp3', 'm4a', 'mp4'}
+
+# Directory to save uploaded files
+UPLOAD_FOLDER = '/path/to/upload/directory'  # Set your desired upload folder path
+os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+
+def allowed_file(filename):
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+
 @episode_bp.route("/register_episode", methods=["POST"])
 def register_episode():
     if not hasattr(g, "user_id") or not g.user_id:
         return jsonify({"error": "Unauthorized"}), 401
 
     # Validate Content-Type
-    if request.content_type != "application/json":
-        return (
-            jsonify({"error": "Invalid Content-Type. Expected application/json"}),
-            415,
-        )
+    if 'multipart/form-data' not in request.content_type:
+        return jsonify({"error": "Invalid Content-Type. Expected multipart/form-data"}), 415
 
     try:
-        data = request.get_json()
-        logger.info("📩 Received raw episode data: %s", data)  # Added log
+        # Check if the post request has the file part
+        if 'audio' not in request.files:
+            return jsonify({"error": "No file part"}), 400
+        
+        # Process each uploaded file
+        files = request.files.getlist('audio')
+        file_paths = []
 
-        # Fetch the account document from MongoDB for the logged-in user
-        user_account = collection.database.Accounts.find_one({"userId": g.user_id})
-        if not user_account:
-            return jsonify({"error": "No account associated with this user"}), 403
+        for file in files:
+            if file.filename == '':
+                return jsonify({"error": "No selected file"}), 400
+            
+            if file and allowed_file(file.filename):
+                filename = secure_filename(file.filename)
+                file_path = os.path.join(UPLOAD_FOLDER, filename)
+                file.save(file_path)
+                file_paths.append(file_path)
+            else:
+                return jsonify({"error": "Invalid file type. Allowed types are: MP3, M4A, MP4"}), 400
 
-        # Fetch the account ID that the user already has (do not override with a new one)
-        if "id" in user_account:
-            account_id = user_account["id"]
-        else:
-            account_id = str(user_account["_id"])
-        logger.info(f"🧩 Found account {account_id} for user {g.user_id}")
-
-        # Validate data with schema
-        schema = EpisodeSchema()
-        errors = schema.validate(data)
-        if errors:
-            logger.error("Schema validation errors: %s", errors)
-            return jsonify({"error": "Invalid data", "details": errors}), 400
-        validated_data = schema.load(data)
-        logger.info("Validated data: %s", validated_data)  # Added log
-
-        podcast_id = validated_data.get("podcastId")
-        title = validated_data.get("title")
-        description = validated_data.get("description")
-        publish_date = validated_data.get("publishDate")
-        duration = validated_data.get("duration")
-        guest_id = validated_data.get("guestId")
-        status = validated_data.get("status")
+        # Handle other form data (podcastId, title, etc.)
+        data = request.form.to_dict()  # Get the other form fields
+        podcast_id = data.get("podcastId")
+        title = data.get("title")
+        description = data.get("description")
+        publish_date = data.get("publishDate")
+        duration = data.get("duration")
+        guest_id = data.get("guestId")
+        status = data.get("status")
 
         # Validate required fields
         if not podcast_id or not title:
-            return (
-                jsonify({"error": "Required fields missing: podcastId and title"}),
-                400,
-            )
+            return jsonify({"error": "Required fields missing: podcastId and title"}), 400
 
+        # Generate unique episode ID
         episode_id = str(uuid.uuid4())
         user_id = str(g.user_id)
 
@@ -79,35 +96,25 @@ def register_episode():
             "duration": duration,
             "guestId": guest_id,
             "status": status,
+            "audio_files": file_paths,  # Store the file paths in the database
             "userid": user_id,
-            "accountId": account_id,  # Add the accountId from the user's account
             "created_at": datetime.now(timezone.utc),
             "updated_at": datetime.now(timezone.utc),
         }
 
-        # Correctly inserting into the Episode collection
-        logger.info("📝 Inserting episode into database: %s", episode_item)
-        result = collection.database["Episodes"].insert_one(
-            episode_item
-        )  # Ensure "Episodes" is correct
-        logger.info("✅ Episode registered successfully with ID: %s", episode_id)
+        # Insert the episode into the database
+        result = collection.database["Episodes"].insert_one(episode_item)
+        logger.info(f"Episode registered successfully with ID: {episode_id}")
 
-        return (
-            jsonify(
-                {
-                    "message": "Episode registered successfully",
-                    "episode_id": episode_id,
-                    "redirect_url": "/index.html",
-                }
-            ),
-            201,
-        )
+        return jsonify({
+            "message": "Episode registered successfully",
+            "episode_id": episode_id,
+            "redirect_url": "/index.html"
+        }), 201
 
     except Exception as e:
-        logger.error("❌ ERROR: %s", e)
+        logger.error(f"Error: {str(e)}")
         return jsonify({"error": f"Failed to register episode: {str(e)}"}), 500
-
-
 @episode_bp.route("/get_episodes/<episode_id>", methods=["GET"])
 def get_episode(episode_id):
     if not g.user_id:

@@ -48,7 +48,7 @@
           <!-- Close button for popup -->
           <span id="close-form-popup" class="close-btn">&times;</span>
           <h2 class="form-title">Add New Podcast</h2>
-          <form id="register-podcast-form">
+          <form id="register-podcast-form" enctype="multipart/form-data">
             <div class="form-grid">
               <div class="field-group">
                 <label for="pod-name">Podcast Name</label>
@@ -147,7 +147,7 @@
           <!-- Close button for popup -->
           <span id="close-episode-form-popup" class="close-btn">&times;</span>
           <h2 class="form-title">Create New Episode</h2>
-          <form id="create-episode-form">
+          <form id="create-episode-form" enctype="multipart/form-data" action="/register_episode" method="POST">
             <div class="form-grid">
               <div class="field-group full-width">
                 <label for="podcast-select">Select Podcast</label>
@@ -194,6 +194,11 @@
                     readonly
                   />
                 </div>
+              </div>
+              <!-- Add fields for MP3 and MP4 file uploads in the episode form -->
+              <div class="field-group">
+                <label for="episode-audio">Upload MP3/MP4 File</label>
+                <input type="file" id="episode-audio" name="audio[]" accept="audio/mp3, audio/m4a, video/mp4" multiple required />
               </div>
               <div class="field-group">
                 <label for="status">Status</label>
