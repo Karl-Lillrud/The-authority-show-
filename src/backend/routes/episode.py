@@ -1,19 +1,4 @@
-from flask import request, jsonify, Blueprint, g
-from backend.database.mongo_connection import collection, database
-from datetime import datetime, timezone
-import uuid
-import logging
-from backend.models.episodes import EpisodeSchema
-
-# Define Blueprint
-episode_bp = Blueprint("episode_bp", __name__)
-
-#SHOULD ONLY BE USED FOR SPECIFIC DATA CRUD OPERATIONS
-#EXTRA FUNCTIONALITY BESIDES CRUD OPERATIONS SHOULD BE IN SERVICES
-
-logger = logging.getLogger(__name__)
-
-
+import gridfs
 from flask import request, jsonify, Blueprint, g
 from backend.database.mongo_connection import collection, database
 from datetime import datetime, timezone
@@ -28,17 +13,17 @@ episode_bp = Blueprint("episode_bp", __name__)
 # Initialize logger
 logger = logging.getLogger(__name__)
 
+fs = gridfs.GridFS(database)
 
 # Directory to save uploaded files
-UPLOAD_FOLDER = '/path/to/upload/directory'  # Set your desired upload folder path
+UPLOAD_FOLDER = r'C:\Users\Sarwar\Desktop\Lia'
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
 def allowed_file(filename):
-    return '.' in filename
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ['mp3', 'm4a', 'mp4']
 
 @episode_bp.route("/register_episode", methods=["POST"])
 def register_episode():
-        
     if not hasattr(g, "user_id") or not g.user_id:
         return jsonify({"error": "Unauthorized"}), 401
     
@@ -47,6 +32,8 @@ def register_episode():
 
     # Validate Content-Type
     if 'multipart/form-data' not in request.content_type:
+        print("❌ Invalid Content-Type:", request.content_type)
+        print("❌ Expected Content-Type: multipart/form-data")
         return jsonify({"error": "Invalid Content-Type. Expected multipart/form-data"}), 415
 
     try:
@@ -117,6 +104,7 @@ def register_episode():
     except Exception as e:
         logger.error(f"Error: {str(e)}")
         return jsonify({"error": f"Failed to register episode: {str(e)}"}), 500
+
 @episode_bp.route("/get_episodes/<episode_id>", methods=["GET"])
 def get_episode(episode_id):
     if not g.user_id:

@@ -13,7 +13,7 @@ function registerEpisode(formData) {
 
     // Append all files to the form data
     for (let i = 0; i < formData.audio.length; i++) {
-        console.log('Appending file:', formData.audio[i]); // Log each file being appended
+        console.log('Appending file:', formData.audio[i]);  // Log each file being appended
         data.append("audio", formData.audio[i]);  // 'audio' corresponds to the name of the file input in the form
     }
 
