@@ -317,7 +317,7 @@ document
         closeAddGuestPopup();
         showNotification("Success", "Guest added successfully!", "success");
         // Refresh the guest list in episode details without refreshing the page
-        renderEpisodeDetail({ _id: episodeId });
+        renderEpisodeDetail({ _id: episodeId, podcast_id: selectedPodcastId });
       } catch (error) {
         console.error("Error adding guest:", error);
         showNotification("Error", "Failed to add guest.", "error");
@@ -947,6 +947,8 @@ function renderPodcastSelection(podcasts) {
 
 // View podcast details
 async function viewPodcast(podcastId) {
+  // Set the global selectedPodcastId so that back buttons can use it
+  selectedPodcastId = podcastId;
   try {
     const response = await fetchPodcast(podcastId);
     const podcast = response.podcast;
@@ -1106,7 +1108,11 @@ function renderPodcastDetail(podcast) {
 
   // Back button event listener
   document.getElementById("back-to-list").addEventListener("click", () => {
+    // Hide podcast details view
     document.getElementById("podcast-detail").style.display = "none";
+    // Re-render the podcast list to include the new episode
+    renderPodcastList();
+    // Show podcast list view
     document.getElementById("podcast-list").style.display = "flex";
   });
 
@@ -1339,7 +1345,7 @@ function renderEpisodeDetail(episode) {
 
   // Back button event listener
   document.getElementById("back-to-podcast").addEventListener("click", () => {
-    viewPodcast(episode.podcast_id);
+    viewPodcast(episode.podcast_id || episode.podcastId || selectedPodcastId);
   });
 
   // Edit button event listener
