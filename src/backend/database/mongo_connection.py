@@ -4,6 +4,7 @@ import os
 from dotenv import load_dotenv
 import logging
 from gridfs import GridFS
+from gridfs import GridFS
 
 mongo_bp = Blueprint("mongo_bp", __name__)
 
@@ -11,10 +12,13 @@ mongo_bp = Blueprint("mongo_bp", __name__)
 load_dotenv()
 
 
+
 # MongoDB Configuration
 MONGODB_URI = os.getenv("MONGODB_URI")
 DATABASE_NAME = "Podmanager"
 COLLECTION_NAME = "Users"
+MAILING_LIST_COLLECTION_NAME = "MailingList"  # Add MailingList collection
+SUBSCRIPTIONS_LIST_COLLECTION = "subscriptions_collection"
 
 if not MONGODB_URI:
     raise ValueError("MongoDB URI is missing.")
@@ -28,12 +32,21 @@ try:
     client = MongoClient(MONGODB_URI)
     database = client[DATABASE_NAME]
     collection = database[COLLECTION_NAME]
+    mailing_list_collection = database[MAILING_LIST_COLLECTION_NAME]  # MailingList collection
+    subscriptions_collection = database[SUBSCRIPTIONS_LIST_COLLECTION]
     fs = GridFS(database)  # Initialize GridFS
     logger.info("MongoDB connection and GridFS initialized successfully.")
 except Exception as e:
     logger.error(f"Failed to connect to MongoDB or initialize GridFS: {e}")
+    logger.error(f"Failed to connect to MongoDB or initialize GridFS: {e}")
     raise
 
+# Functions to access MongoDB and GridFS
+def get_db():
+    return database
+
+def get_fs():
+    return fs
 # Functions to access MongoDB and GridFS
 def get_db():
     return database

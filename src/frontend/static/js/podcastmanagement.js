@@ -7,7 +7,8 @@ import {
 } from "../requests/podcastRequests.js";
 import {
   registerEpisode,
-  fetchEpisodesByPodcast
+  fetchEpisodesByPodcast,
+  fetchEpisodes
 } from "../requests/episodeRequest.js"; // Updated import
 import { svgpodcastmanagement } from "../svg/svgpodcastmanagement.js"; // Updated import path
 import {
@@ -205,6 +206,118 @@ function showManualGuestPopup(selectElement) {
     });
 }
 
+// Updated showAddGuestPopup function:
+async function showAddGuestPopup() {
+  const popup = document.getElementById("guest-popup");
+  popup.style.display = "flex";
+
+  // Populate the Podcast selection dropdown
+  const podcastSelect = document.getElementById("podcast-select-guest");
+  podcastSelect.innerHTML = "";
+  try {
+    const response = await fetchPodcasts();
+    const podcasts = response.podcast;
+    podcasts.forEach((podcast) => {
+      const opt = document.createElement("option");
+      opt.value = podcast._id;
+      opt.textContent = podcast.podName;
+      podcastSelect.appendChild(opt);
+    });
+  } catch (error) {
+    console.error("Error fetching podcasts:", error);
+  }
+
+  // When a podcast is selected, fetch episodes for that podcast using fetchEpisodesByPodcast
+  podcastSelect.addEventListener("change", async () => {
+    const selectedPodcast = podcastSelect.value;
+    const episodeSelect = document.getElementById("episode-id");
+    episodeSelect.innerHTML = "";
+    try {
+      const episodes = await fetchEpisodesByPodcast(selectedPodcast);
+      episodes.forEach((episode) => {
+        const option = document.createElement("option");
+        option.value = episode._id;
+        option.textContent = episode.title;
+        episodeSelect.appendChild(option);
+      });
+    } catch (error) {
+      console.error("Error fetching episodes for podcast:", error);
+    }
+  });
+  // Trigger the change event to populate episodes initially
+  podcastSelect.dispatchEvent(new Event("change"));
+}
+
+// Function to close the Add Guest popup
+function closeAddGuestPopup() {
+  const popup = document.getElementById("guest-popup");
+  popup.style.display = "none";
+}
+
+// Event listener for Add Guest button
+document
+  .getElementById("add-guest-btn")
+  .addEventListener("click", showAddGuestPopup);
+
+// Event listener for closing the Add Guest popup
+document
+  .getElementById("close-guest-popup")
+  .addEventListener("click", closeAddGuestPopup);
+
+// Event listener for cancel button in Add Guest form
+document
+  .getElementById("cancel-guest-btn")
+  .addEventListener("click", closeAddGuestPopup);
+
+// Event listener for Add Guest form submission
+document
+  .getElementById("add-guest-form")
+  .addEventListener("submit", async function (e) {
+    e.preventDefault();
+    const episodeId = document.getElementById("episode-id").value.trim();
+    const guestName = document.getElementById("guest-name").value.trim();
+    const guestDescription = document
+      .getElementById("guest-description")
+      .value.trim();
+    const guestTags = document
+      .getElementById("guest-tags")
+      .value.split(",")
+      .map((tag) => tag.trim())
+      .filter(Boolean);
+    const guestAreas = document
+      .getElementById("guest-areas")
+      .value.split(",")
+      .map((area) => area.trim())
+      .filter(Boolean);
+    const guestEmail = document.getElementById("guest-email").value.trim();
+    const guestLinkedIn = document
+      .getElementById("guest-linkedin")
+      .value.trim();
+    const guestTwitter = document.getElementById("guest-twitter").value.trim();
+
+    if (guestName && guestEmail && episodeId) {
+      try {
+        const guest = await addGuestRequest({
+          episodeId, // Ensure episodeId is correctly set
+          name: guestName,
+          description: guestDescription,
+          tags: guestTags,
+          areasOfInterest: guestAreas,
+          email: guestEmail,
+          linkedin: guestLinkedIn,
+          twitter: guestTwitter
+        });
+        closeAddGuestPopup();
+        showNotification("Success", "Guest added successfully!", "success");
+      } catch (error) {
+        console.error("Error adding guest:", error);
+        showNotification("Error", "Failed to add guest.", "error");
+      }
+    } else {
+      alert("Please fill in all required fields.");
+    }
+  });
+
 document.addEventListener("DOMContentLoaded", function () {
   console.log("DOM fully loaded and parsed");
 
@@ -250,7 +363,7 @@ document.addEventListener("DOMContentLoaded", function () {
         document.getElementById("episode-form-popup").style.display = "flex";
         // Populate guest select for the create episode form
         const guestSelect = document.getElementById("guest-id");
-        renderGuestSelection(guestSelect);
+        // renderGuestSelection(guestSelect);;
       } catch (error) {
         console.error("Error fetching podcasts:", error);
         showNotification(
@@ -284,10 +397,21 @@ document.addEventListener("DOMContentLoaded", function () {
       const data = Object.fromEntries(formData.entries());
 
       // Check for missing required fields
-      if (!data.podcastId || !data.title) {
+      if (!data.podcastId || !data.title || !data.publishDate) {
         showNotification(
           "Missing Fields",
           "Please fill in all required fields.",
+          "error"
+        );
+        return;
+      }
+
+      // Ensure publishDate is in the correct format
+      const publishDate = new Date(data.publishDate);
+      if (isNaN(publishDate.getTime())) {
+        showNotification(
+          "Invalid Date",
+          "Please provide a valid publish date.",
           "error"
         );
         return;
@@ -618,23 +742,36 @@ async function renderPodcastList() {
           epHeading.textContent = "Episodes:";
           epContainer.appendChild(epHeading);
 
-          // Create a flex container to list episodes horizontally
-          const epList = document.createElement("div");
-          epList.style.display = "flex";
-          epList.style.flexDirection = "row";
-          epList.style.gap = "1rem";
-
-          episodes.forEach((ep) => {
-            const epItem = document.createElement("div");
-            epItem.textContent = ep.title;
-            epItem.classList.add("episode-label"); // added label class
-            // Attach click event to open the popup for editing
-            epItem.addEventListener("click", () => {
-              showEpisodePopup(ep);
+          if (episodes.length > 5) {
+            // Create a dropdown if there are more than 5 episodes
+            const epDropdown = document.createElement("select");
+            epDropdown.classList.add("episode-dropdown");
+            episodes.forEach((ep) => {
+              const option = document.createElement("option");
+              option.value = ep._id;
+              option.textContent = ep.title;
+              epDropdown.appendChild(option);
             });
-            epList.appendChild(epItem);
-          });
-          epContainer.appendChild(epList);
+            epContainer.appendChild(epDropdown);
+          } else {
+            // Create a flex container to list episodes horizontally
+            const epList = document.createElement("div");
+            epList.style.display = "flex";
+            epList.style.flexDirection = "row";
+            epList.style.gap = "1rem";
+
+            episodes.forEach((ep) => {
+              const epItem = document.createElement("div");
+              epItem.textContent = ep.title;
+              epItem.classList.add("episode-label"); // added label class
+              // Attach click event to open the popup for editing
+              epItem.addEventListener("click", () => {
+                showEpisodePopup(ep);
+              });
+              epList.appendChild(epItem);
+            });
+            epContainer.appendChild(epList);
+          }
         }
       });
     });
@@ -981,7 +1118,7 @@ async function showEpisodePopup(episode) {
           episode.publishDate
             ? new Date(episode.publishDate).toISOString().slice(0, 16)
             : ""
-        }" />
+        }" required />
       </div>
       <div class="field-group">
         <label for="upd-duration">Duration (minutes)</label>

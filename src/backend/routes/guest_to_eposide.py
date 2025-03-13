@@ -3,6 +3,7 @@ from backend.database.mongo_connection import collection, database
 from datetime import datetime, timezone
 import uuid
 
+
 guesttoepisode_bp = Blueprint("guesttoepisode_bp", __name__)
 
 #NEED CHANGES ADDED AS EXAMPLE, NOT FINAL. DISPLAY IS THAT "2 GUEST CAN BE ASSIGNED TO 1 EPISODE"
@@ -117,3 +118,4 @@ def assign_to_active_podcast():
     collection.insert_one(active_assignment)
 
     return jsonify({"message": f"Guest {guest_id} is now active in podcast {podcast_id}."}), 200
+
