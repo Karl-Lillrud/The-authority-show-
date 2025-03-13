@@ -114,6 +114,10 @@ def load_user():
     g.user_id = session.get("user_id")
     logger.info(f"Request to {request.path} by user {g.user_id}")
 
+@app.route('/podcastmanagement')
+def podcast_management():
+    return render_template('dashboard/podcastmanagement.html') 
+
 
 # Run the app
 if __name__ == "__main__":
