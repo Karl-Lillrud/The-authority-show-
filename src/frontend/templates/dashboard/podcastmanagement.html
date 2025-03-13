@@ -5,6 +5,9 @@ Management{% endblock %} {% block content %}
   href="{{ url_for('static', filename='css/podcastmanagement.css') }}"
 />
 <div class="container">
+  <a href="{{ url_for('dashboard_bp.dashboard') }}" class="back-arrow"
+    >&#8592; Back</a
+  >
   <h1 class="title">Podcast Management</h1>
 
   <!-- Toolbar for CRUD buttons -->
