@@ -55,6 +55,7 @@ CORS(
 # These can cause  GET https://app.podmanager.ai/ 503 (Service Unavailable) error in the browser if not set
 app.secret_key = os.getenv("SECRET_KEY")
 app.config["PREFERRED URL SCHEME"] = "https"
+app.config["SERVER_NAME"] = "localhost:8000"  # Set the SERVER_NAME configuration
 
 # Register blueprints for different routes
 app.register_blueprint(register_bp)
@@ -96,7 +97,7 @@ def load_user():
     logger.info(f"Request to {request.path} by user {g.user_id}")
 
 # Start the scheduler
-start_scheduler()
+start_scheduler(app)
 
 # Run the app
 if __name__ == "__main__":
