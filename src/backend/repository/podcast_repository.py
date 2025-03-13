@@ -40,8 +40,6 @@ class PodcastRepository:
             
             # Generate a unique podcast ID
             podcast_id = str(uuid.uuid4())
-
-            # Create podcast document
             podcast_item = {
                 "_id": podcast_id,
                 "teamId": validated_data.get("teamId"),
@@ -58,7 +56,7 @@ class PodcastRepository:
                 "description": validated_data.get("description"),
                 "logoUrl": validated_data.get("logoUrl"),
                 "category": validated_data.get("category"),
-                "defaultTasks": validated_data.get("defaultTasks", []),
+                "defaultTasks": validated_data.get("defaultTasks", ""),  # Empty string if not provided
                 "created_at": datetime.now(timezone.utc),
             }
 

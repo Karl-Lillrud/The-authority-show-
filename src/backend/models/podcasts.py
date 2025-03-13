@@ -1,4 +1,5 @@
 from marshmallow import Schema, fields
+from models.podtasks import TaskSchema
 
 
 class PodcastSchema(Schema):
@@ -15,6 +16,7 @@ class PodcastSchema(Schema):
         fields.String(), allow_none=True
     )  # Allow empty lists or null
     email = fields.Email(allow_none=True)
+    defaultTasks = fields.List(fields.Nested(TaskSchema), allow_none=True)
     description = fields.Str(allow_none=True)
     logoUrl = fields.Str(allow_none=True)  # Changed from fields.Url to fields.Str
     category = fields.Str(allow_none=True)
