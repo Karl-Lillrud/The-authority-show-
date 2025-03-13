@@ -1482,12 +1482,7 @@ function renderGuestDetail(guest) {
       
       <!-- Add top-right action buttons -->
       <div class="top-right-actions">
-        <button class="action-btn view-btn" id="view-guest-btn" data-id="${
-          guest._id || guest.id
-        }">
-          ${svgpodcastmanagement.view}
-          View Details
-        </button>
+      
         <button class="action-btn edit-btn" id="edit-guest-btn" data-id="${
           guest._id || guest.id
         }">

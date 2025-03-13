@@ -227,7 +227,7 @@ header {
 }
 
 .view-btn {
-  color: #3b82f6;
+  color: var(--highlight-color);
 }
 
 .edit-btn {
@@ -1294,7 +1294,7 @@ header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  border-left: 3px solid #3b82f6;
+  border-left: 3px solid var(--highlight-color);
 }
 
 .guest-card:hover {
@@ -1307,7 +1307,7 @@ header {
   width: 40px;
   height: 40px;
   border-radius: 50%;
-  background-color: #3b82f6;
+  background-color: var(--highlight-color);
   color: white;
   display: flex;
   align-items: center;
@@ -1343,7 +1343,7 @@ header {
 }
 
 .view-profile-btn {
-  background-color: #3b82f6;
+  background-color: var(--highlight-color);
   color: white;
   border: none;
   border-radius: var(--radius-small);
@@ -1371,7 +1371,7 @@ header {
   width: 80px;
   height: 80px;
   border-radius: 50%;
-  background-color: #3b82f6;
+  background-color: var(--highlight-color);
   color: white;
   display: flex;
   align-items: center;
@@ -1424,7 +1424,7 @@ header {
 .guest-tag {
   display: inline-block;
   background-color: rgba(59, 130, 246, 0.1);
-  color: #3b82f6;
+  color: var(--highlight-color);
   padding: 4px 10px;
   border-radius: 20px;
   margin-right: 8px;
@@ -1436,7 +1436,7 @@ header {
 .guest-social-link {
   display: flex;
   align-items: center;
-  color: #3b82f6;
+  color: var(--highlight-color);
   text-decoration: none;
   margin-bottom: 10px;
   font-family: var(--font-primary);
