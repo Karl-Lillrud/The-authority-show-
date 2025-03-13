@@ -1,120 +1,278 @@
-<!DOCTYPE html>
-<html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Podcast Management</title>
-    <link
-      rel="stylesheet"
-      href="{{ url_for('static', filename='css/podcastmanagement.css') }}"
-    />
-  </head>
-  <body>
-    <div class="container">
-      <h1>Podcast Management</h1>
+{% extends "dashboard/components/base.html" %} {% block title %}Podcast
+Management{% endblock %} {% block content %}
+<link
+  rel="stylesheet"
+  href="{{ url_for('static', filename='css/podcastmanagement.css') }}"
+/>
+<div class="container">
+  <a href="{{ url_for('dashboard_bp.dashboard') }}" class="back-arrow"
+    >&#8592; Back</a
+  >
+  <h1 class="title">Podcast Management</h1>
 
-      <!-- Toolbar for CRUD buttons -->
-      <div class="crud-buttons">
-        <button id="add-podcast-btn" class="crud-btn">Add Podcast</button>
+  <!-- Toolbar for CRUD buttons -->
+  <div class="action-buttons">
+    <button id="add-podcast-btn" class="action-button">
+      <span class="button-icon">+</span>
+      <span>Add Podcast</span>
+    </button>
+    <button id="create-episode-btn" class="action-button">
+      <span class="button-icon">+</span>
+      <span>Create Episode</span>
+    </button>
+    <!-- New Add Guest button -->
+    <button id="add-guest-btn" class="action-button">
+      <span class="button-icon">+</span>
+      <span>Add Guest</span>
+    </button>
+  </div>
+
+  <!-- Container for popup list used in selection -->
+  <div id="podcasts-popup" class="popup" style="display: none">
+    <div class="popup-content">
+      <span id="close-popup-btn" class="close-btn">&times;</span>
+      <h2>Select Podcast</h2>
+      <div id="podcasts-list" class="podcasts-list">
+        <!-- Popup list inserted dynamically -->
       </div>
-
-      <!-- Container for popup list used in selection -->
-      <div id="podcasts-popup" style="display: none">
-        <div id="podcasts-list"><!-- Popup list inserted dynamically --></div>
-        <button id="close-popup-btn" class="crud-btn">Close</button>
-        <button id="delete-selected-podcasts-btn" class="crud-btn">
+      <div class="popup-actions">
+        <button id="close-popup-btn" class="cancel-btn">Cancel</button>
+        <button id="delete-selected-podcasts-btn" class="delete-btn">
           Delete Selected
         </button>
       </div>
+    </div>
+  </div>
 
-      <!-- Form container for adding/updating a podcast -->
-      <div class="form-box" style="display: none">
-        <div id="custom-alert" class="alert"></div>
-        <div class="form-fields">
-          <form id="register-podcast-form">
-            <!-- Include your form fields -->
-            <div class="field-group">
-              <label for="pod-name">Podcast Name</label>
+  <!-- Form popup container for adding/updating a podcast -->
+  <div id="form-popup" class="popup" style="display: none">
+    <div class="form-box">
+      <!-- Close button for popup -->
+      <span id="close-form-popup" class="close-btn">&times;</span>
+      <h2 class="form-title">Add New Podcast</h2>
+      <form id="register-podcast-form">
+        <div class="form-grid">
+          <div class="field-group">
+            <label for="pod-name">Podcast Name</label>
+            <input
+              type="text"
+              id="pod-name"
+              name="podName"
+              autocomplete="off"
+              required
+            />
+          </div>
+          <div class="field-group">
+            <label for="pod-owner">Podcast Owner</label>
+            <input type="text" id="pod-owner" name="ownerName" />
+          </div>
+          <div class="field-group">
+            <label for="pod-host">Host(s) Name(s)</label>
+            <input type="text" id="pod-host" name="hostName" />
+          </div>
+          <div class="field-group">
+            <label for="pod-rss">RSS Feed</label>
+            <input type="url" id="pod-rss" name="rssFeed" />
+          </div>
+          <!-- New logo image field -->
+          <div class="field-group">
+            <label for="logo">Podcast Logo</label>
+            <input type="file" id="logo" name="logo" accept="image/*" />
+          </div>
+          <div class="field-group">
+            <label for="google-cal">Google Calendar URL</label>
+            <input type="url" id="google-cal" name="googleCal" />
+          </div>
+          <div class="field-group">
+            <label for="guest-form-url">Guest Form URL</label>
+            <input type="url" id="guest-form-url" name="guestUrl" />
+          </div>
+          <div class="field-group">
+            <label for="email">Email Address</label>
+            <input type="email" id="email" name="email" />
+          </div>
+          <div class="field-group full-width">
+            <label for="description">Podcast Description</label>
+            <textarea id="description" name="description" rows="3"></textarea>
+          </div>
+          <div class="field-group">
+            <label for="category">Category (Required)</label>
+            <input type="text" id="category" name="category" required />
+          </div>
+        </div>
+
+        <h3 class="section-title">Social Media Links</h3>
+        <div class="form-grid">
+          <div class="field-group">
+            <label for="facebook">Facebook</label>
+            <input type="url" id="facebook" name="socialMedia[]" />
+          </div>
+          <div class="field-group">
+            <label for="instagram">Instagram</label>
+            <input type="url" id="instagram" name="socialMedia[]" />
+          </div>
+          <div class="field-group">
+            <label for="linkedin">LinkedIn</label>
+            <input type="url" id="linkedin" name="socialMedia[]" />
+          </div>
+          <div class="field-group">
+            <label for="twitter">Twitter</label>
+            <input type="url" id="twitter" name="socialMedia[]" />
+          </div>
+          <div class="field-group">
+            <label for="tiktok">TikTok</label>
+            <input type="url" id="tiktok" name="socialMedia[]" />
+          </div>
+          <div class="field-group">
+            <label for="pinterest">Pinterest</label>
+            <input type="url" id="pinterest" name="socialMedia[]" />
+          </div>
+        </div>
+
+        <div class="form-actions">
+          <button type="button" id="cancel-form-btn" class="cancel-btn">
+            Cancel
+          </button>
+          <button type="submit" class="save-btn">Save Podcast</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Form popup container for creating a new episode -->
+  <div id="episode-form-popup" class="popup" style="display: none">
+    <div class="form-box">
+      <!-- Close button for popup -->
+      <span id="close-episode-form-popup" class="close-btn">&times;</span>
+      <h2 class="form-title">Create New Episode</h2>
+      <form id="create-episode-form">
+        <div class="form-grid">
+          <div class="field-group full-width">
+            <label for="podcast-select">Select Podcast</label>
+            <select id="podcast-select" name="podcastId" required></select>
+          </div>
+          <div class="field-group full-width">
+            <label for="episode-title">Episode Title</label>
+            <input type="text" id="episode-title" name="title" required />
+          </div>
+          <div class="field-group full-width">
+            <label for="episode-description">Description</label>
+            <textarea
+              id="episode-description"
+              name="description"
+              rows="3"
+            ></textarea>
+          </div>
+          <div class="field-group">
+            <label for="publish-date">Publish Date</label>
+            <input
+              type="datetime-local"
+              id="publish-date"
+              name="publishDate"
+              required
+            />
+          </div>
+          <div class="field-group">
+            <label for="duration">Duration (minutes)</label>
+            <input type="number" id="duration" name="duration" />
+          </div>
+          <!-- Commented out Select Guest and Add Guest Manually fields -->
+          <!--
+          <div class="field-group">
+            <label for="guest-id">Select Guest</label>
+            <select id="guest-id" name="guestId">
+              <option value="">Select Guest</option>
+            </select>
+            <div class="manual-guest-field">
+              <label for="manual-guest">Add Guest Manually</label>
               <input
                 type="text"
-                id="pod-name"
-                name="podName"
-                autocomplete="off"
+                id="manual-guest"
+                placeholder="Click to add guest manually"
+                readonly
               />
             </div>
-            <div class="field-group">
-              <label for="pod-owner">Podcast Owner</label>
-              <input type="text" id="pod-owner" name="ownerName" />
-            </div>
-            <div class="field-group">
-              <label for="pod-host">Host(s) Name(s)</label>
-              <input type="text" id="pod-host" name="hostName" />
-            </div>
-            <div class="field-group">
-              <label for="pod-rss">RSS Feed</label>
-              <input type="url" id="pod-rss" name="rssFeed" />
-            </div>
-            <div class="field-group">
-              <label for="google-cal">Google Calendar URL</label>
-              <input type="url" id="google-cal" name="googleCal" />
-            </div>
-            <div class="field-group">
-              <label for="guest-form-url">Guest Form URL</label>
-              <input type="url" id="guest-form-url" name="guestUrl" />
-            </div>
-            <div class="field-group">
-              <label for="email">Email Address</label>
-              <input type="email" id="email" name="email" />
-            </div>
-            <div class="field-group">
-              <label for="description">Podcast Description</label>
-              <textarea id="description" name="description"></textarea>
-            </div>
-            <div class="field-group">
-              <label for="category">Category (Required)</label>
-              <input type="text" id="category" name="category" />
-            </div>
-            <!-- Social Media Links -->
-            <div class="field-group">
-              <label for="facebook">Facebook</label>
-              <input type="url" id="facebook" name="socialMedia[]" />
-            </div>
-            <div class="field-group">
-              <label for="instagram">Instagram</label>
-              <input type="url" id="instagram" name="socialMedia[]" />
-            </div>
-            <div class="field-group">
-              <label for="linkedin">LinkedIn</label>
-              <input type="url" id="linkedin" name="socialMedia[]" />
-            </div>
-            <div class="field-group">
-              <label for="twitter">Twitter</label>
-              <input type="url" id="twitter" name="socialMedia[]" />
-            </div>
-            <div class="field-group">
-              <label for="tiktok">TikTok</label>
-              <input type="url" id="tiktok" name="socialMedia[]" />
-            </div>
-            <div class="field-group">
-              <label for="pinterest">Pinterest</label>
-              <input type="url" id="pinterest" name="socialMedia[]" />
-            </div>
-            <button type="submit" class="invite-btn">SAVE</button>
-          </form>
+          </div>
+          -->
+          <div class="field-group">
+            <label for="status">Status</label>
+            <input type="text" id="status" name="status" />
+          </div>
         </div>
-      </div>
-
-      <!-- List container where podcasts will be displayed -->
-      <div id="podcast-list" class="podcast-list"></div>
-
-      <!-- Container for podcast detail (if needed) -->
-      <div id="podcast-detail" class="podcast-detail"></div>
-
-      <!-- Alert container for global messages -->
-      <div id="alert" class="alert"></div>
+        <div class="form-actions">
+          <button type="button" id="cancel-episode-form-btn" class="cancel-btn">
+            Cancel
+          </button>
+          <button type="submit" class="save-btn">Create Episode</button>
+        </div>
+      </form>
     </div>
+  </div>
 
-    <!-- Load the JS module for CRUD operations -->
-    <script type="module" src="../static/js/podcastmanagement.js"></script>
-  </body>
-</html>
+  <!-- New popup container for adding a guest -->
+  <div id="guest-popup" class="popup" style="display: none">
+    <div class="form-box">
+      <span id="close-guest-popup" class="close-btn">&times;</span>
+      <h2 class="form-title">Add Guest</h2>
+      <form id="add-guest-form">
+        <!-- New Podcast selection field -->
+        <div class="field-group full-width">
+          <label for="podcast-select-guest">Select Podcast</label>
+          <select id="podcast-select-guest" name="podcastId" required></select>
+        </div>
+        <!-- Existing Episode selection field (to be populated based on selected podcast) -->
+        <div class="field-group full-width">
+          <label for="episode-id">Episode ID</label>
+          <select id="episode-id" name="episodeId" required></select>
+        </div>
+        <div class="field-group full-width">
+          <label for="guest-name">Guest Name</label>
+          <input type="text" id="guest-name" name="guestName" required />
+        </div>
+        <div class="field-group full-width">
+          <label for="guest-description">Guest Description</label>
+          <input
+            type="text"
+            id="guest-description"
+            name="guestDescription"
+            required
+          />
+        </div>
+        <div class="field-group full-width">
+          <label for="guest-tags">Tags (comma separated)</label>
+          <input type="text" id="guest-tags" name="guestTags" />
+        </div>
+        <div class="field-group full-width">
+          <label for="guest-areas">Areas of Interest (comma separated)</label>
+          <input type="text" id="guest-areas" name="guestAreas" />
+        </div>
+        <div class="field-group full-width">
+          <label for="guest-email">Email</label>
+          <input type="email" id="guest-email" name="guestEmail" required />
+        </div>
+        <div class="field-group full-width">
+          <label for="guest-linkedin">LinkedIn</label>
+          <input type="text" id="guest-linkedin" name="guestLinkedIn" />
+        </div>
+        <div class="field-group full-width">
+          <label for="guest-twitter">Twitter</label>
+          <input type="text" id="guest-twitter" name="guestTwitter" />
+        </div>
+        <div class="form-actions">
+          <button type="button" id="cancel-guest-btn" class="cancel-btn">
+            Cancel
+          </button>
+          <button type="submit" class="save-btn">Add Guest</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- List container where podcasts will be displayed -->
+  <div id="podcast-list" class="podcast-list"></div>
+
+  <!-- Container for podcast detail -->
+  <div id="podcast-detail" class="podcast-detail" style="display: none"></div>
+</div>
+<script type="module" src="../static/js/podcastmanagement.js"></script>
+{% endblock %}

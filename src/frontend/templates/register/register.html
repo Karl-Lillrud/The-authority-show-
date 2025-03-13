@@ -56,9 +56,9 @@
         </div>
 
         <div class="extra-links">
-          <a href="{{ url_for('signin_bp.signin_get') }}" class="link"
-            >Already have an account? Sign in</a
-          >
+          <a href="{{ url_for('auth_bp.signin_page') }}" class="link">
+            Already have an account? Sign in
+          </a>
         </div>
 
         <div class="form-actions">
@@ -94,7 +94,9 @@
         const form = document.getElementById("register-form");
         const errorMessage = document.getElementById("error-message");
         const userExistsModal = document.getElementById("user-exists-modal");
-        const userExistsOkButton = document.getElementById("user-exists-ok-button");
+        const userExistsOkButton = document.getElementById(
+          "user-exists-ok-button"
+        );
 
         if (!form) {
           console.error("❌ ERROR: #register-form not found in the DOM.");

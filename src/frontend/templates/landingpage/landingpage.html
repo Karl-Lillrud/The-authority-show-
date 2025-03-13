@@ -1,3 +1,5 @@
+
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -6,9 +8,11 @@
   <title>Podcast Website</title>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-  <link rel="stylesheet" href="../../static/css/landingpage.css">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/landingpage.css') }}">
 </head>
 <body>
+
+  
   <header>
     <nav class="navbar">
       <div class="container">
@@ -20,13 +24,14 @@
           <li><a href="#guest-booking">Guest Booking</a></li>
           <li><a href="#extra-section">Extra</a></li>
         </ul>
+        <button onclick="window.location.href='/dashboard'" class="subscribe-btn">Dashboard</button>
         <button class="subscribe-btn">Subscribe</button>
       </div>
     </nav>
   </header>
   <main>
     <!-- Podcast Header Section -->
-    <section class="podcast-header section-svart" id="podcast-header">
+    <section class="podcast-header section-dark" id="podcast-header">
       <img id="podcast-cover" src="#" alt="Podcast Cover" class="podcast-cover">
       <div class="podcast-info">
         <h1 id="podcast-title">Podcast Title</h1>
@@ -39,7 +44,7 @@
     </section>
 
     <!-- About Section -->
-    <section class="about-section section-svartgrå" id="about-section">
+    <section class="about-section section-darkgrey" id="about-section">
       <h2>About the Podcast</h2>
       <p id="podcast-description">
         A brief description of the podcast goes here. <br>Learn more about our journey and what inspires us.
@@ -47,7 +52,7 @@
       <div class="host-info">
         <img id="host-image" src="/Media/Karl-Lillrud_bok_nvidia.jpg" alt="Host Image" class="host-image">
         <div class="host-details">
-          <h3 id="host-name">Host Name</h3>
+          <h3 id="host-name">{{ host_name }}</h3>
           <p id="host-bio">
             Host biography goes here. Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nulla ac ultrices libero.
           </p>
@@ -62,157 +67,50 @@
       </div>
     </section>
 
-  <!-- Latest Episodes List Section -->
-  <section class="latest-episodes-section section-svart" id="latest-episodes-section">
-    <h2>Latest Episodes</h2>
-    <ul class="episode-list">
-      <!-- Episod 1 -->
-      <li class="episode-item">
-        <div class="episode-card">
-          <div class="episode-thumbnail">
-            <img src="/Media/Karl-Lillrud_bok_nvidia.jpg" alt="Episode 1 Thumbnail">
-          </div>
-          <div class="episode-details">
-            <button class="play-btn">&#9658;</button>
-            <h3>Episode 1: Introduction</h3>
-            <p>Learn about the podcast and get to know our journey.</p>
-            <div class="episode-links">
-              <a href="https://open.spotify.com/" target="_blank" class="spotify-link">
-                <img src="/Media/spotify.png" alt="Spotify" class="podcast-icon">
-                <span class="listen-btn spotify-btn">Spotify</span>
-              </a>
-              <a href="https://podcasts.apple.com/" target="_blank" class="apple-link">
-                <img src="/Media/apple.svg" alt="Apple Podcasts" class="podcast-icon">
-                <span class="listen-btn apple-btn">Apple</span>
-              </a>
+    <!-- Latest Episodes List Section -->
+    <section class="latest-episodes-section section-dark" id="latest-episodes-section">
+      <h2>Latest Episodes</h2>
+      
+      {% if episodes and episodes|length > 0 %}
+      <ul class="episode-list">
+        {% for episode in episodes %}
+        <li class="episode-item">
+          <div class="episode-card">
+            <div class="episode-thumbnail">
+              <!-- Use a placeholder thumbnail; you can update the src dynamically if stored in your document -->
+              <img src="/Media/placeholder-thumbnail.jpg" alt="{{ episode.title }} Thumbnail">
+            </div>
+            <div class="episode-details">
+              <button class="play-btn">&#9658;</button>
+              <!-- Optionally, pass an episode_id to your episode route -->
+              <a href="{{ url_for('landingpage_bp.episode', episode_id=episode._id) }}">{{ episode.title }}</a>
+              <p>{{ episode.description }}</p>
+              <div class="episode-links">
+                <a href="https://open.spotify.com/" target="_blank" class="spotify-link">
+                  <img src="/Media/spotify.png" alt="Spotify" class="podcast-icon">
+                  <span class="listen-btn spotify-btn">Spotify</span>
+                </a>
+                <a href="https://podcasts.apple.com/" target="_blank" class="apple-link">
+                  <img src="/Media/apple.svg" alt="Apple Podcasts" class="podcast-icon">
+                  <span class="listen-btn apple-btn">Apple</span>
+                </a>
+              </div>
             </div>
           </div>
-        </div>
-      </li>
+        </li>
+        {% endfor %}
+      </ul>
+      {% else %}
+      <p>No podcasts at this moment.</p>
+      {% endif %}
+    </section>
 
-      <!-- Episod 2 -->
-      <li class="episode-item">
-        <div class="episode-card">
-          <div class="episode-thumbnail">
-            <img src="/Media/Hero_Sektion.png" alt="Episode 2 Thumbnail">
-          </div>
-          <div class="episode-details">
-            <button class="play-btn">&#9658;</button>
-            <h3>Episode 2: Deep Dive</h3>
-            <p>Dive deep into fascinating topics with expert insights.</p>
-            <div class="episode-links">
-              <a href="https://open.spotify.com/" target="_blank" class="spotify-link">
-                <img src="/Media/spotify.png" alt="Spotify" class="podcast-icon">
-                <span class="listen-btn spotify-btn">Spotify</span>
-              </a>
-              <a href="https://podcasts.apple.com/" target="_blank" class="apple-link">
-                <img src="/Media/apple.svg" alt="Apple Podcasts" class="podcast-icon">
-                <span class="listen-btn apple-btn">Apple</span>
-              </a>
-            </div>
-          </div>
-        </div>
-      </li>
+    <!-- All Episodes List Section -->
 
-      <!-- Episod 3 -->
-      <li class="episode-item">
-        <div class="episode-card">
-          <div class="episode-thumbnail">
-            <img src="/Media/spotify.png" alt="Episode 3 Thumbnail">
-          </div>
-          <div class="episode-details">
-            <button class="play-btn">&#9658;</button>
-            <h3>Episode 3: Guest Interview</h3>
-            <p>Join us for an exclusive interview with a special guest.</p>
-            <div class="episode-links">
-              <a href="https://open.spotify.com/" target="_blank" class="spotify-link">
-                <img src="/Media/spotify.png" alt="Spotify" class="podcast-icon">
-                <span class="listen-btn spotify-btn">Spotify</span>
-              </a>
-              <a href="https://podcasts.apple.com/" target="_blank" class="apple-link">
-                <img src="/Media/apple.svg" alt="Apple Podcasts" class="podcast-icon">
-                <span class="listen-btn apple-btn">Apple</span>
-              </a>
-            </div>
-          </div>
-        </div>
-      </li>
-      <!-- Episod 1 -->
-      <li class="episode-item">
-        <div class="episode-card">
-          <div class="episode-thumbnail">
-            <img src="/Media/Karl-Lillrud_bok_nvidia.jpg" alt="Episode 1 Thumbnail">
-          </div>
-          <div class="episode-details">
-            <button class="play-btn">&#9658;</button>
-            <h3>Episode 1: Introduction</h3>
-            <p>Learn about the podcast and get to know our journey.</p>
-            <div class="episode-links">
-              <a href="https://open.spotify.com/" target="_blank" class="spotify-link">
-                <img src="/Media/spotify.png" alt="Spotify" class="podcast-icon">
-                <span class="listen-btn spotify-btn">Spotify</span>
-              </a>
-              <a href="https://podcasts.apple.com/" target="_blank" class="apple-link">
-                <img src="/Media/apple.svg" alt="Apple Podcasts" class="podcast-icon">
-                <span class="listen-btn apple-btn">Apple</span>
-              </a>
-            </div>
-          </div>
-        </div>
-      </li>
-
-      <!-- Episod 2 -->
-      <li class="episode-item">
-        <div class="episode-card">
-          <div class="episode-thumbnail">
-            <img src="/Media/Hero_Sektion.png" alt="Episode 2 Thumbnail">
-          </div>
-          <div class="episode-details">
-            <button class="play-btn">&#9658;</button>
-            <h3>Episode 2: Deep Dive</h3>
-            <p>Dive deep into fascinating topics with expert insights.</p>
-            <div class="episode-links">
-              <a href="https://open.spotify.com/" target="_blank" class="spotify-link">
-                <img src="/Media/spotify.png" alt="Spotify" class="podcast-icon">
-                <span class="listen-btn spotify-btn">Spotify</span>
-              </a>
-              <a href="https://podcasts.apple.com/" target="_blank" class="apple-link">
-                <img src="/Media/apple.svg" alt="Apple Podcasts" class="podcast-icon">
-                <span class="listen-btn apple-btn">Apple</span>
-              </a>
-            </div>
-          </div>
-        </div>
-      </li>
-
-      <!-- Episod 3 -->
-      <li class="episode-item">
-        <div class="episode-card">
-          <div class="episode-thumbnail">
-            <img src="/Media/spotify.png" alt="Episode 3 Thumbnail">
-          </div>
-          <div class="episode-details">
-            <button class="play-btn">&#9658;</button>
-            <h3>Episode 3: Guest Interview</h3>
-            <p>Join us for an exclusive interview with a special guest.</p>
-            <div class="episode-links">
-              <a href="https://open.spotify.com/" target="_blank" class="spotify-link">
-                <img src="/Media/spotify.png" alt="Spotify" class="podcast-icon">
-                <span class="listen-btn spotify-btn">Spotify</span>
-              </a>
-              <a href="https://podcasts.apple.com/" target="_blank" class="apple-link">
-                <img src="/Media/apple.svg" alt="Apple Podcasts" class="podcast-icon">
-                <span class="listen-btn apple-btn">Apple</span>
-              </a>
-            </div>
-          </div>
-        </div>
-      </li>
-    </ul>
-  </section>
+      
 
     <!-- Exclusive Episodes Section (Glass Card) -->
-    <section class="exclusive-episodes-section section-svart" id="exclusive-episodes-section">
+    <section class="exclusive-episodes-section section-dark" id="exclusive-episodes-section">
       <div class="episodes-glass-card">
         <h2>Get Exclusive Episodes &amp; Updates</h2>
         <p class="episodes-subtext">
@@ -323,7 +221,7 @@
 </section>
 
     <!-- Extra Section -->
-    <section class="extra-section section-svart" id="extra-section">
+    <section class="extra-section section-dark" id="extra-section">
       <h2>Stay Connected</h2>
       <!-- Newsletter Signup -->
       <div class="newsletter-signup">
@@ -379,7 +277,7 @@
       </div>
     </section>
   
-  <footer class="section-svartgrå">
+  <footer class="section-darkgrey">
     <p>&copy; <span id="current-year">2025</span> Podcast Website. All rights reserved.</p>
     <p id="powered-by">Powered by PodManager.AI</p>
     <p id="custom-domain">Custom Domain: podcastname.com</p>

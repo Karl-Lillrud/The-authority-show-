@@ -7,6 +7,9 @@ import uuid
 # Define Blueprint
 podtask_bp = Blueprint("podtask_bp", __name__)
 
+#SHOULD ONLY BE USED FOR SPECIFIC DATA CRUD OPERATIONS
+#EXTRA FUNCTIONALITY BESIDES CRUD OPERATIONS SHOULD BE IN SERVICES
+
 
 @podtask_bp.route("/add_podtasks", methods=["POST"])
 def register_podtask():
