@@ -35,7 +35,7 @@
     <!-- Profile Section -->
     <div id="profile-section" class="settings-section">
       <div class="profile-container">
-        <h2>Settings</h2>
+        <h2Profile</h2>
         <!-- Profile Picture Upload -->
         <div class="profile-pic-container">
           <img
@@ -220,4 +220,11 @@
     </div>   
   </section>
 </div>
+{% endblock %}
+
+<!-- Include QRCode library -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+
+<script src="{{ url_for('static', filename='requests/accountRequests.js') }}"></script>
+
 {% endblock %}

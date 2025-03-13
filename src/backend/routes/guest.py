@@ -87,17 +87,37 @@ def get_guests():
 
     try:
         # Fetch guests for the logged-in user from the database
-        guests_cursor = collection.database.Guests.find({"user_id": g.user_id}, {"_id": 1, "episodeId": 1, "name": 1, "image": 1, "bio": 1, "tags": 1, "email": 1, "linkedin": 1, "twitter": 1, "areasOfInterest": 1})
-        
+        guests_cursor = collection.database.Guests.find(
+            {"user_id": g.user_id},
+            {
+                "_id": 1,
+                "episodeId": 1,
+                "name": 1,
+                "image": 1,
+                "bio": 1,
+                "tags": 1,
+                "email": 1,
+                "linkedin": 1,
+                "twitter": 1,
+                "areasOfInterest": 1,
+            },
+        )
+
         # Prepare the guest list with necessary fields
         guest_list = []
         for guest in guests_cursor:
             guest_list.append(
                 {
                     "id": str(guest.get("_id")),
-                    "episodeId": guest.get("episodeId", None),  # Default to None if episodeId is missing
-                    "name": guest.get("name", "N/A"),  # Default to 'N/A' if name is missing
-                    "image": guest.get("image", ""),  # Default to empty string if image is missing
+                    "episodeId": guest.get(
+                        "episodeId", None
+                    ),  # Default to None if episodeId is missing
+                    "name": guest.get(
+                        "name", "N/A"
+                    ),  # Default to 'N/A' if name is missing
+                    "image": guest.get(
+                        "image", ""
+                    ),  # Default to empty string if image is missing
                     "bio": guest.get("bio", ""),
                     "tags": guest.get("tags", []),
                     "email": guest.get("email", ""),
@@ -108,12 +128,17 @@ def get_guests():
             )
 
         # Return the list of guests with a success message
-        return jsonify({"message": "Guests fetched successfully", "guests": guest_list}), 200
+        return (
+            jsonify({"message": "Guests fetched successfully", "guests": guest_list}),
+            200,
+        )
 
     except Exception as e:
         # Handle any errors during the database query or processing
-        return jsonify({"error": f"An error occurred while fetching guests: {str(e)}"}), 500
-
+        return (
+            jsonify({"error": f"An error occurred while fetching guests: {str(e)}"}),
+            500,
+        )
 
 
 @guest_bp.route("/edit_guests/<guest_id>", methods=["PUT"])
@@ -198,6 +223,7 @@ def delete_guest(guest_id):
         print(f"❌ ERROR: {e}")
         return jsonify({"error": f"Failed to delete guest: {str(e)}"}), 500
 
+
 @guest_bp.route("/get_guests_by_episode/<episode_id>", methods=["GET"])
 def get_guests_by_episode(episode_id):
     if not g.user_id:
@@ -231,4 +257,3 @@ def get_guests_by_episode(episode_id):
     except Exception as e:
         logger.exception("❌ ERROR: Failed to fetch guests for episode")
         return jsonify({"error": f"Failed to fetch guests: {str(e)}"}), 500
-
