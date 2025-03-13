@@ -1478,3 +1478,25 @@ header {
     font-size: 1.5rem;
   }
 }
+
+/* Back Arrow */
+.back-arrow {
+  position: absolute;
+  top: 180px;
+  left: var(--spacing-md);
+  font-size: 0.9rem;
+  text-decoration: none;
+  color: var(--text-color-light);
+  background: var(--background-light);
+  padding: var(--spacing-sm) var(--spacing-md);
+  border-radius: var(--radius-small);
+  box-shadow: -4px -4px 8px var(--light-shadow-light),
+    4px 4px 8px var(--dark-shadow-light);
+  transition: background-color 0.3s ease, color 0.3s ease, transform 0.3s ease;
+}
+
+.back-arrow:hover {
+  transform: translateY(-3px);
+  background-color: rgba(255, 127, 63, 0.1);
+  color: var(--highlight-color);
+}
