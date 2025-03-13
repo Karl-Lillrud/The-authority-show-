@@ -363,7 +363,7 @@ document.addEventListener("DOMContentLoaded", function () {
         document.getElementById("episode-form-popup").style.display = "flex";
         // Populate guest select for the create episode form
         const guestSelect = document.getElementById("guest-id");
-        renderGuestSelection(guestSelect);
+        // renderGuestSelection(guestSelect);;
       } catch (error) {
         console.error("Error fetching podcasts:", error);
         showNotification(
@@ -397,10 +397,21 @@ document.addEventListener("DOMContentLoaded", function () {
       const data = Object.fromEntries(formData.entries());
 
       // Check for missing required fields
-      if (!data.podcastId || !data.title) {
+      if (!data.podcastId || !data.title || !data.publishDate) {
         showNotification(
           "Missing Fields",
           "Please fill in all required fields.",
+          "error"
+        );
+        return;
+      }
+
+      // Ensure publishDate is in the correct format
+      const publishDate = new Date(data.publishDate);
+      if (isNaN(publishDate.getTime())) {
+        showNotification(
+          "Invalid Date",
+          "Please provide a valid publish date.",
           "error"
         );
         return;
@@ -731,23 +742,36 @@ async function renderPodcastList() {
           epHeading.textContent = "Episodes:";
           epContainer.appendChild(epHeading);
 
-          // Create a flex container to list episodes horizontally
-          const epList = document.createElement("div");
-          epList.style.display = "flex";
-          epList.style.flexDirection = "row";
-          epList.style.gap = "1rem";
-
-          episodes.forEach((ep) => {
-            const epItem = document.createElement("div");
-            epItem.textContent = ep.title;
-            epItem.classList.add("episode-label"); // added label class
-            // Attach click event to open the popup for editing
-            epItem.addEventListener("click", () => {
-              showEpisodePopup(ep);
+          if (episodes.length > 5) {
+            // Create a dropdown if there are more than 5 episodes
+            const epDropdown = document.createElement("select");
+            epDropdown.classList.add("episode-dropdown");
+            episodes.forEach((ep) => {
+              const option = document.createElement("option");
+              option.value = ep._id;
+              option.textContent = ep.title;
+              epDropdown.appendChild(option);
             });
-            epList.appendChild(epItem);
-          });
-          epContainer.appendChild(epList);
+            epContainer.appendChild(epDropdown);
+          } else {
+            // Create a flex container to list episodes horizontally
+            const epList = document.createElement("div");
+            epList.style.display = "flex";
+            epList.style.flexDirection = "row";
+            epList.style.gap = "1rem";
+
+            episodes.forEach((ep) => {
+              const epItem = document.createElement("div");
+              epItem.textContent = ep.title;
+              epItem.classList.add("episode-label"); // added label class
+              // Attach click event to open the popup for editing
+              epItem.addEventListener("click", () => {
+                showEpisodePopup(ep);
+              });
+              epList.appendChild(epItem);
+            });
+            epContainer.appendChild(epList);
+          }
         }
       });
     });
@@ -1094,7 +1118,7 @@ async function showEpisodePopup(episode) {
           episode.publishDate
             ? new Date(episode.publishDate).toISOString().slice(0, 16)
             : ""
-        }" />
+        }" required />
       </div>
       <div class="field-group">
         <label for="upd-duration">Duration (minutes)</label>
