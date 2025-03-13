@@ -339,3 +339,11 @@ button:hover {
     width: 100%;
   }
 }
+
+.primary-cta {
+  width: 75%;
+  margin-bottom: var(--spacing-md);
+  display: block;
+  margin-left: auto;
+  margin-right: auto;
+}
