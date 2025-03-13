@@ -227,7 +227,7 @@ header {
 }
 
 .view-btn {
-  color: var(--highlight-color);
+  color: #3b82f6;
 }
 
 .edit-btn {
@@ -270,8 +270,35 @@ header {
 }
 
 .detail-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
   padding: var(--spacing-lg);
   border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+.detail-header-actions {
+  display: flex;
+  gap: 10px;
+}
+
+.edit-detail-btn {
+  background-color: var(--highlight-color);
+  color: white;
+  border: none;
+  border-radius: var(--radius-medium);
+  padding: 8px 16px;
+  cursor: pointer;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  transition: all 0.3s ease;
+}
+
+.edit-detail-btn:hover {
+  background-color: #e0662c;
+  transform: translateY(-2px);
 }
 
 .back-btn {
@@ -515,7 +542,13 @@ header {
   transform: scale(0.95);
   transition: transform 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
   scrollbar-width: thin;
-  scrollbar-color: var(--highlight-color) var(--background-light);
+  scrollbar-color: rgba(0, 0, 0, 0.2) var(--background-light);
+}
+
+.form-box::-webkit-scrollbar-thumb {
+  background-color: rgba(0, 0, 0, 0.2);
+  border-radius: 10px;
+  border: 2px solid var(--background-light);
 }
 
 .popup[style*="display: flex"] .form-box {
@@ -1261,7 +1294,7 @@ header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  border-left: 3px solid var(--highlight-color);
+  border-left: 3px solid #3b82f6;
 }
 
 .guest-card:hover {
@@ -1274,7 +1307,7 @@ header {
   width: 40px;
   height: 40px;
   border-radius: 50%;
-  background-color: var(--highlight-color);
+  background-color: #3b82f6;
   color: white;
   display: flex;
   align-items: center;
@@ -1310,7 +1343,7 @@ header {
 }
 
 .view-profile-btn {
-  background-color: var(--highlight-color);
+  background-color: #3b82f6;
   color: white;
   border: none;
   border-radius: var(--radius-small);
@@ -1319,11 +1352,11 @@ header {
   font-weight: 600;
   font-size: 0.85rem;
   transition: all 0.3s ease;
-  font-family: var(--highlight-color);
+  font-family: var(--font-primary);
 }
 
 .view-profile-btn:hover {
-  background-color: var(--highlight-color);
+  background-color: #2563eb;
   transform: translateY(-2px);
 }
 
@@ -1338,7 +1371,7 @@ header {
   width: 80px;
   height: 80px;
   border-radius: 50%;
-  background-color: var(--highlight-color);
+  background-color: #3b82f6;
   color: white;
   display: flex;
   align-items: center;
@@ -1391,7 +1424,7 @@ header {
 .guest-tag {
   display: inline-block;
   background-color: rgba(59, 130, 246, 0.1);
-  color: var(--highlight-color);
+  color: #3b82f6;
   padding: 4px 10px;
   border-radius: 20px;
   margin-right: 8px;
@@ -1403,7 +1436,7 @@ header {
 .guest-social-link {
   display: flex;
   align-items: center;
-  color: var(--highlight-color);
+  color: #3b82f6;
   text-decoration: none;
   margin-bottom: 10px;
   font-family: var(--font-primary);
@@ -1427,4 +1460,71 @@ header {
 .error-message {
   color: var(--danger-color);
   font-family: var(--font-primary);
+}
+
+/* Update the form-box scrollbar to use a neutral color instead of highlight color */
+.form-box {
+  scrollbar-color: rgba(0, 0, 0, 0.2) var(--background-light);
+}
+
+.form-box::-webkit-scrollbar-thumb {
+  background-color: rgba(0, 0, 0, 0.2);
+  border-radius: 10px;
+  border: 2px solid var(--background-light);
+}
+
+/* Style for the view-profile-btn */
+.view-profile-btn {
+  background-color: var(--highlight-color);
+  color: white;
+  border: none;
+  border-radius: var(--radius-small);
+  padding: 6px 12px;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 0.85rem;
+  transition: all 0.3s ease;
+  font-family: var(--font-primary);
+}
+
+.view-profile-btn:hover {
+  background-color: #e0662c;
+  transform: translateY(-2px);
+}
+
+/* Add styles for episodes in podcast cards */
+.podcast-episodes-preview {
+  margin-top: 10px;
+  max-height: 120px;
+  overflow-y: auto;
+}
+
+.podcast-episode-item {
+  display: flex;
+  align-items: center;
+  padding: 6px 10px;
+  margin-bottom: 5px;
+  border-radius: var(--radius-small);
+  background-color: var(--background-light);
+  box-shadow: -2px -2px 4px var(--light-shadow-light),
+    2px 2px 4px var(--dark-shadow-light);
+  transition: all 0.3s ease;
+  cursor: pointer;
+  border-left: 2px solid var(--highlight-color);
+}
+
+.podcast-episode-item:hover {
+  transform: translateY(-2px);
+}
+
+.podcast-episode-title {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: rgba(0, 0, 0, 0.7);
+  flex: 1;
+}
+
+.podcast-episode-date {
+  font-size: 0.7rem;
+  color: var(--text-color-light);
 }

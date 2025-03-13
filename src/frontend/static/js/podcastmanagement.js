@@ -342,11 +342,13 @@ document.addEventListener("DOMContentLoaded", () => {
   // Close the form popup
   document.getElementById("close-form-popup").addEventListener("click", () => {
     document.getElementById("form-popup").style.display = "none";
+    document.getElementById("podcast-detail").style.display = "block";
   });
 
   // Cancel button in form
   document.getElementById("cancel-form-btn").addEventListener("click", () => {
     document.getElementById("form-popup").style.display = "none";
+    document.getElementById("podcast-detail").style.display = "block";
   });
 
   // Show form for creating a new episode
@@ -435,6 +437,8 @@ document.addEventListener("DOMContentLoaded", () => {
           );
           document.getElementById("episode-form-popup").style.display = "none";
           document.getElementById("create-episode-form").reset();
+          // Refresh the episode list without refreshing the page
+          viewPodcast(data.podcastId);
         } else {
           showNotification("Error", result.error, "error");
         }
@@ -557,11 +561,17 @@ form.addEventListener("submit", async (e) => {
             "Podcast updated successfully!",
             "success"
           );
+          // Update the podcast details in the DOM
+          renderPodcastDetail({ ...updatedData, _id: selectedPodcastId });
+          document.getElementById("form-popup").style.display = "none";
+          document.getElementById("podcast-detail").style.display = "block";
         }
       } else {
         responseData = await addPodcast(updatedData);
         if (!responseData.error) {
           showNotification("Success", "Podcast added successfully!", "success");
+          document.getElementById("form-popup").style.display = "none";
+          document.getElementById("podcast-list").style.display = "flex";
         }
       }
 
@@ -574,9 +584,6 @@ form.addEventListener("submit", async (e) => {
           "error"
         );
       } else {
-        document.getElementById("form-popup").style.display = "none";
-        document.getElementById("podcast-detail").style.display = "none";
-        document.getElementById("podcast-list").style.display = "flex";
         resetForm();
         renderPodcastList();
       }
@@ -669,6 +676,7 @@ function resetForm() {
   selectedPodcastId = null;
 }
 
+// Modify the renderPodcastList function to add episodes preview under the image
 async function renderPodcastList() {
   try {
     // Fetch podcasts from your backend
@@ -687,9 +695,11 @@ async function renderPodcastList() {
       return;
     }
 
-    podcasts.forEach((podcast) => {
+    podcasts.forEach(async (podcast) => {
       const podcastCard = document.createElement("div");
       podcastCard.className = "podcast-card";
+
+      // Create the basic podcast card structure
       podcastCard.innerHTML = `
         <div class="podcast-content">
           <div class="podcast-image" style="background-image: url('${
@@ -715,11 +725,6 @@ async function renderPodcastList() {
                 }">
                   ${svgpodcastmanagement.view}
                 </button>
-                <button class="action-btn edit-btn" title="Edit podcast" data-id="${
-                  podcast._id
-                }">
-                  ${svgpodcastmanagement.edit}
-                </button>
                 <button class="action-btn delete-btn-home" title="Delete podcast" data-id="${
                   podcast._id
                 }">
@@ -730,6 +735,14 @@ async function renderPodcastList() {
             <p class="podcast-description"><strong>Description: </strong>${
               podcast.description || "No description available."
             }</p>
+            
+            <!-- Add episodes preview section -->
+            <div class="podcast-episodes-preview" id="episodes-preview-${
+              podcast._id
+            }">
+              <h4 style="margin-bottom: 8px; font-size: 0.9rem;">Episodes</h4>
+              <div class="episodes-loading">Loading episodes...</div>
+            </div>
           </div>
         </div>
         <div class="podcast-footer">
@@ -737,7 +750,92 @@ async function renderPodcastList() {
             podcast._id
           }">View Details</button>
         </div>`;
+
       podcastListElement.appendChild(podcastCard);
+
+      // Fetch episodes for this podcast and add them to the preview
+      try {
+        const episodes = await fetchEpisodesByPodcast(podcast._id);
+        const episodesPreviewEl = document.getElementById(
+          `episodes-preview-${podcast._id}`
+        );
+
+        if (episodesPreviewEl) {
+          if (episodes && episodes.length > 0) {
+            const episodesContainer = document.createElement("div");
+            episodesContainer.className = "episodes-container";
+
+            // Show up to 3 episodes in the preview
+            const previewEpisodes = episodes.slice(0, 3);
+
+            previewEpisodes.forEach((episode) => {
+              const episodeItem = document.createElement("div");
+              episodeItem.className = "podcast-episode-item";
+              episodeItem.setAttribute("data-episode-id", episode._id);
+
+              const publishDate = episode.publishDate
+                ? new Date(episode.publishDate).toLocaleDateString()
+                : "No date";
+
+              // Include episode description next to the title
+              episodeItem.innerHTML = `
+                <div class="podcast-episode-content">
+                  <div class="podcast-episode-title">${episode.title}</div>
+                  <div class="podcast-episode-description">${
+                    episode.description || "No description available."
+                  }</div>
+                </div>
+                <div class="podcast-episode-date">${publishDate}</div>
+              `;
+
+              // Make episode item navigate to episode details
+              episodeItem.addEventListener("click", (e) => {
+                e.stopPropagation();
+                renderEpisodeDetail(episode);
+                document.getElementById("podcast-list").style.display = "none";
+                document.getElementById("podcast-detail").style.display =
+                  "block";
+              });
+
+              episodesContainer.appendChild(episodeItem);
+            });
+
+            // Replace loading message with episodes
+            episodesPreviewEl.querySelector(".episodes-loading").remove();
+            episodesPreviewEl.appendChild(episodesContainer);
+
+            // Add "View all" link if there are more than 3 episodes
+            if (episodes.length > 3) {
+              const viewAllLink = document.createElement("div");
+              viewAllLink.style.textAlign = "right";
+              viewAllLink.style.marginTop = "5px";
+              viewAllLink.style.fontSize = "0.8rem";
+              viewAllLink.style.color = "var(--highlight-color)";
+              viewAllLink.style.cursor = "pointer";
+              viewAllLink.textContent = `View all ${episodes.length} episodes`;
+
+              viewAllLink.addEventListener("click", (e) => {
+                e.stopPropagation();
+                viewPodcast(podcast._id);
+              });
+
+              episodesPreviewEl.appendChild(viewAllLink);
+            }
+          } else {
+            episodesPreviewEl.innerHTML =
+              '<p style="font-size: 0.8rem; font-style: italic;">No episodes available</p>';
+          }
+        }
+      } catch (error) {
+        console.error("Error fetching episodes for podcast preview:", error);
+        const episodesPreviewEl = document.getElementById(
+          `episodes-preview-${podcast._id}`
+        );
+        if (episodesPreviewEl) {
+          episodesPreviewEl.innerHTML =
+            '<p style="font-size: 0.8rem; color: #e74c3c;">Failed to load episodes</p>';
+        }
+      }
 
       // Add event listener to the image to view details
       podcastCard
@@ -764,21 +862,10 @@ async function renderPodcastList() {
       });
 
     document.querySelectorAll(".edit-btn").forEach((button) => {
-      button.addEventListener("click", async (e) => {
+      button.addEventListener("click", (e) => {
         const podcastId = e.target.closest("button").getAttribute("data-id");
-        try {
-          const podcast = await fetchPodcast(podcastId);
-          displayPodcastDetails(podcast.podcast);
-          selectedPodcastId = podcastId; // Set the selected podcast ID
-
-          // Fetch podcasts to ensure the podcast ID is available
-          const response = await fetchPodcasts();
-          const podcasts = response.podcast;
-          renderPodcastSelection(podcasts);
-
-          document.getElementById("form-popup").style.display = "flex";
-        } catch (error) {
-          showNotification("Error", "Failed to fetch podcast details", "error");
+        if (podcastId) {
+          viewPodcast(podcastId);
         }
       });
     });
@@ -869,7 +956,7 @@ async function viewPodcast(podcastId) {
   }
 }
 
-// Render the podcast detail view
+// Modify the renderPodcastDetail function to add the top-right action buttons
 function renderPodcastDetail(podcast) {
   const podcastDetailElement = document.getElementById("podcast-detail");
   podcastDetailElement.innerHTML = `
@@ -878,13 +965,27 @@ function renderPodcastDetail(podcast) {
         ${svgpodcastmanagement.back}
         Back to podcasts
       </button>
+      
+      <!-- Add top-right action buttons -->
+      <div class="top-right-actions">
+      
+        <button class="action-btn edit-btn" id="edit-podcast-btn" data-id="${
+          podcast._id
+        }">
+          ${svgpodcastmanagement.edit}
+          Edit Podcast
+        </button>
+      </div>
     </div>
     <div class="detail-content">
       <div class="detail-image" style="background-image: url('${
         podcast.logoUrl
       }')"></div>
-      <!-- New Episodes container moved under the image -->
-      <div id="episodes-list" class="episodes-list"></div>
+      <!-- Episodes container with title outside scroll area -->
+      <div id="episodes-list" class="episodes-list">
+        <h3 class="detail-section-title">Episodes</h3>
+        <div id="episodes-container" class="episodes-scroll-container"></div>
+      </div>
       <div class="detail-info">
         <h1 class="detail-title">${podcast.podName}</h1>
         <p class="detail-category">${podcast.category || "Uncategorized"}</p>
@@ -990,12 +1091,6 @@ function renderPodcastDetail(podcast) {
           </div>
         </div>
         <div class="detail-actions" style="margin-top: 2rem; display: flex; gap: 1rem;">
-          <button class="back-btn" id="edit-podcast-btn" data-id="${
-            podcast._id
-          }">
-            ${svgpodcastmanagement.edit}
-            Edit Podcast
-          </button>
           <button class="delete-btn" id="delete-podcast-btn" data-id="${
             podcast._id
           }">
@@ -1058,16 +1153,16 @@ function renderPodcastDetail(podcast) {
   // Render episodes vertically under the image container
   fetchEpisodesByPodcast(podcast._id)
     .then((episodes) => {
-      const episodesListEl = document.getElementById("episodes-list");
-      episodesListEl.innerHTML = `<h3 class="detail-section-title">Episodes</h3>`;
+      const episodesContainer = document.getElementById("episodes-container");
+      episodesContainer.innerHTML = "";
 
       if (episodes && episodes.length) {
-        const episodesContainer = document.createElement("div");
-        episodesContainer.className = "episodes-container";
-        episodesContainer.style.display = "flex";
-        episodesContainer.style.flexDirection = "column";
-        episodesContainer.style.gap = "10px";
-        episodesContainer.style.marginTop = "10px";
+        const episodesListDiv = document.createElement("div");
+        episodesListDiv.className = "episodes-container";
+        episodesListDiv.style.display = "flex";
+        episodesListDiv.style.flexDirection = "column";
+        episodesListDiv.style.gap = "10px";
+        episodesListDiv.style.marginTop = "10px";
 
         episodes.forEach((ep) => {
           const episodeCard = document.createElement("div");
@@ -1082,6 +1177,7 @@ function renderPodcastDetail(podcast) {
           episodeCard.style.borderLeft = "3px solid var(--highlight-color)";
           episodeCard.style.display = "flex";
           episodeCard.style.justifyContent = "space-between";
+          episodeCard.setAttribute("data-episode-id", ep._id);
 
           const publishDate = ep.publishDate
             ? new Date(ep.publishDate).toLocaleDateString()
@@ -1160,15 +1256,15 @@ function renderPodcastDetail(podcast) {
             renderEpisodeDetail(ep);
           });
 
-          episodesContainer.appendChild(episodeCard);
+          episodesListDiv.appendChild(episodeCard);
         });
 
-        episodesListEl.appendChild(episodesContainer);
+        episodesContainer.appendChild(episodesListDiv);
       } else {
         const noEpisodes = document.createElement("p");
         noEpisodes.textContent = "No episodes available.";
         noEpisodes.style.marginTop = "10px";
-        episodesListEl.appendChild(noEpisodes);
+        episodesContainer.appendChild(noEpisodes);
       }
     })
     .catch((error) => {
@@ -1176,7 +1272,7 @@ function renderPodcastDetail(podcast) {
     });
 }
 
-// New function to render episode details and fetch guests
+// Modify the renderEpisodeDetail function to add the top-right action buttons
 function renderEpisodeDetail(episode) {
   const episodeDetailElement = document.getElementById("podcast-detail");
   episodeDetailElement.innerHTML = `
@@ -1185,6 +1281,17 @@ function renderEpisodeDetail(episode) {
         ${svgpodcastmanagement.back}
         Back to podcast
       </button>
+      
+      <!-- Add top-right action buttons -->
+      <div class="top-right-actions">
+      
+        <button class="action-btn edit-btn" id="edit-episode-btn" data-id="${
+          episode._id
+        }">
+          ${svgpodcastmanagement.edit}
+          Edit Episode
+        </button>
+      </div>
     </div>
     <div class="detail-content">
       <div class="detail-image" style="background-image: url('${
@@ -1217,12 +1324,6 @@ function renderEpisodeDetail(episode) {
         </div>
         <div class="separator"></div>
         <div class="detail-actions" style="margin-top: 2rem; display: flex; gap: 1rem;">
-          <button class="back-btn" id="edit-episode-btn" data-id="${
-            episode._id
-          }">
-            ${svgpodcastmanagement.edit}
-            Edit Episode
-          </button>
           <button class="delete-btn" id="delete-episode-btn" data-id="${
             episode._id
           }">
@@ -1244,9 +1345,11 @@ function renderEpisodeDetail(episode) {
     .getElementById("edit-episode-btn")
     .addEventListener("click", async () => {
       try {
-        const response = await fetchEpisode(episode._id);
-        const episodeData = await response.json();
-        showEpisodePopup(episodeData);
+        const episodeId = document
+          .getElementById("edit-episode-btn")
+          .getAttribute("data-id");
+        const response = await fetchEpisode(episodeId);
+        showEpisodePopup(response); // Ensure response is passed correctly
       } catch (error) {
         showNotification("Error", "Failed to fetch episode details", "error");
       }
@@ -1353,30 +1456,45 @@ function renderEpisodeDetail(episode) {
       console.error("Error fetching guests:", error);
       const errorMsg = document.createElement("p");
       errorMsg.className = "error-message";
-      errorMsg.textContent = "This episode have no guests.";
+      errorMsg.textContent = "This episode has no guests.";
       document.getElementById("guests-list").appendChild(errorMsg);
     });
+}
 
-  // Replace the renderGuestDetail function with this enhanced version:
+// Modify the renderGuestDetail function to add the top-right action buttons
+function renderGuestDetail(guest) {
+  const guestDetailElement = document.getElementById("podcast-detail");
 
-  // New function to render guest details
-  function renderGuestDetail(guest) {
-    const guestDetailElement = document.getElementById("podcast-detail");
+  // Get initials from guest name for avatar
+  const initials = guest.name
+    .split(" ")
+    .map((word) => word[0])
+    .join("")
+    .substring(0, 2)
+    .toUpperCase();
 
-    // Get initials from guest name for avatar
-    const initials = guest.name
-      .split(" ")
-      .map((word) => word[0])
-      .join("")
-      .substring(0, 2)
-      .toUpperCase();
-
-    guestDetailElement.innerHTML = `
+  guestDetailElement.innerHTML = `
     <div class="detail-header">
       <button class="back-btn" id="back-to-episode">
         ${svgpodcastmanagement.back}
         Back to episode
       </button>
+      
+      <!-- Add top-right action buttons -->
+      <div class="top-right-actions">
+        <button class="action-btn view-btn" id="view-guest-btn" data-id="${
+          guest._id || guest.id
+        }">
+          ${svgpodcastmanagement.view}
+          View Details
+        </button>
+        <button class="action-btn edit-btn" id="edit-guest-btn" data-id="${
+          guest._id || guest.id
+        }">
+          ${svgpodcastmanagement.edit}
+          Edit Guest
+        </button>
+      </div>
     </div>
     <div class="detail-content">
       <div class="detail-info">
@@ -1495,33 +1613,45 @@ function renderEpisodeDetail(episode) {
     </div>
   `;
 
-    // Back button event listener
-    document.getElementById("back-to-episode").addEventListener("click", () => {
-      fetch(`/get_episodes/${guest.episodeId}`)
-        .then((response) => response.json())
-        .then((episode) => {
-          renderEpisodeDetail(episode);
-        })
-        .catch((error) => {
-          console.error("Error fetching episode:", error);
-          showNotification(
-            "Error",
-            "Failed to return to episode view",
-            "error"
-          );
-        });
+  // Back button event listener
+  document.getElementById("back-to-episode").addEventListener("click", () => {
+    fetch(`/get_episodes/${guest.episodeId}`)
+      .then((response) => response.json())
+      .then((episode) => {
+        renderEpisodeDetail(episode);
+      })
+      .catch((error) => {
+        console.error("Error fetching episode:", error);
+        showNotification("Error", "Failed to return to episode view", "error");
+      });
+  });
+
+  // Add event listeners for the edit guest button
+  document
+    .getElementById("edit-guest-btn")
+    .addEventListener("click", async () => {
+      try {
+        // Implement guest editing functionality here
+        showNotification(
+          "Info",
+          "Guest editing functionality coming soon",
+          "info"
+        );
+      } catch (error) {
+        showNotification("Error", "Failed to edit guest", "error");
+      }
     });
-  }
+}
 
-  // New function to display the episode popup for viewing/updating an episode
-  async function showEpisodePopup(episode) {
-    const popup = document.createElement("div");
-    popup.className = "popup";
-    popup.style.display = "flex";
+// New function to display the episode popup for viewing/updating an episode
+async function showEpisodePopup(episode) {
+  const popup = document.createElement("div");
+  popup.className = "popup";
+  popup.style.display = "flex";
 
-    const popupContent = document.createElement("div");
-    popupContent.className = "form-box";
-    popupContent.innerHTML = `
+  const popupContent = document.createElement("div");
+  popupContent.className = "form-box";
+  popupContent.innerHTML = `
     <span id="close-episode-popup" class="close-btn">&times;</span>
     <h2 class="form-title">Edit Episode</h2>
     <form id="update-episode-form">
@@ -1551,16 +1681,17 @@ function renderEpisodeDetail(episode) {
           episode.duration || ""
         }" />
       </div>
+      <!-- Commented out Guest and Add Guest Manually fields -->
+      <!--
       <div class="field-group">
         <label for="upd-guest-id">Guest</label>
-        <!-- Change guest field to a select -->
         <select id="upd-guest-id" name="guestId"></select>
-        <!-- Add field for manual guest entry -->
         <div class="manual-guest-field">
           <label for="manual-guest">Add Guest Manually</label>
           <input type="text" id="manual-guest" placeholder="Click to add guest manually" readonly />
         </div>
       </div>
+      -->
       <div class="field-group">
         <label for="upd-status">Status</label>
         <input type="text" id="upd-status" name="status" value="${
@@ -1573,70 +1704,53 @@ function renderEpisodeDetail(episode) {
       </div>
     </form>
   `;
-    popup.appendChild(popupContent);
-    document.body.appendChild(popup);
+  popup.appendChild(popupContent);
+  document.body.appendChild(popup);
 
-    // Populate guest dropdown in update popup with the current guest selected.
-    const updGuestSelect = document.getElementById("upd-guest-id");
-    renderGuestSelection(updGuestSelect, episode.guestId || "");
-
-    // Fetch podcasts to ensure the podcast ID is available
-    const response = await fetchPodcasts();
-    const podcasts = response.podcast;
-    renderPodcastSelection(podcasts);
-
-    // Close popup events
-    popup
-      .querySelector("#close-episode-popup")
-      .addEventListener("click", () => {
-        document.body.removeChild(popup);
-      });
-    popup
-      .querySelector("#cancel-episode-update")
-      .addEventListener("click", () => {
-        document.body.removeChild(popup);
-      });
-
-    // Manual guest entry
-    const manualGuestField = document.querySelector(".manual-guest-field");
-    manualGuestField.addEventListener("click", () => {
-      showManualGuestPopup(updGuestSelect);
+  // Close popup events
+  popup.querySelector("#close-episode-popup").addEventListener("click", () => {
+    document.body.removeChild(popup);
+  });
+  popup
+    .querySelector("#cancel-episode-update")
+    .addEventListener("click", () => {
+      document.body.removeChild(popup);
     });
 
-    // Update episode form submission
-    popup
-      .querySelector("#update-episode-form")
-      .addEventListener("submit", async (e) => {
-        e.preventDefault();
-        const updatedData = {
-          title: document.getElementById("upd-episode-title").value.trim(),
-          description: document
-            .getElementById("upd-episode-description")
-            .value.trim(),
-          publishDate: document.getElementById("upd-publish-date").value,
-          duration: document.getElementById("upd-duration").value,
-          guestId: document.getElementById("upd-guest-id").value, // value from select
-          status: document.getElementById("upd-status").value.trim()
-        };
-        Object.keys(updatedData).forEach((key) => {
-          if (!updatedData[key]) delete updatedData[key];
-        });
-        try {
-          const result = await updateEpisode(episode._id, updatedData); // Use updateEpisode from episodeRequest.js
-          if (result.message) {
-            showNotification(
-              "Success",
-              "Episode updated successfully!",
-              "success"
-            );
-            document.body.removeChild(popup);
-            renderPodcastList();
-          } else {
-            showNotification("Error", result.error || "Update failed", "error");
-          }
-        } catch (error) {
-          showNotification("Error", "Failed to update episode.", "error");
-        }
+  // Update episode form submission
+  popup
+    .querySelector("#update-episode-form")
+    .addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const updatedData = {
+        title: document.getElementById("upd-episode-title").value.trim(),
+        description: document
+          .getElementById("upd-episode-description")
+          .value.trim(),
+        publishDate: document.getElementById("upd-publish-date").value,
+        duration: document.getElementById("upd-duration").value,
+        // guestId: document.getElementById("upd-guest-id").value, // Commented out
+        status: document.getElementById("upd-status").value.trim()
+      };
+      Object.keys(updatedData).forEach((key) => {
+        if (!updatedData[key]) delete updatedData[key];
       });
-  }
+      try {
+        const result = await updateEpisode(episode._id, updatedData); // Use updateEpisode from episodeRequest.js
+        if (result.message) {
+          showNotification(
+            "Success",
+            "Episode updated successfully!",
+            "success"
+          );
+          document.body.removeChild(popup);
+          // Update the episode details in the DOM
+          renderEpisodeDetail({ ...episode, ...updatedData });
+        } else {
+          showNotification("Error", result.error || "Update failed", "error");
+        }
+      } catch (error) {
+        showNotification("Error", "Failed to update episode.", "error");
+      }
+    });
 }
