@@ -75,6 +75,26 @@
     });
 
     document.addEventListener("DOMContentLoaded", function () {
+      // Show welcome popup if the flag is set
+      if (sessionStorage.getItem("showWelcomePopup") === "true") {
+        document.getElementById("welcome-popup").style.display = "flex";
+        sessionStorage.removeItem("showWelcomePopup");
+      }
+
+      const welcomePopup = document.getElementById("welcome-popup");
+      const closeWelcomePopup = document.getElementById("close-welcome-popup");
+
+      closeWelcomePopup.addEventListener("click", function () {
+        welcomePopup.style.display = "none";
+      });
+
+      // Close popup if clicking outside the popup-content
+      welcomePopup.addEventListener("click", function (e) {
+        if (e.target === welcomePopup) {
+          welcomePopup.style.display = "none";
+        }
+      });
+
       // Attach change event listener to all checkboxes
       document.querySelectorAll(".task-check").forEach((checkbox) => {
         checkbox.addEventListener("change", function () {
@@ -95,7 +115,7 @@
         const tasks = Array.from(taskList.children);
         tasks.sort((a, b) => {
           return (
-            a.querySelector(".task-check").checked -
+            a.querySelector(".task-check").checked - 
             b.querySelector(".task-check").checked
           );
         });
@@ -821,5 +841,18 @@
       </div>
     </div>
   </main>
+</div>
+
+<!-- Welcome Popup -->
+<div id="welcome-popup" class="popup" style="display: none;">
+  <div class="popup-content">
+    <span id="close-welcome-popup" class="close-btn">&times;</span>
+    <h2>Welcome to PodManager.ai!</h2>
+    <p>🎉 Congratulations!</p>
+    <p>Your spot in the Beta Tester queue is locked in! Get ready for your exclusive sneak peek...</p>
+    <p>💰 To kick things off, we’ve added 3,500 Credits to your account!</p>
+    <p>PodManager.ai will revolutionize your podcasting with AI-powered workflow automation, seamless guest management, and faster episode production- so you can focus on creating amazing content!</p>
+    <p>✨ Check your email right now for more exciting features!</p>
+  </div>
 </div>
 {% endblock %}
