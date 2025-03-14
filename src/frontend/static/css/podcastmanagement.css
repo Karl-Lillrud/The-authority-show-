@@ -144,6 +144,12 @@ header {
 }
 
 /* Podcast Card */
+.podcast-content {
+  display: flex;
+  flex-direction: row;
+  align-items: center; /* Add this to vertically center the image */
+}
+
 .podcast-card {
   background-color: white;
   border-radius: var(--radius-large);
@@ -159,11 +165,6 @@ header {
   box-shadow: var(--card-shadow-hover);
 }
 
-.podcast-content {
-  display: flex;
-  flex-direction: row;
-}
-
 .podcast-image {
   width: 220px;
   height: 220px;
@@ -175,20 +176,11 @@ header {
   transition: all var(--transition-normal);
   position: relative;
   overflow: hidden;
-}
-
-.podcast-image::after {
-  content: "";
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: linear-gradient(
-    to bottom right,
-    rgba(255, 127, 63, 0.1),
-    transparent
-  );
+  display: flex; /* Add this to help with centering */
+  align-items: center; /* Add this to center content vertically */
+  justify-content: center; /* Add this to center content horizontally */
+  margin: 15px; /* Add some margin around the image */
+  border-radius: var(--radius-medium); /* Add rounded corners to the image */
 }
 
 .podcast-info {
