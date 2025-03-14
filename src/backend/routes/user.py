@@ -17,7 +17,7 @@ def get_profile():
 
     try:
         user_id = str(g.user_id)
-        user = collection.database.Users.find_one({"_id": user_id}, {"email": 1, "full_name": 1})
+        user = collection.database.Users.find_one({"_id": user_id}, {"email": 1, "full_name": 1,"phone": 1})
 
         if not user:
             return jsonify({"error": "User not found"}), 404
@@ -25,6 +25,7 @@ def get_profile():
         return jsonify({
             "full_name": user.get("full_name", ""),
             "email": user.get("email", ""),
+            "phone": user.get("phone", "")
         }), 200
 
     except Exception as e:
@@ -41,6 +42,7 @@ def update_profile():
         data = request.get_json()
         full_name = data.get("full_name")
         email = data.get("email")
+        phone = data.get("phone")
         user_id = str(g.user_id)
 
         updates = {}
@@ -48,6 +50,8 @@ def update_profile():
             updates["full_name"] = full_name
         if email:
             updates["email"] = email
+        if phone:
+            updates["phone"] = phone
 
         # Update the user record in the database
         collection.database.Users.update_one({"_id": user_id}, {"$set": updates})

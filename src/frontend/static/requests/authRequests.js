@@ -26,7 +26,19 @@ export async function register(email, password) {
     });
 
     if (response.ok) {
-      return `/signin?message=Registration successful. Please log in.`;
+      // Automatically log in the user
+      const loginResponse = await fetch(`/signin`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password })
+      });
+
+      if (!loginResponse.ok) {
+        throw new Error("Registration successful, but failed to log in.");
+      }
+
+      const loginResult = await loginResponse.json();
+      return loginResult.redirect_url || "/dashboard";
     } else {
       const result = await response.json();
       if (result.error === "User already exists") {
