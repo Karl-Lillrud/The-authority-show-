@@ -88,6 +88,11 @@ function showNotification(title, message, type = "info") {
   }, 5000);
 }
 
+// Insert the new function here
+function setImageSource(imgElement, customSrc, mockSrc) {
+  imgElement.src = customSrc || mockSrc;
+}
+
 // New function to fetch and render guest options into a select element
 async function renderGuestSelection(selectElement, selectedGuestId = "") {
   try {
