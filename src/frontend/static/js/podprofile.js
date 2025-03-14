@@ -33,8 +33,8 @@ document.addEventListener("DOMContentLoaded", function () {
       const rssUrl = this.value.trim();
       if (rssUrl) {
         try {
-          const podcastName = await fetchRSSData(rssUrl);
-          podNameInput.value = podcastName;
+          const rssData = await fetchRSSData(rssUrl);
+          podNameInput.value = rssData.title; // Set the title correctly
         } catch (error) {
           console.error("Error processing RSS feed:", error);
         }

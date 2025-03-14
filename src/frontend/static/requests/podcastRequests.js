@@ -83,11 +83,17 @@ export async function fetchRSSData(rssUrl) {
     const rssDoc = parser.parseFromString(rssText, "application/xml");
 
     const titleElement = rssDoc.querySelector("channel > title");
+    const imageElement = rssDoc.querySelector("channel > image > url");
     if (!titleElement) {
       throw new Error("RSS feed does not contain a title.");
     }
 
-    return titleElement.textContent;
+    // Return all RSS data
+    return {
+      title: titleElement.textContent,
+      imageUrl: imageElement ? imageElement.textContent : null,
+      raw: rssDoc // Include the entire parsed RSS document
+    };
   } catch (error) {
     throw new Error(`Error fetching RSS feed: ${error.message}`);
   }

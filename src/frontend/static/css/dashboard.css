@@ -433,6 +433,7 @@
   box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
   transition: all var(--transition-normal);
   border-left: 3px solid transparent;
+  cursor: pointer; /* Change cursor to pointer on hover */
 }
 
 .podcast-item:hover {
