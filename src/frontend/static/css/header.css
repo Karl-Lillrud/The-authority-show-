@@ -81,7 +81,13 @@ header {
 .logo-container {
   /* Previously positioned absolutely; now let flex layout position it */
   width: 120px; /* Adjust as needed */
+  
 }
+
+.logo-container:hover {
+  transform: scale(1.05);
+}
+
 
 .logo-container img {
   width: 100%;
