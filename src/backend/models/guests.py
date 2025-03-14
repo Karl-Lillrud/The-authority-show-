@@ -1,5 +1,5 @@
 from marshmallow import Schema, fields
-from models.podtasks import TaskSchema
+from backend.models.podtasks import PodtaskSchema
 
 class GuestSchema(Schema):
     id = fields.Str()
@@ -17,5 +17,5 @@ class GuestSchema(Schema):
     scheduled = fields.Int() #Schedule sen
     completed = fields.Int()
     createdAt = fields.DateTime() #Endpoints will fix this
-    defaultTasks = fields.List(fields.Nested(TaskSchema), allow_none=True)
+    defaultTasks = fields.List(fields.Nested(PodtaskSchema), allow_none=True)
     notes = fields.Str()

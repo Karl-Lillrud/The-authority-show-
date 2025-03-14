@@ -1,5 +1,5 @@
 from marshmallow import Schema, fields, pre_load
-from models.podtasks import TaskSchema
+from backend.models.podtasks import PodtaskSchema
 
 
 class EpisodeSchema(Schema):
@@ -10,7 +10,7 @@ class EpisodeSchema(Schema):
     publishDate = fields.DateTime(allow_none=True)
     duration = fields.Int(allow_none=True)
     status = fields.Str(allow_none=True)
-    defaultTasks = fields.List(fields.Nested(TaskSchema), allow_none=True)
+    defaultTasks = fields.List(fields.Nested(PodtaskSchema), allow_none=True)
     createdAt = fields.DateTime()
     updatedAt = fields.DateTime()
 
