@@ -1326,6 +1326,7 @@ header {
   padding: 16px;
   background-color: rgba(0, 0, 0, 0.02);
   border-radius: var(--radius-medium);
+  width: 100%; /* Make the guest detail header wider */
 }
 
 .guest-detail-avatar {
