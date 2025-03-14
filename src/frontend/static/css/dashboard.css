@@ -414,3 +414,68 @@
 #homepage-iframe {
   border-radius: var(--radius-small);
 }
+
+/* Podcast List */
+#podcast-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.podcast-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--spacing-md);
+  margin-bottom: var(--spacing-md);
+  border-radius: var(--radius-medium);
+  background-color: white;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+  transition: all var(--transition-normal);
+  border-left: 3px solid transparent;
+}
+
+.podcast-item:hover {
+  transform: translateY(-2px);
+  border-left: 3px solid var(--highlight-color);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.podcast-title {
+  font-weight: 600;
+  color: rgba(0, 0, 0, 0.7);
+}
+
+.podcast-image {
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  object-fit: cover;
+  margin-right: var(--spacing-sm);
+}
+
+.podcast-item-actions {
+  display: flex;
+  gap: var(--spacing-sm);
+}
+
+.view-btn,
+.edit-btn,
+.delete-btn {
+  background: none;
+  border: none;
+  color: var(--highlight-color);
+  cursor: pointer;
+  font-size: 0.9rem;
+  transition: color 0.3s ease;
+}
+
+.delete-btn {
+  color: var(--danger-color);
+}
+
+.view-btn:hover,
+.edit-btn:hover,
+.delete-btn:hover {
+  color: var(--highlight-hover);
+}
