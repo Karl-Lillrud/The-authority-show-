@@ -1,8 +1,11 @@
 {% extends "dashboard/components/base.html" %} 
 {% block title %}Podcast Task Management{% endblock %} 
 {% block content %}
-<link rel="stylesheet" href="{{ url_for('static', filename='css/settings.css') }}" />
-<script type="module" src="{{ url_for('frontend.static_files', filename='js/settings.js') }}"></script>
+<link rel="stylesheet" href="{{ url_for('static', filename='css/account.css') }}" />
+<!-- Include QRCode library -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script src="{{ url_for('static', filename='requests/accountRequests.js') }}"></script>
+<script type="module" src="{{ url_for('frontend.static_files', filename='js/account.js') }}"></script>
 <div class="account-settings-wrapper">
   <!-- Sidebar Menu -->
   <aside class="sidebar">
@@ -60,6 +63,13 @@
             id="email"
             placeholder="Enter your email"
             value="{{ email }}"
+          />
+          <label for="phone">Phone Number</label>
+          <input
+            type="phone"
+            id="phone"
+            placeholder="Enter your phone number"
+            value="{{ phone }}"
           />
           <label for="password">Current Password</label>
           <input
@@ -220,9 +230,4 @@
     </div>   
   </section>
 </div>
-<!-- Include QRCode library -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
-
-<script src="{{ url_for('static', filename='requests/accountRequests.js') }}"></script>
-
 {% endblock %}
