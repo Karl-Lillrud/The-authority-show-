@@ -15,6 +15,7 @@ document.addEventListener("DOMContentLoaded", function () {
       for (const podcast of podcasts) {
         const podcastItem = document.createElement("li");
         podcastItem.className = "podcast-item";
+        podcastItem.style.cursor = "pointer"; // Change cursor to pointer on hover
 
         // Fetch additional information from the RSS feed
         let imageUrl = "https://via.placeholder.com/50"; // Default image

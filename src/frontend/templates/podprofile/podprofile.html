@@ -8,7 +8,11 @@
       rel="stylesheet"
       href="{{ url_for('static', filename='css/podprofile.css') }}"
     />
-    <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='favicon/favicon.ico') }}" />
+    <link
+      rel="icon"
+      type="image/x-icon"
+      href="{{ url_for('static', filename='favicon/favicon.ico') }}"
+    />
     <link rel="canonical" href="https://app.podmanager.ai" />
   </head>
   <body>
@@ -45,29 +49,31 @@
         <h1 class="fancy-heading">POD INFO</h1>
         <form id="podNameForm">
           <div class="form-group">
-            <label for="podRss">RSS</label>
-            <span class="help-text">
-              To find your podcast's RSS feed URL, log in to your podcast
-              hosting platform, navigate to your podcast settings or
-              distribution options, and look for the "RSS Feed" section and
-              paste that URL here.
-            </span>
+            <div
+              class="label-group"
+              style="display: inline-flex; align-items: center; gap: 0.25rem"
+            >
+              <label for="podRss">RSS</label>
+              <button class="help-button">?</button>
+              <span class="help-text">
+                To find your podcast's RSS feed URL, log in to your podcast
+                hosting platform, navigate to your podcast settings or
+                distribution options, and look for the "RSS Feed" section and
+                paste that URL here.
+              </span>
+            </div>
             <input type="url" id="podRss" name="podRss" />
           </div>
           <div class="form-group">
             <label for="podName">Podcast's Name</label>
             <input type="text" id="podName" name="podName" required />
           </div>
-          <!-- <button type="button" class="button-secondary" id="skipToDashboard">
-            Skip
-          </button> -->
           <button type="button" class="button-primary" id="goToEmailSection">
             Next
           </button>
         </form>
       </div>
-
-     
+    </main>
     <script
       type="module"
       src="{{ url_for('static', filename='requests/podcastRequests.js') }}"

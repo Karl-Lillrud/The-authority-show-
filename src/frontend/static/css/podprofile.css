@@ -238,24 +238,21 @@ body.dark-mode .button-secondary:hover {
 }
 
 .help-button {
-  width: 30px;
-  height: 30px;
+  width: 16px; /* Reduced from 20px */
+  height: 16px; /* Reduced from 20px */
+  font-size: 12px; /* Reduced from 16px */
   background-color: var(--text-color-light);
   color: white;
-  font-size: 16px;
   font-weight: bold;
   border: none;
   border-radius: 50%;
   cursor: pointer;
-  display: flex;
+  display: inline-flex;
   align-items: center;
   justify-content: center;
-  margin-left: auto;
-}
-
-/* Remove the small help button styles */
-.help-button.small {
-  display: none;
+  margin-left: 0.5cm; /* Reduced margin from 2cm to 0.5cm */
+  vertical-align: middle; /* Align with the label */
+  transform: translate(-4mm, -1mm); /* Moved 2mm up and 2mm left */
 }
 
 .help-text {
@@ -285,6 +282,16 @@ body.dark-mode .button-secondary:hover {
 body.dark-mode .help-button {
   background-color: var(--highlight-color);
   color: black;
+}
+
+/* Remove the small help button styles */
+.help-button.small {
+  display: none;
+}
+
+.help-button:hover + .help-text {
+  visibility: visible;
+  opacity: 1;
 }
 
 /* Utility Classes */
@@ -374,4 +381,52 @@ body.dark-mode .help-button {
   font-size: 1.2rem;
   margin-bottom: var(--spacing-md);
   color: var(--text-color-light);
+}
+
+.label-group {
+  position: relative;
+}
+
+.label-group:hover .help-text {
+  visibility: visible;
+  opacity: 1;
+}
+
+@media (max-width: 768px) {
+  .container {
+    width: 90%; /* Make the container use most of the viewport */
+    padding: var(--spacing-md);
+  }
+  .logo-container {
+    margin-bottom: var(--spacing-md);
+  }
+  .logo-container img {
+    width: 100px; /* Reduce logo size on smaller screens */
+  }
+  .label-group {
+    flex-direction: row !important; /* Always keep RSS and ? side-by-side */
+    flex-wrap: nowrap !important; /* Prevent wrapping */
+    align-items: center !important;
+    gap: 0.25rem; /* Ensure minimal gap */
+  }
+  input[type="url"],
+  input[type="text"],
+  select,
+  textarea {
+    width: 100%;
+    font-size: 1rem;
+  }
+  .button-primary {
+    font-size: 1rem;
+    padding: var(--spacing-sm);
+  }
+  .help-text {
+    bottom: auto; /* Disable the above positioning */
+    top: 50%; /* Vertically center with the button */
+    left: 80%; /* Position to the right of the help button */
+    transform: translateY(-40%); /* Adjust vertical alignment */
+    width: 200px !important;
+    padding: var(--spacing-sm) !important;
+    font-size: 0.7rem !important;
+  }
 }
