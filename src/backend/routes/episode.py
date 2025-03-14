@@ -16,9 +16,9 @@ logger = logging.getLogger(__name__)
 
 fs = gridfs.GridFS(database)
 
-# Directory to save uploaded files
-# UPLOAD_FOLDER = r'C:\Users\Sarwar\Desktop\Lia'
-# os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+#Directory to save uploaded files
+#UPLOAD_FOLDER = r'C:\Users\Sarwar\Desktop\Lia'
+#os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
 
 def allowed_file(filename):
