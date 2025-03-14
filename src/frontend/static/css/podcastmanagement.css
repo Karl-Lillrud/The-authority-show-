@@ -34,9 +34,10 @@ body {
   background-color: var(--background-light);
   font-family: var(--font-primary);
   color: var(--text-color-light);
-  
+
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  zoom: 85%;
 }
 
 .container {
