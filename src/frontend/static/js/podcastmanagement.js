@@ -1019,6 +1019,7 @@ function renderPodcastDetail(podcast) {
           podcast._id
         }">
           ${svgpodcastmanagement.edit}
+          
         </button>
       </div>
     </div>
@@ -1336,17 +1337,17 @@ function renderEpisodeDetail(episode) {
       
       <!-- Add top-right action buttons -->
       <div class="top-right-actions">
-        <button class="action-btn edit-btn" id="edit-episode-btn" data-id="${
-          episode._id
-        }">
+        <button class="action-btn edit-btn" id="edit-episode-btn" data-id="${episode._id}">
           ${svgpodcastmanagement.edit}
+        </button>
+        <!-- Add Publish button next to Edit button -->
+        <button class="action-btn publish-btn" id="publish-episode-btn" data-id="${episode._id}">
+          ${svgpodcastmanagement.upload}
         </button>
       </div>
     </div>
     <div class="detail-content">
-      <div class="detail-image" style="background-image: url('${
-        episode.image || "default-image.png"
-      }')"></div>
+      <div class="detail-image" style="background-image: url('${episode.image || "default-image.png"}')"></div>
       <div class="detail-info">
         <h1 class="detail-title">${episode.title}</h1>
         <p class="detail-category">${episode.status || "Uncategorized"}</p>
@@ -1358,9 +1359,7 @@ function renderEpisodeDetail(episode) {
         <div class="detail-grid">
           <div class="detail-item">
             <h3>Publish Date</h3>
-            <p>${
-              new Date(episode.publishDate).toLocaleString() || "Not specified"
-            }</p>
+            <p>${new Date(episode.publishDate).toLocaleString() || "Not specified"}</p>
           </div>
           <div class="detail-item">
             <h3>Duration</h3>
@@ -1374,9 +1373,7 @@ function renderEpisodeDetail(episode) {
         </div>
         <div class="separator"></div>
         <div class="detail-actions" style="margin-top: 2rem; display: flex; gap: 1rem;">
-          <button class="delete-btn" id="delete-episode-btn" data-id="${
-            episode._id
-          }">
+          <button class="delete-btn" id="delete-episode-btn" data-id="${episode._id}">
             <span class="icon">${svgpodcastmanagement.delete}</span>
             Delete Episode
           </button>
@@ -1402,6 +1399,33 @@ function renderEpisodeDetail(episode) {
         showEpisodePopup(response); // Ensure response is passed correctly
       } catch (error) {
         showNotification("Error", "Failed to fetch episode details", "error");
+      }
+    });
+
+  // Publish button event listener
+  document
+    .getElementById("publish-episode-btn")
+    .addEventListener("click", async () => {
+      try {
+        const episodeId = document
+          .getElementById("publish-episode-btn")
+          .getAttribute("data-id");
+        // Implement the publish functionality here
+        const result = await publishEpisode(episodeId); // Assuming you have a publishEpisode function
+        if (result.message) {
+          showNotification(
+            "Success",
+            "Episode published successfully!",
+            "success"
+          );
+          // Update the episode status in the DOM
+          episode.status = "Published";
+          renderEpisodeDetail(episode);
+        } else {
+          showNotification("Error", result.error || "Publish failed", "error");
+        }
+      } catch (error) {
+        showNotification("Error", "Failed to publish episode.", "error");
       }
     });
 
@@ -1514,6 +1538,23 @@ function renderEpisodeDetail(episode) {
   updateEditButtons();
 }
 
+// Add the publishEpisode function to handle the publish request
+async function publishEpisode(episodeId) {
+  const url = `/publish_episode/${episodeId}`;
+  try {
+    const response = await fetch(url, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      }
+    });
+    return await response.json();
+  } catch (error) {
+    console.error("Error publishing episode:", error);
+    return { error: "Failed to publish episode." };
+  }
+}
+
 // Modify the renderGuestDetail function to add the top-right action buttons
 function renderGuestDetail(guest) {
   const guestDetailElement = document.getElementById("podcast-detail");
@@ -1540,6 +1581,11 @@ function renderGuestDetail(guest) {
         }">
           ${svgpodcastmanagement.edit}
         </button>
+        <button class="action publish-btn" id="publish-media-btn" data-id="${
+          guest._id || guest.id
+        }">
+          ${svgpodcastmanagement.publish}
+        }
       </div>
     </div>
     <div class="detail-content">

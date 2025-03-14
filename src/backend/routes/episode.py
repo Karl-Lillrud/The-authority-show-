@@ -318,3 +318,31 @@ def get_episodes_by_podcast(podcast_id):
         return jsonify({"episodes": episodes}), 200
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+
+
+@episode_bp.route("/publish_episode/<episode_id>", methods=["POST"])
+def publish_episode(episode_id):
+    if not g.user_id:
+        return jsonify({"error": "Unauthorized"}), 401
+
+    try:
+        user_id = str(g.user_id)
+        episode = collection.database.Episodes.find_one({"_id": episode_id, "userid": user_id})
+
+        if not episode:
+            return jsonify({"error": "Episode not found"}), 404
+
+        # Update the episode status to "Published"
+        result = collection.database.Episodes.update_one(
+            {"_id": episode_id},
+            {"$set": {"status": "Published", "updated_at": datetime.now(timezone.utc)}}
+        )
+
+        if result.modified_count == 1:
+            return jsonify({"message": "Episode published successfully"}), 200
+        else:
+            return jsonify({"error": "Failed to publish episode"}), 500
+
+    except Exception as e:
+        logger.error(f"Error publishing episode: {str(e)}")
+        return jsonify({"error": f"Failed to publish episode: {str(e)}"}), 500
