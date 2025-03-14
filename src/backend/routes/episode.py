@@ -13,7 +13,6 @@ episode_bp = Blueprint("episode_bp", __name__)
 
 logger = logging.getLogger(__name__)
 
-
 @episode_bp.route("/register_episode", methods=["POST"])
 def register_episode():
     if not hasattr(g, "user_id") or not g.user_id:
@@ -22,8 +21,7 @@ def register_episode():
     # Validate Content-Type
     if request.content_type != "application/json":
         return (
-            jsonify({"error": "Invalid Content-Type. Expected application/json"}),
-            415,
+            jsonify({"error": "Invalid Content-Type. Expected application/json"}), 415,
         )
 
     try:
@@ -61,8 +59,7 @@ def register_episode():
         # Validate required fields
         if not podcast_id or not title:
             return (
-                jsonify({"error": "Required fields missing: podcastId and title"}),
-                400,
+                jsonify({"error": "Required fields missing: podcastId and title"}), 400,
             )
 
         episode_id = str(uuid.uuid4())
@@ -154,7 +151,7 @@ def get_episodes():
         return jsonify({"error": f"Failed to fetch episodes: {str(e)}"}), 500
 
 
-@episode_bp.route("/delete_episods/<episode_id>", methods=["DELETE"])
+@episode_bp.route("/delete_episodes/<episode_id>", methods=["DELETE"])
 def delete_episode(episode_id):
     if not g.user_id:
         return jsonify({"error": "Unauthorized"}), 401
@@ -188,8 +185,7 @@ def update_episode(episode_id):
 
     if request.content_type != "application/json":
         return (
-            jsonify({"error": "Invalid Content-Type. Expected application/json"}),
-            415,
+            jsonify({"error": "Invalid Content-Type. Expected application/json"}), 415,
         )
 
     try:
@@ -256,3 +252,67 @@ def get_episodes_by_podcast(podcast_id):
         return jsonify({"episodes": episodes}), 200
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+
+
+# New routes to handle the required functionality
+
+# View all episodes for a specific guest
+@episode_bp.route('/episodes/get_episodes_by_guest/<guest_id>', methods=['GET'])
+def get_episodes_by_guest(guest_id):
+    if not g.user_id:
+        return jsonify({"error": "Unauthorized"}), 401
+
+    try:
+        # Replace with actual logic to fetch episodes for the guest
+        episodes = [
+            {"id": 1, "title": "Episode 1"},
+            {"id": 2, "title": "Episode 2"}
+        ]
+        return jsonify({"episodes": episodes}), 200
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+# View tasks for a specific episode
+@episode_bp.route('/episodes/view_tasks_by_episode/<episode_id>', methods=['GET'])
+def view_tasks_by_episode(episode_id):
+    if not g.user_id:
+        return jsonify({"error": "Unauthorized"}), 401
+
+    try:
+        # Replace with actual logic to fetch tasks for the episode
+        tasks = [
+            {"id": 1, "name": "Task 1"},
+            {"id": 2, "name": "Task 2"}
+        ]
+        return jsonify({"tasks": tasks}), 200
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+# Add tasks to a specific episode
+@episode_bp.route('/episodes/add_tasks_to_episode', methods=['POST'])
+def add_tasks_to_episode():
+    if not g.user_id:
+        return jsonify({"error": "Unauthorized"}), 401
+
+    if request.content_type != "application/json":
+        return (
+            jsonify({"error": "Invalid Content-Type. Expected application/json"}), 415,
+        )
+
+    try:
+        data = request.get_json()
+        episode_id = data.get('episode_id')
+        guest_id = data.get('guest_id')
+        tasks = data.get('tasks')
+
+        # Replace with actual logic to add tasks to the episode
+        return jsonify({"message": "Tasks added successfully"}), 200
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+# Register the blueprint
+def register_episode_routes(app):
+    app.register_blueprint(episode_bp)
