@@ -453,6 +453,8 @@ document.addEventListener("DOMContentLoaded", () => {
         return;
       }
 
+      // MP3 file is optional, so no need to check for its presence
+
       try {
         const result = await registerEpisode(formData);
         console.log("Result from registerEpisode:", result);
