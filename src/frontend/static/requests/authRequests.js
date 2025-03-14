@@ -26,7 +26,19 @@ export async function register(email, password) {
     });
 
     if (response.ok) {
-      return `/signin?message=Registration successful. Please log in.`;
+      // Automatically log in the user
+      const loginResponse = await fetch(`/signin`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password })
+      });
+
+      if (!loginResponse.ok) {
+        throw new Error("Registration successful, but failed to log in.");
+      }
+
+      const loginResult = await loginResponse.json();
+      return loginResult.redirect_url || "/dashboard";
     } else {
       const result = await response.json();
       if (result.error === "User already exists") {
@@ -40,20 +52,3 @@ export async function register(email, password) {
   }
 }
 
-export async function getEmail() {
-  try {
-    const response = await fetch(`/get_email`, {
-      method: "GET",
-      headers: { "Content-Type": "application/json" }
-    });
-
-    if (!response.ok) {
-      throw new Error("Failed to fetch email.");
-    }
-
-    const result = await response.json();
-    return result.email;
-  } catch (error) {
-    throw new Error(error.message);
-  }
-}

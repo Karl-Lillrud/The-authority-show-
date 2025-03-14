@@ -73,9 +73,15 @@
             id="password"
             name="password"
             class="input"
-            placeholder="Password"
+            placeholder="Password (min. 8 characters, letters and numbers)"
             required
           />
+        </div>
+
+        <div class="extra-links">
+          <a href="{{ url_for('auth_bp.signin_page') }}" class="link">
+            Already have an account? Sign in
+          </a>
         </div>
 
         <div class="form-actions">

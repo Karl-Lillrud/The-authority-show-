@@ -246,12 +246,6 @@ body {
   }
 }
 
-@media screen and (max-width: 576px) {
-  .logo-container {
-    top: 0px;
-  }
-}
-
 @media screen and (max-width: 480px) {
   .center-box {
     width: 90%;

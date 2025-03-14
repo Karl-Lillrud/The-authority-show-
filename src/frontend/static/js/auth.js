@@ -58,9 +58,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // Register form submission
   const registerForm = document.getElementById("register-form");
-  const successModal = document.getElementById("success-modal");
-  const successOkButton = document.getElementById("success-ok-button");
-  const successMessage = document.getElementById("success-message");
+  const errorMessage = document.getElementById("error-message");
 
   registerForm.addEventListener("submit", async (event) => {
     event.preventDefault();
@@ -78,23 +76,23 @@ document.addEventListener("DOMContentLoaded", () => {
       });
 
       if (response.ok) {
-        // Show success modal
-        successMessage.textContent = "Registration successful! Please sign in.";
-        successMessage.style.display = "block";
+        // Automatically log in the user
+        const loginResponse = await fetch(`${API_BASE_URL}/signin`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email, password })
+        });
 
-        // Clear form
-        registerForm.reset();
+        if (!loginResponse.ok) {
+          throw new Error("Registration successful, but failed to log in.");
+        }
 
-        // Switch to login tab
-        tabItems.forEach((tab) => tab.classList.remove("active"));
-        tabContents.forEach((content) => content.classList.remove("active"));
-
-        document.querySelector('[data-tab="signin"]').classList.add("active");
-        document.getElementById("signin-tab").classList.add("active");
-
-        // Focus on email field and pre-fill with registered email
-        document.getElementById("email").value = email;
-        document.getElementById("email").focus();
+        const loginResult = await loginResponse.json();
+        if (loginResult.redirect_url) {
+          window.location.href = loginResult.redirect_url;
+        } else {
+          window.location.href = "/";
+        }
       } else {
         const result = await response.json();
         errorMessage.textContent =

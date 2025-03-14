@@ -11,7 +11,7 @@ document.addEventListener("DOMContentLoaded", function () {
   const podNameForm = document.getElementById("podNameForm");
   const podRssInput = document.getElementById("podRss");
   const podNameInput = document.getElementById("podName");
-  const creditsContainer = document.querySelector(".credits-container");
+  const creditsContainer = document.getElementById("creditsContainer");
 
   // Dark Mode Toggle
   darkModeToggle.addEventListener("click", function () {
@@ -62,9 +62,10 @@ document.addEventListener("DOMContentLoaded", function () {
         podNameSection.classList.add("hidden");
         emailSection.classList.remove("hidden");
 
-        // Show the credits container
-        creditsContainer.classList.remove("hidden");
-        creditsContainer.classList.add("visible");
+        // Show the credits container if it exists
+        if (creditsContainer) {
+          creditsContainer.classList.remove("hidden");
+        }
       } catch (error) {
         console.error("Error sending invitation email:", error);
         alert("Something went wrong. Please try again.");
@@ -72,12 +73,10 @@ document.addEventListener("DOMContentLoaded", function () {
     });
   }
 
-  // Skip to Dashboard Button
-  if (skipToDashboard) {
-    skipToDashboard.addEventListener("click", () => {
-      console.log("Navigating to dashboard");
-      // In a real implementation, you would redirect to the dashboard page
-      // window.location.href = "dashboard";
-    });
-  }
+  // if (skipToDashboard) {
+  //   skipToDashboard.addEventListener("click", () => {
+  //     console.log("Navigating to dashboard");
+  //     window.location.href = "/dashboard"; // Redirects to the dashboard
+  //   });
+  // }
 });

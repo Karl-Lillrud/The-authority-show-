@@ -1,0 +1,79 @@
+<mxfile host="65bd71144e">
+    <diagram id="CqFxaHlYLJ3DUsrj3_QE" name="Page-1">
+        <mxGraphModel dx="1068" dy="522" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1920" pageHeight="1200" math="0" shadow="0">
+            <root>
+                <mxCell id="0"/>
+                <mxCell id="1" parent="0"/>
+                <mxCell id="4" style="edgeStyle=orthogonalEdgeStyle;html=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;rounded=0;" edge="1" parent="1" source="2" target="3">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="2" value="Databas (videolagring)" style="shape=ext;double=1;rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+                    <mxGeometry x="590" y="40" width="120" height="80" as="geometry"/>
+                </mxCell>
+                <mxCell id="3" value="Opus API" style="shape=ext;double=1;rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+                    <mxGeometry x="760" y="180" width="120" height="80" as="geometry"/>
+                </mxCell>
+                <mxCell id="6" style="edgeStyle=orthogonalEdgeStyle;html=1;exitX=0.75;exitY=0;exitDx=0;exitDy=0;entryX=0;entryY=1;entryDx=0;entryDy=0;rounded=0;curved=0;" edge="1" parent="1" source="5" target="2">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="5" value="Användare" style="shape=ext;double=1;rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+                    <mxGeometry x="400" y="190" width="130" height="100" as="geometry"/>
+                </mxCell>
+                <mxCell id="7" style="edgeStyle=orthogonalEdgeStyle;html=1;exitX=0;exitY=0.75;exitDx=0;exitDy=0;entryX=1.031;entryY=0.67;entryDx=0;entryDy=0;entryPerimeter=0;rounded=0;curved=0;" edge="1" parent="1" source="3" target="5">
+                    <mxGeometry relative="1" as="geometry">
+                        <Array as="points">
+                            <mxPoint x="760" y="258"/>
+                        </Array>
+                    </mxGeometry>
+                </mxCell>
+            </root>
+        </mxGraphModel>
+    </diagram>
+    <diagram id="0syk2C6ZPAsIoWzTGL_V" name="Flowchart">
+        <mxGraphModel dx="1155" dy="649" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1920" pageHeight="1200" math="0" shadow="0" adaptiveColors="auto">
+            <root>
+                <mxCell id="0"/>
+                <mxCell id="1" parent="0"/>
+                <mxCell id="zCr1-eC-5d4g6T2VSZYR-1" value="Användare spelar in video" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+                    <mxGeometry x="160" y="60" width="160" height="60" as="geometry"/>
+                </mxCell>
+                <mxCell id="zCr1-eC-5d4g6T2VSZYR-2" value="Lagring i molndatabas&lt;br&gt;t.ex. Azure eller MongoDB Atlas" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+                    <mxGeometry x="160" y="160" width="160" height="60" as="geometry"/>
+                </mxCell>
+                <mxCell id="zCr1-eC-5d4g6T2VSZYR-3" value="Automatisk överföring till Opus via Opus API" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+                    <mxGeometry x="160" y="260" width="160" height="60" as="geometry"/>
+                </mxCell>
+                <mxCell id="zCr1-eC-5d4g6T2VSZYR-4" value="Redigering i Opus" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+                    <mxGeometry x="160" y="360" width="160" height="60" as="geometry"/>
+                </mxCell>
+                <mxCell id="zCr1-eC-5d4g6T2VSZYR-5" value="Redigerad video skickas tillbaka" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+                    <mxGeometry x="160" y="460" width="160" height="60" as="geometry"/>
+                </mxCell>
+                <mxCell id="zCr1-eC-5d4g6T2VSZYR-6" value="Användare väljer shorts" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+                    <mxGeometry x="160" y="560" width="160" height="60" as="geometry"/>
+                </mxCell>
+                <mxCell id="zCr1-eC-5d4g6T2VSZYR-7" value="Publicering av shorts" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+                    <mxGeometry x="160" y="660" width="160" height="60" as="geometry"/>
+                </mxCell>
+                <mxCell id="zCr1-eC-5d4g6T2VSZYR-8" style="rounded=0;" edge="1" parent="1" source="zCr1-eC-5d4g6T2VSZYR-1" target="zCr1-eC-5d4g6T2VSZYR-2">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="zCr1-eC-5d4g6T2VSZYR-9" style="rounded=0;" edge="1" parent="1" source="zCr1-eC-5d4g6T2VSZYR-2" target="zCr1-eC-5d4g6T2VSZYR-3">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="zCr1-eC-5d4g6T2VSZYR-10" style="rounded=0;" edge="1" parent="1" source="zCr1-eC-5d4g6T2VSZYR-3" target="zCr1-eC-5d4g6T2VSZYR-4">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="zCr1-eC-5d4g6T2VSZYR-11" style="rounded=0;" edge="1" parent="1" source="zCr1-eC-5d4g6T2VSZYR-4" target="zCr1-eC-5d4g6T2VSZYR-5">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="zCr1-eC-5d4g6T2VSZYR-12" style="rounded=0;" edge="1" parent="1" source="zCr1-eC-5d4g6T2VSZYR-5" target="zCr1-eC-5d4g6T2VSZYR-6">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="zCr1-eC-5d4g6T2VSZYR-13" style="rounded=0;" edge="1" parent="1" source="zCr1-eC-5d4g6T2VSZYR-6" target="zCr1-eC-5d4g6T2VSZYR-7">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+            </root>
+        </mxGraphModel>
+    </diagram>
+</mxfile>

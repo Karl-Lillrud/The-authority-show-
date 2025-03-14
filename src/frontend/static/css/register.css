@@ -60,9 +60,10 @@ body {
   position: fixed;
   top: 20px;
   left: 50%;
+  width: 120px; /* Adjust as needed */
   transform: translateX(-50%);
-  width: 120px;
   z-index: 999;
+  background-color: transparent;
 }
 
 .logo-container img {
