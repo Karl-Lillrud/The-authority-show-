@@ -7,13 +7,17 @@ import {
 } from "../requests/podcastRequests.js";
 import {
   registerEpisode,
-  fetchEpisodesByPodcast
+  fetchEpisodesByPodcast,
+  fetchEpisode,
+  updateEpisode,
+  deleteEpisode
 } from "../requests/episodeRequest.js"; // Updated import
 import { svgpodcastmanagement } from "../svg/svgpodcastmanagement.js"; // Updated import path
 import {
   fetchGuestsRequest,
-  addGuestRequest
-} from "../requests/guestRequests.js"; // Added import for addGuestRequest
+  addGuestRequest,
+  fetchGuestsByEpisode
+} from "../requests/guestRequests.js"; // Added import for fetchGuestsByEpisode
 
 console.log("podcastmanagement.js loaded");
 
@@ -82,6 +86,11 @@ function showNotification(title, message, type = "info") {
       }, 500);
     }
   }, 5000);
+}
+
+// Insert the new function here
+function setImageSource(imgElement, customSrc, mockSrc) {
+  imgElement.src = customSrc || mockSrc;
 }
 
 // New function to fetch and render guest options into a select element
@@ -205,10 +214,145 @@ function showManualGuestPopup(selectElement) {
     });
 }
 
-document.addEventListener("DOMContentLoaded", function () {
+// Updated showAddGuestPopup function to clear the episode dropdown before populating
+async function showAddGuestPopup() {
+  const popup = document.getElementById("guest-popup");
+  popup.style.display = "flex";
+
+  // Populate the Podcast selection dropdown
+  const podcastSelect = document.getElementById("podcast-select-guest");
+  podcastSelect.innerHTML = "";
+  try {
+    const response = await fetchPodcasts();
+    const podcasts = response.podcast;
+    podcasts.forEach((podcast) => {
+      const opt = document.createElement("option");
+      opt.value = podcast._id;
+      opt.textContent = podcast.podName;
+      podcastSelect.appendChild(opt);
+    });
+  } catch (error) {
+    console.error("Error fetching podcasts:", error);
+  }
+
+  // Remove existing event listener before adding a new one
+  const episodeSelect = document.getElementById("episode-id");
+  const newPodcastSelect = podcastSelect.cloneNode(true);
+  podcastSelect.parentNode.replaceChild(newPodcastSelect, podcastSelect);
+
+  // When a podcast is selected, fetch episodes for that podcast using fetchEpisodesByPodcast
+  newPodcastSelect.addEventListener("change", async () => {
+    const selectedPodcast = newPodcastSelect.value;
+    episodeSelect.innerHTML = ""; // Clear the dropdown before populating
+    try {
+      const episodes = await fetchEpisodesByPodcast(selectedPodcast);
+      episodes.forEach((episode) => {
+        const option = document.createElement("option");
+        option.value = episode._id;
+        option.textContent = episode.title;
+        episodeSelect.appendChild(option);
+      });
+    } catch (error) {
+      console.error("Error fetching episodes for podcast:", error);
+    }
+  });
+  // Trigger the change event to populate episodes initially
+  newPodcastSelect.dispatchEvent(new Event("change"));
+}
+
+// Function to close the Add Guest popup
+function closeAddGuestPopup() {
+  const popup = document.getElementById("guest-popup");
+  popup.style.display = "none";
+}
+
+// Event listener for Add Guest button
+document
+  .getElementById("add-guest-btn")
+  .addEventListener("click", showAddGuestPopup);
+
+// Event listener for closing the Add Guest popup
+document
+  .getElementById("close-guest-popup")
+  .addEventListener("click", closeAddGuestPopup);
+
+// Event listener for cancel button in Add Guest form
+document
+  .getElementById("cancel-guest-btn")
+  .addEventListener("click", closeAddGuestPopup);
+
+// Event listener for Add Guest form submission
+document
+  .getElementById("add-guest-form")
+  .addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const episodeId = document.getElementById("episode-id").value.trim();
+    const guestName = document.getElementById("guest-name").value.trim();
+    const guestDescription = document
+      .getElementById("guest-description")
+      .value.trim();
+    const guestTags = document
+      .getElementById("guest-tags")
+      .value.split(",")
+      .map((tag) => tag.trim())
+      .filter(Boolean);
+    const guestAreas = document
+      .getElementById("guest-areas")
+      .value.split(",")
+      .map((area) => area.trim())
+      .filter(Boolean);
+    const guestEmail = document.getElementById("guest-email").value.trim();
+    const guestLinkedIn = document
+      .getElementById("guest-linkedin")
+      .value.trim();
+    const guestTwitter = document.getElementById("guest-twitter").value.trim();
+
+    if (guestName && guestEmail && episodeId) {
+      try {
+        const guest = await addGuestRequest({
+          episodeId, // Ensure episodeId is correctly set
+          name: guestName,
+          description: guestDescription,
+          tags: guestTags,
+          areasOfInterest: guestAreas,
+          email: guestEmail,
+          linkedin: guestLinkedIn,
+          twitter: guestTwitter
+        });
+        closeAddGuestPopup();
+        showNotification("Success", "Guest added successfully!", "success");
+        // Refresh the guest list in episode details without refreshing the page
+        renderEpisodeDetail({ _id: episodeId, podcast_id: selectedPodcastId });
+      } catch (error) {
+        console.error("Error adding guest:", error);
+        showNotification("Error", "Failed to add guest.", "error");
+      }
+    } else {
+      alert("Please fill in all required fields.");
+    }
+  });
+
+// Function to update edit buttons to use pen icons
+function updateEditButtons() {
+  // Find all edit buttons in the top-right actions
+  const editButtons = document.querySelectorAll(".top-right-actions .edit-btn");
+
+  editButtons.forEach((button) => {
+    // Skip if button has already been processed
+    if (button.querySelector("svg")) return;
+
+    // Clear the button content
+    button.innerHTML = svgpodcastmanagement.edit;
+  });
+}
+
+document.addEventListener("DOMContentLoaded", () => {
   console.log("DOM fully loaded and parsed");
 
   renderPodcastList();
+
+  // Add this line to update edit buttons when the page loads
+  updateEditButtons();
 
   // Show form for adding a podcast
   document.getElementById("add-podcast-btn").addEventListener("click", () => {
@@ -222,11 +366,13 @@ document.addEventListener("DOMContentLoaded", function () {
   // Close the form popup
   document.getElementById("close-form-popup").addEventListener("click", () => {
     document.getElementById("form-popup").style.display = "none";
+    document.getElementById("podcast-detail").style.display = "block";
   });
 
   // Cancel button in form
   document.getElementById("cancel-form-btn").addEventListener("click", () => {
     document.getElementById("form-popup").style.display = "none";
+    document.getElementById("podcast-detail").style.display = "block";
   });
 
   // Show form for creating a new episode
@@ -250,7 +396,7 @@ document.addEventListener("DOMContentLoaded", function () {
         document.getElementById("episode-form-popup").style.display = "flex";
         // Populate guest select for the create episode form
         const guestSelect = document.getElementById("guest-id");
-        renderGuestSelection(guestSelect);
+        // renderGuestSelection(guestSelect);;
       } catch (error) {
         console.error("Error fetching podcasts:", error);
         showNotification(
@@ -281,10 +427,13 @@ document.addEventListener("DOMContentLoaded", function () {
     .addEventListener("submit", async (e) => {
       e.preventDefault();
       const formData = new FormData(e.target);
-      const data = Object.fromEntries(formData.entries());
 
       // Check for missing required fields
-      if (!data.podcastId || !data.title) {
+      if (
+        !formData.get("podcastId") ||
+        !formData.get("title") ||
+        !formData.get("publishDate")
+      ) {
         showNotification(
           "Missing Fields",
           "Please fill in all required fields.",
@@ -293,8 +442,19 @@ document.addEventListener("DOMContentLoaded", function () {
         return;
       }
 
+      // Ensure publishDate is in the correct format
+      const publishDate = new Date(formData.get("publishDate"));
+      if (isNaN(publishDate.getTime())) {
+        showNotification(
+          "Invalid Date",
+          "Please provide a valid publish date.",
+          "error"
+        );
+        return;
+      }
+
       try {
-        const result = await registerEpisode(data);
+        const result = await registerEpisode(formData);
         console.log("Result from registerEpisode:", result);
         if (result.message) {
           showNotification(
@@ -304,6 +464,8 @@ document.addEventListener("DOMContentLoaded", function () {
           );
           document.getElementById("episode-form-popup").style.display = "none";
           document.getElementById("create-episode-form").reset();
+          // Refresh the episode list without refreshing the page
+          viewPodcast(formData.get("podcastId"));
         } else {
           showNotification("Error", result.error, "error");
         }
@@ -359,9 +521,25 @@ document.addEventListener("DOMContentLoaded", function () {
     });
 });
 
+// Add this function to observe DOM changes and update edit buttons when new content is added
+function observeEditButtons() {
+  const observer = new MutationObserver((mutations) => {
+    mutations.forEach((mutation) => {
+      if (mutation.addedNodes.length) {
+        updateEditButtons();
+      }
+    });
+  });
+
+  observer.observe(document.body, { childList: true, subtree: true });
+}
+
+// Call the observer function after the DOM is loaded
+document.addEventListener("DOMContentLoaded", observeEditButtons);
+
 const form = document.getElementById("register-podcast-form");
 
-form.addEventListener("submit", async function (e) {
+form.addEventListener("submit", async (e) => {
   e.preventDefault();
   console.log("Form submitted");
 
@@ -426,11 +604,17 @@ form.addEventListener("submit", async function (e) {
             "Podcast updated successfully!",
             "success"
           );
+          // Update the podcast details in the DOM
+          renderPodcastDetail({ ...updatedData, _id: selectedPodcastId });
+          document.getElementById("form-popup").style.display = "none";
+          document.getElementById("podcast-detail").style.display = "block";
         }
       } else {
         responseData = await addPodcast(updatedData);
         if (!responseData.error) {
           showNotification("Success", "Podcast added successfully!", "success");
+          document.getElementById("form-popup").style.display = "none";
+          document.getElementById("podcast-list").style.display = "flex";
         }
       }
 
@@ -443,9 +627,6 @@ form.addEventListener("submit", async function (e) {
           "error"
         );
       } else {
-        document.getElementById("form-popup").style.display = "none";
-        document.getElementById("podcast-detail").style.display = "none";
-        document.getElementById("podcast-list").style.display = "flex";
         resetForm();
         renderPodcastList();
       }
@@ -466,7 +647,7 @@ form.addEventListener("submit", async function (e) {
   if (logoInput && logoInput.files[0]) {
     const file = logoInput.files[0];
     const reader = new FileReader();
-    reader.onloadend = async function () {
+    reader.onloadend = async () => {
       data.logoUrl = reader.result; // update with new image
       await submitPodcast(data);
     };
@@ -538,6 +719,7 @@ function resetForm() {
   selectedPodcastId = null;
 }
 
+// Modify the renderPodcastList function to add episodes preview under the image
 async function renderPodcastList() {
   try {
     // Fetch podcasts from your backend
@@ -556,14 +738,16 @@ async function renderPodcastList() {
       return;
     }
 
-    podcasts.forEach((podcast) => {
+    podcasts.forEach(async (podcast) => {
       const podcastCard = document.createElement("div");
       podcastCard.className = "podcast-card";
+
+      // Create the basic podcast card structure
       podcastCard.innerHTML = `
         <div class="podcast-content">
           <div class="podcast-image" style="background-image: url('${
             podcast.logoUrl
-          }')"></div>
+          }')" data-id="${podcast._id}"></div>
           <div class="podcast-info">
             <div class="podcast-header">
               <div>
@@ -584,11 +768,6 @@ async function renderPodcastList() {
                 }">
                   ${svgpodcastmanagement.view}
                 </button>
-                <button class="action-btn edit-btn" title="Edit podcast" data-id="${
-                  podcast._id
-                }">
-                  ${svgpodcastmanagement.edit}
-                </button>
                 <button class="action-btn delete-btn-home" title="Delete podcast" data-id="${
                   podcast._id
                 }">
@@ -599,8 +778,14 @@ async function renderPodcastList() {
             <p class="podcast-description"><strong>Description: </strong>${
               podcast.description || "No description available."
             }</p>
-            <!-- Container for episodes -->
-            <div class="podcast-episodes"></div>
+            
+            <!-- Add episodes preview section -->
+            <div class="podcast-episodes-preview" id="episodes-preview-${
+              podcast._id
+            }">
+              <h4 style="margin-bottom: 8px; font-size: 0.9rem;">Episodes</h4>
+              <div class="episodes-loading">Loading episodes...</div>
+            </div>
           </div>
         </div>
         <div class="podcast-footer">
@@ -608,35 +793,102 @@ async function renderPodcastList() {
             podcast._id
           }">View Details</button>
         </div>`;
+
       podcastListElement.appendChild(podcastCard);
 
-      // Fetch and display episodes for this podcast with heading "Episodes:"
-      fetchEpisodesByPodcast(podcast._id).then((episodes) => {
-        if (episodes && episodes.length) {
-          const epContainer = podcastCard.querySelector(".podcast-episodes");
-          const epHeading = document.createElement("h4");
-          epHeading.textContent = "Episodes:";
-          epContainer.appendChild(epHeading);
+      // Fetch episodes for this podcast and add them to the preview
+      try {
+        const episodes = await fetchEpisodesByPodcast(podcast._id);
+        const episodesPreviewEl = document.getElementById(
+          `episodes-preview-${podcast._id}`
+        );
 
-          // Create a flex container to list episodes horizontally
-          const epList = document.createElement("div");
-          epList.style.display = "flex";
-          epList.style.flexDirection = "row";
-          epList.style.gap = "1rem";
+        if (episodesPreviewEl) {
+          if (episodes && episodes.length > 0) {
+            const episodesContainer = document.createElement("div");
+            episodesContainer.className = "episodes-container";
 
-          episodes.forEach((ep) => {
-            const epItem = document.createElement("div");
-            epItem.textContent = ep.title;
-            epItem.classList.add("episode-label"); // added label class
-            // Attach click event to open the popup for editing
-            epItem.addEventListener("click", () => {
-              showEpisodePopup(ep);
+            // Show up to 3 episodes in the preview
+            const previewEpisodes = episodes.slice(0, 3);
+
+            previewEpisodes.forEach((episode) => {
+              const episodeItem = document.createElement("div");
+              episodeItem.className = "podcast-episode-item";
+              episodeItem.setAttribute("data-episode-id", episode._id);
+
+              const publishDate = episode.publishDate
+                ? new Date(episode.publishDate).toLocaleDateString()
+                : "No date";
+
+              // Include episode description next to the title
+              episodeItem.innerHTML = `
+                <div class="podcast-episode-content">
+                  <div class="podcast-episode-title">${episode.title}</div>
+                  <div class="podcast-episode-description">${
+                    episode.description || "No description available."
+                  }</div>
+                </div>
+                <div class="podcast-episode-date">${publishDate}</div>
+              `;
+
+              // Make episode item navigate to episode details
+              episodeItem.addEventListener("click", (e) => {
+                e.stopPropagation();
+                renderEpisodeDetail(episode);
+                document.getElementById("podcast-list").style.display = "none";
+                document.getElementById("podcast-detail").style.display =
+                  "block";
+              });
+
+              episodesContainer.appendChild(episodeItem);
             });
-            epList.appendChild(epItem);
-          });
-          epContainer.appendChild(epList);
+
+            // Replace loading message with episodes
+            episodesPreviewEl.querySelector(".episodes-loading").remove();
+            episodesPreviewEl.appendChild(episodesContainer);
+
+            // Add "View all" link if there are more than 3 episodes
+            if (episodes.length > 3) {
+              const viewAllLink = document.createElement("div");
+              viewAllLink.style.textAlign = "right";
+              viewAllLink.style.marginTop = "5px";
+              viewAllLink.style.fontSize = "0.8rem";
+              viewAllLink.style.color = "var(--highlight-color)";
+              viewAllLink.style.cursor = "pointer";
+              viewAllLink.textContent = `View all ${episodes.length} episodes`;
+
+              viewAllLink.addEventListener("click", (e) => {
+                e.stopPropagation();
+                viewPodcast(podcast._id);
+              });
+
+              episodesPreviewEl.appendChild(viewAllLink);
+            }
+          } else {
+            episodesPreviewEl.innerHTML =
+              '<p style="font-size: 0.8rem; font-style: italic;">No episodes available</p>';
+          }
         }
-      });
+      } catch (error) {
+        console.error("Error fetching episodes for podcast preview:", error);
+        const episodesPreviewEl = document.getElementById(
+          `episodes-preview-${podcast._id}`
+        );
+        if (episodesPreviewEl) {
+          episodesPreviewEl.innerHTML =
+            '<p style="font-size: 0.8rem; color: #e74c3c;">Failed to load episodes</p>';
+        }
+      }
+
+      // Add event listener to the image to view details
+      podcastCard
+        .querySelector(".podcast-image")
+        .addEventListener("click", (e) => {
+          const podcastId = e.target.getAttribute("data-id");
+          if (podcastId) {
+            viewPodcast(podcastId);
+          }
+        });
     });
 
     // Add event listeners for action buttons
@@ -653,21 +905,10 @@ async function renderPodcastList() {
       });
 
     document.querySelectorAll(".edit-btn").forEach((button) => {
-      button.addEventListener("click", async (e) => {
+      button.addEventListener("click", (e) => {
         const podcastId = e.target.closest("button").getAttribute("data-id");
-        try {
-          const podcast = await fetchPodcast(podcastId);
-          displayPodcastDetails(podcast.podcast);
-          selectedPodcastId = podcastId; // Set the selected podcast ID
-
-          // Fetch podcasts to ensure the podcast ID is available
-          const response = await fetchPodcasts();
-          const podcasts = response.podcast;
-          renderPodcastSelection(podcasts);
-
-          document.getElementById("form-popup").style.display = "flex";
-        } catch (error) {
-          showNotification("Error", "Failed to fetch podcast details", "error");
+        if (podcastId) {
+          viewPodcast(podcastId);
         }
       });
     });
@@ -747,6 +988,8 @@ function renderPodcastSelection(podcasts) {
 
 // View podcast details
 async function viewPodcast(podcastId) {
+  // Set the global selectedPodcastId so that back buttons can use it
+  selectedPodcastId = podcastId;
   try {
     const response = await fetchPodcast(podcastId);
     const podcast = response.podcast;
@@ -758,7 +1001,7 @@ async function viewPodcast(podcastId) {
   }
 }
 
-// Render the podcast detail view
+// Modify the renderPodcastDetail function to add the top-right action buttons
 function renderPodcastDetail(podcast) {
   const podcastDetailElement = document.getElementById("podcast-detail");
   podcastDetailElement.innerHTML = `
@@ -767,22 +1010,33 @@ function renderPodcastDetail(podcast) {
         ${svgpodcastmanagement.back}
         Back to podcasts
       </button>
+      
+      <!-- Add top-right action buttons -->
+      <div class="top-right-actions">
+        <button class="action-btn edit-btn" id="edit-podcast-btn" data-id="${
+          podcast._id
+        }">
+          ${svgpodcastmanagement.edit}
+        </button>
+      </div>
     </div>
     <div class="detail-content">
       <div class="detail-image" style="background-image: url('${
         podcast.logoUrl
       }')"></div>
+      <!-- Episodes container with title outside scroll area -->
+      <div id="episodes-list" class="episodes-list">
+        <h3 class="detail-section-title">Episodes</h3>
+        <div id="episodes-container" class="episodes-scroll-container"></div>
+      </div>
       <div class="detail-info">
         <h1 class="detail-title">${podcast.podName}</h1>
         <p class="detail-category">${podcast.category || "Uncategorized"}</p>
-        
         <div class="detail-section">
           <h2>About</h2>
           <p>${podcast.description || "No description available."}</p>
         </div>
-        
         <div class="separator"></div>
-        
         <div class="detail-grid">
           <div class="detail-item">
             <h3>Podcast Owner</h3>
@@ -805,9 +1059,7 @@ function renderPodcastDetail(podcast) {
             }
           </div>
         </div>
-        
         <div class="separator"></div>
-        
         <div class="detail-section">
           <h2>Scheduling</h2>
           <div class="detail-grid">
@@ -835,9 +1087,7 @@ function renderPodcastDetail(podcast) {
             </div>
           </div>
         </div>
-        
         <div class="separator"></div>
-        
         <div class="detail-section">
           <h2>Social Media</h2>
           <div class="social-links">
@@ -883,14 +1133,7 @@ function renderPodcastDetail(podcast) {
             }
           </div>
         </div>
-        
         <div class="detail-actions" style="margin-top: 2rem; display: flex; gap: 1rem;">
-          <button class="back-btn" id="edit-podcast-btn" data-id="${
-            podcast._id
-          }">
-            ${svgpodcastmanagement.edit}
-            Edit Podcast
-          </button>
           <button class="delete-btn" id="delete-podcast-btn" data-id="${
             podcast._id
           }">
@@ -904,7 +1147,11 @@ function renderPodcastDetail(podcast) {
 
   // Back button event listener
   document.getElementById("back-to-list").addEventListener("click", () => {
+    // Hide podcast details view
     document.getElementById("podcast-detail").style.display = "none";
+    // Re-render the podcast list to include the new episode
+    renderPodcastList();
+    // Show podcast list view
     document.getElementById("podcast-list").style.display = "flex";
   });
 
@@ -949,6 +1196,498 @@ function renderPodcastDetail(podcast) {
         }
       }
     });
+
+  // Render episodes vertically under the image container
+  fetchEpisodesByPodcast(podcast._id)
+    .then((episodes) => {
+      const episodesContainer = document.getElementById("episodes-container");
+      episodesContainer.innerHTML = "";
+
+      if (episodes && episodes.length) {
+        const episodesListDiv = document.createElement("div");
+        episodesListDiv.className = "episodes-container";
+        episodesListDiv.style.display = "flex";
+        episodesListDiv.style.flexDirection = "column";
+        episodesListDiv.style.gap = "10px";
+        episodesListDiv.style.marginTop = "10px";
+
+        episodes.forEach((ep) => {
+          const episodeCard = document.createElement("div");
+          episodeCard.className = "episode-card";
+          episodeCard.style.padding = "12px";
+          episodeCard.style.borderRadius = "var(--radius-medium)";
+          episodeCard.style.backgroundColor = "var(--background-light)";
+          episodeCard.style.boxShadow =
+            "-3px -3px 6px var(--light-shadow-light), 3px 3px 6px var(--dark-shadow-light)";
+          episodeCard.style.transition = "all 0.3s ease";
+          episodeCard.style.cursor = "pointer";
+          episodeCard.style.borderLeft = "3px solid var(--highlight-color)";
+          episodeCard.style.display = "flex";
+          episodeCard.style.justifyContent = "space-between";
+          episodeCard.setAttribute("data-episode-id", ep._id);
+
+          const publishDate = ep.publishDate
+            ? new Date(ep.publishDate).toLocaleDateString()
+            : "No date";
+          const description = ep.description
+            ? ep.description
+            : "No description available.";
+
+          // Create content container for title, date, and description
+          const contentDiv = document.createElement("div");
+          contentDiv.style.flex = "1";
+          contentDiv.style.marginRight = "10px";
+
+          contentDiv.innerHTML = `
+          <div class="episode-title" style="font-weight: 600; color: rgba(0, 0, 0, 0.7); margin-bottom: 5px;">${
+            ep.title
+          }</div>
+          <div class="episode-meta" style="font-size: 0.8rem; color: var(--text-color-light); margin-bottom: 5px;">
+            <span>Published: ${publishDate}</span>
+            ${ep.duration ? `<span> • ${ep.duration} min</span>` : ""}
+          </div>
+          <div class="episode-description" style="font-size: 0.85rem; color: var(--text-color-light); display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;">${description}</div>
+        `;
+
+          // Create view button
+          const viewButton = document.createElement("button");
+          viewButton.className = "view-episode-btn";
+          viewButton.textContent = "View";
+          viewButton.style.alignSelf = "center";
+          viewButton.style.backgroundColor = "var(--highlight-color)";
+          viewButton.style.color = "white";
+          viewButton.style.border = "none";
+          viewButton.style.borderRadius = "var(--radius-small)";
+          viewButton.style.padding = "5px 12px";
+          viewButton.style.cursor = "pointer";
+          viewButton.style.fontWeight = "600";
+          viewButton.style.fontSize = "0.85rem";
+          viewButton.style.transition = "all 0.3s ease";
+
+          // Add hover effect to button
+          viewButton.addEventListener("mouseenter", () => {
+            viewButton.style.backgroundColor = "#e0662c";
+            viewButton.style.transform = "translateY(-2px)";
+          });
+
+          viewButton.addEventListener("mouseleave", () => {
+            viewButton.style.backgroundColor = "var(--highlight-color)";
+            viewButton.style.transform = "translateY(0)";
+          });
+
+          // Add click event to view button
+          viewButton.addEventListener("click", (e) => {
+            e.stopPropagation(); // Prevent triggering the card click
+            renderEpisodeDetail(ep);
+          });
+
+          // Add elements to card
+          episodeCard.appendChild(contentDiv);
+          episodeCard.appendChild(viewButton);
+
+          // Add hover effect to card
+          episodeCard.addEventListener("mouseenter", () => {
+            episodeCard.style.transform = "translateY(-2px)";
+            episodeCard.style.boxShadow =
+              "-5px -5px 10px var(--light-shadow-light), 5px 5px 10px var(--dark-shadow-light)";
+          });
+
+          episodeCard.addEventListener("mouseleave", () => {
+            episodeCard.style.transform = "translateY(0)";
+            episodeCard.style.boxShadow =
+              "-3px -3px 6px var(--light-shadow-light), 3px 3px 6px var(--dark-shadow-light)";
+          });
+
+          // Add click event to card (excluding the button)
+          episodeCard.addEventListener("click", () => {
+            renderEpisodeDetail(ep);
+          });
+
+          episodesListDiv.appendChild(episodeCard);
+        });
+
+        episodesContainer.appendChild(episodesListDiv);
+      } else {
+        const noEpisodes = document.createElement("p");
+        noEpisodes.textContent = "No episodes available.";
+        noEpisodes.style.marginTop = "10px";
+        episodesContainer.appendChild(noEpisodes);
+      }
+    })
+    .catch((error) => {
+      console.error("Error fetching episodes:", error);
+    });
+
+  // Modify the renderPodcastDetail function to update edit buttons after rendering
+  updateEditButtons();
+}
+
+// Modify the renderEpisodeDetail function to add the top-right action buttons
+function renderEpisodeDetail(episode) {
+  const episodeDetailElement = document.getElementById("podcast-detail");
+  episodeDetailElement.innerHTML = `
+    <div class="detail-header">
+      <button class="back-btn" id="back-to-podcast">
+        ${svgpodcastmanagement.back}
+        Back to podcast
+      </button>
+      
+      <!-- Add top-right action buttons -->
+      <div class="top-right-actions">
+        <button class="action-btn edit-btn" id="edit-episode-btn" data-id="${
+          episode._id
+        }">
+          ${svgpodcastmanagement.edit}
+        </button>
+      </div>
+    </div>
+    <div class="detail-content">
+      <div class="detail-image" style="background-image: url('${
+        episode.image || "default-image.png"
+      }')"></div>
+      <div class="detail-info">
+        <h1 class="detail-title">${episode.title}</h1>
+        <p class="detail-category">${episode.status || "Uncategorized"}</p>
+        <div class="detail-section">
+          <h2>About</h2>
+          <p>${episode.description || "No description available."}</p>
+        </div>
+        <div class="separator"></div>
+        <div class="detail-grid">
+          <div class="detail-item">
+            <h3>Publish Date</h3>
+            <p>${
+              new Date(episode.publishDate).toLocaleString() || "Not specified"
+            }</p>
+          </div>
+          <div class="detail-item">
+            <h3>Duration</h3>
+            <p>${episode.duration || "Not specified"} minutes</p>
+          </div>
+        </div>
+        <div class="separator"></div>
+        <div class="detail-section">
+          <h2>Guests</h2>
+          <div id="guests-list"></div>
+        </div>
+        <div class="separator"></div>
+        <div class="detail-actions" style="margin-top: 2rem; display: flex; gap: 1rem;">
+          <button class="delete-btn" id="delete-episode-btn" data-id="${
+            episode._id
+          }">
+            <span class="icon">${svgpodcastmanagement.delete}</span>
+            Delete Episode
+          </button>
+        </div>
+      </div>
+    </div>
+  `;
+
+  // Back button event listener
+  document.getElementById("back-to-podcast").addEventListener("click", () => {
+    viewPodcast(episode.podcast_id || episode.podcastId || selectedPodcastId);
+  });
+
+  // Edit button event listener
+  document
+    .getElementById("edit-episode-btn")
+    .addEventListener("click", async () => {
+      try {
+        const episodeId = document
+          .getElementById("edit-episode-btn")
+          .getAttribute("data-id");
+        const response = await fetchEpisode(episodeId);
+        showEpisodePopup(response); // Ensure response is passed correctly
+      } catch (error) {
+        showNotification("Error", "Failed to fetch episode details", "error");
+      }
+    });
+
+  // Delete button event listener
+  document
+    .getElementById("delete-episode-btn")
+    .addEventListener("click", async () => {
+      if (confirm("Are you sure you want to delete this episode?")) {
+        try {
+          await deleteEpisode(episode._id);
+          showNotification(
+            "Success",
+            "Episode deleted successfully!",
+            "success"
+          );
+          viewPodcast(episode.podcast_id);
+        } catch (error) {
+          showNotification("Error", "Failed to delete episode.", "error");
+        }
+      }
+    });
+
+  // Fetch and display guests for the episode
+  fetchGuestsByEpisode(episode._id)
+    .then((guests) => {
+      const guestsListEl = document.getElementById("guests-list");
+      guestsListEl.innerHTML = "";
+
+      if (guests && guests.length) {
+        const guestsContainer = document.createElement("div");
+        guestsContainer.className = "guests-container";
+
+        guests.forEach((guest) => {
+          const guestCard = document.createElement("div");
+          guestCard.className = "guest-card";
+
+          // Get initials from guest name
+          const initials = guest.name
+            .split(" ")
+            .map((word) => word[0])
+            .join("")
+            .substring(0, 2)
+            .toUpperCase();
+
+          // Create content container for guest info
+          const contentDiv = document.createElement("div");
+          contentDiv.className = "guest-info";
+
+          // Add guest avatar placeholder (circle with initials)
+          const avatarDiv = document.createElement("div");
+          avatarDiv.className = "guest-avatar";
+          avatarDiv.textContent = initials;
+
+          // Create guest info with name and email
+          const infoDiv = document.createElement("div");
+          infoDiv.className = "guest-content";
+
+          const nameDiv = document.createElement("div");
+          nameDiv.className = "guest-name";
+          nameDiv.textContent = guest.name;
+
+          const emailDiv = document.createElement("div");
+          emailDiv.className = "guest-email";
+          emailDiv.textContent = guest.email;
+
+          infoDiv.appendChild(nameDiv);
+          infoDiv.appendChild(emailDiv);
+
+          // Create view profile button
+          const viewProfileBtn = document.createElement("button");
+          viewProfileBtn.className = "view-profile-btn";
+          viewProfileBtn.textContent = "View Profile";
+
+          // Add click event to view button
+          viewProfileBtn.addEventListener("click", (e) => {
+            e.stopPropagation(); // Prevent triggering the card click
+            renderGuestDetail(guest);
+          });
+
+          // Add click event to card
+          guestCard.addEventListener("click", () => {
+            renderGuestDetail(guest);
+          });
+
+          // Assemble the card
+          contentDiv.appendChild(avatarDiv);
+          contentDiv.appendChild(infoDiv);
+          guestCard.appendChild(contentDiv);
+          guestCard.appendChild(viewProfileBtn);
+          guestsContainer.appendChild(guestCard);
+        });
+
+        guestsListEl.appendChild(guestsContainer);
+      } else {
+        const noGuests = document.createElement("p");
+        noGuests.className = "no-guests-message";
+        noGuests.textContent = "No guests available for this episode.";
+        guestsListEl.appendChild(noGuests);
+      }
+    })
+    .catch((error) => {
+      console.error("Error fetching guests:", error);
+      const errorMsg = document.createElement("p");
+      errorMsg.className = "error-message";
+      errorMsg.textContent = "This episode has no guests.";
+      document.getElementById("guests-list").appendChild(errorMsg);
+    });
+
+  // Modify the renderEpisodeDetail function to update edit buttons after rendering
+  updateEditButtons();
+}
+
+// Modify the renderGuestDetail function to add the top-right action buttons
+function renderGuestDetail(guest) {
+  const guestDetailElement = document.getElementById("podcast-detail");
+
+  // Get initials from guest name for avatar
+  const initials = guest.name
+    .split(" ")
+    .map((word) => word[0])
+    .join("")
+    .substring(0, 2)
+    .toUpperCase();
+
+  guestDetailElement.innerHTML = `
+    <div class="detail-header">
+      <button class="back-btn" id="back-to-episode">
+        ${svgpodcastmanagement.back}
+        Back to episode
+      </button>
+      
+      <!-- Add top-right action buttons -->
+      <div class="top-right-actions">
+        <button class="action-btn edit-btn" id="edit-guest-btn" data-id="${
+          guest._id || guest.id
+        }">
+          ${svgpodcastmanagement.edit}
+        </button>
+      </div>
+    </div>
+    <div class="detail-content">
+      <div class="detail-info">
+        <div class="guest-detail-header">
+          <div class="guest-detail-avatar">${initials}</div>
+          <div class="guest-detail-info">
+            <h1 class="guest-detail-name">${guest.name}</h1>
+            <p class="guest-detail-email">${
+              guest.email || "No email provided"
+            }</p>
+          </div>
+        </div>
+        
+        <div class="detail-section">
+          <h2>About</h2>
+          <p>${guest.bio || guest.description || "No bio available."}</p>
+        </div>
+        
+        <div class="separator"></div>
+        
+        <div class="guest-detail-section">
+          <h3>Contact Information</h3>
+          <div class="detail-grid">
+            <div class="detail-item">
+              <h4>Email</h4>
+              <p><a href="mailto:${
+                guest.email
+              }" style="color: var(--highlight-color);">${guest.email}</a></p>
+            </div>
+            ${
+              guest.phone
+                ? `
+            <div class="detail-item">
+              <h4>Phone</h4>
+              <p>${guest.phone}</p>
+            </div>
+            `
+                : ""
+            }
+          </div>
+        </div>
+        
+        <div class="separator"></div>
+        
+        <div class="guest-detail-section">
+          <h3>Social Media</h3>
+          <div>
+            ${
+              guest.linkedin
+                ? `
+            <a href="${guest.linkedin}" target="_blank" class="guest-social-link">
+              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"></path>
+                <rect x="2" y="9" width="4" height="12"></rect>
+                <circle cx="4" cy="4" r="2"></circle>
+              </svg>
+              LinkedIn Profile
+            </a>
+            `
+                : ""
+            }
+            
+            ${
+              guest.twitter
+                ? `
+            <a href="${guest.twitter}" target="_blank" class="guest-social-link">
+              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M23 3a10.9 10.9 0 0 1-3.14 1.53 4.48 4.48 0 0 0-7.86 3v1A10.66 10.66 0 0 1 3 4s-4 9 5 13a11.64 11.64 0 0 1-7 2c9 5 20 0 20-11.5a4.5 4.5 0 0 0-.08-.83A7.72 7.72 0 0 0 23 3z"></path>
+              </svg>
+              Twitter Profile
+            </a>
+            `
+                : ""
+            }
+            
+            ${
+              !guest.linkedin && !guest.twitter
+                ? "<p>No social media profiles available.</p>"
+                : ""
+            }
+          </div>
+        </div>
+        
+        ${
+          guest.areasOfInterest && guest.areasOfInterest.length
+            ? `
+        <div class="separator"></div>
+        <div class="guest-detail-section">
+          <h3>Areas of Interest</h3>
+          <div>
+            ${guest.areasOfInterest
+              .map((area) => `<span class="guest-tag">${area}</span>`)
+              .join("")}
+          </div>
+        </div>
+        `
+            : ""
+        }
+        
+        ${
+          guest.tags && guest.tags.length
+            ? `
+        <div class="separator"></div>
+        <div class="guest-detail-section">
+          <h3>Tags</h3>
+          <div>
+            ${guest.tags
+              .map((tag) => `<span class="guest-tag">${tag}</span>`)
+              .join("")}
+          </div>
+        </div>
+        `
+            : ""
+        }
+      </div>
+    </div>
+  `;
+
+  // Back button event listener
+  document.getElementById("back-to-episode").addEventListener("click", () => {
+    fetch(`/get_episodes/${guest.episodeId}`)
+      .then((response) => response.json())
+      .then((episode) => {
+        renderEpisodeDetail(episode);
+      })
+      .catch((error) => {
+        console.error("Error fetching episode:", error);
+        showNotification("Error", "Failed to return to episode view", "error");
+      });
+  });
+
+  // Add event listeners for the edit guest button
+  document
+    .getElementById("edit-guest-btn")
+    .addEventListener("click", async () => {
+      try {
+        // Implement guest editing functionality here
+        showNotification(
+          "Info",
+          "Guest editing functionality coming soon",
+          "info"
+        );
+      } catch (error) {
+        showNotification("Error", "Failed to edit guest", "error");
+      }
+    });
+
+  // Modify the renderGuestDetail function to update edit buttons after rendering
+  updateEditButtons();
 }
 
 // New function to display the episode popup for viewing/updating an episode
@@ -981,7 +1720,7 @@ async function showEpisodePopup(episode) {
           episode.publishDate
             ? new Date(episode.publishDate).toISOString().slice(0, 16)
             : ""
-        }" />
+        }" required />
       </div>
       <div class="field-group">
         <label for="upd-duration">Duration (minutes)</label>
@@ -989,16 +1728,17 @@ async function showEpisodePopup(episode) {
           episode.duration || ""
         }" />
       </div>
+      <!-- Commented out Guest and Add Guest Manually fields -->
+      <!--
       <div class="field-group">
         <label for="upd-guest-id">Guest</label>
-        <!-- Change guest field to a select -->
         <select id="upd-guest-id" name="guestId"></select>
-        <!-- Add field for manual guest entry -->
         <div class="manual-guest-field">
           <label for="manual-guest">Add Guest Manually</label>
           <input type="text" id="manual-guest" placeholder="Click to add guest manually" readonly />
         </div>
       </div>
+      -->
       <div class="field-group">
         <label for="upd-status">Status</label>
         <input type="text" id="upd-status" name="status" value="${
@@ -1014,15 +1754,6 @@ async function showEpisodePopup(episode) {
   popup.appendChild(popupContent);
   document.body.appendChild(popup);
 
-  // Populate guest dropdown in update popup with the current guest selected.
-  const updGuestSelect = document.getElementById("upd-guest-id");
-  renderGuestSelection(updGuestSelect, episode.guestId || "");
-
-  // Fetch podcasts to ensure the podcast ID is available
-  const response = await fetchPodcasts();
-  const podcasts = response.podcast;
-  renderPodcastSelection(podcasts);
-
   // Close popup events
   popup.querySelector("#close-episode-popup").addEventListener("click", () => {
     document.body.removeChild(popup);
@@ -1032,12 +1763,6 @@ async function showEpisodePopup(episode) {
     .addEventListener("click", () => {
       document.body.removeChild(popup);
     });
-
-  // Manual guest entry
-  const manualGuestField = document.querySelector(".manual-guest-field");
-  manualGuestField.addEventListener("click", () => {
-    showManualGuestPopup(updGuestSelect);
-  });
 
   // Update episode form submission
   popup
@@ -1051,27 +1776,23 @@ async function showEpisodePopup(episode) {
           .value.trim(),
         publishDate: document.getElementById("upd-publish-date").value,
         duration: document.getElementById("upd-duration").value,
-        guestId: document.getElementById("upd-guest-id").value, // value from select
+        // guestId: document.getElementById("upd-guest-id").value, // Commented out
         status: document.getElementById("upd-status").value.trim()
       };
       Object.keys(updatedData).forEach((key) => {
         if (!updatedData[key]) delete updatedData[key];
       });
       try {
-        const response = await fetch(`/update_episodes/${episode._id}`, {
-          method: "PUT",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(updatedData)
-        });
-        const result = await response.json();
-        if (response.ok) {
+        const result = await updateEpisode(episode._id, updatedData); // Use updateEpisode from episodeRequest.js
+        if (result.message) {
           showNotification(
             "Success",
             "Episode updated successfully!",
             "success"
           );
           document.body.removeChild(popup);
-          renderPodcastList();
+          // Update the episode details in the DOM
+          renderEpisodeDetail({ ...episode, ...updatedData });
         } else {
           showNotification("Error", result.error || "Update failed", "error");
         }
@@ -1080,3 +1801,24 @@ async function showEpisodePopup(episode) {
       }
     });
 }
+
+// Modify the renderPodcastDetail function to update edit buttons after rendering
+const originalRenderPodcastDetail = renderPodcastDetail;
+renderPodcastDetail = function (podcast) {
+  originalRenderPodcastDetail(podcast);
+  updateEditButtons();
+};
+
+// Modify the renderEpisodeDetail function to update edit buttons after rendering
+const originalRenderEpisodeDetail = renderEpisodeDetail;
+renderEpisodeDetail = function (episode) {
+  originalRenderEpisodeDetail(episode);
+  updateEditButtons();
+};
+
+// Modify the renderGuestDetail function to update edit buttons after rendering
+const originalRenderGuestDetail = renderGuestDetail;
+renderGuestDetail = function (guest) {
+  originalRenderGuestDetail(guest);
+  updateEditButtons();
+};

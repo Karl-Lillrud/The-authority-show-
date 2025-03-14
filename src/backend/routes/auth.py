@@ -22,9 +22,10 @@ auth_bp = Blueprint("auth_bp", __name__)
 
 API_BASE_URL = os.getenv("API_BASE_URL", "http://127.0.0.1:8000")
 
-#USE FOR AUTHENTICATION SECURITY PURPOSES REGISTER, SIGNIN, LOGOUT/ users collection
-#USER.PY Can be used for user specific data
-#ACCOUNT.PY Can be used for account specific data
+# USE FOR AUTHENTICATION SECURITY PURPOSES REGISTER, SIGNIN, LOGOUT/ users collection
+# USER.PY Can be used for user specific data
+# ACCOUNT.PY Can be used for account specific data
+
 
 @auth_bp.route("/signin", methods=["GET"], endpoint="signin")
 @auth_bp.route("/", methods=["GET"])
@@ -38,7 +39,10 @@ def signin_page():
 @auth_bp.route("/", methods=["POST"])
 def signin_submit():
     if request.content_type != "application/json":
-        return jsonify({"error": "Invalid Content-Type. Expected application/json"}), 415
+        return (
+            jsonify({"error": "Invalid Content-Type. Expected application/json"}),
+            415,
+        )
 
     data = request.get_json()
     email = data.get("email", "").strip().lower()
@@ -55,14 +59,17 @@ def signin_submit():
     session.permanent = remember
 
     user_id = session["user_id"]
-    podcasts = list(collection.database.Podcast.find({"userid": user_id}))
+    user_account = collection.database.Accounts.find_one({"userId": user_id})
+    if not user_account:
+        return jsonify({"error": "No account associated with this user"}), 403
 
-    redirect_url = (
-        "/podprofile" if not podcasts else "/dashboard" if len(podcasts) == 1 else "/homepage"
-    )
+    account_id = user_account.get("id", str(user_account["_id"]))
+    podcasts = list(collection.database.Podcasts.find({"accountId": account_id}))
+
+    redirect_url = "/podprofile" if not podcasts else "/podcastmanagement"
 
     response = jsonify({"message": "Login successful", "redirect_url": redirect_url})
-    
+
     if remember:
         response.set_cookie("remember_me", "true", max_age=30 * 24 * 60 * 60)  # 30 days
     else:
@@ -83,13 +90,17 @@ def logout_user():
 def register_page():
     return render_template("register/register.html")
 
+
 @auth_bp.route("/register", methods=["POST"])
 def register_submit():
     print("🔍 Received a POST request at /register")
 
     if request.content_type != "application/json":
         print("❌ Invalid Content-Type:", request.content_type)
-        return jsonify({"error": "Invalid Content-Type. Expected application/json"}), 415
+        return (
+            jsonify({"error": "Invalid Content-Type. Expected application/json"}),
+            415,
+        )
 
     try:
         data = request.get_json()
@@ -105,7 +116,9 @@ def register_submit():
         # Validate email using the function from authService
         email_error = validate_email(email)
         if email_error:
-            return email_error  # If there's an error with the email validation, return it.
+            return (
+                email_error  # If there's an error with the email validation, return it.
+            )
 
         # Validate password using the function from authService
         password_error = validate_password(password)
@@ -140,22 +153,32 @@ def register_submit():
         }
 
         # Create the account after user is created
-        account_repo = AccountRepository()  
+        account_repo = AccountRepository()
         account_response, status_code = account_repo.create_account(account_data)
 
         # If account creation fails, return an error response
         if status_code != 201:
-            return jsonify({"error": "Failed to create account", "details": account_response}), 500
+            return (
+                jsonify(
+                    {"error": "Failed to create account", "details": account_response}
+                ),
+                500,
+            )
 
         account_id = account_response["accountId"]
 
         print("✅ Registration successful!")
-        return jsonify({
-            "message": "Registration successful!",
-            "userId": user_id,
-            "accountId": account_id,
-            "redirect_url": url_for("auth_bp.signin", _external=True),
-        }), 201
+        return (
+            jsonify(
+                {
+                    "message": "Registration successful!",
+                    "userId": user_id,
+                    "accountId": account_id,
+                    "redirect_url": url_for("auth_bp.signin", _external=True),
+                }
+            ),
+            201,
+        )
 
     except Exception as e:
         print(f"❌ ERROR: {e}")

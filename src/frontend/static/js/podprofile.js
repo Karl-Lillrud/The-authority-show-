@@ -72,10 +72,10 @@ document.addEventListener("DOMContentLoaded", function () {
     });
   }
 
-  if (skipToDashboard) {
-    skipToDashboard.addEventListener("click", () => {
-      console.log("Navigating to dashboard");
-      window.location.href = "/dashboard"; // Redirects to the dashboard
-    });
-  }
+  // if (skipToDashboard) {
+  //   skipToDashboard.addEventListener("click", () => {
+  //     console.log("Navigating to dashboard");
+  //     window.location.href = "/dashboard"; // Redirects to the dashboard
+  //   });
+  // }
 });

@@ -28,8 +28,8 @@ def homepage():
 
 
 # ✅ Serves the settings page
-@dashboard_bp.route("/settings", methods=["GET"])
-def settings():
+@dashboard_bp.route("/account", methods=["GET"])
+def account():
     if not g.user_id:
         return redirect(url_for("auth_bp.signin"))  # Updated endpoint
 
@@ -37,7 +37,7 @@ def settings():
     email = user.get("email", "") if user else ""
     full_name = user.get("full_name", "") if user else ""
 
-    return render_template("dashboard/settings.html", email=email, full_name=full_name)
+    return render_template("dashboard/account.html", email=email, full_name=full_name)
 
 
 # ✅ Serves the profile page
@@ -86,5 +86,5 @@ def addmember():
 @dashboard_bp.route("/podcast", methods=["GET"])
 def podcast():
     if not g.user_id:
-        return redirect(url_for("signin_bp.signin"))  # Updated endpoint
+        return redirect(url_for("auth_bp.signin"))  # Updated endpoint
     return render_template("dashboard/podcast.html")

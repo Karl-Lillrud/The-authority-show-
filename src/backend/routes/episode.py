@@ -6,6 +6,7 @@ import uuid
 import logging
 from werkzeug.utils import secure_filename
 import os
+from backend.models.episodes import UPLOAD_FOLDER  # Import UPLOAD_FOLDER
 
 # Define Blueprint
 episode_bp = Blueprint("episode_bp", __name__)
@@ -16,46 +17,60 @@ logger = logging.getLogger(__name__)
 fs = gridfs.GridFS(database)
 
 # Directory to save uploaded files
-UPLOAD_FOLDER = r'C:\Users\Sarwar\Desktop\Lia'
-os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+# UPLOAD_FOLDER = r'C:\Users\Sarwar\Desktop\Lia'
+# os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+
 
 def allowed_file(filename):
-    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ['mp3', 'm4a', 'mp4']
+    return "." in filename and filename.rsplit(".", 1)[1].lower() in [
+        "mp3",
+        "m4a",
+        "mp4",
+    ]
+
 
 @episode_bp.route("/register_episode", methods=["POST"])
 def register_episode():
     if not hasattr(g, "user_id") or not g.user_id:
         return jsonify({"error": "Unauthorized"}), 401
-    
+
     print(f"Content-Type: {request.content_type}")
     print(f"Request Files: {request.files}")
 
     # Validate Content-Type
-    if 'multipart/form-data' not in request.content_type:
+    if "multipart/form-data" not in request.content_type:
         print("❌ Invalid Content-Type:", request.content_type)
         print("❌ Expected Content-Type: multipart/form-data")
-        return jsonify({"error": "Invalid Content-Type. Expected multipart/form-data"}), 415
+        return (
+            jsonify({"error": "Invalid Content-Type. Expected multipart/form-data"}),
+            415,
+        )
 
     try:
         # Check if the post request has the file part
-        if 'audio' not in request.files:
+        if "audio" not in request.files:
             return jsonify({"error": "No file part"}), 400
-        
+
         # Process each uploaded file
-        files = request.files.getlist('audio')
+        files = request.files.getlist("audio")
         file_paths = []
 
         for file in files:
-            if file.filename == '':
+            if file.filename == "":
                 return jsonify({"error": "No selected file"}), 400
-            
+
             if file and allowed_file(file.filename):
                 filename = secure_filename(file.filename)
-                file_path = os.path.join(UPLOAD_FOLDER, filename)
+                file_path = os.path.join(UPLOAD_FOLDER, filename)  # Use UPLOAD_FOLDER
                 file.save(file_path)
                 file_paths.append(file_path)
             else:
-                return jsonify({"error": "Invalid file type. Allowed types are: MP3, M4A, MP4"}), 400
+                return (
+                    jsonify(
+                        {"error": "Invalid file type. Allowed types are: MP3, M4A, MP4"}
+                    ),
+                    400,
+                )
 
         # Handle other form data (podcastId, title, etc.)
         data = request.form.to_dict()  # Get the other form fields
@@ -69,7 +84,10 @@ def register_episode():
 
         # Validate required fields
         if not podcast_id or not title:
-            return jsonify({"error": "Required fields missing: podcastId and title"}), 400
+            return (
+                jsonify({"error": "Required fields missing: podcastId and title"}),
+                400,
+            )
 
         # Generate unique episode ID
         episode_id = str(uuid.uuid4())
@@ -95,15 +113,21 @@ def register_episode():
         result = collection.database["Episodes"].insert_one(episode_item)
         logger.info(f"Episode registered successfully with ID: {episode_id}")
 
-        return jsonify({
-            "message": "Episode registered successfully",
-            "episode_id": episode_id,
-            "redirect_url": "/index.html"
-        }), 201
+        return (
+            jsonify(
+                {
+                    "message": "Episode registered successfully",
+                    "episode_id": episode_id,
+                    "redirect_url": "/index.html",
+                }
+            ),
+            201,
+        )
 
     except Exception as e:
         logger.error(f"Error: {str(e)}")
         return jsonify({"error": f"Failed to register episode: {str(e)}"}), 500
+
 
 @episode_bp.route("/get_episodes/<episode_id>", methods=["GET"])
 def get_episode(episode_id):
