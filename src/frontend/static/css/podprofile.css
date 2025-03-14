@@ -253,6 +253,11 @@ body.dark-mode .button-secondary:hover {
   margin-left: auto;
 }
 
+/* Remove the small help button styles */
+.help-button.small {
+  display: none;
+}
+
 .help-text {
   visibility: hidden;
   position: absolute;
