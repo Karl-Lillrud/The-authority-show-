@@ -34,23 +34,10 @@ body {
   background-color: var(--background-light);
   font-family: var(--font-primary);
   color: var(--text-color-light);
-  line-height: 1.5;
+
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-}
-
-header {
-  display: flex;
-  justify-content: flex-end;
-  height: 80px;
-  min-height: 80px;
-  position: fixed;
-  width: 100%;
-  top: 0;
-  z-index: 1000;
-  background-color: var(--background-light);
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
-  backdrop-filter: blur(8px);
+  zoom: 85%;
 }
 
 .container {
@@ -67,26 +54,6 @@ header {
   font-size: 2.5rem;
   font-weight: 700;
   letter-spacing: -0.5px;
-}
-
-/* Logo */
-.logo-container {
-  position: fixed;
-  top: 16px;
-  left: 24px;
-  width: 120px;
-  z-index: 999;
-  background-color: transparent;
-  transition: transform var(--transition-normal);
-}
-
-.logo-container:hover {
-  transform: scale(1.05);
-}
-
-.logo-container img {
-  width: 100%;
-  height: auto;
 }
 
 /* Action Buttons */

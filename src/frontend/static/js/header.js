@@ -96,10 +96,34 @@ if (document.readyState === "loading") {
   populatePodcastDropdown();
 }
 
-// Add event listener to the logo for redirection to /dashboard
-const logo = document.querySelector(".logo");
-if (logo) {
-  logo.addEventListener("click", function () {
-    window.location.href = "/dashboard";
+const logoutLink = document.getElementById("logout-link");
+const logoutModal = document.getElementById("logout-modal");
+const cancelLogout = document.getElementById("cancel-logout");
+const confirmLogout = document.getElementById("confirm-logout");
+
+if (logoutLink) {
+  logoutLink.addEventListener("click", function (e) {
+    e.preventDefault();
+    logoutModal.style.display = "flex";
   });
 }
+
+if (cancelLogout) {
+  cancelLogout.addEventListener("click", function () {
+    logoutModal.style.display = "none";
+  });
+}
+
+if (confirmLogout) {
+  confirmLogout.addEventListener("click", function () {
+    document.cookie =
+      "remember_me=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+    window.location.href = logoutLink.href;
+  });
+}
+
+window.addEventListener("click", function (e) {
+  if (e.target === logoutModal) {
+    logoutModal.style.display = "none";
+  }
+});
