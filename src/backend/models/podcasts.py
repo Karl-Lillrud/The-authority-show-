@@ -1,7 +1,6 @@
 from marshmallow import Schema, fields
 from backend.models.podtasks import PodtaskSchema
 
-
 class PodcastSchema(Schema):
     id = fields.Str()
     teamId = fields.Str()

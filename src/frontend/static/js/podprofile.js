@@ -32,6 +32,7 @@ document.addEventListener("DOMContentLoaded", function () {
         try {
           const feed = await fetchRSSData(rssUrl); // function from podcastRequests.js
           document.getElementById("podName").value = feed.title || "";
+          document.getElementById("podLogoUrl").value = feed.image || ""; // Assuming feed.image contains the logo URL
         } catch (error) {
           console.error("Error processing RSS feed:", error);
         }
@@ -44,9 +45,11 @@ document.addEventListener("DOMContentLoaded", function () {
     goToEmailSection.addEventListener("click", async () => {
       const podName = podNameInput ? podNameInput.value.trim() : "";
       const podRss = podRssInput ? podRssInput.value.trim() : "";
+      const podLogoUrl = document.getElementById("podLogoUrl").value.trim(); // Get the logo URL
 
       console.log("Podcast Name:", podName);
       console.log("Podcast RSS:", podRss);
+      console.log("Podcast Logo URL:", podLogoUrl);
 
       if (!podName || !podRss) {
         alert("Please enter all required fields: Podcast Name and RSS URL.");
@@ -55,7 +58,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
       try {
         console.log("Sending invitation email");
-        await sendInvitationEmail(podName, podRss);
+        await sendInvitationEmail(podName, podRss, podLogoUrl); // Send the logo URL as well
 
         // Hide the Pod Name section and show the Email section
         podNameSection.classList.add("hidden");
