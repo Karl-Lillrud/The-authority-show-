@@ -13,6 +13,11 @@ async function populatePodcastDropdown() {
     console.log("Podcasts fetched:", data);
     const podcasts = data.podcast || [];
 
+    if (podcasts.length < 2) {
+      dropdown.style.display = 'none';
+      return;
+    }
+
     // Populate the dropdown with the fetched podcasts
     podcasts.forEach(podcast => {
       const option = document.createElement("option");
