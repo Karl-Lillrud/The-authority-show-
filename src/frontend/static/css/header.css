@@ -98,7 +98,7 @@ header {
 .header-nav {
   display: flex;
   align-items: center;
-  gap: var(--spacing-sm);
+  gap: 29px;
 }
 
 /* Podcast Selector */
