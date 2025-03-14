@@ -7,7 +7,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Podcast Website</title>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
   <link rel="stylesheet" href="{{ url_for('static', filename='css/landingpage.css') }}">
 </head>
 <body>
@@ -57,11 +57,14 @@
             Host biography goes here. Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nulla ac ultrices libero.
           </p>
           <div id="host-social">
-            <a href="https://twitter.com/host" target="_blank" class="twitter"><i class="fab fa-twitter"></i></a>
-            <a href="https://instagram.com/host" target="_blank" class="instagram"><i class="fab fa-instagram"></i></a>
-            <a href="https://linkedin.com/in/host" target="_blank" class="linkedin"><i class="fab fa-linkedin"></i></a>
-            <a href="https://facebook.com/host" target="_blank" class="facebook"><i class="fab fa-facebook-f"></i></a>
-            <a href="https://youtube.com/host" target="_blank" class="youtube"><i class="fab fa-youtube"></i></a>
+            <a href="{{ url_for('dashboard_bp.podcastmanagement') }}" class="pinterest"><i class="fab fa-pinterest-p"></i></a>
+            <a href="{{ url_for('dashboard_bp.podcastmanagement') }}" class="twitter"><i class="fab fa-x-twitter"></i></a>
+            <a href="{{ url_for('dashboard_bp.podcastmanagement') }}" class="instagram"><i class="fab fa-instagram"></i></a>
+            <a href="{{ url_for('dashboard_bp.podcastmanagement') }}" class="linkedin"><i class="fab fa-linkedin"></i></a>
+            <a href="{{ url_for('dashboard_bp.podcastmanagement') }}" class="facebook"><i class="fab fa-facebook-f"></i></a>
+            <a href="{{ url_for('dashboard_bp.podcastmanagement') }}" class="youtube"><i class="fab fa-youtube"></i></a>
+            <a href="{{ url_for('dashboard_bp.podcastmanagement') }}" class="tiktok"><i class="fab fa-tiktok"></i></a>            
+          </a>
           </div>
         </div>
       </div>
