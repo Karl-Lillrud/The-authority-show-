@@ -47,17 +47,13 @@ def register_episode():
         )
 
     try:
-        # Check if the post request has the file part
-        if "audio" not in request.files:
-            return jsonify({"error": "No file part"}), 400
-
         # Process each uploaded file
         files = request.files.getlist("audio")
         file_paths = []
 
         for file in files:
             if file.filename == "":
-                return jsonify({"error": "No selected file"}), 400
+                continue  # Skip empty file fields
 
             if file and allowed_file(file.filename):
                 filename = secure_filename(file.filename)
