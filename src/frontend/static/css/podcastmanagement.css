@@ -34,23 +34,10 @@ body {
   background-color: var(--background-light);
   font-family: var(--font-primary);
   color: var(--text-color-light);
-  line-height: 1.5;
+
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-}
-
-header {
-  display: flex;
-  justify-content: flex-end;
-  height: 80px;
-  min-height: 80px;
-  position: fixed;
-  width: 100%;
-  top: 0;
-  z-index: 1000;
-  background-color: var(--background-light);
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
-  backdrop-filter: blur(8px);
+  zoom: 85%;
 }
 
 .container {
@@ -67,26 +54,6 @@ header {
   font-size: 2.5rem;
   font-weight: 700;
   letter-spacing: -0.5px;
-}
-
-/* Logo */
-.logo-container {
-  position: fixed;
-  top: 16px;
-  left: 24px;
-  width: 120px;
-  z-index: 999;
-  background-color: transparent;
-  transition: transform var(--transition-normal);
-}
-
-.logo-container:hover {
-  transform: scale(1.05);
-}
-
-.logo-container img {
-  width: 100%;
-  height: auto;
 }
 
 /* Action Buttons */
@@ -144,6 +111,12 @@ header {
 }
 
 /* Podcast Card */
+.podcast-content {
+  display: flex;
+  flex-direction: row;
+  align-items: center; /* Add this to vertically center the image */
+}
+
 .podcast-card {
   background-color: white;
   border-radius: var(--radius-large);
@@ -159,11 +132,6 @@ header {
   box-shadow: var(--card-shadow-hover);
 }
 
-.podcast-content {
-  display: flex;
-  flex-direction: row;
-}
-
 .podcast-image {
   width: 220px;
   height: 220px;
@@ -175,20 +143,11 @@ header {
   transition: all var(--transition-normal);
   position: relative;
   overflow: hidden;
-}
-
-.podcast-image::after {
-  content: "";
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: linear-gradient(
-    to bottom right,
-    rgba(255, 127, 63, 0.1),
-    transparent
-  );
+  display: flex; /* Add this to help with centering */
+  align-items: center; /* Add this to center content vertically */
+  justify-content: center; /* Add this to center content horizontally */
+  margin: 15px; /* Add some margin around the image */
+  border-radius: var(--radius-medium); /* Add rounded corners to the image */
 }
 
 .podcast-info {
@@ -254,11 +213,35 @@ header {
   background-color: white;
   box-shadow: 0 2px 5px rgba(0, 0, 0, 0.08);
   transition: all var(--transition-normal);
+  position: relative;
 }
 
 .action-btn:hover {
   transform: translateY(-2px);
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.12);
+}
+
+/* Edit button tooltip */
+.action-btn.edit-btn::after {
+  content: "Edit";
+  position: absolute;
+  bottom: -30px;
+  left: 50%;
+  transform: translateX(-50%);
+  background-color: rgba(0, 0, 0, 0.7);
+  color: white;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  opacity: 0;
+  visibility: hidden;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.action-btn.edit-btn:hover::after {
+  opacity: 1;
+  visibility: visible;
 }
 
 .view-btn {
@@ -329,6 +312,55 @@ header {
 .top-right-actions {
   display: flex;
   gap: 12px;
+}
+
+/* Edit button styling */
+.top-right-actions .edit-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background-color: white;
+  color: var(--highlight-color);
+  box-shadow: var(--button-shadow);
+  border: none;
+  cursor: pointer;
+  transition: all var(--transition-normal);
+  position: relative;
+}
+
+.top-right-actions .edit-btn svg {
+  width: 18px;
+  height: 18px;
+}
+
+.top-right-actions .edit-btn::after {
+  content: "Edit";
+  position: absolute;
+  bottom: -30px;
+  left: 50%;
+  transform: translateX(-50%);
+  background-color: rgba(0, 0, 0, 0.7);
+  color: white;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  opacity: 0;
+  visibility: hidden;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.top-right-actions .edit-btn:hover::after {
+  opacity: 1;
+  visibility: visible;
+}
+
+.top-right-actions .edit-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 10px rgba(0, 0, 0, 0.1);
 }
 
 .back-btn {
@@ -548,7 +580,9 @@ header {
   position: relative;
   transform: scale(0.95);
   transition: transform 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-  overflow: hidden;
+  overflow-x: hidden; /* Prevent horizontal scroll */
+  max-height: 85vh;
+  overflow-y: auto;
 }
 
 .popup[style*="display: flex"] .popup-content {
@@ -623,6 +657,7 @@ header {
   position: relative;
   max-height: 85vh;
   overflow-y: auto;
+  overflow-x: hidden; /* Prevent horizontal scroll */
   transform: scale(0.95);
   transition: transform 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
   scrollbar-width: thin;
@@ -745,6 +780,7 @@ header {
   font-size: 1rem;
   transition: all var(--transition-normal);
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+  box-sizing: border-box; /* Ensure padding is included in width */
 }
 
 .field-group input:focus,
@@ -1249,6 +1285,7 @@ header {
   padding: 16px;
   background-color: rgba(0, 0, 0, 0.02);
   border-radius: var(--radius-medium);
+  width: 100%; /* Make the guest detail header wider */
 }
 
 .guest-detail-avatar {
@@ -1341,6 +1378,57 @@ header {
   margin-right: 12px;
 }
 
+/* Create Episode Form - Separate date and duration fields */
+#create-episode-form .field-group,
+#update-episode-form .field-group {
+  width: 100%;
+  box-sizing: border-box;
+}
+
+#create-episode-form .form-grid,
+#update-episode-form .form-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+}
+
+/* Improved Edit Guest Page */
+.guest-edit-container {
+  background-color: white;
+  border-radius: var(--radius-large);
+  padding: var(--spacing-xl);
+  box-shadow: var(--card-shadow);
+  margin-top: var(--spacing-xl);
+}
+
+.guest-edit-header {
+  display: flex;
+  align-items: center;
+  margin-bottom: var(--spacing-lg);
+  padding-bottom: var(--spacing-md);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+.guest-edit-avatar {
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  background-color: var(--highlight-color);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+  font-size: 1.5rem;
+  margin-right: var(--spacing-lg);
+}
+
+.guest-edit-title {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: rgba(0, 0, 0, 0.85);
+}
+
 /* Responsive Design */
 @media (max-width: 1024px) {
   .detail-content {
@@ -1400,6 +1488,17 @@ header {
   .podcast-image {
     width: 100%;
     height: 180px;
+  }
+
+  /* Fix for edit buttons on mobile */
+  .top-right-actions .edit-btn {
+    width: 36px;
+    height: 36px;
+  }
+
+  .top-right-actions .edit-btn::after {
+    bottom: -25px;
+    font-size: 10px;
   }
 }
 

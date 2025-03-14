@@ -209,12 +209,53 @@ html {
 
 /* Social Media Icon Colors */
 #host-social a.twitter {
-  color: #1da1f2;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px; /* Adjust as needed */
+  height: 32px; /* Adjust as needed */
+  background-color: #000; /* Black background */
+  color: #ffffff; /* White icon */
+  border-radius: 50%; /* Make it circular */
+  font-size: 18px; /* Adjust icon size */
+  text-decoration: none; /* Prevent unwanted underline */
+  line-height: 0; /* Fixes vertical alignment issues */
+  transition: background 0.3s ease-in-out, transform 0.3s ease-in-out;
+}
+
+#host-social a.twitter i {
+  font-size: 20px; /* Match the icon size properly */
+  vertical-align: middle; /* Align the icon properly */
+}
+
+#host-social a.twitter:hover {
+  transform: scale(1.2);
 }
 
 #host-social a.instagram {
   color: #e4405f;
 }
+
+#host-social a.pinterest {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 35px; /* Adjust as needed */
+  height: 35px; /* Adjust as needed */
+  background-color: #e60023; /* Pinterest red background */
+  color: #ffffff; /* White icon */
+  border-radius: 50%; /* Make it circular */
+  font-size: 18px; /* Adjust icon size */
+  text-decoration: none; /* Prevent unwanted underline */
+  line-height: 0; /* Fixes vertical alignment issues */
+  transition: background 0.3s ease-in-out, transform 0.3s ease-in-out;
+}
+
+#host-social a.pinterest i {
+  font-size: 20px; /* Match the icon size properly */
+  vertical-align: middle; /* Align the icon properly */
+}
+
 
 #host-social a.linkedin {
   color: #0077b5;
@@ -223,6 +264,49 @@ html {
 #host-social a.facebook {
   color: #1877f2;
 }
+
+#host-social a.tiktok {
+    display: inline-block;
+    font-size: 27px; /* Adjust size as needed */
+    position: relative;
+    color: white; /* The main white TikTok logo */
+    transition: transform 0.3s ease-in-out;
+}
+
+#host-social a.tiktok::before,
+#host-social a.tiktok::after {
+    content: "J"; /* Trick to apply shadows */
+    font-family: FontAwesome;
+    position: absolute;
+    top: 0;
+    left: 0;
+    font-size: 27px; /* Match the main icon size */
+    z-index: -1; /* Move shadows behind */
+    transition: transform 0.3s ease-in-out;
+}
+
+#host-social a.tiktok::before {
+    color: #25F4EE; /* Cyan shadow */
+    transform: translate(1px, 2px);
+}
+
+#host-social a.tiktok::after {
+    color: #FE2C55; /* Red shadow */
+    transform: translate(1px, 6px);
+}
+
+#host-social a.tiktok:hover {
+    transform: scale(1.2);
+}
+
+#host-social a.tiktok:hover::before {
+    transform: translate(0x, 0x);
+}
+
+#host-social a.tiktok:hover::after {
+    transform: translate(1px, 6px);
+}
+
 
 #host-social a.youtube {
   color: #ff0000;
