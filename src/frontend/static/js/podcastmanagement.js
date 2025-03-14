@@ -327,10 +327,27 @@ document
     }
   });
 
+// Function to update edit buttons to use pen icons
+function updateEditButtons() {
+  // Find all edit buttons in the top-right actions
+  const editButtons = document.querySelectorAll(".top-right-actions .edit-btn");
+
+  editButtons.forEach((button) => {
+    // Skip if button has already been processed
+    if (button.querySelector("svg")) return;
+
+    // Clear the button content
+    button.innerHTML = svgpodcastmanagement.edit;
+  });
+}
+
 document.addEventListener("DOMContentLoaded", () => {
   console.log("DOM fully loaded and parsed");
 
   renderPodcastList();
+
+  // Add this line to update edit buttons when the page loads
+  updateEditButtons();
 
   // Show form for adding a podcast
   document.getElementById("add-podcast-btn").addEventListener("click", () => {
@@ -495,6 +512,22 @@ document.addEventListener("DOMContentLoaded", () => {
       }
     });
 });
+
+// Add this function to observe DOM changes and update edit buttons when new content is added
+function observeEditButtons() {
+  const observer = new MutationObserver((mutations) => {
+    mutations.forEach((mutation) => {
+      if (mutation.addedNodes.length) {
+        updateEditButtons();
+      }
+    });
+  });
+
+  observer.observe(document.body, { childList: true, subtree: true });
+}
+
+// Call the observer function after the DOM is loaded
+document.addEventListener("DOMContentLoaded", observeEditButtons);
 
 const form = document.getElementById("register-podcast-form");
 
@@ -972,12 +1005,10 @@ function renderPodcastDetail(podcast) {
       
       <!-- Add top-right action buttons -->
       <div class="top-right-actions">
-      
         <button class="action-btn edit-btn" id="edit-podcast-btn" data-id="${
           podcast._id
         }">
           ${svgpodcastmanagement.edit}
-          Edit Podcast
         </button>
       </div>
     </div>
@@ -1278,6 +1309,9 @@ function renderPodcastDetail(podcast) {
     .catch((error) => {
       console.error("Error fetching episodes:", error);
     });
+
+  // Modify the renderPodcastDetail function to update edit buttons after rendering
+  updateEditButtons();
 }
 
 // Modify the renderEpisodeDetail function to add the top-right action buttons
@@ -1292,12 +1326,10 @@ function renderEpisodeDetail(episode) {
       
       <!-- Add top-right action buttons -->
       <div class="top-right-actions">
-      
         <button class="action-btn edit-btn" id="edit-episode-btn" data-id="${
           episode._id
         }">
           ${svgpodcastmanagement.edit}
-          Edit Episode
         </button>
       </div>
     </div>
@@ -1467,6 +1499,9 @@ function renderEpisodeDetail(episode) {
       errorMsg.textContent = "This episode has no guests.";
       document.getElementById("guests-list").appendChild(errorMsg);
     });
+
+  // Modify the renderEpisodeDetail function to update edit buttons after rendering
+  updateEditButtons();
 }
 
 // Modify the renderGuestDetail function to add the top-right action buttons
@@ -1490,12 +1525,10 @@ function renderGuestDetail(guest) {
       
       <!-- Add top-right action buttons -->
       <div class="top-right-actions">
-      
         <button class="action-btn edit-btn" id="edit-guest-btn" data-id="${
           guest._id || guest.id
         }">
           ${svgpodcastmanagement.edit}
-          Edit Guest
         </button>
       </div>
     </div>
@@ -1644,6 +1677,9 @@ function renderGuestDetail(guest) {
         showNotification("Error", "Failed to edit guest", "error");
       }
     });
+
+  // Modify the renderGuestDetail function to update edit buttons after rendering
+  updateEditButtons();
 }
 
 // New function to display the episode popup for viewing/updating an episode
@@ -1757,3 +1793,24 @@ async function showEpisodePopup(episode) {
       }
     });
 }
+
+// Modify the renderPodcastDetail function to update edit buttons after rendering
+const originalRenderPodcastDetail = renderPodcastDetail;
+renderPodcastDetail = function (podcast) {
+  originalRenderPodcastDetail(podcast);
+  updateEditButtons();
+};
+
+// Modify the renderEpisodeDetail function to update edit buttons after rendering
+const originalRenderEpisodeDetail = renderEpisodeDetail;
+renderEpisodeDetail = function (episode) {
+  originalRenderEpisodeDetail(episode);
+  updateEditButtons();
+};
+
+// Modify the renderGuestDetail function to update edit buttons after rendering
+const originalRenderGuestDetail = renderGuestDetail;
+renderGuestDetail = function (guest) {
+  originalRenderGuestDetail(guest);
+  updateEditButtons();
+};
