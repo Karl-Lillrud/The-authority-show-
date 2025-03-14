@@ -5,10 +5,9 @@
 <header>
   <!-- Logo -->
   <div class="logo-container">
-    <img
-      src="{{ url_for('static', filename='images/PodManagerLogo.png') }}"
-      alt="PodManager Logo"
-    />
+    <a href="{{ url_for('dashboard_bp.dashboard') }}" class="logo-container">
+      <img src="{{ url_for('static', filename='images/PodManagerLogo.png') }}" alt="PodManager Logo" />
+    </a>
   </div>
   <nav class="header-nav">
     <select
