@@ -223,6 +223,31 @@
         border-radius: 4px;
         margin-top: 10px;
       }
+
+      /* Gallery styles */
+      .gallery-container {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 16px;
+        justify-content: center;
+      }
+
+      .gallery-item {
+        flex: 1 1 calc(33.333% - 32px);
+        box-sizing: border-box;
+      }
+
+      @media (max-width: 768px) {
+        .gallery-item {
+          flex: 1 1 calc(50% - 16px);
+        }
+      }
+
+      @media (max-width: 480px) {
+        .gallery-item {
+          flex: 1 1 100%;
+        }
+      }
     </style>
   </head>
   <body>
@@ -285,7 +310,7 @@
           <!-- Episodes Section -->
           <div class="episodes-section">
             <h2>Episodes</h2>
-            <div id="episodes-container"></div>
+            <div id="episodes-container" class="gallery-container"></div>
             <button id="load-more-episodes" class="load-more-btn hidden">
               Load More Episodes
             </button>

@@ -430,3 +430,166 @@ body.dark-mode .help-button {
     font-size: 0.7rem !important;
   }
 }
+
+/* Additional styles for podcast preview and episodes */
+.podcast-preview-card {
+  background-color: #f9f9f9;
+  border-radius: 8px;
+  padding: 16px;
+  margin-top: 20px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.dark-mode .podcast-preview-card {
+  background-color: #2a2a2a;
+  color: #f9f9f9;
+}
+
+.podcast-header {
+  display: flex;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.podcast-image {
+  width: 80px;
+  height: 80px;
+  border-radius: 4px;
+  object-fit: cover;
+  margin-right: 16px;
+}
+
+.podcast-info h2 {
+  margin: 0 0 8px 0;
+  font-size: 1.5rem;
+}
+
+.podcast-author,
+.podcast-category {
+  margin: 0;
+  font-size: 0.9rem;
+  color: #666;
+}
+
+.dark-mode .podcast-author,
+.dark-mode .podcast-category {
+  color: #ccc;
+}
+
+.podcast-description {
+  margin-bottom: 16px;
+  line-height: 1.5;
+}
+
+.social-media h3 {
+  font-size: 1.1rem;
+  margin-bottom: 8px;
+}
+
+.social-media ul {
+  list-style: none;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.social-media li a {
+  display: inline-block;
+  padding: 4px 10px;
+  background-color: #e0e0e0;
+  border-radius: 16px;
+  text-decoration: none;
+  color: #333;
+  font-size: 0.8rem;
+  transition: background-color 0.2s;
+}
+
+.dark-mode .social-media li a {
+  background-color: #444;
+  color: #f0f0f0;
+}
+
+.social-media li a:hover {
+  background-color: #d0d0d0;
+}
+
+.dark-mode .social-media li a:hover {
+  background-color: #555;
+}
+
+.episodes-container {
+  margin-top: 24px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+.episode-card {
+  background-color: #fff;
+  border-radius: 8px;
+  padding: 16px;
+  margin-bottom: 16px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  flex: 1 1 calc(33.333% - 16px); /* Adjust the width as needed */
+  box-sizing: border-box;
+}
+
+.dark-mode .episode-card {
+  background-color: #333;
+  color: #f9f9f9;
+}
+
+.episode-header {
+  display: flex;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.episode-image {
+  width: 60px;
+  height: 60px;
+  border-radius: 4px;
+  object-fit: cover;
+  margin-right: 12px;
+}
+
+.episode-info h3 {
+  margin: 0 0 8px 0;
+  font-size: 1.2rem;
+}
+
+.episode-meta {
+  display: flex;
+  gap: 12px;
+  font-size: 0.8rem;
+  color: #666;
+}
+
+.dark-mode .episode-meta {
+  color: #ccc;
+}
+
+.episode-description {
+  margin-bottom: 12px;
+  line-height: 1.4;
+  font-size: 0.9rem;
+}
+
+.episode-audio {
+  margin-bottom: 12px;
+}
+
+.episode-audio audio {
+  width: 100%;
+}
+
+.episode-link {
+  display: inline-block;
+  padding: 6px 12px;
+  background-color: #007bff;
+  color: white;
+  text-decoration: none;
+  border-radius: 4px;
+  font-size: 0.9rem;
+}
