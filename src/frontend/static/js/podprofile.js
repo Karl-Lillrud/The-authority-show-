@@ -57,8 +57,13 @@ document.addEventListener("DOMContentLoaded", function () {
       }
 
       try {
+        console.log("Fetching RSS data");
+        const rssData = await fetchRSSData(podRss);
+        podNameInput.value = rssData.title; // Set the title correctly
+        const imageUrl = rssData.imageUrl; // Get the imageUrl from RSS
+
         console.log("Sending invitation email");
-        await sendInvitationEmail(podName, podRss);
+        await sendInvitationEmail(podName, podRss, imageUrl);
 
         // Redirect to dashboard and set a flag to show the popup
         sessionStorage.setItem("showWelcomePopup", "true");

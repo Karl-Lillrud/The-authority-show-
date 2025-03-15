@@ -1,8 +1,19 @@
-from flask import Blueprint, render_template, g, redirect, url_for, session, request, jsonify, current_app
+from flask import (
+    Blueprint,
+    render_template,
+    g,
+    redirect,
+    url_for,
+    session,
+    request,
+    jsonify,
+    current_app,
+)
 from backend.database.mongo_connection import collection
 import requests
 
 podprofile_bp = Blueprint("podprofile_bp", __name__)
+
 
 @podprofile_bp.route("/podprofile", methods=["GET"])
 def podprofile():
@@ -11,7 +22,9 @@ def podprofile():
 
     # Fetch the user's email using the /get_email endpoint
     try:
-        response = requests.get(url_for("register_bp.get_email", _external=True), cookies=request.cookies)
+        response = requests.get(
+            url_for("register_bp.get_email", _external=True), cookies=request.cookies
+        )
         response.raise_for_status()
         user_email = response.json().get("email")
         if not user_email:
@@ -22,6 +35,7 @@ def podprofile():
 
     session["user_email"] = user_email  # Store the email in the session
     return render_template("podprofile/podprofile.html", user_email=user_email)
+
 
 @podprofile_bp.route("/save_podprofile", methods=["POST"])
 def save_podprofile():
@@ -34,6 +48,7 @@ def save_podprofile():
             "email": user_email,
             "podName": data.get("podName"),
             "podRss": data.get("podRss"),
+            "imageUrl": data.get("imageUrl"),  # Add imageUrl
         }
         collection["User"].insert_one(user_data)
 
@@ -42,6 +57,7 @@ def save_podprofile():
             "UserID": user_email,
             "Podname": data.get("podName"),
             "RSSFeed": data.get("podRss"),
+            "imageUrl": data.get("imageUrl"),  # Add imageUrl
         }
         collection["Podcast"].insert_one(podcast_data)
 
@@ -50,12 +66,14 @@ def save_podprofile():
         current_app.logger.error(f"Error saving podprofile: {e}")
         return jsonify({"success": False, "error": str(e)}), 500
 
+
 @podprofile_bp.route("/post_podcast_data", methods=["POST"])
 def post_podcast_data():
     try:
         data = request.json
         pod_name = data.get("podName")
         pod_rss = data.get("podRss")
+        image_url = data.get("imageUrl")  # Add imageUrl
         user_email = session.get("user_email", "")
 
         if not pod_name or not pod_rss:
@@ -66,6 +84,7 @@ def post_podcast_data():
             "user_email": user_email,
             "podName": pod_name,
             "podRss": pod_rss,
+            "imageUrl": image_url,  # Add imageUrl
         }
         collection["Podcasts"].insert_one(podcast_data)
 
