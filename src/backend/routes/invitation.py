@@ -57,7 +57,6 @@ def send_invitation():
             "socialMedia": social_media,
             "category": category,
             "author": author,
-            "episodes": episodes,  # Store episodes data
             "created_at": datetime.now(timezone.utc),
         }
 
@@ -69,6 +68,29 @@ def send_invitation():
             logger.error("Failed to add podcast to the database")
             return jsonify({"error": "Failed to add podcast to the database."}), 500
 
+        # Insert episodes into the database
+        for episode in episodes:
+            episode_item = {
+                "_id": str(uuid.uuid4()),
+                "podcast_id": podcast_id,
+                "title": episode.get("title"),
+                "description": episode.get("description"),
+                "publishDate": episode.get("pubDate"),
+                "duration": episode.get("duration"),
+                "audioUrl": episode.get("audioUrl"),
+                "fileSize": episode.get("fileSize"),
+                "fileType": episode.get("fileType"),
+                "guid": episode.get("guid"),
+                "season": episode.get("season"),
+                "episode": episode.get("episode"),
+                "episodeType": episode.get("episodeType"),
+                "explicit": episode.get("explicit"),
+                "imageUrl": episode.get("imageUrl"),
+                "created_at": datetime.now(timezone.utc),
+                "updated_at": datetime.now(timezone.utc),
+            }
+            collection.database.Episodes.insert_one(episode_item)
+
         # Send the invitation email
         body = render_template("beta-email/podmanager-beta-invite.html")
         send_email(user_account["email"], subject, body)
@@ -78,6 +100,7 @@ def send_invitation():
                 {
                     "success": True,
                     "message": "Podcast added and invitation email sent successfully",
+                    "podcastId": podcast_id,  # Return podcastId for further processing
                 }
             ),
             201,

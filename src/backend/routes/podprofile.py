@@ -13,6 +13,7 @@ from backend.database.mongo_connection import collection
 import requests
 import xml.etree.ElementTree as ET
 import urllib.request
+from datetime import datetime, timezone
 
 podprofile_bp = Blueprint("podprofile_bp", __name__)
 
@@ -56,7 +57,7 @@ def save_podprofile():
             "category": data.get("category"),
             "author": data.get("author"),
         }
-        collection["User"].insert_one(user_data)
+        collection["Users"].insert_one(user_data)
 
         # Save to Podcast collection
         podcast_data = {
@@ -69,7 +70,7 @@ def save_podprofile():
             "category": data.get("category"),
             "author": data.get("author"),
         }
-        collection["Podcast"].insert_one(podcast_data)
+        collection["Podcasts"].insert_one(podcast_data)
 
         return jsonify({"success": True})
     except Exception as e:
@@ -104,9 +105,31 @@ def post_podcast_data():
             "socialMedia": social_media,
             "category": category,
             "author": author,
-            "episodes": episodes,  # Store episodes data
         }
-        collection["Podcasts"].insert_one(podcast_data)
+        result = collection["Podcasts"].insert_one(podcast_data)
+        podcast_id = str(result.inserted_id)
+
+        # Save episodes to the Episodes collection
+        for episode in episodes:
+            episode_data = {
+                "podcast_id": podcast_id,
+                "title": episode.get("title"),
+                "description": episode.get("description"),
+                "publishDate": episode.get("pubDate"),
+                "duration": episode.get("duration"),
+                "audioUrl": episode.get("audioUrl"),
+                "fileSize": episode.get("fileSize"),
+                "fileType": episode.get("fileType"),
+                "guid": episode.get("guid"),
+                "season": episode.get("season"),
+                "episode": episode.get("episode"),
+                "episodeType": episode.get("episodeType"),
+                "explicit": episode.get("explicit"),
+                "imageUrl": episode.get("imageUrl"),
+                "created_at": datetime.now(timezone.utc),
+                "updated_at": datetime.now(timezone.utc),
+            }
+            collection["Episodes"].insert_one(episode_data)
 
         return jsonify({"redirectUrl": "/podprofile"}), 200
     except Exception as e:

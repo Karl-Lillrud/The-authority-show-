@@ -14,214 +14,583 @@
       href="{{ url_for('static', filename='favicon/favicon.ico') }}"
     />
     <link rel="canonical" href="https://app.podmanager.ai" />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+    />
     <style>
       /* Additional styles for podcast preview and episodes */
-      .podcast-preview-card {
-        background-color: #f9f9f9;
-        border-radius: 8px;
-        padding: 16px;
-        margin-top: 20px;
-        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      .podcast-container {
+        margin-top: 30px;
+        border-radius: 12px;
+        overflow: hidden;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+        background-color: #fff;
+        transition: all 0.3s ease;
       }
 
-      .dark-mode .podcast-preview-card {
-        background-color: #2a2a2a;
-        color: #f9f9f9;
+      .dark-mode .podcast-container {
+        background-color: #222;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
       }
 
       .podcast-header {
         display: flex;
         align-items: center;
-        margin-bottom: 16px;
+        padding: 24px;
+        background: linear-gradient(135deg, #6e8efb, #a777e3);
+        color: white;
+      }
+
+      .dark-mode .podcast-header {
+        background: linear-gradient(135deg, #4b5e9e, #7d5ba9);
       }
 
       .podcast-image {
-        width: 80px;
-        height: 80px;
-        border-radius: 4px;
+        width: 120px;
+        height: 120px;
+        border-radius: 8px;
         object-fit: cover;
-        margin-right: 16px;
+        margin-right: 24px;
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+        border: 3px solid white;
+      }
+
+      .podcast-info {
+        flex: 1;
       }
 
       .podcast-info h2 {
         margin: 0 0 8px 0;
-        font-size: 1.5rem;
+        font-size: 1.8rem;
+        font-weight: 700;
       }
 
-      .podcast-author,
-      .podcast-category {
-        margin: 0;
+      .podcast-meta {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 12px;
+        margin-top: 8px;
+      }
+
+      .podcast-meta-item {
+        display: flex;
+        align-items: center;
         font-size: 0.9rem;
-        color: #666;
+        color: rgba(255, 255, 255, 0.9);
       }
 
-      .dark-mode .podcast-author,
-      .dark-mode .podcast-category {
-        color: #ccc;
+      .podcast-meta-item i {
+        margin-right: 5px;
+      }
+
+      .podcast-body {
+        padding: 24px;
       }
 
       .podcast-description {
-        margin-bottom: 16px;
-        line-height: 1.5;
+        line-height: 1.6;
+        margin-bottom: 24px;
+        color: #444;
+        font-size: 1rem;
       }
 
-      .social-media h3 {
-        font-size: 1.1rem;
-        margin-bottom: 8px;
+      .dark-mode .podcast-description {
+        color: #ddd;
       }
 
-      .social-media ul {
-        list-style: none;
-        padding: 0;
-        display: flex;
-        flex-wrap: wrap;
-        gap: 8px;
-      }
-
-      .social-media li a {
-        display: inline-block;
-        padding: 4px 10px;
-        background-color: #e0e0e0;
-        border-radius: 16px;
-        text-decoration: none;
+      .podcast-section-title {
+        font-size: 1.4rem;
+        font-weight: 600;
+        margin: 0 0 16px 0;
+        padding-bottom: 8px;
+        border-bottom: 2px solid #f0f0f0;
         color: #333;
-        font-size: 0.8rem;
-        transition: background-color 0.2s;
       }
 
-      .dark-mode .social-media li a {
-        background-color: #444;
+      .dark-mode .podcast-section-title {
+        border-bottom-color: #444;
         color: #f0f0f0;
       }
 
-      .social-media li a:hover {
-        background-color: #d0d0d0;
+      .social-media-links {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        margin-bottom: 24px;
       }
 
-      .dark-mode .social-media li a:hover {
-        background-color: #555;
+      .social-link {
+        display: inline-flex;
+        align-items: center;
+        padding: 8px 16px;
+        background-color: #f5f5f5;
+        border-radius: 30px;
+        text-decoration: none;
+        color: #333;
+        font-size: 0.9rem;
+        transition: all 0.2s ease;
       }
 
-      .episodes-container {
-        margin-top: 24px;
+      .dark-mode .social-link {
+        background-color: #333;
+        color: #f0f0f0;
+      }
+
+      .social-link:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+      }
+
+      .social-link i {
+        margin-right: 8px;
+        font-size: 1rem;
+      }
+
+      .social-link.twitter {
+        background-color: #e8f5fd;
+        color: #1da1f2;
+      }
+      .social-link.facebook {
+        background-color: #e9f0f7;
+        color: #4267b2;
+      }
+      .social-link.instagram {
+        background-color: #f8e9f6;
+        color: #c13584;
+      }
+      .social-link.youtube {
+        background-color: #fce8e8;
+        color: #ff0000;
+      }
+      .social-link.linkedin {
+        background-color: #e7f0f7;
+        color: #0077b5;
+      }
+      .social-link.website {
+        background-color: #e8f4f8;
+        color: #0099cc;
+      }
+
+      .dark-mode .social-link.twitter {
+        background-color: #0c3a54;
+        color: #1da1f2;
+      }
+      .dark-mode .social-link.facebook {
+        background-color: #1a2a4a;
+        color: #4267b2;
+      }
+      .dark-mode .social-link.instagram {
+        background-color: #3d1a38;
+        color: #c13584;
+      }
+      .dark-mode .social-link.youtube {
+        background-color: #4a1a1a;
+        color: #ff0000;
+      }
+      .dark-mode .social-link.linkedin {
+        background-color: #0e2a3d;
+        color: #0077b5;
+      }
+      .dark-mode .social-link.website {
+        background-color: #0e3a4a;
+        color: #0099cc;
+      }
+
+      /* Episodes Gallery */
+      .episodes-gallery {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+        gap: 20px;
+        margin-top: 20px;
       }
 
       .episode-card {
-        background-color: #fff;
-        border-radius: 8px;
-        padding: 16px;
-        margin-bottom: 16px;
-        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        background-color: #f9f9f9;
+        border-radius: 10px;
+        overflow: hidden;
+        transition: all 0.3s ease;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+        height: 100%;
+        display: flex;
+        flex-direction: column;
       }
 
       .dark-mode .episode-card {
-        background-color: #333;
-        color: #f9f9f9;
+        background-color: #2a2a2a;
       }
 
-      .episode-header {
-        display: flex;
-        align-items: center;
-        margin-bottom: 12px;
+      .episode-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 8px 15px rgba(0, 0, 0, 0.1);
+      }
+
+      .episode-image-container {
+        position: relative;
+        padding-top: 56.25%; /* 16:9 aspect ratio */
+        background-color: #e0e0e0;
+        overflow: hidden;
+      }
+
+      .dark-mode .episode-image-container {
+        background-color: #333;
       }
 
       .episode-image {
-        width: 60px;
-        height: 60px;
-        border-radius: 4px;
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
         object-fit: cover;
-        margin-right: 12px;
       }
 
-      .episode-info h3 {
+      .episode-play-button {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        width: 60px;
+        height: 60px;
+        background-color: rgba(0, 0, 0, 0.7);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        opacity: 0;
+        transition: opacity 0.3s ease;
+      }
+
+      .episode-image-container:hover .episode-play-button {
+        opacity: 1;
+      }
+
+      .episode-play-button i {
+        color: white;
+        font-size: 24px;
+        margin-left: 4px; /* Slight adjustment for play icon */
+      }
+
+      .episode-content {
+        padding: 16px;
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+      }
+
+      .episode-title {
+        font-size: 1.1rem;
+        font-weight: 600;
         margin: 0 0 8px 0;
-        font-size: 1.2rem;
+        color: #333;
+        line-height: 1.4;
+      }
+
+      .dark-mode .episode-title {
+        color: #f0f0f0;
       }
 
       .episode-meta {
         display: flex;
-        gap: 12px;
-        font-size: 0.8rem;
+        justify-content: space-between;
+        margin-bottom: 12px;
+        font-size: 0.85rem;
         color: #666;
       }
 
       .dark-mode .episode-meta {
-        color: #ccc;
+        color: #aaa;
+      }
+
+      .episode-date,
+      .episode-duration {
+        display: flex;
+        align-items: center;
+      }
+
+      .episode-date i,
+      .episode-duration i {
+        margin-right: 4px;
+        font-size: 0.9rem;
       }
 
       .episode-description {
-        margin-bottom: 12px;
-        line-height: 1.4;
         font-size: 0.9rem;
-      }
-
-      .episode-audio {
+        color: #555;
+        line-height: 1.5;
         margin-bottom: 12px;
+        flex: 1;
+
+        /* Limit to 3 lines with ellipsis */
+        display: -webkit-box;
+        -webkit-line-clamp: 3;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+        text-overflow: ellipsis;
       }
 
-      .episode-audio audio {
+      .dark-mode .episode-description {
+        color: #bbb;
+      }
+
+      .episode-actions {
+        display: flex;
+        justify-content: space-between;
+        margin-top: auto;
+      }
+
+      .episode-button {
+        padding: 8px 12px;
+        border-radius: 6px;
+        font-size: 0.85rem;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        text-align: center;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      .episode-button.primary {
+        background-color: #6e8efb;
+        color: white;
+        flex: 1;
+        margin-right: 8px;
+      }
+
+      .episode-button.primary:hover {
+        background-color: #5d7de8;
+      }
+
+      .episode-button.secondary {
+        background-color: #f0f0f0;
+        color: #333;
+        width: 36px;
+        height: 36px;
+        padding: 0;
+      }
+
+      .dark-mode .episode-button.secondary {
+        background-color: #444;
+        color: #f0f0f0;
+      }
+
+      .episode-button.secondary:hover {
+        background-color: #e0e0e0;
+      }
+
+      .dark-mode .episode-button.secondary:hover {
+        background-color: #555;
+      }
+
+      .episode-button i {
+        margin-right: 6px;
+      }
+
+      .episode-button.secondary i {
+        margin-right: 0;
+      }
+
+      /* Audio player */
+      .audio-player {
+        width: 100%;
+        padding: 16px;
+        background-color: #f0f0f0;
+        border-radius: 8px;
+        margin-top: 16px;
+        display: none;
+      }
+
+      .dark-mode .audio-player {
+        background-color: #333;
+      }
+
+      .audio-player.active {
+        display: block;
+      }
+
+      .audio-player audio {
         width: 100%;
       }
 
-      .episode-link {
-        display: inline-block;
-        padding: 6px 12px;
-        background-color: #007bff;
-        color: white;
-        text-decoration: none;
-        border-radius: 4px;
-        font-size: 0.9rem;
-      }
-
-      .episode-link:hover {
-        background-color: #0069d9;
+      /* Load more button */
+      .load-more-container {
+        display: flex;
+        justify-content: center;
+        margin-top: 30px;
       }
 
       .load-more-btn {
-        display: block;
-        width: 100%;
-        padding: 8px;
+        padding: 12px 24px;
         background-color: #f0f0f0;
         border: none;
-        border-radius: 4px;
+        border-radius: 30px;
         cursor: pointer;
-        font-size: 0.9rem;
-        margin-top: 8px;
+        font-size: 0.95rem;
+        font-weight: 500;
+        color: #333;
+        transition: all 0.2s ease;
+        display: flex;
+        align-items: center;
       }
 
       .dark-mode .load-more-btn {
-        background-color: #444;
+        background-color: #333;
         color: #f0f0f0;
       }
 
       .load-more-btn:hover {
         background-color: #e0e0e0;
+        transform: translateY(-2px);
       }
 
       .dark-mode .load-more-btn:hover {
-        background-color: #555;
+        background-color: #444;
+      }
+
+      .load-more-btn i {
+        margin-left: 8px;
       }
 
       .hidden {
         display: none;
       }
 
-      .loading {
+      /* Loading and error states */
+      .loading-container {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: 40px;
         text-align: center;
-        padding: 20px;
+      }
+
+      .loading-spinner {
+        border: 4px solid rgba(0, 0, 0, 0.1);
+        border-left-color: #6e8efb;
+        border-radius: 50%;
+        width: 40px;
+        height: 40px;
+        animation: spin 1s linear infinite;
+        margin-bottom: 16px;
+      }
+
+      @keyframes spin {
+        0% {
+          transform: rotate(0deg);
+        }
+        100% {
+          transform: rotate(360deg);
+        }
+      }
+
+      .loading-text {
+        font-size: 1rem;
         color: #666;
       }
 
-      .dark-mode .loading {
-        color: #ccc;
+      .dark-mode .loading-text {
+        color: #aaa;
       }
 
-      .error {
-        color: #d9534f;
-        padding: 10px;
-        border: 1px solid #d9534f;
+      .error-container {
+        background-color: #fff3f3;
+        border-left: 4px solid #ff5252;
+        padding: 16px;
+        margin: 20px 0;
         border-radius: 4px;
-        margin-top: 10px;
+        color: #d32f2f;
+      }
+
+      .dark-mode .error-container {
+        background-color: #3a2222;
+        border-left-color: #ff5252;
+        color: #ff8a8a;
+      }
+
+      /* Responsive adjustments */
+      @media (max-width: 768px) {
+        .podcast-header {
+          flex-direction: column;
+          text-align: center;
+          padding: 20px;
+        }
+
+        .podcast-image {
+          margin-right: 0;
+          margin-bottom: 16px;
+        }
+
+        .podcast-meta {
+          justify-content: center;
+        }
+
+        .episodes-gallery {
+          grid-template-columns: 1fr;
+        }
+      }
+
+      /* Expanded episode description */
+      .episode-description.expanded {
+        -webkit-line-clamp: unset;
+        max-height: none;
+      }
+
+      /* Now playing indicator */
+      .now-playing {
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        background-color: rgba(0, 0, 0, 0.7);
+        color: white;
+        padding: 4px 8px;
+        border-radius: 4px;
+        font-size: 0.8rem;
+        display: flex;
+        align-items: center;
+        opacity: 0;
+        transition: opacity 0.3s ease;
+      }
+
+      .now-playing.active {
+        opacity: 1;
+      }
+
+      .now-playing i {
+        margin-right: 4px;
+        font-size: 0.8rem;
+      }
+
+      /* Pulse animation for now playing */
+      .pulse {
+        display: inline-block;
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: #4caf50;
+        margin-right: 6px;
+        animation: pulse 1.5s infinite;
+      }
+
+      @keyframes pulse {
+        0% {
+          transform: scale(0.95);
+          box-shadow: 0 0 0 0 rgba(76, 175, 80, 0.7);
+        }
+
+        70% {
+          transform: scale(1);
+          box-shadow: 0 0 0 6px rgba(76, 175, 80, 0);
+        }
+
+        100% {
+          transform: scale(0.95);
+          box-shadow: 0 0 0 0 rgba(76, 175, 80, 0);
+        }
       }
     </style>
   </head>
@@ -264,7 +633,7 @@
               style="display: inline-flex; align-items: center; gap: 0.25rem"
             >
               <label for="podRss">RSS</label>
-              <button class="help-button">?</button>
+              <button type="button" class="help-button">?</button>
               <span class="help-text">
                 To find your podcast's RSS feed URL, log in to your podcast
                 hosting platform, navigate to your podcast settings or
@@ -279,17 +648,8 @@
             <input type="text" id="podName" name="podName" required />
           </div>
 
-          <!-- Podcast Preview Section -->
+          <!-- Podcast Preview Section - Redesigned -->
           <div id="podcast-preview" class="hidden"></div>
-
-          <!-- Episodes Section -->
-          <div class="episodes-section">
-            <h2>Episodes</h2>
-            <div id="episodes-container"></div>
-            <button id="load-more-episodes" class="load-more-btn hidden">
-              Load More Episodes
-            </button>
-          </div>
 
           <button type="button" class="button-primary" id="goToEmailSection">
             Next
