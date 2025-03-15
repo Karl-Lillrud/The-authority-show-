@@ -21,6 +21,11 @@ def send_invitation():
     pod_name = data.get("podName", "").strip()
     pod_rss = data.get("podRss", "").strip()
     image_url = data.get("imageUrl", "").strip()
+    description = data.get("description", "").strip()
+    social_media = data.get("socialMedia", [])
+    category = data.get("category", "").strip()
+    author = data.get("author", "").strip()
+    episodes = data.get("episodes", [])  # Get episodes data
 
     if not subject or not pod_name or not pod_rss:
         logger.error("Missing required fields for sending invitation email.")
@@ -48,6 +53,11 @@ def send_invitation():
             "podName": pod_name,
             "rssFeed": pod_rss,
             "imageUrl": image_url,
+            "description": description,
+            "socialMedia": social_media,
+            "category": category,
+            "author": author,
+            "episodes": episodes,  # Store episodes data
             "created_at": datetime.now(timezone.utc),
         }
 

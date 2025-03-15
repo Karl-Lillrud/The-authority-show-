@@ -1,4 +1,9 @@
-export async function sendInvitationEmail(podName, podRss, imageUrl) {
+export async function sendInvitationEmail(
+  podName,
+  podRss,
+  imageUrl,
+  additionalData = {}
+) {
   try {
     const response = await fetch("/send_invitation", {
       method: "POST",
@@ -9,7 +14,12 @@ export async function sendInvitationEmail(podName, podRss, imageUrl) {
         subject: "Welcome to PodManager.ai!",
         podName: podName,
         podRss: podRss,
-        imageUrl: imageUrl // Only passing imageUrl from the RSS raw data
+        imageUrl: imageUrl,
+        description: additionalData.description || "",
+        socialMedia: additionalData.socialMedia || [],
+        category: additionalData.category || "",
+        author: additionalData.author || "",
+        episodes: additionalData.episodes || [] // Include episodes data
       })
     });
     if (!response.ok) {
