@@ -17,9 +17,7 @@ export async function fetchEpisodes(guestId) {
 
 export async function viewEpisodeTasks(episodeId) {
   try {
-    const response = await fetch(
-      `/episodes/view_tasks_by_episode/${episodeId}`
-    );
+    const response = await fetch(`/episodes/view_tasks_by_episode/${episodeId}`);
     const data = await response.json();
 
     if (response.ok) {
@@ -151,7 +149,7 @@ export async function updateEpisode(episodeId, updatedData) {
 
 export async function deleteEpisode(episodeId) {
   try {
-    const response = await fetch(`/delete_episods/${episodeId}`, {
+    const response = await fetch(`/delete_episodes/${episodeId}`, {
       method: "DELETE"
     });
     const result = await response.json();

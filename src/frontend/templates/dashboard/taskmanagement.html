@@ -24,6 +24,10 @@ Management{% endblock %} {% block content %}
         <button id="add-task-btn" onclick="openTaskModal()">
           + Add Custom Task
         </button>
+        <button id="viewEpisodesBtn">View Episodes</button>
+        <button id="viewDefaultTasksBtn">View Default Tasks</button>
+        <button id="addTasksToEpisodeBtn">Add Tasks to Episode</button>
+        <button id="addCustomTaskBtn">Add Custom Task</button>
       </div>
 
       <!-- Wrapper för att flytta Select Episode till höger -->
@@ -474,4 +478,7 @@ Management{% endblock %} {% block content %}
     document.getElementById("add-tasks-episode-popup").style.display = "none";
   };
 </script>
+
+<script src="/static/requests/episodeRequest.js"></script>
+
 {% endblock %}

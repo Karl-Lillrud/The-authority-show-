@@ -3,13 +3,13 @@ from backend.database.mongo_connection import collection
 from datetime import datetime, timezone
 from backend.models.podtasks import PodtaskSchema
 import uuid
+import json
 
 # Define Blueprint
 podtask_bp = Blueprint("podtask_bp", __name__)
 
-#SHOULD ONLY BE USED FOR SPECIFIC DATA CRUD OPERATIONS
-#EXTRA FUNCTIONALITY BESIDES CRUD OPERATIONS SHOULD BE IN SERVICES
-
+# SHOULD ONLY BE USED FOR SPECIFIC DATA CRUD OPERATIONS
+# EXTRA FUNCTIONALITY BESIDES CRUD OPERATIONS SHOULD BE IN SERVICES
 
 @podtask_bp.route("/add_podtasks", methods=["POST"])
 def register_podtask():
@@ -19,8 +19,7 @@ def register_podtask():
     # Validate Content-Type
     if request.content_type != "application/json":
         return (
-            jsonify({"error": "Invalid Content-Type. Expected application/json"}),
-            415,
+            jsonify({"error": "Invalid Content-Type. Expected application/json"}), 415,
         )
 
     try:
@@ -185,8 +184,7 @@ def update_podtask(task_id):
 
     if request.content_type != "application/json":
         return (
-            jsonify({"error": "Invalid Content-Type. Expected application/json"}),
-            415,
+            jsonify({"error": "Invalid Content-Type. Expected application/json"}), 415,
         )
 
     try:
@@ -239,3 +237,19 @@ def update_podtask(task_id):
     except Exception as e:
         print(f"❌ ERROR: {e}")
         return jsonify({"error": f"Failed to update task: {str(e)}"}), 500
+
+
+# New route to fetch default tasks from JSON file
+@podtask_bp.route('/default_tasks', methods=['GET'])
+def get_default_tasks():
+    try:
+        with open('frontend/static/defaulttaskdata/default_tasks.json') as f:
+            default_tasks = json.load(f)
+        return jsonify(default_tasks), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+# Register the blueprint
+def register_podtask_routes(app):
+    app.register_blueprint(podtask_bp)
