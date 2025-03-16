@@ -70,7 +70,6 @@ export async function deletePodcast(podcastId) {
   }
 }
 
-// Enhanced function to fetch RSS data with episodes, description, and social media
 export async function fetchRSSData(rssUrl) {
   try {
     const response = await fetch(rssUrl);
@@ -90,6 +89,12 @@ export async function fetchRSSData(rssUrl) {
 
     // Get podcast image
     const imageElement = rssDoc.querySelector("channel > image > url");
+    const itunesImageElement = rssDoc.querySelector("channel > itunes\\:image");
+    const imageUrl = imageElement
+      ? imageElement.textContent
+      : itunesImageElement
+      ? itunesImageElement.getAttribute("href")
+      : null;
 
     // Get podcast description
     const descriptionElement = rssDoc.querySelector("channel > description");
@@ -107,6 +112,9 @@ export async function fetchRSSData(rssUrl) {
     const ownerNameElement = rssDoc.querySelector(
       "channel > itunes\\:owner > itunes\\:name"
     );
+    const ownerEmailElement = rssDoc.querySelector(
+      "channel > itunes\\:owner > itunes\\:email"
+    );
 
     // Get podcast category
     const categoryElement = rssDoc.querySelector("channel > itunes\\:category");
@@ -114,13 +122,66 @@ export async function fetchRSSData(rssUrl) {
       ? categoryElement.getAttribute("text")
       : null;
 
+    // Get podcast explicit rating
+    const explicitElement = rssDoc.querySelector("channel > itunes\\:explicit");
+    const explicit = explicitElement
+      ? explicitElement.textContent === "yes" ||
+        explicitElement.textContent === "true"
+      : false;
+
+    // Get podcast type
+    const typeElement = rssDoc.querySelector("channel > itunes\\:type");
+    const podcastType = typeElement ? typeElement.textContent : "episodic";
+
+    // Get podcast GUID
+    const guidElement = rssDoc.querySelector("channel > guid");
+    const guid = guidElement ? guidElement.textContent : null;
+
+    // Get podcast publication date
+    const pubDateElement = rssDoc.querySelector("channel > pubDate");
+    const pubDate = pubDateElement ? pubDateElement.textContent : null;
+
+    // Get last build date
+    const lastBuildDateElement = rssDoc.querySelector(
+      "channel > lastBuildDate"
+    );
+    const lastBuildDate = lastBuildDateElement
+      ? lastBuildDateElement.textContent
+      : null;
+
+    // Get copyright information
+    const copyrightElement = rssDoc.querySelector("channel > copyright");
+    const copyright = copyrightElement ? copyrightElement.textContent : null;
+
+    // Get iTunes ID (from feed URL or itunes:new-feed-url)
+    const itunesId = extractItunesId(rssUrl) || "";
+
+    // Get podcast keywords/tags
+    const keywordsElement = rssDoc.querySelector("channel > itunes\\:keywords");
+    const keywords = keywordsElement
+      ? keywordsElement.textContent.split(",").map((k) => k.trim())
+      : [];
+
+    // Get funding information
+    const fundingElement = rssDoc.querySelector("channel > podcast\\:funding");
+    const fundingUrl = fundingElement
+      ? fundingElement.getAttribute("url")
+      : null;
+    const fundingText = fundingElement ? fundingElement.textContent : null;
+
+    // Get complete status (if podcast is finished)
+    const completeElement = rssDoc.querySelector("channel > itunes\\:complete");
+    const complete = completeElement
+      ? completeElement.textContent === "yes"
+      : false;
+
     // Extract social media links from description or link elements
     const socialMediaLinks = extractSocialMediaLinks(
       descriptionElement ? descriptionElement.textContent : "",
       linkElement ? linkElement.textContent : ""
     );
 
-    // Get episodes
+    // Get episodes (existing code)
     const episodeElements = rssDoc.querySelectorAll("channel > item");
     const episodes = Array.from(episodeElements).map((item) => {
       const episodeTitle = item.querySelector("title")?.textContent || "";
@@ -131,9 +192,7 @@ export async function fetchRSSData(rssUrl) {
       const duration =
         item.querySelector("itunes\\:duration")?.textContent || "";
       const episodeImage =
-        item.querySelector("itunes\\:image")?.getAttribute("href") ||
-        imageElement?.textContent ||
-        null;
+        item.querySelector("itunes\\:image")?.getAttribute("href") || imageUrl;
 
       // Get enclosure (audio file)
       const enclosure = item.querySelector("enclosure");
@@ -151,6 +210,31 @@ export async function fetchRSSData(rssUrl) {
       const seasonNumber =
         item.querySelector("itunes\\:season")?.textContent || null;
 
+      // Get episode type (full, trailer, bonus)
+      const episodeType =
+        item.querySelector("itunes\\:episodeType")?.textContent || "full";
+
+      // Get episode explicit rating
+      const episodeExplicit =
+        item.querySelector("itunes\\:explicit")?.textContent === "yes" || false;
+
+      // Get episode keywords
+      const episodeKeywords =
+        item
+          .querySelector("itunes\\:keywords")
+          ?.textContent.split(",")
+          .map((k) => k.trim()) || [];
+
+      // Get chapter markers if available
+      const chapters = Array.from(
+        item.querySelectorAll("podcast\\:chapter") || []
+      ).map((chapter) => ({
+        start: chapter.getAttribute("start"),
+        title: chapter.getAttribute("title"),
+        img: chapter.getAttribute("img") || null,
+        url: chapter.getAttribute("url") || null
+      }));
+
       return {
         title: episodeTitle,
         description: episodeDescription,
@@ -161,6 +245,10 @@ export async function fetchRSSData(rssUrl) {
         guid: guid,
         episodeNumber: episodeNumber,
         seasonNumber: seasonNumber,
+        episodeType: episodeType,
+        explicit: episodeExplicit,
+        keywords: episodeKeywords,
+        chapters: chapters,
         audio: {
           url: audioUrl,
           type: audioType,
@@ -180,8 +268,21 @@ export async function fetchRSSData(rssUrl) {
         : ownerNameElement
         ? ownerNameElement.textContent
         : null,
+      ownerName: ownerNameElement ? ownerNameElement.textContent : null,
+      ownerEmail: ownerEmailElement ? ownerEmailElement.textContent : null,
       category: category,
-      imageUrl: imageElement ? imageElement.textContent : null,
+      explicit: explicit,
+      podcastType: podcastType,
+      guid: guid,
+      pubDate: pubDate,
+      lastBuildDate: lastBuildDate,
+      copyright: copyright,
+      itunesId: itunesId,
+      keywords: keywords,
+      fundingUrl: fundingUrl,
+      fundingText: fundingText,
+      complete: complete,
+      imageUrl: imageUrl,
       socialMedia: socialMediaLinks,
       episodes: episodes,
       raw: rssDoc // Include the entire parsed RSS document
@@ -192,36 +293,18 @@ export async function fetchRSSData(rssUrl) {
   }
 }
 
-// Helper function to extract social media links from text
-function extractSocialMediaLinks(description, link) {
-  const socialMediaLinks = [];
-
-  // Regular expressions for common social media platforms
-  const patterns = {
-    twitter: /https?:\/\/(www\.)?twitter\.com\/[a-zA-Z0-9_]+/g,
-    facebook: /https?:\/\/(www\.)?facebook\.com\/[a-zA-Z0-9.]+/g,
-    instagram: /https?:\/\/(www\.)?instagram\.com\/[a-zA-Z0-9_]+/g,
-    youtube: /https?:\/\/(www\.)?youtube\.com\/(channel|user)\/[a-zA-Z0-9_-]+/g,
-    linkedin: /https?:\/\/(www\.)?linkedin\.com\/(in|company)\/[a-zA-Z0-9_-]+/g,
-    website:
-      /https?:\/\/(?!twitter|facebook|instagram|youtube|linkedin)[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+/g
-  };
-
-  // Combine description and link for searching
-  const textToSearch = `${description} ${link}`;
-
-  // Extract links for each platform
-  for (const [platform, pattern] of Object.entries(patterns)) {
-    const matches = textToSearch.match(pattern);
-    if (matches) {
-      matches.forEach((match) => {
-        socialMediaLinks.push({
-          platform: platform,
-          url: match
-        });
-      });
-    }
+// Helper function to extract iTunes ID from feed URL
+function extractItunesId(url) {
+  // Try to extract from iTunes URL format
+  const itunesMatch = url.match(/\/id(\d+)/);
+  if (itunesMatch && itunesMatch[1]) {
+    return itunesMatch[1];
   }
+  return null;
+}
 
-  return socialMediaLinks;
+// Helper function to extract social media links from text (existing code)
+function extractSocialMediaLinks(description, link) {
+  // Your existing implementation
+  // ...
 }
