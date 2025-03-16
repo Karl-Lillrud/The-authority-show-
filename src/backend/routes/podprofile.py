@@ -11,7 +11,7 @@ from flask import (
 )
 from backend.database.mongo_connection import collection
 import requests
-import xml.etree.ElementTree as ET
+import feedparser
 import urllib.request
 from datetime import datetime, timezone
 
@@ -152,62 +152,27 @@ def fetch_rss():
         with urllib.request.urlopen(req) as response:
             rss_content = response.read()
 
-        # Parse the XML
-        root = ET.fromstring(rss_content)
-
-        # Find the channel element
-        channel = root.find("channel")
-        if channel is None:
-            return jsonify({"error": "Invalid RSS feed format"}), 400
+        # Parse the RSS feed using feedparser
+        feed = feedparser.parse(rss_content)
 
         # Extract basic podcast info
-        title_elem = channel.find("title")
-        title = title_elem.text if title_elem is not None else ""
-
-        description_elem = channel.find("description")
-        description = description_elem.text if description_elem is not None else ""
-
-        # Find image URL
-        image_url = ""
-        image_elem = channel.find(".//image/url")
-        if image_elem is not None:
-            image_url = image_elem.text
-
-        # Find iTunes image if regular image not found
-        if not image_url:
-            ns = {"itunes": "http://www.itunes.com/dtds/podcast-1.0.dtd"}
-            itunes_image = channel.find(".//itunes:image", ns)
-            if itunes_image is not None:
-                image_url = itunes_image.get("href", "")
+        title = feed.feed.get("title", "")
+        description = feed.feed.get("description", "")
+        image_url = feed.feed.get("image", {}).get("href", "")
 
         # Extract episodes
-        items = channel.findall("item")
         episodes = []
-
-        for item in items:
-            episode = {}
-
-            # Basic episode info
-            title_elem = item.find("title")
-            episode["title"] = title_elem.text if title_elem is not None else ""
-
-            description_elem = item.find("description")
-            episode["description"] = (
-                description_elem.text if description_elem is not None else ""
-            )
-
-            pubDate_elem = item.find("pubDate")
-            episode["pubDate"] = pubDate_elem.text if pubDate_elem is not None else ""
-
-            # Find enclosure (audio file)
-            enclosure = item.find("enclosure")
-            if enclosure is not None:
-                episode["audio"] = {
-                    "url": enclosure.get("url", ""),
-                    "type": enclosure.get("type", ""),
-                    "length": enclosure.get("length", ""),
-                }
-
+        for entry in feed.entries:
+            episode = {
+                "title": entry.get("title", ""),
+                "description": entry.get("description", ""),
+                "pubDate": entry.get("published", ""),
+                "audio": {
+                    "url": entry.get("enclosures", [{}])[0].get("href", ""),
+                    "type": entry.get("enclosures", [{}])[0].get("type", ""),
+                    "length": entry.get("enclosures", [{}])[0].get("length", ""),
+                },
+            }
             episodes.append(episode)
 
         return jsonify(
