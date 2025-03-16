@@ -6,8 +6,31 @@
     <title>Register</title>
     <link
       rel="stylesheet"
-      href="{{ url_for('static', filename='css/signin.css') }}"
+      href="{{ url_for('static', filename='css/register.css') }}"
     />
+    <link
+      rel="icon"
+      type="image/x-icon"
+      href="{{ url_for('static', filename='favicon/favicon.ico') }}"
+    />
+    <link rel="canonical" href="https://app.podmanager.ai" />
+
+    <!-- Open Graph Meta Tags -->
+    <meta
+      property="og:title"
+      content="PodManager.AI – Streamline Your Podcast Workflow"
+    />
+    <meta
+      property="og:description"
+      content="PodManager.AI is a toolkit designed to optimize podcast production by automating workflows, guest management, and team collaboration, so creators can focus on content."
+    />
+    <meta
+      property="og:image"
+      content="https://app.podmanager.ai/static/images/PodManager-AI-Background.jpeg"
+    />
+    <meta property="og:url" content="https://podmanager.ai" />
+    <meta property="og:type" content="website" />
+
     <script src="{{ url_for('static', filename='requests/podprofileRequests.js') }}"></script>
     <script src="{{ url_for('static', filename='requests/podprofile_languageRequests.js') }}"></script>
   </head>
@@ -22,8 +45,8 @@
 
     <div class="image">
       <img
-        src="{{ url_for('static', filename='images/WhatsApp Image.jpeg') }}"
-        alt="Beskrivning av bilden"
+        src="{{ url_for('static', filename='images/PodManager-AI-Background.jpeg') }}"
+        alt="Podcast Background"
       />
     </div>
 
@@ -50,7 +73,7 @@
             id="password"
             name="password"
             class="input"
-            placeholder="Password"
+            placeholder="Password (min. 8 characters, letters and numbers)"
             required
           />
         </div>
@@ -63,6 +86,12 @@
 
         <div class="form-actions">
           <button type="submit" class="button button-primary">Register</button>
+        </div>
+
+        <div class="signin-link">
+          <a href="{{ url_for('auth_bp.signin_page') }}" class="link"
+            >Sign in here!</a
+          >
         </div>
       </form>
     </div>

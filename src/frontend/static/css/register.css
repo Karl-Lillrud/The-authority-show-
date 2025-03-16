@@ -11,7 +11,10 @@
 
 body {
   font-family: var(--font-primary);
-  background-color: var(--bg-light);
+  background-image: url("https://app.podmanager.ai/static/images/PodManager-AI-Background.jpeg");
+  background-size: cover;
+  background-position: center;
+  background-color: var(--bg-light); /* Fallback color */
   color: var(--text-light);
   height: 100vh;
   display: flex;
@@ -23,13 +26,9 @@ body {
 
 .image {
   width: 100vw;
-  /* Full bredd */
   height: 100vh;
-  /* Full höjd */
   overflow: hidden;
-  /* Hindrar att något sticker ut */
   position: relative;
-  /* Viktigt för att positionera boxen */
 }
 
 .image img {
@@ -37,9 +36,7 @@ body {
   width: 100%;
   height: 100%;
   object-fit: cover;
-  /* Täcker hela ytan */
   object-position: center;
-  /* Centrerar bilden */
 }
 
 .center-box {
@@ -50,13 +47,13 @@ body {
   top: 48%;
   left: 2%;
   transform: translateY(-50%);
-  /* Perfekt vertikal centrering */
   padding: 20px;
   border-radius: 40px;
   box-shadow: -5px -5px 45px #ff7f3f, 35px 5px 15px var(--shadow-light);
   text-align: center;
   margin: 0;
-  /* Tar bort onödig marginal */
+  display: flex;
+  flex-direction: column;
 }
 
 .logo-container {
@@ -74,10 +71,14 @@ body {
   height: auto;
 }
 
+.title {
+  color: rgba(0, 0, 0, 0.543);
+  margin-bottom: 20px;
+}
+
 .button {
   padding: 10px 20px;
   border-radius: 25px;
-  margin-top: 15px;
   border: none;
   cursor: pointer;
   font-family: var(--font-primary);
@@ -85,8 +86,14 @@ body {
   box-shadow: -5px -5px 10px white, 5px 5px 10px var(--shadow-light);
   transition: all 0.3s ease;
 }
-.button.button {
-  color: #6e7f8d;
+
+.button.button-primary {
+  background-color: #ff7f3f;
+  color: white;
+  border-radius: 14px;
+  height: 6vh;
+  width: 83%;
+  margin: 10px auto;
 }
 
 .button:hover {
@@ -94,14 +101,15 @@ body {
 }
 
 .input {
-  padding: 10px;
+  padding: 24px;
   border: none;
-  border-radius: 10px;
+  border-radius: 20px;
   width: 70%;
+  border: #ff7f3f 1.3px solid;
   background: var(--bg-light);
   box-shadow: inset -5px -5px 10px white, inset 5px 5px 10px var(--shadow-light);
   transition: all 0.3s ease;
-  margin: 15px;
+  margin: 19px;
 }
 
 .input:focus {
@@ -112,35 +120,41 @@ body {
 .link {
   color: var(--highlight);
   text-decoration: none;
-  font-size: 14px;
-  margin-top: 15px;
-  margin: 30px;
+  font-size: 16px;
 }
 
 .link:hover {
   text-decoration: underline;
 }
 
-.account-text {
-  font-size: 14px;
-  color: var(--text-light);
-  margin-top: 20px;
-  margin-bottom: 5px;
+.signin-link {
+  margin-top: auto;
   text-align: center;
+  padding-bottom: 20px;
 }
 
 .error-message {
-  font-size: 14px;
+  font-size: 18px;
   color: var(--highlight);
   margin-bottom: 15px;
   text-align: center;
 }
+
 .success-message {
-  font-size: 14px;
+  font-size: 18px;
   color: var(--highlight);
   margin-bottom: 15px;
   text-align: center;
-  display: none;
+}
+
+#register-form {
+  display: flex;
+  flex-direction: column;
+  flex-grow: 1;
+}
+
+.form-actions {
+  margin: 10px 0;
 }
 
 .modal {
@@ -164,4 +178,122 @@ body {
   text-align: center;
   width: 90%;
   max-width: 250px;
+}
+
+/* Media Queries for Responsiveness */
+@media (max-width: 768px) {
+  .center-box {
+    width: 90%;
+    height: auto;
+    padding: 20px;
+    left: 50%; /* center horizontally */
+    transform: translate(
+      -50%,
+      -50%
+    ); /* adjust to center vertically & horizontally */
+  }
+
+  .button {
+    width: 100%;
+    margin-top: 10px;
+  }
+
+  .logo-container {
+    width: 80px;
+  }
+}
+
+@media (max-width: 480px) {
+  .center-box {
+    width: 100%;
+    height: auto;
+    padding: 15px;
+  }
+
+  .input {
+    padding: 10px;
+  }
+
+  .logo-container {
+    width: 60px;
+  }
+}
+
+/* Additional responsiveness media queries to match signin.css */
+
+@media screen and (max-width: 1200px) {
+  .center-box {
+    width: 35%;
+    /* Behåller left: 2% från originalet */
+  }
+}
+
+@media screen and (max-width: 992px) {
+  .center-box {
+    width: 45%;
+    /* Behåller left: 2% från originalet */
+  }
+}
+
+@media screen and (max-width: 576px) {
+  .center-box {
+    width: 60%;
+    border-radius: 30px;
+    padding: 20px 10px;
+    /* Behåller left: 2% från originalet */
+  }
+  .logo-container {
+    width: 100px;
+    top: 0px;
+  }
+
+  .title {
+    font-size: 24px;
+    margin-bottom: 15px;
+  }
+}
+
+@media screen and (max-width: 375px) {
+  .center-box {
+    width: 80%;
+    padding: 15px 8px;
+  }
+  .input {
+    padding: 10px;
+    margin: 6px;
+  }
+  .button.button-primary {
+    height: 5vh; /* reduced register button height */
+  }
+}
+
+@media screen and (max-height: 700px) {
+  .center-box {
+    height: auto;
+    min-height: 65vh;
+  }
+
+  .button.button-primary {
+    height: auto;
+    padding: 10px;
+  }
+}
+
+@media screen and (max-height: 500px) {
+  .center-box {
+    height: auto;
+    min-height: 80vh;
+    overflow-y: auto;
+  }
+
+  .title {
+    margin-bottom: 10px;
+  }
+}
+
+@media screen and (max-width: 320px) {
+  .center-box {
+    width: 94%;
+    padding: 10px 5px;
+  }
 }
