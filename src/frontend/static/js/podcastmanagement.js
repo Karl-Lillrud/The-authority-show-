@@ -739,12 +739,16 @@ async function renderPodcastList() {
       const podcastCard = document.createElement("div");
       podcastCard.className = "podcast-card";
 
+      // Use imageUrl if available, otherwise allow user to upload an image
+      const imageUrl =
+        podcast.logoUrl || podcast.imageUrl || "default-image.png";
+
       // Create the basic podcast card structure
       podcastCard.innerHTML = `
         <div class="podcast-content">
-          <div class="podcast-image" style="background-image: url('${
-            podcast.logoUrl
-          }')" data-id="${podcast._id}"></div>
+          <div class="podcast-image" style="background-image: url('${imageUrl}')" data-id="${
+        podcast._id
+      }"></div>
           <div class="podcast-info">
             <div class="podcast-header">
               <div>
@@ -1001,6 +1005,8 @@ async function viewPodcast(podcastId) {
 // Modify the renderPodcastDetail function to add the top-right action buttons
 function renderPodcastDetail(podcast) {
   const podcastDetailElement = document.getElementById("podcast-detail");
+  const imageUrl = podcast.logoUrl || podcast.imageUrl || "default-image.png";
+
   podcastDetailElement.innerHTML = `
     <div class="detail-header">
       <button class="back-btn" id="back-to-list">
@@ -1018,9 +1024,7 @@ function renderPodcastDetail(podcast) {
       </div>
     </div>
     <div class="detail-content">
-      <div class="detail-image" style="background-image: url('${
-        podcast.logoUrl
-      }')"></div>
+      <div class="detail-image" style="background-image: url('${imageUrl}')"></div>
       <!-- Episodes container with title outside scroll area -->
       <div id="episodes-list" class="episodes-list">
         <h3 class="detail-section-title">Episodes</h3>
