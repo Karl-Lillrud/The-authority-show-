@@ -18,7 +18,8 @@ document.addEventListener("DOMContentLoaded", function () {
         podcastItem.style.cursor = "pointer"; // Change cursor to pointer on hover
 
         // Fetch additional information from the RSS feed
-        let imageUrl = "https://via.placeholder.com/50"; // Default image
+        let imageUrl =
+          "{{ url_for('static', filename='images/mock-avatar.jpeg') }}";
         try {
           const rssData = await fetchRSSData(podcast.rssFeed);
           console.log("RSS Data:", rssData); // Log all RSS data
