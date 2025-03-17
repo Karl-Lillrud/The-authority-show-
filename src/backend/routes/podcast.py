@@ -27,13 +27,15 @@ def add_podcast():
 
         data = request.get_json()
         if not data:
+            logger.error("No data provided")  # Added log
             return jsonify({"error": "No data provided"}), 400  # Handle empty data
 
+        logger.info(f"Received data for adding podcast: {data}")  # Added log
         response, status = repository.add_podcast(g.user_id, data)
         return jsonify(response), status
 
     except Exception as e:
-        logger.error(f"Error adding podcast: {str(e)}")
+        logger.error(f"Error adding podcast: {str(e)}", exc_info=True)  # Added log
         return jsonify({"error": "Failed to add podcast", "details": str(e)}), 500
 
 

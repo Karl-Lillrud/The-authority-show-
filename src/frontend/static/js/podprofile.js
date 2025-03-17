@@ -1,4 +1,4 @@
-import { fetchRSSData } from "../requests/podcastRequests.js";
+import { fetchRSSData, addPodcast } from "../requests/podcastRequests.js"; // Updated import
 import { sendInvitationEmail } from "../requests/invitationRequests.js";
 import { registerEpisode } from "../requests/episodeRequest.js";
 
@@ -57,6 +57,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
             // Fetch RSS data
             const rssData = await fetchRSSData(rssUrl);
+            console.log("Fetched RSS data:", rssData); // Added log
             currentRssData = rssData;
 
             // Set the podcast name
@@ -108,24 +109,23 @@ document.addEventListener("DOMContentLoaded", () => {
         // Prepare complete podcast data to send
         const podcastData = {
           podName: podName,
-          podRss: podRss,
+          rssFeed: podRss, // Ensure rssFeed is included
           imageUrl: imageUrl,
           description: rssData.description,
           socialMedia: rssData.socialMedia,
           category: rssData.category,
-          author: rssData.author
+          author: rssData.author,
+          title: rssData.title, // Added field
+          language: rssData.language, // Added field
+          copyright_info: rssData.copyright_info // Added field
         };
 
-        console.log("Sending invitation email with complete podcast data");
-        const response = await sendInvitationEmail(
-          podName,
-          podRss,
-          imageUrl,
-          podcastData
-        );
+        console.log("Sending podcast data:", podcastData); // Added log
+        const response = await addPodcast(podcastData); // Updated function call
+        console.log("Received response from addPodcast:", response); // Added log
 
         // Save episodes to the server
-        const podcastId = response.podcastId;
+        const podcastId = response.podcast_id; // Ensure correct field name
         const episodes = rssData.episodes || [];
         for (const episode of episodes) {
           console.log("Registering episode:", episode); // Added log
@@ -134,7 +134,7 @@ document.addEventListener("DOMContentLoaded", () => {
               podcastId: podcastId,
               title: episode.title,
               description: episode.description,
-              pubDate: episode.pubDate,
+              publishDate: episode.pubDate, // Correctly map pubDate to publishDate
               duration: episode.duration,
               audioUrl: episode.audio.url,
               fileSize: episode.audio.length,

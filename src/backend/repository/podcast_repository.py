@@ -8,6 +8,7 @@ import feedparser
 
 logger = logging.getLogger(__name__)
 
+
 class PodcastRepository:
     def __init__(self):
         self.collection = collection.database.Podcasts
@@ -25,21 +26,43 @@ class PodcastRepository:
 
             # Inject the accountId into the data
             data["accountId"] = account_id
-            
+
             # Validate data using PodcastSchema
             schema = PodcastSchema()
             errors = schema.validate(data)
             if errors:
+                logger.error(f"Validation errors: {errors}")  # Added log
                 raise ValueError("Invalid data", errors)
 
             validated_data = schema.load(data)
-            
+            logger.info(f"Validated data: {validated_data}")  # Added log
+
             # Ensure account exists and belongs to the user
-            account_query = {"userId": user_id, "id": account_id} if "id" in user_account else {"userId": user_id, "_id": user_account["_id"]}
+            account_query = (
+                {"userId": user_id, "id": account_id}
+                if "id" in user_account
+                else {"userId": user_id, "_id": user_account["_id"]}
+            )
             account = collection.database.Accounts.find_one(account_query)
             if not account:
                 raise ValueError("Invalid account ID or no permission to add podcast.")
-            
+
+            # Fetch RSS feed data
+            rss_url = validated_data.get("rssFeed")
+            if rss_url:
+                rss_data, status_code = self.fetch_rss_feed(rss_url)
+                if status_code != 200:
+                    logger.error(
+                        f"Failed to fetch RSS feed data: {rss_data}"
+                    )  # Added log
+                    raise ValueError("Failed to fetch RSS feed data")
+
+                # Merge RSS feed data into validated_data
+                validated_data.update(rss_data)
+                logger.info(
+                    f"Updated validated data with RSS feed data: {validated_data}"
+                )  # Added log
+
             # Generate a unique podcast ID
             podcast_id = str(uuid.uuid4())
             podcast_item = {
@@ -49,7 +72,7 @@ class PodcastRepository:
                 "podName": validated_data.get("podName"),
                 "ownerName": validated_data.get("ownerName"),
                 "hostName": validated_data.get("hostName"),
-                "rssFeed": validated_data.get("rssFeed"),
+                "rssFeed": validated_data.get("rssFeed"),  # Ensure rssFeed is included
                 "googleCal": validated_data.get("googleCal"),
                 "podUrl": validated_data.get("podUrl"),
                 "guestUrl": validated_data.get("guestUrl"),
@@ -57,39 +80,69 @@ class PodcastRepository:
                 "email": validated_data.get("email"),
                 "description": validated_data.get("description"),
                 "logoUrl": validated_data.get("logoUrl"),
-                "category": validated_data.get("category"),
-                "defaultTasks": validated_data.get("defaultTasks", ""),  # Empty string if not provided
+                "category": validated_data.get("category", ""),  # Fixed field
+                "defaultTasks": validated_data.get(
+                    "defaultTasks", ""
+                ),  # Empty string if not provided
                 "created_at": datetime.now(timezone.utc),
+                "title": validated_data.get("title", ""),  # Added field
+                "language": validated_data.get("language", ""),  # Added field
+                "author": validated_data.get("author", ""),  # Added field
+                "copyright_info": validated_data.get(
+                    "copyright_info", ""
+                ),  # Added field
+                "imageUrl": validated_data.get("imageUrl", ""),  # Added field
             }
+
+            logger.info(f"Podcast item to be inserted: {podcast_item}")  # Added log
 
             # Insert into database
             result = self.collection.insert_one(podcast_item)
             if result.inserted_id:
-                return {"message": "Podcast added successfully", "podcast_id": podcast_id, "redirect_url": "/index.html"}, 201
+                return {
+                    "message": "Podcast added successfully",
+                    "podcast_id": podcast_id,
+                    "redirect_url": "/index.html",
+                }, 201
             else:
                 raise ValueError("Failed to add podcast.")
 
         except ValueError as e:
             # Handle specific business logic errors
             if isinstance(e.args[0], str):
+                logger.error(f"ValueError: {e.args[0]}")  # Added log
                 return {"error": e.args[0]}, 400  # Specific business error
             else:
-                return {"error": e.args[0], "details": e.args[1]}, 400  # Validation errors
+                logger.error(
+                    f"ValueError: {e.args[0]}, Details: {e.args[1]}"
+                )  # Added log
+                return {
+                    "error": e.args[0],
+                    "details": e.args[1],
+                }, 400  # Validation errors
 
         except Exception as e:
             # Catch any unexpected errors (e.g., database issues)
-            logger.error(f"Error adding podcast: {str(e)}")
+            logger.error(f"Error adding podcast: {str(e)}", exc_info=True)  # Added log
             return {"error": "Failed to add podcast", "details": str(e)}, 500
-        
+
     def get_podcasts(self, user_id):
         try:
-            user_accounts = list(collection.database.Accounts.find({"userId": user_id}, {"id": 1, "_id": 1}))
-            user_account_ids = [account.get("id", str(account["_id"])) for account in user_accounts]
+            user_accounts = list(
+                collection.database.Accounts.find(
+                    {"userId": user_id}, {"id": 1, "_id": 1}
+                )
+            )
+            user_account_ids = [
+                account.get("id", str(account["_id"])) for account in user_accounts
+            ]
 
             if not user_account_ids:
                 return {"podcast": []}, 200  # No podcasts if no accounts
 
-            podcasts = list(self.collection.find({"accountId": {"$in": user_account_ids}}))
+            podcasts = list(
+                self.collection.find({"accountId": {"$in": user_account_ids}})
+            )
             for podcast in podcasts:
                 podcast["_id"] = str(podcast["_id"])
 
@@ -101,13 +154,21 @@ class PodcastRepository:
 
     def get_podcast_by_id(self, user_id, podcast_id):
         try:
-            user_accounts = list(collection.database.Accounts.find({"userId": user_id}, {"id": 1, "_id": 1}))
-            user_account_ids = [account.get("id", str(account["_id"])) for account in user_accounts]
+            user_accounts = list(
+                collection.database.Accounts.find(
+                    {"userId": user_id}, {"id": 1, "_id": 1}
+                )
+            )
+            user_account_ids = [
+                account.get("id", str(account["_id"])) for account in user_accounts
+            ]
 
             if not user_account_ids:
                 return {"error": "No accounts found for user"}, 403
 
-            podcast = self.collection.find_one({"_id": podcast_id, "accountId": {"$in": user_account_ids}})
+            podcast = self.collection.find_one(
+                {"_id": podcast_id, "accountId": {"$in": user_account_ids}}
+            )
             if not podcast:
                 return {"error": "Podcast not found or unauthorized"}, 404
 
@@ -116,19 +177,26 @@ class PodcastRepository:
         except Exception as e:
             logger.error(f"Error fetching podcast: {e}")
             return {"error": f"Failed to fetch podcast: {str(e)}"}, 500
-        
 
     def delete_podcast(self, user_id, podcast_id):
         try:
             # Fetch user account IDs
-            user_accounts = list(collection.database.Accounts.find({"userId": user_id}, {"id": 1, "_id": 1}))
-            user_account_ids = [account.get("id", str(account["_id"])) for account in user_accounts]
+            user_accounts = list(
+                collection.database.Accounts.find(
+                    {"userId": user_id}, {"id": 1, "_id": 1}
+                )
+            )
+            user_account_ids = [
+                account.get("id", str(account["_id"])) for account in user_accounts
+            ]
 
             if not user_account_ids:
                 raise ValueError("No accounts found for user")
 
             # Find podcast by podcast_id and accountId
-            podcast = self.collection.find_one({"_id": podcast_id, "accountId": {"$in": user_account_ids}})
+            podcast = self.collection.find_one(
+                {"_id": podcast_id, "accountId": {"$in": user_account_ids}}
+            )
             if not podcast:
                 raise ValueError("Podcast not found or unauthorized")
 
@@ -141,24 +209,34 @@ class PodcastRepository:
 
         except ValueError as e:
             # Handle specific errors like no accounts found or podcast not found
-            return {"error": str(e)}, 400  # Return a 400 Bad Request for known business errors
+            return {
+                "error": str(e)
+            }, 400  # Return a 400 Bad Request for known business errors
 
         except Exception as e:
             # Catch any unexpected errors (e.g., database connection issues)
             logger.error(f"Error deleting podcast: {str(e)}")
             return {"error": "Failed to delete podcast", "details": str(e)}, 500
-        
+
     def edit_podcast(self, user_id, podcast_id, data):
         try:
             # Fetch user account IDs
-            user_accounts = list(collection.database.Accounts.find({"userId": user_id}, {"id": 1, "_id": 1}))
-            user_account_ids = [account.get("id", str(account["_id"])) for account in user_accounts]
+            user_accounts = list(
+                collection.database.Accounts.find(
+                    {"userId": user_id}, {"id": 1, "_id": 1}
+                )
+            )
+            user_account_ids = [
+                account.get("id", str(account["_id"])) for account in user_accounts
+            ]
 
             if not user_account_ids:
                 raise ValueError("No accounts found for user")
 
             # Find podcast by podcast_id and accountId
-            podcast = self.collection.find_one({"_id": podcast_id, "accountId": {"$in": user_account_ids}})
+            podcast = self.collection.find_one(
+                {"_id": podcast_id, "accountId": {"$in": user_account_ids}}
+            )
             if not podcast:
                 raise ValueError("Podcast not found or unauthorized")
 
@@ -169,12 +247,18 @@ class PodcastRepository:
                 raise ValueError("Invalid data", errors)
 
             # Prepare update data by filtering out None values
-            update_data = {key: value for key, value in data.items() if value is not None}
+            update_data = {
+                key: value for key, value in data.items() if value is not None
+            }
             if not update_data:
-                return {"message": "No update data provided"}, 200  # No actual update needed
+                return {
+                    "message": "No update data provided"
+                }, 200  # No actual update needed
 
             # Perform update operation
-            result = self.collection.update_one({"_id": podcast_id}, {"$set": update_data})
+            result = self.collection.update_one(
+                {"_id": podcast_id}, {"$set": update_data}
+            )
 
             if result.modified_count == 1:
                 return {"message": "Podcast updated successfully"}, 200
@@ -184,20 +268,26 @@ class PodcastRepository:
         except ValueError as e:
             # Specific business logic error
             if isinstance(e.args[0], str):
-                return {"error": e.args[0]}, 400  # Return specific error with 400 for bad input
+                return {
+                    "error": e.args[0]
+                }, 400  # Return specific error with 400 for bad input
             else:
-                return {"error": e.args[0], "details": e.args[1]}, 400  # For validation errors
+                return {
+                    "error": e.args[0],
+                    "details": e.args[1],
+                }, 400  # For validation errors
 
         except Exception as e:
             # Catch any unexpected errors (e.g., database connection issues)
             logger.error(f"Error updating podcast: {str(e)}")
             return {"error": "Failed to update podcast", "details": str(e)}, 500
-        
+
     def fetch_rss_feed(self, rss_url):
         try:
             # Fetch the RSS feed
             req = urllib.request.Request(
-                rss_url, headers={"User-Agent": "Mozilla/5.0 (PodManager.ai RSS Parser)"}
+                rss_url,
+                headers={"User-Agent": "Mozilla/5.0 (PodManager.ai RSS Parser)"},
             )
             with urllib.request.urlopen(req) as response:
                 rss_content = response.read()
@@ -209,6 +299,10 @@ class PodcastRepository:
             title = feed.feed.get("title", "")
             description = feed.feed.get("description", "")
             image_url = feed.feed.get("image", {}).get("href", "")
+            language = feed.feed.get("language", "")  # Added field
+            author = feed.feed.get("author", "")  # Added field
+            copyright_info = feed.feed.get("copyright", "")  # Added field
+            category = feed.feed.get("itunes_category", "")  # Added field
 
             # Extract episodes
             episodes = []
@@ -229,13 +323,13 @@ class PodcastRepository:
                 "title": title,
                 "description": description,
                 "imageUrl": image_url,
+                "language": language,  # Added field
+                "author": author,  # Added field
+                "copyright_info": copyright_info,  # Added field
+                "category": category,  # Added field
                 "episodes": episodes[:10],  # Limit to first 10 episodes
             }, 200
 
         except Exception as e:
             logger.error(f"Error fetching RSS feed: {e}", exc_info=True)
             return {"error": f"Error fetching RSS feed: {str(e)}"}, 500
-
-        
-    
-

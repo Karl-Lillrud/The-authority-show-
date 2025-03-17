@@ -7,7 +7,7 @@ class EpisodeSchema(Schema):
     podcastId = fields.Str(required=True)
     title = fields.Str(required=True)
     description = fields.Str(allow_none=True)
-    pubDate = fields.Str(allow_none=True)  # Renamed from publishDate to pubDate
+    publishDate = fields.Str(allow_none=True)  # Ensure publishDate is correctly defined
     duration = fields.Str(allow_none=True)
     status = fields.Str(allow_none=True)
     defaultTasks = fields.List(fields.Nested(PodtaskSchema), allow_none=True)
@@ -36,7 +36,7 @@ class EpisodeSchema(Schema):
     def process_empty_strings(self, data, **kwargs):
         # Convert empty strings to None for fields that expect specific types
         for key in [
-            "pubDate",  # Updated key
+            "publishDate",  # Ensure publishDate is correctly processed
             "description",
             "duration",
             "status",
