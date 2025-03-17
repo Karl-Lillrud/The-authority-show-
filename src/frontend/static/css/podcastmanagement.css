@@ -247,6 +247,15 @@ header {
   transition: all 0.3s ease;
 }
 
+.landing-page-btn {
+  background: none;
+  border: none;
+  color: var(--highlight-color);
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
 .view-details-btn:hover {
   transform: translateY(-2px);
   text-decoration: underline;
