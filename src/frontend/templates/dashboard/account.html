@@ -43,7 +43,7 @@
         <div class="profile-pic-container">
           <img
             id="profile-pic"
-            src="https://podmanagerstorage.blob.core.windows.net/blob-container/profile_icon.jpg"
+            src="{{ url_for('static', filename='images/mock-avatar.jpeg') }}"
             alt="Profile Picture"
           />
           <input type="file" id="upload-pic" accept="image/*" />

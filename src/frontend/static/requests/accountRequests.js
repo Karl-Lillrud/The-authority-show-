@@ -21,6 +21,23 @@ document.querySelectorAll(".sidebar-item").forEach((item) => {
   });
 });
 
+// Ensure only the Profile settings are displayed when the page is loaded
+document.addEventListener("DOMContentLoaded", function () {
+  // Hide all settings sections
+  document
+    .querySelectorAll(".settings-section")
+    .forEach((section) => (section.style.display = "none"));
+  // Show the Profile section
+  document.getElementById("profile-section").style.display = "block";
+  // Set the Profile sidebar item as active
+  document
+    .querySelectorAll(".sidebar-item")
+    .forEach((item) => item.classList.remove("active"));
+  document
+    .querySelector('.sidebar-item[data-target="profile-section"]')
+    .classList.add("active");
+});
+
 // Subscription functionality for adding user to mailing list
 document
   .getElementById("save-subscription")
