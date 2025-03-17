@@ -276,6 +276,15 @@ body {
   gap: 0.5rem;
 }
 
+.landing-page-btn {
+  background: none;
+  border: none;
+  color: var(--highlight-color);
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
 .view-details-btn:hover {
   transform: translateX(4px);
 }
