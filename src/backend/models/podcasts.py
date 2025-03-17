@@ -25,3 +25,8 @@ class PodcastSchema(Schema):
     copyright_info = fields.Str(allow_none=True)  # Added field
     imageUrl = fields.Str(allow_none=True)  # Added field
     podRss = fields.Str(allow_none=True)  # Added field
+    generator = fields.Str(allow_none=True)  # Added field
+    lastBuildDate = fields.Str(allow_none=True)  # Added field
+    itunesType = fields.Str(allow_none=True)  # Added field
+    link = fields.Str(allow_none=True)  # Added field
+    itunesOwner = fields.Dict(allow_none=True)  # Added field

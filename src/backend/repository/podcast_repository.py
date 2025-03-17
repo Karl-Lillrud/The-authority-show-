@@ -298,17 +298,52 @@ class PodcastRepository:
             # Extract basic podcast info
             title = feed.feed.get("title", "")
             description = feed.feed.get("description", "")
+            link = feed.feed.get("link", "")  # Added podcast link
             image_url = feed.feed.get("image", {}).get("href", "")
-            language = feed.feed.get("language", "")  # Added field
-            author = feed.feed.get("author", "")  # Added field
-            copyright_info = feed.feed.get("copyright", "")  # Added field
-            category = feed.feed.get("itunes_category", {}).get(
-                "text", ""
-            )  # Added field
+            language = feed.feed.get("language", "")
+            author = feed.feed.get("author", "")
+            copyright_info = feed.feed.get("copyright", "")
+            generator = feed.feed.get("generator", "")  # Added generator
+            last_build_date = feed.feed.get(
+                "lastBuildDate", ""
+            )  # Added last build date
+            itunes_type = feed.feed.get("itunes_type", "")  # Added podcast type
+            itunes_owner = {
+                "name": feed.feed.get("itunes_owner", {}).get("itunes_name", ""),
+                "email": feed.feed.get("itunes_owner", {}).get("itunes_email", ""),
+            }  # Added iTunes owner info
+
+            # Handle categories and subcategories
+            categories = []
+            for cat in feed.feed.get("itunes_categories", []):
+                main_cat = cat.get("text", "")
+                sub_cats = [sub.get("text", "") for sub in cat.get("subcategories", [])]
+                categories.append({"main": main_cat, "subcategories": sub_cats})
+            if not categories and feed.feed.get("itunes_category"):
+                categories.append(
+                    {
+                        "main": feed.feed.get("itunes_category", {}).get("text", ""),
+                        "subcategories": [],
+                    }
+                )
 
             # Extract episodes
             episodes = []
             for entry in feed.entries:
+                # Parse duration (e.g., "00:44:56" to seconds)
+                duration = entry.get("itunes_duration", "")
+                duration_seconds = None
+                if duration and ":" in duration:
+                    time_parts = duration.split(":")
+                    if len(time_parts) == 3:  # HH:MM:SS
+                        duration_seconds = (
+                            int(time_parts[0]) * 3600
+                            + int(time_parts[1]) * 60
+                            + int(time_parts[2])
+                        )
+                    elif len(time_parts) == 2:  # MM:SS
+                        duration_seconds = int(time_parts[0]) * 60 + int(time_parts[1])
+
                 episode = {
                     "title": entry.get("title", ""),
                     "description": entry.get("description", ""),
@@ -331,17 +366,24 @@ class PodcastRepository:
                     "summary": entry.get("itunes_summary", ""),
                     "author": entry.get("author", ""),
                     "isHidden": entry.get("itunes_isHidden", None),
+                    "duration": duration_seconds,  # Added duration in seconds
+                    "creator": entry.get("dc_creator", ""),  # Added Dublin Core creator
                 }
                 episodes.append(episode)
 
             return {
                 "title": title,
                 "description": description,
+                "link": link,  # Added
                 "imageUrl": image_url,
-                "language": language,  # Added field
-                "author": author,  # Added field
-                "copyright_info": copyright_info,  # Added field
-                "category": category,  # Added field
+                "language": language,
+                "author": author,
+                "copyright_info": copyright_info,
+                "generator": generator,  # Added
+                "lastBuildDate": last_build_date,  # Added
+                "itunesType": itunes_type,  # Added
+                "itunesOwner": itunes_owner,  # Added
+                "categories": categories,  # Updated to include subcategories
                 "episodes": episodes[:10],  # Limit to first 10 episodes
             }, 200
 

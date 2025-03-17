@@ -109,23 +109,28 @@ document.addEventListener("DOMContentLoaded", () => {
         // Prepare complete podcast data to send
         const podcastData = {
           podName: podName,
-          rssFeed: podRss, // Ensure rssFeed is included
+          rssFeed: podRss,
           imageUrl: imageUrl,
           description: rssData.description,
           socialMedia: rssData.socialMedia,
-          category: rssData.category,
+          category: rssData.categories?.[0]?.main || "", // Use main category
           author: rssData.author,
-          title: rssData.title, // Added field
-          language: rssData.language, // Added field
-          copyright_info: rssData.copyright_info, // Added field
-          ownerName: rssData.ownerName || null, // Ensure ownerName is included
-          hostName: rssData.hostName || null, // Ensure hostName is included
-          googleCal: rssData.googleCal || null, // Ensure googleCal is included
-          podUrl: rssData.podUrl || null, // Ensure podUrl is included
-          guestUrl: rssData.guestUrl || null, // Ensure guestUrl is included
-          email: rssData.email || null, // Ensure email is included
-          logoUrl: rssData.logoUrl || null, // Ensure logoUrl is included
-          defaultTasks: rssData.defaultTasks || null // Ensure defaultTasks is included
+          title: rssData.title,
+          language: rssData.language,
+          copyright_info: rssData.copyright_info,
+          link: rssData.link, // Added
+          generator: rssData.generator, // Added
+          lastBuildDate: rssData.lastBuildDate, // Added
+          itunesType: rssData.itunesType, // Added
+          itunesOwner: rssData.itunesOwner, // Added
+          ownerName: rssData.itunesOwner?.name || null,
+          hostName: rssData.hostName || null,
+          googleCal: rssData.googleCal || null,
+          podUrl: rssData.podUrl || null,
+          guestUrl: rssData.guestUrl || null,
+          email: rssData.itunesOwner?.email || null,
+          logoUrl: rssData.logoUrl || null,
+          defaultTasks: rssData.defaultTasks || null
         };
 
         console.log("Sending podcast data:", podcastData); // Added log
@@ -186,7 +191,6 @@ document.addEventListener("DOMContentLoaded", () => {
       (social) =>
         social.url.includes("spotify.com") || social.platform === "spotify"
     );
-
     const appleLink = rssData.socialMedia?.find(
       (social) =>
         social.url.includes("apple.com/podcast") || social.platform === "apple"
@@ -205,18 +209,30 @@ document.addEventListener("DOMContentLoaded", () => {
               const platform = social.platform || "website";
               const icon = getPlatformIcon(platform);
               return `
-            <a href="${
-              social.url
-            }" target="_blank" class="social-link ${platform}">
-              <i class="${icon}"></i>
-              ${capitalizeFirstLetter(platform)}
-            </a>
-          `;
+              <a href="${
+                social.url
+              }" target="_blank" class="social-link ${platform}">
+                <i class="${icon}"></i>
+                ${capitalizeFirstLetter(platform)}
+              </a>
+            `;
             })
             .join("")
         : "";
 
-    // Build the complete podcast preview HTML
+    // Format categories with subcategories
+    const categoriesHtml = rssData.categories
+      ? rssData.categories
+          .map((cat) => {
+            const subCats =
+              cat.subcategories.length > 0
+                ? ` (${cat.subcategories.join(", ")})`
+                : "";
+            return `<span class="podcast-meta-item"><i class="fas fa-tag"></i> ${cat.main}${subCats}</span>`;
+          })
+          .join("")
+      : "";
+
     podcastPreviewContainer.innerHTML = `
       <div class="podcast-header">
         <img src="${
@@ -230,11 +246,7 @@ document.addEventListener("DOMContentLoaded", () => {
               : ""
           }
           <div class="podcast-meta">
-            ${
-              rssData.category
-                ? `<span class="podcast-meta-item"><i class="fas fa-tag"></i> ${rssData.category}</span>`
-                : ""
-            }
+            ${categoriesHtml}
             ${
               rssData.language
                 ? `<span class="podcast-meta-item"><i class="fas fa-globe"></i> ${rssData.language}</span>`
@@ -243,6 +255,11 @@ document.addEventListener("DOMContentLoaded", () => {
             <span class="podcast-meta-item"><i class="fas fa-microphone"></i> ${
               (rssData.episodes || []).length
             } Episodes</span>
+            ${
+              rssData.itunesType
+                ? `<span class="podcast-meta-item"><i class="fas fa-list"></i> ${rssData.itunesType}</span>`
+                : ""
+            }
           </div>
           <div class="podcast-actions">
             ${
@@ -266,26 +283,67 @@ document.addEventListener("DOMContentLoaded", () => {
       <div class="podcast-body">
         ${
           rssData.description
-            ? `
-          <div class="podcast-description">${rssData.description}</div>
-        `
+            ? `<div class="podcast-description">${rssData.description}</div>`
             : ""
         }
-        
+        ${
+          rssData.copyright_info
+            ? `<p class="podcast-copyright">© ${rssData.copyright_info}</p>`
+            : ""
+        }
+        ${
+          rssData.itunesOwner.name || rssData.itunesOwner.email
+            ? `
+            <h3 class="podcast-section-title">Owner</h3>
+            <div class="podcast-owner">
+              ${
+                rssData.itunesOwner.name
+                  ? `<p><i class="fas fa-user"></i> ${rssData.itunesOwner.name}</p>`
+                  : ""
+              }
+              ${
+                rssData.itunesOwner.email
+                  ? `<p><i class="fas fa-envelope"></i> <a href="mailto:${rssData.itunesOwner.email}">${rssData.itunesOwner.email}</a></p>`
+                  : ""
+              }
+            </div>
+          `
+            : ""
+        }
+        ${
+          rssData.generator || rssData.lastBuildDate
+            ? `
+            <h3 class="podcast-section-title">Details</h3>
+            <div class="podcast-details">
+              ${
+                rssData.generator
+                  ? `<p><i class="fas fa-cogs"></i> Generated by: ${rssData.generator}</p>`
+                  : ""
+              }
+              ${
+                rssData.lastBuildDate
+                  ? `<p><i class="fas fa-clock"></i> Last Updated: ${new Date(
+                      rssData.lastBuildDate
+                    ).toLocaleString()}</p>`
+                  : ""
+              }
+            </div>
+          `
+            : ""
+        }
         ${
           socialMediaLinks
             ? `
-          <h3 class="podcast-section-title">Connect</h3>
-          <div class="social-links">
-            ${socialMediaLinks}
-          </div>
-        `
+            <h3 class="podcast-section-title">Connect</h3>
+            <div class="social-links">
+              ${socialMediaLinks}
+            </div>
+          `
             : ""
         }
       </div>
     `;
   }
-
   // Function to display episodes in a horizontal carousel
   function displayEpisodesCarousel(episodes) {
     if (!episodesCarouselContainer || !episodesSlider || episodes.length === 0)
@@ -294,7 +352,6 @@ document.addEventListener("DOMContentLoaded", () => {
     episodesCarouselContainer.classList.remove("hidden");
     episodesSlider.innerHTML = "";
 
-    // Create episode cards
     episodes.forEach((episode, index) => {
       // Format date
       const pubDate = new Date(episode.pubDate);
@@ -302,22 +359,20 @@ document.addEventListener("DOMContentLoaded", () => {
         ? episode.pubDate
         : pubDate.toLocaleDateString();
 
-      // Format duration
-      let formattedDuration = episode.duration;
+      // Format duration from seconds to HH:MM:SS
+      let formattedDuration = "";
       if (episode.duration) {
-        if (!isNaN(episode.duration) && !episode.duration.includes(":")) {
-          const minutes = Math.floor(Number.parseInt(episode.duration) / 60);
-          const seconds = Number.parseInt(episode.duration) % 60;
-          formattedDuration = `${minutes}:${seconds
-            .toString()
-            .padStart(2, "0")}`;
-        }
+        const hours = Math.floor(episode.duration / 3600);
+        const minutes = Math.floor((episode.duration % 3600) / 60);
+        const seconds = episode.duration % 60;
+        formattedDuration = `${hours > 0 ? `${hours}:` : ""}${minutes
+          .toString()
+          .padStart(2, "0")}:${seconds.toString().padStart(2, "0")}`;
       }
 
       // Generate unique ID for this episode
       const episodeId = `episode-${index}-${Date.now()}`;
 
-      // Create episode card
       const episodeCard = document.createElement("div");
       episodeCard.className = "episode-card";
       episodeCard.dataset.episodeId = episodeId;
@@ -345,10 +400,34 @@ document.addEventListener("DOMContentLoaded", () => {
           <div class="episode-meta">
             <span>${formattedDate}</span>
             ${formattedDuration ? `<span>${formattedDuration}</span>` : ""}
+            ${
+              episode.season && episode.episode
+                ? `<span>S${episode.season} E${episode.episode}</span>`
+                : ""
+            }
+            ${
+              episode.explicit === "Yes"
+                ? `<span class="explicit-tag">E</span>`
+                : ""
+            }
           </div>
-          <div class="episode-description" id="desc-${episodeId}">${
-        episode.description || "No description available."
-      }</div>
+          <div class="episode-description" id="desc-${episodeId}">
+            ${
+              episode.summary ||
+              episode.description ||
+              "No description available."
+            }
+            ${
+              episode.author && episode.author !== currentRssData.author
+                ? `<p><i class="fas fa-user"></i> ${episode.author}</p>`
+                : ""
+            }
+            ${
+              episode.link
+                ? `<p><a href="${episode.link}" target="_blank">Listen on Source</a></p>`
+                : ""
+            }
+          </div>
           <div class="episode-actions">
             <button class="episode-btn primary" data-audio-url="${
               episode.audio?.url
@@ -363,7 +442,7 @@ document.addEventListener("DOMContentLoaded", () => {
             <audio controls>
               <source src="${episode.audio?.url}" type="${
         episode.audio?.type || "audio/mpeg"
-      }">
+      }">episodic
               Your browser does not support the audio element.
             </audio>
           </div>
@@ -373,13 +452,9 @@ document.addEventListener("DOMContentLoaded", () => {
       episodesSlider.appendChild(episodeCard);
     });
 
-    // Setup episode interactions
     setupEpisodeInteractions();
-
-    // Setup carousel navigation
     setupCarouselNavigation();
   }
-
   // Function to setup episode interactions
   function setupEpisodeInteractions() {
     // Play buttons
