@@ -1,8 +1,22 @@
-from flask import Blueprint, render_template, g, redirect, url_for, session, request, jsonify, current_app
+from flask import (
+    Blueprint,
+    render_template,
+    g,
+    redirect,
+    url_for,
+    session,
+    request,
+    jsonify,
+    current_app,
+)
 from backend.database.mongo_connection import collection
 import requests
+import feedparser
+import urllib.request
+from datetime import datetime, timezone
 
 podprofile_bp = Blueprint("podprofile_bp", __name__)
+
 
 @podprofile_bp.route("/podprofile", methods=["GET"])
 def podprofile():
@@ -11,7 +25,9 @@ def podprofile():
 
     # Fetch the user's email using the /get_email endpoint
     try:
-        response = requests.get(url_for("register_bp.get_email", _external=True), cookies=request.cookies)
+        response = requests.get(
+            url_for("register_bp.get_email", _external=True), cookies=request.cookies
+        )
         response.raise_for_status()
         user_email = response.json().get("email")
         if not user_email:
@@ -22,6 +38,7 @@ def podprofile():
 
     session["user_email"] = user_email  # Store the email in the session
     return render_template("podprofile/podprofile.html", user_email=user_email)
+
 
 @podprofile_bp.route("/save_podprofile", methods=["POST"])
 def save_podprofile():
@@ -34,21 +51,32 @@ def save_podprofile():
             "email": user_email,
             "podName": data.get("podName"),
             "podRss": data.get("podRss"),
+            "imageUrl": data.get("imageUrl"),
+            "description": data.get("description"),
+            "socialMedia": data.get("socialMedia", []),
+            "category": data.get("category"),
+            "author": data.get("author"),
         }
-        collection["User"].insert_one(user_data)
+        collection["Users"].insert_one(user_data)
 
         # Save to Podcast collection
         podcast_data = {
             "UserID": user_email,
             "Podname": data.get("podName"),
             "RSSFeed": data.get("podRss"),
+            "imageUrl": data.get("imageUrl"),
+            "description": data.get("description"),
+            "socialMedia": data.get("socialMedia", []),
+            "category": data.get("category"),
+            "author": data.get("author"),
         }
-        collection["Podcast"].insert_one(podcast_data)
+        collection["Podcasts"].insert_one(podcast_data)
 
         return jsonify({"success": True})
     except Exception as e:
         current_app.logger.error(f"Error saving podprofile: {e}")
         return jsonify({"success": False, "error": str(e)}), 500
+
 
 @podprofile_bp.route("/post_podcast_data", methods=["POST"])
 def post_podcast_data():
@@ -56,6 +84,12 @@ def post_podcast_data():
         data = request.json
         pod_name = data.get("podName")
         pod_rss = data.get("podRss")
+        image_url = data.get("imageUrl")
+        description = data.get("description")
+        social_media = data.get("socialMedia", [])
+        category = data.get("category")
+        author = data.get("author")
+        episodes = data.get("episodes", [])  # Get episodes data
         user_email = session.get("user_email", "")
 
         if not pod_name or not pod_rss:
@@ -66,10 +100,90 @@ def post_podcast_data():
             "user_email": user_email,
             "podName": pod_name,
             "podRss": pod_rss,
+            "imageUrl": image_url,
+            "description": description,
+            "socialMedia": social_media,
+            "category": category,
+            "author": author,
         }
-        collection["Podcasts"].insert_one(podcast_data)
+        result = collection["Podcasts"].insert_one(podcast_data)
+        podcast_id = str(result.inserted_id)
+
+        # Save episodes to the Episodes collection
+        for episode in episodes:
+            episode_data = {
+                "podcast_id": podcast_id,
+                "title": episode.get("title"),
+                "description": episode.get("description"),
+                "publishDate": episode.get("pubDate"),
+                "duration": episode.get("duration"),
+                "audioUrl": episode.get("audioUrl"),
+                "fileSize": episode.get("fileSize"),
+                "fileType": episode.get("fileType"),
+                "guid": episode.get("guid"),
+                "season": episode.get("season"),
+                "episode": episode.get("episode"),
+                "episodeType": episode.get("episodeType"),
+                "explicit": episode.get("explicit"),
+                "imageUrl": episode.get("imageUrl"),
+                "created_at": datetime.now(timezone.utc),
+                "updated_at": datetime.now(timezone.utc),
+            }
+            collection["Episodes"].insert_one(episode_data)
 
         return jsonify({"redirectUrl": "/podprofile"}), 200
     except Exception as e:
         current_app.logger.error(f"Error posting podcast data: {e}")
         return jsonify({"error": str(e)}), 500
+
+
+@podprofile_bp.route("/fetch_rss", methods=["GET"])
+def fetch_rss():
+    """Server-side RSS feed fetching for clients that might have CORS issues"""
+    rss_url = request.args.get("url")
+    if not rss_url:
+        return jsonify({"error": "No RSS URL provided"}), 400
+
+    try:
+        # Fetch the RSS feed
+        req = urllib.request.Request(
+            rss_url, headers={"User-Agent": "Mozilla/5.0 (PodManager.ai RSS Parser)"}
+        )
+        with urllib.request.urlopen(req) as response:
+            rss_content = response.read()
+
+        # Parse the RSS feed using feedparser
+        feed = feedparser.parse(rss_content)
+
+        # Extract basic podcast info
+        title = feed.feed.get("title", "")
+        description = feed.feed.get("description", "")
+        image_url = feed.feed.get("image", {}).get("href", "")
+
+        # Extract episodes
+        episodes = []
+        for entry in feed.entries:
+            episode = {
+                "title": entry.get("title", ""),
+                "description": entry.get("description", ""),
+                "pubDate": entry.get("published", ""),
+                "audio": {
+                    "url": entry.get("enclosures", [{}])[0].get("href", ""),
+                    "type": entry.get("enclosures", [{}])[0].get("type", ""),
+                    "length": entry.get("enclosures", [{}])[0].get("length", ""),
+                },
+            }
+            episodes.append(episode)
+
+        return jsonify(
+            {
+                "title": title,
+                "description": description,
+                "imageUrl": image_url,
+                "episodes": episodes[:10],  # Limit to first 10 episodes
+            }
+        )
+
+    except Exception as e:
+        current_app.logger.error(f"Error fetching RSS feed: {e}")
+        return jsonify({"error": f"Error fetching RSS feed: {str(e)}"}), 500

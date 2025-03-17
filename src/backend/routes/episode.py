@@ -51,10 +51,6 @@ def register_episode():
 
         podcast_id = validated_data.get("podcastId")
         title = validated_data.get("title")
-        description = validated_data.get("description")
-        publish_date = validated_data.get("publishDate")
-        duration = validated_data.get("duration")
-        status = validated_data.get("status")
 
         # Validate required fields
         if not podcast_id or not title:
@@ -70,14 +66,30 @@ def register_episode():
             "_id": episode_id,
             "podcast_id": podcast_id,
             "title": title,
-            "description": description,
-            "publishDate": publish_date,
-            "duration": duration,
-            "status": status,
+            "description": validated_data.get("description"),
+            "publishDate": validated_data.get("pubDate"),
+            "duration": validated_data.get("duration"),
+            "status": validated_data.get("status"),
             "userid": user_id,
             "accountId": account_id,  # Add the accountId from the user's account
             "created_at": datetime.now(timezone.utc),
             "updated_at": datetime.now(timezone.utc),
+            "audioUrl": validated_data.get("audioUrl"),
+            "fileSize": validated_data.get("fileSize"),
+            "fileType": validated_data.get("fileType"),
+            "guid": validated_data.get("guid"),
+            "season": validated_data.get("season"),
+            "episode": validated_data.get("episode"),
+            "episodeType": validated_data.get("episodeType"),
+            "explicit": validated_data.get("explicit"),
+            "imageUrl": validated_data.get("imageUrl"),
+            "keywords": validated_data.get("keywords"),
+            "chapters": validated_data.get("chapters"),
+            "link": validated_data.get("link"),
+            "subtitle": validated_data.get("subtitle"),
+            "summary": validated_data.get("summary"),
+            "author": validated_data.get("author"),
+            "isHidden": validated_data.get("isHidden"),
         }
 
         # Correctly inserting into the Episode collection

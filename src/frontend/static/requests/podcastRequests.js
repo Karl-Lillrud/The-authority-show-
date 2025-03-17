@@ -1,3 +1,5 @@
+// Remove: import feedparser from "feedparser-promised";
+
 // Function to add a new podcast
 export async function addPodcast(data) {
   try {
@@ -70,31 +72,33 @@ export async function deletePodcast(podcastId) {
   }
 }
 
-// Function to fetch RSS data
 export async function fetchRSSData(rssUrl) {
   try {
-    const response = await fetch(rssUrl);
+    const response = await fetch(
+      `/fetch_rss?url=${encodeURIComponent(rssUrl)}`
+    );
     if (!response.ok) {
       throw new Error("Failed to fetch RSS feed.");
     }
-
-    const rssText = await response.text();
-    const parser = new DOMParser();
-    const rssDoc = parser.parseFromString(rssText, "application/xml");
-
-    const titleElement = rssDoc.querySelector("channel > title");
-    const imageElement = rssDoc.querySelector("channel > image > url");
-    if (!titleElement) {
-      throw new Error("RSS feed does not contain a title.");
-    }
-
-    // Return all RSS data
-    return {
-      title: titleElement.textContent,
-      imageUrl: imageElement ? imageElement.textContent : null,
-      raw: rssDoc // Include the entire parsed RSS document
-    };
+    return await response.json();
   } catch (error) {
+    console.error("Error in fetchRSSData:", error);
     throw new Error(`Error fetching RSS feed: ${error.message}`);
   }
+}
+
+// Helper function to extract iTunes ID from feed URL
+function extractItunesId(url) {
+  // Try to extract from iTunes URL format
+  const itunesMatch = url.match(/\/id(\d+)/);
+  if (itunesMatch && itunesMatch[1]) {
+    return itunesMatch[1];
+  }
+  return null;
+}
+
+// Helper function to extract social media links from text (existing code)
+function extractSocialMediaLinks(description, link) {
+  // Your existing implementation
+  // ...
 }
