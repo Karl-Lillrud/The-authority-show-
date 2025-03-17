@@ -8,6 +8,8 @@
       rel="stylesheet"
       href="{{ url_for('static', filename='css/podprofile.css') }}"
     />
+    <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='favicon/favicon.ico') }}" />
+    <link rel="canonical" href="https://app.podmanager.ai" />
   </head>
   <body>
     <header>
@@ -79,6 +81,17 @@
           </p>
       </div>
     </main>
+    <div id="welcome-popup" class="popup" style="display: none;">
+      <div class="popup-content">
+        <span id="close-welcome-popup" class="close-btn">&times;</span>
+        <h2>Welcome to PodManager.ai!</h2>
+        <p>🎉 Congratulations!</p>
+        <p>Your spot in the Beta Tester queue is locked in! Get ready for your exclusive sneak peek...</p>
+        <p>💰 To kick things off, we’ve added 3,500 Credits to your account!</p>
+        <p>PodManager.ai will revolutionize your podcasting with AI-powered workflow automation, seamless guest management, and faster episode production- so you can focus on creating amazing content!</p>
+        <p>✨ Check your email right now for more exciting features!</p>
+      </div>
+    </div>
     <script
       type="module"
       src="{{ url_for('static', filename='requests/podcastRequests.js') }}"

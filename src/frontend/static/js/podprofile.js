@@ -12,6 +12,8 @@ document.addEventListener("DOMContentLoaded", function () {
   const podRssInput = document.getElementById("podRss");
   const podNameInput = document.getElementById("podName");
   const creditsContainer = document.getElementById("creditsContainer");
+  const welcomePopup = document.getElementById("welcome-popup");
+  const closeWelcomePopup = document.getElementById("close-welcome-popup");
 
   // Dark Mode Toggle
   darkModeToggle.addEventListener("click", function () {
@@ -25,13 +27,14 @@ document.addEventListener("DOMContentLoaded", function () {
     }
   });
 
+  // RSS Feed Input Handler
   if (podRssInput) {
     podRssInput.addEventListener("input", async function () {
-      const rssUrl = this.value.trim() || "";
+      const rssUrl = this.value.trim();
       if (rssUrl) {
         try {
-          const feed = await fetchRSSData(rssUrl); // function from podcastRequests.js
-          document.getElementById("podName").value = feed.title || "";
+          const rssData = await fetchRSSData(rssUrl);
+          podNameInput.value = rssData.title; // Set the title correctly
         } catch (error) {
           console.error("Error processing RSS feed:", error);
         }
@@ -57,14 +60,9 @@ document.addEventListener("DOMContentLoaded", function () {
         console.log("Sending invitation email");
         await sendInvitationEmail(podName, podRss);
 
-        // Hide the Pod Name section and show the Email section
-        podNameSection.classList.add("hidden");
-        emailSection.classList.remove("hidden");
-
-        // Show the credits container if it exists
-        if (creditsContainer) {
-          creditsContainer.classList.remove("hidden");
-        }
+        // Redirect to dashboard and set a flag to show the popup
+        sessionStorage.setItem("showWelcomePopup", "true");
+        window.location.href = "/dashboard"; // Redirects to the dashboard
       } catch (error) {
         console.error("Error sending invitation email:", error);
         alert("Something went wrong. Please try again.");
