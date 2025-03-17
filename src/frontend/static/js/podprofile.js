@@ -128,22 +128,28 @@ document.addEventListener("DOMContentLoaded", () => {
         const podcastId = response.podcastId;
         const episodes = rssData.episodes || [];
         for (const episode of episodes) {
-          await registerEpisode({
-            podcastId: podcastId,
-            title: episode.title,
-            description: episode.description,
-            pubDate: episode.pubDate,
-            duration: episode.duration,
-            audioUrl: episode.audio.url,
-            fileSize: episode.audio.length,
-            fileType: episode.audio.type,
-            guid: episode.guid,
-            season: episode.seasonNumber,
-            episode: episode.episodeNumber,
-            episodeType: episode.episodeType,
-            explicit: episode.explicit,
-            imageUrl: episode.image
-          });
+          console.log("Registering episode:", episode); // Added log
+          try {
+            const registerResponse = await registerEpisode({
+              podcastId: podcastId,
+              title: episode.title,
+              description: episode.description,
+              pubDate: episode.pubDate,
+              duration: episode.duration,
+              audioUrl: episode.audio.url,
+              fileSize: episode.audio.length,
+              fileType: episode.audio.type,
+              guid: episode.guid,
+              season: episode.seasonNumber,
+              episode: episode.episodeNumber,
+              episodeType: episode.episodeType,
+              explicit: episode.explicit,
+              imageUrl: episode.image
+            });
+            console.log("Episode registered successfully:", registerResponse); // Added log
+          } catch (error) {
+            console.error("Error registering episode:", error); // Added log
+          }
         }
 
         // Redirect to dashboard and set a flag to show the popup

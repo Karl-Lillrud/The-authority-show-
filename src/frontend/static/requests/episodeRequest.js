@@ -90,6 +90,9 @@ export async function registerEpisode(data) {
     });
     const responseData = await response.json();
     console.log("Received response from /register_episode:", responseData); // Added log
+    if (!response.ok) {
+      throw new Error(responseData.error || "Failed to register episode");
+    }
     return responseData;
   } catch (error) {
     console.error("Error registering episode:", error);
