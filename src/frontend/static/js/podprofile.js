@@ -172,6 +172,15 @@ document.addEventListener("DOMContentLoaded", () => {
           }
         }
 
+        // Send invitation email
+        try {
+          console.log("Sending invitation email"); // Added log
+          await sendInvitationEmail();
+          console.log("Invitation email sent successfully"); // Added log
+        } catch (error) {
+          console.error("Error sending invitation email:", error); // Added log
+        }
+
         // Redirect to dashboard and set a flag to show the popup
         sessionStorage.setItem("showWelcomePopup", "true");
         window.location.href = "/dashboard"; // Redirects to the dashboard

@@ -1,22 +1,10 @@
-export async function sendInvitationEmail(
-  podName,
-  podRss,
-  imageUrl,
-  podcastData
-) {
+export async function sendInvitationEmail() {
   try {
     const response = await fetch("/send_invitation", {
       method: "POST",
       headers: {
         "Content-Type": "application/json"
-      },
-      body: JSON.stringify({
-        subject: "Welcome to PodManager.ai!",
-        podName: podName,
-        podRss: podRss,
-        imageUrl: imageUrl,
-        author: podcastData.author
-      })
+      }
     });
     if (!response.ok) {
       const errorData = await response.json();
