@@ -117,7 +117,15 @@ document.addEventListener("DOMContentLoaded", () => {
           author: rssData.author,
           title: rssData.title, // Added field
           language: rssData.language, // Added field
-          copyright_info: rssData.copyright_info // Added field
+          copyright_info: rssData.copyright_info, // Added field
+          ownerName: rssData.ownerName || null, // Ensure ownerName is included
+          hostName: rssData.hostName || null, // Ensure hostName is included
+          googleCal: rssData.googleCal || null, // Ensure googleCal is included
+          podUrl: rssData.podUrl || null, // Ensure podUrl is included
+          guestUrl: rssData.guestUrl || null, // Ensure guestUrl is included
+          email: rssData.email || null, // Ensure email is included
+          logoUrl: rssData.logoUrl || null, // Ensure logoUrl is included
+          defaultTasks: rssData.defaultTasks || null // Ensure defaultTasks is included
         };
 
         console.log("Sending podcast data:", podcastData); // Added log
@@ -144,7 +152,14 @@ document.addEventListener("DOMContentLoaded", () => {
               episode: episode.episodeNumber,
               episodeType: episode.episodeType,
               explicit: episode.explicit,
-              imageUrl: episode.image
+              imageUrl: episode.image,
+              keywords: episode.keywords || null, // Ensure keywords is included
+              chapters: episode.chapters || null, // Ensure chapters is included
+              link: episode.link || null, // Ensure link is included
+              subtitle: episode.subtitle || null, // Ensure subtitle is included
+              summary: episode.summary || null, // Ensure summary is included
+              author: episode.author || null, // Ensure author is included
+              isHidden: episode.isHidden || null // Ensure isHidden is included
             });
             console.log("Episode registered successfully:", registerResponse); // Added log
           } catch (error) {
