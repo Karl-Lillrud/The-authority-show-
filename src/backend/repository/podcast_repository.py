@@ -3,6 +3,8 @@ from datetime import datetime, timezone
 from backend.database.mongo_connection import collection
 from backend.models.podcasts import PodcastSchema
 import logging
+import urllib.request
+import feedparser
 
 logger = logging.getLogger(__name__)
 
@@ -190,6 +192,49 @@ class PodcastRepository:
             # Catch any unexpected errors (e.g., database connection issues)
             logger.error(f"Error updating podcast: {str(e)}")
             return {"error": "Failed to update podcast", "details": str(e)}, 500
+        
+    def fetch_rss_feed(self, rss_url):
+        try:
+            # Fetch the RSS feed
+            req = urllib.request.Request(
+                rss_url, headers={"User-Agent": "Mozilla/5.0 (PodManager.ai RSS Parser)"}
+            )
+            with urllib.request.urlopen(req) as response:
+                rss_content = response.read()
+
+            # Parse the RSS feed using feedparser
+            feed = feedparser.parse(rss_content)
+
+            # Extract basic podcast info
+            title = feed.feed.get("title", "")
+            description = feed.feed.get("description", "")
+            image_url = feed.feed.get("image", {}).get("href", "")
+
+            # Extract episodes
+            episodes = []
+            for entry in feed.entries:
+                episode = {
+                    "title": entry.get("title", ""),
+                    "description": entry.get("description", ""),
+                    "pubDate": entry.get("published", ""),
+                    "audio": {
+                        "url": entry.get("enclosures", [{}])[0].get("href", ""),
+                        "type": entry.get("enclosures", [{}])[0].get("type", ""),
+                        "length": entry.get("enclosures", [{}])[0].get("length", ""),
+                    },
+                }
+                episodes.append(episode)
+
+            return {
+                "title": title,
+                "description": description,
+                "imageUrl": image_url,
+                "episodes": episodes[:10],  # Limit to first 10 episodes
+            }, 200
+
+        except Exception as e:
+            logger.error(f"Error fetching RSS feed: {e}", exc_info=True)
+            return {"error": f"Error fetching RSS feed: {str(e)}"}, 500
 
         
     
