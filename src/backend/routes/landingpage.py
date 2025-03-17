@@ -1,25 +1,32 @@
 from flask import g, redirect, render_template, url_for, Blueprint
-from backend.database.mongo_connection import collection, podcasts # Add import
+
+from backend.database.mongo_connection import collection, podcasts, get_db  # Add import
+
+
 
 landingpage_bp = Blueprint("landingpage_bp", __name__)
 
 
 
 
-
 @landingpage_bp.route('/landingpage', methods=['GET'])
 def landingpage():
-    try:
-        # Temporary fallback for g.user_id
-        if not hasattr(g, 'user_id'):
-            g.user_id = "test_user"  # Replace with real auth logic later
-        if not g.user_id:
-            return redirect(url_for('signin_bp.signin'))
-        
-        podcasts = list(collection.Podmanager.Podcasts.find())
-        return render_template('landingpage/landingpage.html', podcasts=podcasts)
-    except Exception as e:
-        return f"Error: {str(e)}", 500
+
+
+    if not g.user_id:
+        return redirect(url_for('signin_bp.signin'))
+
+    # Get the database and select the Episodes collection
+    db = get_db()
+    episodes_collection = db["Episodes"]
+    
+    # Query for added podcasts. Adjust the query as needed.
+    episodes = list(episodes_collection.find({}))
+    
+    return render_template(
+        'landingpage/landingpage.html',
+        episodes=episodes
+    )
 
 @landingpage_bp.route('/episode', methods=['GET'])
 def episode():

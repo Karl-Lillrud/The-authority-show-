@@ -5,6 +5,9 @@ Management{% endblock %} {% block content %}
   href="{{ url_for('static', filename='css/podcastmanagement.css') }}"
 />
 <div class="container">
+  <a href="{{ url_for('dashboard_bp.dashboard') }}" class="back-arrow"
+    >&#8592; Back</a
+  >
   <h1 class="title">Podcast Management</h1>
 
   <!-- Toolbar for CRUD buttons -->
@@ -16,6 +19,11 @@ Management{% endblock %} {% block content %}
     <button id="create-episode-btn" class="action-button">
       <span class="button-icon">+</span>
       <span>Create Episode</span>
+    </button>
+    <!-- New Add Guest button -->
+    <button id="add-guest-btn" class="action-button">
+      <span class="button-icon">+</span>
+      <span>Add Guest</span>
     </button>
   </div>
 
@@ -157,20 +165,24 @@ Management{% endblock %} {% block content %}
           </div>
           <div class="field-group">
             <label for="publish-date">Publish Date</label>
-            <input type="datetime-local" id="publish-date" name="publishDate" />
+            <input
+              type="datetime-local"
+              id="publish-date"
+              name="publishDate"
+              required
+            />
           </div>
           <div class="field-group">
             <label for="duration">Duration (minutes)</label>
             <input type="number" id="duration" name="duration" />
           </div>
+          <!-- Commented out Select Guest and Add Guest Manually fields -->
+          <!--
           <div class="field-group">
-            <!-- Change label from "Invite Guest" to "Select Guest" -->
             <label for="guest-id">Select Guest</label>
             <select id="guest-id" name="guestId">
               <option value="">Select Guest</option>
-              <!-- Ensure default option says "Select Guest" -->
             </select>
-            <!-- Add field for manual guest entry -->
             <div class="manual-guest-field">
               <label for="manual-guest">Add Guest Manually</label>
               <input
@@ -181,6 +193,7 @@ Management{% endblock %} {% block content %}
               />
             </div>
           </div>
+          -->
           <div class="field-group">
             <label for="status">Status</label>
             <input type="text" id="status" name="status" />
@@ -191,6 +204,65 @@ Management{% endblock %} {% block content %}
             Cancel
           </button>
           <button type="submit" class="save-btn">Create Episode</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- New popup container for adding a guest -->
+  <div id="guest-popup" class="popup" style="display: none">
+    <div class="form-box">
+      <span id="close-guest-popup" class="close-btn">&times;</span>
+      <h2 class="form-title">Add Guest</h2>
+      <form id="add-guest-form">
+        <!-- New Podcast selection field -->
+        <div class="field-group full-width">
+          <label for="podcast-select-guest">Select Podcast</label>
+          <select id="podcast-select-guest" name="podcastId" required></select>
+        </div>
+        <!-- Existing Episode selection field (to be populated based on selected podcast) -->
+        <div class="field-group full-width">
+          <label for="episode-id">Episode ID</label>
+          <select id="episode-id" name="episodeId" required></select>
+        </div>
+        <div class="field-group full-width">
+          <label for="guest-name">Guest Name</label>
+          <input type="text" id="guest-name" name="guestName" required />
+        </div>
+        <div class="field-group full-width">
+          <label for="guest-description">Guest Description</label>
+          <input
+            type="text"
+            id="guest-description"
+            name="guestDescription"
+            required
+          />
+        </div>
+        <div class="field-group full-width">
+          <label for="guest-tags">Tags (comma separated)</label>
+          <input type="text" id="guest-tags" name="guestTags" />
+        </div>
+        <div class="field-group full-width">
+          <label for="guest-areas">Areas of Interest (comma separated)</label>
+          <input type="text" id="guest-areas" name="guestAreas" />
+        </div>
+        <div class="field-group full-width">
+          <label for="guest-email">Email</label>
+          <input type="email" id="guest-email" name="guestEmail" required />
+        </div>
+        <div class="field-group full-width">
+          <label for="guest-linkedin">LinkedIn</label>
+          <input type="text" id="guest-linkedin" name="guestLinkedIn" />
+        </div>
+        <div class="field-group full-width">
+          <label for="guest-twitter">Twitter</label>
+          <input type="text" id="guest-twitter" name="guestTwitter" />
+        </div>
+        <div class="form-actions">
+          <button type="button" id="cancel-guest-btn" class="cancel-btn">
+            Cancel
+          </button>
+          <button type="submit" class="save-btn">Add Guest</button>
         </div>
       </form>
     </div>

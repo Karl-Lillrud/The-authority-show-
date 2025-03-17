@@ -2,7 +2,7 @@ from marshmallow import Schema, fields
 
 class ClipsSchema(Schema):
     id = fields.Str()
-    episodeId = fields.Str(required=True) #Clip should be linked to a podcast
+    episodeId = fields.Str(required=True)
     clipName = fields.Str(required=True)
     duration = fields.Int()
     createdAt = fields.DateTime()

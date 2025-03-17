@@ -1,160 +1,64 @@
-from flask import request, jsonify, Blueprint, g, session
-from backend.database.mongo_connection import collection
-from datetime import datetime, timezone
-from marshmallow import ValidationError
-from backend.models.guests import GuestSchema  # Import your GuestSchema here
-import uuid
+from flask import request, jsonify, Blueprint, g
+import logging
+from backend.repository.guest_repository import GuestRepository
 
+# Define Blueprint
 guest_bp = Blueprint("guest_bp", __name__)
 
+# Create repository instance
+guest_repo = GuestRepository()
 
-#SHOULD ONLY BE USED FOR SPECIFIC DATA CRUD OPERATIONS
-#EXTRA FUNCTIONALITY BESIDES CRUD OPERATIONS SHOULD BE IN SERVICES
+# Configure logger
+logger = logging.getLogger(__name__)
 
+# SHOULD ONLY BE USED FOR SPECIFIC DATA CRUD OPERATIONS
+# EXTRA FUNCTIONALITY BESIDES CRUD OPERATIONS SHOULD BE IN SERVICES
 
 @guest_bp.route("/add_guests", methods=["POST"])
 def add_guest():
+    """Adds a guest to the system and optionally links them to an episode."""
     if not g.user_id:
         return jsonify({"error": "Unauthorized"}), 401
 
     if request.content_type != "application/json":
-        return (
-            jsonify({"error": "Invalid Content-Type. Expected application/json"}),
-            415,
-        )
+        return jsonify({"error": "Invalid Content-Type. Expected application/json"}), 415
 
     try:
         data = request.get_json()
-        print("📩 Received Data:", data)
-
-        try:
-            guest_data = GuestSchema().load(data)
-        except ValidationError as err:
-            return jsonify({"error": f"Validation error: {err.messages}"}), 400
-
-        guest_id = str(uuid.uuid4())
-        user_id = str(g.user_id)
-
-        # Check if the podcast exists
-        podcast = collection.database.Podcasts.find_one(
-            {"_id": guest_data["podcastId"]}
-        )
-        if not podcast:
-            return jsonify({"error": "Podcast not found"}), 404
-
-        guest_item = {
-            "_id": guest_id,
-            "podcastId": guest_data["podcastId"],
-            "name": guest_data["name"].strip(),
-            "image": guest_data.get("image", ""),
-            "tags": guest_data.get("tags", []),
-            "description": guest_data.get("description", ""),
-            "bio": guest_data.get("bio", guest_data.get("description", "")),
-            "email": guest_data["email"].strip(),
-            "linkedin": guest_data.get("linkedin", "").strip(),
-            "twitter": guest_data.get("twitter", "").strip(),
-            "areasOfInterest": guest_data.get("areasOfInterest", []),
-            "status": "Pending",
-            "scheduled": 0,
-            "completed": 0,
-            "created_at": datetime.now(timezone.utc),
-            "user_id": user_id,
-        }
-
-        collection.database.Guests.insert_one(guest_item)
-
-        print("✅ Guest added successfully!")
-        return (
-            jsonify({"message": "Guest added successfully", "guest_id": guest_id}),
-            201,
-        )
-
+        response, status_code = guest_repo.add_guest(data, g.user_id)
+        return jsonify(response), status_code
     except Exception as e:
-        print(f"❌ ERROR: {e}")
+        logger.exception("❌ ERROR: Failed to add guest")
         return jsonify({"error": f"Failed to add guest: {str(e)}"}), 500
-
-
-
-
-# In guest.py, update the get_guests route to return all guests for the logged-in user
 
 @guest_bp.route("/get_guests", methods=["GET"])
 def get_guests():
-    user_id = session.get("user_id")
-    if not user_id:
-        return jsonify({"error": "User not logged in"}), 401
+    if not g.user_id:
+        return jsonify({"error": "Unauthorized"}), 401
 
-    guests_cursor = collection.database.Guests.find({"user_id": user_id})
-    guest_list = []
-    for guest in guests_cursor:
-
-        guest_list.append(
-            {
-                "id": str(guest.get("_id")),
-                "podcastId": guest.get("podcastId"),
-                "name": guest.get("name"),
-                "image": guest.get("image"),
-                "bio": guest.get("bio"),
-                "tags": guest.get("tags", []),
-                "email": guest.get("email"),
-                "linkedin": guest.get("linkedin"),
-                "twitter": guest.get("twitter"),
-                "areasOfInterest": guest.get("areasOfInterest", []),
-            }
-        )
-
-
-    return jsonify({"guests": guest_list})
-
-
+    try:
+        response, status_code = guest_repo.get_guests(g.user_id)
+        return jsonify(response), status_code
+    except Exception as e:
+        logger.exception("❌ ERROR: Failed to fetch guests")
+        return jsonify({"error": f"An error occurred while fetching guests: {str(e)}"}), 500
 
 @guest_bp.route("/edit_guests/<guest_id>", methods=["PUT"])
 def edit_guest(guest_id):
+    """Updates a guest's information, including the option to change the episode they are linked to."""
     if not g.user_id:
         return jsonify({"error": "Unauthorized"}), 401
 
     if request.content_type != "application/json":
-        return (
-            jsonify({"error": "Invalid Content-Type. Expected application/json"}),
-            415,
-        )
+        return jsonify({"error": "Invalid Content-Type. Expected application/json"}), 415
 
     try:
         data = request.get_json()
-        print("📩 Received Data:", data)
-
-        if not guest_id:
-            return jsonify({"error": "Guest ID is required"}), 400
-
-        user_id = str(g.user_id)
-        update_fields = {
-            "name": data.get("name", "").strip(),
-            "image": data.get("image", "default-profile.png"),
-            "tags": data.get("tags", []),
-            "description": data.get("description", ""),
-            "bio": data.get("bio", data.get("description", "")),
-            "email": data.get("email", "").strip(),
-            "linkedin": data.get("linkedin", "").strip(),
-            "twitter": data.get("twitter", "").strip(),
-            "areasOfInterest": data.get("areasOfInterest", []),
-        }
-
-        print("📝 Update Fields:", update_fields)
-
-        # Use "user_id" (with underscore) to match the field set in add_guest
-        result = collection.database.Guests.update_one(
-            {"_id": guest_id, "user_id": user_id}, {"$set": update_fields}
-        )
-
-        if result.matched_count == 0:
-            return jsonify({"error": "Guest not found or unauthorized"}), 404
-
-        return jsonify({"message": "Guest updated successfully"}), 200
-
+        response, status_code = guest_repo.edit_guest(guest_id, data, g.user_id)
+        return jsonify(response), status_code
     except Exception as e:
-        print(f"❌ ERROR: {e}")
+        logger.exception("❌ ERROR: Failed to update guest")
         return jsonify({"error": f"Failed to update guest: {str(e)}"}), 500
-
 
 @guest_bp.route("/delete_guests/<guest_id>", methods=["DELETE"])
 def delete_guest(guest_id):
@@ -162,22 +66,23 @@ def delete_guest(guest_id):
         return jsonify({"error": "Unauthorized"}), 401
 
     if request.content_type and request.content_type != "application/json":
-        return (
-            jsonify({"error": "Invalid Content-Type. Expected application/json"}),
-            415,
-        )
+        return jsonify({"error": "Invalid Content-Type. Expected application/json"}), 415
 
     try:
-        user_id = str(g.user_id)
-        # Use "user_id" to ensure proper matching
-        result = collection.database.Guests.delete_one(
-            {"_id": guest_id, "user_id": user_id}
-        )
-        if result.deleted_count == 0:
-            return jsonify({"error": "Guest not found or unauthorized"}), 404
-
-        return jsonify({"message": "Guest deleted successfully"}), 200
-
+        response, status_code = guest_repo.delete_guest(guest_id, g.user_id)
+        return jsonify(response), status_code
     except Exception as e:
-        print(f"❌ ERROR: {e}")
+        logger.exception("❌ ERROR: Failed to delete guest")
         return jsonify({"error": f"Failed to delete guest: {str(e)}"}), 500
+
+@guest_bp.route("/get_guests_by_episode/<episode_id>", methods=["GET"])
+def get_guests_by_episode(episode_id):
+    if not g.user_id:
+        return jsonify({"error": "Unauthorized"}), 401
+
+    try:
+        response, status_code = guest_repo.get_guests_by_episode(episode_id)
+        return jsonify(response), status_code
+    except Exception as e:
+        logger.exception("❌ ERROR: Failed to fetch guests for episode")
+        return jsonify({"error": f"Failed to fetch guests: {str(e)}"}), 500
