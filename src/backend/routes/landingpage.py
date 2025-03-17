@@ -1,36 +1,42 @@
 from flask import g, redirect, render_template, url_for, Blueprint
-from backend.database.mongo_connection import get_db  # Import MongoDB connection
+from backend.repository.podcast_repository import PodcastRepository  # ✅ Import repository
 
 landingpage_bp = Blueprint("landingpage_bp", __name__)
+
+# ✅ Initialize the repository
+podcast_repo = PodcastRepository()
 
 @landingpage_bp.route('/landingpage', methods=['GET'])
 def landingpage():
     if not g.user_id:
         return redirect(url_for('signin_bp.signin'))
-    
-    db = get_db()
-    podcasts_collection = db["Podcasts"]
-    
-    # Fetch podcast document
-    podcast_doc = podcasts_collection.find_one({})
-    
-    # Extract details
+
+    # ✅ Use the repository to fetch podcast details
+    podcast_data, status_code = podcast_repo.get_podcasts(g.user_id)
+
+    # ✅ If the user has no podcasts, return default values
+    if status_code != 200 or not podcast_data["podcast"]:
+        podcast_doc = None
+    else:
+        podcast_doc = podcast_data["podcast"][0]  # Get the first podcast (if multiple exist)
+
+    # ✅ Extract podcast details (with safe defaults)
     podcast_title = podcast_doc.get("podName", "Default Podcast Title") if podcast_doc else "Default Podcast Title"
     podcast_description = podcast_doc.get("description", "Default Podcast Description") if podcast_doc else "Default Podcast Description"
     host_name = podcast_doc.get("hostName", "Unknown Host") if podcast_doc else "Unknown Host"
-    if not isinstance(social_media_links, list):
-        social_media_links = []
-    
-    # Handle Podcast Logo (Base64 or Default)
-    podcast_logo = ""
-    if podcast_doc:
-        podcast_logo = podcast_doc.get("logoUrl", "")
-        if not podcast_logo.startswith("data:image"):  # Ensure it's Base64
-            podcast_logo = url_for('static', filename='images/default.png')
+    social_media_links = podcast_doc.get("socialMedia", []) if podcast_doc else []
 
-    # Fetch Episodes
-    episodes_collection = db["Episodes"]
-    episodes = list(episodes_collection.find({}))
+    # ✅ Debugging print statements
+    print("DEBUG: SOCIAL MEDIA LINKS FROM DATABASE:", social_media_links)
+
+    # ✅ Handle Podcast Logo (Base64 or Default)
+    podcast_logo = podcast_doc.get("logoUrl", "") if podcast_doc else ""
+    if not podcast_logo.startswith("data:image"):  # Ensure it's Base64
+        podcast_logo = url_for('static', filename='images/default.png')
+
+    # ✅ Fetch episodes using the repository
+    episodes_data, status_code = podcast_repo.get_podcast_by_id(g.user_id, podcast_doc["_id"]) if podcast_doc else ({}, 200)
+    episodes = episodes_data.get("podcast", {}).get("episodes", []) if status_code == 200 else []
 
     return render_template(
         'landingpage/landingpage.html',
