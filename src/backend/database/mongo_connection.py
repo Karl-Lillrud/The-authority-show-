@@ -17,6 +17,7 @@ load_dotenv()
 MONGODB_URI = os.getenv("MONGODB_URI")
 DATABASE_NAME = "Podmanager"
 COLLECTION_NAME = "Users"
+PODCAST_NAME = "Podcasts"
 MAILING_LIST_COLLECTION_NAME = "MailingList"  # Add MailingList collection
 SUBSCRIPTIONS_LIST_COLLECTION = "subscriptions_collection"
 
@@ -32,6 +33,7 @@ try:
     client = MongoClient(MONGODB_URI)
     database = client[DATABASE_NAME]
     collection = database[COLLECTION_NAME]
+    podcasts = database[PODCAST_NAME]
     mailing_list_collection = database[MAILING_LIST_COLLECTION_NAME]  # MailingList collection
     subscriptions_collection = database[SUBSCRIPTIONS_LIST_COLLECTION]
     fs = GridFS(database)  # Initialize GridFS
