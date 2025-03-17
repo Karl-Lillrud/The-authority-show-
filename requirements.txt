@@ -1,8 +1,4 @@
-<<<<<<< HEAD
-<<<<<<< HEAD
 absl-py==2.1.0
-=======
->>>>>>> 4af11a62cfa4844a96af96240e84482d82fbf402
 aiohappyeyeballs==2.4.6
 aiohttp==3.11.12
 aiosignal==1.3.2
@@ -206,10 +202,6 @@ zope.hookable==7.0
 zope.interface==7.2
 zope.lifecycleevent==5.1
 zope.proxy==6.1
-<<<<<<< HEAD
-=======
-=======
->>>>>>> 4af11a62cfa4844a96af96240e84482d82fbf402
 aiohappyeyeballs
 aiohttp
 aiosignal
@@ -403,8 +395,3 @@ zope.hookable
 zope.interface
 zope.lifecycleevent
 zope.proxy
-<<<<<<< HEAD
->>>>>>> 28978f93a6ddfd64e88c124379069da40af523a1
-=======
-
->>>>>>> 4af11a62cfa4844a96af96240e84482d82fbf402
