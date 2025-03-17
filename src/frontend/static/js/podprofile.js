@@ -148,11 +148,11 @@ document.addEventListener("DOMContentLoaded", () => {
               fileSize: episode.audio.length,
               fileType: episode.audio.type,
               guid: episode.guid,
-              season: episode.seasonNumber,
-              episode: episode.episodeNumber,
-              episodeType: episode.episodeType,
-              explicit: episode.explicit,
-              imageUrl: episode.image,
+              season: episode.season || null, // Ensure season is included
+              episode: episode.episode || null, // Ensure episode is included
+              episodeType: episode.episodeType || null, // Ensure episodeType is included
+              explicit: episode.explicit || null, // Ensure explicit is included
+              imageUrl: episode.image || null, // Ensure imageUrl is included
               keywords: episode.keywords || null, // Ensure keywords is included
               chapters: episode.chapters || null, // Ensure chapters is included
               link: episode.link || null, // Ensure link is included

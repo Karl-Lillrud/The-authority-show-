@@ -302,7 +302,9 @@ class PodcastRepository:
             language = feed.feed.get("language", "")  # Added field
             author = feed.feed.get("author", "")  # Added field
             copyright_info = feed.feed.get("copyright", "")  # Added field
-            category = feed.feed.get("itunes_category", "")  # Added field
+            category = feed.feed.get("itunes_category", {}).get(
+                "text", ""
+            )  # Added field
 
             # Extract episodes
             episodes = []
@@ -316,6 +318,19 @@ class PodcastRepository:
                         "type": entry.get("enclosures", [{}])[0].get("type", ""),
                         "length": entry.get("enclosures", [{}])[0].get("length", ""),
                     },
+                    "guid": entry.get("guid", ""),
+                    "season": entry.get("itunes_season", None),
+                    "episode": entry.get("itunes_episode", None),
+                    "episodeType": entry.get("itunes_episodetype", None),
+                    "explicit": entry.get("itunes_explicit", None),
+                    "image": entry.get("itunes_image", {}).get("href", ""),
+                    "keywords": entry.get("itunes_keywords", None),
+                    "chapters": entry.get("chapters", None),
+                    "link": entry.get("link", ""),
+                    "subtitle": entry.get("itunes_subtitle", ""),
+                    "summary": entry.get("itunes_summary", ""),
+                    "author": entry.get("author", ""),
+                    "isHidden": entry.get("itunes_isHidden", None),
                 }
                 episodes.append(episode)
 
