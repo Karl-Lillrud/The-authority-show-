@@ -1,5 +1,5 @@
 from flask import url_for, render_template
-from .email_utils import send_email
+from ..utils.email_utils import send_email
 import logging
 
 # Set up logger

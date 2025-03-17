@@ -1,5 +1,5 @@
 from flask import Blueprint, request, jsonify, render_template
-from backend.utils.guest_followup_email import send_guest_followup_email
+from backend.services.guest_followup_email import send_guest_followup_email
 
 guest_bp = Blueprint("guest_bp", __name__)
 
