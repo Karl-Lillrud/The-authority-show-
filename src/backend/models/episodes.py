@@ -54,4 +54,9 @@ class EpisodeSchema(Schema):
         ]:
             if key in data and data[key] == "":
                 data[key] = None
+
+        # Ensure defaultTasks is None if it's an empty list
+        if "defaultTasks" in data and isinstance(data["defaultTasks"], list) and len(data["defaultTasks"]) == 0:
+            data["defaultTasks"] = None
+
         return data
