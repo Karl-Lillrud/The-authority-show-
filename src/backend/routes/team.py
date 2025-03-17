@@ -1,4 +1,4 @@
-from flask import request, jsonify, Blueprint, g
+from flask import request, jsonify, Blueprint, g, session
 from backend.database.mongo_connection import collection
 from datetime import datetime, timezone
 from marshmallow import ValidationError
@@ -7,6 +7,15 @@ import uuid
 
 # Define Blueprint
 team_bp = Blueprint("team_bp", __name__)
+
+# SHOULD ONLY BE USED FOR SPECIFIC DATA CRUD OPERATIONS
+# EXTRA FUNCTIONALITY BESIDES CRUD OPERATIONS SHOULD BE IN SERVICES
+
+
+@team_bp.before_request
+def before_request():
+    g.user_id = session.get("user_id")
+    g.email = session.get("email")
 
 
 @team_bp.route("/add_teams", methods=["POST"])
@@ -18,7 +27,9 @@ def add_team():
         # Validate with TeamSchema
         try:
             team_schema = TeamSchema()
-            validated_data = team_schema.load(data)  # Validate and deserialize team data
+            validated_data = team_schema.load(
+                data
+            )  # Validate and deserialize team data
         except ValidationError as err:
             return jsonify({"error": "Invalid data", "details": err.messages}), 400
 
@@ -34,7 +45,7 @@ def add_team():
             "isActive": validated_data.get("isActive", True),
             "joinedAt": validated_data.get("joinedAt", datetime.now(timezone.utc)),
             "lastActive": validated_data.get("lastActive", datetime.now(timezone.utc)),
-            "members": [],  # Initially no members, we'll add the creator first
+            "members": validated_data.get("members", []),  # Include members
         }
 
         # Insert the team into the Teams collection
@@ -44,6 +55,7 @@ def add_team():
 
         # Get current user ID (the creator)
         user_id = str(g.user_id)  # Ensure this comes from the current logged-in user
+        user_email = g.email  # Ensure this comes from the current logged-in user
         print("👤 Team creator user ID:", user_id)
 
         # Add the creator to the user_to_team collection
@@ -58,7 +70,9 @@ def add_team():
         collection.database.UsersToTeams.insert_one(user_to_team_item)
 
         # Update the team with its members, adding the creator to the team
-        team_item["members"].append({"userId": user_id, "role": "creator"})
+        team_item["members"].append(
+            {"userId": user_id, "email": user_email, "role": "creator"}
+        )
 
         # Update the team document with its creator
         collection.database.Teams.update_one(
@@ -87,25 +101,40 @@ def get_teams():
         return jsonify({"error": "Unauthorized"}), 401
 
     try:
-        user_id = str(g.user_id)  # Get the logged-in user's ID
+        user_id = str(g.user_id)
 
         # Get teams created by the user
-        created_teams = list(collection.database.Teams.find({"createdBy": user_id}, {"created_at": 0}))
+        created_teams = list(
+            collection.database.Teams.find({"createdBy": user_id}, {"created_at": 0})
+        )
 
         # Get teams where the user is a member (from UsersToTeams)
-        user_team_links = list(collection.database.UsersToTeams.find({"userId": user_id}, {"teamId": 1, "_id": 0}))
+        user_team_links = list(
+            collection.database.UsersToTeams.find(
+                {"userId": user_id}, {"teamId": 1, "_id": 0}
+            )
+        )
         joined_team_ids = [ut["teamId"] for ut in user_team_links]
 
         # Fetch those teams if not already included
-        joined_teams = list(collection.database.Teams.find({"_id": {"$in": joined_team_ids}}, {"created_at": 0}))
+        joined_teams = list(
+            collection.database.Teams.find(
+                {"_id": {"$in": joined_team_ids}}, {"created_at": 0}
+            )
+        )
 
         # Merge and remove duplicates
-        teams = {str(team["_id"]): team for team in created_teams + joined_teams}  # Use dictionary to remove duplicates
+        teams = {str(team["_id"]): team for team in created_teams + joined_teams}
         for team in teams.values():
-            team["_id"] = str(team["_id"])  # Convert ObjectId to string
-            # Fetch the podcast that belongs to this team by matching the teamId in the Podcasts collection
-            podcast = collection.database.Podcasts.find_one({"teamId": team["_id"]})
-            team["podName"] = podcast.get("podName") if podcast else "N/A"
+            team["_id"] = str(team["_id"])
+            # Fetch all podcasts connected to this team
+            podcasts = list(collection.database.Podcasts.find({"teamId": team["_id"]}))
+            if podcasts:
+                team["podNames"] = ", ".join(
+                    [p.get("podName", "N/A") for p in podcasts]
+                )
+            else:
+                team["podNames"] = "N/A"
 
         return jsonify(list(teams.values())), 200
 
@@ -113,31 +142,32 @@ def get_teams():
         return jsonify({"error": f"Failed to retrieve teams: {str(e)}"}), 500
 
 
-
 @team_bp.route("/delete_team/<team_id>", methods=["DELETE"])
 def delete_team(team_id):
     try:
         # Step 1: Check if the team exists
         team = collection.database.Teams.find_one({"_id": team_id})
-
         if not team:
             return jsonify({"error": "Team not found"}), 404
 
         # Step 2: Delete associated user-team relationships
-        user_team_relations = collection.database.UserToTeams.find({"teamId": team_id})
-
-        if user_team_relations:
-            # Remove all user-team relationships for the team
-            collection.database.UsersToTeams.delete_many({"teamId": team_id})
-            print(f"✅ Deleted all user-team relationships for team {team_id}!")
+        collection.database.UsersToTeams.delete_many({"teamId": team_id})
+        print(f"✅ Deleted all user-team relationships for team {team_id}!")
 
         # Step 3: Delete the team itself from the Teams collection
         result = collection.database.Teams.delete_one({"_id": team_id})
-
         if result.deleted_count == 0:
             return jsonify({"error": "Failed to delete the team"}), 500
 
         print(f"✅ Team {team_id} and all members deleted successfully!")
+
+        # Step 4: Remove the teamId from all podcasts connected to this team
+        update_result = collection.database.Podcasts.update_many(
+            {"teamId": team_id}, {"$set": {"teamId": None}}
+        )
+        print(
+            f"✅ Removed teamId from {update_result.modified_count} podcasts for team {team_id}"
+        )
 
         return (
             jsonify(
@@ -148,7 +178,8 @@ def delete_team(team_id):
 
     except Exception as e:
         print(f"❌ ERROR: {e}")
-        return jsonify({"error": f"Failed to delete the team: {str(e)}"}), 500
+        return jsonify({"error": f"Failed to delete podcast or team: {str(e)}"}), 500
+
 
 @team_bp.route("/edit_team/<team_id>", methods=["PUT"])
 def edit_team(team_id):

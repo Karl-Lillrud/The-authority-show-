@@ -1,11 +1,11 @@
-#  * Developer Full Stack: Peter Molén 
+#  * Developer Full Stack: Peter Molén
 #  *
 #  * Create Date: 2025-03-03
 #  *     Program : transcription.py
 #  *   Path Name : THE-AUTHORITY-SHOW-/src/backend/
-#  *       
-#          Tools : Python, Flask, OpenAI GPT-4, ElevenLabs, Whisper, FFmpeg, 
-#          Pyannote, Hugging Face Transformers, Azure Speech-to-Text, TextBlob, 
+#  *
+#          Tools : Python, Flask, OpenAI GPT-4, ElevenLabs, Whisper, FFmpeg,
+#          Pyannote, Hugging Face Transformers, Azure Speech-to-Text, TextBlob,
 #          Matplotlib, NumPy, SoundFile, Noisereduce, TextStat, Torchaudio
 #  *
 #  * Description:
@@ -19,11 +19,7 @@
 #  * - Supports multi-language translation using OpenAI API.
 
 
-
-
-
-
-#backend for PodManager AI Transcription tool
+# backend for PodManager AI Transcription tool
 from flask import Blueprint, request, jsonify, Response, send_file
 import whisper
 import os
@@ -50,16 +46,17 @@ from elevenlabs.client import ElevenLabs
 import cv2
 from PIL import Image
 import torch
+
 # from transformers import CLIPProcessor, CLIPModel
 import re
 from datetime import datetime
 from backend.database.mongo_connection import get_db, get_fs
-from bson import ObjectId  
+from bson import ObjectId
 import gridfs
 import tempfile
 
 
-#initatlizing section
+# initatlizing section
 
 # Set up logging for debugging
 logging.basicConfig(level=logging.DEBUG)
@@ -80,33 +77,40 @@ transcription_bp = Blueprint("transcription", __name__)
 
 
 # Initialize emotion analysis model from HuggingFace
-emotion_analyzer = pipeline("text-classification", model="j-hartmann/emotion-english-distilroberta-base")
+emotion_analyzer = pipeline(
+    "text-classification", model="j-hartmann/emotion-english-distilroberta-base"
+)
 
 
 # Use a smaller, more efficient model like DistilBERT (for ai audio cetrainly level)
-classifier = pipeline("zero-shot-classification", model="nreimers/MiniLM-L6-H384-uncased")
+classifier = pipeline(
+    "zero-shot-classification", model="nreimers/MiniLM-L6-H384-uncased"
+)
 
 
 # Initialize ElevenLabs client with API key
 client = ElevenLabs(api_key=os.getenv("ELEVENLABS_API_KEY"))
 
 
-
 # Initialize MongoDB and GridFS
 db = get_db()  # Get the database object from mongo_connection.py
 fs = get_fs()  # Get the GridFS object from mongo_connection.py
+
 
 # Create TTL index inside metadata.upload_timestamp // delete files in mongo db after 24h
 def create_ttl_index():
     """Ensure TTL index only applies to transcription files."""
     db = get_db()  # Retrieve database connection inside the function
     db.fs.files.create_index(
-        [("metadata.upload_timestamp", 1)], 
+        [("metadata.upload_timestamp", 1)],
         expireAfterSeconds=86400,  # 24 hours
-        partialFilterExpression={"metadata.type": "transcription"},  # Only apply to transcription files
-        name="transcription_TTL"
+        partialFilterExpression={
+            "metadata.type": "transcription"
+        },  # Only apply to transcription files
+        name="transcription_TTL",
     )
     print("✅ TTL Index for 'transcription' files is set.")
+
 
 # Call the function at startup
 create_ttl_index()
@@ -116,10 +120,13 @@ create_ttl_index()
 # The file_id is passed as part of the URL, and it will be used to locate the file in GridFS.
 # The method for this route is GET, meaning this route will be used to fetch a file.
 
+
 # audio
 @transcription_bp.route("/get_file/<file_id>", methods=["GET"])
 def get_file(file_id):
-    logger.info(f"📢 Request received to fetch file with ID: {file_id} (Type: {type(file_id)})")
+    logger.info(
+        f"📢 Request received to fetch file with ID: {file_id} (Type: {type(file_id)})"
+    )
 
     try:
         # Log file_id type before conversion
@@ -134,7 +141,9 @@ def get_file(file_id):
             logger.warning(f"⚠️ Using string ID instead: {file_id}. Error: {e}")
 
         # Log MongoDB file search attempt
-        logger.info(f"🔍 Searching for file in GridFS with ID: {object_id} (Type: {type(object_id)})")
+        logger.info(
+            f"🔍 Searching for file in GridFS with ID: {object_id} (Type: {type(object_id)})"
+        )
 
         # Fetch file from GridFS
         file_obj = fs.get(object_id)
@@ -147,11 +156,19 @@ def get_file(file_id):
         file_data = file_obj.read()
         logger.info(f"✅ File found in GridFS: {file_obj.filename}")
         logger.info(f"📏 File size: {len(file_data)} bytes")
-        logger.info(f"📂 File metadata: {file_obj.metadata if hasattr(file_obj, 'metadata') else 'No metadata available'}")
+        logger.info(
+            f"📂 File metadata: {file_obj.metadata if hasattr(file_obj, 'metadata') else 'No metadata available'}"
+        )
 
         # Send file back to frontend
-        logger.info(f"📤 Sending file {file_obj.filename} (Size: {len(file_data)} bytes) to frontend")
-        return Response(file_data, mimetype="audio/wav", headers={"Content-Disposition": "attachment; filename=enhanced_audio.wav"})
+        logger.info(
+            f"📤 Sending file {file_obj.filename} (Size: {len(file_data)} bytes) to frontend"
+        )
+        return Response(
+            file_data,
+            mimetype="audio/wav",
+            headers={"Content-Disposition": "attachment; filename=enhanced_audio.wav"},
+        )
 
     except gridfs.errors.NoFile:
         logger.error(f"❌ File with ID {file_id} not found in GridFS.")
@@ -162,8 +179,7 @@ def get_file(file_id):
         return jsonify({"error": f"Error: {str(e)}"}), 500
 
 
-
-#video
+# video
 @transcription_bp.route("/get_video/<video_id>", methods=["GET"])
 def get_video(video_id):
     """Serve the processed video from MongoDB GridFS."""
@@ -187,7 +203,9 @@ def get_video(video_id):
 
         # Read video data
         file_data = video_file.read()
-        logger.info(f"✅ Video found in GridFS: {video_file.filename} (Size: {len(file_data)} bytes)")
+        logger.info(
+            f"✅ Video found in GridFS: {video_file.filename} (Size: {len(file_data)} bytes)"
+        )
 
         # Ensure the file is an MP4
         if not video_file.filename.endswith(".mp4"):
@@ -198,7 +216,7 @@ def get_video(video_id):
         return Response(
             file_data,
             mimetype="video/mp4",
-            headers={"Content-Disposition": f"inline; filename={video_file.filename}"}
+            headers={"Content-Disposition": f"inline; filename={video_file.filename}"},
         )
 
     except gridfs.errors.NoFile:
@@ -209,8 +227,8 @@ def get_video(video_id):
         logger.error(f"❌ Error fetching video with ID {video_id}: {str(e)}")
         return jsonify({"error": f"Error: {str(e)}"}), 500
 
-#************************************************************************************
 
+# ************************************************************************************
 
 
 # Transcription route
@@ -218,7 +236,7 @@ def get_video(video_id):
 
 # AI Suggestions
 def generate_ai_suggestions(text):
-    """ Generate AI suggestions to improve transcription, remove filler words, and enhance readability """
+    """Generate AI suggestions to improve transcription, remove filler words, and enhance readability"""
     prompt = f"""
     Review the following transcription and provide suggestions for improvement. Focus on:
     - Removing filler words like "um", "ah", "you know", and similar.
@@ -230,15 +248,16 @@ def generate_ai_suggestions(text):
     """
 
     response = openai.ChatCompletion.create(
-        model="gpt-4",
-        messages=[{"role": "user", "content": prompt}]
+        model="gpt-4", messages=[{"role": "user", "content": prompt}]
     )
 
     return response["choices"][0]["message"]["content"]
 
     # AI Show Notes and Marketing Snippets
+
+
 def generate_show_notes(text):
-    """ Generate AI show notes and marketing snippets based on the transcription, including key takeaways and highlights """
+    """Generate AI show notes and marketing snippets based on the transcription, including key takeaways and highlights"""
     prompt = f"""
     Generate concise and engaging show notes or a summary for this transcription. Include:
     - A brief description of the episode’s key topics and takeaways.
@@ -250,8 +269,7 @@ def generate_show_notes(text):
     """
 
     response = openai.ChatCompletion.create(
-        model="gpt-4",
-        messages=[{"role": "user", "content": prompt}]
+        model="gpt-4", messages=[{"role": "user", "content": prompt}]
     )
 
     return response["choices"][0]["message"]["content"]
@@ -259,7 +277,7 @@ def generate_show_notes(text):
 
 @transcription_bp.route("/transcribe", methods=["POST"])
 def transcribe():
-    """ Transcribe both audio and video files while keeping the original working structure for audio """
+    """Transcribe both audio and video files while keeping the original working structure for audio"""
 
     if "file" not in request.files:
         logging.error("No file provided.")
@@ -268,7 +286,7 @@ def transcribe():
     file = request.files["file"]
     filename = file.filename
     file_ext = os.path.splitext(filename)[-1].lower()
-    
+
     # Determine if it's a video file
     is_video = file_ext in ["mp4", "mov", "avi", "mkv", "webm"]
 
@@ -285,7 +303,9 @@ def transcribe():
                 temp_video.write(file.read())
 
             # Use FFmpeg to extract audio
-            ffmpeg_command = f'ffmpeg -i "{temp_video_path}" -ac 1 -ar 16000 "{temp_audio_path}" -y'
+            ffmpeg_command = (
+                f'ffmpeg -i "{temp_video_path}" -ac 1 -ar 16000 "{temp_audio_path}" -y'
+            )
             subprocess.run(ffmpeg_command, shell=True, check=True)
 
             # Read extracted audio into memory
@@ -304,13 +324,15 @@ def transcribe():
         file_id = fs.put(
             extracted_audio,
             filename=filename.replace(file_ext, ".wav"),
-            metadata={"upload_timestamp": datetime.utcnow(), "type": "transcription"}
+            metadata={"upload_timestamp": datetime.utcnow(), "type": "transcription"},
         )
         logging.info(f"📤 File uploaded to MongoDB GridFS with ID: {file_id}")
 
         # ✅ Retrieve the file for ElevenBase processing
         file_data = fs.get(file_id).read()
-        logging.info(f"📥 File retrieved from MongoDB GridFS with ID: {file_id}, size: {len(file_data)} bytes")
+        logging.info(
+            f"📥 File retrieved from MongoDB GridFS with ID: {file_id}, size: {len(file_data)} bytes"
+        )
 
         audio_data = BytesIO(file_data)  # Convert to BytesIO for ElevenBase processing
 
@@ -321,13 +343,15 @@ def transcribe():
             model_id="scribe_v1",
             num_speakers=2,
             diarize=True,
-            timestamps_granularity="word"
+            timestamps_granularity="word",
         )
 
         # ✅ Process transcription output
         raw_transcription_with_timestamps = []
         words_with_timestamps = transcription_result.words
-        transcription_no_fillers = transcription_result.text.strip() if transcription_result.text else "N/A"
+        transcription_no_fillers = (
+            transcription_result.text.strip() if transcription_result.text else "N/A"
+        )
 
         speaker_map = {}
         speaker_counter = 1
@@ -345,7 +369,9 @@ def transcribe():
             speaker_label = speaker_map[speaker_id]
 
             if word:
-                raw_transcription_with_timestamps.append(f"[{start_time}-{end_time}] {speaker_label}: {word}")
+                raw_transcription_with_timestamps.append(
+                    f"[{start_time}-{end_time}] {speaker_label}: {word}"
+                )
 
         raw_transcription = " ".join(raw_transcription_with_timestamps)
 
@@ -353,23 +379,22 @@ def transcribe():
         ai_suggestions = generate_ai_suggestions(transcription_no_fillers)
         show_notes = generate_show_notes(transcription_no_fillers)
 
-        return jsonify({
-            "raw_transcription": raw_transcription,  # ✅ Now correctly mapped
-            "ai_suggestions": ai_suggestions,
-            "show_notes": show_notes
-        })
+        return jsonify(
+            {
+                "raw_transcription": raw_transcription,  # ✅ Now correctly mapped
+                "ai_suggestions": ai_suggestions,
+                "show_notes": show_notes,
+            }
+        )
 
     except Exception as e:
         logging.error(f"❌ Error during transcription: {e}", exc_info=True)
         return jsonify({"error": "Transcription failed", "details": str(e)}), 500
 
 
-
-
-
 @transcription_bp.route("/translate", methods=["POST"])
 def translate():
-    """ Translate text using OpenAI API """
+    """Translate text using OpenAI API"""
     data = request.json
     text = data.get("text")
     target_language = data.get("language")
@@ -380,15 +405,20 @@ def translate():
     try:
         response = openai.ChatCompletion.create(
             model="gpt-4",
-            messages=[{"role": "user", "content": f"Translate this to {target_language}:\n{text}"}]
+            messages=[
+                {
+                    "role": "user",
+                    "content": f"Translate this to {target_language}:\n{text}",
+                }
+            ],
         )
         translated_text = response["choices"][0]["message"]["content"]
         return jsonify({"translated_text": translated_text})
     except Exception as e:
         return jsonify({"error": str(e)}), 500
-    
 
-#************************************************************************************
+
+# ************************************************************************************
 
 # **Audio Enhancement Route**
 
@@ -396,10 +426,11 @@ def translate():
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
+
 @transcription_bp.route("/audio/enhancement", methods=["POST"])
 def audio_enhancement():
     """Enhance audio quality using noise reduction and volume normalization via FFmpeg."""
-    
+
     logger.info("Starting audio enhancement process...")
 
     if "audio" not in request.files:
@@ -407,20 +438,27 @@ def audio_enhancement():
         return jsonify({"error": "No audio file provided"}), 400
 
     audio_file = request.files["audio"]
-    logger.info(f"Received file: {audio_file.filename}, content type: {audio_file.content_type}")
+    logger.info(
+        f"Received file: {audio_file.filename}, content type: {audio_file.content_type}"
+    )
 
     try:
         # Step 1: Save the original file to MongoDB GridFS with upload_timestamp
         file_id = fs.put(
-            audio_file.read(), 
-            filename=audio_file.filename, 
-            metadata={"upload_timestamp": datetime.utcnow(), "type": "transcription"}  # ✅ Ensure TTL works
+            audio_file.read(),
+            filename=audio_file.filename,
+            metadata={
+                "upload_timestamp": datetime.utcnow(),
+                "type": "transcription",
+            },  # ✅ Ensure TTL works
         )
         logger.info(f"📤 Original file saved to MongoDB GridFS with ID: {file_id}")
 
         # Step 2: Retrieve the file from GridFS for enhancement
         file_data = fs.get(file_id).read()  # Get the file from GridFS
-        logger.info(f"📥 Retrieved original file from GridFS with ID: {file_id}, size: {len(file_data)} bytes")
+        logger.info(
+            f"📥 Retrieved original file from GridFS with ID: {file_id}, size: {len(file_data)} bytes"
+        )
 
         # Step 3: Save to a temporary file for FFmpeg processing
         with tempfile.NamedTemporaryFile(delete=False, suffix=".wav") as temp_file:
@@ -436,7 +474,9 @@ def audio_enhancement():
         enhanced_audio = enhance_audio_with_ffmpeg(temp_file_path, enhanced_audio_path)
 
         if enhanced_audio:
-            logger.info(f"✅ Enhanced audio saved to temporary file: {enhanced_audio_path}")
+            logger.info(
+                f"✅ Enhanced audio saved to temporary file: {enhanced_audio_path}"
+            )
 
             # Step 5: **Detect background noise using temporary file**
             noise_detection_result = detect_background_noise(temp_file_path)
@@ -452,34 +492,38 @@ def audio_enhancement():
             # Step 8: Save the enhanced audio back to MongoDB GridFS
             with open(enhanced_audio_path, "rb") as enhanced_file:
                 enhanced_audio_data = enhanced_file.read()
-            
-            enhanced_file_id = fs.put(enhanced_audio_data, filename=f"enhanced_{audio_file.filename}")
-            logger.info(f"🔍 Enhanced audio saved to GridFS with ID: {enhanced_file_id} (Type: {type(enhanced_file_id)})")
+
+            enhanced_file_id = fs.put(
+                enhanced_audio_data, filename=f"enhanced_{audio_file.filename}"
+            )
+            logger.info(
+                f"🔍 Enhanced audio saved to GridFS with ID: {enhanced_file_id} (Type: {type(enhanced_file_id)})"
+            )
 
             # Cleanup temp files
             os.remove(temp_file_path)
             os.remove(enhanced_audio_path)
 
-            return jsonify({
-                "message": "✅ Audio enhancement completed!",
-                "enhanced_audio": str(enhanced_file_id),  # Send back the ID of the enhanced file
-                "background_noise": noise_detection_result,  # ✅ Background noise now works
-                "speech_rate": speech_rate  # ✅ Speech rate now works
-            })
+            return jsonify(
+                {
+                    "message": "✅ Audio enhancement completed!",
+                    "enhanced_audio": str(
+                        enhanced_file_id
+                    ),  # Send back the ID of the enhanced file
+                    "background_noise": noise_detection_result,  # ✅ Background noise now works
+                    "speech_rate": speech_rate,  # ✅ Speech rate now works
+                }
+            )
         else:
             logger.error("❌ Error enhancing audio with FFmpeg.")
             return jsonify({"error": "Error enhancing audio with FFmpeg."}), 500
 
     except Exception as e:
         logger.error(f"❌ Error during enhancement: {str(e)}")
-        return jsonify({"error": f"Error during enhancement: {str(e)}"}), 500 
+        return jsonify({"error": f"Error during enhancement: {str(e)}"}), 500
 
 
-
-
-
-
-#functions for audio anylziz:
+# functions for audio anylziz:
 def enhance_audio_with_ffmpeg(input_file_path, output_file_path):
     """Enhance audio using FFmpeg for noise reduction and volume normalization with hum removal."""
     try:
@@ -491,8 +535,10 @@ def enhance_audio_with_ffmpeg(input_file_path, output_file_path):
 
         ffmpeg_command = [
             "ffmpeg",
-            "-i", input_file_path,  # Input file path
-            "-af", (
+            "-i",
+            input_file_path,  # Input file path
+            "-af",
+            (
                 "arnndn=nf=-40,"  # General noise reduction with noise floor of -40 dB (stronger)
                 "highpass=f=50,"  # Apply high-pass filter at 50 Hz to remove low-frequency hum
                 "highpass=f=60,"  # Apply high-pass filter at 60 Hz to remove low-frequency hum
@@ -501,8 +547,9 @@ def enhance_audio_with_ffmpeg(input_file_path, output_file_path):
                 "equalizer=f=60:t=q:w=1:g=-40,"  # Notch filter at 60 Hz to remove hum with stronger gain reduction
                 "highpass=f=100,"  # High-pass filter at 100 Hz to remove rumbling low frequencies (optional)
             ),
-            "-filter:a", "loudnorm",  # Volume normalization filter
-            output_file_path  # Output file path
+            "-filter:a",
+            "loudnorm",  # Volume normalization filter
+            output_file_path,  # Output file path
         ]
 
         # Run the command
@@ -514,59 +561,65 @@ def enhance_audio_with_ffmpeg(input_file_path, output_file_path):
 
     except Exception as e:
         logger.error(f"❌ Error during FFmpeg processing: {e}")
-        return None 
-
-
+        return None
 
 
 # Function to remove filler words using GPT-4
 def remove_filler_words(text):
-    """ AI removes filler words like 'um', 'ah', 'like', etc. """
+    """AI removes filler words like 'um', 'ah', 'like', etc."""
     prompt = f"Remove unnecessary filler words (such as 'um', 'ah', 'like', etc.) from the following transcription and improve clarity:\n{text}"
 
     response = openai.ChatCompletion.create(
-        model="gpt-4",
-        messages=[{"role": "user", "content": prompt}]
+        model="gpt-4", messages=[{"role": "user", "content": prompt}]
     )
 
     return response["choices"][0]["message"]["content"]
 
+
 # Function to calculate clarity score
 def calculate_clarity_score(transcript):
-    """ Calculate clarity score based on Flesch-Kincaid readability and filler word removal. """
+    """Calculate clarity score based on Flesch-Kincaid readability and filler word removal."""
     # Calculate Flesch-Kincaid readability score
     readability_score = textstat.flesch_kincaid_grade(transcript)
-    
+
     # Count filler words (simple method)
-    filler_word_count = transcript.lower().count('um') + transcript.lower().count('ah') + transcript.lower().count('like') + transcript.lower().count('you know')
+    filler_word_count = (
+        transcript.lower().count("um")
+        + transcript.lower().count("ah")
+        + transcript.lower().count("like")
+        + transcript.lower().count("you know")
+    )
     filler_penalty = filler_word_count * 0.2
-    
+
     clarity_score = 100 - filler_penalty - readability_score  # Final clarity score
-    
+
     # Ensure score doesn't go below 0
     clarity_score = max(0, clarity_score)
-    
+
     return clarity_score, filler_word_count, readability_score, filler_penalty
 
-#function to detect background noise
+
+# function to detect background noise
 def detect_background_noise(audio_path, threshold=1000, max_freq=500):
     """Detects background noise in a WAV file by analyzing its frequency content using FFT."""
     try:
-        with wave.open(audio_path, 'rb') as wf:
+        with wave.open(audio_path, "rb") as wf:
             sample_rate = wf.getframerate()
             n_frames = wf.getnframes()
             audio_data = wf.readframes(n_frames)
             audio_array = np.frombuffer(audio_data, dtype=np.int16)
 
         fft_result = np.fft.fft(audio_array)
-        fft_freq = np.fft.fftfreq(len(fft_result), 1/sample_rate)
+        fft_freq = np.fft.fftfreq(len(fft_result), 1 / sample_rate)
         magnitude = np.abs(fft_result)
         low_freqs = magnitude[:max_freq]
         avg_magnitude = np.mean(low_freqs)
 
         if avg_magnitude > threshold:
             hum_detected = False
-            if np.any((fft_freq > 49) & (fft_freq < 51)) or np.any((fft_freq > 59) & (fft_freq < 61)):
+            if np.any((fft_freq > 49) & (fft_freq < 51)) or np.any(
+                (fft_freq > 59) & (fft_freq < 61)
+            ):
                 hum_detected = True
 
             if hum_detected:
@@ -580,16 +633,16 @@ def detect_background_noise(audio_path, threshold=1000, max_freq=500):
 
     except Exception as e:
         logging.error(f"Error in background noise detection: {e}")
-        return f"Error in background noise detection: {str(e)}" 
+        return f"Error in background noise detection: {str(e)}"
 
-        
+
 # Speech rate calculation (WPM) (updated to retrieve audio from GridFS)
 def calculate_speech_rate(audio_path, transcript):
     """
     Calculate speech rate (WPM) based on transcription and audio duration.
     """
     try:
-        with wave.open(audio_path, 'rb') as wf:
+        with wave.open(audio_path, "rb") as wf:
             sample_rate = wf.getframerate()
             duration = wf.getnframes() / sample_rate  # Convert frames to seconds
 
@@ -606,10 +659,9 @@ def calculate_speech_rate(audio_path, transcript):
 
     except Exception as e:
         logging.error(f"❌ Error during speech rate calculation: {e}")
-        return "Error calculating speech rate." 
+        return "Error calculating speech rate."
 
 
-    
 # API route for audio analysis
 @transcription_bp.route("/audio_analysis", methods=["POST"])
 def audio_analysis():
@@ -622,16 +674,23 @@ def audio_analysis():
     try:
         # Step 1: Save audio file to MongoDB GridFS with upload_timestamp
         file_id = fs.put(
-            audio_file.read(), 
-            filename=audio_file.filename, 
-            metadata={"upload_timestamp": datetime.utcnow(), "type": "transcription"}  # ✅ Ensure TTL works
+            audio_file.read(),
+            filename=audio_file.filename,
+            metadata={
+                "upload_timestamp": datetime.utcnow(),
+                "type": "transcription",
+            },  # ✅ Ensure TTL works
         )
         logger.info(f"📤 Audio file saved to MongoDB GridFS with ID: {file_id}")
 
-        file_data = fs.get(file_id).read()  # Retrieve the file from GridFS for processing
+        file_data = fs.get(
+            file_id
+        ).read()  # Retrieve the file from GridFS for processing
 
         # Step 2: **Save to temporary file for processing**
-        with tempfile.NamedTemporaryFile(delete=False, suffix=".wav") as temp_audio_file:
+        with tempfile.NamedTemporaryFile(
+            delete=False, suffix=".wav"
+        ) as temp_audio_file:
             temp_audio_file.write(file_data)
             temp_audio_file_path = temp_audio_file.name  # Get the temp file path
 
@@ -658,8 +717,12 @@ def audio_analysis():
             sentiment = "Neutral"
 
         # Step 6: Calculate clarity score
-        cleaned_transcript = remove_filler_words(transcript)  # Remove filler words for clarity
-        clarity_score, filler_word_count, readability_score, filler_penalty = calculate_clarity_score(cleaned_transcript)
+        cleaned_transcript = remove_filler_words(
+            transcript
+        )  # Remove filler words for clarity
+        clarity_score, filler_word_count, readability_score, filler_penalty = (
+            calculate_clarity_score(cleaned_transcript)
+        )
 
         clarity_text = (
             f"Clarity Score: {clarity_score}\n"
@@ -681,11 +744,11 @@ def audio_analysis():
         # Step 9: **Return analysis results**
         result = {
             "message": "✅ Emotion, Sentiment, Clarity, Background Noise, and Speech Rate analysis completed!",
-            "emotion": emotion_result[0]['label'],  # Emotion result
+            "emotion": emotion_result[0]["label"],  # Emotion result
             "sentiment": sentiment,  # Sentiment result
             "clarity_score": clarity_text,  # Clarity score with plain text explanation
             "background_noise": noise_detection_result,  # ✅ Background noise now works
-            "speech_rate": speech_rate  # ✅ Speech rate now works
+            "speech_rate": speech_rate,  # ✅ Speech rate now works
         }
 
     except Exception as e:
@@ -701,18 +764,19 @@ def audio_analysis():
     return jsonify(result)
 
 
-    
-#*************************************************************************************************************************
+# *************************************************************************************************************************
 
 
-#audio clip enviroment:
+# audio clip enviroment:
+
 
 # Function to check if a file already exists in MongoDB GridFS
 def file_exists(filename):
     existing_file = fs.find_one({"filename": filename})
     return existing_file if existing_file else None
 
-#get audio info
+
+# get audio info
 @transcription_bp.route("/get_audio_info", methods=["POST"])
 def get_audio_info():
     """Generate waveform and get duration of uploaded audio file, now using MongoDB GridFS."""
@@ -730,7 +794,10 @@ def get_audio_info():
         file_id = fs.put(
             audio_file.read(),
             filename=filename,
-            metadata={"upload_timestamp": datetime.utcnow(), "type": "transcription"}  # Add type
+            metadata={
+                "upload_timestamp": datetime.utcnow(),
+                "type": "transcription",
+            },  # Add type
         )
 
         # Retrieve the file from GridFS for processing
@@ -772,12 +839,13 @@ def get_audio_info():
             waveform_file_id = fs.put(
                 wf.read(),
                 filename=waveform_filename,
-                metadata={"upload_timestamp": datetime.utcnow(), "type": "transcription"}  # Add type
+                metadata={
+                    "upload_timestamp": datetime.utcnow(),
+                    "type": "transcription",
+                },  # Add type
             )
 
-
         logger.info(f"📤 Waveform saved to MongoDB GridFS with ID: {waveform_file_id}")
-
 
         logger.info(f"📤 Waveform saved to MongoDB GridFS with ID: {waveform_file_id}")
 
@@ -785,17 +853,17 @@ def get_audio_info():
         os.remove(temp_file_path)
         os.remove(waveform_path)
 
-        return jsonify({
-            "duration": duration,
-            "audio_file_id": str(file_id),  # Send correct file ID for actual audio
-            "waveform": str(waveform_file_id)  # Send waveform file ID
-            
-        })
+        return jsonify(
+            {
+                "duration": duration,
+                "audio_file_id": str(file_id),  # Send correct file ID for actual audio
+                "waveform": str(waveform_file_id),  # Send waveform file ID
+            }
+        )
 
     except Exception as e:
         logger.error(f"❌ ERROR: Failed to process audio - {str(e)}")
         return jsonify({"error": f"Failed to process audio: {str(e)}"}), 500
-
 
 
 @transcription_bp.route("/clip_audio", methods=["POST"])
@@ -828,7 +896,9 @@ def clip_audio():
         end_time = clips_to_remove[0].get("end")
 
         if start_time is None or end_time is None or start_time >= end_time:
-            logger.error(f"❌ ERROR: Invalid timestamps received. Start: {start_time}, End: {end_time}")
+            logger.error(
+                f"❌ ERROR: Invalid timestamps received. Start: {start_time}, End: {end_time}"
+            )
             return jsonify({"error": "Invalid timestamps received"}), 400
 
         logger.info(f"🆔 Cutting audio file with MongoDB ID: {file_id}")
@@ -838,10 +908,17 @@ def clip_audio():
         try:
             logger.info(f"📡 Fetching file from MongoDB GridFS with ID: {file_id}")
             file_data = fs.get(ObjectId(file_id)).read()
-            logger.info(f"✅ Successfully fetched file from MongoDB. Size: {len(file_data)} bytes")
+            logger.info(
+                f"✅ Successfully fetched file from MongoDB. Size: {len(file_data)} bytes"
+            )
         except Exception as e:
-            logger.error(f"❌ ERROR: Failed to fetch file {file_id} from MongoDB: {str(e)}")
-            return jsonify({"error": f"Failed to fetch file from MongoDB: {str(e)}"}), 500
+            logger.error(
+                f"❌ ERROR: Failed to fetch file {file_id} from MongoDB: {str(e)}"
+            )
+            return (
+                jsonify({"error": f"Failed to fetch file from MongoDB: {str(e)}"}),
+                500,
+            )
 
         # Save to a temporary file
         with tempfile.NamedTemporaryFile(delete=False, suffix=".wav") as temp_file:
@@ -859,13 +936,17 @@ def clip_audio():
 
         if existing_clipped_file:
             clipped_file_id = existing_clipped_file._id
-            logger.info(f"✅ Using existing clipped file in MongoDB: {clipped_audio_filename} (ID: {clipped_file_id})")
+            logger.info(
+                f"✅ Using existing clipped file in MongoDB: {clipped_audio_filename} (ID: {clipped_file_id})"
+            )
         else:
             # Run FFmpeg to cut the file
             ffmpeg_cmd = f'ffmpeg -y -i "{temp_file_path}" -ss {start_time} -to {end_time} -c copy "{clipped_audio_path}"'
             logger.info(f"🔄 Running FFmpeg Command: {ffmpeg_cmd}")
 
-            process = subprocess.run(ffmpeg_cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            process = subprocess.run(
+                ffmpeg_cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE
+            )
             stdout_output = process.stdout.decode()
             stderr_output = process.stderr.decode()
 
@@ -873,60 +954,87 @@ def clip_audio():
             logger.error(f"⚠️ FFmpeg stderr:\n{stderr_output}")
 
             if process.returncode != 0:
-                logger.error(f"❌ ERROR: FFmpeg process failed with code {process.returncode}")
-                return jsonify({"error": f"FFmpeg failed to process audio. FFmpeg stderr: {stderr_output}"}), 500
+                logger.error(
+                    f"❌ ERROR: FFmpeg process failed with code {process.returncode}"
+                )
+                return (
+                    jsonify(
+                        {
+                            "error": f"FFmpeg failed to process audio. FFmpeg stderr: {stderr_output}"
+                        }
+                    ),
+                    500,
+                )
 
             # Verify if FFmpeg actually created the file
-            if not os.path.exists(clipped_audio_path) or os.path.getsize(clipped_audio_path) == 0:
+            if (
+                not os.path.exists(clipped_audio_path)
+                or os.path.getsize(clipped_audio_path) == 0
+            ):
                 logger.error("❌ ERROR: FFmpeg did not produce a valid output file")
                 return jsonify({"error": "FFmpeg failed to process audio"}), 500
 
             file_size = os.path.getsize(clipped_audio_path)
-            logger.info(f"✅ Clipped audio successfully created at {clipped_audio_path}, size: {file_size} bytes")
+            logger.info(
+                f"✅ Clipped audio successfully created at {clipped_audio_path}, size: {file_size} bytes"
+            )
 
             # Save clipped audio to MongoDB
             with open(clipped_audio_path, "rb") as clipped_file:
                 clipped_file_id = fs.put(
                     clipped_file.read(),
                     filename=clipped_audio_filename,
-                    metadata={"upload_timestamp": datetime.utcnow(), "type": "transcription"}  # Add type
+                    metadata={
+                        "upload_timestamp": datetime.utcnow(),
+                        "type": "transcription",
+                    },  # Add type
                 )
-                logger.info(f"📤 Clipped audio saved to MongoDB with ID: {clipped_file_id}")
-
+                logger.info(
+                    f"📤 Clipped audio saved to MongoDB with ID: {clipped_file_id}"
+                )
 
         # Cleanup temp files
         os.remove(temp_file_path)
         os.remove(clipped_audio_path)
-        logger.info(f"🗑️ Temporary files deleted: {temp_file_path}, {clipped_audio_path}")
+        logger.info(
+            f"🗑️ Temporary files deleted: {temp_file_path}, {clipped_audio_path}"
+        )
 
-        return jsonify({"message": "✅ Audio clipped successfully!", "clipped_audio": str(clipped_file_id)})
+        return jsonify(
+            {
+                "message": "✅ Audio clipped successfully!",
+                "clipped_audio": str(clipped_file_id),
+            }
+        )
 
     except Exception as e:
         logger.error(f"❌ ERROR: Failed to process audio - {str(e)}")
         return jsonify({"error": f"Failed to process audio: {str(e)}"}), 500
 
 
-#*************************************************************************************************************************
-#ai audio cutting:
+# *************************************************************************************************************************
+# ai audio cutting:
 # Background Noise Detection using FFT
 def detect_background_noise(audio_path, threshold=1000, max_freq=500):
     """Detects background noise in a WAV file by analyzing its frequency content using FFT."""
     try:
-        with wave.open(audio_path, 'rb') as wf:
+        with wave.open(audio_path, "rb") as wf:
             sample_rate = wf.getframerate()
             n_frames = wf.getnframes()
             audio_data = wf.readframes(n_frames)
             audio_array = np.frombuffer(audio_data, dtype=np.int16)
 
         fft_result = np.fft.fft(audio_array)
-        fft_freq = np.fft.fftfreq(len(fft_result), 1/sample_rate)
+        fft_freq = np.fft.fftfreq(len(fft_result), 1 / sample_rate)
         magnitude = np.abs(fft_result)
         low_freqs = magnitude[:max_freq]
         avg_magnitude = np.mean(low_freqs)
 
         if avg_magnitude > threshold:
             hum_detected = False
-            if np.any((fft_freq > 49) & (fft_freq < 51)) or np.any((fft_freq > 59) & (fft_freq < 61)):
+            if np.any((fft_freq > 49) & (fft_freq < 51)) or np.any(
+                (fft_freq > 59) & (fft_freq < 61)
+            ):
                 hum_detected = True
 
             if hum_detected:
@@ -942,21 +1050,37 @@ def detect_background_noise(audio_path, threshold=1000, max_freq=500):
         logging.error(f"Error in background noise detection: {e}")
         return f"Error in background noise detection: {str(e)}"
 
+
 # Detect Long Pauses using FFmpeg
 def detect_long_pauses(audio_path, threshold=2.0):
     """Detects long pauses (silences of 2+ seconds) in an audio file using FFmpeg."""
     cmd = [
-        "ffmpeg", "-i", audio_path, "-af",
+        "ffmpeg",
+        "-i",
+        audio_path,
+        "-af",
         f"silencedetect=noise=-40dB:d={threshold}",
-        "-f", "null", "-"
+        "-f",
+        "null",
+        "-",
     ]
     process = subprocess.run(cmd, stderr=subprocess.PIPE, text=True)
     output = process.stderr
 
-    silence_start_times = [float(match.group(1)) for match in re.finditer(r"silence_start: ([0-9.]+)", output)]
-    silence_end_times = [float(match.group(1)) for match in re.finditer(r"silence_end: ([0-9.]+)", output)]
+    silence_start_times = [
+        float(match.group(1))
+        for match in re.finditer(r"silence_start: ([0-9.]+)", output)
+    ]
+    silence_end_times = [
+        float(match.group(1))
+        for match in re.finditer(r"silence_end: ([0-9.]+)", output)
+    ]
 
-    return [{"start": start, "end": end} for start, end in zip(silence_start_times, silence_end_times)]
+    return [
+        {"start": start, "end": end}
+        for start, end in zip(silence_start_times, silence_end_times)
+    ]
+
 
 # Analyze certainty levels
 def analyze_certainty_levels(transcription):
@@ -980,30 +1104,63 @@ def analyze_certainty_levels(transcription):
             logging.error(f"🚨 ERROR: Classification failed for sentence: {sentence}")
             continue
 
-        certainty_score = result['scores'][result['labels'].index('important')]
+        certainty_score = result["scores"][result["labels"].index("important")]
 
         certainty_level = (
-            "Green" if certainty_score <= 0.2 else
-            "Light Green" if certainty_score <= 0.4 else
-            "Yellow" if certainty_score <= 0.6 else
-            "Orange" if certainty_score <= 0.8 else
-            "Dark Orange" if certainty_score <= 0.9 else "Red"
+            "Green"
+            if certainty_score <= 0.2
+            else (
+                "Light Green"
+                if certainty_score <= 0.4
+                else (
+                    "Yellow"
+                    if certainty_score <= 0.6
+                    else (
+                        "Orange"
+                        if certainty_score <= 0.8
+                        else "Dark Orange" if certainty_score <= 0.9 else "Red"
+                    )
+                )
+            )
         )
 
-        sentence_certainty_scores.append({
-            "sentence": sentence,
-            "certainty": certainty_score,
-            "certainty_level": certainty_level
-        })
+        sentence_certainty_scores.append(
+            {
+                "sentence": sentence,
+                "certainty": certainty_score,
+                "certainty_level": certainty_level,
+            }
+        )
 
     return sentence_certainty_scores
+
 
 # Detect Filler Words in Transcript
 def detect_filler_words(transcription):
     """Identifies filler words (um, ah, like, etc.) in a transcript."""
-    filler_words = ["um", "uh", "ah", "like", "you know", "so", "well", "I mean", "sort of", "kind of", "okay", "right"]
+    filler_words = [
+        "um",
+        "uh",
+        "ah",
+        "like",
+        "you know",
+        "so",
+        "well",
+        "I mean",
+        "sort of",
+        "kind of",
+        "okay",
+        "right",
+    ]
     sentences = transcription.split(". ")
-    return [sentence for sentence in sentences if any(re.search(rf"\b{word}\b", sentence, re.IGNORECASE) for word in filler_words)]
+    return [
+        sentence
+        for sentence in sentences
+        if any(
+            re.search(rf"\b{word}\b", sentence, re.IGNORECASE) for word in filler_words
+        )
+    ]
+
 
 # Classify Sentence Importance
 def classify_sentence_relevance(transcription):
@@ -1016,13 +1173,16 @@ def classify_sentence_relevance(transcription):
         classification = classifier(sentence, candidate_labels=candidate_labels)
         highest_label = classification["labels"][0]
 
-        sentence_analysis.append({
-            "sentence": sentence,
-            "category": highest_label,
-            "score": classification["scores"][0]
-        })
+        sentence_analysis.append(
+            {
+                "sentence": sentence,
+                "category": highest_label,
+                "score": classification["scores"][0],
+            }
+        )
 
     return sentence_analysis
+
 
 # Assign timestamps based on word-level timestamps
 def get_sentence_timestamps(sentence, word_timings):
@@ -1032,8 +1192,13 @@ def get_sentence_timestamps(sentence, word_timings):
         return {"start": 0, "end": 0}
 
     first_word, last_word = words[0], words[-1]
-    start_timestamp = next((w["start"] for w in word_timings if w["word"] == first_word), 0.0)
-    end_timestamp = next((w["end"] for w in word_timings if w["word"] == last_word), start_timestamp + 2.0)
+    start_timestamp = next(
+        (w["start"] for w in word_timings if w["word"] == first_word), 0.0
+    )
+    end_timestamp = next(
+        (w["end"] for w in word_timings if w["word"] == last_word),
+        start_timestamp + 2.0,
+    )
 
     return {"start": start_timestamp, "end": end_timestamp}
 
@@ -1050,6 +1215,7 @@ def analyze_sentiment(transcript):
         return "Negative 😡"
     else:
         return "Neutral 😐"
+
 
 # generate show notes function
 def generate_ai_show_notes(transcript):
@@ -1068,8 +1234,13 @@ def generate_ai_show_notes(transcript):
     try:
         response = openai.ChatCompletion.create(
             model="gpt-4",
-            messages=[{"role": "system", "content": "You are a professional podcast assistant."},
-                      {"role": "user", "content": prompt}]
+            messages=[
+                {
+                    "role": "system",
+                    "content": "You are a professional podcast assistant.",
+                },
+                {"role": "user", "content": prompt},
+            ],
         )
 
         ai_show_notes = response["choices"][0]["message"]["content"]
@@ -1077,6 +1248,7 @@ def generate_ai_show_notes(transcript):
 
     except Exception as e:
         return f"❌ Error generating show notes: {str(e)}"
+
 
 # AI Audio Cutting API
 @transcription_bp.route("/ai_cut_audio", methods=["POST"])
@@ -1091,18 +1263,27 @@ def ai_cut_audio():
             try:
                 # Retrieve the file from MongoDB GridFS
                 file_data = fs.get(ObjectId(file_id)).read()
-                logging.info(f"📥 Retrieved audio file from MongoDB GridFS with ID: {file_id}")
+                logging.info(
+                    f"📥 Retrieved audio file from MongoDB GridFS with ID: {file_id}"
+                )
 
                 # Save to a temporary file for processing
-                with tempfile.NamedTemporaryFile(delete=False, suffix=".wav") as temp_file:
+                with tempfile.NamedTemporaryFile(
+                    delete=False, suffix=".wav"
+                ) as temp_file:
                     temp_file.write(file_data)
                     temp_file_path = temp_file.name  # Get the temp file path
 
                 logging.info(f"📂 Temporary file created at: {temp_file_path}")
 
             except Exception as e:
-                logging.error(f"❌ ERROR: Failed to fetch file {file_id} from MongoDB - {str(e)}")
-                return jsonify({"error": f"Failed to fetch file from MongoDB: {str(e)}"}), 500
+                logging.error(
+                    f"❌ ERROR: Failed to fetch file {file_id} from MongoDB - {str(e)}"
+                )
+                return (
+                    jsonify({"error": f"Failed to fetch file from MongoDB: {str(e)}"}),
+                    500,
+                )
 
         # ✅ Handle direct file upload
         elif "audio" in request.files:
@@ -1114,15 +1295,22 @@ def ai_cut_audio():
             existing_audio = fs.find_one({"filename": file_name})
             if existing_audio:
                 file_id = existing_audio._id
-                logging.info(f"📂 Audio file already exists in MongoDB with ID: {file_id}")
+                logging.info(
+                    f"📂 Audio file already exists in MongoDB with ID: {file_id}"
+                )
             else:
                 # ✅ **Save the file only if it doesn't exist**
                 file_id = fs.put(
                     audio_file.read(),
                     filename=file_name,
-                    metadata={"upload_timestamp": datetime.utcnow(), "type": "transcription"}  # ✅ Ensure TTL works
+                    metadata={
+                        "upload_timestamp": datetime.utcnow(),
+                        "type": "transcription",
+                    },  # ✅ Ensure TTL works
                 )
-                logging.info(f"📤 Audio file uploaded to MongoDB GridFS with ID: {file_id}")
+                logging.info(
+                    f"📤 Audio file uploaded to MongoDB GridFS with ID: {file_id}"
+                )
 
             # Save to a temporary file for processing
             with tempfile.NamedTemporaryFile(delete=False, suffix=".wav") as temp_file:
@@ -1140,7 +1328,7 @@ def ai_cut_audio():
             model_id="scribe_v1",
             num_speakers=2,
             diarize=True,
-            timestamps_granularity="word"
+            timestamps_granularity="word",
         )
         transcription = transcription_result.text.strip()
 
@@ -1158,7 +1346,9 @@ def ai_cut_audio():
         cleaned_transcript = remove_filler_words(transcription)
 
         # 🔊 Step 5: Detect background noise
-        noise_detection_result = detect_background_noise(temp_file_path)  # ✅ Process directly from temp file
+        noise_detection_result = detect_background_noise(
+            temp_file_path
+        )  # ✅ Process directly from temp file
 
         # 🛑 Step 6: Detect filler words
         filler_sentences = detect_filler_words(transcription)
@@ -1174,18 +1364,22 @@ def ai_cut_audio():
 
         # Assign timestamps to sentences dynamically
         sentence_timestamps = []
-        for idx, entry in enumerate(sentence_certainty_scores):  # Add an ID to each sentence
+        for idx, entry in enumerate(
+            sentence_certainty_scores
+        ):  # Add an ID to each sentence
             timestamps = get_sentence_timestamps(entry["sentence"], word_timings)
             entry["start"] = timestamps["start"]
             entry["end"] = timestamps["end"]
             entry["id"] = idx  # Add unique ID
 
-            sentence_timestamps.append({
-                "id": idx,  # Add ID to timestamps too
-                "sentence": entry["sentence"],
-                "start": timestamps["start"],
-                "end": timestamps["end"]
-            })
+            sentence_timestamps.append(
+                {
+                    "id": idx,  # Add ID to timestamps too
+                    "sentence": entry["sentence"],
+                    "start": timestamps["start"],
+                    "end": timestamps["end"],
+                }
+            )
 
         # ✂ Step 9: Suggested AI cuts with timestamps
         suggested_cuts = [
@@ -1194,9 +1388,10 @@ def ai_cut_audio():
                 "certainty_level": entry["certainty_level"],
                 "certainty_score": entry["certainty"],
                 "start": entry["start"],
-                "end": entry["end"]
+                "end": entry["end"],
             }
-            for entry in sentence_certainty_scores if entry["certainty"] >= 0.6
+            for entry in sentence_certainty_scores
+            if entry["certainty"] >= 0.6
         ]
 
         # 🎭 Step 10: AI Sentiment Analysis
@@ -1209,21 +1404,24 @@ def ai_cut_audio():
         selected_sentences = []  # To track sentences selected for removal
 
         # 🔄 Final Response
-        return jsonify({
-            "message": "✅ AI Audio processing completed successfully",
-            "file_id": str(file_id),
-            "cleaned_transcript": cleaned_transcript,
-            "background_noise": noise_detection_result,
-            "sentence_certainty_scores": sentence_certainty_scores,
-            "sentence_timestamps": sentence_timestamps,
-            "long_pauses": detect_long_pauses(temp_file_path),
-            "suggested_cuts": suggested_cuts,
-            "selected_sentences": selected_sentences,
-            "sentiment": sentiment_result,
-            "ai_show_notes": ai_show_notes
-        }), 200
-
-
+        return (
+            jsonify(
+                {
+                    "message": "✅ AI Audio processing completed successfully",
+                    "file_id": str(file_id),
+                    "cleaned_transcript": cleaned_transcript,
+                    "background_noise": noise_detection_result,
+                    "sentence_certainty_scores": sentence_certainty_scores,
+                    "sentence_timestamps": sentence_timestamps,
+                    "long_pauses": detect_long_pauses(temp_file_path),
+                    "suggested_cuts": suggested_cuts,
+                    "selected_sentences": selected_sentences,
+                    "sentiment": sentiment_result,
+                    "ai_show_notes": ai_show_notes,
+                }
+            ),
+            200,
+        )
 
     except Exception as e:
         logging.error(f"❌ ERROR: Failed to process audio - {str(e)}")
@@ -1235,26 +1433,29 @@ def ai_cut_audio():
                 os.remove(temp_file_path)
                 logging.info(f"🗑️ Temporary file deleted: {temp_file_path}")
             except PermissionError:
-                logging.warning(f"⚠️ Could not delete {temp_file_path} as it is in use. Retrying in 1 second...")
+                logging.warning(
+                    f"⚠️ Could not delete {temp_file_path} as it is in use. Retrying in 1 second..."
+                )
                 time.sleep(1)
                 try:
                     os.remove(temp_file_path)
-                    logging.info(f"✅ Successfully deleted temp file after retry: {temp_file_path}")
+                    logging.info(
+                        f"✅ Successfully deleted temp file after retry: {temp_file_path}"
+                    )
                 except Exception as e:
                     logging.error(f"❌ Failed to delete temp file: {str(e)}")
 
 
+# ***************************************************************************************************
+
+# ai video enhancemnt and video analyz
 
 
-#***************************************************************************************************
-
-#ai video enhancemnt and video analyz
-
-#ai video enhancment
+# ai video enhancment
 @transcription_bp.route("/ai_videoedit", methods=["POST"])
 def ai_videoedit():
     """Upload video to MongoDB GridFS without processing it immediately."""
-    
+
     try:
         if "video" not in request.files:
             return jsonify({"error": "No video file provided"}), 400
@@ -1263,26 +1464,26 @@ def ai_videoedit():
         video_id = fs.put(
             video_file.read(),
             filename=video_file.filename,
-            metadata={"upload_timestamp": datetime.utcnow(), "type": "transcription"}
+            metadata={"upload_timestamp": datetime.utcnow(), "type": "transcription"},
         )
 
         logger.info(f"📤 Video uploaded to MongoDB GridFS with ID: {video_id}")
 
-        return jsonify({
-            "message": "✅ Video uploaded successfully!",
-            "video_id": str(video_id)
-        })
+        return jsonify(
+            {"message": "✅ Video uploaded successfully!", "video_id": str(video_id)}
+        )
 
     except Exception as e:
         logger.error(f"❌ Error uploading video: {str(e)}")
         return jsonify({"error": "Video upload failed", "details": str(e)}), 500
 
-#video enahnchance route
+
+# video enahnchance route
 @transcription_bp.route("/ai_videoenhance", methods=["POST"])
 def ai_videoenhance():
     """Enhance an existing video stored in MongoDB and save the processed version."""
 
-    temp_video_path = None  
+    temp_video_path = None
     processed_video_path = None
 
     try:
@@ -1308,31 +1509,41 @@ def ai_videoenhance():
 
         # ✅ Ensure file exists before processing
         if not os.path.exists(temp_video_path):
-            raise FileNotFoundError(f"Temporary file {temp_video_path} was not created.")
+            raise FileNotFoundError(
+                f"Temporary file {temp_video_path} was not created."
+            )
 
         # ✅ Process video (Color Correction & Loudness Normalization)
         processed_video_path = temp_video_path.replace(".mp4", "_processed.mp4")
         ffmpeg_command = f'ffmpeg -i "{temp_video_path}" -vf "eq=contrast=1.05:brightness=0.05" -af "loudnorm" "{processed_video_path}"'
-        
+
         logger.info(f"🔄 Running FFmpeg command: {ffmpeg_command}")
         os.system(ffmpeg_command)
 
         # ✅ Ensure processed video exists
         if not os.path.exists(processed_video_path):
-            raise FileNotFoundError(f"Processed file {processed_video_path} was not created.")
+            raise FileNotFoundError(
+                f"Processed file {processed_video_path} was not created."
+            )
 
         logger.info(f"✅ Video processing completed: {processed_video_path}")
 
         # ✅ Save processed video to MongoDB GridFS
         with open(processed_video_path, "rb") as processed_file:
-            processed_video_id = fs.put(processed_file.read(), filename=f"processed_{video_id}.mp4")
+            processed_video_id = fs.put(
+                processed_file.read(), filename=f"processed_{video_id}.mp4"
+            )
 
-        logger.info(f"📤 Processed video saved to MongoDB GridFS with ID: {processed_video_id}")
+        logger.info(
+            f"📤 Processed video saved to MongoDB GridFS with ID: {processed_video_id}"
+        )
 
-        return jsonify({
-            "message": "✅ Video processed successfully!",
-            "processed_video_id": str(processed_video_id)
-        })
+        return jsonify(
+            {
+                "message": "✅ Video processed successfully!",
+                "processed_video_id": str(processed_video_id),
+            }
+        )
 
     except FileNotFoundError as fnf_error:
         logger.error(f"❌ File not found: {str(fnf_error)}")
@@ -1353,10 +1564,7 @@ def ai_videoenhance():
             logger.info(f"🗑️ Processed file deleted: {processed_video_path}")
 
 
-
-
-
-#start of video analyzis part
+# start of video analyzis part
 
 # Load Whisper Model
 print("🔄 Loading Whisper base model...")
@@ -1367,7 +1575,10 @@ print("✅ Whisper base loaded!")
 # Extract audio from video
 def extract_audio(video_path, audio_path):
     try:
-        subprocess.run(['ffmpeg', '-i', video_path, '-ac', '1', '-ar', '16000', audio_path], check=True)
+        subprocess.run(
+            ["ffmpeg", "-i", video_path, "-ac", "1", "-ar", "16000", audio_path],
+            check=True,
+        )
         logger.info(f"🔊 Audio extracted to: {audio_path}")
     except subprocess.CalledProcessError as e:
         logger.error(f"❌ Error extracting audio: {e}")
@@ -1392,7 +1603,7 @@ def transcribe_audio(audio_path):
 # Background Noise Detection using FFT
 def detect_background_noise(audio_path):
     try:
-        with wave.open(audio_path, 'rb') as wf:
+        with wave.open(audio_path, "rb") as wf:
             sample_rate = wf.getframerate()
             n_frames = wf.getnframes()
 
@@ -1410,7 +1621,7 @@ def detect_background_noise(audio_path):
         threshold = 1000
         if avg_magnitude > threshold:
             return "Background noise detected: Likely Hum or Low Frequency Noise"
-        
+
         return "No significant background noise detected"
 
     except Exception as e:
@@ -1436,7 +1647,7 @@ def analyze_sentiment(transcription):
 # Calculate visual quality (sharpness and contrast)
 def calculate_visual_quality(video_path):
     cap = cv2.VideoCapture(video_path)
-    
+
     sharpness = []
     contrast = []
 
@@ -1469,7 +1680,7 @@ def calculate_visual_quality(video_path):
 def calculate_speech_rate(audio_path, transcription):
     try:
         # Get the duration of the audio (in seconds)
-        with wave.open(audio_path, 'rb') as wf:
+        with wave.open(audio_path, "rb") as wf:
             duration = wf.getnframes() / wf.getframerate()
 
         # Count the number of words in the transcription
@@ -1483,12 +1694,13 @@ def calculate_speech_rate(audio_path, transcription):
         logger.error(f"❌ Error during speech rate calculation: {e}")
         return "Error calculating speech rate."
 
-#video analysis route
+
+# video analysis route
 @transcription_bp.route("/ai_videoanalysis", methods=["POST"])
 def ai_video_analysis():
     """Analyze video quality, sentiment, and background noise using AI."""
 
-    temp_video_path = None  
+    temp_video_path = None
     processed_audio_path = None
 
     try:
@@ -1516,7 +1728,9 @@ def ai_video_analysis():
 
         # ✅ Ensure file exists before proceeding
         if not os.path.exists(temp_video_path) or os.path.getsize(temp_video_path) == 0:
-            raise FileNotFoundError(f"Temporary file {temp_video_path} was not created or is empty.")
+            raise FileNotFoundError(
+                f"Temporary file {temp_video_path} was not created or is empty."
+            )
 
         # ✅ Extract audio for background noise detection
         processed_audio_path = temp_video_path.replace(".mp4", ".wav")
@@ -1535,17 +1749,16 @@ def ai_video_analysis():
         # ✅ Perform speech rate calculation (WPM)
         speech_rate = calculate_speech_rate(processed_audio_path, transcription)
 
-        return jsonify({
-            "message": "✅ Video analysis completed successfully!",
-            "video_id": str(video_id),
-            "background_noise": background_noise,
-            "sentiment_analysis": sentiment_analysis,
-            "visual_quality": {
-                "sharpness": sharpness,
-                "contrast": contrast
-            },
-            "speech_rate": speech_rate
-        })
+        return jsonify(
+            {
+                "message": "✅ Video analysis completed successfully!",
+                "video_id": str(video_id),
+                "background_noise": background_noise,
+                "sentiment_analysis": sentiment_analysis,
+                "visual_quality": {"sharpness": sharpness, "contrast": contrast},
+                "speech_rate": speech_rate,
+            }
+        )
 
     except FileNotFoundError as fnf_error:
         logger.error(f"❌ File not found: {str(fnf_error)}")
@@ -1565,14 +1778,11 @@ def ai_video_analysis():
             logger.info(f"🗑️ Processed audio file deleted: {processed_audio_path}")
 
 
+# *************************************************************************************************************************
 
 
+# video cutting:
 
-
-#*************************************************************************************************************************
-
-
-    #video cutting:
 
 @transcription_bp.route("/clip_video", methods=["POST"])
 def clip_video():
@@ -1595,17 +1805,31 @@ def clip_video():
         end_time = clips_to_remove[0]["end"]
 
         if start_time >= end_time:
-            return jsonify({"error": "Invalid timestamps: start time must be before end time"}), 400
+            return (
+                jsonify(
+                    {"error": "Invalid timestamps: start time must be before end time"}
+                ),
+                400,
+            )
 
-        logger.info(f"🎬 Clipping video with ID: {video_id} (Start: {start_time}s, End: {end_time}s)")
+        logger.info(
+            f"🎬 Clipping video with ID: {video_id} (Start: {start_time}s, End: {end_time}s)"
+        )
 
         # ✅ Retrieve video from MongoDB
         try:
             video_file = fs.get(ObjectId(video_id))
-            logger.info(f"✅ Successfully fetched video from MongoDB: {video_file.filename}")
+            logger.info(
+                f"✅ Successfully fetched video from MongoDB: {video_file.filename}"
+            )
         except Exception as e:
-            logger.error(f"❌ ERROR: Failed to fetch video {video_id} from MongoDB: {str(e)}")
-            return jsonify({"error": f"Failed to fetch video from MongoDB: {str(e)}"}), 500
+            logger.error(
+                f"❌ ERROR: Failed to fetch video {video_id} from MongoDB: {str(e)}"
+            )
+            return (
+                jsonify({"error": f"Failed to fetch video from MongoDB: {str(e)}"}),
+                500,
+            )
 
         # ✅ Save video to a temporary file
         with tempfile.NamedTemporaryFile(delete=False, suffix=".mp4") as temp_video:
@@ -1624,7 +1848,10 @@ def clip_video():
         os.system(ffmpeg_cmd)
 
         # ✅ Ensure FFmpeg successfully created the file
-        if not os.path.exists(clipped_video_path) or os.path.getsize(clipped_video_path) == 0:
+        if (
+            not os.path.exists(clipped_video_path)
+            or os.path.getsize(clipped_video_path) == 0
+        ):
             logger.error("❌ ERROR: FFmpeg failed to create a valid output file")
             return jsonify({"error": "FFmpeg failed to process video"}), 500
 
@@ -1635,24 +1862,36 @@ def clip_video():
             clipped_video_id = fs.put(
                 clipped_file.read(),
                 filename=f"clipped_{video_id}.mp4",
-                metadata={"upload_timestamp": datetime.utcnow(), "type": "transcription"}
+                metadata={
+                    "upload_timestamp": datetime.utcnow(),
+                    "type": "transcription",
+                },
             )
 
-        logger.info(f"📤 Clipped video saved to MongoDB GridFS with ID: {clipped_video_id}")
+        logger.info(
+            f"📤 Clipped video saved to MongoDB GridFS with ID: {clipped_video_id}"
+        )
 
         # ✅ Clean up temporary files
         os.remove(temp_video_path)
         os.remove(clipped_video_path)
-        logger.info(f"🗑️ Temporary files deleted: {temp_video_path}, {clipped_video_path}")
+        logger.info(
+            f"🗑️ Temporary files deleted: {temp_video_path}, {clipped_video_path}"
+        )
 
-        return jsonify({"message": "✅ Video clipped successfully!", "clipped_video": str(clipped_video_id)})
+        return jsonify(
+            {
+                "message": "✅ Video clipped successfully!",
+                "clipped_video": str(clipped_video_id),
+            }
+        )
 
     except Exception as e:
         logger.error(f"❌ ERROR: Failed to process video - {str(e)}")
         return jsonify({"error": f"Failed to process video: {str(e)}"}), 500
 
-    
-#*********************************************************************************************************
+
+# *********************************************************************************************************
 
 # Ai media cut editor
 
@@ -1925,9 +2164,6 @@ def clip_video():
 #     return {"start": start_timestamp, "end": end_timestamp}
 
 
-
-
-
 # # sentiment analyze function
 # def analyze_sentiment(transcript):
 #     """Analyzes sentiment of a transcript and returns an emoji-based result."""
@@ -1987,7 +2223,7 @@ def clip_video():
 #         "-movflags", "+faststart",  # Improve playback responsiveness
 #         "-y", output_path
 #     ]
-    
+
 #     subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 #     return output_path
 
@@ -1995,7 +2231,7 @@ def clip_video():
 # #ai media cutter (funnkar nästan 80-90%)
 # @transcription_bp.route("/ai_cut_media", methods=["POST"])
 # def ai_cut_media():
-#     """Handles AI-based media (audio/video) processing: 
+#     """Handles AI-based media (audio/video) processing:
 #        - Transcription
 #        - NLP-based trimming suggestions
 #        - Background noise detection
@@ -2078,7 +2314,6 @@ def clip_video():
 #         )
 #         transcription = transcription_result.text.strip()
 
-        
 
 #         # Extract word-level timestamps
 #         word_timings = [
@@ -2167,7 +2402,7 @@ def clip_video():
 #             "selected_sentences": selected_sentences,
 #             "sentiment": sentiment_result,
 #             "ai_show_notes": ai_show_notes,
-#             "video_clips": video_clips  
+#             "video_clips": video_clips
 #         })
 
 #     except Exception as e:
@@ -2185,4 +2420,3 @@ def clip_video():
 #         if is_video and os.path.exists(audio_path):
 #             os.remove(audio_path)  # ✅ Cleanup extracted audio
 #             logging.info(f"🗑️ Extracted audio file deleted: {audio_path}")
-

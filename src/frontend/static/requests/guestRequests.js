@@ -1,33 +1,45 @@
-function addGuestRequest(payload) {
+export function addGuestRequest(payload) {
   return fetch("/add_guests", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(payload)
-  }).then(res => res.json());
+  }).then((res) => res.json());
 }
 
-function editGuestRequest(guestId, payload) {
+export function editGuestRequest(guestId, payload) {
   return fetch("/edit_guests/" + guestId, {
     method: "PUT",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(payload)
-  }).then(res => res.json());
+  }).then((res) => res.json());
 }
 
-function deleteGuestRequest(guestId) {
+export function deleteGuestRequest(guestId) {
   return fetch("/delete_guests/" + guestId, {
     method: "DELETE",
     headers: { "Content-Type": "application/json" }
-  }).then(res => res.json());
+  }).then((res) => res.json());
 }
 
-function fetchGuestsRequest() {
+export function fetchGuestsRequest() {
   return fetch("/get_guests", { method: "GET" })
-    .then(res => {
+    .then((res) => {
       if (!res.ok) {
         throw new Error("Failed to fetch guests");
       }
       return res.json();
     })
-    .then(data => data.guests || []);
+    .then((data) => data.guests || []);
+}
+
+// New function to fetch guests by episode
+export function fetchGuestsByEpisode(episodeId) {
+  return fetch(`/get_guests_by_episode/${episodeId}`, { method: "GET" })
+    .then((res) => {
+      if (!res.ok) {
+        throw new Error("Failed to fetch guests");
+      }
+      return res.json();
+    })
+    .then((data) => data.guests || []);
 }

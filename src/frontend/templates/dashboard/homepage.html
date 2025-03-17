@@ -11,30 +11,44 @@
 
 <script>
   document.addEventListener("DOMContentLoaded", function () {
-    fetch("/get_user_podcasts")
+    fetch("/get_podcasts")
       .then((response) => response.json())
       .then((data) => {
-        const podcastList = document.getElementById("podcast-list");
-        podcastList.innerHTML = "";
-
         if (data.error) {
-          podcastList.innerHTML = `<p>${data.error}</p>`;
+          document.getElementById(
+            "podcast-list"
+          ).innerHTML = `<p>${data.error}</p>`;
           return;
         }
 
-        data.forEach((podcast) => {
+        const podcasts = data.podcast || [];
+        if (podcasts.length <= 1) {
+          window.parent.document.getElementById(
+            "homepage-popup"
+          ).style.display = "none";
+          return;
+        }
+
+        const podcastList = document.getElementById("podcast-list");
+        podcastList.innerHTML = "";
+
+        podcasts.forEach((pod) => {
           let podcastCard = document.createElement("div");
           podcastCard.classList.add("card");
+          let imgUrl =
+            pod.logoUrl ||
+            "{{ url_for('static', filename='images/mock-podcast.jpeg') }}";
 
           podcastCard.innerHTML = `
-                    <a href="/dashboard"
-                        onclick="window.parent.document.getElementById('homepage-popup').style.display='none';">
-                        <img src="${podcast.image_url}" alt="${podcast.name}">
-                    </a>
-                    <p class="episode-count">${podcast.open_episodes} Open Episodes</p>
-                `;
-
+            <a href="/dashboard"
+               onclick="window.parent.document.getElementById('homepage-popup').style.display='none';">
+              <img src="${imgUrl}" alt="${"Podcast"}">
+              <p>${pod.podName || "Podcast"}</p>
+            </a>
+            `;
           podcastList.appendChild(podcastCard);
+          //<p class="episode-count">${pod.open_episodes || 0} Open Episodes</p>
+          // lägg till baka ^^ sen när vi börjar använda podcast avsnitt
         });
       })
       .catch((error) => console.error("Error loading podcasts:", error));

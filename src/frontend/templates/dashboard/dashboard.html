@@ -1,9 +1,8 @@
-{% extends "dashboard/components/base.html" %} {% block title %}Team Leaderboard
-Dashboard{% endblock %} {% block content %}
-<link
-  rel="stylesheet"
-  href="{{ url_for('static', filename='css/dashboard.css') }}"
-/>
+{% extends "dashboard/components/base.html" %} 
+{% block title %}Team Leaderboard Dashboard{% endblock %} 
+{% block content %}
+
+<link rel="stylesheet" href="{{ url_for('static', filename='css/dashboard.css') }}" />
 <style>
   .cards-container {
     display: flex;
@@ -14,44 +13,63 @@ Dashboard{% endblock %} {% block content %}
     margin: 0.5em;
     box-sizing: border-box;
   }
+  .unsubscribe-section {
+    margin-top: 2rem;
+    padding: 1rem;
+    background-color: #f4f4f4;
+    border-radius: 8px;
+  }
+  .unsubscribe-button {
+    background-color: #ff4c4c;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    cursor: pointer;
+    border-radius: 5px;
+    font-size: 16px;
+  }
+  .unsubscribe-button:hover {
+    background-color: #ff0000;
+  }
+
+  /* Initially hide the select dropdown */
+  #select-podcast {
+    display: none;
+  }
 </style>
-<script src="{{ url_for('static', filename='requests/podprofileRequests.js') }}"></script>
-<script src="{{ url_for('static', filename='requests/podprofile_languageRequests.js') }}"></script>
+
+
+<script type="module" src="{{ url_for('static', filename='requests/podcastRequests.js') }}"></script>
+<script type="module" src="{{ url_for('static', filename='js/dashboard.js') }}"></script>
 <script>
   document.addEventListener("DOMContentLoaded", function () {
-    // Homepage popup remains unchanged
-    if (!sessionStorage.getItem("homepageViewed")) {
-      document.getElementById("homepage-popup").style.display = "flex";
-      sessionStorage.setItem("homepageViewed", "true");
+    // Show welcome popup if the flag is set
+    if (sessionStorage.getItem("showWelcomePopup") === "true") {
+      document.getElementById("welcome-popup").style.display = "flex";
+      sessionStorage.removeItem("showWelcomePopup");
     }
 
-    const taskPopup = document.getElementById("task-popup");
-    const closeTaskPopup = document.getElementById("close-popup");
-    // Hide popup initially
-    taskPopup.style.display = "none";
+    const welcomePopup = document.getElementById("welcome-popup");
+    const closeWelcomePopup = document.getElementById("close-welcome-popup");
+    const podcastPopup = document.getElementById("podcast-popup");
 
-    // Use event delegation to show popup only when a .task-text is clicked
-    document.addEventListener("click", function (e) {
-      if (e.target.closest(".task-text")) {
-        e.stopPropagation();
-        taskPopup.style.display = "flex";
+    closeWelcomePopup.addEventListener("click", function () {
+      welcomePopup.style.display = "none";
+      // Show the podcast popup and fetch podcasts
+      podcastPopup.style.display = "flex";
+      window.fetchAndDisplayPodcasts();
+    });
+
+    // Close popup if clicking outside the popup-content
+    welcomePopup.addEventListener("click", function (e) {
+      if (e.target === welcomePopup) {
+        welcomePopup.style.display = "none";
+        // Show the podcast popup after closing the welcome popup
+        podcastPopup.style.display = "flex";
+        window.fetchAndDisplayPodcasts();
       }
     });
 
-    // Close popup on clicking the close button
-    closeTaskPopup.addEventListener("click", function (e) {
-      taskPopup.style.display = "none";
-    });
-
-    // Optional: close popup if clicking outside the popup-content
-    taskPopup.addEventListener("click", function (e) {
-      if (e.target === taskPopup) {
-        taskPopup.style.display = "none";
-      }
-    });
-  });
-
-  document.addEventListener("DOMContentLoaded", function () {
     // Attach change event listener to all checkboxes
     document.querySelectorAll(".task-check").forEach((checkbox) => {
       checkbox.addEventListener("change", function () {
@@ -72,7 +90,7 @@ Dashboard{% endblock %} {% block content %}
       const tasks = Array.from(taskList.children);
       tasks.sort((a, b) => {
         return (
-          a.querySelector(".task-check").checked -
+          a.querySelector(".task-check").checked - 
           b.querySelector(".task-check").checked
         );
       });
@@ -131,10 +149,10 @@ Dashboard{% endblock %} {% block content %}
     <section class="task-cards">
       <div class="cards-container">
         <div class="card">
-          <img
+          <!-- <img
             src="https://podmanagerstorage.blob.core.windows.net/blob-container/person1.jpg"
             class="profile-image"
-          />
+          /> -->
           <h3>Ollina Olsson</h3>
           <ul class="task-list">
             <li>
@@ -342,12 +360,12 @@ Dashboard{% endblock %} {% block content %}
               ></span>
             </li>
           </ul>
-        </div>
+          </div>
         <div class="card">
-          <img
+          <!-- <img
             src="https://podmanagerstorage.blob.core.windows.net/blob-container/person2.jpg"
             class="profile-image"
-          />
+          /> -->
           <h3>Olle Olsson</h3>
           <ul class="task-list">
             <li>
@@ -557,10 +575,10 @@ Dashboard{% endblock %} {% block content %}
           </ul>
         </div>
         <div class="card">
-          <img
+          <!-- <img
             src="https://podmanagerstorage.blob.core.windows.net/blob-container/person3.jpg"
             class="profile-image"
-          />
+          /> -->
           <h3>Olga Olsson</h3>
           <ul class="task-list">
             <li>
@@ -770,7 +788,6 @@ Dashboard{% endblock %} {% block content %}
           </ul>
         </div>
       </div>
-    </section>
     <!-- Place this outside the card markup -->
     <div id="task-popup" class="popup" style="display: none">
       <div class="popup-content">
@@ -794,8 +811,34 @@ Dashboard{% endblock %} {% block content %}
             <button class="popup-button">OPEN</button>
           </p>
         </div>
+
+
       </div>
     </div>
   </main>
+</div>
+
+<!-- Welcome Popup -->
+<div id="welcome-popup" class="popup" style="display: none;">
+  <div class="popup-content">
+    <span id="close-welcome-popup" class="close-btn">&times;</span>
+    <h2>Welcome to PodManager.ai!</h2>
+    <p>🎉 Congratulations!</p>
+    <p>Your spot in the Beta Tester queue is locked in! Get ready for your exclusive sneak peek...</p>
+    <p>💰 To kick things off, we’ve added 3,500 Credits to your account!</p>
+    <p>PodManager.ai will revolutionize your podcasting with AI-powered workflow automation, seamless guest management, and faster episode production- so you can focus on creating amazing content!</p>
+    <p>✨ Check your email right now for more exciting features!</p>
+  </div>
+</div>
+
+<!-- Podcast Popup -->
+<div id="podcast-popup" class="popup" style="display: none;">
+  <div class="popup-content">
+    <span id="close-podcast-popup" class="close-btn">&times;</span>
+    <h2>Your Podcasts</h2>
+    <ul id="podcast-list">
+      <!-- Podcast items will be dynamically added here -->
+    </ul>
+  </div>
 </div>
 {% endblock %}

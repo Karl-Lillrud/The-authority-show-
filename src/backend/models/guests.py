@@ -1,8 +1,9 @@
 from marshmallow import Schema, fields
+from backend.models.podtasks import PodtaskSchema
 
 class GuestSchema(Schema):
     id = fields.Str()
-    podcastId = fields.Str(required=False) #Guest should be linked to a podcast
+    episodeId = fields.Str(required=False)
     name = fields.Str(required=True)
     image = fields.Str()
     tags = fields.List(fields.Str())
@@ -16,4 +17,5 @@ class GuestSchema(Schema):
     scheduled = fields.Int() #Schedule sen
     completed = fields.Int()
     createdAt = fields.DateTime() #Endpoints will fix this
+    defaultTasks = fields.List(fields.Nested(PodtaskSchema), allow_none=True)
     notes = fields.Str()
