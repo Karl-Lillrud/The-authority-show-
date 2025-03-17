@@ -55,7 +55,7 @@ class EpisodeRepository:
                 "podcast_id": podcast_id,
                 "title": title,
                 "description": validated_data.get("description"),
-                "publishDate": validated_data.get("pubDate"),
+                "publishDate": validated_data.get("publishDate"),
                 "duration": validated_data.get("duration"),
                 "status": validated_data.get("status"),
                 "userid": user_id_str,
