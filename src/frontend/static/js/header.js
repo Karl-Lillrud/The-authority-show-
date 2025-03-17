@@ -13,6 +13,11 @@ async function populatePodcastDropdown() {
     console.log("Podcasts fetched:", data);
     const podcasts = data.podcast || [];
 
+    if (podcasts.length < 2) {
+      dropdown.style.display = 'none';
+      return;
+    }
+
     // Populate the dropdown with the fetched podcasts
     podcasts.forEach(podcast => {
       const option = document.createElement("option");
@@ -90,3 +95,35 @@ if (document.readyState === "loading") {
 } else {
   populatePodcastDropdown();
 }
+
+const logoutLink = document.getElementById("logout-link");
+const logoutModal = document.getElementById("logout-modal");
+const cancelLogout = document.getElementById("cancel-logout");
+const confirmLogout = document.getElementById("confirm-logout");
+
+if (logoutLink) {
+  logoutLink.addEventListener("click", function (e) {
+    e.preventDefault();
+    logoutModal.style.display = "flex";
+  });
+}
+
+if (cancelLogout) {
+  cancelLogout.addEventListener("click", function () {
+    logoutModal.style.display = "none";
+  });
+}
+
+if (confirmLogout) {
+  confirmLogout.addEventListener("click", function () {
+    document.cookie =
+      "remember_me=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+    window.location.href = logoutLink.href;
+  });
+}
+
+window.addEventListener("click", function (e) {
+  if (e.target === logoutModal) {
+    logoutModal.style.display = "none";
+  }
+});

@@ -69,7 +69,7 @@ AZURE_SPEECH_KEY = os.getenv("AZURE_SPEECH_KEY")
 AZURE_REGION = os.getenv("AZURE_REGION")
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 
-if not HF_TOKEN or not AZURE_SPEECH_KEY or not AZURE_REGION or not OPENAI_API_KEY:
+if not HF_TOKEN or not OPENAI_API_KEY:
     raise ValueError("❌ API keys are missing. Add them to your .env file.")
 
 # Create Flask Blueprint

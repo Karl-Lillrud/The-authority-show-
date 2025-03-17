@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Podcast Website</title>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
   <link rel="stylesheet" href="{{ url_for('static', filename='css/landingpage.css') }}">
 </head>
 <body>
@@ -58,30 +58,15 @@
             Host biography goes here.
           </p>
           <div id="host-social">
-            <p>DEBUG ARRAY: {{ social_media | safe }}</p>
-            {% if social_media %}
-                {% for link in social_media %}
-                    <p>DEBUG: Processing Link - {{ link }}</p>  <!-- ADD THIS LINE -->
-                    {% if 'facebook.com' in link %}
-                        <a href="{{ link }}" target="_blank" class="facebook"><i class="fab fa-facebook-f"></i></a>
-                    {% elif 'instagram.com' in link %}
-                        <a href="{{ link }}" target="_blank" class="instagram"><i class="fab fa-instagram"></i></a>
-                    {% elif 'linkedin.com' in link %}
-                        <a href="{{ link }}" target="_blank" class="linkedin"><i class="fab fa-linkedin"></i></a>
-                    {% elif 'x.com' in link or 'twitter.com' in link %}
-                        <a href="{{ link }}" target="_blank" class="twitter"><i class="fab fa-twitter"></i></a>
-                    {% elif 'youtube.com' in link %}
-                        <a href="{{ link }}" target="_blank" class="youtube"><i class="fab fa-youtube"></i></a>
-                    {% else %}
-                        <a href="{{ link }}" target="_blank" class="default-link"><i class="fas fa-link"></i></a>
-                    {% endif %}
-                {% endfor %}
-            {% else %}
-                <p>No social media links available.</p>
-            {% endif %}
-        </div>
-        
-          
+            <a href="{{ url_for('dashboard_bp.podcastmanagement') }}" class="pinterest"><i class="fab fa-pinterest-p"></i></a>
+            <a href="{{ url_for('dashboard_bp.podcastmanagement') }}" class="twitter"><i class="fab fa-x-twitter"></i></a>
+            <a href="{{ url_for('dashboard_bp.podcastmanagement') }}" class="instagram"><i class="fab fa-instagram"></i></a>
+            <a href="{{ url_for('dashboard_bp.podcastmanagement') }}" class="linkedin"><i class="fab fa-linkedin"></i></a>
+            <a href="{{ url_for('dashboard_bp.podcastmanagement') }}" class="facebook"><i class="fab fa-facebook-f"></i></a>
+            <a href="{{ url_for('dashboard_bp.podcastmanagement') }}" class="youtube"><i class="fab fa-youtube"></i></a>
+            <a href="{{ url_for('dashboard_bp.podcastmanagement') }}" class="tiktok"><i class="fab fa-tiktok"></i></a>            
+          </a>
+          </div>
         </div>
       </div>
     </section>
