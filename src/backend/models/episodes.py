@@ -7,7 +7,7 @@ class EpisodeSchema(Schema):
     podcastId = fields.Str(required=True)
     title = fields.Str(required=True)
     description = fields.Str(allow_none=True)
-    pubDate = fields.Str(allow_none=True)
+    publishDate = fields.Str(allow_none=True)
     duration = fields.Str(allow_none=True)
     status = fields.Str(allow_none=True)
     defaultTasks = fields.List(fields.Nested(PodtaskSchema), allow_none=True)
