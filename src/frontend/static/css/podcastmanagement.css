@@ -1438,6 +1438,22 @@ body {
   color: rgba(0, 0, 0, 0.85);
 }
 
+/* Modern Horizontal Menu */
+.action-menu {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 2.5rem;
+}
+
+.menu-container {
+  display: flex;
+  background-color: white;
+  border-radius: var(--radius-large);
+  box-shadow: var(--card-shadow);
+  padding: 8px;
+  gap: 8px;
+}
+
 /* Responsive Design */
 @media (max-width: 1024px) {
   .detail-content {
