@@ -65,12 +65,25 @@ def episode():
         return f"Error: {str(e)}", 500
 
 def map_social_links(social_links):
-    platforms = ["instagram", "twitter", "facebook", "linkedin", "youtube", "tiktok"]
+    platform_keywords = {
+        "instagram": "instagram.com",
+        "twitter": "twitter.com",
+        "facebook": "facebook.com",
+        "linkedin": "linkedin.com",
+        "youtube": "youtube.com",
+        "tiktok": "tiktok.com",
+    }
+
     social_media_dict = {}
 
-    for i, link in enumerate(social_links):
-        platform = platforms[i] if i < len(platforms) else f"other{i}"
-        social_media_dict[platform] = link
+    for link in social_links:
+        matched_platform = "other"
+        for platform, keyword in platform_keywords.items():
+            if keyword in link:
+                matched_platform = platform
+                break  # Stop checking once we find a match
+        
+        social_media_dict[matched_platform] = link
 
     return social_media_dict
 
