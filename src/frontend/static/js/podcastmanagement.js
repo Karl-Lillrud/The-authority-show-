@@ -609,7 +609,7 @@ form.addEventListener("submit", async (e) => {
       document.getElementById("twitter")?.value.trim(),
       document.getElementById("tiktok")?.value.trim(),
       document.getElementById("pinterest")?.value.trim(),
-      document.getElementById("youtube")?.value.trim(),
+      document.getElementById("youtube")?.value.trim()
     ].filter((link) => link)
   };
 
@@ -700,12 +700,16 @@ form.addEventListener("submit", async (e) => {
   }
 
   async function processInputs() {
-    const logoPromise = handleFileInput(logoInput, 'logoUrl');
-    const bannerPromise = handleFileInput(bannerInput, 'bannerUrl');
-    const hostImagePromise = handleFileInput(hostImageInput, 'hostImage');
+    const logoPromise = handleFileInput(logoInput, "logoUrl");
+    const bannerPromise = handleFileInput(bannerInput, "bannerUrl");
+    const hostImagePromise = handleFileInput(hostImageInput, "hostImage");
 
     // Wait for all file inputs to be processed
-    const [logoChanged, bannerChanged, hostImageChanged] = await Promise.all([logoPromise, bannerPromise, hostImagePromise]);
+    const [logoChanged, bannerChanged, hostImageChanged] = await Promise.all([
+      logoPromise,
+      bannerPromise,
+      hostImagePromise
+    ]);
 
     // Submit podcast data
     await submitPodcast(data);
@@ -713,8 +717,6 @@ form.addEventListener("submit", async (e) => {
 
   // Start processing the inputs
   processInputs();
-
-
 });
 
 function displayPodcastDetails(podcast) {
@@ -757,7 +759,6 @@ function displayPodcastDetails(podcast) {
 
   const hostBioEl = document.getElementById("host-bio");
   if (hostBioEl) hostBioEl.value = podcast.hostBio || "";
-
 
   // Social media links
   const facebookEl = document.getElementById("facebook");
@@ -897,11 +898,12 @@ async function renderPodcastList() {
               episodeItem.className = "podcast-episode-item";
               episodeItem.setAttribute("data-episode-id", episode._id);
 
+              // Ensure publishDate is formatted correctly
               const publishDate = episode.publishDate
                 ? new Date(episode.publishDate).toLocaleDateString()
                 : "No date";
 
-              // Include episode description next to the title
+              // Include episode description and publish date
               episodeItem.innerHTML = `
                 <div class="podcast-episode-content">
                   <div class="podcast-episode-title">${episode.title}</div>
@@ -915,7 +917,7 @@ async function renderPodcastList() {
               // Make episode item navigate to episode details
               episodeItem.addEventListener("click", (e) => {
                 e.stopPropagation();
-                renderEpisodeDetail(episode);
+                renderEpisodeDetail({ ...episode, podcast_id: podcast._id }); // Pass podcast ID
                 document.getElementById("podcast-list").style.display = "none";
                 document.getElementById("podcast-detail").style.display =
                   "block";
@@ -1406,15 +1408,23 @@ function renderPodcastDetail(podcast) {
 // Modify the renderEpisodeDetail function to add the top-right action buttons
 function renderEpisodeDetail(episode) {
   const episodeDetailElement = document.getElementById("podcast-detail");
+  const publishDate = episode.publishDate
+    ? new Date(episode.publishDate).toLocaleString()
+    : "Not specified";
+  const duration = episode.duration || "Unknown";
+  const episodeType = episode.episodeType || "Unknown";
+  const link = episode.link || "No link available";
+  const author = episode.author || "Unknown";
+  const fileSize = episode.fileSize || "Unknown";
+  const fileType = episode.fileType || "Unknown";
+
   episodeDetailElement.innerHTML = `
     <div class="detail-header">
       <button class="back-btn" id="back-to-podcast">
         ${svgpodcastmanagement.back}
         Back to podcast
       </button>
-      
-      <!-- Add top-right action buttons -->
-      <div class="top-right-actions">
+      <div class="top-right actions">
         <button class="action-btn edit-btn" id="edit-episode-btn" data-id="${
           episode._id
         }">
@@ -1437,13 +1447,35 @@ function renderEpisodeDetail(episode) {
         <div class="detail-grid">
           <div class="detail-item">
             <h3>Publish Date</h3>
-            <p>${
-              new Date(episode.publishDate).toLocaleString() || "Not specified"
-            }</p>
+            <p>${publishDate}</p>
           </div>
           <div class="detail-item">
             <h3>Duration</h3>
-            <p>${episode.duration || "Not specified"} minutes</p>
+            <p>${duration} minutes</p>
+          </div>
+          <div class="detail-item">
+            <h3>Episode Type</h3>
+            <p>${episodeType}</p>
+          </div>
+          <div class="detail-item">
+            <h3>Author</h3>
+            <p>${author}</p>
+          </div>
+          <div class="detail-item">
+            <h3>File Size</h3>
+            <p>${fileSize}</p>
+          </div>
+          <div class="detail-item">
+            <h3>File Type</h3>
+            <p>${fileType}</p>
+          </div>
+          <div class="detail-item">
+            <h3>Link</h3>
+            ${
+              link !== "No link available"
+                ? `<a href="${link}" target="_blank">${link}</a>`
+                : `<p>${link}</p>`
+            }
           </div>
         </div>
         <div class="separator"></div>
@@ -1466,7 +1498,22 @@ function renderEpisodeDetail(episode) {
 
   // Back button event listener
   document.getElementById("back-to-podcast").addEventListener("click", () => {
-    viewPodcast(episode.podcast_id || episode.podcastId || selectedPodcastId);
+    // Ensure selectedPodcastId is set correctly
+    if (!selectedPodcastId) {
+      selectedPodcastId = episode.podcast_id || episode.podcastId;
+    }
+
+    // Navigate back to the podcast details
+    if (selectedPodcastId) {
+      viewPodcast(selectedPodcastId);
+    } else {
+      console.error("Podcast ID is missing. Cannot navigate back to podcast.");
+      showNotification(
+        "Error",
+        "Podcast ID is missing. Cannot navigate back.",
+        "error"
+      );
+    }
   });
 
   // Edit button event listener
