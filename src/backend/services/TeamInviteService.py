@@ -17,13 +17,6 @@ class TeamInviteService:
             # Normalize email
             email = email.lower().strip()
             
-            # Check if user is already a team member
-            existing_user = self.user_repo.get_user_by_email(email)
-            if existing_user:
-                is_member = self.user_to_team_repo.is_user_in_team(existing_user["_id"], team_id)
-                if is_member:
-                    return {"error": "User is already a member of this team"}, 400
-            
             # Save invite to database
             invite_token = self.invite_repo.save_invite(team_id, email, inviter_id)
             
