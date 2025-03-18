@@ -59,19 +59,19 @@ class TeamInviteRepository:
             "email": email.lower().strip(),  # Store email in lowercase
             "inviterId": inviter_id,
             "createdAt": datetime.now(timezone.utc),
-            "expiresAt": datetime.now(timezone.utc) + timedelta(days=7),  # Expire after 7 days
+            "expiresAt": (datetime.now(timezone.utc) + timedelta(days=7)),  # Expire after 7 days
             "status": "pending",
         }
         
         # Insert invite into database
-        result = self.invites_collection.insert_one(invite_data)
+        self.invites_collection.insert_one(invite_data)
         logger.info(f"Created new invite {invite_token} for {email} to team {team_id}")
         
         return invite_token
 
     def get_invite(self, invite_token):
         """
-        Retrieves an invite by token.
+        Retrieves an invite by token and checks if it's still valid.
         
         Args:
             invite_token (str): The invite token to look up
@@ -80,10 +80,22 @@ class TeamInviteRepository:
             dict or None: The invite document if found, None otherwise
         """
         invite = self.invites_collection.find_one({"_id": invite_token})
-        
-        # Check if invite is expired
+
         if invite and invite.get("status") == "pending":
             expires_at = invite.get("expiresAt")
+
+            # ✅ Ensure expires_at is timezone-aware
+            if isinstance(expires_at, str):
+                try:
+                    expires_at = datetime.fromisoformat(expires_at).replace(tzinfo=timezone.utc)
+                except ValueError:
+                    logger.error(f"Invalid datetime format in expiresAt for invite {invite_token}")
+                    return None
+            
+            elif isinstance(expires_at, datetime) and expires_at.tzinfo is None:
+                expires_at = expires_at.replace(tzinfo=timezone.utc)  # Convert naive datetime to UTC
+            
+            # ✅ Compare with current UTC time safely
             if expires_at and expires_at < datetime.now(timezone.utc):
                 # Auto-expire the invite
                 self.invites_collection.update_one(
@@ -136,7 +148,7 @@ class TeamInviteRepository:
             "status": "pending",
             "expiresAt": {"$gt": datetime.now(timezone.utc)}
         }))
-        
+
     def cancel_invite(self, invite_token, user_id):
         """
         Cancels a pending invite.
@@ -149,7 +161,7 @@ class TeamInviteRepository:
             tuple: (success message dict, status code)
         """
         invite = self.get_invite(invite_token)
-        
+
         if not invite:
             return {"error": "Invite not found"}, 404
             

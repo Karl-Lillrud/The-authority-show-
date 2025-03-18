@@ -61,6 +61,14 @@ def send_invitation():
 def invite_email_body():
     return render_template("beta-email/podmanager-beta-invite.html")
 
+from flask import Blueprint, request, jsonify, g
+from backend.services.TeamInviteService import TeamInviteService  # ✅ Ensure correct import
+
+invitation_bp = Blueprint("invitation_bp", __name__)
+
+# ✅ Initialize the service
+invite_service = TeamInviteService()
+
 @invitation_bp.route("/send_team_invite", methods=["POST"])
 def send_team_invite():
     """Sends an invitation email to join a team."""
@@ -74,6 +82,7 @@ def send_team_invite():
     if not email or not team_id:
         return jsonify({"error": "Missing email or teamId"}), 400
 
+    # ✅ Ensure invite_service has `send_invite` method
     response, status_code = invite_service.send_invite(g.user_id, team_id, email)
     return jsonify(response), status_code
 
