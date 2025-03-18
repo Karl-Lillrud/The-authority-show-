@@ -413,6 +413,28 @@ section {
   padding-bottom: 30px;
 }
 
+.episode-link {
+  font-size: 24px; /* Större textstorlek */
+  color: #ffffff; /* Vit text */
+  text-decoration: none; /* Ingen understrykning */
+  font-weight: bold; /* Fet text */
+  letter-spacing: 1px; /* Lite mer avstånd mellan bokstäverna */
+  transition: color 0.3s, transform 0.3s ease; /* Smidiga övergångar för hover-effekter */
+}
+
+/* Hover-effekt för länktext */
+.episode-link:hover {
+  color: #ff4500; /* Orange färg vid hover */
+  transform: scale(1.1); /* Lätt förstoring vid hover */
+  text-decoration: underline; /* Understrykning vid hover */
+}
+
+/* Fokus-effekt för länktext */
+.episode-link:focus {
+  outline: none; /* Ta bort fokusram */
+  color: #ff4500; /* Orange färg vid fokus */
+  text-decoration: underline; /* Understrykning vid fokus */
+}
 /* Ikoner för knappar */
 .podcast-icon {
   width: 30px;

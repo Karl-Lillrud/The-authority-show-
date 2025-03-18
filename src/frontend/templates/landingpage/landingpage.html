@@ -86,7 +86,7 @@
                 <div class="episode-details">
                   <button class="play-btn">&#9658;</button>
                   <!-- You could pass an episode ID to the episode route if needed -->
-                  <a href="{{ url_for('episode_bp.episode_detail', episode_id=episode._id) }}">
+                  <a href="{{ url_for('episode_bp.episode_detail', episode_id=episode._id) }}" class="episode-link">
                     {{ episode.title }}
                   </a>
                   
