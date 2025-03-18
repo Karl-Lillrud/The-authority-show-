@@ -13,18 +13,7 @@ class TeamInviteRepository:
         self.accounts_collection = collection.database.Accounts
 
     def save_invite(self, team_id, email, inviter_id):
-        """
-        Creates and stores an invite in the database.
-        
-        Args:
-            team_id (str): ID of the team to invite to
-            email (str): Email of the invitee
-            inviter_id (str): ID of the user sending the invite
-            
-        Returns:
-            str: Generated invite token
-        """
-        # Check if team exists
+ 
         team = self.teams_collection.find_one({"_id": team_id})
         if not team:
             logger.error(f"Team with ID {team_id} not found")
@@ -70,15 +59,7 @@ class TeamInviteRepository:
         return invite_token
 
     def get_invite(self, invite_token):
-        """
-        Retrieves an invite by token and checks if it's still valid.
-        
-        Args:
-            invite_token (str): The invite token to look up
-            
-        Returns:
-            dict or None: The invite document if found, None otherwise
-        """
+
         invite = self.invites_collection.find_one({"_id": invite_token})
 
         if invite and invite.get("status") == "pending":
@@ -108,15 +89,7 @@ class TeamInviteRepository:
         return invite
 
     def mark_invite_accepted(self, invite_token):
-        """
-        Marks an invite as accepted after successful registration.
-        
-        Args:
-            invite_token (str): The invite token to update
-            
-        Returns:
-            bool: True if the update was successful, False otherwise
-        """
+
         result = self.invites_collection.update_one(
             {"_id": invite_token},
             {"$set": {
@@ -134,15 +107,7 @@ class TeamInviteRepository:
         return success
             
     def get_pending_invites_by_team(self, team_id):
-        """
-        Gets all pending invites for a team.
-        
-        Args:
-            team_id (str): ID of the team
-            
-        Returns:
-            list: List of pending invite documents
-        """
+
         return list(self.invites_collection.find({
             "teamId": team_id,
             "status": "pending",
@@ -150,16 +115,7 @@ class TeamInviteRepository:
         }))
 
     def cancel_invite(self, invite_token, user_id):
-        """
-        Cancels a pending invite.
-        
-        Args:
-            invite_token (str): The invite token to cancel
-            user_id (str): ID of the user attempting to cancel
-            
-        Returns:
-            tuple: (success message dict, status code)
-        """
+
         invite = self.get_invite(invite_token)
 
         if not invite:

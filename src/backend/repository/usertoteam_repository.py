@@ -113,15 +113,7 @@ class UserToTeamRepository:
             return {"error": f"Failed to retrieve team members: {str(e)}"}, 500
 
     def get_teams_for_user(self, user_id):
-        """
-        Retrieves all teams a user is a member of.
-        
-        Args:
-            user_id (str): The user ID to look up.
-
-        Returns:
-            list: A list of teams the user is part of.
-        """
+  
         try:
             user_teams = list(self.users_to_teams_collection.find({"userId": user_id}, {"teamId": 1, "_id": 0}))
 
