@@ -6,6 +6,7 @@ from backend.models.episodes import EpisodeSchema
 
 logger = logging.getLogger(__name__)
 
+
 class EpisodeRepository:
     def __init__(self):
         self.collection = collection.database.Episodes
@@ -16,7 +17,6 @@ class EpisodeRepository:
         Register a new episode in the database
         """
         try:
-            logger.info("📩 Received raw episode data: %s", data)
 
             # Fetch the account document from MongoDB for the logged-in user
             user_account = self.accounts_collection.find_one({"userId": user_id})
@@ -55,7 +55,9 @@ class EpisodeRepository:
                 "podcast_id": podcast_id,
                 "title": title,
                 "description": validated_data.get("description"),
-                "publishDate": validated_data.get("publishDate"),
+                "publishDate": validated_data.get(
+                    "publishDate"
+                ),  # Ensure publishDate is included
                 "duration": validated_data.get("duration"),
                 "status": validated_data.get("status"),
                 "userid": user_id_str,
@@ -80,12 +82,6 @@ class EpisodeRepository:
                 "isHidden": validated_data.get("isHidden"),
             }
 
-            # Inserting into the Episode collection
-            logger.info("📝 Inserting episode into database: %s", episode_item)
-            result = self.collection.insert_one(episode_item)
-            logger.info("✅ Episode registered successfully with ID: %s", episode_id)
-
-            # Return success response
             return {
                 "message": "Episode registered successfully",
                 "episode_id": episode_id,
@@ -103,7 +99,9 @@ class EpisodeRepository:
             user_id_str = str(user_id)
 
             # Debugging: Print episode_id and user_id
-            print(f"Fetching episode with episode_id: {episode_id} for user_id: {user_id_str}")
+            print(
+                f"Fetching episode with episode_id: {episode_id} for user_id: {user_id_str}"
+            )
 
             # Fetch the episode using the string episode_id
             episode = self.collection.find_one(
@@ -111,7 +109,9 @@ class EpisodeRepository:
             )
 
             if not episode:
-                print(f"Episode with episode_id: {episode_id} and user_id: {user_id_str} not found.")
+                print(
+                    f"Episode with episode_id: {episode_id} and user_id: {user_id_str} not found."
+                )
                 return {"error": "Episode not found"}, 404
 
             return episode, 200
@@ -219,9 +219,7 @@ class EpisodeRepository:
         try:
             user_id_str = str(user_id)
             episodes = list(
-                self.collection.find(
-                    {"podcast_id": podcast_id, "userid": user_id_str}
-                )
+                self.collection.find({"podcast_id": podcast_id, "userid": user_id_str})
             )
             for episode in episodes:
                 episode["_id"] = str(episode["_id"])

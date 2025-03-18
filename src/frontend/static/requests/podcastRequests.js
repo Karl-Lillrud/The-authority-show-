@@ -3,14 +3,21 @@
 // Function to add a new podcast
 export async function addPodcast(data) {
   try {
+    console.log("Sending podcast data to /add_podcasts:", data); // Added log
     const response = await fetch("/add_podcasts", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(data)
+      body: JSON.stringify(data) // Correctly pass the entire data object
     });
-    return await response.json();
+    const responseData = await response.json();
+    if (!response.ok) {
+      console.error("Error response from /add_podcasts:", responseData); // Added log
+      throw new Error(responseData.error || "Failed to add podcast");
+    }
+    console.log("Received response from /add_podcasts:", responseData); // Added log
+    return responseData;
   } catch (error) {
-    console.error("Error adding podcast:", error);
+    console.error("Error adding podcast:", error); // Added log
     throw error;
   }
 }
@@ -74,13 +81,16 @@ export async function deletePodcast(podcastId) {
 
 export async function fetchRSSData(rssUrl) {
   try {
+    console.log("Fetching RSS data from URL:", rssUrl); // Added log
     const response = await fetch(
       `/fetch_rss?url=${encodeURIComponent(rssUrl)}`
     );
     if (!response.ok) {
       throw new Error("Failed to fetch RSS feed.");
     }
-    return await response.json();
+    const rssData = await response.json();
+    console.log("Fetched RSS data:", rssData); // Added log
+    return rssData;
   } catch (error) {
     console.error("Error in fetchRSSData:", error);
     throw new Error(`Error fetching RSS feed: ${error.message}`);

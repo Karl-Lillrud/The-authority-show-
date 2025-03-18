@@ -4,7 +4,6 @@ from backend.repository.podcast_repository import PodcastRepository  # ✅ Impor
 from backend.database.mongo_connection import collection, podcasts, get_db  # Add import
 
 
-
 landingpage_bp = Blueprint("landingpage_bp", __name__)
 
 # ✅ Initialize the repository
@@ -13,12 +12,11 @@ podcast_repo = PodcastRepository()
 @landingpage_bp.route('/landingpage', methods=['GET'])
 def landingpage():
 
-
     if not g.user_id:
         return redirect(url_for('signin_bp.signin'))
 
     # ✅ Use the repository to fetch podcast details
-    podcast_data, status_code = podcast_repo.get_podcasts(g.user_id)
+    podcast_data, status_code = PodcastRepository.get_podcasts(g.user_id)
 
     # ✅ If the user has no podcasts, return default values
     if status_code != 200 or not podcast_data["podcast"]:
@@ -31,6 +29,7 @@ def landingpage():
     podcast_description = podcast_doc.get("description", "Default Podcast Description") if podcast_doc else "Default Podcast Description"
     host_name = podcast_doc.get("hostName", "Unknown Host") if podcast_doc else "Unknown Host"
     social_media_links = podcast_doc.get("socialMedia", []) if podcast_doc else []
+    
 
     # ✅ Debugging print statements
     print("DEBUG: SOCIAL MEDIA LINKS FROM DATABASE:", social_media_links)
@@ -65,13 +64,50 @@ def episode():
     except Exception as e:
         return f"Error: {str(e)}", 500
 
+def map_social_links(social_links):
+    platforms = ["instagram", "twitter", "facebook", "linkedin", "youtube", "tiktok"]
+    social_media_dict = {}
+
+    for i, link in enumerate(social_links):
+        platform = platforms[i] if i < len(platforms) else f"other{i}"
+        social_media_dict[platform] = link
+
+    return social_media_dict
+
 @landingpage_bp.route("/landingpage/<podcast_id>")
 def landingpage_by_id(podcast_id):
     try:
-        podcast = podcasts.find_one({"_id": podcast_id})
-          # Debug
-        if podcast:
-            return render_template("landingpage/landingpage.html", podcast=podcast)
-        return render_template("404.html")
+        podcast_doc = podcasts.find_one({"_id": podcast_id})
+
+        if not podcast_doc:
+            return render_template("404.html")
+
+        # 🟢 Konvertera socialMedia-array till dictionary
+        social_media_links = map_social_links(podcast_doc.get("socialMedia", []))
+        
+
+        # 🟢 Hämta övriga värden
+        podcast_title = podcast_doc.get("podName", "Default Podcast Title")
+        podcast_description = podcast_doc.get("description", "Default Podcast Description")
+        host_name = podcast_doc.get("hostName", "Unknown Host")
+        host_bio = podcast_doc.get("hostBio", "No biography available.")
+        host_image = podcast_doc.get("hostImage", url_for('static', filename='images/default-host.png'))
+
+        podcast_logo = podcast_doc.get("logoUrl", "")
+        if not podcast_logo.startswith("data:image"):
+            podcast_logo = url_for('static', filename='images/default.png')
+
+        return render_template(
+            "landingpage/landingpage.html",
+            podcast_title=podcast_title,
+            podcast_description=podcast_description,
+            host_name=host_name,
+            podcast_logo=podcast_logo,
+            host_bio=host_bio,
+            host_image=host_image,
+            social_media=social_media_links  # 🟢 Nu en dict
+        )
+    
+
     except Exception as e:
         return f"Error: {str(e)}", 500
