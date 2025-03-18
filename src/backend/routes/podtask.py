@@ -1,21 +1,33 @@
+<<<<<<< HEAD
 from flask import request, jsonify, Blueprint, g
 from backend.database.mongo_connection import collection
 from datetime import datetime, timezone
 from backend.models.podtasks import PodtaskSchema
 import uuid
 import json
+=======
+from flask import Blueprint, request, jsonify, g
+from backend.repository.podtask_repository import PodtaskRepository
+>>>>>>> e7af2d3e0c5d2146ac29a0d0f239c24dceb42a8f
 
 # Define Blueprint
 podtask_bp = Blueprint("podtask_bp", __name__)
 
+<<<<<<< HEAD
 # SHOULD ONLY BE USED FOR SPECIFIC DATA CRUD OPERATIONS
 # EXTRA FUNCTIONALITY BESIDES CRUD OPERATIONS SHOULD BE IN SERVICES
+=======
+# Instantiate the Podtask Repository
+podtask_repo = PodtaskRepository()
+
+>>>>>>> e7af2d3e0c5d2146ac29a0d0f239c24dceb42a8f
 
 @podtask_bp.route("/add_podtasks", methods=["POST"])
 def register_podtask():
     if not g.user_id:
         return jsonify({"error": "Unauthorized"}), 401
 
+<<<<<<< HEAD
     # Validate Content-Type
     if request.content_type != "application/json":
         return (
@@ -115,6 +127,11 @@ def register_podtask():
     except Exception as e:
         print(f"❌ ERROR: {e}")
         return jsonify({"error": f"Failed to register podtask: {str(e)}"}), 500
+=======
+    data = request.get_json()
+    response, status_code = podtask_repo.register_podtask(g.user_id, data)
+    return jsonify(response), status_code
+>>>>>>> e7af2d3e0c5d2146ac29a0d0f239c24dceb42a8f
 
 
 @podtask_bp.route("/get_podtasks", methods=["GET"])
@@ -122,18 +139,8 @@ def get_podtasks():
     if not g.user_id:
         return jsonify({"error": "Unauthorized"}), 401
 
-    try:
-        user_id = str(g.user_id)
-        podtasks = list(collection.database.Podtasks.find({"userid": user_id}))
-
-        for task in podtasks:
-            task["_id"] = str(task["_id"])  # Ensure IDs are converted to string
-
-        return jsonify({"podtasks": podtasks}), 200
-
-    except Exception as e:
-        print(f"❌ ERROR: {e}")
-        return jsonify({"error": f"Failed to fetch tasks: {str(e)}"}), 500
+    response, status_code = podtask_repo.get_podtasks(g.user_id)
+    return jsonify(response), status_code
 
 
 @podtask_bp.route("/delete_podtasks/<task_id>", methods=["DELETE"])
@@ -141,40 +148,8 @@ def delete_podtask(task_id):
     if not g.user_id:
         return jsonify({"error": "Unauthorized"}), 401
 
-    try:
-        user_id = str(g.user_id)
-
-        # Debug: Print the task_id being passed in the route
-        print(f"Deleting task with ID: {task_id}")
-
-        # Fetch task using string task_id, assuming task_id is a string in the database
-        task = collection.database.Podtasks.find_one(
-            {"_id": task_id}
-        )  # Use "id" instead of "_id"
-
-        # Debug: Check if the task was found
-        print(f"Found task: {task}")
-
-        if not task:
-            return jsonify({"error": "Task not found"}), 404
-
-        if task["userid"] != user_id:
-            return jsonify({"error": "Permission denied"}), 403
-
-        # Debug: Log the deletion process
-        result = collection.database.Podtasks.delete_one(
-            {"_id": task_id}
-        )  # Use string ID for deletion
-        print(f"Delete result: {result.deleted_count}")
-
-        if result.deleted_count == 1:
-            return jsonify({"message": "Task deleted successfully"}), 200
-        else:
-            return jsonify({"error": "Failed to delete task"}), 500
-
-    except Exception as e:
-        print(f"❌ ERROR: {e}")
-        return jsonify({"error": f"Failed to delete task: {str(e)}"}), 500
+    response, status_code = podtask_repo.delete_podtask(g.user_id, task_id)
+    return jsonify(response), status_code
 
 
 @podtask_bp.route("/update_podtasks/<task_id>", methods=["PUT"])
@@ -182,6 +157,7 @@ def update_podtask(task_id):
     if not g.user_id:
         return jsonify({"error": "Unauthorized"}), 401
 
+<<<<<<< HEAD
     if request.content_type != "application/json":
         return (
             jsonify({"error": "Invalid Content-Type. Expected application/json"}), 415,
@@ -253,3 +229,8 @@ def get_default_tasks():
 # Register the blueprint
 def register_podtask_routes(app):
     app.register_blueprint(podtask_bp)
+=======
+    data = request.get_json()
+    response, status_code = podtask_repo.update_podtask(g.user_id, task_id, data)
+    return jsonify(response), status_code
+>>>>>>> e7af2d3e0c5d2146ac29a0d0f239c24dceb42a8f

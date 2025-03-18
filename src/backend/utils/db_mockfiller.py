@@ -1,17 +1,17 @@
 """
 This script populates the MongoDB database with mock data for the following collections:
-- accounts
-- episodes
-- guests
-- guests_to_episodes
-- podcasts
-- teams
-- users
-- users_to_teams
-- credits
-- edits (clips)
-- podtasks
-- subscriptions
+- Accounts
+- Episodes
+- Guests
+- Guests_to_Episodes
+- Podcasts
+- Teams
+- Users
+- Users_to_Teams
+- Credits
+- Edits (clips)
+- Podtasks
+- Subscriptions
 
 Dependencies:
 • pymongo – to connect and interact with MongoDB (install via: pip install pymongo)
@@ -72,10 +72,10 @@ def create_accounts(n=10):
         accounts.append(account)
     if accounts:
         try:
-            db.accounts.insert_many(accounts)
-            logger.info(f"Inserted {len(accounts)} accounts.")
+            db.Accounts.insert_many(accounts)
+            logger.info(f"Inserted {len(accounts)} Accounts.")
         except Exception as e:
-            logger.error(f"Failed to insert accounts: {e}")
+            logger.error(f"Failed to insert Accounts: {e}")
 
 def create_users(n=10):
     users = []
@@ -91,10 +91,10 @@ def create_users(n=10):
         users.append(user)
     if users:
         try:
-            db.users.insert_many(users)
-            logger.info(f"Inserted {len(users)} users.")
+            db.Users.insert_many(users)
+            logger.info(f"Inserted {len(users)} Users.")
         except Exception as e:
-            logger.error(f"Failed to insert users: {e}")
+            logger.error(f"Failed to insert Users: {e}")
     return [user["id"] for user in users]
 
 def create_teams(n=5):
@@ -108,15 +108,15 @@ def create_teams(n=5):
             "isActive": fake.boolean(),
             "joinedAt": fake.date_time_this_decade(),
             "lastActive": fake.date_time_this_month(),
-            "members": []  # will be linked via users_to_teams
+            "members": []  # will be linked via Users_to_Teams
         }
         teams.append(team)
     if teams:
         try:
-            db.teams.insert_many(teams)
-            logger.info(f"Inserted {len(teams)} teams.")
+            db.Teams.insert_many(teams)
+            logger.info(f"Inserted {len(teams)} Teams.")
         except Exception as e:
-            logger.error(f"Failed to insert teams: {e}")
+            logger.error(f"Failed to insert Teams: {e}")
     return [team["id"] for team in teams]
 
 def create_users_to_teams(user_ids, team_ids):
@@ -135,10 +135,10 @@ def create_users_to_teams(user_ids, team_ids):
             user_to_team.append(mapping)
     if user_to_team:
         try:
-            db.users_to_teams.insert_many(user_to_team)
-            logger.info(f"Inserted {len(user_to_team)} user-to-team mappings.")
+            db.Users_to_Teams.insert_many(user_to_team)
+            logger.info(f"Inserted {len(user_to_team)} Users_to_Teams mappings.")
         except Exception as e:
-            logger.error(f"Failed to insert user-to-team mappings: {e}")
+            logger.error(f"Failed to insert Users_to_Teams mappings: {e}")
 
 def create_podcasts(n=10, account_ids=None, team_ids=None):
     podcasts = []
@@ -163,10 +163,10 @@ def create_podcasts(n=10, account_ids=None, team_ids=None):
         podcasts.append(podcast)
     if podcasts:
         try:
-            db.podcasts.insert_many(podcasts)
-            logger.info(f"Inserted {len(podcasts)} podcasts.")
+            db.Podcasts.insert_many(podcasts)
+            logger.info(f"Inserted {len(podcasts)} Podcasts.")
         except Exception as e:
-            logger.error(f"Failed to insert podcasts: {e}")
+            logger.error(f"Failed to insert Podcasts: {e}")
     return [pod["id"] for pod in podcasts]
 
 def create_guests(n=15, podcast_ids=None):
@@ -193,10 +193,10 @@ def create_guests(n=15, podcast_ids=None):
         guests.append(guest)
     if guests:
         try:
-            db.guests.insert_many(guests)
-            logger.info(f"Inserted {len(guests)} guests.")
+            db.Guests.insert_many(guests)
+            logger.info(f"Inserted {len(guests)} Guests.")
         except Exception as e:
-            logger.error(f"Failed to insert guests: {e}")
+            logger.error(f"Failed to insert Guests: {e}")
     return [guest["id"] for guest in guests]
 
 def create_episodes(n=20, guest_ids=None, podcast_ids=None):
@@ -217,10 +217,10 @@ def create_episodes(n=20, guest_ids=None, podcast_ids=None):
         episodes.append(episode)
     if episodes:
         try:
-            db.episodes.insert_many(episodes)
-            logger.info(f"Inserted {len(episodes)} episodes.")
+            db.Episodes.insert_many(episodes)
+            logger.info(f"Inserted {len(episodes)} Episodes.")
         except Exception as e:
-            logger.error(f"Failed to insert episodes: {e}")
+            logger.error(f"Failed to insert Episodes: {e}")
     return [ep["id"] for ep in episodes]
 
 def create_guests_to_episodes(episode_ids, guest_ids):
@@ -236,10 +236,10 @@ def create_guests_to_episodes(episode_ids, guest_ids):
             mappings.append(mapping)
     if mappings:
         try:
-            db.guests_to_episodes.insert_many(mappings)
-            logger.info(f"Inserted {len(mappings)} guest-to-episode mappings.")
+            db.Guests_to_Episodes.insert_many(mappings)
+            logger.info(f"Inserted {len(mappings)} Guests_to_Episodes mappings.")
         except Exception as e:
-            logger.error(f"Failed to insert guest-to-episode mappings: {e}")
+            logger.error(f"Failed to insert Guests_to_Episodes mappings: {e}")
 
 def create_credits(n=10):
     credits = []
@@ -263,10 +263,10 @@ def create_credits(n=10):
         credits.append(credit)
     if credits:
         try:
-            db.credits.insert_many(credits)
-            logger.info(f"Inserted {len(credits)} credits.")
+            db.Credits.insert_many(credits)
+            logger.info(f"Inserted {len(credits)} Credits.")
         except Exception as e:
-            logger.error(f"Failed to insert credits: {e}")
+            logger.error(f"Failed to insert Credits: {e}")
 
 def create_edits(n=10, episode_ids=None):
     edits = []
@@ -285,10 +285,10 @@ def create_edits(n=10, episode_ids=None):
         edits.append(edit)
     if edits:
         try:
-            db.edits.insert_many(edits)
-            logger.info(f"Inserted {len(edits)} edits (clips).")
+            db.Edits.insert_many(edits)
+            logger.info(f"Inserted {len(edits)} Edits (clips).")
         except Exception as e:
-            logger.error(f"Failed to insert edits: {e}")
+            logger.error(f"Failed to insert Edits: {e}")
 
 def create_podtasks(n=10, podcast_ids=None):
     tasks = []
@@ -313,9 +313,59 @@ def create_podtasks(n=10, podcast_ids=None):
         tasks.append(task)
     if tasks:
         try:
-            db.podtasks.insert_many(tasks)
-            logger.info(f"Inserted {len(tasks)} podtasks.")
+            db.Podtasks.insert_many(tasks)
+            logger.info(f"Inserted {len(tasks)} Podtasks.")
         except Exception as e:
-            logger.error(f"Failed to insert podtasks: {e}")
+            logger.error(f"Failed to insert Podtasks: {e}")
 
-def create_su
+def create_subscriptions(n=10):
+    subscriptions = []
+    plans = ["basic", "premium", "enterprise"]
+    for _ in range(n):
+        subscription = {
+            "id": str(uuid.uuid4()),
+            "subscriptionPlan": random.choice(plans),
+            "autoRenew": fake.boolean(),
+            "discountCode": fake.lexify(text='DISCOUNT-????')
+        }
+        subscriptions.append(subscription)
+    if subscriptions:
+        try:
+            db.Subscriptions.insert_many(subscriptions)
+            logger.info(f"Inserted {len(subscriptions)} Subscriptions.")
+        except Exception as e:
+            logger.error(f"Failed to insert Subscriptions: {e}")
+
+def main():
+    try:
+        # Create mock Accounts
+        create_accounts(10)
+        
+        # Create mock Users and Teams, then link them
+        user_ids = create_users(10)
+        team_ids = create_teams(5)
+        create_users_to_teams(user_ids, team_ids)
+        
+        # Create Podcasts (need account IDs and team IDs)
+        account_ids = [acc["id"] for acc in db.Accounts.find({}, {"id": 1})]
+        podcast_ids = create_podcasts(10, account_ids=account_ids, team_ids=team_ids)
+        
+        # Create Guests associated with Podcasts
+        guest_ids = create_guests(15, podcast_ids=podcast_ids)
+        
+        # Create Episodes associated with Guests and Podcasts
+        episode_ids = create_episodes(20, guest_ids=guest_ids, podcast_ids=podcast_ids)
+        
+        # Create mappings between Guests and Episodes
+        create_guests_to_episodes(episode_ids, guest_ids)
+        
+        # Create additional collections
+        create_credits(10)
+        create_edits(10, episode_ids=episode_ids)
+        create_podtasks(10, podcast_ids=podcast_ids)
+        create_subscriptions(10)
+    except Exception as e:
+        logger.error(f"An error occurred during the mock data creation process: {e}")
+
+if __name__ == "__main__":
+    main()

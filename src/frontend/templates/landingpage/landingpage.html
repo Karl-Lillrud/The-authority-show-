@@ -1,5 +1,3 @@
-
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -29,13 +27,18 @@
       </div>
     </nav>
   </header>
+
   <main>
     <!-- Podcast Header Section -->
     <section class="podcast-header section-dark" id="podcast-header">
-      <img id="podcast-cover" src="#" alt="Podcast Cover" class="podcast-cover">
+      <img id="podcast-logo"
+        src="{{ podcast_logo }}" 
+        crossorigin="anonymous"
+        onerror="this.src='/static/images/default.png'"
+        hidden>
       <div class="podcast-info">
-        <h1 id="podcast-title">Podcast Title</h1>
-        <p id="podcast-tagline">Your podcast tagline goes here.</p>
+        <h1 id="podcast-title">{{ podcast_title }}</h1>
+        <p id="podcast-tagline">{{ podcast_description }}</p>
         <div id="subscribe-buttons">
           <button>Subscribe on Apple</button>
           <button>Subscribe on Spotify</button>
@@ -46,24 +49,22 @@
     <!-- About Section -->
     <section class="about-section section-darkgrey" id="about-section">
       <h2>About the Podcast</h2>
-      <p id="podcast-description">
-        A brief description of the podcast goes here. <br>Learn more about our journey and what inspires us.
-      </p>
+      <p id="podcast-description">{{ podcast_description }}</p>
       <div class="host-info">
-        <img id="host-image" src="/Media/Karl-Lillrud_bok_nvidia.jpg" alt="Host Image" class="host-image">
+        <img id="host-image" src="/static/images/default.png"  alt="Host Image" class="host-image">
         <div class="host-details">
           <h3 id="host-name">{{ host_name }}</h3>
           <p id="host-bio">
-            Host biography goes here. Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nulla ac ultrices libero.
+            Host biography goes here.
           </p>
           <div id="host-social">
-            <a href="{{ url_for('dashboard_bp.podcastmanagement') }}" class="pinterest"><i class="fab fa-pinterest-p"></i></a>
-            <a href="{{ url_for('dashboard_bp.podcastmanagement') }}" class="twitter"><i class="fab fa-x-twitter"></i></a>
-            <a href="{{ url_for('dashboard_bp.podcastmanagement') }}" class="instagram"><i class="fab fa-instagram"></i></a>
-            <a href="{{ url_for('dashboard_bp.podcastmanagement') }}" class="linkedin"><i class="fab fa-linkedin"></i></a>
-            <a href="{{ url_for('dashboard_bp.podcastmanagement') }}" class="facebook"><i class="fab fa-facebook-f"></i></a>
-            <a href="{{ url_for('dashboard_bp.podcastmanagement') }}" class="youtube"><i class="fab fa-youtube"></i></a>
-            <a href="{{ url_for('dashboard_bp.podcastmanagement') }}" class="tiktok"><i class="fab fa-tiktok"></i></a>            
+            {% for platform, link in social_media.items() %}
+              {% if link %}
+                <a href="{{ link }}" target="_blank" class="social-icon {{ platform }}">
+                  <i class="fab fa-{{ platform }}"></i>
+                </a>
+              {% endif %}
+            {% endfor %}
           </a>
           </div>
         </div>
@@ -71,43 +72,44 @@
     </section>
 
     <!-- Latest Episodes List Section -->
+    
     <section class="latest-episodes-section section-dark" id="latest-episodes-section">
       <h2>Latest Episodes</h2>
-      
       {% if episodes and episodes|length > 0 %}
-      <ul class="episode-list">
-        {% for episode in episodes %}
-        <li class="episode-item">
-          <div class="episode-card">
-            <div class="episode-thumbnail">
-              <!-- Use a placeholder thumbnail; you can update the src dynamically if stored in your document -->
-              <img src="/Media/placeholder-thumbnail.jpg" alt="{{ episode.title }} Thumbnail">
-            </div>
-            <div class="episode-details">
-              <button class="play-btn">&#9658;</button>
-              <!-- Optionally, pass an episode_id to your episode route -->
-              <a href="{{ url_for('landingpage_bp.episode', episode_id=episode._id) }}">{{ episode.title }}</a>
-              <p>{{ episode.description }}</p>
-              <div class="episode-links">
-                <a href="https://open.spotify.com/" target="_blank" class="spotify-link">
-                  <img src="/Media/spotify.png" alt="Spotify" class="podcast-icon">
-                  <span class="listen-btn spotify-btn">Spotify</span>
-                </a>
-                <a href="https://podcasts.apple.com/" target="_blank" class="apple-link">
-                  <img src="/Media/apple.svg" alt="Apple Podcasts" class="podcast-icon">
-                  <span class="listen-btn apple-btn">Apple</span>
-                </a>
+        <ul class="episode-list">
+          {% for episode in episodes %}
+            <li class="episode-item">
+              <div class="episode-card">
+                <div class="episode-thumbnail">
+                  <!-- If your document has a thumbnail URL field, replace placeholder below -->
+                  <img src="/Media/placeholder-thumbnail.jpg" alt="{{ episode.title }} Thumbnail">
+                </div>
+                <div class="episode-details">
+                  <button class="play-btn">&#9658;</button>
+                  <!-- You could pass an episode ID to the episode route if needed -->
+                  <a href="{{ url_for('landingpage_bp.episode', episode_id=episode._id) }}">
+                    {{ episode.title }}
+                  </a>
+                  <p>{{ episode.description }}</p>
+                  <div class="episode-links">
+                    <a href="https://open.spotify.com/" target="_blank" class="spotify-link">
+                      <img src="/Media/spotify.png" alt="Spotify" class="podcast-icon">
+                      <span class="listen-btn spotify-btn">Spotify</span>
+                    </a>
+                    <a href="https://podcasts.apple.com/" target="_blank" class="apple-link">
+                      <img src="/Media/apple.svg" alt="Apple Podcasts" class="podcast-icon">
+                      <span class="listen-btn apple-btn">Apple</span>
+                    </a>
+                  </div>
+                </div>
               </div>
-            </div>
-          </div>
-        </li>
-        {% endfor %}
-      </ul>
+            </li>
+          {% endfor %}
+        </ul>
       {% else %}
-      <p>No podcasts at this moment.</p>
+        <p>No podcasts at this moment.</p>
       {% endif %}
     </section>
-
     <!-- All Episodes List Section -->
 
       
@@ -293,5 +295,100 @@
 
   <!-- Loading Indicator -->
   <div id="loading" style="display: none;">Loading...</div>
+
+    <!-- Load JavaScript files at the END -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/color-thief/2.3.2/color-thief.umd.js"></script>
+    
+    <script>
+      document.addEventListener("DOMContentLoaded", function () {
+    console.log("🚀 Color Thief Debug Started");
+
+    if (typeof ColorThief === "undefined") {
+        console.error("❌ Error: ColorThief library failed to load.");
+        return;
+    }
+
+    const logoImg = document.getElementById("podcast-logo");
+    if (!logoImg) {
+        console.error("❌ Error: podcast-logo image not found in DOM!");
+        return;
+    }
+
+    console.log("✅ Logo image found, source:", logoImg.src);
+
+    const img = new Image();
+    img.crossOrigin = "Anonymous";
+    img.src = logoImg.src;
+
+    img.onload = function () {
+        console.log("✅ Image successfully loaded:", img.src);
+
+        try {
+            const colorThief = new ColorThief();
+            const palette = colorThief.getPalette(img, 5);  // Extract 5 colors for a richer theme
+            
+            if (!palette || palette.length < 3) {
+                console.error("❌ Error: No colors extracted.");
+                return;
+            }
+
+            console.log("🎨 Extracted Colors:", palette);
+
+            // Assign extracted colors to variables
+            const primaryColor = `rgb(${palette[0].join(",")})`;  // Main color (background)
+            const secondaryColor = `rgb(${palette[1].join(",")})`; // Section background
+            const accentColor = `rgb(${palette[2].join(",")})`;   // Buttons/links
+            const textColor = `rgb(${palette[3].join(",")})`;     // Contrast text
+            const highlightColor = `rgb(${palette[4].join(",")})`; // Extra details
+
+            // 🌟 Apply to the whole theme
+            document.body.style.background = primaryColor;
+            document.body.style.color = textColor;
+
+            // Navbar & Header
+            document.querySelector("header").style.backgroundColor = secondaryColor;
+            document.querySelector(".navbar").style.backgroundColor = secondaryColor;
+
+            // Podcast Header Section
+            document.getElementById("podcast-header").style.background = `linear-gradient(to right, ${primaryColor}, ${secondaryColor})`;
+
+            // About Section
+            document.querySelector(".about-section").style.backgroundColor = secondaryColor;
+
+            // Latest Episodes Section
+            document.querySelector(".latest-episodes-section").style.backgroundColor = primaryColor;
+
+            // Footer
+            document.querySelector("footer").style.backgroundColor = secondaryColor;
+            document.querySelector("footer").style.color = textColor;
+
+            // Buttons & Links
+            let buttons = document.querySelectorAll(".subscribe-btn, .listen-btn, .sponsor-btn");
+            buttons.forEach(btn => {
+                btn.style.backgroundColor = accentColor;
+                btn.style.color = textColor;
+                btn.style.border = `2px solid ${highlightColor}`;
+            });
+
+            // Social Media Icons
+            let icons = document.querySelectorAll("#host-social a");
+            icons.forEach(icon => {
+                icon.style.color = highlightColor;
+            });
+
+            console.log("🎨 Theme applied successfully!");
+
+        } catch (error) {
+            console.error("❌ Error in Color Thief:", error);
+        }
+    };
+
+    img.onerror = function () {
+        console.error("❌ Error: Could not load the logo image.");
+    };
+});
+
+    </script>
+
 </body>
 </html>
