@@ -112,55 +112,65 @@ class AuthRepository:
             logger.error("Error during registration: %s", e, exc_info=True)
             return {"error": f"Error during registration: {str(e)}"}, 500
         
-def register_team_member(self, data):
-    try:
-        # Validate required fields
-        required_fields = ["email", "password", "fullName", "phone"]
-        for field in required_fields:
-            if field not in data:
-                return {"error": f"Missing required field: {field}"}, 400
+    def register_team_member(self, data):
+        try:
+            print("🔹 Received registration data:", data)  # Debugging
 
-        email = data["email"].lower().strip()
-        password = data["password"]
-        
-        # Validate email format
-        email_error = validate_email(email)
-        if email_error:
-            return email_error
-            
-        # Validate password strength
-        password_error = validate_password(password)
-        if password_error:
-            return password_error
-            
-        # Check if email already exists
-        if self.user_collection.find_one({"email": email}):
-            return {"error": "Email already registered."}, 409
-            
-            
-        # Create user document with team member specific fields
-        user_id = str(uuid.uuid4())
-        hashed_password = generate_password_hash(password)
-        
-        user_document = {
-            "_id": user_id,
-            "email": email,
-            "passwordHash": hashed_password,
-            "fullName": data["fullName"],
-            "phone": data["phone"],
-            "isTeamMember": True,     # Flag to identify as team member
-            "createdAt": datetime.utcnow().isoformat(),
-        }
-        
-        # Insert the new team member
-        self.user_collection.insert_one(user_document)
-        
-        return {
-            "message": "Team member registration successful!",
-            "userId": user_id,
-            "redirect_url": url_for("auth_bp.signin", _external=True),
-        }, 201
-        
-    except Exception as e:
-        logger.error("Error during team member registration: %s", e, exc_info=True)
-        return {"error": f"Error during team member registration: {str(e)}"}, 500
+            # Validate required fields
+            required_fields = ["email", "password", "fullName", "phone"]
+            for field in required_fields:
+                if field not in data or not data[field]:
+                    print(f"❌ Missing field: {field}")  # Debugging
+                    return {"error": f"Missing required field: {field}"}, 400
+
+            email = data["email"].lower().strip()
+            password = data["password"]
+
+            # Validate email format
+            email_error = validate_email(email)
+            if email_error:
+                print("❌ Email validation failed:", email_error)
+                return email_error
+
+            # Validate password strength
+            password_error = validate_password(password)
+            if password_error:
+                print("❌ Password validation failed:", password_error)
+                return password_error
+
+            # Check if email already exists
+            existing_user = self.user_collection.find_one({"email": email})
+            if existing_user:
+                print("❌ Email already exists:", email)
+                return {"error": "Email already registered."}, 409
+
+            # Create user document with team member-specific fields
+            user_id = str(uuid.uuid4())
+            hashed_password = generate_password_hash(password)
+
+            user_document = {
+                "_id": user_id,
+                "email": email,
+                "passwordHash": hashed_password,
+                "fullName": data["fullName"],
+                "phone": data["phone"],
+                "isTeamMember": True,
+                "createdAt": datetime.utcnow().isoformat(),
+            }
+
+            print("✅ User document to insert:", user_document)  # Debugging
+
+            # Insert the new team member
+            self.user_collection.insert_one(user_document)
+            print("✅ User successfully inserted into database!")  # Debugging
+
+            return {
+                "message": "Team member registration successful!",
+                "userId": user_id,
+                "redirect_url": url_for("auth_bp.signin", _external=True),
+            }, 201
+
+        except Exception as e:
+            print("❌ Error during registration:", e)  # Debugging
+            logger.error("Error during team member registration: %s", e, exc_info=True)
+            return {"error": f"Error during team member registration: {str(e)}"}, 500
