@@ -327,6 +327,28 @@ button:hover {
   text-align: left;
 }
 
+.primary-cta {
+  width: 75%;
+  margin-bottom: var(--spacing-md);
+  display: block;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.sidebar nav label {
+  display: block;
+  font-size: 1.2rem;
+  /* Increase font size */
+  font-weight: bold;
+  /* Make it bold */
+  color: var(--text-color-light);
+  /* Use existing text color */
+  margin-bottom: var(--spacing-md);
+  /* Add spacing below */
+  padding-left: var(--spacing-sm);
+  /* Align with menu items */
+}
+
 /* Responsive adjustments */
 @media (max-width: 768px) {
   .account-settings-wrapper {
@@ -337,12 +359,4 @@ button:hover {
   .sidebar {
     width: 100%;
   }
-}
-
-.primary-cta {
-  width: 75%;
-  margin-bottom: var(--spacing-md);
-  display: block;
-  margin-left: auto;
-  margin-right: auto;
 }
