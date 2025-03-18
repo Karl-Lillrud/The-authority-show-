@@ -17,7 +17,6 @@ class EpisodeRepository:
         Register a new episode in the database
         """
         try:
-            logger.info("📩 Received raw episode data: %s", data)
 
             # Fetch the account document from MongoDB for the logged-in user
             user_account = self.accounts_collection.find_one({"userId": user_id})
@@ -83,12 +82,6 @@ class EpisodeRepository:
                 "isHidden": validated_data.get("isHidden"),
             }
 
-            # Inserting into the Episode collection
-            logger.info("📝 Inserting episode into database: %s", episode_item)
-            result = self.collection.insert_one(episode_item)
-            logger.info("✅ Episode registered successfully with ID: %s", episode_id)
-
-            # Return success response
             return {
                 "message": "Episode registered successfully",
                 "episode_id": episode_id,
