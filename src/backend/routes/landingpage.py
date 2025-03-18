@@ -1,7 +1,7 @@
 from flask import g, redirect, render_template, url_for, Blueprint
 from backend.repository.podcast_repository import PodcastRepository  # ✅ Import repository
 
-from backend.database.mongo_connection import collection, podcasts, get_db  # Add import
+from backend.database.mongo_connection import collection, podcasts, get_db, episodes  # Add import
 
 
 landingpage_bp = Blueprint("landingpage_bp", __name__)
@@ -77,22 +77,27 @@ def map_social_links(social_links):
 @landingpage_bp.route("/landingpage/<podcast_id>")
 def landingpage_by_id(podcast_id):
     try:
+        # Fetch podcast details from the Podcasts collection
         podcast_doc = podcasts.find_one({"_id": podcast_id})
 
         if not podcast_doc:
             return render_template("404.html")
 
-        # 🟢 Konvertera socialMedia-array till dictionary
+        # Convert social media links to a dictionary
         social_media_links = map_social_links(podcast_doc.get("socialMedia", []))
-        
 
-        # 🟢 Hämta övriga värden
+        # Fetch episodes from the Episodes collection
+        episodes_data = episodes.find({"podcast_id": podcast_id})  # Assuming the episode documents contain a 'podcast_id' field
+        episodes_list = list(episodes_data)
+
+        # Extract podcast details
         podcast_title = podcast_doc.get("podName", "Default Podcast Title")
         podcast_description = podcast_doc.get("description", "Default Podcast Description")
         host_name = podcast_doc.get("hostName", "Unknown Host")
         host_bio = podcast_doc.get("hostBio", "No biography available.")
         host_image = podcast_doc.get("hostImage", url_for('static', filename='images/default-host.png'))
 
+        # Handle podcast logo (Base64 or default)
         podcast_logo = podcast_doc.get("logoUrl", "")
         if not podcast_logo.startswith("data:image"):
             podcast_logo = url_for('static', filename='images/default.png')
@@ -105,9 +110,9 @@ def landingpage_by_id(podcast_id):
             podcast_logo=podcast_logo,
             host_bio=host_bio,
             host_image=host_image,
-            social_media=social_media_links  # 🟢 Nu en dict
+            social_media=social_media_links,  # Now a dictionary
+            episodes=episodes_list  # Pass episodes to the template
         )
     
-
     except Exception as e:
         return f"Error: {str(e)}", 500
