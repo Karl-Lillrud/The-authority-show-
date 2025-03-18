@@ -1,6 +1,6 @@
 from flask import Blueprint, request, jsonify
 from backend.services.spotify_integration import upload_episode_to_spotify
-from backend.services.spotify_oauth import get_spotify_access_token
+from backend.routes.spotify_oauth import get_spotify_access_token
 
 auto_publish_bp = Blueprint("auto_publish", __name__)
 
