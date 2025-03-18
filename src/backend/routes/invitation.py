@@ -15,6 +15,7 @@ logging.basicConfig(level=logging.INFO)
 @invitation_bp.route("/send_invitation", methods=["POST"])
 def send_invitation():
     try:
+        logger.info("Received send_invitation request")  # Added log
         if not hasattr(g, "user_id") or not g.user_id:
             return jsonify({"error": "Unauthorized"}), 401
 
