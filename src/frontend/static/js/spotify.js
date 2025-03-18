@@ -5,7 +5,13 @@ document.getElementById('publishPodcastForm').addEventListener('submit', functio
     const description = document.getElementById('description').value;
     const audioUrl = document.getElementById('audioUrl').value;
 
-    fetch('/publish_podcast', {
+    // Make sure the audio URL is valid (optional, can be handled backend)
+if (!audioUrl) { 
+    alert("Please provide an audio URL");
+    return;
+}
+
+    fetch('/publish/spotify', {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',

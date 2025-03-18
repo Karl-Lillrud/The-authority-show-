@@ -13,6 +13,7 @@ def publish_to_spotify():
     try:
         # Hämta access token
         access_token = get_spotify_access_token()
+        print(f"Using access token: {access_token}")
 
         # Skicka data till Spotify för publicering
         response = upload_episode_to_spotify(
