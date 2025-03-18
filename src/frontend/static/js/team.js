@@ -1,15 +1,11 @@
-document.addEventListener("DOMContentLoaded", function () {
-  // Helper to fetch podcasts
-  async function fetchPodcasts() {
-    try {
-      const res = await fetch("/get_podcasts", { method: "GET" });
-      const data = await res.json();
-      return data.podcast || [];
-    } catch (err) {
-      console.error("Error fetching podcasts:", err);
-      return [];
-    }
-  }
+import {
+  addTeamRequest,
+  getTeamsRequest,
+  editTeamRequest,
+  deleteTeamRequest,
+  fetchPodcasts,
+  updatePodcastTeamRequest
+} from "../requests/teamRequests.js";
 
   // Update the UI with retrieved teams
   function updateTeamsUI(teams) {
@@ -421,4 +417,3 @@ document.addEventListener("DOMContentLoaded", function () {
       }
     });
   }
-});
