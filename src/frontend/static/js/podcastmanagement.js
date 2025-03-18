@@ -372,7 +372,8 @@ document.addEventListener("DOMContentLoaded", () => {
   // Cancel button in form
   document.getElementById("cancel-form-btn").addEventListener("click", () => {
     document.getElementById("form-popup").style.display = "none";
-    document.getElementById("podcast-detail").style.display = "block";
+    document.getElementById("podcast-detail").style.display = "none"; // Hide podcast detail
+    document.getElementById("podcast-list").style.display = "flex"; // Show podcast list
   });
 
   // Show form for creating a new episode
