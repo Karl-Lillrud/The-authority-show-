@@ -37,7 +37,7 @@ def account():
     email = user.get("email", "") if user else ""
     full_name = user.get("full_name", "") if user else ""
 
-    return render_template("dashboard/account.html", email=email, full_name=full_name)
+    return render_template("account/account.html", email=email, full_name=full_name)
 
 
 # ✅ Serves the profile page
@@ -45,7 +45,7 @@ def account():
 def podcastmanagement():
     if not g.user_id:
         return redirect(url_for("auth_bp.signin"))  # Updated endpoint
-    return render_template("dashboard/podcastmanagement.html")
+    return render_template("podcastmanagement/podcastmanagement.html")
 
 
 # ✅ Serves the tasks page
@@ -53,7 +53,7 @@ def podcastmanagement():
 def taskmanagement():
     if not g.user_id:
         return redirect(url_for("auth_bp.signin"))  # Updated endpoint
-    return render_template("dashboard/taskmanagement.html")
+    return render_template("taskmanagement/taskmanagement.html")
 
 
 @dashboard_bp.route("/podprofile", methods=["GET", "POST"])
@@ -87,4 +87,4 @@ def addmember():
 def podcast():
     if not g.user_id:
         return redirect(url_for("auth_bp.signin"))  # Updated endpoint
-    return render_template("dashboard/podcast.html")
+    return render_template("podcast/podcast.html")

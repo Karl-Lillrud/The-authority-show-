@@ -1,8 +1,8 @@
-{% extends "dashboard/components/base.html" %} 
+{% extends "components/base.html" %} 
 {% block title %}Team Leaderboard Dashboard{% endblock %} 
 {% block content %}
 
-<link rel="stylesheet" href="{{ url_for('static', filename='css/dashboard.css') }}" />
+<link rel="stylesheet" href="{{ url_for('static', filename='css/dashboard/dashboard.css') }}" />
 <style>
   .cards-container {
     display: flex;
@@ -40,7 +40,7 @@
 
 
 <script type="module" src="{{ url_for('static', filename='requests/podcastRequests.js') }}"></script>
-<script type="module" src="{{ url_for('static', filename='js/dashboard.js') }}"></script>
+<script type="module" src="{{ url_for('static', filename='js/dasboard/dashboard.js') }}"></script>
 <script>
   document.addEventListener("DOMContentLoaded", function () {
     // Show welcome popup if the flag is set

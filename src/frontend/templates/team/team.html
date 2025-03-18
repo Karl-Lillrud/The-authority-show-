@@ -1,8 +1,8 @@
-{% extends "dashboard/components/base.html" %} {% block title %}Team Leaderboard
+{% extends "components/base.html" %} {% block title %}Team Leaderboard
 Dashboard{% endblock %} {% block content %}
 <link
   rel="stylesheet"
-  href="{{ url_for('static', filename='css/team.css') }}"
+  href="{{ url_for('static', filename='css/team/team.css') }}"
 />
 
 <div class="container">
@@ -174,5 +174,5 @@ Dashboard{% endblock %} {% block content %}
     </form>
   </div>
 </div>
-<script type="module" src="{{ url_for('static', filename='js/team.js') }}"></script>
+<script type="module" src="{{ url_for('static', filename='js/team/team.js') }}"></script>
 {% endblock %}
