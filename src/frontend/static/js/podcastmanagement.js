@@ -21,6 +21,31 @@ import {
 
 console.log("podcastmanagement.js loaded");
 
+// Add this function at the beginning of the file, after the imports
+function initializeSvgIcons() {
+  // Sidebar menu icons
+  document.getElementById("back-to-dashboard-icon").innerHTML =
+    svgpodcastmanagement.backToDashboard;
+  document.getElementById("podcasts-icon").innerHTML =
+    svgpodcastmanagement.podcasts;
+  document.getElementById("episodes-icon").innerHTML =
+    svgpodcastmanagement.episodes;
+  document.getElementById("guests-icon").innerHTML =
+    svgpodcastmanagement.guests;
+
+  // Action button icons
+  document.getElementById("add-icon-podcast").innerHTML =
+    svgpodcastmanagement.add;
+  document.getElementById("add-icon-episode").innerHTML =
+    svgpodcastmanagement.add;
+  document.getElementById("add-icon-guest").innerHTML =
+    svgpodcastmanagement.add;
+
+  // Sidebar toggle icon
+  document.getElementById("toggle-sidebar-icon").innerHTML =
+    svgpodcastmanagement.toggleSidebar;
+}
+
 // Notification system
 function showNotification(title, message, type = "info") {
   // Remove any existing notification
@@ -346,8 +371,12 @@ function updateEditButtons() {
   });
 }
 
+// Add this line to the DOMContentLoaded event listener
 document.addEventListener("DOMContentLoaded", () => {
   console.log("DOM fully loaded and parsed");
+
+  // Initialize SVG icons
+  initializeSvgIcons();
 
   renderPodcastList();
 
