@@ -22,7 +22,6 @@ class PodcastRepository:
 
             # Get the account ID
             account_id = user_account.get("id", str(user_account["_id"]))
-            logger.info(f"Found account {account_id} for user {user_id}")
 
             # Inject the accountId into the data
             data["accountId"] = account_id
@@ -31,11 +30,9 @@ class PodcastRepository:
             schema = PodcastSchema()
             errors = schema.validate(data)
             if errors:
-                logger.error(f"Validation errors: {errors}")  # Added log
                 raise ValueError("Invalid data", errors)
 
             validated_data = schema.load(data)
-            logger.info(f"Validated data: {validated_data}")  # Added log
 
             # Ensure account exists and belongs to the user
             account_query = (
@@ -52,16 +49,10 @@ class PodcastRepository:
             if rss_url:
                 rss_data, status_code = self.fetch_rss_feed(rss_url)
                 if status_code != 200:
-                    logger.error(
-                        f"Failed to fetch RSS feed data: {rss_data}"
-                    )  # Added log
                     raise ValueError("Failed to fetch RSS feed data")
 
                 # Merge RSS feed data into validated_data
                 validated_data.update(rss_data)
-                logger.info(
-                    f"Updated validated data with RSS feed data: {validated_data}"
-                )  # Added log
 
             # Generate a unique podcast ID
             podcast_id = str(uuid.uuid4())
@@ -94,8 +85,6 @@ class PodcastRepository:
                 "imageUrl": validated_data.get("imageUrl", ""),  # Added field
             }
 
-            logger.info(f"Podcast item to be inserted: {podcast_item}")  # Added log
-
             # Insert into database
             result = self.collection.insert_one(podcast_item)
             if result.inserted_id:
@@ -110,12 +99,8 @@ class PodcastRepository:
         except ValueError as e:
             # Handle specific business logic errors
             if isinstance(e.args[0], str):
-                logger.error(f"ValueError: {e.args[0]}")  # Added log
                 return {"error": e.args[0]}, 400  # Specific business error
             else:
-                logger.error(
-                    f"ValueError: {e.args[0]}, Details: {e.args[1]}"
-                )  # Added log
                 return {
                     "error": e.args[0],
                     "details": e.args[1],
@@ -123,7 +108,6 @@ class PodcastRepository:
 
         except Exception as e:
             # Catch any unexpected errors (e.g., database issues)
-            logger.error(f"Error adding podcast: {str(e)}", exc_info=True)  # Added log
             return {"error": "Failed to add podcast", "details": str(e)}, 500
 
     def get_podcasts(self, user_id):
@@ -149,7 +133,6 @@ class PodcastRepository:
             return {"podcast": podcasts}, 200
 
         except Exception as e:
-            logger.error(f"Error fetching podcasts: {str(e)}")
             return {"error": "Failed to fetch podcasts", "details": str(e)}, 500
 
     def get_podcast_by_id(self, user_id, podcast_id):
@@ -175,7 +158,6 @@ class PodcastRepository:
             podcast["_id"] = str(podcast["_id"])
             return {"podcast": podcast}, 200
         except Exception as e:
-            logger.error(f"Error fetching podcast: {e}")
             return {"error": f"Failed to fetch podcast: {str(e)}"}, 500
 
     def delete_podcast(self, user_id, podcast_id):
@@ -214,8 +196,6 @@ class PodcastRepository:
             }, 400  # Return a 400 Bad Request for known business errors
 
         except Exception as e:
-            # Catch any unexpected errors (e.g., database connection issues)
-            logger.error(f"Error deleting podcast: {str(e)}")
             return {"error": "Failed to delete podcast", "details": str(e)}, 500
 
     def edit_podcast(self, user_id, podcast_id, data):
@@ -278,8 +258,6 @@ class PodcastRepository:
                 }, 400  # For validation errors
 
         except Exception as e:
-            # Catch any unexpected errors (e.g., database connection issues)
-            logger.error(f"Error updating podcast: {str(e)}")
             return {"error": "Failed to update podcast", "details": str(e)}, 500
 
     def fetch_rss_feed(self, rss_url):
@@ -388,5 +366,4 @@ class PodcastRepository:
             }, 200
 
         except Exception as e:
-            logger.error(f"Error fetching RSS feed: {e}", exc_info=True)
             return {"error": f"Error fetching RSS feed: {str(e)}"}, 500

@@ -175,7 +175,8 @@ document.addEventListener("DOMContentLoaded", () => {
         // Send invitation email
         try {
           console.log("Sending invitation email"); // Added log
-          await sendInvitationEmail();
+          const emailResponse = await sendInvitationEmail(); // Added log
+          console.log("Invitation email response:", emailResponse); // Added log
           console.log("Invitation email sent successfully"); // Added log
         } catch (error) {
           console.error("Error sending invitation email:", error); // Added log
