@@ -595,10 +595,9 @@ form.addEventListener("submit", async (e) => {
     guestUrl: document.getElementById("guest-form-url")?.value.trim() || null,
     email,
     description: document.getElementById("description")?.value.trim() || "",
-    bannerUrl: document.getElementById("banner")?.value.trim() || "",
     tagline: document.getElementById("tagline")?.value.trim() || "",
     hostBio: document.getElementById("host-bio")?.value.trim() || "",
-    hostImage: document.getElementById("host-image")?.value.trim() || "",
+    hostImage: "",
     // the logoUrl field will be replaced if a logo is uploaded
 
     category,
@@ -681,35 +680,36 @@ form.addEventListener("submit", async (e) => {
 
   async function handleFileInput(inputElement, dataProperty) {
     return new Promise((resolve) => {
-      if (inputElement && inputElement.files[0]) {
-        const file = inputElement.files[0];
-        const reader = new FileReader();
-        reader.onloadend = () => {
-          data[dataProperty] = reader.result; // update with new image
-          resolve(true);
-        };
-        reader.readAsDataURL(file);
-      } else {
-        // If editing and no new image is selected, do not overwrite the existing property
-        if (selectedPodcastId) {
-          delete data[dataProperty];
+        if (inputElement && inputElement.files[0]) {
+            const file = inputElement.files[0];
+            const reader = new FileReader();
+            reader.onloadend = () => {
+                data[dataProperty] = reader.result;  // ✅ Converts to Base64
+                resolve(true);
+            };
+            reader.readAsDataURL(file);
+        } else {
+            if (selectedPodcastId) {
+                delete data[dataProperty];  // ❌ Prevents overwriting existing images
+            }
+            resolve(false);
         }
-        resolve(false);
-      }
     });
-  }
+}
 
   async function processInputs() {
-    const logoPromise = handleFileInput(logoInput, 'logoUrl');
-    const bannerPromise = handleFileInput(bannerInput, 'bannerUrl');
-    const hostImagePromise = handleFileInput(hostImageInput, 'hostImage');
+      const logoPromise = handleFileInput(logoInput, "logoUrl");
+      const bannerPromise = handleFileInput(bannerInput, "bannerUrl");
+      const hostImagePromise = handleFileInput(document.getElementById("host-image"), "hostImage");  // ✅ Ensures correct file processing
 
-    // Wait for all file inputs to be processed
-    const [logoChanged, bannerChanged, hostImageChanged] = await Promise.all([logoPromise, bannerPromise, hostImagePromise]);
+      const [logoChanged, bannerChanged, hostImageChanged] = await Promise.all([logoPromise, bannerPromise, hostImagePromise]);
 
-    // Submit podcast data
-    await submitPodcast(data);
+      console.log("✅ Final Data Before Sending:", JSON.stringify(data, null, 2));  // 🔍 Debug final payload
+
+      await submitPodcast(data);
   }
+
+
 
   // Start processing the inputs
   processInputs();

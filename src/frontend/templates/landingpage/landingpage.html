@@ -27,35 +27,48 @@
     </nav>
   </header>
 
-  <main>
-    <!-- Podcast Header Section -->
-    <section class="podcast-header section-dark" id="podcast-header">
-      <img id="podcast-logo"
+  <section class="podcast-header section-dark" id="podcast-header"
+    style="background-image: url('{{ banner_url }}'); background-size: cover; background-position: center;">
+
+    <!-- ✅ ADD THIS BACK: Podcast Logo for Color Thief -->
+    <img id="podcast-logo"
         src="{{ podcast_logo }}" 
         crossorigin="anonymous"
         onerror="this.src='/static/images/default.png'"
         hidden>
-      <div class="podcast-info">
+
+    <div class="podcast-info">
         <h1 id="podcast-title">{{ podcast_title }}</h1>
-        <p id="podcast-tagline">{{ podcast_description }}</p>
+        <p id="podcast-tagline">{{ tagline }}</p>
+
         <div id="subscribe-buttons">
-          <button>Subscribe on Apple</button>
-          <button>Subscribe on Spotify</button>
+            <button>Subscribe on Apple</button>
+            <button>Subscribe on Spotify</button>
         </div>
-      </div>
-    </section>
+    </div>
+  </section>
+
+
+
 
     <!-- About Section -->
     <section class="about-section section-darkgrey" id="about-section">
       <h2>About the Podcast</h2>
       <p id="podcast-description">{{ podcast_description }}</p>
+      
       <div class="host-info">
-        <img id="host-image" src="/static/images/default.png"  alt="Host Image" class="host-image">
+        <!-- Host Image -->
+        <img id="host-image" src="{{ host_image }}" alt="Host Image" class="host-image">
+        
         <div class="host-details">
           <h3 id="host-name">{{ host_name }}</h3>
+
+          <!-- Host Bio (Dynamically Fetched) -->
           <p id="host-bio">
-            Host biography goes here.
+            {{ host_bio }}
           </p>
+
+          <!-- Social Media Links -->
           <div id="host-social">
             {% for platform, link in social_media.items() %}
               {% if link %}
@@ -64,7 +77,6 @@
                 </a>
               {% endif %}
             {% endfor %}
-          </a>
           </div>
         </div>
       </div>
@@ -270,85 +282,85 @@
       document.addEventListener("DOMContentLoaded", function () {
     console.log("🚀 Color Thief Debug Started");
 
-    if (typeof ColorThief === "undefined") {
-        console.error("❌ Error: ColorThief library failed to load.");
-        return;
-    }
-
     const logoImg = document.getElementById("podcast-logo");
-    if (!logoImg) {
-        console.error("❌ Error: podcast-logo image not found in DOM!");
+
+    if (!logoImg || !logoImg.src) {
+        console.error("❌ Error: podcast-logo image is missing in the DOM!");
         return;
     }
 
     console.log("✅ Logo image found, source:", logoImg.src);
 
-    const img = new Image();
-    img.crossOrigin = "Anonymous";
-    img.src = logoImg.src;
+    if (logoImg.complete && logoImg.naturalHeight !== 0) {
+        console.log("✅ Logo already loaded.");
+        extractColors(logoImg);
+    } else {
+        console.log("⏳ Waiting for logo to load...");
+        logoImg.onload = function () {
+            console.log("✅ Logo successfully loaded:", logoImg.src);
+            extractColors(logoImg);
+        };
+    }
 
-    img.onload = function () {
-        console.log("✅ Image successfully loaded:", img.src);
-
-        try {
-            const colorThief = new ColorThief();
-            const palette = colorThief.getPalette(img, 5);  // Extract 5 colors for a richer theme
-            
-            if (!palette || palette.length < 3) {
-                console.error("❌ Error: No colors extracted.");
-                return;
-            }
-
-            console.log("🎨 Extracted Colors:", palette);
-
-            // Assign extracted colors to variables
-            const primaryColor = `rgb(${palette[0].join(",")})`;  // Main color (background)
-            const secondaryColor = `rgb(${palette[1].join(",")})`; // Section background
-            const accentColor = `rgb(${palette[2].join(",")})`;   // Buttons/links
-            const textColor = `rgb(${palette[3].join(",")})`;     // Contrast text
-            const highlightColor = `rgb(${palette[4].join(",")})`; // Extra details
-
-            // 🌟 Apply to the whole theme
-            document.body.style.background = primaryColor;
-            document.body.style.color = textColor;
-
-            // Navbar & Header
-            document.querySelector("header").style.backgroundColor = secondaryColor;
-            document.querySelector(".navbar").style.backgroundColor = secondaryColor;
-
-            // Apply colors to **all sections dynamically**
-            document.querySelectorAll("section").forEach((section, index) => {
-                section.style.backgroundColor = index % 2 === 0 ? secondaryColor : primaryColor;
-                section.style.color = textColor;
-            });
-
-            // Footer
-            document.querySelector("footer").style.backgroundColor = secondaryColor;
-            document.querySelector("footer").style.color = textColor;
-
-            // Social Media Icons
-            let icons = document.querySelectorAll("#host-social a");
-            icons.forEach(icon => {
-                icon.style.color = highlightColor;
-            });
-
-            // 🎨 New: Apply colors to Episode Cards
-            document.querySelectorAll(".episode-card").forEach((card, index) => {
-                card.style.backgroundColor = index % 2 === 0 ? primaryColor : secondaryColor;
-                card.style.color = textColor;
-            });
-
-            console.log("🎨 Theme applied successfully!");
-
-        } catch (error) {
-            console.error("❌ Error in Color Thief:", error);
-        }
-    };
-
-    img.onerror = function () {
-        console.error("❌ Error: Could not load the logo image.");
+    logoImg.onerror = function () {
+        console.error("❌ Error: Could not load the podcast-logo image.");
     };
 });
+
+function extractColors(img) {
+    try {
+        const colorThief = new ColorThief();
+        const palette = colorThief.getPalette(img, 5);  // Extract 5 colors for a richer theme
+
+        if (!palette || palette.length < 3) {
+            console.error("❌ Error: No colors extracted.");
+            return;
+        }
+
+        console.log("🎨 Extracted Colors:", palette);
+
+        // ✅ Assign extracted colors to variables (FIXED TEMPLATE STRINGS)
+        const primaryColor = `rgb(${palette[0].join(",")})`;  // Main color (background)
+        const secondaryColor = `rgb(${palette[1].join(",")})`; // Section background
+        const accentColor = `rgb(${palette[2].join(",")})`;   // Buttons/links
+        const textColor = `rgb(${palette[3].join(",")})`;     // Contrast text
+        const highlightColor = `rgb(${palette[4].join(",")})`; // Extra details
+
+        // ✅ Apply colors but **EXCLUDE THE HEADER** (keeps banner image!)
+        document.body.style.background = primaryColor;
+        document.body.style.color = textColor;
+
+        // ✅ Apply colors to the navbar & footer, but NOT the header
+        document.querySelector(".navbar").style.backgroundColor = secondaryColor;
+        document.querySelector("footer").style.backgroundColor = secondaryColor;
+        document.querySelector("footer").style.color = textColor;
+
+        // ✅ Apply colors to **all sections except the header**
+        document.querySelectorAll("section").forEach((section, index) => {
+            if (!section.classList.contains("podcast-header")) {  // ❌ SKIP HEADER
+                section.style.backgroundColor = index % 2 === 0 ? secondaryColor : primaryColor;
+                section.style.color = textColor;
+            }
+        });
+
+        // ✅ Apply highlight color to Social Media Icons
+        document.querySelectorAll("#host-social a").forEach(icon => {
+            icon.style.color = highlightColor;
+        });
+
+        // ✅ Apply colors to Episode Cards
+        document.querySelectorAll(".episode-card").forEach((card, index) => {
+            card.style.backgroundColor = index % 2 === 0 ? primaryColor : secondaryColor;
+            card.style.color = textColor;
+        });
+
+        console.log("🎨 Theme applied successfully!");
+
+    } catch (error) {
+        console.error("❌ Error in Color Thief:", error);
+    }
+}
+
 
 
     </script>
