@@ -1,13 +1,15 @@
 from flask import g, redirect, render_template, url_for, Blueprint
-from backend.repository.podcast_repository import PodcastRepository  # ✅ Import repository
-
-from backend.database.mongo_connection import collection, podcasts, get_db, episodes  # Add import
-
+from backend.repository.podcast_repository import PodcastRepository
+from backend.repository.episode_repository import EpisodeRepository
+import logging
 
 landingpage_bp = Blueprint("landingpage_bp", __name__)
+logger = logging.getLogger(__name__)
+logging.basicConfig(level=logging.ERROR)
 
 # ✅ Initialize the repository
 podcast_repo = PodcastRepository()
+episode_repo = EpisodeRepository()
 
 @landingpage_bp.route('/episode', methods=['GET'])
 def episode():
@@ -46,47 +48,41 @@ def map_social_links(social_links):
 @landingpage_bp.route("/landingpage/<podcast_id>")
 def landingpage_by_id(podcast_id):
     try:
-        # Fetch podcast details from the Podcasts collection
-        podcast_doc = podcasts.find_one({"_id": podcast_id})
-        if not podcast_doc:
+        # ✅ Get the user ID from the session 
+        user_id = getattr(g, 'user_id', "test_user")
+
+        # ✅ Fetch podcast details 
+        podcast_doc, status_code = podcast_repo.get_podcast_by_id(user_id, podcast_id)
+
+        if status_code != 200:
+            logger.warning(f"⚠️ Podcast {podcast_id} not found!")
             return render_template("404.html")
 
-        # Convert social media links to a dictionary
+        # ✅ Fetch episodes using the repository
+        episodes_response, status_code = episode_repo.get_episodes_by_podcast(podcast_id, user_id)
+
+        if status_code != 200:
+            logger.error(f"Failed to fetch episodes for podcast {podcast_id}: {episodes_response}")
+            episodes_list = []
+        else:
+            episodes_list = episodes_response.get("episodes", [])
+
+        # ✅ Convert social media links to dictionary
         social_media_links = map_social_links(podcast_doc.get("socialMedia", []))
 
-        # Fetch episodes from the Episodes collection matching the podcast_id
-        episodes_cursor = episodes.find({"podcast_id": podcast_id})
-        mapped_episodes = []
-        for ep in episodes_cursor:
-            # Print to debug in console
-            print("DEBUG Episode Document:", ep)
+        # ✅ Extract podcast details
+        podcast_title = podcast_doc.get("podcast", {}).get("podName", "Default Podcast Title")
+        podcast_description = podcast_doc.get("podcast", {}).get("description", "Default Podcast Description")
+        host_name = podcast_doc.get("podcast", {}).get("hostName", "Unknown Host")
+        host_bio = podcast_doc.get("podcast", {}).get("hostBio", "No biography available.")
+        host_image = podcast_doc.get("podcast", {}).get("hostImage", url_for('static', filename='images/default-host.png'))
 
-            # Access the top-level fields directly
-            title = ep.get("title", "No Title")
-            description = ep.get("description", "No Description")
-
-            mapped_episodes.append({
-                "_id": ep.get("_id"),
-                "title": title,
-                "description": description,
-                # Add any other fields you want to pass along, e.g. "publishDate"
-                "publishDate": ep.get("publishDate", "No date"),
-                "duration": ep.get("duration", "Unknown Duration")
-            })
-
-        # Extract podcast details
-        podcast_title = podcast_doc.get("podName", "Default Podcast Title")
-        podcast_description = podcast_doc.get("description", "Default Podcast Description")
-        host_name = podcast_doc.get("hostName", "Unknown Host")
-        host_bio = podcast_doc.get("hostBio", "No biography available.")
-        host_image = podcast_doc.get("hostImage", url_for('static', filename='images/default-host.png'))
-
-        # Handle podcast logo (Base64 or default)
-        podcast_logo = podcast_doc.get("logoUrl", "")
+        # ✅ Handle podcast logo (Base64 or default)
+        podcast_logo = podcast_doc.get("podcast", {}).get("logoUrl", "")
         if not podcast_logo.startswith("data:image"):
             podcast_logo = url_for('static', filename='images/default.png')
 
-        # Render the landing page template with the updated episodes list
+        # ✅ Render the template with optimized data retrieval
         return render_template(
             "landingpage/landingpage.html",
             podcast_title=podcast_title,
@@ -96,8 +92,9 @@ def landingpage_by_id(podcast_id):
             host_bio=host_bio,
             host_image=host_image,
             social_media=social_media_links,
-            episodes=mapped_episodes
+            episodes=episodes_list  # ✅ Pass optimized episode list
         )
 
     except Exception as e:
+        logger.error(f"Error loading landing page: {str(e)}")
         return f"Error: {str(e)}", 500
