@@ -702,7 +702,7 @@ form.addEventListener("submit", async (e) => {
   async function processInputs() {
     const logoPromise = handleFileInput(logoInput, 'logoUrl');
     const bannerPromise = handleFileInput(bannerInput, 'bannerUrl');
-    const hostImagePromise = handleFileInput(hostImageInput, 'hostImageUrl');
+    const hostImagePromise = handleFileInput(hostImageInput, 'hostImage');
 
     // Wait for all file inputs to be processed
     const [logoChanged, bannerChanged, hostImageChanged] = await Promise.all([logoPromise, bannerPromise, hostImagePromise]);
