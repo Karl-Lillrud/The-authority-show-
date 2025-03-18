@@ -388,7 +388,7 @@ section {
 /* Episode Description */
 .episode-details p {
   font-size: 14px;
-  color: #bbbbbb; /* Lighter gray for subtlety */
+  color: hsl(0, 0%, 100%); /* Lighter gray for subtlety */
   margin-top: 4px;
 }
 
