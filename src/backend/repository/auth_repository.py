@@ -1,10 +1,11 @@
 import uuid
 from datetime import datetime
-from flask import session, redirect, url_for
+from flask import request, session, redirect, url_for
 from werkzeug.security import check_password_hash, generate_password_hash
 from backend.database.mongo_connection import collection
 from backend.services.authService import validate_password, validate_email
 from backend.repository.account_repository import AccountRepository
+from backend.repository.usertoteam_repository import UserToTeamRepository
 import logging
 
 logger = logging.getLogger(__name__)
@@ -14,6 +15,8 @@ class AuthRepository:
         self.user_collection = collection.database.Users
         self.account_collection = collection.database.Accounts
         self.podcast_collection = collection.database.Podcasts
+        self.invite_collection = collection.database.Invites  # ✅ Ensure invites are available
+        self.user_to_team_repo = UserToTeamRepository()  # ✅ Initialize UserToTeamRepository
         self.account_repo = AccountRepository()
 
     def signin(self, data):
@@ -113,38 +116,41 @@ class AuthRepository:
             return {"error": f"Error during registration: {str(e)}"}, 500
         
     def register_team_member(self, data):
+        """Registers a new team member from an invite."""
         try:
-            print("🔹 Received registration data:", data)  # Debugging
+            print("\U0001F539 Received registration data:", data)  # Debugging
 
-            # Validate required fields
+            invite_token = data.get("inviteToken")  # ✅ Now coming from frontend payload
+
+            if not invite_token:
+                print("\u274C Missing invite token in request payload.")  # Debugging
+                return {"error": "Missing invite token in request."}, 400
+
             required_fields = ["email", "password", "fullName", "phone"]
             for field in required_fields:
                 if field not in data or not data[field]:
-                    print(f"❌ Missing field: {field}")  # Debugging
+                    print(f"\u274C Missing field: {field}")  # Debugging
                     return {"error": f"Missing required field: {field}"}, 400
 
             email = data["email"].lower().strip()
             password = data["password"]
 
-            # Validate email format
-            email_error = validate_email(email)
-            if email_error:
-                print("❌ Email validation failed:", email_error)
-                return email_error
+            invite = self.invite_collection.find_one({"_id": invite_token, "status": "pending"})
+            if not invite:
+                print(f"\u274C Invalid or expired invite: {invite_token}")
+                return {"error": "Invalid or expired invite token."}, 400
 
-            # Validate password strength
-            password_error = validate_password(password)
-            if password_error:
-                print("❌ Password validation failed:", password_error)
-                return password_error
+            team_id = invite["teamId"]
 
-            # Check if email already exists
+            if invite["email"].lower() != email:
+                print(f"\u274C Email mismatch! Invited: {invite['email']} - Registering: {email}")
+                return {"error": "The email does not match the invitation."}, 400
+
             existing_user = self.user_collection.find_one({"email": email})
             if existing_user:
-                print("❌ Email already exists:", email)
+                print("\u274C Email already exists:", email)
                 return {"error": "Email already registered."}, 409
 
-            # Create user document with team member-specific fields
             user_id = str(uuid.uuid4())
             hashed_password = generate_password_hash(password)
 
@@ -158,11 +164,30 @@ class AuthRepository:
                 "createdAt": datetime.utcnow().isoformat(),
             }
 
-            print("✅ User document to insert:", user_document)  # Debugging
+            print("\u2705 User document to insert:", user_document)  # Debugging
 
-            # Insert the new team member
             self.user_collection.insert_one(user_document)
-            print("✅ User successfully inserted into database!")  # Debugging
+            print("\u2705 User successfully inserted into database!")  # Debugging
+
+            user_to_team_data = {
+                "userId": user_id,
+                "teamId": team_id,
+                "role": "member"
+            }
+            add_result, status_code = self.user_to_team_repo.add_user_to_team(user_to_team_data)
+
+            if status_code != 201:
+                print(f"\u274C Failed to add user to team: {add_result}")
+                self.user_collection.delete_one({"_id": user_id})
+                return {"error": "Failed to add user to team."}, 500
+
+            print(f"\u2705 User successfully linked to team {team_id}")
+
+            self.invite_collection.update_one(
+                {"_id": invite_token},
+                {"$set": {"status": "accepted", "acceptedAt": datetime.utcnow().isoformat()}}
+            )
+            print("\u2705 Invitation marked as used")
 
             return {
                 "message": "Team member registration successful!",
@@ -171,6 +196,6 @@ class AuthRepository:
             }, 201
 
         except Exception as e:
-            print("❌ Error during registration:", e)  # Debugging
+            print("\u274C Error during registration:", e)
             logger.error("Error during team member registration: %s", e, exc_info=True)
             return {"error": f"Error during team member registration: {str(e)}"}, 500

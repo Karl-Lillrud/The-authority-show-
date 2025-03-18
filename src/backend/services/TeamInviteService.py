@@ -53,3 +53,51 @@ class TeamInviteService:
         except Exception as e:
             logger.error(f"❌ Error sending invite: {e}", exc_info=True)
             return {"error": f"Failed to send invite: {str(e)}"}, 500
+        
+    def process_registration(self, user_id, email, invite_token):
+        """
+        Links a newly registered user to a team using the invite token.
+        
+        Args:
+            user_id (str): The newly registered user's ID.
+            email (str): The email of the user.
+            invite_token (str): The invite token from the registration.
+
+        Returns:
+            dict: Response message.
+            int: HTTP status code.
+        """
+        try:
+            # Fetch the invite
+            invite = self.invite_repo.get_invite(invite_token)
+            
+            if not invite or invite.get("status") != "pending":
+                return {"error": "Invalid or expired invite token."}, 400
+            
+            # Verify email matches invite
+            if invite["email"].lower() != email.lower():
+                return {"error": "Email does not match the invite."}, 400
+
+            team_id = invite["teamId"]
+
+            # Add user to the team
+            add_result, status_code = self.user_to_team_repo.add_user_to_team({
+                "userId": user_id,
+                "teamId": team_id,
+                "role": "member"
+            })
+
+            if status_code != 201:
+                return {"error": "Failed to add user to team."}, 500
+
+            # Mark invite as accepted
+            self.invite_repo.mark_invite_accepted(invite_token)
+
+            return {
+                "message": "User successfully linked to team.",
+                "teamId": team_id
+            }, 201
+
+        except Exception as e:
+            logger.error(f"Error in process_registration: {str(e)}", exc_info=True)
+            return {"error": f"Error processing registration: {str(e)}"}, 500

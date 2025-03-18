@@ -133,7 +133,8 @@
 
             <div class="form-group">
                 <label for="email">Email Address</label>
-                <input type="email" id="email" name="email" value="{{ email }}" {% if email %}readonly{% endif %} required>
+                <input type="email" id="email" name="email" value="{{ email }}" {% if email %}readonly{% endif %}
+                    required>
                 <div class="form-hint">This email address was used for your invitation</div>
             </div>
 
@@ -146,7 +147,8 @@
                 <label for="password">Password</label>
                 <input type="password" id="password" name="password" required>
                 <span class="toggle-password" onclick="togglePassword()">Show</span>
-                <div class="form-hint">Must be at least 8 characters with numbers, uppercase, and lowercase letters.</div>
+                <div class="form-hint">Must be at least 8 characters with numbers, uppercase, and lowercase letters.
+                </div>
             </div>
 
             <div class="form-group password-container">
@@ -190,12 +192,12 @@
             form.addEventListener('submit', function (event) {
                 event.preventDefault();
 
-                // Basic client-side validation
-                const password = document.getElementById('password').value;
-                const confirmPassword = document.getElementById('confirmPassword').value;
+                // Get invite token from the URL (instead of form input)
+                const urlParams = new URLSearchParams(window.location.search);
+                const inviteToken = urlParams.get("token");  // ✅ Extract from URL
 
-                if (password !== confirmPassword) {
-                    errorMessage.textContent = "Passwords do not match!";
+                if (!inviteToken) {
+                    errorMessage.textContent = "Missing invite token in URL.";
                     errorMessage.style.display = "block";
                     return;
                 }
@@ -209,8 +211,8 @@
                     fullName: document.getElementById('fullName').value,
                     email: document.getElementById('email').value,
                     phone: document.getElementById('phone').value,
-                    password: password,
-                    inviteToken: document.getElementById('inviteToken').value
+                    password: document.getElementById('password').value,
+                    inviteToken: inviteToken  // ✅ Now included in payload
                 };
 
                 // Submit form data via fetch API
@@ -219,26 +221,27 @@
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(formData)
                 })
-                .then(response => response.json())
-                .then(data => {
-                    if (data.error) {
-                        errorMessage.textContent = data.error;
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.error) {
+                            errorMessage.textContent = data.error;
+                            errorMessage.style.display = "block";
+                        } else {
+                            window.location.href = data.redirect_url || '{{ url_for("auth_bp.signin") }}';
+                        }
+                    })
+                    .catch(error => {
+                        errorMessage.textContent = "Registration failed. Please try again.";
                         errorMessage.style.display = "block";
-                    } else {
-                        window.location.href = data.redirect_url || '{{ url_for("auth_bp.signin") }}';
-                    }
-                })
-                .catch(error => {
-                    errorMessage.textContent = "Registration failed. Please try again.";
-                    errorMessage.style.display = "block";
-                })
-                .finally(() => {
-                    registerButton.disabled = false;
-                    loadingText.style.display = "none";
-                });
+                    })
+                    .finally(() => {
+                        registerButton.disabled = false;
+                        loadingText.style.display = "none";
+                    });
             });
         });
     </script>
 
 </body>
+
 </html>
