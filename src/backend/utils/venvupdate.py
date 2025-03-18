@@ -51,10 +51,12 @@ def update_venv_and_requirements(venv_path="venv"):
     else:
         print("⚠️ No valid requirements.txt found. Skipping installation.")
 
-    # Step 7: Update requirements.txt with installed packages
+    # Step 7: Update requirements.txt with installed packages (without version numbers)
     print("🔄 Updating requirements.txt...")
+    result = subprocess.run([pip_exec, "freeze"], capture_output=True, text=True, check=True)
+    packages = [line.split("==")[0] for line in result.stdout.splitlines()]  # Remove version numbers
     with open("requirements.txt", "w") as req_file:
-        subprocess.run([pip_exec, "freeze"], stdout=req_file, check=True)
+        req_file.write("\n".join(packages))
 
     print("✅ Virtual environment is up to date!")
 
