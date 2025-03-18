@@ -185,6 +185,13 @@ body {
   color: rgba(0, 0, 0, 0.6);
 }
 
+.podcast-meta .author,
+.podcast-meta .language {
+  display: block;
+  margin-top: 0.25rem;
+  color: rgba(0, 0, 0, 0.6);
+}
+
 .podcast-description {
   margin-top: var(--spacing-md);
   color: var(--text-color-light);

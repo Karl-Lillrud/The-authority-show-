@@ -558,8 +558,8 @@ form.addEventListener("submit", async (e) => {
   const data = {
     teamId: "",
     podName,
-    ownerName: document.getElementById("pod-owner")?.value.trim() || "",
-    hostName: document.getElementById("pod-host")?.value.trim() || "",
+    author: document.getElementById("pod-author")?.value.trim() || "",
+    language: document.getElementById("pod-language")?.value.trim() || "",
     rssFeed: document.getElementById("pod-rss")?.value.trim() || "",
     googleCal: document.getElementById("google-cal")?.value.trim() || null,
     guestUrl: document.getElementById("guest-form-url")?.value.trim() || null,
@@ -667,11 +667,13 @@ function displayPodcastDetails(podcast) {
   const podNameEl = document.getElementById("pod-name");
   if (podNameEl) podNameEl.value = podcast.podName || "";
 
-  const podOwnerEl = document.getElementById("pod-owner");
-  if (podOwnerEl) podOwnerEl.value = podcast.ownerName || "";
+  // Removed: ownerName and hostName
+  // New fields: Author and Language
+  const podAuthorEl = document.getElementById("pod-author");
+  if (podAuthorEl) podAuthorEl.value = podcast.author || "";
 
-  const podHostEl = document.getElementById("pod-host");
-  if (podHostEl) podHostEl.value = podcast.hostName || "";
+  const podLanguageEl = document.getElementById("pod-language");
+  if (podLanguageEl) podLanguageEl.value = podcast.language || "";
 
   const podRssEl = document.getElementById("pod-rss");
   if (podRssEl) podRssEl.value = podcast.rssFeed || "";
@@ -719,7 +721,6 @@ function resetForm() {
 // Modify the renderPodcastList function to add episodes preview under the image
 async function renderPodcastList() {
   try {
-    // Fetch podcasts from your backend
     const response = await fetchPodcasts();
     const podcasts = response.podcast; // adjust if needed
 
@@ -756,11 +757,11 @@ async function renderPodcastList() {
                 <p class="podcast-meta"><span>Category:</span> ${
                   podcast.category || "Uncategorized"
                 }</p>
-                <p class="podcast-meta"><span>Host:</span> ${
-                  podcast.hostName || "Not specified"
+                <p class="podcast-meta"><span>Author:</span> ${
+                  podcast.author || "Not specified"
                 }</p>
-                <p class="podcast-meta"><span>Owner:</span> ${
-                  podcast.ownerName || "Not specified"
+                <p class="podcast-meta"><span>Language:</span> ${
+                  podcast.language || "Not specified"
                 }</p>
               </div>
               <div class="podcast-actions">
@@ -789,7 +790,6 @@ async function renderPodcastList() {
             </div>
           </div>
         </div>
-        </div>
         <div class="podcast-footer">
           <button class="landing-page-btn" data-id="${
             podcast._id
@@ -801,15 +801,12 @@ async function renderPodcastList() {
 
       podcastListElement.appendChild(podcastCard);
 
-
       // Redirect to the landing page with the specific podcastId
       const landingPageBtn = podcastCard.querySelector(".landing-page-btn");
-  landingPageBtn.addEventListener("click", (e) => {
-    const podcastId = e.target.dataset.id; // Get podcast ID
-    window.location.href = `/landingpage/${podcastId}`;
-  });
-
-      
+      landingPageBtn.addEventListener("click", (e) => {
+        const podcastId = e.target.dataset.id; // Get podcast ID
+        window.location.href = `/landingpage/${podcastId}`;
+      });
 
       // Fetch episodes for this podcast and add them to the preview
       try {
@@ -856,7 +853,6 @@ async function renderPodcastList() {
               });
 
               episodesContainer.appendChild(episodeItem);
-
             });
 
             // Replace loading message with episodes
@@ -1055,12 +1051,12 @@ function renderPodcastDetail(podcast) {
         <div class="separator"></div>
         <div class="detail-grid">
           <div class="detail-item">
-            <h3>Podcast Owner</h3>
-            <p>${podcast.ownerName || "Not specified"}</p>
+            <h3>Author</h3>
+            <p>${podcast.author || "Not specified"}</p>
           </div>
           <div class="detail-item">
-            <h3>Host(s)</h3>
-            <p>${podcast.hostName || "Not specified"}</p>
+            <h3>Language</h3>
+            <p>${podcast.language || "Not specified"}</p>
           </div>
           <div class="detail-item">
             <h3>Email Address</h3>
