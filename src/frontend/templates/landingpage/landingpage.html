@@ -58,13 +58,13 @@
             Host biography goes here.
           </p>
           <div id="host-social">
-            <a href="{{ url_for('dashboard_bp.podcastmanagement') }}" class="pinterest"><i class="fab fa-pinterest-p"></i></a>
-            <a href="{{ url_for('dashboard_bp.podcastmanagement') }}" class="twitter"><i class="fab fa-x-twitter"></i></a>
-            <a href="{{ url_for('dashboard_bp.podcastmanagement') }}" class="instagram"><i class="fab fa-instagram"></i></a>
-            <a href="{{ url_for('dashboard_bp.podcastmanagement') }}" class="linkedin"><i class="fab fa-linkedin"></i></a>
-            <a href="{{ url_for('dashboard_bp.podcastmanagement') }}" class="facebook"><i class="fab fa-facebook-f"></i></a>
-            <a href="{{ url_for('dashboard_bp.podcastmanagement') }}" class="youtube"><i class="fab fa-youtube"></i></a>
-            <a href="{{ url_for('dashboard_bp.podcastmanagement') }}" class="tiktok"><i class="fab fa-tiktok"></i></a>            
+            {% for platform, link in social_media.items() %}
+              {% if link %}
+                <a href="{{ link }}" target="_blank" class="social-icon {{ platform }}">
+                  <i class="fab fa-{{ platform }}"></i>
+                </a>
+              {% endif %}
+            {% endfor %}
           </a>
           </div>
         </div>
