@@ -7,6 +7,7 @@ from uuid import uuid4
 
 logger = logging.getLogger(__name__)
 
+
 class UserToTeamRepository:
     def __init__(self):
         self.users_to_teams_collection = collection.database.UsersToTeams
@@ -18,15 +19,15 @@ class UserToTeamRepository:
             user_to_team_schema = UserToTeamSchema()
             validated_data = user_to_team_schema.load(data)
 
-            user_id = str(validated_data.get("userId"))  
-            team_id = str(validated_data.get("teamId")) 
-            role = validated_data.get("role", "member")  
+            user_id = str(validated_data.get("userId"))
+            team_id = str(validated_data.get("teamId"))
+            role = validated_data.get("role", "member")
 
             team = self.teams_collection.find_one({"_id": team_id})
             if not team:
                 return {"error": "Team not found"}, 404
 
-            user = self.users_collection.find_one({"_id": user_id})  # Ensure correct field name
+            user = self.users_collection.find_one({"_id": user_id})
             if not user:
                 return {"error": "User not found"}, 404
 
@@ -34,7 +35,7 @@ class UserToTeamRepository:
             if existing_user_team:
                 return {"error": "User is already a member of the team"}, 400
 
-            user_to_team_id = str(uuid4())  # Ensure ID is a string
+            user_to_team_id = str(uuid4())
 
             user_to_team_item = {
                 "_id": user_to_team_id,
@@ -110,3 +111,29 @@ class UserToTeamRepository:
         except Exception as e:
             logger.error(f"Error retrieving team members: {e}", exc_info=True)
             return {"error": f"Failed to retrieve team members: {str(e)}"}, 500
+
+    def get_teams_for_user(self, user_id):
+        """
+        Retrieves all teams a user is a member of.
+        
+        Args:
+            user_id (str): The user ID to look up.
+
+        Returns:
+            list: A list of teams the user is part of.
+        """
+        try:
+            user_teams = list(self.users_to_teams_collection.find({"userId": user_id}, {"teamId": 1, "_id": 0}))
+
+            if not user_teams:
+                return {"message": "User is not part of any team"}, 404
+
+            team_ids = [team["teamId"] for team in user_teams]
+
+            teams = list(self.teams_collection.find({"_id": {"$in": team_ids}}, {"_id": 1, "name": 1}))
+
+            return {"teams": teams}, 200
+
+        except Exception as e:
+            logger.error(f"Error retrieving teams for user {user_id}: {e}", exc_info=True)
+            return {"error": f"Failed to retrieve teams: {str(e)}"}, 500
