@@ -10,7 +10,7 @@ dnspython
 durationpy
 feedparser
 Flask
-flask-cors
+Flask-Cors
 google
 google-auth
 google-auth-oauthlib

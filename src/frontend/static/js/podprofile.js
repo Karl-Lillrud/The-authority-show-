@@ -172,14 +172,17 @@ document.addEventListener("DOMContentLoaded", () => {
           }
         }
 
-        // Send invitation email
+        // Skicka inbjudningsmejl
         try {
           console.log("Sending invitation email"); // Added log
-          const emailResponse = await sendInvitationEmail(); // Added log
-          console.log("Invitation email response:", emailResponse); // Added log
+          const emailResponse = await sendInvitationEmail();
+          if (!emailResponse.success) {
+            throw new Error(emailResponse.error || "Unknown error occurred");
+          }
           console.log("Invitation email sent successfully"); // Added log
         } catch (error) {
-          console.error("Error sending invitation email:", error); // Added log
+          console.error("Error sending invitation email:", error);
+          alert("Failed to send invitation email. Please try again later.");
         }
 
         // Redirect to dashboard and set a flag to show the popup
@@ -190,6 +193,8 @@ document.addEventListener("DOMContentLoaded", () => {
         alert("Something went wrong. Please try again.");
       }
     });
+  } else {
+    console.warn("goToEmailSection button not found in the DOM.");
   }
 
   // Function to display podcast preview with enhanced UI

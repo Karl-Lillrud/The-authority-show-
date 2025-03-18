@@ -83,6 +83,10 @@ class PodcastRepository:
                     "copyright_info", ""
                 ),  # Added field
                 "imageUrl": validated_data.get("imageUrl", ""),  # Added field
+                "bannerUrl": validated_data.get("bannerUrl", ""),  # Added field
+                "tagline": validated_data.get("tagline", ""),  # Added field
+                "hostBio": validated_data.get("hostBio", ""),  # Added field
+                "hostImage": validated_data.get("hostImage", ""),  # Added field
             }
 
             # Insert into database
