@@ -144,5 +144,4 @@ def send_team_invite():
 @invitation_bp.route("/verify_invite/<invite_token>", methods=["GET"])
 def verify_invite(invite_token):
     """Verifies if an invite token is valid without registering."""
-    response, status_code = invite_service.verify_invite(invite_token)
-    return jsonify(response), status_code
+    response, status_code = invite_service.verify
