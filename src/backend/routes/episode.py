@@ -132,6 +132,7 @@ def get_episodes_by_podcast(podcast_id):
             author = ep.get("author", "Unknown")
             file_size = ep.get("fileSize", "Unknown")
             file_type = ep.get("fileType", "Unknown")
+            audio_url = ep.get("audioUrl", None)
 
             mapped_episodes.append(
                 {
@@ -145,6 +146,7 @@ def get_episodes_by_podcast(podcast_id):
                     "author": author,
                     "fileSize": file_size,
                     "fileType": file_type,
+                    "audioUrl": audio_url,
                 }
             )
 

@@ -1480,6 +1480,20 @@ function renderEpisodeDetail(episode) {
         </div>
         <div class="separator"></div>
         <div class="detail-section">
+          <h2>Audio Player</h2>
+          ${
+            episode.audioUrl
+              ? `<audio controls style="width: 100%;">
+                  <source src="${episode.audioUrl}" type="${
+                  fileType || "audio/mpeg"
+                }">
+                  Your browser does not support the audio element.
+                </audio>`
+              : "<p>No audio available for this episode.</p>"
+          }
+        </div>
+        <div class="separator"></div>
+        <div class="detail-section">
           <h2>Guests</h2>
           <div id="guests-list"></div>
         </div>
