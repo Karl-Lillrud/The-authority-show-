@@ -1,45 +1,35 @@
-/*
 :root {
-    --background-light: #EFF2F9;
-    --light-shadow-light: #FFFFFF;
-    --dark-shadow-light: rgba(22, 24, 29, 0.23);
+  --background-light: #EFF2F9;
+  --light-shadow-light: #FFFFFF;
+  --dark-shadow-light: rgba(22, 24, 29, 0.23);
+  --text-color-light: #6E7F8D;
+  --highlight-color: #FF7F3F;
+  --font-primary: 'Arial', sans-serif;
+  --spacing-sm: 8px;
+  --spacing-md: 16px;
+  --spacing-lg: 24px;
+  --radius-small: 5px;
+  --radius-medium: 10px;
+}
 
-    --text-color-light: #6E7F8D;
-    --highlight-color: #FF7F3F;
-    --success-color: #4CAF50;
+body {
+  margin: 0;
+  padding: var(--spacing-md);
+  font-family: var(--font-primary);
+  background-color: var(--background-light);
+  color: var(--text-color-light);
+  text-align: center;
+  line-height: 1.6;
+}
 
-    --font-primary: 'Arial', sans-serif;
-
-    --spacing-sm: 8px;
-    --spacing-md: 16px;
-    --spacing-lg: 24px;
-
-    --radius-small: 5px;
-    --radius-medium: 10px;
-  }
-
-  body {
-    margin: 0;
-    padding: var(--spacing-md);
-    font-family: var(--font-primary);
-    background-color: var(--background-light);
-    color: var(--text-color-light);
-    text-align: center;
-    line-height: 1.6;
-  }
-*/
-
-/* Container for account settings */
 .account-settings-wrapper {
   display: flex;
   max-width: 1000px;
   margin: 40px auto;
   gap: 24px;
   align-items: stretch;
-  /* Ensures sidebar and main content are equal height */
 }
 
-/* Sidebar styling */
 .sidebar {
   flex: 0 0 200px;
   background: var(--background-light);
@@ -68,21 +58,18 @@
   background: rgba(255, 127, 63, 0.1);
 }
 
-/* Main content styling */
 .main-content {
   flex: 1;
   display: flex;
   flex-direction: column;
-  /* Remove extra spacing to allow the settings-section to fill the container */
   margin: 0;
 }
 
-/* Make the visible settings-section fill the height of main-content */
 .settings-section {
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
+  justify-content: flex-start;
   text-align: center;
   background: var(--background-light);
   padding: var(--spacing-lg);
@@ -90,13 +77,8 @@
   box-shadow: -8px -8px 16px var(--light-shadow-light),
     8px 8px 16px var(--dark-shadow-light);
   flex: 1;
-  display: flex;
-  flex-direction: column;
-  justify-content: flex-start;
 }
 
-/* Back Arrow (visible on all subsites) */
-/* Back Arrow */
 .back-arrow {
   position: absolute;
   top: 180px;
@@ -118,9 +100,7 @@
   color: var(--highlight-color);
 }
 
-/* Profile Container; DeleteAccount Container*/
-.profile-container,
-.delete-account-container {
+.profile-container {
   background: var(--background-light);
   max-width: 400px;
   margin: auto;
@@ -128,20 +108,12 @@
   transition: box-shadow 0.3s ease, background-color 0.3s ease;
 }
 
-/* Headings */
-h2 {
-  margin-bottom: var(--spacing-md);
-  color: var(--text-color-light);
-}
-
-/* Profile Picture Container */
 .profile-pic-container {
   position: relative;
   text-align: center;
   margin-bottom: var(--spacing-md);
 }
 
-/* Profile Image */
 #profile-pic {
   display: block;
   margin: 0 auto;
@@ -154,7 +126,6 @@ h2 {
     inset 3px 3px 6px var(--dark-shadow-light);
 }
 
-/* File Input for Picture */
 #upload-pic {
   margin-top: var(--spacing-sm);
   font-size: 0.85rem;
@@ -172,7 +143,6 @@ h2 {
   background-color: rgba(255, 127, 63, 0.07);
 }
 
-/* Form styling */
 form {
   display: flex;
   flex-direction: column;
@@ -188,13 +158,11 @@ label {
   font-size: 0.9rem;
 }
 
-/* Input fields */
 input[type="text"],
-input[type="email"],
-input[type="password"],
-input[type="phone"] {
+input[type="email"] {
   width: 95%;
   padding: var(--spacing-sm);
+  margin-bottom: var(--spacing-sm);
   border-radius: var(--radius-small);
   border: none;
   box-shadow: inset -3px -3px 6px var(--light-shadow-light),
@@ -210,7 +178,6 @@ input:focus {
     inset -2px -2px 4px rgba(0, 0, 0, 0.1);
 }
 
-/* Button styling */
 button {
   background: var(--highlight-color);
   color: #fff;
@@ -222,6 +189,7 @@ button {
   box-shadow: -3px -3px 6px var(--light-shadow-light),
     3px 3px 6px var(--dark-shadow-light);
   font-size: 0.9rem;
+  margin-top: var(--spacing-sm);
 }
 
 button:hover {
@@ -229,105 +197,6 @@ button:hover {
   background-color: #faa406;
 }
 
-/* Security Section (2FA options and QR code) */
-#2fa-options {
-  display: none;
-  margin-top: 10px;
-}
-
-.qr-code {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 10px;
-  margin: 10px auto;
-  /* Centers the container */
-  padding: 10px;
-  background: #f9f9f9;
-  border: 1px solid #ddd;
-  border-radius: 10px;
-  width: fit-content;
-}
-
-.qr-code canvas {
-  width: 128px;
-  height: 128px;
-}
-
-/* Modal Styling (used for Recovery, Subscription and DeleteAccount modals) */
-.modal {
-  display: none;
-  position: fixed;
-  z-index: 1000;
-  left: 0;
-  top: 0;
-  width: 100%;
-  height: 100%;
-  background-color: rgba(0, 0, 0, 0.5);
-  align-items: center;
-  justify-content: center;
-}
-
-.modal-content {
-  background-color: #f1f1f1;
-  padding: 40px;
-  border-radius: 20px;
-  width: 400px;
-  text-align: center;
-  box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.2);
-  position: relative;
-}
-
-/* Modal Styling used for DeleteAccount messages) */
-.modal-message {
-  display: none;
-  padding: 3px;
-  margin-top: 3px;
-  border-radius: 6px;
-  font-weight: bold;
-  text-align: center;
-  width: 100%;
-  max-width: 400px;
-  transition: opacity 0.3s ease-in-out;
-  font-size: 0.9rem;
-}
-
-/* Success Style */
-.modal-message.success {
-  color: rgba(20, 164, 46, 0.8);
-  border: none;
-  box-shadow: inset -3px -3px 6px var(--light-shadow-light),
-    inset 3px 3px 6px var(--dark-shadow-light);
-}
-
-/* Error Style */
-.modal-message.error {
-  color: rgba(181, 26, 26, 0.8);
-  border: none;
-  box-shadow: inset -3px -3px 6px var(--light-shadow-light),
-    inset 3px 3px 6px var(--dark-shadow-light);
-}
-
-/* Additional layout adjustments (if needed) */
-.settings-wrapper {
-  max-width: 400px;
-  margin: 40px auto;
-  display: flex;
-  flex-direction: column;
-  gap: 24px;
-}
-
-.card {
-  background: var(--background-light);
-  padding: 16px;
-  border-radius: var(--radius-medium);
-  box-shadow: -8px -8px 16px var(--light-shadow-light),
-    8px 8px 16px var(--dark-shadow-light);
-  text-align: left;
-}
-
-/* Responsive adjustments */
 @media (max-width: 768px) {
   .account-settings-wrapper {
     flex-direction: column;
@@ -338,12 +207,3 @@ button:hover {
     width: 100%;
   }
 }
-
-.primary-cta {
-  width: 75%;
-  margin-bottom: var(--spacing-md);
-  display: block;
-  margin-left: auto;
-  margin-right: auto;
-}
-
