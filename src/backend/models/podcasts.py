@@ -30,3 +30,7 @@ class PodcastSchema(Schema):
     itunesType = fields.Str(allow_none=True)  # Added field
     link = fields.Str(allow_none=True)  # Added field
     itunesOwner = fields.Dict(allow_none=True)  # Added field
+    bannerUrl = fields.Str(allow_none=True)  # Added field
+    tagline = fields.Str(allow_none=True)  # Added field
+    hostBio = fields.Str(allow_none=True)  # Added field
+    hostImage = fields.Str(allow_none=True)  # Added field

@@ -595,6 +595,10 @@ form.addEventListener("submit", async (e) => {
     guestUrl: document.getElementById("guest-form-url")?.value.trim() || null,
     email,
     description: document.getElementById("description")?.value.trim() || "",
+    bannerUrl: document.getElementById("banner")?.value.trim() || "",
+    tagline: document.getElementById("tagline")?.value.trim() || "",
+    hostBio: document.getElementById("host-bio")?.value.trim() || "",
+    hostImage: document.getElementById("host-image")?.value.trim() || "",
     // the logoUrl field will be replaced if a logo is uploaded
 
     category,
@@ -604,7 +608,8 @@ form.addEventListener("submit", async (e) => {
       document.getElementById("linkedin")?.value.trim(),
       document.getElementById("twitter")?.value.trim(),
       document.getElementById("tiktok")?.value.trim(),
-      document.getElementById("pinterest")?.value.trim()
+      document.getElementById("pinterest")?.value.trim(),
+      document.getElementById("youtube")?.value.trim(),
     ].filter((link) => link)
   };
 
@@ -669,23 +674,47 @@ form.addEventListener("submit", async (e) => {
     }
   }
 
-  // Check for a logo file and convert it to a Base64 string if one is selected
+  // Check for a logo, banner and host image file and convert it to a Base64 string if one is selected
   const logoInput = document.getElementById("logo");
-  if (logoInput && logoInput.files[0]) {
-    const file = logoInput.files[0];
-    const reader = new FileReader();
-    reader.onloadend = async () => {
-      data.logoUrl = reader.result; // update with new image
-      await submitPodcast(data);
-    };
-    reader.readAsDataURL(file);
-  } else {
-    // If editing and no new image is selected, do not overwrite the existing logoUrl
-    if (selectedPodcastId) {
-      delete data.logoUrl;
-    }
+  const bannerInput = document.getElementById("banner");
+  const hostImageInput = document.getElementById("host-image");
+
+  async function handleFileInput(inputElement, dataProperty) {
+    return new Promise((resolve) => {
+      if (inputElement && inputElement.files[0]) {
+        const file = inputElement.files[0];
+        const reader = new FileReader();
+        reader.onloadend = () => {
+          data[dataProperty] = reader.result; // update with new image
+          resolve(true);
+        };
+        reader.readAsDataURL(file);
+      } else {
+        // If editing and no new image is selected, do not overwrite the existing property
+        if (selectedPodcastId) {
+          delete data[dataProperty];
+        }
+        resolve(false);
+      }
+    });
+  }
+
+  async function processInputs() {
+    const logoPromise = handleFileInput(logoInput, 'logoUrl');
+    const bannerPromise = handleFileInput(bannerInput, 'bannerUrl');
+    const hostImagePromise = handleFileInput(hostImageInput, 'hostImageUrl');
+
+    // Wait for all file inputs to be processed
+    const [logoChanged, bannerChanged, hostImageChanged] = await Promise.all([logoPromise, bannerPromise, hostImagePromise]);
+
+    // Submit podcast data
     await submitPodcast(data);
   }
+
+  // Start processing the inputs
+  processInputs();
+
+
 });
 
 function displayPodcastDetails(podcast) {
@@ -723,6 +752,13 @@ function displayPodcastDetails(podcast) {
   const categoryEl = document.getElementById("category");
   if (categoryEl) categoryEl.value = podcast.category || "";
 
+  const taglineEl = document.getElementById("tagline");
+  if (taglineEl) taglineEl.value = podcast.tagline || "";
+
+  const hostBioEl = document.getElementById("host-bio");
+  if (hostBioEl) hostBioEl.value = podcast.hostBio || "";
+
+
   // Social media links
   const facebookEl = document.getElementById("facebook");
   if (facebookEl) facebookEl.value = podcast.socialMedia?.[0] || "";
@@ -741,6 +777,9 @@ function displayPodcastDetails(podcast) {
 
   const pinterestEl = document.getElementById("pinterest");
   if (pinterestEl) pinterestEl.value = podcast.socialMedia?.[5] || "";
+
+  const youtubeEl = document.getElementById("youtube");
+  if (youtubeEl) youtubeEl.value = podcast.socialMedia?.[6] || "";
 }
 
 function resetForm() {
