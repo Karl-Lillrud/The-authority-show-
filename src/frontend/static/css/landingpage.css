@@ -11,17 +11,9 @@ html {
   scroll-behavior: smooth;
 }
 
-/* Section Backgrounds - Updated to Dark Theme */
-.section-dark {
-  background-color: #000000;
-  color: #ffffff;
-  padding: 40px 20px;
-}
-
-.section-darkgrey {
-  background-color: #1c1c1c;
-  color: #ffffff;
-  padding: 40px 20px;
+section {
+  background-color: transparent; /* Let JS define the colors */
+  transition: background 0.5s ease-in-out; /* Smooth transition */
 }
 
 /* Navbar */
@@ -82,7 +74,6 @@ html {
   align-items: center;
   justify-content: center;
   gap: 20px;
-  background: url("/Media/Hero_Sektion.png") no-repeat center center;
   background-size: cover;
   min-height: 500px;
 }
@@ -208,6 +199,7 @@ html {
 }
 
 /* Social Media Icon Colors */
+<<<<<<< HEAD
 #host-social a.x {
   display: inline-flex;
   align-items: center;
@@ -217,27 +209,40 @@ html {
   background-color: #000; /* Black background */
   color: #ffffff; /* White icon */
   border-radius: 60%; /* Make it circular */
+=======
+#host-social a.twitter {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px; /* Adjust as needed */
+  height: 32px; /* Adjust as needed */
+  background-color: #000; /* Black background */
+  color: #ffffff; /* White icon */
+  border-radius: 50%; /* Make it circular */
+>>>>>>> e115b9aa443c15cdcef99094eeddfb4073491b93
   font-size: 18px; /* Adjust icon size */
   text-decoration: none; /* Prevent unwanted underline */
   line-height: 0; /* Fixes vertical alignment issues */
   transition: background 0.3s ease-in-out, transform 0.3s ease-in-out;
 }
 
+<<<<<<< HEAD
 #host-social a.x i {
   font-size: 20px; /* Match the icon size properly */
   vertical-align: top; /* Align the icon properly */
+=======
+#host-social a.twitter i {
+  font-size: 20px; /* Match the icon size properly */
+  vertical-align: middle; /* Align the icon properly */
+}
+
+#host-social a.twitter:hover {
+  transform: scale(1.2);
+>>>>>>> e115b9aa443c15cdcef99094eeddfb4073491b93
 }
 
 #host-social a.instagram {
   color: #e4405f;
-}
-
-#host-social a.linkedin {
-  color: #0077b5;
-}
-
-#host-social a.facebook {
-  color: #1877f2;
 }
 
 #host-social a.pinterest {
@@ -258,6 +263,83 @@ html {
 #host-social a.pinterest i {
   font-size: 20px; /* Match the icon size properly */
   vertical-align: middle; /* Align the icon properly */
+}
+
+
+#host-social a.linkedin {
+  color: #0077b5;
+}
+
+#host-social a.facebook {
+  color: #1877f2;
+}
+
+<<<<<<< HEAD
+#host-social a.pinterest {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 35px; /* Adjust as needed */
+  height: 35px; /* Adjust as needed */
+  background-color: #e60023; /* Pinterest red background */
+  color: #ffffff; /* White icon */
+  border-radius: 50%; /* Make it circular */
+  font-size: 18px; /* Adjust icon size */
+  text-decoration: none; /* Prevent unwanted underline */
+  line-height: 0; /* Fixes vertical alignment issues */
+  transition: background 0.3s ease-in-out, transform 0.3s ease-in-out;
+}
+
+#host-social a.pinterest i {
+  font-size: 20px; /* Match the icon size properly */
+  vertical-align: middle; /* Align the icon properly */
+=======
+#host-social a.tiktok {
+    display: inline-block;
+    font-size: 27px; /* Adjust size as needed */
+    position: relative;
+    color: white; /* The main white TikTok logo */
+    transition: transform 0.3s ease-in-out;
+}
+
+#host-social a.tiktok::before,
+#host-social a.tiktok::after {
+    content: "J"; /* Trick to apply shadows */
+    font-family: FontAwesome;
+    position: absolute;
+    top: 0;
+    left: 0;
+    font-size: 27px; /* Match the main icon size */
+    z-index: -1; /* Move shadows behind */
+    transition: transform 0.3s ease-in-out;
+}
+
+#host-social a.tiktok::before {
+    color: #25F4EE; /* Cyan shadow */
+    transform: translate(1px, 2px);
+}
+
+#host-social a.tiktok::after {
+    color: #FE2C55; /* Red shadow */
+    transform: translate(1px, 6px);
+}
+
+#host-social a.tiktok:hover {
+    transform: scale(1.2);
+}
+
+#host-social a.tiktok:hover::before {
+    transform: translate(0x, 0x);
+}
+
+#host-social a.tiktok:hover::after {
+    transform: translate(1px, 6px);
+}
+
+
+#host-social a.youtube {
+  color: #ff0000;
+>>>>>>> e115b9aa443c15cdcef99094eeddfb4073491b93
 }
 
 /* Latest Episodes Section */
@@ -285,19 +367,15 @@ html {
 
 /* Episodkort med thumbnail och detaljer i rad */
 .episode-card {
-  display: flex;
-  background: #1f1f1f;
-  border-radius: 10px;
-  overflow: hidden;
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5);
-  transition: transform 0.3s, box-shadow 0.3s;
-  height: 120px;
-  /* Kompakt höjd */
+  border-radius: 15px; /* More distinct rounded corners */
+  overflow: hidden; /* Ensures no weird cutoffs */
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3); /* Subtle shadow for separation */
+  transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
 }
 
 .episode-card:hover {
-  transform: translateY(-3px);
-  box-shadow: 0 6px 15px rgba(0, 0, 0, 0.7);
+  transform: translateY(-3px); /* Small hover effect */
+  box-shadow: 0 6px 15px rgba(0, 0, 0, 0.5); /* Increase shadow on hover */
 }
 
 /* Thumbnail-del */
@@ -313,26 +391,46 @@ html {
   object-fit: cover;
 }
 
-/* Detaljerad innehållsdels ruta */
+/* Episode Details - Ensures proper alignment */
 .episode-details {
   flex: 1;
-  padding: 15px;
+  padding: 10px 15px;
   display: flex;
   flex-direction: column;
   justify-content: center;
+  align-items: flex-start; /* Aligns text to the left */
 }
 
+/* Episode Title */
 .episode-details h3 {
-  margin: 0 0 5px;
-  font-size: 18px;
+  margin: 0;
+  font-size: 20px; /* Bigger for emphasis */
+  font-weight: bold;
+  color: #ffffff; /* White text for contrast */
+  text-transform: capitalize;
+  text-align: left;
+  letter-spacing: 0.5px;
+  line-height: 1.2;
 }
 
+/* Title Link */
+.episode-details h3 a {
+  color: #ff4500; /* Orange for eye-catching */
+  text-decoration: none;
+  transition: color 0.3s ease;
+}
+
+.episode-details h3 a:hover {
+  color: #ff6600; /* Slightly brighter on hover */
+}
+
+/* Episode Description */
 .episode-details p {
   font-size: 14px;
-  line-height: 1.4;
-  margin: 0 0 5px;
-  color: #cccccc;
+  color: hsl(0, 0%, 100%); /* Lighter gray for subtlety */
+  margin-top: 4px;
 }
+
 
 /* Episod-länkar */
 .episode-links {
@@ -354,6 +452,28 @@ html {
   padding-bottom: 30px;
 }
 
+.episode-link {
+  font-size: 24px; /* Större textstorlek */
+  color: #ffffff; /* Vit text */
+  text-decoration: none; /* Ingen understrykning */
+  font-weight: bold; /* Fet text */
+  letter-spacing: 1px; /* Lite mer avstånd mellan bokstäverna */
+  transition: color 0.3s, transform 0.3s ease; /* Smidiga övergångar för hover-effekter */
+}
+
+/* Hover-effekt för länktext */
+.episode-link:hover {
+  color: #ff4500; /* Orange färg vid hover */
+  transform: scale(1.1); /* Lätt förstoring vid hover */
+  text-decoration: underline; /* Understrykning vid hover */
+}
+
+/* Fokus-effekt för länktext */
+.episode-link:focus {
+  outline: none; /* Ta bort fokusram */
+  color: #ff4500; /* Orange färg vid fokus */
+  text-decoration: underline; /* Understrykning vid fokus */
+}
 /* Ikoner för knappar */
 .podcast-icon {
   width: 30px;

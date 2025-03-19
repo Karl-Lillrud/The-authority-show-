@@ -1,5 +1,3 @@
-
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -8,7 +6,11 @@
   <title>Podcast Website</title>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+<<<<<<< HEAD
   <link rel="stylesheet" href="../../static/css/landingpage.css">
+=======
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/landingpage.css') }}">
+>>>>>>> e115b9aa443c15cdcef99094eeddfb4073491b93
 </head>
 <body>
 
@@ -24,91 +26,116 @@
           <li><a href="#guest-booking">Guest Booking</a></li>
           <li><a href="#extra-section">Extra</a></li>
         </ul>
-        <button onclick="window.location.href='/dashboard'" class="subscribe-btn">Dashboard</button>
         <button class="subscribe-btn">Subscribe</button>
       </div>
     </nav>
   </header>
-  <main>
-    <!-- Podcast Header Section -->
-    <section class="podcast-header section-dark" id="podcast-header">
-      <img id="podcast-cover" src="#" alt="Podcast Cover" class="podcast-cover">
-      <div class="podcast-info">
-        <h1 id="podcast-title">Podcast Title</h1>
-        <p id="podcast-tagline">Your podcast tagline goes here.</p>
+
+  <section class="podcast-header section-dark" id="podcast-header"
+    style="background-image: url('{{ banner_url }}'); background-size: cover; background-position: center;">
+
+    <!-- ✅ ADD THIS BACK: Podcast Logo for Color Thief -->
+    <img id="podcast-logo"
+        src="{{ podcast_logo }}" 
+        crossorigin="anonymous"
+        onerror="this.src='/static/images/default.png'"
+        hidden>
+
+    <div class="podcast-info">
+        <h1 id="podcast-title">{{ podcast_title }}</h1>
+        <p id="podcast-tagline">{{ tagline }}</p>
+
         <div id="subscribe-buttons">
-          <button>Subscribe on Apple</button>
-          <button>Subscribe on Spotify</button>
+            <button>Subscribe on Apple</button>
+            <button>Subscribe on Spotify</button>
         </div>
-      </div>
-    </section>
+    </div>
+  </section>
+
+
+
 
     <!-- About Section -->
     <section class="about-section section-darkgrey" id="about-section">
       <h2>About the Podcast</h2>
-      <p id="podcast-description">
-        A brief description of the podcast goes here. <br>Learn more about our journey and what inspires us.
-      </p>
+      <p id="podcast-description">{{ podcast_description }}</p>
+      
       <div class="host-info">
-        <img id="host-image" src="/Media/Karl-Lillrud_bok_nvidia.jpg" alt="Host Image" class="host-image">
+        <!-- Host Image -->
+        <img id="host-image" src="{{ host_image }}" alt="Host Image" class="host-image">
+        
         <div class="host-details">
           <h3 id="host-name">{{ host_name }}</h3>
+
+          <!-- Host Bio (Dynamically Fetched) -->
           <p id="host-bio">
-            Host biography goes here. Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nulla ac ultrices libero.
+            {{ host_bio }}
           </p>
+
+          <!-- Social Media Links -->
           <div id="host-social">
+<<<<<<< HEAD
             <a href="https://x.com/host" target="_blank" class="x"><i class="fab fa-x-twitter"></i></a>
             <a href="https://instagram.com/host" target="_blank" class="instagram"><i class="fab fa-instagram"></i></a>
             <a href="https://linkedin.com/in/host" target="_blank" class="linkedin"><i class="fab fa-linkedin"></i></a>
             <a href="https://facebook.com/host" target="_blank" class="facebook"><i class="fab fa-facebook-f"></i></a>
             <a href="https://pinterest.com/host" target="_blank" class="pinterest"><i class="fab fa-pinterest-p"></i></a>
+=======
+            {% for platform, link in social_media.items() %}
+              {% if link %}
+                <a href="{{ link }}" target="_blank" class="social-icon {{ platform }}">
+                  <i class="fab fa-{{ platform }}"></i>
+                </a>
+              {% endif %}
+            {% endfor %}
+>>>>>>> e115b9aa443c15cdcef99094eeddfb4073491b93
           </div>
         </div>
       </div>
     </section>
 
     <!-- Latest Episodes List Section -->
+    
     <section class="latest-episodes-section section-dark" id="latest-episodes-section">
       <h2>Latest Episodes</h2>
-      
       {% if episodes and episodes|length > 0 %}
-      <ul class="episode-list">
-        {% for episode in episodes %}
-        <li class="episode-item">
-          <div class="episode-card">
-            <div class="episode-thumbnail">
-              <!-- Use a placeholder thumbnail; you can update the src dynamically if stored in your document -->
-              <img src="/Media/placeholder-thumbnail.jpg" alt="{{ episode.title }} Thumbnail">
-            </div>
-            <div class="episode-details">
-              <button class="play-btn">&#9658;</button>
-              <!-- Optionally, pass an episode_id to your episode route -->
-              <a href="{{ url_for('landingpage_bp.episode', episode_id=episode._id) }}">{{ episode.title }}</a>
-              <p>{{ episode.description }}</p>
-              <div class="episode-links">
-                <a href="https://open.spotify.com/" target="_blank" class="spotify-link">
-                  <img src="/Media/spotify.png" alt="Spotify" class="podcast-icon">
-                  <span class="listen-btn spotify-btn">Spotify</span>
-                </a>
-                <a href="https://podcasts.apple.com/" target="_blank" class="apple-link">
-                  <img src="/Media/apple.svg" alt="Apple Podcasts" class="podcast-icon">
-                  <span class="listen-btn apple-btn">Apple</span>
-                </a>
+        <ul class="episode-list">
+          {% for episode in episodes %}
+            <li class="episode-item">
+              <div class="episode-card">
+                <div class="episode-thumbnail">
+                  <!-- If your document has a thumbnail URL field, replace placeholder below -->
+                  <img src="{{ url_for('static', filename='images/default.png') }}" alt="{{ episode.title }} Thumbnail">
+                </div>
+                <div class="episode-details">
+                  <button class="play-btn">&#9658;</button>
+                  <!-- You could pass an episode ID to the episode route if needed -->
+                  <a href="{{ url_for('episode_bp.episode_detail', episode_id=episode._id) }}" class="episode-link">
+                    {{ episode.title }}
+                  </a>
+                  
+                  
+                  <p>{{ episode.description }}</p>
+                  <div class="episode-links">
+                    <a href="https://open.spotify.com/" target="_blank" class="spotify-link">
+                      <img src="{{ url_for('static', filename='images/spotify.png') }}" alt="Spotify" class="podcast-icon">
+                      <span class="listen-btn spotify-btn">Spotify</span>
+                    </a>
+                    <a href="https://podcasts.apple.com/" target="_blank" class="apple-link">
+                      <img src="{{ url_for('static', filename='images/apple.svg') }}" alt="Apple Podcasts" class="podcast-icon">
+                      <span class="listen-btn apple-btn">Apple</span>
+                    </a>
+                  </div>
+                </div>
               </div>
-            </div>
-          </div>
-        </li>
-        {% endfor %}
-      </ul>
+            </li>
+          {% endfor %}
+        </ul>
       {% else %}
-      <p>No podcasts at this moment.</p>
+        <p>No podcasts at this moment.</p>
       {% endif %}
     </section>
-
-    <!-- All Episodes List Section -->
-
-      
-
+ 
     <!-- Exclusive Episodes Section (Glass Card) -->
     <section class="exclusive-episodes-section section-dark" id="exclusive-episodes-section">
       <div class="episodes-glass-card">
@@ -232,37 +259,6 @@
         </form>
       </div>
 
-      <div class="social-media-carousel">
-        <!-- Twitter Box -->
-        <div class="social-box twitter-box">
-          <h3>Twitter</h3>
-          <div class="carousel">
-            <img src="/Media/Karl-Lillrud_bok_nvidia.jpg" alt="Twitter 1">
-            <img src="/Media/Profile.png" alt="Twitter 2">
-            <img src="/Media/Karl-Lillrud_bok_nvidia.jpg" alt="Twitter 3">
-          </div>
-        </div>
-    
-        <!-- Instagram Box -->
-        <div class="social-box instagram-box">
-          <h3>Instagram</h3>
-          <div class="carousel">
-            <img src="/Media/Karl-Lillrud_bok_nvidia.jpg" alt="Instagram 1">
-            <img src="/Media/Karl-Lillrud_bok_nvidia.jpg" alt="Instagram 2">
-            <img src="/Media/Profile.png" alt="Instagram 3">
-          </div>
-        </div>
-    
-        <!-- LinkedIn Box -->
-        <div class="social-box linkedin-box">
-          <h3>LinkedIn</h3>
-          <div class="carousel">
-            <img src="/Media/Profile.png" alt="LinkedIn 1">
-            <img src="/Media/Karl-Lillrud_bok_nvidia.jpg" alt="LinkedIn 2">
-            <img src="/Media/Karl-Lillrud_bok_nvidia.jpg" alt="LinkedIn 3">
-          </div>
-        </div>
-      </div>
 
       <!-- Merch / Patreon Links -->
       <div class="merch-patreon">
@@ -290,5 +286,96 @@
 
   <!-- Loading Indicator -->
   <div id="loading" style="display: none;">Loading...</div>
+
+    <!-- Load JavaScript files at the END -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/color-thief/2.3.2/color-thief.umd.js"></script>
+    
+    <script>
+      document.addEventListener("DOMContentLoaded", function () {
+    console.log("🚀 Color Thief Debug Started");
+
+    const logoImg = document.getElementById("podcast-logo");
+
+    if (!logoImg || !logoImg.src) {
+        console.error("❌ Error: podcast-logo image is missing in the DOM!");
+        return;
+    }
+
+    console.log("✅ Logo image found, source:", logoImg.src);
+
+    if (logoImg.complete && logoImg.naturalHeight !== 0) {
+        console.log("✅ Logo already loaded.");
+        extractColors(logoImg);
+    } else {
+        console.log("⏳ Waiting for logo to load...");
+        logoImg.onload = function () {
+            console.log("✅ Logo successfully loaded:", logoImg.src);
+            extractColors(logoImg);
+        };
+    }
+
+    logoImg.onerror = function () {
+        console.error("❌ Error: Could not load the podcast-logo image.");
+    };
+});
+
+function extractColors(img) {
+    try {
+        const colorThief = new ColorThief();
+        const palette = colorThief.getPalette(img, 5);  // Extract 5 colors for a richer theme
+
+        if (!palette || palette.length < 3) {
+            console.error("❌ Error: No colors extracted.");
+            return;
+        }
+
+        console.log("🎨 Extracted Colors:", palette);
+
+        // ✅ Assign extracted colors to variables (FIXED TEMPLATE STRINGS)
+        const primaryColor = `rgb(${palette[0].join(",")})`;  // Main color (background)
+        const secondaryColor = `rgb(${palette[1].join(",")})`; // Section background
+        const accentColor = `rgb(${palette[2].join(",")})`;   // Buttons/links
+        const textColor = `rgb(${palette[3].join(",")})`;     // Contrast text
+        const highlightColor = `rgb(${palette[4].join(",")})`; // Extra details
+
+        // ✅ Apply colors but **EXCLUDE THE HEADER** (keeps banner image!)
+        document.body.style.background = primaryColor;
+        document.body.style.color = textColor;
+
+        // ✅ Apply colors to the navbar & footer, but NOT the header
+        document.querySelector(".navbar").style.backgroundColor = secondaryColor;
+        document.querySelector("footer").style.backgroundColor = secondaryColor;
+        document.querySelector("footer").style.color = textColor;
+
+        // ✅ Apply colors to **all sections except the header**
+        document.querySelectorAll("section").forEach((section, index) => {
+            if (!section.classList.contains("podcast-header")) {  // ❌ SKIP HEADER
+                section.style.backgroundColor = index % 2 === 0 ? secondaryColor : primaryColor;
+                section.style.color = textColor;
+            }
+        });
+
+        // ✅ Apply highlight color to Social Media Icons
+        document.querySelectorAll("#host-social a").forEach(icon => {
+            icon.style.color = highlightColor;
+        });
+
+        // ✅ Apply colors to Episode Cards
+        document.querySelectorAll(".episode-card").forEach((card, index) => {
+            card.style.backgroundColor = index % 2 === 0 ? primaryColor : secondaryColor;
+            card.style.color = textColor;
+        });
+
+        console.log("🎨 Theme applied successfully!");
+
+    } catch (error) {
+        console.error("❌ Error in Color Thief:", error);
+    }
+}
+
+
+
+    </script>
+
 </body>
 </html>

@@ -629,11 +629,6 @@ h1 {
   border-radius: 8px;
   object-fit: cover;
 }
-.episode-count {
-  font-weight: 700;
-  font-size: 16px;
-  margin-top: 10px;
-}
 .red {
   color: #dc3545;
 }

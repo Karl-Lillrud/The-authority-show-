@@ -8,6 +8,16 @@
       rel="stylesheet"
       href="{{ url_for('static', filename='css/podprofile.css') }}"
     />
+    <link
+      rel="icon"
+      type="image/x-icon"
+      href="{{ url_for('static', filename='favicon/favicon.ico') }}"
+    />
+    <link rel="canonical" href="https://app.podmanager.ai" />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+    />
   </head>
   <body>
     <header>
@@ -42,47 +52,59 @@
       <div class="container" id="pod-name-section">
         <h1 class="fancy-heading">POD INFO</h1>
         <form id="podNameForm">
-          <div
-            class="help-container"
-            style="text-align: right; margin-bottom: 10px"
-          >
-            <button class="help-button">?</button>
-            <span class="help-text"
-              >To find your podcast's RSS feed URL, log in to your podcast
-              hosting platform, navigate to your podcast settings or
-              distribution options, and look for the "RSS Feed" section and
-              paste that URL here.</span
-            >
-          </div>
           <div class="form-group">
-            <label for="podRss">RSS</label>
+            <div
+              class="label-group"
+              style="display: inline-flex; align-items: center; gap: 0.25rem"
+            >
+              <label for="podRss">RSS</label>
+              <button class="help-button">?</button>
+              <span class="help-text">
+                To find your podcast's RSS feed URL, log in to your podcast
+                hosting platform, navigate to your podcast settings or
+                distribution options, and look for the "RSS Feed" section and
+                paste that URL here.
+              </span>
+            </div>
             <input type="url" id="podRss" name="podRss" />
           </div>
           <div class="form-group">
             <label for="podName">Podcast's Name</label>
             <input type="text" id="podName" name="podName" required />
           </div>
-          <button type="button" class="button-secondary " id="skipToDashboard">
-            Skip
-          </button>
-          <button type="button" class="button-primary" id="goToEmailSection">
-            Next
-          </button>
+
+          <div class="form-group">
+            <button type="button" class="button-primary" id="goToEmailSection">
+              Next
+            </button>
+            <button type="button" class="button-secondary" id="skipButton" onclick="window.location.href='/podcastmanagement'">
+              Skip
+            </button>
+          </div>
         </form>
       </div>
 
-      <!-- Email Section -->
-      <div class="container hidden" id="email-section">
-        <h1 class="fancy-heading">Welcome to PodManager.ai!</h1>
-        <div class="success-message">
-          <p>
-            🎉 Congratulations!<br><br>
-            Your spot in the Beta Tester queue is locked in! Get ready for your exclusive sneak peek...<br><br> 
-            💰 To kick things off, we’ve added 3,500 Credits to your account!<br><br>
-            PodManager.ai will revolutionize your podcasting with AI-powered workflow automation, seamless guest management, and faster episode production- so you can focus on creating amazing content!
-            <br><br>
-            ✨ Check your email right now for more exciting features!
-          </p>
+      <!-- Podcast Preview Container (Separate from the form) -->
+      <div id="podcast-preview" class="podcast-showcase hidden">
+        <!-- Podcast info will be inserted here by JavaScript -->
+      </div>
+
+      <!-- Episodes Carousel Container -->
+      <div id="episodes-carousel" class="episodes-carousel-container hidden">
+        <div class="episodes-header">
+          <h2>Episodes</h2>
+          <div class="carousel-controls">
+            <button id="prev-episodes" class="carousel-control">
+              <i class="fas fa-chevron-left"></i>
+            </button>
+            <button id="next-episodes" class="carousel-control">
+              <i class="fas fa-chevron-right"></i>
+            </button>
+          </div>
+        </div>
+        <div id="episodes-slider" class="episodes-slider">
+          <!-- Episodes will be inserted here by JavaScript -->
+        </div>
       </div>
     </main>
     <script
