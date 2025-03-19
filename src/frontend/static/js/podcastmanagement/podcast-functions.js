@@ -604,6 +604,12 @@ export function renderPodcastDetail(podcast) {
           const publishDate = ep.publishDate
             ? new Date(ep.publishDate).toLocaleDateString()
             : "No date";
+
+          // Convert duration from seconds to minutes and seconds
+          const durationMinutes = Math.floor(ep.duration / 60);
+          const durationSeconds = ep.duration % 60;
+          const formattedDuration = `${durationMinutes}m ${durationSeconds}s`;
+
           const description = ep.description
             ? ep.description
             : "No description available.";
@@ -616,7 +622,7 @@ export function renderPodcastDetail(podcast) {
           <div class="episode-title">${ep.title}</div>
           <div class="episode-meta">
             <span>Published: ${publishDate}</span>
-            ${ep.duration ? `<span> • ${ep.duration} min</span>` : ""}
+            <span> • ${formattedDuration}</span>
           </div>
           <div class="episode-description">${description}</div>
         `;

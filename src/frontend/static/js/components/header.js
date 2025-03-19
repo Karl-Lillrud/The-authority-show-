@@ -1,4 +1,4 @@
-import { fetchPodcasts } from '/static/requests/podcastRequests.js';
+import { fetchPodcasts } from "/static/requests/podcastRequests.js";
 
 async function populatePodcastDropdown() {
   const dropdown = document.getElementById("headerPodcastDropdown");
@@ -14,48 +14,72 @@ async function populatePodcastDropdown() {
     const podcasts = data.podcast || [];
 
     if (podcasts.length < 2) {
-      dropdown.style.display = 'none';
+      dropdown.style.display = "none";
       return;
     }
 
-    // Populate the dropdown with the fetched podcasts
-    podcasts.forEach(podcast => {
-      const option = document.createElement("option");
-      option.value = podcast._id;
+    // Visa dropdownen om det finns fler än 2 podcasts
+    dropdown.style.display = "block";
+
+    const selected = dropdown.querySelector(".dropdown-selected");
+    const optionsContainer = dropdown.querySelector(".dropdown-options");
+
+    podcasts.forEach((podcast) => {
+      const option = document.createElement("div");
       option.textContent = podcast.podName;
-      dropdown.appendChild(option);
+      option.dataset.value = podcast._id;
+
+      option.addEventListener("click", () => {
+        selected.textContent = podcast.podName;
+        localStorage.setItem("selectedPodcastId", podcast._id);
+        window.location.href = "/podcast";
+      });
+
+      optionsContainer.appendChild(option);
     });
 
-    // Check if we're on podcast page
-    if (window.location.pathname === "/podcast") {
-      const savedPodcastId = localStorage.getItem('selectedPodcastId');
-      console.log("Loaded saved podcast ID from localStorage:", savedPodcastId);
+    dropdown.addEventListener("click", () => {
+      dropdown.classList.toggle("active");
+    });
 
-      if (savedPodcastId) {
-        // Set the saved podcast as selected in the dropdown
-        dropdown.value = savedPodcastId;
-        console.log("Podcast selected in dropdown:", savedPodcastId);
-      } else {
-        // Reset to default option if no saved podcast is found
-        dropdown.selectedIndex = 0;
-        console.log("No saved podcast found. Resetting to default option.");
+    document.addEventListener("click", (e) => {
+      if (!dropdown.contains(e.target)) {
+        dropdown.classList.remove("active");
       }
-    } else {
-      // Reset dropdown to default for other pages (non-podcast pages)
-      dropdown.selectedIndex = 0;
-      console.log("Not on podcast page. Resetting dropdown to default.");
-    }
+    });
   } catch (err) {
     console.error("Error populating dropdown:", err);
   }
 }
 
+// Improved menu toggle with animation
 function toggleMenu() {
   const menu = document.getElementById("menu");
+  const menuToggle = document.querySelector(".menu-toggle");
+
   if (menu) {
-    menu.style.display = menu.style.display === "flex" ? "none" : "flex";
-    if (menu.style.display === "flex") {
-      menu.style.position = "absolute";
+    menuToggle.classList.toggle("active");
+
+    if (menu.classList.contains("active")) {
+      // Close menu with animation
+      menu.style.transform = "scale(0.95)";
+      menu.style.opacity = "0";
+
+      setTimeout(() => {
+        menu.classList.remove("active");
+        menu.style.display = "none";
+      }, 300);
+    } else {
+      // Open menu with animation
+      menu.style.display = "flex";
+      menu.style.transform = "scale(0.95)";
+      menu.style.opacity = "0";
+
+      setTimeout(() => {
+        menu.classList.add("active");
+        menu.style.transform = "scale(1)";
+        menu.style.opacity = "1";
+      }, 10);
     }
   }
 }
@@ -67,10 +91,9 @@ if (podcastDropdown) {
   podcastDropdown.addEventListener("change", function () {
     const selectedPodcast = this.value;
     console.log("Selected podcast:", selectedPodcast);
-      window.location.href = "/podcast"; // Redirect to podcast.html after saving selection
-      localStorage.setItem('selectedPodcastId', selectedPodcast);
+    window.location.href = "/podcast"; // Redirect to podcast.html after saving selection
+    localStorage.setItem("selectedPodcastId", selectedPodcast);
     console.log("Saved podcast ID to localStorage:", selectedPodcast);
-    
   });
 
   // Clear localStorage ONLY when navigating away from podcast.html
@@ -78,7 +101,7 @@ if (podcastDropdown) {
     if (window.location.pathname === "/podcast") {
       // Do nothing when leaving podcast.html
     } else {
-      localStorage.removeItem('selectedPodcastId');
+      localStorage.removeItem("selectedPodcastId");
       console.log("Cleared selected podcast from localStorage on page unload.");
       // Reset dropdown to default when leaving the podcast page
       if (podcastDropdown) {
@@ -102,28 +125,43 @@ const cancelLogout = document.getElementById("cancel-logout");
 const confirmLogout = document.getElementById("confirm-logout");
 
 if (logoutLink) {
-  logoutLink.addEventListener("click", function (e) {
+  logoutLink.addEventListener("click", (e) => {
     e.preventDefault();
     logoutModal.style.display = "flex";
   });
 }
 
 if (cancelLogout) {
-  cancelLogout.addEventListener("click", function () {
+  cancelLogout.addEventListener("click", () => {
     logoutModal.style.display = "none";
   });
 }
 
 if (confirmLogout) {
-  confirmLogout.addEventListener("click", function () {
+  confirmLogout.addEventListener("click", () => {
     document.cookie =
       "remember_me=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
     window.location.href = logoutLink.href;
   });
 }
 
-window.addEventListener("click", function (e) {
+window.addEventListener("click", (e) => {
   if (e.target === logoutModal) {
     logoutModal.style.display = "none";
+  }
+});
+
+// Close menu when clicking outside
+document.addEventListener("click", (e) => {
+  const menu = document.getElementById("menu");
+  const menuToggle = document.querySelector(".menu-toggle");
+
+  if (
+    menu &&
+    menu.classList.contains("active") &&
+    !menu.contains(e.target) &&
+    !menuToggle.contains(e.target)
+  ) {
+    toggleMenu();
   }
 });

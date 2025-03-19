@@ -75,23 +75,7 @@ body {
 
 .sidebar::before,
 .sidebar::after {
-  content: "";
-  position: absolute;
-  left: 0;
-  right: 0;
-  height: 4px;
-  background: linear-gradient(to right, #ff7f3f, #ff9f6f);
-  z-index: 2;
-}
-
-.sidebar::before {
-  top: 0;
-  box-shadow: 0 1px 3px rgba(255, 127, 63, 0.3);
-}
-
-.sidebar::after {
-  bottom: 0;
-  box-shadow: 0 -1px 3px rgba(255, 127, 63, 0.3);
+  content: none; /* Ta bort de orangea linjerna */
 }
 
 .sidebar.collapsed {
@@ -107,12 +91,7 @@ body {
 }
 
 .sidebar-header h2 {
-  margin: 0;
-  font-size: 1.25rem;
-  color: rgba(0, 0, 0, 0.8);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  display: none; /* Dölj texten "Podcast Manager" */
 }
 
 .sidebar-content {
