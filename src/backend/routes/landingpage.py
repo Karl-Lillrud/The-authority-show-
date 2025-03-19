@@ -25,7 +25,7 @@ def episode():
 def map_social_links(social_links):
     platform_keywords = {
         "instagram": "instagram.com",
-        "twitter": "twitter.com",
+        "twitter": "x",
         "facebook": "facebook.com",
         "linkedin": "linkedin.com",
         "youtube": "youtube.com",
