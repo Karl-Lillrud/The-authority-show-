@@ -19,3 +19,18 @@ class PodcastSchema(Schema):
     logoUrl = fields.Str(allow_none=True)  # Changed from fields.Url to fields.Str
     category = fields.Str(allow_none=True)
     podUrl = fields.Url(allow_none=True)
+    title = fields.Str(allow_none=True)  # Added field
+    language = fields.Str(allow_none=True)  # Added field
+    author = fields.Str(allow_none=True)  # Added field
+    copyright_info = fields.Str(allow_none=True)  # Added field
+    imageUrl = fields.Str(allow_none=True)  # Added field
+    podRss = fields.Str(allow_none=True)  # Added field
+    generator = fields.Str(allow_none=True)  # Added field
+    lastBuildDate = fields.Str(allow_none=True)  # Added field
+    itunesType = fields.Str(allow_none=True)  # Added field
+    link = fields.Str(allow_none=True)  # Added field
+    itunesOwner = fields.Dict(allow_none=True)  # Added field
+    bannerUrl = fields.Str(allow_none=True)  # Added field
+    tagline = fields.Str(allow_none=True)  # Added field
+    hostBio = fields.Str(allow_none=True)  # Added field
+    hostImage = fields.Str(allow_none=True)  # Added field

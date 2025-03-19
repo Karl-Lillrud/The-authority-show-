@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 aiohappyeyeballs==2.4.6
 aiohttp==3.11.12
 aiosignal==1.3.2
@@ -194,7 +193,6 @@ zope.hookable==7.0
 zope.interface==7.2
 zope.lifecycleevent==5.1
 zope.proxy==6.1
-=======
 aiohappyeyeballs
 aiohttp
 aiosignal
@@ -388,4 +386,3 @@ zope.hookable
 zope.interface
 zope.lifecycleevent
 zope.proxy
->>>>>>> 28978f93a6ddfd64e88c124379069da40af523a1

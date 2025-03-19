@@ -80,6 +80,7 @@ export async function fetchEpisodeCountByGuest(guestId) {
 export async function registerEpisode(data) {
   try {
     if (!data.podcastId || !data.title) {
+      console.error("Missing required fields: podcastId or title", data); // Added log
       throw new Error("Missing required fields: podcastId or title");
     }
     console.log("Sending data to /register_episode:", data); // Added log
@@ -90,9 +91,13 @@ export async function registerEpisode(data) {
     });
     const responseData = await response.json();
     console.log("Received response from /register_episode:", responseData); // Added log
+    if (!response.ok) {
+      console.error("Error response from /register_episode:", responseData); // Added log
+      throw new Error(responseData.error || "Failed to register episode");
+    }
     return responseData;
   } catch (error) {
-    console.error("Error registering episode:", error);
+    console.error("Error registering episode:", error); // Added log
     throw error;
   }
 }
