@@ -1,6 +1,12 @@
 export async function publishToSpotify(episodeData) {
   console.log("Starting publishToSpotify with data:", episodeData); // Log input data
 
+  // Check if audioUrl is provided
+  if (!episodeData.audioUrl) {
+    throw new Error("Audio URL is missing. Please provide a valid audio URL.");
+  }
+
+  // Make the POST request to publish the episode
   const response = await fetch("/publish/spotify", {
     method: "POST",
     headers: {
@@ -19,6 +25,7 @@ export async function publishToSpotify(episodeData) {
     );
   }
 
+  // Parse the response JSON if successful
   const result = await response.json();
   console.log("Successfully published to Spotify:", result); // Log success result
   return result;
@@ -28,7 +35,7 @@ export async function publishToSpotify(episodeData) {
 // const episodeData = {
 //     title: 'Episode Title',
 //     description: 'Episode Description',
-//     audioUrl: 'https://example.com/audio.mp3'
+//     audioUrl: 'https://example.com/audio.mp3' // Make sure to provide a valid audio URL
 // };
 // publishToSpotify(episodeData)
 //     .then(data => console.log(data))
