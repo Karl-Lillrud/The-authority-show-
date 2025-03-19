@@ -18,7 +18,7 @@ def episode():
             g.user_id = "test_user"
         if not g.user_id:
             return redirect(url_for('signin_bp.signin'))
-        return render_template('landingpage/episode.html')
+        return render_template('landingpage/landingpage.html')
     except Exception as e:
         return f"Error: {str(e)}", 500
 

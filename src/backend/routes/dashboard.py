@@ -39,6 +39,7 @@ def account():
 
     return render_template("account/account.html", email=email, full_name=full_name)
 
+
     # ✅ Serves the account page
 @dashboard_bp.route("/settings", methods=["GET"])
 def settings():
