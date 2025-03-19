@@ -5,7 +5,10 @@ import {
   updatePodcast,
   deletePodcast
 } from "../../../static/requests/podcastRequests.js";
-import { fetchEpisodesByPodcast } from "../../../static/requests/episodeRequest.js";
+import {
+  fetchEpisodesByPodcast,
+  fetchEpisode
+} from "../../../static/requests/episodeRequest.js";
 import {
   showNotification,
   updateEditButtons,
@@ -259,13 +262,35 @@ export async function renderPodcastList() {
               episodeItem.appendChild(episodeActions);
 
               // Make episode item navigate to episode details
-              episodeItem.addEventListener("click", (e) => {
+              episodeItem.addEventListener("click", async (e) => {
                 if (!e.target.closest(".podcast-episode-play")) {
-                  renderEpisodeDetail({ ...episode, podcast_id: podcast._id }); // Pass podcast ID
-                  document.getElementById("podcast-list").style.display =
-                    "none";
-                  document.getElementById("podcast-detail").style.display =
-                    "block";
+                  try {
+                    const episodeId = episode._id; // Get the episode ID
+                    const response = await fetchEpisode(episodeId); // Fetch full episode details
+                    if (response) {
+                      renderEpisodeDetail({
+                        ...response,
+                        podcast_id: podcast._id // Pass podcast ID
+                      });
+                      document.getElementById("podcast-list").style.display =
+                        "none";
+                      document.getElementById("podcast-detail").style.display =
+                        "block";
+                    } else {
+                      showNotification(
+                        "Error",
+                        "Failed to load episode details.",
+                        "error"
+                      );
+                    }
+                  } catch (error) {
+                    console.error("Error fetching episode details:", error);
+                    showNotification(
+                      "Error",
+                      "Failed to load episode details.",
+                      "error"
+                    );
+                  }
                 }
               });
 
