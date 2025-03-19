@@ -4,6 +4,7 @@ from datetime import datetime, timezone
 from backend.database.mongo_connection import collection
 from backend.models.podtasks import PodtaskSchema
 from marshmallow import ValidationError
+from backend.repository.taskService import extract_highlights, process_default_tasks
 
 logger = logging.getLogger(__name__)
 
@@ -35,6 +36,13 @@ class PodtaskRepository:
             validated_data["userid"] = str(user_id)
             validated_data["created_at"] = datetime.now(timezone.utc)
 
+            # Process default tasks
+            validated_data = process_default_tasks(validated_data)
+
+            # Extract highlights from description
+            if "description" in validated_data and validated_data["description"]:
+                validated_data["highlights"] = extract_highlights(validated_data["description"])
+
             podtask_id = str(uuid.uuid4())
 
             podtask_document = {
@@ -54,6 +62,10 @@ class PodtaskRepository:
                 "userid": validated_data["userid"],
                 "created_at": validated_data["created_at"],
             }
+
+
+
+            
 
             result = self.podtasks_collection.insert_one(podtask_document)
             if result.inserted_id:
