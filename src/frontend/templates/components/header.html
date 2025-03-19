@@ -15,16 +15,16 @@
     <span id="page-title" class="page-title"></span>
   </div>
   <nav class="header-nav">
-    <select
-      class="form-control"
-      name="podcastId"
+    <div
+      class="custom-dropdown"
       id="headerPodcastDropdown"
-      required
+      style="display: none"
     >
-      <option value="" disabled selected>Select a Podcast</option>
-      <!-- Placeholder option -->
-      <!-- Options will be populated dynamically -->
-    </select>
+      <div class="dropdown-selected">Select a Podcast</div>
+      <div class="dropdown-options">
+        <!-- Options will be dynamiskt genererade -->
+      </div>
+    </div>
 
     <div class="menu-toggle" onclick="toggleMenu()">
       <span></span>

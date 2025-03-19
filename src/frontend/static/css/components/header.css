@@ -60,20 +60,20 @@ img {
 
 /* Header */
 header {
+  display: flex;
+  flex-direction: row; /* Håll innehållet i rad */
+  justify-content: space-between; /* Sprid ut innehållet horisontellt */
+  align-items: center; /* Centrera innehållet vertikalt */
+  padding: var(--spacing-sm) var(--spacing-lg);
   background-color: #ffffff;
   color: var(--text-color-light);
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: var(--spacing-sm) var(--spacing-lg); /* Reduced padding to decrease height */
-  box-shadow: 0 4px 10px -2px rgba(0, 0, 0, 0.08); /* Refined shadow */
+  box-shadow: 0 4px 10px -2px rgba(0, 0, 0, 0.08);
   border-radius: var(--radius-medium);
   transition: all var(--transition-normal);
-  margin-bottom: 0;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
   position: relative;
   z-index: 100;
+  width: 100%; /* Ensure header takes full width */
+  box-sizing: border-box; /* Include padding in width calculation */
 }
 
 header:hover {
@@ -84,6 +84,7 @@ header:hover {
 /* Logo – Reduced size */
 .logo-container {
   width: 100px; /* Reduced from 120px */
+  flex-shrink: 0; /* Prevent logo from shrinking */
 }
 
 .logo-container:hover {
@@ -103,8 +104,10 @@ header:hover {
 /* Logo and Page Title Container */
 .logo-title-container {
   display: flex;
+  flex-direction: row; /* Håll logotyp och titel i rad */
   align-items: center;
   gap: var(--spacing-md);
+  flex-shrink: 0; /* Prevent container from shrinking */
 }
 
 .page-title {
@@ -117,8 +120,11 @@ header:hover {
 /* Header Nav (Menus on the far right) */
 .header-nav {
   display: flex;
+  flex-direction: row; /* Behåll horisontell layout */
   align-items: center;
   gap: var(--spacing-lg);
+  margin-left: auto; /* Push to the right */
+  flex-shrink: 0; /* Prevent nav from shrinking */
 }
 
 .header-nav select {
@@ -131,6 +137,13 @@ header:hover {
   font-size: 0.85rem; /* Reduced from 0.9rem */
   box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
   transition: all var(--transition-normal);
+  appearance: none; /* Remove default browser styling */
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%236e7f8d'%3E%3Cpath d='M7 10l5 5 5-5z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 10px center;
+  background-size: 16px;
 }
 
 .header-nav select:hover {
@@ -140,25 +153,50 @@ header:hover {
 
 /* Podcast Selector */
 #headerPodcastDropdown {
-  font-size: 0.8rem; /* Reduced from 0.875rem */
-  padding: var(--spacing-xs) var(--spacing-sm);
-  border: none;
-  border-radius: 20px;
-  background: var(--background-light);
+  position: relative;
+  background: white;
   color: var(--text-color-light);
-  box-shadow: inset 3px 3px 6px var(--dark-shadow-light),
-    inset -3px -3px 6px var(--light-shadow-light);
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  border-radius: var(--radius-medium);
+  padding: var(--spacing-xs) var(--spacing-sm);
+  font-family: var(--font-primary);
+  font-size: 0.85rem; /* Justerat för bättre läsbarhet */
+  box-shadow: 0 4px 10px -5px rgba(0, 0, 0, 0.1),
+    0 2px 4px -2px rgba(0, 0, 0, 0.05);
   outline: none;
-  transition: box-shadow 0.3s ease, background-color 0.3s ease;
+  transition: all var(--transition-normal);
   cursor: pointer;
-  height: 28px; /* Reduced from 30px */
+  height: 36px; /* Ökad höjd för bättre klickbarhet */
   display: flex;
   align-items: center;
+  justify-content: space-between;
 }
 
 #headerPodcastDropdown:hover {
-  box-shadow: inset 2px 2px 4px rgba(255, 127, 63, 0.4),
-    inset -2px -2px 4px rgba(0, 0, 0, 0.1);
+  border-color: rgba(0, 0, 0, 0.2);
+  background: var(--highlight-color);
+  color: #fff;
+  box-shadow: 0 6px 12px -5px rgba(0, 0, 0, 0.15),
+    0 3px 6px -2px rgba(0, 0, 0, 0.1);
+}
+
+#headerPodcastDropdown option {
+  background: white;
+  color: var(--text-color-light);
+  padding: var(--spacing-xs) var(--spacing-sm);
+  font-family: var(--font-primary);
+  font-size: 0.85rem;
+  border: none;
+}
+
+#headerPodcastDropdown option:hover {
+  background: white; /* Vit bakgrund */
+  color: var(--highlight-color); /* Orange text */
+}
+
+#headerPodcastDropdown:focus {
+  border: 1px solid var(--highlight-hover);
+  box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.1);
 }
 
 /* Menu Toggle (Hamburger) */
@@ -283,15 +321,88 @@ header:hover {
   color: #fff;
 }
 
-/* Responsive styles */
+.custom-dropdown {
+  position: relative;
+  width: 150px; /* Minskad bredd */
+  background: white;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  border-radius: var(--radius-medium);
+  box-shadow: 0 4px 10px -5px rgba(0, 0, 0, 0.1),
+    0 2px 4px -2px rgba(0, 0, 0, 0.05);
+  cursor: pointer;
+  font-family: var(--font-primary);
+  font-size: 0.75rem; /* Minskad fontstorlek */
+  color: var(--text-color-light);
+}
+
+.custom-dropdown .dropdown-selected {
+  padding: var(--spacing-xs) var(--spacing-xs); /* Minskad padding */
+  height: 28px; /* Minskad höjd */
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.custom-dropdown .dropdown-options {
+  display: none;
+  position: absolute;
+  top: 100%;
+  left: 0;
+  width: 100%;
+  background: white;
+  border-radius: var(--radius-medium);
+  box-shadow: 0 4px 10px -5px rgba(0, 0, 0, 0.1),
+    0 2px 4px -2px rgba(0, 0, 0, 0.05);
+  z-index: 100;
+  flex-direction: column;
+  gap: var(--spacing-sm); /* Samma gap som hamburger-menyn */
+}
+
+.custom-dropdown .dropdown-options div {
+  padding: var(--spacing-sm) var(--spacing-md); /* Samma padding som hamburger-menyn */
+  color: var(--text-color-light);
+  transition: background var(--transition-normal),
+    color var(--transition-normal);
+}
+
+.custom-dropdown .dropdown-options div:hover {
+  background: white;
+  color: var(--highlight-color);
+}
+
+.custom-dropdown.active .dropdown-options {
+  display: block;
+}
+
 @media (max-width: 768px) {
   header {
+    flex-direction: row; /* Keep horizontal layout */
+    justify-content: space-between; /* Keep elements spread out */
+    align-items: center;
     padding: var(--spacing-xs) var(--spacing-md);
+    width: 100%; /* Ensure header takes full width */
+    max-width: 100%; /* Prevent overflow */
+    box-sizing: border-box; /* Include padding in width calculation */
+    margin: 0; /* Remove any margin */
+    left: 0; /* Align to left edge */
+    right: 0; /* Align to right edge */
+  }
+
+  .logo-title-container {
+    flex-shrink: 0; /* Prevent container from shrinking */
+    justify-content: flex-start; /* Align to left */
+    margin-right: auto; /* Push other elements to the right */
+  }
+
+  .header-nav {
+    flex-shrink: 0; /* Prevent nav from shrinking */
+    justify-content: flex-end; /* Align to right */
+    margin-left: auto; /* Push to the right */
   }
 
   .logo-container,
   .logo-container img {
-    width: 80px;
+    width: 80px; /* Smaller logo on mobile */
   }
 
   .page-title {
@@ -299,24 +410,70 @@ header:hover {
   }
 
   .header-nav {
-    gap: var(--spacing-md);
+    gap: var(--spacing-sm); /* Reduce gap between nav items */
+    flex-direction: row; /* Keep horizontal layout */
+    align-items: center;
   }
 
   #headerPodcastDropdown {
     max-width: 120px;
+    font-size: 0.75rem; /* Smaller text */
+  }
+
+  .menu-toggle {
+    width: 24px; /* Slightly smaller toggle */
+    height: 20px;
   }
 }
 
+/* Replace the 480px media query with this */
 @media (max-width: 480px) {
+  header {
+    flex-direction: row; /* Keep horizontal layout */
+    justify-content: space-between; /* Keep elements spread out */
+    padding: var(--spacing-xs) var(--spacing-sm); /* Smaller padding */
+    width: 100%; /* Ensure header takes full width */
+    max-width: 100%; /* Prevent overflow */
+    box-sizing: border-box; /* Include padding in width calculation */
+  }
+
   .logo-title-container {
-    gap: var(--spacing-sm);
+    flex-direction: row; /* Keep horizontal layout */
+    align-items: center;
+    gap: var(--spacing-xs); /* Reduce gap */
+    flex-shrink: 0; /* Prevent container from shrinking */
+    justify-content: flex-start; /* Align to left */
+  }
+
+  .logo-container,
+  .logo-container img {
+    width: 70px; /* Even smaller logo on very small screens */
   }
 
   .page-title {
-    font-size: 0.8rem;
+    font-size: 0.8rem; /* Smaller title text */
+    max-width: 100px; /* Limit width to prevent overflow */
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .header-nav {
+    flex-direction: row; /* Keep horizontal layout */
+    align-items: center;
+    gap: var(--spacing-xs); /* Reduce gap */
+    flex-shrink: 0; /* Prevent nav from shrinking */
+    justify-content: flex-end; /* Align to right */
+    margin-left: auto; /* Push to the right */
   }
 
   #headerPodcastDropdown {
-    display: none;
+    max-width: 100px; /* Smaller dropdown */
+    font-size: 0.7rem; /* Smaller text */
+  }
+
+  .custom-dropdown .dropdown-selected {
+    padding: var(--spacing-xs) var(--spacing-xs);
+    height: 24px; /* Smaller height */
   }
 }
