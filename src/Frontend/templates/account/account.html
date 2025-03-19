@@ -1,11 +1,11 @@
-{% extends "dashboard/components/base.html" %} 
+{% extends "/components/base.html" %} 
 {% block title %}Podcast Task Management{% endblock %} 
 {% block content %}
-<link rel="stylesheet" href="{{ url_for('static', filename='css/account.css') }}" />
+<link rel="stylesheet" href="{{ url_for('static', filename='css/account/account.css') }}" />
 <!-- Include QRCode library -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <script src="{{ url_for('static', filename='requests/accountRequests.js') }}"></script>
-<script type="module" src="{{ url_for('frontend.static_files', filename='js/account.js') }}"></script>
+<script type="module" src="{{ url_for('frontend.static_files', filename='js/account/account.js') }}"></script>
 <div class="account-settings-wrapper">
   <!-- Sidebar Menu -->
   <aside class="sidebar">
