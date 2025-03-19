@@ -1,9 +1,9 @@
-from flask import request, jsonify, Blueprint, g
+from flask import request, jsonify, Blueprint, g, render_template
 import logging
 
 # Import the repository
 from backend.repository.episode_repository import EpisodeRepository
-
+from backend.database.mongo_connection import episodes
 # Define Blueprint
 episode_bp = Blueprint("episode_bp", __name__)
 
@@ -85,14 +85,47 @@ def update_episode(episode_id):
         logger.error("❌ ERROR: %s", e)
         return jsonify({"error": f"Failed to update episode: {str(e)}"}), 500
 
+
+@episode_bp.route("/episode/<episode_id>", methods=["GET"])
+def episode_detail(episode_id):
+    try:
+        # Fetch the episode document using the episode ID
+        ep = episodes.find_one({"_id": episode_id})
+        if not ep:
+            return render_template("404.html")
+
+        # Render a dedicated episode page template and pass the episode data
+        return render_template("landingpage/episode.html", episode=ep)
+    except Exception as e:
+        return f"Error: {str(e)}", 500
+
 @episode_bp.route("/episodes/by_podcast/<podcast_id>", methods=["GET"])
 def get_episodes_by_podcast(podcast_id):
     if not hasattr(g, "user_id") or not g.user_id:
         return jsonify({"error": "Unauthorized"}), 401
-        
+
     try:
-        response, status_code = episode_repo.get_episodes_by_podcast(podcast_id, g.user_id)
-        return jsonify(response), status_code
+        # Query the episodes collection for documents matching the given podcast_id
+        episodes_cursor = episodes.find({"podcast_id": podcast_id})
+        mapped_episodes = []
+
+        for ep in episodes_cursor:
+            # Debug print to confirm structure
+            print("DEBUG:", ep)
+
+            title = ep.get("title", "No Title")
+            description = ep.get("description", "No Description")
+
+            mapped_episodes.append({
+                "_id": ep.get("_id"),
+                "title": title,
+                "description": description,
+                # Add other fields if needed
+            })
+
+        # Return the mapped episodes list
+        return jsonify({"episodes": mapped_episodes}), 200
+
     except Exception as e:
         logger.error("❌ ERROR: %s", e)
         return jsonify({"error": f"Failed to fetch episodes by podcast: {str(e)}"}), 500
