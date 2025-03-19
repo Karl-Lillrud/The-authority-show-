@@ -3,8 +3,7 @@ document.getElementById('publishPodcastForm').addEventListener('submit', functio
     
     const title = document.getElementById('title').value;
     const description = document.getElementById('description').value;
-const audioUrl = 'http://localhost:8000/1.mp3'; // Lokalt
-    console.log("Audio URL:", audioUrl);  // Log to verify if it's being retrieved correctly
+    const audioUrl = document.getElementById('audioUrl').value;
 
     // Validate title
     if (!title) {
@@ -18,7 +17,7 @@ const audioUrl = 'http://localhost:8000/1.mp3'; // Lokalt
         return;
     }
 
-    // Validate audio URL
+    // Make sure the audio URL is valid (optional, can be handled backend)
     if (!audioUrl) { 
         alert("Please provide an audio URL");
         return;
@@ -27,7 +26,6 @@ const audioUrl = 'http://localhost:8000/1.mp3'; // Lokalt
     // Log form data for debugging
     console.log('Form Data:', { title, description, audioUrl });
 
-    // Send the data to the backend
     fetch('/publish/spotify', {
         method: 'POST',
         headers: {
@@ -44,8 +42,8 @@ const audioUrl = 'http://localhost:8000/1.mp3'; // Lokalt
             console.error('Error:', data.error);
             alert('Failed to publish podcast on Spotify.');
         } else {
-            console.log('Podcast published:', data);
-            alert('Podcast published on Spotify!');
+            console.log('Podcast publicerad:', data);
+            alert('Podcast publicerad på Spotify!');
         }
     })
     .catch(error => {

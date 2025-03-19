@@ -3,11 +3,15 @@ from flask import Blueprint
 import os
 from dotenv import load_dotenv
 import logging
+from gridfs import GridFS
+from gridfs import GridFS
 
 mongo_bp = Blueprint("mongo_bp", __name__)
 
 # Load environment variables
 load_dotenv()
+
+
 
 # MongoDB Configuration
 MONGODB_URI = os.getenv("MONGODB_URI")
@@ -30,15 +34,22 @@ try:
     collection = database[COLLECTION_NAME]
     mailing_list_collection = database[MAILING_LIST_COLLECTION_NAME]  # MailingList collection
     subscriptions_collection = database[SUBSCRIPTIONS_LIST_COLLECTION]
-    logger.info("MongoDB connection initialized successfully.")
+    fs = GridFS(database)  # Initialize GridFS
+    logger.info("MongoDB connection and GridFS initialized successfully.")
 except Exception as e:
-    logger.error(f"Failed to connect to MongoDB: {e}")
+    logger.error(f"Failed to connect to MongoDB or initialize GridFS: {e}")
+    logger.error(f"Failed to connect to MongoDB or initialize GridFS: {e}")
     raise
 
-# Functions to access MongoDB
+# Functions to access MongoDB and GridFS
 def get_db():
     return database
 
-# Function to get the upload folder path
-def get_upload_folder():
-    return os.getenv("UPLOAD_FOLDER", r"C:\Users\sarwe\Deskto")
+def get_fs():
+    return fs
+# Functions to access MongoDB and GridFS
+def get_db():
+    return database
+
+def get_fs():
+    return fs
