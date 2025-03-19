@@ -15,6 +15,7 @@ episode_repo = EpisodeRepository()
 
 logger = logging.getLogger(__name__)
 
+
 @episode_bp.route("/register_episode", methods=["POST"])
 def register_episode():
     if not hasattr(g, "user_id") or not g.user_id:
@@ -22,7 +23,10 @@ def register_episode():
 
     # Validate Content-Type
     if request.content_type != "application/json":
-        return jsonify({"error": "Invalid Content-Type. Expected application/json"}), 415
+        return (
+            jsonify({"error": "Invalid Content-Type. Expected application/json"}),
+            415,
+        )
 
     try:
         data = request.get_json()
@@ -31,6 +35,7 @@ def register_episode():
     except Exception as e:
         logger.error("❌ ERROR: %s", e)
         return jsonify({"error": f"Failed to register episode: {str(e)}"}), 500
+
 
 @episode_bp.route("/get_episodes/<episode_id>", methods=["GET"])
 def get_episode(episode_id):
@@ -44,6 +49,7 @@ def get_episode(episode_id):
         logger.error("❌ ERROR: %s", e)
         return jsonify({"error": f"Failed to fetch episode: {str(e)}"}), 500
 
+
 @episode_bp.route("/get_episodes", methods=["GET"])
 def get_episodes():
     if not hasattr(g, "user_id") or not g.user_id:
@@ -55,6 +61,7 @@ def get_episodes():
     except Exception as e:
         logger.error("❌ ERROR: %s", e)
         return jsonify({"error": f"Failed to fetch episodes: {str(e)}"}), 500
+
 
 @episode_bp.route("/delete_episods/<episode_id>", methods=["DELETE"])
 def delete_episode(episode_id):
@@ -68,6 +75,7 @@ def delete_episode(episode_id):
         logger.error("❌ ERROR: %s", e)
         return jsonify({"error": f"Failed to delete episode: {str(e)}"}), 500
 
+
 @episode_bp.route("/update_episodes/<episode_id>", methods=["PUT"])
 def update_episode(episode_id):
     if not hasattr(g, "user_id") or not g.user_id:
@@ -75,7 +83,10 @@ def update_episode(episode_id):
 
     # Validate Content-Type
     if request.content_type != "application/json":
-        return jsonify({"error": "Invalid Content-Type. Expected application/json"}), 415
+        return (
+            jsonify({"error": "Invalid Content-Type. Expected application/json"}),
+            415,
+        )
 
     try:
         data = request.get_json()
@@ -105,27 +116,8 @@ def get_episodes_by_podcast(podcast_id):
         return jsonify({"error": "Unauthorized"}), 401
 
     try:
-        # Query the episodes collection for documents matching the given podcast_id
-        episodes_cursor = episodes.find({"podcast_id": podcast_id})
-        mapped_episodes = []
-
-        for ep in episodes_cursor:
-            # Debug print to confirm structure
-            print("DEBUG:", ep)
-
-            title = ep.get("title", "No Title")
-            description = ep.get("description", "No Description")
-
-            mapped_episodes.append({
-                "_id": ep.get("_id"),
-                "title": title,
-                "description": description,
-                # Add other fields if needed
-            })
-
-        # Return the mapped episodes list
-        return jsonify({"episodes": mapped_episodes}), 200
-
+        response, status_code = episode_repo.get_episodes_by_podcast(podcast_id, g.user_id)
+        return jsonify(response), status_code
     except Exception as e:
         logger.error("❌ ERROR: %s", e)
         return jsonify({"error": f"Failed to fetch episodes by podcast: {str(e)}"}), 500
