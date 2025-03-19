@@ -25,7 +25,7 @@ def episode():
 def map_social_links(social_links):
     platform_keywords = {
         "instagram": "instagram.com",
-        "twitter": "twitter.com",
+        "twitter": "x",
         "facebook": "facebook.com",
         "linkedin": "linkedin.com",
         "youtube": "youtube.com",
@@ -80,13 +80,17 @@ def landingpage_by_id(podcast_id):
         podcast_logo = podcast_doc.get("podcast", {}).get("logoUrl", "")
         host_image = podcast_doc.get("podcast", {}).get("hostImage", "")
 
-         # ✅ Handle host image (Base64 or default)
-        if not podcast_logo.startswith("data:image"):
+        # Ensure podcast_logo is a valid string before checking startswith()
+        if not isinstance(podcast_logo, str) or not podcast_logo.startswith("data:image"):
             podcast_logo = url_for('static', filename='images/default.png')
-        if not host_image or not host_image.startswith("data:image"):
-            host_image = url_for('static', filename='images/default.png')
-        if not banner_url or not banner_url.startswith("data:image"):
-            banner_url = url_for('static', filename='images/default.png')
+
+        # Ensure host_image is a valid string before checking startswith()
+        if not isinstance(host_image, str) or not host_image.startswith("data:image"):
+            host_image = url_for('static', filename='images/default-host.png')
+
+        # Ensure banner_url is a valid string before checking startswith()
+        if not isinstance(banner_url, str) or not banner_url.startswith("data:image"):
+            banner_url = url_for('static', filename='images/default-banner.png')
 
         # ✅ Render the template with optimized data retrieval
         return render_template(

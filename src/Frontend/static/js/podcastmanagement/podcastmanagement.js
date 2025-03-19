@@ -596,6 +596,7 @@ form.addEventListener("submit", async (e) => {
     email,
     description: document.getElementById("description")?.value.trim() || "",
     tagline: document.getElementById("tagline")?.value.trim() || "",
+    hostName: document.getElementById("host-name")?.value.trim() || "",
     hostBio: document.getElementById("host-bio")?.value.trim() || "",
     hostImage: "",
     // the logoUrl field will be replaced if a logo is uploaded
