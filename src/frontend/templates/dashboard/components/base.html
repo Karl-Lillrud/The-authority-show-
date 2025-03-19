@@ -18,6 +18,18 @@
     <!-- other head content -->
   </head>
   <body style="display: flex; flex-direction: column; min-height: 100vh">
+    <script>
+      document.addEventListener("DOMContentLoaded", function () {
+        const footerElement = document.querySelector("footer");
+        if (footerElement) {
+          const footerHeight = footerElement.offsetHeight;
+          document.documentElement.style.setProperty(
+            "--footer-height",
+            footerHeight + "px"
+          );
+        }
+      });
+    </script>
     {% include 'dashboard/components/header.html' %}
     <main style="flex: 1">{% block content %}{% endblock %}</main>
     {% include 'dashboard/components/footer.html' %}

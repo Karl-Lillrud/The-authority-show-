@@ -49,14 +49,20 @@ body {
 /* App Container */
 .app-container {
   display: flex;
-  height: 100vh;
+  height: calc(100vh - var(--header-height, 60px));
+  margin-top: 0;
+  position: relative; /* Ensure the sidebar is positioned relative to the container */
   overflow: hidden;
 }
 
 /* Sidebar Styles */
 .sidebar {
   width: var(--sidebar-width);
-  height: 100%;
+  position: absolute; /* Change from fixed to absolute */
+  top: 0; /* Ensure it starts from the top */
+  height: calc(
+    100vh - var(--header-height, 80px)
+  ); /* Remove footer height adjustment */
   background-color: var(--sidebar-bg);
   border-right: 1px solid var(--sidebar-border);
   display: flex;
@@ -64,7 +70,20 @@ body {
   transition: width var(--transition-normal);
   overflow: hidden;
   box-shadow: 0 0 20px rgba(0, 0, 0, 0.05);
-  z-index: 10;
+  z-index: 9;
+}
+
+.sidebar::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: var(--highlight-color, #ff7f3f);
+  box-shadow: 0 1px 3px rgba(255, 127, 63, 0.3);
+  background: linear-gradient(to right, #ff7f3f, #ff9f6f);
+  z-index: 2;
 }
 
 .sidebar.collapsed {
@@ -195,6 +214,12 @@ body {
   overflow-y: auto;
   padding: var(--spacing-lg);
   transition: margin-left var(--transition-normal);
+  margin-left: var(--sidebar-width);
+  min-height: calc(100vh - var(--header-height, 60px));
+}
+
+.sidebar.collapsed + .main-content {
+  margin-left: var(--sidebar-collapsed-width);
 }
 
 .main-header {
@@ -1404,7 +1429,7 @@ body {
     border-right: none;
     border-bottom: 1px solid var(--sidebar-border);
     position: sticky;
-    top: 0;
+    top: var(--header-height, 60px);
     z-index: 100;
     background-color: white;
   }
@@ -1503,6 +1528,8 @@ body {
 
   .main-content {
     padding: var(--spacing-md);
+    margin-left: 0;
+    padding-top: var(--spacing-md);
   }
 
   .main-header {
