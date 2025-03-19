@@ -1,5 +1,3 @@
-Marcus
-
 import {
   addPodcast,
   fetchPodcasts,
