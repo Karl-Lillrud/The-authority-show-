@@ -11,6 +11,14 @@ class UserRepository:
         self.teams_collection = collection.database.Teams
         self.user_to_teams_collection = collection.database.UsersToTeams
 
+    def get_user_by_email(self, email):
+
+        return self.user_collection.find_one({"email": email.lower().strip()})
+    
+    def get_user_by_id(self, user_id):
+
+        return self.user_collection.find_one({"_id": user_id})
+
     def get_profile(self, user_id):
         try:
             user = self.user_collection.find_one(
