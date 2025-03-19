@@ -68,19 +68,25 @@ def landingpage_by_id(podcast_id):
             episodes_list = episodes_response.get("episodes", [])
 
         # ✅ Convert social media links to dictionary
-        social_media_links = map_social_links(podcast_doc.get("socialMedia", []))
+        social_media_links = map_social_links(podcast_doc.get("podcast", {}).get("socialMedia", []))
 
         # ✅ Extract podcast details
         podcast_title = podcast_doc.get("podcast", {}).get("podName", "Default Podcast Title")
         podcast_description = podcast_doc.get("podcast", {}).get("description", "Default Podcast Description")
         host_name = podcast_doc.get("podcast", {}).get("hostName", "Unknown Host")
         host_bio = podcast_doc.get("podcast", {}).get("hostBio", "No biography available.")
-        host_image = podcast_doc.get("podcast", {}).get("hostImage", url_for('static', filename='images/default-host.png'))
-
-        # ✅ Handle podcast logo (Base64 or default)
+        tagline = podcast_doc.get("podcast", {}).get("tagline", "No tagline available.")
+        banner_url = podcast_doc.get("podcast", {}).get("bannerUrl", "")
         podcast_logo = podcast_doc.get("podcast", {}).get("logoUrl", "")
+        host_image = podcast_doc.get("podcast", {}).get("hostImage", "")
+
+         # ✅ Handle host image (Base64 or default)
         if not podcast_logo.startswith("data:image"):
             podcast_logo = url_for('static', filename='images/default.png')
+        if not host_image or not host_image.startswith("data:image"):
+            host_image = url_for('static', filename='images/default.png')
+        if not banner_url or not banner_url.startswith("data:image"):
+            banner_url = url_for('static', filename='images/default.png')
 
         # ✅ Render the template with optimized data retrieval
         return render_template(
@@ -91,8 +97,11 @@ def landingpage_by_id(podcast_id):
             podcast_logo=podcast_logo,
             host_bio=host_bio,
             host_image=host_image,
+            tagline=tagline,
             social_media=social_media_links,
-            episodes=episodes_list  # ✅ Pass optimized episode list
+            episodes=episodes_list,
+            banner_url=banner_url
+              # ✅ Pass optimized episode list
         )
 
     except Exception as e:
