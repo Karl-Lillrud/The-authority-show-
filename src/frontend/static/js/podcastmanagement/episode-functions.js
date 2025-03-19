@@ -317,6 +317,15 @@ export function renderEpisodeDetail(episode) {
 
   // Update edit buttons after rendering
   updateEditButtons();
+
+  if (episode.audioUrl) {
+    const playButton = createPlayButton();
+    playButton.addEventListener("click", (e) => {
+      e.stopPropagation();
+      playAudio(episode.audioUrl, episode.title);
+    });
+    episodeActions.appendChild(playButton); // Ensure play button is appended
+  }
 }
 
 // New function to display the episode popup for viewing/updating an episode
