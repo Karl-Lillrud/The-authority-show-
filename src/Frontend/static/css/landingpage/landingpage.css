@@ -1,0 +1,1068 @@
+/* Global Styles */
+body {
+  font-family: "Inter", sans-serif;
+  margin: 0;
+  padding: 0;
+  background-color: #121212;
+  color: #ffffff;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+section {
+  background-color: transparent; /* Let JS define the colors */
+  transition: background 0.5s ease-in-out; /* Smooth transition */
+}
+
+/* Navbar */
+.navbar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  background: #1f1f1f;
+  padding: 20px;
+  z-index: 1000;
+  box-sizing: border-box;
+}
+
+.navbar .container {
+  max-width: 1200px;
+  margin: 0 auto;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+}
+
+.nav-links {
+  list-style: none;
+  display: flex;
+  gap: 20px;
+  margin: 0;
+  padding: 0;
+}
+
+.nav-links a {
+  text-decoration: none;
+  color: #ffffff;
+  padding: 10px 15px;
+  transition: background 0.3s, color 0.3s;
+  border-radius: 5px;
+}
+
+.nav-links a:hover {
+  background: #ff4500;
+  color: #fff;
+}
+
+.subscribe-btn {
+  background: #ff4500;
+  border: none;
+  padding: 10px 20px;
+  color: #ffffff;
+  cursor: pointer;
+  border-radius: 5px;
+}
+
+/* Podcast Header Section */
+.podcast-header {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 20px;
+  background-size: cover;
+  min-height: 500px;
+}
+
+.podcast-header::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 1;
+}
+
+/* Hide img element since background is used */
+#podcast-cover {
+  display: none;
+}
+
+.podcast-info {
+  position: relative;
+  z-index: 2;
+  text-align: center;
+  color: #ffffff;
+}
+
+.podcast-info h1 {
+  margin: 0;
+  font-size: 32px;
+}
+
+.podcast-info p {
+  margin: 10px 0;
+  font-size: 18px;
+}
+
+#subscribe-buttons button {
+  display: inline-block;
+  background: #ff4500;
+  border: none;
+  padding: 10px 15px;
+  margin: 5px;
+  color: #ffffff;
+  cursor: pointer;
+  border-radius: 5px;
+  font-size: 14px;
+  transition: transform 0.3s ease;
+  transform: scale(1);
+}
+
+#subscribe-buttons button:hover {
+  transform: scale(1.1);
+}
+
+/* About Section */
+.about-section {
+  text-align: center;
+  padding: 40px 20px;
+}
+
+.about-section h2 {
+  font-size: 32px;
+  margin-bottom: 20px;
+}
+
+#podcast-description {
+  max-width: 800px;
+  margin: 0 auto 30px;
+  font-size: 18px;
+  line-height: 1.6;
+}
+
+.host-info {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 30px;
+  flex-wrap: wrap;
+}
+
+.host-image {
+  width: 150px;
+  height: 150px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 4px solid #ff4500;
+}
+
+.host-details {
+  max-width: 500px;
+  text-align: left;
+}
+
+.host-details h3 {
+  margin: 0;
+  font-size: 28px;
+  margin-bottom: 10px;
+}
+
+.host-details p {
+  margin: 10px 0;
+  font-size: 16px;
+  line-height: 1.6;
+}
+
+/* Social Media Icons with their respective colors */
+#host-social {
+  display: inline-block;
+  margin-top: 20px;
+}
+
+#host-social a {
+  display: inline-block;
+  transform: scale(1);
+  font-size: 28px;
+  margin: 0 10px;
+  transition: transform 0.3s ease;
+}
+
+#host-social a:hover {
+  transform: scale(1.2);
+}
+
+/* Social Media Icon Colors */
+#host-social a.twitter {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px; /* Adjust as needed */
+  height: 32px; /* Adjust as needed */
+  background-color: #000; /* Black background */
+  color: #ffffff; /* White icon */
+  border-radius: 50%; /* Make it circular */
+  font-size: 18px; /* Adjust icon size */
+  text-decoration: none; /* Prevent unwanted underline */
+  line-height: 0; /* Fixes vertical alignment issues */
+  transition: background 0.3s ease-in-out, transform 0.3s ease-in-out;
+}
+
+#host-social a.twitter i {
+  font-size: 20px; /* Match the icon size properly */
+  vertical-align: middle; /* Align the icon properly */
+}
+
+#host-social a.twitter:hover {
+  transform: scale(1.2);
+}
+
+#host-social a.instagram {
+  color: #e4405f;
+}
+
+#host-social a.pinterest {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 35px; /* Adjust as needed */
+  height: 35px; /* Adjust as needed */
+  background-color: #e60023; /* Pinterest red background */
+  color: #ffffff; /* White icon */
+  border-radius: 50%; /* Make it circular */
+  font-size: 18px; /* Adjust icon size */
+  text-decoration: none; /* Prevent unwanted underline */
+  line-height: 0; /* Fixes vertical alignment issues */
+  transition: background 0.3s ease-in-out, transform 0.3s ease-in-out;
+}
+
+#host-social a.pinterest i {
+  font-size: 20px; /* Match the icon size properly */
+  vertical-align: middle; /* Align the icon properly */
+}
+
+
+#host-social a.linkedin {
+  color: #0077b5;
+}
+
+#host-social a.facebook {
+  color: #1877f2;
+}
+
+#host-social a.tiktok {
+    display: inline-block;
+    font-size: 27px; /* Adjust size as needed */
+    position: relative;
+    color: white; /* The main white TikTok logo */
+    transition: transform 0.3s ease-in-out;
+}
+
+#host-social a.tiktok::before,
+#host-social a.tiktok::after {
+    content: "J"; /* Trick to apply shadows */
+    font-family: FontAwesome;
+    position: absolute;
+    top: 0;
+    left: 0;
+    font-size: 27px; /* Match the main icon size */
+    z-index: -1; /* Move shadows behind */
+    transition: transform 0.3s ease-in-out;
+}
+
+#host-social a.tiktok::before {
+    color: #25F4EE; /* Cyan shadow */
+    transform: translate(1px, 2px);
+}
+
+#host-social a.tiktok::after {
+    color: #FE2C55; /* Red shadow */
+    transform: translate(1px, 6px);
+}
+
+#host-social a.tiktok:hover {
+    transform: scale(1.2);
+}
+
+#host-social a.tiktok:hover::before {
+    transform: translate(0x, 0x);
+}
+
+#host-social a.tiktok:hover::after {
+    transform: translate(1px, 6px);
+}
+
+
+#host-social a.youtube {
+  color: #ff0000;
+}
+
+/* Latest Episodes Section */
+.latest-episodes-section {
+  padding: 40px 20px;
+  background-color: #000;
+  text-align: center;
+}
+
+.latest-episodes-section h2 {
+  margin-bottom: 30px;
+  font-size: 36px;
+}
+
+/* Episodlistan som grid med 3 kolumner */
+.episode-list {
+  list-style: none;
+  padding: 0;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 15px;
+  max-width: 1200px;
+}
+
+/* Episodkort med thumbnail och detaljer i rad */
+.episode-card {
+  border-radius: 15px; /* More distinct rounded corners */
+  overflow: hidden; /* Ensures no weird cutoffs */
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3); /* Subtle shadow for separation */
+  transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+}
+
+.episode-card:hover {
+  transform: translateY(-3px); /* Small hover effect */
+  box-shadow: 0 6px 15px rgba(0, 0, 0, 0.5); /* Increase shadow on hover */
+}
+
+/* Thumbnail-del */
+.episode-thumbnail {
+  flex: 0 0 100px;
+  height: 120px;
+  overflow: hidden;
+}
+
+.episode-thumbnail img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* Episode Details - Ensures proper alignment */
+.episode-details {
+  flex: 1;
+  padding: 10px 15px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: flex-start; /* Aligns text to the left */
+}
+
+/* Episode Title */
+.episode-details h3 {
+  margin: 0;
+  font-size: 20px; /* Bigger for emphasis */
+  font-weight: bold;
+  color: #ffffff; /* White text for contrast */
+  text-transform: capitalize;
+  text-align: left;
+  letter-spacing: 0.5px;
+  line-height: 1.2;
+}
+
+/* Title Link */
+.episode-details h3 a {
+  color: #ff4500; /* Orange for eye-catching */
+  text-decoration: none;
+  transition: color 0.3s ease;
+}
+
+.episode-details h3 a:hover {
+  color: #ff6600; /* Slightly brighter on hover */
+}
+
+/* Episode Description */
+.episode-details p {
+  font-size: 14px;
+  color: hsl(0, 0%, 100%); /* Lighter gray for subtlety */
+  margin-top: 4px;
+}
+
+
+/* Episod-länkar */
+.episode-links {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  align-items: center;
+  margin-top: 5px;
+  padding: 5px;
+}
+
+.episode-links a {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  text-decoration: none;
+  box-sizing: border-box;
+  padding: 10px;
+  padding-bottom: 30px;
+}
+
+.episode-link {
+  font-size: 24px; /* Större textstorlek */
+  color: #ffffff; /* Vit text */
+  text-decoration: none; /* Ingen understrykning */
+  font-weight: bold; /* Fet text */
+  letter-spacing: 1px; /* Lite mer avstånd mellan bokstäverna */
+  transition: color 0.3s, transform 0.3s ease; /* Smidiga övergångar för hover-effekter */
+}
+
+/* Hover-effekt för länktext */
+.episode-link:hover {
+  color: #ff4500; /* Orange färg vid hover */
+  transform: scale(1.1); /* Lätt förstoring vid hover */
+  text-decoration: underline; /* Understrykning vid hover */
+}
+
+/* Fokus-effekt för länktext */
+.episode-link:focus {
+  outline: none; /* Ta bort fokusram */
+  color: #ff4500; /* Orange färg vid fokus */
+  text-decoration: underline; /* Understrykning vid fokus */
+}
+/* Ikoner för knappar */
+.podcast-icon {
+  width: 30px;
+  height: auto;
+}
+
+/* Lyssningsknappar – stylade som länkar */
+.listen-btn {
+  background: #ff4500;
+  border: none;
+  padding: 5px 10px;
+  color: #ffffff;
+  font-size: 12px;
+  border-radius: 3px;
+  cursor: pointer;
+  text-align: center;
+  transition: background 0.3s ease, transform 0.2s ease;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.listen-btn:hover {
+  background: #e03d00;
+  transform: scale(1.05);
+}
+
+.spotify-btn {
+  background: #1db954;
+}
+
+.spotify-btn:hover {
+  background: #1aa34a;
+}
+
+.apple-btn {
+  background: #a2aaad;
+}
+
+.apple-btn:hover {
+  background: #8c9497;
+}
+
+/* Play-knappen */
+.play-btn {
+  background: transparent;
+  border: none;
+  font-size: 24px;
+  color: #ff4500;
+  cursor: pointer;
+  transition: transform 0.3s;
+  margin-bottom: 5px;
+}
+
+.play-btn:hover {
+  transform: scale(1.1);
+}
+
+/* Exclusive Episodes Section */
+.exclusive-episodes-section {
+  padding: 40px 20px;
+  background-color: #000;
+  text-align: center;
+}
+
+/* Glass Card Container – centrerad med auto marginal */
+.episodes-glass-card {
+  max-width: 700px;
+  margin: 0 auto;
+  padding: 40px 30px;
+  background: rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-radius: 20px;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.4);
+  text-align: center;
+}
+
+/* Rubriker och undertext */
+.episodes-glass-card h2 {
+  font-size: 28px;
+  margin-bottom: 10px;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+}
+
+.episodes-subtext {
+  font-size: 16px;
+  margin-bottom: 20px;
+  color: #cccccc;
+  line-height: 1.6;
+}
+
+/* Divider-linje */
+.episodes-divider {
+  width: 60%;
+  height: 1px;
+  background: rgba(255, 255, 255, 0.2);
+  margin: 20px auto;
+}
+
+/* Feature-listen: grid med två kolumner för symmetri */
+.episodes-feature-list {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 15px;
+  max-width: 400px;
+  margin: 0 auto 20px;
+}
+
+.episodes-feature {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 10px;
+  padding: 10px;
+  transition: background 0.3s;
+}
+
+.episodes-feature:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.episodes-feature i {
+  font-size: 20px;
+  color: #ff4500;
+}
+
+.episodes-feature span {
+  font-size: 16px;
+  color: #ffffff;
+}
+
+/* Prenumerationsknappar */
+.episodes-subscribe {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 10px;
+  margin-top: 20px;
+}
+
+.subscribe-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: #ff4500;
+  color: #ffffff;
+  padding: 10px 15px;
+  border-radius: 8px;
+  text-decoration: none;
+  font-weight: 600;
+  transition: transform 0.3s, background 0.3s;
+}
+
+.subscribe-btn:hover {
+  background: #e03d00;
+  transform: scale(1.05);
+}
+
+/* Exempel: Färger för specifika plattformar */
+.subscribe-btn.apple i {
+  color: #ffffff;
+}
+
+.subscribe-btn.spotify i {
+  color: #1db954;
+}
+
+.subscribe-btn.google i {
+  color: #ea4335;
+}
+
+.subscribe-btn.podcaster i {
+  color: #ffffff;
+}
+
+/* =============================
+      Guest & Sponsor Section
+    ============================= */
+.guest-sponsor-section {
+  background-color: #1c1c1c;
+  padding: 60px 20px;
+  text-align: center;
+  position: relative;
+}
+
+/* Det “glassiga” kortet */
+.guest-sponsor-glass-card {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 40px 30px;
+  background: rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-radius: 20px;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.4);
+  position: relative;
+  overflow: hidden;
+}
+
+/* Rubrik och undertext */
+.guest-sponsor-glass-card h2 {
+  font-size: 32px;
+  margin-bottom: 10px;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+}
+
+.guest-sponsor-subtext {
+  font-size: 16px;
+  margin-bottom: 20px;
+  color: #cccccc;
+  line-height: 1.6;
+}
+
+/* Tabs (Guest Appearances & Sponsorships) */
+.guest-sponsor-tabs {
+  display: flex;
+  justify-content: center;
+  gap: 20px;
+  margin-bottom: 20px;
+}
+
+.tab-btn {
+  background: #333;
+  color: #ffffff;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: background 0.3s, transform 0.3s;
+}
+
+.tab-btn:hover {
+  background: #444;
+  transform: scale(1.05);
+}
+
+.tab-btn.active {
+  background: #ff4500;
+}
+
+/* Divider-linje i kortet */
+.guest-sponsor-divider {
+  width: 80%;
+  height: 1px;
+  background: rgba(255, 255, 255, 0.2);
+  margin: 0 auto 20px auto;
+}
+
+/* GUEST CONTENT */
+.guest-content {
+  display: none;
+  /* Dölj som standard, visas endast om .active */
+}
+
+.guest-content.active {
+  display: block;
+}
+
+.guest-content h3 {
+  font-size: 24px;
+  margin-bottom: 20px;
+}
+
+.guest-features {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 15px;
+  max-width: 500px;
+  margin: 0 auto 20px;
+}
+
+.guest-feature {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 10px;
+  padding: 10px;
+  transition: background 0.3s;
+}
+
+.guest-feature:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.guest-feature i {
+  font-size: 20px;
+  color: #ff4500;
+}
+
+.guest-feature span {
+  font-size: 16px;
+  color: #ffffff;
+}
+
+/* Guest CTA-knapp */
+#apply-guest-btn {
+  background: #ff4500;
+  border: none;
+  padding: 15px 30px;
+  color: #ffffff;
+  cursor: pointer;
+  border-radius: 10px;
+  font-size: 18px;
+  transition: transform 0.3s, background 0.3s;
+}
+
+#apply-guest-btn:hover {
+  background: #e03d00;
+  transform: scale(1.05);
+}
+
+/* SPONSOR CONTENT */
+.sponsor-content {
+  display: none;
+  /* Dölj som standard, visas endast om .active */
+}
+
+.sponsor-content.active {
+  display: block;
+}
+
+.sponsor-content h3 {
+  font-size: 24px;
+  margin-bottom: 20px;
+}
+
+.sponsor-features {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 15px;
+  max-width: 500px;
+  margin: 0 auto 20px;
+}
+
+.sponsor-feature {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 10px;
+  padding: 10px;
+  justify-content: center;
+  transition: background 0.3s;
+}
+
+.sponsor-feature:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.sponsor-feature img {
+  width: 40px;
+  height: 40px;
+  object-fit: contain;
+  border-radius: 5px;
+}
+
+.sponsor-feature span {
+  font-size: 16px;
+  color: #ffffff;
+}
+
+/* Sponsor CTA-knapp */
+.sponsor-btn {
+  background: #ff4500;
+  border: none;
+  padding: 15px 30px;
+  color: #ffffff;
+  cursor: pointer;
+  border-radius: 10px;
+  font-size: 18px;
+  transition: transform 0.3s, background 0.3s;
+}
+
+.sponsor-btn:hover {
+  background: #e03d00;
+  transform: scale(1.05);
+}
+
+/* Extra Section */
+.extra-section {
+  padding: 40px 20px;
+  background-color: #000;
+  color: #ffffff;
+  text-align: center;
+}
+
+.extra-section h2 {
+  font-size: 32px;
+  margin-bottom: 20px;
+  text-align: center;
+}
+
+/* Newsletter Signup */
+.newsletter-signup {
+  margin-bottom: 30px;
+  text-align: center;
+}
+
+.newsletter-signup h3 {
+  font-size: 24px;
+  margin-bottom: 15px;
+  text-align: center;
+}
+
+#newsletter-form {
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 10px;
+  text-align: center;
+}
+
+#newsletter-form input {
+  padding: 12px;
+  border: 1px solid #333;
+  border-radius: 5px;
+  background-color: #1c1c1c;
+  color: #ffffff;
+  font-size: 16px;
+  width: 300px;
+}
+
+#newsletter-form button {
+  padding: 12px 20px;
+  border: none;
+  background: #ff4500;
+  color: #ffffff;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 16px;
+  transition: background 0.3s;
+}
+
+#newsletter-form button:hover {
+  background: #e03d00;
+}
+
+/* Social Media Carousel Container */
+.social-media-carousel {
+  display: flex;
+  justify-content: center;
+  gap: 20px;
+  flex-wrap: wrap;
+}
+
+/* Varje social feed-box */
+.social-box {
+  width: 400px;
+  height: 300px;
+  position: relative;
+  overflow: hidden;
+  border-radius: 10px;
+  background-color: #000;
+  /* Fallback-bakgrund */
+}
+
+/* Rubrik för varje box */
+.social-box h3 {
+  position: absolute;
+  z-index: 2;
+  top: 10px;
+  left: 10px;
+  margin: 0;
+  color: #ffffff;
+  font-size: 20px;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.6);
+}
+
+/* Karusell-container */
+.carousel {
+  width: 100%;
+  height: 100%;
+  position: relative;
+}
+
+/* Alla bilder i karusellen */
+.carousel img {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  opacity: 0;
+  animation: fade 9s infinite ease-in-out;
+}
+
+/* Sätt olika animation-delay för att cykla bilderna */
+.carousel img:nth-child(1) {
+  animation-delay: 0s;
+}
+
+.carousel img:nth-child(2) {
+  animation-delay: 3s;
+}
+
+.carousel img:nth-child(3) {
+  animation-delay: 6s;
+}
+
+/* Keyframes för fade-in/fade-out */
+@keyframes fade {
+  0% {
+    opacity: 0;
+  }
+
+  10% {
+    opacity: 1;
+  }
+
+  33% {
+    opacity: 1;
+  }
+
+  43% {
+    opacity: 0;
+  }
+
+  100% {
+    opacity: 0;
+  }
+}
+
+/* Merch / Patreon & Press Kit */
+.merch-patreon,
+.press-kit {
+  margin-bottom: 30px;
+  text-align: center;
+}
+
+.merch-patreon h3,
+.press-kit h3 {
+  font-size: 24px;
+  margin-bottom: 15px;
+  text-align: center;
+}
+
+.merch-patreon a,
+.press-kit a {
+  display: inline-block;
+  margin: 0 10px;
+  text-decoration: none;
+  color: #ff4500;
+  font-weight: bold;
+  transition: color 0.3s;
+}
+
+.merch-patreon a:hover,
+.press-kit a:hover {
+  color: #ff7f50;
+}
+
+/* Footer */
+footer {
+  text-align: center;
+  padding: 20px;
+  background: #1f1f1f;
+  color: #ffffff;
+}
+
+footer p {
+  margin: 5px 0;
+}
+
+/* Audio Player */
+#audio-player {
+  position: fixed;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 80%;
+  max-width: 600px;
+  background: #1f1f1f;
+  padding: 10px;
+  border-radius: 10px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5);
+  z-index: 1000;
+}
+
+/* Guest Signup */
+.guest-signup {
+  margin-bottom: 30px;
+  text-align: center;
+}
+
+.guest-signup h3 {
+  font-size: 24px;
+  margin-bottom: 15px;
+  text-align: center;
+}
+
+#guest-signup-form {
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 10px;
+  text-align: center;
+}
+
+#guest-signup-form input {
+  padding: 12px;
+  border: 1px solid #333;
+  border-radius: 5px;
+  background-color: #1c1c1c;
+  color: #ffffff;
+  font-size: 16px;
+  width: 300px;
+}
+
+#guest-signup-form button {
+  padding: 12px 20px;
+  border: none;
+  background: #ff4500;
+  color: #ffffff;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 16px;
+  transition: background 0.3s;
+}
+
+#guest-signup-form button:hover {
+  background: #e03d00;
+}

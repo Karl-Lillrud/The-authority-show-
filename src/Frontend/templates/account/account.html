@@ -1,0 +1,65 @@
+{% extends "dashboard/components/base.html" %} 
+{% block title %}Podcast Task Management{% endblock %} 
+{% block content %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/account.css') }}" />
+<!-- Include QRCode library -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script src="{{ url_for('static', filename='requests/accountRequests.js') }}"></script>
+<script type="module" src="{{ url_for('frontend.static_files', filename='js/account.js') }}"></script>
+<div class="account-settings-wrapper">
+  <!-- Sidebar Menu -->
+  <aside class="sidebar">
+    <nav>
+      <ul>
+        <li class="sidebar-item active" data-target="profile-section" tabindex="0">
+          Profile
+        </li>
+        <li class="sidebar-item" data-target="settings-section" tabindex="0">
+          Settings
+        </li>
+      </ul>
+    </nav>
+  </aside>
+
+  <!-- Main Content Area -->
+  <section class="main-content">
+    <!-- Back Arrow common for all sections -->
+    <a href="{{ url_for('dashboard_bp.dashboard') }}" class="back-arrow">&#8592; Back</a>
+
+    <!-- Profile Section -->
+    <div id="profile-section" class="settings-section">
+      <div class="profile-container">
+                
+        <!-- Profile Picture Upload -->
+        <div class="profile-pic-container">
+          <img
+            id="profile-pic"
+            src="{{ url_for('static', filename='images/mock-avatar.jpeg') }}"
+            alt="Profile Picture"
+          />
+          <input type="file" id="upload-pic" accept="image/*" />
+        </div>
+        <!-- Profile Form -->
+        <form id="profile-form">
+          <label for="full-name">Full Name</label>
+          <input
+            type="text"
+            id="full-name"
+            placeholder="Enter your full name"
+            value="{{ full_name }}"
+          />
+          <label for="email">Email</label>
+          <input
+            type="email"
+            id="email"
+            placeholder="Enter your email"
+            value="{{ email }}"
+          />
+
+          <button type="submit">Update profile</button>
+        </form>
+      </div>
+    </div>
+  </section>
+</div>
+{% endblock %}
