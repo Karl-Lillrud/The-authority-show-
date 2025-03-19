@@ -3,7 +3,7 @@ document.getElementById('publishPodcastForm').addEventListener('submit', functio
     
     const title = document.getElementById('title').value;
     const description = document.getElementById('description').value;
-    const audioUrl = document.getElementById('audioUrl').value;
+const audioUrl = 'http://localhost:8000/1.mp3'; // Lokalt
     console.log("Audio URL:", audioUrl);  // Log to verify if it's being retrieved correctly
 
     // Validate title

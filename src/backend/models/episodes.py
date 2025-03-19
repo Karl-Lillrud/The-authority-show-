@@ -1,9 +1,22 @@
+import os
 from marshmallow import Schema, fields, pre_load
 from backend.models.podtasks import PodtaskSchema
 from typing import Optional  # Import Optional
 
-# Define the directory to save uploaded files
+# Define the directory to save uploaded files, Example:
+# UPLOAD_FOLDER = r"C:\Users\username\path\to\upload\folder"
 UPLOAD_FOLDER = r"C:\Users\sarwe\Desktop\LIa"
+
+# Check if the UPLOAD_FOLDER path exists and is accessible
+try:
+    if not os.path.exists(UPLOAD_FOLDER) or not os.access(UPLOAD_FOLDER, os.W_OK):
+        raise PermissionError(
+            f"UPLOAD_FOLDER path '{UPLOAD_FOLDER}' is not accessible. "
+            "Please update the path in 'episodes.py' to a valid directory."
+        )
+except PermissionError as e:
+    # Re-raise the error with a simplified traceback
+    raise SystemExit(f"{__file__}:11: {e}")
 
 
 class EpisodeSchema(Schema):
