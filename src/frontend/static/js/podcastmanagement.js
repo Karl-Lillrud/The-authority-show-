@@ -69,18 +69,18 @@ function showNotification(title, message, type = "info") {
   }
 
   notification.innerHTML = `
-    <div class="notification-icon">${iconSvg}</div>
-    <div class="notification-content">
-      <div class="notification-title">${title}</div>
-      <div class="notification-message">${message}</div>
-    </div>
-    <div class="notification-close">
-      <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-        <line x1="18" y1="6" x2="6" y2="18"></line>
-        <line x1="6" y1="6" x2="18" y2="18"></line>
-      </svg>
-    </div>
-  `;
+  <div class="notification-icon">${iconSvg}</div>
+  <div class="notification-content">
+    <div class="notification-title">${title}</div>
+    <div class="notification-message">${message}</div>
+  </div>
+  <div class="notification-close">
+    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <line x1="18" y1="6" x2="6" y2="18"></line>
+      <line x1="6" y1="6" x2="18" y2="18"></line>
+    </svg>
+  </div>
+`;
 
   // Add to DOM
   document.body.appendChild(notification);
@@ -147,9 +147,9 @@ async function renderGuestSelection(selectElement, selectedGuestId = "") {
     manualField = document.createElement("div");
     manualField.className = "manual-guest-field";
     manualField.innerHTML = `
-      <label for="manual-guest">Add Guest Manually</label>
-      <input type="text" id="manual-guest" placeholder="Click to add guest manually" readonly />
-    `;
+    <label for="manual-guest">Add Guest Manually</label>
+    <input type="text" id="manual-guest" placeholder="Click to add guest manually" readonly />
+  `;
     // Append the field after the select element.
     selectElement.parentElement.appendChild(manualField);
     manualField.addEventListener("click", () => {
@@ -170,23 +170,23 @@ function showManualGuestPopup(selectElement) {
   const popupContent = document.createElement("div");
   popupContent.className = "form-box";
   popupContent.innerHTML = `
-    <span id="close-manual-guest-popup" class="close-btn">&times;</span>
-    <h2 class="form-title">Add Guest Manually</h2>
-    <form id="manual-guest-form">
-      <div class="field-group full-width">
-        <label for="manual-guest-name">Guest Name</label>
-        <input type="text" id="manual-guest-name" name="guestName" required />
-      </div>
-      <div class="field-group full-width">
-        <label for="manual-guest-email">Guest Email</label>
-        <input type="email" id="manual-guest-email" name="guestEmail" required />
-      </div>
-      <div class="form-actions">
-        <button type="button" id="cancel-manual-guest" class="cancel-btn">Cancel</button>
-        <button type="submit" class="save-btn">Add Guest</button>
-      </div>
-    </form>
-  `;
+  <span id="close-manual-guest-popup" class="close-btn">&times;</span>
+  <h2 class="form-title">Add Guest Manually</h2>
+  <form id="manual-guest-form">
+    <div class="field-group full-width">
+      <label for="manual-guest-name">Guest Name</label>
+      <input type="text" id="manual-guest-name" name="guestName" required />
+    </div>
+    <div class="field-group full-width">
+      <label for="manual-guest-email">Guest Email</label>
+      <input type="email" id="manual-guest-email" name="guestEmail" required />
+    </div>
+    <div class="form-actions">
+      <button type="button" id="cancel-manual-guest" class="cancel-btn">Cancel</button>
+      <button type="submit" class="save-btn">Add Guest</button>
+    </div>
+  </form>
+`;
   popup.appendChild(popupContent);
   document.body.appendChild(popup);
 
@@ -788,6 +788,92 @@ function resetForm() {
   selectedPodcastId = null;
 }
 
+// Add this function to create a play button with SVG icon
+function createPlayButton(size = "medium") {
+  const button = document.createElement("button");
+  button.className =
+    size === "small" ? "podcast-episode-play" : "episode-play-btn";
+
+  // Play icon SVG
+  button.innerHTML = `
+  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <polygon points="5 3 19 12 5 21 5 3"></polygon>
+  </svg>
+`;
+
+  return button;
+}
+
+// Add this function to handle audio playback
+function playAudio(audioUrl, episodeTitle) {
+  // Check if there's an existing audio player in the page
+  let audioPlayer = document.getElementById("global-audio-player");
+
+  if (!audioPlayer) {
+    // Create a new audio player if one doesn't exist
+    audioPlayer = document.createElement("div");
+    audioPlayer.id = "global-audio-player";
+    audioPlayer.className = "global-audio-player";
+    audioPlayer.style.position = "fixed";
+    audioPlayer.style.bottom = "20px";
+    audioPlayer.style.right = "20px";
+    audioPlayer.style.zIndex = "1000";
+    audioPlayer.style.backgroundColor = "white";
+    audioPlayer.style.padding = "10px";
+    audioPlayer.style.borderRadius = "var(--radius-medium)";
+    audioPlayer.style.boxShadow = "0 5px 15px rgba(0, 0, 0, 0.2)";
+    audioPlayer.style.display = "flex";
+    audioPlayer.style.flexDirection = "column";
+    audioPlayer.style.width = "300px";
+
+    document.body.appendChild(audioPlayer);
+  }
+
+  // Update the audio player content
+  audioPlayer.innerHTML = `
+  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+    <div style="font-weight: 600; font-size: 0.9rem; color: rgba(0, 0, 0, 0.8); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 230px;">
+      ${episodeTitle}
+    </div>
+    <button id="close-audio-player" style="background: none; border: none; cursor: pointer; color: var(--text-color-light);">
+      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <line x1="18" y1="6" x2="6" y2="18"></line>
+        <line x1="6" y1="6" x2="18" y2="18"></line>
+      </svg>
+    </button>
+  </div>
+  <audio controls autoplay style="width: 100%;">
+    <source src="${audioUrl}" type="audio/mpeg">
+    Your browser does not support the audio element.
+  </audio>
+`;
+
+  // Add event listener to close button
+  document
+    .getElementById("close-audio-player")
+    .addEventListener("click", () => {
+      document.body.removeChild(audioPlayer);
+    });
+}
+
+// Add this function after the renderPodcastList function
+async function viewPodcast(podcastId) {
+  try {
+    const response = await fetchPodcast(podcastId);
+    if (response && response.podcast) {
+      selectedPodcastId = podcastId;
+      renderPodcastDetail(response.podcast);
+      document.getElementById("podcast-list").style.display = "none";
+      document.getElementById("podcast-detail").style.display = "block";
+    } else {
+      showNotification("Error", "Failed to load podcast details.", "error");
+    }
+  } catch (error) {
+    console.error("Error viewing podcast:", error);
+    showNotification("Error", "Failed to load podcast details.", "error");
+  }
+}
+
 // Modify the renderPodcastList function to add episodes preview under the image
 async function renderPodcastList() {
   try {
@@ -799,10 +885,10 @@ async function renderPodcastList() {
 
     if (podcasts.length === 0) {
       podcastListElement.innerHTML = `
-        <div class="empty-state">
-          <p>No podcasts found. Click "Add Podcast" to create your first podcast.</p>
-        </div>
-      `;
+      <div class="empty-state">
+        <p>No podcasts found. Click "Add Podcast" to create your first podcast.</p>
+      </div>
+    `;
       return;
     }
 
@@ -816,58 +902,58 @@ async function renderPodcastList() {
 
       // Create the basic podcast card structure
       podcastCard.innerHTML = `
-        <div class="podcast-content">
-          <div class="podcast-image" style="background-image: url('${imageUrl}')" data-id="${
+      <div class="podcast-content">
+        <div class="podcast-image" style="background-image: url('${imageUrl}')" data-id="${
         podcast._id
       }"></div>
-          <div class="podcast-info">
-            <div class="podcast-header">
-              <div>
-                <h2 class="podcast-title">${podcast.podName}</h2>
-                <p class="podcast-meta"><span>Category:</span> ${
-                  podcast.category || "Uncategorized"
-                }</p>
-                <p class="podcast-meta"><span>Author:</span> ${
-                  podcast.author || "Not specified"
-                }</p>
-                <p class="podcast-meta"><span>Language:</span> ${
-                  podcast.language || "Not specified"
-                }</p>
-              </div>
-              <div class="podcast-actions">
-                <button class="action-btn view-btn" title="View podcast details" data-id="${
-                  podcast._id
-                }">
-                  ${svgpodcastmanagement.view}
-                </button>
-                <button class="action-btn delete-btn-home" title="Delete podcast" data-id="${
-                  podcast._id
-                }">
-                  <span class="icon">${svgpodcastmanagement.delete}</span>
-                </button>
-              </div>
+        <div class="podcast-info">
+          <div class="podcast-header">
+            <div>
+              <h2 class="podcast-title">${podcast.podName}</h2>
+              <p class="podcast-meta"><span>Category:</span> ${
+                podcast.category || "Uncategorized"
+              }</p>
+              <p class="podcast-meta"><span>Author:</span> ${
+                podcast.author || "Not specified"
+              }</p>
+              <p class="podcast-meta"><span>Language:</span> ${
+                podcast.language || "Not specified"
+              }</p>
             </div>
-            <p class="podcast-description"><strong>Description: </strong>${
-              podcast.description || "No description available."
-            }</p>
-            
-            <!-- Add episodes preview section -->
-            <div class="podcast-episodes-preview" id="episodes-preview-${
-              podcast._id
-            }">
-              <h4 style="margin-bottom: 8px; font-size: 0.9rem;">Episodes</h4>
-              <div class="episodes-loading">Loading episodes...</div>
+            <div class="podcast-actions">
+              <button class="action-btn view-btn" title="View podcast details" data-id="${
+                podcast._id
+              }">
+                ${svgpodcastmanagement.view}
+              </button>
+              <button class="action-btn delete-btn-home" title="Delete podcast" data-id="${
+                podcast._id
+              }">
+                <span class="icon">${svgpodcastmanagement.delete}</span>
+              </button>
             </div>
           </div>
+          <p class="podcast-description"><strong>Description: </strong>${
+            podcast.description || "No description available."
+          }</p>
+          
+          <!-- Add episodes preview section -->
+          <div class="podcast-episodes-preview" id="episodes-preview-${
+            podcast._id
+          }">
+            <h4 style="margin-bottom: 8px; font-size: 0.9rem;">Episodes</h4>
+            <div class="episodes-loading">Loading episodes...</div>
+          </div>
         </div>
-        <div class="podcast-footer">
-          <button class="landing-page-btn" data-id="${
-            podcast._id
-          }">Landing Page</button>
-          <button class="view-details-btn" data-id="${
-            podcast._id
-          }">View Details</button>
-        </div>`;
+      </div>
+      <div class="podcast-footer">
+        <button class="landing-page-btn" data-id="${
+          podcast._id
+        }">Landing Page</button>
+        <button class="view-details-btn" data-id="${
+          podcast._id
+        }">View Details</button>
+      </div>`;
 
       podcastListElement.appendChild(podcastCard);
 
@@ -903,24 +989,49 @@ async function renderPodcastList() {
                 ? new Date(episode.publishDate).toLocaleDateString()
                 : "No date";
 
-              // Include episode description and publish date
-              episodeItem.innerHTML = `
-                <div class="podcast-episode-content">
-                  <div class="podcast-episode-title">${episode.title}</div>
-                  <div class="podcast-episode-description">${
-                    episode.description || "No description available."
-                  }</div>
-                </div>
-                <div class="podcast-episode-date">${publishDate}</div>
-              `;
+              // Create episode content div
+              const episodeContent = document.createElement("div");
+              episodeContent.className = "podcast-episode-content";
+              episodeContent.innerHTML = `
+              <div class="podcast-episode-title">${episode.title}</div>
+              <div class="podcast-episode-description">${
+                episode.description || "No description available."
+              }</div>
+            `;
+
+              // Create episode actions div with play button and date
+              const episodeActions = document.createElement("div");
+              episodeActions.className = "podcast-episode-actions";
+
+              // Create play button if audio URL exists
+              if (episode.audioUrl) {
+                const playButton = createPlayButton("small");
+                playButton.addEventListener("click", (e) => {
+                  e.stopPropagation();
+                  playAudio(episode.audioUrl, episode.title);
+                });
+                episodeActions.appendChild(playButton);
+              }
+
+              // Add date
+              const dateDiv = document.createElement("div");
+              dateDiv.className = "podcast-episode-date";
+              dateDiv.textContent = publishDate;
+              episodeActions.appendChild(dateDiv);
+
+              // Assemble the episode item
+              episodeItem.appendChild(episodeContent);
+              episodeItem.appendChild(episodeActions);
 
               // Make episode item navigate to episode details
               episodeItem.addEventListener("click", (e) => {
-                e.stopPropagation();
-                renderEpisodeDetail({ ...episode, podcast_id: podcast._id }); // Pass podcast ID
-                document.getElementById("podcast-list").style.display = "none";
-                document.getElementById("podcast-detail").style.display =
-                  "block";
+                if (!e.target.closest(".podcast-episode-play")) {
+                  renderEpisodeDetail({ ...episode, podcast_id: podcast._id }); // Pass podcast ID
+                  document.getElementById("podcast-list").style.display =
+                    "none";
+                  document.getElementById("podcast-detail").style.display =
+                    "block";
+                }
               });
 
               episodesContainer.appendChild(episodeItem);
@@ -1048,185 +1159,149 @@ async function renderPodcastList() {
   }
 }
 
-// Render podcast selection for creating a new episode
-function renderPodcastSelection(podcasts) {
-  const podcastSelectElement = document.getElementById("podcast-select");
-  podcastSelectElement.innerHTML = "";
-
-  if (podcasts.length === 0) {
-    const option = document.createElement("option");
-    option.value = "";
-    option.textContent = "No podcasts available";
-    podcastSelectElement.appendChild(option);
-    return;
-  }
-
-  podcasts.forEach((podcast) => {
-    const option = document.createElement("option");
-    option.value = podcast._id;
-    option.textContent = podcast.podName;
-    podcastSelectElement.appendChild(option);
-  });
-}
-
-// View podcast details
-async function viewPodcast(podcastId) {
-  // Set the global selectedPodcastId so that back buttons can use it
-  selectedPodcastId = podcastId;
-  try {
-    const response = await fetchPodcast(podcastId);
-    const podcast = response.podcast;
-    renderPodcastDetail(podcast);
-    document.getElementById("podcast-list").style.display = "none";
-    document.getElementById("podcast-detail").style.display = "block";
-  } catch (error) {
-    showNotification("Error", "Failed to load podcast details", "error");
-  }
-}
-
-// Modify the renderPodcastDetail function to add the top-right action buttons
+// Modify the renderPodcastDetail function to add play buttons to episode cards
 function renderPodcastDetail(podcast) {
   const podcastDetailElement = document.getElementById("podcast-detail");
   const imageUrl = podcast.logoUrl || podcast.imageUrl || "default-image.png";
 
   podcastDetailElement.innerHTML = `
-    <div class="detail-header">
-      <button class="back-btn" id="back-to-list">
-        ${svgpodcastmanagement.back}
-        Back to podcasts
+  <div class="detail-header">
+    <button class="back-btn" id="back-to-list">
+      ${svgpodcastmanagement.back}
+      Back to podcasts
+    </button>
+    
+    <!-- Add top-right action buttons -->
+    <div class="top-right-actions">
+      <button class="action-btn edit-btn" id="edit-podcast-btn" data-id="${
+        podcast._id
+      }">
+        ${svgpodcastmanagement.edit}
       </button>
-      
-      <!-- Add top-right action buttons -->
-      <div class="top-right-actions">
-        <button class="action-btn edit-btn" id="edit-podcast-btn" data-id="${
-          podcast._id
-        }">
-          ${svgpodcastmanagement.edit}
-        </button>
-      </div>
     </div>
-    <div class="detail-content">
-      <div class="detail-image" style="background-image: url('${imageUrl}')"></div>
-      <!-- Episodes container with title outside scroll area -->
-      <div id="episodes-list" class="episodes-list">
-        <h3 class="detail-section-title">Episodes</h3>
-        <div id="episodes-container" class="episodes-scroll-container"></div>
+  </div>
+  <div class="detail-content">
+    <div class="detail-image" style="background-image: url('${imageUrl}')"></div>
+    <!-- Episodes container with title outside scroll area -->
+    <div id="episodes-list" class="episodes-list">
+      <h3 class="detail-section-title">Episodes</h3>
+      <div id="episodes-container" class="episodes-scroll-container"></div>
+    </div>
+    <div class="detail-info">
+      <h1 class="detail-title">${podcast.podName}</h1>
+      <p class="detail-category">${podcast.category || "Uncategorized"}</p>
+      <div class="detail-section">
+        <h2>About</h2>
+        <p>${podcast.description || "No description available."}</p>
       </div>
-      <div class="detail-info">
-        <h1 class="detail-title">${podcast.podName}</h1>
-        <p class="detail-category">${podcast.category || "Uncategorized"}</p>
-        <div class="detail-section">
-          <h2>About</h2>
-          <p>${podcast.description || "No description available."}</p>
+      <div class="separator"></div>
+      <div class="detail-grid">
+        <div class="detail-item">
+          <h3>Author</h3>
+          <p>${podcast.author || "Not specified"}</p>
         </div>
-        <div class="separator"></div>
+        <div class="detail-item">
+          <h3>Language</h3>
+          <p>${podcast.language || "Not specified"}</p>
+        </div>
+        <div class="detail-item">
+          <h3>Email Address</h3>
+          <p>${podcast.email || "Not specified"}</p>
+        </div>
+        <div class="detail-item">
+          <h3>RSS Feed</h3>
+          ${
+            podcast.rssFeed
+              ? `<a href="${podcast.rssFeed}" target="_blank">${podcast.rssFeed}</a>`
+              : "<p>Not specified</p>"
+          }
+        </div>
+      </div>
+      <div class="separator"></div>
+      <div class="detail-section">
+        <h2>Scheduling</h2>
         <div class="detail-grid">
           <div class="detail-item">
-            <h3>Author</h3>
-            <p>${podcast.author || "Not specified"}</p>
-          </div>
-          <div class="detail-item">
-            <h3>Language</h3>
-            <p>${podcast.language || "Not specified"}</p>
-          </div>
-          <div class="detail-item">
-            <h3>Email Address</h3>
-            <p>${podcast.email || "Not specified"}</p>
-          </div>
-          <div class="detail-item">
-            <h3>RSS Feed</h3>
+            <h3>Google Calendar</h3>
             ${
-              podcast.rssFeed
-                ? `<a href="${podcast.rssFeed}" target="_blank">${podcast.rssFeed}</a>`
+              podcast.googleCal
+                ? `<a href="${podcast.googleCal}" target="_blank" style="display: flex; align-items: center; gap: 0.5rem;">
+                  ${svgpodcastmanagement.calendar}
+                  Calendar Link
+                </a>`
+                : `<p style="display: flex; align-items: center; gap: 0.5rem;">
+                  ${svgpodcastmanagement.calendar}
+                  Not connected
+                </p>`
+            }
+          </div>
+          <div class="detail-item">
+            <h3>Guest Form URL</h3>
+            ${
+              podcast.guestUrl
+                ? `<a href="${podcast.guestUrl}" target="_blank">${podcast.guestUrl}</a>`
                 : "<p>Not specified</p>"
             }
           </div>
         </div>
-        <div class="separator"></div>
-        <div class="detail-section">
-          <h2>Scheduling</h2>
-          <div class="detail-grid">
-            <div class="detail-item">
-              <h3>Google Calendar</h3>
-              ${
-                podcast.googleCal
-                  ? `<a href="${podcast.googleCal}" target="_blank" style="display: flex; align-items: center; gap: 0.5rem;">
-                    ${svgpodcastmanagement.calendar}
-                    Calendar Link
-                  </a>`
-                  : `<p style="display: flex; align-items: center; gap: 0.5rem;">
-                    ${svgpodcastmanagement.calendar}
-                    Not connected
-                  </p>`
-              }
-            </div>
-            <div class="detail-item">
-              <h3>Guest Form URL</h3>
-              ${
-                podcast.guestUrl
-                  ? `<a href="${podcast.guestUrl}" target="_blank">${podcast.guestUrl}</a>`
-                  : "<p>Not specified</p>"
-              }
-            </div>
-          </div>
-        </div>
-        <div class="separator"></div>
-        <div class="detail-section">
-          <h2>Social Media</h2>
-          <div class="social-links">
-            ${
-              podcast.socialMedia && podcast.socialMedia[0]
-                ? `<a href="${podcast.socialMedia[0]}" target="_blank" class="social-link">
-                  ${svgpodcastmanagement.facebook}
-                  Facebook
-                </a>`
-                : ""
-            }
-            ${
-              podcast.socialMedia && podcast.socialMedia[1]
-                ? `<a href="${podcast.socialMedia[1]}" target="_blank" class="social-link">
-                  ${svgpodcastmanagement.instagram}
-                  Instagram
-                </a>`
-                : ""
-            }
-            ${
-              podcast.socialMedia && podcast.socialMedia[2]
-                ? `<a href="${podcast.socialMedia[2]}" target="_blank" class="social-link">
-                  ${svgpodcastmanagement.linkedin}
-                  LinkedIn
-                </a>`
-                : ""
-            }
-            ${
-              podcast.socialMedia && podcast.socialMedia[3]
-                ? `<a href="${podcast.socialMedia[3]}" target="_blank" class="social-link">
-                  ${svgpodcastmanagement.twitter}
-                  Twitter
-                </a>`
-                : ""
-            }
-            ${
-              podcast.socialMedia && podcast.socialMedia[4]
-                ? `<a href="${podcast.socialMedia[4]}" target="_blank" class="social-link">
-                  ${svgpodcastmanagement.tiktok}
-                  TikTok
-                </a>`
-                : ""
-            }
-          </div>
-        </div>
-        <div class="detail-actions" style="margin-top: 2rem; display: flex; gap: 1rem;">
-          <button class="delete-btn" id="delete-podcast-btn" data-id="${
-            podcast._id
-          }">
-            <span class="icon">${svgpodcastmanagement.delete}</span>
-            Delete Podcast
-          </button>
+      </div>
+      <div class="separator"></div>
+      <div class="detail-section">
+        <h2>Social Media</h2>
+        <div class="social-links">
+          ${
+            podcast.socialMedia && podcast.socialMedia[0]
+              ? `<a href="${podcast.socialMedia[0]}" target="_blank" class="social-link">
+                ${svgpodcastmanagement.facebook}
+                Facebook
+              </a>`
+              : ""
+          }
+          ${
+            podcast.socialMedia && podcast.socialMedia[1]
+              ? `<a href="${podcast.socialMedia[1]}" target="_blank" class="social-link">
+                ${svgpodcastmanagement.instagram}
+                Instagram
+              </a>`
+              : ""
+          }
+          ${
+            podcast.socialMedia && podcast.socialMedia[2]
+              ? `<a href="${podcast.socialMedia[2]}" target="_blank" class="social-link">
+                ${svgpodcastmanagement.linkedin}
+                LinkedIn
+              </a>`
+              : ""
+          }
+          ${
+            podcast.socialMedia && podcast.socialMedia[3]
+              ? `<a href="${podcast.socialMedia[3]}" target="_blank" class="social-link">
+                ${svgpodcastmanagement.twitter}
+                Twitter
+              </a>`
+              : ""
+          }
+          ${
+            podcast.socialMedia && podcast.socialMedia[4]
+              ? `<a href="${podcast.socialMedia[4]}" target="_blank" class="social-link">
+                ${svgpodcastmanagement.tiktok}
+                TikTok
+              </a>`
+              : ""
+          }
         </div>
       </div>
+      <div class="detail-actions" style="margin-top: 2rem; display: flex; gap: 1rem;">
+        <button class="delete-btn" id="delete-podcast-btn" data-id="${
+          podcast._id
+        }">
+          <span class="icon">${svgpodcastmanagement.delete}</span>
+          Delete Podcast
+        </button>
+      </div>
     </div>
-  `;
+  </div>
+`;
 
   // Back button event listener
   document.getElementById("back-to-list").addEventListener("click", () => {
@@ -1322,15 +1397,31 @@ function renderPodcastDetail(podcast) {
           contentDiv.style.marginRight = "10px";
 
           contentDiv.innerHTML = `
-          <div class="episode-title" style="font-weight: 600; color: rgba(0, 0, 0, 0.7); margin-bottom: 5px;">${
-            ep.title
-          }</div>
-          <div class="episode-meta" style="font-size: 0.8rem; color: var(--text-color-light); margin-bottom: 5px;">
-            <span>Published: ${publishDate}</span>
-            ${ep.duration ? `<span> • ${ep.duration} min</span>` : ""}
-          </div>
-          <div class="episode-description" style="font-size: 0.85rem; color: var(--text-color-light); display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;">${description}</div>
-        `;
+        <div class="episode-title" style="font-weight: 600; color: rgba(0, 0, 0, 0.7); margin-bottom: 5px;">${
+          ep.title
+        }</div>
+        <div class="episode-meta" style="font-size: 0.8rem; color: var(--text-color-light); margin-bottom: 5px;">
+          <span>Published: ${publishDate}</span>
+          ${ep.duration ? `<span> • ${ep.duration} min</span>` : ""}
+        </div>
+        <div class="episode-description" style="font-size: 0.85rem; color: var(--text-color-light); display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;">${description}</div>
+      `;
+
+          // Create actions container
+          const actionsDiv = document.createElement("div");
+          actionsDiv.className = "episode-actions";
+          actionsDiv.style.display = "flex";
+          actionsDiv.style.alignItems = "center";
+
+          // Add play button if audio URL exists
+          if (ep.audioUrl) {
+            const playButton = createPlayButton();
+            playButton.addEventListener("click", (e) => {
+              e.stopPropagation();
+              playAudio(ep.audioUrl, ep.title);
+            });
+            actionsDiv.appendChild(playButton);
+          }
 
           // Create view button
           const viewButton = document.createElement("button");
@@ -1346,6 +1437,7 @@ function renderPodcastDetail(podcast) {
           viewButton.style.fontWeight = "600";
           viewButton.style.fontSize = "0.85rem";
           viewButton.style.transition = "all 0.3s ease";
+          actionsDiv.appendChild(viewButton);
 
           // Add hover effect to button
           viewButton.addEventListener("mouseenter", () => {
@@ -1366,7 +1458,7 @@ function renderPodcastDetail(podcast) {
 
           // Add elements to card
           episodeCard.appendChild(contentDiv);
-          episodeCard.appendChild(viewButton);
+          episodeCard.appendChild(actionsDiv);
 
           // Add hover effect to card
           episodeCard.addEventListener("mouseenter", () => {
@@ -1382,8 +1474,13 @@ function renderPodcastDetail(podcast) {
           });
 
           // Add click event to card (excluding the button)
-          episodeCard.addEventListener("click", () => {
-            renderEpisodeDetail(ep);
+          episodeCard.addEventListener("click", (e) => {
+            if (
+              !e.target.closest(".episode-play-btn") &&
+              !e.target.closest(".view-episode-btn")
+            ) {
+              renderEpisodeDetail(ep);
+            }
           });
 
           episodesListDiv.appendChild(episodeCard);
@@ -1405,7 +1502,7 @@ function renderPodcastDetail(podcast) {
   updateEditButtons();
 }
 
-// Modify the renderEpisodeDetail function to add the top-right action buttons
+// Modify the renderEpisodeDetail function to move the audio player under the description
 function renderEpisodeDetail(episode) {
   const episodeDetailElement = document.getElementById("podcast-detail");
   const publishDate = episode.publishDate
@@ -1419,96 +1516,96 @@ function renderEpisodeDetail(episode) {
   const fileType = episode.fileType || "Unknown";
 
   episodeDetailElement.innerHTML = `
-    <div class="detail-header">
-      <button class="back-btn" id="back-to-podcast">
-        ${svgpodcastmanagement.back}
-        Back to podcast
+  <div class="detail-header">
+    <button class="back-btn" id="back-to-podcast">
+      ${svgpodcastmanagement.back}
+      Back to podcast
+    </button>
+    <div class="top-right actions">
+      <button class="action-btn edit-btn" id="edit-episode-btn" data-id="${
+        episode._id
+      }">
+        ${svgpodcastmanagement.edit}
       </button>
-      <div class="top-right actions">
-        <button class="action-btn edit-btn" id="edit-episode-btn" data-id="${
+    </div>
+  </div>
+  <div class="detail-content">
+    <div class="detail-image" style="background-image: url('${
+      episode.image || "default-image.png"
+    }')"></div>
+    <div class="detail-info">
+      <h1 class="detail-title">${episode.title}</h1>
+      <p class="detail-category">${episode.status || "Uncategorized"}</p>
+      <div class="detail-section">
+        <h2>About</h2>
+        <p>${episode.description || "No description available."}</p>
+        
+        <!-- Audio player moved here, under the description -->
+        ${
+          episode.audioUrl
+            ? `<div class="audio-player-container">
+                <audio controls>
+                  <source src="${episode.audioUrl}" type="${
+                fileType || "audio/mpeg"
+              }">
+                  Your browser does not support the audio element.
+                </audio>
+              </div>`
+            : "<p>No audio available for this episode.</p>"
+        }
+      </div>
+      <div class="separator"></div>
+      <div class="detail-grid">
+        <div class="detail-item">
+          <h3>Publish Date</h3>
+          <p>${publishDate}</p>
+        </div>
+        <div class="detail-item">
+          <h3>Duration</h3>
+          <p>${duration} minutes</p>
+        </div>
+        <div class="detail-item">
+          <h3>Episode Type</h3>
+          <p>${episodeType}</p>
+        </div>
+        <div class="detail-item">
+          <h3>Author</h3>
+          <p>${author}</p>
+        </div>
+        <div class="detail-item">
+          <h3>File Size</h3>
+          <p>${fileSize}</p>
+        </div>
+        <div class="detail-item">
+          <h3>File Type</h3>
+          <p>${fileType}</p>
+        </div>
+        <div class="detail-item">
+          <h3>Link</h3>
+          ${
+            link !== "No link available"
+              ? `<a href="${link}" target="_blank">${link}</a>`
+              : `<p>${link}</p>`
+          }
+        </div>
+      </div>
+      <div class="separator"></div>
+      <div class="detail-section">
+        <h2>Guests</h2>
+        <div id="guests-list"></div>
+      </div>
+      <div class="separator"></div>
+      <div class="detail-actions" style="margin-top: 2rem; display: flex; gap: 1rem;">
+        <button class="delete-btn" id="delete-episode-btn" data-id="${
           episode._id
         }">
-          ${svgpodcastmanagement.edit}
+          <span class="icon">${svgpodcastmanagement.delete}</span>
+          Delete Episode
         </button>
       </div>
     </div>
-    <div class="detail-content">
-      <div class="detail-image" style="background-image: url('${
-        episode.image || "default-image.png"
-      }')"></div>
-      <div class="detail-info">
-        <h1 class="detail-title">${episode.title}</h1>
-        <p class="detail-category">${episode.status || "Uncategorized"}</p>
-        <div class="detail-section">
-          <h2>About</h2>
-          <p>${episode.description || "No description available."}</p>
-        </div>
-        <div class="separator"></div>
-        <div class="detail-grid">
-          <div class="detail-item">
-            <h3>Publish Date</h3>
-            <p>${publishDate}</p>
-          </div>
-          <div class="detail-item">
-            <h3>Duration</h3>
-            <p>${duration} minutes</p>
-          </div>
-          <div class="detail-item">
-            <h3>Episode Type</h3>
-            <p>${episodeType}</p>
-          </div>
-          <div class="detail-item">
-            <h3>Author</h3>
-            <p>${author}</p>
-          </div>
-          <div class="detail-item">
-            <h3>File Size</h3>
-            <p>${fileSize}</p>
-          </div>
-          <div class="detail-item">
-            <h3>File Type</h3>
-            <p>${fileType}</p>
-          </div>
-          <div class="detail-item">
-            <h3>Link</h3>
-            ${
-              link !== "No link available"
-                ? `<a href="${link}" target="_blank">${link}</a>`
-                : `<p>${link}</p>`
-            }
-          </div>
-        </div>
-        <div class="separator"></div>
-        <div class="detail-section">
-          <h2>Audio Player</h2>
-          ${
-            episode.audioUrl
-              ? `<audio controls style="width: 100%;">
-                  <source src="${episode.audioUrl}" type="${
-                  fileType || "audio/mpeg"
-                }">
-                  Your browser does not support the audio element.
-                </audio>`
-              : "<p>No audio available for this episode.</p>"
-          }
-        </div>
-        <div class="separator"></div>
-        <div class="detail-section">
-          <h2>Guests</h2>
-          <div id="guests-list"></div>
-        </div>
-        <div class="separator"></div>
-        <div class="detail-actions" style="margin-top: 2rem; display: flex; gap: 1rem;">
-          <button class="delete-btn" id="delete-episode-btn" data-id="${
-            episode._id
-          }">
-            <span class="icon">${svgpodcastmanagement.delete}</span>
-            Delete Episode
-          </button>
-        </div>
-      </div>
-    </div>
-  `;
+  </div>
+`;
 
   // Back button event listener
   document.getElementById("back-to-podcast").addEventListener("click", () => {
@@ -1667,137 +1764,137 @@ function renderGuestDetail(guest) {
     .toUpperCase();
 
   guestDetailElement.innerHTML = `
-    <div class="detail-header">
-      <button class="back-btn" id="back-to-episode">
-        ${svgpodcastmanagement.back}
-        Back to episode
+  <div class="detail-header">
+    <button class="back-btn" id="back-to-episode">
+      ${svgpodcastmanagement.back}
+      Back to episode
+    </button>
+    
+    <!-- Add top-right action buttons -->
+    <div class="top-right-actions">
+      <button class="action-btn edit-btn" id="edit-guest-btn" data-id="${
+        guest._id || guest.id
+      }">
+        ${svgpodcastmanagement.edit}
       </button>
+    </div>
+  </div>
+  <div class="detail-content">
+    <div class="detail-info">
+      <div class="guest-detail-header">
+        <div class="guest-detail-avatar">${initials}</div>
+        <div class="guest-detail-info">
+          <h1 class="guest-detail-name">${guest.name}</h1>
+          <p class="guest-detail-email">${
+            guest.email || "No email provided"
+          }</p>
+        </div>
+      </div>
       
-      <!-- Add top-right action buttons -->
-      <div class="top-right-actions">
-        <button class="action-btn edit-btn" id="edit-guest-btn" data-id="${
-          guest._id || guest.id
-        }">
-          ${svgpodcastmanagement.edit}
-        </button>
+      <div class="detail-section">
+        <h2>About</h2>
+        <p>${guest.bio || guest.description || "No bio available."}</p>
       </div>
-    </div>
-    <div class="detail-content">
-      <div class="detail-info">
-        <div class="guest-detail-header">
-          <div class="guest-detail-avatar">${initials}</div>
-          <div class="guest-detail-info">
-            <h1 class="guest-detail-name">${guest.name}</h1>
-            <p class="guest-detail-email">${
-              guest.email || "No email provided"
-            }</p>
+      
+      <div class="separator"></div>
+      
+      <div class="guest-detail-section">
+        <h3>Contact Information</h3>
+        <div class="detail-grid">
+          <div class="detail-item">
+            <h4>Email</h4>
+            <p><a href="mailto:${
+              guest.email
+            }" style="color: var(--highlight-color);">${guest.email}</a></p>
           </div>
-        </div>
-        
-        <div class="detail-section">
-          <h2>About</h2>
-          <p>${guest.bio || guest.description || "No bio available."}</p>
-        </div>
-        
-        <div class="separator"></div>
-        
-        <div class="guest-detail-section">
-          <h3>Contact Information</h3>
-          <div class="detail-grid">
-            <div class="detail-item">
-              <h4>Email</h4>
-              <p><a href="mailto:${
-                guest.email
-              }" style="color: var(--highlight-color);">${guest.email}</a></p>
-            </div>
-            ${
-              guest.phone
-                ? `
-            <div class="detail-item">
-              <h4>Phone</h4>
-              <p>${guest.phone}</p>
-            </div>
-            `
-                : ""
-            }
+          ${
+            guest.phone
+              ? `
+          <div class="detail-item">
+            <h4>Phone</h4>
+            <p>${guest.phone}</p>
           </div>
+          `
+              : ""
+          }
         </div>
-        
-        <div class="separator"></div>
-        
-        <div class="guest-detail-section">
-          <h3>Social Media</h3>
-          <div>
-            ${
-              guest.linkedin
-                ? `
-            <a href="${guest.linkedin}" target="_blank" class="guest-social-link">
-              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"></path>
-                <rect x="2" y="9" width="4" height="12"></rect>
-                <circle cx="4" cy="4" r="2"></circle>
-              </svg>
-              LinkedIn Profile
-            </a>
-            `
-                : ""
-            }
-            
-            ${
-              guest.twitter
-                ? `
-            <a href="${guest.twitter}" target="_blank" class="guest-social-link">
-              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M23 3a10.9 10.9 0 0 1-3.14 1.53 4.48 4.48 0 0 0-7.86 3v1A10.66 10.66 0 0 1 3 4s-4 9 5 13a11.64 11.64 0 0 1-7 2c9 5 20 0 20-11.5a4.5 4.5 0 0 0-.08-.83A7.72 7.72 0 0 0 23 3z"></path>
-              </svg>
-              Twitter Profile
-            </a>
-            `
-                : ""
-            }
-            
-            ${
-              !guest.linkedin && !guest.twitter
-                ? "<p>No social media profiles available.</p>"
-                : ""
-            }
-          </div>
-        </div>
-        
-        ${
-          guest.areasOfInterest && guest.areasOfInterest.length
-            ? `
-        <div class="separator"></div>
-        <div class="guest-detail-section">
-          <h3>Areas of Interest</h3>
-          <div>
-            ${guest.areasOfInterest
-              .map((area) => `<span class="guest-tag">${area}</span>`)
-              .join("")}
-          </div>
-        </div>
-        `
-            : ""
-        }
-        
-        ${
-          guest.tags && guest.tags.length
-            ? `
-        <div class="separator"></div>
-        <div class="guest-detail-section">
-          <h3>Tags</h3>
-          <div>
-            ${guest.tags
-              .map((tag) => `<span class="guest-tag">${tag}</span>`)
-              .join("")}
-          </div>
-        </div>
-        `
-            : ""
-        }
       </div>
+      
+      <div class="separator"></div>
+      
+      <div class="guest-detail-section">
+        <h3>Social Media</h3>
+        <div>
+          ${
+            guest.linkedin
+              ? `
+          <a href="${guest.linkedin}" target="_blank" class="guest-social-link">
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"></path>
+              <rect x="2" y="9" width="4" height="12"></rect>
+              <circle cx="4" cy="4" r="2"></circle>
+            </svg>
+            LinkedIn Profile
+          </a>
+          `
+              : ""
+          }
+          
+          ${
+            guest.twitter
+              ? `
+          <a href="${guest.twitter}" target="_blank" class="guest-social-link">
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M23 3a10.9 10.9 0 0 1-3.14 1.53 4.48 4.48 0 0 0-7.86 3v1A10.66 10.66 0 0 1 3 4s-4 9 5 13a11.64 11.64 0 0 1-7 2c9 5 20 0 20-11.5a4.5 4.5 0 0 0-.08-.83A7.72 7.72 0 0 0 23 3z"></path>
+            </svg>
+            Twitter Profile
+          </a>
+          `
+              : ""
+          }
+          
+          ${
+            !guest.linkedin && !guest.twitter
+              ? "<p>No social media profiles available.</p>"
+              : ""
+          }
+        </div>
+      </div>
+      
+      ${
+        guest.areasOfInterest && guest.areasOfInterest.length
+          ? `
+      <div class="separator"></div>
+      <div class="guest-detail-section">
+        <h3>Areas of Interest</h3>
+        <div>
+          ${guest.areasOfInterest
+            .map((area) => `<span class="guest-tag">${area}</span>`)
+            .join("")}
+        </div>
+      </div>
+      `
+          : ""
+      }
+      
+      ${
+        guest.tags && guest.tags.length
+          ? `
+      <div class="separator"></div>
+      <div class="guest-detail-section">
+        <h3>Tags</h3>
+        <div>
+          ${guest.tags
+            .map((tag) => `<span class="guest-tag">${tag}</span>`)
+            .join("")}
+        </div>
+      </div>
+      `
+          : ""
+      }
     </div>
-  `;
+  </div>
+`;
 
   // Back button event listener
   document.getElementById("back-to-episode").addEventListener("click", () => {
@@ -1841,58 +1938,58 @@ async function showEpisodePopup(episode) {
   const popupContent = document.createElement("div");
   popupContent.className = "form-box";
   popupContent.innerHTML = `
-    <span id="close-episode-popup" class="close-btn">&times;</span>
-    <h2 class="form-title">Edit Episode</h2>
-    <form id="update-episode-form">
-      <div class="field-group full-width">
-        <label for="upd-episode-title">Episode Title</label>
-        <input type="text" id="upd-episode-title" name="title" value="${
-          episode.title
-        }" required />
+  <span id="close-episode-popup" class="close-btn">&times;</span>
+  <h2 class="form-title">Edit Episode</h2>
+  <form id="update-episode-form">
+    <div class="field-group full-width">
+      <label for="upd-episode-title">Episode Title</label>
+      <input type="text" id="upd-episode-title" name="title" value="${
+        episode.title
+      }" required />
+    </div>
+    <div class="field-group full-width">
+      <label for="upd-episode-description">Description</label>
+      <textarea id="upd-episode-description" name="description" rows="3">${
+        episode.description || ""
+      }</textarea>
+    </div>
+    <div class="field-group">
+      <label for="upd-publish-date">Publish Date</label>
+      <input type="datetime-local" id="upd-publish-date" name="publishDate" value="${
+        episode.publishDate
+          ? new Date(episode.publishDate).toISOString().slice(0, 16)
+          : ""
+      }" required />
+    </div>
+    <div class="field-group">
+      <label for="upd-duration">Duration (minutes)</label>
+      <input type="number" id="upd-duration" name="duration" value="${
+        episode.duration || ""
+      }" />
+    </div>
+    <!-- Commented out Guest and Add Guest Manually fields -->
+    <!--
+    <div class="field-group">
+      <label for="upd-guest-id">Guest</label>
+      <select id="upd-guest-id" name="guestId"></select>
+      <div class="manual-guest-field">
+        <label for="manual-guest">Add Guest Manually</label>
+        <input type="text" id="manual-guest" placeholder="Click to add guest manually" readonly />
       </div>
-      <div class="field-group full-width">
-        <label for="upd-episode-description">Description</label>
-        <textarea id="upd-episode-description" name="description" rows="3">${
-          episode.description || ""
-        }</textarea>
-      </div>
-      <div class="field-group">
-        <label for="upd-publish-date">Publish Date</label>
-        <input type="datetime-local" id="upd-publish-date" name="publishDate" value="${
-          episode.publishDate
-            ? new Date(episode.publishDate).toISOString().slice(0, 16)
-            : ""
-        }" required />
-      </div>
-      <div class="field-group">
-        <label for="upd-duration">Duration (minutes)</label>
-        <input type="number" id="upd-duration" name="duration" value="${
-          episode.duration || ""
-        }" />
-      </div>
-      <!-- Commented out Guest and Add Guest Manually fields -->
-      <!--
-      <div class="field-group">
-        <label for="upd-guest-id">Guest</label>
-        <select id="upd-guest-id" name="guestId"></select>
-        <div class="manual-guest-field">
-          <label for="manual-guest">Add Guest Manually</label>
-          <input type="text" id="manual-guest" placeholder="Click to add guest manually" readonly />
-        </div>
-      </div>
-      -->
-      <div class="field-group">
-        <label for="upd-status">Status</label>
-        <input type="text" id="upd-status" name="status" value="${
-          episode.status || ""
-        }" />
-      </div>
-      <div class="form-actions">
-        <button type="button" id="cancel-episode-update" class="cancel-btn">Cancel</button></div>
-        <button type="submit" class="save-btn">Update Episode</button>
-      </div>
-    </form>
-  `;
+    </div>
+    -->
+    <div class="field-group">
+      <label for="upd-status">Status</label>
+      <input type="text" id="upd-status" name="status" value="${
+        episode.status || ""
+      }" />
+    </div>
+    <div class="form-actions">
+      <button type="button" id="cancel-episode-update" class="cancel-btn">Cancel</button></div>
+      <button type="submit" class="save-btn">Update Episode</button>
+    </div>
+  </form>
+`;
   popup.appendChild(popupContent);
   document.body.appendChild(popup);
 
@@ -1946,21 +2043,40 @@ async function showEpisodePopup(episode) {
 
 // Modify the renderPodcastDetail function to update edit buttons after rendering
 const originalRenderPodcastDetail = renderPodcastDetail;
-renderPodcastDetail = function (podcast) {
+renderPodcastDetail = (podcast) => {
   originalRenderPodcastDetail(podcast);
   updateEditButtons();
 };
 
 // Modify the renderEpisodeDetail function to update edit buttons after rendering
 const originalRenderEpisodeDetail = renderEpisodeDetail;
-renderEpisodeDetail = function (episode) {
+renderEpisodeDetail = (episode) => {
   originalRenderEpisodeDetail(episode);
   updateEditButtons();
 };
 
 // Modify the renderGuestDetail function to update edit buttons after rendering
 const originalRenderGuestDetail = renderGuestDetail;
-renderGuestDetail = function (guest) {
+renderGuestDetail = (guest) => {
   originalRenderGuestDetail(guest);
   updateEditButtons();
 };
+
+// Function to render podcast options in a select element
+async function renderPodcastSelection(podcasts) {
+  const podcastSelect = document.getElementById("podcast-select");
+  podcastSelect.innerHTML = ""; // Clear existing options
+
+  // Add a default "Select Podcast" option
+  const defaultOption = document.createElement("option");
+  defaultOption.value = "";
+  defaultOption.textContent = "Select Podcast";
+  podcastSelect.appendChild(defaultOption);
+
+  podcasts.forEach((podcast) => {
+    const option = document.createElement("option");
+    option.value = podcast._id;
+    option.textContent = podcast.podName;
+    podcastSelect.appendChild(option);
+  });
+}
