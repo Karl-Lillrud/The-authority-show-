@@ -1,5 +1,6 @@
 from marshmallow import Schema, fields, pre_load
 from backend.models.podtasks import PodtaskSchema
+import re
 
 
 class EpisodeSchema(Schema):
@@ -22,8 +23,6 @@ class EpisodeSchema(Schema):
     episodeType = fields.Str(allow_none=True)
     explicit = fields.Bool(allow_none=True)
     imageUrl = fields.Url(allow_none=True)
-
-    # New fields
     keywords = fields.List(fields.Str(), allow_none=True)
     chapters = fields.List(fields.Dict(), allow_none=True)
     link = fields.Url(allow_none=True)
@@ -31,6 +30,7 @@ class EpisodeSchema(Schema):
     summary = fields.Str(allow_none=True)
     author = fields.Str(allow_none=True)
     isHidden = fields.Bool(allow_none=True)
+    highlights = fields.List(fields.Str(), allow_none=True)  # New field for highlights
 
     @pre_load
     def process_empty_strings(self, data, **kwargs):
@@ -64,4 +64,17 @@ class EpisodeSchema(Schema):
                 data["tasks"] = data["defaultTasks"]
                 data["defaultTasks"] = None
 
+        # Extract and edit key highlights from episode content
+        if "description" in data and data["description"]:
+            data["highlights"] = self.extract_highlights(data["description"])
+
         return data
+
+    def extract_highlights(self, description):
+        # Example logic to extract key highlights from the description
+        highlights = []
+        sentences = re.split(r'(?<=[.!?]) +', description)
+        for sentence in sentences:
+            if "important" in sentence.lower() or "key" in sentence.lower():
+                highlights.append(sentence)
+        return highlights
