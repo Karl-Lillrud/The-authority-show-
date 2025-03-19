@@ -1,9 +1,9 @@
-from flask import request, jsonify, Blueprint, g
+from flask import request, jsonify, Blueprint, g, render_template
 import logging
 
 # Import the repository
 from backend.repository.episode_repository import EpisodeRepository
-
+from backend.database.mongo_connection import episodes
 # Define Blueprint
 episode_bp = Blueprint("episode_bp", __name__)
 
@@ -97,15 +97,26 @@ def update_episode(episode_id):
         return jsonify({"error": f"Failed to update episode: {str(e)}"}), 500
 
 
+@episode_bp.route("/episode/<episode_id>", methods=["GET"])
+def episode_detail(episode_id):
+    try:
+        # Fetch the episode document using the episode ID
+        ep = episodes.find_one({"_id": episode_id})
+        if not ep:
+            return render_template("404.html")
+
+        # Render a dedicated episode page template and pass the episode data
+        return render_template("landingpage/episode.html", episode=ep)
+    except Exception as e:
+        return f"Error: {str(e)}", 500
+
 @episode_bp.route("/episodes/by_podcast/<podcast_id>", methods=["GET"])
 def get_episodes_by_podcast(podcast_id):
     if not hasattr(g, "user_id") or not g.user_id:
         return jsonify({"error": "Unauthorized"}), 401
 
     try:
-        response, status_code = episode_repo.get_episodes_by_podcast(
-            podcast_id, g.user_id
-        )
+        response, status_code = episode_repo.get_episodes_by_podcast(podcast_id, g.user_id)
         return jsonify(response), status_code
     except Exception as e:
         logger.error("❌ ERROR: %s", e)

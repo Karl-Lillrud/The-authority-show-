@@ -22,7 +22,6 @@
           <li><a href="#guest-booking">Guest Booking</a></li>
           <li><a href="#extra-section">Extra</a></li>
         </ul>
-        <button onclick="window.location.href='/dashboard'" class="subscribe-btn">Dashboard</button>
         <button class="subscribe-btn">Subscribe</button>
       </div>
     </nav>
@@ -82,22 +81,24 @@
               <div class="episode-card">
                 <div class="episode-thumbnail">
                   <!-- If your document has a thumbnail URL field, replace placeholder below -->
-                  <img src="/Media/placeholder-thumbnail.jpg" alt="{{ episode.title }} Thumbnail">
+                  <img src="{{ url_for('static', filename='images/default.png') }}" alt="{{ episode.title }} Thumbnail">
                 </div>
                 <div class="episode-details">
                   <button class="play-btn">&#9658;</button>
                   <!-- You could pass an episode ID to the episode route if needed -->
-                  <a href="{{ url_for('landingpage_bp.episode', episode_id=episode._id) }}">
+                  <a href="{{ url_for('episode_bp.episode_detail', episode_id=episode._id) }}" class="episode-link">
                     {{ episode.title }}
                   </a>
+                  
+                  
                   <p>{{ episode.description }}</p>
                   <div class="episode-links">
                     <a href="https://open.spotify.com/" target="_blank" class="spotify-link">
-                      <img src="/Media/spotify.png" alt="Spotify" class="podcast-icon">
+                      <img src="{{ url_for('static', filename='images/spotify.png') }}" alt="Spotify" class="podcast-icon">
                       <span class="listen-btn spotify-btn">Spotify</span>
                     </a>
                     <a href="https://podcasts.apple.com/" target="_blank" class="apple-link">
-                      <img src="/Media/apple.svg" alt="Apple Podcasts" class="podcast-icon">
+                      <img src="{{ url_for('static', filename='images/apple.svg') }}" alt="Apple Podcasts" class="podcast-icon">
                       <span class="listen-btn apple-btn">Apple</span>
                     </a>
                   </div>
@@ -110,10 +111,7 @@
         <p>No podcasts at this moment.</p>
       {% endif %}
     </section>
-    <!-- All Episodes List Section -->
-
-      
-
+ 
     <!-- Exclusive Episodes Section (Glass Card) -->
     <section class="exclusive-episodes-section section-dark" id="exclusive-episodes-section">
       <div class="episodes-glass-card">
@@ -237,37 +235,6 @@
         </form>
       </div>
 
-      <div class="social-media-carousel">
-        <!-- Twitter Box -->
-        <div class="social-box twitter-box">
-          <h3>Twitter</h3>
-          <div class="carousel">
-            <img src="/Media/Karl-Lillrud_bok_nvidia.jpg" alt="Twitter 1">
-            <img src="/Media/Profile.png" alt="Twitter 2">
-            <img src="/Media/Karl-Lillrud_bok_nvidia.jpg" alt="Twitter 3">
-          </div>
-        </div>
-    
-        <!-- Instagram Box -->
-        <div class="social-box instagram-box">
-          <h3>Instagram</h3>
-          <div class="carousel">
-            <img src="/Media/Karl-Lillrud_bok_nvidia.jpg" alt="Instagram 1">
-            <img src="/Media/Karl-Lillrud_bok_nvidia.jpg" alt="Instagram 2">
-            <img src="/Media/Profile.png" alt="Instagram 3">
-          </div>
-        </div>
-    
-        <!-- LinkedIn Box -->
-        <div class="social-box linkedin-box">
-          <h3>LinkedIn</h3>
-          <div class="carousel">
-            <img src="/Media/Profile.png" alt="LinkedIn 1">
-            <img src="/Media/Karl-Lillrud_bok_nvidia.jpg" alt="LinkedIn 2">
-            <img src="/Media/Karl-Lillrud_bok_nvidia.jpg" alt="LinkedIn 3">
-          </div>
-        </div>
-      </div>
 
       <!-- Merch / Patreon Links -->
       <div class="merch-patreon">
@@ -349,31 +316,26 @@
             document.querySelector("header").style.backgroundColor = secondaryColor;
             document.querySelector(".navbar").style.backgroundColor = secondaryColor;
 
-            // Podcast Header Section
-            document.getElementById("podcast-header").style.background = `linear-gradient(to right, ${primaryColor}, ${secondaryColor})`;
-
-            // About Section
-            document.querySelector(".about-section").style.backgroundColor = secondaryColor;
-
-            // Latest Episodes Section
-            document.querySelector(".latest-episodes-section").style.backgroundColor = primaryColor;
+            // Apply colors to **all sections dynamically**
+            document.querySelectorAll("section").forEach((section, index) => {
+                section.style.backgroundColor = index % 2 === 0 ? secondaryColor : primaryColor;
+                section.style.color = textColor;
+            });
 
             // Footer
             document.querySelector("footer").style.backgroundColor = secondaryColor;
             document.querySelector("footer").style.color = textColor;
 
-            // Buttons & Links
-            let buttons = document.querySelectorAll(".subscribe-btn, .listen-btn, .sponsor-btn");
-            buttons.forEach(btn => {
-                btn.style.backgroundColor = accentColor;
-                btn.style.color = textColor;
-                btn.style.border = `2px solid ${highlightColor}`;
-            });
-
             // Social Media Icons
             let icons = document.querySelectorAll("#host-social a");
             icons.forEach(icon => {
                 icon.style.color = highlightColor;
+            });
+
+            // 🎨 New: Apply colors to Episode Cards
+            document.querySelectorAll(".episode-card").forEach((card, index) => {
+                card.style.backgroundColor = index % 2 === 0 ? primaryColor : secondaryColor;
+                card.style.color = textColor;
             });
 
             console.log("🎨 Theme applied successfully!");
@@ -387,6 +349,7 @@
         console.error("❌ Error: Could not load the logo image.");
     };
 });
+
 
     </script>
 
