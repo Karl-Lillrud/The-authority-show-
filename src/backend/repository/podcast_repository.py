@@ -25,6 +25,11 @@ class PodcastRepository:
 
             # Inject the accountId into the data
             data["accountId"] = account_id
+            
+            if "hostBio" not in data or not data.get("hostBio"):
+                logger.warning("⚠️ hostBio is missing or empty in request data")
+            if "hostImage" not in data or not data.get("hostImage"):
+                logger.warning("⚠️ hostImage is missing or empty in request data")
 
             # Validate data using PodcastSchema
             schema = PodcastSchema()
