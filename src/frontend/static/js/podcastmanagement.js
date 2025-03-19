@@ -18,6 +18,7 @@ import {
   addGuestRequest,
   fetchGuestsByEpisode
 } from "../requests/guestRequests.js"; // Added import for fetchGuestsByEpisode
+import { publishToSpotify } from "../requests/auto_publishRequests.js"; // Import publishToSpotify
 
 console.log("podcastmanagement.js loaded");
 
@@ -1337,17 +1338,23 @@ function renderEpisodeDetail(episode) {
       
       <!-- Add top-right action buttons -->
       <div class="top-right-actions">
-        <button class="action-btn edit-btn" id="edit-episode-btn" data-id="${episode._id}">
+        <button class="action-btn edit-btn" id="edit-episode-btn" data-id="${
+          episode._id
+        }">
           ${svgpodcastmanagement.edit}
         </button>
         <!-- Add Publish button next to Edit button -->
-        <button class="action-btn publish-btn" id="publish-episode-btn" data-id="${episode._id}">
+        <button class="action-btn publish-btn" id="publish-episode-btn" data-id="${
+          episode._id
+        }">
           ${svgpodcastmanagement.upload}
         </button>
       </div>
     </div>
     <div class="detail-content">
-      <div class="detail-image" style="background-image: url('${episode.image || "default-image.png"}')"></div>
+      <div class="detail-image" style="background-image: url('${
+        episode.image || "default-image.png"
+      }')"></div>
       <div class="detail-info">
         <h1 class="detail-title">${episode.title}</h1>
         <p class="detail-category">${episode.status || "Uncategorized"}</p>
@@ -1359,7 +1366,9 @@ function renderEpisodeDetail(episode) {
         <div class="detail-grid">
           <div class="detail-item">
             <h3>Publish Date</h3>
-            <p>${new Date(episode.publishDate).toLocaleString() || "Not specified"}</p>
+            <p>${
+              new Date(episode.publishDate).toLocaleString() || "Not specified"
+            }</p>
           </div>
           <div class="detail-item">
             <h3>Duration</h3>
@@ -1373,7 +1382,9 @@ function renderEpisodeDetail(episode) {
         </div>
         <div class="separator"></div>
         <div class="detail-actions" style="margin-top: 2rem; display: flex; gap: 1rem;">
-          <button class="delete-btn" id="delete-episode-btn" data-id="${episode._id}">
+          <button class="delete-btn" id="delete-episode-btn" data-id="${
+            episode._id
+          }">
             <span class="icon">${svgpodcastmanagement.delete}</span>
             Delete Episode
           </button>
@@ -1410,12 +1421,24 @@ function renderEpisodeDetail(episode) {
         const episodeId = document
           .getElementById("publish-episode-btn")
           .getAttribute("data-id");
-        // Implement the publish functionality here
-        const result = await publishEpisode(episodeId); // Assuming you have a publishEpisode function
+
+        // Fetch episode details (assuming fetchEpisode is available)
+        const episode = await fetchEpisode(episodeId);
+
+        // Prepare episode data for Spotify
+        const episodeData = {
+          title: episode.title,
+          description: episode.description,
+          audioUrl: episode.audioUrl // Ensure this field exists in the episode object
+        };
+
+        // Publish to Spotify
+        const result = await publishToSpotify(episodeData);
+
         if (result.message) {
           showNotification(
             "Success",
-            "Episode published successfully!",
+            "Episode published to Spotify!",
             "success"
           );
           // Update the episode status in the DOM
@@ -1425,6 +1448,7 @@ function renderEpisodeDetail(episode) {
           showNotification("Error", result.error || "Publish failed", "error");
         }
       } catch (error) {
+        console.error("Error publishing episode:", error);
         showNotification("Error", "Failed to publish episode.", "error");
       }
     });

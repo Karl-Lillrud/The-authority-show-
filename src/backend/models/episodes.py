@@ -3,7 +3,7 @@ from backend.models.podtasks import PodtaskSchema
 from typing import Optional  # Import Optional
 
 # Define the directory to save uploaded files
-UPLOAD_FOLDER = r'C:\Users\sarwe\Desktop\LIa'
+UPLOAD_FOLDER = r"C:\Users\arins\OneDrive\Desktop\Ny mapp"
 
 
 class EpisodeSchema(Schema):
