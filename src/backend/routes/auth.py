@@ -8,7 +8,7 @@ from flask import (
     url_for
 )
 from backend.repository.auth_repository import AuthRepository
-from backend.services.teamInviteService import TeamInviteService
+from backend.services.TeamInviteService import TeamInviteService
 import os
 
 # Define Blueprint
