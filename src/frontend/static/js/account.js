@@ -6,6 +6,7 @@ document.addEventListener('DOMContentLoaded', function () {
             // Populate the fields with the current user data
             document.getElementById('full-name').value = data.full_name || '';
             document.getElementById('email').value = data.email || '';
+            document.getElementById('phone').value = data.phone || '';
         } else {
             alert('Error fetching profile data');
         }
@@ -21,6 +22,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
     const fullName = document.getElementById('full-name').value;
     const email = document.getElementById('email').value;
+    const phoneNumber = document.getElementById('phone').value;
     const password = document.getElementById('password').value;  // Current password
     const newPassword = document.getElementById('new-password').value;  // New password
     const confirmPassword = document.getElementById('confirm-password').value;  // Confirm new password
@@ -44,6 +46,7 @@ document.addEventListener('DOMContentLoaded', function () {
     const profileData = {
         full_name: fullName,
         email: email,
+        phone: phoneNumber
     };
 
     // Update the profile first

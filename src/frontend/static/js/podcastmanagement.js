@@ -21,6 +21,31 @@ import {
 
 console.log("podcastmanagement.js loaded");
 
+// Add this function at the beginning of the file, after the imports
+function initializeSvgIcons() {
+  // Sidebar menu icons
+  document.getElementById("back-to-dashboard-icon").innerHTML =
+    svgpodcastmanagement.backToDashboard;
+  document.getElementById("podcasts-icon").innerHTML =
+    svgpodcastmanagement.podcasts;
+  document.getElementById("episodes-icon").innerHTML =
+    svgpodcastmanagement.episodes;
+  document.getElementById("guests-icon").innerHTML =
+    svgpodcastmanagement.guests;
+
+  // Action button icons
+  document.getElementById("add-icon-podcast").innerHTML =
+    svgpodcastmanagement.add;
+  document.getElementById("add-icon-episode").innerHTML =
+    svgpodcastmanagement.add;
+  document.getElementById("add-icon-guest").innerHTML =
+    svgpodcastmanagement.add;
+
+  // Sidebar toggle icon
+  document.getElementById("toggle-sidebar-icon").innerHTML =
+    svgpodcastmanagement.toggleSidebar;
+}
+
 // Notification system
 function showNotification(title, message, type = "info") {
   // Remove any existing notification
@@ -332,10 +357,31 @@ document
     }
   });
 
+// Function to update edit buttons to use pen icons
+function updateEditButtons() {
+  // Find all edit buttons in the top-right actions
+  const editButtons = document.querySelectorAll(".top-right-actions .edit-btn");
+
+  editButtons.forEach((button) => {
+    // Skip if button has already been processed
+    if (button.querySelector("svg")) return;
+
+    // Clear the button content
+    button.innerHTML = svgpodcastmanagement.edit;
+  });
+}
+
+// Add this line to the DOMContentLoaded event listener
 document.addEventListener("DOMContentLoaded", () => {
   console.log("DOM fully loaded and parsed");
 
+  // Initialize SVG icons
+  initializeSvgIcons();
+
   renderPodcastList();
+
+  // Add this line to update edit buttons when the page loads
+  updateEditButtons();
 
   // Show form for adding a podcast
   document.getElementById("add-podcast-btn").addEventListener("click", () => {
@@ -355,7 +401,8 @@ document.addEventListener("DOMContentLoaded", () => {
   // Cancel button in form
   document.getElementById("cancel-form-btn").addEventListener("click", () => {
     document.getElementById("form-popup").style.display = "none";
-    document.getElementById("podcast-detail").style.display = "block";
+    document.getElementById("podcast-detail").style.display = "none"; // Hide podcast detail
+    document.getElementById("podcast-list").style.display = "flex"; // Show podcast list
   });
 
   // Show form for creating a new episode
@@ -501,6 +548,22 @@ document.addEventListener("DOMContentLoaded", () => {
     });
 });
 
+// Add this function to observe DOM changes and update edit buttons when new content is added
+function observeEditButtons() {
+  const observer = new MutationObserver((mutations) => {
+    mutations.forEach((mutation) => {
+      if (mutation.addedNodes.length) {
+        updateEditButtons();
+      }
+    });
+  });
+
+  observer.observe(document.body, { childList: true, subtree: true });
+}
+
+// Call the observer function after the DOM is loaded
+document.addEventListener("DOMContentLoaded", observeEditButtons);
+
 const form = document.getElementById("register-podcast-form");
 
 form.addEventListener("submit", async (e) => {
@@ -525,13 +588,16 @@ form.addEventListener("submit", async (e) => {
   const data = {
     teamId: "",
     podName,
-    ownerName: document.getElementById("pod-owner")?.value.trim() || "",
-    hostName: document.getElementById("pod-host")?.value.trim() || "",
+    author: document.getElementById("pod-author")?.value.trim() || "",
+    language: document.getElementById("pod-language")?.value.trim() || "",
     rssFeed: document.getElementById("pod-rss")?.value.trim() || "",
     googleCal: document.getElementById("google-cal")?.value.trim() || null,
     guestUrl: document.getElementById("guest-form-url")?.value.trim() || null,
     email,
     description: document.getElementById("description")?.value.trim() || "",
+    tagline: document.getElementById("tagline")?.value.trim() || "",
+    hostBio: document.getElementById("host-bio")?.value.trim() || "",
+    hostImage: "",
     // the logoUrl field will be replaced if a logo is uploaded
 
     category,
@@ -541,7 +607,8 @@ form.addEventListener("submit", async (e) => {
       document.getElementById("linkedin")?.value.trim(),
       document.getElementById("twitter")?.value.trim(),
       document.getElementById("tiktok")?.value.trim(),
-      document.getElementById("pinterest")?.value.trim()
+      document.getElementById("pinterest")?.value.trim(),
+      document.getElementById("youtube")?.value.trim(),
     ].filter((link) => link)
   };
 
@@ -606,23 +673,48 @@ form.addEventListener("submit", async (e) => {
     }
   }
 
-  // Check for a logo file and convert it to a Base64 string if one is selected
+  // Check for a logo, banner and host image file and convert it to a Base64 string if one is selected
   const logoInput = document.getElementById("logo");
-  if (logoInput && logoInput.files[0]) {
-    const file = logoInput.files[0];
-    const reader = new FileReader();
-    reader.onloadend = async () => {
-      data.logoUrl = reader.result; // update with new image
+  const bannerInput = document.getElementById("banner");
+  const hostImageInput = document.getElementById("host-image");
+
+  async function handleFileInput(inputElement, dataProperty) {
+    return new Promise((resolve) => {
+        if (inputElement && inputElement.files[0]) {
+            const file = inputElement.files[0];
+            const reader = new FileReader();
+            reader.onloadend = () => {
+                data[dataProperty] = reader.result;  // ✅ Converts to Base64
+                resolve(true);
+            };
+            reader.readAsDataURL(file);
+        } else {
+            if (selectedPodcastId) {
+                delete data[dataProperty];  // ❌ Prevents overwriting existing images
+            }
+            resolve(false);
+        }
+    });
+}
+
+  async function processInputs() {
+      const logoPromise = handleFileInput(logoInput, "logoUrl");
+      const bannerPromise = handleFileInput(bannerInput, "bannerUrl");
+      const hostImagePromise = handleFileInput(document.getElementById("host-image"), "hostImage");  // ✅ Ensures correct file processing
+
+      const [logoChanged, bannerChanged, hostImageChanged] = await Promise.all([logoPromise, bannerPromise, hostImagePromise]);
+
+      console.log("✅ Final Data Before Sending:", JSON.stringify(data, null, 2));  // 🔍 Debug final payload
+
       await submitPodcast(data);
-    };
-    reader.readAsDataURL(file);
-  } else {
-    // If editing and no new image is selected, do not overwrite the existing logoUrl
-    if (selectedPodcastId) {
-      delete data.logoUrl;
-    }
-    await submitPodcast(data);
   }
+
+
+
+  // Start processing the inputs
+  processInputs();
+
+
 });
 
 function displayPodcastDetails(podcast) {
@@ -634,11 +726,13 @@ function displayPodcastDetails(podcast) {
   const podNameEl = document.getElementById("pod-name");
   if (podNameEl) podNameEl.value = podcast.podName || "";
 
-  const podOwnerEl = document.getElementById("pod-owner");
-  if (podOwnerEl) podOwnerEl.value = podcast.ownerName || "";
+  // Removed: ownerName and hostName
+  // New fields: Author and Language
+  const podAuthorEl = document.getElementById("pod-author");
+  if (podAuthorEl) podAuthorEl.value = podcast.author || "";
 
-  const podHostEl = document.getElementById("pod-host");
-  if (podHostEl) podHostEl.value = podcast.hostName || "";
+  const podLanguageEl = document.getElementById("pod-language");
+  if (podLanguageEl) podLanguageEl.value = podcast.language || "";
 
   const podRssEl = document.getElementById("pod-rss");
   if (podRssEl) podRssEl.value = podcast.rssFeed || "";
@@ -658,6 +752,13 @@ function displayPodcastDetails(podcast) {
   const categoryEl = document.getElementById("category");
   if (categoryEl) categoryEl.value = podcast.category || "";
 
+  const taglineEl = document.getElementById("tagline");
+  if (taglineEl) taglineEl.value = podcast.tagline || "";
+
+  const hostBioEl = document.getElementById("host-bio");
+  if (hostBioEl) hostBioEl.value = podcast.hostBio || "";
+
+
   // Social media links
   const facebookEl = document.getElementById("facebook");
   if (facebookEl) facebookEl.value = podcast.socialMedia?.[0] || "";
@@ -676,6 +777,9 @@ function displayPodcastDetails(podcast) {
 
   const pinterestEl = document.getElementById("pinterest");
   if (pinterestEl) pinterestEl.value = podcast.socialMedia?.[5] || "";
+
+  const youtubeEl = document.getElementById("youtube");
+  if (youtubeEl) youtubeEl.value = podcast.socialMedia?.[6] || "";
 }
 
 function resetForm() {
@@ -686,7 +790,6 @@ function resetForm() {
 // Modify the renderPodcastList function to add episodes preview under the image
 async function renderPodcastList() {
   try {
-    // Fetch podcasts from your backend
     const response = await fetchPodcasts();
     const podcasts = response.podcast; // adjust if needed
 
@@ -706,12 +809,16 @@ async function renderPodcastList() {
       const podcastCard = document.createElement("div");
       podcastCard.className = "podcast-card";
 
+      // Use imageUrl if available, otherwise allow user to upload an image
+      const imageUrl =
+        podcast.logoUrl || podcast.imageUrl || "default-image.png";
+
       // Create the basic podcast card structure
       podcastCard.innerHTML = `
         <div class="podcast-content">
-          <div class="podcast-image" style="background-image: url('${
-            podcast.logoUrl
-          }')" data-id="${podcast._id}"></div>
+          <div class="podcast-image" style="background-image: url('${imageUrl}')" data-id="${
+        podcast._id
+      }"></div>
           <div class="podcast-info">
             <div class="podcast-header">
               <div>
@@ -719,11 +826,11 @@ async function renderPodcastList() {
                 <p class="podcast-meta"><span>Category:</span> ${
                   podcast.category || "Uncategorized"
                 }</p>
-                <p class="podcast-meta"><span>Host:</span> ${
-                  podcast.hostName || "Not specified"
+                <p class="podcast-meta"><span>Author:</span> ${
+                  podcast.author || "Not specified"
                 }</p>
-                <p class="podcast-meta"><span>Owner:</span> ${
-                  podcast.ownerName || "Not specified"
+                <p class="podcast-meta"><span>Language:</span> ${
+                  podcast.language || "Not specified"
                 }</p>
               </div>
               <div class="podcast-actions">
@@ -753,12 +860,22 @@ async function renderPodcastList() {
           </div>
         </div>
         <div class="podcast-footer">
+          <button class="landing-page-btn" data-id="${
+            podcast._id
+          }">Landing Page</button>
           <button class="view-details-btn" data-id="${
             podcast._id
           }">View Details</button>
         </div>`;
 
       podcastListElement.appendChild(podcastCard);
+
+      // Redirect to the landing page with the specific podcastId
+      const landingPageBtn = podcastCard.querySelector(".landing-page-btn");
+      landingPageBtn.addEventListener("click", (e) => {
+        const podcastId = e.target.dataset.id; // Get podcast ID
+        window.location.href = `/landingpage/${podcastId}`;
+      });
 
       // Fetch episodes for this podcast and add them to the preview
       try {
@@ -968,6 +1085,8 @@ async function viewPodcast(podcastId) {
 // Modify the renderPodcastDetail function to add the top-right action buttons
 function renderPodcastDetail(podcast) {
   const podcastDetailElement = document.getElementById("podcast-detail");
+  const imageUrl = podcast.logoUrl || podcast.imageUrl || "default-image.png";
+
   podcastDetailElement.innerHTML = `
     <div class="detail-header">
       <button class="back-btn" id="back-to-list">
@@ -977,19 +1096,15 @@ function renderPodcastDetail(podcast) {
       
       <!-- Add top-right action buttons -->
       <div class="top-right-actions">
-      
         <button class="action-btn edit-btn" id="edit-podcast-btn" data-id="${
           podcast._id
         }">
           ${svgpodcastmanagement.edit}
-          Edit Podcast
         </button>
       </div>
     </div>
     <div class="detail-content">
-      <div class="detail-image" style="background-image: url('${
-        podcast.logoUrl
-      }')"></div>
+      <div class="detail-image" style="background-image: url('${imageUrl}')"></div>
       <!-- Episodes container with title outside scroll area -->
       <div id="episodes-list" class="episodes-list">
         <h3 class="detail-section-title">Episodes</h3>
@@ -1005,12 +1120,12 @@ function renderPodcastDetail(podcast) {
         <div class="separator"></div>
         <div class="detail-grid">
           <div class="detail-item">
-            <h3>Podcast Owner</h3>
-            <p>${podcast.ownerName || "Not specified"}</p>
+            <h3>Author</h3>
+            <p>${podcast.author || "Not specified"}</p>
           </div>
           <div class="detail-item">
-            <h3>Host(s)</h3>
-            <p>${podcast.hostName || "Not specified"}</p>
+            <h3>Language</h3>
+            <p>${podcast.language || "Not specified"}</p>
           </div>
           <div class="detail-item">
             <h3>Email Address</h3>
@@ -1283,6 +1398,9 @@ function renderPodcastDetail(podcast) {
     .catch((error) => {
       console.error("Error fetching episodes:", error);
     });
+
+  // Modify the renderPodcastDetail function to update edit buttons after rendering
+  updateEditButtons();
 }
 
 // Modify the renderEpisodeDetail function to add the top-right action buttons
@@ -1297,12 +1415,10 @@ function renderEpisodeDetail(episode) {
       
       <!-- Add top-right action buttons -->
       <div class="top-right-actions">
-      
         <button class="action-btn edit-btn" id="edit-episode-btn" data-id="${
           episode._id
         }">
           ${svgpodcastmanagement.edit}
-          Edit Episode
         </button>
       </div>
     </div>
@@ -1472,6 +1588,9 @@ function renderEpisodeDetail(episode) {
       errorMsg.textContent = "This episode has no guests.";
       document.getElementById("guests-list").appendChild(errorMsg);
     });
+
+  // Modify the renderEpisodeDetail function to update edit buttons after rendering
+  updateEditButtons();
 }
 
 // Modify the renderGuestDetail function to add the top-right action buttons
@@ -1495,12 +1614,10 @@ function renderGuestDetail(guest) {
       
       <!-- Add top-right action buttons -->
       <div class="top-right-actions">
-      
         <button class="action-btn edit-btn" id="edit-guest-btn" data-id="${
           guest._id || guest.id
         }">
           ${svgpodcastmanagement.edit}
-          Edit Guest
         </button>
       </div>
     </div>
@@ -1649,6 +1766,9 @@ function renderGuestDetail(guest) {
         showNotification("Error", "Failed to edit guest", "error");
       }
     });
+
+  // Modify the renderGuestDetail function to update edit buttons after rendering
+  updateEditButtons();
 }
 
 // New function to display the episode popup for viewing/updating an episode
@@ -1762,3 +1882,24 @@ async function showEpisodePopup(episode) {
       }
     });
 }
+
+// Modify the renderPodcastDetail function to update edit buttons after rendering
+const originalRenderPodcastDetail = renderPodcastDetail;
+renderPodcastDetail = function (podcast) {
+  originalRenderPodcastDetail(podcast);
+  updateEditButtons();
+};
+
+// Modify the renderEpisodeDetail function to update edit buttons after rendering
+const originalRenderEpisodeDetail = renderEpisodeDetail;
+renderEpisodeDetail = function (episode) {
+  originalRenderEpisodeDetail(episode);
+  updateEditButtons();
+};
+
+// Modify the renderGuestDetail function to update edit buttons after rendering
+const originalRenderGuestDetail = renderGuestDetail;
+renderGuestDetail = function (guest) {
+  originalRenderGuestDetail(guest);
+  updateEditButtons();
+};
