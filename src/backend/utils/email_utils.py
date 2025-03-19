@@ -8,50 +8,33 @@ from dotenv import load_dotenv
 # Load environment variables once
 load_dotenv(override=True)
 
+EMAIL_USER = os.getenv("EMAIL_USER")
+EMAIL_PASS = os.getenv("EMAIL_PASS")
+SMTP_SERVER = os.getenv("SMTP_SERVER")
+SMTP_PORT = os.getenv("SMTP_PORT")
+
 # Configure logger
 logger = logging.getLogger(__name__)
 
 def send_email(to_email, subject, body):
-    """
-    Sends an email using SMTP with environment-based configuration.
-    """
-    sender_email = os.getenv("EMAIL_USER")
-    sender_password = os.getenv("EMAIL_PASS")
-    smtp_server = os.getenv("SMTP_SERVER")
-    smtp_port = os.getenv("SMTP_PORT")
-
-    if not sender_email or not sender_password or not smtp_server or not smtp_port:
-        logger.error("❌ Missing required SMTP configuration.")
-        return False
-
-    # Create email message
     msg = MIMEMultipart()
-    msg["From"] = sender_email
+    msg["From"] = EMAIL_USER
     msg["To"] = to_email
     msg["Subject"] = subject
+
     msg.attach(MIMEText(body, "html"))
 
     try:
-        logger.info(f"📤 Connecting to SMTP server {smtp_server}:{smtp_port}")
-        logger.info(f"📧 Logging in as {sender_email}")
-
-        with smtplib.SMTP(smtp_server, int(smtp_port)) as server:
-            server.starttls()
-            server.login(sender_email, sender_password)
-            server.sendmail(sender_email, to_email, msg.as_string())
-
-        logger.info(f"✅ Email sent successfully to {to_email}")
-        return True
-
-    except smtplib.SMTPAuthenticationError:
-        logger.error("❌ SMTP Authentication Error: Check EMAIL_USER and EMAIL_PASS")
-    except smtplib.SMTPException as e:
-        logger.error(f"❌ SMTP Error: {str(e)}", exc_info=True)
+        logger.info(f"Connecting to SMTP server {SMTP_SERVER}:{SMTP_PORT}")  # Added log
+        server = smtplib.SMTP(SMTP_SERVER, SMTP_PORT)
+        server.starttls()
+        logger.info(f"Logging in as {EMAIL_USER}")  # Added log
+        server.login(EMAIL_USER, EMAIL_PASS)
+        server.sendmail(EMAIL_USER, to_email, msg.as_string())
+        server.quit()
+        logger.info(f"Email sent to {to_email}")  # Added log
     except Exception as e:
-        logger.error(f"❌ Unexpected Error: {str(e)}", exc_info=True)
-
-    return False
-
+        logger.error(f"Failed to send email to {to_email}: {e}")  # Added log
 
 def send_team_invite_email(email, invite_token, team_name=None, inviter_name=None):
     """

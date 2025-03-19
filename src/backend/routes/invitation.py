@@ -2,7 +2,7 @@ from flask import Blueprint, request, jsonify, render_template, url_for, g
 from backend.utils.email_utils import send_email
 from backend.database.mongo_connection import collection
 from backend.models.podcasts import PodcastSchema
-from backend.services.TeamInviteService import TeamInviteService
+from backend.services.teamInviteService import TeamInviteService
 from datetime import datetime, timezone
 import uuid
 import logging
@@ -60,9 +60,6 @@ def send_invitation():
 @invitation_bp.route("/invite_email_body", methods=["GET"])
 def invite_email_body():
     return render_template("beta-email/podmanager-beta-invite.html")
-
-from flask import Blueprint, request, jsonify, g
-from backend.services.TeamInviteService import TeamInviteService  # ✅ Ensure correct import
 
 invitation_bp = Blueprint("invitation_bp", __name__)
 

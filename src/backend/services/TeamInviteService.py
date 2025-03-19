@@ -55,18 +55,7 @@ class TeamInviteService:
             return {"error": f"Failed to send invite: {str(e)}"}, 500
         
     def process_registration(self, user_id, email, invite_token):
-        """
-        Links a newly registered user to a team using the invite token.
-        
-        Args:
-            user_id (str): The newly registered user's ID.
-            email (str): The email of the user.
-            invite_token (str): The invite token from the registration.
 
-        Returns:
-            dict: Response message.
-            int: HTTP status code.
-        """
         try:
             # Fetch the invite
             invite = self.invite_repo.get_invite(invite_token)

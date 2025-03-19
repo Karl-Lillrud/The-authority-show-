@@ -27,90 +27,36 @@ class AuthRepository:
             password = data.get("password", "")
             remember = data.get("remember", False)
 
-            user = self.user_collection.find_one({"email": email})
-            if not user or not check_password_hash(user["passwordHash"], password):
+            # Validate credentials
+            user = self._authenticate_user(email, password)
+            if not user:
                 return {"error": "Invalid email or password"}, 401
-
-            session["user_id"] = str(user["_id"])
-            session["email"] = user["email"]
-            session.permanent = remember
-
-            # Check if user has their own account
+            
+            # Set up user session
+            self._setup_session(user, remember)
+            
+            # Get user's personal account
             user_account = self.account_collection.find_one({"userId": session["user_id"]})
             
-            # Retrieve teams the user is part of
-            team_membership, status_code = self.user_to_team_repo.get_teams_for_user(session["user_id"])
-            team_list = team_membership.get("teams", []) if status_code == 200 else []
+            # Get teams the user belongs to
+            team_list = self._get_user_teams(session["user_id"])
             
-            logger.info(f"✅ User is part of teams: {team_list}")
-
-            # Determine the correct main account (the team owner's account)
-            main_account = None
-            if team_list and not user_account:  # Only look for team account if user doesn't have their own
-                first_team = team_list[0]
-                logger.info(f"🔹 First team details: {first_team}")
-                
-                # Get the team ID
-                team_id = first_team.get("_id")
-                logger.info(f"🔹 Team ID: {team_id}")
-                
-                # Find the team owner's user ID (assuming role "creator" indicates ownership)
-                team_owner_mapping = self.users_to_teams_collection.find_one(
-                    {"teamId": team_id, "role": "creator"},
-                    {"userId": 1}
-                )
-                
-                if team_owner_mapping:
-                    owner_id = team_owner_mapping.get("userId")
-                    logger.info(f"🔹 Found team owner ID: {owner_id}")
-                    
-                    # Find the account associated with the owner ID
-                    owner_account = self.account_collection.find_one({"userId": owner_id})
-                    
-                    if owner_account:
-                        logger.info(f"🔹 Found account for team owner: {owner_account['_id']}")
-                        main_account = owner_account
-                    else:
-                        logger.warning(f"⚠️ No account found for team owner with ID: {owner_id}")
-                else:
-                    logger.warning(f"⚠️ No creator found for team ID: {team_id}")
-                    
-                    # Fallback: try to find anyone with a role in the team
-                    any_team_member = self.users_to_teams_collection.find_one(
-                        {"teamId": team_id},
-                        {"userId": 1}
-                    )
-                    
-                    if any_team_member:
-                        member_id = any_team_member.get("userId")
-                        logger.info(f"🔹 Found team member ID: {member_id}")
-                        
-                        # Find the account associated with this member
-                        member_account = self.account_collection.find_one({"userId": member_id})
-                        
-                        if member_account:
-                            logger.info(f"🔹 Found account for team member: {member_account['_id']}")
-                            main_account = member_account
-            
-            # Decide which account to use
-            active_account = user_account or main_account
+            # Determine which account to use (personal or team)
+            active_account = self._determine_active_account(user_account, team_list)
             if not active_account:
                 return {"error": "No account or team-associated account found"}, 403
 
+            # Prepare response data
             account_id = active_account.get("_id")
-            podcasts = list(self.podcast_collection.find({"accountId": account_id}))
-
-            # Redirect team members to work under the main account
             redirect_url = "/podprofile" if user_account else "/podcastmanager"
-
-            # Add debug info to response
+            
             response = {
                 "message": "Login successful",
                 "redirect_url": redirect_url,
                 "teams": team_list,
                 "accountId": str(account_id),
                 "isTeamMember": user.get("isTeamMember", False),
-                "usingTeamAccount": bool(main_account and not user_account)
+                "usingTeamAccount": bool(not user_account and active_account != user_account)
             }
 
             return response, 200
@@ -118,6 +64,91 @@ class AuthRepository:
         except Exception as e:
             logger.error("Error during login: %s", e, exc_info=True)
             return {"error": f"Error during login: {str(e)}"}, 500
+
+    def _authenticate_user(self, email, password):
+        """Authenticate user with email and password."""
+        user = self.user_collection.find_one({"email": email})
+        if not user or not check_password_hash(user["passwordHash"], password):
+            return None
+        return user
+
+    def _setup_session(self, user, remember):
+        """Set up user session data."""
+        session["user_id"] = str(user["_id"])
+        session["email"] = user["email"]
+        session.permanent = remember
+
+    def _get_user_teams(self, user_id):
+        """Get teams that the user is a member of."""
+        team_membership, status_code = self.user_to_team_repo.get_teams_for_user(user_id)
+        teams = team_membership.get("teams", []) if status_code == 200 else []
+        logger.info(f"✅ User is part of teams: {teams}")
+        return teams
+
+    def _determine_active_account(self, user_account, team_list):
+        """Determine which account to use - personal or team."""
+        # If user has personal account, use it
+        if user_account:
+            return user_account
+        
+        # If no personal account but user is in teams, try to use team account
+        if not team_list:
+            return None
+            
+        first_team = team_list[0]
+        team_id = first_team.get("_id")
+        logger.info(f"🔹 First team details: {first_team}")
+        logger.info(f"🔹 Team ID: {team_id}")
+        
+        # Try to find team owner's account first
+        owner_account = self._find_team_owner_account(team_id)
+        if owner_account:
+            return owner_account
+        
+        # Fallback: try to find any team member's account
+        return self._find_any_team_member_account(team_id)
+
+    def _find_team_owner_account(self, team_id):
+        """Find the account of the team owner."""
+        team_owner_mapping = self.users_to_teams_collection.find_one(
+            {"teamId": team_id, "role": "creator"},
+            {"userId": 1}
+        )
+        
+        if not team_owner_mapping:
+            logger.warning(f"⚠️ No creator found for team ID: {team_id}")
+            return None
+            
+        owner_id = team_owner_mapping.get("userId")
+        logger.info(f"🔹 Found team owner ID: {owner_id}")
+        
+        owner_account = self.account_collection.find_one({"userId": owner_id})
+        if owner_account:
+            logger.info(f"🔹 Found account for team owner: {owner_account['_id']}")
+            return owner_account
+        else:
+            logger.warning(f"⚠️ No account found for team owner with ID: {owner_id}")
+            return None
+
+    def _find_any_team_member_account(self, team_id):
+        """Find any team member's account as fallback."""
+        any_team_member = self.users_to_teams_collection.find_one(
+            {"teamId": team_id},
+            {"userId": 1}
+        )
+        
+        if not any_team_member:
+            return None
+            
+        member_id = any_team_member.get("userId")
+        logger.info(f"🔹 Found team member ID: {member_id}")
+        
+        member_account = self.account_collection.find_one({"userId": member_id})
+        if member_account:
+            logger.info(f"🔹 Found account for team member: {member_account['_id']}")
+            return member_account
+        
+        return None
 
     def logout(self):
         session.clear()
