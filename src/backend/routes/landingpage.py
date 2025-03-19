@@ -1,57 +1,15 @@
 from flask import g, redirect, render_template, url_for, Blueprint
-from backend.repository.podcast_repository import PodcastRepository  # ✅ Import repository
-
-from backend.database.mongo_connection import collection, podcasts, get_db  # Add import
-
+from backend.repository.podcast_repository import PodcastRepository
+from backend.repository.episode_repository import EpisodeRepository
+import logging
 
 landingpage_bp = Blueprint("landingpage_bp", __name__)
+logger = logging.getLogger(__name__)
+logging.basicConfig(level=logging.ERROR)
 
 # ✅ Initialize the repository
 podcast_repo = PodcastRepository()
-
-@landingpage_bp.route('/landingpage', methods=['GET'])
-def landingpage():
-
-    if not g.user_id:
-        return redirect(url_for('signin_bp.signin'))
-
-    # ✅ Use the repository to fetch podcast details
-    podcast_data, status_code = PodcastRepository.get_podcasts(g.user_id)
-
-    # ✅ If the user has no podcasts, return default values
-    if status_code != 200 or not podcast_data["podcast"]:
-        podcast_doc = None
-    else:
-        podcast_doc = podcast_data["podcast"][0]  # Get the first podcast (if multiple exist)
-
-    # ✅ Extract podcast details (with safe defaults)
-    podcast_title = podcast_doc.get("podName", "Default Podcast Title") if podcast_doc else "Default Podcast Title"
-    podcast_description = podcast_doc.get("description", "Default Podcast Description") if podcast_doc else "Default Podcast Description"
-    host_name = podcast_doc.get("hostName", "Unknown Host") if podcast_doc else "Unknown Host"
-    social_media_links = podcast_doc.get("socialMedia", []) if podcast_doc else []
-    
-
-    # ✅ Debugging print statements
-    print("DEBUG: SOCIAL MEDIA LINKS FROM DATABASE:", social_media_links)
-
-    # ✅ Handle Podcast Logo (Base64 or Default)
-    podcast_logo = podcast_doc.get("logoUrl", "") if podcast_doc else ""
-    if not podcast_logo.startswith("data:image"):  # Ensure it's Base64
-        podcast_logo = url_for('static', filename='images/default.png')
-
-    # ✅ Fetch episodes using the repository
-    episodes_data, status_code = podcast_repo.get_podcast_by_id(g.user_id, podcast_doc["_id"]) if podcast_doc else ({}, 200)
-    episodes = episodes_data.get("podcast", {}).get("episodes", []) if status_code == 200 else []
-
-    return render_template(
-        'landingpage/landingpage.html',
-        podcast_title=podcast_title,
-        podcast_description=podcast_description,
-        podcast_logo=podcast_logo,
-        host_name=host_name,
-        social_media=social_media_links,  # ✅ Correctly pass social media
-        episodes=episodes
-    )
+episode_repo = EpisodeRepository()
 
 @landingpage_bp.route('/episode', methods=['GET'])
 def episode():
@@ -65,38 +23,72 @@ def episode():
         return f"Error: {str(e)}", 500
 
 def map_social_links(social_links):
-    platforms = ["instagram", "twitter", "facebook", "linkedin", "youtube", "tiktok"]
+    platform_keywords = {
+        "instagram": "instagram.com",
+        "twitter": "twitter.com",
+        "facebook": "facebook.com",
+        "linkedin": "linkedin.com",
+        "youtube": "youtube.com",
+        "tiktok": "tiktok.com",
+    }
+
     social_media_dict = {}
 
-    for i, link in enumerate(social_links):
-        platform = platforms[i] if i < len(platforms) else f"other{i}"
-        social_media_dict[platform] = link
+    for link in social_links:
+        matched_platform = "other"
+        for platform, keyword in platform_keywords.items():
+            if keyword in link:
+                matched_platform = platform
+                break  # Stop checking once we find a match
+        
+        social_media_dict[matched_platform] = link
 
     return social_media_dict
 
 @landingpage_bp.route("/landingpage/<podcast_id>")
 def landingpage_by_id(podcast_id):
     try:
-        podcast_doc = podcasts.find_one({"_id": podcast_id})
+        # ✅ Get the user ID from the session 
+        user_id = getattr(g, 'user_id', "test_user")
 
-        if not podcast_doc:
+        # ✅ Fetch podcast details 
+        podcast_doc, status_code = podcast_repo.get_podcast_by_id(user_id, podcast_id)
+
+        if status_code != 200:
+            logger.warning(f"⚠️ Podcast {podcast_id} not found!")
             return render_template("404.html")
 
-        # 🟢 Konvertera socialMedia-array till dictionary
-        social_media_links = map_social_links(podcast_doc.get("socialMedia", []))
-        
+        # ✅ Fetch episodes using the repository
+        episodes_response, status_code = episode_repo.get_episodes_by_podcast(podcast_id, user_id)
 
-        # 🟢 Hämta övriga värden
-        podcast_title = podcast_doc.get("podName", "Default Podcast Title")
-        podcast_description = podcast_doc.get("description", "Default Podcast Description")
-        host_name = podcast_doc.get("hostName", "Unknown Host")
-        host_bio = podcast_doc.get("hostBio", "No biography available.")
-        host_image = podcast_doc.get("hostImage", url_for('static', filename='images/default-host.png'))
+        if status_code != 200:
+            logger.error(f"Failed to fetch episodes for podcast {podcast_id}: {episodes_response}")
+            episodes_list = []
+        else:
+            episodes_list = episodes_response.get("episodes", [])
 
-        podcast_logo = podcast_doc.get("logoUrl", "")
+        # ✅ Convert social media links to dictionary
+        social_media_links = map_social_links(podcast_doc.get("podcast", {}).get("socialMedia", []))
+
+        # ✅ Extract podcast details
+        podcast_title = podcast_doc.get("podcast", {}).get("podName", "Default Podcast Title")
+        podcast_description = podcast_doc.get("podcast", {}).get("description", "Default Podcast Description")
+        host_name = podcast_doc.get("podcast", {}).get("hostName", "Unknown Host")
+        host_bio = podcast_doc.get("podcast", {}).get("hostBio", "No biography available.")
+        tagline = podcast_doc.get("podcast", {}).get("tagline", "No tagline available.")
+        banner_url = podcast_doc.get("podcast", {}).get("bannerUrl", "")
+        podcast_logo = podcast_doc.get("podcast", {}).get("logoUrl", "")
+        host_image = podcast_doc.get("podcast", {}).get("hostImage", "")
+
+         # ✅ Handle host image (Base64 or default)
         if not podcast_logo.startswith("data:image"):
             podcast_logo = url_for('static', filename='images/default.png')
+        if not host_image or not host_image.startswith("data:image"):
+            host_image = url_for('static', filename='images/default.png')
+        if not banner_url or not banner_url.startswith("data:image"):
+            banner_url = url_for('static', filename='images/default.png')
 
+        # ✅ Render the template with optimized data retrieval
         return render_template(
             "landingpage/landingpage.html",
             podcast_title=podcast_title,
@@ -105,9 +97,13 @@ def landingpage_by_id(podcast_id):
             podcast_logo=podcast_logo,
             host_bio=host_bio,
             host_image=host_image,
-            social_media=social_media_links  # 🟢 Nu en dict
+            tagline=tagline,
+            social_media=social_media_links,
+            episodes=episodes_list,
+            banner_url=banner_url
+              # ✅ Pass optimized episode list
         )
-    
 
     except Exception as e:
+        logger.error(f"Error loading landing page: {str(e)}")
         return f"Error: {str(e)}", 500
