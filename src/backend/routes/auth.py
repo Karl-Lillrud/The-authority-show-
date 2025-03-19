@@ -25,7 +25,7 @@ API_BASE_URL = os.getenv("API_BASE_URL", "http://127.0.0.1:8000")
 def signin_page():
     if request.cookies.get("remember_me") == "true":
         return redirect("/dashboard")
-    return render_template("signin.html", API_BASE_URL=API_BASE_URL)
+    return render_template("signin/signin.html", API_BASE_URL=API_BASE_URL)
 
 
 @auth_bp.route("/signin", methods=["POST"])

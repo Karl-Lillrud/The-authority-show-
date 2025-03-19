@@ -1,0 +1,167 @@
+{% extends "components/base.html" %} {% block title %}Podcast Task
+Management{% endblock %} {% block content %}
+<!-- Guest Selection Popup -->
+<link
+  rel="stylesheet"
+  href="{{ url_for('static', filename='css/taskmanagement/taskmanagement.css') }}"
+/>
+
+
+
+  <!-- Back Arrow -->
+  <a
+    href="{{ url_for('dashboard_bp.dashboard') }}"
+    class="back-arrow"
+    id="dashboard-button"
+    >&#8592; Dashboard</a
+  >
+
+    <div class="task-header-buttons" style="justify-content: center">
+      <div class="button-group">
+        <button id="load-default-btn" onclick="openDefaultTasksPopup()">
+          Add Default Tasks
+        </button>
+        <button id="add-task-btn" onclick="openTaskModal()">
+          + Add Custom Task
+        </button>
+      </div>
+
+      <!-- Wrapper för att flytta Select Episode till höger -->
+      <div class="dropdown-wrapper">
+        <div class="dropdown view-episode-dropdown">
+          <button class="dropbtn" onclick="viewEpisodes()">
+            View Episodes
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="task-list-container">
+    <!-- Current Tasks Header -->
+    <h3 class="current-tasks-header">Pod Tasks</h3>
+
+    <!-- Ordered Task List -->
+    <ol id="task-list" class="sortable responsive-task-list">
+      <!-- Dynamically injected tasks will appear here -->
+    </ol>
+
+    <!-- Add Tasks to Episode and Back Button Container -->
+    <div class="add-tasks-button-container">
+      <div class="dropdown add-tasks-dropdown">
+        <button class="dropbtn" onclick="openAddTasksEpisodePopup()">
+          Add Tasks To Episode
+        </button>
+        <div class="dropdown-content" id="add-tasks-episode-dropdown"></div>
+        <!-- Episodes will be dynamically populated here -->
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Task Modal -->
+<div id="task-modal" class="popup" style="display: none">
+  <div class="popup-content">
+    <span class="close-btn" onclick="closeModal()">&times;</span>
+    <h2 id="modal-title">Create New Task</h2>
+
+    <label for="task-name">Task Name:</label>
+    <input type="text" id="task-name" placeholder="Enter task name" />
+
+    <label for="task-dependencies">Dependent on Other Task(s):</label>
+    <select id="task-dependencies" multiple>
+      <!-- Options dynamically populated -->
+    </select>
+
+    <label for="task-type">Task Type & Action:</label>
+    <select id="task-type">
+      <option value="manual">Manual</option>
+      <option value="email">Automated - Email</option>
+      <option value="system">Automated - System Action</option>
+      <option value="ai">Automated - AI Script</option>
+    </select>
+
+    <div id="action-details" class="hidden">
+      <label for="action-details-input">Action Details:</label>
+      <input
+        type="text"
+        id="action-details-input"
+        placeholder="Enter details"
+      />
+    </div>
+
+    <label for="due-time">Due Time Since Recording Date:</label>
+    <input type="text" id="due-time" placeholder="Enter days" />
+
+    <label for="task-description">Task Description:</label>
+    <textarea id="task-description" placeholder="Enter task details"></textarea>
+
+    <label for="action-link">Action Link:</label>
+    <input type="text" id="action-link" placeholder="Enter external link" />
+    <input type="text" id="action-link-desc" placeholder="Describe the link" />
+
+    <label>
+      <input type="checkbox" id="submission-required" /> Require Information
+      Submission
+    </label>
+
+    <div class="modal-buttons">
+      <button id="save-task-btn">Save Task</button>
+      <button class="cancel-btn" onclick="closeModal()">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<!-- Default Tasks Popup -->
+<div id="default-tasks-popup" class="popup" style="display: none">
+  <div class="popup-content">
+    <span class="close-btn" onclick="closeDefaultTasksPopup()">&times;</span>
+    <h2>Select Default Tasks</h2>
+    <button id="select-all-default-btn" onclick="selectAllDefaultTasks()">
+      Select All
+    </button>
+    <div id="default-tasks-list">
+      <!-- Default tasks will be dynamically populated -->
+    </div>
+    <div class="modal-buttons">
+      <button id="add-default-tasks-btn" onclick="addSelectedDefaultTasks()">
+        Add Selected Tasks
+      </button>
+      <button class="cancel-btn" onclick="closeDefaultTasksPopup()">
+        Cancel
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Episodes Popup -->
+<div id="episodes-popup" class="popup" style="display: none">
+  <div class="popup-content">
+    <h2>Select Episode</h2>
+    <div id="episodes-list">
+      <!-- Episodes will be dynamically populated here -->
+    </div>
+    <div class="modal-buttons" style="justify-content: flex-end">
+      <button class="cancel-btn" onclick="closeEpisodesPopup()">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<div id="add-tasks-episode-popup" class="popup" style="display: none">
+  <div class="popup-content">
+    <h2>Add tasks to</h2>
+    <div id="add-tasks-episode-list">
+      <!-- Episodes will be dynamically populated here -->
+    </div>
+    <div class="modal-buttons" style="justify-content: flex-end">
+      <button class="cancel-btn" onclick="closeAddTasksEpisodePopup()">
+        Cancel
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Add this script tag to load SortableJS library -->
+<script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
+<script type="module" src="{{ url_for('static', filename='js/taskmanagement/taskmanagement.js') }}"></script>
+{% endblock %}
