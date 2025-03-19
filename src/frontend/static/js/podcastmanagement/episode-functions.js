@@ -163,57 +163,54 @@ export function renderEpisodeDetail(episode) {
         <div id="guests-list"></div>
       </div>
       <div class="separator"></div>
-      <div class="detail-actions">
-        <button class="delete-btn" id="delete-episode-btn" data-id="${
-          episode._id
-        }">
-          <span class="icon">${shared.svgpodcastmanagement.delete}</span>
-          Delete Episode
-        </button>
-      </div>
+      <div class="detail-actions" id="episode-actions"></div>
     </div>
   </div>
 `;
 
-  // Back button event listener
-  document.getElementById("back-to-podcast").addEventListener("click", () => {
-    // Ensure selectedPodcastId is set correctly
-    if (!shared.selectedPodcastId) {
-      shared.selectedPodcastId = episode.podcast_id || episode.podcastId;
-    }
+  // Define the episodeActions container
+  const episodeActions = document.getElementById("episode-actions");
 
-    // Navigate back to the podcast details
-    if (shared.selectedPodcastId) {
-      viewPodcast(shared.selectedPodcastId);
-    } else {
-      console.error("Podcast ID is missing. Cannot navigate back to podcast.");
-      showNotification(
-        "Error",
-        "Podcast ID is missing. Cannot navigate back.",
-        "error"
-      );
-    }
-  });
+  // Back button event listener
+  const backButton = document.getElementById("back-to-podcast");
+  if (backButton) {
+    backButton.addEventListener("click", () => {
+      if (!shared.selectedPodcastId) {
+        shared.selectedPodcastId = episode.podcast_id || episode.podcastId;
+      }
+      if (shared.selectedPodcastId) {
+        viewPodcast(shared.selectedPodcastId);
+      } else {
+        console.error(
+          "Podcast ID is missing. Cannot navigate back to podcast."
+        );
+        showNotification(
+          "Error",
+          "Podcast ID is missing. Cannot navigate back.",
+          "error"
+        );
+      }
+    });
+  }
 
   // Edit button event listener
-  document
-    .getElementById("edit-episode-btn")
-    .addEventListener("click", async () => {
+  const editButton = document.getElementById("edit-episode-btn");
+  if (editButton) {
+    editButton.addEventListener("click", async () => {
       try {
-        const episodeId = document
-          .getElementById("edit-episode-btn")
-          .getAttribute("data-id");
+        const episodeId = editButton.getAttribute("data-id");
         const response = await fetchEpisode(episodeId);
-        showEpisodePopup(response); // Ensure response is passed correctly
+        showEpisodePopup(response);
       } catch (error) {
         showNotification("Error", "Failed to fetch episode details", "error");
       }
     });
+  }
 
   // Delete button event listener
-  document
-    .getElementById("delete-episode-btn")
-    .addEventListener("click", async () => {
+  const deleteButton = document.getElementById("delete-episode-btn");
+  if (deleteButton) {
+    deleteButton.addEventListener("click", async () => {
       if (confirm("Are you sure you want to delete this episode?")) {
         try {
           await deleteEpisode(episode._id);
@@ -228,104 +225,103 @@ export function renderEpisodeDetail(episode) {
         }
       }
     });
+  }
 
-  // Fetch and display guests for the episode
-  fetchGuestsByEpisode(episode._id)
-    .then((guests) => {
-      const guestsListEl = document.getElementById("guests-list");
-      guestsListEl.innerHTML = "";
-
-      if (guests && guests.length) {
-        const guestsContainer = document.createElement("div");
-        guestsContainer.className = "guests-container";
-
-        guests.forEach((guest) => {
-          const guestCard = document.createElement("div");
-          guestCard.className = "guest-card";
-
-          // Get initials from guest name
-          const initials = guest.name
-            .split(" ")
-            .map((word) => word[0])
-            .join("")
-            .substring(0, 2)
-            .toUpperCase();
-
-          // Create content container for guest info
-          const contentDiv = document.createElement("div");
-          contentDiv.className = "guest-info";
-
-          // Add guest avatar placeholder (circle with initials)
-          const avatarDiv = document.createElement("div");
-          avatarDiv.className = "guest-avatar";
-          avatarDiv.textContent = initials;
-
-          // Create guest info with name and email
-          const infoDiv = document.createElement("div");
-          infoDiv.className = "guest-content";
-
-          const nameDiv = document.createElement("div");
-          nameDiv.className = "guest-name";
-          nameDiv.textContent = guest.name;
-
-          const emailDiv = document.createElement("div");
-          emailDiv.className = "guest-email";
-          emailDiv.textContent = guest.email;
-
-          infoDiv.appendChild(nameDiv);
-          infoDiv.appendChild(emailDiv);
-
-          // Create view profile button
-          const viewProfileBtn = document.createElement("button");
-          viewProfileBtn.className = "view-profile-btn";
-          viewProfileBtn.textContent = "View Profile";
-
-          // Add click event to view button
-          viewProfileBtn.addEventListener("click", (e) => {
-            e.stopPropagation(); // Prevent triggering the card click
-            renderGuestDetail(guest);
-          });
-
-          // Add click event to card
-          guestCard.addEventListener("click", () => {
-            renderGuestDetail(guest);
-          });
-
-          // Assemble the card
-          contentDiv.appendChild(avatarDiv);
-          contentDiv.appendChild(infoDiv);
-          guestCard.appendChild(contentDiv);
-          guestCard.appendChild(viewProfileBtn);
-          guestsContainer.appendChild(guestCard);
-        });
-
-        guestsListEl.appendChild(guestsContainer);
-      } else {
-        const noGuests = document.createElement("p");
-        noGuests.className = "no-guests-message";
-        noGuests.textContent = "No guests available for this episode.";
-        guestsListEl.appendChild(noGuests);
-      }
-    })
-    .catch((error) => {
-      console.error("Error fetching guests:", error);
-      const errorMsg = document.createElement("p");
-      errorMsg.className = "error-message";
-      errorMsg.textContent = "This episode has no guests.";
-      document.getElementById("guests-list").appendChild(errorMsg);
-    });
-
-  // Update edit buttons after rendering
-  updateEditButtons();
-
-  if (episode.audioUrl) {
+  // Add play button if audioUrl exists
+  if (episode.audioUrl && episodeActions) {
     const playButton = createPlayButton();
     playButton.addEventListener("click", (e) => {
       e.stopPropagation();
       playAudio(episode.audioUrl, episode.title);
     });
-    episodeActions.appendChild(playButton); // Ensure play button is appended
+    episodeActions.appendChild(playButton);
   }
+
+  // Fetch and display guests for the episode
+  fetchGuestsByEpisode(episode._id)
+    .then((guests) => {
+      const guestsListEl = document.getElementById("guests-list");
+      if (guestsListEl) {
+        guestsListEl.innerHTML = "";
+
+        if (guests && guests.length) {
+          const guestsContainer = document.createElement("div");
+          guestsContainer.className = "guests-container";
+
+          guests.forEach((guest) => {
+            const guestCard = document.createElement("div");
+            guestCard.className = "guest-card";
+
+            const initials = guest.name
+              .split(" ")
+              .map((word) => word[0])
+              .join("")
+              .substring(0, 2)
+              .toUpperCase();
+
+            const contentDiv = document.createElement("div");
+            contentDiv.className = "guest-info";
+
+            const avatarDiv = document.createElement("div");
+            avatarDiv.className = "guest-avatar";
+            avatarDiv.textContent = initials;
+
+            const infoDiv = document.createElement("div");
+            infoDiv.className = "guest-content";
+
+            const nameDiv = document.createElement("div");
+            nameDiv.className = "guest-name";
+            nameDiv.textContent = guest.name;
+
+            const emailDiv = document.createElement("div");
+            emailDiv.className = "guest-email";
+            emailDiv.textContent = guest.email;
+
+            infoDiv.appendChild(nameDiv);
+            infoDiv.appendChild(emailDiv);
+
+            const viewProfileBtn = document.createElement("button");
+            viewProfileBtn.className = "view-profile-btn";
+            viewProfileBtn.textContent = "View Profile";
+
+            viewProfileBtn.addEventListener("click", (e) => {
+              e.stopPropagation();
+              renderGuestDetail(guest);
+            });
+
+            guestCard.addEventListener("click", () => {
+              renderGuestDetail(guest);
+            });
+
+            contentDiv.appendChild(avatarDiv);
+            contentDiv.appendChild(infoDiv);
+            guestCard.appendChild(contentDiv);
+            guestCard.appendChild(viewProfileBtn);
+            guestsContainer.appendChild(guestCard);
+          });
+
+          guestsListEl.appendChild(guestsContainer);
+        } else {
+          const noGuests = document.createElement("p");
+          noGuests.className = "no-guests-message";
+          noGuests.textContent = "No guests available for this episode.";
+          guestsListEl.appendChild(noGuests);
+        }
+      }
+    })
+    .catch((error) => {
+      console.error("Error fetching guests:", error);
+      const guestsListEl = document.getElementById("guests-list");
+      if (guestsListEl) {
+        const errorMsg = document.createElement("p");
+        errorMsg.className = "error-message";
+        errorMsg.textContent = "This episode has no guests.";
+        guestsListEl.appendChild(errorMsg);
+      }
+    });
+
+  // Update edit buttons after rendering
+  updateEditButtons();
 }
 
 // New function to display the episode popup for viewing/updating an episode

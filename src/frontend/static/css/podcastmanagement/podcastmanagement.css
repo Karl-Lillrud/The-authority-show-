@@ -1665,25 +1665,71 @@ body {
     min-height: 100vh;
   }
 
+  /* Sidebar Styles */
   .sidebar {
-    width: 100%;
-    height: auto;
-    border-right: none;
-    border-bottom: 1px solid var(--sidebar-border);
-    position: sticky;
-    top: var(--header-height, 60px);
-    z-index: 100;
-    background-color: white;
+    width: var(--sidebar-width);
+    position: absolute;
+    top: 0;
+    height: calc(100vh - var(--header-height, 60px));
+    background-color: var(--sidebar-bg);
+    border-right: 1px solid var(--sidebar-border);
+    display: flex;
+    flex-direction: column;
+    transition: width var(--transition-normal);
+    overflow: hidden;
+    box-shadow: 0 0 20px rgba(0, 0, 0, 0.05);
+    z-index: 9;
+  }
+
+  /* Add decorative curves to sidebar */
+  .sidebar::before,
+  .sidebar::after {
+    content: "";
+    position: absolute;
+    left: 0;
+    right: 0;
+    height: 40px;
+    z-index: 1;
+  }
+
+  .sidebar::before {
+    top: 0;
+    background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1440 320'%3E%3Cpath fill='%23FEF0E6' stroke='%23FF7F3F' stroke-width='2' d='M0,160L48,144C96,128,192,96,288,106.7C384,117,480,171,576,186.7C672,203,768,181,864,154.7C960,128,1056,96,1152,96C1248,96,1344,128,1392,144L1440,160L1440,0L1392,0C1344,0,1248,0,1152,0C1056,0,960,0,864,0C768,0,672,0,576,0C480,0,384,0,288,0C192,0,96,0,48,0L0,0Z'%3E%3C/path%3E%3C/svg%3E")
+      no-repeat;
+    background-size: cover;
+  }
+
+  .sidebar::after {
+    bottom: 0;
+    background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1440 320'%3E%3Cpath fill='%23FEF0E6' stroke='%23FF7F3F' stroke-width='2' d='M0,160L48,144C96,128,192,96,288,106.7C384,117,480,171,576,186.7C672,203,768,181,864,154.7C960,128,1056,96,1152,96C1248,96,1344,128,1392,144L1440,160L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z'%3E%3C/path%3E%3C/svg%3E")
+      no-repeat;
+    background-size: cover;
+  }
+
+  .sidebar.collapsed {
+    width: var(--sidebar-collapsed-width);
   }
 
   .sidebar-header {
-    padding: var(--spacing-md);
+    padding: var(--spacing-lg);
+    border-bottom: 1px solid var(--sidebar-border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: relative;
+    z-index: 2;
   }
 
   .sidebar-content {
-    display: flex;
-    flex-direction: column;
-    padding: 0;
+    flex: 1;
+    overflow-y: auto;
+    padding: var(--spacing-md) 0;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(0, 0, 0, 0.2) white;
+    position: relative;
+    z-index: 2;
+    margin-top: 20px; /* Add space for the top curve */
+    margin-bottom: 20px; /* Add space for the bottom curve */
   }
 
   /* Horizontal menu styling */
