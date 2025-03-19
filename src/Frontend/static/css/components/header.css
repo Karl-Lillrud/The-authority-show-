@@ -74,20 +74,18 @@ header {
     5px 5px 10px var(--dark-shadow-light);
   border-radius: var(--radius-small);
   transition: background-color 0.3s ease, box-shadow 0.3s ease;
-  margin-bottom: 25px;
+  margin-bottom: 0; /* Remove gap below header */
 }
 
 /* Logo – Removed absolute positioning so it stays on the far left */
 .logo-container {
   /* Previously positioned absolutely; now let flex layout position it */
   width: 120px; /* Adjust as needed */
-  
 }
 
 .logo-container:hover {
   transform: scale(1.05);
 }
-
 
 .logo-container img {
   width: 100%;

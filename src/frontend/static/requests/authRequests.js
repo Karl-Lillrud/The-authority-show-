@@ -18,6 +18,11 @@ export async function signin(email, password, remember) {
 }
 
 export async function register(email, password) {
+  // Validate required parameters
+  if (!email || !password) {
+    throw new Error("Email and password are required.");
+  }
+
   try {
     const response = await fetch(`/register`, {
       method: "POST",
@@ -52,7 +57,13 @@ export async function register(email, password) {
   }
 }
 
-export async function registerTeamMember(email, password, fullName, phone, inviteToken) {
+export async function registerTeamMember(
+  email,
+  password,
+  fullName,
+  phone,
+  inviteToken
+) {
   try {
     const response = await fetch(`/register-team-member`, {
       method: "POST",
@@ -66,12 +77,10 @@ export async function registerTeamMember(email, password, fullName, phone, invit
     }
 
     const result = await response.json();
-    
+
     // If registration is successful, automatically redirect
     return result.redirect_url || "/dashboard";
   } catch (error) {
     throw new Error(error.message);
   }
 }
-
-

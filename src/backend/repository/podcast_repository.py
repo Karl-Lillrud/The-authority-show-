@@ -25,7 +25,7 @@ class PodcastRepository:
 
             # Inject the accountId into the data
             data["accountId"] = account_id
-            
+
             if "hostBio" not in data or not data.get("hostBio"):
                 logger.warning("⚠️ hostBio is missing or empty in request data")
             if "hostImage" not in data or not data.get("hostImage"):
@@ -59,6 +59,11 @@ class PodcastRepository:
                 # Merge RSS feed data into validated_data
                 validated_data.update(rss_data)
 
+                # Always assign imageUrl to logoUrl
+                if validated_data.get("imageUrl"):
+                    validated_data["logoUrl"] = validated_data["imageUrl"]
+                validated_data.pop("imageUrl", None)
+
             # Generate a unique podcast ID
             podcast_id = str(uuid.uuid4())
             podcast_item = {
@@ -87,7 +92,6 @@ class PodcastRepository:
                 "copyright_info": validated_data.get(
                     "copyright_info", ""
                 ),  # Added field
-                "imageUrl": validated_data.get("imageUrl", ""),  # Added field
                 "bannerUrl": validated_data.get("bannerUrl", ""),  # Added field
                 "tagline": validated_data.get("tagline", ""),  # Added field
                 "hostBio": validated_data.get("hostBio", ""),  # Added field
