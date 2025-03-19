@@ -1429,8 +1429,11 @@ function renderEpisodeDetail(episode) {
         const episodeData = {
           title: episode.title,
           description: episode.description,
-          audioUrl: episode.audioUrl // Ensure this field exists in the episode object
+          audioUrl: `C:\\Users\\sarwe\\Desktop\\LIa\\${episode.audioUrl || 'default.mp3'}` // Ensure this field exists in the episode object
         };
+
+        // Log episode data for debugging
+        console.log("Episode Data:", episodeData);
 
         // Publish to Spotify
         const result = await publishToSpotify(episodeData);

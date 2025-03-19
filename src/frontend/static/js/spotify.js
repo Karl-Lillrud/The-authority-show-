@@ -31,7 +31,7 @@ document.getElementById('publishPodcastForm').addEventListener('submit', functio
         headers: {
             'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ title, description, audioUrl })
+        body: JSON.stringify({ title, description, audioUrl: `C:\\Users\\sarwe\\Desktop\\LIa\\${audioUrl}` }) // Ensure the local path is used
     })
     .then(response => response.json())
     .then(data => {

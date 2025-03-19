@@ -20,7 +20,8 @@ def upload_episode_to_spotify(access_token, podcast_title, podcast_description, 
         "category": "Technology",  # Justera kategori om nödvändigt
     }
     
-    print(f"Response from Spotify: {response.status_code} - {response.text}")
+    # Log metadata for debugging
+    print(f"Metadata: {metadata}")
 
     response = requests.post(url, json=metadata, headers=headers)
     

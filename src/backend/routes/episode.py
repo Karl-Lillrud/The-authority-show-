@@ -327,15 +327,32 @@ def publish_episode(episode_id):
 
     try:
         user_id = str(g.user_id)
+
+        # Fetch the episode
         episode = collection.database.Episodes.find_one({"_id": episode_id, "userid": user_id})
 
         if not episode:
             return jsonify({"error": "Episode not found"}), 404
 
+        # Check if audioUrl is provided in the request
+        episode_data = request.get_json()  # Assuming the data is being sent as JSON
+        audio_url = episode_data.get("audioUrl")
+
+        if not audio_url:
+            return jsonify({"error": "Audio URL is missing. Please provide a valid audio URL."}), 400
+        
+        print(f"Publishing episode with audio URL: {audio_url}")  # Debugging log
+
         # Update the episode status to "Published"
         result = collection.database.Episodes.update_one(
             {"_id": episode_id},
-            {"$set": {"status": "Published", "updated_at": datetime.now(timezone.utc)}}
+            {
+                "$set": {
+                    "status": "Published",
+                    "updated_at": datetime.now(timezone.utc),
+                    "audioUrl": audio_url  # Optionally, you can store or update audioUrl in the episode document
+                }
+            }
         )
 
         if result.modified_count == 1:
