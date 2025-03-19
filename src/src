@@ -1,0 +1,11 @@
+<script>start("c:\\Users\\danie\\Documents\\programmering\\The-authority-show-\\src\\");</script>
+<script>onHasParentDirectory();</script>
+<script>addRow("backend","backend",1,0,"0 B",1742392804,"3/19/25, 3:00:04 PM");</script>
+<script>addRow("Frontend","Frontend",1,0,"0 B",1742392804,"3/19/25, 3:00:04 PM");</script>
+<script>addRow("__init__.py","__init__.py",0,0,"0 B",1742392804,"3/19/25, 3:00:04 PM");</script>
+<script>addRow(".DS_Store",".DS_Store",0,6148,"6.0 kB",1742392804,"3/19/25, 3:00:04 PM");</script>
+<script>addRow("app.py","app.py",0,4470,"4.4 kB",1742392804,"3/19/25, 3:00:04 PM");</script>
+<script>addRow("client_secret.json","client_secret.json",0,218,"218 B",1742392804,"3/19/25, 3:00:04 PM");</script>
+<script>addRow("environment.yml","environment.yml",0,21862,"21.3 kB",1742392804,"3/19/25, 3:00:04 PM");</script>
+<script>addRow("requirements.txt","requirements.txt",0,767,"767 B",1742392804,"3/19/25, 3:00:04 PM");</script>
+<script>addRow("streamlit_transcription.py","streamlit_transcription.py",0,48879,"47.7 kB",1742392804,"3/19/25, 3:00:04 PM");</script>
