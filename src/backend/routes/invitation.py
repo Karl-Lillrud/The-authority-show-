@@ -2,7 +2,7 @@ from flask import Blueprint, request, jsonify, render_template, url_for, g
 from backend.utils.email_utils import send_email
 from backend.database.mongo_connection import collection
 from backend.models.podcasts import PodcastSchema
-from backend.services.teamInviteService import TeamInviteService
+from backend.services.TeamInviteService import TeamInviteService
 from datetime import datetime, timezone
 import uuid
 import logging
