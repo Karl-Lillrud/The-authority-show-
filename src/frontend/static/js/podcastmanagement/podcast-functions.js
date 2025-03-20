@@ -753,13 +753,13 @@ function handlePodcastFormSubmission() {
 
       category,
       socialMedia: [
-        document.getElementById("facebook")?.value.trim(),
-        document.getElementById("instagram")?.value.trim(),
-        document.getElementById("linkedin")?.value.trim(),
-        document.getElementById("twitter")?.value.trim(),
-        document.getElementById("tiktok")?.value.trim(),
-        document.getElementById("pinterest")?.value.trim(),
-        document.getElementById("youtube")?.value.trim()
+        document.getElementById("facebook")?.value.trim() || " ",
+        document.getElementById("instagram")?.value.trim() || " ",
+        document.getElementById("linkedin")?.value.trim() || " ",
+        document.getElementById("twitter")?.value.trim() || " ",
+        document.getElementById("tiktok")?.value.trim() || " ",
+        document.getElementById("pinterest")?.value.trim() || " ",
+        document.getElementById("youtube")?.value.trim() || " "
       ].filter((link) => link)
     };
 
