@@ -1,18 +1,15 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Complete Your Registration</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/team/registerTeam.css') }}">
 </head>
-
 <body>
     <div class="container">
-        <!-- 🔹 Add the PodManager Logo -->
-        <img src="{{ url_for('static', filename='images/PodManagerLogo.png') }}" alt="PodManager Logo"
-            class="team-logo">
+        <!-- Add the PodManager Logo -->
+        <img src="{{ url_for('static', filename='images/PodManagerLogo.png') }}" alt="PodManager Logo" class="team-logo">
 
         <h1>Join {{ team_name }}</h1>
         <p class="form-description">Complete your registration to join the team</p>
@@ -25,8 +22,7 @@
 
             <div class="form-group">
                 <label for="email">Email Address</label>
-                <input type="email" id="email" name="email" value="{{ email }}" {% if email %}readonly{% endif %}
-                    required>
+                <input type="email" id="email" name="email" value="{{ email }}" {% if email %}readonly{% endif %} required>
                 <div class="form-hint">This email address was used for your invitation</div>
             </div>
 
@@ -39,8 +35,7 @@
                 <label for="password">Password</label>
                 <input type="password" id="password" name="password" required>
                 <span class="toggle-password" data-target="password">Show</span>
-                <div class="form-hint">Must be at least 8 characters with numbers, uppercase, and lowercase letters.
-                </div>
+                <div class="form-hint">Must be at least 8 characters with numbers, uppercase, and lowercase letters.</div>
             </div>
 
             <div class="form-group password-container">
@@ -63,7 +58,6 @@
 
     <!-- Load scripts -->
     <script src="{{ url_for('static', filename='js/team/registerTeamMember.js') }}" type="module"></script>
-
 </body>
-
 </html>
+
