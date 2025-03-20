@@ -21,14 +21,14 @@
     </div>
   </header>
 
-  <!-- Hero section with background and guest image -->
+  <!-- Hero section -->
   <section class="guest-hero">
     <div class="overlay"></div>
     <div class="hero-content container">
       <!-- Guest profile image -->
       <div class="guest-image">
         <img 
-          src="{{ guest_image or url_for('static', filename='images/default-guest.png') }}" 
+          src="{{ guest_image }}" 
           alt="{{ guest_name }}"
         >
       </div>
@@ -40,23 +40,52 @@
     </div>
   </section>
 
-  <!-- Section for About, Experience, Education -->
-  <section class="guest-details container">
-    <div class="detail-card">
-      <h2>About</h2>
-      <p>{{ guest_bio }}</p>
-    </div>
-    <div class="detail-card">
-      <h2>Experience</h2>
-      <p>Add any experiences, previous assignments, and projects here.</p>
-    </div>
-    <div class="detail-card">
-      <h2>Education</h2>
-      <p>Information about education, courses, and certifications.</p>
-    </div>
+  <!-- Guest Info Section -->
+  <section class="guest-info container">
+    <h2>Guest Information</h2>
+    <p><strong>Podcast ID:</strong> {{ podcast_id }}</p>
+    <p><strong>Description:</strong> {{ description }}</p>
+    <p><strong>Tags:</strong> 
+      {% if tags %}
+        {{ tags | join(', ') }}
+      {% else %}
+        No tags
+      {% endif %}
+    </p>
+    <p><strong>Areas of Interest:</strong> 
+      {% if areas_of_interest %}
+        {{ areas_of_interest | join(', ') }}
+      {% else %}
+        None
+      {% endif %}
+    </p>
+    <p><strong>Status:</strong> {{ guest_status }}</p>
+    <p><strong>Scheduled:</strong> {{ scheduled }}</p>
+    <p><strong>Completed:</strong> {{ completed }}</p>
+    <p><strong>Created At:</strong> {{ created_at }}</p>
   </section>
 
-  <!-- Episodes list -->
+  <!-- Contact Info Section -->
+  <section class="contact-info container">
+    <h2>Contact Info</h2>
+    <p><strong>Email:</strong> <a href="mailto:{{ email }}">{{ email }}</a></p>
+    <p><strong>LinkedIn:</strong> 
+      {% if linkedin %}
+        <a href="{{ linkedin }}" target="_blank">{{ linkedin }}</a>
+      {% else %}
+        None
+      {% endif %}
+    </p>
+    <p><strong>Twitter:</strong> 
+      {% if twitter %}
+        <a href="{{ twitter }}" target="_blank">{{ twitter }}</a>
+      {% else %}
+        None
+      {% endif %}
+    </p>
+  </section>
+
+  <!-- Episodes Section -->
   <section class="guest-episodes container">
     <h2>Episodes the Guest Has Participated In</h2>
     {% if episodes and episodes|length > 0 %}
@@ -64,10 +93,7 @@
         {% for episode in episodes %}
           <li class="episode-card">
             <div class="episode-thumbnail">
-              <img 
-                src="{{ episode.thumbnail or url_for('static', filename='images/default.png') }}" 
-                alt="{{ episode.title }}"
-              >
+              <img src="{{ episode.banner }}" alt="{{ episode.title }}">
             </div>
             <div class="episode-info">
               <h3>
