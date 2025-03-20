@@ -59,7 +59,6 @@ body {
 /* Dashboard link styling */
 .dashboard-link {
   color: var(--highlight-color) !important;
-  font-weight: 600;
 }
 
 .dashboard-link .sidebar-icon {
@@ -213,46 +212,6 @@ body {
   background-color: rgba(231, 76, 60, 0.2);
   transform: translateY(-2px);
   box-shadow: 0 6px 10px -3px rgba(231, 76, 60, 0.2);
-}
-
-/* Add action buttons in sidebar */
-.sidebar-action-buttons {
-  margin-top: 20px;
-  padding: 10px;
-  padding-bottom: 40px;
-  border-top: 1px solid var(--sidebar-border);
-  border-bottom: 1px solid var(--sidebar-border);
-}
-
-.sidebar-action-button {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  background-color: rgba(255, 127, 63, 0.1);
-  color: var(--highlight-color);
-  border: none;
-  padding: 10px 12px;
-  border-radius: var(--radius-medium);
-  cursor: pointer;
-  font-size: 0.9rem;
-  font-weight: 600;
-  width: 100%;
-  margin-bottom: 8px;
-  transition: all var(--transition-normal);
-  text-align: left;
-}
-
-.sidebar-action-button:hover {
-  background-color: rgba(255, 127, 63, 0.2);
-  transform: translateX(4px);
-}
-
-.sidebar-action-buttons h3 {
-  font-size: 0.85rem;
-  color: rgba(0, 0, 0, 0.5);
-  margin-bottom: 10px;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
 }
 
 /* Member chips styling */

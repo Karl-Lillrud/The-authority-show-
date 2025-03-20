@@ -146,7 +146,6 @@
 .sidebar-menu-item.active .sidebar-menu-link {
   background-color: var(--sidebar-item-active);
   color: var(--highlight-color);
-  font-weight: 600;
 }
 
 .sidebar-icon {
@@ -201,7 +200,6 @@
 /* Dashboard link styling */
 .dashboard-link {
   color: var(--highlight-color) !important;
-  font-weight: 600;
 }
 
 .dashboard-link .sidebar-icon {
@@ -210,6 +208,10 @@
 
 .dashboard-link:hover {
   background-color: var(--sidebar-item-hover);
+}
+
+.dashboard-link span:not(.sidebar-icon) {
+  margin-left: 4px; /* Adjust as needed */
 }
 
 .sidebar-menu-item .dashboard-link {
