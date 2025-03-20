@@ -124,8 +124,8 @@ body {
 
 /* Add hover effects to the sidebar */
 .sidebar:hover::before {
-  width: 60px;
-  height: 60px;
+  width: 180px;
+  height: 180px;
   filter: drop-shadow(
     0 0 3px rgba(255, 127, 63, 0.6)
   ); /* Uniform glow effect */
@@ -1903,6 +1903,11 @@ body {
   .sidebar::after {
     width: 40px;
     height: 40px;
+  }
+
+  .sidebar::before,
+  .sidebar::after {
+    display: none;
   }
 }
 
