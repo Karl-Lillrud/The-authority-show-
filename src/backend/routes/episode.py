@@ -50,20 +50,8 @@ def get_episode(episode_id):
         return jsonify({"error": f"Failed to fetch episode: {str(e)}"}), 500
 
 
-@episode_bp.route("/get_episodes", methods=["GET"])
-def get_episodes():
-    if not hasattr(g, "user_id") or not g.user_id:
-        return jsonify({"error": "Unauthorized"}), 401
 
-    try:
-        response, status_code = episode_repo.get_episodes(g.user_id)
-        return jsonify(response), status_code
-    except Exception as e:
-        logger.error("❌ ERROR: %s", e)
-        return jsonify({"error": f"Failed to fetch episodes: {str(e)}"}), 500
-
-
-@episode_bp.route("/delete_episods/<episode_id>", methods=["DELETE"])
+@episode_bp.route("/delete_episodes/<episode_id>", methods=["DELETE"])
 def delete_episode(episode_id):
     if not hasattr(g, "user_id") or not g.user_id:
         return jsonify({"error": "Unauthorized"}), 401
