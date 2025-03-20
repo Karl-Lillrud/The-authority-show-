@@ -31,7 +31,9 @@ class UserToTeamRepository:
             if not user:
                 return {"error": "User not found"}, 404
 
-            existing_user_team = self.users_to_teams_collection.find_one({"userId": user_id, "teamId": team_id})
+            existing_user_team = self.users_to_teams_collection.find_one(
+                {"userId": user_id, "teamId": team_id}
+            )
             if existing_user_team:
                 return {"error": "User is already a member of the team"}, 400
 
@@ -66,18 +68,22 @@ class UserToTeamRepository:
             user_to_team_schema = UserToTeamSchema()
             validated_data = user_to_team_schema.load(data)
 
-            user_team_relation = self.users_to_teams_collection.find_one({
-                "userId": validated_data["userId"],
-                "teamId": validated_data["teamId"],
-            })
+            user_team_relation = self.users_to_teams_collection.find_one(
+                {
+                    "userId": validated_data["userId"],
+                    "teamId": validated_data["teamId"],
+                }
+            )
 
             if not user_team_relation:
                 return {"error": "User not found in this team."}, 404
 
-            result = self.users_to_teams_collection.delete_one({
-                "userId": validated_data["userId"],
-                "teamId": validated_data["teamId"],
-            })
+            result = self.users_to_teams_collection.delete_one(
+                {
+                    "userId": validated_data["userId"],
+                    "teamId": validated_data["teamId"],
+                }
+            )
 
             if result.deleted_count == 0:
                 return {"error": "Failed to remove user from team."}, 500
@@ -92,7 +98,9 @@ class UserToTeamRepository:
 
     def get_team_members(self, team_id):
         try:
-            team_members = list(self.users_to_teams_collection.find({"teamId": team_id}, {"_id": 0}))
+            team_members = list(
+                self.users_to_teams_collection.find({"teamId": team_id}, {"_id": 0})
+            )
 
             if not team_members:
                 return {"message": "No members found for this team"}, 404
@@ -100,7 +108,9 @@ class UserToTeamRepository:
             members_details = []
             for member in team_members:
                 user_id = member["userId"]
-                user_details = self.users_collection.find_one({"_id": user_id}, {"_id": 0})
+                user_details = self.users_collection.find_one(
+                    {"_id": user_id}, {"_id": 0}
+                )
 
                 if user_details:
                     user_details["role"] = member.get("role", "member")
@@ -113,19 +123,40 @@ class UserToTeamRepository:
             return {"error": f"Failed to retrieve team members: {str(e)}"}, 500
 
     def get_teams_for_user(self, user_id):
-  
+
         try:
-            user_teams = list(self.users_to_teams_collection.find({"userId": user_id}, {"teamId": 1, "_id": 0}))
+            user_teams = list(
+                self.users_to_teams_collection.find(
+                    {"userId": user_id}, {"teamId": 1, "_id": 0}
+                )
+            )
 
             if not user_teams:
                 return {"message": "User is not part of any team"}, 404
 
             team_ids = [team["teamId"] for team in user_teams]
 
-            teams = list(self.teams_collection.find({"_id": {"$in": team_ids}}, {"_id": 1, "name": 1}))
+            teams = list(
+                self.teams_collection.find(
+                    {"_id": {"$in": team_ids}}, {"_id": 1, "name": 1}
+                )
+            )
 
             return {"teams": teams}, 200
 
         except Exception as e:
-            logger.error(f"Error retrieving teams for user {user_id}: {e}", exc_info=True)
+            logger.error(
+                f"Error retrieving teams for user {user_id}: {e}", exc_info=True
+            )
             return {"error": f"Failed to retrieve teams: {str(e)}"}, 500
+
+    def is_user_in_team(self, user_id, team_id):
+        """Check if a user is already a member of a team."""
+        try:
+            existing_user_team = self.users_to_teams_collection.find_one(
+                {"userId": user_id, "teamId": team_id}
+            )
+            return existing_user_team is not None
+        except Exception as e:
+            logger.error(f"Error checking if user is in team: {e}", exc_info=True)
+            return False

@@ -37,6 +37,10 @@ const sidebarHTML = `
         <span class="sidebar-icon"></span>
         <span>Add New Team</span>
       </button>
+      <button id="addNewMemberBtn" class="sidebar-action-button">
+        <span class="sidebar-icon"></span>
+        <span>Add New Member</span>
+      </button>
     </div>
   </div>
   <div class="sidebar-footer">

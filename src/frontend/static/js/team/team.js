@@ -6,6 +6,7 @@ import {
   fetchPodcasts,
   updatePodcastTeamRequest
 } from "/static/requests/teamRequests.js";
+import { sendTeamInvite } from "/static/requests/invitationRequests.js"; // Import sendTeamInvite
 import { initSidebar } from "/static/js/components/sidebar.js";
 
 // Update the UI with retrieved teams
@@ -379,6 +380,20 @@ document.addEventListener("DOMContentLoaded", async () => {
           });
           console.log("Podcast updated with teamId:", updateResponse);
         }
+
+        // Trigger sendTeamInvite for each member
+        for (const member of members) {
+          try {
+            await sendTeamInvite(teamId, member.email);
+            console.log(`Invitation sent to ${member.email}`);
+          } catch (error) {
+            console.error(
+              `Failed to send invitation to ${member.email}:`,
+              error
+            );
+          }
+        }
+
         closeModal(addTeamModal);
         const teams = await getTeamsRequest();
         updateTeamsUI(teams);
