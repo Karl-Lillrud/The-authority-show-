@@ -24,10 +24,6 @@ function initializeSvgIcons() {
     svgpodcastmanagement.add;
   document.getElementById("add-icon-guest").innerHTML =
     svgpodcastmanagement.add;
-
-  // Sidebar toggle icon
-  document.getElementById("toggle-sidebar-icon").innerHTML =
-    svgpodcastmanagement.toggleSidebar;
 }
 
 // Notification system
@@ -142,17 +138,6 @@ document.addEventListener("DOMContentLoaded", () => {
   // Observe DOM for changes to update edit buttons
   observeEditButtons();
 
-  // Toggle sidebar functionality
-  const toggleSidebar = document.getElementById("toggle-sidebar");
-  if (toggleSidebar) {
-    toggleSidebar.addEventListener("click", function () {
-      const sidebar = document.querySelector(".sidebar");
-      if (sidebar) {
-        sidebar.classList.toggle("collapsed");
-      }
-    });
-  }
-
   // Find the header element from the base template
   const headerElement = document.querySelector("header");
   if (headerElement) {
@@ -163,6 +148,11 @@ document.addEventListener("DOMContentLoaded", () => {
       headerHeight + "px"
     );
   }
+
+  // Add the decorative header to the top of the page
+  const decorativeHeader = document.createElement("div");
+  decorativeHeader.className = "decorative-header";
+  document.body.prepend(decorativeHeader);
 });
 
 // Export shared utilities and variables

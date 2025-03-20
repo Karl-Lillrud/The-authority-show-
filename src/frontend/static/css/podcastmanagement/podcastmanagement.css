@@ -57,12 +57,9 @@ body {
 
 /* Sidebar Styles */
 .sidebar {
-  width: var(--sidebar-width);
-  position: absolute; /* Change from fixed to absolute */
-  top: 0; /* Ensure it starts from the top */
-  height: calc(
-    100vh - var(--header-height, 80px)
-  ); /* Remove footer height adjustment */
+  position: absolute;
+  top: 0;
+  height: calc(100vh - var(--header-height, 80px));
   background-color: var(--sidebar-bg);
   border-right: 1px solid var(--sidebar-border);
   display: flex;
@@ -71,20 +68,78 @@ body {
   overflow: hidden;
   box-shadow: 0 0 20px rgba(0, 0, 0, 0.05);
   z-index: 9;
+  box-sizing: border-box;
+  /* Add decorative corners */
+  position: relative;
 }
 
-.sidebar::before,
+.sidebar::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 120px; /* Increased from 60px */
+  height: 120px; /* Increased from 60px */
+  background: none;
+  border-top-left-radius: 8px;
+  /* Replace solid border with gradient borders */
+  border-left: none;
+  border-top: none;
+  background-image: linear-gradient(
+      to right,
+      var(--highlight-color) 3px,
+      transparent 90%
+    ),
+    linear-gradient(to bottom, var(--highlight-color) 3px, transparent 90%);
+  background-position: top left, top left;
+  background-size: 120px 3px, 3px 120px;
+  background-repeat: no-repeat;
+  transition: all 0.4s ease;
+}
+
 .sidebar::after {
-  content: none; /* Ta bort de orangea linjerna */
+  content: "";
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  left: auto;
+  width: 120px; /* Increased from 60px */
+  height: 120px; /* Increased from 60px */
+  background: none;
+  border-bottom-right-radius: 8px;
+  /* Replace solid border with gradient borders */
+  border-right: none;
+  border-bottom: none;
+  background-image: linear-gradient(
+      to left,
+      var(--highlight-color) 3px,
+      transparent 90%
+    ),
+    linear-gradient(to top, var(--highlight-color) 3px, transparent 90%);
+  background-position: bottom right, bottom right;
+  background-size: 120px 3px, 3px 120px;
+  background-repeat: no-repeat;
+  transition: all 0.4s ease;
 }
 
+/* Add hover effects to the sidebar */
+.sidebar:hover::before {
+  width: 180px;
+  height: 180px;
+  filter: drop-shadow(
+    0 0 3px rgba(255, 127, 63, 0.6)
+  ); /* Uniform glow effect */
+  /* Use the same gradient for both pseudo-elements */
+  background-image: linear-gradient(to right, #ff9f5f 3px, transparent 90%),
+    linear-gradient(to bottom, #ff9f5f 3px, transparent 90%);
+}
 .sidebar.collapsed {
   width: var(--sidebar-collapsed-width);
 }
 
 .sidebar-header {
   padding: var(--spacing-lg);
-  border-bottom: 1px solid var(--sidebar-border);
+  border-bottom: none; /* Remove the thin gray line */
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -100,6 +155,7 @@ body {
   padding: var(--spacing-md) 0;
   scrollbar-width: thin;
   scrollbar-color: rgba(0, 0, 0, 0.2) white;
+  margin-top: -1.5cm; /* Shift menu options up */
 }
 
 .sidebar-content::-webkit-scrollbar {
@@ -165,7 +221,8 @@ body {
 
 .sidebar-footer {
   padding: var(--spacing-md);
-  border-top: 1px solid var(--sidebar-border);
+  /* Remove the thin gray line */
+  /* border-top: 1px solid var(--sidebar-border); */
 }
 
 .sidebar-actions {
@@ -216,12 +273,14 @@ body {
   overflow-y: auto;
   padding: var(--spacing-lg);
   transition: margin-left var(--transition-normal);
-  margin-left: var(--sidebar-width);
+  margin-left: calc(var(--sidebar-width) - 250px); /* Reduced margin */
   min-height: calc(100vh - var(--header-height, 60px));
 }
 
 .sidebar.collapsed + .main-content {
-  margin-left: var(--sidebar-collapsed-width);
+  margin-left: calc(
+    var(--sidebar-collapsed-width) - 20px
+  ); /* Adjust collapsed margin */
 }
 
 .main-header {
@@ -351,7 +410,11 @@ body {
 .sidebar-action-buttons {
   margin-top: 20px;
   padding: 10px;
+  padding-bottom: calc(
+    40px
+  ); /* Added extra padding to move the border 1cm down */
   border-top: 1px solid var(--sidebar-border);
+  border-bottom: 1px solid var(--sidebar-border); /* Added for thin gray line below Add Guest button */
 }
 
 .sidebar-action-button {
@@ -800,6 +863,9 @@ body {
   margin-top: 2rem;
   display: flex;
   gap: 1rem;
+  position: relative;
+  z-index: 100; /* increased z-index to display above footer */
+  margin-bottom: var(--spacing-xl); /* add extra bottom margin */
 }
 
 /* Episodes List */
@@ -1665,74 +1731,43 @@ body {
     min-height: 100vh;
   }
 
-  /* Sidebar Styles */
+  /* Sidebar Styles for mobile */
   .sidebar {
-    width: var(--sidebar-width);
-    position: absolute;
-    top: 0;
-    height: calc(100vh - var(--header-height, 60px));
-    background-color: var(--sidebar-bg);
-    border-right: 1px solid var(--sidebar-border);
-    display: flex;
-    flex-direction: column;
-    transition: width var(--transition-normal);
-    overflow: hidden;
-    box-shadow: 0 0 20px rgba(0, 0, 0, 0.05);
-    z-index: 9;
+    width: 100%;
+    height: auto;
+    position: relative;
+    border-right: none;
+    border-bottom: 1px solid var(--sidebar-border);
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
   }
 
-  /* Add decorative curves to sidebar */
-  .sidebar::before,
-  .sidebar::after {
-    content: "";
-    position: absolute;
-    left: 0;
-    right: 0;
-    height: 40px;
-    z-index: 1;
-  }
-
+  /* Adjust L-shaped corners for mobile */
   .sidebar::before {
-    top: 0;
-    background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1440 320'%3E%3Cpath fill='%23FEF0E6' stroke='%23FF7F3F' stroke-width='2' d='M0,160L48,144C96,128,192,96,288,106.7C384,117,480,171,576,186.7C672,203,768,181,864,154.7C960,128,1056,96,1152,96C1248,96,1344,128,1392,144L1440,160L1440,0L1392,0C1344,0,1248,0,1152,0C1056,0,960,0,864,0C768,0,672,0,576,0C480,0,384,0,288,0C192,0,96,0,48,0L0,0Z'%3E%3C/path%3E%3C/svg%3E")
-      no-repeat;
-    background-size: cover;
+    width: 60px;
+    height: 60px;
   }
 
   .sidebar::after {
-    bottom: 0;
-    background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1440 320'%3E%3Cpath fill='%23FEF0E6' stroke='%23FF7F3F' stroke-width='2' d='M0,160L48,144C96,128,192,96,288,106.7C384,117,480,171,576,186.7C672,203,768,181,864,154.7C960,128,1056,96,1152,96C1248,96,1344,128,1392,144L1440,160L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z'%3E%3C/path%3E%3C/svg%3E")
-      no-repeat;
-    background-size: cover;
+    width: 60px;
+    height: 60px;
   }
 
   .sidebar.collapsed {
-    width: var(--sidebar-collapsed-width);
+    width: 100%;
+    height: auto;
   }
 
   .sidebar-header {
-    padding: var(--spacing-lg);
-    border-bottom: 1px solid var(--sidebar-border);
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    position: relative;
-    z-index: 2;
-  }
-
-  .sidebar-content {
-    flex: 1;
-    overflow-y: auto;
-    padding: var(--spacing-md) 0;
-    scrollbar-width: thin;
-    scrollbar-color: rgba(0, 0, 0, 0.2) white;
-    position: relative;
-    z-index: 2;
-    margin-top: 20px; /* Add space for the top curve */
-    margin-bottom: 20px; /* Add space for the bottom curve */
+    padding: var(--spacing-md);
+    justify-content: center;
   }
 
   /* Horizontal menu styling */
+  .sidebar-content {
+    margin-top: 0;
+    padding: var(--spacing-xs) 0;
+  }
+
   .sidebar-menu {
     display: flex;
     overflow-x: auto;
@@ -1789,6 +1824,9 @@ body {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
     gap: var(--spacing-sm);
+    margin-top: 0;
+    border-top: none;
+    border-bottom: none;
   }
 
   .sidebar-action-buttons h3 {
@@ -1803,6 +1841,7 @@ body {
     text-align: center;
     padding: var(--spacing-sm);
     font-size: 0.8rem;
+    margin-bottom: 0;
   }
 
   .sidebar-action-button svg {
@@ -1815,215 +1854,12 @@ body {
   }
 
   .main-content {
-    padding: var(--spacing-md);
     margin-left: 0;
     padding-top: var(--spacing-md);
   }
-
-  .main-header {
-    flex-direction: column;
-    align-items: flex-start;
-    margin-bottom: var(--spacing-lg);
-  }
-
-  .main-header h1 {
-    font-size: 1.75rem;
-  }
-
-  .action-buttons {
-    width: 100%;
-    justify-content: space-between;
-  }
-
-  .form-grid {
-    grid-template-columns: 1fr;
-  }
-
-  .field-group.full-width {
-    grid-column: auto;
-  }
-
-  .detail-grid,
-  .social-links {
-    grid-template-columns: 1fr;
-  }
-
-  .form-box {
-    width: 95%;
-    max-width: 95%;
-    padding: var(--spacing-md);
-  }
-
-  .form-title {
-    font-size: 1.5rem;
-    margin-bottom: var(--spacing-lg);
-  }
-
-  .close-btn {
-    top: 10px;
-    right: 10px;
-  }
 }
 
-@media (max-width: 576px) {
-  /* Further optimize horizontal menu for very small screens */
-  .sidebar-menu-link {
-    padding: 8px 10px;
-    font-size: 0.8rem;
-  }
-
-  .sidebar-icon {
-    width: 16px;
-    height: 16px;
-  }
-
-  /* Stack action buttons on very small screens */
-  .sidebar-action-buttons {
-    grid-template-columns: 1fr;
-  }
-
-  .main-content {
-    padding: var(--spacing-sm);
-  }
-
-  .main-header h1 {
-    font-size: 1.5rem;
-  }
-
-  .action-button {
-    padding: 8px 12px;
-    font-size: 0.8rem;
-  }
-
-  .action-button svg {
-    width: 16px;
-    height: 16px;
-  }
-
-  .form-box,
-  .popup-content {
-    width: 95%;
-    padding: var(--spacing-md);
-  }
-
-  .field-group input,
-  .field-group select,
-  .field-group textarea {
-    padding: 10px 12px;
-    font-size: 0.9rem;
-  }
-
-  .field-group label {
-    font-size: 0.85rem;
-  }
-
-  .form-actions {
-    flex-direction: column-reverse;
-    gap: 10px;
-  }
-
-  .save-btn,
-  .cancel-btn,
-  .delete-btn {
-    width: 100%;
-    padding: 10px;
-  }
-
-  .close-btn {
-    top: 10px;
-    right: 10px;
-    width: 32px;
-    height: 32px;
-    font-size: 1.2rem;
-  }
-
-  .detail-title {
-    font-size: 1.5rem;
-  }
-
-  .detail-section h2 {
-    font-size: 1.3rem;
-  }
-
-  .podcast-card {
-    margin-bottom: var(--spacing-md);
-  }
-
-  .podcast-title {
-    font-size: 1.4rem;
-  }
-
-  .podcast-header {
-    flex-direction: column;
-  }
-
-  .podcast-actions {
-    margin-top: var(--spacing-sm);
-    align-self: flex-end;
-  }
-
-  .podcast-footer {
-    flex-direction: column;
-    gap: var(--spacing-sm);
-  }
-
-  .podcast-footer button {
-    width: 100%;
-    padding: 10px;
-    text-align: center;
-  }
-
-  .notification {
-    width: 90%;
-    left: 5%;
-    right: 5%;
-  }
-
-  /* Improve episode cards on small screens */
-  .episode-card {
-    flex-direction: column;
-  }
-
-  .view-episode-btn {
-    margin-top: var(--spacing-sm);
-    align-self: flex-end;
-  }
-
-  /* Improve guest cards on small screens */
-  .guest-card {
-    flex-direction: column;
-  }
-
-  .view-profile-btn {
-    margin-top: var(--spacing-sm);
-    width: 100%;
-  }
-}
-
-/* Add styles for collapsible sidebar on mobile */
-@media (max-width: 768px) {
-  .sidebar.collapsed .sidebar-content {
-    display: none;
-  }
-
-  .sidebar.collapsed {
-    height: auto;
-  }
-
-  .sidebar-toggle-mobile {
-    display: block;
-    position: absolute;
-    right: var(--spacing-md);
-    top: var(--spacing-md);
-    background: none;
-    border: none;
-    color: var(--text-color-light);
-    cursor: pointer;
-    z-index: 10;
-  }
-}
-
-/* Add this new media query for screens smaller than 500px */
+/* Further optimize for very small screens */
 @media (max-width: 500px) {
   /* Split sidebar menu into two rows */
   .sidebar-menu {
@@ -2051,27 +1887,81 @@ body {
     padding: 8px;
   }
 
-  /* Make action buttons more compact */
+  /* Stack action buttons on very small screens */
   .sidebar-action-buttons {
-    padding: var(--spacing-sm);
+    grid-template-columns: 1fr;
   }
 
   .sidebar-action-button {
-    padding: 8px;
-    font-size: 0.75rem;
+    padding: 10px;
+    font-size: 0.85rem;
+    margin-bottom: 8px;
   }
 
-  .sidebar-action-button svg {
-    width: 14px;
-    height: 14px;
+  /* Adjust L-shaped corners for very small screens */
+  .sidebar::before,
+  .sidebar::after {
+    width: 40px;
+    height: 40px;
   }
 
-  /* Reduce header padding */
-  .sidebar-header {
-    padding: var(--spacing-sm);
+  .sidebar::before,
+  .sidebar::after {
+    display: none;
+  }
+}
+
+/* Add a toggle button for mobile sidebar */
+.sidebar-toggle-mobile {
+  display: none;
+  background: none;
+  border: none;
+  color: var(--text-color-light);
+  cursor: pointer;
+  padding: 8px;
+  font-size: 1.2rem;
+}
+
+@media (max-width: 768px) {
+  .sidebar-toggle-mobile {
+    display: block;
+    position: absolute;
+    right: var(--spacing-md);
+    top: var(--spacing-md);
+    z-index: 11;
   }
 
-  .sidebar-header h2 {
-    font-size: 1.1rem;
+  .sidebar.collapsed .sidebar-content {
+    display: none;
   }
+
+  .sidebar.collapsed {
+    padding-bottom: 0;
+  }
+
+  .sidebar.collapsed .sidebar-header {
+    border-bottom: none;
+  }
+}
+
+/* Decorative orange panel at the top of the page */
+.decorative-header {
+  width: 100%;
+  height: 120px;
+  background: linear-gradient(135deg, #ff7f3f, #e0662c);
+  position: relative;
+  z-index: 1;
+  overflow: hidden;
+}
+
+.decorative-header::after {
+  content: "";
+  position: absolute;
+  bottom: -20px;
+  left: 0;
+  width: 100%;
+  height: 40px;
+  background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1440 320'%3E%3Cpath fill='%23FF7F3F' fill-opacity='1' d='M0,96L48,112C96,128,192,160,288,176C384,192,480,192,576,176C672,160,768,128,864,112C960,96,1056,96,1152,112C1248,128,1344,160,1392,176L1440,192L1440,0L1392,0C1344,0,1248,0,1152,0C1056,0,960,0,864,0C768,0,672,0,576,0C480,0,384,0,288,0C192,0,96,0,48,0L0,0Z'%3E%3C/path%3E%3C/svg%3E")
+    no-repeat;
+  background-size: cover;
 }

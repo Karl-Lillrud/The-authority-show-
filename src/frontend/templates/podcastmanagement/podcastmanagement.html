@@ -311,32 +311,6 @@ endblock %} {% block content %}
   </main>
 </div>
 
-<script>
-  document.addEventListener("DOMContentLoaded", function () {
-    // Find the header element from the base template
-    const headerElement = document.querySelector("header");
-    if (headerElement) {
-      const headerHeight = headerElement.offsetHeight;
-      // Set the CSS variable for header height
-      document.documentElement.style.setProperty(
-        "--header-height",
-        headerHeight + "px"
-      );
-    }
-
-    // Toggle sidebar functionality
-    const toggleSidebar = document.getElementById("toggle-sidebar");
-    if (toggleSidebar) {
-      toggleSidebar.addEventListener("click", function () {
-        const sidebar = document.querySelector(".sidebar");
-        if (sidebar) {
-          sidebar.classList.toggle("collapsed");
-        }
-      });
-    }
-  });
-</script>
-
 <script
   type="module"
   src="../../static/js/podcastmanagement/podcastmanagement.js"
