@@ -19,6 +19,7 @@ from backend.routes.podprofile import podprofile_bp  # Import the podprofile blu
 from backend.routes.frontend import frontend_bp  # Import the frontend blueprint
 from backend.routes.guest_to_eposide import guesttoepisode_bp
 from backend.routes.guest_form import guest_form_bp  # Import the guest_form blueprint
+from backend.routes.quote import quote_bp
 
 # from backend.routes.transcription import transcription_bp
 from backend.routes.landingpage import landingpage_bp
@@ -28,6 +29,49 @@ from backend.database.mongo_connection import collection
 from backend.utils.email_utils import send_email
 from backend.routes.Mailing_list import Mailing_list_bp
 from backend.routes.user import user_bp
+
+
+# LETS MAKE QUOTES ---- 
+
+# since punkt can't be downloaded via requirements.txt, we need to download it here
+import nltk
+import subprocess
+import sys
+import shutil
+
+# Ensure nltk is installed
+try:
+    import nltk
+except ImportError:
+    subprocess.check_call([sys.executable, "-m", "pip", "install", "nltk"])
+    import nltk
+
+# Define the nltk_data directory inside the project
+nltk_data_dir = os.path.join(os.getcwd(), "nltk_data")
+os.makedirs(nltk_data_dir, exist_ok=True)
+
+# Remove old `punkt` if corrupted
+try:
+    punkt_path = nltk.data.find("tokenizers/punkt")
+    shutil.rmtree(punkt_path, ignore_errors=True)
+    print("Removed existing 'punkt' data to force clean download.")
+except LookupError:
+    print("No existing 'punkt' data found, proceeding.")
+
+# Ensure nltk looks in the correct directory
+if nltk_data_dir not in nltk.data.path:
+    nltk.data.path.insert(0, nltk_data_dir)
+
+# Force download 'punkt'
+nltk.download("punkt_tab", download_dir=nltk_data_dir, force=True)
+
+# Verify the tokenizer works
+try:
+    from nltk.tokenize import word_tokenize
+    print(word_tokenize("Hello, world!"))  # Expected output: ['Hello', ',', 'world', '!']
+except Exception as e:
+    print("Error using word_tokenize:", str(e))
+ # -- WE MADE IT (probably?)
 
 
 if os.getenv("SKIP_VENV_UPDATE", "false").lower() not in ("true", "1", "yes"):
@@ -91,6 +135,7 @@ app.register_blueprint(
 # Register the guest_form blueprint with URL prefix
 
 app.register_blueprint(landingpage_bp)
+app.register_blueprint(quote_bp)
 
 # Set the application environment (defaults to production)
 APP_ENV = os.getenv("APP_ENV", "production")
