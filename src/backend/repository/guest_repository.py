@@ -211,3 +211,87 @@ class GuestRepository:
         except Exception as e:
             logger.exception("❌ ERROR: Failed to fetch guests for episode")
             return {"error": f"Failed to fetch guests: {str(e)}"}, 500
+    
+    def get_guest_by_id(self, user_id, guest_id):
+        """
+        Get a specific guest by ID
+        """
+        try:
+            # Fetch guest for the logged-in user based on guest_id
+            guest_cursor = self.collection.find_one(
+                {"_id": guest_id, "user_id": user_id},
+                {
+                    "_id": 1,
+                    "episodeId": 1,
+                    "name": 1,
+                    "image": 1,
+                    "bio": 1,
+                    "tags": 1,
+                    "email": 1,
+                    "linkedin": 1,
+                    "twitter": 1,
+                    "areasOfInterest": 1,
+                },
+            )
+
+            if guest_cursor is None:
+                return {"message": "Guest not found"}, 404
+
+            guest = {
+                "id": str(guest_cursor.get("_id")),
+                "episodeId": guest_cursor.get("episodeId"),
+                "name": guest_cursor.get("name", "N/A"),
+                "image": guest_cursor.get("image", ""),
+                "bio": guest_cursor.get("bio", ""),
+                "tags": guest_cursor.get("tags", []),
+                "email": guest_cursor.get("email", ""),
+                "linkedin": guest_cursor.get("linkedin", ""),
+                "twitter": guest_cursor.get("twitter", ""),
+                "areasOfInterest": guest_cursor.get("areasOfInterest", []),
+            }
+
+            return {"message": "Guest fetched successfully", "guest": guest}, 200
+
+        except Exception as e:
+            logger.exception("❌ ERROR: Failed to fetch guest by ID")
+            return {"error": f"An error occurred while fetching guest: {str(e)}"}, 500
+        
+    def get_episodes_by_guest(self, guest_id):
+        """
+        Get all episodes for a specific guest
+        """
+        try:
+            # Fetch episodes for the specific guest
+            episodes_cursor = self.collection.aggregate([
+                {"$match": {"guests": guest_id}},  # Match episodes with this guest
+                {"$unwind": "$episodes"},
+                {"$match": {"episodes.guests": guest_id}},  # Match episodes with this guest
+                {
+                    "$project": {
+                        "_id": "$episodes._id",
+                        "title": "$episodes.title",
+                        "description": "$episodes.description",
+                        "publish_date": "$episodes.publish_date",
+                        "guests": "$episodes.guests",
+                    }
+                },
+            ])
+
+            episodes_list = []
+            for episode in episodes_cursor:
+                episodes_list.append({
+                    "episode_id": str(episode["_id"]),
+                    "title": episode["title"],
+                    "description": episode["description"],
+                    "publish_date": episode["publish_date"],
+                    "guests": episode["guests"]
+                })
+
+            if not episodes_list:
+                return {"message": "No episodes found for this guest"}, 404
+
+            return {"message": "Episodes fetched successfully", "episodes": episodes_list}, 200
+
+        except Exception as e:
+            logger.exception("❌ ERROR: Failed to fetch episodes by guest")
+            return {"error": f"Failed to fetch episodes for guest: {str(e)}"}, 500

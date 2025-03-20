@@ -1,0 +1,191 @@
+/* Global Styles */
+body {
+  margin: 0;
+  padding: 0;
+  background-color: #121212;
+  color: #ffffff;
+  font-family: "Inter", sans-serif;
+}
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 20px;
+}
+
+/* Navbar */
+.navbar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  background: #1f1f1f;
+  padding: 20px;
+  z-index: 1000;
+  box-sizing: border-box;
+}
+.logo {
+  font-size: 24px;
+  font-weight: bold;
+  color: #ffffff;
+}
+.nav-links {
+  list-style: none;
+  display: flex;
+  gap: 20px;
+  margin: 0;
+  padding: 0;
+}
+.nav-links a {
+  text-decoration: none;
+  color: #ffffff;
+  padding: 10px 15px;
+  transition: background 0.3s, color 0.3s;
+  border-radius: 5px;
+}
+.nav-links a:hover {
+  background: #ff4500;
+  color: #fff;
+}
+
+/* Hero Section */
+.guest-hero {
+  position: relative;
+  width: 100%;
+  height: 400px;
+  background: url('../images/default-banner.png') center/cover no-repeat;
+  margin-top: 80px; /* Utrymme för navbaren */
+}
+.guest-hero .overlay {
+  position: absolute;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  background: rgba(0, 0, 0, 0.4);
+}
+.hero-content {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 30px;
+  height: 100%;
+}
+.guest-image {
+  flex-shrink: 0;
+  margin-left: 20px;
+}
+.guest-image img {
+  width: 180px;
+  height: 180px;
+  object-fit: cover;
+  border-radius: 50%;
+  border: 4px solid #ff4500;
+}
+.guest-text {
+  max-width: 600px;
+}
+.guest-text h1 {
+  margin: 0;
+  font-size: 32px;
+}
+.guest-text p {
+  margin-top: 10px;
+  font-size: 18px;
+  line-height: 1.4;
+}
+
+/* Guest Details (About, Experience, Education) */
+.guest-details {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20px;
+  margin: 40px 0;
+}
+.detail-card {
+  flex: 1 1 300px;
+  background: #1f1f1f;
+  border-radius: 10px;
+  padding: 20px;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+  transition: transform 0.2s;
+}
+.detail-card:hover {
+  transform: translateY(-3px);
+}
+.detail-card h2 {
+  margin-top: 0;
+  color: #ff4500;
+  margin-bottom: 10px;
+}
+.detail-card p {
+  margin: 0;
+  font-size: 16px;
+  line-height: 1.5;
+}
+
+/* Episodes Section */
+.guest-episodes {
+  margin-bottom: 40px;
+  text-align: center;
+}
+.guest-episodes h2 {
+  font-size: 28px;
+  margin-bottom: 20px;
+  color: #ff4500;
+}
+.episode-list {
+  list-style: none;
+  padding: 0;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 15px;
+}
+.episode-card {
+  background: #1f1f1f;
+  border-radius: 10px;
+  overflow: hidden;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+  transition: transform 0.2s;
+}
+.episode-card:hover {
+  transform: translateY(-3px);
+}
+.episode-thumbnail img {
+  width: 100%;
+  height: 150px;
+  object-fit: cover;
+}
+.episode-info {
+  padding: 10px 15px;
+  text-align: left;
+}
+.episode-info h3 {
+  margin: 0;
+  font-size: 18px;
+  font-weight: bold;
+  color: #ffffff;
+  margin-bottom: 6px;
+}
+.episode-info h3 a {
+  text-decoration: none;
+  color: #ff4500;
+}
+.episode-info h3 a:hover {
+  text-decoration: underline;
+}
+.episode-info p {
+  font-size: 14px;
+  color: #fff;
+  margin: 0;
+}
+
+/* Footer */
+footer {
+  background: #1f1f1f;
+  color: #ffffff;
+  padding: 20px 0;
+  text-align: center;
+}
+footer p {
+  margin: 0;
+  font-size: 14px;
+}

@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>{{ guest_name }} - Guest Profile</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <!-- Link to CSS -->
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/guestpage/guestpage.css') }}">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+</head>
+<body>
+  <!-- Navbar -->
+  <header class="navbar">
+    <div class="container">
+      <div class="logo">PodManager</div>
+      <ul class="nav-links">
+        <li><a href="/">Home</a></li>
+        <li><a href="/episodes">Episodes</a></li>
+        <li><a href="/about">About</a></li>
+      </ul>
+    </div>
+  </header>
+
+  <!-- Hero section with background and guest image -->
+  <section class="guest-hero">
+    <div class="overlay"></div>
+    <div class="hero-content container">
+      <!-- Guest profile image -->
+      <div class="guest-image">
+        <img 
+          src="{{ guest_image or url_for('static', filename='images/default-guest.png') }}" 
+          alt="{{ guest_name }}"
+        >
+      </div>
+      <!-- Guest info -->
+      <div class="guest-text">
+        <h1>{{ guest_name }}</h1>
+        <p>{{ guest_bio }}</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Section for About, Experience, Education -->
+  <section class="guest-details container">
+    <div class="detail-card">
+      <h2>About</h2>
+      <p>{{ guest_bio }}</p>
+    </div>
+    <div class="detail-card">
+      <h2>Experience</h2>
+      <p>Add any experiences, previous assignments, and projects here.</p>
+    </div>
+    <div class="detail-card">
+      <h2>Education</h2>
+      <p>Information about education, courses, and certifications.</p>
+    </div>
+  </section>
+
+  <!-- Episodes list -->
+  <section class="guest-episodes container">
+    <h2>Episodes the Guest Has Participated In</h2>
+    {% if episodes and episodes|length > 0 %}
+      <ul class="episode-list">
+        {% for episode in episodes %}
+          <li class="episode-card">
+            <div class="episode-thumbnail">
+              <img 
+                src="{{ episode.thumbnail or url_for('static', filename='images/default.png') }}" 
+                alt="{{ episode.title }}"
+              >
+            </div>
+            <div class="episode-info">
+              <h3>
+                <a href="{{ url_for('episode_bp.episode_detail', episode_id=episode._id) }}">
+                  {{ episode.title }}
+                </a>
+              </h3>
+              <p>{{ episode.description }}</p>
+            </div>
+          </li>
+        {% endfor %}
+      </ul>
+    {% else %}
+      <p>No episodes found.</p>
+    {% endif %}
+  </section>
+
+  <!-- Footer -->
+  <footer>
+    <div class="container">
+      <p>&copy; 2023 PodManager. All rights reserved.</p>
+    </div>
+  </footer>
+</body>
+</html>
