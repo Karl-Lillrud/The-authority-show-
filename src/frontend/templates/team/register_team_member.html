@@ -5,123 +5,15 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Complete Your Registration</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            background-color: #f4f7f6;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-            margin: 0;
-        }
-
-        .container {
-            width: 100%;
-            max-width: 400px;
-            background: white;
-            padding: 25px;
-            border-radius: 10px;
-            box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1);
-        }
-
-        h1 {
-            text-align: center;
-            color: #333;
-        }
-
-        .form-description {
-            text-align: center;
-            color: #666;
-            margin-bottom: 20px;
-        }
-
-        .form-group {
-            margin-bottom: 15px;
-        }
-
-        label {
-            font-weight: bold;
-            display: block;
-            margin-bottom: 5px;
-        }
-
-        input {
-            width: 100%;
-            padding: 10px;
-            border: 1px solid #ddd;
-            border-radius: 5px;
-            font-size: 14px;
-        }
-
-        .form-hint {
-            font-size: 12px;
-            color: #888;
-            margin-top: 5px;
-        }
-
-        .password-container {
-            position: relative;
-        }
-
-        .toggle-password {
-            position: absolute;
-            right: 10px;
-            top: 35%;
-            transform: translateY(-50%);
-            cursor: pointer;
-            font-size: 14px;
-            color: #007bff;
-        }
-
-        .error-message {
-            color: red;
-            font-size: 14px;
-            margin-top: 5px;
-            display: none;
-        }
-
-        .form-actions {
-            text-align: center;
-            margin-top: 20px;
-        }
-
-        .btn {
-            background: #007bff;
-            color: white;
-            padding: 10px 15px;
-            border: none;
-            width: 100%;
-            font-size: 16px;
-            cursor: pointer;
-            border-radius: 5px;
-        }
-
-        .btn:disabled {
-            background: gray;
-            cursor: not-allowed;
-        }
-
-        .form-footer {
-            text-align: center;
-            margin-top: 10px;
-            font-size: 14px;
-        }
-
-        .loading {
-            display: none;
-            text-align: center;
-            font-size: 14px;
-            color: #007bff;
-            margin-top: 10px;
-        }
-    </style>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/team/registerTeam.css') }}">
 </head>
 
 <body>
-
     <div class="container">
+        <!-- 🔹 Add the PodManager Logo -->
+        <img src="{{ url_for('static', filename='images/PodManagerLogo.png') }}" alt="PodManager Logo"
+            class="team-logo">
+
         <h1>Join {{ team_name }}</h1>
         <p class="form-description">Complete your registration to join the team</p>
 
@@ -146,7 +38,7 @@
             <div class="form-group password-container">
                 <label for="password">Password</label>
                 <input type="password" id="password" name="password" required>
-                <span class="toggle-password" onclick="togglePassword()">Show</span>
+                <span class="toggle-password" data-target="password">Show</span>
                 <div class="form-hint">Must be at least 8 characters with numbers, uppercase, and lowercase letters.
                 </div>
             </div>
@@ -154,11 +46,8 @@
             <div class="form-group password-container">
                 <label for="confirmPassword">Confirm Password</label>
                 <input type="password" id="confirmPassword" name="confirmPassword" required>
-                <span class="toggle-password" onclick="togglePasswordConfirm()">Show</span>
+                <span class="toggle-password" data-target="confirmPassword">Show</span>
             </div>
-
-            <!-- Hidden field for invite token -->
-            <input type="hidden" id="inviteToken" name="inviteToken" value="{{ invite_token }}">
 
             <div class="error-message" id="errorMessage"></div>
             <div class="form-actions">
@@ -172,75 +61,8 @@
         </form>
     </div>
 
-    <script>
-        function togglePassword() {
-            let passwordField = document.getElementById("password");
-            passwordField.type = passwordField.type === "password" ? "text" : "password";
-        }
-
-        function togglePasswordConfirm() {
-            let passwordField = document.getElementById("confirmPassword");
-            passwordField.type = passwordField.type === "password" ? "text" : "password";
-        }
-
-        document.addEventListener('DOMContentLoaded', function () {
-            const form = document.getElementById('registerTeamMemberForm');
-            const registerButton = document.getElementById('registerButton');
-            const errorMessage = document.getElementById('errorMessage');
-            const loadingText = document.getElementById('loadingText');
-
-            form.addEventListener('submit', function (event) {
-                event.preventDefault();
-
-                // Get invite token from the URL (instead of form input)
-                const urlParams = new URLSearchParams(window.location.search);
-                const inviteToken = urlParams.get("token");  // ✅ Extract from URL
-
-                if (!inviteToken) {
-                    errorMessage.textContent = "Missing invite token in URL.";
-                    errorMessage.style.display = "block";
-                    return;
-                }
-
-                // Disable button & show loading
-                registerButton.disabled = true;
-                loadingText.style.display = "block";
-
-                // Prepare form data
-                const formData = {
-                    fullName: document.getElementById('fullName').value,
-                    email: document.getElementById('email').value,
-                    phone: document.getElementById('phone').value,
-                    password: document.getElementById('password').value,
-                    inviteToken: inviteToken  // ✅ Now included in payload
-                };
-
-                // Submit form data via fetch API
-                fetch('{{ url_for("auth_bp.register_team_member_submit") }}', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(formData)
-                })
-                    .then(response => response.json())
-                    .then(data => {
-                        if (data.error) {
-                            errorMessage.textContent = data.error;
-                            errorMessage.style.display = "block";
-                        } else {
-                            window.location.href = data.redirect_url || '{{ url_for("auth_bp.signin") }}';
-                        }
-                    })
-                    .catch(error => {
-                        errorMessage.textContent = "Registration failed. Please try again.";
-                        errorMessage.style.display = "block";
-                    })
-                    .finally(() => {
-                        registerButton.disabled = false;
-                        loadingText.style.display = "none";
-                    });
-            });
-        });
-    </script>
+    <!-- Load scripts -->
+    <script src="{{ url_for('static', filename='js/team/registerTeamMember.js') }}" type="module"></script>
 
 </body>
 

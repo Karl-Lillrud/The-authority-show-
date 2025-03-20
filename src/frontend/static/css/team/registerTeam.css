@@ -1,0 +1,115 @@
+body {
+    font-family: Arial, sans-serif;
+    background-color: #f4f7f6;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    margin: 0;
+}
+
+.container {
+    width: 100%;
+    max-width: 400px;
+    background: white;
+    padding: 25px;
+    border-radius: 10px;
+    box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1);
+}
+
+h1 {
+    text-align: center;
+    color: #333;
+}
+
+.form-description {
+    text-align: center;
+    color: #666;
+    margin-bottom: 20px;
+}
+
+.form-group {
+    margin-bottom: 15px;
+}
+
+label {
+    font-weight: bold;
+    display: block;
+    margin-bottom: 5px;
+}
+
+input {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    font-size: 14px;
+}
+
+.form-hint {
+    font-size: 12px;
+    color: #888;
+    margin-top: 5px;
+}
+
+.password-container {
+    position: relative;
+}
+
+.toggle-password {
+    position: absolute;
+    right: 10px;
+    top: 35%;
+    transform: translateY(-50%);
+    cursor: pointer;
+    font-size: 14px;
+    color: #007bff;
+}
+
+.error-message {
+    color: red;
+    font-size: 14px;
+    margin-top: 5px;
+    display: none;
+}
+
+.form-actions {
+    text-align: center;
+    margin-top: 20px;
+}
+
+.btn {
+    background: #ff5100;
+    color: white;
+    padding: 10px 15px;
+    border: none;
+    width: 100%;
+    font-size: 16px;
+    cursor: pointer;
+    border-radius: 5px;
+}
+
+.btn:disabled {
+    background: gray;
+    cursor: not-allowed;
+}
+
+.form-footer {
+    text-align: center;
+    margin-top: 10px;
+    font-size: 14px;
+}
+
+.loading {
+    display: none;
+    text-align: center;
+    font-size: 14px;
+    color: #007bff;
+    margin-top: 10px;
+}
+
+.team-logo {
+    display: block;
+    margin: 0 auto 20px;
+    max-width: 120px;
+}
