@@ -120,6 +120,18 @@ function observeEditButtons() {
   observer.observe(document.body, { childList: true, subtree: true });
 }
 
+// Function to close popups when clicking outside
+function enablePopupCloseOnOutsideClick() {
+  const popups = document.querySelectorAll(".popup");
+  popups.forEach((popup) => {
+    popup.addEventListener("click", (event) => {
+      if (event.target === popup) {
+        popup.style.display = "none";
+      }
+    });
+  });
+}
+
 // Main initialization
 document.addEventListener("DOMContentLoaded", () => {
   console.log("DOM fully loaded and parsed");
@@ -137,6 +149,9 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // Observe DOM for changes to update edit buttons
   observeEditButtons();
+
+  // Enable closing popups by clicking outside
+  enablePopupCloseOnOutsideClick();
 
   // Find the header element from the base template
   const headerElement = document.querySelector("header");

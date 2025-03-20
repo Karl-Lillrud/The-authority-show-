@@ -283,7 +283,7 @@
   overflow-y: auto;
   padding: var(--spacing-lg);
   transition: margin-left var(--transition-normal);
-  margin-left: var(--sidebar-width);
+  margin-left: 0; /* reduce or remove the sidebar offset */
   min-height: calc(100vh - var(--header-height, 60px));
 }
 

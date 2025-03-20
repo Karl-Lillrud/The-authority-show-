@@ -71,10 +71,10 @@ body {
   transition: all var(--transition-normal);
   width: 100%;
   border: 1px solid rgba(0, 0, 0, 0.03);
+  justify-content: center;
 }
 
 .podcast-card:hover {
-  transform: translateY(-5px);
   box-shadow: var(--card-shadow-hover);
 }
 
