@@ -58,14 +58,14 @@ export function subscribeUser(email) {
 
 // Delete user account
 export function deleteUserAccount(payload) {
-  return fetch('/delete_user', {
-    method: 'DELETE',
-    headers: { 'Content-Type': 'application/json' },
+  return fetch("/delete_user", {
+    method: "DELETE",
+    headers: { "Content-Type": "application/json" },
     body: JSON.stringify(payload),
   })
-    .then(response => response.json())
-    .catch(error => {
-      console.error('Error deleting user account:', error);
-      throw new Error('Failed to delete account');
-    });
+    .then((response) => response.json())
+    .catch((error) => {
+      console.error("Error deleting user account:", error)
+      throw new Error("Failed to delete account")
+    })
 }

@@ -775,6 +775,86 @@ input:focus {
   margin-top: 1rem;
 }
 
+/* Form Validation & Hints */
+.required {
+  color: var(--destructive);
+  margin-left: 2px;
+}
+
+.form-hint {
+  font-size: 0.75rem;
+  color: var(--muted-foreground);
+  margin-top: 0.25rem;
+}
+
+.password-requirements {
+  margin-top: 1rem;
+  padding: 1rem;
+  background-color: var(--input);
+  border-radius: var(--radius);
+  font-size: 0.875rem;
+}
+
+.password-requirements h4 {
+  font-size: 0.875rem;
+  margin-bottom: 0.5rem;
+  color: var(--foreground);
+}
+
+.password-requirements ul {
+  padding-left: 1.5rem;
+  color: var(--muted-foreground);
+}
+
+.password-requirements li {
+  margin-bottom: 0.25rem;
+}
+
+/* Subscription Form */
+.subscription-form-container {
+  margin-top: 2rem;
+  padding: 1.5rem;
+  background-color: var(--input);
+  border-radius: var(--radius);
+}
+
+.subscription-form-container h3 {
+  font-size: 1.125rem;
+  margin-bottom: 1rem;
+}
+
+.subscription-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+/* Form Validation */
+input:invalid {
+  border-color: var(--destructive);
+}
+
+input:focus:invalid {
+  box-shadow: 0 0 0 2px rgba(239, 68, 68, 0.2);
+}
+
+/* Animation for form submission */
+@keyframes pulse {
+  0% {
+    box-shadow: 0 0 0 0 var(--ring);
+  }
+  70% {
+    box-shadow: 0 0 0 10px rgba(255, 127, 63, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(255, 127, 63, 0);
+  }
+}
+
+.primary-button:active {
+  animation: pulse 0.5s;
+}
+
 /* Responsive Styles */
 @media (max-width: 992px) {
   .account-settings-wrapper {
