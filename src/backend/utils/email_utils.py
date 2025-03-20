@@ -55,15 +55,22 @@ def send_email(to_email, subject, body, image_path=None):
         logger.error(f"❌ Failed to send email to {to_email}: {e}")
         return {"error": str(e)}
 
-def send_team_invite_email(email, invite_token, team_name=None, inviter_name=None):
+def send_team_invite_email(email, invite_token, team_name=None, inviter_name=None, role="Member"):
     """
     Sends an invitation email for a team membership with an inline logo.
     """
     # 🔹 Force LOCALHOST for debugging
     base_url = "http://127.0.0.1:8000"
 
-    # Create the registration link with the invite token
+    # Create the registration link with the invite token, team name, and role
     registration_link = f"{base_url}/register_team_member?token={invite_token}"
+    
+    # Add team name and role parameters if available
+    if team_name:
+        registration_link += f"&teamName={team_name}"
+    
+    # Add role parameter (using default if not provided)
+    registration_link += f"&role={role}"
 
     # ✅ Log the generated URL before sending the email
     logger.info(f"🔗 Forced LOCALHOST invite URL: {registration_link} for {email}")

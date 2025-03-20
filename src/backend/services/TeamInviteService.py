@@ -1,3 +1,4 @@
+from datetime import datetime, timedelta, timezone
 import logging
 from backend.repository.teaminvitrepository import TeamInviteRepository
 from backend.repository.usertoteam_repository import UserToTeamRepository
@@ -90,3 +91,44 @@ class TeamInviteService:
         except Exception as e:
             logger.error(f"Error in process_registration: {str(e)}", exc_info=True)
             return {"error": f"Error processing registration: {str(e)}"}, 500
+
+
+def accept_invite(self, invite_token, user_id):
+    """Accepts a team invitation and deletes it after successful registration."""
+    invite = self.invites_collection.find_one({"_id": invite_token})
+
+    if not invite:
+        logger.warning(f"Invite {invite_token} not found")
+        return {"error": "Invite not found"}, 404
+
+    # ✅ Ensure the invite is still valid
+    if invite["status"] == "expired" or (invite.get("expiresAt") and invite["expiresAt"] < datetime.now(timezone.utc)):
+        logger.warning(f"Invite {invite_token} has expired")
+        return {"error": "This invite has expired."}, 400
+
+    if invite["status"] == "accepted":
+        logger.info(f"Invite {invite_token} was already accepted")
+        return {"message": "Invite already accepted."}, 200
+
+    # ✅ Check if the user is already in the team
+    team_member = self.teams_collection.find_one({
+        "_id": invite["teamId"],
+        "members": {"$elemMatch": {"userId": user_id}}
+    })
+    
+    if team_member:
+        logger.warning(f"User {user_id} is already in team {invite['teamId']}")
+        return {"error": "User is already in the team"}, 400
+
+    # ✅ Add user to the team
+    self.teams_collection.update_one(
+        {"_id": invite["teamId"]},
+        {"$push": {"members": {"userId": user_id, "role": "member"}}}
+    )
+
+    # ✅ Delete the invite after it has been accepted
+    self.invites_collection.delete_one({"_id": invite_token})
+    logger.info(f"Invite {invite_token} was accepted and removed from the database")
+
+    return {"message": "Invite accepted successfully and removed"}, 200
+

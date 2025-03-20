@@ -10,54 +10,55 @@
     <div class="container">
         <!-- Add the PodManager Logo -->
         <img src="{{ url_for('static', filename='images/PodManagerLogo.png') }}" alt="PodManager Logo" class="team-logo">
-
-        <h1>Join {{ team_name }}</h1>
-        <p class="form-description">Complete your registration to join the team</p>
-
+        
+        <h1>Join <span class="teamName">a team</span></h1>
+        <p class="form-description">
+            Complete your registration to join <span class="teamName">a team</span> as <span id="teamRole">a Member</span>.
+        </p>
+        
         <form id="registerTeamMemberForm" method="POST">
             <div class="form-group">
                 <label for="fullName">Full Name</label>
                 <input type="text" id="fullName" name="fullName" required>
             </div>
-
+            
             <div class="form-group">
                 <label for="email">Email Address</label>
-                <input type="email" id="email" name="email" value="{{ email }}" {% if email %}readonly{% endif %} required>
+                <input type="email" id="email" name="email" required readonly>
                 <div class="form-hint">This email address was used for your invitation</div>
             </div>
-
+            
             <div class="form-group">
                 <label for="phone">Phone Number</label>
                 <input type="tel" id="phone" name="phone" required>
             </div>
-
+            
             <div class="form-group password-container">
                 <label for="password">Password</label>
                 <input type="password" id="password" name="password" required>
                 <span class="toggle-password" data-target="password">Show</span>
-                <div class="form-hint">Must be at least 8 characters with numbers, uppercase, and lowercase letters.</div>
+                <div class="form-hint">Must be at least 8 characters with numbers and letters.</div>
             </div>
-
+            
             <div class="form-group password-container">
                 <label for="confirmPassword">Confirm Password</label>
                 <input type="password" id="confirmPassword" name="confirmPassword" required>
                 <span class="toggle-password" data-target="confirmPassword">Show</span>
             </div>
-
+            
             <div class="error-message" id="errorMessage"></div>
             <div class="form-actions">
                 <button type="submit" id="registerButton" class="btn">Complete Registration</button>
             </div>
             <div class="loading" id="loadingText">Processing...</div>
-
+            
             <div class="form-footer">
                 <p>Already registered? <a href="{{ url_for('auth_bp.signin') }}">Sign In</a></p>
             </div>
         </form>
     </div>
-
+    
     <!-- Load scripts -->
     <script src="{{ url_for('static', filename='js/team/registerTeamMember.js') }}" type="module"></script>
 </body>
 </html>
-

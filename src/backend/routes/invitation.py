@@ -1,5 +1,5 @@
 from flask import Blueprint, request, jsonify, render_template, url_for, g
-from backend.utils.email_utils import send_email
+from backend.utils.email_utils import send_email, send_team_invite_email
 from backend.database.mongo_connection import collection
 from backend.models.podcasts import PodcastSchema
 from backend.services.TeamInviteService import TeamInviteService
@@ -76,19 +76,59 @@ def send_team_invite():
     data = request.get_json()
     email = data.get("email")
     team_id = data.get("teamId")
+    role = data.get("role", "Member")  # Default to "Member" if role isn't provided
 
     if not email or not team_id:
         return jsonify({"error": "Missing email or teamId"}), 400
 
     try:
+        # ✅ Create invite and get invite token
         result = invite_service.send_invite(g.user_id, team_id, email)
-        return jsonify({"success": True, "inviteId": result}), 201
+        
+        # ✅ Ensure `inviteToken` is correctly extracted
+        if isinstance(result, dict) and "inviteToken" in result:
+            invite_token = result["inviteToken"]
+        else:
+            return jsonify({"error": "Failed to generate invite token"}), 500
+
+        # ✅ Fetch team details from the database
+        team = collection.database.Teams.find_one({"_id": team_id})
+        team_name = team.get("teamName", "Unnamed Team")  # Ensure the correct team name
+
+        # Optionally, get inviter name if needed in the email
+        user = collection.database.Users.find_one({"_id": g.user_id})
+        inviter_name = user.get("fullName") if user else None
+
+        # ✅ Generate frontend registration link including `teamName`, `role`, and `email`
+        registration_url = (
+            f"http://127.0.0.1:8000/register_team_member?token={invite_token}"
+            f"&teamName={team_name}&role={role}&email={email}"
+        )
+        
+        # ✅ Send invitation email with necessary parameters
+        email_result = send_team_invite_email(
+            email=email,
+            invite_token=invite_token,
+            team_name=team_name,
+            inviter_name=inviter_name,
+            role=role
+        )
+
+        if "error" in email_result:
+            logger.warning(f"Email sending issue: {email_result['error']}")
+
+        return jsonify({
+            "success": True,
+            "inviteId": invite_token,
+            "registrationUrl": registration_url
+        }), 201
+
     except ValueError as e:
         return jsonify({"error": str(e)}), 400
     except Exception as e:
         logger.error(f"Error sending team invite: {e}")
         return jsonify({"error": "Failed to send invite"}), 500
-
+    
 
 @invitation_bp.route("/verify_invite/<invite_token>", methods=["GET"])
 def verify_invite(invite_token):
@@ -121,10 +161,10 @@ def verify_invite(invite_token):
 
 @invitation_bp.route("/accept_invite/<invite_token>", methods=["POST"])
 def accept_invite(invite_token):
-    """Accepts a team invitation."""
+    """Accepts a team invitation and removes it after successful registration."""
     if not hasattr(g, "user_id") or not g.user_id:
         return jsonify({"error": "Unauthorized"}), 401
-        
+
     try:
         result, success = invite_service.accept_invite(invite_token, g.user_id)
         if success:
@@ -134,6 +174,7 @@ def accept_invite(invite_token):
     except Exception as e:
         logger.error(f"Error accepting invite: {e}")
         return jsonify({"error": "Failed to accept invite"}), 500
+
 
 
 @invitation_bp.route("/cancel_invite/<invite_token>", methods=["POST"])
