@@ -26,3 +26,11 @@ C:\Users\Peter\miniconda3/envs/
 aitranscription_env/
 *.conda
 .conda/
+.qodo
+
+# Ignore macOS system files
+.DS_Store
+
+
+# Ignore nltk downloaded data
+src/nltk_data/
