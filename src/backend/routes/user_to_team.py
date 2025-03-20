@@ -35,3 +35,12 @@ def get_team_members(team_id):
 
     response, status_code = usertoteam_repo.get_team_members(team_id)
     return jsonify(response), status_code
+
+
+@usertoteam_bp.route("/get_team_members", methods=["GET"])
+def get_all_team_members():
+    if not hasattr(g, "user_id") or not g.user_id:
+        return jsonify({"error": "Unauthorized"}), 401
+
+    response, status_code = usertoteam_repo.get_all_team_members()
+    return jsonify(response), status_code

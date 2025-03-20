@@ -1,5 +1,4 @@
-// Eftersom denna kommer användas  i många sidor och modifieras så är det bättre att kopiera denna fil (se exempel teamsidebar.js)
-
+// Shared SVG icons for sidebar components
 import { sidebarIcons } from "./sidebar-icons.js";
 
 // New constant holding the sidebar HTML markup
@@ -23,8 +22,8 @@ const sidebarHTML = `
             <span>Teams</span>
           </a>
         </li>
-        <!-- Removed Podcasts menu item -->
-        <li class="sidebar-menu-item">
+        <!-- Modified Members menu item with id -->
+        <li id="sidebar-members" class="sidebar-menu-item">
           <a href="#" class="sidebar-menu-link">
             <span id="members-icon" class="sidebar-icon"></span>
             <span>Members</span>

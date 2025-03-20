@@ -4,10 +4,11 @@ import {
   editTeamRequest,
   deleteTeamRequest,
   fetchPodcasts,
-  updatePodcastTeamRequest
+  updatePodcastTeamRequest,
+  getTeamMembersRequest // Add getTeamMembersRequest import
 } from "/static/requests/teamRequests.js";
 import { sendTeamInvite } from "/static/requests/invitationRequests.js"; // Import sendTeamInvite
-import { initSidebar } from "/static/js/components/sidebar.js";
+import { initSidebar } from "./teamSidebar.js";
 
 // Update the UI with retrieved teams
 function updateTeamsUI(teams) {
@@ -304,6 +305,30 @@ function showTeamDetailModal(team) {
   });
 }
 
+// Add a function to render members view
+function renderMembersView(members) {
+  const container = document.querySelector(".main-content");
+  if (!container) {
+    console.error("Error: '.main-content' container not found.");
+    return;
+  }
+  container.innerHTML = `
+    <div class="members-view">
+      ${members
+        .map(
+          (member) => `
+        <div class="member-card">
+          <h3>${member.fullName || member.name}</h3>
+          <p><strong>Email:</strong> ${member.email}</p>
+          <p><strong>Role:</strong> ${member.role || "member"}</p>
+        </div>
+      `
+        )
+        .join("")}
+    </div>
+  `;
+}
+
 // Initialize the page
 document.addEventListener("DOMContentLoaded", async () => {
   // Initialize sidebar using the imported component
@@ -433,5 +458,22 @@ document.addEventListener("DOMContentLoaded", async () => {
         closeModal(addTeamModal);
       }
     });
+  }
+
+  // Attach event listener for "Members" button
+  const membersBtn = document.getElementById("sidebar-members");
+  if (membersBtn) {
+    membersBtn.addEventListener("click", async () => {
+      console.log("Members button pressed");
+      try {
+        const response = await getTeamMembersRequest();
+        console.log("Fetched members:", response);
+        renderMembersView(response.members || []);
+      } catch (error) {
+        console.error("Error fetching members:", error);
+      }
+    });
+  } else {
+    console.error("Members button not found");
   }
 });

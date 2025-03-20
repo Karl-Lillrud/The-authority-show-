@@ -160,3 +160,22 @@ class UserToTeamRepository:
         except Exception as e:
             logger.error(f"Error checking if user is in team: {e}", exc_info=True)
             return False
+
+    def get_all_team_members(self):
+        try:
+            team_members = list(self.users_to_teams_collection.find({}, {"_id": 0}))
+            if not team_members:
+                return {"message": "No members found"}, 404
+            members_details = []
+            for member in team_members:
+                user_id = member.get("userId")
+                user_details = self.users_collection.find_one(
+                    {"_id": user_id}, {"_id": 0}
+                )
+                if user_details:
+                    user_details["role"] = member.get("role", "member")
+                    members_details.append(user_details)
+            return {"members": members_details}, 200
+        except Exception as e:
+            logger.error(f"Error retrieving team members: {e}", exc_info=True)
+            return {"error": f"Failed to retrieve team members: {str(e)}"}, 500

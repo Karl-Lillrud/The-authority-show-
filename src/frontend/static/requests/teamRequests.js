@@ -60,3 +60,8 @@ export async function fetchPodcasts() {
     return [];
   }
 }
+
+export async function getTeamMembersRequest() {
+  const res = await fetch("/get_team_members", { method: "GET" });
+  return res.json();
+}
