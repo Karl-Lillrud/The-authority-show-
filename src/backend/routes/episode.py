@@ -3,13 +3,15 @@ import logging
 
 # Import the repository
 from backend.repository.episode_repository import EpisodeRepository
-from backend.database.mongo_connection import episodes
+from backend.repository.podcast_repository import PodcastRepository  # ✅ Import Podcast Repo
+from backend.database.mongo_connection import episodes, podcasts  # ✅ Ensure we can fetch podcasts
 
 # Define Blueprint
 episode_bp = Blueprint("episode_bp", __name__)
 
 # Create repository instance
 episode_repo = EpisodeRepository()
+podcast_repo = PodcastRepository()
 
 # SHOULD ONLY BE USED FOR SPECIFIC DATA CRUD OPERATIONS
 # EXTRA FUNCTIONALITY BESIDES CRUD OPERATIONS SHOULD BE IN SERVICES
@@ -101,15 +103,40 @@ def update_episode(episode_id):
 @episode_bp.route("/episode/<episode_id>", methods=["GET"])
 def episode_detail(episode_id):
     try:
-        # Fetch the episode document using the episode ID
+        # ✅ Fetch the episode document
         ep = episodes.find_one({"_id": episode_id})
-        if not ep:
-            return render_template("404.html")
 
-        # Render a dedicated episode page template and pass the episode data
-        return render_template("landingpage/episode.html", episode=ep)
+        if not ep:
+            print("❌ ERROR: Episode not found!")
+            return "Error: Episode not found", 404
+
+        # ✅ Ensure `podcast_id` exists in episode
+        podcast_id = ep.get("podcast_id")
+        if not podcast_id:
+            print("❌ ERROR: podcast_id missing in episode")
+            return "Error: podcast_id missing", 500
+
+        # ✅ Fetch the associated podcast using `podcast_id`
+        podcast_doc = podcasts.find_one({"_id": podcast_id}) or {}
+
+        # ✅ Extract the podcast logo safely
+        podcast_logo = podcast_doc.get("logoUrl", "")
+
+        # ✅ Ensure `podcast_logo` is valid (URL or Base64)
+        if not isinstance(podcast_logo, str) or not podcast_logo.startswith(("http", "data:image")):
+            podcast_logo = "/static/images/default.png"  # Default fallback logo
+
+        # ✅ Debugging Logs
+        print(f"Podcast Logo URL: {podcast_logo}")
+
+        # ✅ Pass episode and podcast logo to the template
+        return render_template("landingpage/episode.html", 
+                               episode=ep, 
+                               podcast_logo=podcast_logo)
     except Exception as e:
+        print("❌ ERROR:", str(e))  # Print the full error in console
         return f"Error: {str(e)}", 500
+
 
 
 @episode_bp.route("/episodes/by_podcast/<podcast_id>", methods=["GET"])

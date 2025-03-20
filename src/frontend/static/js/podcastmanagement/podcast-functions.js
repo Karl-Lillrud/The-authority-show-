@@ -747,8 +747,8 @@ function handlePodcastFormSubmission() {
       description: document.getElementById("description")?.value.trim() || "",
       bannerUrl: document.getElementById("banner")?.value.trim() || "",
       tagline: document.getElementById("tagline")?.value.trim() || "",
-      hostBio: document.getElementById("host-bio")?.value.trim() || "",
-      hostImage: document.getElementById("host-image")?.value.trim() || "",
+      hostBio: document.getElementById("hostBio")?.value.trim() || "",
+      hostImage: document.getElementById("hostImage")?.value.trim() || "",
       // the logoUrl field will be replaced if a logo is uploaded
 
       category,

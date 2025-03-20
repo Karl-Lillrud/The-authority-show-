@@ -22,7 +22,14 @@
       </div>
     </nav>
   </header>
-  
+
+    <!-- Prevent error if podcast_logo is None -->
+    <img id="podcast-logo"
+        src="{{ podcast_logo }}"
+        crossorigin="anonymous"
+        onerror="this.src='/static/images/default.png'"
+        hidden>
+
   <main>
     <!-- Enhanced Episode Banner -->
     <section class="episode-banner section-dark">
@@ -147,4 +154,16 @@
   </footer>
   <script src="static/js/audio-player.js"></script>
 </body>
+
+<!-- Load Color Thief -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/color-thief/2.3.2/color-thief.umd.js"></script>
+
+<!-- Load our main Color Thief script -->
+<script src="/static/js/color_thief.js"></script>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        applyColorThiefToEpisodePage("#podcast-logo"); // Call function for landing page
+    });
+</script>
 </html>
