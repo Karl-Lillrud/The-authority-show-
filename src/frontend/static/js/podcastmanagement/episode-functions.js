@@ -86,9 +86,9 @@ export function renderEpisodeDetail(episode) {
   episodeDetailElement.innerHTML = `
   <div class="detail-header">
     <button class="back-btn" id="back-to-podcast">
+      ${shared.svgpodcastmanagement.back}
       Back to podcast
     </button>
-    <div class="top-right-actions">
     <div class="top-right-actions">
       <button class="action-btn edit-btn" id="edit-episode-btn" data-id="${
         episode._id
@@ -162,9 +162,12 @@ export function renderEpisodeDetail(episode) {
         <h2>Guests</h2>
         <div id="guests-list"></div>
       </div>
-      <div class="separator"></div>
-      <div class="detail-actions" id="episode-actions"></div>
     </div>
+  </div>
+  <div class="detail-actions">
+    <button class="delete-btn" id="delete-episode-btn" data-id="${episode._id}">
+      ${shared.svgpodcastmanagement.delete} Delete Episode
+    </button>
   </div>
 `;
 
@@ -225,16 +228,6 @@ export function renderEpisodeDetail(episode) {
         }
       }
     });
-  }
-
-  // Add play button if audioUrl exists
-  if (episode.audioUrl && episodeActions) {
-    const playButton = createPlayButton();
-    playButton.addEventListener("click", (e) => {
-      e.stopPropagation();
-      playAudio(episode.audioUrl, episode.title);
-    });
-    episodeActions.appendChild(playButton);
   }
 
   // Fetch and display guests for the episode

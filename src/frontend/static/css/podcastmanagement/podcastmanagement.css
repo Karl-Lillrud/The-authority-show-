@@ -73,52 +73,66 @@ body {
   position: relative;
 }
 
-/* Replace the faded orange lines with decorative corner designs */
 .sidebar::before {
   content: "";
   position: absolute;
   top: 0;
   left: 0;
-  width: 100%;
-  height: 3px;
+  width: 120px; /* Increased from 60px */
+  height: 120px; /* Increased from 60px */
   background: none;
-  z-index: 10;
-  border-top: 3px solid var(--highlight-color);
-  border-top-right-radius: 3px;
+  border-top-left-radius: 8px;
+  /* Replace solid border with gradient borders */
+  border-left: none;
+  border-top: none;
+  background-image: linear-gradient(
+      to right,
+      var(--highlight-color) 3px,
+      transparent 90%
+    ),
+    linear-gradient(to bottom, var(--highlight-color) 3px, transparent 90%);
+  background-position: top left, top left;
+  background-size: 120px 3px, 3px 120px;
+  background-repeat: no-repeat;
+  transition: all 0.4s ease;
 }
 
 .sidebar::after {
   content: "";
   position: absolute;
   bottom: 0;
-  left: 0;
-  width: 100%;
-  height: 3px;
-  background: none;
-  z-index: 10;
-  border-bottom: 3px solid var(--highlight-color);
-  border-bottom-left-radius: 3px;
-}
-
-/* Add decorative L-shaped corners */
-.sidebar::before {
-  width: 60px;
-  height: 60px;
-  border-left: 3px solid var(--highlight-color);
-  border-top-left-radius: 8px;
-  background: none;
-}
-
-.sidebar::after {
-  width: 60px;
-  height: 60px;
   right: 0;
   left: auto;
-  border-right: 3px solid var(--highlight-color);
-  border-bottom-right-radius: 8px;
+  width: 120px; /* Increased from 60px */
+  height: 120px; /* Increased from 60px */
   background: none;
+  border-bottom-right-radius: 8px;
+  /* Replace solid border with gradient borders */
+  border-right: none;
+  border-bottom: none;
+  background-image: linear-gradient(
+      to left,
+      var(--highlight-color) 3px,
+      transparent 90%
+    ),
+    linear-gradient(to top, var(--highlight-color) 3px, transparent 90%);
+  background-position: bottom right, bottom right;
+  background-size: 120px 3px, 3px 120px;
+  background-repeat: no-repeat;
+  transition: all 0.4s ease;
 }
 
+/* Add hover effects to the sidebar */
+.sidebar:hover::before {
+  width: 60px;
+  height: 60px;
+  filter: drop-shadow(
+    0 0 3px rgba(255, 127, 63, 0.6)
+  ); /* Uniform glow effect */
+  /* Use the same gradient for both pseudo-elements */
+  background-image: linear-gradient(to right, #ff9f5f 3px, transparent 90%),
+    linear-gradient(to bottom, #ff9f5f 3px, transparent 90%);
+}
 .sidebar.collapsed {
   width: var(--sidebar-collapsed-width);
 }
@@ -259,7 +273,7 @@ body {
   overflow-y: auto;
   padding: var(--spacing-lg);
   transition: margin-left var(--transition-normal);
-  margin-left: calc(var(--sidebar-width) - 230px); /* Reduced margin */
+  margin-left: calc(var(--sidebar-width) - 250px); /* Reduced margin */
   min-height: calc(100vh - var(--header-height, 60px));
 }
 
@@ -849,6 +863,9 @@ body {
   margin-top: 2rem;
   display: flex;
   gap: 1rem;
+  position: relative;
+  z-index: 100; /* increased z-index to display above footer */
+  margin-bottom: var(--spacing-xl); /* add extra bottom margin */
 }
 
 /* Episodes List */
@@ -1726,13 +1743,13 @@ body {
 
   /* Adjust L-shaped corners for mobile */
   .sidebar::before {
-    width: 40px;
-    height: 40px;
+    width: 60px;
+    height: 60px;
   }
 
   .sidebar::after {
-    width: 40px;
-    height: 40px;
+    width: 60px;
+    height: 60px;
   }
 
   .sidebar.collapsed {
@@ -1884,8 +1901,8 @@ body {
   /* Adjust L-shaped corners for very small screens */
   .sidebar::before,
   .sidebar::after {
-    width: 25px;
-    height: 25px;
+    width: 40px;
+    height: 40px;
   }
 }
 
