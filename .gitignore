@@ -25,3 +25,10 @@ client_secret.json
 aitranscription_env/
 *.conda
 .conda/
+.qodo
+
+# Ignore mac os DS_Store files
+.DS_Store
+
+# ignore nltk stuff
+src/nltk_data/
