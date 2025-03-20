@@ -22,12 +22,6 @@ document.addEventListener("DOMContentLoaded", () => {
   const teamRoleElement = document.getElementById("teamRole");
   if (teamRoleElement) teamRoleElement.textContent = role;
 
-  // Auto-fill email if provided in URL
-  if (email) {
-    const emailInput = document.getElementById("email");
-    if (emailInput) emailInput.value = email;
-  }
-
   // Attach event listeners for password toggles
   document.querySelectorAll(".toggle-password").forEach((button) => {
     button.addEventListener("click", function () {
