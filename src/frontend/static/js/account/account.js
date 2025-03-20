@@ -1,4 +1,10 @@
-import { fetchProfile, updateProfile } from "/static/requests/accountRequests.js"
+import {
+  fetchProfile,
+  updateProfile,
+  updatePassword,
+  deleteUserAccount,
+  subscribeUser,
+} from "/static/requests/accountRequests.js"
 
 document.addEventListener("DOMContentLoaded", () => {
   // Initialize profile data
@@ -8,12 +14,23 @@ document.addEventListener("DOMContentLoaded", () => {
         document.getElementById("full-name").value = data.full_name || ""
         document.getElementById("email").value = data.email || ""
         document.getElementById("phone").value = data.phone || ""
+
+        // If name is missing, show a message
+        if (!data.full_name) {
+          showNotification("Please complete your profile by adding your full name", "warning")
+        }
+
+        // If phone is missing, show a message
+        if (!data.phone) {
+          showNotification("Please add your phone number to complete your profile", "warning")
+        }
       } else {
         console.error("Error fetching profile data")
       }
     })
     .catch((error) => {
       console.error("Error:", error)
+      showNotification("Failed to load profile data", "error")
     })
 
   // Toggle submenu visibility
@@ -152,6 +169,17 @@ document.addEventListener("DOMContentLoaded", () => {
       const email = document.getElementById("email").value
       const phone = document.getElementById("phone").value
 
+      // Validate required fields
+      if (!fullName.trim()) {
+        showNotification("Full name is required", "error")
+        return
+      }
+
+      if (!email.trim()) {
+        showNotification("Email is required", "error")
+        return
+      }
+
       const profileData = {
         full_name: fullName,
         email: email,
@@ -160,7 +188,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
       updateProfile(profileData)
         .then((data) => {
-          if (data.success) {
+          if (data.message) {
             showNotification("Profile updated successfully!", "success")
           } else {
             showNotification("Failed to update profile", "error")
@@ -169,6 +197,144 @@ document.addEventListener("DOMContentLoaded", () => {
         .catch((error) => {
           console.error("Error:", error)
           showNotification("An error occurred while updating profile", "error")
+        })
+    })
+  }
+
+  // Password form submission
+  const passwordForm = document.querySelector(".password-form")
+  if (passwordForm) {
+    passwordForm.addEventListener("submit", (event) => {
+      event.preventDefault()
+
+      const currentPassword = document.getElementById("password").value
+      const newPassword = document.getElementById("new-password").value
+      const confirmPassword = document.getElementById("confirm-password").value
+
+      // Validate password fields
+      if (!currentPassword) {
+        showNotification("Current password is required", "error")
+        return
+      }
+
+      if (!newPassword) {
+        showNotification("New password is required", "error")
+        return
+      }
+
+      if (newPassword !== confirmPassword) {
+        showNotification("New passwords do not match", "error")
+        return
+      }
+
+      // Check password strength
+      const strength = calculatePasswordStrength(newPassword)
+      if (strength < 2) {
+        showNotification("Password is too weak. Please choose a stronger password.", "error")
+        return
+      }
+
+      const passwordData = {
+        current_password: currentPassword,
+        new_password: newPassword,
+      }
+
+      updatePassword(passwordData)
+        .then((data) => {
+          if (data.message) {
+            showNotification("Password updated successfully!", "success")
+            passwordForm.reset()
+          } else {
+            showNotification("Failed to update password", "error")
+          }
+        })
+        .catch((error) => {
+          console.error("Error:", error)
+          showNotification("An error occurred while updating password", "error")
+        })
+    })
+  }
+
+  // Delete account form submission
+  const deleteForm = document.querySelector(".delete-form")
+  if (deleteForm) {
+    deleteForm.addEventListener("submit", (event) => {
+      event.preventDefault()
+
+      const confirmText = document.getElementById("delete-confirm").value
+      const password = document.getElementById("delete-password").value
+      const email = document.getElementById("email").value
+
+      if (confirmText !== "DELETE") {
+        showNotification("Please type DELETE to confirm account deletion", "error")
+        return
+      }
+
+      if (!password) {
+        showNotification("Password is required to delete your account", "error")
+        return
+      }
+
+      if (!email) {
+        showNotification("Email is required to delete your account", "error")
+        return
+      }
+
+      const confirmData = {
+        deleteEmail: email,
+        deletePassword: password,
+        deleteConfirm: confirmText,
+      }
+
+      deleteUserAccount(confirmData)
+        .then((data) => {
+          if (data.message) {
+            showNotification("Account deleted successfully", "success")
+            // Redirect to logout or home page after successful deletion
+            if (data.redirect) {
+              setTimeout(() => {
+                window.location.href = data.redirect
+              }, 2000)
+            } else {
+              setTimeout(() => {
+                window.location.href = "/logout"
+              }, 2000)
+            }
+          } else {
+            showNotification("Failed to delete account", "error")
+          }
+        })
+        .catch((error) => {
+          console.error("Error:", error)
+          showNotification("An error occurred while deleting account", "error")
+        })
+    })
+  }
+
+  // Subscribe to newsletter
+  const subscribeForm = document.querySelector(".subscription-form")
+  if (subscribeForm) {
+    subscribeForm.addEventListener("submit", (event) => {
+      event.preventDefault()
+
+      const email = document.getElementById("subscription-email").value
+
+      if (!email) {
+        showNotification("Email is required to subscribe", "error")
+        return
+      }
+
+      subscribeUser(email)
+        .then((data) => {
+          if (data.message) {
+            showNotification("Successfully subscribed to newsletter!", "success")
+          } else {
+            showNotification("Failed to subscribe", "error")
+          }
+        })
+        .catch((error) => {
+          console.error("Error:", error)
+          showNotification("An error occurred while subscribing", "error")
         })
     })
   }
@@ -194,6 +360,18 @@ document.addEventListener("DOMContentLoaded", () => {
   const firstSidebarItem = document.querySelector('.sidebar-item:not([data-toggle="submenu"])')
   if (firstSidebarItem) {
     firstSidebarItem.classList.add("active")
+  }
+
+  // Calculate password strength
+  function calculatePasswordStrength(password) {
+    let strength = 0
+
+    if (password.length >= 8) strength++
+    if (password.match(/[A-Z]/)) strength++
+    if (password.match(/[0-9]/)) strength++
+    if (password.match(/[^A-Za-z0-9]/)) strength++
+
+    return strength
   }
 })
 
@@ -292,50 +470,4 @@ function showNotification(message, type) {
     }, 300)
   }, 3000)
 }
-
-// API functions (mock implementations)
-/*
-function fetchProfile() {
-  // In a real application, this would make an API call
-  return new Promise((resolve) => {
-    setTimeout(() => {
-      resolve({
-        full_name: 'John Doe',
-        email: 'john.doe@example.com',
-        phone: '+1 (555) 123-4567'
-      });
-    }, 500);
-  });
-}
-
-function updateProfile(profileData) {
-  // In a real application, this would make an API call
-  console.log('Updating profile with:', profileData);
-  return new Promise((resolve) => {
-    setTimeout(() => {
-      resolve({ success: true, message: 'Profile updated successfully' });
-    }, 800);
-  });
-}
-
-function updatePassword(passwordData) {
-  // In a real application, this would make an API call
-  console.log('Updating password with:', passwordData);
-  return new Promise((resolve) => {
-    setTimeout(() => {
-      resolve({ success: true, message: 'Password updated successfully' });
-    }, 800);
-  });
-}
-
-function deleteUserAccount(confirmData) {
-  // In a real application, this would make an API call
-  console.log('Deleting account with confirmation:', confirmData);
-  return new Promise((resolve) => {
-    setTimeout(() => {
-      resolve({ success: true, message: 'Account deleted successfully' });
-    }, 800);
-  });
-}
-*/
 
