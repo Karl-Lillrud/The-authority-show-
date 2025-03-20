@@ -1,89 +1,17 @@
-{% extends "components/base.html" %} {% block title %}Team Leaderboard Dashboard{% endblock %} {% block content %}
-<link rel="stylesheet" href="{{ url_for('static', filename='css/team/team.css') }}" />
+{% extends "components/base.html" %} {% block title %}Team Leaderboard
+Dashboard{% endblock %} {% block content %}
+<link
+  rel="stylesheet"
+  href="{{ url_for('static', filename='css/team/team.css') }}"
+/>
+<link
+  rel="stylesheet"
+  href="{{ url_for('static', filename='css/components/sidebar.css') }}"
+/>
 
 <div class="app-container">
   <!-- Sidebar -->
-  <aside class="sidebar">
-    <div class="sidebar-header">
-      <!-- Intentionally left empty as in podcast management -->
-    </div>
-    <div class="sidebar-content">
-      <nav class="sidebar-menu">
-        <ul>
-          <li class="sidebar-menu-item">
-            <a href="/dashboard" class="sidebar-menu-link dashboard-link">
-              <span id="back-to-dashboard-icon" class="sidebar-icon">
-                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                  <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
-                  <polyline points="9 22 9 12 15 12 15 22"></polyline>
-                </svg>
-              </span>
-              <span>Back to Dashboard</span>
-            </a>
-          </li>
-          <li class="sidebar-menu-item active">
-            <a href="#" class="sidebar-menu-link">
-              <span id="teams-icon" class="sidebar-icon">
-                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                  <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
-                  <circle cx="9" cy="7" r="4"></circle>
-                  <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
-                  <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
-                </svg>
-              </span>
-              <span>Teams</span>
-            </a>
-          </li>
-          <li class="sidebar-menu-item">
-            <a href="#" class="sidebar-menu-link">
-              <span id="podcasts-icon" class="sidebar-icon">
-                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                  <circle cx="12" cy="12" r="10"></circle>
-                  <circle cx="12" cy="12" r="6"></circle>
-                  <circle cx="12" cy="12" r="2"></circle>
-                </svg>
-              </span>
-              <span>Podcasts</span>
-            </a>
-          </li>
-          <li class="sidebar-menu-item">
-            <a href="#" class="sidebar-menu-link">
-              <span id="members-icon" class="sidebar-icon">
-                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                  <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
-                  <circle cx="12" cy="7" r="4"></circle>
-                </svg>
-              </span>
-              <span>Members</span>
-            </a>
-          </li>
-        </ul>
-      </nav>
-
-      <!-- Add action buttons section to sidebar -->
-      <div class="sidebar-action-buttons">
-        <h3>Actions</h3>
-        <button id="openModalBtn" class="sidebar-action-button">
-          <span class="sidebar-icon">
-            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <line x1="12" y1="5" x2="12" y2="19"></line>
-              <line x1="5" y1="12" x2="19" y2="12"></line>
-            </svg>
-          </span>
-          <span>Add New Team</span>
-        </button>
-      </div>
-    </div>
-    <div class="sidebar-footer">
-      <div class="sidebar-actions">
-        <button id="toggle-sidebar" class="sidebar-toggle">
-          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <polyline points="15 18 9 12 15 6"></polyline>
-          </svg>
-        </button>
-      </div>
-    </div>
-  </aside>
+  <div id="sidebar-container"></div>
 
   <!-- Main Content -->
   <main class="main-content">
@@ -108,7 +36,14 @@
 </div>
 
 <!-- Add Team Modal -->
-<div class="modal popup" id="addTeamModal" tabindex="-1" role="dialog" aria-labelledby="addTeamModalLabel" aria-hidden="true">
+<div
+  class="modal popup"
+  id="addTeamModal"
+  tabindex="-1"
+  role="dialog"
+  aria-labelledby="addTeamModalLabel"
+  aria-hidden="true"
+>
   <div class="form-box" role="document">
     <form method="post" action="{{ url_for('team_bp.add_team') }}">
       <span id="modalCloseBtn" class="close-btn">&times;</span>
@@ -116,7 +51,12 @@
       <div class="form-grid">
         <div class="field-group full-width">
           <label for="podcast">Podcast:</label>
-          <select class="form-control" name="podcastId" id="podcastDropdown" required>
+          <select
+            class="form-control"
+            name="podcastId"
+            id="podcastDropdown"
+            required
+          >
             <option value="">Select a Podcast</option>
             <!-- Populate options with podcasts -->
           </select>
@@ -149,7 +89,9 @@
         </div>
       </div>
       <div class="form-actions">
-        <button type="button" class="cancel-btn" id="modalCloseBtn2">Close</button>
+        <button type="button" class="cancel-btn" id="modalCloseBtn2">
+          Close
+        </button>
         <button type="submit" class="save-btn">Add Team</button>
       </div>
     </form>
@@ -157,7 +99,13 @@
 </div>
 
 <!-- Team Detail Modal -->
-<div class="modal popup" id="teamDetailModal" tabindex="-1" role="dialog" aria-hidden="true">
+<div
+  class="modal popup"
+  id="teamDetailModal"
+  tabindex="-1"
+  role="dialog"
+  aria-hidden="true"
+>
   <div class="form-box" role="document">
     <form id="teamDetailForm">
       <span id="teamDetailCloseBtn" class="close-btn">&times;</span>
@@ -181,11 +129,21 @@
         </div>
         <div class="field-group">
           <label for="detailEmail">Email:</label>
-          <input type="email" class="form-control" id="detailEmail" name="email" required />
+          <input
+            type="email"
+            class="form-control"
+            id="detailEmail"
+            name="email"
+            required
+          />
         </div>
         <div class="field-group full-width">
           <label for="detailDescription">Description:</label>
-          <textarea class="form-control" id="detailDescription" name="description"></textarea>
+          <textarea
+            class="form-control"
+            id="detailDescription"
+            name="description"
+          ></textarea>
         </div>
         <div class="field-group full-width">
           <label>Members:</label>
@@ -199,7 +157,9 @@
         </div>
       </div>
       <div class="form-actions">
-        <button type="button" class="delete-btn" id="deleteTeamBtn">Delete</button>
+        <button type="button" class="delete-btn" id="deleteTeamBtn">
+          Delete
+        </button>
         <button type="button" class="save-btn" id="saveTeamBtn">Save</button>
       </div>
     </form>
@@ -209,6 +169,8 @@
 <!-- Decorative Header -->
 <div class="decorative-header"></div>
 
-<script type="module" src="{{ url_for('static', filename='js/team/team.js') }}"></script>
+<script
+  type="module"
+  src="{{ url_for('static', filename='js/team/team.js') }}"
+></script>
 {% endblock %}
-
