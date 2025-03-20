@@ -7,18 +7,22 @@ from datetime import datetime, timezone
 import uuid
 import logging
 
-invitation_bp = Blueprint("invitation_bp", __name__)
-
 # Configure logging
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO)
+
+# Create the blueprint
+invitation_bp = Blueprint("invitation_bp", __name__)
+
+# Initialize the service once
 invite_service = TeamInviteService()
 
 
 @invitation_bp.route("/send_invitation", methods=["POST"])
 def send_invitation():
+    """Send a beta invitation email to the logged-in user."""
     try:
-        logger.info("Received send_invitation request")  # Added log
+        logger.info("Received send_invitation request")
         if not hasattr(g, "user_id") or not g.user_id:
             return jsonify({"error": "Unauthorized"}), 401
 
@@ -59,12 +63,9 @@ def send_invitation():
 
 @invitation_bp.route("/invite_email_body", methods=["GET"])
 def invite_email_body():
+    """Returns the HTML template for the beta invitation email."""
     return render_template("beta-email/podmanager-beta-invite.html")
 
-invitation_bp = Blueprint("invitation_bp", __name__)
-
-# ✅ Initialize the service
-invite_service = TeamInviteService()
 
 @invitation_bp.route("/send_team_invite", methods=["POST"])
 def send_team_invite():
@@ -79,11 +80,112 @@ def send_team_invite():
     if not email or not team_id:
         return jsonify({"error": "Missing email or teamId"}), 400
 
-    # ✅ Ensure invite_service has `send_invite` method
-    response, status_code = invite_service.send_invite(g.user_id, team_id, email)
-    return jsonify(response), status_code
+    try:
+        result = invite_service.send_invite(g.user_id, team_id, email)
+        return jsonify({"success": True, "inviteId": result}), 201
+    except ValueError as e:
+        return jsonify({"error": str(e)}), 400
+    except Exception as e:
+        logger.error(f"Error sending team invite: {e}")
+        return jsonify({"error": "Failed to send invite"}), 500
+
 
 @invitation_bp.route("/verify_invite/<invite_token>", methods=["GET"])
 def verify_invite(invite_token):
-    """Verifies if an invite token is valid without registering."""
-    response, status_code = invite_service.verify
+    """Verifies if an invite token is valid without accepting it."""
+    try:
+        invite_info = invite_service.get_invite_info(invite_token)
+        if not invite_info:
+            return jsonify({"error": "Invite not found"}), 404
+            
+        # Check if invite is still valid
+        if invite_info.get("status") != "pending":
+            return jsonify({"error": f"Invite is {invite_info.get('status')}"}), 400
+            
+        # Check if invite is expired
+        expires_at = invite_info.get("expiresAt")
+        if expires_at and expires_at < datetime.now(timezone.utc):
+            return jsonify({"error": "Invite has expired"}), 400
+            
+        return jsonify({
+            "teamId": invite_info.get("teamId"),
+            "teamName": invite_info.get("teamName"),
+            "email": invite_info.get("email"),
+            "status": "valid"
+        }), 200
+            
+    except Exception as e:
+        logger.error(f"Error verifying invite: {e}")
+        return jsonify({"error": "Failed to verify invite"}), 500
+
+
+@invitation_bp.route("/accept_invite/<invite_token>", methods=["POST"])
+def accept_invite(invite_token):
+    """Accepts a team invitation."""
+    if not hasattr(g, "user_id") or not g.user_id:
+        return jsonify({"error": "Unauthorized"}), 401
+        
+    try:
+        result, success = invite_service.accept_invite(invite_token, g.user_id)
+        if success:
+            return jsonify(result), 200
+        else:
+            return jsonify(result), 400
+    except Exception as e:
+        logger.error(f"Error accepting invite: {e}")
+        return jsonify({"error": "Failed to accept invite"}), 500
+
+
+@invitation_bp.route("/cancel_invite/<invite_token>", methods=["POST"])
+def cancel_invite(invite_token):
+    """Cancels a pending team invitation."""
+    if not hasattr(g, "user_id") or not g.user_id:
+        return jsonify({"error": "Unauthorized"}), 401
+        
+    try:
+        result, success = invite_service.cancel_invite(invite_token, g.user_id)
+        if success:
+            return jsonify(result), 200
+        else:
+            status_code = 403 if "Permission denied" in result.get("error", "") else 400
+            return jsonify(result), status_code
+    except Exception as e:
+        logger.error(f"Error cancelling invite: {e}")
+        return jsonify({"error": "Failed to cancel invite"}), 500
+
+
+@invitation_bp.route("/team/<team_id>/invites", methods=["GET"])
+def get_team_invites(team_id):
+    """Gets all pending invites for a team."""
+    if not hasattr(g, "user_id") or not g.user_id:
+        return jsonify({"error": "Unauthorized"}), 401
+        
+    try:
+        # Check if user has permission to view team invites
+        is_member = invite_service.check_team_membership(team_id, g.user_id)
+        if not is_member:
+            return jsonify({"error": "Permission denied"}), 403
+            
+        invites = invite_service.get_team_invites(team_id)
+        return jsonify({"invites": invites}), 200
+    except Exception as e:
+        logger.error(f"Error retrieving team invites: {e}")
+        return jsonify({"error": "Failed to retrieve invites"}), 500
+
+
+@invitation_bp.route("/user/invites", methods=["GET"])
+def get_user_invites():
+    """Gets all pending invites for the current user."""
+    if not hasattr(g, "user_id") or not g.user_id:
+        return jsonify({"error": "Unauthorized"}), 401
+        
+    try:
+        user = collection.database.Users.find_one({"_id": g.user_id})
+        if not user or not user.get("email"):
+            return jsonify({"error": "User email not found"}), 400
+            
+        invites = invite_service.get_user_invites(user["email"])
+        return jsonify({"invites": invites}), 200
+    except Exception as e:
+        logger.error(f"Error retrieving user invites: {e}")
+        return jsonify({"error": "Failed to retrieve invites"}), 500
