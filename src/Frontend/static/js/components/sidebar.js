@@ -22,12 +22,7 @@ const sidebarHTML = `
             <span>Teams</span>
           </a>
         </li>
-        <li class="sidebar-menu-item">
-          <a href="#" class="sidebar-menu-link">
-            <span id="podcasts-icon" class="sidebar-icon"></span>
-            <span>Podcasts</span>
-          </a>
-        </li>
+        <!-- Removed Podcasts menu item -->
         <li class="sidebar-menu-item">
           <a href="#" class="sidebar-menu-link">
             <span id="members-icon" class="sidebar-icon"></span>
@@ -96,14 +91,12 @@ export function initSidebar() {
 function initSidebarIcons() {
   // Set navigation icons
   const backToDashboardIcon = document.getElementById("back-to-dashboard-icon");
-  const podcastsIcon = document.getElementById("podcasts-icon");
   const teamsIcon = document.getElementById("teams-icon");
   const membersIcon = document.getElementById("members-icon");
   // Set toggle sidebar icon is already set via sidebarHTML using sidebarIcons.toggleSidebar
 
   if (backToDashboardIcon)
     backToDashboardIcon.innerHTML = sidebarIcons.backToDashboard;
-  if (podcastsIcon) podcastsIcon.innerHTML = sidebarIcons.podcasts;
   if (teamsIcon) teamsIcon.innerHTML = sidebarIcons.teams;
   if (membersIcon) membersIcon.innerHTML = sidebarIcons.members;
   // ...existing icon initializations if needed...
