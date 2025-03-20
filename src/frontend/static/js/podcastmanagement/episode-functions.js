@@ -86,9 +86,9 @@ export function renderEpisodeDetail(episode) {
   episodeDetailElement.innerHTML = `
   <div class="detail-header">
     <button class="back-btn" id="back-to-podcast">
-      ${shared.svgpodcastmanagement.back}
       Back to podcast
     </button>
+    <div class="top-right-actions">
     <div class="top-right-actions">
       <button class="action-btn edit-btn" id="edit-episode-btn" data-id="${
         episode._id
