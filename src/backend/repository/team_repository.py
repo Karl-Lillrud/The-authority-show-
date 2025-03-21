@@ -140,6 +140,8 @@ class TeamRepository:
             if not team:
                 return {"error": "Team not found"}, 404
 
+            team_name = team.get("name", "Unknown Team")  # Hämta teamets namn
+
             self.user_to_teams_collection.delete_many({"teamId": team_id})
 
             result = self.teams_collection.delete_one({"_id": team_id})
@@ -151,7 +153,7 @@ class TeamRepository:
             )
 
             return {
-                "message": f"Team {team_id} and all members deleted successfully!",
+                "message": f"Team '{team_name}' and all members deleted successfully!",
             }, 200
 
         except Exception as e:

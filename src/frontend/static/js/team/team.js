@@ -15,6 +15,7 @@ import {
   deleteTeamMemberRequest,
   getTeamMembersRequest
 } from "/static/requests/userToTeamRequests.js";
+import { showNotification } from "../podcastmanagement/podcastmanagement.js"; // Importera notifikationssystemet
 
 // Update the UI with retrieved teams
 function updateTeamsUI(teams) {
@@ -84,12 +85,21 @@ function updateTeamsUI(teams) {
       .addEventListener("click", async () => {
         try {
           const result = await deleteTeamRequest(team._id);
-          alert(result.message || "Team deleted successfully!");
+          showNotification(
+            "Success",
+            result.message || "Team deleted successfully!",
+            "success"
+          );
           card.remove();
           const teams = await getTeamsRequest();
           updateTeamsUI(teams);
         } catch (error) {
           console.error("Error deleting team:", error);
+          showNotification(
+            "Error",
+            "An error occurred while deleting the team.",
+            "error"
+          );
         }
       });
     container.appendChild(card);
@@ -220,7 +230,11 @@ function showTeamDetailModal(team) {
       );
       populatePodcastDropdownForTeam(team._id, pendingPodcastChanges);
       dropdown.value = "";
-      alert("Podcast addition pending. Press Save to finalize.");
+      showNotification(
+        "Success",
+        "Podcast addition pending. Press Save to finalize.",
+        "success"
+      );
     }
   };
 
@@ -236,7 +250,11 @@ function showTeamDetailModal(team) {
         pendingPodcastChanges
       );
       populatePodcastDropdownForTeam(team._id, pendingPodcastChanges);
-      alert("Podcast removal pending. Press Save to finalize.");
+      showNotification(
+        "Success",
+        "Podcast removal pending. Press Save to finalize.",
+        "success"
+      );
     }
   };
 
@@ -245,7 +263,11 @@ function showTeamDetailModal(team) {
   deleteBtn.onclick = async () => {
     try {
       const result = await deleteTeamRequest(team._id);
-      alert(result.message || "Team deleted successfully!");
+      showNotification(
+        "Success",
+        result.message || "Team deleted successfully!",
+        "success"
+      );
       const card = document.querySelector(`.team-card[data-id="${team._id}"]`);
       if (card) card.remove();
       closeModal(modal);
@@ -253,6 +275,11 @@ function showTeamDetailModal(team) {
       updateTeamsUI(teams);
     } catch (error) {
       console.error("Error deleting team:", error);
+      showNotification(
+        "Error",
+        "An error occurred while deleting the team.",
+        "error"
+      );
     }
   };
 
@@ -280,7 +307,7 @@ function showTeamDetailModal(team) {
       }
     } catch (err) {
       console.error("Error updating podcast assignments:", err);
-      alert("Error updating podcast assignments.");
+      showNotification("Error", "Error updating podcast assignments.", "error");
       return;
     }
 
@@ -294,12 +321,21 @@ function showTeamDetailModal(team) {
     try {
       const result = await editTeamRequest(team._id, payload);
       console.log("Edit team response:", result);
-      alert(result.message || "Team updated successfully!");
+      showNotification(
+        "Success",
+        result.message || "Team updated successfully!",
+        "success"
+      );
       closeModal(modal);
       const teams = await getTeamsRequest();
       updateTeamsUI(teams);
     } catch (error) {
       console.error("Error editing team:", error);
+      showNotification(
+        "Error",
+        "An error occurred while updating the team.",
+        "error"
+      );
     }
   };
 
@@ -366,7 +402,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         const response = await addTeamRequest(payload);
         console.log("Add team response:", response);
         const teamId = response.team_id;
-        alert("Team successfully created!");
+        showNotification("Success", "Team successfully created!", "success");
 
         // If a podcast was selected, update it with the new team ID using a PUT request.
         if (podcastId) {
@@ -380,6 +416,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         updateTeamsUI(teams);
       } catch (error) {
         console.error("Error adding team:", error);
+        showNotification("Error", "Failed to create team.", "error");
       }
     });
   }
@@ -471,7 +508,11 @@ document.addEventListener("DOMContentLoaded", async () => {
       const role = document.getElementById("memberRole").value;
       const teamId = teamSelect.value;
       if (!email || !teamId || !role) {
-        alert("Please provide member email, role and select a team.");
+        showNotification(
+          "Error",
+          "Please provide member email, role and select a team.",
+          "error"
+        );
         return;
       }
       try {
@@ -485,14 +526,17 @@ document.addEventListener("DOMContentLoaded", async () => {
           body: JSON.stringify({ teamId, email, role })
         });
         const updateResult = await res.json();
-        alert(
-          updateResult.message || `Member added and invitation sent to ${email}`
+        showNotification(
+          "Success",
+          updateResult.message ||
+            `Member added and invitation sent to ${email}`,
+          "success"
         );
         addMemberModal.classList.remove("show");
         addMemberModal.setAttribute("aria-hidden", "true");
       } catch (error) {
         console.error("Error sending team invite or adding member:", error);
-        alert("Failed to add member.");
+        showNotification("Error", "Failed to add member.", "error");
       }
     });
   }
@@ -632,14 +676,26 @@ async function deleteMember(teamId, userId = null, email = null) {
   try {
     const result = await deleteTeamMemberRequest(teamId, userId, email);
     if (result.message) {
-      alert(result.message || "Member deleted successfully!");
+      showNotification(
+        "Success",
+        result.message || "Member deleted successfully!",
+        "success"
+      );
       renderMembersView(); // Refresh the members view
     } else {
-      alert(result.error || "Failed to delete member.");
+      showNotification(
+        "Error",
+        result.error || "Failed to delete member.",
+        "error"
+      );
     }
   } catch (error) {
     console.error("Error deleting member:", error);
-    alert("An error occurred while deleting the member.");
+    showNotification(
+      "Error",
+      "An error occurred while deleting the member.",
+      "error"
+    );
   }
 }
 
@@ -664,15 +720,27 @@ function showEditMemberModal(teamId, member) {
         updatedRole
       );
       if (result.message) {
-        alert(result.message || "Member updated successfully!");
+        showNotification(
+          "Success",
+          result.message || "Member updated successfully!",
+          "success"
+        );
         modal.classList.remove("show");
         renderMembersView(); // Refresh the members view
       } else {
-        alert(result.error || "Failed to update member.");
+        showNotification(
+          "Error",
+          result.error || "Failed to update member.",
+          "error"
+        );
       }
     } catch (error) {
       console.error("Error updating member:", error);
-      alert("An error occurred while updating the member.");
+      showNotification(
+        "Error",
+        "An error occurred while updating the member.",
+        "error"
+      );
     }
   };
 
@@ -680,3 +748,122 @@ function showEditMemberModal(teamId, member) {
     modal.classList.remove("show");
   };
 }
+
+async function addTeam(payload) {
+  try {
+    const response = await addTeamRequest(payload);
+    showNotification("Success", "Team successfully created!", "success");
+    const teams = await getTeamsRequest();
+    updateTeamsUI(teams);
+  } catch (error) {
+    console.error("Error adding team:", error);
+    showNotification("Error", "Failed to create team.", "error");
+  }
+}
+
+async function deleteTeam(teamId) {
+  try {
+    const result = await deleteTeamRequest(teamId);
+    if (result.message) {
+      showNotification(
+        "Success",
+        result.message || "Team deleted successfully!",
+        "success"
+      );
+      const teams = await getTeamsRequest();
+      updateTeamsUI(teams);
+    } else {
+      showNotification(
+        "Error",
+        result.error || "Failed to delete team.",
+        "error"
+      );
+    }
+  } catch (error) {
+    console.error("Error deleting team:", error);
+    showNotification(
+      "Error",
+      "An error occurred while deleting the team.",
+      "error"
+    );
+  }
+}
+
+async function saveTeamDetails(teamId, payload) {
+  try {
+    const result = await editTeamRequest(teamId, payload);
+    if (result.message) {
+      showNotification(
+        "Success",
+        result.message || "Team updated successfully!",
+        "success"
+      );
+      const teams = await getTeamsRequest();
+      updateTeamsUI(teams);
+    } else {
+      showNotification(
+        "Error",
+        result.error || "Failed to update team.",
+        "error"
+      );
+    }
+  } catch (error) {
+    console.error("Error updating team:", error);
+    showNotification(
+      "Error",
+      "An error occurred while updating the team.",
+      "error"
+    );
+  }
+}
+
+async function handleAddMemberFormSubmission(e) {
+  e.preventDefault();
+  const email = document.getElementById("memberEmail").value;
+  const role = document.getElementById("memberRole").value;
+  const teamId = document.getElementById("teamSelect").value;
+
+  if (!email || !teamId || !role) {
+    showNotification(
+      "Error",
+      "Please provide member email, role, and select a team.",
+      "error"
+    );
+    return;
+  }
+
+  try {
+    const inviteResult = await sendTeamInvite(teamId, email);
+    console.log(`Invitation sent: `, inviteResult);
+
+    const res = await fetch("/add_team_member", {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ teamId, email, role })
+    });
+    const updateResult = await res.json();
+
+    if (updateResult.message) {
+      showNotification(
+        "Success",
+        "Invitation mail sent successfully!",
+        "success"
+      );
+      document.getElementById("addMemberModal").classList.remove("show");
+    } else {
+      showNotification(
+        "Error",
+        updateResult.error || "Failed to add member.",
+        "error"
+      );
+    }
+  } catch (error) {
+    console.error("Error sending team invite or adding member:", error);
+    showNotification("Error", "Failed to add member.", "error");
+  }
+}
+
+// Update existing event listeners to use showNotification
+document
+  .getElementById("addMemberForm")
+  .addEventListener("submit", handleAddMemberFormSubmission);
