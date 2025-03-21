@@ -1,8 +1,6 @@
 from flask import request, jsonify, Blueprint, g
 from backend.repository.podcast_repository import PodcastRepository
 import logging
-import feedparser
-import urllib.request
 
 # Define Blueprint
 podcast_bp = Blueprint("podcast_bp", __name__)

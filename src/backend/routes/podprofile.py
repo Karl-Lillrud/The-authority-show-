@@ -11,8 +11,6 @@ from flask import (
 )
 from backend.database.mongo_connection import collection
 import requests
-import feedparser
-import urllib.request
 from datetime import datetime, timezone
 
 podprofile_bp = Blueprint("podprofile_bp", __name__)
