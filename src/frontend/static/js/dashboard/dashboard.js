@@ -1,35 +1,26 @@
+// In dashboard.js
+import { fetchAllEpisodes } from "/static/requests/episodeRequest.js";
 import { fetchGuestsByEpisode } from "/static/requests/guestRequests.js";
 
 document.addEventListener("DOMContentLoaded", function () {
-
-  // Fetch Episodes and Display Associated Guest Names
   async function fetchAndDisplayEpisodesWithGuests() {
     try {
-      // Fetch all episodes for the current user
-      const response = await fetch("/get_episodes");
-      const data = await response.json();
-      if (!response.ok) {
-        throw new Error(data.error || "Failed to fetch episodes");
-      }
-      const episodes = data.episodes || [];
+      // Fetch episodes using the function from episodeRequest.js
+      const episodes = await fetchAllEpisodes();
       const container = document.querySelector(".cards-container");
       container.innerHTML = "";
 
       for (const episode of episodes) {
-        // Create a card for each episode
         const card = document.createElement("div");
         card.classList.add("card");
 
-        // Display episode title
         const titleElem = document.createElement("h3");
         titleElem.textContent = episode.title;
         card.appendChild(titleElem);
 
-        // Create a list to display guest names associated with this episode
         const guestList = document.createElement("ul");
         guestList.classList.add("guest-list");
 
-        // Fetch guests for the current episode using its id (assumed to be _id)
         try {
           const guests = await fetchGuestsByEpisode(episode._id);
           if (guests.length > 0) {
@@ -58,6 +49,5 @@ document.addEventListener("DOMContentLoaded", function () {
     }
   }
 
-  // Call the function to populate episode cards with guest names
   fetchAndDisplayEpisodesWithGuests();
 });

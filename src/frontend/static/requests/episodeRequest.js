@@ -172,3 +172,21 @@ export async function deleteEpisode(episodeId) {
     alert("Failed to delete episode.");
   }
 }
+
+// In episodeRequest.js
+export async function fetchAllEpisodes() {
+  try {
+    const response = await fetch("/get_episodes");
+    const data = await response.json();
+    if (response.ok) {
+      return data.episodes;
+    } else {
+      console.error("Failed to fetch episodes:", data.error);
+      throw new Error(data.error || "Failed to fetch episodes");
+    }
+  } catch (error) {
+    console.error("Error fetching episodes:", error);
+    throw error;
+  }
+}
+
