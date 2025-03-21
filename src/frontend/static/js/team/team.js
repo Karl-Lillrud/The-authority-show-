@@ -5,10 +5,11 @@ import {
   deleteTeamRequest,
   fetchPodcasts,
   updatePodcastTeamRequest,
-  getTeamMembers // Lägg till denna import
+  getTeamMembers
 } from "/static/requests/teamRequests.js";
-import { sendTeamInvite } from "/static/requests/invitationRequests.js"; // Added missing import
-import { initSidebar } from "/static/js/team/teamSidebar.js";
+import { sendTeamInvite } from "/static/requests/invitationRequests.js";
+import { initSidebar } from "../components/sidebar.js";
+import { sidebarIcons } from "../components/sidebar-icons.js";
 
 // Update the UI with retrieved teams
 function updateTeamsUI(teams) {
@@ -330,6 +331,7 @@ function showTeamDetailModal(team) {
 document.addEventListener("DOMContentLoaded", async () => {
   // Initialize sidebar from teamSidebar.js
   initSidebar();
+  initSidebarIcons(); // Flyttad funktion initieras här
 
   // Fetch teams data
   const teams = await getTeamsRequest();
@@ -523,7 +525,38 @@ document.addEventListener("DOMContentLoaded", async () => {
       }
     });
   }
+
+  // Initialize menu item event listeners
+  const teamsMenuItem = document.getElementById("sidebar-teams");
+  const membersMenuItem = document.getElementById("sidebar-members");
+
+  if (teamsMenuItem && membersMenuItem) {
+    teamsMenuItem.addEventListener("click", (event) => {
+      event.preventDefault();
+      membersMenuItem.classList.remove("active");
+      teamsMenuItem.classList.add("active");
+      switchToTeamsView();
+    });
+
+    membersMenuItem.addEventListener("click", (event) => {
+      event.preventDefault();
+      teamsMenuItem.classList.remove("active");
+      membersMenuItem.classList.add("active");
+      switchToMembersView();
+    });
+  }
 });
+
+function initSidebarIcons() {
+  const backToDashboardIcon = document.getElementById("back-to-dashboard-icon");
+  const teamsIcon = document.getElementById("teams-icon");
+  const membersIcon = document.getElementById("members-icon");
+
+  if (backToDashboardIcon)
+    backToDashboardIcon.innerHTML = sidebarIcons.backToDashboard;
+  if (teamsIcon) teamsIcon.innerHTML = sidebarIcons.teams;
+  if (membersIcon) membersIcon.innerHTML = sidebarIcons.members;
+}
 
 export function switchToTeamsView() {
   console.log("Switching to Teams view");
@@ -547,7 +580,7 @@ async function renderMembersView() {
     <div class="main-header">
       <h1>Members</h1>
     </div>
-    <div id="members-view-container" class="card-container">
+    <div id="members-view-container" class="card-container"></div>
       <!-- Member cards will be dynamically inserted here -->
     </div>
   `;

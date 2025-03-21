@@ -11,7 +11,55 @@ Dashboard{% endblock %} {% block content %}
 
 <div class="app-container">
   <!-- Sidebar -->
-  <div id="sidebar-container"></div>
+  <div id="sidebar-container">
+    <aside class="sidebar">
+      <div class="sidebar-header">
+        <!-- ...existing header code... -->
+      </div>
+      <div class="sidebar-content">
+        <nav class="sidebar-menu">
+          <ul>
+            <li class="sidebar-menu-item">
+              <a href="/dashboard" class="sidebar-menu-link dashboard-link">
+                <span id="back-to-dashboard-icon" class="sidebar-icon"></span>
+                <span>Back to Dashboard</span>
+              </a>
+            </li>
+            <li id="sidebar-teams" class="sidebar-menu-item">
+              <a href="#" class="sidebar-menu-link">
+                <span id="teams-icon" class="sidebar-icon"></span>
+                <span>Teams</span>
+              </a>
+            </li>
+            <li id="sidebar-members" class="sidebar-menu-item">
+              <a href="#" class="sidebar-menu-link">
+                <span id="members-icon" class="sidebar-icon"></span>
+                <span>Members</span>
+              </a>
+            </li>
+          </ul>
+        </nav>
+        <div class="sidebar-action-buttons">
+          <h3>Actions</h3>
+          <button id="openModalBtn" class="sidebar-action-button">
+            <span class="sidebar-icon"></span>
+            <span>Add New Team</span>
+          </button>
+          <button id="addNewMemberBtn" class="sidebar-action-button">
+            <span class="sidebar-icon"></span>
+            <span>Add New Member</span>
+          </button>
+        </div>
+      </div>
+      <div class="sidebar-footer">
+        <div class="sidebar-actions">
+          <button id="toggle-sidebar" class="sidebar-toggle">
+            <!-- Sidebar toggle icon -->
+          </button>
+        </div>
+      </div>
+    </aside>
+  </div>
 
   <!-- Main Content -->
   <main class="main-content">
