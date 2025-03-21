@@ -766,3 +766,27 @@ body {
     width: 100%;
   }
 }
+
+/* Not Verified Badge */
+.not-verified-badge {
+  display: inline-block;
+  margin-left: 6px;
+  padding: 2px 6px;
+  font-size: 0.7rem;
+  color: #e74c3c;
+  border: 1px solid #e74c3c;
+  border-radius: 4px;
+  background-color: #fceae9;
+}
+
+/* Verified Badge */
+.verified-badge {
+  display: inline-block;
+  margin-left: 6px;
+  padding: 2px 6px;
+  font-size: 0.7rem;
+  color: #4caf50;
+  border: 1px solid #4caf50;
+  border-radius: 4px;
+  background-color: #e8f5e9;
+}

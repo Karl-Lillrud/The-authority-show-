@@ -13,6 +13,8 @@ class TeamRepository:
         self.teams_collection = collection.database.Teams
         self.user_to_teams_collection = collection.database.UsersToTeams
         self.podcasts_collection = collection.database.Podcasts
+        # Added to check user status during team retrieval
+        self.users_collection = collection.database.Users
 
     def add_team(self, user_id, user_email, data):
         try:
@@ -114,6 +116,17 @@ class TeamRepository:
                     if podcasts
                     else "N/A"
                 )
+                # Check each member: if not the creator and not yet verified,
+                # query the Users collection and update verified flag if applicable.
+                for member in team.get("members", []):
+                    if member.get("role") != "creator" and not member.get(
+                        "verified", False
+                    ):
+                        user = self.users_collection.find_one(
+                            {"email": member["email"].lower()}
+                        )
+                        if user and user.get("isTeamMember") is True:
+                            member["verified"] = True
 
             return list(teams.values()), 200
 
@@ -177,7 +190,9 @@ class TeamRepository:
             return {"error": f"Failed to edit team: {str(e)}"}, 500
 
     def add_member_to_team(self, team_id, new_member):
-        # Append new_member object to the members array of the team document
+        # Normalize email to lower case and set verified to False by default
+        new_member["email"] = new_member["email"].lower()
+        new_member["verified"] = False
         result = self.teams_collection.update_one(
             {"_id": team_id}, {"$push": {"members": new_member}}
         )

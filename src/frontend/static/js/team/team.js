@@ -39,9 +39,22 @@ function updateTeamsUI(teams) {
         <p><strong>Members:</strong></p>
         <div class="member-chips">
           ${team.members
-            .map((m) => `<span class="member-chip">${m.email}</span>`)
+            .map(
+              (m) => `
+            <span class="member-chip">
+              ${m.email}
+              ${
+                m.role !== "creator"
+                  ? m.verified === true
+                    ? '<span class="verified-badge">Verified</span>'
+                    : '<span class="not-verified-badge">Not Verified</span>'
+                  : ""
+              }
+            </span>
+          `
+            )
             .join("")}
-        </div>
+        </div></div>
       </div>
       <div class="team-card-footer">
         <button class="btn edit-team-btn">Edit</button>
