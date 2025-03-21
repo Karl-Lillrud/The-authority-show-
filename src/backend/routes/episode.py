@@ -106,15 +106,8 @@ def episode_detail(episode_id):
         # ✅ Fetch the episode document
         ep = episodes.find_one({"_id": episode_id})
 
-        if not ep:
-            print("❌ ERROR: Episode not found!")
-            return "Error: Episode not found", 404
-
         # ✅ Ensure `podcast_id` exists in episode
         podcast_id = ep.get("podcast_id")
-        if not podcast_id:
-            print("❌ ERROR: podcast_id missing in episode")
-            return "Error: podcast_id missing", 500
 
         # ✅ Fetch the associated podcast using `podcast_id`
         podcast_doc = podcasts.find_one({"_id": podcast_id}) or {}
@@ -125,9 +118,6 @@ def episode_detail(episode_id):
         # ✅ Ensure `podcast_logo` is valid (URL or Base64)
         if not isinstance(podcast_logo, str) or not podcast_logo.startswith(("http", "data:image")):
             podcast_logo = "/static/images/default.png"  # Default fallback logo
-
-        # ✅ Debugging Logs
-        print(f"Podcast Logo URL: {podcast_logo}")
 
         # ✅ Pass episode and podcast logo to the template
         return render_template("landingpage/episode.html", 
@@ -141,45 +131,9 @@ def episode_detail(episode_id):
 
 @episode_bp.route("/episodes/by_podcast/<podcast_id>", methods=["GET"])
 def get_episodes_by_podcast(podcast_id):
+    """Fetch all episodes for a given podcast."""
     if not hasattr(g, "user_id") or not g.user_id:
         return jsonify({"error": "Unauthorized"}), 401
 
-    try:
-        # Query the episodes collection for documents matching the given podcast_id
-        episodes_cursor = episodes.find({"podcast_id": podcast_id})
-        mapped_episodes = []
-
-        for ep in episodes_cursor:
-            title = ep.get("title", "No Title")
-            description = ep.get("description", "No Description")
-            publish_date = ep.get("publishDate")
-            duration = ep.get("duration", "Unknown")
-            episode_type = ep.get("episodeType", "Unknown")
-            link = ep.get("link", "No Link")
-            author = ep.get("author", "Unknown")
-            file_size = ep.get("fileSize", "Unknown")
-            file_type = ep.get("fileType", "Unknown")
-            audio_url = ep.get("audioUrl", None)
-
-            mapped_episodes.append(
-                {
-                    "_id": ep.get("_id"),
-                    "title": title,
-                    "description": description,
-                    "publishDate": publish_date,
-                    "duration": duration,
-                    "episodeType": episode_type,
-                    "link": link,
-                    "author": author,
-                    "fileSize": file_size,
-                    "fileType": file_type,
-                    "audioUrl": audio_url,
-                }
-            )
-
-        # Return the mapped episodes list
-        return jsonify({"episodes": mapped_episodes}), 200
-
-    except Exception as e:
-        logger.error("❌ ERROR: %s", e)
-        return jsonify({"error": f"Failed to fetch episodes by podcast: {str(e)}"}), 500
+    episodes, status_code = episode_repo.get_episodes_by_podcast(podcast_id, g.user_id)
+    return jsonify(episodes), status_code

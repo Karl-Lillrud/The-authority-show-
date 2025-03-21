@@ -216,15 +216,47 @@ class EpisodeRepository:
 
     def get_episodes_by_podcast(self, podcast_id, user_id):
         """
-        Get episodes by podcast ID
+        Get all episodes for a given podcast ID
         """
         try:
             user_id_str = str(user_id)
-            episodes = list(
-                self.collection.find({"podcast_id": podcast_id, "userid": user_id_str})
-            )
-            for episode in episodes:
-                episode["_id"] = str(episode["_id"])
-            return {"episodes": episodes}, 200
+
+            # Fetch episodes for the given podcast_id and user_id
+            episodes_cursor = self.collection.find({"podcast_id": podcast_id, "userid": user_id_str})
+            mapped_episodes = []
+
+            for ep in episodes_cursor:
+                mapped_episodes.append({
+                    "_id": str(ep["_id"]),  # Convert ObjectId to string
+                    "podcastId": ep.get("podcast_id"),
+                    "title": ep.get("title", "No Title"),
+                    "description": ep.get("description", "No Description"),
+                    "publishDate": ep.get("publishDate", None),
+                    "duration": ep.get("duration", None),
+                    "status": ep.get("status", "Unknown"),
+                    "audioUrl": ep.get("audioUrl", None),
+                    "fileSize": ep.get("fileSize", "Unknown"),
+                    "fileType": ep.get("fileType", "Unknown"),
+                    "guid": ep.get("guid", None),
+                    "season": ep.get("season", None),
+                    "episode": ep.get("episode", None),
+                    "episodeType": ep.get("episodeType", "Unknown"),
+                    "explicit": ep.get("explicit", None),
+                    "imageUrl": ep.get("imageUrl", None),
+                    "keywords": ep.get("keywords", []),  # Ensure it's always a list
+                    "chapters": ep.get("chapters", []),  # Ensure it's always a list
+                    "link": ep.get("link", None),
+                    "subtitle": ep.get("subtitle", ""),
+                    "summary": ep.get("summary", ""),
+                    "author": ep.get("author", "Unknown"),
+                    "isHidden": ep.get("isHidden", None),
+                    "createdAt": ep.get("created_at"),  # Use correct field name
+                    "updatedAt": ep.get("updated_at"),  # Use correct field name
+                })
+
+            return {"episodes": mapped_episodes}, 200
+
         except Exception as e:
-            return {"error": str(e)}, 500
+            logger.error(f"❌ ERROR fetching episodes for podcast {podcast_id}: {str(e)}")
+            return {"error": f"Failed to fetch episodes: {str(e)}"}, 500
+

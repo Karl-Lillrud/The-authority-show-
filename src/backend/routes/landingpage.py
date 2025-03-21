@@ -97,11 +97,11 @@ def landingpage_by_id(podcast_id):
 
         # Ensure host_image is a valid string before checking startswith()
         if not isinstance(host_image, str) or not host_image.startswith("data:image"):
-            host_image = url_for('static', filename='images/default-host.png')
+            host_image = url_for('static', filename='images/default.png')
 
         # Ensure banner_url is a valid string before checking startswith()
         if not isinstance(banner_url, str) or not banner_url.startswith("data:image"):
-            banner_url = url_for('static', filename='images/default-banner.png')
+            banner_url = url_for('static', filename='images/default.png')
 
         # ✅ Render the template with optimized data retrieval
         return render_template(
