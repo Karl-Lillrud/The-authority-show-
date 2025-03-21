@@ -106,26 +106,39 @@ def episode_detail(episode_id):
         # ✅ Fetch the episode document
         ep = episodes.find_one({"_id": episode_id})
 
+        if not ep:
+            return render_template("404.html")  # Handle missing episode case
+
         # ✅ Ensure `podcast_id` exists in episode
         podcast_id = ep.get("podcast_id")
-
-        # ✅ Fetch the associated podcast using `podcast_id`
         podcast_doc = podcasts.find_one({"_id": podcast_id}) or {}
 
-        # ✅ Extract the podcast logo safely
+        # ✅ Extract podcast logo safely
         podcast_logo = podcast_doc.get("logoUrl", "")
 
-        # ✅ Ensure `podcast_logo` is valid (URL or Base64)
+        # ✅ Validate `podcast_logo` (must be a valid URL or Base64)
         if not isinstance(podcast_logo, str) or not podcast_logo.startswith(("http", "data:image")):
-            podcast_logo = "/static/images/default.png"  # Default fallback logo
+            podcast_logo = "/static/images/default.png"  # Default fallback
 
-        # ✅ Pass episode and podcast logo to the template
-        return render_template("landingpage/episode.html", 
-                               episode=ep, 
-                               podcast_logo=podcast_logo)
+        # ✅ Extract the episode's `audioUrl` safely
+        audio_url = ep.get("audioUrl", "")
+
+        # ✅ Validate `audio_url`
+        if not isinstance(audio_url, str) or not audio_url.startswith(("http", "https")):
+            audio_url = None  # Avoid passing invalid audio URLs
+
+        # ✅ Pass episode, podcast logo, and audio URL to the template
+        return render_template(
+            "landingpage/episode.html",
+            episode=ep,
+            podcast_logo=podcast_logo,
+            audio_url=audio_url,  # ✅ Make sure this is available in the template
+        )
+
     except Exception as e:
         print("❌ ERROR:", str(e))  # Print the full error in console
         return f"Error: {str(e)}", 500
+
 
 
 
