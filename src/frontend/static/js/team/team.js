@@ -502,43 +502,11 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   // Handle Add Member form submission in the new member modal
   if (addMemberForm) {
-    addMemberForm.addEventListener("submit", async (e) => {
-      e.preventDefault();
-      const email = document.getElementById("memberEmail").value;
-      const role = document.getElementById("memberRole").value;
-      const teamId = teamSelect.value;
-      if (!email || !teamId || !role) {
-        showNotification(
-          "Error",
-          "Please provide member email, role and select a team.",
-          "error"
-        );
-        return;
-      }
-      try {
-        // First, trigger sending the invitation email
-        const inviteResult = await sendTeamInvite(teamId, email);
-        console.log(`Invitation sent: `, inviteResult);
-        // Then, update the team's member array via new endpoint
-        const res = await fetch("/add_team_member", {
-          method: "PUT",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ teamId, email, role })
-        });
-        const updateResult = await res.json();
-        showNotification(
-          "Success",
-          updateResult.message ||
-            `Member added and invitation sent to ${email}`,
-          "success"
-        );
-        addMemberModal.classList.remove("show");
-        addMemberModal.setAttribute("aria-hidden", "true");
-      } catch (error) {
-        console.error("Error sending team invite or adding member:", error);
-        showNotification("Error", "Failed to add member.", "error");
-      }
-    });
+    // Ta bort eventuella tidigare registrerade eventhanterare
+    addMemberForm.removeEventListener("submit", handleAddMemberFormSubmission);
+
+    // Lägg till eventhanteraren
+    addMemberForm.addEventListener("submit", handleAddMemberFormSubmission);
   }
 
   // Initialize menu item event listeners

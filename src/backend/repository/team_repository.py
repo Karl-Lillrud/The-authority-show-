@@ -192,13 +192,30 @@ class TeamRepository:
             return {"error": f"Failed to edit team: {str(e)}"}, 500
 
     def add_member_to_team(self, team_id, new_member):
-        # Normalize email to lower case and set verified to False by default
-        new_member["email"] = new_member["email"].lower()
-        new_member["verified"] = False
-        result = self.teams_collection.update_one(
-            {"_id": team_id}, {"$push": {"members": new_member}}
-        )
-        if result.modified_count > 0:
-            return {"message": "Member added successfully"}, 201
-        else:
-            return {"error": "Failed to add member"}, 500
+        try:
+            # Normalize email to lower case
+            new_member["email"] = new_member["email"].strip().lower()
+            new_member["verified"] = False
+
+            # Kontrollera om medlemmen redan finns i teamets members-array
+            existing_member = self.teams_collection.find_one(
+                {"_id": team_id, "members.email": new_member["email"]}
+            )
+            if existing_member:
+                # Kontrollera om e-postadressen redan finns i members-arrayen
+                for member in existing_member.get("members", []):
+                    if member["email"] == new_member["email"]:
+                        return {"error": "Member already exists in the team"}, 400
+
+            # Lägg till medlemmen om den inte redan finns
+            result = self.teams_collection.update_one(
+                {"_id": team_id}, {"$push": {"members": new_member}}
+            )
+            if result.modified_count > 0:
+                return {"message": "Member added successfully"}, 201
+            else:
+                return {"error": "Failed to add member"}, 500
+
+        except Exception as e:
+            logger.error(f"Error adding member to team: {e}", exc_info=True)
+            return {"error": f"Failed to add member: {str(e)}"}, 500
