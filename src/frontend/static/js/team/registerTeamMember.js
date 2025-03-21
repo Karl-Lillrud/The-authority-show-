@@ -1,44 +1,56 @@
-import { registerTeamMember } from "../../requests/authRequests.js"
+import { registerTeamMember } from "../../requests/authRequests.js";
 
 document.addEventListener("DOMContentLoaded", () => {
-  const form = document.getElementById("registerTeamMemberForm")
-  const registerButton = document.getElementById("registerButton")
-  const loadingText = document.getElementById("loadingText")
-  const errorMessage = document.getElementById("errorMessage")
+  const form = document.getElementById("registerTeamMemberForm");
+  const registerButton = document.getElementById("registerButton");
+  const loadingText = document.getElementById("loadingText");
+  const errorMessage = document.getElementById("errorMessage");
+
+  // Extract all URL parameters in one place
+  const urlParams = new URLSearchParams(window.location.search);
+  const inviteToken = urlParams.get("token");
+  const teamName = decodeURIComponent(urlParams.get("teamName") || "Unnamed Team");
+  const role = decodeURIComponent(urlParams.get("role") || "Member");
+  const email = urlParams.get("email");
+
+  // Update team name everywhere
+  document.querySelectorAll(".teamName").forEach((el) => {
+    if (el) el.textContent = teamName;
+  });
+
+  // Update role if element exists
+  const teamRoleElement = document.getElementById("teamRole");
+  if (teamRoleElement) teamRoleElement.textContent = role;
 
   // Attach event listeners for password toggles
   document.querySelectorAll(".toggle-password").forEach((button) => {
     button.addEventListener("click", function () {
-      togglePassword(this.getAttribute("data-target"), this)
-    })
-  })
+      togglePassword(this.getAttribute("data-target"), this);
+    });
+  });
 
   function togglePassword(fieldId, button) {
-    const passwordField = document.getElementById(fieldId)
+    const passwordField = document.getElementById(fieldId);
     if (passwordField.type === "password") {
-      passwordField.type = "text"
-      button.textContent = "Hide"
+      passwordField.type = "text";
+      button.textContent = "Hide";
     } else {
-      passwordField.type = "password"
-      button.textContent = "Show"
+      passwordField.type = "password";
+      button.textContent = "Show";
     }
   }
 
   form.addEventListener("submit", async (event) => {
-    event.preventDefault()
-
-    // Extract invite token from URL
-    const urlParams = new URLSearchParams(window.location.search)
-    const inviteToken = urlParams.get("token")
+    event.preventDefault();
 
     if (!inviteToken) {
-      showError("Missing invite token in URL.")
-      return
+      showError("Missing invite token in URL.");
+      return;
     }
 
     // Disable button & show loading
-    registerButton.disabled = true
-    loadingText.style.display = "block"
+    registerButton.disabled = true;
+    loadingText.style.display = "block";
 
     // Collect form data
     const formData = {
@@ -48,18 +60,18 @@ document.addEventListener("DOMContentLoaded", () => {
       password: document.getElementById("password").value,
       confirmPassword: document.getElementById("confirmPassword").value,
       inviteToken: inviteToken,
-    }
+    };
 
     // Password match validation
     if (formData.password !== formData.confirmPassword) {
-      showError("Passwords do not match.")
-      return
+      showError("Passwords do not match.");
+      return;
     }
 
-    // Password strength validation (at least 8 characters, includes both numbers and letters)
+    // Password strength validation (at least 8 characters, includes both numbers & letters)
     if (!isValidPassword(formData.password)) {
-      showError("Password must be at least 8 characters long and contain both numbers and letters.")
-      return
+      showError("Password must be at least 8 characters long and contain both numbers and letters.");
+      return;
     }
 
     try {
@@ -69,26 +81,25 @@ document.addEventListener("DOMContentLoaded", () => {
         formData.password,
         formData.fullName,
         formData.phone,
-        formData.inviteToken,
-      )
-      window.location.href = redirectUrl
+        formData.inviteToken
+      );
+      window.location.href = redirectUrl;
     } catch (error) {
-      showError(error.message)
+      showError(error.message);
     } finally {
-      registerButton.disabled = false
-      loadingText.style.display = "none"
+      registerButton.disabled = false;
+      loadingText.style.display = "none";
     }
-  })
+  });
 
   function showError(message) {
-    errorMessage.textContent = message
-    errorMessage.style.display = "block"
-    registerButton.disabled = false
-    loadingText.style.display = "none"
+    errorMessage.textContent = message;
+    errorMessage.style.display = "block";
+    registerButton.disabled = false;
+    loadingText.style.display = "none";
   }
 
   function isValidPassword(password) {
-    return password.length >= 8 && /[A-Za-z]/.test(password) && /\d/.test(password)
+    return password.length >= 8 && /[A-Za-z]/.test(password) && /\d/.test(password);
   }
-})
-
+});
