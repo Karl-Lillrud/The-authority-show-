@@ -463,7 +463,8 @@ document.addEventListener("DOMContentLoaded", async () => {
   // Attach event listener for "Members" button
   const membersBtn = document.getElementById("sidebar-members");
   if (membersBtn) {
-    membersBtn.addEventListener("click", async () => {
+    membersBtn.addEventListener("click", async (event) => {
+      event.preventDefault(); // Prevent default navigation behavior
       console.log("Members button pressed");
       try {
         const response = await getTeamMembersRequest();
