@@ -1,0 +1,77 @@
+/* Footer Styles following Neumorphism Design Language */
+.footer {
+  padding: var(--spacing-lg);
+  text-align: center;
+  background: var(--background-light);
+  color: var(--text-color-light);
+  box-shadow: -5px -5px 10px var(--light-shadow-light),
+    5px 5px 10px var(--dark-shadow-light);
+  border-radius: var(--radius-medium);
+  position: relative;
+  width: 100%;
+  transition: background-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+.footer p {
+  font-family: var(--font-primary);
+  color: var(--text-color-light);
+  margin: 0;
+  font-size: 0.9rem;
+}
+
+/* Apply only to the podcast management page */
+.podcastmanagement-wrapper {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+.podcastmanagement-content {
+  flex: 1;
+}
+
+/* Dark Mode Support */
+.dark-mode .footer {
+  background: var(--background-dark);
+  color: var(--text-color-dark);
+  box-shadow: -5px -5px 10px var(--light-shadow-dark),
+    5px 5px 10px var(--dark-shadow-dark);
+}
+
+.dark-mode .footer p {
+  color: var(--text-color-dark);
+}
+
+/* Responsive Adjustments */
+@media (max-width: var(--breakpoint-md)) {
+  .footer {
+    padding: var(--spacing-md);
+  }
+  .footer p {
+    font-size: 0.8rem;
+  }
+}
+
+footer {
+  background-color: #ffffff; /* Vit bakgrund */
+  color: var(--highlight-color); /* Orange text */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: var(--spacing-md) var(--spacing-lg);
+  box-shadow: 0 -10px 25px -5px rgba(0, 0, 0, 0.05),
+    0 -8px 10px -6px rgba(0, 0, 0, 0.02);
+  border-radius: var(--radius-medium);
+  transition: all var(--transition-normal);
+}
+
+footer a {
+  color: var(--highlight-color); /* Orange länkar */
+  text-decoration: none;
+  font-weight: 600;
+  transition: color var(--transition-normal);
+}
+
+footer a:hover {
+  color: var(--highlight-hover); /* Mörkare orange vid hover */
+}

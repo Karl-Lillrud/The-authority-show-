@@ -18,7 +18,7 @@ class TeamRepository:
             team_schema = TeamSchema()
             validated_data = team_schema.load(data)
 
-            team_id = str(uuid.uuid4())
+            team_id = str(uuid.uuid4())  # Ensure team_id is a string
 
             team_item = {
                 "_id": team_id,
@@ -33,7 +33,9 @@ class TeamRepository:
 
             self.teams_collection.insert_one(team_item)
 
+            # ✅ Explicitly set `_id` as a string UUID for `user_to_teams_collection`
             user_to_team_item = {
+                "_id": str(uuid.uuid4()),  # Ensure _id is a string
                 "userId": str(user_id),
                 "teamId": team_id,
                 "role": "creator",

@@ -48,10 +48,14 @@ kubernetes
 Mako
 MarkupSafe
 marshmallow
+<<<<<<< HEAD
 mpmath
 multidict
 narwhals
 networkx
+=======
+nltk
+>>>>>>> 69c2325670bcb7ce9e73d39f49227887426af2db
 node
 npm
 numpy
@@ -76,6 +80,7 @@ python-bootstrap
 python-dateutil
 python-dotenv
 PyYAML
+regex
 requests
 requests-oauthlib
 rpds-py
@@ -89,7 +94,10 @@ smmap
 sniffio
 soupsieve
 sqlparse
+<<<<<<< HEAD
 sympy
+=======
+>>>>>>> 69c2325670bcb7ce9e73d39f49227887426af2db
 tqdm
 typing_extensions
 tzdata

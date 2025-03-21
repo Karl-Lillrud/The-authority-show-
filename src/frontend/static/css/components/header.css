@@ -1,0 +1,479 @@
+:root {
+  --background-light: #eff2f9;
+  --background-dark: #1c1c1c;
+  --light-shadow-light: #ffffff;
+  --dark-shadow-light: rgba(22, 24, 29, 0.15);
+  --light-shadow-dark: rgba(255, 255, 255, 0.1);
+  --dark-shadow-dark: rgba(0, 0, 0, 0.8);
+
+  --text-color-light: #6e7f8d;
+  --text-color-dark: #b3b3b3;
+  --highlight-color: #ff7f3f;
+  --highlight-hover: #e0662c;
+  --error-color: #ff3b30;
+  --success-color: #4caf50;
+
+  --font-primary: "Inter", "Segoe UI", "Arial", sans-serif;
+  --font-secondary: "Avenir Next", sans-serif;
+
+  --spacing-xs: 4px;
+  --spacing-sm: 8px;
+  --spacing-md: 16px;
+  --spacing-lg: 24px;
+  --spacing-xl: 32px;
+
+  --radius-large: 50px;
+  --radius-medium: 12px;
+  --radius-small: 12px;
+
+  --transition-normal: 0.3s ease;
+}
+
+html,
+body {
+  width: 100%;
+  max-width: 100%;
+  margin: 0;
+  padding: 0;
+  overflow-x: hidden;
+  box-sizing: border-box;
+  font-family: var(--font-primary);
+  background-color: var(--background-light);
+  color: var(--text-color-light);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+img {
+  max-width: 100%;
+  height: auto;
+  display: block;
+  border: none;
+}
+
+/* Container */
+.container {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-md);
+}
+
+/* Header */
+header {
+  display: flex;
+  flex-direction: row; /* Håll innehållet i rad */
+  justify-content: space-between; /* Sprid ut innehållet horisontellt */
+  align-items: center; /* Centrera innehållet vertikalt */
+  padding: var(--spacing-sm) var(--spacing-lg);
+  background-color: #ffffff;
+  color: var(--text-color-light);
+  box-shadow: 0 4px 10px -2px rgba(0, 0, 0, 0.08);
+  border-radius: var(--radius-medium);
+  transition: all var(--transition-normal);
+  position: relative;
+  z-index: 100;
+  width: 100%; /* Ensure header takes full width */
+  box-sizing: border-box; /* Include padding in width calculation */
+}
+
+header:hover {
+  box-shadow: 0 8px 15px -5px rgba(0, 0, 0, 0.1),
+    0 4px 6px -2px rgba(0, 0, 0, 0.05);
+}
+
+/* Logo – Reduced size */
+.logo-container {
+  width: 100px; /* Reduced from 120px */
+  flex-shrink: 0; /* Prevent logo from shrinking */
+}
+
+.logo-container:hover {
+  transform: scale(1.05);
+}
+
+.logo-container img {
+  width: 100px; /* Reduced from 120px */
+  height: auto;
+  transition: transform var(--transition-normal);
+}
+
+.logo-container:hover img {
+  transform: scale(1.05);
+}
+
+/* Logo and Page Title Container */
+.logo-title-container {
+  display: flex;
+  flex-direction: row; /* Håll logotyp och titel i rad */
+  align-items: center;
+  gap: var(--spacing-md);
+  flex-shrink: 0; /* Prevent container from shrinking */
+}
+
+.page-title {
+  font-size: 1rem; /* Reduced from 1.2rem */
+  font-weight: 600;
+  color: var(--text-color-light);
+  white-space: nowrap;
+}
+
+/* Header Nav (Menus on the far right) */
+.header-nav {
+  display: flex;
+  flex-direction: row; /* Behåll horisontell layout */
+  align-items: center;
+  gap: var(--spacing-lg);
+  margin-left: auto; /* Push to the right */
+  flex-shrink: 0; /* Prevent nav from shrinking */
+}
+
+.header-nav select {
+  background-color: white;
+  color: var(--text-color-light);
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  border-radius: var(--radius-medium);
+  padding: var(--spacing-xs) var(--spacing-sm);
+  font-family: var(--font-primary);
+  font-size: 0.85rem; /* Reduced from 0.9rem */
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+  transition: all var(--transition-normal);
+  appearance: none; /* Remove default browser styling */
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%236e7f8d'%3E%3Cpath d='M7 10l5 5 5-5z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 10px center;
+  background-size: 16px;
+}
+
+.header-nav select:hover {
+  border-color: var(--highlight-color);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* Podcast Selector */
+#headerPodcastDropdown {
+  position: relative;
+  background: white;
+  color: var(--text-color-light);
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  border-radius: var(--radius-medium);
+  padding: var(--spacing-xs) var(--spacing-sm);
+  font-family: var(--font-primary);
+  font-size: 0.85rem; /* Justerat för bättre läsbarhet */
+  box-shadow: 0 4px 10px -5px rgba(0, 0, 0, 0.1),
+    0 2px 4px -2px rgba(0, 0, 0, 0.05);
+  outline: none;
+  transition: all var(--transition-normal);
+  cursor: pointer;
+  height: 36px; /* Ökad höjd för bättre klickbarhet */
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+#headerPodcastDropdown:hover {
+  border-color: rgba(0, 0, 0, 0.2);
+  background: var(--highlight-color);
+  color: #fff;
+  box-shadow: 0 6px 12px -5px rgba(0, 0, 0, 0.15),
+    0 3px 6px -2px rgba(0, 0, 0, 0.1);
+}
+
+#headerPodcastDropdown option {
+  background: white;
+  color: var(--text-color-light);
+  padding: var(--spacing-xs) var(--spacing-sm);
+  font-family: var(--font-primary);
+  font-size: 0.85rem;
+  border: none;
+}
+
+#headerPodcastDropdown option:hover {
+  background: white; /* Vit bakgrund */
+  color: var(--highlight-color); /* Orange text */
+}
+
+#headerPodcastDropdown:focus {
+  border: 1px solid var(--highlight-hover);
+  box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.1);
+}
+
+/* Menu Toggle (Hamburger) */
+.menu-toggle {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  width: 28px; /* Reduced from 30px */
+  height: 22px; /* Reduced from 24px */
+  cursor: pointer;
+  position: relative;
+  z-index: 101;
+}
+
+.menu-toggle span {
+  display: block;
+  height: 2px; /* Reduced from 3px */
+  width: 100%;
+  background: var(--text-color-light);
+  border-radius: 2px;
+  transition: all 0.3s cubic-bezier(0.68, -0.55, 0.27, 1.55);
+  transform-origin: center;
+}
+
+/* Hamburger animation */
+.menu-toggle.active span:nth-child(1) {
+  transform: translateY(10px) rotate(45deg);
+}
+
+.menu-toggle.active span:nth-child(2) {
+  opacity: 0;
+}
+
+.menu-toggle.active span:nth-child(3) {
+  transform: translateY(-10px) rotate(-45deg);
+}
+
+.header-nav .menu-toggle:hover span {
+  background-color: var(--highlight-color);
+}
+
+/* Dropdown Menu */
+.menu {
+  display: none;
+  position: absolute;
+  top: calc(100% - 1cm); /* Höj menyn 1 cm högre upp */
+  right: 0;
+  min-width: 200px;
+  background: white;
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1),
+    0 8px 10px -6px rgba(0, 0, 0, 0.05);
+  border-radius: var(--radius-medium);
+  padding: var(--spacing-md);
+  flex-direction: column;
+  gap: var(--spacing-sm);
+  z-index: 100;
+  transition: all 0.3s cubic-bezier(0.68, -0.55, 0.27, 1.55);
+  transform-origin: top right;
+  transform: scale(0.95);
+  opacity: 0;
+}
+
+.menu.active {
+  display: flex;
+  transform: scale(1);
+  opacity: 1;
+}
+
+.menu a {
+  text-decoration: none;
+  color: var(--text-color-light);
+  font-family: var(--font-primary);
+  font-size: 0.85rem; /* Reduced from 0.9rem */
+  padding: var(--spacing-xs) 0;
+  transition: color var(--transition-normal);
+}
+
+.menu a:hover {
+  color: var(--highlight-color);
+}
+
+.modal {
+  display: none;
+  position: fixed;
+  z-index: 9999;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5);
+  align-items: center;
+  justify-content: center;
+}
+.modal-cnt {
+  background: #fff;
+  border-radius: 12px;
+  padding: 20px;
+  text-align: center;
+  width: 90%;
+  max-width: 320px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+.modal-cnt p {
+  font-size: 16px;
+  margin-bottom: 20px;
+  font-weight: 500;
+}
+.modal-btns button {
+  padding: 10px 20px;
+  margin: 0 10px;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 14px;
+}
+#cancel-logout {
+  background: #f1f1f1;
+  color: #333;
+}
+#confirm-logout {
+  background: var(--highlight-color);
+  color: #fff;
+}
+
+.custom-dropdown {
+  position: relative;
+  width: 150px; /* Minskad bredd */
+  background: white;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  border-radius: var(--radius-medium);
+  box-shadow: 0 4px 10px -5px rgba(0, 0, 0, 0.1),
+    0 2px 4px -2px rgba(0, 0, 0, 0.05);
+  cursor: pointer;
+  font-family: var(--font-primary);
+  font-size: 0.75rem; /* Minskad fontstorlek */
+  color: var(--text-color-light);
+}
+
+.custom-dropdown .dropdown-selected {
+  padding: var(--spacing-xs) var(--spacing-xs); /* Minskad padding */
+  height: 28px; /* Minskad höjd */
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.custom-dropdown .dropdown-options {
+  display: none;
+  position: absolute;
+  top: 100%;
+  left: 0;
+  width: 100%;
+  background: white;
+  border-radius: var(--radius-medium);
+  box-shadow: 0 4px 10px -5px rgba(0, 0, 0, 0.1),
+    0 2px 4px -2px rgba(0, 0, 0, 0.05);
+  z-index: 100;
+  flex-direction: column;
+  gap: var(--spacing-sm); /* Samma gap som hamburger-menyn */
+}
+
+.custom-dropdown .dropdown-options div {
+  padding: var(--spacing-sm) var(--spacing-md); /* Samma padding som hamburger-menyn */
+  color: var(--text-color-light);
+  transition: background var(--transition-normal),
+    color var(--transition-normal);
+}
+
+.custom-dropdown .dropdown-options div:hover {
+  background: white;
+  color: var(--highlight-color);
+}
+
+.custom-dropdown.active .dropdown-options {
+  display: block;
+}
+
+@media (max-width: 768px) {
+  header {
+    flex-direction: row; /* Keep horizontal layout */
+    justify-content: space-between; /* Keep elements spread out */
+    align-items: center;
+    padding: var(--spacing-xs) var(--spacing-md);
+    width: 100%; /* Ensure header takes full width */
+    max-width: 100%; /* Prevent overflow */
+    box-sizing: border-box; /* Include padding in width calculation */
+    margin: 0; /* Remove any margin */
+    left: 0; /* Align to left edge */
+    right: 0; /* Align to right edge */
+  }
+
+  .logo-title-container {
+    flex-shrink: 0; /* Prevent container from shrinking */
+    justify-content: flex-start; /* Align to left */
+    margin-right: auto; /* Push other elements to the right */
+  }
+
+  .header-nav {
+    flex-shrink: 0; /* Prevent nav from shrinking */
+    justify-content: flex-end; /* Align to right */
+    margin-left: auto; /* Push to the right */
+  }
+
+  .logo-container,
+  .logo-container img {
+    width: 80px; /* Smaller logo on mobile */
+  }
+
+  .page-title {
+    font-size: 0.9rem;
+  }
+
+  .header-nav {
+    gap: var(--spacing-sm); /* Reduce gap between nav items */
+    flex-direction: row; /* Keep horizontal layout */
+    align-items: center;
+  }
+
+  #headerPodcastDropdown {
+    max-width: 120px;
+    font-size: 0.75rem; /* Smaller text */
+  }
+
+  .menu-toggle {
+    width: 24px; /* Slightly smaller toggle */
+    height: 20px;
+  }
+}
+
+/* Replace the 480px media query with this */
+@media (max-width: 480px) {
+  header {
+    flex-direction: row; /* Keep horizontal layout */
+    justify-content: space-between; /* Keep elements spread out */
+    padding: var(--spacing-xs) var(--spacing-sm); /* Smaller padding */
+    width: 100%; /* Ensure header takes full width */
+    max-width: 100%; /* Prevent overflow */
+    box-sizing: border-box; /* Include padding in width calculation */
+  }
+
+  .logo-title-container {
+    flex-direction: row; /* Keep horizontal layout */
+    align-items: center;
+    gap: var(--spacing-xs); /* Reduce gap */
+    flex-shrink: 0; /* Prevent container from shrinking */
+    justify-content: flex-start; /* Align to left */
+  }
+
+  .logo-container,
+  .logo-container img {
+    width: 70px; /* Even smaller logo on very small screens */
+  }
+
+  .page-title {
+    font-size: 0.8rem; /* Smaller title text */
+    max-width: 100px; /* Limit width to prevent overflow */
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .header-nav {
+    flex-direction: row; /* Keep horizontal layout */
+    align-items: center;
+    gap: var(--spacing-xs); /* Reduce gap */
+    flex-shrink: 0; /* Prevent nav from shrinking */
+    justify-content: flex-end; /* Align to right */
+    margin-left: auto; /* Push to the right */
+  }
+
+  #headerPodcastDropdown {
+    max-width: 100px; /* Smaller dropdown */
+    font-size: 0.7rem; /* Smaller text */
+  }
+
+  .custom-dropdown .dropdown-selected {
+    padding: var(--spacing-xs) var(--spacing-xs);
+    height: 24px; /* Smaller height */
+  }
+}

@@ -104,6 +104,7 @@ export async function fetchEpisodesByPodcast(podcastId) {
   try {
     const response = await fetch(`/episodes/by_podcast/${podcastId}`);
     const data = await response.json();
+    console.log("Fetched episodes with additional fields:", data.episodes); // Log episodes
     if (response.ok) {
       return data.episodes;
     } else {
