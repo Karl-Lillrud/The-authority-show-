@@ -50,7 +50,7 @@ function updateTeamsUI(teams) {
               .map(
                 (m) => `
             <span class="member-chip">
-              ${m.email}
+              <span>${m.email}</span>
               ${
                 m.role === "creator"
                   ? '<span class="creator-badge">Creator</span>'
@@ -63,7 +63,7 @@ function updateTeamsUI(teams) {
               )
               .join("");
           })()}
-        </div></div>
+        </div>
       </div>
       <div class="team-card-footer">
         <button class="btn edit-team-btn">Edit</button>

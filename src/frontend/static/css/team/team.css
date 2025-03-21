@@ -853,10 +853,41 @@ body {
   font-weight: 600;
 }
 
-/* Badge Styling */
-.verified-badge,
-.not-verified-badge,
-.creator-badge {
+/* Badge Styling for Team Cards */
+.team-card .verified-badge,
+.team-card .not-verified-badge,
+.team-card .creator-badge {
+  position: static; /* Ingen absolut positionering för team badges */
+  display: inline-block;
+  margin-left: 6px;
+  padding: 4px 8px;
+  font-size: 0.75rem;
+  border-radius: var(--radius-small);
+  font-weight: 600;
+}
+
+.team-card .verified-badge {
+  background-color: #d4edda;
+  color: #155724;
+  border: 1px solid #c3e6cb;
+}
+
+.team-card .not-verified-badge {
+  background-color: #f8d7da;
+  color: #721c24;
+  border: 1px solid #f5c6cb;
+}
+
+.team-card .creator-badge {
+  background-color: #cce5ff;
+  color: #004085;
+  border: 1px solid #b8daff;
+}
+
+/* Badge Styling for Member Cards */
+.member-card .verified-badge,
+.member-card .not-verified-badge,
+.member-card .creator-badge {
   position: absolute;
   bottom: var(--spacing-md);
   right: var(--spacing-md);
@@ -866,20 +897,63 @@ body {
   font-weight: 600;
 }
 
-.verified-badge {
+.member-card .verified-badge {
   background-color: #e8f5e9;
   color: #4caf50;
   border: 1px solid #4caf50;
 }
 
-.not-verified-badge {
+.member-card .not-verified-badge {
   background-color: #fceae9;
   color: #e74c3c;
   border: 1px solid #e74c3c;
 }
 
-.creator-badge {
+.member-card .creator-badge {
   background-color: #3498db;
   color: #ffffff;
   border: 1px solid #3498db;
+}
+
+/* Badge Styling for Team Cards */
+.team-card .member-chip {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  background-color: rgba(110, 127, 141, 0.1);
+  color: var(--text-color-light);
+  padding: 8px 16px;
+  border-radius: 20px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  transition: all var(--transition-normal);
+}
+
+.team-card .member-chip .creator-badge,
+.team-card .member-chip .verified-badge,
+.team-card .member-chip .not-verified-badge {
+  margin-left: auto; /* Placera badge till höger */
+  padding: 4px 8px;
+  font-size: 0.8rem;
+  border-radius: var(--radius-medium);
+  font-weight: 600;
+}
+
+.team-card .member-chip .creator-badge {
+  background-color: #3498db;
+  color: #ffffff;
+  border: 1px solid #3498db;
+}
+
+.team-card .member-chip .verified-badge {
+  background-color: #e8f5e9;
+  color: #4caf50;
+  border: 1px solid #4caf50;
+}
+
+.team-card .member-chip .not-verified-badge {
+  background-color: #fceae9;
+  color: #e74c3c;
+  border: 1px solid #e74c3c;
 }
