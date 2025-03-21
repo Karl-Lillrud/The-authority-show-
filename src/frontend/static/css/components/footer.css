@@ -1,3 +1,17 @@
+/* Footer Styles following Neumorphism Design Language */
+.footer {
+  padding: var(--spacing-lg);
+  text-align: center;
+  background: var(--background-light);
+  color: var(--text-color-light);
+  box-shadow: -5px -5px 10px var(--light-shadow-light),
+    5px 5px 10px var(--dark-shadow-light);
+  border-radius: var(--radius-medium);
+  position: relative;
+  width: 100%;
+  transition: background-color 0.3s ease, box-shadow 0.3s ease;
+}
+
 .footer p {
   font-family: var(--font-primary);
   color: var(--text-color-light);
@@ -49,9 +63,6 @@ footer {
     0 -8px 10px -6px rgba(0, 0, 0, 0.02);
   border-radius: var(--radius-medium);
   transition: all var(--transition-normal);
-  position: absolute;
-  bottom: 0;
-  width: 100%;
 }
 
 footer a {
@@ -64,3 +75,4 @@ footer a {
 footer a:hover {
   color: var(--highlight-hover); /* Mörkare orange vid hover */
 }
+
