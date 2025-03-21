@@ -38,22 +38,30 @@ function updateTeamsUI(teams) {
         <p><strong>Podcasts:</strong> ${team.podNames || "N/A"}</p>
         <p><strong>Members:</strong></p>
         <div class="member-chips">
-          ${team.members
-            .map(
-              (m) => `
+          ${(() => {
+            // Sort so creator comes first
+            const sortedMembers = team.members.sort((a, b) => {
+              if (a.role === "creator" && b.role !== "creator") return -1;
+              if (a.role !== "creator" && b.role === "creator") return 1;
+              return 0;
+            });
+            return sortedMembers
+              .map(
+                (m) => `
             <span class="member-chip">
               ${m.email}
               ${
-                m.role !== "creator"
-                  ? m.verified === true
-                    ? '<span class="verified-badge">Verified</span>'
-                    : '<span class="not-verified-badge">Not Verified</span>'
-                  : ""
+                m.role === "creator"
+                  ? '<span class="creator-badge">Creator</span>'
+                  : m.verified === true
+                  ? '<span class="verified-badge">Verified</span>'
+                  : '<span class="not-verified-badge">Not Verified</span>'
               }
             </span>
           `
-            )
-            .join("")}
+              )
+              .join("");
+          })()}
         </div></div>
       </div>
       <div class="team-card-footer">

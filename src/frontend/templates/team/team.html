@@ -178,28 +178,28 @@ Dashboard{% endblock %} {% block content %}
   <div class="form-box" role="document">
     <form id="addMemberForm">
       <span id="closeAddMemberModal" class="close-btn">&times;</span>
-      <h2 id="addMemberModalLabel">Add New Member</h2>
-      <div class="form-group">
-        <label for="memberEmail">Member Email:</label>
-        <input type="email" id="memberEmail" class="form-control" required />
-      </div>
-      <!-- New role selection -->
-      <div class="form-group">
-        <label for="memberRole">Select Role:</label>
-        <select id="memberRole" class="form-control" required>
-          <option value="member">Member</option>
-          <option value="admin">Admin</option>
-        </select>
-      </div>
-      <div class="form-group">
-        <label for="teamSelect">Select Team:</label>
-        <select id="teamSelect" class="form-control" required>
-          <option value="">Select a Team</option>
-          <!-- Options populated dynamically -->
-        </select>
+      <h2 class="form-title" id="addMemberModalLabel">Add New Member</h2>
+      <div class="form-grid">
+        <div class="field-group full-width">
+          <label for="memberEmail">Member Email:</label>
+          <input type="email" id="memberEmail" class="form-control" required />
+        </div>
+        <div class="field-group">
+          <label for="memberRole">Select Role:</label>
+          <select id="memberRole" class="form-control" required>
+            <option value="member">Member</option>
+            <option value="admin">Admin</option>
+          </select>
+        </div>
+        <div class="field-group">
+          <label for="teamSelect">Select Team:</label>
+          <select id="teamSelect" class="form-control" required>
+            <option value="">Select a Team</option>
+          </select>
+        </div>
       </div>
       <div class="form-actions">
-        <button type="button" id="cancelAddMember" class="cancel-btn"></button>
+        <button type="button" id="cancelAddMember" class="cancel-btn">
           Cancel
         </button>
         <button type="submit" class="save-btn">Add Member</button>

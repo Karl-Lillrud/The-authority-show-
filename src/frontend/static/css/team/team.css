@@ -790,3 +790,15 @@ body {
   border-radius: 4px;
   background-color: #e8f5e9;
 }
+
+/* Creator Badge */
+.creator-badge {
+  display: inline-block;
+  margin-left: 6px;
+  padding: 2px 6px;
+  font-size: 0.7rem;
+  color: #ffffff;
+  background-color: #3498db;
+  border: 1px solid #3498db;
+  border-radius: 4px;
+}
