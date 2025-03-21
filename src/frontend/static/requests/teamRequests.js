@@ -78,11 +78,6 @@ export async function fetchPodcasts() {
   }
 }
 
-export async function getTeamMembersRequest() {
-  const res = await fetch("/get_team_members", { method: "GET" });
-  return res.json();
-}
-
 export async function getTeamMembers(teamId) {
   const res = await fetch(`/get_teams_members/${teamId}`, { method: "GET" });
   return res.json();

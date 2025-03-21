@@ -557,42 +557,33 @@ async function renderMembersView() {
     const membersView = document.getElementById("members-view-container");
 
     for (const team of teams) {
-      const teamMembers = await getTeamMembers(team._id);
-
-      teamMembers.members.forEach((member) => {
-        const card = document.createElement("div");
-        card.className = "member-card";
-        card.innerHTML = `
-          <div class="member-card-header">
-            <h3>${member.fullName || member.email}</h3>
-            ${
-              member.role === "creator"
-                ? '<span class="creator-badge">Creator</span>'
-                : member.verified
-                ? '<span class="verified-badge">Verified</span>'
-                : '<span class="not-verified-badge">Not Verified</span>'
-            }
-          </div>
-          <div class="member-card-body">
-            ${
-              member.fullName
-                ? `<p><strong>Full Name:</strong> ${member.fullName}</p>`
-                : ""
-            }
-            <p><strong>Email:</strong> ${member.email}</p>
-            ${
-              member.phone
-                ? `<p><strong>Phone:</strong> ${member.phone}</p>`
-                : ""
-            }
-            <p><strong>Role:</strong> ${
-              member.role === "creator" ? "Creator" : member.role
-            }</p>
-            <p><strong>Team:</strong> ${team.name}</p>
-          </div>
-        `;
-        membersView.appendChild(card);
-      });
+      // Iterera över alla medlemmar i teamet
+      if (team.members && Array.isArray(team.members)) {
+        team.members.forEach((member) => {
+          const card = document.createElement("div");
+          card.className = "member-card";
+          card.innerHTML = `
+            <div class="member-card-header">
+              <h3>${member.fullName || member.email}</h3>
+              ${
+                member.role === "creator"
+                  ? '<span class="creator-badge">Creator</span>'
+                  : member.verified
+                  ? '<span class="verified-badge">Verified</span>'
+                  : '<span class="not-verified-badge">Not Verified</span>'
+              }
+            </div>
+            <div class="member-card-body">
+              <p><strong>Email:</strong> ${member.email}</p>
+              <p><strong>Role:</strong> ${member.role}</p>
+              <p><strong>Team:</strong> ${team.name}</p>
+            </div>
+          `;
+          membersView.appendChild(card);
+        });
+      } else {
+        console.warn(`No members found for team: ${team.name}`);
+      }
     }
   } catch (error) {
     console.error("Error fetching members:", error);
