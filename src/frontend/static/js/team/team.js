@@ -514,4 +514,14 @@ document.addEventListener("DOMContentLoaded", async () => {
       }
     });
   }
+
+  // Automatically refresh teams every 10 seconds for setting verified badges
+  setInterval(async () => {
+    try {
+      const teams = await getTeamsRequest();
+      updateTeamsUI(teams);
+    } catch (err) {
+      console.error("Error refreshing teams:", err);
+    }
+  }, 30000);
 });
