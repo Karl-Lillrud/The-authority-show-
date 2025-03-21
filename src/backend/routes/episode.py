@@ -50,21 +50,22 @@ def get_episode(episode_id):
         logger.error("❌ ERROR: %s", e)
         return jsonify({"error": f"Failed to fetch episode: {str(e)}"}), 500
 
+<<<<<<< HEAD
+=======
 
 @episode_bp.route("/get_episodes", methods=["GET"])
 def get_episodes():
     if not hasattr(g, "user_id") or not g.user_id:
         return jsonify({"error": "Unauthorized"}), 401
+>>>>>>> 69c2325670bcb7ce9e73d39f49227887426af2db
 
-    try:
-        response, status_code = episode_repo.get_episodes(g.user_id)
-        return jsonify(response), status_code
-    except Exception as e:
-        logger.error("❌ ERROR: %s", e)
-        return jsonify({"error": f"Failed to fetch episodes: {str(e)}"}), 500
 
+<<<<<<< HEAD
+@episode_bp.route("/delete_episodes/<episode_id>", methods=["DELETE"])
+=======
 
 @episode_bp.route("/delete_episods/<episode_id>", methods=["DELETE"])
+>>>>>>> 69c2325670bcb7ce9e73d39f49227887426af2db
 def delete_episode(episode_id):
     if not hasattr(g, "user_id") or not g.user_id:
         return jsonify({"error": "Unauthorized"}), 401
@@ -118,6 +119,10 @@ def get_episodes_by_podcast(podcast_id):
         return jsonify({"error": "Unauthorized"}), 401
 
     try:
+<<<<<<< HEAD
+        response, status_code = episode_repo.get_episodes_by_podcast(podcast_id, g.user_id)
+        return jsonify(response), status_code
+=======
         # Query the episodes collection for documents matching the given podcast_id
         episodes_cursor = episodes.find({"podcast_id": podcast_id})
         mapped_episodes = []
@@ -153,6 +158,7 @@ def get_episodes_by_podcast(podcast_id):
         # Return the mapped episodes list
         return jsonify({"episodes": mapped_episodes}), 200
 
+>>>>>>> 69c2325670bcb7ce9e73d39f49227887426af2db
     except Exception as e:
         logger.error("❌ ERROR: %s", e)
         return jsonify({"error": f"Failed to fetch episodes by podcast: {str(e)}"}), 500
