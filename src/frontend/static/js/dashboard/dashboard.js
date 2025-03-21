@@ -1,127 +1,63 @@
-import { fetchPodcasts, fetchRSSData } from "../../requests/podcastRequests.js";
+import { fetchGuestsByEpisode } from "/static/requests/guestRequests.js";
 
 document.addEventListener("DOMContentLoaded", function () {
-  const podcastPopup = document.getElementById("podcast-popup");
-  const podcastList = document.getElementById("podcast-list");
-  const closePodcastPopup = document.getElementById("close-podcast-popup");
 
-  async function fetchAndDisplayPodcasts() {
+  // Fetch Episodes and Display Associated Guest Names
+  async function fetchAndDisplayEpisodesWithGuests() {
     try {
-      console.log("Fetching podcasts...");
-      const data = await fetchPodcasts();
-      const podcasts = data.podcast; // Access the podcast property
-      console.log("Podcasts fetched:", podcasts);
-      podcastList.innerHTML = ""; // Clear existing content
-      for (const podcast of podcasts) {
-        const podcastItem = document.createElement("li");
-        podcastItem.className = "podcast-item";
-        podcastItem.style.cursor = "pointer"; // Change cursor to pointer on hover
+      // Fetch all episodes for the current user
+      const response = await fetch("/get_episodes");
+      const data = await response.json();
+      if (!response.ok) {
+        throw new Error(data.error || "Failed to fetch episodes");
+      }
+      const episodes = data.episodes || [];
+      const container = document.querySelector(".cards-container");
+      container.innerHTML = "";
 
-        // Fetch additional information from the RSS feed
-        let imageUrl =
-          "{{ url_for('static', filename='images/mock-avatar.jpeg') }}";
+      for (const episode of episodes) {
+        // Create a card for each episode
+        const card = document.createElement("div");
+        card.classList.add("card");
+
+        // Display episode title
+        const titleElem = document.createElement("h3");
+        titleElem.textContent = episode.title;
+        card.appendChild(titleElem);
+
+        // Create a list to display guest names associated with this episode
+        const guestList = document.createElement("ul");
+        guestList.classList.add("guest-list");
+
+        // Fetch guests for the current episode using its id (assumed to be _id)
         try {
-          const rssData = await fetchRSSData(podcast.rssFeed);
-          console.log("RSS Data:", rssData); // Log all RSS data
-          imageUrl = rssData.imageUrl || imageUrl;
+          const guests = await fetchGuestsByEpisode(episode._id);
+          if (guests.length > 0) {
+            guests.forEach((guest) => {
+              const li = document.createElement("li");
+              li.textContent = guest.name;
+              guestList.appendChild(li);
+            });
+          } else {
+            const noGuestMsg = document.createElement("p");
+            noGuestMsg.textContent = "No guest available";
+            guestList.appendChild(noGuestMsg);
+          }
         } catch (error) {
-          console.error("Error fetching RSS data:", error);
+          console.error("Error fetching guests for episode:", error);
+          const errorMsg = document.createElement("p");
+          errorMsg.textContent = "Error loading guest info";
+          guestList.appendChild(errorMsg);
         }
 
-        podcastItem.innerHTML = `
-          <span class="podcast-title">${podcast.podName}</span>
-          <img src="${imageUrl}" alt="${podcast.podName}" class="podcast-image" />
-          <div class="podcast-item-actions">
-            <button class="view-btn" data-id="${podcast._id}">View</button>
-          </div>
-        `;
-        // Add click event to the entire podcast item that redirects to podcast management view details
-        podcastItem.addEventListener("click", (e) => {
-          e.stopPropagation();
-          // Redirect to podcast management view details page for the selected podcast
-          window.location.href = `/podcastmanagement?podcastId=${podcast._id}`;
-        });
-
-        podcastList.appendChild(podcastItem);
+        card.appendChild(guestList);
+        container.appendChild(card);
       }
     } catch (error) {
-      console.error("Error fetching podcasts:", error);
+      console.error("Error fetching episodes with guests:", error);
     }
   }
-  window.fetchAndDisplayPodcasts = fetchAndDisplayPodcasts; // Expose the function to window
 
-  // Fetch and display podcasts when the podcast popup is shown
-  podcastPopup.addEventListener("click", function (e) {
-    if (e.target === podcastPopup) {
-      fetchAndDisplayPodcasts();
-    }
-  });
-
-  // Close podcast popup on clicking the close button
-  closePodcastPopup.addEventListener("click", function () {
-    podcastPopup.style.display = "none";
-  });
-
-  // Close podcast popup if clicking outside the popup-content
-  podcastPopup.addEventListener("click", function (e) {
-    if (e.target === podcastPopup) {
-      podcastPopup.style.display = "none";
-    }
-  });
-});
-
-document.addEventListener("DOMContentLoaded", function () {
-  // Show welcome popup if the flag is set
-  if (sessionStorage.getItem("showWelcomePopup") === "true") {
-    document.getElementById("welcome-popup").style.display = "flex";
-    sessionStorage.removeItem("showWelcomePopup");
-  }
-
-  const welcomePopup = document.getElementById("welcome-popup");
-  const closeWelcomePopup = document.getElementById("close-welcome-popup");
-  const podcastPopup = document.getElementById("podcast-popup");
-
-  closeWelcomePopup.addEventListener("click", function () {
-    welcomePopup.style.display = "none";
-    // Show the podcast popup and fetch podcasts
-    podcastPopup.style.display = "flex";
-    window.fetchAndDisplayPodcasts();
-  });
-
-  // Close popup if clicking outside the popup-content
-  welcomePopup.addEventListener("click", function (e) {
-    if (e.target === welcomePopup) {
-      welcomePopup.style.display = "none";
-      // Show the podcast popup after closing the welcome popup
-      podcastPopup.style.display = "flex";
-      window.fetchAndDisplayPodcasts();
-    }
-  });
-
-  // Attach change event listener to all checkboxes
-  document.querySelectorAll(".task-check").forEach((checkbox) => {
-    checkbox.addEventListener("change", function () {
-      const listItem = this.closest("li");
-      if (this.checked) {
-        listItem.classList.add("completed");
-        // Delay sorting to allow the animation to play
-        setTimeout(() => {
-          sortTasks(listItem.parentElement);
-        }, 500);
-      } else {
-        listItem.classList.remove("completed");
-      }
-    });
-  });
-
-  function sortTasks(taskList) {
-    const tasks = Array.from(taskList.children);
-    tasks.sort((a, b) => {
-      return (
-        a.querySelector(".task-check").checked - 
-        b.querySelector(".task-check").checked
-      );
-    });
-    tasks.forEach((task) => taskList.appendChild(task));
-  }
+  // Call the function to populate episode cards with guest names
+  fetchAndDisplayEpisodesWithGuests();
 });
