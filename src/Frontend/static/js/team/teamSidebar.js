@@ -1,5 +1,7 @@
 // Shared SVG icons for sidebar components
 import { sidebarIcons } from "../components/sidebar-icons.js";
+import { getTeamsRequest } from "../../requests/teamRequests.js"; // Import getTeamsRequest
+import { updateTeamsUI } from "./team.js"; // Import updateTeamsUI to update the UI
 
 // New constant holding the sidebar HTML markup
 const sidebarHTML = `
@@ -90,6 +92,32 @@ export function initSidebar() {
 
   // Initialize sidebar icons
   initSidebarIcons();
+
+  // Add event listeners to toggle active state
+  const teamsMenuItem = document.querySelector(".sidebar-menu-item.active");
+  const membersMenuItem = document.getElementById("sidebar-members");
+
+  if (teamsMenuItem && membersMenuItem) {
+    membersMenuItem.addEventListener("click", (event) => {
+      event.preventDefault(); // Prevent default link behavior
+      teamsMenuItem.classList.remove("active");
+      membersMenuItem.classList.add("active");
+    });
+
+    teamsMenuItem.addEventListener("click", async (event) => {
+      event.preventDefault(); // Prevent default link behavior
+      membersMenuItem.classList.remove("active");
+      teamsMenuItem.classList.add("active");
+
+      // Trigger getTeamsRequest and update the UI
+      try {
+        const teams = await getTeamsRequest();
+        updateTeamsUI(teams);
+      } catch (error) {
+        console.error("Error fetching teams:", error);
+      }
+    });
+  }
 }
 
 function initSidebarIcons() {

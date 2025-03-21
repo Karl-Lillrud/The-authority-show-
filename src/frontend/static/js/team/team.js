@@ -11,7 +11,7 @@ import { sendTeamInvite } from "/static/requests/invitationRequests.js"; // Impo
 import { initSidebar } from "./teamSidebar.js";
 
 // Update the UI with retrieved teams
-function updateTeamsUI(teams) {
+export function updateTeamsUI(teams) {
   let container = document.querySelector(".card-container");
   if (!container) {
     container = document.createElement("div");
