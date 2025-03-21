@@ -125,7 +125,8 @@
 }
 
 .sidebar-menu-item {
-  margin: 4px 8px;
+  margin: 0; /* Remove extra margins */
+  width: 100%; /* Ensure the item spans the full width */
 }
 
 .sidebar-menu-link {
@@ -136,6 +137,8 @@
   text-decoration: none;
   border-radius: var(--radius-medium);
   transition: all var(--transition-normal);
+  width: 100%; /* Ensure the link spans the full width */
+  box-sizing: border-box; /* Include padding in width calculation */
 }
 
 .sidebar-menu-link:hover {

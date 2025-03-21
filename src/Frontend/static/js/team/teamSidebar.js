@@ -1,12 +1,6 @@
-// Shared SVG icons for sidebar components
 import { sidebarIcons } from "../components/sidebar-icons.js";
-import {
-  getTeamsRequest,
-  getTeamMembersRequest
-} from "../../requests/teamRequests.js"; // Import getTeamsRequest and getTeamMembersRequest
-import { updateTeamsUI, renderMembersView } from "./team.js"; // Import updateTeamsUI to update the UI and renderMembersView to display members
+import { switchToTeamsView, switchToMembersView } from "./team.js"; // Import view-switching functions
 
-// New constant holding the sidebar HTML markup
 const sidebarHTML = `
 <aside class="sidebar">
   <div class="sidebar-header">
@@ -21,13 +15,12 @@ const sidebarHTML = `
             <span>Back to Dashboard</span>
           </a>
         </li>
-        <li class="sidebar-menu-item active">
+        <li id="sidebar-teams" class="sidebar-menu-item">
           <a href="#" class="sidebar-menu-link">
             <span id="teams-icon" class="sidebar-icon"></span>
             <span>Teams</span>
           </a>
         </li>
-        <!-- Modified Members menu item with id -->
         <li id="sidebar-members" class="sidebar-menu-item">
           <a href="#" class="sidebar-menu-link">
             <span id="members-icon" class="sidebar-icon"></span>
@@ -51,7 +44,6 @@ const sidebarHTML = `
   <div class="sidebar-footer">
     <div class="sidebar-actions">
       <button id="toggle-sidebar" class="sidebar-toggle">
-        <!-- Optionally include toggle icon markup -->
         ${sidebarIcons.toggleSidebar}
       </button>
     </div>
@@ -62,20 +54,23 @@ const sidebarHTML = `
 export function initSidebar() {
   let sidebar = document.querySelector(".sidebar");
   if (!sidebar) {
-    // Render sidebar into the container (if available)
     const container = document.getElementById("sidebar-container");
     if (container) {
+      console.log("Rendering sidebar..."); // Debugging log
       container.innerHTML = sidebarHTML;
       sidebar = container.querySelector(".sidebar");
+    } else {
+      console.error("Sidebar container not found."); // Debugging log
     }
   }
 
   if (!sidebar) {
-    console.error("Sidebar container not found.");
+    console.error("Sidebar initialization failed."); // Debugging log
     return;
   }
 
-  // Toggle sidebar functionality using the rendered sidebar
+  console.log("Sidebar initialized successfully."); // Debugging log
+
   const toggleSidebarBtn = document.getElementById("toggle-sidebar");
   if (toggleSidebarBtn) {
     toggleSidebarBtn.addEventListener("click", () => {
@@ -87,66 +82,40 @@ export function initSidebar() {
     });
   }
 
-  // Load saved sidebar state
   const sidebarCollapsed = localStorage.getItem("sidebarCollapsed") === "true";
   if (sidebarCollapsed) {
     sidebar.classList.add("collapsed");
   }
 
-  // Initialize sidebar icons
   initSidebarIcons();
 
-  // Add event listeners to toggle active state
-  const teamsMenuItem = document.querySelector(".sidebar-menu-item.active");
+  const teamsMenuItem = document.getElementById("sidebar-teams");
   const membersMenuItem = document.getElementById("sidebar-members");
 
   if (teamsMenuItem && membersMenuItem) {
-    membersMenuItem.addEventListener("click", async (event) => {
-      event.preventDefault(); // Prevent default link behavior
-      teamsMenuItem.classList.remove("active");
-      membersMenuItem.classList.add("active");
-
-      // Clear and display members view
-      const mainContent = document.querySelector(".main-content");
-      if (mainContent) mainContent.innerHTML = ""; // Clear existing content
-
-      try {
-        const response = await getTeamMembersRequest(); // Fetch members
-        renderMembersView(response.members || []); // Display members
-      } catch (error) {
-        console.error("Error fetching members:", error);
-      }
-    });
-
-    teamsMenuItem.addEventListener("click", async (event) => {
-      event.preventDefault(); // Prevent default link behavior
+    teamsMenuItem.addEventListener("click", (event) => {
+      event.preventDefault();
       membersMenuItem.classList.remove("active");
       teamsMenuItem.classList.add("active");
+      switchToTeamsView(); // Delegate to team.js
+    });
 
-      // Clear and display team cards
-      const mainContent = document.querySelector(".main-content");
-      if (mainContent) mainContent.innerHTML = ""; // Clear existing content
-
-      try {
-        const teams = await getTeamsRequest(); // Fetch teams
-        updateTeamsUI(teams); // Display team cards
-      } catch (error) {
-        console.error("Error fetching teams:", error);
-      }
+    membersMenuItem.addEventListener("click", (event) => {
+      event.preventDefault();
+      teamsMenuItem.classList.remove("active");
+      membersMenuItem.classList.add("active");
+      switchToMembersView(); // Delegate to team.js
     });
   }
 }
 
 function initSidebarIcons() {
-  // Set navigation icons
   const backToDashboardIcon = document.getElementById("back-to-dashboard-icon");
   const teamsIcon = document.getElementById("teams-icon");
   const membersIcon = document.getElementById("members-icon");
-  // Set toggle sidebar icon is already set via sidebarHTML using sidebarIcons.toggleSidebar
 
   if (backToDashboardIcon)
     backToDashboardIcon.innerHTML = sidebarIcons.backToDashboard;
   if (teamsIcon) teamsIcon.innerHTML = sidebarIcons.teams;
   if (membersIcon) membersIcon.innerHTML = sidebarIcons.members;
-  // ...existing icon initializations if needed...
 }

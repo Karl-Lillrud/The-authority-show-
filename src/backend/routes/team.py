@@ -16,7 +16,7 @@ def before_request():
 
 @team_bp.route("/add_teams", methods=["POST"])
 def add_team():
-    data = request.get_json()
+    data = request.get_json()  # Ensure the request contains the `description` field
     response, status_code = team_repo.add_team(g.user_id, g.email, data)
     return jsonify(response), status_code
 

@@ -1,11 +1,11 @@
 import {
   addTeamRequest,
-  getTeamsRequest,
+  getTeamsRequest, // Keep this import
   editTeamRequest,
   deleteTeamRequest,
   fetchPodcasts,
   updatePodcastTeamRequest,
-  getTeamMembersRequest // Add getTeamMembersRequest import
+  getTeamMembersRequest
 } from "/static/requests/teamRequests.js";
 import { sendTeamInvite } from "/static/requests/invitationRequests.js"; // Import sendTeamInvite
 import { initSidebar } from "./teamSidebar.js";
@@ -241,10 +241,35 @@ export function renderMembersView(members) {
   `;
 }
 
+// Export the view-switching functions
+export async function switchToTeamsView() {
+  const mainContent = document.querySelector(".main-content");
+  if (mainContent) mainContent.innerHTML = ""; // Clear existing content
+
+  try {
+    const teams = await getTeamsRequest();
+    updateTeamsUI(teams);
+  } catch (error) {
+    console.error("Error fetching teams:", error);
+  }
+}
+
+export async function switchToMembersView() {
+  const mainContent = document.querySelector(".main-content");
+  if (mainContent) mainContent.innerHTML = ""; // Clear existing content
+
+  try {
+    const response = await getTeamMembersRequest();
+    renderMembersView(response.members || []);
+  } catch (error) {
+    console.error("Error fetching members:", error);
+  }
+}
+
 // Initialize the page
 document.addEventListener("DOMContentLoaded", async () => {
+  initSidebar(); // Initialize the sidebar
   // Initialize sidebar using the imported component
-  initSidebar();
 
   // Fetch teams data
   const teams = await getTeamsRequest();
@@ -300,7 +325,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       const payload = {
         name: formData.get("name"),
         email: formData.get("email"),
-        description: formData.get("description"),
+        description: formData.get("description"), // Ensure description is included
         members: members
       };
 

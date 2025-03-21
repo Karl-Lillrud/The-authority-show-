@@ -7,6 +7,7 @@ from backend.models.teams import TeamSchema
 
 logger = logging.getLogger(__name__)
 
+
 class TeamRepository:
     def __init__(self):
         self.teams_collection = collection.database.Teams
@@ -24,6 +25,9 @@ class TeamRepository:
                 "_id": team_id,
                 "name": validated_data.get("name", "").strip(),
                 "email": validated_data.get("email", "").strip(),
+                "description": validated_data.get(
+                    "description", ""
+                ).strip(),  # Ensure description is saved
                 "phone": validated_data.get("phone", "").strip(),
                 "isActive": validated_data.get("isActive", True),
                 "joinedAt": datetime.now(timezone.utc),
@@ -87,9 +91,11 @@ class TeamRepository:
             for team in teams.values():
                 team["_id"] = str(team["_id"])
                 podcasts = list(self.podcasts_collection.find({"teamId": team["_id"]}))
-                team["podNames"] = ", ".join(
-                    [p.get("podName", "N/A") for p in podcasts]
-                ) if podcasts else "N/A"
+                team["podNames"] = (
+                    ", ".join([p.get("podName", "N/A") for p in podcasts])
+                    if podcasts
+                    else "N/A"
+                )
 
             return list(teams.values()), 200
 
@@ -130,7 +136,10 @@ class TeamRepository:
             team_schema = TeamSchema()
             validated_data = team_schema.load(data, partial=True)
 
-            update_fields = {k: v.strip() if isinstance(v, str) else v for k, v in validated_data.items()}
+            update_fields = {
+                k: v.strip() if isinstance(v, str) else v
+                for k, v in validated_data.items()
+            }
 
             if update_fields:
                 result = self.teams_collection.update_one(
