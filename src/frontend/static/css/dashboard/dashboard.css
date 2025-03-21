@@ -480,3 +480,37 @@
 .delete-btn:hover {
   color: var(--highlight-hover);
 }
+
+
+.cards-container {
+    display: flex;
+    flex-wrap: wrap;
+  }
+  .card {
+    flex: 1 1 30%;
+    margin: 0.5em;
+    box-sizing: border-box;
+  }
+  .unsubscribe-section {
+    margin-top: 2rem;
+    padding: 1rem;
+    background-color: #f4f4f4;
+    border-radius: 8px;
+  }
+  .unsubscribe-button {
+    background-color: #ff4c4c;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    cursor: pointer;
+    border-radius: 5px;
+    font-size: 16px;
+  }
+  .unsubscribe-button:hover {
+    background-color: #ff0000;
+  }
+
+  /* Initially hide the select dropdown */
+  #select-podcast {
+    display: none;
+  }
