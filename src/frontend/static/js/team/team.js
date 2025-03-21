@@ -10,6 +10,11 @@ import {
 import { sendTeamInvite } from "/static/requests/invitationRequests.js";
 import { initSidebar } from "../components/sidebar.js";
 import { sidebarIcons } from "../components/sidebar-icons.js";
+import {
+  editTeamMemberRequest,
+  deleteTeamMemberRequest,
+  getTeamMembersRequest
+} from "/static/requests/userToTeamRequests.js";
 
 // Update the UI with retrieved teams
 function updateTeamsUI(teams) {
@@ -591,8 +596,20 @@ async function renderMembersView() {
               }
               <p><strong>Role:</strong> ${member.role}</p>
               <p><strong>Team:</strong> ${team.name}</p>
+              <button class="btn edit-member-btn">Edit</button>
+              <button class="btn delete-member-btn">Delete</button>
             </div>
           `;
+          card
+            .querySelector(".edit-member-btn")
+            .addEventListener("click", () =>
+              showEditMemberModal(team._id, member)
+            );
+          card
+            .querySelector(".delete-member-btn")
+            .addEventListener("click", () =>
+              deleteMember(team._id, member.userId, member.email)
+            );
           membersView.appendChild(card);
         });
       } else {
@@ -609,4 +626,57 @@ async function renderMembersView() {
 export function switchToMembersView() {
   console.log("Switching to Members view");
   renderMembersView();
+}
+
+async function deleteMember(teamId, userId = null, email = null) {
+  try {
+    const result = await deleteTeamMemberRequest(teamId, userId, email);
+    if (result.message) {
+      alert(result.message || "Member deleted successfully!");
+      renderMembersView(); // Refresh the members view
+    } else {
+      alert(result.error || "Failed to delete member.");
+    }
+  } catch (error) {
+    console.error("Error deleting member:", error);
+    alert("An error occurred while deleting the member.");
+  }
+}
+
+// Example usage for unverified members
+function handleDeleteUnverifiedMember(teamId, email) {
+  deleteMember(teamId, null, email);
+}
+
+function showEditMemberModal(teamId, member) {
+  const modal = document.getElementById("editMemberModal");
+  document.getElementById("editMemberEmail").value = member.email;
+  document.getElementById("editMemberRole").value = member.role;
+  modal.classList.add("show");
+  modal.setAttribute("aria-hidden", "false");
+
+  document.getElementById("saveEditMemberBtn").onclick = async () => {
+    const updatedRole = document.getElementById("editMemberRole").value;
+    try {
+      const result = await editTeamMemberRequest(
+        teamId,
+        member.userId,
+        updatedRole
+      );
+      if (result.message) {
+        alert(result.message || "Member updated successfully!");
+        modal.classList.remove("show");
+        renderMembersView(); // Refresh the members view
+      } else {
+        alert(result.error || "Failed to update member.");
+      }
+    } catch (error) {
+      console.error("Error updating member:", error);
+      alert("An error occurred while updating the member.");
+    }
+  };
+
+  document.getElementById("cancelEditMemberBtn").onclick = () => {
+    modal.classList.remove("show");
+  };
 }
