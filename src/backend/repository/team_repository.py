@@ -56,6 +56,24 @@ class TeamRepository:
                 {"_id": team_id}, {"$set": {"members": team_item["members"]}}
             )
 
+            # Send invitation emails to new members (excluding the team creator)
+            from backend.services.TeamInviteService import (
+                TeamInviteService,
+            )  # Import the service
+
+            invite_service = TeamInviteService()
+            for member in team_item["members"]:
+                if member.get("role") != "creator":
+                    try:
+                        response, status_code = invite_service.send_invite(
+                            user_id, team_id, member["email"]
+                        )
+                        logger.info(f"Invitation email sent to {member['email']}")
+                    except Exception as e:
+                        logger.error(
+                            f"Error sending invitation email to {member['email']}: {e}"
+                        )
+
             return {
                 "message": "Team and creator added successfully",
                 "team_id": team_id,
