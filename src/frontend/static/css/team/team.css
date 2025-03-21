@@ -803,6 +803,30 @@ body {
   border-radius: 4px;
 }
 
+/* Admin Badge */
+.admin-badge {
+  display: inline-block;
+  margin-left: 6px;
+  padding: 2px 6px;
+  font-size: 0.7rem;
+  color: #3498db;
+  border: 1px solid #3498db;
+  border-radius: 4px;
+  background-color: #eaf4fb;
+}
+
+/* Member Badge */
+.member-badge {
+  display: inline-block;
+  margin-left: 6px;
+  padding: 2px 6px;
+  font-size: 0.7rem;
+  color: #6c757d;
+  border: 1px solid #6c757d;
+  border-radius: 4px;
+  background-color: #f8f9fa;
+}
+
 /* Member Card Styles */
 .member-card {
   position: relative; /* För att placera badgen absolut */
@@ -956,4 +980,14 @@ body {
   background-color: #fceae9;
   color: #e74c3c;
   border: 1px solid #e74c3c;
+}
+
+/* Member Card Footer */
+.member-card-footer {
+  position: absolute;
+  bottom: var(--spacing-md);
+  right: var(--spacing-md);
+  display: flex;
+  gap: var(--spacing-sm);
+  align-items: center;
 }

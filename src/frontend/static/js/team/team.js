@@ -571,6 +571,13 @@ async function renderMembersView() {
                   ? '<span class="verified-badge">Verified</span>'
                   : '<span class="not-verified-badge">Not Verified</span>'
               }
+              ${
+                member.role === "admin"
+                  ? '<span class="admin-badge">Admin</span>'
+                  : member.role === "member"
+                  ? '<span class="member-badge">Member</span>'
+                  : ""
+              }
             </div>
             <div class="member-card-body">
               <p><strong>Email:</strong> ${member.email}</p>
