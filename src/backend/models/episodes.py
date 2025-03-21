@@ -1,4 +1,4 @@
-from marshmallow import Schema, fields, pre_load
+from marshmallow import Schema, fields, pre_load, validate
 from backend.models.podtasks import PodtaskSchema
 
 
@@ -7,7 +7,7 @@ class EpisodeSchema(Schema):
     podcastId = fields.Str(required=True)
     title = fields.Str(required=True)
     description = fields.Str(allow_none=True)
-    publishDate = fields.Str(allow_none=True)  # Ensure publishDate is correctly defined
+    publishDate = fields.DateTime(required=True)  # Ensure publishDate is correctly defined
     duration = fields.Int(allow_none=True)  # Change to integer
     status = fields.Str(allow_none=True)
     defaultTasks = fields.List(fields.Nested(PodtaskSchema), allow_none=True)
@@ -22,6 +22,7 @@ class EpisodeSchema(Schema):
     episodeType = fields.Str(allow_none=True)
     explicit = fields.Bool(allow_none=True)
     imageUrl = fields.Url(allow_none=True)
+    episodeFiles = fields.List(fields.Dict(keys=fields.Str(), values=fields.Raw()))  # Correctly handle episodeFiles field
 
     # New fields
     keywords = fields.List(fields.Str(), allow_none=True)

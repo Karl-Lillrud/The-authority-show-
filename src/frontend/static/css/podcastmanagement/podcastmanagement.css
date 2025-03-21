@@ -556,7 +556,8 @@ body {
 }
 
 /* Edit button styling */
-.top-right-actions .edit-btn {
+.top-right-actions .edit-btn,
+.top-right-actions .publish-btn {
   display: flex;
   align-items: center;
   justify-content: center;
@@ -572,13 +573,15 @@ body {
   position: relative;
 }
 
-.top-right-actions .edit-btn svg {
+.top-right-actions .edit-btn svg,
+.top-right-actions .publish-btn svg {
   width: 18px;
   height: 18px;
 }
 
-.top-right-actions .edit-btn::after {
-  content: "Edit";
+.top-right-actions .edit-btn::after,
+.top-right-actions .publish-btn::after {
+  content: attr(data-tooltip);
   position: absolute;
   bottom: -30px;
   left: 50%;
@@ -594,12 +597,14 @@ body {
   white-space: nowrap;
 }
 
-.top-right-actions .edit-btn:hover::after {
+.top-right-actions .edit-btn:hover::after,
+.top-right-actions .publish-btn:hover::after {
   opacity: 1;
   visibility: visible;
 }
 
-.top-right-actions .edit-btn:hover {
+.top-right-actions .edit-btn:hover,
+.top-right-actions .publish-btn:hover {
   transform: translateY(-2px);
   box-shadow: 0 6px 10px rgba(0, 0, 0, 0.1);
 }

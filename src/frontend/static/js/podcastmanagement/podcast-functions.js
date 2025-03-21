@@ -1,6 +1,5 @@
 import {
   addPodcast,
-  fetchPodcasts,
   fetchPodcast,
   updatePodcast,
   deletePodcast
@@ -927,4 +926,17 @@ export function initPodcastFunctions() {
 
   // Setup podcast form submission
   handlePodcastFormSubmission();
+}
+
+export async function fetchPodcasts() {
+  try {
+    const response = await fetch("/get_podcasts");
+    if (!response.ok) {
+      throw new Error("Failed to fetch podcasts");
+    }
+    return await response.json();
+  } catch (error) {
+    console.error("Error fetching podcasts:", error);
+    throw error;
+  }
 }

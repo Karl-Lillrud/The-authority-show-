@@ -3,6 +3,7 @@ from datetime import datetime, timezone
 import uuid
 import logging
 from backend.models.episodes import EpisodeSchema
+from backend.services.integration import save_uploaded_files
 
 logger = logging.getLogger(__name__)
 
@@ -48,6 +49,10 @@ class EpisodeRepository:
             episode_id = str(uuid.uuid4())
             user_id_str = str(user_id)
 
+            files = data.pop('episodeFiles', [])
+            saved_files = save_uploaded_files(files)
+            data['episodeFiles'] = saved_files
+
             # Construct the episode document with the handled values
             episode_item = {
                 "_id": episode_id,
@@ -79,6 +84,7 @@ class EpisodeRepository:
                 "summary": validated_data.get("summary"),
                 "author": validated_data.get("author"),
                 "isHidden": validated_data.get("isHidden"),
+                "episodeFiles": data['episodeFiles'],  # Correctly handle episodeFiles field
             }
 
             result = self.collection.insert_one(episode_item)

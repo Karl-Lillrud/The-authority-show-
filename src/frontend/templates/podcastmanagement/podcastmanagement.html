@@ -233,6 +233,10 @@ endblock %} {% block content %}
               <label for="status">Status</label>
               <input type="text" id="status" name="status" />
             </div>
+            <div class="field-group full-width">
+              <label for="episode-files">Upload Episodes (MP3 or MP4)</label>
+              <input type="file" id="episode-files" name="episodeFiles" accept=".mp3, .mp4" multiple required />
+            </div>
           </div>
           <div class="form-actions">
             <button

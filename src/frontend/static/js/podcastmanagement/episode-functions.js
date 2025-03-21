@@ -92,8 +92,13 @@ export function renderEpisodeDetail(episode) {
     <div class="top-right-actions">
       <button class="action-btn edit-btn" id="edit-episode-btn" data-id="${
         episode._id
-      }">
+      }" data-tooltip="Edit">
         ${shared.svgpodcastmanagement.edit}
+      </button>
+      <button class="action-btn publish-btn" id="publish-episode-btn" data-id="${
+        episode._id
+      }" data-tooltip="Publish to Spotify">
+        ${shared.svgpodcastmanagement.upload}
       </button>
     </div>
   </div>
@@ -170,6 +175,34 @@ export function renderEpisodeDetail(episode) {
 
   // Define the episodeActions container
   const episodeActions = document.getElementById("episode-actions");
+
+  // Publish button event listener
+  document
+    .getElementById("publish-episode-btn")
+    .addEventListener("click", async () => {
+      try {
+        const episodeId = document
+          .getElementById("publish-episode-btn")
+          .getAttribute("data-id");
+
+        const response = await fetch(`/publish_to_spotify/${episodeId}`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ episodeId }),
+        });
+
+        const data = await response.json();
+        if (response.ok) {
+          showNotification("Success", "Episode published to Spotify successfully!", "success");
+        } else {
+          showNotification("Error", `Failed to publish episode: ${data.error}`, "error");
+        }
+      } catch (error) {
+        showNotification("Error", "Failed to connect to Spotify.", "error");
+      }
+    });
 
   // Back button event listener
   const backButton = document.getElementById("back-to-podcast");
@@ -475,20 +508,19 @@ export function initEpisodeFunctions() {
     .addEventListener("submit", async (e) => {
       e.preventDefault();
       const formData = new FormData(e.target);
-      const data = Object.fromEntries(formData.entries());
 
       // Check for missing required fields
-      if (!data.podcastId || !data.title || !data.publishDate) {
+      if (!formData.get("podcastId") || !formData.get("title") || !formData.get("publishDate") || !formData.getAll("episodeFiles").length) {
         showNotification(
           "Missing Fields",
-          "Please fill in all required fields.",
+          "Please fill in all required fields and upload episode files.",
           "error"
         );
         return;
       }
 
       // Ensure publishDate is in the correct format
-      const publishDate = new Date(data.publishDate);
+      const publishDate = new Date(formData.get("publishDate"));
       if (isNaN(publishDate.getTime())) {
         showNotification(
           "Invalid Date",
@@ -499,21 +531,31 @@ export function initEpisodeFunctions() {
       }
 
       try {
-        const result = await registerEpisode(data);
-        console.log("Result from registerEpisode:", result);
-        if (result.message) {
-          showNotification(
-            "Success",
-            "Episode created successfully!",
-            "success"
-          );
-          document.getElementById("episode-form-popup").style.display = "none";
-          document.getElementById("create-episode-form").reset();
-          // Refresh the episode list without refreshing the page
-          viewPodcast(data.podcastId);
-        } else {
-          showNotification("Error", result.error, "error");
+        const response = await fetch("/register_episode", {
+          method: "POST",
+          body: formData,
+          headers: {
+            // Ensure the correct Content-Type header is set for file uploads
+            "Accept": "application/json"
+          }
+        });
+
+        if (!response.ok) {
+          const errorData = await response.json();
+          showNotification("Error", errorData.error || "Failed to create episode.", "error");
+          return;
         }
+
+        const result = await response.json();
+        showNotification(
+          "Success",
+          "Episode created successfully!",
+          "success"
+        );
+        document.getElementById("episode-form-popup").style.display = "none";
+        document.getElementById("create-episode-form").reset();
+        // Refresh the episode list without refreshing the page
+        viewPodcast(formData.get("podcastId"));
       } catch (error) {
         console.error("Error creating episode:", error);
         showNotification("Error", "Failed to create episode.", "error");

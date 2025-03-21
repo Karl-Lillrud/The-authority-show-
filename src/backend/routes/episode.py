@@ -1,41 +1,76 @@
 from flask import request, jsonify, Blueprint, g, render_template
 import logging
-
-# Import the repository
+from werkzeug.utils import secure_filename
+from pymongo import MongoClient  # MongoDB client
+import gridfs  # GridFS for file storage
 from backend.repository.episode_repository import EpisodeRepository
 from backend.database.mongo_connection import episodes
+from backend.services.integration import get_spotify_access_token, upload_episode_to_spotify
 
-# Define Blueprint
+# Initialize Blueprint and repository
 episode_bp = Blueprint("episode_bp", __name__)
-
-# Create repository instance
 episode_repo = EpisodeRepository()
-
-# SHOULD ONLY BE USED FOR SPECIFIC DATA CRUD OPERATIONS
-# EXTRA FUNCTIONALITY BESIDES CRUD OPERATIONS SHOULD BE IN SERVICES
 
 logger = logging.getLogger(__name__)
 
+# MongoDB connection and GridFS setup
+client = MongoClient("mongodb://localhost:27017/Podmanager")  # Replace with your MongoDB URI
+db = client['Podmanager']
+fs = gridfs.GridFS(db)  # Use GridFS for file storage
 
 @episode_bp.route("/register_episode", methods=["POST"])
 def register_episode():
+    try:
+        # Validate User
+        user_id = g.get('user_id')
+        if not user_id:
+            return jsonify({"error": "User ID is required"}), 400
+
+        # Parse form data
+        data = request.form.to_dict()
+        files = request.files.getlist('episodeFiles')  # Assuming the field name is 'episodeFiles'
+        data['episodeFiles'] = files
+
+        # Log received data for debugging
+        logger.info(f"Received data: {data}")
+        logger.info(f"Received files: {files}")
+
+        # Validate required fields
+        if not data.get('podcastId') or not data.get('title') or not data.get('publishDate'):
+            return jsonify({"error": "Required fields missing: podcastId, title, and publishDate"}), 400
+
+        # Process the episode registration
+        response, status = episode_repo.register_episode(data, user_id)
+        return jsonify(response), status
+
+    except Exception as e:
+        logger.error(f"Error: {e}")
+        return jsonify({"error": str(e)}), 500
+
+
+@episode_bp.route("/publish_to_spotify/<episode_id>", methods=["POST"])
+def publish_to_spotify(episode_id):
     if not hasattr(g, "user_id") or not g.user_id:
         return jsonify({"error": "Unauthorized"}), 401
 
-    # Validate Content-Type
-    if request.content_type != "application/json":
-        return (
-            jsonify({"error": "Invalid Content-Type. Expected application/json"}),
-            415,
-        )
+    episode = episodes.find_one({"_id": episode_id})
+    if not episode:
+        return jsonify({"error": "Episode not found"}), 404
 
     try:
-        data = request.get_json()
-        response, status_code = episode_repo.register_episode(data, g.user_id)
-        return jsonify(response), status_code
+        # Fetch Spotify access token
+        access_token = get_spotify_access_token()
+        if not access_token:
+            return jsonify({"error": "Failed to retrieve Spotify access token"}), 500
+
+        # Attempt to upload episode to Spotify
+        result = upload_episode_to_spotify(access_token, episode)
+        if result:
+            return jsonify({"message": "Episode published successfully to Spotify!"}), 200
+        else:
+            return jsonify({"error": "Failed to upload episode to Spotify"}), 500
     except Exception as e:
-        logger.error("❌ ERROR: %s", e)
-        return jsonify({"error": f"Failed to register episode: {str(e)}"}), 500
+        return jsonify({"error": f"Error publishing to Spotify: {str(e)}"}), 500
 
 
 @episode_bp.route("/get_episodes/<episode_id>", methods=["GET"])
@@ -64,7 +99,7 @@ def get_episodes():
         return jsonify({"error": f"Failed to fetch episodes: {str(e)}"}), 500
 
 
-@episode_bp.route("/delete_episods/<episode_id>", methods=["DELETE"])
+@episode_bp.route("/delete_episodes/<episode_id>", methods=["DELETE"])
 def delete_episode(episode_id):
     if not hasattr(g, "user_id") or not g.user_id:
         return jsonify({"error": "Unauthorized"}), 401
@@ -84,10 +119,7 @@ def update_episode(episode_id):
 
     # Validate Content-Type
     if request.content_type != "application/json":
-        return (
-            jsonify({"error": "Invalid Content-Type. Expected application/json"}),
-            415,
-        )
+        return jsonify({"error": "Invalid Content-Type. Expected application/json"}), 415
 
     try:
         data = request.get_json()

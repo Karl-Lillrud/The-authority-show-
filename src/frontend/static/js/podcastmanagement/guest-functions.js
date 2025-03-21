@@ -437,3 +437,16 @@ export function initGuestFunctions() {
       }
     });
 }
+
+export async function fetchGuestsByEpisode(episodeId) {
+  try {
+    const response = await fetch(`/get_guests_by_episode/${episodeId}`);
+    if (!response.ok) {
+      throw new Error("Failed to fetch guests");
+    }
+    return await response.json();
+  } catch (error) {
+    console.error("Error fetching guests:", error);
+    throw error;
+  }
+}
