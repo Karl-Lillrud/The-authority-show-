@@ -166,6 +166,48 @@ Dashboard{% endblock %} {% block content %}
   </div>
 </div>
 
+<!-- New Add New Member Modal -->
+<div
+  class="modal popup"
+  id="addMemberModal"
+  tabindex="-1"
+  role="dialog"
+  aria-labelledby="addMemberModalLabel"
+  aria-hidden="true"
+>
+  <div class="form-box" role="document">
+    <form id="addMemberForm">
+      <span id="closeAddMemberModal" class="close-btn">&times;</span>
+      <h2 id="addMemberModalLabel">Add New Member</h2>
+      <div class="form-group">
+        <label for="memberEmail">Member Email:</label>
+        <input type="email" id="memberEmail" class="form-control" required />
+      </div>
+      <!-- New role selection -->
+      <div class="form-group">
+        <label for="memberRole">Select Role:</label>
+        <select id="memberRole" class="form-control" required>
+          <option value="member">Member</option>
+          <option value="admin">Admin</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label for="teamSelect">Select Team:</label>
+        <select id="teamSelect" class="form-control" required>
+          <option value="">Select a Team</option>
+          <!-- Options populated dynamically -->
+        </select>
+      </div>
+      <div class="form-actions">
+        <button type="button" id="cancelAddMember" class="cancel-btn"></button>
+          Cancel
+        </button>
+        <button type="submit" class="save-btn">Add Member</button>
+      </div>
+    </form>
+  </div>
+</div>
+
 <!-- Decorative Header -->
 <div class="decorative-header"></div>
 

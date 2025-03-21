@@ -175,3 +175,13 @@ class TeamRepository:
         except Exception as e:
             logger.error(f"Error editing team: {e}", exc_info=True)
             return {"error": f"Failed to edit team: {str(e)}"}, 500
+
+    def add_member_to_team(self, team_id, new_member):
+        # Append new_member object to the members array of the team document
+        result = self.teams_collection.update_one(
+            {"_id": team_id}, {"$push": {"members": new_member}}
+        )
+        if result.modified_count > 0:
+            return {"message": "Member added successfully"}, 201
+        else:
+            return {"error": "Failed to add member"}, 500

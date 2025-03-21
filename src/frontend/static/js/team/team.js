@@ -6,6 +6,7 @@ import {
   fetchPodcasts,
   updatePodcastTeamRequest
 } from "/static/requests/teamRequests.js";
+import { sendTeamInvite } from "/static/requests/invitationRequests.js"; // Added missing import
 import { initSidebar } from "/static/js/components/sidebar.js";
 
 // Update the UI with retrieved teams
@@ -416,6 +417,87 @@ document.addEventListener("DOMContentLoaded", async () => {
     window.addEventListener("keydown", (event) => {
       if (event.key === "Escape" && addTeamModal.classList.contains("show")) {
         closeModal(addTeamModal);
+      }
+    });
+  }
+
+  // New Member Modal functionality
+  const addMemberBtnSidebar = document.getElementById("addNewMemberBtn");
+  const addMemberModal = document.getElementById("addMemberModal");
+  const closeAddMemberModal = document.getElementById("closeAddMemberModal");
+  const cancelAddMember = document.getElementById("cancelAddMember");
+  const addMemberForm = document.getElementById("addMemberForm");
+  const teamSelect = document.getElementById("teamSelect");
+
+  // Function to fetch teams and populate dropdown
+  async function populateTeamDropdown() {
+    try {
+      const teams = await getTeamsRequest();
+      teamSelect.innerHTML = '<option value="">Select a Team</option>';
+      teams.forEach((team) => {
+        const option = document.createElement("option");
+        option.value = team._id;
+        option.textContent = team.name;
+        teamSelect.appendChild(option);
+      });
+    } catch (err) {
+      console.error("Error fetching teams for dropdown:", err);
+    }
+  }
+
+  // Open modal on Add New Member button click
+  if (addMemberBtnSidebar && addMemberModal) {
+    addMemberBtnSidebar.addEventListener("click", () => {
+      populateTeamDropdown();
+      addMemberModal.classList.add("show");
+      addMemberModal.setAttribute("aria-hidden", "false");
+    });
+  }
+
+  // Modal close handlers
+  if (closeAddMemberModal) {
+    closeAddMemberModal.addEventListener("click", () => {
+      addMemberModal.classList.remove("show");
+      addMemberModal.setAttribute("aria-hidden", "true");
+    });
+  }
+  if (cancelAddMember) {
+    cancelAddMember.addEventListener("click", () => {
+      addMemberModal.classList.remove("show");
+      addMemberModal.setAttribute("aria-hidden", "true");
+    });
+  }
+
+  // Handle Add Member form submission in the new member modal
+  if (addMemberForm) {
+    addMemberForm.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const email = document.getElementById("memberEmail").value;
+      const role = document.getElementById("memberRole").value;
+      const teamId = teamSelect.value;
+      if (!email || !teamId || !role) {
+        alert("Please provide member email, role and select a team.");
+        return;
+      }
+      try {
+        // First, trigger sending the invitation email
+        const inviteResult = await sendTeamInvite(teamId, email);
+        console.log(`Invitation sent: `, inviteResult);
+        // Then, update the team's member array via new endpoint
+        const res = await fetch("/add_team_member", {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ teamId, email, role })
+        });
+        const updateResult = await res.json();
+        alert(
+          updateResult.message || `Member added and invitation sent to ${email}`
+        );
+        addMemberModal.classList.remove("show");
+        addMemberModal.setAttribute("aria-hidden", "true");
+      } catch (error) {
+        console.error("Error sending team invite or adding member:", error);
+        alert("Failed to add member.");
       }
     });
   }
