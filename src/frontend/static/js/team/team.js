@@ -547,8 +547,6 @@ async function renderMembersView() {
       <h1>Members</h1>
     </div>
     <div id="members-view-container" class="card-container"></div>
-      <!-- Member cards will be dynamically inserted here -->
-    </div>
   `;
 
   try {
@@ -556,9 +554,10 @@ async function renderMembersView() {
     const membersView = document.getElementById("members-view-container");
 
     for (const team of teams) {
-      // Iterera över alla medlemmar i teamet
+      console.log(`Team: ${team.name}`, team.members); // Debugging: Log team members
       if (team.members && Array.isArray(team.members)) {
         team.members.forEach((member) => {
+          console.log(`Member: ${member.email}`, member); // Debugging: Log each member
           const card = document.createElement("div");
           card.className = "member-card";
           card.innerHTML = `
@@ -580,7 +579,16 @@ async function renderMembersView() {
               }
             </div>
             <div class="member-card-body">
-              <p><strong>Email:</strong> ${member.email}</p>
+              ${
+                member.verified
+                  ? `<p><strong>Email:</strong> ${member.email}</p>`
+                  : ""
+              }
+              ${
+                member.phone
+                  ? `<p><strong>Phone:</strong> ${member.phone}</p>`
+                  : ""
+              }
               <p><strong>Role:</strong> ${member.role}</p>
               <p><strong>Team:</strong> ${team.name}</p>
             </div>
