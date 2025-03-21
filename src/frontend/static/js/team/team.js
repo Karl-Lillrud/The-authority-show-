@@ -163,7 +163,6 @@ function addMemberRow(containerId) {
 
 // The team detail modal logic
 function showTeamDetailModal(team) {
-  // Ensure the modal exists in the DOM
   const modal = document.getElementById("teamDetailModal");
   if (!modal) {
     console.error("Error: 'teamDetailModal' not found in the DOM.");
@@ -174,6 +173,7 @@ function showTeamDetailModal(team) {
   document.getElementById("detailName").value = team.name || "";
   document.getElementById("detailEmail").value = team.email || "";
   document.getElementById("detailDescription").value = team.description || "";
+
   const membersContainer = document.getElementById("members-container-edit");
   membersContainer.innerHTML = ""; // Clear existing members
   team.members.forEach((member) => {
@@ -202,6 +202,27 @@ function showTeamDetailModal(team) {
         membersContainer.removeChild(memberRow);
       });
   });
+
+  // Fetch and display assigned podcasts
+  const pendingPodcastChanges = {};
+  let originalAssignedPodcasts = [];
+  async function initAssignments() {
+    try {
+      const podcasts = await fetchPodcasts();
+      originalAssignedPodcasts = podcasts.filter((p) => p.teamId === team._id);
+      renderAssignedPodcasts(
+        team._id,
+        originalAssignedPodcasts,
+        pendingPodcastChanges
+      );
+
+      // Populate the "Add Podcast" dropdown with all available podcasts
+      populatePodcastDropdownForTeam(team._id, pendingPodcastChanges);
+    } catch (error) {
+      console.error("Error fetching podcasts:", error);
+    }
+  }
+  initAssignments();
 
   // Show the modal
   modal.classList.add("show");
@@ -320,13 +341,13 @@ document.addEventListener("DOMContentLoaded", async () => {
           role: row.querySelector("select[name='memberRole']").value
         });
       });
-      // Extract the selected podcast ID from the form
-      const podcastId = formData.get("podcastId");
+
+      // Ensure an empty array is sent if no members are added
       const payload = {
         name: formData.get("name"),
         email: formData.get("email"),
-        description: formData.get("description"), // Ensure description is included
-        members: members
+        description: formData.get("description"),
+        members: members.length > 0 ? members : [] // Send an empty array if no members
       };
 
       try {
@@ -373,6 +394,22 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     if (openModalBtn) {
       openModalBtn.addEventListener("click", () => {
+        // Clear the members container before showing the modal
+        const membersContainer = document.getElementById("members-container");
+        if (membersContainer) {
+          membersContainer.innerHTML = ""; // Clear all existing member rows
+        }
+
+        // Reset the form fields
+        const addTeamForm = addTeamModal.querySelector("form");
+        if (addTeamForm) {
+          addTeamForm.reset();
+        }
+
+        // Clear any lingering members array in JavaScript
+        const members = []; // Reset the members array to ensure no carryover
+
+        // Show the modal
         addTeamModal.classList.add("show");
         addTeamModal.setAttribute("aria-hidden", "false");
       });

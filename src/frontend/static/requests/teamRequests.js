@@ -3,6 +3,23 @@
 
 export async function addTeamRequest(payload) {
   console.log("Sending payload to add team:", payload); // Debugging line
+
+  // Ensure the `members` field is always an array
+  if (!Array.isArray(payload.members)) {
+    payload.members = [];
+  }
+
+  // Deduplicate members by email
+  const uniqueMembers = new Map();
+  payload.members.forEach((member) => {
+    if (member.email) {
+      uniqueMembers.set(member.email, member);
+    }
+  });
+  payload.members = Array.from(uniqueMembers.values());
+
+  console.log("Deduplicated members in payload:", payload.members); // Debugging line
+
   const res = await fetch("/add_teams", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
