@@ -1,7 +1,10 @@
 // Shared SVG icons for sidebar components
 import { sidebarIcons } from "../components/sidebar-icons.js";
-import { getTeamsRequest } from "../../requests/teamRequests.js"; // Import getTeamsRequest
-import { updateTeamsUI } from "./team.js"; // Import updateTeamsUI to update the UI
+import {
+  getTeamsRequest,
+  getTeamMembersRequest
+} from "../../requests/teamRequests.js"; // Import getTeamsRequest and getTeamMembersRequest
+import { updateTeamsUI, renderMembersView } from "./team.js"; // Import updateTeamsUI to update the UI and renderMembersView to display members
 
 // New constant holding the sidebar HTML markup
 const sidebarHTML = `
@@ -98,10 +101,21 @@ export function initSidebar() {
   const membersMenuItem = document.getElementById("sidebar-members");
 
   if (teamsMenuItem && membersMenuItem) {
-    membersMenuItem.addEventListener("click", (event) => {
+    membersMenuItem.addEventListener("click", async (event) => {
       event.preventDefault(); // Prevent default link behavior
       teamsMenuItem.classList.remove("active");
       membersMenuItem.classList.add("active");
+
+      // Clear and display members view
+      const mainContent = document.querySelector(".main-content");
+      if (mainContent) mainContent.innerHTML = ""; // Clear existing content
+
+      try {
+        const response = await getTeamMembersRequest(); // Fetch members
+        renderMembersView(response.members || []); // Display members
+      } catch (error) {
+        console.error("Error fetching members:", error);
+      }
     });
 
     teamsMenuItem.addEventListener("click", async (event) => {
@@ -109,10 +123,13 @@ export function initSidebar() {
       membersMenuItem.classList.remove("active");
       teamsMenuItem.classList.add("active");
 
-      // Trigger getTeamsRequest and update the UI
+      // Clear and display team cards
+      const mainContent = document.querySelector(".main-content");
+      if (mainContent) mainContent.innerHTML = ""; // Clear existing content
+
       try {
-        const teams = await getTeamsRequest();
-        updateTeamsUI(teams);
+        const teams = await getTeamsRequest(); // Fetch teams
+        updateTeamsUI(teams); // Display team cards
       } catch (error) {
         console.error("Error fetching teams:", error);
       }
