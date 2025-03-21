@@ -197,16 +197,6 @@ function showTeamDetailModal(team) {
   document.getElementById("detailName").value = team.name;
   document.getElementById("detailEmail").value = team.email;
   document.getElementById("detailDescription").value = team.description;
-  document.getElementById("members-container-edit").innerHTML = "";
-  team.members.forEach((member) => {
-    addMemberRow("members-container-edit");
-    const memberRows = document.querySelectorAll(
-      "#members-container-edit .member-row"
-    );
-    const lastRow = memberRows[memberRows.length - 1];
-    lastRow.querySelector("input[name='memberEmail']").value = member.email;
-    lastRow.querySelector("select[name='memberRole']").value = member.role;
-  });
 
   const modal = document.getElementById("teamDetailModal");
   modal.classList.add("show");
@@ -293,17 +283,8 @@ function showTeamDetailModal(team) {
       name: document.getElementById("detailName").value,
       email: document.getElementById("detailEmail").value,
       description: document.getElementById("detailDescription").value,
-      members: []
+      members: [] // Members är tomt eftersom det inte längre används här
     };
-
-    document
-      .querySelectorAll("#members-container-edit .member-row")
-      .forEach((row) => {
-        payload.members.push({
-          email: row.querySelector("input[name='memberEmail']").value,
-          role: row.querySelector("select[name='memberRole']").value
-        });
-      });
 
     try {
       const result = await editTeamRequest(team._id, payload);
@@ -337,15 +318,6 @@ document.addEventListener("DOMContentLoaded", async () => {
   const teams = await getTeamsRequest();
   updateTeamsUI(teams);
 
-  // Add event listeners to the Add Member buttons
-  document.getElementById("addMemberBtn").addEventListener("click", () => {
-    addMemberRow("members-container");
-  });
-
-  document.getElementById("addMemberBtnEdit").addEventListener("click", () => {
-    addMemberRow("members-container-edit");
-  });
-
   // Initialize podcast dropdown
   async function populatePodcastDropdown() {
     const podcastDropdown = document.getElementById("podcastDropdown");
@@ -375,20 +347,14 @@ document.addEventListener("DOMContentLoaded", async () => {
     addTeamForm.addEventListener("submit", async (event) => {
       event.preventDefault();
       const formData = new FormData(addTeamForm);
-      const members = [];
-      document.querySelectorAll(".member-row").forEach((row) => {
-        members.push({
-          email: row.querySelector("input[name='memberEmail']").value,
-          role: row.querySelector("select[name='memberRole']").value
-        });
-      });
+
       // Extract the selected podcast ID from the form
       const podcastId = formData.get("podcastId");
       const payload = {
         name: formData.get("name"),
         email: formData.get("email"),
         description: formData.get("description"),
-        members: members
+        members: [] // Members är tomt eftersom det inte längre används här
       };
 
       try {
@@ -445,7 +411,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     });
   }
 
-  // New Member Modal functionality
+  // New Member Modal functionality remains unchanged
   const addMemberBtnSidebar = document.getElementById("addNewMemberBtn");
   const addMemberModal = document.getElementById("addMemberModal");
   const closeAddMemberModal = document.getElementById("closeAddMemberModal");

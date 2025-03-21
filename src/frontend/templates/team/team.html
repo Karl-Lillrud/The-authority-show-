@@ -124,17 +124,6 @@ Dashboard{% endblock %} {% block content %}
         <!-- Add hidden input fields for userId and email -->
         <input type="hidden" name="userId" value="{{ session.user_id }}" />
         <input type="hidden" name="email" value="{{ session.email }}" />
-        <!-- Section for adding members -->
-        <div class="field-group full-width">
-          <label for="members">Members:</label>
-          <div id="members-container">
-            <!-- Members will be added here dynamically -->
-          </div>
-          <button type="button" id="addMemberBtn" class="action-button">
-            <span class="button-icon">+</span>
-            <span>Add Member</span>
-          </button>
-        </div>
       </div>
       <div class="form-actions">
         <button type="button" class="cancel-btn" id="modalCloseBtn2">
@@ -192,16 +181,6 @@ Dashboard{% endblock %} {% block content %}
             id="detailDescription"
             name="description"
           ></textarea>
-        </div>
-        <div class="field-group full-width">
-          <label>Members:</label>
-          <div id="members-container-edit">
-            <!-- Members will be added here dynamically -->
-          </div>
-          <button type="button" id="addMemberBtnEdit" class="action-button">
-            <span class="button-icon">+</span>
-            <span>Add Member</span>
-          </button>
         </div>
       </div>
       <div class="form-actions">
