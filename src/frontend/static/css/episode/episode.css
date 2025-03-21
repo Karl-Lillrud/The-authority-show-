@@ -39,8 +39,7 @@ html {
   justify-content: center;
   align-items: center;
   text-align: center;
-  background: linear-gradient(rgba(0, 0, 0, 0.6), rgba(0, 0, 0, 0.6)),
-    url("/Media/karl_episode.png") no-repeat center top; /* Move up */
+  background: linear-gradient(rgba(0, 0, 0, 0.6), rgba(0, 0, 0, 0.6));
   background-size: cover;
   width: 100%;
   height: 1000px;
@@ -121,66 +120,17 @@ html {
   border-radius: 5px;
 }
 
-/* Custom Audio Player */
+/* Center the audio player */
 .audio-player {
-  background: #ff4500; /* Background color similar to the image */
-  padding: 20px;
-  border-radius: 10px;
-  text-align: center;
-  max-width: 700px;
-  margin: 0 auto;
-  color: white;
-}
-
-/* Player Bar */
-.player-container {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 10px;
-}
-
-/* Seek Bar */
-#seek-bar {
-  flex: 1;
-  margin: 0 10px;
-  -webkit-appearance: none;
-  appearance: none;
-  height: 4px;
-  background: white;
-  border-radius: 5px;
-  cursor: pointer;
-}
-
-/* Custom Controls */
-.player-controls {
   display: flex;
   justify-content: center;
   align-items: center;
-  gap: 15px;
+  height: 100vh; /* Centers it vertically on the page */
 }
 
-/* Buttons */
-.player-controls button {
-  background: none;
-  border: 2px solid white;
-  border-radius: 50%;
-  padding: 10px;
-  color: white;
-  font-size: 18px;
-  cursor: pointer;
-  transition: 0.3s;
-}
-
-.player-controls button:hover {
-  background: rgba(255, 255, 255, 0.2);
-}
-
-/* Play Button */
-#play-btn {
-  width: 50px;
-  height: 50px;
-  font-size: 22px;
+audio {
+  display: block;
+  margin: auto;
 }
 
 /* Guest About Section */

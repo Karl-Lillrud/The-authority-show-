@@ -3,13 +3,15 @@ import logging
 
 # Import the repository
 from backend.repository.episode_repository import EpisodeRepository
-from backend.database.mongo_connection import episodes
+from backend.repository.podcast_repository import PodcastRepository  # ✅ Import Podcast Repo
+from backend.database.mongo_connection import episodes, podcasts  # ✅ Ensure we can fetch podcasts
 
 # Define Blueprint
 episode_bp = Blueprint("episode_bp", __name__)
 
 # Create repository instance
 episode_repo = EpisodeRepository()
+podcast_repo = PodcastRepository()
 
 # SHOULD ONLY BE USED FOR SPECIFIC DATA CRUD OPERATIONS
 # EXTRA FUNCTIONALITY BESIDES CRUD OPERATIONS SHOULD BE IN SERVICES
@@ -101,58 +103,50 @@ def update_episode(episode_id):
 @episode_bp.route("/episode/<episode_id>", methods=["GET"])
 def episode_detail(episode_id):
     try:
-        # Fetch the episode document using the episode ID
+        # ✅ Fetch the episode document
         ep = episodes.find_one({"_id": episode_id})
-        if not ep:
-            return render_template("404.html")
 
-        # Render a dedicated episode page template and pass the episode data
-        return render_template("landingpage/episode.html", episode=ep)
+        if not ep:
+            return render_template("404.html")  # Handle missing episode case
+
+        # ✅ Ensure `podcast_id` exists in episode
+        podcast_id = ep.get("podcast_id")
+        podcast_doc = podcasts.find_one({"_id": podcast_id}) or {}
+
+        # ✅ Extract podcast logo safely
+        podcast_logo = podcast_doc.get("logoUrl", "")
+
+        # ✅ Validate `podcast_logo` (must be a valid URL or Base64)
+        if not isinstance(podcast_logo, str) or not podcast_logo.startswith(("http", "data:image")):
+            podcast_logo = "/static/images/default.png"  # Default fallback
+
+        # ✅ Extract the episode's `audioUrl` safely
+        audio_url = ep.get("audioUrl", "")
+
+        # ✅ Validate `audio_url`
+        if not isinstance(audio_url, str) or not audio_url.startswith(("http", "https")):
+            audio_url = None  # Avoid passing invalid audio URLs
+
+        # ✅ Pass episode, podcast logo, and audio URL to the template
+        return render_template(
+            "landingpage/episode.html",
+            episode=ep,
+            podcast_logo=podcast_logo,
+            audio_url=audio_url,  # ✅ Make sure this is available in the template
+        )
+
     except Exception as e:
+        print("❌ ERROR:", str(e))  # Print the full error in console
         return f"Error: {str(e)}", 500
+
+
 
 
 @episode_bp.route("/episodes/by_podcast/<podcast_id>", methods=["GET"])
 def get_episodes_by_podcast(podcast_id):
+    """Fetch all episodes for a given podcast."""
     if not hasattr(g, "user_id") or not g.user_id:
         return jsonify({"error": "Unauthorized"}), 401
 
-    try:
-        # Query the episodes collection for documents matching the given podcast_id
-        episodes_cursor = episodes.find({"podcast_id": podcast_id})
-        mapped_episodes = []
-
-        for ep in episodes_cursor:
-            title = ep.get("title", "No Title")
-            description = ep.get("description", "No Description")
-            publish_date = ep.get("publishDate")
-            duration = ep.get("duration", "Unknown")
-            episode_type = ep.get("episodeType", "Unknown")
-            link = ep.get("link", "No Link")
-            author = ep.get("author", "Unknown")
-            file_size = ep.get("fileSize", "Unknown")
-            file_type = ep.get("fileType", "Unknown")
-            audio_url = ep.get("audioUrl", None)
-
-            mapped_episodes.append(
-                {
-                    "_id": ep.get("_id"),
-                    "title": title,
-                    "description": description,
-                    "publishDate": publish_date,
-                    "duration": duration,
-                    "episodeType": episode_type,
-                    "link": link,
-                    "author": author,
-                    "fileSize": file_size,
-                    "fileType": file_type,
-                    "audioUrl": audio_url,
-                }
-            )
-
-        # Return the mapped episodes list
-        return jsonify({"episodes": mapped_episodes}), 200
-
-    except Exception as e:
-        logger.error("❌ ERROR: %s", e)
-        return jsonify({"error": f"Failed to fetch episodes by podcast: {str(e)}"}), 500
+    episodes, status_code = episode_repo.get_episodes_by_podcast(podcast_id, g.user_id)
+    return jsonify(episodes), status_code
