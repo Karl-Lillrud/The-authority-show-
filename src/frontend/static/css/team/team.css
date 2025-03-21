@@ -802,3 +802,84 @@ body {
   border: 1px solid #3498db;
   border-radius: 4px;
 }
+
+/* Member Card Styles */
+.member-card {
+  position: relative; /* För att placera badgen absolut */
+  background-color: white;
+  border-radius: var(--radius-large);
+  overflow: hidden;
+  box-shadow: var(--card-shadow);
+  transition: all var(--transition-normal);
+  border: 1px solid rgba(0, 0, 0, 0.03);
+  display: flex;
+  flex-direction: column;
+  padding: var(--spacing-lg);
+}
+
+.member-card:hover {
+  transform: translateY(-5px);
+  box-shadow: var(--card-shadow-hover);
+}
+
+.member-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--spacing-md);
+}
+
+.member-card-header h3 {
+  margin: 0;
+  font-size: 1.2rem;
+  color: rgba(0, 0, 0, 0.85);
+  font-weight: 700;
+}
+
+.member-card-body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+}
+
+.member-card-body p {
+  margin: 0;
+  font-size: 0.95rem;
+  color: rgba(0, 0, 0, 0.7);
+}
+
+.member-card-body p strong {
+  color: rgba(0, 0, 0, 0.85);
+  font-weight: 600;
+}
+
+/* Badge Styling */
+.verified-badge,
+.not-verified-badge,
+.creator-badge {
+  position: absolute;
+  bottom: var(--spacing-md);
+  right: var(--spacing-md);
+  font-size: 0.8rem;
+  padding: 4px 8px;
+  border-radius: var(--radius-medium);
+  font-weight: 600;
+}
+
+.verified-badge {
+  background-color: #e8f5e9;
+  color: #4caf50;
+  border: 1px solid #4caf50;
+}
+
+.not-verified-badge {
+  background-color: #fceae9;
+  color: #e74c3c;
+  border: 1px solid #e74c3c;
+}
+
+.creator-badge {
+  background-color: #3498db;
+  color: #ffffff;
+  border: 1px solid #3498db;
+}

@@ -107,13 +107,16 @@ class UserToTeamRepository:
 
             members_details = []
             for member in team_members:
-                user_id = member["userId"]
+                user_id = member.get("userId")
                 user_details = self.users_collection.find_one(
-                    {"_id": user_id}, {"_id": 0}
+                    {"_id": user_id}, {"_id": 0, "fullName": 1, "email": 1, "phone": 1}
                 )
 
                 if user_details:
                     user_details["role"] = member.get("role", "member")
+                    user_details["verified"] = (
+                        True  # Mark as verified if in UsersToTeams
+                    )
                     members_details.append(user_details)
 
             return {"teamId": team_id, "members": members_details}, 200
