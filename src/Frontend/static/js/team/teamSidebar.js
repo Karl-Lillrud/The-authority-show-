@@ -1,5 +1,5 @@
 // Shared SVG icons for sidebar components
-import { sidebarIcons } from "./sidebar-icons.js";
+import { sidebarIcons } from "../components/sidebar-icons.js";
 
 // New constant holding the sidebar HTML markup
 const sidebarHTML = `

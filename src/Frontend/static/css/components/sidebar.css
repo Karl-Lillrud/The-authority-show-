@@ -144,8 +144,12 @@
 }
 
 .sidebar-menu-item.active .sidebar-menu-link {
-  background-color: var(--sidebar-item-active);
-  color: var(--highlight-color);
+  background-color: var(--sidebar-item-active); /* Light orange background */
+  color: var(--highlight-color); /* Orange text */
+}
+
+.sidebar-menu-item .sidebar-menu-link {
+  color: var(--text-color-light); /* Default gray text */
 }
 
 .sidebar-icon {
