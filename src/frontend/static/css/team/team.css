@@ -994,3 +994,11 @@ body {
   gap: var(--spacing-sm);
   align-items: center;
 }
+
+#back-to-dashboard-icon {
+  margin-left: 4px; /* Flytta ikonen lite till höger */
+}
+
+#members-icon {
+  margin-left: -0.3mm; /* Flytta ikonen 1mm till vänster */
+}

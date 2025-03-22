@@ -15,7 +15,87 @@ import {
   deleteTeamMemberRequest,
   getTeamMembersRequest
 } from "/static/requests/userToTeamRequests.js";
-import { showNotification } from "../podcastmanagement/podcastmanagement.js"; // Importera notifikationssystemet
+
+// Notification system for team.js
+function showNotification(title, message, type = "info") {
+  // Remove any existing notification
+  const existingNotification = document.querySelector(".notification");
+  if (existingNotification) {
+    existingNotification.remove();
+  }
+
+  // Create notification elements
+  const notification = document.createElement("div");
+  notification.className = `notification ${type}`;
+
+  // Icon based on type
+  let iconSvg = "";
+  if (type === "success") {
+    iconSvg = `
+      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+        <polyline points="22 4 12 14.01 9 11.01"></polyline>
+      </svg>`;
+  } else if (type === "error") {
+    iconSvg = `
+      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="12" cy="12" r="10"></circle>
+        <line x1="12" y1="8" x2="12" y2="12"></line>
+        <line x1="12" y1="16" x2="12.01" y2="16"></line>
+      </svg>`;
+  } else {
+    iconSvg = `
+      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="12" cy="12" r="10"></circle>
+        <line x1="12" y1="16" x2="12" y2="12"></line>
+        <line x1="12" y1="8" x2="12.01" y2="8"></line>
+      </svg>`;
+  }
+
+  notification.innerHTML = `
+    <div class="notification-icon">${iconSvg}</div>
+    <div class="notification-content">
+      <div class="notification-title">${title}</div>
+      <div class="notification-message">${message}</div>
+    </div>
+    <div class="notification-close">
+      <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <line x1="18" y1="6" x2="6" y2="18"></line>
+        <line x1="6" y1="6" x2="18" y2="18"></line>
+      </svg>
+    </div>
+  `;
+
+  // Add to DOM
+  document.body.appendChild(notification);
+
+  // Add event listener to close button
+  notification
+    .querySelector(".notification-close")
+    .addEventListener("click", () => {
+      notification.classList.remove("show");
+      setTimeout(() => {
+        notification.remove();
+      }, 500);
+    });
+
+  // Show notification with animation
+  setTimeout(() => {
+    notification.classList.add("show");
+  }, 10);
+
+  // Auto hide after 5 seconds
+  setTimeout(() => {
+    if (document.body.contains(notification)) {
+      notification.classList.remove("show");
+      setTimeout(() => {
+        if (document.body.contains(notification)) {
+          notification.remove();
+        }
+      }, 500);
+    }
+  }, 5000);
+}
 
 // Update the UI with retrieved teams
 function updateTeamsUI(teams) {
@@ -534,11 +614,17 @@ function initSidebarIcons() {
   const backToDashboardIcon = document.getElementById("back-to-dashboard-icon");
   const teamsIcon = document.getElementById("teams-icon");
   const membersIcon = document.getElementById("members-icon");
+  const addTeamIcon = document.querySelector("#openModalBtn .sidebar-icon");
+  const addMemberIcon = document.querySelector(
+    "#addNewMemberBtn .sidebar-icon"
+  );
 
   if (backToDashboardIcon)
     backToDashboardIcon.innerHTML = sidebarIcons.backToDashboard;
   if (teamsIcon) teamsIcon.innerHTML = sidebarIcons.teams;
   if (membersIcon) membersIcon.innerHTML = sidebarIcons.members;
+  if (addTeamIcon) addTeamIcon.innerHTML = sidebarIcons.add;
+  if (addMemberIcon) addMemberIcon.innerHTML = sidebarIcons.add;
 }
 
 export function switchToTeamsView() {
