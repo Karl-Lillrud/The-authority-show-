@@ -160,28 +160,36 @@ function updateTeamsUI(teams) {
     card
       .querySelector(".edit-team-btn")
       .addEventListener("click", () => showTeamDetailModal(team));
-    card
-      .querySelector(".delete-team-btn")
-      .addEventListener("click", async () => {
-        try {
-          const result = await deleteTeamRequest(team._id);
-          showNotification(
-            "Success",
-            result.message || "Team deleted successfully!",
-            "success"
-          );
-          card.remove();
-          const teams = await getTeamsRequest();
-          updateTeamsUI(teams);
-        } catch (error) {
-          console.error("Error deleting team:", error);
-          showNotification(
-            "Error",
-            "An error occurred while deleting the team.",
-            "error"
-          );
+    card.querySelector(".delete-team-btn").addEventListener("click", () => {
+      // New confirmation popup for deleting a team which will remove all members as well
+      showConfirmationPopup(
+        "Delete Team",
+        "Deleting this team will also remove all associated members. Are you sure you want to proceed?",
+        async () => {
+          try {
+            const result = await deleteTeamRequest(team._id);
+            showNotification(
+              "Success",
+              result.message || "Team deleted successfully!",
+              "success"
+            );
+            card.remove();
+            const teams = await getTeamsRequest();
+            updateTeamsUI(teams);
+          } catch (error) {
+            console.error("Error deleting team:", error);
+            showNotification(
+              "Error",
+              "An error occurred while deleting the team.",
+              "error"
+            );
+          }
+        },
+        () => {
+          showNotification("Info", "Team deletion cancelled.", "info");
         }
-      });
+      );
+    });
     container.appendChild(card);
   });
 }
