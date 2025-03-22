@@ -209,6 +209,10 @@ class UserToTeamRepository:
     def delete_team_member(self, team_id, user_id=None, email=None):
         try:
             if user_id:
+                # Hämta e-postadressen för användaren baserat på userId
+                user = self.users_collection.find_one({"_id": user_id}, {"email": 1})
+                email = user.get("email") if user else "Unknown Email"
+
                 # Ta bort medlemmen från UsersToTeams
                 result = self.users_to_teams_collection.delete_one(
                     {"teamId": team_id, "userId": user_id}
@@ -223,7 +227,7 @@ class UserToTeamRepository:
                 if result.modified_count == 0:
                     return {"error": "Failed to delete member from Teams array"}, 500
 
-                return {"message": "Member deleted successfully"}, 200
+                return {"message": f"Member '{email}' deleted successfully"}, 200
 
             elif email:
                 # Ta bort medlemmen från Teams-arrayen baserat på email om användaren inte är verifierad
@@ -236,7 +240,9 @@ class UserToTeamRepository:
                         "error": "Failed to delete unverified member from Teams array"
                     }, 500
 
-                return {"message": "Unverified member deleted successfully"}, 200
+                return {
+                    "message": f"Unverified member '{email}' deleted successfully"
+                }, 200
 
             else:
                 return {"error": "Missing userId or email"}, 400

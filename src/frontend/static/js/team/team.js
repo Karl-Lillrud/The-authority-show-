@@ -37,7 +37,7 @@ function updateTeamsUI(teams) {
     card.innerHTML = `
       <div class="team-card-header">
         <h2>${team.name}</h2>
-        <p><strong>Email:</strong> ${team.email}</p>
+        <p><strong>Team Email:</strong> ${team.email}</p>
       </div>
       <div class="team-card-body">
         <p><strong>Description:</strong> ${
@@ -811,7 +811,12 @@ async function handleAddMemberFormSubmission(e) {
     });
     const updateResult = await res.json();
 
-    if (updateResult.message) {
+    if (updateResult.error && updateResult.error.includes("creator")) {
+      showNotification(
+        "The provided email is already used by the team creator.",
+        "error"
+      );
+    } else if (updateResult.message) {
       showNotification(
         "Success",
         "Invitation mail sent successfully!",
@@ -826,8 +831,16 @@ async function handleAddMemberFormSubmission(e) {
       );
     }
   } catch (error) {
-    console.error("Error sending team invite or adding member:", error);
-    showNotification("Error", "Failed to add member.", "error");
+    if (error.message.includes("User is already a member of this team")) {
+      showNotification(
+        "Error",
+        "The provided email is already used by the team creator.",
+        "error"
+      );
+    } else {
+      console.error("Error sending team invite or adding member:", error);
+      showNotification("Error", "Failed to add member.", "error");
+    }
   }
 }
 
