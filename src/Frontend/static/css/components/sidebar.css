@@ -126,9 +126,9 @@
 
 /* Fix for sidebar menu items - ensure they're properly structured for hover */
 .sidebar-menu-item {
-  margin: 0; /* Remove extra margins */
-  width: 100%; /* Ensure the item spans the full width */
-  position: relative; /* Add position relative for absolute positioning of children */
+  margin: 12px 0; /* Increased spacing between menu items */
+  width: 100%;
+  position: relative;
 }
 
 /* Improve the hover target area for menu items */
