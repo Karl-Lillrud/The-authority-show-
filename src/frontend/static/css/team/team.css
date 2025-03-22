@@ -1002,3 +1002,78 @@ body {
 #members-icon {
   margin-left: -0.3mm; /* Flytta ikonen 1mm till vänster */
 }
+
+.popup.confirmation-popup {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+  backdrop-filter: blur(5px);
+  transition: all 0.4s ease;
+}
+
+.popup.confirmation-popup .form-box {
+  background-color: white;
+  border-radius: var(--radius-large);
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+  padding: var(--spacing-xl);
+  width: 90%;
+  max-width: 400px;
+  text-align: center;
+}
+
+.popup.confirmation-popup .form-title {
+  margin-bottom: var(--spacing-md);
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: rgba(0, 0, 0, 0.85);
+}
+
+.popup.confirmation-popup p {
+  margin-bottom: var(--spacing-lg);
+  font-size: 1rem;
+  color: var(--text-color-light);
+}
+
+.popup.confirmation-popup .form-actions {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--spacing-md);
+}
+
+.popup.confirmation-popup .cancel-btn {
+  background-color: white;
+  color: var(--text-color-light);
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  padding: 10px 20px;
+  border-radius: var(--radius-medium);
+  cursor: pointer;
+  transition: all var(--transition-normal);
+}
+
+.popup.confirmation-popup .cancel-btn:hover {
+  background-color: rgba(0, 0, 0, 0.05);
+  color: var(--highlight-color);
+}
+
+.popup.confirmation-popup .save-btn {
+  background-color: var(--highlight-color);
+  color: white;
+  padding: 10px 20px;
+  border: none;
+  border-radius: var(--radius-medium);
+  cursor: pointer;
+  transition: all var(--transition-normal);
+}
+
+.popup.confirmation-popup .save-btn:hover {
+  background-color: var(--highlight-hover);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}

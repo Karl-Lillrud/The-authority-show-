@@ -706,7 +706,7 @@ async function renderMembersView() {
           card
             .querySelector(".delete-member-btn")
             .addEventListener("click", () =>
-              deleteMember(team._id, member.userId, member.email)
+              deleteMember(team._id, member.userId, member.email, member.role)
             );
           membersView.appendChild(card);
         });
@@ -726,8 +726,83 @@ export function switchToMembersView() {
   renderMembersView();
 }
 
-async function deleteMember(teamId, userId = null, email = null) {
+function showConfirmationPopup(title, message, onConfirm, onCancel) {
+  console.log("showConfirmationPopup called with:", title, message); // Debugging log
+
+  // Remove any existing popup
+  const existingPopup = document.querySelector(".confirmation-popup");
+  if (existingPopup) {
+    existingPopup.remove();
+  }
+
+  // Create popup elements
+  const popup = document.createElement("div");
+  popup.className = "popup confirmation-popup show";
+
+  popup.innerHTML = `
+    <div class="form-box">
+      <h2 class="form-title">${title}</h2>
+      <p>${message}</p>
+      <div class="form-actions">
+        <button class="cancel-btn" id="cancelPopupBtn">Cancel</button>
+        <button class="save-btn" id="confirmPopupBtn">Confirm</button>
+      </div>
+    </div>
+  `;
+
+  // Add to DOM
+  document.body.appendChild(popup);
+
+  // Add event listeners for buttons
+  document.getElementById("confirmPopupBtn").addEventListener("click", () => {
+    console.log("Confirm button clicked"); // Debugging log
+    onConfirm();
+    popup.remove();
+  });
+
+  document.getElementById("cancelPopupBtn").addEventListener("click", () => {
+    console.log("Cancel button clicked"); // Debugging log
+    if (onCancel) onCancel();
+    popup.remove();
+  });
+}
+
+// Update deleteMember function to ensure popup is triggered
+async function deleteMember(teamId, userId = null, email = null, role = null) {
+  console.log("deleteMember called with:", { teamId, userId, email, role }); // Debug log
+
   try {
+    // Modified condition to ensure case-insensitive check for 'creator'
+    if (role && role.toLowerCase() === "creator") {
+      showConfirmationPopup(
+        "Delete Creator",
+        "This member is the creator of the team. Deleting the creator will delete the entire team. Are you sure you want to proceed?",
+        async () => {
+          try {
+            await deleteTeam(teamId); // Proceed to delete the entire team
+            showNotification(
+              "Success",
+              "Team and creator deleted successfully!",
+              "success"
+            );
+            renderMembersView(); // Refresh the members view
+          } catch (error) {
+            console.error("Error deleting team:", error);
+            showNotification(
+              "Error",
+              "An error occurred while deleting the team.",
+              "error"
+            );
+          }
+        },
+        () => {
+          showNotification("Info", "Deletion canceled.", "info");
+        }
+      );
+      return;
+    }
+
+    // Proceed to delete the member
     const result = await deleteTeamMemberRequest(teamId, userId, email);
     if (result.message) {
       showNotification(
@@ -754,8 +829,8 @@ async function deleteMember(teamId, userId = null, email = null) {
 }
 
 // Example usage for unverified members
-function handleDeleteUnverifiedMember(teamId, email) {
-  deleteMember(teamId, null, email);
+function handleDeleteUnverifiedMember(teamId, email, role) {
+  deleteMember(teamId, null, email, role);
 }
 
 function showEditMemberModal(teamId, member) {
