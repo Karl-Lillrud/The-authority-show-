@@ -4,6 +4,7 @@ from datetime import datetime, timezone
 from backend.database.mongo_connection import collection
 from backend.models.podtasks import PodtaskSchema
 from marshmallow import ValidationError
+from backend.services.taskService import extract_highlights, process_default_tasks
 
 logger = logging.getLogger(__name__)
 
@@ -18,28 +19,39 @@ class PodtaskRepository:
             schema = PodtaskSchema()
             validated_data = schema.load(data)
 
-            user_accounts = list(self.accounts_collection.find({"userId": str(user_id)}, {"_id": 1}))
-            if not user_accounts:
-                return {"error": "No accounts found for user"}, 403
+            # Only assign podcastId if it's missing and user has podcast access
+            if not validated_data.get("podcastId"):
+                user_accounts = list(self.accounts_collection.find({"userId": str(user_id)}, {"_id": 1}))
+                if not user_accounts:
+                    return {"error": "No accounts found for user"}, 403
 
-            user_account_ids = [str(account["_id"]) for account in user_accounts]
+                user_account_ids = [str(account["_id"]) for account in user_accounts]
+                podcasts = list(self.podcasts_collection.find({"accountId": {"$in": user_account_ids}}))
+                if not podcasts:
+                    return {"error": "No podcasts found for user"}, 404
 
-            podcasts = list(self.podcasts_collection.find({"accountId": {"$in": user_account_ids}}))
-            if not podcasts:
-                return {"error": "No podcasts found for user"}, 404
+                selected_podcast = podcasts[0]
+                validated_data["podcastId"] = str(selected_podcast["_id"])
 
-            selected_podcast = podcasts[0]
-            podcast_id = str(selected_podcast["_id"])
-
-            validated_data["podcastId"] = podcast_id
             validated_data["userid"] = str(user_id)
             validated_data["created_at"] = datetime.now(timezone.utc)
 
+            # Optional processing steps
+            validated_data = process_default_tasks(validated_data)
+
+            if "description" in validated_data and validated_data["description"]:
+                validated_data["highlights"] = extract_highlights(validated_data["description"])
+
             podtask_id = str(uuid.uuid4())
 
+            # Build the podtask document with all optional fields included
             podtask_document = {
                 "_id": podtask_id,
-                "podcastId": validated_data["podcastId"],
+                "podcastId": validated_data.get("podcastId"),
+                "episodeId": validated_data.get("episodeId"),
+                "teamId": validated_data.get("teamId"),
+                "members": validated_data.get("members"),
+                "guestId": validated_data.get("guestId"),
                 "name": validated_data.get("name"),
                 "action": validated_data.get("action"),
                 "dayCount": validated_data.get("dayCount"),
@@ -53,6 +65,7 @@ class PodtaskRepository:
                 "priority": validated_data.get("priority"),
                 "userid": validated_data["userid"],
                 "created_at": validated_data["created_at"],
+                "highlights": validated_data.get("highlights"),
             }
 
             result = self.podtasks_collection.insert_one(podtask_document)

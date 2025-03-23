@@ -6,6 +6,7 @@ from backend.repository.user_repository import UserRepository
 
 logger = logging.getLogger(__name__)
 
+
 class TeamInviteService:
     def __init__(self):
         self.invite_repo = TeamInviteRepository()
@@ -23,7 +24,9 @@ class TeamInviteService:
             # Check if user is already a team member
             existing_user = self.user_repo.get_user_by_email(email)
             if existing_user:
-                is_member = self.user_to_team_repo.is_user_in_team(existing_user["_id"], team_id)
+                is_member = self.user_to_team_repo.is_user_in_team(
+                    existing_user["_id"], team_id
+                )
                 if is_member:
                     return {"error": "User is already a member of this team"}, 400
 
@@ -32,7 +35,9 @@ class TeamInviteService:
 
             # Get inviter details for the email
             inviter = self.user_repo.get_user_by_id(inviter_id)
-            inviter_name = inviter.get("fullName", "A team member") if inviter else "A team member"
+            inviter_name = (
+                inviter.get("fullName", "A team member") if inviter else "A team member"
+            )
 
             # Get team details
             invite = self.invite_repo.get_invite(invite_token)
@@ -45,7 +50,7 @@ class TeamInviteService:
             return {
                 "message": "Invite sent successfully",
                 "inviteToken": invite_token,
-                "email": email
+                "email": email,
             }, 201
 
         except ValueError as ve:
@@ -54,16 +59,16 @@ class TeamInviteService:
         except Exception as e:
             logger.error(f"❌ Error sending invite: {e}", exc_info=True)
             return {"error": f"Failed to send invite: {str(e)}"}, 500
-        
+
     def process_registration(self, user_id, email, invite_token):
         """Processes user registration with an invite token."""
         try:
             # Fetch the invite
             invite = self.invite_repo.get_invite(invite_token)
-            
+
             if not invite or invite.get("status") != "pending":
                 return {"error": "Invalid or expired invite token."}, 400
-            
+
             # Verify email matches invite
             if invite["email"].lower() != email.lower():
                 return {"error": "Email does not match the invite."}, 400
@@ -71,11 +76,9 @@ class TeamInviteService:
             team_id = invite["teamId"]
 
             # Add user to the team
-            add_result, status_code = self.user_to_team_repo.add_user_to_team({
-                "userId": user_id,
-                "teamId": team_id,
-                "role": "member"
-            })
+            add_result, status_code = self.user_to_team_repo.add_user_to_team(
+                {"userId": user_id, "teamId": team_id, "role": "member"}
+            )
 
             if status_code != 201:
                 return {"error": "Failed to add user to team."}, 500
@@ -87,7 +90,7 @@ class TeamInviteService:
 
             return {
                 "message": "User successfully linked to team.",
-                "teamId": team_id
+                "teamId": team_id,
             }, 201
 
         except Exception as e:

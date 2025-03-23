@@ -36,6 +36,10 @@ export function fetchGuestsRequest() {
 export function fetchGuestsByEpisode(episodeId) {
   return fetch(`/get_guests_by_episode/${episodeId}`, { method: "GET" })
     .then((res) => {
+      // If no guests are found, the endpoint might return 404. 
+      if (res.status === 404) {
+        return { guests: [] };
+      }
       if (!res.ok) {
         throw new Error("Failed to fetch guests");
       }

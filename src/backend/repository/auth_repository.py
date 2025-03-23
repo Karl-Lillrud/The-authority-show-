@@ -292,6 +292,23 @@ class AuthRepository:
 
             print(f"✅ User successfully linked to team {team_id}")
 
+            # Uppdatera teamets members-array med fullName och phone
+            self.teams_collection.update_one(
+                {"_id": team_id, "members.email": email},
+                {
+                    "$set": {
+                        "members.$.userId": user_id,
+                        "members.$.fullName": data["fullName"],
+                        "members.$.phone": data["phone"],
+                        "members.$.verified": True,
+                    }
+                },
+            )
+            logger.info(
+                f"Updated team {team_id} members with fullName and phone: {data['fullName']}, {data['phone']}"
+            )
+            print(f"✅ Team {team_id} members updated with user details.")
+
             self.invite_collection.update_one(
                 {"_id": invite_token},
                 {
