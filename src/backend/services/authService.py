@@ -1,6 +1,75 @@
-import dns.resolver  # Added to correctly use dns resolver
-from flask import jsonify
+import logging
 import re
+import dns
+from flask import jsonify, session
+from werkzeug.security import check_password_hash
+from backend.database.mongo_connection import collection
+from backend.services.teamService import TeamService
+from backend.services.accountService import AccountService
+
+logger = logging.getLogger(__name__)
+
+class AuthService:
+    def __init__(self):
+        self.user_collection = collection.database.Users
+        self.team_service = TeamService()
+        self.account_service = AccountService()
+    
+    def signin(self, data):
+        try:
+            email = data.get("email", "").strip().lower()
+            password = data.get("password", "")
+            remember = data.get("remember", False)
+
+            # Authenticate user
+            user = self._authenticate_user(email, password)
+            if not user:
+                return {"error": "Invalid email or password"}, 401
+            
+            # Set up session
+            self._setup_session(user, remember)
+            
+            # Get user's personal account and teams
+            user_id = session["user_id"]
+            user_account = self.account_service.get_user_account(user_id)
+            team_list = self.team_service.get_user_teams(user_id)
+            
+            # Determine active account
+            active_account = self.account_service.determine_active_account(user_id, user_account, team_list)
+            if not active_account:
+                return {"error": "No account or team-associated account found"}, 403
+
+            # Prepare response data
+            account_id = active_account.get("_id")
+            redirect_url = "/podprofile" if user_account else "/podcastmanager"
+            
+            response = {
+                "message": "Login successful",
+                "redirect_url": redirect_url,
+                "teams": team_list,
+                "accountId": str(account_id),
+                "isTeamMember": user.get("isTeamMember", False),
+                "usingTeamAccount": bool(not user_account and active_account != user_account)
+            }
+
+            return response, 200
+
+        except Exception as e:
+            logger.error("Error during login: %s", e, exc_info=True)
+            return {"error": f"Error during login: {str(e)}"}, 500
+
+    def _authenticate_user(self, email, password):
+        """Authenticate user with email and password."""
+        user = self.user_collection.find_one({"email": email})
+        if not user or not check_password_hash(user["passwordHash"], password):
+            return None
+        return user
+
+    def _setup_session(self, user, remember):
+        """Set up user session data."""
+        session["user_id"] = str(user["_id"])
+        session["email"] = user["email"]
+        session.permanent = remember
 
 # Function to validate password
 def validate_password(password):

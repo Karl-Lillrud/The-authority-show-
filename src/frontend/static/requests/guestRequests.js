@@ -31,3 +31,15 @@ export function fetchGuestsRequest() {
     })
     .then((data) => data.guests || []);
 }
+
+// New function to fetch guests by episode
+export function fetchGuestsByEpisode(episodeId) {
+  return fetch(`/get_guests_by_episode/${episodeId}`, { method: "GET" })
+    .then((res) => {
+      if (!res.ok) {
+        throw new Error("Failed to fetch guests");
+      }
+      return res.json();
+    })
+    .then((data) => data.guests || []);
+}

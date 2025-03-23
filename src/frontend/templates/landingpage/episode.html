@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Episode Title - Podcast</title>
-  <link rel="stylesheet" href="../../static/css/episode.css">
+  <link rel="stylesheet" href="../../static/css/episode/episode.css">
 </head>
 <body>
   <header>
@@ -27,16 +27,19 @@
     <!-- Enhanced Episode Banner -->
     <section class="episode-banner section-dark">
       <div class="banner-container">
-        <img src="/media/karl_episode.png" alt="Episode Thumbnail">
+        <!-- Use dynamic thumbnail with a fallback -->
+        <img src="{{ episode.thumbnail_url or '/media/default_episode.png' }}" alt="Episode Thumbnail">
         <div class="banner-content">
-          <h1 class="episode-title">Episode Title</h1>
-          <p class="episode-description">Join us for an exciting discussion on [topic], featuring [guest name] and host Karl Lillrud.</p>
-          <div class="episode-actions">
+          <h1 class="episode-title">{{ episode.title }}</h1>
+          <p class="episode-description">
+            {{ episode.description }}
+          </p>
+          <nav class="episode-actions">
             <a href="#transcript" class="btn">📖 Read Transcript</a>
             <a href="#learnings" class="btn">💡 Key Learnings</a>
             <a href="#faq" class="btn">❓ FAQ</a>
             <a href="#shorts" class="btn">🎬 Watch Shorts</a>
-          </div>
+          </nav>
         </div>
       </div>
     </section>
@@ -139,17 +142,9 @@
         </video>
       </div>
     </section>
-    
-
-  
-    
-
-
-  
   <footer class="section-darkgrey">
     <p>&copy; 2025 Podcast Website. All rights reserved.</p>
   </footer>
-  <script src="audio-player.js"></script>
-
+  <script src="static/js/audio-player.js"></script>
 </body>
 </html>

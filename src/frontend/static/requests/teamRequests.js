@@ -1,7 +1,7 @@
 // teamRequests.js
 // New asynchronous methods for team operations calling endpoints in team.py
 
-async function addTeamRequest(payload) {
+export async function addTeamRequest(payload) {
   console.log("Sending payload to add team:", payload); // Debugging line
   const res = await fetch("/add_teams", {
     method: "POST",
@@ -13,7 +13,7 @@ async function addTeamRequest(payload) {
   return data;
 }
 
-async function deleteTeamRequest(teamId) {
+export async function deleteTeamRequest(teamId) {
   const res = await fetch(`/delete_team/${teamId}`, {
     method: "DELETE",
     headers: { "Content-Type": "application/json" }
@@ -21,12 +21,12 @@ async function deleteTeamRequest(teamId) {
   return res.json();
 }
 
-async function getTeamsRequest() {
+export async function getTeamsRequest() {
   const res = await fetch("/get_teams", { method: "GET" });
   return res.json();
 }
 
-async function editTeamRequest(teamId, payload) {
+export async function editTeamRequest(teamId, payload) {
   console.log("Sending payload to edit team:", payload); // Debugging line
   const res = await fetch(`/edit_team/${teamId}`, {
     method: "PUT",
@@ -38,7 +38,7 @@ async function editTeamRequest(teamId, payload) {
   return data;
 }
 
-async function updatePodcastTeamRequest(podcastId, payload) {
+export async function updatePodcastTeamRequest(podcastId, payload) {
   console.log("Sending payload to update podcast:", payload); // Debugging line
   const res = await fetch(`/edit_podcasts/${podcastId}`, {
     method: "PUT",
@@ -48,4 +48,15 @@ async function updatePodcastTeamRequest(podcastId, payload) {
   const data = await res.json();
   console.log("Response from update podcast:", data); // Debugging line
   return data;
+}
+
+export async function fetchPodcasts() {
+  try {
+    const res = await fetch("/get_podcasts", { method: "GET" });
+    const data = await res.json();
+    return data.podcast || [];
+  } catch (err) {
+    console.error("Error fetching podcasts:", err);
+    return [];
+  }
 }

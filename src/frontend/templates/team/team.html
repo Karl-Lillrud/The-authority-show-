@@ -1,34 +1,38 @@
-{% extends "dashboard/components/base.html" %} {% block title %}Team Leaderboard
+{% extends "components/base.html" %} {% block title %}Team Leaderboard
 Dashboard{% endblock %} {% block content %}
 <link
   rel="stylesheet"
-  href="{{ url_for('static', filename='css/team.css') }}"
+  href="{{ url_for('static', filename='css/team/team.css') }}"
+/>
+<link
+  rel="stylesheet"
+  href="{{ url_for('static', filename='css/components/sidebar.css') }}"
 />
 
-<div class="container">
-  <h1 class="title">Teams</h1>
+<div class="app-container">
+  <!-- Sidebar -->
+  <div id="sidebar-container"></div>
 
-  <!-- Toolbar for CRUD buttons -->
-  <div class="action-buttons">
-    <button id="openModalBtn" class="action-button">
-      <span class="button-icon">+</span>
-      <span>Add New Team</span>
-    </button>
-  </div>
+  <!-- Main Content -->
+  <main class="main-content">
+    <div class="main-header">
+      <h1>Teams</h1>
+    </div>
 
-  <!-- Flash messages -->
-  {% with messages = get_flashed_messages() %} {% if messages %}
-  <div class="alert">
-    {% for message in messages %}
-    <div>{{ message }}</div>
-    {% endfor %}
-  </div>
-  {% endif %} {% endwith %}
+    <!-- Flash messages -->
+    {% with messages = get_flashed_messages() %} {% if messages %}
+    <div class="alert">
+      {% for message in messages %}
+      <div>{{ message }}</div>
+      {% endfor %}
+    </div>
+    {% endif %} {% endwith %}
 
-  <!-- Always render an empty container for teams -->
-  <div class="card-container">
-    <!-- New team card design will be inserted here dynamically -->
-  </div>
+    <!-- Team list -->
+    <div class="card-container">
+      <!-- Team cards will be inserted here dynamically -->
+    </div>
+  </main>
 </div>
 
 <!-- Add Team Modal -->
@@ -40,59 +44,55 @@ Dashboard{% endblock %} {% block content %}
   aria-labelledby="addTeamModalLabel"
   aria-hidden="true"
 >
-  <div class="modal-dialog form-box" role="document">
+  <div class="form-box" role="document">
     <form method="post" action="{{ url_for('team_bp.add_team') }}">
-      <div class="modal-content">
-        <span id="modalCloseBtn" class="close-btn">&times;</span>
-        <h2 class="form-title" id="addTeamModalLabel">Add New Team</h2>
-        <div class="modal-body">
-          <div class="form-grid">
-            <div class="field-group full-width">
-              <label for="podcast">Podcast:</label>
-              <select
-                class="form-control"
-                name="podcastId"
-                id="podcastDropdown"
-                required
-              >
-                <option value="">Select a Podcast</option>
-                <!-- Populate options with podcasts -->
-              </select>
-            </div>
-            <div class="field-group">
-              <label for="name">Team Name:</label>
-              <input type="text" class="form-control" name="name" required />
-            </div>
-            <div class="field-group">
-              <label for="email">Email:</label>
-              <input type="email" class="form-control" name="email" required />
-            </div>
-            <div class="field-group full-width">
-              <label for="description">Description:</label>
-              <textarea class="form-control" name="description"></textarea>
-            </div>
-            <!-- Add hidden input fields for userId and email -->
-            <input type="hidden" name="userId" value="{{ session.user_id }}" />
-            <input type="hidden" name="email" value="{{ session.email }}" />
-            <!-- Section for adding members -->
-            <div class="field-group full-width">
-              <label for="members">Members:</label>
-              <div id="members-container">
-                <!-- Members will be added here dynamically -->
-              </div>
-              <button type="button" id="addMemberBtn" class="action-button">
-                <span class="button-icon">+</span>
-                <span>Add Member</span>
-              </button>
-            </div>
+      <span id="modalCloseBtn" class="close-btn">&times;</span>
+      <h2 class="form-title" id="addTeamModalLabel">Add New Team</h2>
+      <div class="form-grid">
+        <div class="field-group full-width">
+          <label for="podcast">Podcast:</label>
+          <select
+            class="form-control"
+            name="podcastId"
+            id="podcastDropdown"
+            required
+          >
+            <option value="">Select a Podcast</option>
+            <!-- Populate options with podcasts -->
+          </select>
+        </div>
+        <div class="field-group">
+          <label for="name">Team Name:</label>
+          <input type="text" class="form-control" name="name" required />
+        </div>
+        <div class="field-group">
+          <label for="email">Email:</label>
+          <input type="email" class="form-control" name="email" required />
+        </div>
+        <div class="field-group full-width">
+          <label for="description">Description:</label>
+          <textarea class="form-control" name="description"></textarea>
+        </div>
+        <!-- Add hidden input fields for userId and email -->
+        <input type="hidden" name="userId" value="{{ session.user_id }}" />
+        <input type="hidden" name="email" value="{{ session.email }}" />
+        <!-- Section for adding members -->
+        <div class="field-group full-width">
+          <label for="members">Members:</label>
+          <div id="members-container">
+            <!-- Members will be added here dynamically -->
           </div>
-        </div>
-        <div class="form-actions">
-          <button type="button" class="cancel-btn" id="modalCloseBtn2">
-            Close
+          <button type="button" id="addMemberBtn" class="action-button">
+            <span class="button-icon">+</span>
+            <span>Add Member</span>
           </button>
-          <button type="submit" class="save-btn">Add Team</button>
         </div>
+      </div>
+      <div class="form-actions">
+        <button type="button" class="cancel-btn" id="modalCloseBtn2">
+          Close
+        </button>
+        <button type="submit" class="save-btn">Add Team</button>
       </div>
     </form>
   </div>
@@ -106,74 +106,71 @@ Dashboard{% endblock %} {% block content %}
   role="dialog"
   aria-hidden="true"
 >
-  <div class="modal-dialog form-box" role="document">
+  <div class="form-box" role="document">
     <form id="teamDetailForm">
-      <div class="modal-content">
-        <span id="teamDetailCloseBtn" class="close-btn">&times;</span>
-        <h2 class="form-title" id="teamDetailModalLabel">Team Details</h2>
-        <div class="modal-body">
-          <div class="form-grid">
-            <!-- Dynamic podcast assignment section -->
-            <div class="field-group full-width">
-              <label>Assigned Podcasts:</label>
-              <div id="assignedPodcasts" class="podcast-chips"></div>
-            </div>
-            <div class="field-group full-width">
-              <label for="podcastAssignmentDropdown">Add Podcast:</label>
-              <select class="form-control" id="podcastAssignmentDropdown">
-                <option value="">Select Podcast to Add</option>
-              </select>
-            </div>
-            <!-- Team detail fields -->
-            <div class="field-group">
-              <label for="detailName">Name:</label>
-              <input
-                type="text"
-                class="form-control"
-                id="detailName"
-                name="name"
-              />
-            </div>
-            <div class="field-group">
-              <label for="detailEmail">Email:</label>
-              <input
-                type="email"
-                class="form-control"
-                id="detailEmail"
-                name="email"
-                required
-              />
-            </div>
-            <div class="field-group full-width">
-              <label for="detailDescription">Description:</label>
-              <textarea
-                class="form-control"
-                id="detailDescription"
-                name="description"
-              ></textarea>
-            </div>
-            <div class="field-group full-width">
-              <label>Members:</label>
-              <div id="members-container-edit">
-                <!-- Members will be added here dynamically -->
-              </div>
-              <button type="button" id="addMemberBtnEdit" class="action-button">
-                <span class="button-icon">+</span>
-                <span>Add Member</span>
-              </button>
-            </div>
+      <span id="teamDetailCloseBtn" class="close-btn">&times;</span>
+      <h2 class="form-title" id="teamDetailModalLabel">Team Details</h2>
+      <div class="form-grid">
+        <!-- Dynamic podcast assignment section -->
+        <div class="field-group full-width">
+          <label>Assigned Podcasts:</label>
+          <div id="assignedPodcasts" class="podcast-chips"></div>
+        </div>
+        <div class="field-group full-width">
+          <label for="podcastAssignmentDropdown">Add Podcast:</label>
+          <select class="form-control" id="podcastAssignmentDropdown">
+            <option value="">Select Podcast to Add</option>
+          </select>
+        </div>
+        <!-- Team detail fields -->
+        <div class="field-group">
+          <label for="detailName">Name:</label>
+          <input type="text" class="form-control" id="detailName" name="name" />
+        </div>
+        <div class="field-group">
+          <label for="detailEmail">Email:</label>
+          <input
+            type="email"
+            class="form-control"
+            id="detailEmail"
+            name="email"
+            required
+          />
+        </div>
+        <div class="field-group full-width">
+          <label for="detailDescription">Description:</label>
+          <textarea
+            class="form-control"
+            id="detailDescription"
+            name="description"
+          ></textarea>
+        </div>
+        <div class="field-group full-width">
+          <label>Members:</label>
+          <div id="members-container-edit">
+            <!-- Members will be added here dynamically -->
           </div>
-        </div>
-        <div class="form-actions">
-          <button type="button" class="delete-btn" id="deleteTeamBtn">
-            Delete
+          <button type="button" id="addMemberBtnEdit" class="action-button">
+            <span class="button-icon">+</span>
+            <span>Add Member</span>
           </button>
-          <button type="button" class="save-btn" id="saveTeamBtn">Save</button>
         </div>
+      </div>
+      <div class="form-actions">
+        <button type="button" class="delete-btn" id="deleteTeamBtn">
+          Delete
+        </button>
+        <button type="button" class="save-btn" id="saveTeamBtn">Save</button>
       </div>
     </form>
   </div>
 </div>
-<script src="{{ url_for('static', filename='requests/teamRequests.js') }}"></script>
-<script src="{{ url_for('static', filename='js/team.js') }}"></script>
+
+<!-- Decorative Header -->
+<div class="decorative-header"></div>
+
+<script
+  type="module"
+  src="{{ url_for('static', filename='js/team/team.js') }}"
+></script>
 {% endblock %}
