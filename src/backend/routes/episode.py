@@ -38,7 +38,7 @@ def add_episode():
         return jsonify({"error": f"Failed to add episode: {str(e)}"}), 500
 
 
-@episode_bp.route("/get_episode/<episode_id>", methods=["GET"])
+@episode_bp.route("/get_episodes/<episode_id>", methods=["GET"])
 def get_episode(episode_id):
     if not hasattr(g, "user_id") or not g.user_id:
         return jsonify({"error": "Unauthorized"}), 401

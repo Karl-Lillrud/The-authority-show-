@@ -119,7 +119,7 @@ export async function fetchEpisodesByPodcast(podcastId) {
 
 export async function fetchEpisode(episodeId) {
   try {
-    const response = await fetch(`/get_episode/${episodeId}`);
+    const response = await fetch(`/get_episodes/${episodeId}`);
     const data = await response.json();
     if (response.ok) {
       return data;
