@@ -19,10 +19,10 @@ __pycache__/
 src/__pycache__/
 src/database/__pycache__/
 src/routes/__pycache__/
+src/nltk_data/ 
 
+client_secret.json
 
-# Ignore Miniconda environments
-C:\Users\Peter\miniconda3/envs/
 aitranscription_env/
 *.conda
 .conda/

@@ -4,6 +4,7 @@ import logging
 # Import the repository
 from backend.repository.episode_repository import EpisodeRepository
 from backend.database.mongo_connection import episodes
+
 # Define Blueprint
 episode_bp = Blueprint("episode_bp", __name__)
 
@@ -55,15 +56,11 @@ def get_episodes():
     if not hasattr(g, "user_id") or not g.user_id:
         return jsonify({"error": "Unauthorized"}), 401
 
-    try:
-        response, status_code = episode_repo.get_episodes(g.user_id)
-        return jsonify(response), status_code
-    except Exception as e:
-        logger.error("❌ ERROR: %s", e)
-        return jsonify({"error": f"Failed to fetch episodes: {str(e)}"}), 500
+    response, status_code = episode_repo.get_episodes(g.user_id)
+    return jsonify(response), status_code
 
 
-@episode_bp.route("/delete_episods/<episode_id>", methods=["DELETE"])
+@episode_bp.route("/delete_episodes/<episode_id>", methods=["DELETE"])
 def delete_episode(episode_id):
     if not hasattr(g, "user_id") or not g.user_id:
         return jsonify({"error": "Unauthorized"}), 401
@@ -110,6 +107,7 @@ def episode_detail(episode_id):
     except Exception as e:
         return f"Error: {str(e)}", 500
 
+
 @episode_bp.route("/episodes/by_podcast/<podcast_id>", methods=["GET"])
 def get_episodes_by_podcast(podcast_id):
     if not hasattr(g, "user_id") or not g.user_id:
@@ -121,3 +119,5 @@ def get_episodes_by_podcast(podcast_id):
     except Exception as e:
         logger.error("❌ ERROR: %s", e)
         return jsonify({"error": f"Failed to fetch episodes by podcast: {str(e)}"}), 500
+    
+    

@@ -6,7 +6,7 @@
     <title>Enter Reset Code</title>
     <link
       rel="stylesheet"
-      href="{{ url_for('static', filename='css/forgot-password.css') }}"
+      href="{{ url_for('static', filename='css/forgot-password/forgot-password.css') }}"
     />
   </head>
   <body>
@@ -62,77 +62,8 @@
       <div class="form-actions">
         <button id="resendCode" class="button">Resend Code</button>
       </div>
-
-      <script>
-        document.addEventListener("DOMContentLoaded", function () {
-          const urlParams = new URLSearchParams(window.location.search);
-          const emailParam = urlParams.get("email");
-
-          if (emailParam) {
-            document.getElementById("email").value = emailParam; // Autofill email if found in URL
-          }
-        });
-
-        document
-          .getElementById("enterCodeForm")
-          .addEventListener("submit", function (event) {
-            event.preventDefault();
-
-            const email = document.getElementById("email").value.trim();
-            const code = document.getElementById("code").value.trim();
-
-            fetch("/enter-code", {
-              method: "POST",
-              headers: {
-                Accept: "application/json",
-                "Content-Type": "application/json"
-              },
-              body: JSON.stringify({ email: email, code: code })
-            })
-              .then((response) => response.json())
-              .then((data) => {
-                console.log("Server Response:", data);
-                if (data.error) {
-                  alert("Error: " + data.error);
-                } else if (data.redirect_url) {
-                  window.location.href =
-                    data.redirect_url + "?email=" + encodeURIComponent(email);
-                } else {
-                  alert("Unexpected response from the server.");
-                }
-              })
-              .catch((error) => console.error("Fetch Error:", error));
-          });
-
-        // ✅ Resend Code Logic
-        document
-          .getElementById("resendCode")
-          .addEventListener("click", function () {
-            const email = document.getElementById("email").value.trim();
-
-            if (!email) {
-              alert("Please enter your email first.");
-              return;
-            }
-
-            fetch("/resend-code", {
-              // ✅ Calls the new API route
-              method: "POST",
-              headers: {
-                Accept: "application/json",
-                "Content-Type": "application/json"
-              },
-              body: JSON.stringify({ email: email })
-            })
-              .then((response) => response.json())
-              .then((data) => {
-                alert(data.message || data.error);
-              })
-              .catch((error) => console.error("Fetch Error:", error));
-          });
-      </script>
-
       <p><a href="/" class="link">Back to Login</a></p>
     </div>
+    <script type="module" src="{{ url_for('static', filename='js/forgotpassword/enter-code.js') }}"></script>
   </body>
 </html>
