@@ -4,7 +4,7 @@ from datetime import datetime, timezone
 from backend.database.mongo_connection import collection
 from backend.models.podtasks import PodtaskSchema
 from marshmallow import ValidationError
-from backend.repository.taskService import extract_highlights, process_default_tasks
+from backend.services.taskService import extract_highlights, process_default_tasks
 
 logger = logging.getLogger(__name__)
 

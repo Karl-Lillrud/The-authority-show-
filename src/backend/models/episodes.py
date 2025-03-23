@@ -54,19 +54,3 @@ class EpisodeSchema(Schema):
         ]:
             if key in data and data[key] == "":
                 data[key] = None
-
-
-        # Extract and edit key highlights from episode content
-        if "description" in data and data["description"]:
-            data["highlights"] = self.extract_highlights(data["description"])
-
-        return data
-
-    def extract_highlights(self, description):
-        # Example logic to extract key highlights from the description
-        highlights = []
-        sentences = re.split(r'(?<=[.!?]) +', description)
-        for sentence in sentences:
-            if "important" in sentence.lower() or "key" in sentence.lower():
-                highlights.append(sentence)
-        return highlights
