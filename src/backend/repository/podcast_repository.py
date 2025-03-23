@@ -82,6 +82,9 @@ class PodcastRepository:
                 "description": validated_data.get("description"),
                 "logoUrl": validated_data.get("logoUrl"),
                 "category": validated_data.get("category", ""),  # Fixed field
+                "defaultTasks": validated_data.get(
+                    "defaultTasks", ""
+                ),  # Empty string if not provided
                 "created_at": datetime.now(timezone.utc),
                 "title": validated_data.get("title", ""),  # Added field
                 "language": validated_data.get("language", ""),  # Added field
