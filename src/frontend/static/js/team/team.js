@@ -380,7 +380,7 @@ function showTeamDetailModal(team) {
       name: document.getElementById("detailName").value,
       email: document.getElementById("detailEmail").value,
       description: document.getElementById("detailDescription").value,
-      members: [] // Members är tomt eftersom det inte längre används här
+      members: team.members // Preserve all members (including creator)
     };
 
     try {
