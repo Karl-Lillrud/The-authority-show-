@@ -1,3 +1,10 @@
+from venv import logger
+from flask import request, jsonify, Blueprint, g
+from backend.database.mongo_connection import collection
+from datetime import datetime, timezone
+from backend.models.podtasks import PodtaskSchema
+import uuid
+import json
 from flask import Blueprint, request, jsonify, g
 from backend.repository.podtask_repository import PodtaskRepository
 
@@ -38,9 +45,29 @@ def delete_podtask(task_id):
 
 @podtask_bp.route("/update_podtasks/<task_id>", methods=["PUT"])
 def update_podtask(task_id):
+    """Updates a podtask for the given user and task ID."""
     if not g.user_id:
         return jsonify({"error": "Unauthorized"}), 401
 
-    data = request.get_json()
-    response, status_code = podtask_repo.update_podtask(g.user_id, task_id, data)
-    return jsonify(response), status_code
+    if request.content_type != "application/json":
+        return jsonify({"error": "Invalid Content-Type. Expected application/json"}), 415
+
+    try:
+        data = request.get_json()
+        response, status_code = podtask_repo.update_podtask(g.user_id, task_id, data)
+        return jsonify(response), status_code
+    except Exception as e:
+        logger.exception("❌ ERROR: Failed to update task")
+        return jsonify({"error": f"Failed to update task: {str(e)}"}), 500
+
+
+# New route to fetch default tasks from JSON file
+@podtask_bp.route('/default_tasks', methods=['GET'])
+def get_default_tasks():
+    try:
+        with open('frontend/static/defaulttaskdata/default_tasks.json') as f:
+            default_tasks = json.load(f)
+        return jsonify(default_tasks), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+

@@ -61,59 +61,104 @@ class TeamInviteRepository:
     def get_invite(self, invite_token):
 
         invite = self.invites_collection.find_one({"_id": invite_token})
-
-        if invite and invite.get("status") == "pending":
-            expires_at = invite.get("expiresAt")
-
-            # ✅ Ensure expires_at is timezone-aware
-            if isinstance(expires_at, str):
-                try:
-                    expires_at = datetime.fromisoformat(expires_at).replace(tzinfo=timezone.utc)
-                except ValueError:
-                    logger.error(f"Invalid datetime format in expiresAt for invite {invite_token}")
-                    return None
-            
-            elif isinstance(expires_at, datetime) and expires_at.tzinfo is None:
-                expires_at = expires_at.replace(tzinfo=timezone.utc)  # Convert naive datetime to UTC
-            
-            # ✅ Compare with current UTC time safely
-            if expires_at and expires_at < datetime.now(timezone.utc):
-                # Auto-expire the invite
-                self.invites_collection.update_one(
-                    {"_id": invite_token},
-                    {"$set": {"status": "expired"}}
-                )
-                invite["status"] = "expired"
-                logger.info(f"Invite {invite_token} has expired")
-                
         return invite
 
+    def get_team_invites(self, team_id):
+        """
+        Get all pending invites for a specific team.
+        Returns a list of invite documents.
+        """
+        invites = list(self.invites_collection.find({
+            "teamId": team_id,
+            "status": "pending"
+        }))
+        return invites
+
+    def get_user_invites(self, email):
+        """
+        Get all pending invites for a specific email.
+        Returns a list of invite documents.
+        """
+        normalized_email = email.lower().strip()
+        invites = list(self.invites_collection.find({
+            "email": normalized_email,
+            "status": "pending"
+        }))
+        return invites
+
     def mark_invite_accepted(self, invite_token):
+        """
+        Mark an invite as accepted.
+        Returns a tuple containing a result dict and a success boolean.
+        """
+        invite = self.get_invite(invite_token)
+
+        if not invite:
+            logger.warning(f"Invite {invite_token} not found")
+            return {"error": "Invite not found"}, False
+
+        # Ensure `expiresAt` is a valid datetime
+        expires_at = invite.get("expiresAt")
+        if isinstance(expires_at, str):
+            try:
+                expires_at = datetime.fromisoformat(expires_at).replace(tzinfo=timezone.utc)
+            except ValueError:
+                logger.error(f"Invalid datetime format for invite {invite_token}")
+                return {"error": "Invalid invite expiration format"}, False
+
+        if expires_at and expires_at < datetime.now(timezone.utc):
+            logger.warning(f"Invite {invite_token} has expired")
+            # Update status to expired
+            self.invites_collection.update_one(
+                {"_id": invite_token},
+                {"$set": {"status": "expired"}}
+            )
+            return {"error": "This invite has expired."}, False
+
+        if invite.get("status") == "accepted":
+            logger.info(f"Invite {invite_token} was already accepted")
+            return {"message": "Invite already accepted."}, True
+
+        # Check if the user registered with the invited email
+        registered_user = self.users_collection.find_one({"email": invite["email"]})
+        
+        if not registered_user:
+            logger.warning(f"User with email {invite['email']} has not registered yet")
+            return {"error": "User has not registered yet."}, False
 
         result = self.invites_collection.update_one(
             {"_id": invite_token},
             {"$set": {
                 "status": "accepted", 
-                "acceptedAt": datetime.now(timezone.utc)
+                "acceptedAt": datetime.now(timezone.utc),  # Proper datetime object, not string
+                "registeredUserId": registered_user["_id"]  # Store user ID for reference
             }}
         )
-        
-        success = result.modified_count == 1
-        if success:
-            logger.info(f"Invite {invite_token} marked as accepted")
+
+        if result.modified_count == 1:
+            logger.info(f"Invite {invite_token} marked as accepted for user {registered_user['_id']}")
+            
+            # Immediately delete the invite after 5 minutes (alternative approach)
+            # This won't work for scheduling but shows intent
+            # In practice, you would set up a scheduled task for this
+            self.schedule_accepted_invite_deletion(invite_token)
+            
+            return {"message": "Invite accepted successfully"}, True
         else:
             logger.warning(f"Failed to mark invite {invite_token} as accepted")
+            return {"error": "Failed to accept invite"}, False
             
-        return success
-            
-    def get_pending_invites_by_team(self, team_id):
-
-        return list(self.invites_collection.find({
-            "teamId": team_id,
-            "status": "pending",
-            "expiresAt": {"$gt": datetime.now(timezone.utc)}
-        }))
-
+    def schedule_accepted_invite_deletion(self, invite_token):
+        """
+        Schedule deletion of an accepted invite.
+        In a real implementation, this would set up a scheduled task.
+        For demonstration, we just log the intent.
+        """
+        logger.info(f"Scheduled deletion of accepted invite {invite_token} in 5 minutes")
+        # In a real system, you would use a task scheduler like Celery here
+        # For example:
+        # delete_accepted_invite.apply_async(args=[invite_token], countdown=300)  # 5 minutes
+        
     def cancel_invite(self, invite_token, user_id):
 
         invite = self.get_invite(invite_token)
@@ -140,4 +185,99 @@ class TeamInviteRepository:
         if result.modified_count == 1:
             return {"message": "Invite cancelled successfully"}, 200
         else:
-            return {"error": "Failed to cancel invite"}, 400
+            return {"error": "Failed to cancel invite"}, False
+        
+    def cleanup_old_invites(self):
+        """
+        Delete expired, old pending, and recently accepted invites from the database.
+        Returns a dict with counts of deleted documents.
+        """
+        # Delete expired invites (more than 3 days old)
+        result_expired = self.invites_collection.delete_many({
+            "status": "expired",
+            "expiresAt": {"$lt": datetime.now(timezone.utc) - timedelta(days=3)}
+        })
+        logger.info(f"Deleted {result_expired.deleted_count} expired invites")
+
+        # Delete unused invites that are still "pending" after 10 days
+        result_pending = self.invites_collection.delete_many({
+            "status": "pending",
+            "createdAt": {"$lt": datetime.now(timezone.utc) - timedelta(days=10)}
+        })
+        logger.info(f"Deleted {result_pending.deleted_count} old pending invites")
+        
+        # Delete accepted invites that are more than 5 minutes old
+        # Handle both string and datetime formats for acceptedAt
+        current_time = datetime.now(timezone.utc)
+        five_mins_ago = current_time - timedelta(minutes=5)
+        
+        # First, try to delete documents with proper datetime objects
+        result_accepted_datetime = self.invites_collection.delete_many({
+            "status": "accepted",
+            "acceptedAt": {"$type": "date", "$lt": five_mins_ago}
+        })
+        
+        # Then handle string format dates (for backward compatibility with existing data)
+        # This is complex and might not be perfect - better to fix data format going forward
+        # This is a simplified approach that might need adjustment
+        five_mins_ago_str = five_mins_ago.isoformat()
+        result_accepted_string = self.invites_collection.delete_many({
+            "status": "accepted",
+            "acceptedAt": {"$type": "string", "$lt": five_mins_ago_str}
+        })
+        
+        total_accepted_deleted = result_accepted_datetime.deleted_count + result_accepted_string.deleted_count
+        logger.info(f"Deleted {total_accepted_deleted} accepted invites (older than 5 minutes)")
+
+        return {
+            "expired_deleted": result_expired.deleted_count,
+            "pending_deleted": result_pending.deleted_count,
+            "accepted_deleted": total_accepted_deleted
+        }
+
+    def mark_expired_invites(self):
+        """
+        Mark invites as expired if they've passed their expiration date.
+        Returns the count of newly marked expired invites.
+        """
+        result = self.invites_collection.update_many(
+            {
+                "status": "pending",
+                "expiresAt": {"$lt": datetime.now(timezone.utc)}
+            },
+            {"$set": {"status": "expired"}}
+        )
+        
+        logger.info(f"Marked {result.modified_count} invites as expired")
+        return result.modified_count
+        
+    def fix_string_dates(self):
+        """
+        One-time fix to convert string dates to proper MongoDB datetime objects.
+        Returns the count of fixed documents.
+        """
+        # Find documents with string acceptedAt
+        string_date_docs = list(self.invites_collection.find(
+            {"status": "accepted", "acceptedAt": {"$type": "string"}}
+        ))
+        
+        fixed_count = 0
+        for doc in string_date_docs:
+            try:
+                # Parse the string date
+                date_str = doc["acceptedAt"]
+                parsed_date = datetime.fromisoformat(date_str.replace('Z', '+00:00'))
+                
+                # Update the document
+                result = self.invites_collection.update_one(
+                    {"_id": doc["_id"]},
+                    {"$set": {"acceptedAt": parsed_date}}
+                )
+                
+                if result.modified_count == 1:
+                    fixed_count += 1
+            except (ValueError, KeyError) as e:
+                logger.error(f"Error fixing date format for invite {doc.get('_id')}: {str(e)}")
+                
+        logger.info(f"Fixed date format for {fixed_count} invites")
+        return fixed_count
