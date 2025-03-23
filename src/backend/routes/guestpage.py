@@ -11,17 +11,23 @@ guest_repo = GuestRepository()
 episode_repo = EpisodeRepository()
 
 def map_social_links_from_fields(guest):
-    """
-    Build a social media dictionary from individual guest fields.
-    """
+    def ensure_protocol(link):
+        if link and not link.startswith("http"):
+            return "https://" + link
+        return link
+
     social_media = {}
-    if guest.get("linkedin"):
-        social_media["linkedin"] = guest["linkedin"]
-    if guest.get("twitter"):
-        social_media["twitter"] = guest["twitter"]
-    # Add additional social fields if available:
-    # if guest.get("instagram"):
-    #     social_media["instagram"] = guest["instagram"]
+
+    twitter = guest.get("twitter", "").strip()
+    if twitter:
+        twitter_link = ensure_protocol(twitter)
+        social_media["twitter"] = twitter_link
+
+    linkedin = guest.get("linkedin", "").strip()
+    if linkedin:
+        linkedin_link = ensure_protocol(linkedin)
+        social_media["linkedin"] = linkedin_link
+
     return social_media
 
 @guestpage_bp.route("/guestpage/<guest_id>")
@@ -36,53 +42,45 @@ def guestpage(guest_id):
             return render_template("404.html"), 404
 
         guest = guest_response.get("guest", {})
-        
-        # Extract fields from the MongoDB document
-        guest_name = guest.get("name", "Default Guest Name")
-        guest_bio = guest.get("bio", "Default Guest Biography")
-        guest_image = guest.get("image", "")
-        podcast_id = guest.get("podcastId", "")
-        tags = guest.get("tags", [])
-        description = guest.get("description", "")
-        email = guest.get("email", "")
-        linkedin = guest.get("linkedin", "")
-        twitter = guest.get("twitter", "")
-        areas_of_interest = guest.get("areasOfInterest", [])
-        status = guest.get("status", "")
-        scheduled = guest.get("scheduled", 0)
-        completed = guest.get("completed", 0)
-        created_at = guest.get("created_at", "")
 
-        # Fallback if guest_image is empty or not a valid data URI
+        # Extract guest image with fallback
+        guest_image = guest.get("image", "")
         if not isinstance(guest_image, str) or not guest_image.startswith("data:image"):
             guest_image = url_for('static', filename='images/default.png')
 
-        # If you have episodes for the guest
-        episodes_response, ep_status_code = guest_repo.get_episodes_by_guest(guest_id)
-        if ep_status_code != 200:
-            logger.error(f"Failed to fetch episodes for guest {guest_id}: {episodes_response}")
-            episodes_list = []
-        else:
-            episodes_list = episodes_response.get("episodes", [])
+        # Map social media links from the guest document
+        social_media = map_social_links_from_fields(guest)
 
-        # Render the guestpage template, passing all fields you need
+        # Fetch episodes for the guest
+        episode_id = guest.get("episodeId")
+        episode = {}
+        if episode_id:
+            episode_data, status = episode_repo.get_episode(episode_id, user_id)
+            if status == 200:
+                episode = {
+                    "_id": episode_data.get("_id"),
+                    "title": episode_data.get("title"),
+                    "description": episode_data.get("description"),
+                    "banner": episode_data.get("imageUrl", "") or url_for('static', filename='images/default_banner.png'),
+                }
+        episodes_list = [episode] if episode else []
+
         return render_template(
             "guestpage/guestpage.html",
-            guest_name=guest_name,
-            guest_bio=guest_bio,
+            guest_name=guest.get("name", "Default Guest Name"),
+            guest_bio=guest.get("bio", "Default Guest Biography"),
             guest_image=guest_image,
-            podcast_id=podcast_id,
-            tags=tags,
-            description=description,
-            email=email,
-            linkedin=linkedin,
-            twitter=twitter,
-            areas_of_interest=areas_of_interest,
-            guest_status=status,
-            scheduled=scheduled,
-            completed=completed,
-            created_at=created_at,
-            episodes=episodes_list
+            podcast_id=guest.get("podcastId", ""),
+            tags=guest.get("tags", []),
+            description=guest.get("description", ""),
+            email=guest.get("email", ""),
+            areas_of_interest=guest.get("areasOfInterest", []),
+            guest_status=guest.get("status", ""),
+            scheduled=guest.get("scheduled", 0),
+            completed=guest.get("completed", 0),
+            created_at=guest.get("created_at", ""),
+            episodes=episodes_list,
+            social_media=social_media
         )
     except Exception as e:
         logger.error(f"Error loading guest page: {str(e)}")

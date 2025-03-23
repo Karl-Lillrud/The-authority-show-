@@ -24,13 +24,20 @@
   <!-- Hero section -->
   <section class="guest-hero">
     <div class="overlay"></div>
+    <!-- Social Media Icons in Top-Right Corner -->
+    <div id="guest-social">
+      {% for platform, link in social_media.items() %}
+        {% if link %}
+          <a href="{{ link }}" target="_blank" class="social-icon {{ platform }}">
+            <i class="fab fa-{{ platform }}"></i>
+          </a>
+        {% endif %}
+      {% endfor %}
+    </div>
     <div class="hero-content container">
       <!-- Guest profile image -->
       <div class="guest-image">
-        <img 
-          src="{{ guest_image }}" 
-          alt="{{ guest_name }}"
-        >
+        <img src="{{ guest_image }}" alt="{{ guest_name }}">
       </div>
       <!-- Guest info -->
       <div class="guest-text">
@@ -41,44 +48,18 @@
   </section>
 
   <!-- Guest Info Section -->
-  <section class="guest-info container">
+  <section class="guest-info container section-orange" style="text-align: center;">
     <h2>Guest Information</h2>
-    <p><strong>Podcast ID:</strong> {{ podcast_id }}</p>
-    <p><strong>Description:</strong> {{ description }}</p>
-    <p><strong>Tags:</strong> 
-      {% if tags %}
-        {{ tags | join(', ') }}
+    <p><strong>Email:</strong> 
+      {% if email %}
+        <a href="mailto:{{ email }}">{{ email }}</a>
       {% else %}
-        No tags
+        None
       {% endif %}
     </p>
-    <p><strong>Areas of Interest:</strong> 
+    <p><strong>Areas of Interest:</strong>
       {% if areas_of_interest %}
         {{ areas_of_interest | join(', ') }}
-      {% else %}
-        None
-      {% endif %}
-    </p>
-    <p><strong>Status:</strong> {{ guest_status }}</p>
-    <p><strong>Scheduled:</strong> {{ scheduled }}</p>
-    <p><strong>Completed:</strong> {{ completed }}</p>
-    <p><strong>Created At:</strong> {{ created_at }}</p>
-  </section>
-
-  <!-- Contact Info Section -->
-  <section class="contact-info container">
-    <h2>Contact Info</h2>
-    <p><strong>Email:</strong> <a href="mailto:{{ email }}">{{ email }}</a></p>
-    <p><strong>LinkedIn:</strong> 
-      {% if linkedin %}
-        <a href="{{ linkedin }}" target="_blank">{{ linkedin }}</a>
-      {% else %}
-        None
-      {% endif %}
-    </p>
-    <p><strong>Twitter:</strong> 
-      {% if twitter %}
-        <a href="{{ twitter }}" target="_blank">{{ twitter }}</a>
       {% else %}
         None
       {% endif %}
@@ -86,30 +67,24 @@
   </section>
 
   <!-- Episodes Section -->
-  <section class="guest-episodes container">
-    <h2>Episodes the Guest Has Participated In</h2>
-    {% if episodes and episodes|length > 0 %}
-      <ul class="episode-list">
-        {% for episode in episodes %}
-          <li class="episode-card">
-            <div class="episode-thumbnail">
-              <img src="{{ episode.banner }}" alt="{{ episode.title }}">
-            </div>
-            <div class="episode-info">
-              <h3>
-                <a href="{{ url_for('episode_bp.episode_detail', episode_id=episode._id) }}">
-                  {{ episode.title }}
-                </a>
-              </h3>
-              <p>{{ episode.description }}</p>
-            </div>
-          </li>
-        {% endfor %}
-      </ul>
-    {% else %}
-      <p>No episodes found.</p>
-    {% endif %}
-  </section>
+  {% for episode in episodes %}
+  <li class="episode-card">
+    <div class="episode-banner">
+      <img src="{{ url_for('static', filename='images/default.png') }}" alt="{{ episode.title }} Thumbnail">
+    </div>
+    <div class="episode-content">
+      <div class="episode-header">
+        <span class="play-icon"><i class="fas fa-play"></i></span>
+        <h3>{{ episode.title }}</h3>
+      </div>
+      <p class="episode-description">{{ episode.description }}</p>
+      <div class="episode-links">
+        <a href="#" class="platform spotify"><i class="fab fa-spotify"></i> Spotify</a>
+        <a href="#" class="platform apple"><i class="fab fa-apple"></i> Apple</a>
+      </div>
+    </div>
+  </li>
+{% endfor %}
 
   <!-- Footer -->
   <footer>

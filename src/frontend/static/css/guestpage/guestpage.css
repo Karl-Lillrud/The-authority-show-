@@ -1,15 +1,19 @@
 /* Global Styles */
 body {
+  font-family: "Inter", sans-serif;
   margin: 0;
   padding: 0;
   background-color: #121212;
   color: #ffffff;
-  font-family: "Inter", sans-serif;
 }
-.container {
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 0 20px;
+
+html {
+  scroll-behavior: smooth;
+}
+
+section {
+  background-color: transparent;
+  transition: background 0.5s ease-in-out;
 }
 
 /* Navbar */
@@ -23,11 +27,16 @@ body {
   z-index: 1000;
   box-sizing: border-box;
 }
-.logo {
-  font-size: 24px;
-  font-weight: bold;
-  color: #ffffff;
+
+.navbar .container {
+  max-width: 1200px;
+  margin: 0 auto;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
 }
+
 .nav-links {
   list-style: none;
   display: flex;
@@ -35,6 +44,7 @@ body {
   margin: 0;
   padding: 0;
 }
+
 .nav-links a {
   text-decoration: none;
   color: #ffffff;
@@ -42,6 +52,7 @@ body {
   transition: background 0.3s, color 0.3s;
   border-radius: 5px;
 }
+
 .nav-links a:hover {
   background: #ff4500;
   color: #fff;
@@ -52,15 +63,39 @@ body {
   position: relative;
   width: 100%;
   height: 400px;
-  background: url('../images/default.png') center/cover no-repeat;
-  margin-top: 80px; /* space for navbar */
+  background: url('../images/default-banner.png') center/cover no-repeat;
+  margin-top: 80px;
 }
 .guest-hero .overlay {
   position: absolute;
-  top: 0; left: 0;
-  width: 100%; height: 100%;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
   background: rgba(0, 0, 0, 0.4);
+  z-index: 1;
 }
+
+/* Social Media Icons in Hero (Top-right) */
+#guest-social {
+  position: absolute;
+  top: 20px;
+  right: 30px;
+  display: flex;
+  gap: 15px;
+  z-index: 10; /* <--- Lägg till denna rad */
+}
+
+#guest-social a {
+  color: #ff4500;
+  font-size: 24px;
+  transition: transform 0.3s;
+}
+
+#guest-social a:hover {
+  transform: scale(1.1);
+}
+
 .hero-content {
   position: relative;
   display: flex;
@@ -68,10 +103,12 @@ body {
   gap: 30px;
   height: 100%;
 }
+
 .guest-image {
   flex-shrink: 0;
   margin-left: 20px;
 }
+
 .guest-image img {
   width: 180px;
   height: 180px;
@@ -79,88 +116,63 @@ body {
   border-radius: 50%;
   border: 4px solid #ff4500;
 }
+
 .guest-text {
   max-width: 600px;
 }
+
 .guest-text h1 {
   margin: 0;
   font-size: 32px;
 }
+
 .guest-text p {
   margin-top: 10px;
   font-size: 18px;
   line-height: 1.4;
 }
 
-/* Host Section */
-.host-info {
-  background: #1f1f1f;
-  border-radius: 10px;
-  padding: 30px 20px;
-  margin: 40px 0;
-  display: flex;
-  align-items: center;
-  gap: 30px;
-}
-.host-profile {
-  display: flex;
-  align-items: center;
-  gap: 20px;
-}
-.host-image img {
-  width: 120px;
-  height: 120px;
-  object-fit: cover;
-  border-radius: 50%;
-  border: 3px solid #ff4500;
-}
-.host-details h2 {
-  margin: 0 0 10px;
-  color: #ff4500;
-  font-size: 24px;
-}
-.host-details p {
-  margin: 0 0 15px;
-  font-size: 16px;
-  line-height: 1.5;
-}
-.social-media a {
-  color: #ffffff;
-  font-size: 20px;
-  margin-right: 15px;
-  transition: color 0.3s;
-}
-.social-media a:hover {
-  color: #ff4500;
+/* Guest Details Section */
+.about-section, .guest-details {
+  text-align: center;
+  padding: 40px 20px;
+  background-color: #000; /* dark background to match landing page */
 }
 
-/* Guest Details (About, Experience, Education) */
-.guest-details {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 20px;
-  margin: 40px 0;
+.about-section h2,
+.guest-details h2 {
+  font-size: 32px;
+  margin-bottom: 20px;
 }
-.detail-card {
-  flex: 1 1 300px;
-  background: #1f1f1f;
-  border-radius: 10px;
-  padding: 20px;
-  box-shadow: 0 4px 10px rgba(0,0,0,0.3);
-  transition: transform 0.2s;
+
+#guest-description {
+  max-width: 800px;
+  margin: 0 auto 30px;
+  font-size: 18px;
+  line-height: 1.6;
 }
-.detail-card:hover {
-  transform: translateY(-3px);
-}
-.detail-card h2 {
-  margin-top: 0;
-  color: #ff4500;
-  margin-bottom: 10px;
-}
-.detail-card p {
-  margin: 0;
+
+/* Guest Meta Info (Additional Details) */
+.guest-meta p {
   font-size: 16px;
-  line-height: 1.5;
+  margin: 5px 0;
+}
+
+/* Contact Info Section */
+.contact-info {
+  text-align: center;
+  padding: 40px 20px;
+}
+
+.contact-info h2 {
+  font-size: 32px;
+  margin-bottom: 20px;
+}
+
+.section-orange {
+  background: rgba(255, 69, 0, 0.05);
+  border-top: 1px solid rgba(255, 69, 0, 0.2);
+  border-bottom: 1px solid rgba(255, 69, 0, 0.2);
 }
 
 /* Episodes Section */
@@ -168,11 +180,13 @@ body {
   margin-bottom: 40px;
   text-align: center;
 }
+
 .guest-episodes h2 {
   font-size: 28px;
   margin-bottom: 20px;
   color: #ff4500;
 }
+
 .episode-list {
   list-style: none;
   padding: 0;
@@ -181,43 +195,74 @@ body {
   grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
   gap: 15px;
 }
+
 .episode-card {
-  background: #1f1f1f;
-  border-radius: 10px;
+  background-color: #111;
+  border-radius: 16px;
   overflow: hidden;
-  box-shadow: 0 4px 10px rgba(0,0,0,0.3);
-  transition: transform 0.2s;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  margin-bottom: 24px;
+  color: white;
+  max-width: 400px;
+  list-style: none;
 }
-.episode-card:hover {
-  transform: translateY(-3px);
-}
-.episode-thumbnail img {
+
+.episode-banner img {
   width: 100%;
-  height: 150px;
-  object-fit: cover;
+  height: 200px; /* Begränsar höjd */
+  object-fit: cover; /* Beskär bilden snyggt */
+  display: block;
+  border-top-left-radius: 16px;
+  border-top-right-radius: 16px;
 }
-.episode-info {
-  padding: 10px 15px;
-  text-align: left;
+
+.episode-content {
+  padding: 16px;
 }
-.episode-info h3 {
-  margin: 0;
-  font-size: 18px;
+
+.episode-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 20px;
   font-weight: bold;
-  color: #ffffff;
-  margin-bottom: 6px;
 }
-.episode-info h3 a {
-  text-decoration: none;
-  color: #ff4500;
+
+.play-icon {
+  color: red;
+  font-size: 16px;
 }
-.episode-info h3 a:hover {
-  text-decoration: underline;
-}
-.episode-info p {
+
+.episode-description {
   font-size: 14px;
-  color: #fff;
-  margin: 0;
+  margin-top: 4px;
+  margin-bottom: 16px;
+  color: #aaa;
+}
+
+.episode-links {
+  display: flex;
+  gap: 12px;
+}
+
+.platform {
+  padding: 6px 12px;
+  border-radius: 8px;
+  text-decoration: none;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.platform.spotify {
+  background-color: #1DB954;
+  color: white;
+}
+
+.platform.apple {
+  background-color: #ccc;
+  color: black;
 }
 
 /* Footer */
@@ -227,6 +272,7 @@ footer {
   padding: 20px 0;
   text-align: center;
 }
+
 footer p {
   margin: 0;
   font-size: 14px;
