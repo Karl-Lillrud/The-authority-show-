@@ -237,6 +237,49 @@ Dashboard{% endblock %} {% block content %}
   </div>
 </div>
 
+<!-- Edit Member Modal -->
+<div
+  class="modal popup"
+  id="editMemberModal"
+  tabindex="-1"
+  role="dialog"
+  aria-labelledby="editMemberModalLabel"
+  aria-hidden="true"
+>
+  <div class="form-box" role="document">
+    <form id="editMemberForm">
+      <span id="cancelEditMemberBtn" class="close-btn">&times;</span>
+      <h2 class="form-title" id="editMemberModalLabel">Edit Member</h2>
+      <div class="form-grid">
+        <div class="field-group full-width">
+          <label for="editMemberEmail">Member Email:</label>
+          <input
+            type="email"
+            id="editMemberEmail"
+            class="form-control"
+            required
+          />
+        </div>
+        <div class="field-group">
+          <label for="editMemberRole">Select Role:</label>
+          <select id="editMemberRole" class="form-control" required>
+            <option value="member">Member</option>
+            <option value="admin">Admin</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-actions">
+        <button type="button" id="cancelEditMemberBtn" class="cancel-btn">
+          Cancel
+        </button>
+        <button type="button" id="saveEditMemberBtn" class="save-btn">
+          Save
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
 <!-- Decorative Header -->
 <div class="decorative-header"></div>
 

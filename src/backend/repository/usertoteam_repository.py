@@ -16,6 +16,10 @@ class UserToTeamRepository:
 
     def add_user_to_team(self, data):
         try:
+            # Validate required fields
+            if not data.get("teamId") or not data.get("userId") or not data.get("role"):
+                return {"error": "Missing teamId, userId, or role"}, 400
+
             user_to_team_schema = UserToTeamSchema()
             validated_data = user_to_team_schema.load(data)
 
@@ -208,34 +212,41 @@ class UserToTeamRepository:
 
     def delete_team_member(self, team_id, user_id=None, email=None):
         try:
+            logger.info(
+                f"Deleting team member with team_id={team_id}, user_id={user_id}, email={email}"
+            )  # Debugging log
+
             if user_id:
-                # Hämta e-postadressen för användaren baserat på userId
+                # Fetch email for debugging purposes
                 user = self.users_collection.find_one({"_id": user_id}, {"email": 1})
                 email = user.get("email") if user else "Unknown Email"
 
-                # Ta bort medlemmen från UsersToTeams
+                # Remove member from UsersToTeams
                 result = self.users_to_teams_collection.delete_one(
                     {"teamId": team_id, "userId": user_id}
                 )
                 if result.deleted_count == 0:
+                    logger.error("Failed to delete member from UsersToTeams")
                     return {"error": "Failed to delete member from UsersToTeams"}, 500
 
-                # Ta bort medlemmen från Teams-arrayen
+                # Remove member from Teams array
                 result = self.teams_collection.update_one(
                     {"_id": team_id}, {"$pull": {"members": {"userId": user_id}}}
                 )
                 if result.modified_count == 0:
+                    logger.error("Failed to delete member from Teams array")
                     return {"error": "Failed to delete member from Teams array"}, 500
 
                 return {"message": f"Member '{email}' deleted successfully"}, 200
 
             elif email:
-                # Ta bort medlemmen från Teams-arrayen baserat på email om användaren inte är verifierad
+                # Remove unverified member from Teams array
                 result = self.teams_collection.update_one(
                     {"_id": team_id, "members.email": email, "members.verified": False},
                     {"$pull": {"members": {"email": email, "verified": False}}},
                 )
                 if result.modified_count == 0:
+                    logger.error("Failed to delete unverified member from Teams array")
                     return {
                         "error": "Failed to delete unverified member from Teams array"
                     }, 500
@@ -245,6 +256,7 @@ class UserToTeamRepository:
                 }, 200
 
             else:
+                logger.error("Missing userId or email in delete_team_member")
                 return {"error": "Missing userId or email"}, 400
 
         except Exception as e:

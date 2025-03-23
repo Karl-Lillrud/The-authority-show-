@@ -30,6 +30,11 @@ export async function deleteTeamMemberRequest(
   userId = null,
   email = null
 ) {
+  console.log("Payload for deleteTeamMemberRequest:", {
+    teamId,
+    userId,
+    email
+  }); // Debugging log
   const res = await fetch("/delete_team_member", {
     method: "DELETE",
     headers: { "Content-Type": "application/json" },
