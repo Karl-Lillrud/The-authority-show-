@@ -13,7 +13,7 @@ body {
   padding: 24px;
   border: #ff7f50 2px solid;
   border-radius: 12px;
-  box-shadow: 30px 0px 60px -10px #ff7f50, -30px 0px 60px -10px #ff7f50;
+  box-shadow: 30px 0px 60px -30px #ff7f50, -30px 0px 60px -30px #ff7f50;
   max-width: 800px;
   margin: 0 auto; /* Centrerar den horisontellt */
   position: absolute; /* Positionera den absolut */
