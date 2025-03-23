@@ -175,3 +175,39 @@ export const shared = {
   selectedPodcastId: null,
   svgpodcastmanagement
 };
+
+document.getElementById("guests-link").addEventListener("click", function(event) {
+  event.preventDefault(); // Prevent the default redirect
+
+  // Fetch the rendered guest page from the Flask route
+  fetch('/guest') // This is the Flask route that renders guest.html
+    .then(response => {
+      if (!response.ok) {
+        throw new Error('Failed to fetch guest page');
+      }
+      return response.text();
+    })
+    .then(html => {
+      // Inject the fetched HTML into the main content
+      const mainContent = document.querySelector('.main-content');
+      mainContent.innerHTML = html;  // Replace the existing content with the guest page
+
+      // Dynamically load and execute guest.js
+      const guestScript = document.createElement('script');
+      guestScript.type = 'module';
+
+      // Use Flask's URL generation to properly resolve the path for guest.js
+      guestScript.src = '/static/js/guest/guest.js'; // Hardcoded static path since you use url_for to resolve on server-side
+
+      guestScript.onload = function() {
+        console.log('Guest page script loaded and executed.');
+      };
+      guestScript.onerror = function() {
+        console.error('Error loading guest page script.');
+      };
+      document.body.appendChild(guestScript);
+    })
+    .catch(error => {
+      console.error('Error loading guest page:', error);
+    });
+});
