@@ -651,20 +651,22 @@ async function renderMembersView() {
           card.innerHTML = `
             <div class="member-card-header">
               <h3>${member.fullName || member.email}</h3>
-              ${
-                member.role === "creator"
-                  ? '<span class="creator-badge">Creator</span>'
-                  : member.verified
-                  ? '<span class="verified-badge">Verified</span>'
-                  : '<span class="not-verified-badge">Not Verified</span>'
-              }
-              ${
-                member.role === "admin"
-                  ? '<span class="admin-badge">Admin</span>'
-                  : member.role === "member"
-                  ? '<span class="member-badge">Member</span>'
-                  : ""
-              }
+              <span class="member-chip">
+                ${
+                  member.role === "creator"
+                    ? '<span class="creator-badge">Creator</span>'
+                    : member.role === "admin"
+                    ? '<span class="admin-badge">Admin</span>'
+                    : '<span class="member-badge">Member</span>'
+                }
+                ${
+                  member.role !== "creator" && !member.verified
+                    ? '<span class="not-verified-badge">Not Verified</span>'
+                    : member.role !== "creator" && member.verified
+                    ? '<span class="verified-badge">Verified</span>'
+                    : ""
+                }
+              </span>
             </div>
             <div class="member-card-body">
               ${
