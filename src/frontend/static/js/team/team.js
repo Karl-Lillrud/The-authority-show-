@@ -1029,6 +1029,8 @@ async function handleAddMemberFormSubmission(e) {
         "success"
       );
       document.getElementById("addMemberModal").classList.remove("show");
+      const teams = await getTeamsRequest();
+      updateTeamsUI(teams);
     } else {
       showNotification(
         "Error",
