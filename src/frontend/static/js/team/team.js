@@ -1013,9 +1013,7 @@ async function handleAddMemberFormSubmission(e) {
   }
 
   try {
-    const inviteResult = await sendTeamInvite(teamId, email);
-    console.log(`Invitation sent: `, inviteResult);
-
+    // Add the member to the team
     const res = await fetch("/add_team_member", {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
@@ -1023,38 +1021,39 @@ async function handleAddMemberFormSubmission(e) {
     });
     const updateResult = await res.json();
 
-    if (updateResult.error && updateResult.error.includes("creator")) {
-      showNotification(
-        "The provided email is already used by the team creator.",
-        "error"
-      );
-    } else if (updateResult.message) {
+    if (updateResult.error) {
+      showNotification("Error", updateResult.error, "error");
+      return;
+    }
+
+    // Notify success for member creation
+    showNotification("Success", "Member added successfully!", "success");
+
+    // Attempt to send the invitation email
+    try {
+      const inviteResult = await sendTeamInvite(teamId, email);
+      console.log(`Invitation sent: `, inviteResult);
       showNotification(
         "Success",
-        "Invitation mail sent successfully!",
+        "Invitation email sent successfully!",
         "success"
       );
-      document.getElementById("addMemberModal").classList.remove("show");
-      const teams = await getTeamsRequest();
-      updateTeamsUI(teams);
-    } else {
+    } catch (emailError) {
+      console.error("Error sending invitation email:", emailError);
       showNotification(
-        "Error",
-        updateResult.error || "Failed to add member.",
-        "error"
+        "Warning",
+        "Member added, but the invitation email failed to send.",
+        "warning"
       );
     }
+
+    // Close the modal and refresh the team list
+    document.getElementById("addMemberModal").classList.remove("show");
+    const teams = await getTeamsRequest();
+    updateTeamsUI(teams);
   } catch (error) {
-    if (error.message.includes("User is already a member of this team")) {
-      showNotification(
-        "Error",
-        "The provided email is already used by the team creator.",
-        "error"
-      );
-    } else {
-      console.error("Error sending team invite or adding member:", error);
-      showNotification("Error", "Failed to add member.", "error");
-    }
+    console.error("Error adding member:", error);
+    showNotification("Error", "Failed to add member.", "error");
   }
 }
 
