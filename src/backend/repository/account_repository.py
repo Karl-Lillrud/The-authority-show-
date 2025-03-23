@@ -78,3 +78,37 @@ class AccountRepository:
         except Exception as e:
             logger.error(f"Failed to fetch account: {e}")
             return {"error": f"Failed to fetch account: {str(e)}"}, 500
+
+    def delete_by_user(self, user_id):
+        try:
+            result = self.collection.delete_many({"userId": user_id})
+            logger.info(f"Deleted {result.deleted_count} accounts for user {user_id}")
+            return result.deleted_count
+        except Exception as e:
+            logger.error(f"Failed to delete accounts: {e}", exc_info=True)
+            return 0
+
+    def get_credit_ids_by_user(self, user_id):
+        try:
+            user_id_str = str(user_id)
+
+            account = self.collection.find_one({"userId": user_id_str}, {"_id": 1})
+            if not account:
+                logger.warning(f"No account found for user {user_id_str}")
+                return []
+
+            account_id_str = str(account["_id"])
+
+            credits = self.credits_collection.find(
+                {"accountId": account_id_str}, {"_id": 1}
+            )
+            credit_ids = [str(credit["_id"]) for credit in credits]
+
+            logger.info(
+                f"Found {len(credit_ids)} credit IDs for user {user_id_str}: {credit_ids}"
+            )
+            return credit_ids
+
+        except Exception as e:
+            logger.error(f"Failed to retrieve credit IDs: {e}", exc_info=True)
+            return []

@@ -228,3 +228,12 @@ class EpisodeRepository:
             return {"episodes": episodes}, 200
         except Exception as e:
             return {"error": str(e)}, 500
+
+    def delete_by_user(self, user_id):
+        try:
+            result = self.collection.delete_many({"userid": str(user_id)})
+            logger.info(f"🧹 Deleted {result.deleted_count} episodes for user {user_id}")
+            return result.deleted_count
+        except Exception as e:
+            logger.error(f"Failed to delete episodes: {e}", exc_info=True)
+            return 0

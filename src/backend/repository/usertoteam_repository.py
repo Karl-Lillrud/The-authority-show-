@@ -7,7 +7,6 @@ from uuid import uuid4
 
 logger = logging.getLogger(__name__)
 
-
 class UserToTeamRepository:
     def __init__(self):
         self.users_to_teams_collection = collection.database.UsersToTeams
@@ -129,3 +128,13 @@ class UserToTeamRepository:
         except Exception as e:
             logger.error(f"Error retrieving teams for user {user_id}: {e}", exc_info=True)
             return {"error": f"Failed to retrieve teams: {str(e)}"}, 500
+
+    def delete_by_user(self, user_id):
+        try:
+            result = self.users_to_teams_collection.delete_many({"userId": user_id})
+            if result.deleted_count > 0:
+                logger.info(f"🧹 Removed user {user_id} from {result.deleted_count} team links")
+            return result.deleted_count
+        except Exception as e:
+            logger.error(f"❌ Failed to remove user from teams: {e}", exc_info=True)
+            return 0

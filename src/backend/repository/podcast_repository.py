@@ -380,3 +380,15 @@ class PodcastRepository:
 
         except Exception as e:
             return {"error": f"Error fetching RSS feed: {str(e)}"}, 500
+
+    def delete_by_user(self, user_id):
+        try:
+            accounts = list(collection.database.Accounts.find({"userId": user_id}))
+            account_ids = [str(a.get("id", a["_id"])) for a in accounts]
+            result = self.collection.delete_many({"accountId": {"$in": account_ids}})
+            logger.info(f"🧹 Deleted {result.deleted_count} podcasts for user {user_id}")
+            return result.deleted_count
+        except Exception as e:
+            logger.error(f"Failed to delete podcasts: {e}", exc_info=True)
+            return 0
+

@@ -129,3 +129,13 @@ class PodtaskRepository:
         except Exception as e:
             logger.error(f"Error updating podtask: {e}", exc_info=True)
             return {"error": f"Failed to update task: {str(e)}"}, 500
+
+    
+    def delete_by_user(self, user_id):
+        try:
+            result = self.podtasks_collection.delete_many({"userid": str(user_id)})
+            logger.info(f"🧹 Deleted {result.deleted_count} podtasks for user {user_id}")
+            return result.deleted_count
+        except Exception as e:
+            logger.error(f"Failed to delete podtasks: {e}", exc_info=True)
+            return 0
