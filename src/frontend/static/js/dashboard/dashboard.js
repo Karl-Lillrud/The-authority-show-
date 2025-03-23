@@ -1,127 +1,160 @@
-import { fetchPodcasts, fetchRSSData } from "../../requests/podcastRequests.js";
+import { fetchAllEpisodes } from "/static/requests/episodeRequest.js"
+import { fetchGuestsByEpisode } from "/static/requests/guestRequests.js"
+import { fetchPodcast } from "/static/requests/podcastRequests.js"
 
-document.addEventListener("DOMContentLoaded", function () {
-  const podcastPopup = document.getElementById("podcast-popup");
-  const podcastList = document.getElementById("podcast-list");
-  const closePodcastPopup = document.getElementById("close-podcast-popup");
+document.addEventListener("DOMContentLoaded", () => {
+  // Initialize welcome popup
+  initWelcomePopup()
 
-  async function fetchAndDisplayPodcasts() {
-    try {
-      console.log("Fetching podcasts...");
-      const data = await fetchPodcasts();
-      const podcasts = data.podcast; // Access the podcast property
-      console.log("Podcasts fetched:", podcasts);
-      podcastList.innerHTML = ""; // Clear existing content
-      for (const podcast of podcasts) {
-        const podcastItem = document.createElement("li");
-        podcastItem.className = "podcast-item";
-        podcastItem.style.cursor = "pointer"; // Change cursor to pointer on hover
+  // Fetch and display episodes
+  fetchAndDisplayEpisodesWithGuests()
 
-        // Fetch additional information from the RSS feed
-        let imageUrl =
-          "{{ url_for('static', filename='images/mock-avatar.jpeg') }}";
-        try {
-          const rssData = await fetchRSSData(podcast.rssFeed);
-          console.log("RSS Data:", rssData); // Log all RSS data
-          imageUrl = rssData.imageUrl || imageUrl;
-        } catch (error) {
-          console.error("Error fetching RSS data:", error);
-        }
+  // Populate leaderboard with mock data (replace with actual data fetch)
+  populateLeaderboard()
+})
 
-        podcastItem.innerHTML = `
-          <span class="podcast-title">${podcast.podName}</span>
-          <img src="${imageUrl}" alt="${podcast.podName}" class="podcast-image" />
-          <div class="podcast-item-actions">
-            <button class="view-btn" data-id="${podcast._id}">View</button>
-          </div>
-        `;
-        // Add click event to the entire podcast item that redirects to podcast management view details
-        podcastItem.addEventListener("click", (e) => {
-          e.stopPropagation();
-          // Redirect to podcast management view details page for the selected podcast
-          window.location.href = `/podcastmanagement?podcastId=${podcast._id}`;
-        });
+function initWelcomePopup() {
+  const welcomePopup = document.getElementById("welcome-popup")
+  const closeWelcomePopup = document.getElementById("close-welcome-popup")
+  const getStartedBtn = document.getElementById("get-started-btn")
 
-        podcastList.appendChild(podcastItem);
-      }
-    } catch (error) {
-      console.error("Error fetching podcasts:", error);
-    }
-  }
-  window.fetchAndDisplayPodcasts = fetchAndDisplayPodcasts; // Expose the function to window
+  // Show popup
+  welcomePopup.style.display = "flex"
 
-  // Fetch and display podcasts when the podcast popup is shown
-  podcastPopup.addEventListener("click", function (e) {
-    if (e.target === podcastPopup) {
-      fetchAndDisplayPodcasts();
-    }
-  });
+  // Close popup when clicking close button
+  closeWelcomePopup.addEventListener("click", () => {
+    welcomePopup.style.display = "none"
+  })
 
-  // Close podcast popup on clicking the close button
-  closePodcastPopup.addEventListener("click", function () {
-    podcastPopup.style.display = "none";
-  });
+  // Close popup when clicking get started button
+  getStartedBtn.addEventListener("click", () => {
+    welcomePopup.style.display = "none"
+  })
 
-  // Close podcast popup if clicking outside the popup-content
-  podcastPopup.addEventListener("click", function (e) {
-    if (e.target === podcastPopup) {
-      podcastPopup.style.display = "none";
-    }
-  });
-});
-
-document.addEventListener("DOMContentLoaded", function () {
-  // Show welcome popup if the flag is set
-  if (sessionStorage.getItem("showWelcomePopup") === "true") {
-    document.getElementById("welcome-popup").style.display = "flex";
-    sessionStorage.removeItem("showWelcomePopup");
-  }
-
-  const welcomePopup = document.getElementById("welcome-popup");
-  const closeWelcomePopup = document.getElementById("close-welcome-popup");
-  const podcastPopup = document.getElementById("podcast-popup");
-
-  closeWelcomePopup.addEventListener("click", function () {
-    welcomePopup.style.display = "none";
-    // Show the podcast popup and fetch podcasts
-    podcastPopup.style.display = "flex";
-    window.fetchAndDisplayPodcasts();
-  });
-
-  // Close popup if clicking outside the popup-content
-  welcomePopup.addEventListener("click", function (e) {
+  // Close popup when clicking outside
+  welcomePopup.addEventListener("click", (e) => {
     if (e.target === welcomePopup) {
-      welcomePopup.style.display = "none";
-      // Show the podcast popup after closing the welcome popup
-      podcastPopup.style.display = "flex";
-      window.fetchAndDisplayPodcasts();
+      welcomePopup.style.display = "none"
     }
-  });
+  })
+}
 
-  // Attach change event listener to all checkboxes
-  document.querySelectorAll(".task-check").forEach((checkbox) => {
-    checkbox.addEventListener("change", function () {
-      const listItem = this.closest("li");
-      if (this.checked) {
-        listItem.classList.add("completed");
-        // Delay sorting to allow the animation to play
-        setTimeout(() => {
-          sortTasks(listItem.parentElement);
-        }, 500);
-      } else {
-        listItem.classList.remove("completed");
-      }
-    });
-  });
+async function fetchAndDisplayEpisodesWithGuests() {
+  try {
+    const episodes = await fetchAllEpisodes() // Fetch all episodes
+    const container = document.querySelector(".cards-container")
+    container.innerHTML = "" // Clear existing content
 
-  function sortTasks(taskList) {
-    const tasks = Array.from(taskList.children);
-    tasks.sort((a, b) => {
-      return (
-        a.querySelector(".task-check").checked - 
-        b.querySelector(".task-check").checked
-      );
-    });
-    tasks.forEach((task) => taskList.appendChild(task));
+    const limitedEpisodes = episodes.slice(0, 3) // Show up to 3 cards
+
+    for (const episode of limitedEpisodes) {
+      // Create episode card
+      const card = createEpisodeCard(episode)
+      container.appendChild(card)
+
+      // Fetch and populate podcast details
+      await populatePodcastDetails(card, episode)
+
+      // Fetch and populate guest list
+      await populateGuestList(card, episode)
+    }
+  } catch (error) {
+    console.error("Error fetching episodes with guests:", error)
+    const container = document.querySelector(".cards-container")
+    container.innerHTML = `<div class="error-message">Error loading episodes. Please try again later.</div>`
   }
-});
+}
+
+function createEpisodeCard(episode) {
+  const card = document.createElement("div")
+  card.classList.add("episode-card")
+  card.dataset.episodeId = episode._id
+
+  // Card structure
+  card.innerHTML = `
+    <div class="card-header">
+      <img class="podcast-logo" src="/static/images/default-podcast-logo.png" alt="Podcast Logo">
+      <div class="card-title">
+        <h3>${episode.title}</h3>
+      </div>
+    </div>
+    <div class="card-body">
+      <h4>Guests:</h4>
+      <ul class="guest-list">
+        <li>Loading guests...</li>
+      </ul>
+    </div>
+    <div class="card-footer">
+      <span>Episode #${episode.episode_number || "N/A"}</span>
+      <button class="toggle-tasks">+</button>
+    </div>
+    <div class="tasks-container" style="display: none;">
+      <p>Tasks for this episode will be displayed here.</p>
+    </div>
+  `
+
+  // Add event listener for toggle tasks button
+  const toggleButton = card.querySelector(".toggle-tasks")
+  const tasksContainer = card.querySelector(".tasks-container")
+
+  toggleButton.addEventListener("click", () => {
+    if (tasksContainer.style.display === "none") {
+      tasksContainer.style.display = "block"
+      toggleButton.textContent = "-"
+    } else {
+      tasksContainer.style.display = "none"
+      toggleButton.textContent = "+"
+    }
+  })
+
+  return card
+}
+
+async function populatePodcastDetails(card, episode) {
+  try {
+    const podcastId = episode.podcast_id
+
+    if (!podcastId) {
+      console.error("Error: Missing podcastId for episode:", episode)
+      return
+    }
+
+    const podcastResponse = await fetchPodcast(podcastId)
+    const podcast = podcastResponse.podcast || {}
+
+    // Update podcast logo and title
+    const logoElement = card.querySelector(".podcast-logo")
+    if (podcast.logoUrl) {
+      logoElement.src = podcast.logoUrl
+    }
+    logoElement.alt = podcast.podName || "Podcast Logo"
+  } catch (error) {
+    console.error("Error fetching podcast details:", error)
+  }
+}
+
+async function populateGuestList(card, episode) {
+  try {
+    const guestList = card.querySelector(".guest-list")
+    const guests = await fetchGuestsByEpisode(episode._id)
+
+    guestList.innerHTML = "" // Clear loading message
+
+    if (guests.length > 0) {
+      guests.forEach((guest) => {
+        const li = document.createElement("li")
+        li.textContent = guest.name
+        guestList.appendChild(li)
+      })
+    } else {
+      const noGuestMsg = document.createElement("li")
+      noGuestMsg.textContent = "No guests available"
+      guestList.appendChild(noGuestMsg)
+    }
+  } catch (error) {
+    console.error("Error fetching guests for episode:", error)
+    const guestList = card.querySelector(".guest-list")
+    guestList.innerHTML = "<li>Error loading guest info</li>"
+  }
+}
+
