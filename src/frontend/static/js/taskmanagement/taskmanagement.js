@@ -30,6 +30,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
   // Fetch tasks on page load
   fetchTasks();
+  document.title = "To-Do Workflow";
 });
 
 // Fetch tasks from the server
@@ -91,7 +92,7 @@ function renderSampleTasks() {
     { id: "task4", name: "Send reminder 24 hours before recording" },
     { id: "task5", name: "Edit and process audio" }
   ];
-
+  console.log("Welcome to the To-Do Workflow");
   renderTasks(sampleTasks);
 }
 
