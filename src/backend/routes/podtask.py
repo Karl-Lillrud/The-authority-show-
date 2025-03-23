@@ -21,93 +21,20 @@ def register_podtask():
     if not g.user_id:
         return jsonify({"error": "Unauthorized"}), 401
 
-
     # Validate Content-Type
     if request.content_type != "application/json":
-        return (
-            jsonify({"error": "Invalid Content-Type. Expected application/json"}), 415,
-        )
+        return jsonify({"error": "Invalid Content-Type. Expected application/json"}), 415
 
     try:
         data = request.get_json()
         print("📩 Received Podtask Data:", data)
 
-        # Validate data using PodtaskSchema
-        schema = PodtaskSchema()
-        errors = schema.validate(data)
-        if errors:
-            return jsonify({"error": "Invalid data", "details": errors}), 400
-
-        validated_data = schema.load(data)
-
-        user_id = str(g.user_id)  # Get the user ID
-
-        # Fetch accounts associated with the user using the correct field `userId`
-        user_accounts = list(
-            collection.database.Accounts.find({"userId": user_id}, {"_id": 1})
-        )
-        print(f"Found accounts: {user_accounts}")
-
-        if not user_accounts:
-            return jsonify({"error": "No accounts found for user"}), 403
-
-        # Extract account IDs
-        user_account_ids = [
-            str(account["_id"]) for account in user_accounts
-        ]  # Use _id as account ID
-
-        # Fetch the podcasts associated with these account IDs
-        podcasts = list(
-            collection.database.Podcasts.find({"accountId": {"$in": user_account_ids}})
-        )
-        print(f"Found podcasts for the user: {podcasts}")
-
-        if not podcasts:
-            return jsonify({"error": "No podcasts found for user"}), 404
-
-        # Assume we link the first podcast, or you could add logic to select one
-        selected_podcast = podcasts[0]
-        podcast_id = str(selected_podcast["_id"])  # Get the podcast ID
-
-        # Set the podcastId for the podtask
-        validated_data["podcastId"] = podcast_id
-
-        # Add metadata to the podtask document
-        validated_data["userid"] = user_id
-        validated_data["created_at"] = datetime.now(timezone.utc)
-
-        # Generate a unique `id` for the podtask manually (UUID as string)
-        podtask_id = str(uuid.uuid4())  # Manually generate the `id` field as a string
-
-        # Insert the podtask into the database
-        podtask_document = {
-            "_id": podtask_id,  # Set the UUID as the explicit _id field
-            "podcastId": validated_data["podcastId"],
-            "name": validated_data.get("name"),
-            "action": validated_data.get("action"),
-            "dayCount": validated_data.get("dayCount"),
-            "description": validated_data.get("description"),
-            "actionUrl": validated_data.get("actionUrl"),
-            "urlDescribe": validated_data.get("urlDescribe"),
-            "submissionReq": validated_data.get("submissionReq"),
-            "status": validated_data.get("status"),
-            "assignedAt": validated_data.get("assignedAt"),
-            "dueDate": validated_data.get("dueDate"),
-            "priority": validated_data.get("priority"),
-            "userid": validated_data[
-                "userid"
-            ],  # not neccessary, Lazy way to test user session correctness #can be removed
-            "created_at": validated_data["created_at"],
-        }
-
+        response, status_code = podtask_repo.register_podtask(g.user_id, data)
+        return jsonify(response), status_code
 
     except Exception as e:
         print(f"❌ ERROR: {e}")
         return jsonify({"error": f"Failed to register podtask: {str(e)}"}), 500
-
-    data = request.get_json()
-    response, status_code = podtask_repo.register_podtask(g.user_id, data)
-    return jsonify(response), status_code
 
 
 @podtask_bp.route("/get_podtasks", methods=["GET"])
@@ -201,11 +128,3 @@ def get_default_tasks():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
-
-# Register the blueprint
-def register_podtask_routes(app):
-    app.register_blueprint(podtask_bp)
-
-    data = request.get_json()
-    response, status_code = podtask_repo.update_podtask(g.user_id, task_id, data)
-    return jsonify(response), status_code
