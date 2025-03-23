@@ -81,16 +81,16 @@ export async function registerEpisode(data) {
       console.error("Missing required fields: podcastId or title", data); // Added log
       throw new Error("Missing required fields: podcastId or title");
     }
-    console.log("Sending data to /register_episode:", data); // Added log
-    const response = await fetch("/register_episode", {
+    console.log("Sending data to /add_episode:", data); // Added log
+    const response = await fetch("/add_episode", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(data)
     });
     const responseData = await response.json();
-    console.log("Received response from /register_episode:", responseData); // Added log
+    console.log("Received response from /add_episode:", responseData); // Added log
     if (!response.ok) {
-      console.error("Error response from /register_episode:", responseData); // Added log
+      console.error("Error response from /add_episode:", responseData); // Added log
       throw new Error(responseData.error || "Failed to register episode");
     }
     return responseData;
@@ -119,7 +119,7 @@ export async function fetchEpisodesByPodcast(podcastId) {
 
 export async function fetchEpisode(episodeId) {
   try {
-    const response = await fetch(`/get_episodes/${episodeId}`);
+    const response = await fetch(`/get_episode/${episodeId}`);
     const data = await response.json();
     if (response.ok) {
       return data;

@@ -12,7 +12,7 @@ class EpisodeRepository:
         self.collection = collection.database.Episodes
         self.accounts_collection = collection.database.Accounts
 
-    def register_episode(self, data, user_id):
+    def add_episode(self, data, user_id):
         """
         Register a new episode in the database
         """
