@@ -4,17 +4,12 @@ import {
   editTeamRequest,
   deleteTeamRequest,
   fetchPodcasts,
-  updatePodcastTeamRequest,
-  getTeamMembers
+  updatePodcastTeamRequest
 } from "/static/requests/teamRequests.js";
 import { sendTeamInvite } from "/static/requests/invitationRequests.js";
 import { initSidebar } from "../components/sidebar.js";
 import { sidebarIcons } from "../components/sidebar-icons.js";
-import {
-  editTeamMemberRequest,
-  deleteTeamMemberRequest,
-  getTeamMembersRequest
-} from "/static/requests/userToTeamRequests.js";
+import { deleteTeamMemberRequest } from "/static/requests/userToTeamRequests.js";
 import { successSvg, errorSvg, infoSvg, closeSvg } from "./teamSvg.js";
 
 // Notification system for team.js
@@ -108,32 +103,30 @@ function updateTeamsUI(teams) {
           team.description || "No description available"
         }</p>
         <p><strong>Podcasts:</strong> ${team.podNames || "N/A"}</p>
-        <p><strong>Members:</strong></p>
-        <div class="member-chips">
-          ${(() => {
-            // Sort so creator comes first
-            const sortedMembers = team.members.sort((a, b) => {
-              if (a.role === "creator" && b.role !== "creator") return -1;
-              if (a.role !== "creator" && b.role === "creator") return 1;
-              return 0;
-            });
-            return sortedMembers
-              .map(
-                (m) => `
-            <span class="member-chip">
-              <span>${m.email}</span>
-              ${
-                m.role === "creator"
-                  ? '<span class="creator-badge">Creator</span>'
-                  : m.verified === true
-                  ? '<span class="verified-badge">Verified</span>'
-                  : '<span class="not-verified-badge">Not Verified</span>'
-              }
-            </span>
-          `
-              )
-              .join("");
-          })()}
+        <div class="members-section">
+          <strong>Members:</strong>
+          <div>
+            ${
+              team.members.length > 0
+                ? team.members
+                    .map(
+                      (m) => `
+                      <span class="member-chip">
+                        ${m.email}
+                        ${
+                          m.role === "creator"
+                            ? '<span class="creator-badge">Creator</span>'
+                            : m.verified === true
+                            ? '<span class="verified-badge">Verified</span>'
+                            : '<span class="not-verified-badge">Not Verified</span>'
+                        }
+                      </span>
+                    `
+                    )
+                    .join("")
+                : "No members available"
+            }
+          </div>
         </div>
       </div>
       <div class="team-card-footer">
@@ -686,8 +679,10 @@ async function renderMembersView() {
               }
               <p><strong>Role:</strong> ${member.role}</p>
               <p><strong>Team:</strong> ${team.name}</p>
-              <button class="btn edit-member-btn">Edit</button>
-              <button class="btn delete-member-btn">Delete</button>
+              <div class="member-card-footer"> <!-- Ensure this class is applied -->
+                <button class="btn edit-member-btn">Edit</button>
+                <button class="btn delete-member-btn">Delete</button>
+              </div>
             </div>
           `;
           card
