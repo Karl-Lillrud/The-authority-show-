@@ -74,6 +74,7 @@ def delete_guest(guest_id):
 
 @guest_bp.route("/get_guests_by_episode/<episode_id>", methods=["GET"])
 def get_guests_by_episode(episode_id):
+    """Fetch all guest profiles linked to a specific episode ID."""
     if not hasattr(g, "user_id") or not g.user_id:
         return jsonify({"error": "Unauthorized"}), 401
 
@@ -81,5 +82,5 @@ def get_guests_by_episode(episode_id):
         response, status_code = guest_repo.get_guests_by_episode(episode_id)
         return jsonify(response), status_code
     except Exception as e:
-        logger.error("❌ ERROR: %s", e)
+        logger.exception("❌ ERROR: Failed to fetch guests by episode")
         return jsonify({"error": f"Failed to fetch guests by episode: {str(e)}"}), 500
