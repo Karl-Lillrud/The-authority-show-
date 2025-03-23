@@ -681,17 +681,23 @@ async function renderMembersView() {
               }
               <p><strong>Role:</strong> ${member.role}</p>
               <p><strong>Team:</strong> ${team.name}</p>
-              <div class="member-card-footer"> <!-- Ensure this class is applied -->
-                <button class="btn edit-member-btn">Edit</button>
+              <div class="member-card-footer">
+                ${
+                  member.role !== "creator"
+                    ? '<button class="btn edit-member-btn">Edit</button>'
+                    : ""
+                }
                 <button class="btn delete-member-btn">Delete</button>
               </div>
             </div>
           `;
-          card
-            .querySelector(".edit-member-btn")
-            .addEventListener("click", () =>
-              showEditMemberModal(team._id, member)
-            );
+          if (member.role !== "creator") {
+            card
+              .querySelector(".edit-member-btn")
+              .addEventListener("click", () =>
+                showEditMemberModal(team._id, member)
+              );
+          }
           card
             .querySelector(".delete-member-btn")
             .addEventListener("click", () =>
