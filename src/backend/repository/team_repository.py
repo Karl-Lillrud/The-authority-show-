@@ -7,11 +7,14 @@ from backend.models.teams import TeamSchema
 
 logger = logging.getLogger(__name__)
 
+
 class TeamRepository:
     def __init__(self):
         self.teams_collection = collection.database.Teams
         self.user_to_teams_collection = collection.database.UsersToTeams
         self.podcasts_collection = collection.database.Podcasts
+        # Added to check user status during team retrieval
+        self.users_collection = collection.database.Users
 
     def add_team(self, user_id, user_email, data):
         try:
@@ -24,6 +27,9 @@ class TeamRepository:
                 "_id": team_id,
                 "name": validated_data.get("name", "").strip(),
                 "email": validated_data.get("email", "").strip(),
+                "description": validated_data.get(
+                    "description", ""
+                ).strip(),  # Ensure description is saved
                 "phone": validated_data.get("phone", "").strip(),
                 "isActive": validated_data.get("isActive", True),
                 "joinedAt": datetime.now(timezone.utc),
@@ -51,6 +57,24 @@ class TeamRepository:
             self.teams_collection.update_one(
                 {"_id": team_id}, {"$set": {"members": team_item["members"]}}
             )
+
+            # Send invitation emails to new members (excluding the team creator)
+            from backend.services.TeamInviteService import (
+                TeamInviteService,
+            )  # Import the service
+
+            invite_service = TeamInviteService()
+            for member in team_item["members"]:
+                if member.get("role") != "creator":
+                    try:
+                        response, status_code = invite_service.send_invite(
+                            user_id, team_id, member["email"]
+                        )
+                        logger.info(f"Invitation email sent to {member['email']}")
+                    except Exception as e:
+                        logger.error(
+                            f"Error sending invitation email to {member['email']}: {e}"
+                        )
 
             return {
                 "message": "Team and creator added successfully",
@@ -87,9 +111,22 @@ class TeamRepository:
             for team in teams.values():
                 team["_id"] = str(team["_id"])
                 podcasts = list(self.podcasts_collection.find({"teamId": team["_id"]}))
-                team["podNames"] = ", ".join(
-                    [p.get("podName", "N/A") for p in podcasts]
-                ) if podcasts else "N/A"
+                team["podNames"] = (
+                    ", ".join([p.get("podName", "N/A") for p in podcasts])
+                    if podcasts
+                    else "N/A"
+                )
+                # Check each member: if not the creator and not yet verified,
+                # query the Users collection and update verified flag if applicable.
+                for member in team.get("members", []):
+                    if member.get("role") != "creator" and not member.get(
+                        "verified", False
+                    ):
+                        user = self.users_collection.find_one(
+                            {"email": member["email"].lower()}
+                        )
+                        if user and user.get("isTeamMember") is True:
+                            member["verified"] = True
 
             return list(teams.values()), 200
 
@@ -103,6 +140,8 @@ class TeamRepository:
             if not team:
                 return {"error": "Team not found"}, 404
 
+            team_name = team.get("name", "Unknown Team")  # Hämta teamets namn
+
             self.user_to_teams_collection.delete_many({"teamId": team_id})
 
             result = self.teams_collection.delete_one({"_id": team_id})
@@ -114,7 +153,7 @@ class TeamRepository:
             )
 
             return {
-                "message": f"Team {team_id} and all members deleted successfully!",
+                "message": f"Team '{team_name}' and all members deleted successfully!",
             }, 200
 
         except Exception as e:
@@ -130,7 +169,10 @@ class TeamRepository:
             team_schema = TeamSchema()
             validated_data = team_schema.load(data, partial=True)
 
-            update_fields = {k: v.strip() if isinstance(v, str) else v for k, v in validated_data.items()}
+            update_fields = {
+                k: v.strip() if isinstance(v, str) else v
+                for k, v in validated_data.items()
+            }
 
             if update_fields:
                 result = self.teams_collection.update_one(
@@ -148,3 +190,32 @@ class TeamRepository:
         except Exception as e:
             logger.error(f"Error editing team: {e}", exc_info=True)
             return {"error": f"Failed to edit team: {str(e)}"}, 500
+
+    def add_member_to_team(self, team_id, new_member):
+        try:
+            # Normalize email to lower case
+            new_member["email"] = new_member["email"].strip().lower()
+            new_member["verified"] = False
+
+            # Kontrollera om medlemmen redan finns i teamets members-array
+            existing_member = self.teams_collection.find_one(
+                {"_id": team_id, "members.email": new_member["email"]}
+            )
+            if existing_member:
+                # Kontrollera om e-postadressen redan finns i members-arrayen
+                for member in existing_member.get("members", []):
+                    if member["email"] == new_member["email"]:
+                        return {"error": "Member already exists in the team"}, 400
+
+            # Lägg till medlemmen om den inte redan finns
+            result = self.teams_collection.update_one(
+                {"_id": team_id}, {"$push": {"members": new_member}}
+            )
+            if result.modified_count > 0:
+                return {"message": "Member added successfully"}, 201
+            else:
+                return {"error": "Failed to add member"}, 500
+
+        except Exception as e:
+            logger.error(f"Error adding member to team: {e}", exc_info=True)
+            return {"error": f"Failed to add member: {str(e)}"}, 500

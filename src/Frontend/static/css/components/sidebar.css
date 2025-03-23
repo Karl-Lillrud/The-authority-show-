@@ -124,10 +124,14 @@
   margin: 0;
 }
 
+/* Fix for sidebar menu items - ensure they're properly structured for hover */
 .sidebar-menu-item {
-  margin: 4px 8px;
+  margin: 12px 0; /* Increased spacing between menu items */
+  width: 100%;
+  position: relative;
 }
 
+/* Improve the hover target area for menu items */
 .sidebar-menu-link {
   display: flex;
   align-items: center;
@@ -136,16 +140,23 @@
   text-decoration: none;
   border-radius: var(--radius-medium);
   transition: all var(--transition-normal);
+  width: 100%; /* Ensure the link spans the full width */
+  box-sizing: border-box; /* Include padding in width calculation */
+  cursor: pointer; /* Ensure cursor shows it's clickable */
+  position: relative; /* For z-index stacking */
+  z-index: 1; /* Ensure it's above any decorative elements */
 }
 
+/* Improve hover state */
 .sidebar-menu-link:hover {
   background-color: var(--sidebar-item-hover);
   color: var(--highlight-color);
 }
 
+/* Active state styling */
 .sidebar-menu-item.active .sidebar-menu-link {
-  background-color: var(--sidebar-item-active);
-  color: var(--highlight-color);
+  background-color: var(--sidebar-item-active); /* Light orange background */
+  color: var(--highlight-color); /* Orange text */
 }
 
 .sidebar-icon {
@@ -175,6 +186,7 @@
   justify-content: flex-end;
 }
 
+/* Improve toggle button hover state */
 .sidebar-toggle {
   background: none;
   border: none;
@@ -186,6 +198,8 @@
   align-items: center;
   justify-content: center;
   transition: all var(--transition-normal);
+  position: relative; /* For z-index */
+  z-index: 2; /* Ensure it's above other elements */
 }
 
 .sidebar-toggle:hover {
@@ -197,9 +211,11 @@
   transform: rotate(180deg);
 }
 
-/* Dashboard link styling */
+/* Dashboard link styling - fix hover issues */
 .dashboard-link {
   color: var(--highlight-color) !important;
+  position: relative; /* For z-index */
+  z-index: 1; /* Ensure it's above decorative elements */
 }
 
 .dashboard-link .sidebar-icon {
@@ -214,6 +230,7 @@
   margin-left: 4px; /* Adjust as needed */
 }
 
+/* Fix the dashboard link hover area */
 .sidebar-menu-item .dashboard-link {
   display: flex;
   align-items: center;
@@ -224,6 +241,7 @@
   border-radius: var(--radius-medium);
   transition: all var(--transition-normal);
   transform: translateX(-4px);
+  cursor: pointer; /* Ensure cursor shows it's clickable */
 }
 
 .sidebar-menu-item .dashboard-link:hover {
@@ -234,7 +252,7 @@
     background-color var(--transition-normal);
 }
 
-/* Action buttons in sidebar */
+/* Action buttons in sidebar - fix hover issues */
 .sidebar-action-buttons {
   margin-top: 20px;
   padding: 10px;
@@ -259,6 +277,8 @@
   margin-bottom: 8px;
   transition: all var(--transition-normal);
   text-align: left;
+  position: relative; /* For z-index */
+  z-index: 1; /* Ensure it's above decorative elements */
 }
 
 .sidebar-action-button:hover {
@@ -332,7 +352,7 @@
     justify-content: center;
   }
 
-  /* Horizontal menu styling */
+  /* Horizontal menu styling - fix hover issues on mobile */
   .sidebar-content {
     margin-top: 0;
     padding: var(--spacing-xs) 0;
@@ -371,6 +391,7 @@
     order: -1;
   }
 
+  /* Improve mobile menu link hover states */
   .sidebar-menu-link {
     padding: 8px 12px;
     display: flex;
@@ -379,6 +400,8 @@
     text-align: center;
     font-size: 0.85rem;
     white-space: nowrap;
+    position: relative; /* For z-index */
+    z-index: 1; /* Ensure it's above decorative elements */
   }
 
   .sidebar-icon {
@@ -388,7 +411,7 @@
     height: 18px;
   }
 
-  /* Action buttons in a row */
+  /* Action buttons in a row - fix hover on mobile */
   .sidebar-action-buttons {
     padding: var(--spacing-md);
     display: grid;
@@ -412,6 +435,8 @@
     padding: var(--spacing-sm);
     font-size: 0.8rem;
     margin-bottom: 0;
+    position: relative; /* For z-index */
+    z-index: 1; /* Ensure it's above decorative elements */
   }
 
   .sidebar-action-button svg {
