@@ -56,6 +56,9 @@ def get_episodes():
     if not hasattr(g, "user_id") or not g.user_id:
         return jsonify({"error": "Unauthorized"}), 401
 
+    response, status_code = episode_repo.get_episodes(g.user_id)
+    return jsonify(response), status_code
+
 
 @episode_bp.route("/delete_episodes/<episode_id>", methods=["DELETE"])
 def delete_episode(episode_id):
@@ -116,3 +119,5 @@ def get_episodes_by_podcast(podcast_id):
     except Exception as e:
         logger.error("❌ ERROR: %s", e)
         return jsonify({"error": f"Failed to fetch episodes by podcast: {str(e)}"}), 500
+    
+    
