@@ -1,4 +1,4 @@
-import re
+import re #THIS CLASS CAN HELP TO MAKE DEFAULT TASKS INTO REGULAR TASKS "IMPORT"
 
 def extract_highlights(description):
     # Example logic to extract key highlights from the description
@@ -7,7 +7,7 @@ def extract_highlights(description):
     for sentence in sentences:
         if "important" in sentence.lower() or "key" in sentence.lower():
             highlights.append(sentence)
-    return highlights
+    return highlights 
 
 def process_default_tasks(data):
     # Ensure defaultTasks is None if it's an empty list

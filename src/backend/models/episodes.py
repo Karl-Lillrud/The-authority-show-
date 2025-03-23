@@ -11,7 +11,6 @@ class EpisodeSchema(Schema):
     publishDate = fields.Str(allow_none=True)  # Ensure publishDate is correctly defined
     duration = fields.Int(allow_none=True)  # Change to integer
     status = fields.Str(allow_none=True)
-    defaultTasks = fields.List(fields.Nested(PodtaskSchema), allow_none=True)
     createdAt = fields.DateTime()
     updatedAt = fields.DateTime()
     audioUrl = fields.Url(allow_none=True)
@@ -31,26 +30,3 @@ class EpisodeSchema(Schema):
     author = fields.Str(allow_none=True)
     isHidden = fields.Bool(allow_none=True)
     highlights = fields.List(fields.Str(), allow_none=True)  # New field for highlights
-
-    @pre_load
-    def process_empty_strings(self, data, **kwargs):
-        # Convert empty strings to None for fields that expect specific types
-        for key in [
-            "publishDate",  # Ensure publishDate is correctly processed
-            "description",
-            "duration",
-            "status",
-            "audioUrl",
-            "fileSize",
-            "fileType",
-            "guid",
-            "season",
-            "episode",
-            "imageUrl",
-            "link",
-            "subtitle",
-            "summary",
-            "author",
-        ]:
-            if key in data and data[key] == "":
-                data[key] = None
