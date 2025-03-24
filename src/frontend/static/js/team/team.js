@@ -1023,7 +1023,10 @@ async function handleAddMemberFormSubmission(e) {
   const role = document.getElementById("memberRole").value;
   const teamId = document.getElementById("teamSelect").value;
 
+  console.log("Submitting Add Member Form with data:", { email, role, teamId }); // Debug log
+
   if (!email || !teamId || !role) {
+    console.error("Validation failed: Missing email, role, or teamId"); // Debug log
     showNotification(
       "Error",
       "Please provide member email, role, and select a team.",
@@ -1033,46 +1036,30 @@ async function handleAddMemberFormSubmission(e) {
   }
 
   try {
-    // Add the member to the team
-    const res = await fetch("/add_team_member", {
-      method: "PUT",
+    console.log("Sending request to /send_team_invite"); // Debug log
+    const res = await fetch("/send_team_invite", {
+      method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ teamId, email, role })
     });
+
+    console.log("Response status:", res.status); // Debug log
+    const contentType = res.headers.get("content-type");
+    console.log("Response content-type:", contentType); // Debug log
+
+    if (!contentType || !contentType.includes("application/json")) {
+      throw new Error("Invalid server response. Expected JSON.");
+    }
+
     const updateResult = await res.json();
+    console.log("Response body:", updateResult); // Debug log
 
-    if (updateResult.error) {
-      showNotification("Error", updateResult.error, "error");
-      return;
-    }
-
-    // Notify success for member creation
     showNotification("Success", "Member added successfully!", "success");
-
-    // Attempt to send the invitation email
-    try {
-      const inviteResult = await sendTeamInvite(teamId, email);
-      console.log(`Invitation sent: `, inviteResult);
-      showNotification(
-        "Success",
-        "Invitation email sent successfully!",
-        "success"
-      );
-    } catch (emailError) {
-      console.error("Error sending invitation email:", emailError);
-      showNotification(
-        "Warning",
-        "Member added, but the invitation email failed to send.",
-        "warning"
-      );
-    }
-
-    // Close the modal and refresh the team list
     document.getElementById("addMemberModal").classList.remove("show");
     const teams = await getTeamsRequest();
     updateTeamsUI(teams);
   } catch (error) {
-    console.error("Error adding member:", error);
+    console.error("Error in handleAddMemberFormSubmission:", error); // Debug log
     showNotification("Error", "Failed to add member.", "error");
   }
 }

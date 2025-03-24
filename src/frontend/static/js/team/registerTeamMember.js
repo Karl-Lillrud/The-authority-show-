@@ -9,8 +9,10 @@ document.addEventListener("DOMContentLoaded", () => {
   // Extract all URL parameters in one place
   const urlParams = new URLSearchParams(window.location.search);
   const inviteToken = urlParams.get("token");
-  const teamName = decodeURIComponent(urlParams.get("teamName") || "Unnamed Team");
-  const role = decodeURIComponent(urlParams.get("role") || "Member");
+  const teamName = decodeURIComponent(
+    urlParams.get("teamName") || "Unnamed Team"
+  );
+  const role = decodeURIComponent(urlParams.get("role"));
   const email = urlParams.get("email");
 
   // Update team name everywhere
@@ -59,7 +61,7 @@ document.addEventListener("DOMContentLoaded", () => {
       phone: document.getElementById("phone").value.trim(),
       password: document.getElementById("password").value,
       confirmPassword: document.getElementById("confirmPassword").value,
-      inviteToken: inviteToken,
+      inviteToken: inviteToken
     };
 
     // Password match validation
@@ -70,7 +72,9 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // Password strength validation (at least 8 characters, includes both numbers & letters)
     if (!isValidPassword(formData.password)) {
-      showError("Password must be at least 8 characters long and contain both numbers and letters.");
+      showError(
+        "Password must be at least 8 characters long and contain both numbers and letters."
+      );
       return;
     }
 
@@ -100,6 +104,8 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   function isValidPassword(password) {
-    return password.length >= 8 && /[A-Za-z]/.test(password) && /\d/.test(password);
+    return (
+      password.length >= 8 && /[A-Za-z]/.test(password) && /\d/.test(password)
+    );
   }
 });
