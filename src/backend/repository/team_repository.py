@@ -219,3 +219,43 @@ class TeamRepository:
         except Exception as e:
             logger.error(f"Error adding member to team: {e}", exc_info=True)
             return {"error": f"Failed to add member: {str(e)}"}, 500
+
+    # Delete team when user is team creator or remove user from teams members when user account is deleted  
+    def remove_member_or_delete_team(self, team_id: str, user_id: str, return_message_only=False):
+        try:
+            team = self.teams_collection.find_one({"_id": team_id})
+            if not team:
+                msg = {"error": f"Team {team_id} not found"}
+                return msg if return_message_only else (msg, 404)
+
+            # Check if the user is the creator of the team
+            is_creator = any(
+                member.get("userId") == user_id and member.get("role") == "creator"
+                for member in team.get("members", [])
+            )
+
+            if is_creator:
+                # Creator: Delete entire team and related links
+                self.user_to_teams_collection.delete_many({"teamId": team_id})
+                self.teams_collection.delete_one({"_id": team_id})
+
+                msg = {"message": f"Team {team_id} deleted by creator {user_id}"}
+                return msg if return_message_only else (msg, 200)
+
+            else:
+                # Member: Remove user from team members and UsersToTeams
+                self.teams_collection.update_one(
+                    {"_id": team_id},
+                    {"$pull": {"members": {"userId": user_id}}}
+                )
+                self.user_to_teams_collection.delete_many(
+                    {"teamId": team_id, "userId": user_id}
+                )
+
+                msg = {"message": f"User {user_id} removed from team {team_id}"}
+                return msg if return_message_only else (msg, 200)
+
+        except Exception as e:
+            logger.error(f"Error removing user or deleting team: {e}", exc_info=True)
+            msg = {"error": f"Failed to update team: {str(e)}"}
+            return msg if return_message_only else (msg, 500)
