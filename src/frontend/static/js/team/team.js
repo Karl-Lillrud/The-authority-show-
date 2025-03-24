@@ -116,9 +116,9 @@ function updateTeamsUI(teams) {
                         ${
                           m.role === "creator"
                             ? '<span class="creator-badge">Creator</span>'
-                            : m.verified === true
-                            ? '<span class="verified-badge">Verified</span>'
-                            : '<span class="not-verified-badge">Not Verified</span>'
+                            : `<span class="role-badge ${m.role.toLowerCase()}">${
+                                m.role
+                              }</span>`
                         }
                       </span>
                     `
@@ -651,10 +651,8 @@ async function renderMembersView() {
     const membersView = document.getElementById("members-view-container");
 
     for (const team of teams) {
-      console.log(`Team: ${team.name}`, team.members); // Debugging: Log team members
       if (team.members && Array.isArray(team.members)) {
         team.members.forEach((member) => {
-          console.log(`Member: ${member.email}`, member); // Debugging: Log each member
           const card = document.createElement("div");
           card.className = "member-card";
           card.innerHTML = `
@@ -664,9 +662,9 @@ async function renderMembersView() {
                 ${
                   member.role === "creator"
                     ? '<span class="creator-badge">Creator</span>'
-                    : member.role === "admin"
-                    ? '<span class="admin-badge">Admin</span>'
-                    : '<span class="member-badge">Member</span>'
+                    : `<span class="role-badge ${member.role.toLowerCase()}">${
+                        member.role
+                      }</span>`
                 }
                 ${
                   member.role !== "creator" && !member.verified
@@ -714,8 +712,6 @@ async function renderMembersView() {
             );
           membersView.appendChild(card);
         });
-      } else {
-        console.warn(`No members found for team: ${team.name}`);
       }
     }
   } catch (error) {
