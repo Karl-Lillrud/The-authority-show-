@@ -32,14 +32,14 @@ export function fetchGuestsRequest() {
     .then((data) => data.guests || []);
 }
 
-// New function to fetch guests by episode
+// Ensure the endpoint is correctly calling the backend route
 export function fetchGuestsByEpisode(episodeId) {
-  return fetch(`/get_guests_by_episode/${episodeId}`, { method: "GET" })
+  return fetch(`/get_guests_by_episode/${episodeId}`, { method: "GET" }) // Make sure this endpoint matches the backend
     .then((res) => {
       if (!res.ok) {
         throw new Error("Failed to fetch guests");
       }
       return res.json();
     })
-    .then((data) => data.guests || []);
+    .then((data) => data.guests || []); // Ensure that the returned data is correctly structured
 }

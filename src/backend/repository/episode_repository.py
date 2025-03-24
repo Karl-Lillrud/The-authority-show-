@@ -3,8 +3,9 @@ from datetime import datetime, timezone
 import uuid
 import logging
 from backend.models.episodes import EpisodeSchema
-from backend.services.integration import save_uploaded_files
+from backend.services.spotify_integration import save_uploaded_files
 import bson
+import base64
 
 logger = logging.getLogger(__name__)
 
@@ -124,11 +125,11 @@ class EpisodeRepository:
                 )
                 return {"error": "Episode not found"}, 404
 
-            # Convert binary data to a serializable format
+            # Convert binary data to a base64 encoded string
             if 'episodeFiles' in episode:
                 for file in episode['episodeFiles']:
                     if 'data' in file:
-                        file['data'] = bson.Binary(file['data']).decode('utf-8')
+                        file['data'] = base64.b64encode(file['data']).decode('utf-8')
 
             return episode, 200
 
@@ -242,3 +243,16 @@ class EpisodeRepository:
             return {"episodes": episodes}, 200
         except Exception as e:
             return {"error": str(e)}, 500
+
+    def get_episode_by_id(self, episode_id):
+        """
+        Get a single episode by ID without user validation
+        """
+        try:
+            episode = self.collection.find_one({"_id": episode_id})
+            if not episode:
+                return None
+            return episode
+        except Exception as e:
+            logger.error(f"❌ ERROR: {e}")
+            return None

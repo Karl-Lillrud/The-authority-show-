@@ -940,3 +940,21 @@ export async function fetchPodcasts() {
     throw error;
   }
 }
+
+document.addEventListener("DOMContentLoaded", () => {
+  // Example usage of fetchEpisode
+  document.querySelectorAll(".episode-link").forEach(link => {
+    link.addEventListener("click", async (event) => {
+      event.preventDefault();
+      const episodeId = link.dataset.episodeId;
+      try {
+        const episode = await fetchEpisode(episodeId);
+        console.log("Fetched episode:", episode);
+        // Render episode details or perform other actions with the fetched episode
+      } catch (error) {
+        console.error("Error fetching episode details:", error);
+        showNotification("Error", `Failed to fetch episode: ${error.message}`, "error");
+      }
+    });
+  });
+});

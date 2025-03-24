@@ -5,8 +5,9 @@ from pymongo import MongoClient  # MongoDB client
 import gridfs  # GridFS for file storage
 from backend.repository.episode_repository import EpisodeRepository
 from backend.database.mongo_connection import episodes
-from backend.services.integration import get_spotify_access_token, upload_episode_to_spotify
+from backend.services.spotify_integration import get_spotify_access_token, upload_episode_to_spotify, save_uploaded_files
 import bson
+import base64
 
 # Initialize Blueprint and repository
 episode_bp = Blueprint("episode_bp", __name__)
@@ -18,6 +19,11 @@ logger = logging.getLogger(__name__)
 client = MongoClient("mongodb://localhost:27017/Podmanager")  # Replace with your MongoDB URI
 db = client['Podmanager']
 fs = gridfs.GridFS(db)  # Use GridFS for file storage
+
+def get_guests_for_episode(episode_id):
+    guests_collection = db['Guests']  # Replace with your actual guests collection name
+    guests = guests_collection.find({"episodeId": episode_id})
+    return list(guests)
 
 @episode_bp.route("/register_episode", methods=["POST"])
 def register_episode():
@@ -52,19 +58,32 @@ def register_episode():
 
 @episode_bp.route("/publish_to_spotify/<episode_id>", methods=["POST"])
 def publish_to_spotify(episode_id):
+    # Check if the user is authorized
     if not hasattr(g, "user_id") or not g.user_id:
         return jsonify({"error": "Unauthorized"}), 401
 
-    episode = episodes.find_one({"_id": episode_id})
+    # Fetch the episode by ID
+    episode = episode_repo.get_episode_by_id(episode_id)
     if not episode:
         return jsonify({"error": "Episode not found"}), 404
 
+    # Ensure episode data contains necessary fields
+    if not episode.get('audioUrl'):
+        return jsonify({"error": "Audio URL is missing in the episode data."}), 400
+    if not episode.get('title'):
+        return jsonify({"error": "Title is missing in the episode data."}), 400
+    if not episode.get('description'):
+        return jsonify({"error": "Description is missing in the episode data."}), 400
+
     try:
-        # Fetch Spotify access token
+        # Fetch the Spotify access token
         access_token = get_spotify_access_token()
         if not access_token:
             logger.error("Failed to retrieve Spotify access token")
             return jsonify({"error": "Failed to retrieve Spotify access token"}), 500
+
+        # Log the episode data being sent to Spotify for debugging purposes
+        logger.info(f"Publishing to Spotify with data: {episode}")
 
         # Attempt to upload episode to Spotify
         result = upload_episode_to_spotify(access_token, episode)
@@ -78,6 +97,7 @@ def publish_to_spotify(episode_id):
         return jsonify({"error": f"Error publishing to Spotify: {str(e)}"}), 500
 
 
+
 @episode_bp.route("/get_episodes/<episode_id>", methods=["GET"])
 def get_episode(episode_id):
     if not hasattr(g, "user_id") or not g.user_id:
@@ -85,15 +105,23 @@ def get_episode(episode_id):
 
     try:
         response, status_code = episode_repo.get_episode(episode_id, g.user_id)
-        # Convert binary data to a serializable format
+        
+        # Ensure binary data is correctly handled
         if 'episodeFiles' in response:
             for file in response['episodeFiles']:
                 if 'data' in file:
-                    file['data'] = bson.Binary(file['data']).decode('utf-8')
+                    # Check if the data is in bytes, then convert to base64
+                    if isinstance(file['data'], bytes):
+                        file['data'] = base64.b64encode(file['data']).decode('utf-8')
+                    else:
+                        # If it's not in bytes, log the error or handle accordingly
+                        logger.error(f"Expected bytes but found {type(file['data'])} for file data.")
+        
         return jsonify(response), status_code
     except Exception as e:
         logger.error("❌ ERROR: %s", e)
         return jsonify({"error": f"Failed to fetch episode: {str(e)}"}), 500
+
 
 
 @episode_bp.route("/get_episodes", methods=["GET"])
@@ -152,6 +180,34 @@ def episode_detail(episode_id):
         return render_template("landingpage/episode.html", episode=ep)
     except Exception as e:
         return f"Error: {str(e)}", 500
+    
+
+@episode_bp.route("/get_guests_by_episode/<episode_id>", methods=["GET"])
+def get_guests_by_episode(episode_id):
+    # Check if the user is authorized
+    if not hasattr(g, "user_id") or not g.user_id:
+        return jsonify({"error": "Unauthorized"}), 401
+
+    try:
+        # Fetch the guests from the database for the specific episode
+        guests = get_guests_for_episode(episode_id)  # Ensure this function correctly fetches from your database
+
+        # If no guests are found, return an appropriate message
+        if not guests:
+            logger.warning(f"No guests found for episode {episode_id}")
+            return jsonify({"message": "No guests found for this episode."}), 404
+
+        # Log the retrieved guests for debugging purposes
+        logger.info(f"Guests found for episode {episode_id}: {guests}")
+
+        return jsonify({"guests": guests}), 200
+    except Exception as e:
+        # Log the error if the guests could not be fetched
+        logger.error(f"Error fetching guests for episode {episode_id}: {str(e)}")
+        return jsonify({"error": "Failed to fetch guests"}), 500
+
+
+
 
 
 @episode_bp.route("/episodes/by_podcast/<podcast_id>", methods=["GET"])

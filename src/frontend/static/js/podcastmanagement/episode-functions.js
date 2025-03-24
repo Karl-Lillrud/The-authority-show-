@@ -1,7 +1,6 @@
 import {
   registerEpisode,
   fetchEpisodesByPodcast,
-  fetchEpisode,
   updateEpisode,
   deleteEpisode
 } from "../../../static/requests/episodeRequest.js";
@@ -14,6 +13,7 @@ import {
 } from "./podcastmanagement.js";
 import { renderPodcastSelection, viewPodcast } from "./podcast-functions.js";
 import { renderGuestDetail } from "./guest-functions.js";
+import { fetchEpisode } from "../../../static/requests/episodeRequest.js";
 
 // Add this function to create a play button with SVG icon
 export function createPlayButton(size = "medium") {
@@ -35,13 +35,11 @@ export function createPlayButton(size = "medium") {
 export function playAudio(audioUrl, episodeTitle) {
   // Check if there's an existing audio player in the page
   let audioPlayer = document.getElementById("global-audio-player");
-
   if (!audioPlayer) {
     // Create a new audio player if one doesn't exist
     audioPlayer = document.createElement("div");
     audioPlayer.id = "global-audio-player";
     audioPlayer.className = "global-audio-player";
-
     document.body.appendChild(audioPlayer);
   }
 
@@ -112,7 +110,6 @@ export function renderEpisodeDetail(episode) {
       <div class="detail-section">
         <h2>About</h2>
         <p>${episode.description || "No description available."}</p>
-        
         <!-- Audio player moved here, under the description -->
         ${
           episode.audioUrl
@@ -276,63 +273,49 @@ export function renderEpisodeDetail(episode) {
       const guestsListEl = document.getElementById("guests-list");
       if (guestsListEl) {
         guestsListEl.innerHTML = "";
-
         if (guests && guests.length) {
           const guestsContainer = document.createElement("div");
           guestsContainer.className = "guests-container";
-
           guests.forEach((guest) => {
             const guestCard = document.createElement("div");
             guestCard.className = "guest-card";
-
             const initials = guest.name
               .split(" ")
               .map((word) => word[0])
               .join("")
               .substring(0, 2)
               .toUpperCase();
-
             const contentDiv = document.createElement("div");
             contentDiv.className = "guest-info";
-
             const avatarDiv = document.createElement("div");
             avatarDiv.className = "guest-avatar";
             avatarDiv.textContent = initials;
-
             const infoDiv = document.createElement("div");
             infoDiv.className = "guest-content";
-
             const nameDiv = document.createElement("div");
             nameDiv.className = "guest-name";
             nameDiv.textContent = guest.name;
-
             const emailDiv = document.createElement("div");
             emailDiv.className = "guest-email";
             emailDiv.textContent = guest.email;
-
             infoDiv.appendChild(nameDiv);
             infoDiv.appendChild(emailDiv);
-
             const viewProfileBtn = document.createElement("button");
             viewProfileBtn.className = "view-profile-btn";
             viewProfileBtn.textContent = "View Profile";
-
             viewProfileBtn.addEventListener("click", (e) => {
               e.stopPropagation();
               renderGuestDetail(guest);
             });
-
             guestCard.addEventListener("click", () => {
               renderGuestDetail(guest);
             });
-
             contentDiv.appendChild(avatarDiv);
             contentDiv.appendChild(infoDiv);
             guestCard.appendChild(contentDiv);
             guestCard.appendChild(viewProfileBtn);
             guestsContainer.appendChild(guestCard);
           });
-
           guestsListEl.appendChild(guestsContainer);
         } else {
           const noGuests = document.createElement("p");
@@ -362,7 +345,6 @@ async function showEpisodePopup(episode) {
   const popup = document.createElement("div");
   popup.className = "popup";
   popup.style.display = "flex";
-
   const popupContent = document.createElement("div");
   popupContent.className = "form-box";
   popupContent.innerHTML = `
@@ -466,7 +448,6 @@ export function initEpisodeFunctions() {
       try {
         const response = await fetchPodcasts();
         const podcasts = response.podcast;
-
         if (!podcasts || podcasts.length === 0) {
           showNotification(
             "No Podcasts",
@@ -475,7 +456,6 @@ export function initEpisodeFunctions() {
           );
           return;
         }
-
         renderPodcastSelection(podcasts);
         document.getElementById("episode-form-popup").style.display = "flex";
       } catch (error) {
@@ -539,13 +519,11 @@ export function initEpisodeFunctions() {
             "Accept": "application/json"
           }
         });
-
         if (!response.ok) {
           const errorData = await response.json();
           showNotification("Error", errorData.error || "Failed to create episode.", "error");
           return;
         }
-
         const result = await response.json();
         showNotification(
           "Success",
@@ -561,4 +539,46 @@ export function initEpisodeFunctions() {
         showNotification("Error", "Failed to create episode.", "error");
       }
     });
+}
+
+document.addEventListener("DOMContentLoaded", () => {
+  // Example usage of fetchEpisode
+  document.querySelectorAll(".episode-link").forEach(link => {
+    link.addEventListener("click", async (event) => {
+      event.preventDefault();
+      const episodeId = link.dataset.episodeId;
+      try {
+        const episode = await fetchEpisode(episodeId);
+        console.log("Fetched episode:", episode);
+        // Render episode details or perform other actions with the fetched episode
+      } catch (error) {
+        console.error("Error fetching episode details:", error);
+        showNotification("Error", `Failed to fetch episode: ${error.message}`, "error");
+      }
+    });
+  });
+
+  // Example usage of publishEpisodeToSpotify
+  document.querySelectorAll(".publish-episode-btn").forEach(button => {
+    button.addEventListener("click", async (event) => {
+      const episodeId = button.dataset.episodeId;
+      await publishEpisodeToSpotify(episodeId);
+    });
+  });
+});
+
+async function publishEpisodeToSpotify(episodeId) {
+  try {
+    const response = await fetch(`/publish_to_spotify/${episodeId}`, {
+      method: "POST"
+    });
+    if (!response.ok) {
+      throw new Error(`Failed to upload episode to Spotify: ${response.statusText}`);
+    }
+    const result = await response.json();
+    showNotification("Success", "Episode published successfully to Spotify!", "success");
+  } catch (error) {
+    console.error("Failed to publish episode:", error);
+    showNotification("Error", `Failed to upload episode to Spotify: ${error.message}`, "error");
+  }
 }
