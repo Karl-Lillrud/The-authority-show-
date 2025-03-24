@@ -284,3 +284,12 @@ def bulk_update_status(self, user_id: str, task_ids: List[str], new_status: str)
                 logger.error(f"Error in bulk status update: {e}", exc_info=True)
                 return {"error": f"Failed to update tasks: {str(e)}"}, 500
                 
+    # Delete podtask when user account is deleted
+    def delete_by_user(self, user_id):
+        try:
+            result = self.podtasks_collection.delete_many({"userid": str(user_id)})
+            logger.info(f"🧹 Deleted {result.deleted_count} podtasks for user {user_id}")
+            return result.deleted_count
+        except Exception as e:
+            logger.error(f"Failed to delete podtasks: {e}", exc_info=True)
+            return 0

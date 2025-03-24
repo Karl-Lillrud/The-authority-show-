@@ -78,3 +78,13 @@ class AccountRepository:
         except Exception as e:
             logger.error(f"Failed to fetch account: {e}")
             return {"error": f"Failed to fetch account: {str(e)}"}, 500
+
+    # Delete account when user is deleted
+    def delete_by_user(self, user_id):
+        try:
+            result = self.collection.delete_many({"userId": user_id})
+            logger.info(f"Deleted {result.deleted_count} accounts for user {user_id}")
+            return result.deleted_count
+        except Exception as e:
+            logger.error(f"Failed to delete accounts: {e}", exc_info=True)
+            return 0

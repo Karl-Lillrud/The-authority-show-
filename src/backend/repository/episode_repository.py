@@ -236,3 +236,5 @@ class EpisodeRepository:
         except Exception as e:
             logger.error("❌ ERROR: %s", e)
             return {"error": f"Failed to fetch episodes by podcast: {str(e)}"}, 500
+
+    
