@@ -6,19 +6,27 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>GUEST REGISTRATION</title>
   <!-- Other -->
-  <link rel="stylesheet" href="{{ url_for('static', filename='css/guest-form.css') }}"> <!-- Link to the CSS file -->
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/guest-form/guest-form.css') }}"> <!-- Link to the CSS file -->
   <script src="https://cdn.jsdelivr.net/npm/emailjs-com@2.6.4/dist/email.min.js"></script>
   <script src="https://cdn.tailwindcss.com"></script>
 </head>
 
-<body class="bg-[#eff2f9] flex items-center justify-center min-h-screen">
+<body >
 
-  <div class="bg-[#eff2f9] p-6 rounded-lg shadow-xl w-full max-w-xl">
+<!-- Link to the CSS file 
+  <div class="image">
+    <img
+     src="{{ url_for('static', filename='images/vivi.jpg') }}" alt="Beskrivning av bilden"/>
+  </div>-->
+
+
+  <div class=" p-6 rounded-lg shadow-xl w-full max-w-xl" id="guestFormContainer">
     <!--- Top Image -->
     <div class="w-full h-32 mb-4 rounded-lg flex items-center justify-center">
       <img src="{{ url_for('static', filename='images/PodManagerLogo.png') }}" alt="PodManager Logo" class="h-full object-contain">
     </div>
-
+  
+   
     <!--- Title -->
     <h2 class="text-2xl font-bold text-center text-gray-700 mb-4">Guest Registration</h2>
     <form id="guestForm" class="space-y-4">
@@ -37,10 +45,10 @@
         <input type="file" id="profilePhoto" accept="image/*" class="hidden" onchange="previewImage()">
 
         <!-- Custom styled button -->
-        <label for="profilePhoto" class="bg-[#ff3b30] text-white px-4 py-2 rounded cursor-pointer inline-block mt-2">
+        <label for="profilePhoto" id="profilePhotoLabel">
           Browse
         </label>
-
+        
         <!-- File name display -->
         <p id="fileName" class="text-sm text-gray-700 mt-2"></p>
 
@@ -89,14 +97,12 @@
         <label class="block text-gray-600 font-medium">Select a Recording Date & Time *</label>
 
         <!-- Button to show calendar with an icon -->
-        <button id="openDatePicker" type="button"
-          class="flex items-center gap-2 text-white  px-4 py-2 rounded-lg bg-[#ff3b30] transition">
-          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
-            stroke="currentColor" class="w-5 h-5">
-            <path stroke-linecap="round" stroke-linejoin="round"
-              d="M8 7V3m8 4V3m-9 8h10m-11 9h12a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+        <button id="openDatePicker" type="button" class="flex items-center gap-2 text-white px-4 py-2 rounded-lg bg-[#ff3b30] transition">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10m-11 9h12a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
           </svg>
         </button>
+        
 
         <!-- Inline Calendar + Time Picker (Initially Hidden) -->
         <div id="dateTimeContainer" class="hidden mt-4 p-4 bg-white shadow-lg rounded-lg w-full max-w-md">
@@ -150,8 +156,9 @@
       <label class="block text-gray-600 font-medium mb-2">Do you wish to add a social media account?</label>
 
       <!-- Button to add social media -->
-      <button id="addSocialButton" type="button" class="bg-[#ff3b30] text-white px-4 py-2 rounded"
-        onclick="addSocialMedia()">Link Social Media</button>
+     
+        <button id="addSocialButton" type="button" onclick="addSocialMedia()">Link Social Media</button>
+
 
       <!-- Container where social media fields will be added -->
       <div id="socialMediaContainer" class="mt-4 space-y-4"></div>
@@ -160,8 +167,8 @@
       <label class="block text-gray-600 font-medium mb-2">Do you want to recommend a guest?</label>
 
       <!-- Button to add a recommended guest -->
-      <button id="addGuestButton" type="button" class="bg-[#ff3b30] text-white px-4 py-2 rounded"
-        onclick="addRecommendedGuest()">Add Guest</button>
+      <button id="addGuestButton" type="button" onclick="addRecommendedGuest()">Add Guest</button>
+
 
       <!-- Container where recommended guest fields will be added -->
       <div id="recommendedGuestContainer" class="mt-4 space-y-4"></div>
@@ -197,14 +204,21 @@
       <div></div>
 
       <!--- Submit button -->
-      <button type="submit"
-        class="w-full bg-[#ff3b30] text-white py-2 rounded-lg font-semibold transition-all">Submit</button>
+      <button type="submit" class="w-full bg-[#ff3b30] text-white py-2 rounded-lg font-semibold transition-all">
+        Submit
+      </button>
+      
     </form>
   </div>
 
   <!--- Link to script -->
   <script src="{{ url_for('static', filename='js/guest-form.js') }}"></script>
+  <footer class="footer">
+    <img src="{{ url_for('static', filename='images/PodManagerLogo.png') }}" alt="Pod Manager" class="footer-logo">
+    <p class="footer-text">Powered by Pod Manager</p>
 
+  </footer>
+  
 </body>
 
 </html>
