@@ -621,6 +621,8 @@ export function switchToTeamsView() {
     .catch((error) => console.error("Error rendering teams view:", error));
 }
 
+// Ta bort showEditMemberModal och använd showTeamCardEditMemberModal istället
+// Uppdatera renderMembersView för att använda showTeamCardEditMemberModal
 async function renderMembersView() {
   const mainContent = document.querySelector(".main-content");
   mainContent.innerHTML = `
@@ -683,7 +685,7 @@ async function renderMembersView() {
             </div>
           `;
           if (member.role !== "creator") {
-            // Use team card edit modal logic for editing members
+            // Använd showTeamCardEditMemberModal för att redigera medlemmar
             card
               .querySelector(".edit-member-btn")
               .addEventListener("click", () =>
@@ -818,204 +820,7 @@ function handleDeleteUnverifiedMember(teamId, email, role) {
   deleteMember(teamId, null, email, role);
 }
 
-function showEditMemberModal(teamId, member) {
-  const modal = document.getElementById("editMemberModal");
-  const emailInput = document.getElementById("editMemberEmail");
-  const roleSelect = document.getElementById("editMemberRole");
-  const saveBtn = document.getElementById("saveEditMemberBtn");
-
-  emailInput.value = member.email;
-  roleSelect.value = member.role;
-
-  modal.classList.add("show");
-  modal.setAttribute("aria-hidden", "false");
-
-  saveBtn.onclick = async () => {
-    const updatedEmail = emailInput.value.trim();
-    const updatedRole = roleSelect.value;
-    console.log(
-      "Original email:",
-      member.email,
-      "Updated email:",
-      updatedEmail
-    );
-    if (!teamId || !updatedEmail || !updatedRole) {
-      showNotification("Error", "Missing teamId, email, or role.", "error");
-      return;
-    }
-    try {
-      // Compare lower-case emails to detect change
-      if (
-        updatedEmail.toLowerCase() !== member.email.toLowerCase() ||
-        updatedRole !== member.role
-      ) {
-        let result;
-        if (!member.userId) {
-          // For members without userId, allow email change by passing newEmail
-          console.log(
-            "Calling editTeamMemberByEmailRequest with newEmail:",
-            updatedEmail
-          );
-          result = await editTeamMemberByEmailRequest(
-            teamId,
-            member.email,
-            updatedRole,
-            updatedEmail
-          );
-        } else {
-          // For members with userId do not allow email change
-          if (updatedEmail.toLowerCase() !== member.email.toLowerCase()) {
-            showNotification(
-              "Error",
-              "Email change is not allowed for verified users.",
-              "error"
-            );
-            return;
-          }
-          result = await editTeamMemberRequest(
-            teamId,
-            member.userId,
-            updatedRole
-          );
-        }
-        if (result.error) {
-          showNotification("Error", result.error, "error");
-          return;
-        }
-        showNotification("Success", "Member updated successfully!", "success");
-      }
-      modal.classList.remove("show");
-      const teams = await getTeamsRequest();
-      updateTeamsUI(teams);
-    } catch (error) {
-      console.error("Error updating member:", error);
-      showNotification(
-        "Error",
-        "An error occurred while updating the member.",
-        "error"
-      );
-    }
-  };
-
-  document.getElementById("cancelEditMemberBtn").onclick = () => {
-    modal.classList.remove("show");
-  };
-}
-
-async function addTeam(payload) {
-  try {
-    const response = await addTeamRequest(payload);
-    showNotification("Success", "Team successfully created!", "success");
-    const teams = await getTeamsRequest();
-    updateTeamsUI(teams);
-  } catch (error) {
-    console.error("Error adding team:", error);
-    showNotification("Error", "Failed to create team.", "error");
-  }
-}
-
-async function deleteTeam(teamId) {
-  try {
-    const result = await deleteTeamRequest(teamId);
-    if (result.message) {
-      showNotification(
-        "Success",
-        result.message || "Team deleted successfully!",
-        "success"
-      );
-      const teams = await getTeamsRequest();
-      updateTeamsUI(teams);
-    } else {
-      showNotification(
-        "Error",
-        result.error || "Failed to delete team.",
-        "error"
-      );
-    }
-  } catch (error) {
-    console.error("Error deleting team:", error);
-    showNotification(
-      "Error",
-      "An error occurred while deleting the team.",
-      "error"
-    );
-  }
-}
-
-async function saveTeamDetails(teamId, payload) {
-  try {
-    const result = await editTeamRequest(teamId, payload);
-    if (result.message) {
-      showNotification(
-        "Success",
-        result.message || "Team updated successfully!",
-        "success"
-      );
-      const teams = await getTeamsRequest();
-      updateTeamsUI(teams);
-    } else {
-      showNotification(
-        "Error",
-        result.error || "Failed to update team.",
-        "error"
-      );
-    }
-  } catch (error) {
-    console.error("Error updating team:", error);
-    showNotification(
-      "Error",
-      "An error occurred while updating the team.",
-      "error"
-    );
-  }
-}
-
-async function handleAddMemberFormSubmission(e) {
-  e.preventDefault();
-  const email = document.getElementById("memberEmail").value;
-  const role = document.getElementById("memberRole").value;
-  const teamId = document.getElementById("teamSelect").value;
-
-  console.log("Submitting Add Member Form with data:", { email, role, teamId }); // Debug log
-
-  if (!email || !teamId || !role) {
-    console.error("Validation failed: Missing email, role, or teamId"); // Debug log
-    showNotification(
-      "Error",
-      "Please provide member email, role, and select a team.",
-      "error"
-    );
-    return;
-  }
-
-  try {
-    const inviteResult = await sendTeamInviteRequest(teamId, email, role);
-    console.log("Response from /send_team_invite:", inviteResult); // Debug log
-
-    const addMemberResult = await addTeamMemberRequest(teamId, email, role);
-    console.log("Response from /add_team_member:", addMemberResult); // Debug log
-
-    if (addMemberResult.error) {
-      showNotification("Error", addMemberResult.error, "error");
-      return;
-    }
-
-    showNotification("Success", "Member added successfully!", "success");
-    document.getElementById("addMemberModal").classList.remove("show");
-    const teams = await getTeamsRequest();
-    updateTeamsUI(teams);
-  } catch (error) {
-    console.error("Error in handleAddMemberFormSubmission:", error); // Debug log
-    showNotification("Error", "Failed to add member.", "error");
-  }
-}
-
-// Update existing event listeners to use showNotification
-document
-  .getElementById("addMemberForm")
-  .addEventListener("submit", handleAddMemberFormSubmission);
-
-// Function to show the edit member modal from team cards
+// Kontrollera att endast en deklaration av showTeamCardEditMemberModal finns
 function showTeamCardEditMemberModal(teamId, member) {
   const modal = document.getElementById("teamCardEditMemberModal");
   const emailInput = document.getElementById("teamCardEditMemberEmail");
@@ -1164,3 +969,116 @@ function showTeamCardEditMemberModal(teamId, member) {
     modal.classList.remove("show");
   };
 }
+
+async function addTeam(payload) {
+  try {
+    const response = await addTeamRequest(payload);
+    showNotification("Success", "Team successfully created!", "success");
+    const teams = await getTeamsRequest();
+    updateTeamsUI(teams);
+  } catch (error) {
+    console.error("Error adding team:", error);
+    showNotification("Error", "Failed to create team.", "error");
+  }
+}
+
+async function deleteTeam(teamId) {
+  try {
+    const result = await deleteTeamRequest(teamId);
+    if (result.message) {
+      showNotification(
+        "Success",
+        result.message || "Team deleted successfully!",
+        "success"
+      );
+      const teams = await getTeamsRequest();
+      updateTeamsUI(teams);
+    } else {
+      showNotification(
+        "Error",
+        result.error || "Failed to delete team.",
+        "error"
+      );
+    }
+  } catch (error) {
+    console.error("Error deleting team:", error);
+    showNotification(
+      "Error",
+      "An error occurred while deleting the team.",
+      "error"
+    );
+  }
+}
+
+async function saveTeamDetails(teamId, payload) {
+  try {
+    const result = await editTeamRequest(teamId, payload);
+    if (result.message) {
+      showNotification(
+        "Success",
+        result.message || "Team updated successfully!",
+        "success"
+      );
+      const teams = await getTeamsRequest();
+      updateTeamsUI(teams);
+    } else {
+      showNotification(
+        "Error",
+        result.error || "Failed to update team.",
+        "error"
+      );
+    }
+  } catch (error) {
+    console.error("Error updating team:", error);
+    showNotification(
+      "Error",
+      "An error occurred while updating the team.",
+      "error"
+    );
+  }
+}
+
+async function handleAddMemberFormSubmission(e) {
+  e.preventDefault();
+  const email = document.getElementById("memberEmail").value;
+  const role = document.getElementById("memberRole").value;
+  const teamId = document.getElementById("teamSelect").value;
+
+  console.log("Submitting Add Member Form with data:", { email, role, teamId }); // Debug log
+
+  if (!email || !teamId || !role) {
+    console.error("Validation failed: Missing email, role, or teamId"); // Debug log
+    showNotification(
+      "Error",
+      "Please provide member email, role, and select a team.",
+      "error"
+    );
+    return;
+  }
+
+  try {
+    const inviteResult = await sendTeamInviteRequest(teamId, email, role);
+    console.log("Response from /send_team_invite:", inviteResult); // Debug log
+
+    const addMemberResult = await addTeamMemberRequest(teamId, email, role);
+    console.log("Response from /add_team_member:", addMemberResult); // Debug log
+
+    if (addMemberResult.error) {
+      showNotification("Error", addMemberResult.error, "error");
+      return;
+    }
+
+    showNotification("Success", "Member added successfully!", "success");
+    document.getElementById("addMemberModal").classList.remove("show");
+    const teams = await getTeamsRequest();
+    updateTeamsUI(teams);
+  } catch (error) {
+    console.error("Error in handleAddMemberFormSubmission:", error); // Debug log
+    showNotification("Error", "Failed to add member.", "error");
+  }
+}
+
+// Update existing event listeners to use showNotification
+document
+  .getElementById("addMemberForm")
+  .addEventListener("submit", handleAddMemberFormSubmission);

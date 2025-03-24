@@ -242,10 +242,9 @@ class UserToTeamRepository:
                 # Delete the user from Users collection by _id
                 delete_user_result = self.users_collection.delete_one({"_id": user_id})
                 if delete_user_result.deleted_count == 0:
-                    logger.error(
-                        "Failed to delete user from Users collection using _id"
+                    logger.warning(
+                        "User not found in Users collection, skipping deletion"
                     )
-                    return {"error": "Failed to delete user from Users collection"}, 500
 
                 return {
                     "message": f"Member with user_id '{user_id}' deleted successfully"
@@ -263,15 +262,14 @@ class UserToTeamRepository:
                         "error": "Failed to delete unverified member from Teams array"
                     }, 500
 
-                # Delete the user from Users collection by email
+                # Optionally delete the user from Users collection by email
                 delete_user_result = self.users_collection.delete_one(
                     {"email": email.lower()}
                 )
                 if delete_user_result.deleted_count == 0:
-                    logger.error(
-                        "Failed to delete user from Users collection using email"
+                    logger.warning(
+                        "Unverified user not found in Users collection, skipping deletion"
                     )
-                    return {"error": "Failed to delete user from Users collection"}, 500
 
                 return {
                     "message": f"Unverified member '{email}' deleted successfully"
