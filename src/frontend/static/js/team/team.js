@@ -1083,7 +1083,7 @@ function showTeamCardEditMemberModal(teamId, member) {
   emailInput.value = member.email;
   roleSelect.value = member.role;
 
-  // Set fields to read-only initially
+  // Set fields to read-only and disabled initially
   emailInput.readOnly = true;
   roleSelect.disabled = true;
   saveBtn.disabled = true;
@@ -1097,6 +1097,10 @@ function showTeamCardEditMemberModal(teamId, member) {
     emailInput.readOnly = false;
     roleSelect.disabled = false;
     saveBtn.disabled = false;
+
+    // Remove grayed-out appearance
+    emailInput.style.backgroundColor = "";
+    roleSelect.style.backgroundColor = "";
   };
 
   // Save changes when "Save" is clicked
