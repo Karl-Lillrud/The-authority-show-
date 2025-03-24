@@ -83,15 +83,17 @@ def send_team_invite():
     team_id = data.get("teamId")
     role = data.get("role")
 
-    if not email or not team_id:
-        logger.error("Validation failed: Missing email or teamId")  # Debug log
-        return jsonify({"error": "Missing email or teamId"}), 400
+    if not email or not team_id or not role:
+        logger.error("Validation failed: Missing email, teamId, or role")  # Debug log
+        return jsonify({"error": "Missing email, teamId, or role"}), 400
 
     try:
         logger.info(
             "Creating invite for email: %s, teamId: %s, role: %s", email, team_id, role
         )  # Debug log
-        result = invite_service.send_invite(g.user_id, team_id, email)
+        result = invite_service.send_invite(
+            g.user_id, team_id, email, role=role
+        )  # Pass role to the invite service
         logger.info("Invite service result: %s", result)  # Debug log
 
         if isinstance(result, dict) and "inviteToken" in result:

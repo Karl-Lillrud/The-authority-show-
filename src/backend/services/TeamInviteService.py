@@ -1,6 +1,6 @@
 from datetime import datetime, timedelta, timezone
 import logging
-from backend.repository.teaminvitrepository import TeamInviteRepository
+from backend.repository.teaminviterepository import TeamInviteRepository
 from backend.repository.usertoteam_repository import UserToTeamRepository
 from backend.repository.user_repository import UserRepository
 
@@ -13,11 +13,13 @@ class TeamInviteService:
         self.user_to_team_repo = UserToTeamRepository()
         self.user_repo = UserRepository()
 
-    def send_invite(self, inviter_id, team_id, email):
+    def send_invite(self, inviter_id, team_id, email, role):
         """Handles sending a team invite and email notification."""
         try:
-            from backend.utils.email_utils import send_team_invite_email  # Import inside function
-            
+            from backend.utils.email_utils import (
+                send_team_invite_email,
+            )  # Import inside function
+
             # Normalize email
             email = email.lower().strip()
 
@@ -30,8 +32,10 @@ class TeamInviteService:
                 if is_member:
                     return {"error": "User is already a member of this team"}, 400
 
-            # Save invite to database
-            invite_token = self.invite_repo.save_invite(team_id, email, inviter_id)
+            # Save invite to database, including the role
+            invite_token = self.invite_repo.save_invite(
+                team_id, email, inviter_id, role=role
+            )
 
             # Get inviter details for the email
             inviter = self.user_repo.get_user_by_id(inviter_id)
@@ -45,6 +49,8 @@ class TeamInviteService:
 
             # Call send_team_invite_email
             send_team_invite_email(email, invite_token, team_name, inviter_name)
+            # ✅ Call send_team_invite_email
+            send_team_invite_email(email, invite_token, team_name, inviter_name, role)
 
             logger.info(f"✅ Team invite sent to {email} for team {team_id}")
             return {
@@ -98,7 +104,6 @@ class TeamInviteService:
             return {"error": f"Error processing registration: {str(e)}"}, 500
 
 
-
 def accept_invite(self, invite_token, user_id):
     """Accepts a team invitation and deletes it after successful registration."""
     invite = self.invites_collection.find_one({"_id": invite_token})
@@ -132,4 +137,3 @@ def accept_invite(self, invite_token, user_id):
         {"_id": invite["teamId"]},
         {"$push": {"members": {"userId": user_id, "role": invite["role"]}}},
     )
-
