@@ -11,7 +11,10 @@ import {
 import { sendTeamInviteRequest } from "/static/requests/invitationRequests.js";
 import { initSidebar } from "../components/sidebar.js";
 import { sidebarIcons } from "../components/sidebar-icons.js";
-import { deleteTeamMemberRequest } from "/static/requests/userToTeamRequests.js";
+import {
+  deleteTeamMemberRequest,
+  editTeamMemberRequest
+} from "/static/requests/userToTeamRequests.js";
 import { successSvg, errorSvg, infoSvg, closeSvg } from "./teamSvg.js";
 
 // Notification system for team.js

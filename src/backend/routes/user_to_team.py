@@ -1,3 +1,7 @@
+import logging
+
+logger = logging.getLogger(__name__)
+
 from flask import Blueprint, request, jsonify, g
 from backend.repository.usertoteam_repository import UserToTeamRepository
 
