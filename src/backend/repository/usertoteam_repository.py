@@ -7,6 +7,7 @@ from uuid import uuid4
 
 logger = logging.getLogger(__name__)
 
+
 class UserToTeamRepository:
     def __init__(self):
         self.users_to_teams_collection = collection.database.UsersToTeams
@@ -188,22 +189,29 @@ class UserToTeamRepository:
 
     def edit_team_member(self, team_id, user_id, new_role):
         try:
+            logger.info(
+                f"Editing team member: team_id={team_id}, user_id={user_id}, new_role={new_role}"
+            )  # Debug log
+
             # Uppdatera rollen i UsersToTeams
-            result = self.users_to_teams_collection.update_one(
+            result_users_to_teams = self.users_to_teams_collection.update_one(
                 {"teamId": team_id, "userId": user_id}, {"$set": {"role": new_role}}
             )
-            if result.modified_count == 0:
+            if result_users_to_teams.modified_count == 0:
+                logger.error("Failed to update role in UsersToTeams")
                 return {"error": "Failed to update role in UsersToTeams"}, 500
 
             # Uppdatera rollen i Teams-arrayen
-            result = self.teams_collection.update_one(
+            result_teams = self.teams_collection.update_one(
                 {"_id": team_id, "members.userId": user_id},
                 {"$set": {"members.$.role": new_role}},
             )
-            if result.modified_count == 0:
+            if result_teams.modified_count == 0:
+                logger.error("Failed to update role in Teams array")
                 return {"error": "Failed to update role in Teams array"}, 500
 
-            return {"message": "Member role updated successfully"}, 200
+            logger.info("Member role updated successfully in both schemas")
+            return {"message": "Member role updated successfully in both schemas"}, 200
 
         except Exception as e:
             logger.error(f"Error editing team member: {e}", exc_info=True)
@@ -267,7 +275,9 @@ class UserToTeamRepository:
         try:
             result = self.users_to_teams_collection.delete_many({"userId": user_id})
             if result.deleted_count > 0:
-                logger.info(f"🧹 Removed user {user_id} from {result.deleted_count} team links")
+                logger.info(
+                    f"🧹 Removed user {user_id} from {result.deleted_count} team links"
+                )
             return result.deleted_count
         except Exception as e:
             logger.error(f"❌ Failed to remove user from teams: {e}", exc_info=True)

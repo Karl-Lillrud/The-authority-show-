@@ -220,8 +220,10 @@ class TeamRepository:
             logger.error(f"Error adding member to team: {e}", exc_info=True)
             return {"error": f"Failed to add member: {str(e)}"}, 500
 
-    # Delete team when user is team creator or remove user from teams members when user account is deleted  
-    def remove_member_or_delete_team(self, team_id: str, user_id: str, return_message_only=False):
+    # Delete team when user is team creator or remove user from teams members when user account is deleted
+    def remove_member_or_delete_team(
+        self, team_id: str, user_id: str, return_message_only=False
+    ):
         try:
             team = self.teams_collection.find_one({"_id": team_id})
             if not team:
@@ -245,8 +247,7 @@ class TeamRepository:
             else:
                 # Member: Remove user from team members and UsersToTeams
                 self.teams_collection.update_one(
-                    {"_id": team_id},
-                    {"$pull": {"members": {"userId": user_id}}}
+                    {"_id": team_id}, {"$pull": {"members": {"userId": user_id}}}
                 )
                 self.user_to_teams_collection.delete_many(
                     {"teamId": team_id, "userId": user_id}
@@ -259,3 +260,36 @@ class TeamRepository:
             logger.error(f"Error removing user or deleting team: {e}", exc_info=True)
             msg = {"error": f"Failed to update team: {str(e)}"}
             return msg if return_message_only else (msg, 500)
+
+    def edit_team_member(self, team_id, email, new_email, role):
+        try:
+            # Kontrollera om teamet existerar
+            team = self.teams_collection.find_one({"_id": team_id})
+            if not team:
+                return {"error": "Team not found"}, 404
+
+            # Hitta medlemmen i teamets members-array
+            member = next(
+                (m for m in team.get("members", []) if m["email"] == email), None
+            )
+            if not member:
+                return {"error": "Member not found in team"}, 404
+
+            # Uppdatera e-post och roll i teamets members-array
+            self.teams_collection.update_one(
+                {"_id": team_id, "members.email": email},
+                {"$set": {"members.$.email": new_email, "members.$.role": role}},
+            )
+
+            # Skicka ny inbjudan om e-posten ändras
+            if email != new_email:
+                from backend.services.TeamInviteService import TeamInviteService
+
+                invite_service = TeamInviteService()
+                invite_service.send_invite(None, team_id, new_email, role)
+
+            return {"message": "Member updated successfully"}, 200
+
+        except Exception as e:
+            logger.error(f"Error editing team member: {e}", exc_info=True)
+            return {"error": f"Failed to edit team member: {str(e)}"}, 500
