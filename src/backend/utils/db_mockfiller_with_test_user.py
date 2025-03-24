@@ -18,7 +18,6 @@ hashed_password = generate_password_hash(password)
 # === UUIDs (all string-based for compatibility with session logic) ===
 user_id = str(uuid.uuid4())
 account_id = str(uuid.uuid4())
-credit_id = str(uuid.uuid4())
 podcast_id = str(uuid.uuid4())
 episode_id = str(uuid.uuid4())
 guest_id = str(uuid.uuid4())
@@ -169,10 +168,9 @@ print(f"🔑 Login Email: {email}")
 print(f"🔐 Password:   {password}")
 print(f"🆔 User ID:    {user_id}")
 print(f"🏢 Account ID: {account_id}")
-print(f"💳 Credit ID:  {credit_id}")
 print("\n📦 Collections populated:")
 for col in [
-    "Users", "Accounts", "Credits", "Podcasts", "Episodes", "Guests",
+    "Users", "Accounts", "Podcasts", "Episodes", "Guests",
     "Podtasks", "Invites", "Teams", "UsersToTeams"
 ]:
     print(f" - {col}")

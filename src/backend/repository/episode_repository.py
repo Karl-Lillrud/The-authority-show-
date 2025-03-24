@@ -229,6 +229,7 @@ class EpisodeRepository:
         except Exception as e:
             return {"error": str(e)}, 500
 
+    # Delete episodes associated with user when user account is deleted
     def delete_by_user(self, user_id):
         try:
             result = self.collection.delete_many({"userid": str(user_id)})

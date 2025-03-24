@@ -129,6 +129,7 @@ class UserToTeamRepository:
             logger.error(f"Error retrieving teams for user {user_id}: {e}", exc_info=True)
             return {"error": f"Failed to retrieve teams: {str(e)}"}, 500
 
+    # Delete user to team association when user account is deleted
     def delete_by_user(self, user_id):
         try:
             result = self.users_to_teams_collection.delete_many({"userId": user_id})

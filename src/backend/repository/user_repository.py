@@ -87,6 +87,7 @@ class UserRepository:
             logger.error(f"Error updating password: {e}", exc_info=True)
             return {"error": f"Error updating password: {str(e)}"}, 500
 
+    # Delete user and all associated data from related collections
     def cleanup_user_data(self, user_id, user_email):
         try:
             user_id_str = str(user_id)
@@ -120,7 +121,7 @@ class UserRepository:
                     elif "removed" in result.get("message", "").lower():
                         removed_count += 1
 
-            logger.info(f"🧹 Team cleanup summary for user {user_id_str}: {deleted_count} team(s) deleted, {removed_count} team(s) cleaned (removed from members)")
+            logger.info(f"🧹 Team cleanup summary for user {user_id_str}: {deleted_count} team(s) deleted, {removed_count} team(s) cleaned (user removed from team members)")
 
             # Continue cleanup
             accounts = AccountRepository().delete_by_user(user_id_str)

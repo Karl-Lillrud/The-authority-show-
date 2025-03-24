@@ -130,7 +130,7 @@ class PodtaskRepository:
             logger.error(f"Error updating podtask: {e}", exc_info=True)
             return {"error": f"Failed to update task: {str(e)}"}, 500
 
-    
+    # Delete podtask when user account is deleted
     def delete_by_user(self, user_id):
         try:
             result = self.podtasks_collection.delete_many({"userid": str(user_id)})

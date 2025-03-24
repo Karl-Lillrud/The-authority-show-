@@ -149,6 +149,7 @@ class TeamRepository:
             logger.error(f"Error editing team: {e}", exc_info=True)
             return {"error": f"Failed to edit team: {str(e)}"}, 500
 
+    # Delete team when user is team creator or remove user from teams members when user account is deleted  
     def remove_member_or_delete_team(self, team_id: str, user_id: str, return_message_only=False):
         try:
             team = self.teams_collection.find_one({"_id": team_id})
