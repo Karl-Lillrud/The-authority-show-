@@ -247,42 +247,42 @@ class PodtaskRepository:
         return update_fields
 
 
-def bulk_update_status(self, user_id: str, task_ids: List[str], new_status: str) -> Tuple[Dict[str, Any], int]:
+    def bulk_update_status(self, user_id: str, task_ids: List[str], new_status: str) -> Tuple[Dict[str, Any], int]:
     
-            try:
-                # Verify all tasks exist and belong to the user
-                tasks = list(self.podtasks_collection.find({"_id": {"$in": task_ids}}))
-                if len(tasks) != len(task_ids):
-                    return {"error": "One or more tasks not found"}, 404
+        try:
+            # Verify all tasks exist and belong to the user
+            tasks = list(self.podtasks_collection.find({"_id": {"$in": task_ids}}))
+            if len(tasks) != len(task_ids):
+                return {"error": "One or more tasks not found"}, 404
                     
-                for task in tasks:
-                    if task["userid"] != str(user_id):
-                        return {"error": "Permission denied for one or more tasks"}, 403
+            for task in tasks:
+                if task["userid"] != str(user_id):
+                    return {"error": "Permission denied for one or more tasks"}, 403
                 
-                # Prepare update data
-                update_data = {
-                    "status": new_status,
-                    "updated_at": datetime.now(timezone.utc)
-                }
+            # Prepare update data
+            update_data = {
+                "status": new_status,
+                "updated_at": datetime.now(timezone.utc)
+            }
                 
-                # Add completion timestamp if status is "completed"
-                if new_status == "completed":
-                    update_data["completed_at"] = datetime.now(timezone.utc)
+            # Add completion timestamp if status is "completed"
+            if new_status == "completed":
+                update_data["completed_at"] = datetime.now(timezone.utc)
                 
-                # Perform bulk update
-                result = self.podtasks_collection.update_many(
-                    {"_id": {"$in": task_ids}},
-                    {"$set": update_data}
-                )
+            # Perform bulk update
+            result = self.podtasks_collection.update_many(
+                {"_id": {"$in": task_ids}},
+                {"$set": update_data}
+            )
                 
-                return {
-                    "message": f"Updated {result.modified_count} tasks",
-                    "modified_count": result.modified_count
-                }, 200
+            return {
+                "message": f"Updated {result.modified_count} tasks",
+                "modified_count": result.modified_count
+            }, 200
                 
-            except Exception as e:
-                logger.error(f"Error in bulk status update: {e}", exc_info=True)
-                return {"error": f"Failed to update tasks: {str(e)}"}, 500
+        except Exception as e:
+            logger.error(f"Error in bulk status update: {e}", exc_info=True)
+            return {"error": f"Failed to update tasks: {str(e)}"}, 500
                 
     # Delete podtask when user account is deleted
     def delete_by_user(self, user_id):
