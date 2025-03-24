@@ -13,7 +13,7 @@ class TeamInviteRepository:
         self.users_collection = collection.database.Users
         self.accounts_collection = collection.database.Accounts
 
-    def save_invite(self, team_id, email, inviter_id):
+    def save_invite(self, team_id, email, inviter_id, role):
         """
         Create a new team invite and save it to the database.
         Raises ValueError for invalid inputs or permissions.
@@ -60,6 +60,7 @@ class TeamInviteRepository:
             "teamName": team.get("name", "Team"),  # Include team name for email
             "email": normalized_email,
             "inviterId": inviter_id,
+            "role": role,  # Include role in the invite
             "createdAt": datetime.now(timezone.utc),
             "expiresAt": datetime.now(timezone.utc) + timedelta(hours=24),
             "status": "pending",

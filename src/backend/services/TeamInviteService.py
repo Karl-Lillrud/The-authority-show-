@@ -13,7 +13,7 @@ class TeamInviteService:
         self.user_to_team_repo = UserToTeamRepository()
         self.user_repo = UserRepository()
 
-    def send_invite(self, inviter_id, team_id, email):
+    def send_invite(self, inviter_id, team_id, email, role):
         """Handles sending a team invite and email notification."""
         try:
             from backend.utils.email_utils import (
@@ -32,8 +32,10 @@ class TeamInviteService:
                 if is_member:
                     return {"error": "User is already a member of this team"}, 400
 
-            # Save invite to database
-            invite_token = self.invite_repo.save_invite(team_id, email, inviter_id)
+            # Save invite to database, including the role
+            invite_token = self.invite_repo.save_invite(
+                team_id, email, inviter_id, role=role
+            )
 
             # Get inviter details for the email
             inviter = self.user_repo.get_user_by_id(inviter_id)
@@ -46,7 +48,7 @@ class TeamInviteService:
             team_name = invite.get("teamName", "the team")
 
             # ✅ Call send_team_invite_email
-            send_team_invite_email(email, invite_token, team_name, inviter_name)
+            send_team_invite_email(email, invite_token, team_name, inviter_name, role)
 
             logger.info(f"✅ Team invite sent to {email} for team {team_id}")
             return {
