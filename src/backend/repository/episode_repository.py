@@ -4,6 +4,7 @@ import uuid
 import logging
 from backend.models.episodes import EpisodeSchema
 from backend.services.integration import save_uploaded_files
+import bson
 
 logger = logging.getLogger(__name__)
 
@@ -31,6 +32,11 @@ class EpisodeRepository:
                 account_id = str(user_account["_id"])
             logger.info(f"🧩 Found account {account_id} for user {user_id}")
 
+            files = data.pop('episodeFiles', [])
+            if files:
+                saved_files = save_uploaded_files(files)
+                data['episodeFiles'] = saved_files
+
             # Validate data with schema
             schema = EpisodeSchema()
             errors = schema.validate(data)
@@ -48,10 +54,6 @@ class EpisodeRepository:
 
             episode_id = str(uuid.uuid4())
             user_id_str = str(user_id)
-
-            files = data.pop('episodeFiles', [])
-            saved_files = save_uploaded_files(files)
-            data['episodeFiles'] = saved_files
 
             # Construct the episode document with the handled values
             episode_item = {
@@ -84,7 +86,7 @@ class EpisodeRepository:
                 "summary": validated_data.get("summary"),
                 "author": validated_data.get("author"),
                 "isHidden": validated_data.get("isHidden"),
-                "episodeFiles": data['episodeFiles'],  # Correctly handle episodeFiles field
+                "episodeFiles": data.get('episodeFiles', []),  # Correctly handle optional episodeFiles field
             }
 
             result = self.collection.insert_one(episode_item)
@@ -121,6 +123,12 @@ class EpisodeRepository:
                     f"Episode with episode_id: {episode_id} and user_id: {user_id_str} not found."
                 )
                 return {"error": "Episode not found"}, 404
+
+            # Convert binary data to a serializable format
+            if 'episodeFiles' in episode:
+                for file in episode['episodeFiles']:
+                    if 'data' in file:
+                        file['data'] = bson.Binary(file['data']).decode('utf-8')
 
             return episode, 200
 

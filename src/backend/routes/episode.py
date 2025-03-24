@@ -6,6 +6,7 @@ import gridfs  # GridFS for file storage
 from backend.repository.episode_repository import EpisodeRepository
 from backend.database.mongo_connection import episodes
 from backend.services.integration import get_spotify_access_token, upload_episode_to_spotify
+import bson
 
 # Initialize Blueprint and repository
 episode_bp = Blueprint("episode_bp", __name__)
@@ -28,8 +29,9 @@ def register_episode():
 
         # Parse form data
         data = request.form.to_dict()
-        files = request.files.getlist('episodeFiles')  # Assuming the field name is 'episodeFiles'
-        data['episodeFiles'] = files
+        files = request.files.getlist('episodeFiles')
+        if files and files[0].filename != '':
+            data['episodeFiles'] = files
 
         # Log received data for debugging
         logger.info(f"Received data: {data}")
@@ -61,6 +63,7 @@ def publish_to_spotify(episode_id):
         # Fetch Spotify access token
         access_token = get_spotify_access_token()
         if not access_token:
+            logger.error("Failed to retrieve Spotify access token")
             return jsonify({"error": "Failed to retrieve Spotify access token"}), 500
 
         # Attempt to upload episode to Spotify
@@ -68,8 +71,10 @@ def publish_to_spotify(episode_id):
         if result:
             return jsonify({"message": "Episode published successfully to Spotify!"}), 200
         else:
+            logger.error("Failed to upload episode to Spotify")
             return jsonify({"error": "Failed to upload episode to Spotify"}), 500
     except Exception as e:
+        logger.error(f"Error publishing to Spotify: {str(e)}", exc_info=True)
         return jsonify({"error": f"Error publishing to Spotify: {str(e)}"}), 500
 
 
@@ -80,6 +85,11 @@ def get_episode(episode_id):
 
     try:
         response, status_code = episode_repo.get_episode(episode_id, g.user_id)
+        # Convert binary data to a serializable format
+        if 'episodeFiles' in response:
+            for file in response['episodeFiles']:
+                if 'data' in file:
+                    file['data'] = bson.Binary(file['data']).decode('utf-8')
         return jsonify(response), status_code
     except Exception as e:
         logger.error("❌ ERROR: %s", e)

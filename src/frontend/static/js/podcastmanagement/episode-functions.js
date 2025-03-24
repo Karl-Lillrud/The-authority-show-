@@ -510,10 +510,10 @@ export function initEpisodeFunctions() {
       const formData = new FormData(e.target);
 
       // Check for missing required fields
-      if (!formData.get("podcastId") || !formData.get("title") || !formData.get("publishDate") || !formData.getAll("episodeFiles").length) {
+      if (!formData.get("podcastId") || !formData.get("title") || !formData.get("publishDate")) {
         showNotification(
           "Missing Fields",
-          "Please fill in all required fields and upload episode files.",
+          "Please fill in all required fields.",
           "error"
         );
         return;

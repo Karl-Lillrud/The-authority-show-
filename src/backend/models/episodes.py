@@ -22,6 +22,15 @@ class EpisodeSchema(Schema):
     episodeType = fields.Str(allow_none=True)
     explicit = fields.Bool(allow_none=True)
     imageUrl = fields.Url(allow_none=True)
+    episodeFiles = fields.List(fields.Dict(keys=fields.Str(), values=fields.Raw()), required=False)  # Make episodeFiles optional
+    fileSize = fields.Str(allow_none=True)
+    fileType = fields.Str(allow_none=True)
+    guid = fields.Str(allow_none=True)
+    season = fields.Int(allow_none=True)
+    episode = fields.Int(allow_none=True)
+    episodeType = fields.Str(allow_none=True)
+    explicit = fields.Bool(allow_none=True)
+    imageUrl = fields.Url(allow_none=True)
     episodeFiles = fields.List(fields.Dict(keys=fields.Str(), values=fields.Raw()))  # Correctly handle episodeFiles field
 
     # New fields

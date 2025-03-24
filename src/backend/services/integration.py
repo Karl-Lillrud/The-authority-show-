@@ -4,6 +4,9 @@ import base64
 import os
 from werkzeug.utils import secure_filename
 from bson import Binary
+import logging
+
+logger = logging.getLogger(__name__)
 
 def get_spotify_access_token():
     client_id = os.getenv('SPOTIFY_CLIENT_ID')
@@ -23,6 +26,7 @@ def get_spotify_access_token():
     response = requests.post(token_url, headers=headers, data=data)
     if response.status_code == 200:
         return response.json().get('access_token')
+    logger.error(f"Failed to retrieve Spotify access token: {response.status_code} - {response.text}")
     return None
 
 def upload_episode_to_spotify(access_token, episode):
@@ -39,7 +43,14 @@ def upload_episode_to_spotify(access_token, episode):
     }
 
     response = requests.post(spotify_api_url, headers=headers, json=episode_data)
-    return response.status_code == 201  # Assuming 201 indicates success
+    if response.status_code == 201:
+        return True
+    elif response.status_code == 404:
+        logger.error(f"Failed to upload episode to Spotify: {response.status_code} - {response.json()}")
+        return False
+    else:
+        logger.error(f"Failed to upload episode to Spotify: {response.status_code} - {response.text}")
+        return False
 
 def save_uploaded_files(files):
     saved_files = []
