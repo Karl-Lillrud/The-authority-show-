@@ -130,7 +130,6 @@ document.addEventListener("DOMContentLoaded", () => {
           guestUrl: rssData.guestUrl || null,
           email: rssData.itunesOwner?.email || null,
           logoUrl: rssData.logoUrl || null,
-          defaultTasks: rssData.defaultTasks || null
         };
 
         console.log("Sending podcast data:", podcastData); // Added log
