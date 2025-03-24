@@ -60,6 +60,8 @@ body {
   min-height: calc(100vh - var(--header-height));
   position: relative;
   overflow: hidden;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 /* Dashboard link styling */

@@ -835,14 +835,19 @@ function handleDeleteUnverifiedMember(teamId, email, role) {
 
 function showEditMemberModal(teamId, member) {
   const modal = document.getElementById("editMemberModal");
-  document.getElementById("editMemberEmail").value = member.email;
-  document.getElementById("editMemberRole").value = member.role;
+  const emailInput = document.getElementById("editMemberEmail");
+  const roleSelect = document.getElementById("editMemberRole");
+  const saveBtn = document.getElementById("saveEditMemberBtn");
+
+  emailInput.value = member.email;
+  roleSelect.value = member.role;
+
   modal.classList.add("show");
   modal.setAttribute("aria-hidden", "false");
 
-  document.getElementById("saveEditMemberBtn").onclick = async () => {
-    const updatedEmail = document.getElementById("editMemberEmail").value;
-    const updatedRole = document.getElementById("editMemberRole").value;
+  saveBtn.onclick = async () => {
+    const updatedEmail = emailInput.value;
+    const updatedRole = roleSelect.value;
 
     if (!teamId || !updatedEmail || !updatedRole) {
       showNotification(
@@ -854,67 +859,77 @@ function showEditMemberModal(teamId, member) {
     }
 
     try {
-      // Step 1: Delete the old member
-      const deleteResult = await deleteTeamMemberRequest(
-        teamId,
-        member.userId,
-        member.email
-      );
-      if (deleteResult.error) {
-        showNotification(
-          "Error",
-          deleteResult.error || "Failed to delete old member.",
-          "error"
+      // Only update if the role or email has changed
+      if (updatedEmail !== member.email || updatedRole !== member.role) {
+        // Step 1: Delete the old member
+        const deleteResult = await deleteTeamMemberRequest(
+          teamId,
+          member.userId,
+          member.email
         );
-        return;
-      }
-
-      // Step 2: Add the new member
-      const addMemberPayload = {
-        teamId,
-        email: updatedEmail,
-        role: updatedRole
-      };
-      console.log("Payload for adding new member:", addMemberPayload); // Debugging log
-      const addMemberResponse = await fetch("/add_team_member", {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(addMemberPayload)
-      });
-      const addMemberResult = await addMemberResponse.json();
-
-      if (addMemberResult.error) {
-        showNotification(
-          "Error",
-          addMemberResult.error || "Failed to add new member.",
-          "error"
-        );
-        return;
-      }
-
-      // Step 3: Send invitation email to the new member
-      try {
-        const inviteResult = await sendTeamInvite(teamId, updatedEmail);
-        if (inviteResult.error) {
+        if (deleteResult.error) {
           showNotification(
             "Error",
-            inviteResult.error || "Failed to send invitation email.",
+            deleteResult.error || "Failed to delete old member.",
             "error"
           );
+          return;
+        }
+
+        // Step 2: Add the updated member
+        const addMemberPayload = {
+          teamId,
+          email: updatedEmail,
+          role: updatedRole
+        };
+        const addMemberResponse = await fetch("/add_team_member", {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(addMemberPayload)
+        });
+        const addMemberResult = await addMemberResponse.json();
+
+        if (addMemberResult.error) {
+          showNotification(
+            "Error",
+            addMemberResult.error || "Failed to add updated member.",
+            "error"
+          );
+          return;
+        }
+
+        // Step 3: Send invitation email only if the email has changed
+        if (updatedEmail !== member.email) {
+          try {
+            const inviteResult = await sendTeamInvite(teamId, updatedEmail);
+            if (inviteResult.error) {
+              showNotification(
+                "Error",
+                inviteResult.error || "Failed to send invitation email.",
+                "error"
+              );
+            } else {
+              showNotification(
+                "Success",
+                "Member updated and invitation email sent successfully!",
+                "success"
+              );
+            }
+          } catch (inviteError) {
+            console.error("Error sending invitation email:", inviteError);
+            showNotification(
+              "Error",
+              "Failed to send invitation email to the updated member.",
+              "error"
+            );
+          }
         } else {
           showNotification(
             "Success",
-            "Member updated and invitation email sent successfully!",
+            "Member updated successfully!",
             "success"
           );
         }
-      } catch (inviteError) {
-        console.error("Error sending invitation email:", inviteError);
-        showNotification(
-          "Error",
-          "Failed to send invitation email to the new member.",
-          "error"
-        );
       }
 
       modal.classList.remove("show");
@@ -1143,69 +1158,79 @@ function showTeamCardEditMemberModal(teamId, member) {
     }
 
     try {
-      // Step 1: Delete the old member
-      const deleteResult = await deleteTeamMemberRequest(
-        teamId,
-        member.userId,
-        member.email
-      );
-      if (deleteResult.error) {
-        showNotification(
-          "Error",
-          deleteResult.error || "Failed to delete old member.",
-          "error"
+      // Only update if the role or email has changed
+      if (updatedEmail !== member.email || updatedRole !== member.role) {
+        // Step 1: Delete the old member
+        const deleteResult = await deleteTeamMemberRequest(
+          teamId,
+          member.userId,
+          member.email
         );
-        return;
-      }
-
-      // Step 2: Add the updated member
-      const addMemberPayload = {
-        teamId,
-        email: updatedEmail,
-        role: updatedRole
-      };
-      const addMemberResponse = await fetch("/add_team_member", {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(addMemberPayload)
-      });
-      const addMemberResult = await addMemberResponse.json();
-
-      if (addMemberResult.error) {
-        showNotification(
-          "Error",
-          addMemberResult.error || "Failed to add updated member.",
-          "error"
-        );
-        return;
-      }
-
-      // Step 3: Send invitation email to the updated member
-      try {
-        const inviteResult = await sendTeamInvite(teamId, updatedEmail);
-        if (inviteResult.error) {
+        if (deleteResult.error) {
           showNotification(
             "Error",
-            inviteResult.error || "Failed to send invitation email.",
+            deleteResult.error || "Failed to delete old member.",
             "error"
           );
+          return;
+        }
+
+        // Step 2: Add the updated member
+        const addMemberPayload = {
+          teamId,
+          email: updatedEmail,
+          role: updatedRole
+        };
+        const addMemberResponse = await fetch("/add_team_member", {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(addMemberPayload)
+        });
+        const addMemberResult = await addMemberResponse.json();
+
+        if (addMemberResult.error) {
+          showNotification(
+            "Error",
+            addMemberResult.error || "Failed to add updated member.",
+            "error"
+          );
+          return;
+        }
+
+        // Step 3: Send invitation email only if the email has changed
+        if (updatedEmail !== member.email) {
+          try {
+            const inviteResult = await sendTeamInvite(teamId, updatedEmail);
+            if (inviteResult.error) {
+              showNotification(
+                "Error",
+                inviteResult.error || "Failed to send invitation email.",
+                "error"
+              );
+            } else {
+              showNotification(
+                "Success",
+                "Member updated and invitation email sent successfully!",
+                "success"
+              );
+            }
+          } catch (inviteError) {
+            console.error("Error sending invitation email:", inviteError);
+            showNotification(
+              "Error",
+              "Failed to send invitation email to the updated member.",
+              "error"
+            );
+          }
         } else {
           showNotification(
             "Success",
-            "Member updated and invitation email sent successfully!",
+            "Member updated successfully!",
             "success"
           );
         }
-      } catch (inviteError) {
-        console.error("Error sending invitation email:", inviteError);
-        showNotification(
-          "Error",
-          "Failed to send invitation email to the updated member.",
-          "error"
-        );
       }
 
-      // Close the modal and refresh the team list
       modal.classList.remove("show");
       const teams = await getTeamsRequest();
       updateTeamsUI(teams);
