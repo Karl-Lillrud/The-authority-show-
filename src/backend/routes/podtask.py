@@ -84,3 +84,35 @@ def get_default_tasks():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
+
+@podtask_bp.route("/add_tasks_to_episode", methods=["POST"])
+def add_tasks_to_episode():
+    if not g.user_id:
+        return jsonify({"error": "Unauthorized"}), 401
+    if request.content_type != "application/json":
+        return jsonify({"error": "Invalid Content-Type. Expected application/json"}), 415
+    try:
+        data = request.get_json()
+        tasks = data.get("tasks")
+        episode_id = data.get("episode_id")
+        guest_id = data.get("guest_id")
+        response, status_code = podtask_repo.add_tasks_to_episode(g.user_id, episode_id, guest_id, tasks)
+        return jsonify(response), status_code
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+@podtask_bp.route('/add_default_tasks_to_episode', methods=['POST'])
+def add_default_tasks_to_episode_route():
+    if not g.get("user_id"):
+        return jsonify({"error": "Unauthorized"}), 401
+    try:
+        data = request.get_json()
+        episode_id = data.get("episode_id")
+        default_tasks = data.get("default_tasks")
+        # Log input values for debugging
+        print("Adding default tasks:", episode_id, default_tasks)
+        result, status = podtask_repo.add_default_tasks_to_episode(g.user_id, episode_id, default_tasks)
+        return jsonify(result), status
+    except Exception as e:
+        print("Error in add_default_tasks_to_episode_route:", e)
+        return jsonify({"error": str(e)}), 500

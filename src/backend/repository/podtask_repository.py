@@ -12,6 +12,7 @@ from backend.services.taskService import extract_highlights, process_default_tas
 
 logger = logging.getLogger(__name__)
 
+
 class PodtaskRepository:
     
     def __init__(self):
@@ -20,6 +21,8 @@ class PodtaskRepository:
         self.accounts_collection = collection.database.Accounts
         self.podcasts_collection = collection.database.Podcasts
         self.users_collection = collection.database.Users
+        # Assuming episodes are stored in a collection named "Episodes"
+        self.episodes_collection = collection.database.Episodes
     
     def register_podtask(self, user_id: str, data: Dict[str, Any]) -> Tuple[Dict[str, Any], int]:
         try:
@@ -69,7 +72,6 @@ class PodtaskRepository:
             return {"error": f"Failed to register podtask: {str(e)}"}, 500
     
     def _get_default_podcast_id(self, user_id: str) -> Union[str, Tuple[Dict[str, Any], int]]:
-
         # Find user accounts
         user_accounts = list(self.accounts_collection.find({"userId": str(user_id)}, {"_id": 1}))
         if not user_accounts:
@@ -87,7 +89,6 @@ class PodtaskRepository:
         return str(podcasts[0]["_id"])
     
     def _create_podtask_document(self, podtask_id: str, data: Dict[str, Any]) -> Dict[str, Any]:
-
         return {
             "_id": podtask_id,
             "podcastId": data.get("podcastId"),
@@ -112,7 +113,6 @@ class PodtaskRepository:
         }
 
     def get_podtasks(self, user_id: str, filters: Optional[Dict[str, Any]] = None) -> Tuple[Dict[str, Any], int]:
-
         try:
             # Create base query
             query = {"userid": str(user_id)}
@@ -120,7 +120,7 @@ class PodtaskRepository:
             # Add any additional filters
             if filters:
                 for key, value in filters.items():
-                    if key in ["status", "priority", "teamId", "episodeId"]:
+                    if key in ["status", "priority", "teamId", "episodeId", "podcastId"]:
                         query[key] = value
             
             # Execute query
@@ -142,7 +142,6 @@ class PodtaskRepository:
             return {"error": f"Failed to fetch tasks: {str(e)}"}, 500
 
     def get_podtask_by_id(self, user_id: str, task_id: str) -> Tuple[Dict[str, Any], int]:
-
         try:
             # Find task
             task = self.podtasks_collection.find_one({"_id": task_id})
@@ -169,7 +168,6 @@ class PodtaskRepository:
             return {"error": f"Failed to fetch task: {str(e)}"}, 500
 
     def delete_podtask(self, user_id: str, task_id: str) -> Tuple[Dict[str, Any], int]:
-   
         try:
             # Find and verify ownership
             task = self.podtasks_collection.find_one({"_id": task_id})
@@ -221,7 +219,6 @@ class PodtaskRepository:
             logger.error(f"Error updating task {task_id}: {e}", exc_info=True)
             return {"error": f"Failed to update task: {str(e)}"}, 500
 
-    
     def _prepare_update_fields(self, existing_task: Dict[str, Any], data: Dict[str, Any]) -> Dict[str, Any]:
         description = data.get("description", existing_task.get("description", "")).strip()
         highlights = extract_highlights(description) if description and description != existing_task.get("description") else None
@@ -246,9 +243,7 @@ class PodtaskRepository:
         update_fields["updated_at"] = datetime.now(timezone.utc)
         return update_fields
 
-
     def bulk_update_status(self, user_id: str, task_ids: List[str], new_status: str) -> Tuple[Dict[str, Any], int]:
-    
         try:
             # Verify all tasks exist and belong to the user
             tasks = list(self.podtasks_collection.find({"_id": {"$in": task_ids}}))
@@ -283,13 +278,81 @@ class PodtaskRepository:
         except Exception as e:
             logger.error(f"Error in bulk status update: {e}", exc_info=True)
             return {"error": f"Failed to update tasks: {str(e)}"}, 500
-                
-    # Delete podtask when user account is deleted
-    def delete_by_user(self, user_id):
+
+    def add_tasks_to_episode(self, user_id: str, episode_id: str, guest_id: str, tasks: list) -> Tuple[Dict[str, Any], int]:
         try:
-            result = self.podtasks_collection.delete_many({"userid": str(user_id)})
-            logger.info(f"🧹 Deleted {result.deleted_count} podtasks for user {user_id}")
-            return result.deleted_count
+            # Lookup the episode to retrieve its podcastId
+            episode = self.episodes_collection.find_one({"_id": episode_id})
+            if not episode:
+                return {"error": "Episode not found"}, 404
+            podcastId = episode.get("podcastId")
+            if not podcastId:
+                return {"error": "Episode missing podcastId"}, 400
+
+            inserted_count = 0
+            inserted_ids = []
+            for task in tasks:
+                # Set keys to ensure correct associations
+                task["podcastId"] = podcastId
+                task["episodeId"] = episode_id
+                task["guestId"] = guest_id
+                task["userid"] = str(user_id)
+                task["created_at"] = datetime.now(timezone.utc)
+                # Convert 'title' to 'name' if provided
+                if "title" in task:
+                    task["name"] = task.pop("title")
+                # Optionally process defaults if needed
+                task = process_default_tasks(task)
+                # Generate a unique id for each task
+                podtask_id = str(uuid.uuid4())
+                task_document = self._create_podtask_document(podtask_id, task)
+                result = self.podtasks_collection.insert_one(task_document)
+                if result.inserted_id:
+                    inserted_count += 1
+                    inserted_ids.append(podtask_id)
+            if inserted_count > 0:
+                return {"message": f"Added {inserted_count} tasks", "task_ids": inserted_ids}, 201
+            else:
+                return {"error": "No tasks were added"}, 500
         except Exception as e:
-            logger.error(f"Failed to delete podtasks: {e}", exc_info=True)
-            return 0
+            return {"error": str(e)}, 500
+            
+            
+    def add_default_tasks_to_episode(self, user_id: str, episode_id: str, default_tasks: list) -> Tuple[Dict[str, Any], int]:
+        try:
+            episode = self.episodes_collection.find_one({"_id": episode_id})
+            if not episode:
+                return {"error": "Episode not found"}, 404
+
+            # Try both keys: podcastId and podcast_id
+            podcastId = episode.get("podcastId") or episode.get("podcast_id")
+            if not podcastId:
+                return {"error": "Episode missing podcastId"}, 400
+
+            inserted_count = 0
+            inserted_ids = []
+
+            for task_name in default_tasks:
+                task = {
+                    "name": task_name,
+                    "podcastId": podcastId,
+                    "episodeId": episode_id,
+                    "userid": str(user_id),
+                    "created_at": datetime.now(timezone.utc),
+                    "status": "pending",
+                }
+                task = process_default_tasks(task)
+                podtask_id = str(uuid.uuid4())
+                task_document = self._create_podtask_document(podtask_id, task)
+                result = self.podtasks_collection.insert_one(task_document)
+                if result.inserted_id:
+                    inserted_count += 1
+                    inserted_ids.append(podtask_id)
+
+            if inserted_count > 0:
+                return {"message": f"Added {inserted_count} default tasks", "task_ids": inserted_ids}, 201
+            else:
+                return {"error": "No default tasks were added"}, 500
+        except Exception as e:
+            return {"error": str(e)}, 500
+

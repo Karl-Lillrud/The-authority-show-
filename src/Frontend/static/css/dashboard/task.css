@@ -1,0 +1,164 @@
+/* Task Management Styles */
+.task-management {
+  padding: var(--spacing-md);
+}
+
+.task-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--spacing-md);
+}
+
+.task-header h3 {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: rgba(0, 0, 0, 0.8);
+}
+
+.task-header-actions {
+  display: flex;
+  gap: var(--spacing-sm);
+}
+
+.task-list {
+  margin-top: var(--spacing-md);
+}
+
+.no-tasks {
+  text-align: center;
+  color: var(--text-color-light);
+  padding: var(--spacing-md) 0;
+}
+
+.task-item {
+  display: flex;
+  align-items: flex-start;
+  padding: var(--spacing-sm) 0;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+.task-item:last-child {
+  border-bottom: none;
+}
+
+.task-checkbox {
+  margin-right: var(--spacing-sm);
+  margin-top: 3px;
+}
+
+.task-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.task-title {
+  font-weight: 500;
+  margin-bottom: 2px;
+}
+
+.task-completed .task-title {
+  text-decoration: line-through;
+  color: var(--text-color-light);
+  opacity: 0.7;
+}
+
+.task-description {
+  font-size: 0.85rem;
+  color: var(--text-color-light);
+  margin-bottom: 4px;
+}
+
+.task-meta {
+  display: flex;
+  align-items: center;
+  font-size: 0.75rem;
+  color: var(--text-color-light);
+}
+
+.task-assigned {
+  margin-right: var(--spacing-md);
+}
+
+.assign-to-me-btn {
+  background: none;
+  border: none;
+  color: var(--highlight-color);
+  font-size: 0.75rem;
+  cursor: pointer;
+  padding: 0;
+  text-decoration: underline;
+}
+
+.assign-to-me-btn:hover {
+  color: var(--highlight-hover);
+}
+
+.task-actions {
+  display: flex;
+  gap: 4px;
+}
+
+.task-action-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--text-color-light);
+  padding: 4px;
+  border-radius: 4px;
+  transition: all var(--transition-normal);
+}
+
+.task-action-btn:hover {
+  background-color: rgba(0, 0, 0, 0.05);
+  color: var(--highlight-color);
+}
+
+.task-action-btn.delete:hover {
+  color: var(--error-color);
+}
+
+/* Import Tasks Dialog */
+.import-tasks-container {
+  max-height: 300px;
+  overflow-y: auto;
+  margin: var(--spacing-md) 0;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  border-radius: var(--radius-small);
+  padding: var(--spacing-sm);
+}
+
+.import-task-item {
+  display: flex;
+  align-items: flex-start;
+  padding: var(--spacing-sm) 0;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+.import-task-item:last-child {
+  border-bottom: none;
+}
+
+.import-task-checkbox {
+  margin-right: var(--spacing-sm);
+  margin-top: 3px;
+}
+
+.import-task-title {
+  font-size: 0.9rem;
+}
+
+.import-actions {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: var(--spacing-md);
+}
+
+.selected-count {
+  font-size: 0.85rem;
+  color: var(--text-color-light);
+}
+
+/* Add Font Awesome for icons */
+@import url('https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css');
