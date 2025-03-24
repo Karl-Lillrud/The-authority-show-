@@ -1398,23 +1398,33 @@ body {
 .role-badge {
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   margin-left: 6px;
-  padding: 2px 6px;
+  padding: 2px 6px; /* Match padding with verified/not-verified badges */
   font-size: 0.7rem;
   font-weight: 600;
   border-radius: 4px;
   white-space: nowrap;
+  text-align: center;
+  line-height: 1; /* Ensure consistent vertical alignment */
+  height: 20px; /* Match height with verified/not-verified badges */
+  border: 1px solid transparent; /* Add border for consistency */
 }
 
-.role-badge::before {
-  content: "";
-  display: inline-block;
-  width: 12px;
-  height: 12px;
-  margin-right: 4px;
-  background-repeat: no-repeat;
-  background-position: center;
+/* Example role-specific styles */
+.role-badge.cohost {
+  color: #ff9800;
+  background-color: #fff3e0;
+  border-color: #ff9800;
 }
+
+.role-badge.guest {
+  color: #9c27b0;
+  background-color: #f3e5f5;
+  border-color: #9c27b0;
+}
+
+/* Add similar styles for other roles as needed */
 
 /* CoHost Badge */
 .role-badge.cohost {

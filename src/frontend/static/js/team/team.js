@@ -1077,7 +1077,36 @@ function showTeamCardEditMemberModal(teamId, member) {
 
   // Populate fields with member data
   emailInput.value = member.email;
-  roleSelect.value = member.role;
+
+  // Populate role dropdown dynamically
+  const roles = [
+    "CoHost",
+    "Guest",
+    "Scriptwriter",
+    "Producer",
+    "AudioEngineer",
+    "SoundDesigner",
+    "Researcher",
+    "GuestCoordinator",
+    "Showrunner",
+    "SocialMediaManager",
+    "GraphicDesigner",
+    "Copywriter",
+    "Publicist",
+    "SponsorshipManager",
+    "MarketingStrategist",
+    "AnalyticsSpecialist",
+    "ShowCoordinator",
+    "Webmaster"
+  ];
+  roleSelect.innerHTML = roles
+    .map(
+      (role) =>
+        `<option value="${role}" ${
+          member.role === role ? "selected" : ""
+        }>${role}</option>`
+    )
+    .join("");
 
   // Set fields to read-only and disabled initially
   emailInput.readOnly = true;
