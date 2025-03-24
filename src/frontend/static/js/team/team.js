@@ -4,9 +4,10 @@ import {
   editTeamRequest,
   deleteTeamRequest,
   fetchPodcasts,
-  updatePodcastTeamRequest
+  updatePodcastTeamRequest,
+  addTeamMemberRequest // Added import
 } from "/static/requests/teamRequests.js";
-import { sendTeamInvite } from "/static/requests/invitationRequests.js";
+import { sendTeamInviteRequest } from "/static/requests/invitationRequests.js";
 import { initSidebar } from "../components/sidebar.js";
 import { sidebarIcons } from "../components/sidebar-icons.js";
 import { deleteTeamMemberRequest } from "/static/requests/userToTeamRequests.js";
@@ -1015,23 +1016,16 @@ async function handleAddMemberFormSubmission(e) {
   }
 
   try {
-    console.log("Sending request to /send_team_invite"); // Debug log
-    const res = await fetch("/send_team_invite", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ teamId, email, role })
-    });
+    const inviteResult = await sendTeamInviteRequest(teamId, email, role);
+    console.log("Response from /send_team_invite:", inviteResult); // Debug log
 
-    console.log("Response status:", res.status); // Debug log
-    const contentType = res.headers.get("content-type");
-    console.log("Response content-type:", contentType); // Debug log
+    const addMemberResult = await addTeamMemberRequest(teamId, email, role);
+    console.log("Response from /add_team_member:", addMemberResult); // Debug log
 
-    if (!contentType || !contentType.includes("application/json")) {
-      throw new Error("Invalid server response. Expected JSON.");
+    if (addMemberResult.error) {
+      showNotification("Error", addMemberResult.error, "error");
+      return;
     }
-
-    const updateResult = await res.json();
-    console.log("Response body:", updateResult); // Debug log
 
     showNotification("Success", "Member added successfully!", "success");
     document.getElementById("addMemberModal").classList.remove("show");
