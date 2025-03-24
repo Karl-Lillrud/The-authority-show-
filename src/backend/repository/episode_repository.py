@@ -41,8 +41,8 @@ class EpisodeRepository:
             title = validated_data.get("title")
 
             # Validate required fields
-            if not podcast_id or not title:
-                return {"error": "Required fields missing: podcastId and title"}, 400
+            if not podcast_id or not title or not validated_data.get("recordingAt"):
+                return {"error": "Required fields missing: podcastId, title, and recordingAt"}, 400
 
             episode_id = str(uuid.uuid4())
             user_id_str = str(user_id)
@@ -76,6 +76,7 @@ class EpisodeRepository:
                 "summary": validated_data.get("summary"),
                 "author": validated_data.get("author"),
                 "isHidden": validated_data.get("isHidden"),
+                "recordingAt": validated_data.get("recordingAt"),
             }
 
             result = self.collection.insert_one(episode_item)
@@ -192,7 +193,7 @@ class EpisodeRepository:
                 "title", "description", "publishDate", "duration", "status",
                 "audioUrl", "fileSize", "fileType", "guid", "season", "episode", 
                 "episodeType", "explicit", "imageUrl", "keywords", "chapters", 
-                "link", "subtitle", "summary", "author", "isHidden"
+                "link", "subtitle", "summary", "author", "isHidden", "recordingAt"
             ]
             
             for field in fields_to_update:
