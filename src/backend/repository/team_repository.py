@@ -261,35 +261,16 @@ class TeamRepository:
             msg = {"error": f"Failed to update team: {str(e)}"}
             return msg if return_message_only else (msg, 500)
 
-    def edit_team_member(self, team_id, email, new_email, role):
+    def edit_team_member_by_email(self, team_id, email, new_role):
         try:
-            # Kontrollera om teamet existerar
-            team = self.teams_collection.find_one({"_id": team_id})
-            if not team:
-                return {"error": "Team not found"}, 404
-
-            # Hitta medlemmen i teamets members-array
-            member = next(
-                (m for m in team.get("members", []) if m["email"] == email), None
-            )
-            if not member:
-                return {"error": "Member not found in team"}, 404
-
-            # Uppdatera e-post och roll i teamets members-array
-            self.teams_collection.update_one(
+            result = self.teams_collection.update_one(
                 {"_id": team_id, "members.email": email},
-                {"$set": {"members.$.email": new_email, "members.$.role": role}},
+                {"$set": {"members.$.role": new_role}},
             )
-
-            # Skicka ny inbjudan om e-posten ändras
-            if email != new_email:
-                from backend.services.TeamInviteService import TeamInviteService
-
-                invite_service = TeamInviteService()
-                invite_service.send_invite(None, team_id, new_email, role)
-
-            return {"message": "Member updated successfully"}, 200
-
+            if result.modified_count > 0:
+                return {"message": "Member role updated successfully!"}, 200
+            else:
+                return {"error": "No matching member found or role unchanged."}, 400
         except Exception as e:
-            logger.error(f"Error editing team member: {e}", exc_info=True)
-            return {"error": f"Failed to edit team member: {str(e)}"}, 500
+            logger.error(f"Error editing member by email: {e}", exc_info=True)
+            return {"error": f"Failed to edit member: {str(e)}"}, 500
