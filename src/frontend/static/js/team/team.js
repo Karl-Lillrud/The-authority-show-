@@ -1087,6 +1087,23 @@ function showTeamCardEditMemberModal(teamId, member) {
     )
     .join("");
 
+  // Add help text element below roleSelect if not already present.
+  let roleHelp = document.getElementById("teamCardEditMemberRoleHelpText");
+  if (!roleHelp) {
+    roleHelp = document.createElement("div");
+    roleHelp.id = "teamCardEditMemberRoleHelpText";
+    roleHelp.style.fontSize = "0.9em";
+    roleHelp.style.color = "red";
+    roleSelect.parentElement.appendChild(roleHelp);
+  }
+  // If the member is not verified, show an informational message and ensure role cannot be changed.
+  if (!member.verified) {
+    roleHelp.textContent = "Du måste vara verifierad innan du kan byta roll.";
+    roleSelect.disabled = true;
+  } else {
+    roleHelp.textContent = "";
+  }
+
   // Set fields to read-only and disabled initially
   emailInput.readOnly = true;
   roleSelect.disabled = true;
@@ -1099,10 +1116,16 @@ function showTeamCardEditMemberModal(teamId, member) {
   // Enable editing when "Edit" is clicked
   editBtn.onclick = () => {
     emailInput.readOnly = false;
-    roleSelect.disabled = false;
-    saveBtn.disabled = false;
-
-    // Remove grayed-out appearance
+    if (member.verified) {
+      roleSelect.disabled = false;
+      saveBtn.disabled = false;
+    } else {
+      showNotification(
+        "Info",
+        "Medlemmen är inte verifierad och kan inte ändra roll.",
+        "info"
+      );
+    }
     emailInput.style.backgroundColor = "";
     roleSelect.style.backgroundColor = "";
   };
