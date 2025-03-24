@@ -1,6 +1,6 @@
 from datetime import datetime, timedelta, timezone
 import logging
-from backend.repository.teaminvitrepository import TeamInviteRepository
+from backend.repository.teaminviterepository import TeamInviteRepository
 from backend.repository.usertoteam_repository import UserToTeamRepository
 from backend.repository.user_repository import UserRepository
 
@@ -16,8 +16,10 @@ class TeamInviteService:
     def send_invite(self, inviter_id, team_id, email, role):
         """Handles sending a team invite and email notification."""
         try:
-            from backend.utils.email_utils import send_team_invite_email  # Import inside function
-            
+            from backend.utils.email_utils import (
+                send_team_invite_email,
+            )  # Import inside function
+
             # Normalize email
             email = email.lower().strip()
 
@@ -102,7 +104,6 @@ class TeamInviteService:
             return {"error": f"Error processing registration: {str(e)}"}, 500
 
 
-
 def accept_invite(self, invite_token, user_id):
     """Accepts a team invitation and deletes it after successful registration."""
     invite = self.invites_collection.find_one({"_id": invite_token})
@@ -136,72 +137,3 @@ def accept_invite(self, invite_token, user_id):
         {"_id": invite["teamId"]},
         {"$push": {"members": {"userId": user_id, "role": invite["role"]}}},
     )
-
-    
-    def accept_invite(self, invite_token, user_id):
-        """Accepts a team invitation."""
-        try:
-            # Fetch the invite
-            invite = self.invite_repo.get_invite(invite_token)
-            
-            if not invite:
-                logger.warning(f"Invite {invite_token} not found")
-                return {"error": "Invite not found"}, 404
-                
-            # Ensure the invite is still valid
-            if invite["status"] == "expired":
-                logger.warning(f"Invite {invite_token} has expired")
-                return {"error": "This invite has expired."}, 400
-                
-            # Check expiration date if available
-            expires_at = invite.get("expiresAt")
-            if expires_at:
-                if isinstance(expires_at, str):
-                    try:
-                        expires_at = datetime.fromisoformat(expires_at.replace('Z', '+00:00'))
-                    except ValueError:
-                        logger.error(f"Invalid datetime format for invite {invite_token}")
-                        return {"error": "Invalid invite expiration format"}, 500
-                        
-                if expires_at < datetime.now(timezone.utc):
-                    logger.warning(f"Invite {invite_token} has expired")
-                    return {"error": "This invite has expired."}, 400
-
-            if invite["status"] == "accepted":
-                logger.info(f"Invite {invite_token} was already accepted")
-                return {"message": "Invite already accepted."}, 200
-
-            # Check if the user is already in the team
-            is_member = self.user_to_team_repo.is_user_in_team(user_id, invite["teamId"])
-            if is_member:
-                logger.warning(f"User {user_id} is already in team {invite['teamId']}")
-                return {"error": "User is already in the team"}, 400
-
-
-            # Add user to the team
-            add_result, status_code = self.user_to_team_repo.add_user_to_team({
-                "userId": user_id,
-                "teamId": invite["teamId"],
-                "role": "member"
-            })
-
-
-    return {"message": "Invite accepted successfully and removed"}, 200
-
-            if status_code != 201:
-                return {"error": "Failed to add user to team."}, 500
-                
-            # Delete the invite instead of marking as accepted
-            result = self.invite_repo.invites_collection.delete_one({"_id": invite_token})
-            
-            if result.deleted_count == 1:
-                logger.info(f"Invite {invite_token} was accepted and removed from the database")
-                return {"message": "Invite accepted successfully and removed"}, 200
-            else:
-                logger.warning(f"Failed to delete invite {invite_token} after acceptance")
-                return {"error": "Failed to complete invite acceptance"}, 500
-
-        except Exception as e:
-            logger.error(f"Error accepting invite: {str(e)}", exc_info=True)
-            return {"error": f"Error accepting invite: {str(e)}"}, 500
-
