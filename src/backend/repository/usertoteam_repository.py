@@ -24,7 +24,7 @@ class UserToTeamRepository:
 
             user_id = str(validated_data.get("userId"))
             team_id = str(validated_data.get("teamId"))
-            role = validated_data.get("role", "member")
+            role = validated_data.get("role")
 
             team = self.teams_collection.find_one({"_id": team_id})
             if not team:
@@ -116,7 +116,7 @@ class UserToTeamRepository:
                 )
 
                 if user_details:
-                    user_details["role"] = member.get("role", "member")
+                    user_details["role"] = member.get("role")
                     user_details["verified"] = (
                         True  # Mark as verified if in UsersToTeams
                     )
@@ -179,7 +179,7 @@ class UserToTeamRepository:
                     {"_id": user_id}, {"_id": 0}
                 )
                 if user_details:
-                    user_details["role"] = member.get("role", "member")
+                    user_details["role"] = member.get("role")
                     members_details.append(user_details)
             return {"members": members_details}, 200
         except Exception as e:

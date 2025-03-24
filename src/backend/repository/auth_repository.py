@@ -251,6 +251,7 @@ class AuthRepository:
                 return {"error": "Invalid or expired invite token."}, 400
 
             team_id = invite["teamId"]
+            role = invite["role"]
 
             if invite["email"].lower() != email:
                 print(
@@ -280,7 +281,7 @@ class AuthRepository:
             self.user_collection.insert_one(user_document)
             print("✅ User successfully inserted into database!")
 
-            user_to_team_data = {"userId": user_id, "teamId": team_id, "role": "member"}
+            user_to_team_data = {"userId": user_id, "teamId": team_id, "role": role}
             add_result, status_code = self.user_to_team_repo.add_user_to_team(
                 user_to_team_data
             )

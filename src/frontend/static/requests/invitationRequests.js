@@ -17,14 +17,14 @@ export async function sendInvitationEmail() {
   }
 }
 
-export async function sendTeamInvite(teamId, email) {
+export async function sendTeamInvite(teamId, email, role) {
   try {
     const response = await fetch("/send_team_invite", {
       method: "POST",
       headers: {
         "Content-Type": "application/json"
       },
-      body: JSON.stringify({ teamId, email })
+      body: JSON.stringify({ teamId, email, role })
     });
     if (!response.ok) {
       const errorData = await response.json();
