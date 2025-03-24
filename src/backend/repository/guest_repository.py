@@ -211,3 +211,14 @@ class GuestRepository:
         except Exception as e:
             logger.exception("❌ ERROR: Failed to fetch guests for episode")
             return {"error": f"Failed to fetch guests: {str(e)}"}, 500
+
+
+    # Delete guests associated with user when user account is deleted
+    def delete_by_user(self, user_id):
+        try:
+            result = self.collection.delete_many({"user_id": str(user_id)})
+            logger.info(f"🧹 Deleted {result.deleted_count} guests for user {user_id}")
+            return result.deleted_count
+        except Exception as e:
+            logger.error(f"Failed to delete guests: {e}", exc_info=True)
+            return 0
