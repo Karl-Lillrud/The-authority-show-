@@ -683,10 +683,11 @@ async function renderMembersView() {
             </div>
           `;
           if (member.role !== "creator") {
+            // Use team card edit modal logic for editing members
             card
               .querySelector(".edit-member-btn")
               .addEventListener("click", () =>
-                showEditMemberModal(team._id, member)
+                showTeamCardEditMemberModal(team._id, member)
               );
           }
           card
@@ -830,94 +831,62 @@ function showEditMemberModal(teamId, member) {
   modal.setAttribute("aria-hidden", "false");
 
   saveBtn.onclick = async () => {
-    const updatedEmail = emailInput.value;
+    const updatedEmail = emailInput.value.trim();
     const updatedRole = roleSelect.value;
-
+    console.log(
+      "Original email:",
+      member.email,
+      "Updated email:",
+      updatedEmail
+    );
     if (!teamId || !updatedEmail || !updatedRole) {
-      showNotification(
-        "Error",
-        "Missing teamId, email, or role. Please check your input.",
-        "error"
-      );
+      showNotification("Error", "Missing teamId, email, or role.", "error");
       return;
     }
-
     try {
-      // Only update if the role or email has changed
-      if (updatedEmail !== member.email || updatedRole !== member.role) {
-        // Step 1: Delete the old member
-        const deleteResult = await deleteTeamMemberRequest(
-          teamId,
-          member.userId,
-          member.email
-        );
-        if (deleteResult.error) {
-          showNotification(
-            "Error",
-            deleteResult.error || "Failed to delete old member.",
-            "error"
+      // Compare lower-case emails to detect change
+      if (
+        updatedEmail.toLowerCase() !== member.email.toLowerCase() ||
+        updatedRole !== member.role
+      ) {
+        let result;
+        if (!member.userId) {
+          // For members without userId, allow email change by passing newEmail
+          console.log(
+            "Calling editTeamMemberByEmailRequest with newEmail:",
+            updatedEmail
           );
-          return;
-        }
-
-        // Step 2: Add the updated member
-        const addMemberPayload = {
-          teamId,
-          email: updatedEmail,
-          role: updatedRole
-        };
-        const addMemberResponse = await fetch("/add_team_member", {
-          method: "PUT",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(addMemberPayload)
-        });
-        const addMemberResult = await addMemberResponse.json();
-
-        if (addMemberResult.error) {
-          showNotification(
-            "Error",
-            addMemberResult.error || "Failed to add updated member.",
-            "error"
+          result = await editTeamMemberByEmailRequest(
+            teamId,
+            member.email,
+            updatedRole,
+            updatedEmail
           );
-          return;
-        }
-
-        // Step 3: Send invitation email only if the email has changed
-        if (updatedEmail !== member.email) {
-          try {
-            const inviteResult = await sendTeamInvite(teamId, updatedEmail);
-            if (inviteResult.error) {
-              showNotification(
-                "Error",
-                inviteResult.error || "Failed to send invitation email.",
-                "error"
-              );
-            } else {
-              showNotification(
-                "Success",
-                "Member updated and invitation email sent successfully!",
-                "success"
-              );
-            }
-          } catch (inviteError) {
-            console.error("Error sending invitation email:", inviteError);
+        } else {
+          // For members with userId do not allow email change
+          if (updatedEmail.toLowerCase() !== member.email.toLowerCase()) {
             showNotification(
               "Error",
-              "Failed to send invitation email to the updated member.",
+              "Email change is not allowed for verified users.",
               "error"
             );
+            return;
           }
-        } else {
-          showNotification(
-            "Success",
-            "Member updated successfully!",
-            "success"
+          result = await editTeamMemberRequest(
+            teamId,
+            member.userId,
+            updatedRole
           );
         }
+        if (result.error) {
+          showNotification("Error", result.error, "error");
+          return;
+        }
+        showNotification("Success", "Member updated successfully!", "success");
       }
-
       modal.classList.remove("show");
-      renderMembersView(); // Refresh the members view
+      const teams = await getTeamsRequest();
+      updateTeamsUI(teams);
     } catch (error) {
       console.error("Error updating member:", error);
       showNotification(
