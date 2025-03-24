@@ -5,9 +5,13 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>PodManager.ai Dashboard</title>
   <link
-  rel="stylesheet"
-  href="{{ url_for('static', filename='css/dashboard/dashboard.css') }}"
-/>
+    rel="stylesheet"
+    href="{{ url_for('static', filename='css/dashboard/dashboard.css') }}"
+  />
+  <link
+    rel="stylesheet"
+    href="{{ url_for('static', filename='css/dashboard/task.css') }}"
+  />
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
 </head>
 <body>
@@ -65,14 +69,13 @@
         <p>💰 To kick things off, we've added <strong>3,500 Credits</strong> to your account!</p>
         <p>PodManager.ai will revolutionize your podcasting with AI-powered workflow automation, seamless guest management, and faster episode production- so you can focus on creating amazing content!</p>
         <p>✨ Check your email right now for more exciting features!</p>
-        <button id="get-started-btn" class="btn btn-primary">Get Started</button>
+        <button id="get-started-btn" class="btn save-btn">Get Started</button>
       </div>
     </div>
   </div>
 
   <script
-  type="module"
-  src="{{ url_for('static', filename='js/dashboard/dashboard.js') }}"
-></script>
+    type="module"
+    src="{{ url_for('static', filename='js/dashboard/dashboard.js') }}"
+  ></script>
 {% endblock %}
-

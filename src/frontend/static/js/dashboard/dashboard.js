@@ -1,6 +1,7 @@
 import { fetchAllEpisodes } from "/static/requests/episodeRequest.js"
 import { fetchGuestsByEpisode } from "/static/requests/guestRequests.js"
 import { fetchPodcast } from "/static/requests/podcastRequests.js"
+import { initTaskManagement } from "/static/js/dashboard/task.js"
 
 document.addEventListener("DOMContentLoaded", () => {
   // Initialize welcome popup
@@ -58,6 +59,9 @@ async function fetchAndDisplayEpisodesWithGuests() {
       // Fetch and populate guest list
       await populateGuestList(card, episode)
     }
+    
+    // Initialize task management after cards are created
+    initTaskManagement()
   } catch (error) {
     console.error("Error fetching episodes with guests:", error)
     const container = document.querySelector(".cards-container")
@@ -86,26 +90,12 @@ function createEpisodeCard(episode) {
     </div>
     <div class="card-footer">
       <span>Episode #${episode.episode_number || "N/A"}</span>
-      <button class="toggle-tasks">+</button>
+      <button class="toggle-tasks" aria-label="Toggle tasks">+</button>
     </div>
     <div class="tasks-container" style="display: none;">
       <p>Tasks for this episode will be displayed here.</p>
     </div>
   `
-
-  // Add event listener for toggle tasks button
-  const toggleButton = card.querySelector(".toggle-tasks")
-  const tasksContainer = card.querySelector(".tasks-container")
-
-  toggleButton.addEventListener("click", () => {
-    if (tasksContainer.style.display === "none") {
-      tasksContainer.style.display = "block"
-      toggleButton.textContent = "-"
-    } else {
-      tasksContainer.style.display = "none"
-      toggleButton.textContent = "+"
-    }
-  })
 
   return card
 }
@@ -158,3 +148,27 @@ async function populateGuestList(card, episode) {
   }
 }
 
+function populateLeaderboard() {
+  // Mock data for leaderboard
+  const leaderboardData = [
+    { name: "John Doe", tasksCompleted: 42, totalPoints: 1250, monthsWon: 2, shadowGoal: 1500 },
+    { name: "Jane Smith", tasksCompleted: 38, totalPoints: 1150, monthsWon: 1, shadowGoal: 1300 },
+    { name: "Alex Johnson", tasksCompleted: 35, totalPoints: 1050, monthsWon: 0, shadowGoal: 1200 },
+    { name: "Sarah Williams", tasksCompleted: 30, totalPoints: 900, monthsWon: 1, shadowGoal: 1100 }
+  ]
+
+  const leaderboardBody = document.querySelector(".leaderboard-table tbody")
+  leaderboardBody.innerHTML = "" // Clear existing content
+
+  leaderboardData.forEach(entry => {
+    const row = document.createElement("tr")
+    row.innerHTML = `
+      <td>${entry.name}</td>
+      <td>${entry.tasksCompleted}</td>
+      <td>${entry.totalPoints}</td>
+      <td>${entry.monthsWon}</td>
+      <td>${entry.shadowGoal}</td>
+    `
+    leaderboardBody.appendChild(row)
+  })
+}
