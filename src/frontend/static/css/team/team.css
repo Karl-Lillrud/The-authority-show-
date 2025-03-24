@@ -324,6 +324,7 @@ body {
   transition: all var(--transition-normal);
   margin-bottom: 8px;
   flex: 0 0 auto;
+  cursor: pointer; /* Ensure the cursor changes to indicate interactivity */
 }
 
 .member-chip:hover {
@@ -331,21 +332,9 @@ body {
   transform: translateY(-2px);
 }
 
-.member-chip.admin {
-  background-color: rgba(52, 152, 219, 0.1);
-  color: #3498db;
-}
-
-.member-chip .not-verified-badge,
-.member-chip .verified-badge,
-.member-chip .creator-badge,
-.member-chip .admin-badge {
-  margin-left: 4px; /* Ensure badges are inline and spaced */
-  padding: 2px 6px;
-  font-size: 0.7rem;
-  border-radius: var(--radius-small);
-  font-weight: 600;
-  white-space: nowrap;
+/* Ensure badges inside member chips do not block clicks */
+.member-chip span {
+  pointer-events: none;
 }
 
 /* Podcast chips styling */
@@ -1349,7 +1338,7 @@ body {
 .member-card-footer .btn {
   padding: 8px 16px;
   border: none;
-  border-radius: var(--radius-medium);
+  border-radius: var (--radius-medium);
   cursor: pointer;
   font-weight: 600;
   font-size: 0.9rem;

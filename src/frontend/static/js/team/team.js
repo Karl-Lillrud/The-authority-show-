@@ -111,7 +111,7 @@ function updateTeamsUI(teams) {
                 ? team.members
                     .map(
                       (m) => `
-                      <span class="member-chip">
+                      <span class="member-chip" data-email="${m.email}">
                         ${m.email}
                         ${
                           m.role === "creator"
@@ -166,6 +166,15 @@ function updateTeamsUI(teams) {
           showNotification("Info", "Team deletion cancelled.", "info");
         }
       );
+    });
+    card.querySelectorAll(".member-chip").forEach((chip) => {
+      chip.addEventListener("click", () => {
+        const memberEmail = chip.getAttribute("data-email");
+        const member = team.members.find((m) => m.email === memberEmail);
+        if (member) {
+          showTeamCardEditMemberModal(team._id, member);
+        }
+      });
     });
     container.appendChild(card);
   });
@@ -1061,3 +1070,128 @@ async function handleAddMemberFormSubmission(e) {
 document
   .getElementById("addMemberForm")
   .addEventListener("submit", handleAddMemberFormSubmission);
+
+// Function to show the edit member modal from team cards
+function showTeamCardEditMemberModal(teamId, member) {
+  const modal = document.getElementById("teamCardEditMemberModal");
+  const emailInput = document.getElementById("teamCardEditMemberEmail");
+  const roleSelect = document.getElementById("teamCardEditMemberRole");
+  const editBtn = document.getElementById("teamCardEditMemberEditBtn");
+  const saveBtn = document.getElementById("teamCardEditMemberSaveBtn");
+
+  // Populate fields with member data
+  emailInput.value = member.email;
+  roleSelect.value = member.role;
+
+  // Set fields to read-only initially
+  emailInput.readOnly = true;
+  roleSelect.disabled = true;
+  saveBtn.disabled = true;
+
+  // Show the modal
+  modal.classList.add("show");
+  modal.setAttribute("aria-hidden", "false");
+
+  // Enable editing when "Edit" is clicked
+  editBtn.onclick = () => {
+    emailInput.readOnly = false;
+    roleSelect.disabled = false;
+    saveBtn.disabled = false;
+  };
+
+  // Save changes when "Save" is clicked
+  saveBtn.onclick = async () => {
+    const updatedEmail = emailInput.value;
+    const updatedRole = roleSelect.value;
+
+    if (!teamId || !updatedEmail || !updatedRole) {
+      showNotification(
+        "Error",
+        "Missing teamId, email, or role. Please check your input.",
+        "error"
+      );
+      return;
+    }
+
+    try {
+      // Step 1: Delete the old member
+      const deleteResult = await deleteTeamMemberRequest(
+        teamId,
+        member.userId,
+        member.email
+      );
+      if (deleteResult.error) {
+        showNotification(
+          "Error",
+          deleteResult.error || "Failed to delete old member.",
+          "error"
+        );
+        return;
+      }
+
+      // Step 2: Add the updated member
+      const addMemberPayload = {
+        teamId,
+        email: updatedEmail,
+        role: updatedRole
+      };
+      const addMemberResponse = await fetch("/add_team_member", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(addMemberPayload)
+      });
+      const addMemberResult = await addMemberResponse.json();
+
+      if (addMemberResult.error) {
+        showNotification(
+          "Error",
+          addMemberResult.error || "Failed to add updated member.",
+          "error"
+        );
+        return;
+      }
+
+      // Step 3: Send invitation email to the updated member
+      try {
+        const inviteResult = await sendTeamInvite(teamId, updatedEmail);
+        if (inviteResult.error) {
+          showNotification(
+            "Error",
+            inviteResult.error || "Failed to send invitation email.",
+            "error"
+          );
+        } else {
+          showNotification(
+            "Success",
+            "Member updated and invitation email sent successfully!",
+            "success"
+          );
+        }
+      } catch (inviteError) {
+        console.error("Error sending invitation email:", inviteError);
+        showNotification(
+          "Error",
+          "Failed to send invitation email to the updated member.",
+          "error"
+        );
+      }
+
+      // Close the modal and refresh the team list
+      modal.classList.remove("show");
+      const teams = await getTeamsRequest();
+      updateTeamsUI(teams);
+    } catch (error) {
+      console.error("Error updating member:", error);
+      showNotification(
+        "Error",
+        "An error occurred while updating the member.",
+        "error"
+      );
+    }
+  };
+
+  // Close the modal
+  document.getElementById("teamCardEditMemberCloseBtn").onclick = () => {
+    modal.classList.remove("show");
+  };
+}
