@@ -33,7 +33,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       </div>
     `;
 
-    // Fetch episodes and display
+        // Fetch episodes and display with Transcript button
     const episodesData = await fetchEpisodesByPodcast(podcastId);
     const episodesDiv = document.getElementById("episodes-container");
     if (episodesData && episodesData.length > 0) {
@@ -43,6 +43,9 @@ document.addEventListener("DOMContentLoaded", async () => {
             <h4>${episode.title}</h4>
             <p><strong>Duration:</strong> ${episode.duration || 'N/A'}</p>
             <p><strong>Release Date:</strong> ${episode.publishDate || 'N/A'}</p>
+            <button class="btn" onclick="window.open('http://localhost:8501/', '_blank')">
+              AI Edit
+            </button>
           </div>
         `
       ).join("");
