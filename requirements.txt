@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 absl-py==2.1.0
 aiohappyeyeballs==2.4.6
 aiohttp==3.11.12
@@ -211,11 +212,14 @@ antlr4-python3-runtime
 anyio
 asteroid-filterbanks
 azure-cognitiveservices-speech
+=======
+>>>>>>> 59bb72c88a0a7bc6d0eb3c3ecd37f5365ec33e23
 bcrypt
 beautifulsoup4
 blinker
 cachetools
 certifi
+<<<<<<< HEAD
 cffi
 charset-normalizer
 click
@@ -242,14 +246,22 @@ httplib2
 httpx
 huggingface-hub
 hyperpyyaml
+=======
+>>>>>>> 59bb72c88a0a7bc6d0eb3c3ecd37f5365ec33e23
 charset-normalizer
 click
 colorama
 dnspython
 durationpy
+<<<<<<< HEAD
 Flask
 Flask-Cors
 feedparser
+=======
+feedparser
+Flask
+flask-cors
+>>>>>>> 59bb72c88a0a7bc6d0eb3c3ecd37f5365ec33e23
 google
 google-auth
 google-auth-oauthlib
@@ -259,6 +271,7 @@ idna
 itsdangerous
 Jinja2
 jsonify
+<<<<<<< HEAD
 julius
 kiwisolver
 kubernetes
@@ -307,6 +320,8 @@ pylogrus
 pymongo
 pyparsing
 pyphen
+=======
+>>>>>>> 59bb72c88a0a7bc6d0eb3c3ecd37f5365ec33e23
 kubernetes
 MarkupSafe
 marshmallow
@@ -329,6 +344,7 @@ python-bootstrap
 python-dateutil
 python-dotenv
 PyYAML
+<<<<<<< HEAD
 pytorch-lightning
 pytorch-metric-learning
 pytz
@@ -375,10 +391,16 @@ websocket-client
 websockets
 Werkzeug
 yarl
+=======
+>>>>>>> 59bb72c88a0a7bc6d0eb3c3ecd37f5365ec33e23
 requests
 requests-oauthlib
 rsa
 setuptools
+<<<<<<< HEAD
+=======
+sgmllib3k
+>>>>>>> 59bb72c88a0a7bc6d0eb3c3ecd37f5365ec33e23
 shortuuid
 six
 soupsieve

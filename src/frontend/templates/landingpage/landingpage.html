@@ -6,7 +6,7 @@
   <title>Podcast Website</title>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-  <link rel="stylesheet" href="{{ url_for('static', filename='css/landingpage.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/landingpage/landingpage.css') }}">
 </head>
 <body>
 
@@ -277,93 +277,7 @@
 
     <!-- Load JavaScript files at the END -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/color-thief/2.3.2/color-thief.umd.js"></script>
+    <script src="static/js/landingpage/landingpage.js"></script>
     
-    <script>
-      document.addEventListener("DOMContentLoaded", function () {
-    console.log("🚀 Color Thief Debug Started");
-
-    const logoImg = document.getElementById("podcast-logo");
-
-    if (!logoImg || !logoImg.src) {
-        console.error("❌ Error: podcast-logo image is missing in the DOM!");
-        return;
-    }
-
-    console.log("✅ Logo image found, source:", logoImg.src);
-
-    if (logoImg.complete && logoImg.naturalHeight !== 0) {
-        console.log("✅ Logo already loaded.");
-        extractColors(logoImg);
-    } else {
-        console.log("⏳ Waiting for logo to load...");
-        logoImg.onload = function () {
-            console.log("✅ Logo successfully loaded:", logoImg.src);
-            extractColors(logoImg);
-        };
-    }
-
-    logoImg.onerror = function () {
-        console.error("❌ Error: Could not load the podcast-logo image.");
-    };
-});
-
-function extractColors(img) {
-    try {
-        const colorThief = new ColorThief();
-        const palette = colorThief.getPalette(img, 5);  // Extract 5 colors for a richer theme
-
-        if (!palette || palette.length < 3) {
-            console.error("❌ Error: No colors extracted.");
-            return;
-        }
-
-        console.log("🎨 Extracted Colors:", palette);
-
-        // ✅ Assign extracted colors to variables (FIXED TEMPLATE STRINGS)
-        const primaryColor = `rgb(${palette[0].join(",")})`;  // Main color (background)
-        const secondaryColor = `rgb(${palette[1].join(",")})`; // Section background
-        const accentColor = `rgb(${palette[2].join(",")})`;   // Buttons/links
-        const textColor = `rgb(${palette[3].join(",")})`;     // Contrast text
-        const highlightColor = `rgb(${palette[4].join(",")})`; // Extra details
-
-        // ✅ Apply colors but **EXCLUDE THE HEADER** (keeps banner image!)
-        document.body.style.background = primaryColor;
-        document.body.style.color = textColor;
-
-        // ✅ Apply colors to the navbar & footer, but NOT the header
-        document.querySelector(".navbar").style.backgroundColor = secondaryColor;
-        document.querySelector("footer").style.backgroundColor = secondaryColor;
-        document.querySelector("footer").style.color = textColor;
-
-        // ✅ Apply colors to **all sections except the header**
-        document.querySelectorAll("section").forEach((section, index) => {
-            if (!section.classList.contains("podcast-header")) {  // ❌ SKIP HEADER
-                section.style.backgroundColor = index % 2 === 0 ? secondaryColor : primaryColor;
-                section.style.color = textColor;
-            }
-        });
-
-        // ✅ Apply highlight color to Social Media Icons
-        document.querySelectorAll("#host-social a").forEach(icon => {
-            icon.style.color = highlightColor;
-        });
-
-        // ✅ Apply colors to Episode Cards
-        document.querySelectorAll(".episode-card").forEach((card, index) => {
-            card.style.backgroundColor = index % 2 === 0 ? primaryColor : secondaryColor;
-            card.style.color = textColor;
-        });
-
-        console.log("🎨 Theme applied successfully!");
-
-    } catch (error) {
-        console.error("❌ Error in Color Thief:", error);
-    }
-}
-
-
-
-    </script>
-
 </body>
 </html>
