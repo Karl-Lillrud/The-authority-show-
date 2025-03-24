@@ -1,4 +1,4 @@
-from backend.database.mongo_connection import collection, database
+from backend.database.mongo_connection import collection
 from datetime import datetime, timezone
 import uuid
 import logging
@@ -12,13 +12,11 @@ class EpisodeRepository:
         self.collection = collection.database.Episodes
         self.accounts_collection = collection.database.Accounts
 
-    def register_episode(self, data, user_id):
+    def add_episode(self, data, user_id):
         """
         Register a new episode in the database
         """
         try:
-            logger.info("📩 Received raw episode data: %s", data)
-
             # Fetch the account document from MongoDB for the logged-in user
             user_account = self.accounts_collection.find_one({"userId": user_id})
             if not user_account:
@@ -38,7 +36,6 @@ class EpisodeRepository:
                 logger.error("Schema validation errors: %s", errors)
                 return {"error": "Invalid data", "details": errors}, 400
             validated_data = schema.load(data)
-            logger.info("Validated data: %s", validated_data)
 
             podcast_id = validated_data.get("podcastId")
             title = validated_data.get("title")
@@ -56,9 +53,7 @@ class EpisodeRepository:
                 "podcast_id": podcast_id,
                 "title": title,
                 "description": validated_data.get("description"),
-                "publishDate": validated_data.get(
-                    "publishDate"
-                ),  # Ensure publishDate is included
+                "publishDate": validated_data.get("publishDate"),
                 "duration": validated_data.get("duration"),
                 "status": validated_data.get("status"),
                 "userid": user_id_str,
@@ -83,10 +78,7 @@ class EpisodeRepository:
                 "isHidden": validated_data.get("isHidden"),
             }
 
-            # Inserting into the Episode collection
-            logger.info("📝 Inserting episode into database: %s", episode_item)
             result = self.collection.insert_one(episode_item)
-            logger.info("✅ Episode registered successfully with ID: %s", episode_id)
 
             # Return success response
             return {
@@ -104,11 +96,9 @@ class EpisodeRepository:
         """
         try:
             user_id_str = str(user_id)
-
-            # Debugging: Print episode_id and user_id
-            print(
-                f"Fetching episode with episode_id: {episode_id} for user_id: {user_id_str}"
-            )
+            
+            # Log the request
+            logger.info(f"Fetching episode with episode_id: {episode_id} for user_id: {user_id_str}")
 
             # Fetch the episode using the string episode_id
             episode = self.collection.find_one(
@@ -116,15 +106,16 @@ class EpisodeRepository:
             )
 
             if not episode:
-                print(
-                    f"Episode with episode_id: {episode_id} and user_id: {user_id_str} not found."
-                )
+                logger.info(f"Episode with episode_id: {episode_id} and user_id: {user_id_str} not found")
                 return {"error": "Episode not found"}, 404
 
-            return episode, 200
+            # Convert _id to string
+            episode["_id"] = str(episode["_id"])
+            
+            return {"episode": episode}, 200
 
         except Exception as e:
-            print(f"❌ ERROR: {e}")
+            logger.error("❌ ERROR: %s", e)
             return {"error": f"Failed to fetch episode: {str(e)}"}, 500
 
     def get_episodes(self, user_id):
@@ -141,7 +132,7 @@ class EpisodeRepository:
             return {"episodes": episodes}, 200
 
         except Exception as e:
-            print(f"❌ ERROR: {e}")
+            logger.error("❌ ERROR: %s", e)
             return {"error": f"Failed to fetch episodes: {str(e)}"}, 500
 
     def delete_episode(self, episode_id, user_id):
@@ -166,7 +157,7 @@ class EpisodeRepository:
                 return {"error": "Failed to delete episode"}, 500
 
         except Exception as e:
-            print(f"❌ ERROR: {e}")
+            logger.error("❌ ERROR: %s", e)
             return {"error": f"Failed to delete episode: {str(e)}"}, 500
 
     def update_episode(self, episode_id, user_id, data):
@@ -176,33 +167,41 @@ class EpisodeRepository:
         try:
             user_id_str = str(user_id)
 
+            # Check if episode exists and user has permission
             existing_episode = self.collection.find_one({"_id": episode_id})
             if not existing_episode:
                 return {"error": "Episode not found"}, 404
 
             if existing_episode["userid"] != user_id_str:
                 return {"error": "Permission denied"}, 403
-
+                
+            # Validate data with schema
+            schema = EpisodeSchema(partial=True)  # partial=True allows partial updates
+            errors = schema.validate(data)
+            if errors:
+                logger.error("Schema validation errors: %s", errors)
+                return {"error": "Invalid data", "details": errors}, 400
+                
+            # Create update fields dictionary
             update_fields = {
-                "title": (
-                    data.get("title", existing_episode["title"]).strip()
-                    if data.get("title")
-                    else existing_episode["title"]
-                ),
-                "description": (
-                    data.get("description", existing_episode["description"]).strip()
-                    if data.get("description")
-                    else existing_episode["description"]
-                ),
-                "publishDate": data.get("publishDate", existing_episode["publishDate"]),
-                "duration": data.get("duration", existing_episode["duration"]),
-                "status": (
-                    data.get("status", existing_episode["status"]).strip()
-                    if data.get("status")
-                    else existing_episode["status"]
-                ),
                 "updated_at": datetime.now(timezone.utc),
             }
+            
+            # Add all fields from data that are not None
+            fields_to_update = [
+                "title", "description", "publishDate", "duration", "status",
+                "audioUrl", "fileSize", "fileType", "guid", "season", "episode", 
+                "episodeType", "explicit", "imageUrl", "keywords", "chapters", 
+                "link", "subtitle", "summary", "author", "isHidden"
+            ]
+            
+            for field in fields_to_update:
+                if field in data and data[field] is not None:
+                    # Strip string values
+                    if isinstance(data[field], str):
+                        update_fields[field] = data[field].strip()
+                    else:
+                        update_fields[field] = data[field]
 
             # Update the episode in the database
             result = self.collection.update_one(
@@ -216,7 +215,7 @@ class EpisodeRepository:
                 return {"message": "No changes made to the episode"}, 200
 
         except Exception as e:
-            print(f"❌ ERROR: {e}")
+            logger.error("❌ ERROR: %s", e)
             return {"error": f"Failed to update episode: {str(e)}"}, 500
 
     def get_episodes_by_podcast(self, podcast_id, user_id):
@@ -228,8 +227,12 @@ class EpisodeRepository:
             episodes = list(
                 self.collection.find({"podcast_id": podcast_id, "userid": user_id_str})
             )
+            
             for episode in episodes:
                 episode["_id"] = str(episode["_id"])
+                
             return {"episodes": episodes}, 200
+            
         except Exception as e:
-            return {"error": str(e)}, 500
+            logger.error("❌ ERROR: %s", e)
+            return {"error": f"Failed to fetch episodes by podcast: {str(e)}"}, 500

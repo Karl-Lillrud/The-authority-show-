@@ -4,55 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>PodManager.ai - Terms of Service</title>
-    <style>
-      body {
-        font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
-        line-height: 1.6;
-        color: #333;
-        margin: 0;
-        padding: 0;
-        background-color: #f4f4f4;
-      }
-      .container {
-        max-width: 800px;
-        margin: 0 auto;
-        padding: 20px;
-        background-color: #fff;
-        box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-      }
-      header {
-        background-color: #1e1e1e;
-        color: #fff;
-        text-align: center;
-        padding: 20px 0;
-      }
-      h1 {
-        color: #ff8c00;
-        margin-bottom: 30px;
-      }
-      h2 {
-        color: #ff8c00;
-        margin-top: 30px;
-      }
-      footer {
-        background-color: #1e1e1e;
-        color: #fff;
-        text-align: center;
-        padding: 20px 0;
-        margin-top: 40px;
-      }
-      a {
-        color: #ff8c00;
-        text-decoration: none;
-      }
-      a:hover {
-        text-decoration: underline;
-      }
-      .logo {
-        max-width: 200px;
-        height: auto;
-      }
-    </style>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/terms-of-service/terms-of-service.css') }}" />
   </head>
   <body>
     <header>
@@ -153,7 +105,8 @@
     <footer>
       <p>&copy; 2025 PodManager.ai. All rights reserved.</p>
       <p>
-        <a href="#">Privacy Policy</a> | <a href="#">Terms of Service</a> |
+        <a href="{{ url_for('frontend.privacy_policy_page') }}">Privacy Policy</a> | 
+        <a href="{{ url_for('frontend.terms_of_service_page') }}">Terms of Service</a> |
         <a href="mailto:giveme@podmanager.ai">Contact Us</a>
       </p>
     </footer>

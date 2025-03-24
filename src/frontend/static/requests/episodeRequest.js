@@ -81,16 +81,16 @@ export async function registerEpisode(data) {
       console.error("Missing required fields: podcastId or title", data); // Added log
       throw new Error("Missing required fields: podcastId or title");
     }
-    console.log("Sending data to /register_episode:", data); // Added log
-    const response = await fetch("/register_episode", {
+    console.log("Sending data to /add_episode:", data); // Added log
+    const response = await fetch("/add_episode", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(data)
     });
     const responseData = await response.json();
-    console.log("Received response from /register_episode:", responseData); // Added log
+    console.log("Received response from /add_episode:", responseData); // Added log
     if (!response.ok) {
-      console.error("Error response from /register_episode:", responseData); // Added log
+      console.error("Error response from /add_episode:", responseData); // Added log
       throw new Error(responseData.error || "Failed to register episode");
     }
     return responseData;
@@ -104,6 +104,7 @@ export async function fetchEpisodesByPodcast(podcastId) {
   try {
     const response = await fetch(`/episodes/by_podcast/${podcastId}`);
     const data = await response.json();
+    console.log("Fetched episodes with additional fields:", data.episodes); // Log episodes
     if (response.ok) {
       return data.episodes;
     } else {
@@ -157,15 +158,40 @@ export async function deleteEpisode(episodeId) {
     const response = await fetch(`/delete_episodes/${episodeId}`, {
       method: "DELETE"
     });
-    const result = await response.json();
-    if (response.ok) {
-      return result;
+
+    const contentType = response.headers.get("content-type");
+    if (contentType && contentType.indexOf("application/json") !== -1) {
+      const result = await response.json();
+      if (response.ok) {
+        return result;
+      } else {
+        console.error("Failed to delete episode:", result.error);
+        alert("Failed to delete episode: " + result.error);
+      }
     } else {
-      console.error("Failed to delete episode:", result.error);
-      alert("Failed to delete episode: " + result.error);
+      console.error("Unexpected response format:", await response.text());
+      alert("Failed to delete episode: Unexpected response format");
     }
   } catch (error) {
     console.error("Error deleting episode:", error);
     alert("Failed to delete episode.");
   }
 }
+
+// In episodeRequest.js
+export async function fetchAllEpisodes() {
+  try {
+    const response = await fetch("/get_episodes");
+    const data = await response.json();
+    if (response.ok) {
+      return data.episodes;
+    } else {
+      console.error("Failed to fetch episodes:", data.error);
+      throw new Error(data.error || "Failed to fetch episodes");
+    }
+  } catch (error) {
+    console.error("Error fetching episodes:", error);
+    throw error;
+  }
+}
+

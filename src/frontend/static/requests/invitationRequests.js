@@ -16,3 +16,23 @@ export async function sendInvitationEmail() {
     throw error;
   }
 }
+
+export async function sendTeamInvite(teamId, email) {
+  try {
+    const response = await fetch("/send_team_invite", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({ teamId, email })
+    });
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(`Failed to send team invite: ${errorData.error}`);
+    }
+    return await response.json();
+  } catch (error) {
+    console.error("Error sending team invite:", error);
+    throw error;
+  }
+}
