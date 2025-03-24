@@ -78,7 +78,7 @@ class TeamInviteService:
 
             # Add user to the team
             add_result, status_code = self.user_to_team_repo.add_user_to_team(
-                {"userId": user_id, "teamId": team_id, "role": "member"}
+                {"userId": user_id, "teamId": team_id, "role": invite["role"]}
             )
 
             if status_code != 201:
@@ -114,7 +114,9 @@ def accept_invite(self, invite_token, user_id):
         return {"error": "Invite not found"}, 404
 
     # ✅ Ensure the invite is still valid
-    if invite["status"] == "expired" or (invite.get("expiresAt") and invite["expiresAt"] < datetime.now(timezone.utc)):
+    if invite["status"] == "expired" or (
+        invite.get("expiresAt") and invite["expiresAt"] < datetime.now(timezone.utc)
+    ):
         logger.warning(f"Invite {invite_token} has expired")
         return {"error": "This invite has expired."}, 400
 
@@ -123,11 +125,10 @@ def accept_invite(self, invite_token, user_id):
         return {"message": "Invite already accepted."}, 200
 
     # ✅ Check if the user is already in the team
-    team_member = self.teams_collection.find_one({
-        "_id": invite["teamId"],
-        "members": {"$elemMatch": {"userId": user_id}}
-    })
-    
+    team_member = self.teams_collection.find_one(
+        {"_id": invite["teamId"], "members": {"$elemMatch": {"userId": user_id}}}
+    )
+
     if team_member:
         logger.warning(f"User {user_id} is already in team {invite['teamId']}")
         return {"error": "User is already in the team"}, 400
@@ -135,7 +136,7 @@ def accept_invite(self, invite_token, user_id):
     # ✅ Add user to the team
     self.teams_collection.update_one(
         {"_id": invite["teamId"]},
-        {"$push": {"members": {"userId": user_id, "role": "member"}}}
+        {"$push": {"members": {"userId": user_id, "role": invite["role"]}}},
     )
 
     # ✅ Delete the invite after it has been accepted
@@ -143,4 +144,3 @@ def accept_invite(self, invite_token, user_id):
     logger.info(f"Invite {invite_token} was accepted and removed from the database")
 
     return {"message": "Invite accepted successfully and removed"}, 200
-

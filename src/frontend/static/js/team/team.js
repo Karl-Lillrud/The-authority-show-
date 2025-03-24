@@ -243,27 +243,6 @@ function closeModal(modal) {
   modal.setAttribute("aria-hidden", "true");
 }
 
-// Function to add a new member input row
-function addMemberRow(containerId) {
-  const membersContainer = document.getElementById(containerId);
-  const memberRow = document.createElement("div");
-  memberRow.className = "member-row";
-  memberRow.innerHTML = `
-    <input type="email" name="memberEmail" placeholder="Email" class="form-control" required>
-    <select name="memberRole" class="form-control" required>
-      <option value="admin">Admin</option>
-      <option value="member">Member</option>
-    </select>
-    <button type="button" class="removeMemberBtn btn">Remove</button>
-  `;
-  membersContainer.appendChild(memberRow);
-
-  // Add event listener to the remove button
-  memberRow.querySelector(".removeMemberBtn").addEventListener("click", () => {
-    membersContainer.removeChild(memberRow);
-  });
-}
-
 // The team detail modal logic
 function showTeamDetailModal(team) {
   // Local state for pending podcast assignment changes

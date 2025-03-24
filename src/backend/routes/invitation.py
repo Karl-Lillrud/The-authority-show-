@@ -81,7 +81,7 @@ def send_team_invite():
 
     email = data.get("email")
     team_id = data.get("teamId")
-    role = data.get("role")  # Default to "Member" if role isn't provided
+    role = data.get("role")
 
     if not email or not team_id:
         logger.error("Validation failed: Missing email or teamId")  # Debug log
