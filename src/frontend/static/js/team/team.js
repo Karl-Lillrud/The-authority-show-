@@ -283,29 +283,40 @@ function showTeamDetailModal(team) {
     }
   };
 
-  // Delete button immediately deletes the team.
+  // Replace delete button handler with confirmation popup.
   const deleteBtn = document.getElementById("deleteTeamDetailsBtn");
-  deleteBtn.onclick = async () => {
-    try {
-      const result = await deleteTeamRequest(team._id);
-      showNotification(
-        "Success",
-        result.message || "Team deleted successfully!",
-        "success"
-      );
-      const card = document.querySelector(`.team-card[data-id="${team._id}"]`);
-      if (card) card.remove();
-      closeModal(modal);
-      const teams = await getTeamsRequest();
-      updateTeamsUI(teams);
-    } catch (error) {
-      console.error("Error deleting team:", error);
-      showNotification(
-        "Error",
-        "An error occurred while deleting the team.",
-        "error"
-      );
-    }
+  deleteBtn.onclick = () => {
+    showConfirmationPopup(
+      "Delete Team",
+      "Are you sure you want to delete this team? All members will be removed and this action cannot be undone.",
+      async () => {
+        try {
+          const result = await deleteTeamRequest(team._id);
+          showNotification(
+            "Success",
+            result.message || "Team deleted successfully!",
+            "success"
+          );
+          const card = document.querySelector(
+            `.team-card[data-id="${team._id}"]`
+          );
+          if (card) card.remove();
+          closeModal(modal);
+          const teams = await getTeamsRequest();
+          updateTeamsUI(teams);
+        } catch (error) {
+          console.error("Error deleting team:", error);
+          showNotification(
+            "Error",
+            "An error occurred while deleting the team.",
+            "error"
+          );
+        }
+      },
+      () => {
+        showNotification("Info", "Deletion canceled.", "info");
+      }
+    );
   };
 
   // Save button finalizes pending podcast assignment changes and updates team details.
