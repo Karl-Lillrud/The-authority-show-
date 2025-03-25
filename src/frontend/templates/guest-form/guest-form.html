@@ -9,202 +9,244 @@
   <link rel="stylesheet" href="{{ url_for('static', filename='css/guest-form/guest-form.css') }}"> <!-- Link to the CSS file -->
   <script src="https://cdn.jsdelivr.net/npm/emailjs-com@2.6.4/dist/email.min.js"></script>
   <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    html, body {
+      height: 100%;
+      margin: 0;
+      display: flex;
+      flex-direction: column;
+    }
+    .content {
+      flex: 1;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+    .footer {
+      text-align: center;
+      padding: 1rem;
+      background-color: #f8f9fa;
+      border-top: 1px solid #e9ecef;
+    }
+    .footer-logo {
+      height: 40px;
+    }
+    .footer-text {
+      margin-top: 0.5rem;
+      font-size: 0.9rem;
+      color: #6c757d;
+    }
+  </style>
 </head>
 
-<body class="bg-[#eff2f9] flex items-center justify-center min-h-screen">
+<body>
 
-  <div class="bg-[#eff2f9] p-6 rounded-lg shadow-xl w-full max-w-xl">
-    <!--- Top Image -->
-    <div class="w-full h-32 mb-4 rounded-lg flex items-center justify-center">
-      <img src="{{ url_for('static', filename='images/PodManagerLogo.png') }}" alt="PodManager Logo" class="h-full object-contain">
-    </div>
+<!-- Link to the CSS file 
+  <div class="image">
+    <img
+     src="{{ url_for('static', filename='images/vivi.jpg') }}" alt="Beskrivning av bilden"/>
+  </div>-->
 
-    <!--- Title -->
-    <h2 class="text-2xl font-bold text-center text-gray-700 mb-4">Guest Registration</h2>
-    <form id="guestForm" class="space-y-4">
+  <div class="content">
+    <div class=" p-6 rounded-lg shadow-xl w-full max-w-xl" id="guestFormContainer">
+      <!--- Top Image -->
+      <div class="w-full h-32 mb-4 rounded-lg flex items-center justify-center">
+        <img src="{{ url_for('static', filename='images/PodManagerLogo.png') }}" alt="PodManager Logo" class="h-full object-contain">
+      </div>
+    
+     
+      <!--- Title -->
+      <h2 class="text-2xl font-bold text-center text-gray-700 mb-4">Guest Registration</h2>
+      <form id="guestForm" class="space-y-4">
 
-            <!-- Image section -->
-      <div class="mb-6">
-        <label class="block text-gray-600 font-medium">
-          Profile photo <span class="text-red-500">*</span>
-        </label>
-        <p class="text-sm text-gray-500">
-          (Preferably with a neutral background so we can make it transparent for the episode cover.)<br><br>
-        </p>
-        <p class="text-sm text-gray-500">Upload a Profile Image: <br><br>Image (Max 10 MB).</p>
+              <!-- Image section -->
+        <div class="mb-6">
+          <label class="block text-gray-600 font-medium">
+            Profile photo <span class="text-red-500">*</span>
+          </label>
+          <p class="text-sm text-gray-500">
+            (Preferably with a neutral background so we can make it transparent for the episode cover.)<br><br>
+          </p>
+          <p class="text-sm text-gray-500">Upload a Profile Image (Max 10 MB)</p>
 
-        <!-- Hidden default file input -->
-        <input type="file" id="profilePhoto" accept="image/*" class="hidden" onchange="previewImage()">
+          <!-- Hidden default file input -->
+          <input type="file" id="profilePhoto" accept="image/*" class="hidden" onchange="previewImage()">
 
-        <!-- Custom styled button -->
-        <label for="profilePhoto" class="bg-[#ff3b30] text-white px-4 py-2 rounded cursor-pointer inline-block mt-2">
-          Browse
-        </label>
+          <!-- Custom styled button -->
+          <label for="profilePhoto" id="profilePhotoLabel">
+            Browse
+          </label>
+          
+          <!-- File name display -->
+          <p id="fileName" class="text-sm text-gray-700 mt-2"></p>
 
-        <!-- File name display -->
-        <p id="fileName" class="text-sm text-gray-700 mt-2"></p>
+          <!-- Image preview initially hidden -->
+          <div id="imagePreviewContainer" class="hidden mt-4">
+            <img id="imagePreview" class="w-32 h-32 object-cover rounded-lg border" alt="Image Preview">
+            <button type="button" class="mt-2 bg-red-500 text-white px-3 py-1 rounded"
+              onclick="removeImage()">Remove</button>
+          </div>
 
-        <!-- Image preview initially hidden -->
-        <div id="imagePreviewContainer" class="hidden mt-4">
-          <img id="imagePreview" class="w-32 h-32 object-cover rounded-lg border" alt="Image Preview">
-          <button type="button" class="mt-2 bg-red-500 text-white px-3 py-1 rounded"
-            onclick="removeImage()">Remove</button>
+          <!-- Error message placeholder -->
+          <p id="photoError" class="text-red-500 text-sm mt-1"></p>
         </div>
 
-        <!-- Error message placeholder -->
-        <p id="photoError" class="text-red-500 text-sm mt-1"></p>
-      </div>
+        <!--- Asks for Full Name -->
+        <div>
+          <label class="block text-gray-600 font-medium">Name *</label>
+          <input type="text" id="first name" class="input-field" placeholder="Enter your First name" required>
+          <p id="firstnameError" class="error-message"></p>
+        </div>
 
-      <!--- Asks for Full Name -->
-      <div>
-        <label class="block text-gray-600 font-medium">Name *</label>
-        <input type="text" id="first name" class="input-field" placeholder="Enter your First name" required>
-        <p id="firstnameError" class="error-message"></p>
-      </div>
+        <!--- Asks for email adress -->
+        <div>
+          <label class="block text-gray-600 font-medium">Email *</label>
+          <input type="text" id="email" class="input-field" placeholder="Enter your email" required>
+          <p id="emailError" class="error-message"></p>
+        </div>
 
-      <!--- Asks for email adress -->
-      <div>
-        <label class="block text-gray-600 font-medium">Email *</label>
-        <input type="text" id="email" class="input-field" placeholder="Enter your email" required>
-        <p id="emailError" class="error-message"></p>
-      </div>
+              <!--- Bio -->
+        <div>
+          <label class="block text-gray-600 font-medium">Short Bio *</label>
+          <textarea id="bio" class="input-field" placeholder="Tell us about yourself" required></textarea>
+        </div>
 
-            <!--- Bio -->
-      <div>
-        <label class="block text-gray-600 font-medium">Short Bio *</label>
-        <textarea id="bio" class="input-field" placeholder="Tell us about yourself" required></textarea>
-      </div>
+        <!--- Longer question format-->
+        <div>
+          <label class="block text-gray-600 font-medium">
+            Think of three (3) areas of interest for your episode recording that you and your listeners will find interesting to hear about. *</label>
+          <textarea id="interest" class="input-field" placeholder="Tell us" required></textarea>
+        </div>
 
-      <!--- Longer question format-->
-      <div>
-        <label class="block text-gray-600 font-medium">
-          I'd like you to think about your 3 areas of interest for us to discuss during your episode recording that you
-          think will be of interest to the listener in one way or another. *</label>
-        <textarea id="interest" class="input-field" placeholder="Tell us" required></textarea>
-      </div>
+        <!--- Calender -->
+        <!-- Date & Time Selection -->
+        <div>
+          <label class="block text-gray-600 font-medium">Select a Recording Date & Time *</label>
 
-      <!--- Calender -->
-      <!-- Date & Time Selection -->
-      <div>
-        <label class="block text-gray-600 font-medium">Select a Recording Date & Time *</label>
+          <!-- Button to show calendar with an icon -->
+          <button id="openDatePicker" type="button" class="flex items-center gap-2 text-white px-4 py-2 rounded-lg bg-[#ff3b30] transition">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10m-11 9h12a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+            </svg>
+          </button>
+          
 
-        <!-- Button to show calendar with an icon -->
-        <button id="openDatePicker" type="button"
-          class="flex items-center gap-2 text-white  px-4 py-2 rounded-lg bg-[#ff3b30] transition">
-          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
-            stroke="currentColor" class="w-5 h-5">
-            <path stroke-linecap="round" stroke-linejoin="round"
-              d="M8 7V3m8 4V3m-9 8h10m-11 9h12a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-          </svg>
+          <!-- Inline Calendar + Time Picker (Initially Hidden) -->
+          <div id="dateTimeContainer" class="hidden mt-4 p-4 bg-white shadow-lg rounded-lg w-full max-w-md">
+
+            <!-- Year Selection Dropdown -->
+            <select id="yearSelector" class="border p-2 rounded w-full mb-3"></select>
+
+            <!-- Month & Year Selection -->
+            <div class="flex justify-between items-center mb-3">
+              <button id="prevMonth" class="text-gray-700 px-3 py-1 border rounded hover:bg-gray-100">←</button>
+              <span id="currentMonthYear" class="font-semibold"></span>
+              <button id="nextMonth" class="text-gray-700 px-3 py-1 border rounded hover:bg-gray-100">→</button>
+            </div>
+
+            <!-- Calendar UI -->
+            <div id="calendarPicker" class="grid grid-cols-7 gap-2"></div>
+
+            <!-- Time Picker -->
+            <div id="timePickerContainer" class="mt-4 hidden">
+              <label class="block text-gray-600 font-medium">Select Time</label>
+              <select id="timePicker" class="w-full border p-2 rounded"></select>
+            </div>
+
+            <!-- Confirm Button -->
+            <button id="confirmDateTime" class="bg-[#ff3b30] text-white px-4 py-2 rounded hidden mt-4">Confirm</button>
+          </div>
+
+          <!-- Display selected date & time -->
+          <p id="selectedDateTime" class="mt-2 text-gray-700"></p>
+
+          <!-- Hidden input fields to store selected values -->
+          <input type="hidden" id="recordingDate" required>
+          <input type="hidden" id="recordingTime" required>
+        </div>
+
+        <!--- Asks for company -->
+        <div>
+          <label class="block text-gray-600 font-medium">Company</label>
+          <input type="text" id="company" class="input-field" placeholder="Enter your Company name">
+          <p id="companyError" class="error-message"></p>
+        </div>
+
+        <!--- Asks for phone number -->
+        <div>
+          <label class="block text-gray-600 font-medium">Phone</label>
+          <input type="text" id="phone" class="input-field" placeholder="Enter your phone number">
+          <p id="phoneError" class="error-message"></p>
+        </div>
+
+        <!-- asks if you have a social media account -->
+        <label class="block text-gray-600 font-medium mb-2">Do you wish to add a social media account?</label>
+
+        <!-- Button to add social media -->
+      
+          <button id="addSocialButton" type="button" onclick="addSocialMedia()">Link Social Media</button>
+
+
+        <!-- Container where social media fields will be added -->
+        <div id="socialMediaContainer" class="mt-4 space-y-4"></div>
+
+        <!-- Adds recommended guests part -->
+        <label class="block text-gray-600 font-medium mb-2">Do you want to recommend a guest?</label>
+
+        <!-- Button to add a recommended guest -->
+        <button id="addGuestButton" type="button" onclick="addRecommendedGuest()">Add Guest</button>
+
+
+        <!-- Container where recommended guest fields will be added -->
+        <div id="recommendedGuestContainer" class="mt-4 space-y-4"></div>
+        <!-- list of other people -->
+        <div>
+          <label class="block text-gray-600 font-medium">List of other people you think we should invite</label>
+          <textarea id="list" class="input-field" placeholder="List them here"></textarea>
+        </div>
+
+        <!-- General added notes etc -->
+        <div>
+          <label class="block text-gray-600 font-medium">Comments</label>
+          <textarea id="notes" class="input-field" placeholder="Write you notes here"></textarea>
+        </div>
+
+        <!--- Question about future opportunities -->
+        <label class="block text-gray-600 font-medium">Would you be interested in future opportunities? Like live events,
+        guest panel discussions, or special episodes. We’d love to keep the collaboration going!</label>
+
+        <!-- Yes/No Radio Buttons -->
+        <div class="flex gap-4 mt-2">
+          <label class="flex items-center">
+            <input type="radio" name="updatesOption" value="no" checked>
+            <span class="ml-2">No</span>
+          </label>
+
+          <label class="flex items-center">
+            <input type="radio" name="updatesOption" value="yes">
+            <span class="ml-2">Yes</span>
+          </label>
+        </div>
+
+        <div></div>
+
+        <!--- Submit button -->
+        <button type="submit" class="w-full bg-[#ff3b30] text-white py-2 rounded-lg font-semibold transition-all">
+          Submit
         </button>
-
-        <!-- Inline Calendar + Time Picker (Initially Hidden) -->
-        <div id="dateTimeContainer" class="hidden mt-4 p-4 bg-white shadow-lg rounded-lg w-full max-w-md">
-
-          <!-- Year Selection Dropdown -->
-          <select id="yearSelector" class="border p-2 rounded w-full mb-3"></select>
-
-          <!-- Month & Year Selection -->
-          <div class="flex justify-between items-center mb-3">
-            <button id="prevMonth" class="text-gray-700 px-3 py-1 border rounded hover:bg-gray-100">←</button>
-            <span id="currentMonthYear" class="font-semibold"></span>
-            <button id="nextMonth" class="text-gray-700 px-3 py-1 border rounded hover:bg-gray-100">→</button>
-          </div>
-
-          <!-- Calendar UI -->
-          <div id="calendarPicker" class="grid grid-cols-7 gap-2"></div>
-
-          <!-- Time Picker -->
-          <div id="timePickerContainer" class="mt-4 hidden">
-            <label class="block text-gray-600 font-medium">Select Time</label>
-            <select id="timePicker" class="w-full border p-2 rounded"></select>
-          </div>
-
-          <!-- Confirm Button -->
-          <button id="confirmDateTime" class="bg-[#ff3b30] text-white px-4 py-2 rounded hidden mt-4">Confirm</button>
-        </div>
-
-        <!-- Display selected date & time -->
-        <p id="selectedDateTime" class="mt-2 text-gray-700"></p>
-
-        <!-- Hidden input fields to store selected values -->
-        <input type="hidden" id="recordingDate" required>
-        <input type="hidden" id="recordingTime" required>
-      </div>
-
-      <!--- Asks for company -->
-      <div>
-        <label class="block text-gray-600 font-medium">Company</label>
-        <input type="text" id="company" class="input-field" placeholder="Enter your Company name">
-        <p id="companyError" class="error-message"></p>
-      </div>
-
-      <!--- Asks for phone number -->
-      <div>
-        <label class="block text-gray-600 font-medium">Phone</label>
-        <input type="text" id="phone" class="input-field" placeholder="Enter your phone number">
-        <p id="phoneError" class="error-message"></p>
-      </div>
-
-      <!-- asks if you have a social media account -->
-      <label class="block text-gray-600 font-medium mb-2">Do you wish to add a social media account?</label>
-
-      <!-- Button to add social media -->
-      <button id="addSocialButton" type="button" class="bg-[#ff3b30] text-white px-4 py-2 rounded"
-        onclick="addSocialMedia()">Link Social Media</button>
-
-      <!-- Container where social media fields will be added -->
-      <div id="socialMediaContainer" class="mt-4 space-y-4"></div>
-
-      <!-- Adds recommended guests part -->
-      <label class="block text-gray-600 font-medium mb-2">Do you want to recommend a guest?</label>
-
-      <!-- Button to add a recommended guest -->
-      <button id="addGuestButton" type="button" class="bg-[#ff3b30] text-white px-4 py-2 rounded"
-        onclick="addRecommendedGuest()">Add Guest</button>
-
-      <!-- Container where recommended guest fields will be added -->
-      <div id="recommendedGuestContainer" class="mt-4 space-y-4"></div>
-      <!-- list of other people -->
-      <div>
-        <label class="block text-gray-600 font-medium">List of other people you think we should invite</label>
-        <textarea id="list" class="input-field" placeholder="List them here"></textarea>
-      </div>
-
-      <!-- General added notes etc -->
-      <div>
-        <label class="block text-gray-600 font-medium">Comments</label>
-        <textarea id="notes" class="input-field" placeholder="Write you notes here"></textarea>
-      </div>
-
-      <!--- Question about future opportunities -->
-      <label class="block text-gray-600 font-medium">Would you be interested in future opportunities? Like live events,
-      guest panel discussions, or special episodes. We’d love to keep the collaboration going!</label>
-
-      <!-- Yes/No Radio Buttons -->
-      <div class="flex gap-4 mt-2">
-        <label class="flex items-center">
-          <input type="radio" name="updatesOption" value="no" checked>
-          <span class="ml-2">No</span>
-        </label>
-
-        <label class="flex items-center">
-          <input type="radio" name="updatesOption" value="yes">
-          <span class="ml-2">Yes</span>
-        </label>
-      </div>
-
-      <div></div>
-
-      <!--- Submit button -->
-      <button type="submit"
-        class="w-full bg-[#ff3b30] text-white py-2 rounded-lg font-semibold transition-all">Submit</button>
-    </form>
+        
+      </form>
+    </div>
   </div>
 
   <!--- Link to script -->
   <script src="{{ url_for('static', filename='js/guest-form/guest-form.js') }}"></script>
+  <footer class="footer">
+    <img src="{{ url_for('static', filename='images/PodManagerLogo.png') }}" alt="Pod Manager" class="footer-logo">
+    <p class="footer-text">Powered by Pod Manager</p>
 
+  </footer>
+  
 </body>
 
 </html>

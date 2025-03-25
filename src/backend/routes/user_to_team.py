@@ -1,3 +1,7 @@
+import logging
+
+logger = logging.getLogger(__name__)
+
 from flask import Blueprint, request, jsonify, g
 from backend.repository.usertoteam_repository import UserToTeamRepository
 
@@ -34,4 +38,52 @@ def get_team_members(team_id):
         return jsonify({"error": "Unauthorized"}), 401
 
     response, status_code = usertoteam_repo.get_team_members(team_id)
+    return jsonify(response), status_code
+
+
+@usertoteam_bp.route("/get_team_members", methods=["GET"])
+def get_all_team_members():
+    if not hasattr(g, "user_id") or not g.user_id:
+        return jsonify({"error": "Unauthorized"}), 401
+
+    response, status_code = usertoteam_repo.get_all_team_members()
+    return jsonify(response), status_code
+
+
+@usertoteam_bp.route("/edit_team_member", methods=["PUT"])
+def edit_team_member():
+    if not hasattr(g, "user_id") or not g.user_id:
+        return jsonify({"error": "Unauthorized"}), 401
+
+    data = request.get_json()
+    logger.info(
+        f"Incoming payload for /edit_team_member: {data}"
+    )  # Logga inkommande data
+
+    team_id = data.get("teamId")
+    user_id = data.get("userId")
+    new_role = data.get("role")
+
+    if not team_id or not user_id or not new_role:
+        logger.error("Missing required fields in /edit_team_member")
+        return jsonify({"error": "Missing teamId, userId, or role"}), 400
+
+    response, status_code = usertoteam_repo.edit_team_member(team_id, user_id, new_role)
+    return jsonify(response), status_code
+
+
+@usertoteam_bp.route("/delete_team_member", methods=["DELETE"])
+def delete_team_member():
+    if not hasattr(g, "user_id") or not g.user_id:
+        return jsonify({"error": "Unauthorized"}), 401
+
+    data = request.get_json()
+    team_id = data.get("teamId")
+    user_id = data.get("userId")
+    email = data.get("email")
+
+    if not team_id:
+        return jsonify({"error": "Missing teamId"}), 400
+
+    response, status_code = usertoteam_repo.delete_team_member(team_id, user_id, email)
     return jsonify(response), status_code

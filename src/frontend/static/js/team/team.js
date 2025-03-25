@@ -4,9 +4,82 @@ import {
   editTeamRequest,
   deleteTeamRequest,
   fetchPodcasts,
-  updatePodcastTeamRequest
+  updatePodcastTeamRequest,
+  addTeamMemberRequest,
+  editTeamMemberByEmailRequest
 } from "/static/requests/teamRequests.js";
-import { initSidebar } from "/static/js/components/sidebar.js";
+import { sendTeamInviteRequest } from "/static/requests/invitationRequests.js";
+import { initSidebar } from "../components/sidebar.js";
+import { sidebarIcons } from "../components/sidebar-icons.js";
+import {
+  deleteTeamMemberRequest,
+  editTeamMemberRequest
+} from "/static/requests/userToTeamRequests.js";
+import { successSvg, errorSvg, infoSvg, closeSvg } from "./teamSvg.js";
+
+// Notification system for team.js
+function showNotification(title, message, type = "info") {
+  // Remove any existing notification
+  const existingNotification = document.querySelector(".notification");
+  if (existingNotification) {
+    existingNotification.remove();
+  }
+
+  // Create notification elements
+  const notification = document.createElement("div");
+  notification.className = `notification ${type}`;
+
+  // Icon based on type
+  let iconSvg = "";
+  if (type === "success") {
+    iconSvg = successSvg;
+  } else if (type === "error") {
+    iconSvg = errorSvg;
+  } else {
+    iconSvg = infoSvg;
+  }
+
+  notification.innerHTML = `
+    <div class="notification-icon">${iconSvg}</div>
+    <div class="notification-content">
+      <div class="notification-title">${title}</div>
+      <div class="notification-message">${message}</div>
+    </div>
+    <div class="notification-close">
+      ${closeSvg}
+    </div>
+  `;
+
+  // Add to DOM
+  document.body.appendChild(notification);
+
+  // Add event listener to close button
+  notification
+    .querySelector(".notification-close")
+    .addEventListener("click", () => {
+      notification.classList.remove("show");
+      setTimeout(() => {
+        notification.remove();
+      }, 500);
+    });
+
+  // Show notification with animation
+  setTimeout(() => {
+    notification.classList.add("show");
+  }, 10);
+
+  // Auto hide after 5 seconds
+  setTimeout(() => {
+    if (document.body.contains(notification)) {
+      notification.classList.remove("show");
+      setTimeout(() => {
+        if (document.body.contains(notification)) {
+          notification.remove();
+        }
+      }, 500);
+    }
+  }, 5000);
+}
 
 // Update the UI with retrieved teams
 function updateTeamsUI(teams) {
@@ -28,18 +101,37 @@ function updateTeamsUI(teams) {
     card.innerHTML = `
       <div class="team-card-header">
         <h2>${team.name}</h2>
-        <p><strong>Email:</strong> ${team.email}</p>
+        <p><strong>Team Email:</strong> ${team.email}</p>
       </div>
       <div class="team-card-body">
         <p><strong>Description:</strong> ${
           team.description || "No description available"
         }</p>
         <p><strong>Podcasts:</strong> ${team.podNames || "N/A"}</p>
-        <p><strong>Members:</strong></p>
-        <div class="member-chips">
-          ${team.members
-            .map((m) => `<span class="member-chip">${m.email}</span>`)
-            .join("")}
+        <div class="members-section">
+          <strong>Members:</strong>
+          <div>
+            ${
+              team.members.length > 0
+                ? team.members
+                    .map(
+                      (m) => `
+                      <span class="member-chip" data-email="${m.email}">
+                        ${m.email}
+                        ${
+                          m.role === "creator"
+                            ? '<span class="creator-badge">Creator</span>'
+                            : `<span class="role-badge ${m.role.toLowerCase()}">${
+                                m.role
+                              }</span>`
+                        }
+                      </span>
+                    `
+                    )
+                    .join("")
+                : "No members available"
+            }
+          </div>
         </div>
       </div>
       <div class="team-card-footer">
@@ -50,19 +142,45 @@ function updateTeamsUI(teams) {
     card
       .querySelector(".edit-team-btn")
       .addEventListener("click", () => showTeamDetailModal(team));
-    card
-      .querySelector(".delete-team-btn")
-      .addEventListener("click", async () => {
-        try {
-          const result = await deleteTeamRequest(team._id);
-          alert(result.message || "Team deleted successfully!");
-          card.remove();
-          const teams = await getTeamsRequest();
-          updateTeamsUI(teams);
-        } catch (error) {
-          console.error("Error deleting team:", error);
+    card.querySelector(".delete-team-btn").addEventListener("click", () => {
+      // New confirmation popup for deleting a team which will remove all members as well
+      showConfirmationPopup(
+        "Delete Team",
+        "Deleting this team will also remove all associated members. Are you sure you want to proceed?",
+        async () => {
+          try {
+            const result = await deleteTeamRequest(team._id);
+            showNotification(
+              "Success",
+              result.message || "Team deleted successfully!",
+              "success"
+            );
+            card.remove();
+            const teams = await getTeamsRequest();
+            updateTeamsUI(teams);
+          } catch (error) {
+            console.error("Error deleting team:", error);
+            showNotification(
+              "Error",
+              "An error occurred while deleting the team.",
+              "error"
+            );
+          }
+        },
+        () => {
+          showNotification("Info", "Team deletion cancelled.", "info");
+        }
+      );
+    });
+    card.querySelectorAll(".member-chip").forEach((chip) => {
+      chip.addEventListener("click", () => {
+        const memberEmail = chip.getAttribute("data-email");
+        const member = team.members.find((m) => m.email === memberEmail);
+        if (member) {
+          showTeamCardEditMemberModal(team._id, member);
         }
       });
+    });
     container.appendChild(card);
   });
 }
@@ -130,27 +248,6 @@ function closeModal(modal) {
   modal.setAttribute("aria-hidden", "true");
 }
 
-// Function to add a new member input row
-function addMemberRow(containerId) {
-  const membersContainer = document.getElementById(containerId);
-  const memberRow = document.createElement("div");
-  memberRow.className = "member-row";
-  memberRow.innerHTML = `
-    <input type="email" name="memberEmail" placeholder="Email" class="form-control" required>
-    <select name="memberRole" class="form-control" required>
-      <option value="admin">Admin</option>
-      <option value="member">Member</option>
-    </select>
-    <button type="button" class="removeMemberBtn btn">Remove</button>
-  `;
-  membersContainer.appendChild(memberRow);
-
-  // Add event listener to the remove button
-  memberRow.querySelector(".removeMemberBtn").addEventListener("click", () => {
-    membersContainer.removeChild(memberRow);
-  });
-}
-
 // The team detail modal logic
 function showTeamDetailModal(team) {
   // Local state for pending podcast assignment changes
@@ -173,16 +270,6 @@ function showTeamDetailModal(team) {
   document.getElementById("detailName").value = team.name;
   document.getElementById("detailEmail").value = team.email;
   document.getElementById("detailDescription").value = team.description;
-  document.getElementById("members-container-edit").innerHTML = "";
-  team.members.forEach((member) => {
-    addMemberRow("members-container-edit");
-    const memberRows = document.querySelectorAll(
-      "#members-container-edit .member-row"
-    );
-    const lastRow = memberRows[memberRows.length - 1];
-    lastRow.querySelector("input[name='memberEmail']").value = member.email;
-    lastRow.querySelector("select[name='memberRole']").value = member.role;
-  });
 
   const modal = document.getElementById("teamDetailModal");
   modal.classList.add("show");
@@ -201,7 +288,11 @@ function showTeamDetailModal(team) {
       );
       populatePodcastDropdownForTeam(team._id, pendingPodcastChanges);
       dropdown.value = "";
-      alert("Podcast addition pending. Press Save to finalize.");
+      showNotification(
+        "Success",
+        "Podcast addition pending. Press Save to finalize.",
+        "success"
+      );
     }
   };
 
@@ -217,7 +308,11 @@ function showTeamDetailModal(team) {
         pendingPodcastChanges
       );
       populatePodcastDropdownForTeam(team._id, pendingPodcastChanges);
-      alert("Podcast removal pending. Press Save to finalize.");
+      showNotification(
+        "Success",
+        "Podcast removal pending. Press Save to finalize.",
+        "success"
+      );
     }
   };
 
@@ -226,7 +321,11 @@ function showTeamDetailModal(team) {
   deleteBtn.onclick = async () => {
     try {
       const result = await deleteTeamRequest(team._id);
-      alert(result.message || "Team deleted successfully!");
+      showNotification(
+        "Success",
+        result.message || "Team deleted successfully!",
+        "success"
+      );
       const card = document.querySelector(`.team-card[data-id="${team._id}"]`);
       if (card) card.remove();
       closeModal(modal);
@@ -234,6 +333,11 @@ function showTeamDetailModal(team) {
       updateTeamsUI(teams);
     } catch (error) {
       console.error("Error deleting team:", error);
+      showNotification(
+        "Error",
+        "An error occurred while deleting the team.",
+        "error"
+      );
     }
   };
 
@@ -261,7 +365,7 @@ function showTeamDetailModal(team) {
       }
     } catch (err) {
       console.error("Error updating podcast assignments:", err);
-      alert("Error updating podcast assignments.");
+      showNotification("Error", "Error updating podcast assignments.", "error");
       return;
     }
 
@@ -269,27 +373,27 @@ function showTeamDetailModal(team) {
       name: document.getElementById("detailName").value,
       email: document.getElementById("detailEmail").value,
       description: document.getElementById("detailDescription").value,
-      members: []
+      members: team.members // Preserve all members (including creator)
     };
-
-    document
-      .querySelectorAll("#members-container-edit .member-row")
-      .forEach((row) => {
-        payload.members.push({
-          email: row.querySelector("input[name='memberEmail']").value,
-          role: row.querySelector("select[name='memberRole']").value
-        });
-      });
 
     try {
       const result = await editTeamRequest(team._id, payload);
       console.log("Edit team response:", result);
-      alert(result.message || "Team updated successfully!");
+      showNotification(
+        "Success",
+        result.message || "Team updated successfully!",
+        "success"
+      );
       closeModal(modal);
       const teams = await getTeamsRequest();
       updateTeamsUI(teams);
     } catch (error) {
       console.error("Error editing team:", error);
+      showNotification(
+        "Error",
+        "An error occurred while updating the team.",
+        "error"
+      );
     }
   };
 
@@ -305,21 +409,13 @@ function showTeamDetailModal(team) {
 
 // Initialize the page
 document.addEventListener("DOMContentLoaded", async () => {
-  // Initialize sidebar using the imported component
+  // Initialize sidebar from teamSidebar.js
   initSidebar();
+  initSidebarIcons(); // Flyttad funktion initieras här
 
   // Fetch teams data
   const teams = await getTeamsRequest();
   updateTeamsUI(teams);
-
-  // Add event listeners to the Add Member buttons
-  document.getElementById("addMemberBtn").addEventListener("click", () => {
-    addMemberRow("members-container");
-  });
-
-  document.getElementById("addMemberBtnEdit").addEventListener("click", () => {
-    addMemberRow("members-container-edit");
-  });
 
   // Initialize podcast dropdown
   async function populatePodcastDropdown() {
@@ -350,27 +446,21 @@ document.addEventListener("DOMContentLoaded", async () => {
     addTeamForm.addEventListener("submit", async (event) => {
       event.preventDefault();
       const formData = new FormData(addTeamForm);
-      const members = [];
-      document.querySelectorAll(".member-row").forEach((row) => {
-        members.push({
-          email: row.querySelector("input[name='memberEmail']").value,
-          role: row.querySelector("select[name='memberRole']").value
-        });
-      });
+
       // Extract the selected podcast ID from the form
       const podcastId = formData.get("podcastId");
       const payload = {
         name: formData.get("name"),
         email: formData.get("email"),
         description: formData.get("description"),
-        members: members
+        members: [] // Members är tomt eftersom det inte längre används här
       };
 
       try {
         const response = await addTeamRequest(payload);
         console.log("Add team response:", response);
         const teamId = response.team_id;
-        alert("Team successfully created!");
+        showNotification("Success", "Team successfully created!", "success");
 
         // If a podcast was selected, update it with the new team ID using a PUT request.
         if (podcastId) {
@@ -384,6 +474,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         updateTeamsUI(teams);
       } catch (error) {
         console.error("Error adding team:", error);
+        showNotification("Error", "Failed to create team.", "error");
       }
     });
   }
@@ -419,4 +510,595 @@ document.addEventListener("DOMContentLoaded", async () => {
       }
     });
   }
+
+  // New Member Modal functionality remains unchanged
+  const addMemberBtnSidebar = document.getElementById("addNewMemberBtn");
+  const addMemberModal = document.getElementById("addMemberModal");
+  const closeAddMemberModal = document.getElementById("closeAddMemberModal");
+  const cancelAddMember = document.getElementById("cancelAddMember");
+  const addMemberForm = document.getElementById("addMemberForm");
+  const teamSelect = document.getElementById("teamSelect");
+
+  // Function to fetch teams and populate dropdown
+  async function populateTeamDropdown() {
+    try {
+      const teams = await getTeamsRequest();
+      teamSelect.innerHTML = '<option value="">Select a Team</option>';
+      teams.forEach((team) => {
+        const option = document.createElement("option");
+        option.value = team._id;
+        option.textContent = team.name;
+        teamSelect.appendChild(option);
+      });
+    } catch (err) {
+      console.error("Error fetching teams for dropdown:", err);
+    }
+  }
+
+  // Open modal on Add New Member button click
+  if (addMemberBtnSidebar && addMemberModal) {
+    addMemberBtnSidebar.addEventListener("click", () => {
+      populateTeamDropdown();
+      addMemberModal.classList.add("show");
+      addMemberModal.setAttribute("aria-hidden", "false");
+    });
+  }
+
+  // Modal close handlers
+  if (closeAddMemberModal) {
+    closeAddMemberModal.addEventListener("click", () => {
+      addMemberModal.classList.remove("show");
+      addMemberModal.setAttribute("aria-hidden", "true");
+    });
+  }
+  if (cancelAddMember) {
+    cancelAddMember.addEventListener("click", () => {
+      addMemberModal.classList.remove("show");
+      addMemberModal.setAttribute("aria-hidden", "true");
+    });
+  }
+
+  // Handle Add Member form submission in the new member modal
+  if (addMemberForm) {
+    // Ta bort eventuella tidigare registrerade eventhanterare
+    addMemberForm.removeEventListener("submit", handleAddMemberFormSubmission);
+
+    // Lägg till eventhanteraren
+    addMemberForm.addEventListener("submit", handleAddMemberFormSubmission);
+  }
+
+  // Initialize menu item event listeners
+  const teamsMenuItem = document.getElementById("sidebar-teams");
+  const membersMenuItem = document.getElementById("sidebar-members");
+
+  if (teamsMenuItem && membersMenuItem) {
+    teamsMenuItem.addEventListener("click", (event) => {
+      event.preventDefault();
+      membersMenuItem.classList.remove("active");
+      teamsMenuItem.classList.add("active");
+      switchToTeamsView();
+    });
+
+    membersMenuItem.addEventListener("click", (event) => {
+      event.preventDefault();
+      teamsMenuItem.classList.remove("active");
+      membersMenuItem.classList.add("active");
+      switchToMembersView();
+    });
+  }
 });
+
+function initSidebarIcons() {
+  const backToDashboardIcon = document.getElementById("back-to-dashboard-icon");
+  const teamsIcon = document.getElementById("teams-icon");
+  const membersIcon = document.getElementById("members-icon");
+  const addTeamIcon = document.querySelector("#openModalBtn .sidebar-icon");
+  const addMemberIcon = document.querySelector(
+    "#addNewMemberBtn .sidebar-icon"
+  );
+
+  if (backToDashboardIcon)
+    backToDashboardIcon.innerHTML = sidebarIcons.backToDashboard;
+  if (teamsIcon) teamsIcon.innerHTML = sidebarIcons.teams;
+  if (membersIcon) membersIcon.innerHTML = sidebarIcons.members;
+  if (addTeamIcon) addTeamIcon.innerHTML = sidebarIcons.add;
+  if (addMemberIcon) addMemberIcon.innerHTML = sidebarIcons.add;
+}
+
+export function switchToTeamsView() {
+  console.log("Switching to Teams view");
+  const mainContent = document.querySelector(".main-content");
+  mainContent.innerHTML = `
+    <div class="main-header">
+      <h1>Teams</h1>
+    </div>
+    <div class="card-container">
+      <!-- Team cards will be dynamically inserted here -->
+    </div>
+  `;
+  getTeamsRequest()
+    .then((teams) => updateTeamsUI(teams))
+    .catch((error) => console.error("Error rendering teams view:", error));
+}
+
+// Ta bort showEditMemberModal och använd showTeamCardEditMemberModal istället
+// Uppdatera renderMembersView för att använda showTeamCardEditMemberModal
+async function renderMembersView() {
+  const mainContent = document.querySelector(".main-content");
+  mainContent.innerHTML = `
+    <div class="main-header">
+      <h1>Members</h1>
+    </div>
+    <div id="members-view-container" class="card-container"></div>
+  `;
+
+  try {
+    const teams = await getTeamsRequest();
+    const membersView = document.getElementById("members-view-container");
+
+    for (const team of teams) {
+      if (team.members && Array.isArray(team.members)) {
+        team.members.forEach((member) => {
+          const card = document.createElement("div");
+          card.className = "member-card";
+          card.innerHTML = `
+            <div class="member-card-header">
+              <h3>${member.fullName || member.email}</h3>
+              <span class="member-chip">
+                ${
+                  member.role === "creator"
+                    ? '<span class="creator-badge">Creator</span>'
+                    : `<span class="role-badge ${member.role.toLowerCase()}">${
+                        member.role
+                      }</span>`
+                }
+                ${
+                  member.role !== "creator" && !member.verified
+                    ? '<span class="not-verified-badge">Not Verified</span>'
+                    : member.role !== "creator" && member.verified
+                    ? '<span class="verified-badge">Verified</span>'
+                    : ""
+                }
+              </span>
+            </div>
+            <div class="member-card-body">
+              ${
+                member.verified
+                  ? `<p><strong>Email:</strong> ${member.email}</p>`
+                  : ""
+              }
+              ${
+                member.phone
+                  ? `<p><strong>Phone:</strong> ${member.phone}</p>`
+                  : ""
+              }
+              <p><strong>Role:</strong> ${member.role}</p>
+              <p><strong>Team:</strong> ${team.name}</p>
+              <div class="member-card-footer">
+                ${
+                  member.role !== "creator"
+                    ? '<button class="btn edit-member-btn">Edit</button>'
+                    : ""
+                }
+                <button class="btn delete-member-btn">Delete</button>
+              </div>
+            </div>
+          `;
+          if (member.role !== "creator") {
+            // Använd showTeamCardEditMemberModal för att redigera medlemmar
+            card
+              .querySelector(".edit-member-btn")
+              .addEventListener("click", () =>
+                showTeamCardEditMemberModal(team._id, member)
+              );
+          }
+          card
+            .querySelector(".delete-member-btn")
+            .addEventListener("click", () =>
+              deleteMember(team._id, member.userId, member.email, member.role)
+            );
+          membersView.appendChild(card);
+        });
+      }
+    }
+  } catch (error) {
+    console.error("Error fetching members:", error);
+    const membersView = document.getElementById("members-view-container");
+    membersView.innerHTML = `<p>Error loading members. Please try again later.</p>`;
+  }
+}
+
+export function switchToMembersView() {
+  console.log("Switching to Members view");
+  renderMembersView();
+}
+
+function showConfirmationPopup(title, message, onConfirm, onCancel) {
+  console.log("showConfirmationPopup called with:", title, message); // Debugging log
+
+  // Remove any existing popup
+  const existingPopup = document.querySelector(".confirmation-popup");
+  if (existingPopup) {
+    existingPopup.remove();
+  }
+
+  // Create popup elements
+  const popup = document.createElement("div");
+  popup.className = "popup confirmation-popup show";
+
+  popup.innerHTML = `
+    <div class="form-box">
+      <h2 class="form-title">${title}</h2>
+      <p>${message}</p>
+      <div class="form-actions">
+        <button class="cancel-btn" id="cancelPopupBtn">Cancel</button>
+        <button class="save-btn" id="confirmPopupBtn">Confirm</button>
+      </div>
+    </div>
+  `;
+
+  // Add to DOM
+  document.body.appendChild(popup);
+
+  // Add event listeners for buttons
+  document.getElementById("confirmPopupBtn").addEventListener("click", () => {
+    console.log("Confirm button clicked"); // Debugging log
+    onConfirm();
+    popup.remove();
+  });
+
+  document.getElementById("cancelPopupBtn").addEventListener("click", () => {
+    console.log("Cancel button clicked"); // Debugging log
+    if (onCancel) onCancel();
+    popup.remove();
+  });
+}
+
+// Update deleteMember function to ensure popup is triggered
+async function deleteMember(teamId, userId = null, email = null, role = null) {
+  console.log("deleteMember called with:", { teamId, userId, email, role }); // Debug log
+
+  try {
+    // Modified condition to ensure case-insensitive check for 'creator'
+    if (role && role.toLowerCase() === "creator") {
+      showConfirmationPopup(
+        "Delete Creator",
+        "This member is the creator of the team. Deleting the creator will delete the entire team. Are you sure you want to proceed?",
+        async () => {
+          try {
+            await deleteTeam(teamId); // Proceed to delete the entire team
+            showNotification(
+              "Success",
+              "Team and creator deleted successfully!",
+              "success"
+            );
+            renderMembersView(); // Refresh the members view
+          } catch (error) {
+            console.error("Error deleting team:", error);
+            showNotification(
+              "Error",
+              "An error occurred while deleting the team.",
+              "error"
+            );
+          }
+        },
+        () => {
+          showNotification("Info", "Deletion canceled.", "info");
+        }
+      );
+      return;
+    }
+
+    // Proceed to delete the member
+    const result = await deleteTeamMemberRequest(teamId, userId, email);
+    if (result.message) {
+      showNotification(
+        "Success",
+        result.message || "Member deleted successfully!",
+        "success"
+      );
+      renderMembersView(); // Refresh the members view
+    } else {
+      showNotification(
+        "Error",
+        result.error || "Failed to delete member.",
+        "error"
+      );
+    }
+  } catch (error) {
+    console.error("Error deleting member:", error);
+    showNotification(
+      "Error",
+      "An error occurred while deleting the member.",
+      "error"
+    );
+  }
+}
+
+// Example usage for unverified members
+function handleDeleteUnverifiedMember(teamId, email, role) {
+  deleteMember(teamId, null, email, role);
+}
+
+function showTeamCardEditMemberModal(teamId, member) {
+  const modal = document.getElementById("teamCardEditMemberModal");
+  const emailInput = document.getElementById("teamCardEditMemberEmail");
+  const roleSelect = document.getElementById("teamCardEditMemberRole");
+  const editBtn = document.getElementById("teamCardEditMemberEditBtn");
+  const saveBtn = document.getElementById("teamCardEditMemberSaveBtn");
+
+  // Populate fields with member data
+  const originalEmail = member.email;
+  emailInput.value = member.email;
+
+  // Populate role dropdown
+  const roles = [
+    "CoHost",
+    "Guest",
+    "Scriptwriter",
+    "Producer",
+    "AudioEngineer",
+    "SoundDesigner",
+    "Researcher",
+    "GuestCoordinator",
+    "Showrunner",
+    "SocialMediaManager",
+    "GraphicDesigner",
+    "Copywriter",
+    "Publicist",
+    "SponsorshipManager",
+    "MarketingStrategist",
+    "AnalyticsSpecialist",
+    "ShowCoordinator",
+    "Webmaster"
+  ];
+  roleSelect.innerHTML = roles
+    .map(
+      (role) =>
+        `<option value="${role}" ${
+          member.role === role ? "selected" : ""
+        }>${role}</option>`
+    )
+    .join("");
+
+  // Handle help text
+  let roleHelp = document.getElementById("teamCardEditMemberRoleHelpText");
+  if (!roleHelp) {
+    roleHelp = document.createElement("div");
+    roleHelp.id = "teamCardEditMemberRoleHelpText";
+    roleHelp.style.fontSize = "0.8em";
+    roleHelp.style.color = "red";
+    roleHelp.style.marginLeft = "0.5cm";
+    roleSelect.parentElement.appendChild(roleHelp);
+  }
+
+  // Hide help text and disable role select for creators
+  if (member.role === "creator") {
+    roleHelp.textContent = "";
+    roleSelect.disabled = true;
+    editBtn.style.display = "none"; // Hide Edit button
+  } else {
+    roleHelp.textContent = !member.verified
+      ? "The user must be verified before you can change roles."
+      : "";
+    roleSelect.disabled = !member.verified;
+    editBtn.style.display = "inline-block"; // Show Edit button
+  }
+
+  // Set initial state
+  emailInput.readOnly = true;
+  saveBtn.disabled = true;
+
+  // Show modal
+  modal.classList.add("show");
+  modal.setAttribute("aria-hidden", "false");
+
+  // Enable editing
+  editBtn.onclick = () => {
+    emailInput.readOnly = false;
+    if (member.verified) {
+      roleSelect.disabled = false;
+    }
+    saveBtn.disabled = false;
+    emailInput.style.backgroundColor = "";
+    roleSelect.style.backgroundColor = "";
+  };
+
+  // Save changes using deleteMember logic
+  saveBtn.onclick = async () => {
+    const newEmail = emailInput.value;
+    const newRole = roleSelect.value;
+
+    if (!teamId || !newEmail || !newRole) {
+      showNotification("Error", "Missing teamId, email, or role.", "error");
+      return;
+    }
+
+    try {
+      if (newEmail !== originalEmail) {
+        // Step 1: Delete the old member using the same logic as members section
+        await deleteMember(teamId, member.userId, originalEmail, member.role);
+
+        // Step 2: Add the new member
+        const addResult = await addTeamMemberRequest(teamId, newEmail, newRole);
+        if (addResult.error) {
+          showNotification(
+            "Error",
+            addResult.error || "Failed to add new member.",
+            "error"
+          );
+          return;
+        }
+
+        // Step 3: Send team invite
+        const inviteResult = await sendTeamInviteRequest(
+          teamId,
+          newEmail,
+          newRole
+        );
+        if (inviteResult.error) {
+          showNotification(
+            "Error",
+            inviteResult.error || "Failed to send invitation.",
+            "error"
+          );
+          return;
+        }
+
+        showNotification(
+          "Success",
+          "Member updated and invitation sent successfully!",
+          "success"
+        );
+      } else if (newRole !== member.role) {
+        const result = member.userId
+          ? await editTeamMemberRequest(teamId, member.userId, newRole)
+          : await editTeamMemberByEmailRequest(teamId, originalEmail, newRole);
+
+        if (result.error) {
+          showNotification(
+            "Error",
+            result.error || "Failed to update role.",
+            "error"
+          );
+          return;
+        }
+        showNotification(
+          "Success",
+          "Member role updated successfully!",
+          "success"
+        );
+      }
+
+      modal.classList.remove("show");
+      const teams = await getTeamsRequest();
+      updateTeamsUI(teams); // Uppdatera team-vyn
+      renderMembersView(); // Uppdatera members-vyn också för konsistens
+    } catch (error) {
+      console.error("Error updating member:", error);
+      showNotification(
+        "Error",
+        "An error occurred while updating the member.",
+        "error"
+      );
+    }
+  };
+
+  // Close modal
+  document.getElementById("teamCardEditMemberCloseBtn").onclick = () => {
+    modal.classList.remove("show");
+  };
+}
+
+async function addTeam(payload) {
+  try {
+    const response = await addTeamRequest(payload);
+    showNotification("Success", "Team successfully created!", "success");
+    const teams = await getTeamsRequest();
+    updateTeamsUI(teams);
+  } catch (error) {
+    console.error("Error adding team:", error);
+    showNotification("Error", "Failed to create team.", "error");
+  }
+}
+
+async function deleteTeam(teamId) {
+  try {
+    const result = await deleteTeamRequest(teamId);
+    if (result.message) {
+      showNotification(
+        "Success",
+        result.message || "Team deleted successfully!",
+        "success"
+      );
+      const teams = await getTeamsRequest();
+      updateTeamsUI(teams);
+    } else {
+      showNotification(
+        "Error",
+        result.error || "Failed to delete team.",
+        "error"
+      );
+    }
+  } catch (error) {
+    console.error("Error deleting team:", error);
+    showNotification(
+      "Error",
+      "An error occurred while deleting the team.",
+      "error"
+    );
+  }
+}
+
+async function saveTeamDetails(teamId, payload) {
+  try {
+    const result = await editTeamRequest(teamId, payload);
+    if (result.message) {
+      showNotification(
+        "Success",
+        result.message || "Team updated successfully!",
+        "success"
+      );
+      const teams = await getTeamsRequest();
+      updateTeamsUI(teams);
+    } else {
+      showNotification(
+        "Error",
+        result.error || "Failed to update team.",
+        "error"
+      );
+    }
+  } catch (error) {
+    console.error("Error updating team:", error);
+    showNotification(
+      "Error",
+      "An error occurred while updating the team.",
+      "error"
+    );
+  }
+}
+
+async function handleAddMemberFormSubmission(e) {
+  e.preventDefault();
+  const email = document.getElementById("memberEmail").value;
+  const role = document.getElementById("memberRole").value;
+  const teamId = document.getElementById("teamSelect").value;
+
+  console.log("Submitting Add Member Form with data:", { email, role, teamId }); // Debug log
+
+  if (!email || !teamId || !role) {
+    console.error("Validation failed: Missing email, role, or teamId"); // Debug log
+    showNotification(
+      "Error",
+      "Please provide member email, role, and select a team.",
+      "error"
+    );
+    return;
+  }
+
+  try {
+    const inviteResult = await sendTeamInviteRequest(teamId, email, role);
+    console.log("Response from /send_team_invite:", inviteResult); // Debug log
+
+    const addMemberResult = await addTeamMemberRequest(teamId, email, role);
+    console.log("Response from /add_team_member:", addMemberResult); // Debug log
+
+    if (addMemberResult.error) {
+      showNotification("Error", addMemberResult.error, "error");
+      return;
+    }
+
+    showNotification("Success", "Member added successfully!", "success");
+    document.getElementById("addMemberModal").classList.remove("show");
+    const teams = await getTeamsRequest();
+    updateTeamsUI(teams);
+  } catch (error) {
+    console.error("Error in handleAddMemberFormSubmission:", error); // Debug log
+    showNotification("Error", "Failed to add member.", "error");
+  }
+}
+
+// Update existing event listeners to use showNotification
+document
+  .getElementById("addMemberForm")
+  .addEventListener("submit", handleAddMemberFormSubmission);

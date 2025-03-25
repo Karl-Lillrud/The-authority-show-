@@ -1,13 +1,19 @@
-{% extends "/components/base.html" %} {% block title %}Podcast Management{%
-endblock %} {% block content %}
-<link
-  rel="stylesheet"
-  href="{{ url_for('static', filename='css/components/sidebar.css') }}"
-/>
-<link
-  rel="stylesheet"
-  href="{{ url_for('static', filename='css/podcastmanagement/podcastmanagement.css') }}"
-/>
+{% block title %}Podcast Management{% endblock %}
+{% block content %}
+<head>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/components/sidebar.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/podcastmanagement/podcastmanagement.css') }}">
+
+  <!-- Google Analytics -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-PTPQQ5WSQV"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+
+    gtag('config', 'G-PTPQQ5WSQV');
+  </script>
+</head>
 
 <div class="app-container">
   <!-- Sidebar -->
@@ -37,7 +43,7 @@ endblock %} {% block content %}
             </a>
           </li>
           <li class="sidebar-menu-item">
-            <a href="#" class="sidebar-menu-link">
+            <a href="#" class="sidebar-menu-link" id="guests-link">
               <span id="guests-icon" class="sidebar-icon"></span>
               <span>Guests</span>
             </a>

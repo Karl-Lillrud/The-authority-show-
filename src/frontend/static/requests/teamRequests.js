@@ -3,6 +3,23 @@
 
 export async function addTeamRequest(payload) {
   console.log("Sending payload to add team:", payload); // Debugging line
+
+  // Ensure the `members` field is always an array
+  if (!Array.isArray(payload.members)) {
+    payload.members = [];
+  }
+
+  // Deduplicate members by email
+  const uniqueMembers = new Map();
+  payload.members.forEach((member) => {
+    if (member.email) {
+      uniqueMembers.set(member.email, member);
+    }
+  });
+  payload.members = Array.from(uniqueMembers.values());
+
+  console.log("Deduplicated members in payload:", payload.members); // Debugging line
+
   const res = await fetch("/add_teams", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -59,4 +76,30 @@ export async function fetchPodcasts() {
     console.error("Error fetching podcasts:", err);
     return [];
   }
+}
+
+export async function getTeamMembers(teamId) {
+  const res = await fetch(`/get_teams_members/${teamId}`, { method: "GET" });
+  return res.json();
+}
+
+export async function addTeamMemberRequest(teamId, email, role) {
+  console.log("Sending request to /add_team_member"); // Debug log
+  const res = await fetch("/add_team_member", {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ teamId, email, role })
+  });
+  const data = await res.json();
+  console.log("Response from /add_team_member:", data); // Debug log
+  return data;
+}
+
+export async function editTeamMemberByEmailRequest(teamId, email, role) {
+  const res = await fetch("/edit_team_member_by_email", {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ teamId, email, role })
+  });
+  return res.json();
 }

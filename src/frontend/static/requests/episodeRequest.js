@@ -17,9 +17,7 @@ export async function fetchEpisodes(guestId) {
 
 export async function viewEpisodeTasks(episodeId) {
   try {
-    const response = await fetch(
-      `/episodes/view_tasks_by_episode/${episodeId}`
-    );
+    const response = await fetch(`/episodes/view_tasks_by_episode/${episodeId}`);
     const data = await response.json();
 
     if (response.ok) {
@@ -83,16 +81,16 @@ export async function registerEpisode(data) {
       console.error("Missing required fields: podcastId or title", data); // Added log
       throw new Error("Missing required fields: podcastId or title");
     }
-    console.log("Sending data to /register_episode:", data); // Added log
-    const response = await fetch("/register_episode", {
+    console.log("Sending data to /add_episode:", data); // Added log
+    const response = await fetch("/add_episode", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(data)
     });
     const responseData = await response.json();
-    console.log("Received response from /register_episode:", responseData); // Added log
+    console.log("Received response from /add_episode:", responseData); // Added log
     if (!response.ok) {
-      console.error("Error response from /register_episode:", responseData); // Added log
+      console.error("Error response from /add_episode:", responseData); // Added log
       throw new Error(responseData.error || "Failed to register episode");
     }
     return responseData;
@@ -157,15 +155,22 @@ export async function updateEpisode(episodeId, updatedData) {
 
 export async function deleteEpisode(episodeId) {
   try {
-    const response = await fetch(`/delete_episods/${episodeId}`, {
+    const response = await fetch(`/delete_episodes/${episodeId}`, {
       method: "DELETE"
     });
-    const result = await response.json();
-    if (response.ok) {
-      return result;
+
+    const contentType = response.headers.get("content-type");
+    if (contentType && contentType.indexOf("application/json") !== -1) {
+      const result = await response.json();
+      if (response.ok) {
+        return result;
+      } else {
+        console.error("Failed to delete episode:", result.error);
+        alert("Failed to delete episode: " + result.error);
+      }
     } else {
-      console.error("Failed to delete episode:", result.error);
-      alert("Failed to delete episode: " + result.error);
+      console.error("Unexpected response format:", await response.text());
+      alert("Failed to delete episode: Unexpected response format");
     }
   } catch (error) {
     console.error("Error deleting episode:", error);
