@@ -284,7 +284,7 @@ function showTeamDetailModal(team) {
   };
 
   // Delete button immediately deletes the team.
-  const deleteBtn = document.getElementById("deleteTeamBtn");
+  const deleteBtn = document.getElementById("deleteTeamDetailsBtn");
   deleteBtn.onclick = async () => {
     try {
       const result = await deleteTeamRequest(team._id);
