@@ -561,6 +561,24 @@ body {
   background-position: center;
 }
 
+/* Additional styling for delete button in the member details modal */
+#teamCardEditMemberModal .delete-member-btn {
+  background: linear-gradient(135deg, rgba(255, 59, 48, 0.12), rgba(255, 59, 48, 0.06));
+  color: var(--danger-color);
+  padding: 12px 28px;
+  border: none;
+  border-radius: var(--radius-medium);
+  cursor: pointer;
+  box-shadow: var(--button-shadow);
+  transition: all var(--transition-fast);
+}
+
+#teamCardEditMemberModal .delete-member-btn:hover {
+  background: linear-gradient(135deg, rgba(255, 59, 48, 0.2), rgba(255, 59, 48, 0.1));
+  transform: translateY(-2px);
+  box-shadow: 0 6px 12px rgba(255, 59, 48, 0.15);
+}
+
 /* Member Card Styles */
 .member-card {
   background: linear-gradient(135deg, #ffffff 0%, #f9fafb 100%);

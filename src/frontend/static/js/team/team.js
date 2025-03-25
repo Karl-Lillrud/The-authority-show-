@@ -626,7 +626,7 @@ async function renderMembersView() {
               <p><strong>Team:</strong> ${team.name}</p>
               <div class="member-card-footer" style="position: relative;">
                 <!-- Uppdaterat: skriv ut verifieringsbadge och rollbadge tillsammans -->
-                <span class="member-badge" style="position: absolute; bottom: 0px; right: 8px;">
+                <span class="member-badge" style="position: absolute; bottom: 8px; right: 8px;">
                   ${
                     member.role === "creator"
                       ? '<span class="creator-badge">Creator</span>'
