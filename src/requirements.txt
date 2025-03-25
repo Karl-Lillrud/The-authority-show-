@@ -1,6 +1,8 @@
 bcrypt
 beautifulsoup4
 blinker
+boto3
+botocore
 cachetools
 certifi
 charset-normalizer
@@ -10,7 +12,7 @@ dnspython
 durationpy
 feedparser
 Flask
-flask-cors
+Flask-Cors
 google
 google-auth
 google-auth-oauthlib
@@ -19,6 +21,7 @@ httplib2
 idna
 itsdangerous
 Jinja2
+jmespath
 joblib
 jsonify
 kubernetes
@@ -48,6 +51,7 @@ regex
 requests
 requests-oauthlib
 rsa
+s3transfer
 setuptools
 sgmllib3k
 shortuuid
