@@ -149,13 +149,13 @@ body {
 }
 
 .team-card-header {
+  position: relative; /* För att placera edit-ikonen */
   padding: var(--spacing-lg);
   border-bottom: 1px solid rgba(0, 0, 0, 0.05);
   background-color: rgba(255, 127, 63, 0.03);
   display: flex;
-  justify-content: space-between;
-  align-items: center;
-  flex-wrap: wrap;
+  flex-direction: column; /* Ändra till kolumnlayout */
+  gap: var(--spacing-sm);
 }
 
 .team-card-header h2 {
@@ -164,20 +164,58 @@ body {
   color: rgba(0, 0, 0, 0.85);
   font-weight: 700;
   letter-spacing: -0.3px;
-  display: flex;
-  align-items: center;
-  gap: 10px;
 }
 
-/* Updated team icon */
-.team-card-header h2::before {
-  content: "";
-  display: inline-block;
-  width: 24px;
-  height: 24px;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='%23FF7F3F' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2'%3E%3C/path%3E%3Ccircle cx='9' cy='7' r='4'%3E%3C/circle%3E%3Cpath d='M23 21v-2a4 4 0 0 0-3-3.87'%3E%3C/path%3E%3Cpath d='M16 3.13a4 4 0 0 1 0 7.75'%3E%3C/path%3E%3C/svg%3E");
-  background-repeat: no-repeat;
-  background-position: center;
+.team-card-header p {
+  margin: 0;
+  font-size: 0.9rem;
+  color: var(--text-color-light);
+}
+
+.edit-icon-btn {
+  position: absolute;
+  top: var(--spacing-sm); /* Justera för att placera den i hörnet */
+  right: var(--spacing-sm);
+  background-color: white; /* Bakgrundsfärg */
+  color: var(--highlight-color); /* Samma färg som i podcastmanagement */
+  border: none;
+  border-radius: 50%;
+  cursor: pointer;
+  padding: 8px;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: var(--button-shadow);
+  transition: all var(--transition-fast);
+}
+
+.edit-icon-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 10px rgba(0, 0, 0, 0.1);
+}
+
+.edit-icon-btn::after {
+  content: "Edit";
+  position: absolute;
+  bottom: -30px;
+  left: 50%;
+  transform: translateX(-50%);
+  background-color: rgba(0, 0, 0, 0.7);
+  color: white;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  opacity: 0;
+  visibility: hidden;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.edit-icon-btn:hover::after {
+  opacity: 1;
+  visibility: visible;
 }
 
 .team-card-body {

@@ -15,7 +15,7 @@ import {
   deleteTeamMemberRequest,
   editTeamMemberRequest
 } from "/static/requests/userToTeamRequests.js";
-import { successSvg, errorSvg, infoSvg, closeSvg } from "./teamSvg.js";
+import { successSvg, errorSvg, infoSvg, closeSvg, edit } from "./teamSvg.js"; // Lägg till `edit` här
 
 // Notification system for team.js
 function showNotification(title, message, type = "info") {
@@ -102,6 +102,7 @@ function updateTeamsUI(teams) {
       <div class="team-card-header">
         <h2>${team.name}</h2>
         <p><strong>Team Email:</strong> ${team.email}</p>
+        <button class="edit-icon-btn">${edit}</button>
       </div>
       <div class="team-card-body">
         <p><strong>Description:</strong> ${
@@ -134,44 +135,10 @@ function updateTeamsUI(teams) {
           </div>
         </div>
       </div>
-      <div class="team-card-footer">
-        <button class="btn edit-team-btn">Edit</button>
-        <button class="btn delete-team-btn">Delete</button>
-      </div>
     `;
     card
-      .querySelector(".edit-team-btn")
+      .querySelector(".edit-icon-btn")
       .addEventListener("click", () => showTeamDetailModal(team));
-    card.querySelector(".delete-team-btn").addEventListener("click", () => {
-      // New confirmation popup for deleting a team which will remove all members as well
-      showConfirmationPopup(
-        "Delete Team",
-        "Deleting this team will also remove all associated members. Are you sure you want to proceed?",
-        async () => {
-          try {
-            const result = await deleteTeamRequest(team._id);
-            showNotification(
-              "Success",
-              result.message || "Team deleted successfully!",
-              "success"
-            );
-            card.remove();
-            const teams = await getTeamsRequest();
-            updateTeamsUI(teams);
-          } catch (error) {
-            console.error("Error deleting team:", error);
-            showNotification(
-              "Error",
-              "An error occurred while deleting the team.",
-              "error"
-            );
-          }
-        },
-        () => {
-          showNotification("Info", "Team deletion cancelled.", "info");
-        }
-      );
-    });
     card.querySelectorAll(".member-chip").forEach((chip) => {
       chip.addEventListener("click", () => {
         const memberEmail = chip.getAttribute("data-email");
