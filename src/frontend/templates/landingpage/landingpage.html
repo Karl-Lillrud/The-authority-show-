@@ -58,9 +58,6 @@
     </div>
   </section>
 
-
-
-
     <!-- About Section -->
     <section class="about-section section-darkgrey" id="about-section">
       <h2>About the Podcast</h2>
@@ -282,12 +279,17 @@
     Your browser does not support the audio element.
   </audio>
 
-  <!-- Loading Indicator -->
-  <div id="loading" style="display: none;">Loading...</div>
+<!-- Load Color Thief -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/color-thief/2.3.2/color-thief.umd.js"></script>
 
-    <!-- Load JavaScript files at the END -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/color-thief/2.3.2/color-thief.umd.js"></script>
-    <script src="static/js/landingpage/landingpage.js"></script>
+<!-- Load our main Color Thief script -->
+<script src="/static/js/color_thief.js"></script>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        applyColorThiefToLandingPage("#podcast-logo"); // Call function for landing page
+    });
+</script>
     
 </body>
 </html>
