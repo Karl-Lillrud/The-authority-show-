@@ -820,7 +820,13 @@ function handleDeleteUnverifiedMember(teamId, email, role) {
   deleteMember(teamId, null, email, role);
 }
 
-// Kontrollera att endast en deklaration av showTeamCardEditMemberModal finns
+javascript;
+
+Collapse;
+
+Wrap;
+
+Copy;
 function showTeamCardEditMemberModal(teamId, member) {
   const modal = document.getElementById("teamCardEditMemberModal");
   const emailInput = document.getElementById("teamCardEditMemberEmail");
@@ -829,9 +835,10 @@ function showTeamCardEditMemberModal(teamId, member) {
   const saveBtn = document.getElementById("teamCardEditMemberSaveBtn");
 
   // Populate fields with member data
+  const originalEmail = member.email;
   emailInput.value = member.email;
 
-  // Populate role dropdown dynamically
+  // Populate role dropdown
   const roles = [
     "CoHost",
     "Guest",
@@ -861,85 +868,99 @@ function showTeamCardEditMemberModal(teamId, member) {
     )
     .join("");
 
-  // Add help text element below roleSelect if not already present.
+  // Handle help text
   let roleHelp = document.getElementById("teamCardEditMemberRoleHelpText");
   if (!roleHelp) {
     roleHelp = document.createElement("div");
     roleHelp.id = "teamCardEditMemberRoleHelpText";
-    roleHelp.style.fontSize = "0.9em";
+    roleHelp.style.fontSize = "0.8em";
     roleHelp.style.color = "red";
+    roleHelp.style.marginLeft = "0.5cm";
     roleSelect.parentElement.appendChild(roleHelp);
   }
-  // If the member is not verified, show an informational message and ensure role cannot be changed.
   if (!member.verified) {
-    roleHelp.textContent = "Du måste vara verifierad innan du kan byta roll.";
+    roleHelp.textContent =
+      "The user must be verified before you can change roles.";
     roleSelect.disabled = true;
   } else {
     roleHelp.textContent = "";
   }
 
-  // Set fields to read-only and disabled initially
+  // Set initial state
   emailInput.readOnly = true;
   roleSelect.disabled = true;
   saveBtn.disabled = true;
 
-  // Show the modal
+  // Show modal
   modal.classList.add("show");
   modal.setAttribute("aria-hidden", "false");
 
-  // Enable editing when "Edit" is clicked
+  // Enable editing
   editBtn.onclick = () => {
     emailInput.readOnly = false;
     if (member.verified) {
       roleSelect.disabled = false;
-      saveBtn.disabled = false;
-    } else {
-      showNotification(
-        "Info",
-        "Medlemmen är inte verifierad och kan inte ändra roll.",
-        "info"
-      );
     }
+    saveBtn.disabled = false;
     emailInput.style.backgroundColor = "";
     roleSelect.style.backgroundColor = "";
   };
 
-  // Save changes when "Save" is clicked
+  // Save changes using deleteMember logic
   saveBtn.onclick = async () => {
-    const updatedEmail = emailInput.value;
-    const updatedRole = roleSelect.value;
+    const newEmail = emailInput.value;
+    const newRole = roleSelect.value;
 
-    if (!teamId || !updatedEmail || !updatedRole) {
-      showNotification(
-        "Error",
-        "Missing teamId, email, or role. Please check your input.",
-        "error"
-      );
+    if (!teamId || !newEmail || !newRole) {
+      showNotification("Error", "Missing teamId, email, or role.", "error");
       return;
     }
 
     try {
-      // Only update if the role has changed
-      if (updatedRole !== member.role) {
-        let result;
-        // Call different endpoints depending on whether member.userId exists
-        if (member.userId) {
-          result = await editTeamMemberRequest(
-            teamId,
-            member.userId,
-            updatedRole
+      if (newEmail !== originalEmail) {
+        // Step 1: Delete the old member using the same logic as members section
+        await deleteMember(teamId, member.userId, originalEmail, member.role);
+
+        // Step 2: Add the new member
+        const addResult = await addTeamMemberRequest(teamId, newEmail, newRole);
+        if (addResult.error) {
+          showNotification(
+            "Error",
+            addResult.error || "Failed to add new member.",
+            "error"
           );
-        } else {
-          result = await editTeamMemberByEmailRequest(
-            teamId,
-            member.email,
-            updatedRole
-          );
+          return;
         }
+
+        // Step 3: Send team invite
+        const inviteResult = await sendTeamInviteRequest(
+          teamId,
+          newEmail,
+          newRole
+        );
+        if (inviteResult.error) {
+          showNotification(
+            "Error",
+            inviteResult.error || "Failed to send invitation.",
+            "error"
+          );
+          return;
+        }
+
+        showNotification(
+          "Success",
+          "Member updated and invitation sent successfully!",
+          "success"
+        );
+      } else if (newRole !== member.role) {
+        const result = member.userId
+          ? await editTeamMemberRequest(teamId, member.userId, newRole)
+          : await editTeamMemberByEmailRequest(teamId, originalEmail, newRole);
+
         if (result.error) {
           showNotification(
             "Error",
-            deleteResult.error || "Failed to delete old member.",
+            result.error || "Failed to update role.",
             "error"
           );
           return;
@@ -953,7 +974,8 @@ function showTeamCardEditMemberModal(teamId, member) {
 
       modal.classList.remove("show");
       const teams = await getTeamsRequest();
-      updateTeamsUI(teams);
+      updateTeamsUI(teams); // Uppdatera team-vyn
+      renderMembersView(); // Uppdatera members-vyn också för konsistens
     } catch (error) {
       console.error("Error updating member:", error);
       showNotification(
@@ -964,7 +986,7 @@ function showTeamCardEditMemberModal(teamId, member) {
     }
   };
 
-  // Close the modal
+  // Close modal
   document.getElementById("teamCardEditMemberCloseBtn").onclick = () => {
     modal.classList.remove("show");
   };
