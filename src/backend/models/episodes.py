@@ -13,7 +13,7 @@ class EpisodeSchema(Schema):
     defaultTasks = fields.List(fields.Nested(PodtaskSchema), allow_none=True)
     createdAt = fields.DateTime()
     updatedAt = fields.DateTime()
-    audioUrl = fields.Url(allow_none=True)
+    audioUrl = fields.Str(allow_none=True)  # Change from URL to Str
     fileSize = fields.Str(allow_none=True)
     fileType = fields.Str(allow_none=True)
     guid = fields.Str(allow_none=True)

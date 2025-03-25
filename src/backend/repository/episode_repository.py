@@ -1,4 +1,4 @@
-from backend.database.mongo_connection import collection, database
+from backend.database.mongo_connection import collection, database, get_fs
 from datetime import datetime, timezone
 import uuid
 import logging
@@ -8,6 +8,7 @@ import bson
 import base64
 
 logger = logging.getLogger(__name__)
+fs = get_fs()
 
 class EpisodeRepository:
     def __init__(self):
@@ -35,6 +36,10 @@ class EpisodeRepository:
             if files:
                 saved_files = save_uploaded_files(files)
                 data['episodeFiles'] = saved_files
+
+                # Save the first file to GridFS and get the file ID
+                file_id = fs.put(files[0].stream, filename=files[0].filename)
+                data['audioUrl'] = str(file_id)
 
             # Validate data with schema
             schema = EpisodeSchema()
