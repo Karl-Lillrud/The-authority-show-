@@ -99,7 +99,6 @@ function createEpisodeCard(episode) {
       </ul>
     </div>
     <div class="card-footer">
-      <span>Episode #${episode.episode || "N/A"}</span>
       <button class="toggle-tasks" aria-label="Toggle tasks">+</button>
     </div>
     <div class="tasks-container" style="display: none;">

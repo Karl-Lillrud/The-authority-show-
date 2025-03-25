@@ -177,9 +177,6 @@ function showAddTaskPopup(episodeId) {
               <label for="task-assigned">Assign To</label>
               <select id="task-assigned" class="form-control">
                 <option value="">Select a person</option>
-                <option value="John Doe">John Doe</option>
-                <option value="Jane Smith">Jane Smith</option>
-                <option value="Alex Johnson">Alex Johnson</option>
               </select>
             </div>
             <div class="modal-footer">
@@ -299,9 +296,6 @@ async function showEditTaskPopup(taskId) {
               <label for="edit-task-assigned">Assign To</label>
               <select id="edit-task-assigned" class="form-control">
                 <option value="">Select a person</option>
-                <option value="John Doe" ${guestId === "John Doe" ? "selected" : ""}>John Doe</option>
-                <option value="Jane Smith" ${guestId === "Jane Smith" ? "selected" : ""}>Jane Smith</option>
-                <option value="Alex Johnson" ${guestId === "Alex Johnson" ? "selected" : ""}>Alex Johnson</option>
               </select>
             </div>
             <div class="form-group">
@@ -384,8 +378,6 @@ async function showEditTaskPopup(taskId) {
     }
   });
 }
-
-           
 
 
 // Helper function to close the edit modal with animation
