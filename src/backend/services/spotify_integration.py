@@ -46,6 +46,11 @@ def upload_episode_to_spotify(access_token, episode):
         "duration_ms": episode['duration'] * 1000 if episode.get('duration') else None,
     }
 
+    # Check if audio_url is missing
+    if not episode_data["audio_url"]:
+        logger.error("Audio URL is missing in the episode data.")
+        return False
+
     response = requests.post(spotify_api_url, headers=headers, json=episode_data)
     if response.status_code == 201:
         return True

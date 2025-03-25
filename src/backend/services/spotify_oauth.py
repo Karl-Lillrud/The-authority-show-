@@ -1,10 +1,13 @@
 import os
 import base64
 import requests
+import logging
 from flask import Blueprint, request, jsonify
 from dotenv import load_dotenv
 
 load_dotenv()
+
+logger = logging.getLogger(__name__)
 
 spotify_oauth_bp = Blueprint("spotify_oauth", __name__)
 
@@ -56,30 +59,25 @@ def exchange_code_for_tokens(code):
 
 # Hämta access token med hjälp av OAuth 2.0
 def get_spotify_access_token():
-    client_id = os.getenv("SPOTIFY_CLIENT_ID")
-    client_secret = os.getenv("SPOTIFY_CLIENT_SECRET")
-    refresh_token = os.getenv("SPOTIFY_REFRESH_TOKEN")
-    
-    if not client_id or not client_secret or not refresh_token:
-        raise ValueError("Spotify-uppgifter saknas i .env")
-    
+    client_id = os.getenv('SPOTIFY_CLIENT_ID')
+    client_secret = os.getenv('SPOTIFY_CLIENT_SECRET')
+    refresh_token = os.getenv('SPOTIFY_REFRESH_TOKEN')
+
     token_url = 'https://accounts.spotify.com/api/token'
-    auth_str = f"{client_id}:{client_secret}"
     headers = {
-        'Authorization': f'Basic {base64.b64encode(auth_str.encode()).decode()}',
+        'Authorization': f'Basic {base64.b64encode(f"{client_id}:{client_secret}".encode()).decode()}',
         'Content-Type': 'application/x-www-form-urlencoded'
     }
-    
     data = {
         'grant_type': 'refresh_token',
         'refresh_token': refresh_token
     }
-    
+
     response = requests.post(token_url, headers=headers, data=data)
     if response.status_code == 200:
         return response.json().get('access_token')
-    else:
-        raise Exception(f"Misslyckades att hämta access token: {response.content}")
+    logger.error(f"Failed to retrieve Spotify access token: {response.status_code} - {response.text}")
+    return None
 
 # Generera auktoriseringslänk
 def get_authorization_url():

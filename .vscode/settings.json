@@ -1,5 +1,6 @@
 {
     
     "python.pythonPath": "venv\\Scripts\\python.exe",
-    "liveServer.settings.port": 5501
+    "liveServer.settings.port": 5501,
+    "postman.settings.dotenv-detection-notification-visibility": false
 }

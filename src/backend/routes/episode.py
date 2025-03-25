@@ -8,6 +8,8 @@ from backend.database.mongo_connection import episodes
 from backend.services.spotify_integration import get_spotify_access_token, upload_episode_to_spotify, save_uploaded_files
 import bson
 import base64
+import os
+from dotenv import load_dotenv
 
 # Initialize Blueprint and repository
 episode_bp = Blueprint("episode_bp", __name__)
@@ -15,10 +17,15 @@ episode_repo = EpisodeRepository()
 
 logger = logging.getLogger(__name__)
 
+# Load environment variables
+load_dotenv()
+MONGODB_URI = os.getenv("MONGODB_URI")
+DATABASE_NAME = "Podmanager"
+
 # MongoDB connection and GridFS setup
-client = MongoClient("mongodb://localhost:27017/Podmanager")  # Replace with your MongoDB URI
-db = client['Podmanager']
-fs = gridfs.GridFS(db)  # Use GridFS for file storage
+client = MongoClient(MONGODB_URI)  # Use MongoDB URI from .env file
+db = client[DATABASE_NAME]  # Specify the database name
+fs = gridfs.GridFS(db)  # Initialize GridFS
 
 def get_guests_for_episode(episode_id):
     guests_collection = db['Guests']  # Replace with your actual guests collection name
@@ -58,32 +65,19 @@ def register_episode():
 
 @episode_bp.route("/publish_to_spotify/<episode_id>", methods=["POST"])
 def publish_to_spotify(episode_id):
-    # Check if the user is authorized
     if not hasattr(g, "user_id") or not g.user_id:
         return jsonify({"error": "Unauthorized"}), 401
 
-    # Fetch the episode by ID
     episode = episode_repo.get_episode_by_id(episode_id)
     if not episode:
         return jsonify({"error": "Episode not found"}), 404
 
-    # Ensure episode data contains necessary fields
-    if not episode.get('audioUrl'):
-        return jsonify({"error": "Audio URL is missing in the episode data."}), 400
-    if not episode.get('title'):
-        return jsonify({"error": "Title is missing in the episode data."}), 400
-    if not episode.get('description'):
-        return jsonify({"error": "Description is missing in the episode data."}), 400
-
     try:
-        # Fetch the Spotify access token
+        # Fetch Spotify access token
         access_token = get_spotify_access_token()
         if not access_token:
             logger.error("Failed to retrieve Spotify access token")
             return jsonify({"error": "Failed to retrieve Spotify access token"}), 500
-
-        # Log the episode data being sent to Spotify for debugging purposes
-        logger.info(f"Publishing to Spotify with data: {episode}")
 
         # Attempt to upload episode to Spotify
         result = upload_episode_to_spotify(access_token, episode)
@@ -91,11 +85,10 @@ def publish_to_spotify(episode_id):
             return jsonify({"message": "Episode published successfully to Spotify!"}), 200
         else:
             logger.error("Failed to upload episode to Spotify")
-            return jsonify({"error": "Failed to upload episode to Spotify"}), 500
+            return jsonify({"error": "Failed to upload episode to Spotify"}), 400
     except Exception as e:
         logger.error(f"Error publishing to Spotify: {str(e)}", exc_info=True)
         return jsonify({"error": f"Error publishing to Spotify: {str(e)}"}), 500
-
 
 
 @episode_bp.route("/get_episodes/<episode_id>", methods=["GET"])

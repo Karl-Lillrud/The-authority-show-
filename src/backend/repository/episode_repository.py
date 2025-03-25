@@ -9,7 +9,6 @@ import base64
 
 logger = logging.getLogger(__name__)
 
-
 class EpisodeRepository:
     def __init__(self):
         self.collection = collection.database.Episodes
@@ -20,7 +19,6 @@ class EpisodeRepository:
         Register a new episode in the database
         """
         try:
-
             # Fetch the account document from MongoDB for the logged-in user
             user_account = self.accounts_collection.find_one({"userId": user_id})
             if not user_account:
@@ -71,7 +69,7 @@ class EpisodeRepository:
                 "accountId": account_id,
                 "created_at": datetime.now(timezone.utc),
                 "updated_at": datetime.now(timezone.utc),
-                "audioUrl": validated_data.get("audioUrl"),
+                "audioUrl": validated_data.get("audioUrl"),  # Ensure audioUrl is included
                 "fileSize": validated_data.get("fileSize"),
                 "fileType": validated_data.get("fileType"),
                 "guid": validated_data.get("guid"),
@@ -211,6 +209,7 @@ class EpisodeRepository:
                     if data.get("status")
                     else existing_episode["status"]
                 ),
+                "audioUrl": data.get("audioUrl", existing_episode["audioUrl"]),  # Ensure audioUrl is updated
                 "updated_at": datetime.now(timezone.utc),
             }
 

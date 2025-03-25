@@ -4,14 +4,11 @@ import os
 from dotenv import load_dotenv
 import logging
 from gridfs import GridFS
-from gridfs import GridFS
 
 mongo_bp = Blueprint("mongo_bp", __name__)
 
 # Load environment variables
 load_dotenv()
-
-
 
 # MongoDB Configuration
 MONGODB_URI = os.getenv("MONGODB_URI")
@@ -31,7 +28,7 @@ logger = logging.getLogger(__name__)
 
 # Initialize MongoDB Client
 try:
-    client = MongoClient(MONGODB_URI)
+    client = MongoClient(MONGODB_URI)  # Correctly pass the URI from .env
     database = client[DATABASE_NAME]
     collection = database[COLLECTION_NAME]
     podcasts = database[PODCAST_NAME]
@@ -42,15 +39,8 @@ try:
     logger.info("MongoDB connection and GridFS initialized successfully.")
 except Exception as e:
     logger.error(f"Failed to connect to MongoDB or initialize GridFS: {e}")
-    logger.error(f"Failed to connect to MongoDB or initialize GridFS: {e}")
     raise
 
-# Functions to access MongoDB and GridFS
-def get_db():
-    return database
-
-def get_fs():
-    return fs
 # Functions to access MongoDB and GridFS
 def get_db():
     return database
