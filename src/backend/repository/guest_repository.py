@@ -14,18 +14,14 @@ class GuestRepository:
 
     def add_guest(self, data, user_id):
         try:
-            # Step 1: Retrieve the episodeId from the request data
             episode_id = data.get("episodeId")
 
-            # Step 2: Fetch the episode details from the database using episodeId
             episode = collection.database.Episodes.find_one({"_id": episode_id})
             if not episode:
                 return {"error": "Episode not found"}, 404  # Handle case where the episode does not exist
 
-            # Step 3: Get the current date and time
             current_date = datetime.now(timezone.utc)
 
-            # Step 4: Check if the episode has been published or if the publish date has passed
             # Use email.utils.parsedate to parse the date
             try:
                 publish_date_parsed = email.utils.parsedate(episode["publishDate"])
@@ -33,15 +29,12 @@ class GuestRepository:
             except Exception as e:
                 return {"error": f"Invalid publish date format: {str(e)}"}, 400
 
-            # Step 5: Compare the publishDate with the current date
             if episode["status"] == "published" or publish_date < current_date:
                 return {"error": "Cannot invite guests to a published episode or an episode that has passed its date."}, 400
 
-            # Step 6: Proceed with guest addition logic if the episode is valid
             guest_data = GuestSchema().load(data)  # Validate and load guest data using GuestSchema
             guest_id = str(uuid.uuid4())  # Generate a unique ID for the guest
 
-            # Step 7: Construct the guest item to be added to the database
             guest_item = {
                 "_id": guest_id,
                 "episodeId": episode_id,  # Link the guest to the episode
@@ -61,10 +54,8 @@ class GuestRepository:
                 "user_id": user_id,  # Store the user ID to associate guest with the user
             }
 
-            # Step 8: Insert the guest data into the database
             self.collection.insert_one(guest_item)
 
-            # Step 9: Return a success message with the guest ID
             return {"message": "Guest added successfully", "guest_id": guest_id}, 201
 
         except Exception as e:
