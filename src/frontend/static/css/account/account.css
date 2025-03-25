@@ -263,6 +263,12 @@ button {
   gap: 2rem;
 }
 
+.profile-edit-content {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
 .profile-pic-container {
   display: flex;
   flex-direction: column;
