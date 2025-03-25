@@ -151,8 +151,3 @@ async function populateGuestList(card, episode) {
     guestList.innerHTML = "<li>Error loading guest info</li>"
   }
 }
-
-function populateLeaderboard() {
-  // Replace this mock implementation with an actual data fetch if needed
-  console.log("Populating leaderboard with mock data...")
-}
