@@ -820,13 +820,6 @@ function handleDeleteUnverifiedMember(teamId, email, role) {
   deleteMember(teamId, null, email, role);
 }
 
-javascript;
-
-Collapse;
-
-Wrap;
-
-Copy;
 function showTeamCardEditMemberModal(teamId, member) {
   const modal = document.getElementById("teamCardEditMemberModal");
   const emailInput = document.getElementById("teamCardEditMemberEmail");
@@ -878,17 +871,22 @@ function showTeamCardEditMemberModal(teamId, member) {
     roleHelp.style.marginLeft = "0.5cm";
     roleSelect.parentElement.appendChild(roleHelp);
   }
-  if (!member.verified) {
-    roleHelp.textContent =
-      "The user must be verified before you can change roles.";
-    roleSelect.disabled = true;
-  } else {
+
+  // Hide help text and disable role select for creators
+  if (member.role === "creator") {
     roleHelp.textContent = "";
+    roleSelect.disabled = true;
+    editBtn.style.display = "none"; // Hide Edit button
+  } else {
+    roleHelp.textContent = !member.verified
+      ? "The user must be verified before you can change roles."
+      : "";
+    roleSelect.disabled = !member.verified;
+    editBtn.style.display = "inline-block"; // Show Edit button
   }
 
   // Set initial state
   emailInput.readOnly = true;
-  roleSelect.disabled = true;
   saveBtn.disabled = true;
 
   // Show modal
