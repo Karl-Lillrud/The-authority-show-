@@ -1,19 +1,25 @@
-from flask import request, jsonify, Blueprint, g, render_template
+from flask import request, jsonify, Blueprint, g, render_template, send_file
 import logging
-from werkzeug.utils import secure_filename
-from pymongo import MongoClient  # MongoDB client
-import gridfs  # GridFS for file storage
-from backend.repository.episode_repository import EpisodeRepository
-from backend.database.mongo_connection import episodes
-from backend.services.spotify_integration import get_spotify_access_token, upload_episode_to_spotify, save_uploaded_files
-import bson
-import base64
+from pymongo import MongoClient
+import gridfs
 import os
 from dotenv import load_dotenv
+import base64
+from io import BytesIO
 
-# Initialize Blueprint and repository
+# Import the repository
+from backend.repository.episode_repository import EpisodeRepository
+from backend.database.mongo_connection import episodes
+from backend.services.spotify_integration import save_uploaded_files, get_spotify_access_token, upload_episode_to_spotify
+
+# Define Blueprint
 episode_bp = Blueprint("episode_bp", __name__)
+
+# Create repository instance
 episode_repo = EpisodeRepository()
+
+# SHOULD ONLY BE USED FOR SPECIFIC DATA CRUD OPERATIONS
+# EXTRA FUNCTIONALITY BESIDES CRUD OPERATIONS SHOULD BE IN SERVICES
 
 logger = logging.getLogger(__name__)
 
@@ -22,7 +28,6 @@ load_dotenv()
 MONGODB_URI = os.getenv("MONGODB_URI")
 DATABASE_NAME = "Podmanager"
 
-# MongoDB connection and GridFS setup
 client = MongoClient(MONGODB_URI)  # Use MongoDB URI from .env file
 db = client[DATABASE_NAME]  # Specify the database name
 fs = gridfs.GridFS(db)  # Initialize GridFS
@@ -44,9 +49,16 @@ def register_episode():
         data = request.form.to_dict()
         files = request.files.getlist('episodeFiles')
         if files and files[0].filename != '':
-            data['episodeFiles'] = files
+            # Save files to MongoDB using GridFS
+            saved_files = save_uploaded_files(files)
 
-        # Log received data for debugging
+            # Assuming the file is saved as the first item in the saved_files list
+            audio_url = saved_files[0]['url']  # The URL returned from GridFS storage
+
+            # Store the full audio URL in the data dictionary
+            data['audioUrl'] = audio_url  # This now contains the full URL
+            data['episodeFiles'] = saved_files  # Store file details
+
         logger.info(f"Received data: {data}")
         logger.info(f"Received files: {files}")
 
@@ -54,16 +66,16 @@ def register_episode():
         if not data.get('podcastId') or not data.get('title') or not data.get('publishDate'):
             return jsonify({"error": "Required fields missing: podcastId, title, and publishDate"}), 400
 
-        # Process the episode registration
+        # Register episode and save data to the database
         response, status = episode_repo.register_episode(data, user_id)
         return jsonify(response), status
-
     except Exception as e:
         logger.error(f"Error: {e}")
         return jsonify({"error": str(e)}), 500
 
 
-@episode_bp.route("/publish_to_spotify/<episode_id>", methods=["POST"])
+
+@episode_bp.route('/publish_to_spotify/<episode_id>', methods=['POST'])
 def publish_to_spotify(episode_id):
     if not hasattr(g, "user_id") or not g.user_id:
         return jsonify({"error": "Unauthorized"}), 401
@@ -90,7 +102,6 @@ def publish_to_spotify(episode_id):
         logger.error(f"Error publishing to Spotify: {str(e)}", exc_info=True)
         return jsonify({"error": f"Error publishing to Spotify: {str(e)}"}), 500
 
-
 @episode_bp.route("/get_episodes/<episode_id>", methods=["GET"])
 def get_episode(episode_id):
     if not hasattr(g, "user_id") or not g.user_id:
@@ -98,24 +109,15 @@ def get_episode(episode_id):
 
     try:
         response, status_code = episode_repo.get_episode(episode_id, g.user_id)
-        
-        # Ensure binary data is correctly handled
+        # Convert binary data to a base64 encoded string
         if 'episodeFiles' in response:
             for file in response['episodeFiles']:
                 if 'data' in file:
-                    # Check if the data is in bytes, then convert to base64
-                    if isinstance(file['data'], bytes):
-                        file['data'] = base64.b64encode(file['data']).decode('utf-8')
-                    else:
-                        # If it's not in bytes, log the error or handle accordingly
-                        logger.error(f"Expected bytes but found {type(file['data'])} for file data.")
-        
+                    file['data'] = base64.b64encode(file['data']).decode('utf-8')
         return jsonify(response), status_code
     except Exception as e:
         logger.error("❌ ERROR: %s", e)
         return jsonify({"error": f"Failed to fetch episode: {str(e)}"}), 500
-
-
 
 @episode_bp.route("/get_episodes", methods=["GET"])
 def get_episodes():
@@ -130,7 +132,7 @@ def get_episodes():
         return jsonify({"error": f"Failed to fetch episodes: {str(e)}"}), 500
 
 
-@episode_bp.route("/delete_episodes/<episode_id>", methods=["DELETE"])
+@episode_bp.route("/delete_episods/<episode_id>", methods=["DELETE"])
 def delete_episode(episode_id):
     if not hasattr(g, "user_id") or not g.user_id:
         return jsonify({"error": "Unauthorized"}), 401
@@ -150,7 +152,10 @@ def update_episode(episode_id):
 
     # Validate Content-Type
     if request.content_type != "application/json":
-        return jsonify({"error": "Invalid Content-Type. Expected application/json"}), 415
+        return (
+            jsonify({"error": "Invalid Content-Type. Expected application/json"}),
+            415,
+        )
 
     try:
         data = request.get_json()
@@ -159,7 +164,6 @@ def update_episode(episode_id):
     except Exception as e:
         logger.error("❌ ERROR: %s", e)
         return jsonify({"error": f"Failed to update episode: {str(e)}"}), 500
-
 
 @episode_bp.route("/episode/<episode_id>", methods=["GET"])
 def episode_detail(episode_id):
@@ -173,35 +177,6 @@ def episode_detail(episode_id):
         return render_template("landingpage/episode.html", episode=ep)
     except Exception as e:
         return f"Error: {str(e)}", 500
-    
-
-@episode_bp.route("/get_guests_by_episode/<episode_id>", methods=["GET"])
-def get_guests_by_episode(episode_id):
-    # Check if the user is authorized
-    if not hasattr(g, "user_id") or not g.user_id:
-        return jsonify({"error": "Unauthorized"}), 401
-
-    try:
-        # Fetch the guests from the database for the specific episode
-        guests = get_guests_for_episode(episode_id)  # Ensure this function correctly fetches from your database
-
-        # If no guests are found, return an appropriate message
-        if not guests:
-            logger.warning(f"No guests found for episode {episode_id}")
-            return jsonify({"message": "No guests found for this episode."}), 404
-
-        # Log the retrieved guests for debugging purposes
-        logger.info(f"Guests found for episode {episode_id}: {guests}")
-
-        return jsonify({"guests": guests}), 200
-    except Exception as e:
-        # Log the error if the guests could not be fetched
-        logger.error(f"Error fetching guests for episode {episode_id}: {str(e)}")
-        return jsonify({"error": "Failed to fetch guests"}), 500
-
-
-
-
 
 @episode_bp.route("/episodes/by_podcast/<podcast_id>", methods=["GET"])
 def get_episodes_by_podcast(podcast_id):
@@ -247,3 +222,21 @@ def get_episodes_by_podcast(podcast_id):
     except Exception as e:
         logger.error("❌ ERROR: %s", e)
         return jsonify({"error": f"Failed to fetch episodes by podcast: {str(e)}"}), 500
+
+@episode_bp.route("/get_guests_by_episode/<episode_id>", methods=["GET"])
+def get_guests_by_episode(episode_id):
+    try:
+        # Fetch the guests from the database for the specific episode
+        guests = get_guests_for_episode(episode_id)  # This should fetch from your database
+        return jsonify({"guests": guests}), 200
+    except Exception as e:
+        logger.error(f"Error fetching guests: {str(e)}")
+        return jsonify({"error": "Failed to fetch guests"}), 500
+
+@episode_bp.route('/file/<file_id>', methods=['GET'])
+def get_file(file_id):
+    try:
+        file = fs.get(file_id)
+        return send_file(BytesIO(file.read()), attachment_filename=file.filename, as_attachment=True)
+    except gridfs.errors.NoFile:
+        return jsonify({"error": "File not found"}), 404
