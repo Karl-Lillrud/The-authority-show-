@@ -282,26 +282,45 @@ with tab2:
                     st.write(f"📊 **Detected Emotion**: {emotion}")
                     st.write(f"📊 **Sentiment**: {sentiment}")
                     # Display Clarity Score Breakdown in a readable format
-                    st.write(f"📊 **Clarity Score**: {clarity_score.split('\n')[0]}")  # Clarity Score only
-                    st.write(f"**Filler Words Detected**: {clarity_score.split('\n')[1]}")  # Filler words count
-                    st.write(f"**Readability (Flesch-Kincaid Score)**: {clarity_score.split('\n')[2]}")  # Readability
-                    st.write(f"**Filler Word Penalty**: {clarity_score.split('\n')[3]}")  # Penalty for filler words
+                    # 🧠 Handle Clarity Score Breakdown Safely
+                    if clarity_score and isinstance(clarity_score, str):
+                        clarity_lines = clarity_score.split("\n")
 
-                    # Explanation of Flesch-Kincaid Score
-                    flesch_kincaid_score = float(clarity_score.split('\n')[2].split(": ")[1])  # Extract the Flesch-Kincaid score
-                    if flesch_kincaid_score <= 5:
-                        grade_level = "easy to understand"
-                        example_text = "This is an example of a simple sentence: 'The cat sleeps.'"
-                    elif flesch_kincaid_score <= 8:
-                        grade_level = "understandable for middle school students"
-                        example_text = "This is an example of a slightly more complex sentence: 'The cat sleeps on the chair, enjoying the sun.'"
+                        if len(clarity_lines) >= 4:
+                            st.write(f"📊 **Clarity Score**: {clarity_lines[0]}")
+                            st.write(f"**Filler Words Detected**: {clarity_lines[1]}")
+                            st.write(f"**Readability (Flesch-Kincaid Score)**: {clarity_lines[2]}")
+                            st.write(f"**Filler Word Penalty**: {clarity_lines[3]}")
+                        else:
+                            st.warning("⚠️ Incomplete clarity score data received.")
                     else:
-                        grade_level = "for high school or above"
-                        example_text = "This is an example of a more complex sentence: 'The feline, basking in the sunlight, curled up on the chair, exhibiting a peaceful demeanor.'"
+                        st.error("❌ No clarity score data available from backend.")
 
-                    # Provide explanation
-                    st.write(f"**Flesch-Kincaid Score Explanation**: A score of {flesch_kincaid_score} indicates that the text is {grade_level}.")
-                    st.write(f"**Example of Readability**: {example_text}")
+                    # ✅ Extract Flesch-Kincaid Score safely
+                    try:
+                        flesch_kincaid_line = next((line for line in clarity_lines if "Flesch-Kincaid" in line), None)
+                        if flesch_kincaid_line:
+                            flesch_kincaid_score = float(flesch_kincaid_line.split(": ")[1])
+                        else:
+                            flesch_kincaid_score = None
+                    except (IndexError, ValueError, TypeError) as e:
+                        st.warning(f"⚠️ Could not extract Flesch-Kincaid Score. Error: {e}")
+                        flesch_kincaid_score = None
+
+                    # ✅ Explain the score
+                    if flesch_kincaid_score is not None:
+                        if flesch_kincaid_score <= 5:
+                            grade_level = "easy to understand"
+                            example_text = "This is an example of a simple sentence: 'The cat sleeps.'"
+                        elif flesch_kincaid_score <= 8:
+                            grade_level = "understandable for middle school students"
+                            example_text = "This is an example of a slightly more complex sentence: 'The cat sleeps on the chair, enjoying the sun.'"
+                        else:
+                            grade_level = "for high school or above"
+                            example_text = "This is an example of a more complex sentence: 'The feline, basking in the sunlight, curled up on the chair, exhibiting a peaceful demeanor.'"
+
+                        st.write(f"**Flesch-Kincaid Score Explanation**: A score of {flesch_kincaid_score} indicates that the text is {grade_level}.")
+                        st.write(f"**Example of Readability**: {example_text}")
                     st.write("**Filler Words Penalty**: A higher number of filler words results in a lower clarity score.")
 
                     # Tips
@@ -949,5 +968,3 @@ with tab3:
                             st.error("❌ Error: Clipped file ID not found.")
                     else:
                         st.error("❌ Error clipping video. Try again.")
-
-

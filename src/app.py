@@ -21,7 +21,7 @@ from backend.routes.guestpage import guestpage_bp
 from backend.routes.guest_to_eposide import guesttoepisode_bp
 from backend.routes.guest_form import guest_form_bp  # Import the guest_form blueprint
 
-# from backend.routes.transcription import transcription_bp
+from backend.routes.transcript.transcription import transcription_bp
 from backend.routes.landingpage import landingpage_bp
 from dotenv import load_dotenv
 from backend.utils import venvupdate
@@ -88,7 +88,7 @@ app.register_blueprint(guesttoepisode_bp)
 app.register_blueprint(
     guest_form_bp, url_prefix="/guest-form"
 )  # Register the guest_form blueprint with URL prefix
-# app.register_blueprint(transcription_bp)
+app.register_blueprint(transcription_bp)
 
 # Register the guest_form blueprint with URL prefix
 
@@ -122,5 +122,3 @@ if __name__ == "__main__":
     app.run(
         host="0.0.0.0", port=8000, debug=False
     )  # Ensure the port matches your request URL
-
-    
