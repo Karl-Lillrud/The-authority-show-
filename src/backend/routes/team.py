@@ -55,3 +55,18 @@ def add_team_member():
     new_member = {"email": email.strip(), "role": role.strip()}
     response, status_code = team_repo.add_member_to_team(team_id, new_member)
     return jsonify(response), status_code
+
+
+@team_bp.route("/edit_team_member_by_email", methods=["PUT"])
+def edit_team_member_by_email():
+    data = request.get_json()
+    team_id = data.get("teamId")
+    email = data.get("email")
+    new_role = data.get("role")
+    if not team_id or not email or not new_role:
+        return jsonify({"error": "Missing teamId, email, or role"}), 400
+
+    response, status_code = team_repo.edit_team_member_by_email(
+        team_id, email.lower(), new_role
+    )
+    return jsonify(response), status_code

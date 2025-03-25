@@ -13,7 +13,7 @@ class TeamInviteRepository:
         self.users_collection = collection.database.Users
         self.accounts_collection = collection.database.Accounts
 
-    def save_invite(self, team_id, email, inviter_id):
+    def save_invite(self, team_id, email, inviter_id, role):
         """
         Create a new team invite and save it to the database.
         Raises ValueError for invalid inputs or permissions.
@@ -60,6 +60,7 @@ class TeamInviteRepository:
             "teamName": team.get("name", "Team"),  # Include team name for email
             "email": normalized_email,
             "inviterId": inviter_id,
+            "role": role,  # Include role in the invite
             "createdAt": datetime.now(timezone.utc),
             "expiresAt": datetime.now(timezone.utc) + timedelta(hours=24),
             "status": "pending",
@@ -145,6 +146,7 @@ class TeamInviteRepository:
             logger.warning(f"User with email {invite['email']} has not registered yet")
             return {"error": "User has not registered yet."}, False
 
+        # Update invite status to accepted
         result = self.invites_collection.update_one(
             {"_id": invite_token},
             {
@@ -173,7 +175,9 @@ class TeamInviteRepository:
         In a real implementation, this would set up a scheduled task.
         For demonstration, we just log the intent.
         """
-        logger.info(f"Scheduled deletion of accepted invite {invite_token} in 5 minutes")
+        logger.info(
+            f"Scheduled deletion of accepted invite {invite_token} in 5 minutes"
+        )
         # In a real system, you would use a task scheduler like Celery here
 
     def cancel_invite(self, invite_token, user_id):
@@ -254,20 +258,24 @@ class TeamInviteRepository:
         )
 
         # Delete expired invites (more than 3 days old)
-        result_expired = self.invites_collection.delete_many({
-            "status": "expired",
-            "expiresAt": {"$lt": datetime.now(timezone.utc) - timedelta(days=3)}
-        })
+        result_expired = self.invites_collection.delete_many(
+            {
+                "status": "expired",
+                "expiresAt": {"$lt": datetime.now(timezone.utc) - timedelta(days=3)},
+            }
+        )
         logger.info(f"Deleted {result_expired.deleted_count} expired invites")
 
         # Delete unused invites that are still "pending" after 10 days
-        result_pending = self.invites_collection.delete_many({
-            "status": "pending",
-            "createdAt": {"$lt": datetime.now(timezone.utc) - timedelta(days=10)}
-        })
+        result_pending = self.invites_collection.delete_many(
+            {
+                "status": "pending",
+                "createdAt": {"$lt": datetime.now(timezone.utc) - timedelta(days=10)},
+            }
+        )
 
         logger.info(f"Deleted {result_pending.deleted_count} old pending invites")
-        
+
         # Delete accepted invites that are more than 5 minutes old
         current_time = datetime.now(timezone.utc)
         five_mins_ago = current_time - timedelta(minutes=5)
@@ -278,13 +286,20 @@ class TeamInviteRepository:
         })
         
         five_mins_ago_str = five_mins_ago.isoformat()
-        result_accepted_string = self.invites_collection.delete_many({
-            "status": "accepted",
-            "acceptedAt": {"$type": "string", "$lt": five_mins_ago_str}
-        })
-        
-        total_accepted_deleted = result_accepted_datetime.deleted_count + result_accepted_string.deleted_count
-        logger.info(f"Deleted {total_accepted_deleted} accepted invites (older than 5 minutes)")
+        result_accepted_string = self.invites_collection.delete_many(
+            {
+                "status": "accepted",
+                "acceptedAt": {"$type": "string", "$lt": five_mins_ago_str},
+            }
+        )
+
+        total_accepted_deleted = (
+            result_accepted_datetime.deleted_count
+            + result_accepted_string.deleted_count
+        )
+        logger.info(
+            f"Deleted {total_accepted_deleted} accepted invites (older than 5 minutes)"
+        )
 
         return {
             "expired_deleted": result_expired.deleted_count,
@@ -320,13 +335,14 @@ class TeamInviteRepository:
                 date_str = doc["acceptedAt"]
                 parsed_date = datetime.fromisoformat(date_str.replace('Z', '+00:00'))
                 result = self.invites_collection.update_one(
-                    {"_id": doc["_id"]},
-                    {"$set": {"acceptedAt": parsed_date}}
+                    {"_id": doc["_id"]}, {"$set": {"acceptedAt": parsed_date}}
                 )
                 if result.modified_count == 1:
                     fixed_count += 1
             except (ValueError, KeyError) as e:
-                logger.error(f"Error fixing date format for invite {doc.get('_id')}: {str(e)}")
-                
+                logger.error(
+                    f"Error fixing date format for invite {doc.get('_id')}: {str(e)}"
+                )
+
         logger.info(f"Fixed date format for {fixed_count} invites")
         return fixed_count

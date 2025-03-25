@@ -82,3 +82,24 @@ export async function getTeamMembers(teamId) {
   const res = await fetch(`/get_teams_members/${teamId}`, { method: "GET" });
   return res.json();
 }
+
+export async function addTeamMemberRequest(teamId, email, role) {
+  console.log("Sending request to /add_team_member"); // Debug log
+  const res = await fetch("/add_team_member", {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ teamId, email, role })
+  });
+  const data = await res.json();
+  console.log("Response from /add_team_member:", data); // Debug log
+  return data;
+}
+
+export async function editTeamMemberByEmailRequest(teamId, email, role) {
+  const res = await fetch("/edit_team_member_by_email", {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ teamId, email, role })
+  });
+  return res.json();
+}

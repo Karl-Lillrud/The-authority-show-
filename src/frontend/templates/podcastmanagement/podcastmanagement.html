@@ -1,13 +1,19 @@
-{% extends "/components/base.html" %} {% block title %}Podcast Management{%
-endblock %} {% block content %}
-<link
-  rel="stylesheet"
-  href="{{ url_for('static', filename='css/components/sidebar.css') }}"
-/>
-<link
-  rel="stylesheet"
-  href="{{ url_for('static', filename='css/podcastmanagement/podcastmanagement.css') }}"
-/>
+{% block title %}Podcast Management{% endblock %}
+{% block content %}
+<head>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/components/sidebar.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/podcastmanagement/podcastmanagement.css') }}">
+
+  <!-- Google Analytics -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-PTPQQ5WSQV"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+
+    gtag('config', 'G-PTPQQ5WSQV');
+  </script>
+</head>
 
 <div class="app-container">
   <!-- Sidebar -->
@@ -145,10 +151,10 @@ endblock %} {% block content %}
               <input type="text" id="hostBio" name="hostBio" />
             </div>
             <div class="field-group">
-              <label for="hostImage">Host Image</label>
+              <label for="host-image">Host Image</label>
               <input
                 type="file"
-                id="hostImage"
+                id="host-image"
                 name="hostImage"
                 accept="image/*"
               />
