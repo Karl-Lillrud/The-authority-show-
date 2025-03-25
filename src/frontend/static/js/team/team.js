@@ -1041,9 +1041,25 @@ function showTeamCardEditMemberModal(teamId, member) {
 
   // Replace the current delete button event listener with the same as in member cards
   const deleteBtn = document.getElementById("teamCardEditMemberDeleteBtn");
-  deleteBtn.addEventListener("click", () =>
-    deleteMember(teamId, member.userId, member.email, member.role)
-  );
+  deleteBtn.addEventListener("click", () => {
+    showConfirmationPopup(
+      "Delete Member",
+      "Are you sure you want to delete this member? This action cannot be undone.",
+      async () => {
+        closeModal(modal);
+        await deleteMember(
+          teamId,
+          member.userId,
+          member.email,
+          member.role,
+          true
+        );
+      },
+      () => {
+        showNotification("Info", "Member deletion canceled.", "info");
+      }
+    );
+  });
 }
 
 async function addTeam(payload) {
