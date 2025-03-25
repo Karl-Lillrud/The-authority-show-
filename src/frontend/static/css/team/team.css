@@ -486,7 +486,10 @@ body {
 .save-btn,
 .cancel-btn,
 .delete-btn {
-  padding: 12px 28px;
+  padding: 10px 20px; /* Minska padding */
+  height: auto; /* Ta bort eventuell fast höjd */
+  font-size: 0.95rem; /* Justera fontstorlek */
+  line-height: 1.2; /* För bättre vertikal centrering */
   border: none;
   border-radius: var(--radius-medium);
   font-weight: 600;
@@ -541,42 +544,84 @@ body {
 }
 
 .delete-btn {
-  background: linear-gradient(135deg, rgba(255, 59, 48, 0.12), rgba(255, 59, 48, 0.06));
+  background-color: rgba(231, 76, 60, 0.1);
   color: var(--danger-color);
+  border: none;
+  border-radius: var(--radius-small);
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
   box-shadow: var(--button-shadow);
+  transition: all var(--transition-normal);
 }
 
 .delete-btn:hover {
-  background: linear-gradient(135deg, rgba(255, 59, 48, 0.2), rgba(255, 59, 48, 0.1));
   transform: translateY(-2px);
-  box-shadow: 0 6px 12px rgba(255, 59, 48, 0.15);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.12);
+  background-color: rgba(231, 76, 60, 0.2);
 }
 
-.delete-btn::before {
-  content: "";
+.delete-btn svg {
   width: 18px;
   height: 18px;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='18' height='18' viewBox='0 0 24 24' fill='none' stroke='%23ff3b30' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='3 6 5 6 21 6'%3E%3C/polyline%3E%3Cpath d='M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2'%3E%3C/path%3E%3Cline x1='10' y1='11' x2='10' y2='17'%3E%3C/line%3E%3Cline x1='14' y1='11' x2='14' y2='17'%3E%3C/line%3E%3C/svg%3E");
+  stroke: var(--danger-color);
+}
+
+/* Fix för SVG-färger i knappar */
+.delete-btn svg,
+#teamCardEditMemberModal .delete-member-btn svg {
+  width: 18px;
+  height: 18px;
+  fill: none; /* Ta bort heltäckande färg */
+  stroke: var(--danger-color); /* Använd endast stroke */
+  stroke-width: 2;
+}
+
+/* Lägg till papperskorgsikon som bakgrundsbild */
+.delete-btn::before,
+#teamCardEditMemberModal .delete-member-btn::before {
+  content: "";
+  display: inline-block;
+  width: 18px;
+  height: 18px;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23ff3b30' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='3 6 5 6 21 6'%3E%3C/polyline%3E%3Cpath d='M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2'%3E%3C/path%3E%3Cline x1='10' y1='11' x2='10' y2='17'%3E%3C/line%3E%3Cline x1='14' y1='11' x2='14' y2='17'%3E%3C/line%3E%3C/svg%3E");
   background-repeat: no-repeat;
   background-position: center;
+  margin-right: 8px; /* Mellanrum mellan ikon och text */
+  vertical-align: middle;
 }
 
 /* Additional styling for delete button in the member details modal */
 #teamCardEditMemberModal .delete-member-btn {
-  background: linear-gradient(135deg, rgba(255, 59, 48, 0.12), rgba(255, 59, 48, 0.06));
+  background: linear-gradient(135deg, rgba(231, 76, 60, 0.12), rgba(231, 76, 60, 0.06));
   color: var(--danger-color);
-  padding: 12px 28px;
+  padding: 10px 20px; /* Minska padding */
+  height: auto; /* Ta bort eventuell fast höjd */
+  font-size: 0.95rem; /* Justera fontstorlek */
+  line-height: 1.2; /* För bättre vertikal centrering */
   border: none;
   border-radius: var(--radius-medium);
   cursor: pointer;
   box-shadow: var(--button-shadow);
+  display: flex;
+  align-items: center;
+  gap: 8px;
   transition: all var(--transition-fast);
 }
 
+#teamCardEditMemberModal .delete-member-btn svg {
+  width: 18px;
+  height: 18px;
+  fill: var(--danger-color);
+}
+
 #teamCardEditMemberModal .delete-member-btn:hover {
-  background: linear-gradient(135deg, rgba(255, 59, 48, 0.2), rgba(255, 59, 48, 0.1));
+  background: linear-gradient(135deg, rgba(231, 76, 60, 0.2), rgba(231, 76, 60, 0.1));
   transform: translateY(-2px);
-  box-shadow: 0 6px 12px rgba(255, 59, 48, 0.15);
+  box-shadow: 0 6px 12px rgba(231, 76, 60, 0.15);
 }
 
 /* Member Card Styles */
