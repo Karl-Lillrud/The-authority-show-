@@ -619,13 +619,13 @@ async function renderMembersView() {
           card.className = "member-card";
           card.innerHTML = `
             <div class="member-card-header" style="position: relative;">
-              <h3>${member.fullName || member.email}</h3>
+              <h3>${member.email}</h3>
               <button class="edit-icon-btn" style="position: absolute; top: 8px; right: 8px;">${edit}</button>
             </div>
             <div class="member-card-body">
               ${
-                member.verified
-                  ? `<p><strong>Email:</strong> ${member.email}</p>`
+                member.fullName
+                  ? `<p><strong>Full Name:</strong> ${member.fullName}</p>`
                   : ""
               }
               ${
@@ -636,7 +636,6 @@ async function renderMembersView() {
               <p><strong>Role:</strong> ${member.role}</p>
               <p><strong>Team:</strong> ${team.name}</p>
               <div class="member-card-footer" style="position: relative;">
-                <!-- Uppdaterat: skriv ut verifieringsbadge och rollbadge tillsammans -->
                 <span class="member-badge" style="position: absolute; bottom: 8px; right: 8px;">
                   ${
                     member.role === "creator"
