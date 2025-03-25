@@ -598,35 +598,18 @@ async function renderMembersView() {
     </div>
     <div id="members-view-container" class="card-container"></div>
   `;
-
   try {
     const teams = await getTeamsRequest();
     const membersView = document.getElementById("members-view-container");
-
     for (const team of teams) {
       if (team.members && Array.isArray(team.members)) {
         team.members.forEach((member) => {
           const card = document.createElement("div");
           card.className = "member-card";
           card.innerHTML = `
-            <div class="member-card-header">
+            <div class="member-card-header" style="position: relative;">
               <h3>${member.fullName || member.email}</h3>
-              <span class="member-chip">
-                ${
-                  member.role === "creator"
-                    ? '<span class="creator-badge">Creator</span>'
-                    : `<span class="role-badge ${member.role.toLowerCase()}">${
-                        member.role
-                      }</span>`
-                }
-                ${
-                  member.role !== "creator" && !member.verified
-                    ? '<span class="not-verified-badge">Not Verified</span>'
-                    : member.role !== "creator" && member.verified
-                    ? '<span class="verified-badge">Verified</span>'
-                    : ""
-                }
-              </span>
+              <button class="edit-icon-btn" style="position: absolute; top: 8px; right: 8px;">${edit}</button>
             </div>
             <div class="member-card-body">
               ${
@@ -641,29 +624,35 @@ async function renderMembersView() {
               }
               <p><strong>Role:</strong> ${member.role}</p>
               <p><strong>Team:</strong> ${team.name}</p>
-              <div class="member-card-footer">
-                ${
-                  member.role !== "creator"
-                    ? '<button class="btn edit-member-btn">Edit</button>'
-                    : ""
-                }
-                <button class="btn delete-member-btn">Delete</button>
+              <div class="member-card-footer" style="position: relative;">
+                <!-- Uppdaterat: skriv ut verifieringsbadge och rollbadge tillsammans -->
+                <span class="member-badge" style="position: absolute; bottom: 0px; right: 8px;">
+                  ${
+                    member.role === "creator"
+                      ? '<span class="creator-badge">Creator</span>'
+                      : (member.verified
+                          ? '<span class="verified-badge">Verified</span>'
+                          : '<span class="not-verified-badge">Not Verified</span>') +
+                        '<span class="role-badge ' +
+                        member.role.toLowerCase() +
+                        '">' +
+                        member.role +
+                        "</span>"
+                  }
+                </span>
               </div>
             </div>
           `;
           if (member.role !== "creator") {
-            // Använd showTeamCardEditMemberModal för att redigera medlemmar
             card
-              .querySelector(".edit-member-btn")
+              .querySelector(".edit-icon-btn")
               .addEventListener("click", () =>
                 showTeamCardEditMemberModal(team._id, member)
               );
+          } else {
+            card.querySelector(".edit-icon-btn").style.display = "none";
           }
-          card
-            .querySelector(".delete-member-btn")
-            .addEventListener("click", () =>
-              deleteMember(team._id, member.userId, member.email, member.role)
-            );
+          // Ta bort delete-knappseventlyssnaren från member cards
           membersView.appendChild(card);
         });
       }
@@ -1049,6 +1038,12 @@ function showTeamCardEditMemberModal(teamId, member) {
       modal.setAttribute("aria-hidden", "true");
     }
   });
+
+  // Replace the current delete button event listener with the same as in member cards
+  const deleteBtn = document.getElementById("teamCardEditMemberDeleteBtn");
+  deleteBtn.addEventListener("click", () =>
+    deleteMember(teamId, member.userId, member.email, member.role)
+  );
 }
 
 async function addTeam(payload) {

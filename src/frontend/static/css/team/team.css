@@ -727,6 +727,13 @@ body {
   background-position: center;
 }
 
+/* Ny regel för inline-brytning & gap mellan badgsen */
+.member-badge {
+  display: flex;
+  align-items: center;
+  gap: 2mm;
+}
+
 /* Role Badges */
 .role-badge {
   padding: 4px 10px;
