@@ -722,24 +722,56 @@ function showConfirmationPopup(title, message, onConfirm, onCancel) {
 }
 
 // Update deleteMember function to ensure popup is triggered
-async function deleteMember(teamId, userId = null, email = null, role = null) {
-  console.log("deleteMember called with:", { teamId, userId, email, role }); // Debug log
+async function deleteMember(
+  teamId,
+  userId = null,
+  email = null,
+  role = null,
+  skipConfirmation = false
+) {
+  console.log("deleteMember called with:", {
+    teamId,
+    userId,
+    email,
+    role,
+    skipConfirmation
+  }); // Debug log
 
   try {
-    // Modified condition to ensure case-insensitive check for 'creator'
+    // Om skipConfirmation är true, hoppa över popupen
+    if (skipConfirmation) {
+      const result = await deleteTeamMemberRequest(teamId, userId, email);
+      if (result.message) {
+        showNotification(
+          "Success",
+          result.message || "Member deleted successfully!",
+          "success"
+        );
+        renderMembersView(); // Uppdatera members-vyn
+      } else {
+        showNotification(
+          "Error",
+          result.error || "Failed to delete member.",
+          "error"
+        );
+      }
+      return;
+    }
+
+    // Visa popup för att bekräfta borttagning av creator
     if (role && role.toLowerCase() === "creator") {
       showConfirmationPopup(
         "Delete Creator",
         "This member is the creator of the team. Deleting the creator will delete the entire team. Are you sure you want to proceed?",
         async () => {
           try {
-            await deleteTeam(teamId); // Proceed to delete the entire team
+            await deleteTeam(teamId); // Ta bort hela teamet
             showNotification(
               "Success",
               "Team and creator deleted successfully!",
               "success"
             );
-            renderMembersView(); // Refresh the members view
+            renderMembersView(); // Uppdatera members-vyn
           } catch (error) {
             console.error("Error deleting team:", error);
             showNotification(
@@ -753,25 +785,43 @@ async function deleteMember(teamId, userId = null, email = null, role = null) {
           showNotification("Info", "Deletion canceled.", "info");
         }
       );
-      return;
+      return; // Avsluta här för att undvika ytterligare popup
     }
 
-    // Proceed to delete the member
-    const result = await deleteTeamMemberRequest(teamId, userId, email);
-    if (result.message) {
-      showNotification(
-        "Success",
-        result.message || "Member deleted successfully!",
-        "success"
-      );
-      renderMembersView(); // Refresh the members view
-    } else {
-      showNotification(
-        "Error",
-        result.error || "Failed to delete member.",
-        "error"
-      );
-    }
+    // Visa popup för att bekräfta borttagning av vanliga medlemmar
+    showConfirmationPopup(
+      "Delete Member",
+      "Are you sure you want to delete this member? This action cannot be undone.",
+      async () => {
+        try {
+          const result = await deleteTeamMemberRequest(teamId, userId, email);
+          if (result.message) {
+            showNotification(
+              "Success",
+              result.message || "Member deleted successfully!",
+              "success"
+            );
+            renderMembersView(); // Uppdatera members-vyn
+          } else {
+            showNotification(
+              "Error",
+              result.error || "Failed to delete member.",
+              "error"
+            );
+          }
+        } catch (error) {
+          console.error("Error deleting member:", error);
+          showNotification(
+            "Error",
+            "An error occurred while deleting the member.",
+            "error"
+          );
+        }
+      },
+      () => {
+        showNotification("Info", "Member deletion canceled.", "info");
+      }
+    );
   } catch (error) {
     console.error("Error deleting member:", error);
     showNotification(
@@ -793,6 +843,7 @@ function showTeamCardEditMemberModal(teamId, member) {
   const roleSelect = document.getElementById("teamCardEditMemberRole");
   const editBtn = document.getElementById("teamCardEditMemberEditBtn");
   const saveBtn = document.getElementById("teamCardEditMemberSaveBtn");
+  const closeBtn = document.getElementById("teamCardEditMemberCloseBtn");
 
   // Populate fields with member data
   const originalEmail = member.email;
@@ -885,47 +936,76 @@ function showTeamCardEditMemberModal(teamId, member) {
     modal.classList.remove("show");
     modal.setAttribute("aria-hidden", "true");
 
-    try {
-      if (newEmail !== originalEmail) {
-        // Steg 1: Ta bort gammal medlem
-        await deleteMember(teamId, member.userId, originalEmail, member.role);
-
-        // Steg 2: Lägg till ny medlem
-        const addResult = await addTeamMemberRequest(teamId, newEmail, newRole);
-        if (addResult.error) {
-          showNotification(
-            "Error",
-            addResult.error || "Failed to add new member.",
-            "error"
-          );
-          return;
+    // Ändra e-post
+    if (newEmail !== originalEmail) {
+      showConfirmationPopup(
+        "Change Email",
+        "Are you sure you want to change the email? The previous member will be removed, and a new verification email will be sent.",
+        async () => {
+          try {
+            await deleteMember(
+              teamId,
+              member.userId,
+              originalEmail,
+              member.role,
+              true
+            );
+            const addResult = await addTeamMemberRequest(
+              teamId,
+              newEmail,
+              newRole
+            );
+            if (addResult.error) {
+              showNotification(
+                "Error",
+                addResult.error || "Failed to add new member.",
+                "error"
+              );
+              return;
+            }
+            const inviteResult = await sendTeamInviteRequest(
+              teamId,
+              newEmail,
+              newRole
+            );
+            if (inviteResult.error) {
+              showNotification(
+                "Error",
+                inviteResult.error || "Failed to send invitation.",
+                "error"
+              );
+              return;
+            }
+            showNotification(
+              "Success",
+              "Member updated and invitation sent successfully!",
+              "success"
+            );
+            const teams = await getTeamsRequest();
+            updateTeamsUI(teams);
+            renderMembersView();
+          } catch (error) {
+            console.error("Error updating member:", error);
+            showNotification(
+              "Error",
+              "An error occurred while updating the member.",
+              "error"
+            );
+          }
+        },
+        () => {
+          showNotification("Info", "Email change canceled.", "info");
         }
+      );
+      return;
+    }
 
-        // Steg 3: Skicka inbjudan
-        const inviteResult = await sendTeamInviteRequest(
-          teamId,
-          newEmail,
-          newRole
-        );
-        if (inviteResult.error) {
-          showNotification(
-            "Error",
-            inviteResult.error || "Failed to send invitation.",
-            "error"
-          );
-          return;
-        }
-
-        showNotification(
-          "Success",
-          "Member updated and invitation sent successfully!",
-          "success"
-        );
-      } else if (newRole !== member.role) {
+    // Ändra roll eller ingen ändring
+    if (newRole !== member.role) {
+      try {
         const result = member.userId
           ? await editTeamMemberRequest(teamId, member.userId, newRole)
           : await editTeamMemberByEmailRequest(teamId, originalEmail, newRole);
-
         if (result.error) {
           showNotification(
             "Error",
@@ -939,25 +1019,36 @@ function showTeamCardEditMemberModal(teamId, member) {
           "Member role updated successfully!",
           "success"
         );
+        const teams = await getTeamsRequest();
+        updateTeamsUI(teams);
+        renderMembersView();
+      } catch (error) {
+        console.error("Error updating member:", error);
+        showNotification(
+          "Error",
+          "An error occurred while updating the member.",
+          "error"
+        );
       }
-
-      // Uppdatera UI efter lyckad operation
-      const teams = await getTeamsRequest();
-      updateTeamsUI(teams);
-      renderMembersView();
-    } catch (error) {
-      console.error("Error updating member:", error);
-      showNotification(
-        "Error",
-        "An error occurred while updating the member.",
-        "error"
-      );
+    } else {
+      // Ingen ändring gjord
+      showNotification("Info", "No changes were made.", "info");
     }
   };
-  // Close modal
-  document.getElementById("teamCardEditMemberCloseBtn").onclick = () => {
+
+  // Eventlyssnare för att stänga modalen när "X" klickas
+  closeBtn.onclick = () => {
     modal.classList.remove("show");
+    modal.setAttribute("aria-hidden", "true");
   };
+
+  // Eventlyssnare för att stänga modalen när användaren klickar utanför den
+  window.addEventListener("click", (event) => {
+    if (event.target === modal) {
+      modal.classList.remove("show");
+      modal.setAttribute("aria-hidden", "true");
+    }
+  });
 }
 
 async function addTeam(payload) {
@@ -1072,3 +1163,34 @@ async function handleAddMemberFormSubmission(e) {
 document
   .getElementById("addMemberForm")
   .addEventListener("submit", handleAddMemberFormSubmission);
+
+// Lägg till funktionalitet för Add New Member popup
+document.addEventListener("DOMContentLoaded", () => {
+  const addMemberModal = document.getElementById("addMemberModal");
+  const closeAddMemberModal = document.getElementById("closeAddMemberModal");
+  const cancelAddMember = document.getElementById("cancelAddMember");
+
+  // Eventlyssnare för att stänga modalen när "X" klickas
+  if (closeAddMemberModal) {
+    closeAddMemberModal.addEventListener("click", () => {
+      addMemberModal.classList.remove("show");
+      addMemberModal.setAttribute("aria-hidden", "true");
+    });
+  }
+
+  // Eventlyssnare för att stänga modalen när "Cancel" klickas
+  if (cancelAddMember) {
+    cancelAddMember.addEventListener("click", () => {
+      addMemberModal.classList.remove("show");
+      addMemberModal.setAttribute("aria-hidden", "true");
+    });
+  }
+
+  // Eventlyssnare för att stänga modalen när användaren klickar utanför den
+  window.addEventListener("click", (event) => {
+    if (event.target === addMemberModal) {
+      addMemberModal.classList.remove("show");
+      addMemberModal.setAttribute("aria-hidden", "true");
+    }
+  });
+});
