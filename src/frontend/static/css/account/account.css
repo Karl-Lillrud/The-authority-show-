@@ -389,7 +389,7 @@ input:focus {
   display: flex;
   gap: 1rem;
   margin-top: 1rem;
-}
+} 
 
 .primary-button {
   background-color: var(--primary);

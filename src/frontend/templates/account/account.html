@@ -58,7 +58,7 @@
               </svg>
             </li>
             <ul class="submenu">
-              <li class="submenu-item" data-target="profile-edit-section" tabindex="0">Edit Profile</li>
+              <li class="submenu-item" data-target="profile-section" tabindex="0">Edit Profile</li>
               <li class="submenu-item" data-target="settings-password" tabindex="0">Change Password</li>
               <li class="submenu-item" data-target="settings-delete" tabindex="0">Delete Account</li>
             </ul>
@@ -100,23 +100,27 @@
             <div class="profile-pic-container">
               <div class="profile-pic-wrapper">
                 <img id="profile-pic" src="/placeholder.svg?height=120&width=120" alt="Profile Picture">
+                
                 <div class="profile-pic-overlay">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="edit-icon">
+                    <path d="M12 20h9"></path>
+                    <path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"></path>
                   </svg>
                 </div>
               </div>
+              <button id="upload-pic" class="upload-button">Change Photo</button>
             </div>
             
-            <form id="profile-details" class="profile-form">
+            <form id="profile-form" class="profile-form">
               <div class="form-group">
                 <label for="full-name">Full Name <span class="required">*</span></label>
-                <input type="text" id="full-name" name="full_name" disabled>
+                <input type="text" id="full-name" name="full_name" disabled required>
                 <div class="form-hint">This name will be displayed on your profile</div>
               </div>
               
               <div class="form-group">
                 <label for="email">Email Address <span class="required">*</span></label>
-                <input type="email" id="email" name="email" disabled>
+                <input type="email" id="email" name="email" disabled required>
               </div>
               
               <div class="form-group">
@@ -124,55 +128,15 @@
                 <input type="text" id="phone" name="phone" disabled>
                 <div class="form-hint">Used for account recovery and important notifications</div>
               </div>
+
+              <div class="form-actions">
+                <button type="submit" class="primary-button">Save Changes</button>
+                <button type="reset" class="secondary-button">Cancel</button>
+              </div>
+
             </form>
           </div>
         </div>
-
-        <!-- Edit Profile Section -->
-        <div id="profile-edit-section" class="settings-section">
-          <div class="section-header">
-            <h2>Profile Information</h2>
-            <p>Manage your personal information and how it appears across services</p>
-          </div>
-        <div class="profile-content">
-          <div class="profile-pic-container">
-            <div class="profile-pic-wrapper">
-              <img id="profile-pic" src="/placeholder.svg?height=120&width=120" alt="Profile Picture">
-              <div class="profile-pic-overlay">
-                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="edit-icon">
-                  <path d="M12 20h9"></path>
-                  <path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"></path>
-                </svg>
-              </div>
-            </div>
-            <button id="upload-pic" class="upload-button">Change Photo</button>
-          </div>
-          
-          <form id="profile-form" class="profile-form">
-            <div class="form-group">
-              <label for="full-name">Full Name <span class="required">*</span></label>
-              <input type="text" id="full-name" name="full_name" placeholder="Your full name" required>
-              <div class="form-hint">This name will be displayed on your profile</div>
-            </div>
-            
-            <div class="form-group">
-              <label for="email">Email Address <span class="required">*</span></label>
-              <input type="email" id="email" name="email" placeholder="your.email@example.com" required>
-            </div>
-            
-            <div class="form-group">
-              <label for="phone">Phone Number</label>
-              <input type="text" id="phone" name="phone" placeholder="+1 (555) 123-4567">
-              <div class="form-hint">Used for account recovery and important notifications</div>
-            </div>
-            
-            <div class="form-actions">
-              <button type="submit" class="primary-button">Save Changes</button>
-              <button type="reset" class="secondary-button">Cancel</button>
-            </div>
-          </form>
-        </div>
-      </div>
 
         <!-- Security - 2FA Section -->
         <div id="security-2fa" class="settings-section">

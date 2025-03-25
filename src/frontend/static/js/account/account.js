@@ -7,6 +7,20 @@ import {
 } from "/static/requests/accountRequests.js"
 
 document.addEventListener("DOMContentLoaded", () => {
+    // Hides the edit buttons when in non-edit mode
+    const formActions = document.querySelector(".form-actions");
+    if (formActions) {
+      formActions.style.display = 'none'; 
+    }
+    const uploadBtn = document.getElementById("upload-pic");
+    if (uploadBtn) {
+      uploadBtn.style.display = 'none'; 
+    }
+    const profilePictureOverlay = document.querySelector(".profile-pic-overlay");
+    if (profilePictureOverlay) {
+      profilePictureOverlay.style.display = 'none'; 
+    }
+
   // Initialize profile data
   fetchProfile()
     .then((data) => {
@@ -189,6 +203,12 @@ document.addEventListener("DOMContentLoaded", () => {
       updateProfile(profileData)
         .then((data) => {
           if (data.message) {
+            // Changes back to non-edit mode
+            document.querySelector('.sidebar-item[data-target="profile-section"]').click();
+            const editProfileButton = document.querySelector('.submenu-item[data-target="profile-section"]');
+            if (editProfileButton) {
+              editProfileButton.classList.remove("active");
+            }
             showNotification("Profile updated successfully!", "success")
           } else {
             showNotification("Failed to update profile", "error")
@@ -199,6 +219,45 @@ document.addEventListener("DOMContentLoaded", () => {
           showNotification("An error occurred while updating profile", "error")
         })
     })
+  }
+
+  const toggleProfileEditMode = (isEditMode) => {
+    const profileSection = document.getElementById("profile-section");
+    const formFields = profileSection.querySelectorAll("input, textarea");
+    const formActions = profileSection.querySelector(".form-actions");
+    const uploadButton = document.getElementById("upload-pic");
+    const profilePicOverlay = document.querySelector(".profile-pic-overlay");
+  
+    formFields.forEach(field => field.disabled = !isEditMode);
+    formActions.style.display = isEditMode ? 'flex' : 'none';
+    uploadButton.style.display = isEditMode ? 'inline-block' : 'none';
+    profilePicOverlay.style.display = isEditMode ? 'flex' : 'none';
+  
+    const formGroups = profileSection.querySelectorAll(".form-group");
+    formGroups.forEach(group => {
+      const requiredSpan = group.querySelector(".required");
+      if (requiredSpan) {
+        requiredSpan.style.display = isEditMode && group.querySelector("input").value === "" ? 'inline' : 'none';
+      }
+    });
+  }
+  
+  // Handle "Profile" button (non-edit mode)
+  const profileButton = document.querySelector('.sidebar-item[data-target="profile-section"]');
+  if (profileButton) {
+    profileButton.addEventListener("click", function () {
+      // Switch to non-edit mode
+      toggleProfileEditMode(false);
+    });
+  }
+  
+  // Handle "Edit Profile" submenu item (editable mode)
+  const editProfileButton = document.querySelector('.submenu-item[data-target="profile-section"]');
+  if (editProfileButton) {
+    editProfileButton.addEventListener("click", function () {
+      // Switch to edit mode
+      toggleProfileEditMode(true);
+    });
   }
 
   // Password form submission
@@ -470,4 +529,3 @@ function showNotification(message, type) {
     }, 300)
   }, 3000)
 }
-
