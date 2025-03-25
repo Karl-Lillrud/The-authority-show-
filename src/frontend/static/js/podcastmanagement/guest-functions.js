@@ -120,10 +120,17 @@ function showManualGuestPopup(selectElement) {
             email: guestEmail,
             podcastId
           });
-          document.body.removeChild(popup);
-          // Fetch and render the updated guest list
-          await renderGuestSelection(selectElement, guest.guest_id);
-          showNotification("Success", "Guest added successfully!", "success"); // Show success notification
+
+          // Check for the success message in the response from the backend
+          if (guest && guest.message === "Guest added successfully") {
+            document.body.removeChild(popup);
+            // Fetch and render the updated guest list
+            await renderGuestSelection(selectElement, guest.guest_id);
+            showNotification("Success", "Guest added successfully!", "success"); // Success notification
+          } else {
+            // Handle failure from the backend
+            showNotification("Error", guest.error || "Failed to add guest.", "error"); // Error notification
+          }
         } catch (error) {
           console.error("Error adding guest:", error);
           showNotification("Error", "Failed to add guest.", "error"); // Show error notification
@@ -133,6 +140,7 @@ function showManualGuestPopup(selectElement) {
       }
     });
 }
+
 
 // Updated showAddGuestPopup function to clear the episode dropdown before populating
 async function showAddGuestPopup() {
@@ -383,57 +391,80 @@ export function initGuestFunctions() {
 
   // Event listener for Add Guest form submission
   document
-    .getElementById("add-guest-form")
-    .addEventListener("submit", async (e) => {
-      e.preventDefault();
-      const episodeId = document.getElementById("episode-id").value.trim();
-      const guestName = document.getElementById("guest-name").value.trim();
-      const guestDescription = document
-        .getElementById("guest-description")
-        .value.trim();
-      const guestTags = document
-        .getElementById("guest-tags")
-        .value.split(",")
-        .map((tag) => tag.trim())
-        .filter(Boolean);
-      const guestAreas = document
-        .getElementById("guest-areas")
-        .value.split(",")
-        .map((area) => area.trim())
-        .filter(Boolean);
-      const guestEmail = document.getElementById("guest-email").value.trim();
-      const guestLinkedIn = document
-        .getElementById("guest-linkedin")
-        .value.trim();
-      const guestTwitter = document
-        .getElementById("guest-twitter")
-        .value.trim();
+  .getElementById("add-guest-form")
+  .addEventListener("submit", async (e) => {
+    e.preventDefault();
 
-      if (guestName && guestEmail && episodeId) {
-        try {
-          const guest = await addGuestRequest({
-            episodeId, // Ensure episodeId is correctly set
-            name: guestName,
-            description: guestDescription,
-            tags: guestTags,
-            areasOfInterest: guestAreas,
-            email: guestEmail,
-            linkedin: guestLinkedIn,
-            twitter: guestTwitter
-          });
-          closeAddGuestPopup();
-          showNotification("Success", "Guest added successfully!", "success");
-          // Refresh the guest list in episode details without refreshing the page
-          renderEpisodeDetail({
-            _id: episodeId,
-            podcast_id: shared.selectedPodcastId
-          });
-        } catch (error) {
-          console.error("Error adding guest:", error);
-          showNotification("Error", "Failed to add guest.", "error");
+    // Collect form values
+    const episodeId = document.getElementById("episode-id").value.trim();
+    const guestName = document.getElementById("guest-name").value.trim();
+    const guestDescription = document
+      .getElementById("guest-description")
+      .value.trim();
+    const guestTags = document
+      .getElementById("guest-tags")
+      .value.split(",")
+      .map((tag) => tag.trim())
+      .filter(Boolean);
+    const guestAreas = document
+      .getElementById("guest-areas")
+      .value.split(",")
+      .map((area) => area.trim())
+      .filter(Boolean);
+    const guestEmail = document.getElementById("guest-email").value.trim();
+    const guestLinkedIn = document
+      .getElementById("guest-linkedin")
+      .value.trim();
+    const guestTwitter = document
+      .getElementById("guest-twitter")
+      .value.trim();
+
+    // Ensure required fields are filled in
+    if (guestName && guestEmail && episodeId) {
+      try {
+        // Fetch episode details using episodeId (you may need to fetch this from your backend)
+        const episode = await fetchEpisodeDetails(episodeId); // Replace with your actual fetch method
+        const current_date = new Date();
+        const publish_date = new Date(episode.publishDate); // Assuming publishDate is in a valid format
+
+        // Check if the episode is published or if the publish date has passed
+        if (episode["status"] === "published" || publish_date < current_date) {
+          // If the episode is already published or expired, show an error notification
+          showNotification("Error", "Cannot add guest to a published episode or an episode that has passed its date.", "error");
+          return; // Stop further execution
         }
-      } else {
-        alert("Please fill in all required fields.");
+
+        // Proceed with guest addition logic if the episode is valid
+        const guest = await addGuestRequest({
+          episodeId, // Ensure episodeId is correctly set
+          name: guestName,
+          description: guestDescription,
+          tags: guestTags,
+          areasOfInterest: guestAreas,
+          email: guestEmail,
+          linkedin: guestLinkedIn,
+          twitter: guestTwitter
+        });
+
+        closeAddGuestPopup();
+
+        // Show success notification if the guest is added successfully
+        showNotification("Success", "Guest added successfully!", "success");
+
+        // Refresh the guest list in episode details without refreshing the page
+        renderEpisodeDetail({
+          _id: episodeId,
+          podcast_id: shared.selectedPodcastId
+        });
+      } catch (error) {
+        console.error("Error adding guest:", error);
+
+        // Show failure notification if there was an error during the process
+        showNotification("Error", "Failed to add guest!", "error"); // Correct failure message
       }
-    });
+    } else {
+      // Alert if the required fields are not filled
+      alert("Please fill in all required fields.");
+    }
+  });
 }

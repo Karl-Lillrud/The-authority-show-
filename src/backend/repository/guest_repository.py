@@ -4,6 +4,7 @@ import uuid
 import logging
 from backend.models.guests import GuestSchema
 from marshmallow import ValidationError
+import email.utils  # Import to handle parsing date format
 
 logger = logging.getLogger(__name__)
 
@@ -12,28 +13,38 @@ class GuestRepository:
         self.collection = collection.database.Guests
 
     def add_guest(self, data, user_id):
-        """
-        Add a new guest to the database
-        """
         try:
-            logger.info("📩 Received guest data: %s", data)
-
-            # Validate guest data
-            try:
-                guest_data = GuestSchema().load(data)
-            except ValidationError as err:
-                logger.error("Validation error: %s", err.messages)
-                return {"error": "Validation error", "details": err.messages}, 400
-
-            guest_id = str(uuid.uuid4())
-
-            # Get the episodeId if provided
+            # Step 1: Retrieve the episodeId from the request data
             episode_id = data.get("episodeId")
 
-            # Construct guest document
+            # Step 2: Fetch the episode details from the database using episodeId
+            episode = collection.database.Episodes.find_one({"_id": episode_id})
+            if not episode:
+                return {"error": "Episode not found"}, 404  # Handle case where the episode does not exist
+
+            # Step 3: Get the current date and time
+            current_date = datetime.now(timezone.utc)
+
+            # Step 4: Check if the episode has been published or if the publish date has passed
+            # Use email.utils.parsedate to parse the date
+            try:
+                publish_date_parsed = email.utils.parsedate(episode["publishDate"])
+                publish_date = datetime(*publish_date_parsed[:6])  # Convert parsed time to datetime object
+            except Exception as e:
+                return {"error": f"Invalid publish date format: {str(e)}"}, 400
+
+            # Step 5: Compare the publishDate with the current date
+            if episode["status"] == "published" or publish_date < current_date:
+                return {"error": "Cannot invite guests to a published episode or an episode that has passed its date."}, 400
+
+            # Step 6: Proceed with guest addition logic if the episode is valid
+            guest_data = GuestSchema().load(data)  # Validate and load guest data using GuestSchema
+            guest_id = str(uuid.uuid4())  # Generate a unique ID for the guest
+
+            # Step 7: Construct the guest item to be added to the database
             guest_item = {
                 "_id": guest_id,
-                "episodeId": episode_id,  # Link to the episode if provided
+                "episodeId": episode_id,  # Link the guest to the episode
                 "name": guest_data["name"].strip(),
                 "image": guest_data.get("image", ""),
                 "tags": guest_data.get("tags", []),
@@ -43,21 +54,18 @@ class GuestRepository:
                 "linkedin": guest_data.get("linkedin", "").strip(),
                 "twitter": guest_data.get("twitter", "").strip(),
                 "areasOfInterest": guest_data.get("areasOfInterest", []),
-                "status": "Pending",
-                "scheduled": 0,
-                "completed": 0,
+                "status": "Pending",  # Set guest status as 'Pending' initially
+                "scheduled": 0,  # Set initial scheduling status
+                "completed": 0,  # Set initial completion status
                 "created_at": datetime.now(timezone.utc),
-                "user_id": user_id,  # Storing the logged-in user ID
+                "user_id": user_id,  # Store the user ID to associate guest with the user
             }
 
-            # Insert guest into the database
+            # Step 8: Insert the guest data into the database
             self.collection.insert_one(guest_item)
-            logger.info("✅ Guest added successfully with ID: %s", guest_id)
 
-            return {
-                "message": "Guest added successfully", 
-                "guest_id": guest_id
-            }, 201
+            # Step 9: Return a success message with the guest ID
+            return {"message": "Guest added successfully", "guest_id": guest_id}, 201
 
         except Exception as e:
             logger.exception("❌ ERROR: Failed to add guest")
