@@ -890,7 +890,7 @@ function showTeamCardEditMemberModal(teamId, member) {
     roleSelect.parentElement.appendChild(roleHelp);
   }
 
-  // Hide help text and disable role select for creators
+  // Initial state: lock fields and set help text
   if (member.role === "creator") {
     roleHelp.textContent = "";
     roleSelect.disabled = true;
@@ -899,7 +899,7 @@ function showTeamCardEditMemberModal(teamId, member) {
     roleHelp.textContent = !member.verified
       ? "The user must be verified before you can change roles."
       : "";
-    roleSelect.disabled = !member.verified;
+    roleSelect.disabled = true; // Role field always locked initially
     editBtn.style.display = "inline-block"; // Show Edit button
   }
 
@@ -913,9 +913,9 @@ function showTeamCardEditMemberModal(teamId, member) {
 
   // Enable editing
   editBtn.onclick = () => {
-    emailInput.readOnly = false;
+    emailInput.readOnly = false; // Unlock email field
     if (member.verified) {
-      roleSelect.disabled = false;
+      roleSelect.disabled = false; // Unlock role field only if verified
     }
     saveBtn.disabled = false;
     emailInput.style.backgroundColor = "";
