@@ -43,20 +43,19 @@ def upload_episode_to_spotify(access_token, episode):
     }
 
     # Ensure audioUrl is a valid URL
-    audio_url = f"http://127.0.0.1:8000/file/{episode.get('audioUrl')}"  # Adjust base URL as needed
+    audio_url = episode.get('audioUrl')  # This now contains the full path
+
+    if not audio_url:
+        logger.error("Audio URL is missing in the episode data.")
+        return False
 
     episode_data = {
         "title": episode['title'],
         "description": episode['description'],
-        "audio_url": audio_url,  # Ensure audioUrl is present
+        "audio_url": audio_url,  # Use the full audio URL
         "publish_date": episode['publishDate'].isoformat() if episode.get('publishDate') else None,
         "duration_ms": episode['duration'] * 1000 if episode.get('duration') else None,
     }
-
-    # Check if audio_url is missing
-    if not episode_data["audio_url"]:
-        logger.error("Audio URL is missing in the episode data.")
-        return False
 
     logger.info(f"Uploading episode to Spotify with data: {episode_data}")
 
@@ -77,9 +76,14 @@ def save_uploaded_files(files):
         if file and allowed_file(file.filename):
             filename = secure_filename(file.filename)
             file_id = fs.put(file.stream, filename=filename)
-            file_url = f"/file/{file_id}"  # Generate URL for the file
+            
+            # Construct the Anchor URL format for the MP3 file
+            # You can adjust the URL format as per your requirements
+            file_url = f"https://anchor.fm/s/fd781dd0/podcast/play/{file_id}/{filename}"  # Adjust this URL pattern as needed
+            
             saved_files.append({"filename": filename, "url": file_url})
     return saved_files
+
 
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in {'mp3', 'mp4'}
