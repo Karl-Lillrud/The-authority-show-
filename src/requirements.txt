@@ -19,10 +19,12 @@ httplib2
 idna
 itsdangerous
 Jinja2
+joblib
 jsonify
 kubernetes
 MarkupSafe
 marshmallow
+nltk
 node
 npm
 oauth2client
@@ -42,6 +44,7 @@ python-bootstrap
 python-dateutil
 python-dotenv
 PyYAML
+regex
 requests
 requests-oauthlib
 rsa
@@ -51,6 +54,7 @@ shortuuid
 six
 soupsieve
 sqlparse
+tqdm
 typing_extensions
 urllib3
 websocket-client
