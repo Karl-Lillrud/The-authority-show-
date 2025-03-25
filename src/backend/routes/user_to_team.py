@@ -1,3 +1,7 @@
+import logging
+
+logger = logging.getLogger(__name__)
+
 from flask import Blueprint, request, jsonify, g
 from backend.repository.usertoteam_repository import UserToTeamRepository
 
@@ -52,11 +56,16 @@ def edit_team_member():
         return jsonify({"error": "Unauthorized"}), 401
 
     data = request.get_json()
+    logger.info(
+        f"Incoming payload for /edit_team_member: {data}"
+    )  # Logga inkommande data
+
     team_id = data.get("teamId")
     user_id = data.get("userId")
     new_role = data.get("role")
 
     if not team_id or not user_id or not new_role:
+        logger.error("Missing required fields in /edit_team_member")
         return jsonify({"error": "Missing teamId, userId, or role"}), 400
 
     response, status_code = usertoteam_repo.edit_team_member(team_id, user_id, new_role)
