@@ -47,6 +47,21 @@ def get_podtasks():
     return jsonify(response), status_code
 
 
+@podtask_bp.route('/get_podtask/<task_id>', methods=['GET'])
+def get_podtask(task_id):
+    if not g.user_id:
+        return jsonify({"error": "Unauthorized"}), 401
+
+    try:
+        task = podtask_repo.get_podtask_by_id(g.user_id, task_id)  # Using the repository method
+        if task:
+            return jsonify(task), 200
+        else:
+            return jsonify({'error': 'Task not found'}), 404
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+
 @podtask_bp.route("/delete_podtasks/<task_id>", methods=["DELETE"])
 def delete_podtask(task_id):
     if not g.user_id:
