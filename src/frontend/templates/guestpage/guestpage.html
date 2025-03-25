@@ -4,9 +4,18 @@
   <meta charset="UTF-8">
   <title>{{ guest_name }} - Guest Profile</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <!-- Link to CSS -->
   <link rel="stylesheet" href="{{ url_for('static', filename='css/guestpage/guestpage.css') }}">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+  <!-- Google Analytics -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-PTPQQ5WSQV"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+
+    gtag('config', 'G-PTPQQ5WSQV');
+  </script>
 </head>
 <body>
   <!-- Navbar -->

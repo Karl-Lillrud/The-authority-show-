@@ -4,12 +4,17 @@ import {
   editTeamRequest,
   deleteTeamRequest,
   fetchPodcasts,
-  updatePodcastTeamRequest
+  updatePodcastTeamRequest,
+  addTeamMemberRequest,
+  editTeamMemberByEmailRequest
 } from "/static/requests/teamRequests.js";
-import { sendTeamInvite } from "/static/requests/invitationRequests.js";
+import { sendTeamInviteRequest } from "/static/requests/invitationRequests.js";
 import { initSidebar } from "../components/sidebar.js";
 import { sidebarIcons } from "../components/sidebar-icons.js";
-import { deleteTeamMemberRequest } from "/static/requests/userToTeamRequests.js";
+import {
+  deleteTeamMemberRequest,
+  editTeamMemberRequest
+} from "/static/requests/userToTeamRequests.js";
 import { successSvg, errorSvg, infoSvg, closeSvg } from "./teamSvg.js";
 
 // Notification system for team.js
@@ -616,6 +621,8 @@ export function switchToTeamsView() {
     .catch((error) => console.error("Error rendering teams view:", error));
 }
 
+// Ta bort showEditMemberModal och använd showTeamCardEditMemberModal istället
+// Uppdatera renderMembersView för att använda showTeamCardEditMemberModal
 async function renderMembersView() {
   const mainContent = document.querySelector(".main-content");
   mainContent.innerHTML = `
@@ -678,10 +685,11 @@ async function renderMembersView() {
             </div>
           `;
           if (member.role !== "creator") {
+            // Använd showTeamCardEditMemberModal för att redigera medlemmar
             card
               .querySelector(".edit-member-btn")
               .addEventListener("click", () =>
-                showEditMemberModal(team._id, member)
+                showTeamCardEditMemberModal(team._id, member)
               );
           }
           card
@@ -812,107 +820,160 @@ function handleDeleteUnverifiedMember(teamId, email, role) {
   deleteMember(teamId, null, email, role);
 }
 
-function showEditMemberModal(teamId, member) {
-  const modal = document.getElementById("editMemberModal");
-  const emailInput = document.getElementById("editMemberEmail");
-  const roleSelect = document.getElementById("editMemberRole");
-  const saveBtn = document.getElementById("saveEditMemberBtn");
+function showTeamCardEditMemberModal(teamId, member) {
+  const modal = document.getElementById("teamCardEditMemberModal");
+  const emailInput = document.getElementById("teamCardEditMemberEmail");
+  const roleSelect = document.getElementById("teamCardEditMemberRole");
+  const editBtn = document.getElementById("teamCardEditMemberEditBtn");
+  const saveBtn = document.getElementById("teamCardEditMemberSaveBtn");
 
+  // Populate fields with member data
+  const originalEmail = member.email;
   emailInput.value = member.email;
-  roleSelect.value = member.role;
 
+  // Populate role dropdown
+  const roles = [
+    "CoHost",
+    "Guest",
+    "Scriptwriter",
+    "Producer",
+    "AudioEngineer",
+    "SoundDesigner",
+    "Researcher",
+    "GuestCoordinator",
+    "Showrunner",
+    "SocialMediaManager",
+    "GraphicDesigner",
+    "Copywriter",
+    "Publicist",
+    "SponsorshipManager",
+    "MarketingStrategist",
+    "AnalyticsSpecialist",
+    "ShowCoordinator",
+    "Webmaster"
+  ];
+  roleSelect.innerHTML = roles
+    .map(
+      (role) =>
+        `<option value="${role}" ${
+          member.role === role ? "selected" : ""
+        }>${role}</option>`
+    )
+    .join("");
+
+  // Handle help text
+  let roleHelp = document.getElementById("teamCardEditMemberRoleHelpText");
+  if (!roleHelp) {
+    roleHelp = document.createElement("div");
+    roleHelp.id = "teamCardEditMemberRoleHelpText";
+    roleHelp.style.fontSize = "0.8em";
+    roleHelp.style.color = "red";
+    roleHelp.style.marginLeft = "0.5cm";
+    roleSelect.parentElement.appendChild(roleHelp);
+  }
+
+  // Hide help text and disable role select for creators
+  if (member.role === "creator") {
+    roleHelp.textContent = "";
+    roleSelect.disabled = true;
+    editBtn.style.display = "none"; // Hide Edit button
+  } else {
+    roleHelp.textContent = !member.verified
+      ? "The user must be verified before you can change roles."
+      : "";
+    roleSelect.disabled = !member.verified;
+    editBtn.style.display = "inline-block"; // Show Edit button
+  }
+
+  // Set initial state
+  emailInput.readOnly = true;
+  saveBtn.disabled = true;
+
+  // Show modal
   modal.classList.add("show");
   modal.setAttribute("aria-hidden", "false");
 
-  saveBtn.onclick = async () => {
-    const updatedEmail = emailInput.value;
-    const updatedRole = roleSelect.value;
+  // Enable editing
+  editBtn.onclick = () => {
+    emailInput.readOnly = false;
+    if (member.verified) {
+      roleSelect.disabled = false;
+    }
+    saveBtn.disabled = false;
+    emailInput.style.backgroundColor = "";
+    roleSelect.style.backgroundColor = "";
+  };
 
-    if (!teamId || !updatedEmail || !updatedRole) {
-      showNotification(
-        "Error",
-        "Missing teamId, email, or role. Please check your input.",
-        "error"
-      );
+  // Save changes using deleteMember logic
+  saveBtn.onclick = async () => {
+    const newEmail = emailInput.value;
+    const newRole = roleSelect.value;
+
+    if (!teamId || !newEmail || !newRole) {
+      showNotification("Error", "Missing teamId, email, or role.", "error");
       return;
     }
 
     try {
-      // Only update if the role or email has changed
-      if (updatedEmail !== member.email || updatedRole !== member.role) {
-        // Step 1: Delete the old member
-        const deleteResult = await deleteTeamMemberRequest(
+      if (newEmail !== originalEmail) {
+        // Step 1: Delete the old member using the same logic as members section
+        await deleteMember(teamId, member.userId, originalEmail, member.role);
+
+        // Step 2: Add the new member
+        const addResult = await addTeamMemberRequest(teamId, newEmail, newRole);
+        if (addResult.error) {
+          showNotification(
+            "Error",
+            addResult.error || "Failed to add new member.",
+            "error"
+          );
+          return;
+        }
+
+        // Step 3: Send team invite
+        const inviteResult = await sendTeamInviteRequest(
           teamId,
-          member.userId,
-          member.email
+          newEmail,
+          newRole
         );
-        if (deleteResult.error) {
+        if (inviteResult.error) {
           showNotification(
             "Error",
-            deleteResult.error || "Failed to delete old member.",
+            inviteResult.error || "Failed to send invitation.",
             "error"
           );
           return;
         }
 
-        // Step 2: Add the updated member
-        const addMemberPayload = {
-          teamId,
-          email: updatedEmail,
-          role: updatedRole
-        };
-        const addMemberResponse = await fetch("/add_team_member", {
-          method: "PUT",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(addMemberPayload)
-        });
-        const addMemberResult = await addMemberResponse.json();
+        showNotification(
+          "Success",
+          "Member updated and invitation sent successfully!",
+          "success"
+        );
+      } else if (newRole !== member.role) {
+        const result = member.userId
+          ? await editTeamMemberRequest(teamId, member.userId, newRole)
+          : await editTeamMemberByEmailRequest(teamId, originalEmail, newRole);
 
-        if (addMemberResult.error) {
+        if (result.error) {
           showNotification(
             "Error",
-            addMemberResult.error || "Failed to add updated member.",
+            result.error || "Failed to update role.",
             "error"
           );
           return;
         }
-
-        // Step 3: Send invitation email only if the email has changed
-        if (updatedEmail !== member.email) {
-          try {
-            const inviteResult = await sendTeamInvite(teamId, updatedEmail);
-            if (inviteResult.error) {
-              showNotification(
-                "Error",
-                inviteResult.error || "Failed to send invitation email.",
-                "error"
-              );
-            } else {
-              showNotification(
-                "Success",
-                "Member updated and invitation email sent successfully!",
-                "success"
-              );
-            }
-          } catch (inviteError) {
-            console.error("Error sending invitation email:", inviteError);
-            showNotification(
-              "Error",
-              "Failed to send invitation email to the updated member.",
-              "error"
-            );
-          }
-        } else {
-          showNotification(
-            "Success",
-            "Member updated successfully!",
-            "success"
-          );
-        }
+        showNotification(
+          "Success",
+          "Member role updated successfully!",
+          "success"
+        );
       }
 
       modal.classList.remove("show");
-      renderMembersView(); // Refresh the members view
+      const teams = await getTeamsRequest();
+      updateTeamsUI(teams); // Uppdatera team-vyn
+      renderMembersView(); // Uppdatera members-vyn också för konsistens
     } catch (error) {
       console.error("Error updating member:", error);
       showNotification(
@@ -923,7 +984,8 @@ function showEditMemberModal(teamId, member) {
     }
   };
 
-  document.getElementById("cancelEditMemberBtn").onclick = () => {
+  // Close modal
+  document.getElementById("teamCardEditMemberCloseBtn").onclick = () => {
     modal.classList.remove("show");
   };
 }
@@ -1015,23 +1077,16 @@ async function handleAddMemberFormSubmission(e) {
   }
 
   try {
-    console.log("Sending request to /send_team_invite"); // Debug log
-    const res = await fetch("/send_team_invite", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ teamId, email, role })
-    });
+    const inviteResult = await sendTeamInviteRequest(teamId, email, role);
+    console.log("Response from /send_team_invite:", inviteResult); // Debug log
 
-    console.log("Response status:", res.status); // Debug log
-    const contentType = res.headers.get("content-type");
-    console.log("Response content-type:", contentType); // Debug log
+    const addMemberResult = await addTeamMemberRequest(teamId, email, role);
+    console.log("Response from /add_team_member:", addMemberResult); // Debug log
 
-    if (!contentType || !contentType.includes("application/json")) {
-      throw new Error("Invalid server response. Expected JSON.");
+    if (addMemberResult.error) {
+      showNotification("Error", addMemberResult.error, "error");
+      return;
     }
-
-    const updateResult = await res.json();
-    console.log("Response body:", updateResult); // Debug log
 
     showNotification("Success", "Member added successfully!", "success");
     document.getElementById("addMemberModal").classList.remove("show");
@@ -1047,171 +1102,3 @@ async function handleAddMemberFormSubmission(e) {
 document
   .getElementById("addMemberForm")
   .addEventListener("submit", handleAddMemberFormSubmission);
-
-// Function to show the edit member modal from team cards
-function showTeamCardEditMemberModal(teamId, member) {
-  const modal = document.getElementById("teamCardEditMemberModal");
-  const emailInput = document.getElementById("teamCardEditMemberEmail");
-  const roleSelect = document.getElementById("teamCardEditMemberRole");
-  const editBtn = document.getElementById("teamCardEditMemberEditBtn");
-  const saveBtn = document.getElementById("teamCardEditMemberSaveBtn");
-
-  // Populate fields with member data
-  emailInput.value = member.email;
-
-  // Populate role dropdown dynamically
-  const roles = [
-    "CoHost",
-    "Guest",
-    "Scriptwriter",
-    "Producer",
-    "AudioEngineer",
-    "SoundDesigner",
-    "Researcher",
-    "GuestCoordinator",
-    "Showrunner",
-    "SocialMediaManager",
-    "GraphicDesigner",
-    "Copywriter",
-    "Publicist",
-    "SponsorshipManager",
-    "MarketingStrategist",
-    "AnalyticsSpecialist",
-    "ShowCoordinator",
-    "Webmaster"
-  ];
-  roleSelect.innerHTML = roles
-    .map(
-      (role) =>
-        `<option value="${role}" ${
-          member.role === role ? "selected" : ""
-        }>${role}</option>`
-    )
-    .join("");
-
-  // Set fields to read-only and disabled initially
-  emailInput.readOnly = true;
-  roleSelect.disabled = true;
-  saveBtn.disabled = true;
-
-  // Show the modal
-  modal.classList.add("show");
-  modal.setAttribute("aria-hidden", "false");
-
-  // Enable editing when "Edit" is clicked
-  editBtn.onclick = () => {
-    emailInput.readOnly = false;
-    roleSelect.disabled = false;
-    saveBtn.disabled = false;
-
-    // Remove grayed-out appearance
-    emailInput.style.backgroundColor = "";
-    roleSelect.style.backgroundColor = "";
-  };
-
-  // Save changes when "Save" is clicked
-  saveBtn.onclick = async () => {
-    const updatedEmail = emailInput.value;
-    const updatedRole = roleSelect.value;
-
-    if (!teamId || !updatedEmail || !updatedRole) {
-      showNotification(
-        "Error",
-        "Missing teamId, email, or role. Please check your input.",
-        "error"
-      );
-      return;
-    }
-
-    try {
-      // Only update if the role or email has changed
-      if (updatedEmail !== member.email || updatedRole !== member.role) {
-        // Step 1: Delete the old member
-        const deleteResult = await deleteTeamMemberRequest(
-          teamId,
-          member.userId,
-          member.email
-        );
-        if (deleteResult.error) {
-          showNotification(
-            "Error",
-            deleteResult.error || "Failed to delete old member.",
-            "error"
-          );
-          return;
-        }
-
-        // Step 2: Add the updated member
-        const addMemberPayload = {
-          teamId,
-          email: updatedEmail,
-          role: updatedRole
-        };
-        const addMemberResponse = await fetch("/add_team_member", {
-          method: "PUT",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(addMemberPayload)
-        });
-        const addMemberResult = await addMemberResponse.json();
-
-        if (addMemberResult.error) {
-          showNotification(
-            "Error",
-            addMemberResult.error || "Failed to add updated member.",
-            "error"
-          );
-          return;
-        }
-
-        // Step 3: Send invitation email only if the email has changed
-        if (updatedEmail !== member.email) {
-          try {
-            const inviteResult = await sendTeamInvite(teamId, updatedEmail);
-            if (inviteResult.error) {
-              showNotification(
-                "Error",
-                inviteResult.error || "Failed to send invitation email.",
-                "error"
-              );
-            } else {
-              showNotification(
-                "Success",
-                "Member updated and invitation email sent successfully!",
-                "success"
-              );
-            }
-          } catch (inviteError) {
-            console.error("Error sending invitation email:", inviteError);
-            showNotification(
-              "Error",
-              "Failed to send invitation email to the updated member.",
-              "error"
-            );
-          }
-        } else {
-          showNotification(
-            "Success",
-            "Member updated successfully!",
-            "success"
-          );
-        }
-      }
-
-      modal.classList.remove("show");
-      const teams = await getTeamsRequest();
-      updateTeamsUI(teams);
-    } catch (error) {
-      console.error("Error updating member:", error);
-      showNotification(
-        "Error",
-        "An error occurred while updating the member.",
-        "error"
-      );
-    }
-  };
-
-  // Close the modal
-  document.getElementById("teamCardEditMemberCloseBtn").onclick = () => {
-    modal.classList.remove("show");
-  };
-}
