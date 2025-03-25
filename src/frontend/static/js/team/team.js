@@ -881,12 +881,16 @@ function showTeamCardEditMemberModal(teamId, member) {
       return;
     }
 
+    // Stäng modalen omedelbart
+    modal.classList.remove("show");
+    modal.setAttribute("aria-hidden", "true");
+
     try {
       if (newEmail !== originalEmail) {
-        // Step 1: Delete the old member using the same logic as members section
+        // Steg 1: Ta bort gammal medlem
         await deleteMember(teamId, member.userId, originalEmail, member.role);
 
-        // Step 2: Add the new member
+        // Steg 2: Lägg till ny medlem
         const addResult = await addTeamMemberRequest(teamId, newEmail, newRole);
         if (addResult.error) {
           showNotification(
@@ -897,7 +901,7 @@ function showTeamCardEditMemberModal(teamId, member) {
           return;
         }
 
-        // Step 3: Send team invite
+        // Steg 3: Skicka inbjudan
         const inviteResult = await sendTeamInviteRequest(
           teamId,
           newEmail,
@@ -937,10 +941,10 @@ function showTeamCardEditMemberModal(teamId, member) {
         );
       }
 
-      modal.classList.remove("show");
+      // Uppdatera UI efter lyckad operation
       const teams = await getTeamsRequest();
-      updateTeamsUI(teams); // Uppdatera team-vyn
-      renderMembersView(); // Uppdatera members-vyn också för konsistens
+      updateTeamsUI(teams);
+      renderMembersView();
     } catch (error) {
       console.error("Error updating member:", error);
       showNotification(
@@ -950,7 +954,6 @@ function showTeamCardEditMemberModal(teamId, member) {
       );
     }
   };
-
   // Close modal
   document.getElementById("teamCardEditMemberCloseBtn").onclick = () => {
     modal.classList.remove("show");
