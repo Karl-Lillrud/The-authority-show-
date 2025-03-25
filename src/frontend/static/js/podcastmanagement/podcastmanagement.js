@@ -24,10 +24,6 @@ function initializeSvgIcons() {
     svgpodcastmanagement.add;
   document.getElementById("add-icon-guest").innerHTML =
     svgpodcastmanagement.add;
-
-  // Sidebar toggle icon
-  document.getElementById("toggle-sidebar-icon").innerHTML =
-    svgpodcastmanagement.toggleSidebar;
 }
 
 // Notification system
@@ -124,6 +120,18 @@ function observeEditButtons() {
   observer.observe(document.body, { childList: true, subtree: true });
 }
 
+// Function to close popups when clicking outside
+function enablePopupCloseOnOutsideClick() {
+  const popups = document.querySelectorAll(".popup");
+  popups.forEach((popup) => {
+    popup.addEventListener("click", (event) => {
+      if (event.target === popup) {
+        popup.style.display = "none";
+      }
+    });
+  });
+}
+
 // Main initialization
 document.addEventListener("DOMContentLoaded", () => {
   console.log("DOM fully loaded and parsed");
@@ -142,16 +150,8 @@ document.addEventListener("DOMContentLoaded", () => {
   // Observe DOM for changes to update edit buttons
   observeEditButtons();
 
-  // Toggle sidebar functionality
-  const toggleSidebar = document.getElementById("toggle-sidebar");
-  if (toggleSidebar) {
-    toggleSidebar.addEventListener("click", function () {
-      const sidebar = document.querySelector(".sidebar");
-      if (sidebar) {
-        sidebar.classList.toggle("collapsed");
-      }
-    });
-  }
+  // Enable closing popups by clicking outside
+  enablePopupCloseOnOutsideClick();
 
   // Find the header element from the base template
   const headerElement = document.querySelector("header");
@@ -163,6 +163,11 @@ document.addEventListener("DOMContentLoaded", () => {
       headerHeight + "px"
     );
   }
+
+  // Add the decorative header to the top of the page
+  const decorativeHeader = document.createElement("div");
+  decorativeHeader.className = "decorative-header";
+  document.body.prepend(decorativeHeader);
 });
 
 // Export shared utilities and variables
@@ -170,3 +175,39 @@ export const shared = {
   selectedPodcastId: null,
   svgpodcastmanagement
 };
+
+document.getElementById("guests-link").addEventListener("click", function(event) {
+  event.preventDefault(); // Prevent the default redirect
+
+  // Fetch the rendered guest page from the Flask route
+  fetch('/guest') // This is the Flask route that renders guest.html
+    .then(response => {
+      if (!response.ok) {
+        throw new Error('Failed to fetch guest page');
+      }
+      return response.text();
+    })
+    .then(html => {
+      // Inject the fetched HTML into the main content
+      const mainContent = document.querySelector('.main-content');
+      mainContent.innerHTML = html;  // Replace the existing content with the guest page
+
+      // Dynamically load and execute guest.js
+      const guestScript = document.createElement('script');
+      guestScript.type = 'module';
+
+      // Use Flask's URL generation to properly resolve the path for guest.js
+      guestScript.src = '/static/js/guest/guest.js'; // Hardcoded static path since you use url_for to resolve on server-side
+
+      guestScript.onload = function() {
+        console.log('Guest page script loaded and executed.');
+      };
+      guestScript.onerror = function() {
+        console.error('Error loading guest page script.');
+      };
+      document.body.appendChild(guestScript);
+    })
+    .catch(error => {
+      console.error('Error loading guest page:', error);
+    });
+});

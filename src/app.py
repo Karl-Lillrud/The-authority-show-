@@ -17,6 +17,7 @@ from backend.routes.google_calendar import google_calendar_bp
 from backend.routes.episode import episode_bp
 from backend.routes.podprofile import podprofile_bp  # Import the podprofile blueprint
 from backend.routes.frontend import frontend_bp  # Import the frontend blueprint
+from backend.routes.guestpage import guestpage_bp
 from backend.routes.guest_to_eposide import guesttoepisode_bp
 from backend.routes.guest_form import guest_form_bp  # Import the guest_form blueprint
 
@@ -75,6 +76,7 @@ app.register_blueprint(Mailing_list_bp)
 app.register_blueprint(
     guest_bp
 )  # Ensure this line is present and has the correct prefix
+app.register_blueprint(guestpage_bp)
 app.register_blueprint(account_bp)
 app.register_blueprint(usertoteam_bp)
 app.register_blueprint(invitation_bp)
@@ -120,3 +122,5 @@ if __name__ == "__main__":
     app.run(
         host="0.0.0.0", port=8000, debug=False
     )  # Ensure the port matches your request URL
+
+    

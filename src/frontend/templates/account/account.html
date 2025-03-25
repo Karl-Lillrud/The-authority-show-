@@ -1,65 +1,496 @@
-{% extends "dashboard/components/base.html" %} 
-{% block title %}Podcast Task Management{% endblock %} 
+{% extends "components/base.html" %} 
+{% block title %}Team Leaderboard Dashboard{% endblock %} 
 {% block content %}
-<link rel="stylesheet" href="{{ url_for('static', filename='css/account.css') }}" />
-<!-- Include QRCode library -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
-<script src="{{ url_for('static', filename='requests/accountRequests.js') }}"></script>
-<script type="module" src="{{ url_for('frontend.static_files', filename='js/account.js') }}"></script>
-<div class="account-settings-wrapper">
-  <!-- Sidebar Menu -->
-  <aside class="sidebar">
-    <nav>
-      <ul>
-        <li class="sidebar-item active" data-target="profile-section" tabindex="0">
-          Profile
-        </li>
-        <li class="sidebar-item" data-target="settings-section" tabindex="0">
-          Settings
-        </li>
-      </ul>
-    </nav>
-  </aside>
-
-  <!-- Main Content Area -->
-  <section class="main-content">
-    <!-- Back Arrow common for all sections -->
-    <a href="{{ url_for('dashboard_bp.dashboard') }}" class="back-arrow">&#8592; Back</a>
-
-    <!-- Profile Section -->
-    <div id="profile-section" class="settings-section">
-      <div class="profile-container">
-                
-        <!-- Profile Picture Upload -->
-        <div class="profile-pic-container">
-          <img
-            id="profile-pic"
-            src="{{ url_for('static', filename='images/mock-avatar.jpeg') }}"
-            alt="Profile Picture"
-          />
-          <input type="file" id="upload-pic" accept="image/*" />
-        </div>
-        <!-- Profile Form -->
-        <form id="profile-form">
-          <label for="full-name">Full Name</label>
-          <input
-            type="text"
-            id="full-name"
-            placeholder="Enter your full name"
-            value="{{ full_name }}"
-          />
-          <label for="email">Email</label>
-          <input
-            type="email"
-            id="email"
-            placeholder="Enter your email"
-            value="{{ email }}"
-          />
-
-          <button type="submit">Update profile</button>
-        </form>
-      </div>
+<head>
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-PTPQQ5WSQV"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+  
+    gtag('config', 'G-PTPQQ5WSQV');
+  </script>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Account Settings</title> 
+<link rel="stylesheet" href="{{ url_for('static', filename='css/account/account.css') }}" />
+<link rel="stylesheet" href="{{ url_for('static', filename='css/account/notification.css') }}" />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
+</head>
+<body>
+  <div class="account-container">
+    <div class="account-header">
+      <a href="/dashboard" class="back-link">
+        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon">
+          <path d="m15 18-6-6 6-6"></path>
+        </svg>
+        Back to Dashboard
+      </a>
+      <h1>Account Settings</h1>
     </div>
-  </section>
-</div>
+
+    <div class="account-settings-wrapper">
+      <!-- Sidebar -->
+      <aside class="sidebar">
+        <nav>
+          <ul>
+            <li class="sidebar-item active" data-target="profile-section" tabindex="0">
+              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon">
+                <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"></path>
+                <circle cx="12" cy="7" r="4"></circle>
+              </svg>
+              Profile
+            </li>
+            <li class="sidebar-item" data-toggle="submenu" tabindex="0">
+              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon">
+                <rect width="18" height="11" x="3" y="11" rx="2" ry="2"></rect>
+                <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+              </svg>
+              Security
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="chevron">
+                <path d="m9 18 6-6-6-6"></path>
+              </svg>
+            </li>
+            <ul class="submenu">
+              <li class="submenu-item" data-target="security-2fa" tabindex="0">Two-Factor Authentication</li>
+              <li class="submenu-item" data-target="security-recovery" tabindex="0">Password Recovery</li>
+            </ul>
+            <li class="sidebar-item" data-toggle="submenu" tabindex="0">
+              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon">
+                <path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z" />
+                <circle cx="12" cy="12" r="3"></circle>
+              </svg>
+              Settings
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="chevron">
+                <path d="m9 18 6-6-6-6"></path>
+              </svg>
+            </li>
+            <ul class="submenu">
+              <li class="submenu-item" data-target="settings-password" tabindex="0">Change Password</li>
+              <li class="submenu-item" data-target="settings-delete" tabindex="0">Delete Account</li>
+            </ul>
+            <li class="sidebar-item" data-toggle="submenu" tabindex="0">
+              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon">
+                <path d="M4 10V4a2 2 0 0 1 2-2h8.5L20 7.5V20a2 2 0 0 1-2 2H4"></path>
+                <polyline points="14 2 14 8 20 8"></polyline>
+                <path d="M10.42 12.61a2.1 2.1 0 1 1 2.97 2.97L7.95 21 4 22l.99-3.95 5.43-5.44Z"></path>
+              </svg>
+              Subscription
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="chevron">
+                <path d="m9 18 6-6-6-6"></path>
+              </svg>
+            </li>
+            <ul class="submenu">
+              <li class="submenu-item" data-target="subscription-choose" tabindex="0">Choose Subscription</li>
+              <li class="submenu-item" data-target="subscription-change" tabindex="0">Change Subscription</li>
+            </ul>
+          </ul>
+          <button id="back-to-main-menu" class="back-button">
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon">
+              <path d="m15 18-6-6 6-6"></path>
+            </svg>
+            Back to Main Menu
+          </button>
+        </nav>
+      </aside>
+
+      <!-- Main Content Area -->
+      <section class="main-content">
+        <!-- Profile Section -->
+        <div id="profile-section" class="settings-section active">
+          <div class="section-header">
+            <h2>Profile Information</h2>
+            <p>Manage your personal information and how it appears across services</p>
+          </div>
+          
+          <div class="profile-content">
+            <div class="profile-pic-container">
+              <div class="profile-pic-wrapper">
+                <img id="profile-pic" src="/placeholder.svg?height=120&width=120" alt="Profile Picture">
+                <div class="profile-pic-overlay">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="edit-icon">
+                    <path d="M12 20h9"></path>
+                    <path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"></path>
+                  </svg>
+                </div>
+              </div>
+              <button id="upload-pic" class="upload-button">Change Photo</button>
+            </div>
+            
+            <form id="profile-form" class="profile-form">
+              <div class="form-group">
+                <label for="full-name">Full Name <span class="required">*</span></label>
+                <input type="text" id="full-name" name="full_name" placeholder="Your full name" required>
+                <div class="form-hint">This name will be displayed on your profile</div>
+              </div>
+              
+              <div class="form-group">
+                <label for="email">Email Address <span class="required">*</span></label>
+                <input type="email" id="email" name="email" placeholder="your.email@example.com" required>
+              </div>
+              
+              <div class="form-group">
+                <label for="phone">Phone Number</label>
+                <input type="text" id="phone" name="phone" placeholder="+1 (555) 123-4567">
+                <div class="form-hint">Used for account recovery and important notifications</div>
+              </div>
+              
+              <div class="form-actions">
+                <button type="submit" class="primary-button">Save Changes</button>
+                <button type="reset" class="secondary-button">Cancel</button>
+              </div>
+            </form>
+          </div>
+        </div>
+
+        <!-- Security - 2FA Section -->
+        <div id="security-2fa" class="settings-section">
+          <div class="section-header">
+            <h2>Two-Factor Authentication</h2>
+            <p>Add an extra layer of security to your account</p>
+          </div>
+          
+          <div class="security-content">
+            <div class="info-card">
+              <div class="info-card-icon">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10"></path>
+                </svg>
+              </div>
+              <div class="info-card-content">
+                <h3>Protect your account</h3>
+                <p>Two-factor authentication adds an additional layer of security to your account by requiring more than just a password to sign in.</p>
+              </div>
+            </div>
+            
+            <div class="toggle-container">
+              <label class="toggle">
+                <span class="toggle-label">Enable Two-Factor Authentication</span>
+                <input type="checkbox" id="enable-2fa">
+                <span class="toggle-switch"></span>
+              </label>
+            </div>
+            
+            <div class="form-actions">
+              <button type="button" class="primary-button">Set Up 2FA</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Security - Password Recovery Section -->
+        <div id="security-recovery" class="settings-section">
+          <div class="section-header">
+            <h2>Password Recovery</h2>
+            <p>Set up recovery options for your account</p>
+          </div>
+          
+          <div class="security-content">
+            <div class="info-card">
+              <div class="info-card-icon">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="m12 8-9.04 9.06a2.82 2.82 0 1 0 3.98 3.98L16 12"></path>
+                  <circle cx="17" cy="7" r="5"></circle>
+                </svg>
+              </div>
+              <div class="info-card-content">
+                <h3>Recovery Options</h3>
+                <p>Set up recovery methods to regain access to your account if you forget your password.</p>
+              </div>
+            </div>
+            
+            <form class="recovery-form">
+              <div class="form-group">
+                <label for="recovery-email">Recovery Email</label>
+                <input type="email" id="recovery-email" name="recovery_email" placeholder="backup.email@example.com">
+              </div>
+              
+              <div class="form-group">
+                <label for="recovery-phone">Recovery Phone</label>
+                <input type="text" id="recovery-phone" name="recovery_phone" placeholder="+1 (555) 987-6543">
+              </div>
+              
+              <div class="form-actions">
+                <button type="submit" class="primary-button">Save Recovery Options</button>
+              </div>
+            </form>
+          </div>
+        </div>
+
+        <!-- Settings - Change Password Section -->
+        <div id="settings-password" class="settings-section">
+          <div class="section-header">
+            <h2>Change Password</h2>
+            <p>Update your password to keep your account secure</p>
+          </div>
+          
+          <div class="password-content">
+            <form class="password-form">
+              <div class="form-group">
+                <label for="password">Current Password <span class="required">*</span></label>
+                <div class="password-input-container">
+                  <input type="password" id="password" name="password" placeholder="Enter your current password" required>
+                  <button type="button" class="toggle-password">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"></path>
+                      <circle cx="12" cy="12" r="3"></circle>
+                    </svg>
+                  </button>
+                </div>
+              </div>
+              
+              <div class="form-group">
+                <label for="new-password">New Password <span class="required">*</span></label>
+                <div class="password-input-container">
+                  <input type="password" id="new-password" name="new_password" placeholder="Enter your new password" required>
+                  <button type="button" class="toggle-password">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"></path>
+                      <circle cx="12" cy="12" r="3"></circle>
+                    </svg>
+                  </button>
+                </div>
+              </div>
+              
+              <div class="form-group">
+                <label for="confirm-password">Confirm New Password <span class="required">*</span></label>
+                <div class="password-input-container">
+                  <input type="password" id="confirm-password" name="confirm_password" placeholder="Confirm your new password" required>
+                  <button type="button" class="toggle-password">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"></path>
+                      <circle cx="12" cy="12" r="3"></circle>
+                    </svg>
+                  </button>
+                </div>
+              </div>
+              
+              <div class="password-strength">
+                <div class="strength-label">Password Strength</div>
+                <div class="strength-meter">
+                  <div class="strength-segment"></div>
+                  <div class="strength-segment"></div>
+                  <div class="strength-segment"></div>
+                  <div class="strength-segment"></div>
+                </div>
+                <div class="strength-text">Weak</div>
+              </div>
+              
+              <div class="password-requirements">
+                <h4>Password Requirements:</h4>
+                <ul>
+                  <li>At least 8 characters long</li>
+                  <li>Include at least one uppercase letter</li>
+                  <li>Include at least one number</li>
+                  <li>Include at least one special character</li>
+                </ul>
+              </div>
+              
+              <div class="form-actions">
+                <button type="submit" class="primary-button">Update Password</button>
+                <button type="reset" class="secondary-button">Cancel</button>
+              </div>
+            </form>
+          </div>
+        </div>
+
+        <!-- Settings - Delete Account Section -->
+        <div id="settings-delete" class="settings-section">
+          <div class="section-header">
+            <h2>Delete Account</h2>
+            <p>Permanently delete your account and all associated data</p>
+          </div>
+          
+          <div class="delete-content">
+            <div class="warning-card">
+              <div class="warning-icon">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"></path>
+                  <path d="M12 9v4"></path>
+                  <path d="M12 17h.01"></path>
+                </svg>
+              </div>
+              <div class="warning-content">
+                <h3>Warning: This action cannot be undone</h3>
+                <p>Deleting your account will permanently remove all your data, including profile information, settings, and subscription details. This action cannot be reversed.</p>
+              </div>
+            </div>
+            
+            <form class="delete-form">
+              <div class="form-group">
+                <label for="delete-confirm">Type "DELETE" to confirm <span class="required">*</span></label>
+                <input type="text" id="delete-confirm" name="delete_confirm" placeholder="DELETE" required>
+              </div>
+
+              <div class="form-group">
+                <label for="delete-email">Confirm your email <span class="required">*</span></label>
+                <input type="email" id="delete-email" name="delete_email" placeholder="Enter your email" required>
+                <div class="form-hint">Enter your email address to confirm deletion</div>
+              </div>
+              
+              <div class="form-group">
+                <label for="delete-password">Enter your password <span class="required">*</span></label>
+                <input type="password" id="delete-password" name="delete_password" placeholder="Enter your password" required>
+              </div>
+              
+              <div class="form-actions">
+                <button type="submit" class="danger-button">Permanently Delete Account</button>
+                <button type="button" class="secondary-button">Cancel</button>
+              </div>
+            </form>
+          </div>
+        </div>
+
+        <!-- Subscription - Choose Subscription Section -->
+        <div id="subscription-choose" class="settings-section">
+          <div class="section-header">
+            <h2>Choose Subscription</h2>
+            <p>Select a subscription plan that works for you</p>
+          </div>
+          
+          <div class="subscription-content">
+            <div class="subscription-plans">
+              <div class="plan-card">
+                <div class="plan-header">
+                  <h3>Free</h3>
+                  <div class="plan-price">$0<span>/month</span></div>
+                </div>
+                <div class="plan-features">
+                  <ul>
+                    <li>Basic features</li>
+                    <li>Limited storage</li>
+                    <li>Email support</li>
+                  </ul>
+                </div>
+                <button class="plan-button current">Current Plan</button>
+              </div>
+              
+              <div class="plan-card">
+                <div class="plan-header">
+                  <h3>Pro</h3>
+                  <div class="plan-price">$9.99<span>/month</span></div>
+                </div>
+                <div class="plan-features">
+                  <ul>
+                    <li>All Free features</li>
+                    <li>Advanced analytics</li>
+                    <li>Priority support</li>
+                    <li>Unlimited storage</li>
+                  </ul>
+                </div>
+                <button class="plan-button primary-button">Upgrade</button>
+              </div>
+              
+              <div class="plan-card">
+                <div class="plan-header">
+                  <h3>Enterprise</h3>
+                  <div class="plan-price">$29.99<span>/month</span></div>
+                </div>
+                <div class="plan-features">
+                  <ul>
+                    <li>All Pro features</li>
+                    <li>Dedicated support</li>
+                    <li>Custom integrations</li>
+                    <li>Team management</li>
+                  </ul>
+                </div>
+                <button class="plan-button primary-button">Upgrade</button>
+              </div>
+            </div>
+            
+            <div class="subscription-form-container">
+              <h3>Subscribe to our newsletter</h3>
+              <form class="subscription-form">
+                <div class="form-group">
+                  <label for="subscription-email">Email Address</label>
+                  <input type="email" id="subscription-email" name="email" placeholder="your.email@example.com">
+                </div>
+                <div class="form-actions">
+                  <button type="submit" class="primary-button">Subscribe</button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+
+        <!-- Subscription - Change Subscription Section -->
+        <div id="subscription-change" class="settings-section">
+          <div class="section-header">
+            <h2>Change Subscription</h2>
+            <p>Modify your current subscription plan</p>
+          </div>
+          
+          <div class="subscription-content">
+            <div class="current-plan-info">
+              <div class="info-card">
+                <div class="info-card-icon">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <rect width="20" height="14" x="2" y="5" rx="2"></rect>
+                    <line x1="2" x2="22" y1="10" y2="10"></line>
+                  </svg>
+                </div>
+                <div class="info-card-content">
+                  <h3>Current Plan: Free</h3>
+                  <p>Your subscription renews on <strong>January 1, 2026</strong></p>
+                </div>
+              </div>
+            </div>
+            
+            <div class="billing-history">
+              <h3>Billing History</h3>
+              <div class="billing-table">
+                <div class="billing-header">
+                  <div class="billing-cell">Date</div>
+                  <div class="billing-cell">Amount</div>
+                  <div class="billing-cell">Status</div>
+                  <div class="billing-cell">Invoice</div>
+                </div>
+                <div class="billing-row">
+                  <div class="billing-cell">Dec 1, 2024</div>
+                  <div class="billing-cell">$0.00</div>
+                  <div class="billing-cell"><span class="status-paid">Paid</span></div>
+                  <div class="billing-cell"><a href="#" class="invoice-link">View</a></div>
+                </div>
+                <div class="billing-row">
+                  <div class="billing-cell">Nov 1, 2024</div>
+                  <div class="billing-cell">$0.00</div>
+                  <div class="billing-cell"><span class="status-paid">Paid</span></div>
+                  <div class="billing-cell"><a href="#" class="invoice-link">View</a></div>
+                </div>
+              </div>
+            </div>
+            
+            <div class="payment-methods">
+              <h3>Payment Methods</h3>
+              <div class="payment-card">
+                <div class="payment-card-icon">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <rect width="20" height="14" x="2" y="5" rx="2"></rect>
+                    <line x1="2" x2="22" y1="10" y2="10"></line>
+                  </svg>
+                </div>
+                <div class="payment-card-details">
+                  <div class="card-name">Visa ending in 4242</div>
+                  <div class="card-expiry">Expires 12/25</div>
+                </div>
+                <div class="payment-card-actions">
+                  <button class="text-button">Edit</button>
+                  <button class="text-button">Remove</button>
+                </div>
+              </div>
+              
+              <button class="secondary-button add-payment-button">
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M5 12h14"></path>
+                  <path d="M12 5v14"></path>
+                </svg>
+                Add Payment Method
+              </button>
+            </div>
+          </div>
+        </div>
+      </section>
+    </div>
+  </div>
+  <script type="module" src="{{ url_for('frontend.static_files', filename='js/account/account.js') }}"></script>
 {% endblock %}
+
