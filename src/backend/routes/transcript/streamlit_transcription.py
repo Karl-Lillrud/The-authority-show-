@@ -27,7 +27,7 @@ import tempfile
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-API_BASE_URL = "http://127.0.0.1:8000"
+API_BASE_URL = "http://192.168.0.43:8000"
 
 
 # Function to format transcription for display and download
@@ -298,6 +298,8 @@ with tab2:
 
                     # ✅ Extract Flesch-Kincaid Score safely
                     try:
+                        clarity_lines = clarity_score.split("\n") if clarity_score and isinstance(clarity_score, str) else []
+
                         flesch_kincaid_line = next((line for line in clarity_lines if "Flesch-Kincaid" in line), None)
                         if flesch_kincaid_line:
                             flesch_kincaid_score = float(flesch_kincaid_line.split(": ")[1])
