@@ -654,6 +654,7 @@ async function renderMembersView() {
             </div>
           `;
           if (member.role !== "creator") {
+            // Använd samma modalfunktion som för team-cards
             card
               .querySelector(".edit-icon-btn")
               .addEventListener("click", () =>
@@ -662,7 +663,6 @@ async function renderMembersView() {
           } else {
             card.querySelector(".edit-icon-btn").style.display = "none";
           }
-          // Ta bort delete-knappseventlyssnaren från member cards
           membersView.appendChild(card);
         });
       }
@@ -849,8 +849,20 @@ function showTeamCardEditMemberModal(teamId, member) {
   // Sätt in värden
   const originalEmail = member.email;
   emailInput.value = member.email;
-  fullNameInput.value = member.fullName || ""; // Visa full name om det finns
-  phoneInput.value = member.phone || ""; // Visa phone om det finns
+  fullNameInput.value = member.fullName || "";
+  phoneInput.value = member.phone || "";
+
+  // Visa endast fullName- och phone-fälten om de finns
+  if (!member.fullName) {
+    fullNameInput.parentElement.style.display = "none";
+  } else {
+    fullNameInput.parentElement.style.display = "";
+  }
+  if (!member.phone) {
+    phoneInput.parentElement.style.display = "none";
+  } else {
+    phoneInput.parentElement.style.display = "";
+  }
 
   // Sätt in rollalternativen och välj korrekt alternativ
   const roles = [
