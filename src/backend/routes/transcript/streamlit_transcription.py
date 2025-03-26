@@ -23,11 +23,14 @@ import json
 from io import BytesIO
 import logging
 import tempfile
+from dotenv import load_dotenv
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-API_BASE_URL = "http://192.168.0.43:8000"
+load_dotenv()
+
+API_BASE_URL = os.getenv("API_BASE_URL")
 
 
 # Function to format transcription for display and download
