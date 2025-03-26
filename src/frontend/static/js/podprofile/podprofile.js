@@ -264,7 +264,8 @@ document.addEventListener("DOMContentLoaded", () => {
               (rssData.episodes || []).length
             } Episodes</span>
             ${
-              rssData.itunesType
+              rssData.itunesType &&
+              rssData.itunesType.toLowerCase() !== "episodic"
                 ? `<span class="podcast-meta-item"><i class="fas fa-list"></i> ${rssData.itunesType}</span>`
                 : ""
             }
@@ -447,12 +448,7 @@ document.addEventListener("DOMContentLoaded", () => {
             </button>
           </div>
           <div class="audio-player" id="player-${episodeId}">
-            <audio controls>
-              <source src="${episode.audio?.url}" type="${
-        episode.audio?.type || "audio/mpeg"
-      }">episodic
-              Your browser does not support the audio element.
-            </audio>
+         
           </div>
         </div>
       `;
