@@ -215,6 +215,11 @@
     }
   }
 
+  function openTaskModal() {
+    const taskModal = document.getElementById("task-modal");
+    taskModal.style.display = "block";
+  }
+
   function closeDefaultTasksPopup() {
     document.getElementById("default-tasks-popup").style.display = "none";
   }
@@ -224,11 +229,6 @@
     checkboxes.forEach(checkbox => {
       checkbox.checked = true;
     });
-  }
-
-  function openTaskModal() {
-    const taskModal = document.getElementById("task-modal");
-    taskModal.style.display = "block";
   }
 
   function closeModal() {
