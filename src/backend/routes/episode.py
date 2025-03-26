@@ -48,15 +48,15 @@ def register_episode():
         # Parse form data
         data = request.form.to_dict()
         files = request.files.getlist('episodeFiles')
-        
-        if files and files[0].filename != '':
-            # Spara filerna till MongoDB via GridFS
-            saved_files = save_uploaded_files(files)
-            audio_url = saved_files[0]['url']  # URL som lagras i MongoDB
+        if not files or files[0].filename == '':
+            return jsonify({"error": "No files uploaded"}), 400  # Validate file presence
 
-            # Lägga till audio URL i data
-            data['audioUrl'] = audio_url
-            data['episodeFiles'] = saved_files  # Spara filinformation i databasen
+        # Reset file pointers and save files
+        saved_files = save_uploaded_files(files)
+        if not saved_files:
+            return jsonify({"error": "Failed to save uploaded files"}), 500
+        data['audioUrl'] = saved_files[0]['url']
+        data['episodeFiles'] = saved_files
 
         # Validera nödvändiga fält
         if not data.get('podcastId') or not data.get('title') or not data.get('publishDate'):

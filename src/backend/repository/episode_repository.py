@@ -34,8 +34,6 @@ class EpisodeRepository:
             if files:
                 saved_files = save_uploaded_files(files)
                 data['episodeFiles'] = saved_files
-
-                # Use the URL of the first file as the audioUrl
                 data['audioUrl'] = saved_files[0]['url']
 
             # Validate data with schema

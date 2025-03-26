@@ -110,7 +110,7 @@ export function renderEpisodeDetail(episode) {
       <div class="detail-section">
         <h2>About</h2>
         <p>${episode.description || "No description available."}</p>
-        <!-- Audio player moved here, under the description -->
+        <!-- Audio player -->
         ${
           episode.audioUrl
             ? `<div class="audio-player-container">

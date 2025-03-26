@@ -5,8 +5,9 @@ import boto3
 from werkzeug.utils import secure_filename
 import logging
 from dotenv import load_dotenv
-from flask import Blueprint, send_file, abort, request
+from flask import Blueprint, redirect, send_file, abort, request
 from bson.objectid import ObjectId
+import io  # Add this import for BytesIO
 
 
 # Load environment variables
@@ -103,18 +104,26 @@ def save_uploaded_files(files):
     """
     saved_files = []
     for file in files:
+        logger.info(f"Processing file: {file.filename}")  # Log file name
         if file and allowed_file(file.filename):
             filename = secure_filename(file.filename)
-            # Upload to Cloudflare R2 (equivalent of AWS S3)
-            s3.upload_fileobj(
-                file,
-                'mediastorage',  # Replace with your R2 bucket name
-                filename,
-                ExtraArgs={'ACL': 'public-read'}  # Make the file public
-            )
-            # Construct the public URL
-            file_url = f"https://8dd08def3e3e74358dcbf2fec09bf125.r2.cloudflarestorage.com/{filename}"
-            saved_files.append({"filename": filename, "url": file_url})
+            try:
+                # Wrap the file in a BytesIO buffer to ensure it remains open
+                file_buffer = io.BytesIO(file.read())
+                file_buffer.seek(0)  # Reset the buffer pointer to the beginning
+
+                # Upload to Cloudflare R2 (equivalent of AWS S3)
+                s3.upload_fileobj(
+                    file_buffer,
+                    os.getenv('CLOUDFLARE_R2_BUCKET_NAME'),  # Use the correct bucket name
+                    filename,
+                    ExtraArgs={'ACL': 'public-read'}  # Ensure the file is publicly accessible
+                )
+                # Construct the public URL
+                file_url = f"{os.getenv('CLOUDFLARE_R2_BUCKET_URL')}/{filename}"
+                saved_files.append({"filename": filename, "url": file_url})
+            except Exception as e:
+                logger.error(f"Failed to upload file {filename}: {e}")
     return saved_files
 
 def allowed_file(filename):
@@ -123,6 +132,7 @@ def allowed_file(filename):
     """
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in {'mp3', 'mp4'}
 
+file_bp = Blueprint("file_bp", __name__)
 # Flask Blueprint to handle file serving
 file_bp = Blueprint("file_bp", __name__)
 
