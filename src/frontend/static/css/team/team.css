@@ -243,6 +243,7 @@ body {
   font-weight: 500;
   transition: all var(--transition-normal);
   cursor: pointer;
+  margin-bottom: 10px; /* Added to increase vertical spacing between members */
 }
 
 .member-chip:hover {
