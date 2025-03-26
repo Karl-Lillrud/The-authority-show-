@@ -492,6 +492,30 @@ body {
   cursor: not-allowed;
 }
 
+/* Field edit button styles */
+.field-edit-btn {
+  background-color: transparent;
+  border: none;
+  color: var(--highlight-color);
+  cursor: pointer;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all var(--transition-fast);
+}
+
+.field-edit-btn:hover {
+  background-color: rgba(255, 111, 97, 0.1);
+  transform: scale(1.1);
+}
+
+.field-edit-container {
+  position: relative;
+}
+
 /* Buttons */
 .form-actions {
   display: flex;
@@ -505,10 +529,10 @@ body {
 .save-btn,
 .cancel-btn,
 .delete-btn {
-  padding: 10px 20px; /* Minska padding */
-  height: auto; /* Ta bort eventuell fast höjd */
-  font-size: 0.95rem; /* Justera fontstorlek */
-  line-height: 1.2; /* För bättre vertikal centrering */
+  padding: 10px 20px; /* Reduced padding */
+  height: auto; /* Remove fixed height */
+  font-size: 0.95rem; /* Adjust font size */
+  line-height: 1.2; /* Better vertical centering */
   border: none;
   border-radius: var(--radius-medium);
   font-weight: 600;
@@ -593,17 +617,17 @@ body {
   stroke: var(--danger-color);
 }
 
-/* Fix för SVG-färger i knappar */
+/* Fix for SVG colors in buttons */
 .delete-btn svg,
 #teamCardEditMemberModal .delete-member-btn svg {
   width: 18px;
   height: 18px;
-  fill: none; /* Ta bort heltäckande färg */
-  stroke: var(--danger-color); /* Använd endast stroke */
+  fill: none; /* Remove fill color */
+  stroke: var(--danger-color); /* Use only stroke */
   stroke-width: 2;
 }
 
-/* Lägg till papperskorgsikon som bakgrundsbild */
+/* Add trash icon as background image */
 .delete-member-btn {
   background: linear-gradient(
     135deg,
@@ -825,7 +849,7 @@ body {
   background-position: center;
 }
 
-/* Ny regel för inline-brytning & gap mellan badgsen */
+/* New rule for inline-breaking & gap between badges */
 .member-badge {
   display: flex;
   align-items: center;
@@ -1019,4 +1043,84 @@ body {
   flex-wrap: wrap;
   gap: 10px; /* Horizontal and vertical spacing between members */
   row-gap: 12px; /* Specifically increase vertical spacing */
+}
+
+/* Notification styles */
+.notification {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  display: flex;
+  align-items: center;
+  background: white;
+  border-radius: var(--radius-medium);
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
+  padding: 16px;
+  width: 350px;
+  max-width: 90vw;
+  z-index: 1100;
+  transform: translateX(120%);
+  transition: transform 0.4s ease;
+}
+
+.notification.show {
+  transform: translateX(0);
+}
+
+.notification.success {
+  border-left: 4px solid var(--success-color);
+}
+
+.notification.error {
+  border-left: 4px solid var(--danger-color);
+}
+
+.notification.info {
+  border-left: 4px solid var(--highlight-color);
+}
+
+.notification-icon {
+  margin-right: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.notification.success .notification-icon {
+  color: var(--success-color);
+}
+
+.notification.error .notification-icon {
+  color: var(--danger-color);
+}
+
+.notification.info .notification-icon {
+  color: var(--highlight-color);
+}
+
+.notification-content {
+  flex: 1;
+}
+
+.notification-title {
+  font-weight: 600;
+  margin-bottom: 4px;
+  color: rgba(0, 0, 0, 0.85);
+}
+
+.notification-message {
+  font-size: 0.9rem;
+  color: rgba(0, 0, 0, 0.65);
+}
+
+.notification-close {
+  cursor: pointer;
+  padding: 4px;
+  margin-left: 12px;
+  color: rgba(0, 0, 0, 0.4);
+  transition: color 0.2s ease;
+}
+
+.notification-close:hover {
+  color: rgba(0, 0, 0, 0.7);
 }
