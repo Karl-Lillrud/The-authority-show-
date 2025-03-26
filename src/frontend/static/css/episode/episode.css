@@ -1,0 +1,207 @@
+body {
+  font-family: "Inter", sans-serif;
+  margin: 0;
+  padding: 0;
+  background-color: #121212;
+  color: #ffffff;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+/* Section Backgrounds - Updated to Dark Theme */
+.section-dark {
+  background-color: #000000;
+  color: #ffffff;
+  padding: 40px 20px;
+}
+.section-darkgrey {
+  background-color: #1c1c1c;
+  color: #ffffff;
+  padding: 40px 20px;
+}
+
+/* Center align text-based sections */
+.episode-banner,
+.transcript,
+.audio-player,
+.key-learnings,
+.faq,
+.shorts,
+.guest-about-section {
+  text-align: center;
+}
+
+.episode-banner {
+  position: relative;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  background: linear-gradient(rgba(0, 0, 0, 0.6), rgba(0, 0, 0, 0.6));
+  background-size: cover;
+  width: 100%;
+  height: 1000px;
+  padding: 40px 0;
+}
+
+/* Fix button spacing */
+.episode-actions {
+  display: flex;
+  gap: 15px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.episode-actions .btn {
+  background: #ff4500;
+  color: white;
+  padding: 12px 20px;
+  font-size: 16px;
+  border-radius: 5px;
+  text-decoration: none;
+  font-weight: bold;
+  transition: background 0.3s ease, transform 0.2s ease;
+}
+
+.episode-actions .btn:hover {
+  background: #e03d00;
+  transform: scale(1.05);
+}
+/* Navbar */
+.navbar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  background: #1f1f1f;
+  padding: 20px;
+  z-index: 1000;
+  box-sizing: border-box;
+}
+
+.navbar .container {
+  max-width: 1200px;
+  margin: 0 auto;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+}
+
+.nav-links {
+  list-style: none;
+  display: flex;
+  gap: 20px;
+  margin: 0;
+  padding: 0;
+}
+
+.nav-links a {
+  text-decoration: none;
+  color: #ffffff;
+  padding: 10px 15px;
+  transition: background 0.3s, color 0.3s;
+  border-radius: 5px;
+}
+
+.nav-links a:hover {
+  background: #ff4500;
+  color: #fff;
+}
+
+.subscribe-btn {
+  background: #ff4500;
+  border: none;
+  padding: 10px 20px;
+  color: #ffffff;
+  cursor: pointer;
+  border-radius: 5px;
+}
+
+/* Center the audio player */
+.audio-player {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh; /* Centers it vertically on the page */
+}
+
+audio {
+  display: block;
+  margin: auto;
+}
+
+/* Guest About Section */
+.guest-about-info {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 30px;
+  flex-wrap: wrap;
+}
+
+.guest-about-image {
+  width: 150px;
+  height: 150px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 4px solid #ff4500;
+}
+
+.guest-about-details {
+  max-width: 500px;
+  text-align: left;
+}
+
+.guest-about-details h3 {
+  margin: 0;
+  font-size: 28px;
+  margin-bottom: 10px;
+}
+
+.guest-about-details p {
+  margin: 10px 0;
+  font-size: 16px;
+  line-height: 1.6;
+}
+
+/* Social Media Icons with their respective colors */
+#guest-about-social {
+  display: inline-block;
+  margin-top: 20px;
+}
+
+#guest-about-social a {
+  display: inline-block;
+  transform: scale(1);
+  font-size: 28px;
+  margin: 0 10px;
+  transition: transform 0.3s ease;
+}
+
+#guest-about-social a:hover {
+  transform: scale(1.2);
+}
+
+/* Social Media Icon Colors */
+#guest-about-social a.twitter {
+  color: #1da1f2;
+}
+
+#guest-about-social a.instagram {
+  color: #e4405f;
+}
+
+#guest-about-social a.linkedin {
+  color: #0077b5;
+}
+
+#guest-about-social a.facebook {
+  color: #1877f2;
+}
+
+#guest-about-social a.youtube {
+  color: #ff0000;
+}

@@ -1,0 +1,86 @@
+<link
+  rel="stylesheet"
+  href="{{ url_for('static', filename='css/components/header.css') }}"
+/>
+<header>
+  <!-- Logo and Page Title -->
+  <div class="logo-title-container">
+    <a href="{{ url_for('dashboard_bp.dashboard') }}" class="logo-container">
+      <img
+        src="{{ url_for('static', filename='images/PodManagerLogo.png') }}"
+        alt="PodManager Logo"
+      />
+    </a>
+    <!-- Page Title -->
+    <span id="page-title" class="page-title"></span>
+  </div>
+  <nav class="header-nav">
+    <div
+      class="custom-dropdown"
+      id="headerPodcastDropdown"
+      style="display: none"
+    >
+      <div class="dropdown-selected">Select a Podcast</div>
+      <div class="dropdown-options">
+        <!-- Options will be dynamiskt genererade -->
+      </div>
+    </div>
+
+    <div class="menu-toggle" onclick="toggleMenu()">
+      <span></span>
+      <span></span>
+      <span></span>
+    </div>
+    <div class="menu" id="menu">
+      <!-- <a href="{{ url_for('dashboard_bp.account') }}">Account</a>
+      <a href="{{ url_for('dashboard_bp.taskmanagement') }}">Task Management</a>-->
+      <a href="{{ url_for('dashboard_bp.podcastmanagement') }}"
+        >Podcast Management</a
+      >
+      <!-- <a href="{{ url_for('dashboard_bp.team') }}">Team Members</a>>-->
+      <!--  <a
+       href="{{ url_for('landingpage_bp.landingpage_by_id', podcast_id='your_podcast_id_here') }}" 
+        >Landing Page</a
+      >
+     -->
+      <a href="{{ url_for('auth_bp.signin') }}" id="logout-link">Log out</a>
+    </div>
+  </nav>
+</header>
+
+<!-- Custom Logout Modal (TikTok-style) -->
+<div id="logout-modal" class="modal">
+  <div class="modal-cnt">
+    <p>Are you sure you want to log out?</p>
+    <div class="modal-btns">
+      <button id="cancel-logout">Cancel</button>
+      <button id="confirm-logout">Log out</button>
+    </div>
+  </div>
+</div>
+
+<!-- Include header.js as a module -->
+<script
+  type="module"
+  src="{{ url_for('static', filename='js/components/header.js') }}"
+></script>
+
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+    // Dynamically set the page title based on the current page
+    const pageTitleElement = document.getElementById("page-title");
+    if (pageTitleElement) {
+      const pageTitles = {
+        "/podcastmanagement": "Podcast Manager",
+        "/dashboard": "Dashboard",
+        "/team": "Team Members",
+        "/guest": "Guest View",
+        "/taskmanagement": "Task Management"
+      };
+
+      const currentPath = window.location.pathname;
+      const pageTitle = pageTitles[currentPath] || "PodManager";
+      pageTitleElement.textContent = pageTitle;
+    }
+  });
+</script>

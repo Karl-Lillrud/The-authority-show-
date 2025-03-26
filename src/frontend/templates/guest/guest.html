@@ -1,11 +1,10 @@
-{% extends "dashboard/components/base.html" %}
-{% block title %}Team Leaderboard Dashboard{% endblock %}
-{% block content %}
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="{{ url_for('frontend.static_files', filename='css/guest.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/guest/guest.css') }}">
+  <script type="module" src="/static/requests/guestRequests.js"></script>
+  <script type="module" src="/static/js/guest.js"></script>
+
   
   <!-- Import guest.js as a module from the static folder -->
-  <script type="module" src="{{ url_for('frontend.static_files', filename='js/guest.js') }}"></script>
 
   <div class="container">
     <h1 class="title">Discover Guests for Your Podcast</h1>
@@ -26,4 +25,3 @@
       <form id="popup-form"></form>
     </div>
   </div>
-{% endblock %}

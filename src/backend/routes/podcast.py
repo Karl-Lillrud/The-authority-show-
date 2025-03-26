@@ -1,91 +1,108 @@
 from flask import request, jsonify, Blueprint, g
-from backend.repository.podcast_repository import PodcastRepository
 import logging
+from backend.repository.podcast_repository import PodcastRepository
 
 # Define Blueprint
 podcast_bp = Blueprint("podcast_bp", __name__)
-repository = PodcastRepository()
 
-# Configure logging
+# Create repository instance
+podcast_repo = PodcastRepository()
+
+# Configure logger
 logger = logging.getLogger(__name__)
-logging.basicConfig(level=logging.INFO)
+
+# SHOULD ONLY BE USED FOR SPECIFIC DATA CRUD OPERATIONS
+# EXTRA FUNCTIONALITY BESIDES CRUD OPERATIONS SHOULD BE IN SERVICES
 
 @podcast_bp.route("/add_podcasts", methods=["POST"])
 def add_podcast():
+    """Adds a podcast to the system."""
+    if not hasattr(g, "user_id") or not g.user_id:
+        return jsonify({"error": "Unauthorized"}), 401
+
+    if request.content_type != "application/json":
+        return jsonify({"error": "Invalid Content-Type. Expected application/json"}), 415
+
     try:
-        if not hasattr(g, "user_id") or not g.user_id:
-            return jsonify({"error": "Unauthorized"}), 401
-
-        if request.content_type != "application/json":
-            return jsonify({"error": "Invalid Content-Type. Expected application/json"}), 415
-
         data = request.get_json()
         if not data:
-            return jsonify({"error": "No data provided"}), 400  # Handle empty data
-        
-        response, status = repository.add_podcast(g.user_id, data)
-        return jsonify(response), status
-
+            return jsonify({"error": "No data provided"}), 400
+            
+        response, status_code = podcast_repo.add_podcast(g.user_id, data)
+        return jsonify(response), status_code
     except Exception as e:
-        logger.error(f"Error adding podcast: {str(e)}")
-        return jsonify({"error": "Failed to add podcast", "details": str(e)}), 500
-
+        logger.error("❌ ERROR: %s", e)
+        return jsonify({"error": f"Failed to add podcast: {str(e)}"}), 500
 
 @podcast_bp.route("/get_podcasts", methods=["GET"])
 def get_podcasts():
+    """Gets all podcasts for the current user."""
+    if not hasattr(g, "user_id") or not g.user_id:
+        return jsonify({"error": "Unauthorized"}), 401
+
     try:
-        if not hasattr(g, "user_id") or not g.user_id:
-            return jsonify({"error": "Unauthorized"}), 401
-        
-        response, status = repository.get_podcasts(g.user_id)
-        return jsonify(response), status
-
+        response, status_code = podcast_repo.get_podcasts(g.user_id)
+        return jsonify(response), status_code
     except Exception as e:
-        logger.error(f"Error fetching podcasts: {str(e)}")
-        return jsonify({"error": "Failed to fetch podcasts", "details": str(e)}), 500
-
+        logger.error("❌ ERROR: %s", e)
+        return jsonify({"error": f"Failed to fetch podcasts: {str(e)}"}), 500
 
 @podcast_bp.route("/get_podcasts/<podcast_id>", methods=["GET"])
 def get_podcast_by_id(podcast_id):
+    """Gets a podcast by its ID."""
+    if not hasattr(g, "user_id") or not g.user_id:
+        return jsonify({"error": "Unauthorized"}), 401
+
     try:
-        if not hasattr(g, "user_id") or not g.user_id:
-            return jsonify({"error": "Unauthorized"}), 401
-        
-        response, status = repository.get_podcast_by_id(g.user_id, podcast_id)
-        return jsonify(response), status
-
+        response, status_code = podcast_repo.get_podcast_by_id(g.user_id, podcast_id)
+        return jsonify(response), status_code
     except Exception as e:
-        logger.error(f"Error fetching podcast by ID {podcast_id}: {str(e)}")
-        return jsonify({"error": "Failed to fetch podcast by ID", "details": str(e)}), 500
-
-
-@podcast_bp.route("/delete_podcasts/<podcast_id>", methods=["DELETE"])
-def delete_podcast(podcast_id):
-    try:
-        if not hasattr(g, "user_id") or not g.user_id:
-            return jsonify({"error": "Unauthorized"}), 401
-        
-        response, status = repository.delete_podcast(g.user_id, podcast_id)
-        return jsonify(response), status
-
-    except Exception as e:
-        logger.error(f"Error deleting podcast {podcast_id}: {str(e)}")
-        return jsonify({"error": "Failed to delete podcast", "details": str(e)}), 500
-
+        logger.error("❌ ERROR: %s", e)
+        return jsonify({"error": f"Failed to fetch podcast by ID: {str(e)}"}), 500
 
 @podcast_bp.route("/edit_podcasts/<podcast_id>", methods=["PUT"])
 def edit_podcast(podcast_id):
-    try:
-        if not hasattr(g, "user_id") or not g.user_id:
-            return jsonify({"error": "Unauthorized"}), 401
+    """Updates a podcast's information."""
+    if not hasattr(g, "user_id") or not g.user_id:
+        return jsonify({"error": "Unauthorized"}), 401
 
+    if request.content_type != "application/json":
+        return jsonify({"error": "Invalid Content-Type. Expected application/json"}), 415
+
+    try:
         data = request.get_json()
         if not data:
-            return jsonify({"error": "No data provided"}), 400  # Handle empty data
-
-        response, status = repository.edit_podcast(g.user_id, podcast_id, data)
-        return jsonify(response), status
-
+            return jsonify({"error": "No data provided"}), 400
+            
+        response, status_code = podcast_repo.edit_podcast(g.user_id, podcast_id, data)
+        return jsonify(response), status_code
     except Exception as e:
-        logger.error(f"Error editing podcast {podcast_id}: {str(e)}")
-        return jsonify({"error": "Failed to edit podcast", "details": str(e)}), 500
+        logger.error("❌ ERROR: %s", e)
+        return jsonify({"error": f"Failed to edit podcast: {str(e)}"}), 500
+
+@podcast_bp.route("/delete_podcasts/<podcast_id>", methods=["DELETE"])
+def delete_podcast(podcast_id):
+    """Deletes a podcast by its ID."""
+    if not hasattr(g, "user_id") or not g.user_id:
+        return jsonify({"error": "Unauthorized"}), 401
+
+    try:
+        response, status_code = podcast_repo.delete_podcast(g.user_id, podcast_id)
+        return jsonify(response), status_code
+    except Exception as e:
+        logger.error("❌ ERROR: %s", e)
+        return jsonify({"error": f"Failed to delete podcast: {str(e)}"}), 500
+
+@podcast_bp.route("/fetch_rss", methods=["GET"])
+def fetch_rss():
+    """Server-side RSS feed fetching for clients that might have CORS issues."""
+    rss_url = request.args.get("url")
+    if not rss_url:
+        return jsonify({"error": "No RSS URL provided"}), 400
+
+    try:
+        response, status_code = podcast_repo.fetch_rss_feed(rss_url)
+        return jsonify(response), status_code
+    except Exception as e:
+        logger.error("❌ ERROR: %s", e)
+        return jsonify({"error": f"Failed to fetch RSS feed: {str(e)}"}), 500

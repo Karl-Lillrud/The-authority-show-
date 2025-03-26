@@ -1,30 +1,15 @@
-from flask import (
-    render_template,
-    request,
-    jsonify,
-    session,
-    Blueprint,
-    redirect,
-    url_for,
-    g,
-)
-from werkzeug.security import check_password_hash, generate_password_hash
-from backend.database.mongo_connection import collection
-from backend.services.authService import validate_password, validate_email
-from backend.repository.account_repository import AccountRepository
+from flask import Blueprint, request, jsonify, redirect, render_template, flash, url_for
+from backend.repository.auth_repository import AuthRepository
+from backend.services.TeamInviteService import TeamInviteService
 import os
-import uuid
-from datetime import datetime
 
-account_repo = AccountRepository()
-
+# Define Blueprint
 auth_bp = Blueprint("auth_bp", __name__)
 
-API_BASE_URL = os.getenv("API_BASE_URL", "http://127.0.0.1:8000")
+# Instantiate the Auth Repository
+auth_repo = AuthRepository()
 
-# USE FOR AUTHENTICATION SECURITY PURPOSES REGISTER, SIGNIN, LOGOUT/ users collection
-# USER.PY Can be used for user specific data
-# ACCOUNT.PY Can be used for account specific data
+API_BASE_URL = os.getenv("API_BASE_URL", "http://127.0.0.1:8000")
 
 
 @auth_bp.route("/signin", methods=["GET"], endpoint="signin")
@@ -32,7 +17,7 @@ API_BASE_URL = os.getenv("API_BASE_URL", "http://127.0.0.1:8000")
 def signin_page():
     if request.cookies.get("remember_me") == "true":
         return redirect("/dashboard")
-    return render_template("signin.html", API_BASE_URL=API_BASE_URL)
+    return render_template("signin/signin.html", API_BASE_URL=API_BASE_URL)
 
 
 @auth_bp.route("/signin", methods=["POST"])
@@ -45,141 +30,90 @@ def signin_submit():
         )
 
     data = request.get_json()
-    email = data.get("email", "").strip().lower()
-    password = data.get("password", "")
-    remember = data.get("remember", False)
-
-    user = collection.find_one({"email": email})
-
-    if not user or not check_password_hash(user["passwordHash"], password):
-        return jsonify({"error": "Invalid email or password"}), 401
-
-    session["user_id"] = str(user["_id"])
-    session["email"] = user["email"]
-    session.permanent = remember
-
-    user_id = session["user_id"]
-    user_account = collection.database.Accounts.find_one({"userId": user_id})
-    if not user_account:
-        return jsonify({"error": "No account associated with this user"}), 403
-
-    account_id = user_account.get("id", str(user_account["_id"]))
-    podcasts = list(collection.database.Podcasts.find({"accountId": account_id}))
-
-    redirect_url = "/podprofile" if not podcasts else "/podcastmanagement"
-
-    response = jsonify({"message": "Login successful", "redirect_url": redirect_url})
-
-    if remember:
-        response.set_cookie("remember_me", "true", max_age=30 * 24 * 60 * 60)  # 30 days
-    else:
-        response.delete_cookie("remember_me")
-
-    return response, 200
+    response, status_code = auth_repo.signin(data)
+    return jsonify(response), status_code
 
 
 @auth_bp.route("/logout", methods=["GET"])
 def logout_user():
-    session.clear()
-    response = redirect(url_for("auth_bp.signin"))
-    response.delete_cookie("remember_me")
-    return response
+    response = auth_repo.logout()
+    # Ensure the response is JSON-serializable
+    if isinstance(response, dict):
+        return jsonify(response), 200
+    return jsonify({"message": "Logout successful"}), 200
 
 
 @auth_bp.route("/register", methods=["GET"])
 def register_page():
+    # Get the invite token from the URL parameters
+    invite_token = request.args.get("token")
+
+    if invite_token:
+        # Verify the invite token
+        invite_service = TeamInviteService()
+        response, status = invite_service.verify_invite(invite_token)
+
+        if status == 200:
+            # Render the team member registration form with the invite data
+            return render_template(
+                "team/register-team-member.html",
+                email=response.get("email"),
+                team_name=response.get("teamName", "the team"),
+                invite_token=invite_token,
+            )
+        else:
+            flash(response.get("error", "Invalid invitation link"), "error")
+            return redirect(url_for("auth_bp.signin"))
+
+    # Regular registration page if no token
     return render_template("register/register.html")
 
 
 @auth_bp.route("/register", methods=["POST"])
 def register_submit():
-    print("🔍 Received a POST request at /register")
-
     if request.content_type != "application/json":
-        print("❌ Invalid Content-Type:", request.content_type)
         return (
             jsonify({"error": "Invalid Content-Type. Expected application/json"}),
             415,
         )
 
-    try:
-        data = request.get_json()
-        print("📩 Received Data:", data)
+    data = request.get_json()
+    response, status_code = auth_repo.register(data)
+    # Convert possible Response object into a JSON dict
+    if hasattr(response, "get_json"):
+        response = response.get_json()
+    return jsonify(response), status_code
 
-        if "email" not in data or "password" not in data:
-            print("❌ Missing email or password")
-            return jsonify({"error": "Missing email or password"}), 400
 
-        email = data["email"].lower().strip()
-        password = data["password"]
+@auth_bp.route("/register-team-member", methods=["GET"])
+def register_team_member_page():
+    return render_template("register/register_team_member.html")
 
-        # Validate email using the function from authService
-        email_error = validate_email(email)
-        if email_error:
-            return (
-                email_error  # If there's an error with the email validation, return it.
-            )
 
-        # Validate password using the function from authService
-        password_error = validate_password(password)
-        if password_error:
-            return password_error  # If there's an error with the password validation, return it.
-
-        hashed_password = generate_password_hash(password)
-
-        print("🔍 Checking if user already exists...")
-        if collection.database.Users.find_one({"email": email}):
-            print("⚠️ Email already registered:", email)
-            return jsonify({"error": "Email already registered."}), 409
-
-        # Create User Document
-        user_id = str(uuid.uuid4())
-        user_document = {
-            "_id": user_id,
-            "email": email,
-            "passwordHash": hashed_password,
-            "createdAt": datetime.utcnow().isoformat(),
-        }
-
-        print("📝 Inserting user into database:", user_document)
-        collection.database.Users.insert_one(user_document)
-
-        # Create Account Data, passing it to the AccountRepository
-        account_data = {
-            "userId": user_id,
-            "email": email,
-            "companyName": data.get("companyName", ""),
-            "isCompany": data.get("isCompany", False),
-        }
-
-        # Create the account after user is created
-        account_repo = AccountRepository()
-        account_response, status_code = account_repo.create_account(account_data)
-
-        # If account creation fails, return an error response
-        if status_code != 201:
-            return (
-                jsonify(
-                    {"error": "Failed to create account", "details": account_response}
-                ),
-                500,
-            )
-
-        account_id = account_response["accountId"]
-
-        print("✅ Registration successful!")
+@auth_bp.route("/register-team-member", methods=["POST"])
+def register_team_member_submit():
+    if request.content_type != "application/json":
         return (
-            jsonify(
-                {
-                    "message": "Registration successful!",
-                    "userId": user_id,
-                    "accountId": account_id,
-                    "redirect_url": url_for("auth_bp.signin", _external=True),
-                }
-            ),
-            201,
+            jsonify({"error": "Invalid Content-Type. Expected application/json"}),
+            415,
         )
 
-    except Exception as e:
-        print(f"❌ ERROR: {e}")
-        return jsonify({"error": f"Database error: {str(e)}"}), 500
+    data = request.get_json()
+    response, status_code = auth_repo.register_team_member(data)
+    # Convert possible Response object into a JSON dict
+    if hasattr(response, "get_json"):
+        response = response.get_json()
+
+    if status_code == 201:
+        invite_token = data.get("inviteToken")
+        if invite_token:
+            invite_service = TeamInviteService()
+            invite_response, invite_status = invite_service.process_registration(
+                user_id=response.get("userId"),
+                email=data.get("email"),
+                invite_token=invite_token,
+            )
+            if invite_status == 201:
+                response["teamId"] = invite_response.get("teamId")
+                response["teamMessage"] = invite_response.get("message")
+    return jsonify(response), status_code

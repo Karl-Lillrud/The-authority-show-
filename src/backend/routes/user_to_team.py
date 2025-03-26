@@ -1,153 +1,35 @@
-from flask import request, jsonify, Blueprint, g
-from backend.database.mongo_connection import collection
-from datetime import datetime, timezone
-from marshmallow import ValidationError
-from backend.models.users_to_teams import UserToTeamSchema
-from uuid import uuid4
+import logging
 
+logger = logging.getLogger(__name__)
+
+from flask import Blueprint, request, jsonify, g
+from backend.repository.usertoteam_repository import UserToTeamRepository
+
+# Define Blueprint
 usertoteam_bp = Blueprint("usertoteam_bp", __name__)
 
-# Use TeamSchema when you're dealing with information specific to a team, such as the team's name, role, email, and other properties related to the team itself.
-# Use UserToTeamSchema when you're dealing with the relationship between a user and a team, such as adding a user to a team or querying which teams a particular user belongs to.
-#SHOULD ONLY BE USED FOR SPECIFIC DATA CRUD OPERATIONS
-#EXTRA FUNCTIONALITY BESIDES CRUD OPERATIONS SHOULD BE IN SERVICES
+# Instantiate the User-To-Team Repository
+usertoteam_repo = UserToTeamRepository()
+
 
 @usertoteam_bp.route("/add_users_to_teams", methods=["POST"])
 def add_user_to_team():
     if not hasattr(g, "user_id") or not g.user_id:
         return jsonify({"error": "Unauthorized"}), 401
 
-    if request.content_type != "application/json":
-        return jsonify({"error": "Invalid Content-Type. Expected application/json"}), 415
-
-    try:
-        # Get incoming JSON data
-        data = request.get_json()
-        print("📩 Received Data:", data)
-
-        # Validate with UserToTeamSchema
-        try:
-            user_to_team_schema = UserToTeamSchema()
-            validated_data = user_to_team_schema.load(data)  # Validate and deserialize the user-team data
-        except ValidationError as err:
-            return jsonify({"error": "Invalid data", "details": err.messages}), 400
-
-        user_id = validated_data.get("userId")
-        team_id = validated_data.get("teamId")
-        role = validated_data.get("role", "member")  # Default to "member" if no role provided
-
-        # Check if the team exists
-        team = collection.database.Teams.find_one({"_id": team_id})
-        if not team:
-            return jsonify({"error": "Team not found"}), 404
-
-        # Check if the user exists
-        user = collection.database.Users.find_one({"userId": user_id})
-        if not user:
-            return jsonify({"error": "User not found"}), 404
-
-        # Ensure that the user is not already a member of the team
-        existing_user_team = collection.database.UsersToTeams.find_one(
-            {"userId": user_id, "teamId": team_id}
-        )
-        if existing_user_team:
-            return jsonify({"error": "User is already a member of the team"}), 400
-
-        # Create the user-team relationship
-        user_to_team_id = str(uuid4())  # Generate a unique ID for this user-to-team relationship
-
-        user_to_team_item = {
-            "_id": user_to_team_id,
-            "userId": user_id,
-            "teamId": team_id,
-            "role": role,
-            "assignedAt": datetime.utcnow(),
-        }
-
-        # Insert the user-team relationship into the database
-        result = collection.database.UsersToTeams.insert_one(user_to_team_item)
-
-        # Check if the insertion was successful
-        if result.inserted_id:
-            print("✅ User added to team successfully!")
-            return jsonify(
-                {
-                    "message": "User added to team successfully",
-                    "user_to_team_id": user_to_team_id,  # Return the generated ID
-                }
-            ), 201
-        else:
-            print("❌ Failed to insert user-team relationship")
-            return jsonify({"error": "Failed to add user to team."}), 500
-
-    except Exception as e:
-        print(f"❌ ERROR: {e}")
-        return jsonify({"error": f"Failed to add user to team: {str(e)}"}), 500
+    data = request.get_json()
+    response, status_code = usertoteam_repo.add_user_to_team(data)
+    return jsonify(response), status_code
 
 
 @usertoteam_bp.route("/remove_users_from_teams", methods=["POST"])
 def remove_user_from_team():
-    if not g.user_id:  # Assuming user_id is stored in the global `g` object
+    if not hasattr(g, "user_id") or not g.user_id:
         return jsonify({"error": "Unauthorized"}), 401
 
-    if request.content_type != "application/json":
-        return (
-            jsonify({"error": "Invalid Content-Type. Expected application/json"}),
-            415,
-        )
-
-    try:
-        # Get incoming JSON data
-        data = request.get_json()
-        print("📩 Received Data:", data)
-
-        # Validate with UserToTeamSchema
-        try:
-            user_to_team_schema = (
-                UserToTeamSchema()
-            )  # Validate relationship between user and team
-            validated_data = user_to_team_schema.load(
-                data
-            )  # Validate and deserialize the user-team data
-        except ValidationError as err:
-            return jsonify({"error": "Invalid data", "details": err.messages}), 400
-
-        # Check if the user is actually assigned to this team
-        user_team_relation = collection.database.UsersToTeams.find_one(
-            {
-                "userId": validated_data["userId"],  # The user to be removed
-                "teamId": validated_data["teamId"],  # From the specified team
-            }
-        )
-
-        if not user_team_relation:
-            return jsonify({"error": "User not found in this team."}), 404
-
-        # Delete the user-team relationship document
-        result = collection.database.UsersToTeams.delete_one(
-            {
-                "userId": validated_data["userId"],  # The user to be removed
-                "teamId": validated_data["teamId"],  # From the specified team
-            }
-        )
-
-        if result.deleted_count == 0:
-            return jsonify({"error": "Failed to remove user from team."}), 500
-
-        print("✅ User removed from team successfully!")
-
-        return (
-            jsonify(
-                {
-                    "message": "User removed from team successfully",
-                }
-            ),
-            200,
-        )
-
-    except Exception as e:
-        print(f"❌ ERROR: {e}")
-        return jsonify({"error": f"Failed to remove user from team: {str(e)}"}), 500
+    data = request.get_json()
+    response, status_code = usertoteam_repo.remove_user_from_team(data)
+    return jsonify(response), status_code
 
 
 @usertoteam_bp.route("/get_teams_members/<team_id>", methods=["GET"])
@@ -155,32 +37,55 @@ def get_team_members(team_id):
     if not hasattr(g, "user_id") or not g.user_id:
         return jsonify({"error": "Unauthorized"}), 401
 
-    try:
-        # Find all users linked to the given teamId
-        team_members = list(
-            collection.database.UsersToTeams.find({"teamId": team_id}, {"_id": 0})
-        )
+    response, status_code = usertoteam_repo.get_team_members(team_id)
+    return jsonify(response), status_code
 
-        if not team_members:
-            return jsonify({"message": "No members found for this team"}), 404
 
-        # Fetch user details for each member
-        members_details = []
-        for member in team_members:
-            user_id = member["userId"]
-            user_details = collection.database.Users.find_one(
-                {"_id": user_id}, {"_id": 0}
-            )  # Assuming Users collection holds user details
+@usertoteam_bp.route("/get_team_members", methods=["GET"])
+def get_all_team_members():
+    if not hasattr(g, "user_id") or not g.user_id:
+        return jsonify({"error": "Unauthorized"}), 401
 
-            if user_details:
-                # Add role and other details to the user data
-                user_details["role"] = member.get(
-                    "role", "member"
-                )  # Default to 'member' if no role is assigned
-                members_details.append(user_details)
+    response, status_code = usertoteam_repo.get_all_team_members()
+    return jsonify(response), status_code
 
-        return jsonify({"teamId": team_id, "members": members_details}), 200
 
-    except Exception as e:
-        print(f"❌ ERROR: {e}")
-        return jsonify({"error": f"Failed to retrieve team members: {str(e)}"}), 500
+@usertoteam_bp.route("/edit_team_member", methods=["PUT"])
+def edit_team_member():
+    if not hasattr(g, "user_id") or not g.user_id:
+        return jsonify({"error": "Unauthorized"}), 401
+
+    data = request.get_json()
+    logger.info(f"Incoming payload for /edit_team_member: {data}")
+
+    team_id = data.get("teamId")
+    user_id = data.get("userId")
+    new_role = data.get("role")
+    full_name = data.get("fullName")  # New field
+    phone = data.get("phone")  # New field
+
+    if not team_id or not user_id or not new_role:
+        logger.error("Missing required fields in /edit_team_member")
+        return jsonify({"error": "Missing teamId, userId, or role"}), 400
+
+    response, status_code = usertoteam_repo.edit_team_member(
+        team_id, user_id, new_role, full_name, phone
+    )
+    return jsonify(response), status_code
+
+
+@usertoteam_bp.route("/delete_team_member", methods=["DELETE"])
+def delete_team_member():
+    if not hasattr(g, "user_id") or not g.user_id:
+        return jsonify({"error": "Unauthorized"}), 401
+
+    data = request.get_json()
+    team_id = data.get("teamId")
+    user_id = data.get("userId")
+    email = data.get("email")
+
+    if not team_id:
+        return jsonify({"error": "Missing teamId"}), 400
+
+    response, status_code = usertoteam_repo.delete_team_member(team_id, user_id, email)
+    return jsonify(response), status_code

@@ -1,14 +1,23 @@
+// Remove: import feedparser from "feedparser-promised";
+
 // Function to add a new podcast
 export async function addPodcast(data) {
   try {
+    console.log("Sending podcast data to /add_podcasts:", data); // Added log
     const response = await fetch("/add_podcasts", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(data)
+      body: JSON.stringify(data) // Correctly pass the entire data object
     });
-    return await response.json();
+    const responseData = await response.json();
+    if (!response.ok) {
+      console.error("Error response from /add_podcasts:", responseData); // Added log
+      throw new Error(responseData.error || "Failed to add podcast");
+    }
+    console.log("Received response from /add_podcasts:", responseData); // Added log
+    return responseData;
   } catch (error) {
-    console.error("Error adding podcast:", error);
+    console.error("Error adding podcast:", error); // Added log
     throw error;
   }
 }
@@ -70,31 +79,36 @@ export async function deletePodcast(podcastId) {
   }
 }
 
-// Function to fetch RSS data
 export async function fetchRSSData(rssUrl) {
   try {
-    const response = await fetch(rssUrl);
+    console.log("Fetching RSS data from URL:", rssUrl); // Added log
+    const response = await fetch(
+      `/fetch_rss?url=${encodeURIComponent(rssUrl)}`
+    );
     if (!response.ok) {
       throw new Error("Failed to fetch RSS feed.");
     }
-
-    const rssText = await response.text();
-    const parser = new DOMParser();
-    const rssDoc = parser.parseFromString(rssText, "application/xml");
-
-    const titleElement = rssDoc.querySelector("channel > title");
-    const imageElement = rssDoc.querySelector("channel > image > url");
-    if (!titleElement) {
-      throw new Error("RSS feed does not contain a title.");
-    }
-
-    // Return all RSS data
-    return {
-      title: titleElement.textContent,
-      imageUrl: imageElement ? imageElement.textContent : null,
-      raw: rssDoc // Include the entire parsed RSS document
-    };
+    const rssData = await response.json();
+    console.log("Fetched RSS data:", rssData); // Added log
+    return rssData;
   } catch (error) {
+    console.error("Error in fetchRSSData:", error);
     throw new Error(`Error fetching RSS feed: ${error.message}`);
   }
+}
+
+// Helper function to extract iTunes ID from feed URL
+function extractItunesId(url) {
+  // Try to extract from iTunes URL format
+  const itunesMatch = url.match(/\/id(\d+)/);
+  if (itunesMatch && itunesMatch[1]) {
+    return itunesMatch[1];
+  }
+  return null;
+}
+
+// Helper function to extract social media links from text (existing code)
+function extractSocialMediaLinks(description, link) {
+  // Your existing implementation
+  // ...
 }

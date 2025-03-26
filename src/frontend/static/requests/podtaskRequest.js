@@ -1,8 +1,8 @@
+// Updated podtaskRequest.js remains the same as before:
 export async function fetchTasks() {
   try {
     const response = await fetch("/get_podtasks");
     const data = await response.json();
-
     if (response.ok) {
       return data.podtasks;
     } else {
@@ -19,7 +19,6 @@ export async function fetchTask(taskId) {
   try {
     const response = await fetch(`/get_podtask/${taskId}`);
     const data = await response.json();
-
     if (response.ok) {
       return data;
     } else {
@@ -34,12 +33,12 @@ export async function fetchTask(taskId) {
 
 export async function saveTask(taskData) {
   try {
-    const response = await fetch("/register_podtask", {
+    // Updated endpoint: using "/add_podtasks" to match backend route
+    const response = await fetch("/add_podtasks", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(taskData)
     });
-
     const result = await response.json();
     if (response.ok) {
       alert("Task saved successfully!");
@@ -56,12 +55,11 @@ export async function saveTask(taskData) {
 
 export async function updateTask(taskId, taskData) {
   try {
-    const response = await fetch(`/update_podtask/${taskId}`, {
+    const response = await fetch(`/update_podtasks/${taskId}`, {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(taskData)
     });
-
     const result = await response.json();
     if (response.ok) {
       alert("Task updated successfully!");
@@ -78,10 +76,9 @@ export async function updateTask(taskId, taskData) {
 
 export async function deleteTask(taskId) {
   try {
-    const response = await fetch(`/delete_podtask/${taskId}`, {
+    const response = await fetch(`/delete_podtasks/${taskId}`, {
       method: "DELETE"
     });
-
     const result = await response.json();
     if (response.ok) {
       alert("Task deleted successfully!");
@@ -100,7 +97,6 @@ export async function fetchDefaultTasks() {
   try {
     const response = await fetch("/get_default_tasks");
     const data = await response.json();
-
     if (response.ok) {
       return data.default_tasks;
     } else {
@@ -118,7 +114,6 @@ export async function deleteDefaultTask(taskId) {
     const response = await fetch(`/delete_default_task/${taskId}`, {
       method: "DELETE"
     });
-
     const result = await response.json();
     if (response.ok) {
       alert("Default task deleted successfully!");
@@ -140,7 +135,6 @@ export async function addSelectedDefaultTasks(tasks) {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ tasks })
     });
-
     const result = await response.json();
     if (response.ok) {
       alert("Selected tasks added successfully!");
@@ -162,11 +156,10 @@ export async function addTasksToEpisode(episodeId, guestId, tasks) {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         tasks,
-        episode_id: episodeId,
-        guest_id: guestId
+        episodeId: episodeId,
+        guestId: guestId      
       })
     });
-
     const result = await response.json();
     if (response.ok) {
       alert("Tasks added to episode successfully!");
@@ -189,5 +182,29 @@ export async function fetchLocalDefaultTasks() {
   } catch (error) {
     console.error("Error fetching local default tasks:", error);
     alert("Failed to fetch local default tasks.");
+  }
+}
+
+export async function addDefaultTasksToEpisode(episodeId, defaultTasks) {
+  try {
+    const response = await fetch("/add_default_tasks_to_episode", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        default_tasks: defaultTasks,
+        episode_id: episodeId
+      })
+    });
+    const result = await response.json();
+    if (response.ok) {
+      alert("Default tasks added to episode successfully!");
+      return result;
+    } else {
+      console.error("Error adding default tasks to episode:", result.error);
+      alert("Error: " + result.error);
+    }
+  } catch (error) {
+    console.error("Error adding default tasks to episode:", error);
+    alert("Failed to add default tasks to episode.");
   }
 }

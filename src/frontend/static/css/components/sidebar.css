@@ -1,0 +1,491 @@
+/* Sidebar Component Styles */
+:root {
+  --sidebar-width: 260px;
+  --sidebar-collapsed-width: 80px;
+  --sidebar-bg: #ffffff;
+  --sidebar-border: rgba(0, 0, 0, 0.05);
+  --sidebar-item-hover: rgba(255, 127, 63, 0.1);
+  --sidebar-item-active: rgba(255, 127, 63, 0.15);
+  --highlight-color: #ff7f3f;
+  --highlight-hover: #e0662c;
+  --text-color-light: #6e7f8d;
+  --transition-normal: 0.3s ease;
+  --spacing-xs: 4px;
+  --spacing-sm: 8px;
+  --spacing-md: 16px;
+  --spacing-lg: 24px;
+  --spacing-xl: 32px;
+  --radius-medium: 12px;
+}
+
+/* Sidebar Styles */
+.sidebar {
+  position: absolute;
+  top: 0;
+  height: calc(100vh - var(--header-height, 80px));
+  width: var(--sidebar-width);
+  background-color: var(--sidebar-bg);
+  border-right: 1px solid var(--sidebar-border);
+  display: flex;
+  flex-direction: column;
+  transition: width var(--transition-normal);
+  overflow: hidden;
+  box-shadow: 0 0 20px rgba(0, 0, 0, 0.05);
+  z-index: 9;
+  box-sizing: border-box;
+  /* Add decorative corners */
+  position: relative;
+}
+
+.sidebar::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 120px;
+  height: 120px;
+  background: none;
+  border-top-left-radius: 8px;
+  background-image: linear-gradient(
+      to right,
+      var(--highlight-color) 3px,
+      transparent 90%
+    ),
+    linear-gradient(to bottom, var(--highlight-color) 3px, transparent 90%);
+  background-position: top left, top left;
+  background-size: 120px 3px, 3px 120px;
+  background-repeat: no-repeat;
+  transition: all 0.4s ease;
+}
+
+.sidebar::after {
+  content: "";
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  left: auto;
+  width: 120px;
+  height: 120px;
+  background: none;
+  border-bottom-right-radius: 8px;
+  background-image: linear-gradient(
+      to left,
+      var(--highlight-color) 3px,
+      transparent 90%
+    ),
+    linear-gradient(to top, var(--highlight-color) 3px, transparent 90%);
+  background-position: bottom right, bottom right;
+  background-size: 120px 3px, 3px 120px;
+  background-repeat: no-repeat;
+  transition: all 0.4s ease;
+}
+
+.sidebar-header {
+  padding: var(--spacing-lg);
+  border-bottom: none;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.sidebar-content {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: var(--spacing-md) 0;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(0, 0, 0, 0.2) white;
+  margin-top: -50px;
+}
+
+.sidebar-content::-webkit-scrollbar {
+  width: 6px;
+}
+
+.sidebar-content::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.sidebar-content::-webkit-scrollbar-thumb {
+  background-color: rgba(0, 0, 0, 0.2);
+  border-radius: 10px;
+}
+
+.sidebar-menu {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  overflow-x: hidden;
+}
+
+.sidebar-menu ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+/* Fix for sidebar menu items - ensure they're properly structured for hover */
+.sidebar-menu-item {
+  margin: 12px 0; /* Increased spacing between menu items */
+  width: 100%;
+  position: relative;
+}
+
+/* Improve the hover target area for menu items */
+.sidebar-menu-link {
+  display: flex;
+  align-items: center;
+  padding: 12px 16px;
+  color: var(--text-color-light);
+  text-decoration: none;
+  border-radius: var(--radius-medium);
+  transition: all var(--transition-normal);
+  width: 100%; /* Ensure the link spans the full width */
+  box-sizing: border-box; /* Include padding in width calculation */
+  cursor: pointer; /* Ensure cursor shows it's clickable */
+  position: relative; /* For z-index stacking */
+  z-index: 1; /* Ensure it's above any decorative elements */
+}
+
+/* Improve hover state */
+.sidebar-menu-link:hover {
+  background-color: var(--sidebar-item-hover);
+  color: var(--highlight-color);
+}
+
+/* Active state styling */
+.sidebar-menu-item.active .sidebar-menu-link {
+  background-color: var(--sidebar-item-active); /* Light orange background */
+  color: var(--highlight-color); /* Orange text */
+}
+
+.sidebar-icon {
+  margin-right: 12px;
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.sidebar.collapsed {
+  width: var(--sidebar-collapsed-width);
+}
+
+.sidebar.collapsed .sidebar-menu-link span:not(.sidebar-icon) {
+  display: none;
+}
+
+.sidebar-footer {
+  padding: var(--spacing-md);
+}
+
+.sidebar-actions {
+  display: flex;
+  justify-content: flex-end;
+}
+
+/* Improve toggle button hover state */
+.sidebar-toggle {
+  background: none;
+  border: none;
+  color: var(--text-color-light);
+  cursor: pointer;
+  padding: 8px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all var(--transition-normal);
+  position: relative; /* For z-index */
+  z-index: 2; /* Ensure it's above other elements */
+}
+
+.sidebar-toggle:hover {
+  background-color: var(--sidebar-item-hover);
+  color: var(--highlight-color);
+}
+
+.sidebar.collapsed .sidebar-toggle svg {
+  transform: rotate(180deg);
+}
+
+/* Dashboard link styling - fix hover issues */
+.dashboard-link {
+  color: var(--highlight-color) !important;
+  position: relative; /* For z-index */
+  z-index: 1; /* Ensure it's above decorative elements */
+}
+
+.dashboard-link .sidebar-icon {
+  color: var(--highlight-color);
+}
+
+.dashboard-link:hover {
+  background-color: var(--sidebar-item-hover);
+}
+
+.dashboard-link span:not(.sidebar-icon) {
+  margin-left: 4px; /* Adjust as needed */
+}
+
+/* Fix the dashboard link hover area */
+.sidebar-menu-item .dashboard-link {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  padding: 12px 16px;
+  color: var(--text-color-light);
+  text-decoration: none;
+  border-radius: var(--radius-medium);
+  transition: all var(--transition-normal);
+  transform: translateX(-4px);
+  cursor: pointer; /* Ensure cursor shows it's clickable */
+}
+
+.sidebar-menu-item .dashboard-link:hover {
+  background-color: var(--sidebar-item-hover);
+  color: var(--highlight-color);
+  transform: translateX(-10px);
+  transition: transform var(--transition-normal),
+    background-color var(--transition-normal);
+}
+
+/* Action buttons in sidebar - fix hover issues */
+.sidebar-action-buttons {
+  margin-top: 20px;
+  padding: 10px;
+  padding-bottom: 40px;
+  border-top: 1px solid var(--sidebar-border);
+  border-bottom: 1px solid var(--sidebar-border);
+}
+
+.sidebar-action-button {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background-color: rgba(255, 127, 63, 0.1);
+  color: var(--highlight-color);
+  border: none;
+  padding: 10px 12px;
+  border-radius: var(--radius-medium);
+  cursor: pointer;
+  font-size: 0.9rem;
+  font-weight: 600;
+  width: 100%;
+  margin-bottom: 8px;
+  transition: all var(--transition-normal);
+  text-align: left;
+  position: relative; /* For z-index */
+  z-index: 1; /* Ensure it's above decorative elements */
+}
+
+.sidebar-action-button:hover {
+  background-color: rgba(255, 127, 63, 0.2);
+  transform: translateX(4px);
+}
+
+.sidebar-action-button svg {
+  width: 18px;
+  height: 18px;
+}
+
+.sidebar-action-buttons h3 {
+  font-size: 0.85rem;
+  color: rgba(0, 0, 0, 0.5);
+  margin-bottom: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+/* Main Content */
+.main-content {
+  flex: 1;
+  overflow-y: auto;
+  padding: var(--spacing-lg);
+  transition: margin-left var(--transition-normal);
+  margin-left: 0; /* reduce or remove the sidebar offset */
+  min-height: calc(100vh - var(--header-height, 60px));
+}
+
+.sidebar.collapsed + .main-content {
+  margin-left: var(--sidebar-collapsed-width);
+}
+
+@media (max-width: 768px) {
+  .sidebar {
+    width: 100%;
+    height: auto;
+    position: relative;
+    border-right: none;
+    border-bottom: 1px solid var(--sidebar-border);
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+    font-size: 0.85rem; /* Minska textstorleken */
+  }
+
+  .sidebar-header {
+    padding: var(--spacing-md); /* Minska padding */
+  }
+
+  .sidebar-menu-link {
+    padding: 8px 12px; /* Minska padding */
+    font-size: 0.85rem; /* Minska textstorleken */
+  }
+
+  .sidebar-icon {
+    width: 16px; /* Minska ikonstorleken */
+    height: 16px;
+    margin-right: 8px; /* Minska mellanrum mellan ikon och text */
+  }
+
+  .sidebar-action-button {
+    padding: 8px 10px; /* Minska padding */
+    font-size: 0.85rem; /* Minska textstorleken */
+  }
+
+  .sidebar-toggle {
+    padding: 6px; /* Minska storleken på toggle-knappen */
+  }
+
+  .sidebar-footer {
+    padding: var(--spacing-sm); /* Minska padding */
+  }
+
+  /* Se till att sidebar-content alltid är synlig */
+  .sidebar-content {
+    margin-top: 0;
+    padding: var(--spacing-md);
+    display: block;
+    height: auto;
+  }
+
+  /* Gör menyn vertikal istället för horisontell på mobilen */
+  .sidebar-menu {
+    display: block; /* Ändra från flex till block */
+    overflow-x: visible;
+    padding: var(--spacing-md);
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+    border-bottom: none;
+  }
+
+  .sidebar-menu::-webkit-scrollbar {
+    display: none;
+  }
+
+  .sidebar-menu-item {
+    margin: 8px 0; /* Ge mer utrymme mellan items */
+    width: 100%;
+    display: block;
+  }
+
+  /* Se till att alla länkar är synliga */
+  .sidebar-menu-link {
+    padding: 12px 16px;
+    display: flex;
+    align-items: center;
+    font-size: 1rem;
+    width: 100%;
+    opacity: 1 !important; /* Förhindra att de döljs */
+    visibility: visible !important;
+  }
+
+  .sidebar.collapsed .sidebar-menu-link span:not(.sidebar-icon) {
+    display: inline; /* Återställ textens synlighet */
+  }
+
+  /* Action-knappar */
+  .sidebar-action-buttons {
+    padding: var(--spacing-md);
+    display: block; /* Ändra från grid till block */
+    margin-top: var(--spacing-md);
+    border-top: 1px solid var(--sidebar-border);
+  }
+
+  .sidebar-action-button {
+    width: 100%;
+    margin-bottom: 8px;
+    padding: 12px 16px;
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+  }
+
+  .sidebar-menu-item .dashboard-link {
+    display: none; /* Dölj hela "Back to Dashboard"-knappen */
+  }
+}
+
+/* För väldigt små skärmar under 500px */
+@media (max-width: 500px) {
+  .sidebar-menu {
+    display: block; /* Behåll vertikal layout */
+    padding: var(--spacing-sm);
+  }
+
+  .sidebar-menu-item {
+    flex-basis: 100%; /* Full bredd för varje item */
+    margin: 6px 0;
+  }
+
+  .sidebar-menu-link {
+    padding: 10px 12px;
+    font-size: 0.95rem;
+  }
+
+  .sidebar-action-buttons {
+    display: block;
+  }
+
+  .sidebar-action-button {
+    padding: 10px 12px;
+    font-size: 0.9rem;
+  }
+}
+
+/* Lägg till dessa generella regler för att säkerställa synlighet */
+.sidebar.collapsed {
+  width: 100%; /* Förhindra att sidebar blir för smal */
+}
+
+.sidebar.collapsed .sidebar-menu,
+.sidebar.collapsed .sidebar-action-buttons {
+  display: block !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+}
+
+@media (max-width: 500px) {
+  .sidebar {
+    font-size: 0.75rem; /* Minska textstorleken ytterligare */
+  }
+
+  .sidebar-header {
+    padding: var(--spacing-sm); /* Minska padding */
+  }
+
+  .sidebar-menu-link {
+    padding: 6px 10px; /* Minska padding */
+    font-size: 0.75rem; /* Minska textstorleken */
+  }
+
+  .sidebar-icon {
+    width: 14px; /* Minska ikonstorleken ytterligare */
+    height: 14px;
+    margin-right: 6px; /* Minska mellanrum mellan ikon och text */
+  }
+
+  .sidebar-action-button {
+    padding: 6px 8px; /* Minska padding */
+    font-size: 0.75rem; /* Minska textstorleken */
+  }
+
+  .sidebar-toggle {
+    padding: 4px; /* Minska storleken på toggle-knappen */
+  }
+
+  .sidebar-footer {
+    padding: var(--spacing-xs); /* Minska padding */
+  }
+}
