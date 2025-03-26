@@ -91,3 +91,30 @@ def get_episodes_by_podcast(podcast_id):
         return jsonify({"error": "Unauthorized"}), 401
 
     return episode_repo.get_episodes_by_podcast(podcast_id, g.user_id)
+
+
+@episode_bp.route("/add_tasks_to_episode", methods=["POST"])
+def add_tasks_to_episode():
+    if not g.user_id:
+        return jsonify({"error": "Unauthorized"}), 401
+    if request.content_type != "application/json":
+        return jsonify({"error": "Invalid Content-Type. Expected application/json"}), 415
+    try:
+        data = request.get_json()
+        tasks = data.get("tasks")
+        episode_id = data.get("episode_id")
+        guest_id = data.get("guest_id")
+        response, status_code = episode_repo.add_tasks_to_episode(g.user_id, episode_id, guest_id, tasks)
+        return jsonify(response), status_code
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+@episode_bp.route("/view_tasks_by_episode/<episode_id>", methods=["GET"])
+def view_tasks_by_episode(episode_id):
+    if not g.user_id:
+        return jsonify({"error": "Unauthorized"}), 401
+    try:
+        tasks = episode_repo.get_tasks_by_episode(g.user_id, episode_id)
+        return jsonify({"tasks": tasks}), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500

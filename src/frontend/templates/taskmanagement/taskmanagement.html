@@ -200,6 +200,80 @@
   <link rel="stylesheet" href="{{ url_for('static', filename='css/taskmanagement/taskmanagement-redesign.css') }}">
   <script type="module" src="{{ url_for('static', filename='js/taskmanagement/taskmanagement-redesign.js') }}"></script>
   <script type="module" src="{{ url_for('static', filename='js/taskmanagement/taskmanagement.js') }}"></script>
+<script>
+  async function openDefaultTasksPopup() {
+    try {
+      const response = await fetch("/static/defaulttaskdata/default_tasks.json");
+      const defaultTasks = await response.json();
+      const defaultTasksList = document.getElementById("default-tasks-list");
+      defaultTasksList.innerHTML = defaultTasks
+        .map(task => `<div><input type="checkbox" class="default-task-checkbox" value="${task}">${task}</div>`)
+        .join("");
+      document.getElementById("default-tasks-popup").style.display = "block";
+    } catch (error) {
+      console.error("Error loading default tasks:", error);
+    }
+  }
+
+  function closeDefaultTasksPopup() {
+    document.getElementById("default-tasks-popup").style.display = "none";
+  }
+
+  function selectAllDefaultTasks() {
+    const checkboxes = document.querySelectorAll(".default-task-checkbox");
+    checkboxes.forEach(checkbox => {
+      checkbox.checked = true;
+    });
+  }
+
+  function openTaskModal() {
+    const taskModal = document.getElementById("task-modal");
+    taskModal.style.display = "block";
+  }
+
+  function closeModal() {
+    const taskModal = document.getElementById("task-modal");
+    taskModal.style.display = "none";
+  }
+
+  async function viewEpisodes() {
+    try {
+      const guestId = "currentGuestId"; // Replace with actual guest ID logic
+      const episodes = await fetchEpisodes(guestId);
+      const episodesList = document.getElementById("episodes-list");
+      episodesList.innerHTML = episodes
+        .map(episode => `<div onclick="viewEpisodeTasks('${episode.id}')">${episode.title}</div>`)
+        .join("");
+      document.getElementById("episodes-popup").style.display = "block";
+    } catch (error) {
+      console.error("Error loading episodes:", error);
+    }
+  }
+
+  async function viewEpisodeTasks(episodeId) {
+    try {
+      const tasks = await fetchTasksByEpisode(episodeId);
+      const taskList = document.getElementById("task-list");
+      taskList.innerHTML = tasks.map(task => `<li>${task.name}</li>`).join("");
+      closeEpisodesPopup();
+    } catch (error) {
+      console.error("Error loading episode tasks:", error);
+    }
+  }
+
+  async function addCustomTask() {
+    const taskName = document.getElementById("task-name").value;
+    if (taskName) {
+      const taskList = document.getElementById("task-list");
+      taskList.innerHTML += `<li>${taskName}</li>`;
+      closeModal();
+    } else {
+      alert("Task name cannot be empty.");
+    }
+  }
+
+  document.getElementById("save-task-btn").onclick = addCustomTask;
+</script>
 {% endblock %}
 </body>
 </html>

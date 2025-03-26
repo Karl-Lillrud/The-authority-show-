@@ -195,3 +195,19 @@ export async function fetchAllEpisodes() {
   }
 }
 
+export async function fetchTasksByEpisode(episodeId) {
+  try {
+    const response = await fetch(`/view_tasks_by_episode/${episodeId}`);
+    const data = await response.json();
+    if (response.ok) {
+      return data.tasks;
+    } else {
+      console.error("Failed to fetch tasks by episode:", data.error);
+      alert("Failed to fetch tasks by episode: " + data.error);
+    }
+  } catch (error) {
+    console.error("Error fetching tasks by episode:", error);
+    alert("Failed to fetch tasks by episode.");
+  }
+}
+
