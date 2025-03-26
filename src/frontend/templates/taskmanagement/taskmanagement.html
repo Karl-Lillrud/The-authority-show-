@@ -199,7 +199,12 @@
   <!-- Link to your custom CSS and JS files -->
   <link rel="stylesheet" href="{{ url_for('static', filename='css/taskmanagement/taskmanagement-redesign.css') }}">
   <script type="module" src="{{ url_for('static', filename='js/taskmanagement/taskmanagement-redesign.js') }}"></script>
-  <script type="module" src="{{ url_for('static', filename='js/taskmanagement/taskmanagement.js') }}"></script>
+  <script type="module">
+    import { openDefaultTasksPopup } from "{{ url_for('static', filename='js/taskmanagement/taskmanagement.js') }}";
+  
+    // Attach the function to the button
+    document.getElementById("load-default-btn").onclick = openDefaultTasksPopup;
+  </script>
 {% endblock %}
 </body>
 </html>
