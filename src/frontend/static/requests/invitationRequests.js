@@ -1,41 +1,10 @@
-export async function sendInvitationEmail(
-  podName,
-  podRss,
-  imageUrl,
-  additionalData = {}
-) {
+export async function sendInvitationEmail() {
   try {
     const response = await fetch("/send_invitation", {
       method: "POST",
       headers: {
         "Content-Type": "application/json"
-      },
-      body: JSON.stringify({
-        subject: "Welcome to PodManager.ai!",
-        podName: podName,
-        podRss: podRss,
-        imageUrl: imageUrl,
-        description: additionalData.description || "",
-        socialMedia: additionalData.socialMedia || [],
-        category: additionalData.category || "",
-        author: additionalData.author || "",
-        // New fields to capture more podcast information
-        language: additionalData.language || "",
-        copyright: additionalData.copyright || "",
-        explicit: additionalData.explicit || false,
-        podcastType: additionalData.podcastType || "episodic",
-        ownerEmail: additionalData.ownerEmail || "",
-        ownerName: additionalData.ownerName || "",
-        keywords: additionalData.keywords || [],
-        itunesId: additionalData.itunesId || "",
-        guid: additionalData.guid || "",
-        pubDate: additionalData.pubDate || "",
-        lastBuildDate: additionalData.lastBuildDate || "",
-        fundingUrl: additionalData.fundingUrl || "",
-        fundingText: additionalData.fundingText || "",
-        complete: additionalData.complete || false, // Indicates if podcast is complete/no longer publishing
-        episodes: additionalData.episodes || [] // Include episodes data
-      })
+      }
     });
     if (!response.ok) {
       const errorData = await response.json();
@@ -46,4 +15,16 @@ export async function sendInvitationEmail(
     console.error("Error sending invitation email:", error);
     throw error;
   }
+}
+
+export async function sendTeamInviteRequest(teamId, email, role) {
+  console.log("Sending request to /send_team_invite"); // Debug log
+  const res = await fetch("/send_team_invite", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ teamId, email, role })
+  });
+  const data = await res.json();
+  console.log("Response from /send_team_invite:", data); // Debug log
+  return data;
 }

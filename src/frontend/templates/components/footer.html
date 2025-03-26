@@ -1,0 +1,15 @@
+<link
+  rel="stylesheet"
+  href="{{ url_for('static', filename='css/components/footer.css') }}"
+/>
+<!-- components/footer.html -->
+<footer>
+  <p>
+    © 2023 PodManager. All rights reserved.
+    <a href="{{ url_for('frontend.terms_of_service_page') }}"
+      >Terms of Service</a
+    >
+    |
+    <a href="{{ url_for('frontend.privacy_policy_page') }}">Privacy Policy</a>
+  </p>
+</footer>

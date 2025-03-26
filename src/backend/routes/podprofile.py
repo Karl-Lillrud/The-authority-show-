@@ -11,8 +11,6 @@ from flask import (
 )
 from backend.database.mongo_connection import collection
 import requests
-import feedparser
-import urllib.request
 from datetime import datetime, timezone
 
 podprofile_bp = Blueprint("podprofile_bp", __name__)
@@ -135,55 +133,3 @@ def post_podcast_data():
     except Exception as e:
         current_app.logger.error(f"Error posting podcast data: {e}")
         return jsonify({"error": str(e)}), 500
-
-
-@podprofile_bp.route("/fetch_rss", methods=["GET"])
-def fetch_rss():
-    """Server-side RSS feed fetching for clients that might have CORS issues"""
-    rss_url = request.args.get("url")
-    if not rss_url:
-        return jsonify({"error": "No RSS URL provided"}), 400
-
-    try:
-        # Fetch the RSS feed
-        req = urllib.request.Request(
-            rss_url, headers={"User-Agent": "Mozilla/5.0 (PodManager.ai RSS Parser)"}
-        )
-        with urllib.request.urlopen(req) as response:
-            rss_content = response.read()
-
-        # Parse the RSS feed using feedparser
-        feed = feedparser.parse(rss_content)
-
-        # Extract basic podcast info
-        title = feed.feed.get("title", "")
-        description = feed.feed.get("description", "")
-        image_url = feed.feed.get("image", {}).get("href", "")
-
-        # Extract episodes
-        episodes = []
-        for entry in feed.entries:
-            episode = {
-                "title": entry.get("title", ""),
-                "description": entry.get("description", ""),
-                "pubDate": entry.get("published", ""),
-                "audio": {
-                    "url": entry.get("enclosures", [{}])[0].get("href", ""),
-                    "type": entry.get("enclosures", [{}])[0].get("type", ""),
-                    "length": entry.get("enclosures", [{}])[0].get("length", ""),
-                },
-            }
-            episodes.append(episode)
-
-        return jsonify(
-            {
-                "title": title,
-                "description": description,
-                "imageUrl": image_url,
-                "episodes": episodes[:10],  # Limit to first 10 episodes
-            }
-        )
-
-    except Exception as e:
-        current_app.logger.error(f"Error fetching RSS feed: {e}")
-        return jsonify({"error": f"Error fetching RSS feed: {str(e)}"}), 500

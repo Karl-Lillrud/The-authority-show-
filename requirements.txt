@@ -8,9 +8,9 @@ click
 colorama
 dnspython
 durationpy
-Flask
-Flask-Cors
 feedparser
+Flask
+flask-cors
 google
 google-auth
 google-auth-oauthlib
@@ -46,6 +46,7 @@ requests
 requests-oauthlib
 rsa
 setuptools
+sgmllib3k
 shortuuid
 six
 soupsieve
