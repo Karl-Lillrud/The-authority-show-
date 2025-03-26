@@ -85,7 +85,7 @@ function displayPodcastDetails(podcast) {
   if (twitterEl) twitterEl.value = podcast.socialMedia?.[3] || "";
 
   const tiktokEl = document.getElementById("tiktok");
-  if (tiktokEl) twitterEl.value = podcast.socialMedia?.[4] || "";
+  if (tiktokEl) tiktokEl.value = podcast.socialMedia?.[4] || "";
 
   const pinterestEl = document.getElementById("pinterest");
   if (pinterestEl) pinterestEl.value = podcast.socialMedia?.[5] || "";
