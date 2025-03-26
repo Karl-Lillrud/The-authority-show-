@@ -277,27 +277,19 @@ Dashboard{% endblock %} {% block content %}
             required
           />
         </div>
+        <!-- Nya fält -->
+        <div class="field-group">
+          <label for="editMemberFullName">Full Name:</label>
+          <input type="text" id="editMemberFullName" class="form-control" />
+        </div>
+        <div class="field-group">
+          <label for="editMemberPhone">Phone:</label>
+          <input type="text" id="editMemberPhone" class="form-control" />
+        </div>
         <div class="field-group">
           <label for="editMemberRole">Select Role:</label>
           <select id="editMemberRole" class="form-control" required>
-            <option value="CoHost">CoHost</option>
-            <option value="Guest">Guest</option>
-            <option value="Scriptwriter">Scriptwriter</option>
-            <option value="Producer">Producer</option>
-            <option value="AudioEngineer">AudioEngineer</option>
-            <option value="SoundDesigner">SoundDesigner</option>
-            <option value="Researcher">Researcher</option>
-            <option value="GuestCoordinator">GuestCoordinator</option>
-            <option value="Showrunner">Showrunner</option>
-            <option value="SocialMediaManager">SocialMediaManager</option>
-            <option value="GraphicDesigner">GraphicDesigner</option>
-            <option value="Copywriter">Copywriter</option>
-            <option value="Publicist">Publicist</option>
-            <option value="SponsorshipManager">SponsorshipManager</option>
-            <option value="MarketingStrategist">MarketingStrategist</option>
-            <option value="AnalyticsSpecialist">AnalyticsSpecialist</option>
-            <option value="ShowCoordinator">ShowCoordinator</option>
-            <option value="Webmaster">Webmaster</option>
+            <!-- ...existing options... -->
           </select>
         </div>
       </div>
@@ -338,6 +330,23 @@ Dashboard{% endblock %} {% block content %}
             readonly
           />
         </div>
+        <!-- Nya fält -->
+        <div class="field-group">
+          <label for="teamCardEditMemberFullName">Full Name:</label>
+          <input
+            type="text"
+            id="teamCardEditMemberFullName"
+            class="form-control"
+          />
+        </div>
+        <div class="field-group">
+          <label for="teamCardEditMemberPhone">Phone:</label>
+          <input
+            type="text"
+            id="teamCardEditMemberPhone"
+            class="form-control"
+          />
+        </div>
         <div class="field-group">
           <label for="teamCardEditMemberRole">Role:</label>
           <select id="teamCardEditMemberRole" class="form-control" disabled>
@@ -357,7 +366,7 @@ Dashboard{% endblock %} {% block content %}
         <button type="button" id="teamCardEditMemberSaveBtn" class="save-btn">
           Save
         </button>
-        <!-- Use same delete button as in member cards -->
+        <!-- ...existing delete button... -->
         <button
           type="button"
           id="teamCardEditMemberDeleteBtn"

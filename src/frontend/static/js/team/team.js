@@ -840,15 +840,19 @@ function showTeamCardEditMemberModal(teamId, member) {
   const modal = document.getElementById("teamCardEditMemberModal");
   const emailInput = document.getElementById("teamCardEditMemberEmail");
   const roleSelect = document.getElementById("teamCardEditMemberRole");
+  const fullNameInput = document.getElementById("teamCardEditMemberFullName"); // Ny referens
+  const phoneInput = document.getElementById("teamCardEditMemberPhone"); // Ny referens
   const editBtn = document.getElementById("teamCardEditMemberEditBtn");
   const saveBtn = document.getElementById("teamCardEditMemberSaveBtn");
   const closeBtn = document.getElementById("teamCardEditMemberCloseBtn");
 
-  // Populate fields with member data
+  // Sätt in värden
   const originalEmail = member.email;
   emailInput.value = member.email;
+  fullNameInput.value = member.fullName || ""; // Visa full name om det finns
+  phoneInput.value = member.phone || ""; // Visa phone om det finns
 
-  // Populate role dropdown
+  // Sätt in rollalternativen och välj korrekt alternativ
   const roles = [
     "CoHost",
     "Guest",
@@ -878,7 +882,7 @@ function showTeamCardEditMemberModal(teamId, member) {
     )
     .join("");
 
-  // Handle help text
+  // Hantera hjälptext och initiala tillstånd
   let roleHelp = document.getElementById("teamCardEditMemberRoleHelpText");
   if (!roleHelp) {
     roleHelp = document.createElement("div");
@@ -888,54 +892,48 @@ function showTeamCardEditMemberModal(teamId, member) {
     roleHelp.style.marginLeft = "0.5cm";
     roleSelect.parentElement.appendChild(roleHelp);
   }
-
-  // Initial state: lock fields and set help text
   if (member.role === "creator") {
     roleHelp.textContent = "";
     roleSelect.disabled = true;
-    editBtn.style.display = "none"; // Hide Edit button
+    editBtn.style.display = "none";
   } else {
     roleHelp.textContent = !member.verified
       ? "The user must be verified before you can change roles."
       : "";
-    roleSelect.disabled = true; // Role field always locked initially
-    editBtn.style.display = "inline-block"; // Show Edit button
+    roleSelect.disabled = true;
+    editBtn.style.display = "inline-block";
   }
-
-  // Set initial state
   emailInput.readOnly = true;
   saveBtn.disabled = true;
 
-  // Show modal
+  // Visa modalen
   modal.classList.add("show");
   modal.setAttribute("aria-hidden", "false");
 
-  // Enable editing
+  // Aktivera redigering
   editBtn.onclick = () => {
-    emailInput.readOnly = false; // Unlock email field
+    emailInput.readOnly = false;
     if (member.verified) {
-      roleSelect.disabled = false; // Unlock role field only if verified
+      roleSelect.disabled = false;
     }
     saveBtn.disabled = false;
-    emailInput.style.backgroundColor = "";
-    roleSelect.style.backgroundColor = "";
   };
 
-  // Save changes using deleteMember logic
+  // Spara ändringarna inklusive full name och phone
   saveBtn.onclick = async () => {
     const newEmail = emailInput.value;
     const newRole = roleSelect.value;
+    const newFullName = fullNameInput.value; // Läs in uppdaterat full name
+    const newPhone = phoneInput.value; // Läs in uppdaterat phone
 
     if (!teamId || !newEmail || !newRole) {
       showNotification("Error", "Missing teamId, email, or role.", "error");
       return;
     }
-
-    // Stäng modalen omedelbart
     modal.classList.remove("show");
     modal.setAttribute("aria-hidden", "true");
 
-    // Ändra e-post
+    // Om e-post ändras, hantera som tidigare (borttagning + ny inbjudan)
     if (newEmail !== originalEmail) {
       showConfirmationPopup(
         "Change Email",
@@ -999,11 +997,21 @@ function showTeamCardEditMemberModal(teamId, member) {
       return;
     }
 
-    // Ändra roll eller ingen ändring
-    if (newRole !== member.role) {
+    // Om endast roll eller de extra fälten ändrats, skicka med uppdaterade värden
+    if (
+      newRole !== member.role ||
+      newFullName !== (member.fullName || "") ||
+      newPhone !== (member.phone || "")
+    ) {
       try {
         const result = member.userId
-          ? await editTeamMemberRequest(teamId, member.userId, newRole)
+          ? await editTeamMemberRequest(
+              teamId,
+              member.userId,
+              newRole,
+              newFullName,
+              newPhone
+            )
           : await editTeamMemberByEmailRequest(teamId, originalEmail, newRole);
         if (result.error) {
           showNotification(
@@ -1015,7 +1023,7 @@ function showTeamCardEditMemberModal(teamId, member) {
         }
         showNotification(
           "Success",
-          "Member role updated successfully!",
+          "Member details updated successfully!",
           "success"
         );
         const teams = await getTeamsRequest();
@@ -1030,18 +1038,15 @@ function showTeamCardEditMemberModal(teamId, member) {
         );
       }
     } else {
-      // Ingen ändring gjord
       showNotification("Info", "No changes were made.", "info");
     }
   };
 
-  // Eventlyssnare för att stänga modalen när "X" klickas
   closeBtn.onclick = () => {
     modal.classList.remove("show");
     modal.setAttribute("aria-hidden", "true");
   };
 
-  // Eventlyssnare för att stänga modalen när användaren klickar utanför den
   window.addEventListener("click", (event) => {
     if (event.target === modal) {
       modal.classList.remove("show");
@@ -1049,7 +1054,6 @@ function showTeamCardEditMemberModal(teamId, member) {
     }
   });
 
-  // Replace the current delete button event listener with the same as in member cards
   const deleteBtn = document.getElementById("teamCardEditMemberDeleteBtn");
   deleteBtn.addEventListener("click", () => {
     showConfirmationPopup(
