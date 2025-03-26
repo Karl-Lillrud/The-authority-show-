@@ -447,7 +447,6 @@ export function initEpisodeFunctions() {
         );
       }
     });
-
   // Close the episode form popup
   document
     .getElementById("close-episode-form-popup")
@@ -461,6 +460,29 @@ export function initEpisodeFunctions() {
     .addEventListener("click", () => {
       document.getElementById("episode-form-popup").style.display = "none";
     });
+    // Assuming you are getting the episode data from the backend or checking a condition
+function loadEpisodeDetails(episodeData) {
+  const episodeInput = document.getElementById("episode-id");
+
+  // Check if the episode is created
+  if (episodeData && episodeData.isCreated) {  // Replace with your actual condition to check if the episode is created
+    // Disable the input field and apply greyed-out styles
+    episodeInput.disabled = true;
+    episodeInput.style.backgroundColor = "#d3d3d3"; // Grey out the background
+    episodeInput.style.color = "#a9a9a9"; // Grey out the text
+  } else {
+    // Enable the input field if the episode is not created
+    episodeInput.disabled = false;
+    episodeInput.style.backgroundColor = ""; // Reset background color
+    episodeInput.style.color = ""; // Reset text color
+  }
+}
+
+// Example usage when the episode data is available
+const episodeData = {
+  isCreated: true  // Example flag, replace with actual check
+};
+loadEpisodeDetails(episodeData);
 
   // Episode form submission
   document
