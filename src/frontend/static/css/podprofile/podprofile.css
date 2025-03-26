@@ -131,7 +131,7 @@ main {
   border-radius: var(--border-radius-xl);
   border: 1px solid rgba(0, 0, 0, 0.2);
   box-shadow: 0px 0px 50px 0px rgb(213, 61, 6);
-  width: 460px;
+  width: 560px; /* Increased width by 100px */
   padding: var(--spacing-md); /* Reduced padding */
   margin: 0 auto; /* Center horizontally */
   height: auto; /* Adjust height dynamically */
@@ -418,10 +418,9 @@ body.dark-mode .help-button {
 
 /* NEW PODCAST SHOWCASE STYLES */
 .podcast-showcase {
-  width: 100%;
-  max-width: 1000px;
-  margin: 40px auto 0;
-  border-radius: 16px;
+  width: 560px; /* Increased width by 100px */
+  margin: var(--spacing-lg) auto 0; /* Center horizontally and add spacing above */
+  border-radius: var(--border-radius-xl);
   overflow: hidden;
   background-color: var(--card-bg-light);
   box-shadow: var(--card-shadow);
@@ -584,9 +583,8 @@ body.dark-mode .social-link {
 
 /* Episodes Carousel */
 .episodes-carousel-container {
-  width: 100%;
-  max-width: 1000px;
-  margin: 24px auto;
+  width: 560px; /* Increased width by 100px */
+  margin: var(--spacing-lg) auto; /* Center horizontally and add spacing */
 }
 
 .episodes-header {
@@ -604,7 +602,8 @@ body.dark-mode .social-link {
 
 .carousel-controls {
   display: flex;
-  gap: 12px;
+  justify-content: space-between;
+  margin-top: var(--spacing-sm);
 }
 
 .carousel-control {
@@ -630,8 +629,8 @@ body.dark-mode .social-link {
   display: flex;
   overflow-x: auto;
   scroll-behavior: smooth;
-  gap: 20px;
-  padding: 8px 4px 24px;
+  gap: 0; /* Remove gap between slides */
+  padding: 0; /* Remove padding */
   scrollbar-width: none; /* Firefox */
   -ms-overflow-style: none; /* IE and Edge */
 }
@@ -641,7 +640,7 @@ body.dark-mode .social-link {
 }
 
 .episode-card {
-  flex: 0 0 300px;
+  flex: 0 0 100%; /* Ensure each card takes up 100% of the slider width */
   border-radius: 12px;
   overflow: hidden;
   background-color: var(--card-bg-light);
@@ -939,4 +938,8 @@ body.dark-mode .error-container {
   .episode-card {
     flex: 0 0 85%;
   }
+}
+
+#connectCalendar {
+  margin-bottom: calc(var(--spacing-md) + 50px); /* Add 50px extra space below the button */
 }

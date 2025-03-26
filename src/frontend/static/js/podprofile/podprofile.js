@@ -509,20 +509,20 @@ document.addEventListener("DOMContentLoaded", () => {
   function setupCarouselNavigation() {
     if (!prevEpisodesBtn || !nextEpisodesBtn || !episodesSlider) return;
 
-    // Scroll amount (width of one episode card + gap)
-    const scrollAmount = 320; // 300px card width + 20px gap
+    // Scroll amount (width of one episode card)
+    const scrollAmount = episodesSlider.offsetWidth; // Use the slider's width to ensure one full card is shown
 
     prevEpisodesBtn.addEventListener("click", () => {
       episodesSlider.scrollBy({
         left: -scrollAmount,
-        behavior: "smooth"
+        behavior: "smooth",
       });
     });
 
     nextEpisodesBtn.addEventListener("click", () => {
       episodesSlider.scrollBy({
         left: scrollAmount,
-        behavior: "smooth"
+        behavior: "smooth",
       });
     });
   }
