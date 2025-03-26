@@ -29,6 +29,9 @@ from backend.database.mongo_connection import collection
 from backend.utils.email_utils import send_email
 from backend.routes.Mailing_list import Mailing_list_bp
 from backend.routes.user import user_bp
+from backend.routes.highlight import highlights_bp
+
+
 
 
 if os.getenv("SKIP_VENV_UPDATE", "false").lower() not in ("true", "1", "yes"):
