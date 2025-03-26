@@ -190,6 +190,14 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
+  // Calendar Connection Button
+  const connectCalendarButton = document.getElementById("connectCalendar");
+  if (connectCalendarButton) {
+    connectCalendarButton.addEventListener("click", () => {
+      window.location.href = "/connect_calendar";
+    });
+  }
+
   // Function to display podcast preview with enhanced UI
   function displayPodcastPreview(rssData) {
     if (!podcastPreviewContainer) return;
