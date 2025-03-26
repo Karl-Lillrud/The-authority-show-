@@ -10,12 +10,15 @@
 
 <body>
     <div class="container">
-        <!-- 🔹 Add the PodManager Logo -->
+        <!-- Add the PodManager Logo -->
         <img src="{{ url_for('static', filename='images/PodManagerLogo.png') }}" alt="PodManager Logo"
             class="team-logo">
 
-        <h1>Join {{ team_name }}</h1>
-        <p class="form-description">Complete your registration to join the team</p>
+        <h1>Join <span class="teamName">a team</span></h1>
+        <p class="form-description">
+            Complete your registration to join <span class="teamName">a team</span> as <span id="teamRole">a
+                Member</span>.
+        </p>
 
         <form id="registerTeamMemberForm" method="POST">
             <div class="form-group">
@@ -25,10 +28,10 @@
 
             <div class="form-group">
                 <label for="email">Email Address</label>
-                <input type="email" id="email" name="email" value="{{ email }}" {% if email %}readonly{% endif %}
-                    required>
-                <div class="form-hint">This email address was used for your invitation</div>
+                <input type="email" id="email" name="email" required>
+                <div class="form-hint">Use the email address associated with your invitation</div>
             </div>
+
 
             <div class="form-group">
                 <label for="phone">Phone Number</label>
@@ -39,8 +42,7 @@
                 <label for="password">Password</label>
                 <input type="password" id="password" name="password" required>
                 <span class="toggle-password" data-target="password">Show</span>
-                <div class="form-hint">Must be at least 8 characters with numbers, uppercase, and lowercase letters.
-                </div>
+                <div class="form-hint">Must be at least 8 characters with numbers and letters.</div>
             </div>
 
             <div class="form-group password-container">
@@ -63,7 +65,6 @@
 
     <!-- Load scripts -->
     <script src="{{ url_for('static', filename='js/team/registerTeamMember.js') }}" type="module"></script>
-
 </body>
 
 </html>

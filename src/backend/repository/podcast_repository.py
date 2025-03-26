@@ -82,9 +82,6 @@ class PodcastRepository:
                 "description": validated_data.get("description"),
                 "logoUrl": validated_data.get("logoUrl"),
                 "category": validated_data.get("category", ""),  # Fixed field
-                "defaultTasks": validated_data.get(
-                    "defaultTasks", ""
-                ),  # Empty string if not provided
                 "created_at": datetime.now(timezone.utc),
                 "title": validated_data.get("title", ""),  # Added field
                 "language": validated_data.get("language", ""),  # Added field
@@ -380,3 +377,16 @@ class PodcastRepository:
 
         except Exception as e:
             return {"error": f"Error fetching RSS feed: {str(e)}"}, 500
+
+    # Delete podcast associated with user when user account is deleted
+    def delete_by_user(self, user_id):
+        try:
+            accounts = list(collection.database.Accounts.find({"userId": user_id}))
+            account_ids = [str(a.get("id", a["_id"])) for a in accounts]
+            result = self.collection.delete_many({"accountId": {"$in": account_ids}})
+            logger.info(f"🧹 Deleted {result.deleted_count} podcasts for user {user_id}")
+            return result.deleted_count
+        except Exception as e:
+            logger.error(f"Failed to delete podcasts: {e}", exc_info=True)
+            return 0
+
