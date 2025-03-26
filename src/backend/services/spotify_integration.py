@@ -61,51 +61,32 @@ def get_spotify_access_token():
 
 def upload_episode_to_spotify(access_token, episode):
     """
-    Upload the episode to Spotify using the provided access token.
+    Submit the RSS feed URL to Spotify for the podcast.
     """
-    # Correct Spotify API endpoint for uploading episodes
-    spotify_api_url = f"https://api.spotify.com/v1/shows/{episode['podcast_id']}/episodes"  # Verify this endpoint
+    # Ensure the show ID is present in the episode data
+    show_id = episode.get('podcast_id')  # Correct way to get the podcast_id from episode
+    if not show_id:
+        logger.error("Podcast ID (show ID) is missing in the episode data.")
+        return False
+
+    # Correct Spotify API endpoint for submitting RSS feed
+    spotify_api_url = f"https://api.spotify.com/v1/shows/{show_id}/rss"
+    logger.info(f"Submitting RSS feed to Spotify using URL: {spotify_api_url}")  # Debugging line
 
     headers = {
         "Authorization": f"Bearer {access_token}",
         "Content-Type": "application/json"
     }
 
-    # Ensure audioUrl is valid and publicly accessible
-    audio_url = episode.get('audioUrl')
-    if not audio_url:
-        logger.error("Audio URL is missing in the episode data.")
+    # Ensure the RSS feed URL is valid
+    rss_feed_url = episode.get('rss_feed_url')
+    if not rss_feed_url:
+        logger.error("RSS feed URL is missing in the episode data.")
         return False
 
-    # Make sure the audio URL is a full URL and publicly accessible
-    if not audio_url.startswith('http://') and not audio_url.startswith('https://'):
-        audio_url = f"http://127.0.0.1:5000{audio_url}"
-    logger.info(f"Using audio URL: {audio_url}")
-
-    # Episode data should include the correct fields
-    episode_data = {
-        "name": episode['title'],
-        "description": episode['description'],
-        "audio_url": audio_url,  # Ensure this URL is publicly accessible
-        "publish_date": episode['publishDate'].isoformat() if episode.get('publishDate') else None,
-        "duration_ms": episode['duration'] * 1000 if episode.get('duration') else 0,  # Ensure duration is in milliseconds
-    }
-
-    logger.info(f"Uploading episode to Spotify with data: {episode_data}")
-
-    try:
-        # Use POST or PUT based on Spotify API documentation
-        response = requests.post(spotify_api_url, headers=headers, json=episode_data)
-
-        if response.status_code == 201:
-            logger.info("Episode uploaded successfully to Spotify.")
-            return True
-        else:
-            logger.error(f"Error uploading episode to Spotify: {response.status_code} - {response.text}")
-            return False
-    except Exception as e:
-        logger.error(f"Exception occurred while uploading episode to Spotify: {e}")
-        return False
+    logger.info("Spotify does not provide an API for RSS feed submission.")
+    logger.info(f"Please submit the RSS feed URL manually via Spotify for Podcasters: {rss_feed_url}")
+    return False
 
 def save_uploaded_files(files):
     """
@@ -131,8 +112,10 @@ def save_uploaded_files(files):
                 # Construct the public URL
                 file_url = f"{os.getenv('CLOUDFLARE_R2_BUCKET_URL')}/{filename}"
                 saved_files.append({"filename": filename, "url": file_url})
+                logger.info(f"File uploaded successfully: {file_url}")
             except Exception as e:
                 logger.error(f"Failed to upload file {filename}: {e}")
+                logger.error(f"Error details: {e}")
     return saved_files
 
 def allowed_file(filename):

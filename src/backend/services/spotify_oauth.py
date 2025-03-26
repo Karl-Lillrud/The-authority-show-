@@ -1,84 +1,164 @@
-import os
-import base64
 import requests
+import base64
+import os
+import boto3
+from werkzeug.utils import secure_filename
+import logging
 from dotenv import load_dotenv
-from flask import redirect, url_for, request
+from flask import Blueprint, redirect, send_file, abort, request
+from bson.objectid import ObjectId
+import io  # Add this import for BytesIO
 
+
+# Load environment variables
 load_dotenv()
 
-# Spotify Configuration from .env file
-SPOTIFY_CLIENT_ID = os.getenv("SPOTIFY_CLIENT_ID")
-SPOTIFY_CLIENT_SECRET = os.getenv("SPOTIFY_CLIENT_SECRET")
-SPOTIFY_REDIRECT_URI = os.getenv("SPOTIFY_REDIRECT_URI")
-SPOTIFY_REFRESH_TOKEN = os.getenv("SPOTIFY_REFRESH_TOKEN")
+# Set up logging
+logger = logging.getLogger(__name__)
+
+# Initialize R2 client (AWS S3-compatible)
+s3 = boto3.client(
+    's3',
+    endpoint_url='https://8dd08def3e3e74358dcbf2fec09bf125.r2.cloudflarestorage.com',  # Correct Cloudflare R2 endpoint URL
+    aws_access_key_id=os.getenv('CLOUDFLARE_R2_ACCESS_KEY'),  # R2 Access Key
+    aws_secret_access_key=os.getenv('CLOUDFLARE_R2_SECRET_KEY'),  # R2 Secret Key
+)
+
+# Get the upload folder path from environment variables
+UPLOAD_FOLDER = os.getenv('UPLOAD_FOLDER', 'uploads')  # Default is 'uploads'
 
 def get_spotify_access_token():
     """
     Get a fresh access token using the refresh token stored in .env
     """
-    url = "https://accounts.spotify.com/api/token"
-    auth_header = base64.b64encode(f"{SPOTIFY_CLIENT_ID}:{SPOTIFY_CLIENT_SECRET}".encode()).decode()
+    # Retrieve Spotify credentials from .env
+    client_id = os.getenv('SPOTIFY_CLIENT_ID')
+    client_secret = os.getenv('SPOTIFY_CLIENT_SECRET')
+    refresh_token = os.getenv('SPOTIFY_REFRESH_TOKEN')
+
+    # Prepare the request for the Spotify token endpoint
+    token_url = 'https://accounts.spotify.com/api/token'
     headers = {
-        "Authorization": f"Basic {auth_header}",
-        "Content-Type": "application/x-www-form-urlencoded",
+        'Authorization': f'Basic {base64.b64encode(f"{client_id}:{client_secret}".encode()).decode()}',
+        'Content-Type': 'application/x-www-form-urlencoded'
     }
-
     data = {
-        "grant_type": "refresh_token",
-        "refresh_token": SPOTIFY_REFRESH_TOKEN,
+        'grant_type': 'refresh_token',
+        'refresh_token': refresh_token
     }
 
-    response = requests.post(url, headers=headers, data=data)
+    # Make the POST request to get the access token
+    response = requests.post(token_url, headers=headers, data=data)
     
+    # Check if the request was successful
     if response.status_code == 200:
-        access_token = response.json().get("access_token")
+        access_token = response.json().get('access_token')
+        logger.info(f"Spotify access token retrieved successfully: {access_token[:10]}...")  # Log partial token
         return access_token
     else:
-        print(f"Failed to get access token: {response.status_code}")
+        logger.error(f"Failed to retrieve Spotify access token: {response.status_code} - {response.text}")
         return None
 
-def handle_spotify_oauth_callback(request):
+def upload_episode_to_spotify(access_token, episode):
     """
-    Handle the Spotify OAuth callback and exchange the code for tokens.
+    Submit the RSS feed URL to Spotify for the podcast.
     """
-    code = request.args.get("code")
-    
-    if code:
-        access_token, refresh_token = exchange_code_for_tokens(code)
-        
-        if access_token and refresh_token:
-            # Save tokens securely and store them in session or database
-            print("Successfully authenticated with Spotify.")
-            return redirect(url_for('your_next_route'))  # Replace with your next route
-        else:
-            print("Failed to exchange authorization code for tokens.")
-            return {"error": "Failed to exchange authorization code for tokens."}
-    else:
-        return {"error": "No code provided."}
+    # Ensure the show ID is present in the episode data
+    show_id = episode.get('podcast_id')  # Correct way to get the podcast_id from episode
+    if not show_id:
+        logger.error("Podcast ID (show ID) is missing in the episode data.")
+        return False
 
-def exchange_code_for_tokens(code):
-    """
-    Exchange authorization code for access and refresh tokens
-    """
-    url = "https://accounts.spotify.com/api/token"
-    auth_header = base64.b64encode(f"{SPOTIFY_CLIENT_ID}:{SPOTIFY_CLIENT_SECRET}".encode()).decode()
+    # Correct Spotify API endpoint for submitting RSS feed
+    spotify_api_url = f"https://api.spotify.com/v1/shows/{show_id}/rss"
+    logger.info(f"Submitting RSS feed to Spotify using URL: {spotify_api_url}")  # Debugging line
+
     headers = {
-        "Authorization": f"Basic {auth_header}",
-        "Content-Type": "application/x-www-form-urlencoded",
-    }
-    
-    data = {
-        "grant_type": "authorization_code",
-        "code": code,
-        "redirect_uri": SPOTIFY_REDIRECT_URI,
+        "Authorization": f"Bearer {access_token}",
+        "Content-Type": "application/json"
     }
 
-    response = requests.post(url, headers=headers, data=data)
-    
-    if response.status_code == 200:
-        tokens = response.json()
-        access_token = tokens.get("access_token")
-        refresh_token = tokens.get("refresh_token")
-        os.environ["SPOTIFY_REFRESH_TOKEN"] = refresh_token  # Save refresh token securely
-        return access_token, refresh_token
-    return None, None
+    # Ensure the RSS feed URL is valid
+    rss_feed_url = episode.get('rss_feed_url')
+    if not rss_feed_url:
+        logger.error("RSS feed URL is missing in the episode data.")
+        return False
+
+    # Payload for submitting the RSS feed
+    payload = {
+        "rss_feed": rss_feed_url
+    }
+
+    logger.info(f"Submitting RSS feed to Spotify with data: {payload}")
+
+    try:
+        # Use POST to submit the RSS feed
+        response = requests.post(spotify_api_url, headers=headers, json=payload)
+
+        if response.status_code == 201:
+            logger.info("RSS feed submitted successfully to Spotify.")
+            return True
+        else:
+            try:
+                # Attempt to parse the response JSON for detailed error information
+                error_details = response.json()
+                logger.error(f"Error submitting RSS feed to Spotify: {response.status_code} - {error_details}")
+            except ValueError:
+                # Log the raw response body if it is not JSON
+                logger.error(f"Error submitting RSS feed to Spotify: {response.status_code} - Raw response: {response.text}")
+            return False
+    except Exception as e:
+        logger.error(f"Exception occurred while submitting RSS feed to Spotify: {e}", exc_info=True)
+        return False
+
+def save_uploaded_files(files):
+    """
+    Save uploaded files to Cloudflare R2 and generate URLs for them.
+    """
+    saved_files = []
+    for file in files:
+        logger.info(f"Processing file: {file.filename}")  # Log file name
+        if file and allowed_file(file.filename):
+            filename = secure_filename(file.filename)
+            try:
+                # Wrap the file in a BytesIO buffer to ensure it remains open
+                file_buffer = io.BytesIO(file.read())
+                file_buffer.seek(0)  # Reset the buffer pointer to the beginning
+
+                # Upload to Cloudflare R2 (equivalent of AWS S3)
+                s3.upload_fileobj(
+                    file_buffer,
+                    os.getenv('CLOUDFLARE_R2_BUCKET_NAME'),  # Use the correct bucket name
+                    filename,
+                    ExtraArgs={'ACL': 'public-read'}  # Ensure the file is publicly accessible
+                )
+                # Construct the public URL
+                file_url = f"{os.getenv('CLOUDFLARE_R2_BUCKET_URL')}/{filename}"
+                saved_files.append({"filename": filename, "url": file_url})
+            except Exception as e:
+                logger.error(f"Failed to upload file {filename}: {e}")
+    return saved_files
+
+def allowed_file(filename):
+    """
+    Check if the uploaded file is of an allowed type (mp3, mp4).
+    """
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() in {'mp3', 'mp4'}
+
+file_bp = Blueprint("file_bp", __name__)
+# Flask Blueprint to handle file serving
+file_bp = Blueprint("file_bp", __name__)
+
+# Route to serve the file from Cloudflare R2 (publicly accessible)
+@file_bp.route("/files/<filename>", methods=["GET"])
+def serve_file(filename):
+    """
+    Serve the file stored in Cloudflare R2 for public access.
+    """
+    try:
+        # Construct the public URL
+        file_url = f"https://<account_id>.r2.cloudflarestorage.com/mediastorage/{filename}"
+        return redirect(file_url)
+    except Exception as e:
+        logger.error(f"Failed to fetch file: {e}")
+        abort(404)  # Return a 404 if the file is not found

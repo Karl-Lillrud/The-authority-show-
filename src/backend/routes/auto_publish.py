@@ -1,9 +1,8 @@
 from flask import Blueprint, jsonify, g
 from backend.repository.episode_repository import EpisodeRepository
-from backend.services.spotify_integration import get_spotify_access_token
-from backend.services.submit_rss_to_spotify import submit_rss_to_spotify  # Import the submit_rss_to_spotify function
+from backend.services.spotify_integration import get_spotify_access_token, upload_episode_to_spotify
 from backend.services.generate_rss_feed import create_rss_feed
-from backend.services.upload_rss_to_cloudflare import upload_rss_to_cloudflare  # Import the upload function
+from backend.services.upload_rss_to_cloudflare import upload_rss_to_cloudflare
 import logging
 
 auto_publish_bp = Blueprint('auto_publish_bp', __name__)
@@ -12,6 +11,9 @@ logger = logging.getLogger(__name__)
 
 @auto_publish_bp.route('/auto_publish/<episode_id>', methods=['POST'])
 def auto_publish(episode_id):
+    """
+    Automatically publish an episode by generating and uploading an RSS feed.
+    """
     logger.info(f"Received request to publish episode {episode_id}")
 
     if not hasattr(g, "user_id") or not g.user_id:
@@ -30,41 +32,44 @@ def auto_publish(episode_id):
 
         # Generate RSS Feed
         podcast_data = {
-            "title": episode['podcast_title'],
-            "description": episode['podcast_description'],
-            "link": episode['podcast_link']
+            "title": episode.get('podcast_title', 'Untitled Podcast'),
+            "description": episode.get('podcast_description', 'No description available'),
+            "link": episode.get('podcast_link', '#')
         }
         episode_data = [{
-            "title": episode['title'],
-            "description": episode['description'],
-            "audio_url": episode['audio_url'],  # Include the audio URL of the episode
-            "publish_date": episode['publishDate'],
-            "guid": episode['guid']
+            "title": episode.get('title', 'Untitled Episode'),
+            "description": episode.get('description', 'No description available'),
+            "audio_url": episode.get('audio_url'),
+            "publish_date": episode.get('publishDate'),
+            "guid": episode.get('guid', episode_id)
         }]
-        
-        # Generate the RSS feed
         rss_feed = create_rss_feed(podcast_data, episode_data)
 
         # Upload the RSS feed to Cloudflare R2
         rss_feed_url = upload_rss_to_cloudflare(rss_feed, f"{episode_id}_feed.xml")
         logger.info(f"RSS feed uploaded to Cloudflare R2: {rss_feed_url}")
 
-        # Now submit the RSS feed URL to Spotify (not the raw audio file)
-        result = submit_rss_to_spotify(access_token, rss_feed_url)
+        # Add the RSS feed URL to the episode data
+        episode['rss_feed_url'] = rss_feed_url
 
+        # Submit the RSS feed URL to Spotify
+        result = upload_episode_to_spotify(access_token, episode)
         if result:
             return jsonify({"message": "Episode published successfully to Spotify!"}), 200
         else:
             logger.error("Failed to upload RSS feed to Spotify")
             return jsonify({"error": "Failed to upload RSS feed to Spotify"}), 400
     except Exception as e:
-        logger.error(f"Error publishing to
+        logger.error(f"Error publishing episode {episode_id} to Spotify: {e}", exc_info=True)
+        return jsonify({"error": "Failed to publish episode"}), 500
 
 @auto_publish_bp.route('/publish_to_spotify/<episode_id>', methods=['POST'])
 def publish_to_spotify(episode_id):
     """
     Publish an episode to Spotify.
     """
+    logger.info(f"Received request to publish episode {episode_id}")
+
     try:
         episode = episode_repo.get_episode_by_id(episode_id)
         if not episode:
@@ -74,11 +79,35 @@ def publish_to_spotify(episode_id):
         if not access_token:
             return jsonify({"error": "Failed to retrieve Spotify access token"}), 500
 
+        # Generate RSS feed and upload it to Cloudflare R2
+        podcast_data = {
+            "title": episode.get('podcast_title', 'Untitled Podcast'),
+            "description": episode.get('podcast_description', 'No description available'),
+            "link": episode.get('podcast_link', '#')
+        }
+        episode_data = [{
+            "title": episode.get('title', 'Untitled Episode'),
+            "description": episode.get('description', 'No description available'),
+            "audio_url": episode.get('audio_url'),
+            "publish_date": episode.get('publishDate'),
+            "guid": episode.get('guid', episode_id)
+        }]
+        rss_feed = create_rss_feed(podcast_data, episode_data)
+
+        # Upload the RSS feed to Cloudflare R2
+        rss_feed_url = upload_rss_to_cloudflare(rss_feed, f"{episode_id}_feed.xml")
+        logger.info(f"RSS feed uploaded to Cloudflare R2: {rss_feed_url}")
+
+        # Add the RSS feed URL to the episode data
+        episode['rss_feed_url'] = rss_feed_url
+
+        # Submit the RSS feed URL to Spotify
         result = upload_episode_to_spotify(access_token, episode)
         if result:
             return jsonify({"message": "Episode published successfully to Spotify!"}), 200
         else:
-            return jsonify({"error": "Failed to publish episode to Spotify"}), 400
+            logger.error("Failed to upload RSS feed to Spotify")
+            return jsonify({"error": "Failed to upload RSS feed to Spotify"}), 400
     except Exception as e:
-        logger.error(f"Error publishing episode {episode_id} to Spotify: {e}")
+        logger.error(f"Error publishing episode {episode_id} to Spotify: {e}", exc_info=True)
         return jsonify({"error": "Failed to publish episode"}), 500
