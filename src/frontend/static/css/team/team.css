@@ -1013,3 +1013,10 @@ body {
   transform: translateY(-2px);
   box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
 }
+
+.team-card .members-section div {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px; /* Horizontal and vertical spacing between members */
+  row-gap: 12px; /* Specifically increase vertical spacing */
+}
