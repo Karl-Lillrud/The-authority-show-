@@ -7,14 +7,14 @@ from backend.routes.forgot_pass import forgotpass_bp
 from backend.routes.podcast import podcast_bp  # Import the podcast blueprint
 from backend.routes.dashboard import dashboard_bp
 from backend.routes.pod_management import pod_management_bp
-from backend.routes.podtask import register_podtask_routes  # Import the registration function
+from backend.routes.podtask import podtask_bp
 from backend.routes.account import account_bp
 from backend.routes.team import team_bp
 from backend.routes.guest import guest_bp
 from backend.routes.user_to_team import usertoteam_bp
 from backend.routes.invitation import invitation_bp
 from backend.routes.google_calendar import google_calendar_bp
-from backend.routes.episode import register_episode_routes  # Import the registration function
+from backend.routes.episode import episode_bp
 from backend.routes.podprofile import podprofile_bp  # Import the podprofile blueprint
 from backend.routes.frontend import frontend_bp  # Import the frontend blueprint
 from backend.routes.guestpage import guestpage_bp
@@ -73,20 +73,27 @@ app.register_blueprint(forgotpass_bp)
 app.register_blueprint(podcast_bp)  # Register the podcast blueprint
 app.register_blueprint(dashboard_bp)
 app.register_blueprint(pod_management_bp)
-register_podtask_routes(app)  # Register the podtask routes
+app.register_blueprint(podtask_bp)
 app.register_blueprint(team_bp)
 app.register_blueprint(Mailing_list_bp)
-app.register_blueprint(guest_bp)  # Ensure this line is present and has the correct prefix
+app.register_blueprint(
+    guest_bp
+)  # Ensure this line is present and has the correct prefix
+app.register_blueprint(guestpage_bp)
 app.register_blueprint(account_bp)
 app.register_blueprint(usertoteam_bp)
 app.register_blueprint(invitation_bp)
 app.register_blueprint(google_calendar_bp)
-register_episode_routes(app)  # Register the episode routes
+app.register_blueprint(episode_bp)
 app.register_blueprint(podprofile_bp)  # Register the podprofile blueprint
 app.register_blueprint(frontend_bp)  # Register the frontend blueprint
 app.register_blueprint(guesttoepisode_bp)
-app.register_blueprint(guest_form_bp, url_prefix="/guest-form")  # Register the guest_form blueprint with URL prefix
+app.register_blueprint(
+    guest_form_bp, url_prefix="/guest-form"
+)  # Register the guest_form blueprint with URL prefix
 # app.register_blueprint(transcription_bp)
+
+# Register the guest_form blueprint with URL prefix
 
 app.register_blueprint(landingpage_bp)
 
