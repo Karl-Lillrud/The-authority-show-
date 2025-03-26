@@ -48,12 +48,14 @@ document.addEventListener("DOMContentLoaded", () => {
     })
 
   // Toggle submenu visibility
-  document.querySelectorAll('.sidebar-item[data-toggle="submenu"]').forEach((item) => {
+  document.querySelectorAll('.sidebar-item').forEach((item) => {
     item.addEventListener("click", function () {
       const submenu = this.nextElementSibling
       const allSubmenus = document.querySelectorAll(".submenu")
       const allToggleItems = document.querySelectorAll('.sidebar-item[data-toggle="submenu"]')
-
+      document.querySelectorAll(".sidebar-item").forEach(sidebarItem => {
+        sidebarItem.classList.remove('active');
+      });
       // Toggle active state for the clicked item
       this.classList.toggle("active")
 
@@ -81,6 +83,7 @@ document.addEventListener("DOMContentLoaded", () => {
         submenu.style.display = "block"
         document.getElementById("back-to-main-menu").style.display = "flex"
       }
+      
     })
   })
 
@@ -94,7 +97,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
       // Add active class to clicked item
       this.classList.add("active")
-
       // Hide all sections
       document.querySelectorAll(".settings-section").forEach((section) => {
         section.classList.remove("active")
@@ -233,12 +235,27 @@ document.addEventListener("DOMContentLoaded", () => {
     uploadButton.style.display = isEditMode ? 'inline-block' : 'none';
     profilePicOverlay.style.display = isEditMode ? 'flex' : 'none';
   
+    // Change the visibility of the required asterix depending on edit mode or not
     const formGroups = profileSection.querySelectorAll(".form-group");
     formGroups.forEach(group => {
       const requiredSpan = group.querySelector(".required");
       if (requiredSpan) {
         requiredSpan.style.display = isEditMode && group.querySelector("input").value === "" ? 'inline' : 'none';
       }
+    });
+
+    formFields.forEach(field => {
+      field.addEventListener("input", () => {
+        formGroups.forEach(group => {
+          const requiredSpan = group.querySelector(".required");
+          const inputField = group.querySelector("input");
+          
+          // Check if the field is empty and update asterisk visibility
+          if (requiredSpan && inputField) {
+            requiredSpan.style.display = isEditMode && inputField.value === "" ? 'inline' : 'none';
+          }
+        });
+      });
     });
   }
   
