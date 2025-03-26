@@ -1361,59 +1361,91 @@ body {
   }
 }
 
-@media (max-width: 350px) {
+/* Uppdaterade badge-storlekar i grundstilen (oförändrad från tidigare) */
+.creator-badge,
+.verified-badge,
+.not-verified-badge,
+.role-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  padding: 3px 6px;
+  font-size: 0.7rem;
+  font-weight: 600;
+  border-radius: 12px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1),
+    inset 0 1px 1px rgba(255, 255, 255, 0.5),
+    inset 0 -1px 1px rgba(0, 0, 0, 0.05);
+}
+
+.creator-badge::before,
+.verified-badge::before,
+.not-verified-badge::before {
+  width: 8px;
+  height: 8px;
+}
+
+/* Media query från 500px */
+@media (max-width: 500px) {
   :root {
-    --spacing-lg: 15px;
-    --spacing-md: 10px;
-    --spacing-sm: 8px;
-    --spacing-xs: 4px;
-    --radius-large: 12px;
-    --radius-medium: 8px;
-    --radius-small: 4px;
+    --spacing-lg: 20px;
+    --spacing-md: 15px;
+    --spacing-sm: 10px;
+    --spacing-xs: 5px;
+    --radius-large: 16px;
+    --radius-medium: 10px;
+    --radius-small: 6px;
   }
 
   .main-content {
-    padding: var(--spacing-xs);
-    height: calc(100vh - var(--header-height)); /* Behåller scroll */
-  }
-
-  .main-header {
-    gap: var(--spacing-xs);
-  }
-
-  .main-header h1 {
-    font-size: 1.2rem;
+    padding: var(--spacing-sm);
+    margin-left: 0;
+    height: calc(100vh - var(--header-height));
   }
 
   .card-container {
-    gap: var(--spacing-sm);
-    padding-bottom: var(--spacing-sm);
+    gap: var(--spacing-md);
+    padding-bottom: var(--spacing-md);
   }
 
+  /* Team Card */
   .team-card {
-    padding: var(--spacing-xs);
+    padding: var(--spacing-sm);
+    min-width: 0;
+    border-radius: var(--radius-medium);
   }
 
   .team-card-header {
-    padding: var(--spacing-xs);
+    padding: var(--spacing-sm);
+    gap: var(--spacing-xs);
+    flex-direction: column;
+    align-items: flex-start;
   }
 
   .team-card-header h2 {
-    font-size: 1rem;
+    font-size: 1.2rem;
+    word-break: break-word;
   }
 
+  /* Minskad textstorlek för e-post högst upp */
   .team-card-header p {
-    font-size: 0.75rem;
+    font-size: 0.75rem; /* Minskad från 0.95rem */
   }
 
   .team-card-body {
-    padding: var(--spacing-xs);
-    gap: var(--spacing-xs);
+    padding: var(--spacing-sm);
+    gap: var(--spacing-sm);
+    grid-template-columns: 1fr;
   }
 
   .team-card-body p {
-    font-size: 0.75rem;
+    font-size: 0.85rem;
     gap: 6px;
+    flex-wrap: wrap;
+  }
+
+  .team-card-body p:nth-child(2) {
+    font-size: 0.75rem;
   }
 
   .team-card-body p::before {
@@ -1422,124 +1454,40 @@ body {
   }
 
   .team-card .edit-icon-btn {
-    width: 28px;
-    height: 28px;
-    padding: 4px;
-    top: var(--spacing-xs);
-    right: var(--spacing-xs);
+    width: 32px;
+    height: 32px;
+    padding: 6px;
   }
 
-  .team-card .edit-icon-btn::after {
-    font-size: 10px;
-    bottom: -25px;
-    padding: 4px 8px;
-  }
-
-  .form-box {
-    width: 98%;
+  /* Member Card */
+  .member-card {
     padding: var(--spacing-sm);
+    min-width: 0;
     border-radius: var(--radius-medium);
   }
 
-  .form-title {
-    font-size: 1.3rem;
+  .member-card-header {
+    padding: var(--spacing-sm);
     margin-bottom: var(--spacing-sm);
-  }
-
-  .form-title::after {
-    width: 40px;
-    height: 2px;
-  }
-
-  .field-group {
-    margin-bottom: var(--spacing-sm);
-  }
-
-  .field-group label {
-    font-size: 0.8rem;
-    padding-left: 8px;
-  }
-
-  .field-group label::before {
-    width: 3px;
-    height: 12px;
-  }
-
-  .field-group input,
-  .field-group select,
-  .field-group textarea {
-    padding: 8px 12px;
-    font-size: 0.8rem;
-    border-radius: var (--radius-small);
-  }
-
-  .form-actions {
+    flex-direction: column;
+    align-items: flex-start;
     gap: var(--spacing-xs);
   }
 
-  .save-btn,
-  .cancel-btn,
-  .delete-btn {
-    padding: 6px 12px;
-    font-size: 0.8rem;
-  }
-
-  .save-btn::before,
-  .cancel-btn::before,
-  .delete-member-btn::before {
-    width: 14px;
-    height: 14px;
-  }
-
-  .delete-btn {
-    width: 32px;
-    height: 32px;
-  }
-
-  .member-chip,
-  .podcast-chip {
-    padding: 3px 5px;
-    font-size: 0.6rem;
-    gap: 2px;
-  }
-
-  .podcast-chip::before {
-    width: 10px;
-    height: 10px;
-  }
-
-  .remove-chip {
-    width: 14px;
-    height: 14px;
-  }
-
-  .creator-badge,
-  .verified-badge,
-  .not-verified-badge,
-  .role-badge {
-    padding: 1px 3px;
-    font-size: 0.55rem;
-    gap: 2px;
-    border-radius: 12px;
-  }
-
-  .creator-badge::before,
-  .verified-badge::before,
-  .not-verified-badge::before {
-    width: 5px;
-    height: 5px;
-  }
-
-  .member-card {
-    padding: var(--spacing-xs);
-  }
-
-  .member-card-header {
-    margin-bottom: var(--spacing-xs);
-  }
-
   .member-card-header h3 {
-    font-size: 0.9rem;
+    font-size: 1.1rem;
+    word-break: break-word;
+  }
+
+  /* Om e-post visas som separat p i headern */
+  .member-card-header p {
+    font-size: 0.75rem; /* Lägger till om det finns */
+  }
+
+  /* Om e-post är del av h3 (t.ex. efter namn) */
+  .member-card-header h3 span.email {
+    /* Kräver att du lägger till <span class="email"> runt e-post i HTML */
+    font-size: 0.75rem;
   }
 
   .member-card-header h3::before {
@@ -1548,54 +1496,440 @@ body {
   }
 
   .member-card .edit-icon-btn {
-    width: 24px;
-    height: 24px;
-    padding: 3px;
-    top: var(--spacing-xs);
-    right: var(--spacing-xs);
+    width: 32px;
+    height: 32px;
+    padding: 6px;
+    position: static;
+    margin-left: auto;
   }
 
-  .member-card .edit-icon-btn::after {
-    font-size: 9px;
-    bottom: -20px;
-    padding: 3px 6px;
+  .member-card-body {
+    gap: var(--spacing-sm);
+  }
+
+  .member-card-body p {
+    font-size: 0.85rem;
+    gap: 6px;
+    flex-wrap: wrap;
+  }
+
+  .member-card-body p:nth-child(2) {
+    font-size: 0.75rem;
+  }
+
+  .member-card-footer {
+    margin-top: var(--spacing-md);
+    gap: var(--spacing-sm);
+    flex-wrap: wrap;
+  }
+
+  .member-card-footer .edit-member-btn {
+    padding: 8px 16px;
+    font-size: 0.85rem;
+  }
+
+  /* Badges */
+  .creator-badge,
+  .verified-badge,
+  .not-verified-badge,
+  .role-badge {
+    padding: 2px 5px;
+    font-size: 0.65rem;
+    gap: 2px;
+  }
+
+  .creator-badge::before,
+  .verified-badge::before,
+  .not-verified-badge::before {
+    width: 7px;
+    height: 7px;
+  }
+}
+
+/* Media query för 400px */
+@media (max-width: 400px) {
+  :root {
+    --spacing-lg: 15px;
+    --spacing-md: 12px;
+    --spacing-sm: 8px;
+    --spacing-xs: 4px;
+    --radius-large: 12px;
+    --radius-medium: 8px;
+  }
+
+  .team-card-header h2 {
+    font-size: 1.1rem;
+  }
+
+  .team-card-header p {
+    font-size: 0.7rem;
+  }
+
+  .team-card-body p {
+    font-size: 0.8rem;
+  }
+
+  .member-card-header h3 {
+    font-size: 1rem;
+  }
+
+  .member-card-header p {
+    font-size: 0.7rem;
+  }
+
+  .member-card-header h3 span.email {
+    font-size: 0.7rem;
+  }
+
+  .member-card-body p {
+    font-size: 0.8rem;
+  }
+
+  .creator-badge,
+  .verified-badge,
+  .not-verified-badge,
+  .role-badge {
+    padding: 2px 4px;
+    font-size: 0.6rem;
+  }
+
+  .creator-badge::before,
+  .verified-badge::before,
+  .not-verified-badge::before {
+    width: 6px;
+    height: 6px;
+  }
+}
+
+/* Media query för 350px */
+@media (max-width: 350px) {
+  :root {
+    --spacing-lg: 12px;
+    --spacing-md: 10px;
+    --spacing-sm: 6px;
+    --spacing-xs: 3px;
+    --radius-large: 10px;
+  }
+
+  .team-card-header h2 {
+    font-size: 1rem;
+  }
+
+  .team-card-header p {
+    font-size: 0.65rem;
+  }
+
+  .team-card-body p {
+    font-size: 0.75rem;
+  }
+
+  .member-card-header h3 {
+    font-size: 0.9rem;
+  }
+
+  .member-card-header p {
+    font-size: 0.65rem;
+  }
+
+  .member-card-header h3 span.email {
+    font-size: 0.65rem;
   }
 
   .member-card-body p {
     font-size: 0.75rem;
-    gap: 6px;
+  }
+
+  .creator-badge,
+  .verified-badge,
+  .not-verified-badge,
+  .role-badge {
+    padding: 1px 3px;
+    font-size: 0.55rem;
+  }
+
+  .creator-badge::before,
+  .verified-badge::before,
+  .not-verified-badge::before {
+    width: 5px;
+    height: 5px;
+  }
+}
+
+/* Media query för 300px */
+@media (max-width: 300px) {
+  :root {
+    --spacing-lg: 10px;
+    --spacing-md: 8px;
+    --spacing-sm: 5px;
+    --spacing-xs: 2px;
+    --radius-large: 8px;
+    --radius-medium: 6px;
+  }
+
+  .main-content {
+    padding: 4px;
+  }
+
+  .card-container {
+    gap: 5px;
+    margin-top: 5px;
+    padding-bottom: 5px;
+  }
+
+  .team-card {
+    padding: 5px;
+  }
+
+  .team-card-header {
+    padding: 5px;
+    gap: 3px;
+  }
+
+  .team-card-header h2 {
+    font-size: 0.9rem;
+    line-height: 1.2;
+  }
+
+  .team-card-header p {
+    font-size: 0.6rem;
+  }
+
+  .team-card-body {
+    padding: 5px;
+    gap: 3px;
+  }
+
+  .team-card-body p {
+    font-size: 0.7rem;
+    line-height: 1.2;
+  }
+
+  .team-card .edit-icon-btn {
+    width: 20px;
+    height: 20px;
+    padding: 3px;
+    position: static;
+    margin-left: auto;
+  }
+
+  .member-card {
+    padding: 5px;
+  }
+
+  .member-card-header {
+    padding: 5px;
+    gap: 3px;
+  }
+
+  .member-card-header h3 {
+    font-size: 0.85rem;
+    line-height: 1.2;
+  }
+
+  .member-card-header p {
+    font-size: 0.6rem;
+  }
+
+  .member-card-header h3 span.email {
+    font-size: 0.6rem;
+  }
+
+  .member-card-body {
+    padding: 0 5px 5px;
+    gap: 3px;
+  }
+
+  .member-card-body p {
+    font-size: 0.7rem;
+    line-height: 1.2;
   }
 
   .member-card-footer {
-    margin-top: var(--spacing-sm);
-    gap: var(--spacing-xs);
+    margin-top: 5px;
+    gap: 3px;
+    justify-content: space-between;
   }
 
-  .member-card-footer .edit-member-btn {
-    padding: 6px 12px;
-    font-size: 0.75rem;
+  .member-card-footer .edit-member-btn,
+  .member-card-footer .delete-member-btn {
+    padding: 5px 8px;
+    font-size: 0.65rem;
+    flex-grow: 1;
   }
 
-  .notification {
-    width: 95%;
-    padding: 10px;
-    top: 5px;
-    right: 5px;
+  .creator-badge,
+  .verified-badge,
+  .not-verified-badge,
+  .role-badge {
+    padding: 1px 2px;
+    font-size: 0.5rem;
+    gap: 1px;
   }
 
-  .notification-title {
-    font-size: 0.8rem;
+  .creator-badge::before,
+  .verified-badge::before,
+  .not-verified-badge::before {
+    width: 4px;
+    height: 4px;
+  }
+}
+
+/* Add these styles to your existing CSS file */
+
+/* Text truncation utility class */
+.text-truncate {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 100%;
+}
+
+/* Responsive improvements for team cards */
+.team-card-header h2,
+.team-card-header p {
+  max-width: calc(100% - 50px); /* Make room for edit button */
+}
+
+.description-text {
+  display: inline-block;
+  word-break: break-word;
+}
+
+.members-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.member-chip {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px;
+  max-width: 100%;
+}
+
+.member-email {
+  max-width: 150px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Responsive improvements for member cards */
+.member-card-header h3 {
+  max-width: calc(100% - 40px); /* Make room for edit button */
+}
+
+.member-card-body p {
+  word-break: break-word;
+}
+
+.member-badge {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-top: 8px;
+}
+
+/* Enhanced media queries for very small screens */
+@media (max-width: 400px) {
+  .member-email {
+    max-width: 120px;
   }
 
-  .notification-message {
+  .team-card-body p,
+  .member-card-body p {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 2px;
+  }
+
+  .team-card-body p::before,
+  .member-card-body p::before {
+    margin-bottom: 2px;
+  }
+
+  .creator-badge,
+  .verified-badge,
+  .not-verified-badge,
+  .role-badge {
+    font-size: 0.6rem;
+    padding: 2px 4px;
+  }
+}
+
+@media (max-width: 350px) {
+  .member-email {
+    max-width: 100px;
+  }
+
+  .team-card-header h2 {
+    font-size: 0.95rem;
+  }
+
+  .team-card-header p,
+  .team-card-body p,
+  .member-card-body p {
     font-size: 0.7rem;
   }
 
-  .notification-icon {
-    margin-right: 10px;
+  .member-card-header h3 {
+    font-size: 0.85rem;
   }
 
-  .notification-close {
-    margin-left: 8px;
+  .creator-badge,
+  .verified-badge,
+  .not-verified-badge,
+  .role-badge {
+    font-size: 0.55rem;
+    padding: 1px 3px;
+  }
+}
+
+@media (max-width: 300px) {
+  .team-card,
+  .member-card {
+    padding: 4px;
+  }
+
+  .team-card-header,
+  .member-card-header {
+    padding: 4px;
+  }
+
+  .team-card-body,
+  .member-card-body {
+    padding: 4px;
+  }
+
+  .team-card-header h2 {
+    font-size: 0.85rem;
+  }
+
+  .team-card-header p,
+  .team-card-body p,
+  .member-card-body p {
+    font-size: 0.65rem;
+  }
+
+  .member-card-header h3 {
+    font-size: 0.8rem;
+  }
+
+  .edit-icon-btn {
+    width: 24px;
+    height: 24px;
+    padding: 2px;
+  }
+
+  .creator-badge,
+  .verified-badge,
+  .not-verified-badge,
+  .role-badge {
+    font-size: 0.5rem;
+    padding: 1px 2px;
   }
 }

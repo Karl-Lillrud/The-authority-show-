@@ -20,43 +20,45 @@ export function updateTeamsUI(teams) {
     card.className = "team-card";
     card.setAttribute("data-id", team._id);
     card.innerHTML = `
-      <div class="team-card-header">
-        <h2>${team.name}</h2>
-        <p><strong>Team Email:</strong> ${team.email}</p>
-        <button class="edit-icon-btn">${edit}</button>
+  <div class="team-card-header">
+    <h2 class="text-truncate">${team.name}</h2>
+    <p class="text-truncate"><strong>Team Email:</strong> ${team.email}</p>
+    <button class="edit-icon-btn">${edit}</button>
+  </div>
+  <div class="team-card-body">
+    <p><strong>Description:</strong> <span class="description-text">${
+      team.description || "No description available"
+    }</span></p>
+    <p><strong>Podcasts:</strong> <span class="text-truncate">${
+      team.podNames || "N/A"
+    }</span></p>
+    <div class="members-section">
+      <strong>Members:</strong>
+      <div class="members-container">
+        ${
+          team.members.length > 0
+            ? team.members
+                .map(
+                  (m) => `
+                  <span class="member-chip" data-email="${m.email}">
+                    <span class="member-email text-truncate">${m.email}</span>
+                    ${
+                      m.role === "creator"
+                        ? '<span class="creator-badge">Creator</span>'
+                        : `<span class="role-badge ${m.role.toLowerCase()}">${
+                            m.role
+                          }</span>`
+                    }
+                  </span>
+                `
+                )
+                .join("")
+            : "No members available"
+        }
       </div>
-      <div class="team-card-body">
-        <p><strong>Description:</strong> ${
-          team.description || "No description available"
-        }</p>
-        <p><strong>Podcasts:</strong> ${team.podNames || "N/A"}</p>
-        <div class="members-section">
-          <strong>Members:</strong>
-          <div style="margin-top: 10px;">
-            ${
-              team.members.length > 0
-                ? team.members
-                    .map(
-                      (m) => `
-                      <span class="member-chip" data-email="${m.email}">
-                        ${m.email}
-                        ${
-                          m.role === "creator"
-                            ? '<span class="creator-badge">Creator</span>'
-                            : `<span class="role-badge ${m.role.toLowerCase()}">${
-                                m.role
-                              }</span>`
-                        }
-                      </span>
-                    `
-                    )
-                    .join("")
-                : "No members available"
-            }
-          </div>
-        </div>
-      </div>
-    `;
+    </div>
+  </div>
+`;
     card
       .querySelector(".edit-icon-btn")
       .addEventListener("click", () => showTeamDetailModal(team));

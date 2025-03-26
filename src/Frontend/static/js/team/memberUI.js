@@ -30,41 +30,43 @@ export async function renderMembersView() {
           const card = document.createElement("div");
           card.className = "member-card";
           card.innerHTML = `
-            <div class="member-card-header" style="position: relative;">
-              <h3>${member.email}</h3>
-              <button class="edit-icon-btn" style="position: absolute; top: 8px; right: 8px;">${edit}</button>
-            </div>
-            <div class="member-card-body">
-              ${
-                member.fullName
-                  ? `<p><strong>Full Name:</strong> ${member.fullName}</p>`
-                  : ""
-              }
-              ${
-                member.phone
-                  ? `<p><strong>Phone:</strong> ${member.phone}</p>`
-                  : ""
-              }
-              <p><strong>Role:</strong> ${member.role}</p>
-              <p><strong>Team:</strong> ${team.name}</p>
-              <div class="member-card-footer" style="position: relative;">
-                <span class="member-badge" style="position: absolute; bottom: 8px; right: 8px;">
-                  ${
-                    member.role === "creator"
-                      ? '<span class="creator-badge">Creator</span>'
-                      : (member.verified
-                          ? '<span class="verified-badge">Verified</span>'
-                          : '<span class="not-verified-badge">Not Verified</span>') +
-                        '<span class="role-badge ' +
-                        member.role.toLowerCase() +
-                        '">' +
-                        member.role +
-                        "</span>"
-                  }
-                </span>
-              </div>
-            </div>
-          `;
+  <div class="member-card-header" style="position: relative;">
+    <h3 class="text-truncate">${member.email}</h3>
+    <button class="edit-icon-btn" style="position: absolute; top: 8px; right: 8px;">${edit}</button>
+  </div>
+  <div class="member-card-body">
+    ${
+      member.fullName
+        ? `<p><strong>Full Name:</strong> <span class="text-truncate">${member.fullName}</span></p>`
+        : ""
+    }
+    ${
+      member.phone
+        ? `<p><strong>Phone:</strong> <span class="text-truncate">${member.phone}</span></p>`
+        : ""
+    }
+    <p><strong>Role:</strong> ${member.role}</p>
+    <p><strong>Team:</strong> <span class="text-truncate">${
+      team.name
+    }</span></p>
+    <div class="member-card-footer">
+      <span class="member-badge">
+        ${
+          member.role === "creator"
+            ? '<span class="creator-badge">Creator</span>'
+            : (member.verified
+                ? '<span class="verified-badge">Verified</span>'
+                : '<span class="not-verified-badge">Not Verified</span>') +
+              '<span class="role-badge ' +
+              member.role.toLowerCase() +
+              '">' +
+              member.role +
+              "</span>"
+        }
+      </span>
+    </div>
+  </div>
+`;
           if (member.role !== "creator") {
             card
               .querySelector(".edit-icon-btn")
@@ -463,6 +465,9 @@ export function showTeamCardEditMemberModal(teamId, member) {
       }
     );
   });
+
+  // Make sure email field has text truncation
+  emailInput.classList.add("text-truncate");
 }
 
 // Helper function to add individual edit buttons to fields
