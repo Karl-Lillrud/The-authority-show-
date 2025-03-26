@@ -664,6 +664,12 @@ body {
   align-items: center;
   margin-bottom: var(--spacing-md);
   position: relative;
+  background: linear-gradient(
+    90deg,
+    rgba(255, 111, 97, 0.05),
+    rgba(255, 111, 97, 0.02)
+  );
+  padding: var(--spacing-lg); /* Liknande team-card-header */
 }
 
 .member-card-header h3 {
@@ -687,8 +693,8 @@ body {
 
 .member-card .edit-icon-btn {
   position: absolute;
-  top: var(--spacing-sm);
-  right: var(--spacing-sm);
+  top: var(--spacing-sm) !important;
+  right: var(--spacing-sm) !important;
   background-color: #ffffff;
   color: var(--highlight-color);
   border: none;
@@ -1047,7 +1053,9 @@ body {
     padding: var(--spacing-md);
     overflow-y: auto; /* Behåller inre scroll */
     min-height: auto; /* Tar bort min-height för att inte begränsa scroll */
-    height: calc(100vh - var(--header-height)); /* Sätter en fast höjd för att aktivera scroll */
+    height: calc(
+      100vh - var(--header-height)
+    ); /* Sätter en fast höjd för att aktivera scroll */
   }
 
   .form-grid {
@@ -1305,9 +1313,9 @@ body {
   }
 
   .member-card .edit-icon-btn {
-    width: 28px;
-    height: 28px;
-    padding: 4px;
+    width: 32px;
+    height: 32px;
+    padding: 6px;
   }
 
   .member-card .edit-icon-btn::after {
@@ -1397,189 +1405,189 @@ body {
 
   .team-card-body p {
     font-size: 0.75rem;
-    gap: 6px ```css
-  gap: 6px;
-}
+    gap: 6px;
+  }
 
-.team-card-body p::before {
-  width: 14px;
-  height: 14px;
-}
+  .team-card-body p::before {
+    width: 14px;
+    height: 14px;
+  }
 
-.team-card .edit-icon-btn {
-  width: 28px;
-  height: 28px;
-  padding: 4px;
-  top: var(--spacing-xs);
-  right: var(--spacing-xs);
-}
+  .team-card .edit-icon-btn {
+    width: 28px;
+    height: 28px;
+    padding: 4px;
+    top: var(--spacing-xs);
+    right: var(--spacing-xs);
+  }
 
-.team-card .edit-icon-btn::after {
-  font-size: 10px;
-  bottom: -25px;
-  padding: 4px 8px;
-}
+  .team-card .edit-icon-btn::after {
+    font-size: 10px;
+    bottom: -25px;
+    padding: 4px 8px;
+  }
 
-.form-box {
-  width: 98%;
-  padding: var(--spacing-sm);
-  border-radius: var(--radius-medium);
-}
+  .form-box {
+    width: 98%;
+    padding: var(--spacing-sm);
+    border-radius: var(--radius-medium);
+  }
 
-.form-title {
-  font-size: 1.3rem;
-  margin-bottom: var(--spacing-sm);
-}
+  .form-title {
+    font-size: 1.3rem;
+    margin-bottom: var(--spacing-sm);
+  }
 
-.form-title::after {
-  width: 40px;
-  height: 2px;
-}
+  .form-title::after {
+    width: 40px;
+    height: 2px;
+  }
 
-.field-group {
-  margin-bottom: var(--spacing-sm);
-}
+  .field-group {
+    margin-bottom: var(--spacing-sm);
+  }
 
-.field-group label {
-  font-size: 0.8rem;
-  padding-left: 8px;
-}
+  .field-group label {
+    font-size: 0.8rem;
+    padding-left: 8px;
+  }
 
-.field-group label::before {
-  width: 3px;
-  height: 12px;
-}
+  .field-group label::before {
+    width: 3px;
+    height: 12px;
+  }
 
-.field-group input,
-.field-group select,
-.field-group textarea {
-  padding: 8px 12px;
-  font-size: 0.8rem;
-  border-radius: var(--radius-small);
-}
+  .field-group input,
+  .field-group select,
+  .field-group textarea {
+    padding: 8px 12px;
+    font-size: 0.8rem;
+    border-radius: var(--radius-small);
+  }
 
-.form-actions {
-  gap: var(--spacing-xs);
-}
+  .form-actions {
+    gap: var(--spacing-xs);
+  }
 
-.save-btn,
-.cancel-btn,
-.delete-btn {
-  padding: 6px 12px;
-  font-size: 0.8rem;
-}
+  .save-btn,
+  .cancel-btn,
+  .delete-btn {
+    padding: 6px 12px;
+    font-size: 0.8rem;
+  }
 
-.save-btn::before,
-.cancel-btn::before,
-.delete-member-btn::before {
-  width: 14px;
-  height: 14px;
-}
+  .save-btn::before,
+  .cancel-btn::before,
+  .delete-member-btn::before {
+    width: 14px;
+    height: 14px;
+  }
 
-.delete-btn {
-  width: 32px;
-  height: 32px;
-}
+  .delete-btn {
+    width: 32px;
+    height: 32px;
+  }
 
-.member-chip,
-.podcast-chip {
-  padding: 3px 5px;
-  font-size: 0.6rem;
-  gap: 2px;
-}
+  .member-chip,
+  .podcast-chip {
+    padding: 3px 5px;
+    font-size: 0.6rem;
+    gap: 2px;
+  }
 
-.podcast-chip::before {
-  width: 10px;
-  height: 10px;
-}
+  .podcast-chip::before {
+    width: 10px;
+    height: 10px;
+  }
 
-.remove-chip {
-  width: 14px;
-  height: 14px;
-}
+  .remove-chip {
+    width: 14px;
+    height: 14px;
+  }
 
-.creator-badge,
-.verified-badge,
-.not-verified-badge,
-.role-badge {
-  padding: 1px 3px;
-  font-size: 0.55rem;
-  gap: 2px;
-  border-radius: 12px;
-}
+  .creator-badge,
+  .verified-badge,
+  .not-verified-badge,
+  .role-badge {
+    padding: 1px 3px;
+    font-size: 0.55rem;
+    gap: 2px;
+    border-radius: 12px;
+  }
 
-.creator-badge::before,
-.verified-badge::before,
-.not-verified-badge::before {
-  width: 5px;
-  height: 5px;
-}
+  .creator-badge::before,
+  .verified-badge::before,
+  .not-verified-badge::before {
+    width: 5px;
+    height: 5px;
+  }
 
-.member-card {
-  padding: var(--spacing-xs);
-}
+  .member-card {
+    padding: var(--spacing-xs);
+  }
 
-.member-card-header {
-  margin-bottom: var(--spacing-xs);
-}
+  .member-card-header {
+    margin-bottom: var(--spacing-xs);
+  }
 
-.member-card-header h3 {
-  font-size: 0.9rem;
-}
+  .member-card-header h3 {
+    font-size: 0.9rem;
+  }
 
-.member-card-header h3::before {
-  width: 16px;
-  height: 16px;
-}
+  .member-card-header h3::before {
+    width: 16px;
+    height: 16px;
+  }
 
-.member-card .edit-icon-btn {
-  width: 24px;
-  height: 24px;
-  padding: 3px;
-  top: var(--spacing-xs);
-  right: var(--spacing-xs);
-}
+  .member-card .edit-icon-btn {
+    width: 24px;
+    height: 24px;
+    padding: 3px;
+    top: var(--spacing-xs);
+    right: var(--spacing-xs);
+  }
 
-.member-card .edit-icon-btn::after {
-  font-size: 9px;
-  bottom: -20px;
-  padding: 3px 6px;
-}
+  .member-card .edit-icon-btn::after {
+    font-size: 9px;
+    bottom: -20px;
+    padding: 3px 6px;
+  }
 
-.member-card-body p {
-  font-size: 0.75rem;
-  gap: 6px;
-}
+  .member-card-body p {
+    font-size: 0.75rem;
+    gap: 6px;
+  }
 
-.member-card-footer {
-  margin-top: var(--spacing-sm);
-  gap: var(--spacing-xs);
-}
+  .member-card-footer {
+    margin-top: var(--spacing-sm);
+    gap: var(--spacing-xs);
+  }
 
-.member-card-footer .edit-member-btn {
-  padding: 6px 12px;
-  font-size: 0.75rem;
-}
+  .member-card-footer .edit-member-btn {
+    padding: 6px 12px;
+    font-size: 0.75rem;
+  }
 
-.notification {
-  width: 95%;
-  padding: 10px;
-  top: 5px;
-  right: 5px;
-}
+  .notification {
+    width: 95%;
+    padding: 10px;
+    top: 5px;
+    right: 5px;
+  }
 
-.notification-title {
-  font-size: 0.8rem;
-}
+  .notification-title {
+    font-size: 0.8rem;
+  }
 
-.notification-message {
-  font-size: 0.7rem;
-}
+  .notification-message {
+    font-size: 0.7rem;
+  }
 
-.notification-icon {
-  margin-right: 10px;
-}
+  .notification-icon {
+    margin-right: 10px;
+  }
 
-.notification-close {
-  margin-left: 8px;
+  .notification-close {
+    margin-left: 8px;
+  }
 }
