@@ -1,6 +1,6 @@
 import os
 import logging
-from flask import Flask, request, session, g, jsonify, render_template
+from flask import Flask, request, session, g, jsonify, render_template, send_from_directory
 from flask_cors import CORS
 from backend.routes.auth import auth_bp
 from backend.routes.forgot_pass import forgotpass_bp
@@ -19,6 +19,7 @@ from backend.routes.podprofile import podprofile_bp  # Import the podprofile blu
 from backend.routes.frontend import frontend_bp  # Import the frontend blueprint
 from backend.routes.guest_to_eposide import guesttoepisode_bp
 from backend.routes.guest_form import guest_form_bp  # Import the guest_form blueprint
+from backend.services.spotify_integration import file_bp 
 
 # from backend.routes.transcription import transcription_bp
 from backend.routes.landingpage import landingpage_bp
@@ -64,6 +65,7 @@ app.config["PREFERRED URL SCHEME"] = "https"
 
 # Register blueprints for different routes
 app.register_blueprint(auth_bp)
+app.register_blueprint(file_bp)
 app.register_blueprint(user_bp)
 app.register_blueprint(forgotpass_bp)
 app.register_blueprint(podcast_bp)  # Register the podcast blueprint
@@ -113,6 +115,14 @@ logger.info(f"APP_ENV: {APP_ENV}")
 def load_user():
     g.user_id = session.get("user_id")
     logger.info(f"Request to {request.path} by user {g.user_id}")
+
+
+@app.route('/default-image.png')
+def default_image():
+    default_image_path = os.path.join(app.static_folder, 'images', 'default-image.png')
+    if os.path.exists(default_image_path):
+        return send_from_directory(os.path.join(app.static_folder, 'images'), 'default-image.png')
+    return "Default image not found", 404
 
 
 # Run the app

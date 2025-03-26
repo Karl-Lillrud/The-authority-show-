@@ -1,3 +1,4 @@
+from flask import request  # Add this import
 from backend.database.mongo_connection import collection, database, get_fs
 from datetime import datetime, timezone
 import uuid
@@ -26,20 +27,16 @@ class EpisodeRepository:
                 return {"error": "No account associated with this user"}, 403
 
             # Fetch the account ID that the user already has
-            if "id" in user_account:
-                account_id = user_account["id"]
-            else:
-                account_id = str(user_account["_id"])
+            account_id = user_account.get("id", str(user_account["_id"]))
             logger.info(f"🧩 Found account {account_id} for user {user_id}")
 
-            files = data.pop('episodeFiles', [])
+            files = request.files.getlist('episodeFiles')  # Fetch files from the request
             if files:
                 saved_files = save_uploaded_files(files)
                 data['episodeFiles'] = saved_files
 
-                # Save the first file to GridFS and get the file ID
-                file_id = fs.put(files[0].stream, filename=files[0].filename)
-                data['audioUrl'] = str(file_id)
+                # Use the URL of the first file as the audioUrl
+                data['audioUrl'] = saved_files[0]['url']
 
             # Validate data with schema
             schema = EpisodeSchema()
@@ -65,9 +62,7 @@ class EpisodeRepository:
                 "podcast_id": podcast_id,
                 "title": title,
                 "description": validated_data.get("description"),
-                "publishDate": validated_data.get(
-                    "publishDate"
-                ),  # Ensure publishDate is included
+                "publishDate": validated_data.get("publishDate"),
                 "duration": validated_data.get("duration"),
                 "status": validated_data.get("status"),
                 "userid": user_id_str,

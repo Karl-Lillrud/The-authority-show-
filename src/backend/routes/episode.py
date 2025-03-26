@@ -48,33 +48,28 @@ def register_episode():
         # Parse form data
         data = request.form.to_dict()
         files = request.files.getlist('episodeFiles')
+        
         if files and files[0].filename != '':
-            # Save files to MongoDB using GridFS
+            # Spara filerna till MongoDB via GridFS
             saved_files = save_uploaded_files(files)
+            audio_url = saved_files[0]['url']  # URL som lagras i MongoDB
 
-            # Assuming the file is saved as the first item in the saved_files list
-            audio_url = saved_files[0]['url']  # The URL returned from GridFS storage
+            # Lägga till audio URL i data
+            data['audioUrl'] = audio_url
+            data['episodeFiles'] = saved_files  # Spara filinformation i databasen
 
-            # Store the full audio URL in the data dictionary
-            data['audioUrl'] = audio_url  # This now contains the full URL
-            data['episodeFiles'] = saved_files  # Store file details
-
-        logger.info(f"Received data: {data}")
-        logger.info(f"Received files: {files}")
-
-        # Validate required fields
+        # Validera nödvändiga fält
         if not data.get('podcastId') or not data.get('title') or not data.get('publishDate'):
             return jsonify({"error": "Required fields missing: podcastId, title, and publishDate"}), 400
 
-        # Register episode and save data to the database
+        # Registrera episode och spara i databasen
         response, status = episode_repo.register_episode(data, user_id)
         return jsonify(response), status
     except Exception as e:
         logger.error(f"Error: {e}")
         return jsonify({"error": str(e)}), 500
 
-
-
+# Publicera till Spotify
 @episode_bp.route('/publish_to_spotify/<episode_id>', methods=['POST'])
 def publish_to_spotify(episode_id):
     if not hasattr(g, "user_id") or not g.user_id:
@@ -85,18 +80,17 @@ def publish_to_spotify(episode_id):
         return jsonify({"error": "Episode not found"}), 404
 
     try:
-        # Fetch Spotify access token
+        # Hämta Spotify access token
         access_token = get_spotify_access_token()
         if not access_token:
             logger.error("Failed to retrieve Spotify access token")
             return jsonify({"error": "Failed to retrieve Spotify access token"}), 500
 
-        # Attempt to upload episode to Spotify
+        # Försök att ladda upp episode till Spotify
         result = upload_episode_to_spotify(access_token, episode)
         if result:
             return jsonify({"message": "Episode published successfully to Spotify!"}), 200
         else:
-            logger.error("Failed to upload episode to Spotify")
             return jsonify({"error": "Failed to upload episode to Spotify"}), 400
     except Exception as e:
         logger.error(f"Error publishing to Spotify: {str(e)}", exc_info=True)
@@ -226,11 +220,11 @@ def get_episodes_by_podcast(podcast_id):
 @episode_bp.route("/get_guests_by_episode/<episode_id>", methods=["GET"])
 def get_guests_by_episode(episode_id):
     try:
-        # Fetch the guests from the database for the specific episode
-        guests = get_guests_for_episode(episode_id)  # This should fetch from your database
-        return jsonify({"guests": guests}), 200
+        guests = db['Guests'].find({"episodeId": episode_id})  # Replace with your actual guests collection
+        guests_list = [{"id": str(guest["_id"]), "name": guest["name"]} for guest in guests]
+        return jsonify({"guests": guests_list}), 200
     except Exception as e:
-        logger.error(f"Error fetching guests: {str(e)}")
+        logger.error(f"Error fetching guests for episode {episode_id}: {e}")
         return jsonify({"error": "Failed to fetch guests"}), 500
 
 @episode_bp.route('/file/<file_id>', methods=['GET'])

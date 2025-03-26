@@ -174,32 +174,25 @@ export function renderEpisodeDetail(episode) {
   const episodeActions = document.getElementById("episode-actions");
 
   // Publish button event listener
-  document
-    .getElementById("publish-episode-btn")
-    .addEventListener("click", async () => {
-      try {
-        const episodeId = document
-          .getElementById("publish-episode-btn")
-          .getAttribute("data-id");
-
-        const response = await fetch(`/publish_to_spotify/${episodeId}`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({ episodeId }),
-        });
-
-        const data = await response.json();
-        if (response.ok) {
-          showNotification("Success", "Episode published to Spotify successfully!", "success");
-        } else {
-          showNotification("Error", `Failed to publish episode: ${data.error}`, "error");
-        }
-      } catch (error) {
-        showNotification("Error", "Failed to connect to Spotify.", "error");
-      }
+  document.getElementById("publish-episode-btn")
+  .addEventListener("click", async () => {
+    const episodeId = document.getElementById("publish-episode-btn").getAttribute("data-id");
+    const response = await fetch(`/publish_to_spotify/${episodeId}`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ episodeId })
     });
+
+    const data = await response.json();
+    if (response.ok) {
+      showNotification("Success", "Episode published to Spotify successfully!", "success");
+    } else {
+      showNotification("Error", `Failed to publish episode: ${data.error}`, "error");
+    }
+  });
+
 
   // Back button event listener
   const backButton = document.getElementById("back-to-podcast");
@@ -567,18 +560,38 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 });
 
-async function publishEpisodeToSpotify(episodeId) {
+export async function publishEpisodeToSpotify(episodeId) {
   try {
+    console.log(`Publishing episode with ID: ${episodeId}`); // Log the episode ID
     const response = await fetch(`/publish_to_spotify/${episodeId}`, {
-      method: "POST"
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
     });
+
     if (!response.ok) {
-      throw new Error(`Failed to upload episode to Spotify: ${response.statusText}`);
+      const errorData = await response.json();
+      console.error("Failed to publish episode:", errorData); // Log the error response
+      alert(`Failed to publish episode: ${errorData.error || "Unknown error"}`);
+      return;
     }
+
     const result = await response.json();
-    showNotification("Success", "Episode published successfully to Spotify!", "success");
+    console.log("Episode published successfully:", result); // Log success response
+    alert("Episode published successfully!");
   } catch (error) {
-    console.error("Failed to publish episode:", error);
-    showNotification("Error", `Failed to upload episode to Spotify: ${error.message}`, "error");
+    console.error("Error publishing episode:", error); // Log any unexpected errors
+    alert("An error occurred while publishing the episode.");
   }
 }
+
+// Example usage of the function
+document.querySelectorAll(".publish-episode-btn").forEach((button) => {
+  button.addEventListener("click", (e) => {
+    const episodeId = e.target.dataset.episodeId;
+    if (episodeId) {
+      publishEpisodeToSpotify(episodeId);
+    } else {
+      console.error("Episode ID is missing for publish button.");
+    }
+  });
+});

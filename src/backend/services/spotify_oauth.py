@@ -1,90 +1,84 @@
 import os
 import base64
 import requests
-import logging
-from flask import Blueprint, request, jsonify
 from dotenv import load_dotenv
+from flask import redirect, url_for, request
 
 load_dotenv()
 
-logger = logging.getLogger(__name__)
+# Spotify Configuration from .env file
+SPOTIFY_CLIENT_ID = os.getenv("SPOTIFY_CLIENT_ID")
+SPOTIFY_CLIENT_SECRET = os.getenv("SPOTIFY_CLIENT_SECRET")
+SPOTIFY_REDIRECT_URI = os.getenv("SPOTIFY_REDIRECT_URI")
+SPOTIFY_REFRESH_TOKEN = os.getenv("SPOTIFY_REFRESH_TOKEN")
 
-spotify_oauth_bp = Blueprint("spotify_oauth", __name__)
+def get_spotify_access_token():
+    """
+    Get a fresh access token using the refresh token stored in .env
+    """
+    url = "https://accounts.spotify.com/api/token"
+    auth_header = base64.b64encode(f"{SPOTIFY_CLIENT_ID}:{SPOTIFY_CLIENT_SECRET}".encode()).decode()
+    headers = {
+        "Authorization": f"Basic {auth_header}",
+        "Content-Type": "application/x-www-form-urlencoded",
+    }
 
-@spotify_oauth_bp.route('/callback', methods=['GET'])
-def callback():
-    code = request.args.get('code')
-    if not code:
-        return jsonify({"error": "Ingen kod skickades."}), 400
+    data = {
+        "grant_type": "refresh_token",
+        "refresh_token": SPOTIFY_REFRESH_TOKEN,
+    }
 
-    try:
+    response = requests.post(url, headers=headers, data=data)
+    
+    if response.status_code == 200:
+        access_token = response.json().get("access_token")
+        return access_token
+    else:
+        print(f"Failed to get access token: {response.status_code}")
+        return None
+
+def handle_spotify_oauth_callback(request):
+    """
+    Handle the Spotify OAuth callback and exchange the code for tokens.
+    """
+    code = request.args.get("code")
+    
+    if code:
         access_token, refresh_token = exchange_code_for_tokens(code)
-        # Här kan du spara tokens i databasen eller .env
-        return jsonify({
-            "access_token": access_token,
-            "refresh_token": refresh_token
-        })
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
+        
+        if access_token and refresh_token:
+            # Save tokens securely and store them in session or database
+            print("Successfully authenticated with Spotify.")
+            return redirect(url_for('your_next_route'))  # Replace with your next route
+        else:
+            print("Failed to exchange authorization code for tokens.")
+            return {"error": "Failed to exchange authorization code for tokens."}
+    else:
+        return {"error": "No code provided."}
 
 def exchange_code_for_tokens(code):
-    client_id = os.getenv("SPOTIFY_CLIENT_ID")
-    client_secret = os.getenv("SPOTIFY_CLIENT_SECRET")
-    redirect_uri = os.getenv("SPOTIFY_REDIRECT_URI")
-    
-    token_url = 'https://accounts.spotify.com/api/token'
-    auth_str = f"{client_id}:{client_secret}"
-    auth_base64 = base64.b64encode(auth_str.encode()).decode()
-
+    """
+    Exchange authorization code for access and refresh tokens
+    """
+    url = "https://accounts.spotify.com/api/token"
+    auth_header = base64.b64encode(f"{SPOTIFY_CLIENT_ID}:{SPOTIFY_CLIENT_SECRET}".encode()).decode()
     headers = {
-        'Authorization': f'Basic {auth_base64}',
-        'Content-Type': 'application/x-www-form-urlencoded'
+        "Authorization": f"Basic {auth_header}",
+        "Content-Type": "application/x-www-form-urlencoded",
     }
-
+    
     data = {
-        'grant_type': 'authorization_code',
-        'code': code,
-        'redirect_uri': redirect_uri
+        "grant_type": "authorization_code",
+        "code": code,
+        "redirect_uri": SPOTIFY_REDIRECT_URI,
     }
 
-    response = requests.post(token_url, headers=headers, data=data)
-
+    response = requests.post(url, headers=headers, data=data)
+    
     if response.status_code == 200:
-        token_data = response.json()
-        access_token = token_data['access_token']
-        refresh_token = token_data['refresh_token']
+        tokens = response.json()
+        access_token = tokens.get("access_token")
+        refresh_token = tokens.get("refresh_token")
+        os.environ["SPOTIFY_REFRESH_TOKEN"] = refresh_token  # Save refresh token securely
         return access_token, refresh_token
-    else:
-        raise Exception(f"Fel vid tokenhämtning: {response.content}")
-
-# Hämta access token med hjälp av OAuth 2.0
-def get_spotify_access_token():
-    client_id = os.getenv('SPOTIFY_CLIENT_ID')
-    client_secret = os.getenv('SPOTIFY_CLIENT_SECRET')
-    refresh_token = os.getenv('SPOTIFY_REFRESH_TOKEN')
-
-    token_url = 'https://accounts.spotify.com/api/token'
-    headers = {
-        'Authorization': f'Basic {base64.b64encode(f"{client_id}:{client_secret}".encode()).decode()}',
-        'Content-Type': 'application/x-www-form-urlencoded'
-    }
-    data = {
-        'grant_type': 'refresh_token',
-        'refresh_token': refresh_token
-    }
-
-    response = requests.post(token_url, headers=headers, data=data)
-    if response.status_code == 200:
-        return response.json().get('access_token')
-    logger.error(f"Failed to retrieve Spotify access token: {response.status_code} - {response.text}")
-    return None
-
-# Generera auktoriseringslänk
-def get_authorization_url():
-    client_id = os.getenv("SPOTIFY_CLIENT_ID")
-    redirect_uri = os.getenv("SPOTIFY_REDIRECT_URI")
-    scope = "playlist-read-private playlist-modify-public"  # Justera efter behov
-    
-    auth_url = f"https://accounts.spotify.com/authorize?client_id={client_id}&response_type=code&redirect_uri={redirect_uri}&scope={scope}"
-    
-    return auth_url
+    return None, None
