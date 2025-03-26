@@ -356,6 +356,14 @@ Dashboard{% endblock %} {% block content %}
         </div>
       </div>
       <div class="form-actions">
+        <!-- Flyttade delete-knappen längst till vänster -->
+        <button
+          type="button"
+          id="teamCardEditMemberDeleteBtn"
+          class="btn delete-member-btn"
+        >
+          Delete
+        </button>
         <button
           type="button"
           id="teamCardEditMemberEditBtn"
@@ -365,14 +373,6 @@ Dashboard{% endblock %} {% block content %}
         </button>
         <button type="button" id="teamCardEditMemberSaveBtn" class="save-btn">
           Save
-        </button>
-        <!-- ...existing delete button... -->
-        <button
-          type="button"
-          id="teamCardEditMemberDeleteBtn"
-          class="btn delete-member-btn"
-        >
-          Delete
         </button>
       </div>
     </form>

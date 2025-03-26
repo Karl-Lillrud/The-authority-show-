@@ -916,6 +916,8 @@ function showTeamCardEditMemberModal(teamId, member) {
     editBtn.style.display = "inline-block";
   }
   emailInput.readOnly = true;
+  fullNameInput.readOnly = true;
+  phoneInput.readOnly = true;
   saveBtn.disabled = true;
 
   // Visa modalen
@@ -925,6 +927,8 @@ function showTeamCardEditMemberModal(teamId, member) {
   // Aktivera redigering
   editBtn.onclick = () => {
     emailInput.readOnly = false;
+    fullNameInput.readOnly = false;
+    phoneInput.readOnly = false;
     if (member.verified) {
       roleSelect.disabled = false;
     }
