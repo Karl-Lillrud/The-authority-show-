@@ -321,6 +321,35 @@
     border-right: none;
     border-bottom: 1px solid var(--sidebar-border);
     box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+    font-size: 0.85rem; /* Minska textstorleken */
+  }
+
+  .sidebar-header {
+    padding: var(--spacing-md); /* Minska padding */
+  }
+
+  .sidebar-menu-link {
+    padding: 8px 12px; /* Minska padding */
+    font-size: 0.85rem; /* Minska textstorleken */
+  }
+
+  .sidebar-icon {
+    width: 16px; /* Minska ikonstorleken */
+    height: 16px;
+    margin-right: 8px; /* Minska mellanrum mellan ikon och text */
+  }
+
+  .sidebar-action-button {
+    padding: 8px 10px; /* Minska padding */
+    font-size: 0.85rem; /* Minska textstorleken */
+  }
+
+  .sidebar-toggle {
+    padding: 6px; /* Minska storleken på toggle-knappen */
+  }
+
+  .sidebar-footer {
+    padding: var(--spacing-sm); /* Minska padding */
   }
 
   /* Se till att sidebar-content alltid är synlig */
@@ -382,6 +411,10 @@
     align-items: center;
     justify-content: flex-start;
   }
+
+  .sidebar-menu-item .dashboard-link {
+    display: none; /* Dölj hela "Back to Dashboard"-knappen */
+  }
 }
 
 /* För väldigt små skärmar under 500px */
@@ -421,4 +454,38 @@
   display: block !important;
   opacity: 1 !important;
   visibility: visible !important;
+}
+
+@media (max-width: 500px) {
+  .sidebar {
+    font-size: 0.75rem; /* Minska textstorleken ytterligare */
+  }
+
+  .sidebar-header {
+    padding: var(--spacing-sm); /* Minska padding */
+  }
+
+  .sidebar-menu-link {
+    padding: 6px 10px; /* Minska padding */
+    font-size: 0.75rem; /* Minska textstorleken */
+  }
+
+  .sidebar-icon {
+    width: 14px; /* Minska ikonstorleken ytterligare */
+    height: 14px;
+    margin-right: 6px; /* Minska mellanrum mellan ikon och text */
+  }
+
+  .sidebar-action-button {
+    padding: 6px 8px; /* Minska padding */
+    font-size: 0.75rem; /* Minska textstorleken */
+  }
+
+  .sidebar-toggle {
+    padding: 4px; /* Minska storleken på toggle-knappen */
+  }
+
+  .sidebar-footer {
+    padding: var(--spacing-xs); /* Minska padding */
+  }
 }
