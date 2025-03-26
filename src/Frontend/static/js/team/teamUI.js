@@ -32,7 +32,7 @@ export function updateTeamsUI(teams) {
         <p><strong>Podcasts:</strong> ${team.podNames || "N/A"}</p>
         <div class="members-section">
           <strong>Members:</strong>
-          <div>
+          <div style="margin-top: 10px;">
             ${
               team.members.length > 0
                 ? team.members

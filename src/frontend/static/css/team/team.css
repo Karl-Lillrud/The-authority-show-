@@ -171,7 +171,7 @@ body {
   color: var(--text-color-light);
 }
 
-.edit-icon-btn {
+.team-card .edit-icon-btn {
   position: absolute;
   top: var(--spacing-sm);
   right: var(--spacing-sm);
@@ -190,12 +190,12 @@ body {
   transition: all var(--transition-fast);
 }
 
-.edit-icon-btn:hover {
+.team-card .edit-icon-btn:hover {
   transform: scale(1.05);
   box-shadow: 0 8px 12px rgba(0, 0, 0, 0.12);
 }
 
-.edit-icon-btn::after {
+.team-card .edit-icon-btn::after {
   content: "Edit";
   position: absolute;
   bottom: -35px;
@@ -211,7 +211,7 @@ body {
   transition: all var(--transition-fast);
 }
 
-.edit-icon-btn:hover::after {
+.team-card .edit-icon-btn:hover::after {
   opacity: 1;
   visibility: visible;
 }
@@ -258,16 +258,16 @@ body {
 .member-chip {
   display: inline-flex;
   align-items: center;
-  gap: var(--spacing-xs);
+  gap: 4px;
   background: linear-gradient(
     135deg,
     rgba(90, 106, 120, 0.12),
     rgba(90, 106, 120, 0.06)
   );
   color: var(--text-color-light);
-  padding: 8px 14px;
-  border-radius: 24px;
-  font-size: 0.9rem;
+  padding: 6px 10px;
+  border-radius: 20px;
+  font-size: 0.85rem;
   font-weight: 500;
   transition: all var(--transition-normal);
   cursor: pointer;
@@ -290,16 +290,16 @@ body {
 .podcast-chip {
   display: inline-flex;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
   background: linear-gradient(
     135deg,
     rgba(255, 111, 97, 0.12),
     rgba(255, 111, 97, 0.06)
   );
   color: var(--highlight-color);
-  padding: 8px 16px;
-  border-radius: 24px;
-  font-size: 0.9rem;
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-size: 0.85rem;
   font-weight: 500;
   transition: all var(--transition-normal);
 }
@@ -315,9 +315,9 @@ body {
 
 .podcast-chip::before {
   content: "";
-  width: 18px;
-  height: 18px;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='18' height='18' viewBox='0 0 24 24' fill='none' stroke='%23ff6f61' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z'%3E%3C/path%3E%3Cpath d='M19 10v2a7 7 0 0 1-14 0v-2'%3E%3C/path%3E%3Cline x1='12' y1='19' x2='12' y2='23'%3E%3C/line%3E%3Cline x1='8' y1='23' x2='16' y2='23'%3E%3C/line%3E%3C/svg%3E");
+  width: 16px;
+  height: 16px;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23ff6f61' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z'%3E%3C/path%3E%3Cpath d='M19 10v2a7 7 0 0 1-14 0v-2'%3E%3C/path%3E%3Cline x1='12' y1='19' x2='12' y2='23'%3E%3C/line%3E%3Cline x1='8' y1='23' x2='16' y2='23'%3E%3C/line%3E%3C/svg%3E");
   background-repeat: no-repeat;
   background-position: center;
 }
@@ -325,8 +325,8 @@ body {
 .remove-chip {
   cursor: pointer;
   font-weight: bold;
-  width: 22px;
-  height: 22px;
+  width: 18px;
+  height: 18px;
   background-color: rgba(255, 255, 255, 0.4);
   border-radius: 50%;
   display: flex;
@@ -537,7 +537,6 @@ body {
   border-radius: var(--radius-medium);
   font-weight: 600;
   cursor: pointer;
-  font-size: 1rem;
   transition: all var(--transition-fast);
   display: flex;
   align-items: center;
@@ -679,6 +678,7 @@ body {
   transition: all var(--transition-normal);
   border: 1px solid rgba(0, 0, 0, 0.02);
   padding: var(--spacing-lg);
+  position: relative; /* Added for positioning edit button */
 }
 
 .member-card:hover {
@@ -691,6 +691,7 @@ body {
   justify-content: space-between;
   align-items: center;
   margin-bottom: var(--spacing-md);
+  position: relative;
 }
 
 .member-card-header h3 {
@@ -710,6 +711,51 @@ body {
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='22' height='22' viewBox='0 0 24 24' fill='none' stroke='%23ff6f61' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2'%3E%3C/path%3E%3Ccircle cx='12' cy='7' r='4'%3E%3C/circle%3E%3C/svg%3E");
   background-repeat: no-repeat;
   background-position: center;
+}
+
+.member-card .edit-icon-btn {
+  position: absolute;
+  top: var(--spacing-sm);
+  right: var(--spacing-sm);
+  background-color: #ffffff;
+  color: var(--highlight-color);
+  border: none;
+  border-radius: 50%;
+  cursor: pointer;
+  padding: 8px;
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: var(--button-shadow);
+  transition: all var(--transition-fast);
+}
+
+.member-card .edit-icon-btn:hover {
+  transform: scale(1.05);
+  box-shadow: 0 8px 12px rgba(0, 0, 0, 0.12);
+}
+
+.member-card .edit-icon-btn::after {
+  content: "Edit";
+  position: absolute;
+  bottom: -30px;
+  left: 50%;
+  transform: translateX(-50%);
+  background-color: rgba(0, 0, 0, 0.75);
+  color: white;
+  padding: 4px 8px;
+  border-radius: 6px;
+  font-size: 12px;
+  opacity: 0;
+  visibility: hidden;
+  transition: all var(--transition-fast);
+}
+
+.member-card .edit-icon-btn:hover::after {
+  opacity: 1;
+  visibility: visible;
 }
 
 .member-card-body {
@@ -789,24 +835,24 @@ body {
   box-shadow: 0 6px 12px rgba(255, 59, 48, 0.15);
 }
 
-/* Badges - Improved Design */
+/* Badges - Improved Design (Smaller) */
 .creator-badge,
 .verified-badge,
 .not-verified-badge,
 .role-badge {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  padding: 6px 12px;
-  font-size: 0.85rem;
+  gap: 4px;
+  padding: 4px 8px;
+  font-size: 0.75rem;
   font-weight: 700;
   font-family: var(--font-primary);
-  letter-spacing: 0.5px;
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
-  border-radius: 20px;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15),
-    inset 0 2px 4px rgba(255, 255, 255, 0.8),
-    inset 0 -2px 4px rgba(0, 0, 0, 0.1);
+  letter-spacing: 0.3px;
+  text-shadow: 0 1px 1px rgba(0, 0, 0, 0.15);
+  border-radius: 16px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1),
+    inset 0 1px 2px rgba(255, 255, 255, 0.6),
+    inset 0 -1px 2px rgba(0, 0, 0, 0.05);
   transition: all var(--transition-fast);
 }
 
@@ -814,77 +860,77 @@ body {
 .verified-badge:hover,
 .not-verified-badge:hover,
 .role-badge:hover {
-  transform: translateY(-2px) scale(1.05);
-  box-shadow: 0 6px 12px rgba(0, , 0, 0.2), 0 0 10px rgba(255, 111, 97, 0.5),
-    inset 0 2px 4px rgba(255, 255, 255, 0.9);
+  transform: translateY(-1px) scale(1.05);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15), 0 0 6px rgba(255, 111, 97, 0.3),
+    inset 0 1px 2px rgba(255, 255, 255, 0.7);
 }
 
 .creator-badge {
   background: linear-gradient(135deg, #3498db 0%, #1b6db2 80%, #3498db 100%);
   color: #fff;
-  border: 1px solid rgba(255, 255, 255, 0.3);
+  border: 1px solid rgba(255, 255, 255, 0.2);
 }
 
 .creator-badge::before {
   content: "";
-  width: 14px;
-  height: 14px;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolygon points='12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2'%3E%3C/polygon%3E%3C/svg%3E");
+  width: 10px;
+  height: 10px;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolygon points='12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2'%3E%3C/polygon%3E%3C/svg%3E");
   background-repeat: no-repeat;
   background-position: center;
   transition: transform var(--transition-fast);
 }
 
 .creator-badge:hover::before {
-  transform: scale(1.2) rotate(10deg);
+  transform: scale(1.1) rotate(10deg);
 }
 
 .verified-badge {
   background: linear-gradient(135deg, #34c759 0%, #27a844 70%, #34c759 100%);
   color: #fff;
-  border: 1px solid rgba(255, 255, 255, 0.3);
+  border: 1px solid rgba(255, 255, 255, 0.2);
 }
 
 .verified-badge::before {
   content: "";
-  width: 14px;
-  height: 14px;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M22 11.08V12a10 10 0 1 1-5.93-9.14'%3E%3C/path%3E%3Cpolyline points='22 4 12 14.01 9 11.01'%3E%3C/polyline%3E%3C/svg%3E");
+  width: 10px;
+  height: 10px;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M22 11.08V12a10 10 0 1 1-5.93-9.14'%3E%3C/path%3E%3Cpolyline points='22 4 12 14.01 9 11.01'%3E%3C/polyline%3E%3C/svg%3E");
   background-repeat: no-repeat;
   background-position: center;
   transition: transform var(--transition-fast);
 }
 
 .verified-badge:hover::before {
-  transform: scale(1.2) rotate(10deg);
+  transform: scale(1.1) rotate(10deg);
 }
 
 .not-verified-badge {
   background: linear-gradient(135deg, #ff3b30 0%, #d32f2f 70%, #ff3b30 100%);
   color: #fff;
-  border: 1px solid rgba(255, 255, 255, 0.3);
+  border: 1px solid rgba(255, 255, 255, 0.2);
 }
 
 .not-verified-badge::before {
   content: "";
-  width: 14px;
-  height: 14px;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='12' cy='12' r='10'%3E%3C/circle%3E%3Cline x1='12' y1='8' x2='12' y2='12'%3E%3C/line%3E%3Cline x1='12' y1='16' x2='12.01' y2='16'%3E%3C/line%3E%3C/svg%3E");
+  width: 10px;
+  height: 10px;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='12' cy='12' r='10'%3E%3C/circle%3E%3Cline x1='12' y1='8' x2='12' y2='12'%3E%3C/line%3E%3Cline x1='12' y1='16' x2='12.01' y2='16'%3E%3C/line%3E%3C/svg%3E");
   background-repeat: no-repeat;
   background-position: center;
   transition: transform var(--transition-fast);
 }
 
 .not-verified-badge:hover::before {
-  transform: scale(1.2) rotate(10deg);
+  transform: scale(1.1) rotate(10deg);
 }
 
 /* Role Badges */
 .role-badge {
-  padding: 6px 12px;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15),
-    inset 0 2px 4px rgba(255, 255, 255, 0.8),
-    inset 0 -2px 4px rgba(0, 0, 0, 0.1);
+  padding: 4px 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1),
+    inset 0 1px 2px rgba(255, 255, 255, 0.6),
+    inset 0 -1px 2px rgba(0, 0, 0, 0.05);
 }
 
 .role-badge.cohost {
@@ -999,13 +1045,22 @@ body {
 .member-badge {
   display: flex;
   align-items: center;
-  gap: 2mm;
+  gap: 1.5mm;
+  flex-wrap: wrap;
 }
 
 /* Responsive Styles */
 @media (max-width: 1024px) {
   .team-card-body {
     grid-template-columns: 1fr;
+  }
+
+  .main-header h1 {
+    font-size: 1.8rem;
+  }
+
+  .team-card-header h2 {
+    font-size: 1.4rem;
   }
 }
 
@@ -1038,6 +1093,11 @@ body {
     margin: 0;
   }
 
+  .sidebar-menu-item .dashboard-link {
+    padding: 10px 14px;
+    font-size: 0.9rem;
+  }
+
   .form-grid {
     grid-template-columns: 1fr;
   }
@@ -1047,37 +1107,524 @@ body {
     padding: var(--spacing-md);
   }
 
+  .main-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--spacing-sm);
+  }
+
+  .main-header h1 {
+    font-size: 1.6rem;
+  }
+
+  .team-card {
+    padding: var(--spacing-sm);
+  }
+
+  .team-card-header {
+    padding: var(--spacing-md);
+  }
+
+  .team-card-header h2 {
+    font-size: 1.3rem;
+  }
+
+  .team-card-body {
+    padding: var(--spacing-md);
+    gap: var(--spacing-sm);
+  }
+
+  .team-card-body p {
+    font-size: 0.9rem;
+  }
+
+  .team-card .edit-icon-btn {
+    width: 36px;
+    height: 36px;
+    padding: 8px;
+  }
+
   .creator-badge,
   .verified-badge,
   .not-verified-badge,
   .role-badge {
-    padding: 4px 8px;
-    font-size: 0.75rem;
+    padding: 3px 6px;
+    font-size: 0.65rem;
   }
 
   .creator-badge::before,
   .verified-badge::before,
   .not-verified-badge::before {
-    width: 12px;
-    height: 12px;
+    width: 8px;
+    height: 8px;
+  }
+
+  .member-chip,
+  .podcast-chip {
+    padding: 5px 8px;
+    font-size: 0.75rem;
+  }
+
+  .member-card {
+    padding: var(--spacing-md);
+  }
+
+  .member-card-header h3 {
+    font-size: 1.1rem;
+  }
+
+  .member-card .edit-icon-btn {
+    width: 32px;
+    height: 32px;
+    padding: 6px;
+  }
+
+  .member-card-footer .edit-member-btn {
+    padding: 10px 20px;
+    font-size: 0.9rem;
   }
 }
 
 @media (max-width: 576px) {
+  :root {
+    --spacing-lg: 20px;
+    --spacing-md: 15px;
+    --spacing-sm: 10px;
+    --spacing-xs: 5px;
+    --radius-large: 16px;
+    --radius-medium: 10px;
+    --radius-small: 6px;
+  }
+
+  .main-content {
+    padding: var(--spacing-sm);
+  }
+
+  .main-header h1 {
+    font-size: 1.4rem;
+  }
+
+  .card-container {
+    gap: var(--spacing-md);
+  }
+
+  .team-card {
+    padding: var(--spacing-sm);
+  }
+
+  .team-card-header {
+    padding: var(--spacing-sm);
+    gap: var(--spacing-xs);
+  }
+
+  .team-card-header h2 {
+    font-size: 1.2rem;
+  }
+
+  .team-card-header p {
+    font-size: 0.85rem;
+  }
+
+  .team-card-body {
+    padding: var(--spacing-sm);
+    gap: var(--spacing-sm);
+  }
+
+  .team-card-body p {
+    font-size: 0.85rem;
+  }
+
+  .team-card-body p::before {
+    width: 16px;
+    height: 16px;
+  }
+
+  .team-card .edit-icon-btn {
+    width: 32px;
+    height: 32px;
+    padding: 6px;
+  }
+
+  .team-card .edit-icon-btn::after {
+    font-size: 12px;
+    bottom: -30px;
+  }
+
   .form-box {
     width: 95%;
     padding: var(--spacing-md);
+    border-radius: var(--radius-medium);
+  }
+
+  .form-title {
+    font-size: 1.5rem;
+    margin-bottom: var(--spacing-md);
+  }
+
+  .form-title::after {
+    width: 50px;
+    height: 3px;
+  }
+
+  .field-group label {
+    font-size: 0.9rem;
+    padding-left: 10px;
+  }
+
+  .field-group input,
+  .field-group select,
+  .field-group textarea {
+    padding: 10px 14px;
+    font-size: 0.9rem;
+    border-radius: var(--radius-small);
   }
 
   .form-actions {
     flex-direction: column;
-    gap: 12px;
+    gap: var(--spacing-sm);
   }
 
   .save-btn,
   .cancel-btn,
   .delete-btn {
     width: 100%;
+    padding: 8px 16px;
+    font-size: 0.9rem;
+  }
+
+  .save-btn::before,
+  .cancel-btn::before,
+  .delete-member-btn::before {
+    width: 16px;
+    height: 16px;
+  }
+
+  .delete-btn {
+    width: 36px;
+    height: 36px;
+  }
+
+  .member-chip,
+  .podcast-chip {
+    padding: 4px 6px;
+    font-size: 0.7rem;
+    gap: 3px;
+  }
+
+  .podcast-chip::before {
+    width: 12px;
+    height: 12px;
+  }
+
+  .remove-chip {
+    width: 16px;
+    height: 16px;
+  }
+
+  .creator-badge,
+  .verified-badge,
+  .not-verified-badge,
+  .role-badge {
+    padding: 2px 4px;
+    font-size: 0.6rem;
+    gap: 3px;
+  }
+
+  .creator-badge::before,
+  .verified-badge::before,
+  .not-verified-badge::before {
+    width: 6px;
+    height: 6px;
+  }
+
+  .member-card {
+    padding: var(--spacing-sm);
+  }
+
+  .member-card-header h3 {
+    font-size: 1rem;
+  }
+
+  .member-card-header h3::before {
+    width: 18px;
+    height: 18px;
+  }
+
+  .member-card .edit-icon-btn {
+    width: 28px;
+    height: 28px;
+    padding: 4px;
+  }
+
+  .member-card .edit-icon-btn::after {
+    font-size: 10px;
+    bottom: -25px;
+  }
+
+  .member-card-body p {
+    font-size: 0.85rem;
+    gap: 8px;
+  }
+
+  .member-card-footer {
+    gap: var(--spacing-xs);
+  }
+
+  .member-card-footer .edit-member-btn {
+    padding: 8px 16px;
+    font-size: 0.85rem;
+  }
+
+  .notification {
+    width: 90%;
+    padding: 12px;
+    top: 10px;
+    right: 10px;
+  }
+
+  .notification-title {
+    font-size: 0.9rem;
+  }
+
+  .notification-message {
+    font-size: 0.8rem;
+  }
+}
+
+@media (max-width: 350px) {
+  :root {
+    --spacing-lg: 15px;
+    --spacing-md: 10px;
+    --spacing-sm: 8px;
+    --spacing-xs: 4px;
+    --radius-large: 12px;
+    --radius-medium: 8px;
+    --radius-small: 4px;
+  }
+
+  .main-content {
+    padding: var(--spacing-xs);
+  }
+
+  .main-header {
+    gap: var(--spacing-xs);
+  }
+
+  .main-header h1 {
+    font-size: 1.2rem;
+  }
+
+  .card-container {
+    gap: var(--spacing-sm);
+  }
+
+  .team-card {
+    padding: var(--spacing-xs);
+  }
+
+  .team-card-header {
+    padding: var(--spacing-xs);
+  }
+
+  .team-card-header h2 {
+    font-size: 1rem;
+  }
+
+  .team-card-header p {
+    font-size: 0.75rem;
+  }
+
+  .team-card-body {
+    padding: var(--spacing-xs);
+    gap: var(--spacing-xs);
+  }
+
+  .team-card-body p {
+    font-size: 0.75rem;
+    gap: 6px;
+  }
+
+  .team-card-body p::before {
+    width: 14px;
+    height: 14px;
+  }
+
+  .team-card .edit-icon-btn {
+    width: 28px;
+    height: 28px;
+    padding: 4px;
+    top: var(--spacing-xs);
+    right: var(--spacing-xs);
+  }
+
+  .team-card .edit-icon-btn::after {
+    font-size: 10px;
+    bottom: -25px;
+    padding: 4px 8px;
+  }
+
+  .form-box {
+    width: 98%;
+    padding: var(--spacing-sm);
+    border-radius: var(--radius-medium);
+  }
+
+  .form-title {
+    font-size: 1.3rem;
+    margin-bottom: var(--spacing-sm);
+  }
+
+  .form-title::after {
+    width: 40px;
+    height: 2px;
+  }
+
+  .field-group {
+    margin-bottom: var(--spacing-sm);
+  }
+
+  .field-group label {
+    font-size: 0.8rem;
+    padding-left: 8px;
+  }
+
+  .field-group label::before {
+    width: 3px;
+    height: 12px;
+  }
+
+  .field-group input,
+  .field-group select,
+  .field-group textarea {
+    padding: 8px 12px;
+    font-size: 0.8rem;
+    border-radius: var(--radius-small);
+  }
+
+  .form-actions {
+    gap: var(--spacing-xs);
+  }
+
+  .save-btn,
+  .cancel-btn,
+  .delete-btn {
+    padding: 6px 12px;
+    font-size: 0.8rem;
+  }
+
+  .save-btn::before,
+  .cancel-btn::before,
+  .delete-member-btn::before {
+    width: 14px;
+    height: 14px;
+  }
+
+  .delete-btn {
+    width: 32px;
+    height: 32px;
+  }
+
+  .member-chip,
+  .podcast-chip {
+    padding: 3px 5px;
+    font-size: 0.6rem;
+    gap: 2px;
+  }
+
+  .podcast-chip::before {
+    width: 10px;
+    height: 10px;
+  }
+
+  .remove-chip {
+    width: 14px;
+    height: 14px;
+  }
+
+  .creator-badge,
+  .verified-badge,
+  .not-verified-badge,
+  .role-badge {
+    padding: 1px 3px;
+    font-size: 0.55rem;
+    gap: 2px;
+    border-radius: 12px;
+  }
+
+  .creator-badge::before,
+  .verified-badge::before,
+  .not-verified-badge::before {
+    width: 5px;
+    height: 5px;
+  }
+
+  .member-card {
+    padding: var(--spacing-xs);
+  }
+
+  .member-card-header {
+    margin-bottom: var(--spacing-xs);
+  }
+
+  .member-card-header h3 {
+    font-size: 0.9rem;
+  }
+
+  .member-card-header h3::before {
+    width: 16px;
+    height: 16px;
+  }
+
+  .member-card .edit-icon-btn {
+    width: 24px;
+    height: 24px;
+    padding: 3px;
+    top: var(--spacing-xs);
+    right: var(--spacing-xs);
+  }
+
+  .member-card .edit-icon-btn::after {
+    font-size: 9px;
+    bottom: -20px;
+    padding: 3px 6px;
+  }
+
+  .member-card-body p {
+    font-size: 0.75rem;
+    gap: 6px;
+  }
+
+  .member-card-footer {
+    margin-top: var(--spacing-sm);
+    gap: var(--spacing-xs);
+  }
+
+  .member-card-footer .edit-member-btn {
+    padding: 6px 12px;
+    font-size: 0.75rem;
+  }
+
+  .notification {
+    width: 95%;
+    padding: 10px;
+    top: 5px;
+    right: 5px;
+  }
+
+  .notification-title {
+    font-size: 0.8rem;
+  }
+
+  .notification-message {
+    font-size: 0.7rem;
+  }
+
+  .notification-icon {
+    margin-right: 10px;
+  }
+
+  .notification-close {
+    margin-left: 8px;
   }
 }
 
@@ -1106,8 +1653,8 @@ body {
 .team-card .members-section div {
   display: flex;
   flex-wrap: wrap;
-  gap: 10px;
-  row-gap: 12px;
+  gap: 8px;
+  row-gap: 10px;
 }
 
 /* Notification styles */
