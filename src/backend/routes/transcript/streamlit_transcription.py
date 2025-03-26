@@ -27,7 +27,7 @@ import tempfile
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-API_BASE_URL = "http://192.168.0.43:8000"
+API_BASE_URL = "http://127.0.0.1:8000"
 
 
 # Function to format transcription for display and download

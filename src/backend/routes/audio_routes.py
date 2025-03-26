@@ -1,0 +1,60 @@
+# audio_routes.py
+import logging
+from flask import Blueprint, request, jsonify
+from backend.services.audioService import AudioService
+
+logger = logging.getLogger(__name__)
+audio_bp = Blueprint("audio_bp", __name__)
+audio_service = AudioService()
+
+@audio_bp.route("/audio/enhancement", methods=["POST"])
+def audio_enhancement():
+    if "audio" not in request.files:
+        return jsonify({"error": "No audio file provided"}), 400
+
+    audio_file = request.files["audio"]
+    filename = audio_file.filename
+    audio_bytes = audio_file.read()
+
+    try:
+        enhanced_file_id = audio_service.enhance_audio(audio_bytes, filename)
+        return jsonify({"enhanced_audio": enhanced_file_id})
+    except Exception as e:
+        logger.error(f"Error enhancing audio: {str(e)}")
+        return jsonify({"error": str(e)}), 500
+
+
+@audio_bp.route("/audio_analysis", methods=["POST"])
+def audio_analysis():
+    if "audio" not in request.files:
+        return jsonify({"error": "No audio file provided"}), 400
+
+    audio_file = request.files["audio"]
+    audio_bytes = audio_file.read()
+
+    try:
+        analysis_result = audio_service.analyze_audio(audio_bytes)
+        return jsonify(analysis_result)
+    except Exception as e:
+        logger.error(f"Error analyzing audio: {str(e)}")
+        return jsonify({"error": str(e)}), 500
+
+
+@audio_bp.route("/clip_audio", methods=["POST"])
+def clip_audio():
+    data = request.json
+    file_id = data.get("file_id")
+    clips = data.get("clips", [])
+
+    if not file_id or not clips:
+        return jsonify({"error": "Invalid request data"}), 400
+
+    try:
+        # Example: just handle the first clip
+        start_time = clips[0]["start"]
+        end_time = clips[0]["end"]
+        clipped_id = audio_service.cut_audio(file_id, start_time, end_time)
+        return jsonify({"clipped_audio": clipped_id})
+    except Exception as e:
+        logger.error(f"Error clipping audio: {str(e)}")
+        return jsonify({"error": str(e)}), 500
