@@ -105,26 +105,28 @@ export function showTeamDetailModal(team) {
   nameInput.readOnly = true;
   emailInput.readOnly = true;
   descriptionInput.readOnly = true;
+  document.getElementById("podcastAssignmentDropdown").disabled = true;
 
-  // Get the edit button
-  const editBtn = document.getElementById("editTeamDetailsBtn");
-  if (editBtn) {
-    editBtn.onclick = () => {
-      // Make all fields editable
+  // New edit button handler for Team Details
+  const editTeamDetailsBtn = document.getElementById("editTeamDetailsBtn");
+  if (editTeamDetailsBtn) {
+    editTeamDetailsBtn.onclick = () => {
+      // Unlock Name, Team Email, Description and Podcast dropdown
       nameInput.readOnly = false;
       emailInput.readOnly = false;
-      descriptionInput.readOnly = false;
+      descriptionInput.readOnly = false; // Unlock description
+      document.getElementById("podcastAssignmentDropdown").disabled = false; // Unlock podcast dropdown
 
-      // Add visual indication that fields are editable
+      // Visual indication for unlocked fields
       nameInput.style.backgroundColor = "rgba(255, 111, 97, 0.05)";
       emailInput.style.backgroundColor = "rgba(255, 111, 97, 0.05)";
-      descriptionInput.style.backgroundColor = "rgba(255, 111, 97, 0.05)";
-
+      descriptionInput.style.backgroundColor = "rgba(255, 111, 97, 0.05)"; // New visual cue
       nameInput.style.borderColor = "var(--highlight-color)";
       emailInput.style.borderColor = "var(--highlight-color)";
-      descriptionInput.style.borderColor = "var(--highlight-color)";
+      descriptionInput.style.borderColor = "var(--highlight-color)"; // New visual cue
 
-      // Focus on the first field
+      // Enable save button and focus on name field
+      document.getElementById("saveTeamBtn").disabled = false;
       nameInput.focus();
     };
   }

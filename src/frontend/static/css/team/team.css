@@ -465,6 +465,13 @@ body {
   cursor: not-allowed;
 }
 
+.field-group textarea[readonly] {
+  background-color: #f8f9fa;
+  color: #a0a0a0;
+  border-color: #e0e0e0;
+  cursor: not-allowed;
+}
+
 /* Field edit button styles */
 .field-edit-btn {
   background-color: transparent;
@@ -1463,7 +1470,7 @@ body {
   .field-group textarea {
     padding: 8px 12px;
     font-size: 0.8rem;
-    border-radius: var(--radius-small);
+    border-radius: var (--radius-small);
   }
 
   .form-actions {

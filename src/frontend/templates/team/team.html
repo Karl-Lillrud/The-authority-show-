@@ -153,14 +153,20 @@ Dashboard{% endblock %} {% block content %}
         </div>
         <div class="field-group full-width">
           <label for="podcastAssignmentDropdown">Add Podcast:</label>
-          <select class="form-control" id="podcastAssignmentDropdown">
+          <select class="form-control" id="podcastAssignmentDropdown" disabled>
             <option value="">Select Podcast to Add</option>
           </select>
         </div>
         <!-- Team detail fields -->
         <div class="field-group">
           <label for="detailName">Name:</label>
-          <input type="text" class="form-control" id="detailName" name="name" />
+          <input
+            type="text"
+            class="form-control"
+            id="detailName"
+            name="name"
+            readonly
+          />
         </div>
         <div class="field-group">
           <label for="detailEmail">Team Email:</label>
@@ -171,6 +177,7 @@ Dashboard{% endblock %} {% block content %}
             id="detailEmail"
             name="email"
             required
+            readonly
           />
         </div>
         <div class="field-group full-width">
@@ -179,6 +186,7 @@ Dashboard{% endblock %} {% block content %}
             class="form-control"
             id="detailDescription"
             name="description"
+            readonly
           ></textarea>
         </div>
       </div>
@@ -189,6 +197,13 @@ Dashboard{% endblock %} {% block content %}
           id="deleteTeamDetailsBtn"
         >
           Delete
+        </button>
+        <button
+          type="button"
+          id="editTeamDetailsBtn"
+          class="save-btn edit-team-btn"
+        >
+          Edit
         </button>
         <button type="button" class="save-btn" id="saveTeamBtn">Save</button>
       </div>
