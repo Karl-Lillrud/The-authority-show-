@@ -22,7 +22,14 @@
       </div>
     </nav>
   </header>
-  
+
+    <!-- Prevent error if podcast_logo is None -->
+    <img id="podcast-logo"
+        src="{{ podcast_logo }}"
+        crossorigin="anonymous"
+        onerror="this.src='/static/images/default.png'"
+        hidden>
+
   <main>
     <!-- Enhanced Episode Banner -->
     <section class="episode-banner section-dark">
@@ -44,23 +51,9 @@
       </div>
     </section>
     
-    <!-- Custom Audio Player -->
-    <section class="audio-player">
-      <div class="player-container">
-        <span id="current-time">00:00</span>
-        <input type="range" id="seek-bar" value="0">
-        <span id="duration">00:00</span>
-      </div>
-
-      <div class="player-controls">
-        <button id="speed-btn">1x</button>
-        <button id="rewind-btn"><i class="fas fa-undo-alt"></i> 15</button>
-        <button id="play-btn"><i class="fas fa-play"></i></button>
-        <button id="forward-btn">15 <i class="fas fa-redo-alt"></i></button>
-      </div>
-
-      <audio id="audio">
-        <source src="episode-audio.mp3" type="audio/mpeg">
+      <audio id="audio-player" controls>
+        <source id="audio-source" src="{{ audio_url or '' }}" type="audio/mpeg">
+        Your browser does not support the audio element.
       </audio>
     </section>
     
@@ -147,4 +140,16 @@
   </footer>
   <script src="static/js/audio-player.js"></script>
 </body>
+
+<!-- Load Color Thief -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/color-thief/2.3.2/color-thief.umd.js"></script>
+
+<!-- Load our main Color Thief script -->
+<script src="/static/js/color_thief.js"></script>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        applyColorThiefToEpisodePage("#podcast-logo"); // Call function for landing page
+    });
+</script>
 </html>

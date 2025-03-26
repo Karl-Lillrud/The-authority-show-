@@ -85,7 +85,7 @@ function displayPodcastDetails(podcast) {
   if (twitterEl) twitterEl.value = podcast.socialMedia?.[3] || "";
 
   const tiktokEl = document.getElementById("tiktok");
-  if (tiktokEl) twitterEl.value = podcast.socialMedia?.[4] || "";
+  if (tiktokEl) tiktokEl.value = podcast.socialMedia?.[4] || "";
 
   const pinterestEl = document.getElementById("pinterest");
   if (pinterestEl) pinterestEl.value = podcast.socialMedia?.[5] || "";
@@ -747,8 +747,8 @@ function handlePodcastFormSubmission() {
       description: document.getElementById("description")?.value.trim() || "",
       bannerUrl: document.getElementById("banner")?.value.trim() || "",
       tagline: document.getElementById("tagline")?.value.trim() || "",
-      hostBio: document.getElementById("host-bio")?.value.trim() || "",
-      hostImage: document.getElementById("host-image")?.value.trim() || "",
+      hostBio: document.getElementById("hostBio")?.value.trim() || "",
+      hostImage: document.getElementById("hostImage")?.value.trim() || "",
       // the logoUrl field will be replaced if a logo is uploaded
 
       category,

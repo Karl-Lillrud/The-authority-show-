@@ -153,6 +153,70 @@ document.addEventListener("DOMContentLoaded", () => {
   // Enable closing popups by clicking outside
   enablePopupCloseOnOutsideClick();
 
+  // Highlight editing logic
+function showHighlightPopup(highlight) {
+  const popup = document.getElementById("highlight-form-popup");
+  document.getElementById("highlight-title").value = highlight.title || "";
+  document.getElementById("highlight-start-time").value = highlight.startTime || "";
+  document.getElementById("highlight-end-time").value = highlight.endTime || "";
+  popup.style.display = "flex";
+}
+
+document.getElementById("edit-highlight-form").addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const highlightData = {
+    title: document.getElementById("highlight-title").value.trim(),
+    startTime: parseInt(document.getElementById("highlight-start-time").value, 10),
+    endTime: parseInt(document.getElementById("highlight-end-time").value, 10),
+  };
+
+  try {
+    const response = await fetch("/edit_highlight", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(highlightData),
+    });
+    const result = await response.json();
+    if (response.ok) {
+      showNotification("Success", "Highlight saved successfully!", "success");
+      document.getElementById("highlight-form-popup").style.display = "none";
+    } else {
+      showNotification("Error", "Failed to save highlight: " + result.error, "error");
+    }
+  } catch (error) {
+    console.error("Error saving highlight:", error);
+    showNotification("Error", "Failed to save highlight.", "error");
+  }
+});
+
+async function verifyHighlightConsistency(highlight) {
+  try {
+    const response = await fetch("/verify_highlight", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(highlight),
+    });
+    const result = await response.json();
+    if (response.ok) {
+      showNotification("Verified", "Highlight verified successfully!", "success");
+    } else {
+      showNotification("Error", "Highlight verification failed: " + result.error, "error");
+    }
+  } catch (error) {
+    console.error("Error verifying highlight:", error);
+    showNotification("Error", "Failed to verify highlight.", "error");
+  }
+}
+
+// Close / Cancel popup
+document.getElementById("close-highlight-form-popup").addEventListener("click", () => {
+  document.getElementById("highlight-form-popup").style.display = "none";
+});
+
+document.getElementById("cancel-highlight-form-btn").addEventListener("click", () => {
+  document.getElementById("highlight-form-popup").style.display = "none";
+});
+
   // Find the header element from the base template
   const headerElement = document.querySelector("header");
   if (headerElement) {
