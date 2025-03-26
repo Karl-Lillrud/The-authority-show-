@@ -13,16 +13,11 @@ API_BASE_URL = os.getenv("API_BASE_URL", "http://127.0.0.1:8000")
 
 
 @auth_bp.route("/signin", methods=["GET"], endpoint="signin")
+@auth_bp.route("/", methods=["GET"])
 def signin_page():
     if request.cookies.get("remember_me") == "true":
         return redirect("/dashboard")
     return render_template("signin/signin.html", API_BASE_URL=API_BASE_URL)
-
-
-# Skapa en ny root-route som visar register sidan
-@auth_bp.route("/", methods=["GET"])
-def root_redirect():
-    return redirect(url_for("auth_bp.register_page"))
 
 
 @auth_bp.route("/signin", methods=["POST"])
