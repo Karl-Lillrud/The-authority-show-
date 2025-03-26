@@ -33,8 +33,13 @@ class EpisodeRepository:
             files = request.files.getlist('episodeFiles')  # Fetch files from the request
             if files:
                 saved_files = save_uploaded_files(files)
+                if not saved_files:  # Correctly indented inside the try block
+                    logger.error("No files were saved to Cloudflare R2.")
+                    return {"error": "Failed to save files. Please try again."}, 400
+
                 data['episodeFiles'] = saved_files
-                data['audioUrl'] = saved_files[0]['url']
+                data['audioUrl'] = saved_files[0]['url']  # Ensure audioUrl is set
+                logger.info(f"Audio URL set to: {data['audioUrl']}")
 
             # Validate data with schema
             schema = EpisodeSchema()

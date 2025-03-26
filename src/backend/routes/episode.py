@@ -80,13 +80,12 @@ def publish_to_spotify(episode_id):
         return jsonify({"error": "Episode not found"}), 404
 
     try:
-        # Hämta Spotify access token
         access_token = get_spotify_access_token()
         if not access_token:
             logger.error("Failed to retrieve Spotify access token")
             return jsonify({"error": "Failed to retrieve Spotify access token"}), 500
 
-        # Försök att ladda upp episode till Spotify
+        # Attempt to upload the episode to Spotify
         result = upload_episode_to_spotify(access_token, episode)
         if result:
             return jsonify({"message": "Episode published successfully to Spotify!"}), 200
@@ -95,6 +94,7 @@ def publish_to_spotify(episode_id):
     except Exception as e:
         logger.error(f"Error publishing to Spotify: {str(e)}", exc_info=True)
         return jsonify({"error": f"Error publishing to Spotify: {str(e)}"}), 500
+
 
 @episode_bp.route("/get_episodes/<episode_id>", methods=["GET"])
 def get_episode(episode_id):
@@ -219,10 +219,14 @@ def get_episodes_by_podcast(podcast_id):
 
 @episode_bp.route("/get_guests_by_episode/<episode_id>", methods=["GET"])
 def get_guests_by_episode(episode_id):
+    """
+    Fetch guests associated with a specific episode.
+    """
     try:
-        guests = db['Guests'].find({"episodeId": episode_id})  # Replace with your actual guests collection
-        guests_list = [{"id": str(guest["_id"]), "name": guest["name"]} for guest in guests]
-        return jsonify({"guests": guests_list}), 200
+        guests = guest_repo.get_guests_by_episode(episode_id)
+        if not guests:
+            return jsonify({"error": "No guests found for this episode"}), 404
+        return jsonify({"guests": guests}), 200
     except Exception as e:
         logger.error(f"Error fetching guests for episode {episode_id}: {e}")
         return jsonify({"error": "Failed to fetch guests"}), 500

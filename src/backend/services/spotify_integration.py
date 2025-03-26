@@ -52,17 +52,20 @@ def get_spotify_access_token():
     
     # Check if the request was successful
     if response.status_code == 200:
-        return response.json().get('access_token')
-    
-    logger.error(f"Failed to retrieve Spotify access token: {response.status_code} - {response.text}")
-    return None
+        access_token = response.json().get('access_token')
+        logger.info(f"Spotify access token retrieved successfully: {access_token[:10]}...")  # Log partial token
+        return access_token
+    else:
+        logger.error(f"Failed to retrieve Spotify access token: {response.status_code} - {response.text}")
+        return None
 
 def upload_episode_to_spotify(access_token, episode):
     """
     Upload the episode to Spotify using the provided access token.
     """
-    spotify_api_url = f"https://api.spotify.com/v1/shows/{episode['podcast_id']}/episodes"
-    
+    # Correct Spotify API endpoint for uploading episodes
+    spotify_api_url = f"https://api.spotify.com/v1/shows/{episode['podcast_id']}/episodes"  # Verify this endpoint
+
     headers = {
         "Authorization": f"Bearer {access_token}",
         "Content-Type": "application/json"
@@ -77,6 +80,7 @@ def upload_episode_to_spotify(access_token, episode):
     # Make sure the audio URL is a full URL and publicly accessible
     if not audio_url.startswith('http://') and not audio_url.startswith('https://'):
         audio_url = f"http://127.0.0.1:5000{audio_url}"
+    logger.info(f"Using audio URL: {audio_url}")
 
     # Episode data should include the correct fields
     episode_data = {
@@ -89,13 +93,18 @@ def upload_episode_to_spotify(access_token, episode):
 
     logger.info(f"Uploading episode to Spotify with data: {episode_data}")
 
-    response = requests.post(spotify_api_url, headers=headers, json=episode_data)
+    try:
+        # Use POST or PUT based on Spotify API documentation
+        response = requests.post(spotify_api_url, headers=headers, json=episode_data)
 
-    if response.status_code == 201:
-        logger.info("Episode uploaded successfully to Spotify.")
-        return True
-    else:
-        logger.error(f"Error uploading episode to Spotify: {response.status_code} - {response.text}")
+        if response.status_code == 201:
+            logger.info("Episode uploaded successfully to Spotify.")
+            return True
+        else:
+            logger.error(f"Error uploading episode to Spotify: {response.status_code} - {response.text}")
+            return False
+    except Exception as e:
+        logger.error(f"Exception occurred while uploading episode to Spotify: {e}")
         return False
 
 def save_uploaded_files(files):

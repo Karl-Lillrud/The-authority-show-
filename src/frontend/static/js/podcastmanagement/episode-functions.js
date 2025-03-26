@@ -566,6 +566,7 @@ export async function publishEpisodeToSpotify(episodeId) {
     const response = await fetch(`/publish_to_spotify/${episodeId}`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ episodeId }),  // Make sure you're sending the data correctly
     });
 
     if (!response.ok) {
@@ -583,6 +584,7 @@ export async function publishEpisodeToSpotify(episodeId) {
     alert("An error occurred while publishing the episode.");
   }
 }
+
 
 // Example usage of the function
 document.querySelectorAll(".publish-episode-btn").forEach((button) => {
