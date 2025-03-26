@@ -24,7 +24,11 @@ class AudioService:
         file_id = fs.put(
             audio_bytes,
             filename=filename,
-            metadata={"upload_timestamp": datetime.utcnow(), "type": "transcription"},
+            metadata={
+                "upload_timestamp": datetime.utcnow(),
+                "type": "transcription",
+                "enhanced": False  # 👈 Explicitly mark original
+            },
         )
         logger.info(f"Original audio saved to GridFS with ID: {file_id}")
 
@@ -42,13 +46,19 @@ class AudioService:
         # 4. Read back enhanced audio & save to GridFS
         with open(temp_out_path, "rb") as f:
             enhanced_data = f.read()
+
         enhanced_file_id = fs.put(
             enhanced_data,
             filename=f"enhanced_{filename}",
-            metadata={"upload_timestamp": datetime.utcnow(), "type": "transcription"},
+            metadata={
+                "upload_timestamp": datetime.utcnow(),
+                "type": "transcription",   # ✅ Needed for TTL + file fetch
+                "enhanced": True           # 👈 Mark this as enhanced version
+            },
         )
+        logger.info(f"Enhanced audio saved to GridFS with ID: {enhanced_file_id}")
 
-        # Cleanup
+        # Cleanup temp files
         os.remove(temp_in_path)
         os.remove(temp_out_path)
 

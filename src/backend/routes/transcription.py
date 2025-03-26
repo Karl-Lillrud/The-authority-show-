@@ -2,14 +2,15 @@
 
 import os
 import logging
-from flask import Blueprint, request, jsonify
+from flask import Blueprint, request, jsonify, Response
 from datetime import datetime
 from bson import ObjectId
 from elevenlabs.client import ElevenLabs
-
-# Import your new service classes or methods:
 from backend.services.transcriptionService import TranscriptionService
+import gridfs
+from backend.database.mongo_connection import get_db, get_fs
 
+fs = gridfs.GridFS(get_db())
 logger = logging.getLogger(__name__)
 
 # Keep the same blueprint name so app.py doesn’t break
@@ -45,5 +46,26 @@ def translate():
     try:
         translated = transcription_service.translate_text(text, language)
         return jsonify({"translated_text": translated})
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+    
+@transcription_bp.route("/get_file/<file_id>", methods=["GET"])
+def get_file(file_id):
+    try:
+        object_id = ObjectId(file_id)
+        file_obj = fs.get(object_id)
+
+        if not file_obj:
+            return jsonify({"error": "File not found"}), 404
+
+        file_data = file_obj.read()
+        return Response(
+            file_data,
+            mimetype="audio/wav",
+            headers={"Content-Disposition": f"attachment; filename={file_obj.filename}"}
+        )
+
+    except gridfs.errors.NoFile:
+        return jsonify({"error": "File not found."}), 404
     except Exception as e:
         return jsonify({"error": str(e)}), 500

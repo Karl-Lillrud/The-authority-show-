@@ -8,16 +8,13 @@ import logging
 logger = logging.getLogger(__name__)
 
 def enhance_audio_with_ffmpeg(input_path: str, output_path: str) -> bool:
-    """
-    Run FFmpeg command to enhance audio.
-    Return True if successful, False otherwise.
-    """
     try:
         ffmpeg_cmd = [
             "ffmpeg",
+            "-y",
             "-i", input_path,
             "-af",
-            "arnndn=nf=-40,highpass=f=50,highpass=f=60,highpass=f=70,"
+            "afftdn=nf=-25,highpass=f=50,highpass=f=60,highpass=f=70,"
             "equalizer=f=50:t=q:w=1:g=-40,equalizer=f=60:t=q:w=1:g=-40,"
             "highpass=f=100,loudnorm",
             output_path
@@ -27,6 +24,7 @@ def enhance_audio_with_ffmpeg(input_path: str, output_path: str) -> bool:
     except Exception as e:
         logger.error(f"Error during FFmpeg audio enhancement: {str(e)}")
         return False
+
 
 def detect_background_noise(audio_path: str, threshold=1000, max_freq=500) -> str:
     """
