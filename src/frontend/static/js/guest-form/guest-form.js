@@ -398,6 +398,8 @@ document.addEventListener("DOMContentLoaded", function () {
         calendarPicker.innerHTML = "";
         const firstDay = new Date(currentYear, currentMonth, 1).getDay();
         const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
+        const today = new Date(); // Get today's date
+        today.setHours(0, 0, 0, 0); // Normalize to midnight for comparison
 
         currentMonthYear.textContent = `${new Date(currentYear, currentMonth).toLocaleString('default', { month: 'long' })} ${currentYear}`;
 
@@ -427,8 +429,8 @@ document.addEventListener("DOMContentLoaded", function () {
             const fullDate = new Date(currentYear, currentMonth, day);
             const formattedDate = fullDate.toISOString().split('T')[0]; // Format as YYYY-MM-DD
 
-            // Check if the date is unavailable
-            if (fullDate.getDay() === 0 || fullDate.getDay() === 6 || unavailableDates.includes(formattedDate)) {
+            // Check if the date is unavailable or in the past
+            if (fullDate < today || fullDate.getDay() === 0 || fullDate.getDay() === 6 || unavailableDates.includes(formattedDate)) {
                 dayEl.classList.add("text-gray-400", "cursor-not-allowed", "line-through");
             } else {
                 dayEl.classList.add("bg-blue-100", "cursor-pointer");

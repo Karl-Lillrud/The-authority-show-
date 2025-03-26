@@ -17,11 +17,22 @@ export async function removeUserFromTeamRequest(payload) {
 }
 
 export async function editTeamMemberRequest(teamId, userId, role) {
+  console.log("Sending payload to /edit_team_member:", {
+    teamId,
+    userId,
+    role
+  }); // Debug log
   const res = await fetch("/edit_team_member", {
     method: "PUT",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ teamId, userId, role })
   });
+
+  if (!res.ok) {
+    const errorData = await res.json();
+    console.error("Error response from /edit_team_member:", errorData); // Logga backend-felet
+  }
+
   return res.json();
 }
 

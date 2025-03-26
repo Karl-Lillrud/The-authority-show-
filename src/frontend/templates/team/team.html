@@ -1,13 +1,19 @@
-{% extends "components/base.html" %} {% block title %}Team Leaderboard
-Dashboard{% endblock %} {% block content %}
-<link
-  rel="stylesheet"
-  href="{{ url_for('static', filename='css/team/team.css') }}"
-/>
-<link
-  rel="stylesheet"
-  href="{{ url_for('static', filename='css/components/sidebar.css') }}"
-/>
+{% block title %}Team Leaderboard Dashboard{% endblock %}
+{% block content %}
+<head>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/team/team.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/components/sidebar.css') }}">
+
+  <!-- Google Analytics -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-PTPQQ5WSQV"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+
+    gtag('config', 'G-PTPQQ5WSQV');
+  </script>
+</head>
 
 <div class="app-container">
   <div id="sidebar-container">
@@ -192,7 +198,7 @@ Dashboard{% endblock %} {% block content %}
   </div>
 </div>
 
-<!-- New Add New Member Modal -->
+<!-- Add New Member Modal -->
 <div
   class="modal popup"
   id="addMemberModal"
@@ -213,8 +219,24 @@ Dashboard{% endblock %} {% block content %}
         <div class="field-group">
           <label for="memberRole">Select Role:</label>
           <select id="memberRole" class="form-control" required>
-            <option value="member">Member</option>
-            <option value="admin">Admin</option>
+            <option value="CoHost">CoHost</option>
+            <option value="Guest">Guest</option>
+            <option value="Scriptwriter">Scriptwriter</option>
+            <option value="Producer">Producer</option>
+            <option value="AudioEngineer">AudioEngineer</option>
+            <option value="SoundDesigner">SoundDesigner</option>
+            <option value="Researcher">Researcher</option>
+            <option value="GuestCoordinator">GuestCoordinator</option>
+            <option value="Showrunner">Showrunner</option>
+            <option value="SocialMediaManager">SocialMediaManager</option>
+            <option value="GraphicDesigner">GraphicDesigner</option>
+            <option value="Copywriter">Copywriter</option>
+            <option value="Publicist">Publicist</option>
+            <option value="SponsorshipManager">SponsorshipManager</option>
+            <option value="MarketingStrategist">MarketingStrategist</option>
+            <option value="AnalyticsSpecialist">AnalyticsSpecialist</option>
+            <option value="ShowCoordinator">ShowCoordinator</option>
+            <option value="Webmaster">Webmaster</option>
           </select>
         </div>
         <div class="field-group">
@@ -260,8 +282,24 @@ Dashboard{% endblock %} {% block content %}
         <div class="field-group">
           <label for="editMemberRole">Select Role:</label>
           <select id="editMemberRole" class="form-control" required>
-            <option value="member">Member</option>
-            <option value="admin">Admin</option>
+            <option value="CoHost">CoHost</option>
+            <option value="Guest">Guest</option>
+            <option value="Scriptwriter">Scriptwriter</option>
+            <option value="Producer">Producer</option>
+            <option value="AudioEngineer">AudioEngineer</option>
+            <option value="SoundDesigner">SoundDesigner</option>
+            <option value="Researcher">Researcher</option>
+            <option value="GuestCoordinator">GuestCoordinator</option>
+            <option value="Showrunner">Showrunner</option>
+            <option value="SocialMediaManager">SocialMediaManager</option>
+            <option value="GraphicDesigner">GraphicDesigner</option>
+            <option value="Copywriter">Copywriter</option>
+            <option value="Publicist">Publicist</option>
+            <option value="SponsorshipManager">SponsorshipManager</option>
+            <option value="MarketingStrategist">MarketingStrategist</option>
+            <option value="AnalyticsSpecialist">AnalyticsSpecialist</option>
+            <option value="ShowCoordinator">ShowCoordinator</option>
+            <option value="Webmaster">Webmaster</option>
           </select>
         </div>
       </div>
@@ -270,6 +308,60 @@ Dashboard{% endblock %} {% block content %}
           Cancel
         </button>
         <button type="button" id="saveEditMemberBtn" class="save-btn">
+          Save
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Edit Member Modal for Team Cards -->
+<div
+  class="modal popup"
+  id="teamCardEditMemberModal"
+  tabindex="-1"
+  role="dialog"
+  aria-labelledby="teamCardEditMemberModalLabel"
+  aria-hidden="true"
+>
+  <div class="form-box" role="document">
+    <form id="teamCardEditMemberForm">
+      <span id="teamCardEditMemberCloseBtn" class="close-btn">&times;</span>
+      <h2 class="form-title" id="teamCardEditMemberModalLabel">
+        Member Details
+      </h2>
+      <div class="form-grid">
+        <div class="field-group full-width">
+          <label for="teamCardEditMemberEmail">Member Email:</label>
+          <input
+            type="email"
+            id="teamCardEditMemberEmail"
+            class="form-control"
+            readonly
+          />
+        </div>
+        <div class="field-group">
+          <label for="teamCardEditMemberRole">Role:</label>
+          <select id="teamCardEditMemberRole" class="form-control" disabled>
+            <option value="member">Member</option>
+            <option value="admin">Admin</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-actions">
+        <button
+          type="button"
+          id="teamCardEditMemberEditBtn"
+          class="edit-team-btn"
+        >
+          Edit
+        </button>
+        <button
+          type="button"
+          id="teamCardEditMemberSaveBtn"
+          class="save-btn"
+          disabled
+        >
           Save
         </button>
       </div>

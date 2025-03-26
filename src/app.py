@@ -17,6 +17,7 @@ from backend.routes.google_calendar import google_calendar_bp
 from backend.routes.episode import register_episode_routes  # Import the registration function
 from backend.routes.podprofile import podprofile_bp  # Import the podprofile blueprint
 from backend.routes.frontend import frontend_bp  # Import the frontend blueprint
+from backend.routes.guestpage import guestpage_bp
 from backend.routes.guest_to_eposide import guesttoepisode_bp
 from backend.routes.guest_form import guest_form_bp  # Import the guest_form blueprint
 
@@ -28,6 +29,9 @@ from backend.database.mongo_connection import collection
 from backend.utils.email_utils import send_email
 from backend.routes.Mailing_list import Mailing_list_bp
 from backend.routes.user import user_bp
+from backend.routes.highlight import highlights_bp
+
+
 
 
 if os.getenv("SKIP_VENV_UPDATE", "false").lower() not in ("true", "1", "yes"):

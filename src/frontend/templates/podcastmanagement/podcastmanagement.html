@@ -1,13 +1,19 @@
-{% extends "/components/base.html" %} {% block title %}Podcast Management{%
-endblock %} {% block content %}
-<link
-  rel="stylesheet"
-  href="{{ url_for('static', filename='css/components/sidebar.css') }}"
-/>
-<link
-  rel="stylesheet"
-  href="{{ url_for('static', filename='css/podcastmanagement/podcastmanagement.css') }}"
-/>
+{% block title %}Podcast Management{% endblock %}
+{% block content %}
+<head>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/components/sidebar.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/podcastmanagement/podcastmanagement.css') }}">
+
+  <!-- Google Analytics -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-PTPQQ5WSQV"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+
+    gtag('config', 'G-PTPQQ5WSQV');
+  </script>
+</head>
 
 <div class="app-container">
   <!-- Sidebar -->
@@ -145,10 +151,10 @@ endblock %} {% block content %}
               <input type="text" id="hostBio" name="hostBio" />
             </div>
             <div class="field-group">
-              <label for="hostImage">Host Image</label>
+              <label for="host-image">Host Image</label>
               <input
                 type="file"
-                id="hostImage"
+                id="host-image"
                 name="hostImage"
                 accept="image/*"
               />
@@ -251,6 +257,32 @@ endblock %} {% block content %}
         </form>
       </div>
     </div>
+
+    <!-- Highlight Editing Form -->
+<div id="highlight-form-popup" class="popup" style="display: none">
+  <div class="form-box">
+    <span id="close-highlight-form-popup" class="close-btn">&times;</span>
+    <h2 class="form-title">Edit Highlight</h2>
+    <form id="edit-highlight-form">
+      <div class="field-group full-width">
+        <label for="highlight-title">Highlight Title</label>
+        <input type="text" id="highlight-title" name="title" required />
+      </div>
+      <div class="field-group full-width">
+        <label for="highlight-start-time">Start Time (seconds)</label>
+        <input type="number" id="highlight-start-time" name="startTime" required />
+      </div>
+      <div class="field-group full-width">
+        <label for="highlight-end-time">End Time (seconds)</label>
+        <input type="number" id="highlight-end-time" name="endTime" required />
+      </div>
+      <div class="form-actions">
+        <button type="button" id="cancel-highlight-form-btn" class="cancel-btn">Cancel</button>
+        <button type="submit" class="save-btn">Save Highlight</button>
+      </div>
+    </form>
+  </div>
+</div>
 
     <!-- New popup container for adding a guest -->
     <div id="guest-popup" class="popup" style="display: none">

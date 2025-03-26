@@ -1,15 +1,11 @@
 import { fetchAllEpisodes } from "/static/requests/episodeRequest.js"
 import { fetchGuestsByEpisode } from "/static/requests/guestRequests.js"
 import { fetchPodcast } from "/static/requests/podcastRequests.js"
+import { initTaskManagement } from "/static/js/dashboard/task.js"
 
 document.addEventListener("DOMContentLoaded", () => {
-  // Initialize welcome popup
   initWelcomePopup()
-
-  // Fetch and display episodes
   fetchAndDisplayEpisodesWithGuests()
-
-  // Populate leaderboard with mock data (replace with actual data fetch)
   populateLeaderboard()
 })
 
@@ -18,20 +14,16 @@ function initWelcomePopup() {
   const closeWelcomePopup = document.getElementById("close-welcome-popup")
   const getStartedBtn = document.getElementById("get-started-btn")
 
-  // Show popup
   welcomePopup.style.display = "flex"
 
-  // Close popup when clicking close button
   closeWelcomePopup.addEventListener("click", () => {
     welcomePopup.style.display = "none"
   })
 
-  // Close popup when clicking get started button
   getStartedBtn.addEventListener("click", () => {
     welcomePopup.style.display = "none"
   })
 
-  // Close popup when clicking outside
   welcomePopup.addEventListener("click", (e) => {
     if (e.target === welcomePopup) {
       welcomePopup.style.display = "none"
@@ -41,23 +33,34 @@ function initWelcomePopup() {
 
 async function fetchAndDisplayEpisodesWithGuests() {
   try {
-    const episodes = await fetchAllEpisodes() // Fetch all episodes
+    const episodes = await fetchAllEpisodes()
+    // Only show episodes with active status
+    const activeEpisodes = episodes.filter(ep => ep.status === "active")
     const container = document.querySelector(".cards-container")
-    container.innerHTML = "" // Clear existing content
+    const initialEpisodes = activeEpisodes.slice(0, 3)
+    let isExpanded = false
 
-    const limitedEpisodes = episodes.slice(0, 3) // Show up to 3 cards
+    // Initially display only the first 3 active episodes
+    await displayEpisodes(initialEpisodes, container)
 
-    for (const episode of limitedEpisodes) {
-      // Create episode card
-      const card = createEpisodeCard(episode)
-      container.appendChild(card)
+    // Set up toggle button for view all / view less
+    const viewAllBtn = document.querySelector('.episodes-section .view-all')
+    viewAllBtn.textContent = "View All"
 
-      // Fetch and populate podcast details
-      await populatePodcastDetails(card, episode)
-
-      // Fetch and populate guest list
-      await populateGuestList(card, episode)
-    }
+    viewAllBtn.addEventListener('click', async (e) => {
+      e.preventDefault()
+      if (!isExpanded) {
+        // Expand to show all active episodes
+        await displayEpisodes(activeEpisodes, container)
+        viewAllBtn.textContent = "View Less"
+        isExpanded = true
+      } else {
+        // Collapse back to original state (first 3 active episodes)
+        await displayEpisodes(initialEpisodes, container)
+        viewAllBtn.textContent = "View All"
+        isExpanded = false
+      }
+    })
   } catch (error) {
     console.error("Error fetching episodes with guests:", error)
     const container = document.querySelector(".cards-container")
@@ -65,12 +68,23 @@ async function fetchAndDisplayEpisodesWithGuests() {
   }
 }
 
+async function displayEpisodes(episodes, container) {
+  container.innerHTML = ""
+  for (const episode of episodes) {
+    const card = createEpisodeCard(episode)
+    container.appendChild(card)
+    await populatePodcastDetails(card, episode)
+    await populateGuestList(card, episode)
+  }
+  initTaskManagement()
+}
+
 function createEpisodeCard(episode) {
   const card = document.createElement("div")
   card.classList.add("episode-card")
-  card.dataset.episodeId = episode._id
+  // Use episode.id if available; fallback to episode._id
+  card.dataset.episodeId = episode.id || episode._id
 
-  // Card structure
   card.innerHTML = `
     <div class="card-header">
       <img class="podcast-logo" src="/static/images/default-podcast-logo.png" alt="Podcast Logo">
@@ -85,44 +99,25 @@ function createEpisodeCard(episode) {
       </ul>
     </div>
     <div class="card-footer">
-      <span>Episode #${episode.episode_number || "N/A"}</span>
-      <button class="toggle-tasks">+</button>
+      <button class="toggle-tasks" aria-label="Toggle tasks">+</button>
     </div>
     <div class="tasks-container" style="display: none;">
       <p>Tasks for this episode will be displayed here.</p>
     </div>
   `
-
-  // Add event listener for toggle tasks button
-  const toggleButton = card.querySelector(".toggle-tasks")
-  const tasksContainer = card.querySelector(".tasks-container")
-
-  toggleButton.addEventListener("click", () => {
-    if (tasksContainer.style.display === "none") {
-      tasksContainer.style.display = "block"
-      toggleButton.textContent = "-"
-    } else {
-      tasksContainer.style.display = "none"
-      toggleButton.textContent = "+"
-    }
-  })
-
   return card
 }
 
 async function populatePodcastDetails(card, episode) {
   try {
-    const podcastId = episode.podcast_id
-
+    const podcastId = episode.podcastId || episode.podcast_id
     if (!podcastId) {
       console.error("Error: Missing podcastId for episode:", episode)
       return
     }
-
     const podcastResponse = await fetchPodcast(podcastId)
     const podcast = podcastResponse.podcast || {}
 
-    // Update podcast logo and title
     const logoElement = card.querySelector(".podcast-logo")
     if (podcast.logoUrl) {
       logoElement.src = podcast.logoUrl
@@ -136,10 +131,9 @@ async function populatePodcastDetails(card, episode) {
 async function populateGuestList(card, episode) {
   try {
     const guestList = card.querySelector(".guest-list")
-    const guests = await fetchGuestsByEpisode(episode._id)
+    const guests = await fetchGuestsByEpisode(episode.id || episode._id)
 
-    guestList.innerHTML = "" // Clear loading message
-
+    guestList.innerHTML = ""
     if (guests.length > 0) {
       guests.forEach((guest) => {
         const li = document.createElement("li")
@@ -157,4 +151,3 @@ async function populateGuestList(card, episode) {
     guestList.innerHTML = "<li>Error loading guest info</li>"
   }
 }
-
