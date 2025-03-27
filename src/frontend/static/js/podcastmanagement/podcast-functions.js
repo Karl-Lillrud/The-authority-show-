@@ -414,22 +414,25 @@ export async function renderPodcastList() {
     document.querySelectorAll(".delete-btn-home").forEach((button) => {
       button.addEventListener("click", async (e) => {
         const podcastId = e.target.closest("button").getAttribute("data-id");
-        if (confirm("Are you sure you want to delete this podcast?")) {
-          try {
-            await deletePodcast(podcastId);
-            showNotification(
-              "Success",
-              "Podcast deleted successfully!",
-              "success"
-            );
-            e.target.closest(".podcast-card")?.remove();
-            if (document.querySelectorAll(".podcast-card").length === 0) {
-              renderPodcastList();
+        showDeleteConfirmationModal(
+          "Are you sure you want to delete this podcast?",
+          async () => {
+            try {
+              await deletePodcast(podcastId);
+              showNotification(
+                "Success",
+                "Podcast deleted successfully!",
+                "success"
+              );
+              e.target.closest(".podcast-card")?.remove();
+              if (document.querySelectorAll(".podcast-card").length === 0) {
+                renderPodcastList();
+              }
+            } catch (error) {
+              showNotification("Error", "Failed to delete podcast.", "error");
             }
-          } catch (error) {
-            showNotification("Error", "Failed to delete podcast.", "error");
           }
-        }
+        );
       });
     });
   } catch (error) {
@@ -961,3 +964,60 @@ export function initPodcastFunctions() {
   // Setup podcast form submission
   handlePodcastFormSubmission();
 }
+
+// Function to show a custom confirmation modal
+function showDeleteConfirmationModal(message, onConfirm, onCancel) {
+  const modal = document.createElement("div");
+  modal.className = "popup";
+  modal.style.display = "flex";
+
+  modal.innerHTML = `
+    <div class="form-box">
+      <h2 class="form-title">Confirm Deletion</h2>
+      <p>${message}</p>
+      <div class="form-actions">
+        <button class="cancel-btn" id="cancel-delete-btn">Cancel</button>
+        <button class="delete-btn" id="confirm-delete-btn">Delete</button>
+      </div>
+    </div>
+  `;
+
+  document.body.appendChild(modal);
+
+  // Event listeners for buttons
+  modal.querySelector("#cancel-delete-btn").addEventListener("click", () => {
+    document.body.removeChild(modal);
+    if (onCancel) onCancel();
+  });
+
+  modal.querySelector("#confirm-delete-btn").addEventListener("click", () => {
+    document.body.removeChild(modal);
+    if (onConfirm) onConfirm();
+  });
+}
+
+// Update delete button event listener to use the custom modal
+document.querySelectorAll(".delete-btn-home").forEach((button) => {
+  button.addEventListener("click", async (e) => {
+    const podcastId = e.target.closest("button").getAttribute("data-id");
+    showDeleteConfirmationModal(
+      "Are you sure you want to delete this podcast?",
+      async () => {
+        try {
+          await deletePodcast(podcastId);
+          showNotification(
+            "Success",
+            "Podcast deleted successfully!",
+            "success"
+          );
+          e.target.closest(".podcast-card")?.remove();
+          if (document.querySelectorAll(".podcast-card").length === 0) {
+            renderPodcastList();
+          }
+        } catch (error) {
+          showNotification("Error", "Failed to delete podcast.", "error");
+        }
+      }
+    );
+  });
+});
