@@ -46,41 +46,33 @@ class PodcastRepository:
             if not account:
                 raise ValueError("Invalid account ID or no permission to add podcast.")
 
-            # Define allowed fields and default values
-            allowed_fields = {
-                "teamId": None,
-                "podName": None,
-                "ownerName": None,
-                "hostName": None,
-                "rssFeed": None,
-                "googleCal": None,
-                "podUrl": None,
-                "guestUrl": None,
-                "socialMedia": [],
-                "email": None,
-                "description": None,
-                "logoUrl": None,
-                "category": "",
-                "title": "",
-                "language": "",
-                "author": "",
-                "copyright_info": "",
-                "bannerUrl": "",
-                "tagline": "",
-                "hostBio": "",
-                "hostImage": "",
-            }
-
-            # Generate podcast item dynamically
+            # Generate a unique podcast ID
             podcast_id = str(uuid.uuid4())
             podcast_item = {
                 "_id": podcast_id,
+                "teamId": validated_data.get("teamId"),
                 "accountId": account_id,
+                "podName": validated_data.get("podName"),
+                "ownerName": validated_data.get("ownerName"),
+                "hostName": validated_data.get("hostName"),
+                "rssFeed": validated_data.get("rssFeed"),
+                "googleCal": validated_data.get("googleCal"),
+                "podUrl": validated_data.get("podUrl"),
+                "guestUrl": validated_data.get("guestUrl"),
+                "socialMedia": validated_data.get("socialMedia", []),
+                "email": validated_data.get("email"),
+                "description": validated_data.get("description"),
+                "logoUrl": validated_data.get("logoUrl"),
+                "category": validated_data.get("category", ""),
                 "created_at": datetime.now(timezone.utc),
-                **{
-                    key: validated_data.get(key, default)
-                    for key, default in allowed_fields.items()
-                },
+                "title": validated_data.get("title", ""),
+                "language": validated_data.get("language", ""),
+                "author": validated_data.get("author", ""),
+                "copyright_info": validated_data.get("copyright_info", ""),
+                "bannerUrl": validated_data.get("bannerUrl", ""),
+                "tagline": validated_data.get("tagline", ""),
+                "hostBio": validated_data.get("hostBio", ""),
+                "hostImage": validated_data.get("hostImage", ""),
             }
 
             # Insert into database
