@@ -363,11 +363,20 @@ export function initGuestFunctions() {
           });
           closeAddGuestPopup();
           showNotification("Success", "Guest added successfully!", "success");
-          // Refresh the guest list in episode details without refreshing the page
+
+          // Navigate to episode details and scroll to the "Guests" section
           renderEpisodeDetail({
             _id: episodeId,
             podcast_id: shared.selectedPodcastId
           });
+          setTimeout(() => {
+            const guestsSection = document.querySelector(
+              ".podcast-about-section h2.section-title"
+            );
+            if (guestsSection) {
+              guestsSection.scrollIntoView({ behavior: "smooth" });
+            }
+          }, 500);
         } catch (error) {
           console.error("Error adding guest:", error);
           showNotification("Error", "Failed to add guest.", "error");
