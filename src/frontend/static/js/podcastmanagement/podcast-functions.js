@@ -45,7 +45,12 @@ function displayPodcastDetails(podcast) {
   if (podAuthorEl) podAuthorEl.value = podcast.author || "";
 
   const podLanguageEl = document.getElementById("pod-language");
-  if (podLanguageEl) podLanguageEl.value = podcast.language || "";
+  if (podLanguageEl) {
+    podLanguageEl.value =
+      podcast.language && podcast.language.toLowerCase() === "en"
+        ? "English"
+        : podcast.language || "";
+  }
 
   const podRssEl = document.getElementById("pod-rss");
   if (podRssEl) podRssEl.value = podcast.rssFeed || "";
