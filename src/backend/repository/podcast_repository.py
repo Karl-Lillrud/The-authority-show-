@@ -268,3 +268,35 @@ class PodcastRepository:
         except Exception as e:
             logger.error(f"Failed to delete podcasts: {e}", exc_info=True)
             return 0
+
+    def addPodcastWithRss(self, user_id, rss_url):
+        """
+        Fetch RSS data using RSSService and add a podcast to the repository.
+        """
+        try:
+            # Fetch RSS data
+            rss_data, status_code = RSSService.fetch_rss_feed(rss_url)
+            if status_code != 200:
+                return {"error": "Failed to fetch RSS feed", "details": rss_data}, 400
+
+            # Prepare podcast data from RSS
+            podcast_data = {
+                "podName": rss_data.get("title", ""),
+                "rssFeed": rss_url,
+                "description": rss_data.get("description", ""),
+                "logoUrl": rss_data.get("logoUrl", ""),
+                "category": rss_data.get("categories", [{}])[0].get("main", ""),
+                "email": rss_data.get("email", ""),
+                "title": rss_data.get("title", ""),
+                "language": rss_data.get("language", ""),
+                "author": rss_data.get("author", ""),
+                "copyright_info": rss_data.get("copyright_info", ""),
+                "socialMedia": [],  # Add logic if needed
+            }
+
+            # Call existing add_podcast method
+            return self.add_podcast(user_id, podcast_data)
+
+        except Exception as e:
+            logger.error("Error in addPodcastWithRss: %s", e, exc_info=True)
+            return {"error": "Failed to add podcast with RSS", "details": str(e)}, 500

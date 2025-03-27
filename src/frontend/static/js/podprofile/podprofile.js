@@ -290,6 +290,10 @@ document.addEventListener("DOMContentLoaded", () => {
           .join("")
       : "";
 
+    // Format language display
+    const languageDisplay =
+      rssData.language === "en" ? "English" : rssData.language;
+
     podcastPreviewContainer.innerHTML = `
       <div class="podcast-header">
         <img src="${
@@ -306,7 +310,7 @@ document.addEventListener("DOMContentLoaded", () => {
             ${categoriesHtml}
             ${
               rssData.language
-                ? `<span class="podcast-meta-item"><i class="fas fa-globe"></i> ${rssData.language}</span>`
+                ? `<span class="podcast-meta-item"><i class="fas fa-globe"></i> ${languageDisplay}</span>`
                 : ""
             }
             <span class="podcast-meta-item"><i class="fas fa-microphone"></i> ${
