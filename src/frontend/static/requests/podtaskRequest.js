@@ -55,7 +55,7 @@ export async function saveTask(taskData) {
 
 export async function updateTask(taskId, taskData) {
   try {
-    const response = await fetch(`/update_podtask/${taskId}`, {
+    const response = await fetch(`/update_podtasks/${taskId}`, {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(taskData)
@@ -76,7 +76,7 @@ export async function updateTask(taskId, taskData) {
 
 export async function deleteTask(taskId) {
   try {
-    const response = await fetch(`/delete_podtask/${taskId}`, {
+    const response = await fetch(`/delete_podtasks/${taskId}`, {
       method: "DELETE"
     });
     const result = await response.json();

@@ -263,6 +263,12 @@ button {
   gap: 2rem;
 }
 
+.profile-edit-content {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
 .profile-pic-container {
   display: flex;
   flex-direction: column;
@@ -383,7 +389,7 @@ input:focus {
   display: flex;
   gap: 1rem;
   margin-top: 1rem;
-}
+} 
 
 .primary-button {
   background-color: var(--primary);
