@@ -279,23 +279,8 @@ class PodcastRepository:
             if status_code != 200:
                 return {"error": "Failed to fetch RSS feed", "details": rss_data}, 400
 
-            # Prepare podcast data from RSS
-            podcast_data = {
-                "podName": rss_data.get("title", ""),
-                "rssFeed": rss_url,
-                "description": rss_data.get("description", ""),
-                "logoUrl": rss_data.get("logoUrl", ""),
-                "category": rss_data.get("categories", [{}])[0].get("main", ""),
-                "email": rss_data.get("email", ""),
-                "title": rss_data.get("title", ""),
-                "language": rss_data.get("language", ""),
-                "author": rss_data.get("author", ""),
-                "copyright_info": rss_data.get("copyright_info", ""),
-                "socialMedia": [],  # Add logic if needed
-            }
-
             # Call existing add_podcast method
-            return self.add_podcast(user_id, podcast_data)
+            return self.add_podcast(user_id)
 
         except Exception as e:
             logger.error("Error in addPodcastWithRss: %s", e, exc_info=True)
