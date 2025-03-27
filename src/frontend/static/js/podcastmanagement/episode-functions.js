@@ -118,7 +118,9 @@ export function renderEpisodeDetail(episode) {
     </div>
     <div class="detail-info">
       <h1 class="detail-title">${episode.title}</h1>
-      <p class="detail-category">${episode.status || "Uncategorized"}</p>
+      ${
+        episode.status ? `<p class="detail-category">${episode.status}</p>` : ""
+      }
       <div class="detail-section">
         <h2>About</h2>
         <p>${episode.description || "No description available."}</p>
