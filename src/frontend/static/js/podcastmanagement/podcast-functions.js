@@ -452,8 +452,6 @@ export function renderPodcastDetail(podcast) {
       ${shared.svgpodcastmanagement.back}
       Back to podcasts
     </button>
-    
-    <!-- Add top-right action buttons -->
     <div class="top-right-actions">
       <button class="action-btn edit-btn" id="edit-podcast-btn" data-id="${
         podcast._id
@@ -464,11 +462,6 @@ export function renderPodcastDetail(podcast) {
   </div>
   <div class="detail-content">
     <div class="detail-image" style="background-image: url('${imageUrl}')"></div>
-    <!-- Episodes container with title outside scroll area -->
-    <div id="episodes-list" class="episodes-list">
-      <h3 class="detail-section-title">Episodes</h3>
-      <div id="episodes-container" class="episodes-scroll-container"></div>
-    </div>
     <div class="detail-info">
       <h1 class="detail-title">${podcast.podName}</h1>
       <p class="detail-category">${podcast.category || "Uncategorized"}</p>
@@ -476,10 +469,15 @@ export function renderPodcastDetail(podcast) {
         <h2>About</h2>
         <p>${podcast.description || "No description available."}</p>
       </div>
+      <!-- Episodes container moved directly under About -->
+      <div id="episodes-list" class="episodes-list">
+        <h3 class="detail-section-title">Episodes</h3>
+        <div id="episodes-container" class="episodes-scroll-container"></div>
+      </div>
       <div class="separator"></div>
       <div class="detail-grid">
         <div class="detail-item">
-          <h3>Host</h3>
+          <h3>Author</h3>
           <p>${podcast.author || "Not specified"}</p>
         </div>
         <div class="detail-item">
@@ -512,13 +510,13 @@ export function renderPodcastDetail(podcast) {
             ${
               podcast.googleCal
                 ? `<a href="${podcast.googleCal}" target="_blank" class="calendar-link">
-                  ${shared.svgpodcastmanagement.calendar}
-                  Calendar Link
-                </a>`
+                    ${shared.svgpodcastmanagement.calendar}
+                    Calendar Link
+                  </a>`
                 : `<p class="calendar-link">
-                  ${shared.svgpodcastmanagement.calendar}
-                  Not connected
-                </p>`
+                    ${shared.svgpodcastmanagement.calendar}
+                    Not connected
+                  </p>`
             }
           </div>
           <div class="detail-item">
@@ -538,57 +536,55 @@ export function renderPodcastDetail(podcast) {
           ${
             podcast.socialMedia && podcast.socialMedia[0]
               ? `<a href="${podcast.socialMedia[0]}" target="_blank" class="social-link">
-                ${shared.svgpodcastmanagement.facebook}
-                Facebook
-              </a>`
+                  ${shared.svgpodcastmanagement.facebook}
+                  Facebook
+                </a>`
               : ""
           }
           ${
             podcast.socialMedia && podcast.socialMedia[1]
               ? `<a href="${podcast.socialMedia[1]}" target="_blank" class="social-link">
-                ${shared.svgpodcastmanagement.instagram}
-                Instagram
-              </a>`
+                  ${shared.svgpodcastmanagement.instagram}
+                  Instagram
+                </a>`
               : ""
           }
           ${
             podcast.socialMedia && podcast.socialMedia[2]
               ? `<a href="${podcast.socialMedia[2]}" target="_blank" class="social-link">
-                ${shared.svgpodcastmanagement.linkedin}
-                LinkedIn
-              </a>`
+                  ${shared.svgpodcastmanagement.linkedin}
+                  LinkedIn
+                </a>`
               : ""
           }
           ${
             podcast.socialMedia && podcast.socialMedia[3]
               ? `<a href="${podcast.socialMedia[3]}" target="_blank" class="social-link">
-                ${shared.svgpodcastmanagement.twitter}
-                Twitter
-              </a>`
+                  ${shared.svgpodcastmanagement.twitter}
+                  Twitter
+                </a>`
               : ""
           }
           ${
             podcast.socialMedia && podcast.socialMedia[4]
               ? `<a href="${podcast.socialMedia[4]}" target="_blank" class="social-link">
-                ${shared.svgpodcastmanagement.tiktok}
-                TikTok
-              </a>`
+                  ${shared.svgpodcastmanagement.tiktok}
+                  TikTok
+                </a>`
               : ""
           }
         </div>
       </div>
-      <div class="detail-actions">
-        <button class="delete-btn" id="delete-podcast-btn" data-id="${
-          podcast._id
-        }">
-          <span class="icon">${shared.svgpodcastmanagement.delete}</span>
-          Delete Podcast
-        </button>
-      </div>
     </div>
   </div>
+  
+  <div class="detail-actions">
+    <button class="delete-btn" id="delete-podcast-btn" data-id="${podcast._id}">
+      <span class="icon">${shared.svgpodcastmanagement.delete}</span>
+      Delete Podcast
+    </button>
+  </div>
   `;
-
   // Back button event listener
   document.getElementById("back-to-list").addEventListener("click", () => {
     // Hide podcast details view
