@@ -14,6 +14,19 @@ def create_rss_feed(podcast, episodes):
     link = ET.SubElement(channel, "link")
     link.text = podcast.get('link', '#')  # Handle None value
 
+    image = ET.SubElement(channel, "image")
+    image_url = ET.SubElement(image, "url")
+    image_url.text = podcast.get('imageUrl', 'default-image.png')  # Ensure image URL is included
+
+    author = ET.SubElement(channel, "author")
+    author.text = podcast.get('author', 'Unknown Author')  # Ensure author is included
+
+    explicit = ET.SubElement(channel, "explicit")
+    explicit.text = "yes" if podcast.get('explicit', False) else "no"  # Explicit content flag
+
+    category = ET.SubElement(channel, "category")
+    category.text = podcast.get('category', 'Uncategorized')  # Ensure category is included
+
     for episode in episodes:
         item = ET.SubElement(channel, "item")
         

@@ -174,22 +174,29 @@ export function renderEpisodeDetail(episode) {
   const episodeActions = document.getElementById("episode-actions");
 
   // Publish button event listener
-  document.getElementById("publish-episode-btn")
-  .addEventListener("click", async () => {
+  document.getElementById("publish-episode-btn").addEventListener("click", async () => {
     const episodeId = document.getElementById("publish-episode-btn").getAttribute("data-id");
-    const response = await fetch(`/publish_to_spotify/${episodeId}`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ episodeId })
-    });
-
-    const data = await response.json();
-    if (response.ok) {
-      showNotification("Success", "Episode published to Spotify successfully!", "success");
-    } else {
-      showNotification("Error", `Failed to publish episode: ${data.error}`, "error");
+    try {
+      const response = await fetch(`/publish_to_spotify/${episodeId}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        }
+      });
+  
+      const data = await response.json();
+      if (response.ok) {
+        showNotification(
+          "Success",
+          `RSS feed uploaded successfully. Please submit it manually to Spotify: <a href="${data.rss_feed_url}" target="_blank">Submit RSS Feed</a>`,
+          "success"
+        );
+      } else {
+        showNotification("Error", `Failed to publish episode: ${data.error}`, "error");
+      }
+    } catch (error) {
+      console.error("Error publishing episode:", error);
+      showNotification("Error", "An unexpected error occurred while publishing the episode.", "error");
     }
   });
 
@@ -476,62 +483,69 @@ export function initEpisodeFunctions() {
     });
 
   // Episode form submission
-  document
-    .getElementById("create-episode-form")
-    .addEventListener("submit", async (e) => {
-      e.preventDefault();
-      const formData = new FormData(e.target);
+  document.getElementById("create-episode-form").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const formData = new FormData(e.target);
 
-      // Check for missing required fields
-      if (!formData.get("podcastId") || !formData.get("title") || !formData.get("publishDate")) {
-        showNotification(
-          "Missing Fields",
-          "Please fill in all required fields.",
-          "error"
-        );
+    // Validate required fields
+    const requiredFields = ["title", "description", "publishDate", "author", "imageUrl", "explicit", "category", "episodeType"];
+    for (const field of requiredFields) {
+      if (!formData.get(field)) {
+        showNotification("Error", `Field "${field}" is required.`, "error");
         return;
       }
+    }
 
-      // Ensure publishDate is in the correct format
-      const publishDate = new Date(formData.get("publishDate"));
-      if (isNaN(publishDate.getTime())) {
-        showNotification(
-          "Invalid Date",
-          "Please provide a valid publish date.",
-          "error"
-        );
-        return;
-      }
+    // Check for missing required fields
+    if (!formData.get("podcastId") || !formData.get("title") || !formData.get("publishDate")) {
+      showNotification(
+        "Missing Fields",
+        "Please fill in all required fields.",
+        "error"
+      );
+      return;
+    }
 
-      try {
-        const response = await fetch("/register_episode", {
-          method: "POST",
-          body: formData,
-          headers: {
-            // Ensure the correct Content-Type header is set for file uploads
-            "Accept": "application/json"
-          }
-        });
-        if (!response.ok) {
-          const errorData = await response.json();
-          showNotification("Error", errorData.error || "Failed to create episode.", "error");
-          return;
+    // Ensure publishDate is in the correct format
+    const publishDate = new Date(formData.get("publishDate"));
+    if (isNaN(publishDate.getTime())) {
+      showNotification(
+        "Invalid Date",
+        "Please provide a valid publish date.",
+        "error"
+      );
+      return;
+    }
+
+    try {
+      const response = await fetch("/register_episode", {
+        method: "POST",
+        body: formData,
+        headers: {
+          // Ensure the correct Content-Type header is set for file uploads
+          "Accept": "application/json"
         }
-        const result = await response.json();
-        showNotification(
-          "Success",
-          "Episode created successfully!",
-          "success"
-        );
-        document.getElementById("episode-form-popup").style.display = "none";
-        document.getElementById("create-episode-form").reset();
-        // Refresh the episode list without refreshing the page
-        viewPodcast(formData.get("podcastId"));
-      } catch (error) {
-        console.error("Error creating episode:", error);
-        showNotification("Error", "Failed to create episode.", "error");
+      });
+      if (!response.ok) {
+        const errorData = await response.json();
+        showNotification("Error", errorData.error || "Failed to create episode.", "error");
+        return;
       }
-    });
+      const result = await response.json();
+      showNotification(
+        "Success",
+        "Episode created successfully!",
+        "success"
+      );
+      document.getElementById("episode-form-popup").style.display = "none";
+      document.getElementById("create-episode-form").reset();
+      // Refresh the episode list without refreshing the page
+      viewPodcast(formData.get("podcastId"));
+    } catch (error) {
+      console.error("Error creating episode:", error);
+      showNotification("Error", "Failed to create episode.", "error");
+    }
+  });
 }
 
 document.addEventListener("DOMContentLoaded", () => {

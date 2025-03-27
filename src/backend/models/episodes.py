@@ -5,9 +5,9 @@ from backend.models.podtasks import PodtaskSchema
 class EpisodeSchema(Schema):
     id = fields.Str()
     podcastId = fields.Str(required=True)
-    title = fields.Str(required=True)
-    description = fields.Str(allow_none=True)
-    publishDate = fields.DateTime(required=True)  # Ensure publishDate is correctly defined
+    title = fields.Str(required=True)  # Ensure title is required
+    description = fields.Str(required=True)  # Ensure description is required
+    publishDate = fields.DateTime(required=True)  # Ensure publishDate is required
     duration = fields.Int(allow_none=True)  # Change to integer
     status = fields.Str(allow_none=True)
     defaultTasks = fields.List(fields.Nested(PodtaskSchema), allow_none=True)
@@ -19,19 +19,11 @@ class EpisodeSchema(Schema):
     guid = fields.Str(allow_none=True)
     season = fields.Int(allow_none=True)
     episode = fields.Int(allow_none=True)
-    episodeType = fields.Str(allow_none=True)
-    explicit = fields.Bool(allow_none=True)
-    imageUrl = fields.Url(allow_none=True)
+    episodeType = fields.Str(required=True, validate=validate.OneOf(["Full", "Trailer", "Bonus"]))  # Add episodeType with validation
+    explicit = fields.Bool(required=True)  # Explicit content flag is required
+    imageUrl = fields.Url(required=True)  # Ensure image URL is required
     episodeFiles = fields.List(fields.Dict(keys=fields.Str(), values=fields.Raw()), required=False)  # Make episodeFiles optional
-    fileSize = fields.Str(allow_none=True)
-    fileType = fields.Str(allow_none=True)
-    guid = fields.Str(allow_none=True)
-    season = fields.Int(allow_none=True)
-    episode = fields.Int(allow_none=True)
-    episodeType = fields.Str(allow_none=True)
-    explicit = fields.Bool(allow_none=True)
-    imageUrl = fields.Url(allow_none=True)
-    episodeFiles = fields.List(fields.Dict(keys=fields.Str(), values=fields.Raw()))  # Correctly handle episodeFiles field
+    category = fields.Str(required=True)  # Add category field
 
     # New fields
     keywords = fields.List(fields.Str(), allow_none=True)
@@ -39,7 +31,7 @@ class EpisodeSchema(Schema):
     link = fields.Url(allow_none=True)
     subtitle = fields.Str(allow_none=True)
     summary = fields.Str(allow_none=True)
-    author = fields.Str(allow_none=True)
+    author = fields.Str(required=True)  # Ensure author is required
     isHidden = fields.Bool(allow_none=True)
 
     @pre_load

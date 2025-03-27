@@ -77,8 +77,8 @@ class EpisodeRepository:
                 "fileType": validated_data.get("fileType"),
                 "guid": validated_data.get("guid"),
                 "season": validated_data.get("season"),
-                "episode": validated_data.get("episode"),
-                "episodeType": validated_data.get("episodeType"),
+                "episode": validated_data.get("episode"),  # Ensure episode is saved
+                "episodeType": validated_data.get("episodeType"),  # Ensure episodeType is saved
                 "explicit": validated_data.get("explicit"),
                 "imageUrl": validated_data.get("imageUrl"),
                 "keywords": validated_data.get("keywords"),
@@ -88,6 +88,7 @@ class EpisodeRepository:
                 "summary": validated_data.get("summary"),
                 "author": validated_data.get("author"),
                 "isHidden": validated_data.get("isHidden"),
+                "category": validated_data.get("category"),  # Ensure category is saved
                 "episodeFiles": data.get('episodeFiles', []),  # Correctly handle optional episodeFiles field
             }
 

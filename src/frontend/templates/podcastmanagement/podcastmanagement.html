@@ -237,6 +237,33 @@ endblock %} {% block content %}
               <label for="episode-files">Upload Episodes (MP3 or MP4)</label>
               <input type="file" id="episode-files" name="episodeFiles" accept=".mp3, .mp4" multiple />
             </div>
+            <div class="field-group">
+              <label for="author">Author</label>
+              <input type="text" id="author" name="author" required />
+            </div>
+            <div class="field-group">
+              <label for="image-url">Image URL</label>
+              <input type="url" id="image-url" name="imageUrl" required />
+            </div>
+            <div class="field-group">
+              <label for="explicit">Explicit Content</label>
+              <select id="explicit" name="explicit" required>
+                <option value="true">Yes</option>
+                <option value="false">No</option>
+              </select>
+            </div>
+            <div class="field-group">
+              <label for="category">Category</label>
+              <input type="text" id="category" name="category" required />
+            </div>
+            <div class="field-group">
+              <label for="episode-type">Episode Type</label>
+              <select id="episode-type" name="episodeType" required>
+                <option value="Full">Full</option>
+                <option value="Trailer">Trailer</option>
+                <option value="Bonus">Bonus</option>
+              </select>
+            </div>
           </div>
           <div class="form-actions">
             <button

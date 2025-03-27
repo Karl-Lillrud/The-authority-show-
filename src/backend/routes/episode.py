@@ -68,6 +68,19 @@ def register_episode():
         if not data.get('podcastId') or not data.get('title') or not data.get('publishDate'):
             return jsonify({"error": "Required fields missing: podcastId, title, and publishDate"}), 400
 
+        if not data.get('title') or not data.get('description') or not data.get('publishDate') or not data.get('author') or not data.get('imageUrl') or 'explicit' not in data:
+            return jsonify({"error": "Required fields missing: title, description, publishDate, author, imageUrl, and explicit"}), 400
+
+        if not data.get('category'):
+            return jsonify({"error": "Required field missing: category"}), 400
+
+        if not data.get('episodeType'):
+            return jsonify({"error": "Required field missing: episodeType"}), 400
+
+        # Ensure the episode field is populated if not provided
+        if not data.get('episode'):
+            data['episode'] = None  # Default to None if not provided
+
         # Registrera episode och spara i databasen
         response, status = episode_repo.register_episode(data, user_id)
         return jsonify(response), status
@@ -88,7 +101,7 @@ def publish_to_spotify(episode_id):
         if not episode:
             return jsonify({"error": "Episode not found"}), 404
 
-        access_token = get_spotify_access_token()  # Correctly indented
+        access_token = get_spotify_access_token()
         if not access_token:
             return jsonify({"error": "Failed to retrieve Spotify access token"}), 500
 
@@ -96,7 +109,11 @@ def publish_to_spotify(episode_id):
         podcast_data = {
             "title": episode.get('podcast_title', 'Untitled Podcast'),
             "description": episode.get('podcast_description', 'No description available'),
-            "link": episode.get('podcast_link', '#')
+            "link": episode.get('podcast_link', '#'),
+            "imageUrl": episode.get('podcast_imageUrl', 'default-image.png'),
+            "author": episode.get('podcast_author', 'Unknown Author'),
+            "explicit": episode.get('explicit', False),
+            "category": episode.get('category', 'Uncategorized')
         }
         episode_data = [{
             "title": episode.get('title', 'Untitled Episode'),
@@ -105,21 +122,20 @@ def publish_to_spotify(episode_id):
             "publish_date": episode.get('publishDate'),
             "guid": episode.get('guid', episode_id)
         }]
-        
-        # Generate the RSS feed
         rss_feed = create_rss_feed(podcast_data, episode_data)
 
-        # Upload the RSS feed to Cloudflare R2 and get the URL
-        rss_feed_url = upload_rss_to_cloudflare(rss_feed, f"{episode_id}_feed.xml")
+        # Upload the RSS feed to Cloudflare R2
+        rss_feed_url = upload_rss_to_cloudflare(rss_feed, f"rss_feeds/{episode_id}_feed.xml")
         logger.info(f"RSS feed uploaded to Cloudflare R2: {rss_feed_url}")
 
-        # Add the RSS feed URL to the episode data
-        episode['rss_feed_url'] = rss_feed_url
-
-        # Log a message instructing manual submission
+        # Notify the user to manually submit the RSS feed
         logger.info("Spotify does not provide an API for RSS feed submission.")
         logger.info(f"Please submit the RSS feed URL manually via Spotify for Podcasters: {rss_feed_url}")
-        return jsonify({"message": "RSS feed generated and uploaded. Please submit it manually via Spotify for Podcasters.", "rss_feed_url": rss_feed_url}), 200
+
+        return jsonify({
+            "message": "RSS feed generated and uploaded. Please submit it manually via Spotify for Podcasters.",
+            "rss_feed_url": rss_feed_url
+        }), 200
     except Exception as e:
         logger.error(f"Error publishing episode {episode_id} to Spotify: {e}", exc_info=True)
         return jsonify({"error": "Failed to publish episode"}), 500
