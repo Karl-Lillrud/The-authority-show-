@@ -6,6 +6,8 @@ import subprocess
 from datetime import datetime
 from io import BytesIO
 from flask import Blueprint, request, jsonify
+import matplotlib
+matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 import numpy as np
 import soundfile as sf
