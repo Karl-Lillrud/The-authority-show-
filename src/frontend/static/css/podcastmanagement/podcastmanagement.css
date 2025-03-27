@@ -213,8 +213,20 @@ body {
   padding: var(--spacing-md) var(--spacing-xl);
   border-top: 1px solid rgba(0, 0, 0, 0.05);
   display: flex;
-  justify-content: flex-end;
+  justify-content: flex-start;
+  gap: 0.5rem;
   background-color: rgba(0, 0, 0, 0.01);
+}
+
+.footer-link {
+  color: var(--highlight-color);
+  font-weight: 600;
+  cursor: pointer;
+  transition: color var(--transition-normal);
+}
+
+.footer-separator {
+  color: rgba(0, 0, 0, 0.6);
 }
 
 .view-details-btn {

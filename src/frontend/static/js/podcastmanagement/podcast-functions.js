@@ -192,18 +192,19 @@ export async function renderPodcastList() {
         </div>
       </div>
       <div class="podcast-footer">
-        <button class="landing-page-btn" data-id="${
+        <span class="footer-link landing-page-link" data-id="${
           podcast._id
-        }">Landing Page</button>
-        <button class="view-details-btn" data-id="${
+        }">Landing Page</span>
+        <span class="footer-separator">|</span>
+        <span class="footer-link view-details-link" data-id="${
           podcast._id
-        }">View Details</button>
+        }">View Details</span>
       </div>`;
 
       podcastListElement.appendChild(podcastCard);
 
       // Redirect to the landing page with the specific podcastId
-      const landingPageBtn = podcastCard.querySelector(".landing-page-btn");
+      const landingPageBtn = podcastCard.querySelector(".landing-page-link");
       landingPageBtn.addEventListener("click", (e) => {
         const podcastId = e.target.dataset.id; // Get podcast ID
         window.location.href = `/landingpage/${podcastId}`;
@@ -345,6 +346,21 @@ export async function renderPodcastList() {
           if (podcastId) {
             viewPodcast(podcastId);
           }
+        });
+
+      // Add event listeners for the footer links
+      podcastCard
+        .querySelector(".landing-page-link")
+        .addEventListener("click", (e) => {
+          const podcastId = e.target.dataset.id;
+          window.location.href = `/landingpage/${podcastId}`;
+        });
+
+      podcastCard
+        .querySelector(".view-details-link")
+        .addEventListener("click", (e) => {
+          const podcastId = e.target.dataset.id;
+          viewPodcast(podcastId);
         });
     });
 
