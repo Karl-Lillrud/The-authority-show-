@@ -2,7 +2,10 @@ import {
   fetchGuestsRequest,
   addGuestRequest
 } from "../../../static/requests/guestRequests.js";
-import { fetchEpisodesByPodcast } from "../../../static/requests/episodeRequest.js";
+import {
+  fetchEpisodesByPodcast,
+  fetchEpisode
+} from "../../../static/requests/episodeRequest.js";
 import { fetchPodcasts } from "../../../static/requests/podcastRequests.js";
 import {
   showNotification,
@@ -281,13 +284,52 @@ export function renderGuestDetail(guest) {
 `;
 
   // Back button event listener
-  document.getElementById("back-to-episode").addEventListener("click", () => {
-    // Logic to navigate back to the episode details
-    if (shared.selectedEpisodeId) {
-      // Reuse the episode detail rendering function
-      renderEpisodeDetail(shared.selectedEpisodeId);
-    }
-  });
+  document
+    .getElementById("back-to-episode")
+    .addEventListener("click", async () => {
+      const episodeId = shared.selectedEpisodeId || guest.episodeId; // Fallback to guest.episodeId
+      if (episodeId) {
+        try {
+          // Fetch the episode details
+          const episodeResponse = await fetchEpisode(episodeId);
+          if (episodeResponse) {
+            // Fetch episodes for the podcast
+            const podcastEpisodes = await fetchEpisodesByPodcast(
+              episodeResponse.podcast_id || episodeResponse.podcastId
+            );
+
+            // Render the episode details
+            renderEpisodeDetail({
+              ...episodeResponse,
+              episodes: podcastEpisodes // Include episodes in the render
+            });
+          } else {
+            console.error("Failed to fetch episode details.");
+            showNotification(
+              "Error",
+              "Failed to fetch episode details.",
+              "error"
+            );
+          }
+        } catch (error) {
+          console.error("Error fetching episode details:", error);
+          showNotification(
+            "Error",
+            "Failed to fetch episode details.",
+            "error"
+          );
+        }
+      } else {
+        console.error(
+          "Episode ID is missing. Cannot navigate back to the episode."
+        );
+        showNotification(
+          "Error",
+          "Episode ID is missing. Cannot navigate back.",
+          "error"
+        );
+      }
+    });
 
   // Edit button event listener
   document.getElementById("edit-guest-btn").addEventListener("click", () => {
