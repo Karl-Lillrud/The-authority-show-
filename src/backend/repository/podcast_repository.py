@@ -332,6 +332,17 @@ class PodcastRepository:
                     }
                 )
 
+            # Fallback: if still no categories, use regex to extract <itunes:category> text attribute
+            if not categories:
+                rss_text = rss_content.decode("utf-8", errors="ignore")
+                import re
+
+                cat_matches = re.findall(
+                    r'<itunes:category text="([^"]+)"', rss_text, re.IGNORECASE
+                )
+                if cat_matches:
+                    categories = [{"main": m, "subcategories": []} for m in cat_matches]
+
             # Extract episodes
             episodes = []
             for entry in feed.entries:
