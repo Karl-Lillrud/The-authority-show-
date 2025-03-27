@@ -221,12 +221,14 @@ body {
 .footer-link {
   color: var(--highlight-color);
   font-weight: 600;
+  font-size: 0.85rem; /* Reduced font size */
   cursor: pointer;
   transition: color var(--transition-normal);
 }
 
 .footer-separator {
   color: rgba(0, 0, 0, 0.6);
+  font-size: 0.85rem; /* Match font size with links */
 }
 
 .view-details-btn {
