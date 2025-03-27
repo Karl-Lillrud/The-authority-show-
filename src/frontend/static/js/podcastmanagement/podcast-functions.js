@@ -810,11 +810,8 @@ function handlePodcastFormSubmission() {
               "Podcast updated successfully!",
               "success"
             );
-            // Update the podcast details in the DOM
-            renderPodcastDetail({
-              ...updatedData,
-              _id: shared.selectedPodcastId
-            });
+            // Fetch updated podcasts list after updating
+            await renderPodcastList();
             document.getElementById("form-popup").style.display = "none";
             document.getElementById("podcast-detail").style.display = "block";
           }
@@ -841,7 +838,6 @@ function handlePodcastFormSubmission() {
           );
         } else {
           resetForm();
-          renderPodcastList();
         }
       } catch (error) {
         console.error("Error:", error);
