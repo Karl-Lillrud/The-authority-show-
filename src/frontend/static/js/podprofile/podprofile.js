@@ -263,11 +263,9 @@ document.addEventListener("DOMContentLoaded", () => {
             <span class="podcast-meta-item"><i class="fas fa-microphone"></i> ${
               (rssData.episodes || []).length
             } Episodes</span>
-            ${
-              rssData.itunesType
-                ? `<span class="podcast-meta-item"><i class="fas fa-list"></i> ${rssData.itunesType}</span>`
-                : ""
-            }
+            
+         
+            
           </div>
           <div class="podcast-actions">
             ${
