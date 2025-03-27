@@ -15,7 +15,7 @@ from backend.utils.text_utils import (transcribe_with_whisper,
                                       get_sentence_timestamps,
                                       detect_long_pauses, 
                                       generate_ai_show_notes)
-from backend.repository.Ai_models import save_file,get_file_data
+from backend.repository.Ai_models import save_file,get_file_data,get_file_by_id
 from elevenlabs.client import ElevenLabs
 
 
@@ -227,3 +227,7 @@ class AudioService:
         finally:
             os.remove(temp_path)
             logger.info(f"🗑️ Temp file cleaned up: {temp_path}")
+    
+    def ai_cut_audio_from_id(self, file_id: str) -> dict:
+        audio_bytes, filename = get_file_by_id(file_id)
+        return self.ai_cut_audio(audio_bytes, filename)

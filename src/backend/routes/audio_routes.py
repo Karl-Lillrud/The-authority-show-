@@ -58,3 +58,17 @@ def clip_audio():
     except Exception as e:
         logger.error(f"Error clipping audio: {str(e)}")
         return jsonify({"error": str(e)}), 500
+
+@audio_bp.route("/ai_cut_audio", methods=["POST"])
+def ai_cut_audio():
+    logger.info(f"🔍 Received AI Cut request for file_id: {file_id}")
+    try:
+        file_id = request.json.get("file_id")
+        if not file_id:
+            return jsonify({"error": "file_id is required"}), 400
+
+        result = audio_service.ai_cut_audio_from_id(file_id)
+        return jsonify(result)
+    except Exception as e:
+        logger.error(f"AI cut failed: {str(e)}")
+        return jsonify({"error": str(e)}), 500
