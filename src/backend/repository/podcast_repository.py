@@ -296,10 +296,27 @@ class PodcastRepository:
                 "lastBuildDate", ""
             )  # Added last build date
             itunes_type = feed.feed.get("itunes_type", "")  # Added podcast type
+            # Updated: Check alternative keys for owner info with additional fallback
+            itunes_owner_dict = feed.feed.get("itunes_owner", {})
             itunes_owner = {
-                "name": feed.feed.get("itunes_owner", {}).get("itunes_name", ""),
-                "email": feed.feed.get("itunes_owner", {}).get("itunes_email", ""),
-            }  # Added iTunes owner info
+                "name": itunes_owner_dict.get("itunes_name", "")
+                or feed.feed.get("itunes_owner_name", "")
+                or "",
+                "email": itunes_owner_dict.get("itunes_email", "")
+                or feed.feed.get("itunes_owner_email", "")
+                or feed.feed.get("owner", {}).get("email", "")
+                or feed.feed.get("owner_email", ""),
+            }
+            # Fallback: if owner email is empty, try extracting via regex from raw XML
+            if not itunes_owner.get("email"):
+                rss_text = rss_content.decode("utf-8", errors="ignore")
+                import re
+
+                match = re.search(
+                    r"<itunes:email>(.*?)<\/itunes:email>", rss_text, re.IGNORECASE
+                )
+                if match:
+                    itunes_owner["email"] = match.group(1).strip()
 
             # Handle categories and subcategories
             categories = []
@@ -371,6 +388,7 @@ class PodcastRepository:
                 "lastBuildDate": last_build_date,  # Added
                 "itunesType": itunes_type,  # Added
                 "itunesOwner": itunes_owner,  # Added
+                "email": itunes_owner.get("email", ""),  # New field added
                 "categories": categories,  # Updated to include subcategories
                 "episodes": episodes[:10],  # Limit to first 10 episodes
             }, 200
@@ -384,9 +402,10 @@ class PodcastRepository:
             accounts = list(collection.database.Accounts.find({"userId": user_id}))
             account_ids = [str(a.get("id", a["_id"])) for a in accounts]
             result = self.collection.delete_many({"accountId": {"$in": account_ids}})
-            logger.info(f"🧹 Deleted {result.deleted_count} podcasts for user {user_id}")
+            logger.info(
+                f"🧹 Deleted {result.deleted_count} podcasts for user {user_id}"
+            )
             return result.deleted_count
         except Exception as e:
             logger.error(f"Failed to delete podcasts: {e}", exc_info=True)
             return 0
-
