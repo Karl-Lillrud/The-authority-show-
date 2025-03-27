@@ -1735,7 +1735,6 @@ body {
 }
 
 .details-column {
-  background-color: rgba(0, 0, 0, 0.02);
   padding: var(--spacing-lg);
   border-radius: var(--radius-medium);
 }
