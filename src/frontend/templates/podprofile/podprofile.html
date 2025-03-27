@@ -18,6 +18,10 @@
       rel="stylesheet"
       href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
     />
+    <link
+      rel="stylesheet"
+      href="{{ url_for('static', filename='css/loadingbar/loading-bar.css') }}"
+    />
   </head>
   <body>
     <header>
@@ -83,7 +87,12 @@
             <button type="button" class="button-primary" id="goToEmailSection">
               Next
             </button>
-            <button type="button" class="button-secondary" id="skipButton" onclick="window.location.href='/podcastmanagement'">
+            <button
+              type="button"
+              class="button-secondary"
+              id="skipButton"
+              onclick="window.location.href='/podcastmanagement'"
+            >
               Skip
             </button>
           </div>

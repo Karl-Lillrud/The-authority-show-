@@ -12,12 +12,12 @@ function initializeSvgIcons() {
     svgpodcastmanagement.backToDashboard;
   document.getElementById("podcasts-icon").innerHTML =
     svgpodcastmanagement.podcasts;
-  // Commented out because the episodes element is not present
-  // document.getElementById("episodes-icon").innerHTML =
-  //   svgpodcastmanagement.episodes;
-  // Commented out because the guests element is not present
-  // document.getElementById("guests-icon").innerHTML =
-  //   svgpodcastmanagement.guests;
+
+  document.getElementById("episodes-icon").innerHTML =
+    svgpodcastmanagement.episodes;
+
+  document.getElementById("guests-icon").innerHTML =
+    svgpodcastmanagement.guests;
 
   // Action button icons
   document.getElementById("add-icon-podcast").innerHTML =
@@ -124,6 +124,7 @@ function observeEditButtons() {
 
 // Function to close popups when clicking outside
 function enablePopupCloseOnOutsideClick() {
+  // Handle existing popups
   const popups = document.querySelectorAll(".popup");
   popups.forEach((popup) => {
     popup.addEventListener("click", (event) => {
@@ -132,6 +133,25 @@ function enablePopupCloseOnOutsideClick() {
       }
     });
   });
+
+  // Set up a mutation observer to handle dynamically created popups
+  const observer = new MutationObserver((mutations) => {
+    mutations.forEach((mutation) => {
+      if (mutation.addedNodes.length) {
+        mutation.addedNodes.forEach((node) => {
+          if (node.classList && node.classList.contains("popup")) {
+            node.addEventListener("click", (event) => {
+              if (event.target === node) {
+                node.style.display = "none";
+              }
+            });
+          }
+        });
+      }
+    });
+  });
+
+  observer.observe(document.body, { childList: true, subtree: true });
 }
 
 // Main initialization
@@ -273,8 +293,8 @@ export const shared = {
   svgpodcastmanagement
 };
 
-// Commented out the event listener for guests-link as the element is removed from the sidebar
-// document.getElementById("guests-link").addEventListener("click", function(event) {
-//   event.preventDefault();
-//   ...existing code...
-// });
+document
+  .getElementById("guests-link")
+  .addEventListener("click", function (event) {
+    event.preventDefault();
+  });
