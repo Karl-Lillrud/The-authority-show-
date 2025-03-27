@@ -84,7 +84,7 @@ export function renderEpisodeDetail(episode) {
 
   const episodeType = episode.episodeType || "Unknown";
   const link = episode.link || "No link available";
-  const author = episode.author || "Unknown";
+  const host = episode.author || "Unknown"; // Changed "author" to "host"
   const fileSize = episode.fileSize || "Unknown";
   const fileType = episode.fileType || "Unknown";
 
@@ -142,8 +142,8 @@ export function renderEpisodeDetail(episode) {
           <p>${episodeType}</p>
         </div>
         <div class="detail-item">
-          <h3>Author</h3>
-          <p>${author}</p>
+          <h3>Host</h3> <!-- Changed label from "Author" to "Host" -->
+          <p>${host}</p>
         </div>
         <div class="detail-item">
           <h3>File Size</h3>
