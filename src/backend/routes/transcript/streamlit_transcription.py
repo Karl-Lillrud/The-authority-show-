@@ -114,25 +114,32 @@ with tab1:
 
         if st.button("▶ Transcribe"):
             with st.spinner("🔄 Transcribing... Please wait."):
-                # ✅ Send the file to the backend API for transcription
-                files = {"file": (uploaded_file.name, uploaded_file, uploaded_file.type)}  # Ensure correct file format
-                response = requests.post(f"{API_BASE_URL}/transcribe", files=files)
+                files = {"file": (uploaded_file.name, uploaded_file, uploaded_file.type)}
 
-                # ✅ Process the response
-                if response.status_code == 200:
+                try:
+                    response = requests.post(f"{API_BASE_URL}/transcribe", files=files)
                     result = response.json()
 
-                    st.success("✅ Transcription completed!")
-                    
-                    # Store results in session state
-                    st.session_state.raw_transcription = result.get("raw_transcription", "")
-                    st.session_state.transcription_no_fillers = result.get("transcription_no_fillers", "")
-                    st.session_state.ai_suggestions = result.get("ai_suggestions", "")
-                    st.session_state.show_notes = result.get("show_notes", "")
+                    if response.status_code == 200:
+                        result = response.json()
 
+                        # ✅ Correct keys
+                        st.session_state.raw_transcription = result.get("raw_transcription", "")
+                        st.session_state.transcription_no_fillers = result.get("transcription_no_fillers", "")
+                        st.session_state.ai_suggestions = result.get("ai_suggestions", "")
+                        st.session_state.show_notes = result.get("show_notes", "")
 
-                else:
-                    st.error(f"❌ Error: {response.status_code} - {response.text}")
+                        # ✅ Also assign to short keys (optional for legacy)
+                        st.session_state["transcription"] = st.session_state.raw_transcription
+                        st.session_state["transcription_no_fillers"] = st.session_state.transcription_no_fillers
+
+                        st.success("✅ Transcription complete!")
+
+                    else:
+                        st.error(f"❌ Error: {response.status_code} - {response.text}")
+
+                except Exception as e:
+                    st.error(f"Request failed: {str(e)}")
 
     # Language selection
     languages = ["English", "Spanish", "French", "German", "Swedish", "Japanese", "Chinese", "Italian", "Portuguese"]
@@ -143,7 +150,7 @@ with tab1:
             
             # ✅ Use the correct key: `raw_transcription`
             transcription_text = st.session_state.get("transcription_translated", st.session_state.raw_transcription)
-            transcription_text = st.text_area("", transcription_text, height=200, key="raw_transcription")
+            st.text_area("Raw Transcription", value=transcription_text, height=200, key="raw_transcription_display")
 
             # Translation dropdown & button
             language_transcription = st.selectbox("🌍 Translate Raw Transcription to:", languages, key="lang_transcription")

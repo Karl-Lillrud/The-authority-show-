@@ -1,85 +1,94 @@
-# transcription_service.py
-import logging
 import os
-import openai
+import logging
 from datetime import datetime
 from io import BytesIO
+from elevenlabs.client import ElevenLabs
 from backend.database.mongo_connection import fs
-from backend.utils.ai_utils import remove_filler_words, analyze_sentiment
+from backend.utils.ai_utils import remove_filler_words
 from backend.utils.text_utils import generate_ai_suggestions, generate_show_notes
-from bson import ObjectId
 
 logger = logging.getLogger(__name__)
+client = ElevenLabs(api_key=os.getenv("ELEVENLABS_API_KEY"))
 
 class TranscriptionService:
-    def __init__(self, elevenlabs_client):
-        """
-        :param elevenlabs_client: The ElevenLabs() client you’re using for speech_to_text.
-        """
-        self.elevenlabs_client = elevenlabs_client
-
-    def transcribe_file(self, file_data: bytes, filename: str, is_video: bool) -> dict:
-        """
-        Transcribes an audio or video file. If video, you can extract audio first, then transcribe.
-        """
-        # 1. If video, extract audio via FFmpeg. Otherwise, read direct.
-        # 2. Save file to MongoDB if needed. Example:
+    def transcribe_audio(self, file_data: bytes, filename: str) -> dict:
+        # 1. Save file to MongoDB
         file_id = fs.put(
             file_data,
             filename=filename,
             metadata={"upload_timestamp": datetime.utcnow(), "type": "transcription"},
         )
-        logger.info(f"File saved to MongoDB with ID: {file_id}")
+        logger.info(f"📥 File saved to MongoDB with ID: {file_id}")
 
-        # 3. Actually transcribe with ElevenLabs
-        audio_data = BytesIO(file_data)  # wrap in BytesIO
-        transcription_result = self.elevenlabs_client.speech_to_text.convert(
+        # 2. Transcribe with ElevenLabs
+        audio_data = BytesIO(file_data)
+        transcription_result = client.speech_to_text.convert(
             file=audio_data,
             model_id="scribe_v1",
             num_speakers=2,
             diarize=True,
-            timestamps_granularity="word",
+            timestamps_granularity="word"
         )
 
-        # 4. Build raw transcription text with timestamps
+        if not transcription_result.text:
+            raise Exception("Transcription returned no text.")
+
+        transcription_text = transcription_result.text.strip()
+        logger.info(f"🧠 Final transcription text:\n{transcription_text[:300]}")
+
         raw_transcription = []
         speaker_map = {}
         speaker_counter = 1
 
+        # 3. Attempt to build word-level transcription
+        logger.debug(f"Word-level entries found: {len(transcription_result.words)}")
+
         for word_info in transcription_result.words:
             word = word_info.text.strip()
+            start = round(word_info.start, 2)
+            end = round(word_info.end, 2)
             speaker_id = word_info.speaker_id
+
             if speaker_id not in speaker_map:
                 speaker_map[speaker_id] = f"Speaker {speaker_counter}"
                 speaker_counter += 1
 
+            speaker_label = speaker_map[speaker_id]
             if word:
-                raw_transcription.append(
-                    f"[{word_info.start}-{word_info.end}] {speaker_map[speaker_id]}: {word}"
-                )
+                raw_transcription.append(f"[{start}-{end}] {speaker_label}: {word}")
 
-        # 5. Create AI suggestions & show notes
-        transcription_text = transcription_result.text.strip()
+        # 4. Fallback if word-level fails
+        if not raw_transcription:
+            logger.warning("⚠️ No word-level transcription found. Using fallback.")
+            fallback_sentences = transcription_text.split(".")
+            raw_transcription = [
+                f"Speaker 1: {sentence.strip()}" for sentence in fallback_sentences if sentence.strip()
+            ]
+
+        # 5. AI enhancements
+        logger.info(f"🧽 Running filler-word removal...")
+        transcription_no_fillers = remove_filler_words(transcription_text)
+
+        logger.info(f"💡 Generating AI suggestions...")
         ai_suggestions = generate_ai_suggestions(transcription_text)
+
+        logger.info(f"📝 Generating show notes...")
         show_notes = generate_show_notes(transcription_text)
 
         return {
+            "file_id": str(file_id),
             "raw_transcription": " ".join(raw_transcription),
+            "transcription_no_fillers": transcription_no_fillers,
             "ai_suggestions": ai_suggestions,
             "show_notes": show_notes,
-            "file_id": str(file_id)
         }
 
-    def translate_text(self, text: str, target_language: str) -> str:
-        """
-        Translate text using GPT-4 or any other approach.
-        """
+    def translate_text(self, text: str, language: str) -> str:
+        import openai
         try:
             response = openai.ChatCompletion.create(
                 model="gpt-4",
-                messages=[
-                    {"role": "user", "content": f"Translate this to {target_language}:\n{text}"}
-                ],
+                messages=[{"role": "user", "content": f"Translate this to {language}:\n{text}"}],
             )
             return response["choices"][0]["message"]["content"]
         except Exception as e:

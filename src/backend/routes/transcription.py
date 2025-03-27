@@ -2,31 +2,34 @@
 
 import os
 import logging
+import subprocess
+from datetime import datetime
+from io import BytesIO
 from flask import Blueprint, request, jsonify
-from elevenlabs.client import ElevenLabs
+import matplotlib.pyplot as plt
+import numpy as np
 import soundfile as sf
+import tempfile
+
+from elevenlabs.client import ElevenLabs
+from backend.database.mongo_connection import get_fs
 from backend.services.transcriptionService import TranscriptionService
 from backend.services.audioService import AudioService
 from backend.services.videoService import VideoService
 from backend.repository.Ai_models import fetch_file, save_file, get_file_by_id
-from backend.utils.file_utils import convert_audio_to_wav
-import wave
-import numpy as np
-import matplotlib.pyplot as plt
-import tempfile
-from datetime import datetime
-from backend.database.mongo_connection import get_fs
+from backend.utils.text_utils import generate_show_notes,generate_ai_suggestions
+from backend.utils.ai_utils import remove_filler_words
+
 
 transcription_bp = Blueprint("transcription", __name__)
 logger = logging.getLogger(__name__)
 fs = get_fs()
 
 # Services
-elevenlabs_client = ElevenLabs(api_key=os.getenv("ELEVENLABS_API_KEY"))
-transcription_service = TranscriptionService(elevenlabs_client)
+client = ElevenLabs(api_key=os.getenv("ELEVENLABS_API_KEY"))
+transcription_service = TranscriptionService()
 audio_service = AudioService()
 video_service = VideoService()
-
 
 @transcription_bp.route("/transcribe", methods=["POST"])
 def transcribe():
@@ -36,27 +39,34 @@ def transcribe():
     file = request.files["file"]
     filename = file.filename
     file_ext = os.path.splitext(filename)[-1].lower()
-    file_bytes = file.read()
-
-    is_video = file_ext in [".mp4", ".mov", ".avi", ".mkv", ".webm"]
+    is_video = file_ext in ["mp4", "mov", "avi", "mkv", "webm"]
 
     try:
+        # 🟢 Extract audio if needed
         if is_video:
-            file_id = video_service.upload_video(file_bytes, filename)
-            transcript_data = video_service.analyze_video(file_id)
-        else:
-            file_id = audio_service.enhance_audio(file_bytes, filename)
-            transcript_data = audio_service.analyze_audio(file_bytes)
+            temp_video_path = f"/tmp/{filename}"
+            temp_audio_path = temp_video_path.replace(file_ext, ".wav")
 
-        return jsonify({
-            "file_id": file_id,
-            **transcript_data
-        })
+            file.save(temp_video_path)
+            subprocess.run(
+                f'ffmpeg -i "{temp_video_path}" -ac 1 -ar 16000 "{temp_audio_path}" -y',
+                shell=True, check=True
+            )
+            with open(temp_audio_path, "rb") as f:
+                audio_bytes = f.read()
+            os.remove(temp_video_path)
+            os.remove(temp_audio_path)
+        else:
+            audio_bytes = file.read()
+
+        # 🧠 Transcribe using service
+        result = transcription_service.transcribe_audio(audio_bytes, filename)
+
+        return jsonify(result)
 
     except Exception as e:
-        logger.error(f"Transcription error: {str(e)}", exc_info=True)
-        return jsonify({"error": str(e)}), 500
-
+        logger.error(f"Transcription failed: {e}", exc_info=True)
+        return jsonify({"error": "Transcription failed", "details": str(e)}), 500
 
 @transcription_bp.route("/translate", methods=["POST"])
 def translate():
