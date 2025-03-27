@@ -1,6 +1,7 @@
 import { fetchRSSData, addPodcast } from "../../requests/podcastRequests.js"; // Updated import
 import { sendInvitationEmail } from "../../requests/invitationRequests.js";
 import { registerEpisode } from "../../requests/episodeRequest.js";
+import { createLoadingBar } from "./loading-bar.js";
 
 document.addEventListener("DOMContentLoaded", () => {
   // DOM Elements
@@ -21,6 +22,10 @@ document.addEventListener("DOMContentLoaded", () => {
   let currentRssData = null;
   let currentlyPlayingAudio = null;
   let currentlyPlayingId = null;
+  let loadingBar;
+
+  // Initialize loading bar
+  loadingBar = createLoadingBar();
 
   // Dark Mode Toggle
   if (darkModeToggle) {
@@ -95,7 +100,7 @@ document.addEventListener("DOMContentLoaded", () => {
       // Add loading spinner on Next button
       goToEmailSection.disabled = true;
       goToEmailSection.innerHTML =
-        '<i class="fas fa-spinner fa-spin"></i> Loading Please Wait...';
+        '<i class="fas fa-spinner fa-spin"></i> Processing...';
 
       const podName = podNameInput ? podNameInput.value.trim() : "";
       const podRss = podRssInput ? podRssInput.value.trim() : "";
@@ -109,6 +114,9 @@ document.addEventListener("DOMContentLoaded", () => {
       }
 
       try {
+        // Show loading popup
+        loadingBar.showLoadingPopup();
+
         console.log("Fetching RSS data");
         const rssData = await fetchRSSData(podRss);
         podNameInput.value = rssData.title; // Set the title correctly
@@ -140,9 +148,18 @@ document.addEventListener("DOMContentLoaded", () => {
           logoUrl: rssData.logoUrl || null
         };
 
+        // Process first step - Registering episode
+        loadingBar.processStep(0);
+
         console.log("Sending podcast data:", podcastData); // Added log
+        // Process second step - Sending data
+        loadingBar.processStep(1);
+
         const response = await addPodcast(podcastData); // Updated function call
         console.log("Received response from addPodcast:", response); // Added log
+
+        // Process third step - Received response
+        loadingBar.processStep(2);
 
         // Save episodes to the server
         const podcastId = response.podcast_id; // Ensure correct field name
@@ -179,6 +196,9 @@ document.addEventListener("DOMContentLoaded", () => {
           }
         }
 
+        // Process fourth step - Episode registered successfully
+        loadingBar.processStep(3);
+
         // Send invitation email
         try {
           console.log("Sending invitation email"); // Added log
@@ -188,11 +208,18 @@ document.addEventListener("DOMContentLoaded", () => {
           console.error("Error sending invitation email:", error); // Added log
         }
 
-        // Redirect to podcastmanagement (updated redirection)
-        sessionStorage.setItem("showWelcomePopup", "true");
-        window.location.href = "/podcastmanagement"; // Redirect now to podcastmanagement
+        // Short delay to show the completed loading bar
+        setTimeout(() => {
+          // Hide loading popup
+          loadingBar.hideLoadingPopup();
+
+          // Redirect to podcastmanagement (updated redirection)
+          sessionStorage.setItem("showWelcomePopup", "true");
+          window.location.href = "/podcastmanagement"; // Redirect now to podcastmanagement
+        }, 1000);
       } catch (error) {
-        // On error, restore button state
+        // On error, restore button state and hide loading popup
+        loadingBar.hideLoadingPopup();
         goToEmailSection.disabled = false;
         goToEmailSection.innerHTML = "Next";
         console.error("Error processing podcast data:", error);
