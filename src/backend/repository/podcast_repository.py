@@ -360,20 +360,14 @@ class PodcastRepository:
                     elif len(time_parts) == 2:  # MM:SS
                         duration_seconds = int(time_parts[0]) * 60 + int(time_parts[1])
 
-                # New episode image extraction
+                # New episode image extraction without channel fallback
                 episode_image = ""
-                # Try iTunes image first
                 if "itunes_image" in entry and entry["itunes_image"]:
                     episode_image = entry["itunes_image"].get("href", "")
-                # Try entry image element if available
                 if not episode_image and "image" in entry and entry["image"]:
                     episode_image = entry["image"].get("href", "")
-                # Try media_thumbnail if provided
                 if not episode_image:
                     episode_image = entry.get("media_thumbnail", [{}])[0].get("url", "")
-                # Only fallback to channel image if no episode image found
-                if not episode_image:
-                    episode_image = image_url
 
                 # Fallback for episode category
                 episode_category = entry.get("itunes_category", "")
@@ -406,7 +400,7 @@ class PodcastRepository:
                     "episode": entry.get("itunes_episode", None),
                     "episodeType": entry.get("itunes_episodetype", None),
                     "explicit": entry.get("itunes_explicit", None),
-                    "image": episode_image,  # Use unique episode image if available
+                    "image": episode_image,  # Use unique episode image only
                     "keywords": entry.get("itunes_keywords", None),
                     "chapters": entry.get("chapters", None),
                     "link": entry.get("link", ""),

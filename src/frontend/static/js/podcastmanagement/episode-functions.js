@@ -111,9 +111,11 @@ export function renderEpisodeDetail(episode) {
     </div>
   </div>
   <div class="detail-content">
-    <div class="detail-image" style="background-image: url('${
-      episode.image || "default-image.png"
-    }')"></div>
+    <div class="detail-image">
+      <img src="${
+        episode.image || episode.imageUrl || "default-image.png"
+      }" alt="${episode.title}" class="detail-image">
+    </div>
     <div class="detail-info">
       <h1 class="detail-title">${episode.title}</h1>
       <p class="detail-category">${episode.status || "Uncategorized"}</p>

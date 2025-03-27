@@ -181,7 +181,10 @@ document.addEventListener("DOMContentLoaded", () => {
               episode: episode.episode || null, // Ensure episode is included
               episodeType: episode.episodeType || null, // Ensure episodeType is included
               explicit: episode.explicit || null, // Ensure explicit is included
-              imageUrl: episode.image || null, // Ensure imageUrl is included
+              imageUrl:
+                episode.image ||
+                episode.imageUrl ||
+                "/placeholder.svg?height=300&width=300", // updated field
               keywords: episode.keywords || null, // Ensure keywords is included
               chapters: episode.chapters || null, // Ensure chapters is included
               link: episode.link || null, // Ensure link is included
