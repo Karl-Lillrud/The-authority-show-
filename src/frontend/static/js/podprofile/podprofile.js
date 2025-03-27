@@ -95,7 +95,7 @@ document.addEventListener("DOMContentLoaded", () => {
       // Add loading spinner on Next button
       goToEmailSection.disabled = true;
       goToEmailSection.innerHTML =
-        '<i class="fas fa-spinner fa-spin"></i> Loading...';
+        '<i class="fas fa-spinner fa-spin"></i> Loading Please Wait...';
 
       const podName = podNameInput ? podNameInput.value.trim() : "";
       const podRss = podRssInput ? podRssInput.value.trim() : "";
