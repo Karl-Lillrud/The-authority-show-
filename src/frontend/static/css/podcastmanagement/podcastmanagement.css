@@ -54,6 +54,7 @@ body {
   gap: var(--spacing-xl);
   margin-top: var(--spacing-xl);
   align-items: center; /* Center the cards horizontally */
+  padding-bottom: 50px; /* Add padding to ensure the last card is fully visible */
 }
 
 /* Podcast Card */
