@@ -8,21 +8,29 @@ async function populatePodcastDropdown() {
   }
 
   try {
-    // Fetch the podcasts
     const data = await fetchPodcasts();
     console.log("Podcasts fetched:", data);
     const podcasts = data.podcast || [];
 
+    const selected = dropdown.querySelector(".dropdown-selected");
+    const optionsContainer = dropdown.querySelector(".dropdown-options");
+
+    // Auto-select if only one podcast exists
+    if (podcasts.length === 1) {
+      const onlyPodcast = podcasts[0];
+      localStorage.setItem("selectedPodcastId", onlyPodcast._id);
+
+      if (selected) selected.textContent = onlyPodcast.podName;
+    }
+
+    // Hide dropdown if fewer than 2 podcasts
     if (podcasts.length < 2) {
       dropdown.style.display = "none";
       return;
     }
 
-    // Visa dropdownen om det finns fler än 2 podcasts
+    // Show dropdown
     dropdown.style.display = "block";
-
-    const selected = dropdown.querySelector(".dropdown-selected");
-    const optionsContainer = dropdown.querySelector(".dropdown-options");
 
     podcasts.forEach((podcast) => {
       const option = document.createElement("div");
@@ -165,3 +173,29 @@ document.addEventListener("click", (e) => {
     toggleMenu();
   }
 });
+
+document.addEventListener("DOMContentLoaded", () => {
+  const landingPageLink = document.getElementById("landing-page-link");
+
+  if (landingPageLink) {
+    const selectedPodcastId = localStorage.getItem("selectedPodcastId");
+
+    // Set the href dynamically (good for right-click > open in new tab)
+    if (selectedPodcastId) {
+      landingPageLink.href = `/landingpage/${selectedPodcastId}`;
+    }
+
+    // On click, prevent default and redirect
+    landingPageLink.addEventListener("click", (e) => {
+      e.preventDefault();
+      const id = localStorage.getItem("selectedPodcastId");
+      if (id) {
+        window.location.href = `/landingpage/${id}`;
+      } else {
+        alert("Please select a podcast first.");
+      }
+    });
+  }
+});
+
+
