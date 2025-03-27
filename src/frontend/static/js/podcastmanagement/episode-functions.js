@@ -76,7 +76,12 @@ export function renderEpisodeDetail(episode) {
   const publishDate = episode.publishDate
     ? new Date(episode.publishDate).toLocaleString()
     : "Not specified";
-  const duration = episode.duration || "Unknown";
+
+  // Convert duration from seconds to minutes and seconds
+  const durationMinutes = Math.floor(episode.duration / 60);
+  const durationSeconds = episode.duration % 60;
+  const formattedDuration = `${durationMinutes}m ${durationSeconds}s`;
+
   const episodeType = episode.episodeType || "Unknown";
   const link = episode.link || "No link available";
   const author = episode.author || "Unknown";
@@ -130,7 +135,7 @@ export function renderEpisodeDetail(episode) {
         </div>
         <div class="detail-item">
           <h3>Duration</h3>
-          <p>${duration} minutes</p>
+          <p>${formattedDuration}</p>
         </div>
         <div class="detail-item">
           <h3>Episode Type</h3>
