@@ -30,6 +30,7 @@ from backend.utils.email_utils import send_email
 from backend.routes.Mailing_list import Mailing_list_bp
 from backend.routes.user import user_bp
 from backend.routes.audio_routes import audio_bp
+from backend.routes.video_routes import video_bp
 
 
 if os.getenv("SKIP_VENV_UPDATE", "false").lower() not in ("true", "1", "yes"):
@@ -91,7 +92,7 @@ app.register_blueprint(
 )  # Register the guest_form blueprint with URL prefix
 app.register_blueprint(transcription_bp)
 app.register_blueprint(audio_bp)
-
+app.register_blueprint(video_bp)
 # Register the guest_form blueprint with URL prefix
 
 app.register_blueprint(landingpage_bp)
