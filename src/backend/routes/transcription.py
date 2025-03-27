@@ -68,6 +68,7 @@ def transcribe():
         logger.error(f"Transcription failed: {e}", exc_info=True)
         return jsonify({"error": "Transcription failed", "details": str(e)}), 500
 
+
 @transcription_bp.route("/translate", methods=["POST"])
 def translate():
     data = request.json

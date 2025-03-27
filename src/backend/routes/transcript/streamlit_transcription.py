@@ -149,8 +149,14 @@ with tab1:
             st.subheader("📜 Raw Transcription")
             
             # ✅ Use the correct key: `raw_transcription`
-            transcription_text = st.session_state.get("transcription_translated", st.session_state.raw_transcription)
-            st.text_area("Raw Transcription", value=transcription_text, height=200, key="raw_transcription_display")
+            transcription_text = st.session_state.get("transcription_translated")
+            if not transcription_text:
+                transcription_text = st.session_state.get("raw_transcription", "")
+
+            if transcription_text:
+                st.text_area("📜 Raw Transcription", value=transcription_text, height=200, key="raw_transcription_display")
+            else:
+                st.warning("⚠️ No transcription available. Please transcribe a file first.")
 
             # Translation dropdown & button
             language_transcription = st.selectbox("🌍 Translate Raw Transcription to:", languages, key="lang_transcription")
