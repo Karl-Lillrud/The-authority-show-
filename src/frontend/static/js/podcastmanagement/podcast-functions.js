@@ -586,8 +586,18 @@ export function renderPodcastDetail(podcast) {
         const response = await fetchPodcast(podcastId);
         displayPodcastDetails(response.podcast);
         shared.selectedPodcastId = podcastId;
-        document.getElementById("form-popup").style.display = "flex";
-        document.getElementById("podcast-detail").style.display = "none";
+
+        // Show the form popup and keep podcast details visible in the background
+        const formPopup = document.getElementById("form-popup");
+        formPopup.style.display = "flex";
+        formPopup.addEventListener("click", (event) => {
+          if (event.target === formPopup) {
+            formPopup.style.display = "none";
+          }
+        });
+
+        // Ensure podcast details remain visible
+        document.getElementById("podcast-detail").style.display = "block";
       } catch (error) {
         showNotification("Error", "Failed to fetch podcast details", "error");
       }
