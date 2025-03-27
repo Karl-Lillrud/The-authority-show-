@@ -1,8 +1,15 @@
 # video_routes.py
 import logging
-from flask import Blueprint, request, jsonify
-from backend.services.videoService import VideoService
+from flask import Blueprint, request, jsonify, Response
+from io import BytesIO
+from bson import ObjectId
+import gridfs
 
+from backend.services.videoService import VideoService
+from backend.repository.Ai_models import get_file_data  # if you use it elsewhere
+from backend.database.mongo_connection import get_fs
+
+fs = get_fs()
 logger = logging.getLogger(__name__)
 video_bp = Blueprint("video_bp", __name__)
 video_service = VideoService()
@@ -70,4 +77,23 @@ def clip_video():
         return jsonify({"clipped_video": clipped_id})
     except Exception as e:
         logger.error(f"Error clipping video: {str(e)}")
+        return jsonify({"error": str(e)}), 500
+
+
+@video_bp.route("/get_video/<file_id>", methods=["GET"])
+def get_video(file_id: str):
+    try:
+        file_obj = fs.get(ObjectId(file_id))
+        if not file_obj:
+            return jsonify({"error": "File not found"}), 404
+
+        file_data = file_obj.read()
+        return Response(
+            file_data,
+            mimetype="video/mp4",
+            headers={"Content-Disposition": f"attachment; filename={file_obj.filename}"}
+        )
+    except gridfs.errors.NoFile:
+        return jsonify({"error": "File not found."}), 404
+    except Exception as e:
         return jsonify({"error": str(e)}), 500

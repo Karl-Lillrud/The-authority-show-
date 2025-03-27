@@ -25,15 +25,26 @@ def fetch_file(file_id: str):
             return jsonify({"error": "File not found"}), 404
 
         file_data = file_obj.read()
+        # Check metadata for file type, default to audio if not provided
+        file_type = file_obj.metadata.get("type", "audio")
+        if file_type == "video":
+            mimetype = "video/mp4"
+        elif file_type == "audio":
+            mimetype = "audio/wav"
+        else:
+            # Fallback or add more types as needed
+            mimetype = "application/octet-stream"
+
         return Response(
             file_data,
-            mimetype="audio/wav",  # Adjust depending on your use case
+            mimetype=mimetype,
             headers={"Content-Disposition": f"attachment; filename={file_obj.filename}"}
         )
     except gridfs.errors.NoFile:
         return jsonify({"error": "File not found."}), 404
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+
 
 def get_file_data(file_id: str) -> bytes:
     file_obj = fs.get(ObjectId(file_id))
