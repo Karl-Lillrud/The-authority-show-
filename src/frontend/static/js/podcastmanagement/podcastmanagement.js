@@ -12,12 +12,12 @@ function initializeSvgIcons() {
     svgpodcastmanagement.backToDashboard;
   document.getElementById("podcasts-icon").innerHTML =
     svgpodcastmanagement.podcasts;
-  // Commented out because the episodes element is not present
-  // document.getElementById("episodes-icon").innerHTML =
-  //   svgpodcastmanagement.episodes;
-  // Commented out because the guests element is not present
-  // document.getElementById("guests-icon").innerHTML =
-  //   svgpodcastmanagement.guests;
+
+  document.getElementById("episodes-icon").innerHTML =
+    svgpodcastmanagement.episodes;
+
+  document.getElementById("guests-icon").innerHTML =
+    svgpodcastmanagement.guests;
 
   // Action button icons
   document.getElementById("add-icon-podcast").innerHTML =
@@ -273,8 +273,8 @@ export const shared = {
   svgpodcastmanagement
 };
 
-// Commented out the event listener for guests-link as the element is removed from the sidebar
-// document.getElementById("guests-link").addEventListener("click", function(event) {
-//   event.preventDefault();
-//   ...existing code...
-// });
+document
+  .getElementById("guests-link")
+  .addEventListener("click", function (event) {
+    event.preventDefault();
+  });
