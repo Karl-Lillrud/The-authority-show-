@@ -424,9 +424,7 @@ document.addEventListener("DOMContentLoaded", () => {
       episodeCard.innerHTML = `
         <div class="episode-image-container">
           <img src="${
-            episode.image ||
-            currentRssData.imageUrl ||
-            "/placeholder.svg?height=300&width=300"
+            episode.image || "/placeholder.svg?height=300&width=300"
           }" alt="${episode.title}" class="episode-image">
           <div class="episode-play-overlay">
             <button class="episode-play-btn" data-audio-url="${
