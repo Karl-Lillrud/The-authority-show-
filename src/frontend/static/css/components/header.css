@@ -58,6 +58,60 @@ img {
   gap: var(--spacing-md);
 }
 
+/* Ensure the container holds both the link and the dropdown */
+.dropdown-container {
+  position: relative;
+  display: inline-block; /* Aligns the link and dropdown together */
+}
+
+/* Position the dropdown directly to the left of the link */
+.dropdown-content {
+  display: none;
+  position: absolute;
+  top: 0;              /* Align vertically with the link */
+  right: 100%;         /* Position directly to the left of the link */
+  min-width: 100px;    /* Adjust the width as needed */
+  background: white;
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.05);
+  border-radius: var(--radius-medium);
+  padding: var(--spacing-md);
+  gap: var(--spacing-sm);
+  z-index: 101;
+  transition: all 0.3s cubic-bezier(0.68, -0.55, 0.27, 1.55);
+  transform-origin: top right;  /* Ensure it opens from the correct side */
+  transform: scale(0.95);
+}
+
+/* Show the dropdown when the link or the dropdown itself is hovered */
+.dropdown-container:hover .dropdown-content,
+.dropdown-content:hover {
+  display: block;
+}
+
+/* Ensure the link is displayed correctly and has no gaps */
+.dropdown-trigger {
+  position: relative;
+  display: inline-block; /* Ensures the dropdown is positioned relative to this */
+  padding-right: 10px;   /* Adjust to avoid gap */
+  z-index: 102;          /* Keep the link on top */
+}
+
+/* Add hover styles to make sure it's easy to hover from the link to the dropdown */
+.dropdown-content a {
+  display: block;
+  text-decoration: none;
+  color: var(--text-color-light);
+  font-family: var(--font-primary);
+  font-size: 0.85rem;
+  padding: var(--spacing-xs) var(--spacing-md);
+  transition: color var(--transition-normal);
+}
+
+.dropdown-content a:hover {
+  color: var(--highlight-color);
+}
+
+
 /* Header */
 header {
   display: flex;
@@ -261,6 +315,7 @@ header:hover {
 
 .menu.active {
   display: flex;
+  flex-direction: column;
   transform: scale(1);
   opacity: 1;
 }
