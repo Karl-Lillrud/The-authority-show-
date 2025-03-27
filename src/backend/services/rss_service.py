@@ -10,23 +10,7 @@ class RSSService:
     @staticmethod
     def fetch_rss_feed(rss_url):
         """
-        Fetch and parse an RSS feed from the given URL.
-
-        This method retrieves the RSS feed content from the provided URL, parses it using
-        the `feedparser` library, and extracts relevant podcast information such as title,
-        description, episodes, and metadata.
-
-        Args:
-            rss_url (str): The URL of the RSS feed to fetch.
-
-        Returns:
-            dict: A dictionary containing parsed RSS feed data, including podcast metadata
-                  and a list of episodes.
-            int: HTTP status code indicating the result of the operation (200 for success,
-                 500 for errors).
-
-        Raises:
-            Exception: If there is an error during the fetching or parsing of the RSS feed.
+        Fetches and parses an RSS feed, extracting podcast metadata and episodes.
         """
         try:
             logger.info(f"🌐 Fetching RSS feed from URL: {rss_url}")  # Log start
