@@ -13,6 +13,10 @@ from backend.database.mongo_connection import episodes
 from backend.services.spotify_integration import save_uploaded_files, get_spotify_access_token, upload_episode_to_spotify
 from backend.services.generate_rss_feed import create_rss_feed
 from backend.services.upload_rss_to_cloudflare import upload_rss_to_cloudflare  # Ensure this import exists
+from backend.repository.guest_repository import GuestRepository
+
+# Create repository instance
+guest_repo = GuestRepository()
 
 # Define Blueprint
 episode_bp = Blueprint("episode_bp", __name__)
