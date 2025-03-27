@@ -220,10 +220,15 @@ body {
 
 .footer-link {
   color: var(--highlight-color);
-  font-weight: 600;
+  font-weight: 500; /* Reduced font weight */
   font-size: 0.85rem; /* Reduced font size */
   cursor: pointer;
-  transition: color var(--transition-normal);
+  transition: color var(--transition-normal), text-decoration 0.2s ease;
+}
+
+.footer-link:hover {
+  color: var(--highlight-hover);
+  text-decoration: underline; /* Add underline on hover */
 }
 
 .footer-separator {
