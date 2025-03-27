@@ -1,6 +1,5 @@
 import {
   registerEpisode,
-  fetchEpisodesByPodcast,
   fetchEpisode,
   updateEpisode,
   deleteEpisode
@@ -97,65 +96,80 @@ export function renderEpisodeDetail(episode) {
   const fileType = episode.fileType || "Unknown";
 
   episodeDetailElement.innerHTML = `
-  <div class="detail-header">
-    <button class="back-btn" id="back-to-podcast">
-      ${shared.svgpodcastmanagement.back}
-      Back to podcast
+<div class="detail-header">
+  <button class="back-btn" id="back-to-podcast">
+    ${shared.svgpodcastmanagement.back}
+    Back to podcast
+  </button>
+  <div class="top-right-actions">
+    <button class="action-btn edit-btn" id="edit-episode-btn" data-id="${
+      episode._id
+    }">
+      ${shared.svgpodcastmanagement.edit}
     </button>
-    <div class="top-right-actions">
-      <button class="action-btn edit-btn" id="edit-episode-btn" data-id="${
-        episode._id
-      }">
-        ${shared.svgpodcastmanagement.edit}
-      </button>
-    </div>
   </div>
-  <div class="detail-content">
-    <div class="detail-image">
-      <img src="${
+</div>
+
+<div class="podcast-detail-container">
+  <!-- Header section with image and basic info -->
+  <div class="podcast-header-section">
+    <div class="podcast-image-container">
+      <div class="detail-image" style="background-image: url('${
         episode.image || episode.imageUrl || "default-image.png"
-      }" alt="${episode.title}" class="detail-image">
+      }')"></div>
     </div>
-    <div class="detail-info">
+    <div class="podcast-basic-info">
       <h1 class="detail-title">${episode.title}</h1>
       ${
         episode.status ? `<p class="detail-category">${episode.status}</p>` : ""
       }
-      <div class="detail-section">
-        <h2>About</h2>
-        <p>${episode.description || "No description available."}</p>
-        
-        <!-- Audio player moved here, under the description -->
-        ${
-          episode.audioUrl
-            ? `<div class="audio-player-container">
-                <audio controls>
-                  <source src="${episode.audioUrl}" type="${
-                fileType || "audio/mpeg"
-              }">
-                  Your browser does not support the audio element.
-                </audio>
-              </div>`
-            : "<p>No audio available for this episode.</p>"
-        }
+      <div class="podcast-meta-info">
+        <div class="meta-item">
+          <span class="meta-label">Publish Date:</span>
+          <span class="meta-value">${publishDate}</span>
+        </div>
+        <div class="meta-item">
+          <span class="meta-label">Duration:</span>
+          <span class="meta-value">${formattedDuration}</span>
+        </div>
+        <div class="meta-item">
+          <span class="meta-label">Host:</span>
+          <span class="meta-value">${host}</span>
+        </div>
       </div>
-      <div class="separator"></div>
+    </div>
+  </div>
+  
+  <!-- About section -->
+  <div class="podcast-about-section">
+    <h2 class="section-title">About</h2>
+    <p class="podcast-description">${
+      episode.description || "No description available."
+    }</p>
+    
+    <!-- Audio player -->
+    ${
+      episode.audioUrl
+        ? `<div class="audio-player-container">
+            <audio controls>
+              <source src="${episode.audioUrl}" type="${
+            fileType || "audio/mpeg"
+          }">
+              Your browser does not support the audio element.
+            </audio>
+          </div>`
+        : "<p>No audio available for this episode.</p>"
+    }
+  </div>
+  
+  <!-- Additional details section -->
+  <div class="podcast-details-section">
+    <div class="details-column">
+      <h2 class="section-title">Episode Details</h2>
       <div class="detail-grid">
-        <div class="detail-item">
-          <h3>Publish Date</h3>
-          <p>${publishDate}</p>
-        </div>
-        <div class="detail-item">
-          <h3>Duration</h3>
-          <p>${formattedDuration}</p>
-        </div>
         <div class="detail-item">
           <h3>Episode Type</h3>
           <p>${episodeType}</p>
-        </div>
-        <div class="detail-item">
-          <h3>Host</h3> <!-- Changed label from "Author" to "Host" -->
-          <p>${host}</p>
         </div>
         <div class="detail-item">
           <h3>File Size</h3>
@@ -174,18 +188,21 @@ export function renderEpisodeDetail(episode) {
           }
         </div>
       </div>
-      <div class="separator"></div>
-      <div class="detail-section">
-        <h2>Guests</h2>
-        <div id="guests-list"></div>
-      </div>
     </div>
   </div>
-  <div class="detail-actions">
-    <button class="delete-btn" id="delete-episode-btn" data-id="${episode._id}">
-      ${shared.svgpodcastmanagement.delete} Delete Episode
-    </button>
+  
+  <!-- Guests section -->
+  <div class="podcast-about-section">
+    <h2 class="section-title">Guests</h2>
+    <div id="guests-list"></div>
   </div>
+</div>
+
+<div class="detail-actions">
+  <button class="delete-btn" id="delete-episode-btn" data-id="${episode._id}">
+    ${shared.svgpodcastmanagement.delete} Delete Episode
+  </button>
+</div>
 `;
 
   // Define the episodeActions container

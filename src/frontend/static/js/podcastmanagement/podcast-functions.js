@@ -460,52 +460,66 @@ export function renderPodcastDetail(podcast) {
       </button>
     </div>
   </div>
-  <div class="detail-content">
-    <div class="detail-image" style="background-image: url('${imageUrl}')"></div>
-    <div class="detail-info">
-      <h1 class="detail-title">${podcast.podName}</h1>
-      <p class="detail-category">${podcast.category || "Uncategorized"}</p>
-      <div class="detail-section">
-        <h2>About</h2>
-        <p>${podcast.description || "No description available."}</p>
+  
+  <div class="podcast-detail-container">
+    <!-- Top section with image and basic info -->
+    <div class="podcast-header-section">
+      <div class="podcast-image-container">
+        <div class="detail-image" style="background-image: url('${imageUrl}')"></div>
       </div>
-      <!-- Episodes container moved directly under About -->
-      <div id="episodes-list" class="episodes-list">
-        <h3 class="detail-section-title">Episodes</h3>
-        <div id="episodes-container" class="episodes-scroll-container"></div>
-      </div>
-      <div class="separator"></div>
-      <div class="detail-grid">
-        <div class="detail-item">
-          <h3>Author</h3>
-          <p>${podcast.author || "Not specified"}</p>
-        </div>
-        <div class="detail-item">
-          <h3>Language</h3>
-          <p>${
-            podcast.language && podcast.language.toLowerCase() === "en"
-              ? "English"
-              : podcast.language || "Not specified"
-          }</p>
-        </div>
-        <div class="detail-item">
-          <h3>Email Address</h3>
-          <p>${podcast.email || "Not specified"}</p>
-        </div>
-        <div class="detail-item">
-          <h3>RSS Feed</h3>
-          ${
-            podcast.rssFeed
-              ? `<a href="${podcast.rssFeed}" target="_blank">${podcast.rssFeed}</a>`
-              : "<p>Not specified</p>"
-          }
+      <div class="podcast-basic-info">
+        <h1 class="detail-title">${podcast.podName}</h1>
+        <p class="detail-category">${podcast.category || "Uncategorized"}</p>
+        <div class="podcast-meta-info">
+          <div class="meta-item">
+            <span class="meta-label">Host:</span> <!-- Changed from "Author" to "Host" -->
+            <span class="meta-value">${podcast.author || "Not specified"}</span>
+          </div>
+          <div class="meta-item">
+            <span class="meta-label">Language:</span>
+            <span class="meta-value">${
+              podcast.language && podcast.language.toLowerCase() === "en"
+                ? "English"
+                : podcast.language || "Not specified"
+            }</span>
+          </div>
+          <div class="meta-item">
+            <span class="meta-label">Email:</span>
+            <span class="meta-value">${podcast.email || "Not specified"}</span>
+          </div>
         </div>
       </div>
-      <div class="separator"></div>
-      <div class="detail-section">
-        <h2>Scheduling</h2>
-        <div class="detail-grid">
-          <div class="detail-item">
+    </div>
+    
+    <!-- About section -->
+    <div class="podcast-about-section">
+      <h2 class="section-title">About</h2>
+      <p class="podcast-description">${
+        podcast.description || "No description available."
+      }</p>
+    </div>
+    
+    <!-- Episodes section -->
+    <div class="podcast-episodes-section">
+      <h2 class="section-title">Episodes</h2>
+      <div id="episodes-container" class="episodes-list-container"></div>
+    </div>
+    
+    <!-- Additional details section -->
+    <div class="podcast-details-section">
+      <div class="details-column">
+        <h2 class="section-title">RSS Feed</h2>
+        ${
+          podcast.rssFeed
+            ? `<a href="${podcast.rssFeed}" target="_blank" class="detail-link">${podcast.rssFeed}</a>`
+            : "<p>Not specified</p>"
+        }
+      </div>
+      
+      <div class="details-column">
+        <h2 class="section-title">Scheduling</h2>
+        <div class="scheduling-details">
+          <div class="scheduling-item">
             <h3>Google Calendar</h3>
             ${
               podcast.googleCal
@@ -519,61 +533,62 @@ export function renderPodcastDetail(podcast) {
                   </p>`
             }
           </div>
-          <div class="detail-item">
+          <div class="scheduling-item">
             <h3>Guest Form URL</h3>
             ${
               podcast.guestUrl
-                ? `<a href="${podcast.guestUrl}" target="_blank">${podcast.guestUrl}</a>`
+                ? `<a href="${podcast.guestUrl}" target="_blank" class="detail-link">${podcast.guestUrl}</a>`
                 : "<p>Not specified</p>"
             }
           </div>
         </div>
       </div>
-      <div class="separator"></div>
-      <div class="detail-section">
-        <h2>Social Media</h2>
-        <div class="social-links">
-          ${
-            podcast.socialMedia && podcast.socialMedia[0]
-              ? `<a href="${podcast.socialMedia[0]}" target="_blank" class="social-link">
-                  ${shared.svgpodcastmanagement.facebook}
-                  Facebook
-                </a>`
-              : ""
-          }
-          ${
-            podcast.socialMedia && podcast.socialMedia[1]
-              ? `<a href="${podcast.socialMedia[1]}" target="_blank" class="social-link">
-                  ${shared.svgpodcastmanagement.instagram}
-                  Instagram
-                </a>`
-              : ""
-          }
-          ${
-            podcast.socialMedia && podcast.socialMedia[2]
-              ? `<a href="${podcast.socialMedia[2]}" target="_blank" class="social-link">
-                  ${shared.svgpodcastmanagement.linkedin}
-                  LinkedIn
-                </a>`
-              : ""
-          }
-          ${
-            podcast.socialMedia && podcast.socialMedia[3]
-              ? `<a href="${podcast.socialMedia[3]}" target="_blank" class="social-link">
-                  ${shared.svgpodcastmanagement.twitter}
-                  Twitter
-                </a>`
-              : ""
-          }
-          ${
-            podcast.socialMedia && podcast.socialMedia[4]
-              ? `<a href="${podcast.socialMedia[4]}" target="_blank" class="social-link">
-                  ${shared.svgpodcastmanagement.tiktok}
-                  TikTok
-                </a>`
-              : ""
-          }
-        </div>
+    </div>
+    
+    <!-- Social media section -->
+    <div class="podcast-social-section">
+      <h2 class="section-title">Social Media</h2>
+      <div class="social-links">
+        ${
+          podcast.socialMedia && podcast.socialMedia[0]
+            ? `<a href="${podcast.socialMedia[0]}" target="_blank" class="social-link">
+                ${shared.svgpodcastmanagement.facebook}
+                Facebook
+              </a>`
+            : ""
+        }
+        ${
+          podcast.socialMedia && podcast.socialMedia[1]
+            ? `<a href="${podcast.socialMedia[1]}" target="_blank" class="social-link">
+                ${shared.svgpodcastmanagement.instagram}
+                Instagram
+              </a>`
+            : ""
+        }
+        ${
+          podcast.socialMedia && podcast.socialMedia[2]
+            ? `<a href="${podcast.socialMedia[2]}" target="_blank" class="social-link">
+                ${shared.svgpodcastmanagement.linkedin}
+                LinkedIn
+              </a>`
+            : ""
+        }
+        ${
+          podcast.socialMedia && podcast.socialMedia[3]
+            ? `<a href="${podcast.socialMedia[3]}" target="_blank" class="social-link">
+                ${shared.svgpodcastmanagement.twitter}
+                Twitter
+              </a>`
+            : ""
+        }
+        ${
+          podcast.socialMedia && podcast.socialMedia[4]
+            ? `<a href="${podcast.socialMedia[4]}" target="_blank" class="social-link">
+                ${shared.svgpodcastmanagement.tiktok}
+                TikTok
+              </a>`
+            : ""
+        }
       </div>
     </div>
   </div>
@@ -585,6 +600,7 @@ export function renderPodcastDetail(podcast) {
     </button>
   </div>
   `;
+
   // Back button event listener
   document.getElementById("back-to-list").addEventListener("click", () => {
     // Hide podcast details view
@@ -647,19 +663,16 @@ export function renderPodcastDetail(podcast) {
       }
     });
 
-  // Render episodes vertically under the image container
+  // Render episodes in a vertical list
   fetchEpisodesByPodcast(podcast._id)
     .then((episodes) => {
       const episodesContainer = document.getElementById("episodes-container");
       episodesContainer.innerHTML = "";
 
       if (episodes && episodes.length) {
-        const episodesListDiv = document.createElement("div");
-        episodesListDiv.className = "episodes-container";
-
         episodes.forEach((ep) => {
           const episodeCard = document.createElement("div");
-          episodeCard.className = "episode-card";
+          episodeCard.className = "episode-list-item";
           episodeCard.setAttribute("data-episode-id", ep._id);
 
           const publishDate = ep.publishDate
@@ -675,64 +688,59 @@ export function renderPodcastDetail(podcast) {
             ? ep.description
             : "No description available.";
 
-          // Create content container for title, date, and description
-          const contentDiv = document.createElement("div");
-          contentDiv.className = "episode-content";
+          episodeCard.innerHTML = `
+            <div class="episode-content">
+              <div class="episode-header">
+                <h3 class="episode-title">${ep.title}</h3>
+                ${
+                  ep.status
+                    ? `<span class="episode-status">${ep.status}</span>`
+                    : ""
+                }
+              </div>
+              <div class="episode-meta">
+                <span class="episode-date">Published: ${publishDate}</span>
+                <span class="episode-duration">${formattedDuration}</span>
+              </div>
+              <div class="episode-description">${description}</div>
+            </div>
+            <div class="episode-actions">
+              ${
+                ep.audioUrl
+                  ? `<button class="episode-play-btn"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg></button>`
+                  : ""
+              }
+              <button class="view-episode-btn">View Details</button>
+            </div>
+          `;
 
-          contentDiv.innerHTML = `
-          <div class="episode-title">${ep.title}</div>
-          <div class="episode-meta">
-            <span>Published: ${publishDate}</span>
-            <span> • ${formattedDuration}</span>
-          </div>
-          <div class="episode-description">${description}</div>
-        `;
-
-          // Create actions container
-          const actionsDiv = document.createElement("div");
-          actionsDiv.className = "episode-actions";
-
-          // Add play button if audio URL exists
+          // Add play button event listener if audio URL exists
           if (ep.audioUrl) {
-            const playButton = createPlayButton();
-            playButton.addEventListener("click", (e) => {
-              e.stopPropagation();
-              playAudio(ep.audioUrl, ep.title);
-            });
-            actionsDiv.appendChild(playButton);
+            episodeCard
+              .querySelector(".episode-play-btn")
+              .addEventListener("click", (e) => {
+                e.stopPropagation();
+                playAudio(ep.audioUrl, ep.title);
+              });
           }
 
-          // Create view button
-          const viewButton = document.createElement("button");
-          viewButton.className = "view-episode-btn";
-          viewButton.textContent = "View";
+          // Add view button event listener
+          episodeCard
+            .querySelector(".view-episode-btn")
+            .addEventListener("click", (e) => {
+              e.stopPropagation();
+              renderEpisodeDetail(ep);
+            });
 
-          // Add click event to view button
-          viewButton.addEventListener("click", (e) => {
-            e.stopPropagation(); // Prevent triggering the card click
-            renderEpisodeDetail(ep);
-          });
-
-          actionsDiv.appendChild(viewButton);
-
-          // Add elements to card
-          episodeCard.appendChild(contentDiv);
-          episodeCard.appendChild(actionsDiv);
-
-          // Add click event to card (excluding the button)
+          // Add click event to card (excluding buttons)
           episodeCard.addEventListener("click", (e) => {
-            if (
-              !e.target.closest(".episode-play-btn") &&
-              !e.target.closest(".view-episode-btn")
-            ) {
+            if (!e.target.closest("button")) {
               renderEpisodeDetail(ep);
             }
           });
 
-          episodesListDiv.appendChild(episodeCard);
+          episodesContainer.appendChild(episodeCard);
         });
-
-        episodesContainer.appendChild(episodesListDiv);
       } else {
         const noEpisodes = document.createElement("p");
         noEpisodes.className = "no-episodes-message";
@@ -742,6 +750,11 @@ export function renderPodcastDetail(podcast) {
     })
     .catch((error) => {
       console.error("Error fetching episodes:", error);
+      const episodesContainer = document.getElementById("episodes-container");
+      if (episodesContainer) {
+        episodesContainer.innerHTML =
+          '<p class="error-message">Failed to load episodes.</p>';
+      }
     });
 
   // Update edit buttons after rendering
