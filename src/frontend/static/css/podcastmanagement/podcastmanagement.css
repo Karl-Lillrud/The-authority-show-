@@ -1344,7 +1344,7 @@ body {
 
 .cancel-btn {
   background-color: white;
-  color: var(--text-color-light);
+  color: var (--text-color-light);
   box-shadow: var(--button-shadow);
   border: 1px solid rgba(0, 0, 0, 0.05);
 }
@@ -1850,4 +1850,45 @@ body {
     max-width: 350px; /* Increased from 250px */
     margin: 0 auto;
   }
+}
+
+/* Guest Detail */
+.podcast-detail-container {
+  // ...existing code...
+}
+
+.podcast-header-section {
+  // ...existing code...
+}
+
+.podcast-basic-info {
+  // ...existing code...
+}
+
+.podcast-meta-info {
+  // ...existing code...
+}
+
+.meta-item {
+  // ...existing code...
+}
+
+.podcast-about-section {
+  // ...existing code...
+}
+
+.podcast-social-section {
+  // ...existing code...
+}
+
+.social-links {
+  // ...existing code...
+}
+
+.social-link {
+  // ...existing code...
+}
+
+.detail-actions {
+  // ...existing code...
 }

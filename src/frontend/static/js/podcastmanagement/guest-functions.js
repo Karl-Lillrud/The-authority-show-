@@ -195,155 +195,113 @@ function closeAddGuestPopup() {
 export function renderGuestDetail(guest) {
   const guestDetailElement = document.getElementById("podcast-detail");
 
-  // Get initials from guest name for avatar
-  const initials = guest.name
-    .split(" ")
-    .map((word) => word[0])
-    .join("")
-    .substring(0, 2)
-    .toUpperCase();
-
   guestDetailElement.innerHTML = `
-  <div class="detail-header">
-    <button class="back-btn" id="back-to-episode">
-      ${shared.svgpodcastmanagement.back}
-      Back to episode
+<div class="detail-header">
+  <button class="back-btn" id="back-to-episode">
+    ${shared.svgpodcastmanagement.back}
+    Back to episode
+  </button>
+  <div class="top-right-actions">
+    <button class="action-btn edit-btn" id="edit-guest-btn" data-id="${
+      guest._id
+    }">
+      ${shared.svgpodcastmanagement.edit}
     </button>
-    
-    <div class="top-right-actions">
-      <button class="action-btn edit-btn" id="edit-guest-btn" data-id="${
-        guest._id || guest.id
-      }">
-        ${shared.svgpodcastmanagement.edit}
-      </button>
-    </div>
   </div>
-  <div class="detail-content">
-    <div class="detail-image">
-      <div class="guest-detail-avatar-large">${initials}</div>
+</div>
+
+<div class="podcast-detail-container">
+  <!-- Header section with image and basic info -->
+  <div class="podcast-header-section">
+    <div class="podcast-image-container">
+      <div class="detail-image" style="background-image: url('${
+        guest.image || "default-guest-image.png"
+      }')"></div>
     </div>
-    <div class="detail-info">
+    <div class="podcast-basic-info">
       <h1 class="detail-title">${guest.name}</h1>
-      <p class="detail-category">${guest.tags ? guest.tags[0] : "Guest"}</p>
-      
-      <div class="detail-section">
-        <h2>About</h2>
-        <p>${guest.bio || guest.description || "No bio available."}</p>
+      <p class="detail-category">${guest.role || "Guest"}</p>
+      <div class="podcast-meta-info">
+        <div class="meta-item">
+          <span class="meta-label">Email:</span>
+          <span class="meta-value">${guest.email || "Not specified"}</span>
+        </div>
+        <div class="meta-item">
+          <span class="meta-label">Phone:</span>
+          <span class="meta-value">${guest.phone || "Not specified"}</span>
+        </div>
+        <div class="meta-item">
+          <span class="meta-label">Company:</span>
+          <span class="meta-value">${guest.company || "Not specified"}</span>
+        </div>
       </div>
-      
-      <div class="separator"></div>
-      
-      <div class="detail-grid">
-        <div class="detail-item">
-          <h3>Email</h3>
-          <p><a href="mailto:${guest.email}" class="guest-email-link">${
-    guest.email
-  }</a></p>
-        </div>
-        ${
-          guest.phone
-            ? `
-        <div class="detail-item">
-          <h3>Phone</h3>
-          <p>${guest.phone}</p>
-        </div>
-        `
-            : ""
-        }
-        ${
-          guest.linkedin
-            ? `
-        <div class="detail-item">
-          <h3>LinkedIn</h3>
-          <p><a href="${guest.linkedin}" target="_blank" class="guest-social-link">
-            ${shared.svgpodcastmanagement.linkedin}
-            LinkedIn Profile
-          </a></p>
-        </div>
-        `
-            : ""
-        }
-        ${
-          guest.twitter
-            ? `
-        <div class="detail-item">
-          <h3>Twitter</h3>
-          <p><a href="${guest.twitter}" target="_blank" class="guest-social-link">
-            ${shared.svgpodcastmanagement.twitter}
-            Twitter Profile
-          </a></p>
-        </div>
-        `
-            : ""
-        }
-      </div>
-      
+    </div>
+  </div>
+  
+  <!-- About section -->
+  <div class="podcast-about-section">
+    <h2 class="section-title">About</h2>
+    <p class="podcast-description">${guest.bio || "No bio available."}</p>
+  </div>
+  
+  <!-- Social media section -->
+  <div class="podcast-social-section">
+    <h2 class="section-title">Social Media</h2>
+    <div class="social-links">
       ${
-        guest.areasOfInterest && guest.areasOfInterest.length
-          ? `
-      <div class="separator"></div>
-      <div class="detail-section">
-        <h2>Areas of Interest</h2>
-        <div class="guest-tags">
-          ${guest.areasOfInterest
-            .map((area) => `<span class="guest-tag">${area}</span>`)
-            .join("")}
-        </div>
-      </div>
-      `
+        guest.socialMedia?.twitter
+          ? `<a href="${guest.socialMedia.twitter}" target="_blank" class="social-link">
+              ${shared.svgpodcastmanagement.twitter} Twitter
+            </a>`
           : ""
       }
-      
       ${
-        guest.tags && guest.tags.length
-          ? `
-      <div class="separator"></div>
-      <div class="detail-section">
-        <h2>Tags</h2>
-        <div class="guest-tags">
-          ${guest.tags
-            .map((tag) => `<span class="guest-tag">${tag}</span>`)
-            .join("")}
-        </div>
-      </div>
-      `
+        guest.socialMedia?.linkedin
+          ? `<a href="${guest.socialMedia.linkedin}" target="_blank" class="social-link">
+              ${shared.svgpodcastmanagement.linkedin} LinkedIn
+            </a>`
+          : ""
+      }
+      ${
+        guest.socialMedia?.instagram
+          ? `<a href="${guest.socialMedia.instagram}" target="_blank" class="social-link">
+              ${shared.svgpodcastmanagement.instagram} Instagram
+            </a>`
           : ""
       }
     </div>
   </div>
+</div>
+
+<div class="detail-actions">
+  <button class="delete-btn" id="delete-guest-btn" data-id="${guest._id}">
+    ${shared.svgpodcastmanagement.delete} Delete Guest
+  </button>
+</div>
 `;
 
   // Back button event listener
   document.getElementById("back-to-episode").addEventListener("click", () => {
-    fetch(`/get_episodes/${guest.episodeId}`)
-      .then((response) => response.json())
-      .then((episode) => {
-        renderEpisodeDetail(episode);
-      })
-      .catch((error) => {
-        console.error("Error fetching episode:", error);
-        showNotification("Error", "Failed to return to episode view", "error");
-      });
+    // Logic to navigate back to the episode details
+    if (shared.selectedEpisodeId) {
+      // Reuse the episode detail rendering function
+      renderEpisodeDetail(shared.selectedEpisodeId);
+    }
   });
 
-  // Add event listeners for the edit guest button
-  document
-    .getElementById("edit-guest-btn")
-    .addEventListener("click", async () => {
-      try {
-        // Implement guest editing functionality here
-        showNotification(
-          "Info",
-          "Guest editing functionality coming soon",
-          "info"
-        );
-      } catch (error) {
-        showNotification("Error", "Failed to edit guest", "error");
-      }
-    });
+  // Edit button event listener
+  document.getElementById("edit-guest-btn").addEventListener("click", () => {
+    // Logic to open the guest edit form
+    console.log("Edit guest:", guest._id);
+  });
 
-  // Update edit buttons after rendering
-  updateEditButtons();
+  // Delete button event listener
+  document.getElementById("delete-guest-btn").addEventListener("click", () => {
+    if (confirm("Are you sure you want to delete this guest?")) {
+      // Logic to delete the guest
+      console.log("Delete guest:", guest._id);
+    }
+  });
 }
 
 // Initialize guest functions
