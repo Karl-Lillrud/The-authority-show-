@@ -275,11 +275,17 @@ endblock %} {% block content %}
             </div>
             <div class="field-group">
               <label for="duration">Duration (minutes)</label>
-              <input type="number" id="duration" name="duration" />
+              <input type="number" id="duration" name="duration" required />
             </div>
             <div class="field-group">
               <label for="status">Status</label>
-              <input type="text" id="status" name="status" />
+              <select id="status" name="status">
+                <option value="Published">Published</option>
+                <option value="Recordet">Recorded</option>
+                <option value="Edited">Edited</option>
+                <option value="Not Recorded">Not Recorded</option>
+                <option value="Not Scheduled">Not Scheduled</option>
+              </select>
             </div>
           </div>
           <div class="form-actions">
