@@ -1,19 +1,13 @@
-{% block title %}Team Leaderboard Dashboard{% endblock %}
-{% block content %}
-<head>
-  <link rel="stylesheet" href="{{ url_for('static', filename='css/team/team.css') }}">
-  <link rel="stylesheet" href="{{ url_for('static', filename='css/components/sidebar.css') }}">
-
-  <!-- Google Analytics -->
-  <script async src="https://www.googletagmanager.com/gtag/js?id=G-PTPQQ5WSQV"></script>
-  <script>
-    window.dataLayer = window.dataLayer || [];
-    function gtag(){dataLayer.push(arguments);}
-    gtag('js', new Date());
-
-    gtag('config', 'G-PTPQQ5WSQV');
-  </script>
-</head>
+{% extends "components/base.html" %} {% block title %}Team Leaderboard
+Dashboard{% endblock %} {% block content %}
+<link
+  rel="stylesheet"
+  href="{{ url_for('static', filename='css/team/team.css') }}"
+/>
+<link
+  rel="stylesheet"
+  href="{{ url_for('static', filename='css/components/sidebar.css') }}"
+/>
 
 <div class="app-container">
   <div id="sidebar-container">
@@ -159,14 +153,20 @@
         </div>
         <div class="field-group full-width">
           <label for="podcastAssignmentDropdown">Add Podcast:</label>
-          <select class="form-control" id="podcastAssignmentDropdown">
+          <select class="form-control" id="podcastAssignmentDropdown" disabled>
             <option value="">Select Podcast to Add</option>
           </select>
         </div>
         <!-- Team detail fields -->
         <div class="field-group">
           <label for="detailName">Name:</label>
-          <input type="text" class="form-control" id="detailName" name="name" />
+          <input
+            type="text"
+            class="form-control"
+            id="detailName"
+            name="name"
+            readonly
+          />
         </div>
         <div class="field-group">
           <label for="detailEmail">Team Email:</label>
@@ -177,6 +177,7 @@
             id="detailEmail"
             name="email"
             required
+            readonly
           />
         </div>
         <div class="field-group full-width">
@@ -185,12 +186,24 @@
             class="form-control"
             id="detailDescription"
             name="description"
+            readonly
           ></textarea>
         </div>
       </div>
       <div class="form-actions">
-        <button type="button" class="delete-btn" id="deleteTeamBtn">
+        <button
+          type="button"
+          class="btn delete-member-btn"
+          id="deleteTeamDetailsBtn"
+        >
           Delete
+        </button>
+        <button
+          type="button"
+          id="editTeamDetailsBtn"
+          class="save-btn edit-team-btn"
+        >
+          Edit
         </button>
         <button type="button" class="save-btn" id="saveTeamBtn">Save</button>
       </div>
@@ -279,27 +292,19 @@
             required
           />
         </div>
+        <!-- Nya fält -->
+        <div class="field-group">
+          <label for="editMemberFullName">Full Name:</label>
+          <input type="text" id="editMemberFullName" class="form-control" />
+        </div>
+        <div class="field-group">
+          <label for="editMemberPhone">Phone:</label>
+          <input type="text" id="editMemberPhone" class="form-control" />
+        </div>
         <div class="field-group">
           <label for="editMemberRole">Select Role:</label>
           <select id="editMemberRole" class="form-control" required>
-            <option value="CoHost">CoHost</option>
-            <option value="Guest">Guest</option>
-            <option value="Scriptwriter">Scriptwriter</option>
-            <option value="Producer">Producer</option>
-            <option value="AudioEngineer">AudioEngineer</option>
-            <option value="SoundDesigner">SoundDesigner</option>
-            <option value="Researcher">Researcher</option>
-            <option value="GuestCoordinator">GuestCoordinator</option>
-            <option value="Showrunner">Showrunner</option>
-            <option value="SocialMediaManager">SocialMediaManager</option>
-            <option value="GraphicDesigner">GraphicDesigner</option>
-            <option value="Copywriter">Copywriter</option>
-            <option value="Publicist">Publicist</option>
-            <option value="SponsorshipManager">SponsorshipManager</option>
-            <option value="MarketingStrategist">MarketingStrategist</option>
-            <option value="AnalyticsSpecialist">AnalyticsSpecialist</option>
-            <option value="ShowCoordinator">ShowCoordinator</option>
-            <option value="Webmaster">Webmaster</option>
+            <!-- ...existing options... -->
           </select>
         </div>
       </div>
@@ -340,6 +345,23 @@
             readonly
           />
         </div>
+        <!-- Nya fält -->
+        <div class="field-group">
+          <label for="teamCardEditMemberFullName">Full Name:</label>
+          <input
+            type="text"
+            id="teamCardEditMemberFullName"
+            class="form-control"
+          />
+        </div>
+        <div class="field-group">
+          <label for="teamCardEditMemberPhone">Phone:</label>
+          <input
+            type="text"
+            id="teamCardEditMemberPhone"
+            class="form-control"
+          />
+        </div>
         <div class="field-group">
           <label for="teamCardEditMemberRole">Role:</label>
           <select id="teamCardEditMemberRole" class="form-control" disabled>
@@ -349,19 +371,22 @@
         </div>
       </div>
       <div class="form-actions">
+        <!-- Flyttade delete-knappen längst till vänster -->
         <button
           type="button"
-          id="teamCardEditMemberEditBtn"
-          class="edit-team-btn"
+          id="teamCardEditMemberDeleteBtn"
+          class="btn delete-member-btn"
         >
-          Edit
+          Delete
         </button>
         <button
           type="button"
-          id="teamCardEditMemberSaveBtn"
-          class="save-btn"
-          disabled
+          id="teamCardEditMemberEditBtn"
+          class="save-btn edit-team-btn"
         >
+          Edit
+        </button>
+        <button type="button" id="teamCardEditMemberSaveBtn" class="save-btn">
           Save
         </button>
       </div>

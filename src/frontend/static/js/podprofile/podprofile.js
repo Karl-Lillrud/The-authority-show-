@@ -129,7 +129,7 @@ document.addEventListener("DOMContentLoaded", () => {
           podUrl: rssData.podUrl || null,
           guestUrl: rssData.guestUrl || null,
           email: rssData.itunesOwner?.email || null,
-          logoUrl: rssData.logoUrl || null,
+          logoUrl: rssData.logoUrl || null
         };
 
         console.log("Sending podcast data:", podcastData); // Added log
@@ -180,9 +180,9 @@ document.addEventListener("DOMContentLoaded", () => {
           console.error("Error sending invitation email:", error); // Added log
         }
 
-        // Redirect to dashboard and set a flag to show the popup
+        // Redirect to podcastmanagement (updated redirection)
         sessionStorage.setItem("showWelcomePopup", "true");
-        window.location.href = "/dashboard"; // Redirects to the dashboard
+        window.location.href = "/podcastmanagement"; // Redirect now to podcastmanagement
       } catch (error) {
         console.error("Error processing podcast data:", error);
         alert("Something went wrong. Please try again.");
