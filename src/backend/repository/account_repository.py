@@ -24,33 +24,29 @@ class AccountRepository:
             if "userId" not in data or "email" not in data:
                 raise ValueError("Missing required fields: userId and email")
 
-            # Define allowed fields and default values
-            allowed_fields = {
-                "userId": None,
-                "email": None,
-                "companyName": "",
-                "isCompany": False,
-                "paymentInfo": "",
+            user_id = data["userId"]
+            email = data["email"]
+            company_name = data.get("companyName", "")
+            is_company = data.get("isCompany", False)
+
+            subscription_id = str(uuid.uuid4())  # Generate unique subscription ID
+            account_id = str(uuid.uuid4())  # Generate unique account ID
+
+            # Create account document
+            account_document = {
+                "_id": account_id,
+                "userId": user_id,
+                "subscriptionId": subscription_id,
+                "email": email,
+                "isCompany": is_company,
+                "companyName": company_name,
+                "paymentInfo": "",  # Placeholder for payment info
                 "subscriptionStatus": "active",
+                "createdAt": datetime.utcnow().isoformat(),
                 "referralBonus": 0,
                 "subscriptionStart": datetime.utcnow().isoformat(),
                 "subscriptionEnd": "",
                 "isActive": True,
-            }
-
-            # Generate unique IDs
-            subscription_id = str(uuid.uuid4())
-            account_id = str(uuid.uuid4())
-
-            # Generate account document dynamically
-            account_document = {
-                "_id": account_id,
-                "subscriptionId": subscription_id,
-                "createdAt": datetime.utcnow().isoformat(),
-                **{
-                    key: data.get(key, default)
-                    for key, default in allowed_fields.items()
-                },
             }
 
             # Insert account into the database
