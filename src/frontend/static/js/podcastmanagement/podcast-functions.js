@@ -155,7 +155,7 @@ export async function renderPodcastList() {
                 podcast.author || "Not specified"
               }</p>
               <p class="podcast-meta"><span>Language:</span> ${
-                podcast.language === "EN"
+                podcast.language && podcast.language.toLowerCase() === "en"
                   ? "English"
                   : podcast.language || "Not specified"
               }</p>
@@ -461,7 +461,7 @@ export function renderPodcastDetail(podcast) {
         <div class="detail-item">
           <h3>Language</h3>
           <p>${
-            podcast.language === "EN"
+            podcast.language && podcast.language.toLowerCase() === "en"
               ? "English"
               : podcast.language || "Not specified"
           }</p>
