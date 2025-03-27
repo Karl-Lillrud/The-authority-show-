@@ -1,6 +1,8 @@
 bcrypt
 beautifulsoup4
 blinker
+boto3
+botocore
 cachetools
 certifi
 charset-normalizer
@@ -19,6 +21,7 @@ httplib2
 idna
 itsdangerous
 Jinja2
+jmespath
 jsonify
 kubernetes
 MarkupSafe
@@ -45,6 +48,7 @@ PyYAML
 requests
 requests-oauthlib
 rsa
+s3transfer
 setuptools
 sgmllib3k
 shortuuid
