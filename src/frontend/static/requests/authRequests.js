@@ -13,7 +13,7 @@ export async function signin(email, password, remember) {
     const result = await response.json();
     console.log("Signin response from backend:", result);
 
-    // ✅ Trust backend-provided redirect_url
+    // Trust backend-provided redirect_url
     return result.redirect_url || "/dashboard";
 
   } catch (error) {
