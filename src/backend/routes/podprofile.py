@@ -12,6 +12,7 @@ from flask import (
 from backend.database.mongo_connection import collection
 import requests
 from datetime import datetime, timezone
+from os import getenv  # Add this import
 
 podprofile_bp = Blueprint("podprofile_bp", __name__)
 
@@ -132,4 +133,51 @@ def post_podcast_data():
         return jsonify({"redirectUrl": "/podprofile"}), 200
     except Exception as e:
         current_app.logger.error(f"Error posting podcast data: {e}")
+        return jsonify({"error": str(e)}), 500
+
+
+@podprofile_bp.route("/connect_calendar", methods=["GET"])
+def connect_calendar():
+    try:
+        # Redirect user to the calendar integration service (e.g., Google OAuth)
+        calendar_auth_url = "https://accounts.google.com/o/oauth2/auth"  # Example URL
+        params = {
+            "client_id": getenv("GOOGLE_CLIENT_ID"),  # Fetch from .env
+            "redirect_uri": getenv("GOOGLE_REDIRECT_URI"),  # Fetch from .env
+            "response_type": "code",
+            "scope": "https://www.googleapis.com/auth/calendar",
+            "access_type": "offline",
+        }
+        auth_url = f"{calendar_auth_url}?{requests.compat.urlencode(params)}"
+        return redirect(auth_url)
+    except Exception as e:
+        current_app.logger.error(f"Error connecting calendar: {e}")
+        return jsonify({"error": str(e)}), 500
+
+
+@podprofile_bp.route("/calendar_callback", methods=["GET"])
+def calendar_callback():
+    try:
+        # Handle the OAuth callback and exchange the code for tokens
+        code = request.args.get("code")
+        if not code:
+            return jsonify({"error": "Authorization code missing"}), 400
+
+        token_url = "https://oauth2.googleapis.com/token"
+        data = {
+            "code": code,
+            "client_id": getenv("GOOGLE_CLIENT_ID"),  # Fetch from .env
+            "client_secret": getenv("GOOGLE_CLIENT_SECRET"),  # Fetch from .env
+            "redirect_uri": getenv("GOOGLE_REDIRECT_URI"),  # Fetch from .env
+            "grant_type": "authorization_code",
+        }
+        response = requests.post(token_url, data=data)
+        response.raise_for_status()
+        tokens = response.json()
+
+        # Save tokens to the database or session
+        session["calendar_tokens"] = tokens
+        return redirect(url_for("podprofile_bp.podprofile"))
+    except Exception as e:
+        current_app.logger.error(f"Error in calendar callback: {e}")
         return jsonify({"error": str(e)}), 500
