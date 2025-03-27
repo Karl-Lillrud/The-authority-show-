@@ -92,11 +92,19 @@ document.addEventListener("DOMContentLoaded", () => {
   // Go to Email Section Button
   if (goToEmailSection) {
     goToEmailSection.addEventListener("click", async () => {
+      // Add loading spinner on Next button
+      goToEmailSection.disabled = true;
+      goToEmailSection.innerHTML =
+        '<i class="fas fa-spinner fa-spin"></i> Loading...';
+
       const podName = podNameInput ? podNameInput.value.trim() : "";
       const podRss = podRssInput ? podRssInput.value.trim() : "";
 
       if (!podName || !podRss) {
         alert("Please enter all required fields: Podcast Name and RSS URL.");
+        // Restore button if validation fails
+        goToEmailSection.disabled = false;
+        goToEmailSection.innerHTML = "Next";
         return;
       }
 
@@ -184,6 +192,9 @@ document.addEventListener("DOMContentLoaded", () => {
         sessionStorage.setItem("showWelcomePopup", "true");
         window.location.href = "/podcastmanagement"; // Redirect now to podcastmanagement
       } catch (error) {
+        // On error, restore button state
+        goToEmailSection.disabled = false;
+        goToEmailSection.innerHTML = "Next";
         console.error("Error processing podcast data:", error);
         alert("Something went wrong. Please try again.");
       }
