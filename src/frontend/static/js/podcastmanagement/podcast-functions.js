@@ -880,6 +880,15 @@ function handlePodcastFormSubmission() {
         if (inputElement && inputElement.files[0]) {
           const file = inputElement.files[0];
           const reader = new FileReader();
+          reader.onerror = () => {
+            // Notify if file reading fails
+            showNotification(
+              "Error",
+              "Failed to read file for " + dataProperty,
+              "error"
+            );
+            resolve(false);
+          };
           reader.onloadend = () => {
             data[dataProperty] = reader.result; // update with new image
             resolve(true);

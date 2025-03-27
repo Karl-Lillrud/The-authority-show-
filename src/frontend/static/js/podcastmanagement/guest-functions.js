@@ -129,7 +129,12 @@ function showManualGuestPopup(selectElement) {
           showNotification("Error", "Failed to add guest.", "error"); // Show error notification
         }
       } else {
-        alert("Please fill in all required fields.");
+        // Replace alert with showNotification
+        showNotification(
+          "Error",
+          "Please fill in all required fields.",
+          "error"
+        );
       }
     });
 }
@@ -410,7 +415,12 @@ export function initGuestFunctions() {
           showNotification("Error", "Failed to add guest.", "error");
         }
       } else {
-        alert("Please fill in all required fields.");
+        // Replace alert with notification
+        showNotification(
+          "Error",
+          "Please fill in all required fields.",
+          "error"
+        );
       }
     });
 }

@@ -1,7 +1,7 @@
 import { fetchRSSData, addPodcast } from "../../requests/podcastRequests.js"; // Updated import
 import { sendInvitationEmail } from "../../requests/invitationRequests.js";
 import { registerEpisode } from "../../requests/episodeRequest.js";
-import { createLoadingBar } from "./loading-bar.js";
+import { createLoadingBar } from "../../js/components/loading-bar.js"; // Updated import
 
 document.addEventListener("DOMContentLoaded", () => {
   // DOM Elements

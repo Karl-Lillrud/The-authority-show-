@@ -62,6 +62,14 @@ export function playAudio(audioUrl, episodeTitle) {
   </audio>
 `;
 
+  // Add error event to the audio element
+  const audioEl = audioPlayer.querySelector("audio");
+  if (audioEl) {
+    audioEl.addEventListener("error", () => {
+      showNotification("Error", "Failed to load or play audio.", "error");
+    });
+  }
+
   // Add event listener to close button
   document
     .getElementById("close-audio-player")
