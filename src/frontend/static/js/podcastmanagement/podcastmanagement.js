@@ -124,6 +124,7 @@ function observeEditButtons() {
 
 // Function to close popups when clicking outside
 function enablePopupCloseOnOutsideClick() {
+  // Handle existing popups
   const popups = document.querySelectorAll(".popup");
   popups.forEach((popup) => {
     popup.addEventListener("click", (event) => {
@@ -132,6 +133,25 @@ function enablePopupCloseOnOutsideClick() {
       }
     });
   });
+
+  // Set up a mutation observer to handle dynamically created popups
+  const observer = new MutationObserver((mutations) => {
+    mutations.forEach((mutation) => {
+      if (mutation.addedNodes.length) {
+        mutation.addedNodes.forEach((node) => {
+          if (node.classList && node.classList.contains("popup")) {
+            node.addEventListener("click", (event) => {
+              if (event.target === node) {
+                node.style.display = "none";
+              }
+            });
+          }
+        });
+      }
+    });
+  });
+
+  observer.observe(document.body, { childList: true, subtree: true });
 }
 
 // Main initialization

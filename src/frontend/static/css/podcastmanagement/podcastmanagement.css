@@ -928,6 +928,21 @@ body {
   font-size: 1.5rem;
 }
 
+.guest-detail-avatar-large {
+  width: 150px;
+  height: 150px;
+  border-radius: 50%;
+  background-color: var(--highlight-color);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  font-size: 3rem;
+  margin: 75px auto;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+}
+
 .guest-detail-name {
   font-size: 2rem;
   font-weight: 700;

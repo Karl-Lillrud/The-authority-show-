@@ -151,11 +151,13 @@ export async function renderPodcastList() {
               <p class="podcast-meta"><span>Category:</span> ${
                 podcast.category || "Uncategorized"
               }</p>
-              <p class="podcast-meta"><span>Author:</span> ${
+              <p class="podcast-meta"><span>Host:</span> ${
                 podcast.author || "Not specified"
               }</p>
               <p class="podcast-meta"><span>Language:</span> ${
-                podcast.language || "Not specified"
+                podcast.language === "EN"
+                  ? "English"
+                  : podcast.language || "Not specified"
               }</p>
             </div>
             <div class="podcast-actions">
@@ -453,12 +455,16 @@ export function renderPodcastDetail(podcast) {
       <div class="separator"></div>
       <div class="detail-grid">
         <div class="detail-item">
-          <h3>Author</h3>
+          <h3>Host</h3>
           <p>${podcast.author || "Not specified"}</p>
         </div>
         <div class="detail-item">
           <h3>Language</h3>
-          <p>${podcast.language || "Not specified"}</p>
+          <p>${
+            podcast.language === "EN"
+              ? "English"
+              : podcast.language || "Not specified"
+          }</p>
         </div>
         <div class="detail-item">
           <h3>Email Address</h3>

@@ -115,7 +115,7 @@ endblock %} {% block content %}
               />
             </div>
             <div class="field-group">
-              <label for="pod-author">Author</label>
+              <label for="pod-author">Host</label>
               <input type="text" id="pod-author" name="author" />
             </div>
             <div class="field-group">
@@ -127,7 +127,7 @@ endblock %} {% block content %}
               <input type="url" id="pod-rss" name="rssFeed" />
             </div>
             <div class="field-group">
-              <label for="logo">Album Cover</label>
+              <label for="logo">Album Art</label>
               <input type="file" id="logo" name="logo" accept="image/*" />
             </div>
             <div class="field-group">
@@ -152,7 +152,19 @@ endblock %} {% block content %}
             </div>
             <div class="field-group">
               <label for="category">Category (Required)</label>
-              <input type="text" id="category" name="category" required />
+              <select id="category" name="category" required>
+                <option value="">Select a category</option>
+                <option value="Business">Business</option>
+                <option value="Comedy">Comedy</option>
+                <option value="Education">Education</option>
+                <option value="Health & Fitness">Health & Fitness</option>
+                <option value="News">News</option>
+                <option value="Technology">Technology</option>
+                <option value="Science">Science</option>
+                <option value="Arts">Arts</option>
+                <option value="Music">Music</option>
+                <option value="Society & Culture">Society & Culture</option>
+              </select>
             </div>
             <div class="field-group">
               <label for="tagline">Tagline</label>

@@ -205,7 +205,6 @@ export function renderGuestDetail(guest) {
       Back to episode
     </button>
     
-    <!-- Add top-right action buttons -->
     <div class="top-right-actions">
       <button class="action-btn edit-btn" id="edit-guest-btn" data-id="${
         guest._id || guest.id
@@ -215,16 +214,12 @@ export function renderGuestDetail(guest) {
     </div>
   </div>
   <div class="detail-content">
+    <div class="detail-image">
+      <div class="guest-detail-avatar-large">${initials}</div>
+    </div>
     <div class="detail-info">
-      <div class="guest-detail-header">
-        <div class="guest-detail-avatar">${initials}</div>
-        <div class="guest-detail-info">
-          <h1 class="guest-detail-name">${guest.name}</h1>
-          <p class="guest-detail-email">${
-            guest.email || "No email provided"
-          }</p>
-        </div>
-      </div>
+      <h1 class="detail-title">${guest.name}</h1>
+      <p class="detail-category">${guest.tags ? guest.tags[0] : "Guest"}</p>
       
       <div class="detail-section">
         <h2>About</h2>
@@ -233,75 +228,57 @@ export function renderGuestDetail(guest) {
       
       <div class="separator"></div>
       
-      <div class="guest-detail-section">
-        <h3>Contact Information</h3>
-        <div class="detail-grid">
-          <div class="detail-item">
-            <h4>Email</h4>
-            <p><a href="mailto:${guest.email}" class="guest-email-link">${
+      <div class="detail-grid">
+        <div class="detail-item">
+          <h3>Email</h3>
+          <p><a href="mailto:${guest.email}" class="guest-email-link">${
     guest.email
   }</a></p>
-          </div>
-          ${
-            guest.phone
-              ? `
-          <div class="detail-item">
-            <h4>Phone</h4>
-            <p>${guest.phone}</p>
-          </div>
-          `
-              : ""
-          }
         </div>
-      </div>
-      
-      <div class="separator"></div>
-      
-      <div class="guest-detail-section">
-        <h3>Social Media</h3>
-        <div>
-          ${
-            guest.linkedin
-              ? `
-          <a href="${guest.linkedin}" target="_blank" class="guest-social-link">
-            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"></path>
-              <rect x="2" y="9" width="4" height="12"></rect>
-              <circle cx="4" cy="4" r="2"></circle>
-            </svg>
+        ${
+          guest.phone
+            ? `
+        <div class="detail-item">
+          <h3>Phone</h3>
+          <p>${guest.phone}</p>
+        </div>
+        `
+            : ""
+        }
+        ${
+          guest.linkedin
+            ? `
+        <div class="detail-item">
+          <h3>LinkedIn</h3>
+          <p><a href="${guest.linkedin}" target="_blank" class="guest-social-link">
+            ${shared.svgpodcastmanagement.linkedin}
             LinkedIn Profile
-          </a>
-          `
-              : ""
-          }
-          
-          ${
-            guest.twitter
-              ? `
-          <a href="${guest.twitter}" target="_blank" class="guest-social-link">
-            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M23 3a10.9 10.9 0 0 1-3.14 1.53 4.48 4.48 0 0 0-7.86 3v1A10.66 10.66 0 0 1 3 4s-4 9 5 13a11.64 11.64 0 0 1-7 2c9 5 20 0 20-11.5a4.5 4.5 0 0 0-.08-.83A7.72 7.72 0 0 0 23 3z"></path>
-            </svg>
-            Twitter Profile
-          </a>
-          `
-              : ""
-          }
-          
-          ${
-            !guest.linkedin && !guest.twitter
-              ? "<p>No social media profiles available.</p>"
-              : ""
-          }
+          </a></p>
         </div>
+        `
+            : ""
+        }
+        ${
+          guest.twitter
+            ? `
+        <div class="detail-item">
+          <h3>Twitter</h3>
+          <p><a href="${guest.twitter}" target="_blank" class="guest-social-link">
+            ${shared.svgpodcastmanagement.twitter}
+            Twitter Profile
+          </a></p>
+        </div>
+        `
+            : ""
+        }
       </div>
       
       ${
         guest.areasOfInterest && guest.areasOfInterest.length
           ? `
       <div class="separator"></div>
-      <div class="guest-detail-section">
-        <h3>Areas of Interest</h3>
+      <div class="detail-section">
+        <h2>Areas of Interest</h2>
         <div class="guest-tags">
           ${guest.areasOfInterest
             .map((area) => `<span class="guest-tag">${area}</span>`)
@@ -316,8 +293,8 @@ export function renderGuestDetail(guest) {
         guest.tags && guest.tags.length
           ? `
       <div class="separator"></div>
-      <div class="guest-detail-section">
-        <h3>Tags</h3>
+      <div class="detail-section">
+        <h2>Tags</h2>
         <div class="guest-tags">
           ${guest.tags
             .map((tag) => `<span class="guest-tag">${tag}</span>`)
