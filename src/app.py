@@ -25,6 +25,7 @@ from backend.routes.guest_form import guest_form_bp  # Import the guest_form blu
 from backend.routes.landingpage import landingpage_bp
 from dotenv import load_dotenv
 from backend.utils import venvupdate
+from backend.utils.email_utils import send_guest_invitation # Import the send_guest_invitation function
 from backend.database.mongo_connection import collection
 from backend.utils.email_utils import send_email
 from backend.routes.Mailing_list import Mailing_list_bp
