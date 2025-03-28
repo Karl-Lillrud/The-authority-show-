@@ -90,7 +90,7 @@ app.register_blueprint(podprofile_bp)  # Register the podprofile blueprint
 app.register_blueprint(frontend_bp)  # Register the frontend blueprint
 app.register_blueprint(guesttoepisode_bp)
 app.register_blueprint(
-    guest_form_bp, url_prefix="/guest-form"
+    guest_form_bp, url_prefix="/"
 )  # Register the guest_form blueprint with URL prefix
 # app.register_blueprint(transcription_bp)
 

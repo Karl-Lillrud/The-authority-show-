@@ -12,8 +12,9 @@ export async function addGuestRequest(payload) {
     email: payload.email,
     episodeId: payload.episodeId
   });
+  console.log("🔥 Trying to send invite to", payload.email);
 
-  // ✅ Now that the guest is added, try sending the invite:
+  // Now that the guest is added, try sending the invite:
   if (payload.name && payload.email && payload.episodeId) {
     try {
       const inviteResponse = await fetch("/api/send-invite", {

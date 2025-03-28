@@ -8,18 +8,6 @@ logger = logging.getLogger(__name__)
 
 guest_form_bp = Blueprint('guest_form', __name__)
 
-@guest_form_bp.route("/api/send-invite", methods=["POST"])
-def api_send_guest_invite():
-    data = request.get_json()
-    if not data:
-        return jsonify({"error": "Missing data"}), 400
-
-    try:
-        result = send_guest_invitation(data)
-        return jsonify(result)
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
-
 @guest_form_bp.route("/", methods=["GET", "POST"])
 def guest_form():
     if request.method == 'POST':
@@ -64,4 +52,19 @@ def guest_form():
             return jsonify({"error": "Failed to submit form"}), 500
 
     return render_template('guest-form/guest-form.html')
+
+
+@guest_form_bp.route("/api/send-invite", methods=["POST"])
+def api_send_guest_invite():
+    logger.info("📩 /api/send-invite was called!")
+    data = request.get_json()
+    if not data:
+        return jsonify({"error": "Missing data"}), 400
+
+    try:
+        result = send_guest_invitation(data)
+        return jsonify(result)
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
 
