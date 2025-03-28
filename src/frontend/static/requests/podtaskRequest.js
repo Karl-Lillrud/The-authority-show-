@@ -93,21 +93,7 @@ export async function deleteTask(taskId) {
   }
 }
 
-export async function fetchDefaultTasks() {
-  try {
-    const response = await fetch("/get_default_tasks");
-    const data = await response.json();
-    if (response.ok) {
-      return data.default_tasks;
-    } else {
-      console.error("Failed to fetch default tasks:", data.error);
-      alert("Failed to fetch default tasks: " + data.error);
-    }
-  } catch (error) {
-    console.error("Error fetching default tasks:", error);
-    alert("Failed to fetch default tasks.");
-  }
-}
+// Removed fetchDefaultTasks function
 
 export async function deleteDefaultTask(taskId) {
   try {

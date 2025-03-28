@@ -45,7 +45,6 @@ PyYAML
 requests
 requests-oauthlib
 rsa
-setuptools
 sgmllib3k
 shortuuid
 six
