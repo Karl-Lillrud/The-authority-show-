@@ -158,7 +158,7 @@ export async function renderPodcastList() {
               }</p>
             </div>
             <div class="podcast-actions">
-              <button class="action-btn update-rss-btn" title="Update RSS Feed" data-id="${
+              <button class="action-btn update-rss-btn" title="RSS" data-id="${
                 podcast._id
               }">
                 <span class="icon">${shared.svgpodcastmanagement.update}</span>
@@ -205,6 +205,17 @@ export async function renderPodcastList() {
         const podcastId = e.target.dataset.id; // Get podcast ID
         window.location.href = `/landingpage/${podcastId}`;
       });
+
+      // Add event listener for Update RSS Feed button
+      const updateRssButton = podcastCard.querySelector(".update-rss-btn");
+      if (updateRssButton) {
+        updateRssButton.addEventListener("click", () => {
+          const newRssFeed = prompt("Enter the new RSS Feed URL:");
+          if (newRssFeed) {
+            updateRssFeed(podcast._id, newRssFeed);
+          }
+        });
+      }
 
       // Fetch episodes for this podcast and add them to the preview
       try {
@@ -902,6 +913,31 @@ export function renderPodcastSelection(podcasts) {
     podcastSelect.appendChild(option);
   });
 }
+
+// // Function to update RSS feed 
+// async function updateRssFeed(podcastId, newRssFeed) {
+//   try {
+//     const response = await fetch(`/update-rss`, {
+//       method: 'POST',
+//       headers: {
+//         'Content-Type': 'application/json'
+//       },
+//       body: JSON.stringify({ podcastId, rssFeedUrl: newRssFeed })
+//     });
+
+//     const data = await response.json();
+
+//     if (data.success) {
+//       showNotification("Success", "RSS Feed updated successfully!", "success");
+//       // Optionally, update the UI with the new RSS link
+//     } else {
+//       showNotification("Error", "Failed to update RSS Feed.", "error");
+//     }
+//   } catch (error) {
+//     console.error("Error updating RSS feed:", error);
+//     showNotification("Error", "Failed to update RSS Feed.", "error");
+//   }
+// }
 
 // Initialize podcast functions
 export function initPodcastFunctions() {
