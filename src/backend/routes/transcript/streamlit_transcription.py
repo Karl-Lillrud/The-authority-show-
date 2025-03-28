@@ -25,6 +25,7 @@ import logging
 import tempfile
 from dotenv import load_dotenv
 
+
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
@@ -825,26 +826,25 @@ with tab2:
 
 
 
-# 📹 **Flik 3: AI Video Enhancement**
+# 📹 **Tab 3: AI Video Enhancement & Analysis**
+# 📹 Video Enhancement & AI Analysis Tab
 with tab3:
     st.subheader("📹 Video Enhancement & AI Analysis")
 
-    # Upload video for enhancement
+    # ---- Video Upload Section ----
     video_file = st.file_uploader("📂 Upload a video file", type=["mp4", "mov", "mkv"], key="video_uploader")
-
     if video_file:
         st.video(video_file)
         st.text("🎬 Original Video File")
 
-        # ✅ Upload video but don't process it yet
+        # Upload video to MongoDB if not already uploaded
         if "video_id" not in st.session_state:
             with st.spinner("🔄 Uploading video to MongoDB..."):
                 files = {"video": video_file}
                 upload_response = requests.post(f"{API_BASE_URL}/ai_videoedit", files=files)
-
                 if upload_response.status_code == 200:
                     upload_result = upload_response.json()
-                    st.session_state["video_id"] = upload_result.get("video_id")  # Store MongoDB ID
+                    st.session_state["video_id"] = upload_result.get("video_id")
                     st.text("✅ Video Uploaded! Click 'Enhance Video' to start processing.")
                 else:
                     st.error("❌ Error uploading video.")
@@ -852,137 +852,110 @@ with tab3:
         else:
             st.text("✅ Video already uploaded. Click 'Enhance Video' to start processing.")
 
-        # Enhance Video Button (NOW CALLS `/ai_videoenhance` INSTEAD)
+        # ---- Video Enhancement Section ----
         if st.button("Enhance Video"):
             with st.spinner("🔄 Enhancing video..."):
-                video_id = st.session_state["video_id"]  # Use MongoDB ID instead of re-uploading
-
+                video_id = st.session_state["video_id"]
                 response = requests.post(f"{API_BASE_URL}/ai_videoenhance", json={"video_id": video_id})
-
                 if response.status_code == 200:
                     processed_video_id = response.json().get("processed_video_id")
-
                     if processed_video_id:
                         st.success("✅ Video enhancement completed!")
                         st.session_state["processed_video_id"] = processed_video_id
-
-                        # ✅ Update video URL to use `/get_video`
+                        # Update video URL using /get_video endpoint
                         processed_video_url = f"{API_BASE_URL}/get_video/{processed_video_id}"
                         st.video(processed_video_url)
-
-                        # ✅ Update download button to use `/get_video`
                         st.markdown(f"[📥 Download Enhanced Video]({processed_video_url})", unsafe_allow_html=True)
                     else:
                         st.error("❌ Processed video file not found.")
                 else:
                     st.error("❌ Error enhancing video.")
 
-    # 📊 **AI Video Analysis**
+    # ---- AI Video Analysis Section ----
     if "processed_video_id" in st.session_state:
         st.markdown("---")
         st.subheader("📊 AI Video Analysis")
-
         if st.button("Analyze Video"):
             with st.spinner("🔄 Analyzing video..."):
-                video_id = st.session_state["processed_video_id"]  # Use processed video ID from MongoDB
-
-                if "processed_video_id" in st.session_state:
-                    video_id = st.session_state["processed_video_id"]
-                    response = requests.post(f"{API_BASE_URL}/ai_videoanalysis", json={"video_id": video_id})
-                else:
-                    st.error("❌ No processed video found. Please enhance a video first.")
-
+                video_id = st.session_state["processed_video_id"]
+                response = requests.post(f"{API_BASE_URL}/ai_videoanalysis", json={"video_id": video_id})
                 if response.status_code == 200:
                     analysis_results = response.json()
-
-                    background_noise = analysis_results.get("background_noise", "")
-                    sentiment_analysis = analysis_results.get("sentiment_analysis", "")
-                    visual_quality = analysis_results.get("visual_quality", {})
-                    speech_rate = analysis_results.get("speech_rate", "")
-
                     st.success("✅ Video analysis completed!")
-
-                    # Display results
-                    st.write("📊 Background Noise Detection")
-                    st.write(background_noise)
-
-                    st.write("📊 Sentiment Analysis")
-                    st.write(f"Sentiment of the video: {sentiment_analysis}")
-
+                    
+                    st.write("📜 **Transcript:**")
+                    st.write(analysis_results.get("transcript", "No transcript available"))
+                    
+                    st.write("🔊 **Background Noise Detection:**")
+                    st.write(analysis_results.get("background_noise", "No data available"))
+                    
+                    st.write("🗣 **Sentiment Analysis:**")
+                    st.write(analysis_results.get("sentiment", "No sentiment available"))
+                    
+                    # Optional: Visual Quality
+                    visual_quality = analysis_results.get("visual_quality")
                     if visual_quality:
-                        st.write("📊 Visual Quality Detection")
-                        st.write(f"Sharpness: {visual_quality['sharpness']}")
-                        st.write(f"Contrast: {visual_quality['contrast']}")
-
+                        st.write("🎨 **Visual Quality:**")
+                        st.write(f"Sharpness: {visual_quality.get('sharpness', 'N/A')}")
+                        st.write(f"Contrast: {visual_quality.get('contrast', 'N/A')}")
+                    
+                    # Optional: Speech Rate
+                    speech_rate = analysis_results.get("speech_rate")
                     if speech_rate:
-                        st.write("📊 Speech Analysis")
-                        st.write(f"Words Per Minute: {speech_rate}")
-
+                        st.write("⏱ **Speech Rate:**")
+                        st.write(speech_rate)
                 else:
                     st.error("❌ Error analyzing video.")
 
-
-
-
-    # 🔻 **NEW SECTION: Video Cutting**
-    st.markdown("---")  
+    # ---- Video Cutting Section ----
+    st.markdown("---")
     st.subheader("✂ Video Cutting")
-
-    # Upload video file for cutting
     video_file_cut = st.file_uploader("📂 Upload a video file for cutting", type=["mp4", "mov", "mkv"], key="video_uploader_cut")
-
-    if video_file_cut:  
+    if video_file_cut:
         st.video(video_file_cut)
         st.text("🎬 Original Video File for Cutting")
 
-        # ✅ Upload video to MongoDB **ONLY IF NOT ALREADY UPLOADED**
+        # Upload video for cutting if not already uploaded
         if "uploaded_video_id" not in st.session_state:
             with st.spinner("🔄 Uploading video to MongoDB..."):
                 files = {"video": video_file_cut}
                 upload_response = requests.post(f"{API_BASE_URL}/ai_videoedit", files=files)
-
                 if upload_response.status_code == 200:
                     upload_result = upload_response.json()
-                    st.session_state["uploaded_video_id"] = upload_result.get("video_id")  # Store MongoDB ID
+                    st.session_state["uploaded_video_id"] = upload_result.get("video_id")
                     st.text("✅ Video Uploaded! You can now cut it.")
                 else:
                     st.error("❌ Error uploading video.")
                     st.stop()
+        else:
+            st.text("✅ Video already uploaded for cutting.")
 
-        # Retrieve uploaded video ID
         video_id = st.session_state.get("uploaded_video_id")
-
         if video_id:
             st.markdown("### ✂ Select & Cut Video")
-
-            # **Sliders for start & end time**
             duration = st.number_input("Enter total duration of video (seconds)", min_value=1.0, step=0.1)
             start_time_video = st.slider("Start Time (seconds)", 0.0, duration, 0.0, step=0.1, key="start_time_video_cut")
             end_time_video = st.slider("End Time (seconds)", 0.0, duration, duration, step=0.1, key="end_time_video_cut")
-
+            
             if start_time_video >= end_time_video:
                 st.warning("⚠ Start time must be less than end time.")
-
+            
             if st.button("✂ Cut Video"):
                 with st.spinner("🔄 Processing video..."):
                     data = {"video_id": video_id, "clips": [{"start": start_time_video, "end": end_time_video}]}
-
                     response = requests.post(f"{API_BASE_URL}/clip_video", json=data)
-
                     if response.status_code == 200:
                         result = response.json()
                         clipped_video_id = result.get("clipped_video")
-
                         if clipped_video_id:
                             st.success("✅ Video clipping completed!")
-
-                            # ✅ Stream video from MongoDB
                             clipped_video_url = f"{API_BASE_URL}/get_video/{clipped_video_id}"
                             st.video(clipped_video_url)
-
-                            # ✅ Download button
                             st.markdown(f"[📥 Download Clipped Video]({clipped_video_url})", unsafe_allow_html=True)
                         else:
                             st.error("❌ Error: Clipped file ID not found.")
                     else:
                         st.error("❌ Error clipping video. Try again.")
+
+    # ---- Video Cutting Section ----
+   
