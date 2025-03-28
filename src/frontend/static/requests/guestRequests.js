@@ -1,28 +1,44 @@
-export async function send_guest_invitation({ name, email, episodeId }) {
-  try {
-    const response = await fetch("/api/send-invite", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name, email, episodeId }),
-    });
-
-    const result = await response.json();
-
-    if (!response.ok) throw new Error(result.error || "Failed to send invite");
-
-    return result;
-  } catch (error) {
-    throw error;
-  }
-}
-
 export async function addGuestRequest(payload) {
   const res = await fetch("/add_guests", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(payload)
   });
-  return res.json();
+
+  const guestResult = await res.json();
+
+  console.log("Sending invite with:", {
+    name: payload.name,
+    email: payload.email,
+    episodeId: payload.episodeId
+  });
+
+  // ✅ Now that the guest is added, try sending the invite:
+  if (payload.name && payload.email && payload.episodeId) {
+    try {
+      const inviteResponse = await fetch("/api/send-invite", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: payload.name,
+          email: payload.email,
+          episodeId: payload.episodeId
+        })
+      });
+
+      const inviteResult = await inviteResponse.json();
+
+      if (!inviteResponse.ok) {
+        console.error("❌ Failed to send invite:", inviteResult.error);
+      } else {
+        console.log("✅ Invite sent!");
+      }
+    } catch (err) {
+      console.error("❌ Error sending invite:", err);
+    }
+  }
+
+  return guestResult;
 }
 
 export async function editGuestRequest(guestId, payload) {
