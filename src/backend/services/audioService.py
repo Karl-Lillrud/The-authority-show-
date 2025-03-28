@@ -194,7 +194,7 @@ class AudioService:
     
     def isolate_voice(self, audio_bytes: bytes, filename: str) -> str:
         """
-        Use ElevenLabs Voice Isolator via direct HTTP request and save result to MongoDB.
+        Use ElevenLabs Audio Isolation API to extract vocals and save result to MongoDB.
         """
         logger.info(f"🎙️ Starting voice isolation for file: {filename}")
 
@@ -203,22 +203,24 @@ class AudioService:
             temp_path = tmp.name
 
         try:
-            api_key = os.getenv("ELEVENLABS_API_KEY")
-            url = "https://api.elevenlabs.io/v1/audio/voice-isolation"
+            logger.info("🔄 Sending audio to ElevenLabs voice isolation endpoint...")
 
             with open(temp_path, "rb") as f:
-                files = {"audio": (filename, f, "audio/wav")}
-                headers = {"xi-api-key": api_key}
-
-                logger.info("🔄 Sending audio to ElevenLabs voice isolation endpoint...")
-                response = requests.post(url, files=files, headers=headers)
+                response = requests.post(
+                    "https://api.elevenlabs.io/v1/audio-isolation",
+                    headers={
+                        "xi-api-key": os.getenv("ELEVENLABS_API_KEY")
+                    },
+                    files={"audio": f}
+                )
 
             if response.status_code != 200:
+                logger.error(f"❌ Voice isolation failed: {response.status_code} {response.text}")
                 raise RuntimeError(f"Voice isolation failed: {response.status_code} {response.text}")
 
             isolated_audio = response.content
-            isolated_filename = f"isolated_{filename}"
 
+            isolated_filename = f"isolated_{filename}"
             file_id = save_file(
                 isolated_audio,
                 filename=isolated_filename,
