@@ -35,7 +35,7 @@ async function fetchAndDisplayEpisodesWithGuests() {
   try {
     const episodes = await fetchAllEpisodes()
     // Only show episodes with active status
-    const activeEpisodes = episodes.filter(ep => ep.status === "active")
+    const activeEpisodes = episodes.filter(ep => ep.status === "Not recorded" || ep.status === "Not scheduled" || ep.status === "Recorded" || ep.status === "Edited")
     const container = document.querySelector(".cards-container")
     const initialEpisodes = activeEpisodes.slice(0, 3)
     let isExpanded = false
