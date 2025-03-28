@@ -95,7 +95,7 @@ export function renderEpisodeDetail(episode) {
       </button>
       <button class="action-btn publish-btn" id="publish-episode-btn" data-id="${
         episode._id
-      }" data-tooltip="Publish to Spotify">
+      }" data-tooltip="Publish">
         ${shared.svgpodcastmanagement.upload}
       </button>
     </div>
@@ -177,7 +177,7 @@ export function renderEpisodeDetail(episode) {
   document.getElementById("publish-episode-btn").addEventListener("click", async () => {
     const episodeId = document.getElementById("publish-episode-btn").getAttribute("data-id");
     try {
-      const response = await fetch(`/publish_to_spotify/${episodeId}`, {
+      const response = await fetch(`/publish/${episodeId}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -188,9 +188,15 @@ export function renderEpisodeDetail(episode) {
       if (response.ok) {
         showNotification(
           "Success",
-          `RSS feed uploaded successfully. Please submit it manually to Spotify: <a href="${data.rss_feed_url}" target="_blank">Submit RSS Feed</a>`,
+          "Published successfully!",
           "success"
         );
+
+        // Update the status to "Published"
+        const statusElement = document.querySelector(".detail-category");
+        if (statusElement) {
+          statusElement.textContent = "Published";
+        }
       } else {
         showNotification("Error", `Failed to publish episode: ${data.error}`, "error");
       }
@@ -577,7 +583,7 @@ document.addEventListener("DOMContentLoaded", () => {
 export async function publishEpisodeToSpotify(episodeId) {
   try {
     console.log(`Publishing episode with ID: ${episodeId}`); // Log the episode ID
-    const response = await fetch(`/publish_to_spotify/${episodeId}`, {
+    const response = await fetch(`/publish/${episodeId}`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ episodeId }),  // Make sure you're sending the data correctly
