@@ -57,3 +57,5 @@ def get_db():
 
 def get_fs():
     return fs
+
+db = database

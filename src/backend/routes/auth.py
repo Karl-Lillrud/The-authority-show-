@@ -1,7 +1,12 @@
 from flask import Blueprint, request, jsonify, redirect, render_template, flash, url_for
 from backend.repository.auth_repository import AuthRepository
 from backend.services.TeamInviteService import TeamInviteService
+from backend.database.mongo_connection import db
+import logging
 import os
+
+logger = logging.getLogger(__name__)
+logger.info("Auth blueprint initialized.")
 
 # Define Blueprint
 auth_bp = Blueprint("auth_bp", __name__)
@@ -11,17 +16,16 @@ auth_repo = AuthRepository()
 
 API_BASE_URL = os.getenv("API_BASE_URL", "http://127.0.0.1:8000")
 
-
 @auth_bp.route("/signin", methods=["GET"], endpoint="signin")
 @auth_bp.route("/", methods=["GET"])
 def signin_page():
     if request.cookies.get("remember_me") == "true":
-        return redirect("/dashboard")
+        return redirect("/dashboard")  # Or to podcastmanagement if needed
     return render_template("signin/signin.html", API_BASE_URL=API_BASE_URL)
-
 
 @auth_bp.route("/signin", methods=["POST"])
 @auth_bp.route("/", methods=["POST"])
+
 def signin_submit():
     if request.content_type != "application/json":
         return (
@@ -31,8 +35,31 @@ def signin_submit():
 
     data = request.get_json()
     response, status_code = auth_repo.signin(data)
-    return jsonify(response), status_code
+    logger.info("SIGNIN raw response from auth_repo: %s", response)
 
+    if "accountId" not in response:        return jsonify(response), status_code
+        
+    # Only proceed if login was successful
+    if status_code == 200 and "accountId" in response:
+        try:
+            user_id = response["accountId"]
+            logger.info("Looking for podcast with accountId: %s", user_id)
+            podcast = db["Podcasts"].find_one({"accountId": user_id})
+            logger.info("Podcast query result: %s", podcast)
+
+            if podcast:
+                response["hasPodcast"] = True
+                response["redirect_url"] = "/podcastmanagement"
+            else:
+                response["hasPodcast"] = False
+                response["redirect_url"] = "/podprofile"
+
+        except Exception as e:
+            logger.error("Error checking podcast: %s", e)
+            response["hasPodcast"] = False
+            response["redirect_url"] = "/podprofile"
+
+    return jsonify(response), status_code
 
 @auth_bp.route("/logout", methods=["GET"])
 def logout_user():
@@ -109,7 +136,7 @@ def register_team_member_submit():
         if invite_token:
             invite_service = TeamInviteService()
             invite_response, invite_status = invite_service.process_registration(
-                user_id=response.get("userId"),
+                user_id=response.get("accountId"),
                 email=data.get("email"),
                 invite_token=invite_token,
             )
