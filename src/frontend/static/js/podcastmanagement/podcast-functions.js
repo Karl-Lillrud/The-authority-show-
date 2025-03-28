@@ -171,6 +171,11 @@ export async function renderPodcastList() {
               }">
                 ${shared.svgpodcastmanagement.view}
               </button>
+              <button class="action-btn update-rss-btn" title="Update RSS Feed" data-id="${
+                podcast._id
+              }">
+                <span class="icon">${shared.svgpodcastmanagement.edit}</span>
+              </button>
               <button class="action-btn delete-btn-home" title="Delete podcast" data-id="${
                 podcast._id
               }">
@@ -208,6 +213,14 @@ export async function renderPodcastList() {
       landingPageBtn.addEventListener("click", (e) => {
         const podcastId = e.target.dataset.id; // Get podcast ID
         window.location.href = `/landingpage/${podcastId}`;
+      });
+
+      // Add event listener for the Update RSS Feed button
+      podcastCard.querySelector(".update-rss-btn").addEventListener("click", () => {
+        const newRssFeed = prompt("Enter the new RSS Feed URL:");
+        if (newRssFeed) {
+          updateRssFeed(podcast._id, newRssFeed);
+        }
       });
 
       // Fetch episodes for this podcast and add them to the preview
@@ -759,6 +772,45 @@ export function renderPodcastDetail(podcast) {
 
   // Update edit buttons after rendering
   updateEditButtons();
+
+  // Add the new Update RSS Feed button
+  const updateRssButton = document.getElementById("update-rss-btn");
+
+  if (updateRssButton) {
+    updateRssButton.addEventListener("click", () => {
+      const newRssFeed = prompt("Enter the new RSS Feed URL:");
+
+      if (newRssFeed) {
+        // Call a function to update the RSS feed in the backend
+        updateRssFeed(podcast._id, newRssFeed);
+      }
+    });
+  }
+}
+
+// Function to update RSS feed
+async function updateRssFeed(podcastId, newRssFeed) {
+  try {
+    const response = await fetch(`/update-rss`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ podcastId, rssFeedUrl: newRssFeed })
+    });
+
+    const data = await response.json();
+
+    if (data.success) {
+      showNotification("Success", "RSS Feed updated successfully!", "success");
+      // Optionally, update the UI with the new RSS link
+    } else {
+      showNotification("Error", "Failed to update RSS Feed.", "error");
+    }
+  } catch (error) {
+    console.error("Error updating RSS feed:", error);
+    showNotification("Error", "Failed to update RSS Feed.", "error");
+  }
 }
 
 // Function to handle podcast form submission
