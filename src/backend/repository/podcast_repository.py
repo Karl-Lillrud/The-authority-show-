@@ -5,7 +5,7 @@ from backend.models.podcasts import PodcastSchema
 import logging
 import urllib.request
 import feedparser
-from backend.services.rss_service import RSSService  # Import RSSService
+from backend.services.rss_Service import RSSService  # Import RSSService
 
 
 logger = logging.getLogger(__name__)
