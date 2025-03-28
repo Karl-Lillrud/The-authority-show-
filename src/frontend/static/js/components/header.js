@@ -1,64 +1,21 @@
 import { fetchPodcasts } from "/static/requests/podcastRequests.js";
 
-/* async function populatePodcastDropdown() {
-  const dropdown = document.getElementById("headerPodcastDropdown");
-  if (!dropdown) {
-    console.error("Header podcast dropdown element not found.");
-    return;
-  }
+function toggleLandingPage() {
+  var dropdown = document.getElementById("dropdown-content");
+  var triangle = document.getElementById("triangle");
 
-  try {
-    const data = await fetchPodcasts();
-    console.log("Podcasts fetched:", data);
-    const podcasts = data.podcast || [];
-
-    const selected = dropdown.querySelector(".dropdown-selected");
-    const optionsContainer = dropdown.querySelector(".dropdown-options");
-
-    // Auto-select if only one podcast exists
-    if (podcasts.length === 1) {
-      const onlyPodcast = podcasts[0];
-      localStorage.setItem("selectedPodcastId", onlyPodcast._id);
-
-      if (selected) selected.textContent = onlyPodcast.podName;
-    }
-
-    // Hide dropdown if fewer than 2 podcasts
-    if (podcasts.length < 2) {
-      dropdown.style.display = "none";
-      return;
-    }
-
-    // Show dropdown
+  // Toggle dropdown visibility and triangle direction
+  if (dropdown.style.display === "none" || dropdown.style.display === "") {
     dropdown.style.display = "block";
-
-    podcasts.forEach((podcast) => {
-      const option = document.createElement("div");
-      option.textContent = podcast.podName;
-      option.dataset.value = podcast._id;
-
-      option.addEventListener("click", () => {
-        selected.textContent = podcast.podName;
-        localStorage.setItem("selectedPodcastId", podcast._id);
-        window.location.href = "/podcast";
-      });
-
-      optionsContainer.appendChild(option);
-    });
-
-    dropdown.addEventListener("click", () => {
-      dropdown.classList.toggle("active");
-    });
-
-    document.addEventListener("click", (e) => {
-      if (!dropdown.contains(e.target)) {
-        dropdown.classList.remove("active");
-      }
-    });
-  } catch (err) {
-    console.error("Error populating dropdown:", err);
+    triangle.classList.remove("triangle-down");
+    triangle.classList.add("triangle-up");
+  } else {
+    dropdown.style.display = "none";
+    triangle.classList.remove("triangle-up");
+    triangle.classList.add("triangle-down");
   }
-} */
+}
+window.toggleLandingPage = toggleLandingPage;
 
 async function populatePodcastDropdown() {
   const dropdown = document.getElementById("dropdown-content");
@@ -72,16 +29,6 @@ async function populatePodcastDropdown() {
     const data = await fetchPodcasts();
     console.log("Podcasts fetched:", data);
     const podcasts = data.podcast || [];
-
-    /* if (podcasts.length < 2) {
-      dropdown.style.display = "none";
-      return;
-    } */
-
-    // Visa dropdownen om det finns fler än 2 podcasts
-    //dropdown.style.display = "block";
-
-    //const selected = dropdown.querySelector(".dropdown-selected");
     const optionsContainer = dropdown.querySelector(".dropdown-options");
 
     podcasts.forEach((podcast) => {
@@ -91,8 +38,6 @@ async function populatePodcastDropdown() {
       option.dataset.value = podcast._id;
 
       option.addEventListener("click", () => {
-        //selected.textContent = podcast.podName;
-        localStorage.setItem("selectedPodcastId", podcast._id);
         window.location.href = "/landingpage/" + podcast._id;
       });
 
@@ -112,6 +57,7 @@ async function populatePodcastDropdown() {
     console.error("Error populating dropdown:", err);
   }
 }
+
 // Improved menu toggle with animation
 function toggleMenu() {
   const menu = document.getElementById("menu");
