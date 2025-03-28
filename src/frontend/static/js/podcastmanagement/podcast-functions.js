@@ -45,7 +45,12 @@ function displayPodcastDetails(podcast) {
   if (podAuthorEl) podAuthorEl.value = podcast.author || "";
 
   const podLanguageEl = document.getElementById("pod-language");
-  if (podLanguageEl) podLanguageEl.value = podcast.language || "";
+  if (podLanguageEl) {
+    podLanguageEl.value =
+      podcast.language && podcast.language.toLowerCase() === "en"
+        ? "English"
+        : podcast.language || "";
+  }
 
   const podRssEl = document.getElementById("pod-rss");
   if (podRssEl) podRssEl.value = podcast.rssFeed || "";
@@ -151,11 +156,13 @@ export async function renderPodcastList() {
               <p class="podcast-meta"><span>Category:</span> ${
                 podcast.category || "Uncategorized"
               }</p>
-              <p class="podcast-meta"><span>Author:</span> ${
+              <p class="podcast-meta"><span>Host:</span> ${
                 podcast.author || "Not specified"
               }</p>
               <p class="podcast-meta"><span>Language:</span> ${
-                podcast.language || "Not specified"
+                podcast.language && podcast.language.toLowerCase() === "en"
+                  ? "English"
+                  : podcast.language || "Not specified"
               }</p>
             </div>
             <div class="podcast-actions">
@@ -185,18 +192,19 @@ export async function renderPodcastList() {
         </div>
       </div>
       <div class="podcast-footer">
-        <button class="landing-page-btn" data-id="${
+        <span class="footer-link landing-page-link" data-id="${
           podcast._id
-        }">Landing Page</button>
-        <button class="view-details-btn" data-id="${
+        }">Landing Page</span>
+        <span class="footer-separator">|</span>
+        <span class="footer-link view-details-link" data-id="${
           podcast._id
-        }">View Details</button>
+        }">View Details</span>
       </div>`;
 
       podcastListElement.appendChild(podcastCard);
 
       // Redirect to the landing page with the specific podcastId
-      const landingPageBtn = podcastCard.querySelector(".landing-page-btn");
+      const landingPageBtn = podcastCard.querySelector(".landing-page-link");
       landingPageBtn.addEventListener("click", (e) => {
         const podcastId = e.target.dataset.id; // Get podcast ID
         window.location.href = `/landingpage/${podcastId}`;
@@ -339,6 +347,21 @@ export async function renderPodcastList() {
             viewPodcast(podcastId);
           }
         });
+
+      // Add event listeners for the footer links
+      podcastCard
+        .querySelector(".landing-page-link")
+        .addEventListener("click", (e) => {
+          const podcastId = e.target.dataset.id;
+          window.location.href = `/landingpage/${podcastId}`;
+        });
+
+      podcastCard
+        .querySelector(".view-details-link")
+        .addEventListener("click", (e) => {
+          const podcastId = e.target.dataset.id;
+          viewPodcast(podcastId);
+        });
     });
 
     // Add event listeners for action buttons
@@ -391,22 +414,25 @@ export async function renderPodcastList() {
     document.querySelectorAll(".delete-btn-home").forEach((button) => {
       button.addEventListener("click", async (e) => {
         const podcastId = e.target.closest("button").getAttribute("data-id");
-        if (confirm("Are you sure you want to delete this podcast?")) {
-          try {
-            await deletePodcast(podcastId);
-            showNotification(
-              "Success",
-              "Podcast deleted successfully!",
-              "success"
-            );
-            e.target.closest(".podcast-card")?.remove();
-            if (document.querySelectorAll(".podcast-card").length === 0) {
-              renderPodcastList();
+        showDeleteConfirmationModal(
+          "Are you sure you want to delete this podcast?",
+          async () => {
+            try {
+              await deletePodcast(podcastId);
+              showNotification(
+                "Success",
+                "Podcast deleted successfully!",
+                "success"
+              );
+              e.target.closest(".podcast-card")?.remove();
+              if (document.querySelectorAll(".podcast-card").length === 0) {
+                renderPodcastList();
+              }
+            } catch (error) {
+              showNotification("Error", "Failed to delete podcast.", "error");
             }
-          } catch (error) {
-            showNotification("Error", "Failed to delete podcast.", "error");
           }
-        }
+        );
       });
     });
   } catch (error) {
@@ -426,8 +452,6 @@ export function renderPodcastDetail(podcast) {
       ${shared.svgpodcastmanagement.back}
       Back to podcasts
     </button>
-    
-    <!-- Add top-right action buttons -->
     <div class="top-right-actions">
       <button class="action-btn edit-btn" id="edit-podcast-btn" data-id="${
         podcast._id
@@ -436,126 +460,144 @@ export function renderPodcastDetail(podcast) {
       </button>
     </div>
   </div>
-  <div class="detail-content">
-    <div class="detail-image" style="background-image: url('${imageUrl}')"></div>
-    <!-- Episodes container with title outside scroll area -->
-    <div id="episodes-list" class="episodes-list">
-      <h3 class="detail-section-title">Episodes</h3>
-      <div id="episodes-container" class="episodes-scroll-container"></div>
+  
+  <div class="podcast-detail-container">
+    <!-- Top section with image and basic info -->
+    <div class="podcast-header-section">
+      <div class="podcast-image-container">
+        <div class="detail-image" style="background-image: url('${imageUrl}')"></div>
+      </div>
+      <div class="podcast-basic-info">
+        <h1 class="detail-title">${podcast.podName}</h1>
+        <p class="detail-category">${podcast.category || "Uncategorized"}</p>
+        <div class="podcast-meta-info">
+          <div class="meta-item">
+            <span class="meta-label">Host:</span> <!-- Changed from "Author" to "Host" -->
+            <span class="meta-value">${podcast.author || "Not specified"}</span>
+          </div>
+          <div class="meta-item">
+            <span class="meta-label">Language:</span>
+            <span class="meta-value">${
+              podcast.language && podcast.language.toLowerCase() === "en"
+                ? "English"
+                : podcast.language || "Not specified"
+            }</span>
+          </div>
+          <div class="meta-item">
+            <span class="meta-label">Email:</span>
+            <span class="meta-value">${podcast.email || "Not specified"}</span>
+          </div>
+        </div>
+      </div>
     </div>
-    <div class="detail-info">
-      <h1 class="detail-title">${podcast.podName}</h1>
-      <p class="detail-category">${podcast.category || "Uncategorized"}</p>
-      <div class="detail-section">
-        <h2>About</h2>
-        <p>${podcast.description || "No description available."}</p>
+    
+    <!-- About section -->
+    <div class="podcast-about-section">
+      <h2 class="section-title">About</h2>
+      <p class="podcast-description">${
+        podcast.description || "No description available."
+      }</p>
+    </div>
+    
+    <!-- Episodes section -->
+    <div class="podcast-episodes-section">
+      <h2 class="section-title">Episodes</h2>
+      <div id="episodes-container" class="episodes-list-container"></div>
+    </div>
+    
+    <!-- Additional details section -->
+    <div class="podcast-details-section">
+      <div class="details-column">
+        <h2 class="section-title">RSS Feed</h2>
+        ${
+          podcast.rssFeed
+            ? `<a href="${podcast.rssFeed}" target="_blank" class="detail-link">${podcast.rssFeed}</a>`
+            : "<p>Not specified</p>"
+        }
       </div>
-      <div class="separator"></div>
-      <div class="detail-grid">
-        <div class="detail-item">
-          <h3>Author</h3>
-          <p>${podcast.author || "Not specified"}</p>
-        </div>
-        <div class="detail-item">
-          <h3>Language</h3>
-          <p>${podcast.language || "Not specified"}</p>
-        </div>
-        <div class="detail-item">
-          <h3>Email Address</h3>
-          <p>${podcast.email || "Not specified"}</p>
-        </div>
-        <div class="detail-item">
-          <h3>RSS Feed</h3>
-          ${
-            podcast.rssFeed
-              ? `<a href="${podcast.rssFeed}" target="_blank">${podcast.rssFeed}</a>`
-              : "<p>Not specified</p>"
-          }
-        </div>
-      </div>
-      <div class="separator"></div>
-      <div class="detail-section">
-        <h2>Scheduling</h2>
-        <div class="detail-grid">
-          <div class="detail-item">
+      
+      <div class="details-column">
+        <h2 class="section-title">Scheduling</h2>
+        <div class="scheduling-details">
+          <div class="scheduling-item">
             <h3>Google Calendar</h3>
             ${
               podcast.googleCal
                 ? `<a href="${podcast.googleCal}" target="_blank" class="calendar-link">
-                  ${shared.svgpodcastmanagement.calendar}
-                  Calendar Link
-                </a>`
+                    ${shared.svgpodcastmanagement.calendar}
+                    Calendar Link
+                  </a>`
                 : `<p class="calendar-link">
-                  ${shared.svgpodcastmanagement.calendar}
-                  Not connected
-                </p>`
+                    ${shared.svgpodcastmanagement.calendar}
+                    Not connected
+                  </p>`
             }
           </div>
-          <div class="detail-item">
+          <div class="scheduling-item">
             <h3>Guest Form URL</h3>
             ${
               podcast.guestUrl
-                ? `<a href="${podcast.guestUrl}" target="_blank">${podcast.guestUrl}</a>`
+                ? `<a href="${podcast.guestUrl}" target="_blank" class="detail-link">${podcast.guestUrl}</a>`
                 : "<p>Not specified</p>"
             }
           </div>
         </div>
       </div>
-      <div class="separator"></div>
-      <div class="detail-section">
-        <h2>Social Media</h2>
-        <div class="social-links">
-          ${
-            podcast.socialMedia && podcast.socialMedia[0]
-              ? `<a href="${podcast.socialMedia[0]}" target="_blank" class="social-link">
+    </div>
+    
+    <!-- Social media section -->
+    <div class="podcast-social-section">
+      <h2 class="section-title">Social Media</h2>
+      <div class="social-links">
+        ${
+          podcast.socialMedia && podcast.socialMedia[0]
+            ? `<a href="${podcast.socialMedia[0]}" target="_blank" class="social-link">
                 ${shared.svgpodcastmanagement.facebook}
                 Facebook
               </a>`
-              : ""
-          }
-          ${
-            podcast.socialMedia && podcast.socialMedia[1]
-              ? `<a href="${podcast.socialMedia[1]}" target="_blank" class="social-link">
+            : ""
+        }
+        ${
+          podcast.socialMedia && podcast.socialMedia[1]
+            ? `<a href="${podcast.socialMedia[1]}" target="_blank" class="social-link">
                 ${shared.svgpodcastmanagement.instagram}
                 Instagram
               </a>`
-              : ""
-          }
-          ${
-            podcast.socialMedia && podcast.socialMedia[2]
-              ? `<a href="${podcast.socialMedia[2]}" target="_blank" class="social-link">
+            : ""
+        }
+        ${
+          podcast.socialMedia && podcast.socialMedia[2]
+            ? `<a href="${podcast.socialMedia[2]}" target="_blank" class="social-link">
                 ${shared.svgpodcastmanagement.linkedin}
                 LinkedIn
               </a>`
-              : ""
-          }
-          ${
-            podcast.socialMedia && podcast.socialMedia[3]
-              ? `<a href="${podcast.socialMedia[3]}" target="_blank" class="social-link">
+            : ""
+        }
+        ${
+          podcast.socialMedia && podcast.socialMedia[3]
+            ? `<a href="${podcast.socialMedia[3]}" target="_blank" class="social-link">
                 ${shared.svgpodcastmanagement.twitter}
                 Twitter
               </a>`
-              : ""
-          }
-          ${
-            podcast.socialMedia && podcast.socialMedia[4]
-              ? `<a href="${podcast.socialMedia[4]}" target="_blank" class="social-link">
+            : ""
+        }
+        ${
+          podcast.socialMedia && podcast.socialMedia[4]
+            ? `<a href="${podcast.socialMedia[4]}" target="_blank" class="social-link">
                 ${shared.svgpodcastmanagement.tiktok}
                 TikTok
               </a>`
-              : ""
-          }
-        </div>
-      </div>
-      <div class="detail-actions">
-        <button class="delete-btn" id="delete-podcast-btn" data-id="${
-          podcast._id
-        }">
-          <span class="icon">${shared.svgpodcastmanagement.delete}</span>
-          Delete Podcast
-        </button>
+            : ""
+        }
       </div>
     </div>
+  </div>
+  
+  <div class="detail-actions">
+    <button class="delete-btn" id="delete-podcast-btn" data-id="${podcast._id}">
+      <span class="icon">${shared.svgpodcastmanagement.delete}</span>
+      Delete Podcast
+    </button>
   </div>
   `;
 
@@ -580,8 +622,18 @@ export function renderPodcastDetail(podcast) {
         const response = await fetchPodcast(podcastId);
         displayPodcastDetails(response.podcast);
         shared.selectedPodcastId = podcastId;
-        document.getElementById("form-popup").style.display = "flex";
-        document.getElementById("podcast-detail").style.display = "none";
+
+        // Show the form popup and keep podcast details visible in the background
+        const formPopup = document.getElementById("form-popup");
+        formPopup.style.display = "flex";
+        formPopup.addEventListener("click", (event) => {
+          if (event.target === formPopup) {
+            formPopup.style.display = "none";
+          }
+        });
+
+        // Ensure podcast details remain visible
+        document.getElementById("podcast-detail").style.display = "block";
       } catch (error) {
         showNotification("Error", "Failed to fetch podcast details", "error");
       }
@@ -611,19 +663,16 @@ export function renderPodcastDetail(podcast) {
       }
     });
 
-  // Render episodes vertically under the image container
+  // Render episodes in a vertical list
   fetchEpisodesByPodcast(podcast._id)
     .then((episodes) => {
       const episodesContainer = document.getElementById("episodes-container");
       episodesContainer.innerHTML = "";
 
       if (episodes && episodes.length) {
-        const episodesListDiv = document.createElement("div");
-        episodesListDiv.className = "episodes-container";
-
         episodes.forEach((ep) => {
           const episodeCard = document.createElement("div");
-          episodeCard.className = "episode-card";
+          episodeCard.className = "episode-list-item";
           episodeCard.setAttribute("data-episode-id", ep._id);
 
           const publishDate = ep.publishDate
@@ -639,64 +688,59 @@ export function renderPodcastDetail(podcast) {
             ? ep.description
             : "No description available.";
 
-          // Create content container for title, date, and description
-          const contentDiv = document.createElement("div");
-          contentDiv.className = "episode-content";
+          episodeCard.innerHTML = `
+            <div class="episode-content">
+              <div class="episode-header">
+                <h3 class="episode-title">${ep.title}</h3>
+                ${
+                  ep.status
+                    ? `<span class="episode-status">${ep.status}</span>`
+                    : ""
+                }
+              </div>
+              <div class="episode-meta">
+                <span class="episode-date">Published: ${publishDate}</span>
+                <span class="episode-duration">${formattedDuration}</span>
+              </div>
+              <div class="episode-description">${description}</div>
+            </div>
+            <div class="episode-actions">
+              ${
+                ep.audioUrl
+                  ? `<button class="episode-play-btn"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg></button>`
+                  : ""
+              }
+              <button class="view-episode-btn">View Details</button>
+            </div>
+          `;
 
-          contentDiv.innerHTML = `
-          <div class="episode-title">${ep.title}</div>
-          <div class="episode-meta">
-            <span>Published: ${publishDate}</span>
-            <span> • ${formattedDuration}</span>
-          </div>
-          <div class="episode-description">${description}</div>
-        `;
-
-          // Create actions container
-          const actionsDiv = document.createElement("div");
-          actionsDiv.className = "episode-actions";
-
-          // Add play button if audio URL exists
+          // Add play button event listener if audio URL exists
           if (ep.audioUrl) {
-            const playButton = createPlayButton();
-            playButton.addEventListener("click", (e) => {
-              e.stopPropagation();
-              playAudio(ep.audioUrl, ep.title);
-            });
-            actionsDiv.appendChild(playButton);
+            episodeCard
+              .querySelector(".episode-play-btn")
+              .addEventListener("click", (e) => {
+                e.stopPropagation();
+                playAudio(ep.audioUrl, ep.title);
+              });
           }
 
-          // Create view button
-          const viewButton = document.createElement("button");
-          viewButton.className = "view-episode-btn";
-          viewButton.textContent = "View";
+          // Add view button event listener
+          episodeCard
+            .querySelector(".view-episode-btn")
+            .addEventListener("click", (e) => {
+              e.stopPropagation();
+              renderEpisodeDetail(ep);
+            });
 
-          // Add click event to view button
-          viewButton.addEventListener("click", (e) => {
-            e.stopPropagation(); // Prevent triggering the card click
-            renderEpisodeDetail(ep);
-          });
-
-          actionsDiv.appendChild(viewButton);
-
-          // Add elements to card
-          episodeCard.appendChild(contentDiv);
-          episodeCard.appendChild(actionsDiv);
-
-          // Add click event to card (excluding the button)
+          // Add click event to card (excluding buttons)
           episodeCard.addEventListener("click", (e) => {
-            if (
-              !e.target.closest(".episode-play-btn") &&
-              !e.target.closest(".view-episode-btn")
-            ) {
+            if (!e.target.closest("button")) {
               renderEpisodeDetail(ep);
             }
           });
 
-          episodesListDiv.appendChild(episodeCard);
+          episodesContainer.appendChild(episodeCard);
         });
-
-        episodesContainer.appendChild(episodesListDiv);
       } else {
         const noEpisodes = document.createElement("p");
         noEpisodes.className = "no-episodes-message";
@@ -706,6 +750,11 @@ export function renderPodcastDetail(podcast) {
     })
     .catch((error) => {
       console.error("Error fetching episodes:", error);
+      const episodesContainer = document.getElementById("episodes-container");
+      if (episodesContainer) {
+        episodesContainer.innerHTML =
+          '<p class="error-message">Failed to load episodes.</p>';
+      }
     });
 
   // Update edit buttons after rendering
@@ -789,11 +838,8 @@ function handlePodcastFormSubmission() {
               "Podcast updated successfully!",
               "success"
             );
-            // Update the podcast details in the DOM
-            renderPodcastDetail({
-              ...updatedData,
-              _id: shared.selectedPodcastId
-            });
+            // Fetch updated podcasts list after updating
+            await renderPodcastList();
             document.getElementById("form-popup").style.display = "none";
             document.getElementById("podcast-detail").style.display = "block";
           }
@@ -820,7 +866,6 @@ function handlePodcastFormSubmission() {
           );
         } else {
           resetForm();
-          renderPodcastList();
         }
       } catch (error) {
         console.error("Error:", error);
@@ -844,6 +889,15 @@ function handlePodcastFormSubmission() {
         if (inputElement && inputElement.files[0]) {
           const file = inputElement.files[0];
           const reader = new FileReader();
+          reader.onerror = () => {
+            // Notify if file reading fails
+            showNotification(
+              "Error",
+              "Failed to read file for " + dataProperty,
+              "error"
+            );
+            resolve(false);
+          };
           reader.onloadend = () => {
             data[dataProperty] = reader.result; // update with new image
             resolve(true);
@@ -928,3 +982,60 @@ export function initPodcastFunctions() {
   // Setup podcast form submission
   handlePodcastFormSubmission();
 }
+
+// Function to show a custom confirmation modal
+function showDeleteConfirmationModal(message, onConfirm, onCancel) {
+  const modal = document.createElement("div");
+  modal.className = "popup";
+  modal.style.display = "flex";
+
+  modal.innerHTML = `
+    <div class="form-box">
+      <h2 class="form-title">Confirm Deletion</h2>
+      <p>${message}</p>
+      <div class="form-actions">
+        <button class="cancel-btn" id="cancel-delete-btn">Cancel</button>
+        <button class="delete-btn" id="confirm-delete-btn">Delete</button>
+      </div>
+    </div>
+  `;
+
+  document.body.appendChild(modal);
+
+  // Event listeners for buttons
+  modal.querySelector("#cancel-delete-btn").addEventListener("click", () => {
+    document.body.removeChild(modal);
+    if (onCancel) onCancel();
+  });
+
+  modal.querySelector("#confirm-delete-btn").addEventListener("click", () => {
+    document.body.removeChild(modal);
+    if (onConfirm) onConfirm();
+  });
+}
+
+// Update delete button event listener to use the custom modal
+document.querySelectorAll(".delete-btn-home").forEach((button) => {
+  button.addEventListener("click", async (e) => {
+    const podcastId = e.target.closest("button").getAttribute("data-id");
+    showDeleteConfirmationModal(
+      "Are you sure you want to delete this podcast?",
+      async () => {
+        try {
+          await deletePodcast(podcastId);
+          showNotification(
+            "Success",
+            "Podcast deleted successfully!",
+            "success"
+          );
+          e.target.closest(".podcast-card")?.remove();
+          if (document.querySelectorAll(".podcast-card").length === 0) {
+            renderPodcastList();
+          }
+        } catch (error) {
+          showNotification("Error", "Failed to delete podcast.", "error");
+        }
+      }
+    );
+  });
+});
