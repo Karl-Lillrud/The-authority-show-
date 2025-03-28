@@ -1268,6 +1268,10 @@ select option:disabled {
   color: #a9a9a9; /* Grey out the text for disabled options */
 }
 
+select:invalid {
+  color: #000000; /* Ensure placeholder text color is black */
+}
+
 .form-actions {
   display: flex;
   justify-content: flex-end;

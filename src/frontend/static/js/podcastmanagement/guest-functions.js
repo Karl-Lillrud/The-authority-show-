@@ -182,6 +182,7 @@ async function showAddGuestPopup() {
       const defaultOption = document.createElement("option");
       defaultOption.value = "";
       defaultOption.textContent = "Select Episode";
+      defaultOption.style.color = "#000000"; // Ensure "Select Episode" text color is black
       episodeSelect.appendChild(defaultOption);
 
       try {
