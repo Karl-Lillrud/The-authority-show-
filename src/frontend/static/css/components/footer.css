@@ -52,6 +52,63 @@
   }
 }
 
+@media (max-width: 768px) {
+  .footer {
+    padding: var(--spacing-md); /* Minska padding */
+    font-size: 0.85rem; /* Minska textstorleken */
+  }
+
+  .footer p {
+    font-size: 0.8rem; /* Anpassa textstorleken */
+  }
+
+  footer a {
+    font-size: 0.8rem; /* Minska länktextstorleken */
+  }
+
+  footer p {
+    font-size: 0.8rem; /* Minska textstorleken för copyright-texten */
+  }
+}
+
+@media (max-width: 500px) {
+  .footer {
+    padding: var(--spacing-sm); /* Minska padding ytterligare */
+    font-size: 0.75rem; /* Ytterligare minskning av textstorleken */
+  }
+
+  .footer p {
+    font-size: 0.7rem; /* Anpassa textstorleken ytterligare */
+  }
+
+  footer a {
+    font-size: 0.7rem; /* Anpassa länktextstorleken */
+  }
+
+  footer p {
+    font-size: 0.7rem; /* Minska textstorleken för copyright-texten ytterligare */
+  }
+}
+
+@media (max-width: 350px) {
+  .footer {
+    padding: var(--spacing-xs); /* Minimera padding */
+    font-size: 0.65rem; /* Ytterligare minskning av textstorleken */
+  }
+
+  .footer p {
+    font-size: 0.6rem; /* Anpassa textstorleken ytterligare */
+  }
+
+  footer a {
+    font-size: 0.6rem; /* Anpassa länktextstorleken */
+  }
+
+  footer p {
+    font-size: 0.6rem; /* Minska textstorleken för copyright-texten ytterligare */
+  }
+}
+
 footer {
   background-color: #ffffff; /* Vit bakgrund */
   color: var(--highlight-color); /* Orange text */

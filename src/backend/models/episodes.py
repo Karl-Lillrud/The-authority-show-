@@ -1,5 +1,6 @@
 from marshmallow import Schema, fields, pre_load, validate
 from backend.models.podtasks import PodtaskSchema
+import re
 
 
 class EpisodeSchema(Schema):
@@ -10,7 +11,7 @@ class EpisodeSchema(Schema):
     publishDate = fields.DateTime(required=True)  # Ensure publishDate is required
     duration = fields.Int(allow_none=True)  # Change to integer
     status = fields.Str(allow_none=True)
-    defaultTasks = fields.List(fields.Nested(PodtaskSchema), allow_none=True)
+    recordingAt = fields.DateTime()
     createdAt = fields.DateTime()
     updatedAt = fields.DateTime()
     audioUrl = fields.Str(allow_none=True)  # Change from URL to Str
@@ -19,10 +20,14 @@ class EpisodeSchema(Schema):
     guid = fields.Str(allow_none=True)
     season = fields.Int(allow_none=True)
     episode = fields.Int(allow_none=True)
-    episodeType = fields.Str(required=True, validate=validate.OneOf(["Full", "Trailer", "Bonus"]))  # Add episodeType with validation
+    episodeType = fields.Str(
+        required=True, validate=validate.OneOf(["Full", "Trailer", "Bonus"])
+    )  # Add episodeType with validation
     explicit = fields.Bool(required=True)  # Explicit content flag is required
     imageUrl = fields.Url(required=True)  # Ensure image URL is required
-    episodeFiles = fields.List(fields.Dict(keys=fields.Str(), values=fields.Raw()), required=False)  # Make episodeFiles optional
+    episodeFiles = fields.List(
+        fields.Dict(keys=fields.Str(), values=fields.Raw()), required=False
+    )  # Make episodeFiles optional
     category = fields.Str(required=True)  # Add category field
 
     # New fields
@@ -33,27 +38,4 @@ class EpisodeSchema(Schema):
     summary = fields.Str(allow_none=True)
     author = fields.Str(required=True)  # Ensure author is required
     isHidden = fields.Bool(allow_none=True)
-
-    @pre_load
-    def process_empty_strings(self, data, **kwargs):
-        # Convert empty strings to None for fields that expect specific types
-        for key in [
-            "publishDate",  # Ensure publishDate is correctly processed
-            "description",
-            "duration",
-            "status",
-            "audioUrl",
-            "fileSize",
-            "fileType",
-            "guid",
-            "season",
-            "episode",
-            "imageUrl",
-            "link",
-            "subtitle",
-            "summary",
-            "author",
-        ]:
-            if key in data and data[key] == "":
-                data[key] = None
-        return data
+    highlights = fields.List(fields.Str(), allow_none=True)  # New field for highlights

@@ -31,16 +31,25 @@ def homepage():
 @dashboard_bp.route("/account", methods=["GET"])
 def account():
     if not g.user_id:
-        return redirect(url_for("auth_bp.signin"))  # Updated endpoint
+        return redirect(url_for("auth_bp.signin"))
 
     user = collection.find_one({"_id": g.user_id})
     email = user.get("email", "") if user else ""
     full_name = user.get("full_name", "") if user else ""
+    phone_number = user.get("phone_number", "") if user else ""  # Fetch phone number
+    password = user.get("password", "") if user else ""  # Ensure password is hashed
 
-    return render_template("account/account.html", email=email, full_name=full_name)
+    # Pass all required fields to the account template
+    return render_template(
+        "account/account.html",
+        email=email,
+        full_name=full_name,
+        phone_number=phone_number,
+        password=password,
+    )
 
 
-    # ✅ Serves the account page
+# ✅ Serves the settings page
 @dashboard_bp.route("/settings", methods=["GET"])
 def settings():
     if not g.user_id:
@@ -49,8 +58,17 @@ def settings():
     user = collection.find_one({"_id": g.user_id})
     email = user.get("email", "") if user else ""
     full_name = user.get("full_name", "") if user else ""
+    phone_number = user.get("phone_number", "") if user else ""  # Fetch phone number
+    password = user.get("password", "") if user else ""  # Ensure password is hashed
 
-    return render_template("dashboard/settings.html", email=email, full_name=full_name)
+    # Pass all required fields to the settings template
+    return render_template(
+        "account/settings.html",
+        email=email,
+        full_name=full_name,
+        phone_number=phone_number,
+        password=password,
+    )
 
 
 # ✅ Serves the profile page
@@ -86,14 +104,6 @@ def team():
 def register_team_member():
     """Serves the team member registration page."""
     return render_template("team/register_team_member.html")
-
-
-@dashboard_bp.route("/guest", methods=["GET", "POST"])
-def guest():
-    if not g.user_id:
-        return redirect(url_for("auth_bp.signin"))  # Updated endpoint
-    return render_template("guest/guest.html")
-
 
 @dashboard_bp.route("/addmember", methods=["GET"])
 def addmember():

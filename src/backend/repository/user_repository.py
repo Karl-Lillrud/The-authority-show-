@@ -2,8 +2,17 @@ import logging
 from flask import url_for
 from werkzeug.security import check_password_hash, generate_password_hash
 from backend.database.mongo_connection import collection
+from backend.repository.account_repository import AccountRepository
+from backend.repository.episode_repository import EpisodeRepository
+from backend.repository.guest_repository import GuestRepository
+from backend.repository.podcast_repository import PodcastRepository
+from backend.repository.podtask_repository import PodtaskRepository
+from backend.repository.usertoteam_repository import UserToTeamRepository
+from backend.repository.team_repository import TeamRepository
+from backend.repository.teaminviterepository import TeamInviteRepository
 
 logger = logging.getLogger(__name__)
+
 
 class UserRepository:
     def __init__(self):
@@ -14,7 +23,7 @@ class UserRepository:
     def get_user_by_email(self, email):
 
         return self.user_collection.find_one({"email": email.lower().strip()})
-    
+
     def get_user_by_id(self, user_id):
 
         return self.user_collection.find_one({"_id": user_id})
@@ -71,13 +80,73 @@ class UserRepository:
 
             hashed_new_password = generate_password_hash(new_password)
 
-            self.user_collection.update_one({"_id": user_id}, {"$set": {"passwordHash": hashed_new_password}})
+            self.user_collection.update_one(
+                {"_id": user_id}, {"$set": {"passwordHash": hashed_new_password}}
+            )
 
             return {"message": "Password updated successfully!"}, 200
 
         except Exception as e:
             logger.error(f"Error updating password: {e}", exc_info=True)
             return {"error": f"Error updating password: {str(e)}"}, 500
+
+    # Delete user and all associated data from related collections
+    def cleanup_user_data(self, user_id, user_email):
+        try:
+            user_id_str = str(user_id)
+            logger.info(f"Starting cleanup for user {user_id_str} ({user_email})")
+
+            # Delete content in each related collection
+            episodes = EpisodeRepository().delete_by_user(user_id_str)
+            guests = GuestRepository().delete_by_user(user_id_str)
+            podcasts = PodcastRepository().delete_by_user(user_id_str)
+            podtasks = PodtaskRepository().delete_by_user(user_id_str)
+
+            # Clean up teams: remove from members or delete if creator
+            team_repo = TeamRepository()
+            affected_teams = team_repo.user_to_teams_collection.find(
+                {"userId": user_id_str}, {"teamId": 1}
+            )
+
+            team_cleanup_results = []
+            deleted_count = 0
+            removed_count = 0
+
+            for entry in affected_teams:
+                team_id = entry.get("teamId")
+                if team_id:
+                    result = team_repo.remove_member_or_delete_team(
+                        team_id, user_id_str, return_message_only=True
+                    )
+                    team_cleanup_results.append(result)
+
+                    # Count deletions vs removals
+                    if "deleted" in result.get("message", "").lower():
+                        deleted_count += 1
+                    elif "removed" in result.get("message", "").lower():
+                        removed_count += 1
+
+            logger.info(
+                f"🧹 Team cleanup summary for user {user_id_str}: {deleted_count} team(s) deleted, {removed_count} team(s) cleaned (user removed from team members)"
+            )
+
+            # Continue cleanup
+            accounts = AccountRepository().delete_by_user(user_id_str)
+            user_teams = UserToTeamRepository().delete_by_user(user_id_str)
+
+            return {
+                "episodes_deleted": episodes,
+                "guests_deleted": guests,
+                "podcasts_deleted": podcasts,
+                "podtasks_deleted": podtasks,
+                "accounts_deleted": accounts,
+                "user_team_links_deleted": user_teams,
+                "teams_processed": team_cleanup_results,
+            }
+
+        except Exception as e:
+            logger.error(f"Error during cleanup: {e}", exc_info=True)
+            return {"error": f"Cleanup failed: {str(e)}"}
 
     def delete_user(self, data):
         try:
@@ -86,12 +155,16 @@ class UserRepository:
             delete_confirm = data.get("deleteConfirm", "").strip().upper()
 
             if delete_confirm != "DELETE":
-                return {"error": "Please type 'DELETE' exactly to confirm account deletion."}, 400
+                return {
+                    "error": "Please type 'DELETE' exactly to confirm account deletion."
+                }, 400
 
             if not input_email or not input_password:
                 return {"error": "Email and password are required."}, 400
 
-            user = self.user_collection.find_one({"email": {"$regex": f"^{input_email}$", "$options": "i"}})
+            user = self.user_collection.find_one(
+                {"email": {"$regex": f"^{input_email}$", "$options": "i"}}
+            )
             if not user:
                 return {"error": "User does not exist in the database."}, 404
 
@@ -101,8 +174,8 @@ class UserRepository:
 
             user_id = user.get("_id")
 
-            self.user_to_teams_collection.delete_many({"userId": user_id})
-            self.teams_collection.delete_many({"UserID": user_id})
+            cleanup_result = self.cleanup_user_data(user_id, user["email"])
+
             user_result = self.user_collection.delete_one({"_id": user_id})
 
             if user_result.deleted_count == 0:

@@ -12,8 +12,10 @@ function initializeSvgIcons() {
     svgpodcastmanagement.backToDashboard;
   document.getElementById("podcasts-icon").innerHTML =
     svgpodcastmanagement.podcasts;
+
   document.getElementById("episodes-icon").innerHTML =
     svgpodcastmanagement.episodes;
+
   document.getElementById("guests-icon").innerHTML =
     svgpodcastmanagement.guests;
 
@@ -24,10 +26,6 @@ function initializeSvgIcons() {
     svgpodcastmanagement.add;
   document.getElementById("add-icon-guest").innerHTML =
     svgpodcastmanagement.add;
-
-  // Sidebar toggle icon
-  document.getElementById("toggle-sidebar-icon").innerHTML =
-    svgpodcastmanagement.toggleSidebar;
 }
 
 // Notification system
@@ -124,6 +122,38 @@ function observeEditButtons() {
   observer.observe(document.body, { childList: true, subtree: true });
 }
 
+// Function to close popups when clicking outside
+function enablePopupCloseOnOutsideClick() {
+  // Handle existing popups
+  const popups = document.querySelectorAll(".popup");
+  popups.forEach((popup) => {
+    popup.addEventListener("click", (event) => {
+      if (event.target === popup) {
+        popup.style.display = "none";
+      }
+    });
+  });
+
+  // Set up a mutation observer to handle dynamically created popups
+  const observer = new MutationObserver((mutations) => {
+    mutations.forEach((mutation) => {
+      if (mutation.addedNodes.length) {
+        mutation.addedNodes.forEach((node) => {
+          if (node.classList && node.classList.contains("popup")) {
+            node.addEventListener("click", (event) => {
+              if (event.target === node) {
+                node.style.display = "none";
+              }
+            });
+          }
+        });
+      }
+    });
+  });
+
+  observer.observe(document.body, { childList: true, subtree: true });
+}
+
 // Main initialization
 document.addEventListener("DOMContentLoaded", () => {
   console.log("DOM fully loaded and parsed");
@@ -142,16 +172,103 @@ document.addEventListener("DOMContentLoaded", () => {
   // Observe DOM for changes to update edit buttons
   observeEditButtons();
 
-  // Toggle sidebar functionality
-  const toggleSidebar = document.getElementById("toggle-sidebar");
-  if (toggleSidebar) {
-    toggleSidebar.addEventListener("click", function () {
-      const sidebar = document.querySelector(".sidebar");
-      if (sidebar) {
-        sidebar.classList.toggle("collapsed");
+  // Enable closing popups by clicking outside
+  enablePopupCloseOnOutsideClick();
+
+  // Highlight editing logic
+  function showHighlightPopup(highlight) {
+    const popup = document.getElementById("highlight-form-popup");
+    document.getElementById("highlight-title").value = highlight.title || "";
+    document.getElementById("highlight-start-time").value =
+      highlight.startTime || "";
+    document.getElementById("highlight-end-time").value =
+      highlight.endTime || "";
+    popup.style.display = "flex";
+  }
+
+  document
+    .getElementById("edit-highlight-form")
+    .addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const highlightData = {
+        title: document.getElementById("highlight-title").value.trim(),
+        startTime: parseInt(
+          document.getElementById("highlight-start-time").value,
+          10
+        ),
+        endTime: parseInt(
+          document.getElementById("highlight-end-time").value,
+          10
+        )
+      };
+
+      try {
+        const response = await fetch("/edit_highlight", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(highlightData)
+        });
+        const result = await response.json();
+        if (response.ok) {
+          showNotification(
+            "Success",
+            "Highlight saved successfully!",
+            "success"
+          );
+          document.getElementById("highlight-form-popup").style.display =
+            "none";
+        } else {
+          showNotification(
+            "Error",
+            "Failed to save highlight: " + result.error,
+            "error"
+          );
+        }
+      } catch (error) {
+        console.error("Error saving highlight:", error);
+        showNotification("Error", "Failed to save highlight.", "error");
       }
     });
+
+  async function verifyHighlightConsistency(highlight) {
+    try {
+      const response = await fetch("/verify_highlight", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(highlight)
+      });
+      const result = await response.json();
+      if (response.ok) {
+        showNotification(
+          "Verified",
+          "Highlight verified successfully!",
+          "success"
+        );
+      } else {
+        showNotification(
+          "Error",
+          "Highlight verification failed: " + result.error,
+          "error"
+        );
+      }
+    } catch (error) {
+      console.error("Error verifying highlight:", error);
+      showNotification("Error", "Failed to verify highlight.", "error");
+    }
   }
+
+  // Close / Cancel popup
+  document
+    .getElementById("close-highlight-form-popup")
+    .addEventListener("click", () => {
+      document.getElementById("highlight-form-popup").style.display = "none";
+    });
+
+  document
+    .getElementById("cancel-highlight-form-btn")
+    .addEventListener("click", () => {
+      document.getElementById("highlight-form-popup").style.display = "none";
+    });
 
   // Find the header element from the base template
   const headerElement = document.querySelector("header");
@@ -163,6 +280,11 @@ document.addEventListener("DOMContentLoaded", () => {
       headerHeight + "px"
     );
   }
+
+  // Add the decorative header to the top of the page
+  const decorativeHeader = document.createElement("div");
+  decorativeHeader.className = "decorative-header";
+  document.body.prepend(decorativeHeader);
 });
 
 // Export shared utilities and variables
@@ -170,3 +292,9 @@ export const shared = {
   selectedPodcastId: null,
   svgpodcastmanagement
 };
+
+document
+  .getElementById("guests-link")
+  .addEventListener("click", function (event) {
+    event.preventDefault();
+  });

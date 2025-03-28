@@ -60,6 +60,14 @@ export function playAudio(audioUrl, episodeTitle) {
   </audio>
 `;
 
+  // Add error event to the audio element
+  const audioEl = audioPlayer.querySelector("audio");
+  if (audioEl) {
+    audioEl.addEventListener("error", () => {
+      showNotification("Error", "Failed to load or play audio.", "error");
+    });
+  }
+
   // Add event listener to close button
   document
     .getElementById("close-audio-player")
@@ -74,10 +82,15 @@ export function renderEpisodeDetail(episode) {
   const publishDate = episode.publishDate
     ? new Date(episode.publishDate).toLocaleString()
     : "Not specified";
-  const duration = episode.duration || "Unknown";
+
+  // Convert duration from seconds to minutes and seconds
+  const durationMinutes = Math.floor(episode.duration / 60);
+  const durationSeconds = episode.duration % 60;
+  const formattedDuration = `${durationMinutes}m ${durationSeconds}s`;
+
   const episodeType = episode.episodeType || "Unknown";
   const link = episode.link || "No link available";
-  const author = episode.author || "Unknown";
+  const host = episode.author || "Unknown"; // Changed "author" to "host"
   const fileSize = episode.fileSize || "Unknown";
   const fileType = episode.fileType || "Unknown";
 
@@ -127,20 +140,8 @@ export function renderEpisodeDetail(episode) {
       <div class="separator"></div>
       <div class="detail-grid">
         <div class="detail-item">
-          <h3>Publish Date</h3>
-          <p>${publishDate}</p>
-        </div>
-        <div class="detail-item">
-          <h3>Duration</h3>
-          <p>${duration} minutes</p>
-        </div>
-        <div class="detail-item">
           <h3>Episode Type</h3>
           <p>${episodeType}</p>
-        </div>
-        <div class="detail-item">
-          <h3>Author</h3>
-          <p>${author}</p>
         </div>
         <div class="detail-item">
           <h3>File Size</h3>
@@ -159,53 +160,107 @@ export function renderEpisodeDetail(episode) {
           }
         </div>
       </div>
-      <div class="separator"></div>
-      <div class="detail-section">
-        <h2>Guests</h2>
-        <div id="guests-list"></div>
-      </div>
-      <div class="separator"></div>
-      <div class="detail-actions" id="episode-actions"></div>
     </div>
   </div>
+  
+  <!-- Guests section -->
+  <div class="podcast-about-section">
+    <h2 class="section-title">Guests</h2>
+    <div id="guests-list"></div>
+  </div>
+</div>
+
+<div class="detail-actions">
+  <button class="delete-btn" id="delete-episode-btn" data-id="${episode._id}">
+    ${shared.svgpodcastmanagement.delete} Delete Episode
+  </button>
+</div>
 `;
 
   // Define the episodeActions container
   const episodeActions = document.getElementById("episode-actions");
 
   // Publish button event listener
-  document.getElementById("publish-episode-btn").addEventListener("click", async () => {
-    const episodeId = document.getElementById("publish-episode-btn").getAttribute("data-id");
-    try {
-      const response = await fetch(`/publish/${episodeId}`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
+  document
+    .getElementById("publish-episode-btn")
+    .addEventListener("click", async () => {
+      const episodeId = document
+        .getElementById("publish-episode-btn")
+        .getAttribute("data-id");
+      try {
+        const response = await fetch(`/publish/${episodeId}`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          }
+        });
+
+        const data = await response.json();
+        if (response.ok) {
+          showNotification("Success", "Published successfully!", "success");
+
+          // Update the status to "Published"
+          const statusElement = document.querySelector(".detail-category");
+          if (statusElement) {
+            statusElement.textContent = "Published";
+          }
+        } else {
+          showNotification(
+            "Error",
+            `Failed to publish episode: ${data.error}`,
+            "error"
+          );
         }
-      });
-  
-      const data = await response.json();
-      if (response.ok) {
+      } catch (error) {
+        console.error("Error publishing episode:", error);
         showNotification(
-          "Success",
-          "Published successfully!",
-          "success"
+          "Error",
+          "An unexpected error occurred while publishing the episode.",
+          "error"
         );
-
-        // Update the status to "Published"
-        const statusElement = document.querySelector(".detail-category");
-        if (statusElement) {
-          statusElement.textContent = "Published";
-        }
-      } else {
-        showNotification("Error", `Failed to publish episode: ${data.error}`, "error");
       }
-    } catch (error) {
-      console.error("Error publishing episode:", error);
-      showNotification("Error", "An unexpected error occurred while publishing the episode.", "error");
-    }
-  });
+    });
 
+  // Publish button event listener
+  document
+    .getElementById("publish-episode-btn")
+    .addEventListener("click", async () => {
+      const episodeId = document
+        .getElementById("publish-episode-btn")
+        .getAttribute("data-id");
+      try {
+        const response = await fetch(`/publish/${episodeId}`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          }
+        });
+
+        const data = await response.json();
+        if (response.ok) {
+          showNotification("Success", "Published successfully!", "success");
+
+          // Update the status to "Published"
+          const statusElement = document.querySelector(".detail-category");
+          if (statusElement) {
+            statusElement.textContent = "Published";
+          }
+        } else {
+          showNotification(
+            "Error",
+            `Failed to publish episode: ${data.error}`,
+            "error"
+          );
+        }
+      } catch (error) {
+        console.error("Error publishing episode:", error);
+        showNotification(
+          "Error",
+          "An unexpected error occurred while publishing the episode.",
+          "error"
+        );
+      }
+    });
 
   // Back button event listener
   const backButton = document.getElementById("back-to-podcast");
@@ -261,16 +316,6 @@ export function renderEpisodeDetail(episode) {
         }
       }
     });
-  }
-
-  // Add play button if audioUrl exists
-  if (episode.audioUrl && episodeActions) {
-    const playButton = createPlayButton();
-    playButton.addEventListener("click", (e) => {
-      e.stopPropagation();
-      playAudio(episode.audioUrl, episode.title);
-    });
-    episodeActions.appendChild(playButton);
   }
 
   // Fetch and display guests for the episode
@@ -489,74 +534,89 @@ export function initEpisodeFunctions() {
     });
 
   // Episode form submission
-  document.getElementById("create-episode-form").addEventListener("submit", async (e) => {
-    e.preventDefault();
-    const formData = new FormData(e.target);
+  document
+    .getElementById("create-episode-form")
+    .addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const formData = new FormData(e.target);
 
-    // Validate required fields
-    const requiredFields = ["title", "description", "publishDate", "author", "imageUrl", "explicit", "category", "episodeType"];
-    for (const field of requiredFields) {
-      if (!formData.get(field)) {
-        showNotification("Error", `Field "${field}" is required.`, "error");
-        return;
-      }
-    }
-
-    // Check for missing required fields
-    if (!formData.get("podcastId") || !formData.get("title") || !formData.get("publishDate")) {
-      showNotification(
-        "Missing Fields",
-        "Please fill in all required fields.",
-        "error"
-      );
-      return;
-    }
-
-    // Ensure publishDate is in the correct format
-    const publishDate = new Date(formData.get("publishDate"));
-    if (isNaN(publishDate.getTime())) {
-      showNotification(
-        "Invalid Date",
-        "Please provide a valid publish date.",
-        "error"
-      );
-      return;
-    }
-
-    try {
-      const response = await fetch("/register_episode", {
-        method: "POST",
-        body: formData,
-        headers: {
-          // Ensure the correct Content-Type header is set for file uploads
-          "Accept": "application/json"
+      // Validate required fields
+      const requiredFields = [
+        "title",
+        "description",
+        "publishDate",
+        "author",
+        "imageUrl",
+        "explicit",
+        "category",
+        "episodeType"
+      ];
+      for (const field of requiredFields) {
+        if (!formData.get(field)) {
+          showNotification("Error", `Field "${field}" is required.`, "error");
+          return;
         }
-      });
-      if (!response.ok) {
-        const errorData = await response.json();
-        showNotification("Error", errorData.error || "Failed to create episode.", "error");
+      }
+
+      // Check for missing required fields
+      if (
+        !formData.get("podcastId") ||
+        !formData.get("title") ||
+        !formData.get("publishDate")
+      ) {
+        showNotification(
+          "Missing Fields",
+          "Please fill in all required fields.",
+          "error"
+        );
         return;
       }
-      const result = await response.json();
-      showNotification(
-        "Success",
-        "Episode created successfully!",
-        "success"
-      );
-      document.getElementById("episode-form-popup").style.display = "none";
-      document.getElementById("create-episode-form").reset();
-      // Refresh the episode list without refreshing the page
-      viewPodcast(formData.get("podcastId"));
-    } catch (error) {
-      console.error("Error creating episode:", error);
-      showNotification("Error", "Failed to create episode.", "error");
-    }
-  });
+
+      // Ensure publishDate is in the correct format
+      const publishDate = new Date(formData.get("publishDate"));
+      if (isNaN(publishDate.getTime())) {
+        showNotification(
+          "Invalid Date",
+          "Please provide a valid publish date.",
+          "error"
+        );
+        return;
+      }
+
+      try {
+        const response = await fetch("/register_episode", {
+          method: "POST",
+          body: formData,
+          headers: {
+            // Ensure the correct Content-Type header is set for file uploads
+            Accept: "application/json"
+          }
+        });
+        if (!response.ok) {
+          const errorData = await response.json();
+          showNotification(
+            "Error",
+            errorData.error || "Failed to create episode.",
+            "error"
+          );
+          return;
+        }
+        const result = await response.json();
+        showNotification("Success", "Episode created successfully!", "success");
+        document.getElementById("episode-form-popup").style.display = "none";
+        document.getElementById("create-episode-form").reset();
+        // Refresh the episode list without refreshing the page
+        viewPodcast(formData.get("podcastId"));
+      } catch (error) {
+        console.error("Error creating episode:", error);
+        showNotification("Error", "Failed to create episode.", "error");
+      }
+    });
 }
 
 document.addEventListener("DOMContentLoaded", () => {
   // Example usage of fetchEpisode
-  document.querySelectorAll(".episode-link").forEach(link => {
+  document.querySelectorAll(".episode-link").forEach((link) => {
     link.addEventListener("click", async (event) => {
       event.preventDefault();
       const episodeId = link.dataset.episodeId;
@@ -566,13 +626,17 @@ document.addEventListener("DOMContentLoaded", () => {
         // Render episode details or perform other actions with the fetched episode
       } catch (error) {
         console.error("Error fetching episode details:", error);
-        showNotification("Error", `Failed to fetch episode: ${error.message}`, "error");
+        showNotification(
+          "Error",
+          `Failed to fetch episode: ${error.message}`,
+          "error"
+        );
       }
     });
   });
 
   // Example usage of publishEpisodeToSpotify
-  document.querySelectorAll(".publish-episode-btn").forEach(button => {
+  document.querySelectorAll(".publish-episode-btn").forEach((button) => {
     button.addEventListener("click", async (event) => {
       const episodeId = button.dataset.episodeId;
       await publishEpisodeToSpotify(episodeId);
@@ -586,7 +650,7 @@ export async function publishEpisodeToSpotify(episodeId) {
     const response = await fetch(`/publish/${episodeId}`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ episodeId }),  // Make sure you're sending the data correctly
+      body: JSON.stringify({ episodeId }) // Make sure you're sending the data correctly
     });
 
     if (!response.ok) {
@@ -604,7 +668,6 @@ export async function publishEpisodeToSpotify(episodeId) {
     alert("An error occurred while publishing the episode.");
   }
 }
-
 
 // Example usage of the function
 document.querySelectorAll(".publish-episode-btn").forEach((button) => {

@@ -1,174 +1,337 @@
-/* Leaderboard Section */
-.leaderboard-section {
-  width: 100%;
-  max-width: 1200px; /* Adjust based on the actual width of task cards */
-  margin: 0 auto;
+:root {
+  --background-light: #eff2f9;
+  --background-dark: #1c1c1c;
+  --light-shadow-light: #ffffff;
+  --dark-shadow-light: rgba(22, 24, 29, 0.15);
+  --light-shadow-dark: rgba(255, 255, 255, 0.1);
+  --dark-shadow-dark: rgba(0, 0, 0, 0.8);
+  --text-color-light: #6e7f8d;
+  --text-color-dark: #b3b3b3;
+  --highlight-color: #ff7f3f;
+  --highlight-hover: #e0662c;
+  --error-color: #ff3b30;
+  --success-color: #4caf50;
+  --font-primary: "Inter", "Segoe UI", "Arial", sans-serif;
+  --font-secondary: "Avenir Next", sans-serif;
+  --spacing-xs: 4px;
+  --spacing-sm: 8px;
+  --spacing-md: 16px;
+  --spacing-lg: 24px;
+  --spacing-xl: 32px;
+  --radius-large: 20px;
+  --radius-medium: 12px;
+  --radius-small: 6px;
+  --transition-normal: 0.3s ease;
+  --card-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05), 0 8px 10px -6px rgba(0, 0, 0, 0.02);
+  --card-shadow-hover: 0 20px 35px -10px rgba(0, 0, 0, 0.1), 0 10px 15px -5px rgba(0, 0, 0, 0.05);
+  --button-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
 }
 
-/* Leaderboard Table */
+/* Reset styles - only apply to dashboard elements to avoid conflicts */
+.dashboard * {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+/* Avoid styling the body directly to prevent conflicts with base.html */
+/* Instead, style the dashboard container */
+.dashboard {
+  font-family: var(--font-primary);
+  color: var(--text-color-light);
+  line-height: 1.5;
+  max-width: 1200px;
+  margin: 20px auto 0; /* Add margin-top here */
+  position: relative;
+  z-index: 2;
+  padding: 0 var(--spacing-lg);
+}
+
+
+/* Decorative Header */
+.decorative-header {
+  width: 100%;
+  height: 120px;
+  background: linear-gradient(135deg, var(--highlight-color), var(--highlight-hover));
+  position: relative;
+  z-index: 1;
+  overflow: hidden;
+}
+
+.decorative-header::after {
+  content: "";
+  position: absolute;
+  bottom: -20px;
+  left: 0;
+  width: 100%;
+  height: 40px;
+  background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1440 320'%3E%3Cpath fill='%23FF7F3F' fill-opacity='1' d='M0,96L48,112C96,128,192,160,288,176C384,192,480,192,576,176C672,160,768,128,864,112C960,96,1056,96,1152,112C1248,128,1344,160,1392,176L1440,192L1440,0L1392,0C1344,0,1248,0,1152,0C1056,0,960,0,864,0C768,0,672,0,576,0C480,0,384,0,288,0C192,0,96,0,48,0L0,0Z'%3E%3C/path%3E%3C/svg%3E")
+    no-repeat;
+  background-size: cover;
+}
+
+/* Main Content */
+.main-content {
+  width: 100%;
+  margin-bottom: var(--spacing-xl); /* Add margin to avoid overlapping with footer */
+}
+
+/* Dashboard Content */
+.dashboard-content {
+  width: 100%;
+}
+
+/* Section Headers */
+.section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--spacing-md);
+}
+
+.section-header h2 {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: rgba(0, 0, 0, 0.8);
+  position: relative;
+  padding-bottom: var(--spacing-xs);
+}
+
+.section-header h2::after {
+  content: "";
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 40px;
+  height: 3px;
+  background-color: var(--highlight-color);
+  border-radius: 3px;
+}
+
+.view-all {
+  color: var(--highlight-color);
+  text-decoration: none;
+  font-size: 0.875rem;
+  font-weight: 600;
+  transition: all var(--transition-normal);
+  display: flex;
+  align-items: center;
+}
+
+.view-all:hover {
+  color: var(--highlight-hover);
+}
+
+.view-all::after {
+  content: "→";
+  display: inline-block;
+  margin-left: var(--spacing-xs);
+  transition: transform var(--transition-normal);
+}
+
+.view-all:hover::after {
+  transform: translateX(4px);
+}
+
+/* Leaderboard Section */
+.leaderboard-section {
+  margin-bottom: var(--spacing-xl);
+  background-color: white;
+  border-radius: var(--radius-large);
+  padding: var(--spacing-lg);
+  box-shadow: var(--card-shadow);
+  border: 1px solid rgba(0, 0, 0, 0.03);
+}
+
+.team-leaderboard {
+  overflow: hidden;
+}
+
 .leaderboard-table {
   width: 100%;
   border-collapse: collapse;
-  margin: var(--spacing-md) auto 0 auto;
-  font-size: 0.95rem;
 }
 
 .leaderboard-table th,
 .leaderboard-table td {
-  padding: var(--spacing-sm);
+  padding: var(--spacing-md);
   text-align: left;
-  border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
 }
 
-.leaderboard-table thead tr {
-  background-color: var(--highlight-color);
-  color: #fff;
-}
-
-.leaderboard-table tbody tr:nth-child(even) {
-  background-color: rgba(0, 0, 0, 0.03);
+.leaderboard-table th {
+  background-color: rgba(0, 0, 0, 0.02);
+  font-weight: 600;
+  font-size: 0.875rem;
+  color: rgba(0, 0, 0, 0.7);
 }
 
 .leaderboard-table tbody tr:hover {
-  background-color: rgba(255, 127, 63, 0.1);
+  background-color: rgba(255, 127, 63, 0.05);
 }
 
-/* Task Cards Container */
-.task-cards {
-  display: flex;
-  flex-wrap: wrap;
+.leaderboard-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+/* Episodes Section */
+.episodes-section {
+  margin-bottom: var(--spacing-xl);
+}
+
+.cards-container {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
   gap: var(--spacing-lg);
-  justify-content: center;
-  align-items: flex-start;
-  width: 90%;
-  margin: var(--spacing-lg) auto;
 }
 
-/* Card */
-.card {
-  width: 380px;
-  background: var(--background-light);
+.episode-card {
+  background-color: white;
+  border-radius: var(--radius-large);
+  box-shadow: var(--card-shadow);
+  overflow: hidden;
+  transition: all var(--transition-normal);
+  border: 1px solid rgba(0, 0, 0, 0.03);
+}
+
+.episode-card:hover {
+  transform: translateY(-5px);
+  box-shadow: var(--card-shadow-hover);
+}
+
+.card-header {
+  padding: var(--spacing-lg);
+  display: flex;
+  align-items: center;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+.podcast-logo {
+  width: 60px;
+  height: 60px;
   border-radius: var(--radius-medium);
-  padding: var(--spacing-md);
-  box-shadow: -8px -8px 16px var(--light-shadow-light),
-    8px 8px 16px var(--dark-shadow-light);
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  transition: box-shadow 0.3s ease, transform 0.3s ease;
-}
-
-/* Card Heading */
-.card h3 {
-  margin-bottom: var(--spacing-md);
-  text-align: center;
-  font-family: var(--font-secondary);
-  font-size: 1.2rem;
-  color: var(--text-color-light);
-}
-
-/* Profile Image */
-.profile-image {
-  width: 70px;
-  height: 70px;
-  border-radius: 50%;
-  margin-bottom: var(--spacing-sm);
   object-fit: cover;
-  box-shadow: inset -2px -2px 4px var(--light-shadow-light),
-    inset 2px 2px 4px var(--dark-shadow-light);
+  margin-right: var(--spacing-md);
+  background-color: rgba(255, 127, 63, 0.05);
 }
 
-/* Task List */
-.task-list {
+.card-title {
+  flex: 1;
+}
+
+.card-title h3 {
+  font-size: 1.1rem;
+  font-weight: 700;
+  margin-bottom: var(--spacing-xs);
+  color: rgba(0, 0, 0, 0.85);
+}
+
+.card-body {
+  padding: var(--spacing-md) var(--spacing-lg);
+}
+
+.card-body h4 {
+  font-size: 0.9rem;
+  font-weight: 600;
+  margin-bottom: var(--spacing-sm);
+  color: rgba(0, 0, 0, 0.7);
+}
+
+.guest-list {
   list-style: none;
-  padding: 0;
-  margin: 0;
-  width: 100%;
-  max-height: 380px;
-  overflow-y: auto;
+  margin-bottom: var(--spacing-md);
 }
 
-/* Single Task Row */
-.task-list li {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: var(--spacing-xs);
-  margin-bottom: 10px;
-  border-radius: var(--radius-small);
-  background-color: whitesmoke;
-  box-shadow: inset -2px -2px 4px var(--light-shadow-light),
-    inset 2px 2px 4px var(--dark-shadow-light);
-  transition: background-color 0.3s ease, box-shadow 0.3s ease;
-  cursor: pointer;
-  color: var(--text-color-light);
+.guest-list li {
+  padding: var(--spacing-sm) 0;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
   font-size: 0.9rem;
 }
 
-.task-list li:hover {
-  background-color: rgba(255, 127, 63, 0.08);
+.guest-list li:last-child {
+  border-bottom: none;
 }
 
-/* Task Text */
-.task-text {
-  flex: 1;
-  margin-right: var(--spacing-sm);
+.card-footer {
+  padding: var(--spacing-md) var(--spacing-lg);
+  background-color: rgba(0, 0, 0, 0.01);
+  border-top: 1px solid rgba(0, 0, 0, 0.05);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.toggle-tasks {
+  background-color: var(--highlight-color);
+  color: white;
+  border: none;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 1rem;
+  font-weight: 700;
+  transition: all var(--transition-normal);
+  box-shadow: var(--button-shadow);
+}
+
+.toggle-tasks:hover {
+  background-color: var(--highlight-hover);
+  transform: scale(1.1);
+  box-shadow: 0 6px 10px -3px rgba(0, 0, 0, 0.2);
+}
+
+.tasks-container {
+  padding: var(--spacing-md) var(--spacing-lg);
+  background-color: rgba(0, 0, 0, 0.02);
+  font-size: 0.9rem;
+  border-top: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+/* Buttons - use the same styling as in podcastmanagement.css */
+.btn {
+  padding: var(--spacing-sm) var(--spacing-lg);
+  border-radius: var(--radius-medium);
+  font-weight: 600;
+  cursor: pointer;
+  transition: all var(--transition-normal);
+  border: none;
+  font-size: 0.95rem;
+}
+
+.save-btn {
+  background-color: var(--highlight-color);
+  color: white;
+  box-shadow: var(--button-shadow);
   position: relative;
-  transition: opacity 0.5s ease;
+  overflow: hidden;
 }
 
-.task-text::after {
+.save-btn::after {
   content: "";
   position: absolute;
-  left: 0;
-  top: 50%;
-  width: 0;
-  height: 2px;
-  background: currentColor;
-  transition: width 0.5s ease;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+  transition: 0.5s;
 }
 
-/* When task is completed, fade text and draw a line through it */
-.completed .task-text {
-  opacity: 0.6;
-  text-decoration: line-through;
+.save-btn:hover {
+  background-color: var(--highlight-hover);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 10px -3px rgba(0, 0, 0, 0.2);
 }
 
-/* Custom Checkboxes */
-.task-check {
-  -webkit-appearance: none;
-  appearance: none;
-  width: 24px;
-  height: 24px;
-  background-color: var(--background-light);
-  border-radius: 50%;
-  box-shadow: inset -2px -2px 4px var(--light-shadow-light),
-    inset 2px 2px 4px var(--dark-shadow-light);
-  cursor: pointer;
-  position: relative;
-  outline: none;
-  border: none;
-  transition: background-color 0.3s ease, box-shadow 0.3s ease;
+.save-btn:hover::after {
+  left: 100%;
 }
 
-.task-check:checked {
-  background-color: var(--success-color);
-  box-shadow: inset -2px -2px 4px rgba(255, 255, 255, 0.6),
-    inset 2px 2px 4px rgba(0, 0, 0, 0.2);
-}
-
-.task-check:checked::after {
-  content: "✓";
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  color: #fff;
-  font-size: 16px;
-  font-weight: bold;
-}
-
-/* Popup Overlay */
+/* Popup - use the same styling as in podcastmanagement.css */
 .popup {
   position: fixed;
   top: 0;
@@ -176,10 +339,10 @@
   width: 100%;
   height: 100%;
   background-color: rgba(0, 0, 0, 0.5);
-  display: flex;
+  display: none;
   justify-content: center;
   align-items: center;
-  z-index: 1000;
+  z-index: 1000; /* High z-index but below header */
   backdrop-filter: blur(5px);
   transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
   opacity: 0;
@@ -236,14 +399,13 @@
 }
 
 .popup-content h2 {
-  margin-top: 0;
-  margin-bottom: var(--spacing-xl);
+  margin-bottom: var(--spacing-lg);
   color: rgba(0, 0, 0, 0.8);
   text-align: center;
   font-size: 1.8rem;
+  font-weight: 700;
   position: relative;
   padding-bottom: 15px;
-  font-weight: 700;
 }
 
 .popup-content h2::after {
@@ -258,225 +420,73 @@
   border-radius: 3px;
 }
 
-.popup p {
+.popup-body {
   color: var(--text-color-light);
+}
+
+.popup-body p {
+  margin-bottom: var(--spacing-md);
   line-height: 1.6;
-  font-size: 1rem;
-  margin-bottom: var(--spacing-md);
 }
 
-/* Task Popup Content */
-#popup-task-content {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  font-size: 0.9rem;
-  background: var(--background-light);
-  padding: var(--spacing-sm);
-  border-radius: var(--radius-small);
-  box-shadow: inset -2px -2px 4px var(--light-shadow-light),
-    inset 2px 2px 4px var(--dark-shadow-dark);
-  margin-bottom: var(--spacing-md);
+.popup-body .btn {
+  margin-top: var(--spacing-lg);
+  display: block;
+  width: 100%;
+  padding: var(--spacing-md);
 }
 
-/* Popup Instructions */
-.popup-instructions {
-  font-weight: bold;
-  font-size: 0.85rem;
-  margin-bottom: var(--spacing-xs);
+/* Error Message */
+.error-message {
+  background-color: rgba(231, 76, 60, 0.1);
+  border: 1px solid rgba(231, 76, 60, 0.2);
+  color: var(--error-color);
+  padding: var(--spacing-md);
+  border-radius: var(--radius-medium);
+  text-align: center;
+  grid-column: 1 / -1;
 }
 
-/* Popup Actions */
-.popup-actions {
-  display: flex;
-  flex-direction: column;
-  gap: var(--spacing-sm);
-}
-
-.popup-actions p {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  font-size: 0.85rem;
-  background: var(--background-light);
-  padding: var(--spacing-sm);
-  border-radius: var(--radius-small);
-  box-shadow: inset -2px -2px 4px var(--light-shadow-light),
-    inset 2px 2px 4px var(--dark-shadow-dark);
-}
-
-/* Popup Buttons */
-.popup-button {
-  background: var(--highlight-color);
-  color: #fff;
-  padding: var(--spacing-xs) var(--spacing-sm);
-  border: none;
-  border-radius: var(--radius-small);
-  cursor: pointer;
-  font-size: 0.8rem;
-  transition: background-color 0.3s ease, transform 0.3s ease;
-}
-
-.popup-button:hover {
-  background-color: #e36f2f;
-  transform: translateY(-2px);
-}
-
-/* Media Queries */
+/* Responsive */
 @media (max-width: 992px) {
-  .leaderboard-section {
-    width: 92%;
+  .cards-container {
+    grid-template-columns: repeat(2, 1fr);
   }
 
-  .leaderboard-section {
-    width: 95%;
-    margin-top: var(--spacing-sm);
-  }
-}
-
-@media (max-width: 768px) {
-  header {
-    flex-direction: column;
-    align-items: center;
-  }
-
-  .header-nav {
-    flex-direction: column;
-    width: 100%;
-    align-items: center;
-  }
-
-  .menu {
-    right: auto;
-    left: 50%;
-    transform: translateX(-50%);
-    width: 90%;
+  .dashboard {
+    padding: 0 var(--spacing-md);
   }
 }
 
 @media (max-width: 768px) {
-  .task-cards {
-    flex-direction: column;
-    align-items: center;
+  .cards-container {
+    grid-template-columns: 1fr;
   }
 
-  .card {
-    width: 90%;
-    margin: 0 auto;
+  .dashboard {
+    padding: 0 var(--spacing-sm);
+    margin-top: -30px; /* Adjust for smaller decorative header */
+  }
+
+  .decorative-header {
+    height: 100px;
   }
 }
 
 @media (max-width: 576px) {
-  .card {
-    width: 100%;
+  .leaderboard-table {
+    display: block;
+    overflow-x: auto;
   }
 
-  .menu-toggle {
-    width: 24px;
-    height: 18px;
+  .section-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--spacing-sm);
   }
 
-  .menu-toggle span {
-    height: 2px;
-  }
-
-  #podcast-selector {
-    font-size: 0.75rem;
-    height: 24px;
+  .popup-content {
+    padding: var(--spacing-lg);
   }
 }
 
-/* Homepage Popup Specific */
-#homepage-popup {
-  display: none;
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: rgba(0, 0, 0, 0.3);
-  justify-content: center;
-  align-items: center;
-  z-index: 3000;
-}
-
-#homepage-popup .popup-content {
-  width: 90%;
-  max-width: 800px;
-  background: var(--background-light);
-  border-radius: var(--radius-medium);
-  box-shadow: -10px -10px 20px var(--light-shadow-light),
-    10px 10px 20px var (--dark-shadow-light);
-  padding: var(--spacing-lg);
-  position: relative;
-}
-
-#homepage-iframe {
-  border-radius: var(--radius-small);
-}
-
-/* Podcast List */
-#podcast-list {
-  list-style: none;
-  padding: 0;
-  margin: 0;
-}
-
-.podcast-item {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: var(--spacing-md);
-  margin-bottom: var(--spacing-md);
-  border-radius: var(--radius-medium);
-  background-color: white;
-  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
-  transition: all var(--transition-normal);
-  border-left: 3px solid transparent;
-  cursor: pointer; /* Change cursor to pointer on hover */
-}
-
-.podcast-item:hover {
-  transform: translateY(-2px);
-  border-left: 3px solid var(--highlight-color);
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-}
-
-.podcast-title {
-  font-weight: 600;
-  color: rgba(0, 0, 0, 0.7);
-}
-
-.podcast-image {
-  width: 50px;
-  height: 50px;
-  border-radius: 50%;
-  object-fit: cover;
-  margin-right: var(--spacing-sm);
-}
-
-.podcast-item-actions {
-  display: flex;
-  gap: var(--spacing-sm);
-}
-
-.view-btn,
-.edit-btn,
-.delete-btn {
-  background: none;
-  border: none;
-  color: var(--highlight-color);
-  cursor: pointer;
-  font-size: 0.9rem;
-  transition: color 0.3s ease;
-}
-
-.delete-btn {
-  color: var(--danger-color);
-}
-
-.view-btn:hover,
-.edit-btn:hover,
-.delete-btn:hover {
-  color: var(--highlight-hover);
-}

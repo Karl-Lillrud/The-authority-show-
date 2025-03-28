@@ -9,29 +9,21 @@
   --danger-color: #e74c3c;
   --font-primary: "Inter", "Segoe UI", "Arial", sans-serif;
   --spacing-xs: 4px;
-  --spacing-sm: 8px;
-  --spacing-md: 16px;
-  --spacing-lg: 24px;
-  --spacing-xl: 32px;
-  --radius-small: 6px;
-  --radius-medium: 12px;
-  --radius-large: 20px;
+  --spacing-sm: 6px;
+  --spacing-md: 12px;
+  --spacing-lg: 18px;
+  --spacing-xl: 24px;
+  --radius-small: 5px;
+  --radius-medium: 10px;
+  --radius-large: 16px;
   --transition-fast: 0.2s ease;
   --transition-normal: 0.3s ease;
-  --card-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05),
-    0 8px 10px -6px rgba(0, 0, 0, 0.02);
-  --card-shadow-hover: 0 20px 35px -10px rgba(0, 0, 0, 0.1),
-    0 10px 15px -5px rgba(0, 0, 0, 0.05);
-  --button-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1),
-    0 2px 4px -1px rgba(0, 0, 0, 0.06);
-
-  /* Sidebar variables */
-  --sidebar-width: 260px;
-  --sidebar-collapsed-width: 80px;
-  --sidebar-bg: #ffffff;
-  --sidebar-border: rgba(0, 0, 0, 0.05);
-  --sidebar-item-hover: rgba(255, 127, 63, 0.1);
-  --sidebar-item-active: rgba(255, 127, 63, 0.15);
+  --card-shadow: 0 8px 20px -5px rgba(0, 0, 0, 0.05),
+    0 6px 8px -6px rgba(0, 0, 0, 0.02);
+  --card-shadow-hover: 0 16px 28px -8px rgba(0, 0, 0, 0.1),
+    0 8px 12px -5px rgba(0, 0, 0, 0.05);
+  --button-shadow: 0 3px 5px -1px rgba(0, 0, 0, 0.1),
+    0 2px 3px -1px rgba(0, 0, 0, 0.06);
 }
 
 /* Base styles */
@@ -44,6 +36,7 @@ body {
   color: var(--text-color-light);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  font-size: 14px;
 }
 
 /* App Container */
@@ -51,248 +44,20 @@ body {
   display: flex;
   height: calc(100vh - var(--header-height, 60px));
   margin-top: 0;
-  position: relative; /* Ensure the sidebar is positioned relative to the container */
+  position: relative;
   overflow: hidden;
-}
-
-/* Sidebar Styles */
-.sidebar {
-  width: var(--sidebar-width);
-  position: absolute; /* Change from fixed to absolute */
-  top: 0; /* Ensure it starts from the top */
-  height: calc(
-    100vh - var(--header-height, 80px)
-  ); /* Remove footer height adjustment */
-  background-color: var(--sidebar-bg);
-  border-right: 1px solid var(--sidebar-border);
-  display: flex;
-  flex-direction: column;
-  transition: width var(--transition-normal);
-  overflow: hidden;
-  box-shadow: 0 0 20px rgba(0, 0, 0, 0.05);
-  z-index: 9;
-}
-
-.sidebar::before,
-.sidebar::after {
-  content: none; /* Ta bort de orangea linjerna */
-}
-
-.sidebar.collapsed {
-  width: var(--sidebar-collapsed-width);
-}
-
-.sidebar-header {
-  padding: var(--spacing-lg);
-  border-bottom: 1px solid var(--sidebar-border);
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
-
-.sidebar-header h2 {
-  display: none; /* Dölj texten "Podcast Manager" */
-}
-
-.sidebar-content {
-  flex: 1;
-  overflow-y: auto;
-  padding: var(--spacing-md) 0;
-  scrollbar-width: thin;
-  scrollbar-color: rgba(0, 0, 0, 0.2) white;
-}
-
-.sidebar-content::-webkit-scrollbar {
-  width: 6px;
-}
-
-.sidebar-content::-webkit-scrollbar-track {
-  background: transparent;
-}
-
-.sidebar-content::-webkit-scrollbar-thumb {
-  background-color: rgba(0, 0, 0, 0.2);
-  border-radius: 10px;
-}
-
-.sidebar-menu {
-  list-style: none;
-  padding: 0;
-  margin: 0;
-}
-
-.sidebar-menu ul {
-  list-style: none;
-  padding: 0;
-  margin: 0;
-}
-
-.sidebar-menu-item {
-  margin: 4px 8px;
-}
-
-.sidebar-menu-link {
-  display: flex;
-  align-items: center;
-  padding: 12px 16px;
-  color: var(--text-color-light);
-  text-decoration: none;
-  border-radius: var(--radius-medium);
-  transition: all var(--transition-normal);
-}
-
-.sidebar-menu-link:hover {
-  background-color: var(--sidebar-item-hover);
-  color: var(--highlight-color);
-}
-
-.sidebar-menu-item.active .sidebar-menu-link {
-  background-color: var(--sidebar-item-active);
-  color: var(--highlight-color);
-  font-weight: 600;
-}
-
-.sidebar-icon {
-  margin-right: 12px;
-  width: 20px;
-  height: 20px;
-  flex-shrink: 0;
-}
-
-.sidebar.collapsed .sidebar-menu-link span {
-  display: none;
-}
-
-.sidebar-footer {
-  padding: var(--spacing-md);
-  border-top: 1px solid var(--sidebar-border);
-}
-
-.sidebar-actions {
-  display: flex;
-  justify-content: flex-end;
-}
-
-.sidebar-toggle {
-  background: none;
-  border: none;
-  color: var(--text-color-light);
-  cursor: pointer;
-  padding: 8px;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: all var(--transition-normal);
-}
-
-.sidebar-toggle:hover {
-  background-color: var(--sidebar-item-hover);
-  color: var(--highlight-color);
-}
-
-.sidebar.collapsed .sidebar-toggle svg {
-  transform: rotate(180deg);
-}
-
-/* Dashboard link styling */
-.dashboard-link {
-  color: var(--highlight-color) !important;
-  font-weight: 600;
-}
-
-.dashboard-link .sidebar-icon {
-  color: var(--highlight-color);
-}
-
-.dashboard-link:hover {
-  background-color: var(--sidebar-item-hover);
-  transform: translateX(-4px);
-}
-
-/* Main Content */
-.main-content {
-  flex: 1;
-  overflow-y: auto;
-  padding: var(--spacing-lg);
-  transition: margin-left var(--transition-normal);
-  margin-left: var(--sidebar-width);
-  min-height: calc(100vh - var(--header-height, 60px));
-}
-
-.sidebar.collapsed + .main-content {
-  margin-left: var(--sidebar-collapsed-width);
-}
-
-.main-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: var(--spacing-xl);
-  flex-wrap: wrap;
-  gap: var(--spacing-md);
-}
-
-.main-header h1 {
-  margin: 0;
-  font-size: 2rem;
-  color: rgba(0, 0, 0, 0.8);
-}
-
-.action-buttons {
-  display: flex;
-  gap: var(--spacing-md);
-  flex-wrap: wrap;
-}
-
-.action-button {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  background-color: white;
-  color: var(--text-color-light);
-  border: none;
-  padding: 10px 16px;
-  border-radius: var(--radius-medium);
-  cursor: pointer;
-  font-size: 0.9rem;
-  font-weight: 600;
-  box-shadow: var(--button-shadow);
-  transition: all var(--transition-normal);
-}
-
-.action-button svg {
-  width: 18px;
-  height: 18px;
-}
-
-.action-button:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1),
-    0 4px 6px -2px rgba(0, 0, 0, 0.05);
-  color: var(--highlight-color);
-}
-
-#add-podcast-btn,
-#create-episode-btn,
-#add-guest-btn {
-  background-color: var(--highlight-color);
-  color: white;
-}
-
-#add-podcast-btn:hover,
-#create-episode-btn:hover,
-#add-guest-btn:hover {
-  background-color: var(--highlight-hover);
-  color: white;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 /* Podcast List */
 .podcast-list {
   display: flex;
   flex-direction: column;
-  gap: var(--spacing-xl);
-  margin-top: var(--spacing-xl);
+  gap: var(--spacing-lg);
+  margin-top: var(--spacing-lg);
+  align-items: center;
+  padding-bottom: 3rem;
 }
 
 /* Podcast Card */
@@ -310,16 +75,16 @@ body {
   transition: all var(--transition-normal);
   width: 100%;
   border: 1px solid rgba(0, 0, 0, 0.03);
+  justify-content: center;
 }
 
 .podcast-card:hover {
-  transform: translateY(-5px);
   box-shadow: var(--card-shadow-hover);
 }
 
 .podcast-image {
-  width: 220px;
-  height: 220px;
+  width: 180px;
+  height: 180px;
   flex-shrink: 0;
   background-size: cover;
   background-position: center;
@@ -331,12 +96,12 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
-  margin: 15px;
+  margin: 12px;
   border-radius: var(--radius-medium);
 }
 
 .podcast-info {
-  padding: var(--spacing-xl);
+  padding: var(--spacing-lg);
   flex-grow: 1;
 }
 
@@ -344,54 +109,13 @@ body {
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
-  margin-bottom: var(--spacing-md);
+  margin-bottom: var(--spacing-sm);
 }
 
-/* Add styling for action buttons in sidebar */
-.sidebar-action-buttons {
-  margin-top: 20px;
-  padding: 10px;
-  border-top: 1px solid var(--sidebar-border);
-}
-
-.sidebar-action-button {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  background-color: rgba(255, 127, 63, 0.1);
-  color: var(--highlight-color);
-  border: none;
-  padding: 10px 12px;
-  border-radius: var(--radius-medium);
-  cursor: pointer;
-  font-size: 0.9rem;
-  font-weight: 600;
-  width: 100%;
-  margin-bottom: 8px;
-  transition: all var(--transition-normal);
-  text-align: left;
-}
-
-.sidebar-action-button:hover {
-  background-color: rgba(255, 127, 63, 0.2);
-  transform: translateX(4px);
-}
-
-.sidebar-action-button svg {
-  width: 18px;
-  height: 18px;
-}
-.sidebar-action-buttons h3 {
-  font-size: 0.85rem;
-  color: rgba(0, 0, 0, 0.5);
-  margin-bottom: 10px;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-}
 .podcast-title {
-  font-size: 1.75rem;
+  font-size: 1.4rem;
   font-weight: 700;
-  margin-bottom: 0.75rem;
+  margin-bottom: 0.5rem;
   color: rgba(0, 0, 0, 0.85);
   letter-spacing: -0.5px;
   line-height: 1.2;
@@ -399,8 +123,8 @@ body {
 
 .podcast-meta {
   color: var(--text-color-light);
-  font-size: 0.9rem;
-  margin-bottom: 0.5rem;
+  font-size: 0.8rem;
+  margin-bottom: 0.4rem;
   display: flex;
   align-items: center;
 }
@@ -414,29 +138,30 @@ body {
 .podcast-meta .author,
 .podcast-meta .language {
   display: block;
-  margin-top: 0.25rem;
+  margin-top: 0.2rem;
   color: rgba(0, 0, 0, 0.6);
 }
 
 .podcast-description {
-  margin-top: var(--spacing-md);
+  margin-top: var(--spacing-sm);
   color: var(--text-color-light);
   display: -webkit-box;
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
-  line-height: 1.6;
+  line-height: 1.5;
+  font-size: 0.85rem;
 }
 
 .podcast-actions {
   display: flex;
-  gap: 0.75rem;
+  gap: 0.5rem;
   flex-wrap: nowrap;
 }
 
 .action-btn {
-  width: 40px;
-  height: 40px;
+  width: 32px;
+  height: 32px;
   border-radius: 50%;
   border: none;
   display: flex;
@@ -444,27 +169,27 @@ body {
   justify-content: center;
   cursor: pointer;
   background-color: white;
-  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.08);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08);
   transition: all var(--transition-normal);
   position: relative;
 }
 
 .action-btn:hover {
   transform: translateY(-2px);
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.12);
+  box-shadow: 0 3px 6px rgba(0, 0, 0, 0.12);
 }
 
 .action-btn.edit-btn::after {
   content: "Edit";
   position: absolute;
-  bottom: -30px;
+  bottom: -25px;
   left: 50%;
   transform: translateX(-50%);
   background-color: rgba(0, 0, 0, 0.7);
   color: white;
-  padding: 4px 8px;
-  border-radius: 4px;
-  font-size: 12px;
+  padding: 3px 6px;
+  border-radius: 3px;
+  font-size: 10px;
   opacity: 0;
   visibility: hidden;
   transition: all 0.2s ease;
@@ -489,11 +214,30 @@ body {
 }
 
 .podcast-footer {
-  padding: var(--spacing-md) var(--spacing-xl);
+  padding: var(--spacing-sm) var(--spacing-lg);
   border-top: 1px solid rgba(0, 0, 0, 0.05);
   display: flex;
-  justify-content: flex-end;
+  justify-content: flex-start;
+  gap: 0.5rem;
   background-color: rgba(0, 0, 0, 0.01);
+}
+
+.footer-link {
+  color: var(--highlight-color);
+  font-weight: 500;
+  font-size: 0.75rem;
+  cursor: pointer;
+  transition: color var(--transition-normal), text-decoration 0.2s ease;
+}
+
+.footer-link:hover {
+  color: var(--highlight-hover);
+  text-decoration: underline;
+}
+
+.footer-separator {
+  color: rgba(0, 0, 0, 0.6);
+  font-size: 0.75rem;
 }
 
 .view-details-btn {
@@ -505,7 +249,8 @@ body {
   transition: all var(--transition-normal);
   display: flex;
   align-items: center;
-  gap: 0.5rem;
+  gap: 0.4rem;
+  font-size: 0.8rem;
 }
 
 .landing-page-btn {
@@ -515,6 +260,7 @@ body {
   font-weight: 600;
   cursor: pointer;
   transition: all 0.3s ease;
+  font-size: 0.8rem;
 }
 
 .view-details-btn:hover {
@@ -537,7 +283,7 @@ body {
   border-radius: var(--radius-large);
   box-shadow: var(--card-shadow);
   overflow: hidden;
-  margin-top: var(--spacing-xl);
+  margin-top: var(--spacing-lg);
   border: 1px solid rgba(0, 0, 0, 0.03);
 }
 
@@ -545,14 +291,14 @@ body {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: var(--spacing-lg) var(--spacing-xl);
+  padding: var(--spacing-md) var(--spacing-lg);
   border-bottom: 1px solid rgba(0, 0, 0, 0.05);
   background-color: rgba(0, 0, 0, 0.01);
 }
 
 .top-right-actions {
   display: flex;
-  gap: 12px;
+  gap: 8px;
 }
 
 /* Edit button styling */
@@ -561,8 +307,8 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 40px;
-  height: 40px;
+  width: 32px;
+  height: 32px;
   border-radius: 50%;
   background-color: white;
   color: var(--highlight-color);
@@ -583,14 +329,14 @@ body {
 .top-right-actions .publish-btn::after {
   content: attr(data-tooltip);
   position: absolute;
-  bottom: -30px;
+  bottom: -25px;
   left: 50%;
   transform: translateX(-50%);
   background-color: rgba(0, 0, 0, 0.7);
   color: white;
-  padding: 4px 8px;
-  border-radius: 4px;
-  font-size: 12px;
+  padding: 3px 6px;
+  border-radius: 3px;
+  font-size: 10px;
   opacity: 0;
   visibility: hidden;
   transition: all 0.2s ease;
@@ -606,22 +352,23 @@ body {
 .top-right-actions .edit-btn:hover,
 .top-right-actions .publish-btn:hover {
   transform: translateY(-2px);
-  box-shadow: 0 6px 10px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
 }
 
 .back-btn {
   display: inline-flex;
   align-items: center;
-  gap: 0.5rem;
+  gap: 0.4rem;
   background: white;
   border: none;
   color: var(--text-color-light);
   font-weight: 600;
   cursor: pointer;
-  padding: 10px 16px;
+  padding: 8px 12px;
   border-radius: var(--radius-medium);
   box-shadow: var(--button-shadow);
   transition: all var(--transition-normal);
+  font-size: 0.8rem;
 }
 
 .back-btn:hover {
@@ -630,15 +377,15 @@ body {
 }
 
 .detail-content {
-  padding: var(--spacing-xl);
+  padding: var(--spacing-lg);
   display: grid;
-  grid-template-columns: 300px 1fr;
-  gap: var(--spacing-xl);
+  grid-template-columns: 220px 1fr;
+  gap: var(--spacing-lg);
 }
 
 .detail-image {
   width: 100%;
-  height: 300px;
+  height: 250px;
   border-radius: var(--radius-medium);
   background-size: cover;
   background-position: center;
@@ -666,13 +413,13 @@ body {
 .detail-info {
   display: flex;
   flex-direction: column;
-  gap: var(--spacing-md);
+  gap: var(--spacing-sm);
 }
 
 .detail-title {
-  font-size: 2.5rem;
+  font-size: 1.8rem;
   font-weight: 700;
-  margin-bottom: 0.5rem;
+  margin-bottom: 0.4rem;
   color: rgba(0, 0, 0, 0.85);
   letter-spacing: -0.5px;
   line-height: 1.2;
@@ -680,26 +427,26 @@ body {
 
 .detail-category {
   color: var(--highlight-color);
-  font-size: 1.125rem;
+  font-size: 0.9rem;
   font-weight: 600;
-  margin-bottom: var(--spacing-md);
+  margin-bottom: var(--spacing-sm);
   display: inline-block;
-  padding: 4px 12px;
+  padding: 3px 10px;
   background-color: rgba(255, 127, 63, 0.1);
-  border-radius: 20px;
+  border-radius: 16px;
 }
 
 .detail-section {
-  margin-bottom: var(--spacing-lg);
+  margin-bottom: var(--spacing-md);
 }
 
 .detail-section h2 {
-  font-size: 1.5rem;
-  margin-bottom: var(--spacing-md);
+  font-size: 1.2rem;
+  margin-bottom: var(--spacing-sm);
   color: rgba(0, 0, 0, 0.8);
   font-weight: 700;
   position: relative;
-  padding-bottom: 8px;
+  padding-bottom: 6px;
 }
 
 .detail-section h2::after {
@@ -707,27 +454,27 @@ body {
   position: absolute;
   bottom: 0;
   left: 0;
-  width: 40px;
-  height: 3px;
+  width: 30px;
+  height: 2px;
   background-color: var(--highlight-color);
-  border-radius: 3px;
+  border-radius: 2px;
 }
 
 .detail-section p {
   color: var(--text-color-light);
-  line-height: 1.7;
-  font-size: 1.05rem;
+  line-height: 1.6;
+  font-size: 0.9rem;
 }
 
 .detail-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: var(--spacing-xl);
+  gap: var(--spacing-lg);
 }
 
 .detail-item {
   background-color: rgba(0, 0, 0, 0.02);
-  padding: var(--spacing-lg);
+  padding: var(--spacing-md);
   border-radius: var(--radius-medium);
   transition: all var(--transition-normal);
 }
@@ -738,15 +485,15 @@ body {
 }
 
 .detail-item h3 {
-  font-size: 1rem;
+  font-size: 0.85rem;
   color: rgba(0, 0, 0, 0.6);
   font-weight: 600;
-  margin-bottom: 0.5rem;
+  margin-bottom: 0.4rem;
 }
 
 .detail-item p {
   margin: 0;
-  font-size: 1.05rem;
+  font-size: 0.9rem;
   color: rgba(0, 0, 0, 0.8);
 }
 
@@ -756,7 +503,8 @@ body {
   transition: all var(--transition-normal);
   display: inline-flex;
   align-items: center;
-  gap: 0.5rem;
+  gap: 0.4rem;
+  font-size: 0.85rem;
 }
 
 .detail-item a:hover {
@@ -767,25 +515,28 @@ body {
 .separator {
   height: 1px;
   background-color: rgba(0, 0, 0, 0.05);
-  margin: var(--spacing-lg) 0;
+  margin: var(--spacing-md) 0;
 }
 
 .social-links {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
-  gap: var(--spacing-md);
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
 }
 
+/* Update social media link styles */
 .social-link {
-  display: flex;
+  display: inline-flex; /* Change to inline-flex to prevent full width */
   align-items: center;
-  gap: 0.75rem;
+  gap: 0.6rem;
   color: var(--highlight-color);
   text-decoration: none;
   transition: all var(--transition-normal);
-  padding: 10px 16px;
+  padding: 8px 12px;
   background-color: rgba(255, 127, 63, 0.05);
   border-radius: var(--radius-medium);
+  font-size: 0.85rem;
+  max-width: fit-content; /* Ensure the width fits the content */
 }
 
 .social-link:hover {
@@ -797,30 +548,34 @@ body {
 .calendar-link {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
+  gap: 0.4rem;
+  font-size: 0.85rem;
 }
 
 /* Detail actions styling */
 .detail-actions {
-  margin-top: 2rem;
+  margin-top: 1.5rem;
   display: flex;
-  gap: 1rem;
+  gap: 0.8rem;
+  position: relative;
+  z-index: 100;
+  margin-bottom: var(--spacing-lg);
 }
 
 /* Episodes List */
 .episodes-list {
   width: 100%;
-  padding: var(--spacing-md);
-  margin-top: var(--spacing-md);
+  padding: var(--spacing-sm);
+  margin-top: var(--spacing-sm);
 }
 
 .detail-section-title {
-  font-size: 1.25rem;
+  font-size: 1.1rem;
   font-weight: 600;
   color: rgba(0, 0, 0, 0.8);
-  margin-bottom: var(--spacing-md);
+  margin-bottom: var(--spacing-sm);
   position: relative;
-  padding-bottom: 8px;
+  padding-bottom: 6px;
 }
 
 .detail-section-title::after {
@@ -828,32 +583,36 @@ body {
   position: absolute;
   bottom: 0;
   left: 0;
-  width: 60px;
+  width: 40px;
   height: 2px;
   background-color: var(--highlight-color);
   border-radius: 2px;
 }
 
-.episodes-scroll-container {
-  max-height: 400px;
+/* Adjust the episodes list container height to show about 3 episodes */
+.episodes-list-container {
+  max-height: 300px;
   overflow-y: auto;
-  padding-right: var(--spacing-sm);
+  border-radius: var(--radius-medium);
+  background-color: rgba(0, 0, 0, 0.02);
+  padding: var(--spacing-xs);
+  margin-top: var(--spacing-sm);
   scrollbar-width: thin;
   scrollbar-color: rgba(0, 0, 0, 0.2) white;
 }
 
 .episodes-scroll-container::-webkit-scrollbar {
-  width: 8px;
+  width: 6px;
 }
 
 .episodes-scroll-container::-webkit-scrollbar-track {
   background: white;
-  border-radius: 10px;
+  border-radius: 8px;
 }
 
 .episodes-scroll-container::-webkit-scrollbar-thumb {
   background-color: rgba(0, 0, 0, 0.2);
-  border-radius: 10px;
+  border-radius: 8px;
   border: 2px solid white;
 }
 
@@ -862,49 +621,50 @@ body {
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
-  padding: 16px;
+  padding: 12px;
   border-radius: var(--radius-medium);
   background-color: white;
-  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
   transition: all var(--transition-normal);
   cursor: pointer;
-  border-left: 3px solid var(--highlight-color);
-  margin-bottom: var(--spacing-sm);
+  border-left: 2px solid var(--highlight-color);
+  margin-bottom: var(--spacing-xs);
 }
 
 .episode-card:hover {
   transform: translateY(-2px);
-  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
 }
 
 .episode-content {
   flex: 1;
-  margin-right: 16px;
+  margin-right: 12px;
 }
 
 .episode-title {
   font-weight: 600;
   color: rgba(0, 0, 0, 0.8);
-  margin-bottom: 5px;
+  margin-bottom: 4px;
+  font-size: 0.9rem;
 }
 
 .episode-meta {
-  font-size: 0.8rem;
+  font-size: 0.7rem;
   color: var(--text-color-light);
-  margin-bottom: 5px;
+  margin-bottom: 4px;
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
 }
 
 .episode-description {
-  font-size: 0.85rem;
+  font-size: 0.75rem;
   color: var(--text-color-light);
   display: -webkit-box;
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
-  line-height: 1.5;
+  line-height: 1.4;
 }
 
 .episode-actions {
@@ -917,10 +677,10 @@ body {
   color: white;
   border: none;
   border-radius: var(--radius-small);
-  padding: 8px 16px;
+  padding: 6px 12px;
   cursor: pointer;
   font-weight: 600;
-  font-size: 0.85rem;
+  font-size: 0.75rem;
   transition: all var(--transition-normal);
   align-self: center;
   box-shadow: var(--button-shadow);
@@ -929,7 +689,7 @@ body {
 .view-episode-btn:hover {
   background-color: var(--highlight-hover);
   transform: translateY(-2px);
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 3px 6px rgba(0, 0, 0, 0.15);
 }
 
 /* Add styles for the episode play button */
@@ -938,53 +698,53 @@ body {
   color: white;
   border: none;
   border-radius: 50%;
-  width: 32px;
-  height: 32px;
+  width: 28px;
+  height: 28px;
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
   transition: all var(--transition-normal);
-  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.15);
-  margin-right: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
+  margin-right: 6px;
   flex-shrink: 0;
 }
 
 .episode-play-btn:hover {
   background-color: var(--highlight-hover);
   transform: scale(1.1);
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 3px 6px rgba(0, 0, 0, 0.2);
 }
 
 .episode-play-btn svg {
-  width: 16px;
-  height: 16px;
+  width: 14px;
+  height: 14px;
 }
 
 /* Podcast Episodes Preview */
 .podcast-episodes-preview {
-  margin-top: 16px;
-  max-height: 150px;
+  margin-top: 12px;
+  max-height: 120px;
   overflow-y: auto;
-  padding: 8px;
+  padding: 6px;
   background-color: rgba(0, 0, 0, 0.02);
   border-radius: var(--radius-medium);
 }
 
 .episodes-preview-title {
-  margin-bottom: 8px;
-  font-size: 0.9rem;
+  margin-bottom: 6px;
+  font-size: 0.8rem;
 }
 
 .podcast-episode-item {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 10px;
-  margin-bottom: 8px;
+  padding: 8px;
+  margin-bottom: 6px;
   border-radius: var(--radius-small);
   background-color: white;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
   transition: all var(--transition-normal);
   cursor: pointer;
   border-left: 2px solid var(--highlight-color);
@@ -993,7 +753,7 @@ body {
 .podcast-episode-actions {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
 }
 
 .podcast-episode-play {
@@ -1001,14 +761,14 @@ body {
   color: white;
   border: none;
   border-radius: 50%;
-  width: 24px;
-  height: 24px;
+  width: 20px;
+  height: 20px;
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
   transition: all var(--transition-normal);
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 }
 
 .podcast-episode-play:hover {
@@ -1018,18 +778,18 @@ body {
 
 .podcast-episode-content {
   flex: 1;
-  margin-right: 10px;
+  margin-right: 8px;
 }
 
 .podcast-episode-title {
-  font-size: 0.85rem;
+  font-size: 0.75rem;
   font-weight: 600;
   color: rgba(0, 0, 0, 0.8);
   margin-bottom: 2px;
 }
 
 .podcast-episode-description {
-  font-size: 0.75rem;
+  font-size: 0.7rem;
   color: var(--text-color-light);
   display: -webkit-box;
   -webkit-line-clamp: 1;
@@ -1038,7 +798,7 @@ body {
 }
 
 .podcast-episode-date {
-  font-size: 0.7rem;
+  font-size: 0.65rem;
   color: var(--text-color-light);
   white-space: nowrap;
 }
@@ -1046,66 +806,67 @@ body {
 /* View all link */
 .view-all-link {
   text-align: right;
-  margin-top: 5px;
-  font-size: 0.8rem;
+  margin-top: 4px;
+  font-size: 0.7rem;
   color: var(--highlight-color);
   cursor: pointer;
 }
 
 /* No episodes message */
 .no-episodes-message {
-  font-size: 0.8rem;
+  font-size: 0.7rem;
   font-style: italic;
 }
 
 /* Episodes error message */
 .episodes-error-message {
-  font-size: 0.8rem;
+  font-size: 0.7rem;
   color: #e74c3c;
 }
 
 /* Style for the audio player in episode details */
 .audio-player-container {
-  max-width: 500px;
-  margin-top: 16px;
-  margin-bottom: 16px;
+  max-width: 400px;
+  margin-top: 12px;
+  margin-bottom: 12px;
 }
 
 .audio-player-container audio {
   width: 100%;
   border-radius: var(--radius-medium);
+  height: 30px;
 }
 
 /* Global audio player */
 .global-audio-player {
   position: fixed;
-  bottom: 20px;
-  right: 20px;
+  bottom: 16px;
+  right: 16px;
   z-index: 1000;
   background-color: white;
-  padding: 10px;
+  padding: 8px;
   border-radius: var(--radius-medium);
-  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
   display: flex;
   flex-direction: column;
-  width: 300px;
+  width: 250px;
 }
 
 .audio-player-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 8px;
+  margin-bottom: 6px;
 }
 
 .audio-player-title {
   font-weight: 600;
-  font-size: 0.9rem;
+  font-size: 0.8rem;
   color: rgba(0, 0, 0, 0.8);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  max-width: 230px;
+  max-width: 200px;
 }
 
 .audio-player-close {
@@ -1119,35 +880,35 @@ body {
 .guests-container {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 8px;
 }
 
 .guest-card {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 12px;
+  padding: 10px;
   border-radius: var(--radius-medium);
   background-color: white;
-  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
   transition: all var(--transition-normal);
   cursor: pointer;
 }
 
 .guest-card:hover {
   transform: translateY(-2px);
-  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
 }
 
 .guest-info {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 10px;
 }
 
 .guest-avatar {
-  width: 40px;
-  height: 40px;
+  width: 32px;
+  height: 32px;
   border-radius: 50%;
   background-color: var(--highlight-color);
   color: white;
@@ -1155,6 +916,7 @@ body {
   align-items: center;
   justify-content: center;
   font-weight: 600;
+  font-size: 0.8rem;
 }
 
 .guest-content {
@@ -1165,10 +927,11 @@ body {
 .guest-name {
   font-weight: 600;
   color: rgba(0, 0, 0, 0.8);
+  font-size: 0.85rem;
 }
 
 .guest-email {
-  font-size: 0.8rem;
+  font-size: 0.7rem;
   color: var(--text-color-light);
 }
 
@@ -1177,10 +940,10 @@ body {
   color: white;
   border: none;
   border-radius: var(--radius-small);
-  padding: 6px 12px;
+  padding: 5px 10px;
   cursor: pointer;
   font-weight: 600;
-  font-size: 0.8rem;
+  font-size: 0.7rem;
   transition: all var(--transition-normal);
 }
 
@@ -1193,13 +956,13 @@ body {
 .guest-detail-header {
   display: flex;
   align-items: center;
-  gap: 20px;
-  margin-bottom: 20px;
+  gap: 16px;
+  margin-bottom: 16px;
 }
 
 .guest-detail-avatar {
-  width: 60px;
-  height: 60px;
+  width: 50px;
+  height: 50px;
   border-radius: 50%;
   background-color: var(--highlight-color);
   color: white;
@@ -1207,28 +970,43 @@ body {
   align-items: center;
   justify-content: center;
   font-weight: 600;
-  font-size: 1.5rem;
+  font-size: 1.2rem;
+}
+
+.guest-detail-avatar-large {
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  background-color: var(--highlight-color);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  font-size: 2.5rem;
+  margin: 60px auto;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
 }
 
 .guest-detail-name {
-  font-size: 2rem;
+  font-size: 1.6rem;
   font-weight: 700;
-  margin-bottom: 5px;
+  margin-bottom: 4px;
   color: rgba(0, 0, 0, 0.85);
 }
 
 .guest-detail-email {
-  font-size: 1rem;
+  font-size: 0.9rem;
   color: var(--text-color-light);
 }
 
 .guest-detail-section {
-  margin-bottom: var(--spacing-lg);
+  margin-bottom: var(--spacing-md);
 }
 
 .guest-detail-section h3 {
-  font-size: 1.2rem;
-  margin-bottom: var(--spacing-md);
+  font-size: 1rem;
+  margin-bottom: var(--spacing-sm);
   color: rgba(0, 0, 0, 0.8);
   font-weight: 600;
 }
@@ -1236,10 +1014,11 @@ body {
 .guest-social-link {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
   color: var(--highlight-color);
   text-decoration: none;
-  margin-bottom: 10px;
+  margin-bottom: 8px;
+  font-size: 0.85rem;
 }
 
 .guest-social-link:hover {
@@ -1248,41 +1027,43 @@ body {
 
 .guest-email-link {
   color: var(--highlight-color);
+  font-size: 0.85rem;
 }
 
 .guest-tags {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
+  gap: 6px;
 }
 
 .guest-tag {
   background-color: rgba(255, 127, 63, 0.1);
   color: var(--highlight-color);
-  padding: 4px 10px;
-  border-radius: 15px;
-  font-size: 0.85rem;
+  padding: 3px 8px;
+  border-radius: 12px;
+  font-size: 0.75rem;
 }
 
 /* Notification */
 .notification {
   position: fixed;
-  top: 20px;
-  right: 20px;
-  padding: var(--spacing-md) var(--spacing-lg);
+  top: 16px;
+  right: 16px;
+  padding: var(--spacing-sm) var(--spacing-md);
   border-radius: var(--radius-medium);
   background-color: white;
-  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1),
-    0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  box-shadow: 0 8px 12px -3px rgba(0, 0, 0, 0.1),
+    0 3px 5px -2px rgba(0, 0, 0, 0.05);
   color: var(--text-color-light);
   font-weight: 600;
   z-index: 2000;
   display: flex;
   align-items: center;
-  gap: var(--spacing-md);
+  gap: var(--spacing-sm);
   transform: translateX(150%);
   transition: transform 0.5s cubic-bezier(0.68, -0.55, 0.27, 1.55);
-  max-width: 350px;
+  max-width: 300px;
+  font-size: 0.85rem;
 }
 
 .notification.show {
@@ -1290,7 +1071,7 @@ body {
 }
 
 .notification.success {
-  border-left: 4px solid var(--success-color);
+  border-left: 3px solid var(--success-color);
 }
 
 .notification.success .notification-icon {
@@ -1298,7 +1079,7 @@ body {
 }
 
 .notification.error {
-  border-left: 4px solid var(--danger-color);
+  border-left: 3px solid var(--danger-color);
 }
 
 .notification.error .notification-icon {
@@ -1306,7 +1087,7 @@ body {
 }
 
 .notification.info {
-  border-left: 4px solid #3498db;
+  border-left: 3px solid #3498db;
 }
 
 .notification.info .notification-icon {
@@ -1319,12 +1100,13 @@ body {
 
 .notification-title {
   font-weight: 700;
-  margin-bottom: 4px;
+  margin-bottom: 3px;
   color: rgba(0, 0, 0, 0.8);
+  font-size: 0.85rem;
 }
 
 .notification-message {
-  font-size: 0.9rem;
+  font-size: 0.8rem;
   font-weight: 400;
   color: var(--text-color-light);
 }
@@ -1365,15 +1147,15 @@ body {
 .popup-content {
   background-color: white;
   border-radius: var(--radius-large);
-  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
-  padding: var(--spacing-xl);
+  box-shadow: 0 20px 40px -10px rgba(0, 0, 0, 0.25);
+  padding: var(--spacing-lg);
   width: 90%;
-  max-width: 600px;
+  max-width: 500px;
   position: relative;
   transform: scale(0.95);
   transition: transform 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
   overflow-x: hidden;
-  max-height: 85vh;
+  max-height: 80vh;
   overflow-y: auto;
 }
 
@@ -1383,39 +1165,39 @@ body {
 
 .close-btn {
   position: absolute;
-  top: var(--spacing-md);
-  right: var(--spacing-md);
-  width: 40px;
-  height: 40px;
+  top: var(--spacing-sm);
+  right: var(--spacing-sm);
+  width: 32px;
+  height: 32px;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 1.5rem;
+  font-size: 1.2rem;
   color: var(--text-color-light);
   background-color: white;
   border-radius: 50%;
   cursor: pointer;
   transition: all var(--transition-normal);
-  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
   z-index: 10;
 }
 
 .close-btn:hover {
   color: var(--highlight-color);
   transform: rotate(90deg);
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 3px 6px rgba(0, 0, 0, 0.15);
 }
 
 /* Form Box */
 .form-box {
   background-color: white;
   border-radius: var(--radius-large);
-  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
-  padding: var(--spacing-xl);
+  box-shadow: 0 20px 40px -10px rgba(0, 0, 0, 0.25);
+  padding: var(--spacing-lg);
   width: 90%;
-  max-width: 800px;
+  max-width: 700px;
   position: relative;
-  max-height: 85vh;
+  max-height: 80vh;
   overflow-y: auto;
   overflow-x: hidden;
   transform: scale(0.95);
@@ -1425,18 +1207,18 @@ body {
 }
 
 .form-box::-webkit-scrollbar {
-  width: 12px;
+  width: 8px;
 }
 
 .form-box::-webkit-scrollbar-track {
   background: white;
-  border-radius: 10px;
+  border-radius: 8px;
 }
 
 .form-box::-webkit-scrollbar-thumb {
   background-color: rgba(0, 0, 0, 0.2);
-  border-radius: 10px;
-  border: 3px solid white;
+  border-radius: 8px;
+  border: 2px solid white;
 }
 
 .popup[style*="display: flex"] .form-box {
@@ -1445,12 +1227,12 @@ body {
 
 .form-title {
   margin-top: 0;
-  margin-bottom: var(--spacing-xl);
+  margin-bottom: var(--spacing-lg);
   color: rgba(0, 0, 0, 0.8);
   text-align: center;
-  font-size: 2rem;
+  font-size: 1.6rem;
   position: relative;
-  padding-bottom: 15px;
+  padding-bottom: 12px;
   font-weight: 700;
 }
 
@@ -1460,20 +1242,20 @@ body {
   bottom: 0;
   left: 50%;
   transform: translateX(-50%);
-  width: 80px;
-  height: 4px;
+  width: 60px;
+  height: 3px;
   background-color: var(--highlight-color);
-  border-radius: 4px;
+  border-radius: 3px;
 }
 
 .form-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: var(--spacing-lg);
+  gap: var(--spacing-md);
 }
 
 .field-group {
-  margin-bottom: var(--spacing-md);
+  margin-bottom: var(--spacing-sm);
   position: relative;
 }
 
@@ -1483,13 +1265,13 @@ body {
 
 .field-group label {
   display: block;
-  margin-bottom: var(--spacing-sm);
+  margin-bottom: var(--spacing-xs);
   font-weight: 600;
   color: rgba(0, 0, 0, 0.6);
   transition: all var(--transition-normal);
-  font-size: 0.95rem;
+  font-size: 0.85rem;
   position: relative;
-  padding-left: 10px;
+  padding-left: 8px;
 }
 
 .field-group label::before {
@@ -1498,10 +1280,10 @@ body {
   left: 0;
   top: 50%;
   transform: translateY(-50%);
-  width: 3px;
-  height: 14px;
+  width: 2px;
+  height: 12px;
   background-color: var(--highlight-color);
-  border-radius: 2px;
+  border-radius: 1px;
   opacity: 0.7;
 }
 
@@ -1509,12 +1291,12 @@ body {
 .field-group select,
 .field-group textarea {
   width: 100%;
-  padding: 12px 16px;
+  padding: 8px 12px;
   border: 1px solid rgba(0, 0, 0, 0.1);
   border-radius: var(--radius-medium);
   background-color: white;
   color: rgba(0, 0, 0, 0.8);
-  font-size: 1rem;
+  font-size: 0.9rem;
   transition: all var(--transition-normal);
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
   box-sizing: border-box;
@@ -1525,15 +1307,15 @@ body {
 .field-group textarea:focus {
   outline: none;
   border-color: var(--highlight-color);
-  box-shadow: 0 0 0 3px rgba(255, 127, 63, 0.2);
+  box-shadow: 0 0 0 2px rgba(255, 127, 63, 0.2);
 }
 
 .form-actions {
   display: flex;
   justify-content: flex-end;
-  gap: var(--spacing-md);
-  margin-top: var(--spacing-lg);
-  padding-top: var(--spacing-md);
+  gap: var(--spacing-sm);
+  margin-top: var(--spacing-md);
+  padding-top: var(--spacing-sm);
   border-top: 1px solid rgba(0, 0, 0, 0.05);
 }
 
@@ -1541,13 +1323,13 @@ body {
 .save-btn,
 .cancel-btn,
 .delete-btn {
-  padding: 12px 24px;
+  padding: 8px 16px;
   border: none;
   border-radius: var(--radius-medium);
   font-weight: 600;
   cursor: pointer;
   transition: all var(--transition-normal);
-  font-size: 1rem;
+  font-size: 0.9rem;
   letter-spacing: 0.5px;
 }
 
@@ -1578,7 +1360,7 @@ body {
 .save-btn:hover {
   background-color: var(--highlight-hover);
   transform: translateY(-2px);
-  box-shadow: 0 6px 10px -3px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 4px 8px -3px rgba(0, 0, 0, 0.2);
 }
 
 .save-btn:hover::after {
@@ -1595,30 +1377,32 @@ body {
 .cancel-btn:hover {
   transform: translateY(-2px);
   color: var(--highlight-color);
-  box-shadow: 0 6px 10px -3px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 4px 8px -3px rgba(0, 0, 0, 0.1);
 }
 
 .delete-btn {
   background-color: rgba(231, 76, 60, 0.1);
   color: var(--danger-color);
   box-shadow: var(--button-shadow);
+  font-size: 0.85rem;
+  padding: 6px 14px;
 }
 
 .delete-btn:hover {
   background-color: rgba(231, 76, 60, 0.2);
   transform: translateY(-2px);
-  box-shadow: 0 6px 10px -3px rgba(231, 76, 60, 0.2);
+  box-shadow: 0 4px 8px -3px rgba(231, 76, 60, 0.2);
 }
 
 /* Responsive Design */
 @media (max-width: 1024px) {
   .detail-content {
-    grid-template-columns: 250px 1fr;
+    grid-template-columns: 200px 1fr;
   }
 
   .form-grid {
     grid-template-columns: 1fr 1fr;
-    gap: var(--spacing-md);
+    gap: var(--spacing-sm);
   }
 }
 
@@ -1631,8 +1415,8 @@ body {
   .detail-image {
     grid-column: 1;
     grid-row: 1;
-    height: 250px;
-    margin-bottom: var(--spacing-md);
+    height: 200px;
+    margin-bottom: var(--spacing-sm);
   }
 
   #episodes-list {
@@ -1651,7 +1435,7 @@ body {
 
   .podcast-image {
     width: 100%;
-    height: 200px;
+    height: 180px;
     margin: 0;
     border-radius: 0;
     border-top-left-radius: var(--radius-large);
@@ -1659,424 +1443,443 @@ body {
   }
 
   .podcast-info {
-    padding: var(--spacing-md);
+    padding: var(--spacing-sm);
   }
 }
 
+/* Decorative orange panel at the top of the page */
+.decorative-header {
+  width: 100%;
+  height: 90px;
+  background: linear-gradient(135deg, #ff7f3f, #e0662c);
+  position: relative;
+  z-index: 1;
+  overflow: hidden;
+}
+
+.decorative-header::after {
+  content: "";
+  position: absolute;
+  bottom: -15px;
+  left: 0;
+  width: 100%;
+  height: 30px;
+  background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1440 320'%3E%3Cpath fill='%23FF7F3F' fill-opacity='1' d='M0,96L48,112C96,128,192,160,288,176C384,192,480,192,576,176C672,160,768,128,864,112C960,96,1056,96,1152,112C1248,128,1344,160,1392,176L1440,192L1440,0L1392,0C1344,0,1248,0,1152,0C1056,0,960,0,864,0C768,0,672,0,576,0C480,0,384,0,288,0C192,0,96,0,48,0L0,0Z'%3E%3C/path%3E%3C/svg%3E")
+    no-repeat;
+  background-size: cover;
+}
+
+/* New styles for two-column layout in podcast details */
+.detail-two-col {
+  display: flex;
+  gap: 1.5rem;
+  margin-top: 0.8rem;
+}
+
+.about-column {
+  flex: 2;
+}
+
+.extra-details-column {
+  flex: 1;
+}
+
+/* Ensure stacking on smaller screens */
 @media (max-width: 768px) {
-  .app-container {
+  .detail-two-col {
     flex-direction: column;
-    height: auto;
-    min-height: 100vh;
-  }
-
-  /* Sidebar Styles */
-  .sidebar {
-    width: var(--sidebar-width);
-    position: absolute;
-    top: 0;
-    height: calc(100vh - var(--header-height, 60px));
-    background-color: var(--sidebar-bg);
-    border-right: 1px solid var(--sidebar-border);
-    display: flex;
-    flex-direction: column;
-    transition: width var(--transition-normal);
-    overflow: hidden;
-    box-shadow: 0 0 20px rgba(0, 0, 0, 0.05);
-    z-index: 9;
-  }
-
-  /* Add decorative curves to sidebar */
-  .sidebar::before,
-  .sidebar::after {
-    content: "";
-    position: absolute;
-    left: 0;
-    right: 0;
-    height: 40px;
-    z-index: 1;
-  }
-
-  .sidebar::before {
-    top: 0;
-    background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1440 320'%3E%3Cpath fill='%23FEF0E6' stroke='%23FF7F3F' stroke-width='2' d='M0,160L48,144C96,128,192,96,288,106.7C384,117,480,171,576,186.7C672,203,768,181,864,154.7C960,128,1056,96,1152,96C1248,96,1344,128,1392,144L1440,160L1440,0L1392,0C1344,0,1248,0,1152,0C1056,0,960,0,864,0C768,0,672,0,576,0C480,0,384,0,288,0C192,0,96,0,48,0L0,0Z'%3E%3C/path%3E%3C/svg%3E")
-      no-repeat;
-    background-size: cover;
-  }
-
-  .sidebar::after {
-    bottom: 0;
-    background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1440 320'%3E%3Cpath fill='%23FEF0E6' stroke='%23FF7F3F' stroke-width='2' d='M0,160L48,144C96,128,192,96,288,106.7C384,117,480,171,576,186.7C672,203,768,181,864,154.7C960,128,1056,96,1152,96C1248,96,1344,128,1392,144L1440,160L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z'%3E%3C/path%3E%3C/svg%3E")
-      no-repeat;
-    background-size: cover;
-  }
-
-  .sidebar.collapsed {
-    width: var(--sidebar-collapsed-width);
-  }
-
-  .sidebar-header {
-    padding: var(--spacing-lg);
-    border-bottom: 1px solid var(--sidebar-border);
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    position: relative;
-    z-index: 2;
-  }
-
-  .sidebar-content {
-    flex: 1;
-    overflow-y: auto;
-    padding: var(--spacing-md) 0;
-    scrollbar-width: thin;
-    scrollbar-color: rgba(0, 0, 0, 0.2) white;
-    position: relative;
-    z-index: 2;
-    margin-top: 20px; /* Add space for the top curve */
-    margin-bottom: 20px; /* Add space for the bottom curve */
-  }
-
-  /* Horizontal menu styling */
-  .sidebar-menu {
-    display: flex;
-    overflow-x: auto;
-    padding: var(--spacing-xs) var(--spacing-md);
-    scrollbar-width: none; /* Firefox */
-    -ms-overflow-style: none; /* IE and Edge */
-    justify-content: flex-start;
-    border-bottom: 1px solid var(--sidebar-border);
-  }
-
-  .sidebar-menu::-webkit-scrollbar {
-    display: none; /* Chrome, Safari, Opera */
-  }
-
-  .sidebar-menu ul {
-    display: flex;
-    width: 100%;
-    padding: 0;
-    margin: 0;
-  }
-
-  .sidebar-menu-item {
-    margin: 0 4px;
-    flex-shrink: 0;
-    white-space: nowrap;
-  }
-
-  /* Make "Back to Dashboard" stay at the left */
-  .sidebar-menu-item:first-child {
-    margin-left: 0;
-    order: -1;
-  }
-
-  .sidebar-menu-link {
-    padding: 8px 12px;
-    display: flex;
-    flex-direction: row;
-    align-items: center;
-    text-align: center;
-    font-size: 0.85rem;
-    white-space: nowrap;
-  }
-
-  .sidebar-icon {
-    margin-right: 8px;
-    margin-bottom: 0;
-    width: 18px;
-    height: 18px;
-  }
-
-  /* Action buttons in a row */
-  .sidebar-action-buttons {
-    padding: var(--spacing-md);
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: var(--spacing-sm);
-  }
-
-  .sidebar-action-buttons h3 {
-    grid-column: 1 / -1;
-    margin-bottom: var(--spacing-sm);
-  }
-
-  .sidebar-action-button {
-    flex-direction: row;
-    justify-content: center;
-    align-items: center;
-    text-align: center;
-    padding: var(--spacing-sm);
-    font-size: 0.8rem;
-  }
-
-  .sidebar-action-button svg {
-    margin-right: 8px;
-    margin-bottom: 0;
-  }
-
-  .sidebar-footer {
-    display: none;
-  }
-
-  .main-content {
-    padding: var(--spacing-md);
-    margin-left: 0;
-    padding-top: var(--spacing-md);
-  }
-
-  .main-header {
-    flex-direction: column;
-    align-items: flex-start;
-    margin-bottom: var(--spacing-lg);
-  }
-
-  .main-header h1 {
-    font-size: 1.75rem;
-  }
-
-  .action-buttons {
-    width: 100%;
-    justify-content: space-between;
-  }
-
-  .form-grid {
-    grid-template-columns: 1fr;
-  }
-
-  .field-group.full-width {
-    grid-column: auto;
-  }
-
-  .detail-grid,
-  .social-links {
-    grid-template-columns: 1fr;
-  }
-
-  .form-box {
-    width: 95%;
-    max-width: 95%;
-    padding: var(--spacing-md);
-  }
-
-  .form-title {
-    font-size: 1.5rem;
-    margin-bottom: var(--spacing-lg);
-  }
-
-  .close-btn {
-    top: 10px;
-    right: 10px;
   }
 }
 
-@media (max-width: 576px) {
-  /* Further optimize horizontal menu for very small screens */
-  .sidebar-menu-link {
-    padding: 8px 10px;
-    font-size: 0.8rem;
-  }
-
-  .sidebar-icon {
-    width: 16px;
-    height: 16px;
-  }
-
-  /* Stack action buttons on very small screens */
-  .sidebar-action-buttons {
-    grid-template-columns: 1fr;
-  }
-
-  .main-content {
-    padding: var(--spacing-sm);
-  }
-
-  .main-header h1 {
-    font-size: 1.5rem;
-  }
-
-  .action-button {
-    padding: 8px 12px;
-    font-size: 0.8rem;
-  }
-
-  .action-button svg {
-    width: 16px;
-    height: 16px;
-  }
-
-  .form-box,
-  .popup-content {
-    width: 95%;
-    padding: var(--spacing-md);
-  }
-
-  .field-group input,
-  .field-group select,
-  .field-group textarea {
-    padding: 10px 12px;
-    font-size: 0.9rem;
-  }
-
-  .field-group label {
-    font-size: 0.85rem;
-  }
-
-  .form-actions {
-    flex-direction: column-reverse;
-    gap: 10px;
-  }
-
-  .save-btn,
-  .cancel-btn,
-  .delete-btn {
-    width: 100%;
-    padding: 10px;
-  }
-
-  .close-btn {
-    top: 10px;
-    right: 10px;
-    width: 32px;
-    height: 32px;
-    font-size: 1.2rem;
-  }
-
-  .detail-title {
-    font-size: 1.5rem;
-  }
-
-  .detail-section h2 {
-    font-size: 1.3rem;
-  }
-
-  .podcast-card {
-    margin-bottom: var(--spacing-md);
-  }
-
-  .podcast-title {
-    font-size: 1.4rem;
-  }
-
-  .podcast-header {
-    flex-direction: column;
-  }
-
-  .podcast-actions {
-    margin-top: var(--spacing-sm);
-    align-self: flex-end;
-  }
-
-  .podcast-footer {
-    flex-direction: column;
-    gap: var(--spacing-sm);
-  }
-
-  .podcast-footer button {
-    width: 100%;
-    padding: 10px;
-    text-align: center;
-  }
-
-  .notification {
-    width: 90%;
-    left: 5%;
-    right: 5%;
-  }
-
-  /* Improve episode cards on small screens */
-  .episode-card {
-    flex-direction: column;
-  }
-
-  .view-episode-btn {
-    margin-top: var(--spacing-sm);
-    align-self: flex-end;
-  }
-
-  /* Improve guest cards on small screens */
-  .guest-card {
-    flex-direction: column;
-  }
-
-  .view-profile-btn {
-    margin-top: var(--spacing-sm);
-    width: 100%;
-  }
+/* Add these styles for the full-width episodes section */
+.full-width-episodes {
+  width: 100%;
+  padding: var(--spacing-lg);
+  background-color: white;
+  border-top: 1px solid rgba(0, 0, 0, 0.05);
+  margin-top: 0;
 }
 
-/* Add styles for collapsible sidebar on mobile */
+.episodes-heading {
+  font-size: 1.2rem;
+  margin-bottom: var(--spacing-sm);
+  color: rgba(0, 0, 0, 0.8);
+  font-weight: 700;
+  position: relative;
+  padding-bottom: 6px;
+}
+
+.episodes-heading::after {
+  content: "";
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 30px;
+  height: 2px;
+  background-color: var(--highlight-color);
+  border-radius: 2px;
+}
+
+/* Update the episodes container styles */
+.episodes-scroll-container {
+  max-height: 450px;
+  overflow-y: auto;
+  padding-right: var(--spacing-xs);
+  scrollbar-width: thin;
+  scrollbar-color: rgba(0, 0, 0, 0.2) white;
+  width: 100%;
+}
+
+/* Update episode card styles for full width */
+.episode-card {
+  width: 100%;
+  margin-bottom: var(--spacing-sm);
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  padding: 16px;
+  border-radius: var(--radius-medium);
+  background-color: white;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  transition: all var(--transition-normal);
+  cursor: pointer;
+  border-left: 2px solid var(--highlight-color);
+}
+
+.episode-content {
+  flex: 1;
+  margin-right: 16px;
+}
+
+/* Ensure the detail actions are properly positioned */
+.detail-actions {
+  padding: 0 var(--spacing-lg) var(--spacing-lg);
+  background-color: white;
+}
+
+/* Add these new styles for the redesigned podcast detail page */
+.podcast-detail-container {
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-lg);
+}
+
+/* Header section with image and basic info */
+.podcast-header-section {
+  display: flex;
+  gap: var(--spacing-lg);
+  padding: var(--spacing-lg);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+/* Make the podcast image wider in the header section */
+.podcast-image-container {
+  flex: 0 0 250px;
+}
+
+.podcast-basic-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+}
+
+.podcast-meta-info {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--spacing-sm);
+  margin-top: var(--spacing-sm);
+}
+
+.meta-item {
+  background-color: rgba(0, 0, 0, 0.02);
+  padding: var(--spacing-xs) var(--spacing-sm);
+  border-radius: var(--radius-small);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.8rem;
+}
+
+.meta-label {
+  font-weight: 600;
+  color: rgba(0, 0, 0, 0.6);
+}
+
+.meta-value {
+  color: rgba(0, 0, 0, 0.8);
+}
+
+/* About section */
+.podcast-about-section {
+  padding: 0 var(--spacing-lg);
+}
+
+.section-title {
+  font-size: 1.2rem;
+  margin-bottom: var(--spacing-sm);
+  color: rgba(0, 0, 0, 0.8);
+  font-weight: 700;
+  position: relative;
+  padding-bottom: 6px;
+}
+
+.section-title::after {
+  content: "";
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 30px;
+  height: 2px;
+  background-color: var(--highlight-color);
+  border-radius: 2px;
+}
+
+.podcast-description {
+  color: var(--text-color-light);
+  line-height: 1.6;
+  font-size: 0.9rem;
+  margin-bottom: var(--spacing-sm);
+}
+
+/* Episodes section */
+.podcast-episodes-section {
+  padding: 0 var(--spacing-lg);
+}
+
+/* Replace the episodes grid styles with these vertical list styles */
+.episodes-list-container {
+  max-height: 450px;
+  overflow-y: auto;
+  border-radius: var(--radius-medium);
+  background-color: rgba(0, 0, 0, 0.02);
+  padding: var(--spacing-xs);
+  margin-top: var(--spacing-sm);
+  scrollbar-width: thin;
+  scrollbar-color: rgba(0, 0, 0, 0.2) white;
+}
+
+.episodes-list-container::-webkit-scrollbar {
+  width: 6px;
+}
+
+.episodes-list-container::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.5);
+  border-radius: 8px;
+}
+
+.episodes-list-container::-webkit-scrollbar-thumb {
+  background-color: rgba(0, 0, 0, 0.2);
+  border-radius: 8px;
+  border: 2px solid rgba(255, 255, 255, 0.5);
+}
+
+.episode-list-item {
+  background-color: white;
+  border-radius: var(--radius-medium);
+  box-shadow: var(--card-shadow);
+  padding: var(--spacing-sm);
+  margin-bottom: var(--spacing-sm);
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  transition: all var(--transition-normal);
+  cursor: pointer;
+  border-left: 2px solid var(--highlight-color);
+}
+
+.episode-list-item:last-child {
+  margin-bottom: 0;
+}
+
+.episode-list-item:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--card-shadow-hover);
+}
+
+.episode-content {
+  flex: 1;
+  margin-right: var(--spacing-sm);
+}
+
+.episode-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: var(--spacing-xs);
+  margin-bottom: var(--spacing-xs);
+}
+
+.episode-title {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: rgba(0, 0, 0, 0.8);
+  margin: 0;
+  flex: 1;
+}
+
+.episode-status {
+  font-size: 0.7rem;
+  padding: 3px 6px;
+  background-color: rgba(255, 127, 63, 0.1);
+  color: var(--highlight-color);
+  border-radius: 10px;
+  white-space: nowrap;
+}
+
+.episode-meta {
+  display: flex;
+  gap: var(--spacing-sm);
+  font-size: 0.7rem;
+  color: var(--text-color-light);
+  margin-bottom: var(--spacing-xs);
+}
+
+.episode-description {
+  font-size: 0.8rem;
+  color: var(--text-color-light);
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  line-height: 1.4;
+}
+
+.episode-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+  flex-shrink: 0;
+}
+
+/* Additional details section */
+.podcast-details-section {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: var(--spacing-lg);
+  padding: 0 var(--spacing-lg);
+}
+
+.details-column {
+  padding: var(--spacing-md);
+  border-radius: var(--radius-medium);
+}
+
+.detail-link {
+  color: var(--highlight-color);
+  text-decoration: none;
+  word-break: break-all;
+  display: inline-block;
+  font-size: 0.85rem;
+}
+
+.detail-link:hover {
+  text-decoration: underline;
+}
+
+.scheduling-details {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+}
+
+.scheduling-item h3 {
+  font-size: 0.9rem;
+  color: rgba(0, 0, 0, 0.6);
+  font-weight: 600;
+  margin-bottom: 0.4rem;
+}
+
+/* Social media section */
+.podcast-social-section {
+  padding: 0 var(--spacing-lg) var(--spacing-lg);
+}
+
+.social-links {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+}
+
+.social-link {
+  display: inline-flex; /* Change to inline-flex to prevent full width */
+  align-items: center;
+  gap: 0.6rem;
+  color: var(--highlight-color);
+  text-decoration: none;
+  transition: all var(--transition-normal);
+  padding: 8px 12px;
+  background-color: rgba(255, 127, 63, 0.05);
+  border-radius: var(--radius-medium);
+  font-size: 0.85rem;
+  max-width: fit-content; /* Ensure the width fits the content */
+}
+
+.social-link:hover {
+  transform: translateY(-2px);
+  background-color: rgba(255, 127, 63, 0.1);
+}
+
+/* Error and empty state messages */
+.no-episodes-message,
+.error-message {
+  text-align: center;
+  padding: var(--spacing-lg);
+  color: var(--text-color-light);
+  font-style: italic;
+  grid-column: 1 / -1;
+  font-size: 0.85rem;
+}
+
+.error-message {
+  color: var(--danger-color);
+}
+
+/* Responsive adjustments */
 @media (max-width: 768px) {
-  .sidebar.collapsed .sidebar-content {
-    display: none;
+  .podcast-header-section {
+    flex-direction: column;
   }
 
-  .sidebar.collapsed {
-    height: auto;
+  .podcast-image-container {
+    width: 100%;
+    max-width: 250px;
+    margin: 0 auto;
   }
 
-  .sidebar-toggle-mobile {
-    display: block;
-    position: absolute;
-    right: var(--spacing-md);
-    top: var(--spacing-md);
-    background: none;
-    border: none;
-    color: var(--text-color-light);
-    cursor: pointer;
-    z-index: 10;
+  .detail-image {
+    height: 200px;
+  }
+
+  .episodes-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .podcast-details-section {
+    grid-template-columns: 1fr;
   }
 }
 
-/* Add this new media query for screens smaller than 500px */
-@media (max-width: 500px) {
-  /* Split sidebar menu into two rows */
-  .sidebar-menu {
-    flex-wrap: wrap;
-    justify-content: flex-start;
-    padding: var(--spacing-xs) var(--spacing-sm);
-  }
+/* Error and empty state messages */
+.no-episodes-message,
+.error-message {
+  text-align: center;
+  padding: var(--spacing-lg);
+  color: var(--text-color-light);
+  font-style: italic;
+  font-size: 0.85rem;
+}
 
-  .sidebar-menu-item {
-    flex-basis: calc(50% - 8px);
-    margin: 4px;
-  }
+.error-message {
+  color: var(--danger-color);
+}
 
-  /* Keep "Back to Dashboard" full width on top row */
-  .sidebar-menu-item:first-child {
-    flex-basis: 100%;
-    margin-bottom: 8px;
-    border-bottom: 1px solid rgba(0, 0, 0, 0.05);
-    padding-bottom: 8px;
-  }
-
-  .sidebar-menu-link {
+/* Adjust responsive breakpoint for the wider image */
+@media (max-width: 900px) {
+  .podcast-image-container {
     width: 100%;
-    justify-content: flex-start;
-    padding: 8px;
-  }
-
-  /* Make action buttons more compact */
-  .sidebar-action-buttons {
-    padding: var(--spacing-sm);
-  }
-
-  .sidebar-action-button {
-    padding: 8px;
-    font-size: 0.75rem;
-  }
-
-  .sidebar-action-button svg {
-    width: 14px;
-    height: 14px;
-  }
-
-  /* Reduce header padding */
-  .sidebar-header {
-    padding: var(--spacing-sm);
-  }
-
-  .sidebar-header h2 {
-    font-size: 1.1rem;
+    max-width: 250px;
+    margin: 0 auto;
   }
 }
