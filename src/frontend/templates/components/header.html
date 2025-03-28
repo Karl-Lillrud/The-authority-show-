@@ -34,27 +34,17 @@
     <div class="menu" id="menu">
       <!-- <a href="{{ url_for('dashboard_bp.account') }}">Account</a>
       <a href="{{ url_for('dashboard_bp.taskmanagement') }}">Task Management</a>-->
-      <a href="{{ url_for('dashboard_bp.podcastmanagement') }}"
-        >Podcast Management</a
-      >
+
       <!-- <a href="{{ url_for('dashboard_bp.team') }}">Team Members</a>>-->
-      <a href="#" id="landing-page-link">Landing Page</a>
 
       <a href="{{ url_for('dashboard_bp.account') }}">Account</a>
+
       <a href="{{ url_for('dashboard_bp.taskmanagement') }}">Episode To-Do</a>
       <a href="{{ url_for('dashboard_bp.team') }}">Team Management</a>
-
       <a href="{{ url_for('dashboard_bp.podcastmanagement') }}"
         >Podcast Management</a
       >
-      <a
-        href="{{ url_for('landingpage_bp.landingpage_by_id', podcast_id='your_podcast_id_here') }}"
-        >Landing Page</a
-      >
-
-      <a href="{{ url_for('dashboard_bp.podcastmanagement') }}">Podcast Management</a>
       <a href="#" id="landing-page-link">Landing Page</a>
-
       <a href="{{ url_for('auth_bp.signin') }}" id="logout-link">Log out</a>
     </div>
   </nav>

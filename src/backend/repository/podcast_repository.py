@@ -5,6 +5,8 @@ from backend.models.podcasts import PodcastSchema
 import logging
 import urllib.request
 import feedparser
+from backend.services.rss_Service import RSSService  # Import RSSService
+
 
 logger = logging.getLogger(__name__)
 
@@ -26,11 +28,6 @@ class PodcastRepository:
             # Inject the accountId into the data
             data["accountId"] = account_id
 
-            if "hostBio" not in data or not data.get("hostBio"):
-                logger.warning("⚠️ hostBio is missing or empty in request data")
-            if "hostImage" not in data or not data.get("hostImage"):
-                logger.warning("⚠️ hostImage is missing or empty in request data")
-
             # Validate data using PodcastSchema
             schema = PodcastSchema()
             errors = schema.validate(data)
@@ -49,21 +46,6 @@ class PodcastRepository:
             if not account:
                 raise ValueError("Invalid account ID or no permission to add podcast.")
 
-            # Fetch RSS feed data
-            rss_url = validated_data.get("rssFeed")
-            if rss_url:
-                rss_data, status_code = self.fetch_rss_feed(rss_url)
-                if status_code != 200:
-                    raise ValueError("Failed to fetch RSS feed data")
-
-                # Merge RSS feed data into validated_data
-                validated_data.update(rss_data)
-
-                # Always assign imageUrl to logoUrl
-                if validated_data.get("imageUrl"):
-                    validated_data["logoUrl"] = validated_data["imageUrl"]
-                validated_data.pop("imageUrl", None)
-
             # Generate a unique podcast ID
             podcast_id = str(uuid.uuid4())
             podcast_item = {
@@ -73,7 +55,7 @@ class PodcastRepository:
                 "podName": validated_data.get("podName"),
                 "ownerName": validated_data.get("ownerName"),
                 "hostName": validated_data.get("hostName"),
-                "rssFeed": validated_data.get("rssFeed"),  # Ensure rssFeed is included
+                "rssFeed": validated_data.get("rssFeed"),
                 "googleCal": validated_data.get("googleCal"),
                 "podUrl": validated_data.get("podUrl"),
                 "guestUrl": validated_data.get("guestUrl"),
@@ -81,18 +63,16 @@ class PodcastRepository:
                 "email": validated_data.get("email"),
                 "description": validated_data.get("description"),
                 "logoUrl": validated_data.get("logoUrl"),
-                "category": validated_data.get("category", ""),  # Fixed field
+                "category": validated_data.get("category", ""),
                 "created_at": datetime.now(timezone.utc),
-                "title": validated_data.get("title", ""),  # Added field
-                "language": validated_data.get("language", ""),  # Added field
-                "author": validated_data.get("author", ""),  # Added field
-                "copyright_info": validated_data.get(
-                    "copyright_info", ""
-                ),  # Added field
-                "bannerUrl": validated_data.get("bannerUrl", ""),  # Added field
-                "tagline": validated_data.get("tagline", ""),  # Added field
-                "hostBio": validated_data.get("hostBio", ""),  # Added field
-                "hostImage": validated_data.get("hostImage", ""),  # Added field
+                "title": validated_data.get("title", ""),
+                "language": validated_data.get("language", ""),
+                "author": validated_data.get("author", ""),
+                "copyright_info": validated_data.get("copyright_info", ""),
+                "bannerUrl": validated_data.get("bannerUrl", ""),
+                "tagline": validated_data.get("tagline", ""),
+                "hostBio": validated_data.get("hostBio", ""),
+                "hostImage": validated_data.get("hostImage", ""),
             }
 
             # Insert into database
@@ -107,17 +87,12 @@ class PodcastRepository:
                 raise ValueError("Failed to add podcast.")
 
         except ValueError as e:
-            # Handle specific business logic errors
             if isinstance(e.args[0], str):
-                return {"error": e.args[0]}, 400  # Specific business error
+                return {"error": e.args[0]}, 400
             else:
-                return {
-                    "error": e.args[0],
-                    "details": e.args[1],
-                }, 400  # Validation errors
+                return {"error": e.args[0], "details": e.args[1]}, 400
 
         except Exception as e:
-            # Catch any unexpected errors (e.g., database issues)
             return {"error": "Failed to add podcast", "details": str(e)}, 500
 
     def get_podcasts(self, user_id):
@@ -272,166 +247,12 @@ class PodcastRepository:
 
     def fetch_rss_feed(self, rss_url):
         try:
-            # Fetch the RSS feed
-            req = urllib.request.Request(
-                rss_url,
-                headers={"User-Agent": "Mozilla/5.0 (PodManager.ai RSS Parser)"},
-            )
-            with urllib.request.urlopen(req) as response:
-                rss_content = response.read()
-
-            # Parse the RSS feed using feedparser
-            feed = feedparser.parse(rss_content)
-
-            # Extract basic podcast info
-            title = feed.feed.get("title", "")
-            description = feed.feed.get("description", "")
-            link = feed.feed.get("link", "")  # Added podcast link
-            image_url = feed.feed.get("image", {}).get("href", "")
-            language = feed.feed.get("language", "")
-            author = feed.feed.get("author", "")
-            copyright_info = feed.feed.get("copyright", "")
-            generator = feed.feed.get("generator", "")  # Added generator
-            last_build_date = feed.feed.get(
-                "lastBuildDate", ""
-            )  # Added last build date
-            itunes_type = feed.feed.get("itunes_type", "")  # Added podcast type
-            # Updated: Check alternative keys for owner info with additional fallback
-            itunes_owner_dict = feed.feed.get("itunes_owner", {})
-            itunes_owner = {
-                "name": itunes_owner_dict.get("itunes_name", "")
-                or feed.feed.get("itunes_owner_name", "")
-                or "",
-                "email": itunes_owner_dict.get("itunes_email", "")
-                or feed.feed.get("itunes_owner_email", "")
-                or feed.feed.get("owner", {}).get("email", "")
-                or feed.feed.get("owner_email", ""),
-            }
-            # Fallback: if owner email is empty, try extracting via regex from raw XML
-            if not itunes_owner.get("email"):
-                rss_text = rss_content.decode("utf-8", errors="ignore")
-                import re
-
-                match = re.search(
-                    r"<itunes:email>(.*?)<\/itunes:email>", rss_text, re.IGNORECASE
-                )
-                if match:
-                    itunes_owner["email"] = match.group(1).strip()
-
-            # Handle categories and subcategories
-            categories = []
-            for cat in feed.feed.get("itunes_categories", []):
-                main_cat = cat.get("text", "")
-                sub_cats = [sub.get("text", "") for sub in cat.get("subcategories", [])]
-                categories.append({"main": main_cat, "subcategories": sub_cats})
-            if not categories and feed.feed.get("itunes_category"):
-                categories.append(
-                    {
-                        "main": feed.feed.get("itunes_category", {}).get("text", ""),
-                        "subcategories": [],
-                    }
-                )
-
-            # Fallback: if still no categories, use regex to extract <itunes:category> text attribute
-            if not categories:
-                rss_text = rss_content.decode("utf-8", errors="ignore")
-                import re
-
-                cat_matches = re.findall(
-                    r'<itunes:category text="([^"]+)"', rss_text, re.IGNORECASE
-                )
-                if cat_matches:
-                    categories = [{"main": m, "subcategories": []} for m in cat_matches]
-
-            # Extract episodes
-            episodes = []
-            for entry in feed.entries:
-                # Parse duration (e.g., "00:44:56" to seconds)
-                duration = entry.get("itunes_duration", "")
-                duration_seconds = None
-                if duration and ":" in duration:
-                    time_parts = duration.split(":")
-                    if len(time_parts) == 3:  # HH:MM:SS
-                        duration_seconds = (
-                            int(time_parts[0]) * 3600
-                            + int(time_parts[1]) * 60
-                            + int(time_parts[2])
-                        )
-                    elif len(time_parts) == 2:  # MM:SS
-                        duration_seconds = int(time_parts[0]) * 60 + int(time_parts[1])
-
-                # New episode image extraction without channel fallback
-                episode_image = ""
-                if "itunes_image" in entry and entry["itunes_image"]:
-                    episode_image = entry["itunes_image"].get("href", "")
-                if not episode_image and "image" in entry and entry["image"]:
-                    episode_image = entry["image"].get("href", "")
-                if not episode_image:
-                    episode_image = entry.get("media_thumbnail", [{}])[0].get("url", "")
-
-                # Fallback for episode category
-                episode_category = entry.get("itunes_category", "")
-                if not episode_category:
-                    episode_category = entry.get("category", "")
-                if not episode_category and categories:
-                    episode_category = categories[0].get("main", "")
-                # New raw fallback using regex on entry content
-                if not episode_category and entry.get("content"):
-                    import re
-
-                    content = entry.get("content")[0].get("value", "")
-                    match = re.search(
-                        r"<category>(.*?)<\/category>", content, re.IGNORECASE
-                    )
-                    if match:
-                        episode_category = match.group(1).strip()
-
-                episode = {
-                    "title": entry.get("title", ""),
-                    "description": entry.get("description", ""),
-                    "pubDate": entry.get("published", ""),
-                    "audio": {
-                        "url": entry.get("enclosures", [{}])[0].get("href", ""),
-                        "type": entry.get("enclosures", [{}])[0].get("type", ""),
-                        "length": entry.get("enclosures", [{}])[0].get("length", ""),
-                    },
-                    "guid": entry.get("guid", ""),
-                    "season": entry.get("itunes_season", None),
-                    "episode": entry.get("itunes_episode", None),
-                    "episodeType": entry.get("itunes_episodetype", None),
-                    "explicit": entry.get("itunes_explicit", None),
-                    "image": episode_image,  # Use unique episode image only
-                    "keywords": entry.get("itunes_keywords", None),
-                    "chapters": entry.get("chapters", None),
-                    "link": entry.get("link", ""),
-                    "subtitle": entry.get("itunes_subtitle", ""),
-                    "summary": entry.get("itunes_summary", ""),
-                    "author": entry.get("author", ""),
-                    "isHidden": entry.get("itunes_isHidden", None),
-                    "duration": duration_seconds,  # Duration in seconds
-                    "creator": entry.get("dc_creator", ""),
-                    "category": episode_category,  # New field for episode category
-                }
-                episodes.append(episode)
-
-            return {
-                "title": title,
-                "description": description,
-                "link": link,  # Added
-                "imageUrl": image_url,
-                "language": language,
-                "author": author,
-                "copyright_info": copyright_info,
-                "generator": generator,  # Added
-                "lastBuildDate": last_build_date,  # Added
-                "itunesType": itunes_type,  # Added
-                "itunesOwner": itunes_owner,  # Added
-                "email": itunes_owner.get("email", ""),  # New field added
-                "categories": categories,  # Updated to include subcategories
-                "episodes": episodes[:10],  # Limit to first 10 episodes
-            }, 200
-
+            # Delegate RSS fetching to RSSService
+            return RSSService.fetch_rss_feed(rss_url)
         except Exception as e:
+            logger.error(
+                "❌ ERROR fetching RSS feed: %s", e, exc_info=True
+            )  # Added error log
             return {"error": f"Error fetching RSS feed: {str(e)}"}, 500
 
     # Delete podcast associated with user when user account is deleted
@@ -447,3 +268,20 @@ class PodcastRepository:
         except Exception as e:
             logger.error(f"Failed to delete podcasts: {e}", exc_info=True)
             return 0
+
+    def addPodcastWithRss(self, user_id, rss_url):
+        """
+        Fetch RSS data using RSSService and add a podcast to the repository.
+        """
+        try:
+            # Fetch RSS data
+            rss_data, status_code = RSSService.fetch_rss_feed(rss_url)
+            if status_code != 200:
+                return {"error": "Failed to fetch RSS feed", "details": rss_data}, 400
+
+            # Call existing add_podcast method
+            return self.add_podcast(user_id)
+
+        except Exception as e:
+            logger.error("Error in addPodcastWithRss: %s", e, exc_info=True)
+            return {"error": "Failed to add podcast with RSS", "details": str(e)}, 500
