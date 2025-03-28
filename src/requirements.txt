@@ -76,6 +76,7 @@ pyparsing
 python-bootstrap
 python-dateutil
 python-dotenv
+pytz
 PyYAML
 regex
 requests
@@ -92,6 +93,7 @@ sniffio
 soupsieve
 sqlparse
 sympy
+timezonefinder
 tqdm
 typing_extensions
 tzdata
