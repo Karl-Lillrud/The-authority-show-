@@ -8,6 +8,7 @@ import email.utils  # Import to handle parsing date format
 
 logger = logging.getLogger(__name__)
 
+
 class GuestRepository:
     def __init__(self):
         self.collection = collection.database.Guests
@@ -18,26 +19,28 @@ class GuestRepository:
 
             episode = collection.database.Episodes.find_one({"_id": episode_id})
             if not episode:
-                return {"error": "Episode not found"}, 404  # Handle case where the episode does not exist
+                return {"error": "Episode not found"}, 404
 
             current_date = datetime.now(timezone.utc)
 
-            # Use email.utils.parsedate to parse the date
+            # Parse and make publish_date offset-aware
             try:
                 publish_date_parsed = email.utils.parsedate(episode["publishDate"])
-                publish_date = datetime(*publish_date_parsed[:6])  # Convert parsed time to datetime object
+                publish_date = datetime(
+                    *publish_date_parsed[:6]
+                )  # Convert to datetime object
+                publish_date = publish_date.replace(
+                    tzinfo=timezone.utc
+                )  # Make it offset-aware
             except Exception as e:
                 return {"error": f"Invalid publish date format: {str(e)}"}, 400
 
-            if episode["status"] == "published" or publish_date < current_date:
-                return {"error": "Cannot invite guests to a published episode or an episode that has passed its date."}, 400
-
-            guest_data = GuestSchema().load(data)  # Validate and load guest data using GuestSchema
-            guest_id = str(uuid.uuid4())  # Generate a unique ID for the guest
+            guest_data = GuestSchema().load(data)
+            guest_id = str(uuid.uuid4())
 
             guest_item = {
                 "_id": guest_id,
-                "episodeId": episode_id,  # Link the guest to the episode
+                "episodeId": episode_id,
                 "name": guest_data["name"].strip(),
                 "image": guest_data.get("image", ""),
                 "tags": guest_data.get("tags", []),
@@ -47,11 +50,11 @@ class GuestRepository:
                 "linkedin": guest_data.get("linkedin", "").strip(),
                 "twitter": guest_data.get("twitter", "").strip(),
                 "areasOfInterest": guest_data.get("areasOfInterest", []),
-                "status": "Pending",  # Set guest status as 'Pending' initially
-                "scheduled": 0,  # Set initial scheduling status
-                "completed": 0,  # Set initial completion status
+                "status": "Pending",
+                "scheduled": 0,
+                "completed": 0,
                 "created_at": datetime.now(timezone.utc),
-                "user_id": user_id,  # Store the user ID to associate guest with the user
+                "user_id": user_id,
             }
 
             self.collection.insert_one(guest_item)
@@ -90,9 +93,15 @@ class GuestRepository:
                 guest_list.append(
                     {
                         "id": str(guest.get("_id")),
-                        "episodeId": guest.get("episodeId", None),  # Default to None if episodeId is missing
-                        "name": guest.get("name", "N/A"),  # Default to 'N/A' if name is missing
-                        "image": guest.get("image", ""),  # Default to empty string if image is missing
+                        "episodeId": guest.get(
+                            "episodeId", None
+                        ),  # Default to None if episodeId is missing
+                        "name": guest.get(
+                            "name", "N/A"
+                        ),  # Default to 'N/A' if name is missing
+                        "image": guest.get(
+                            "image", ""
+                        ),  # Default to empty string if image is missing
                         "bio": guest.get("bio", ""),
                         "tags": guest.get("tags", []),
                         "email": guest.get("email", ""),
@@ -103,10 +112,7 @@ class GuestRepository:
                 )
 
             # Return the list of guests with a success message
-            return {
-                "message": "Guests fetched successfully", 
-                "guests": guest_list
-            }, 200
+            return {"message": "Guests fetched successfully", "guests": guest_list}, 200
 
         except Exception as e:
             # Handle any errors during the database query or processing
@@ -210,7 +216,7 @@ class GuestRepository:
         except Exception as e:
             logger.exception("❌ ERROR: Failed to fetch guests for episode")
             return {"error": f"Failed to fetch guests: {str(e)}"}, 500
-    
+
     def get_guest_by_id(self, user_id, guest_id):
         """
         Get a specific guest by ID
@@ -254,47 +260,56 @@ class GuestRepository:
         except Exception as e:
             logger.exception("❌ ERROR: Failed to fetch guest by ID")
             return {"error": f"An error occurred while fetching guest: {str(e)}"}, 500
-        
+
     def get_episodes_by_guest(self, guest_id):
         """
         Get all episodes for a specific guest
         """
         try:
             # Fetch episodes for the specific guest
-            episodes_cursor = self.collection.aggregate([
-                {"$match": {"guests": guest_id}},  # Match episodes with this guest
-                {"$unwind": "$episodes"},
-                {"$match": {"episodes.guests": guest_id}},  # Match episodes with this guest
-                {
-                    "$project": {
-                        "_id": "$episodes._id",
-                        "title": "$episodes.title",
-                        "description": "$episodes.description",
-                        "publish_date": "$episodes.publish_date",
-                        "guests": "$episodes.guests",
-                    }
-                },
-            ])
+            episodes_cursor = self.collection.aggregate(
+                [
+                    {"$match": {"guests": guest_id}},  # Match episodes with this guest
+                    {"$unwind": "$episodes"},
+                    {
+                        "$match": {"episodes.guests": guest_id}
+                    },  # Match episodes with this guest
+                    {
+                        "$project": {
+                            "_id": "$episodes._id",
+                            "title": "$episodes.title",
+                            "description": "$episodes.description",
+                            "publish_date": "$episodes.publish_date",
+                            "guests": "$episodes.guests",
+                        }
+                    },
+                ]
+            )
 
             episodes_list = []
             for episode in episodes_cursor:
-                episodes_list.append({
-                    "episode_id": str(episode["_id"]),
-                    "title": episode["title"],
-                    "description": episode["description"],
-                    "publish_date": episode["publish_date"],
-                    "guests": episode["guests"]
-                })
+                episodes_list.append(
+                    {
+                        "episode_id": str(episode["_id"]),
+                        "title": episode["title"],
+                        "description": episode["description"],
+                        "publish_date": episode["publish_date"],
+                        "guests": episode["guests"],
+                    }
+                )
 
             if not episodes_list:
                 return {"message": "No episodes found for this guest"}, 404
 
-            return {"message": "Episodes fetched successfully", "episodes": episodes_list}, 200
+            return {
+                "message": "Episodes fetched successfully",
+                "episodes": episodes_list,
+            }, 200
 
         except Exception as e:
             logger.exception("❌ ERROR: Failed to fetch episodes by guest")
             return {"error": f"Failed to fetch episodes for guest: {str(e)}"}, 500
-        
+
     # Delete guests associated with user when user account is deleted
     def delete_by_user(self, user_id):
         try:

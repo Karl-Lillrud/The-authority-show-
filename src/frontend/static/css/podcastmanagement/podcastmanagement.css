@@ -1260,10 +1260,12 @@ select:disabled {
   color: #a9a9a9;
 }
 
+select option {
+  color: #000000; /* Ensure text color is black for all options */
+}
+
 select option:disabled {
-  color: #a9a9a9; /* Grey out the text */
-  background-color: #f0f0f0; /* Light grey background */
-  font-style: italic; /* Optional: italicize for distinction */
+  color: #a9a9a9; /* Grey out the text for disabled options */
 }
 
 .form-actions {

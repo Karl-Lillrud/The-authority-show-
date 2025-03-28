@@ -2,7 +2,10 @@ import {
   fetchGuestsRequest,
   addGuestRequest
 } from "../../../static/requests/guestRequests.js";
-import { fetchEpisodesByPodcast } from "../../../static/requests/episodeRequest.js";
+import {
+  fetchEpisodesByPodcast,
+  fetchEpisode
+} from "../../../static/requests/episodeRequest.js"; // Added fetchEpisode import
 import { fetchPodcasts } from "../../../static/requests/podcastRequests.js";
 import {
   showNotification,
@@ -217,6 +220,7 @@ async function showAddGuestPopup() {
           }
 
           option.textContent = text;
+          option.style.color = option.disabled ? "#a9a9a9" : "#000000"; // Set text color based on enabled/disabled state
           episodeSelect.appendChild(option);
         });
 
@@ -470,29 +474,37 @@ export function initGuestFunctions() {
         .getElementById("guest-twitter")
         .value.trim();
 
+      // Log the collected data
+      console.log("Collected Guest Data:", {
+        episodeId,
+        guestName,
+        guestDescription,
+        guestTags,
+        guestAreas,
+        guestEmail,
+        guestLinkedIn,
+        guestTwitter
+      });
+
       // Ensure required fields are filled in
       if (guestName && guestEmail && episodeId) {
         try {
-          // Fetch episode details using episodeId (you may need to fetch this from your backend)
-          const episode = await fetchEpisodeDetails(episodeId); // Replace with your actual fetch method
-          const current_date = new Date();
-          const publish_date = new Date(episode.publishDate); // Assuming publishDate is in a valid format
+          // Log before sending the request
+          console.log("Sending request to addGuestRequest with payload:", {
+            episodeId,
+            name: guestName,
+            description: guestDescription,
+            tags: guestTags,
+            areasOfInterest: guestAreas,
+            email: guestEmail,
+            linkedin: guestLinkedIn,
+            twitter: guestTwitter
+          });
 
-          // Check if the episode is published or if the publish date has passed
-          if (
-            episode["status"] === "published" ||
-            publish_date < current_date
-          ) {
-            // If the episode is already published or expired, show an error notification
-            showNotification(
-              "Error",
-              "Cannot add guest to a published episode or an episode that has passed its date.",
-              "error"
-            );
-            return; // Stop further execution
-          }
+          // Fetch the episode details
+          const episode = await fetchEpisode(episodeId);
 
-          // Proceed with guest addition logic if the episode is valid
+          // Proceed with guest addition logic
           const guest = await addGuestRequest({
             episodeId, // Ensure episodeId is correctly set
             name: guestName,
@@ -503,6 +515,15 @@ export function initGuestFunctions() {
             linkedin: guestLinkedIn,
             twitter: guestTwitter
           });
+
+          // Log the response from the backend
+          console.log("Response from addGuestRequest:", guest);
+
+          if (guest.error) {
+            console.error("Backend error:", guest.error);
+            showNotification("Error", guest.error, "error");
+            return;
+          }
 
           closeAddGuestPopup();
 
