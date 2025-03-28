@@ -158,6 +158,11 @@ export async function renderPodcastList() {
               }</p>
             </div>
             <div class="podcast-actions">
+              <button class="action-btn update-rss-btn" title="Update RSS Feed" data-id="${
+                podcast._id
+              }">
+                <span class="icon">${shared.svgpodcastmanagement.update}</span>
+              </button>
               <button class="action-btn view-btn" title="View podcast details" data-id="${
                 podcast._id
               }">
