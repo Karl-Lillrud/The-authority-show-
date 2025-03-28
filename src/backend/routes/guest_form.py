@@ -53,7 +53,6 @@ def guest_form():
 
     return render_template('guest-form/guest-form.html')
 
-<<<<<<< HEAD
 
 @guest_form_bp.route("/api/send-invite", methods=["POST"])
 def api_send_guest_invite():
@@ -69,5 +68,3 @@ def api_send_guest_invite():
         return jsonify({"error": str(e)}), 500
 
 
-=======
->>>>>>> c03991d423ac24320459b453874d6df07648a691

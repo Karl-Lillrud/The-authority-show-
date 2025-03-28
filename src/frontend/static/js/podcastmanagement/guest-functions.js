@@ -431,8 +431,4 @@ export function initGuestFunctions() {
       showNotification("Error", "Please fill in all required fields.", "error");
     }
   });
-<<<<<<< HEAD
 }
-=======
-}
->>>>>>> c03991d423ac24320459b453874d6df07648a691
