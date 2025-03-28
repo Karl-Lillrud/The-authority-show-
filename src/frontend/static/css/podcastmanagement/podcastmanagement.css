@@ -1305,6 +1305,32 @@ body {
   box-shadow: 0 0 0 2px rgba(255, 127, 63, 0.2);
 }
 
+select {
+  background-color: #ffffff; /* Set background to white */
+  color: #000000; /* Set text color to black */
+  border: 1px solid #ccc; /* Add a border for consistency */
+  padding: 8px;
+  border-radius: 4px;
+  font-size: 16px;
+}
+
+select:disabled {
+  background-color: #d3d3d3; /* Keep disabled fields grey */
+  color: #a9a9a9;
+}
+
+select option {
+  color: #000000; /* Ensure text color is black for all options */
+}
+
+select option:disabled {
+  color: #a9a9a9; /* Grey out the text for disabled options */
+}
+
+select:invalid {
+  color: #000000; /* Ensure placeholder text color is black */
+}
+
 .form-actions {
   display: flex;
   justify-content: flex-end;

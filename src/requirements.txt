@@ -24,11 +24,6 @@ feedparser
 filelock
 Flask
 flask-cors
-flatbuffers
-fonttools
-frozenlist
-fsspec
-gitdb
 google
 google-auth
 google-auth-oauthlib
