@@ -9,6 +9,7 @@ from io import BytesIO
 
 # Import the repository
 from backend.repository.episode_repository import EpisodeRepository
+from backend.repository.podcast_repository import PodcastRepository
 from backend.database.mongo_connection import episodes
 from backend.services.spotify_integration import (
     save_uploaded_files,
