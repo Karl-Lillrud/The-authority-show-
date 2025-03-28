@@ -13,7 +13,6 @@
 #  * - Supports file processing via REST API and integrates with Streamlit frontend.
 
 
-
 import streamlit as st
 import requests
 import base64
