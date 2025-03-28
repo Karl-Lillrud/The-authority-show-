@@ -460,29 +460,38 @@ export function initEpisodeFunctions() {
     .addEventListener("click", () => {
       document.getElementById("episode-form-popup").style.display = "none";
     });
-    // Assuming you are getting the episode data from the backend or checking a condition
-function loadEpisodeDetails(episodeData) {
-  const episodeInput = document.getElementById("episode-id");
 
-  // Check if the episode is created
-  if (episodeData && episodeData.isCreated) {  // Replace with your actual condition to check if the episode is created
-    // Disable the input field and apply greyed-out styles
-    episodeInput.disabled = true;
-    episodeInput.style.backgroundColor = "#d3d3d3"; // Grey out the background
-    episodeInput.style.color = "#a9a9a9"; // Grey out the text
-  } else {
-    // Enable the input field if the episode is not created
-    episodeInput.disabled = false;
-    episodeInput.style.backgroundColor = ""; // Reset background color
-    episodeInput.style.color = ""; // Reset text color
+  // Update the episode creation form to include recordingAt
+  document.getElementById("create-episode-form").innerHTML += `
+    <div class="field-group">
+      <label for="recording-at">Recording Date</label>
+      <input type="datetime-local" id="recording-at" name="recordingAt" />
+    </div>
+  `;
+
+  // Assuming you are getting the episode data from the backend or checking a condition
+  function loadEpisodeDetails(episodeData) {
+    const episodeInput = document.getElementById("episode-id");
+
+    // Check if the episode is created
+    if (episodeData && episodeData.isCreated) {
+      // Disable the input field and apply greyed-out styles
+      episodeInput.disabled = true;
+      episodeInput.style.backgroundColor = "#d3d3d3"; // Grey out the background
+      episodeInput.style.color = "#a9a9a9"; // Grey out the text
+    } else {
+      // Enable the input field if the episode is not created
+      episodeInput.disabled = false;
+      episodeInput.style.backgroundColor = ""; // Reset background color
+      episodeInput.style.color = ""; // Reset text color
+    }
   }
-}
 
-// Example usage when the episode data is available
-const episodeData = {
-  isCreated: true  // Example flag, replace with actual check
-};
-loadEpisodeDetails(episodeData);
+  // Example usage when the episode data is available
+  const episodeData = {
+    isCreated: true // Example flag, replace with actual check
+  };
+  loadEpisodeDetails(episodeData);
 
   // Episode form submission
   document
@@ -491,6 +500,19 @@ loadEpisodeDetails(episodeData);
       e.preventDefault();
       const formData = new FormData(e.target);
       const data = Object.fromEntries(formData.entries());
+
+      // Ensure recordingAt is in the correct format
+      if (data.recordingAt) {
+        const recordingAt = new Date(data.recordingAt);
+        if (isNaN(recordingAt.getTime())) {
+          showNotification(
+            "Invalid Date",
+            "Please provide a valid recording date.",
+            "error"
+          );
+          return;
+        }
+      }
 
       // Check for missing required fields
       if (!data.podcastId || !data.title || !data.publishDate) {
