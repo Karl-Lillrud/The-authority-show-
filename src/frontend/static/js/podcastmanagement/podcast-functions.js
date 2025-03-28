@@ -458,6 +458,13 @@ export async function renderPodcastList() {
   }
 }
 
+// Add delete confirmation modal fallback function
+function showDeleteConfirmationModal(message, onConfirm) {
+  if (confirm(message)) {
+    onConfirm();
+  }
+}
+
 // Function to render podcast detail
 export function renderPodcastDetail(podcast) {
   const podcastDetailElement = document.getElementById("podcast-detail");
