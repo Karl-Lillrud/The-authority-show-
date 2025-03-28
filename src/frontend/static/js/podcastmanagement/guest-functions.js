@@ -5,15 +5,7 @@ import {
 import {
   fetchEpisodesByPodcast,
   fetchEpisode
-<<<<<<< HEAD
 } from "../../../static/requests/episodeRequest.js";
-=======
-
-} from "../../../static/requests/episodeRequest.js"; // Added fetchEpisode import
-
-
-
->>>>>>> 3353a9eb3634bfd9d9c24614c514d6ef36fce653
 import { fetchPodcasts } from "../../../static/requests/podcastRequests.js";
 import {
   showNotification,
@@ -518,18 +510,7 @@ export function initGuestFunctions() {
           // Show success notification if the guest is added successfully
           showNotification("Success", "Guest added successfully!", "success");
 
-<<<<<<< HEAD
-<<<<<<< HEAD
           // Refresh the guest list in episode details without refreshing the page
-=======
-          // Navigate to episode details and scroll to the "Guests" section
->>>>>>> b7f5e84bd20e6d015c23f6731f6063a6aeb9d17f
-=======
-          // Refresh the guest list in episode details without refreshing the page
-
-          // Navigate to episode details and scroll to the "Guests" section
-
->>>>>>> 3353a9eb3634bfd9d9c24614c514d6ef36fce653
           renderEpisodeDetail({
             _id: episodeId,
             podcast_id: shared.selectedPodcastId
@@ -549,28 +530,8 @@ export function initGuestFunctions() {
           showNotification("Error", "Failed to add guest!", "error"); // Correct failure message
         }
       } else {
-<<<<<<< HEAD
-<<<<<<< HEAD
         // Alert if the required fields are not filled
         alert("Please fill in all required fields.");
-=======
-=======
-
-        // Alert if the required fields are not filled
-        alert("Please fill in all required fields.");
-
->>>>>>> 3353a9eb3634bfd9d9c24614c514d6ef36fce653
-        // Replace alert with notification
-        showNotification(
-          "Error",
-          "Please fill in all required fields.",
-          "error"
-        );
-<<<<<<< HEAD
->>>>>>> b7f5e84bd20e6d015c23f6731f6063a6aeb9d17f
-=======
-
->>>>>>> 3353a9eb3634bfd9d9c24614c514d6ef36fce653
       }
     });
 }
