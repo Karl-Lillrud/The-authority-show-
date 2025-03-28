@@ -1,3 +1,21 @@
+export async function send_guest_invitation({ name, email, episodeId }) {
+  try {
+    const response = await fetch("/api/send-invite", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ name, email, episodeId }),
+    });
+
+    const result = await response.json();
+
+    if (!response.ok) throw new Error(result.error || "Failed to send invite");
+
+    return result;
+  } catch (error) {
+    throw error;
+  }
+}
+
 export async function addGuestRequest(payload) {
   const res = await fetch("/add_guests", {
     method: "POST",

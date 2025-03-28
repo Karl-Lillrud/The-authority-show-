@@ -1,22 +1,28 @@
-import smtplib
-import logging
+import sys
 import os
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../../')))
+from flask import Blueprint, request, jsonify, render_template
+from backend.repository.guest_repository import GuestRepository
+from backend.utils.email_utils import send_guest_invitation
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
-from email.mime.image import MIMEImage  # Added for inline image support
+from email.mime.image import MIMEImage
 from dotenv import load_dotenv
+import smtplib
+import logging
 
-# Load environment variables once
+
 load_dotenv(override=True)
+
+logger = logging.getLogger(__name__)
 
 EMAIL_USER = os.getenv("EMAIL_USER")
 EMAIL_PASS = os.getenv("EMAIL_PASS")
 SMTP_SERVER = os.getenv("SMTP_SERVER")
 SMTP_PORT = os.getenv("SMTP_PORT")
 
-# Configure logger
-logger = logging.getLogger(__name__)
-logger.info(f"SMTP_SERVER: {SMTP_SERVER}, SMTP_PORT: {SMTP_PORT}, EMAIL_USER: {EMAIL_USER}")
+
+guest_form_bp = Blueprint('guest_form', __name__)
 
 def send_email(to_email, subject, body, image_path=None):
     """
@@ -174,3 +180,12 @@ def send_guest_invitation(data):
     image_path = "src/frontend/static/images/PodManagerLogo.png"
     logger.info(f"📬 Sending guest invitation to {recipient} for episode {episode_id}")
     return send_email(recipient, subject, body, image_path=image_path)
+
+if __name__ == "__main__":
+    test_data = {
+        "name": "Test-Guest",
+        "email": "uu7273240@gmail.com",  # use your real email to test
+        "episodeId": "ep001"
+    }
+    result = send_guest_invitation(test_data)
+    print("✅ Result:", result)
