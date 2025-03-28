@@ -1,23 +1,20 @@
-# audio_service.py
 import os
 import logging
 import tempfile
-from datetime import datetime
-from bson import ObjectId
+import requests
 import subprocess
 from backend.database.mongo_connection import get_fs
-from backend.utils.file_utils import enhance_audio_with_ffmpeg, detect_background_noise,convert_audio_to_wav
-from backend.utils.ai_utils import remove_filler_words, calculate_clarity_score, analyze_sentiment
-from backend.utils.text_utils import (transcribe_with_whisper,
-                                      detect_filler_words,
-                                      classify_sentence_relevance,
-                                      analyze_certainty_levels,
-                                      get_sentence_timestamps,
-                                      detect_long_pauses, 
-                                      generate_ai_show_notes)
-from backend.repository.Ai_models import save_file,get_file_data,get_file_by_id
+from backend.utils.file_utils import enhance_audio_with_ffmpeg, detect_background_noise, convert_audio_to_wav
+from backend.utils.ai_utils import (
+    remove_filler_words, calculate_clarity_score, analyze_sentiment
+)
+from backend.utils.text_utils import (
+    transcribe_with_whisper, detect_filler_words, classify_sentence_relevance,
+    analyze_certainty_levels, get_sentence_timestamps, detect_long_pauses,
+    generate_ai_show_notes
+)
+from backend.repository.Ai_models import save_file, get_file_data, get_file_by_id
 from elevenlabs.client import ElevenLabs
-
 
 logger = logging.getLogger(__name__)
 fs = get_fs()
@@ -70,50 +67,30 @@ class AudioService:
         }
 
     def cut_audio(self, file_id: str, start_time: float, end_time: float) -> str:
-        """
-        Trim an audio file between start_time and end_time, store it in MongoDB, and avoid duplicates.
-        """
         logger.info(f"📥 Request to clip audio file with ID: {file_id}")
         logger.info(f"🕒 Timestamps to clip: start={start_time}, end={end_time}")
 
         if start_time is None or end_time is None or start_time >= end_time:
-            raise ValueError(f"Invalid timestamps. Start: {start_time}, End: {end_time}")
+            raise ValueError("Invalid timestamps.")
 
-        # Generate filename
         clipped_filename = f"clipped_{file_id}.wav"
-
-        # Check if clipped file already exists
         existing = fs.find_one({"filename": clipped_filename})
         if existing:
-            logger.info(f"✅ Clipped version already exists in MongoDB with ID: {existing._id}")
+            logger.info(f"✅ Clipped version exists: {existing._id}")
             return str(existing._id)
 
+        audio_data = get_file_data(file_id)
+
+        with tempfile.NamedTemporaryFile(delete=False, suffix=".wav") as tmp_in:
+            tmp_in.write(audio_data)
+            input_path = tmp_in.name
+
+        output_path = input_path.replace(".wav", "_clipped.wav")
+
         try:
-            # Step 1: Get original audio from MongoDB
-            audio_data = get_file_data(file_id)
-            logger.info(f"📦 Retrieved original audio file ({len(audio_data)} bytes)")
-
-            with tempfile.NamedTemporaryFile(delete=False, suffix=".wav") as tmp_in:
-                tmp_in.write(audio_data)
-                input_path = tmp_in.name
-
-            output_path = input_path.replace(".wav", "_clipped.wav")
-
-            # Step 2: Run FFmpeg
             ffmpeg_cmd = f'ffmpeg -y -i "{input_path}" -ss {start_time} -to {end_time} -c copy "{output_path}"'
-            logger.info(f"🔧 Running FFmpeg command:\n{ffmpeg_cmd}")
-            result = subprocess.run(ffmpeg_cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            subprocess.run(ffmpeg_cmd, shell=True, check=True)
 
-            logger.info(f"📜 FFmpeg STDOUT:\n{result.stdout.decode()}")
-            logger.warning(f"⚠️ FFmpeg STDERR:\n{result.stderr.decode()}")
-
-            if result.returncode != 0:
-                raise RuntimeError(f"FFmpeg failed with return code {result.returncode}")
-
-            if not os.path.exists(output_path) or os.path.getsize(output_path) == 0:
-                raise RuntimeError("FFmpeg did not produce a valid output file")
-
-            # Step 3: Save clipped file
             with open(output_path, "rb") as f:
                 clipped_data = f.read()
 
@@ -122,27 +99,16 @@ class AudioService:
                 filename=clipped_filename,
                 metadata={"type": "transcription", "clipped": True}
             )
-            logger.info(f"✅ Clipped audio saved to MongoDB with ID: {clipped_file_id}")
 
+            logger.info(f"✅ Clipped audio saved with ID: {clipped_file_id}")
             return clipped_file_id
 
         finally:
-            # Clean up temp files
             for path in [input_path, output_path]:
-                try:
+                if os.path.exists(path):
                     os.remove(path)
-                    logger.info(f"🗑️ Deleted temp file: {path}")
-                except Exception as e:
-                    logger.warning(f"⚠️ Failed to delete temp file {path}: {str(e)}")
 
-    
     def ai_cut_audio(self, file_bytes: bytes, filename: str) -> dict:
-        """
-        Perform AI-based audio analysis: transcription, filler removal, background noise, certainty levels, sentiment, etc.
-        """
-
-        # Step 1: Save temp file
-        # Detect file extension from filename
         ext = os.path.splitext(filename)[1].lower()
         if ext not in [".mp3", ".wav"]:
             raise ValueError("Unsupported audio format")
@@ -157,18 +123,18 @@ class AudioService:
             with open(temp_path, "wb") as f:
                 f.write(file_bytes)
 
-        logger.info(f"📥 AI Cut: Temp audio file saved to {temp_path}")
+        logger.info(f"📥 AI Cut: Temp file at {temp_path}")
 
         try:
-            # Step 2: Transcribe
             client = ElevenLabs()
             result = client.speech_to_text.convert(
                 file=open(temp_path, "rb"),
                 model_id="scribe_v1",
                 num_speakers=2,
                 diarize=True,
-                timestamps_granularity="word",
+                timestamps_granularity="word"
             )
+
             transcript = result.text.strip()
             word_timings = [
                 {"word": w.text, "start": w.start, "end": w.end}
@@ -176,19 +142,15 @@ class AudioService:
                 if hasattr(w, "start") and hasattr(w, "end")
             ]
 
-            # Step 3: NLP & AI Tasks
             cleaned_transcript = remove_filler_words(transcript)
             noise_result = detect_background_noise(temp_path)
             filler_sentences = detect_filler_words(transcript)
-            sentence_analysis = classify_sentence_relevance(transcript)
             sentence_certainty = analyze_certainty_levels(transcript)
 
             sentence_timestamps = []
             for idx, entry in enumerate(sentence_certainty):
                 timestamps = get_sentence_timestamps(entry["sentence"], word_timings)
-                entry["start"] = timestamps["start"]
-                entry["end"] = timestamps["end"]
-                entry["id"] = idx
+                entry.update({"start": timestamps["start"], "end": timestamps["end"], "id": idx})
                 sentence_timestamps.append({
                     "id": idx,
                     "sentence": entry["sentence"],
@@ -198,14 +160,12 @@ class AudioService:
 
             suggested_cuts = [
                 {
-                    "sentence": entry["sentence"],
-                    "certainty_level": entry["certainty_level"],
-                    "certainty_score": entry["certainty"],
-                    "start": entry["start"],
-                    "end": entry["end"],
-                }
-                for entry in sentence_certainty
-                if entry["certainty"] >= 0.6
+                    "sentence": e["sentence"],
+                    "certainty_level": e["certainty_level"],
+                    "certainty_score": e["certainty"],
+                    "start": e["start"],
+                    "end": e["end"]
+                } for e in sentence_certainty if e["certainty"] >= 0.6
             ]
 
             sentiment = analyze_sentiment(transcript)
@@ -227,7 +187,51 @@ class AudioService:
         finally:
             os.remove(temp_path)
             logger.info(f"🗑️ Temp file cleaned up: {temp_path}")
-    
+
     def ai_cut_audio_from_id(self, file_id: str) -> dict:
         audio_bytes, filename = get_file_by_id(file_id)
         return self.ai_cut_audio(audio_bytes, filename)
+    
+    def isolate_voice(self, audio_bytes: bytes, filename: str) -> str:
+        """
+        Use ElevenLabs Voice Isolator via direct HTTP request and save result to MongoDB.
+        """
+        logger.info(f"🎙️ Starting voice isolation for file: {filename}")
+
+        with tempfile.NamedTemporaryFile(delete=False, suffix=".wav") as tmp:
+            tmp.write(audio_bytes)
+            temp_path = tmp.name
+
+        try:
+            api_key = os.getenv("ELEVENLABS_API_KEY")
+            url = "https://api.elevenlabs.io/v1/audio/voice-isolation"
+
+            with open(temp_path, "rb") as f:
+                files = {"audio": (filename, f, "audio/wav")}
+                headers = {"xi-api-key": api_key}
+
+                logger.info("🔄 Sending audio to ElevenLabs voice isolation endpoint...")
+                response = requests.post(url, files=files, headers=headers)
+
+            if response.status_code != 200:
+                raise RuntimeError(f"Voice isolation failed: {response.status_code} {response.text}")
+
+            isolated_audio = response.content
+            isolated_filename = f"isolated_{filename}"
+
+            file_id = save_file(
+                isolated_audio,
+                filename=isolated_filename,
+                metadata={"type": "voice_isolated", "source": filename}
+            )
+
+            logger.info(f"✅ Isolated voice saved to MongoDB with ID: {file_id}")
+            return file_id
+
+        except Exception as e:
+            logger.error(f"❌ Voice isolation failed: {str(e)}")
+            raise RuntimeError(f"Voice isolation failed: {str(e)}")
+
+        finally:
+            os.remove(temp_path)
+            logger.info(f"🗑️ Temp file cleaned up: {temp_path}")

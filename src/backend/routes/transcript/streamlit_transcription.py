@@ -376,6 +376,50 @@ with tab2:
 
                 else:
                     st.error("❌ Error analyzing emotion, sentiment, clarity, or background noise.")
+                    
+    st.markdown("---")
+    st.subheader("🎤 Voice Isolation (Powered by ElevenLabs)")
+
+    # Upload audio file for voice isolation
+    voice_file = st.file_uploader("📂 Upload an audio file for voice isolation", type=["wav", "mp3"], key="voice_isolator")
+
+    if voice_file:
+        st.audio(voice_file, format="audio/wav")
+        st.text("🎧 Original Audio (Before Isolation)")
+
+        if st.button("🎙️ Isolate Voice"):
+            with st.spinner("🔄 Isolating voice using ElevenLabs..."):
+                try:
+                    files = {"audio": voice_file}
+                    response = requests.post(f"{API_BASE_URL}/voice_isolate", files=files)
+
+                    if response.status_code == 200:
+                        isolated_id = response.json().get("isolated_file_id")
+                        st.success("✅ Voice isolation completed!")
+
+                        # Fetch the isolated file from MongoDB
+                        fetch_url = f"{API_BASE_URL}/get_file/{isolated_id}"
+                        logger.info(f"📡 Fetching isolated voice file from: {fetch_url}")
+                        isolated_response = requests.get(fetch_url)
+
+                        if isolated_response.status_code == 200:
+                            st.audio(isolated_response.content, format="audio/wav")
+                            st.session_state["isolated_voice"] = isolated_response.content
+
+                            st.download_button(
+                                label="📥 Download Isolated Voice",
+                                data=isolated_response.content,
+                                file_name="isolated_voice.wav",
+                                mime="audio/wav"
+                            )
+                        else:
+                            st.error("❌ Failed to fetch isolated voice file.")
+                    else:
+                        st.error(f"❌ Isolation failed: {response.text}")
+
+                except Exception as e:
+                    logger.error(f"Voice isolation request failed: {e}")
+                    st.error("❌ Voice isolation failed. Please try again.")
 
                     
     # Audio Cutting Section

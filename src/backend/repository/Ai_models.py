@@ -60,3 +60,4 @@ def get_file_by_id(file_id: str):
         return file_obj.read(), file_obj.filename
     except NoFile:
         raise FileNotFoundError("File not found in GridFS.")
+

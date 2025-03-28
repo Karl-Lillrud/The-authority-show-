@@ -206,3 +206,19 @@ def get_audio_info():
     except Exception as e:
         logger.error(f"❌ ERROR: Failed to process audio - {str(e)}")
         return jsonify({"error": f"Failed to process audio: {str(e)}"}), 500
+
+@transcription_bp.route("/voice_isolate", methods=["POST"])
+def isolate_voice():
+    if "audio" not in request.files:
+        return jsonify({"error": "No audio provided"}), 400
+
+    file = request.files["audio"]
+    filename = file.filename
+    audio_bytes = file.read()
+
+    try:
+        file_id = audio_service.isolate_voice(audio_bytes, filename)
+        return jsonify({"isolated_file_id": file_id}), 200
+    except Exception as e:
+        logger.error(f"Voice isolation error: {str(e)}")
+        return jsonify({"error": str(e)}), 500
