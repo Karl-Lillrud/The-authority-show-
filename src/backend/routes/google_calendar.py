@@ -1,5 +1,7 @@
 from flask import Blueprint, redirect, url_for, session, request
 from google_auth_oauthlib.flow import Flow
+from backend.database.mongo_connection import collection
+from bson import ObjectId
 import os
 from dotenv import load_dotenv
 import json
@@ -40,9 +42,21 @@ def connect_google_calendar():
 
 @google_calendar_bp.route('/oauth2callback')
 def oauth2callback():
+    user_id = session.get("user_id")
+    if not user_id:
+        return "User not authenticated", 401
+
     flow.fetch_token(authorization_response=request.url)
     credentials = flow.credentials
-    session['credentials'] = credentials_to_dict(credentials)
+    token_data = credentials_to_dict(credentials)
+
+    # Save to MongoDB
+    collection.database.Accounts.update_one(
+        {"_id": ObjectId(user_id)},
+        {"$set": {"googleCredentials": token_data}}
+    )
+
+    session['credentials'] = token_data
     return redirect(url_for('dashboard_bp.dashboard'))
 
 def credentials_to_dict(credentials):
