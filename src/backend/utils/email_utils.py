@@ -174,3 +174,12 @@ def send_guest_invitation(data):
     image_path = "src/frontend/static/images/PodManagerLogo.png"
     logger.info(f"📬 Sending guest invitation to {recipient} for episode {episode_id}")
     return send_email(recipient, subject, body, image_path=image_path)
+
+if __name__ == "__main__":
+    print("🚀 Starting email_utils.py test run...")
+    test_data = {
+        "name": "Test-From-App",
+        "email": "your@email.com",
+        "episodeId": "ep002"
+    }
+    send_guest_invitation(test_data)
