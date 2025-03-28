@@ -126,14 +126,19 @@ main {
 
 /* Container Styling */
 .container {
+  position: relative; /* Add relative positioning */
   background-color: var(--background-light);
   border-radius: var(--border-radius-xl);
   border: 1px solid rgba(0, 0, 0, 0.2);
   box-shadow: 0px 0px 50px 0px rgb(213, 61, 6);
-  width: 18%;
-  width: 460px;
-  padding: var(--spacing-xl);
-  margin: var(--spacing-xl) auto;
+  width: 560px; /* Increased width by 100px */
+  padding: var(--spacing-md); /* Reduced padding */
+  margin: 0 auto; /* Center horizontally */
+  height: auto; /* Adjust height dynamically */
+  display: flex;
+  flex-direction: column;
+  justify-content: center; /* Center content vertically */
+  gap: var(--spacing-sm); /* Add spacing between elements */
   transition: background-color 0.3s ease;
 }
 
@@ -142,21 +147,21 @@ body.dark-mode .container {
 }
 
 .container h1 {
-  margin-bottom: var(--spacing-lg);
+  margin-bottom: var(--spacing-sm); /* Reduced margin */
   color: var(--highlight-color);
   text-align: center;
 }
 
 /* Form Styling */
 .form-group {
-  margin-bottom: var(--spacing-lg);
+  margin-bottom: var(--spacing-sm); /* Reduced spacing between form groups */
   text-align: left;
 }
 
 label {
   display: block;
-  margin-bottom: var(--spacing-sm);
-  font-size: 1.1rem;
+  margin-bottom: var(--spacing-xs); /* Reduced margin below labels */
+  font-size: 1rem; /* Slightly smaller font size */
   font-weight: 500;
 }
 
@@ -164,11 +169,11 @@ input,
 select,
 textarea {
   width: 100%;
-  padding: var(--spacing-md);
+  padding: var(--spacing-xs); /* Reduced padding inside inputs */
   border: 1px solid #cccccc;
   border-radius: var(--border-radius-md);
   box-shadow: inset #c2bcbc 1px 5px 20px 0px;
-  font-size: 1rem;
+  font-size: 0.95rem; /* Slightly smaller font size */
   background: var(--background-light);
   color: var(--text-color-light);
   transition: all 0.3s ease;
@@ -192,8 +197,8 @@ body.dark-mode textarea {
 
 /* Button Styling */
 button {
-  padding: var(--spacing-md);
-  font-size: 1rem;
+  padding: var(--spacing-sm); /* Reduced padding for buttons */
+  font-size: 0.95rem; /* Slightly smaller font size */
   font-weight: bold;
   border: none;
   border-radius: var(--border-radius-md);
@@ -204,8 +209,8 @@ button {
 .button-primary {
   background-color: var(--highlight-color);
   color: white;
-  width: 100%;
-  margin-top: var(--spacing-lg);
+  width: 100%; /* Default full width for other buttons */
+  margin-top: var(--spacing-sm); /* Reduced margin above buttons */
   border: 1px double orange;
 }
 
@@ -214,12 +219,26 @@ button {
   opacity: 0.9;
 }
 
+#goToEmailSection {
+  width: auto; /* Make the button smaller */
+  padding: var(--spacing-xs) var(--spacing-md); /* Adjust padding */
+  position: absolute; /* Position it relative to the container */
+  bottom: var(--spacing-md); /* Place it at the bottom of the container */
+  right: var(--spacing-md); /* Align it to the right inside the container */
+  font-size: 0.9rem; /* Slightly smaller font size */
+}
+
+#goToEmailSection:hover {
+  box-shadow: 0 0 10px var(--highlight-color);
+  opacity: 0.9;
+}
+
 .button-secondary {
   background: none;
   color: var(--text-color-light);
   text-decoration: underline;
-  padding: var(--spacing-sm);
-  margin-top: var(--spacing-md);
+  padding: var(--spacing-xs); /* Reduced padding */
+  margin-top: var(--spacing-sm); /* Reduced margin */
   width: auto;
 }
 
@@ -399,10 +418,9 @@ body.dark-mode .help-button {
 
 /* NEW PODCAST SHOWCASE STYLES */
 .podcast-showcase {
-  width: 100%;
-  max-width: 1000px;
-  margin: 40px auto 0;
-  border-radius: 16px;
+  width: 560px; /* Increased width by 100px */
+  margin: var(--spacing-lg) auto 0; /* Center horizontally and add spacing above */
+  border-radius: var(--border-radius-xl);
   overflow: hidden;
   background-color: var(--card-bg-light);
   box-shadow: var(--card-shadow);
@@ -565,9 +583,8 @@ body.dark-mode .social-link {
 
 /* Episodes Carousel */
 .episodes-carousel-container {
-  width: 100%;
-  max-width: 1000px;
-  margin: 24px auto;
+  width: 560px; /* Increased width by 100px */
+  margin: var(--spacing-lg) auto; /* Center horizontally and add spacing */
 }
 
 .episodes-header {
@@ -585,7 +602,8 @@ body.dark-mode .social-link {
 
 .carousel-controls {
   display: flex;
-  gap: 12px;
+  justify-content: space-between;
+  margin-top: var(--spacing-sm);
 }
 
 .carousel-control {
@@ -611,8 +629,8 @@ body.dark-mode .social-link {
   display: flex;
   overflow-x: auto;
   scroll-behavior: smooth;
-  gap: 20px;
-  padding: 8px 4px 24px;
+  gap: 0; /* Remove gap between slides */
+  padding: 0; /* Remove padding */
   scrollbar-width: none; /* Firefox */
   -ms-overflow-style: none; /* IE and Edge */
 }
@@ -622,7 +640,7 @@ body.dark-mode .social-link {
 }
 
 .episode-card {
-  flex: 0 0 300px;
+  flex: 0 0 100%; /* Ensure each card takes up 100% of the slider width */
   border-radius: 12px;
   overflow: hidden;
   background-color: var(--card-bg-light);
@@ -920,4 +938,9 @@ body.dark-mode .error-container {
   .episode-card {
     flex: 0 0 85%;
   }
+}
+
+#connectCalendar {
+  margin-bottom: calc(var(--spacing-md) + 50px);
+  /* Add 50px extra space below the button */
 }

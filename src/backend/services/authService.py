@@ -1,11 +1,15 @@
 import logging
 import re
 import dns
+import random
+import time
+import hashlib
 from flask import jsonify, session
 from werkzeug.security import check_password_hash
 from backend.database.mongo_connection import collection
 from backend.services.teamService import TeamService
 from backend.services.accountService import AccountService
+from backend.utils.email_utils import send_email
 
 logger = logging.getLogger(__name__)
 
@@ -57,6 +61,48 @@ class AuthService:
         except Exception as e:
             logger.error("Error during login: %s", e, exc_info=True)
             return {"error": f"Error during login: {str(e)}"}, 500
+    def send_verification_code(self, email):
+        """
+        Generate and send a verification code to the user's email.
+        """
+        try:
+            # Generate a 6-digit verification code
+            code = str(random.randint(100000, 999999))
+
+            # Store the verification code securely (e.g., hashed) with an expiration time
+            expiration_time = time.time() + 300  # Code valid for 5 minutes
+            hashed_code = hashlib.sha256(code.encode()).hexdigest()
+            self._store_verification_code(email, hashed_code, expiration_time)
+
+            # Send the verification code to the user's email
+            subject = "Verification Code"
+            body = f"""
+            <html>
+                <body>
+                    <p>Hello,</p>
+                    <p>Your verification code is: <strong>{code}</strong></p>
+                    <p>This code is valid for 5 minutes.</p>
+                    <p>If you did not request this code, please ignore this email.</p>
+                </body>
+            </html>
+        """
+            send_email(email, subject, body)
+
+            return {"message": "Verification code sent"}
+        except Exception as e:
+            logger.error(f"Error sending the verification code: {e}", exc_info=True)
+            return {"error": f"Failed to send verification code: {str(e)}"}
+        
+    def _store_verification_code(self, email, hashed_code, expiration_time):
+        """
+        Store the hashed verification code and its expiration time in the database.
+        """
+        # Save to MongoDB (replace with your database logic)
+        self.user_collection.update_one(
+            {"email": email},
+            {"$set": {"verification_code": hashed_code, "verification_expiration": expiration_time}},
+            upsert=True
+        )
 
     def _authenticate_user(self, email, password):
         """Authenticate user with email and password."""
