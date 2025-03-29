@@ -14,6 +14,32 @@ export function closeModal(modal) {
   modal.setAttribute("aria-hidden", "true");
 }
 
+// Reusable function to render dropdown options
+function renderDropdownOptions(dropdown, items, isSelectedCallback) {
+  dropdown.innerHTML = '<option value="">Select Podcast to Add</option>';
+  items.forEach(item => {
+    const option = document.createElement("option");
+    option.value = item._id;
+    option.textContent = item.podName;
+    if (isSelectedCallback(item)) {
+      option.selected = true;
+    }
+    dropdown.appendChild(option);
+  });
+}
+
+// Reusable function to render chips
+function renderChips(container, items, onRemoveCallback) {
+  container.innerHTML = "";
+  items.forEach(item => {
+    const chip = document.createElement("div");
+    chip.className = "podcast-chip";
+    chip.innerHTML = `${item.podName} <span class="remove-chip" data-id="${item._id}">&times;</span>`;
+    chip.querySelector(".remove-chip").addEventListener("click", () => onRemoveCallback(item));
+    container.appendChild(chip);
+  });
+}
+
 // Helper to render assigned podcasts
 export function renderAssignedPodcasts(
   teamId,
@@ -21,28 +47,18 @@ export function renderAssignedPodcasts(
   pendingPodcastChanges
 ) {
   const container = document.getElementById("assignedPodcasts");
-  container.innerHTML = "";
-  const finalAssignments = {};
-  originalAssignedPodcasts.forEach((p) => {
-    finalAssignments[p._id] = p;
-  });
+  const finalAssignments = { ...originalAssignedPodcasts };
   for (const [podcastId, newTeam] of Object.entries(pendingPodcastChanges)) {
     if (newTeam === teamId) {
-      if (!finalAssignments[podcastId]) {
-        finalAssignments[podcastId] = {
-          _id: podcastId,
-          podName: "Pending: " + podcastId
-        };
-      }
+      finalAssignments[podcastId] = { _id: podcastId, podName: "Pending: " + podcastId };
     } else if (newTeam === "REMOVE") {
       delete finalAssignments[podcastId];
     }
   }
-  Object.values(finalAssignments).forEach((podcast) => {
-    const chip = document.createElement("div");
-    chip.className = "podcast-chip";
-    chip.innerHTML = `${podcast.podName} <span class="remove-chip" data-id="${podcast._id}">&times;</span>`;
-    container.appendChild(chip);
+  renderChips(container, Object.values(finalAssignments), podcast => {
+    pendingPodcastChanges[podcast._id] = "REMOVE";
+    renderAssignedPodcasts(teamId, originalAssignedPodcasts, pendingPodcastChanges);
+    populatePodcastDropdownForTeam(teamId, pendingPodcastChanges);
   });
 }
 
@@ -52,25 +68,9 @@ export async function populatePodcastDropdownForTeam(
   pendingPodcastChanges
 ) {
   const dropdown = document.getElementById("podcastAssignmentDropdown");
-  dropdown.innerHTML = '<option value="">Select Podcast to Add</option>';
   const podcasts = await fetchPodcasts();
-  podcasts.forEach((podcast) => {
-    let isAssigned = false;
-    if (podcast.teamId === teamId) {
-      isAssigned = true;
-    }
-    if (pendingPodcastChanges[podcast._id] === teamId) {
-      isAssigned = true;
-    }
-    if (pendingPodcastChanges[podcast._id] === "REMOVE") {
-      isAssigned = false;
-    }
-    if (!isAssigned) {
-      const option = document.createElement("option");
-      option.value = podcast._id;
-      option.textContent = podcast.podName;
-      dropdown.appendChild(option);
-    }
+  renderDropdownOptions(dropdown, podcasts, podcast => {
+    return podcast.teamId === teamId || pendingPodcastChanges[podcast._id] === teamId;
   });
 }
 
