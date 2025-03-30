@@ -83,7 +83,7 @@ app.register_blueprint(guestpage_bp)
 app.register_blueprint(account_bp)
 app.register_blueprint(usertoteam_bp)
 app.register_blueprint(invitation_bp)
-app.register_blueprint(google_calendar_bp)
+app.register_blueprint(google_calendar_bp)  # Register the google_calendar blueprint
 app.register_blueprint(episode_bp)
 app.register_blueprint(podprofile_bp)  # Register the podprofile blueprint
 app.register_blueprint(frontend_bp)  # Register the frontend blueprint
@@ -126,4 +126,4 @@ if __name__ == "__main__":
         host="0.0.0.0", port=8000, debug=False
     )  # Ensure the port matches your request URL
 
-    
+
