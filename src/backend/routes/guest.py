@@ -28,18 +28,8 @@ def add_guest():
         if not user_id:
             return {"error": "User not authenticated"}, 401
 
-        # Add the guest to the database
+        # Add the guest to the database and send the invitation email
         response, status_code = InvitationService.send_guest_invitation(user_id, data)
-
-        # If the guest was added successfully, send the invitation email
-        if status_code == 201:
-            guest_form_url = url_for(
-                "guest_form.guest_form",
-                _external=True,
-                guestId=response.get("guest_id"),
-                googleCal=data.get("googleCal", ""),
-            )
-            send_guest_invitation_email(data["name"], data["email"], guest_form_url)
 
         return jsonify(response), status_code
 

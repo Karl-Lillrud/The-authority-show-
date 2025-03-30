@@ -5,6 +5,7 @@ from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from email.mime.image import MIMEImage  # Added for inline image support
 from dotenv import load_dotenv
+from flask import render_template
 
 # Load environment variables once
 load_dotenv(override=True)
@@ -130,19 +131,22 @@ def send_team_invite_email(
     return send_email(email, subject, body, image_path=image_path)
 
 
-def send_guest_invitation_email(guest_name, guest_email, guest_form_url):
+def send_guest_invitation_email(guest_name, guest_email, guest_form_url, podcast_name):
     """
     Sends an invitation email to a guest with a link to the guest form.
     """
-    subject = "You're Invited to Join as a Guest!"
-    body = f"""
-    <html>
-        <body>
-            <p>Hello {guest_name},</p>
-            <p>You have been invited to join as a guest on our podcast. Please click the link below to fill out your guest form and schedule a recording date:</p>
-            <p><a href="{guest_form_url}">Complete Your Guest Form</a></p>
-            <p>We look forward to having you on our show!</p>
-        </body>
-    </html>
-    """
-    return send_email(guest_email, subject, body)
+    try:
+        # Render the email body using the guest-email.html template
+        body = render_template(
+            "guest-email/guest-email.html",
+            guest_name=guest_name,
+            guest_form_url=guest_form_url,
+            podcast_name=podcast_name,
+        )
+
+        subject = f"You're Invited to Join {podcast_name} as a Guest!"
+        return send_email(guest_email, subject, body)
+
+    except Exception as e:
+        logger.error(f"Failed to send guest invitation email: {e}", exc_info=True)
+        return {"error": f"Failed to send guest invitation email: {str(e)}"}

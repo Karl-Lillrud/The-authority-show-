@@ -17,9 +17,14 @@ class GuestRepository:
         try:
             episode_id = data.get("episodeId")
 
+            # Fetch the episode and ensure it contains the 'podcast_id' field
             episode = collection.database.Episodes.find_one({"_id": episode_id})
             if not episode:
+                logger.error(f"Episode with ID {episode_id} not found.")
                 return {"error": "Episode not found"}, 404
+            if "podcast_id" not in episode:
+                logger.warning(f"Episode with ID {episode_id} is missing 'podcast_id'.")
+                return {"error": "Episode missing 'podcast_id' field"}, 400
 
             current_date = datetime.now(timezone.utc)
 
