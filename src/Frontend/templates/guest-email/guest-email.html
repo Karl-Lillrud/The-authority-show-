@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>You're Invited to Our Podcast!</title>
+    <style>
+        /* Base styles */
+        body {
+            font-family: 'Helvetica Neue', Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background-color: #f9f9f9;
+            margin: 0;
+            padding: 0;
+        }
+        
+        /* Container */
+        .email-container {
+            max-width: 600px;
+            margin: 0 auto;
+            background-color: #ffffff;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+        }
+        
+        /* Header */
+        .header {
+            background: linear-gradient(135deg, #FF8A00, #FF5000);
+            padding: 30px 20px;
+            text-align: center;
+        }
+        
+        .logo {
+            width: 150px;
+            height: auto;
+            margin: 0 auto;
+        }
+        
+        /* Content */
+        .content {
+            padding: 30px;
+        }
+        
+        h1 {
+            color: #FF6B00;
+            margin-top: 0;
+            font-size: 24px;
+            font-weight: 700;
+        }
+        
+        p {
+            margin-bottom: 20px;
+            font-size: 16px;
+        }
+        
+        /* Button */
+        .button-container {
+            text-align: center;
+            margin: 30px 0;
+        }
+        
+        .button {
+            display: inline-block;
+            background: linear-gradient(135deg, #FF8A00, #FF5000);
+            color: white;
+            text-decoration: none;
+            padding: 14px 30px;
+            border-radius: 50px;
+            font-weight: bold;
+            font-size: 16px;
+            transition: transform 0.2s ease;
+        }
+        
+        .button:hover {
+            transform: scale(1.05);
+            background: linear-gradient(135deg, #FF5000, #FF8A00);
+        }
+        
+        /* Footer */
+        .footer {
+            background-color: #f5f5f5;
+            padding: 20px;
+            text-align: center;
+            font-size: 14px;
+            color: #777;
+        }
+        
+        /* Responsive */
+        @media only screen and (max-width: 480px) {
+            .content {
+                padding: 20px;
+            }
+            
+            h1 {
+                font-size: 22px;
+            }
+            
+            .button {
+                padding: 12px 25px;
+                font-size: 15px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="email-container">
+        <div class="header">
+            <img src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/PodManagerLogo-t0B20jTKtOvAxm5Z0XGzQ9REUMqB7T.png" alt="PodManager Logo" class="logo">
+        </div>
+        
+        <div class="content">
+            <h1>Hello {{ guest_name }},</h1>
+            
+            <p>We're excited to invite you as a guest on the podcast {{ podcast_name }}! Your expertise and unique perspective would make for an amazing episode that our listeners would love to hear!</p>
+            
+            <p>To get started, please click the button below to fill out your guest form and schedule a recording date that works best for you.</p>
+            
+            <div class="button-container">
+                <a href="{{ guest_form_url }}" class="button">Complete Your Guest Form</a>
+            </div>
+            
+            <p>We look forward to having you on our show and creating great content together!</p>
+            
+            <p>Best regards, {{ podcast_name }}</p>
+        </div>
+        
+        <div class="footer">
+            <p>© 2025 PodManager. All rights reserved.</p>
+            <p>If you have any questions, please contact us at <a href="mailto:podmanagerbeta@gmail.com">podmanagerbeta@gmail.com</a></p>
+        </div>
+    </div>
+</body>
+</html>
