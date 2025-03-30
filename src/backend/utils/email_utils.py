@@ -128,3 +128,21 @@ def send_team_invite_email(
 
     # 🔹 Call send_email() with inline image support
     return send_email(email, subject, body, image_path=image_path)
+
+
+def send_guest_invitation_email(guest_name, guest_email, guest_form_url):
+    """
+    Sends an invitation email to a guest with a link to the guest form.
+    """
+    subject = "You're Invited to Join as a Guest!"
+    body = f"""
+    <html>
+        <body>
+            <p>Hello {guest_name},</p>
+            <p>You have been invited to join as a guest on our podcast. Please click the link below to fill out your guest form and schedule a recording date:</p>
+            <p><a href="{guest_form_url}">Complete Your Guest Form</a></p>
+            <p>We look forward to having you on our show!</p>
+        </body>
+    </html>
+    """
+    return send_email(guest_email, subject, body)

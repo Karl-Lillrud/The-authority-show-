@@ -10,7 +10,7 @@ from backend.routes.pod_management import pod_management_bp
 from backend.routes.podtask import podtask_bp
 from backend.routes.account import account_bp
 from backend.routes.team import team_bp
-from backend.routes.guest import guest_bp
+from backend.routes.guest import guest_bp  # Ensure the guest blueprint is correctly imported
 from backend.routes.user_to_team import usertoteam_bp
 from backend.routes.invitation import invitation_bp
 from backend.routes.google_calendar import google_calendar_bp
@@ -76,9 +76,7 @@ app.register_blueprint(pod_management_bp)
 app.register_blueprint(podtask_bp)
 app.register_blueprint(team_bp)
 app.register_blueprint(Mailing_list_bp)
-app.register_blueprint(
-    guest_bp
-)  # Ensure this line is present and has the correct prefix
+app.register_blueprint(guest_bp)  # Ensure the guest blueprint is correctly registered
 app.register_blueprint(guestpage_bp)
 app.register_blueprint(account_bp)
 app.register_blueprint(usertoteam_bp)
