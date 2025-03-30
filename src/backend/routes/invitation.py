@@ -21,8 +21,17 @@ def send_invitation():
         if not hasattr(g, "user_id") or not g.user_id:
             return jsonify({"error": "Unauthorized"}), 401
 
+        # Fetch the user's email using InvitationService
+        try:
+            user_email = invitation_service.get_user_email(g.user_id)
+        except ValueError as e:
+            logger.error(str(e))
+            return jsonify({"error": str(e)}), 400
+
+        # Ensure the invitation type is valid
+        invitation_type = "beta"  # Hardcoded for this endpoint
         result, status_code = invitation_service.send_invitation(
-            "beta", None, inviter_id=g.user_id
+            invitation_type, user_email, inviter_id=g.user_id
         )
         return jsonify(result), status_code
 

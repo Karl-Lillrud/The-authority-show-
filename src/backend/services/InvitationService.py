@@ -17,7 +17,7 @@ class InvitationService:
     ):
         """
         Handles sending different types of invitations.
-        :param invitation_type: Type of invitation (e.g., 'guest', 'registration', 'team').
+        :param invitation_type: Type of invitation (e.g., 'guest', 'registration', 'team', 'beta').
         :param email: Recipient's email address.
         :param inviter_id: ID of the user sending the invitation (optional).
         :param team_id: ID of the team (optional, for team invitations).
@@ -25,7 +25,15 @@ class InvitationService:
         :return: A dictionary with the result and status code.
         """
         try:
+            if not email:
+                raise ValueError("Email is required for sending an invitation.")
+
             email = email.lower().strip()
+
+            # Validate invitation type
+            valid_invitation_types = {"team", "guest", "registration", "beta"}
+            if invitation_type not in valid_invitation_types:
+                raise ValueError(f"Invalid invitation type: {invitation_type}")
 
             if invitation_type == "team":
                 if not inviter_id or not team_id or not role:
@@ -70,8 +78,12 @@ class InvitationService:
                 logger.info(f"Registration invitation sent to {email}")
                 return {"message": "Registration invitation sent successfully"}, 200
 
-            else:
-                raise ValueError("Invalid invitation type.")
+            elif invitation_type == "beta":
+                # Send a beta invitation email
+                body = render_template("beta-email/podmanager-beta-invite.html")
+                send_email(email, "Invitation to PodManager Beta", body)
+                logger.info(f"Beta invitation sent to {email}")
+                return {"message": "Beta invitation sent successfully"}, 200
 
         except Exception as e:
             logger.error(
@@ -80,3 +92,16 @@ class InvitationService:
             return {
                 "error": f"Failed to send {invitation_type} invitation: {str(e)}"
             }, 500
+
+    def get_user_email(self, user_id):
+        """
+        Fetches the email address for a given user ID.
+        """
+        try:
+            user = self.user_repo.get_user_by_id(user_id)
+            if not user or not user.get("email"):
+                raise ValueError("No email found for the user.")
+            return user["email"]
+        except Exception as e:
+            logger.error(f"Error fetching email for user {user_id}: {e}")
+            raise ValueError("Failed to fetch user email.")
