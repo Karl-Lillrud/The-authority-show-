@@ -495,11 +495,15 @@ export function initEpisodeFunctions() {
       document.getElementById("episode-form-popup").style.display = "none";
     });
 
-  // Update the episode creation form to include recordingAt
-  document.getElementById("create-episode-form").innerHTML += `
+  // Update the episode creation form to move recordingAt above the buttons
+  document.getElementById("create-episode-form").innerHTML = `
     <div class="field-group">
       <label for="recording-at">Recording Date</label>
       <input type="datetime-local" id="recording-at" name="recordingAt" />
+    </div>
+    <div class="form-actions">
+      <button type="button" id="cancel-episode-form-btn" class="cancel-btn">Cancel</button>
+      <button type="submit" class="save-btn">Create Episode</button>
     </div>
   `;
 
