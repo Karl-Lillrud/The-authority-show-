@@ -3,7 +3,7 @@ name: Deploy Flask App to Azure
 on:
   push:
     branches:
-      - main
+      - main  # Change this if you use a different branch
 
 jobs:
   build-and-deploy:
@@ -16,28 +16,18 @@ jobs:
       - name: Setup Python
         uses: actions/setup-python@v3
         with:
-          python-version: "3.x"
+          python-version: "3.x"  # Specify the Python version you are using
 
       - name: Install Dependencies
         run: |
-          cd src  # Change to the src directory
+          cd src  # Navigate to the src directory
           python -m pip install --upgrade pip
           pip install -r requirements.txt
-
-      - name: Upload Startup Script
-        run: |
-          cd src  # Change to the src directory
-          echo -e "#!/bin/bash\n\ngunicorn --chdir src --bind 0.0.0.0:8000 --timeout 600 app:app &\nstreamlit run src/backend/routes/transcript/streamlit_transcription.py --server.port 8501 &\nwait" > /home/site/wwwroot/src/startup.sh
-          chmod +x /home/site/wwwroot/src/startup.sh  # Ensure the script is executable
 
       - name: Deploy to Azure Web App
         uses: azure/webapps-deploy@v3
         with:
           app-name: "podmanager"  # Replace with your Azure Web App name
           publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }}
-          package: ./src # Changed to deploy only the contents of src
-          startup-command: "/bin/bash startup.sh" # Changed so the file is found directly
-          slot-name: production
-        env:
-          pythonLocation: /opt/hostedtoolcache/Python/3.13.2/x64
-          LD_LIBRARY_PATH: /opt/hostedtoolcache/Python/3.13.2/x64/lib
+          package: .
+          startup-command: "gunicorn --chdir /home/site/wwwroot/src --bind 0.0.0.0:8000 --timeout 600 app:app & streamlit run /home/site/wwwroot/src/backend/routes/transcript/streamlit_transcription.py --server.port 8501"
