@@ -1,4 +1,4 @@
-#!/bin/bash
+!/bin/bash
 
 # Change to the src directory
 cd /home/site/wwwroot/src
