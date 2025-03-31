@@ -10,6 +10,7 @@ beautifulsoup4
 blinker
 cachetools
 certifi
+cffi
 charset-normalizer
 click
 colorama
@@ -30,6 +31,7 @@ google-auth-oauthlib
 greenlet
 gunicorn
 h11
+h3
 httplib2
 idna
 importlib_metadata
