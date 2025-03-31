@@ -6,7 +6,7 @@ from bson import ObjectId
 import gridfs
 
 from backend.services.videoService import VideoService
-from backend.repository.Ai_models import get_file_data  # if you use it elsewhere
+from backend.repository.ai_models import get_file_data  # if you use it elsewhere
 from backend.database.mongo_connection import get_fs
 
 fs = get_fs()

@@ -13,7 +13,7 @@ from backend.utils.text_utils import (
     analyze_certainty_levels, get_sentence_timestamps, detect_long_pauses,
     generate_ai_show_notes
 )
-from backend.repository.Ai_models import save_file, get_file_data, get_file_by_id
+from backend.repository.ai_models import save_file, get_file_data, get_file_by_id
 from elevenlabs.client import ElevenLabs
 
 logger = logging.getLogger(__name__)
