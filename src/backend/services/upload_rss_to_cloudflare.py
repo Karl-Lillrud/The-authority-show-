@@ -4,6 +4,7 @@ from dotenv import load_dotenv
 
 load_dotenv()  # Load environment variables from .env
 
+
 def upload_rss_to_cloudflare(rss_feed, filename):
     """
     Upload the generated RSS feed to Cloudflare R2.
@@ -14,6 +15,7 @@ def upload_rss_to_cloudflare(rss_feed, filename):
         endpoint_url=os.getenv("CLOUDFLARE_R2_BUCKET_URL"),
         aws_access_key_id=os.getenv("CLOUDFLARE_R2_ACCESS_KEY"),
         aws_secret_access_key=os.getenv("CLOUDFLARE_R2_SECRET_KEY"),
+        region_name="auto",  # Use a valid region name to avoid the InvalidRegionName error
     )
 
     # Define the bucket and the file name
@@ -26,7 +28,7 @@ def upload_rss_to_cloudflare(rss_feed, filename):
         Key=file_path,
         Body=rss_feed,
         ContentType="application/xml",  # Set content type to XML
-        ACL="public-read"  # Ensure the file is publicly accessible
+        ACL="public-read",  # Ensure the file is publicly accessible
     )
 
     # Return the publicly accessible URL
