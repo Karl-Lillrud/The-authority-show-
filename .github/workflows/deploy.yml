@@ -34,7 +34,6 @@ jobs:
           app-name: "podmanager" # Corrected name
           publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }}
           package: ./src
-          slot-name: production # We’ll address this next
         env:
           pythonLocation: /opt/hostedtoolcache/Python/3.11/x64 # Matcha version
           LD_LIBRARY_PATH: /opt/hostedtoolcache/Python/3.11/x64/lib
