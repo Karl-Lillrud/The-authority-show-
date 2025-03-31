@@ -6,6 +6,7 @@ import os
 from dotenv import load_dotenv
 import base64
 from io import BytesIO
+from datetime import datetime, timezone
 
 # Import the repository
 from backend.repository.episode_repository import EpisodeRepository
@@ -101,17 +102,15 @@ def publish(episode_id):
     Publish an episode.
     """
     logger.info(f"Received request to publish episode {episode_id}")
-
     try:
         episode = episode_repo.get_episode_by_id(episode_id)
         if not episode:
             return jsonify({"error": "Episode not found"}), 404
 
-        access_token = get_spotify_access_token()  # Correctly indented
+        access_token = get_spotify_access_token()
         if not access_token:
             return jsonify({"error": "Failed to retrieve Spotify access token"}), 500
 
-        # Generate RSS feed and upload it to Cloudflare R2
         podcast_data = {
             "title": episode.get("podcast_title", "Untitled Podcast"),
             "description": episode.get(
@@ -129,17 +128,23 @@ def publish(episode_id):
             }
         ]
 
-        # Generate the RSS feed
         rss_feed = create_rss_feed(podcast_data, episode_data)
-
-        # Upload the RSS feed to Cloudflare R2 and get the URL
         rss_feed_url = upload_rss_to_cloudflare(rss_feed, f"{episode_id}_feed.xml")
         logger.info(f"RSS feed uploaded to Cloudflare R2: {rss_feed_url}")
 
-        # Add the RSS feed URL to the episode data
-        episode["rss_feed_url"] = rss_feed_url
+        # Mark episode as published (update the episode document)
+        episode_repo.collection.update_one(
+            {"_id": episode_id},
+            {
+                "$set": {
+                    "status": "Published",
+                    "rss_feed_url": rss_feed_url,
+                    "updated_at": datetime.now(timezone.utc),
+                }
+            },
+        )
+        episode["status"] = "Published"  # update local representation
 
-        # Log a message instructing manual submission
         logger.info("Spotify does not provide an API for RSS feed submission.")
         logger.info(
             f"Please submit the RSS feed URL manually via Spotify for Podcasters: {rss_feed_url}"
@@ -147,12 +152,13 @@ def publish(episode_id):
         return (
             jsonify(
                 {
-                    "message": "RSS feed generated and uploaded. Please submit it manually via Spotify for Podcasters.",
+                    "message": "Episode published successfully",
                     "rss_feed_url": rss_feed_url,
                 }
             ),
             200,
         )
+
     except Exception as e:
         logger.error(f"Error publishing episode {episode_id}: {e}", exc_info=True)
         return jsonify({"error": "Failed to publish episode"}), 500
@@ -221,9 +227,8 @@ def episode_detail(episode_id):
         episode, podcast = episode_repo.get_episode_detail_with_podcast(episode_id)
         if not episode:
             return render_template("404.html")
-
-        # Render a dedicated episode page template and pass the episode data
-        return render_template("landingpage/episode.html", episode=ep)
+        # Pass the retrieved episode (which includes the published status) to the template
+        return render_template("landingpage/episode.html", episode=episode)
     except Exception as e:
         logger.error("❌ ERROR in episode_detail: %s", str(e))
         return f"Error: {str(e)}", 500
@@ -250,6 +255,7 @@ def get_episodes_by_podcast(podcast_id):
             file_size = ep.get("fileSize", "Unknown")
             file_type = ep.get("fileType", "Unknown")
             audio_url = ep.get("audioUrl", None)
+            status = ep.get("status", "Uncategorized")  # Include status field
 
             mapped_episodes.append(
                 {
@@ -264,6 +270,7 @@ def get_episodes_by_podcast(podcast_id):
                     "fileSize": file_size,
                     "fileType": file_type,
                     "audioUrl": audio_url,
+                    "status": status,  # add status to the mapping
                 }
             )
 

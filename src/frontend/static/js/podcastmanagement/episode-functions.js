@@ -106,11 +106,13 @@ export function renderEpisodeDetail(episode) {
       }" data-tooltip="Edit">
         ${shared.svgpodcastmanagement.edit}
       </button>
-      <button class="action-btn publish-btn" id="publish-episode-btn" data-id="${
-        episode._id
-      }" data-tooltip="Publish">
-        ${shared.svgpodcastmanagement.upload}
-      </button>
+      ${
+        episode.status !== "Published"
+          ? `<button class="action-btn publish-btn" id="publish-episode-btn" data-id="${episode._id}" data-tooltip="Publish">
+               ${shared.svgpodcastmanagement.upload}
+             </button>`
+          : `<span class="published-label">Published</span>`
+      }
     </div>
   </div>
   <div class="detail-content">
@@ -179,47 +181,6 @@ export function renderEpisodeDetail(episode) {
 
   // Define the episodeActions container
   const episodeActions = document.getElementById("episode-actions");
-
-  // Publish button event listener
-  document
-    .getElementById("publish-episode-btn")
-    .addEventListener("click", async () => {
-      const episodeId = document
-        .getElementById("publish-episode-btn")
-        .getAttribute("data-id");
-      try {
-        const response = await fetch(`/publish/${episodeId}`, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json"
-          }
-        });
-
-        const data = await response.json();
-        if (response.ok) {
-          showNotification("Success", "Published successfully!", "success");
-
-          // Update the status to "Published"
-          const statusElement = document.querySelector(".detail-category");
-          if (statusElement) {
-            statusElement.textContent = "Published";
-          }
-        } else {
-          showNotification(
-            "Error",
-            `Failed to publish episode: ${data.error}`,
-            "error"
-          );
-        }
-      } catch (error) {
-        console.error("Error publishing episode:", error);
-        showNotification(
-          "Error",
-          "An unexpected error occurred while publishing the episode.",
-          "error"
-        );
-      }
-    });
 
   // Publish button event listener
   document
