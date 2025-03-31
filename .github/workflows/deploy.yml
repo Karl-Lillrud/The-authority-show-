@@ -3,7 +3,7 @@ name: Deploy Flask App to Azure
 on:
   push:
     branches:
-      - custom # Change this if you use a different branch
+      - main # Change this if you use a different branch
 
 jobs:
   build-and-deploy:
