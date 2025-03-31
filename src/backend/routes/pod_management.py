@@ -11,7 +11,7 @@ from flask import (
 from backend.database.mongo_connection import collection, collection as team_collection
 
 dashboardmanagement_bp = Blueprint("dashboardmanagement_bp", __name__)
-pod_management_bp = Blueprint("pod_management", __name__)
+pod_management_bp = Blueprint("pod_management_bp", __name__, url_prefix="/podcastmanagement")
 
 
 @dashboardmanagement_bp.route("/load_all_guests", methods=["GET"])
@@ -49,3 +49,9 @@ def invite():
         )
         flash("You have successfully joined the team!", "success")
     return redirect(url_for("register_bp.register", email=email))
+
+
+@pod_management_bp.route("/", methods=["GET"])
+def podcast_management():
+    """Render the Podcast Management page."""
+    return render_template("podcastmanagement/podcastmanagement.html")

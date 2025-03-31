@@ -1,0 +1,27 @@
+{% extends "components/base.html" %}
+{% block title %}Listener Intelligence Dashboard{% endblock %}
+{% block content %}
+<div class="dashboard-container">
+  <h1>Listener Intelligence Dashboard</h1>
+  <div id="engagement-metrics" class="dashboard-section">
+    <h2>Audience Engagement Metrics</h2>
+    <div id="engagement-chart"></div>
+  </div>
+  <div id="emotional-flow" class="dashboard-section">
+    <h2>Emotional Flow Mapping</h2>
+    <div id="emotional-heatmap"></div>
+  </div>
+  <div id="cta-performance" class="dashboard-section">
+    <h2>Call-to-Action Performance</h2>
+    <div id="cta-table"></div>
+  </div>
+  <div id="superfan-identification" class="dashboard-section">
+    <h2>Superfan Identification</h2>
+    <div id="superfan-list"></div>
+  </div>
+  <div id="content-recommendations" class="dashboard-section">
+    <h2>Content Recommendations</h2>
+    <div id="recommendations"></div>
+  </div>
+</div>
+{% endblock %}
