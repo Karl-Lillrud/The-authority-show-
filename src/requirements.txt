@@ -142,7 +142,6 @@ python-bootstrap
 python-dateutil
 python-dotenv
 pytz
-pywin32
 PyYAML
 referencing
 regex
