@@ -614,13 +614,17 @@ body.dark-mode .social-link {
 }
 
 .episodes-list::-webkit-scrollbar-track {
-  background: rgba(0, 0, 0, 0.05);
+  background: #e0e0e0; /* Light silver track */
   border-radius: 10px;
 }
 
 .episodes-list::-webkit-scrollbar-thumb {
-  background: var(--highlight-color);
+  background: #b0b0b0; /* Silver-like color for the thumb */
   border-radius: 10px;
+}
+
+.episodes-list::-webkit-scrollbar-thumb:hover {
+  background: #a0a0a0; /* Slightly darker silver on hover */
 }
 
 .episodes-header {
