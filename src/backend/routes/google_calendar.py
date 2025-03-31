@@ -2,7 +2,6 @@ from flask import Blueprint, redirect, url_for, session, request
 from google_auth_oauthlib.flow import Flow
 import os
 from dotenv import load_dotenv
-import json
 
 google_calendar_bp = Blueprint('google_calendar_bp', __name__)
 
@@ -12,22 +11,17 @@ GOOGLE_CLIENT_ID = os.getenv("GOOGLE_CLIENT_ID")
 GOOGLE_CLIENT_SECRET = os.getenv("GOOGLE_AUTH_CLIENT_SECRET")
 GOOGLE_REDIRECT_URI = os.getenv("GOOGLE_REDIRECT_URI")
 
-# Create the client_secret.json file dynamically
-client_secret_data = {
-    "web": {
-        "client_id": GOOGLE_CLIENT_ID,
-        "client_secret": GOOGLE_CLIENT_SECRET,
-        "redirect_uris": [GOOGLE_REDIRECT_URI],
-        "auth_uri": "https://accounts.google.com/o/oauth2/auth",
-        "token_uri": "https://oauth2.googleapis.com/token"
-    }
-}
-
-with open('client_secret.json', 'w') as json_file:
-    json.dump(client_secret_data, json_file)
-
-flow = Flow.from_client_secrets_file(
-    'client_secret.json',
+# Configure the Flow object directly using environment variables
+flow = Flow.from_client_config(
+    {
+        "web": {
+            "client_id": GOOGLE_CLIENT_ID,
+            "client_secret": GOOGLE_CLIENT_SECRET,
+            "redirect_uris": [GOOGLE_REDIRECT_URI],
+            "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+            "token_uri": "https://oauth2.googleapis.com/token"
+        }
+    },
     scopes=['https://www.googleapis.com/auth/calendar'],
     redirect_uri=GOOGLE_REDIRECT_URI
 )
