@@ -310,10 +310,31 @@ document.addEventListener("DOMContentLoaded", function () {
     let currentYear = new Date().getFullYear();
 
     // Define unavailable dates
-    const unavailableDates = [
-        "2025-03-10", "2025-03-15", "2025-03-20", // Example unavailable dates
-        "2025-04-05", "2025-04-12", "2025-04-18"  // More blocked days
-    ];
+    let unavailableDates = [];
+
+
+    async function fetchUnavailableDates() {
+        try {
+            const response = await fetch("/api/creator-availability");
+            const data = await response.json();
+            unavailableDates = data.unavailableDates || [];
+
+
+            if (data.events) {
+                unavailableDates = data.events.map(event => {
+                  const date = new Date(event.start).toISOString().split("T")[0];
+                  return date;
+                });
+              }
+          
+              generateCalendar(); // Redraw the calendar after fetching data
+            } catch (error) {
+              console.error("Failed to fetch unavailable dates:", error);
+            }
+          }
+          // Fetch unavailable dates from Google Calendar
+          fetchUnavailableDates();
+
 
     // Load saved selection from localStorage
     loadSavedDateTime();
@@ -495,43 +516,65 @@ document.addEventListener("DOMContentLoaded", function () {
 form.addEventListener("submit", function(event) {
     event.preventDefault();
 
-    const formData = {
-        name: document.getElementById("name").value,
-        company: document.getElementById("company").value,
-        email: document.getElementById("email").value,
-        phone: document.getElementById("phone").value,
-        socialMedia: JSON.parse(localStorage.getItem("socialMediaData")) || [],
-        bio: document.getElementById("bio").value,
-        interest: document.getElementById("interest").value,
-        recordingDate: document.getElementById("recordingDate").value,
-        recordingTime: document.getElementById("recordingTime").value,
-        recommendedGuests: JSON.parse(localStorage.getItem("recommendedGuestData")) || [],
-        list: document.getElementById("list").value,
-        imageData: localStorage.getItem("imageData"),
-        notes: document.getElementById("notes").value,
-        updatesOption: document.querySelector('input[name="updatesOption"]:checked').value
-    };
+    try {
+        const nameInput = document.getElementById("name");
+        const emailInput = document.getElementById("email");
+        const companyInput = document.getElementById("company");
+        const phoneInput = document.getElementById("phone");
+        const bioInput = document.getElementById("bio");
+        const interestInput = document.getElementById("interest");
+        const dateInput = document.getElementById("recordingDate");
+        const timeInput = document.getElementById("recordingTime");
+        const listInput = document.getElementById("list");
+        const notesInput = document.getElementById("notes");
 
-    fetch('/guest-form', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(formData)
-    })
-    .then(response => response.json())
-    .then(data => {
-        alert(data.message);
-        form.reset();
-        localStorage.clear();
-        document.getElementById("socialMediaContainer").innerHTML = "";
-        document.getElementById("recommendedGuestContainer").innerHTML = "";
-        document.getElementById("imagePreviewContainer").classList.add("hidden");
-        document.getElementById("fileName").textContent = "";
-        document.getElementById("selectedDateTime").textContent = "";
-    })
-    .catch(error => {
-        console.error('Error:', error);
-        alert('An error occurred while submitting the form.');
-    });
+        if (!nameInput || !emailInput || !companyInput) {
+            alert("Required fields are missing in the form.");
+            return;
+        }
+
+        const formData = {
+            name: nameInput.value,
+            company: companyInput?.value || "",
+            email: emailInput?.value || "",
+            phone: phoneInput?.value || "",
+            socialMedia: JSON.parse(localStorage.getItem("socialMediaData")) || [],
+            bio: bioInput?.value || "",
+            interest: interestInput?.value || "",
+            recordingDate: dateInput?.value || "",
+            recordingTime: timeInput?.value || "",
+            recommendedGuests: JSON.parse(localStorage.getItem("recommendedGuestData")) || [],
+            list: listInput?.value || "",
+            imageData: localStorage.getItem("imageData"),
+            notes: notesInput?.value || "",
+            updatesOption: document.querySelector('input[name="updatesOption"]:checked')?.value || ""
+        };
+        console.log("Form values before sending:", formData);
+
+        fetch('/guest-form', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(formData)
+        })
+        .then(response => response.json())
+        .then(data => {
+            alert(data.message);
+            form.reset();
+            localStorage.clear();
+            document.getElementById("socialMediaContainer").innerHTML = "";
+            document.getElementById("recommendedGuestContainer").innerHTML = "";
+            document.getElementById("imagePreviewContainer").classList.add("hidden");
+            document.getElementById("fileName").textContent = "";
+            document.getElementById("selectedDateTime").textContent = "";
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('An error occurred while submitting the form.');
+        });
+    } catch (err) {
+        console.error("Form submission error:", err);
+        alert("Could not submit form due to a missing input field.");
+    }
 });
