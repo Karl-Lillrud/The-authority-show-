@@ -32,6 +32,9 @@ from backend.routes.user import user_bp
 from backend.routes.audio_routes import audio_bp
 from backend.routes.video_routes import video_bp
 
+from backend.routes.highlight import highlights_bp
+
+
 
 if os.getenv("SKIP_VENV_UPDATE", "false").lower() not in ("true", "1", "yes"):
     venvupdate.update_venv_and_requirements()

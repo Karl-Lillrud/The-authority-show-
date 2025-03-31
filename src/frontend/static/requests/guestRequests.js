@@ -35,7 +35,10 @@ export async function fetchGuestsRequest() {
 
 export async function fetchGuestsByEpisode(episodeId) {
   if (!episodeId || episodeId === "undefined") {
-    console.warn("⚠️ Invalid episodeId passed to fetchGuestsByEpisode:", episodeId);
+    console.warn(
+      "⚠️ Invalid episodeId passed to fetchGuestsByEpisode:",
+      episodeId
+    );
     return [];
   }
 

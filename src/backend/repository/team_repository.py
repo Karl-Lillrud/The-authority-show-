@@ -140,10 +140,9 @@ class TeamRepository:
             if not team:
                 return {"error": "Team not found"}, 404
 
-            team_name = team.get("name", "Unknown Team")  # Hämta teamets namn
+            team_name = team.get("name", "Unknown Team")
 
             self.user_to_teams_collection.delete_many({"teamId": team_id})
-
             result = self.teams_collection.delete_one({"_id": team_id})
             if result.deleted_count == 0:
                 return {"error": "Failed to delete the team"}, 500
@@ -151,6 +150,14 @@ class TeamRepository:
             update_result = self.podcasts_collection.update_many(
                 {"teamId": team_id}, {"$set": {"teamId": None}}
             )
+            # Delete verified non-creator users from Users collection using user id
+            for member in team.get("members", []):
+                if (
+                    member.get("role") != "creator"
+                    and member.get("verified", False)
+                    and member.get("userId")
+                ):
+                    self.users_collection.delete_one({"_id": member["userId"]})
 
             return {
                 "message": f"Team '{team_name}' and all members deleted successfully!",

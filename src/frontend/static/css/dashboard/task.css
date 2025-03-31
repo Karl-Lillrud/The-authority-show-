@@ -23,19 +23,34 @@
 
 .task-list {
   margin-top: var(--spacing-md);
+  max-height: 300px;
+  overflow-y: auto;
+  border-radius: 8px;
+  background-color: #f9f9f9;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.tasks-container {
+  max-height: 500px;
 }
 
 .no-tasks {
   text-align: center;
   color: var(--text-color-light);
   padding: var(--spacing-md) 0;
+  font-style: italic;
 }
 
 .task-item {
   display: flex;
   align-items: flex-start;
-  padding: var(--spacing-sm) 0;
+  padding: 12px 16px;
   border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+  transition: background-color 0.2s ease;
+}
+
+.task-item:hover {
+  background-color: rgba(0, 0, 0, 0.02);
 }
 
 .task-item:last-child {
@@ -45,6 +60,9 @@
 .task-checkbox {
   margin-right: var(--spacing-sm);
   margin-top: 3px;
+  width: 18px;
+  height: 18px;
+  cursor: pointer;
 }
 
 .task-content {
@@ -54,7 +72,8 @@
 
 .task-title {
   font-weight: 500;
-  margin-bottom: 2px;
+  margin-bottom: 4px;
+  color: #333;
 }
 
 .task-completed .task-title {
@@ -66,7 +85,8 @@
 .task-description {
   font-size: 0.85rem;
   color: var(--text-color-light);
-  margin-bottom: 4px;
+  margin-bottom: 8px;
+  line-height: 1.4;
 }
 
 .task-meta {
@@ -74,10 +94,23 @@
   align-items: center;
   font-size: 0.75rem;
   color: var(--text-color-light);
+  background-color: rgba(0, 0, 0, 0.03);
+  padding: 4px 8px;
+  border-radius: 4px;
+  display: inline-block;
 }
 
 .task-assigned {
   margin-right: var(--spacing-md);
+  display: flex;
+  align-items: center;
+}
+
+.task-assigned:before {
+  content: "\f007";
+  font-family: "Font Awesome 5 Free";
+  margin-right: 4px;
+  opacity: 0.7;
 }
 
 .assign-to-me-btn {
@@ -94,9 +127,17 @@
   color: var(--highlight-hover);
 }
 
+/* Update task-actions to always be visible */
 .task-actions {
   display: flex;
-  gap: 4px;
+  gap: 8px;
+  opacity: 1; /* Changed from 0.4 to always be visible */
+  transition: opacity 0.2s ease;
+}
+
+/* Remove the hover effect that changes opacity */
+.task-item:hover .task-actions {
+  opacity: 1;
 }
 
 .task-action-btn {
@@ -104,9 +145,12 @@
   border: none;
   cursor: pointer;
   color: var(--text-color-light);
-  padding: 4px;
+  padding: 6px;
   border-radius: 4px;
   transition: all var(--transition-normal);
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .task-action-btn:hover {
@@ -114,8 +158,40 @@
   color: var(--highlight-color);
 }
 
-.task-action-btn.delete:hover {
-  color: var(--error-color);
+/* Make the edit button more prominent */
+.task-action-btn.edit-task-btn {
+  background-color: #f0f7ff;
+  color: #0078ff;
+  padding: 8px 12px;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  border: 1px solid rgba(0, 120, 255, 0.2);
+}
+
+.task-action-btn.edit-task-btn:hover {
+  background-color: #e0f0ff;
+  color: #0066dd;
+}
+
+/* Make the delete button more prominent */
+.task-action-btn.delete-task-btn {
+  background-color: #fff0f0;
+  color: #ff3b30;
+  padding: 8px 12px;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  border: 1px solid rgba(255, 59, 48, 0.2);
+}
+
+.task-action-btn.delete-task-btn:hover {
+  background-color: #ffe0e0;
+  color: #e02d26;
 }
 
 /* Import Tasks Dialog */
@@ -160,5 +236,255 @@
   color: var(--text-color-light);
 }
 
+/* Add Task Popup Styles */
+.popup {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.popup-content {
+  background-color: white;
+  border-radius: 12px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+  width: 90%;
+  max-width: 500px;
+  max-height: 90vh;
+  overflow-y: auto;
+  position: relative;
+  animation: popup-fade-in 0.3s ease;
+}
+
+/* Add these styles for the improved modal */
+.popup-content.modal {
+  max-width: 550px;
+  border-radius: 12px;
+  box-shadow: 0 15px 30px rgba(0, 0, 0, 0.2);
+  transform: scale(0.95);
+  opacity: 0;
+  transition: transform 0.3s ease, opacity 0.3s ease;
+}
+
+.popup-content.modal.show {
+  transform: scale(1);
+  opacity: 1;
+}
+
+.popup-content.modal.hide {
+  transform: scale(0.95);
+  opacity: 0;
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px 24px;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+.modal-header h2 {
+  margin: 0;
+  padding: 0;
+  font-size: 1.3rem;
+  font-weight: 600;
+  color: #333;
+  border-bottom: none;
+}
+
+.modal-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  margin-top: 24px;
+  padding-top: 16px;
+  border-top: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+.cancel-btn {
+  background-color: #f5f5f5;
+  color: #555;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  padding: 12px 20px;
+}
+
+.cancel-btn:hover {
+  background-color: #eaeaea;
+}
+
+@keyframes popup-fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.close-btn {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  font-size: 24px;
+  cursor: pointer;
+  color: #999;
+  transition: color 0.2s ease;
+  width: 30px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+}
+
+.close-btn:hover {
+  color: #333;
+  background-color: rgba(0, 0, 0, 0.05);
+}
+
+.popup h2 {
+  margin: 0;
+  padding: 20px 24px;
+  font-size: 1.3rem;
+  font-weight: 600;
+  color: #333;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+.popup-body {
+  padding: 24px;
+}
+
+.form-group {
+  margin-bottom: 20px;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 8px;
+  font-weight: 500;
+  color: #555;
+  font-size: 0.9rem;
+}
+
+.form-control {
+  width: 100%;
+  padding: 12px;
+  border: 1px solid rgba(0, 0, 0, 0.15);
+  border-radius: 8px;
+  font-size: 0.95rem;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  background-color: #f9f9f9;
+}
+
+.form-control:focus {
+  outline: none;
+  border-color: var(--highlight-color);
+  box-shadow: 0 0 0 3px rgba(0, 120, 255, 0.1);
+  background-color: #fff;
+}
+
+textarea.form-control {
+  min-height: 100px;
+  resize: vertical;
+}
+
+.btn {
+  padding: 10px 16px;
+  border-radius: 8px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-size: 0.9rem;
+  border: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.btn i {
+  margin-right: 6px;
+}
+
+.save-btn {
+  background-color: var(--highlight-color, #0078ff);
+  color: white;
+  padding: 12px 24px;
+}
+
+.save-btn:hover {
+  background-color: var(--highlight-hover, #0066dd);
+  transform: translateY(-1px);
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+.save-btn:active {
+  transform: translateY(0);
+}
+
+.save-btn:disabled {
+  background-color: #ccc;
+  cursor: not-allowed;
+}
+
+.import-tasks-btn,
+.add-task-btn {
+  background-color: #f5f5f5;
+  color: #555;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+.import-tasks-btn:hover,
+.add-task-btn:hover {
+  background-color: #eaeaea;
+}
+
+/* Add animation for the modal */
+@keyframes modalFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes modalFadeOut {
+  from {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: translateY(20px) scale(0.95);
+  }
+}
+
+/* Add spinner animation for loading state */
+@keyframes spin {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+.fa-spinner {
+  animation: spin 1s linear infinite;
+}
+
 /* Add Font Awesome for icons */
-@import url('https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css');
+@import url("https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css");
+
