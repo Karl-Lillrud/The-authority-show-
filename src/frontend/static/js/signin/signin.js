@@ -7,7 +7,9 @@ document.addEventListener("DOMContentLoaded", function () {
   const errorMessage = document.getElementById("error-message");
   const form = document.getElementById("signin-form");
   const sendCodeButton = document.getElementById("send-code-button");
+  const loginWithCodeButton = document.getElementById("login-with-code-button");
   const emailInput = document.getElementById("email");
+  const verificationCodeInput = document.getElementById("verification-code");
 
   // Display success message if present in URL params
   if (message) {
@@ -45,40 +47,62 @@ document.addEventListener("DOMContentLoaded", function () {
   });
 
   // Handle "Send Verification Code" button click
-  if (sendCodeButton) {
-    sendCodeButton.addEventListener("click", async function () {
-      const email = emailInput.value.trim();
+  sendCodeButton.addEventListener("click", async function () {
+    const email = emailInput.value.trim();
 
-      if (!email) {
-        errorMessage.textContent = "Please enter your email.";
-        errorMessage.style.display = "block";
-        return;
+    if (!email) {
+      alert("Please enter your email.");
+      return;
+    }
+
+    try {
+      const response = await fetch("/send-verification-code", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email }),
+      });
+
+      const result = await response.json();
+      if (response.ok) {
+        alert("Verification code sent to your email!");
+        verificationCodeInput.style.display = "block";
+        loginWithCodeButton.style.display = "block";
+      } else {
+        alert(result.message || "Failed to send verification code.");
       }
+    } catch (error) {
+      console.error("Error:", error);
+      alert("An error occurred. Please try again.");
+    }
+  });
 
-      try {
-        const response = await fetch("/send-verification-code", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ email }),
-        });
+  // Handle "Login with Code" button click
+  loginWithCodeButton.addEventListener("click", async function () {
+    const email = emailInput.value.trim();
+    const code = verificationCodeInput.value.trim();
 
-        const result = await response.json();
-        if (response.ok) {
-          successMessage.textContent = "Verification code sent to your email!";
-          successMessage.style.display = "block";
-          errorMessage.style.display = "none";
-        } else {
-          errorMessage.textContent =
-            result.error || "Failed to send verification code.";
-          errorMessage.style.display = "block";
-          successMessage.style.display = "none";
-        }
-      } catch (error) {
-        console.error("Error:", error);
-        errorMessage.textContent = "An error occurred. Please try again.";
-        errorMessage.style.display = "block";
-        successMessage.style.display = "none";
+    if (!email || !code) {
+      alert("Please enter both email and verification code.");
+      return;
+    }
+
+    try {
+      const response = await fetch("/login-with-code", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, code }),
+      });
+
+      const result = await response.json();
+      if (response.ok) {
+        alert("Login successful!");
+        window.location.href = result.redirect_url || "/dashboard";
+      } else {
+        alert(result.message || "Failed to log in with code.");
       }
-    });
-  }
+    } catch (error) {
+      console.error("Error:", error);
+      alert("An error occurred. Please try again.");
+    }
+  });
 });

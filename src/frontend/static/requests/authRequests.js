@@ -84,3 +84,21 @@ export async function registerTeamMember(
     throw new Error(error.message);
   }
 }
+
+export async function sendVerificationCode(email) {
+  const response = await fetch("/send-verification-code", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ email }),
+  });
+  return response.json();
+}
+
+export async function loginWithVerificationCode(email, code) {
+  const response = await fetch("/login-with-code", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ email, code }),
+  });
+  return response.json();
+}

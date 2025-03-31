@@ -77,6 +77,23 @@
           <!-- Sign In button -->
           <button type="submit" class="button button-primary">Sign In</button>
         </div>
+        <div class="form-actions">
+          <input
+            type="text"
+            id="verification-code"
+            class="input"
+            placeholder="Enter verification code"
+            style="display: none;"
+          />
+          <button
+            type="button"
+            id="login-with-code-button"
+            class="button button-primary"
+            style="display: none;"
+          >
+            Login with Code
+          </button>
+        </div>
 
         <div class="register-link">
           <a href="{{ url_for('auth_bp.register_page') }}" class="link">
