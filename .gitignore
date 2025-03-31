@@ -22,6 +22,7 @@ src/routes/__pycache__/
 src/nltk_data/ 
 
 client_secret.json
+src/client_secret.json
 
 aitranscription_env/
 *.conda
