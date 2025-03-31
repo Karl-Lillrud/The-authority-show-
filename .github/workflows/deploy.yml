@@ -16,11 +16,11 @@ jobs:
       - name: Setup Python
         uses: actions/setup-python@v3
         with:
-          python-version: "3.x"
+          python-version: "3.11" # Anpassa om nödvändigt
 
       - name: Install Dependencies
         run: |
-          cd src  # Navigate to the src directory
+          cd src
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
@@ -31,6 +31,9 @@ jobs:
       - name: Deploy to Azure Web App
         uses: azure/webapps-deploy@v3
         with:
-          app-name: "podmanager-ggevewegdfgwebcd"
+          app-name: "podmanager-ggevewegdfgwebcd" # Rätt namn
           publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }}
-          package: ./src # Changed to deploy only the contents of src
+          package: ./src
+        env:
+          pythonLocation: /opt/hostedtoolcache/Python/3.11/x64 # Matcha version
+          LD_LIBRARY_PATH: /opt/hostedtoolcache/Python/3.11/x64/lib
