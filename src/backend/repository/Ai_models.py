@@ -45,7 +45,6 @@ def fetch_file(file_id: str):
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
-
 def get_file_data(file_id: str) -> bytes:
     file_obj = fs.get(ObjectId(file_id))
     return file_obj.read()
