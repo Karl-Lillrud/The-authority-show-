@@ -296,6 +296,36 @@ body {
   background-color: rgba(0, 0, 0, 0.01);
 }
 
+/* Ensure "Back to Dashboard" button is responsive */
+.detail-header .back-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  background: white;
+  border: none;
+  color: var(--text-color-light);
+  font-weight: 600;
+  cursor: pointer;
+  padding: 8px 12px;
+  border-radius: var(--radius-medium);
+  box-shadow: var(--button-shadow);
+  transition: all var(--transition-normal);
+  font-size: 0.8rem;
+}
+
+.detail-header .back-btn:hover {
+  transform: translateX(-4px);
+  color: var(--highlight-color);
+}
+
+/* Adjust "Back to Dashboard" button for smaller screens */
+@media (max-width: 768px) {
+  .detail-header .back-btn {
+    font-size: 0.7rem;
+    padding: 6px 10px;
+  }
+}
+
 .top-right-actions {
   display: flex;
   gap: 8px;
@@ -1902,5 +1932,23 @@ select:invalid {
     width: 100%;
     max-width: 250px;
     margin: 0 auto;
+  }
+}
+
+/* Make submenu horizontal */
+.submenu {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-around;
+  padding: 0.5rem;
+  background-color: #f8f9fa;
+  border-bottom: 1px solid #ddd;
+}
+
+/* Adjust submenu for smaller screens */
+@media (max-width: 768px) {
+  .submenu {
+    flex-wrap: wrap;
+    justify-content: center;
   }
 }
