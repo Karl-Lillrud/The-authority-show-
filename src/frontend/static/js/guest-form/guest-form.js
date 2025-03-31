@@ -327,7 +327,8 @@ document.addEventListener("DOMContentLoaded", function () {
         try {
             const response = await fetch(`/guest-form/available_dates?guestId=${guestId}&googleCal=${googleCal}`);
             if (!response.ok) {
-                throw new Error("Failed to fetch available dates");
+                const errorData = await response.json();
+                throw new Error(errorData.error || "Failed to fetch available dates");
             }
 
             const data = await response.json();

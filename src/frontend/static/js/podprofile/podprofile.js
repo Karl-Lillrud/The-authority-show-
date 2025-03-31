@@ -237,17 +237,8 @@ document.addEventListener("DOMContentLoaded", () => {
     connectCalendarButton.addEventListener("click", (event) => {
       event.preventDefault(); // Prevent page reload
 
-      const podRss = podRssInput ? podRssInput.value.trim() : "";
-      const podName = podNameInput ? podNameInput.value.trim() : "";
-
-      if (!podRss || !podName) {
-        alert("Please fill in both the Podcast Name and RSS URL before connecting your calendar.");
-        return;
-      }
-
-      // Redirect to the OAuth page with RSS and Podcast Name as query parameters
-      const queryParams = new URLSearchParams({ podRss, podName }).toString();
-      window.location.href = `/connect_calendar?${queryParams}`;
+      // Redirect the browser to the Google OAuth flow
+      window.location.href = "/connect_google_calendar";
     });
   }
 

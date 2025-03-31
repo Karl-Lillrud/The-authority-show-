@@ -1,5 +1,7 @@
-from flask import Blueprint, redirect, url_for, session, request
+from flask import Blueprint, redirect, url_for, session, request, jsonify
 from google_auth_oauthlib.flow import Flow
+from googleapiclient.discovery import build
+from google.oauth2.credentials import Credentials
 import os
 from dotenv import load_dotenv
 import json
@@ -45,32 +47,59 @@ def connect_google_calendar():
 
 @google_calendar_bp.route('/oauth2callback')
 def oauth2callback():
-    flow.fetch_token(authorization_response=request.url)
-    credentials = flow.credentials
-    session['credentials'] = credentials_to_dict(credentials)
-    return redirect(url_for('dashboard_bp.dashboard'))
+    try:
+        flow.fetch_token(authorization_response=request.url)
+        credentials = flow.credentials
+        session['credentials'] = credentials_to_dict(credentials)
 
-@google_calendar_bp.route("/connect_calendar")
+        # Store the token in sessionStorage via a redirect
+        google_token = credentials.token
+        return redirect(f"/podprofile?googleToken={google_token}")
+    except Exception as e:
+        logger.error(f"Error during OAuth callback: {e}", exc_info=True)
+        return jsonify({"error": "Failed to complete Google OAuth process"}), 500
+
+@google_calendar_bp.route("/connect_calendar", methods=["POST"])
 def connect_calendar():
-    user_id = session.get("user_id")
-    if not user_id:
-        return {"error": "User not authenticated"}, 401
+    try:
+        # Retrieve the OAuth token from the request
+        token = request.json.get("token")
+        if not token:
+            logger.error("Missing token in /connect_calendar request.")
+            return jsonify({"error": "Missing token"}), 400
 
-    # Preserve query parameters for RSS and Podcast Name
-    pod_rss = request.args.get("podRss", "")
-    pod_name = request.args.get("podName", "")
-    session["podRss"] = pod_rss
-    session["podName"] = pod_name
+        # Use the token to authenticate with Google Calendar API
+        credentials = Credentials.from_authorized_user_info(token)
+        service = build("calendar", "v3", credentials=credentials)
 
-    # Redirect to Google OAuth
-    auth_url = (
-        f"{GOOGLE_AUTH_URL}?response_type=code"
-        f"&client_id={GOOGLE_CLIENT_ID}"
-        f"&redirect_uri={GOOGLE_REDIRECT_URI}"
-        f"&scope=https://www.googleapis.com/auth/calendar"
-        f"&access_type=offline"
-    )
-    return redirect(auth_url)
+        # Generate a publicly shareable calendar link
+        calendar_list = service.calendarList().list().execute()
+        primary_calendar = next(
+            (cal for cal in calendar_list.get("items", []) if cal.get("primary")), None
+        )
+        if not primary_calendar:
+            logger.error("Primary calendar not found for user.")
+            return jsonify({"error": "Primary calendar not found"}), 404
+
+        calendar_id = primary_calendar["id"]
+        shareable_link = f"https://calendar.google.com/calendar/embed?src={calendar_id}"
+
+        # Save the shareable link to the database
+        user_id = session.get("user_id")
+        if not user_id:
+            logger.error("User not authenticated in /connect_calendar request.")
+            return jsonify({"error": "User not authenticated"}), 401
+
+        collection.database.Users.update_one(
+            {"_id": user_id}, {"$set": {"googleCal": shareable_link}}
+        )
+
+        logger.info(f"Google Calendar connected successfully for user {user_id}.")
+        return jsonify({"message": "Calendar connected successfully", "googleCal": shareable_link}), 200
+
+    except Exception as e:
+        logger.error(f"Error in /connect_calendar: {e}", exc_info=True)
+        return jsonify({"error": str(e)}), 500
 
 @google_calendar_bp.route("/calendar_callback")
 def calendar_callback():

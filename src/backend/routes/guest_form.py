@@ -20,65 +20,57 @@ def guest_form():
         return render_template('guest-form/guest-form.html')  # Render the HTML template
 
 @guest_form_bp.route("/available_dates", methods=["GET"])
-def get_available_dates():
+def available_dates():
     """
-    Fetch the inviting user's available calendar dates and working hours from Google Calendar.
+    Fetch available dates and times for a guest based on the user's Google Calendar.
     """
     try:
         guest_id = request.args.get("guestId")
         google_cal_token = request.args.get("googleCal")
 
         if not guest_id or not google_cal_token:
-            logger.error("Guest ID or Google Calendar token is missing in the request.")
-            return {"error": "Guest ID and Google Calendar token are required"}, 400
+            logger.error("Missing guestId or googleCal token in request.")
+            return jsonify({"error": "Missing guestId or googleCal token"}), 400
 
-        # Use the googleCal token to fetch events and working hours from Google Calendar
+        # Use the token to authenticate with Google Calendar API
         credentials = Credentials(token=google_cal_token)
         service = build("calendar", "v3", credentials=credentials)
 
-        # Fetch events for the next 30 days
-        now = datetime.utcnow()
-        time_min = now.isoformat() + "Z"
-        time_max = (now + timedelta(days=30)).isoformat() + "Z"
-
+        # Fetch busy times from the primary calendar
+        calendar_id = "primary"
         events_result = service.events().list(
-            calendarId="primary",
-            timeMin=time_min,
-            timeMax=time_max,
+            calendarId=calendar_id,
+            timeMin="2025-03-01T00:00:00Z",  # Example: Fetch events starting from March 1, 2025
+            timeMax="2025-03-31T23:59:59Z",  # Example: Fetch events until March 31, 2025
             singleEvents=True,
             orderBy="startTime"
         ).execute()
 
         events = events_result.get("items", [])
-        busy_dates = set()
+        busy_dates = []
         busy_times = {}
 
         for event in events:
             start = event["start"].get("dateTime", event["start"].get("date"))
             end = event["end"].get("dateTime", event["end"].get("date"))
-            date = start.split("T")[0]
-            busy_dates.add(date)
 
-            if "T" in start and "T" in end:
-                start_time = start.split("T")[1]
-                end_time = end.split("T")[1]
+            if "dateTime" in event["start"]:
+                date = start.split("T")[0]
                 if date not in busy_times:
                     busy_times[date] = []
-                busy_times[date].append({"start": start_time, "end": end_time})
+                busy_times[date].append({"start": start, "end": end})
+            else:
+                busy_dates.append(start)
 
-        # Fetch the user's working hours
-        try:
-            settings = service.settings().get(setting="workingHours").execute()
-            working_hours = settings.get("value", {"start": "09:00:00", "end": "17:00:00"})
-        except HttpError:
-            working_hours = {"start": "09:00:00", "end": "17:00:00"}  # Default working hours
+        # Example working hours
+        working_hours = {"start": "09:00:00", "end": "17:00:00"}
 
         return jsonify({
-            "busy_dates": list(busy_dates),
+            "busy_dates": busy_dates,
             "busy_times": busy_times,
             "working_hours": working_hours
         }), 200
 
     except Exception as e:
-        logger.error(f"Failed to fetch available dates: {e}", exc_info=True)
-        return {"error": "Failed to fetch available dates"}, 500
+        logger.error(f"Error fetching available dates: {e}", exc_info=True)
+        return jsonify({"error": "Failed to fetch available dates"}), 500

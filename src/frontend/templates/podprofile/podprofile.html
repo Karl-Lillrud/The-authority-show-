@@ -55,6 +55,14 @@
       <!-- Pod Name Section -->
       <div class="container" id="pod-name-section">
         <h1 class="fancy-heading">POD INFO</h1>
+        
+        <!-- Connect Your Calendar Button -->
+        <div class="form-group">
+          <button id="connectCalendar" class="button-primary">
+            Connect Your Calendar
+          </button>
+        </div>
+
         <form id="podNameForm">
           <div class="form-group">
             <div
@@ -75,12 +83,6 @@
           <div class="form-group">
             <label for="podName">Podcast's Name</label>
             <input type="text" id="podName" name="podName" required />
-          </div>
-
-          <div class="form-group">
-            <button id="connectCalendar" class="button-primary">
-              Connect Your Calendar
-            </button>
           </div>
 
           <div class="form-group">
@@ -130,5 +132,14 @@
       src="https://unpkg.com/lazysizes@5.3.2/lazysizes.min.js"
       async
     ></script>
+    <script>
+      // Extract googleToken from URL and store it in sessionStorage
+      const urlParams = new URLSearchParams(window.location.search);
+      const googleToken = urlParams.get("googleToken");
+      if (googleToken) {
+        sessionStorage.setItem("googleToken", googleToken);
+        console.log("Google token stored in sessionStorage.");
+      }
+    </script>
   </body>
 </html>

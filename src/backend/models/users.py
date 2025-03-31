@@ -9,3 +9,6 @@ class UserSchema(Schema):
     createdAt = fields.DateTime()
     referralCode = fields.Str()
     referredBy = fields.Str(allow_none=True)
+
+class User:
+    googleCal: str  # Store the publicly shareable calendar link
