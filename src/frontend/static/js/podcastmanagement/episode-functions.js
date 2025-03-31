@@ -558,58 +558,38 @@ export function initEpisodeFunctions() {
         }
       }
 
-      // Check for missing required fields
-      if (
-        !formData.get("podcastId") ||
-        !formData.get("title") ||
-        !formData.get("publishDate")
-      ) {
-        showNotification(
-          "Missing Fields",
-          "Please fill in all required fields.",
-          "error"
-        );
-        return;
-      }
-
-      // Ensure publishDate is in the correct format
-      const publishDate = new Date(formData.get("publishDate"));
-      if (isNaN(publishDate.getTime())) {
-        showNotification(
-          "Invalid Date",
-          "Please provide a valid publish date.",
-          "error"
-        );
-        return;
-      }
-
       try {
         const response = await fetch("/register_episode", {
           method: "POST",
           body: formData,
           headers: {
-            // Ensure the correct Content-Type header is set for file uploads
             Accept: "application/json"
           }
         });
+
         if (!response.ok) {
           const errorData = await response.json();
           showNotification(
             "Error",
-            errorData.error || "Failed to create episode.",
+            errorData.error ||
+              "Failed to create episode. Please check the backend configuration.",
             "error"
           );
           return;
         }
+
         const result = await response.json();
         showNotification("Success", "Episode created successfully!", "success");
         document.getElementById("episode-form-popup").style.display = "none";
         document.getElementById("create-episode-form").reset();
-        // Refresh the episode list without refreshing the page
         viewPodcast(formData.get("podcastId"));
       } catch (error) {
         console.error("Error creating episode:", error);
-        showNotification("Error", "Failed to create episode.", "error");
+        showNotification(
+          "Error",
+          "An unexpected error occurred while creating the episode.",
+          "error"
+        );
       }
     });
 }
