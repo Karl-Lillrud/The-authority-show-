@@ -18,6 +18,10 @@
       rel="stylesheet"
       href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
     />
+    <link
+      rel="stylesheet"
+      href="{{ url_for('static', filename='css/loadingbar/loading-bar.css') }}"
+    />
   </head>
   <body>
     <header>
@@ -74,37 +78,30 @@
           </div>
 
           <div class="form-group">
+            <button id="connectCalendar" class="button-primary">
+              Connect Your Calendar
+            </button>
+          </div>
+
+          <div class="form-group">
             <button type="button" class="button-primary" id="goToEmailSection">
               Next
             </button>
-            <button type="button" class="button-secondary" id="skipButton" onclick="window.location.href='/podcastmanagement'">
+            <button
+              type="button"
+              class="button-secondary"
+              id="skipButton"
+              onclick="window.location.href='/podcastmanagement'"
+            >
               Skip
             </button>
           </div>
         </form>
       </div>
 
-      <!-- Podcast Preview Container (Separate from the form) -->
-      <div id="podcast-preview" class="podcast-showcase hidden">
+      <!-- Unified Podcast Container -->
+      <div id="podcast-container" class="podcast-container hidden">
         <!-- Podcast info will be inserted here by JavaScript -->
-      </div>
-
-      <!-- Episodes Carousel Container -->
-      <div id="episodes-carousel" class="episodes-carousel-container hidden">
-        <div class="episodes-header">
-          <h2>Episodes</h2>
-          <div class="carousel-controls">
-            <button id="prev-episodes" class="carousel-control">
-              <i class="fas fa-chevron-left"></i>
-            </button>
-            <button id="next-episodes" class="carousel-control">
-              <i class="fas fa-chevron-right"></i>
-            </button>
-          </div>
-        </div>
-        <div id="episodes-slider" class="episodes-slider">
-          <!-- Episodes will be inserted here by JavaScript -->
-        </div>
       </div>
     </main>
     <script

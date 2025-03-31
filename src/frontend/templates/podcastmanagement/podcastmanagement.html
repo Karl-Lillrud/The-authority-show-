@@ -1,388 +1,418 @@
 {% extends "components/base.html" %} {% block title %}Podcast Management{%
-endblock %} {% block content %}
-<head>
-  <link
-    rel="stylesheet"
-    href="{{ url_for('static', filename='css/components/sidebar.css') }}"
-  />
-  <link
-    rel="stylesheet"
-    href="{{ url_for('static', filename='css/podcastmanagement/podcastmanagement.css') }}"
-  />
-
-  <!-- Google Analytics -->
-  <script
-    async
-    src="https://www.googletagmanager.com/gtag/js?id=G-PTPQQ5WSQV"
-  ></script>
-  <script>
-    window.dataLayer = window.dataLayer || [];
-    function gtag() {
-      dataLayer.push(arguments);
-    }
-    gtag("js", new Date());
-
-    gtag("config", "G-PTPQQ5WSQV");
-  </script>
-</head>
-
-<div class="app-container">
-  <!-- Sidebar -->
-  <aside class="sidebar">
-    <div class="sidebar-header">
-      <!-- Intentionally left empty as in teams -->
-    </div>
-    <div class="sidebar-content">
-      <nav class="sidebar-menu">
-        <ul>
-          <li class="sidebar-menu-item">
-            <a href="/dashboard" class="sidebar-menu-link dashboard-link">
-              <span id="back-to-dashboard-icon" class="sidebar-icon"></span>
-              <span>Back to Dashboard</span>
-            </a>
-          </li>
-          <li class="sidebar-menu-item active">
-            <a href="#" class="sidebar-menu-link">
-              <span id="podcasts-icon" class="sidebar-icon"></span>
-              <span>Podcasts</span>
-            </a>
-          </li>
-          <!-- Commented out Episodes and Guests -->
-          {#
-          <li class="sidebar-menu-item">
-            <a href="#" class="sidebar-menu-link">
-              <span id="episodes-icon" class="sidebar-icon"></span>
-              <span>Episodes</span>
-            </a>
-          </li>
-          <li class="sidebar-menu-item">
-            <a href="#" class="sidebar-menu-link" id="guests-link">
-              <span id="guests-icon" class="sidebar-icon"></span>
-              <span>Guests</span>
-            </a>
-          </li>
-          #}
-        </ul>
-      </nav>
-
-      <!-- Add action buttons section to sidebar -->
-      <div class="sidebar-action-buttons">
-        <h3>Actions</h3>
-        <button id="add-podcast-btn" class="sidebar-action-button">
-          <span id="add-icon-podcast" class="sidebar-icon"></span>
-          <span>Add Podcast</span>
-        </button>
-        <button id="create-episode-btn" class="sidebar-action-button">
-          <span id="add-icon-episode" class="sidebar-icon"></span>
-          <span>Create Episode</span>
-        </button>
-        <button id="add-guest-btn" class="sidebar-action-button">
-          <span id="add-icon-guest" class="sidebar-icon"></span>
-          <span>Add Guest</span>
-        </button>
+  endblock %} {% block content %}
+  <head>
+    <link
+      rel="stylesheet"
+      href="{{ url_for('static', filename='css/components/sidebar.css') }}"
+    />
+    <link
+      rel="stylesheet"
+      href="{{ url_for('static', filename='css/podcastmanagement/podcastmanagement.css') }}"
+    />
+  
+    <!-- Google Analytics -->
+    <script
+      async
+      src="https://www.googletagmanager.com/gtag/js?id=G-PTPQQ5WSQV"
+    ></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag() {
+        dataLayer.push(arguments);
+      }
+      gtag("js", new Date());
+  
+      gtag("config", "G-PTPQQ5WSQV");
+    </script>
+  </head>
+  
+  <div class="app-container">
+    <!-- Sidebar -->
+    <aside class="sidebar">
+      <div class="sidebar-header">
+        <!-- Intentionally left empty as in teams -->
+      </div>
+      <div class="sidebar-content">
+        <nav class="sidebar-menu">
+          <ul>
+            <li class="sidebar-menu-item">
+              <a href="/dashboard" class="sidebar-menu-link dashboard-link">
+                <span id="back-to-dashboard-icon" class="sidebar-icon"></span>
+                <span>Back to Dashboard</span>
+              </a>
+            </li>
+            <li class="sidebar-menu-item active">
+              <a href="#" class="sidebar-menu-link">
+                <span id="podcasts-icon" class="sidebar-icon"></span>
+                <span>Podcasts</span>
+              </a>
+            </li>
+  
+            <li class="sidebar-menu-item">
+              <a href="#" class="sidebar-menu-link">
+                <span id="episodes-icon" class="sidebar-icon"></span>
+                <span>Episodes</span>
+              </a>
+            </li>
+            <li class="sidebar-menu-item">
+              <a href="#" class="sidebar-menu-link" id="guests-link">
+                <span id="guests-icon" class="sidebar-icon"></span>
+                <span>Guests</span>
+              </a>
+            </li>
+          </ul>
+        </nav>
+  
+        <!-- Add action buttons section to sidebar -->
+        <div class="sidebar-action-buttons">
+          <h3>Actions</h3>
+          <button id="add-podcast-btn" class="sidebar-action-button">
+            <span id="add-icon-podcast" class="sidebar-icon"></span>
+            <span>Add Podcast</span>
+          </button>
+          <button id="create-episode-btn" class="sidebar-action-button">
+            <span id="add-icon-episode" class="sidebar-icon"></span>
+            <span>Create Episode</span>
+          </button>
+          <button id="add-guest-btn" class="sidebar-action-button">
+            <span id="add-icon-guest" class="sidebar-icon"></span>
+            <span>Add Guest</span>
+          </button>
+        </div>
+      </div>
+      <div class="sidebar-footer">
+        <div class="sidebar-actions">
+          <button id="toggle-sidebar" class="sidebar-toggle">
+            <span id="toggle-sidebar-icon"></span>
+          </button>
+        </div>
+      </div>
+    </aside>
+  
+    <!-- Main Content -->
+    <main class="main-content">
+      <!-- Podcast List -->
+      <div id="podcast-list" class="podcast-list"></div>
+  
+      <!-- Podcast Detail -->
+      <div id="podcast-detail" class="podcast-detail" style="display: none"></div>
+  
+      <!-- Form popup container for adding/updating a podcast -->
+      <div id="form-popup" class="popup" style="display: none">
+        <div class="form-box">
+          <span id="close-form-popup" class="close-btn">&times;</span>
+          <h2 class="form-title">Add New Podcast</h2>
+          <form id="register-podcast-form">
+            <div class="form-grid">
+              <div class="field-group">
+                <label for="pod-name">Podcast Name</label>
+                <input
+                  type="text"
+                  id="pod-name"
+                  name="podName"
+                  autocomplete="off"
+                  required
+                />
+              </div>
+              <div class="field-group">
+                <label for="pod-author">Host</label>
+                <input type="text" id="pod-author" name="author" />
+              </div>
+              <div class="field-group">
+                <label for="pod-language">Language</label>
+                <input type="text" id="pod-language" name="language" />
+              </div>
+              <div class="field-group">
+                <label for="pod-rss">RSS Feed</label>
+                <input type="url" id="pod-rss" name="rssFeed" />
+              </div>
+              <div class="field-group">
+                <label for="logo">Album Art</label>
+                <input type="file" id="logo" name="logo" accept="image/*" />
+              </div>
+              <div class="field-group">
+                <label for="banner">Banner</label>
+                <input type="file" id="banner" name="banner" accept="image/*" />
+              </div>
+              <div class="field-group">
+                <label for="google-cal">Google Calendar URL</label>
+                <input type="url" id="google-cal" name="googleCal" />
+              </div>
+              <div class="field-group">
+                <label for="guest-form-url">Guest Form URL</label>
+                <input type="url" id="guest-form-url" name="guestUrl" />
+              </div>
+              <div class="field-group">
+                <label for="email">Email Address</label>
+                <input type="email" id="email" name="email" />
+              </div>
+              <div class="field-group full-width">
+                <label for="description">Podcast Description</label>
+                <textarea id="description" name="description" rows="3"></textarea>
+              </div>
+              <div class="field-group">
+                <label for="category">Category (Required)</label>
+                <select id="category" name="category" required>
+                  <option value="">Select a category</option>
+                  <option value="Comedy">Comedy</option>
+                  <option value="True Crime">True Crime</option>
+                  <option value="News">News</option>
+                  <option value="Sports">Sports</option>
+                  <option value="History">History</option>
+                  <option value="Society & Culture">Society & Culture</option>
+                  <option value="Education">Education</option>
+                  <option value="Business">Business</option>
+                  <option value="Technology">Technology</option>
+                  <option value="Health & Fitness">Health & Fitness</option>
+                  <option value="Arts">Arts</option>
+                  <option value="Music">Music</option>
+                  <option value="Science">Science</option>
+                  <option value="Fiction">Fiction</option>
+                  <option value="Kids & Family">Kids & Family</option>
+                  <option value="Lifestyle & Leisure">Lifestyle & Leisure</option>
+                  <option value="Government & Politics">
+                    Government & Politics
+                  </option>
+                  <option value="Spirituality & Religion">
+                    Spirituality & Religion
+                  </option>
+                  <option value="TV & Film">TV & Film</option>
+                  <option value="Gaming">Gaming</option>
+                </select>
+              </div>
+              <div class="field-group">
+                <label for="tagline">Tagline</label>
+                <input type="text" id="tagline" name="tagline" />
+              </div>
+              <div class="field-group">
+                <label for="hostBio">Host bio</label>
+                <input type="text" id="hostBio" name="hostBio" />
+              </div>
+              <div class="field-group">
+                <label for="host-image">Host Image</label>
+                <input
+                  type="file"
+                  id="host-image"
+                  name="hostImage"
+                  accept="image/*"
+                />
+              </div>
+            </div>
+  
+            <h3 class="section-title">Social Media Links</h3>
+            <div class="form-grid">
+              <div class="field-group">
+                <label for="facebook">Facebook</label>
+                <input type="url" id="facebook" name="socialMedia[]" />
+              </div>
+              <div class="field-group">
+                <label for="instagram">Instagram</label>
+                <input type="url" id="instagram" name="socialMedia[]" />
+              </div>
+              <div class="field-group">
+                <label for="linkedin">LinkedIn</label>
+                <input type="url" id="linkedin" name="socialMedia[]" />
+              </div>
+              <div class="field-group">
+                <label for="twitter">Twitter</label>
+                <input type="url" id="twitter" name="socialMedia[]" />
+              </div>
+              <div class="field-group">
+                <label for="tiktok">TikTok</label>
+                <input type="url" id="tiktok" name="socialMedia[]" />
+              </div>
+              <div class="field-group">
+                <label for="pinterest">Pinterest</label>
+                <input type="url" id="pinterest" name="socialMedia[]" />
+              </div>
+              <div class="field-group">
+                <label for="youtube">Youtube</label>
+                <input type="url" id="youtube" name="socialMedia[]" />
+              </div>
+            </div>
+  
+            <div class="form-actions">
+              <button type="button" id="cancel-form-btn" class="cancel-btn">
+                Cancel
+              </button>
+              <button type="submit" class="save-btn">Save Podcast</button>
+            </div>
+          </form>
+        </div>
+      </div>
+  
+      <!-- Form popup container for creating a new episode -->
+      <div id="episode-form-popup" class="popup" style="display: none">
+        <div class="form-box">
+          <span id="close-episode-form-popup" class="close-btn">&times;</span>
+          <h2 class="form-title">Create New Episode</h2>
+          <form id="create-episode-form">
+            <div class="form-grid">
+              <div class="field-group full-width">
+                <label for="podcast-select">Select Podcast</label>
+                <select id="podcast-select" name="podcastId" required></select>
+              </div>
+              <div class="field-group full-width">
+                <label for="episode-title">Episode Title</label>
+                <input type="text" id="episode-title" name="title" required />
+              </div>
+              <div class="field-group full-width">
+                <label for="episode-description">Description</label>
+                <textarea
+                  id="episode-description"
+                  name="description"
+                  rows="3"
+                ></textarea>
+              </div>
+              <div class="field-group">
+                <label for="publish-date">Publish Date</label>
+                <input
+                  type="datetime-local"
+                  id="publish-date"
+                  name="publishDate"
+                  required
+                />
+              </div>
+          <div class="field-group">
+            <label for="duration">Duration (minutes)</label>
+            <input type="number" id="duration" name="duration" required />
+          </div>
+          <div class="field-group">
+            <label for="status">Status</label>
+            <select id="status" name="status">
+              <option value="Published">Published</option>
+              <option value="Recorded">Recorded</option>
+              <option value="Edited">Edited</option>
+              <option value="Not Recorded">Not Recorded</option>
+              <option value="Not Scheduled">Not Scheduled</option>
+            </select>
+          </div>
+          <div class="field-group">
+            <label for="recording-at">Recording Date</label>
+            <input type="datetime-local" id="recording-at" name="recordingAt" />
+          </div>
+        </div>
+        <!-- Align buttons to the far right -->
+        <div class="form-actions" style="text-align: right;">
+          <button type="button" id="cancel-episode-form-btn" class="cancel-btn">Cancel</button>
+          <button type="submit" class="save-btn">Create Episode</button>
+          </div>
+        </form>
       </div>
     </div>
-    <div class="sidebar-footer">
-      <div class="sidebar-actions">
-        <button id="toggle-sidebar" class="sidebar-toggle">
-          <span id="toggle-sidebar-icon"></span>
-        </button>
+  
+      <!-- Highlight Editing Form -->
+      <div id="highlight-form-popup" class="popup" style="display: none">
+        <div class="form-box">
+          <span id="close-highlight-form-popup" class="close-btn">&times;</span>
+          <h2 class="form-title">Edit Highlight</h2>
+          <form id="edit-highlight-form">
+            <div class="field-group full-width">
+              <label for="highlight-title">Highlight Title</label>
+              <input type="text" id="highlight-title" name="title" required />
+            </div>
+            <div class="field-group full-width">
+              <label for="highlight-start-time">Start Time (seconds)</label>
+              <input
+                type="number"
+                id="highlight-start-time"
+                name="startTime"
+                required
+              />
+            </div>
+            <div class="field-group full-width">
+              <label for="highlight-end-time">End Time (seconds)</label>
+              <input
+                type="number"
+                id="highlight-end-time"
+                name="endTime"
+                required
+              />
+            </div>
+            <div class="form-actions">
+              <button
+                type="button"
+                id="cancel-highlight-form-btn"
+                class="cancel-btn"
+              >
+                Cancel
+              </button>
+              <button type="submit" class="save-btn">Save Highlight</button>
+            </div>
+          </form>
+        </div>
       </div>
-    </div>
-  </aside>
-
-  <!-- Main Content -->
-  <main class="main-content">
-    <!-- Podcast List -->
-    <div id="podcast-list" class="podcast-list"></div>
-
-    <!-- Podcast Detail -->
-    <div id="podcast-detail" class="podcast-detail" style="display: none"></div>
-
-    <!-- Form popup container for adding/updating a podcast -->
-    <div id="form-popup" class="popup" style="display: none">
-      <div class="form-box">
-        <span id="close-form-popup" class="close-btn">&times;</span>
-        <h2 class="form-title">Add New Podcast</h2>
-        <form id="register-podcast-form">
-          <div class="form-grid">
-            <div class="field-group">
-              <label for="pod-name">Podcast Name</label>
+  
+      <!-- New popup container for adding a guest -->
+      <div id="guest-popup" class="popup" style="display: none">
+        <div class="form-box">
+          <span id="close-guest-popup" class="close-btn">&times;</span>
+          <h2 class="form-title">Add Guest</h2>
+          <form id="add-guest-form">
+            <div class="field-group full-width">
+              <label for="podcast-select-guest">Select Podcast</label>
+              <select
+                id="podcast-select-guest"
+                name="podcastId"
+                required
+              ></select>
+            </div>
+            <div class="field-group full-width">
+              <label for="episode-id">Episode ID</label>
+              <select id="episode-id" name="episodeId" required></select>
+            </div>
+            <div class="field-group full-width">
+              <label for="guest-name">Guest Name</label>
+              <input type="text" id="guest-name" name="guestName" required />
+            </div>
+            <div class="field-group full-width">
+              <label for="guest-description">Guest Description</label>
               <input
                 type="text"
-                id="pod-name"
-                name="podName"
-                autocomplete="off"
+                id="guest-description"
+                name="guestDescription"
                 required
               />
             </div>
-            <div class="field-group">
-              <label for="pod-author">Author</label>
-              <input type="text" id="pod-author" name="author" />
-            </div>
-            <div class="field-group">
-              <label for="pod-language">Language</label>
-              <input type="text" id="pod-language" name="language" />
-            </div>
-            <div class="field-group">
-              <label for="pod-rss">RSS Feed</label>
-              <input type="url" id="pod-rss" name="rssFeed" />
-            </div>
-            <div class="field-group">
-              <label for="logo">Album Cover</label>
-              <input type="file" id="logo" name="logo" accept="image/*" />
-            </div>
-            <div class="field-group">
-              <label for="banner">Banner</label>
-              <input type="file" id="banner" name="banner" accept="image/*" />
-            </div>
-            <div class="field-group">
-              <label for="google-cal">Google Calendar URL</label>
-              <input type="url" id="google-cal" name="googleCal" />
-            </div>
-            <div class="field-group">
-              <label for="guest-form-url">Guest Form URL</label>
-              <input type="url" id="guest-form-url" name="guestUrl" />
-            </div>
-            <div class="field-group">
-              <label for="email">Email Address</label>
-              <input type="email" id="email" name="email" />
+            <div class="field-group full-width">
+              <label for="guest-tags">Tags (comma separated)</label>
+              <input type="text" id="guest-tags" name="guestTags" />
             </div>
             <div class="field-group full-width">
-              <label for="description">Podcast Description</label>
-              <textarea id="description" name="description" rows="3"></textarea>
-            </div>
-            <div class="field-group">
-              <label for="category">Category (Required)</label>
-              <input type="text" id="category" name="category" required />
-            </div>
-            <div class="field-group">
-              <label for="tagline">Tagline</label>
-              <input type="text" id="tagline" name="tagline" />
-            </div>
-            <div class="field-group">
-              <label for="hostBio">Host bio</label>
-              <input type="text" id="hostBio" name="hostBio" />
-            </div>
-            <div class="field-group">
-              <label for="host-image">Host Image</label>
-              <input
-                type="file"
-                id="host-image"
-                name="hostImage"
-                accept="image/*"
-              />
-            </div>
-          </div>
-
-          <h3 class="section-title">Social Media Links</h3>
-          <div class="form-grid">
-            <div class="field-group">
-              <label for="facebook">Facebook</label>
-              <input type="url" id="facebook" name="socialMedia[]" />
-            </div>
-            <div class="field-group">
-              <label for="instagram">Instagram</label>
-              <input type="url" id="instagram" name="socialMedia[]" />
-            </div>
-            <div class="field-group">
-              <label for="linkedin">LinkedIn</label>
-              <input type="url" id="linkedin" name="socialMedia[]" />
-            </div>
-            <div class="field-group">
-              <label for="twitter">Twitter</label>
-              <input type="url" id="twitter" name="socialMedia[]" />
-            </div>
-            <div class="field-group">
-              <label for="tiktok">TikTok</label>
-              <input type="url" id="tiktok" name="socialMedia[]" />
-            </div>
-            <div class="field-group">
-              <label for="pinterest">Pinterest</label>
-              <input type="url" id="pinterest" name="socialMedia[]" />
-            </div>
-            <div class="field-group">
-              <label for="youtube">Youtube</label>
-              <input type="url" id="youtube" name="socialMedia[]" />
-            </div>
-          </div>
-
-          <div class="form-actions">
-            <button type="button" id="cancel-form-btn" class="cancel-btn">
-              Cancel
-            </button>
-            <button type="submit" class="save-btn">Save Podcast</button>
-          </div>
-        </form>
-      </div>
-    </div>
-
-    <!-- Form popup container for creating a new episode -->
-    <div id="episode-form-popup" class="popup" style="display: none">
-      <div class="form-box">
-        <span id="close-episode-form-popup" class="close-btn">&times;</span>
-        <h2 class="form-title">Create New Episode</h2>
-        <form id="create-episode-form">
-          <div class="form-grid">
-            <div class="field-group full-width">
-              <label for="podcast-select">Select Podcast</label>
-              <select id="podcast-select" name="podcastId" required></select>
+              <label for="guest-areas">Areas of Interest (comma separated)</label>
+              <input type="text" id="guest-areas" name="guestAreas" />
             </div>
             <div class="field-group full-width">
-              <label for="episode-title">Episode Title</label>
-              <input type="text" id="episode-title" name="title" required />
+              <label for="guest-email">Email</label>
+              <input type="email" id="guest-email" name="guestEmail" required />
             </div>
             <div class="field-group full-width">
-              <label for="episode-description">Description</label>
-              <textarea
-                id="episode-description"
-                name="description"
-                rows="3"
-              ></textarea>
+              <label for="guest-linkedin">LinkedIn</label>
+              <input type="text" id="guest-linkedin" name="guestLinkedIn" />
             </div>
-            <div class="field-group">
-              <label for="publish-date">Publish Date</label>
-              <input
-                type="datetime-local"
-                id="publish-date"
-                name="publishDate"
-                required
-              />
+            <div class="field-group full-width">
+              <label for="guest-twitter">Twitter</label>
+              <input type="text" id="guest-twitter" name="guestTwitter" />
             </div>
-            <div class="field-group">
-              <label for="duration">Duration (minutes)</label>
-              <input type="number" id="duration" name="duration" />
+            <div class="form-actions">
+              <button type="button" id="cancel-guest-btn" class="cancel-btn">
+                Cancel
+              </button>
+              <button type="submit" class="save-btn">Add Guest</button>
             </div>
-            <div class="field-group">
-              <label for="status">Status</label>
-              <input type="text" id="status" name="status" />
-            </div>
-          </div>
-          <div class="form-actions">
-            <button
-              type="button"
-              id="cancel-episode-form-btn"
-              class="cancel-btn"
-            >
-              Cancel
-            </button>
-            <button type="submit" class="save-btn">Create Episode</button>
-          </div>
-        </form>
+          </form>
+        </div>
       </div>
-    </div>
-
-    <!-- Highlight Editing Form -->
-    <div id="highlight-form-popup" class="popup" style="display: none">
-      <div class="form-box">
-        <span id="close-highlight-form-popup" class="close-btn">&times;</span>
-        <h2 class="form-title">Edit Highlight</h2>
-        <form id="edit-highlight-form">
-          <div class="field-group full-width">
-            <label for="highlight-title">Highlight Title</label>
-            <input type="text" id="highlight-title" name="title" required />
-          </div>
-          <div class="field-group full-width">
-            <label for="highlight-start-time">Start Time (seconds)</label>
-            <input
-              type="number"
-              id="highlight-start-time"
-              name="startTime"
-              required
-            />
-          </div>
-          <div class="field-group full-width">
-            <label for="highlight-end-time">End Time (seconds)</label>
-            <input
-              type="number"
-              id="highlight-end-time"
-              name="endTime"
-              required
-            />
-          </div>
-          <div class="form-actions">
-            <button
-              type="button"
-              id="cancel-highlight-form-btn"
-              class="cancel-btn"
-            >
-              Cancel
-            </button>
-            <button type="submit" class="save-btn">Save Highlight</button>
-          </div>
-        </form>
-      </div>
-    </div>
-
-    <!-- New popup container for adding a guest -->
-    <div id="guest-popup" class="popup" style="display: none">
-      <div class="form-box">
-        <span id="close-guest-popup" class="close-btn">&times;</span>
-        <h2 class="form-title">Add Guest</h2>
-        <form id="add-guest-form">
-          <div class="field-group full-width">
-            <label for="podcast-select-guest">Select Podcast</label>
-            <select
-              id="podcast-select-guest"
-              name="podcastId"
-              required
-            ></select>
-          </div>
-          <div class="field-group full-width">
-            <label for="episode-id">Episode ID</label>
-            <select id="episode-id" name="episodeId" required></select>
-          </div>
-          <div class="field-group full-width">
-            <label for="guest-name">Guest Name</label>
-            <input type="text" id="guest-name" name="guestName" required />
-          </div>
-          <div class="field-group full-width">
-            <label for="guest-description">Guest Description</label>
-            <input
-              type="text"
-              id="guest-description"
-              name="guestDescription"
-              required
-            />
-          </div>
-          <div class="field-group full-width">
-            <label for="guest-tags">Tags (comma separated)</label>
-            <input type="text" id="guest-tags" name="guestTags" />
-          </div>
-          <div class="field-group full-width">
-            <label for="guest-areas">Areas of Interest (comma separated)</label>
-            <input type="text" id="guest-areas" name="guestAreas" />
-          </div>
-          <div class="field-group full-width">
-            <label for="guest-email">Email</label>
-            <input type="email" id="guest-email" name="guestEmail" required />
-          </div>
-          <div class="field-group full-width">
-            <label for="guest-linkedin">LinkedIn</label>
-            <input type="text" id="guest-linkedin" name="guestLinkedIn" />
-          </div>
-          <div class="field-group full-width">
-            <label for="guest-twitter">Twitter</label>
-            <input type="text" id="guest-twitter" name="guestTwitter" />
-          </div>
-          <div class="form-actions">
-            <button type="button" id="cancel-guest-btn" class="cancel-btn">
-              Cancel
-            </button>
-            <button type="submit" class="save-btn">Add Guest</button>
-          </div>
-        </form>
-      </div>
-    </div>
-  </main>
-</div>
-
-<script
-  type="module"
-  src="{{ url_for('static', filename='js/components/sidebar.js') }}"
-></script>
-<script
-  type="module"
-  src="{{ url_for('static', filename='js/podcastmanagement/podcastmanagement.js') }}"
-></script>
-{% endblock %}
+    </main>
+  </div>
+  
+  <script
+    type="module"
+    src="{{ url_for('static', filename='js/components/sidebar.js') }}"
+  ></script>
+  <script
+    type="module"
+    src="{{ url_for('static', filename='js/podcastmanagement/podcastmanagement.js') }}"
+  ></script>
+  {% endblock %}
+  
