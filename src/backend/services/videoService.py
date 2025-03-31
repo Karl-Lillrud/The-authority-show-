@@ -3,7 +3,7 @@ import logging
 import tempfile
 from datetime import datetime
 import subprocess
-from bson import ObjectId
+
 
 from backend.utils.file_utils import extract_audio, detect_background_noise
 from backend.utils.text_utils import transcribe_with_whisper

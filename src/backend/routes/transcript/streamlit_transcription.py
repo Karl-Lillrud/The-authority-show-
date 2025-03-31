@@ -16,10 +16,7 @@
 import streamlit as st
 import requests
 import base64
-import time
 import os
-import json
-from io import BytesIO
 import logging
 import tempfile
 from dotenv import load_dotenv

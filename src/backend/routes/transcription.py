@@ -3,7 +3,6 @@ import os
 import logging
 import subprocess
 from datetime import datetime
-from io import BytesIO
 from flask import Blueprint, request, jsonify
 import matplotlib
 matplotlib.use('Agg')
