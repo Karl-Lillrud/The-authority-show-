@@ -1,46 +1,44 @@
 import { fetchPodcasts } from "/static/requests/podcastRequests.js";
 
+function toggleLandingPage() {
+  var dropdown = document.getElementById("dropdown-content");
+  var triangle = document.getElementById("triangle");
+
+  // Toggle dropdown visibility and triangle direction
+  if (dropdown.style.display === "none" || dropdown.style.display === "") {
+    dropdown.style.display = "block";
+    triangle.classList.remove("triangle-down");
+    triangle.classList.add("triangle-up");
+  } else {
+    dropdown.style.display = "none";
+    triangle.classList.remove("triangle-up");
+    triangle.classList.add("triangle-down");
+  }
+}
+window.toggleLandingPage = toggleLandingPage;
+
 async function populatePodcastDropdown() {
-  const dropdown = document.getElementById("headerPodcastDropdown");
+  const dropdown = document.getElementById("dropdown-content");
   if (!dropdown) {
     console.error("Header podcast dropdown element not found.");
     return;
   }
 
   try {
+    // Fetch the podcasts
     const data = await fetchPodcasts();
     console.log("Podcasts fetched:", data);
     const podcasts = data.podcast || [];
-
-    const selected = dropdown.querySelector(".dropdown-selected");
     const optionsContainer = dropdown.querySelector(".dropdown-options");
 
-    // Auto-select if only one podcast exists
-    if (podcasts.length === 1) {
-      const onlyPodcast = podcasts[0];
-      localStorage.setItem("selectedPodcastId", onlyPodcast._id);
-
-      if (selected) selected.textContent = onlyPodcast.podName;
-    }
-
-    // Hide dropdown if fewer than 2 podcasts
-    if (podcasts.length < 2) {
-      dropdown.style.display = "none";
-      return;
-    }
-
-    // Show dropdown
-    dropdown.style.display = "block";
-
     podcasts.forEach((podcast) => {
-      const option = document.createElement("div");
+      const option = document.createElement("a");
       option.textContent = podcast.podName;
+      option.href = "/landingpage/" + podcast._id;
       option.dataset.value = podcast._id;
 
       option.addEventListener("click", () => {
-        selected.textContent = podcast.podName;
-        localStorage.setItem("selectedPodcastId", podcast._id);
-        window.location.href = "/podcast";
+        window.location.href = "/landingpage/" + podcast._id;
       });
 
       optionsContainer.appendChild(option);

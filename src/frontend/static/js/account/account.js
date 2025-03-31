@@ -21,6 +21,11 @@ document.addEventListener("DOMContentLoaded", () => {
       profilePictureOverlay.style.display = 'none'; 
     }
 
+    const requiredFields = document.querySelectorAll(".required-profile");
+    requiredFields.forEach(field => {
+      field.style.display = 'none';
+    });
+    
   // Initialize profile data
   fetchProfile()
     .then((data) => {
