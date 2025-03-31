@@ -30,6 +30,7 @@ from backend.routes.Mailing_list import Mailing_list_bp
 from backend.routes.user import user_bp
 from backend.routes.audio_routes import audio_bp
 from backend.routes.video_routes import video_bp
+from flask import Flask, Response
 
 from backend.routes.highlight import highlights_bp
 
@@ -114,7 +115,15 @@ logger.info(f"MONGODB_URI: {os.getenv('MONGODB_URI')}")
 logger.info(f"APP_ENV: {APP_ENV}")
 
 
-# Log the request with user info
+@app.route("/streamlit/<path:path>", methods=["GET", "POST"])
+def proxy_streamlit(path):
+    url = f"http://localhost:8501/{path}"
+    resp = requests.request(
+        method=request.method, url=url, headers=request.headers, data=request.data
+    )
+    return Response(resp.content, resp.status_code, resp.raw.headers.items())
+
+
 @app.before_request
 def load_user():
     g.user_id = session.get("user_id")
