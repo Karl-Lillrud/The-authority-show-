@@ -431,6 +431,18 @@ async function showEpisodePopup(episode) {
       Object.keys(updatedData).forEach((key) => {
         if (!updatedData[key]) delete updatedData[key];
       });
+
+      if (updatedData.duration) {
+        if (updatedData.duration < 0) {
+          showNotification(
+            "Invalid duration",
+            "Please provide a positive integer for duration",
+            "error"
+          );
+          return;
+        }
+      }
+
       try {
         const result = await updateEpisode(episode._id, updatedData); // Use updateEpisode from episodeRequest.js
         if (result.message) {
