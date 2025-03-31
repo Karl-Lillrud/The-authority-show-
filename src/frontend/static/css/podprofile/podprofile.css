@@ -126,14 +126,19 @@ main {
 
 /* Container Styling */
 .container {
+  position: relative; /* Add relative positioning */
   background-color: var(--background-light);
   border-radius: var(--border-radius-xl);
   border: 1px solid rgba(0, 0, 0, 0.2);
   box-shadow: 0px 0px 50px 0px rgb(213, 61, 6);
-  width: 18%;
-  width: 460px;
-  padding: var(--spacing-xl);
-  margin: var(--spacing-xl) auto;
+  width: 400px; /* Reduced width from 560px to 400px */
+  padding: var(--spacing-md); /* Reduced padding */
+  margin: 0 auto; /* Center horizontally */
+  height: auto; /* Adjust height dynamically */
+  display: flex;
+  flex-direction: column;
+  justify-content: center; /* Center content vertically */
+  gap: var(--spacing-sm); /* Add spacing between elements */
   transition: background-color 0.3s ease;
 }
 
@@ -142,21 +147,21 @@ body.dark-mode .container {
 }
 
 .container h1 {
-  margin-bottom: var(--spacing-lg);
+  margin-bottom: var(--spacing-sm); /* Reduced margin */
   color: var(--highlight-color);
   text-align: center;
 }
 
 /* Form Styling */
 .form-group {
-  margin-bottom: var(--spacing-lg);
+  margin-bottom: var(--spacing-sm); /* Reduced spacing between form groups */
   text-align: left;
 }
 
 label {
   display: block;
-  margin-bottom: var(--spacing-sm);
-  font-size: 1.1rem;
+  margin-bottom: var(--spacing-xs); /* Reduced margin below labels */
+  font-size: 1rem; /* Slightly smaller font size */
   font-weight: 500;
 }
 
@@ -164,11 +169,11 @@ input,
 select,
 textarea {
   width: 100%;
-  padding: var(--spacing-md);
+  padding: var(--spacing-xs); /* Reduced padding inside inputs */
   border: 1px solid #cccccc;
   border-radius: var(--border-radius-md);
   box-shadow: inset #c2bcbc 1px 5px 20px 0px;
-  font-size: 1rem;
+  font-size: 0.95rem; /* Slightly smaller font size */
   background: var(--background-light);
   color: var(--text-color-light);
   transition: all 0.3s ease;
@@ -192,8 +197,8 @@ body.dark-mode textarea {
 
 /* Button Styling */
 button {
-  padding: var(--spacing-md);
-  font-size: 1rem;
+  padding: var(--spacing-sm); /* Reduced padding for buttons */
+  font-size: 0.95rem; /* Slightly smaller font size */
   font-weight: bold;
   border: none;
   border-radius: var(--border-radius-md);
@@ -204,8 +209,8 @@ button {
 .button-primary {
   background-color: var(--highlight-color);
   color: white;
-  width: 100%;
-  margin-top: var(--spacing-lg);
+  width: 100%; /* Default full width for other buttons */
+  margin-top: var(--spacing-sm); /* Reduced margin above buttons */
   border: 1px double orange;
 }
 
@@ -214,12 +219,26 @@ button {
   opacity: 0.9;
 }
 
+#goToEmailSection {
+  width: auto; /* Make the button smaller */
+  padding: var(--spacing-xs) var(--spacing-md); /* Adjust padding */
+  position: absolute; /* Position it relative to the container */
+  bottom: var(--spacing-md); /* Place it at the bottom of the container */
+  right: var(--spacing-md); /* Align it to the right inside the container */
+  font-size: 0.9rem; /* Slightly smaller font size */
+}
+
+#goToEmailSection:hover {
+  box-shadow: 0 0 10px var(--highlight-color);
+  opacity: 0.9;
+}
+
 .button-secondary {
   background: none;
   color: var(--text-color-light);
   text-decoration: underline;
-  padding: var(--spacing-sm);
-  margin-top: var(--spacing-md);
+  padding: var(--spacing-xs); /* Reduced padding */
+  margin-top: var(--spacing-sm); /* Reduced margin */
   width: auto;
 }
 
@@ -397,19 +416,21 @@ body.dark-mode .help-button {
   opacity: 1;
 }
 
-/* NEW PODCAST SHOWCASE STYLES */
-.podcast-showcase {
-  width: 100%;
-  max-width: 1000px;
-  margin: 40px auto 0;
-  border-radius: 16px;
+/* NEW UNIFIED PODCAST CONTAINER */
+.podcast-container {
+  width: 900px;
+  max-width: 95%;
+  margin: var(--spacing-lg) auto;
+  border-radius: var(--border-radius-xl);
   overflow: hidden;
   background-color: var(--card-bg-light);
   box-shadow: var(--card-shadow);
   transition: all 0.3s ease;
+  display: flex;
+  flex-direction: column;
 }
 
-body.dark-mode .podcast-showcase {
+body.dark-mode .podcast-container {
   background-color: var(--card-bg-dark);
 }
 
@@ -499,8 +520,24 @@ body.dark-mode .podcast-showcase {
   border-color: var(--apple-purple);
 }
 
-.podcast-body {
+/* Podcast Content Area */
+.podcast-content {
+  display: flex;
+  flex-direction: row;
+  min-height: 500px;
+}
+
+/* Podcast Details */
+.podcast-details {
+  flex: 1;
   padding: 24px;
+  border-right: 1px solid rgba(0, 0, 0, 0.1);
+  overflow-y: auto;
+  max-height: 600px;
+}
+
+body.dark-mode .podcast-details {
+  border-right: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .podcast-description {
@@ -563,97 +600,87 @@ body.dark-mode .social-link {
   color: var(--highlight-color);
 }
 
-/* Episodes Carousel */
-.episodes-carousel-container {
-  width: 100%;
-  max-width: 1000px;
-  margin: 24px auto;
+/* Episodes List */
+.episodes-list {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+  max-height: 600px;
+}
+
+.episodes-list::-webkit-scrollbar {
+  width: 6px;
+}
+
+.episodes-list::-webkit-scrollbar-track {
+  background: #e0e0e0; /* Light silver track */
+  border-radius: 10px;
+}
+
+.episodes-list::-webkit-scrollbar-thumb {
+  background: #b0b0b0; /* Silver-like color for the thumb */
+  border-radius: 10px;
+}
+
+.episodes-list::-webkit-scrollbar-thumb:hover {
+  background: #a0a0a0; /* Slightly darker silver on hover */
 }
 
 .episodes-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 16px;
+  padding: 16px 24px;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+  position: sticky;
+  top: 0;
+  background-color: var(--card-bg-light);
+  z-index: 10;
+}
+
+body.dark-mode .episodes-header {
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  background-color: var(--card-bg-dark);
 }
 
 .episodes-header h2 {
   font-size: 1.5rem;
   font-weight: 600;
   color: var(--highlight-color);
-}
-
-.carousel-controls {
-  display: flex;
-  gap: 12px;
-}
-
-.carousel-control {
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background-color: var(--highlight-color);
-  color: white;
-  border: none;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.carousel-control:hover {
-  background-color: #e06a2c;
-  transform: scale(1.05);
-}
-
-.episodes-slider {
-  display: flex;
-  overflow-x: auto;
-  scroll-behavior: smooth;
-  gap: 20px;
-  padding: 8px 4px 24px;
-  scrollbar-width: none; /* Firefox */
-  -ms-overflow-style: none; /* IE and Edge */
-}
-
-.episodes-slider::-webkit-scrollbar {
-  display: none; /* Chrome, Safari, Opera */
+  margin: 0;
 }
 
 .episode-card {
-  flex: 0 0 300px;
-  border-radius: 12px;
-  overflow: hidden;
-  background-color: var(--card-bg-light);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  display: flex;
+  padding: 16px 24px;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
   transition: all 0.3s ease;
+  position: relative;
 }
 
 body.dark-mode .episode-card {
-  background-color: var(--card-bg-dark);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
 }
 
 .episode-card:hover {
-  transform: translateY(-5px);
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+  background-color: rgba(0, 0, 0, 0.02);
+}
+
+body.dark-mode .episode-card:hover {
+  background-color: rgba(255, 255, 255, 0.02);
 }
 
 .episode-image-container {
-  position: relative;
-  height: 160px;
+  flex: 0 0 80px;
+  height: 80px;
+  border-radius: var(--border-radius-sm);
   overflow: hidden;
+  position: relative;
+  margin-right: 16px;
 }
 
 .episode-image {
   width: 100%;
   height: 100%;
   object-fit: cover;
-  transition: transform 0.3s ease;
-}
-
-.episode-card:hover .episode-image {
-  transform: scale(1.05);
 }
 
 .episode-play-overlay {
@@ -675,8 +702,8 @@ body.dark-mode .episode-card {
 }
 
 .episode-play-btn {
-  width: 50px;
-  height: 50px;
+  width: 40px;
+  height: 40px;
   border-radius: 50%;
   background-color: var(--highlight-color);
   color: white;
@@ -694,13 +721,15 @@ body.dark-mode .episode-card {
 }
 
 .episode-content {
-  padding: 16px;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
 }
 
 .episode-title {
-  font-size: 1.1rem;
+  font-size: 1rem;
   font-weight: 600;
-  margin-bottom: 8px;
+  margin-bottom: 4px;
   line-height: 1.4;
   display: -webkit-box;
   -webkit-line-clamp: 2;
@@ -710,10 +739,11 @@ body.dark-mode .episode-card {
 
 .episode-meta {
   display: flex;
-  justify-content: space-between;
-  font-size: 0.85rem;
+  flex-wrap: wrap;
+  gap: 12px;
+  font-size: 0.8rem;
   color: #777;
-  margin-bottom: 12px;
+  margin-bottom: 8px;
 }
 
 body.dark-mode .episode-meta {
@@ -721,24 +751,30 @@ body.dark-mode .episode-meta {
 }
 
 .episode-description {
-  font-size: 0.9rem;
+  font-size: 0.85rem;
   line-height: 1.5;
-  margin-bottom: 16px;
+  margin-bottom: 12px;
   display: -webkit-box;
-  -webkit-line-clamp: 3;
+  -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
+  transition: all 0.3s ease;
+}
+
+.episode-description.expanded {
+  -webkit-line-clamp: unset;
+  max-height: none;
 }
 
 .episode-actions {
   display: flex;
   gap: 8px;
+  margin-top: auto;
 }
 
 .episode-btn {
-  flex: 1;
-  padding: 8px 0;
-  font-size: 0.9rem;
+  padding: 6px 12px;
+  font-size: 0.8rem;
   border-radius: 6px;
   display: flex;
   align-items: center;
@@ -771,6 +807,7 @@ body.dark-mode .episode-btn.secondary {
 .audio-player {
   margin-top: 12px;
   display: none;
+  width: 100%;
 }
 
 .audio-player.active {
@@ -829,11 +866,6 @@ body.dark-mode .episode-btn.secondary {
   }
 }
 
-.expanded {
-  -webkit-line-clamp: unset;
-  max-height: none;
-}
-
 /* Loading spinner */
 .loading-container {
   display: flex;
@@ -885,13 +917,13 @@ body.dark-mode .error-container {
   color: #ff6b6b;
 }
 
+/* Responsive adjustments */
 @media (max-width: 768px) {
   .container {
-    width: 90%; /* Make the container use most of the viewport */
-    padding: var(--spacing-md);
+    width: 90%;
   }
 
-  .podcast-showcase {
+  .podcast-container {
     width: 95%;
   }
 
@@ -913,11 +945,25 @@ body.dark-mode .error-container {
     justify-content: center;
   }
 
-  .episodes-slider {
-    gap: 12px;
+  .podcast-content {
+    flex-direction: column;
+    gap: 0; /* Remove gap between sections */
   }
 
-  .episode-card {
-    flex: 0 0 85%;
+  .podcast-details {
+    border-right: none;
+    border-bottom: none; /* Remove bottom border */
+    max-height: none; /* Remove height restriction */
+    margin-bottom: 0; /* Remove extra margin */
+    padding-bottom: 0; /* Remove padding */
   }
+
+  .episodes-list {
+    margin-top: 0; /* Remove unnecessary margin */
+  }
+}
+
+#connectCalendar {
+  margin-bottom: calc(var(--spacing-md) + 50px);
+  /* Add 50px extra space below the button */
 }

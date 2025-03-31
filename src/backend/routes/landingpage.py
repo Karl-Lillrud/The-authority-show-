@@ -2,6 +2,9 @@ from flask import g, redirect, render_template, url_for, Blueprint
 from backend.repository.podcast_repository import PodcastRepository
 from backend.repository.episode_repository import EpisodeRepository
 import logging
+import base64
+import requests
+from flask import request, jsonify, render_template, url_for, g
 
 landingpage_bp = Blueprint("landingpage_bp", __name__)
 logger = logging.getLogger(__name__)
@@ -47,63 +50,90 @@ def map_social_links(social_links):
 
 @landingpage_bp.route("/landingpage/<podcast_id>")
 def landingpage_by_id(podcast_id):
-    try:
-        # ✅ Get the user ID from the session 
-        user_id = getattr(g, 'user_id', "test_user")
+    def convert_image_to_data_url(image_url):
+        try:
+            response = requests.get(image_url)
+            response.raise_for_status()
+            # Determine the MIME type from the response headers.
+            mime_type = response.headers.get('Content-Type', 'image/jpeg')
+            # Encode the image content to base64.
+            base64_data = base64.b64encode(response.content).decode('utf-8')
+            data_url = f"data:{mime_type};base64,{base64_data}"
+            return data_url
+        except Exception as e:
+            logger.error("Error converting image: %s", e)
+            return None
 
-        # ✅ Fetch podcast details 
+    try:
+        user_id = getattr(g, 'user_id', "test_user")
         podcast_doc, status_code = podcast_repo.get_podcast_by_id(user_id, podcast_id)
 
         if status_code != 200:
             logger.warning(f"⚠️ Podcast {podcast_id} not found!")
             return render_template("404.html")
 
-        # ✅ Fetch episodes using the repository
         episodes_response, status_code = episode_repo.get_episodes_by_podcast(podcast_id, user_id)
+        episodes_list = episodes_response.get("episodes", []) if status_code == 200 else []
 
-        if status_code != 200:
-            logger.error(f"Failed to fetch episodes for podcast {podcast_id}: {episodes_response}")
-            episodes_list = []
-        else:
-            episodes_list = episodes_response.get("episodes", [])
-
-        # ✅ Convert social media links to dictionary
         social_media_links = map_social_links(podcast_doc.get("podcast", {}).get("socialMedia", []))
 
-        # ✅ Extract podcast details
         podcast_title = podcast_doc.get("podcast", {}).get("podName", "Default Podcast Title")
         podcast_description = podcast_doc.get("podcast", {}).get("description", "Default Podcast Description")
-        host_name = podcast_doc.get("podcast", {}).get("hostName", "Unknown Host")
+
+        # Grab host_name and author_name from the document
+        host_name = podcast_doc.get("podcast", {}).get("hostName", "")
+        author_name = podcast_doc.get("podcast", {}).get("author", "")
+
+        # If host_name is empty, fall back to author_name
+        if not host_name:
+            host_name = author_name or "Unknown Host"
+
         host_bio = podcast_doc.get("podcast", {}).get("hostBio", "No biography available.")
         tagline = podcast_doc.get("podcast", {}).get("tagline", "No tagline available.")
+
+        # Extract banner_url and logoUrl from the document
         banner_url = podcast_doc.get("podcast", {}).get("bannerUrl", "")
         podcast_logo = podcast_doc.get("podcast", {}).get("logoUrl", "")
         host_image = podcast_doc.get("podcast", {}).get("hostImage", "")
 
-        # Ensure `podcast_logo` is a valid string before checking its type
+        # If no banner_url is provided, fallback to using the podcast_logo
+        if not banner_url:
+            banner_url = podcast_logo
+
+        # Convert podcast_logo if it's an external URL
         if isinstance(podcast_logo, str):
-            if podcast_logo.startswith("data:image"):  
-                # ✅ It's a base64 image, so we can use it directly
-                pass  
-            elif podcast_logo.startswith("http"):  
-                # ✅ It's an external URL, check if it's accessible
-                podcast_logo = podcast_logo  # Keep the existing URL
-            else:  
-                # ❌ If it's neither, set a default fallback image
+            if podcast_logo.startswith("data:image"):
+                pass  # Already a data URL
+            elif podcast_logo.startswith("http"):
+                converted_logo = convert_image_to_data_url(podcast_logo)
+                if converted_logo:
+                    podcast_logo = converted_logo
+                else:
+                    podcast_logo = url_for('static', filename='images/default.png')
+            else:
                 podcast_logo = url_for('static', filename='images/default.png')
         else:
-            # ❌ If it's not a string at all, set a default image
             podcast_logo = url_for('static', filename='images/default.png')
 
-        # Ensure host_image is a valid string before checking startswith()
+        # Convert banner_url if it's an external URL
+        if isinstance(banner_url, str):
+            if banner_url.startswith("data:image"):
+                pass  # Already a data URL
+            elif banner_url.startswith("http"):
+                converted_banner = convert_image_to_data_url(banner_url)
+                if converted_banner:
+                    banner_url = converted_banner
+                else:
+                    banner_url = url_for('static', filename='images/default.png')
+            else:
+                banner_url = url_for('static', filename='images/default.png')
+        else:
+            banner_url = url_for('static', filename='images/default.png')
+
+        # Process host_image if needed
         if not isinstance(host_image, str) or not host_image.startswith("data:image"):
             host_image = url_for('static', filename='images/default.png')
 
-        # Ensure banner_url is a valid string before checking startswith()
-        if not isinstance(banner_url, str) or not banner_url.startswith("data:image"):
-            banner_url = url_for('static', filename='images/default.png')
-
-        # ✅ Render the template with optimized data retrieval
         return render_template(
             "landingpage/landingpage.html",
             podcast_title=podcast_title,
