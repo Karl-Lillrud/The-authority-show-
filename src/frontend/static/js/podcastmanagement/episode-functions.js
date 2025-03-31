@@ -568,6 +568,16 @@ export function initEpisodeFunctions() {
         );
         return;
       }
+      if (data.duration) {
+        if (data.duration < 0) {
+          showNotification(
+            "Invalid duration",
+            "Please provide a positive integer for duration",
+            "error"
+          );
+          return;
+        }
+      }
 
       try {
         const result = await registerEpisode(data);
