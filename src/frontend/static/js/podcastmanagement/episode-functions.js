@@ -496,12 +496,12 @@ export function initEpisodeFunctions() {
     });
 
   // Update the episode creation form to include recordingAt
-  document.getElementById("create-episode-form").innerHTML += `
+  /* document.getElementById("create-episode-form").innerHTML += `
     <div class="field-group">
       <label for="recording-at">Recording Date</label>
       <input type="datetime-local" id="recording-at" name="recordingAt" />
     </div>
-  `;
+  `; */
 
   // Assuming you are getting the episode data from the backend or checking a condition
   function loadEpisodeDetails(episodeData) {
