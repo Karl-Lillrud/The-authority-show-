@@ -309,11 +309,36 @@ document.addEventListener("DOMContentLoaded", function () {
     let currentMonth = new Date().getMonth();
     let currentYear = new Date().getFullYear();
 
-    // Define unavailable dates
-    const unavailableDates = [
-        "2025-03-10", "2025-03-15", "2025-03-20", // Example unavailable dates
-        "2025-04-05", "2025-04-12", "2025-04-18"  // More blocked days
-    ];
+    let busyDates = [];
+    let busyTimes = {};
+    let workingHours = { start: "09:00:00", end: "17:00:00" };
+
+    // Fetch available dates and working hours from the backend
+    async function fetchAvailableDates() {
+        const urlParams = new URLSearchParams(window.location.search);
+        const guestId = urlParams.get("guestId");
+        const googleCal = urlParams.get("googleCal");
+
+        if (!guestId || !googleCal) {
+            console.error("Guest ID or Google Calendar token is missing in the URL");
+            return;
+        }
+
+        try {
+            const response = await fetch(`/guest-form/available_dates?guestId=${guestId}&googleCal=${googleCal}`);
+            if (!response.ok) {
+                throw new Error("Failed to fetch available dates");
+            }
+
+            const data = await response.json();
+            busyDates = data.busy_dates || [];
+            busyTimes = data.busy_times || {};
+            workingHours = data.working_hours || { start: "09:00:00", end: "17:00:00" };
+            generateCalendar(); // Regenerate the calendar with the fetched data
+        } catch (error) {
+            console.error("Error fetching available dates:", error);
+        }
+    }
 
     // Load saved selection from localStorage
     loadSavedDateTime();
@@ -430,7 +455,7 @@ document.addEventListener("DOMContentLoaded", function () {
             const formattedDate = fullDate.toISOString().split('T')[0]; // Format as YYYY-MM-DD
 
             // Check if the date is unavailable or in the past
-            if (fullDate < today || fullDate.getDay() === 0 || fullDate.getDay() === 6 || unavailableDates.includes(formattedDate)) {
+            if (fullDate < today || busyDates.includes(formattedDate)) {
                 dayEl.classList.add("text-gray-400", "cursor-not-allowed", "line-through");
             } else {
                 dayEl.classList.add("bg-blue-100", "cursor-pointer");
@@ -452,17 +477,36 @@ document.addEventListener("DOMContentLoaded", function () {
         }
     }
 
-    // Populate time slots (only full hours & half hours)
+    // Populate time slots based on working hours and busy times
     function populateTimeSlots() {
         timePicker.innerHTML = "";
         timePickerContainer.classList.remove("hidden");
 
-        for (let hour = 9; hour <= 18; hour++) {
-            ["00", "30"].forEach(minute => {
-                const timeOption = document.createElement("option");
-                timeOption.value = `${hour}:${minute}`;
-                timeOption.textContent = `${hour}:${minute}`;
-                timePicker.appendChild(timeOption);
+        if (!selectedDate) return;
+
+        const dateStr = selectedDate.toISOString().split("T")[0];
+        const busySlots = busyTimes[dateStr] || [];
+        const workingStart = parseTime(workingHours.start);
+        const workingEnd = parseTime(workingHours.end);
+
+        for (let hour = workingStart.hour; hour <= workingEnd.hour; hour++) {
+            ["00", "30"].forEach((minute) => {
+                const time = `${hour.toString().padStart(2, "0")}:${minute}`;
+                const timeObj = parseTime(`${time}:00`);
+
+                // Check if the time is within busy slots
+                const isBusy = busySlots.some((slot) => {
+                    const slotStart = parseTime(slot.start);
+                    const slotEnd = parseTime(slot.end);
+                    return timeObj >= slotStart && timeObj < slotEnd;
+                });
+
+                if (!isBusy) {
+                    const timeOption = document.createElement("option");
+                    timeOption.value = time;
+                    timeOption.textContent = time;
+                    timePicker.appendChild(timeOption);
+                }
             });
         }
 
@@ -473,6 +517,12 @@ document.addEventListener("DOMContentLoaded", function () {
         if (savedTime) {
             timePicker.value = savedTime;
         }
+    }
+
+    // Helper function to parse time strings (HH:mm:ss)
+    function parseTime(timeStr) {
+        const [hour, minute, second] = timeStr.split(":").map(Number);
+        return { hour, minute, second };
     }
 
     // Confirm selection & prevent unwanted validation
@@ -489,6 +539,9 @@ document.addEventListener("DOMContentLoaded", function () {
             saveDateTime(); // Save selection to localStorage
         }
     });
+
+    // Fetch available dates on page load
+    fetchAvailableDates();
 });
 
 // Submit form data to the backend
