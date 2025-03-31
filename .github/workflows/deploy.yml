@@ -3,7 +3,7 @@ name: Deploy Flask App to Azure
 on:
   push:
     branches:
-      - main
+      - main # Change this if you use a different branch
 
 jobs:
   build-and-deploy:
@@ -27,8 +27,8 @@ jobs:
       - name: Upload Startup Script
         run: |
           cd src  # Change to the src directory
-          echo -e "#!/bin/bash\n\n# Start gunicorn in the background\ngunicorn --chdir src --bind=0.0.0.0 --timeout 600 app:app &\n\n# Run streamlit\nstreamlit run src/backend/routes/transcript/streamlit_transcription.py" > startup.sh
-          chmod +x startup.sh
+          echo -e "#!/bin/bash\n\ngunicorn --chdir src --bind=0.0.0.0 --timeout 600 app:app &\nstreamlit run src/backend/routes/transcript/streamlit_transcription.py" > startup.sh
+          chmod +x startup.sh  # Make sure the script is executable
 
       - name: Deploy to Azure Web App
         uses: azure/webapps-deploy@v3
@@ -36,3 +36,4 @@ jobs:
           app-name: "podmanager" # Replace with your Azure Web App name
           publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }}
           package: .
+          startup-command: ./src/startup.sh # Set the startup script for Azure Web App
