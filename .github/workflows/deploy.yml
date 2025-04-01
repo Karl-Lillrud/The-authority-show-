@@ -38,24 +38,21 @@ jobs:
 
       - name: Upload Startup Script
         run: |
-          echo -e "#!/bin/bash\n\ngunicorn --chdir src --bind=0.0.0.0 --timeout 600 app:app &\nstreamlit run src/backend/routes/transcript/streamlit_transcription.py" > src/startup.sh
+          echo -e "#!/bin/bash\n\ngunicorn --chdir /home/site/wwwroot/src --bind=0.0.0.0:8000 --timeout 600 app:app &\nstreamlit run /home/site/wwwroot/src/backend/routes/transcript/streamlit_transcription.py --server.port 8501 &\nwait" > src/startup.sh
           chmod +x src/startup.sh
-          echo "Uploading startup.sh..."
-          cp ./src/startup.sh /home/site/wwwroot/src/startup.sh
-          chmod +x /home/site/wwwroot/src/startup.sh
 
       - name: Verify Deployment Structure
         run: |
           echo "Verifying deployment structure..."
-          ls -l /home/site/wwwroot/src
-          cat /home/site/wwwroot/src/startup.sh
+          ls -l ./src
+          cat ./src/startup.sh
 
       - name: Deploy to Azure Web App
         uses: azure/webapps-deploy@v3
         with:
           app-name: "podmanager" # Replace with your Azure Web App name
           publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }}
-          package: ./src # Distribuerar endast src
+          package: ./src # Ensure the entire src directory is deployed
 
       - name: Ensure Deployment Package is Extracted
         run: |
