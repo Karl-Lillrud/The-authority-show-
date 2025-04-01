@@ -35,12 +35,7 @@ jobs:
           app-name: "podmanager" # Replace with your Azure Web App name
           publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }}
           package: ./src # Distribuerar endast src
-
-      - name: Clean wwwroot directory
-        run: |
-          echo "Cleaning /wwwroot/ directory..."
-          find /home/site/wwwroot -type f ! -name 'output.tar.gz' -delete
-          find /home/site/wwwroot -type d ! -name '.' -exec rm -rf {} +
+          slot-name: "ggevewegdfgwebcd" # Specify the slot name here
 
       - name: Debug File Existence
         run: |
