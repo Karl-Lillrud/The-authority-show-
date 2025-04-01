@@ -22,16 +22,11 @@ import tempfile
 from dotenv import load_dotenv
 import os
 import sys
+
 # Ensure the project root is in the system path (if needed)
 project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../../"))
 if project_root not in sys.path:
     sys.path.insert(0, project_root)
-
-from backend.services.transcriptionService import TranscriptionService
-
-transcription_service = TranscriptionService()
-
-
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
