@@ -7,7 +7,7 @@ from io import BytesIO
 from elevenlabs.client import ElevenLabs
 from backend.database.mongo_connection import fs
 from backend.utils.ai_utils import remove_filler_words
-from backend.utils.text_utils import generate_ai_suggestions, generate_show_notes, generate_ai_quotes, generate_quote_image
+from backend.utils.text_utils import generate_ai_suggestions, generate_show_notes, generate_ai_quotes, generate_ai_quotes, generate_quote_images
 
 logger = logging.getLogger(__name__)
 client = ElevenLabs(api_key=os.getenv("ELEVENLABS_API_KEY"))
@@ -80,12 +80,9 @@ class TranscriptionService:
         logger.info(f"📝 Generating quotes notes...")
         quotes_text = generate_ai_quotes(transcription_text)
 
-        if isinstance(quotes_text, str):
-            quotes_list = quotes_text.split("\n\n")
-        else:
-            quotes_list = quotes_text
+        quotes_list = quotes_text.split("\n\n") if isinstance(quotes_text, str) else [quotes_text]
 
-        quote_images = [generate_quote_image(quote) for quote in quotes_list if quote.strip()]
+        quote_image_urls = generate_quote_images(quotes_list)
 
         return {
             "file_id": str(file_id),
@@ -94,7 +91,7 @@ class TranscriptionService:
             "ai_suggestions": ai_suggestions,
             "show_notes": show_notes,
             "quotes": quotes_text,
-            "quote_images": quote_images,
+            "quote_images": quote_image_urls
         }
 
     def translate_text(self, text: str, language: str) -> str:

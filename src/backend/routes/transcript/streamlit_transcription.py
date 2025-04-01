@@ -50,13 +50,24 @@ def download_button(label, file_path, filename):
         return st.markdown(href, unsafe_allow_html=True)
     return st.warning("Processed file not found. Try again.")
 
-
 # Function to create a download button för textinnehåll
 def download_button_text(label, text, filename):
     if isinstance(text, list):
         text = format_transcription(text)  # Convert list to string
     b64 = base64.b64encode(text.encode()).decode()
     return st.download_button(label, text, filename, key=filename)
+
+def download_button_image(label, image_path, filename):
+    """Creates a download button for an image."""
+    if os.path.exists(image_path):
+        with open(image_path, "rb") as img_file:
+            b64 = base64.b64encode(img_file.read()).decode()
+        ext = filename.split(".")[-1]
+        mime = f"image/{ext if ext != 'jpg' else 'jpeg'}"
+        href = f'<a href="data:{mime};base64,{b64}" download="{filename}">{label}</a>'
+        return st.markdown(href, unsafe_allow_html=True)
+    else:
+        return st.warning("Image not found.")
 
 # Funktion för att översätta text
 def translate_text(text, target_language):
@@ -201,22 +212,21 @@ with tab1:
                 quotes_text = st.session_state.get("quotes_translated", st.session_state.quotes) or ""
                 st.text_area("💬 Quotes", value=quotes_text, height=200, key="quotes")
 
-                # Language translation
                 language_quotes = st.selectbox("🌍 Translate Quotes to:", languages, key="lang_quotes")
                 if st.button("Translate Quotes"):
                     st.session_state["quotes_translated"] = translate_text(quotes_text, language_quotes)
                     st.rerun()
 
-                # Download
                 download_button_text("⬇ Download AI-Generated Quotes", st.session_state.get("quotes_translated", quotes_text), "ai_quotes.txt")
 
-                # 🖼️ Display quote images (if available)
-                # Show generated quote images (URLs from backend)
+                # 🖼️ Display quote images (from URLs)
                 quote_images = st.session_state.get("quote_images", [])
                 if quote_images:
                     st.markdown("### 🖼️ Quote Images")
-                    for url in quote_images:
-                        st.image(url, use_column_width=True)
+                    for i, url in enumerate(quote_images, 1):
+                        if url:
+                            st.image(url, use_column_width=True)
+                            st.markdown(f"[⬇ Download Image {i}]({url})", unsafe_allow_html=True)
 
 
 # 🎵 **Flik 2: AI Audio Enhancement**
