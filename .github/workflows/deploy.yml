@@ -3,7 +3,7 @@ name: Deploy Flask App to Azure
 on:
   push:
     branches:
-      - main # Change this if you use a different branch
+      - main
 
 jobs:
   build-and-deploy:
@@ -20,13 +20,19 @@ jobs:
 
       - name: Install Dependencies
         run: |
-
+          cd src
           python -m pip install --upgrade pip
-          pip install -r requirements.txt
+          pip install -r ../requirements.txt  # Matchar path till requirements.txt i projektroten
+
+      - name: Upload Startup Script
+        run: |
+          echo -e "#!/bin/bash\n\ngunicorn --chdir src --bind=0.0.0.0 --timeout 600 app:app &\nstreamlit run src/backend/routes/transcript/streamlit_transcription.py" > src/startup.sh
+          chmod +x src/startup.sh
 
       - name: Deploy to Azure Web App
         uses: azure/webapps-deploy@v3
         with:
           app-name: "podmanager" # Replace with your Azure Web App name
           publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }}
-          package: .
+          package: ./src # Distribuerar endast src
+          slot-name: production

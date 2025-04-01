@@ -1,7 +1,10 @@
-!/bin/bash
+#!/bin/bash
 
-# Start gunicorn in the background
-gunicorn --chdir src --bind=0.0.0.0 --timeout 600 app:app &
+# Start Gunicorn (Flask) på port 8000
+gunicorn --chdir src --bind=0.0.0.0:8000 --timeout 600 app:app &
 
-# Run streamlit
-streamlit run src/backend/routes/transcript/streamlit_transcription.py
+# Start Streamlit på port 8501
+streamlit run src/backend/routes/transcript/streamlit_transcription.py --server.port 8501 &
+
+# Håll scriptet igång
+wait
