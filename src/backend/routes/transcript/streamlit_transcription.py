@@ -89,7 +89,7 @@ def translate_text(text, target_language):
 
     
 # Initialize session state variables
-for key in ["transcription", "transcription_no_fillers", "ai_suggestions", "show_notes"]:
+for key in ["transcription", "transcription_no_fillers", "ai_suggestions", "show_notes", "quotes"]:
     if key not in st.session_state:
         st.session_state[key] = ""
     if f"{key}_translated" not in st.session_state:
@@ -140,6 +140,7 @@ with tab1:
                         st.session_state.transcription_no_fillers = result.get("transcription_no_fillers", "")
                         st.session_state.ai_suggestions = result.get("ai_suggestions", "")
                         st.session_state.show_notes = result.get("show_notes", "")
+                        st.session_state.quotes = result.get("quotes", [])
 
                         # ✅ Also assign to short keys (optional for legacy)
                         st.session_state["transcription"] = st.session_state.raw_transcription
@@ -203,26 +204,19 @@ with tab1:
 
                 download_button_text("⬇ Download AI-Generated Show Notes", st.session_state.get("show_notes_translated", st.session_state.show_notes), "ai_show_notes.txt")
             
-             # 💬 AI-Generated Quotes Section
             with st.expander("💬 AI-Generated Quotes"):
-                # Check if quotes already exist in session state; if not, generate them
-                quotes_text = st.session_state.get("ai_quotes", "")
-                if not quotes_text:
-                    if transcription_text:
-                        # Use the generate_quotes method from the transcription_service instance
-                        quotes_text = transcription_service.generate_quotes(transcription_text)
-                        st.session_state["ai_quotes"] = quotes_text
-                    else:
-                        quotes_text = "No transcription available to generate quotes."
+                quotes_text = st.session_state.get("quotes_translated", st.session_state.quotes)
+                quotes_text = quotes_text or ""
 
-                quotes_text = st.text_area("💬 AI-Generated Quotes", value=quotes_text, height=200, key="ai_quotes_text")
+                st.text_area("💬 Quotes", value=quotes_text, height=200, key="quotes")
 
                 language_quotes = st.selectbox("🌍 Translate Quotes to:", languages, key="lang_quotes")
                 if st.button("Translate Quotes"):
-                    st.session_state["ai_quotes_translated"] = translate_text(quotes_text, language_quotes)
+                    st.session_state["quotes_translated"] = translate_text(quotes_text, language_quotes)
                     st.rerun()
 
-                download_button_text("⬇ Download AI-Generated Quotes", st.session_state.get("ai_quotes_translated", quotes_text), "ai_quotes.txt")
+                download_button_text("⬇ Download AI-Generated Quotes", st.session_state.get("quotes_translated", quotes_text), "ai_quotes.txt")
+
 
 # 🎵 **Flik 2: AI Audio Enhancement**
 with tab2:

@@ -7,7 +7,7 @@ from io import BytesIO
 from elevenlabs.client import ElevenLabs
 from backend.database.mongo_connection import fs
 from backend.utils.ai_utils import remove_filler_words
-from backend.utils.text_utils import generate_ai_suggestions, generate_show_notes
+from backend.utils.text_utils import generate_ai_suggestions, generate_show_notes, generate_ai_quotes
 
 logger = logging.getLogger(__name__)
 client = ElevenLabs(api_key=os.getenv("ELEVENLABS_API_KEY"))
@@ -77,12 +77,16 @@ class TranscriptionService:
         logger.info(f"📝 Generating show notes...")
         show_notes = generate_show_notes(transcription_text)
 
+        logger.info(f"📝 Generating quotes notes...")
+        quotes_notes = generate_ai_quotes(transcription_text)
+
         return {
             "file_id": str(file_id),
             "raw_transcription": " ".join(raw_transcription),
             "transcription_no_fillers": transcription_no_fillers,
             "ai_suggestions": ai_suggestions,
             "show_notes": show_notes,
+            "quotes": quotes_notes
         }
 
     def translate_text(self, text: str, language: str) -> str:
@@ -95,19 +99,4 @@ class TranscriptionService:
         except Exception as e:
             logger.error(f"Translation failed: {str(e)}")
             return f"Error: {str(e)}"
-        
-    def generate_quotes(self, text: str, num_quotes=3) -> str:
-        if not text.strip():
-            return "No text provided for quote generation."
-        try:
-            response = openai.ChatCompletion.create(
-                model="gpt-4",
-                messages=[{
-                    "role": "user",
-                    "content": f"Generate {num_quotes} insightful and memorable quotes from the following transcript:\n\n{text}"
-                }],
-            )
-            return response["choices"][0]["message"]["content"]
-        except Exception as e:
-            logger.error(f"Quote generation failed: {str(e)}")
-            return f"Error: {str(e)}"
+

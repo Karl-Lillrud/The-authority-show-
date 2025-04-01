@@ -16,8 +16,7 @@ from backend.services.transcriptionService import TranscriptionService
 from backend.services.audioService import AudioService
 from backend.services.videoService import VideoService
 from backend.repository.ai_models import fetch_file, save_file, get_file_by_id
-from backend.utils.text_utils import generate_show_notes,generate_ai_suggestions
-from backend.utils.ai_utils import remove_filler_words
+
 
 transcription_bp = Blueprint("transcription", __name__)
 logger = logging.getLogger(__name__)
@@ -78,19 +77,6 @@ def translate():
         return jsonify({"translated_text": translated})
     except Exception as e:
         return jsonify({"error": str(e)}), 500
-    
-@transcription_bp.route("/generate_quotes", methods=["POST"])
-def generate_quotes_endpoint():
-    data = request.json
-    text = data.get("text", "")
-    num_quotes = data.get("num_quotes", 3)
-
-    try:
-        quotes = transcription_service.generate_quotes(text, num_quotes)
-        return jsonify({"quotes": quotes})
-    except Exception as e:    
-        return jsonify({"error": str(e)}), 500
-
 
 @transcription_bp.route("/get_file/<file_id>", methods=["GET"])
 def get_file(file_id):

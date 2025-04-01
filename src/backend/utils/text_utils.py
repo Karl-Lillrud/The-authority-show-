@@ -3,13 +3,10 @@ import openai
 import logging
 import subprocess
 import re
-import wave
-import numpy as np
 import subprocess
-from textblob import TextBlob
 from transformers import pipeline
-import requests
 import os
+
 API_BASE_URL = os.getenv("API_BASE_URL")
 logger = logging.getLogger(__name__)
 
@@ -44,24 +41,6 @@ def generate_show_notes(text):
         messages=[{"role": "user", "content": prompt}]
     )
     return response["choices"][0]["message"]["content"]
-
-# def generate_quotes(text, num_quotes=3):
-#     """
-#     Generate a specified number of insightful quotes from the transcript by calling the API.
-#     """
-#     if not text.strip():
-#         return "No text provided for quote generation."
-    
-#     payload = {"text": text, "num_quotes": num_quotes}
-    
-#     try:
-#         response = requests.post(f"{API_BASE_URL}/generate_quotes", json=payload)
-#         if response.status_code == 200:
-#             return response.json().get("quotes", "No quotes generated")
-#         else:
-#             return f"Failed to generate quotes: {response.text}"
-#     except Exception as e:
-#         return f"Error contacting quotes API: {e}"
 
 def transcribe_with_whisper(audio_path: str) -> str:
     """
@@ -182,3 +161,32 @@ def generate_ai_show_notes(transcript):
     except Exception as e:
         logger.error(f"❌ Error generating show notes: {e}")
         return f"Error generating show notes: {str(e)}"
+    
+def generate_ai_quotes(transcript: str) -> str:
+    prompt = f"""
+    From the following podcast transcript, extract 3 impactful, quotable moments or sentences.
+    - Keep each quote short and standalone (1–2 sentences).
+    - The quotes should be insightful, funny, emotional, or thought-provoking.
+    - Do NOT include speaker labels, just the raw quote text.
+
+    Transcript:
+    {transcript}
+    """
+
+    try:
+        response = openai.ChatCompletion.create(
+            model="gpt-4",
+            messages=[
+                {"role": "system", "content": "You're an expert podcast editor and copywriter."},
+                {"role": "user", "content": prompt}
+            ]
+        )
+        quotes_raw = response["choices"][0]["message"]["content"].strip()
+
+        # 🧼 Clean extra bullet points or symbols if needed
+        lines = [line.strip("•–—-• \n\"") for line in quotes_raw.split("\n") if line.strip()]
+        return "\n\n".join(lines[:3])  # Join into one string
+
+    except Exception as e:
+        logger.error(f"❌ Error generating quotes: {e}")
+        return f"Error generating quotes: {str(e)}"
