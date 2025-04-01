@@ -36,6 +36,22 @@ jobs:
           publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }}
           package: ./src # Distribuerar endast src
 
+      - name: Clean wwwroot directory
+        run: |
+          echo "Cleaning /wwwroot/ directory..."
+          find /home/site/wwwroot -type f ! -name 'output.tar.gz' -delete
+          find /home/site/wwwroot -type d ! -name '.' -exec rm -rf {} +
+
+      - name: Debug File Existence
+        run: |
+          echo "Listing files in /home/site/wwwroot/"
+          ls -l /home/site/wwwroot/
+
+      - name: Check File Permissions
+        run: |
+          echo "Checking permissions for output.tar.gz"
+          ls -l /home/site/wwwroot/output.tar.gz || echo "File not found or inaccessible"
+
       - name: Ensure Deployment Package is Extracted
         run: |
           if [ -f /home/site/wwwroot/output.tar.gz ]; then
