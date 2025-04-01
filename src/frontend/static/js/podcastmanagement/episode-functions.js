@@ -85,6 +85,11 @@ export function createPlayButton(size = "small") {
 // Function to render episode detail
 export function renderEpisodeDetail(episode) {
   const episodeDetailElement = document.getElementById("podcast-detail");
+  if (!episodeDetailElement) {
+    console.error("Episode detail element not found in the DOM.");
+    return; // Exit the function if the element is not found
+  }
+
   const publishDate = episode.publishDate
     ? new Date(episode.publishDate).toLocaleString()
     : "Not specified";
@@ -194,12 +199,10 @@ export function renderEpisodeDetail(episode) {
   const episodeActions = document.getElementById("episode-actions");
 
   // Publish button event listener
-  document
-    .getElementById("publish-episode-btn")
-    .addEventListener("click", async () => {
-      const episodeId = document
-        .getElementById("publish-episode-btn")
-        .getAttribute("data-id");
+  const publishButton = document.getElementById("publish-episode-btn");
+  if (publishButton) {
+    publishButton.addEventListener("click", async () => {
+      const episodeId = publishButton.getAttribute("data-id");
       try {
         const response = await fetch(`/publish/${episodeId}`, {
           method: "POST",
@@ -233,6 +236,7 @@ export function renderEpisodeDetail(episode) {
         );
       }
     });
+  }
 
   // Back button event listener
   const backButton = document.getElementById("back-to-podcast");
