@@ -23,15 +23,22 @@ class GuestRepository:
 
             current_date = datetime.now(timezone.utc)
 
-            # Parse and make publish_date offset-aware
+            publish_date_str = episode.get("publishDate")
+            if not publish_date_str:
+                return {"error": "Episode is missing a publish date."}, 400
+
             try:
-                publish_date_parsed = email.utils.parsedate(episode["publishDate"])
-                publish_date = datetime(
-                    *publish_date_parsed[:6]
-                )  # Convert to datetime object
-                publish_date = publish_date.replace(
-                    tzinfo=timezone.utc
-                )  # Make it offset-aware
+                print(f"📅 Raw publishDate from episode: {publish_date_str}")
+                
+                # Remove trailing Z if present
+                if publish_date_str.endswith("Z"):
+                    publish_date_str = publish_date_str[:-1]
+                
+                # If time is provided without seconds, pad it
+                if len(publish_date_str) == 16:  # Format like '2025-04-03T13:40'
+                    publish_date_str += ":00"
+
+                publish_date = datetime.fromisoformat(publish_date_str).replace(tzinfo=timezone.utc)
             except Exception as e:
                 return {"error": f"Invalid publish date format: {str(e)}"}, 400
 

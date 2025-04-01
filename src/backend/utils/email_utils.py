@@ -16,7 +16,7 @@ SMTP_PORT = os.getenv("SMTP_PORT")
 
 # Configure logger
 logger = logging.getLogger(__name__)
-
+logger.info(f"SMTP_SERVER: {SMTP_SERVER}, SMTP_PORT: {SMTP_PORT}, EMAIL_USER: {EMAIL_USER}")
 
 def send_email(to_email, subject, body, image_path=None):
     """
@@ -128,3 +128,58 @@ def send_team_invite_email(
 
     # 🔹 Call send_email() with inline image support
     return send_email(email, subject, body, image_path=image_path)
+
+def send_guest_invitation(data):
+    logger.info(f"send_guest_invitation called with data: {data}")
+    """
+    Sends a podcast guest invitation email.
+
+    Args:
+        data (dict): Should include 'name', 'email', and 'episodeId'.
+    """
+    subject = "🎙️ You're Invited to Join a Podcast Episode!"
+    recipient = data.get("email")
+    name = data.get("name")
+    episode_id = data.get("episodeId")
+
+    # Replace with your actual public link if needed
+    confirmation_link = f"http://127.0.0.1:8000/confirm_guest?episodeId={episode_id}&email={recipient}"
+
+    body = f"""
+    <html>
+        <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto;">
+            <div style="background-color: #f9f9f9; padding: 30px; border-radius: 5px;">
+                <h2 style="color: #FF3B30;">You're Invited, {name}!</h2>
+                <p>We’d love to have you on our podcast as a guest for an upcoming episode.</p>
+                <p><strong>Episode ID:</strong> {episode_id}</p>
+                <p>To confirm your interest or ask questions, click below:</p>
+                <p style="text-align: center;">
+                    <a href="{confirmation_link}" style="display: inline-block;
+                        padding: 12px 24px;
+                        background-color: #FF3B30;
+                        color: white;
+                        text-decoration: none;
+                        border-radius: 5px;
+                        font-weight: bold;">
+                        Confirm Participation
+                    </a>
+                </p>
+                <p style="margin-top: 20px;">We’re excited to feature your voice on the show. 🎧</p>
+                <p>The PodManager Team</p>
+            </div>
+        </body>
+    </html>
+    """
+
+    image_path = "src/frontend/static/images/PodManagerLogo.png"
+    logger.info(f"📬 Sending guest invitation to {recipient} for episode {episode_id}")
+    return send_email(recipient, subject, body, image_path=image_path)
+
+if __name__ == "__main__":
+    print("🚀 Starting email_utils.py test run...")
+    test_data = {
+        "name": "Test-From-App",
+        "email": "your@email.com",
+        "episodeId": "ep002"
+    }
+    send_guest_invitation(test_data)

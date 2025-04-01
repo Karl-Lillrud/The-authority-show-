@@ -1,6 +1,7 @@
 import {
   fetchGuestsRequest,
-  addGuestRequest
+  addGuestRequest,
+  send_guest_invitation
 } from "../../../static/requests/guestRequests.js";
 import {
   fetchEpisodesByPodcast,
@@ -409,10 +410,10 @@ export function renderGuestDetail(guest) {
 
 // Initialize guest functions
 export function initGuestFunctions() {
-  // Event listener for Add Guest button
-  document
-    .getElementById("add-guest-btn")
-    .addEventListener("click", showAddGuestPopup);
+  // Bind button clicks
+  document.getElementById("add-guest-btn").addEventListener("click", showAddGuestPopup);
+  document.getElementById("close-guest-popup").addEventListener("click", closeAddGuestPopup);
+  document.getElementById("cancel-guest-btn").addEventListener("click", closeAddGuestPopup);
 
   // Event listener for closing the Add Guest popup
   document
@@ -433,26 +434,12 @@ export function initGuestFunctions() {
       // Collect form values
       const episodeId = document.getElementById("episode-id").value.trim();
       const guestName = document.getElementById("guest-name").value.trim();
-      const guestDescription = document
-        .getElementById("guest-description")
-        .value.trim();
-      const guestTags = document
-        .getElementById("guest-tags")
-        .value.split(",")
-        .map((tag) => tag.trim())
-        .filter(Boolean);
-      const guestAreas = document
-        .getElementById("guest-areas")
-        .value.split(",")
-        .map((area) => area.trim())
-        .filter(Boolean);
+      const guestDescription = document.getElementById("guest-description").value.trim(); 
+      const guestTags = document.getElementById("guest-tags").value.split(",").map(tag => tag.trim()).filter(Boolean);
+      const guestAreas = document.getElementById("guest-areas").value.split(",").map(area => area.trim()).filter(Boolean);
       const guestEmail = document.getElementById("guest-email").value.trim();
-      const guestLinkedIn = document
-        .getElementById("guest-linkedin")
-        .value.trim();
-      const guestTwitter = document
-        .getElementById("guest-twitter")
-        .value.trim();
+      const guestLinkedIn = document.getElementById("guest-linkedin").value.trim();
+      const guestTwitter = document.getElementById("guest-twitter").value.trim();
 
       // Log the collected data
       console.log("Collected Guest Data:", {
@@ -488,12 +475,8 @@ export function initGuestFunctions() {
           const guest = await addGuestRequest({
             episodeId, // Ensure episodeId is correctly set
             name: guestName,
-            description: guestDescription,
-            tags: guestTags,
-            areasOfInterest: guestAreas,
             email: guestEmail,
-            linkedin: guestLinkedIn,
-            twitter: guestTwitter
+            episodeId
           });
 
           // Log the response from the backend
@@ -534,4 +517,4 @@ export function initGuestFunctions() {
         alert("Please fill in all required fields.");
       }
     });
-}
+  }
