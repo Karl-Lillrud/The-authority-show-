@@ -20,19 +20,17 @@ jobs:
 
       - name: Install Dependencies
         run: |
-          cd src  # Change to the src directory
           python -m pip install --upgrade pip
-          pip install -r requirements.txt
+          pip install -r requirements.txt  # Matchar path till requirements.txt i projektroten
 
       - name: Upload Startup Script
         run: |
-          cd src  # Change to the src directory
-          echo -e "#!/bin/bash\n\ngunicorn --chdir src --bind=0.0.0.0 --timeout 600 app:app &\nstreamlit run src/backend/routes/transcript/streamlit_transcription.py" > startup.sh
-          chmod +x startup.sh  # Make sure the script is executable
+          echo -e "#!/bin/bash\n\ngunicorn --chdir src --bind=0.0.0.0 --timeout 600 app:app &\nstreamlit run src/backend/routes/transcript/streamlit_transcription.py" > src/startup.sh
+          chmod +x src/startup.sh  # Flyttar startup.sh till src
 
       - name: Deploy to Azure Web App
         uses: azure/webapps-deploy@v3
         with:
           app-name: "podmanager" # Replace with your Azure Web App name
           publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }}
-          package: .
+          package: . # Distribuerar hela projektet
