@@ -3,7 +3,7 @@ name: Deploy Flask App to Azure
 on:
   push:
     branches:
-      - main
+      - main # Change this if you use a different branch
 
 jobs:
   build-and-deploy:
@@ -30,36 +30,36 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r ../requirements.txt
 
-      - name: Verify Deployment Structure
-        run: |
-          echo "Verifying deployment structure..."
-          ls -l ./src
-
       - name: Prepare Deployment Package
         run: |
           echo "Preparing deployment package..."
-          mkdir -p ./deploy
-          cp -r ./src ./deploy/src
-          if [ -f .env ]; then
-            cp .env ./deploy/.env
-          else
-            echo "Warning: .env file not found. Skipping..."
-          fi
-          ls -l ./deploy
+          mkdir -p ./deploy/src
+          cp -r ./src/* ./deploy/src
+          cp .env ./deploy/.env || echo "Warning: .env file not found. Skipping..."
+          cp ./src/startup.sh ./deploy/src/startup.sh
+          chmod +x ./deploy/src/startup.sh
+          ls -l ./deploy/src
 
       - name: Deploy to Azure Web App
         uses: azure/webapps-deploy@v3
         with:
           app-name: "podmanager" # Replace with your Azure Web App name
           publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }}
-          package: ./deploy # Deploy the prepared package
+          package: ./deploy
 
-      - name: Ensure Deployment Package is Extracted
+      - name: Extract Deployment Package
         run: |
+          echo "Extracting deployment package..."
           if [ -f /home/site/wwwroot/output.tar.gz ]; then
-            echo "Extracting deployment package..."
             tar -xzf /home/site/wwwroot/output.tar.gz -C /home/site/wwwroot
             rm /home/site/wwwroot/output.tar.gz
+            chmod +x /home/site/wwwroot/src/startup.sh
           else
             echo "No deployment package found to extract."
           fi
+
+      - name: Verify Deployment Structure
+        run: |
+          echo "Verifying deployment structure..."
+          ls -l /home/site/wwwroot/src
+          cat /home/site/wwwroot/src/startup.sh
