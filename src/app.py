@@ -31,7 +31,7 @@ from backend.routes.user import user_bp
 from backend.routes.audio_routes import audio_bp
 from backend.routes.video_routes import video_bp
 from flask import Flask, Response
-import requests
+
 
 from backend.routes.highlight import highlights_bp
 
@@ -114,15 +114,6 @@ logger = logging.getLogger(__name__)
 logger.info(f"API_BASE_URL: {API_BASE_URL}")
 logger.info(f"MONGODB_URI: {os.getenv('MONGODB_URI')}")
 logger.info(f"APP_ENV: {APP_ENV}")
-
-
-@app.route("/streamlit/<path:path>", methods=["GET", "POST"])
-def proxy_streamlit(path):
-    url = f"http://localhost:8501/{path}"
-    resp = requests.request(
-        method=request.method, url=url, headers=request.headers, data=request.data
-    )
-    return Response(resp.content, resp.status_code, resp.raw.headers.items())
 
 
 @app.before_request
