@@ -12,7 +12,7 @@
 #  * - Implements background noise detection, sentiment analysis, and audio quality assessment.
 #  * - Supports file processing via REST API and integrates with Streamlit frontend.
 
-import openai
+
 import streamlit as st
 import requests
 import base64
@@ -23,10 +23,6 @@ from dotenv import load_dotenv
 import os
 import sys
 
-# Ensure the project root is in the system path (if needed)
-project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../../"))
-if project_root not in sys.path:
-    sys.path.insert(0, project_root)
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -34,7 +30,7 @@ logger = logging.getLogger(__name__)
 load_dotenv()
 
 API_BASE_URL = os.getenv("API_BASE_URL")
-openai.api_key = os.getenv("OPENAI_API_KEY")
+
 
 # Function to format transcription for display and download
 def format_transcription(transcription):
