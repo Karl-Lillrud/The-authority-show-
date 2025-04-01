@@ -1,4 +1,4 @@
-name: Deploy Flask App to Azure
+name: Git (main) to Azure
 
 on:
   push:
@@ -16,19 +16,17 @@ jobs:
       - name: Setup Python
         uses: actions/setup-python@v3
         with:
-          python-version: "3.13" # Specify a stable Python version
+          python-version: "3.x"
 
       - name: Install Dependencies
         run: |
+          cd src  # Change to the src directory if needed
           python -m pip install --upgrade pip
           pip install -r requirements.txt
-
-      - name: Verify Python Version
-        run: python --version
 
       - name: Deploy to Azure Web App
         uses: azure/webapps-deploy@v3
         with:
           app-name: "podmanager" # Replace with your Azure Web App name
           publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }}
-          package: ./src # Ensure the correct deployment package path
+          package: .
