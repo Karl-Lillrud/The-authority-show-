@@ -30,7 +30,7 @@ jobs:
       - name: Prepare deployment package
         run: |
           mkdir deployment
-          cp -r src requirements.txt supervisord.conf deployment/
+          cp -r src requirements.txt ./src/supervisord.conf deployment/
           cd deployment
           zip -r ../release.zip .
 
