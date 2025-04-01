@@ -65,6 +65,53 @@ def transcribe():
         logger.error(f"Transcription failed: {e}", exc_info=True)
         return jsonify({"error": "Transcription failed", "details": str(e)}), 500
 
+@transcription_bp.route("/clean", methods=["POST"])
+def clean_transcript():
+    data = request.json
+    transcript = data.get("transcript", "")
+    if not transcript:
+        return jsonify({"error": "No transcript provided"}), 400
+    clean = transcription_service.get_clean_transcript(transcript)
+    return jsonify({"clean_transcript": clean})
+
+@transcription_bp.route("/ai_suggestions", methods=["POST"])
+def ai_suggestions():
+    data = request.json
+    transcript = data.get("transcript", "")
+    if not transcript:
+        return jsonify({"error": "No transcript provided"}), 400
+    suggestions = transcription_service.get_ai_suggestions(transcript)
+    return jsonify({"ai_suggestions": suggestions})
+
+@transcription_bp.route("/show_notes", methods=["POST"])
+def show_notes():
+    data = request.json
+    transcript = data.get("transcript", "")
+    if not transcript:
+        return jsonify({"error": "No transcript provided"}), 400
+    notes = transcription_service.get_show_notes(transcript)
+    return jsonify({"show_notes": notes})
+
+@transcription_bp.route("/quotes", methods=["POST"])
+def quotes():
+    data = request.json
+    transcript = data.get("transcript", "")
+    if not transcript:
+        return jsonify({"error": "No transcript provided"}), 400
+    quotes_text = transcription_service.get_quotes(transcript)
+    return jsonify({"quotes": quotes_text})
+
+@transcription_bp.route("/quote_images", methods=["POST"])
+def quote_images():
+    data = request.json
+    quotes_text = data.get("quotes", "")
+    if not quotes_text:
+        return jsonify({"error": "No quotes provided"}), 400
+    # Split the quotes text into a list; adjust the delimiter as needed.
+    quotes_list = quotes_text.split("\n\n")
+    image_urls = transcription_service.get_quote_images(quotes_list)
+    return jsonify({"quote_images": image_urls})
+
 
 @transcription_bp.route("/translate", methods=["POST"])
 def translate():

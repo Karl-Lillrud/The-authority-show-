@@ -194,6 +194,7 @@ def generate_ai_quotes(transcript: str) -> str:
         logger.error(f"❌ Error generating quotes: {e}")
         return f"Error generating quotes: {str(e)}"
 
+
 def generate_quote_images(quotes: List[str]) -> List[str]:
     """
     Generate DALL·E 3 images for a list of quotes and return image URLs.
@@ -206,7 +207,6 @@ def generate_quote_images(quotes: List[str]) -> List[str]:
 
     for quote in quotes:
         prompt = f"Create a visually striking, artistic background that reflects this quote’s emotion: \"{quote}\". No text in the image."
-
         try:
             response = openai.Image.create(
                 prompt=prompt,
@@ -219,5 +219,4 @@ def generate_quote_images(quotes: List[str]) -> List[str]:
         except Exception as e:
             logger.error(f"❌ Failed to generate image for quote: {quote} | Error: {e}")
             urls.append("")
-
     return urls
