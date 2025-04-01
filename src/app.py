@@ -31,7 +31,6 @@ from backend.routes.user import user_bp
 from backend.routes.audio_routes import audio_bp
 from backend.routes.video_routes import video_bp
 from flask import Flask, Response
-import requests
 
 from backend.routes.highlight import highlights_bp
 
