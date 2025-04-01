@@ -62,5 +62,4 @@ jobs:
           app-name: 'podmanager'
           publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }}
           slot-name: 'Production'
-          startup-command: |
-            /bin/sh -c "gunicorn --bind=0.0.0.0:8000 src.app:app & streamlit run src/backend/routes/transcript/streamlit_transcription.py --server.port 8501 --server.enableCORS false --server.headless true"
+          
