@@ -18,48 +18,15 @@ jobs:
         with:
           python-version: "3.x"
 
-      - name: Create Virtual Environment
-        run: |
-          python -m venv antenv
-          source antenv/bin/activate
-          pip install -r requirements.txt
-
       - name: Install Dependencies
         run: |
-          cd src
+          cd src  # Change to the src directory
           python -m pip install --upgrade pip
-          pip install -r ../requirements.txt
-
-      - name: Prepare Deployment Package
-        run: |
-          echo "Preparing deployment package..."
-          mkdir -p ./deploy/src
-          cp -r ./src/* ./deploy/src
-          cp .env ./deploy/.env || echo "Warning: .env file not found. Skipping..."
-          cp ./src/startup.sh ./deploy/src/startup.sh
-          chmod +x ./deploy/src/startup.sh
-          ls -l ./deploy/src
+          pip install -r requirements.txt
 
       - name: Deploy to Azure Web App
         uses: azure/webapps-deploy@v3
         with:
           app-name: "podmanager" # Replace with your Azure Web App name
           publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }}
-          package: ./deploy
-
-      - name: Extract Deployment Package
-        run: |
-          echo "Extracting deployment package..."
-          if [ -f /home/site/wwwroot/output.tar.gz ]; then
-            tar -xzf /home/site/wwwroot/output.tar.gz -C /home/site/wwwroot
-            rm /home/site/wwwroot/output.tar.gz
-            chmod +x /home/site/wwwroot/src/startup.sh
-          else
-            echo "No deployment package found to extract."
-          fi
-
-      - name: Verify Deployment Structure
-        run: |
-          echo "Verifying deployment structure..."
-          ls -l /home/site/wwwroot/src
-          cat /home/site/wwwroot/src/startup.sh
+          package: .
