@@ -18,8 +18,12 @@ echo "Clearing pip cache to free up space..."
 rm -rf /home/site/wwwroot/.cache/pip
 
 # Remove large unnecessary files in /wwwroot/
-echo "Removing unnecessary files in /wwwroot/..."
-find /home/site/wwwroot/ -type f -name "*.tar.gz" -exec rm -f {} \;
+if [ -d "/home/site/wwwroot/" ]; then
+  echo "Removing unnecessary files in /wwwroot/..."
+  find /home/site/wwwroot/ -type f -name "*.tar.gz" -exec rm -f {} \;
+else
+  echo "/wwwroot/ does not exist. Skipping cleanup."
+fi
 
 # Install dependencies if not already cached
 if [ ! -d "$CACHE_DIR" ] || [ -z "$(ls -A $CACHE_DIR)" ]; then

@@ -45,11 +45,6 @@ jobs:
             exit 1
           fi
 
-      - name: Clean Up Old Files
-        run: |
-          echo "Cleaning up unnecessary files in /wwwroot/..."
-          find /home/site/wwwroot/ -type f -name "*.tar.gz" -exec rm -f {} \;
-
       - name: Deploy to Azure Web App
         uses: azure/webapps-deploy@v3
         with:
