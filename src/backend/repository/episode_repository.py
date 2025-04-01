@@ -278,3 +278,19 @@ class EpisodeRepository:
         except Exception as e:
             logger.error(f"Failed to fetch episode with podcast: {str(e)}")
             return None, None
+
+    def get_episode_by_id(self, episode_id):
+        """
+        Fetch an episode by its ID without user validation.
+        """
+        try:
+            logger.info(f"Fetching episode by ID: {episode_id}")
+            result = self.collection.find_one({"_id": episode_id})
+            if not result:
+                logger.warning(f"Episode with ID {episode_id} not found.")
+                return None
+            result["_id"] = str(result["_id"])  # Ensure the ID is a string
+            return result
+        except Exception as e:
+            logger.error(f"Error fetching episode by ID {episode_id}: {e}")
+            return None

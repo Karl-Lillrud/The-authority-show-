@@ -113,9 +113,7 @@ def publish(episode_id):
 
         podcast_data = {
             "title": episode.get("podcast_title", "Untitled Podcast"),
-            "description": episode.get(
-                "podcast_description", "No description available"
-            ),
+            "description": episode.get("podcast_description", "No description available"),
             "link": episode.get("podcast_link", "#"),
         }
         episode_data = [
@@ -143,7 +141,7 @@ def publish(episode_id):
                 }
             },
         )
-        episode["status"] = "Published"  # update local representation
+        episode["status"] = "Published"  # Update local representation
 
         logger.info("Spotify does not provide an API for RSS feed submission.")
         logger.info(
