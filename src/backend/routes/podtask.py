@@ -145,13 +145,19 @@ def save_workflow():
         data = request.get_json()
         episode_id = data.get("episode_id")
         tasks = data.get("tasks")
+        # Get the name and description from the request data
+        name = data.get("name", "Unnamed Workflow")  # Default if not provided
+        description = data.get("description", "")  # Empty string if not provided
 
         # Create workflow
         workflow_id = str(uuid.uuid4())
         workflow_data = {
+            "_id": workflow_id,
             "user_id": g.user_id,
             "episode_id": episode_id,
             "tasks": tasks,
+            "name": name,  # Add name field
+            "description": description,  # Add description field
             "created_at": datetime.now(timezone.utc),
         }
 

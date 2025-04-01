@@ -41,7 +41,6 @@ export async function saveTask(taskData) {
     });
     const result = await response.json();
     if (response.ok) {
-      alert("Task saved successfully!");
       return result;
     } else {
       console.error("Error saving task:", result.error);
