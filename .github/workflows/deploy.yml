@@ -21,7 +21,8 @@ jobs:
       - name: Clean Temporary Files
         run: |
           echo "🔄 Cleaning up temporary files to free up space..."
-          rm -rf /tmp/* /home/site/wwwroot/output.tar.gz
+          find /tmp -type f -exec rm -f {} + || true
+          rm -f /home/site/wwwroot/output.tar.gz || true
           echo "✅ Temporary files cleaned up."
 
       - name: Install Dependencies
