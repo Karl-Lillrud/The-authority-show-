@@ -28,31 +28,27 @@ jobs:
         run: |
           cd src
           python -m pip install --upgrade pip
-          pip install -r ../requirements.txt  # Matchar path till requirements.txt i projektroten
+          pip install -r ../requirements.txt
 
       - name: Verify Deployment Structure
         run: |
           echo "Verifying deployment structure..."
           ls -l ./src
-          ls -l ./src/startup.sh
 
-      - name: Upload Startup Script
+      - name: Prepare Deployment Package
         run: |
-          echo -e "#!/bin/bash\n\ngunicorn --chdir /home/site/wwwroot/src --bind=0.0.0.0:8000 --timeout 600 app:app &\nstreamlit run /home/site/wwwroot/src/backend/routes/transcript/streamlit_transcription.py --server.port 8501 &\nwait" > src/startup.sh
-          chmod +x src/startup.sh
-
-      - name: Verify Deployment Structure
-        run: |
-          echo "Verifying deployment structure..."
-          ls -l ./src
-          cat ./src/startup.sh
+          echo "Preparing deployment package..."
+          mkdir -p ./deploy
+          cp -r ./src ./deploy/src
+          cp .env ./deploy/.env
+          ls -l ./deploy
 
       - name: Deploy to Azure Web App
         uses: azure/webapps-deploy@v3
         with:
           app-name: "podmanager" # Replace with your Azure Web App name
           publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }}
-          package: ./src # Ensure the entire src directory is deployed
+          package: ./deploy # Deploy the prepared package
 
       - name: Ensure Deployment Package is Extracted
         run: |
