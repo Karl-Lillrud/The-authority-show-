@@ -40,7 +40,11 @@ jobs:
           echo "Preparing deployment package..."
           mkdir -p ./deploy
           cp -r ./src ./deploy/src
-          cp .env ./deploy/.env
+          if [ -f .env ]; then
+            cp .env ./deploy/.env
+          else
+            echo "Warning: .env file not found. Skipping..."
+          fi
           ls -l ./deploy
 
       - name: Deploy to Azure Web App
