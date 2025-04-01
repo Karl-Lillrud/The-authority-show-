@@ -1952,3 +1952,45 @@ select:invalid {
     justify-content: center;
   }
 }
+
+@media (max-width: 768px) {
+  .sidebar-menu ul {
+    display: flex;
+    flex-direction: row;
+    overflow-x: auto;
+    gap: 8px;
+    padding: 0 var(--spacing-sm);
+    margin: 0;
+    list-style: none;
+  }
+
+  .sidebar-menu-item {
+    flex: 0 0 auto;
+    min-width: fit-content;
+  }
+
+  .sidebar-menu-link {
+    display: inline-block;
+    padding: 10px 14px;
+    border-radius: var(--radius-medium);
+    background-color: white;
+    color: var(--highlight-color);
+    font-weight: 600;
+    transition: background-color 0.3s ease;
+    white-space: nowrap;
+  }
+
+  .sidebar-menu-link:hover {
+    background-color: rgba(255, 127, 63, 0.1);
+  }
+
+  .dashboard-link {
+    display: none; /* Optional: hides "Back to Dashboard" */
+  }
+
+  /* Optional: subtle bottom shadow */
+  .sidebar-menu {
+    box-shadow: inset 0 -1px 0 rgba(0, 0, 0, 0.06);
+  }
+}
+
