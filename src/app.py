@@ -20,6 +20,7 @@ from backend.routes.frontend import frontend_bp  # Import the frontend blueprint
 from backend.routes.guestpage import guestpage_bp
 from backend.routes.guest_to_eposide import guesttoepisode_bp
 from backend.routes.guest_form import guest_form_bp  # Import the guest_form blueprint
+
 from backend.routes.landingpage import landingpage_bp
 from backend.routes.Mailing_list import Mailing_list_bp
 from backend.routes.user import user_bp
@@ -94,7 +95,6 @@ app.register_blueprint(
     guest_form_bp, url_prefix="/guest-form"
 )  # Register the guest_form blueprint with URL prefix
 
-#app.register_blueprint(transcription_bp)
 app.register_blueprint(audio_bp)
 app.register_blueprint(video_bp)
 # Register the guest_form blueprint with URL prefix
