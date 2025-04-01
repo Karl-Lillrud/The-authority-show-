@@ -21,12 +21,16 @@ jobs:
           python-version: '3.x'
 
       - name: Install dependencies
-        run: pip install -r requirements.txt
+        run: |
+          python -m venv antenv
+          source antenv/bin/activate
+          pip install --upgrade pip
+          pip install -r requirements.txt
 
       - name: Prepare deployment package
         run: |
           mkdir deployment
-          cp -r src requirements.txt deployment/
+          cp -r src requirements.txt supervisord.conf deployment/
           cd deployment
           zip -r ../release.zip .
 
@@ -63,3 +67,4 @@ jobs:
           publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }}
           slot-name: 'Production'
           package: .
+          startup-command: /usr/bin/supervisord -c /home/site/wwwroot/supervisord.conf

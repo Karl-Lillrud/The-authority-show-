@@ -33,6 +33,8 @@ from backend.routes.video_routes import video_bp
 from flask import Flask, Response
 
 from backend.routes.highlight import highlights_bp
+import requests  # Ensure requests is imported
+from backend.routes.streamlit_proxy import streamlit_proxy_bp  # Import the streamlit proxy blueprint
 
 
 if os.getenv("SKIP_VENV_UPDATE", "false").lower() not in ("true", "1", "yes"):
@@ -98,6 +100,7 @@ app.register_blueprint(video_bp)
 # Register the guest_form blueprint with URL prefix
 
 app.register_blueprint(landingpage_bp)
+app.register_blueprint(streamlit_proxy_bp, url_prefix="/streamlit")  # Register the streamlit proxy blueprint
 
 # Set the application environment (defaults to production)
 APP_ENV = os.getenv("APP_ENV", "production")
@@ -113,15 +116,6 @@ logger = logging.getLogger(__name__)
 logger.info(f"API_BASE_URL: {API_BASE_URL}")
 logger.info(f"MONGODB_URI: {os.getenv('MONGODB_URI')}")
 logger.info(f"APP_ENV: {APP_ENV}")
-
-
-@app.route("/streamlit/<path:path>", methods=["GET", "POST"])
-def proxy_streamlit(path):
-    url = f"http://localhost:8501/{path}"
-    resp = requests.request(
-        method=request.method, url=url, headers=request.headers, data=request.data
-    )
-    return Response(resp.content, resp.status_code, resp.raw.headers.items())
 
 
 @app.before_request
