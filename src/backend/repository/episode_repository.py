@@ -50,59 +50,41 @@ class EpisodeRepository:
                 return {"error": "Invalid data", "details": errors}, 400
             validated_data = schema.load(data)
 
-            podcast_id = validated_data.get("podcastId")
-            title = validated_data.get("title")
-
-            # Validate required fields
-            if not podcast_id or not title:
-                return {"error": "Required fields missing: podcastId and title"}, 400
-
+            validated = schema.load(data)
             episode_id = str(uuid.uuid4())
 
-            episode_doc = (
-                {  # Corrected variable name from 'episode_item' to 'episode_doc'
-                    "_id": episode_id,
-                    "podcast_id": podcast_id,
-                    "title": title,
-                    "description": validated_data.get("description"),
-                    "publishDate": validated_data.get("publishDate"),
-                    "duration": validated_data.get("duration"),
-                    "status": validated_data.get("status"),
-                    "accountId": account_id,
-                    "created_at": datetime.now(timezone.utc),
-                    "updated_at": datetime.now(timezone.utc),
-                    "audioUrl": validated_data.get(
-                        "audioUrl"
-                    ),  # Ensure audioUrl is included
-                    "fileSize": validated_data.get("fileSize"),
-                    "fileType": validated_data.get("fileType"),
-                    "guid": validated_data.get("guid"),
-                    "season": validated_data.get("season"),
-                    "episode": validated_data.get("episode"),  # Ensure episode is saved
-                    "episodeType": validated_data.get(
-                        "episodeType"
-                    ),  # Ensure episodeType is saved
-                    "explicit": validated_data.get("explicit"),
-                    "imageUrl": validated_data.get("imageUrl"),
-                    "keywords": validated_data.get("keywords"),
-                    "chapters": validated_data.get("chapters"),
-                    "link": validated_data.get("link"),
-                    "subtitle": validated_data.get("subtitle"),
-                    "summary": validated_data.get("summary"),
-                    "author": validated_data.get("author"),
-                    "isHidden": validated_data.get("isHidden"),
-                    "category": validated_data.get(
-                        "category"
-                    ),  # Ensure category is saved
-                    "episodeFiles": data.get(
-                        "episodeFiles", []
-                    ),  # Correctly handle optional episodeFiles field
-                }
-            )
+            episode_doc = {
+                "_id": episode_id,
+                "podcast_id": validated.get("podcastId"),
+                "title": validated.get("title"),
+                "description": validated.get("description"),
+                "publishDate": validated.get("publishDate"),
+                "duration": validated.get("duration"),
+                "status": validated.get("status"),
+                "userid": str(user_id),
+                "accountId": account_id,
+                "created_at": datetime.now(timezone.utc),
+                "updated_at": datetime.now(timezone.utc),
+                "audioUrl": validated.get("audioUrl"),
+                "fileSize": validated.get("fileSize"),
+                "fileType": validated.get("fileType"),
+                "guid": validated.get("guid"),
+                "season": validated.get("season"),
+                "episode": validated.get("episode"),
+                "episodeType": validated.get("episodeType"),
+                "explicit": validated.get("explicit"),
+                "imageUrl": validated.get("imageUrl"),
+                "keywords": validated.get("keywords"),
+                "chapters": validated.get("chapters"),
+                "link": validated.get("link"),
+                "subtitle": validated.get("subtitle"),
+                "summary": validated.get("summary"),
+                "author": validated.get("author"),
+                "isHidden": validated.get("isHidden"),
+                "recordingAt": validated.get("recordingAt"),
+            }
 
-            result = self.collection.insert_one(episode_doc)  # Corrected variable name
-
-            # Return success response
+            self.collection.insert_one(episode_doc)
             return {
                 "message": "Episode registered successfully",
                 "episode_id": episode_id,
@@ -118,15 +100,11 @@ class EpisodeRepository:
         """
         try:
             user_id_str = str(user_id)
-            logger.info(f"Fetching episode with ID: {episode_id} for user ID: {user_id_str}")
 
-            # Fetch the episode using the string episode_id
-            episode = self.collection.find_one({"_id": episode_id, "userid": user_id_str})
-
-            if not episode:
-                logger.warning(f"Episode with ID {episode_id} not found for user ID {user_id_str}.")
-                # Log additional debug information
-                logger.debug(f"Available episodes for user ID {user_id_str}: {list(self.collection.find({'userid': user_id_str}, {'_id': 1}))}")
+            result = self.collection.find_one(
+                {"_id": episode_id, "userid": str(user_id)}
+            )
+            if not result:
                 return {"error": "Episode not found"}, 404
 
             # Convert binary data to a base64 encoded string
@@ -179,15 +157,56 @@ class EpisodeRepository:
                 logger.warning(f"Permission denied for user ID {user_id} to update episode ID {episode_id}.")
                 return {"error": "Permission denied"}, 403
 
+            # Validate data with schema
+            schema = EpisodeSchema(partial=True)  # partial=True allows partial updates
+            errors = schema.validate(data)
+            if errors:
+                logger.error("Schema validation errors: %s", errors)
+                return {"error": "Invalid data", "details": errors}, 400
+
+            # Create update fields dictionary
             update_fields = {
-                "title": data.get("title", ep["title"]).strip() if data.get("title") else ep["title"],
-                "description": data.get("description", ep["description"]).strip() if data.get("description") else ep["description"],
-                "publishDate": data.get("publishDate", ep["publishDate"]),
-                "duration": data.get("duration", ep["duration"]),
-                "status": data.get("status", ep["status"]).strip() if data.get("status") else ep["status"],
-                "audioUrl": data.get("audioUrl", ep["audioUrl"]),  # Ensure audioUrl is updated
+                "title": data.get("title", ep["title"]),
+                "description": data.get("description", ep["description"]),
+                "publishDate": data.get("publishDate", ep.get("publishDate")),
+                "duration": data.get("duration", ep.get("duration")),
+                "status": data.get("status", ep.get("status")),
                 "updated_at": datetime.now(timezone.utc),
             }
+
+            # Add all fields from data that are not None
+            fields_to_update = [
+                "title",
+                "description",
+                "publishDate",
+                "duration",
+                "status",
+                "audioUrl",
+                "fileSize",
+                "fileType",
+                "guid",
+                "season",
+                "episode",
+                "episodeType",
+                "explicit",
+                "imageUrl",
+                "keywords",
+                "chapters",
+                "link",
+                "subtitle",
+                "summary",
+                "author",
+                "isHidden",
+                "recordingAt",
+            ]
+
+            for field in fields_to_update:
+                if field in data and data[field] is not None:
+                    # Strip string values
+                    if isinstance(data[field], str):
+                        update_fields[field] = data[field].strip()
+                    else:
+                        update_fields[field] = data[field]
 
             # Update the episode in the database
             result = self.collection.update_one({"_id": episode_id}, {"$set": update_fields})
@@ -228,15 +247,50 @@ class EpisodeRepository:
                 return {"error": str(e)}, 500
             raise e  # Re-raise the exception for direct calls
 
-    def get_episode_by_id(self, episode_id):
-        """
-        Get a single episode by ID without user validation
-        """
+    # Delete episodes associated with user when user account is deleted
+    def delete_by_user(self, user_id):
+        try:
+            result = self.collection.delete_many({"userid": str(user_id)})
+            logger.info(
+                f"🧹 Deleted {result.deleted_count} episodes for user {user_id}"
+            )
+            return result.deleted_count
+        except Exception as e:
+
+            logger.error(
+                f"❌ ERROR fetching episodes for podcast {podcast_id}: {str(e)}"
+            )
+            return {"error": f"Failed to fetch episodes: {str(e)}"}, 500
+
+    def get_episode_detail_with_podcast(self, episode_id):
+        """Fetch an episode along with its associated podcast."""
         try:
             episode = self.collection.find_one({"_id": episode_id})
             if not episode:
-                return None
-            return episode
+                return None, None
+            podcast = (
+                collection.database.Podcasts.find_one(
+                    {"_id": episode.get("podcast_id")}
+                )
+                or {}
+            )
+            return episode, podcast
         except Exception as e:
-            logger.error(f"❌ ERROR: {e}")
+            logger.error(f"Failed to fetch episode with podcast: {str(e)}")
+            return None, None
+
+    def get_episode_by_id(self, episode_id):
+        """
+        Fetch an episode by its ID without user validation.
+        """
+        try:
+            logger.info(f"Fetching episode by ID: {episode_id}")
+            result = self.collection.find_one({"_id": episode_id})
+            if not result:
+                logger.warning(f"Episode with ID {episode_id} not found.")
+                return None
+            result["_id"] = str(result["_id"])  # Ensure the ID is a string
+            return result
+        except Exception as e:
+            logger.error(f"Error fetching episode by ID {episode_id}: {e}")
             return None

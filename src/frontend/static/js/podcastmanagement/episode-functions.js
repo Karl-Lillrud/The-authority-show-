@@ -85,6 +85,11 @@ export function createPlayButton(size = "small") {
 // Function to render episode detail
 export function renderEpisodeDetail(episode) {
   const episodeDetailElement = document.getElementById("podcast-detail");
+  if (!episodeDetailElement) {
+    console.error("Episode detail element not found in the DOM.");
+    return; // Exit the function if the element is not found
+  }
+
   const publishDate = episode.publishDate
     ? new Date(episode.publishDate).toLocaleString()
     : "Not specified";
@@ -194,12 +199,10 @@ export function renderEpisodeDetail(episode) {
   const episodeActions = document.getElementById("episode-actions");
 
   // Publish button event listener
-  document
-    .getElementById("publish-episode-btn")
-    .addEventListener("click", async () => {
-      const episodeId = document
-        .getElementById("publish-episode-btn")
-        .getAttribute("data-id");
+  const publishButton = document.getElementById("publish-episode-btn");
+  if (publishButton) {
+    publishButton.addEventListener("click", async () => {
+      const episodeId = publishButton.getAttribute("data-id");
       try {
         const response = await fetch(`/publish/${episodeId}`, {
           method: "POST",
@@ -233,6 +236,7 @@ export function renderEpisodeDetail(episode) {
         );
       }
     });
+  }
 
   // Back button event listener
   const backButton = document.getElementById("back-to-podcast");
@@ -490,7 +494,6 @@ export function initEpisodeFunctions() {
         );
       }
     });
-
   // Close the episode form popup
   document
     .getElementById("close-episode-form-popup")
@@ -505,6 +508,38 @@ export function initEpisodeFunctions() {
       document.getElementById("episode-form-popup").style.display = "none";
     });
 
+  // Update the episode creation form to include recordingAt
+  /* document.getElementById("create-episode-form").innerHTML += `
+    <div class="field-group">
+      <label for="recording-at">Recording Date</label>
+      <input type="datetime-local" id="recording-at" name="recordingAt" />
+    </div>
+  `; */
+
+  // Assuming you are getting the episode data from the backend or checking a condition
+  function loadEpisodeDetails(episodeData) {
+    const episodeInput = document.getElementById("episode-id");
+
+    // Check if the episode is created
+    if (episodeData && episodeData.isCreated) {
+      // Disable the input field and apply greyed-out styles
+      episodeInput.disabled = true;
+      episodeInput.style.backgroundColor = "#d3d3d3"; // Grey out the background
+      episodeInput.style.color = "#a9a9a9"; // Grey out the text
+    } else {
+      // Enable the input field if the episode is not created
+      episodeInput.disabled = false;
+      episodeInput.style.backgroundColor = ""; // Reset background color
+      episodeInput.style.color = ""; // Reset text color
+    }
+  }
+
+  // Example usage when the episode data is available
+  const episodeData = {
+    isCreated: true // Example flag, replace with actual check
+  };
+  loadEpisodeDetails(episodeData);
+
   // Episode form submission
   document
     .getElementById("create-episode-form")
@@ -512,22 +547,38 @@ export function initEpisodeFunctions() {
       e.preventDefault();
       const formData = new FormData(e.target);
 
-      // Validate required fields
-      const requiredFields = [
-        "title",
-        "description",
-        "publishDate",
-        "author",
-        "imageUrl",
-        "explicit",
-        "category",
-        "episodeType"
-      ];
-      for (const field of requiredFields) {
-        if (!formData.get(field)) {
-          showNotification("Error", `Field "${field}" is required.`, "error");
+      // Ensure recordingAt is in the correct format
+      if (data.recordingAt) {
+        const recordingAt = new Date(data.recordingAt);
+        if (isNaN(recordingAt.getTime())) {
+          showNotification(
+            "Invalid Date",
+            "Please provide a valid recording date.",
+            "error"
+          );
           return;
         }
+      }
+
+      // Check for missing required fields
+      if (!data.podcastId || !data.title || !data.publishDate) {
+        showNotification(
+          "Missing Fields",
+          "Please fill in all required fields.",
+          "error"
+        );
+        return;
+      }
+
+      // Ensure publishDate is in the correct format
+      const publishDate = new Date(data.publishDate);
+      if (isNaN(publishDate.getTime())) {
+        showNotification(
+          "Invalid Date",
+          "Please provide a valid publish date.",
+          "error"
+        );
+        return;
       }
 
       try {

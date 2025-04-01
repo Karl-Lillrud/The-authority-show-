@@ -4,6 +4,9 @@ import dns
 import random
 import time
 import hashlib
+import pytz
+from datetime import datetime, timedelta
+from timezonefinder import TimezoneFinder
 from flask import jsonify, session
 from werkzeug.security import check_password_hash
 from backend.database.mongo_connection import collection
@@ -61,18 +64,76 @@ class AuthService:
         except Exception as e:
             logger.error("Error during login: %s", e, exc_info=True)
             return {"error": f"Error during login: {str(e)}"}, 500
-    def send_verification_code(self, email):
+
+    def verify_code_and_login(self, email, code):
+        """
+        Verifies the provided code and logs in the user if the code is valid.
+        """
+        try:
+            # Fetch the user's stored code and expiration time from the database
+            user_data = self.user_collection.find_one({"email": email})
+            if not user_data:
+                return {"error": "Email not found"}, 404
+
+            stored_code = user_data.get("verification_code")
+            expiration_time = user_data.get("code_expires_at")
+
+            # Check if the code has expired
+            if time.time() > expiration_time:
+                return {"error": "Verification code has expired"}, 400
+
+            # Check if the code matches
+            if hashlib.sha256(code.encode()).hexdigest() != stored_code:
+                return {"error": "Invalid verification code"}, 400
+
+            # Remove the code after successful verification
+            self.user_collection.update_one(
+                {"email": email},
+                {"$unset": {"verification_code": "", "code_expires_at": ""}}
+            )
+
+            # Log in the user (set up session or return a token)
+            user = self.user_collection.find_one({"email": email})
+            self._setup_session(user, remember=False)
+
+            return {"message": "Login successful"}, 200
+        except Exception as e:
+            logger.error(f"Error verifying code: {e}", exc_info=True)
+            return {"error": "An error occurred during verification"}, 500
+
+
+    def send_verification_code(self, email, latitude=None, longitude=None):
         """
         Generate and send a verification code to the user's email.
+        Dynamically fetch the timezone based on latitude and longitude.
         """
         try:
             # Generate a 6-digit verification code
             code = str(random.randint(100000, 999999))
 
-            # Store the verification code securely (e.g., hashed) with an expiration time
-            expiration_time = time.time() + 300  # Code valid for 5 minutes
+            # Determine the timezone based on latitude and longitude
+            if latitude is not None and longitude is not None:
+                tf = TimezoneFinder()
+                timezone_name = tf.timezone_at(lat=latitude, lng=longitude)
+                if not timezone_name:
+                    timezone_name = "Europe/Stockholm"  # Default to Sweden's timezone if none found
+            else:
+                timezone_name = "Europe/Stockholm"  # Default to Sweden's timezone if no location is provided
+
+            # Get the current time in the determined timezone (handling DST automatically)
+            local_timezone = pytz.timezone(timezone_name)
+            current_time = datetime.now(local_timezone)  # Current time in the user's timezone
+            expiration_time = current_time + timedelta(minutes=5)  # Verification code valid for 5 minutes
+
+            # Format current time to show only hours and minutes
+            formatted_current_time = current_time.strftime("%H:%M")  # Hours and minutes in 24-hour format
+            formatted_expiration_time = expiration_time.strftime("%H:%M")  # Hours and minutes in 24-hour format
+
+            # Hash the verification code
             hashed_code = hashlib.sha256(code.encode()).hexdigest()
-            self._store_verification_code(email, hashed_code, expiration_time)
+
+            # Store the verification code and timestamps in the database
+            self._store_verification_code(email, hashed_code, formatted_expiration_time, formatted_current_time)
 
             # Send the verification code to the user's email
             subject = "Verification Code"
@@ -85,24 +146,32 @@ class AuthService:
                     <p>If you did not request this code, please ignore this email.</p>
                 </body>
             </html>
-        """
+            """
             send_email(email, subject, body)
 
             return {"message": "Verification code sent"}
         except Exception as e:
             logger.error(f"Error sending the verification code: {e}", exc_info=True)
             return {"error": f"Failed to send verification code: {str(e)}"}
-        
-    def _store_verification_code(self, email, hashed_code, expiration_time):
+
+    def _store_verification_code(self, email, hashed_code, expiration_time, created_at):
         """
         Store the hashed verification code and its expiration time in the database.
         """
         # Save to MongoDB (replace with your database logic)
         self.user_collection.update_one(
             {"email": email},
-            {"$set": {"verification_code": hashed_code, "verification_expiration": expiration_time}},
+            {
+                "$set": {
+                    "verification_code": hashed_code,
+                    "verification_expiration": expiration_time,  # Expiration time as formatted hours and minutes
+                    "createdAt": created_at,  # Time when the button was clicked as formatted hours and minutes
+                }
+            },
             upsert=True
         )
+
+
 
     def _authenticate_user(self, email, password):
         """Authenticate user with email and password."""

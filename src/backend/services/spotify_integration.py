@@ -131,7 +131,7 @@ def save_uploaded_files(files):
             except Exception as e:
                 logger.error(f"Failed to upload file {filename}: {e}")
                 logger.error(f"Error details: {e}")
-    return saved_files
+        return saved_files
 
 
 def allowed_file(filename):
