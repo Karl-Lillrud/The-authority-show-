@@ -322,12 +322,17 @@ def download_rss(podcast_id):
             return jsonify({"error": "Podcast not found"}), 404
 
         logger.info(f"Podcast found: {podcast.get('podName', 'Unknown')}")
-        episodes = episode_repo.get_episodes_by_podcast(podcast_id, g.user_id)
-        if not episodes or len(episodes) == 0:
+        episodes, status_code = episode_repo.get_episodes_by_podcast(
+            podcast_id, g.user_id, return_with_status=True
+        )
+        if status_code != 200 or not episodes:
             logger.warning(f"No episodes found for podcast ID {podcast_id}.")
-            return jsonify({"error": "No episodes found for this podcast"}), 404
+            episodes = []  # Ensure episodes is an empty list
 
-        logger.info(f"Found {len(episodes)} episodes for podcast ID {podcast_id}.")
+        # Ensure all episodes are dictionaries
+        episodes = [ep for ep in episodes if isinstance(ep, dict)]
+
+        logger.info(f"Found {len(episodes)} valid episodes for podcast ID {podcast_id}.")
 
         # Generate the RSS feed
         rss_feed = create_rss_feed(podcast, episodes)

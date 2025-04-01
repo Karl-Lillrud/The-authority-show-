@@ -18,6 +18,10 @@ def create_rss_feed(podcast, episodes):
 
         # Add episodes
         for episode in episodes:
+            if not isinstance(episode, dict):
+                logger.error(f"Invalid episode format: {episode}")
+                continue  # Skip invalid episodes
+
             item = SubElement(channel, "item")
             SubElement(item, "title").text = episode.get("title", "Untitled Episode")
             SubElement(item, "description").text = episode.get("description", "No description available")

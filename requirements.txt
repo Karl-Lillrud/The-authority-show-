@@ -50,6 +50,7 @@ PySocks
 python-bootstrap
 python-dateutil
 python-dotenv
+pytz
 PyYAML
 requests
 requests-oauthlib

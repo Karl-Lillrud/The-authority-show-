@@ -243,7 +243,11 @@ export async function renderPodcastList() {
             );
           } catch (error) {
             console.error("Error downloading RSS feed:", error);
-            showNotification("Error", "Failed to download RSS feed.", "error");
+            showNotification(
+              "Error",
+              "Failed to download RSS feed. Ensure the podcast has episodes or try again later.",
+              "error"
+            );
           }
         });
       }
