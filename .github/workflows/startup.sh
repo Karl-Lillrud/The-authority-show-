@@ -9,6 +9,9 @@ mkdir -p $CACHE_DIR
 # Export pip cache directory
 export PIP_CACHE_DIR=$CACHE_DIR
 
+# Ensure the script is executed from the correct directory
+cd /home/site/wwwroot
+
 # Clear old log files
 echo "Clearing old log files..."
 rm -rf /home/LogFiles/*

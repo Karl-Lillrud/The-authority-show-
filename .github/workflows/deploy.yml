@@ -37,7 +37,7 @@ jobs:
       - name: Verify Deployment Package
         run: |
           if [ ! -f ./src/startup.sh ]; then
-            echo "Error: startup.sh is missing!"
+            echo "Error: startup.sh is missing in src/!"
             exit 1
           fi
           if [ ! -f ./requirements.txt ]; then
