@@ -6,6 +6,8 @@ import re
 import subprocess
 from transformers import pipeline
 import os
+from pathlib import Path
+import requests
 
 API_BASE_URL = os.getenv("API_BASE_URL")
 logger = logging.getLogger(__name__)
@@ -190,3 +192,29 @@ def generate_ai_quotes(transcript: str) -> str:
     except Exception as e:
         logger.error(f"❌ Error generating quotes: {e}")
         return f"Error generating quotes: {str(e)}"
+
+def generate_quote_image(quote_text: str, index: int = 1, output_dir: Path = Path("generated_images")) -> str:
+    """
+    Generates a DALL·E 3 marketing image based on a quote and saves it locally.
+    :param quote_text: The quote to visualize.
+    :param index: Index to differentiate multiple quote images.
+    :param output_dir: Directory to save the image.
+    :return: Path to saved image or error message.
+    """
+    try:
+        openai.api_key = os.getenv("OPENAI_API_KEY")
+
+        prompt = f"Create a striking, artistic background that reflects this quote's emotion and meaning: \"{quote_text}\". Do not include text."
+
+        response = openai.Image.create(
+            prompt=prompt,
+            model="dall-e-3",
+            n=1,
+            size="1024x1024"
+        )
+
+        return response["data"][0]["url"]
+
+    except Exception as e:
+        logger.error(f"❌ Error generating quote image: {str(e)}")
+        return ""

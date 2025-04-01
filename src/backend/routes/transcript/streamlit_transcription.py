@@ -136,6 +136,7 @@ with tab1:
                         st.session_state.ai_suggestions = result.get("ai_suggestions", "")
                         st.session_state.show_notes = result.get("show_notes", "")
                         st.session_state.quotes = result.get("quotes", [])
+                        st.session_state.quote_images = result.get("quote_images", [])
 
                         # ✅ Also assign to short keys (optional for legacy)
                         st.session_state["transcription"] = st.session_state.raw_transcription
@@ -199,18 +200,27 @@ with tab1:
 
                 download_button_text("⬇ Download AI-Generated Show Notes", st.session_state.get("show_notes_translated", st.session_state.show_notes), "ai_show_notes.txt")
             
-            with st.expander("💬 AI-Generated Quotes"):
-                quotes_text = st.session_state.get("quotes_translated", st.session_state.quotes)
-                quotes_text = quotes_text or ""
 
+            with st.expander("💬 AI-Generated Quotes"):
+                quotes_text = st.session_state.get("quotes_translated", st.session_state.quotes) or ""
                 st.text_area("💬 Quotes", value=quotes_text, height=200, key="quotes")
 
+                # Language translation
                 language_quotes = st.selectbox("🌍 Translate Quotes to:", languages, key="lang_quotes")
                 if st.button("Translate Quotes"):
                     st.session_state["quotes_translated"] = translate_text(quotes_text, language_quotes)
                     st.rerun()
 
+                # Download
                 download_button_text("⬇ Download AI-Generated Quotes", st.session_state.get("quotes_translated", quotes_text), "ai_quotes.txt")
+
+                # 🖼️ Display quote images (if available)
+                # Show generated quote images (URLs from backend)
+                quote_images = st.session_state.get("quote_images", [])
+                if quote_images:
+                    st.markdown("### 🖼️ Quote Images")
+                    for url in quote_images:
+                        st.image(url, use_column_width=True)
 
 
 # 🎵 **Flik 2: AI Audio Enhancement**
