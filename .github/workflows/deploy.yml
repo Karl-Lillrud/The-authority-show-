@@ -28,13 +28,27 @@ jobs:
 
       - name: Install Dependencies
         run: |
-          python -m venv antenv
-          source antenv/bin/activate
           pip install --upgrade pip
           pip install -r requirements.txt
 
       - name: Verify Python Version
         run: python --version
+
+      - name: Verify Deployment Package
+        run: |
+          if [ ! -f ./src/startup.sh ]; then
+            echo "Error: startup.sh is missing!"
+            exit 1
+          fi
+          if [ ! -f ./requirements.txt ]; then
+            echo "Error: requirements.txt is missing!"
+            exit 1
+          fi
+
+      - name: Clean Up Old Files
+        run: |
+          echo "Cleaning up unnecessary files in /wwwroot/..."
+          find /home/site/wwwroot/ -type f -name "*.tar.gz" -exec rm -f {} \;
 
       - name: Deploy to Azure Web App
         uses: azure/webapps-deploy@v3

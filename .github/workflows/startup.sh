@@ -9,6 +9,18 @@ mkdir -p $CACHE_DIR
 # Export pip cache directory
 export PIP_CACHE_DIR=$CACHE_DIR
 
+# Clear old log files
+echo "Clearing old log files..."
+rm -rf /home/LogFiles/*
+
+# Clear pip cache if needed
+echo "Clearing pip cache to free up space..."
+rm -rf /home/site/wwwroot/.cache/pip
+
+# Remove large unnecessary files in /wwwroot/
+echo "Removing unnecessary files in /wwwroot/..."
+find /home/site/wwwroot/ -type f -name "*.tar.gz" -exec rm -f {} \;
+
 # Install dependencies if not already cached
 if [ ! -d "$CACHE_DIR" ] || [ -z "$(ls -A $CACHE_DIR)" ]; then
   echo "Installing dependencies..."
