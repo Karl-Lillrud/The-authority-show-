@@ -18,16 +18,37 @@ jobs:
         with:
           python-version: "3.x"
 
+      - name: Create Virtual Environment
+        run: |
+          python -m venv antenv
+          source antenv/bin/activate
+          pip install -r requirements.txt
+
       - name: Install Dependencies
         run: |
           cd src
           python -m pip install --upgrade pip
           pip install -r ../requirements.txt  # Matchar path till requirements.txt i projektroten
 
+      - name: Verify Deployment Structure
+        run: |
+          echo "Verifying deployment structure..."
+          ls -l ./src
+          ls -l ./src/startup.sh
+
       - name: Upload Startup Script
         run: |
           echo -e "#!/bin/bash\n\ngunicorn --chdir src --bind=0.0.0.0 --timeout 600 app:app &\nstreamlit run src/backend/routes/transcript/streamlit_transcription.py" > src/startup.sh
           chmod +x src/startup.sh
+          echo "Uploading startup.sh..."
+          cp ./src/startup.sh /home/site/wwwroot/src/startup.sh
+          chmod +x /home/site/wwwroot/src/startup.sh
+
+      - name: Verify Deployment Structure
+        run: |
+          echo "Verifying deployment structure..."
+          ls -l /home/site/wwwroot/src
+          cat /home/site/wwwroot/src/startup.sh
 
       - name: Deploy to Azure Web App
         uses: azure/webapps-deploy@v3
