@@ -78,6 +78,18 @@ def translate():
         return jsonify({"translated_text": translated})
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+    
+@transcription_bp.route("/generate_quotes", methods=["POST"])
+def generate_quotes_endpoint():
+    data = request.json
+    text = data.get("text", "")
+    num_quotes = data.get("num_quotes", 3)
+
+    try:
+        quotes = transcription_service.generate_quotes(text, num_quotes)
+        return jsonify({"quotes": quotes})
+    except Exception as e:    
+        return jsonify({"error": str(e)}), 500
 
 
 @transcription_bp.route("/get_file/<file_id>", methods=["GET"])

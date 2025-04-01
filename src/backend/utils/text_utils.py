@@ -1,4 +1,4 @@
-# text_utils.py
+# src\backend\utils\text_utils.py
 import openai
 import logging
 import subprocess
@@ -8,7 +8,9 @@ import numpy as np
 import subprocess
 from textblob import TextBlob
 from transformers import pipeline
-
+import requests
+import os
+API_BASE_URL = os.getenv("API_BASE_URL")
 logger = logging.getLogger(__name__)
 
 def format_transcription(transcription):
@@ -42,6 +44,24 @@ def generate_show_notes(text):
         messages=[{"role": "user", "content": prompt}]
     )
     return response["choices"][0]["message"]["content"]
+
+# def generate_quotes(text, num_quotes=3):
+#     """
+#     Generate a specified number of insightful quotes from the transcript by calling the API.
+#     """
+#     if not text.strip():
+#         return "No text provided for quote generation."
+    
+#     payload = {"text": text, "num_quotes": num_quotes}
+    
+#     try:
+#         response = requests.post(f"{API_BASE_URL}/generate_quotes", json=payload)
+#         if response.status_code == 200:
+#             return response.json().get("quotes", "No quotes generated")
+#         else:
+#             return f"Failed to generate quotes: {response.text}"
+#     except Exception as e:
+#         return f"Error contacting quotes API: {e}"
 
 def transcribe_with_whisper(audio_path: str) -> str:
     """

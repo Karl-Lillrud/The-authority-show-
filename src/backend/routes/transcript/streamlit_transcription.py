@@ -2,7 +2,7 @@
 #  *
 #  * Create Date: 2025-03-03
 #  *     Program : transcription.py
-#  *   Path Name : THE-AUTHORITY-SHOW-/src/backend/
+#  *   Path Name : src\backend\routes\transcript\streamlit_transcription.py
 #  *       Tools : Python, Flask, ElevenBase, OpenAI Whisper, FFmpeg, Pydub, MongoDB, Hugging Face Transformers
 #  *
 #  * Description:
@@ -12,7 +12,7 @@
 #  * - Implements background noise detection, sentiment analysis, and audio quality assessment.
 #  * - Supports file processing via REST API and integrates with Streamlit frontend.
 
-
+import openai
 import streamlit as st
 import requests
 import base64
@@ -20,6 +20,17 @@ import os
 import logging
 import tempfile
 from dotenv import load_dotenv
+import os
+import sys
+# Ensure the project root is in the system path (if needed)
+project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../../"))
+if project_root not in sys.path:
+    sys.path.insert(0, project_root)
+
+from backend.services.transcriptionService import TranscriptionService
+
+transcription_service = TranscriptionService()
+
 
 
 logging.basicConfig(level=logging.INFO)
@@ -28,7 +39,7 @@ logger = logging.getLogger(__name__)
 load_dotenv()
 
 API_BASE_URL = os.getenv("API_BASE_URL")
-
+openai.api_key = os.getenv("OPENAI_API_KEY")
 
 # Function to format transcription for display and download
 def format_transcription(transcription):
@@ -72,6 +83,10 @@ def translate_text(text, target_language):
             return f"Translation failed: {response.text}"
     except Exception as e:
         return f"Error contacting translation API: {e}"
+
+
+
+
     
 # Initialize session state variables
 for key in ["transcription", "transcription_no_fillers", "ai_suggestions", "show_notes"]:
@@ -187,6 +202,27 @@ with tab1:
                     st.rerun()  
 
                 download_button_text("⬇ Download AI-Generated Show Notes", st.session_state.get("show_notes_translated", st.session_state.show_notes), "ai_show_notes.txt")
+            
+             # 💬 AI-Generated Quotes Section
+            with st.expander("💬 AI-Generated Quotes"):
+                # Check if quotes already exist in session state; if not, generate them
+                quotes_text = st.session_state.get("ai_quotes", "")
+                if not quotes_text:
+                    if transcription_text:
+                        # Use the generate_quotes method from the transcription_service instance
+                        quotes_text = transcription_service.generate_quotes(transcription_text)
+                        st.session_state["ai_quotes"] = quotes_text
+                    else:
+                        quotes_text = "No transcription available to generate quotes."
+
+                quotes_text = st.text_area("💬 AI-Generated Quotes", value=quotes_text, height=200, key="ai_quotes_text")
+
+                language_quotes = st.selectbox("🌍 Translate Quotes to:", languages, key="lang_quotes")
+                if st.button("Translate Quotes"):
+                    st.session_state["ai_quotes_translated"] = translate_text(quotes_text, language_quotes)
+                    st.rerun()
+
+                download_button_text("⬇ Download AI-Generated Quotes", st.session_state.get("ai_quotes_translated", quotes_text), "ai_quotes.txt")
 
 # 🎵 **Flik 2: AI Audio Enhancement**
 with tab2:

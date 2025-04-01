@@ -1,4 +1,6 @@
+#src/backend/services/transcriptionService.py
 import os
+import openai
 import logging
 from datetime import datetime
 from io import BytesIO
@@ -84,7 +86,6 @@ class TranscriptionService:
         }
 
     def translate_text(self, text: str, language: str) -> str:
-        import openai
         try:
             response = openai.ChatCompletion.create(
                 model="gpt-4",
@@ -93,4 +94,20 @@ class TranscriptionService:
             return response["choices"][0]["message"]["content"]
         except Exception as e:
             logger.error(f"Translation failed: {str(e)}")
+            return f"Error: {str(e)}"
+        
+    def generate_quotes(self, text: str, num_quotes=3) -> str:
+        if not text.strip():
+            return "No text provided for quote generation."
+        try:
+            response = openai.ChatCompletion.create(
+                model="gpt-4",
+                messages=[{
+                    "role": "user",
+                    "content": f"Generate {num_quotes} insightful and memorable quotes from the following transcript:\n\n{text}"
+                }],
+            )
+            return response["choices"][0]["message"]["content"]
+        except Exception as e:
+            logger.error(f"Quote generation failed: {str(e)}")
             return f"Error: {str(e)}"
