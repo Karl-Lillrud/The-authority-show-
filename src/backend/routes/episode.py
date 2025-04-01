@@ -306,3 +306,41 @@ def get_file(file_id):
         )
     except gridfs.errors.NoFile:
         return jsonify({"error": "File not found"}), 404
+
+
+@episode_bp.route("/download_rss/<podcast_id>", methods=["GET"])
+def download_rss(podcast_id):
+    """
+    Generate and return the RSS feed XML file for a podcast.
+    """
+    try:
+        # Fetch the podcast and its episodes
+        logger.info(f"Fetching podcast with ID: {podcast_id}")
+        podcast = podcast_repo.get_podcast_by_id(podcast_id)
+        if not podcast:
+            logger.error(f"Podcast with ID {podcast_id} not found.")
+            return jsonify({"error": "Podcast not found"}), 404
+
+        logger.info(f"Podcast found: {podcast.get('podName', 'Unknown')}")
+        episodes = episode_repo.get_episodes_by_podcast(podcast_id, g.user_id)
+        if not episodes or len(episodes) == 0:
+            logger.warning(f"No episodes found for podcast ID {podcast_id}.")
+            return jsonify({"error": "No episodes found for this podcast"}), 404
+
+        logger.info(f"Found {len(episodes)} episodes for podcast ID {podcast_id}.")
+
+        # Generate the RSS feed
+        rss_feed = create_rss_feed(podcast, episodes)
+        logger.info(f"RSS feed generated successfully for podcast ID {podcast_id}.")
+
+        # Return the RSS feed as a downloadable file
+        response = send_file(
+            BytesIO(rss_feed.encode("utf-8")),
+            mimetype="application/xml",
+            as_attachment=True,
+            download_name=f"{podcast.get('podName', 'podcast')}_rss_feed.xml",
+        )
+        return response
+    except Exception as e:
+        logger.error(f"Error generating RSS feed for podcast {podcast_id}: {e}", exc_info=True)
+        return jsonify({"error": "Failed to generate RSS feed"}), 500

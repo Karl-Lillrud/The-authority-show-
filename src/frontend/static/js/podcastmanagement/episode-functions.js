@@ -15,65 +15,71 @@ import { renderPodcastSelection, viewPodcast } from "./podcast-functions.js";
 import { renderGuestDetail } from "./guest-functions.js";
 import { fetchEpisode } from "../../../static/requests/episodeRequest.js";
 
-// Add this function to create a play button with SVG icon
-export function createPlayButton(size = "medium") {
-  const button = document.createElement("button");
-  button.className =
-    size === "small" ? "podcast-episode-play" : "episode-play-btn";
+// Function to play audio files
+export function playAudio(audioUrl, title) {
+  const audioPopup = document.createElement("div");
+  audioPopup.className = "media-popup";
 
-  // Play icon SVG
-  button.innerHTML = `
-  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-    <polygon points="5 3 19 12 5 21 5 3"></polygon>
-  </svg>
-`;
+  audioPopup.innerHTML = `
+    <div class="media-popup-content">
+      <span class="close-media-popup">&times;</span>
+      <h2>${title}</h2>
+      <audio controls autoplay>
+        <source src="${audioUrl}" type="audio/mpeg">
+        Your browser does not support the audio element.
+      </audio>
+    </div>
+  `;
 
-  return button;
+  document.body.appendChild(audioPopup);
+
+  // Close popup event
+  audioPopup.querySelector(".close-media-popup").addEventListener("click", () => {
+    document.body.removeChild(audioPopup);
+  });
 }
 
-// Add this function to handle audio playback
-export function playAudio(audioUrl, episodeTitle) {
-  // Check if there's an existing audio player in the page
-  let audioPlayer = document.getElementById("global-audio-player");
-  if (!audioPlayer) {
-    // Create a new audio player if one doesn't exist
-    audioPlayer = document.createElement("div");
-    audioPlayer.id = "global-audio-player";
-    audioPlayer.className = "global-audio-player";
-    document.body.appendChild(audioPlayer);
-  }
+// Function to play audio or video
+export function playMedia(mediaUrl, title) {
+  const mediaPopup = document.createElement("div");
+  mediaPopup.className = "media-popup";
 
-  // Update the audio player content
-  audioPlayer.innerHTML = `
-  <div class="audio-player-header">
-    <div class="audio-player-title">${episodeTitle}</div>
-    <button id="close-audio-player" class="audio-player-close">
-      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-        <line x1="18" y1="6" x2="6" y2="18"></line>
-        <line x1="6" y1="6" x2="18" y2="18"></line>
-      </svg>
-    </button>
-  </div>
-  <audio controls autoplay>
-    <source src="${audioUrl}" type="audio/mpeg">
-    Your browser does not support the audio element.
-  </audio>
-`;
+  mediaPopup.innerHTML = `
+    <div class="media-popup-content">
+      <span class="close-media-popup">&times;</span>
+      <h2>${title}</h2>
+      ${
+        mediaUrl.endsWith(".mp4")
+          ? `<video controls autoplay>
+               <source src="${mediaUrl}" type="video/mp4">
+               Your browser does not support the video tag.
+             </video>`
+          : `<audio controls autoplay>
+               <source src="${mediaUrl}" type="audio/mpeg">
+               Your browser does not support the audio element.
+             </audio>`
+      }
+    </div>
+  `;
 
-  // Add error event to the audio element
-  const audioEl = audioPlayer.querySelector("audio");
-  if (audioEl) {
-    audioEl.addEventListener("error", () => {
-      showNotification("Error", "Failed to load or play audio.", "error");
-    });
-  }
+  document.body.appendChild(mediaPopup);
 
-  // Add event listener to close button
-  document
-    .getElementById("close-audio-player")
-    .addEventListener("click", () => {
-      document.body.removeChild(audioPlayer);
-    });
+  // Close popup event
+  mediaPopup.querySelector(".close-media-popup").addEventListener("click", () => {
+    document.body.removeChild(mediaPopup);
+  });
+}
+
+// Function to create a play button
+export function createPlayButton(size = "small") {
+  const playButton = document.createElement("button");
+  playButton.className = `play-btn ${size}`;
+  playButton.innerHTML = `
+    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <polygon points="5 3 19 12 5 21 5 3"></polygon>
+    </svg>
+  `;
+  return playButton;
 }
 
 // Function to render episode detail
@@ -125,18 +131,23 @@ export function renderEpisodeDetail(episode) {
       <div class="detail-section">
         <h2>About</h2>
         <p>${episode.description || "No description available."}</p>
-        <!-- Audio player -->
+        <!-- Media player -->
         ${
           episode.audioUrl
-            ? `<div class="audio-player-container">
-                <audio controls>
-                  <source src="${episode.audioUrl}" type="${
-                fileType || "audio/mpeg"
-              }">
-                  Your browser does not support the audio element.
-                </audio>
+            ? `<div class="media-player-container">
+                ${
+                  episode.audioUrl.endsWith(".mp4")
+                    ? `<video controls>
+                        <source src="${episode.audioUrl}" type="video/mp4">
+                        Your browser does not support the video element.
+                      </video>`
+                    : `<audio controls>
+                        <source src="${episode.audioUrl}" type="audio/mpeg">
+                        Your browser does not support the audio element.
+                      </audio>`
+                }
               </div>`
-            : "<p>No audio available for this episode.</p>"
+            : "<p>No media available for this episode.</p>"
         }
       </div>
       <div class="separator"></div>

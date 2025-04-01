@@ -54,17 +54,20 @@ def get_podcasts():
 
 
 @podcast_bp.route("/get_podcasts/<podcast_id>", methods=["GET"])
-def get_podcast_by_id(podcast_id):
-    """Gets a podcast by its ID."""
-    if not hasattr(g, "user_id") or not g.user_id:
-        return jsonify({"error": "Unauthorized"}), 401
-
+def get_podcast(podcast_id):
+    """
+    Fetch a podcast by its ID.
+    """
     try:
-        response, status_code = podcast_repo.get_podcast_by_id(g.user_id, podcast_id)
-        return jsonify(response), status_code
+        logger.info(f"Fetching podcast with ID: {podcast_id}")
+        podcast = podcast_repo.get_podcast_by_id(podcast_id)  # Correct method call
+        if not podcast:
+            logger.warning(f"Podcast with ID {podcast_id} not found.")
+            return jsonify({"error": "Podcast not found"}), 404
+        return jsonify({"podcast": podcast}), 200
     except Exception as e:
-        logger.error("❌ ERROR: %s", e)
-        return jsonify({"error": f"Failed to fetch podcast by ID: {str(e)}"}), 500
+        logger.error(f"❌ ERROR: {e}")
+        return jsonify({"error": "Failed to fetch podcast"}), 500
 
 
 @podcast_bp.route("/edit_podcasts/<podcast_id>", methods=["PUT"])

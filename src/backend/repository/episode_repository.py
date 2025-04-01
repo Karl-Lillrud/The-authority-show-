@@ -118,21 +118,15 @@ class EpisodeRepository:
         """
         try:
             user_id_str = str(user_id)
-
-            # Debugging: Print episode_id and user_id
-            print(
-                f"Fetching episode with episode_id: {episode_id} for user_id: {user_id_str}"
-            )
+            logger.info(f"Fetching episode with ID: {episode_id} for user ID: {user_id_str}")
 
             # Fetch the episode using the string episode_id
-            episode = self.collection.find_one(
-                {"_id": episode_id, "userid": user_id_str}
-            )
+            episode = self.collection.find_one({"_id": episode_id, "userid": user_id_str})
 
             if not episode:
-                print(
-                    f"Episode with episode_id: {episode_id} and user_id: {user_id_str} not found."
-                )
+                logger.warning(f"Episode with ID {episode_id} not found for user ID {user_id_str}.")
+                # Log additional debug information
+                logger.debug(f"Available episodes for user ID {user_id_str}: {list(self.collection.find({'userid': user_id_str}, {'_id': 1}))}")
                 return {"error": "Episode not found"}, 404
 
             # Convert binary data to a base64 encoded string
@@ -144,7 +138,7 @@ class EpisodeRepository:
             return episode, 200
 
         except Exception as e:
-
+            logger.error(f"Error fetching episode with ID {episode_id}: {e}")
             return {"error": f"Failed to fetch episode: {str(e)}"}, 500
 
     def get_episodes(self, user_id):
@@ -155,7 +149,6 @@ class EpisodeRepository:
                 ep["_id"] = str(ep["_id"])
             return {"episodes": results}, 200
         except Exception as e:
-
             return {"error": f"Failed to fetch episodes: {str(e)}"}, 500
 
     def delete_episode(self, episode_id, user_id):
@@ -172,62 +165,48 @@ class EpisodeRepository:
                 return {"message": "Episode deleted successfully"}, 200
             return {"error": "Failed to delete episode"}, 500
         except Exception as e:
-
             return {"error": f"Failed to delete episode: {str(e)}"}, 500
 
     def update_episode(self, episode_id, user_id, data):
         """Update an episode if it belongs to the user."""
         try:
-
+            logger.info(f"Updating episode with ID: {episode_id} for user ID: {user_id}")
             ep = self.collection.find_one({"_id": episode_id})
             if not ep:
-
+                logger.warning(f"Episode with ID {episode_id} not found.")
                 return {"error": "Episode not found"}, 404
             if ep["userid"] != str(user_id):
+                logger.warning(f"Permission denied for user ID {user_id} to update episode ID {episode_id}.")
                 return {"error": "Permission denied"}, 403
 
             update_fields = {
-                "title": (
-                    data.get("title", existing_episode["title"]).strip()
-                    if data.get("title")
-                    else existing_episode["title"]
-                ),
-                "description": (
-                    data.get("description", existing_episode["description"]).strip()
-                    if data.get("description")
-                    else existing_episode["description"]
-                ),
-                "publishDate": data.get("publishDate", existing_episode["publishDate"]),
-                "duration": data.get("duration", existing_episode["duration"]),
-                "status": (
-                    data.get("status", existing_episode["status"]).strip()
-                    if data.get("status")
-                    else existing_episode["status"]
-                ),
-                "audioUrl": data.get(
-                    "audioUrl", existing_episode["audioUrl"]
-                ),  # Ensure audioUrl is updated
+                "title": data.get("title", ep["title"]).strip() if data.get("title") else ep["title"],
+                "description": data.get("description", ep["description"]).strip() if data.get("description") else ep["description"],
+                "publishDate": data.get("publishDate", ep["publishDate"]),
+                "duration": data.get("duration", ep["duration"]),
+                "status": data.get("status", ep["status"]).strip() if data.get("status") else ep["status"],
+                "audioUrl": data.get("audioUrl", ep["audioUrl"]),  # Ensure audioUrl is updated
                 "updated_at": datetime.now(timezone.utc),
             }
 
             # Update the episode in the database
-            result = self.collection.update_one(
-                {"_id": episode_id}, {"$set": update_fields}
-            )
+            result = self.collection.update_one({"_id": episode_id}, {"$set": update_fields})
 
-            # Return the result of the update operation
             if result.modified_count == 1:
+                logger.info(f"Episode with ID {episode_id} updated successfully.")
                 return {"message": "Episode updated successfully"}, 200
             else:
+                logger.info(f"No changes made to episode with ID {episode_id}.")
                 return {"message": "No changes made to the episode"}, 200
 
         except Exception as e:
-
+            logger.error(f"Error updating episode with ID {episode_id}: {e}")
             return {"error": f"Failed to update episode: {str(e)}"}, 500
 
-    def get_episodes_by_podcast(self, podcast_id, user_id):
+    def get_episodes_by_podcast(self, podcast_id, user_id, return_with_status=False):
         """Get all episodes under a specific podcast owned by the user."""
         try:
+            logger.info(f"Fetching episodes for podcast ID: {podcast_id} and user ID: {user_id}")
             episodes = list(
                 self.collection.find({"podcast_id": podcast_id, "userid": str(user_id)})
             )
@@ -235,9 +214,19 @@ class EpisodeRepository:
             for ep in episodes:
                 ep["_id"] = str(ep["_id"])
 
-            return {"episodes": episodes}, 200
+            if not episodes:
+                logger.warning(f"No episodes found for podcast ID {podcast_id}.")
+            else:
+                logger.info(f"Found {len(episodes)} episodes for podcast ID {podcast_id}.")
+
+            if return_with_status:
+                return {"episodes": episodes}, 200
+            return episodes  # Return only the episodes list if status is not needed
         except Exception as e:
-            return {"error": str(e)}, 500
+            logger.error(f"Error fetching episodes for podcast ID {podcast_id}: {e}")
+            if return_with_status:
+                return {"error": str(e)}, 500
+            raise e  # Re-raise the exception for direct calls
 
     def get_episode_by_id(self, episode_id):
         """

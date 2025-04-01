@@ -13,7 +13,7 @@ import {
   updateEditButtons,
   shared
 } from "./podcastmanagement.js";
-import { createPlayButton, playAudio } from "./episode-functions.js";
+import { createPlayButton, playAudio, playMedia } from "./episode-functions.js";
 import { renderEpisodeDetail } from "./episode-functions.js";
 
 // Function to set image source with fallback
@@ -219,10 +219,31 @@ export async function renderPodcastList() {
       // Add event listener for Update RSS Feed button
       const updateRssButton = podcastCard.querySelector(".update-rss-btn");
       if (updateRssButton) {
-        updateRssButton.addEventListener("click", () => {
-          const newRssFeed = prompt("Enter the new RSS Feed URL:");
-          if (newRssFeed) {
-            updateRssFeed(podcast._id, newRssFeed);
+        updateRssButton.addEventListener("click", async () => {
+          try {
+            const response = await fetch(`/download_rss/${podcast._id}`);
+            if (!response.ok) {
+              throw new Error("Failed to download RSS feed");
+            }
+
+            const blob = await response.blob();
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement("a");
+            a.href = url;
+            a.download = `${podcast.podName || "podcast"}_rss_feed.xml`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            window.URL.revokeObjectURL(url);
+
+            showNotification(
+              "Success",
+              "RSS feed downloaded successfully!",
+              "success"
+            );
+          } catch (error) {
+            console.error("Error downloading RSS feed:", error);
+            showNotification("Error", "Failed to download RSS feed.", "error");
           }
         });
       }
@@ -704,11 +725,6 @@ export function renderPodcastDetail(podcast) {
             ? new Date(ep.publishDate).toLocaleDateString()
             : "No date";
 
-          // Convert duration from seconds to minutes and seconds
-          const durationMinutes = Math.floor(ep.duration / 60);
-          const durationSeconds = ep.duration % 60;
-          const formattedDuration = `${durationMinutes}m ${durationSeconds}s`;
-
           const description = ep.description
             ? ep.description
             : "No description available.";
@@ -725,7 +741,6 @@ export function renderPodcastDetail(podcast) {
               </div>
               <div class="episode-meta">
                 <span class="episode-date">Published: ${publishDate}</span>
-                <span class="episode-duration">${formattedDuration}</span>
               </div>
               <div class="episode-description">${description}</div>
             </div>
@@ -739,13 +754,13 @@ export function renderPodcastDetail(podcast) {
             </div>
           `;
 
-          // Add play button event listener if audio URL exists
+          // Add play button event listener if audio or video URL exists
           if (ep.audioUrl) {
             episodeCard
               .querySelector(".episode-play-btn")
               .addEventListener("click", (e) => {
                 e.stopPropagation();
-                playAudio(ep.audioUrl, ep.title);
+                playMedia(ep.audioUrl, ep.title);
               });
           }
 

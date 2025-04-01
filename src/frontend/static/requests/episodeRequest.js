@@ -121,6 +121,10 @@ export async function fetchEpisode(episodeId) {
   try {
     const response = await fetch(`/get_episodes/${episodeId}`);
     if (!response.ok) {
+      if (response.status === 404) {
+        console.warn(`Episode with ID ${episodeId} not found.`);
+        throw new Error("Episode not found");
+      }
       throw new Error(`Failed to fetch episode: ${response.statusText}`);
     }
     const episode = await response.json();
