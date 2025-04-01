@@ -20,9 +20,8 @@ jobs:
 
       - name: Install Dependencies
         run: |
-          cd src
           python -m pip install --upgrade pip
-          pip install -r ../requirements.txt  # Matchar path till requirements.txt i projektroten
+          pip install -r requirements.txt  # Uppdaterad för att använda rätt sökväg
 
       - name: Upload Startup Script
         run: |
