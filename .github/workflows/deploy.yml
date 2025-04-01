@@ -24,15 +24,6 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
-      - name: Create Startup Script
-        run: |
-          echo -e "#!/bin/bash\n\ngunicorn --chdir src --bind=0.0.0.0 --timeout 600 app:app &\nstreamlit run src/backend/routes/transcript/streamlit_transcription.py" > src/startup.sh
-          chmod +x src/startup.sh
-
-      - name: Configure Azure Start Command
-        run: |
-          az webapp config set --name "podmanager" --resource-group "podmanager" --startup-file "bash src/startup.sh"
-
       - name: Deploy to Azure Web App
         uses: azure/webapps-deploy@v3
         with:
