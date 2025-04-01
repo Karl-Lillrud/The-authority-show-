@@ -14,6 +14,7 @@ logger = logging.getLogger(__name__)
 # SHOULD ONLY BE USED FOR SPECIFIC DATA CRUD OPERATIONS
 # EXTRA FUNCTIONALITY BESIDES CRUD OPERATIONS SHOULD BE IN SERVICES
 
+
 @podcast_bp.route("/add_podcasts", methods=["POST"])
 def add_podcast():
     """Adds a podcast to the system."""
@@ -21,18 +22,22 @@ def add_podcast():
         return jsonify({"error": "Unauthorized"}), 401
 
     if request.content_type != "application/json":
-        return jsonify({"error": "Invalid Content-Type. Expected application/json"}), 415
+        return (
+            jsonify({"error": "Invalid Content-Type. Expected application/json"}),
+            415,
+        )
 
     try:
         data = request.get_json()
         if not data:
             return jsonify({"error": "No data provided"}), 400
-            
+
         response, status_code = podcast_repo.add_podcast(g.user_id, data)
         return jsonify(response), status_code
     except Exception as e:
         logger.error("❌ ERROR: %s", e)
         return jsonify({"error": f"Failed to add podcast: {str(e)}"}), 500
+
 
 @podcast_bp.route("/get_podcasts", methods=["GET"])
 def get_podcasts():
@@ -47,6 +52,7 @@ def get_podcasts():
         logger.error("❌ ERROR: %s", e)
         return jsonify({"error": f"Failed to fetch podcasts: {str(e)}"}), 500
 
+
 @podcast_bp.route("/get_podcasts/<podcast_id>", methods=["GET"])
 def get_podcast_by_id(podcast_id):
     """Gets a podcast by its ID."""
@@ -60,6 +66,7 @@ def get_podcast_by_id(podcast_id):
         logger.error("❌ ERROR: %s", e)
         return jsonify({"error": f"Failed to fetch podcast by ID: {str(e)}"}), 500
 
+
 @podcast_bp.route("/edit_podcasts/<podcast_id>", methods=["PUT"])
 def edit_podcast(podcast_id):
     """Updates a podcast's information."""
@@ -67,18 +74,22 @@ def edit_podcast(podcast_id):
         return jsonify({"error": "Unauthorized"}), 401
 
     if request.content_type != "application/json":
-        return jsonify({"error": "Invalid Content-Type. Expected application/json"}), 415
+        return (
+            jsonify({"error": "Invalid Content-Type. Expected application/json"}),
+            415,
+        )
 
     try:
         data = request.get_json()
         if not data:
             return jsonify({"error": "No data provided"}), 400
-            
+
         response, status_code = podcast_repo.edit_podcast(g.user_id, podcast_id, data)
         return jsonify(response), status_code
     except Exception as e:
         logger.error("❌ ERROR: %s", e)
         return jsonify({"error": f"Failed to edit podcast: {str(e)}"}), 500
+
 
 @podcast_bp.route("/delete_podcasts/<podcast_id>", methods=["DELETE"])
 def delete_podcast(podcast_id):
@@ -93,16 +104,31 @@ def delete_podcast(podcast_id):
         logger.error("❌ ERROR: %s", e)
         return jsonify({"error": f"Failed to delete podcast: {str(e)}"}), 500
 
-@podcast_bp.route("/fetch_rss", methods=["GET"])
+
+@podcast_bp.route("/fetch_rss", methods=["POST"])
 def fetch_rss():
-    """Server-side RSS feed fetching for clients that might have CORS issues."""
-    rss_url = request.args.get("url")
-    if not rss_url:
+    """
+    Fetch RSS feed data or add a podcast based on RSS feed.
+    """
+    if not hasattr(g, "user_id") or not g.user_id:
+        return jsonify({"error": "Unauthorized"}), 401
+
+    data = request.get_json()
+    if not data or "rssUrl" not in data:
         return jsonify({"error": "No RSS URL provided"}), 400
 
+    rss_url = data["rssUrl"]
+    add_podcast_flag = data.get("addPodcast", False)  # Check if podcast should be added
+
     try:
-        response, status_code = podcast_repo.fetch_rss_feed(rss_url)
+        if add_podcast_flag:
+            # Add podcast using RSS data
+            response, status_code = podcast_repo.addPodcastWithRss(g.user_id, rss_url)
+        else:
+            # Fetch RSS data only
+            response, status_code = podcast_repo.fetch_rss_feed(rss_url)
+
         return jsonify(response), status_code
     except Exception as e:
         logger.error("❌ ERROR: %s", e)
-        return jsonify({"error": f"Failed to fetch RSS feed: {str(e)}"}), 500
+        return jsonify({"error": f"Failed to process RSS feed: {str(e)}"}), 500

@@ -79,23 +79,31 @@ def landingpage_by_id(podcast_id):
 
         podcast_title = podcast_doc.get("podcast", {}).get("podName", "Default Podcast Title")
         podcast_description = podcast_doc.get("podcast", {}).get("description", "Default Podcast Description")
-        host_name = podcast_doc.get("podcast", {}).get("hostName", "Unknown Host")
+
+        # Grab host_name and author_name from the document
+        host_name = podcast_doc.get("podcast", {}).get("hostName", "")
+        author_name = podcast_doc.get("podcast", {}).get("author", "")
+
+        # If host_name is empty, fall back to author_name
+        if not host_name:
+            host_name = author_name or "Unknown Host"
+
         host_bio = podcast_doc.get("podcast", {}).get("hostBio", "No biography available.")
         tagline = podcast_doc.get("podcast", {}).get("tagline", "No tagline available.")
 
-        # Extract banner_url and logoUrl from the document.
+        # Extract banner_url and logoUrl from the document
         banner_url = podcast_doc.get("podcast", {}).get("bannerUrl", "")
         podcast_logo = podcast_doc.get("podcast", {}).get("logoUrl", "")
         host_image = podcast_doc.get("podcast", {}).get("hostImage", "")
 
-        # If no banner_url is provided, fallback to using the podcast_logo.
+        # If no banner_url is provided, fallback to using the podcast_logo
         if not banner_url:
             banner_url = podcast_logo
 
-        # Process podcast_logo: convert external URLs to base64 data URLs.
+        # Convert podcast_logo if it's an external URL
         if isinstance(podcast_logo, str):
             if podcast_logo.startswith("data:image"):
-                pass  # Already a data URL.
+                pass  # Already a data URL
             elif podcast_logo.startswith("http"):
                 converted_logo = convert_image_to_data_url(podcast_logo)
                 if converted_logo:
@@ -107,10 +115,10 @@ def landingpage_by_id(podcast_id):
         else:
             podcast_logo = url_for('static', filename='images/default.png')
 
-        # Process banner_url: convert external URLs to base64 data URLs.
+        # Convert banner_url if it's an external URL
         if isinstance(banner_url, str):
             if banner_url.startswith("data:image"):
-                pass  # Already a data URL.
+                pass  # Already a data URL
             elif banner_url.startswith("http"):
                 converted_banner = convert_image_to_data_url(banner_url)
                 if converted_banner:
@@ -122,7 +130,7 @@ def landingpage_by_id(podcast_id):
         else:
             banner_url = url_for('static', filename='images/default.png')
 
-        # Process host_image if needed.
+        # Process host_image if needed
         if not isinstance(host_image, str) or not host_image.startswith("data:image"):
             host_image = url_for('static', filename='images/default.png')
 
