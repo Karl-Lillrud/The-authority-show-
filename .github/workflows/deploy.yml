@@ -34,5 +34,5 @@ jobs:
         with:
           app-name: "podmanager" # Replace with your Azure Web App name
           publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }}
-          package: ./src # Distribuerar endast src
+          package: . # Deploy the entire project directory
           slot-name: production
