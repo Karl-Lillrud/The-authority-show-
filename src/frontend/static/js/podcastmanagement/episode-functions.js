@@ -431,6 +431,18 @@ async function showEpisodePopup(episode) {
       Object.keys(updatedData).forEach((key) => {
         if (!updatedData[key]) delete updatedData[key];
       });
+
+      if (updatedData.duration) {
+        if (updatedData.duration < 0) {
+          showNotification(
+            "Invalid duration",
+            "Please provide a positive integer for duration",
+            "error"
+          );
+          return;
+        }
+      }
+
       try {
         const result = await updateEpisode(episode._id, updatedData); // Use updateEpisode from episodeRequest.js
         if (result.message) {
@@ -496,12 +508,12 @@ export function initEpisodeFunctions() {
     });
 
   // Update the episode creation form to include recordingAt
-  document.getElementById("create-episode-form").innerHTML += `
+  /* document.getElementById("create-episode-form").innerHTML += `
     <div class="field-group">
       <label for="recording-at">Recording Date</label>
       <input type="datetime-local" id="recording-at" name="recordingAt" />
     </div>
-  `;
+  `; */
 
   // Assuming you are getting the episode data from the backend or checking a condition
   function loadEpisodeDetails(episodeData) {
@@ -567,6 +579,16 @@ export function initEpisodeFunctions() {
           "error"
         );
         return;
+      }
+      if (data.duration) {
+        if (data.duration < 0) {
+          showNotification(
+            "Invalid duration",
+            "Please provide a positive integer for duration",
+            "error"
+          );
+          return;
+        }
       }
 
       try {
