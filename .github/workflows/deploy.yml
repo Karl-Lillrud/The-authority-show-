@@ -38,6 +38,12 @@ jobs:
       - name: Make startup.sh Executable
         run: chmod +x ./startup.sh
 
+      - name: Clean Up wwwroot Before Deployment
+        run: |
+          echo "🔄 Cleaning up /wwwroot before deployment..."
+          rm -rf /home/site/wwwroot/* || true
+          echo "✅ /wwwroot cleaned up before deployment."
+
       - name: Deploy to Azure Web App
         uses: azure/webapps-deploy@v3
         with:
