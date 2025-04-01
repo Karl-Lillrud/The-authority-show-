@@ -16,42 +16,22 @@ jobs:
       - name: Setup Python
         uses: actions/setup-python@v3
         with:
-          python-version: "3.13" # Specify a stable Python versionon version
-
-      - name: Cache Python Dependencies
-        uses: actions/cache@v3
-        with:
-          path: ~/.cache/pip
-          key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
-          restore-keys: |
-            ${{ runner.os }}-pip-
+          python-version: "3.13" # Specify a stable Python version
 
       - name: Install Dependencies
         run: |
-          pip install --upgrade pip
+          python -m pip install --upgrade pip
           pip install -r requirements.txt
 
       - name: Verify Python Version
         run: python --version
 
-      - name: Verify Deployment Package
-        run: |
-          if [ ! -f ./src/startup.sh ]; then
-            echo "Error: startup.sh is missing in src/!"
-            exit 1
-          fi
-          if [ ! -f ./requirements.txt ]; then
-            echo "Error: requirements.txt is missing!"
-            exit 1
-          fi
-          if [ ! -f ./.python-version ]; then
-            echo "Error: .python-version is missing!"
-            exit 1
-          fi
+      - name: Make startup.sh Executable
+        run: chmod +x ./startup.sh
 
       - name: Deploy to Azure Web App
         uses: azure/webapps-deploy@v3
         with:
           app-name: "podmanager" # Replace with your Azure Web App name
           publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }}
-          package: ./ # Deploy the entire project root to include startup.sh
+          package: ./ # Ensure the correct deployment package path
