@@ -34,11 +34,4 @@ jobs:
         with:
           app-name: "podmanager" # Replace with your Azure Web App name
           publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }}
-          package: ./src # Deploy the entire project directory
-          slot-name: production
-
-      - name: Ensure Deployment Package is Extracted
-        run: |
-          if [ -f /home/site/wwwroot/output.tar.gz ]; then
-            tar -xzf /home/site/wwwroot/output.tar.gz -C /home/site/wwwroot
-          fi
+          package: ./src # Distribuerar endast src
