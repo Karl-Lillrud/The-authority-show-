@@ -1,4 +1,4 @@
-import { signin } from "/static/requests/authRequests.js";
+import { signin, sendVerificationCode } from "/static/requests/authRequests.js";
 
 document.addEventListener("DOMContentLoaded", function () {
   const urlParams = new URLSearchParams(window.location.search);
@@ -7,6 +7,7 @@ document.addEventListener("DOMContentLoaded", function () {
   const errorMessage = document.getElementById("error-message");
   const form = document.getElementById("signin-form");
   const sendCodeButton = document.getElementById("send-code-button");
+  const sendCodeMessage = document.getElementById("send-code-message");
   const loginWithCodeButton = document.getElementById("login-with-code-button");
   const emailInput = document.getElementById("email");
   const verificationCodeInput = document.getElementById("verification-code");
@@ -15,7 +16,7 @@ document.addEventListener("DOMContentLoaded", function () {
   if (message) {
     successMessage.textContent = message;
     successMessage.style.display = "block";
-    successMessage.style.color = "var(--highlight)"; // Match error message color
+    successMessage.style.color = "var(--highlight)";
   }
 
   // Ensure the form exists
@@ -46,33 +47,29 @@ document.addEventListener("DOMContentLoaded", function () {
     }
   });
 
-  // Handle "Send Verification Code" button click
+  // Handle "Sign in with Verification Code" button click
   sendCodeButton.addEventListener("click", async function () {
     const email = emailInput.value.trim();
 
     if (!email) {
-      alert("Please enter your email.");
+      sendCodeMessage.textContent = "Please enter your email.";
+      sendCodeMessage.style.display = "block";
+      sendCodeMessage.style.color = "red";
       return;
     }
 
     try {
-      const response = await fetch("/send-verification-code", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email }),
-      });
-
-      const result = await response.json();
-      if (response.ok) {
-        alert("Verification code sent to your email!");
-        verificationCodeInput.style.display = "block";
-        loginWithCodeButton.style.display = "block";
-      } else {
-        alert(result.message || "Failed to send verification code.");
-      }
+      const result = await sendVerificationCode(email);
+      sendCodeMessage.textContent = "Verification code sent successfully.";
+      sendCodeMessage.style.display = "block";
+      sendCodeMessage.style.color = "green";
+      verificationCodeInput.style.display = "block";
+      loginWithCodeButton.style.display = "block";
     } catch (error) {
       console.error("Error:", error);
-      alert("An error occurred. Please try again.");
+      sendCodeMessage.textContent = error.message || "An error occurred. Please try again.";
+      sendCodeMessage.style.display = "block";
+      sendCodeMessage.style.color = "red";
     }
   });
 
@@ -82,7 +79,9 @@ document.addEventListener("DOMContentLoaded", function () {
     const code = verificationCodeInput.value.trim();
 
     if (!email || !code) {
-      alert("Please enter both email and verification code.");
+      sendCodeMessage.textContent = "Please enter both email and verification code.";
+      sendCodeMessage.style.display = "block";
+      sendCodeMessage.style.color = "red";
       return;
     }
 
@@ -95,14 +94,20 @@ document.addEventListener("DOMContentLoaded", function () {
 
       const result = await response.json();
       if (response.ok) {
-        alert("Login successful!");
+        sendCodeMessage.textContent = "Login successful!";
+        sendCodeMessage.style.display = "block";
+        sendCodeMessage.style.color = "green";
         window.location.href = result.redirect_url || "/dashboard";
       } else {
-        alert(result.message || "Failed to log in with code.");
+        sendCodeMessage.textContent = result.message || "Failed to log in with code.";
+        sendCodeMessage.style.display = "block";
+        sendCodeMessage.style.color = "red";
       }
     } catch (error) {
       console.error("Error:", error);
-      alert("An error occurred. Please try again.");
+      sendCodeMessage.textContent = "An error occurred. Please try again.";
+      sendCodeMessage.style.display = "block";
+      sendCodeMessage.style.color = "red";
     }
   });
 });

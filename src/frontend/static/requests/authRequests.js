@@ -86,12 +86,23 @@ export async function registerTeamMember(
 }
 
 export async function sendVerificationCode(email) {
-  const response = await fetch("/send-verification-code", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ email }),
-  });
-  return response.json();
+  try {
+    const response = await fetch("/send-verification-code", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email }),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.message || "Failed to send verification code.");
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error("Error in sendVerificationCode:", error);
+    throw error;
+  }
 }
 
 export async function loginWithVerificationCode(email, code) {

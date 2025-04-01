@@ -66,17 +66,21 @@
         </div>
 
         <div class="form-actions">
-          <!-- Button to send verification code -->
+          <!-- Rename the button -->
           <button
             type="button"
             id="send-code-button"
             class="button button-secondary"
           >
-            Send Verification Code
+            Sign in with Verification Code
           </button>
+          <!-- Add a message container below the button -->
+          <div id="send-code-message" class="message" style="display: none;"></div>
           <!-- Sign In button -->
           <button type="submit" class="button button-primary">Sign In</button>
         </div>
+
+        <!-- Move the verification code input and button here -->
         <div class="form-actions">
           <input
             type="text"
