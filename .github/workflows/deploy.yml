@@ -28,6 +28,9 @@ jobs:
           mkdir deployment
           cp -r src requirements.txt deployment/
           cd deployment
+          # Remove unnecessary files to reduce package size
+          find . -name "__pycache__" -type d -exec rm -rf {} +
+          find . -name "*.pyc" -exec rm -f {} +
           zip -r ../release.zip .
 
       - name: Upload artifact for deployment jobs
