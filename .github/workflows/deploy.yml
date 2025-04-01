@@ -68,4 +68,4 @@ jobs:
           publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }}
           slot-name: "Production"
           clean: true
-          package: release.zip
+          package: .
