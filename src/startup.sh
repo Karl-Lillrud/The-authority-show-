@@ -1,4 +1,7 @@
-#!/bin/bash
-gunicorn --bind 0.0.0.0:80 app:app &  # Changed to port 80
-streamlit run backend/routes/transcript/streamlit_transcription.py --server.port 8501 &
-wait
+!/bin/bash
+
+# Start gunicorn in the background
+gunicorn --chdir src --bind=0.0.0.0 --timeout 600 app:app &
+
+# Run streamlit
+streamlit run src/backend/routes/transcript/streamlit_transcription.py

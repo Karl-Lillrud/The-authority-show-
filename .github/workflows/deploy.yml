@@ -16,24 +16,24 @@ jobs:
       - name: Setup Python
         uses: actions/setup-python@v3
         with:
-          python-version: "3.11" # Anpassa om nödvändigt
+          python-version: "3.x"
 
       - name: Install Dependencies
         run: |
-          cd src
+          cd src  # Change to the src directory
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
-      - name: Make Startup Script Executable
+      - name: Upload Startup Script
         run: |
-          chmod +x src/startup.sh
+          cd src  # Change to the src directory
+          echo -e "#!/bin/bash\n\ngunicorn --chdir src --bind=0.0.0.0 --timeout 600 app:app &\nstreamlit run src/backend/routes/transcript/streamlit_transcription.py" > startup.sh
+          chmod +x startup.sh  # Make sure the script is executable
 
       - name: Deploy to Azure Web App
         uses: azure/webapps-deploy@v3
         with:
-          app-name: "podmanager" # Corrected name
+          app-name: "podmanager" # Replace with your Azure Web App name
           publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }}
-          package: ./src
-        env:
-          pythonLocation: /opt/hostedtoolcache/Python/3.11/x64 # Matcha version
-          LD_LIBRARY_PATH: /opt/hostedtoolcache/Python/3.11/x64/lib
+          package: .
+          startup-command: ./src/startup.sh # Set the startup script for Azure Web App
