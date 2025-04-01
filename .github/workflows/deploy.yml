@@ -1,71 +1,35 @@
-name: Build and deploy Python app to Azure Web App - podmanager
+name: Python CI
 
-on:
-  push:
-    branches:
-      - main
-  workflow_dispatch:
+on: [push]
+
+env:
+  AZURE_WEBAPP_NAME: podmanager # Set this to your application's name
+  AZURE_WEBAPP_PACKAGE_PATH: "." # Set this to the path to your web app project, defaults to the repository root
+  RESOURCE_GROUP: PodManager # Byt ut mot namnet på din resursgrupp
 
 jobs:
   build:
     runs-on: ubuntu-latest
-    permissions:
-      contents: read
-
     steps:
       - uses: actions/checkout@v4
-
-      - name: Set up Python version
-        uses: actions/setup-python@v5
+      - name: Set up Python 3.x
+        uses: actions/setup-python@v4
         with:
-          python-version: "3.x"
-
+          python-version: 3.x
       - name: Install dependencies
         run: |
-          python -m pip install --upgrade pip  # Uppdatera pip till senaste versionen
-          pip install --no-cache-dir -r requirements.txt  # Undvik cache för att minska diskförbrukning
-
-      - name: Prepare deployment package
-        run: |
-          mkdir deployment
-          cp -r src requirements.txt deployment/
-          cd deployment
-          # Remove unnecessary files to reduce package size
-          find . -name "__pycache__" -type d -exec rm -rf {} +
-          find . -name "*.pyc" -exec rm -f {} +
-          zip -r ../release.zip .
-
-      - name: Upload artifact for deployment jobs
-        uses: actions/upload-artifact@v4
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+      - name: Deploy startup script
+        uses: azure/cli@v2
         with:
-          name: python-app
-          path: release.zip
-
-  deploy:
-    runs-on: ubuntu-latest
-    needs: build
-    environment:
-      name: "Production"
-      url: ${{ steps.deploy-to-webapp.outputs.webapp-url }}
-    permissions:
-      id-token: write
-      contents: read
-
-    steps:
-      - name: Download artifact from build job
-        uses: actions/download-artifact@v4
-        with:
-          name: python-app
-
-      - name: Unzip artifact for deployment
-        run: unzip release.zip
-
-      - name: Deploy to Azure Web App using Publish Profile
+          inlineScript: |
+            az webapp deploy --src-path ${{ github.workspace }}/src/main/azure/createPasswordlessDataSource.sh --name ${{ env.AZURE_WEBAPP_NAME }} --resource-group ${{ env.RESOURCE_GROUP }} --type startup --track-status false
+      - name: Building web app
+        uses: azure/appservice-build@v2
+      - name: Deploy web App using GH Action azure/webapps-deploy
         uses: azure/webapps-deploy@v3
-        id: deploy-to-webapp
         with:
-          app-name: "podmanager"
+          app-name: ${{ env.AZURE_WEBAPP_NAME }}
           publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }}
-          slot-name: "Production"
-          clean: true
-          package: .
+          package: ${{ env.AZURE_WEBAPP_PACKAGE_PATH }}
