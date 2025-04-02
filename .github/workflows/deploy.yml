@@ -38,9 +38,6 @@ jobs:
       - name: Make startup.sh Executable
         run: chmod +x ./startup.sh
 
-      - name: Run startup.sh
-        run: bash ./startup.sh
-
       - name: Deploy to Azure Web App
         uses: azure/webapps-deploy@v3
         with:
