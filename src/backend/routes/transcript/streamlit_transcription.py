@@ -276,7 +276,10 @@ with tab1:
                         st.image(url, use_column_width=True)
                         st.markdown(f"[⬇ Download Image {i}]({url})", unsafe_allow_html=True)
 
-# 🎵 **Flik 2: AI Audio Enhancement**
+# ----------------------------
+# Tab 2: AI Audio Enhancement
+# ----------------------------
+
 with tab2:
     st.subheader("🎙 Audio Enhancement & AI analysis")
     
@@ -953,9 +956,10 @@ with tab2:
 
 
 
+# ----------------------------
+# Tab 3: AI Video Enhancement & Analysis
+# ----------------------------
 
-# 📹 **Tab 3: AI Video Enhancement & Analysis**
-# 📹 Video Enhancement & AI Analysis Tab
 with tab3:
     st.subheader("📹 Video Enhancement & AI Analysis")
 
