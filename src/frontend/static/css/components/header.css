@@ -150,6 +150,9 @@ header:hover {
   font-weight: 600;
   color: var(--text-color-light);
   white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  visibility: visible;
 }
 
 /* Header Nav (Menus on the far right) */
