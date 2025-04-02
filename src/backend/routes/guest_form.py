@@ -1,7 +1,7 @@
 from flask import Blueprint, request, jsonify, render_template, session
 from googleapiclient.discovery import build
 from google.oauth2.credentials import Credentials
-from googleapiclient.errors import HttpError
+from google.auth.transport.requests import Request
 from backend.database.mongo_connection import collection
 import logging
 from datetime import datetime, timedelta
@@ -32,8 +32,18 @@ def available_dates():
             logger.error("Missing guestId or googleCal token in request.")
             return jsonify({"error": "Missing guestId or googleCal token"}), 400
 
-        # Use the token to authenticate with Google Calendar API
+        # If the googleCal token is just the access token, we should attempt to retrieve full credentials from session
         credentials = Credentials(token=google_cal_token)
+
+        # If the credentials are expired and we have a refresh token, try to refresh them
+        if credentials and credentials.expired and credentials.refresh_token:
+            credentials.refresh(Request())  # Refresh the credentials using the refresh_token
+
+        # If credentials are missing refresh_token, return an error
+        if not credentials.refresh_token:
+            logger.error("No refresh token available to refresh credentials.")
+            return jsonify({"error": "Failed to refresh access token"}), 500
+
         service = build("calendar", "v3", credentials=credentials)
 
         # Fetch busy times from the primary calendar
