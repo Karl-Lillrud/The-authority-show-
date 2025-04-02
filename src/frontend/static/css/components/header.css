@@ -148,6 +148,17 @@ header:hover {
   flex-shrink: 0; /* Prevent container from shrinking */
 }
 
+.page-title {
+  font-size: 1rem; /* Reduced from 1.2rem */
+  font-weight: 600;
+  color: var(--text-color-light);
+  white-space: nowrap;
+  max-width: 100px; /* Limit width to prevent overflow */
+  white-space: nowrap;
+  overflow: visible;
+  text-overflow: ellipsis;
+}
+
 
 /* Header Nav (Menus on the far right) */
 .header-nav {
@@ -481,17 +492,6 @@ header:hover {
   .logo-container,
   .logo-container img {
     width: 70px; /* Even smaller logo on very small screens */
-  }
-
-  .page-title {
-    font-size: 1rem; /* Reduced from 1.2rem */
-    font-weight: 600;
-    color: var(--text-color-light);
-    white-space: nowrap;
-    max-width: 100px; /* Limit width to prevent overflow */
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
   }
 
   .header-nav {
