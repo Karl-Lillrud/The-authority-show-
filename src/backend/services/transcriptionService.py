@@ -8,7 +8,7 @@ from io import BytesIO
 from elevenlabs.client import ElevenLabs
 from backend.database.mongo_connection import fs
 from backend.utils.ai_utils import remove_filler_words
-from backend.utils.text_utils import generate_ai_suggestions, generate_show_notes, generate_ai_quotes, generate_ai_quotes, generate_quote_images
+from backend.utils.text_utils import generate_ai_suggestions, generate_show_notes, generate_ai_quotes, generate_ai_quotes, generate_quote_images,translate_text
 
 logger = logging.getLogger(__name__)
 client = ElevenLabs(api_key=os.getenv("ELEVENLABS_API_KEY"))
@@ -98,13 +98,6 @@ class TranscriptionService:
         return generate_quote_images(quotes)
 
     def translate_text(self, text: str, language: str) -> str:
-        try:
-            response = openai.ChatCompletion.create(
-                model="gpt-4",
-                messages=[{"role": "user", "content": f"Translate this to {language}:\n{text}"}],
-            )
-            return response["choices"][0]["message"]["content"]
-        except Exception as e:
-            logger.error(f"Translation failed: {str(e)}")
-            return f"Error: {str(e)}"
+        logger.info(f"🌍 Translating transcript to {language}...")
+        return translate_text(text, language)
 

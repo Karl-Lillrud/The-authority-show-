@@ -24,28 +24,35 @@ def format_transcription(transcription):
         ])
     return transcription  # Already a string
 
-def download_button_text(label, text, filename):
-    """Create a Streamlit download button for text content."""
+def download_button_text(label, text, filename, key_prefix=""):
     if isinstance(text, list):
         text = format_transcription(text)
     b64 = base64.b64encode(text.encode()).decode()
-    return st.download_button(label, text, filename, key=filename)
+    key = f"{key_prefix}_{filename}" if key_prefix else filename
+    return st.download_button(label, text, filename, key=key)
 
-def translate_text(text, target_language):
-    """Translate text to a given language via the API."""
+
+def translate_text(text: str, target_language: str) -> str:
+    """
+    Translate the given text to the target language using GPT.
+    """
     if not text.strip():
-        return text
+        return ""
+
+    prompt = f"Translate the following transcript to {target_language}:\n\n{text}"
+
     try:
-        response = requests.post(
-            f"{API_BASE_URL}/translate",
-            json={"text": text, "language": target_language},
+        response = openai.ChatCompletion.create(
+            model="gpt-4",
+            messages=[
+                {"role": "system", "content": "You are a professional translator."},
+                {"role": "user", "content": prompt}
+            ]
         )
-        if response.status_code == 200:
-            return response.json().get("translated_text", "Translation failed")
-        else:
-            return f"Translation failed: {response.text}"
+        return response["choices"][0]["message"]["content"].strip()
     except Exception as e:
-        return f"Error contacting translation API: {e}"
+        logger.error(f"❌ Translation failed: {str(e)}")
+        return f"Error during translation: {str(e)}"
 
 def generate_ai_suggestions(text):
     prompt = f"""

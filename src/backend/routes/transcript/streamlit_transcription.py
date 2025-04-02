@@ -7,7 +7,11 @@ import logging
 import tempfile
 from dotenv import load_dotenv
 import sys
-from backend.utils.text_utils import translate_text, download_button_text
+
+project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../../"))
+if project_root not in sys.path:
+    sys.path.insert(0, project_root)
+from backend.utils.text_utils import download_button_text
 
 # Load environment variables early
 load_dotenv()
@@ -18,20 +22,29 @@ logger = logging.getLogger(__name__)
 API_BASE_URL = os.getenv("API_BASE_URL")
 
 def render_translate_and_download(section_key: str, label: str, filename: str):
-    """ Add a functions that keeps us from having to repeat code"""
     content = st.session_state.get(section_key, "")
     if not content:
         return
 
-    # Translate Dropdown
     lang = st.selectbox(f"🌍 Translate {label} to:", languages, key=f"{section_key}_lang")
-    if st.button(f"Translate {label}"):
-        st.session_state[f"{section_key}_translated"] = translate_text(content, lang)
-        st.experimental_rerun()
 
-    # Download Button
+    if st.button(f"Translate {label}", key=f"{section_key}_translate_btn"):
+        try:
+            response = requests.post(
+                f"{API_BASE_URL}/translate",
+                json={"text": content, "language": lang}
+            )
+            if response.status_code == 200:
+                translated = response.json().get("translated_text", "")
+                st.session_state[f"{section_key}_translated"] = translated
+                st.success(f"{label} translated to {lang}!")
+            else:
+                st.error(f"Translation failed: {response.text}")
+        except Exception as e:
+            st.error(f"Error calling translation API: {e}")
+
     translated = st.session_state.get(f"{section_key}_translated", content)
-    download_button_text(f"⬇ Download {label}", translated, filename)
+    download_button_text(f"⬇ Download {label}", translated, filename, key_prefix=section_key)
 
 # ----------------------------
 # Initialize Session State
@@ -129,24 +142,9 @@ with tab1:
     if st.session_state.get("raw_transcription", ""):
         # ---- Raw transcription ----
         st.markdown("## 📜 Raw Transcription")
-        transcription_text = st.session_state.get("transcription_translated") or st.session_state.raw_transcription
-        st.text_area("Raw Transcription", value=transcription_text, height=200)
-
-        # Translate transcript
-        language_transcription = st.selectbox("🌍 Translate Raw Transcription to:", languages)
-        if st.button("Translate Raw Transcription"):
-            st.session_state["transcription_translated"] = translate_text(
-                st.session_state.raw_transcription,
-                language_transcription
-            )
-            st.experimental_rerun()
-
-        # Download button
-        download_button_text(
-            "⬇ Download Raw Transcription",
-            st.session_state.get("transcription_translated", st.session_state.raw_transcription),
-            "raw_transcription.txt"
-        )
+        raw_text = st.session_state.get("raw_transcription_translated") or st.session_state.raw_transcription
+        st.text_area("Raw Transcription", value=raw_text, height=200)
+        render_translate_and_download("raw_transcription", "Raw Transcription", "raw_transcription.txt")
 
         # ---- Transcription Enhancement Tools ----
         st.markdown("---")
@@ -160,14 +158,14 @@ with tab1:
             response = requests.post(f"{API_BASE_URL}/clean", json=payload)
             if response.status_code == 200:
                 st.session_state.transcription_no_fillers = response.json().get("clean_transcript", "")
-                st.session_state.show_clean_transcript = True  # Show field
+                st.session_state.show_clean_transcript = True
                 st.success("Clean transcript generated!")
             else:
                 st.error("Failed to clean transcript.")
 
-        # Show clean transcript
         if st.session_state.show_clean_transcript and st.session_state.transcription_no_fillers:
-            st.text_area("Clean Transcript", value=st.session_state.transcription_no_fillers, height=200)
+            clean_text = st.session_state.get("transcription_no_fillers_translated") or st.session_state.transcription_no_fillers
+            st.text_area("Clean Transcript", value=clean_text, height=200)
             render_translate_and_download("transcription_no_fillers", "Clean Transcript", "clean_transcript.txt")
 
         # 2) AI Suggestions
@@ -184,7 +182,8 @@ with tab1:
                 st.error("Failed to generate AI suggestions.")
 
         if st.session_state.show_ai_suggestions and st.session_state.ai_suggestions:
-            st.text_area("AI Suggestions", value=st.session_state.ai_suggestions, height=200)
+            ai_text = st.session_state.get("ai_suggestions_translated") or st.session_state.ai_suggestions
+            st.text_area("AI Suggestions", value=ai_text, height=200)
             render_translate_and_download("ai_suggestions", "AI Suggestions", "ai_suggestions.txt")
 
         # 3) Show Notes
@@ -201,7 +200,8 @@ with tab1:
                 st.error("Failed to generate show notes.")
 
         if st.session_state.show_show_notes and st.session_state.show_notes:
-            st.text_area("Show Notes", value=st.session_state.show_notes, height=200)
+            notes_text = st.session_state.get("show_notes_translated") or st.session_state.show_notes
+            st.text_area("Show Notes", value=notes_text, height=200)
             render_translate_and_download("show_notes", "Show Notes", "show_notes.txt")
 
         # 4) Quotes
@@ -217,9 +217,9 @@ with tab1:
             else:
                 st.error("Failed to generate quotes.")
 
-        # Show quotes
         if st.session_state.show_quotes and st.session_state.quotes:
-            st.text_area("Quotes", value=st.session_state.quotes, height=200)
+            quotes_text = st.session_state.get("quotes_translated") or st.session_state.quotes
+            st.text_area("Quotes", value=quotes_text, height=200)
             render_translate_and_download("quotes", "Quotes", "quotes.txt")
 
             # 5) Quote Images (only shown after "Generate Quotes")
@@ -235,13 +235,14 @@ with tab1:
                 else:
                     st.error("Failed to generate quote images.")
 
-            # Show generated images
             if st.session_state.show_quote_images and st.session_state.get("quote_images", []):
                 st.markdown("#### Your Quote Images")
                 for i, url in enumerate(st.session_state.quote_images, 1):
                     if url:
                         st.image(url, use_column_width=True)
                         st.markdown(f"[⬇ Download Image {i}]({url})", unsafe_allow_html=True)
+
+
                         
 # ----------------------------
 # Tab 2: AI Audio Enhancement
