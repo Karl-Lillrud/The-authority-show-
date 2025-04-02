@@ -1,22 +1,25 @@
 import cv2
-import mediapipe as mp
 import torch
 import torchvision.transforms as T
 from torchvision.models.detection import maskrcnn_resnet50_fpn
-
-# Load MediaPipe Face Mesh
-mp_face_mesh = mp.solutions.face_mesh
-face_mesh = mp_face_mesh.FaceMesh(static_image_mode=False, max_num_faces=1, min_detection_confidence=0.5)
+import noisereduce as nr
+import numpy as np
 
 # Load Mask R-CNN (Pretrained)
 model = maskrcnn_resnet50_fpn(pretrained=True)
 model.eval()
 transform = T.Compose([T.ToTensor()])
 
+def reduce_noise(image):
+    """Apply noise reduction to the image."""
+    # Convert image to grayscale for noise reduction
+    gray_image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+    reduced_noise = nr.reduce_noise(y=gray_image, sr=22050)  # Example sampling rate
+    return cv2.merge([reduced_noise, reduced_noise, reduced_noise])
+
 def detect_headphones(frame):
-    # Convert to RGB for MediaPipe
-    rgb_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-    results = face_mesh.process(rgb_frame)
+    # Apply noise reduction to the frame
+    frame = reduce_noise(frame)
     
     # Convert to Tensor for Mask R-CNN
     tensor_frame = transform(frame).unsqueeze(0)
