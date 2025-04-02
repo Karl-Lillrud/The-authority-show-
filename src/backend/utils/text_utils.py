@@ -1,14 +1,16 @@
-# src\backend\utils\text_utils.py
+# src/backend/utils/text_utils.py
+
+import os
+import re
 import openai
 import logging
 import subprocess
-import re
-import subprocess
-from transformers import pipeline
-import os
-from pathlib import Path
+import base64
 import requests
+from pathlib import Path
 from typing import List
+from transformers import pipeline
+import streamlit as st  # Needed for download_button_text
 
 API_BASE_URL = os.getenv("API_BASE_URL")
 logger = logging.getLogger(__name__)
@@ -17,10 +19,33 @@ def format_transcription(transcription):
     """Convert list of dictionaries to a readable string."""
     if isinstance(transcription, list):
         return "\n".join([
-            f"[{item['start']}-{item['end']}] {item['speaker']}: {item['text']}"
+            f"[{item['start']}-{item['end']}] {item['speaker']}: {item['text'].strip()}"
             for item in transcription
         ])
     return transcription  # Already a string
+
+def download_button_text(label, text, filename):
+    """Create a Streamlit download button for text content."""
+    if isinstance(text, list):
+        text = format_transcription(text)
+    b64 = base64.b64encode(text.encode()).decode()
+    return st.download_button(label, text, filename, key=filename)
+
+def translate_text(text, target_language):
+    """Translate text to a given language via the API."""
+    if not text.strip():
+        return text
+    try:
+        response = requests.post(
+            f"{API_BASE_URL}/translate",
+            json={"text": text, "language": target_language},
+        )
+        if response.status_code == 200:
+            return response.json().get("translated_text", "Translation failed")
+        else:
+            return f"Translation failed: {response.text}"
+    except Exception as e:
+        return f"Error contacting translation API: {e}"
 
 def generate_ai_suggestions(text):
     prompt = f"""
@@ -46,9 +71,6 @@ def generate_show_notes(text):
     return response["choices"][0]["message"]["content"]
 
 def transcribe_with_whisper(audio_path: str) -> str:
-    """
-    Example of calling openai.Audio.transcribe for a local file.
-    """
     try:
         with open(audio_path, "rb") as f:
             response = openai.Audio.transcribe("whisper-1", file=f)
@@ -56,8 +78,7 @@ def transcribe_with_whisper(audio_path: str) -> str:
     except Exception as e:
         logger.error(f"Error in Whisper transcription: {str(e)}")
         return ""
-    
-# Emotion/Sentence classifiers (load only once)
+
 classifier = pipeline(
     "zero-shot-classification",
     model="nreimers/MiniLM-L6-H384-uncased"
@@ -164,7 +185,7 @@ def generate_ai_show_notes(transcript):
     except Exception as e:
         logger.error(f"❌ Error generating show notes: {e}")
         return f"Error generating show notes: {str(e)}"
-    
+
 def generate_ai_quotes(transcript: str) -> str:
     prompt = f"""
     From the following podcast transcript, extract 3 impactful, quotable moments or sentences.
@@ -185,23 +206,13 @@ def generate_ai_quotes(transcript: str) -> str:
             ]
         )
         quotes_raw = response["choices"][0]["message"]["content"].strip()
-
-        # 🧼 Clean extra bullet points or symbols if needed
         lines = [line.strip("•–—-• \n\"") for line in quotes_raw.split("\n") if line.strip()]
-        return "\n\n".join(lines[:3])  # Join into one string
-
+        return "\n\n".join(lines[:3])
     except Exception as e:
         logger.error(f"❌ Error generating quotes: {e}")
         return f"Error generating quotes: {str(e)}"
 
-
 def generate_quote_images(quotes: List[str]) -> List[str]:
-    """
-    Generate DALL·E 3 images for a list of quotes and return image URLs.
-
-    :param quotes: A list of short quotes (1–2 sentences each).
-    :return: List of image URLs (or empty string for failed ones).
-    """
     openai.api_key = os.getenv("OPENAI_API_KEY")
     urls = []
 

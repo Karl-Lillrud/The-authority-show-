@@ -7,6 +7,7 @@ import logging
 import tempfile
 from dotenv import load_dotenv
 import sys
+from backend.utils.text_utils import translate_text, download_button_text
 
 # Load environment variables early
 load_dotenv()
@@ -16,59 +17,21 @@ logger = logging.getLogger(__name__)
 
 API_BASE_URL = os.getenv("API_BASE_URL")
 
-# ----------------------------
-# Helper Functions
-# ----------------------------
-def format_transcription(transcription):
-    """Convert list of dictionaries to a readable string."""
-    if isinstance(transcription, list):
-        return "\n".join(
-            [f"[{item['start']}-{item['end']}] {item['speaker']}: {item['text']}" for item in transcription]
-        )
-    return transcription
+def render_translate_and_download(section_key: str, label: str, filename: str):
+    """ Add a functions that keeps us from having to repeat code"""
+    content = st.session_state.get(section_key, "")
+    if not content:
+        return
 
-def download_button(label, file_path, filename):
-    """Generate a download button for processed files."""
-    if file_path and os.path.exists(file_path):
-        with open(file_path, "rb") as f:
-            b64 = base64.b64encode(f.read()).decode()
-        ext = filename.split(".")[-1]
-        href = f'<a href="data:file/{ext};base64,{b64}" download="{filename}">{label}</a>'
-        return st.markdown(href, unsafe_allow_html=True)
-    return st.warning("Processed file not found. Try again.")
+    # Translate Dropdown
+    lang = st.selectbox(f"🌍 Translate {label} to:", languages, key=f"{section_key}_lang")
+    if st.button(f"Translate {label}"):
+        st.session_state[f"{section_key}_translated"] = translate_text(content, lang)
+        st.experimental_rerun()
 
-def download_button_text(label, text, filename):
-    if isinstance(text, list):
-        text = format_transcription(text)
-    b64 = base64.b64encode(text.encode()).decode()
-    return st.download_button(label, text, filename, key=filename)
-
-def download_button_image(label, image_path, filename):
-    """Creates a download button for an image."""
-    if os.path.exists(image_path):
-        with open(image_path, "rb") as img_file:
-            b64 = base64.b64encode(img_file.read()).decode()
-        ext = filename.split(".")[-1]
-        mime = f"image/{ext if ext != 'jpg' else 'jpeg'}"
-        href = f'<a href="data:{mime};base64,{b64}" download="{filename}">{label}</a>'
-        return st.markdown(href, unsafe_allow_html=True)
-    else:
-        return st.warning("Image not found.")
-
-def translate_text(text, target_language):
-    if not text.strip():
-        return text
-    try:
-        response = requests.post(
-            f"{API_BASE_URL}/translate",
-            json={"text": text, "language": target_language},
-        )
-        if response.status_code == 200:
-            return response.json().get("translated_text", "Translation failed")
-        else:
-            return f"Translation failed: {response.text}"
-    except Exception as e:
-        return f"Error contacting translation API: {e}"
+    # Download Button
+    translated = st.session_state.get(f"{section_key}_translated", content)
+    download_button_text(f"⬇ Download {label}", translated, filename)
 
 # ----------------------------
 # Initialize Session State
@@ -140,7 +103,7 @@ with tab1:
                     if response.status_code == 200:
                         result = response.json()
                         st.session_state.raw_transcription = result.get("raw_transcription", "")
-                        st.session_state.transcription_no_fillers = result.get("transcription_no_fillers", "")
+                        st.session_state.full_transcript = result.get("full_transcript", "")
                         st.session_state.ai_suggestions = result.get("ai_suggestions", "")
                         st.session_state.show_notes = result.get("show_notes", "")
                         st.session_state.quotes = result.get("quotes", "")
@@ -193,7 +156,7 @@ with tab1:
         st.markdown("### 🧹 Clean Transcript")
         st.write("Removes filler words and unnecessary expressions from your transcript.")
         if st.button("Generate Clean Transcript"):
-            payload = {"transcript": st.session_state.raw_transcription}
+            payload = {"transcript": st.session_state.get("full_transcript", "")}
             response = requests.post(f"{API_BASE_URL}/clean", json=payload)
             if response.status_code == 200:
                 st.session_state.transcription_no_fillers = response.json().get("clean_transcript", "")
@@ -205,6 +168,7 @@ with tab1:
         # Show clean transcript
         if st.session_state.show_clean_transcript and st.session_state.transcription_no_fillers:
             st.text_area("Clean Transcript", value=st.session_state.transcription_no_fillers, height=200)
+            render_translate_and_download("transcription_no_fillers", "Clean Transcript", "clean_transcript.txt")
 
         # 2) AI Suggestions
         st.markdown("### 🤖 AI Suggestions")
@@ -221,6 +185,7 @@ with tab1:
 
         if st.session_state.show_ai_suggestions and st.session_state.ai_suggestions:
             st.text_area("AI Suggestions", value=st.session_state.ai_suggestions, height=200)
+            render_translate_and_download("ai_suggestions", "AI Suggestions", "ai_suggestions.txt")
 
         # 3) Show Notes
         st.markdown("### 📝 Show Notes")
@@ -237,6 +202,7 @@ with tab1:
 
         if st.session_state.show_show_notes and st.session_state.show_notes:
             st.text_area("Show Notes", value=st.session_state.show_notes, height=200)
+            render_translate_and_download("show_notes", "Show Notes", "show_notes.txt")
 
         # 4) Quotes
         st.markdown("### 💬 Generate Quotes")
@@ -254,6 +220,7 @@ with tab1:
         # Show quotes
         if st.session_state.show_quotes and st.session_state.quotes:
             st.text_area("Quotes", value=st.session_state.quotes, height=200)
+            render_translate_and_download("quotes", "Quotes", "quotes.txt")
 
             # 5) Quote Images (only shown after "Generate Quotes")
             st.markdown("### 🖼️ Generate Quote Images")
