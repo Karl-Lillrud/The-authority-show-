@@ -20,7 +20,6 @@ from backend.routes.frontend import frontend_bp  # Import the frontend blueprint
 from backend.routes.guestpage import guestpage_bp
 from backend.routes.guest_to_eposide import guesttoepisode_bp
 from backend.routes.guest_form import guest_form_bp  # Import the guest_form blueprint
-
 from backend.routes.transcription import transcription_bp
 from backend.routes.landingpage import landingpage_bp
 from dotenv import load_dotenv
@@ -31,10 +30,16 @@ from backend.routes.Mailing_list import Mailing_list_bp
 from backend.routes.user import user_bp
 from backend.routes.audio_routes import audio_bp
 from backend.routes.video_routes import video_bp
-
 from backend.routes.highlight import highlights_bp
+from transformers import BertForSequenceClassification, AutoTokenizer
 
+# Suppress TensorFlow oneDNN warning by setting the environment variable
+os.environ["TF_ENABLE_ONEDNN_OPTS"] = "0"
 
+# Ensure ffmpeg is installed and available
+from pydub import AudioSegment
+if not AudioSegment.converter:
+    raise RuntimeError("ffmpeg is not installed or not in PATH. Please install it and try again.")
 
 if os.getenv("SKIP_VENV_UPDATE", "false").lower() not in ("true", "1", "yes"):
     venvupdate.update_venv_and_requirements()
@@ -78,9 +83,7 @@ app.register_blueprint(pod_management_bp)
 app.register_blueprint(podtask_bp)
 app.register_blueprint(team_bp)
 app.register_blueprint(Mailing_list_bp)
-app.register_blueprint(
-    guest_bp
-)  # Ensure this line is present and has the correct prefix
+app.register_blueprint(guest_bp)
 app.register_blueprint(guestpage_bp)
 app.register_blueprint(account_bp)
 app.register_blueprint(usertoteam_bp)
@@ -90,14 +93,10 @@ app.register_blueprint(episode_bp)
 app.register_blueprint(podprofile_bp)  # Register the podprofile blueprint
 app.register_blueprint(frontend_bp)  # Register the frontend blueprint
 app.register_blueprint(guesttoepisode_bp)
-app.register_blueprint(
-    guest_form_bp, url_prefix="/guest-form"
-)  # Register the guest_form blueprint with URL prefix
+app.register_blueprint(guest_form_bp, url_prefix="/guest-form") 
 app.register_blueprint(transcription_bp)
 app.register_blueprint(audio_bp)
 app.register_blueprint(video_bp)
-# Register the guest_form blueprint with URL prefix
-
 app.register_blueprint(landingpage_bp)
 
 # Set the application environment (defaults to production)
@@ -122,6 +121,16 @@ def load_user():
     g.user_id = session.get("user_id")
     logger.info(f"Request to {request.path} by user {g.user_id}")
 
+
+# Initialize the BERT model and tokenizer
+model_name = "nreimers/MiniLM-L6-H384-uncased"
+model = BertForSequenceClassification.from_pretrained(model_name, num_labels=3)
+tokenizer = AutoTokenizer.from_pretrained(model_name)
+
+# Define a proper label2id mapping for the BERT model
+label2id = {"entailment": 0, "neutral": 1, "contradiction": 2}
+model.config.label2id = label2id
+model.config.id2label = {v: k for k, v in label2id.items()}
 
 # Run the app
 if __name__ == "__main__":
