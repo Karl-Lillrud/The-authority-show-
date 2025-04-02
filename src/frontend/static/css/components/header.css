@@ -438,6 +438,10 @@ header:hover {
     width: 80px; /* Smaller logo on mobile */
   }
 
+  .page-title {
+    font-size: 0.9rem;
+  }
+
   .header-nav {
     gap: var(--spacing-sm); /* Reduce gap between nav items */
     flex-direction: row; /* Keep horizontal layout */
