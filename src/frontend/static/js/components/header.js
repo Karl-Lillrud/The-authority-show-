@@ -172,72 +172,6 @@ document.addEventListener("click", (e) => {
   }
 });
 
-document.addEventListener("DOMContentLoaded", async () => {
-  const mainContent = document.querySelector("main");
-  const pageTitleElement = document.getElementById("page-title");
-
-  // Function to load content dynamically
-  async function loadContent(url) {
-    try {
-      const response = await fetch(url);
-      if (response.ok) {
-        const html = await response.text();
-        const parser = new DOMParser();
-        const doc = parser.parseFromString(html, "text/html");
-        const newContent = doc.querySelector("main").innerHTML;
-
-        if (mainContent) {
-          mainContent.innerHTML = newContent;
-        }
-
-        // Update the page title dynamically
-        const pageTitles = {
-          "/account": "Account",
-          "/podcastmanagement": "Podcast Management",
-          "/dashboard": "Dashboard",
-          "/team": "Team Members",
-          "/guest": "Guest View",
-          "/taskmanagement": "Task Management",
-        };
-
-        const currentPath = new URL(url).pathname;
-        const pageTitle = pageTitles[currentPath] || "PodManager";
-
-        if (pageTitleElement) {
-          pageTitleElement.textContent = pageTitle;
-        }
-
-        // Update the <title> tag in the <head>
-        document.title = pageTitle;
-      } else {
-        console.error("Failed to load content:", response.status);
-      }
-    } catch (err) {
-      console.error("Error loading content dynamically:", err);
-    }
-  }
-
-  // Load content for the current URL on page load
-  await loadContent(window.location.href);
-
-  // Handle navigation clicks
-  const navLinks = document.querySelectorAll(".menu a, #landing-page-link");
-  navLinks.forEach((link) => {
-    link.addEventListener("click", async (e) => {
-      e.preventDefault();
-      const url = link.href;
-
-      await loadContent(url);
-      window.history.pushState({}, "", url);
-    });
-  });
-
-  // Handle browser back/forward navigation
-  window.addEventListener("popstate", async () => {
-    await loadContent(window.location.href);
-  });
-});
-
 document.addEventListener("DOMContentLoaded", () => {
   const landingPageLink = document.getElementById("landing-page-link");
 
@@ -261,3 +195,5 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 });
+
+

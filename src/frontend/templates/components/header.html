@@ -15,7 +15,18 @@
     <span id="page-title" class="page-title"></span>
   </div>
   <nav class="header-nav">
-      <div class="menu-toggle" onclick="toggleMenu()">
+    <div
+      class="custom-dropdown"
+      id="headerPodcastDropdown"
+      style="display: none"
+    >
+      <div class="dropdown-selected">Select a Podcast</div>
+      <div class="dropdown-options">
+        <!-- Options will be dynamiskt genererade -->
+      </div>
+    </div>
+
+    <div class="menu-toggle" onclick="toggleMenu()">
       <span></span>
       <span></span>
       <span></span>
@@ -60,7 +71,6 @@
     const pageTitleElement = document.getElementById("page-title");
     if (pageTitleElement) {
       const pageTitles = {
-        "/account": "Account",
         "/podcastmanagement": "Podcast Management",
         "/dashboard": "Dashboard",
         "/team": "Team Members",
