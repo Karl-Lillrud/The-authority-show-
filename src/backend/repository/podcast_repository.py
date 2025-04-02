@@ -120,30 +120,22 @@ class PodcastRepository:
         except Exception as e:
             return {"error": "Failed to fetch podcasts", "details": str(e)}, 500
 
-    def get_podcast_by_id(self, user_id, podcast_id):
+    def get_podcast_by_id(self, podcast_id):
+        """
+        Fetch a podcast by its ID.
+        """
         try:
-            user_accounts = list(
-                collection.database.Accounts.find(
-                    {"userId": user_id}, {"id": 1, "_id": 1}
-                )
-            )
-            user_account_ids = [
-                account.get("id", str(account["_id"])) for account in user_accounts
-            ]
-
-            if not user_account_ids:
-                return {"error": "No accounts found for user"}, 403
-
-            podcast = self.collection.find_one(
-                {"_id": podcast_id, "accountId": {"$in": user_account_ids}}
-            )
-            if not podcast:
-                return {"error": "Podcast not found or unauthorized"}, 404
-
-            podcast["_id"] = str(podcast["_id"])
-            return {"podcast": podcast}, 200
+            logger.info(f"Fetching podcast by ID: {podcast_id}")
+            podcast = self.collection.find_one({"_id": podcast_id})
+            if podcast:
+                podcast["_id"] = str(podcast["_id"])  # Convert ObjectId to string
+                logger.info(f"Podcast found: {podcast.get('podName', 'Unknown')}")
+            else:
+                logger.warning(f"Podcast with ID {podcast_id} not found.")
+            return podcast
         except Exception as e:
-            return {"error": f"Failed to fetch podcast: {str(e)}"}, 500
+            logger.error(f"Error fetching podcast by ID {podcast_id}: {e}")
+            return None
 
     def delete_podcast(self, user_id, podcast_id):
         try:

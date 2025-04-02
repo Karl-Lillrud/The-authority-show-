@@ -17,7 +17,9 @@ export async function fetchEpisodes(guestId) {
 
 export async function viewEpisodeTasks(episodeId) {
   try {
-    const response = await fetch(`/episodes/view_tasks_by_episode/${episodeId}`);
+    const response = await fetch(
+      `/episodes/view_tasks_by_episode/${episodeId}`
+    );
     const data = await response.json();
 
     if (response.ok) {
@@ -120,16 +122,27 @@ export async function fetchEpisodesByPodcast(podcastId) {
 export async function fetchEpisode(episodeId) {
   try {
     const response = await fetch(`/get_episodes/${episodeId}`);
-    const data = await response.json();
-    if (response.ok) {
-      return data;
-    } else {
-      console.error("Failed to fetch episode:", data.error);
-      alert("Failed to fetch episode: " + data.error);
+    if (!response.ok) {
+      if (response.status === 404) {
+        console.warn(`Episode with ID ${episodeId} not found.`);
+        throw new Error("Episode not found");
+      }
+      throw new Error(`Failed to fetch episode: ${response.statusText}`);
     }
+    const episode = await response.json();
+    // Ensure binary data is correctly handled
+    if (episode.episodeFiles) {
+      episode.episodeFiles = episode.episodeFiles.map((file) => {
+        if (file.data) {
+          file.data = atob(file.data); // Decode base64 to binary string
+        }
+        return file;
+      });
+    }
+    return episode;
   } catch (error) {
-    console.error("Error fetching episode:", error);
-    alert("Failed to fetch episode.");
+    console.error(`Failed to fetch episode: ${error.message}`);
+    throw error;
   }
 }
 
@@ -194,4 +207,3 @@ export async function fetchAllEpisodes() {
     throw error;
   }
 }
-

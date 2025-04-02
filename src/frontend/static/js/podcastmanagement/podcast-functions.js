@@ -1,6 +1,5 @@
 import {
   addPodcast,
-  fetchPodcasts,
   fetchPodcast,
   updatePodcast,
   deletePodcast
@@ -14,7 +13,7 @@ import {
   updateEditButtons,
   shared
 } from "./podcastmanagement.js";
-import { createPlayButton, playAudio } from "./episode-functions.js";
+import { createPlayButton, playAudio, playMedia } from "./episode-functions.js";
 import { renderEpisodeDetail } from "./episode-functions.js";
 
 // Function to set image source with fallback
@@ -141,7 +140,9 @@ export async function renderPodcastList() {
 
       // Use imageUrl if available, otherwise allow user to upload an image
       const imageUrl =
-        podcast.logoUrl || podcast.imageUrl || "default-image.png";
+        podcast.logoUrl ||
+        podcast.imageUrl ||
+        "/static/images/default-image.png";
 
       // Create the basic podcast card structure
       podcastCard.innerHTML = `
@@ -166,6 +167,11 @@ export async function renderPodcastList() {
               }</p>
             </div>
             <div class="podcast-actions">
+              <button class="action-btn update-rss-btn" title="RSS" data-id="${
+                podcast._id
+              }">
+                <span class="icon">${shared.svgpodcastmanagement.update}</span>
+              </button>
               <button class="action-btn view-btn" title="View podcast details" data-id="${
                 podcast._id
               }">
@@ -209,6 +215,38 @@ export async function renderPodcastList() {
         const podcastId = e.target.dataset.id; // Get podcast ID
         window.location.href = `/landingpage/${podcastId}`;
       });
+
+      // Add event listener for Update RSS Feed button
+      const updateRssButton = podcastCard.querySelector(".update-rss-btn");
+      if (updateRssButton) {
+        updateRssButton.addEventListener("click", async () => {
+          try {
+            const response = await fetch(`/download_rss/${podcast._id}`);
+            if (!response.ok) {
+              throw new Error("Failed to download RSS feed");
+            }
+
+            const blob = await response.blob();
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement("a");
+            a.href = url;
+            a.download = `${podcast.podName || "podcast"}_rss_feed.xml`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            window.URL.revokeObjectURL(url);
+
+            showNotification(
+              "Success",
+              "RSS feed downloaded successfully!",
+              "success"
+            );
+          } catch (error) {
+            console.error("Error downloading RSS feed:", error);
+            showNotification("Error", "Failed to download RSS feed.", "error");
+          }
+        });
+      }
 
       // Fetch episodes for this podcast and add them to the preview
       try {
@@ -441,10 +479,18 @@ export async function renderPodcastList() {
   }
 }
 
+// Add delete confirmation modal fallback function
+function showDeleteConfirmationModal(message, onConfirm) {
+  if (confirm(message)) {
+    onConfirm();
+  }
+}
+
 // Function to render podcast detail
 export function renderPodcastDetail(podcast) {
   const podcastDetailElement = document.getElementById("podcast-detail");
-  const imageUrl = podcast.logoUrl || podcast.imageUrl || "default-image.png";
+  const imageUrl =
+    podcast.logoUrl || podcast.imageUrl || "/static/images/default-image.png";
 
   podcastDetailElement.innerHTML = `
   <div class="detail-header">
@@ -679,11 +725,6 @@ export function renderPodcastDetail(podcast) {
             ? new Date(ep.publishDate).toLocaleDateString()
             : "No date";
 
-          // Convert duration from seconds to minutes and seconds
-          const durationMinutes = Math.floor(ep.duration / 60);
-          const durationSeconds = ep.duration % 60;
-          const formattedDuration = `${durationMinutes}m ${durationSeconds}s`;
-
           const description = ep.description
             ? ep.description
             : "No description available.";
@@ -700,7 +741,6 @@ export function renderPodcastDetail(podcast) {
               </div>
               <div class="episode-meta">
                 <span class="episode-date">Published: ${publishDate}</span>
-                <span class="episode-duration">${formattedDuration}</span>
               </div>
               <div class="episode-description">${description}</div>
             </div>
@@ -714,13 +754,13 @@ export function renderPodcastDetail(podcast) {
             </div>
           `;
 
-          // Add play button event listener if audio URL exists
+          // Add play button event listener if audio or video URL exists
           if (ep.audioUrl) {
             episodeCard
               .querySelector(".episode-play-btn")
               .addEventListener("click", (e) => {
                 e.stopPropagation();
-                playAudio(ep.audioUrl, ep.title);
+                playMedia(ep.audioUrl, ep.title);
               });
           }
 
@@ -953,6 +993,31 @@ export function renderPodcastSelection(podcasts) {
   });
 }
 
+// // Function to update RSS feed
+// async function updateRssFeed(podcastId, newRssFeed) {
+//   try {
+//     const response = await fetch(`/update-rss`, {
+//       method: 'POST',
+//       headers: {
+//         'Content-Type': 'application/json'
+//       },
+//       body: JSON.stringify({ podcastId, rssFeedUrl: newRssFeed })
+//     });
+
+//     const data = await response.json();
+
+//     if (data.success) {
+//       showNotification("Success", "RSS Feed updated successfully!", "success");
+//       // Optionally, update the UI with the new RSS link
+//     } else {
+//       showNotification("Error", "Failed to update RSS Feed.", "error");
+//     }
+//   } catch (error) {
+//     console.error("Error updating RSS feed:", error);
+//     showNotification("Error", "Failed to update RSS Feed.", "error");
+//   }
+// }
+
 // Initialize podcast functions
 export function initPodcastFunctions() {
   renderPodcastList();
@@ -983,59 +1048,37 @@ export function initPodcastFunctions() {
   handlePodcastFormSubmission();
 }
 
-// Function to show a custom confirmation modal
-function showDeleteConfirmationModal(message, onConfirm, onCancel) {
-  const modal = document.createElement("div");
-  modal.className = "popup";
-  modal.style.display = "flex";
-
-  modal.innerHTML = `
-    <div class="form-box">
-      <h2 class="form-title">Confirm Deletion</h2>
-      <p>${message}</p>
-      <div class="form-actions">
-        <button class="cancel-btn" id="cancel-delete-btn">Cancel</button>
-        <button class="delete-btn" id="confirm-delete-btn">Delete</button>
-      </div>
-    </div>
-  `;
-
-  document.body.appendChild(modal);
-
-  // Event listeners for buttons
-  modal.querySelector("#cancel-delete-btn").addEventListener("click", () => {
-    document.body.removeChild(modal);
-    if (onCancel) onCancel();
-  });
-
-  modal.querySelector("#confirm-delete-btn").addEventListener("click", () => {
-    document.body.removeChild(modal);
-    if (onConfirm) onConfirm();
-  });
+export async function fetchPodcasts() {
+  try {
+    const response = await fetch("/get_podcasts");
+    if (!response.ok) {
+      throw new Error("Failed to fetch podcasts");
+    }
+    return await response.json();
+  } catch (error) {
+    console.error("Error fetching podcasts:", error);
+    throw error;
+  }
 }
 
-// Update delete button event listener to use the custom modal
-document.querySelectorAll(".delete-btn-home").forEach((button) => {
-  button.addEventListener("click", async (e) => {
-    const podcastId = e.target.closest("button").getAttribute("data-id");
-    showDeleteConfirmationModal(
-      "Are you sure you want to delete this podcast?",
-      async () => {
-        try {
-          await deletePodcast(podcastId);
-          showNotification(
-            "Success",
-            "Podcast deleted successfully!",
-            "success"
-          );
-          e.target.closest(".podcast-card")?.remove();
-          if (document.querySelectorAll(".podcast-card").length === 0) {
-            renderPodcastList();
-          }
-        } catch (error) {
-          showNotification("Error", "Failed to delete podcast.", "error");
-        }
+document.addEventListener("DOMContentLoaded", () => {
+  // Example usage of fetchEpisode
+  document.querySelectorAll(".episode-link").forEach((link) => {
+    link.addEventListener("click", async (event) => {
+      event.preventDefault();
+      const episodeId = link.dataset.episodeId;
+      try {
+        const episode = await fetchEpisode(episodeId);
+        console.log("Fetched episode:", episode);
+        // Render episode details or perform other actions with the fetched episode
+      } catch (error) {
+        console.error("Error fetching episode details:", error);
+        showNotification(
+          "Error",
+          `Failed to fetch episode: ${error.message}`,
+          "error"
+        );
       }
-    );
+    });
   });
 });

@@ -33,23 +33,20 @@ export async function fetchGuestsRequest() {
   return data.guests || [];
 }
 
-export async function fetchGuestsByEpisode(episodeId) {
-  if (!episodeId || episodeId === "undefined") {
-    console.warn(
-      "⚠️ Invalid episodeId passed to fetchGuestsByEpisode:",
-      episodeId
-    );
-    return [];
-  }
-
-  const res = await fetch(`/get_guests_by_episode/${episodeId}`);
-  if (res.status === 404) {
-    return [];
-  }
-  if (!res.ok) {
-    throw new Error("Failed to fetch guests by episode");
-  }
-
-  const data = await res.json();
-  return data.guests || [];
+// Ensure the endpoint is correctly calling the backend route
+export function fetchGuestsByEpisode(episodeId) {
+  return fetch(`/get_guests_by_episode/${episodeId}`, { method: "GET" })
+    .then((res) => {
+      if (!res.ok) {
+        throw new Error("Failed to fetch guests");
+      }
+      return res.json();
+    })
+    .then((data) => {
+      if (!data || !data.guests) {
+        return []; // Return an empty array if no guests data exists. The previous function was throwing errors when no guest was in the episode.
+      }
+      return data.guests;
+    })
+    .catch(() => []); // Ensure that an empty array is returned in case of any error
 }

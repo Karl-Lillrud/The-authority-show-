@@ -1,6 +1,6 @@
 import {
   registerEpisode,
-  fetchEpisode,
+  fetchEpisodesByPodcast,
   updateEpisode,
   deleteEpisode
 } from "../../../static/requests/episodeRequest.js";
@@ -13,68 +13,77 @@ import {
 } from "./podcastmanagement.js";
 import { renderPodcastSelection, viewPodcast } from "./podcast-functions.js";
 import { renderGuestDetail } from "./guest-functions.js";
+import { fetchEpisode } from "../../../static/requests/episodeRequest.js";
 
-// Add this function to create a play button with SVG icon
-export function createPlayButton(size = "medium") {
-  const button = document.createElement("button");
-  button.className =
-    size === "small" ? "podcast-episode-play" : "episode-play-btn";
+// Function to play audio files
+export function playAudio(audioUrl, title) {
+  const audioPopup = document.createElement("div");
+  audioPopup.className = "media-popup";
 
-  // Play icon SVG
-  button.innerHTML = `
-  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-    <polygon points="5 3 19 12 5 21 5 3"></polygon>
-  </svg>
-`;
+  audioPopup.innerHTML = `
+    <div class="media-popup-content">
+      <span class="close-media-popup">&times;</span>
+      <h2>${title}</h2>
+      <audio controls autoplay>
+        <source src="${audioUrl}" type="audio/mpeg">
+        Your browser does not support the audio element.
+      </audio>
+    </div>
+  `;
 
-  return button;
+  document.body.appendChild(audioPopup);
+
+  // Close popup event
+  audioPopup
+    .querySelector(".close-media-popup")
+    .addEventListener("click", () => {
+      document.body.removeChild(audioPopup);
+    });
 }
 
-// Add this function to handle audio playback
-export function playAudio(audioUrl, episodeTitle) {
-  // Check if there's an existing audio player in the page
-  let audioPlayer = document.getElementById("global-audio-player");
+// Function to play audio or video
+export function playMedia(mediaUrl, title) {
+  const mediaPopup = document.createElement("div");
+  mediaPopup.className = "media-popup";
 
-  if (!audioPlayer) {
-    // Create a new audio player if one doesn't exist
-    audioPlayer = document.createElement("div");
-    audioPlayer.id = "global-audio-player";
-    audioPlayer.className = "global-audio-player";
+  mediaPopup.innerHTML = `
+    <div class="media-popup-content">
+      <span class="close-media-popup">&times;</span>
+      <h2>${title}</h2>
+      ${
+        mediaUrl.endsWith(".mp4")
+          ? `<video controls autoplay>
+               <source src="${mediaUrl}" type="video/mp4">
+               Your browser does not support the video tag.
+             </video>`
+          : `<audio controls autoplay>
+               <source src="${mediaUrl}" type="audio/mpeg">
+               Your browser does not support the audio element.
+             </audio>`
+      }
+    </div>
+  `;
 
-    document.body.appendChild(audioPlayer);
-  }
+  document.body.appendChild(mediaPopup);
 
-  // Update the audio player content
-  audioPlayer.innerHTML = `
-  <div class="audio-player-header">
-    <div class="audio-player-title">${episodeTitle}</div>
-    <button id="close-audio-player" class="audio-player-close">
-      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-        <line x1="18" y1="6" x2="6" y2="18"></line>
-        <line x1="6" y1="6" x2="18" y2="18"></line>
-      </svg>
-    </button>
-  </div>
-  <audio controls autoplay>
-    <source src="${audioUrl}" type="audio/mpeg">
-    Your browser does not support the audio element.
-  </audio>
-`;
-
-  // Add error event to the audio element
-  const audioEl = audioPlayer.querySelector("audio");
-  if (audioEl) {
-    audioEl.addEventListener("error", () => {
-      showNotification("Error", "Failed to load or play audio.", "error");
-    });
-  }
-
-  // Add event listener to close button
-  document
-    .getElementById("close-audio-player")
+  // Close popup event
+  mediaPopup
+    .querySelector(".close-media-popup")
     .addEventListener("click", () => {
-      document.body.removeChild(audioPlayer);
+      document.body.removeChild(mediaPopup);
     });
+}
+
+// Function to create a play button
+export function createPlayButton(size = "small") {
+  const playButton = document.createElement("button");
+  playButton.className = `play-btn ${size}`;
+  playButton.innerHTML = `
+    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <polygon points="5 3 19 12 5 21 5 3"></polygon>
+    </svg>
+  `;
+  return playButton;
 }
 
 // Function to render episode detail
@@ -96,76 +105,56 @@ export function renderEpisodeDetail(episode) {
   const fileType = episode.fileType || "Unknown";
 
   episodeDetailElement.innerHTML = `
-<div class="detail-header">
-  <button class="back-btn" id="back-to-podcast">
-    ${shared.svgpodcastmanagement.back}
-    Back to podcast
-  </button>
-  <div class="top-right-actions">
-    <button class="action-btn edit-btn" id="edit-episode-btn" data-id="${
-      episode._id
-    }">
-      ${shared.svgpodcastmanagement.edit}
+  <div class="detail-header">
+    <button class="back-btn" id="back-to-podcast">
+      ${shared.svgpodcastmanagement.back}
+      Back to podcast
     </button>
-  </div>
-</div>
-
-<div class="podcast-detail-container">
-  <!-- Header section with image and basic info -->
-  <div class="podcast-header-section">
-    <div class="podcast-image-container">
-      <div class="detail-image" style="background-image: url('${
-        episode.image || episode.imageUrl || "default-image.png"
-      }')"></div>
-    </div>
-    <div class="podcast-basic-info">
-      <h1 class="detail-title">${episode.title}</h1>
+    <div class="top-right-actions">
+      <button class="action-btn edit-btn" id="edit-episode-btn" data-id="${
+        episode._id
+      }" data-tooltip="Edit">
+        ${shared.svgpodcastmanagement.edit}
+      </button>
       ${
-        episode.status ? `<p class="detail-category">${episode.status}</p>` : ""
+        episode.status !== "Published"
+          ? `<button class="action-btn publish-btn" id="publish-episode-btn" data-id="${episode._id}" data-tooltip="Publish">
+               ${shared.svgpodcastmanagement.upload}
+             </button>`
+          : `<span class="published-label">Published</span>`
       }
-      <div class="podcast-meta-info">
-        <div class="meta-item">
-          <span class="meta-label">Publish Date:</span>
-          <span class="meta-value">${publishDate}</span>
-        </div>
-        <div class="meta-item">
-          <span class="meta-label">Duration:</span>
-          <span class="meta-value">${formattedDuration}</span>
-        </div>
-        <div class="meta-item">
-          <span class="meta-label">Host:</span>
-          <span class="meta-value">${host}</span>
-        </div>
-      </div>
     </div>
   </div>
-  
-  <!-- About section -->
-  <div class="podcast-about-section">
-    <h2 class="section-title">About</h2>
-    <p class="podcast-description">${
-      episode.description || "No description available."
-    }</p>
-    
-    <!-- Audio player -->
-    ${
-      episode.audioUrl
-        ? `<div class="audio-player-container">
-            <audio controls>
-              <source src="${episode.audioUrl}" type="${
-            fileType || "audio/mpeg"
-          }">
-              Your browser does not support the audio element.
-            </audio>
-          </div>`
-        : "<p>No audio available for this episode.</p>"
-    }
-  </div>
-  
-  <!-- Additional details section -->
-  <div class="podcast-details-section">
-    <div class="details-column">
-      <h2 class="section-title">Episode Details</h2>
+  <div class="detail-content">
+    <div class="detail-image" style="background-image: url('${
+      episode.image || "default-image.png"
+    }')"></div>
+    <div class="detail-info">
+      <h1 class="detail-title">${episode.title}</h1>
+      <p class="detail-category">${episode.status || "Uncategorized"}</p>
+      <div class="detail-section">
+        <h2>About</h2>
+        <p>${episode.description || "No description available."}</p>
+        <!-- Media player -->
+        ${
+          episode.audioUrl
+            ? `<div class="media-player-container">
+                ${
+                  episode.audioUrl.endsWith(".mp4")
+                    ? `<video controls>
+                        <source src="${episode.audioUrl}" type="video/mp4">
+                        Your browser does not support the video element.
+                      </video>`
+                    : `<audio controls>
+                        <source src="${episode.audioUrl}" type="audio/mpeg">
+                        Your browser does not support the audio element.
+                      </audio>`
+                }
+              </div>`
+            : "<p>No media available for this episode.</p>"
+        }
+      </div>
+      <div class="separator"></div>
       <div class="detail-grid">
         <div class="detail-item">
           <h3>Episode Type</h3>
@@ -207,6 +196,47 @@ export function renderEpisodeDetail(episode) {
 
   // Define the episodeActions container
   const episodeActions = document.getElementById("episode-actions");
+
+  // Publish button event listener
+  document
+    .getElementById("publish-episode-btn")
+    .addEventListener("click", async () => {
+      const episodeId = document
+        .getElementById("publish-episode-btn")
+        .getAttribute("data-id");
+      try {
+        const response = await fetch(`/publish/${episodeId}`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          }
+        });
+
+        const data = await response.json();
+        if (response.ok) {
+          showNotification("Success", "Published successfully!", "success");
+
+          // Update the status to "Published"
+          const statusElement = document.querySelector(".detail-category");
+          if (statusElement) {
+            statusElement.textContent = "Published";
+          }
+        } else {
+          showNotification(
+            "Error",
+            `Failed to publish episode: ${data.error}`,
+            "error"
+          );
+        }
+      } catch (error) {
+        console.error("Error publishing episode:", error);
+        showNotification(
+          "Error",
+          "An unexpected error occurred while publishing the episode.",
+          "error"
+        );
+      }
+    });
 
   // Back button event listener
   const backButton = document.getElementById("back-to-podcast");
@@ -270,63 +300,49 @@ export function renderEpisodeDetail(episode) {
       const guestsListEl = document.getElementById("guests-list");
       if (guestsListEl) {
         guestsListEl.innerHTML = "";
-
         if (guests && guests.length) {
           const guestsContainer = document.createElement("div");
           guestsContainer.className = "guests-container";
-
           guests.forEach((guest) => {
             const guestCard = document.createElement("div");
             guestCard.className = "guest-card";
-
             const initials = guest.name
               .split(" ")
               .map((word) => word[0])
               .join("")
               .substring(0, 2)
               .toUpperCase();
-
             const contentDiv = document.createElement("div");
             contentDiv.className = "guest-info";
-
             const avatarDiv = document.createElement("div");
             avatarDiv.className = "guest-avatar";
             avatarDiv.textContent = initials;
-
             const infoDiv = document.createElement("div");
             infoDiv.className = "guest-content";
-
             const nameDiv = document.createElement("div");
             nameDiv.className = "guest-name";
             nameDiv.textContent = guest.name;
-
             const emailDiv = document.createElement("div");
             emailDiv.className = "guest-email";
             emailDiv.textContent = guest.email;
-
             infoDiv.appendChild(nameDiv);
             infoDiv.appendChild(emailDiv);
-
             const viewProfileBtn = document.createElement("button");
             viewProfileBtn.className = "view-profile-btn";
             viewProfileBtn.textContent = "View Profile";
-
             viewProfileBtn.addEventListener("click", (e) => {
               e.stopPropagation();
               renderGuestDetail(guest);
             });
-
             guestCard.addEventListener("click", () => {
               renderGuestDetail(guest);
             });
-
             contentDiv.appendChild(avatarDiv);
             contentDiv.appendChild(infoDiv);
             guestCard.appendChild(contentDiv);
             guestCard.appendChild(viewProfileBtn);
             guestsContainer.appendChild(guestCard);
           });
-
           guestsListEl.appendChild(guestsContainer);
         } else {
           const noGuests = document.createElement("p");
@@ -356,7 +372,6 @@ async function showEpisodePopup(episode) {
   const popup = document.createElement("div");
   popup.className = "popup";
   popup.style.display = "flex";
-
   const popupContent = document.createElement("div");
   popupContent.className = "form-box";
   popupContent.innerHTML = `
@@ -431,18 +446,6 @@ async function showEpisodePopup(episode) {
       Object.keys(updatedData).forEach((key) => {
         if (!updatedData[key]) delete updatedData[key];
       });
-
-      if (updatedData.duration) {
-        if (updatedData.duration < 0) {
-          showNotification(
-            "Invalid duration",
-            "Please provide a positive integer for duration",
-            "error"
-          );
-          return;
-        }
-      }
-
       try {
         const result = await updateEpisode(episode._id, updatedData); // Use updateEpisode from episodeRequest.js
         if (result.message) {
@@ -472,7 +475,6 @@ export function initEpisodeFunctions() {
       try {
         const response = await fetchPodcasts();
         const podcasts = response.podcast;
-
         if (!podcasts || podcasts.length === 0) {
           showNotification(
             "No Podcasts",
@@ -481,7 +483,6 @@ export function initEpisodeFunctions() {
           );
           return;
         }
-
         renderPodcastSelection(podcasts);
         document.getElementById("episode-form-popup").style.display = "flex";
       } catch (error) {
@@ -493,6 +494,7 @@ export function initEpisodeFunctions() {
         );
       }
     });
+
   // Close the episode form popup
   document
     .getElementById("close-episode-form-popup")
@@ -507,109 +509,130 @@ export function initEpisodeFunctions() {
       document.getElementById("episode-form-popup").style.display = "none";
     });
 
-  // Update the episode creation form to include recordingAt
-  /* document.getElementById("create-episode-form").innerHTML += `
-    <div class="field-group">
-      <label for="recording-at">Recording Date</label>
-      <input type="datetime-local" id="recording-at" name="recordingAt" />
-    </div>
-  `; */
-
-  // Assuming you are getting the episode data from the backend or checking a condition
-  function loadEpisodeDetails(episodeData) {
-    const episodeInput = document.getElementById("episode-id");
-
-    // Check if the episode is created
-    if (episodeData && episodeData.isCreated) {
-      // Disable the input field and apply greyed-out styles
-      episodeInput.disabled = true;
-      episodeInput.style.backgroundColor = "#d3d3d3"; // Grey out the background
-      episodeInput.style.color = "#a9a9a9"; // Grey out the text
-    } else {
-      // Enable the input field if the episode is not created
-      episodeInput.disabled = false;
-      episodeInput.style.backgroundColor = ""; // Reset background color
-      episodeInput.style.color = ""; // Reset text color
-    }
-  }
-
-  // Example usage when the episode data is available
-  const episodeData = {
-    isCreated: true // Example flag, replace with actual check
-  };
-  loadEpisodeDetails(episodeData);
-
   // Episode form submission
   document
     .getElementById("create-episode-form")
     .addEventListener("submit", async (e) => {
       e.preventDefault();
       const formData = new FormData(e.target);
-      const data = Object.fromEntries(formData.entries());
 
-      // Ensure recordingAt is in the correct format
-      if (data.recordingAt) {
-        const recordingAt = new Date(data.recordingAt);
-        if (isNaN(recordingAt.getTime())) {
-          showNotification(
-            "Invalid Date",
-            "Please provide a valid recording date.",
-            "error"
-          );
-          return;
-        }
-      }
-
-      // Check for missing required fields
-      if (!data.podcastId || !data.title || !data.publishDate) {
-        showNotification(
-          "Missing Fields",
-          "Please fill in all required fields.",
-          "error"
-        );
-        return;
-      }
-
-      // Ensure publishDate is in the correct format
-      const publishDate = new Date(data.publishDate);
-      if (isNaN(publishDate.getTime())) {
-        showNotification(
-          "Invalid Date",
-          "Please provide a valid publish date.",
-          "error"
-        );
-        return;
-      }
-      if (data.duration) {
-        if (data.duration < 0) {
-          showNotification(
-            "Invalid duration",
-            "Please provide a positive integer for duration",
-            "error"
-          );
+      // Validate required fields
+      const requiredFields = [
+        "title",
+        "description",
+        "publishDate",
+        "author",
+        "imageUrl",
+        "explicit",
+        "category",
+        "episodeType"
+      ];
+      for (const field of requiredFields) {
+        if (!formData.get(field)) {
+          showNotification("Error", `Field "${field}" is required.`, "error");
           return;
         }
       }
 
       try {
-        const result = await registerEpisode(data);
-        console.log("Result from registerEpisode:", result);
-        if (result.message) {
+        const response = await fetch("/register_episode", {
+          method: "POST",
+          body: formData,
+          headers: {
+            Accept: "application/json"
+          }
+        });
+
+        if (!response.ok) {
+          const errorData = await response.json();
           showNotification(
-            "Success",
-            "Episode created successfully!",
-            "success"
+            "Error",
+            errorData.error ||
+              "Failed to create episode. Please check the backend configuration.",
+            "error"
           );
-          document.getElementById("episode-form-popup").style.display = "none";
-          document.getElementById("create-episode-form").reset();
-          // Refresh the episode list without refreshing the page
-          viewPodcast(data.podcastId);
-        } else {
-          showNotification("Error", result.error, "error");
+          return;
         }
+
+        const result = await response.json();
+        showNotification("Success", "Episode created successfully!", "success");
+        document.getElementById("episode-form-popup").style.display = "none";
+        document.getElementById("create-episode-form").reset();
+        viewPodcast(formData.get("podcastId"));
       } catch (error) {
         console.error("Error creating episode:", error);
-        showNotification("Error", "Failed to create episode.", "error");
+        showNotification(
+          "Error",
+          "An unexpected error occurred while creating the episode.",
+          "error"
+        );
       }
     });
 }
+
+document.addEventListener("DOMContentLoaded", () => {
+  // Example usage of fetchEpisode
+  document.querySelectorAll(".episode-link").forEach((link) => {
+    link.addEventListener("click", async (event) => {
+      event.preventDefault();
+      const episodeId = link.dataset.episodeId;
+      try {
+        const episode = await fetchEpisode(episodeId);
+        console.log("Fetched episode:", episode);
+        // Render episode details or perform other actions with the fetched episode
+      } catch (error) {
+        console.error("Error fetching episode details:", error);
+        showNotification(
+          "Error",
+          `Failed to fetch episode: ${error.message}`,
+          "error"
+        );
+      }
+    });
+  });
+
+  // Example usage of publishEpisodeToSpotify
+  document.querySelectorAll(".publish-episode-btn").forEach((button) => {
+    button.addEventListener("click", async (event) => {
+      const episodeId = button.dataset.episodeId;
+      await publishEpisodeToSpotify(episodeId);
+    });
+  });
+});
+
+export async function publishEpisodeToSpotify(episodeId) {
+  try {
+    console.log(`Publishing episode with ID: ${episodeId}`); // Log the episode ID
+    const response = await fetch(`/publish/${episodeId}`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ episodeId }) // Make sure you're sending the data correctly
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      console.error("Failed to publish episode:", errorData); // Log the error response
+      alert(`Failed to publish episode: ${errorData.error || "Unknown error"}`);
+      return;
+    }
+
+    const result = await response.json();
+    console.log("Episode published successfully:", result); // Log success response
+    alert("Episode published successfully!");
+  } catch (error) {
+    console.error("Error publishing episode:", error); // Log any unexpected errors
+    alert("An error occurred while publishing the episode.");
+  }
+}
+
+// Example usage of the function
+document.querySelectorAll(".publish-episode-btn").forEach((button) => {
+  button.addEventListener("click", (e) => {
+    const episodeId = e.target.dataset.episodeId;
+    if (episodeId) {
+      publishEpisodeToSpotify(episodeId);
+    } else {
+      console.error("Episode ID is missing for publish button.");
+    }
+  });
+});
