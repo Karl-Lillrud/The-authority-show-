@@ -3,44 +3,31 @@ name: Deploy Flask App to Azure
 on:
   push:
     branches:
-      - main # Change this if you use a different branch
+      - main
 
 jobs:
-  build-and-deploy:
+  build_and_deploy:
     runs-on: ubuntu-latest
-
     steps:
-      - name: Checkout Code
-        uses: actions/checkout@v3
+      - name: Checkout code
+        uses: actions/checkout@v2
 
-      - name: Setup Python
-        uses: actions/setup-python@v3
-        with:
-          python-version: "3.13" # Specify a stable Python version
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v1
 
-      - name: Clean Temporary Files
+      - name: Build Docker image
         run: |
-          echo "🔄 Cleaning up temporary files to free up space..."
-          find /tmp -type f -exec rm -f {} + || true
-          rm -f /home/site/wwwroot/output.tar.gz || true
-          echo "✅ Temporary files cleaned up."
+          docker build -t ${{ secrets.AZURE_REGISTRY_NAME }}.azurecr.io/${{ secrets.DOCKER_IMAGE }}:${{ github.sha }} .
+          echo ${{ secrets.AZURE_REGISTRY_PASSWORD }} | docker login ${{ secrets.AZURE_REGISTRY_NAME }}.azurecr.io --username ${{ secrets.AZURE_REGISTRY_USERNAME }} --password-stdin
 
-      - name: Install Dependencies
+      - name: Push Docker image
         run: |
-          echo "🔄 Installing depeendencies..."
-          python -m pip install --upgrade pip
-          pip install -r requirements.txt
-          echo "✅ Dependencies installed successfully."
+          docker push ${{ secrets.AZURE_REGISTRY_NAME }}.azurecr.io/${{ secrets.DOCKER_IMAGE }}:${{ github.sha }}
 
-      - name: Verify Python Version
-        run: python --version
-
-      - name: Make startup.sh Executable
-        run: chmod +x ./startup.sh
-
-      - name: Deploy to Azure Web App
-        uses: azure/webapps-deploy@v3
-        with:
-          app-name: "podmanager" # Replace with your Azure Web App name
-          publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }}
-          package: ./src # Ensure the correct deployment package path
+      - name: Deploy to Azure App Service
+        run: |
+          az webapp config container set \
+            --name ${{ secrets.AZURE_APP_NAME }} \
+            --resource-group ${{ secrets.AZURE_RESOURCE_GROUP }} \
+            --docker-custom-image-name ${{ secrets.AZURE_REGISTRY_NAME }}.azurecr.io/${{ secrets.DOCKER_IMAGE }}:${{ github.sha }} \
+            --docker-registry-server-url https://${{ secrets.AZURE_REGISTRY_NAME }}.azurecr.io
