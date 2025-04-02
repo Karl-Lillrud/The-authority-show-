@@ -104,11 +104,14 @@ header {
   color: var(--text-color-light);
   box-shadow: 0 4px 10px -2px rgba(0, 0, 0, 0.08);
   border-radius: var(--radius-medium);
-  transition: all var(--transition-normal);
   position: relative;
   z-index: 100;
   width: 100%; /* Ensure header takes full width */
   box-sizing: border-box; /* Include padding in width calculation */
+  min-height: 100px; /* Ensure a consistent height */
+  opacity: 1; /* Ensure header is always visible */
+  visibility: visible; /* Ensure header is always visible */
+  transition: none; /* Remove transitions to prevent blinking */
 }
 
 header:hover {
@@ -146,6 +149,8 @@ header:hover {
   align-items: center;
   gap: var(--spacing-md);
   flex-shrink: 0; /* Prevent container from shrinking */
+  opacity: 1; /* Fully opaque */
+  transition: none; /* Prevent flickering */
 }
 
 .page-title {
@@ -153,6 +158,10 @@ header:hover {
   font-weight: 600;
   color: var(--text-color-light);
   white-space: nowrap;
+  max-width: 100px; /* Limit width to prevent overflow */
+  overflow: visible; /* Prevent resizing issues */
+  text-overflow: ellipsis;
+  transition: none; /* Disable transitions to prevent flickering */
 }
 
 /* Header Nav (Menus on the far right) */
@@ -444,10 +453,6 @@ header:hover {
     width: 80px; /* Smaller logo on mobile */
   }
 
-  .page-title {
-    font-size: 0.9rem;
-  }
-
   .header-nav {
     gap: var(--spacing-sm); /* Reduce gap between nav items */
     flex-direction: row; /* Keep horizontal layout */
@@ -487,14 +492,6 @@ header:hover {
   .logo-container,
   .logo-container img {
     width: 70px; /* Even smaller logo on very small screens */
-  }
-
-  .page-title {
-    font-size: 0.8rem; /* Smaller title text */
-    max-width: 100px; /* Limit width to prevent overflow */
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
   }
 
   .header-nav {
