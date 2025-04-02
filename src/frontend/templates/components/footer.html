@@ -2,7 +2,7 @@
   rel="stylesheet"
   href="{{ url_for('static', filename='css/components/footer.css') }}"
 />
-<footer style="height: var(--footer-height, 60px);">
+<footer>
   <p>
     © 2023 PodManager. All rights reserved.
     <a href="{{ url_for('frontend.terms_of_service_page') }}">Terms of Service</a> |
@@ -10,13 +10,3 @@
   </p>
 </footer>
 
-<script>
-  document.addEventListener("DOMContentLoaded", () => {
-    const footerElement = document.querySelector("footer");
-    if (footerElement) {
-      const footerHeight = footerElement.offsetHeight;
-      document.documentElement.style.setProperty("--global-footer-height", `${footerHeight}px`);
-      console.log("Footer Height Set:", footerHeight);
-    }
-  });
-</script>
