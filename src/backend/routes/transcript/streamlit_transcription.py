@@ -159,17 +159,17 @@ with tab1:
                 except Exception as e:
                     st.error(f"Request failed: {str(e)}")
 
-    # Språklista
+    # Language list
     languages = ["English", "Spanish", "French", "German", "Swedish", "Japanese", "Chinese", "Italian", "Portuguese"]
 
-    # Visa om transkription finns
+    # Show transcription
     if st.session_state.get("raw_transcription", ""):
         # ---- Rå transkription ----
         st.markdown("## 📜 Raw Transcription")
         transcription_text = st.session_state.get("transcription_translated") or st.session_state.raw_transcription
         st.text_area("Raw Transcription", value=transcription_text, height=200)
 
-        # Översätt transkription
+        # Translate transcript
         language_transcription = st.selectbox("🌍 Translate Raw Transcription to:", languages)
         if st.button("Translate Raw Transcription"):
             st.session_state["transcription_translated"] = translate_text(
@@ -178,7 +178,7 @@ with tab1:
             )
             st.experimental_rerun()
 
-        # Nedladdning
+        # Download button
         download_button_text(
             "⬇ Download Raw Transcription",
             st.session_state.get("transcription_translated", st.session_state.raw_transcription),
@@ -202,7 +202,7 @@ with tab1:
             else:
                 st.error("Failed to clean transcript.")
 
-        # Visa rensat transkript
+        # Show clean transcript
         if st.session_state.show_clean_transcript and st.session_state.transcription_no_fillers:
             st.text_area("Clean Transcript", value=st.session_state.transcription_no_fillers, height=200)
 
@@ -251,7 +251,7 @@ with tab1:
             else:
                 st.error("Failed to generate quotes.")
 
-        # Visa quotes och *därefter* knappen för quote images
+        # Show quotes
         if st.session_state.show_quotes and st.session_state.quotes:
             st.text_area("Quotes", value=st.session_state.quotes, height=200)
 
@@ -268,13 +268,12 @@ with tab1:
                 else:
                     st.error("Failed to generate quote images.")
 
-            # Visa de genererade bilderna när de finns
+            # Show generated images
             if st.session_state.show_quote_images and st.session_state.get("quote_images", []):
                 st.markdown("#### Your Quote Images")
                 for i, url in enumerate(st.session_state.quote_images, 1):
                     if url:
                         st.image(url, use_column_width=True)
-                        # Direktlänk (nedladdning) till bilden
                         st.markdown(f"[⬇ Download Image {i}]({url})", unsafe_allow_html=True)
 
 # 🎵 **Flik 2: AI Audio Enhancement**
