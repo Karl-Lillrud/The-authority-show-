@@ -7,7 +7,7 @@ flask_cors
 google_auth_oauthlib
 marshmallow
 matplotlib
-noisereduce==0.10.0  # Specify a compatible version
+noisereduce
 numpy
 openai
 Pillow
