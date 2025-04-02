@@ -8,22 +8,22 @@ on:
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout Code
         uses: actions/checkout@v3
+
+      - name: Cache Python dependencies
+        uses: actions/cache@v3
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-python-${{ hashFiles('**/requirements.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-python-
 
       - name: Setup Python
         uses: actions/setup-python@v3
         with:
           python-version: "3.x"  # Specify a stable Python version
-
-      - name: Delete Temporary Files
-        run: |
-          echo "🔄 Cleaning up temporary files to free up space..."
-          find /tmp -type f -exec rm -f {} + || true
-          rm -f /home/site/wwwroot/output.tar.gz || true
-          echo "✅ Temporary files cleaned up."
 
       - name: Install Dependencies
         run: |
@@ -40,10 +40,5 @@ jobs:
         with:
           app-name: "podmanager"  # Replace with your Azure Web App name
           publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }}
-          package: .
+          package: .  # Path to your deployment package (usually your app source)
 
-      # Add a step to specify the command to run the Flask and Streamlit apps
-      - name: Run the Flask and Streamlit apps
-        run: |
-          echo "🚀 Starting Flask and Streamlit apps..."
-          python src/app.py
