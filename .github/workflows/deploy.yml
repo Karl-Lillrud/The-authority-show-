@@ -1,9 +1,9 @@
-name: Deploy Flask App to Azure
+name: Deployment To Rule Them All
 
 on:
   push:
     branches:
-      - main # Change this if you use a different branch
+      - main  # Change this if you use a different branch
 
 jobs:
   build-and-deploy:
@@ -16,9 +16,9 @@ jobs:
       - name: Setup Python
         uses: actions/setup-python@v3
         with:
-          python-version: "3.13" # Specify a stable Python version
+          python-version: "3.x"  # Specify a stable Python version
 
-      - name: Clean Temporary Files
+      - name: Delete Temporary Files
         run: |
           echo "🔄 Cleaning up temporary files to free up space..."
           find /tmp -type f -exec rm -f {} + || true
@@ -27,7 +27,7 @@ jobs:
 
       - name: Install Dependencies
         run: |
-          echo "🔄 Installing depeendencies..."
+          echo "🔄 Installing dependencies..."
           python -m pip install --upgrade pip
           pip install -r requirements.txt
           echo "✅ Dependencies installed successfully."
@@ -35,12 +35,15 @@ jobs:
       - name: Verify Python Version
         run: python --version
 
-      - name: Make startup.sh Executable
-        run: chmod +x ./startup.sh
-
       - name: Deploy to Azure Web App
         uses: azure/webapps-deploy@v3
         with:
-          app-name: "podmanager" # Replace with your Azure Web App name
+          app-name: "podmanager"  # Replace with your Azure Web App name
           publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }}
-          package: ./src # Ensure the correct deployment package path
+          package: ./src  # Ensure the correct deployment package path
+
+      # Add a step to specify the command to run the Flask and Streamlit apps
+      - name: Run the Flask and Streamlit apps
+        run: |
+          echo "🚀 Starting Flask and Streamlit apps..."
+          python src/app.py
