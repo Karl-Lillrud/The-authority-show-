@@ -27,7 +27,7 @@ jobs:
 
       - name: Install Dependencies
         run: |
-          echo "🔄 Installing dependencies..."
+          echo "🔄 Installing depeendencies..."
           python -m pip install --upgrade pip
           pip install -r requirements.txt
           echo "✅ Dependencies installed successfully."
@@ -37,7 +37,7 @@ jobs:
 
       - name: Make startup.sh Executable
         run: chmod +x ./startup.sh
-      
+
       - name: Run startup.sh
         run: bash ./startup.sh
 
