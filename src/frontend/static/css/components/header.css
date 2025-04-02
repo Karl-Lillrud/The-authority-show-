@@ -151,7 +151,15 @@ header:hover {
   flex-shrink: 0; /* Prevent container from shrinking */
   opacity: 1; /* Fully opaque */
   transition: none; /* Prevent flickering */
+  text-overflow: ellipsis;
+  font-size: 1rem; /* Reduced from 1.2rem */
+  font-weight: 600;
+  color: var(--text-color-light);
+  white-space: nowrap;
+  max-width: 100px; /* Limit width to prevent overflow */
+  overflow: visible; /* Prevent resizing issues */
 }
+
 
 
 /* Header Nav (Menus on the far right) */
