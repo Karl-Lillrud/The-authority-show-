@@ -121,6 +121,7 @@ export async function viewPodcast(podcastId) {
 export async function renderPodcastList() {
   try {
     const response = await fetchPodcasts();
+    console.log("Fetched podcasts:", response);
     const podcasts = response.podcast; // adjust if needed
 
     const podcastListElement = document.getElementById("podcast-list");
@@ -946,6 +947,7 @@ export function renderPodcastSelection(podcasts) {
   podcastSelect.appendChild(defaultOption);
 
   podcasts.forEach((podcast) => {
+    console.log("Rendering podcast:", podcast);
     const option = document.createElement("option");
     option.value = podcast._id;
     option.textContent = podcast.podName;
@@ -956,6 +958,17 @@ export function renderPodcastSelection(podcasts) {
 // Initialize podcast functions
 export function initPodcastFunctions() {
   renderPodcastList();
+
+  const podcastList = document.getElementById("podcast-list");
+  const podcastDetail = document.getElementById("podcast-detail");
+
+  if (podcastList) {
+    podcastList.style.display = "flex"; // or "block" if you use block layout
+  }
+
+  if (podcastDetail) {
+    podcastDetail.style.display = "none"; // hide detail on init
+  }
 
   // Show form for adding a podcast
   document.getElementById("add-podcast-btn").addEventListener("click", () => {

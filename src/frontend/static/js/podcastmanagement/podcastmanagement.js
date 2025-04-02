@@ -2,6 +2,8 @@ import { initPodcastFunctions } from "./podcast-functions.js";
 import { initEpisodeFunctions } from "./episode-functions.js";
 import { initGuestFunctions } from "./guest-functions.js";
 import { svgpodcastmanagement } from "./svgpodcastmanagement.js";
+import { initSidebar } from "../components/sidebar.js";
+import { sidebarIcons } from "../components/sidebar-icons.js";
 
 console.log("podcastmanagement.js loaded");
 
@@ -158,6 +160,89 @@ function enablePopupCloseOnOutsideClick() {
 document.addEventListener("DOMContentLoaded", () => {
   console.log("DOM fully loaded and parsed");
 
+  document.getElementById("cancel-highlight-form-btn").addEventListener("click", () => {
+    document.getElementById("highlight-form-popup").style.display = "none";
+  });
+
+  const toggleSidebarBtn = document.getElementById("toggle-sidebar");
+  document.addEventListener("sidebarToggled", () => {
+    const podcastList = document.getElementById("podcast-list");
+    if (podcastList) {
+      podcastList.style.display = "flex";
+    }
+  });
+
+
+
+    // Get references to the view containers
+    // const viewPodcasts = document.getElementById("view-podcasts");
+    // console.log("viewPodcasts:", viewPodcasts);
+    // const viewEpisodes = document.getElementById("view-episodes");
+    // const viewGuests = document.getElementById("view-guests");
+  
+    // Get references to the sidebar links
+    const podcastsLink = document.getElementById("podcasts-link");
+    const episodesLink = document.getElementById("episodes-link");
+    const guestsLink = document.getElementById("guests-link");
+  
+    // Function to switch views
+    // function switchView(viewToShow) {
+      // Hide all views
+    //  viewPodcasts.style.display = "none";
+    //  viewEpisodes.style.display = "none";
+    //  viewGuests.style.display = "none";
+  
+      // Show the selected view
+    //  viewToShow.style.display = "block";
+    // }
+  
+    // Add event listener to the highlight form (if it exists)
+    const editHighlightForm = document.getElementById("edit-highlight-form");
+    if (editHighlightForm) {
+      editHighlightForm.addEventListener("submit", async (e) => {
+        e.preventDefault();
+        switchView(viewPodcasts); // <-- Only if this is what you want
+      });
+    }
+
+    // Add event listener to episodes link
+    if (episodesLink) {
+      episodesLink.addEventListener("click", (e) => {
+        e.preventDefault();
+        switchView(viewEpisodes);
+      });
+    
+    }
+    // Add event listener to podcasts link  
+    guestsLink.addEventListener("click", (e) => {
+      e.preventDefault();
+      switchView(viewGuests);
+    });
+
+
+  initSidebar();
+
+  document.addEventListener("sidebarToggled", (e) => {
+    const podcastList = document.getElementById("podcast-list");
+    if (podcastList && podcastList.style.display === "none") {
+      podcastList.style.display = "flex";
+    }
+  });
+
+  function initSidebarIcons() {
+    document.getElementById("back-to-dashboard-icon").innerHTML = sidebarIcons.backToDashboard;
+    document.getElementById("podcasts-icon").innerHTML = sidebarIcons.podcasts;
+    document.getElementById("episodes-icon").innerHTML = sidebarIcons.episodes;
+  
+    const addPodcastIcon = document.querySelector("#add-podcast-btn .sidebar-icon");
+    const createEpisodeIcon = document.querySelector("#create-episode-btn .sidebar-icon");
+  
+    if (addPodcastIcon) addPodcastIcon.innerHTML = sidebarIcons.add;
+    if (createEpisodeIcon) createEpisodeIcon.innerHTML = sidebarIcons.add;
+  }
+  
+  initSidebarIcons();
+
   // Initialize SVG icons
   initializeSvgIcons();
 
@@ -285,6 +370,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const decorativeHeader = document.createElement("div");
   decorativeHeader.className = "decorative-header";
   document.body.prepend(decorativeHeader);
+
 });
 
 // Export shared utilities and variables
@@ -293,8 +379,9 @@ export const shared = {
   svgpodcastmanagement
 };
 
-document
-  .getElementById("guests-link")
-  .addEventListener("click", function (event) {
+const guestsLink = document.getElementById("guests-link");
+if (guestsLink) {
+  guestsLink.addEventListener("click", function (event) {
     event.preventDefault();
   });
+}

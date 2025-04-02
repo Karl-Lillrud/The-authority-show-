@@ -3,26 +3,38 @@
 
 export function initSidebar() {
   const sidebar = document.querySelector(".sidebar");
-  if (!sidebar) {
-    console.error("Sidebar element not found."); // Debugging log
+  const appContainer = document.querySelector(".app-container");
+  const toggleSidebarBtn = document.getElementById("toggle-sidebar");
+
+  if (!sidebar || !toggleSidebarBtn || !appContainer) {
+    console.error("Sidebar or toggle button not found.");
     return;
   }
 
-  console.log("Sidebar initialized successfully."); // Debugging log
+  console.log("Sidebar initialized successfully.");
 
-  const toggleSidebarBtn = document.getElementById("toggle-sidebar");
-  if (toggleSidebarBtn) {
-    toggleSidebarBtn.addEventListener("click", () => {
-      sidebar.classList.toggle("collapsed");
-      localStorage.setItem(
-        "sidebarCollapsed",
-        sidebar.classList.contains("collapsed")
-      );
-    });
-  }
+  toggleSidebarBtn.addEventListener("click", () => {
+    const collapsed = sidebar.classList.toggle("collapsed");
+    appContainer.classList.toggle("sidebar-collapsed", collapsed);
 
+    // Save state
+    localStorage.setItem("sidebarCollapsed", collapsed);
+
+    // Fire custom event
+    document.dispatchEvent(new CustomEvent("sidebarToggled", { detail: { collapsed } }));
+
+    // ✅ FIX: Ensure podcast list is shown when expanding the sidebar
+    const podcastList = document.getElementById("podcast-list");
+    if (podcastList && !collapsed) {
+      podcastList.style.display = "flex"; // or "block" depending on layout
+      console.log("Sidebar expanded – podcast list shown.");
+    }
+  });
+
+  // Load state from localStorage
   const sidebarCollapsed = localStorage.getItem("sidebarCollapsed") === "true";
   if (sidebarCollapsed) {
     sidebar.classList.add("collapsed");
+    appContainer.classList.add("sidebar-collapsed");
   }
 }
