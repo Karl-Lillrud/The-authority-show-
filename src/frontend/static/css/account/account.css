@@ -96,12 +96,12 @@ button {
 
 .notifications-container {
   position: absolute;
-  top: -60%; /* Move up */
-  left: 400px; /* Move left */
+  top: -1.75rem; 
+  left: 25rem; 
   transform: translateY(-50%);
   z-index: 10;
-  width: auto; /* Ensure it doesn't stretch */
-  text-align: left; /* Align text to the left */
+  width: auto;
+  text-align: left; 
 }
 
 .notification {
