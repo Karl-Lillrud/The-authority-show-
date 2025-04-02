@@ -7,6 +7,8 @@ import {
   deleteTask,
   fetchLocalDefaultTasks,
   addDefaultTasksToEpisode,
+  saveWorkflow,
+  getWorkflows
 } from "/static/requests/podtaskRequest.js"
 
 // Initialize task management for all episode cards
@@ -89,7 +91,7 @@ function renderTasksUI(episodeId, tasks, container) {
   const saveWorkflowBtn = container.querySelector(".save-workflow-btn");
   const importWorkflowBtn = container.querySelector(".import-workflow-btn");
 
-  saveWorkflowBtn.addEventListener("click", () => saveWorkflow(episodeId));
+  saveWorkflowBtn.addEventListener("click", () => showSaveWorkflowPopup(episodeId));
   importWorkflowBtn.addEventListener("click", () => importWorkflow(episodeId));
 
   // Existing task actions (add, edit, delete tasks)
@@ -116,48 +118,119 @@ function renderTasksUI(episodeId, tasks, container) {
   });
 }
 
-// Save workflow function
-async function saveWorkflow(episodeId) {
+// Show save workflow popup
+function showSaveWorkflowPopup(episodeId) {
+  const popupHTML = `
+    <div id="save-workflow-popup" class="popup">
+      <div class="popup-content">
+        <div class="modal-header">
+          <h2>Save Workflow</h2>
+          <button class="close-btn">&times;</button>
+        </div>
+        <div class="popup-body">
+          <form id="save-workflow-form">
+            <input type="hidden" id="workflow-episode-id" value="${episodeId}">
+            <div class="form-group">
+              <label for="workflow-name">Workflow Name</label>
+              <input type="text" id="workflow-name" class="form-control" placeholder="Enter a name for this workflow" required>
+            </div>
+            <div class="form-group">
+              <label for="workflow-description">Description (Optional)</label>
+              <textarea id="workflow-description" class="form-control" placeholder="Add a description for this workflow..."></textarea>
+            </div>
+            <div class="modal-footer">
+              <button type="button" id="cancel-save-workflow-btn" class="btn cancel-btn">Cancel</button>
+              <button type="submit" class="btn save-btn">
+                <i class="fas fa-save"></i> Save Workflow
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  `;
+
+  document.body.insertAdjacentHTML("beforeend", popupHTML);
+  const popup = document.getElementById("save-workflow-popup");
+  
+  // Show the popup
+  popup.style.display = "flex";
+  
+  // Add class to animate in
+  setTimeout(() => {
+    popup.querySelector(".popup-content").classList.add("show");
+  }, 10);
+
+  // Close button event
+  const closeBtn = popup.querySelector(".close-btn");
+  closeBtn.addEventListener("click", () => {
+    closePopup(popup);
+  });
+
+  // Cancel button event
+  const cancelBtn = document.getElementById("cancel-save-workflow-btn");
+  cancelBtn.addEventListener("click", () => {
+    closePopup(popup);
+  });
+
+  // Close when clicking outside
+  popup.addEventListener("click", (e) => {
+    if (e.target === popup) {
+      closePopup(popup);
+    }
+  });
+
+  // Form submission
+  const form = document.getElementById("save-workflow-form");
+  form.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const workflowName = document.getElementById("workflow-name").value;
+    const workflowDescription = document.getElementById("workflow-description").value;
+
+    try {
+      // Show loading state
+      const saveBtn = form.querySelector(".save-btn");
+      const originalText = saveBtn.innerHTML;
+      saveBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...';
+      saveBtn.disabled = true;
+
+      // Call the modified saveWorkflow function with the name
+      await saveWorkflowWithName(episodeId, workflowName, workflowDescription);
+      
+      closePopup(popup);
+    } catch (error) {
+      console.error("Error saving workflow:", error);
+      // Reset button state
+      const saveBtn = form.querySelector(".save-btn");
+      saveBtn.innerHTML = originalText;
+      saveBtn.disabled = false;
+      
+      alert("Failed to save workflow: " + error.message);
+    }
+  });
+}
+
+// Modified saveWorkflow function to include the name
+async function saveWorkflowWithName(episodeId, workflowName, workflowDescription = "") {
   try {
-    const response = await fetch("/get_podtasks", { method: "GET", headers: { "Content-Type": "application/json" } });
-    const data = await response.json();
-
-    const tasks = data.podtasks.filter(task => task.episodeId === episodeId);
-
+    const tasksData = await fetchTasks();
+    const tasks = tasksData.filter(task => task.episodeId === episodeId);
     if (tasks.length === 0) {
       return alert("No tasks found for this episode.");
     }
-
-    const saveResponse = await fetch("/save_workflow", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ episode_id: episodeId, tasks: tasks }),
-    });
-
-    const saveData = await saveResponse.json();
-    if (saveResponse.ok) {
-      alert("Workflow saved successfully!");
-    } else {
-      alert("Failed to save workflow: " + saveData.error);
-    }
+    await saveWorkflow(episodeId, workflowName, workflowDescription, tasks);
   } catch (error) {
     console.error("Error saving workflow:", error);
-    alert("Failed to save workflow.");
+    throw error;
   }
 }
 
 // Import workflow function with dropdown
 async function importWorkflow(episodeId) {
   try {
-    const response = await fetch(`/get_workflows`, {
-      method: "GET", 
-      headers: { "Content-Type": "application/json" }
-    });
-
-    const data = await response.json();
-    if (response.ok && data.workflows.length > 0) {
-      // Show a modal with a dropdown list of workflows
-      showImportWorkflowModal(episodeId, data.workflows);
+    const workflows = await getWorkflows();
+    if (workflows.length > 0) {
+      showImportWorkflowModal(episodeId, workflows);
     } else {
       alert("No workflows available to import.");
     }
@@ -219,7 +292,7 @@ function showImportWorkflowModal(episodeId, workflows) {
         method: "GET",
         headers: { "Content-Type": "application/json" },
       });
-  
+
       const workflowData = await workflowResponse.json();
       
       if (!workflowResponse.ok) {
@@ -281,7 +354,7 @@ function showImportWorkflowModal(episodeId, workflows) {
       alert("Failed to import workflow: " + error.message);
     }
   });
-} // Added missing closing brace here
+} 
 
 function closeModal(modal) {
   modal.style.display = "none";  // Make sure to hide it
@@ -297,9 +370,6 @@ function renderTaskList(tasks) {
         <div class="task-content">
           <div class="task-title">${task.name}</div>
           ${task.description ? `<div class="task-description">${task.description}</div>` : ""}
-          <div class="task-meta">
-            <span class="task-assigned">${task.guestId ? task.guestId : "Unassigned"}</span>
-          </div>
         </div>
         <div class="task-actions">
           <button class="task-action-btn edit-task-btn" title="Edit Task"><i class="fas fa-edit"></i> Edit</button>
@@ -308,9 +378,6 @@ function renderTaskList(tasks) {
       </div>
     `).join("");
 }
-
-// Additional task management functions like addTask, editTask, etc., stay the same...
-
 
 // Show add task popup
 function showAddTaskPopup(episodeId) {
@@ -331,12 +398,6 @@ function showAddTaskPopup(episodeId) {
             <div class="form-group">
               <label for="task-description">Description</label>
               <textarea id="task-description" class="form-control" placeholder="Add more details about this task..."></textarea>
-            </div>
-            <div class="form-group">
-              <label for="task-assigned">Assign To</label>
-              <select id="task-assigned" class="form-control">
-                <option value="">Select a person</option>
-              </select>
             </div>
             <div class="modal-footer">
               <button type="button" id="cancel-add-btn" class="btn cancel-btn">Cancel</button>
@@ -386,13 +447,11 @@ function showAddTaskPopup(episodeId) {
     e.preventDefault();
     const title = document.getElementById("task-title").value;
     const description = document.getElementById("task-description").value;
-    const assignedTo = document.getElementById("task-assigned").value;
 
     const taskData = {
       name: title,
       description,
       episodeId: episodeId,
-      guestId: assignedTo || null,
     };
 
     try {
@@ -416,7 +475,6 @@ function showAddTaskPopup(episodeId) {
   });
 }
 
-// FIXED: Show edit task popup with proper animation and visibility
 // Show edit task popup with proper animation and visibility
 async function showEditTaskPopup(taskId) {
   const response = await fetchTask(taskId); // Ensure this fetches the full task object
@@ -450,12 +508,6 @@ async function showEditTaskPopup(taskId) {
             <div class="form-group">
               <label for="edit-task-description">Description</label>
               <textarea id="edit-task-description" class="form-control">${description || ''}</textarea>
-            </div>
-            <div class="form-group">
-              <label for="edit-task-assigned">Assign To</label>
-              <select id="edit-task-assigned" class="form-control">
-                <option value="">Select a person</option>
-              </select>
             </div>
             <div class="form-group">
               <label for="edit-task-status">Status</label>
@@ -503,13 +555,11 @@ async function showEditTaskPopup(taskId) {
 
     const title = document.getElementById("edit-task-title").value;
     const description = document.getElementById("edit-task-description").value;
-    const assignedTo = document.getElementById("edit-task-assigned").value;
     const status = document.getElementById("edit-task-status").value;
 
     const taskData = {
       name: title,
       description,
-      guestId: assignedTo || null,
       status: status,
     };
 
@@ -538,7 +588,6 @@ async function showEditTaskPopup(taskId) {
   });
 }
 
-
 // Helper function to close the edit modal with animation
 function closeEditModal(modal) {
   const modalContent = modal.querySelector(".popup-content");
@@ -550,7 +599,6 @@ function closeEditModal(modal) {
     modal.remove();
   }, 300);
 }
-
 
 // Helper function to close any popup with animation
 function closePopup(popup) {
@@ -671,7 +719,6 @@ async function showImportTasksPopup(episodeId) {
 }
 
 // Toggle task completion
-// Toggle task completion
 async function toggleTaskCompletion(taskId, completed) {
   try {
     // Update task completion status on the server
@@ -693,8 +740,6 @@ async function toggleTaskCompletion(taskId, completed) {
     console.error("Error updating task completion:", error);
   }
 }
-
-
 
 // Confirm delete task
 function confirmDeleteTask(taskId) {
