@@ -1,11 +1,11 @@
 #!/bin/bash
 
 # Variables
-APP_NAME="your-app-name"
-RESOURCE_GROUP="your-resource-group"
-REGISTRY_NAME="your-registry-name"
-DOCKER_IMAGE="your-image-name"
-AZURE_APP_SERVICE_PLAN="your-app-service-plan"
+APP_NAME="podmanager"
+RESOURCE_GROUP="PodManager"
+REGISTRY_NAME="podmanager"
+DOCKER_IMAGE="podmanager"
+AZURE_APP_SERVICE_PLAN="ASP-Portal-385d6529-b807"
 DOCKER_TAG="latest"
 
 # Build Docker image
