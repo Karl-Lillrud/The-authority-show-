@@ -120,6 +120,8 @@ footer {
     0 -8px 10px -6px rgba(0, 0, 0, 0.02);
   border-radius: var(--radius-medium);
   transition: all var(--transition-normal);
+  height: var(--footer-height, 60px);
+  transition: height 0.3s ease; /* Smooth transition for height changes */
 }
 
 footer a {
