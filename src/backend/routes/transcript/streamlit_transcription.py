@@ -103,7 +103,7 @@ tab1, tab2, tab3 = st.tabs([
 with tab1:
     st.subheader("🎙 AI-Powered Transcription")
 
-    # Initiera extra session_states för att styra synlighet
+    # Initialize extra session_states to control visibility
     if "show_clean_transcript" not in st.session_state:
         st.session_state.show_clean_transcript = False
     if "show_ai_suggestions" not in st.session_state:
@@ -115,7 +115,7 @@ with tab1:
     if "show_quote_images" not in st.session_state:
         st.session_state.show_quote_images = False
 
-    # Filuppladdning
+    # File upload
     uploaded_file = st.file_uploader(
         "📂 Choose an audio or video file",
         type=["wav", "mp3", "m4a", "ogg", "mp4", "mov", "avi", "mkv", "webm"],
@@ -126,7 +126,7 @@ with tab1:
         file_ext = uploaded_file.name.split(".")[-1].lower()
         is_video = file_ext in ["mp4", "mov", "avi", "mkv", "webm"]
 
-        # Visa audio- eller videospelare
+        # Show audio or video player
         if not is_video:
             st.audio(uploaded_file, format="audio/wav")
         else:
@@ -146,7 +146,7 @@ with tab1:
                         st.session_state.quotes = result.get("quotes", "")
                         st.session_state.quote_images = result.get("quote_images", [])
 
-                        # Nollställ visningsflaggor så att man inte visar äldre data
+                        # Reset display flags so that older data is not shown
                         st.session_state.show_clean_transcript = False
                         st.session_state.show_ai_suggestions = False
                         st.session_state.show_show_notes = False
@@ -164,7 +164,7 @@ with tab1:
 
     # Show transcription
     if st.session_state.get("raw_transcription", ""):
-        # ---- Rå transkription ----
+        # ---- Raw transcription ----
         st.markdown("## 📜 Raw Transcription")
         transcription_text = st.session_state.get("transcription_translated") or st.session_state.raw_transcription
         st.text_area("Raw Transcription", value=transcription_text, height=200)
@@ -197,7 +197,7 @@ with tab1:
             response = requests.post(f"{API_BASE_URL}/clean", json=payload)
             if response.status_code == 200:
                 st.session_state.transcription_no_fillers = response.json().get("clean_transcript", "")
-                st.session_state.show_clean_transcript = True  # Visa fält
+                st.session_state.show_clean_transcript = True  # Show field
                 st.success("Clean transcript generated!")
             else:
                 st.error("Failed to clean transcript.")
@@ -255,7 +255,7 @@ with tab1:
         if st.session_state.show_quotes and st.session_state.quotes:
             st.text_area("Quotes", value=st.session_state.quotes, height=200)
 
-            # 5) Quote Images (visas bara efter ”Generate Quotes”)
+            # 5) Quote Images (only shown after "Generate Quotes")
             st.markdown("### 🖼️ Generate Quote Images")
             st.write("Turn the extracted quotes into shareable images.")
             if st.button("Generate Quote Images"):
@@ -275,7 +275,7 @@ with tab1:
                     if url:
                         st.image(url, use_column_width=True)
                         st.markdown(f"[⬇ Download Image {i}]({url})", unsafe_allow_html=True)
-
+                        
 # ----------------------------
 # Tab 2: AI Audio Enhancement
 # ----------------------------
