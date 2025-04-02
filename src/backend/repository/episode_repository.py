@@ -209,9 +209,9 @@ class EpisodeRepository:
         except Exception as e:
 
             logger.error(
-                f"❌ ERROR fetching episodes for podcast {podcast_id}: {str(e)}"
+                f"❌ ERROR deleting episodes: {str(e)}"
             )
-            return {"error": f"Failed to fetch episodes: {str(e)}"}, 500
+            return {"error": f"Failed to delete episodes: {str(e)}"}, 500
 
     def get_episode_detail_with_podcast(self, episode_id):
         """Fetch an episode along with its associated podcast."""
