@@ -172,31 +172,6 @@ def save_workflow():
     except Exception as e:
         return jsonify({"error": f"Failed to save workflow: {str(e)}"}), 500
 
-@podtask_bp.route("/import_workflow", methods=["GET"])
-def import_workflow():
-    if not g.user_id:
-        return jsonify({"error": "Unauthorized"}), 401
-    try:
-        # Extract the workflow_id from the query parameters
-        workflow_id = request.args.get("workflow_id")
-        
-        if not workflow_id:
-            return jsonify({"error": "Missing workflow ID"}), 400
-
-        # Fetch the saved workflow from the database
-        workflow = collection.database.Workflows.find_one({"_id": workflow_id, "user_id": g.user_id})
-        if not workflow:
-            return jsonify({"error": "Workflow not found"}), 404
-
-        # Add the tasks from the workflow to the episode
-        episode_id = request.args.get("episode_id")  # Ensure episode_id is passed as query parameter
-        tasks_to_import = workflow["tasks"]
-        
-        response, status_code = podtask_repo.add_tasks_to_episode(g.user_id, episode_id, tasks_to_import)
-        
-        return jsonify(response), status_code
-    except Exception as e:
-        return jsonify({"error": f"Failed to import workflow: {str(e)}"}), 500
 
 @podtask_bp.route('/get_workflows', methods=['GET'])
 def get_workflows():

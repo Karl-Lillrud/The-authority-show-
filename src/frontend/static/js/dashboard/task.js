@@ -7,6 +7,8 @@ import {
   deleteTask,
   fetchLocalDefaultTasks,
   addDefaultTasksToEpisode,
+  saveWorkflow,
+  getWorkflows
 } from "/static/requests/podtaskRequest.js"
 
 // Initialize task management for all episode cards
@@ -211,51 +213,24 @@ function showSaveWorkflowPopup(episodeId) {
 // Modified saveWorkflow function to include the name
 async function saveWorkflowWithName(episodeId, workflowName, workflowDescription = "") {
   try {
-    const response = await fetch("/get_podtasks", { method: "GET", headers: { "Content-Type": "application/json" } });
-    const data = await response.json();
-
-    const tasks = data.podtasks.filter(task => task.episodeId === episodeId);
-
+    const tasksData = await fetchTasks();
+    const tasks = tasksData.filter(task => task.episodeId === episodeId);
     if (tasks.length === 0) {
       return alert("No tasks found for this episode.");
     }
-
-    const saveResponse = await fetch("/save_workflow", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ 
-        episode_id: episodeId, 
-        tasks: tasks,
-        name: workflowName,
-        description: workflowDescription
-      }),
-    });
-
-    const saveData = await saveResponse.json();
-    if (saveResponse.ok) {
-      alert("Workflow saved successfully!");
-    } else {
-      alert("Failed to save workflow: " + saveData.error);
-    }
+    await saveWorkflow(episodeId, workflowName, workflowDescription, tasks);
   } catch (error) {
     console.error("Error saving workflow:", error);
-    alert("Failed to save workflow.");
-    throw error; // Re-throw to handle in the calling function
+    throw error;
   }
 }
 
 // Import workflow function with dropdown
 async function importWorkflow(episodeId) {
   try {
-    const response = await fetch(`/get_workflows`, {
-      method: "GET", 
-      headers: { "Content-Type": "application/json" }
-    });
-
-    const data = await response.json();
-    if (response.ok && data.workflows.length > 0) {
-      // Show a modal with a dropdown list of workflows
-      showImportWorkflowModal(episodeId, data.workflows);
+    const workflows = await getWorkflows();
+    if (workflows.length > 0) {
+      showImportWorkflowModal(episodeId, workflows);
     } else {
       alert("No workflows available to import.");
     }
@@ -395,9 +370,6 @@ function renderTaskList(tasks) {
         <div class="task-content">
           <div class="task-title">${task.name}</div>
           ${task.description ? `<div class="task-description">${task.description}</div>` : ""}
-          <div class="task-meta">
-            <span class="task-assigned">${task.guestId ? task.guestId : "Unassigned"}</span>
-          </div>
         </div>
         <div class="task-actions">
           <button class="task-action-btn edit-task-btn" title="Edit Task"><i class="fas fa-edit"></i> Edit</button>
@@ -426,12 +398,6 @@ function showAddTaskPopup(episodeId) {
             <div class="form-group">
               <label for="task-description">Description</label>
               <textarea id="task-description" class="form-control" placeholder="Add more details about this task..."></textarea>
-            </div>
-            <div class="form-group">
-              <label for="task-assigned">Assign To</label>
-              <select id="task-assigned" class="form-control">
-                <option value="">Select a person</option>
-              </select>
             </div>
             <div class="modal-footer">
               <button type="button" id="cancel-add-btn" class="btn cancel-btn">Cancel</button>
@@ -481,13 +447,11 @@ function showAddTaskPopup(episodeId) {
     e.preventDefault();
     const title = document.getElementById("task-title").value;
     const description = document.getElementById("task-description").value;
-    const assignedTo = document.getElementById("task-assigned").value;
 
     const taskData = {
       name: title,
       description,
       episodeId: episodeId,
-      guestId: assignedTo || null,
     };
 
     try {
@@ -546,12 +510,6 @@ async function showEditTaskPopup(taskId) {
               <textarea id="edit-task-description" class="form-control">${description || ''}</textarea>
             </div>
             <div class="form-group">
-              <label for="edit-task-assigned">Assign To</label>
-              <select id="edit-task-assigned" class="form-control">
-                <option value="">Select a person</option>
-              </select>
-            </div>
-            <div class="form-group">
               <label for="edit-task-status">Status</label>
               <select id="edit-task-status" class="form-control">
                 <option value="incomplete" ${status === "incomplete" ? "selected" : ""}>Incomplete</option>
@@ -597,13 +555,11 @@ async function showEditTaskPopup(taskId) {
 
     const title = document.getElementById("edit-task-title").value;
     const description = document.getElementById("edit-task-description").value;
-    const assignedTo = document.getElementById("edit-task-assigned").value;
     const status = document.getElementById("edit-task-status").value;
 
     const taskData = {
       name: title,
       description,
-      guestId: assignedTo || null,
       status: status,
     };
 
