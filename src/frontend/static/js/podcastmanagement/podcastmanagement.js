@@ -1,5 +1,6 @@
 import { initPodcastFunctions } from "./podcast-functions.js";
 import { initEpisodeFunctions } from "./episode-functions.js";
+import { renderPodcastDetail } from "./podcast-functions.js";
 import { initGuestFunctions } from "./guest-functions.js";
 import { svgpodcastmanagement } from "./svgpodcastmanagement.js";
 

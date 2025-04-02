@@ -1904,3 +1904,23 @@ select:invalid {
     margin: 0 auto;
   }
 }
+
+/* Add to your .css file */
+
+.podcast-image-container {
+  position: relative; 
+  /* or a fixed width, or fluid. up to you. */
+}
+
+.inline-audio-title {
+  font-weight: bold;
+  margin-top: 6px;
+  margin-bottom: 4px;
+}
+
+.inline-audio-player {
+  display: block;
+  width: 100%;
+  margin-bottom: 8px;
+}
+
