@@ -27,9 +27,25 @@ from backend.routes.guest_to_eposide import guesttoepisode_bp
 from backend.routes.guest_form import guest_form_bp
 from backend.routes.transcription import transcription_bp
 from backend.routes.landingpage import landingpage_bp
-from backend.routes.streamlit_proxy import streamlit_proxy_bp
+from dotenv import load_dotenv
+from backend.utils import venvupdate
+from backend.database.mongo_connection import collection
+from backend.utils.email_utils import send_email
+from backend.routes.Mailing_list import Mailing_list_bp
+from backend.routes.user import user_bp
+from backend.routes.audio_routes import audio_bp
+from backend.routes.video_routes import video_bp
+from backend.routes.highlight import highlights_bp
+from transformers import BertForSequenceClassification, AutoTokenizer
 
-# Ensure virtual environment is updated if needed
+# Suppress TensorFlow oneDNN warning by setting the environment variable
+os.environ["TF_ENABLE_ONEDNN_OPTS"] = "0"
+
+# Ensure ffmpeg is installed and available
+from pydub import AudioSegment
+if not AudioSegment.converter:
+    raise RuntimeError("ffmpeg is not installed or not in PATH. Please install it and try again.")
+
 if os.getenv("SKIP_VENV_UPDATE", "false").lower() not in ("true", "1", "yes"):
     venvupdate.update_venv_and_requirements()
 
@@ -67,7 +83,7 @@ app.register_blueprint(episode_bp)
 app.register_blueprint(podprofile_bp)
 app.register_blueprint(frontend_bp)
 app.register_blueprint(guesttoepisode_bp)
-app.register_blueprint(guest_form_bp, url_prefix="/guest-form")
+app.register_blueprint(guest_form_bp, url_prefix="/guest-form") 
 app.register_blueprint(transcription_bp)
 app.register_blueprint(audio_bp)
 app.register_blueprint(video_bp)
@@ -88,14 +104,18 @@ def load_user():
     g.user_id = session.get("user_id")
     logger.info(f"Request to {request.path} by user {g.user_id}")
 
-def start_flask():
-    """Start the Flask app."""
-    subprocess.run(["flask", "run", "--host=0.0.0.0", "--port=8000"])
 
-def start_streamlit():
-    """Start the Streamlit transcription app."""
-    subprocess.run(["streamlit", "run", "src/backend/routes/transcript/streamlit_transcription.py"])
+# Initialize the BERT model and tokenizer
+model_name = "nreimers/MiniLM-L6-H384-uncased"
+model = BertForSequenceClassification.from_pretrained(model_name, num_labels=3)
+tokenizer = AutoTokenizer.from_pretrained(model_name)
 
+# Define a proper label2id mapping for the BERT model
+label2id = {"entailment": 0, "neutral": 1, "contradiction": 2}
+model.config.label2id = label2id
+model.config.id2label = {v: k for k, v in label2id.items()}
+
+# Run the app
 if __name__ == "__main__":
     try:
         # Start Flask in a separate process

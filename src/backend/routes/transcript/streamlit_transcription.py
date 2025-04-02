@@ -1,18 +1,4 @@
-#  * Developer Full Stack: Peter Molén 
-#  *
-#  * Create Date: 2025-03-03
-#  *     Program : transcription.py
-#  *   Path Name : THE-AUTHORITY-SHOW-/src/backend/
-#  *       Tools : Python, Flask, ElevenBase, OpenAI Whisper, FFmpeg, Pydub, MongoDB, Hugging Face Transformers
-#  *
-#  * Description:
-#  * - Handles transcription, audio enhancement, cutting, and AI-driven processing.
-#  * - Uses AI models for speech-to-text, filler word detection, and confidence scoring.
-#  * - Provides automatic and manual sentence selection with timestamped analysis.
-#  * - Implements background noise detection, sentiment analysis, and audio quality assessment.
-#  * - Supports file processing via REST API and integrates with Streamlit frontend.
-
-
+# src/backend/routes/transcript/streamlit_transcription.py
 import streamlit as st
 import requests
 import base64
@@ -20,175 +6,248 @@ import os
 import logging
 import tempfile
 from dotenv import load_dotenv
+import sys
+from backend.utils.text_utils import download_button_text
 
+project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../../"))
+if project_root not in sys.path:
+    sys.path.insert(0, project_root)
+
+# Load environment variables early
+load_dotenv()
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-load_dotenv()
-
 API_BASE_URL = os.getenv("API_BASE_URL")
 
+def render_translate_and_download(section_key: str, label: str, filename: str):
+    content = st.session_state.get(section_key, "")
+    if not content:
+        return
 
-# Function to format transcription for display and download
-def format_transcription(transcription):
-    """Convert list of dictionaries to a readable string."""
-    if isinstance(transcription, list):
-        return "\n".join([f"[{item['start']}-{item['end']}] {item['speaker']}: {item['text']}" for item in transcription])
-    return transcription  # Already a string
+    lang = st.selectbox(f"🌍 Translate {label} to:", languages, key=f"{section_key}_lang")
 
+    if st.button(f"Translate {label}", key=f"{section_key}_translate_btn"):
+        try:
+            response = requests.post(
+                f"{API_BASE_URL}/translate",
+                json={"text": content, "language": lang}
+            )
+            if response.status_code == 200:
+                translated = response.json().get("translated_text", "")
+                st.session_state[f"{section_key}_translated"] = translated
+                st.success(f"{label} translated to {lang}!")
+            else:
+                st.error(f"Translation failed: {response.text}")
+        except Exception as e:
+            st.error(f"Error calling translation API: {e}")
 
-# Funktion för att skapa en nedladdningsknapp för filväg
-def download_button(label, file_path, filename):
-    """Generate a download button for processed files"""
-    if file_path and os.path.exists(file_path):
-        with open(file_path, "rb") as f:
-            b64 = base64.b64encode(f.read()).decode()
-        href = f'<a href="data:file/{filename.split(".")[-1]};base64,{b64}" download="{filename}">{label}</a>'
-        return st.markdown(href, unsafe_allow_html=True)
-    return st.warning("Processed file not found. Try again.")
+    translated = st.session_state.get(f"{section_key}_translated", content)
+    download_button_text(f"⬇ Download {label}", translated, filename, key_prefix=section_key)
 
-
-# Function to create a download button för textinnehåll
-def download_button_text(label, text, filename):
-    if isinstance(text, list):
-        text = format_transcription(text)  # Convert list to string
-    b64 = base64.b64encode(text.encode()).decode()
-    return st.download_button(label, text, filename, key=filename)
-
-# Funktion för att översätta text
-def translate_text(text, target_language):
-    if not text.strip():
-        return text  # Don't translate empty text
-
-    try:
-        response = requests.post(
-            f"{API_BASE_URL}/translate",
-            json={"text": text, "language": target_language}
-        )
-        if response.status_code == 200:
-            return response.json().get("translated_text", "Translation failed")
-        else:
-            return f"Translation failed: {response.text}"
-    except Exception as e:
-        return f"Error contacting translation API: {e}"
-    
-# Initialize session state variables
-for key in ["transcription", "transcription_no_fillers", "ai_suggestions", "show_notes"]:
+# ----------------------------
+# Initialize Session State
+# ----------------------------
+for key in ["transcription", "transcription_no_fillers", "ai_suggestions", "show_notes", "quotes", "quote_images"]:
     if key not in st.session_state:
         st.session_state[key] = ""
     if f"{key}_translated" not in st.session_state:
         st.session_state[f"{key}_translated"] = ""
 
-# 📌 **Sidhuvud**
-st.markdown("<h1 style='display: inline;'>PodManagerAI - </h1><h3 style='display: inline;'>Transcription & AI Enhancement</h3>", unsafe_allow_html=True)
-
+# ----------------------------
+# App Header & Description
+# ----------------------------
+st.markdown(
+    "<h1 style='display: inline;'>PodManagerAI - </h1><h3 style='display: inline;'>Transcription & AI Enhancement</h3>",
+    unsafe_allow_html=True,
+)
 st.write("Upload an audio file to get an AI-enhanced transcription with show notes.")
 
-# 📌 **Flikar för navigering**
-tab1, tab2, tab3 = st.tabs(["🎙 AI-Powered Transcription", "🎵 AI Audio Enhancement & cutting editor", "📹 AI Video Enhancement & cutting editor"])
+# ----------------------------
+# Tabs for Navigation
+# ----------------------------
+tab1, tab2, tab3 = st.tabs([
+    "🎙 AI-Powered Transcription",
+    "🎵 AI Audio Enhancement & Cutting Editor",
+    "📹 AI Video Enhancement & Cutting Editor"
+])
 
-# 🎙 **Flik 1: AI-Powered Transcription**
+# ----------------------------
+# Tab 1: AI-Powered Transcription
+# ----------------------------
 with tab1:
     st.subheader("🎙 AI-Powered Transcription")
+
+    # Initialize extra session_states to control visibility
+    if "show_clean_transcript" not in st.session_state:
+        st.session_state.show_clean_transcript = False
+    if "show_ai_suggestions" not in st.session_state:
+        st.session_state.show_ai_suggestions = False
+    if "show_show_notes" not in st.session_state:
+        st.session_state.show_show_notes = False
+    if "show_quotes" not in st.session_state:
+        st.session_state.show_quotes = False
+    if "show_quote_images" not in st.session_state:
+        st.session_state.show_quote_images = False
+
+    # File upload
     uploaded_file = st.file_uploader(
-        "📂 Choose an audio or video file", 
-        type=["wav", "mp3", "m4a", "ogg", "mp4", "mov", "avi", "mkv", "webm"], 
-        key="file_uploader"
+        "📂 Choose an audio or video file",
+        type=["wav", "mp3", "m4a", "ogg", "mp4", "mov", "avi", "mkv", "webm"],
+        key="file_uploader",
     )
 
     if uploaded_file is not None:
         file_ext = uploaded_file.name.split(".")[-1].lower()
         is_video = file_ext in ["mp4", "mov", "avi", "mkv", "webm"]
 
-        # 🎵 If it's an audio file, show an audio player
+        # Show audio or video player
         if not is_video:
             st.audio(uploaded_file, format="audio/wav")
-
-        # 🎬 If it's a video file, show the video
         else:
             st.video(uploaded_file)
 
         if st.button("▶ Transcribe"):
             with st.spinner("🔄 Transcribing... Please wait."):
                 files = {"file": (uploaded_file.name, uploaded_file, uploaded_file.type)}
-
                 try:
                     response = requests.post(f"{API_BASE_URL}/transcribe", files=files)
-                    result = response.json()
-
                     if response.status_code == 200:
                         result = response.json()
-
-                        # ✅ Correct keys
                         st.session_state.raw_transcription = result.get("raw_transcription", "")
-                        st.session_state.transcription_no_fillers = result.get("transcription_no_fillers", "")
+                        st.session_state.full_transcript = result.get("full_transcript", "")
                         st.session_state.ai_suggestions = result.get("ai_suggestions", "")
                         st.session_state.show_notes = result.get("show_notes", "")
+                        st.session_state.quotes = result.get("quotes", "")
+                        st.session_state.quote_images = result.get("quote_images", [])
 
-                        # ✅ Also assign to short keys (optional for legacy)
-                        st.session_state["transcription"] = st.session_state.raw_transcription
-                        st.session_state["transcription_no_fillers"] = st.session_state.transcription_no_fillers
+                        # Reset display flags so that older data is not shown
+                        st.session_state.show_clean_transcript = False
+                        st.session_state.show_ai_suggestions = False
+                        st.session_state.show_show_notes = False
+                        st.session_state.show_quotes = False
+                        st.session_state.show_quote_images = False
 
                         st.success("✅ Transcription complete!")
-
                     else:
                         st.error(f"❌ Error: {response.status_code} - {response.text}")
-
                 except Exception as e:
                     st.error(f"Request failed: {str(e)}")
 
-    # Language selection
+    # Language list
     languages = ["English", "Spanish", "French", "German", "Swedish", "Japanese", "Chinese", "Italian", "Portuguese"]
 
-    # Display stored transcriptions if available
-    if "raw_transcription" in st.session_state:
-            st.subheader("📜 Raw Transcription")
-            
-            # ✅ Use the correct key: `raw_transcription`
-            transcription_text = st.session_state.get("transcription_translated")
-            if not transcription_text:
-                transcription_text = st.session_state.get("raw_transcription", "")
+    # Show transcription
+    if st.session_state.get("raw_transcription", ""):
+        # ---- Raw transcription ----
+        st.markdown("## 📜 Raw Transcription")
+        raw_text = st.session_state.get("raw_transcription_translated") or st.session_state.raw_transcription
+        st.text_area("Raw Transcription", value=raw_text, height=200)
+        render_translate_and_download("raw_transcription", "Raw Transcription", "raw_transcription.txt")
 
-            if transcription_text:
-                st.text_area("📜 Raw Transcription", value=transcription_text, height=200, key="raw_transcription_display")
+        # ---- Transcription Enhancement Tools ----
+        st.markdown("---")
+        st.markdown("## 🔧 Transcription Enhancement Tools")
+
+        # 1) Clean Transcript
+        st.markdown("### 🧹 Clean Transcript")
+        st.write("Removes filler words and unnecessary expressions from your transcript.")
+        if st.button("Generate Clean Transcript"):
+            payload = {"transcript": st.session_state.get("full_transcript", "")}
+            response = requests.post(f"{API_BASE_URL}/clean", json=payload)
+            if response.status_code == 200:
+                st.session_state.transcription_no_fillers = response.json().get("clean_transcript", "")
+                st.session_state.show_clean_transcript = True
+                st.success("Clean transcript generated!")
             else:
-                st.warning("⚠️ No transcription available. Please transcribe a file first.")
+                st.error("Failed to clean transcript.")
 
-            # Translation dropdown & button
-            language_transcription = st.selectbox("🌍 Translate Raw Transcription to:", languages, key="lang_transcription")
-            if st.button("Translate Raw Transcription"):
-                st.session_state["transcription_translated"] = translate_text(st.session_state.raw_transcription, language_transcription)
-                st.rerun()  
+        if st.session_state.show_clean_transcript and st.session_state.transcription_no_fillers:
+            clean_text = st.session_state.get("transcription_no_fillers_translated") or st.session_state.transcription_no_fillers
+            st.text_area("Clean Transcript", value=clean_text, height=200)
+            render_translate_and_download("transcription_no_fillers", "Clean Transcript", "clean_transcript.txt")
 
-            # Download button
-            download_button_text("⬇ Download Raw Transcription", st.session_state.get("transcription_translated", st.session_state.raw_transcription), "raw_transcription.txt")
+        # 2) AI Suggestions
+        st.markdown("### 🤖 AI Suggestions")
+        st.write("Get ideas or improvements for your transcript, e.g. better phrasing or structure.")
+        if st.button("Generate AI Suggestions"):
+            payload = {"transcript": st.session_state.raw_transcription}
+            response = requests.post(f"{API_BASE_URL}/ai_suggestions", json=payload)
+            if response.status_code == 200:
+                st.session_state.ai_suggestions = response.json().get("ai_suggestions", "")
+                st.session_state.show_ai_suggestions = True
+                st.success("AI suggestions generated!")
+            else:
+                st.error("Failed to generate AI suggestions.")
 
-        
-            with st.expander("🤖 AI cleaned trancript + Suggested Transcription"):
-                ai_suggestions_text = st.session_state.get("ai_suggestions_translated", st.session_state.ai_suggestions)
-                ai_suggestions_text = st.text_area("", ai_suggestions_text, height=200, key="ai_suggestions")
+        if st.session_state.show_ai_suggestions and st.session_state.ai_suggestions:
+            ai_text = st.session_state.get("ai_suggestions_translated") or st.session_state.ai_suggestions
+            st.text_area("AI Suggestions", value=ai_text, height=200)
+            render_translate_and_download("ai_suggestions", "AI Suggestions", "ai_suggestions.txt")
 
-                language_ai_suggestions = st.selectbox("🌍 Translate AI-Suggested Transcription to:", languages, key="lang_ai_suggestions")
-                if st.button("Translate AI-Suggested Transcription"):
-                    st.session_state["ai_suggestions_translated"] = translate_text(st.session_state.ai_suggestions, language_ai_suggestions)
-                    st.rerun()  
+        # 3) Show Notes
+        st.markdown("### 📝 Show Notes")
+        st.write("Automatically summarize the main points in the transcript for easy reference.")
+        if st.button("Generate Show Notes"):
+            payload = {"transcript": st.session_state.raw_transcription}
+            response = requests.post(f"{API_BASE_URL}/show_notes", json=payload)
+            if response.status_code == 200:
+                st.session_state.show_notes = response.json().get("show_notes", "")
+                st.session_state.show_show_notes = True
+                st.success("Show notes generated!")
+            else:
+                st.error("Failed to generate show notes.")
 
-                download_button_text("⬇ Download AI-Suggested Transcription", st.session_state.get("ai_suggestions_translated", st.session_state.ai_suggestions), "ai_suggestions.txt")
+        if st.session_state.show_show_notes and st.session_state.show_notes:
+            notes_text = st.session_state.get("show_notes_translated") or st.session_state.show_notes
+            st.text_area("Show Notes", value=notes_text, height=200)
+            render_translate_and_download("show_notes", "Show Notes", "show_notes.txt")
 
-            # 🔹 AI-Generated Show Notes
-            with st.expander("📝 AI-Generated Show Notes & Marketing Snippets"):
-                show_notes_text = st.session_state.get("show_notes_translated", st.session_state.show_notes)
-                show_notes_text = st.text_area("", show_notes_text, height=200, key="show_notes")
+        # 4) Quotes
+        st.markdown("### 💬 Generate Quotes")
+        st.write("Extract memorable quotes from your transcript.")
+        if st.button("Generate Quotes"):
+            payload = {"transcript": st.session_state.raw_transcription}
+            response = requests.post(f"{API_BASE_URL}/quotes", json=payload)
+            if response.status_code == 200:
+                st.session_state.quotes = response.json().get("quotes", "")
+                st.session_state.show_quotes = True
+                st.success("Quotes generated!")
+            else:
+                st.error("Failed to generate quotes.")
 
-                language_show_notes = st.selectbox("🌍 Translate AI-Generated Show Notes to:", languages, key="lang_show_notes")
-                if st.button("Translate AI-Generated Show Notes"):
-                    st.session_state["show_notes_translated"] = translate_text(st.session_state.show_notes, language_show_notes)
-                    st.rerun()  
+        if st.session_state.show_quotes and st.session_state.quotes:
+            quotes_text = st.session_state.get("quotes_translated") or st.session_state.quotes
+            st.text_area("Quotes", value=quotes_text, height=200)
+            render_translate_and_download("quotes", "Quotes", "quotes.txt")
 
-                download_button_text("⬇ Download AI-Generated Show Notes", st.session_state.get("show_notes_translated", st.session_state.show_notes), "ai_show_notes.txt")
+            # 5) Quote Images (only shown after "Generate Quotes")
+            st.markdown("### 🖼️ Generate Quote Images")
+            st.write("Turn the extracted quotes into shareable images.")
+            if st.button("Generate Quote Images"):
+                payload = {"quotes": st.session_state.quotes}
+                response = requests.post(f"{API_BASE_URL}/quote_images", json=payload)
+                if response.status_code == 200:
+                    st.session_state.quote_images = response.json().get("quote_images", [])
+                    st.session_state.show_quote_images = True
+                    st.success("Quote images generated!")
+                else:
+                    st.error("Failed to generate quote images.")
 
-# 🎵 **Flik 2: AI Audio Enhancement**
+            if st.session_state.show_quote_images and st.session_state.get("quote_images", []):
+                st.markdown("#### Your Quote Images")
+                for i, url in enumerate(st.session_state.quote_images, 1):
+                    if url:
+                        st.image(url, use_column_width=True)
+                        st.markdown(f"[⬇ Download Image {i}]({url})", unsafe_allow_html=True)
+
+
+                        
+# ----------------------------
+# Tab 2: AI Audio Enhancement
+# ----------------------------
+
 with tab2:
     st.subheader("🎙 Audio Enhancement & AI analysis")
     
@@ -865,9 +924,10 @@ with tab2:
 
 
 
+# ----------------------------
+# Tab 3: AI Video Enhancement & Analysis
+# ----------------------------
 
-# 📹 **Tab 3: AI Video Enhancement & Analysis**
-# 📹 Video Enhancement & AI Analysis Tab
 with tab3:
     st.subheader("📹 Video Enhancement & AI Analysis")
 
@@ -997,5 +1057,140 @@ with tab3:
                     else:
                         st.error("❌ Error clipping video. Try again.")
 
-    # ---- Video Cutting Section ----
-   
+# # Initialize session state variables
+# for key in ["transcription", "transcription_no_fillers", "ai_suggestions", "show_notes", "quotes"]:
+#     if key not in st.session_state:
+#         st.session_state[key] = ""
+#     if f"{key}_translated" not in st.session_state:
+#         st.session_state[f"{key}_translated"] = ""
+
+# # 📌 **Sidhuvud**
+# st.markdown("<h1 style='display: inline;'>PodManagerAI - </h1><h3 style='display: inline;'>Transcription & AI Enhancement</h3>", unsafe_allow_html=True)
+
+# st.write("Upload an audio file to get an AI-enhanced transcription with show notes.")
+
+# # 📌 **Flikar för navigering**
+# tab1, tab2, tab3 = st.tabs(["🎙 AI-Powered Transcription", "🎵 AI Audio Enhancement & cutting editor", "📹 AI Video Enhancement & cutting editor"])
+
+# # 🎙 **Flik 1: AI-Powered Transcription**
+# with tab1:
+#     st.subheader("🎙 AI-Powered Transcription")
+#     uploaded_file = st.file_uploader(
+#         "📂 Choose an audio or video file", 
+#         type=["wav", "mp3", "m4a", "ogg", "mp4", "mov", "avi", "mkv", "webm"], 
+#         key="file_uploader"
+#     )
+
+#     if uploaded_file is not None:
+#         file_ext = uploaded_file.name.split(".")[-1].lower()
+#         is_video = file_ext in ["mp4", "mov", "avi", "mkv", "webm"]
+
+#         # 🎵 If it's an audio file, show an audio player
+#         if not is_video:
+#             st.audio(uploaded_file, format="audio/wav")
+
+#         # 🎬 If it's a video file, show the video
+#         else:
+#             st.video(uploaded_file)
+
+#         if st.button("▶ Transcribe"):
+#             with st.spinner("🔄 Transcribing... Please wait."):
+#                 files = {"file": (uploaded_file.name, uploaded_file, uploaded_file.type)}
+
+#                 try:
+#                     response = requests.post(f"{API_BASE_URL}/transcribe", files=files)
+#                     result = response.json()
+
+#                     if response.status_code == 200:
+#                         result = response.json()
+
+#                         # ✅ Correct keys
+#                         st.session_state.raw_transcription = result.get("raw_transcription", "")
+#                         st.session_state.transcription_no_fillers = result.get("transcription_no_fillers", "")
+#                         st.session_state.ai_suggestions = result.get("ai_suggestions", "")
+#                         st.session_state.show_notes = result.get("show_notes", "")
+#                         st.session_state.quotes = result.get("quotes", [])
+#                         st.session_state.quote_images = result.get("quote_images", [])
+
+#                         # ✅ Also assign to short keys (optional for legacy)
+#                         st.session_state["transcription"] = st.session_state.raw_transcription
+#                         st.session_state["transcription_no_fillers"] = st.session_state.transcription_no_fillers
+
+#                         st.success("✅ Transcription complete!")
+
+#                     else:
+#                         st.error(f"❌ Error: {response.status_code} - {response.text}")
+
+#                 except Exception as e:
+#                     st.error(f"Request failed: {str(e)}")
+
+#     # Language selection
+#     languages = ["English", "Spanish", "French", "German", "Swedish", "Japanese", "Chinese", "Italian", "Portuguese"]
+
+#     # Display stored transcriptions if available
+#     if "raw_transcription" in st.session_state:
+#             st.subheader("📜 Raw Transcription")
+            
+#             # ✅ Use the correct key: `raw_transcription`
+#             transcription_text = st.session_state.get("transcription_translated")
+#             if not transcription_text:
+#                 transcription_text = st.session_state.get("raw_transcription", "")
+
+#             if transcription_text:
+#                 st.text_area("📜 Raw Transcription", value=transcription_text, height=200, key="raw_transcription_display")
+#             else:
+#                 st.warning("⚠️ No transcription available. Please transcribe a file first.")
+
+#             # Translation dropdown & button
+#             language_transcription = st.selectbox("🌍 Translate Raw Transcription to:", languages, key="lang_transcription")
+#             if st.button("Translate Raw Transcription"):
+#                 st.session_state["transcription_translated"] = translate_text(st.session_state.raw_transcription, language_transcription)
+#                 st.rerun()  
+
+#             # Download button
+#             download_button_text("⬇ Download Raw Transcription", st.session_state.get("transcription_translated", st.session_state.raw_transcription), "raw_transcription.txt")
+
+        
+#             with st.expander("🤖 AI cleaned trancript + Suggested Transcription"):
+#                 ai_suggestions_text = st.session_state.get("ai_suggestions_translated", st.session_state.ai_suggestions)
+#                 ai_suggestions_text = st.text_area("", ai_suggestions_text, height=200, key="ai_suggestions")
+
+#                 language_ai_suggestions = st.selectbox("🌍 Translate AI-Suggested Transcription to:", languages, key="lang_ai_suggestions")
+#                 if st.button("Translate AI-Suggested Transcription"):
+#                     st.session_state["ai_suggestions_translated"] = translate_text(st.session_state.ai_suggestions, language_ai_suggestions)
+#                     st.rerun()  
+
+#                 download_button_text("⬇ Download AI-Suggested Transcription", st.session_state.get("ai_suggestions_translated", st.session_state.ai_suggestions), "ai_suggestions.txt")
+
+#             # 🔹 AI-Generated Show Notes
+#             with st.expander("📝 AI-Generated Show Notes & Marketing Snippets"):
+#                 show_notes_text = st.session_state.get("show_notes_translated", st.session_state.show_notes)
+#                 show_notes_text = st.text_area("", show_notes_text, height=200, key="show_notes")
+
+#                 language_show_notes = st.selectbox("🌍 Translate AI-Generated Show Notes to:", languages, key="lang_show_notes")
+#                 if st.button("Translate AI-Generated Show Notes"):
+#                     st.session_state["show_notes_translated"] = translate_text(st.session_state.show_notes, language_show_notes)
+#                     st.rerun()  
+
+#                 download_button_text("⬇ Download AI-Generated Show Notes", st.session_state.get("show_notes_translated", st.session_state.show_notes), "ai_show_notes.txt")
+            
+
+#             with st.expander("💬 AI-Generated Quotes"):
+#                 quotes_text = st.session_state.get("quotes_translated", st.session_state.quotes) or ""
+#                 st.text_area("💬 Quotes", value=quotes_text, height=200, key="quotes")
+
+#                 language_quotes = st.selectbox("🌍 Translate Quotes to:", languages, key="lang_quotes")
+#                 if st.button("Translate Quotes"):
+#                     st.session_state["quotes_translated"] = translate_text(quotes_text, language_quotes)
+#                     st.rerun()
+
+#                 download_button_text("⬇ Download AI-Generated Quotes", st.session_state.get("quotes_translated", quotes_text), "ai_quotes.txt")
+
+#                 # 🖼️ Display quote images (from URLs)
+#                 quote_images = st.session_state.get("quote_images", [])
+#                 if quote_images:
+#                     st.markdown("### 🖼️ Quote Images")
+#                     for i, url in enumerate(quote_images, 1):
+#                         if url:
+#                             st.image(url, use_column_width=True)
+#                             st.markdown(f"[⬇ Download Image {i}]({url})", unsafe_allow_html=True)
