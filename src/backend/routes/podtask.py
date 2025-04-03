@@ -3,6 +3,7 @@ from flask import request, jsonify, Blueprint, g
 from backend.database.mongo_connection import collection
 from datetime import datetime, timezone
 from backend.models.podtasks import PodtaskSchema
+from backend.models.workflows import WorkflowSchema  # Import the schema
 import uuid
 import json
 from flask import Blueprint, request, jsonify, g
@@ -15,6 +16,8 @@ podtask_bp = Blueprint("podtask_bp", __name__)
 # EXTRA FUNCTIONALITY BESIDES CRUD OPERATIONS SHOULD BE IN SERVICES
 # Instantiate the Podtask Repository
 podtask_repo = PodtaskRepository()
+
+
 
 
 @podtask_bp.route("/add_podtasks", methods=["POST"])
@@ -45,6 +48,21 @@ def get_podtasks():
 
     response, status_code = podtask_repo.get_podtasks(g.user_id)
     return jsonify(response), status_code
+
+
+@podtask_bp.route('/get_podtask/<task_id>', methods=['GET'])
+def get_podtask(task_id):
+    if not g.user_id:
+        return jsonify({"error": "Unauthorized"}), 401
+
+    try:
+        task = podtask_repo.get_podtask_by_id(g.user_id, task_id)  # Using the repository method
+        if task:
+            return jsonify(task), 200
+        else:
+            return jsonify({'error': 'Task not found'}), 404
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
 
 
 @podtask_bp.route("/delete_podtasks/<task_id>", methods=["DELETE"])
@@ -116,3 +134,60 @@ def add_default_tasks_to_episode_route():
     except Exception as e:
         print("Error in add_default_tasks_to_episode_route:", e)
         return jsonify({"error": str(e)}), 500
+
+@podtask_bp.route("/save_workflow", methods=["POST"])
+def save_workflow():
+    if not g.user_id:
+        return jsonify({"error": "Unauthorized"}), 401
+    if request.content_type != "application/json":
+        return jsonify({"error": "Invalid Content-Type. Expected application/json"}), 415
+    try:
+        data = request.get_json()
+        episode_id = data.get("episode_id")
+        tasks = data.get("tasks")
+        # Get the name and description from the request data
+        name = data.get("name", "Unnamed Workflow")  # Default if not provided
+        description = data.get("description", "")  # Empty string if not provided
+
+        # Create workflow
+        workflow_id = str(uuid.uuid4())
+        workflow_data = {
+            "_id": workflow_id,
+            "user_id": g.user_id,
+            "episode_id": episode_id,
+            "tasks": tasks,
+            "name": name,  # Add name field
+            "description": description,  # Add description field
+            "created_at": datetime.now(timezone.utc),
+        }
+
+        # Save workflow to DB
+        result = collection.database.Workflows.insert_one(workflow_data)
+
+        if result.inserted_id:
+            return jsonify({"message": "Workflow saved successfully", "workflow_id": workflow_id}), 201
+        else:
+            return jsonify({"error": "Failed to save workflow"}), 500
+
+    except Exception as e:
+        return jsonify({"error": f"Failed to save workflow: {str(e)}"}), 500
+
+
+@podtask_bp.route('/get_workflows', methods=['GET'])
+def get_workflows():
+    if not g.user_id:
+        return jsonify({"error": "Unauthorized"}), 401
+
+    try:
+        # Fetch workflows from the database
+        workflows = list(collection.database.Workflows.find({"user_id": g.user_id}))
+
+        # Serialize the workflows to convert ObjectId to string
+        schema = WorkflowSchema(many=True)
+        workflows_data = schema.dump(workflows)
+
+        return jsonify({"workflows": workflows_data}), 200
+
+    except Exception as e:
+        return jsonify({"error": f"Failed to fetch workflows: {str(e)}"}), 500
+

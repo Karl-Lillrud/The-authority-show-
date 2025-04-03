@@ -41,7 +41,6 @@ export async function saveTask(taskData) {
     });
     const result = await response.json();
     if (response.ok) {
-      alert("Task saved successfully!");
       return result;
     } else {
       console.error("Error saving task:", result.error);
@@ -55,7 +54,7 @@ export async function saveTask(taskData) {
 
 export async function updateTask(taskId, taskData) {
   try {
-    const response = await fetch(`/update_podtask/${taskId}`, {
+    const response = await fetch(`/update_podtasks/${taskId}`, {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(taskData)
@@ -76,7 +75,7 @@ export async function updateTask(taskId, taskData) {
 
 export async function deleteTask(taskId) {
   try {
-    const response = await fetch(`/delete_podtask/${taskId}`, {
+    const response = await fetch(`/delete_podtasks/${taskId}`, {
       method: "DELETE"
     });
     const result = await response.json();
@@ -206,5 +205,52 @@ export async function addDefaultTasksToEpisode(episodeId, defaultTasks) {
   } catch (error) {
     console.error("Error adding default tasks to episode:", error);
     alert("Failed to add default tasks to episode.");
+  }
+}
+
+export async function saveWorkflow(episodeId, workflowName, workflowDescription, tasks) {
+  try {
+    const response = await fetch("/save_workflow", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ 
+        episode_id: episodeId, 
+        tasks, 
+        name: workflowName,
+        description: workflowDescription 
+      }),
+    });
+    const data = await response.json();
+    if (response.ok) {
+      alert("Workflow saved successfully!");
+      return data;
+    } else {
+      alert("Failed to save workflow: " + data.error);
+      return null;
+    }
+  } catch (error) {
+    console.error("Error saving workflow:", error);
+    alert("Failed to save workflow.");
+    throw error;
+  }
+}
+
+export async function getWorkflows() {
+  try {
+    const response = await fetch("/get_workflows", {
+      method: "GET", 
+      headers: { "Content-Type": "application/json" }
+    });
+    const data = await response.json();
+    if (response.ok) {
+      return data.workflows;
+    } else {
+      alert("Failed to fetch workflows: " + data.error);
+      return [];
+    }
+  } catch (error) {
+    console.error("Error fetching workflows:", error);
+    alert("Failed to fetch workflows.");
+    throw error;
   }
 }

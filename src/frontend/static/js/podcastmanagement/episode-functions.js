@@ -1,6 +1,5 @@
 import {
   registerEpisode,
-  fetchEpisodesByPodcast,
   fetchEpisode,
   updateEpisode,
   deleteEpisode
@@ -62,6 +61,14 @@ export function playAudio(audioUrl, episodeTitle) {
   </audio>
 `;
 
+  // Add error event to the audio element
+  const audioEl = audioPlayer.querySelector("audio");
+  if (audioEl) {
+    audioEl.addEventListener("error", () => {
+      showNotification("Error", "Failed to load or play audio.", "error");
+    });
+  }
+
   // Add event listener to close button
   document
     .getElementById("close-audio-player")
@@ -76,69 +83,93 @@ export function renderEpisodeDetail(episode) {
   const publishDate = episode.publishDate
     ? new Date(episode.publishDate).toLocaleString()
     : "Not specified";
-  const duration = episode.duration || "Unknown";
+
+  // Convert duration from seconds to minutes and seconds
+  const durationMinutes = Math.floor(episode.duration / 60);
+  const durationSeconds = episode.duration % 60;
+  const formattedDuration = `${durationMinutes}m ${durationSeconds}s`;
+
   const episodeType = episode.episodeType || "Unknown";
   const link = episode.link || "No link available";
-  const author = episode.author || "Unknown";
+  const host = episode.author || "Unknown"; // Changed "author" to "host"
   const fileSize = episode.fileSize || "Unknown";
   const fileType = episode.fileType || "Unknown";
 
   episodeDetailElement.innerHTML = `
-  <div class="detail-header">
-    <button class="back-btn" id="back-to-podcast">
-      ${shared.svgpodcastmanagement.back}
-      Back to podcast
+<div class="detail-header">
+  <button class="back-btn" id="back-to-podcast">
+    ${shared.svgpodcastmanagement.back}
+    Back to podcast
+  </button>
+  <div class="top-right-actions">
+    <button class="action-btn edit-btn" id="edit-episode-btn" data-id="${
+      episode._id
+    }">
+      ${shared.svgpodcastmanagement.edit}
     </button>
-    <div class="top-right-actions">
-      <button class="action-btn edit-btn" id="edit-episode-btn" data-id="${
-        episode._id
-      }">
-        ${shared.svgpodcastmanagement.edit}
-      </button>
+  </div>
+</div>
+
+<div class="podcast-detail-container">
+  <!-- Header section with image and basic info -->
+  <div class="podcast-header-section">
+    <div class="podcast-image-container">
+      <div class="detail-image" style="background-image: url('${
+        episode.image || episode.imageUrl || "default-image.png"
+      }')"></div>
+    </div>
+    <div class="podcast-basic-info">
+      <h1 class="detail-title">${episode.title}</h1>
+      ${
+        episode.status ? `<p class="detail-category">${episode.status}</p>` : ""
+      }
+      <div class="podcast-meta-info">
+        <div class="meta-item">
+          <span class="meta-label">Publish Date:</span>
+          <span class="meta-value">${publishDate}</span>
+        </div>
+        <div class="meta-item">
+          <span class="meta-label">Duration:</span>
+          <span class="meta-value">${formattedDuration}</span>
+        </div>
+        <div class="meta-item">
+          <span class="meta-label">Host:</span>
+          <span class="meta-value">${host}</span>
+        </div>
+      </div>
     </div>
   </div>
-  <div class="detail-content">
-    <div class="detail-image" style="background-image: url('${
-      episode.image || "default-image.png"
-    }')"></div>
-    <div class="detail-info">
-      <h1 class="detail-title">${episode.title}</h1>
-      <p class="detail-category">${episode.status || "Uncategorized"}</p>
-      <div class="detail-section">
-        <h2>About</h2>
-        <p>${episode.description || "No description available."}</p>
-        
-        <!-- Audio player moved here, under the description -->
-        ${
-          episode.audioUrl
-            ? `<div class="audio-player-container">
-                <audio controls>
-                  <source src="${episode.audioUrl}" type="${
-                fileType || "audio/mpeg"
-              }">
-                  Your browser does not support the audio element.
-                </audio>
-              </div>`
-            : "<p>No audio available for this episode.</p>"
-        }
-      </div>
-      <div class="separator"></div>
+  
+  <!-- About section -->
+  <div class="podcast-about-section">
+    <h2 class="section-title">About</h2>
+    <p class="podcast-description">${
+      episode.description || "No description available."
+    }</p>
+    
+    <!-- Audio player -->
+    ${
+      episode.audioUrl
+        ? `<div class="audio-player-container">
+            <audio controls>
+              <source src="${episode.audioUrl}" type="${
+            fileType || "audio/mpeg"
+          }">
+              Your browser does not support the audio element.
+            </audio>
+          </div>`
+        : "<p>No audio available for this episode.</p>"
+    }
+  </div>
+  
+  <!-- Additional details section -->
+  <div class="podcast-details-section">
+    <div class="details-column">
+      <h2 class="section-title">Episode Details</h2>
       <div class="detail-grid">
-        <div class="detail-item">
-          <h3>Publish Date</h3>
-          <p>${publishDate}</p>
-        </div>
-        <div class="detail-item">
-          <h3>Duration</h3>
-          <p>${duration} minutes</p>
-        </div>
         <div class="detail-item">
           <h3>Episode Type</h3>
           <p>${episodeType}</p>
-        </div>
-        <div class="detail-item">
-          <h3>Author</h3>
-          <p>${author}</p>
         </div>
         <div class="detail-item">
           <h3>File Size</h3>
@@ -157,18 +188,21 @@ export function renderEpisodeDetail(episode) {
           }
         </div>
       </div>
-      <div class="separator"></div>
-      <div class="detail-section">
-        <h2>Guests</h2>
-        <div id="guests-list"></div>
-      </div>
     </div>
   </div>
-  <div class="detail-actions">
-    <button class="delete-btn" id="delete-episode-btn" data-id="${episode._id}">
-      ${shared.svgpodcastmanagement.delete} Delete Episode
-    </button>
+  
+  <!-- Guests section -->
+  <div class="podcast-about-section">
+    <h2 class="section-title">Guests</h2>
+    <div id="guests-list"></div>
   </div>
+</div>
+
+<div class="detail-actions">
+  <button class="delete-btn" id="delete-episode-btn" data-id="${episode._id}">
+    ${shared.svgpodcastmanagement.delete} Delete Episode
+  </button>
+</div>
 `;
 
   // Define the episodeActions container
@@ -397,6 +431,18 @@ async function showEpisodePopup(episode) {
       Object.keys(updatedData).forEach((key) => {
         if (!updatedData[key]) delete updatedData[key];
       });
+
+      if (updatedData.duration) {
+        if (updatedData.duration < 0) {
+          showNotification(
+            "Invalid duration",
+            "Please provide a positive integer for duration",
+            "error"
+          );
+          return;
+        }
+      }
+
       try {
         const result = await updateEpisode(episode._id, updatedData); // Use updateEpisode from episodeRequest.js
         if (result.message) {
@@ -447,7 +493,6 @@ export function initEpisodeFunctions() {
         );
       }
     });
-
   // Close the episode form popup
   document
     .getElementById("close-episode-form-popup")
@@ -462,6 +507,38 @@ export function initEpisodeFunctions() {
       document.getElementById("episode-form-popup").style.display = "none";
     });
 
+  // Update the episode creation form to include recordingAt
+  /* document.getElementById("create-episode-form").innerHTML += `
+    <div class="field-group">
+      <label for="recording-at">Recording Date</label>
+      <input type="datetime-local" id="recording-at" name="recordingAt" />
+    </div>
+  `; */
+
+  // Assuming you are getting the episode data from the backend or checking a condition
+  function loadEpisodeDetails(episodeData) {
+    const episodeInput = document.getElementById("episode-id");
+
+    // Check if the episode is created
+    if (episodeData && episodeData.isCreated) {
+      // Disable the input field and apply greyed-out styles
+      episodeInput.disabled = true;
+      episodeInput.style.backgroundColor = "#d3d3d3"; // Grey out the background
+      episodeInput.style.color = "#a9a9a9"; // Grey out the text
+    } else {
+      // Enable the input field if the episode is not created
+      episodeInput.disabled = false;
+      episodeInput.style.backgroundColor = ""; // Reset background color
+      episodeInput.style.color = ""; // Reset text color
+    }
+  }
+
+  // Example usage when the episode data is available
+  const episodeData = {
+    isCreated: true // Example flag, replace with actual check
+  };
+  loadEpisodeDetails(episodeData);
+
   // Episode form submission
   document
     .getElementById("create-episode-form")
@@ -469,6 +546,19 @@ export function initEpisodeFunctions() {
       e.preventDefault();
       const formData = new FormData(e.target);
       const data = Object.fromEntries(formData.entries());
+
+      // Ensure recordingAt is in the correct format
+      if (data.recordingAt) {
+        const recordingAt = new Date(data.recordingAt);
+        if (isNaN(recordingAt.getTime())) {
+          showNotification(
+            "Invalid Date",
+            "Please provide a valid recording date.",
+            "error"
+          );
+          return;
+        }
+      }
 
       // Check for missing required fields
       if (!data.podcastId || !data.title || !data.publishDate) {
@@ -489,6 +579,16 @@ export function initEpisodeFunctions() {
           "error"
         );
         return;
+      }
+      if (data.duration) {
+        if (data.duration < 0) {
+          showNotification(
+            "Invalid duration",
+            "Please provide a positive integer for duration",
+            "error"
+          );
+          return;
+        }
       }
 
       try {

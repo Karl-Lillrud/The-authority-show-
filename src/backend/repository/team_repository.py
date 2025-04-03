@@ -140,10 +140,9 @@ class TeamRepository:
             if not team:
                 return {"error": "Team not found"}, 404
 
-            team_name = team.get("name", "Unknown Team")  # Hämta teamets namn
+            team_name = team.get("name", "Unknown Team")
 
             self.user_to_teams_collection.delete_many({"teamId": team_id})
-
             result = self.teams_collection.delete_one({"_id": team_id})
             if result.deleted_count == 0:
                 return {"error": "Failed to delete the team"}, 500
@@ -151,6 +150,14 @@ class TeamRepository:
             update_result = self.podcasts_collection.update_many(
                 {"teamId": team_id}, {"$set": {"teamId": None}}
             )
+            # Delete verified non-creator users from Users collection using user id
+            for member in team.get("members", []):
+                if (
+                    member.get("role") != "creator"
+                    and member.get("verified", False)
+                    and member.get("userId")
+                ):
+                    self.users_collection.delete_one({"_id": member["userId"]})
 
             return {
                 "message": f"Team '{team_name}' and all members deleted successfully!",
@@ -220,8 +227,10 @@ class TeamRepository:
             logger.error(f"Error adding member to team: {e}", exc_info=True)
             return {"error": f"Failed to add member: {str(e)}"}, 500
 
-    # Delete team when user is team creator or remove user from teams members when user account is deleted  
-    def remove_member_or_delete_team(self, team_id: str, user_id: str, return_message_only=False):
+    # Delete team when user is team creator or remove user from teams members when user account is deleted
+    def remove_member_or_delete_team(
+        self, team_id: str, user_id: str, return_message_only=False
+    ):
         try:
             team = self.teams_collection.find_one({"_id": team_id})
             if not team:
@@ -245,8 +254,7 @@ class TeamRepository:
             else:
                 # Member: Remove user from team members and UsersToTeams
                 self.teams_collection.update_one(
-                    {"_id": team_id},
-                    {"$pull": {"members": {"userId": user_id}}}
+                    {"_id": team_id}, {"$pull": {"members": {"userId": user_id}}}
                 )
                 self.user_to_teams_collection.delete_many(
                     {"teamId": team_id, "userId": user_id}
@@ -259,3 +267,17 @@ class TeamRepository:
             logger.error(f"Error removing user or deleting team: {e}", exc_info=True)
             msg = {"error": f"Failed to update team: {str(e)}"}
             return msg if return_message_only else (msg, 500)
+
+    def edit_team_member_by_email(self, team_id, email, new_role):
+        try:
+            result = self.teams_collection.update_one(
+                {"_id": team_id, "members.email": email},
+                {"$set": {"members.$.role": new_role}},
+            )
+            if result.modified_count > 0:
+                return {"message": "Member role updated successfully!"}, 200
+            else:
+                return {"error": "No matching member found or role unchanged."}, 400
+        except Exception as e:
+            logger.error(f"Error editing member by email: {e}", exc_info=True)
+            return {"error": f"Failed to edit member: {str(e)}"}, 500

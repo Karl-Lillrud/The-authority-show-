@@ -105,14 +105,6 @@ def register_team_member():
     """Serves the team member registration page."""
     return render_template("team/register_team_member.html")
 
-
-@dashboard_bp.route("/guest", methods=["GET", "POST"])
-def guest():
-    if not g.user_id:
-        return redirect(url_for("auth_bp.signin"))  # Updated endpoint
-    return render_template("guest/guest.html")
-
-
 @dashboard_bp.route("/addmember", methods=["GET"])
 def addmember():
     if not g.user_id:

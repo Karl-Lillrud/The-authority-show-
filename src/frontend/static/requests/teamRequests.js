@@ -94,3 +94,12 @@ export async function addTeamMemberRequest(teamId, email, role) {
   console.log("Response from /add_team_member:", data); // Debug log
   return data;
 }
+
+export async function editTeamMemberByEmailRequest(teamId, email, role) {
+  const res = await fetch("/edit_team_member_by_email", {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ teamId, email, role })
+  });
+  return res.json();
+}

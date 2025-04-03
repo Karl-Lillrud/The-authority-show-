@@ -7,6 +7,7 @@ from uuid import uuid4
 
 logger = logging.getLogger(__name__)
 
+
 class UserToTeamRepository:
     def __init__(self):
         self.users_to_teams_collection = collection.database.UsersToTeams
@@ -186,24 +187,53 @@ class UserToTeamRepository:
             logger.error(f"Error retrieving team members: {e}", exc_info=True)
             return {"error": f"Failed to retrieve team members: {str(e)}"}, 500
 
-    def edit_team_member(self, team_id, user_id, new_role):
+    def edit_team_member(self, team_id, user_id, new_role, full_name=None, phone=None):
         try:
-            # Uppdatera rollen i UsersToTeams
-            result = self.users_to_teams_collection.update_one(
-                {"teamId": team_id, "userId": user_id}, {"$set": {"role": new_role}}
+            logger.info(
+                f"Editing team member: team_id={team_id}, user_id={user_id}, new_role={new_role}, full_name={full_name}, phone={phone}"
             )
-            if result.modified_count == 0:
-                return {"error": "Failed to update role in UsersToTeams"}, 500
 
-            # Uppdatera rollen i Teams-arrayen
-            result = self.teams_collection.update_one(
+            # Uppdatera roll och extra fält i Teams array
+            update_fields_teams = {"members.$.role": new_role}
+            if full_name:
+                update_fields_teams["members.$.fullName"] = full_name
+            if phone:
+                update_fields_teams["members.$.phone"] = phone
+
+            result_teams = self.teams_collection.update_one(
                 {"_id": team_id, "members.userId": user_id},
-                {"$set": {"members.$.role": new_role}},
+                {"$set": update_fields_teams},
             )
-            if result.modified_count == 0:
-                return {"error": "Failed to update role in Teams array"}, 500
+            if result_teams.modified_count == 0:
+                logger.error("Failed to update member in Teams array")
+                return {"error": "Failed to update member in Teams array"}, 500
 
-            return {"message": "Member role updated successfully"}, 200
+            # Uppdatera UsersToTeams-dokumentet med ny roll
+            result_u2t = self.users_to_teams_collection.update_one(
+                {"teamId": team_id, "userId": user_id},
+                {"$set": {"role": new_role}},
+            )
+            if result_u2t.modified_count == 0:
+                logger.warning("Role not updated in UsersToTeams collection")
+
+            # Uppdatera fullName och phone i Users-kollektionen om angivet
+            update_fields_users = {}
+            if full_name:
+                update_fields_users["fullName"] = full_name
+            if phone:
+                update_fields_users["phone"] = phone
+
+            if update_fields_users:
+                result_users = self.users_collection.update_one(
+                    {"_id": user_id}, {"$set": update_fields_users}
+                )
+                if result_users.modified_count == 0:
+                    logger.warning("Failed to update user details in Users collection")
+
+            logger.info(
+                "Member details updated successfully in Users, Teams and UsersToTeams schemas"
+            )
+            return {"message": "Member details updated successfully"}, 200
 
         except Exception as e:
             logger.error(f"Error editing team member: {e}", exc_info=True)
@@ -213,14 +243,9 @@ class UserToTeamRepository:
         try:
             logger.info(
                 f"Deleting team member with team_id={team_id}, user_id={user_id}, email={email}"
-            )  # Debugging log
-
+            )
             if user_id:
-                # Fetch email for debugging purposes
-                user = self.users_collection.find_one({"_id": user_id}, {"email": 1})
-                email = user.get("email") if user else "Unknown Email"
-
-                # Remove member from UsersToTeams
+                # Remove member from UsersToTeams using user_id
                 result = self.users_to_teams_collection.delete_one(
                     {"teamId": team_id, "userId": user_id}
                 )
@@ -228,7 +253,7 @@ class UserToTeamRepository:
                     logger.error("Failed to delete member from UsersToTeams")
                     return {"error": "Failed to delete member from UsersToTeams"}, 500
 
-                # Remove member from Teams array
+                # Remove member from Teams array using user_id
                 result = self.teams_collection.update_one(
                     {"_id": team_id}, {"$pull": {"members": {"userId": user_id}}}
                 )
@@ -236,10 +261,19 @@ class UserToTeamRepository:
                     logger.error("Failed to delete member from Teams array")
                     return {"error": "Failed to delete member from Teams array"}, 500
 
-                return {"message": f"Member '{email}' deleted successfully"}, 200
+                # Delete the user from Users collection by _id
+                delete_user_result = self.users_collection.delete_one({"_id": user_id})
+                if delete_user_result.deleted_count == 0:
+                    logger.warning(
+                        "User not found in Users collection, skipping deletion"
+                    )
+
+                return {
+                    "message": f"Member with user_id '{user_id}' deleted successfully"
+                }, 200
 
             elif email:
-                # Remove unverified member from Teams array
+                # Remove unverified member from Teams array via email
                 result = self.teams_collection.update_one(
                     {"_id": team_id, "members.email": email, "members.verified": False},
                     {"$pull": {"members": {"email": email, "verified": False}}},
@@ -249,6 +283,15 @@ class UserToTeamRepository:
                     return {
                         "error": "Failed to delete unverified member from Teams array"
                     }, 500
+
+                # Optionally delete the user from Users collection by email
+                delete_user_result = self.users_collection.delete_one(
+                    {"email": email.lower()}
+                )
+                if delete_user_result.deleted_count == 0:
+                    logger.warning(
+                        "Unverified user not found in Users collection, skipping deletion"
+                    )
 
                 return {
                     "message": f"Unverified member '{email}' deleted successfully"
@@ -267,7 +310,9 @@ class UserToTeamRepository:
         try:
             result = self.users_to_teams_collection.delete_many({"userId": user_id})
             if result.deleted_count > 0:
-                logger.info(f"🧹 Removed user {user_id} from {result.deleted_count} team links")
+                logger.info(
+                    f"🧹 Removed user {user_id} from {result.deleted_count} team links"
+                )
             return result.deleted_count
         except Exception as e:
             logger.error(f"❌ Failed to remove user from teams: {e}", exc_info=True)
