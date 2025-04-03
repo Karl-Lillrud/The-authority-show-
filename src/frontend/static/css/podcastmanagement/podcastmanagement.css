@@ -59,7 +59,7 @@
   width: var(--sidebar-width);
   height: 100vh;
   background-color: var(--sidebar-bg);
-  z-index: 100;
+  z-index: 9;
   transition: transform var(--transition-normal), width var(--transition-normal);
 }
 
