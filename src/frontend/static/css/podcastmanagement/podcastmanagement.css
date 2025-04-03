@@ -34,9 +34,10 @@
 
 /* Sidebar Styles */
 .sidebar {
-  position: absolute;
+  position: fixed;
+  left: 0;
   top: 0;
-  height: calc(100vh - var(--header-height, 80px));
+  height: 100vh;
   width: var(--sidebar-width);
   background-color: var(--sidebar-bg);
   border-right: 1px solid var(--sidebar-border);
@@ -45,7 +46,7 @@
   transition: width var(--transition-normal);
   overflow: hidden;
   box-shadow: 0 0 20px rgba(0, 0, 0, 0.05);
-  z-index: 9;
+  z-index: 100;
   box-sizing: border-box;
 }
 
@@ -164,12 +165,31 @@
 }
 
 /* Main Content */
-.main-content {
+/* .main-content {
   flex: 1;
   overflow-y: auto;
   padding: var(--spacing-lg);
   transition: margin-left var(--transition-normal);
-  margin-left: var(--sidebar-width);
+  margin-left: 0; /* reduce or remove the sidebar offset */
+  /* min-height: calc(100vh - var(--header-height, 60px));
+} */ 
+
+.main-content {
+  flex: 1;
+  transition: margin-left var(--transition-normal);
+  padding: var(--spacing-lg);
+  background-color: var(--background-light);
+  margin-left: var(--sidebar-width); /* default desktop behavior */
+}
+
+.sidebar-collapsed .main-content {
+  margin-left: var(--sidebar-collapsed-width); /* collapsed behavior */
+}
+
+@media (max-width: 768px) {
+  .main-content {
+    margin-left: 0 !important; /* full width on mobile, sidebar overlays */
+  }
 }
 
 /* Sidebar Action Buttons */
@@ -197,6 +217,13 @@
   margin-bottom: 8px;
   transition: all var(--transition-normal);
   text-align: left;
+}
+
+.podcast-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-lg);
+  width: 100%;
 }
 
 .sidebar-action-button:hover {
@@ -256,17 +283,15 @@
 }
 
 .podcast-card {
+  width: 100%;
+  max-width: unset; /* remove previous 600px cap */
+  background-color: white;
+  border-radius: var(--radius-large);
+  padding: 1rem;
+  box-shadow: var(--card-shadow);
   display: flex;
   flex-direction: row;
-  align-items: flex-start;
-  padding: 1rem;
   gap: 1rem;
-  background-color: #fff;
-  border-radius: var(--radius-large);
-  box-shadow: var(--card-shadow);
-  transition: var(--transition-normal);
-  max-width: 600px;
-  width: 100%;
 }
 
 .podcast-image {
