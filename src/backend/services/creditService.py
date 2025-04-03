@@ -1,12 +1,17 @@
 from datetime import datetime
-from database.mongo_connection import collection
+from backend.database.mongo_connection import collection
 from backend.utils.credit_costs import CREDIT_COSTS
 from backend.repository.credits_repository import (
     get_credits_by_user_id, update_credits, log_credit_transaction
 )
 
+from bson import ObjectId  
+
 def get_user_credits(user_id):
-    return get_credits_by_user_id(user_id)
+    credits = get_credits_by_user_id(user_id)
+    if credits:
+        credits["_id"] = str(credits["_id"])  # Convert ObjectId to string
+    return credits
 
 def consume_credits(user_id, feature_name):
     cost = CREDIT_COSTS.get(feature_name)
