@@ -306,15 +306,14 @@
 }
 
 .podcast-card {
-  width: 100%;
-  max-width: unset; /* remove previous 600px cap */
   background-color: white;
   border-radius: var(--radius-large);
-  padding: 1rem;
   box-shadow: var(--card-shadow);
+  box-shadow: var(--card-shadow-hover);
+  padding: var(--spacing-lg);
   display: flex;
-  flex-direction: row;
-  gap: 1rem;
+  gap: var(--spacing-lg);
+  align-items: flex-start;
 }
 
 .podcast-image {
@@ -359,9 +358,23 @@
 }
 
 /* Optional: Styling the episode list inside the card */
-.podcast-card .episodes-list {
-  margin-top: 0.8rem;
-  font-size: 0.8rem;
+.episodes-list {
+  background-color: #f9f9f9;
+  border-radius: var(--radius-medium);
+  padding: var(--spacing-sm) var(--spacing-md);
+  margin-top: var(--spacing-md);
+  border-left: 3px solid var(--highlight-color);
+}
+
+.episode-title {
+  font-weight: 600;
+  font-size: 0.95rem;
+  margin-bottom: 4px;
+}
+
+.episode-description {
+  font-size: 0.85rem;
+  color: var(--text-color-light);
 }
 
 .podcast-card .episode-title {
