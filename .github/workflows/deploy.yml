@@ -23,6 +23,10 @@ jobs:
 
           pip install -r src/requirements.txt
 
+      - name: Remove default hostingstart.html
+        run: |
+          rm -f hostingstart.html
+
       - name: Deploy to Azure App Service
         uses: azure/webapps-deploy@v2
         with:
