@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Enter Verification Code</title>
+  <link rel="stylesheet" href="/static/css/global/styles.css">
+  <link rel="stylesheet" href="/static/css/verification/enter-verification-code.css">
+</head>
+<body>
+  <div class="background">
+    <img src="/static/images/PodManager-AI-Background.jpeg" alt="Background Image" class="background-image">
+  </div>
+  <div class="container">
+    <div class="card">
+      <h1 class="title">Enter Verification Code</h1>
+      <p class="description">A verification code has been sent to your email. Please enter it below to continue.</p>
+      <form id="verification-code-form">
+        <input type="hidden" id="email" value="{{ email }}">
+        <div class="input-group">
+          <label for="verification-code" class="label">Verification Code</label>
+          <input type="text" id="verification-code" class="input" placeholder="Enter verification code" required>
+        </div>
+        <div id="error-message" class="error-message" style="display: none;"></div>
+        <button type="submit" class="button button-primary">Verify</button>
+      </form>
+    </div>
+  </div>
+  <script src="/static/js/verification/enter-verification-code.js"></script>
+</body>
+</html>

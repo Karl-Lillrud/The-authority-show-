@@ -73,17 +73,25 @@ class AuthService:
             # Fetch the user's stored code and expiration time from the database
             user_data = self.user_collection.find_one({"email": email})
             if not user_data:
+                logger.error(f"User with email {email} not found.")
                 return {"error": "Email not found"}, 404
 
             stored_code = user_data.get("verification_code")
             expiration_time = user_data.get("code_expires_at")
 
+            # Check if the code or expiration time is missing
+            if not stored_code or not expiration_time:
+                logger.error(f"Verification code or expiration time missing for email {email}.")
+                return {"error": "Verification code not found or expired"}, 400
+
             # Check if the code has expired
-            if time.time() > expiration_time:
+            if datetime.utcnow() > expiration_time:
+                logger.error(f"Verification code for email {email} has expired.")
                 return {"error": "Verification code has expired"}, 400
 
             # Check if the code matches
             if hashlib.sha256(code.encode()).hexdigest() != stored_code:
+                logger.error(f"Invalid verification code for email {email}.")
                 return {"error": "Invalid verification code"}, 400
 
             # Remove the code after successful verification
@@ -96,11 +104,11 @@ class AuthService:
             user = self.user_collection.find_one({"email": email})
             self._setup_session(user, remember=False)
 
-            return {"message": "Login successful"}, 200
+            logger.info(f"User with email {email} logged in successfully.")
+            return {"message": "Login successful", "redirect_url": "/dashboard"}, 200
         except Exception as e:
-            logger.error(f"Error verifying code: {e}", exc_info=True)
+            logger.error(f"Error verifying code for email {email}: {e}", exc_info=True)
             return {"error": "An error occurred during verification"}, 500
-
 
     def send_verification_code(self, email, latitude=None, longitude=None):
         """
@@ -123,17 +131,17 @@ class AuthService:
             # Get the current time in the determined timezone (handling DST automatically)
             local_timezone = pytz.timezone(timezone_name)
             current_time = datetime.now(local_timezone)  # Current time in the user's timezone
-            expiration_time = current_time + timedelta(minutes=5)  # Verification code valid for 5 minutes
-
-            # Format current time to show only hours and minutes
-            formatted_current_time = current_time.strftime("%H:%M")  # Hours and minutes in 24-hour format
-            formatted_expiration_time = expiration_time.strftime("%H:%M")  # Hours and minutes in 24-hour format
+            expiration_time = datetime.utcnow() + timedelta(minutes=10)  # Extend validity to 10 minutes
 
             # Hash the verification code
             hashed_code = hashlib.sha256(code.encode()).hexdigest()
 
-            # Store the verification code and timestamps in the database
-            self._store_verification_code(email, hashed_code, formatted_expiration_time, formatted_current_time)
+            # Store the verification code and expiration time in the database
+            self.user_collection.update_one(
+                {"email": email},
+                {"$set": {"verification_code": hashed_code, "code_expires_at": expiration_time}},
+                upsert=True
+            )
 
             # Send the verification code to the user's email
             subject = "Verification Code"
@@ -142,7 +150,7 @@ class AuthService:
                 <body>
                     <p>Hello,</p>
                     <p>Your verification code is: <strong>{code}</strong></p>
-                    <p>This code is valid for 5 minutes.</p>
+                    <p>This code is valid for 10 minutes.</p>
                     <p>If you did not request this code, please ignore this email.</p>
                 </body>
             </html>
@@ -170,8 +178,6 @@ class AuthService:
             },
             upsert=True
         )
-
-
 
     def _authenticate_user(self, email, password):
         """Authenticate user with email and password."""

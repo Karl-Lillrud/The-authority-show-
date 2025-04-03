@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sign In</title>
+  <link rel="stylesheet" href="/static/css/global/styles.css">
+</head>
+<body>
+  <div id="success-message" style="display: none;"></div>
+  <div id="error-message" style="display: none;"></div>
+
+  <div id="login-form">
+    <form id="signin-form">
+      <input type="email" id="email" placeholder="Enter your email" required />
+      <input type="password" id="password" placeholder="Enter your password" required />
+      <button type="submit">Sign In</button>
+      <button type="button" id="send-code-button">Sign in with Verification Code</button>
+      <p id="send-code-message"></p>
+    </form>
+  </div>
+
+  <div id="verification-form" style="display: none;">
+    <form id="verification-code-form">
+      <input type="text" id="verification-code" placeholder="Enter verification code" required />
+      <button type="button" id="login-with-code-button">Login</button>
+      <button type="button" id="back-to-login">Back to Login</button>
+      <p id="send-code-message"></p>
+    </form>
+  </div>
+
+  <script src="/static/js/signin/signin.js"></script>
+</body>
+</html>

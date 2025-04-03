@@ -4,7 +4,8 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Sign In</title>
-    <link rel="stylesheet" href="/static/css/signin/signin.css" />
+    <link rel="stylesheet" href="/static/css/global/styles.css">
+    <link rel="stylesheet" href="/static/css/signin/signin.css">
     <link
       rel="icon"
       type="image/x-icon"
@@ -37,84 +38,114 @@
       ></div>
       <div id="error-message" class="error-message" style="display: none"></div>
 
-      <form id="signin-form">
+      <div id="login-form">
+        <form id="signin-form">
+          <div class="input-group">
+            <label for="email" class="label"></label>
+            <input
+              type="email"
+              id="email"
+              name="email"
+              class="input"
+              placeholder="Email"
+              required
+            />
+          </div>
+          <div class="input-group">
+            <label for="password" class="label"></label>
+            <input
+              type="password"
+              id="password"
+              name="password"
+              class="input"
+              placeholder="Password"
+              required
+            />
+          </div>
+
+          <div class="forgot-password-link">
+            <a href="/forgotpassword" class="link">Forgot Password?</a>
+          </div>
+
+          <div class="form-actions">
+            <!-- Rename the button -->
+            <button
+              type="button"
+              id="send-code-button"
+              class="button button-secondary"
+            >
+              Sign in with Verification Code
+            </button>
+            <!-- Add the missing message container -->
+            <p id="send-code-message" class="message" style="display: none;"></p>
+            <!-- Sign In button -->
+            <button type="submit" class="button button-primary">Sign In</button>
+          </div>
+
+          <!-- Move the verification code input and button here -->
+          <div class="form-actions">
+            <div class="input-group" id="verification-code-group" style="display: none;">
+              <label for="verification-code-login" class="label">Verification Code</label>
+              <input type="text" id="verification-code-login" class="input" placeholder="Enter verification code">
+            </div>
+            <button
+              id="login-with-code-button-login"
+              class="button button-primary"
+              style="display: none;"
+            >
+              Login with Code
+            </button>
+          </div>
+
+          <div class="register-link">
+            <a href="{{ url_for('auth_bp.register_page') }}" class="link">
+              Don't Have an Account? Register Here</a
+            >
+          </div>
+          <div class="policy-links">
+            <a href="{{ url_for('frontend.terms_of_service_page') }}" class="link"
+              >Terms of Service</a
+            >
+            |
+            <a href="{{ url_for('frontend.privacy_policy_page') }}" class="link"
+              >Privacy Policy</a
+            >
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <div id="verification-form" style="display: none;">
+      <form id="verification-code-form">
         <div class="input-group">
-          <label for="email" class="label"></label>
-          <input
-            type="email"
-            id="email"
-            name="email"
-            class="input"
-            placeholder="Email"
-            required
-          />
-        </div>
-        <div class="input-group">
-          <label for="password" class="label"></label>
-          <input
-            type="password"
-            id="password"
-            name="password"
-            class="input"
-            placeholder="Password"
-            required
-          />
-        </div>
-
-        <div class="forgot-password-link">
-          <a href="/forgotpassword" class="link">Forgot Password?</a>
-        </div>
-
-        <div class="form-actions">
-          <!-- Rename the button -->
-          <button
-            type="button"
-            id="send-code-button"
-            class="button button-secondary"
-          >
-            Sign in with Verification Code
-          </button>
-          <!-- Add a message container below the button -->
-          <div id="send-code-message" class="message" style="display: none;"></div>
-          <!-- Sign In button -->
-          <button type="submit" class="button button-primary">Sign In</button>
-        </div>
-
-        <!-- Move the verification code input and button here -->
-        <div class="form-actions">
+          <label for="verification-code-verification" class="label">Verification Code</label>
           <input
             type="text"
-            id="verification-code"
+            id="verification-code-verification"
             class="input"
             placeholder="Enter verification code"
-            style="display: none;"
+            required
           />
+        </div>
+        <div class="form-actions">
           <button
             type="button"
-            id="login-with-code-button"
+            id="login-with-code-button-verification"
             class="button button-primary"
-            style="display: none;"
           >
             Login with Code
           </button>
-        </div>
-
-        <div class="register-link">
-          <a href="{{ url_for('auth_bp.register_page') }}" class="link">
-            Don't Have an Account? Register Here</a
+          <button
+            type="button"
+            id="back-to-login"
+            class="button button-secondary"
           >
-        </div>
-        <div class="policy-links">
-          <a href="{{ url_for('frontend.terms_of_service_page') }}" class="link"
-            >Terms of Service</a
-          >
-          |
-          <a href="{{ url_for('frontend.privacy_policy_page') }}" class="link"
-            >Privacy Policy</a
-          >
+            Back to Login
+          </button>
         </div>
       </form>
     </div>
+
     <script type="module" src="{{ url_for('static', filename='js/signin/signin.js') }}"></script>
   </body>
 </html>
