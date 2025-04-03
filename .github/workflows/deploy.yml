@@ -26,6 +26,6 @@ jobs:
       - name: Deploy to Azure Web App
         uses: azure/webapps-deploy@v3
         with:
-          app-name: "podmanager"  # Replace with your Azure Web App name
+          app-name: "streamlitapp"  # Replace with the correct Azure Web App name
           publish-profile: ${{ secrets.STREAMLIT_PUBLISH_PROFILE }}
           startup-command: streamlit run src/backend/routes/transcript/streamlit_transcription.py --server.headless true --server.port $PORT
