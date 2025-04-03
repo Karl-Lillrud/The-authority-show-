@@ -24,7 +24,7 @@ jobs:
 
       - name: Copy src folder to deployment root
         run: |
-          cp -r src ./src
+          cp -r src/* .
 
       - name: Remove default hostingstart.html
         run: |
