@@ -103,6 +103,7 @@ def save_uploaded_files(files):
         if file and allowed_file(file.filename):
             filename = secure_filename(file.filename)
             try:
+                file.seek(0)  # Reset the file stream to the beginning
                 blob = bucket.blob(f"mp3_files/{filename}")
                 blob.upload_from_file(file, content_type=file.content_type)
                 # Construct the public URL
