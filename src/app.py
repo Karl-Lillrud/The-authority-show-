@@ -139,13 +139,13 @@ logger.info(f"APP_ENV: {APP_ENV}")
 # start_streamlit()
 
 
-@app.route("/streamlit/<path:path>", methods=["GET", "POST"])
-def proxy_streamlit(path):
-    url = f"http://localhost:8501/{path}"
-    resp = requests.request(
-        method=request.method, url=url, headers=request.headers, data=request.data
-    )
-    return Response(resp.content, resp.status_code, resp.raw.headers.items())
+# @app.route("/streamlit/<path:path>", methods=["GET", "POST"])
+# def proxy_streamlit(path):
+#   url = f"http://localhost:8501/{path}"
+#   resp = requests.request(
+#      method=request.method, url=url, headers=request.headers, data=request.data
+#  )
+#  return Response(resp.content, resp.status_code, resp.raw.headers.items())
 
 
 @app.before_request
