@@ -14,27 +14,38 @@ export function initSidebar() {
   console.log("Sidebar initialized successfully.");
 
   toggleSidebarBtn.addEventListener("click", () => {
-    const collapsed = sidebar.classList.toggle("collapsed");
-    appContainer.classList.toggle("sidebar-collapsed", collapsed);
+    const isMobile = window.innerWidth <= 768;
 
-    // Save state
-    localStorage.setItem("sidebarCollapsed", collapsed);
+    if (isMobile) {
+      sidebar.classList.toggle("open");
+      const isOpen = sidebar.classList.contains("open");
+      appContainer.classList.toggle("sidebar-open", isOpen);
+    } else {
+      const collapsed = sidebar.classList.toggle("collapsed");
+      appContainer.classList.toggle("sidebar-collapsed", collapsed);
 
-    // Fire custom event
-    document.dispatchEvent(new CustomEvent("sidebarToggled", { detail: { collapsed } }));
+      // Save state
+      localStorage.setItem("sidebarCollapsed", collapsed);
 
-    // ✅ FIX: Ensure podcast list is shown when expanding the sidebar
-    const podcastList = document.getElementById("podcast-list");
-    if (podcastList && !collapsed) {
-      podcastList.style.display = "flex"; // or "block" depending on layout
-      console.log("Sidebar expanded – podcast list shown.");
+      // Fire custom event
+      document.dispatchEvent(new CustomEvent("sidebarToggled", { detail: { collapsed } }));
+
+      // Show podcast list if expanding
+      const podcastList = document.getElementById("podcast-list");
+      if (podcastList && !collapsed) {
+        podcastList.style.display = "flex";
+      }
     }
   });
 
-  // Load state from localStorage
-  const sidebarCollapsed = localStorage.getItem("sidebarCollapsed") === "true";
-  if (sidebarCollapsed) {
-    sidebar.classList.add("collapsed");
-    appContainer.classList.add("sidebar-collapsed");
+  // Restore sidebar state (desktop only)
+  const isMobile = window.innerWidth <= 768;
+  if (!isMobile) {
+    const sidebarCollapsed = localStorage.getItem("sidebarCollapsed") === "true";
+    if (sidebarCollapsed) {
+      sidebar.classList.add("collapsed");
+      appContainer.classList.add("sidebar-collapsed");
+    }
   }
 }
+
