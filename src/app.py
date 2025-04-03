@@ -141,6 +141,10 @@ def load_user():
     g.user_id = session.get("user_id")
     logger.info(f"Request to {request.path} by user {g.user_id}")
 
+@app.route("/health", methods=["GET"])
+def health():
+    return "OK", 200
+
 # Run the app
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 8000))  # Ensure Flask runs on port 8000
