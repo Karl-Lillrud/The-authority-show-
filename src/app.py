@@ -1,5 +1,6 @@
 import os
 import logging
+import subprocess  # Add this import
 from flask import Flask, request, session, g, jsonify, render_template
 from flask_cors import CORS
 from backend.routes.auth import auth_bp
@@ -102,18 +103,39 @@ app.register_blueprint(landingpage_bp)
 # Set the application environment (defaults to production)
 APP_ENV = os.getenv("APP_ENV", "production")
 
-# Set the API base URL depending on the environment
-API_BASE_URL = os.getenv("API_BASE_URL")
+# Set the API base URL dynamically based on the environment
+if APP_ENV == "production":
+    API_BASE_URL = os.getenv("PROD_BASE_URL")
+else:
+    API_BASE_URL = os.getenv("LOCAL_BASE_URL")
+
+# Log the updated API_BASE_URL
+logger.info(f"Dynamic API_BASE_URL: {API_BASE_URL}")
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 # Log the configuration
-logger.info(f"API_BASE_URL: {API_BASE_URL}")
 logger.info(f"MONGODB_URI: {os.getenv('MONGODB_URI')}")
 logger.info(f"APP_ENV: {APP_ENV}")
 
+# Start Streamlit when the app starts
+def start_streamlit():
+    streamlit_port = os.getenv("STREAMLIT_PORT", "8501")
+    streamlit_command = [
+        "streamlit",
+        "run",
+        "streamlit_app.py",  # Replace with the actual Streamlit app file if different
+        "--server.port",
+        streamlit_port,
+        "--server.headless",
+        "true",
+    ]
+    subprocess.Popen(streamlit_command)
+
+# Start Streamlit in a separate process
+start_streamlit()
 
 @app.route("/streamlit/<path:path>", methods=["GET", "POST"])
 def proxy_streamlit(path):
