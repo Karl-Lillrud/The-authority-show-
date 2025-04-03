@@ -12,12 +12,12 @@ pydub
 pymongo
 python-dotenv
 pytz
-soundfile
 textblob
 textstat
 timezonefinder
 transformers
 Werkzeug
 gunicorn
+openai
 
 

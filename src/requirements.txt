@@ -4,20 +4,18 @@ Flask
 flask_cors
 google_auth_oauthlib
 marshmallow
-matplotlib
-numpy
 opencv_contrib_python
 Pillow
 pydub
 pymongo
 python-dotenv
 pytz
-soundfile
 textblob
 textstat
 timezonefinder
 transformers
 Werkzeug
 gunicorn
+openai
 
 
