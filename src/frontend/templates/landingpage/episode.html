@@ -63,7 +63,7 @@
 
       {% for guest in guests %}
         <div class="guest-about-info">
-          <img class="guest-about-image" src="{{ guest.imageUrl or '/media/default_guest.png' }}" alt="Guest Image">
+          <img class="guest-about-image" src="{{ guest.image or url_for('static', filename='images/default.png') }}" alt="Guest Image">
           <div class="guest-about-details">
             <h3>{{ guest.name }}</h3>
             <p>{{ guest.bio or "No bio available." }}</p>
