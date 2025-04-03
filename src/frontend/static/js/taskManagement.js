@@ -1,3 +1,4 @@
+// Add selected default tasks to the episode
 window.addSelectedDefaultTasks = function () {
     const selectedTasks = [];
     const checkboxes = document.querySelectorAll('#default-tasks-list input[type="checkbox"]:checked');
@@ -7,7 +8,7 @@ window.addSelectedDefaultTasks = function () {
     });
 
     if (selectedTasks.length === 0) {
-        alert("No tasks selected!");
+        alert("No tasks selected!"); // Ensure this message is localized if i18n is used
         return;
     }
 
