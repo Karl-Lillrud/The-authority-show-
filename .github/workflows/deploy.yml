@@ -15,10 +15,10 @@ jobs:
       - name: Copy requirements to root
         run: cp src/requirements.txt requirements.txt
 
-      - name: Setup Python 3.10
+      - name: Setup Python 3.13
         uses: actions/setup-python@v4
         with:
-          python-version: "3.10"
+          python-version: "3.13"
 
       - name: Install Dependencies
         run: |
