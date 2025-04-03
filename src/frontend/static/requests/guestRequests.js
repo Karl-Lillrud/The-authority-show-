@@ -1,6 +1,6 @@
 export async function addGuestRequest(payload) {
   try {
-    const res = await fetch("/add_guest", {
+    const res = await fetch("/add_guest", { // Correct endpoint
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload)
@@ -9,14 +9,6 @@ export async function addGuestRequest(payload) {
     if (!res.ok) {
       const errorData = await res.json();
       console.error("Backend error:", errorData.error);
-
-      // If Google Calendar is not connected, show a specific error
-      if (errorData.error.includes("connect your Google Calendar")) {
-        alert(errorData.error);  // Show specific alert message
-        window.location.href = "/podprofile";  // Redirect to the page where the user can connect their calendar
-        return;
-      }
-
       throw new Error(errorData.error || "Failed to add guest.");
     }
 

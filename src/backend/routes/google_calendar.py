@@ -2,7 +2,6 @@ from flask import Blueprint, redirect, url_for, session, request, jsonify
 from google_auth_oauthlib.flow import Flow
 from googleapiclient.discovery import build
 from google.oauth2.credentials import Credentials
-from google.auth.transport.requests import Request
 import os
 from dotenv import load_dotenv
 import json
@@ -48,29 +47,17 @@ def connect_google_calendar():
 
 @google_calendar_bp.route('/oauth2callback')
 def oauth2callback():
-    code = request.args.get('code')
-    
-    if not code:
-        return jsonify({"error": "Authorization code not provided"}), 400
-
     try:
         flow.fetch_token(authorization_response=request.url)
         credentials = flow.credentials
-
-        # Store credentials in session
         session['credentials'] = credentials_to_dict(credentials)
 
-        # Extract the googleToken (access token) from credentials
+        # Store the token in sessionStorage via a redirect
         google_token = credentials.token
-
-        # Redirect to podprofile and pass the token in the URL
-        return redirect(f"/podprofile?googleToken={google_token}&podRss=&podName=")
-
+        return redirect(f"/podprofile?googleToken={google_token}")
     except Exception as e:
         logger.error(f"Error during OAuth callback: {e}", exc_info=True)
         return jsonify({"error": "Failed to complete Google OAuth process"}), 500
-
-
 
 @google_calendar_bp.route("/connect_calendar", methods=["POST"])
 def connect_calendar():
@@ -142,7 +129,7 @@ def calendar_callback():
 def credentials_to_dict(credentials):
     return {
         'token': credentials.token,
-        'refresh_token': credentials.refresh_token,  # This should always be available if access_type='offline'
+        'refresh_token': credentials.refresh_token,
         'token_uri': credentials.token_uri,
         'client_id': credentials.client_id,
         'client_secret': credentials.client_secret,

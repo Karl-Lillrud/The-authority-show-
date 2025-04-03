@@ -41,7 +41,7 @@ class GuestRepository:
                 return {"error": f"Invalid publish date format: {str(e)}"}, 400
 
             guest_data = GuestSchema().load(data)
-            guest_id = str(uuid.uuid4())  # Generate guest_id manually
+            guest_id = str(uuid.uuid4())
 
             guest_item = {
                 "_id": guest_id,
@@ -62,9 +62,10 @@ class GuestRepository:
                 "user_id": user_id,
             }
 
-            guest_id = str(self.collection.insert_one(guest_item).inserted_id)  # Capture inserted guest_id
+            self.collection.insert_one(guest_item)
 
-            return {"message": "Guest added successfully", "guest_id": guest_id}, 201  # Return guest_id
+            return {"message": "Guest added successfully", "guest_id": guest_id}, 201
+
         except Exception as e:
             logger.exception("❌ ERROR: Failed to add guest")
             return {"error": f"Failed to add guest: {str(e)}"}, 500
@@ -323,16 +324,3 @@ class GuestRepository:
         except Exception as e:
             logger.error(f"Failed to delete guests: {e}", exc_info=True)
             return 0
-    
-    def check_google_calendar_connection(self, user_id):
-        user = collection.database.Users.find_one({"_id": user_id})
-        if user:
-            google_cal = user.get("googleCal")
-            if google_cal:
-                logger.info(f"Google Calendar connected: {google_cal}")
-                return True
-            else:
-                logger.info("Google Calendar not connected (field is empty or missing).")
-        else:
-            logger.error(f"User with id {user_id} not found.")
-        return False
