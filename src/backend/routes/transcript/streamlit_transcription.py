@@ -7,11 +7,14 @@ import logging
 import tempfile
 from dotenv import load_dotenv
 import sys
-from backend.utils.text_utils import download_button_text
 
-project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../../"))
-if project_root not in sys.path:
-    sys.path.insert(0, project_root)
+# Add the `src` directory to the Python module search path
+project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../../.."))
+src_path = os.path.join(project_root, "src")
+if src_path not in sys.path:
+    sys.path.insert(0, src_path)
+
+from backend.utils.text_utils import download_button_text
 
 # Load environment variables early
 load_dotenv()

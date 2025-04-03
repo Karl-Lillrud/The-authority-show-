@@ -1,31 +1,35 @@
-dnspython
-elevenlabs
-Faker
+dnspythonw>=2.12.0
+elevenlabs2.0
+Fakerthon
 feedparser
 flask
 flask-cors
 google_auth_oauthlib
 marshmallow
-matplotlib
+matplotlibh_oauthlib
 noisereduce
-numpy
-openai
+numpyotlib
+openaieduce
 openai_whisper
 opencv_contrib_python
-Pillow
-pydub
+Pillow_whisper
+pydubv_contrib_python
 pymongo
 python-dotenv
-pytz
-soundfile
+pytzngo
+soundfiletenv
 streamlit
-textblob
-textstat
+textblobe
+textstatt
 timezonefinder
-torch
-torchaudio
-torchvision
-transformers
-Werkzeug
+torch==2.0.1  # Replace with the latest stable version
+torchaudio==2.0.1  # Ensure compatibility with PyTorch
+torchvision1  # Replace with the latest stable version
+transformers2.0.1  # Ensure compatibility with PyTorch
+Werkzeugion
+whisperrmers
+requests
 whisper
 requests
+tensorflow>=2.12.0
+keras>=2.12.0
