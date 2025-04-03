@@ -53,15 +53,7 @@ app = Flask(__name__, template_folder=template_folder, static_folder=static_fold
 
 CORS(
     app,
-    resources={
-        r"/*": {
-            "origins": [
-                "https://devapp.podmanager.ai",
-                "https://app.podmanager.ai",
-                "http://127.0.0.1:8000",
-            ]
-        }
-    },
+    resources={r"/*": {"origins": ["https://devapp.podmanager.ai", "https://app.podmanager.ai", "http://127.0.0.1:8000"]}},
 )
 
 # Set secret key and preferred URL scheme
@@ -114,24 +106,30 @@ logger.info(f"APP_ENV: {APP_ENV}")
 
 # Start Streamlit when the app starts
 def start_streamlit():
+    # Define the Streamlit port, defaulting to 8501
     streamlit_port = os.getenv("STREAMLIT_PORT", "8501")
+    # Command to start Streamlit
     streamlit_command = [
         "streamlit",
         "run",
-        "src/backend/routes/transcript/streamlit_transcription.py",
+        "src/backend/routes/transcript/streamlit_transcription.py",  # Adjust the path if needed
         "--server.port",
         streamlit_port,
         "--server.headless",
         "true",
     ]
+    # Start Streamlit as a background process
     subprocess.Popen(streamlit_command)
 
-start_streamlit()
+# Start Streamlit in the background
+# start_streamlit()
 
-# Proxy requests to Streamlit
+# Proxy requests to Streamlit (on port 8501)
 @app.route("/streamlit/<path:path>", methods=["GET", "POST"])
 def proxy_streamlit(path):
+    # Construct the URL for Streamlit
     url = f"http://localhost:8501/{path}"
+    # Proxy the request to Streamlit
     resp = requests.request(
         method=request.method, url=url, headers=request.headers, data=request.data
     )
@@ -145,5 +143,5 @@ def load_user():
 
 # Run the app
 if __name__ == "__main__":
-    port = int(os.environ.get("PORT", 8000))
+    port = int(os.environ.get("PORT", 8000))  # Ensure Flask runs on port 8000
     app.run(host="0.0.0.0", port=port)
