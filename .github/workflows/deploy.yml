@@ -20,9 +20,8 @@ jobs:
       - name: Install Dependencies
         run: |
           python -m pip install --upgrade pip
-          # Installerar requirements från root. 
-          # Om du istället vill använda src/requirements.txt, byt kommandot nedan.
-          pip install -r requirements.txt
+
+          pip install -r src/requirements.txt
 
       - name: Deploy to Azure App Service
         uses: azure/webapps-deploy@v2
