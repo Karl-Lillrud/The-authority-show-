@@ -123,22 +123,20 @@ logger.info(f"APP_ENV: {APP_ENV}")
 
 
 # Start Streamlit when the app starts
-def start_streamlit():
-    streamlit_port = os.getenv("STREAMLIT_PORT", "8501")
-    streamlit_command = [
-        "streamlit",
-        "run",
-        "src/backend/routes/transcript/streamlit_transcription.py",  # Replace with the actual Streamlit app file if different
-        "--server.port",
-        streamlit_port,
-        "--server.headless",
-        "true",
-    ]
-    subprocess.Popen(streamlit_command)
+# def start_streamlit():
+#     streamlit_port = os.getenv("STREAMLIT_PORT", "8501")
+#     streamlit_command = [
+#         "streamlit",
+#         "run",
+#         "src/backend/routes/transcript/streamlit_transcription.py",
+#         "--server.port",
+#         streamlit_port,
+#         "--server.headless",
+#         "true",
+#     ]
+#     subprocess.Popen(streamlit_command)
 
-
-# Start Streamlitt in a separate process
-start_streamlit()
+# start_streamlit()
 
 
 @app.route("/streamlit/<path:path>", methods=["GET", "POST"])
