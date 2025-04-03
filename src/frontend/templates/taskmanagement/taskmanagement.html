@@ -272,6 +272,24 @@
     }
   }
 
+  function addSelectedDefaultTasks() {
+    const selectedTasks = [];
+    const checkboxes = document.querySelectorAll('#default-tasks-list input[type="checkbox"]:checked');
+
+    checkboxes.forEach((checkbox) => {
+      selectedTasks.push(checkbox.value);
+    });
+
+    if (selectedTasks.length === 0) {
+      alert("No tasks selected!");
+      return;
+    }
+
+    console.log("Selected tasks:", selectedTasks);
+    // Add logic to handle selected tasks, e.g., send them to the server or update the UI
+    closeDefaultTasksPopup();
+  }
+
   document.getElementById("save-task-btn").onclick = addCustomTask;
 </script>
 {% endblock %}
