@@ -1,14 +1,12 @@
+from google.cloud import storage
+import os
+import logging
+from werkzeug.utils import secure_filename
+import io
 import requests
 import base64
-import os
-import boto3
-from werkzeug.utils import secure_filename
-import logging
 from dotenv import load_dotenv
-from flask import Blueprint, redirect, send_file, abort, request
-from bson.objectid import ObjectId
-import io  # Add this import for BytesIO
-
+from flask import Blueprint, redirect, abort, request
 
 # Load environment variables
 load_dotenv()
@@ -16,17 +14,11 @@ load_dotenv()
 # Set up logging
 logger = logging.getLogger(__name__)
 
-# Initialize R2 client (AWS S3-compatible)
-s3 = boto3.client(
-    "s3",
-    endpoint_url="https://8dd08def3e3e74358dcbf2fec09bf125.r2.cloudflarestorage.com",  # Correct Cloudflare R2 endpoint URL
-    aws_access_key_id=os.getenv("CLOUDFLARE_R2_ACCESS_KEY"),  # R2 Access Key
-    aws_secret_access_key=os.getenv("CLOUDFLARE_R2_SECRET_KEY"),  # R2 Secret Key
-    region_name="auto",  # Set to a valid region name (e.g., 'auto' for automatic selection)
+# Initialize Google Cloud Storage client
+storage_client = storage.Client.from_service_account_json(
+    os.getenv("GOOGLE_CLOUD_SERVICE_ACCOUNT_KEY")
 )
-
-# Get the upload folder path from environment variables
-UPLOAD_FOLDER = os.getenv("UPLOAD_FOLDER", "uploads")  # Default is 'uploads'
+bucket_name = os.getenv("GOOGLE_CLOUD_BUCKET_NAME")
 
 
 def get_spotify_access_token():
@@ -101,36 +93,24 @@ def upload_episode_to_spotify(access_token, episode):
 
 def save_uploaded_files(files):
     """
-    Save uploaded files to Cloudflare R2 and generate URLs for them.
+    Save uploaded files to Google Cloud Storage and generate URLs for them.
     """
     saved_files = []
+    bucket = storage_client.bucket(bucket_name)
+
     for file in files:
-        logger.info(f"Processing file: {file.filename}")  # Log file name
+        logger.info(f"Processing file: {file.filename}")
         if file and allowed_file(file.filename):
             filename = secure_filename(file.filename)
             try:
-                # Wrap the file in a BytesIO buffer to ensure it remains open
-                file_buffer = io.BytesIO(file.read())
-                file_buffer.seek(0)  # Reset the buffer pointer to the beginning
-
-                # Upload to Cloudflare R2 (equivalent of AWS S3)
-                s3.upload_fileobj(
-                    file_buffer,
-                    os.getenv(
-                        "CLOUDFLARE_R2_BUCKET_NAME"
-                    ),  # Use the correct bucket name
-                    filename,
-                    ExtraArgs={
-                        "ACL": "public-read"
-                    },  # Ensure the file is publicly accessible
-                )
+                blob = bucket.blob(f"mp3_files/{filename}")
+                blob.upload_from_file(file, content_type=file.content_type)
                 # Construct the public URL
-                file_url = f"{os.getenv('CLOUDFLARE_R2_BUCKET_URL')}/{filename}"
+                file_url = f"https://storage.googleapis.com/{bucket_name}/mp3_files/{filename}"
                 saved_files.append({"filename": filename, "url": file_url})
                 logger.info(f"File uploaded successfully: {file_url}")
             except Exception as e:
                 logger.error(f"Failed to upload file {filename}: {e}")
-                logger.error(f"Error details: {e}")
     return saved_files
 
 
@@ -146,17 +126,15 @@ file_bp = Blueprint("file_bp", __name__)
 file_bp = Blueprint("file_bp", __name__)
 
 
-# Route to serve the file from Cloudflare R2 (publicly accessible)
+# Route to serve the file from Google Cloud Storage (publicly accessible)
 @file_bp.route("/files/<filename>", methods=["GET"])
 def serve_file(filename):
     """
-    Serve the file stored in Cloudflare R2 for public access.
+    Serve the file stored in Google Cloud Storage for public access.
     """
     try:
         # Construct the public URL
-        file_url = (
-            f"https://<account_id>.r2.cloudflarestorage.com/mediastorage/{filename}"
-        )
+        file_url = f"https://storage.googleapis.com/{bucket_name}/mp3_files/{filename}"
         return redirect(file_url)
     except Exception as e:
         logger.error(f"Failed to fetch file: {e}")

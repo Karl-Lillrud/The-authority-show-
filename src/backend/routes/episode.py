@@ -18,9 +18,7 @@ from backend.services.spotify_integration import (
     upload_episode_to_spotify,
 )
 from backend.services.generate_rss_feed import create_rss_feed
-from backend.services.upload_rss_to_cloudflare import (
-    upload_rss_to_cloudflare,
-)  # Ensure this import exists
+from backend.services.upload_rss_to_google_cloud import upload_rss_to_google_cloud
 from backend.repository.guest_repository import GuestRepository
 
 # Create repository instance
@@ -60,34 +58,20 @@ def register_episode():
         data = request.form.to_dict()
         files = request.files.getlist("episodeFiles")
         if not files or files[0].filename == "":
-            return (
-                jsonify({"error": "No files uploaded"}),
-                400,
-            )  # Validate file presence
+            return jsonify({"error": "No files uploaded"}), 400
 
-        # Reset file pointers and save files
+        # Save files to Google Cloud Storage
         saved_files = save_uploaded_files(files)
         if not saved_files:
             return jsonify({"error": "Failed to save uploaded files"}), 500
         data["audioUrl"] = saved_files[0]["url"]
         data["episodeFiles"] = saved_files
 
-        # Validera nödvändiga fält
-        if (
-            not data.get("podcastId")
-            or not data.get("title")
-            or not data.get("publishDate")
-        ):
-            return (
-                jsonify(
-                    {
-                        "error": "Required fields missing: podcastId, title, and publishDate"
-                    }
-                ),
-                400,
-            )
+        # Validate required fields
+        if not data.get("podcastId") or not data.get("title") or not data.get("publishDate"):
+            return jsonify({"error": "Required fields missing: podcastId, title, and publishDate"}), 400
 
-        # Registrera episode och spara i databasen
+        # Register episode and save in the database
         response, status = episode_repo.register_episode(data, user_id)
         return jsonify(response), status
     except Exception as e:
@@ -107,15 +91,9 @@ def publish(episode_id):
         if not episode:
             return jsonify({"error": "Episode not found"}), 404
 
-        access_token = get_spotify_access_token()
-        if not access_token:
-            return jsonify({"error": "Failed to retrieve Spotify access token"}), 500
-
         podcast_data = {
             "title": episode.get("podcast_title", "Untitled Podcast"),
-            "description": episode.get(
-                "podcast_description", "No description available"
-            ),
+            "description": episode.get("podcast_description", "No description available"),
             "link": episode.get("podcast_link", "#"),
         }
         episode_data = [
@@ -129,8 +107,8 @@ def publish(episode_id):
         ]
 
         rss_feed = create_rss_feed(podcast_data, episode_data)
-        rss_feed_url = upload_rss_to_cloudflare(rss_feed, f"{episode_id}_feed.xml")
-        logger.info(f"RSS feed uploaded to Cloudflare R2: {rss_feed_url}")
+        rss_feed_url = upload_rss_to_google_cloud(rss_feed, f"{episode_id}_feed.xml")
+        logger.info(f"RSS feed uploaded to Google Cloud Storage: {rss_feed_url}")
 
         # Mark episode as published (update the episode document)
         episode_repo.collection.update_one(
@@ -145,19 +123,7 @@ def publish(episode_id):
         )
         episode["status"] = "Published"  # update local representation
 
-        logger.info("Spotify does not provide an API for RSS feed submission.")
-        logger.info(
-            f"Please submit the RSS feed URL manually via Spotify for Podcasters: {rss_feed_url}"
-        )
-        return (
-            jsonify(
-                {
-                    "message": "Episode published successfully",
-                    "rss_feed_url": rss_feed_url,
-                }
-            ),
-            200,
-        )
+        return jsonify({"message": "Episode published successfully", "rss_feed_url": rss_feed_url}), 200
 
     except Exception as e:
         logger.error(f"Error publishing episode {episode_id}: {e}", exc_info=True)

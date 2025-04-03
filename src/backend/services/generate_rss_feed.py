@@ -1,5 +1,6 @@
 import logging
 from xml.etree.ElementTree import Element, SubElement, tostring
+from backend.services.upload_rss_to_google_cloud import upload_rss_to_google_cloud
 
 logger = logging.getLogger(__name__)
 
