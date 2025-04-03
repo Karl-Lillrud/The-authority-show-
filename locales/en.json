@@ -12,5 +12,19 @@
     "Episode ID and description are required.": "Episode ID and description are required.",
     "Task added successfully.": "Task added successfully.",
     "Task not found.": "Task not found.",
-    "Task updated successfully.": "Task updated successfully."
+    "Task updated successfully.": "Task updated successfully.",
+    "taskmanagement": {
+        "title": "Podcast To-Do Workflow",
+        "buttons": {
+            "addDefaultTasks": "Add Default Tasks",
+            "addCustomTask": "Add Custom Task"
+        },
+        "currentTasks": "To-Do Items",
+        "errors": {
+            "noTasksSelected": "No tasks selected!"
+        },
+        "notifications": {
+            "tasksAdded": "Tasks added to the episode:"
+        }
+    }
 }
