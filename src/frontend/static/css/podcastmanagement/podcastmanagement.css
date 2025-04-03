@@ -396,3 +396,13 @@
     pointer-events: none; /* Optional: prevent interaction under sidebar */
   }
 }
+
+.sidebar.collapsed .sidebar-menu .dashboard-item {
+  display: none !important;
+}
+
+@media (max-width: 768px) {
+  .sidebar:not(.open) .dashboard-item {
+    display: none !important;
+  }
+}
