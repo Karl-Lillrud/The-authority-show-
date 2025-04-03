@@ -23,6 +23,10 @@ jobs:
           # Installerar requirements från src
           pip install -r src/requirements.txt
 
+      - name: Copy src folder to deployment root
+        run: |
+          cp -r src/* .
+
       - name: Remove default web.config
         run: |
           rm -f web.config
