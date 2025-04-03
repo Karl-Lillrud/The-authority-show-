@@ -22,6 +22,10 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r src/requirements.txt
 
+      - name: Copy src folder to deployment root
+        run: |
+          cp -r src/* .
+
       - name: Remove default hostingstart.html
         run: |
           rm -f hostingstart.html
