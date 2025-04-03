@@ -109,12 +109,12 @@ if APP_ENV == "production":
 else:
     API_BASE_URL = os.getenv("LOCAL_BASE_URL")
 
-# Log the updated API_BASE_URL
-logger.info(f"Dynamic API_BASE_URL: {API_BASE_URL}")
-
 # Configure logging
 logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
+logger = logging.getLogger(__name__)  # Ensure logger is defined here
+
+# Log the updated API_BASE_URL
+logger.info(f"Dynamic API_BASE_URL: {API_BASE_URL}")
 
 # Log the configuration
 logger.info(f"MONGODB_URI: {os.getenv('MONGODB_URI')}")
@@ -126,7 +126,7 @@ def start_streamlit():
     streamlit_command = [
         "streamlit",
         "run",
-        "streamlit_app.py",  # Replace with the actual Streamlit app file if different
+        "src/backend/routes/transcript/streamlit_transcription.py",  # Replace with the actual Streamlit app file if different
         "--server.port",
         streamlit_port,
         "--server.headless",
