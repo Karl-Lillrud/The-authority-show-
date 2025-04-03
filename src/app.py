@@ -137,7 +137,7 @@ def start_streamlit():
     subprocess.Popen(streamlit_command)
 
 
-# Start Streamlit in a separate process
+# Start Streamlitt in a separate process
 start_streamlit()
 
 
