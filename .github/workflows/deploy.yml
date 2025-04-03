@@ -12,6 +12,14 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v3
 
+      - name: Cache Python dependencies
+        uses: actions/cache@v3
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles('src/requirements.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-
+
       - name: Copy requirements to root
         run: cp src/requirements.txt requirements.txt
 
