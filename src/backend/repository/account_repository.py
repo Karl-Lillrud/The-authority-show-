@@ -2,6 +2,7 @@ import uuid
 from datetime import datetime
 from backend.database.mongo_connection import collection
 from backend.models.accounts import AccountSchema
+from backend.services.creditService import initialize_credits  # Import initialize_credits
 import logging
 
 logger = logging.getLogger(__name__)
@@ -52,6 +53,8 @@ class AccountRepository:
             # Insert account into the database
             self.collection.insert_one(account_document)
             logger.info("Inserted account into database: %s", account_document)
+
+            initialize_credits(user_id)  # Call initialize_credits here
 
             return {
                 "message": "Account created successfully",
