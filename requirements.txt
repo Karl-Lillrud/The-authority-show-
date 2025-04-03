@@ -13,11 +13,11 @@ pymongo
 python-dotenv
 pytz
 soundfile
-tensorflow
 textblob
 textstat
 timezonefinder
 transformers
 Werkzeug
 gunicorn
+
 
