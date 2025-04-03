@@ -29,11 +29,6 @@ jobs:
         run: |
           rm -f hostingstart.html
 
-      # Optional step to ensure Gunicorn is set up correctly for Azure (if needed)
-      - name: Create startup.txt (if necessary for Azure)
-        run: |
-          echo "gunicorn --bind 0.0.0.0:$PORT --chdir src app:app" > startup.txt
-
       - name: Deploy to Azure App Service
         uses: azure/webapps-deploy@v2
         with:
