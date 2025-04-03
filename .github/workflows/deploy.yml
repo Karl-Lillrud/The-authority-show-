@@ -18,6 +18,10 @@ jobs:
           # Installerar requirements från src
           pip install -r src/requirements.txt
 
+      - name: Remove default web.config
+        run: |
+          rm -f web.config
+
       - name: Deploy to Azure App Service
         uses: azure/webapps-deploy@v2
         with:
