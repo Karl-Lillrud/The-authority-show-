@@ -5,11 +5,13 @@
     <title>Your Join Link for the Recording</title>
   </head>
   <body>
-    <h1>Hello {{ name }},</h1>
-    <p>Your recording session is about to start in 1 hour.</p>
+    <!--should be checking for status: not recorded and then check if its 1 day before-->
+    <p><strong>Episode Title:</strong> {{ episode_title }}</p>
+    <h1>Hello {{ guest_name }},</h1>
+    <p>Your recording session is about to start soon.</p>
     <p>Please click the link below to join the session:</p>
     <p><a href="{{ join_link }}">Join Your Session</a></p>
     <p>See you soon!</p>
-    <p>Best regards,<br>Your Team</p>
+    <p>Best regards,<br>{{ podName }}</p>
   </body>
 </html>

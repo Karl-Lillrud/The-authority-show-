@@ -5,9 +5,11 @@
     <title>Episode Publishing Reminder</title>
   </head>
   <body>
-    <h1>Hello {{ name }},</h1>
+   <!-- should be checking for status: recorded and then checking for 7 days before publishDate and if it matches send out email  -->
+    <p><strong>Episode Title:</strong> {{ episode_title }}</p>
+    <h1>Hello {{ guest_name }},</h1>
     <p>This is a friendly reminder that your episode is scheduled to be published in 7 days.</p>
     <p>If you need to review any details or make changes, please let us know.</p>
-    <p>Best regards,<br>Your Team</p>
+    <p>Best regards,<br>{{ podName }}/p>
   </body>
 </html>

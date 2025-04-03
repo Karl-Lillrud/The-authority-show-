@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <title>Missing Social Media Information</title>
+  </head>
+  <body>
+    <p><strong>Episode Title:</strong> {{ episode_title }}</p>
+    <!-- should be checking for status: recorded and if any social media handles are missing, send out the email -->
+    <h1>Hi {{ guest_name }},</h1>
+    <p>You forgot to provide some of your social media handles, so we can’t tag you in the posts we do to promote you and your episode with <strong>The Authority Show</strong>.</p>
+    <p>Please reply with the missing handles for <strong>{{ social_network }}</strong> so we can update your episode details and make sure you get some good promotion through our network.</p>
+    <p>If you don't use these social networks, that's not a problem. We just want to make sure you get the most out of this collaboration.</p>
+    <p>Also, don't forget to connect and tag <strong>Karl Lillrud</strong> in the posts you create.</p>
+    <p>Thank you!</p>
+    <p>Best regards,<br>{{ podName }}</p>
+  </body>
+</html>

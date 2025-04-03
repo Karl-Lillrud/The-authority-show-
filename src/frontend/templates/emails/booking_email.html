@@ -5,9 +5,12 @@
     <title>Booking Information</title>
   </head>
   <body>
-    <h1>Hello {{ name }},</h1>
+    <!-- Should be checking for status: not recorded and then send it out right away  -->
+    <p><strong>Episode Title:</strong> {{ episode_title }}</p>
+    <h1>Hello {{ guest_name }},</h1>
     <p>Thank you for booking your recording session with us. Your session details are confirmed.</p>
+    <p>Your session is scheduled for: {{ booking_date }}.</p>
     <p>If you have any questions, feel free to reach out.</p>
-    <p>Best regards,<br>Your Team</p>
+    <p>Best regards,<br>{{ podName }}</p>
   </body>
 </html>

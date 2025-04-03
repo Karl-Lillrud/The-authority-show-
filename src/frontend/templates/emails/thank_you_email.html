@@ -5,9 +5,11 @@
     <title>Thank You for a Great Episode</title>
   </head>
   <body>
-    <h1>Hello {{ name }},</h1>
+    <!-- Should be checking for status: published and straight away send it out  -->
+    <p><strong>Episode Title:</strong> {{ episode_title }}</p>
+    <h1>Hello {{ guest_name }},</h1>
     <p>Thank you for participating in the episode!</p>
     <p>We appreciate your contribution and look forward to collaborating again in the future.</p>
-    <p>Best regards,<br>Your Team</p>
+    <p>Best regards,<br>{{ podName }}</p>
   </body>
 </html>

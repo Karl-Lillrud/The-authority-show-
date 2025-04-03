@@ -2,13 +2,21 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8">
-    <title>Preparation for Your Recording</title>
+    <title>Looking Forward to Doing the Podcast with You Tomorrow</title>
   </head>
   <body>
-    <h1>Hello {{ name }},</h1>
-    <p>This is a reminder that your recording session is scheduled in 14 days.</p>
-    <p>Please prepare any necessary materials and review the guidelines provided.</p>
-    <p>Looking forward to a great session!</p>
-    <p>Best regards,<br>Your Team</p>
+    <!--should be checking for status: not recorded and if its 1 day before and then send out email -->
+    <p><strong>Episode Title:</strong> {{ episode_title }}</p>
+    <h1>Hi {{ guest_name }},</h1>
+    <p>I'm looking forward to meeting with you tomorrow to do the recording. I just want to make sure you have all things prepared.</p>
+    <p>Super short checklist:</p>
+    <ul>
+      <li>Make sure Chrome is updated by just closing and starting Chrome, or the recording will not work.</li>
+      <li>Find a silent space with good light!</li>
+      <li>Prepare some discussion topics around innovation and AI in general where you think I can add value.</li>
+    </ul>
+    <p>Here you find all the other information: <a href="https://www.karllillrud.com/get-prepared" target="_blank">Get Prepared</a></p>
+    <p>The meeting link is: <a href="https://riverside.fm/studio/karl-lillruds-studio?t=791f5d8944d84fff54fe" target="_blank">Join the Studio</a></p>
+    <p>Best regards,<br>{{ podName }}</p>
   </body>
 </html>
