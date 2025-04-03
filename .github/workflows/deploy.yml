@@ -29,3 +29,4 @@ jobs:
                        --location "NorthEurope" \
                        --sku "B1" \
                        --plan ${{ secrets.AZURE_APP_PLAN }}
+#trial
