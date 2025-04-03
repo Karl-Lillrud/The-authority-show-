@@ -296,10 +296,6 @@ endblock %} {% block content %}
               <input type="text" id="author" name="author" required />
             </div>
             <div class="field-group">
-              <label for="image-url">Image URL</label>
-              <input type="url" id="image-url" name="imageUrl" required />
-            </div>
-            <div class="field-group">
               <label for="explicit">Explicit Content</label>
               <select id="explicit" name="explicit" required>
                 <option value="true">Yes</option>
@@ -317,6 +313,10 @@ endblock %} {% block content %}
                 <option value="Trailer">Trailer</option>
                 <option value="Bonus">Bonus</option>
               </select>
+            </div>
+            <div class="field-group full-width">
+              <label for="image">Episode Image</label>
+              <input type="file" id="image" name="image" accept="image/*" required />
             </div>
           </div>
           <div class="form-actions">

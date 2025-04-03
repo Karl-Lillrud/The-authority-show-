@@ -522,7 +522,7 @@ export function initEpisodeFunctions() {
         "description",
         "publishDate",
         "author",
-        "imageUrl",
+        "image", // Ensure the image field is included
         "explicit",
         "category",
         "episodeType"

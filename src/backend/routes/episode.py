@@ -20,6 +20,7 @@ from backend.services.spotify_integration import (
 from backend.services.generate_rss_feed import create_rss_feed
 from backend.services.upload_rss_to_google_cloud import upload_rss_to_google_cloud
 from backend.repository.guest_repository import GuestRepository
+from backend.services.upload_to_google_cloud import upload_to_google_cloud
 
 # Create repository instance
 guest_repo = GuestRepository()
@@ -57,26 +58,29 @@ def register_episode():
         # Parse form data
         data = request.form.to_dict()
         files = request.files.getlist("episodeFiles")
-        image_file = request.files.get("imageFile")  # Get the image file
+        image_file = request.files.get("image")  # Get the image file from the frontend
 
         if not files or files[0].filename == "":
-            return jsonify({"error": "No files uploaded"}), 400
+            return jsonify({"error": "No audio files uploaded"}), 400
 
         # Save audio files to Google Cloud Storage
         saved_files = save_uploaded_files(files)
         if not saved_files:
-            return jsonify({"error": "Failed to save uploaded files"}), 500
+            return jsonify({"error": "Failed to save uploaded audio files"}), 500
         data["audioUrl"] = saved_files[0]["url"]
         data["episodeFiles"] = saved_files
+        logger.info(f"Audio files saved to Google Cloud Storage: {saved_files}")
 
-        # Save image file to the 'images/' folder in Google Cloud Storage (if provided)
+        # Save image file to Google Cloud Storage (if provided)
         if image_file:
-            image_filename = f"images/{image_file.filename}"  # Add 'images/' folder prefix
-            image_url = upload_to_cloud(image_file.read(), image_filename)
+            image_filename = f"{image_file.filename}"
+            image_url = upload_to_google_cloud(image_file.read(), image_filename)
             data["imageUrl"] = image_url
+            logger.info(f"Image file '{image_file.filename}' saved to: {image_url}")
         else:
             # Provide a default image URL if no image file is uploaded
             data["imageUrl"] = "https://storage.googleapis.com/podmanager/images/default_image.png"
+            logger.warning("No image file uploaded. Using default image URL.")
 
         # Validate required fields
         if not data.get("podcastId") or not data.get("title") or not data.get("publishDate"):
@@ -84,6 +88,7 @@ def register_episode():
 
         # Register episode and save in the database
         response, status = episode_repo.register_episode(data, user_id)
+        logger.info(f"Episode registered successfully with data: {data}")
         return jsonify(response), status
     except Exception as e:
         logger.error(f"Error: {e}")
@@ -102,18 +107,31 @@ def publish(episode_id):
         if not episode:
             return jsonify({"error": "Episode not found"}), 404
 
+        # Validate required fields
+        if not episode.get("audioUrl"):
+            logger.error("Audio URL is missing for the episode.")
+            return jsonify({"error": "Audio URL is missing for the episode."}), 400
+
+        if not episode.get("imageUrl"):
+            logger.warning("Episode image is missing. Using default image.")
+            episode["imageUrl"] = "https://storage.googleapis.com/podmanager/images/default_image.png"
+
         podcast_data = {
             "title": episode.get("podcast_title", "Untitled Podcast"),
             "description": episode.get("podcast_description", "No description available"),
             "link": episode.get("podcast_link", "#"),
+            "imageUrl": episode.get("imageUrl"),
         }
         episode_data = [
             {
                 "title": episode.get("title", "Untitled Episode"),
                 "description": episode.get("description", "No description available"),
-                "audio_url": episode.get("audio_url"),
-                "publish_date": episode.get("publishDate"),
+                "audioUrl": episode.get("audioUrl"),
+                "publishDate": episode.get("publishDate"),
                 "guid": episode.get("guid", episode_id),
+                "imageUrl": episode.get("imageUrl"),
+                "duration": episode.get("duration"),
+                "explicit": episode.get("explicit"),
             }
         ]
 
@@ -132,8 +150,6 @@ def publish(episode_id):
                 }
             },
         )
-        episode["status"] = "Published"  # update local representation
-
         return jsonify({"message": "Episode published successfully", "rss_feed_url": rss_feed_url}), 200
 
     except Exception as e:

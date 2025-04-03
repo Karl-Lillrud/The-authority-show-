@@ -39,3 +39,4 @@ class EpisodeSchema(Schema):
     author = fields.Str(required=True)  # Ensure author is required
     isHidden = fields.Bool(allow_none=True)
     highlights = fields.List(fields.Str(), allow_none=True)  # New field for highlights
+    imageUrl = fields.String(required=False)  # Add imageUrl field

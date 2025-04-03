@@ -24,23 +24,18 @@ def create_rss_feed(podcast, episodes):
         # Add podcast details
         SubElement(channel, "title").text = podcast.get("podName", "Untitled Podcast")
         SubElement(channel, "description").text = podcast.get("description", "No description available")
-        SubElement(channel, "link").text = podcast.get("rssFeedUrl", "#")  # Add RSS feed URL
+        SubElement(channel, "link").text = podcast.get("rssFeedUrl", "#")
         SubElement(channel, "language").text = podcast.get("language", "en-us")
         SubElement(channel, "itunes:author").text = podcast.get("author", "Unknown Author")
         SubElement(channel, "itunes:explicit").text = "true" if podcast.get("explicit", False) else "false"
 
         # Add podcast image (cover art)
-        image_url = podcast.get("imageUrl", "")
-        if image_url:
-            SubElement(channel, "itunes:image", href=image_url)
-        else:
-            logger.warning("Cover art is missing. Please provide a valid imageUrl.")
+        image_url = podcast.get("imageUrl", "https://storage.googleapis.com/podmanager/images/default_image.png")
+        SubElement(channel, "itunes:image", href=image_url)
+        logger.info(f"Podcast image URL added to RSS feed: {image_url}")
 
         # Add iTunes categories (at least one is required)
-        categories = podcast.get("categories", [])
-        if not categories:
-            logger.warning("No iTunes categories found. Adding a default category.")
-            categories = ["Uncategorized"]
+        categories = podcast.get("categories", ["Uncategorized"])
         for category in categories:
             SubElement(channel, "itunes:category", text=category)
 
@@ -67,16 +62,20 @@ def create_rss_feed(podcast, episodes):
 
             # Add enclosure for the audio file
             audio_url = episode.get("audioUrl", "")
-            file_size = episode.get("fileSize", 0)
             if audio_url:
-                # Validate file extension
                 mime_type, _ = mimetypes.guess_type(audio_url)
                 if mime_type and mime_type.startswith("audio/"):
-                    SubElement(item, "enclosure", url=audio_url, type=mime_type, length=str(file_size))
+                    SubElement(item, "enclosure", url=audio_url, type=mime_type, length=str(episode.get("fileSize", 0)))
                 else:
                     logger.warning(f"Invalid audio file URL or type: {audio_url}")
             else:
                 logger.warning("Audio URL is missing for an episode.")
+                continue  # Skip this episode if no audio URL is provided
+
+            # Add episode image (if available)
+            episode_image = episode.get("imageUrl", image_url)  # Fallback to podcast image
+            SubElement(item, "itunes:image", href=episode_image)
+            logger.info(f"Episode image URL added to RSS feed: {episode_image}")
 
             # Add duration (if available)
             duration = episode.get("duration", "0")
