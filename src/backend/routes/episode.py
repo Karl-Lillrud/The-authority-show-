@@ -57,15 +57,26 @@ def register_episode():
         # Parse form data
         data = request.form.to_dict()
         files = request.files.getlist("episodeFiles")
+        image_file = request.files.get("imageFile")  # Get the image file
+
         if not files or files[0].filename == "":
             return jsonify({"error": "No files uploaded"}), 400
 
-        # Save files to Google Cloud Storage
+        # Save audio files to Google Cloud Storage
         saved_files = save_uploaded_files(files)
         if not saved_files:
             return jsonify({"error": "Failed to save uploaded files"}), 500
         data["audioUrl"] = saved_files[0]["url"]
         data["episodeFiles"] = saved_files
+
+        # Save image file to the 'images/' folder in Google Cloud Storage (if provided)
+        if image_file:
+            image_filename = f"images/{image_file.filename}"  # Add 'images/' folder prefix
+            image_url = upload_to_cloud(image_file.read(), image_filename)
+            data["imageUrl"] = image_url
+        else:
+            # Provide a default image URL if no image file is uploaded
+            data["imageUrl"] = "https://storage.googleapis.com/podmanager/images/default_image.png"
 
         # Validate required fields
         if not data.get("podcastId") or not data.get("title") or not data.get("publishDate"):

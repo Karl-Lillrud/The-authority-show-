@@ -1,7 +1,7 @@
 import logging
 from xml.etree.ElementTree import Element, SubElement, tostring
-from backend.services.upload_rss_to_google_cloud import upload_rss_to_google_cloud
 from datetime import datetime
+import mimetypes
 
 logger = logging.getLogger(__name__)
 
@@ -10,26 +10,38 @@ def create_rss_feed(podcast, episodes):
     Generate an RSS feed for the given podcast and episodes.
     """
     try:
-        # Create the root <rss> element
-        rss = Element("rss", version="2.0", attrib={"xmlns:itunes": "http://www.itunes.com/dtds/podcast-1.0.dtd"})
+        # Create the root <rss> element with the required namespaces
+        rss = Element(
+            "rss",
+            version="2.0",
+            attrib={
+                "xmlns:itunes": "http://www.itunes.com/dtds/podcast-1.0.dtd",
+                "xmlns:media": "http://search.yahoo.com/mrss/",
+            },
+        )
         channel = SubElement(rss, "channel")
 
         # Add podcast details
         SubElement(channel, "title").text = podcast.get("podName", "Untitled Podcast")
         SubElement(channel, "description").text = podcast.get("description", "No description available")
-        SubElement(channel, "link").text = podcast.get("podUrl", "#")
+        SubElement(channel, "link").text = podcast.get("rssFeedUrl", "#")  # Add RSS feed URL
         SubElement(channel, "language").text = podcast.get("language", "en-us")
         SubElement(channel, "itunes:author").text = podcast.get("author", "Unknown Author")
         SubElement(channel, "itunes:explicit").text = "true" if podcast.get("explicit", False) else "false"
 
-        # Add podcast image
+        # Add podcast image (cover art)
         image_url = podcast.get("imageUrl", "")
         if image_url:
-            image = SubElement(channel, "itunes:image", href=image_url)
+            SubElement(channel, "itunes:image", href=image_url)
+        else:
+            logger.warning("Cover art is missing. Please provide a valid imageUrl.")
 
-        # Add iTunes categories (if available)
-        category = podcast.get("category", "")
-        if category:
+        # Add iTunes categories (at least one is required)
+        categories = podcast.get("categories", [])
+        if not categories:
+            logger.warning("No iTunes categories found. Adding a default category.")
+            categories = ["Uncategorized"]
+        for category in categories:
             SubElement(channel, "itunes:category", text=category)
 
         # Add episodes
@@ -50,14 +62,21 @@ def create_rss_feed(podcast, episodes):
             SubElement(item, "pubDate").text = pub_date_str
 
             # Add <guid> (Episode ID or URL) - Ensure it's unique
-            guid = episode.get("guid", f"https://www.podcastwebsite.com/episode/{episode.get('title')}")
+            guid = episode.get("guid", f"https://yourdomain.com/episode/{episode.get('id', 'unknown')}")
             SubElement(item, "guid").text = guid
 
             # Add enclosure for the audio file
             audio_url = episode.get("audioUrl", "")
-            file_size = episode.get("file_size", 0)
+            file_size = episode.get("fileSize", 0)
             if audio_url:
-                SubElement(item, "enclosure", url=audio_url, type="audio/mpeg", length=str(file_size))
+                # Validate file extension
+                mime_type, _ = mimetypes.guess_type(audio_url)
+                if mime_type and mime_type.startswith("audio/"):
+                    SubElement(item, "enclosure", url=audio_url, type=mime_type, length=str(file_size))
+                else:
+                    logger.warning(f"Invalid audio file URL or type: {audio_url}")
+            else:
+                logger.warning("Audio URL is missing for an episode.")
 
             # Add duration (if available)
             duration = episode.get("duration", "0")
