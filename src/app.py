@@ -23,7 +23,8 @@ from backend.routes.frontend import frontend_bp
 from backend.routes.guestpage import guestpage_bp
 from backend.routes.guest_to_eposide import guesttoepisode_bp
 from backend.routes.guest_form import guest_form_bp
-from backend.routes.transcription import transcription_bp
+
+# from backend.routes.transcription import transcription_bp
 from backend.routes.landingpage import landingpage_bp
 from backend.routes.Mailing_list import Mailing_list_bp
 from backend.routes.user import user_bp
@@ -53,7 +54,15 @@ app = Flask(__name__, template_folder=template_folder, static_folder=static_fold
 
 CORS(
     app,
-    resources={r"/*": {"origins": ["https://devapp.podmanager.ai", "https://app.podmanager.ai", "http://127.0.0.1:8000"]}},
+    resources={
+        r"/*": {
+            "origins": [
+                "https://devapp.podmanager.ai",
+                "https://app.podmanager.ai",
+                "http://127.0.0.1:8000",
+            ]
+        }
+    },
 )
 
 # Set secret key and preferred URL scheme
@@ -81,7 +90,7 @@ app.register_blueprint(podprofile_bp)
 app.register_blueprint(frontend_bp)
 app.register_blueprint(guesttoepisode_bp)
 app.register_blueprint(guest_form_bp, url_prefix="/guest-form")
-app.register_blueprint(transcription_bp)
+# app.register_blueprint(transcription_bp)
 app.register_blueprint(audio_bp)
 app.register_blueprint(video_bp)
 app.register_blueprint(landingpage_bp)
@@ -105,35 +114,36 @@ logger.info(f"MONGODB_URI: {os.getenv('MONGODB_URI')}")
 logger.info(f"APP_ENV: {APP_ENV}")
 
 # Start Streamlit when the app starts
-def start_streamlit():
-    # Define the Streamlit port, defaulting to 8501
-    streamlit_port = os.getenv("STREAMLIT_PORT", "8501")
-    # Command to start Streamlit
-    streamlit_command = [
-        "streamlit",
-        "run",
-        "src/backend/routes/transcript/streamlit_transcription.py",  # Adjust the path if needed
-        "--server.port",
-        streamlit_port,
-        "--server.headless",
-        "true",
-    ]
-    # Start Streamlit as a background process
-    subprocess.Popen(streamlit_command)
+# def start_streamlit():
+# Define the Streamlit port, defaulting to 8501
+#   streamlit_port = os.getenv("STREAMLIT_PORT", "8501")
+# Command to start Streamlit
+#  streamlit_command = [
+#      "streamlit",
+#      "run",
+#      "src/backend/routes/transcript/streamlit_transcription.py",  # Adjust the path if needed
+#       "--server.port",
+#       streamlit_port,
+#      "--server.headless",
+#       "true",
+#   ]
+# Start Streamlit as a background process
+##    subprocess.Popen(streamlit_command)
 
 # Start Streamlit in the background
 # start_streamlit()
 
 # Proxy requests to Streamlit (on port 8501)
-@app.route("/streamlit/<path:path>", methods=["GET", "POST"])
-def proxy_streamlit(path):
-    # Construct the URL for Streamlit
-    url = f"http://localhost:8501/{path}"
-    # Proxy the request to Streamlit
-    resp = requests.request(
-        method=request.method, url=url, headers=request.headers, data=request.data
-    )
-    return Response(resp.content, resp.status_code, resp.raw.headers.items())
+# @app.route("/streamlit/<path:path>", methods=["GET", "POST"])
+# def proxy_streamlit(path):
+#   # Construct the URL for Streamlit
+#   url = f"http://localhost:8501/{path}"
+#   # Proxy the request to Streamlit
+#   resp = requests.request(
+#       method=request.method, url=url, headers=request.headers, data=request.data
+# )
+#   return Response(resp.content, resp.status_code, resp.raw.headers.items())
+
 
 # Load user information before each request
 @app.before_request
@@ -141,9 +151,11 @@ def load_user():
     g.user_id = session.get("user_id")
     logger.info(f"Request to {request.path} by user {g.user_id}")
 
+
 @app.route("/health", methods=["GET"])
 def health():
     return "OK", 200
+
 
 # Run the app
 if __name__ == "__main__":
