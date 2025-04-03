@@ -1,9 +1,9 @@
-name: Deploy Flask App to Azure
+name: Deploy Streamlit App to Azure
 
 on:
   push:
     branches:
-      - main
+      - 903-dev-streamlit-only
 
 jobs:
   build-and-deploy:
@@ -16,11 +16,10 @@ jobs:
       - name: Setup Python
         uses: actions/setup-python@v3
         with:
-          python-version: "3.x"
+          python-version: "3.12"
 
       - name: Install Dependencies
         run: |
-          cd src  # Change to the src directory
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
@@ -28,5 +27,5 @@ jobs:
         uses: azure/webapps-deploy@v3
         with:
           app-name: "podmanager"  # Replace with your Azure Web App name
-          publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }}
-          package: .
+          publish-profile: ${{ secrets.STREAMLIT_PUBLISH_PROFILE }}
+          startup-command: streamlit run src/backend/routes/transcript/streamlit_transcription.py --server.headless true --server.port $PORT
