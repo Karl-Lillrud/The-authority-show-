@@ -257,14 +257,33 @@
   async function viewEpisodes() {
     try {
       const guestId = "currentGuestId"; // Replace with actual guest ID logic
-      const episodes = await fetchEpisodes(guestId);
+      const url = `/api/episodes?guestId=${guestId}`;
+      console.log("Fetching episodes from:", url); // Log the URL
+      const response = await fetch(url);
+
       const episodesList = document.getElementById("episodes-list");
-      episodesList.innerHTML = episodes
-        .map(episode => `<div onclick="viewEpisodeTasks('${episode.id}')">${episode.title}</div>`)
-        .join("");
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error("Error loading episodes:", errorText);
+        episodesList.innerHTML = `<p style="color: red;">Failed to load episodes: ${response.statusText}</p>`;
+        return;
+      }
+
+      const episodes = await response.json();
+      if (episodes.length === 0) {
+        episodesList.innerHTML = `<p style="color: red;">No episodes found for this guest.</p>`;
+      } else {
+        episodesList.innerHTML = episodes
+          .map(episode => `<div onclick="viewEpisodeTasks('${episode.id}')">${episode.title}</div>`)
+          .join("");
+      }
+
       document.getElementById("episodes-popup").style.display = "block";
     } catch (error) {
       console.error("Error loading episodes:", error);
+      const episodesList = document.getElementById("episodes-list");
+      episodesList.innerHTML = `<p style="color: red;">An error occurred while loading episodes.</p>`;
     }
   }
 
