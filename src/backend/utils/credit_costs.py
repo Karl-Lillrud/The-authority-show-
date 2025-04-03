@@ -7,4 +7,3 @@ CREDIT_COSTS = {
     "automation": 500,
     "video_generation": 800
 }
-CREDIT_COSTS["transcription"]
