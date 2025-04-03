@@ -12,9 +12,6 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v3
 
-      - name: Copy requirements to root
-        run: cp src/requirements.txt requirements.txt
-
       - name: Setup Python 3.10
         uses: actions/setup-python@v4
         with:
@@ -25,12 +22,9 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r src/requirements.txt
 
-      - name: Remove default hostingstart.html
-        run: |
-          rm -f hostingstart.html
-
       - name: Deploy to Azure App Service
         uses: azure/webapps-deploy@v2
         with:
           app-name: ${{ secrets.AZURE_APP_NAME }}
           publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }}
+          startup-command: gunicorn --chdir src app:app --bind=0.0.0.0 --timeout 600
