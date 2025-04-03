@@ -1,15 +1,11 @@
 dnspython
-elevenlabs
-Faker
 feedparser
 Flask
 flask_cors
 google_auth_oauthlib
 marshmallow
 matplotlib
-noisereduce
 numpy
-openai
 opencv_contrib_python
 Pillow
 pydub
@@ -17,13 +13,10 @@ pymongo
 python-dotenv
 pytz
 soundfile
-streamlit
-tensorflow
 textblob
 textstat
 timezonefinder
 transformers
 Werkzeug
-whisper
 gunicorn
 
