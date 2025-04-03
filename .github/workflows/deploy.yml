@@ -21,7 +21,6 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install -r src/requirements.txt
-          cp -r . podmanager/
 
       - name: Remove default hostingstart.html
         run: |
@@ -33,4 +32,6 @@ jobs:
           app-name: ${{ secrets.AZURE_APP_NAME }}
           publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }}
 
-          #marcus och arin
+      - name: Set Startup Command for Gunicorn
+        run: |
+          echo "gunicorn --chdir src app:app" > .azure/startup.txt
