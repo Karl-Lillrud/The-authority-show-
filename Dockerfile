@@ -1,16 +1,24 @@
 FROM python:3.12-slim
 
-# Ställ in arbetskatalogen i containern
 WORKDIR /app
 
-# Kopiera över requirements.txt till containern
-COPY requirements.txt .
+# Set PYTHONPATH to include the src directory
+ENV PYTHONPATH=/app/src
 
-# Installera alla Python-paket som anges i requirements.txt
-RUN pip install -r requirements.txt
+# Copy only requirements.txt first to leverage Docker caching
+COPY src/requirements.txt src/requirements.txt
 
-# Kopiera över hela appen till containern
+# Copy the .env file from the root directory to /app/src/
+COPY .env /app/src/
+
+# Install dependencies
+RUN pip install --no-cache-dir -r src/requirements.txt
+
+# Copy the rest of the application
 COPY . .
 
-# Kör Gunicorn med rätt bindning
-CMD ["gunicorn", "--bind", "0.0.0.0:8000", "app:app"]
+# Expose the port Flask will run on
+EXPOSE 8000
+
+# Run Gunicorn to serve the Flask app
+CMD ["gunicorn", "--bind", "0.0.0.0:8000", "src.app:app"]
