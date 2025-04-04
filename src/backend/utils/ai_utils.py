@@ -9,15 +9,25 @@ logger = logging.getLogger(__name__)
 
 def remove_filler_words(text: str) -> str:
     """
-    Use GPT or simple regex to remove filler words. Example uses GPT-4 prompt:
+    Removes timestamps and speaker tags, then uses GPT-4 to remove filler words.
     """
-    prompt = f"Remove unnecessary filler words (um, ah, like, etc.) from:\n{text}"
+    # Remove timestamps (e.g. 00:01, [00:01:23], (00:00), etc.)
+    text = re.sub(r'\[?\(?\b\d{1,2}:\d{2}(?::\d{2})?\b\)?\]?', '', text)
+
+    # Remove speaker tags (e.g., "Speaker 1:", "Interviewer:", etc.)
+    text = re.sub(r'\b(Speaker \d+|Interviewer|Interviewee|Host|Guest):', '', text, flags=re.IGNORECASE)
+
+    # Strip extra whitespace
+    text = re.sub(r'\s+', ' ', text).strip()
+
+    # Ask GPT to remove filler words
+    prompt = f"Remove unnecessary filler words (um, uh, ah, like, you know, etc.) from this text:\n{text}"
     try:
         response = openai.ChatCompletion.create(
             model="gpt-4",
             messages=[{"role": "user", "content": prompt}]
         )
-        return response["choices"][0]["message"]["content"]
+        return response["choices"][0]["message"]["content"].strip()
     except Exception as e:
         logger.error(f"Error removing filler words: {str(e)}")
         return text  # fallback
