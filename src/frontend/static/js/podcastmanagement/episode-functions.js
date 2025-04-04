@@ -77,6 +77,19 @@ export function playAudio(audioUrl, episodeTitle) {
     });
 }
 
+// Add responsive submenu logic
+function makeSubmenuResponsive() {
+  const submenu = document.querySelector(".submenu");
+  if (submenu) {
+    submenu.style.display = "flex";
+    submenu.style.flexDirection = "row";
+    submenu.style.justifyContent = "space-around";
+  }
+}
+
+// Call the function to adjust submenu responsiveness
+makeSubmenuResponsive();
+
 // Function to render episode detail
 export function renderEpisodeDetail(episode) {
   const episodeDetailElement = document.getElementById("podcast-detail");
@@ -97,10 +110,6 @@ export function renderEpisodeDetail(episode) {
 
   episodeDetailElement.innerHTML = `
 <div class="detail-header">
-  <button class="back-btn" id="back-to-podcast">
-    ${shared.svgpodcastmanagement.back}
-    Back to podcast
-  </button>
   <div class="top-right-actions">
     <button class="action-btn edit-btn" id="edit-episode-btn" data-id="${
       episode._id
@@ -207,28 +216,6 @@ export function renderEpisodeDetail(episode) {
 
   // Define the episodeActions container
   const episodeActions = document.getElementById("episode-actions");
-
-  // Back button event listener
-  const backButton = document.getElementById("back-to-podcast");
-  if (backButton) {
-    backButton.addEventListener("click", () => {
-      if (!shared.selectedPodcastId) {
-        shared.selectedPodcastId = episode.podcast_id || episode.podcastId;
-      }
-      if (shared.selectedPodcastId) {
-        viewPodcast(shared.selectedPodcastId);
-      } else {
-        console.error(
-          "Podcast ID is missing. Cannot navigate back to podcast."
-        );
-        showNotification(
-          "Error",
-          "Podcast ID is missing. Cannot navigate back.",
-          "error"
-        );
-      }
-    });
-  }
 
   // Edit button event listener
   const editButton = document.getElementById("edit-episode-btn");
