@@ -23,7 +23,7 @@ body {
 }
 
 #addGuestButton {
-  background-color: coral; /* Bakgrundsfärg */
+  background-color:coral; /* Bakgrundsfärg */
   color: white; /* Textfärg */
   position: relative;
   top: 1vh;
@@ -46,22 +46,21 @@ body {
   display: inline-block; /* Gör etiketten inline-block för att den ska bete sig som en knapp */
   margin-top: 0.5rem; /* Övre marginal */
 }
-
 #profilePhotoLabel:hover {
   background-color: rgb(202, 209, 215);
 }
 
 #openDatePicker {
   display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  background-color: coral;
-  color: white;
+  align-items: center; 
+  gap: 0.5rem; 
+  background-color: coral; 
+  color: white; 
   padding: 0.5rem 1rem;
-  border-radius: 0.5rem;
-  transition: all 0.3s ease;
-  border: none;
-  cursor: pointer;
+  border-radius: 0.5rem; 
+  transition: all 0.3s ease; 
+  border: none; 
+  cursor: pointer; 
 }
 
 #openDatePicker svg {
@@ -75,7 +74,6 @@ body {
 #openDatePicker:hover {
   background-color: rgb(202, 209, 215);
 }
-
 button[type="submit"] {
   width: 100%; /* Fyller hela bredden av föräldraelementet, motsvarande w-full */
   background-color: #ff7f50;
@@ -97,47 +95,47 @@ button[type="submit"]:hover {
   grid-template-columns: repeat(7, 1fr);
 }
 
-.input-field {
-  width: 100%;
-  padding: 10px;
-  margin-top: 5px;
-  border: 1px solid orange;
-  border-radius: 15px;
-  outline: none;
-  transition: all 0.3s;
-}
+    .input-field {
+      width: 100%;
+      padding: 10px;
+      margin-top: 5px;
+      border: 1px solid orange;
+      border-radius: 15px;
+      outline: none;
+      transition: all 0.3s;
+    }
 
-.input-field:focus {
-  box-shadow: 0 0 5px rgba(0, 123, 255, 0.5);
-}
+    .input-field:focus {
+      box-shadow: 0 0 5px rgba(0, 123, 255, 0.5);
+    }
 
-.error-message {
-  color: red;
-  font-size: 14px;
-  margin-top: 15px;
-}
+    .error-message {
+      color: red;
+      font-size: 14px;
+      margin-top: 15px;
+    }
 
 .footer {
-  background-color: #ff7f50 !important;
-  position: relative !important;
-  top: 120vh !important;
-  height: 17vh !important;
-  margin-top: 7vh !important;
-  text-align: center !important;
-  padding: 1rem !important;
+  background-color: #ff7f50;
+  position:relative;
+  top: 200vh;
+  height: 17vh;
+  margin-top: 7vh;
+  text-align: center;
+  padding: 1rem ; 
 }
 
 .footer-text {
-  color: white !important;
-  font-size: 18px !important;
-  margin-bottom: 1px !important;
+  color: white;
+  font-size: 18px; 
+  margin-bottom: 1px; 
 }
 
 .footer-logo {
-  margin-top: 0px !important;
-  width: 90px !important;
-  height: auto !important;
-  display: block !important;
-  margin-left: auto !important;
-  margin-right: auto !important;
+  margin-top: 0px; 
+  width: 90px; 
+  height: auto; 
+  display: block; 
+  margin-left: auto;
+  margin-right: auto; 
 }
