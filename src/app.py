@@ -59,6 +59,7 @@ CORS(
                 "https://devapp.podmanager.ai",
                 "https://app.podmanager.ai",
                 "http://127.0.0.1:8000",
+                "https://podmanager-ggevewegdfgwebcd.scm.northeurope-01.azurewebsites.net",
             ]
         }
     },
@@ -161,7 +162,5 @@ def health():
 
 ## Run the app
 if __name__ == "__main__":
-    port = int(
-        os.getenv("PORT", "8000")
-    )  # Use PORT from environment (Render sets this)
-    app.run(host="0.0.0.0", port=port, debug=False)
+    port = int(os.environ.get("PORT", 8000))  # Ensure Flaqsk rruns on port 8000
+    app.run(host="0.0.0.0", port=port)
