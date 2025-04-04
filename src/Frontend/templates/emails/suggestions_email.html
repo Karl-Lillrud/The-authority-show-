@@ -5,13 +5,11 @@
     <title>Your Episode is Live!</title>
 </head>
 <body>
-    <!-- should be checking for status: published and if it has been published send out email  -->
-    <p><strong>Episode Title:</strong> {{ episode_title }}</p>
     <h1>Hi {{ guest_name }},</h1>
-    <p>Your episode of <strong>{{ podName }}</strong> is officially live!</p>
+    <p>Your episode with <strong>{{ podName }}</strong> is officially live!</p>
 
     <p>Here’s the link to listen and share: 
-        <a href="spotify_url">
+        <a href="{{ link }}">
             Listen on Spotify
         </a>
     </p>
@@ -24,16 +22,17 @@
     <p>It's always best if you write your own post, but here’s an idea to get you started:</p>
     <blockquote>
         “My episode on {{ podName }} with @{{ hostName }} is now live! 
-        We explored "{{ title }}"" and had an amazing discussion. 
+        We explored "{{ title }}" and had an amazing discussion. 
         Listen in here: 
-        <a href="spotify_url">
+            <a href="{{ link }}">
             Listen now!
         </a> 
-        #{{ podname }} #{{ guest_name }} #{{ hostName }}”
+        #{{ podName }} #{{ guest_name }} #{{ hostName }}”
     </blockquote>
 
-
-    <p>Media material for this episode can be found here: <a href="{{ audio_url }}">Download Here</a></p> <!-- Audio URL -->
+    <p>Media material for this episode can be found here: 
+        <a href="{{ audio_url }}">Download Here</a>
+    </p>
 
     <p>Feel free to make it your own, and let me know if there’s anything more I can do to help get the word out. I’m here to make this as easy and inspiring as possible!</p>
 

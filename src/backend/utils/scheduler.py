@@ -9,17 +9,15 @@ from backend.database.mongo_connection import database  # Import the database fr
 import time
 from flask import render_template
 
-# Set up logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-# MongoDB collections
 episode_collection = database["Episodes"]
 guest_collection = database["Guests"]
 podcast_collection = database["Podcasts"]
 
-SENT_EMAILS_FILE = "sent_emails.json"  # JSON file to track sent emails
-TEMPLATES_FILE = "email_templates.json"  # File with email templates
+SENT_EMAILS_FILE = "sent_emails.json"  
+TEMPLATES_FILE = "email_templates.json" 
 
 # Ensure the sent_emails.json file exists
 if not os.path.exists(SENT_EMAILS_FILE):
@@ -70,14 +68,10 @@ def parse_publish_date(publish_date):
         return None
 
 def check_and_send_emails():
-    """Check for episodes based on multiple triggers and send corresponding emails."""
     today = datetime.now(timezone.utc)
-    logger.info(f"Checking for episodes based on triggers. Today: {today}")
 
-    # Load sent emails to track which ones have already been processed
     sent_emails = load_sent_emails()
 
-    # Define triggers with their corresponding conditions
     triggers = {
         "booking": {"status": "Not Recorded", "time_check": None},  # Send immediately
         "preparation": {"status": "Not Recorded", "time_check": timedelta(days=1)},  # 1 day before publishDate
@@ -112,9 +106,6 @@ def check_and_send_emails():
                 "status": "Published",  # Only check for published episodes
             }
 
-        # Log the query for debugging
-        logger.info(f"Query for trigger '{trigger_name}': {query}")
-
         try:
             # Execute the query
             episodes = list(episode_collection.find(query))
@@ -138,9 +129,6 @@ def check_and_send_emails():
                 if not guest:
                     logger.warning(f"No valid guest found for episode {episode['title']} (Guest GUID: {guest_id}).")
                     continue
-
-                # Log the guest's social media fields
-                logger.info(f"Checking social media handles for guest {guest['name']}: LinkedIn='{guest.get('linkedin')}', Twitter='{guest.get('twitter')}'")
 
                 # Check for missing social media handles
                 if not guest.get("linkedin") or guest.get("linkedin") == "" or not guest.get("twitter") or guest.get("twitter") == "":
@@ -177,16 +165,20 @@ def check_and_send_emails():
 def start_scheduler(app):
     """Start the scheduler."""
     scheduler = BackgroundScheduler()
-
-    # Wrap the job in app.app_context()
-    scheduler.add_job(lambda: app.app_context().push() or check_and_send_emails(), "interval", seconds=30)
+    #Change depending on when we want to run the check_and_send_emails function
+    scheduler.add_job(
+        lambda: app.app_context().push() or check_and_send_emails(),
+        "cron",
+        hour=17,
+        minute=00
+    )
     scheduler.start()
-    logger.info("Scheduler started. Running checks for emails every minute.")
+    logger.info("Scheduler started. Running checks for emails every day at choosen time.")
 
 if __name__ == "__main__":
-    from app import app  # Import the Flask app
+    from app import app 
     try:
-        start_scheduler(app)  # Pass the app to the scheduler
+        start_scheduler(app)  
         while True:
             time.sleep(1)  # Sleep to prevent high CPU usage
     except (KeyboardInterrupt, SystemExit):
