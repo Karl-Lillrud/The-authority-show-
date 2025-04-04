@@ -57,28 +57,26 @@
       </audio>
     </section>
     
-    <!-- Guest About Section -->
+      <!-- Guest About Section -->
     <section class="guest-about-section section-dark" id="guest-about-section">
-      <h2>Meet the Guest</h2>
-      <p id="guest-about-description">
-        A brief introduction about the guest goes here. <br>Learn more about their background and expertise.
-      </p>
-      <div class="guest-about-info">
-        <img id="guest-about-image" src="/media/Karl-Lillrud_bok_nvidia.jpg" alt="Guest Image" class="guest-about-image">
-        <div class="guest-about-details">
-          <h3 id="guest-about-name">Guest Name</h3>
-          <p id="guest-about-bio">
-            Guest biography goes here. Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nulla ac ultrices libero.
-          </p>
-          <div id="guest-about-social">
-            <a href="https://twitter.com/guest" target="_blank" class="twitter"><i class="fab fa-twitter"></i></a>
-            <a href="https://instagram.com/guest" target="_blank" class="instagram"><i class="fab fa-instagram"></i></a>
-            <a href="https://linkedin.com/in/guest" target="_blank" class="linkedin"><i class="fab fa-linkedin"></i></a>
-            <a href="https://facebook.com/guest" target="_blank" class="facebook"><i class="fab fa-facebook-f"></i></a>
-            <a href="https://youtube.com/guest" target="_blank" class="youtube"><i class="fab fa-youtube"></i></a>
+      <h2>Meet the Guest{{ guests|length > 1 and 's' or '' }}</h2>
+
+      {% for guest in guests %}
+        <div class="guest-about-info">
+          <img class="guest-about-image" src="{{ guest.image or url_for('static', filename='images/default.png') }}" alt="Guest Image">
+          <div class="guest-about-details">
+            <h3>{{ guest.name }}</h3>
+            <p>{{ guest.bio or "No bio available." }}</p>
+            <div class="guest-about-social">
+              {% if guest.twitter %}<a href="{{ guest.twitter }}" target="_blank" class="twitter"><i class="fab fa-twitter"></i></a>{% endif %}
+              {% if guest.instagram %}<a href="{{ guest.instagram }}" target="_blank" class="instagram"><i class="fab fa-instagram"></i></a>{% endif %}
+              {% if guest.linkedin %}<a href="{{ guest.linkedin }}" target="_blank" class="linkedin"><i class="fab fa-linkedin"></i></a>{% endif %}
+              {% if guest.facebook %}<a href="{{ guest.facebook }}" target="_blank" class="facebook"><i class="fab fa-facebook-f"></i></a>{% endif %}
+              {% if guest.youtube %}<a href="{{ guest.youtube }}" target="_blank" class="youtube"><i class="fab fa-youtube"></i></a>{% endif %}
+            </div>
           </div>
         </div>
-      </div>
+      {% endfor %}
     </section>
 
 

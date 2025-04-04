@@ -7,4 +7,5 @@ class WorkflowSchema(Schema):
     episode_id = fields.Str()
     tasks = fields.List(fields.Dict())
     created_at = fields.DateTime()
-    name = fields.Str()  # You can add a 'name' field for the workflow
+    name = fields.Str()
+    description = fields.Str()

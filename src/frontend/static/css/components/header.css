@@ -118,6 +118,9 @@ header:hover {
 
 /* Logo – Reduced size */
 .logo-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
   width: 100px; /* Reduced from 120px */
   flex-shrink: 0; /* Prevent logo from shrinking */
 }
@@ -150,7 +153,12 @@ header:hover {
   font-weight: 600;
   color: var(--text-color-light);
   white-space: nowrap;
+  max-width: 100px; /* Limit width to prevent overflow */
+  white-space: nowrap;
+  overflow: visible;
+  text-overflow: ellipsis;
 }
+
 
 /* Header Nav (Menus on the far right) */
 .header-nav {
@@ -484,14 +492,6 @@ header:hover {
   .logo-container,
   .logo-container img {
     width: 70px; /* Even smaller logo on very small screens */
-  }
-
-  .page-title {
-    font-size: 0.8rem; /* Smaller title text */
-    max-width: 100px; /* Limit width to prevent overflow */
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
   }
 
   .header-nav {

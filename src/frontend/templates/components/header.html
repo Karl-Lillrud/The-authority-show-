@@ -32,13 +32,7 @@
       <span></span>
     </div>
     <div class="menu" id="menu">
-      <!-- <a href="{{ url_for('dashboard_bp.account') }}">Account</a>
-      <a href="{{ url_for('dashboard_bp.taskmanagement') }}">Task Management</a>-->
-
-      <!-- <a href="{{ url_for('dashboard_bp.team') }}">Team Members</a>>-->
-
       <a href="{{ url_for('dashboard_bp.account') }}">Account</a>
-
       <a href="{{ url_for('dashboard_bp.taskmanagement') }}">Episode To-Do</a>
       <a href="{{ url_for('dashboard_bp.team') }}">Team Management</a>
       <a href="{{ url_for('dashboard_bp.podcastmanagement') }}">Podcast Management</a>
@@ -50,7 +44,7 @@
         </div>
       </div>
       <a href="{{ url_for('auth_bp.signin') }}" id="logout-link">Log out</a>
-  </div>
+    </div>
   </nav>
 </header>
 
@@ -71,22 +65,3 @@
   src="{{ url_for('static', filename='js/components/header.js') }}"
 ></script>
 
-<script>
-  document.addEventListener("DOMContentLoaded", function () {
-    // Dynamically set the page title based on the current page
-    const pageTitleElement = document.getElementById("page-title");
-    if (pageTitleElement) {
-      const pageTitles = {
-        "/podcastmanagement": "Podcast Management",
-        "/dashboard": "Dashboard",
-        "/team": "Team Members",
-        "/guest": "Guest View",
-        "/taskmanagement": "Task Management"
-      };
-
-      const currentPath = window.location.pathname;
-      const pageTitle = pageTitles[currentPath] || "PodManager";
-      pageTitleElement.textContent = pageTitle;
-    }
-  });
-</script>
