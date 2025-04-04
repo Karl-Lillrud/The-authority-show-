@@ -159,5 +159,5 @@ def health():
 
 # Run the app
 if __name__ == "__main__":
-    port = int(os.environ.get("PORT", 8000))  # Ensure Flask rruns on port 8000
+    port = int(os.environ.get("PORT", 8000))  # Ensure Flaqsk rruns on port 8000
     app.run(host="0.0.0.0", port=port)
