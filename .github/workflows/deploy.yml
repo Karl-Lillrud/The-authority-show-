@@ -21,10 +21,12 @@ jobs:
 
     - name: Build and push Docker image to ACR
       run: |
-        docker build -t $REGISTRY_NAME.azurecr.io/$IMAGE_NAME:latest .
-        docker push $REGISTRY_NAME.azurecr.io/$IMAGE_NAME:latest
+        docker build -t ${{ secrets.REGISTRY_NAME }}.azurecr.io/${{ secrets.IMAGE_NAME }}:latest .
+        docker push ${{ secrets.REGISTRY_NAME }}.azurecr.io/${{ secrets.IMAGE_NAME }}:latest
 
     - name: Run deployment script
       run: |
         chmod +x ./deploy.sh
         ./deploy.sh
+
+
