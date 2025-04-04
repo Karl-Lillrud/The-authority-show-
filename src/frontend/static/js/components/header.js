@@ -1,7 +1,24 @@
 import { fetchPodcasts } from "/static/requests/podcastRequests.js";
 
+function toggleLandingPage() {
+  var dropdown = document.getElementById("dropdown-content");
+  var triangle = document.getElementById("triangle");
+
+  // Toggle dropdown visibility and triangle direction
+  if (dropdown.style.display === "none" || dropdown.style.display === "") {
+    dropdown.style.display = "block";
+    triangle.classList.remove("triangle-down");
+    triangle.classList.add("triangle-up");
+  } else {
+    dropdown.style.display = "none";
+    triangle.classList.remove("triangle-up");
+    triangle.classList.add("triangle-down");
+  }
+}
+window.toggleLandingPage = toggleLandingPage;
+
 async function populatePodcastDropdown() {
-  const dropdown = document.getElementById("headerPodcastDropdown");
+  const dropdown = document.getElementById("dropdown-content");
   if (!dropdown) {
     console.error("Header podcast dropdown element not found.");
     return;
@@ -12,27 +29,16 @@ async function populatePodcastDropdown() {
     const data = await fetchPodcasts();
     console.log("Podcasts fetched:", data);
     const podcasts = data.podcast || [];
-
-    if (podcasts.length < 2) {
-      dropdown.style.display = "none";
-      return;
-    }
-
-    // Visa dropdownen om det finns fler än 2 podcasts
-    dropdown.style.display = "block";
-
-    const selected = dropdown.querySelector(".dropdown-selected");
     const optionsContainer = dropdown.querySelector(".dropdown-options");
 
     podcasts.forEach((podcast) => {
-      const option = document.createElement("div");
+      const option = document.createElement("a");
       option.textContent = podcast.podName;
+      option.href = "/landingpage/" + podcast._id;
       option.dataset.value = podcast._id;
 
       option.addEventListener("click", () => {
-        selected.textContent = podcast.podName;
-        localStorage.setItem("selectedPodcastId", podcast._id);
-        window.location.href = "/podcast";
+        window.location.href = "/landingpage/" + podcast._id;
       });
 
       optionsContainer.appendChild(option);
@@ -165,3 +171,45 @@ document.addEventListener("click", (e) => {
     toggleMenu();
   }
 });
+
+document.addEventListener("DOMContentLoaded", () => {
+  const landingPageLink = document.getElementById("landing-page-link");
+
+  if (landingPageLink) {
+    const selectedPodcastId = localStorage.getItem("selectedPodcastId");
+
+    // Set the href dynamically (good for right-click > open in new tab)
+    if (selectedPodcastId) {
+      landingPageLink.href = `/landingpage/${selectedPodcastId}`;
+    }
+
+    // On click, prevent default and redirect
+    landingPageLink.addEventListener("click", (e) => {
+      e.preventDefault();
+      const id = localStorage.getItem("selectedPodcastId");
+      if (id) {
+        window.location.href = `/landingpage/${id}`;
+      } else {
+        alert("Please select a podcast first.");
+      }
+    });
+  }
+
+  // Dynamically set the page title based on the current page
+  const pageTitleElement = document.getElementById("page-title");
+  if (pageTitleElement) {
+    const pageTitles = {
+      "/account": "Account",
+      "/podcastmanagement": "Podcast Management",
+      "/dashboard": "Dashboard",
+      "/team": "Team Members",
+      "/guest": "Guest View",
+      "/taskmanagement": "Task Management"
+    };
+
+    const currentPath = window.location.pathname;
+    const pageTitle = pageTitles[currentPath] || "PodManager";
+    pageTitleElement.textContent = pageTitle;
+  }
+});
+

@@ -1,8 +1,10 @@
 from flask import request, jsonify, Blueprint, g, render_template
 from backend.repository.episode_repository import EpisodeRepository
 from backend.repository.podcast_repository import PodcastRepository
+from backend.repository.guest_repository import GuestRepository
 import logging
 
+guest_repo = GuestRepository()
 episode_bp = Blueprint("episode_bp", __name__)
 episode_repo = EpisodeRepository()
 podcast_repo = PodcastRepository()
@@ -65,6 +67,10 @@ def episode_detail(episode_id):
         episode, podcast = episode_repo.get_episode_detail_with_podcast(episode_id)
         if not episode:
             return render_template("404.html")
+        
+        # Hämta gäster kopplade till avsnittet
+        guests_response, status = guest_repo.get_guests_by_episode(episode_id)
+        guests = guests_response.get("guests", []) if status == 200 else []
 
         podcast_logo = podcast.get("logoUrl", "")
         if not isinstance(podcast_logo, str) or not podcast_logo.startswith(("http", "data:image")):
@@ -79,11 +85,11 @@ def episode_detail(episode_id):
             episode=episode,
             podcast_logo=podcast_logo,
             audio_url=audio_url,
+            guests=guests
         )
     except Exception as e:
         logger.error("❌ ERROR in episode_detail: %s", str(e))
         return f"Error: {str(e)}", 500
-
 
 @episode_bp.route("/episodes/by_podcast/<podcast_id>", methods=["GET"])
 def get_episodes_by_podcast(podcast_id):
@@ -91,3 +97,4 @@ def get_episodes_by_podcast(podcast_id):
         return jsonify({"error": "Unauthorized"}), 401
 
     return episode_repo.get_episodes_by_podcast(podcast_id, g.user_id)
+

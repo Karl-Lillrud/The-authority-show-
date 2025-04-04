@@ -6,7 +6,6 @@ import { initTaskManagement } from "/static/js/dashboard/task.js"
 document.addEventListener("DOMContentLoaded", () => {
   initWelcomePopup()
   fetchAndDisplayEpisodesWithGuests()
-  populateLeaderboard()
 })
 
 function initWelcomePopup() {
@@ -35,7 +34,7 @@ async function fetchAndDisplayEpisodesWithGuests() {
   try {
     const episodes = await fetchAllEpisodes()
     // Only show episodes with active status
-    const activeEpisodes = episodes.filter(ep => ep.status === "active")
+    const activeEpisodes = episodes.filter(ep => ep.status === "Not Recorded" || ep.status === "Not Scheduled" || ep.status === "Recorded" || ep.status === "Edited")
     const container = document.querySelector(".cards-container")
     const initialEpisodes = activeEpisodes.slice(0, 3)
     let isExpanded = false

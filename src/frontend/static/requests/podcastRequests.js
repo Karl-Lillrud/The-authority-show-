@@ -82,9 +82,11 @@ export async function deletePodcast(podcastId) {
 export async function fetchRSSData(rssUrl) {
   try {
     console.log("Fetching RSS data from URL:", rssUrl); // Added log
-    const response = await fetch(
-      `/fetch_rss?url=${encodeURIComponent(rssUrl)}`
-    );
+    const response = await fetch("/fetch_rss", {
+      method: "POST", // Changed from GET to POST
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ rssUrl }) // Send rssUrl in the request body
+    });
     if (!response.ok) {
       throw new Error("Failed to fetch RSS feed.");
     }
@@ -92,7 +94,7 @@ export async function fetchRSSData(rssUrl) {
     console.log("Fetched RSS data:", rssData); // Added log
     return rssData;
   } catch (error) {
-    console.error("Error in fetchRSSData:", error);
+    console.error("Error in fetchRSSData:", error); // Added log
     throw new Error(`Error fetching RSS feed: ${error.message}`);
   }
 }

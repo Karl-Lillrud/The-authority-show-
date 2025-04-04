@@ -2,7 +2,10 @@ import {
   fetchGuestsRequest,
   addGuestRequest
 } from "../../../static/requests/guestRequests.js";
-import { fetchEpisodesByPodcast } from "../../../static/requests/episodeRequest.js";
+import {
+  fetchEpisodesByPodcast,
+  fetchEpisode
+} from "../../../static/requests/episodeRequest.js";
 import { fetchPodcasts } from "../../../static/requests/podcastRequests.js";
 import {
   showNotification,
@@ -120,26 +123,40 @@ function showManualGuestPopup(selectElement) {
             email: guestEmail,
             podcastId
           });
-          document.body.removeChild(popup);
-          // Fetch and render the updated guest list
-          await renderGuestSelection(selectElement, guest.guest_id);
-          showNotification("Success", "Guest added successfully!", "success"); // Show success notification
+
+          // Check for the success message in the response from the backend
+          if (guest && guest.message === "Guest added successfully") {
+            document.body.removeChild(popup);
+            // Fetch and render the updated guest list
+            await renderGuestSelection(selectElement, guest.guest_id);
+            showNotification("Success", "Guest added successfully!", "success"); // Success notification
+          } else {
+            // Handle failure from the backend
+            showNotification(
+              "Error",
+              guest.error || "Failed to add guest.",
+              "error"
+            ); // Error notification
+          }
         } catch (error) {
           console.error("Error adding guest:", error);
           showNotification("Error", "Failed to add guest.", "error"); // Show error notification
         }
       } else {
-        alert("Please fill in all required fields.");
+        // Replace alert with showNotification
+        showNotification(
+          "Error",
+          "Please fill in all required fields.",
+          "error"
+        );
       }
     });
 }
 
-// Updated showAddGuestPopup function to clear the episode dropdown before populating
 async function showAddGuestPopup() {
   const popup = document.getElementById("guest-popup");
   popup.style.display = "flex";
 
-  // Populate the Podcast selection dropdown
   const podcastSelect = document.getElementById("podcast-select-guest");
   podcastSelect.innerHTML = "";
   try {
@@ -155,28 +172,80 @@ async function showAddGuestPopup() {
     console.error("Error fetching podcasts:", error);
   }
 
-  // Remove existing event listener before adding a new one
   const episodeSelect = document.getElementById("episode-id");
-  const newPodcastSelect = podcastSelect.cloneNode(true);
-  podcastSelect.parentNode.replaceChild(newPodcastSelect, podcastSelect);
+  const newPodcastSelect = podcastSelect;
 
-  // When a podcast is selected, fetch episodes for that podcast using fetchEpisodesByPodcast
-  newPodcastSelect.addEventListener("change", async () => {
-    const selectedPodcast = newPodcastSelect.value;
-    episodeSelect.innerHTML = ""; // Clear the dropdown before populating
-    try {
-      const episodes = await fetchEpisodesByPodcast(selectedPodcast);
-      episodes.forEach((episode) => {
-        const option = document.createElement("option");
-        option.value = episode._id;
-        option.textContent = episode.title;
-        episodeSelect.appendChild(option);
-      });
-    } catch (error) {
-      console.error("Error fetching episodes for podcast:", error);
-    }
-  });
-  // Trigger the change event to populate episodes initially
+  // Attach the change listener only once per popup opening
+  newPodcastSelect.addEventListener(
+    "change",
+    async () => {
+      const selectedPodcast = newPodcastSelect.value;
+      episodeSelect.innerHTML = ""; // Clear dropdown
+      episodeSelect.disabled = false; // Ensure dropdown is active
+      episodeSelect.style.backgroundColor = "#ffffff"; // Force white background
+
+      const defaultOption = document.createElement("option");
+      defaultOption.value = "";
+      defaultOption.textContent = "Select Episode";
+      defaultOption.style.color = "#000000"; // Ensure "Select Episode" text color is black
+      episodeSelect.appendChild(defaultOption);
+
+      try {
+        const episodes = await fetchEpisodesByPodcast(selectedPodcast);
+        const currentDate = new Date();
+        console.log("Current Date:", currentDate.toISOString());
+
+        episodes.forEach((episode) => {
+          const option = document.createElement("option");
+          option.value = episode._id;
+          let text = episode.title;
+
+          console.log(
+            `Episode: ${episode.title}, RecordingAt: ${episode.recordingAt}`
+          );
+
+          if (episode.recordingAt) {
+            const recordingDate = new Date(episode.recordingAt);
+            console.log(
+              `Parsed Recording Date: ${recordingDate.toISOString()}`
+            );
+            if (recordingDate < currentDate) {
+              option.disabled = true;
+              text += " (Recording passed)";
+              option.style.backgroundColor = "#f0f0f0"; // Set non-white background for passed recordings
+              console.log(`${episode.title} is disabled (past recording)`);
+            } else {
+              option.style.backgroundColor = "#ffffff"; // White background for valid episodes
+              console.log(`${episode.title} is enabled (future recording)`);
+            }
+          } else {
+            option.style.backgroundColor = "#ffffff"; // White background if no recordingAt set
+            console.log(
+              `${episode.title} has no recordingAt, enabled by default`
+            );
+          }
+
+          option.textContent = text;
+          option.style.color = option.disabled ? "#a9a9a9" : "#000000"; // Set text color based on enabled/disabled state
+          episodeSelect.appendChild(option);
+        });
+
+        const enabledOption = Array.from(episodeSelect.options).find(
+          (opt) => !opt.disabled
+        );
+        if (enabledOption) {
+          enabledOption.selected = true;
+        } else {
+          defaultOption.selected = true;
+        }
+      } catch (error) {
+        console.error("Error fetching episodes for podcast:", error);
+      }
+    },
+    { once: true }
+  ); // Ensure the listener is added only once
+
+  newPodcastSelect.selectedIndex = 0;
   newPodcastSelect.dispatchEvent(new Event("change"));
 }
 
@@ -190,178 +259,152 @@ function closeAddGuestPopup() {
 export function renderGuestDetail(guest) {
   const guestDetailElement = document.getElementById("podcast-detail");
 
-  // Get initials from guest name for avatar
-  const initials = guest.name
-    .split(" ")
-    .map((word) => word[0])
-    .join("")
-    .substring(0, 2)
-    .toUpperCase();
-
   guestDetailElement.innerHTML = `
-  <div class="detail-header">
-    <button class="back-btn" id="back-to-episode">
-      ${shared.svgpodcastmanagement.back}
-      Back to episode
+<div class="detail-header">
+  <button class="back-btn" id="back-to-episode">
+    ${shared.svgpodcastmanagement.back}
+    Back to episode
+  </button>
+  <div class="top-right-actions">
+    <button class="action-btn edit-btn" id="edit-guest-btn" data-id="${
+      guest._id
+    }">
+      ${shared.svgpodcastmanagement.edit}
     </button>
-    
-    <!-- Add top-right action buttons -->
-    <div class="top-right-actions">
-      <button class="action-btn edit-btn" id="edit-guest-btn" data-id="${
-        guest._id || guest.id
-      }">
-        ${shared.svgpodcastmanagement.edit}
-      </button>
+  </div>
+</div>
+
+<div class="podcast-detail-container">
+  <!-- Header section with image and basic info -->
+  <div class="podcast-header-section">
+    <div class="podcast-image-container">
+      <div class="detail-image" style="background-image: url('${
+        guest.image || "default-guest-image.png"
+      }')"></div>
+    </div>
+    <div class="podcast-basic-info">
+      <h1 class="detail-title">${guest.name}</h1>
+      <p class="detail-category">${guest.role || "Guest"}</p>
+      <div class="podcast-meta-info">
+        <div class="meta-item">
+          <span class="meta-label">Email:</span>
+          <span class="meta-value">${guest.email || "Not specified"}</span>
+        </div>
+        <div class="meta-item">
+          <span class="meta-label">Phone:</span>
+          <span class="meta-value">${guest.phone || "Not specified"}</span>
+        </div>
+        <div class="meta-item">
+          <span class="meta-label">Company:</span>
+          <span class="meta-value">${guest.company || "Not specified"}</span>
+        </div>
+      </div>
     </div>
   </div>
-  <div class="detail-content">
-    <div class="detail-info">
-      <div class="guest-detail-header">
-        <div class="guest-detail-avatar">${initials}</div>
-        <div class="guest-detail-info">
-          <h1 class="guest-detail-name">${guest.name}</h1>
-          <p class="guest-detail-email">${
-            guest.email || "No email provided"
-          }</p>
-        </div>
-      </div>
-      
-      <div class="detail-section">
-        <h2>About</h2>
-        <p>${guest.bio || guest.description || "No bio available."}</p>
-      </div>
-      
-      <div class="separator"></div>
-      
-      <div class="guest-detail-section">
-        <h3>Contact Information</h3>
-        <div class="detail-grid">
-          <div class="detail-item">
-            <h4>Email</h4>
-            <p><a href="mailto:${guest.email}" class="guest-email-link">${
-    guest.email
-  }</a></p>
-          </div>
-          ${
-            guest.phone
-              ? `
-          <div class="detail-item">
-            <h4>Phone</h4>
-            <p>${guest.phone}</p>
-          </div>
-          `
-              : ""
-          }
-        </div>
-      </div>
-      
-      <div class="separator"></div>
-      
-      <div class="guest-detail-section">
-        <h3>Social Media</h3>
-        <div>
-          ${
-            guest.linkedin
-              ? `
-          <a href="${guest.linkedin}" target="_blank" class="guest-social-link">
-            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"></path>
-              <rect x="2" y="9" width="4" height="12"></rect>
-              <circle cx="4" cy="4" r="2"></circle>
-            </svg>
-            LinkedIn Profile
-          </a>
-          `
-              : ""
-          }
-          
-          ${
-            guest.twitter
-              ? `
-          <a href="${guest.twitter}" target="_blank" class="guest-social-link">
-            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M23 3a10.9 10.9 0 0 1-3.14 1.53 4.48 4.48 0 0 0-7.86 3v1A10.66 10.66 0 0 1 3 4s-4 9 5 13a11.64 11.64 0 0 1-7 2c9 5 20 0 20-11.5a4.5 4.5 0 0 0-.08-.83A7.72 7.72 0 0 0 23 3z"></path>
-            </svg>
-            Twitter Profile
-          </a>
-          `
-              : ""
-          }
-          
-          ${
-            !guest.linkedin && !guest.twitter
-              ? "<p>No social media profiles available.</p>"
-              : ""
-          }
-        </div>
-      </div>
-      
+  
+  <!-- About section -->
+  <div class="podcast-about-section">
+    <h2 class="section-title">About</h2>
+    <p class="podcast-description">${guest.bio || "No bio available."}</p>
+  </div>
+  
+  <!-- Social media section -->
+  <div class="podcast-social-section">
+    <h2 class="section-title">Social Media</h2>
+    <div class="social-links">
       ${
-        guest.areasOfInterest && guest.areasOfInterest.length
-          ? `
-      <div class="separator"></div>
-      <div class="guest-detail-section">
-        <h3>Areas of Interest</h3>
-        <div class="guest-tags">
-          ${guest.areasOfInterest
-            .map((area) => `<span class="guest-tag">${area}</span>`)
-            .join("")}
-        </div>
-      </div>
-      `
+        guest.socialMedia?.twitter
+          ? `<a href="${guest.socialMedia.twitter}" target="_blank" class="social-link">
+              ${shared.svgpodcastmanagement.twitter} Twitter
+            </a>`
           : ""
       }
-      
       ${
-        guest.tags && guest.tags.length
-          ? `
-      <div class="separator"></div>
-      <div class="guest-detail-section">
-        <h3>Tags</h3>
-        <div class="guest-tags">
-          ${guest.tags
-            .map((tag) => `<span class="guest-tag">${tag}</span>`)
-            .join("")}
-        </div>
-      </div>
-      `
+        guest.socialMedia?.linkedin
+          ? `<a href="${guest.socialMedia.linkedin}" target="_blank" class="social-link">
+              ${shared.svgpodcastmanagement.linkedin} LinkedIn
+            </a>`
+          : ""
+      }
+      ${
+        guest.socialMedia?.instagram
+          ? `<a href="${guest.socialMedia.instagram}" target="_blank" class="social-link">
+              ${shared.svgpodcastmanagement.instagram} Instagram
+            </a>`
           : ""
       }
     </div>
   </div>
+</div>
+
+<div class="detail-actions">
+  <button class="delete-btn" id="delete-guest-btn" data-id="${guest._id}">
+    ${shared.svgpodcastmanagement.delete} Delete Guest
+  </button>
+</div>
 `;
 
   // Back button event listener
-  document.getElementById("back-to-episode").addEventListener("click", () => {
-    fetch(`/get_episodes/${guest.episodeId}`)
-      .then((response) => response.json())
-      .then((episode) => {
-        renderEpisodeDetail(episode);
-      })
-      .catch((error) => {
-        console.error("Error fetching episode:", error);
-        showNotification("Error", "Failed to return to episode view", "error");
-      });
-  });
-
-  // Add event listeners for the edit guest button
   document
-    .getElementById("edit-guest-btn")
+    .getElementById("back-to-episode")
     .addEventListener("click", async () => {
-      try {
-        // Implement guest editing functionality here
-        showNotification(
-          "Info",
-          "Guest editing functionality coming soon",
-          "info"
+      const episodeId = shared.selectedEpisodeId || guest.episodeId; // Fallback to guest.episodeId
+      if (episodeId) {
+        try {
+          // Fetch the episode details
+          const episodeResponse = await fetchEpisode(episodeId);
+          if (episodeResponse) {
+            // Fetch episodes for the podcast
+            const podcastEpisodes = await fetchEpisodesByPodcast(
+              episodeResponse.podcast_id || episodeResponse.podcastId
+            );
+
+            // Render the episode details
+            renderEpisodeDetail({
+              ...episodeResponse,
+              episodes: podcastEpisodes // Include episodes in the render
+            });
+          } else {
+            console.error("Failed to fetch episode details.");
+            showNotification(
+              "Error",
+              "Failed to fetch episode details.",
+              "error"
+            );
+          }
+        } catch (error) {
+          console.error("Error fetching episode details:", error);
+          showNotification(
+            "Error",
+            "Failed to fetch episode details.",
+            "error"
+          );
+        }
+      } else {
+        console.error(
+          "Episode ID is missing. Cannot navigate back to the episode."
         );
-      } catch (error) {
-        showNotification("Error", "Failed to edit guest", "error");
+        showNotification(
+          "Error",
+          "Episode ID is missing. Cannot navigate back.",
+          "error"
+        );
       }
     });
 
-  // Update edit buttons after rendering
-  updateEditButtons();
+  // Edit button event listener
+  document.getElementById("edit-guest-btn").addEventListener("click", () => {
+    // Logic to open the guest edit form
+    console.log("Edit guest:", guest._id);
+  });
+
+  // Delete button event listener
+  document.getElementById("delete-guest-btn").addEventListener("click", () => {
+    if (confirm("Are you sure you want to delete this guest?")) {
+      // Logic to delete the guest
+      console.log("Delete guest:", guest._id);
+    }
+  });
 }
 
 // Initialize guest functions
@@ -386,6 +429,8 @@ export function initGuestFunctions() {
     .getElementById("add-guest-form")
     .addEventListener("submit", async (e) => {
       e.preventDefault();
+
+      // Collect form values
       const episodeId = document.getElementById("episode-id").value.trim();
       const guestName = document.getElementById("guest-name").value.trim();
       const guestDescription = document
@@ -409,8 +454,37 @@ export function initGuestFunctions() {
         .getElementById("guest-twitter")
         .value.trim();
 
+      // Log the collected data
+      console.log("Collected Guest Data:", {
+        episodeId,
+        guestName,
+        guestDescription,
+        guestTags,
+        guestAreas,
+        guestEmail,
+        guestLinkedIn,
+        guestTwitter
+      });
+
+      // Ensure required fields are filled in
       if (guestName && guestEmail && episodeId) {
         try {
+          // Log before sending the request
+          console.log("Sending request to addGuestRequest with payload:", {
+            episodeId,
+            name: guestName,
+            description: guestDescription,
+            tags: guestTags,
+            areasOfInterest: guestAreas,
+            email: guestEmail,
+            linkedin: guestLinkedIn,
+            twitter: guestTwitter
+          });
+
+          // Fetch the episode details
+          const episode = await fetchEpisode(episodeId);
+
+          // Proceed with guest addition logic
           const guest = await addGuestRequest({
             episodeId, // Ensure episodeId is correctly set
             name: guestName,
@@ -421,18 +495,42 @@ export function initGuestFunctions() {
             linkedin: guestLinkedIn,
             twitter: guestTwitter
           });
+
+          // Log the response from the backend
+          console.log("Response from addGuestRequest:", guest);
+
+          if (guest.error) {
+            console.error("Backend error:", guest.error);
+            showNotification("Error", guest.error, "error");
+            return;
+          }
+
           closeAddGuestPopup();
+
+          // Show success notification if the guest is added successfully
           showNotification("Success", "Guest added successfully!", "success");
+
           // Refresh the guest list in episode details without refreshing the page
           renderEpisodeDetail({
             _id: episodeId,
             podcast_id: shared.selectedPodcastId
           });
+          setTimeout(() => {
+            const guestsSection = document.querySelector(
+              ".podcast-about-section h2.section-title"
+            );
+            if (guestsSection) {
+              guestsSection.scrollIntoView({ behavior: "smooth" });
+            }
+          }, 500);
         } catch (error) {
           console.error("Error adding guest:", error);
-          showNotification("Error", "Failed to add guest.", "error");
+
+          // Show failure notification if there was an error during the process
+          showNotification("Error", "Failed to add guest!", "error"); // Correct failure message
         }
       } else {
+        // Alert if the required fields are not filled
         alert("Please fill in all required fields.");
       }
     });
