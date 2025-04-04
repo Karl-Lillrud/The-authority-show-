@@ -60,6 +60,7 @@ CORS(
                 "https://devapp.podmanager.ai",
                 "https://app.podmanager.ai",
                 "http://127.0.0.1:8000",
+                "https://podmanager-ggevewegdfgwebcd.scm.northeurope-01.azurewebsites.net",
             ]
         }
     },
