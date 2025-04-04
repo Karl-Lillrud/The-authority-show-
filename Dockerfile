@@ -11,8 +11,8 @@ COPY src/requirements.txt /app/src/requirements.txt
 # Install dependencies
 RUN pip install --no-cache-dir -r /app/src/requirements.txt
 
-# Copy the .env file from the root directory to /app/src/
-COPY .env /app/.env
+# Copy the .env file from the root directory to /app
+COPY .env /app/src/.env
 
 # Copy the rest of the application
 COPY src/ /app/src/
