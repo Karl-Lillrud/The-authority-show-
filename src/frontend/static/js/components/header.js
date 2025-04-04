@@ -194,6 +194,22 @@ document.addEventListener("DOMContentLoaded", () => {
       }
     });
   }
-});
 
+  // Dynamically set the page title based on the current page
+  const pageTitleElement = document.getElementById("page-title");
+  if (pageTitleElement) {
+    const pageTitles = {
+      "/account": "Account",
+      "/podcastmanagement": "Podcast Management",
+      "/dashboard": "Dashboard",
+      "/team": "Team Members",
+      "/guest": "Guest View",
+      "/taskmanagement": "Task Management"
+    };
+
+    const currentPath = window.location.pathname;
+    const pageTitle = pageTitles[currentPath] || "PodManager";
+    pageTitleElement.textContent = pageTitle;
+  }
+});
 
