@@ -1,4 +1,4 @@
-name: Deploy Flask App to Azure
+name: RedShadow For Azure
 
 on:
   push:
