@@ -7,6 +7,25 @@ import {
 } from "/static/requests/accountRequests.js"
 
 document.addEventListener("DOMContentLoaded", () => {
+    // Hides the edit buttons when in non-edit mode
+    const formActions = document.querySelector(".form-actions");
+    if (formActions) {
+      formActions.style.display = 'none'; 
+    }
+    const uploadBtn = document.getElementById("upload-pic");
+    if (uploadBtn) {
+      uploadBtn.style.display = 'none'; 
+    }
+    const profilePictureOverlay = document.querySelector(".profile-pic-overlay");
+    if (profilePictureOverlay) {
+      profilePictureOverlay.style.display = 'none'; 
+    }
+
+    const requiredFields = document.querySelectorAll(".required-profile");
+    requiredFields.forEach(field => {
+      field.style.display = 'none';
+    });
+    
   // Initialize profile data
   fetchProfile()
     .then((data) => {
@@ -34,12 +53,14 @@ document.addEventListener("DOMContentLoaded", () => {
     })
 
   // Toggle submenu visibility
-  document.querySelectorAll('.sidebar-item[data-toggle="submenu"]').forEach((item) => {
+  document.querySelectorAll('.sidebar-item').forEach((item) => {
     item.addEventListener("click", function () {
       const submenu = this.nextElementSibling
       const allSubmenus = document.querySelectorAll(".submenu")
       const allToggleItems = document.querySelectorAll('.sidebar-item[data-toggle="submenu"]')
-
+      document.querySelectorAll(".sidebar-item").forEach(sidebarItem => {
+        sidebarItem.classList.remove('active');
+      });
       // Toggle active state for the clicked item
       this.classList.toggle("active")
 
@@ -67,6 +88,7 @@ document.addEventListener("DOMContentLoaded", () => {
         submenu.style.display = "block"
         document.getElementById("back-to-main-menu").style.display = "flex"
       }
+      
     })
   })
 
@@ -80,7 +102,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
       // Add active class to clicked item
       this.classList.add("active")
-
       // Hide all sections
       document.querySelectorAll(".settings-section").forEach((section) => {
         section.classList.remove("active")
@@ -189,6 +210,12 @@ document.addEventListener("DOMContentLoaded", () => {
       updateProfile(profileData)
         .then((data) => {
           if (data.message) {
+            // Changes back to non-edit mode
+            document.querySelector('.sidebar-item[data-target="profile-section"]').click();
+            const editProfileButton = document.querySelector('.submenu-item[data-target="profile-section"]');
+            if (editProfileButton) {
+              editProfileButton.classList.remove("active");
+            }
             showNotification("Profile updated successfully!", "success")
           } else {
             showNotification("Failed to update profile", "error")
@@ -199,6 +226,60 @@ document.addEventListener("DOMContentLoaded", () => {
           showNotification("An error occurred while updating profile", "error")
         })
     })
+  }
+
+  const toggleProfileEditMode = (isEditMode) => {
+    const profileSection = document.getElementById("profile-section");
+    const formFields = profileSection.querySelectorAll("input, textarea");
+    const formActions = profileSection.querySelector(".form-actions");
+    const uploadButton = document.getElementById("upload-pic");
+    const profilePicOverlay = document.querySelector(".profile-pic-overlay");
+  
+    formFields.forEach(field => field.disabled = !isEditMode);
+    formActions.style.display = isEditMode ? 'flex' : 'none';
+    uploadButton.style.display = isEditMode ? 'inline-block' : 'none';
+    profilePicOverlay.style.display = isEditMode ? 'flex' : 'none';
+  
+    // Change the visibility of the required asterix depending on edit mode or not
+    const formGroups = profileSection.querySelectorAll(".form-group");
+    formGroups.forEach(group => {
+      const requiredSpan = group.querySelector(".required");
+      if (requiredSpan) {
+        requiredSpan.style.display = isEditMode && group.querySelector("input").value === "" ? 'inline' : 'none';
+      }
+    });
+
+    formFields.forEach(field => {
+      field.addEventListener("input", () => {
+        formGroups.forEach(group => {
+          const requiredSpan = group.querySelector(".required");
+          const inputField = group.querySelector("input");
+          
+          // Check if the field is empty and update asterisk visibility
+          if (requiredSpan && inputField) {
+            requiredSpan.style.display = isEditMode && inputField.value === "" ? 'inline' : 'none';
+          }
+        });
+      });
+    });
+  }
+  
+  // Handle "Profile" button (non-edit mode)
+  const profileButton = document.querySelector('.sidebar-item[data-target="profile-section"]');
+  if (profileButton) {
+    profileButton.addEventListener("click", function () {
+      // Switch to non-edit mode
+      toggleProfileEditMode(false);
+    });
+  }
+  
+  // Handle "Edit Profile" submenu item (editable mode)
+  const editProfileButton = document.querySelector('.submenu-item[data-target="profile-section"]');
+  if (editProfileButton) {
+    editProfileButton.addEventListener("click", function () {
+      // Switch to edit mode
+      toggleProfileEditMode(true);
+    });
   }
 
   // Password form submission
@@ -454,20 +535,22 @@ function triggerFileUpload() {
 }
 
 function showNotification(message, type) {
-  // Create notification element
-  const notification = document.createElement("div")
-  notification.className = `notification ${type}`
-  notification.textContent = message
+  const notificationContainer = document.getElementById("header-notifications");
+  if (!notificationContainer) return;
 
-  // Add notification to the DOM
-  document.body.appendChild(notification)
+  // Create notification element
+  const notification = document.createElement("div");
+  notification.className = `notification ${type}`;
+  notification.textContent = message;
+
+  // Add notification to the container
+  notificationContainer.appendChild(notification);
 
   // Remove notification after 3 seconds
   setTimeout(() => {
-    notification.classList.add("fade-out")
+    notification.classList.add("fade-out");
     setTimeout(() => {
-      document.body.removeChild(notification)
-    }, 300)
-  }, 3000)
+      notificationContainer.removeChild(notification);
+    }, 300);
+  }, 3000);
 }
-

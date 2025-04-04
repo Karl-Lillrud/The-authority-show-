@@ -7,6 +7,16 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
   <link rel="stylesheet" href="{{ url_for('static', filename='css/landingpage/landingpage.css') }}">
+
+  <!-- Google Analytics -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-PTPQQ5WSQV"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+
+    gtag('config', 'G-PTPQQ5WSQV');
+  </script>
 </head>
 <body>
 
@@ -47,9 +57,6 @@
         </div>
     </div>
   </section>
-
-
-
 
     <!-- About Section -->
     <section class="about-section section-darkgrey" id="about-section">
@@ -272,12 +279,17 @@
     Your browser does not support the audio element.
   </audio>
 
-  <!-- Loading Indicator -->
-  <div id="loading" style="display: none;">Loading...</div>
+<!-- Load Color Thief -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/color-thief/2.3.2/color-thief.umd.js"></script>
 
-    <!-- Load JavaScript files at the END -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/color-thief/2.3.2/color-thief.umd.js"></script>
-    <script src="static/js/landingpage/landingpage.js"></script>
+<!-- Load our main Color Thief script -->
+<script src="/static/js/color_thief.js"></script>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        applyColorThiefToLandingPage("#podcast-logo"); // Call function for landing page
+    });
+</script>
     
 </body>
 </html>

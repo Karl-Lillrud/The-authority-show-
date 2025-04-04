@@ -22,7 +22,14 @@
       </div>
     </nav>
   </header>
-  
+
+    <!-- Prevent error if podcast_logo is None -->
+    <img id="podcast-logo"
+        src="{{ podcast_logo }}"
+        crossorigin="anonymous"
+        onerror="this.src='/static/images/default.png'"
+        hidden>
+
   <main>
     <!-- Enhanced Episode Banner -->
     <section class="episode-banner section-dark">
@@ -44,48 +51,32 @@
       </div>
     </section>
     
-    <!-- Custom Audio Player -->
-    <section class="audio-player">
-      <div class="player-container">
-        <span id="current-time">00:00</span>
-        <input type="range" id="seek-bar" value="0">
-        <span id="duration">00:00</span>
-      </div>
-
-      <div class="player-controls">
-        <button id="speed-btn">1x</button>
-        <button id="rewind-btn"><i class="fas fa-undo-alt"></i> 15</button>
-        <button id="play-btn"><i class="fas fa-play"></i></button>
-        <button id="forward-btn">15 <i class="fas fa-redo-alt"></i></button>
-      </div>
-
-      <audio id="audio">
-        <source src="episode-audio.mp3" type="audio/mpeg">
+      <audio id="audio-player" controls>
+        <source id="audio-source" src="{{ audio_url or '' }}" type="audio/mpeg">
+        Your browser does not support the audio element.
       </audio>
     </section>
     
-    <!-- Guest About Section -->
+      <!-- Guest About Section -->
     <section class="guest-about-section section-dark" id="guest-about-section">
-      <h2>Meet the Guest</h2>
-      <p id="guest-about-description">
-        A brief introduction about the guest goes here. <br>Learn more about their background and expertise.
-      </p>
-      <div class="guest-about-info">
-        <img id="guest-about-image" src="/media/Karl-Lillrud_bok_nvidia.jpg" alt="Guest Image" class="guest-about-image">
-        <div class="guest-about-details">
-          <h3 id="guest-about-name">Guest Name</h3>
-          <p id="guest-about-bio">
-            Guest biography goes here. Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nulla ac ultrices libero.
-          </p>
-          <div id="guest-about-social">
-            <a href="https://twitter.com/guest" target="_blank" class="twitter"><i class="fab fa-twitter"></i></a>
-            <a href="https://instagram.com/guest" target="_blank" class="instagram"><i class="fab fa-instagram"></i></a>
-            <a href="https://linkedin.com/in/guest" target="_blank" class="linkedin"><i class="fab fa-linkedin"></i></a>
-            <a href="https://facebook.com/guest" target="_blank" class="facebook"><i class="fab fa-facebook-f"></i></a>
-            <a href="https://youtube.com/guest" target="_blank" class="youtube"><i class="fab fa-youtube"></i></a>
+      <h2>Meet the Guest{{ guests|length > 1 and 's' or '' }}</h2>
+
+      {% for guest in guests %}
+        <div class="guest-about-info">
+          <img class="guest-about-image" src="{{ guest.image or url_for('static', filename='images/default.png') }}" alt="Guest Image">
+          <div class="guest-about-details">
+            <h3>{{ guest.name }}</h3>
+            <p>{{ guest.bio or "No bio available." }}</p>
+            <div class="guest-about-social">
+              {% if guest.twitter %}<a href="{{ guest.twitter }}" target="_blank" class="twitter"><i class="fab fa-twitter"></i></a>{% endif %}
+              {% if guest.instagram %}<a href="{{ guest.instagram }}" target="_blank" class="instagram"><i class="fab fa-instagram"></i></a>{% endif %}
+              {% if guest.linkedin %}<a href="{{ guest.linkedin }}" target="_blank" class="linkedin"><i class="fab fa-linkedin"></i></a>{% endif %}
+              {% if guest.facebook %}<a href="{{ guest.facebook }}" target="_blank" class="facebook"><i class="fab fa-facebook-f"></i></a>{% endif %}
+              {% if guest.youtube %}<a href="{{ guest.youtube }}" target="_blank" class="youtube"><i class="fab fa-youtube"></i></a>{% endif %}
+            </div>
           </div>
         </div>
-      </div>
+      {% endfor %}
     </section>
 
 
@@ -147,4 +138,16 @@
   </footer>
   <script src="static/js/audio-player.js"></script>
 </body>
+
+<!-- Load Color Thief -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/color-thief/2.3.2/color-thief.umd.js"></script>
+
+<!-- Load our main Color Thief script -->
+<script src="/static/js/color_thief.js"></script>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        applyColorThiefToEpisodePage("#podcast-logo"); // Call function for landing page
+    });
+</script>
 </html>

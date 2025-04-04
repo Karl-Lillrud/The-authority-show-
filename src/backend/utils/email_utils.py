@@ -17,24 +17,29 @@ SMTP_PORT = os.getenv("SMTP_PORT")
 # Configure logger
 logger = logging.getLogger(__name__)
 
+
 def send_email(to_email, subject, body, image_path=None):
     """
     Sends an email with optional inline image attachments.
     """
-    msg = MIMEMultipart()
+    msg = MIMEMultipart("alternative")
     msg["From"] = EMAIL_USER
     msg["To"] = to_email
     msg["Subject"] = subject
 
+    # Add plain-text version
+    plain_text = "This is the plain-text version of the email. Please view it in an HTML-compatible email client."
+    msg.attach(MIMEText(plain_text, "plain"))
+
     # Attach the HTML content
     msg.attach(MIMEText(body, "html"))
 
-    # 🔹 Attach inline image (PodManagerLogo.png) if available
+    # Attach inline image if provided
     if image_path and os.path.exists(image_path):
         try:
             with open(image_path, "rb") as img_file:
                 img = MIMEImage(img_file.read(), _subtype="png")
-                img.add_header("Content-ID", "<pod_manager_logo>")  # Needed for inline image
+                img.add_header("Content-ID", "<pod_manager_logo>")
                 img.add_header("Content-Disposition", "inline", filename="PodManagerLogo.png")
                 msg.attach(img)
             logger.info("✅ Attached inline image successfully.")
@@ -43,19 +48,24 @@ def send_email(to_email, subject, body, image_path=None):
 
     try:
         logger.info(f"📡 Connecting to SMTP server {SMTP_SERVER}:{SMTP_PORT}")
-        server = smtplib.SMTP(SMTP_SERVER, SMTP_PORT)
-        server.starttls()
-        logger.info(f"🔐 Logging in as {EMAIL_USER}")
-        server.login(EMAIL_USER, EMAIL_PASS)
-        server.sendmail(EMAIL_USER, to_email, msg.as_string())
-        server.quit()
-        logger.info(f"✅ Email successfully sent to {to_email}")
-        return {"success": True}
+        with smtplib.SMTP(SMTP_SERVER, SMTP_PORT) as server:
+            server.starttls()
+            logger.info(f"🔐 Logging in as {EMAIL_USER}")
+            server.login(EMAIL_USER, EMAIL_PASS)
+            server.sendmail(EMAIL_USER, to_email, msg.as_string())
+            logger.info(f"✅ Email successfully sent to {to_email}")
+            return {"success": True}
+    except smtplib.SMTPAuthenticationError as e:
+        logger.error(f"❌ Authentication failed: {e}")
+        return {"error": "Authentication failed. Check your email credentials."}
     except Exception as e:
         logger.error(f"❌ Failed to send email to {to_email}: {e}")
         return {"error": str(e)}
 
-def send_team_invite_email(email, invite_token, team_name=None, inviter_name=None, role="Member"):
+
+def send_team_invite_email(
+    email, invite_token, team_name=None, inviter_name=None, role=None
+):
     """
     Sends an invitation email for a team membership with an inline logo.
     """
@@ -64,11 +74,11 @@ def send_team_invite_email(email, invite_token, team_name=None, inviter_name=Non
 
     # Create the registration link with the invite token, team name, and role
     registration_link = f"{base_url}/register_team_member?token={invite_token}"
-    
+
     # Add team name and role parameters if available
     if team_name:
         registration_link += f"&teamName={team_name}"
-    
+
     # Add role parameter (using default if not provided)
     registration_link += f"&role={role}"
 
@@ -76,7 +86,7 @@ def send_team_invite_email(email, invite_token, team_name=None, inviter_name=Non
     logger.info(f"🔗 Forced LOCALHOST invite URL: {registration_link} for {email}")
 
     subject = "You've been invited to join a team!"
-    
+
     team_info = f"the team at {team_name}" if team_name else "a team"
     inviter_info = f" by {inviter_name}" if inviter_name else ""
 

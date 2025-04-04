@@ -224,45 +224,55 @@ class AuthRepository:
             return {"error": f"Error during registration: {str(e)}"}, 500
 
     def register_team_member(self, data):
-        """Registers a new team member from an invite."""
         try:
-            print("🔹 Received registration data:", data)  # Debugging
-
+            logger.info("🔹 Received registration data: %s", data)  # Debug log
             invite_token = data.get("inviteToken")
-
             if not invite_token:
-                print("❌ Missing invite token in request payload.")
-                return {"error": "Missing invite token in request."}, 400
+                logger.error("❌ Missing invite token")  # Debug log
+                raise ValueError("Missing invite token")
+
+            # Fetch invite details
+            invite = self.invite_collection.find_one({"_id": invite_token})
+            if not invite:
+                logger.error(f"❌ Invalid invite token: {invite_token}")  # Debug log
+                raise ValueError("Invalid invite token")
+
+            # Ensure role is present in the invite
+            role = invite.get("role")
+            if not role:
+                logger.error(f"❌ Missing role in invite: {invite}")  # Debug log
+                raise KeyError("role")  # Explicitly raise KeyError if role is missing
+
+            logger.info("✅ Role extracted from invite: %s", role)  # Debug log
 
             required_fields = ["email", "password", "fullName", "phone"]
             for field in required_fields:
                 if field not in data or not data[field]:
-                    print(f"❌ Missing field: {field}")
+                    logger.error(f"❌ Missing required field: {field}")  # Debug log
                     return {"error": f"Missing required field: {field}"}, 400
 
             email = data["email"].lower().strip()
             password = data["password"]
 
-            invite = self.invite_collection.find_one(
-                {"_id": invite_token, "status": "pending"}
-            )
-            if not invite:
-                print(f"❌ Invalid or expired invite: {invite_token}")
-                return {"error": "Invalid or expired invite token."}, 400
+            # Validate invite status
+            if invite.get("status") != "pending":
+                logger.error(f"❌ Invite is not pending: {invite}")  # Debug log
+                return {"error": "Invite is not valid or already used."}, 400
 
-            team_id = invite["teamId"]
-
+            # Validate email matches the invite
             if invite["email"].lower() != email:
-                print(
+                logger.error(
                     f"❌ Email mismatch! Invited: {invite['email']} - Registering: {email}"
-                )
+                )  # Debug log
                 return {"error": "The email does not match the invitation."}, 400
 
+            # Check if the email is already registered
             existing_user = self.user_collection.find_one({"email": email})
             if existing_user:
-                print("❌ Email already exists:", email)
+                logger.error("❌ Email already exists: %s", email)  # Debug log
                 return {"error": "Email already registered."}, 409
 
+            # Proceed with user registration
             user_id = str(uuid.uuid4())
             hashed_password = generate_password_hash(password)
 
@@ -276,22 +286,50 @@ class AuthRepository:
                 "createdAt": datetime.utcnow().isoformat(),
             }
 
-            print("✅ User document to insert:", user_document)
+            logger.info("✅ User document to insert: %s", user_document)  # Debug log
             self.user_collection.insert_one(user_document)
-            print("✅ User successfully inserted into database!")
+            logger.info("✅ User successfully inserted into database!")  # Debug log
 
-            user_to_team_data = {"userId": user_id, "teamId": team_id, "role": "member"}
+            # Add user to the team
+            user_to_team_data = {
+                "userId": user_id,
+                "teamId": invite["teamId"],
+                "role": role,
+            }
             add_result, status_code = self.user_to_team_repo.add_user_to_team(
                 user_to_team_data
             )
 
             if status_code != 201:
-                print(f"❌ Failed to add user to team: {add_result}")
-                self.user_collection.delete_one({"_id": user_id})
+                logger.error(
+                    f"❌ Failed to add user to team: {add_result}"
+                )  # Debug log
+                self.user_collection.delete_one(
+                    {"_id": user_id}
+                )  # Rollback user creation
                 return {"error": "Failed to add user to team."}, 500
 
-            print(f"✅ User successfully linked to team {team_id}")
+            logger.info(
+                f"✅ User successfully linked to team {invite['teamId']}"
+            )  # Debug log
 
+            # Update the team's members array with fullName and phone
+            self.teams_collection.update_one(
+                {"_id": invite["teamId"], "members.email": email},
+                {
+                    "$set": {
+                        "members.$.userId": user_id,
+                        "members.$.fullName": data["fullName"],
+                        "members.$.phone": data["phone"],
+                        "members.$.verified": True,
+                    }
+                },
+            )
+            logger.info(
+                f"✅ Team {invite['teamId']} members updated with user details."
+            )  # Debug log
+
+            # Mark the invite as accepted
             self.invite_collection.update_one(
                 {"_id": invite_token},
                 {
@@ -301,7 +339,7 @@ class AuthRepository:
                     }
                 },
             )
-            print("✅ Invitation marked as used")
+            logger.info("✅ Invitation marked as used")  # Debug log
 
             return {
                 "message": "Team member registration successful!",
@@ -309,10 +347,14 @@ class AuthRepository:
                 "redirect_url": url_for("auth_bp.signin", _external=True),
             }, 201
 
+        except KeyError as e:
+            logger.error("Error during team member registration: %s", e)  # Debug log
+            raise
         except Exception as e:
-            print("❌ Error during registration:", e)
-            logger.error("Error during team member registration: %s", e, exc_info=True)
-            return {"error": f"Error during team member registration: {str(e)}"}, 500
+            logger.error(
+                "Error during team member registration: %s", e, exc_info=True
+            )  # Debug log
+            raise
 
 
 def validate_email(email):

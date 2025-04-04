@@ -1,54 +1,38 @@
 from flask import request, jsonify, Blueprint, g, render_template
+from backend.repository.episode_repository import EpisodeRepository
+from backend.repository.podcast_repository import PodcastRepository
+from backend.repository.guest_repository import GuestRepository
 import logging
 
-# Import the repository
-from backend.repository.episode_repository import EpisodeRepository
-from backend.database.mongo_connection import episodes
-
-# Define Blueprint
+guest_repo = GuestRepository()
 episode_bp = Blueprint("episode_bp", __name__)
-
-# Create repository instance
 episode_repo = EpisodeRepository()
-
-# SHOULD ONLY BE USED FOR SPECIFIC DATA CRUD OPERATIONS
-# EXTRA FUNCTIONALITY BESIDES CRUD OPERATIONS SHOULD BE IN SERVICES
-
+podcast_repo = PodcastRepository()
 logger = logging.getLogger(__name__)
 
 
-@episode_bp.route("/register_episode", methods=["POST"])
-def register_episode():
+@episode_bp.route("/add_episode", methods=["POST"])
+def add_episode():
     if not hasattr(g, "user_id") or not g.user_id:
         return jsonify({"error": "Unauthorized"}), 401
-
-    # Validate Content-Type
     if request.content_type != "application/json":
-        return (
-            jsonify({"error": "Invalid Content-Type. Expected application/json"}),
-            415,
-        )
+        return jsonify({"error": "Invalid Content-Type. Expected application/json"}), 415
 
     try:
         data = request.get_json()
-        response, status_code = episode_repo.register_episode(data, g.user_id)
-        return jsonify(response), status_code
+
+        return episode_repo.register_episode(data, g.user_id)
     except Exception as e:
         logger.error("❌ ERROR: %s", e)
-        return jsonify({"error": f"Failed to register episode: {str(e)}"}), 500
+        return jsonify({"error": str(e)}), 500
+
 
 
 @episode_bp.route("/get_episodes/<episode_id>", methods=["GET"])
 def get_episode(episode_id):
     if not hasattr(g, "user_id") or not g.user_id:
         return jsonify({"error": "Unauthorized"}), 401
-
-    try:
-        response, status_code = episode_repo.get_episode(episode_id, g.user_id)
-        return jsonify(response), status_code
-    except Exception as e:
-        logger.error("❌ ERROR: %s", e)
-        return jsonify({"error": f"Failed to fetch episode: {str(e)}"}), 500
+    return episode_repo.get_episode(episode_id, g.user_id)
 
 
 @episode_bp.route("/get_episodes", methods=["GET"])
@@ -56,103 +40,61 @@ def get_episodes():
     if not hasattr(g, "user_id") or not g.user_id:
         return jsonify({"error": "Unauthorized"}), 401
 
-    try:
-        response, status_code = episode_repo.get_episodes(g.user_id)
-        return jsonify(response), status_code
-    except Exception as e:
-        logger.error("❌ ERROR: %s", e)
-        return jsonify({"error": f"Failed to fetch episodes: {str(e)}"}), 500
+    return episode_repo.get_episodes(g.user_id)
 
 
-@episode_bp.route("/delete_episods/<episode_id>", methods=["DELETE"])
+
+@episode_bp.route("/delete_episodes/<episode_id>", methods=["DELETE"])
 def delete_episode(episode_id):
     if not hasattr(g, "user_id") or not g.user_id:
         return jsonify({"error": "Unauthorized"}), 401
-
-    try:
-        response, status_code = episode_repo.delete_episode(episode_id, g.user_id)
-        return jsonify(response), status_code
-    except Exception as e:
-        logger.error("❌ ERROR: %s", e)
-        return jsonify({"error": f"Failed to delete episode: {str(e)}"}), 500
+    return episode_repo.delete_episode(episode_id, g.user_id)
 
 
 @episode_bp.route("/update_episodes/<episode_id>", methods=["PUT"])
 def update_episode(episode_id):
     if not hasattr(g, "user_id") or not g.user_id:
         return jsonify({"error": "Unauthorized"}), 401
-
-    # Validate Content-Type
     if request.content_type != "application/json":
-        return (
-            jsonify({"error": "Invalid Content-Type. Expected application/json"}),
-            415,
-        )
-
-    try:
-        data = request.get_json()
-        response, status_code = episode_repo.update_episode(episode_id, g.user_id, data)
-        return jsonify(response), status_code
-    except Exception as e:
-        logger.error("❌ ERROR: %s", e)
-        return jsonify({"error": f"Failed to update episode: {str(e)}"}), 500
+        return jsonify({"error": "Invalid Content-Type. Expected application/json"}), 415
+    data = request.get_json()
+    return episode_repo.update_episode(episode_id, g.user_id, data)
 
 
 @episode_bp.route("/episode/<episode_id>", methods=["GET"])
 def episode_detail(episode_id):
     try:
-        # Fetch the episode document using the episode ID
-        ep = episodes.find_one({"_id": episode_id})
-        if not ep:
+        episode, podcast = episode_repo.get_episode_detail_with_podcast(episode_id)
+        if not episode:
             return render_template("404.html")
+        
+        # Hämta gäster kopplade till avsnittet
+        guests_response, status = guest_repo.get_guests_by_episode(episode_id)
+        guests = guests_response.get("guests", []) if status == 200 else []
 
-        # Render a dedicated episode page template and pass the episode data
-        return render_template("landingpage/episode.html", episode=ep)
+        podcast_logo = podcast.get("logoUrl", "")
+        if not isinstance(podcast_logo, str) or not podcast_logo.startswith(("http", "data:image")):
+            podcast_logo = "/static/images/default.png"
+
+        audio_url = episode.get("audioUrl", "")
+        if not isinstance(audio_url, str) or not audio_url.startswith(("http", "https")):
+            audio_url = None
+
+        return render_template(
+            "landingpage/episode.html",
+            episode=episode,
+            podcast_logo=podcast_logo,
+            audio_url=audio_url,
+            guests=guests
+        )
     except Exception as e:
+        logger.error("❌ ERROR in episode_detail: %s", str(e))
         return f"Error: {str(e)}", 500
-
 
 @episode_bp.route("/episodes/by_podcast/<podcast_id>", methods=["GET"])
 def get_episodes_by_podcast(podcast_id):
     if not hasattr(g, "user_id") or not g.user_id:
         return jsonify({"error": "Unauthorized"}), 401
 
-    try:
-        # Query the episodes collection for documents matching the given podcast_id
-        episodes_cursor = episodes.find({"podcast_id": podcast_id})
-        mapped_episodes = []
+    return episode_repo.get_episodes_by_podcast(podcast_id, g.user_id)
 
-        for ep in episodes_cursor:
-            title = ep.get("title", "No Title")
-            description = ep.get("description", "No Description")
-            publish_date = ep.get("publishDate")
-            duration = ep.get("duration", "Unknown")
-            episode_type = ep.get("episodeType", "Unknown")
-            link = ep.get("link", "No Link")
-            author = ep.get("author", "Unknown")
-            file_size = ep.get("fileSize", "Unknown")
-            file_type = ep.get("fileType", "Unknown")
-            audio_url = ep.get("audioUrl", None)
-
-            mapped_episodes.append(
-                {
-                    "_id": ep.get("_id"),
-                    "title": title,
-                    "description": description,
-                    "publishDate": publish_date,
-                    "duration": duration,
-                    "episodeType": episode_type,
-                    "link": link,
-                    "author": author,
-                    "fileSize": file_size,
-                    "fileType": file_type,
-                    "audioUrl": audio_url,
-                }
-            )
-
-        # Return the mapped episodes list
-        return jsonify({"episodes": mapped_episodes}), 200
-
-    except Exception as e:
-        logger.error("❌ ERROR: %s", e)
-        return jsonify({"error": f"Failed to fetch episodes by podcast: {str(e)}"}), 500

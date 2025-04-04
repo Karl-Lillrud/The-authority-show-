@@ -16,3 +16,15 @@ export async function sendInvitationEmail() {
     throw error;
   }
 }
+
+export async function sendTeamInviteRequest(teamId, email, role) {
+  console.log("Sending request to /send_team_invite"); // Debug log
+  const res = await fetch("/send_team_invite", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ teamId, email, role })
+  });
+  const data = await res.json();
+  console.log("Response from /send_team_invite:", data); // Debug log
+  return data;
+}
