@@ -1,18 +1,8 @@
-from flask import (
-    render_template,
-    jsonify,
-    Blueprint,
-    g,
-    request,
-    redirect,
-    url_for,
-    flash,
-)
+from flask import Blueprint, render_template, request, jsonify, redirect, url_for, flash, g
 from backend.database.mongo_connection import collection, collection as team_collection
 
+podcast_management_bp = Blueprint("podcast_management_bp", __name__, url_prefix="/podcastmanagement")
 dashboardmanagement_bp = Blueprint("dashboardmanagement_bp", __name__)
-pod_management_bp = Blueprint("pod_management_bp", __name__, url_prefix="/podcastmanagement")
-
 
 @dashboardmanagement_bp.route("/load_all_guests", methods=["GET"])
 def load_all_guests():
@@ -37,8 +27,9 @@ def get_user_podcasts():
         return jsonify({"error": "Unauthorized"}), 401
 
 
-@pod_management_bp.route("/invite")
+@podcast_management_bp.route("/invite", methods=["GET"])
 def invite():
+    """Invite a team member."""
     email = request.args.get("email")
     name = request.args.get("name")
     role = request.args.get("role")
@@ -51,7 +42,7 @@ def invite():
     return redirect(url_for("register_bp.register", email=email))
 
 
-@pod_management_bp.route("/", methods=["GET"])
+@podcast_management_bp.route("/", methods=["GET"])
 def podcast_management():
     """Render the Podcast Management page."""
     return render_template("podcastmanagement/podcastmanagement.html")
