@@ -61,6 +61,7 @@
   background-color: var(--sidebar-bg);
   z-index: 9;
   transition: transform var(--transition-normal), width var(--transition-normal);
+  /* padding-top: var(--header-height, -6px); */
 }
 
 .sidebar.collapsed {
@@ -83,6 +84,7 @@
   flex: 1;
   overflow-y: auto;
   overflow-x: hidden;
+  padding-top: var(--spacing-md);
   padding: var(--spacing-md) 0;
   scrollbar-width: thin;
   scrollbar-color: rgba(0, 0, 0, 0.2) white;
@@ -102,10 +104,22 @@
 }
 
 .sidebar-menu {
+  margin-top: calc(var(--spacing-lg) + 9px);
   list-style: none;
   padding: 0;
   margin: 0;
 }
+
+.sidebar-menu {
+  margin-top: 0;
+}
+
+@media (max-width: 768px) {
+  .sidebar.open .sidebar-menu {
+    margin-top: var(--header-height, 60px);
+  }
+}
+
 
 .sidebar-menu li {
   list-style-type: none !important;
