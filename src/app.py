@@ -6,7 +6,7 @@ from backend.routes.auth import auth_bp
 from backend.routes.forgot_pass import forgotpass_bp
 from backend.routes.podcast import podcast_bp  # Import the podcast blueprint
 from backend.routes.dashboard import dashboard_bp
-from backend.routes.pod_management import pod_management_bp
+from backend.routes.podcast_management import pod_management_bp
 from backend.routes.podtask import podtask_bp
 from backend.routes.account import account_bp
 from backend.routes.team import team_bp
