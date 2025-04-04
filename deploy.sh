@@ -1,0 +1,75 @@
+#!/bin/bash
+
+# Define variables
+RESOURCE_GROUP="PodManager"
+REGISTRY_NAME="podmanageracr"
+IMAGE_NAME="podmanagerlive:latest"
+WEBAPP_NAME="podmanager"
+APP_SERVICE_PLAN="podmanagersp"
+LOCATION="northeu" # e.g., "eastus"
+
+# Step 1: Check if Resource Group exists
+echo "Checking if Resource Group '$RESOURCE_GROUP' exists..."
+if ! az group exists --name $RESOURCE_GROUP; then
+    echo "Creating Resource Group '$RESOURCE_GROUP' in $LOCATION..."
+    az group create --name $RESOURCE_GROUP --location $LOCATION --output none
+else
+    echo "Resource Group '$RESOURCE_GROUP' already exists."
+fi
+
+# Step 2: Check if Azure Container Registry (ACR) exists
+echo "Checking if Azure Container Registry '$REGISTRY_NAME' exists..."
+if ! az acr show --name $REGISTRY_NAME --resource-group $RESOURCE_GROUP --output none; then
+    echo "Creating Azure Container Registry '$REGISTRY_NAME'..."
+    az acr create --resource-group $RESOURCE_GROUP --name $REGISTRY_NAME --sku Basic --output none
+else
+    echo "Azure Container Registry '$REGISTRY_NAME' already exists."
+fi
+
+# Step 3: Log in to Azure Container Registry (ACR) using Managed Identity
+echo "Logging in to ACR '$REGISTRY_NAME' using Managed Identity..."
+az acr login --name $REGISTRY_NAME
+
+# Step 4: Build Docker Image
+echo "Building Docker image '$IMAGE_NAME'..."
+docker build -t $IMAGE_NAME .
+
+# Step 5: Tag Docker Image for ACR
+echo "Tagging Docker image '$IMAGE_NAME' with ACR tag..."
+docker tag $IMAGE_NAME $REGISTRY_NAME.azurecr.io/$IMAGE_NAME:latest
+
+# Step 6: Push Docker Image to ACR
+echo "Pushing Docker image to ACR..."
+docker push $REGISTRY_NAME.azurecr.io/$IMAGE_NAME:latest
+
+# Step 7: Check if App Service Plan exists
+echo "Checking if App Service Plan '$APP_SERVICE_PLAN' exists..."
+if ! az appservice plan show --name $APP_SERVICE_PLAN --resource-group $RESOURCE_GROUP --output none; then
+    echo "Creating App Service Plan '$APP_SERVICE_PLAN'..."
+    az appservice plan create --name $APP_SERVICE_PLAN --resource-group $RESOURCE_GROUP --sku B1 --is-linux --output none
+else
+    echo "App Service Plan '$APP_SERVICE_PLAN' already exists."
+fi
+
+# Step 8: Check if Web App exists
+echo "Checking if Web App '$WEBAPP_NAME' exists..."
+if ! az webapp show --name $WEBAPP_NAME --resource-group $RESOURCE_GROUP --output none; then
+    echo "Creating Web App '$WEBAPP_NAME' for container deployment..."
+    az webapp create --resource-group $RESOURCE_GROUP --plan $APP_SERVICE_PLAN --name $WEBAPP_NAME --deployment-container-image-name $REGISTRY_NAME.azurecr.io/$IMAGE_NAME:latest --output none
+else
+    echo "Web App '$WEBAPP_NAME' already exists."
+fi
+
+# Step 9: Configure Web App to use ACR with Managed Identity (No publish profile required)
+echo "Configuring Web App to use Docker image from ACR..."
+az webapp config container set --name $WEBAPP_NAME --resource-group $RESOURCE_GROUP \
+  --docker-registry-server-url https://$REGISTRY_NAME.azurecr.io \
+  --docker-custom-image-name $REGISTRY_NAME.azurecr.io/$IMAGE_NAME:latest
+
+# Step 10: Check the status of the Web App
+echo "Web App '$WEBAPP_NAME' is deployed successfully. Checking the status..."
+az webapp show --name $WEBAPP_NAME --resource-group $RESOURCE_GROUP --output table
+
+# Step 11: Optionally, open the Web App in a browser
+echo "Opening Web App in the default browser..."
+open https://$WEBAPP_NAME.azurewebsites.net
