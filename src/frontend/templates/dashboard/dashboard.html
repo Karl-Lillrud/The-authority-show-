@@ -1,16 +1,21 @@
 {% extends "/components/base.html" %} {% block title %}Podcast Management{%
-  endblock %} {% block content %}
+endblock %} {% block content %}
 <head>
-  <script async src="https://www.googletagmanager.com/gtag/js?id=G-PTPQQ5WSQV"></script>
+  <script
+    async
+    src="https://www.googletagmanager.com/gtag/js?id=G-PTPQQ5WSQV"
+  ></script>
   <script>
     window.dataLayer = window.dataLayer || [];
-    function gtag(){dataLayer.push(arguments);}
-    gtag('js', new Date());
-  
-    gtag('config', 'G-PTPQQ5WSQV');
+    function gtag() {
+      dataLayer.push(arguments);
+    }
+    gtag("js", new Date());
+
+    gtag("config", "G-PTPQQ5WSQV");
   </script>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>PodManager.ai Dashboard</title>
   <link
     rel="stylesheet"
@@ -20,7 +25,10 @@
     rel="stylesheet"
     href="{{ url_for('static', filename='css/dashboard/task.css') }}"
   />
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
+  <link
+    rel="stylesheet"
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
+  />
 </head>
 <body>
   <div class="dashboard">
@@ -29,8 +37,6 @@
       <!-- Dashboard Content -->
       <div class="dashboard-content">
         <!-- Team Leaderboard -->
-
-
         <section class="leaderboard-section">
           <div class="section-header">
             <h2>Team Leaderboard</h2>
@@ -75,9 +81,19 @@
       <h2>Welcome to PodManager.ai!</h2>
       <div class="popup-body">
         <p>🎉 <strong>Congratulations!</strong></p>
-        <p>Your spot in the Beta Tester queue is locked in! Get ready for your exclusive sneak peek...</p>
-        <p>💰 To kick things off, we've added <strong>3,500 Credits</strong> to your account!</p>
-        <p>PodManager.ai will revolutionize your podcasting with AI-powered workflow automation, seamless guest management, and faster episode production- so you can focus on creating amazing content!</p>
+        <p>
+          Your spot in the Beta Tester queue is locked in! Get ready for your
+          exclusive sneak peek...
+        </p>
+        <p>
+          💰 To kick things off, we've added <strong>3,500 Credits</strong> to
+          your account!
+        </p>
+        <p>
+          PodManager.ai will revolutionize your podcasting with AI-powered
+          workflow automation, seamless guest management, and faster episode
+          production- so you can focus on creating amazing content!
+        </p>
         <p>✨ Check your email right now for more exciting features!</p>
         <button id="get-started-btn" class="btn save-btn">Get Started</button>
       </div>
@@ -88,4 +104,5 @@
     type="module"
     src="{{ url_for('static', filename='js/dashboard/dashboard.js') }}"
   ></script>
-{% endblock %}
+  {% endblock %}
+</body>
