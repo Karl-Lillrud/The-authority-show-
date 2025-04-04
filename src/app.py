@@ -122,7 +122,7 @@ def start_streamlit():
     streamlit_command = [
         "streamlit",
         "run",
-        "src/backend/routes/transcript/streamlit_transcription.py",  # Adjust the path if needed
+        "src/backend/routes/transcript/streamlit_transcription.py",  # Adjust the path iif needed
         "--server.port",
         streamlit_port,
         "--server.headless",
