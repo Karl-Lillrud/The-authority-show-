@@ -1,6 +1,6 @@
 body {
   background-size: cover;
-  background-color:  aliceblue;
+  background-color: aliceblue;
   background-position: center;
   background-attachment: fixed;
   margin: 0;
@@ -35,11 +35,10 @@ body {
 
 #addGuestButton:hover {
   background-color: rgb(202, 209, 215);
-
 }
 
 #profilePhotoLabel {
-  background-color:coral; /* Bakgrundsfärg */
+  background-color: coral; /* Bakgrundsfärg */
   color: white; /* Textfärg */
   padding: 0.5rem 1rem; /* Inre marginaler (vertikal och horisontell) */
   border-radius: 0.375rem; /* Rundade hörn */
@@ -47,8 +46,7 @@ body {
   display: inline-block; /* Gör etiketten inline-block för att den ska bete sig som en knapp */
   margin-top: 0.5rem; /* Övre marginal */
 }
-
-#profilePhotoLabel:hover{  
+#profilePhotoLabel:hover {
   background-color: rgb(202, 209, 215);
 }
 
@@ -76,11 +74,9 @@ body {
 #openDatePicker:hover {
   background-color: rgb(202, 209, 215);
 }
-
-
 button[type="submit"] {
   width: 100%; /* Fyller hela bredden av föräldraelementet, motsvarande w-full */
-  background-color:  #ff7f50;
+  background-color: #ff7f50;
   color: white; /* Textfärg, motsvarande text-white */
   padding: 0.5rem 0; /* Padding på toppen och botten (py-2) */
   border-radius: 0.5rem; /* Rundade hörn, motsvarande rounded-lg */
@@ -94,12 +90,10 @@ button[type="submit"]:hover {
   background-color: rgb(202, 209, 215);
 }
 
-
-
-   #calendarPicker {
-      display: grid;
-      grid-template-columns: repeat(7, 1fr);
-    }
+#calendarPicker {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+}
 
     .input-field {
       width: 100%;
@@ -120,7 +114,6 @@ button[type="submit"]:hover {
       font-size: 14px;
       margin-top: 15px;
     }
-
 
 .footer {
   background-color: #ff7f50;
