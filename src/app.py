@@ -133,7 +133,7 @@ def start_streamlit():
 
 
 # Start Streamlit in the background
-# start_streamlit()
+start_streamlit()
 
 
 # Proxy requests to Streamlit (on port 8501)
