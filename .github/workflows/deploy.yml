@@ -11,20 +11,20 @@ jobs:
 
     steps:
     - name: Checkout code
-      uses: actions/checkout@v2
+      uses: actions/checkout@v4
 
-    - name: Set up Docker
-      uses: docker/setup-buildx-action@v1
+    - name: Set up QEMU
+      uses: docker/setup-qemu-action@v3
+
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
 
     - name: Build and push Docker image to ACR
       run: |
-        docker build -t ${{ secrets.REGISTRY_NAME }}.azurecr.io/${{ secrets.IMAGE_NAME }}:latest .
-        docker push ${{ secrets.REGISTRY_NAME }}.azurecr.io/${{ secrets.IMAGE_NAME }}:latest
+        docker build -t $REGISTRY_NAME.azurecr.io/$IMAGE_NAME:latest .
+        docker push $REGISTRY_NAME.azurecr.io/$IMAGE_NAME:latest
 
     - name: Run deployment script
       run: |
         chmod +x ./deploy.sh
         ./deploy.sh
-      env:
-        REGISTRY_NAME: ${{ secrets.REGISTRY_NAME }}
-        IMAGE_NAME: ${{ secrets.IMAGE_NAME }}

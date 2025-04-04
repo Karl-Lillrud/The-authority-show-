@@ -12,7 +12,7 @@ COPY src/requirements.txt src/requirements.txt
 COPY .env /app/src/
 
 # Install dependencies
-RUN pip install --no-cache-dir -r src/requirements.txt
+RUN pip install -r src/requirements.txt
 
 # Copy the rest of the application
 COPY . .
