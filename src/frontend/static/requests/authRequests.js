@@ -98,7 +98,15 @@ export async function sendVerificationCode(email) {
       throw new Error(errorData.message || "Failed to send verification code.");
     }
 
-    return await response.json();
+    const result = await response.json();
+
+    // Ensure the function only throws an error for actual failures
+    if (result.success === false) {
+      throw new Error(result.message || "Failed to send verification code.");
+    }
+
+    // Return the success response
+    return result;
   } catch (error) {
     console.error("Error in sendVerificationCode:", error);
     throw error;
