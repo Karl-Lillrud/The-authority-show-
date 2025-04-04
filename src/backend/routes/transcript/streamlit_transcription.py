@@ -7,11 +7,16 @@ import logging
 import tempfile
 from dotenv import load_dotenv
 import sys
-from backend.utils.text_utils import download_button_text
 
+
+#This is to add the backend directory to the system path for imports
+# This is necessary to import modules from the backend directory
 project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../../"))
 if project_root not in sys.path:
     sys.path.insert(0, project_root)
+from backend.utils.text_utils import download_button_text
+from backend.services.creditService import get_user_credits
+from backend.utils.credit_costs import CREDIT_COSTS
 
 # Load environment variables early
 load_dotenv()
@@ -45,6 +50,8 @@ def render_translate_and_download(section_key: str, label: str, filename: str):
 
     translated = st.session_state.get(f"{section_key}_translated", content)
     download_button_text(f"⬇ Download {label}", translated, filename, key_prefix=section_key)
+
+
 
 # ----------------------------
 # Initialize Session State
@@ -108,7 +115,7 @@ with tab1:
         else:
             st.video(uploaded_file)
 
-        if st.button("▶ Transcribe"):
+        if st.button(f"▶ Transcribe ({CREDIT_COSTS['transcription']} credits)"):
             with st.spinner("🔄 Transcribing... Please wait."):
                 files = {"file": (uploaded_file.name, uploaded_file, uploaded_file.type)}
                 try:
@@ -171,7 +178,7 @@ with tab1:
         # 2) AI Suggestions
         st.markdown("### 🤖 AI Suggestions")
         st.write("Get ideas or improvements for your transcript, e.g. better phrasing or structure.")
-        if st.button("Generate AI Suggestions"):
+        if st.button(f"Generate AI Suggestions ({CREDIT_COSTS['ai_suggestions']} credits)"):
             payload = {"transcript": st.session_state.raw_transcription}
             response = requests.post(f"{API_BASE_URL}/ai_suggestions", json=payload)
             if response.status_code == 200:
@@ -189,7 +196,7 @@ with tab1:
         # 3) Show Notes
         st.markdown("### 📝 Show Notes")
         st.write("Automatically summarize the main points in the transcript for easy reference.")
-        if st.button("Generate Show Notes"):
+        if st.button(f"**Cost:** {CREDIT_COSTS['show_notes']} credits"):
             payload = {"transcript": st.session_state.raw_transcription}
             response = requests.post(f"{API_BASE_URL}/show_notes", json=payload)
             if response.status_code == 200:
@@ -207,7 +214,7 @@ with tab1:
         # 4) Quotes
         st.markdown("### 💬 Generate Quotes")
         st.write("Extract memorable quotes from your transcript.")
-        if st.button("Generate Quotes"):
+        if st.button(f"Generate Quotes ({CREDIT_COSTS['ai_quotes']} credits)"):
             payload = {"transcript": st.session_state.raw_transcription}
             response = requests.post(f"{API_BASE_URL}/quotes", json=payload)
             if response.status_code == 200:
@@ -225,7 +232,7 @@ with tab1:
             # 5) Quote Images (only shown after "Generate Quotes")
             st.markdown("### 🖼️ Generate Quote Images")
             st.write("Turn the extracted quotes into shareable images.")
-            if st.button("Generate Quote Images"):
+            if st.button(f"Generate Quote Images ({CREDIT_COSTS['ai_qoute_images']} credits)"):
                 payload = {"quotes": st.session_state.quotes}
                 response = requests.post(f"{API_BASE_URL}/quote_images", json=payload)
                 if response.status_code == 200:
@@ -258,7 +265,7 @@ with tab2:
         st.audio(audio_file, format="audio/wav")
         st.text("🔊 Original Audio File")
 
-        if st.button("Enhance Audio"):
+        if st.button(f"Enhance Audio ({CREDIT_COSTS['audio_enhancment']} credits)"):
             with st.spinner("🔄 Enhancing audio..."):
                 files = {"audio": audio_file}
                 try:
@@ -442,7 +449,7 @@ with tab2:
         st.audio(voice_file, format="audio/wav")
         st.text("🎧 Original Audio (Before Isolation)")
 
-        if st.button("🎙️ Isolate Voice"):
+        if st.button(f"🎙️ Isolate Voice ({CREDIT_COSTS['voice_isolation']} credits)"):
             with st.spinner("🔄 Isolating voice using ElevenLabs..."):
                 try:
                     files = {"audio": voice_file}
@@ -529,7 +536,7 @@ with tab2:
         if start_time >= end_time:
             st.warning("⚠ Start time must be less than end time.")
 
-        if st.button("✂ Cut Audio"):
+        if st.button(f"✂ Cut Audio ({CREDIT_COSTS['audio_cutting']} credits)"):
             with st.spinner("🔄 Processing audio..."):
                 if not audio_file_id:
                     st.error("❌ Error: No audio file ID found!")
@@ -598,7 +605,7 @@ with tab2:
 
     # **Analyze Audio Button (Only show if file is uploaded)**
     if "file_id" in st.session_state:
-        if st.button("Analyze Audio"):
+        if st.button(f"Analyze Audio ({CREDIT_COSTS['ai_audio_cutting']} credits)"):
             with st.spinner("🔄 Using AI to process audio..."):
                 if "file_id" not in st.session_state:
                     st.error("❌ No audio file ID found. Please upload an audio file first.")
@@ -953,7 +960,7 @@ with tab3:
             st.text("✅ Video already uploaded. Click 'Enhance Video' to start processing.")
 
         # ---- Video Enhancement Section ----
-        if st.button("Enhance Video"):
+        if st.button(f"Enhance Video ({CREDIT_COSTS['video_enhancement']})"):
             with st.spinner("🔄 Enhancing video..."):
                 video_id = st.session_state["video_id"]
                 response = requests.post(f"{API_BASE_URL}/ai_videoenhance", json={"video_id": video_id})
@@ -1040,7 +1047,7 @@ with tab3:
             if start_time_video >= end_time_video:
                 st.warning("⚠ Start time must be less than end time.")
             
-            if st.button("✂ Cut Video"):
+            if st.button(f"✂ Cut Video ({CREDIT_COSTS['video_cutting']})"):
                 with st.spinner("🔄 Processing video..."):
                     data = {"video_id": video_id, "clips": [{"start": start_time_video, "end": end_time_video}]}
                     response = requests.post(f"{API_BASE_URL}/clip_video", json=data)
