@@ -6,16 +6,16 @@ WORKDIR /app
 ENV PYTHONPATH=/app/src
 
 # Copy only requirements.txt first to leverage Docker caching
-COPY src/requirements.txt src/requirements.txt
-
-# Copy the .env file from the root directory to /app/src/
-COPY .env /app/src/
+COPY src/requirements.txt /app/src/requirements.txt
 
 # Install dependencies
-RUN pip install -r src/requirements.txt
+RUN pip install --no-cache-dir -r /app/src/requirements.txt
+
+# Copy the .env file from the root directory to /app/src/
+COPY .env /app/src/.env
 
 # Copy the rest of the application
-COPY . .
+COPY src/ /app/src/
 
 # Expose the port Flask will run on
 EXPOSE 8000
