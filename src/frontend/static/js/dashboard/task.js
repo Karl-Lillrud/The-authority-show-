@@ -297,9 +297,6 @@ function renderTaskList(tasks) {
         <div class="task-content">
           <div class="task-title">${task.name}</div>
           ${task.description ? `<div class="task-description">${task.description}</div>` : ""}
-          <div class="task-meta">
-            <span class="task-assigned">${task.guestId ? task.guestId : "Unassigned"}</span>
-          </div>
         </div>
         <div class="task-actions">
           <button class="task-action-btn edit-task-btn" title="Edit Task"><i class="fas fa-edit"></i> Edit</button>
@@ -331,12 +328,6 @@ function showAddTaskPopup(episodeId) {
             <div class="form-group">
               <label for="task-description">Description</label>
               <textarea id="task-description" class="form-control" placeholder="Add more details about this task..."></textarea>
-            </div>
-            <div class="form-group">
-              <label for="task-assigned">Assign To</label>
-              <select id="task-assigned" class="form-control">
-                <option value="">Select a person</option>
-              </select>
             </div>
             <div class="modal-footer">
               <button type="button" id="cancel-add-btn" class="btn cancel-btn">Cancel</button>
@@ -386,13 +377,11 @@ function showAddTaskPopup(episodeId) {
     e.preventDefault();
     const title = document.getElementById("task-title").value;
     const description = document.getElementById("task-description").value;
-    const assignedTo = document.getElementById("task-assigned").value;
 
     const taskData = {
       name: title,
       description,
       episodeId: episodeId,
-      guestId: assignedTo || null,
     };
 
     try {
@@ -452,12 +441,6 @@ async function showEditTaskPopup(taskId) {
               <textarea id="edit-task-description" class="form-control">${description || ''}</textarea>
             </div>
             <div class="form-group">
-              <label for="edit-task-assigned">Assign To</label>
-              <select id="edit-task-assigned" class="form-control">
-                <option value="">Select a person</option>
-              </select>
-            </div>
-            <div class="form-group">
               <label for="edit-task-status">Status</label>
               <select id="edit-task-status" class="form-control">
                 <option value="incomplete" ${status === "incomplete" ? "selected" : ""}>Incomplete</option>
@@ -503,13 +486,11 @@ async function showEditTaskPopup(taskId) {
 
     const title = document.getElementById("edit-task-title").value;
     const description = document.getElementById("edit-task-description").value;
-    const assignedTo = document.getElementById("edit-task-assigned").value;
     const status = document.getElementById("edit-task-status").value;
 
     const taskData = {
       name: title,
       description,
-      guestId: assignedTo || null,
       status: status,
     };
 
