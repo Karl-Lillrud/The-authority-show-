@@ -20,6 +20,7 @@ from backend.routes.frontend import frontend_bp  # Import the frontend blueprint
 from backend.routes.guestpage import guestpage_bp
 from backend.routes.guest_to_eposide import guesttoepisode_bp
 from backend.routes.guest_form import guest_form_bp  # Import the guest_form blueprint
+
 from backend.routes.transcription import transcription_bp
 from backend.routes.landingpage import landingpage_bp
 from dotenv import load_dotenv

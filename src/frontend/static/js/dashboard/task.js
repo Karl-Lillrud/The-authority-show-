@@ -7,21 +7,18 @@ import {
   deleteTask,
   fetchLocalDefaultTasks,
   addDefaultTasksToEpisode,
+  saveWorkflow,
+  getWorkflows
 } from "/static/requests/podtaskRequest.js"
-
-// Task Management functionality for podcast dashboard
-// This file uses the API functions from podtaskRequest.js
 
 // Initialize task management for all episode cards
 export function initTaskManagement() {
-  // Add event listeners to all toggle task buttons
   const toggleButtons = document.querySelectorAll(".toggle-tasks");
   toggleButtons.forEach((button) => {
     button.addEventListener("click", handleToggleTasks);
   });
 }
 
-// Handle toggle tasks button click
 function handleToggleTasks(event) {
   const button = event.currentTarget;
   const card = button.closest(".episode-card");
@@ -31,8 +28,6 @@ function handleToggleTasks(event) {
   if (tasksContainer.style.display === "none") {
     tasksContainer.style.display = "block";
     button.textContent = "-";
-
-    // Load tasks for this episode
     loadTasksForEpisode(episodeId, tasksContainer);
   } else {
     tasksContainer.style.display = "none";
@@ -40,7 +35,6 @@ function handleToggleTasks(event) {
   }
 }
 
-// Load tasks for an episode
 async function loadTasksForEpisode(episodeId, container) {
   try {
     if (!container) {
@@ -51,7 +45,6 @@ async function loadTasksForEpisode(episodeId, container) {
     container.innerHTML = "<p>Loading tasks...</p>";
     const tasks = await fetchTasks();
 
-    // Filter tasks using the podtask schema field "episodeId"
     const episodeTasks = tasks ? tasks.filter((task) => task.episodeId === episodeId) : [];
     renderTasksUI(episodeId, episodeTasks, container);
   } catch (error) {
@@ -62,10 +55,8 @@ async function loadTasksForEpisode(episodeId, container) {
   }
 }
 
-
 // Render tasks UI
 function renderTasksUI(episodeId, tasks, container) {
-  // Create task management UI
   const taskManagementHTML = `
     <div class="task-management">
       <div class="task-header">
@@ -82,13 +73,28 @@ function renderTasksUI(episodeId, tasks, container) {
       <div class="task-list">
         ${tasks.length > 0 ? renderTaskList(tasks) : '<p class="no-tasks">No tasks yet. Add a task or import default tasks.</p>'}
       </div>
+      <!-- New Buttons for Save and Import Workflow -->
+      <div class="workflow-actions">
+        <button class="btn save-workflow-btn" data-episode-id="${episodeId}">
+          <i class="fas fa-save"></i> Save Workflow
+        </button>
+        <button class="btn import-workflow-btn" data-episode-id="${episodeId}">
+          <i class="fas fa-download"></i> Import Workflow
+        </button>
+      </div>
     </div>
   `;
 
-  // Set the HTML
   container.innerHTML = taskManagementHTML;
 
-  // Add event listeners
+  // Add event listeners for save and import workflow
+  const saveWorkflowBtn = container.querySelector(".save-workflow-btn");
+  const importWorkflowBtn = container.querySelector(".import-workflow-btn");
+
+  saveWorkflowBtn.addEventListener("click", () => showSaveWorkflowPopup(episodeId));
+  importWorkflowBtn.addEventListener("click", () => importWorkflow(episodeId));
+
+  // Existing task actions (add, edit, delete tasks)
   const addTaskBtn = container.querySelector(".add-task-btn");
   addTaskBtn.addEventListener("click", () => showAddTaskPopup(episodeId));
 
@@ -99,58 +105,278 @@ function renderTasksUI(episodeId, tasks, container) {
   const taskItems = container.querySelectorAll(".task-item");
   taskItems.forEach((item) => {
     const taskId = item.dataset.taskId;
-
-    // Only add event listeners if taskId exists
     if (taskId) {
-      // Checkbox for completion
       const checkbox = item.querySelector(".task-checkbox");
       checkbox.addEventListener("change", () => toggleTaskCompletion(taskId, checkbox.checked));
 
-      // Edit button
       const editBtn = item.querySelector(".edit-task-btn");
       editBtn.addEventListener("click", () => showEditTaskPopup(taskId));
 
-      // Delete button
       const deleteBtn = item.querySelector(".delete-task-btn");
       deleteBtn.addEventListener("click", () => confirmDeleteTask(taskId));
-
-      // Assign to me button
-      const assignBtn = item.querySelector(".assign-to-me-btn");
-      if (assignBtn) {
-        assignBtn.addEventListener("click", () => assignTaskToMe(taskId));
-      }
-    } else {
-      console.error("Task ID is undefined for item:", item);
     }
   });
+}
+
+// Show save workflow popup
+function showSaveWorkflowPopup(episodeId) {
+  const popupHTML = `
+    <div id="save-workflow-popup" class="popup">
+      <div class="popup-content">
+        <div class="modal-header">
+          <h2>Save Workflow</h2>
+          <button class="close-btn">&times;</button>
+        </div>
+        <div class="popup-body">
+          <form id="save-workflow-form">
+            <input type="hidden" id="workflow-episode-id" value="${episodeId}">
+            <div class="form-group">
+              <label for="workflow-name">Workflow Name</label>
+              <input type="text" id="workflow-name" class="form-control" placeholder="Enter a name for this workflow" required>
+            </div>
+            <div class="form-group">
+              <label for="workflow-description">Description (Optional)</label>
+              <textarea id="workflow-description" class="form-control" placeholder="Add a description for this workflow..."></textarea>
+            </div>
+            <div class="modal-footer">
+              <button type="button" id="cancel-save-workflow-btn" class="btn cancel-btn">Cancel</button>
+              <button type="submit" class="btn save-btn">
+                <i class="fas fa-save"></i> Save Workflow
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  `;
+
+  document.body.insertAdjacentHTML("beforeend", popupHTML);
+  const popup = document.getElementById("save-workflow-popup");
+  
+  // Show the popup
+  popup.style.display = "flex";
+  
+  // Add class to animate in
+  setTimeout(() => {
+    popup.querySelector(".popup-content").classList.add("show");
+  }, 10);
+
+  // Close button event
+  const closeBtn = popup.querySelector(".close-btn");
+  closeBtn.addEventListener("click", () => {
+    closePopup(popup);
+  });
+
+  // Cancel button event
+  const cancelBtn = document.getElementById("cancel-save-workflow-btn");
+  cancelBtn.addEventListener("click", () => {
+    closePopup(popup);
+  });
+
+  // Close when clicking outside
+  popup.addEventListener("click", (e) => {
+    if (e.target === popup) {
+      closePopup(popup);
+    }
+  });
+
+  // Form submission
+  const form = document.getElementById("save-workflow-form");
+  form.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const workflowName = document.getElementById("workflow-name").value;
+    const workflowDescription = document.getElementById("workflow-description").value;
+
+    try {
+      // Show loading state
+      const saveBtn = form.querySelector(".save-btn");
+      const originalText = saveBtn.innerHTML;
+      saveBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...';
+      saveBtn.disabled = true;
+
+      // Call the modified saveWorkflow function with the name
+      await saveWorkflowWithName(episodeId, workflowName, workflowDescription);
+      
+      closePopup(popup);
+    } catch (error) {
+      console.error("Error saving workflow:", error);
+      // Reset button state
+      const saveBtn = form.querySelector(".save-btn");
+      saveBtn.innerHTML = originalText;
+      saveBtn.disabled = false;
+      
+      alert("Failed to save workflow: " + error.message);
+    }
+  });
+}
+
+// Modified saveWorkflow function to include the name
+async function saveWorkflowWithName(episodeId, workflowName, workflowDescription = "") {
+  try {
+    const tasksData = await fetchTasks();
+    const tasks = tasksData.filter(task => task.episodeId === episodeId);
+    if (tasks.length === 0) {
+      return alert("No tasks found for this episode.");
+    }
+    await saveWorkflow(episodeId, workflowName, workflowDescription, tasks);
+  } catch (error) {
+    console.error("Error saving workflow:", error);
+    throw error;
+  }
+}
+
+// Import workflow function with dropdown
+async function importWorkflow(episodeId) {
+  try {
+    const workflows = await getWorkflows();
+    if (workflows.length > 0) {
+      showImportWorkflowModal(episodeId, workflows);
+    } else {
+      alert("No workflows available to import.");
+    }
+  } catch (error) {
+    console.error("Error fetching workflows:", error);
+    alert("Failed to fetch workflows.");
+  }
+}
+
+function showImportWorkflowModal(episodeId, workflows) {
+  const modalHTML = `
+    <div id="import-workflow-modal" class="popup">
+      <div class="popup-content">
+        <div class="modal-header">
+          <h2>Select a Workflow to Import</h2>
+          <button class="close-btn">&times;</button>
+        </div>
+        <div class="popup-body">
+          <label for="workflow-select">Choose a workflow:</label>
+          <select id="workflow-select" class="form-control">
+            <option value="">--Select a Workflow--</option>
+            ${workflows.map(workflow => `<option value="${workflow._id}">${workflow.name || 'Unnamed Workflow'}</option>`).join('')}
+          </select>
+        </div>
+        <div class="modal-footer">
+          <button type="button" id="cancel-import-btn" class="btn cancel-btn">Cancel</button>
+          <button type="button" id="import-selected-btn" class="btn save-btn" disabled>Import Workflow</button>
+        </div>
+      </div>
+    </div>
+  `;
+  
+  document.body.insertAdjacentHTML("beforeend", modalHTML);
+
+  // Force modal to display
+  const modal = document.getElementById("import-workflow-modal");
+  modal.style.display = "flex";  // Make sure it's visible
+
+  const importBtn = document.getElementById("import-selected-btn");
+  const workflowSelect = document.getElementById("workflow-select");
+
+  workflowSelect.addEventListener("change", () => {
+    importBtn.disabled = !workflowSelect.value;
+  });
+
+  const closeBtn = modal.querySelector(".close-btn");
+  closeBtn.addEventListener("click", () => closeModal(modal));
+
+  const cancelBtn = document.getElementById("cancel-import-btn");
+  cancelBtn.addEventListener("click", () => closeModal(modal));
+
+  importBtn.addEventListener("click", async () => {
+    const workflowId = workflowSelect.value;
+    if (!workflowId) return;
+  
+    try {
+      // First, get the specific workflow by ID
+      const workflowResponse = await fetch(`/get_workflows`, {
+        method: "GET",
+        headers: { "Content-Type": "application/json" },
+      });
+
+      const workflowData = await workflowResponse.json();
+      
+      if (!workflowResponse.ok) {
+        alert("Failed to fetch workflows: " + workflowData.error);
+        return;
+      }
+      
+      // Find the selected workflow in the response
+      const selectedWorkflow = workflowData.workflows.find(w => w._id === workflowId);
+      
+      if (!selectedWorkflow) {
+        alert("Selected workflow not found");
+        return;
+      }
+      
+      // Extract tasks from the selected workflow
+      const tasks = selectedWorkflow.tasks;
+      
+      if (!tasks || tasks.length === 0) {
+        alert("No tasks found in this workflow");
+        return;
+      }
+      
+      // Debug: Log the tasks to see their structure
+      console.log("Tasks to import:", tasks);
+      
+      // Instead of using add_tasks_to_episode, let's add tasks one by one using saveTask
+      let addedCount = 0;
+      for (const task of tasks) {
+        // Create a new task object with the required fields
+        const taskData = {
+          name: task.name || "Imported Task",
+          description: task.description || "",
+          episodeId: episodeId,
+          // Use a default guest ID if none is provided
+          guestId: task.guestId,
+          // Copy other relevant fields
+          status: task.status || "pending",
+          priority: task.priority || "medium"
+        };
+        
+        // Save the task
+        await saveTask(taskData);
+        addedCount++;
+      }
+      
+      if (addedCount > 0) {
+        // Reload the tasks after successful import
+        const tasksContainer = document.querySelector(`.episode-card[data-episode-id="${episodeId}"] .tasks-container`);
+        loadTasksForEpisode(episodeId, tasksContainer);
+        
+        alert(`Successfully imported ${addedCount} tasks from the workflow!`);
+        closeModal(modal);
+      } else {
+        alert("No tasks were imported");
+      }
+    } catch (error) {
+      console.error("Error importing workflow:", error);
+      alert("Failed to import workflow: " + error.message);
+    }
+  });
+} 
+
+function closeModal(modal) {
+  modal.style.display = "none";  // Make sure to hide it
+  setTimeout(() => modal.remove(), 300);  // Remove after animation
 }
 
 // Render task list
 function renderTaskList(tasks) {
   return tasks
-    .map(
-      (task) => `
-    <div class="task-item ${task.completed ? "task-completed" : ""}" data-task-id="${task._id || task.id}">
-      <input type="checkbox" class="task-checkbox" ${task.completed ? "checked" : ""}>
-      <div class="task-content">
-        <div class="task-title">${task.name}</div>
-        ${task.description ? `<div class="task-description">${task.description}</div>` : ""}
-        <div class="task-meta">
-          <span class="task-assigned">${task.guestId ? task.guestId : "Unassigned"}</span>
+    .map((task) => `
+      <div class="task-item ${task.completed ? "task-completed" : ""}" data-task-id="${task._id || task.id}">
+        <input type="checkbox" class="task-checkbox" ${task.completed ? "checked" : ""}>
+        <div class="task-content">
+          <div class="task-title">${task.name}</div>
+          ${task.description ? `<div class="task-description">${task.description}</div>` : ""}
+        </div>
+        <div class="task-actions">
+          <button class="task-action-btn edit-task-btn" title="Edit Task"><i class="fas fa-edit"></i> Edit</button>
+          <button class="task-action-btn delete-task-btn" title="Delete Task"><i class="fas fa-trash"></i> Delete</button>
         </div>
       </div>
-      <div class="task-actions">
-        <button class="task-action-btn edit-task-btn" title="Edit Task">
-          <i class="fas fa-edit"></i> Edit
-        </button>
-        <button class="task-action-btn delete-task-btn" title="Delete Task">
-          <i class="fas fa-trash"></i> Delete
-        </button>
-      </div>
-    </div>
-  `,
-    )
-    .join("");
+    `).join("");
 }
 
 // Show add task popup
@@ -172,12 +398,6 @@ function showAddTaskPopup(episodeId) {
             <div class="form-group">
               <label for="task-description">Description</label>
               <textarea id="task-description" class="form-control" placeholder="Add more details about this task..."></textarea>
-            </div>
-            <div class="form-group">
-              <label for="task-assigned">Assign To</label>
-              <select id="task-assigned" class="form-control">
-                <option value="">Select a person</option>
-              </select>
             </div>
             <div class="modal-footer">
               <button type="button" id="cancel-add-btn" class="btn cancel-btn">Cancel</button>
@@ -227,13 +447,11 @@ function showAddTaskPopup(episodeId) {
     e.preventDefault();
     const title = document.getElementById("task-title").value;
     const description = document.getElementById("task-description").value;
-    const assignedTo = document.getElementById("task-assigned").value;
 
     const taskData = {
       name: title,
       description,
       episodeId: episodeId,
-      guestId: assignedTo || null,
     };
 
     try {
@@ -257,7 +475,6 @@ function showAddTaskPopup(episodeId) {
   });
 }
 
-// FIXED: Show edit task popup with proper animation and visibility
 // Show edit task popup with proper animation and visibility
 async function showEditTaskPopup(taskId) {
   const response = await fetchTask(taskId); // Ensure this fetches the full task object
@@ -291,12 +508,6 @@ async function showEditTaskPopup(taskId) {
             <div class="form-group">
               <label for="edit-task-description">Description</label>
               <textarea id="edit-task-description" class="form-control">${description || ''}</textarea>
-            </div>
-            <div class="form-group">
-              <label for="edit-task-assigned">Assign To</label>
-              <select id="edit-task-assigned" class="form-control">
-                <option value="">Select a person</option>
-              </select>
             </div>
             <div class="form-group">
               <label for="edit-task-status">Status</label>
@@ -344,13 +555,11 @@ async function showEditTaskPopup(taskId) {
 
     const title = document.getElementById("edit-task-title").value;
     const description = document.getElementById("edit-task-description").value;
-    const assignedTo = document.getElementById("edit-task-assigned").value;
     const status = document.getElementById("edit-task-status").value;
 
     const taskData = {
       name: title,
       description,
-      guestId: assignedTo || null,
       status: status,
     };
 
@@ -379,7 +588,6 @@ async function showEditTaskPopup(taskId) {
   });
 }
 
-
 // Helper function to close the edit modal with animation
 function closeEditModal(modal) {
   const modalContent = modal.querySelector(".popup-content");
@@ -391,7 +599,6 @@ function closeEditModal(modal) {
     modal.remove();
   }, 300);
 }
-
 
 // Helper function to close any popup with animation
 function closePopup(popup) {
@@ -512,7 +719,6 @@ async function showImportTasksPopup(episodeId) {
 }
 
 // Toggle task completion
-// Toggle task completion
 async function toggleTaskCompletion(taskId, completed) {
   try {
     // Update task completion status on the server
@@ -534,8 +740,6 @@ async function toggleTaskCompletion(taskId, completed) {
     console.error("Error updating task completion:", error);
   }
 }
-
-
 
 // Confirm delete task
 function confirmDeleteTask(taskId) {
@@ -620,23 +824,4 @@ function confirmDeleteTask(taskId) {
       confirmBtn.disabled = false;
     }
   });
-}
-
-// Assign task to me
-async function assignTaskToMe(taskId) {
-  try {
-    // Update task
-    await updateTask(taskId, { guestId: "Current User" }); // Replace with actual current user
-
-    // Get episode ID
-    const taskItem = document.querySelector(`.task-item[data-task-id="${taskId}"]`);
-    const tasksContainer = taskItem.closest(".tasks-container");
-    const episodeCard = tasksContainer.closest(".episode-card");
-    const episodeId = episodeCard.dataset.episodeId;
-
-    // Reload tasks
-    loadTasksForEpisode(episodeId, tasksContainer);
-  } catch (error) {
-    console.error("Error assigning task:", error);
-  }
 }
