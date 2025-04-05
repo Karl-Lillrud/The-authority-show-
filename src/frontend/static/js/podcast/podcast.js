@@ -43,16 +43,26 @@ document.addEventListener("DOMContentLoaded", async () => {
             <h4>${episode.title}</h4>
             <p><strong>Duration:</strong> ${episode.duration || 'N/A'}</p>
             <p><strong>Release Date:</strong> ${episode.publishDate || 'N/A'}</p>
-            <button class="btn" onclick="window.open('http://localhost:8501/', '_blank')">
+            <button class="btn ai-edit-btn" data-episode-id="${episode.id}">
               AI Edit
             </button>
           </div>
         `
       ).join("");
+      
     } else {
       episodesDiv.innerHTML = "<p>No episodes found for this podcast.</p>";
     }
+// Right after rendering episode cards
+document.querySelectorAll('.ai-edit-btn').forEach(button => {
+  button.addEventListener('click', () => {
+    const host = window.location.hostname;
+    const protocol = window.location.protocol.includes("https") ? "https" : "http";
+    const streamlitURL = `${protocol}://${host}:8501/`;
 
+    window.open(streamlitURL, '_blank');
+  });
+});
     // Fetch guests, filter, and display
     const guests = await fetchGuestsRequest();
     const filteredGuests = guests.filter(guest => guest.podcastId === podcastId);
