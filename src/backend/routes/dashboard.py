@@ -111,8 +111,10 @@ def addmember():
         return redirect(url_for("auth_bp.signin"))  # Updated endpoint
     return render_template("team/addmember.html")
 
-@dashboard_bp.route("/podcast", methods=["GET"])
-def podcast():
+@dashboard_bp.route("/podcast/<podcast_id>", methods=["GET"])
+def podcast(podcast_id):
     if not g.user_id:
-        return redirect(url_for("auth_bp.signin"))  # Updated endpoint
-    return render_template("podcast/podcast.html")
+        return redirect(url_for("auth_bp.signin"))
+    
+    # Store podcast_id in session or inject into template if needed
+    return render_template("podcast/podcast.html", podcast_id=podcast_id)

@@ -2,73 +2,98 @@ import { fetchPodcasts } from "/static/requests/podcastRequests.js";
 
 document.addEventListener("DOMContentLoaded", () => {
   const aiEditLink = document.getElementById("ai-edit-link");
-
   if (aiEditLink) {
     const host = window.location.hostname;
     const streamlitURL = `http://${host}:8501/`;
     aiEditLink.href = streamlitURL;
   }
+
+  populateHeaderPodcastDropdown();
+  populateLandingPageDropdown();
+  setDynamicPageTitle();
 });
 
+// 🔽 Landing Page Dropdown
 function toggleLandingPage() {
-  var dropdown = document.getElementById("dropdown-lp-content");
-  var triangle = document.getElementById("triangle");
+  const dropdown = document.getElementById("dropdown-lp-content");
+  const triangle = document.getElementById("triangle");
 
-  // Toggle dropdown visibility and triangle direction
   if (dropdown.style.display === "none" || dropdown.style.display === "") {
     dropdown.style.display = "block";
-    triangle.classList.remove("triangle-down");
-    triangle.classList.add("triangle-up");
+    triangle.classList.replace("triangle-down", "triangle-up");
   } else {
     dropdown.style.display = "none";
-    triangle.classList.remove("triangle-up");
-    triangle.classList.add("triangle-down");
+    triangle.classList.replace("triangle-up", "triangle-down");
   }
 }
 window.toggleLandingPage = toggleLandingPage;
 
-async function populatePodcastDropdown() {
+async function populateLandingPageDropdown() {
   const dropdown = document.getElementById("dropdown-lp-content");
-  if (!dropdown) {
-    console.error("Header podcast dropdown element not found.");
-    return;
-  }
+  if (!dropdown) return;
 
   try {
-    // Fetch the podcasts
     const data = await fetchPodcasts();
-    console.log("Podcasts fetched:", data);
     const podcasts = data.podcast || [];
     const optionsContainer = dropdown.querySelector(".dropdown-lp-options");
 
     podcasts.forEach((podcast) => {
       const option = document.createElement("a");
       option.textContent = podcast.podName;
-      option.href = "/landingpage/" + podcast._id;
-      option.dataset.value = podcast._id;
+      option.href = `/landingpage/${podcast._id}`;
 
-      option.addEventListener("click", () => {
-        window.location.href = "/landingpage/" + podcast._id;
+      option.addEventListener("click", (e) => {
+        e.preventDefault();
+        window.location.href = `/landingpage/${podcast._id}`;
       });
 
       optionsContainer.appendChild(option);
     });
-
-    dropdown.addEventListener("click", () => {
-      dropdown.classList.toggle("active");
-    });
-
-    document.addEventListener("click", (e) => {
-      if (!dropdown.contains(e.target)) {
-        dropdown.classList.remove("active");
-      }
-    });
   } catch (err) {
-    console.error("Error populating dropdown:", err);
+    console.error("Error populating landing page dropdown:", err);
   }
 }
 
-// Improved menu toggle with animation
+// 🔽 Header Dropdown for `/podcast/:id`
+async function populateHeaderPodcastDropdown() {
+  const dropdownContainer = document.getElementById("headerPodcastDropdown");
+  const dropdownSelected = dropdownContainer.querySelector(".dropdown-selected");
+  const dropdownOptions = dropdownContainer.querySelector(".dropdown-options");
+
+  try {
+    const data = await fetchPodcasts();
+    const podcasts = data.podcast || [];
+
+    podcasts.forEach((podcast) => {
+      const option = document.createElement("div");
+      option.classList.add("dropdown-option");
+      option.textContent = podcast.podName;
+      option.dataset.id = podcast._id;
+
+      option.addEventListener("click", () => {
+        localStorage.setItem("selectedPodcastId", podcast._id);
+        window.location.href = `/podcast/${podcast._id}`;
+      });
+
+      dropdownOptions.appendChild(option);
+    });
+
+    dropdownSelected.addEventListener("click", () => {
+      dropdownOptions.style.display =
+        dropdownOptions.style.display === "block" ? "none" : "block";
+    });
+
+    document.addEventListener("click", (e) => {
+      if (!dropdownContainer.contains(e.target)) {
+        dropdownOptions.style.display = "none";
+      }
+    });
+  } catch (err) {
+    console.error("Error populating header podcast dropdown:", err);
+  }
+}
+
+// 🔧 Toggle mobile menu
 function toggleMenu() {
   const menu = document.getElementById("menu");
   const menuToggle = document.querySelector(".menu-toggle");
@@ -77,7 +102,6 @@ function toggleMenu() {
     menuToggle.classList.toggle("active");
 
     if (menu.classList.contains("active")) {
-      // Close menu with animation
       menu.style.transform = "scale(0.95)";
       menu.style.opacity = "0";
 
@@ -86,7 +110,6 @@ function toggleMenu() {
         menu.style.display = "none";
       }, 300);
     } else {
-      // Open menu with animation
       menu.style.display = "flex";
       menu.style.transform = "scale(0.95)";
       menu.style.opacity = "0";
@@ -101,40 +124,7 @@ function toggleMenu() {
 }
 window.toggleMenu = toggleMenu;
 
-const podcastDropdown = document.querySelector("#headerPodcastDropdown");
-
-if (podcastDropdown) {
-  podcastDropdown.addEventListener("change", function () {
-    const selectedPodcast = this.value;
-    console.log("Selected podcast:", selectedPodcast);
-    window.location.href = "/podcast"; // Redirect to podcast.html after saving selection
-    localStorage.setItem("selectedPodcastId", selectedPodcast);
-    console.log("Saved podcast ID to localStorage:", selectedPodcast);
-  });
-
-  // Clear localStorage ONLY when navigating away from podcast.html
-  window.addEventListener("beforeunload", () => {
-    if (window.location.pathname === "/podcast") {
-      // Do nothing when leaving podcast.html
-    } else {
-      localStorage.removeItem("selectedPodcastId");
-      console.log("Cleared selected podcast from localStorage on page unload.");
-      // Reset dropdown to default when leaving the podcast page
-      if (podcastDropdown) {
-        podcastDropdown.selectedIndex = 0;
-        console.log("Dropdown reset to default.");
-      }
-    }
-  });
-}
-
-// Ensure the dropdown is populated when the document is ready
-if (document.readyState === "loading") {
-  document.addEventListener("DOMContentLoaded", populatePodcastDropdown);
-} else {
-  populatePodcastDropdown();
-}
-
+// 🔐 Logout modal
 const logoutLink = document.getElementById("logout-link");
 const logoutModal = document.getElementById("logout-modal");
 const cancelLogout = document.getElementById("cancel-logout");
@@ -146,32 +136,27 @@ if (logoutLink) {
     logoutModal.style.display = "flex";
   });
 }
-
 if (cancelLogout) {
   cancelLogout.addEventListener("click", () => {
     logoutModal.style.display = "none";
   });
 }
-
 if (confirmLogout) {
   confirmLogout.addEventListener("click", () => {
-    document.cookie =
-      "remember_me=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+    document.cookie = "remember_me=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
     window.location.href = logoutLink.href;
   });
 }
-
 window.addEventListener("click", (e) => {
   if (e.target === logoutModal) {
     logoutModal.style.display = "none";
   }
 });
 
-// Close menu when clicking outside
+// Close menu on outside click
 document.addEventListener("click", (e) => {
   const menu = document.getElementById("menu");
   const menuToggle = document.querySelector(".menu-toggle");
-
   if (
     menu &&
     menu.classList.contains("active") &&
@@ -182,30 +167,8 @@ document.addEventListener("click", (e) => {
   }
 });
 
-document.addEventListener("DOMContentLoaded", () => {
-  const landingPageLink = document.getElementById("landing-page-link");
-
-  if (landingPageLink) {
-    const selectedPodcastId = localStorage.getItem("selectedPodcastId");
-
-    // Set the href dynamically (good for right-click > open in new tab)
-    if (selectedPodcastId) {
-      landingPageLink.href = `/landingpage/${selectedPodcastId}`;
-    }
-
-    // On click, prevent default and redirect
-    landingPageLink.addEventListener("click", (e) => {
-      e.preventDefault();
-      const id = localStorage.getItem("selectedPodcastId");
-      if (id) {
-        window.location.href = `/landingpage/${id}`;
-      } else {
-        alert("Please select a podcast first.");
-      }
-    });
-  }
-
-  // Dynamically set the page title based on the current page
+// 🧠 Dynamic Page Title
+function setDynamicPageTitle() {
   const pageTitleElement = document.getElementById("page-title");
   if (pageTitleElement) {
     const pageTitles = {
@@ -214,12 +177,11 @@ document.addEventListener("DOMContentLoaded", () => {
       "/dashboard": "Dashboard",
       "/team": "Team Members",
       "/guest": "Guest View",
-      "/taskmanagement": "Task Management"
+      "/taskmanagement": "Task Management",
     };
 
     const currentPath = window.location.pathname;
     const pageTitle = pageTitles[currentPath] || "PodManager";
     pageTitleElement.textContent = pageTitle;
   }
-});
-
+}
