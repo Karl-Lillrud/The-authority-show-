@@ -60,7 +60,6 @@ document.addEventListener("DOMContentLoaded", function() {
 
     document.getElementById("delete-guest").addEventListener("click", function(e) {
       e.stopPropagation();
-      // Call deleteGuestRequest from guestRequests.js
       deleteGuestRequest(guest.id)
         .then(data => {
           if (data.message) {
@@ -76,6 +75,37 @@ document.addEventListener("DOMContentLoaded", function() {
           alert("Error deleting guest");
           closePopup();
         });
+    });
+  }
+
+  // Reusable function to render a guest card
+  function createGuestCard(guest, onClick) {
+    const card = document.createElement("div");
+    card.classList.add("guest-card");
+    card.innerHTML = `
+      <img src="${guest.image}" alt="${guest.name}">
+      <h3>${guest.name}</h3>
+      <div class="tags">
+        ${guest.tags.map(tag => `<span>${tag}</span>`).join("")}
+      </div>
+    `;
+    card.addEventListener("click", onClick);
+    return card;
+  }
+
+  // Reusable function to handle image uploads
+  function handleImageUpload(inputElement, previewElement) {
+    inputElement.addEventListener("change", function () {
+      const file = this.files[0];
+      if (file) {
+        const reader = new FileReader();
+        reader.onload = function (e) {
+          previewElement.style.backgroundImage = `url(${e.target.result})`;
+          previewElement.style.backgroundSize = "cover";
+          previewElement.textContent = "";
+        };
+        reader.readAsDataURL(file);
+      }
     });
   }
 
@@ -118,21 +148,7 @@ document.addEventListener("DOMContentLoaded", function() {
 
     const picUploader = document.getElementById("popup-profile-pic");
     const picInput = document.getElementById("popup-profile-pic-input");
-    picUploader.addEventListener("click", function() {
-      picInput.click();
-    });
-    picInput.addEventListener("change", function() {
-      const file = this.files[0];
-      if (file) {
-        const reader = new FileReader();
-        reader.onload = function(e) {
-          picUploader.style.backgroundImage = `url(${e.target.result})`;
-          picUploader.style.backgroundSize = "cover";
-          picUploader.textContent = "";
-        };
-        reader.readAsDataURL(file);
-      }
-    });
+    handleImageUpload(picInput, picUploader);
 
     popupForm.onsubmit = function(e) {
       e.preventDefault();
@@ -166,7 +182,6 @@ document.addEventListener("DOMContentLoaded", function() {
         twitter: twitter
       };
 
-      // Call addGuestRequest from guestRequests.js
       addGuestRequest(payload)
         .then(data => {
           if (data.guest_id) {
@@ -222,19 +237,7 @@ document.addEventListener("DOMContentLoaded", function() {
 
     const picUploader = document.getElementById("popup-profile-pic");
     const picInput = document.getElementById("popup-profile-pic-input");
-    picUploader.addEventListener("click", function() {
-      picInput.click();
-    });
-    picInput.addEventListener("change", function() {
-      const file = this.files[0];
-      if (file) {
-        const reader = new FileReader();
-        reader.onload = function(e) {
-          picUploader.innerHTML = `<img src="${e.target.result}" alt="${guest.name}" style="width:100%; height:100%; border-radius:50%;">`;
-        };
-        reader.readAsDataURL(file);
-      }
-    });
+    handleImageUpload(picInput, picUploader);
 
     popupForm.onsubmit = function(e) {
       e.preventDefault();
@@ -268,7 +271,6 @@ document.addEventListener("DOMContentLoaded", function() {
         twitter: twitter
       };
 
-      // Call editGuestRequest from guestRequests.js
       editGuestRequest(guest.id, payload)
         .then(data => {
           if (data.message) {
@@ -292,29 +294,16 @@ document.addEventListener("DOMContentLoaded", function() {
     const guestListEl = document.getElementById("guest-list");
     if (!guestListEl) return;
     guestListEl.innerHTML = "";
-    // Call fetchGuestsRequest from guestRequests.js
     fetchGuestsRequest().then(guests => {
       const searchTerms = filterText.split(",").map(term => term.trim().toLowerCase()).filter(Boolean);
       guests.filter(guest => {
         const combinedText = (guest.name + " " + guest.description + " " + guest.tags.join(" ") + " " + (guest.areasOfInterest ? guest.areasOfInterest.join(" ") : "")).toLowerCase();
         return searchTerms.length === 0 || searchTerms.every(term => combinedText.includes(term));
       }).forEach(guest => {
-        const card = document.createElement("div");
-        card.classList.add("guest-card");
-        card.innerHTML = `
-          <img src="${guest.image}" alt="${guest.name}">
-          <h3>${guest.name}</h3>
-          <div class="tags">
-            ${guest.tags.map(tag => `<span>${tag}</span>`).join("")}
-          </div>
-        `;
-        card.addEventListener("click", function() {
-          openProfilePopup(guest);
-        });
+        const card = createGuestCard(guest, () => openProfilePopup(guest));
         guestListEl.appendChild(card);
       });
 
-      // Add card to trigger Add Guest popup.
       const addCard = document.createElement("div");
       addCard.classList.add("guest-card", "add-guest-card");
       addCard.innerHTML = `
