@@ -5,7 +5,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   if (aiEditLink) {
     const host = window.location.hostname;
-    const streamlitURL = `http://${host}:8501/`; // Adjust if your prod uses HTTPS or a custom domain
+    const streamlitURL = `http://${host}:8501/`;
     aiEditLink.href = streamlitURL;
   }
 });
