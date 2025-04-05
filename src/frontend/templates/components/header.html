@@ -15,14 +15,10 @@
     <span id="page-title" class="page-title"></span>
   </div>
   <nav class="header-nav">
-    <div
-      class="custom-dropdown"
-      id="headerPodcastDropdown"
-      style="display: none"
-    >
+    <div class="custom-dropdown" id="headerPodcastDropdown">
       <div class="dropdown-selected">Select a Podcast</div>
-      <div class="dropdown-options">
-        <!-- Options will be dynamiskt genererade -->
+      <div class="dropdown-options" id="header-dropdown-options">
+        <!-- JS will insert options here -->
       </div>
     </div>
 
@@ -36,6 +32,7 @@
       <a href="{{ url_for('dashboard_bp.taskmanagement') }}">Episode To-Do</a>
       <a href="{{ url_for('dashboard_bp.team') }}">Team Management</a>
       <a href="{{ url_for('dashboard_bp.podcastmanagement') }}">Podcast Management</a>
+      <a href="#" id="ai-edit-link" target="_blank">AI Edit</a>
       <a href="#" class="dropdown-trigger" onclick="toggleLandingPage()">Landing Pages<span id="triangle" class="triangle-down"></span></a>
       <!-- Dropdown content that will appear next to the "Landing Page" link -->
       <div class="dropdown-lp-content" id="dropdown-lp-content">
