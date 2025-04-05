@@ -1,24 +1,58 @@
-# text_utils.py
+# src/backend/utils/text_utils.py
+
+import os
+import re
 import openai
 import logging
 import subprocess
-import re
-import wave
-import numpy as np
-import subprocess
-from textblob import TextBlob
+import base64
+import requests
+from pathlib import Path
+from typing import List
 from transformers import pipeline
+import streamlit as st  # Needed for download_button_text
 
+API_BASE_URL = os.getenv("API_BASE_URL")
 logger = logging.getLogger(__name__)
 
 def format_transcription(transcription):
     """Convert list of dictionaries to a readable string."""
     if isinstance(transcription, list):
         return "\n".join([
-            f"[{item['start']}-{item['end']}] {item['speaker']}: {item['text']}"
+            f"[{item['start']}-{item['end']}] {item['speaker']}: {item['text'].strip()}"
             for item in transcription
         ])
     return transcription  # Already a string
+
+def download_button_text(label, text, filename, key_prefix=""):
+    if isinstance(text, list):
+        text = format_transcription(text)
+    b64 = base64.b64encode(text.encode()).decode()
+    key = f"{key_prefix}_{filename}" if key_prefix else filename
+    return st.download_button(label, text, filename, key=key)
+
+
+def translate_text(text: str, target_language: str) -> str:
+    """
+    Translate the given text to the target language using GPT.
+    """
+    if not text.strip():
+        return ""
+
+    prompt = f"Translate the following transcript to {target_language}:\n\n{text}"
+
+    try:
+        response = openai.ChatCompletion.create(
+            model="gpt-4",
+            messages=[
+                {"role": "system", "content": "You are a professional translator."},
+                {"role": "user", "content": prompt}
+            ]
+        )
+        return response["choices"][0]["message"]["content"].strip()
+    except Exception as e:
+        logger.error(f"❌ Translation failed: {str(e)}")
+        return f"Error during translation: {str(e)}"
 
 def generate_ai_suggestions(text):
     prompt = f"""
@@ -44,9 +78,6 @@ def generate_show_notes(text):
     return response["choices"][0]["message"]["content"]
 
 def transcribe_with_whisper(audio_path: str) -> str:
-    """
-    Example of calling openai.Audio.transcribe for a local file.
-    """
     try:
         with open(audio_path, "rb") as f:
             response = openai.Audio.transcribe("whisper-1", file=f)
@@ -54,8 +85,7 @@ def transcribe_with_whisper(audio_path: str) -> str:
     except Exception as e:
         logger.error(f"Error in Whisper transcription: {str(e)}")
         return ""
-    
-# Emotion/Sentence classifiers (load only once)
+
 classifier = pipeline(
     "text-classification",
     model="nreimers/MiniLM-L6-H384-uncased",
@@ -164,3 +194,49 @@ def generate_ai_show_notes(transcript):
     except Exception as e:
         logger.error(f"❌ Error generating show notes: {e}")
         return f"Error generating show notes: {str(e)}"
+
+def generate_ai_quotes(transcript: str) -> str:
+    prompt = f"""
+    From the following podcast transcript, extract 3 impactful, quotable moments or sentences.
+    - Keep each quote short and standalone (1–2 sentences).
+    - The quotes should be insightful, funny, emotional, or thought-provoking.
+    - Do NOT include speaker labels, just the raw quote text.
+
+    Transcript:
+    {transcript}
+    """
+
+    try:
+        response = openai.ChatCompletion.create(
+            model="gpt-4",
+            messages=[
+                {"role": "system", "content": "You're an expert podcast editor and copywriter."},
+                {"role": "user", "content": prompt}
+            ]
+        )
+        quotes_raw = response["choices"][0]["message"]["content"].strip()
+        lines = [line.strip("•–—-• \n\"") for line in quotes_raw.split("\n") if line.strip()]
+        return "\n\n".join(lines[:3])
+    except Exception as e:
+        logger.error(f"❌ Error generating quotes: {e}")
+        return f"Error generating quotes: {str(e)}"
+
+def generate_quote_images(quotes: List[str]) -> List[str]:
+    openai.api_key = os.getenv("OPENAI_API_KEY")
+    urls = []
+
+    for quote in quotes:
+        prompt = f"Create a visually striking, artistic background that reflects this quote’s emotion: \"{quote}\". No text in the image."
+        try:
+            response = openai.Image.create(
+                prompt=prompt,
+                model="dall-e-3",
+                n=1,
+                size="1024x1024"
+            )
+            url = response["data"][0]["url"]
+            urls.append(url)
+        except Exception as e:
+            logger.error(f"❌ Failed to generate image for quote: {quote} | Error: {e}")
+            urls.append("")
+    return urls

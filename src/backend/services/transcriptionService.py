@@ -1,11 +1,14 @@
+#src/backend/services/transcriptionService.py
 import os
+import openai
 import logging
 from datetime import datetime
+from typing import List
 from io import BytesIO
 from elevenlabs.client import ElevenLabs
 from backend.database.mongo_connection import fs
 from backend.utils.ai_utils import remove_filler_words
-from backend.utils.text_utils import generate_ai_suggestions, generate_show_notes
+from backend.utils.text_utils import generate_ai_suggestions, generate_show_notes, generate_ai_quotes, generate_ai_quotes, generate_quote_images,translate_text
 
 logger = logging.getLogger(__name__)
 client = ElevenLabs(api_key=os.getenv("ELEVENLABS_API_KEY"))
@@ -40,9 +43,8 @@ class TranscriptionService:
         speaker_map = {}
         speaker_counter = 1
 
-        # 3. Attempt to build word-level transcription
+        # 3. Build word-level transcription
         logger.debug(f"Word-level entries found: {len(transcription_result.words)}")
-
         for word_info in transcription_result.words:
             word = word_info.text.strip()
             start = round(word_info.start, 2)
@@ -57,7 +59,7 @@ class TranscriptionService:
             if word:
                 raw_transcription.append(f"[{start}-{end}] {speaker_label}: {word}")
 
-        # 4. Fallback if word-level fails
+        # 4. Fallback if no word-level transcription is available
         if not raw_transcription:
             logger.warning("⚠️ No word-level transcription found. Using fallback.")
             fallback_sentences = transcription_text.split(".")
@@ -65,32 +67,37 @@ class TranscriptionService:
                 f"Speaker 1: {sentence.strip()}" for sentence in fallback_sentences if sentence.strip()
             ]
 
-        # 5. AI enhancements
-        logger.info(f"🧽 Running filler-word removal...")
-        transcription_no_fillers = remove_filler_words(transcription_text)
-
-        logger.info(f"💡 Generating AI suggestions...")
-        ai_suggestions = generate_ai_suggestions(transcription_text)
-
-        logger.info(f"📝 Generating show notes...")
-        show_notes = generate_show_notes(transcription_text)
-
         return {
             "file_id": str(file_id),
             "raw_transcription": " ".join(raw_transcription),
-            "transcription_no_fillers": transcription_no_fillers,
-            "ai_suggestions": ai_suggestions,
-            "show_notes": show_notes,
+            "full_transcript": transcription_text
         }
 
+    def get_clean_transcript(self, transcript_text: str) -> str:
+        logger.info("🧽 Running filler-word removal...")
+        return remove_filler_words(transcript_text)
+
+    def get_ai_suggestions(self, transcript_text: str) -> str:
+        logger.info("💡 Generating AI suggestions...")
+        return generate_ai_suggestions(transcript_text)
+
+    def get_show_notes(self, transcript_text: str) -> str:
+        logger.info("📝 Generating show notes...")
+        return generate_show_notes(transcript_text)
+
+    def get_quotes(self, transcript_text: str) -> str:
+        logger.info("💬 Generating quotes...")
+        quotes_text = generate_ai_quotes(transcript_text)
+        # Ensure it's a string. If it's not, convert it.
+        if not isinstance(quotes_text, str):
+            quotes_text = str(quotes_text)
+        return quotes_text
+    
+    def get_quote_images(self, quotes: List[str]) -> List[str]:
+        logger.info("🖼 Generating quote images...")
+        return generate_quote_images(quotes)
+
     def translate_text(self, text: str, language: str) -> str:
-        import openai
-        try:
-            response = openai.ChatCompletion.create(
-                model="gpt-4",
-                messages=[{"role": "user", "content": f"Translate this to {language}:\n{text}"}],
-            )
-            return response["choices"][0]["message"]["content"]
-        except Exception as e:
-            logger.error(f"Translation failed: {str(e)}")
-            return f"Error: {str(e)}"
+        logger.info(f"🌍 Translating transcript to {language}...")
+        return translate_text(text, language)
+

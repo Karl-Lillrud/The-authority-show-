@@ -27,3 +27,4 @@ src/client_secret.json
 aitranscription_env/
 *.conda
 .conda/
+.DS_Store

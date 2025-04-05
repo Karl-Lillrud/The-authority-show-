@@ -22,9 +22,16 @@ from backend.routes.podprofile import podprofile_bp
 from backend.routes.frontend import frontend_bp
 from backend.routes.guestpage import guestpage_bp
 from backend.routes.guest_to_eposide import guesttoepisode_bp
+from backend.routes.guest_form import guest_form_bp  # Import the guest_form blueprint
+from backend.utils.email_utils import send_email
+from backend.utils.scheduler import start_scheduler
+
 from backend.routes.guest_form import guest_form_bp
 from backend.routes.transcription import transcription_bp
 from backend.routes.landingpage import landingpage_bp
+from dotenv import load_dotenv
+from backend.utils import venvupdate
+from backend.database.mongo_connection import collection
 from backend.routes.Mailing_list import Mailing_list_bp
 from backend.routes.user import user_bp
 from backend.routes.audio_routes import audio_bp

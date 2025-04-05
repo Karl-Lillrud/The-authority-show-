@@ -535,19 +535,22 @@ function triggerFileUpload() {
 }
 
 function showNotification(message, type) {
-  // Create notification element
-  const notification = document.createElement("div")
-  notification.className = `notification ${type}`
-  notification.textContent = message
+  const notificationContainer = document.getElementById("header-notifications");
+  if (!notificationContainer) return;
 
-  // Add notification to the DOM
-  document.body.appendChild(notification)
+  // Create notification element
+  const notification = document.createElement("div");
+  notification.className = `notification ${type}`;
+  notification.textContent = message;
+
+  // Add notification to the container
+  notificationContainer.appendChild(notification);
 
   // Remove notification after 3 seconds
   setTimeout(() => {
-    notification.classList.add("fade-out")
+    notification.classList.add("fade-out");
     setTimeout(() => {
-      document.body.removeChild(notification)
-    }, 300)
-  }, 3000)
+      notificationContainer.removeChild(notification);
+    }, 300);
+  }, 3000);
 }

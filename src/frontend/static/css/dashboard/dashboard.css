@@ -22,9 +22,12 @@
   --radius-medium: 12px;
   --radius-small: 6px;
   --transition-normal: 0.3s ease;
-  --card-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05), 0 8px 10px -6px rgba(0, 0, 0, 0.02);
-  --card-shadow-hover: 0 20px 35px -10px rgba(0, 0, 0, 0.1), 0 10px 15px -5px rgba(0, 0, 0, 0.05);
-  --button-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  --card-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05),
+    0 8px 10px -6px rgba(0, 0, 0, 0.02);
+  --card-shadow-hover: 0 20px 35px -10px rgba(0, 0, 0, 0.1),
+    0 10px 15px -5px rgba(0, 0, 0, 0.05);
+  --button-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1),
+    0 2px 4px -1px rgba(0, 0, 0, 0.06);
 }
 
 /* Reset styles - only apply to dashboard elements to avoid conflicts */
@@ -47,12 +50,15 @@
   padding: 0 var(--spacing-lg);
 }
 
-
 /* Decorative Header */
 .decorative-header {
   width: 100%;
   height: 120px;
-  background: linear-gradient(135deg, var(--highlight-color), var(--highlight-hover));
+  background: linear-gradient(
+    135deg,
+    var(--highlight-color),
+    var(--highlight-hover)
+  );
   position: relative;
   z-index: 1;
   overflow: hidden;
@@ -73,7 +79,9 @@
 /* Main Content */
 .main-content {
   width: 100%;
-  margin-bottom: var(--spacing-xl); /* Add margin to avoid overlapping with footer */
+  margin-bottom: var(
+    --spacing-xl
+  ); /* Add margin to avoid overlapping with footer */
 }
 
 /* Dashboard Content */
@@ -317,7 +325,12 @@
   left: -100%;
   width: 100%;
   height: 100%;
-  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.2),
+    transparent
+  );
   transition: 0.5s;
 }
 
@@ -489,4 +502,3 @@
     padding: var(--spacing-lg);
   }
 }
-
