@@ -1,4 +1,4 @@
-import { signin } from "/static/requests/authRequests.js";
+import { signin, sendVerificationCode, loginWithVerificationCode } from "/static/requests/authRequests.js";
 
 document.addEventListener("DOMContentLoaded", function () {
   const urlParams = new URLSearchParams(window.location.search);
@@ -7,13 +7,18 @@ document.addEventListener("DOMContentLoaded", function () {
   const errorMessage = document.getElementById("error-message");
   const form = document.getElementById("signin-form");
   const sendCodeButton = document.getElementById("send-code-button");
+  const sendCodeMessage = document.getElementById("send-code-message");
+  const loginWithCodeButton = document.getElementById("login-with-code-button");
+  const loginWithCodeButtonVerification = document.getElementById("login-with-code-button-verification");
   const emailInput = document.getElementById("email");
+  const verificationCodeInput = document.getElementById("verification-code");
+  const verificationCodeInputVerification = document.getElementById("verification-code-verification");
 
   // Display success message if present in URL params
   if (message) {
     successMessage.textContent = message;
     successMessage.style.display = "block";
-    successMessage.style.color = "var(--highlight)"; // Match error message color
+    successMessage.style.color = "var(--highlight)";
   }
 
   // Ensure the form exists
@@ -44,41 +49,116 @@ document.addEventListener("DOMContentLoaded", function () {
     }
   });
 
-  // Handle "Send Verification Code" button click
-  if (sendCodeButton) {
-    sendCodeButton.addEventListener("click", async function () {
-      const email = emailInput.value.trim();
+  // Handle "Sign in with Verification Code" button click
+  sendCodeButton.addEventListener("click", async function () {
+    const email = emailInput.value.trim();
 
-      if (!email) {
-        errorMessage.textContent = "Please enter your email.";
-        errorMessage.style.display = "block";
+    if (!email) {
+      sendCodeMessage.textContent = "Please enter your email.";
+      sendCodeMessage.style.display = "block";
+      sendCodeMessage.style.color = "red";
+      return;
+    }
+
+    try {
+      const result = await sendVerificationCode(email);
+
+      // Handle success response
+      sendCodeMessage.textContent = "Verification code sent successfully.";
+      sendCodeMessage.style.display = "block";
+      sendCodeMessage.style.color = "green";
+
+      // Clear the verification code input field
+      const verificationCodeInput = document.getElementById("verification-code");
+      if (verificationCodeInput) {
+        verificationCodeInput.value = "";
+      }
+
+      // Show the verification form and hide the login form
+      document.getElementById("login-form").style.display = "none";
+      document.getElementById("verification-form").style.display = "block";
+    } catch (error) {
+      console.error("Error:", error);
+      sendCodeMessage.textContent = error.message || "An error occurred. Please try again.";
+      sendCodeMessage.style.display = "block";
+      sendCodeMessage.style.color = "red";
+    }
+  });
+
+  // Handle "Back to Login" button click
+  const backToLoginButton = document.getElementById("back-to-login");
+  if (backToLoginButton) {
+    backToLoginButton.addEventListener("click", function () {
+      // Show the login form and hide the verification form
+      document.getElementById("verification-form").style.display = "none";
+      document.getElementById("login-form").style.display = "block";
+    });
+  } else {
+    console.error("❌ ERROR: #back-to-login not found in the DOM. Ensure the button exists in the HTML.");
+  }
+
+  // Handle "Login with Code" button click
+  loginWithCodeButton.addEventListener("click", async function () {
+    const code = verificationCodeInput.value.trim();
+
+    if (!email || !code) { // Use the existing 'email' variable
+      sendCodeMessage.textContent = "Please enter both email and verification code.";
+      sendCodeMessage.style.display = "block";
+      sendCodeMessage.style.color = "red";
+      return;
+    }
+
+    try {
+      const response = await loginWithVerificationCode(email, code);
+
+      if (response.redirect_url) {
+        sendCodeMessage.textContent = "Login successful!";
+        sendCodeMessage.style.display = "block";
+        sendCodeMessage.style.color = "green";
+        window.location.href = response.redirect_url;
+      } else {
+        throw new Error("Failed to log in with code.");
+      }
+    } catch (error) {
+      console.error("Error:", error);
+      sendCodeMessage.textContent = error.message || "An error occurred. Please try again.";
+      sendCodeMessage.style.display = "block";
+      sendCodeMessage.style.color = "red";
+    }
+  });
+
+  // Handle "Login with Code Verification" button click
+  if (loginWithCodeButtonVerification) {
+    loginWithCodeButtonVerification.addEventListener("click", async function () {
+      const email = emailInput.value.trim();
+      const code = verificationCodeInputVerification.value.trim();
+
+      if (!email || !code) {
+        sendCodeMessage.textContent = "Please enter both email and verification code.";
+        sendCodeMessage.style.display = "block";
+        sendCodeMessage.style.color = "red";
         return;
       }
 
       try {
-        const response = await fetch("/send-verification-code", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ email }),
-        });
+        const response = await loginWithVerificationCode(email, code);
 
-        const result = await response.json();
-        if (response.ok) {
-          successMessage.textContent = "Verification code sent to your email!";
-          successMessage.style.display = "block";
-          errorMessage.style.display = "none";
+        if (response && response.redirect_url) {
+          sendCodeMessage.textContent = "Login successful!";
+          sendCodeMessage.style.display = "block";
+          sendCodeMessage.style.color = "green";
+          window.location.href = response.redirect_url;
         } else {
-          errorMessage.textContent =
-            result.error || "Failed to send verification code.";
-          errorMessage.style.display = "block";
-          successMessage.style.display = "none";
+          throw new Error(response.message || "Failed to log in with code.");
         }
       } catch (error) {
         console.error("Error:", error);
-        errorMessage.textContent = "An error occurred. Please try again.";
-        errorMessage.style.display = "block";
-        successMessage.style.display = "none";
+        sendCodeMessage.textContent = error.message || "An error occurred. Please try again.";
+        sendCodeMessage.style.display = "block";
+        sendCodeMessage.style.color = "red";
       }
     });
+  } else {
+    console.error("❌ ERROR: #login-with-code-button-verification not found in the DOM.");
   }
 });

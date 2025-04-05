@@ -3,6 +3,11 @@ from backend.repository.auth_repository import AuthRepository
 from backend.services.TeamInviteService import TeamInviteService
 from backend.services.authService import AuthService
 import os
+import logging
+
+# Configure logger
+logging.basicConfig(level=logging.ERROR)
+logger = logging.getLogger(__name__)
 
 # Define Blueprint
 auth_bp = Blueprint("auth_bp", __name__)
@@ -144,3 +149,38 @@ def register_team_member_submit():
                 response["teamId"] = invite_response.get("teamId")
                 response["teamMessage"] = invite_response.get("message")
     return jsonify(response), status_code
+
+
+@auth_bp.route("/login-with-code", methods=["POST"])
+def login_with_code():
+    """
+    Endpoint to log in the user using a verification code.
+    """
+    if request.content_type != "application/json":
+        return jsonify({"error": "Invalid Content-Type. Expected application/json"}), 415
+
+    data = request.get_json()
+    email = data.get("email")
+    code = data.get("code")
+
+    if not email or not code:
+        return jsonify({"error": "Email and code are required"}), 400
+
+    try:
+        # Call the AuthService to verify the code and log in the user
+        result, status_code = auth_service.verify_code_and_login(email, code)
+        return jsonify(result), status_code
+    except Exception as e:
+        logger.error(f"Error in /login-with-code: {e}", exc_info=True)
+        return jsonify({"error": f"Failed to log in with code: {str(e)}"}), 500
+
+
+@auth_bp.route("/verification/enter-verification-code", methods=["GET"])
+def enter_verification_code_page():
+    """
+    Render the page for entering the verification code.
+    """
+    email = request.args.get("email")
+    if not email:
+        return redirect(url_for("auth_bp.signin"))
+    return render_template("verification/enter-verification-code.html", email=email)

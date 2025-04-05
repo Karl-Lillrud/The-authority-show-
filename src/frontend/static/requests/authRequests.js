@@ -84,3 +84,40 @@ export async function registerTeamMember(
     throw new Error(error.message);
   }
 }
+
+export async function sendVerificationCode(email) {
+  try {
+    const response = await fetch("/send-verification-code", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email }),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.message || "Failed to send verification code.");
+    }
+
+    const result = await response.json();
+
+    // Ensure the function only throws an error for actual failures
+    if (result.success === false) {
+      throw new Error(result.message || "Failed to send verification code.");
+    }
+
+    // Return the success response
+    return result;
+  } catch (error) {
+    console.error("Error in sendVerificationCode:", error);
+    throw error;
+  }
+}
+
+export async function loginWithVerificationCode(email, code) {
+  const response = await fetch("/login-with-code", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ email, code }),
+  });
+  return response.json();
+}
