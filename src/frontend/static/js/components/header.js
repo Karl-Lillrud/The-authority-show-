@@ -1,7 +1,7 @@
 import { fetchPodcasts } from "/static/requests/podcastRequests.js";
 
 function toggleLandingPage() {
-  var dropdown = document.getElementById("dropdown-content");
+  var dropdown = document.getElementById("dropdown-lp-content");
   var triangle = document.getElementById("triangle");
 
   // Toggle dropdown visibility and triangle direction
@@ -18,7 +18,7 @@ function toggleLandingPage() {
 window.toggleLandingPage = toggleLandingPage;
 
 async function populatePodcastDropdown() {
-  const dropdown = document.getElementById("dropdown-content");
+  const dropdown = document.getElementById("dropdown-lp-content");
   if (!dropdown) {
     console.error("Header podcast dropdown element not found.");
     return;
@@ -29,7 +29,7 @@ async function populatePodcastDropdown() {
     const data = await fetchPodcasts();
     console.log("Podcasts fetched:", data);
     const podcasts = data.podcast || [];
-    const optionsContainer = dropdown.querySelector(".dropdown-options");
+    const optionsContainer = dropdown.querySelector(".dropdown-lp-options");
 
     podcasts.forEach((podcast) => {
       const option = document.createElement("a");
