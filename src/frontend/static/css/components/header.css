@@ -195,52 +195,62 @@ header:hover {
 }
 
 /* Podcast Selector */
+/* Header Podcast Dropdown Cleanup */
 #headerPodcastDropdown {
   position: relative;
   background: white;
   color: var(--text-color-light);
   border: 1px solid rgba(0, 0, 0, 0.1);
-  border-radius: var(--radius-medium);
-  padding: var(--spacing-xs) var(--spacing-sm);
+  border-radius: var(--radius-small);
   font-family: var(--font-primary);
-  font-size: 0.85rem; /* Justerat för bättre läsbarhet */
-  box-shadow: 0 4px 10px -5px rgba(0, 0, 0, 0.1),
-    0 2px 4px -2px rgba(0, 0, 0, 0.05);
-  outline: none;
-  transition: all var(--transition-normal);
+  font-size: 0.85rem;
   cursor: pointer;
-  height: 36px; /* Ökad höjd för bättre klickbarhet */
+  min-width: 160px;
+  padding: 6px 12px;
+  transition: all var(--transition-normal);
+  box-shadow: 0 4px 10px -5px rgba(0, 0, 0, 0.1);
   display: flex;
   align-items: center;
   justify-content: space-between;
+  z-index: 10;
 }
 
 #headerPodcastDropdown:hover {
-  border-color: rgba(0, 0, 0, 0.2);
+  border-color: var(--highlight-color);
+  background-color: #fdfdfd;
+}
+
+/* Dropdown options inside header dropdown */
+#header-dropdown-options {
+  display: none;
+  position: absolute;
+  top: 110%;
+  left: 0;
+  width: 100%;
+  background: white;
+  border-radius: var(--radius-small);
+  box-shadow: 0 8px 15px -5px rgba(0, 0, 0, 0.1);
+  padding: var(--spacing-xs) 0;
+  z-index: 100;
+}
+
+#headerPodcastDropdown.active #header-dropdown-options {
+  display: block;
+}
+
+#header-dropdown-options .dropdown-option {
+  padding: 8px 12px;
+  cursor: pointer;
+  font-size: 0.85rem;
+  transition: background 0.2s ease, color 0.2s ease;
+}
+
+#header-dropdown-options .dropdown-option:hover {
   background: var(--highlight-color);
   color: #fff;
-  box-shadow: 0 6px 12px -5px rgba(0, 0, 0, 0.15),
-    0 3px 6px -2px rgba(0, 0, 0, 0.1);
+  border-radius: 0;
 }
 
-#headerPodcastDropdown option {
-  background: white;
-  color: var(--text-color-light);
-  padding: var(--spacing-xs) var(--spacing-sm);
-  font-family: var(--font-primary);
-  font-size: 0.85rem;
-  border: none;
-}
-
-#headerPodcastDropdown option:hover {
-  background: white; /* Vit bakgrund */
-  color: var(--highlight-color); /* Orange text */
-}
-
-#headerPodcastDropdown:focus {
-  border: 1px solid var(--highlight-hover);
-  box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.1);
-}
 
 /* Menu Toggle (Hamburger) */
 .menu-toggle {
