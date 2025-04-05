@@ -1,5 +1,15 @@
 import { fetchPodcasts } from "/static/requests/podcastRequests.js";
 
+document.addEventListener("DOMContentLoaded", () => {
+  const aiEditLink = document.getElementById("ai-edit-link");
+
+  if (aiEditLink) {
+    const host = window.location.hostname;
+    const streamlitURL = `http://${host}:8501/`; // Adjust if your prod uses HTTPS or a custom domain
+    aiEditLink.href = streamlitURL;
+  }
+});
+
 function toggleLandingPage() {
   var dropdown = document.getElementById("dropdown-lp-content");
   var triangle = document.getElementById("triangle");
