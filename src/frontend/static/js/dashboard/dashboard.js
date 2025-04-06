@@ -106,19 +106,19 @@ async function fetchAndDisplayEpisodesWithGuests() {
     // Set up toggle button for view all / view less
     const viewAllBtn = document.querySelector(".episodes-section .view-all");
     if (viewAllBtn) {
-      viewAllBtn.textContent = "Visa alla";
+      viewAllBtn.textContent = "View All";
 
       viewAllBtn.addEventListener("click", async (e) => {
         e.preventDefault();
         if (!isExpanded) {
           // Expand to show all active episodes
           await displayEpisodes(activeEpisodes, container);
-          viewAllBtn.textContent = "Visa färre";
+          viewAllBtn.textContent = "View Less";
           isExpanded = true;
         } else {
           // Collapse back to original state (first 3 active episodes)
           await displayEpisodes(initialEpisodes, container);
-          viewAllBtn.textContent = "Visa alla";
+          viewAllBtn.textContent = "View All";
           isExpanded = false;
         }
       });
@@ -127,7 +127,7 @@ async function fetchAndDisplayEpisodesWithGuests() {
     console.error("Error fetching episodes with guests:", error);
     const container = document.querySelector(".cards-container");
     if (container) {
-      container.innerHTML = `<div class="error-message">Fel vid laddning av avsnitt. Försök igen senare.</div>`;
+      container.innerHTML = `<div class="error-message">Error loading episodes. Please try again later.</div>`;
     }
 
     // Display sample episodes for demo purposes
@@ -142,7 +142,7 @@ function displaySampleEpisodes() {
   const sampleEpisodes = [
     {
       id: "ep1",
-      title: "Marknadsföringsinsikter med Sarah Johnson",
+      title: "Marketing Insights with Sarah Johnson",
       status: "Recorded",
       recordingDate: "2023-10-18",
       podcastName: "Business Insights",
@@ -150,7 +150,7 @@ function displaySampleEpisodes() {
     },
     {
       id: "ep2",
-      title: "Tekniktrender 2023",
+      title: "Tech Trends 2023",
       status: "Not Recorded",
       recordingDate: "2023-10-25",
       podcastName: "Tech Talk",
@@ -158,7 +158,7 @@ function displaySampleEpisodes() {
     },
     {
       id: "ep3",
-      title: "Startup-framgångshistorier",
+      title: "Startup Success Stories",
       status: "Edited",
       recordingDate: "2023-10-15",
       podcastName: "Entrepreneur Hour",
@@ -197,7 +197,7 @@ async function displayEpisodes(episodes, container) {
   container.innerHTML = "";
 
   if (episodes.length === 0) {
-    container.innerHTML = `<div class="empty-message">Inga aktiva avsnitt hittades.</div>`;
+    container.innerHTML = `<div class="empty-message">No active episodes found.</div>`;
     return;
   }
 
@@ -222,12 +222,8 @@ function createEpisodeCard(episode) {
   let statusText = episode.status || "Not Scheduled";
   let statusClass = "status-" + statusText.toLowerCase().replace(/\s+/g, "-");
 
-  // Translate status to Swedish
-  let swedishStatus = statusText;
-  if (statusText === "Not Recorded") swedishStatus = "Ej inspelad";
-  if (statusText === "Not Scheduled") swedishStatus = "Ej schemalagd";
-  if (statusText === "Recorded") swedishStatus = "Inspelad";
-  if (statusText === "Edited") swedishStatus = "Redigerad";
+  // Use English status directly
+  let englishStatus = statusText;
 
   card.innerHTML = `
     <div class="card-header">
@@ -235,7 +231,7 @@ function createEpisodeCard(episode) {
       <div class="card-title">
         <h3>${episode.title}</h3>
         <div class="episode-meta">
-          <span class="episode-status ${statusClass}">${swedishStatus}</span>
+          <span class="episode-status ${statusClass}">${englishStatus}</span>
           <span class="episode-date">${formatDate(
             episode.recordingDate || episode.createdAt || new Date()
           )}</span>
@@ -243,9 +239,9 @@ function createEpisodeCard(episode) {
       </div>
     </div>
     <div class="card-body">
-      <h4>Gäster</h4>
+      <h4>Guests</h4>
       <ul class="guest-list">
-        <li>Laddar gäster...</li>
+        <li>Loading guests...</li>
       </ul>
     </div>
     <div class="card-footer">
@@ -276,8 +272,8 @@ function createEpisodeCard(episode) {
 
 function formatDate(dateString) {
   const date = new Date(dateString);
-  // Format date in Swedish style
-  return date.toLocaleDateString("sv-SE", {
+  // Format date in English style
+  return date.toLocaleDateString("en-US", {
     day: "numeric",
     month: "short",
     year: "numeric"
@@ -325,14 +321,14 @@ async function populateGuestList(card, episode) {
       });
     } else {
       const noGuestMsg = document.createElement("li");
-      noGuestMsg.textContent = "Inga gäster tillgängliga";
+      noGuestMsg.textContent = "No guests available";
       guestList.appendChild(noGuestMsg);
     }
   } catch (error) {
     console.error("Error fetching guests for episode:", error);
     const guestList = card.querySelector(".guest-list");
     if (guestList) {
-      guestList.innerHTML = "<li>Fel vid laddning av gästinformation</li>";
+      guestList.innerHTML = "<li>Error loading guest information</li>";
     }
   }
 }
