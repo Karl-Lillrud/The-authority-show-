@@ -50,32 +50,6 @@
   padding: 0 var(--spacing-lg);
 }
 
-/* Decorative Header */
-.decorative-header {
-  width: 100%;
-  height: 120px;
-  background: linear-gradient(
-    135deg,
-    var(--highlight-color),
-    var(--highlight-hover)
-  );
-  position: relative;
-  z-index: 1;
-  overflow: hidden;
-}
-
-.decorative-header::after {
-  content: "";
-  position: absolute;
-  bottom: -20px;
-  left: 0;
-  width: 100%;
-  height: 40px;
-  background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1440 320'%3E%3Cpath fill='%23FF7F3F' fill-opacity='1' d='M0,96L48,112C96,128,192,160,288,176C384,192,480,192,576,176C672,160,768,128,864,112C960,96,1056,96,1152,112C1248,128,1344,160,1392,176L1440,192L1440,0L1392,0C1344,0,1248,0,1152,0C1056,0,960,0,864,0C768,0,672,0,576,0C480,0,384,0,288,0C192,0,96,0,48,0L0,0Z'%3E%3C/path%3E%3C/svg%3E")
-    no-repeat;
-  background-size: cover;
-}
-
 /* Dashboard Header */
 .dashboard-header {
   display: flex;
