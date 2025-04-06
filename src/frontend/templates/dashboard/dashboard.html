@@ -32,44 +32,384 @@ endblock %} {% block content %}
 </head>
 <body>
   <div class="dashboard">
+    <!-- Dashboard Header -->
+    <div class="dashboard-header">
+      <div class="welcome-message">
+        <h1>Välkommen till din Podcast Dashboard</h1>
+        <p>Här är en översikt över dina podcasts och aktiviteter</p>
+      </div>
+      <div class="dashboard-actions">
+        <button class="action-button create-podcast">
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            width="20"
+            height="20"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
+            <path
+              d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"
+            ></path>
+            <path d="M19 10v2a7 7 0 0 1-14 0v-2"></path>
+            <line x1="12" x2="12" y1="19" y2="22"></line>
+          </svg>
+          Skapa ny podcast
+        </button>
+        <button class="action-button schedule-episode">
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            width="20"
+            height="20"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
+            <rect width="18" height="18" x="3" y="4" rx="2"></rect>
+            <line x1="16" x2="16" y1="2" y2="6"></line>
+            <line x1="8" x2="8" y1="2" y2="6"></line>
+            <line x1="3" x2="21" y1="10" y2="10"></line>
+          </svg>
+          Schemalägg avsnitt
+        </button>
+      </div>
+    </div>
+
+    <!-- Stats Overview -->
+    <div class="stats-overview">
+      <div class="stat-card">
+        <div class="stat-icon podcast-icon">
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            width="24"
+            height="24"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
+            <path
+              d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"
+            ></path>
+            <path d="M19 10v2a7 7 0 0 1-14 0v-2"></path>
+            <line x1="12" x2="12" y1="19" y2="22"></line>
+          </svg>
+        </div>
+        <div class="stat-content">
+          <h3 class="stat-value" id="podcast-count">3</h3>
+          <p class="stat-label">Aktiva podcasts</p>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon episode-icon">
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            width="24"
+            height="24"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
+            <circle cx="12" cy="12" r="10"></circle>
+            <polygon points="10 8 16 12 10 16 10 8"></polygon>
+          </svg>
+        </div>
+        <div class="stat-content">
+          <h3 class="stat-value" id="episode-count">12</h3>
+          <p class="stat-label">Totala avsnitt</p>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon guest-icon">
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            width="24"
+            height="24"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
+            <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path>
+            <circle cx="9" cy="7" r="4"></circle>
+            <path d="M22 21v-2a4 4 0 0 0-3-3.87"></path>
+            <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+          </svg>
+        </div>
+        <div class="stat-content">
+          <h3 class="stat-value" id="guest-count">24</h3>
+          <p class="stat-label">Gäster</p>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon task-icon">
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            width="24"
+            height="24"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
+            <path
+              d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z"
+            ></path>
+            <path d="m9 12 2 2 4-4"></path>
+          </svg>
+        </div>
+        <div class="stat-content">
+          <h3 class="stat-value" id="task-count">18</h3>
+          <p class="stat-label">Uppgifter</p>
+        </div>
+      </div>
+    </div>
+
     <!-- Main Content -->
     <main class="main-content">
       <!-- Dashboard Content -->
       <div class="dashboard-content">
-        <!-- Team Leaderboard -->
-        <section class="leaderboard-section">
-          <div class="section-header">
-            <h2>Team Leaderboard</h2>
-            <a href="#" class="view-all">View Details</a>
-          </div>
-          <div class="team-leaderboard">
-            <table class="leaderboard-table">
-              <thead>
-                <tr>
-                  <th>Name</th>
-                  <th>Tasks Completed</th>
-                  <th>Total Points</th>
-                  <th>Months Won</th>
-                  <th>Shadow Goal</th>
-                </tr>
-              </thead>
-              <tbody>
-                <!-- Leaderboard data will be populated here -->
-              </tbody>
-            </table>
-          </div>
-        </section>
+        <div class="dashboard-grid">
+          <!-- Team Leaderboard -->
+          <section class="leaderboard-section">
+            <div class="section-header">
+              <h2>Team Leaderboard</h2>
+              <a href="#" class="view-all">Visa alla</a>
+            </div>
+            <div class="team-leaderboard">
+              <table class="leaderboard-table">
+                <thead>
+                  <tr>
+                    <th>Namn</th>
+                    <th>Avklarade uppgifter</th>
+                    <th>Poäng</th>
+                    <th>Månader vunna</th>
+                    <th>Mål</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td>
+                      <div class="member-info">
+                        <div class="member-avatar">JD</div>
+                        <span>John Doe</span>
+                      </div>
+                    </td>
+                    <td>42</td>
+                    <td>
+                      <div class="points">
+                        <span>1,250</span>
+                        <div class="progress-bar">
+                          <div class="progress" style="width: 85%"></div>
+                        </div>
+                      </div>
+                    </td>
+                    <td>3</td>
+                    <td>
+                      <div class="goal-progress">
+                        <span>85%</span>
+                        <div class="progress-circle" data-progress="85"></div>
+                      </div>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td>
+                      <div class="member-info">
+                        <div class="member-avatar">AS</div>
+                        <span>Anna Smith</span>
+                      </div>
+                    </td>
+                    <td>38</td>
+                    <td>
+                      <div class="points">
+                        <span>1,120</span>
+                        <div class="progress-bar">
+                          <div class="progress" style="width: 76%"></div>
+                        </div>
+                      </div>
+                    </td>
+                    <td>2</td>
+                    <td>
+                      <div class="goal-progress">
+                        <span>76%</span>
+                        <div class="progress-circle" data-progress="76"></div>
+                      </div>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td>
+                      <div class="member-info">
+                        <div class="member-avatar">RJ</div>
+                        <span>Robert Johnson</span>
+                      </div>
+                    </td>
+                    <td>35</td>
+                    <td>
+                      <div class="points">
+                        <span>980</span>
+                        <div class="progress-bar">
+                          <div class="progress" style="width: 68%"></div>
+                        </div>
+                      </div>
+                    </td>
+                    <td>1</td>
+                    <td>
+                      <div class="goal-progress">
+                        <span>68%</span>
+                        <div class="progress-circle" data-progress="68"></div>
+                      </div>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </section>
 
-        <!-- Recent Episodes -->
-        <section class="episodes-section">
-          <div class="section-header">
-            <h2>Active Episodes</h2>
-            <a href="#" class="view-all">View All</a>
-          </div>
-          <div class="cards-container">
-            <!-- Episodes will be loaded here via JavaScript -->
-          </div>
-        </section>
+          <!-- Recent Activity -->
+          <section class="activity-section">
+            <div class="section-header">
+              <h2>Senaste aktivitet</h2>
+              <a href="#" class="view-all">Visa alla</a>
+            </div>
+            <div class="activity-timeline">
+              <div class="timeline-item">
+                <div class="timeline-icon completed">
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="20"
+                    height="20"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  >
+                    <path d="M20 6 9 17l-5-5"></path>
+                  </svg>
+                </div>
+                <div class="timeline-content">
+                  <h4>Avsnitt inspelat</h4>
+                  <p>Marknadsföringsinsikter med Sarah Johnson</p>
+                  <span class="timeline-time">Idag, 10:30</span>
+                </div>
+              </div>
+              <div class="timeline-item">
+                <div class="timeline-icon scheduled">
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="20"
+                    height="20"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  >
+                    <rect
+                      width="18"
+                      height="18"
+                      x="3"
+                      y="4"
+                      rx="2"
+                      ry="2"
+                    ></rect>
+                    <line x1="16" x2="16" y1="2" y2="6"></line>
+                    <line x1="8" x2="8" y1="2" y2="6"></line>
+                    <line x1="3" x2="21" y1="10" y2="10"></line>
+                  </svg>
+                </div>
+                <div class="timeline-content">
+                  <h4>Gäst bekräftad</h4>
+                  <p>Tekniktrender med Michael Chen</p>
+                  <span class="timeline-time">Igår, 15:45</span>
+                </div>
+              </div>
+              <div class="timeline-item">
+                <div class="timeline-icon published">
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="20"
+                    height="20"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  >
+                    <path
+                      d="M4 14.899A7 7 0 1 1 15.71 8h1.79a4.5 4.5 0 0 1 2.5 8.242"
+                    ></path>
+                    <path d="M12 12v9"></path>
+                    <path d="m16 16-4-4-4 4"></path>
+                  </svg>
+                </div>
+                <div class="timeline-content">
+                  <h4>Avsnitt publicerat</h4>
+                  <p>AI:s framtid med Dr. Emily Roberts</p>
+                  <span class="timeline-time">15 okt, 2023</span>
+                </div>
+              </div>
+              <div class="timeline-item">
+                <div class="timeline-icon pending">
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="20"
+                    height="20"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  >
+                    <path d="M5 22h14"></path>
+                    <path d="M5 2h14"></path>
+                    <path
+                      d="M17 22v-4.172a2 2 0 0 0-.586-1.414L12 12l-4.414 4.414A2 2 0 0 0 7 17.828V2"
+                    ></path>
+                    <path
+                      d="M7 2v4.172a2 2 0 0 0 .586 1.414L12 12l4.414-4.414A2 2 0 0 0 17 6.172V2"
+                    ></path>
+                  </svg>
+                </div>
+                <div class="timeline-content">
+                  <h4>Redigering pågår</h4>
+                  <p>Startup-framgångshistorier med Alex Turner</p>
+                  <span class="timeline-time">12 okt, 2023</span>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <!-- Recent Episodes -->
+          <section class="episodes-section">
+            <div class="section-header">
+              <h2>Aktiva avsnitt</h2>
+              <a href="#" class="view-all">Visa alla</a>
+            </div>
+            <div class="cards-container">
+              <!-- Episodes will be loaded here via JavaScript -->
+            </div>
+          </section>
+        </div>
       </div>
     </main>
   </div>
@@ -78,24 +418,25 @@ endblock %} {% block content %}
   <div id="welcome-popup" class="popup">
     <div class="popup-content">
       <span id="close-welcome-popup" class="close-btn">&times;</span>
-      <h2>Welcome to PodManager.ai!</h2>
+      <h2>Välkommen till PodManager.ai!</h2>
       <div class="popup-body">
-        <p>🎉 <strong>Congratulations!</strong></p>
+        <p>🎉 <strong>Grattis!</strong></p>
         <p>
-          Your spot in the Beta Tester queue is locked in! Get ready for your
-          exclusive sneak peek...
+          Din plats i Beta Tester-kön är säkrad! Gör dig redo för din exklusiva
+          förhandstitt...
         </p>
         <p>
-          💰 To kick things off, we've added <strong>3,500 Credits</strong> to
-          your account!
+          💰 För att kicka igång har vi lagt till
+          <strong>3 500 krediter</strong> på ditt konto!
         </p>
         <p>
-          PodManager.ai will revolutionize your podcasting with AI-powered
-          workflow automation, seamless guest management, and faster episode
-          production- so you can focus on creating amazing content!
+          PodManager.ai kommer att revolutionera din podcastproduktion med
+          AI-driven arbetsflödesautomatisering, smidig gästhantering och
+          snabbare avsnittsproduktion - så att du kan fokusera på att skapa
+          fantastiskt innehåll!
         </p>
-        <p>✨ Check your email right now for more exciting features!</p>
-        <button id="get-started-btn" class="btn save-btn">Get Started</button>
+        <p>✨ Kolla din e-post nu för fler spännande funktioner!</p>
+        <button id="get-started-btn" class="btn save-btn">Kom igång</button>
       </div>
     </div>
   </div>
