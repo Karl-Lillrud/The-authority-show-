@@ -20,5 +20,8 @@ COPY src/ /app/src/
 # Expose the port Flask will run on
 EXPOSE 8000
 
+# Expose the port Streamlit will run on
+EXPOSE 8501
+
 # Run Gunicorn to serve the Flask app
 CMD ["gunicorn", "--bind", "0.0.0.0:8000", "src.app:app"]
