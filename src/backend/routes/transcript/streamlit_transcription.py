@@ -30,9 +30,14 @@ logger = logging.getLogger(__name__)
 
 API_BASE_URL = os.getenv("API_BASE_URL")
 
-# DEBUG TESTING
-st.session_state["user_id"] = "6b918cad-a5b7-4c6b-b050-73adf58edff8"  # Replace with actual user ID retrieval logic
-st.write("🆔 Current user ID:", st.session_state.get("user_id"))
+#Need fix
+params = st.experimental_get_query_params()
+if "user_id" in params:
+    st.session_state["user_id"] = params["user_id"][0]
+    st.write("🆔 Current user ID:", st.session_state["user_id"])
+else:
+    st.write("🆔 User ID not set. Please log in through the main app.")
+
 def try_consume_credits(user_id, feature):
     response = requests.post(
         f"{API_BASE_URL}/credits/consume",
