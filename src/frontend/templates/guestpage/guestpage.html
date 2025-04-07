@@ -75,9 +75,10 @@
     </p>
   </section>
 
-  <!-- Episodes Section -->
+  
+    <!-- Episodes Section -->
   {% for episode in episodes %}
-  <li class="episode-card">
+  <li class="episode-card" onclick="window.location.href='/episode/{{ episode._id }}'">
     <div class="episode-banner">
       <img src="{{ url_for('static', filename='images/default.png') }}" alt="{{ episode.title }} Thumbnail">
     </div>
@@ -88,12 +89,16 @@
       </div>
       <p class="episode-description">{{ episode.description }}</p>
       <div class="episode-links">
-        <a href="#" class="platform spotify"><i class="fab fa-spotify"></i> Spotify</a>
-        <a href="#" class="platform apple"><i class="fab fa-apple"></i> Apple</a>
+        <a href="https://open.spotify.com/" target="_blank" class="platform spotify" onclick="event.stopPropagation()">
+          <i class="fab fa-spotify"></i> Spotify
+        </a>
+        <a href="https://podcasts.apple.com/" target="_blank" class="platform apple" onclick="event.stopPropagation()">
+          <i class="fab fa-apple"></i> Apple
+        </a>
       </div>
     </div>
   </li>
-{% endfor %}
+  {% endfor %}
 
   <!-- Footer -->
   <footer>
