@@ -1,5 +1,5 @@
 import { signin } from "/static/requests/authRequests.js";
-import { signin } from "/static/requests/authRequests.js";
+// import { signin } from "/static/requests/authRequests.js";
 
 document.addEventListener("DOMContentLoaded", function () {
     const form = document.getElementById("signin-form");
