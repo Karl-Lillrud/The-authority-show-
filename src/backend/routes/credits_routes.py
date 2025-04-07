@@ -1,6 +1,5 @@
 from flask import Blueprint, request, jsonify
 from backend.services.creditService import get_user_credits, consume_credits
-
 credits_bp = Blueprint("credits_bp", __name__)
 
 @credits_bp.route("/credits/<user_id>", methods=["GET"])
@@ -23,3 +22,4 @@ def consume():
         return jsonify({"success": True, "data": result}), 200
     except Exception as e:
         return jsonify({"error": str(e)}), 400
+
