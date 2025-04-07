@@ -1,5 +1,6 @@
 from flask import Blueprint, request, jsonify, redirect, render_template, flash, url_for
 from backend.repository.auth_repository import AuthRepository
+from backend.services.authService import AuthService
 from backend.services.TeamInviteService import TeamInviteService
 from backend.database.mongo_connection import db
 import logging
@@ -13,6 +14,32 @@ auth_bp = Blueprint("auth_bp", __name__)
 
 # Instantiate the Auth Repository
 auth_repo = AuthRepository()
+
+auth_service = AuthService()
+
+# Instantiate AuthService
+@auth_bp.route("/send-verification-code", methods=["POST"])
+def send_verification_code():
+    """
+    Endpoint to send a verification code to the user's email
+    """
+    if request.content_type != "application/json":
+        return jsonify({"error": "Invalid Content-Type. Expected application/json"}), 415
+
+    data = request.get_json()
+    email = data.get("email")
+
+    if not email:
+        return jsonify({"error": "Email is required"}), 400
+
+    try:
+        # Call the AuthService to send the verification code
+        result = auth_service.send_verification_code(email)
+        if result.get("error"):
+            return jsonify(result), 400
+        return jsonify({"message": "Verification code sent successfully"}), 200
+    except Exception as e:
+        return jsonify({"error": f"Failed to send verification code: {str(e)}"}), 500
 
 API_BASE_URL = os.getenv("API_BASE_URL", "http://127.0.0.1:8000")
 

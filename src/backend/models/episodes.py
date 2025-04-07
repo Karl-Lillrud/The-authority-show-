@@ -11,7 +11,7 @@ class EpisodeSchema(Schema):
     publishDate = fields.Str(allow_none=True)  # Ensure publishDate is correctly defined
     duration = fields.Int(allow_none=True)  # Change to integer
     status = fields.Str(allow_none=True)
-    recordingAt = fields.DateTime()
+    recordingAt = fields.DateTime(allow_none=True)  # Allow recordingAt to be optional
     createdAt = fields.DateTime()
     updatedAt = fields.DateTime()
     audioUrl = fields.Url(allow_none=True)

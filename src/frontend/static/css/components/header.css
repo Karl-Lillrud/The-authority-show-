@@ -51,11 +51,46 @@ img {
   border: none;
 }
 
-/* Container */
-.container {
-  display: flex;
-  flex-direction: column;
-  gap: var(--spacing-md);
+.dropdown-lp-content {
+  display: none;
+}
+
+.dropdown-lp-options {
+  padding-left: 5px;
+}
+
+/* Style to make the menu bigger when dropdown is visible */
+.menu.expanded {
+  height: auto; /* Allow for expansion */
+}
+
+.dropdown-lp-content a {
+  display: block;
+  text-decoration: none;
+  color: var(--text-color-light);
+  font-family: var(--font-primary);
+  font-size: 0.85rem;
+  padding: var(--spacing-xs) var(--spacing-md);
+  transition: color var(--transition-normal);
+}
+
+ /* Triangle styles */
+ .triangle-down, .triangle-up {
+  width: 0;
+  height: 0;
+  border-left: 5px solid transparent;
+  border-right: 5px solid transparent;
+  display: inline-block;
+  vertical-align: middle; /* Ensures proper vertical alignment */
+  margin-left: 5px;
+}
+
+.triangle-down {
+  border-top: 5px solid #000;
+}
+
+.triangle-up {
+  border-bottom: 5px solid #000;
 }
 
 /* Header */
@@ -83,6 +118,9 @@ header:hover {
 
 /* Logo – Reduced size */
 .logo-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
   width: 100px; /* Reduced from 120px */
   flex-shrink: 0; /* Prevent logo from shrinking */
 }
@@ -115,7 +153,12 @@ header:hover {
   font-weight: 600;
   color: var(--text-color-light);
   white-space: nowrap;
+  max-width: 100px; /* Limit width to prevent overflow */
+  white-space: nowrap;
+  overflow: visible;
+  text-overflow: ellipsis;
 }
+
 
 /* Header Nav (Menus on the far right) */
 .header-nav {
@@ -152,52 +195,62 @@ header:hover {
 }
 
 /* Podcast Selector */
+/* Header Podcast Dropdown Cleanup */
 #headerPodcastDropdown {
   position: relative;
   background: white;
   color: var(--text-color-light);
   border: 1px solid rgba(0, 0, 0, 0.1);
-  border-radius: var(--radius-medium);
-  padding: var(--spacing-xs) var(--spacing-sm);
+  border-radius: var(--radius-small);
   font-family: var(--font-primary);
-  font-size: 0.85rem; /* Justerat för bättre läsbarhet */
-  box-shadow: 0 4px 10px -5px rgba(0, 0, 0, 0.1),
-    0 2px 4px -2px rgba(0, 0, 0, 0.05);
-  outline: none;
-  transition: all var(--transition-normal);
+  font-size: 0.85rem;
   cursor: pointer;
-  height: 36px; /* Ökad höjd för bättre klickbarhet */
+  min-width: 160px;
+  padding: 6px 12px;
+  transition: all var(--transition-normal);
+  box-shadow: 0 4px 10px -5px rgba(0, 0, 0, 0.1);
   display: flex;
   align-items: center;
   justify-content: space-between;
+  z-index: 10;
 }
 
 #headerPodcastDropdown:hover {
-  border-color: rgba(0, 0, 0, 0.2);
+  border-color: var(--highlight-color);
+  background-color: #fdfdfd;
+}
+
+/* Dropdown options inside header dropdown */
+#header-dropdown-options {
+  display: none;
+  position: absolute;
+  top: 110%;
+  left: 0;
+  width: 100%;
+  background: white;
+  border-radius: var(--radius-small);
+  box-shadow: 0 8px 15px -5px rgba(0, 0, 0, 0.1);
+  padding: var(--spacing-xs) 0;
+  z-index: 100;
+}
+
+#headerPodcastDropdown.active #header-dropdown-options {
+  display: block;
+}
+
+#header-dropdown-options .dropdown-option {
+  padding: 8px 12px;
+  cursor: pointer;
+  font-size: 0.85rem;
+  transition: background 0.2s ease, color 0.2s ease;
+}
+
+#header-dropdown-options .dropdown-option:hover {
   background: var(--highlight-color);
   color: #fff;
-  box-shadow: 0 6px 12px -5px rgba(0, 0, 0, 0.15),
-    0 3px 6px -2px rgba(0, 0, 0, 0.1);
+  border-radius: 0;
 }
 
-#headerPodcastDropdown option {
-  background: white;
-  color: var(--text-color-light);
-  padding: var(--spacing-xs) var(--spacing-sm);
-  font-family: var(--font-primary);
-  font-size: 0.85rem;
-  border: none;
-}
-
-#headerPodcastDropdown option:hover {
-  background: white; /* Vit bakgrund */
-  color: var(--highlight-color); /* Orange text */
-}
-
-#headerPodcastDropdown:focus {
-  border: 1px solid var(--highlight-hover);
-  box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.1);
-}
 
 /* Menu Toggle (Hamburger) */
 .menu-toggle {
@@ -261,6 +314,7 @@ header:hover {
 
 .menu.active {
   display: flex;
+  flex-direction: column;
   transform: scale(1);
   opacity: 1;
 }
@@ -335,7 +389,7 @@ header:hover {
   color: var(--text-color-light);
 }
 
-.custom-dropdown .dropdown-selected {
+.custom-dropdown .dropdown-lp-selected {
   padding: var(--spacing-xs) var(--spacing-xs); /* Minskad padding */
   height: 28px; /* Minskad höjd */
   display: flex;
@@ -343,7 +397,7 @@ header:hover {
   justify-content: space-between;
 }
 
-.custom-dropdown .dropdown-options {
+.custom-dropdown .dropdown-lp-options {
   display: none;
   position: absolute;
   top: 100%;
@@ -358,19 +412,19 @@ header:hover {
   gap: var(--spacing-sm); /* Samma gap som hamburger-menyn */
 }
 
-.custom-dropdown .dropdown-options div {
+.custom-dropdown .dropdown-lp-options div {
   padding: var(--spacing-sm) var(--spacing-md); /* Samma padding som hamburger-menyn */
   color: var(--text-color-light);
   transition: background var(--transition-normal),
     color var(--transition-normal);
 }
 
-.custom-dropdown .dropdown-options div:hover {
+.custom-dropdown .dropdown-lp-options div:hover {
   background: white;
   color: var(--highlight-color);
 }
 
-.custom-dropdown.active .dropdown-options {
+.custom-dropdown.active .dropdown-lp-options {
   display: block;
 }
 
@@ -448,14 +502,6 @@ header:hover {
   .logo-container,
   .logo-container img {
     width: 70px; /* Even smaller logo on very small screens */
-  }
-
-  .page-title {
-    font-size: 0.8rem; /* Smaller title text */
-    max-width: 100px; /* Limit width to prevent overflow */
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
   }
 
   .header-nav {
