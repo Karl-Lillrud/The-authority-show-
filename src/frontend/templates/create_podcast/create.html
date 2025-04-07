@@ -1,0 +1,105 @@
+{% extends "components/base.html" %}
+
+{% block title %}GuidetoPodcast{% endblock %}
+
+{% block content %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/create_podcast/create.css') }}">
+<div class="create-podcast-container">
+    <div class="header-section">
+        <h1>Hur du skapar din podcast</h1>
+        <div class="header-underline"></div>
+    </div>
+    
+    <div class="guide-grid">
+        <div class="guide-card" id="step-1">
+            <div class="card-number">1</div>
+            <div class="card-content">
+                <h2>Skapa ett konto</h2>
+                <p>Börja med att registrera dig på plattformen genom att klicka på "Registrera" i menyn.</p>
+            </div>
+        </div>
+
+        <div class="guide-card" id="step-2">
+            <div class="card-number">2</div>
+            <div class="card-content">
+                <h2>Logga in och gå till din profil</h2>
+                <p>Efter registrering, logga in och navigera till din profilsida.</p>
+            </div>
+        </div>
+
+        <div class="guide-card" id="step-3">
+            <div class="card-number">3</div>
+            <div class="card-content">
+                <h2>Skapa din podcast</h2>
+                <ul>
+                    <li><i class="fas fa-check"></i> Klicka på "Skapa ny podcast"</li>
+                    <li><i class="fas fa-check"></i> Välj ett namn för din podcast</li>
+                    <li><i class="fas fa-check"></i> Ladda upp en omslagsbild (minst 1400x1400 pixlar)</li>
+                    <li><i class="fas fa-check"></i> Skriv en beskrivning av din podcast</li>
+                    <li><i class="fas fa-check"></i> Välj kategori och språk</li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="guide-card" id="step-4">
+            <div class="card-number">4</div>
+            <div class="card-content">
+                <h2>Ladda upp ditt första avsnitt</h2>
+                <ul>
+                    <li><i class="fas fa-check"></i> Gå till din podcast-dashboard</li>
+                    <li><i class="fas fa-check"></i> Klicka på "Lägg till avsnitt"</li>
+                    <li><i class="fas fa-check"></i> Fyll i avsnittets titel och beskrivning</li>
+                    <li><i class="fas fa-check"></i> Ladda upp ljudfilen (MP3-format)</li>
+                    <li><i class="fas fa-check"></i> Lägg till taggar och avsnittsnummer</li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="guide-card" id="step-5">
+            <div class="card-number">5</div>
+            <div class="card-content">
+                <h2>Publicera</h2>
+                <p>Granska din information och klicka på "Publicera" när du är nöjd. Din podcast kommer nu att vara tillgänglig för lyssnare!</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="tips-card">
+        <h2><i class="fas fa-lightbulb"></i> Tips för en lyckad podcast</h2>
+        <div class="tips-grid">
+            <div class="tip-item">
+                <i class="fas fa-microphone"></i>
+                <p>Använd en bra mikrofon för bästa ljudkvalitet</p>
+            </div>
+            <div class="tip-item">
+                <i class="fas fa-calendar-check"></i>
+                <p>Planera ditt innehåll i förväg</p>
+            </div>
+            <div class="tip-item">
+                <i class="fas fa-clock"></i>
+                <p>Var konsekvent med publicering</p>
+            </div>
+            <div class="tip-item">
+                <i class="fas fa-users"></i>
+                <p>Engagera dig med dina lyssnare</p>
+            </div>
+        </div>
+    </div>
+</div>
+<script>
+    // This script adds a simple hover effect and highlight to each guide step
+    const steps = document.querySelectorAll('.guide-card');
+
+    steps.forEach(step => {
+        step.addEventListener('mouseenter', () => {
+            step.style.transform = 'scale(1.05)';
+            step.style.transition = 'all 0.3s ease';
+        });
+
+        step.addEventListener('mouseleave', () => {
+            step.style.transform = 'scale(1)';
+        });
+    });
+</script>
+
+{% endblock %}

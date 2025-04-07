@@ -1,0 +1,171 @@
+/* General container */
+.create-podcast-container {
+    max-width: 1200px;
+    margin: 40px auto;
+    padding: 2.5rem;
+    background-color: #ffffff;
+    border-radius: 16px;
+    box-shadow: 0px 10px 20px rgba(0, 0, 0, 0.08);
+    font-family: 'Inter', sans-serif;
+}
+
+/* Header section */
+.header-section h1 {
+    font-size: 3rem;
+    color: #1a1a1a;
+    text-align: center;
+    margin-bottom: 1.5rem;
+    font-weight: 700;
+    letter-spacing: -0.5px;
+}
+
+.header-underline {
+    width: 120px;
+    height: 5px;
+    background: linear-gradient(90deg, #3182ce, #63b3ed);
+    margin: 0 auto;
+    border-radius: 3px;
+}
+
+/* Guide section layout */
+.guide-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+    gap: 2.5rem;
+    margin-top: 4rem;
+}
+
+/* Individual guide card style */
+.guide-card {
+    background-color: #ffffff;
+    padding: 2rem;
+    border-radius: 16px;
+    box-shadow: 0px 8px 16px rgba(0, 0, 0, 0.06);
+    transition: all 0.3s ease;
+    border: 1px solid #e2e8f0;
+    position: relative;
+}
+
+.guide-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0px 12px 24px rgba(0, 0, 0, 0.1);
+    border-color: #3182ce;
+}
+
+.card-number {
+    position: absolute;
+    top: -15px;
+    left: -15px;
+    width: 40px;
+    height: 40px;
+    background: linear-gradient(135deg, #3182ce, #63b3ed);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-weight: 700;
+    font-size: 1.5rem;
+    box-shadow: 0px 4px 8px rgba(49, 130, 206, 0.3);
+}
+
+.card-content h2 {
+    font-size: 1.8rem;
+    color: #1a1a1a;
+    margin-bottom: 1.5rem;
+    font-weight: 600;
+}
+
+.card-content ul {
+    list-style: none;
+    padding: 0;
+}
+
+.card-content li {
+    font-size: 1.1rem;
+    color: #4a5568;
+    margin-bottom: 1rem;
+    display: flex;
+    align-items: center;
+    line-height: 1.6;
+}
+
+.card-content li i {
+    color: #3182ce;
+    margin-right: 12px;
+    font-size: 1.2rem;
+}
+
+/* Tips section styling */
+.tips-card {
+    margin-top: 5rem;
+    background: linear-gradient(135deg, #f7fafc, #edf2f7);
+    padding: 3rem;
+    border-radius: 16px;
+    box-shadow: 0px 8px 16px rgba(0, 0, 0, 0.06);
+}
+
+.tips-card h2 {
+    font-size: 2.2rem;
+    color: #1a1a1a;
+    margin-bottom: 2rem;
+    text-align: center;
+    font-weight: 700;
+}
+
+.tips-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 2rem;
+    margin-top: 2rem;
+}
+
+.tip-item {
+    background-color: #ffffff;
+    padding: 2rem;
+    border-radius: 12px;
+    box-shadow: 0px 4px 12px rgba(0, 0, 0, 0.05);
+    text-align: center;
+    transition: all 0.3s ease;
+}
+
+.tip-item:hover {
+    transform: translateY(-3px);
+    box-shadow: 0px 8px 16px rgba(0, 0, 0, 0.1);
+}
+
+.tip-item i {
+    font-size: 2.5rem;
+    color: #3182ce;
+    margin-bottom: 1.5rem;
+}
+
+.tip-item p {
+    font-size: 1.2rem;
+    color: #4a5568;
+    line-height: 1.6;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .create-podcast-container {
+        padding: 1.5rem;
+        margin: 20px;
+    }
+
+    .header-section h1 {
+        font-size: 2.2rem;
+    }
+
+    .guide-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .tips-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .card-content h2 {
+        font-size: 1.5rem;
+    }
+}

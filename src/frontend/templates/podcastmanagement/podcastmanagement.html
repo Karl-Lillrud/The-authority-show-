@@ -3,6 +3,7 @@ endblock %} {% block content %}
 <link
   rel="stylesheet"
   href="{{ url_for('static', filename='css/podcastmanagement/podcastmanagement.css') }}"
+  
 />
 
 <div class="app-container">
@@ -38,6 +39,16 @@ endblock %} {% block content %}
               <span>Guests</span>
             </a>
           </li>
+          <li class="sidebar-menu-item">
+            <a href="{{ url_for('GuidetoPodcast.show_GuidetoPodcast') }}" class="sidebar-menu-link">
+              <img src="{{ url_for('static', filename='images/image.jpg') }}" alt="GuidetoPodcast Icon" class="sidebar-icon">
+             
+              
+              <span>Start Your Podcast Journey</span>
+            </a>
+          </li>
+          
+          
         </ul>
       </nav>
 

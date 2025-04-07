@@ -2,6 +2,8 @@ import os
 import logging
 from flask import Flask, request, session, g, jsonify, render_template
 from flask_cors import CORS
+from backend.routes.GuidetoPodcast import GuidetoPodcast_bp
+
 from backend.routes.auth import auth_bp
 from backend.routes.forgot_pass import forgotpass_bp
 from backend.routes.podcast import podcast_bp  # Import the podcast blueprint
@@ -77,6 +79,7 @@ app.register_blueprint(
 )  # Ensure this line is present and has the correct prefix
 app.register_blueprint(account_bp)
 app.register_blueprint(usertoteam_bp)
+app.register_blueprint(GuidetoPodcast_bp)
 app.register_blueprint(invitation_bp)
 app.register_blueprint(google_calendar_bp)
 app.register_blueprint(episode_bp)

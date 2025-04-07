@@ -10,7 +10,7 @@ dnspython
 durationpy
 feedparser
 Flask
-Flask-Cors
+flask-cors
 google
 google-auth
 google-auth-oauthlib
@@ -45,7 +45,6 @@ PyYAML
 requests
 requests-oauthlib
 rsa
-setuptools
 sgmllib3k
 shortuuid
 six
