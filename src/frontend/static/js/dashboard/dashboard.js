@@ -50,12 +50,9 @@ async function initWelcomePopup() {
 
 async function disableWelcomePopup() {
   try {
-    const data = {
-      isFirstLogin: false
-    }
+    const data = { isFirstLogin: false }  
     await updateAccount(data);
-
-  }catch (error) {
+  } catch (error) {
     console.error("Error disabling welcome popup:", error);
   }
 }

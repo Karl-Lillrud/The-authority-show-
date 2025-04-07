@@ -38,9 +38,7 @@ export function fetchAccount() {
 export function updateAccount(accountData) {
   return fetch('/edit_account', {
     method: 'PUT',
-    headers: {
-      'Content-Type': 'application/json',
-    },
+    headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(accountData),
   })
     .then(response => response.json())

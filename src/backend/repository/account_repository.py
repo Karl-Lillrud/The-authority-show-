@@ -80,8 +80,6 @@ class AccountRepository:
             if "subscriptionEnd" in account and isinstance(account["subscriptionEnd"], str) and account["subscriptionEnd"]:
                 account["subscriptionEnd"] = datetime.fromisoformat(account["subscriptionEnd"])
 
-            """ schema = AccountSchema()
-            result = schema.dump(account)  # Serialize the account data """
             return {"account": account}, 200
 
         except Exception as e:
