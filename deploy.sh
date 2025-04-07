@@ -72,8 +72,8 @@ fi
 # Step 10: Configure Web App to use ACR with Managed Identity (No publish profile required)
 echo "Configuring Web App to use Docker image from ACR..."
 az webapp config container set --name $WEBAPP_NAME --resource-group $RESOURCE_GROUP \
-  --docker-registry-server-url https://$REGISTRY_NAME.azurecr.io \
-  --docker-custom-image-name $REGISTRY_NAME.azurecr.io/$IMAGE_NAME:latest
+  --container-registry-url https://$REGISTRY_NAME.azurecr.io \
+  --container-image-name $REGISTRY_NAME.azurecr.io/$IMAGE_NAME:latest
 
 # Step 11: Check the status of the Web App
 echo "Web App '$WEBAPP_NAME' is deployed successfully. Checking the status..."
