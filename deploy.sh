@@ -1,24 +1,5 @@
 #!/bin/bash
 
-# Load environment variables from .env file
-if [ -f .env ]; then
-    # Loop through each line in the .env file and export variables manually
-    while IFS='=' read -r key value; do
-        # Ignore lines starting with '#' (comments) and empty lines
-        if [[ ! "$key" =~ ^# && -n "$key" && "$value" =~ .*=.* ]]; then
-            # Strip any leading or trailing spaces or quotes from the key and value
-            key=$(echo "$key" | xargs)
-            value=$(echo "$value" | xargs)
-            # Remove quotes around values if present
-            value=$(echo "$value" | sed 's/^"\(.*\)"$/\1/')
-            # Avoid exporting invalid keys or empty variables
-            if [[ -n "$key" && -n "$value" ]]; then
-                export "$key"="$value"
-            fi
-        fi
-    done < .env
-fi
-
 # Define variables
 RESOURCE_GROUP="PodManager"
 REGISTRY_NAME="podmanageracr"
@@ -45,13 +26,9 @@ else
     echo "Azure Container Registry '$REGISTRY_NAME' already exists."
 fi
 
-# Step 3: Log in to Azure Container Registry (ACR) using credentials from .env
-echo "Logging in to ACR '$REGISTRY_NAME' using credentials from .env..."
-if [ -z "$ACR_USERNAME" ] || [ -z "$ACR_PASSWORD" ]; then
-    echo "❌ ERROR: ACR_USERNAME or ACR_PASSWORD is not set in the .env file."
-    exit 1
-fi
-echo "$ACR_PASSWORD" | docker login $REGISTRY_NAME.azurecr.io --username $ACR_USERNAME --password-stdin
+# Step 3: Log in to Azure Container Registry (ACR) using Azure CLI
+echo "Logging in to ACR '$REGISTRY_NAME' using Azure CLI..."
+az acr login --name $REGISTRY_NAME
 
 # Step 4: Check if the "podmanagerlive" repository exists in ACR
 echo "Checking if repository 'podmanagerlive' exists in ACR..."
