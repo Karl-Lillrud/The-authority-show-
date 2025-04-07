@@ -52,9 +52,26 @@ def oauth2callback():
         credentials = flow.credentials
         session['credentials'] = credentials_to_dict(credentials)
 
-        # Store the token in sessionStorage via a redirect
-        google_token = credentials.token
-        return redirect(f"/podprofile?googleToken={google_token}")
+        # Extract the refresh token
+        refresh_token = credentials.refresh_token
+        if not refresh_token:
+            logger.error("❌ ERROR: No refresh token received during OAuth callback.")
+            return jsonify({"error": "No refresh token received"}), 400
+
+        # Save the refresh token in the Users collection as googleRefresh
+        user_id = session.get("user_id")
+        if not user_id:
+            logger.error("❌ ERROR: User not authenticated during OAuth callback.")
+            return jsonify({"error": "User not authenticated"}), 401
+
+        collection.database.Users.update_one(
+            {"_id": user_id},
+            {"$set": {"googleRefresh": refresh_token}},  # Save as googleRefresh
+            upsert=True
+        )
+
+        logger.info(f"✅ Refresh token saved successfully for user {user_id}.")
+        return redirect(f"/podprofile?googleToken={refresh_token}")  # Pass refresh token to frontend
     except Exception as e:
         logger.error(f"Error during OAuth callback: {e}", exc_info=True)
         return jsonify({"error": "Failed to complete Google OAuth process"}), 500

@@ -328,12 +328,12 @@ class GuestRepository:
 
     def save_google_refresh_token(self, user_id, refresh_token):
         """
-        Save the Google OAuth2 refresh token in the Guests collection.
+        Save the Google OAuth2 refresh token in the Users collection.
         """
         try:
-            result = self.collection.update_one(
-                {"user_id": str(user_id)},
-                {"$set": {"googleRefresh": refresh_token}},
+            result = collection.database.Users.update_one(
+                {"_id": str(user_id)},
+                {"$set": {"googleRefresh": refresh_token}},  # Save as googleRefresh
                 upsert=True
             )
             if result.modified_count > 0 or result.upserted_id:

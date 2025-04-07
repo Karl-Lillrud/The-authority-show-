@@ -234,16 +234,12 @@ document.addEventListener("DOMContentLoaded", () => {
   // Calendar Connection Button
   const connectCalendarButton = document.getElementById("connectCalendar");
   if (connectCalendarButton) {
-    connectCalendarButton.addEventListener("click", async (event) => {
+    connectCalendarButton.addEventListener("click", (event) => {
       event.preventDefault();
 
       try {
-        // Redirect to Google OAuth flow
-        const response = await fetch("/connect_google_calendar");
-        if (!response.ok) throw new Error("Failed to initiate Google OAuth flow");
-
-        const { authUrl } = await response.json();
-        window.location.href = authUrl;
+        // Redirect the user to the backend endpoint, which will handle the OAuth redirection
+        window.location.href = "/connect_google_calendar";
       } catch (error) {
         console.error("Error connecting to Google Calendar:", error);
         alert("Failed to connect to Google Calendar. Please try again.");
@@ -259,7 +255,7 @@ document.addEventListener("DOMContentLoaded", () => {
       fetch("/save_google_refresh_token", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ refreshToken: googleToken }),
+        body: JSON.stringify({ refreshToken: googleToken }), // Save as refreshToken
       })
         .then((res) => res.json())
         .then((data) => {
