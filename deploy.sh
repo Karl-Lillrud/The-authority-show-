@@ -34,7 +34,7 @@ az acr login --name $REGISTRY_NAME
 echo "Checking if repository 'podmanagerlive' exists in ACR..."
 if az acr repository show --name $REGISTRY_NAME --repository podmanagerlive --output none; then
     echo "Repository 'podmanagerlive' exists. Deleting repository and its contents..."
-    az acr repository delete --name $REGISTRY_NAME --repository podmanagerlive --yes --force --output none
+    az acr repository delete --name $REGISTRY_NAME --repository podmanagerlive --yes --output none
 else
     echo "Repository 'podmanagerlive' does not exist. No need to delete."
 fi
