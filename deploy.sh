@@ -46,7 +46,7 @@ az acr login --name $REGISTRY_NAME
 
 # Step 4: Remove existing repository (if any) from ACR
 echo "Removing existing repository '$IMAGE_NAME' from ACR (if it exists)..."
-az acr repository delete --name $REGISTRY_NAME --repository $IMAGE_NAME --yes --force
+az acr repository delete --name $REGISTRY_NAME --repository $IMAGE_NAME --yes
 
 # Step 5: Build Docker Image
 echo "Building Docker image '$IMAGE_NAME'..."
