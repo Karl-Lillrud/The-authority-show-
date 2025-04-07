@@ -2,10 +2,13 @@
 
 # Load environment variables from .env file
 if [ -f .env ]; then
-    set -o allexport
-    # Source .env file ignoring comments
-    source <(grep -v '^#' .env)
-    set +o allexport
+    # Loop through each line in the .env file and export variables manually
+    while IFS='=' read -r key value; do
+        # Ignore lines starting with '#' (comments) and empty lines
+        if [[ ! "$key" =~ ^# && -n "$key" ]]; then
+            export "$key"="$value"
+        fi
+    done < .env
 fi
 
 # Define variables
@@ -92,6 +95,7 @@ az webapp config container set --name $WEBAPP_NAME --resource-group $RESOURCE_GR
 # Step 11: Check the status of the Web App
 echo "Web App '$WEBAPP_NAME' is deployed successfully. Checking the status..."
 az webapp show --name $WEBAPP_NAME --resource-group $RESOURCE_GROUP --output table
+
 
 # Step 12: Happy Message
 echo "RedShadow And Arin Deployed Podmanager Successfully!"
