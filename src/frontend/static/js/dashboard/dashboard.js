@@ -1,6 +1,7 @@
 import { fetchAllEpisodes } from "/static/requests/episodeRequest.js";
 import { fetchGuestsByEpisode } from "/static/requests/guestRequests.js";
 import { fetchPodcast, fetchPodcasts } from "/static/requests/podcastRequests.js";
+import { fetchAccount, updateAccount } from "/static/requests/accountRequests.js";
 import { initTaskManagement } from "/static/js/dashboard/task.js";
 
 document.addEventListener("DOMContentLoaded", () => {
@@ -13,10 +14,9 @@ document.addEventListener("DOMContentLoaded", () => {
 
 async function initWelcomePopup() {
   try {
-    const response = await fetchPodcasts();
-    const podcasts = response.podcast;
-
-    if (podcasts.length === 0) {
+    const result = await fetchAccount();
+    const account = result.account;
+    if (account.isFirstLogin) {
       const welcomePopup = document.getElementById("welcome-popup");
       const closeWelcomePopup = document.getElementById("close-welcome-popup");
       const getStartedBtn = document.getElementById("get-started-btn");
@@ -27,21 +27,36 @@ async function initWelcomePopup() {
 
       closeWelcomePopup.addEventListener("click", () => {
         welcomePopup.style.display = "none";
+        disableWelcomePopup();
       });
 
       getStartedBtn.addEventListener("click", () => {
         welcomePopup.style.display = "none";
+        disableWelcomePopup();
       });
 
       welcomePopup.addEventListener("click", (e) => {
         if (e.target === welcomePopup) {
           welcomePopup.style.display = "none";
+          disableWelcomePopup();
         }
       });
           return;
     }
   } catch (error) {
     console.error("Error initializing welcome popup:", error);
+  }
+}
+
+async function disableWelcomePopup() {
+  try {
+    const data = {
+      isFirstLogin: false
+    }
+    await updateAccount(data);
+
+  }catch (error) {
+    console.error("Error disabling welcome popup:", error);
   }
 }
 
