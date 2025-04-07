@@ -2,7 +2,10 @@
 
 # Load environment variables from .env file
 if [ -f .env ]; then
-    export $(grep -v '^#' .env | xargs)
+    set -o allexport
+    # Source .env file ignoring comments
+    source <(grep -v '^#' .env)
+    set +o allexport
 fi
 
 # Define variables
@@ -90,6 +93,6 @@ az webapp config container set --name $WEBAPP_NAME --resource-group $RESOURCE_GR
 echo "Web App '$WEBAPP_NAME' is deployed successfully. Checking the status..."
 az webapp show --name $WEBAPP_NAME --resource-group $RESOURCE_GROUP --output table
 
-# Step 12: Optionally, open the Web App in a browser
-echo "Opening Web App in the default browser..."
-open https://$WEBAPP_NAME.azurewebsites.net
+# Step 12: Happy Message
+echo "RedShadow And Arin Deployed Podmanager Successfully!"
+
