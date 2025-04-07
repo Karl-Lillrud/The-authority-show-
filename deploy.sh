@@ -3,7 +3,7 @@
 # Define variables
 RESOURCE_GROUP="PodManager"
 REGISTRY_NAME="podmanageracr"
-IMAGE_NAME="podmanagerlive:latest"
+IMAGE_NAME="podmanagerlive"
 WEBAPP_NAME="podmanager"
 APP_SERVICE_PLAN="podmanagersp"
 LOCATION="northeu" # e.g., "eastus"
