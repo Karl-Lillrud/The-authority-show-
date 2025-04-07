@@ -1,6 +1,6 @@
 import { fetchAllEpisodes } from "/static/requests/episodeRequest.js";
 import { fetchGuestsByEpisode } from "/static/requests/guestRequests.js";
-import { fetchPodcast } from "/static/requests/podcastRequests.js";
+import { fetchPodcast, fetchPodcasts } from "/static/requests/podcastRequests.js";
 import { initTaskManagement } from "/static/js/dashboard/task.js";
 
 document.addEventListener("DOMContentLoaded", () => {
@@ -11,28 +11,38 @@ document.addEventListener("DOMContentLoaded", () => {
   updateStatCounts();
 });
 
-function initWelcomePopup() {
-  const welcomePopup = document.getElementById("welcome-popup");
-  const closeWelcomePopup = document.getElementById("close-welcome-popup");
-  const getStartedBtn = document.getElementById("get-started-btn");
+async function initWelcomePopup() {
+  try {
+    const response = await fetchPodcasts();
+    const podcasts = response.podcast;
 
-  if (!welcomePopup) return;
+    if (podcasts.length === 0) {
+      const welcomePopup = document.getElementById("welcome-popup");
+      const closeWelcomePopup = document.getElementById("close-welcome-popup");
+      const getStartedBtn = document.getElementById("get-started-btn");
 
-  welcomePopup.style.display = "flex";
+      if (!welcomePopup) return;
 
-  closeWelcomePopup.addEventListener("click", () => {
-    welcomePopup.style.display = "none";
-  });
+      welcomePopup.style.display = "flex";
 
-  getStartedBtn.addEventListener("click", () => {
-    welcomePopup.style.display = "none";
-  });
+      closeWelcomePopup.addEventListener("click", () => {
+        welcomePopup.style.display = "none";
+      });
 
-  welcomePopup.addEventListener("click", (e) => {
-    if (e.target === welcomePopup) {
-      welcomePopup.style.display = "none";
+      getStartedBtn.addEventListener("click", () => {
+        welcomePopup.style.display = "none";
+      });
+
+      welcomePopup.addEventListener("click", (e) => {
+        if (e.target === welcomePopup) {
+          welcomePopup.style.display = "none";
+        }
+      });
+          return;
     }
-  });
+  } catch (error) {
+    console.error("Error initializing welcome popup:", error);
+  }
 }
 
 function initProgressCircles() {
