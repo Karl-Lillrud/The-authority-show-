@@ -30,6 +30,20 @@ logger = logging.getLogger(__name__)
 
 API_BASE_URL = os.getenv("API_BASE_URL")
 
+# DEBUG TESTING
+st.session_state["user_id"] = "6b918cad-a5b7-4c6b-b050-73adf58edff8"  # Replace with actual user ID retrieval logic
+st.write("🆔 Current user ID:", st.session_state.get("user_id"))
+def try_consume_credits(user_id, feature):
+    response = requests.post(
+        f"{API_BASE_URL}/credits/consume",
+        json={"user_id": user_id, "feature": feature}
+    )
+    if response.status_code == 200:
+        return True
+    else:
+        st.error(f"❌ Credit Error: {response.json().get('error')}")
+        return False
+# END OF DEBUG
 def render_translate_and_download(section_key: str, label: str, filename: str):
     content = st.session_state.get(section_key, "")
     if not content:
@@ -119,13 +133,18 @@ with tab1:
         else:
             st.video(uploaded_file)
 
+        # Transcribe button is now outside the video/audio block
         if st.button(f"▶ Transcribe ({CREDIT_COSTS['transcription']} credits)"):
+            # ✅ Step 1: Consume credits first
+            if not try_consume_credits(st.session_state["user_id"], "transcription"):
+                st.stop()  # Stop if credits error
             with st.spinner("🔄 Transcribing... Please wait."):
                 files = {"file": (uploaded_file.name, uploaded_file, uploaded_file.type)}
                 try:
                     response = requests.post(f"{API_BASE_URL}/transcribe", files=files)
                     if response.status_code == 200:
                         result = response.json()
+                        # ✅ Store results in session state
                         st.session_state.raw_transcription = result.get("raw_transcription", "")
                         st.session_state.full_transcript = result.get("full_transcript", "")
                         st.session_state.ai_suggestions = result.get("ai_suggestions", "")
@@ -133,7 +152,7 @@ with tab1:
                         st.session_state.quotes = result.get("quotes", "")
                         st.session_state.quote_images = result.get("quote_images", [])
 
-                        # Reset display flags so that older data is not shown
+                        # ✅ Reset display flags
                         st.session_state.show_clean_transcript = False
                         st.session_state.show_ai_suggestions = False
                         st.session_state.show_show_notes = False
@@ -145,6 +164,7 @@ with tab1:
                         st.error(f"❌ Error: {response.status_code} - {response.text}")
                 except Exception as e:
                     st.error(f"Request failed: {str(e)}")
+
 
     # Language list
     languages = ["English", "Spanish", "French", "German", "Swedish", "Japanese", "Chinese", "Italian", "Portuguese"]
