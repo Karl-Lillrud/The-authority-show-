@@ -26,7 +26,11 @@
         </svg>
         Back to Dashboard
       </a>
-      <h1>Account Settings</h1>
+      <div class="header-content">
+        <h1>Account Settings</h1>
+        <!-- Notification Container -->
+        <div id="header-notifications" class="notifications-container"></div>
+      </div>
     </div>
 
     <div class="account-settings-wrapper">
@@ -119,15 +123,18 @@
               <button id="upload-pic" class="upload-button">Change Photo</button>
             </div>
             
+            <!-- Notification Container -->
+            <div id="profile-notifications" class="notifications-container"></div>
+            
             <form id="profile-form" class="profile-form">
               <div class="form-group">
-                <label for="full-name">Full Name <span class="required">*</span></label>
+                <label for="full-name">Full Name <span class="required required-profile">*</span></label>
                 <input type="text" id="full-name" name="full_name" disabled required>
                 <div class="form-hint">This name will be displayed on your profile</div>
               </div>
               
               <div class="form-group">
-                <label for="email">Email Address <span class="required">*</span></label>
+                <label for="email">Email Address <span class="required required-profile">*</span></label>
                 <input type="email" id="email" name="email" disabled required>
               </div>
               
@@ -319,7 +326,7 @@
             </div>
             
             <form class="delete-form">
-              <div class="form-group">
+              <div class="form-group"></div>
                 <label for="delete-confirm">Type "DELETE" to confirm <span class="required">*</span></label>
                 <input type="text" id="delete-confirm" name="delete_confirm" placeholder="DELETE" required>
               </div>

@@ -124,10 +124,21 @@ function showManualGuestPopup(selectElement) {
             email: guestEmail,
             podcastId
           });
-          document.body.removeChild(popup);
-          // Fetch and render the updated guest list
-          await renderGuestSelection(selectElement, guest.guest_id);
-          showNotification("Success", "Guest added successfully!", "success"); // Show success notification
+
+          // Check for the success message in the response from the backend
+          if (guest && guest.message === "Guest added successfully") {
+            document.body.removeChild(popup);
+            // Fetch and render the updated guest list
+            await renderGuestSelection(selectElement, guest.guest_id);
+            showNotification("Success", "Guest added successfully!", "success"); // Success notification
+          } else {
+            // Handle failure from the backend
+            showNotification(
+              "Error",
+              guest.error || "Failed to add guest.",
+              "error"
+            ); // Error notification
+          }
         } catch (error) {
           console.error("Error adding guest:", error);
           showNotification("Error", "Failed to add guest.", "error"); // Show error notification
@@ -143,12 +154,10 @@ function showManualGuestPopup(selectElement) {
     });
 }
 
-// Updated showAddGuestPopup function to clear the episode dropdown before populating
 async function showAddGuestPopup() {
   const popup = document.getElementById("guest-popup");
   popup.style.display = "flex";
 
-  // Populate the Podcast selection dropdown
   const podcastSelect = document.getElementById("podcast-select-guest");
   podcastSelect.innerHTML = "";
   try {
@@ -164,28 +173,80 @@ async function showAddGuestPopup() {
     console.error("Error fetching podcasts:", error);
   }
 
-  // Remove existing event listener before adding a new one
   const episodeSelect = document.getElementById("episode-id");
-  const newPodcastSelect = podcastSelect.cloneNode(true);
-  podcastSelect.parentNode.replaceChild(newPodcastSelect, podcastSelect);
+  const newPodcastSelect = podcastSelect;
 
-  // When a podcast is selected, fetch episodes for that podcast using fetchEpisodesByPodcast
-  newPodcastSelect.addEventListener("change", async () => {
-    const selectedPodcast = newPodcastSelect.value;
-    episodeSelect.innerHTML = ""; // Clear the dropdown before populating
-    try {
-      const episodes = await fetchEpisodesByPodcast(selectedPodcast);
-      episodes.forEach((episode) => {
-        const option = document.createElement("option");
-        option.value = episode._id;
-        option.textContent = episode.title;
-        episodeSelect.appendChild(option);
-      });
-    } catch (error) {
-      console.error("Error fetching episodes for podcast:", error);
-    }
-  });
-  // Trigger the change event to populate episodes initially
+  // Attach the change listener only once per popup opening
+  newPodcastSelect.addEventListener(
+    "change",
+    async () => {
+      const selectedPodcast = newPodcastSelect.value;
+      episodeSelect.innerHTML = ""; // Clear dropdown
+      episodeSelect.disabled = false; // Ensure dropdown is active
+      episodeSelect.style.backgroundColor = "#ffffff"; // Force white background
+
+      const defaultOption = document.createElement("option");
+      defaultOption.value = "";
+      defaultOption.textContent = "Select Episode";
+      defaultOption.style.color = "#000000"; // Ensure "Select Episode" text color is black
+      episodeSelect.appendChild(defaultOption);
+
+      try {
+        const episodes = await fetchEpisodesByPodcast(selectedPodcast);
+        const currentDate = new Date();
+        console.log("Current Date:", currentDate.toISOString());
+
+        episodes.forEach((episode) => {
+          const option = document.createElement("option");
+          option.value = episode._id;
+          let text = episode.title;
+
+          console.log(
+            `Episode: ${episode.title}, RecordingAt: ${episode.recordingAt}`
+          );
+
+          if (episode.recordingAt) {
+            const recordingDate = new Date(episode.recordingAt);
+            console.log(
+              `Parsed Recording Date: ${recordingDate.toISOString()}`
+            );
+            if (recordingDate < currentDate) {
+              option.disabled = true;
+              text += " (Recording passed)";
+              option.style.backgroundColor = "#f0f0f0"; // Set non-white background for passed recordings
+              console.log(`${episode.title} is disabled (past recording)`);
+            } else {
+              option.style.backgroundColor = "#ffffff"; // White background for valid episodes
+              console.log(`${episode.title} is enabled (future recording)`);
+            }
+          } else {
+            option.style.backgroundColor = "#ffffff"; // White background if no recordingAt set
+            console.log(
+              `${episode.title} has no recordingAt, enabled by default`
+            );
+          }
+
+          option.textContent = text;
+          option.style.color = option.disabled ? "#a9a9a9" : "#000000"; // Set text color based on enabled/disabled state
+          episodeSelect.appendChild(option);
+        });
+
+        const enabledOption = Array.from(episodeSelect.options).find(
+          (opt) => !opt.disabled
+        );
+        if (enabledOption) {
+          enabledOption.selected = true;
+        } else {
+          defaultOption.selected = true;
+        }
+      } catch (error) {
+        console.error("Error fetching episodes for podcast:", error);
+      }
+    },
+    { once: true }
+  ); // Ensure the listener is added only once
+
+  newPodcastSelect.selectedIndex = 0;
   newPodcastSelect.dispatchEvent(new Event("change"));
 }
 
