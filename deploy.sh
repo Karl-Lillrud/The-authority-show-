@@ -78,7 +78,3 @@ az webapp config container set --name $WEBAPP_NAME --resource-group $RESOURCE_GR
 # Step 11: Check the status of the Web App
 echo "Web App '$WEBAPP_NAME' is deployed successfully. Checking the status..."
 az webapp show --name $WEBAPP_NAME --resource-group $RESOURCE_GROUP --output table
-
-# Step 12: Optionally, open the Web App in a browser
-echo "Opening Web App in the default browser..."
-open https://$WEBAPP_NAME.azurewebsites.net
