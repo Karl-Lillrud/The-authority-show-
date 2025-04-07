@@ -2,8 +2,10 @@ from flask import Blueprint, request, jsonify, redirect, render_template, flash,
 from backend.repository.auth_repository import AuthRepository
 from backend.services.TeamInviteService import TeamInviteService
 from backend.services.authService import AuthService
+from backend.utils.email_utils import send_email
 import os
 import logging
+import random
 
 # Configure logger
 logging.basicConfig(level=logging.ERROR)
@@ -11,6 +13,9 @@ logger = logging.getLogger(__name__)
 
 # Define Blueprint
 auth_bp = Blueprint("auth_bp", __name__)
+
+# In-memory store for verification codes (use a database in production)
+verification_codes = {}
 
 # Instantiate the Auth Repository
 auth_repo = AuthRepository()
@@ -33,13 +38,22 @@ def send_verification_code():
         return jsonify({"error": "Email is required"}), 400
 
     try:
-        # Call the AuthService to send the verification code
-        result = auth_service.send_verification_code(email)
-        if result.get("error"):
-            return jsonify(result), 400
-        return jsonify({"message": "Verification code sent successfully"}), 200
+        # Generate a 6-digit verification code
+        verification_code = str(random.randint(100000, 999999))
+
+        # Save the code in the in-memory store (replace with database logic)
+        verification_codes[email] = verification_code
+
+        # Send the verification code via email
+        send_email(
+            to=email,
+            subject="Your Verification Code",
+            body=f"Your verification code is: {verification_code}",
+        )
+
+        return jsonify({"success": True, "message": "Verification code sent successfully."})
     except Exception as e:
-        return jsonify({"error": f"Failed to send verification code: {str(e)}"}), 500
+        return jsonify({"success": False, "message": str(e)}), 500
 
 API_BASE_URL = os.getenv("API_BASE_URL", "http://127.0.0.1:8000")
 

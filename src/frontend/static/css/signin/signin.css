@@ -211,6 +211,25 @@ body {
   font-size: 14px;
 }
 
+#signin-with-code-container {
+  display: none;
+  margin: 2rem auto;
+  max-width: 400px;
+  padding: 2rem;
+  background: var(--background);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+}
+
+#signin-with-code-container .input-group {
+  margin-bottom: 1rem;
+}
+
+#signin-with-code-container .form-actions {
+  display: flex;
+  justify-content: space-between;
+}
+
 /* Media Queries for Responsiveness */
 @media (max-width: 768px) {
   .center-box {

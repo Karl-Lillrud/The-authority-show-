@@ -48,6 +48,7 @@
               name="email"
               class="input"
               placeholder="Email"
+              autocomplete="email"
               required
             />
           </div>
@@ -59,6 +60,7 @@
               name="password"
               class="input"
               placeholder="Password"
+              autocomplete="current-password"
               required
             />
           </div>
@@ -82,7 +84,13 @@
           <div class="form-actions">
             <div class="input-group" id="verification-code-group" style="display: none;">
               <label for="verification-code-login" class="label">Verification Code</label>
-              <input type="text" id="verification-code-login" class="input" placeholder="Enter verification code">
+              <input
+                type="text"
+                id="verification-code-login"
+                class="input"
+                placeholder="Enter verification code"
+                autocomplete="one-time-code"
+              />
             </div>
             <button
               id="login-with-code-button"
@@ -112,12 +120,12 @@
     </div>
 
     <div id="verification-form" style="display: none;">
-      <form id="verification-code-form">
+      <form id="verification-code-form-1">
         <div class="input-group">
-          <label for="verification-code-verification" class="label">Verification Code</label>
+          <label for="verification-code-verification-1" class="label">Verification Code</label>
           <input
             type="text"
-            id="verification-code-verification"
+            id="verification-code-verification-1"
             class="input"
             placeholder="Enter verification code"
             required
@@ -126,14 +134,14 @@
         <div class="form-actions">
           <button
             type="button"
-            id="login-with-code-button-verification"
+            id="login-with-code-button-verification-1"
             class="button button-primary"
           >
             Login with Code
           </button>
           <button
             type="button"
-            id="back-to-login"
+            id="back-to-login-1"
             class="button button-secondary"
           >
             Back to Login
@@ -142,6 +150,81 @@
       </form>
     </div>
 
+    <div id="signin-with-code-container">
+      <form id="signin-with-code-form">
+        <div class="input-group">
+          <label for="signin-email" class="label">Email</label>
+          <input
+            type="email"
+            id="signin-email"
+            class="input"
+            placeholder="Enter your email"
+            required
+          />
+        </div>
+        <div class="form-actions">
+          <button
+            type="button"
+            id="send-verification-code-button"
+            class="button button-primary"
+          >
+            Send Verification Code
+          </button>
+        </div>
+      </form>
+    </div>
+
+    <div id="verification-code-container" style="display: none;">
+      <form id="verification-code-form">
+        <div class="input-group">
+          <label for="verification-code" class="label">Verification Code</label>
+          <input
+            type="text"
+            id="verification-code"
+            class="input"
+            placeholder="Enter verification code"
+            required
+          />
+        </div>
+        <div class="form-actions">
+          <button type="button" id="verify-code-button" class="button button-primary">
+            Verify Code
+          </button>
+          <button type="button" id="back-to-email-button" class="button button-secondary">
+            Back to Email
+          </button>
+        </div>
+        <button
+          type="button"
+          id="login-with-code-button-verification"
+          class="button button-primary"
+        >
+          Login with Code
+        </button>
+        <button
+          type="button"
+          id="back-to-login-button"
+          class="button button-secondary"
+        >
+          Back to Login
+        </button>
+      </form>
+    </div>
+
+    <!-- Lägg till elementet med id="show-login-form" -->
+    <button
+      type="button"
+      id="show-login-form"
+      class="button button-secondary"
+    >
+      Show Login Form
+    </button>
+
     <script type="module" src="{{ url_for('static', filename='js/signin/signin.js') }}"></script>
+    <script>
+      document.getElementById("show-login-form").addEventListener("click", function () {
+        document.getElementById("login-form").style.display = "block";
+      });
+    </script>
   </body>
 </html>

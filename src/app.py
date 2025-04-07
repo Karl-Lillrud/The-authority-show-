@@ -34,6 +34,7 @@ from backend.routes.audio_routes import audio_bp
 from backend.routes.video_routes import video_bp
 
 from backend.routes.highlight import highlights_bp
+from backend.routes.verification import verification_bp
 
 
 
@@ -100,6 +101,7 @@ app.register_blueprint(video_bp)
 # Register the guest_form blueprint with URL prefix
 
 app.register_blueprint(landingpage_bp)
+app.register_blueprint(verification_bp, url_prefix="/verification")
 
 # Set the application environment (defaults to production)
 APP_ENV = os.getenv("APP_ENV", "production")
@@ -128,5 +130,5 @@ start_scheduler(app)
 # Run the app
 if __name__ == "__main__":
     app.run(
-        host="0.0.0.0", port=8000, debug=False
+        host="0.0.0.0", port=8000, debug=True
     )  # Ensure the port matches your request URL
