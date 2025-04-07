@@ -16,17 +16,37 @@
 
     gtag('config', 'G-PTPQQ5WSQV');
   </script>
-</head>
-<body>
-  <!-- Navbar -->
-  <header class="navbar">
-    <div class="container">
-      <div class="logo">PodManager</div>
-      <ul class="nav-links">
-        <li><a href="/">Home</a></li>
-        <li><a href="/episodes">Episodes</a></li>
-        <li><a href="/about">About</a></li>
-      </ul>
+  </head>
+  <body>
+    <header style="
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    background: #1f1f1f;
+    height: 80px;             /* Fast höjd på navbar */
+    display: flex;
+    align-items: center;      /* Vertikal centrering */
+    box-sizing: border-box;
+    z-index: 1000;
+  ">
+    <div style="
+      margin-left: 20px; 
+      display: flex; 
+      align-items: center;
+    ">
+      <a href="/">
+        <!-- Gör logon max 60px hög -->
+        <img
+          src="{{ url_for('static', filename='images/PodManagerLogo.png') }}"
+          alt="PodManager Logo"
+          style="
+            height: 60px;      /* Logons höjd */
+            width: auto;       /* Bevara proportionerna */
+            display: block;
+          "
+        >
+      </a>
     </div>
   </header>
 
