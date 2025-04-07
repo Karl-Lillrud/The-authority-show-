@@ -1,5 +1,10 @@
 #!/bin/bash
 
+# Load environment variables from .env file
+if [ -f .env ]; then
+    export $(grep -v '^#' .env | xargs)
+fi
+
 # Define variables
 RESOURCE_GROUP="PodManager"
 REGISTRY_NAME="podmanageracr"
@@ -26,9 +31,13 @@ else
     echo "Azure Container Registry '$REGISTRY_NAME' already exists."
 fi
 
-# Step 3: Log in to Azure Container Registry (ACR) using Managed Identity
-echo "Logging in to ACR '$REGISTRY_NAME' using Managed Identity..."
-az acr login --name $REGISTRY_NAME
+# Step 3: Log in to Azure Container Registry (ACR) using credentials from .env
+echo "Logging in to ACR '$REGISTRY_NAME' using credentials from .env..."
+if [ -z "$ACR_USERNAME" ] || [ -z "$ACR_PASSWORD" ]; then
+    echo "❌ ERROR: ACR_USERNAME or ACR_PASSWORD is not set in the .env file."
+    exit 1
+fi
+echo "$ACR_PASSWORD" | docker login $REGISTRY_NAME.azurecr.io --username $ACR_USERNAME --password-stdin
 
 # Step 4: Check if the "podmanagerlive" repository exists in ACR
 echo "Checking if repository 'podmanagerlive' exists in ACR..."
@@ -69,12 +78,18 @@ else
     echo "Web App '$WEBAPP_NAME' already exists."
 fi
 
-# Step 10: Configure Web App to use ACR with Managed Identity (No publish profile required)
+# Step 10: Configure Web App to use ACR with credentials from .env
 echo "Configuring Web App to use Docker image from ACR..."
 az webapp config container set --name $WEBAPP_NAME --resource-group $RESOURCE_GROUP \
   --container-registry-url https://$REGISTRY_NAME.azurecr.io \
-  --container-image-name $REGISTRY_NAME.azurecr.io/$IMAGE_NAME:latest
+  --container-image-name $REGISTRY_NAME.azurecr.io/$IMAGE_NAME:latest \
+  --docker-registry-server-user $ACR_USERNAME \
+  --docker-registry-server-password $ACR_PASSWORD
 
 # Step 11: Check the status of the Web App
 echo "Web App '$WEBAPP_NAME' is deployed successfully. Checking the status..."
 az webapp show --name $WEBAPP_NAME --resource-group $RESOURCE_GROUP --output table
+
+# Step 12: Optionally, open the Web App in a browser
+echo "Opening Web App in the default browser..."
+open https://$WEBAPP_NAME.azurewebsites.net
