@@ -72,14 +72,6 @@ class AccountRepository:
             if not account:
                 return {"error": "Account not found"}, 404
             
-            # Convert string fields to datetime
-            if "createdAt" in account and isinstance(account["createdAt"], str):
-                account["createdAt"] = datetime.fromisoformat(account["createdAt"])
-            if "subscriptionStart" in account and isinstance(account["subscriptionStart"], str):
-                account["subscriptionStart"] = datetime.fromisoformat(account["subscriptionStart"])
-            if "subscriptionEnd" in account and isinstance(account["subscriptionEnd"], str) and account["subscriptionEnd"]:
-                account["subscriptionEnd"] = datetime.fromisoformat(account["subscriptionEnd"])
-
             return {"account": account}, 200
 
         except Exception as e:
