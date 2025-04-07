@@ -1,0 +1,34 @@
+{
+  "booking": {
+    "subject": "Booking Information",
+    "template": "emails/booking_email.html"
+  },
+  "preparation": {
+    "subject": "Preparation for Your Recording",
+    "template": "emails/preparation_email.html"
+  },
+  "missing_info": {
+    "subject": "Missing Information Request",
+    "template": "emails/missing_info_email.html"
+  },
+  "publishing_reminder": {
+    "subject": "Episode Publishing Reminder",
+    "template": "emails/publishing_reminder_email.html"
+  },
+  "join_link": {
+    "subject": "Your Join Link for the Recording",
+    "template": "emails/join_link_email.html"
+  },
+  "thank_you": {
+    "subject": "Thank You for a Great Episode",
+    "template": "emails/thank_you_email.html"
+  },
+  "recommendations": {
+    "subject": "We've would love your recommendations",
+    "template": "emails/recommendations_email.html"
+  },
+  "suggestions": {
+    "subject": "Your Episode is Live!",
+    "template": "emails/suggestions_email.html"
+  }
+}
