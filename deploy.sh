@@ -6,6 +6,11 @@ if [ -f .env ]; then
     while IFS='=' read -r key value; do
         # Ignore lines starting with '#' (comments) and empty lines
         if [[ ! "$key" =~ ^# && -n "$key" ]]; then
+            # Strip any leading or trailing spaces or quotes from the key and value
+            key=$(echo "$key" | xargs)
+            value=$(echo "$value" | xargs)
+            # Remove quotes around values if present
+            value=$(echo "$value" | sed 's/^"\(.*\)"$/\1/')
             export "$key"="$value"
         fi
     done < .env
@@ -96,7 +101,5 @@ az webapp config container set --name $WEBAPP_NAME --resource-group $RESOURCE_GR
 echo "Web App '$WEBAPP_NAME' is deployed successfully. Checking the status..."
 az webapp show --name $WEBAPP_NAME --resource-group $RESOURCE_GROUP --output table
 
-
 # Step 12: Happy Message
 echo "RedShadow And Arin Deployed Podmanager Successfully!"
-
