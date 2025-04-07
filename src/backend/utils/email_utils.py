@@ -5,7 +5,8 @@ from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from email.mime.image import MIMEImage  # Added for inline image support
 from dotenv import load_dotenv
-from flask import render_template
+from flask import render_template, Blueprint, request, jsonify
+from backend.repository.guest_repository import GuestRepository
 
 # Load environment variables once
 load_dotenv(override=True)
@@ -17,6 +18,27 @@ SMTP_PORT = os.getenv("SMTP_PORT")
 
 # Configure logger
 logger = logging.getLogger(__name__)
+
+google_calendar_bp = Blueprint("google_calendar", __name__)
+guest_repo = GuestRepository()
+
+@google_calendar_bp.route("/save_google_refresh_token", methods=["POST"])
+def save_google_refresh_token():
+    """
+    Save the Google OAuth2 refresh token in the Guests collection.
+    """
+    try:
+        data = request.json
+        refresh_token = data.get("refreshToken")
+        user_id = request.headers.get("User-ID")  # Assume User-ID is passed in headers
+
+        if not refresh_token or not user_id:
+            return jsonify({"error": "Missing refresh token or user ID"}), 400
+
+        return guest_repo.save_google_refresh_token(user_id, refresh_token)
+    except Exception as e:
+        logger.exception("❌ ERROR: Failed to save Google refresh token")
+        return jsonify({"error": f"Failed to save Google refresh token: {str(e)}"}), 500
 
 
 def send_email(to_email, subject, body, image_path=None):

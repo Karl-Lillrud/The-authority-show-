@@ -5,6 +5,7 @@ import logging
 from backend.models.guests import GuestSchema
 from marshmallow import ValidationError
 import email.utils  # Import to handle parsing date format
+from google.oauth2.credentials import Credentials
 
 logger = logging.getLogger(__name__)
 
@@ -324,3 +325,20 @@ class GuestRepository:
         except Exception as e:
             logger.error(f"Failed to delete guests: {e}", exc_info=True)
             return 0
+
+    def save_google_refresh_token(self, user_id, refresh_token):
+        """
+        Save the Google OAuth2 refresh token in the Guests collection.
+        """
+        try:
+            result = self.collection.update_one(
+                {"user_id": str(user_id)},
+                {"$set": {"googleRefresh": refresh_token}},
+                upsert=True
+            )
+            if result.modified_count > 0 or result.upserted_id:
+                return {"message": "Google refresh token saved successfully"}, 200
+            return {"error": "Failed to save Google refresh token"}, 500
+        except Exception as e:
+            logger.exception("❌ ERROR: Failed to save Google refresh token")
+            return {"error": f"Failed to save Google refresh token: {str(e)}"}, 500

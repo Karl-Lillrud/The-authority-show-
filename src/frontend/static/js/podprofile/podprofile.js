@@ -234,12 +234,44 @@ document.addEventListener("DOMContentLoaded", () => {
   // Calendar Connection Button
   const connectCalendarButton = document.getElementById("connectCalendar");
   if (connectCalendarButton) {
-    connectCalendarButton.addEventListener("click", (event) => {
-      event.preventDefault(); // Prevent page reload
+    connectCalendarButton.addEventListener("click", async (event) => {
+      event.preventDefault();
 
-      // Redirect the browser to the Google OAuth flow
-      window.location.href = "/connect_google_calendar";
+      try {
+        // Redirect to Google OAuth flow
+        const response = await fetch("/connect_google_calendar");
+        if (!response.ok) throw new Error("Failed to initiate Google OAuth flow");
+
+        const { authUrl } = await response.json();
+        window.location.href = authUrl;
+      } catch (error) {
+        console.error("Error connecting to Google Calendar:", error);
+        alert("Failed to connect to Google Calendar. Please try again.");
+      }
     });
+  }
+
+  // Save Google refresh token after OAuth flow
+  const urlParams = new URLSearchParams(window.location.search);
+  const googleToken = urlParams.get("googleToken");
+  if (googleToken) {
+    try {
+      fetch("/save_google_refresh_token", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ refreshToken: googleToken }),
+      })
+        .then((res) => res.json())
+        .then((data) => {
+          if (data.message) {
+            console.log("Google refresh token saved successfully.");
+          } else {
+            console.error("Error saving Google refresh token:", data.error);
+          }
+        });
+    } catch (error) {
+      console.error("Error saving Google refresh token:", error);
+    }
   }
 
   // Function to display podcast preview with enhanced UI
