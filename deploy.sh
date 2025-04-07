@@ -5,13 +5,16 @@ if [ -f .env ]; then
     # Loop through each line in the .env file and export variables manually
     while IFS='=' read -r key value; do
         # Ignore lines starting with '#' (comments) and empty lines
-        if [[ ! "$key" =~ ^# && -n "$key" ]]; then
+        if [[ ! "$key" =~ ^# && -n "$key" && "$value" =~ .*=.* ]]; then
             # Strip any leading or trailing spaces or quotes from the key and value
             key=$(echo "$key" | xargs)
             value=$(echo "$value" | xargs)
             # Remove quotes around values if present
             value=$(echo "$value" | sed 's/^"\(.*\)"$/\1/')
-            export "$key"="$value"
+            # Avoid exporting invalid keys or empty variables
+            if [[ -n "$key" && -n "$value" ]]; then
+                export "$key"="$value"
+            fi
         fi
     done < .env
 fi
