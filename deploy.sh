@@ -8,11 +8,7 @@ WEBAPP_NAME="podmanager"
 APP_SERVICE_PLAN="podmanagersp"
 LOCATION="northeu" # e.g., "eastus"
 
-# Step 1: Ensure Azure login
-echo "Logging into Azure..."
-az login --output none
-
-# Step 2: Check if Resource Group exists
+# Step 1: Check if Resource Group exists
 echo "Checking if Resource Group '$RESOURCE_GROUP' exists..."
 if ! az group exists --name $RESOURCE_GROUP; then
     echo "Creating Resource Group '$RESOURCE_GROUP' in $LOCATION..."
@@ -21,7 +17,7 @@ else
     echo "Resource Group '$RESOURCE_GROUP' already exists."
 fi
 
-# Step 3: Check if Azure Container Registry (ACR) exists
+# Step 2: Check if Azure Container Registry (ACR) exists
 echo "Checking if Azure Container Registry '$REGISTRY_NAME' exists..."
 if ! az acr show --name $REGISTRY_NAME --resource-group $RESOURCE_GROUP --output none; then
     echo "Creating Azure Container Registry '$REGISTRY_NAME'..."
@@ -30,32 +26,32 @@ else
     echo "Azure Container Registry '$REGISTRY_NAME' already exists."
 fi
 
-# Step 4: Log in to Azure Container Registry (ACR)
-echo "Logging in to ACR '$REGISTRY_NAME'..."
+# Step 3: Log in to Azure Container Registry (ACR) using Managed Identity
+echo "Logging in to ACR '$REGISTRY_NAME' using Managed Identity..."
 az acr login --name $REGISTRY_NAME
 
-# Step 5: Check if the "podmanagerlive" repository exists in ACR
+# Step 4: Check if the "podmanagerlive" repository exists in ACR
 echo "Checking if repository 'podmanagerlive' exists in ACR..."
-if az acr repository list --name $REGISTRY_NAME --output tsv | grep -q "podmanagerlive"; then
+if az acr repository show --name $REGISTRY_NAME --repository podmanagerlive --output none; then
     echo "Repository 'podmanagerlive' exists. Deleting repository and its contents..."
     az acr repository delete --name $REGISTRY_NAME --repository podmanagerlive --yes --output none
 else
     echo "Repository 'podmanagerlive' does not exist. No need to delete."
 fi
 
-# Step 6: Build Docker Image
+# Step 5: Build Docker Image
 echo "Building Docker image '$IMAGE_NAME'..."
 docker build -t $IMAGE_NAME .
 
-# Step 7: Tag Docker Image for ACR
+# Step 6: Tag Docker Image for ACR
 echo "Tagging Docker image '$IMAGE_NAME' with ACR tag..."
 docker tag $IMAGE_NAME $REGISTRY_NAME.azurecr.io/$IMAGE_NAME:latest
 
-# Step 8: Push Docker Image to ACR
+# Step 7: Push Docker Image to ACR
 echo "Pushing Docker image to ACR..."
 docker push $REGISTRY_NAME.azurecr.io/$IMAGE_NAME:latest
 
-# Step 9: Check if App Service Plan exists
+# Step 8: Check if App Service Plan exists
 echo "Checking if App Service Plan '$APP_SERVICE_PLAN' exists..."
 if ! az appservice plan show --name $APP_SERVICE_PLAN --resource-group $RESOURCE_GROUP --output none; then
     echo "Creating App Service Plan '$APP_SERVICE_PLAN'..."
@@ -64,7 +60,7 @@ else
     echo "App Service Plan '$APP_SERVICE_PLAN' already exists."
 fi
 
-# Step 10: Check if Web App exists
+# Step 9: Check if Web App exists
 echo "Checking if Web App '$WEBAPP_NAME' exists..."
 if ! az webapp show --name $WEBAPP_NAME --resource-group $RESOURCE_GROUP --output none; then
     echo "Creating Web App '$WEBAPP_NAME' for container deployment..."
@@ -73,16 +69,16 @@ else
     echo "Web App '$WEBAPP_NAME' already exists."
 fi
 
-# Step 11: Configure Web App to use ACR with Managed Identity (No publish profile required)
+# Step 10: Configure Web App to use ACR with Managed Identity (No publish profile required)
 echo "Configuring Web App to use Docker image from ACR..."
 az webapp config container set --name $WEBAPP_NAME --resource-group $RESOURCE_GROUP \
   --docker-registry-server-url https://$REGISTRY_NAME.azurecr.io \
   --docker-custom-image-name $REGISTRY_NAME.azurecr.io/$IMAGE_NAME:latest
 
-# Step 12: Check the status of the Web App
+# Step 11: Check the status of the Web App
 echo "Web App '$WEBAPP_NAME' is deployed successfully. Checking the status..."
 az webapp show --name $WEBAPP_NAME --resource-group $RESOURCE_GROUP --output table
 
-# Step 13: Optionally, open the Web App in a browser
+# Step 12: Optionally, open the Web App in a browser
 echo "Opening Web App in the default browser..."
 open https://$WEBAPP_NAME.azurewebsites.net
