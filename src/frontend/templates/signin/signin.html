@@ -37,62 +37,93 @@
       ></div>
       <div id="error-message" class="error-message" style="display: none"></div>
 
-      <form id="signin-form">
-        <div class="input-group">
-          <label for="email" class="label"></label>
-          <input
-            type="email"
-            id="email"
-            name="email"
-            class="input"
-            placeholder="Email"
-            required
-          />
-        </div>
-        <div class="input-group">
-          <label for="password" class="label"></label>
-          <input
-            type="password"
-            id="password"
-            name="password"
-            class="input"
-            placeholder="Password"
-            required
-          />
-        </div>
+      <div id="signin-container">
+        <form id="signin-form">
+          <div class="input-group">
+            <label for="email" class="label"></label>
+            <input
+              type="email"
+              id="email"
+              name="email"
+              class="input"
+              placeholder="Email"
+              required
+            />
+          </div>
+          <div class="input-group">
+            <label for="password" class="label"></label>
+            <input
+              type="password"
+              id="password"
+              name="password"
+              class="input"
+              placeholder="Password"
+              required
+            />
+          </div>
 
-        <div class="forgot-password-link">
-          <a href="/forgotpassword" class="link">Forgot Password?</a>
-        </div>
+          <div class="forgot-password-link">
+            <a href="/forgotpassword" class="link">Forgot Password?</a>
+          </div>
 
-        <div class="form-actions">
-          <!-- Button to send verification code -->
-          <button
-            type="button"
-            id="send-code-button"
-            class="button button-secondary"
-          >
-            Send Verification Code
-          </button>
-          <!-- Sign In button -->
-          <button type="submit" class="button button-primary">Sign In</button>
-        </div>
+          <div class="form-actions">
+            <!-- Button to initiate "Sign In with Verification Code" -->
+            <button
+              type="button"
+              id="signin-with-code-button"
+              class="button button-secondary"
+            >
+              Sign In with Verification Code
+            </button>
+            <!-- Sign In button -->
+            <button type="submit" class="button button-primary">Sign In</button>
+          </div>
 
-        <div class="register-link">
-          <a href="{{ url_for('auth_bp.register_page') }}" class="link">
-            Don't Have an Account? Register Here</a
-          >
-        </div>
-        <div class="policy-links">
-          <a href="{{ url_for('frontend.terms_of_service_page') }}" class="link"
-            >Terms of Service</a
-          >
-          |
-          <a href="{{ url_for('frontend.privacy_policy_page') }}" class="link"
-            >Privacy Policy</a
-          >
-        </div>
-      </form>
+          <div class="register-link">
+            <a href="{{ url_for('auth_bp.register_page') }}" class="link">
+              Don't Have an Account? Register Here</a
+            >
+          </div>
+          <div class="policy-links">
+            <a href="{{ url_for('frontend.terms_of_service_page') }}" class="link"
+              >Terms of Service</a
+            >
+            |
+            <a href="{{ url_for('frontend.privacy_policy_page') }}" class="link"
+              >Privacy Policy</a
+            >
+          </div>
+        </form>
+      </div>
+
+      <!-- New container for "Sign In with Verification Code" -->
+      <div id="verification-code-container" style="display: none;">
+        <h2>Sign In with Verification Code</h2>
+        <form id="verification-code-form">
+          <div class="input-group">
+            <input
+              type="email"
+              id="verification-email"
+              class="input"
+              placeholder="Enter your email"
+              required
+            />
+          </div>
+          <div class="input-group" id="verification-code-group" style="display: none;">
+            <input
+              type="text"
+              id="verification-code"
+              class="input"
+              placeholder="Enter verification code"
+              required
+            />
+          </div>
+          <div class="form-actions">
+            <button type="submit" class="button button-primary">Verify and Sign In</button>
+          </div>
+        </form>
+        <p><a href="/" class="link">Back to Login</a></p>
+      </div>
     </div>
     <script type="module" src="{{ url_for('static', filename='js/signin/signin.js') }}"></script>
   </body>

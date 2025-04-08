@@ -144,3 +144,26 @@ def register_team_member_submit():
                 response["teamId"] = invite_response.get("teamId")
                 response["teamMessage"] = invite_response.get("message")
     return jsonify(response), status_code
+
+
+@auth_bp.route("/verify-and-signin", methods=["POST"])
+def verify_and_signin():
+    """
+    Endpoint to verify the code and sign in the user.
+    """
+    if request.content_type != "application/json":
+        return jsonify({"error": "Invalid Content-Type. Expected application/json"}), 415
+
+    data = request.get_json()
+    email = data.get("email")
+    code = data.get("code")
+
+    if not email or not code:
+        return jsonify({"error": "Email and code are required"}), 400
+
+    try:
+        # Call the AuthService to verify the code and log in the user
+        result = auth_service.verify_code_and_login(email, code)
+        return jsonify(result), result.get("status", 200)
+    except Exception as e:
+        return jsonify({"error": f"Failed to verify code: {str(e)}"}), 500
