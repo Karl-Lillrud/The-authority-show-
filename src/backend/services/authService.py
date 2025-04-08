@@ -171,7 +171,49 @@ class AuthService:
             upsert=True
         )
 
+    def generate_verification_code(self, email):
+        """
+        Generate a verification code and save it in the database.
+        """
+        # Generate a 6-digit verification code
+        code = str(random.randint(100000, 999999))
 
+        # Hash the verification code for security
+        hashed_code = hashlib.sha256(code.encode()).hexdigest()
+
+        # Set the expiration time for the code (e.g., 10 minutes from now)
+        expiration_time = datetime.utcnow() + timedelta(minutes=10)
+
+        # Save the hashed code and expiration time in the database
+        self.user_collection.update_one(
+            {"email": email},
+            {
+                "$set": {
+                    "verification_code": hashed_code,
+                    "code_expires_at": expiration_time,
+                }
+            },
+            upsert=True,
+        )
+
+        return code
+
+    def send_login_email(self, email, login_link):
+        """
+        Send a log-in link to the user's email.
+        """
+        subject = "Your Log-In Link"
+        body = f"""
+        <html>
+            <body>
+                <p>Hello,</p>
+                <p>Click the link below to log in:</p>
+                <a href="{login_link}">{login_link}</a>
+                <p>This link is valid for 10 minutes.</p>
+            </body>
+        </html>
+        """
+        send_email(email, subject, body)
 
     def _authenticate_user(self, email, password):
         """Authenticate user with email and password."""

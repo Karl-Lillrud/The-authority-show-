@@ -167,3 +167,30 @@ def verify_and_signin():
         return jsonify(result), result.get("status", 200)
     except Exception as e:
         return jsonify({"error": f"Failed to verify code: {str(e)}"}), 500
+
+
+@auth_bp.route("/send-login-link", methods=["POST"])
+def send_login_link():
+    """
+    Endpoint to send a log-in link to the user's email.
+    """
+    if request.content_type != "application/json":
+        return jsonify({"error": "Invalid Content-Type. Expected application/json"}), 415
+
+    data = request.get_json()
+    email = data.get("email")
+
+    if not email:
+        return jsonify({"error": "Email is required"}), 400
+
+    try:
+        # Generate a verification code and save it in the database
+        verification_code = auth_service.generate_verification_code(email)
+
+        # Send the log-in link via email
+        login_link = f"{request.host_url}dashboard?code={verification_code}&email={email}"
+        auth_service.send_login_email(email, login_link)
+
+        return jsonify({"message": "Log-in link sent successfully"}), 200
+    except Exception as e:
+        return jsonify({"error": f"Failed to send log-in link: {str(e)}"}), 500
