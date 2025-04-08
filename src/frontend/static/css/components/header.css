@@ -523,3 +523,14 @@ header:hover {
     height: 24px; /* Smaller height */
   }
 }
+.credits-info {
+  padding: var(--spacing-sm);
+  background-color: var(--background-light);
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  border-radius: var(--radius-small);
+  font-size: 0.85rem;
+  color: var(--text-color-light);
+  margin-left: var(--spacing-lg);
+  display: flex;
+  align-items: center;
+}
