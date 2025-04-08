@@ -114,9 +114,11 @@ def podcastmanagement():
     """
     Serves the podcast management page.
     """
-    if "user_id" not in session:
+    if "user_id" not in session or not session.get("user_id"):
         logger.warning("User is not logged in. Redirecting to sign-in page.")
         return redirect(url_for("auth_bp.signin", error="You must be logged in to access the dashboard."))
+    
+    logger.info(f"User {session['email']} accessed the podcast management page.")
     return render_template("podcastmanagement/podcastmanagement.html")
 
 
