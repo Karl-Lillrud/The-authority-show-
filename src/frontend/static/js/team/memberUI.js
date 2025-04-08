@@ -24,6 +24,10 @@ export async function renderMembersView() {
   try {
     const teams = await getTeamsRequest();
     const membersView = document.getElementById("members-view-container");
+    if (!teams || teams.length === 0) {
+      membersView.innerHTML = `<p>No members available.</p>`;
+      return;
+    }
     for (const team of teams) {
       if (team.members && Array.isArray(team.members)) {
         team.members.forEach((member) => {
@@ -544,6 +548,7 @@ export async function handleAddMemberFormSubmission(e) {
   }
 
   try {
+    document.getElementById("addMemberModal").classList.remove("show");
     const inviteResult = await sendTeamInviteRequest(teamId, email, role);
     const addMemberResult = await addTeamMemberRequest(teamId, email, role);
 
@@ -553,7 +558,6 @@ export async function handleAddMemberFormSubmission(e) {
     }
 
     showNotification("Success", "Member added successfully!", "success");
-    document.getElementById("addMemberModal").classList.remove("show");
     const teams = await getTeamsRequest();
     updateTeamsUI(teams);
   } catch (error) {

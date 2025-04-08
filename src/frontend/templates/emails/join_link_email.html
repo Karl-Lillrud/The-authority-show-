@@ -1,0 +1,16 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <title>Your Join Link for the Recording</title>
+  </head>
+  <body>
+    <!--should be checking for status: not recorded and then check if its 1 day before-->
+    <h1>Hello {{ guest_name }},</h1>
+    <p>Your recording session is about to start soon.</p>
+    <p>Please click the link below to join the session:</p>
+    <p><a href="{{ join_link }}">Join Your Session</a></p>
+    <p>See you soon!</p>
+    <p>Best regards,<br>{{ podName }}</p>
+  </body>
+</html>

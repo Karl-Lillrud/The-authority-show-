@@ -27,3 +27,4 @@ credentials.json
 aitranscription_env/
 *.conda
 .conda/
+.DS_Store

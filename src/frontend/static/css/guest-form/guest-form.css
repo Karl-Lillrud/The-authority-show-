@@ -46,7 +46,6 @@ body {
   display: inline-block; /* Gör etiketten inline-block för att den ska bete sig som en knapp */
   margin-top: 0.5rem; /* Övre marginal */
 }
-
 #profilePhotoLabel:hover {
   background-color: rgb(202, 209, 215);
 }
@@ -75,7 +74,6 @@ body {
 #openDatePicker:hover {
   background-color: rgb(202, 209, 215);
 }
-
 button[type="submit"] {
   width: 100%; /* Fyller hela bredden av föräldraelementet, motsvarande w-full */
   background-color: #ff7f50;

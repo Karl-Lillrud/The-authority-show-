@@ -15,42 +15,39 @@
     <span id="page-title" class="page-title"></span>
   </div>
   <nav class="header-nav">
-    <div
-      class="custom-dropdown"
-      id="headerPodcastDropdown"
-      style="display: none"
-    >
+    <div class="custom-dropdown" id="headerPodcastDropdown">
       <div class="dropdown-selected">Select a Podcast</div>
-      <div class="dropdown-options">
-        <!-- Options will be dynamiskt genererade -->
+      <div class="dropdown-options" id="header-dropdown-options">
+        <!-- JS will insert options here -->
       </div>
     </div>
-
+    <!-- New Credits Display Field -->
+    <script>
+      const currentUserID = "{{ session['user_id'] or '' }}";
+    </script>
+    <div class="credits-info">
+      Credits: <span id="user-credits">Loading...</span>
+    </div>
     <div class="menu-toggle" onclick="toggleMenu()">
       <span></span>
       <span></span>
       <span></span>
     </div>
     <div class="menu" id="menu">
-      <!-- <a href="{{ url_for('dashboard_bp.account') }}">Account</a>
-      <a href="{{ url_for('dashboard_bp.taskmanagement') }}">Task Management</a>-->
-
-      <!-- <a href="{{ url_for('dashboard_bp.team') }}">Team Members</a>>-->
-
       <a href="{{ url_for('dashboard_bp.account') }}">Account</a>
-
       <a href="{{ url_for('dashboard_bp.taskmanagement') }}">Episode To-Do</a>
       <a href="{{ url_for('dashboard_bp.team') }}">Team Management</a>
       <a href="{{ url_for('dashboard_bp.podcastmanagement') }}">Podcast Management</a>
+      <a href="#" id="ai-edit-link" target="_blank">AI Edit</a>
       <a href="#" class="dropdown-trigger" onclick="toggleLandingPage()">Landing Pages<span id="triangle" class="triangle-down"></span></a>
       <!-- Dropdown content that will appear next to the "Landing Page" link -->
-      <div class="dropdown-content" id="dropdown-content">
-        <div class="dropdown-options">
+      <div class="dropdown-lp-content" id="dropdown-lp-content">
+        <div class="dropdown-lp-options">
           <!-- Podcast options will be inserted here dynamically -->
         </div>
       </div>
       <a href="{{ url_for('auth_bp.signin') }}" id="logout-link">Log out</a>
-  </div>
+    </div>
   </nav>
 </header>
 
@@ -69,24 +66,6 @@
 <script
   type="module"
   src="{{ url_for('static', filename='js/components/header.js') }}"
+  
 ></script>
 
-<script>
-  document.addEventListener("DOMContentLoaded", function () {
-    // Dynamically set the page title based on the current page
-    const pageTitleElement = document.getElementById("page-title");
-    if (pageTitleElement) {
-      const pageTitles = {
-        "/podcastmanagement": "Podcast Management",
-        "/dashboard": "Dashboard",
-        "/team": "Team Members",
-        "/guest": "Guest View",
-        "/taskmanagement": "Task Management"
-      };
-
-      const currentPath = window.location.pathname;
-      const pageTitle = pageTitles[currentPath] || "PodManager";
-      pageTitleElement.textContent = pageTitle;
-    }
-  });
-</script>

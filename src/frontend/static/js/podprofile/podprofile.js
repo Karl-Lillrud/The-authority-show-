@@ -12,12 +12,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const podRssInput = document.getElementById("podRss");
   const podNameInput = document.getElementById("podName");
   const creditsContainer = document.getElementById("creditsContainer");
-  const podcastPreviewContainer = document.getElementById("podcast-preview");
-  const episodesCarouselContainer =
-    document.getElementById("episodes-carousel");
-  const episodesSlider = document.getElementById("episodes-slider");
-  const prevEpisodesBtn = document.getElementById("prev-episodes");
-  const nextEpisodesBtn = document.getElementById("next-episodes");
+  const podcastContainer = document.getElementById("podcast-container");
 
   let currentRssData = null;
   let currentlyPlayingAudio = null;
@@ -50,14 +45,14 @@ document.addEventListener("DOMContentLoaded", () => {
         if (rssUrl) {
           try {
             // Show loading indicator
-            if (podcastPreviewContainer) {
-              podcastPreviewContainer.innerHTML = `
+            if (podcastContainer) {
+              podcastContainer.innerHTML = `
               <div class="loading-container">
                 <div class="loading-spinner"></div>
                 <div class="loading-text">Loading podcast data...</div>
               </div>
             `;
-              podcastPreviewContainer.classList.remove("hidden");
+              podcastContainer.classList.remove("hidden");
             }
 
             // Fetch RSS data
@@ -71,18 +66,13 @@ document.addEventListener("DOMContentLoaded", () => {
             }
 
             // Display podcast preview if container exists
-            if (podcastPreviewContainer) {
-              displayPodcastPreview(rssData);
-            }
-
-            // Display episodes carousel
-            if (episodesCarouselContainer && episodesSlider) {
-              displayEpisodesCarousel(rssData.episodes || []);
+            if (podcastContainer) {
+              displayPodcastData(rssData);
             }
           } catch (error) {
             console.error("Error processing RSS feed:", error);
-            if (podcastPreviewContainer) {
-              podcastPreviewContainer.innerHTML = `
+            if (podcastContainer) {
+              podcastContainer.innerHTML = `
               <div class="error-container">
                 <strong>Error loading podcast:</strong> ${error.message}
               </div>
@@ -325,7 +315,101 @@ document.addEventListener("DOMContentLoaded", () => {
     const languageDisplay =
       rssData.language === "en" ? "English" : rssData.language;
 
-    podcastPreviewContainer.innerHTML = `
+    // Format episodes
+    const episodesHtml = rssData.episodes
+      ? rssData.episodes
+          .map((episode, index) => {
+            // Format date
+            const pubDate = new Date(episode.pubDate);
+            const formattedDate = isNaN(pubDate)
+              ? episode.pubDate
+              : pubDate.toLocaleDateString();
+
+            // Format duration from seconds to HH:MM:SS
+            let formattedDuration = "";
+            if (episode.duration) {
+              const hours = Math.floor(episode.duration / 3600);
+              const minutes = Math.floor((episode.duration % 3600) / 60);
+              const seconds = episode.duration % 60;
+              formattedDuration = `${hours > 0 ? `${hours}:` : ""}${minutes
+                .toString()
+                .padStart(2, "0")}:${seconds.toString().padStart(2, "0")}`;
+            }
+
+            // Generate unique ID for this episode
+            const episodeId = `episode-${index}-${Date.now()}`;
+
+            return `
+              <div class="episode-card" data-episode-id="${episodeId}">
+                <div class="episode-image-container">
+                  <img src="${
+                    episode.image || "/placeholder.svg?height=300&width=300"
+                  }" alt="${episode.title}" class="episode-image">
+                  <div class="episode-play-overlay">
+                    <button class="episode-play-btn" data-audio-url="${
+                      episode.audio?.url
+                    }" data-episode-id="${episodeId}">
+                      <i class="fas fa-play"></i>
+                    </button>
+                  </div>
+                  <div class="now-playing" id="now-playing-${episodeId}">
+                    <span class="pulse"></span>Now Playing
+                  </div>
+                </div>
+                <div class="episode-content">
+                  <h3 class="episode-title">${episode.title}</h3>
+                  <div class="episode-meta">
+                    <span><i class="fas fa-calendar"></i> ${formattedDate}</span>
+                    ${
+                      formattedDuration
+                        ? `<span><i class="fas fa-clock"></i> ${formattedDuration}</span>`
+                        : ""
+                    }
+                    ${
+                      episode.season && episode.episode
+                        ? `<span><i class="fas fa-list-ol"></i> S${episode.season} E${episode.episode}</span>`
+                        : ""
+                    }
+                    ${
+                      episode.explicit === "Yes"
+                        ? `<span class="explicit-tag"><i class="fas fa-exclamation-circle"></i> Explicit</span>`
+                        : ""
+                    }
+                  </div>
+                  <div class="episode-description" id="desc-${episodeId}">
+                    ${
+                      episode.summary ||
+                      episode.description ||
+                      "No description available."
+                    }
+                  </div>
+                  <div class="episode-actions">
+                    <button class="episode-btn primary" data-audio-url="${
+                      episode.audio?.url
+                    }" data-episode-id="${episodeId}">
+                      <i class="fas fa-play"></i> Play
+                    </button>
+                    <button class="episode-btn secondary toggle-description" data-desc-id="desc-${episodeId}">
+                      <i class="fas fa-ellipsis-h"></i> More
+                    </button>
+                  </div>
+                  <div class="audio-player" id="player-${episodeId}">
+                    <audio controls>
+                      <source src="${episode.audio?.url}" type="${
+              episode.audio?.type || "audio/mpeg"
+            }">
+                      Your browser does not support the audio element.
+                    </audio>
+                  </div>
+                </div>
+              </div>
+            `;
+          })
+          .join("")
+      : "";
+
+    // Build the complete HTML for the unified container
+    podcastContainer.innerHTML = `
       <div class="podcast-header">
         <img src="${
           rssData.imageUrl || "/placeholder.svg?height=300&width=300"
@@ -347,9 +431,6 @@ document.addEventListener("DOMContentLoaded", () => {
             <span class="podcast-meta-item"><i class="fas fa-microphone"></i> ${
               (rssData.episodes || []).length
             } Episodes</span>
-            
-         
-            
           </div>
           <div class="podcast-actions">
             ${
@@ -370,179 +451,82 @@ document.addEventListener("DOMContentLoaded", () => {
           </div>
         </div>
       </div>
-      <div class="podcast-body">
-        ${
-          rssData.description
-            ? `<div class="podcast-description">${rssData.description}</div>`
-            : ""
-        }
-        ${
-          rssData.copyright_info
-            ? `<p class="podcast-copyright">© ${rssData.copyright_info}</p>`
-            : ""
-        }
-        ${
-          rssData.itunesOwner.name || rssData.itunesOwner.email
-            ? `
-            <h3 class="podcast-section-title">Owner</h3>
-            <div class="podcast-owner">
-              ${
-                rssData.itunesOwner.name
-                  ? `<p><i class="fas fa-user"></i> ${rssData.itunesOwner.name}</p>`
-                  : ""
-              }
-              ${
-                rssData.itunesOwner.email
-                  ? `<p><i class="fas fa-envelope"></i> <a href="mailto:${rssData.itunesOwner.email}">${rssData.itunesOwner.email}</a></p>`
-                  : ""
-              }
-            </div>
-          `
-            : ""
-        }
-        ${
-          rssData.generator || rssData.lastBuildDate
-            ? `
-            <h3 class="podcast-section-title">Details</h3>
-            <div class="podcast-details">
-              ${
-                rssData.generator
-                  ? `<p><i class="fas fa-cogs"></i> Generated by: ${rssData.generator}</p>`
-                  : ""
-              }
-              ${
-                rssData.lastBuildDate
-                  ? `<p><i class="fas fa-clock"></i> Last Updated: ${new Date(
-                      rssData.lastBuildDate
-                    ).toLocaleString()}</p>`
-                  : ""
-              }
-            </div>
-          `
-            : ""
-        }
-        ${
-          socialMediaLinks
-            ? `
-            <h3 class="podcast-section-title">Connect</h3>
-            <div class="social-links">
-              ${socialMediaLinks}
-            </div>
-          `
-            : ""
-        }
+      <div class="podcast-content">
+        <div class="podcast-details">
+          ${
+            rssData.description
+              ? `<div class="podcast-description">${rssData.description}</div>`
+              : ""
+          }
+          ${
+            rssData.copyright_info
+              ? `<p class="podcast-copyright">© ${rssData.copyright_info}</p>`
+              : ""
+          }
+          ${
+            rssData.itunesOwner.name || rssData.itunesOwner.email
+              ? `
+              <h3 class="podcast-section-title">Owner</h3>
+              <div class="podcast-owner">
+                ${
+                  rssData.itunesOwner.name
+                    ? `<p><i class="fas fa-user"></i> ${rssData.itunesOwner.name}</p>`
+                    : ""
+                }
+                ${
+                  rssData.itunesOwner.email
+                    ? `<p><i class="fas fa-envelope"></i> <a href="mailto:${rssData.itunesOwner.email}">${rssData.itunesOwner.email}</a></p>`
+                    : ""
+                }
+              </div>
+            `
+              : ""
+          }
+          ${
+            rssData.generator || rssData.lastBuildDate
+              ? `
+              <h3 class="podcast-section-title">Details</h3>
+              <div class="podcast-details">
+                ${
+                  rssData.generator
+                    ? `<p><i class="fas fa-cogs"></i> Generated by: ${rssData.generator}</p>`
+                    : ""
+                }
+                ${
+                  rssData.lastBuildDate
+                    ? `<p><i class="fas fa-clock"></i> Last Updated: ${new Date(
+                        rssData.lastBuildDate
+                      ).toLocaleString()}</p>`
+                    : ""
+                }
+              </div>
+            `
+              : ""
+          }
+          ${
+            socialMediaLinks
+              ? `
+              <h3 class="podcast-section-title">Connect</h3>
+              <div class="social-links">
+                ${socialMediaLinks}
+              </div>
+            `
+              : ""
+          }
+        </div>
+        <div class="episodes-list">
+          <div class="episodes-header">
+            <h2>Episodes</h2>
+          </div>
+          ${episodesHtml}
+        </div>
       </div>
     `;
-  }
-  // Function to display episodes in a horizontal carousel
-  function displayEpisodesCarousel(episodes) {
-    if (!episodesCarouselContainer || !episodesSlider || episodes.length === 0)
-      return;
 
-    episodesCarouselContainer.classList.remove("hidden");
-    episodesSlider.innerHTML = "";
-
-    episodes.forEach((episode, index) => {
-      // Format date
-      const pubDate = new Date(episode.pubDate);
-      const formattedDate = isNaN(pubDate)
-        ? episode.pubDate
-        : pubDate.toLocaleDateString();
-
-      // Format duration from seconds to HH:MM:SS
-      let formattedDuration = "";
-      if (episode.duration) {
-        const hours = Math.floor(episode.duration / 3600);
-        const minutes = Math.floor((episode.duration % 3600) / 60);
-        const seconds = episode.duration % 60;
-        formattedDuration = `${hours > 0 ? `${hours}:` : ""}${minutes
-          .toString()
-          .padStart(2, "0")}:${seconds.toString().padStart(2, "0")}`;
-      }
-
-      // Generate unique ID for this episode
-      const episodeId = `episode-${index}-${Date.now()}`;
-
-      const episodeCard = document.createElement("div");
-      episodeCard.className = "episode-card";
-      episodeCard.dataset.episodeId = episodeId;
-
-      episodeCard.innerHTML = `
-        <div class="episode-image-container">
-          <img src="${
-            episode.image || "/placeholder.svg?height=300&width=300"
-          }" alt="${episode.title}" class="episode-image">
-          <div class="episode-play-overlay">
-            <button class="episode-play-btn" data-audio-url="${
-              episode.audio?.url
-            }" data-episode-id="${episodeId}">
-              <i class="fas fa-play"></i>
-            </button>
-          </div>
-          <div class="now-playing" id="now-playing-${episodeId}">
-            <span class="pulse"></span>Now Playing
-          </div>
-        </div>
-        <div class="episode-content">
-          <h3 class="episode-title">${episode.title}</h3>
-          <div class="episode-meta">
-            <span>${formattedDate}</span>
-            ${formattedDuration ? `<span>${formattedDuration}</span>` : ""}
-            ${
-              episode.season && episode.episode
-                ? `<span>S${episode.season} E${episode.episode}</span>`
-                : ""
-            }
-            ${
-              episode.explicit === "Yes"
-                ? `<span class="explicit-tag">E</span>`
-                : ""
-            }
-          </div>
-          <div class="episode-description" id="desc-${episodeId}">
-            ${
-              episode.summary ||
-              episode.description ||
-              "No description available."
-            }
-            ${
-              episode.author && episode.author !== currentRssData.author
-                ? `<p><i class="fas fa-user"></i> ${episode.author}</p>`
-                : ""
-            }
-            ${
-              episode.link
-                ? `<p><a href="${episode.link}" target="_blank">Listen on Source</a></p>`
-                : ""
-            }
-          </div>
-          <div class="episode-actions">
-            <button class="episode-btn primary" data-audio-url="${
-              episode.audio?.url
-            }" data-episode-id="${episodeId}">
-              <i class="fas fa-play"></i> Play
-            </button>
-            <button class="episode-btn secondary toggle-description" data-desc-id="desc-${episodeId}">
-              <i class="fas fa-ellipsis-h"></i> More
-            </button>
-          </div>
-          <div class="audio-player" id="player-${episodeId}">
-            <audio controls>
-              <source src="${episode.audio?.url}" type="${
-        episode.audio?.type || "audio/mpeg"
-      }">episodic
-              Your browser does not support the audio element.
-            </audio>
-          </div>
-        </div>
-      `;
-
-      episodesSlider.appendChild(episodeCard);
-    });
-
+    // Setup episode interactions after rendering
     setupEpisodeInteractions();
-    setupCarouselNavigation();
   }
+
   // Function to setup episode interactions
   function setupEpisodeInteractions() {
     // Play buttons
@@ -573,28 +557,6 @@ document.addEventListener("DOMContentLoaded", () => {
             ? '<i class="fas fa-chevron-up"></i> Less'
             : '<i class="fas fa-ellipsis-h"></i> More';
         }
-      });
-    });
-  }
-
-  // Function to setup carousel navigation
-  function setupCarouselNavigation() {
-    if (!prevEpisodesBtn || !nextEpisodesBtn || !episodesSlider) return;
-
-    // Scroll amount (width of one episode card)
-    const scrollAmount = episodesSlider.offsetWidth; // Use the slider's width to ensure one full card is shown
-
-    prevEpisodesBtn.addEventListener("click", () => {
-      episodesSlider.scrollBy({
-        left: -scrollAmount,
-        behavior: "smooth"
-      });
-    });
-
-    nextEpisodesBtn.addEventListener("click", () => {
-      episodesSlider.scrollBy({
-        left: scrollAmount,
-        behavior: "smooth"
       });
     });
   }
