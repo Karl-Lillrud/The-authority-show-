@@ -55,6 +55,14 @@
       <!-- Pod Name Section -->
       <div class="container" id="pod-name-section">
         <h1 class="fancy-heading">POD INFO</h1>
+        
+        <!-- Connect Your Calendar Button -->
+        <div class="form-group">
+          <button id="connectCalendar" class="button-primary">
+            Connect Your Calendar
+          </button>
+        </div>
+
         <form id="podNameForm">
           <div class="form-group">
             <div
@@ -77,9 +85,18 @@
             <input type="text" id="podName" name="podName" required />
           </div>
 
+          <!-- Add spacing between Podcast's Name and Connect Your Calendar -->
+          <div style="height: var(--spacing-md);"></div>
+
           <div class="form-group">
-            <button id="connectCalendar" class="button-primary">
+            <button id="connectCalendar" class="button-primary connect-calendar-button">
               Connect Your Calendar
+              <span class="help-button calendar-help-button">
+                ?
+                <span class="help-text calendar-help-text">
+                  To connect your calendar, log in to your calendar provider, navigate to your calendar settings or API/Sync options, and paste your calendar URL here.
+                </span>
+              </span>
             </button>
           </div>
 
@@ -112,5 +129,28 @@
       src="https://unpkg.com/lazysizes@5.3.2/lazysizes.min.js"
       async
     ></script>
+    <script>
+      // Extract googleToken from URL and save it as refreshToken
+      const urlParams = new URLSearchParams(window.location.search);
+      const googleToken = urlParams.get("googleToken");
+      if (googleToken) {
+        fetch("/save_google_refresh_token", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ refreshToken: googleToken }), // Save as refreshToken
+        })
+          .then((res) => res.json())
+          .then((data) => {
+            if (data.message) {
+              console.log("Google refresh token saved successfully.");
+            } else {
+              console.error("Error saving Google refresh token:", data.error);
+            }
+          })
+          .catch((error) => {
+            console.error("Error saving Google refresh token:", error);
+          });
+      }
+    </script>
   </body>
 </html>

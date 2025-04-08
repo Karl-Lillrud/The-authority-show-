@@ -1,9 +1,10 @@
 from marshmallow import Schema, fields
+from datetime import datetime
 
 class CreditsSchema(Schema):
     id = fields.Str()
-    availableCredits = fields.Int()
-    usedCredits = fields.Int()
-    lastUpdated = fields.DateTime()
-    creditsHistory = fields.List(fields.Dict(keys=fields.Str(), values=fields.Raw()))
-    creditLimit = fields.Int()
+    userId = fields.Str(required=True)
+    availableCredits = fields.Int(default=0)
+    usedCredits = fields.Int(default=0)
+    lastUpdated = fields.DateTime(default=datetime.utcnow)
+    creditsHistory = fields.List(fields.Dict(), missing=[])

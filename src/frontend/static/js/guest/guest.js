@@ -134,55 +134,48 @@ document.addEventListener("DOMContentLoaded", function() {
       }
     });
 
-    popupForm.onsubmit = function(e) {
+    popupForm.onsubmit = async function (e) {
       e.preventDefault();
-      const podcastId = document.getElementById("guest-podcastid-input").value;
-      const name = document.getElementById("guest-name-input").value;
-      const description = document.getElementById("guest-description-input").value;
+      const name = document.getElementById("guest-name-input").value.trim();
+      const email = document.getElementById("guest-email-input").value.trim();
+      const description = document.getElementById("guest-description-input").value.trim();
       const tags = document.getElementById("guest-tags-input").value.split(",").map(tag => tag.trim()).filter(Boolean);
-      const areasText = document.getElementById("guest-areas-input").value;
-      const areasOfInterest = areasText ? areasText.split(",").map(s => s.trim()).filter(Boolean) : [];
-      const email = document.getElementById("guest-email-input").value;
-      const linkedin = document.getElementById("guest-linkedin-input").value;
-      const twitter = document.getElementById("guest-twitter-input").value;
+      const areasOfInterest = document.getElementById("guest-areas-input").value.split(",").map(area => area.trim()).filter(Boolean);
 
-      let image;
-      if (picUploader && picUploader.style.backgroundImage) {
-        image = picUploader.style.backgroundImage.slice(5, -2);
-      } else {
-        image = "default-profile.png";
+      if (!name || !email) {
+        alert("Name and Email are required fields.");
+        return;
       }
 
       const payload = {
-        podcastId: podcastId,
-        name: name,
-        image: image,
-        tags: tags,
-        description: description,
-        bio: description,
-        areasOfInterest: areasOfInterest,
-        email: email,
-        linkedin: linkedin,
-        twitter: twitter
+        name,
+        email,
+        description,
+        tags,
+        areasOfInterest,
+        googleCal: sessionStorage.getItem("googleCal") || "", // Include googleCal token if available
       };
 
-      // Call addGuestRequest from guestRequests.js
-      addGuestRequest(payload)
-        .then(data => {
-          if (data.guest_id) {
-            alert("Guest added successfully");
-            renderGuestList();
-          } else {
-            alert("Error adding guest: " + data.error);
-          }
-          closePopup();
-        })
-        .catch(err => {
-          console.error(err);
-          alert("Error adding guest");
-          closePopup();
+      try {
+        const response = await fetch("/add_guest", { // Corrected endpoint
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
         });
-    }
+
+        if (!response.ok) {
+          throw new Error(`Failed to add guest: ${response.statusText}`);
+        }
+
+        const result = await response.json();
+        alert(result.message);
+        renderGuestList();
+        closePopup();
+      } catch (error) {
+        console.error("Error adding guest:", error);
+        alert("An error occurred while adding the guest.");
+      }
+    };
   }
 
   // Edit Guest Popup & Submission
