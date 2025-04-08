@@ -116,34 +116,33 @@
     </div>
 
     <div id="verification-form" style="display: none;">
-      <form id="verification-code-form">
-        <div class="input-group">
-          <label for="verification-code-verification" class="label">Verification Code</label>
-          <input
-            type="text"
-            id="verification-code-verification"
-            class="input"
-            placeholder="Enter verification code"
-            required
-          />
-        </div>
-        <div class="form-actions">
-          <button
-            type="button"
-            id="login-with-code-button-verification"
-            class="button button-primary"
-          >
-            Login with Code
-          </button>
-          <button
-            type="button"
-            id="back-to-login"
-            class="button button-secondary"
-          >
-            Back to Login
-          </button>
-        </div>
-      </form>
+      <h2>Enter Verification Code</h2>
+      <div class="input-group">
+        <label for="verification-code" class="label">Verification Code</label>
+        <input
+          type="text"
+          id="verification-code"
+          class="input"
+          placeholder="Enter your verification code"
+          required
+        />
+      </div>
+      <div class="form-actions">
+        <button
+          type="button"
+          id="login-with-code-button"
+          class="button button-primary"
+        >
+          Verify Code
+        </button>
+        <button
+          type="button"
+          id="back-to-login"
+          class="button button-secondary"
+        >
+          Back to Login
+        </button>
+      </div>
     </div>
 
     <script type="module" src="{{ url_for('static', filename='js/signin/signin.js') }}"></script>

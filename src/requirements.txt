@@ -108,7 +108,7 @@ oauth2client
 oauthlib
 odict
 openai
-openai-whisper @ git+https://github.com/openai/whisper.git@517a43ecd132a2089d85f4ebc044728a71d49f6e
+openai-whisper
 opt_einsum
 optional-django
 packaging

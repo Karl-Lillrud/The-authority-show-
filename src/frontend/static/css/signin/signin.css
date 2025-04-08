@@ -157,6 +157,29 @@ body {
   margin: 10px 0;
 }
 
+#verification-form {
+  display: none; /* Hidden by default */
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+  height: 100%;
+  background-color: #ffffff; /* Ensure it has a background color */
+  border-radius: 8px; /* Optional: Add rounded corners */
+  padding: 20px; /* Add padding for spacing */
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); /* Optional: Add a shadow for better visibility */
+}
+
+#verification-form .input-group {
+  margin: 15px 0;
+}
+
+#verification-form .form-actions {
+  margin-top: 20px;
+  display: flex;
+  gap: 10px; /* Add spacing between buttons */
+}
+
 /* Media Queries for Responsiveness */
 @media (max-width: 768px) {
   .center-box {
