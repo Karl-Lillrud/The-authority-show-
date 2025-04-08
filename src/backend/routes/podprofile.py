@@ -158,26 +158,46 @@ def connect_calendar():
 @podprofile_bp.route("/calendar_callback", methods=["GET"])
 def calendar_callback():
     try:
-        # Handle the OAuth callback and exchange the code for tokens
+        # Get the code from the request
         code = request.args.get("code")
         if not code:
+            current_app.logger.error("Authorization code missing in callback")
             return jsonify({"error": "Authorization code missing"}), 400
 
+        # Get user ID from session
+        user_id = session.get("user_id")
+        if not user_id:
+            current_app.logger.error("User ID not found in session during calendar callback")
+            return jsonify({"error": "User not authenticated"}), 401
+
+        # Exchange code for tokens
         token_url = "https://oauth2.googleapis.com/token"
         data = {
             "code": code,
-            "client_id": getenv("GOOGLE_CLIENT_ID"),  # Fetch from .env
-            "client_secret": getenv("GOOGLE_CLIENT_SECRET"),  # Fetch from .env
-            "redirect_uri": getenv("GOOGLE_REDIRECT_URI"),  # Fetch from .env
+            "client_id": getenv("GOOGLE_CLIENT_ID"),
+            "client_secret": getenv("GOOGLE_CLIENT_SECRET"),
+            "redirect_uri": getenv("GOOGLE_REDIRECT_URI"),
             "grant_type": "authorization_code",
         }
         response = requests.post(token_url, data=data)
         response.raise_for_status()
         tokens = response.json()
 
-        # Save tokens to the database or session
-        session["calendar_tokens"] = tokens
+        # Save tokens to the database using UserRepository
+        from backend.repository.user_repository import UserRepository
+        user_repo = UserRepository()
+        save_result = user_repo.save_tokens(
+            user_id, 
+            tokens["access_token"], 
+            tokens["refresh_token"]
+        )
+        
+        if "error" in save_result:
+            current_app.logger.error(f"Error saving tokens: {save_result['error']}")
+            return jsonify(save_result), 500
+
+        current_app.logger.info(f"Successfully saved Google Calendar tokens for user {user_id}")
         return redirect(url_for("podprofile_bp.podprofile"))
     except Exception as e:
-        current_app.logger.error(f"Error in calendar callback: {e}")
+        current_app.logger.error(f"Error in calendar callback: {e}", exc_info=True)
         return jsonify({"error": str(e)}), 500

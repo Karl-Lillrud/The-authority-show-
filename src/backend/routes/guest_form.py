@@ -5,6 +5,8 @@ from google.auth.transport.requests import Request
 from backend.database.mongo_connection import collection
 import logging
 from datetime import datetime, timedelta
+import os
+from backend.repository.user_repository import UserRepository
 
 guest_form_bp = Blueprint("guest_form", __name__)  # Ensure the blueprint name matches
 logger = logging.getLogger(__name__)
@@ -32,21 +34,33 @@ def available_dates():
             logger.error("Missing guestId or googleCal token in request.")
             return jsonify({"error": "Missing guestId or googleCal token"}), 400
 
-        # If the googleCal token is just the access token, we should attempt to retrieve full credentials from session
-        credentials = Credentials(token=google_cal_token)
+        # Retrieve the user's refresh token from the database
+        user_repo = UserRepository()
+        user = user_repo.get_user_by_id(guest_id)
+        if not user:
+            logger.error(f"User with guestId {guest_id} not found.")
+            return jsonify({"error": "User not found"}), 404
 
-        # If the credentials are expired and we have a refresh token, try to refresh them
-        if credentials and credentials.expired and credentials.refresh_token:
-            credentials.refresh(Request())  # Refresh the credentials using the refresh_token
+        refresh_token = user.get("googleCalRefreshToken")
+        if not refresh_token:
+            logger.error("No refresh token available for user.")
+            return jsonify({"error": "No refresh token available"}), 400
 
-        # If credentials are missing refresh_token, return an error
-        if not credentials.refresh_token:
-            logger.error("No refresh token available to refresh credentials.")
-            return jsonify({"error": "Failed to refresh access token"}), 500
+        # Create credentials using the access token and refresh token
+        credentials = Credentials(
+            token=google_cal_token,  # Access token
+            refresh_token=refresh_token,
+            token_uri="https://oauth2.googleapis.com/token",
+            client_id=os.getenv("GOOGLE_CLIENT_ID"),
+            client_secret=os.getenv("GOOGLE_CLIENT_SECRET")
+        )
 
+        # Refresh the credentials if expired
+        if credentials.expired and credentials.refresh_token:
+            credentials.refresh(Request())  # Refresh the credentials using the refresh token
+
+        # Use the credentials to interact with the Google Calendar API
         service = build("calendar", "v3", credentials=credentials)
-
-        # Fetch busy times from the primary calendar
         calendar_id = "primary"
         events_result = service.events().list(
             calendarId=calendar_id,
