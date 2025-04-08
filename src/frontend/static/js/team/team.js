@@ -10,7 +10,7 @@ import {
   handleAddMemberFormSubmission
 } from "./memberUI.js";
 import { closeModal } from "./modals.js";
-import { showNotification } from "./notifications.js";
+import { showNotification } from "../components/notifications.js";
 import { addTeam } from "./teamOperations.js";
 
 // Initialize sidebar icons
