@@ -98,14 +98,29 @@ export async function sendVerificationCode(email) {
       throw new Error(errorData.message || "Failed to send verification code.");
     }
 
+<<<<<<< HEAD
     return await response.json();
+=======
+    const result = await response.json();
+
+    // Ensure the function only throws an error for actual failures
+    if (result.success === false) {
+      throw new Error(result.message || "Failed to send verification code.");
+    }
+
+    // Return the success response
+    return result;
+>>>>>>> parent of 295f9066f (Implement email verification feature with code generation and validation)
   } catch (error) {
     console.error("Error in sendVerificationCode:", error);
     throw error;
   }
 }
 
+<<<<<<< HEAD
 
+=======
+>>>>>>> parent of 295f9066f (Implement email verification feature with code generation and validation)
 export async function loginWithVerificationCode(email, code) {
   const response = await fetch("/login-with-code", {
     method: "POST",
@@ -113,6 +128,7 @@ export async function loginWithVerificationCode(email, code) {
     body: JSON.stringify({ email, code }),
   });
   return response.json();
+<<<<<<< HEAD
 }
 
 export async function sendVerificationCode(email) {
@@ -130,3 +146,6 @@ export async function sendVerificationCode(email) {
   return response.json();
 }
 
+=======
+}
+>>>>>>> parent of 295f9066f (Implement email verification feature with code generation and validation)

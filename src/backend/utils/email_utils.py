@@ -22,11 +22,6 @@ def send_email(to_email, subject, body, image_path=None):
     """
     Sends an email with optional inline image attachments.
     """
-    sender_email = os.getenv("EMAIL_ADDRESS")
-    sender_password = os.getenv("EMAIL_PASSWORD")
-    smtp_server = os.getenv("SMTP_SERVER", "smtp.gmail.com")
-    smtp_port = int(os.getenv("SMTP_PORT", 587))
-
     msg = MIMEMultipart("alternative")
     msg["From"] = EMAIL_USER
     msg["To"] = to_email
@@ -53,11 +48,11 @@ def send_email(to_email, subject, body, image_path=None):
 
     try:
         logger.info(f"📡 Connecting to SMTP server {SMTP_SERVER}:{SMTP_PORT}")
-        with smtplib.SMTP(smtp_server, smtp_port) as server:
+        with smtplib.SMTP(SMTP_SERVER, SMTP_PORT) as server:
             server.starttls()
             logger.info(f"🔐 Logging in as {EMAIL_USER}")
-            server.login(sender_email, sender_password)
-            server.sendmail(sender_email, to_email, msg.as_string())
+            server.login(EMAIL_USER, EMAIL_PASS)
+            server.sendmail(EMAIL_USER, to_email, msg.as_string())
             logger.info(f"✅ Email successfully sent to {to_email}")
             return {"success": True}
     except smtplib.SMTPAuthenticationError as e:

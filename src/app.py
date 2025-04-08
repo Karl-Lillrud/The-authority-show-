@@ -34,7 +34,6 @@ from backend.routes.audio_routes import audio_bp
 from backend.routes.video_routes import video_bp
 
 from backend.routes.highlight import highlights_bp
-from backend.routes.verification import verification_bp
 
 
 if os.getenv("SKIP_VENV_UPDATE", "false").lower() not in ("true", "1", "yes"):
@@ -100,7 +99,6 @@ app.register_blueprint(video_bp)
 # Register the guest_form blueprint with URL prefix
 
 app.register_blueprint(landingpage_bp)
-app.register_blueprint(verification_bp, url_prefix="/verification")
 
 # Set the application environment (defaults to production)
 APP_ENV = os.getenv("APP_ENV", "production")
@@ -130,5 +128,10 @@ start_scheduler(app)
 # Run the app
 if __name__ == "__main__":
     app.run(
+<<<<<<< HEAD
         host="0.0.0.0", port=8000, debug=True
     )
+=======
+        host="0.0.0.0", port=8000, debug=False
+    )  # Ensure the port matches your request URL
+>>>>>>> parent of 295f9066f (Implement email verification feature with code generation and validation)

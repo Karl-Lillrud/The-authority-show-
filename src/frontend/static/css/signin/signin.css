@@ -166,7 +166,45 @@ body {
 #verification-form .form-actions {
   margin-top: 20px;
   display: flex;
+<<<<<<< HEAD
   gap: 10px;
+=======
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+#verification-form .form-actions .button {
+  flex: 1;
+  padding: 10px;
+  font-size: 14px;
+}
+
+#verification-container {
+  display: none;
+  margin: 2rem auto;
+  max-width: 400px;
+  padding: 2rem;
+  background: var(--bg-light);
+  border-radius: 20px;
+  box-shadow: 0 4px 15px var(--shadow-light);
+  text-align: center;
+}
+
+#verification-container .input-group {
+  margin-bottom: 1.5rem;
+}
+
+#verification-container .form-actions {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+#verification-container .form-actions .button {
+  flex: 1;
+  padding: 10px;
+  font-size: 14px;
+>>>>>>> parent of 295f9066f (Implement email verification feature with code generation and validation)
 }
 
 /* Media Queries for Responsiveness */
