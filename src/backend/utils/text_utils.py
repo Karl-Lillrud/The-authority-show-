@@ -6,9 +6,7 @@ import openai
 import logging
 import subprocess
 import base64
-import requests
-from pathlib import Path
-from typing import List
+import random
 from transformers import pipeline
 import streamlit as st  # Needed for download_button_text
 
@@ -219,12 +217,51 @@ def generate_ai_quotes(transcript: str) -> str:
         logger.error(f"❌ Error generating quotes: {e}")
         return f"Error generating quotes: {str(e)}"
 
-def generate_quote_images(quotes: List[str]) -> List[str]:
+
+
+def generate_quote_images(quotes: list[str]) -> list[str]:
     openai.api_key = os.getenv("OPENAI_API_KEY")
     urls = []
 
+    STYLE_REFERENCES = [
+        "https://drive.google.com/uc?export=view&id=1Iz9QF_2KrmkRnUSDbDDf44QBCZJAOCNC",
+        "https://drive.google.com/uc?export=view&id=1tUZSOpyiFgMJJdeDLjWu6UlhOvOGbJ2h",
+        "https://drive.google.com/uc?export=view&id=1LOJHp71b6On3mvKtgdHIVlJ_WSNFHLFs",
+        "https://drive.google.com/uc?export=view&id=1I6TWdJ4kJChY2pqZPn4zcI05pZIPOgKm",
+        "https://drive.google.com/uc?export=view&id=1OBUIrn1MnVVwLawXvIwG9_OoEz83jeJJ",
+        "https://drive.google.com/uc?export=view&id=1iUxfmwJsVqNLYDx6Ljbg9MyaSKXQpJWQ"
+            # Add more as needed
+    ]
+
     for quote in quotes:
-        prompt = f"Create a visually striking, artistic background that reflects this quote’s emotion: \"{quote}\". No text in the image."
+        reference_image = random.choice(STYLE_REFERENCES)
+
+        # 🎨 Define multiple prompt templates
+        prompt_variants = [
+            f"Design a podcast-themed quote card background with a clean layout and modern style. "
+            f"Leave a clearly defined empty space in the center or top half for a quote. "
+            f"Use this image as a reference for style: {reference_image}. "
+            f"The background should visually reflect the meaning or feeling of this quote: \"{quote}\". "
+            f"Do not include any text in the image. This quote is for layout context only.",
+
+            f"Create a modern, minimalistic podcast quote card background. Make sure the layout includes open space for a future quote. "
+            f"Use this reference image for aesthetic inspiration: {reference_image}. "
+            f"Let the visual theme be influenced by the emotional or thematic content of this quote: \"{quote}\". "
+            f"Do not include any text in the image. This quote is for layout context only.",
+
+            f"Generate a social media-ready podcast quote background with room for text in the center or top. "
+            f"The composition should reflect the tone or message of the following quote: \"{quote}\". "
+            f"Use the visual style of this reference image: {reference_image}. "
+            f"Do not include any text in the image. This quote is for layout context only.",
+
+            f"Create an artistic podcast quote card background using this reference image for style: {reference_image}. "
+            f"The visual atmosphere should echo the energy or sentiment of this quote: \"{quote}\". "
+            f"Leave visual space for a text overlay, but do not include any text. This quote is for layout context only."
+        ]
+
+
+        prompt = random.choice(prompt_variants)
+
         try:
             response = openai.Image.create(
                 prompt=prompt,
@@ -232,9 +269,10 @@ def generate_quote_images(quotes: List[str]) -> List[str]:
                 n=1,
                 size="1024x1024"
             )
-            url = response["data"][0]["url"]
-            urls.append(url)
+            generated_url = response["data"][0]["url"]
+            urls.append(generated_url)
         except Exception as e:
             logger.error(f"❌ Failed to generate image for quote: {quote} | Error: {e}")
             urls.append("")
+
     return urls
