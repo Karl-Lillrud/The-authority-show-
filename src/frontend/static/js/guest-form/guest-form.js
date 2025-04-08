@@ -315,31 +315,181 @@ document.addEventListener("DOMContentLoaded", function () {
 
     // Fetch available dates and working hours from the backend
     async function fetchAvailableDates() {
-        const urlParams = new URLSearchParams(window.location.search);
-        const guestId = urlParams.get("guestId");
-        const googleCal = urlParams.get("googleCal");
-
-        if (!guestId || !googleCal) {
-            console.error("Guest ID or Google Calendar token is missing in the URL");
-            return;
-        }
-
         try {
-            const response = await fetch(`/guest-form/available_dates?guestId=${guestId}&googleCal=${googleCal}`);
-            if (!response.ok) {
-                const errorData = await response.json();
-                throw new Error(errorData.error || "Failed to fetch available dates");
+          // First, try to get the token from URL parameters
+          const urlParams = new URLSearchParams(window.location.search)
+          let googleCalToken = urlParams.get("googleCal")
+      
+          // If not in URL, try localStorage or sessionStorage
+          if (!googleCalToken) {
+            googleCalToken = localStorage.getItem("googleCalToken") || sessionStorage.getItem("googleCalToken")
+          }
+      
+          // If still no token, try to get it from the server
+          if (!googleCalToken) {
+            try {
+              const tokenResponse = await fetch("/get_google_cal_token")
+              if (tokenResponse.ok) {
+                const tokenData = await tokenResponse.json()
+                googleCalToken = tokenData.token
+                if (googleCalToken) {
+                  localStorage.setItem("googleCalToken", googleCalToken)
+                }
+              }
+            } catch (tokenError) {
+              console.error("Error fetching token from server:", tokenError)
             }
-
-            const data = await response.json();
-            busyDates = data.busy_dates || [];
-            busyTimes = data.busy_times || {};
-            workingHours = data.working_hours || { start: "09:00:00", end: "17:00:00" };
-            generateCalendar(); // Regenerate the calendar with the fetched data
+          }
+      
+          // If we still don't have a token, show a connect button
+          if (!googleCalToken) {
+            console.error("No Google Calendar token available")
+            showConnectCalendarButton()
+            return
+          }
+      
+          // Make the request to the backend
+          const response = await fetch(`/guest-form/available_dates?googleCal=${googleCalToken}`)
+      
+          if (!response.ok) {
+            const errorData = await response.json()
+            // If unauthorized or token expired, clear stored token and show connect button
+            if (response.status === 401 || response.status === 403) {
+              localStorage.removeItem("googleCalToken")
+              sessionStorage.removeItem("googleCalToken")
+              showConnectCalendarButton()
+            }
+            throw new Error(errorData.error || "Failed to fetch available dates")
+          }
+      
+          const data = await response.json()
+          console.log("Available dates data:", data)
+      
+          // Update the calendar with the fetched data
+          updateCalendarWithAvailability(data)
+      
+          // Hide connect button if it was shown
+          hideConnectCalendarButton()
         } catch (error) {
-            console.error("Error fetching available dates:", error);
+          console.error("Error fetching available dates:", error)
+          // Display error message to user
+          const errorContainer = document.getElementById("calendarError")
+          if (errorContainer) {
+            errorContainer.textContent = `Error: ${error.message}`
+            errorContainer.classList.remove("hidden")
+          }
         }
-    }
+      }
+      
+      // Function to show the connect calendar button
+      function showConnectCalendarButton() {
+        const calendarContainer = document.getElementById("dateTimeContainer")
+        const connectButtonContainer = document.getElementById("connectCalendarContainer")
+      
+        if (calendarContainer) {
+          calendarContainer.classList.add("hidden")
+        }
+      
+        if (!connectButtonContainer) {
+          // Create the connect button container if it doesn't exist
+          const container = document.createElement("div")
+          container.id = "connectCalendarContainer"
+          container.className = "text-center p-4 border rounded bg-gray-100 my-4"
+          container.innerHTML = `
+            <p class="mb-2">Please connect your Google Calendar to view available dates.</p>
+            <button id="connectCalendarBtn" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
+              Connect Google Calendar
+            </button>
+          `
+      
+          // Insert the container before the calendar
+          const formElement = document.getElementById("guestForm")
+          if (formElement) {
+            const recordingDateField = document.getElementById("recordingDateField")
+            if (recordingDateField) {
+              recordingDateField.parentNode.insertBefore(container, recordingDateField.nextSibling)
+            } else {
+              formElement.insertBefore(container, formElement.firstChild)
+            }
+          }
+      
+          // Add event listener to the connect button
+          document.getElementById("connectCalendarBtn").addEventListener("click", connectGoogleCalendar)
+        } else {
+          connectButtonContainer.classList.remove("hidden")
+        }
+      }
+      
+      // Function to hide the connect calendar button
+      function hideConnectCalendarButton() {
+        const connectButtonContainer = document.getElementById("connectCalendarContainer")
+        const calendarContainer = document.getElementById("dateTimeContainer")
+      
+        if (connectButtonContainer) {
+          connectButtonContainer.classList.add("hidden")
+        }
+      
+        if (calendarContainer) {
+          calendarContainer.classList.remove("hidden")
+        }
+      }
+      
+      // Function to connect to Google Calendar
+      function connectGoogleCalendar() {
+        window.location.href = "/connect_google_calendar"
+      }
+      
+      // Function to update the calendar with availability data
+      function updateCalendarWithAvailability(data) {
+        // Store the data for use when generating calendar
+        window.busyDates = data.busy_dates || []
+        window.busyTimes = data.busy_times || {}
+        window.workingHours = data.working_hours || { start: "09:00:00", end: "17:00:00" }
+      
+        // Declare generateCalendar before using it, assuming it's defined elsewhere or will be
+        let generateCalendar
+      
+        // Check if generateCalendar is a function before calling it
+        if (typeof window.generateCalendar === "function") {
+          generateCalendar = window.generateCalendar // Assign the function to the local variable
+        }
+      
+        // Call the existing calendar generation function if it exists
+        if (typeof generateCalendar === "function") {
+          generateCalendar()
+        } else {
+          // If the function doesn't exist yet, set up a global variable that will be used later
+          window.calendarDataReady = true
+        }
+      }
+      
+      // Call this function when the page loads
+      document.addEventListener("DOMContentLoaded", () => {
+        // Get the Google Calendar token from URL parameters if present
+        const urlParams = new URLSearchParams(window.location.search)
+        const googleCalToken = urlParams.get("googleCal")
+      
+        if (googleCalToken) {
+          // Store the token for later use
+          localStorage.setItem("googleCalToken", googleCalToken)
+          console.log("Stored Google Calendar token from URL")
+      
+          // Fetch available dates using the token
+          fetchAvailableDates()
+        } else {
+          console.log("No Google Calendar token in URL, checking storage")
+          // Try to use a previously stored token
+          const storedToken = localStorage.getItem("googleCalToken")
+          if (storedToken) {
+            console.log("Found stored Google Calendar token")
+            fetchAvailableDates()
+          } else {
+            console.log("No Google Calendar token available")
+            // Show connect button if no token is available
+            showConnectCalendarButton()
+          }
+        }
+      })
 
     // Load saved selection from localStorage
     loadSavedDateTime();

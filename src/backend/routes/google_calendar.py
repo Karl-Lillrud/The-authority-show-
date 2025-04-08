@@ -265,6 +265,39 @@ def calendar_callback():
         logger.error(f"Failed to save Google Calendar code and tokens: {e}", exc_info=True)
         return {"error": f"Failed to save Google Calendar code and tokens: {str(e)}"}, 500
 
+@google_calendar_bp.route("/get_google_cal_token", methods=["GET"])
+def get_google_cal_token():
+    """
+    Get the Google Calendar access token for the current user.
+    This endpoint is used by the frontend to retrieve the token when needed.
+    """
+    try:
+        # Get the user ID from the session
+        user_id = session.get("user_id")
+        if not user_id:
+            logger.error("User not authenticated in get_google_cal_token request.")
+            return jsonify({"error": "User not authenticated"}), 401
+
+        # Get the user from the database
+        user_repo = UserRepository()
+        user = user_repo.get_user_by_id(user_id)
+        if not user:
+            logger.error(f"User with ID {user_id} not found.")
+            return jsonify({"error": "User not found"}), 404
+
+        # Get the access token
+        access_token = user.get("googleCalAccessToken")
+        if not access_token:
+            logger.error(f"No Google Calendar access token found for user {user_id}.")
+            return jsonify({"error": "No Google Calendar access token found"}), 404
+
+        # Return the token
+        return jsonify({"token": access_token}), 200
+
+    except Exception as e:
+        logger.error(f"Error getting Google Calendar token: {e}", exc_info=True)
+        return jsonify({"error": f"Failed to get Google Calendar token: {str(e)}"}), 500
+
 def credentials_to_dict(credentials):
     return {
         'token': credentials.token,
