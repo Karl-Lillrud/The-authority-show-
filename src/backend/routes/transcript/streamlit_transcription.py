@@ -32,28 +32,28 @@ API_BASE_URL = os.getenv("API_BASE_URL")
 #Need fix
 # DEBUG TESTING
 # SET MONGODB USER_ID HERE AND ADD CREDITS FOR TESTING
-st.session_state["user_id"] = "6b918cad-a5b7-4c6b-b050-73adf58edff8"  # Replace with actual user ID retrieval logic
-st.write("🆔 Current user ID:", st.session_state.get("user_id"))
-def try_consume_credits(user_id, feature):
-    response = requests.post(
-        f"{API_BASE_URL}/credits/consume",
-        json={"user_id": user_id, "feature": feature}
-    )
-    if response.status_code == 200:
-        return True
-    else:
-        st.error(f"❌ Credit Error: {response.json().get('error')}")
-        return False
-def try_consume_credits(user_id, feature):
-    response = requests.post(
-        f"{API_BASE_URL}/credits/consume",
-        json={"user_id": user_id, "feature": feature}
-    )
-    if response.status_code == 200:
-        return True
-    else:
-        st.error(f"❌ Credit Error: {response.json().get('error')}")
-        return False
+# st.session_state["user_id"] = "6b918cad-a5b7-4c6b-b050-73adf58edff8"  # Replace with actual user ID retrieval logic
+# st.write("🆔 Current user ID:", st.session_state.get("user_id"))
+# def try_consume_credits(user_id, feature):
+#     response = requests.post(
+#         f"{API_BASE_URL}/credits/consume",
+#         json={"user_id": user_id, "feature": feature}
+#     )
+#     if response.status_code == 200:
+#         return True
+#     else:
+#         st.error(f"❌ Credit Error: {response.json().get('error')}")
+#         return False
+# def try_consume_credits(user_id, feature):
+#     response = requests.post(
+#         f"{API_BASE_URL}/credits/consume",
+#         json={"user_id": user_id, "feature": feature}
+#     )
+#     if response.status_code == 200:
+#         return True
+#     else:
+#         st.error(f"❌ Credit Error: {response.json().get('error')}")
+#         return False
 # END OF DEBUG
 def render_translate_and_download(section_key: str, label: str, filename: str):
     content = st.session_state.get(section_key, "")
