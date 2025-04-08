@@ -5,6 +5,8 @@ document.addEventListener("DOMContentLoaded", () => {
   if (aiEditLink) {
     const host = window.location.hostname;
     const streamlitURL = `http://${host}:8501/`;
+    aiEditLink.href = streamlitURL;
+  }
 
   populateHeaderPodcastDropdown();
   populateLandingPageDropdown();
