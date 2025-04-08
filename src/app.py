@@ -128,10 +128,5 @@ start_scheduler(app)
 # Run the app
 if __name__ == "__main__":
     app.run(
-<<<<<<< HEAD
         host="0.0.0.0", port=8000, debug=True
     )
-=======
-        host="0.0.0.0", port=8000, debug=False
-    )  # Ensure the port matches your request URL
->>>>>>> parent of 295f9066f (Implement email verification feature with code generation and validation)
