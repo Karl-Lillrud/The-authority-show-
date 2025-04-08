@@ -384,18 +384,36 @@ button {
   color: white;
 }
 
+/* Style for the profile picture label */
+.profile-pic-label {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--foreground);
+  margin-bottom: 0.5rem;
+  text-align: center;
+  display: block;
+}
+
+/* Ensure the button is centered and below the image */
 .upload-button {
-  background-color: transparent;
-  color: var(--primary);
+  display: block;
+  margin: 0.5rem auto 0;
+  background-color: var(--primary);
+  color: white;
   border: none;
+  border-radius: var(--radius);
+  padding: 0.75rem 1.5rem;
   font-size: 0.875rem;
   font-weight: 500;
-  padding: 0;
+  text-align: center;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
 }
 
 .upload-button:hover {
-  color: var(--primary-hover);
-  text-decoration: underline;
+  background-color: var(--primary-hover);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
 }
 
 .profile-form {

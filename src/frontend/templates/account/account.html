@@ -110,9 +110,9 @@
           
           <div class="profile-content">
             <div class="profile-pic-container">
+              <label for="profile-pic" class="profile-pic-label">Profile Picture</label>
               <div class="profile-pic-wrapper">
-                <img id="profile-pic" src="/placeholder.svg?height=120&width=120" alt="Profile Picture">
-                
+                <img id="profile-pic" src="{{ url_for('static', filename='images/profilepic.png') }}" alt="Profile Picture">
                 <div class="profile-pic-overlay">
                   <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="edit-icon">
                     <path d="M12 20h9"></path>
@@ -122,35 +122,35 @@
               </div>
               <button id="upload-pic" class="upload-button">Change Photo</button>
             </div>
-            
-            <!-- Notification Container -->
-            <div id="profile-notifications" class="notifications-container"></div>
-            
-            <form id="profile-form" class="profile-form">
-              <div class="form-group">
-                <label for="full-name">Full Name <span class="required required-profile">*</span></label>
-                <input type="text" id="full-name" name="full_name" disabled required>
-                <div class="form-hint">This name will be displayed on your profile</div>
-              </div>
-              
-              <div class="form-group">
-                <label for="email">Email Address <span class="required required-profile">*</span></label>
-                <input type="email" id="email" name="email" disabled required>
-              </div>
-              
-              <div class="form-group">
-                <label for="phone">Phone Number</label>
-                <input type="text" id="phone" name="phone" disabled>
-                <div class="form-hint">Used for account recovery and important notifications</div>
-              </div>
-
-              <div class="form-actions">
-                <button type="submit" class="primary-button">Save Changes</button>
-                <button type="reset" class="secondary-button">Cancel</button>
-              </div>
-
-            </form>
           </div>
+          
+          <!-- Notification Container -->
+          <div id="profile-notifications" class="notifications-container"></div>
+          
+          <form id="profile-form" class="profile-form">
+            <div class="form-group">
+              <label for="full-name">Full Name <span class="required required-profile">*</span></label>
+              <input type="text" id="full-name" name="full_name" disabled required>
+              <div class="form-hint">This name will be displayed on your profile</div>
+            </div>
+            
+            <div class="form-group">
+              <label for="email">Email Address <span class="required required-profile">*</span></label>
+              <input type="email" id="email" name="email" disabled required>
+            </div>
+            
+            <div class="form-group">
+              <label for="phone">Phone Number</label>
+              <input type="text" id="phone" name="phone" disabled>
+              <div class="form-hint">Used for account recovery and important notifications</div>
+            </div>
+
+            <div class="form-actions">
+              <button type="submit" class="primary-button">Save Changes</button>
+              <button type="reset" class="secondary-button">Cancel</button>
+            </div>
+
+          </form>
         </div>
 
         <!-- Security - 2FA Section -->
