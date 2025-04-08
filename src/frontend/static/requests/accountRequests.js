@@ -24,6 +24,30 @@ export function updateProfile(profileData) {
     });
 }
 
+// Fetch account data
+export function fetchAccount() {
+  return fetch('/get_account')
+    .then(response => response.json())
+    .catch(error => {
+      console.error('Error fetching account data:', error);
+      throw new Error('Failed to fetch account data');
+    });
+}
+
+// Update account data
+export function updateAccount(accountData) {
+  return fetch('/edit_account', {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(accountData),
+  })
+    .then(response => response.json())
+    .catch(error => {
+      console.error('Error updating profile:', error);
+      throw new Error('Failed to update profile');
+    });
+}
+
 // Update password
 export function updatePassword(passwordData) {
   return fetch('/update_password', {

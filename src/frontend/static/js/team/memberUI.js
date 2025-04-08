@@ -24,6 +24,10 @@ export async function renderMembersView() {
   try {
     const teams = await getTeamsRequest();
     const membersView = document.getElementById("members-view-container");
+    if (!teams || teams.length === 0) {
+      membersView.innerHTML = `<p>No teams available.</p>`;
+      return;
+    }
     for (const team of teams) {
       if (team.members && Array.isArray(team.members)) {
         team.members.forEach((member) => {

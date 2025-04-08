@@ -47,6 +47,7 @@ class AccountRepository:
                 "subscriptionStart": datetime.utcnow().isoformat(),
                 "subscriptionEnd": "",
                 "isActive": True,
+                "isFirstLogin": True,
             }
 
             # Insert account into the database
@@ -80,6 +81,33 @@ class AccountRepository:
             logger.error(f"Failed to fetch account: {e}")
             return {"error": f"Failed to fetch account: {str(e)}"}, 500
 
+    def get_account_by_user(self, user_id):
+        try:
+            account = self.collection.find_one({"userId": user_id})
+            if not account:
+                return {"error": "Account not found"}, 404
+            
+            return {"account": account}, 200
+
+        except Exception as e:
+            logger.error(f"Failed to fetch account: {e}")
+            return {"error": f"Failed to fetch account: {str(e)}"}, 500
+
+    def edit_account(self, user_id, data):
+        try:
+            updates = {k: v for k, v in data.items() if v is not None}
+
+            if not updates:
+                return {"error": "No valid fields provided for update"}, 400
+
+            self.collection.update_one({"userId": user_id}, {"$set": updates})
+
+            return {"message": "Profile updated successfully!"}, 200
+
+        except Exception as e:
+            logger.error(f"Error updating profile: {e}", exc_info=True)
+            return {"error": f"Error updating profile: {str(e)}"}, 500
+    
     # Delete account when user is deleted
     def delete_by_user(self, user_id):
         try:
