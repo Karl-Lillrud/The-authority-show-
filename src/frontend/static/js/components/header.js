@@ -201,7 +201,7 @@ function setDynamicPageTitle() {
       "/dashboard": "Dashboard",
       "/team": "Team Members",
       "/guest": "Guest View",
-      "/taskmanagement": "Task Management",
+      "/taskmanagement": "Episode To-Do",
     };
 
     const currentPath = window.location.pathname;
