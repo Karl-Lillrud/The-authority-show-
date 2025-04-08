@@ -1,14 +1,3 @@
-:root {
-  --bg-light: #eff2f9;
-  --bg-dark: #1c1c1c;
-  --shadow-light: rgba(22, 24, 29, 0.23);
-  --shadow-dark: rgba(0, 0, 0, 0.8);
-  --text-light: #6e7f8d;
-  --text-dark: #b3b3b3;
-  --highlight: #ff7f3f;
-  --font-primary: "Campton", sans-serif;
-}
-
 body {
   font-family: var(--font-primary);
   background-image: url("https://app.podmanager.ai/static/images/PodManager-AI-Background.jpeg");
@@ -157,19 +146,17 @@ body {
   margin: 10px 0;
 }
 
-<<<<<<< HEAD
 #verification-form {
-<<<<<<< HEAD
-  display: none; /* Hidden by default */
+  display: none;
   flex-direction: column;
   justify-content: center;
   align-items: center;
   width: 100%;
   height: 100%;
-  background-color: #ffffff; /* Ensure it has a background color */
-  border-radius: 8px; /* Optional: Add rounded corners */
-  padding: 20px; /* Add padding for spacing */
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); /* Optional: Add a shadow for better visibility */
+  background-color: #ffffff;
+  border-radius: 8px;
+  padding: 20px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
 }
 
 #verification-form .input-group {
@@ -179,83 +166,9 @@ body {
 #verification-form .form-actions {
   margin-top: 20px;
   display: flex;
-  gap: 10px; /* Add spacing between buttons */
-=======
-  display: none;
-  margin: 2rem auto;
-  max-width: 400px;
-  padding: 2rem;
-  background: var(--bg-light);
-  border-radius: 20px;
-  box-shadow: 0 4px 15px var(--shadow-light);
-  text-align: center;
+  gap: 10px;
 }
 
-#verification-form .input-group {
-  margin-bottom: 1.5rem;
-}
-
-#verification-form .form-actions {
-  display: flex;
-  justify-content: space-between;
-  gap: 1rem;
-}
-
-#verification-form .form-actions .button {
-  flex: 1;
-  padding: 10px;
-  font-size: 14px;
-}
-
-#verification-container {
-  display: none;
-  margin: 2rem auto;
-  max-width: 400px;
-  padding: 2rem;
-  background: var(--bg-light);
-  border-radius: 20px;
-  box-shadow: 0 4px 15px var(--shadow-light);
-  text-align: center;
-}
-
-#verification-container .input-group {
-  margin-bottom: 1.5rem;
-}
-
-#verification-container .form-actions {
-  display: flex;
-  justify-content: space-between;
-  gap: 1rem;
-}
-
-#verification-container .form-actions .button {
-  flex: 1;
-  padding: 10px;
-  font-size: 14px;
-}
-
-#signin-with-code-container {
-  display: none;
-  margin: 2rem auto;
-  max-width: 400px;
-  padding: 2rem;
-  background: var(--background);
-  border-radius: var(--radius);
-  box-shadow: var(--shadow);
-}
-
-#signin-with-code-container .input-group {
-  margin-bottom: 1rem;
-}
-
-#signin-with-code-container .form-actions {
-  display: flex;
-  justify-content: space-between;
->>>>>>> ede698130658101f76d28b337d6fdc0d46330cca
-}
-
-=======
->>>>>>> parent of 003dcac05 (Add verification form and enhance sign-in process with improved error handling and code structure)
 /* Media Queries for Responsiveness */
 @media (max-width: 768px) {
   .center-box {

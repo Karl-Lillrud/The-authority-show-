@@ -84,10 +84,7 @@ export async function registerTeamMember(
     throw new Error(error.message);
   }
 }
-<<<<<<< HEAD
 
-<<<<<<< HEAD
-=======
 export async function sendVerificationCode(email) {
   try {
     const response = await fetch("/send-verification-code", {
@@ -108,7 +105,7 @@ export async function sendVerificationCode(email) {
   }
 }
 
->>>>>>> parent of 003dcac05 (Add verification form and enhance sign-in process with improved error handling and code structure)
+
 export async function loginWithVerificationCode(email, code) {
   const response = await fetch("/login-with-code", {
     method: "POST",
@@ -132,5 +129,4 @@ export async function sendVerificationCode(email) {
 
   return response.json();
 }
-=======
->>>>>>> parent of 072a6997d (Implement email verification code functionality for sign-in process)
+
