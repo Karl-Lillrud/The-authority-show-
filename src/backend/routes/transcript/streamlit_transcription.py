@@ -30,33 +30,20 @@ logger = logging.getLogger(__name__)
 API_BASE_URL = os.getenv("API_BASE_URL")
 
 #Need fix
-session_requests = requests.Session()
-
-if "auth_cookie" in st.session_state:
-    session_requests.cookies.set("session", st.session_state["auth_cookie"])
-
-try:
-    # Attempt to retrieve the current user from the Flask backend via /get_profile.
-    # Make sure that the session cookie is passed along (e.g., using requests.Session if needed)
-    response = session_requests.get(f"{API_BASE_URL}/get_profile")
+# DEBUG TESTING
+# SET MONGODB USER_ID HERE AND ADD CREDITS FOR TESTING
+st.session_state["user_id"] = "6b918cad-a5b7-4c6b-b050-73adf58edff8"  # Replace with actual user ID retrieval logic
+st.write("🆔 Current user ID:", st.session_state.get("user_id"))
+def try_consume_credits(user_id, feature):
+    response = requests.post(
+        f"{API_BASE_URL}/credits/consume",
+        json={"user_id": user_id, "feature": feature}
+    )
     if response.status_code == 200:
-        # Assume your /get_profile returns a JSON with a field "user_id"
-        user_profile = response.json()
-        user_id = user_profile.get("user_id")
-        if user_id:
-            user_credits = get_user_credits(user_id)
-            if user_credits:
-                st.session_state["user_id"] = user_id
-                st.write("🆔 Current user ID:", user_id)
-            else:
-                st.write("🆔 User not found in MongoDB. Please log in through the main app.")
-        else:
-            st.write("🆔 User ID not found in the profile. Please log in through the main app.")
+        return True
     else:
-        st.write("🆔 Unable to fetch user profile. Please log in through the main app.")
-except Exception as e:
-    st.error(f"Error fetching current user: {e}")
-
+        st.error(f"❌ Credit Error: {response.json().get('error')}")
+        return False
 def try_consume_credits(user_id, feature):
     response = requests.post(
         f"{API_BASE_URL}/credits/consume",
