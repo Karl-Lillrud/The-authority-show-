@@ -7,18 +7,11 @@ import logging
 import tempfile
 from dotenv import load_dotenv
 import sys
-
-
-
-#This is to add the backend directory to the system path for imports
-# This is necessary to import modules from the backend directory
-
 project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../../"))
 if project_root not in sys.path:
     sys.path.insert(0, project_root)
 from backend.utils.text_utils import download_button_text
-from backend.services.creditService import get_user_credits
-from backend.utils.credit_costs import CREDIT_COSTS
+
 
 
 # Load environment variables early
@@ -29,32 +22,6 @@ logger = logging.getLogger(__name__)
 
 API_BASE_URL = os.getenv("API_BASE_URL")
 
-#Need fix
-# DEBUG TESTING
-# SET MONGODB USER_ID HERE AND ADD CREDITS FOR TESTING
-# st.session_state["user_id"] = "6b918cad-a5b7-4c6b-b050-73adf58edff8"  # Replace with actual user ID retrieval logic
-# st.write("🆔 Current user ID:", st.session_state.get("user_id"))
-# def try_consume_credits(user_id, feature):
-#     response = requests.post(
-#         f"{API_BASE_URL}/credits/consume",
-#         json={"user_id": user_id, "feature": feature}
-#     )
-#     if response.status_code == 200:
-#         return True
-#     else:
-#         st.error(f"❌ Credit Error: {response.json().get('error')}")
-#         return False
-# def try_consume_credits(user_id, feature):
-#     response = requests.post(
-#         f"{API_BASE_URL}/credits/consume",
-#         json={"user_id": user_id, "feature": feature}
-#     )
-#     if response.status_code == 200:
-#         return True
-#     else:
-#         st.error(f"❌ Credit Error: {response.json().get('error')}")
-#         return False
-# END OF DEBUG
 def render_translate_and_download(section_key: str, label: str, filename: str):
     content = st.session_state.get(section_key, "")
     if not content:
@@ -79,8 +46,6 @@ def render_translate_and_download(section_key: str, label: str, filename: str):
 
     translated = st.session_state.get(f"{section_key}_translated", content)
     download_button_text(f"⬇ Download {label}", translated, filename, key_prefix=section_key)
-
-
 
 # ----------------------------
 # Initialize Session State
@@ -144,18 +109,13 @@ with tab1:
         else:
             st.video(uploaded_file)
 
-        # Transcribe button is now outside the video/audio block
-        if st.button(f"▶ Transcribe ({CREDIT_COSTS['transcription']} credits)"):
-            # ✅ Step 1: Consume credits first
-            if not try_consume_credits(st.session_state["user_id"], "transcription"):
-                st.stop()  # Stop if credits error
+        if st.button("▶ Transcribe"):
             with st.spinner("🔄 Transcribing... Please wait."):
                 files = {"file": (uploaded_file.name, uploaded_file, uploaded_file.type)}
                 try:
                     response = requests.post(f"{API_BASE_URL}/transcribe", files=files)
                     if response.status_code == 200:
                         result = response.json()
-                        # ✅ Store results in session state
                         st.session_state.raw_transcription = result.get("raw_transcription", "")
                         st.session_state.full_transcript = result.get("full_transcript", "")
                         st.session_state.ai_suggestions = result.get("ai_suggestions", "")
@@ -163,7 +123,7 @@ with tab1:
                         st.session_state.quotes = result.get("quotes", "")
                         st.session_state.quote_images = result.get("quote_images", [])
 
-                        # ✅ Reset display flags
+                        # Reset display flags so that older data is not shown
                         st.session_state.show_clean_transcript = False
                         st.session_state.show_ai_suggestions = False
                         st.session_state.show_show_notes = False
@@ -175,7 +135,6 @@ with tab1:
                         st.error(f"❌ Error: {response.status_code} - {response.text}")
                 except Exception as e:
                     st.error(f"Request failed: {str(e)}")
-
 
     # Language list
     languages = ["English", "Spanish", "French", "German", "Swedish", "Japanese", "Chinese", "Italian", "Portuguese"]
@@ -213,7 +172,7 @@ with tab1:
         # 2) AI Suggestions
         st.markdown("### 🤖 AI Suggestions")
         st.write("Get ideas or improvements for your transcript, e.g. better phrasing or structure.")
-        if st.button(f"Generate AI Suggestions ({CREDIT_COSTS['ai_suggestions']} credits)"):
+        if st.button("Generate AI Suggestions"):
             payload = {"transcript": st.session_state.raw_transcription}
             response = requests.post(f"{API_BASE_URL}/ai_suggestions", json=payload)
             if response.status_code == 200:
@@ -231,7 +190,7 @@ with tab1:
         # 3) Show Notes
         st.markdown("### 📝 Show Notes")
         st.write("Automatically summarize the main points in the transcript for easy reference.")
-        if st.button(f"**Cost:** {CREDIT_COSTS['show_notes']} credits"):
+        if st.button("Generate Show Notes"):
             payload = {"transcript": st.session_state.raw_transcription}
             response = requests.post(f"{API_BASE_URL}/show_notes", json=payload)
             if response.status_code == 200:
@@ -249,7 +208,7 @@ with tab1:
         # 4) Quotes
         st.markdown("### 💬 Generate Quotes")
         st.write("Extract memorable quotes from your transcript.")
-        if st.button(f"Generate Quotes ({CREDIT_COSTS['ai_quotes']} credits)"):
+        if st.button("Generate Quotes"):
             payload = {"transcript": st.session_state.raw_transcription}
             response = requests.post(f"{API_BASE_URL}/quotes", json=payload)
             if response.status_code == 200:
@@ -267,7 +226,7 @@ with tab1:
             # 5) Quote Images (only shown after "Generate Quotes")
             st.markdown("### 🖼️ Generate Quote Images")
             st.write("Turn the extracted quotes into shareable images.")
-            if st.button(f"Generate Quote Images ({CREDIT_COSTS['ai_qoute_images']} credits)"):
+            if st.button("Generate Quote Images"):
                 payload = {"quotes": st.session_state.quotes}
                 response = requests.post(f"{API_BASE_URL}/quote_images", json=payload)
                 if response.status_code == 200:
@@ -300,7 +259,7 @@ with tab2:
         st.audio(audio_file, format="audio/wav")
         st.text("🔊 Original Audio File")
 
-        if st.button(f"Enhance Audio ({CREDIT_COSTS['audio_enhancment']} credits)"):
+        if st.button("Enhance Audio"):
             with st.spinner("🔄 Enhancing audio..."):
                 files = {"audio": audio_file}
                 try:
@@ -484,7 +443,7 @@ with tab2:
         st.audio(voice_file, format="audio/wav")
         st.text("🎧 Original Audio (Before Isolation)")
 
-        if st.button(f"🎙️ Isolate Voice ({CREDIT_COSTS['voice_isolation']} credits)"):
+        if st.button("🎙️ Isolate Voice"):
             with st.spinner("🔄 Isolating voice using ElevenLabs..."):
                 try:
                     files = {"audio": voice_file}
@@ -571,7 +530,7 @@ with tab2:
         if start_time >= end_time:
             st.warning("⚠ Start time must be less than end time.")
 
-        if st.button(f"✂ Cut Audio ({CREDIT_COSTS['audio_cutting']} credits)"):
+        if st.button("✂ Cut Audio"):
             with st.spinner("🔄 Processing audio..."):
                 if not audio_file_id:
                     st.error("❌ Error: No audio file ID found!")
@@ -640,7 +599,7 @@ with tab2:
 
     # **Analyze Audio Button (Only show if file is uploaded)**
     if "file_id" in st.session_state:
-        if st.button(f"Analyze Audio ({CREDIT_COSTS['ai_audio_cutting']} credits)"):
+        if st.button("Analyze Audio"):
             with st.spinner("🔄 Using AI to process audio..."):
                 if "file_id" not in st.session_state:
                     st.error("❌ No audio file ID found. Please upload an audio file first.")
@@ -995,7 +954,7 @@ with tab3:
             st.text("✅ Video already uploaded. Click 'Enhance Video' to start processing.")
 
         # ---- Video Enhancement Section ----
-        if st.button(f"Enhance Video ({CREDIT_COSTS['video_enhancement']})"):
+        if st.button("Enhance Video"):
             with st.spinner("🔄 Enhancing video..."):
                 video_id = st.session_state["video_id"]
                 response = requests.post(f"{API_BASE_URL}/ai_videoenhance", json={"video_id": video_id})
@@ -1082,7 +1041,7 @@ with tab3:
             if start_time_video >= end_time_video:
                 st.warning("⚠ Start time must be less than end time.")
             
-            if st.button(f"✂ Cut Video ({CREDIT_COSTS['video_cutting']})"):
+            if st.button("✂ Cut Video"):
                 with st.spinner("🔄 Processing video..."):
                     data = {"video_id": video_id, "clips": [{"start": start_time_video, "end": end_time_video}]}
                     response = requests.post(f"{API_BASE_URL}/clip_video", json=data)
@@ -1099,3 +1058,140 @@ with tab3:
                     else:
                         st.error("❌ Error clipping video. Try again.")
 
+# # Initialize session state variables
+# for key in ["transcription", "transcription_no_fillers", "ai_suggestions", "show_notes", "quotes"]:
+#     if key not in st.session_state:
+#         st.session_state[key] = ""
+#     if f"{key}_translated" not in st.session_state:
+#         st.session_state[f"{key}_translated"] = ""
+
+# # 📌 **Sidhuvud**
+# st.markdown("<h1 style='display: inline;'>PodManagerAI - </h1><h3 style='display: inline;'>Transcription & AI Enhancement</h3>", unsafe_allow_html=True)
+
+# st.write("Upload an audio file to get an AI-enhanced transcription with show notes.")
+
+# # 📌 **Flikar för navigering**
+# tab1, tab2, tab3 = st.tabs(["🎙 AI-Powered Transcription", "🎵 AI Audio Enhancement & cutting editor", "📹 AI Video Enhancement & cutting editor"])
+
+# # 🎙 **Flik 1: AI-Powered Transcription**
+# with tab1:
+#     st.subheader("🎙 AI-Powered Transcription")
+#     uploaded_file = st.file_uploader(
+#         "📂 Choose an audio or video file", 
+#         type=["wav", "mp3", "m4a", "ogg", "mp4", "mov", "avi", "mkv", "webm"], 
+#         key="file_uploader"
+#     )
+
+#     if uploaded_file is not None:
+#         file_ext = uploaded_file.name.split(".")[-1].lower()
+#         is_video = file_ext in ["mp4", "mov", "avi", "mkv", "webm"]
+
+#         # 🎵 If it's an audio file, show an audio player
+#         if not is_video:
+#             st.audio(uploaded_file, format="audio/wav")
+
+#         # 🎬 If it's a video file, show the video
+#         else:
+#             st.video(uploaded_file)
+
+#         if st.button("▶ Transcribe"):
+#             with st.spinner("🔄 Transcribing... Please wait."):
+#                 files = {"file": (uploaded_file.name, uploaded_file, uploaded_file.type)}
+
+#                 try:
+#                     response = requests.post(f"{API_BASE_URL}/transcribe", files=files)
+#                     result = response.json()
+
+#                     if response.status_code == 200:
+#                         result = response.json()
+
+#                         # ✅ Correct keys
+#                         st.session_state.raw_transcription = result.get("raw_transcription", "")
+#                         st.session_state.transcription_no_fillers = result.get("transcription_no_fillers", "")
+#                         st.session_state.ai_suggestions = result.get("ai_suggestions", "")
+#                         st.session_state.show_notes = result.get("show_notes", "")
+#                         st.session_state.quotes = result.get("quotes", [])
+#                         st.session_state.quote_images = result.get("quote_images", [])
+
+#                         # ✅ Also assign to short keys (optional for legacy)
+#                         st.session_state["transcription"] = st.session_state.raw_transcription
+#                         st.session_state["transcription_no_fillers"] = st.session_state.transcription_no_fillers
+
+#                         st.success("✅ Transcription complete!")
+
+#                     else:
+#                         st.error(f"❌ Error: {response.status_code} - {response.text}")
+
+#                 except Exception as e:
+#                     st.error(f"Request failed: {str(e)}")
+
+#     # Language selection
+#     languages = ["English", "Spanish", "French", "German", "Swedish", "Japanese", "Chinese", "Italian", "Portuguese"]
+
+#     # Display stored transcriptions if available
+#     if "raw_transcription" in st.session_state:
+#             st.subheader("📜 Raw Transcription")
+            
+#             # ✅ Use the correct key: `raw_transcription`
+#             transcription_text = st.session_state.get("transcription_translated")
+#             if not transcription_text:
+#                 transcription_text = st.session_state.get("raw_transcription", "")
+
+#             if transcription_text:
+#                 st.text_area("📜 Raw Transcription", value=transcription_text, height=200, key="raw_transcription_display")
+#             else:
+#                 st.warning("⚠️ No transcription available. Please transcribe a file first.")
+
+#             # Translation dropdown & button
+#             language_transcription = st.selectbox("🌍 Translate Raw Transcription to:", languages, key="lang_transcription")
+#             if st.button("Translate Raw Transcription"):
+#                 st.session_state["transcription_translated"] = translate_text(st.session_state.raw_transcription, language_transcription)
+#                 st.rerun()  
+
+#             # Download button
+#             download_button_text("⬇ Download Raw Transcription", st.session_state.get("transcription_translated", st.session_state.raw_transcription), "raw_transcription.txt")
+
+        
+#             with st.expander("🤖 AI cleaned trancript + Suggested Transcription"):
+#                 ai_suggestions_text = st.session_state.get("ai_suggestions_translated", st.session_state.ai_suggestions)
+#                 ai_suggestions_text = st.text_area("", ai_suggestions_text, height=200, key="ai_suggestions")
+
+#                 language_ai_suggestions = st.selectbox("🌍 Translate AI-Suggested Transcription to:", languages, key="lang_ai_suggestions")
+#                 if st.button("Translate AI-Suggested Transcription"):
+#                     st.session_state["ai_suggestions_translated"] = translate_text(st.session_state.ai_suggestions, language_ai_suggestions)
+#                     st.rerun()  
+
+#                 download_button_text("⬇ Download AI-Suggested Transcription", st.session_state.get("ai_suggestions_translated", st.session_state.ai_suggestions), "ai_suggestions.txt")
+
+#             # 🔹 AI-Generated Show Notes
+#             with st.expander("📝 AI-Generated Show Notes & Marketing Snippets"):
+#                 show_notes_text = st.session_state.get("show_notes_translated", st.session_state.show_notes)
+#                 show_notes_text = st.text_area("", show_notes_text, height=200, key="show_notes")
+
+#                 language_show_notes = st.selectbox("🌍 Translate AI-Generated Show Notes to:", languages, key="lang_show_notes")
+#                 if st.button("Translate AI-Generated Show Notes"):
+#                     st.session_state["show_notes_translated"] = translate_text(st.session_state.show_notes, language_show_notes)
+#                     st.rerun()  
+
+#                 download_button_text("⬇ Download AI-Generated Show Notes", st.session_state.get("show_notes_translated", st.session_state.show_notes), "ai_show_notes.txt")
+            
+
+#             with st.expander("💬 AI-Generated Quotes"):
+#                 quotes_text = st.session_state.get("quotes_translated", st.session_state.quotes) or ""
+#                 st.text_area("💬 Quotes", value=quotes_text, height=200, key="quotes")
+
+#                 language_quotes = st.selectbox("🌍 Translate Quotes to:", languages, key="lang_quotes")
+#                 if st.button("Translate Quotes"):
+#                     st.session_state["quotes_translated"] = translate_text(quotes_text, language_quotes)
+#                     st.rerun()
+
+#                 download_button_text("⬇ Download AI-Generated Quotes", st.session_state.get("quotes_translated", quotes_text), "ai_quotes.txt")
+
+#                 # 🖼️ Display quote images (from URLs)
+#                 quote_images = st.session_state.get("quote_images", [])
+#                 if quote_images:
+#                     st.markdown("### 🖼️ Quote Images")
+#                     for i, url in enumerate(quote_images, 1):
+#                         if url:
+#                             st.image(url, use_column_width=True)
+#                             st.markdown(f"[⬇ Download Image {i}]({url})", unsafe_allow_html=True)
