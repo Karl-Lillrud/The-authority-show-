@@ -105,6 +105,10 @@ def register_submit():
         )
 
     data = request.get_json()
+
+    #  Endast tillagt: hämta nyhetsbrevsvärdet
+    subscribe_newsletter = data.get("subscribe_newsletter", False)
+
     response, status_code = auth_repo.register(data)
     # Convert possible Response object into a JSON dict
     if hasattr(response, "get_json"):
