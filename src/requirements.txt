@@ -1,9 +1,12 @@
+APScheduler
+azure_storage
 dnspython
 elevenlabs
 Faker
 feedparser
 Flask
 flask_cors
+flask_mail
 google_auth_oauthlib
 marshmallow
 matplotlib

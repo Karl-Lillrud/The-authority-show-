@@ -37,7 +37,6 @@ from backend.routes.highlight import highlights_bp
 from backend.routes.verification import verification_bp
 
 
-
 if os.getenv("SKIP_VENV_UPDATE", "false").lower() not in ("true", "1", "yes"):
     venvupdate.update_venv_and_requirements()
 
@@ -125,10 +124,10 @@ def load_user():
     g.user_id = session.get("user_id")
     logger.info(f"Request to {request.path} by user {g.user_id}")
 
+
 start_scheduler(app)
 
 # Run the app
 if __name__ == "__main__":
     app.run(
         host="0.0.0.0", port=8000, debug=True
-    )  # Ensure the port matches your request URL
