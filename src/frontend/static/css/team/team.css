@@ -111,7 +111,6 @@ body {
 }
 
 .team-card:hover {
-  transform: translateY(-6px);
   box-shadow: var(--card-shadow-hover);
 }
 
@@ -662,7 +661,6 @@ body {
 }
 
 .member-card:hover {
-  transform: translateY(-6px);
   box-shadow: var(--card-shadow-hover);
 }
 

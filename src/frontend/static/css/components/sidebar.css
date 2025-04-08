@@ -291,6 +291,10 @@
   height: 18px;
 }
 
+.hide-sidebar-menu-item {
+  display: none !important; 
+}
+
 .sidebar-action-buttons h3 {
   font-size: 0.85rem;
   color: rgba(0, 0, 0, 0.5);

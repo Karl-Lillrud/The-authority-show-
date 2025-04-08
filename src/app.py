@@ -9,8 +9,9 @@ from backend.routes.dashboard import dashboard_bp
 from backend.routes.pod_management import pod_management_bp
 from backend.routes.podtask import podtask_bp
 from backend.routes.account import account_bp
+from backend.routes.credits_routes import credits_bp
 from backend.routes.team import team_bp
-from backend.routes.guest import guest_bp
+from backend.routes.guest import guest_bp  # Ensure the guest blueprint is correctly imported
 from backend.routes.user_to_team import usertoteam_bp
 from backend.routes.invitation import invitation_bp
 from backend.routes.google_calendar import google_calendar_bp
@@ -34,7 +35,6 @@ from backend.routes.audio_routes import audio_bp
 from backend.routes.video_routes import video_bp
 
 from backend.routes.highlight import highlights_bp
-
 
 
 if os.getenv("SKIP_VENV_UPDATE", "false").lower() not in ("true", "1", "yes"):
@@ -79,14 +79,13 @@ app.register_blueprint(pod_management_bp)
 app.register_blueprint(podtask_bp)
 app.register_blueprint(team_bp)
 app.register_blueprint(Mailing_list_bp)
-app.register_blueprint(
-    guest_bp
-)  # Ensure this line is present and has the correct prefix
+app.register_blueprint(guest_bp)  # Ensure the guest blueprint is correctly registered
 app.register_blueprint(guestpage_bp)
 app.register_blueprint(account_bp)
+app.register_blueprint(credits_bp)  
 app.register_blueprint(usertoteam_bp)
 app.register_blueprint(invitation_bp)
-app.register_blueprint(google_calendar_bp)
+app.register_blueprint(google_calendar_bp)  # Register the google_calendar blueprint
 app.register_blueprint(episode_bp)
 app.register_blueprint(podprofile_bp)  # Register the podprofile blueprint
 app.register_blueprint(frontend_bp)  # Register the frontend blueprint
@@ -123,10 +122,11 @@ def load_user():
     g.user_id = session.get("user_id")
     logger.info(f"Request to {request.path} by user {g.user_id}")
 
+
 start_scheduler(app)
 
 # Run the app
 if __name__ == "__main__":
     app.run(
-        host="0.0.0.0", port=8000, debug=False
+        host="0.0.0.0", port=8000, debug=True
     )  # Ensure the port matches your request URL

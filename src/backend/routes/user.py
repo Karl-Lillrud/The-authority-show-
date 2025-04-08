@@ -19,7 +19,7 @@ def get_profile():
     return jsonify(response), status_code
 
 
-# Route to update user profile data
+# Route to update user profile data//
 @user_bp.route("/update_profile", methods=["PUT"])
 def update_profile():
     if not hasattr(g, "user_id") or not g.user_id:
