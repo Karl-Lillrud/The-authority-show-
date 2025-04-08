@@ -548,6 +548,7 @@ export async function handleAddMemberFormSubmission(e) {
   }
 
   try {
+    document.getElementById("addMemberModal").classList.remove("show");
     const inviteResult = await sendTeamInviteRequest(teamId, email, role);
     const addMemberResult = await addTeamMemberRequest(teamId, email, role);
 
@@ -557,7 +558,6 @@ export async function handleAddMemberFormSubmission(e) {
     }
 
     showNotification("Success", "Member added successfully!", "success");
-    document.getElementById("addMemberModal").classList.remove("show");
     const teams = await getTeamsRequest();
     updateTeamsUI(teams);
   } catch (error) {

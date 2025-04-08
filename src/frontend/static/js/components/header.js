@@ -199,7 +199,7 @@ function setDynamicPageTitle() {
       "/account": "Account",
       "/podcastmanagement": "Podcast Management",
       "/dashboard": "Dashboard",
-      "/team": "Team Members",
+      "/team": "Team Management",
       "/guest": "Guest View",
       "/taskmanagement": "Episode To-Do",
     };
