@@ -3,16 +3,26 @@
 # Load environment variables from .env file using dotenv
 if [ -f .env ]; then
     echo "Loading environment variables from .env file using dotenv..."
+    if ! dotenv -f .env list > /dev/null 2>&1; then
+        echo "❌ ERROR: Invalid syntax in .env file. Please check for invalid lines or characters."
+        exit 1
+    fi
     export $(dotenv -f .env list | xargs)
 else
     echo ".env file not found. Exiting..."
     exit 1
 fi
 
+# Check if ACR credentials are set
+if [ -z "$ACR_USERNAME" ] || [ -z "$ACR_PASSWORD" ]; then
+    echo "❌ ERROR: ACR_USERNAME or ACR_PASSWORD is not set in the .env file."
+    exit 1
+fi
+
 # Define variables
 RESOURCE_GROUP="PodManager"
-REGISTRY_NAME="podmanageracr"
-IMAGE_NAME="podmanager" 
+REGISTRY_NAME="podmanageracr3container"
+IMAGE_NAME="podmanagerlive:latest"
 WEBAPP_NAME="podmanager"
 APP_SERVICE_PLAN="podmanagersp"
 LOCATION="northeurope" # e.g., "eastus"
@@ -35,9 +45,9 @@ else
     echo "Azure Container Registry '$REGISTRY_NAME' already exists."
 fi
 
-# Step 3: Remove existing repository (if any) from ACR
-echo "Removing existing repository '$IMAGE_NAME' from ACR (if it exists)..."
-az acr repository delete --name $REGISTRY_NAME --repository $IMAGE_NAME --yes
+# Step 3: Log in to Azure Container Registry (ACR) using Managed Identity
+echo "Logging in to ACR '$REGISTRY_NAME' using Managed Identity..."
+az acr login --name $REGISTRY_NAME
 
 # Step 4: Build Docker Image
 echo "Building Docker image '$IMAGE_NAME'..."
@@ -69,11 +79,13 @@ else
     echo "Web App '$WEBAPP_NAME' already exists."
 fi
 
-# Step 9: Configure Web App to use ACR with credentials (no username and password needed with Managed Identity)
-echo "Configuring Web App to use Docker image from ACR with tag '$IMAGE_NAME'..."
+# Step 9: Configure Web App to use ACR with credentials
+echo "Configuring Web App to use Docker image from ACR with credentials..."
 az webapp config container set --name $WEBAPP_NAME --resource-group $RESOURCE_GROUP \
   --container-registry-url https://$REGISTRY_NAME.azurecr.io \
-  --container-image-name $REGISTRY_NAME.azurecr.io/$IMAGE_NAME
+  --container-image-name $REGISTRY_NAME.azurecr.io/$IMAGE_NAME \
+  --container-registry-user "$ACR_USERNAME" \
+  --container-registry-password "$ACR_PASSWORD"
 
 # Step 10: Check the status of the Web App
 echo "Web App '$WEBAPP_NAME' is deployed successfully. Checking the status..."
