@@ -4,16 +4,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const aiEditLink = document.getElementById("ai-edit-link");
   if (aiEditLink) {
     const host = window.location.hostname;
-    const params = new URLSearchParams(window.location.search);
-    let user_id = params.get("user_id");
-
-// Alternatively, retrieve it from a secure storage if available on the client
-    if (!user_id || user_id === "null") {
-      user_id = localStorage.getItem("user_id"); // or another trusted source
-}
-    const streamlitURL = `http://${host}:8501/?user_id=${user_id}`;
-    aiEditLink.href = streamlitURL;
-  }
+    const streamlitURL = `http://${host}:8501/`;
 
   populateHeaderPodcastDropdown();
   populateLandingPageDropdown();
