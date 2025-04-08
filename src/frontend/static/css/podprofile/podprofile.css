@@ -282,9 +282,10 @@ body.dark-mode .button-secondary:hover {
 .help-text {
   visibility: hidden;
   position: absolute;
-  bottom: 100%; /* Position above the question mark button */
-  left: 50%; /* Center horizontally */
-  transform: translateX(-50%); /* Adjust to be exactly above */
+  right: calc(130% + var(--spacing-sm)); /* Move the tooltip further to the left */
+  top: 50%; /* Center vertically relative to the button */
+  transform: translateY(-50%); /* Adjust to be vertically centered */
+  margin-right: 0; /* Remove additional margin */
   width: 300px;
   background-color: #333;
   color: white;
@@ -293,7 +294,6 @@ body.dark-mode .button-secondary:hover {
   font-size: 0.9rem;
   box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.2);
   z-index: 100;
-  opacity: 0;
   text-align: left; /* Align text to the left */
   transition: opacity 0.3s, visibility 0.3s;
 }
@@ -313,7 +313,7 @@ body.dark-mode .help-button {
   display: none;
 }
 
-.help-button:hover + .help-text {
+.help-button:hover .help-text {
   visibility: visible;
   opacity: 1;
 }
@@ -964,6 +964,54 @@ body.dark-mode .error-container {
 }
 
 #connectCalendar {
+  margin-top: var(--spacing-sm); /* Add spacing above the button */
+  margin-bottom: var(--spacing-sm); /* Add spacing below the button */
   margin-bottom: calc(var(--spacing-md) + 50px);
   /* Add 50px extra space below the button */
+}
+
+.connect-calendar-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  padding-right: 10px;
+}
+
+.calendar-help-button {
+  font-size: 0.8rem;
+  border-radius: 50%;
+  width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+.calendar-help-text {
+  visibility: hidden;
+  position: absolute;
+  left: calc(200% + var(--spacing-xs)); /* Move the tooltip to the right of the button */
+  top: 50%; /* Center vertically relative to the button */
+  transform: translateY(-50%); /* Adjust to be vertically centered */
+  margin-left: 0;
+  width: 300px;
+  background-color: #333;
+  color: white;
+  padding: var(--spacing-md);
+  border-radius: var(--border-radius-sm);
+  font-size: 0.9rem;
+  box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.2);
+  z-index: 100;
+  text-align: left; /* Align text to the left */
+  transition: opacity 0.3s, visibility 0.3s;
+}
+
+.calendar-help-button:hover .calendar-help-text {
+  visibility: visible;
+  opacity: 1;
 }
