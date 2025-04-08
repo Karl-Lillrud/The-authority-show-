@@ -9,9 +9,10 @@ class AccountSchema(Schema):
     isCompany = fields.Bool()
     companyName = fields.Str()
     paymentInfo = fields.Str()
-    subscriptionStatus = fields.Str
+    subscriptionStatus = fields.Str()
     createdAt = fields.DateTime()
     referralBonus = fields.Int()
     subscriptionStart = fields.DateTime()
     subscriptionEnd = fields.DateTime()
     isActive = fields.Bool()
+    isFirstLogin = fields.Bool()

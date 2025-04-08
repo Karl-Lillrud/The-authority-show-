@@ -1,6 +1,7 @@
 import { fetchAllEpisodes } from "/static/requests/episodeRequest.js";
 import { fetchGuestsByEpisode } from "/static/requests/guestRequests.js";
-import { fetchPodcast } from "/static/requests/podcastRequests.js";
+import { fetchPodcast, fetchPodcasts } from "/static/requests/podcastRequests.js";
+import { fetchAccount, updateAccount } from "/static/requests/accountRequests.js";
 import { initTaskManagement } from "/static/js/dashboard/task.js";
 
 document.addEventListener("DOMContentLoaded", () => {
@@ -11,28 +12,49 @@ document.addEventListener("DOMContentLoaded", () => {
   updateStatCounts();
 });
 
-function initWelcomePopup() {
-  const welcomePopup = document.getElementById("welcome-popup");
-  const closeWelcomePopup = document.getElementById("close-welcome-popup");
-  const getStartedBtn = document.getElementById("get-started-btn");
+async function initWelcomePopup() {
+  try {
+    const result = await fetchAccount();
+    const account = result.account;
+    if (account.isFirstLogin) {
+      const welcomePopup = document.getElementById("welcome-popup");
+      const closeWelcomePopup = document.getElementById("close-welcome-popup");
+      const getStartedBtn = document.getElementById("get-started-btn");
 
-  if (!welcomePopup) return;
+      if (!welcomePopup) return;
 
-  welcomePopup.style.display = "flex";
+      welcomePopup.style.display = "flex";
 
-  closeWelcomePopup.addEventListener("click", () => {
-    welcomePopup.style.display = "none";
-  });
+      closeWelcomePopup.addEventListener("click", () => {
+        welcomePopup.style.display = "none";
+        disableWelcomePopup();
+      });
 
-  getStartedBtn.addEventListener("click", () => {
-    welcomePopup.style.display = "none";
-  });
+      getStartedBtn.addEventListener("click", () => {
+        welcomePopup.style.display = "none";
+        disableWelcomePopup();
+      });
 
-  welcomePopup.addEventListener("click", (e) => {
-    if (e.target === welcomePopup) {
-      welcomePopup.style.display = "none";
+      welcomePopup.addEventListener("click", (e) => {
+        if (e.target === welcomePopup) {
+          welcomePopup.style.display = "none";
+          disableWelcomePopup();
+        }
+      });
+          return;
     }
-  });
+  } catch (error) {
+    console.error("Error initializing welcome popup:", error);
+  }
+}
+
+async function disableWelcomePopup() {
+  try {
+    const data = { isFirstLogin: false }  
+    await updateAccount(data);
+  } catch (error) {
+    console.error("Error disabling welcome popup:", error);
+  }
 }
 
 function initProgressCircles() {
