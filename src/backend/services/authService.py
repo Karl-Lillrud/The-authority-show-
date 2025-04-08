@@ -145,12 +145,21 @@ class AuthService:
 
             # Send the verification code to the user's email
             subject = "Verification Code"
-            body = f"Your verification code is: {code}. This code is valid for 10 minutes."
+            body = f"""
+            <html>
+                <body>
+                    <p>Hello,</p>
+                    <p>Your verification code is: <strong>{code}</strong></p>
+                    <p>This code is valid for 10 minutes.</p>
+                    <p>If you did not request this code, please ignore this email.</p>
+                </body>
+            </html>
+            """
             send_email(email, subject, body)
-            logger.info(f"Verification code sent to {email}")
+
             return {"message": "Verification code sent"}
         except Exception as e:
-            logger.error(f"Error sending the verification code to {email}: {e}", exc_info=True)
+            logger.error(f"Error sending the verification code: {e}", exc_info=True)
             return {"error": f"Failed to send verification code: {str(e)}"}
 
     def _store_verification_code(self, email, hashed_code, expiration_time, created_at):
