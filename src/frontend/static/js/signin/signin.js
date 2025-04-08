@@ -8,6 +8,7 @@ document.addEventListener("DOMContentLoaded", function () {
   const errorMessage = document.getElementById("error-message");
   const form = document.getElementById("signin-form");
   const sendCodeButton = document.getElementById("send-code-button");
+<<<<<<< HEAD
   const sendCodeMessage = document.getElementById("send-code-message");
   const loginWithCodeButton = document.getElementById("login-with-code-button");
   const emailInput = document.getElementById("email");
@@ -21,6 +22,9 @@ document.addEventListener("DOMContentLoaded", function () {
   const loginForm = document.getElementById("login-form");
   const verificationForm = document.getElementById("verification-form");
 >>>>>>> parent of 003dcac05 (Add verification form and enhance sign-in process with improved error handling and code structure)
+=======
+  const emailInput = document.getElementById("email");
+>>>>>>> parent of 072a6997d (Implement email verification code functionality for sign-in process)
 
   // Display success message if present in URL params
   if (message) {
@@ -57,6 +61,7 @@ document.addEventListener("DOMContentLoaded", function () {
     }
   });
 
+<<<<<<< HEAD
   // Handle "Sign in with Verification Code" button click
   if (sendCodeButton) {
     sendCodeButton.addEventListener("click", async function () {
@@ -210,6 +215,43 @@ document.addEventListener("DOMContentLoaded", function () {
       // Show the login form and hide the verification form
       form.style.display = "flex"; // Show the login form
       verificationForm.style.display = "none"; // Hide the verification form
+=======
+  // Handle "Send Verification Code" button click
+  if (sendCodeButton) {
+    sendCodeButton.addEventListener("click", async function () {
+      const email = emailInput.value.trim();
+
+      if (!email) {
+        errorMessage.textContent = "Please enter your email.";
+        errorMessage.style.display = "block";
+        return;
+      }
+
+      try {
+        const response = await fetch("/send-verification-code", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email }),
+        });
+
+        const result = await response.json();
+        if (response.ok) {
+          successMessage.textContent = "Verification code sent to your email!";
+          successMessage.style.display = "block";
+          errorMessage.style.display = "none";
+        } else {
+          errorMessage.textContent =
+            result.error || "Failed to send verification code.";
+          errorMessage.style.display = "block";
+          successMessage.style.display = "none";
+        }
+      } catch (error) {
+        console.error("Error:", error);
+        errorMessage.textContent = "An error occurred. Please try again.";
+        errorMessage.style.display = "block";
+        successMessage.style.display = "none";
+      }
+>>>>>>> parent of 072a6997d (Implement email verification code functionality for sign-in process)
     });
   }
 });

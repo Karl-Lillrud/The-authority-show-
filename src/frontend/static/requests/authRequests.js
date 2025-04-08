@@ -84,6 +84,7 @@ export async function registerTeamMember(
     throw new Error(error.message);
   }
 }
+<<<<<<< HEAD
 
 <<<<<<< HEAD
 =======
@@ -131,3 +132,5 @@ export async function sendVerificationCode(email) {
 
   return response.json();
 }
+=======
+>>>>>>> parent of 072a6997d (Implement email verification code functionality for sign-in process)
