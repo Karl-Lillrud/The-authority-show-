@@ -25,7 +25,7 @@ export async function renderMembersView() {
     const teams = await getTeamsRequest();
     const membersView = document.getElementById("members-view-container");
     if (!teams || teams.length === 0) {
-      membersView.innerHTML = `<p>No teams available.</p>`;
+      membersView.innerHTML = `<p>No members available.</p>`;
       return;
     }
     for (const team of teams) {
