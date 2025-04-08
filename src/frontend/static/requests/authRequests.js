@@ -87,6 +87,7 @@ export async function registerTeamMember(
 
 export async function sendVerificationCode(email) {
 <<<<<<< HEAD
+<<<<<<< HEAD
   const response = await fetch("/send-verification-code", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -94,6 +95,8 @@ export async function sendVerificationCode(email) {
   });
   return response.json();
 =======
+=======
+>>>>>>> parent of 295f9066f (Implement email verification feature with code generation and validation)
   try {
     const response = await fetch("/send-verification-code", {
       method: "POST",
@@ -106,12 +109,27 @@ export async function sendVerificationCode(email) {
       throw new Error(errorData.message || "Failed to send verification code.");
     }
 
+<<<<<<< HEAD
     return await response.json();
+=======
+    const result = await response.json();
+
+    // Ensure the function only throws an error for actual failures
+    if (result.success === false) {
+      throw new Error(result.message || "Failed to send verification code.");
+    }
+
+    // Return the success response
+    return result;
+>>>>>>> parent of 295f9066f (Implement email verification feature with code generation and validation)
   } catch (error) {
     console.error("Error in sendVerificationCode:", error);
     throw error;
   }
+<<<<<<< HEAD
 >>>>>>> parent of 003dcac05 (Add verification form and enhance sign-in process with improved error handling and code structure)
+=======
+>>>>>>> parent of 295f9066f (Implement email verification feature with code generation and validation)
 }
 
 export async function loginWithVerificationCode(email, code) {
@@ -121,6 +139,7 @@ export async function loginWithVerificationCode(email, code) {
     body: JSON.stringify({ email, code }),
   });
   return response.json();
+<<<<<<< HEAD
 }
 <<<<<<< HEAD
 
@@ -141,3 +160,6 @@ export async function sendVerificationCode(email) {
 
 =======
 >>>>>>> parent of 9490424b6 (Refactor authentication flow: update client secrets, enhance verification code handling, and improve error handling in sendVerificationCode function)
+=======
+}
+>>>>>>> parent of 295f9066f (Implement email verification feature with code generation and validation)

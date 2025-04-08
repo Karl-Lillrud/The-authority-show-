@@ -208,8 +208,11 @@ body {
 >>>>>>> parent of 295f9066f (Implement email verification feature with code generation and validation)
 }
 
+<<<<<<< HEAD
 =======
 >>>>>>> parent of 003dcac05 (Add verification form and enhance sign-in process with improved error handling and code structure)
+=======
+>>>>>>> parent of 295f9066f (Implement email verification feature with code generation and validation)
 /* Media Queries for Responsiveness */
 @media (max-width: 768px) {
   .center-box {
