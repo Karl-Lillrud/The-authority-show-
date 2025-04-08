@@ -22,7 +22,6 @@ from backend.routes.guest_to_eposide import guesttoepisode_bp
 from backend.routes.guest_form import guest_form_bp  # Import the guest_form blueprint
 from backend.utils.email_utils import send_email
 from backend.utils.scheduler import start_scheduler
-
 from backend.routes.transcription import transcription_bp
 from backend.routes.landingpage import landingpage_bp
 from dotenv import load_dotenv
@@ -128,14 +127,6 @@ start_scheduler(app)
 # Run the app
 if __name__ == "__main__":
     app.run(
-<<<<<<< HEAD
-        host="0.0.0.0", port=8000, debug=True
-<<<<<<< HEAD
-    )
-=======
-    )  # Ensure the port matches your request URL
->>>>>>> parent of ede698130 (Merge branch 'dev' into 846-email-verification-login-v3)
-=======
         host="0.0.0.0", port=8000, debug=False
     )  # Ensure the port matches your request URL
->>>>>>> parent of 295f9066f (Implement email verification feature with code generation and validation)
+
