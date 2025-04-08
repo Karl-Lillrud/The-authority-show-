@@ -669,32 +669,28 @@ document.addEventListener("DOMContentLoaded", () => {
     // Track if we have any available times
     let hasAvailableTimes = false;
 
+    // Loop over each hour in the working hours and add it to the time picker
     for (let hour = workingStart.hour; hour <= workingEnd.hour; hour++) {
-        for (const minuteVal of ["00", "30"]) {
-            // Skip if we're past the end time
-            if (hour === workingEnd.hour && minuteVal === "30") continue;
+        const time = `${hour.toString().padStart(2, "0")}:00`; // Set the time to the full hour
+        const timeStr = `${time}:00`; // Add seconds for comparison
 
-            const time = `${hour.toString().padStart(2, "0")}:${minuteVal}`;
-            const timeStr = `${time}:00`; // Add seconds for comparison
+        // Check if this time is busy
+        const isBusy = isTimeBusy(time, busySlots);
 
-            // Check if this time is busy
-            const isBusy = isTimeBusy(time, busySlots);
+        const timeOption = document.createElement("option");
+        timeOption.value = time;
+        timeOption.textContent = time;
 
-            const timeOption = document.createElement("option");
-            timeOption.value = time;
-            timeOption.textContent = time;
-
-            if (isBusy) {
-                // Add to unavailable group with styling
-                timeOption.disabled = true; // Disable the option
-                timeOption.classList.add("line-through", "text-red-500"); // Cross it out visually
-                timeOption.textContent = `${time} (Unavailable)`; // Add unavailable label
-                unavailableGroup.appendChild(timeOption);
-            } else {
-                // Add to available group
-                availableGroup.appendChild(timeOption);
-                hasAvailableTimes = true;
-            }
+        if (isBusy) {
+            // Add to unavailable group with styling
+            timeOption.disabled = true; // Disable the option
+            timeOption.classList.add("line-through", "text-red-500"); // Cross it out visually
+            timeOption.textContent = `${time} (Unavailable)`; // Add unavailable label
+            unavailableGroup.appendChild(timeOption);
+        } else {
+            // Add to available group
+            availableGroup.appendChild(timeOption);
+            hasAvailableTimes = true;
         }
     }
 
