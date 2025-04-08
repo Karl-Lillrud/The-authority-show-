@@ -86,23 +86,12 @@ export async function registerTeamMember(
 }
 
 export async function sendVerificationCode(email) {
-  try {
-    const response = await fetch("/send-verification-code", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email }),
-    });
-
-    if (!response.ok) {
-      const errorData = await response.json();
-      throw new Error(errorData.message || "Failed to send verification code.");
-    }
-
-    return await response.json();
-  } catch (error) {
-    console.error("Error in sendVerificationCode:", error);
-    throw error;
-  }
+  const response = await fetch("/send-verification-code", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ email }),
+  });
+  return response.json();
 }
 
 export async function loginWithVerificationCode(email, code) {
@@ -113,6 +102,7 @@ export async function loginWithVerificationCode(email, code) {
   });
   return response.json();
 }
+<<<<<<< HEAD
 
 export async function sendVerificationCode(email) {
   const response = await fetch("/verification/send-verification-code", {
@@ -129,3 +119,5 @@ export async function sendVerificationCode(email) {
   return response.json();
 }
 
+=======
+>>>>>>> parent of 9490424b6 (Refactor authentication flow: update client secrets, enhance verification code handling, and improve error handling in sendVerificationCode function)

@@ -1,4 +1,8 @@
+<<<<<<< HEAD
 import { signin, sendVerificationCode, loginWithVerificationCode } from "/static/requests/authRequests.js";
+=======
+import { signin } from "/static/requests/authRequests.js";
+>>>>>>> parent of 9490424b6 (Refactor authentication flow: update client secrets, enhance verification code handling, and improve error handling in sendVerificationCode function)
 
 document.addEventListener("DOMContentLoaded", function () {
   const urlParams = new URLSearchParams(window.location.search);
@@ -11,7 +15,6 @@ document.addEventListener("DOMContentLoaded", function () {
   const errorMessage = document.getElementById("error-message");
   const form = document.getElementById("signin-form");
   const sendCodeButton = document.getElementById("send-code-button");
-  const sendCodeMessage = document.getElementById("send-code-message");
   const loginWithCodeButton = document.getElementById("login-with-code-button");
 <<<<<<< HEAD
   const emailInput = document.getElementById("email");
@@ -29,7 +32,7 @@ document.addEventListener("DOMContentLoaded", function () {
   if (message) {
     successMessage.textContent = message;
     successMessage.style.display = "block";
-    successMessage.style.color = "var(--highlight)";
+    successMessage.style.color = "var(--highlight)"; // Match error message color
   }
 
 <<<<<<< HEAD
@@ -67,18 +70,17 @@ document.addEventListener("DOMContentLoaded", function () {
     }
   });
 
-  // Handle "Sign in with Verification Code" button click
+  // Handle "Send Verification Code" button click
   sendCodeButton.addEventListener("click", async function () {
     const email = emailInput.value.trim();
 
     if (!email) {
-      sendCodeMessage.textContent = "Please enter your email.";
-      sendCodeMessage.style.display = "block";
-      sendCodeMessage.style.color = "red";
+      alert("Please enter your email.");
       return;
     }
 
     try {
+<<<<<<< HEAD
       const result = await sendVerificationCode(email);
 <<<<<<< HEAD
 =======
@@ -103,11 +105,25 @@ document.addEventListener("DOMContentLoaded", function () {
       document.getElementById("login-form").style.display = "none";
       document.getElementById("verification-form").style.display = "block";
 >>>>>>> parent of 295f9066f (Implement email verification feature with code generation and validation)
+=======
+      const response = await fetch("/send-verification-code", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email }),
+      });
+
+      const result = await response.json();
+      if (response.ok) {
+        alert("Verification code sent to your email!");
+        verificationCodeInput.style.display = "block";
+        loginWithCodeButton.style.display = "block";
+      } else {
+        alert(result.message || "Failed to send verification code.");
+      }
+>>>>>>> parent of 9490424b6 (Refactor authentication flow: update client secrets, enhance verification code handling, and improve error handling in sendVerificationCode function)
     } catch (error) {
       console.error("Error:", error);
-      sendCodeMessage.textContent = error.message || "An error occurred. Please try again.";
-      sendCodeMessage.style.display = "block";
-      sendCodeMessage.style.color = "red";
+      alert("An error occurred. Please try again.");
     }
   });
 
@@ -134,16 +150,22 @@ document.addEventListener("DOMContentLoaded", function () {
   loginWithCodeButton.addEventListener("click", async function () {
     const code = verificationCodeInput.value.trim();
 
+<<<<<<< HEAD
     if (!email || !code) { // Use the existing 'email' variable
       sendCodeMessage.textContent = "Please enter both email and verification code.";
       sendCodeMessage.style.display = "block";
       sendCodeMessage.style.color = "red";
+=======
+    if (!email || !code) {
+      alert("Please enter both email and verification code.");
+>>>>>>> parent of 9490424b6 (Refactor authentication flow: update client secrets, enhance verification code handling, and improve error handling in sendVerificationCode function)
       return;
     }
 
     try {
       const response = await loginWithVerificationCode(email, code);
 
+<<<<<<< HEAD
       if (response.redirect_url) {
         sendCodeMessage.textContent = "Login successful!";
         sendCodeMessage.style.display = "block";
@@ -157,6 +179,18 @@ document.addEventListener("DOMContentLoaded", function () {
       sendCodeMessage.textContent = error.message || "An error occurred. Please try again.";
       sendCodeMessage.style.display = "block";
       sendCodeMessage.style.color = "red";
+=======
+      const result = await response.json();
+      if (response.ok) {
+        alert("Login successful!");
+        window.location.href = result.redirect_url || "/dashboard";
+      } else {
+        alert(result.message || "Failed to log in with code.");
+      }
+    } catch (error) {
+      console.error("Error:", error);
+      alert("An error occurred. Please try again.");
+>>>>>>> parent of 9490424b6 (Refactor authentication flow: update client secrets, enhance verification code handling, and improve error handling in sendVerificationCode function)
     }
   });
 
