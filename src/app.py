@@ -131,7 +131,4 @@ start_scheduler(app)
 if __name__ == "__main__":
     app.run(
         host="0.0.0.0", port=8000, debug=True
-<<<<<<< HEAD
-    )  # Ensure the port matches your request URL
-=======
->>>>>>> ede698130658101f76d28b337d6fdc0d46330cca
+    )
