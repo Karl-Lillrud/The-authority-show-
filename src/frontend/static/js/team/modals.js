@@ -29,9 +29,10 @@ export function renderAssignedPodcasts(
   for (const [podcastId, newTeam] of Object.entries(pendingPodcastChanges)) {
     if (newTeam === teamId) {
       if (!finalAssignments[podcastId]) {
+        const podcast = originalAssignedPodcasts.find((p) => p._id === podcastId);
         finalAssignments[podcastId] = {
           _id: podcastId,
-          podName: "Pending: " + podcastId
+          podName: podcast ? podcast.podName : "Unknown Podcast",
         };
       }
     } else if (newTeam === "REMOVE") {
@@ -240,11 +241,16 @@ export function showTeamDetailModal(team) {
       return;
     }
 
+    const selectedPodcastId = Object.entries(pendingPodcastChanges).find(
+      ([, teamId]) => teamId === team._id
+    )?.[0]; // Gets the podcastId assigned to this team
+
     const payload = {
       name: document.getElementById("detailName").value,
       email: document.getElementById("detailEmail").value,
       description: document.getElementById("detailDescription").value,
-      members: team.members // Preserve all members (including creator)
+      members: team.members, // Preserve all members (including creator)
+      podcastId: selectedPodcastId || "" // Fallback to empty string if none selected
     };
 
     try {

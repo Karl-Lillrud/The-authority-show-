@@ -191,7 +191,6 @@ class TeamRepository:
                     return {"message": "No changes made to the team."}, 200
             else:
                 return {"message": "No valid fields provided for update."}, 400
-
         except ValidationError as err:
             return {"error": "Invalid data", "details": err.messages}, 400
         except Exception as e:
