@@ -17,29 +17,23 @@ logger = logging.getLogger(__name__)
 load_dotenv()
 
 GOOGLE_CLIENT_ID = os.getenv("GOOGLE_CLIENT_ID")
-GOOGLE_CLIENT_SECRET = os.getenv("GOOGLE_CLIENT_SECRET")  # Fixed environment variable name
+GOOGLE_CLIENT_SECRET = os.getenv("GOOGLE_CLIENT_SECRET")
 GOOGLE_REDIRECT_URI = os.getenv("GOOGLE_REDIRECT_URI")
-GOOGLE_AUTH_URL = "https://accounts.google.com/o/oauth2/auth"
-GOOGLE_TOKEN_URL = "https://oauth2.googleapis.com/token"
+GOOGLE_AUTH_URL = os.getenv("GOOGLE_AUTH_URI")
+GOOGLE_TOKEN_URL = os.getenv("GOOGLE_TOKEN_URI")
 
-# Create the client_secret.json file dynamically
-client_secret_data = {
-    "web": {
-        "client_id": GOOGLE_CLIENT_ID,
-        "client_secret": GOOGLE_CLIENT_SECRET,
-        "redirect_uris": [GOOGLE_REDIRECT_URI],
-        "auth_uri": GOOGLE_AUTH_URL,
-        "token_uri": GOOGLE_TOKEN_URL
-    }
-}
-
-with open('client_secret.json', 'w') as json_file:
-    json.dump(client_secret_data, json_file)
-
-flow = Flow.from_client_secrets_file(
-    'client_secret.json',
-    scopes=['https://www.googleapis.com/auth/calendar'],
-    redirect_uri=GOOGLE_REDIRECT_URI
+flow = Flow.from_client_config(
+    {
+        "web": {
+            "client_id": GOOGLE_CLIENT_ID,
+            "client_secret": GOOGLE_CLIENT_SECRET,
+            "redirect_uris": [GOOGLE_REDIRECT_URI],
+            "auth_uri": GOOGLE_AUTH_URL,
+            "token_uri": GOOGLE_TOKEN_URL,
+        }
+    },
+    scopes=["https://www.googleapis.com/auth/calendar"],
+    redirect_uri=GOOGLE_REDIRECT_URI,
 )
 
 @google_calendar_bp.route('/connect_google_calendar')

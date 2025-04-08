@@ -140,7 +140,7 @@ def post_podcast_data():
 def connect_calendar():
     try:
         # Redirect user to the calendar integration service (e.g., Google OAuth)
-        calendar_auth_url = "https://accounts.google.com/o/oauth2/auth"  # Example URL
+        calendar_auth_url = getenv("GOOGLE_AUTH_URI")
         params = {
             "client_id": getenv("GOOGLE_CLIENT_ID"),  # Fetch from .env
             "redirect_uri": getenv("GOOGLE_REDIRECT_URI"),  # Fetch from .env
