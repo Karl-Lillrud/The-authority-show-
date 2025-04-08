@@ -35,7 +35,11 @@
         class="success-message"
         style="display: none"
       ></div>
-      <div id="error-message" class="error-message" style="display: none"></div>
+      <div id="error-message" class="error-message" style="display: block;">
+        {% if request.args.get('error') %}
+          <p>{{ request.args.get('error') }}</p>
+        {% endif %}
+      </div>
 
       <div id="signin-container">
         <form id="signin-form">

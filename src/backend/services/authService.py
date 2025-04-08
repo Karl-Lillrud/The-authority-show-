@@ -80,7 +80,7 @@ class AuthService:
 
             # Check if the code has expired
             if not expiration_time or datetime.utcnow() > expiration_time:
-                return {"error": "Verification code has expired"}
+                return {"error": "The log-in link has expired. Please request a new one."}
 
             # Check if the code matches
             if hashlib.sha256(code.encode()).hexdigest() != stored_code:
@@ -198,6 +198,7 @@ class AuthService:
         """
         Send a log-in link to the user's email.
         """
+        logger.info(f"Generated log-in link: {login_link}")  # Log the generated link for debugging
         subject = "Your Log-In Link for PodManager"
         body = f"""
         <html>

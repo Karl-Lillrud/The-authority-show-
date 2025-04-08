@@ -191,9 +191,11 @@ def send_login_link():
     try:
         # Generate a verification code and save it in the database
         verification_code = auth_service.generate_verification_code(email)
+        logger.info(f"Generated verification code for {email}: {verification_code}")  # Log the code for debugging
 
         # Construct the log-in link
-        login_link = f"{request.host_url}dashboard?code={verification_code}&email={email}"
+        login_link = f"{request.host_url}dashboard?email={email}&code={verification_code}"
+        logger.info(f"Generated log-in link for {email}: {login_link}")  # Log the link for debugging
 
         # Send the log-in link via email
         auth_service.send_login_email(email, login_link)

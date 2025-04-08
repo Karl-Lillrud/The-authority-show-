@@ -1,13 +1,16 @@
-import logging  # Add logging import
+import logging
 from flask import g, redirect, render_template, url_for, Blueprint, request, session
-from backend.database.mongo_connection import collection  # Add import
+from backend.database.mongo_connection import collection
+from backend.services.authService import AuthService  # Ensure authService is imported
 
 # Configure logger
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO)
 
-dashboard_bp = Blueprint("dashboard_bp", __name__)
+# Initialize AuthService
+authService = AuthService()
 
+dashboard_bp = Blueprint("dashboard_bp", __name__)
 
 # 📌 Dashboard
 @dashboard_bp.route("/dashboard", methods=["GET"])
@@ -19,23 +22,30 @@ def dashboard():
     code = request.args.get("code")
 
     if not email or not code:
-        return redirect("/signin?error=Invalid+log-in+link")
+        if not email:
+            logger.warning("Missing email parameter in request")
+        if not code:
+            logger.warning("Missing code parameter in request")
+        return redirect("/signin?error=Missing+email+or+verification+code")
 
     try:
+        logger.info(f"Attempting to verify email: {email} with code: {code}")
         # Verify the email and code using AuthService
         result = authService.verify_code_and_login(email, code)
         if "error" in result:
+            logger.warning(f"Verification failed for email: {email} - {result['error']}")
             return redirect(f"/signin?error={result['error']}")
 
         # Log the user in by setting session
         user = result["user"]
         session["user_id"] = str(user["_id"])
         session["email"] = user["email"]
+        logger.info(f"User logged in successfully: {email}")
 
-        # Redirect to the dashboard
-        return render_template("dashboard/dashboard.html", user={"email": user["email"]})
+        # Redirect to the podcast management page
+        return redirect(url_for("dashboard_bp.podcastmanagement"))
     except Exception as e:
-        logger.error(f"Error during login: {e}", exc_info=True)
+        logger.error(f"Error during login for email: {email} - {e}", exc_info=True)
         return redirect(f"/signin?error=An+unexpected+error+occurred")
 
 
@@ -101,8 +111,12 @@ def settings():
 # ✅ Serves the profile page
 @dashboard_bp.route("/podcastmanagement", methods=["GET"])
 def podcastmanagement():
-    if not g.user_id:
-        return redirect(url_for("auth_bp.signin"))  # Updated endpoint
+    """
+    Serves the podcast management page.
+    """
+    if "user_id" not in session:
+        logger.warning("User is not logged in. Redirecting to sign-in page.")
+        return redirect(url_for("auth_bp.signin", error="You must be logged in to access the dashboard."))
     return render_template("podcastmanagement/podcastmanagement.html")
 
 
