@@ -85,6 +85,29 @@ export async function registerTeamMember(
   }
 }
 
+<<<<<<< HEAD
+=======
+export async function sendVerificationCode(email) {
+  try {
+    const response = await fetch("/send-verification-code", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email }),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.message || "Failed to send verification code.");
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error("Error in sendVerificationCode:", error);
+    throw error;
+  }
+}
+
+>>>>>>> parent of 003dcac05 (Add verification form and enhance sign-in process with improved error handling and code structure)
 export async function loginWithVerificationCode(email, code) {
   const response = await fetch("/login-with-code", {
     method: "POST",

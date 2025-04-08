@@ -157,6 +157,7 @@ body {
   margin: 10px 0;
 }
 
+<<<<<<< HEAD
 #verification-form {
 <<<<<<< HEAD
   display: none; /* Hidden by default */
@@ -253,6 +254,8 @@ body {
 >>>>>>> ede698130658101f76d28b337d6fdc0d46330cca
 }
 
+=======
+>>>>>>> parent of 003dcac05 (Add verification form and enhance sign-in process with improved error handling and code structure)
 /* Media Queries for Responsiveness */
 @media (max-width: 768px) {
   .center-box {
