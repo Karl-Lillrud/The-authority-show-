@@ -77,9 +77,18 @@
             <input type="text" id="podName" name="podName" required />
           </div>
 
+          <!-- Add spacing between Podcast's Name and Connect Your Calendar -->
+          <div style="height: var(--spacing-md);"></div>
+
           <div class="form-group">
-            <button id="connectCalendar" class="button-primary">
+            <button id="connectCalendar" class="button-primary connect-calendar-button">
               Connect Your Calendar
+              <span class="help-button calendar-help-button">
+                ?
+                <span class="help-text calendar-help-text">
+                  To connect your calendar, log in to your calendar provider, navigate to your calendar settings or API/Sync options, and paste your calendar URL here.
+                </span>
+              </span>
             </button>
           </div>
 
