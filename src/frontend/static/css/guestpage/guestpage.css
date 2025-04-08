@@ -16,25 +16,31 @@ section {
   transition: background 0.5s ease-in-out;
 }
 
-/* Navbar */
 .navbar {
   position: fixed;
   top: 0;
   left: 0;
   width: 100%;
   background: #1f1f1f;
-  padding: 20px;
-  z-index: 1000;
+  height: 80px;             
+  display: flex;
+  align-items: center;      
   box-sizing: border-box;
+  z-index: 1000;
 }
 
-.navbar .container {
-  max-width: 1200px;
-  margin: 0 auto;
+
+.logo-container {
+  margin-left: 20px;
   display: flex;
-  justify-content: space-between;
   align-items: center;
-  width: 100%;
+}
+
+
+.logo-image {
+  height: 60px;      
+  width: auto;       
+  display: block;
 }
 
 .nav-links {
@@ -83,7 +89,7 @@ section {
   right: 30px;
   display: flex;
   gap: 15px;
-  z-index: 10; /* <--- Lägg till denna rad */
+  z-index: 10; 
 }
 
 #guest-social a {
