@@ -3,6 +3,7 @@ from backend.repository.auth_repository import AuthRepository
 from backend.services.TeamInviteService import TeamInviteService
 from backend.services.authService import AuthService
 import os
+import logging  # Add logging import
 
 # Define Blueprint
 auth_bp = Blueprint("auth_bp", __name__)
@@ -11,6 +12,10 @@ auth_bp = Blueprint("auth_bp", __name__)
 auth_repo = AuthRepository()
 
 auth_service = AuthService()
+
+# Configure logger
+logger = logging.getLogger(__name__)
+logging.basicConfig(level=logging.INFO)
 
 # Instantiate AuthService
 @auth_bp.route("/send-verification-code", methods=["POST"])

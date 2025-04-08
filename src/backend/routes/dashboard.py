@@ -1,5 +1,10 @@
+import logging  # Add logging import
 from flask import g, redirect, render_template, url_for, Blueprint, request, session
 from backend.database.mongo_connection import collection  # Add import
+
+# Configure logger
+logger = logging.getLogger(__name__)
+logging.basicConfig(level=logging.INFO)
 
 dashboard_bp = Blueprint("dashboard_bp", __name__)
 
@@ -23,13 +28,15 @@ def dashboard():
             return redirect(f"/signin?error={result['error']}")
 
         # Log the user in by setting session
-        session["user_id"] = result["user_id"]
-        session["email"] = email
+        user = result["user"]
+        session["user_id"] = str(user["_id"])
+        session["email"] = user["email"]
 
         # Redirect to the dashboard
-        return render_template("dashboard/dashboard.html", user={"email": email})
+        return render_template("dashboard/dashboard.html", user={"email": user["email"]})
     except Exception as e:
-        return redirect(f"/signin?error={str(e)}")
+        logger.error(f"Error during login: {e}", exc_info=True)
+        return redirect(f"/signin?error=An+unexpected+error+occurred")
 
 
 # ✅ Serves the homepage page

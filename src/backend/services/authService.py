@@ -92,8 +92,8 @@ class AuthService:
                 {"$unset": {"verification_code": "", "code_expires_at": ""}}
             )
 
-            # Log in the user (set up session or return user ID)
-            return {"message": "Login successful", "user_id": str(user_data["_id"])}
+            # Return the user data
+            return {"message": "Login successful", "user": user_data}
         except Exception as e:
             logger.error(f"Error verifying code: {e}", exc_info=True)
             return {"error": "An error occurred during verification"}
