@@ -19,6 +19,7 @@ DATABASE_NAME = "Podmanager"
 COLLECTION_NAME = "Users"
 PODCAST_NAME = "Podcasts"
 EPISODE_NAME = "Episodes"
+CREDITS = "Credits"
 MAILING_LIST_COLLECTION_NAME = "MailingList"  # Add MailingList collection
 SUBSCRIPTIONS_LIST_COLLECTION = "subscriptions_collection"
 
@@ -36,6 +37,7 @@ try:
     collection = database[COLLECTION_NAME]
     podcasts = database[PODCAST_NAME]
     episodes = database[EPISODE_NAME]
+    credits = database[CREDITS]
     mailing_list_collection = database[MAILING_LIST_COLLECTION_NAME]  # MailingList collection
     subscriptions_collection = database[SUBSCRIPTIONS_LIST_COLLECTION]
     fs = GridFS(database)  # Initialize GridFS

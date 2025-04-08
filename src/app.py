@@ -9,6 +9,7 @@ from backend.routes.dashboard import dashboard_bp
 from backend.routes.pod_management import pod_management_bp
 from backend.routes.podtask import podtask_bp
 from backend.routes.account import account_bp
+from backend.routes.credits_routes import credits_bp
 from backend.routes.team import team_bp
 from backend.routes.guest import guest_bp
 from backend.routes.user_to_team import usertoteam_bp
@@ -83,6 +84,7 @@ app.register_blueprint(
 )  # Ensure this line is present and has the correct prefix
 app.register_blueprint(guestpage_bp)
 app.register_blueprint(account_bp)
+app.register_blueprint(credits_bp)  
 app.register_blueprint(usertoteam_bp)
 app.register_blueprint(invitation_bp)
 app.register_blueprint(google_calendar_bp)
