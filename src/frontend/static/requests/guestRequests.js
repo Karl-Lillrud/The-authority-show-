@@ -1,10 +1,22 @@
 export async function addGuestRequest(payload) {
-  const res = await fetch("/add_guests", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(payload)
-  });
-  return res.json();
+  try {
+    const res = await fetch("/add_guest", { // Correct endpoint
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload)
+    });
+
+    if (!res.ok) {
+      const errorData = await res.json();
+      console.error("Backend error:", errorData.error);
+      throw new Error(errorData.error || "Failed to add guest.");
+    }
+
+    return await res.json();
+  } catch (error) {
+    console.error("Error in addGuestRequest:", error);
+    throw error;
+  }
 }
 
 export async function editGuestRequest(guestId, payload) {

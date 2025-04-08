@@ -10,6 +10,8 @@ from backend.repository.podtask_repository import PodtaskRepository
 from backend.repository.usertoteam_repository import UserToTeamRepository
 from backend.repository.team_repository import TeamRepository
 from backend.repository.teaminviterepository import TeamInviteRepository
+from datetime import datetime, timezone
+import bson
 
 logger = logging.getLogger(__name__)
 
@@ -21,12 +23,24 @@ class UserRepository:
         self.user_to_teams_collection = collection.database.UsersToTeams
 
     def get_user_by_email(self, email):
-
         return self.user_collection.find_one({"email": email.lower().strip()})
 
     def get_user_by_id(self, user_id):
-
-        return self.user_collection.find_one({"_id": user_id})
+        # Handle both string and ObjectId formats
+        try:
+            if isinstance(user_id, str) and bson.ObjectId.is_valid(user_id):
+                # Try to convert to ObjectId if it's a valid format
+                return self.user_collection.find_one({"_id": bson.ObjectId(user_id)})
+            else:
+                # Otherwise use as is
+                return self.user_collection.find_one({"_id": user_id})
+        except Exception as e:
+            logger.error(f"Error in get_user_by_id: {e}", exc_info=True)
+            # Try both formats as fallback
+            return self.user_collection.find_one({"$or": [
+                {"_id": user_id},
+                {"_id": str(user_id)}
+            ]})
 
     def get_profile(self, user_id):
         try:
@@ -189,3 +203,66 @@ class UserRepository:
         except Exception as e:
             logger.error(f"Error during deletion: {e}", exc_info=True)
             return {"error": f"Error during deletion: {str(e)}"}, 500
+
+    def save_tokens(self, user_id, access_token, refresh_token):
+        """
+        Save access token and refresh token to the user document.
+        """
+        try:
+            # Log token saving attempt with partial token info for security
+            logger.info(f"save_tokens called for user {user_id}")
+            
+            # Try different user_id formats to ensure we find the user
+            try_user_ids = [user_id]
+            
+            # If it's a string that could be an ObjectId, add that format
+            if isinstance(user_id, str) and bson.ObjectId.is_valid(user_id):
+                try_user_ids.append(bson.ObjectId(user_id))
+            
+            # If it's an ObjectId, add the string version
+            if not isinstance(user_id, str):
+                try_user_ids.append(str(user_id))
+                
+            logger.info(f"Will try user IDs: {try_user_ids}")
+            
+            # Create update data
+            user_data = {
+                "googleCalAccessToken": access_token,
+                "googleCalRefreshToken": refresh_token,
+                "googleCalLastUpdated": datetime.now(timezone.utc)
+            }
+            
+            # Try to update with each possible user_id format
+            for uid in try_user_ids:
+                try:
+                    result = self.user_collection.update_one(
+                        {"_id": uid},
+                        {"$set": user_data}
+                    )
+                    
+                    logger.info(f"Update with user_id {uid}: matched={result.matched_count}, modified={result.modified_count}")
+                    
+                    if result.matched_count > 0:
+                        # We found and updated the user, so we can stop trying
+                        logger.info(f"Successfully updated user {uid} with tokens")
+                        
+                        # Verify the update
+                        user = self.user_collection.find_one({"_id": uid})
+                        if user and user.get("googleCalRefreshToken") == refresh_token:
+                            logger.info(f"Verified tokens saved for user {uid}")
+                            return {"message": "Tokens saved successfully"}, 200
+                        else:
+                            logger.warning(f"Tokens saved but verification failed for user {uid}")
+                            
+                        # Even if verification failed, we did find and update the user
+                        return {"message": "Tokens saved"}, 200
+                except Exception as e:
+                    logger.error(f"Error updating user {uid}: {e}", exc_info=True)
+            
+            # If we get here, we didn't find the user with any ID format
+            logger.error(f"No user found with any ID format: {try_user_ids}")
+            return {"error": "User not found"}, 404
+
+        except Exception as e:
+            logger.error(f"Failed to save tokens for user {user_id}: {str(e)}", exc_info=True)
+            return {"error": f"Failed to save tokens: {str(e)}"}, 500

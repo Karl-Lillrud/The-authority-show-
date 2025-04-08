@@ -224,14 +224,45 @@ document.addEventListener("DOMContentLoaded", () => {
   // Calendar Connection Button
   const connectCalendarButton = document.getElementById("connectCalendar");
   if (connectCalendarButton) {
-    connectCalendarButton.addEventListener("click", () => {
-      window.location.href = "/connect_calendar";
+    connectCalendarButton.addEventListener("click", (event) => {
+      event.preventDefault();
+
+      try {
+        // Redirect the user to the backend endpoint, which will handle the OAuth redirection
+        window.location.href = "/connect_google_calendar";
+      } catch (error) {
+        console.error("Error connecting to Google Calendar:", error);
+        alert("Failed to connect to Google Calendar. Please try again.");
+      }
     });
   }
 
-  // Function to display podcast data in the unified container
-  function displayPodcastData(rssData) {
-    if (!podcastContainer) return;
+  // Save Google refresh token after OAuth flow
+  const urlParams = new URLSearchParams(window.location.search);
+  const googleToken = urlParams.get("googleToken");
+  if (googleToken) {
+    try {
+      fetch("/save_google_refresh_token", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ refreshToken: googleToken }), // Save as refreshToken
+      })
+        .then((res) => res.json())
+        .then((data) => {
+          if (data.message) {
+            console.log("Google refresh token saved successfully.");
+          } else {
+            console.error("Error saving Google refresh token:", data.error);
+          }
+        });
+    } catch (error) {
+      console.error("Error saving Google refresh token:", error);
+    }
+  }
+
+  // Function to display podcast preview with enhanced UI
+  function displayPodcastPreview(rssData) {
+    if (!podcastPreviewContainer) return;
 
     // Find Spotify and Apple Podcast links
     const spotifyLink = rssData.socialMedia?.find(
@@ -655,3 +686,54 @@ document.addEventListener("DOMContentLoaded", () => {
     };
   }
 });
+
+function connectGoogleCalendar() {
+  // Show loading state
+  const connectCalendarButton = document.getElementById("connectCalendar")
+  if (connectCalendarButton) {
+    connectCalendarButton.disabled = true
+    connectCalendarButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Connecting...'
+  }
+
+  // Redirect to the Google OAuth flow
+  fetch("/connect_google_calendar")
+    .then((response) => {
+      if (response.redirected) {
+        window.location.href = response.url
+      } else {
+        return response.json().then((data) => {
+          throw new Error(data.error || "Failed to connect to Google Calendar")
+        })
+      }
+    })
+    .catch((error) => {
+      console.error("Error connecting to Google Calendar:", error)
+      alert("Error connecting to Google Calendar: " + error.message)
+
+      // Reset button state
+      if (connectCalendarButton) {
+        connectCalendarButton.disabled = false
+        connectCalendarButton.innerHTML = "Connect Google Calendar"
+      }
+    })
+}
+
+// Add event listener when the DOM is loaded
+document.addEventListener("DOMContentLoaded", () => {
+  const connectCalendarButton = document.getElementById("connectCalendar")
+  if (connectCalendarButton) {
+    connectCalendarButton.addEventListener("click", (event) => {
+      event.preventDefault()
+      connectGoogleCalendar()
+    })
+  }
+
+  // Check for googleToken in URL parameters (after OAuth callback)
+  const urlParams = new URLSearchParams(window.location.search)
+  const googleToken = urlParams.get("googleToken")
+
+  if (googleToken) {
+    console.log("Google Calendar connected successfully!")
+    // You can display a success message or update UI elements here
+  }
+})

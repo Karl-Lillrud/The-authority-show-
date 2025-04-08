@@ -95,6 +95,44 @@ button[type="submit"]:hover {
   grid-template-columns: repeat(7, 1fr);
 }
 
+/* Add styles for the calendar to better indicate unavailable dates */
+#calendarPicker button {
+  transition: all 0.2s ease;
+  position: relative;
+}
+
+#calendarPicker button.line-through {
+  text-decoration: line-through;
+  opacity: 0.7;
+}
+
+#calendarPicker button.line-through::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background-color: rgba(239, 68, 68, 0.7); /* Red color with transparency */
+  transform: rotate(-45deg);
+}
+
+/* Style for the time picker to show unavailable times */
+#timePicker option:disabled {
+  color: #ef4444; /* Red color for unavailable times */
+  font-style: italic; /* Italicized to make them visually different */
+}
+
+#timePicker option.line-through {
+  text-decoration: line-through;
+  color: #ef4444; /* Red color for crossed-off times */
+}
+
+#timePicker optgroup {
+  font-weight: bold;
+  color: #4b5563;
+}
+
 .input-field {
   width: 100%;
   padding: 10px;
