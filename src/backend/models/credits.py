@@ -6,6 +6,5 @@ class CreditsSchema(Schema):
     userId = fields.Str(required=True)
     availableCredits = fields.Int(default=0)
     usedCredits = fields.Int(default=0)
-    creditLimit = fields.Int(default=3000)
     lastUpdated = fields.DateTime(default=datetime.utcnow)
     creditsHistory = fields.List(fields.Dict(), missing=[])
