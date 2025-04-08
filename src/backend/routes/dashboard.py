@@ -1,4 +1,4 @@
-from flask import g, redirect, render_template, url_for, Blueprint
+from flask import g, redirect, render_template, url_for, Blueprint, request, session
 from backend.database.mongo_connection import collection  # Add import
 
 dashboard_bp = Blueprint("dashboard_bp", __name__)
@@ -7,9 +7,29 @@ dashboard_bp = Blueprint("dashboard_bp", __name__)
 # 📌 Dashboard
 @dashboard_bp.route("/dashboard", methods=["GET"])
 def dashboard():
-    if not g.user_id:
-        return redirect(url_for("auth_bp.signin"))  # Updated endpoint
-    return render_template("dashboard/dashboard.html")
+    """
+    Authenticate the user using the email and verification code.
+    """
+    email = request.args.get("email")
+    code = request.args.get("code")
+
+    if not email or not code:
+        return redirect("/signin?error=Invalid+log-in+link")
+
+    try:
+        # Verify the email and code using AuthService
+        result = authService.verify_code_and_login(email, code)
+        if "error" in result:
+            return redirect(f"/signin?error={result['error']}")
+
+        # Log the user in by setting session
+        session["user_id"] = result["user_id"]
+        session["email"] = email
+
+        # Redirect to the dashboard
+        return render_template("dashboard/dashboard.html", user={"email": email})
+    except Exception as e:
+        return redirect(f"/signin?error={str(e)}")
 
 
 # ✅ Serves the homepage page

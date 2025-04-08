@@ -187,10 +187,13 @@ def send_login_link():
         # Generate a verification code and save it in the database
         verification_code = auth_service.generate_verification_code(email)
 
-        # Send the log-in link via email
+        # Construct the log-in link
         login_link = f"{request.host_url}dashboard?code={verification_code}&email={email}"
+
+        # Send the log-in link via email
         auth_service.send_login_email(email, login_link)
 
         return jsonify({"message": "Log-in link sent successfully"}), 200
     except Exception as e:
-        return jsonify({"error": f"Failed to send log-in link: {str(e)}"}), 500
+        logger.error(f"Error sending log-in link: {e}", exc_info=True)
+        return jsonify({"error": "Failed to send log-in link. Please try again later."}), 500
