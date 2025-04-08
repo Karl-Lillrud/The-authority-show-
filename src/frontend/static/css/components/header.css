@@ -538,3 +538,6 @@ header:hover {
 .credits-info:hover {
   box-shadow: 0 4px 10px rgba(255,115,0,0.4);
 }
+.credits-info #user-credits {
+  margin-left: 4px; /* Adjust the value as needed */
+}
