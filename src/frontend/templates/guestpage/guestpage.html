@@ -18,37 +18,13 @@
   </script>
   </head>
   <body>
-    <header style="
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    background: #1f1f1f;
-    height: 80px;             /* Fast höjd på navbar */
-    display: flex;
-    align-items: center;      /* Vertikal centrering */
-    box-sizing: border-box;
-    z-index: 1000;
-  ">
-    <div style="
-      margin-left: 20px; 
-      display: flex; 
-      align-items: center;
-    ">
-      <a href="/">
-        <!-- Gör logon max 60px hög -->
-        <img
-          src="{{ url_for('static', filename='images/PodManagerLogo.png') }}"
-          alt="PodManager Logo"
-          style="
-            height: 60px;      /* Logons höjd */
-            width: auto;       /* Bevara proportionerna */
-            display: block;
-          "
-        >
-      </a>
-    </div>
-  </header>
+    <header class="navbar">
+      <div class="logo-container">
+        <a href="/podcastmanagement">
+          <img src="{{ url_for('static', filename='images/PodManagerLogo.png') }}" alt="PodManager Logo" class="logo-image">
+        </a>
+      </div>
+    </header>
 
   <!-- Hero section -->
   <section class="guest-hero">
