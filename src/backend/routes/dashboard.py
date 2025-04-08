@@ -16,37 +16,14 @@ dashboard_bp = Blueprint("dashboard_bp", __name__)
 @dashboard_bp.route("/dashboard", methods=["GET"])
 def dashboard():
     """
-    Authenticate the user using the email and verification code.
+    Serves the dashboard page if the user is logged in.
     """
-    email = request.args.get("email")
-    code = request.args.get("code")
-
-    if not email or not code:
-        if not email:
-            logger.warning("Missing email parameter in request")
-        if not code:
-            logger.warning("Missing code parameter in request")
-        return redirect("/signin?error=Missing+email+or+verification+code")
-
-    try:
-        logger.info(f"Attempting to verify email: {email} with code: {code}")
-        # Verify the email and code using AuthService
-        result = authService.verify_code_and_login(email, code)
-        if "error" in result:
-            logger.warning(f"Verification failed for email: {email} - {result['error']}")
-            return redirect(f"/signin?error={result['error']}")
-
-        # Log the user in by setting session
-        user = result["user"]
-        session["user_id"] = str(user["_id"])
-        session["email"] = user["email"]
-        logger.info(f"User logged in successfully: {email}")
-
-        # Redirect to the podcast management page
-        return redirect(url_for("dashboard_bp.podcastmanagement"))
-    except Exception as e:
-        logger.error(f"Error during login for email: {email} - {e}", exc_info=True)
-        return redirect(f"/signin?error=An+unexpected+error+occurred")
+    if "user_id" not in session or not session.get("user_id"):
+        logger.warning("User is not logged in. Redirecting to sign-in page.")
+        return redirect(url_for("auth_bp.signin", error="You must be logged in to access the dashboard."))
+    
+    logger.info(f"User {session['email']} accessed the dashboard.")
+    return render_template("dashboard/dashboard.html")
 
 
 # ✅ Serves the homepage page
