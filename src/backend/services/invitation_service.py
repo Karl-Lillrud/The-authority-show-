@@ -7,7 +7,7 @@ logger = logging.getLogger(__name__)
 
 class InvitationService:
     @staticmethod
-    def send_guest_invitation(user_id, guest_data, guest_id):
+    def send_guest_invitation(user_id, guest_data):
         """
         Sends an invitation email to a guest and saves the guest to the database.
         """
@@ -17,6 +17,17 @@ class InvitationService:
             google_cal_token = user.get("googleCal")
             if not google_cal_token:
                 return {"error": "User has not connected their Google Calendar"}, 400
+
+            # Save the guest to the database
+            guest_id = collection.database.Guests.insert_one({
+                "name": guest_data["name"],
+                "email": guest_data["email"],
+                "description": guest_data.get("description", ""),
+                "tags": guest_data.get("tags", []),
+                "areasOfInterest": guest_data.get("areasOfInterest", []),
+                "user_id": user_id,
+                "episodeId": guest_data["episodeId"],  # Ensure episodeId is saved
+            }).inserted_id
 
             # Fetch the podcast name using the episode ID
             episode = collection.database.Episodes.find_one({"_id": guest_data["episodeId"]}, {"podcast_id": 1})
@@ -38,7 +49,7 @@ class InvitationService:
             guest_form_url = url_for(
                 "guest_form.guest_form",
                 _external=True,
-                guestId=str(guest_id),  # Use the passed guest_id here
+                guestId=str(guest_id),
                 googleCal=google_cal_token,
             )
 

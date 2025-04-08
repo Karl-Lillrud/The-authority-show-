@@ -1,7 +1,7 @@
 from flask import Blueprint, request, jsonify, render_template, session
 from googleapiclient.discovery import build
 from google.oauth2.credentials import Credentials
-from google.auth.transport.requests import Request
+from googleapiclient.errors import HttpError
 from backend.database.mongo_connection import collection
 import logging
 from datetime import datetime, timedelta

@@ -2,7 +2,6 @@ from flask import Blueprint, redirect, url_for, session, request, jsonify
 from google_auth_oauthlib.flow import Flow
 from googleapiclient.discovery import build
 from google.oauth2.credentials import Credentials
-from google.auth.transport.requests import Request
 import os
 from dotenv import load_dotenv
 import json
@@ -301,7 +300,7 @@ def get_google_cal_token():
 def credentials_to_dict(credentials):
     return {
         'token': credentials.token,
-        'refresh_token': credentials.refresh_token,  # This should always be available if access_type='offline'
+        'refresh_token': credentials.refresh_token,
         'token_uri': credentials.token_uri,
         'client_id': credentials.client_id,
         'client_secret': credentials.client_secret,

@@ -19,37 +19,23 @@ logger = logging.getLogger(__name__)
 
 @guest_bp.route("/add_guest", methods=["POST"])
 def add_guest():
+    """
+    Adds a guest to the system and sends an invitation email.
+    """
     try:
         data = request.json
         user_id = session.get("user_id")
         if not user_id:
             return {"error": "User not authenticated"}, 401
 
-        # Check if the user has connected their Google Calendar using the GuestRepository instance
-        google_calendar_connected = guest_repo.check_google_calendar_connection(user_id)  # Correct method call
+        # Add the guest to the database and send the invitation email
+        response, status_code = InvitationService.send_guest_invitation(user_id, data)
 
-        if not google_calendar_connected:
-            return jsonify({
-                "error": "You need to connect your Google Calendar to add guests."
-            }), 400
-
-        # Add the guest to the database using the GuestRepository's add_guest method
-        response, status_code = guest_repo.add_guest(data, user_id)
-
-        # If the guest was added successfully, send the invitation email
-        if status_code == 201:  # Assuming 201 means success in adding guest
-            guest_id = response.get("guest_id")  # Get guest_id from the response
-            invitation_response = InvitationService.send_guest_invitation(user_id, data, guest_id)  # Pass guest_id
-            return jsonify(invitation_response), 201
-        else:
-            return jsonify(response), status_code
+        return jsonify(response), status_code
 
     except Exception as e:
         logger.error(f"Failed to add guest: {e}", exc_info=True)
         return jsonify({"error": f"Failed to add guest: {str(e)}"}), 500
-
-
-
 
 @guest_bp.route("/get_guests", methods=["GET"])
 def get_guests():
