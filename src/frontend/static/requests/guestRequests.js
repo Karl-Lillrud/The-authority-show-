@@ -1,30 +1,63 @@
-export async function addGuestRequest(payload) {
+export async function send_guest_invitation({ name, email, episodeId }) {
   try {
-    const res = await fetch("/add_guest", {
+    const response = await fetch("/api/send-invite", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload)
+      body: JSON.stringify({ name, email, episodeId }),
     });
 
-    if (!res.ok) {
-      const errorData = await res.json();
-      console.error("Backend error:", errorData.error);
+    const result = await response.json();
 
-      // If Google Calendar is not connected, show a specific error
-      if (errorData.error.includes("connect your Google Calendar")) {
-        alert(errorData.error);  // Show specific alert message
-        window.location.href = "/podprofile";  // Redirect to the page where the user can connect their calendar
-        return;
-      }
+    if (!response.ok) throw new Error(result.error || "Failed to send invite");
 
-      throw new Error(errorData.error || "Failed to add guest.");
-    }
-
-    return await res.json();
+    return result;
   } catch (error) {
-    console.error("Error in addGuestRequest:", error);
     throw error;
   }
+}
+
+export async function addGuestRequest(payload) {
+  const res = await fetch("/add_guests", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload)
+  });
+
+  const guestResult = await res.json();
+
+  console.log("Sending invite with:", {
+    name: payload.name,
+    email: payload.email,
+    episodeId: payload.episodeId
+  });
+  console.log("🔥 Trying to send invite to", payload.email);
+
+  // Now that the guest is added, try sending the invite:
+  if (payload.name && payload.email && payload.episodeId) {
+    try {
+      const inviteResponse = await fetch("/api/send-invite", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: payload.name,
+          email: payload.email,
+          episodeId: payload.episodeId
+        })
+      });
+
+      const inviteResult = await inviteResponse.json();
+
+      if (!inviteResponse.ok) {
+        console.error("❌ Failed to send invite:", inviteResult.error);
+      } else {
+        console.log("✅ Invite sent!");
+      }
+    } catch (err) {
+      console.error("❌ Error sending invite:", err);
+    }
+  }
+
+  return guestResult;
 }
 
 export async function editGuestRequest(guestId, payload) {

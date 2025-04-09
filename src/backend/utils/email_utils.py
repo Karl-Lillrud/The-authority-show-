@@ -20,130 +20,7 @@ SMTP_PORT = os.getenv("SMTP_PORT")
 
 # Configure logger
 logger = logging.getLogger(__name__)
-
-google_calendar_bp = Blueprint("google_calendar", __name__)
-guest_repo = GuestRepository()
-
-@google_calendar_bp.route("/save_google_refresh_token", methods=["POST"])
-def save_google_refresh_token():
-    """
-    Save the Google OAuth2 refresh token in the Users collection.
-    """
-    try:
-        data = request.json
-        refresh_token = data.get("refreshToken")  # Ensure it's named refreshToken
-        user_id = request.headers.get("User-ID")  # Assume User-ID is passed in headers
-
-        if not refresh_token or not user_id:
-            return jsonify({"error": "Missing refresh token or user ID"}), 400
-
-        # Save the refresh token as googleRefresh
-        result = collection.database.Users.update_one(
-            {"_id": user_id},
-            {"$set": {"googleRefresh": refresh_token}},  # Save as googleRefresh
-            upsert=True
-        )
-
-        if result.modified_count > 0 or result.upserted_id:
-            logger.info(f"✅ Refresh token saved successfully for user {user_id}.")
-            return jsonify({"message": "Google refresh token saved successfully"}), 200
-        else:
-            logger.error(f"❌ Failed to save refresh token for user {user_id}.")
-            return jsonify({"error": "Failed to save Google refresh token"}), 500
-    except Exception as e:
-        logger.exception("❌ ERROR: Failed to save Google refresh token")
-        return jsonify({"error": f"Failed to save Google refresh token: {str(e)}"}), 500
-
-
-@google_calendar_bp.route("/connect_google_calendar", methods=["GET"])
-def connect_google_calendar():
-    """
-    Redirect the user to the Google OAuth URL for calendar access.
-    """
-    try:
-        client_id = os.getenv("GOOGLE_CLIENT_ID")
-        redirect_uri = os.getenv("GOOGLE_REDIRECT_URI")
-        scope = "https://www.googleapis.com/auth/calendar"
-        response_type = "code"
-        access_type = "offline"
-        include_granted_scopes = "true"
-
-        params = {
-            "client_id": client_id,
-            "redirect_uri": redirect_uri,
-            "scope": scope,
-            "response_type": response_type,
-            "access_type": access_type,
-            "include_granted_scopes": include_granted_scopes,
-        }
-
-        auth_url = f"{os.getenv('GOOGLE_OAUTH_URL')}?{urllib.parse.urlencode(params)}"
-        return redirect(auth_url)  # Redirect the user to the Google OAuth page
-    except Exception as e:
-        logger.exception("❌ ERROR: Failed to generate Google OAuth URL")
-        return jsonify({"error": f"Failed to generate Google OAuth URL: {str(e)}"}), 500
-
-
-@google_calendar_bp.route("/calendar_callback", methods=["GET"])
-def calendar_callback():
-    """
-    Handle the Google OAuth2 callback and exchange the authorization code for tokens.
-    """
-    try:
-        code = request.args.get("code")
-        if not code:
-            logger.error("❌ ERROR: Missing authorization code in callback")
-            return jsonify({"error": "Missing authorization code"}), 400
-
-        client_id = os.getenv("GOOGLE_CLIENT_ID")
-        client_secret = os.getenv("GOOGLE_CLIENT_SECRET")
-        redirect_uri = os.getenv("GOOGLE_REDIRECT_URI")
-
-        if not client_id or not client_secret or not redirect_uri:
-            logger.error("❌ ERROR: Missing required environment variables")
-            return jsonify({"error": "Missing required environment variables"}), 500
-
-        token_url = "https://oauth2.googleapis.com/token"
-        payload = {
-            "code": code,
-            "client_id": client_id,
-            "client_secret": client_secret,
-            "redirect_uri": redirect_uri,
-            "grant_type": "authorization_code",
-        }
-
-        logger.info(f"🔗 Sending token exchange request to {token_url} with payload: {payload}")
-
-        response = requests.post(token_url, data=payload)
-        if response.status_code != 200:
-            logger.error(f"❌ ERROR: Failed to exchange code for tokens: {response.text}")
-            return jsonify({"error": "Failed to exchange code for tokens"}), 500
-
-        tokens = response.json()
-        logger.info(f"✅ Token exchange successful: {tokens}")
-
-        refresh_token = tokens.get("refresh_token")
-        if not refresh_token:
-            logger.warning("⚠️ WARNING: No refresh token received")
-            return jsonify({"error": "No refresh token received"}), 400
-
-        # Save the refresh token in the Users collection
-        user_id = request.headers.get("User-ID")
-        if not user_id:
-            logger.error("❌ ERROR: Missing user ID in headers")
-            return jsonify({"error": "Missing user ID"}), 400
-
-        save_result = guest_repo.save_google_refresh_token(user_id, refresh_token)
-        if save_result[1] != 200:
-            logger.error(f"❌ ERROR: Failed to save refresh token: {save_result[0]['error']}")
-            return jsonify({"error": "Failed to save refresh token"}), 500
-
-        return jsonify({"message": "Google calendar connected successfully"}), 200
-
-    except Exception as e:
-        logger.exception("❌ ERROR: Failed to handle calendar callback")
-        return jsonify({"error": f"Internal server error: {str(e)}"}), 500
-
+logger.info(f"SMTP_SERVER: {SMTP_SERVER}, SMTP_PORT: {SMTP_PORT}, EMAIL_USER: {EMAIL_USER}")
 
 def send_email(to_email, subject, body, image_path=None):
     """
@@ -256,23 +133,57 @@ def send_team_invite_email(
     # 🔹 Call send_email() with inline image support
     return send_email(email, subject, body, image_path=image_path)
 
-
-def send_guest_invitation_email(guest_name, guest_email, guest_form_url, podcast_name):
+def send_guest_invitation(data):
+    logger.info(f"send_guest_invitation called with data: {data}")
     """
-    Sends an invitation email to a guest with a link to the guest form.
+    Sends a podcast guest invitation email.
+
+    Args:
+        data (dict): Should include 'name', 'email', and 'episodeId'.
     """
-    try:
-        # Render the email body using the guest-email.html template
-        body = render_template(
-            "guest-email/guest-email.html",
-            guest_name=guest_name,
-            guest_form_url=guest_form_url,
-            podcast_name=podcast_name,
-        )
+    subject = "🎙️ You're Invited to Join a Podcast Episode!"
+    recipient = data.get("email")
+    name = data.get("name")
+    episode_id = data.get("episodeId")
 
-        subject = f"You're Invited to Join {podcast_name} as a Guest!"
-        return send_email(guest_email, subject, body)
+    # Replace with your actual public link if needed
+    confirmation_link = f"http://127.0.0.1:8000/confirm_guest?episodeId={episode_id}&email={recipient}"
 
-    except Exception as e:
-        logger.error(f"Failed to send guest invitation email: {e}", exc_info=True)
-        return {"error": f"Failed to send guest invitation email: {str(e)}"}
+    body = f"""
+    <html>
+        <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto;">
+            <div style="background-color: #f9f9f9; padding: 30px; border-radius: 5px;">
+                <h2 style="color: #FF3B30;">You're Invited, {name}!</h2>
+                <p>We’d love to have you on our podcast as a guest for an upcoming episode.</p>
+                <p><strong>Episode ID:</strong> {episode_id}</p>
+                <p>To confirm your interest or ask questions, click below:</p>
+                <p style="text-align: center;">
+                    <a href="{confirmation_link}" style="display: inline-block;
+                        padding: 12px 24px;
+                        background-color: #FF3B30;
+                        color: white;
+                        text-decoration: none;
+                        border-radius: 5px;
+                        font-weight: bold;">
+                        Confirm Participation
+                    </a>
+                </p>
+                <p style="margin-top: 20px;">We’re excited to feature your voice on the show. 🎧</p>
+                <p>The PodManager Team</p>
+            </div>
+        </body>
+    </html>
+    """
+
+    image_path = "src/frontend/static/images/PodManagerLogo.png"
+    logger.info(f"📬 Sending guest invitation to {recipient} for episode {episode_id}")
+    return send_email(recipient, subject, body, image_path=image_path)
+
+if __name__ == "__main__":
+    print("🚀 Starting email_utils.py test run...")
+    test_data = {
+        "name": "Test-From-App",
+        "email": "your@email.com",
+        "episodeId": "ep002"
+    }
+    send_guest_invitation(test_data)
