@@ -1,0 +1,92 @@
+:root {
+    --background-light2: #f5f7fa;
+    --text-color-light2: #5a6a78;
+    --highlight-color2: #ff6f61;
+    --highlight-hover2: #e65a4d;
+    --success-color2: #5000a1;
+    --danger-color2: #ff3b30;
+    --spacing-sm2: 12px;
+    --spacing-md2: 20px;
+    --radius-medium2: 14px;
+    --transition-normal2: 0.35s ease;
+    --card-shadow2: 0 12px 24px -6px rgba(0, 0, 0, 0.06),
+        0 6px 12px -4px rgba(0, 0, 0, 0.03);
+    --card-shadow-hover2: 0 18px 36px -8px rgba(0, 0, 0, 0.12),
+        0 8px 16px -4px rgba(0, 0, 0, 0.06);
+}
+
+.notification {
+    position: fixed;
+    top: 16px;
+    right: 16px;
+    padding: var(--spacing-sm) var(--spacing-md);
+    border-radius: var(--radius-medium);
+    background-color: white;
+    box-shadow: 0 8px 12px -3px rgba(0, 0, 0, 0.1),
+      0 3px 5px -2px rgba(0, 0, 0, 0.05);
+    color: var(--text-color-light);
+    font-weight: 600;
+    z-index: 2000;
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    transform: translateX(150%);
+    transition: transform 0.5s cubic-bezier(0.68, -0.55, 0.27, 1.55);
+    max-width: 300px;
+    font-size: 0.85rem;
+  }
+  
+  .notification.show {
+    transform: translateX(0);
+  }
+  
+  .notification.success {
+    border-left: 3px solid var(--success-color);
+  }
+  
+  .notification.success .notification-icon {
+    color: var(--success-color);
+  }
+  
+  .notification.error {
+    border-left: 3px solid var(--danger-color);
+  }
+  
+  .notification.error .notification-icon {
+    color: var(--danger-color);
+  }
+  
+  .notification.info {
+    border-left: 3px solid #3498db;
+  }
+  
+  .notification.info .notification-icon {
+    color: #3498db;
+  }
+  
+  .notification-content {
+    flex: 1;
+  }
+  
+  .notification-title {
+    font-weight: 700;
+    margin-bottom: 3px;
+    color: rgba(0, 0, 0, 0.8);
+    font-size: 0.85rem;
+  }
+  
+  .notification-message {
+    font-size: 0.8rem;
+    font-weight: 400;
+    color: var(--text-color-light);
+  }
+  
+  .notification-close {
+    cursor: pointer;
+    color: var(--text-color-light);
+    transition: color var(--transition-normal);
+  }
+  
+  .notification-close:hover {
+    color: var(--highlight-color);
+  }

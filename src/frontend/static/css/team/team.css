@@ -1343,7 +1343,7 @@ body {
     font-size: 0.85rem;
   }
 
-  .notification {
+ /*  .notification {
     width: 90%;
     padding: 12px;
     top: 10px;
@@ -1356,7 +1356,7 @@ body {
 
   .notification-message {
     font-size: 0.8rem;
-  }
+  } */
 }
 
 /* Uppdaterade badge-storlekar i grundstilen (oförändrad från tidigare) */
