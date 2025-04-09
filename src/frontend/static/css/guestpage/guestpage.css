@@ -194,6 +194,22 @@ section {
   line-height: 1.6;
 }
 
+.guest-email a {
+  color: var(--primary-color);
+  font-size: 1rem;
+  text-decoration: none;
+}
+
+.guest-email a:hover {
+  text-decoration: underline;
+}
+
+.guest-interests {
+  font-size: 1rem;
+  margin-top: 0.5rem;
+  color: var(--accent-dark);
+}
+
 /* 5. Övrig Gästinformationssektion (Meta & Kontakt) */
 .guest-meta p {
   font-size: 1rem;

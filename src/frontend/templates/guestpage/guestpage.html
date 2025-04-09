@@ -4,11 +4,9 @@
   <meta charset="UTF-8">
   <title>{{ guest_name }} - Guest Profile</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <!-- Länka till din externa CSS-fil -->
   <link rel="stylesheet" href="{{ url_for('static', filename='css/guestpage/guestpage.css') }}">
-  <!-- Ikoner -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-  
+
   <!-- Google Analytics -->
   <script async src="https://www.googletagmanager.com/gtag/js?id=G-PTPQQ5WSQV"></script>
   <script>
@@ -22,20 +20,16 @@
   <!-- Navbar -->
   <header class="navbar">
     <div class="logo-container">
-      <!-- Länken går till podcast management-sidan -->
       <a href="/podcastmanagement">
-        <img src="{{ url_for('static', filename='images/PodManagerLogo.png') }}" 
-             alt="PodManager Logo" 
-             class="logo-image">
+        <img src="{{ url_for('static', filename='images/PodManagerLogo.png') }}" alt="PodManager Logo" class="logo-image">
       </a>
     </div>
-    <!-- Övriga element i navbaren kan läggas till här -->
   </header>
 
-  <!-- Hero Section -->
+  <!-- Hero section -->
   <section class="guest-hero">
     <div class="overlay"></div>
-    <!-- Sociala ikoner i övre högra hörnet -->
+    <!-- Social Media Icons (Top-Right) -->
     <div id="guest-social">
       {% for platform, link in social_media.items() %}
         {% if link %}
@@ -46,36 +40,28 @@
       {% endfor %}
     </div>
     <div class="hero-content container">
-      <!-- Gästens profilbild -->
+      <!-- Guest profile image -->
       <div class="guest-image">
         <img src="{{ guest_image }}" alt="{{ guest_name }}">
       </div>
-      <!-- Gästens information -->
+      <!-- Guest info direkt i hero-sektionen -->
       <div class="guest-text">
         <h1>{{ guest_name }}</h1>
-        <p>{{ guest_bio }}</p>
+        <!-- Placera e-post snyggt, t.ex. precis under namnet -->
+        {% if email %}
+          <p class="guest-email"><a href="mailto:{{ email }}">{{ email }}</a></p>
+        {% endif %}
+        <!-- "Areas of Interest" under namnet -->
+        {% if areas_of_interest %}
+          <p class="guest-interests">Areas of Interest: {{ areas_of_interest | join(', ') }}</p>
+        {% endif %}
+        <!-- Gästens bio -->
+        <p class="guest-bio">{{ guest_bio }}</p>
       </div>
     </div>
   </section>
 
-  <!-- Guest Info Section -->
-  <section class="guest-info container section-orange">
-    <h2>Guest Information</h2>
-    <p><strong>Email:</strong> 
-      {% if email %}
-        <a href="mailto:{{ email }}">{{ email }}</a>
-      {% else %}
-        None
-      {% endif %}
-    </p>
-    <p><strong>Areas of Interest:</strong>
-      {% if areas_of_interest %}
-        {{ areas_of_interest | join(', ') }}
-      {% else %}
-        None
-      {% endif %}
-    </p>
-  </section>
+  <!-- Ta bort den tidigare "Guest Information" sektionen -->
 
   <!-- Episodes Section -->
   <section class="guest-episodes container">
@@ -84,8 +70,7 @@
       {% for episode in episodes %}
         <li class="episode-card" onclick="window.location.href='/episode/{{ episode._id }}'">
           <div class="episode-banner">
-            <img src="{{ url_for('static', filename='images/default.png') }}" 
-                 alt="{{ episode.title }} Thumbnail">
+            <img src="{{ url_for('static', filename='images/default.png') }}" alt="{{ episode.title }} Thumbnail">
           </div>
           <div class="episode-content">
             <div class="episode-header">
