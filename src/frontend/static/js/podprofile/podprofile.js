@@ -1,39 +1,39 @@
-import { fetchRSSData, addPodcast } from "../../requests/podcastRequests.js"; // Updated import
-import { sendInvitationEmail } from "../../requests/invitationRequests.js";
-import { registerEpisode } from "../../requests/episodeRequest.js";
-import { createLoadingBar } from "../../js/components/loading-bar.js"; // Updated import
+import { fetchRSSData, addPodcast } from "../../requests/podcastRequests.js" // Updated import
+import { sendInvitationEmail } from "../../requests/invitationRequests.js"
+import { registerEpisode } from "../../requests/episodeRequest.js"
+import { createLoadingBar } from "../../js/components/loading-bar.js" // Updated import
 
 document.addEventListener("DOMContentLoaded", () => {
   // DOM Elements
-  const darkModeToggle = document.getElementById("dark-mode-toggle");
-  const goToEmailSection = document.getElementById("goToEmailSection");
-  const podNameSection = document.getElementById("pod-name-section");
-  const podNameForm = document.getElementById("podNameForm");
-  const podRssInput = document.getElementById("podRss");
-  const podNameInput = document.getElementById("podName");
-  const creditsContainer = document.getElementById("creditsContainer");
-  const podcastContainer = document.getElementById("podcast-container");
+  const darkModeToggle = document.getElementById("dark-mode-toggle")
+  const goToEmailSection = document.getElementById("goToEmailSection")
+  const podNameSection = document.getElementById("pod-name-section")
+  const podNameForm = document.getElementById("podNameForm")
+  const podRssInput = document.getElementById("podRss")
+  const podNameInput = document.getElementById("podName")
+  const creditsContainer = document.getElementById("creditsContainer")
+  const podcastContainer = document.getElementById("podcast-container")
 
-  let currentRssData = null;
-  let currentlyPlayingAudio = null;
-  let currentlyPlayingId = null;
-  let loadingBar;
+  let currentRssData = null
+  let currentlyPlayingAudio = null
+  let currentlyPlayingId = null
+  let loadingBar
 
   // Initialize loading bar
-  loadingBar = createLoadingBar();
+  loadingBar = createLoadingBar()
 
   // Dark Mode Toggle
   if (darkModeToggle) {
     darkModeToggle.addEventListener("click", () => {
-      document.body.classList.toggle("dark-mode");
+      document.body.classList.toggle("dark-mode")
 
       // Update moon/sun emoji based on dark mode state
       if (document.body.classList.contains("dark-mode")) {
-        darkModeToggle.textContent = "☀️"; // Sun for dark mode
+        darkModeToggle.textContent = "☀️" // Sun for dark mode
       } else {
-        darkModeToggle.textContent = "🌙"; // Moon for light mode
+        darkModeToggle.textContent = "🌙" // Moon for light mode
       }
-    });
+    })
   }
 
   // RSS Feed Input Handler
@@ -41,76 +41,75 @@ document.addEventListener("DOMContentLoaded", () => {
     podRssInput.addEventListener(
       "input",
       debounce(async function () {
-        const rssUrl = this.value.trim();
+        const rssUrl = this.value.trim()
         if (rssUrl) {
           try {
             // Show loading indicator
             if (podcastContainer) {
               podcastContainer.innerHTML = `
-              <div class="loading-container">
-                <div class="loading-spinner"></div>
-                <div class="loading-text">Loading podcast data...</div>
-              </div>
-            `;
-              podcastContainer.classList.remove("hidden");
+                <div class="loading-container">
+                  <div class="loading-spinner"></div>
+                  <div class="loading-text">Loading podcast data...</div>
+                </div>
+              `
+              podcastContainer.classList.remove("hidden")
             }
 
             // Fetch RSS data
-            const rssData = await fetchRSSData(rssUrl);
-            console.log("Fetched RSS data:", rssData); // Added log
-            currentRssData = rssData;
+            const rssData = await fetchRSSData(rssUrl)
+            console.log("Fetched RSS data:", rssData) // Added log
+            currentRssData = rssData
 
             // Set the podcast name
             if (podNameInput) {
-              podNameInput.value = rssData.title;
+              podNameInput.value = rssData.title
             }
 
             // Display podcast preview if container exists
             if (podcastContainer) {
-              displayPodcastData(rssData);
+              displayPodcastPreview(rssData)
             }
           } catch (error) {
-            console.error("Error processing RSS feed:", error);
+            console.error("Error processing RSS feed:", error)
             if (podcastContainer) {
               podcastContainer.innerHTML = `
-              <div class="error-container">
-                <strong>Error loading podcast:</strong> ${error.message}
-              </div>
-            `;
+                <div class="error-container">
+                  <strong>Error loading podcast:</strong> ${error.message}
+                </div>
+              `
             }
           }
         }
-      }, 500)
-    );
+      }, 500),
+    )
   }
 
   // Go to Email Section Button
   if (goToEmailSection) {
     goToEmailSection.addEventListener("click", async () => {
       // Add loading spinner on Next button
-      goToEmailSection.disabled = true;
-      goToEmailSection.innerHTML =
-        '<i class="fas fa-spinner fa-spin"></i> Processing...';
+      goToEmailSection.disabled = true
+      goToEmailSection.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processing...'
 
-      const podName = podNameInput ? podNameInput.value.trim() : "";
-      const podRss = podRssInput ? podRssInput.value.trim() : "";
+      const podName = podNameInput ? podNameInput.value.trim() : ""
+      const podRss = podRssInput ? podRssInput.value.trim() : ""
 
       if (!podName || !podRss) {
-        alert("Please enter all required fields: Podcast Name and RSS URL.");
+        alert("Please enter all required fields: Podcast Name and RSS URL.")
         // Restore button if validation fails
-        goToEmailSection.disabled = false;
-        goToEmailSection.innerHTML = "Next";
-        return;
+        goToEmailSection.disabled = false
+        goToEmailSection.innerHTML = "Next"
+        return
       }
 
       try {
         // Show loading popup
-        loadingBar.showLoadingPopup();
+        loadingBar.showLoadingPopup()
 
-        console.log("Fetching RSS data");
-        const rssData = await fetchRSSData(podRss);
-        podNameInput.value = rssData.title; // Set the title correctly
-        const imageUrl = rssData.imageUrl; // Get the imageUrl from RSS
+        console.log("Fetching RSS data")
+        const rssData = await fetchRSSData(podRss)
+        podNameInput.value = rssData.title // Set the title correctly
+        const imageUrl = rssData.imageUrl // Get the imageUrl from RSS
 
         // Prepare complete podcast data to send
         const podcastData = {
@@ -135,27 +134,27 @@ document.addEventListener("DOMContentLoaded", () => {
           podUrl: rssData.podUrl || null,
           guestUrl: rssData.guestUrl || null,
           email: rssData.itunesOwner?.email || null,
-          logoUrl: rssData.logoUrl || null
-        };
+          logoUrl: rssData.logoUrl || null,
+        }
 
         // Process first step - Registering episode
-        loadingBar.processStep(0);
+        loadingBar.processStep(0)
 
-        console.log("Sending podcast data:", podcastData); // Added log
+        console.log("Sending podcast data:", podcastData) // Added log
         // Process second step - Sending data
-        loadingBar.processStep(1);
+        loadingBar.processStep(1)
 
-        const response = await addPodcast(podcastData); // Updated function call
-        console.log("Received response from addPodcast:", response); // Added log
+        const response = await addPodcast(podcastData) // Updated function call
+        console.log("Received response from addPodcast:", response) // Added log
 
         // Process third step - Received response
-        loadingBar.processStep(2);
+        loadingBar.processStep(2)
 
         // Save episodes to the server
-        const podcastId = response.podcast_id; // Ensure correct field name
-        const episodes = rssData.episodes || [];
+        const podcastId = response.podcast_id // Ensure correct field name
+        const episodes = rssData.episodes || []
         for (const episode of episodes) {
-          console.log("Registering episode:", episode); // Added log
+          console.log("Registering episode:", episode) // Added log
           try {
             const registerResponse = await registerEpisode({
               podcastId: podcastId,
@@ -171,142 +170,156 @@ document.addEventListener("DOMContentLoaded", () => {
               episode: episode.episode || null, // Ensure episode is included
               episodeType: episode.episodeType || null, // Ensure episodeType is included
               explicit: episode.explicit || null, // Ensure explicit is included
-              imageUrl:
-                episode.image ||
-                episode.imageUrl ||
-                "/placeholder.svg?height=300&width=300", // updated field
+              imageUrl: episode.image || episode.imageUrl || "/placeholder.svg?height=300&width=300", // updated field
               keywords: episode.keywords || null, // Ensure keywords is included
               chapters: episode.chapters || null, // Ensure chapters is included
               link: episode.link || null, // Ensure link is included
               subtitle: episode.subtitle || null, // Ensure subtitle is included
               summary: episode.summary || null, // Ensure summary is included
               author: episode.author || null, // Ensure author is included
-              isHidden: episode.isHidden || null // Ensure isHidden is included
-            });
-            console.log("Episode registered successfully:", registerResponse); // Added log
+              isHidden: episode.isHidden || null, // Ensure isHidden is included
+            })
+            console.log("Episode registered successfully:", registerResponse) // Added log
           } catch (error) {
-            console.error("Error registering episode:", error); // Added log
+            console.error("Error registering episode:", error) // Added log
           }
         }
 
         // Process fourth step - Episode registered successfully
-        loadingBar.processStep(3);
+        loadingBar.processStep(3)
 
         // Send invitation email
         try {
-          console.log("Sending invitation email"); // Added log
-          await sendInvitationEmail();
-          console.log("Invitation email sent successfully"); // Added log
+          console.log("Sending invitation email") // Added log
+          await sendInvitationEmail()
+          console.log("Invitation email sent successfully") // Added log
         } catch (error) {
-          console.error("Error sending invitation email:", error); // Added log
+          console.error("Error sending invitation email:", error) // Added log
         }
 
         // Short delay to show the completed loading bar
         setTimeout(() => {
           // Hide loading popup
-          loadingBar.hideLoadingPopup();
+          loadingBar.hideLoadingPopup()
 
           // Redirect to podcastmanagement (updated redirection)
-          sessionStorage.setItem("showWelcomePopup", "true");
-          window.location.href = "/podcastmanagement"; // Redirect now to podcastmanagement
-        }, 1000);
+          sessionStorage.setItem("showWelcomePopup", "true")
+          window.location.href = "/podcastmanagement" // Redirect now to podcastmanagement
+        }, 1000)
       } catch (error) {
         // On error, restore button state and hide loading popup
-        loadingBar.hideLoadingPopup();
-        goToEmailSection.disabled = false;
-        goToEmailSection.innerHTML = "Next";
-        console.error("Error processing podcast data:", error);
-        alert("Something went wrong. Please try again.");
+        loadingBar.hideLoadingPopup()
+        goToEmailSection.disabled = false
+        goToEmailSection.innerHTML = "Next"
+        console.error("Error processing podcast data:", error)
+        alert("Something went wrong. Please try again.")
       }
-    });
+    })
   }
 
   // Calendar Connection Button
-  const connectCalendarButton = document.getElementById("connectCalendar");
+  const connectCalendarButton = document.getElementById("connectCalendar")
   if (connectCalendarButton) {
-    connectCalendarButton.addEventListener("click", () => {
-      window.location.href = "/connect_calendar";
-    });
+    connectCalendarButton.addEventListener("click", (event) => {
+      event.preventDefault()
+
+      try {
+        // Redirect the user to the backend endpoint, which will handle the OAuth redirection
+        window.location.href = "/connect_google_calendar"
+      } catch (error) {
+        console.error("Error connecting to Google Calendar:", error)
+        alert("Failed to connect to Google Calendar. Please try again.")
+      }
+    })
   }
 
-  // Function to display podcast data in the unified container
-  function displayPodcastData(rssData) {
-    if (!podcastContainer) return;
+  // Save Google refresh token after OAuth flow
+  const urlParams = new URLSearchParams(window.location.search)
+  const googleToken = urlParams.get("googleToken")
+  if (googleToken) {
+    try {
+      fetch("/save_google_refresh_token", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ refreshToken: googleToken }), // Save as refreshToken
+      })
+        .then((res) => res.json())
+        .then((data) => {
+          if (data.message) {
+            console.log("Google refresh token saved successfully.")
+          } else {
+            console.error("Error saving Google refresh token:", data.error)
+          }
+        })
+    } catch (error) {
+      console.error("Error saving Google refresh token:", error)
+    }
+  }
+
+  // Function to display podcast preview with enhanced UI
+  function displayPodcastPreview(rssData) {
+    if (!podcastContainer) return
 
     // Find Spotify and Apple Podcast links
     const spotifyLink = rssData.socialMedia?.find(
-      (social) =>
-        social.url.includes("spotify.com") || social.platform === "spotify"
-    );
+      (social) => social.url.includes("spotify.com") || social.platform === "spotify",
+    )
     const appleLink = rssData.socialMedia?.find(
-      (social) =>
-        social.url.includes("apple.com/podcast") || social.platform === "apple"
-    );
+      (social) => social.url.includes("apple.com/podcast") || social.platform === "apple",
+    )
 
     // Format social media links
     const socialMediaLinks =
       rssData.socialMedia && rssData.socialMedia.length > 0
         ? rssData.socialMedia
-            .filter(
-              (social) =>
-                !social.url.includes("spotify.com") &&
-                !social.url.includes("apple.com/podcast")
-            )
+            .filter((social) => !social.url.includes("spotify.com") && !social.url.includes("apple.com/podcast"))
             .map((social) => {
-              const platform = social.platform || "website";
-              const icon = getPlatformIcon(platform);
+              const platform = social.platform || "website"
+              const icon = getPlatformIcon(platform)
               return `
-              <a href="${
-                social.url
-              }" target="_blank" class="social-link ${platform}">
+              <a href="${social.url}" target="_blank" class="social-link ${platform}" rel="noreferrer">
                 <i class="${icon}"></i>
                 ${capitalizeFirstLetter(platform)}
               </a>
-            `;
+            `
             })
             .join("")
-        : "";
+        : ""
 
     // Format categories with subcategories
     const categoriesHtml = rssData.categories
       ? rssData.categories
           .map((cat) => {
-            const subCats =
-              cat.subcategories.length > 0
-                ? ` (${cat.subcategories.join(", ")})`
-                : "";
-            return `<span class="podcast-meta-item"><i class="fas fa-tag"></i> ${cat.main}${subCats}</span>`;
+            const subCats = cat.subcategories.length > 0 ? ` (${cat.subcategories.join(", ")})` : ""
+            return `<span class="podcast-meta-item"><i class="fas fa-tag"></i> ${cat.main}${subCats}</span>`
           })
           .join("")
-      : "";
+      : ""
 
     // Format language display
-    const languageDisplay =
-      rssData.language === "en" ? "English" : rssData.language;
+    const languageDisplay = rssData.language === "en" ? "English" : rssData.language
 
     // Format episodes
     const episodesHtml = rssData.episodes
       ? rssData.episodes
           .map((episode, index) => {
             // Format date
-            const pubDate = new Date(episode.pubDate);
-            const formattedDate = isNaN(pubDate)
-              ? episode.pubDate
-              : pubDate.toLocaleDateString();
+            const pubDate = new Date(episode.pubDate)
+            const formattedDate = isNaN(pubDate) ? episode.pubDate : pubDate.toLocaleDateString()
 
             // Format duration from seconds to HH:MM:SS
-            let formattedDuration = "";
+            let formattedDuration = ""
             if (episode.duration) {
-              const hours = Math.floor(episode.duration / 3600);
-              const minutes = Math.floor((episode.duration % 3600) / 60);
-              const seconds = episode.duration % 60;
+              const hours = Math.floor(episode.duration / 3600)
+              const minutes = Math.floor((episode.duration % 3600) / 60)
+              const seconds = episode.duration % 60
               formattedDuration = `${hours > 0 ? `${hours}:` : ""}${minutes
                 .toString()
-                .padStart(2, "0")}:${seconds.toString().padStart(2, "0")}`;
+                .padStart(2, "0")}:${seconds.toString().padStart(2, "0")}`
             }
 
             // Generate unique ID for this episode
-            const episodeId = `episode-${index}-${Date.now()}`;
+            const episodeId = `episode-${index}-${Date.now()}`
 
             return `
               <div class="episode-card" data-episode-id="${episodeId}">
@@ -329,11 +342,7 @@ document.addEventListener("DOMContentLoaded", () => {
                   <h3 class="episode-title">${episode.title}</h3>
                   <div class="episode-meta">
                     <span><i class="fas fa-calendar"></i> ${formattedDate}</span>
-                    ${
-                      formattedDuration
-                        ? `<span><i class="fas fa-clock"></i> ${formattedDuration}</span>`
-                        : ""
-                    }
+                    ${formattedDuration ? `<span><i class="fas fa-clock"></i> ${formattedDuration}</span>` : ""}
                     ${
                       episode.season && episode.episode
                         ? `<span><i class="fas fa-list-ol"></i> S${episode.season} E${episode.episode}</span>`
@@ -346,11 +355,7 @@ document.addEventListener("DOMContentLoaded", () => {
                     }
                   </div>
                   <div class="episode-description" id="desc-${episodeId}">
-                    ${
-                      episode.summary ||
-                      episode.description ||
-                      "No description available."
-                    }
+                    ${episode.summary || episode.description || "No description available."}
                   </div>
                   <div class="episode-actions">
                     <button class="episode-btn primary" data-audio-url="${
@@ -364,18 +369,16 @@ document.addEventListener("DOMContentLoaded", () => {
                   </div>
                   <div class="audio-player" id="player-${episodeId}">
                     <audio controls>
-                      <source src="${episode.audio?.url}" type="${
-              episode.audio?.type || "audio/mpeg"
-            }">
+                      <source src="${episode.audio?.url}" type="${episode.audio?.type || "audio/mpeg"}">
                       Your browser does not support the audio element.
                     </audio>
                   </div>
                 </div>
               </div>
-            `;
+            `
           })
           .join("")
-      : "";
+      : ""
 
     // Build the complete HTML for the unified container
     podcastContainer.innerHTML = `
@@ -385,11 +388,7 @@ document.addEventListener("DOMContentLoaded", () => {
         }" alt="${rssData.title}" class="podcast-cover">
         <div class="podcast-info">
           <h2 class="podcast-title">${rssData.title}</h2>
-          ${
-            rssData.author
-              ? `<p class="podcast-author">By ${rssData.author}</p>`
-              : ""
-          }
+          ${rssData.author ? `<p class="podcast-author">By ${rssData.author}</p>` : ""}
           <div class="podcast-meta">
             ${categoriesHtml}
             ${
@@ -404,17 +403,17 @@ document.addEventListener("DOMContentLoaded", () => {
           <div class="podcast-actions">
             ${
               spotifyLink
-                ? `<a href="${spotifyLink.url}" target="_blank" class="podcast-action-btn spotify"><i class="fab fa-spotify"></i> Spotify</a>`
+                ? `<a href="${spotifyLink.url}" target="_blank" class="podcast-action-btn spotify" rel="noreferrer"><i class="fab fa-spotify"></i> Spotify</a>`
                 : ""
             }
             ${
               appleLink
-                ? `<a href="${appleLink.url}" target="_blank" class="podcast-action-btn apple"><i class="fab fa-apple"></i> Apple Podcasts</a>`
+                ? `<a href="${appleLink.url}" target="_blank" class="podcast-action-btn apple" rel="noreferrer"><i class="fab fa-apple"></i> Apple Podcasts</a>`
                 : ""
             }
             ${
               rssData.link
-                ? `<a href="${rssData.link}" target="_blank" class="podcast-action-btn"><i class="fas fa-globe"></i> Website</a>`
+                ? `<a href="${rssData.link}" target="_blank" class="podcast-action-btn" rel="noreferrer"><i class="fas fa-globe"></i> Website</a>`
                 : ""
             }
           </div>
@@ -422,26 +421,14 @@ document.addEventListener("DOMContentLoaded", () => {
       </div>
       <div class="podcast-content">
         <div class="podcast-details">
+          ${rssData.description ? `<div class="podcast-description">${rssData.description}</div>` : ""}
+          ${rssData.copyright_info ? `<p class="podcast-copyright">© ${rssData.copyright_info}</p>` : ""}
           ${
-            rssData.description
-              ? `<div class="podcast-description">${rssData.description}</div>`
-              : ""
-          }
-          ${
-            rssData.copyright_info
-              ? `<p class="podcast-copyright">© ${rssData.copyright_info}</p>`
-              : ""
-          }
-          ${
-            rssData.itunesOwner.name || rssData.itunesOwner.email
+            rssData.itunesOwner?.name || rssData.itunesOwner?.email
               ? `
               <h3 class="podcast-section-title">Owner</h3>
               <div class="podcast-owner">
-                ${
-                  rssData.itunesOwner.name
-                    ? `<p><i class="fas fa-user"></i> ${rssData.itunesOwner.name}</p>`
-                    : ""
-                }
+                ${rssData.itunesOwner.name ? `<p><i class="fas fa-user"></i> ${rssData.itunesOwner.name}</p>` : ""}
                 ${
                   rssData.itunesOwner.email
                     ? `<p><i class="fas fa-envelope"></i> <a href="mailto:${rssData.itunesOwner.email}">${rssData.itunesOwner.email}</a></p>`
@@ -456,15 +443,11 @@ document.addEventListener("DOMContentLoaded", () => {
               ? `
               <h3 class="podcast-section-title">Details</h3>
               <div class="podcast-details">
-                ${
-                  rssData.generator
-                    ? `<p><i class="fas fa-cogs"></i> Generated by: ${rssData.generator}</p>`
-                    : ""
-                }
+                ${rssData.generator ? `<p><i class="fas fa-cogs"></i> Generated by: ${rssData.generator}</p>` : ""}
                 ${
                   rssData.lastBuildDate
                     ? `<p><i class="fas fa-clock"></i> Last Updated: ${new Date(
-                        rssData.lastBuildDate
+                        rssData.lastBuildDate,
                       ).toLocaleString()}</p>`
                     : ""
                 }
@@ -490,117 +473,107 @@ document.addEventListener("DOMContentLoaded", () => {
           ${episodesHtml}
         </div>
       </div>
-    `;
+    `
 
     // Setup episode interactions after rendering
-    setupEpisodeInteractions();
+    setupEpisodeInteractions()
   }
 
   // Function to setup episode interactions
   function setupEpisodeInteractions() {
     // Play buttons
-    const playButtons = document.querySelectorAll(
-      ".episode-play-btn, .episode-btn.primary"
-    );
+    const playButtons = document.querySelectorAll(".episode-play-btn, .episode-btn.primary")
     playButtons.forEach((button) => {
       button.addEventListener("click", function () {
-        const audioUrl = this.dataset.audioUrl;
-        const episodeId = this.dataset.episodeId;
+        const audioUrl = this.dataset.audioUrl
+        const episodeId = this.dataset.episodeId
 
         if (audioUrl && episodeId) {
-          playEpisode(episodeId, audioUrl);
+          playEpisode(episodeId, audioUrl)
         }
-      });
-    });
+      })
+    })
 
     // Toggle description buttons
-    const toggleButtons = document.querySelectorAll(".toggle-description");
+    const toggleButtons = document.querySelectorAll(".toggle-description")
     toggleButtons.forEach((button) => {
       button.addEventListener("click", function () {
-        const descId = this.dataset.descId;
-        const descElement = document.getElementById(descId);
+        const descId = this.dataset.descId
+        const descElement = document.getElementById(descId)
 
         if (descElement) {
-          descElement.classList.toggle("expanded");
+          descElement.classList.toggle("expanded")
           this.innerHTML = descElement.classList.contains("expanded")
             ? '<i class="fas fa-chevron-up"></i> Less'
-            : '<i class="fas fa-ellipsis-h"></i> More';
+            : '<i class="fas fa-ellipsis-h"></i> More'
         }
-      });
-    });
+      })
+    })
   }
 
   // Function to play episode audio
   function playEpisode(episodeId, audioUrl) {
     // Stop currently playing audio if any
     if (currentlyPlayingAudio) {
-      currentlyPlayingAudio.pause();
+      currentlyPlayingAudio.pause()
 
       // Reset previous now playing indicator
       if (currentlyPlayingId) {
-        const prevIndicator = document.getElementById(
-          `now-playing-${currentlyPlayingId}`
-        );
+        const prevIndicator = document.getElementById(`now-playing-${currentlyPlayingId}`)
         if (prevIndicator) {
-          prevIndicator.classList.remove("active");
+          prevIndicator.classList.remove("active")
         }
 
         // Reset play button icon
-        const prevPlayButtons = document.querySelectorAll(
-          `[data-episode-id="${currentlyPlayingId}"]`
-        );
+        const prevPlayButtons = document.querySelectorAll(`[data-episode-id="${currentlyPlayingId}"]`)
         prevPlayButtons.forEach((button) => {
           if (button.classList.contains("primary")) {
-            button.innerHTML = '<i class="fas fa-play"></i> Play';
+            button.innerHTML = '<i class="fas fa-play"></i> Play'
           } else if (button.classList.contains("episode-play-btn")) {
-            button.innerHTML = '<i class="fas fa-play"></i>';
+            button.innerHTML = '<i class="fas fa-play"></i>'
           }
-        });
+        })
 
         // Hide audio player
-        const prevPlayer = document.getElementById(
-          `player-${currentlyPlayingId}`
-        );
+        const prevPlayer = document.getElementById(`player-${currentlyPlayingId}`)
         if (prevPlayer) {
-          prevPlayer.classList.remove("active");
+          prevPlayer.classList.remove("active")
         }
       }
     }
 
     // If clicking the same episode that's already playing, just stop it
     if (episodeId === currentlyPlayingId) {
-      currentlyPlayingAudio = null;
-      currentlyPlayingId = null;
-      return;
+      currentlyPlayingAudio = null
+      currentlyPlayingId = null
+      return
     }
 
     // Show audio player for this episode
-    const audioPlayer = document.getElementById(`player-${episodeId}`);
+    const audioPlayer = document.getElementById(`player-${episodeId}`)
     if (audioPlayer) {
-      audioPlayer.classList.add("active");
-      const audio = audioPlayer.querySelector("audio");
+      audioPlayer.classList.add("active")
+      const audio = audioPlayer.querySelector("audio")
 
       if (audio) {
-        audio.play();
-        currentlyPlayingAudio = audio;
-        currentlyPlayingId = episodeId;
+        audio.play()
+        currentlyPlayingAudio = audio
+        currentlyPlayingId = episodeId
 
         // Update play button icons
-        const playButtons = document.querySelectorAll(
-          `[data-episode-id="${episodeId}"]`
-        );
+        const playButtons = document.querySelectorAll(`[data-episode-id="${episodeId}"]`)
         playButtons.forEach((button) => {
           if (button.classList.contains("primary")) {
-            button.innerHTML = '<i class="fas fa-pause"></i> Pause';
+            button.innerHTML = '<i class="fas fa-pause"></i> Pause'
           } else if (button.classList.contains("episode-play-btn")) {
-            button.innerHTML = '<i class="fas fa-pause"></i>';
+            button.innerHTML = '<i class="fas fa-pause"></i>'
           }
-        });
+        })
 
         // Show now playing indicator
-        const nowPlaying = document.getElementById(`now-playing-${episodeId}`);
+        const nowPlaying = document.getElementById(`now-playing-${episodeId}`)
         if (nowPlaying) {
-          nowPlaying.classList.add("active");
+          nowPlaying.classList.add("active")
         }
 
         // Handle audio ending
@@ -608,20 +581,20 @@ document.addEventListener("DOMContentLoaded", () => {
           // Reset play button icons
           playButtons.forEach((button) => {
             if (button.classList.contains("primary")) {
-              button.innerHTML = '<i class="fas fa-play"></i> Play';
+              button.innerHTML = '<i class="fas fa-play"></i> Play'
             } else if (button.classList.contains("episode-play-btn")) {
-              button.innerHTML = '<i class="fas fa-play"></i>';
+              button.innerHTML = '<i class="fas fa-play"></i>'
             }
-          });
+          })
 
           // Hide now playing indicator
           if (nowPlaying) {
-            nowPlaying.classList.remove("active");
+            nowPlaying.classList.remove("active")
           }
 
-          currentlyPlayingAudio = null;
-          currentlyPlayingId = null;
-        };
+          currentlyPlayingAudio = null
+          currentlyPlayingId = null
+        }
       }
     }
   }
@@ -636,22 +609,73 @@ document.addEventListener("DOMContentLoaded", () => {
       linkedin: "fab fa-linkedin-in",
       website: "fas fa-globe",
       spotify: "fab fa-spotify",
-      apple: "fab fa-apple"
-    };
-    return icons[platform.toLowerCase()] || "fas fa-link";
+      apple: "fab fa-apple",
+    }
+    return icons[platform.toLowerCase()] || "fas fa-link"
   }
 
   // Helper function to capitalize first letter
   function capitalizeFirstLetter(string) {
-    return string.charAt(0).toUpperCase() + string.slice(1);
+    return string.charAt(0).toUpperCase() + string.slice(1)
   }
 
   // Debounce function to prevent too many API calls
   function debounce(func, wait) {
-    let timeout;
+    let timeout
     return function (...args) {
-      clearTimeout(timeout);
-      timeout = setTimeout(() => func.apply(this, args), wait);
-    };
+      clearTimeout(timeout)
+      timeout = setTimeout(() => func.apply(this, args), wait)
+    }
   }
-});
+})
+
+function connectGoogleCalendar() {
+  // Show loading state
+  const connectCalendarButton = document.getElementById("connectCalendar")
+  if (connectCalendarButton) {
+    connectCalendarButton.disabled = true
+    connectCalendarButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Connecting...'
+  }
+
+  // Redirect to the Google OAuth flow
+  fetch("/connect_google_calendar")
+    .then((response) => {
+      if (response.redirected) {
+        window.location.href = response.url
+      } else {
+        return response.json().then((data) => {
+          throw new Error(data.error || "Failed to connect to Google Calendar")
+        })
+      }
+    })
+    .catch((error) => {
+      console.error("Error connecting to Google Calendar:", error)
+      alert("Error connecting to Google Calendar: " + error.message)
+
+      // Reset button state
+      if (connectCalendarButton) {
+        connectCalendarButton.disabled = false
+        connectCalendarButton.innerHTML = "Connect Google Calendar"
+      }
+    })
+}
+
+// Add event listener when the DOM is loaded
+document.addEventListener("DOMContentLoaded", () => {
+  const connectCalendarButton = document.getElementById("connectCalendar")
+  if (connectCalendarButton) {
+    connectCalendarButton.addEventListener("click", (event) => {
+      event.preventDefault()
+      connectGoogleCalendar()
+    })
+  }
+
+  // Check for googleToken in URL parameters (after OAuth callback)
+  const urlParams = new URLSearchParams(window.location.search)
+  const googleToken = urlParams.get("googleToken")
+
+  if (googleToken) {
+    console.log("Google Calendar connected successfully!")
+    // You can display a success message or update UI elements here
+  }
+})

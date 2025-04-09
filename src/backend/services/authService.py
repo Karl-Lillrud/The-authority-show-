@@ -73,18 +73,18 @@ class AuthService:
             # Fetch the user's stored code and expiration time from the database
             user_data = self.user_collection.find_one({"email": email})
             if not user_data:
-                return {"error": "Email not found"}, 404
+                return {"error": "Email not found"}
 
             stored_code = user_data.get("verification_code")
             expiration_time = user_data.get("code_expires_at")
 
             # Check if the code has expired
-            if time.time() > expiration_time:
-                return {"error": "Verification code has expired"}, 400
+            if not expiration_time or datetime.utcnow() > expiration_time:
+                return {"error": "The log-in link has expired. Please request a new one."}
 
             # Check if the code matches
             if hashlib.sha256(code.encode()).hexdigest() != stored_code:
-                return {"error": "Invalid verification code"}, 400
+                return {"error": "Invalid verification code"}
 
             # Remove the code after successful verification
             self.user_collection.update_one(
@@ -92,15 +92,11 @@ class AuthService:
                 {"$unset": {"verification_code": "", "code_expires_at": ""}}
             )
 
-            # Log in the user (set up session or return a token)
-            user = self.user_collection.find_one({"email": email})
-            self._setup_session(user, remember=False)
-
-            return {"message": "Login successful"}, 200
+            # Return the user data
+            return {"message": "Login successful", "user": user_data}
         except Exception as e:
             logger.error(f"Error verifying code: {e}", exc_info=True)
-            return {"error": "An error occurred during verification"}, 500
-
+            return {"error": "An error occurred during verification"}
 
     def send_verification_code(self, email, latitude=None, longitude=None):
         """
@@ -171,7 +167,51 @@ class AuthService:
             upsert=True
         )
 
+    def generate_verification_code(self, email):
+        """
+        Generate a verification code and save it in the database.
+        """
+        # Generate a 6-digit verification code
+        code = str(random.randint(100000, 999999))
 
+        # Hash the verification code for security
+        hashed_code = hashlib.sha256(code.encode()).hexdigest()
+
+        # Set the expiration time for the code (e.g., 10 minutes from now)
+        expiration_time = datetime.utcnow() + timedelta(minutes=10)
+
+        # Save the hashed code and expiration time in the database
+        self.user_collection.update_one(
+            {"email": email},
+            {
+                "$set": {
+                    "verification_code": hashed_code,
+                    "code_expires_at": expiration_time,
+                }
+            },
+            upsert=True,
+        )
+
+        return code
+
+    def send_login_email(self, email, login_link):
+        """
+        Send a log-in link to the user's email.
+        """
+        logger.info(f"Generated log-in link: {login_link}")  # Log the generated link for debugging
+        subject = "Your Log-In Link for PodManager"
+        body = f"""
+        <html>
+            <body>
+                <p>Hello,</p>
+                <p>Click the link below to log in to your PodManager account:</p>
+                <a href="{login_link}" style="color: #ff7f3f; text-decoration: none;">Log In</a>
+                <p>This link is valid for 10 minutes. If you did not request this, please ignore this email.</p>
+                <p>Best regards,<br>PodManager Team</p>
+            </body>
+        </html>
+        """
+        send_email(email, subject, body)
 
     def _authenticate_user(self, email, password):
         """Authenticate user with email and password."""
