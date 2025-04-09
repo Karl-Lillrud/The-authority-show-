@@ -207,7 +207,7 @@ def send_login_link():
 
     try:
         # Construct the log-in link
-        login_link = f"{request.host_url}podprofile?email={email}"  # Updated to redirect to podprofile
+        login_link = f"{request.host_url}dashboard?email={email}"
         logger.info(f"Generated log-in link for {email}: {login_link}")
 
         # Send the log-in link via email
