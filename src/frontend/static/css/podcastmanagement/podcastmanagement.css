@@ -1859,6 +1859,11 @@ select:invalid {
 
 /* Responsive adjustments */
 @media (max-width: 768px) {
+  .app-container {
+    flex-direction: column;
+    overflow-y: auto; /* Lägg till detta för att behålla scroll på hela appen om det behövs */
+  }
+
   .podcast-header-section {
     flex-direction: column;
   }
