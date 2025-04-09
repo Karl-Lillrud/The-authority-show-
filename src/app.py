@@ -1,6 +1,8 @@
 import os
 import logging
-from flask import Flask, request, session, g, jsonify, render_template
+import subprocess
+import requests
+from flask import Flask, request, session, g, jsonify, render_template, Response
 from flask_cors import CORS
 from backend.routes.auth import auth_bp
 from backend.routes.forgot_pass import forgotpass_bp
@@ -77,7 +79,9 @@ app.register_blueprint(pod_management_bp)
 app.register_blueprint(podtask_bp)
 app.register_blueprint(team_bp)
 app.register_blueprint(Mailing_list_bp)
-app.register_blueprint(guest_bp)  # Ensure this line is present and has the correct prefix
+app.register_blueprint(
+    guest_bp
+)  # Ensure this line is present and has the correct prefix
 app.register_blueprint(guestpage_bp)
 app.register_blueprint(account_bp)
 app.register_blueprint(usertoteam_bp)
@@ -87,7 +91,9 @@ app.register_blueprint(episode_bp)
 app.register_blueprint(podprofile_bp)  # Register the podprofile blueprint
 app.register_blueprint(frontend_bp)  # Register the frontend blueprint
 app.register_blueprint(guesttoepisode_bp)
-app.register_blueprint(guest_form_bp, url_prefix="/guest-form")  # Register the guest_form blueprint with URL prefix
+app.register_blueprint(
+    guest_form_bp, url_prefix="/guest-form"
+)  # Register the guest_form blueprint with URL prefix
 app.register_blueprint(transcription_bp)
 app.register_blueprint(audio_bp)
 app.register_blueprint(video_bp)
@@ -118,7 +124,42 @@ def load_user():
     logger.info(f"Request to {request.path} by user {g.user_id}")
 
 
+# Start Streamlit when the app starts
+def start_streamlit():
+    # Define the Streamlit port, defaulting to 8501
+    streamlit_port = os.getenv("STREAMLIT_PORT", "8501")
+    # Command to start Streamlit
+    streamlit_command = [
+        "streamlit",
+        "run",
+        "src/backend/routes/transcript/streamlit_transcription.py",  # Adjust the path iif needed
+        "--server.port",
+        streamlit_port,
+        "--server.headless",
+        "true",
+    ]
+    # Start Streamlit as a background process
+    subprocess.Popen(streamlit_command)
+
+
+# Start Streamlit in the background
+start_streamlit()
+
+
+# Proxy requests to Streamlit (on port 8501)
+@app.route("/streamlit/<path:path>", methods=["GET", "POST"])
+def proxy_streamlit(path):
+    # Construct the URL for Streamlit using API_BASE_URL from .env
+    url = f"{API_BASE_URL}/streamlit/{path}"
+    # Proxy the request to Streamlit
+    resp = requests.request(
+        method=request.method, url=url, headers=request.headers, data=request.data
+    )
+    return Response(resp.content, resp.status_code, resp.raw.headers.items())
+
+
 start_scheduler(app)
+
 
 # Run the app
 if __name__ == "__main__":
