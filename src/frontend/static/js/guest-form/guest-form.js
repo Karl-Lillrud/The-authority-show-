@@ -769,47 +769,114 @@ function isTimeBusy(time, busySlots) {
   fetchAvailableDates()
 })
 
-// Submit form data to the backend
-form.addEventListener("submit", (event) => {
-  event.preventDefault()
+// Existing logic or functions here...
 
-  const formData = {
-    name: document.getElementById("name").value,
-    company: document.getElementById("company").value,
-    email: document.getElementById("email").value,
-    phone: document.getElementById("phone").value,
-    socialMedia: JSON.parse(localStorage.getItem("socialMediaData")) || [],
-    bio: document.getElementById("bio").value,
-    interest: document.getElementById("interest").value,
-    recordingDate: document.getElementById("recordingDate").value,
-    recordingTime: document.getElementById("recordingTime").value,
-    recommendedGuests: JSON.parse(localStorage.getItem("recommendedGuestData")) || [],
-    list: document.getElementById("list").value,
-    imageData: localStorage.getItem("imageData"),
-    notes: document.getElementById("notes").value,
-    updatesOption: document.querySelector('input[name="updatesOption"]:checked').value,
-  }
+// Add this at the end of the file or inside the DOMContentLoaded listener
+document.addEventListener("DOMContentLoaded", function () {
+  const form = document.getElementById("guestForm");
 
-  fetch("/guest-form", {
+  form.addEventListener("submit", function (event) {
+    event.preventDefault();
+
+    // Safely get the values from the form fields
+    const firstNameInput = document.getElementById("firstName");
+    const emailInput = document.getElementById("email");
+    const bioInput = document.getElementById("bio");
+    const interestInput = document.getElementById("interest");
+    const recordingDateInput = document.getElementById("recordingDate");
+    const recordingTimeInput = document.getElementById("recordingTime");
+    const companyInput = document.getElementById("company");
+    const phoneInput = document.getElementById("phone");
+    const listInput = document.getElementById("list");
+    const notesInput = document.getElementById("notes");
+    const updatesOptionInput = document.querySelector('input[name="updatesOption"]:checked');
+
+    // Retrieve the Google Calendar tokens
+    const googleCalAccessToken = localStorage.getItem("googleCalAccessToken");
+    const googleCalRefreshToken = localStorage.getItem("googleCalRefreshToken");
+
+    // Check if each element exists before trying to get its value
+    const firstName = firstNameInput ? firstNameInput.value : null;
+    const email = emailInput ? emailInput.value : null;
+    const bio = bioInput ? bioInput.value : null;
+    const interest = interestInput ? interestInput.value : null;
+    const recordingDate = recordingDateInput ? recordingDateInput.value : null;
+    const recordingTime = recordingTimeInput ? recordingTimeInput.value : null;
+    const company = companyInput ? companyInput.value : null;
+    const phone = phoneInput ? phoneInput.value : null;
+    const list = listInput ? listInput.value : null;
+    const notes = notesInput ? notesInput.value : null;
+    const updatesOption = updatesOptionInput ? updatesOptionInput.value : null;
+
+    // Prepare the form data object with the tokens
+    const formData = {
+      firstName,
+      email,
+      bio,
+      interest,
+      recordingDate,
+      recordingTime,
+      company,
+      phone,
+      list,
+      notes,
+      updatesOption,
+      googleCalAccessToken,  // Add the access token
+      googleCalRefreshToken  // Add the refresh token
+    };
+
+    // Send the form data to the backend
+    fetch("/guest-form", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(formData),
+    })
+    .then((response) => response.json())
+    .then((data) => {
+      console.log('Form submission success:', data);
+      alert('Guest form submitted successfully!');
+      form.reset(); // Reset the form after submission
+    })
+    .catch((error) => {
+      console.error('Error during form submission:', error);
+      alert('An error occurred during submission.');
+    });
+  });
+});
+
+// Submit form data to the backend and create a Google Calendar event
+async function createGoogleCalendarEvent(formData) {
+  const eventData = {
+    summary: `Podcast Recording: ${formData.firstName}`,
+    description: `Recording with ${formData.firstName} from ${formData.company}`,
+    start: {
+      dateTime: `${formData.recordingDate}T${formData.recordingTime}:00`,
+      timeZone: "Europe/Stockholm", // Adjust to your time zone
+    },
+    end: {
+      dateTime: `${formData.recordingDate}T${formData.recordingTime}:30`, // 30-minute default duration
+      timeZone: "Europe/Stockholm",
+    },
+    attendees: [
+      {
+        email: formData.email,
+      },
+    ],
+  };
+
+  // Send the event data to the backend to create a calendar event
+  const res = await fetch("/create-google-calendar-event", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
     },
-    body: JSON.stringify(formData),
-  })
-    .then((response) => response.json())
-    .then((data) => {
-      alert(data.message)
-      form.reset()
-      localStorage.clear()
-      document.getElementById("socialMediaContainer").innerHTML = ""
-      document.getElementById("recommendedGuestContainer").innerHTML = ""
-      document.getElementById("imagePreviewContainer").classList.add("hidden")
-      document.getElementById("fileName").textContent = ""
-      document.getElementById("selectedDateTime").textContent = ""
-    })
-    .catch((error) => {
-      console.error("Error:", error)
-      alert("An error occurred while submitting the form.")
-    })
-})
+    body: JSON.stringify(eventData),
+  });
+
+  if (!res.ok) {
+    const errorData = await res.json();
+    throw new Error(errorData.error || "Failed to create Google Calendar event.");
+  }
+}
