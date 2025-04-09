@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PodManagerAI</title>
+    <link rel="stylesheet" href="ai_edits.css">
+</head>
+<body>
+    <div id="app">
+        <header>
+            <h1>PodManagerAI</h1>
+            <h3>Transcription & AI Enhancement</h3>
+        </header>
+        <main>
+            <div id="tabs">
+                <button onclick="showTab('transcription')">🎙 AI-Powered Transcription</button>
+                <button onclick="showTab('audio')">🎵 AI Audio Enhancement</button>
+                <button onclick="showTab('video')">📹 AI Video Enhancement</button>
+            </div>
+            <div id="content">
+                <!-- Content will be dynamically loaded here -->
+            </div>
+        </main>
+    </div>
+    <script>
+        const episodeId = "{{ episode_id }}"; // Pass the episode ID to JavaScript
+        console.log("Loaded AI Edits page for episode ID:", episodeId);
+    </script>
+    <script src="ai_edits.js"></script>
+</body>
+</html>

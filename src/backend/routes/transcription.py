@@ -3,7 +3,7 @@ import os
 import logging
 import subprocess
 from datetime import datetime
-from flask import Blueprint, request, jsonify
+from flask import Blueprint, request, jsonify, render_template
 import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
@@ -263,4 +263,19 @@ def isolate_voice():
     except Exception as e:
         logger.error(f"Voice isolation error: {str(e)}")
         return jsonify({"error": str(e)}), 500
-    
+
+@transcription_bp.route("/ai_edits", methods=["GET"])
+def render_ai_edits():
+    episode_id = request.args.get("episodeId")
+    if not episode_id or episode_id == "unknown":
+        logger.error(f"❌ Invalid or missing episode ID: {episode_id}")
+        return jsonify({"error": "Invalid or missing episode ID"}), 400
+
+    logger.info(f"✅ Rendering AI Edits page for episode ID: {episode_id}")
+    try:
+        return render_template("ai_edits/ai_edits.html", episode_id=episode_id)
+    except Exception as e:
+        logger.error(f"Error rendering ai_edits.html: {e}")
+        return jsonify({"error": "Failed to render AI Edits page"}), 500
+
+

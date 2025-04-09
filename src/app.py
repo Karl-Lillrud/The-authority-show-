@@ -93,7 +93,7 @@ app.register_blueprint(guesttoepisode_bp)
 app.register_blueprint(
     guest_form_bp, url_prefix="/guest-form"
 )  # Register the guest_form blueprint with URL prefix
-app.register_blueprint(transcription_bp)
+app.register_blueprint(transcription_bp, url_prefix="/transcription")
 app.register_blueprint(audio_bp)
 app.register_blueprint(video_bp)
 # Register the guest_form blueprint with URL prefix
