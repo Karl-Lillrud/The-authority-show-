@@ -7,28 +7,6 @@ body {
     color: #404040;
   }
   
-  /* Header */
-  header {
-    background-color: #FFFFFF;
-    padding: 1rem 1.5rem;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
-    text-align: center;
-  }
-  
-  header h1 {
-    font-size: 2rem;
-    font-weight: bold;
-    margin: 0;
-    color: #FF7300;
-  }
-  
-  header h3 {
-    font-size: 1.25rem;
-    font-weight: 500;
-    margin-top: 0.5rem;
-    color: #404040;
-  }
-  
   /* Tabs */
   #tabs {
     display: flex;

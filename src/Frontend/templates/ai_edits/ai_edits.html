@@ -5,23 +5,28 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>PodManagerAI</title>
     <link rel="stylesheet" href="/static/css/ai_edits/ai_edits.css">
+    <link rel="stylesheet" href="/static/css/dashboard/dashboard.css">
 </head>
 <body>
     <div id="app">
         {% include "components/header.html" %}
-        <main>
-            <div id="tabs">
-                <button onclick="showTab('transcription')" id="tab-transcription">🎙 AI-Powered Transcription</button>
-                <button onclick="showTab('audio')" id="tab-audio">🎵 AI Audio Enhancement</button>
-                <button onclick="showTab('video')" id="tab-video">📹 AI Video Enhancement</button>
-            </div>
-            <div id="content">
-                <h2>🎙 AI-Powered Transcription</h2>
-                <input type="file" id="fileUploader" accept="audio/*,video/*">
-                <button onclick="transcribe()">Transcribe</button>
-                <pre id="transcriptionResult"></pre>
-            </div>
-        </main>
+
+        <!-- Wrap main content in dashboard container for same placement as dashboard -->
+        <div class="dashboard dashboard-content">
+            <main>
+                <div id="tabs">
+                    <button onclick="showTab('transcription')" id="tab-transcription">🎙 AI-Powered Transcription</button>
+                    <button onclick="showTab('audio')" id="tab-audio">🎵 AI Audio Enhancement</button>
+                    <button onclick="showTab('video')" id="tab-video">📹 AI Video Enhancement</button>
+                </div>
+                <div id="content">
+                    <h2>🎙 AI-Powered Transcription</h2>
+                    <input type="file" id="fileUploader" accept="audio/*,video/*">
+                    <button onclick="transcribe()">Transcribe</button>
+                    <pre id="transcriptionResult"></pre>
+                </div>
+            </main>
+        </div>
     </div>
     <script>
         const episodeId = "{{ episode_id }}"; // Pass the episode ID to JavaScript
