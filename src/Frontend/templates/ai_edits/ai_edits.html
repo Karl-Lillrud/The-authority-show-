@@ -16,7 +16,10 @@
                 <button onclick="showTab('video')" id="tab-video">📹 AI Video Enhancement</button>
             </div>
             <div id="content">
-                <!-- Content will be dynamically loaded here -->
+                <h2>🎙 AI-Powered Transcription</h2>
+                <input type="file" id="fileUploader" accept="audio/*,video/*">
+                <button onclick="transcribe()">Transcribe</button>
+                <pre id="transcriptionResult"></pre>
             </div>
         </main>
     </div>
@@ -24,6 +27,6 @@
         const episodeId = "{{ episode_id }}"; // Pass the episode ID to JavaScript
         console.log("Loaded AI Edits page for episode ID:", episodeId);
     </script>
-    <script src="ai_edits.js"></script>
+    <script src="/static/js/ai_edits/ai_edits.js"></script>
 </body>
 </html>
