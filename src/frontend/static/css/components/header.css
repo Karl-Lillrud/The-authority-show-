@@ -109,6 +109,7 @@ header {
   z-index: 100;
   width: 100%; /* Ensure header takes full width */
   box-sizing: border-box; /* Include padding in width calculation */
+  min-height: 116px;
 }
 
 header:hover {

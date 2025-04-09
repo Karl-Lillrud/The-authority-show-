@@ -42,7 +42,7 @@ body {
 /* App Container */
 .app-container {
   display: flex;
-  height: calc(100vh - var(--header-height, 60px));
+  height: calc(100vh - 116px - 60px);
   margin-top: 0;
   position: relative;
   overflow: hidden;
