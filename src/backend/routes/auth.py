@@ -1,4 +1,4 @@
-from flask import Blueprint, request, jsonify, redirect, render_template, flash, url_for
+from flask import Blueprint, request, jsonify, redirect, render_template, flash, url_for, session
 from backend.repository.auth_repository import AuthRepository
 from backend.services.TeamInviteService import TeamInviteService
 from backend.services.authService import AuthService
@@ -63,7 +63,18 @@ def signin_submit():
 
     data = request.get_json()
     response, status_code = auth_repo.signin(data)
-    return jsonify(response), status_code
+
+    if status_code == 200 and response.get("user_authenticated"):
+        user = response.get("user")
+        session["user_id"] = str(user["_id"])  # Ensure user_id is set
+        session["email"] = user["email"]  # Optional: Add email for logging
+        logger.info(f"User {user['email']} logged in successfully.")
+        logger.debug(f"Session after login: {dict(session)}")  # Debug log
+        return jsonify({"redirect_url": "/dashboard"}), 200
+    else:
+        logger.warning("Failed login attempt.")
+        logger.debug(f"Login attempt data: {data}")  # Debug log
+        return jsonify({"error": "Invalid credentials"}), 401
 
 
 @auth_bp.route("/logout", methods=["GET"])
@@ -180,27 +191,26 @@ def send_login_link():
     Endpoint to send a log-in link to the user's email.
     """
     if request.content_type != "application/json":
+        logger.error("Invalid Content-Type. Expected application/json")
         return jsonify({"error": "Invalid Content-Type. Expected application/json"}), 415
 
     data = request.get_json()
     email = data.get("email")
 
     if not email:
+        logger.error("Email is required but not provided")
         return jsonify({"error": "Email is required"}), 400
 
     try:
-        # Generate a verification code and save it in the database
-        verification_code = auth_service.generate_verification_code(email)
-        logger.info(f"Generated verification code for {email}: {verification_code}")  # Log the code for debugging
-
         # Construct the log-in link
-        login_link = f"{request.host_url}dashboard?email={email}&code={verification_code}"
-        logger.info(f"Generated log-in link for {email}: {login_link}")  # Log the link for debugging
+        login_link = f"{request.host_url}dashboard?email={email}"
+        logger.info(f"Generated log-in link for {email}: {login_link}")
 
         # Send the log-in link via email
         auth_service.send_login_email(email, login_link)
 
+        logger.info(f"Log-in link sent successfully to {email}")
         return jsonify({"message": "Log-in link sent successfully"}), 200
     except Exception as e:
-        logger.error(f"Error sending log-in link: {e}", exc_info=True)
+        logger.error(f"Error sending log-in link for {email}: {e}", exc_info=True)
         return jsonify({"error": "Failed to send log-in link. Please try again later."}), 500

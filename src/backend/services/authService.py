@@ -65,134 +65,28 @@ class AuthService:
             logger.error("Error during login: %s", e, exc_info=True)
             return {"error": f"Error during login: {str(e)}"}, 500
 
-    def verify_code_and_login(self, email, code):
+    def verify_code_and_login(self, email):
         """
-        Verifies the provided code and logs in the user if the code is valid.
+        Authenticates the user directly using the log-in link.
         """
         try:
-            # Fetch the user's stored code and expiration time from the database
+            logger.debug(f"Authenticating user via log-in link for email: {email}")
+            # Fetch the user's data from the database
             user_data = self.user_collection.find_one({"email": email})
             if not user_data:
+                logger.warning(f"Email not found: {email}")
                 return {"error": "Email not found"}
 
-            stored_code = user_data.get("verification_code")
-            expiration_time = user_data.get("code_expires_at")
-
-            # Check if the code has expired
-            if not expiration_time or datetime.utcnow() > expiration_time:
-                return {"error": "The log-in link has expired. Please request a new one."}
-
-            # Check if the code matches
-            if hashlib.sha256(code.encode()).hexdigest() != stored_code:
-                return {"error": "Invalid verification code"}
-
-            # Remove the code after successful verification
-            self.user_collection.update_one(
-                {"email": email},
-                {"$unset": {"verification_code": "", "code_expires_at": ""}}
-            )
+            # Set up the session for the user
+            session["user_id"] = str(user_data["_id"])
+            session["email"] = user_data["email"]
+            logger.info(f"User {email} authenticated via log-in link.")
 
             # Return the user data
             return {"message": "Login successful", "user": user_data}
         except Exception as e:
-            logger.error(f"Error verifying code: {e}", exc_info=True)
-            return {"error": "An error occurred during verification"}
-
-    def send_verification_code(self, email, latitude=None, longitude=None):
-        """
-        Generate and send a verification code to the user's email.
-        Dynamically fetch the timezone based on latitude and longitude.
-        """
-        try:
-            # Generate a 6-digit verification code
-            code = str(random.randint(100000, 999999))
-
-            # Determine the timezone based on latitude and longitude
-            if latitude is not None and longitude is not None:
-                tf = TimezoneFinder()
-                timezone_name = tf.timezone_at(lat=latitude, lng=longitude)
-                if not timezone_name:
-                    timezone_name = "Europe/Stockholm"  # Default to Sweden's timezone if none found
-            else:
-                timezone_name = "Europe/Stockholm"  # Default to Sweden's timezone if no location is provided
-
-            # Get the current time in the determined timezone (handling DST automatically)
-            local_timezone = pytz.timezone(timezone_name)
-            current_time = datetime.now(local_timezone)  # Current time in the user's timezone
-            expiration_time = current_time + timedelta(minutes=5)  # Verification code valid for 5 minutes
-
-            # Format current time to show only hours and minutes
-            formatted_current_time = current_time.strftime("%H:%M")  # Hours and minutes in 24-hour format
-            formatted_expiration_time = expiration_time.strftime("%H:%M")  # Hours and minutes in 24-hour format
-
-            # Hash the verification code
-            hashed_code = hashlib.sha256(code.encode()).hexdigest()
-
-            # Store the verification code and timestamps in the database
-            self._store_verification_code(email, hashed_code, formatted_expiration_time, formatted_current_time)
-
-            # Send the verification code to the user's email
-            subject = "Verification Code"
-            body = f"""
-            <html>
-                <body>
-                    <p>Hello,</p>
-                    <p>Your verification code is: <strong>{code}</strong></p>
-                    <p>This code is valid for 5 minutes.</p>
-                    <p>If you did not request this code, please ignore this email.</p>
-                </body>
-            </html>
-            """
-            send_email(email, subject, body)
-
-            return {"message": "Verification code sent"}
-        except Exception as e:
-            logger.error(f"Error sending the verification code: {e}", exc_info=True)
-            return {"error": f"Failed to send verification code: {str(e)}"}
-
-    def _store_verification_code(self, email, hashed_code, expiration_time, created_at):
-        """
-        Store the hashed verification code and its expiration time in the database.
-        """
-        # Save to MongoDB (replace with your database logic)
-        self.user_collection.update_one(
-            {"email": email},
-            {
-                "$set": {
-                    "verification_code": hashed_code,
-                    "verification_expiration": expiration_time,  # Expiration time as formatted hours and minutes
-                    "createdAt": created_at,  # Time when the button was clicked as formatted hours and minutes
-                }
-            },
-            upsert=True
-        )
-
-    def generate_verification_code(self, email):
-        """
-        Generate a verification code and save it in the database.
-        """
-        # Generate a 6-digit verification code
-        code = str(random.randint(100000, 999999))
-
-        # Hash the verification code for security
-        hashed_code = hashlib.sha256(code.encode()).hexdigest()
-
-        # Set the expiration time for the code (e.g., 10 minutes from now)
-        expiration_time = datetime.utcnow() + timedelta(minutes=10)
-
-        # Save the hashed code and expiration time in the database
-        self.user_collection.update_one(
-            {"email": email},
-            {
-                "$set": {
-                    "verification_code": hashed_code,
-                    "code_expires_at": expiration_time,
-                }
-            },
-            upsert=True,
-        )
-
-        return code
+            logger.error(f"Error authenticating user via log-in link for email {email}: {e}", exc_info=True)
+            return {"error": "An error occurred during authentication"}
 
     def send_login_email(self, email, login_link):
         """
