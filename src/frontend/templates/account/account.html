@@ -105,50 +105,70 @@
         <div id="profile-section" class="settings-section active">
           <div class="section-header">
             <h2>Profile Information</h2>
-            <p>Manage your personal information and how it appears across services</p>
+            <p>View your personal information</p>
           </div>
           
           <div class="profile-content">
             <div class="profile-pic-container">
-              <label for="profile-pic" class="profile-pic-label">Profile Picture</label>
               <div class="profile-pic-wrapper">
                 <img id="profile-pic" src="{{ url_for('static', filename='images/profilepic.png') }}" alt="Profile Picture">
                 <div class="profile-pic-overlay">
                   <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="edit-icon">
-                    <path d="M12 20h9"></path>
                     <path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"></path>
+                    <path d="M12 20h9"></path>
                   </svg>
                 </div>
               </div>
-              <button id="upload-pic" class="upload-button">Change Photo</button>
+              <button id="upload-pic" class="secondary-button">Change Photo</button>
             </div>
           </div>
           
           <!-- Notification Container -->
           <div id="profile-notifications" class="notifications-container"></div>
           
-          <form id="profile-form" class="profile-form">
+          <!-- Profile Information Card -->
+          <div class="profile-info-card">
+            <div class="profile-info-item">
+              <div class="info-label">Full Name</div>
+              <div class="info-value" id="display-full-name">Loading...</div>
+            </div>
+            
+            <div class="profile-info-item">
+              <div class="info-label">Email Address</div>
+              <div class="info-value" id="display-email">Loading...</div>
+            </div>
+            
+            <div class="profile-info-item">
+              <div class="info-label">Phone Number</div>
+              <div class="info-value" id="display-phone">Not provided</div>
+            </div>
+          </div>
+          
+          <!-- Edit Profile Button -->
+          <div class="profile-actions">
+            <button type="button" class="primary-button" id="edit-profile-btn">Edit Profile</button>
+          </div>
+          
+          <!-- Hidden form for editing mode -->
+          <form id="profile-form" class="profile-form" style="display: none;">
             <div class="form-group">
               <label for="full-name">Full Name <span class="required required-profile">*</span></label>
-              <input type="text" id="full-name" name="full_name" disabled required>
+              <input type="text" id="full-name" name="full_name" required>
               <div class="form-hint">This name will be displayed on your profile</div>
             </div>
             
             <div class="form-group">
               <label for="email">Email Address <span class="required required-profile">*</span></label>
-              <input type="email" id="email" name="email" disabled required>
+              <input type="email" id="email" name="email" required>
             </div>
             
             <div class="form-group">
               <label for="phone">Phone Number</label>
-              <input type="text" id="phone" name="phone" disabled>
+              <input type="text" id="phone" name="phone">
               <div class="form-hint">Used for account recovery and important notifications</div>
             </div>
 
-            <div class="form-actions">
-              <button type="submit" class="primary-button">Save Changes</button>
-              <button type="reset" class="secondary-button">Cancel</button>
-            </div>
+            <button type="submit" class="primary-button save-profile-btn">Save Changes</button>
 
           </form>
         </div>
