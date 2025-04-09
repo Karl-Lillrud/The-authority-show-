@@ -32,13 +32,13 @@ function showTab(tabName) {
         content.innerHTML = `
             <h2>🎵 AI Audio Enhancement</h2>
             <input type="file" id="audioUploader" accept="audio/*">
-            <button onclick="enhanceAudio()">Enhance Audio</button>
+            <button class="btn ai-edit-button" onclick="enhanceAudio()">Enhance Audio</button>
             <div id="audioControls"></div>
     
             <div id="audioAnalysisSection" style="display: none;">
                 <hr/>
                 <h3>🤖 AI Analysis</h3>
-                <button onclick="analyzeEnhancedAudio()">📊 Analyze</button>
+                <button class="btn ai-edit-button" onclick="analyzeEnhancedAudio()">📊 Analyze</button>
                 <pre id="analysisResults"></pre>
                 <a id="downloadEnhanced" style="display:none;" download="enhanced_audio.wav">📥 Download Enhanced Audio</a>
             </div>
@@ -48,7 +48,7 @@ function showTab(tabName) {
                 <h3>✂ Audio Cutting</h3>
                 <label>Start: <input type="number" id="startTime" min="0" step="0.1"></label>
                 <label>End: <input type="number" id="endTime" min="0" step="0.1"></label>
-                <button onclick="cutAudio()">✂ Cut</button>
+                <button class="btn ai-edit-button" onclick="cutAudio()">✂ Cut</button>
                 <div id="cutResult"></div>
                 <a id="downloadCut" style="display:none;" download="cut_audio.wav">📥 Download Cut</a>
             </div>
@@ -56,7 +56,7 @@ function showTab(tabName) {
             <div id="aiCuttingSection" style="display: none;">
                 <hr/>
                 <h3>🧠 AI Cutting + Transcript</h3>
-                <button onclick="aiCutAudio()">Run AI Cut</button>
+                <button class="btn ai-edit-button" onclick="aiCutAudio()">Run AI Cut</button>
                 <pre id="aiTranscript"></pre>
                 <pre id="aiSuggestedCuts"></pre>
             </div>
