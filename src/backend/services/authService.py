@@ -107,6 +107,29 @@ class AuthService:
         """
         send_email(email, subject, body)
 
+    def verify_otp_and_login(self, email, otp):
+        """
+        Verify the OTP and log in the user.
+        """
+        try:
+            user = self.user_collection.find_one({"email": email})
+            if not user:
+                return {"error": "Email not found"}, 404
+
+            # Verify OTP (assuming OTP is stored in the database for simplicity)
+            if user.get("otp") != otp:
+                return {"error": "Invalid OTP"}, 401
+
+            # Set up the session
+            session["user_id"] = str(user["_id"])
+            session["email"] = user["email"]
+            logger.info(f"User {email} authenticated via OTP.")
+
+            return {"user_authenticated": True, "user": user}, 200
+        except Exception as e:
+            logger.error(f"Error verifying OTP for email {email}: {e}", exc_info=True)
+            return {"error": "An error occurred during authentication"}, 500
+
     def _authenticate_user(self, email, password):
         """Authenticate user with email and password."""
         user = self.user_collection.find_one({"email": email})

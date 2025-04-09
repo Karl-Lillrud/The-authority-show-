@@ -55,26 +55,30 @@ def signin_page():
 @auth_bp.route("/signin", methods=["POST"])
 @auth_bp.route("/", methods=["POST"])
 def signin_submit():
+    """
+    Handle OTP-based sign-in.
+    """
     if request.content_type != "application/json":
-        return (
-            jsonify({"error": "Invalid Content-Type. Expected application/json"}),
-            415,
-        )
+        return jsonify({"error": "Invalid Content-Type. Expected application/json"}), 415
 
     data = request.get_json()
-    response, status_code = auth_repo.signin(data)
+    email = data.get("email")
+    otp = data.get("otp")
+
+    if not email or not otp:
+        return jsonify({"error": "Email and OTP are required"}), 400
+
+    response, status_code = auth_service.verify_otp_and_login(email, otp)
 
     if status_code == 200 and response.get("user_authenticated"):
         user = response.get("user")
-        session["user_id"] = str(user["_id"])  # Ensure user_id is set
-        session["email"] = user["email"]  # Optional: Add email for logging
+        session["user_id"] = str(user["_id"])
+        session["email"] = user["email"]
         logger.info(f"User {user['email']} logged in successfully.")
-        logger.debug(f"Session after login: {dict(session)}")  # Debug log
         return jsonify({"redirect_url": "/dashboard"}), 200
     else:
-        logger.warning("Failed login attempt.")
-        logger.debug(f"Login attempt data: {data}")  # Debug log
-        return jsonify({"error": "Invalid credentials"}), 401
+        logger.warning("Failed OTP login attempt.")
+        return jsonify({"error": response.get("error", "Invalid OTP")}), 401
 
 
 @auth_bp.route("/logout", methods=["GET"])
