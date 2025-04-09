@@ -1,41 +1,111 @@
+/* Global Styles */
 body {
-    font-family: Arial, sans-serif;
+    font-family: 'Inter', sans-serif;
     margin: 0;
     padding: 0;
-    background-color: #f4f4f4;
-}
-
-header {
-    background-color: #007bff;
-    color: white;
-    padding: 10px 20px;
+    background-color: #F4F4F4;
+    color: #404040;
+  }
+  
+  /* Header */
+  header {
+    background-color: #FFFFFF;
+    padding: 1rem 1.5rem;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
     text-align: center;
-}
-
-main {
-    padding: 20px;
-}
-
-#tabs {
-    margin-bottom: 20px;
-}
-
-#tabs button {
-    margin-right: 10px;
-    padding: 10px 20px;
-    background-color: #007bff;
-    color: white;
+  }
+  
+  header h1 {
+    font-size: 2rem;
+    font-weight: bold;
+    margin: 0;
+    color: #FF7300;
+  }
+  
+  header h3 {
+    font-size: 1.25rem;
+    font-weight: 500;
+    margin-top: 0.5rem;
+    color: #404040;
+  }
+  
+  /* Tabs */
+  #tabs {
+    display: flex;
+    gap: 1rem;
+    border-bottom: 1px solid #ccc;
+    padding-bottom: 0.5rem;
+    margin-bottom: 1rem;
+  }
+  
+  #tabs button {
+    padding: 0.5rem 1rem;
+    font-weight: 600;
+    color: #404040;
+    background: transparent;
     border: none;
     cursor: pointer;
-}
-
-#tabs button:hover {
-    background-color: #0056b3;
-}
-
-#content {
-    background-color: white;
-    padding: 20px;
-    border-radius: 5px;
-    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-}
+    border-bottom: 3px solid transparent;
+    transition: all 0.3s ease;
+  }
+  
+  #tabs button.active,
+  #tabs button:hover {
+    color: #FF7300;
+    border-bottom: 3px solid #FF7300;
+  }
+  
+  /* Main Content */
+  main {
+    padding: 1.5rem;
+  }
+  
+  /* Content Box */
+  #content {
+    background-color: #ffffff;
+    padding: 1.5rem;
+    border-radius: 1rem;
+    box-shadow: 0 4px 12px rgba(255, 115, 0, 0.1);
+  }
+  
+  /* File Upload */
+  input[type="file"] {
+    border: 2px dashed #ccc;
+    padding: 1rem;
+    width: 100%;
+    border-radius: 0.75rem;
+    background: #fafafa;
+    text-align: center;
+    cursor: pointer;
+    margin-bottom: 1rem;
+  }
+  
+  /* Buttons */
+  button {
+    background-color: #FF7300;
+    color: white;
+    font-weight: 600;
+    padding: 0.5rem 1.5rem;
+    border: none;
+    border-radius: 1rem;
+    cursor: pointer;
+    box-shadow: 0 2px 6px rgba(255, 115, 0, 0.4);
+    transition: background 0.3s ease;
+  }
+  
+  button:hover {
+    background-color: #e46600;
+  }
+  
+  /* Results */
+  #transcriptionResult,
+  #audioResult,
+  #videoResult {
+    margin-top: 1.5rem;
+    white-space: pre-wrap;
+    background: #f9f9f9;
+    border: 1px solid #ddd;
+    padding: 1rem;
+    border-radius: 0.75rem;
+  }
+  
