@@ -472,6 +472,7 @@ header:hover {
   #headerPodcastDropdown {
     max-width: 120px;
     font-size: 0.75rem; /* Smaller text */
+    display: none;
   }
 
   .menu-toggle {
