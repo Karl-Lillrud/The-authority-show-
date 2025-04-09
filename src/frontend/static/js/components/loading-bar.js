@@ -25,7 +25,7 @@ export function createLoadingBar() {
     { text: "Registering episode", percentage: 25 },
     { text: "Sending data", percentage: 50 },
     { text: "Sending invitation email", percentage: 75 },
-    { text: "Episode registered successfully", percentage: 100 }
+    { text: "Podcast registered successfully", percentage: 100 }
   ];
 
   // Function to show the loading popup with a fade-in effect

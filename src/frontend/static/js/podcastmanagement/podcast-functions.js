@@ -1038,14 +1038,11 @@ export function initPodcastFunctions() {
   // Close the form popup
   document.getElementById("close-form-popup").addEventListener("click", () => {
     document.getElementById("form-popup").style.display = "none";
-    document.getElementById("podcast-detail").style.display = "block";
   });
 
   // Cancel button in form
   document.getElementById("cancel-form-btn").addEventListener("click", () => {
     document.getElementById("form-popup").style.display = "none";
-    document.getElementById("podcast-detail").style.display = "none"; // Hide podcast detail
-    document.getElementById("podcast-list").style.display = "flex"; // Show podcast list
   });
 
   // Setup podcast form submission
