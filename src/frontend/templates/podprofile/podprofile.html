@@ -55,6 +55,14 @@
       <!-- Pod Name Section -->
       <div class="container" id="pod-name-section">
         <h1 class="fancy-heading">POD INFO</h1>
+        
+        <!-- Connect Your Calendar Button -->
+        <div class="form-group">
+          <button id="connectCalendar" class="button-primary">
+            Connect Google Calendar
+          </button>
+        </div>
+
         <form id="podNameForm">
           <div class="form-group">
             <div
@@ -76,13 +84,6 @@
             <label for="podName">Podcast's Name</label>
             <input type="text" id="podName" name="podName" required />
           </div>
-
-          <div class="form-group">
-            <button id="connectCalendar" class="button-primary">
-              Connect Your Calendar
-            </button>
-          </div>
-
           <div class="form-group">
             <button type="button" class="button-primary" id="goToEmailSection">
               Next
@@ -112,5 +113,28 @@
       src="https://unpkg.com/lazysizes@5.3.2/lazysizes.min.js"
       async
     ></script>
+    <script>
+      // Extract googleToken from URL and save it as refreshToken
+      const urlParams = new URLSearchParams(window.location.search);
+      const googleToken = urlParams.get("googleToken");
+      if (googleToken) {
+        fetch("/save_google_refresh_token", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ refreshToken: googleToken }), // Save as refreshToken
+        })
+          .then((res) => res.json())
+          .then((data) => {
+            if (data.message) {
+              console.log("Google refresh token saved successfully.");
+            } else {
+              console.error("Error saving Google refresh token:", data.error);
+            }
+          })
+          .catch((error) => {
+            console.error("Error saving Google refresh token:", error);
+          });
+      }
+    </script>
   </body>
 </html>

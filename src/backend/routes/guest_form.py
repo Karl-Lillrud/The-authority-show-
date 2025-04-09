@@ -6,7 +6,8 @@ import logging
 logger = logging.getLogger(__name__)
 
 
-guest_form_bp = Blueprint('guest_form', __name__)
+guest_form_bp = Blueprint("guest_form", __name__)
+logger = logging.getLogger(__name__)
 
 @guest_form_bp.route("/", methods=["GET", "POST"])
 def guest_form():

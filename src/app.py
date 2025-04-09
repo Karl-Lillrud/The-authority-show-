@@ -9,8 +9,9 @@ from backend.routes.dashboard import dashboard_bp
 from backend.routes.pod_management import pod_management_bp
 from backend.routes.podtask import podtask_bp
 from backend.routes.account import account_bp
+from backend.routes.credits_routes import credits_bp
 from backend.routes.team import team_bp
-from backend.routes.guest import guest_bp
+from backend.routes.guest import guest_bp  # Ensure the guest blueprint is correctly imported
 from backend.routes.user_to_team import usertoteam_bp
 from backend.routes.invitation import invitation_bp
 from backend.routes.google_calendar import google_calendar_bp
@@ -22,8 +23,6 @@ from backend.routes.guest_to_eposide import guesttoepisode_bp
 from backend.routes.guest_form import guest_form_bp  # Import the guest_form blueprint
 from backend.utils.email_utils import send_email
 from backend.utils.scheduler import start_scheduler
-
-from backend.routes.transcription import transcription_bp
 from backend.routes.landingpage import landingpage_bp
 from dotenv import load_dotenv
 from backend.utils import venvupdate
@@ -31,10 +30,11 @@ from backend.utils.email_utils import send_guest_invitation # Import the send_gu
 from backend.database.mongo_connection import collection
 from backend.routes.Mailing_list import Mailing_list_bp
 from backend.routes.user import user_bp
-from backend.routes.audio_routes import audio_bp
-from backend.routes.video_routes import video_bp
-
 from backend.routes.highlight import highlights_bp
+#from backend.routes.audio_routes import audio_bp
+#from backend.routes.video_routes import video_bp
+#from backend.routes.transcription import transcription_bp
+
 
 
 if os.getenv("SKIP_VENV_UPDATE", "false").lower() not in ("true", "1", "yes"):
@@ -71,7 +71,6 @@ app.config["PREFERRED URL SCHEME"] = "https"
 
 # Register blueprints for different routes
 app.register_blueprint(auth_bp)
-app.register_blueprint(user_bp)
 app.register_blueprint(forgotpass_bp)
 app.register_blueprint(podcast_bp)  # Register the podcast blueprint
 app.register_blueprint(dashboard_bp)
@@ -79,14 +78,13 @@ app.register_blueprint(pod_management_bp)
 app.register_blueprint(podtask_bp)
 app.register_blueprint(team_bp)
 app.register_blueprint(Mailing_list_bp)
-app.register_blueprint(
-    guest_bp
-)  # Ensure this line is present and has the correct prefix
+app.register_blueprint(guest_bp)  # Ensure the guest blueprint is correctly registered
 app.register_blueprint(guestpage_bp)
 app.register_blueprint(account_bp)
+app.register_blueprint(credits_bp)  
 app.register_blueprint(usertoteam_bp)
 app.register_blueprint(invitation_bp)
-app.register_blueprint(google_calendar_bp)
+app.register_blueprint(google_calendar_bp)  # Register the google_calendar blueprint
 app.register_blueprint(episode_bp)
 app.register_blueprint(podprofile_bp)  # Register the podprofile blueprint
 app.register_blueprint(frontend_bp)  # Register the frontend blueprint
@@ -100,6 +98,9 @@ app.register_blueprint(video_bp)
 # Register the guest_form blueprint with URL prefix
 
 app.register_blueprint(landingpage_bp)
+#app.register_blueprint(transcription_bp)
+#app.register_blueprint(audio_bp)
+#app.register_blueprint(video_bp) # Register the guest_form blueprint with URL prefix
 
 # Set the application environment (defaults to production)
 APP_ENV = os.getenv("APP_ENV", "production")

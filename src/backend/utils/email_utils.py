@@ -5,6 +5,10 @@ from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from email.mime.image import MIMEImage  # Added for inline image support
 from dotenv import load_dotenv
+from flask import render_template, Blueprint, request, jsonify, url_for, redirect
+import urllib.parse
+import requests
+from backend.repository.guest_repository import GuestRepository
 
 # Load environment variables once
 load_dotenv(override=True)
