@@ -4,32 +4,38 @@
   <meta charset="UTF-8">
   <title>{{ guest_name }} - Guest Profile</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <!-- Länka till din externa CSS-fil -->
   <link rel="stylesheet" href="{{ url_for('static', filename='css/guestpage/guestpage.css') }}">
+  <!-- Ikoner -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-
+  
   <!-- Google Analytics -->
   <script async src="https://www.googletagmanager.com/gtag/js?id=G-PTPQQ5WSQV"></script>
   <script>
     window.dataLayer = window.dataLayer || [];
     function gtag(){dataLayer.push(arguments);}
     gtag('js', new Date());
-
     gtag('config', 'G-PTPQQ5WSQV');
   </script>
-  </head>
-  <body>
-    <header class="navbar">
-      <div class="logo-container">
-        <a href="/podcastmanagement">
-          <img src="{{ url_for('static', filename='images/PodManagerLogo.png') }}" alt="PodManager Logo" class="logo-image">
-        </a>
-      </div>
-    </header>
+</head>
+<body>
+  <!-- Navbar -->
+  <header class="navbar">
+    <div class="logo-container">
+      <!-- Länken går till podcast management-sidan -->
+      <a href="/podcastmanagement">
+        <img src="{{ url_for('static', filename='images/PodManagerLogo.png') }}" 
+             alt="PodManager Logo" 
+             class="logo-image">
+      </a>
+    </div>
+    <!-- Övriga element i navbaren kan läggas till här -->
+  </header>
 
-  <!-- Hero section -->
+  <!-- Hero Section -->
   <section class="guest-hero">
     <div class="overlay"></div>
-    <!-- Social Media Icons in Top-Right Corner -->
+    <!-- Sociala ikoner i övre högra hörnet -->
     <div id="guest-social">
       {% for platform, link in social_media.items() %}
         {% if link %}
@@ -40,11 +46,11 @@
       {% endfor %}
     </div>
     <div class="hero-content container">
-      <!-- Guest profile image -->
+      <!-- Gästens profilbild -->
       <div class="guest-image">
         <img src="{{ guest_image }}" alt="{{ guest_name }}">
       </div>
-      <!-- Guest info -->
+      <!-- Gästens information -->
       <div class="guest-text">
         <h1>{{ guest_name }}</h1>
         <p>{{ guest_bio }}</p>
@@ -53,7 +59,7 @@
   </section>
 
   <!-- Guest Info Section -->
-  <section class="guest-info container section-orange" style="text-align: center;">
+  <section class="guest-info container section-orange">
     <h2>Guest Information</h2>
     <p><strong>Email:</strong> 
       {% if email %}
@@ -71,30 +77,35 @@
     </p>
   </section>
 
-  
-    <!-- Episodes Section -->
-  {% for episode in episodes %}
-  <li class="episode-card" onclick="window.location.href='/episode/{{ episode._id }}'">
-    <div class="episode-banner">
-      <img src="{{ url_for('static', filename='images/default.png') }}" alt="{{ episode.title }} Thumbnail">
-    </div>
-    <div class="episode-content">
-      <div class="episode-header">
-        <span class="play-icon"><i class="fas fa-play"></i></span>
-        <h3>{{ episode.title }}</h3>
-      </div>
-      <p class="episode-description">{{ episode.description }}</p>
-      <div class="episode-links">
-        <a href="https://open.spotify.com/" target="_blank" class="platform spotify" onclick="event.stopPropagation()">
-          <i class="fab fa-spotify"></i> Spotify
-        </a>
-        <a href="https://podcasts.apple.com/" target="_blank" class="platform apple" onclick="event.stopPropagation()">
-          <i class="fab fa-apple"></i> Apple
-        </a>
-      </div>
-    </div>
-  </li>
-  {% endfor %}
+  <!-- Episodes Section -->
+  <section class="guest-episodes container">
+    <h2>Episodes Featuring {{ guest_name }}</h2>
+    <ul class="episode-list">
+      {% for episode in episodes %}
+        <li class="episode-card" onclick="window.location.href='/episode/{{ episode._id }}'">
+          <div class="episode-banner">
+            <img src="{{ url_for('static', filename='images/default.png') }}" 
+                 alt="{{ episode.title }} Thumbnail">
+          </div>
+          <div class="episode-content">
+            <div class="episode-header">
+              <span class="play-icon"><i class="fas fa-play"></i></span>
+              <h3>{{ episode.title }}</h3>
+            </div>
+            <p class="episode-description">{{ episode.description }}</p>
+            <div class="episode-links">
+              <a href="https://open.spotify.com/" target="_blank" class="platform spotify" onclick="event.stopPropagation()">
+                <i class="fab fa-spotify"></i> Spotify
+              </a>
+              <a href="https://podcasts.apple.com/" target="_blank" class="platform apple" onclick="event.stopPropagation()">
+                <i class="fab fa-apple"></i> Apple
+              </a>
+            </div>
+          </div>
+        </li>
+      {% endfor %}
+    </ul>
+  </section>
 
   <!-- Footer -->
   <footer>
