@@ -6,25 +6,25 @@ function showTab(tabName) {
         content.innerHTML = `
             <h2>🎙 AI-Powered Transcription</h2>
             <input type="file" id="fileUploader" accept="audio/*,video/*">
-            <button onclick="transcribe()">▶ Transcribe</button>
+            <button class="btn ai-edit-button" onclick="transcribe()">▶ Transcribe</button>
             <pre id="transcriptionResult"></pre>
 
             <div id="enhancementTools" style="display:none;">
                 <hr/>
                 <h3>🔧 Enhancement Tools</h3>
-                <button onclick="generateCleanTranscript()">🧹 Clean Transcript</button>
+                <button class="btn ai-edit-button" onclick="generateCleanTranscript()">🧹 Clean Transcript</button>
                 <pre id="cleanTranscript"></pre>
 
-                <button onclick="generateAISuggestions()">🤖 AI Suggestions</button>
+                <button class="btn ai-edit-button" onclick="generateAISuggestions()">🤖 AI Suggestions</button>
                 <pre id="aiSuggestions"></pre>
 
-                <button onclick="generateShowNotes()">📝 Show Notes</button>
+                <button class="btn ai-edit-button" onclick="generateShowNotes()">📝 Show Notes</button>
                 <pre id="showNotes"></pre>
 
-                <button onclick="generateQuotes()">💬 Generate Quotes</button>
+                <button class="btn ai-edit-button" onclick="generateQuotes()">💬 Generate Quotes</button>
                 <pre id="quotesText"></pre>
 
-                <button onclick="generateQuoteImages()">🖼️ Generate Quote Images</button>
+                <button class="btn ai-edit-button" onclick="generateQuoteImages()">🖼️ Generate Quote Images</button>
                 <div id="quoteImages"></div>
             </div>
         `;
@@ -32,14 +32,14 @@ function showTab(tabName) {
         content.innerHTML = `
             <h2>🎵 AI Audio Enhancement</h2>
             <input type="file" id="audioUploader" accept="audio/*">
-            <button onclick="enhanceAudio()">Enhance Audio</button>
+            <button class="btn ai-edit-button" onclick="enhanceAudio()">Enhance Audio</button>
             <div id="audioResult"></div>
         `;
     } else if (tabName === 'video') {
         content.innerHTML = `
             <h2>📹 AI Video Enhancement</h2>
             <input type="file" id="videoUploader" accept="video/*">
-            <button onclick="enhanceVideo()">Enhance Video</button>
+            <button class="btn ai-edit-button" onclick="enhanceVideo()">Enhance Video</button>
             <div id="videoResult"></div>
         `;
     }

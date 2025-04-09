@@ -86,4 +86,24 @@ body {
     padding: 1rem;
     border-radius: 0.75rem;
   }
-  
+ /* Enhanced styling for AI Edit buttons */
+.btn.ai-edit-button {
+    background-color: var(--highlight-color); /* e.g. #ff7f3f */
+    color: white;
+    padding: 10px 20px;      /* Increased padding for a more substantial button */
+    font-size: 1rem;         /* Consistent font size */
+    font-weight: 600;
+    border: none;
+    border-radius: var(--radius-medium);  /* Uses your predefined radius (e.g. 12px) */
+    cursor: pointer;
+    transition: background-color 0.3s ease, transform 0.2s ease, box-shadow 0.2s ease;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    margin: 0.5rem 0;        /* Add some vertical spacing between buttons */
+    display: inline-block;   /* Ensure buttons behave as inline-block elements */
+}
+
+.btn.ai-edit-button:hover {
+    background-color: var(--highlight-hover);  /* e.g. #e0662c */
+    transform: translateY(-2px);
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+} 
