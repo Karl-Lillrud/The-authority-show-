@@ -48,7 +48,7 @@ API_BASE_URL = os.getenv("API_BASE_URL", "http://127.0.0.1:8000")
 @auth_bp.route("/", methods=["GET"])
 def signin_page():
     if request.cookies.get("remember_me") == "true":
-        return redirect("/dashboard")
+        return redirect("/podprofile")  # Redirect to podprofile instead of dashboard
     return render_template("signin/signin.html", API_BASE_URL=API_BASE_URL)
 
 
@@ -207,7 +207,7 @@ def send_login_link():
 
     try:
         # Construct the log-in link
-        login_link = f"{request.host_url}dashboard?email={email}"
+        login_link = f"{request.host_url}podprofile?email={email}"  # Redirect to podprofile
         logger.info(f"Generated log-in link for {email}: {login_link}")
 
         # Send the log-in link via email
