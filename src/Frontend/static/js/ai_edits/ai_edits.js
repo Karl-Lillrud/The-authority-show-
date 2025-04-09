@@ -33,7 +33,33 @@ function showTab(tabName) {
             <h2>🎵 AI Audio Enhancement</h2>
             <input type="file" id="audioUploader" accept="audio/*">
             <button onclick="enhanceAudio()">Enhance Audio</button>
-            <div id="audioResult"></div>
+            <div id="audioControls"></div>
+    
+            <div id="audioAnalysisSection" style="display: none;">
+                <hr/>
+                <h3>🤖 AI Analysis</h3>
+                <button onclick="analyzeEnhancedAudio()">📊 Analyze</button>
+                <pre id="analysisResults"></pre>
+                <a id="downloadEnhanced" style="display:none;" download="enhanced_audio.wav">📥 Download Enhanced Audio</a>
+            </div>
+    
+            <div id="audioCuttingSection" style="display: none;">
+                <hr/>
+                <h3>✂ Audio Cutting</h3>
+                <label>Start: <input type="number" id="startTime" min="0" step="0.1"></label>
+                <label>End: <input type="number" id="endTime" min="0" step="0.1"></label>
+                <button onclick="cutAudio()">✂ Cut</button>
+                <div id="cutResult"></div>
+                <a id="downloadCut" style="display:none;" download="cut_audio.wav">📥 Download Cut</a>
+            </div>
+    
+            <div id="aiCuttingSection" style="display: none;">
+                <hr/>
+                <h3>🧠 AI Cutting + Transcript</h3>
+                <button onclick="aiCutAudio()">Run AI Cut</button>
+                <pre id="aiTranscript"></pre>
+                <pre id="aiSuggestedCuts"></pre>
+            </div>
         `;
     } else if (tabName === 'video') {
         content.innerHTML = `
@@ -151,23 +177,122 @@ async function generateQuoteImages() {
 
 
 async function enhanceAudio() {
-    const fileInput = document.getElementById('audioUploader');
-    const file = fileInput.files[0];
-    if (!file) {
-        alert('Please upload an audio file.');
+    const input = document.getElementById('audioUploader');
+    const audioControls = document.getElementById('audioControls');
+    const file = input.files[0];
+
+    if (!file) return alert("Upload an audio file first.");
+
+    audioControls.innerHTML = "🔄 Enhancing... Please wait.";
+    const formData = new FormData();
+    formData.append("audio", file);
+
+    try {
+        const response = await fetch("/audio/enhancement", {
+            method: "POST",
+            body: formData
+        });
+
+        const result = await response.json();
+        const enhancedAudioId = result.enhanced_audio;
+
+        if (enhancedAudioId) {
+            const audioRes = await fetch(`/get_file/${enhancedAudioId}`);
+            const audioBlob = await audioRes.blob();
+            enhancedAudioBlob = audioBlob;
+
+            const audioURL = URL.createObjectURL(audioBlob);
+            audioControls.innerHTML = `
+                <p>✅ Audio enhancement complete!</p>
+                <audio controls src="${audioURL}"></audio>
+            `;
+
+            document.getElementById("audioAnalysisSection").style.display = "block";
+            const downloadLink = document.getElementById("downloadEnhanced");
+            downloadLink.href = audioURL;
+            downloadLink.style.display = "inline-block";
+        } else {
+            audioControls.innerHTML = "❌ Failed to enhance audio.";
+        }
+    } catch (err) {
+        audioControls.innerHTML = `❌ Error: ${err.message}`;
+    }
+}
+
+async function analyzeEnhancedAudio() {
+    const analysisContainer = document.getElementById("analysisResults");
+    if (!enhancedAudioBlob) {
+        alert("Enhance the audio first.");
         return;
     }
 
-    const formData = new FormData();
-    formData.append('audio', file);
+    analysisContainer.textContent = "🔍 Analyzing enhanced audio...";
 
-    const response = await fetch('/audio/enhancement', {
+    const formData = new FormData();
+    formData.append("audio", enhancedAudioBlob, "enhanced_audio.wav");
+
+    try {
+        const response = await fetch("/audio_analysis", {
+            method: "POST",
+            body: formData
+        });
+
+        const data = await response.json();
+        analysisContainer.textContent = `
+📊 Emotion: ${data.emotion}
+📊 Sentiment: ${data.sentiment}
+📊 Clarity Score: ${data.clarity_score}
+📊 Background Noise: ${data.background_noise}
+📊 Speech Rate (WPM): ${data.speech_rate}
+        `;
+    } catch (err) {
+        analysisContainer.textContent = `❌ Analysis failed: ${err.message}`;
+    }
+}
+
+async function cutAudio() {
+    const start = parseFloat(document.getElementById("startTime").value);
+    const end = parseFloat(document.getElementById("endTime").value);
+
+    if (isNaN(start) || isNaN(end) || start >= end) {
+        return alert("⚠️ Invalid start/end times");
+    }
+
+    const res = await fetch('/clip_audio', {
         method: 'POST',
-        body: formData,
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({ file_id: enhancedAudioId, start_time: start, end_time: end })
     });
 
-    const result = await response.json();
-    document.getElementById('audioResult').innerText = JSON.stringify(result, null, 2);
+    const data = await res.json();
+    const cutAudioId = data.clipped_audio;
+
+    const audioRes = await fetch(`/get_file/${cutAudioId}`);
+    const blob = await audioRes.blob();
+    const url = URL.createObjectURL(blob);
+
+    document.getElementById("cutResult").innerHTML = `<audio controls src="${url}"></audio>`;
+    const download = document.getElementById("downloadCut");
+    download.href = url;
+    download.style.display = "inline-block";
+}
+
+async function aiCutAudio() {
+    const res = await fetch('/ai_cut_audio', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({ file_id: enhancedAudioId })
+    });
+
+    const result = await res.json();
+
+    const transcript = result.cleaned_transcript || "No transcript";
+    const cuts = result.suggested_cuts?.map(cut =>
+        `🗣 "${cut.sentence}" [${cut.start}s - ${cut.end}s] — Certainty: ${cut.certainty_score}`
+    ).join("\n") || "No suggested cuts.";
+
+    document.getElementById("aiTranscript").innerText = transcript;
+    document.getElementById("aiSuggestedCuts").innerText = cuts;
 }
 
 async function enhanceVideo() {
