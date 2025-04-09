@@ -1,3 +1,4 @@
+// Notification system for team dashboard
 export function showNotification(title, message, type = "info") {
   // Remove any existing notification
   const existingNotification = document.querySelector(".notification");
@@ -8,26 +9,34 @@ export function showNotification(title, message, type = "info") {
   // Import SVG icons
   import("./notificationsSvg.js").then(({ successSvg, errorSvg, infoSvg, closeSvg }) => {
     // Fetch the notification HTML
-    fetch('../../templates/components/notification.html')
+    fetch('../../templates/components/notifications.html')
       .then((response) => response.text())
       .then((html) => {
-        // Create notification element
-        const notification = document.createElement("div");
+        
+        const tempDiv = document.createElement('div');
+        tempDiv.innerHTML = html;
+
+        // Select the notification template
+        const notificationTemplate = tempDiv.querySelector('#notification-template');
+
+        const cssLink = loadCssLink(tempDiv, '#notification-style'); // The css path is in the div
+        document.head.appendChild(cssLink); 
+
+        // Clone the template to create a new notification instance
+        const notification = notificationTemplate.cloneNode(true);
+        notification.id = ''; // Remove the ID to avoid duplicates
+
         notification.className = `notification ${type}`;
-        notification.innerHTML = html;
 
         // Set icon based on type
         const iconSvg = type === "success" ? successSvg : type === "error" ? errorSvg : infoSvg;
         notification.querySelector(".notification-icon").innerHTML = iconSvg;
 
-        // Set title and message
         notification.querySelector(".notification-title").textContent = title;
         notification.querySelector(".notification-message").textContent = message;
 
-        // Set close button icon
         notification.querySelector(".notification-close").innerHTML = closeSvg;
 
-        // Add to DOM
         document.body.appendChild(notification);
 
         // Add event listener to close button
@@ -65,18 +74,24 @@ export function showConfirmationPopup(title, message, onConfirm, onCancel) {
     existingPopup.remove();
   }
 
-  // Fetch the popup HTML
-  fetch("../../templates/components/notification.html")
+  fetch('../../templates/components/notifications.html')
     .then((response) => response.text())
     .then((html) => {
-      // Create popup element
-      const popup = document.createElement("div");
-      popup.className = "popup confirmation-popup show";
-      popup.innerHTML = html;
+      const tempDiv = document.createElement('div');
+      tempDiv.innerHTML = html;
 
-      // Set title and message
-      popup.querySelector(".form-title").textContent = title;
-      popup.querySelector(".form-message").textContent = message;
+      // Select the confirmation popup template
+      const popupTemplate = tempDiv.querySelector('#confirmation-popup-template');
+
+      const cssLink = loadCssLink(tempDiv, '#notification-style'); // The css path is in the div
+      document.head.appendChild(cssLink); 
+
+      // Clone the template to create a new confirmation popup instance
+      const popup = popupTemplate.cloneNode(true);
+      popup.id = ''; // Remove the ID to avoid duplicates
+
+      popup.querySelector('.form-title').textContent = title;
+      popup.querySelector('.form-message').textContent = message;
 
       // Add to DOM
       document.body.appendChild(popup);
@@ -92,4 +107,12 @@ export function showConfirmationPopup(title, message, onConfirm, onCancel) {
         popup.remove();
       });
     });
+}
+
+function loadCssLink(container, templateElement) {
+  const cssPath = container.querySelector(templateElement).dataset.css; // This is the CSS path from the template
+  const link = document.createElement("link");
+  link.rel = "stylesheet";
+  link.href = cssPath;
+  return link;
 }
