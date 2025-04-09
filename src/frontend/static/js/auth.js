@@ -23,9 +23,11 @@ document.addEventListener("DOMContentLoaded", () => {
     // Get API base URL from the HTML template
     const API_BASE_URL = document.body.getAttribute("data-api-base-url");
   
+    // Declare errorMessage once
+    const errorMessage = document.getElementById("error-message");
+  
     // Login form submission
     const loginForm = document.getElementById("login-form");
-    const errorMessage = document.getElementById("error-message");
   
     loginForm.addEventListener("submit", async (event) => {
       event.preventDefault();
@@ -58,7 +60,6 @@ document.addEventListener("DOMContentLoaded", () => {
   
     // Register form submission
     const registerForm = document.getElementById("register-form");
-    const errorMessage = document.getElementById("error-message");
   
     registerForm.addEventListener("submit", async (event) => {
       event.preventDefault();
