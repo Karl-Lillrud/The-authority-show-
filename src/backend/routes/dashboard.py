@@ -31,6 +31,7 @@ def dashboard():
                 session["user_id"] = str(result["user"]["_id"])
                 session["email"] = result["user"]["email"]
                 logger.info(f"User {email} authenticated via log-in link.")
+                return redirect(url_for("dashboard_bp.podprofile"))  # Updated to redirect to podprofile
             else:
                 logger.warning(f"Failed to authenticate user via log-in link for email: {email}. Reason: {result.get('error', 'Unknown error')}")
                 return redirect(url_for("auth_bp.signin", error=result.get("error", "Invalid log-in link.")))
