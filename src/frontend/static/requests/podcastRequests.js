@@ -39,10 +39,10 @@ export async function fetchPodcasts() {
 // Function to get a podcast by ID
 export async function fetchPodcast(podcastId) {
   try {
-    const response = await fetch(`/get_podcasts/${podcastId}`, {
-      method: "GET",
-      headers: { "Content-Type": "application/json" }
-    });
+    const response = await fetch(`/get_podcasts/${podcastId}`);
+    if (!response.ok) {
+      throw new Error(`Failed to fetch podcast: ${response.statusText}`);
+    }
     return await response.json();
   } catch (error) {
     console.error("Error fetching podcast:", error);
