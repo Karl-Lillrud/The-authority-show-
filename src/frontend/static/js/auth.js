@@ -23,7 +23,6 @@ document.addEventListener("DOMContentLoaded", () => {
     // Get API base URL from the HTML template
     const API_BASE_URL = document.body.getAttribute("data-api-base-url");
   
-    // Declare errorMessage once
     const errorMessage = document.getElementById("error-message");
   
     // Login form submission
