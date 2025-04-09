@@ -1,11 +1,14 @@
 import uuid
-from datetime import datetime
+from datetime import datetime, timedelta, timezone
 from flask import request, session, redirect, url_for
 from werkzeug.security import check_password_hash, generate_password_hash
 from backend.database.mongo_connection import collection
 from backend.services.authService import validate_password, validate_email
 from backend.repository.account_repository import AccountRepository
 from backend.repository.usertoteam_repository import UserToTeamRepository
+from backend.repository.team_repository import TeamRepository
+from backend.repository.podcast_repository import PodcastRepository
+from backend.repository.episode_repository import EpisodeRepository
 import logging
 import dns.resolver  # Ensure dnspython is properly imported
 
@@ -22,6 +25,9 @@ class AuthRepository:
         self.account_repo = AccountRepository()
         self.teams_collection = collection.database.Teams
         self.users_to_teams_collection = collection.database.UsersToTeams
+        self.team_repo = TeamRepository()
+        self.podcast_repo = PodcastRepository()
+        self.episode_repo = EpisodeRepository()
 
     def signin(self, data):
         try:
@@ -212,6 +218,84 @@ class AuthRepository:
 
             account_id = account_response["accountId"]
 
+            # --- BEGIN: Add default data for new user ---
+            try:
+                # Check if this user already has podcasts (indicator of prior setup)
+                podcast_check_response, podcast_check_status = self.podcast_repo.get_podcasts(user_id)
+
+                # Proceed only if the check was successful and returned no podcasts
+                if podcast_check_status == 200 and not podcast_check_response.get("podcast"):
+                    logger.info(f"✅ New user {user_id}. Creating default team, podcast, and episodes.")
+
+                    # 1. Create Default Team
+                    team_data = {"name": f"{email.split('@')[0]}'s Team"} # Example name
+                    team_response, team_status = self.team_repo.add_team(user_id, email, team_data)
+
+                    if team_status == 201:
+                        team_id = team_response["team_id"]
+                        logger.info(f"✅ Default team created: {team_id} for user {user_id}")
+
+                        # 2. Create Default Podcast (linked to account and team)
+                        podcast_data = {
+                            "podName": "My Example Podcast",
+                            "ownerName": email.split('@')[0], # Example owner name
+                            # accountId is derived from user_id within add_podcast
+                            "teamId": team_id # Link podcast to the team
+                        }
+                        podcast_response, podcast_status = self.podcast_repo.add_podcast(user_id, podcast_data)
+
+                        if podcast_status == 201:
+                            podcast_id = podcast_response["podcast_id"]
+                            logger.info(f"✅ Default podcast created: {podcast_id} for user {user_id}")
+
+                            # 3. Create Example Episodes
+                            now = datetime.now(timezone.utc)
+                            episode_data_1 = {
+                                "podcastId": podcast_id,
+                                "title": "Example Episode 1: Getting Started",
+                                "description": "This is your first example episode, scheduled for next week.",
+                                "publishDate": (now + timedelta(days=7)).isoformat(), # Future date as ISO string
+                                "status": "Scheduled"
+                                # accountId is derived from user_id within register_episode
+                            }
+                            episode_data_2 = {
+                                "podcastId": podcast_id,
+                                "title": "Example Episode 2: Exploring Features",
+                                "description": "Discover what you can do with PodManager, scheduled in two weeks.",
+                                "publishDate": (now + timedelta(days=14)).isoformat(), # Future date as ISO string
+                                "status": "Scheduled"
+                                # accountId is derived from user_id within register_episode
+                            }
+
+                            # Register Episode 1
+                            ep1_resp, ep1_stat = self.episode_repo.register_episode(episode_data_1, user_id)
+                            if ep1_stat == 201:
+                                logger.info(f"✅ Example episode 1 created for podcast {podcast_id}")
+                            else:
+                                logger.error(f"❌ Failed to create example episode 1 for user {user_id}: {ep1_resp}")
+
+                            # Register Episode 2
+                            ep2_resp, ep2_stat = self.episode_repo.register_episode(episode_data_2, user_id)
+                            if ep2_stat == 201:
+                                logger.info(f"✅ Example episode 2 created for podcast {podcast_id}")
+                            else:
+                                logger.error(f"❌ Failed to create example episode 2 for user {user_id}: {ep2_resp}")
+
+                        else:
+                            logger.error(f"❌ Failed to create default podcast for user {user_id}. Response: {podcast_response}")
+                            # Optionally attempt to clean up team if podcast failed? Depends on requirements.
+                    else:
+                        logger.error(f"❌ Failed to create default team for user {user_id}. Response: {team_response}")
+                elif podcast_check_status != 200:
+                     logger.warning(f"⚠️ Could not verify podcast presence for user {user_id} (status {podcast_check_status}). Skipping default data creation.")
+                else: # podcast_check_status == 200 and podcasts exist
+                     logger.info(f"ℹ️ User {user_id} already has podcasts. Skipping default data creation.")
+
+            except Exception as default_data_err:
+                # Log error but don't fail registration
+                logger.error(f"❌ Error creating default data for user {user_id}: {default_data_err}", exc_info=True)
+            # --- END: Add default data for new user ---
+
             return {
                 "message": "Registration successful!",
                 "userId": user_id,
@@ -221,7 +305,17 @@ class AuthRepository:
 
         except Exception as e:
             logger.error("Error during registration: %s", e, exc_info=True)
-            return {"error": f"Error during registration: {str(e)}"}, 500
+            # Check if the error response needs to be JSON serializable
+            error_message = f"Error during registration: {str(e)}"
+            status_code = 500
+            if isinstance(e, ValueError) and len(e.args) > 1 and isinstance(e.args[1], dict):
+                # Handle validation errors more gracefully if needed
+                error_message = e.args[0]
+                status_code = 400 # Or appropriate status code
+            elif "duplicate key" in str(e).lower(): # Basic check for duplicate errors
+                error_message = "An account related error occurred. Please try again or contact support." # More generic message
+
+            return {"error": error_message}, status_code
 
     def register_team_member(self, data):
         try:
@@ -366,3 +460,14 @@ def validate_email(email):
     except Exception as e:
         raise Exception(f"MX lookup failed for domain '{domain}': {e}")
     # ...existing code...
+
+def validate_password(password):
+    # Actual existing validation logic should be here (if any was originally present)
+    if not password:
+        return {"error": "Password is required."}, 400
+    if len(password) < 8:
+        return {"error": "Password must be at least 8 characters long."}, 400
+    if not any(char.isdigit() for char in password) or not any(char.isalpha() for char in password):
+        return {"error": "Password must contain both letters and numbers."}, 400
+    # If the function passed all checks, return None (indicating no error)
+    return None
