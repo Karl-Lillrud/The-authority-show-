@@ -1,6 +1,10 @@
 let enhancedAudioBlob = null;
 let enhancedAudioId = null;
-let fullAnalysisResult = null;
+let isolatedAudioBlob = null;
+let isolatedAudioId = null;
+
+let activeAudioBlob = null;
+let activeAudioId = null;
 
 function showTab(tabName) {
     const content = document.getElementById('content');
@@ -71,18 +75,18 @@ function showTab(tabName) {
 
             <button class="btn ai-edit-button" onclick="enhanceAudio()">Enhance Audio</button>
             <div id="audioControls"></div>
-            
-                <div id="enhancedAudioContainer" style="display: none; margin-top: 1rem;">
-                    <p>🎚 <strong>Enhanced Audio</strong></p>
-                    <audio id="enhancedAudioPlayer" controls style="width: 100%"></audio>
-                </div>
-    
+
+            <div id="enhancedAudioContainer" style="display: none; margin-top: 1rem;">
+                <p>🎚 <strong>Enhanced Audio</strong></p>
+                <audio id="enhancedAudioPlayer" controls style="width: 100%"></audio>
+            </div>
+
             <div id="audioAnalysisSection" style="display: none;">
                 <hr/>
                 <h3>🤖 AI Analysis</h3>
                 <button onclick="analyzeEnhancedAudio()">📊 Analyze</button>
                 <pre id="analysisResults"></pre>
-                <a id="downloadEnhanced" style="display:none;" download="enhanced_audio.wav">📥 Download Enhanced Audio</a>
+                <a id="downloadEnhanced" style="display:none;" download="processed_audio.wav">📥 Download Processed Audio</a>
             </div>
 
             <div id="audioCuttingSection" style="display: none;">
@@ -272,11 +276,11 @@ async function enhanceAudio() {
         const blob = await audioRes.blob();
         enhancedAudioBlob = blob;
 
+        activeAudioBlob = blob;
+        activeAudioId = enhancedAudioId;
+
         const url = URL.createObjectURL(blob);
-        audioControls.innerHTML = `
-            <div class="audio-label">✅ Audio enhancement complete!</div>
-            <audio id="enhancedAudioPlayer" controls class="podmanager-audio" src="${url}"></audio>
-            `;
+        audioControls.innerHTML = `<p>✅ Audio enhancement complete!</p><audio controls src="${url}"></audio>`;
         document.getElementById("audioAnalysisSection").style.display = "block";
         document.getElementById("audioCuttingSection").style.display = "block";
         document.getElementById("aiCuttingSection").style.display = "block";
@@ -288,44 +292,10 @@ async function enhanceAudio() {
     }
 }
 
-async function analyzeEnhancedAudio() {
-    const analysisContainer = document.getElementById("analysisResults");
-    if (!enhancedAudioBlob) {
-        alert("Enhance the audio first.");
-        return;
-    }
-
-    analysisContainer.textContent = "🔍 Analyzing enhanced audio...";
-
-    const formData = new FormData();
-    formData.append("audio", enhancedAudioBlob, "enhanced_audio.wav");
-
-    try {
-        const response = await fetch("/audio_analysis", {
-            method: "POST",
-            body: formData
-        });
-
-        const data = await response.json();
-        analysisContainer.textContent = `
-📊 Emotion: ${data.emotion}
-📊 Sentiment: ${data.sentiment}
-📊 Clarity Score: ${data.clarity_score}
-📊 Background Noise: ${data.background_noise}
-📊 Speech Rate (WPM): ${data.speech_rate}
-        `;
-    } catch (err) {
-        analysisContainer.textContent = `❌ Analysis failed: ${err.message}`;
-    }
-}
-
 async function runVoiceIsolation() {
-    const fileInput = document.getElementById('audioUploader');
-    const file = fileInput.files[0];
-
-    if (!file) {
-        return alert("Upload an audio file before isolating.");
-    }
+    const input = document.getElementById('audioUploader');
+    const file = input.files[0];
+    if (!file) return alert("Upload an audio file first.");
 
     const resultContainer = document.getElementById("isolatedVoiceResult");
     resultContainer.innerText = "🎙️ Isolating voice using ElevenLabs...";
@@ -334,19 +304,22 @@ async function runVoiceIsolation() {
     formData.append("audio", file);
 
     try {
-        const response = await fetch("/transcription/voice_isolate", {
-            method: "POST",
-            body: formData
-        });
-
+        const response = await fetch("/transcription/voice_isolate", { method: "POST", body: formData });
         const data = await response.json();
-        const isolatedId = data.isolated_file_id;
+        isolatedAudioId = data.isolated_file_id;
 
-        const audioRes = await fetch(`/transcription/get_file/${isolatedId}`);
+        const audioRes = await fetch(`/transcription/get_file/${isolatedAudioId}`);
         const blob = await audioRes.blob();
-        const url = URL.createObjectURL(blob);
+        isolatedAudioBlob = blob;
 
+        activeAudioBlob = blob;
+        activeAudioId = isolatedAudioId;
+
+        const url = URL.createObjectURL(blob);
         resultContainer.innerHTML = `<p>✅ Voice isolated!</p><audio controls src="${url}"></audio>`;
+        document.getElementById("audioAnalysisSection").style.display = "block";
+        document.getElementById("audioCuttingSection").style.display = "block";
+        document.getElementById("aiCuttingSection").style.display = "block";
         const dl = document.getElementById("downloadIsolatedVoice");
         dl.href = url;
         dl.style.display = "inline-block";
@@ -355,30 +328,44 @@ async function runVoiceIsolation() {
     }
 }
 
+async function analyzeEnhancedAudio() {
+    const resultEl = document.getElementById("analysisResults");
+    if (!activeAudioBlob) return alert("No audio loaded. Enhance or Isolate first.");
+
+    resultEl.innerText = "🔍 Analyzing...";
+    const formData = new FormData();
+    formData.append("audio", activeAudioBlob, "processed_audio.wav");
+
+    try {
+        const res = await fetch("/audio_analysis", { method: "POST", body: formData });
+        const data = await res.json();
+        resultEl.innerText = `
+📊 Emotion: ${data.emotion}
+📊 Sentiment: ${data.sentiment}
+📊 Clarity Score: ${data.clarity_score}
+📊 Background Noise: ${data.background_noise}
+📊 Speech Rate (WPM): ${data.speech_rate}
+        `;
+    } catch (err) {
+        resultEl.innerText = `❌ Analysis failed: ${err.message}`;
+    }
+}
 
 async function cutAudio() {
     const start = parseFloat(document.getElementById("startTime").value);
     const end = parseFloat(document.getElementById("endTime").value);
-    if (isNaN(start) || isNaN(end) || start >= end) return alert("Invalid times");
+    if (!activeAudioId || isNaN(start) || isNaN(end) || start >= end) return alert("Invalid times or no audio ID.");
 
     const res = await fetch('/clip_audio', {
         method: 'POST',
-        headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({
-            file_id: enhancedAudioId,
-            clips: [{ start, end }] // ✅ Wrap in 'clips' array
-        })
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ file_id: activeAudioId, clips: [{ start, end }] })
     });
 
     const data = await res.json();
+    if (!data.clipped_audio) return alert("❌ Cut failed.");
 
-    if (!data.clipped_audio) {
-        alert("❌ Cutting failed: " + (data.error || "Unknown error"));
-        return;
-    }
-
-    const cutAudioId = data.clipped_audio;
-    const audioRes = await fetch(`/transcription/get_file/${cutAudioId}`); // adjust path if needed
+    const audioRes = await fetch(`/transcription/get_file/${data.clipped_audio}`);
     const blob = await audioRes.blob();
     const url = URL.createObjectURL(blob);
 
@@ -388,30 +375,23 @@ async function cutAudio() {
     dl.style.display = "inline-block";
 }
 
-
 async function aiCutAudio() {
+    if (!activeAudioId) return alert("No audio loaded.");
+
     const res = await fetch('/ai_cut_audio', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ file_id: enhancedAudioId })
+        body: JSON.stringify({ file_id: activeAudioId })
     });
 
     const data = await res.json();
-
-    if (!res.ok || !data.cleaned_transcript) {
-        alert("❌ AI cut failed: " + (data.error || "Unknown error"));
-        return;
-    }
+    if (!res.ok || !data.cleaned_transcript) return alert("❌ AI cut failed.");
 
     document.getElementById("aiTranscript").innerText = data.cleaned_transcript;
-
-    const suggestions = (data.suggested_cuts || [])
-        .map(cut => `💬 "${cut.sentence}" (${cut.start}s - ${cut.end}s) | Confidence: ${cut.certainty_score}`)
-        .join("\n");
-
-    document.getElementById("aiSuggestedCuts").innerText = suggestions || "No suggested cuts found.";
+    document.getElementById("aiSuggestedCuts").innerText = (data.suggested_cuts || [])
+        .map(c => `💬 "${c.sentence}" (${c.start}s - ${c.end}s) | Confidence: ${c.certainty_score}`)
+        .join("\n") || "No suggested cuts found.";
 }
-
 
 async function enhanceVideo() {
     const fileInput = document.getElementById('videoUploader');
