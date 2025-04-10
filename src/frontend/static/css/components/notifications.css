@@ -92,7 +92,7 @@
 }
 
 /* confirmation-popup styles */
-.popup {
+.confirmation-popup {
     position: fixed;
     top: 0;
     left: 0;
@@ -109,12 +109,12 @@
     transition: all var(--transition-normal);
 }
   
-.popup.show {
+.confirmation-popup.show {
     opacity: 1;
     visibility: visible;
 }
   
-.form-box {
+.confirm-form-box {
     background: linear-gradient(145deg, #ffffff, #f9fafb);
     border-radius: var(--radius-large);
     box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
@@ -127,16 +127,16 @@
     transition: transform var(--transition-normal);
 }
   
-.popup.show .form-box {
+.confirmation-popup.show .confirm-form-box {
     transform: scale(1);
 }
 
-.form-actions {
+.confirm-form-actions {
     flex-direction: column;
     gap: var(--spacing-sm);
 }
 
-.form-title {
+.confirm-form-title {
     margin: 0 0 var(--spacing-lg);
     color: rgba(0, 0, 0, 0.85);
     text-align: center;
@@ -146,7 +146,7 @@
     padding-bottom: 12px;
 }
 
-.form-title::after {
+.confirm-form-title::after {
     content: "";
     position: absolute;
     bottom: 0;
@@ -158,7 +158,7 @@
     border-radius: 4px;
 }
 
-.form-actions {
+.confirm-form-actions {
     display: flex;
     justify-content: flex-end;
     gap: var(--spacing-md);
@@ -247,23 +247,23 @@
         font-size: 0.8rem;
     }
 
-    .form-box {
+    .confirm-form-box {
         width: 95%;
         padding: var(--spacing-md);
         border-radius: var(--radius-medium);
     }
 
-    .form-title {
+    .confirm-form-title {
         font-size: 1.5rem;
         margin-bottom: var(--spacing-md);
     }
 
-    .form-title::after {
+    .confirm-form-title::after {
         width: 50px;
         height: 3px;
     }
 
-    .form-actions {
+    .confirm-form-actions {
         flex-direction: column;
         gap: var(--spacing-sm);
       }

@@ -82,11 +82,11 @@ export function showConfirmationPopup(title, message, onConfirm, onCancel) {
       document.head.appendChild(cssLink); 
 
       const popup = tempDiv.querySelector('#confirmation-popup-template');
-      popup.className = "popup confirmation-popup show";
+      popup.className = "confirmation-popup show";
       popup.id = ''; // Remove the ID to avoid duplicates
 
-      popup.querySelector('.form-title').textContent = title;
-      popup.querySelector('.form-message').textContent = message;
+      popup.querySelector('.confirm-form-title').textContent = title;
+      popup.querySelector('.confirm-form-message').textContent = message;
 
       document.body.appendChild(popup);
 
