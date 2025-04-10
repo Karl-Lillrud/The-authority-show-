@@ -60,36 +60,40 @@ function showTab(tabName) {
                 <audio id="originalAudioPlayer" controls style="width: 100%"></audio>
             </div>
 
+            <p><strong>Choose one:</strong> Enhance OR Isolate audio</p>
+
+            <div id="voiceIsolationSection" style="margin-top: 1rem;">
+                <h3>🎤 Voice Isolation (ElevenLabs)</h3>
+                <button class="btn ai-edit-button" onclick="runVoiceIsolation()">🎙️ Isolate Voice</button>
+                <div id="isolatedVoiceResult"></div>
+                <a id="downloadIsolatedVoice" style="display:none;" download="isolated_voice.wav">📥 Download Isolated Voice</a>
+            </div>
+
             <button class="btn ai-edit-button" onclick="enhanceAudio()">Enhance Audio</button>
             <div id="audioControls"></div>
-            
-                <div id="enhancedAudioContainer" style="display: none; margin-top: 1rem;">
-                    <p>🎚 <strong>Enhanced Audio</strong></p>
-                    <audio id="enhancedAudioPlayer" controls style="width: 100%"></audio>
-                </div>
-    
+
             <div id="audioAnalysisSection" style="display: none;">
                 <hr/>
                 <h3>🤖 AI Analysis</h3>
-                <button class="btn ai-edit-button" onclick="analyzeEnhancedAudio()">📊 Analyze</button>
+                <button onclick="analyzeEnhancedAudio()">📊 Analyze</button>
                 <pre id="analysisResults"></pre>
                 <a id="downloadEnhanced" style="display:none;" download="enhanced_audio.wav">📥 Download Enhanced Audio</a>
             </div>
-    
+
             <div id="audioCuttingSection" style="display: none;">
                 <hr/>
                 <h3>✂ Audio Cutting</h3>
                 <label>Start: <input type="number" id="startTime" min="0" step="0.1"></label>
                 <label>End: <input type="number" id="endTime" min="0" step="0.1"></label>
-                <button class="btn ai-edit-button" onclick="cutAudio()">✂ Cut</button>
+                <button onclick="cutAudio()">✂ Cut</button>
                 <div id="cutResult"></div>
                 <a id="downloadCut" style="display:none;" download="cut_audio.wav">📥 Download Cut</a>
             </div>
-    
+
             <div id="aiCuttingSection" style="display: none;">
                 <hr/>
                 <h3>🧠 AI Cutting + Transcript</h3>
-                <button class="btn ai-edit-button" onclick="aiCutAudio()">Run AI Cut</button>
+                <button onclick="aiCutAudio()">Run AI Cut</button>
                 <pre id="aiTranscript"></pre>
                 <pre id="aiSuggestedCuts"></pre>
             </div>
@@ -306,6 +310,43 @@ async function analyzeEnhancedAudio() {
         analysisContainer.textContent = `❌ Analysis failed: ${err.message}`;
     }
 }
+
+async function runVoiceIsolation() {
+    const fileInput = document.getElementById('audioUploader');
+    const file = fileInput.files[0];
+
+    if (!file) {
+        return alert("Upload an audio file before isolating.");
+    }
+
+    const resultContainer = document.getElementById("isolatedVoiceResult");
+    resultContainer.innerText = "🎙️ Isolating voice using ElevenLabs...";
+
+    const formData = new FormData();
+    formData.append("audio", file);
+
+    try {
+        const response = await fetch("/transcription/voice_isolate", {
+            method: "POST",
+            body: formData
+        });
+
+        const data = await response.json();
+        const isolatedId = data.isolated_file_id;
+
+        const audioRes = await fetch(`/transcription/get_file/${isolatedId}`);
+        const blob = await audioRes.blob();
+        const url = URL.createObjectURL(blob);
+
+        resultContainer.innerHTML = `<p>✅ Voice isolated!</p><audio controls src="${url}"></audio>`;
+        const dl = document.getElementById("downloadIsolatedVoice");
+        dl.href = url;
+        dl.style.display = "inline-block";
+    } catch (err) {
+        resultContainer.innerText = `❌ Isolation failed: ${err.message}`;
+    }
+}
+
 
 async function cutAudio() {
     const start = parseFloat(document.getElementById("startTime").value);
