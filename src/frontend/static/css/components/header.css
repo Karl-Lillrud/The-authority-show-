@@ -104,18 +104,12 @@ header {
   background-color: #ffffff;
   color: var(--text-color-light);
   box-shadow: 0 4px 10px -2px rgba(0, 0, 0, 0.08);
-  border-radius: 12px;
   transition: all 0.3s ease;
   position: relative;
   z-index: 100;
   width: 100%; /* Ensure header takes full width */
   box-sizing: border-box; /* Include padding in width calculation */
   min-height: 116px;
-}
-
-header:hover {
-  box-shadow: 0 8px 15px -5px rgba(0, 0, 0, 0.1),
-    0 4px 6px -2px rgba(0, 0, 0, 0.05);
 }
 
 /* Logo – Reduced size */
