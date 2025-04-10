@@ -55,17 +55,17 @@ function showTab(tabName) {
         content.innerHTML = `
             <h2>🎵 AI Audio Enhancement</h2>
             <input type="file" id="audioUploader" accept="audio/*" onchange="previewOriginalAudio()">
-            <div id="originalAudioContainer" style="display: none; margin-bottom: 1rem;">
-                <p>🎧 <strong>Original Audio</strong></p>
-                <audio id="originalAudioPlayer" controls style="width: 100%"></audio>
-            </div>
+                <div id="originalAudioContainer" style="display: none; margin-bottom: 1rem;">
+                    <p class="audio-label">Original Audio</p>
+                    <audio id="originalAudioPlayer" controls class="podmanager-audio"></audio>
+                </div>
 
             <button class="btn ai-edit-button" onclick="enhanceAudio()">Enhance Audio</button>
             <div id="audioControls"></div>
             
-                <div id="enhancedAudioContainer" style="display: none; margin-top: 1rem;">
-                    <p>🎚 <strong>Enhanced Audio</strong></p>
-                    <audio id="enhancedAudioPlayer" controls style="width: 100%"></audio>
+                <div id="enhancedAudioContainer" style="display: none; margin-top: 1.5rem;">
+                    <p class="audio-label">Enhanced Audio</p>
+                    <audio id="enhancedAudioPlayer" controls class="podmanager-audio"></audio>
                 </div>
     
             <div id="audioAnalysisSection" style="display: none;">
@@ -264,7 +264,10 @@ async function enhanceAudio() {
         enhancedAudioBlob = blob;
 
         const url = URL.createObjectURL(blob);
-        audioControls.innerHTML = `✅ Audio enhancement complete!<br><audio controls src="${url}"></audio>`;
+        audioControls.innerHTML = `
+            <div class="audio-label">✅ Audio enhancement complete!</div>
+            <audio id="enhancedAudioPlayer" controls class="podmanager-audio" src="${url}"></audio>
+            `;
         document.getElementById("audioAnalysisSection").style.display = "block";
         document.getElementById("audioCuttingSection").style.display = "block";
         document.getElementById("aiCuttingSection").style.display = "block";
