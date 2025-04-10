@@ -76,10 +76,6 @@ function showTab(tabName) {
             <button class="btn ai-edit-button" onclick="enhanceAudio()">Enhance Audio</button>
             <div id="audioControls"></div>
 
-            <div id="enhancedAudioContainer" style="display: none; margin-top: 1rem;">
-                <p>🎚 <strong>Enhanced Audio</strong></p>
-                <audio id="enhancedAudioPlayer" controls style="width: 100%"></audio>
-            </div>
 
             <div id="audioAnalysisSection" style="display: none;">
                 <hr/>
@@ -268,7 +264,11 @@ async function enhanceAudio() {
     formData.append("audio", file);
 
     try {
-        const response = await fetch("/audio/enhancement", { method: "POST", body: formData });
+        const response = await fetch("/audio/enhancement", {
+            method: "POST",
+            body: formData
+        });
+
         const result = await response.json();
         enhancedAudioId = result.enhanced_audio;
 
@@ -280,7 +280,64 @@ async function enhanceAudio() {
         activeAudioId = enhancedAudioId;
 
         const url = URL.createObjectURL(blob);
-        audioControls.innerHTML = `<p>✅ Audio enhancement complete!</p><audio controls src="${url}"></audio>`;
+
+        // 🎵 Inject custom player
+        audioControls.innerHTML = `
+            <div class="custom-audio-wrapper">
+                <p class="audio-status">✅ Audio enhancement complete!</p>
+                <div class="custom-audio-player">
+                    <button id="customPlayBtn" class="play-btn">▶</button>
+                    <input type="range" id="customSeek" value="0" min="0" step="1" class="seek-bar">
+                    <span id="customTime" class="time-display">0:00 / 0:00</span>
+                </div>
+                <audio id="customAudio" src="${url}" style="display: none;"></audio>
+            </div>
+        `;
+
+        // 🎛 Custom audio logic
+        const audio = document.getElementById("customAudio");
+        const playBtn = document.getElementById("customPlayBtn");
+        const seek = document.getElementById("customSeek");
+        const time = document.getElementById("customTime");
+
+        audio.addEventListener("loadedmetadata", () => {
+            seek.max = Math.floor(audio.duration);
+            updateTime();
+        });
+
+        audio.addEventListener("timeupdate", () => {
+            seek.value = Math.floor(audio.currentTime);
+            updateTime();
+        });
+
+        playBtn.addEventListener("click", () => {
+            if (audio.paused) {
+                audio.play();
+                playBtn.textContent = "⏸";
+            } else {
+                audio.pause();
+                playBtn.textContent = "▶";
+            }
+        });
+
+        seek.addEventListener("input", () => {
+            audio.currentTime = seek.value;
+            updateTime();
+        });
+
+        function updateTime() {
+            const current = formatTime(audio.currentTime);
+            const duration = formatTime(audio.duration);
+            time.textContent = `${current} / ${duration}`;
+        }
+
+        function formatTime(seconds) {
+            const m = Math.floor(seconds / 60);
+            const s = Math.floor(seconds % 60).toString().padStart(2, "0");
+            return `${m}:${s}`;
+        }
+
+        // 🎯 Enable the rest of the interface
         document.getElementById("audioAnalysisSection").style.display = "block";
         document.getElementById("audioCuttingSection").style.display = "block";
         document.getElementById("aiCuttingSection").style.display = "block";
@@ -291,6 +348,7 @@ async function enhanceAudio() {
         audioControls.innerHTML = `❌ Error: ${err.message}`;
     }
 }
+
 
 async function runVoiceIsolation() {
     const input = document.getElementById('audioUploader');

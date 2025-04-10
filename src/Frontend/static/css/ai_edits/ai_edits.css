@@ -147,3 +147,65 @@ body {
 .audio-label::before {
   content: "🎧 ";
 }
+
+.custom-audio-wrapper {
+  background: #ffffff;
+  border: 1px solid #f4f4f4;
+  border-radius: 1rem;
+  padding: 1rem;
+  box-shadow: 0 4px 8px rgba(255, 115, 0, 0.1);
+  margin-top: 1rem;
+  font-family: 'Inter', sans-serif;
+}
+
+.audio-status {
+  font-weight: 600;
+  color: #404040;
+  margin-bottom: 0.5rem;
+}
+
+.custom-audio-player {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  width: 100%;
+}
+
+.play-btn {
+  background-color: #FF7300;
+  color: white;
+  border: none;
+  padding: 0.5rem 1rem;
+  font-weight: bold;
+  border-radius: 999px;
+  cursor: pointer;
+  box-shadow: 0 2px 6px rgba(255, 115, 0, 0.4);
+  transition: background 0.2s;
+}
+
+.play-btn:hover {
+  background-color: #e66700;
+}
+
+.seek-bar {
+  flex: 1;
+  appearance: none;
+  height: 6px;
+  border-radius: 999px;
+  background: #ddd;
+  outline: none;
+}
+
+.seek-bar::-webkit-slider-thumb {
+  appearance: none;
+  height: 14px;
+  width: 14px;
+  border-radius: 50%;
+  background: #FF7300;
+  cursor: pointer;
+}
+
+.time-display {
+  font-size: 0.875rem;
+  color: #404040;
+}
