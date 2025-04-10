@@ -317,17 +317,22 @@ async function cutAudio() {
 
     const res = await fetch('/clip_audio', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {'Content-Type': 'application/json'},
         body: JSON.stringify({
             file_id: enhancedAudioId,
-            clips: [{ start: start, end: end }]
+            clips: [{ start, end }] // ✅ Wrap in 'clips' array
         })
     });
-    
 
     const data = await res.json();
+
+    if (!data.clipped_audio) {
+        alert("❌ Cutting failed: " + (data.error || "Unknown error"));
+        return;
+    }
+
     const cutAudioId = data.clipped_audio;
-    const audioRes = await fetch(`transcription/get_file/${cutAudioId}`);
+    const audioRes = await fetch(`/transcription/get_file/${cutAudioId}`); // adjust path if needed
     const blob = await audioRes.blob();
     const url = URL.createObjectURL(blob);
 
@@ -337,6 +342,7 @@ async function cutAudio() {
     dl.style.display = "inline-block";
 }
 
+
 async function aiCutAudio() {
     const res = await fetch('/ai_cut_audio', {
         method: 'POST',
@@ -345,11 +351,21 @@ async function aiCutAudio() {
     });
 
     const data = await res.json();
+
+    if (!res.ok || !data.cleaned_transcript) {
+        alert("❌ AI cut failed: " + (data.error || "Unknown error"));
+        return;
+    }
+
     document.getElementById("aiTranscript").innerText = data.cleaned_transcript;
-    document.getElementById("aiSuggestedCuts").innerText = data.suggested_cuts.map(
-        cut => `💬 "${cut.sentence}" (${cut.start}s - ${cut.end}s) | Confidence: ${cut.certainty_score}`
-    ).join("\n");
+
+    const suggestions = (data.suggested_cuts || [])
+        .map(cut => `💬 "${cut.sentence}" (${cut.start}s - ${cut.end}s) | Confidence: ${cut.certainty_score}`)
+        .join("\n");
+
+    document.getElementById("aiSuggestedCuts").innerText = suggestions || "No suggested cuts found.";
 }
+
 
 async function enhanceVideo() {
     const fileInput = document.getElementById('videoUploader');
