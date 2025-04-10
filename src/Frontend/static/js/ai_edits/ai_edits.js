@@ -97,7 +97,11 @@ function showTab(tabName) {
     } else if (tabName === 'video') {
         content.innerHTML = `
             <h2>📹 AI Video Enhancement</h2>
-            <input type="file" id="videoUploader" accept="video/*">
+            <input type="file" id="videoUploader" accept="video/*" onchange="previewOriginalVideo()">
+            <div id="originalVideoContainer" style="display: none; margin-bottom: 1rem;">
+                <p>🎬 <strong>Original Video</strong></p>
+                <video id="originalVideoPlayer" controls style="width: 100%"></video>
+            </div>
             <button class="btn ai-edit-button" onclick="enhanceVideo()">Enhance Video</button>
             <div id="videoResult"></div>
         `;
@@ -348,16 +352,54 @@ async function enhanceVideo() {
         return;
     }
 
+    const videoResult = document.getElementById('videoResult');
+    videoResult.innerText = "🔄 Uploading video... Please wait.";
+
     const formData = new FormData();
     formData.append('video', file);
 
-    const response = await fetch('/ai_videoenhance', {
-        method: 'POST',
-        body: formData,
-    });
+    try {
+        // Step 1: Upload the video file and get a video_id
+        const uploadResponse = await fetch('/ai_videoedit', {
+            method: 'POST',
+            body: formData,
+        });
 
-    const result = await response.json();
-    document.getElementById('videoResult').innerText = JSON.stringify(result, null, 2);
+        if (!uploadResponse.ok) {
+            throw new Error(`Video upload failed: ${uploadResponse.statusText}`);
+        }
+        
+        const uploadResult = await uploadResponse.json();
+        const video_id = uploadResult.video_id;
+        if (!video_id) {
+            throw new Error('No video_id returned from upload.');
+        }
+        
+        videoResult.innerText = "🔄 Enhancing video... Please wait.";
+        
+        // Step 2: Call the enhance endpoint with the video_id
+        const enhanceResponse = await fetch('/ai_videoenhance', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ video_id })
+        });
+        
+        if (!enhanceResponse.ok) {
+            throw new Error(`Enhancement failed: ${enhanceResponse.statusText}`);
+        }
+        
+        const enhanceResult = await enhanceResponse.json();
+        const processed_id = enhanceResult.processed_video_id;
+        if (!processed_id) {
+            throw new Error('No processed_video_id returned from enhancement.');
+        }
+        
+        // Step 3: Construct video URL from processed_id and display the video
+        const videoURL = `/get_video/${processed_id}`;
+        videoResult.innerHTML = `<video controls src="${videoURL}" style="width: 100%; margin-top: 1rem;"></video>`;
+    } catch (err) {
+        videoResult.innerText = `❌ ${err.message}`;
+    }
 }
 
 function previewOriginalAudio() {
@@ -371,5 +413,16 @@ function previewOriginalAudio() {
     const container = document.getElementById('originalAudioContainer');
 
     audioPlayer.src = audioURL;
+    container.style.display = 'block';
+}
+
+function previewOriginalVideo() {
+    const fileInput = document.getElementById('videoUploader');
+    const file = fileInput.files[0];
+    if (!file) return;
+    const videoURL = URL.createObjectURL(file);
+    const videoPlayer = document.getElementById('originalVideoPlayer');
+    const container = document.getElementById('originalVideoContainer');
+    videoPlayer.src = videoURL;
     container.style.display = 'block';
 }
