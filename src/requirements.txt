@@ -34,6 +34,7 @@ filelock
 Flask
 flask_cors
 flask_mail
+google-api-python-client
 google_auth_oauthlib
 flatbuffers
 fonttools

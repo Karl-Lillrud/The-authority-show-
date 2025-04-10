@@ -1,4 +1,4 @@
-// emailjs.init("your_user_id") // Initializes EmailJS (If you want to use it)
+emailjs.init("your_user_id") // Initializes EmailJS (If you want to use it)
 
 const form = document.getElementById("guestForm")
 const availableDates = ["2025-03-10", "2025-03-15", "2025-03-20"]
@@ -641,105 +641,104 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   // Populate time slots based on working hours and busy times
-  // Populate time slots based on working hours and busy times
   function populateTimeSlots() {
-    timePicker.innerHTML = ""; // Clear existing options
-    timePickerContainer.classList.remove("hidden");
+    timePicker.innerHTML = "" // Clear existing options
+    timePickerContainer.classList.remove("hidden")
 
-    if (!selectedDate) return;
+    if (!selectedDate) return
 
-    const dateStr = formatDate(selectedDate);
-    console.log(`Populating time slots for date: ${dateStr}`);
+    const dateStr = formatDate(selectedDate)
+    console.log(`Populating time slots for date: ${dateStr}`)
 
     // Get busy slots for the selected date
-    const busySlots = globalBusyTimes[dateStr] || [];
-    console.log(`Busy slots for ${dateStr}:`, busySlots);
+    const busySlots = globalBusyTimes[dateStr] || []
+    console.log(`Busy slots for ${dateStr}:`, busySlots)
 
-    const workingStart = parseTime(globalWorkingHours.start);
-    const workingEnd = parseTime(globalWorkingHours.end);
+    const workingStart = parseTime(globalWorkingHours.start)
+    const workingEnd = parseTime(globalWorkingHours.end)
 
     // Create a group for available times
-    const availableGroup = document.createElement("optgroup");
-    availableGroup.label = "Available Times";
+    const availableGroup = document.createElement("optgroup")
+    availableGroup.label = "Available Times"
 
     // Create a group for unavailable times (to show them but make them unselectable)
-    const unavailableGroup = document.createElement("optgroup");
-    unavailableGroup.label = "Unavailable Times";
+    const unavailableGroup = document.createElement("optgroup")
+    unavailableGroup.label = "Unavailable Times"
 
     // Track if we have any available times
-    let hasAvailableTimes = false;
+    let hasAvailableTimes = false
 
     // Loop over each hour in the working hours and add it to the time picker
     for (let hour = workingStart.hour; hour <= workingEnd.hour; hour++) {
-        const time = `${hour.toString().padStart(2, "0")}:00`; // Set the time to the full hour
-        const timeStr = `${time}:00`; // Add seconds for comparison
+      const time = `${hour.toString().padStart(2, "0")}:00` // Set the time to the full hour
+      const timeStr = `${time}:00` // Add seconds for comparison
 
-        // Check if this time is busy
-        const isBusy = isTimeBusy(time, busySlots);
+      // Check if this time is busy
+      const isBusy = isTimeBusy(time, busySlots)
 
-        const timeOption = document.createElement("option");
-        timeOption.value = time;
-        timeOption.textContent = time;
+      const timeOption = document.createElement("option")
+      timeOption.value = time
+      timeOption.textContent = time
 
-        if (isBusy) {
-            // Add to unavailable group with styling
-            timeOption.disabled = true; // Disable the option
-            timeOption.classList.add("line-through", "text-red-500"); // Cross it out visually
-            timeOption.textContent = `${time} (Unavailable)`; // Add unavailable label
-            unavailableGroup.appendChild(timeOption);
-        } else {
-            // Add to available group
-            availableGroup.appendChild(timeOption);
-            hasAvailableTimes = true;
-        }
+      if (isBusy) {
+        // Add to unavailable group with styling
+        timeOption.disabled = true // Disable the option
+        timeOption.classList.add("line-through", "text-red-500") // Cross it out visually
+        timeOption.textContent = `${time} (Unavailable)` // Add unavailable label
+        unavailableGroup.appendChild(timeOption)
+      } else {
+        // Add to available group
+        availableGroup.appendChild(timeOption)
+        hasAvailableTimes = true
+      }
     }
 
     // Add available times first
     if (hasAvailableTimes) {
-        timePicker.appendChild(availableGroup);
+      timePicker.appendChild(availableGroup)
     } else {
-        // If no available times, add a message
-        const noTimesOption = document.createElement("option");
-        noTimesOption.disabled = true;
-        noTimesOption.textContent = "No available times for this date";
-        timePicker.appendChild(noTimesOption);
+      // If no available times, add a message
+      const noTimesOption = document.createElement("option")
+      noTimesOption.disabled = true
+      noTimesOption.textContent = "No available times for this date"
+      timePicker.appendChild(noTimesOption)
     }
 
     // Add unavailable times for reference
     if (unavailableGroup.children.length > 0) {
-        timePicker.appendChild(unavailableGroup);
+      timePicker.appendChild(unavailableGroup)
     }
 
-    confirmDateTimeBtn.classList.remove("hidden");
+    confirmDateTimeBtn.classList.remove("hidden")
 
     // Restore the selected time after refresh
-    const savedTime = localStorage.getItem("recordingTime");
+    const savedTime = localStorage.getItem("recordingTime")
     if (savedTime && !isTimeBusy(savedTime, busySlots)) {
-        timePicker.value = savedTime;
+      timePicker.value = savedTime
     }
-}
-
+  }
 
   // Helper function to check if a time is busy
-function isTimeBusy(time, busySlots) {
+  function isTimeBusy(time, busySlots) {
     // Convert the time (e.g., "13:00") into a Date object for the selected date
-    const [hours, minutes] = time.split(":").map(Number);
-    const selectedDateTime = new Date(selectedDate); // Use the globally selected date
-    selectedDateTime.setHours(hours, minutes, 0, 0); // Set the time on the selected date
+    const [hours, minutes] = time.split(":").map(Number)
+    const selectedDateTime = new Date(selectedDate) // Use the globally selected date
+    selectedDateTime.setHours(hours, minutes, 0, 0) // Set the time on the selected date
 
     // Loop over each busy slot and compare with the selected time
     for (const slot of busySlots) {
-        const startTime = new Date(slot.start); // Convert the start time of the busy slot to a Date object
-        const endTime = new Date(slot.end); // Convert the end time of the busy slot to a Date object
+      const startTime = new Date(slot.start) // Convert the start time of the busy slot to a Date object
+      const endTime = new Date(slot.end) // Convert the end time of the busy slot to a Date object
 
-        // Check if the selected time falls within the busy slot
-        if (selectedDateTime >= startTime && selectedDateTime < endTime) {
-            return true; // The time is busy
-        }
+      // Check if the selected time falls within the busy slot
+      if (selectedDateTime >= startTime && selectedDateTime < endTime) {
+        return true // The time is busy
+      }
     }
 
-    return false; // The time is available
-}
+    return false // The time is available
+  }
+
   // Helper function to parse time strings (HH:mm:ss)
   function parseTime(timeStr) {
     const parts = timeStr.split(":")
@@ -769,47 +768,132 @@ function isTimeBusy(time, busySlots) {
   fetchAvailableDates()
 })
 
-// Submit form data to the backend
-form.addEventListener("submit", (event) => {
-  event.preventDefault()
+// Existing logic or functions here...
 
-  const formData = {
-    name: document.getElementById("name").value,
-    company: document.getElementById("company").value,
-    email: document.getElementById("email").value,
-    phone: document.getElementById("phone").value,
-    socialMedia: JSON.parse(localStorage.getItem("socialMediaData")) || [],
-    bio: document.getElementById("bio").value,
-    interest: document.getElementById("interest").value,
-    recordingDate: document.getElementById("recordingDate").value,
-    recordingTime: document.getElementById("recordingTime").value,
-    recommendedGuests: JSON.parse(localStorage.getItem("recommendedGuestData")) || [],
-    list: document.getElementById("list").value,
-    imageData: localStorage.getItem("imageData"),
-    notes: document.getElementById("notes").value,
-    updatesOption: document.querySelector('input[name="updatesOption"]:checked').value,
+// Add this at the end of the file or inside the DOMContentLoaded listener
+document.addEventListener("DOMContentLoaded", () => {
+  const form = document.getElementById("guestForm")
+
+  form.addEventListener("submit", (event) => {
+    event.preventDefault()
+
+    // Generate a unique guest ID
+    const guestId = "guest_" + Date.now() + "_" + Math.random().toString(36).substr(2, 9)
+
+    // Get profile photo data if available
+    const profilePhotoInput = document.getElementById("profilePhoto")
+    let profilePhotoData = null
+    if (profilePhotoInput.files.length > 0) {
+      profilePhotoData = localStorage.getItem("imageData") // Get the base64 image data
+    }
+
+    // Get social media data
+    const socialMediaData = JSON.parse(localStorage.getItem("socialMediaData") || "[]")
+
+    // Get recommended guests data
+    const recommendedGuestData = JSON.parse(localStorage.getItem("recommendedGuestData") || "[]")
+
+    // Safely get the values from all form fields
+    const formData = {
+      guestId: guestId, // Include the generated guest ID
+      firstName: document.getElementById("firstName").value,
+      email: document.getElementById("email").value,
+      bio: document.getElementById("bio").value,
+      interest: document.getElementById("interest").value,
+      recordingDate: document.getElementById("recordingDate").value,
+      recordingTime: document.getElementById("recordingTime").value,
+      company: document.getElementById("company").value,
+      phone: document.getElementById("phone").value,
+      socialMedia: socialMediaData,
+      recommendedGuests: recommendedGuestData,
+      list: document.getElementById("list").value,
+      notes: document.getElementById("notes").value,
+      updatesOption: document.querySelector('input[name="updatesOption"]:checked').value,
+      profilePhoto: profilePhotoData,
+      googleCalToken:
+        new URLSearchParams(window.location.search).get("googleCal") || localStorage.getItem("googleCalToken") || "",
+    }
+
+    console.log("Submitting form data:", formData)
+
+    // Send the form data to the backend
+    fetch("/guest-form", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(formData),
+    })
+      .then((response) => response.json())
+      .then((data) => {
+        console.log("Form submission success:", data)
+        alert("Guest form submitted successfully!")
+        form.reset() // Reset the form after submission
+
+        // Clear localStorage items
+        localStorage.removeItem("imageData")
+        localStorage.removeItem("socialMediaData")
+        localStorage.removeItem("recommendedGuestData")
+        localStorage.removeItem("recordingDate")
+        localStorage.removeItem("recordingTime")
+        localStorage.removeItem("selectedDateText")
+
+        // Clear any previews
+        const imagePreviewContainer = document.getElementById("imagePreviewContainer")
+        if (imagePreviewContainer) {
+          imagePreviewContainer.classList.add("hidden")
+        }
+
+        // Clear social media and recommended guest containers
+        document.getElementById("socialMediaContainer").innerHTML = ""
+        document.getElementById("recommendedGuestContainer").innerHTML = ""
+        socialMediaCount = 0
+        recommendedGuestCount = 0
+
+        // Show the add buttons again
+        document.getElementById("addSocialButton").classList.remove("hidden")
+        document.getElementById("addGuestButton").classList.remove("hidden")
+      })
+      .catch((error) => {
+        console.error("Error during form submission:", error)
+        alert("An error occurred during submission.")
+      })
+  })
+})
+
+
+// Submit form data to the backend and create a Google Calendar event
+async function createGoogleCalendarEvent(formData) {
+  const eventData = {
+    summary: `Podcast Recording: ${formData.firstName}`,
+    description: `Recording with ${formData.firstName} from ${formData.company}`,
+    start: {
+      dateTime: `${formData.recordingDate}T${formData.recordingTime}:00`,
+      timeZone: "Europe/Stockholm", // Adjust to your time zone
+    },
+    end: {
+      dateTime: `${formData.recordingDate}T${formData.recordingTime}:30`, // 30-minute default duration
+      timeZone: "Europe/Stockholm",
+    },
+    attendees: [
+      {
+        email: formData.email,
+      },
+    ],
+    googleCalToken: formData.googleCalToken, // Make sure to include the token
   }
 
-  fetch("/guest-form", {
+  // Send the event data to the backend to create a calendar event
+  const res = await fetch("/create-google-calendar-event", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
     },
-    body: JSON.stringify(formData),
+    body: JSON.stringify(eventData),
   })
-    .then((response) => response.json())
-    .then((data) => {
-      alert(data.message)
-      form.reset()
-      localStorage.clear()
-      document.getElementById("socialMediaContainer").innerHTML = ""
-      document.getElementById("recommendedGuestContainer").innerHTML = ""
-      document.getElementById("imagePreviewContainer").classList.add("hidden")
-      document.getElementById("fileName").textContent = ""
-      document.getElementById("selectedDateTime").textContent = ""
-    })
-    .catch((error) => {
-      console.error("Error:", error)
-      alert("An error occurred while submitting the form.")
-    })
-})
+
+  if (!res.ok) {
+    const errorData = await res.json()
+    throw new Error(errorData.error || "Failed to create Google Calendar event.")
+  }
+}

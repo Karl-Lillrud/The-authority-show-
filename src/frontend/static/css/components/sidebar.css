@@ -310,7 +310,6 @@
   padding: var(--spacing-lg);
   transition: margin-left var(--transition-normal);
   margin-left: 0; /* reduce or remove the sidebar offset */
-  min-height: calc(100vh - 116px - 60px);
 }
 
 .sidebar.collapsed + .main-content {
