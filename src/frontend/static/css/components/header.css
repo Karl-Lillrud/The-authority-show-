@@ -42,6 +42,7 @@ body {
   color: var(--text-color-light);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  font-size: 14px;
 }
 
 img {
@@ -99,12 +100,12 @@ header {
   flex-direction: row; /* Håll innehållet i rad */
   justify-content: space-between; /* Sprid ut innehållet horisontellt */
   align-items: center; /* Centrera innehållet vertikalt */
-  padding: var(--spacing-sm) var(--spacing-lg);
+  padding: 8px 24px;
   background-color: #ffffff;
   color: var(--text-color-light);
   box-shadow: 0 4px 10px -2px rgba(0, 0, 0, 0.08);
-  border-radius: var(--radius-medium);
-  transition: all var(--transition-normal);
+  border-radius: 12px;
+  transition: all 0.3s ease;
   position: relative;
   z-index: 100;
   width: 100%; /* Ensure header takes full width */
