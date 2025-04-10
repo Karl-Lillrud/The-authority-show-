@@ -289,63 +289,13 @@ async function enhanceAudio() {
 
         const url = URL.createObjectURL(blob);
 
-        // 🎵 Inject custom player
+        // Inject plain audio player without custom styling
         audioControls.innerHTML = `
-            <div class="custom-audio-wrapper">
-                <p class="audio-status">✅ Audio enhancement complete!</p>
-                <div class="custom-audio-player">
-                    <button id="customPlayBtn" class="play-btn">▶</button>
-                    <input type="range" id="customSeek" value="0" min="0" step="1" class="seek-bar">
-                    <span id="customTime" class="time-display">0:00 / 0:00</span>
-                </div>
-                <audio id="customAudio" src="${url}" style="display: none;"></audio>
-            </div>
+            <p>Audio enhancement complete!</p>
+            <audio controls src="${url}" style="width: 100%;"></audio>
         `;
 
-        // 🎛 Custom audio logic
-        const audio = document.getElementById("customAudio");
-        const playBtn = document.getElementById("customPlayBtn");
-        const seek = document.getElementById("customSeek");
-        const time = document.getElementById("customTime");
-
-        audio.addEventListener("loadedmetadata", () => {
-            seek.max = Math.floor(audio.duration);
-            updateTime();
-        });
-
-        audio.addEventListener("timeupdate", () => {
-            seek.value = Math.floor(audio.currentTime);
-            updateTime();
-        });
-
-        playBtn.addEventListener("click", () => {
-            if (audio.paused) {
-                audio.play();
-                playBtn.textContent = "⏸";
-            } else {
-                audio.pause();
-                playBtn.textContent = "▶";
-            }
-        });
-
-        seek.addEventListener("input", () => {
-            audio.currentTime = seek.value;
-            updateTime();
-        });
-
-        function updateTime() {
-            const current = formatTime(audio.currentTime);
-            const duration = formatTime(audio.duration);
-            time.textContent = `${current} / ${duration}`;
-        }
-
-        function formatTime(seconds) {
-            const m = Math.floor(seconds / 60);
-            const s = Math.floor(seconds % 60).toString().padStart(2, "0");
-            return `${m}:${s}`;
-        }
-
-        // 🎯 Enable the rest of the interface
+        // Enable other sections of the interface
         document.getElementById("audioAnalysisSection").style.display = "block";
         document.getElementById("audioCuttingSection").style.display = "block";
         document.getElementById("aiCuttingSection").style.display = "block";
@@ -383,15 +333,8 @@ async function runVoiceIsolation() {
 
         const url = URL.createObjectURL(blob);
         resultContainer.innerHTML = `
-            <div class="custom-audio-wrapper">
-                <p class="audio-status">🎧 Isolated Audio</p>
-                <div class="custom-audio-player">
-                    <button id="isolatedPlayBtn" class="play-btn">▶</button>
-                    <input type="range" id="isolatedSeek" value="0" min="0" step="1" class="seek-bar">
-                    <span id="isolatedTime" class="time-display">0:00 / 0:00</span>
-                </div>
-                <audio id="isolatedAudio" src="${url}" style="display: none;"></audio>
-            </div>
+            <p>Isolated Audio</p>
+            <audio controls src="${url}" style="width: 100%;"></audio>
         `;
         document.getElementById("audioAnalysisSection").style.display = "block";
         document.getElementById("audioCuttingSection").style.display = "block";
@@ -400,44 +343,6 @@ async function runVoiceIsolation() {
         const dl = document.getElementById("downloadIsolatedVoice");
         dl.href = url;
         dl.style.display = "inline-block";
-
-        // Initialize custom audio player for isolated audio
-        const audio = document.getElementById("isolatedAudio");
-        const playBtn = document.getElementById("isolatedPlayBtn");
-        const seek = document.getElementById("isolatedSeek");
-        const time = document.getElementById("isolatedTime");
-
-        audio.addEventListener("loadedmetadata", () => {
-            seek.max = Math.floor(audio.duration);
-            updateTime();
-        });
-        audio.addEventListener("timeupdate", () => {
-            seek.value = Math.floor(audio.currentTime);
-            updateTime();
-        });
-        playBtn.addEventListener("click", () => {
-            if (audio.paused) {
-                audio.play();
-                playBtn.textContent = "⏸";
-            } else {
-                audio.pause();
-                playBtn.textContent = "▶";
-            }
-        });
-        seek.addEventListener("input", () => {
-            audio.currentTime = seek.value;
-            updateTime();
-        });
-        function updateTime() {
-            const current = formatTime(audio.currentTime);
-            const duration = formatTime(audio.duration);
-            time.textContent = `${current} / ${duration}`;
-        }
-        function formatTime(seconds) {
-            const m = Math.floor(seconds / 60);
-            const s = Math.floor(seconds % 60).toString().padStart(2, "0");
-            return `${m}:${s}`;
-        }
     } catch (err) {
         resultContainer.innerText = `❌ Isolation failed: ${err.message}`;
     }
@@ -571,57 +476,15 @@ function previewOriginalAudio() {
     const file = fileInput.files[0];
     if (!file) return;
     const audioURL = URL.createObjectURL(file);
-    const container = document.getElementById('originalAudioContainer');
-
-    container.innerHTML = `
-        <div class="custom-audio-wrapper">
-            <p class="audio-status">🎧 Original Audio</p>
-            <div class="custom-audio-player">
-                <button id="originalPlayBtn" class="play-btn">▶</button>
-                <input type="range" id="originalSeek" value="0" min="0" step="1" class="seek-bar">
-                <span id="originalTime" class="time-display">0:00 / 0:00</span>
-            </div>
-            <audio id="originalAudio" src="${audioURL}" style="display: none;"></audio>
-        </div>
-    `;
-    container.style.display = 'block';
-
-    // Initialize custom audio player events
-    const audio = document.getElementById("originalAudio");
-    const playBtn = document.getElementById("originalPlayBtn");
-    const seek = document.getElementById("originalSeek");
-    const time = document.getElementById("originalTime");
-
-    audio.addEventListener("loadedmetadata", () => {
-        seek.max = Math.floor(audio.duration);
-        updateTime();
-    });
-    audio.addEventListener("timeupdate", () => {
-        seek.value = Math.floor(audio.currentTime);
-        updateTime();
-    });
-    playBtn.addEventListener("click", () => {
-        if (audio.paused) {
-            audio.play();
-            playBtn.textContent = "⏸";
-        } else {
-            audio.pause();
-            playBtn.textContent = "▶";
-        }
-    });
-    seek.addEventListener("input", () => {
-        audio.currentTime = seek.value;
-        updateTime();
-    });
-    function updateTime() {
-        const current = formatTime(audio.currentTime);
-        const duration = formatTime(audio.duration);
-        time.textContent = `${current} / ${duration}`;
-    }
-    function formatTime(seconds) {
-        const m = Math.floor(seconds / 60);
-        const s = Math.floor(seconds % 60).toString().padStart(2, "0");
-        return `${m}:${s}`;
+    
+    // Use the correct ID from your audio tab markup
+    const audioPlayer = document.getElementById("originalAudioPlayer");
+    if (audioPlayer) {
+        audioPlayer.src = audioURL;
+        audioPlayer.load();
+        document.getElementById("originalAudioContainer").style.display = "block";
+    } else {
+        console.error("Audio player element not found");
     }
 }
 
