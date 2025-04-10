@@ -67,9 +67,9 @@ kubernetes
 llvmlite
 Mako
 MarkupSafe
-mediapipe
 marshmallow
 matplotlib
+mediapipe
 more-itertools
 mpmath
 multidict
@@ -85,8 +85,8 @@ oauth2client
 oauthlib
 odict
 openai
-openai-whisper
-opencv-contrib-python
+openai_whisper
+opencv_contrib-python
 Pillow
 opt_einsum
 optional-django
