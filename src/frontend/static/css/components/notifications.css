@@ -167,8 +167,8 @@
     border-top: 1px solid rgba(0, 0, 0, 0.04);
 }
 
-.save-btn,
-.cancel-btn {
+.confirm-save-btn,
+.confirm-cancel-btn {
   padding: 10px 20px;
   height: auto;
   font-size: 0.95rem;
@@ -183,7 +183,7 @@
   gap: 8px;
 }
 
-.save-btn {
+.confirm-confirm-save-btn {
     background: linear-gradient(
       135deg,
       var(--highlight-color),
@@ -193,12 +193,12 @@
     box-shadow: var(--button-shadow);
 }
   
-.save-btn:hover {
+.confirm-save-btn:hover {
     transform: translateY(-2px);
     box-shadow: 0 8px 14px rgba(0, 0, 0, 0.15);
 }
   
-.save-btn::before {
+.confirm-save-btn::before {
     content: "";
     width: 18px;
     height: 18px;
@@ -207,20 +207,20 @@
     background-position: center;
 }
 
-.cancel-btn {
+.confirm-cancel-btn {
     background: #fff;
     color: var(--text-color-light);
     box-shadow: var(--button-shadow);
     border: 1px solid rgba(0, 0, 0, 0.06);
 }
   
-.cancel-btn:hover {
+.confirm-cancel-btn:hover {
     transform: translateY(-2px);
     color: var(--highlight-color);
     box-shadow: 0 6px 12px rgba(0, 0, 0, 0.1);
 }
   
-.cancel-btn::before {
+.confirm-cancel-btn::before {
     content: "";
     width: 18px;
     height: 18px;
@@ -268,15 +268,15 @@
         gap: var(--spacing-sm);
       }
     
-    .save-btn,
-    .cancel-btn {
+    .confirm-save-btn,
+    .confirm-cancel-btn {
         width: 100%;
         padding: 8px 16px;
         font-size: 0.9rem;
     }
 
-    .save-btn::before,
-    .cancel-btn::before{
+    .confirm-save-btn::before,
+    .confirm-cancel-btn::before{
       width: 16px;
       height: 16px;
     }
