@@ -777,46 +777,44 @@ document.addEventListener("DOMContentLoaded", () => {
   form.addEventListener("submit", (event) => {
     event.preventDefault()
 
-    // Safely get the values from the form fields
-    const firstNameInput = document.getElementById("firstName")
-    const emailInput = document.getElementById("email")
-    const bioInput = document.getElementById("bio")
-    const interestInput = document.getElementById("interest")
-    const recordingDateInput = document.getElementById("recordingDate")
-    const recordingTimeInput = document.getElementById("recordingTime")
-    const companyInput = document.getElementById("company")
-    const phoneInput = document.getElementById("phone")
-    const listInput = document.getElementById("list")
-    const notesInput = document.getElementById("notes")
-    const updatesOptionInput = document.querySelector('input[name="updatesOption"]:checked')
+    // Generate a unique guest ID
+    const guestId = "guest_" + Date.now() + "_" + Math.random().toString(36).substr(2, 9)
 
-    // Retrieve the Google Calendar token
-    let googleCalToken = new URLSearchParams(window.location.search).get("googleCal")
-    if (!googleCalToken) {
-      googleCalToken = localStorage.getItem("googleCalToken") // Fallback to localStorage if not found in URL
+    // Get profile photo data if available
+    const profilePhotoInput = document.getElementById("profilePhoto")
+    let profilePhotoData = null
+    if (profilePhotoInput.files.length > 0) {
+      profilePhotoData = localStorage.getItem("imageData") // Get the base64 image data
     }
 
-    if (!googleCalToken) {
-      console.error("Google Calendar token is missing.")
-      alert("Google Calendar token is required.")
-      return // Prevent form submission if the token is missing
-    }
+    // Get social media data
+    const socialMediaData = JSON.parse(localStorage.getItem("socialMediaData") || "[]")
 
-    // Prepare the form data object with the token
+    // Get recommended guests data
+    const recommendedGuestData = JSON.parse(localStorage.getItem("recommendedGuestData") || "[]")
+
+    // Safely get the values from all form fields
     const formData = {
-      firstName: firstNameInput.value,
-      email: emailInput.value,
-      bio: bioInput.value,
-      interest: interestInput.value,
-      recordingDate: recordingDateInput.value,
-      recordingTime: recordingTimeInput.value,
-      company: companyInput.value,
-      phone: phoneInput.value,
-      list: listInput.value,
-      notes: notesInput.value,
-      updatesOption: updatesOptionInput ? updatesOptionInput.value : "",
-      googleCalToken: googleCalToken, // Include the token here
+      guestId: guestId, // Include the generated guest ID
+      firstName: document.getElementById("firstName").value,
+      email: document.getElementById("email").value,
+      bio: document.getElementById("bio").value,
+      interest: document.getElementById("interest").value,
+      recordingDate: document.getElementById("recordingDate").value,
+      recordingTime: document.getElementById("recordingTime").value,
+      company: document.getElementById("company").value,
+      phone: document.getElementById("phone").value,
+      socialMedia: socialMediaData,
+      recommendedGuests: recommendedGuestData,
+      list: document.getElementById("list").value,
+      notes: document.getElementById("notes").value,
+      updatesOption: document.querySelector('input[name="updatesOption"]:checked').value,
+      profilePhoto: profilePhotoData,
+      googleCalToken:
+        new URLSearchParams(window.location.search).get("googleCal") || localStorage.getItem("googleCalToken") || "",
     }
+
+    console.log("Submitting form data:", formData)
 
     // Send the form data to the backend
     fetch("/guest-form", {
@@ -831,6 +829,30 @@ document.addEventListener("DOMContentLoaded", () => {
         console.log("Form submission success:", data)
         alert("Guest form submitted successfully!")
         form.reset() // Reset the form after submission
+
+        // Clear localStorage items
+        localStorage.removeItem("imageData")
+        localStorage.removeItem("socialMediaData")
+        localStorage.removeItem("recommendedGuestData")
+        localStorage.removeItem("recordingDate")
+        localStorage.removeItem("recordingTime")
+        localStorage.removeItem("selectedDateText")
+
+        // Clear any previews
+        const imagePreviewContainer = document.getElementById("imagePreviewContainer")
+        if (imagePreviewContainer) {
+          imagePreviewContainer.classList.add("hidden")
+        }
+
+        // Clear social media and recommended guest containers
+        document.getElementById("socialMediaContainer").innerHTML = ""
+        document.getElementById("recommendedGuestContainer").innerHTML = ""
+        socialMediaCount = 0
+        recommendedGuestCount = 0
+
+        // Show the add buttons again
+        document.getElementById("addSocialButton").classList.remove("hidden")
+        document.getElementById("addGuestButton").classList.remove("hidden")
       })
       .catch((error) => {
         console.error("Error during form submission:", error)
@@ -838,6 +860,7 @@ document.addEventListener("DOMContentLoaded", () => {
       })
   })
 })
+
 
 // Submit form data to the backend and create a Google Calendar event
 async function createGoogleCalendarEvent(formData) {

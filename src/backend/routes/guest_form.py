@@ -112,16 +112,25 @@ def save_guest_to_db(data):
     Function to save guest data to the database.
     """
     guest_data = {
-        "name": data.get("firstName"),  # Change to firstName instead of name
+        "guestId": data.get("guestId"),  # Include the guest ID
+        "name": data.get("firstName"),
         "email": data["email"],
         "company": data["company"],
         "phone": data["phone"],
         "recordingDate": data["recordingDate"],
         "recordingTime": data["recordingTime"],
         "bio": data["bio"],
-        # Add any other necessary fields
+        "interest": data["interest"],
+        "socialMedia": data.get("socialMedia", []),
+        "recommendedGuests": data.get("recommendedGuests", []),
+        "list": data.get("list", ""),
+        "notes": data.get("notes", ""),
+        "updatesOption": data.get("updatesOption", "no"),
+        "profilePhoto": data.get("profilePhoto"),
+        "createdAt": datetime.now(),
+        "status": "pending"  # Initial status for the guest
     }
-    # Save the guest data to the guests collection instead of the default collection
+    # Save the guest data to the guests collection
     guest_id = collection.database.Guests.insert_one(guest_data).inserted_id
     return guest_id
 
