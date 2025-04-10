@@ -131,11 +131,6 @@
     transform: scale(1);
 }
 
-.confirm-form-actions {
-    flex-direction: column;
-    gap: var(--spacing-sm);
-}
-
 .confirm-form-title {
     margin: 0 0 var(--spacing-lg);
     color: rgba(0, 0, 0, 0.85);
