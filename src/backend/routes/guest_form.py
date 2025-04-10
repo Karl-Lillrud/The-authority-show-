@@ -7,6 +7,7 @@ import logging
 from datetime import datetime, timedelta
 import os
 from backend.repository.user_repository import UserRepository
+from google.auth.transport.requests import Request
 
 guest_form_bp = Blueprint("guest_form", __name__)
 logger = logging.getLogger(__name__)
@@ -24,6 +25,7 @@ def guest_form():
         
         if google_cal_token:
             try:
+                # Now this call will work correctly with the two parameters
                 create_google_calendar_event(data, google_cal_token)  # Create the event in Google Calendar
                 return jsonify({"message": "Guest form submitted and event created successfully"}), 200
             except Exception as e:
@@ -58,7 +60,7 @@ def create_google_calendar_event(data, google_cal_token):
         user_id = session.get("user_id")
         user_repo = UserRepository()
         user = user_repo.get_user_by_id(user_id)
-        
+
         # Refresh the credentials using the access token and refresh token
         credentials = Credentials(
             token=google_cal_token,
@@ -67,16 +69,16 @@ def create_google_calendar_event(data, google_cal_token):
             client_id=os.getenv("GOOGLE_CLIENT_ID"),
             client_secret=os.getenv("GOOGLE_CLIENT_SECRET")
         )
-        
+
         if credentials.expired and credentials.refresh_token:
             credentials.refresh(Request())  # Refresh expired token
-        
+
         # Create the Google Calendar service instance
         service = build("calendar", "v3", credentials=credentials)
         event = {
-            'summary': f"Podcast Recording: {data['name']}",
+            'summary': f"Podcast Recording: {data['firstName']}",
             'location': data.get('company', 'N/A'),
-            'description': f"Recording with {data['name']} from {data['company']}",
+            'description': f"Recording with {data['firstName']} from {data['company']}",
             'start': {
                 'dateTime': f"{data['recordingDate']}T{data['recordingTime']}:00",
                 'timeZone': 'Europe/Stockholm',
@@ -89,20 +91,21 @@ def create_google_calendar_event(data, google_cal_token):
                 {'email': data['email']},
             ],
         }
-        
+
         # Create the event on the user's primary calendar
         event_result = service.events().insert(
             calendarId='primary',
             body=event
         ).execute()
-        
+
         logger.info(f"Created event: {event_result['summary']} at {event_result['start']['dateTime']}")
-        
+
         return event_result
 
     except HttpError as error:
         logger.error(f"An error occurred while creating the event: {error}")
         raise error
+
 
 def save_guest_to_db(data):
     """
@@ -122,8 +125,9 @@ def save_guest_to_db(data):
     guest_id = collection.insert_one(guest_data).inserted_id
     return guest_id
 
+# RENAMED this route function to avoid the naming conflict
 @guest_form_bp.route("/create-google-calendar-event", methods=["POST"])
-def create_google_calendar_event():
+def create_calendar_event_route():
     """
     Create a Google Calendar event using the Google Calendar API.
     """
