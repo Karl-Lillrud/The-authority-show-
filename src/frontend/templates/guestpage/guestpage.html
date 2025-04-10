@@ -26,42 +26,42 @@
     </div>
   </header>
 
-  <!-- Hero section -->
   <section class="guest-hero">
     <div class="overlay"></div>
     <!-- Social Media Icons (Top-Right) -->
+    <!-- Social Media and Email (Top-Right) -->
     <div id="guest-social">
-      {% for platform, link in social_media.items() %}
-        {% if link %}
-          <a href="{{ link }}" target="_blank" class="social-icon {{ platform }}">
-            <i class="fab fa-{{ platform }}"></i>
-          </a>
-        {% endif %}
-      {% endfor %}
+      <div class="icons">
+        {% for platform, link in social_media.items() %}
+          {% if link %}
+            <a href="{{ link }}" target="_blank" class="social-icon {{ platform }}">
+              <i class="fab fa-{{ platform }}"></i>
+            </a>
+          {% endif %}
+        {% endfor %}
+      </div>
+      {% if email %}
+        <div class="social-email">
+          <a href="mailto:{{ email }}">{{ email }}</a>
+        </div>
+      {% endif %}
     </div>
     <div class="hero-content container">
       <!-- Guest profile image -->
       <div class="guest-image">
         <img src="{{ guest_image }}" alt="{{ guest_name }}">
       </div>
-      <!-- Guest info direkt i hero-sektionen -->
       <div class="guest-text">
         <h1>{{ guest_name }}</h1>
-        <!-- Placera e-post snyggt, t.ex. precis under namnet -->
-        {% if email %}
-          <p class="guest-email"><a href="mailto:{{ email }}">{{ email }}</a></p>
-        {% endif %}
-        <!-- "Areas of Interest" under namnet -->
         {% if areas_of_interest %}
           <p class="guest-interests">Areas of Interest: {{ areas_of_interest | join(', ') }}</p>
         {% endif %}
-        <!-- Gästens bio -->
+        <!-- Guest bio -->
         <p class="guest-bio">{{ guest_bio }}</p>
       </div>
     </div>
   </section>
 
-  <!-- Ta bort den tidigare "Guest Information" sektionen -->
 
   <!-- Episodes Section -->
   <section class="guest-episodes container">

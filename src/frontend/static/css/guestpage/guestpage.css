@@ -116,21 +116,34 @@ section {
 /* Social Media Icons (i hero) */
 #guest-social {
   position: absolute;
-  top: 1.25rem;
-  right: 1.875rem;
+  top: 20px;
+  right: 30px;
   display: flex;
-  gap: 0.9375rem;
+  flex-direction: column;  /* Ändrar riktning så att barnen staplas vertikalt */
+  align-items: center;
+  gap: 5px;                /* Mindre gap mellan ikonerna och e‑posten */
   z-index: 10;
 }
 
-#guest-social a {
-  color: var(--primary-color);
-  font-size: 1.5rem;
-  transition: transform 0.3s;
+/* Container för sociala ikoner, behåll horisontell layout */
+#guest-social .icons {
+  display: flex;
+  gap: 15px;
 }
 
-#guest-social a:hover {
-  transform: scale(1.1);
+.social-email {
+  font-size: 0.9rem;
+  color: #000000;  /* Svart färg */
+  text-align: center;
+}
+
+.social-email a {
+  color: #000000;
+  text-decoration: none;
+}
+
+.social-email a:hover {
+  text-decoration: underline;
 }
 
 /* Hero-innehåll */
