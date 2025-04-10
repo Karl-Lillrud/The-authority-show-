@@ -6,6 +6,8 @@ let isolatedAudioId = null;
 let activeAudioBlob = null;
 let activeAudioId = null;
 
+window.CURRENT_USER_ID = localStorage.getItem("user_id");
+
 function showTab(tabName) {
     const content = document.getElementById('content');
     content.innerHTML = ''; // Clear existing content
@@ -134,6 +136,13 @@ async function transcribe() {
     const file = fileInput.files[0];
     if (!file) {
         alert('Please upload a file.');
+        return;
+    }
+
+    try {
+        await consumeUserCredits("transcription");
+    } catch (err) {
+        resultContainer.innerText = `❌ Not enough credits: ${err.message}`;
         return;
     }
 
@@ -267,6 +276,13 @@ async function enhanceAudio() {
     const file = input.files[0];
     if (!file) return alert("Upload an audio file first.");
 
+    try {
+        await consumeUserCredits("audio_enhancment");
+    } catch (err) {
+        audioControls.innerHTML = `❌ Not enough credits: ${err.message}`;
+        return;
+    }
+
     audioControls.innerHTML = "🔄 Enhancing... Please wait.";
     const formData = new FormData();
     formData.append("audio", file);
@@ -364,6 +380,13 @@ async function runVoiceIsolation() {
     if (!file) return alert("Upload an audio file first.");
 
     const resultContainer = document.getElementById("isolatedVoiceResult");
+
+    try {
+        await consumeUserCredits("voice_isolation");
+    } catch (err) {
+        resultContainer.innerText = `❌ Not enough credits: ${err.message}`;
+        return;
+    }
     resultContainer.innerText = "🎙️ Isolating voice using ElevenLabs...";
 
     const formData = new FormData();
@@ -635,3 +658,43 @@ function previewOriginalVideo() {
     videoPlayer.src = videoURL;
     container.style.display = 'block';
 }
+
+async function fetchUserCredits(userId) {
+    try {
+        const response = await fetch(`/api/credits/check?user_id=${userId}`);
+        if (response.ok) {
+            const data = await response.json();
+            document.getElementById("userCredits").innerText = `Available Credits: ${data.availableCredits}`;
+        } else {
+            alert("Failed to fetch user credits.");
+        }
+    } catch (error) {
+        console.error("Error fetching user credits:", error);
+    }
+}
+
+async function consumeUserCredits(featureKey) {
+    if (!window.CURRENT_USER_ID) {
+        throw new Error("User not logged in.");
+    }
+
+    const res = await fetch('/credits/consume', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            user_id: window.CURRENT_USER_ID,
+            feature: featureKey
+        })
+    });
+
+    const result = await res.json();
+    if (!res.ok) {
+        throw new Error(result.error || "Failed to consume credits");
+    }
+
+    // ✅ Update the UI to reflect new credit balance
+    await fetchUserCredits(CURRENT_USER_ID);
+
+    return result.data;
+}
+

@@ -3,7 +3,7 @@ import os
 import logging
 import subprocess
 from datetime import datetime
-from flask import Blueprint, request, jsonify, render_template
+from flask import Blueprint, request, jsonify, render_template, session
 import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
@@ -273,9 +273,7 @@ def render_ai_edits():
 
     logger.info(f"✅ Rendering AI Edits page for episode ID: {episode_id}")
     try:
-        return render_template("ai_edits/ai_edits.html", episode_id=episode_id)
+        return render_template("ai_edits/ai_edits.html", episode_id=episode_id, user_id=session.get("user_id"))
     except Exception as e:
         logger.error(f"Error rendering ai_edits.html: {e}")
         return jsonify({"error": "Failed to render AI Edits page"}), 500
-
-
