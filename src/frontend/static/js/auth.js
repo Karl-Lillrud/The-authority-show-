@@ -49,7 +49,7 @@ document.addEventListener("DOMContentLoaded", () => {
         if (result.redirect_url) {
           window.location.href = result.redirect_url;
         } else {
-          window.location.href = "/";
+          window.location.href = "/podprofile"; // Redirect to podprofile
         }
       } catch (error) {
         errorMessage.textContent = error.message;
@@ -91,7 +91,7 @@ document.addEventListener("DOMContentLoaded", () => {
           if (loginResult.redirect_url) {
             window.location.href = loginResult.redirect_url;
           } else {
-            window.location.href = "/";
+            window.location.href = "/podprofile"; // Redirect to podprofile
           }
         } else {
           const result = await response.json();
