@@ -64,17 +64,25 @@ function showTab(tabName) {
                 <audio id="originalAudioPlayer" controls style="width: 100%"></audio>
             </div>
 
-            <p><strong>Choose one:</strong> Enhance OR Isolate audio</p>
+            <div style="margin-top: 1rem; padding: 1rem; border: 1px solid #ddd; border-radius: 12px;">
+                <h3>🔊 Choose Audio Processing Method</h3>
+                <p style="margin-bottom: 1rem;">Select one of the following enhancements for your uploaded audio file:</p>
 
-            <div id="voiceIsolationSection" style="margin-top: 1rem;">
-                <h3>🎤 Voice Isolation (ElevenLabs)</h3>
-                <button class="btn ai-edit-button" onclick="runVoiceIsolation()">🎙️ Isolate Voice</button>
-                <div id="isolatedVoiceResult"></div>
-                <a id="downloadIsolatedVoice" style="display:none;" download="isolated_voice.wav">📥 Download Isolated Voice</a>
+                <!-- 🎤 Voice Isolation -->
+                <div id="voiceIsolationSection" style="margin-bottom: 1.5rem;">
+                    <h4>🎤 <strong>Voice Isolation (Powered by ElevenLabs)</strong></h4>
+                    <button class="btn ai-edit-button" onclick="runVoiceIsolation()">🎙️ Isolate Voice</button>
+                    <div id="isolatedVoiceResult" style="margin-top: 1rem;"></div>
+
+                </div>
+
+                <!-- 🎚️ Audio Enhancement -->
+                <div id="audioEnhancementSection">
+                    <h4>🎚️ <strong>Audio Enhancement (Noise Reduction & Normalization)</strong></h4>
+                    <button class="btn ai-edit-button" onclick="enhanceAudio()">✨ Enhance Audio</button>
+                    <div id="audioControls" style="margin-top: 1rem;"></div>
+                </div>
             </div>
-        
-            <button class="btn ai-edit-button" onclick="enhanceAudio()">Enhance Audio</button>
-            <div id="audioControls"></div>
 
 
             <div id="audioAnalysisSection" style="display: none;">
@@ -98,7 +106,7 @@ function showTab(tabName) {
             <div id="aiCuttingSection" style="display: none;">
                 <hr/>
                 <h3>🧠 AI Cutting + Transcript</h3>
-                <button class="btn ai-edit-button" onclick="aiCutAudio()">Run AI Cut</button>
+                <button class="btn ai-edit-button" onclick="aiCutAudio()">🧠 Run AI Cut</button>
                 <pre id="aiTranscript"></pre>
                 <pre id="aiSuggestedCuts"></pre>
             </div>
