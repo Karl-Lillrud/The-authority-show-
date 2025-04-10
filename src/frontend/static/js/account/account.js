@@ -26,31 +26,58 @@ document.addEventListener("DOMContentLoaded", () => {
       field.style.display = 'none';
     });
     
+    // Hide the edit profile button in view mode
+    const editProfileBtn = document.getElementById("edit-profile-btn");
+    if (editProfileBtn) {
+      editProfileBtn.style.display = 'none';
+    }
+    
   // Initialize profile data
   fetchProfile()
     .then((data) => {
       if (data) {
-        document.getElementById("full-name").value = data.full_name || ""
-        document.getElementById("email").value = data.email || ""
-        document.getElementById("phone").value = data.phone || ""
-
-        // If name is missing, show a message
-        if (!data.full_name) {
-          showNotification("Please complete your profile by adding your full name", "warning")
+        // Set profile picture
+        const profilePic = document.getElementById("profile-pic");
+        if (data.profile_picture_url) {
+          profilePic.src = data.profile_picture_url; // Use the URL from the server
+        } else {
+          // Use a hardcoded path instead of Flask template variables
+          profilePic.src = "/static/images/profilepic.png"; // Fix the default path
         }
 
-        // If phone is missing, show a message
-        if (!data.phone) {
-          showNotification("Please add your phone number to complete your profile", "warning")
-        }
+        // Set other profile data
+        document.getElementById("full-name").value = data.full_name || "";
+        document.getElementById("email").value = data.email || "";
+        document.getElementById("phone").value = data.phone || "";
+
+        // Update the display values
+        document.getElementById("display-full-name").textContent = data.full_name || "Not provided";
+        document.getElementById("display-email").textContent = data.email || "Not provided";
+        document.getElementById("display-phone").textContent = data.phone || "Not provided";
       } else {
-        console.error("Error fetching profile data")
+        console.error("Error fetching profile data");
       }
     })
     .catch((error) => {
-      console.error("Error:", error)
-      showNotification("Failed to load profile data", "error")
-    })
+      console.error("Error:", error);
+      showNotification("Failed to load profile data", "error");
+    });
+
+  // Cancel edit button (switches back to view mode)
+  const cancelEditBtn = document.getElementById("cancel-edit-btn");
+  if (cancelEditBtn) {
+    cancelEditBtn.addEventListener("click", function() {
+      toggleProfileMode(false);
+    });
+  }
+
+  // Handle the "Edit Profile" button in the profile view
+  if (editProfileBtn) {
+    editProfileBtn.addEventListener("click", function() {
+      // Switch to edit mode
+      toggleProfileEditMode(true);
+    });
+  }
 
   // Toggle submenu visibility
   document.querySelectorAll('.sidebar-item').forEach((item) => {
@@ -184,83 +211,106 @@ document.addEventListener("DOMContentLoaded", () => {
   const profileForm = document.getElementById("profile-form")
   if (profileForm) {
     profileForm.addEventListener("submit", (event) => {
-      event.preventDefault()
+      event.preventDefault();
 
-      const fullName = document.getElementById("full-name").value
-      const email = document.getElementById("email").value
-      const phone = document.getElementById("phone").value
+      const fullName = document.getElementById("full-name").value;
+      const email = document.getElementById("email").value;
+      const phone = document.getElementById("phone").value; // Optional field
 
       // Validate required fields
       if (!fullName.trim()) {
-        showNotification("Full name is required", "error")
-        return
+        showNotification("Full name is required", "error");
+        return;
       }
 
       if (!email.trim()) {
-        showNotification("Email is required", "error")
-        return
+        showNotification("Email is required", "error");
+        return;
       }
 
       const profileData = {
         full_name: fullName,
         email: email,
-        phone: phone,
-      }
+        phone: phone || null, // Allow phone to be null if not provided
+      };
 
       updateProfile(profileData)
         .then((data) => {
           if (data.message) {
-            // Changes back to non-edit mode
-            document.querySelector('.sidebar-item[data-target="profile-section"]').click();
-            const editProfileButton = document.querySelector('.submenu-item[data-target="profile-section"]');
-            if (editProfileButton) {
-              editProfileButton.classList.remove("active");
-            }
-            showNotification("Profile updated successfully!", "success")
+            showNotification("Profile updated successfully!", "success");
+            // Update the display values in the read-only view
+            document.getElementById("display-full-name").textContent = fullName || "Not provided";
+            document.getElementById("display-email").textContent = email || "Not provided";
+            document.getElementById("display-phone").textContent = phone || "Not provided";
+            // Switch back to view mode
+            toggleProfileMode(false);
           } else {
-            showNotification("Failed to update profile", "error")
+            showNotification("Failed to update profile", "error");
           }
         })
         .catch((error) => {
-          console.error("Error:", error)
-          showNotification("An error occurred while updating profile", "error")
-        })
-    })
+          console.error("Error:", error);
+          showNotification("An error occurred while updating profile", "error");
+        });
+    });
   }
 
   const toggleProfileEditMode = (isEditMode) => {
     const profileSection = document.getElementById("profile-section");
-    const formFields = profileSection.querySelectorAll("input, textarea");
-    const formActions = profileSection.querySelector(".form-actions");
+    const profileForm = document.getElementById("profile-form");
+    const profileInfoCard = document.querySelector(".profile-info-card");
+    const profileActions = document.querySelector(".profile-actions");
     const uploadButton = document.getElementById("upload-pic");
     const profilePicOverlay = document.querySelector(".profile-pic-overlay");
-  
-    formFields.forEach(field => field.disabled = !isEditMode);
-    formActions.style.display = isEditMode ? 'flex' : 'none';
-    uploadButton.style.display = isEditMode ? 'inline-block' : 'none';
-    profilePicOverlay.style.display = isEditMode ? 'flex' : 'none';
-  
-    // Change the visibility of the required asterix depending on edit mode or not
-    const formGroups = profileSection.querySelectorAll(".form-group");
-    formGroups.forEach(group => {
-      const requiredSpan = group.querySelector(".required");
-      if (requiredSpan) {
-        requiredSpan.style.display = isEditMode && group.querySelector("input").value === "" ? 'inline' : 'none';
-      }
-    });
-
-    formFields.forEach(field => {
-      field.addEventListener("input", () => {
-        formGroups.forEach(group => {
-          const requiredSpan = group.querySelector(".required");
-          const inputField = group.querySelector("input");
-          
-          // Check if the field is empty and update asterisk visibility
-          if (requiredSpan && inputField) {
-            requiredSpan.style.display = isEditMode && inputField.value === "" ? 'inline' : 'none';
-          }
-        });
+    const formFields = profileForm.querySelectorAll("input, textarea"); // Get form fields from the form itself
+    
+    // Toggle between view and edit modes
+    if (isEditMode) {
+      // Switch to edit mode - show form and hide info card
+      profileForm.style.display = 'block';
+      profileInfoCard.style.display = 'none';
+      profileActions.style.display = 'none';
+      
+      // IMPORTANT - Enable all form fields for editing (removing disabled attribute)
+      formFields.forEach(field => {
+        field.disabled = false; // Remove disabled attribute
       });
+      
+      // Show upload button and profile pic overlay
+      if (uploadButton) uploadButton.style.display = 'inline-block';
+      if (profilePicOverlay) profilePicOverlay.style.display = 'flex';
+    } else {
+      // Switch back to view mode code remains the same
+      profileForm.style.display = 'none';
+      profileInfoCard.style.display = 'block';
+      profileActions.style.display = 'flex';
+      
+      // Update display values before switching back to view mode
+      const fullNameInput = document.getElementById("full-name");
+      const emailInput = document.getElementById("email");
+      const phoneInput = document.getElementById("phone");
+      
+      if (fullNameInput && document.getElementById("display-full-name")) {
+        document.getElementById("display-full-name").textContent = fullNameInput.value || "Not provided";
+      }
+      
+      if (emailInput && document.getElementById("display-email")) {
+        document.getElementById("display-email").textContent = emailInput.value || "Not provided";
+      }
+      
+      if (phoneInput && document.getElementById("display-phone")) {
+        document.getElementById("display-phone").textContent = phoneInput.value || "Not provided";
+      }
+      
+      // Hide upload button and profile pic overlay
+      if (uploadButton) uploadButton.style.display = 'none';
+      if (profilePicOverlay) profilePicOverlay.style.display = 'none';
+    }
+    
+    // Show or hide required indicators based on mode
+    const requiredFields = profileSection.querySelectorAll(".required-profile");
+    requiredFields.forEach(field => {
+      field.style.display = isEditMode ? 'inline' : 'none';
     });
   }
   
@@ -277,8 +327,23 @@ document.addEventListener("DOMContentLoaded", () => {
   const editProfileButton = document.querySelector('.submenu-item[data-target="profile-section"]');
   if (editProfileButton) {
     editProfileButton.addEventListener("click", function () {
+      // Make sure the profile section is active
+      document.querySelectorAll(".settings-section").forEach((section) => {
+        section.classList.remove("active");
+      });
+      const profileSection = document.getElementById("profile-section");
+      if (profileSection) {
+        profileSection.classList.add("active");
+      }
+      
       // Switch to edit mode
       toggleProfileEditMode(true);
+      
+      // Mark this submenu item as active
+      document.querySelectorAll(".submenu-item").forEach(item => {
+        item.classList.remove("active");
+      });
+      this.classList.add("active");
     });
   }
 
@@ -456,6 +521,35 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 })
 
+// Function to toggle between view and edit modes
+function toggleProfileMode(isEditMode) {
+  const profileInfoCard = document.querySelector(".profile-info-card");
+  const profileActions = document.querySelector(".profile-actions");
+  const profileForm = document.getElementById("profile-form");
+  const profilePicOverlay = document.querySelector(".profile-pic-overlay");
+  const uploadButton = document.getElementById("upload-pic");
+  
+  if (isEditMode) {
+    // Switch to edit mode
+    profileInfoCard.style.display = "none";
+    profileActions.style.display = "none"; // Hide the Edit Profile button
+    profileForm.style.display = "block";
+    
+    // Show photo editing elements
+    if (profilePicOverlay) profilePicOverlay.style.display = "flex";
+    if (uploadButton) uploadButton.style.display = "inline-block";
+  } else {
+    // Switch to view mode
+    profileInfoCard.style.display = "block";
+    profileActions.style.display = "none"; // Keep the Edit Profile button hidden
+    profileForm.style.display = "none";
+    
+    // Hide photo editing elements
+    if (profilePicOverlay) profilePicOverlay.style.display = "none";
+    if (uploadButton) uploadButton.style.display = "none";
+  }
+}
+
 // Helper functions
 function updatePasswordStrength(password) {
   let strength = 0
@@ -509,29 +603,31 @@ function updatePasswordStrength(password) {
 }
 
 function triggerFileUpload() {
-  const fileInput = document.createElement("input")
-  fileInput.type = "file"
-  fileInput.accept = "image/*"
-  fileInput.style.display = "none"
+  const fileInput = document.createElement("input");
+  fileInput.type = "file";
+  fileInput.accept = "image/*";
+  fileInput.style.display = "none";
 
   fileInput.addEventListener("change", function () {
     if (this.files && this.files[0]) {
-      const reader = new FileReader()
+      const reader = new FileReader();
 
       reader.onload = (e) => {
-        document.getElementById("profile-pic").src = e.target.result
+        // Update the profile image in both view and edit modes
+        const profilePic = document.getElementById("profile-pic");
+        profilePic.src = e.target.result;
 
         // Here you would typically upload the file to your server
         // uploadProfilePicture(fileInput.files[0]);
-      }
+      };
 
-      reader.readAsDataURL(this.files[0])
+      reader.readAsDataURL(this.files[0]);
     }
-  })
+  });
 
-  document.body.appendChild(fileInput)
-  fileInput.click()
-  document.body.removeChild(fileInput)
+  document.body.appendChild(fileInput);
+  fileInput.click();
+  document.body.removeChild(fileInput);
 }
 
 function showNotification(message, type) {
@@ -553,4 +649,21 @@ function showNotification(message, type) {
       notificationContainer.removeChild(notification);
     }, 300);
   }, 3000);
+}
+
+// Add this to your HTML, inside the profile-pic-container
+const profilePicContainer = document.querySelector(".profile-pic-container");
+if (profilePicContainer) {
+  profilePicContainer.innerHTML = `
+    <div class="profile-pic-wrapper">
+      <img id="profile-pic" src="{{ url_for('static', filename='images/profilepic.png') }}" alt="Profile Picture">
+      <div class="profile-pic-overlay">
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="edit-icon">
+          <path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"></path>
+          <path d="M12 20h9"></path>
+        </svg>
+      </div>
+    </div>
+    <button id="upload-pic" class="secondary-button">Change Photo</button>
+  `;
 }

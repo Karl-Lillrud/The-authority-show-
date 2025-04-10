@@ -19,7 +19,7 @@ def get_profile():
     return jsonify(response), status_code
 
 
-# Route to update user profile data
+# Route to update user profile data//
 @user_bp.route("/update_profile", methods=["PUT"])
 def update_profile():
     if not hasattr(g, "user_id") or not g.user_id:
@@ -29,7 +29,7 @@ def update_profile():
     response, status_code = user_repo.update_profile(str(g.user_id), data)
     return jsonify(response), status_code
 
-
+"""
 # Route to update password
 @user_bp.route("/update_password", methods=["PUT"])
 def update_password():
@@ -40,6 +40,7 @@ def update_password():
     response, status_code = user_repo.update_password(str(g.user_id), data)
     return jsonify(response), status_code
 
+"""
 
 # Route to delete user account and associated data
 @user_bp.route("/delete_user", methods=["DELETE"])

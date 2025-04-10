@@ -109,6 +109,7 @@ header {
   z-index: 100;
   width: 100%; /* Ensure header takes full width */
   box-sizing: border-box; /* Include padding in width calculation */
+  min-height: 116px;
 }
 
 header:hover {
@@ -472,6 +473,7 @@ header:hover {
   #headerPodcastDropdown {
     max-width: 120px;
     font-size: 0.75rem; /* Smaller text */
+    display: none;
   }
 
   .menu-toggle {
@@ -522,4 +524,22 @@ header:hover {
     padding: var(--spacing-xs) var(--spacing-xs);
     height: 24px; /* Smaller height */
   }
+}
+.credits-info {
+  padding: 8px 12px;
+  background-color: #F4F4F4; /* Light Gray background */
+  border: 1px solid #E0E0E0;
+  border-radius: 1rem; /* Rounded corners (approx. rounded-2xl) */
+  font-size: 0.85rem;
+  color: #404040; /* Darker text */
+  margin-left: 24px;
+  display: flex;
+  align-items: center;
+  transition: box-shadow 0.3s ease;
+}
+.credits-info:hover {
+  box-shadow: 0 4px 10px rgba(255,115,0,0.4);
+}
+.credits-info #user-credits {
+  margin-left: 4px; /* Adjust the value as needed */
 }

@@ -57,7 +57,7 @@ body {
 /* App Container */
 .app-container {
   display: flex;
-  min-height: calc(100vh - var(--header-height));
+  min-height: calc(100vh - 116px - 60px);
   position: relative;
   overflow: hidden;
 }
@@ -111,7 +111,6 @@ body {
 }
 
 .team-card:hover {
-  transform: translateY(-6px);
   box-shadow: var(--card-shadow-hover);
 }
 
@@ -662,7 +661,6 @@ body {
 }
 
 .member-card:hover {
-  transform: translateY(-6px);
   box-shadow: var(--card-shadow-hover);
 }
 

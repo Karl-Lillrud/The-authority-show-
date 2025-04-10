@@ -21,7 +21,13 @@
         <!-- JS will insert options here -->
       </div>
     </div>
-
+    <!-- New Credits Display Field -->
+    <script>
+      const currentUserID = "{{ session['user_id'] or '' }}";
+    </script>
+    <div class="credits-info">
+      Credits: <span id="user-credits">Loading...</span>
+    </div>
     <div class="menu-toggle" onclick="toggleMenu()">
       <span></span>
       <span></span>
@@ -60,5 +66,6 @@
 <script
   type="module"
   src="{{ url_for('static', filename='js/components/header.js') }}"
+  
 ></script>
 
