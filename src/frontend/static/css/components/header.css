@@ -532,9 +532,7 @@ header {
   align-items: center;
   transition: box-shadow 0.3s ease;
 }
-.credits-info:hover {
-  border: 1px solid var(--highlight-color);
-}
+
 .credits-info #user-credits {
   margin-left: 4px; /* Adjust the value as needed */
 }
