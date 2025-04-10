@@ -411,6 +411,39 @@ body.dark-mode .help-button {
   position: relative;
 }
 
+.label-group .help-button {
+  width: 16px;
+  height: 16px;
+  font-size: 12px;
+  background-color: var(--text-color-light);
+  color: white;
+  font-weight: bold;
+  border: none;
+  border-radius: 50%;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.label-group .help-text {
+  visibility: hidden;
+  position: absolute;
+  left: calc(100% + var(--spacing-sm));
+  top: 50%;
+  transform: translateY(-50%);
+  width: 300px;
+  background-color: #333;
+  color: white;
+  padding: var(--spacing-md);
+  border-radius: var(--border-radius-sm);
+  font-size: 0.9rem;
+  box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.2);
+  z-index: 100;
+  text-align: left;
+  transition: opacity 0.3s, visibility 0.3s;
+}
+
 .label-group:hover .help-text {
   visibility: visible;
   opacity: 1;
