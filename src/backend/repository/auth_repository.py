@@ -228,7 +228,41 @@ class AuthRepository:
                     logger.info(f"✅ New user {user_id}. Creating default team, podcast, and episodes.")
 
                     # 1. Create Default Team
-                    team_data = {"name": f"{email.split('@')[0]}'s Team"} # Example name
+                    team_data = {
+                        "name": f"{email.split('@')[0]}'s Team",
+                        "members": [
+                            {
+                                "userId": str(uuid.uuid4()),
+                                "email": "john.doe@example.com",
+                                "fullName": "John Doe",
+                                "role": "member",
+                                "completedTasks": 42,
+                                "points": 1250,
+                                "monthsWon": 3,
+                                "goal": 85
+                            },
+                            {
+                                "userId": str(uuid.uuid4()),
+                                "email": "anna.smith@example.com",
+                                "fullName": "Anna Smith",
+                                "role": "member",
+                                "completedTasks": 38,
+                                "points": 1120,
+                                "monthsWon": 2,
+                                "goal": 76
+                            },
+                            {
+                                "userId": str(uuid.uuid4()),
+                                "email": "robert.johnson@example.com",
+                                "fullName": "Robert Johnson",
+                                "role": "member",
+                                "completedTasks": 35,
+                                "points": 980,
+                                "monthsWon": 1,
+                                "goal": 68
+                            }
+                        ]
+                    }
                     team_response, team_status = self.team_repo.add_team(user_id, email, team_data)
 
                     if team_status == 201:
