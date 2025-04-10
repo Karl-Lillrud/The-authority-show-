@@ -183,7 +183,7 @@
   gap: 8px;
 }
 
-.confirm-confirm-save-btn {
+.confirm-save-btn {
     background: linear-gradient(
       135deg,
       var(--highlight-color),
