@@ -348,11 +348,21 @@ async function aiCutAudio() {
     });
 
     const data = await res.json();
+
+    if (!res.ok || !data.cleaned_transcript) {
+        alert("❌ AI cut failed: " + (data.error || "Unknown error"));
+        return;
+    }
+
     document.getElementById("aiTranscript").innerText = data.cleaned_transcript;
-    document.getElementById("aiSuggestedCuts").innerText = data.suggested_cuts.map(
-        cut => `💬 "${cut.sentence}" (${cut.start}s - ${cut.end}s) | Confidence: ${cut.certainty_score}`
-    ).join("\n");
+
+    const suggestions = (data.suggested_cuts || [])
+        .map(cut => `💬 "${cut.sentence}" (${cut.start}s - ${cut.end}s) | Confidence: ${cut.certainty_score}`)
+        .join("\n");
+
+    document.getElementById("aiSuggestedCuts").innerText = suggestions || "No suggested cuts found.";
 }
+
 
 async function enhanceVideo() {
     const fileInput = document.getElementById('videoUploader');
