@@ -1,13 +1,6 @@
 import { fetchPodcasts } from "/static/requests/podcastRequests.js";
 
 document.addEventListener("DOMContentLoaded", () => {
-  const aiEditLink = document.getElementById("ai-edit-link");
-  if (aiEditLink) {
-    const host = window.location.hostname;
-    const streamlitURL = `http://${host}:8501/`;
-    aiEditLink.href = streamlitURL;
-  }
-
   populateHeaderPodcastDropdown();
   populateLandingPageDropdown();
   setDynamicPageTitle();
