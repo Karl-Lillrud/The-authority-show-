@@ -121,8 +121,8 @@ def save_guest_to_db(data):
         "bio": data["bio"],
         # Add any other necessary fields
     }
-    # Save the guest data to your database (MongoDB in this case)
-    guest_id = collection.insert_one(guest_data).inserted_id
+    # Save the guest data to the guests collection instead of the default collection
+    guest_id = collection.database.Guests.insert_one(guest_data).inserted_id
     return guest_id
 
 # RENAMED this route function to avoid the naming conflict
