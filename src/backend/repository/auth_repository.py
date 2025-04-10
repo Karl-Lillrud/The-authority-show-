@@ -250,21 +250,30 @@ class AuthRepository:
 
                             # 3. Create Example Episodes
                             now = datetime.now(timezone.utc)
+                            one_week_future = now + timedelta(days=7)
+                            two_weeks_future = now + timedelta(days=14)
+                            
                             episode_data_1 = {
                                 "podcastId": podcast_id,
                                 "title": "Example Episode 1: Getting Started",
                                 "description": "This is your first example episode, scheduled for next week.",
-                                "publishDate": (now + timedelta(days=7)).isoformat(), # Future date as ISO string
-                                "status": "Scheduled"
-                                # accountId is derived from user_id within register_episode
+                                "publishDate": one_week_future.isoformat(),
+                                "status": "Not Recorded",  # Changed from "Active" to "Not Recorded"
+                                "recordingAt": one_week_future.isoformat(),
+                                "duration": 45,
+                                "isHidden": False,
+                                "author": email.split('@')[0]
                             }
                             episode_data_2 = {
                                 "podcastId": podcast_id,
                                 "title": "Example Episode 2: Exploring Features",
                                 "description": "Discover what you can do with PodManager, scheduled in two weeks.",
-                                "publishDate": (now + timedelta(days=14)).isoformat(), # Future date as ISO string
-                                "status": "Scheduled"
-                                # accountId is derived from user_id within register_episode
+                                "publishDate": two_weeks_future.isoformat(),
+                                "status": "Not Scheduled",  # Changed from "Active" to "Not Scheduled"
+                                "recordingAt": two_weeks_future.isoformat(),
+                                "duration": 60,
+                                "isHidden": False,
+                                "author": email.split('@')[0]
                             }
 
                             # Register Episode 1
