@@ -119,3 +119,31 @@ body {
   white-space: pre-wrap;      /* 🔧 allows wrapping of long lines */
   word-break: break-word;     /* optional: wraps long single words */
 }
+
+/* 🎵 PodManager Audio Player Styling */
+.podmanager-audio {
+  width: 100%;
+  height: 48px;
+  background-color: #ffffff;
+  border-radius: 1rem; /* rounded-2xl */
+  border: 1px solid #e5e7eb; /* Tailwind's gray-200 */
+  box-shadow: 0 4px 8px rgba(255, 115, 0, 0.15); /* soft orange glow */
+  transition: box-shadow 0.3s ease;
+  padding: 4px;
+}
+
+.podmanager-audio:hover {
+  box-shadow: 0 6px 14px rgba(255, 115, 0, 0.3);
+  outline: 2px solid rgba(255, 115, 0, 0.15);
+}
+
+.audio-label {
+  font-family: 'Inter', sans-serif;
+  font-weight: 600;
+  color: #404040;
+  margin-bottom: 0.25rem;
+}
+
+.audio-label::before {
+  content: "🎧 ";
+}
