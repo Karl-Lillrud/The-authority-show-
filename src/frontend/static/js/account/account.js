@@ -5,7 +5,6 @@ import {
   deleteUserAccount,
   subscribeUser,
 } from "/static/requests/accountRequests.js"
-import { showNotification } from "../components/notifications.js"
 
 document.addEventListener("DOMContentLoaded", () => {
     // Hides the edit buttons when in non-edit mode
@@ -37,12 +36,12 @@ document.addEventListener("DOMContentLoaded", () => {
 
         // If name is missing, show a message
         if (!data.full_name) {
-          showNotification("Info", "Please complete your profile by adding your full name", "info")
+          showNotification("Please complete your profile by adding your full name", "warning")
         }
 
         // If phone is missing, show a message
         if (!data.phone) {
-          showNotification("Info", "Please add your phone number to complete your profile", "info")
+          showNotification("Please add your phone number to complete your profile", "warning")
         }
       } else {
         console.error("Error fetching profile data")
@@ -535,7 +534,7 @@ function triggerFileUpload() {
   document.body.removeChild(fileInput)
 }
 
-function dshowNotification(message, type) {
+function showNotification(message, type) {
   const notificationContainer = document.getElementById("header-notifications");
   if (!notificationContainer) return;
 

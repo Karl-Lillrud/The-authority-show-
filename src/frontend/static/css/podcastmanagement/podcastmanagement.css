@@ -1040,7 +1040,7 @@ body {
 }
 
 /* Notification */
-/* .notification {
+.notification {
   position: fixed;
   top: 16px;
   right: 16px;
