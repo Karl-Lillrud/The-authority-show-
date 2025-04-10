@@ -86,7 +86,7 @@ oauthlib
 odict
 openai
 openai_whisper
-opencv_contrib-python
+opencv_contrib_python
 Pillow
 opt_einsum
 optional-django
