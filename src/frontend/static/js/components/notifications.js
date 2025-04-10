@@ -1,6 +1,6 @@
 const notificiationsUrl = "../../templates/components/notifications.html";
 
-// Notification system for team dashboard
+// Notification system, see Team.js on how to use it
 export function showNotification(title, message, type = "info") {
   // Remove any existing notification
   const existingNotification = document.querySelector(".notification");
@@ -64,6 +64,7 @@ export function showNotification(title, message, type = "info") {
   });
 }
 
+// Confirmation popup system, see team/modals.js on how to use it
 export function showConfirmationPopup(title, message, onConfirm, onCancel) {
   // Remove any existing popup
   const existingPopup = document.querySelector(".confirmation-popup");
