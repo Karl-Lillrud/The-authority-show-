@@ -5,6 +5,7 @@ annotated-types
 antlr4-python3-runtime
 anyio
 APScheduler
+azure_storage
 attrs
 audioread
 azure-cognitiveservices-speech
@@ -31,8 +32,9 @@ Faker
 feedparser
 filelock
 Flask
-Flask-Cors
-Flask-Mail
+flask_cors
+flask_mail
+google_auth_oauthlib
 flatbuffers
 fonttools
 frozenlist
@@ -65,6 +67,7 @@ kubernetes
 llvmlite
 Mako
 MarkupSafe
+mediapipe
 marshmallow
 matplotlib
 more-itertools
@@ -84,6 +87,7 @@ odict
 openai
 openai-whisper
 opencv-contrib-python
+Pillow
 opt_einsum
 optional-django
 packaging
