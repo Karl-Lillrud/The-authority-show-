@@ -128,72 +128,102 @@ async function transcribe() {
 }
 
 async function generateCleanTranscript() {
-    const res = await fetch("/transcription/clean", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ transcript: fullTranscript })
-    });
+    try {
+        const res = await fetch("/transcription/clean", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ transcript: fullTranscript })
+        });
 
-    const data = await res.json();
-    document.getElementById("cleanTranscriptResult").innerText =
-        data.clean_transcript || "No clean result.";
+        const data = await res.json();
+        document.getElementById("cleanTranscriptResult").innerText =
+            data.clean_transcript || "No clean result.";
+    } catch (err) {
+        document.getElementById("cleanTranscriptResult").innerText =
+            "❌ Failed to clean transcript. Server says: " + err.message;
+    }
 }
 
-async function generateAISuggestions() {
-    const res = await fetch('/transcription/ai_suggestions', {
-        method: 'POST',
-        headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({ transcript: rawTranscript })
-    });
 
-    const data = await res.json();
-    document.getElementById("aiSuggestionsResult").innerText = data.ai_suggestions || "No suggestions.";
+async function generateAISuggestions() {
+    try {
+        const res = await fetch('/transcription/ai_suggestions', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({ transcript: rawTranscript })
+        });
+
+        const data = await res.json();
+        document.getElementById("aiSuggestionsResult").innerText = data.ai_suggestions || "No suggestions.";
+    } catch (err) {
+        // 🔧 Show error message if OpenAI or backend fails
+        document.getElementById("aiSuggestionsResult").innerText =
+            "❌ Failed to generate suggestions. Server says: " + err.message;
+    }
 }
 
 async function generateShowNotes() {
-    const res = await fetch('/transcription/show_notes', {
-        method: 'POST',
-        headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({ transcript: rawTranscript })
-    });
+    try {
+        const res = await fetch('/transcription/show_notes', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({ transcript: rawTranscript })
+        });
 
-    const data = await res.json();
-    document.getElementById("showNotesResult").innerText = data.show_notes || "No notes.";
+        const data = await res.json();
+        document.getElementById("showNotesResult").innerText = data.show_notes || "No notes.";
+    } catch (err) {
+        document.getElementById("showNotesResult").innerText =
+            "❌ Failed to generate show notes. Server says: " + err.message;
+    }
 }
+
 
 async function generateQuotes() {
-    const res = await fetch('/transcription/quotes', {
-        method: 'POST',
-        headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({ transcript: rawTranscript })
-    });
+    try {
+        const res = await fetch('/transcription/quotes', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({ transcript: rawTranscript })
+        });
 
-    const data = await res.json();
-    document.getElementById("quotesResult").innerText = data.quotes || "No quotes.";
+        const data = await res.json();
+        document.getElementById("quotesResult").innerText = data.quotes || "No quotes.";
+    } catch (err) {
+        document.getElementById("quotesResult").innerText =
+            "❌ Failed to generate quotes. Server says: " + err.message;
+    }
 }
+
 
 async function generateQuoteImages() {
-    const quotes = document.getElementById("quotesText").innerText;
+    const quotes = document.getElementById("quotesResult").innerText;
     if (!quotes) return alert("Generate quotes first.");
 
-    const res = await fetch('/transcription/quote_images', {
-        method: 'POST',
-        headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({ quotes })
-    });
+    try {
+        const res = await fetch('/transcription/quote_images', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({ quotes })
+        });
 
-    const data = await res.json();
-    const imageDiv = document.getElementById("quoteImagesResult");
-    imageDiv.innerHTML = "";
+        const data = await res.json();
+        const imageDiv = document.getElementById("quoteImagesResult");
+        imageDiv.innerHTML = "";
 
-    (data.quote_images || []).forEach(url => {
-        const img = document.createElement("img");
-        img.src = url;
-        img.style.maxWidth = "100%";
-        img.style.margin = "10px 0";
-        imageDiv.appendChild(img);
-    });
+        (data.quote_images || []).forEach(url => {
+            const img = document.createElement("img");
+            img.src = url;
+            img.style.maxWidth = "100%";
+            img.style.margin = "10px 0";
+            imageDiv.appendChild(img);
+        });
+    } catch (err) {
+        document.getElementById("quoteImagesResult").innerText =
+            "❌ Failed to generate quote images. Server says: " + err.message;
+    }
 }
+
 
 
 async function enhanceAudio() {

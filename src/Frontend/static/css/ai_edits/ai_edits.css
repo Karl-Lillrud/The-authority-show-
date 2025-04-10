@@ -109,13 +109,13 @@ body {
 } 
 
 .result-field pre {
-  max-height: 300px;      /* Optional: controls scrollable height */
+  max-height: 300px;
   overflow-y: auto;
+  overflow-x: hidden;         /* 🔧 prevents horizontal scroll */
   padding: 8px;
   background-color: #f9f9f9;
   border: 1px solid #ddd;
   border-radius: 0.75rem;
-  white-space: pre-wrap;   /* ✅ This wraps long lines */
-  word-break: break-word;
-  overflow-x: hidden;  /* ✅ Optional: breaks very long words */
+  white-space: pre-wrap;      /* 🔧 allows wrapping of long lines */
+  word-break: break-word;     /* optional: wraps long single words */
 }
