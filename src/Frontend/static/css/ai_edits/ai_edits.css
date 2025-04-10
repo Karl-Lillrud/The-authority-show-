@@ -107,3 +107,15 @@ body {
     transform: translateY(-2px);
     box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
 } 
+
+.result-field pre {
+  max-height: 300px;      /* Optional: controls scrollable height */
+  overflow-y: auto;
+  padding: 8px;
+  background-color: #f9f9f9;
+  border: 1px solid #ddd;
+  border-radius: 0.75rem;
+  white-space: pre-wrap;   /* ✅ This wraps long lines */
+  word-break: break-word;
+  overflow-x: hidden;  /* ✅ Optional: breaks very long words */
+}

@@ -7,28 +7,47 @@ function showTab(tabName) {
             <h2>🎙 AI-Powered Transcription</h2>
             <input type="file" id="fileUploader" accept="audio/*,video/*">
             <button class="btn ai-edit-button" onclick="transcribe()">▶ Transcribe</button>
-            <pre id="transcriptionResult"></pre>
+            <div class="result-field">
+                <pre id="transcriptionResult"></pre>
+            </div>
 
             <div id="enhancementTools" style="display:none;">
                 <hr/>
                 <h3>🔧 Enhancement Tools</h3>
-                <button class="btn ai-edit-button" onclick="generateCleanTranscript()">🧹 Clean Transcript</button>
-                <pre id="cleanTranscript"></pre>
-
-                <button class="btn ai-edit-button" onclick="generateAISuggestions()">🤖 AI Suggestions</button>
-                <pre id="aiSuggestions"></pre>
-
-                <button class="btn ai-edit-button" onclick="generateShowNotes()">📝 Show Notes</button>
-                <pre id="showNotes"></pre>
-
-                <button class="btn ai-edit-button" onclick="generateQuotes()">💬 Generate Quotes</button>
-                <pre id="quotesText"></pre>
-
-                <button class="btn ai-edit-button" onclick="generateQuoteImages()">🖼️ Generate Quote Images</button>
-                <div id="quoteImages"></div>
+                <div class="result-group">
+                    <button class="btn ai-edit-button" onclick="generateCleanTranscript()">🧹 Clean Transcript</button>
+                    <div class="result-field">
+                        <pre id="cleanTranscriptResult"></pre>
+                    </div>
+                </div>
+                <div class="result-group">
+                    <button class="btn ai-edit-button" onclick="generateAISuggestions()">🤖 AI Suggestions</button>
+                    <div class="result-field">
+                        <pre id="aiSuggestionsResult"></pre>
+                    </div>
+                </div>
+                <div class="result-group">
+                    <button class="btn ai-edit-button" onclick="generateShowNotes()">📝 Show Notes</button>
+                    <div class="result-field">
+                        <pre id="showNotesResult"></pre>
+                    </div>
+                </div>
+                <div class="result-group">
+                    <button class="btn ai-edit-button" onclick="generateQuotes()">💬 Generate Quotes</button>
+                    <div class="result-field">
+                        <pre id="quotesResult"></pre>
+                    </div>
+                </div>
+                <div class="result-group">
+                    <button class="btn ai-edit-button" onclick="generateQuoteImages()">🖼️ Generate Quote Images</button>
+                    <div class="result-field">
+                        <div id="quoteImagesResult"></div>
+                    </div>
+                </div>
             </div>
-        `;
-    } else if (tabName === 'audio') {
+    `;
+}
+      else if (tabName === 'audio') {
         content.innerHTML = `
             <h2>🎵 AI Audio Enhancement</h2>
             <input type="file" id="audioUploader" accept="audio/*">
@@ -109,14 +128,15 @@ async function transcribe() {
 }
 
 async function generateCleanTranscript() {
-    const res = await fetch('/transcription/clean', {
-        method: 'POST',
-        headers: {'Content-Type': 'application/json'},
+    const res = await fetch("/transcription/clean", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ transcript: fullTranscript })
     });
 
     const data = await res.json();
-    document.getElementById("cleanTranscript").innerText = data.clean_transcript || "No clean result.";
+    document.getElementById("cleanTranscriptResult").innerText =
+        data.clean_transcript || "No clean result.";
 }
 
 async function generateAISuggestions() {
@@ -127,7 +147,7 @@ async function generateAISuggestions() {
     });
 
     const data = await res.json();
-    document.getElementById("aiSuggestions").innerText = data.ai_suggestions || "No suggestions.";
+    document.getElementById("aiSuggestionsResult").innerText = data.ai_suggestions || "No suggestions.";
 }
 
 async function generateShowNotes() {
@@ -138,7 +158,7 @@ async function generateShowNotes() {
     });
 
     const data = await res.json();
-    document.getElementById("showNotes").innerText = data.show_notes || "No notes.";
+    document.getElementById("showNotesResult").innerText = data.show_notes || "No notes.";
 }
 
 async function generateQuotes() {
@@ -149,7 +169,7 @@ async function generateQuotes() {
     });
 
     const data = await res.json();
-    document.getElementById("quotesText").innerText = data.quotes || "No quotes.";
+    document.getElementById("quotesResult").innerText = data.quotes || "No quotes.";
 }
 
 async function generateQuoteImages() {
@@ -163,7 +183,7 @@ async function generateQuoteImages() {
     });
 
     const data = await res.json();
-    const imageDiv = document.getElementById("quoteImages");
+    const imageDiv = document.getElementById("quoteImagesResult");
     imageDiv.innerHTML = "";
 
     (data.quote_images || []).forEach(url => {
