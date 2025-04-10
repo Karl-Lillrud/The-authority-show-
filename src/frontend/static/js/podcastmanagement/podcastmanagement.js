@@ -2,6 +2,7 @@ import { initPodcastFunctions } from "./podcast-functions.js";
 import { initEpisodeFunctions } from "./episode-functions.js";
 import { initGuestFunctions } from "./guest-functions.js";
 import { svgpodcastmanagement } from "./svgpodcastmanagement.js";
+import { initEmailConfigFunctions } from "./emailconfig-functions.js";
 
 console.log("podcastmanagement.js loaded");
 
@@ -165,7 +166,8 @@ document.addEventListener("DOMContentLoaded", () => {
   initPodcastFunctions();
   initEpisodeFunctions();
   initGuestFunctions();
-
+  initEmailConfigFunctions();
+  
   // Add this line to update edit buttons when the page loads
   updateEditButtons();
 
@@ -257,7 +259,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
 
-  // Close / Cancel popup
+  // Close the popup
   document
     .getElementById("close-highlight-form-popup")
     .addEventListener("click", () => {
@@ -285,6 +287,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const decorativeHeader = document.createElement("div");
   decorativeHeader.className = "decorative-header";
   document.body.prepend(decorativeHeader);
+
 });
 
 // Export shared utilities and variables

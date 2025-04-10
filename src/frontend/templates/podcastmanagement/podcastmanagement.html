@@ -79,6 +79,10 @@
             <span id="add-icon-guest" class="sidebar-icon"></span>
             <span>Add Guest</span>
           </button>
+          <button id="email-config-btn" class="sidebar-action-button">
+            <span id="email-config-icon" class="sidebar-icon"></span>
+            <span>Email Config</span>
+          </button>
         </div>
       </div>
       <div class="sidebar-footer">
@@ -406,6 +410,59 @@
               <button type="submit" class="save-btn">Add Guest</button>
             </div>
           </form>
+        </div>
+      </div>
+
+      <!-- Email Configuration Popup -->
+      <div id="email-config-popup" class="popup" style="display: none">
+        <div class="form-box">
+          <span id="close-email-config-popup" class="close-btn">&times;</span>
+          <h2 class="form-title">Email Configuration</h2>
+          <div class="form-grid">
+            <!-- Section for managing triggers -->
+            <h3 class="section-title">Manage Triggers</h3>
+            <div class="field-group full-width">
+              <label for="trigger-select">Select Trigger</label>
+              <select id="trigger-select" name="trigger">
+                <option value="booking">Booking</option>
+                <option value="preparation">Preparation</option>
+                <option value="missing_info">Missing Info</option>
+                <option value="publishing_reminder">Publishing Reminder</option>
+                <option value="join_link">Join Link</option>
+                <option value="thank_you">Thank You</option>
+                <option value="recommendations">Recommendations</option>
+                <option value="suggestions">Suggestions</option>
+                <option value="missing_social_media">Missing Social Media</option>
+              </select>
+            </div>
+            <div class="field-group full-width">
+              <label for="trigger-time">Trigger Time</label>
+              <input type="datetime-local" id="trigger-time" name="triggerTime" />
+            </div>
+            <button id="save-trigger-btn" class="save-btn">Save Trigger</button>
+
+            <!-- Section for viewing the outbox -->
+            <h3 class="section-title">Outbox</h3>
+            <div id="outbox-container">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Episode ID</th>
+                    <th>Trigger</th>
+                    <th>Recipient</th>
+                    <th>Subject</th>
+                    <th>Timestamp</th>
+                  </tr>
+                </thead>
+                <tbody id="outbox-table">
+                  <!-- Rows will be populated dynamically -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+          <div class="form-actions">
+            <button id="close-email-config-btn" class="cancel-btn">Close</button>
+          </div>
         </div>
       </div>
     </main>
