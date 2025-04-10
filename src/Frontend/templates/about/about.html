@@ -1,24 +1,33 @@
-{% extends "/components/base.html" %} {% block title %}Podcast Management{%
-    endblock %} {% block content %}
+<!DOCTYPE html>
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>About Podmanager | Professional Podcast Management</title>
+    <title>About PodManager | Professional Podcast Management</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link
     rel="stylesheet"
     href="{{ url_for('static', filename='css/about/about.css') }}"
   />
-    <script>src="{{ url_for('static', filename='js/about/about.js') }}"</script>
+  <script>src="{{ url_for('static', filename='js/about/about.js') }}"</script>
 </head>
 <body>
+    <!-- Simplified Navigation -->
+    <nav class="navbar">
+        <div class="navbar-container">
+            <a href="/" class="logo">
+                <i class="fas fa-podcast"></i>
+                PodManager
+            </a>
+        </div>
+    </nav>
 
     <!-- Hero Section -->
     <section class="hero">
         <div class="container">
             <h1>Elevate Your Podcast Production</h1>
-            <p>Podmanager is the all-in-one podcast management platform designed to streamline your workflow and enhance your content quality.</p>
-            <a href="#" class="btn">Get Started Free</a>
+            <p>PodManager is the all-in-one podcast management platform designed to streamline your workflow and enhance your content quality.</p>
+            <a href="signin.html" class="btn">Get Started Now</a>
         </div>
     </section>
 
@@ -28,7 +37,7 @@
             <div class="section-title">
                 <h2>Overview</h2>
             </div>
-            <p>Podmanager is a powerful podcast management platform designed to streamline the podcasting experience for creators. With features that assist in guest management, episode organization, team collaboration, task management, and audio enhancement, it's the all-in-one solution for podcasters looking to elevate their production workflow.</p>
+            <p>PodManager is a powerful podcast management platform designed to streamline the podcasting experience for creators. With features that assist in guest management, episode organization, team collaboration, task management, and audio enhancement, it's the all-in-one solution for podcasters looking to elevate their production workflow.</p>
         </div>
     </section>
 
@@ -89,11 +98,11 @@
     <section class="why-choose">
         <div class="container">
             <div class="section-title">
-                <h2>Why Choose Podmanager?</h2>
+                <h2>Why Choose PodManager?</h2>
             </div>
             <div class="why-choose-content">
                 <div class="why-choose-text">
-                    <p>Podmanager simplifies podcast creation and management. Whether you're a solo creator or leading a team, this platform brings all the essential tools together in one place.</p>
+                    <p>PodManager simplifies podcast creation and management. Whether you're a solo creator or leading a team, this platform brings all the essential tools together in one place.</p>
                     <p>It's designed to help you manage every aspect of your podcast from start to finish, ensuring efficiency and high-quality production at every step.</p>
                     <ul class="benefits-list">
                         <li>Save time with streamlined workflows</li>
@@ -114,9 +123,23 @@
     <section class="cta">
         <div class="container">
             <h2>Ready to Transform Your Podcast?</h2>
-            <p>Join thousands of podcasters who have elevated their production quality and streamlined their workflow with Podmanager.</p>
-            <a href="#" class="btn btn-light">Start Your Free Trial</a>
+            <p>Join thousands of podcasters who have elevated their production quality and streamlined their workflow with PodManager.</p>
+            <a href="/" class="btn btn-light">Register Now</a>
         </div>
     </section>
+
+    <!-- Simplified Footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-links">
+                <a href="{{ url_for('frontend.privacy_policy_page') }}">Privacy Policy</a> |
+                <a href="{{ url_for('frontend.terms_of_service_page') }}">Terms of Service</a> |
+                <a href="{{ url_for('frontend.about_page') }}">About PodManager</a>
+            </div>
+            <div class="copyright">
+                <p>&copy; 2023 PodManager. All rights reserved.</p>
+            </div>
+        </div>
+    </footer>
 </body>
-{% endblock %}
+</html>
