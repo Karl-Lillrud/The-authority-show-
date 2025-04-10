@@ -1,3 +1,5 @@
+const notificiationsUrl = "../../templates/components/notifications.html";
+
 // Notification system for team dashboard
 export function showNotification(title, message, type = "info") {
   // Remove any existing notification
@@ -8,8 +10,7 @@ export function showNotification(title, message, type = "info") {
 
   // Import SVG icons
   import("./notificationsSvg.js").then(({ successSvg, errorSvg, infoSvg, closeSvg }) => {
-    // Fetch the notification HTML
-    fetch('../../templates/components/notifications.html')
+    fetch(notificiationsUrl)
       .then((response) => response.text())
       .then((html) => {
         
@@ -20,12 +21,9 @@ export function showNotification(title, message, type = "info") {
         document.head.appendChild(cssLink); 
         
         // Select the notification template
-        const notificationTemplate = tempDiv.querySelector('#notification-template');
-
-        // Clone the template to create a new notification instance
-        const notification = notificationTemplate.cloneNode(true);
+        const notification = tempDiv.querySelector('#notification-template');
+      
         notification.id = ''; // Remove the ID to avoid duplicates
-
         notification.className = `notification ${type}`;
 
         // Set icon based on type
@@ -34,7 +32,6 @@ export function showNotification(title, message, type = "info") {
 
         notification.querySelector(".notification-title").textContent = title;
         notification.querySelector(".notification-message").textContent = message;
-
         notification.querySelector(".notification-close").innerHTML = closeSvg;
 
         document.body.appendChild(notification);
@@ -74,31 +71,24 @@ export function showConfirmationPopup(title, message, onConfirm, onCancel) {
     existingPopup.remove();
   }
 
-  fetch('../../templates/components/notifications.html')
+  fetch(notificiationsUrl)
     .then((response) => response.text())
     .then((html) => {
       const tempDiv = document.createElement("div");
-      /* tempDiv.className = "popup confirmation-popup show"; */
       tempDiv.innerHTML = html;
-
-      // Select the confirmation popup template
-      
 
       const cssLink = loadCssLink(tempDiv, '#notification-style'); // The css path is in the div
       document.head.appendChild(cssLink); 
 
-      const popupTemplate = tempDiv.querySelector('#confirmation-popup-template');
-      // Clone the template to create a new confirmation popup instance
-      const popup = popupTemplate.cloneNode(true);
+      const popup = tempDiv.querySelector('#confirmation-popup-template');
+      popup.className = "popup confirmation-popup show";
       popup.id = ''; // Remove the ID to avoid duplicates
 
       popup.querySelector('.form-title').textContent = title;
       popup.querySelector('.form-message').textContent = message;
-      popup.className = "popup confirmation-popup show";
-      // Add to DOM
+
       document.body.appendChild(popup);
 
-      // Add event listeners for buttons
       document.getElementById("confirmPopupBtn").addEventListener("click", () => {
         onConfirm();
         popup.remove();
@@ -110,45 +100,6 @@ export function showConfirmationPopup(title, message, onConfirm, onCancel) {
       });
     });
 }
-
-/* export function showConfirmationPopup(title, message, onConfirm, onCancel) {
-  // Remove any existing popup
-  const existingPopup = document.querySelector(".confirmation-popup");
-  if (existingPopup) {
-    existingPopup.remove();
-  }
-
-  // Create popup elements
-  const popup = document.createElement("div");
-  popup.className = "popup confirmation-popup show";
-
-  popup.innerHTML = `
-      <div class="form-box">
-        <h2 class="form-title">${title}</h2>
-        <p>${message}</p>
-        <div class="form-actions">
-          <button class="cancel-btn" id="cancelPopupBtn">Cancel</button>
-          <button class="save-btn" id="confirmPopupBtn">Confirm</button>
-        </div>
-      </div>
-    `;
-
-  // Add to DOM
-  document.body.appendChild(popup);
-
-  // Add event listeners for buttons
-  document.getElementById("confirmPopupBtn").addEventListener("click", () => {
-    onConfirm();
-    popup.remove();
-  });
-
-  document.getElementById("cancelPopupBtn").addEventListener("click", () => {
-    if (onCancel) onCancel();
-    popup.remove();
-  });
-} */
-
-  
 
 function loadCssLink(container, templateElement) {
   const cssPath = container.querySelector(templateElement).dataset.css; // This is the CSS path from the template
