@@ -1,3 +1,7 @@
+let enhancedAudioBlob = null;
+let enhancedAudioId = null;
+let fullAnalysisResult = null;
+
 function showTab(tabName) {
     const content = document.getElementById('content');
     content.innerHTML = ''; // Clear existing content
@@ -235,7 +239,6 @@ async function enhanceAudio() {
     const input = document.getElementById('audioUploader');
     const audioControls = document.getElementById('audioControls');
     const file = input.files[0];
-
     if (!file) return alert("Upload an audio file first.");
 
     audioControls.innerHTML = "🔄 Enhancing... Please wait.";
@@ -243,32 +246,22 @@ async function enhanceAudio() {
     formData.append("audio", file);
 
     try {
-        const response = await fetch("/audio/enhancement", {
-            method: "POST",
-            body: formData
-        });
-
+        const response = await fetch("/audio/enhancement", { method: "POST", body: formData });
         const result = await response.json();
-        const enhancedAudioId = result.enhanced_audio;
+        enhancedAudioId = result.enhanced_audio;
 
-        if (enhancedAudioId) {
-            const audioRes = await fetch(`/get_file/${enhancedAudioId}`);
-            const audioBlob = await audioRes.blob();
-            enhancedAudioBlob = audioBlob;
+        const audioRes = await fetch(`/get_file/${enhancedAudioId}`);
+        const blob = await audioRes.blob();
+        enhancedAudioBlob = blob;
 
-            const audioURL = URL.createObjectURL(audioBlob);
-            audioControls.innerHTML = `
-                <p>✅ Audio enhancement complete!</p>
-                <audio controls src="${audioURL}"></audio>
-            `;
-
-            document.getElementById("audioAnalysisSection").style.display = "block";
-            const downloadLink = document.getElementById("downloadEnhanced");
-            downloadLink.href = audioURL;
-            downloadLink.style.display = "inline-block";
-        } else {
-            audioControls.innerHTML = "❌ Failed to enhance audio.";
-        }
+        const url = URL.createObjectURL(blob);
+        audioControls.innerHTML = `✅ Audio enhancement complete!<br><audio controls src="${url}"></audio>`;
+        document.getElementById("audioAnalysisSection").style.display = "block";
+        document.getElementById("audioCuttingSection").style.display = "block";
+        document.getElementById("aiCuttingSection").style.display = "block";
+        const dl = document.getElementById("downloadEnhanced");
+        dl.href = url;
+        dl.style.display = "inline-block";
     } catch (err) {
         audioControls.innerHTML = `❌ Error: ${err.message}`;
     }
@@ -308,10 +301,7 @@ async function analyzeEnhancedAudio() {
 async function cutAudio() {
     const start = parseFloat(document.getElementById("startTime").value);
     const end = parseFloat(document.getElementById("endTime").value);
-
-    if (isNaN(start) || isNaN(end) || start >= end) {
-        return alert("⚠️ Invalid start/end times");
-    }
+    if (isNaN(start) || isNaN(end) || start >= end) return alert("Invalid times");
 
     const res = await fetch('/clip_audio', {
         method: 'POST',
@@ -321,33 +311,28 @@ async function cutAudio() {
 
     const data = await res.json();
     const cutAudioId = data.clipped_audio;
-
     const audioRes = await fetch(`/get_file/${cutAudioId}`);
     const blob = await audioRes.blob();
     const url = URL.createObjectURL(blob);
 
     document.getElementById("cutResult").innerHTML = `<audio controls src="${url}"></audio>`;
-    const download = document.getElementById("downloadCut");
-    download.href = url;
-    download.style.display = "inline-block";
+    const dl = document.getElementById("downloadCut");
+    dl.href = url;
+    dl.style.display = "inline-block";
 }
 
 async function aiCutAudio() {
     const res = await fetch('/ai_cut_audio', {
         method: 'POST',
-        headers: {'Content-Type': 'application/json'},
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ file_id: enhancedAudioId })
     });
 
-    const result = await res.json();
-
-    const transcript = result.cleaned_transcript || "No transcript";
-    const cuts = result.suggested_cuts?.map(cut =>
-        `🗣 "${cut.sentence}" [${cut.start}s - ${cut.end}s] — Certainty: ${cut.certainty_score}`
-    ).join("\n") || "No suggested cuts.";
-
-    document.getElementById("aiTranscript").innerText = transcript;
-    document.getElementById("aiSuggestedCuts").innerText = cuts;
+    const data = await res.json();
+    document.getElementById("aiTranscript").innerText = data.cleaned_transcript;
+    document.getElementById("aiSuggestedCuts").innerText = data.suggested_cuts.map(
+        cut => `💬 "${cut.sentence}" (${cut.start}s - ${cut.end}s) | Confidence: ${cut.certainty_score}`
+    ).join("\n");
 }
 
 async function enhanceVideo() {
