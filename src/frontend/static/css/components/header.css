@@ -109,6 +109,7 @@ header {
   z-index: 100;
   width: 100%; /* Ensure header takes full width */
   box-sizing: border-box; /* Include padding in width calculation */
+  min-height: 116px;
 }
 
 header:hover {
@@ -472,6 +473,7 @@ header:hover {
   #headerPodcastDropdown {
     max-width: 120px;
     font-size: 0.75rem; /* Smaller text */
+    display: none;
   }
 
   .menu-toggle {

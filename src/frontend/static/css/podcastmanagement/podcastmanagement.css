@@ -42,7 +42,7 @@ body {
 /* App Container */
 .app-container {
   display: flex;
-  height: calc(100vh - var(--header-height, 60px));
+  height: calc(100vh - 116px - 60px);
   margin-top: 0;
   position: relative;
   overflow: hidden;
@@ -1859,6 +1859,11 @@ select:invalid {
 
 /* Responsive adjustments */
 @media (max-width: 768px) {
+  .app-container {
+    flex-direction: column;
+    overflow-y: auto; /* Lägg till detta för att behålla scroll på hela appen om det behövs */
+  }
+
   .podcast-header-section {
     flex-direction: column;
   }
