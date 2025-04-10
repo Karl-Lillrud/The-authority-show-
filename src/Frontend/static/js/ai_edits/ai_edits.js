@@ -50,7 +50,12 @@ function showTab(tabName) {
       else if (tabName === 'audio') {
         content.innerHTML = `
             <h2>🎵 AI Audio Enhancement</h2>
-            <input type="file" id="audioUploader" accept="audio/*">
+            <input type="file" id="audioUploader" accept="audio/*" onchange="previewOriginalAudio()">
+            <div id="originalAudioContainer" style="display: none; margin-bottom: 1rem;">
+                <p>🎧 <strong>Original Audio</strong></p>
+                <audio id="originalAudioPlayer" controls style="width: 100%"></audio>
+            </div>
+
             <button class="btn ai-edit-button" onclick="enhanceAudio()">Enhance Audio</button>
             <div id="audioControls"></div>
     
@@ -363,4 +368,18 @@ async function enhanceVideo() {
 
     const result = await response.json();
     document.getElementById('videoResult').innerText = JSON.stringify(result, null, 2);
+}
+
+function previewOriginalAudio() {
+    const fileInput = document.getElementById('audioUploader');
+    const file = fileInput.files[0];
+
+    if (!file) return;
+
+    const audioURL = URL.createObjectURL(file);
+    const audioPlayer = document.getElementById('originalAudioPlayer');
+    const container = document.getElementById('originalAudioContainer');
+
+    audioPlayer.src = audioURL;
+    container.style.display = 'block';
 }
