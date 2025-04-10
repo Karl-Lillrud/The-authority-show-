@@ -62,6 +62,11 @@ function showTab(tabName) {
 
             <button class="btn ai-edit-button" onclick="enhanceAudio()">Enhance Audio</button>
             <div id="audioControls"></div>
+            
+                <div id="enhancedAudioContainer" style="display: none; margin-top: 1rem;">
+                    <p>🎚 <strong>Enhanced Audio</strong></p>
+                    <audio id="enhancedAudioPlayer" controls style="width: 100%"></audio>
+                </div>
     
             <div id="audioAnalysisSection" style="display: none;">
                 <hr/>
