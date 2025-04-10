@@ -8,6 +8,27 @@ let activeAudioId = null;
 
 window.CURRENT_USER_ID = localStorage.getItem("user_id");
 
+const CREDIT_COSTS = {
+    transcription: 600,
+    ai_suggestions: 300,
+    ai_quotes: 200,
+    show_notes: 250,
+    ai_qoute_images: 1000,
+    translation: 150,
+    audio_enhancment: 500,
+    voice_isolation: 500,
+    audio_cutting: 500,
+    ai_audio_cutting: 500,
+    video_enhancement: 800,
+    video_cutting: 800,
+    ai_audio_analysis: 300,
+};
+
+function labelWithCredits(text, key) {
+    const cost = CREDIT_COSTS[key];
+    return `${text} <span style="color: gray; font-size: 0.9em;">(${cost} credits)</span>`;
+}
+
 function showTab(tabName) {
     const content = document.getElementById('content');
     content.innerHTML = ''; // Clear existing content
@@ -16,7 +37,9 @@ function showTab(tabName) {
         content.innerHTML = `
             <h2>🎙 AI-Powered Transcription</h2>
             <input type="file" id="fileUploader" accept="audio/*,video/*">
-            <button class="btn ai-edit-button" onclick="transcribe()">▶ Transcribe</button>
+            <button class="btn ai-edit-button" onclick="transcribe()">
+              ${labelWithCredits("▶ Transcribe", "transcription")}
+            </button>
             <div class="result-field">
                 <pre id="transcriptionResult"></pre>
             </div>
@@ -31,33 +54,40 @@ function showTab(tabName) {
                     </div>
                 </div>
                 <div class="result-group">
-                    <button class="btn ai-edit-button" onclick="generateAISuggestions()">🤖 AI Suggestions</button>
+                    <button class="btn ai-edit-button" onclick="generateAISuggestions()">
+                      ${labelWithCredits("🤖 AI Suggestions", "ai_suggestions")}
+                    </button>
                     <div class="result-field">
                         <pre id="aiSuggestionsResult"></pre>
                     </div>
                 </div>
                 <div class="result-group">
-                    <button class="btn ai-edit-button" onclick="generateShowNotes()">📝 Show Notes</button>
+                    <button class="btn ai-edit-button" onclick="generateShowNotes()">
+                      ${labelWithCredits("📝 Show Notes", "show_notes")}
+                    </button>
                     <div class="result-field">
                         <pre id="showNotesResult"></pre>
                     </div>
                 </div>
                 <div class="result-group">
-                    <button class="btn ai-edit-button" onclick="generateQuotes()">💬 Generate Quotes</button>
+                    <button class="btn ai-edit-button" onclick="generateQuotes()">
+                      ${labelWithCredits("💬 Generate Quotes", "ai_quotes")}
+                    </button>
                     <div class="result-field">
                         <pre id="quotesResult"></pre>
                     </div>
                 </div>
                 <div class="result-group">
-                    <button class="btn ai-edit-button" onclick="generateQuoteImages()">🖼️ Generate Quote Images</button>
+                    <button class="btn ai-edit-button" onclick="generateQuoteImages()">
+                      ${labelWithCredits("🖼️ Generate Quote Images", "ai_qoute_images")}
+                    </button>
                     <div class="result-field">
                         <div id="quoteImagesResult"></div>
                     </div>
                 </div>
             </div>
-    `;
-}
-      else if (tabName === 'audio') {
+        `;
+    } else if (tabName === 'audio') {
         content.innerHTML = `
             <h2>🎵 AI Audio Enhancement</h2>
             <input type="file" id="audioUploader" accept="audio/*" onchange="previewOriginalAudio()">
@@ -70,27 +100,29 @@ function showTab(tabName) {
                 <h3>🔊 Choose Audio Processing Method</h3>
                 <p style="margin-bottom: 1rem;">Select one of the following enhancements for your uploaded audio file:</p>
 
-                <!-- 🎤 Voice Isolation -->
                 <div id="voiceIsolationSection" style="margin-bottom: 1.5rem;">
                     <h4>🎤 <strong>Voice Isolation (Powered by ElevenLabs)</strong></h4>
-                    <button class="btn ai-edit-button" onclick="runVoiceIsolation()">🎙️ Isolate Voice</button>
+                    <button class="btn ai-edit-button" onclick="runVoiceIsolation()">
+                      ${labelWithCredits("🎙️ Isolate Voice", "voice_isolation")}
+                    </button>
                     <div id="isolatedVoiceResult" style="margin-top: 1rem;"></div>
-
                 </div>
 
-                <!-- 🎚️ Audio Enhancement -->
                 <div id="audioEnhancementSection">
                     <h4>🎚️ <strong>Audio Enhancement (Noise Reduction & Normalization)</strong></h4>
-                    <button class="btn ai-edit-button" onclick="enhanceAudio()">✨ Enhance Audio</button>
+                    <button class="btn ai-edit-button" onclick="enhanceAudio()">
+                      ${labelWithCredits("✨ Enhance Audio", "audio_enhancment")}
+                    </button>
                     <div id="audioControls" style="margin-top: 1rem;"></div>
                 </div>
             </div>
 
-
             <div id="audioAnalysisSection" style="display: none;">
                 <hr/>
                 <h3>🤖 AI Analysis</h3>
-                <button class="btn ai-edit-button" onclick="analyzeEnhancedAudio()">📊 Analyze</button>
+                <button class="btn ai-edit-button" onclick="analyzeEnhancedAudio()">
+                  ${labelWithCredits("📊 Analyze", "ai_audio_analysis")}
+                </button>
                 <pre id="analysisResults"></pre>
                 <a id="downloadEnhanced" style="display:none;" download="processed_audio.wav">📥 Download Processed Audio</a>
             </div>
@@ -100,7 +132,9 @@ function showTab(tabName) {
                 <h3>✂ Audio Cutting</h3>
                 <label>Start: <input type="number" id="startTime" min="0" step="0.1"></label>
                 <label>End: <input type="number" id="endTime" min="0" step="0.1"></label>
-                <button class="btn ai-edit-button" onclick="cutAudio()">✂ Cut</button>
+                <button class="btn ai-edit-button" onclick="cutAudio()">
+                  ${labelWithCredits("✂ Cut", "audio_cutting")}
+                </button>
                 <div id="cutResult"></div>
                 <a id="downloadCut" style="display:none;" download="cut_audio.wav">📥 Download Cut</a>
             </div>
@@ -108,7 +142,9 @@ function showTab(tabName) {
             <div id="aiCuttingSection" style="display: none;">
                 <hr/>
                 <h3>🧠 AI Cutting + Transcript</h3>
-                <button class="btn ai-edit-button" onclick="aiCutAudio()">🧠 Run AI Cut</button>
+                <button class="btn ai-edit-button" onclick="aiCutAudio()">
+                  ${labelWithCredits("🧠 Run AI Cut", "ai_audio_cutting")}
+                </button>
                 <pre id="aiTranscript"></pre>
                 <pre id="aiSuggestedCuts"></pre>
             </div>
@@ -121,11 +157,14 @@ function showTab(tabName) {
                 <p>🎬 <strong>Original Video</strong></p>
                 <video id="originalVideoPlayer" controls style="width: 100%"></video>
             </div>
-            <button class="btn ai-edit-button" onclick="enhanceVideo()">Enhance Video</button>
+            <button class="btn ai-edit-button" onclick="enhanceVideo()">
+              ${labelWithCredits("✨ Enhance Video", "video_enhancement")}
+            </button>
             <div id="videoResult"></div>
         `;
     }
 }
+
 
 let rawTranscript = "";
 let fullTranscript = "";
@@ -188,29 +227,32 @@ async function generateCleanTranscript() {
     }
 }
 
-
 async function generateAISuggestions() {
     try {
+        await consumeUserCredits("ai_suggestions");
+
         const res = await fetch('/transcription/ai_suggestions', {
             method: 'POST',
-            headers: {'Content-Type': 'application/json'},
+            headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ transcript: rawTranscript })
         });
 
         const data = await res.json();
         document.getElementById("aiSuggestionsResult").innerText = data.ai_suggestions || "No suggestions.";
     } catch (err) {
-        // 🔧 Show error message if OpenAI or backend fails
         document.getElementById("aiSuggestionsResult").innerText =
-            "❌ Failed to generate suggestions. Server says: " + err.message;
+            "❌ Not enough credits: " + err.message;
     }
 }
 
+
 async function generateShowNotes() {
     try {
+        await consumeUserCredits("show_notes");
+
         const res = await fetch('/transcription/show_notes', {
             method: 'POST',
-            headers: {'Content-Type': 'application/json'},
+            headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ transcript: rawTranscript })
         });
 
@@ -218,16 +260,19 @@ async function generateShowNotes() {
         document.getElementById("showNotesResult").innerText = data.show_notes || "No notes.";
     } catch (err) {
         document.getElementById("showNotesResult").innerText =
-            "❌ Failed to generate show notes. Server says: " + err.message;
+            "❌ Not enough credits: " + err.message;
     }
 }
 
 
+
 async function generateQuotes() {
     try {
+        await consumeUserCredits("ai_quotes");
+
         const res = await fetch('/transcription/quotes', {
             method: 'POST',
-            headers: {'Content-Type': 'application/json'},
+            headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ transcript: rawTranscript })
         });
 
@@ -235,9 +280,10 @@ async function generateQuotes() {
         document.getElementById("quotesResult").innerText = data.quotes || "No quotes.";
     } catch (err) {
         document.getElementById("quotesResult").innerText =
-            "❌ Failed to generate quotes. Server says: " + err.message;
+            "❌ Not enough credits: " + err.message;
     }
 }
+
 
 
 async function generateQuoteImages() {
@@ -245,9 +291,11 @@ async function generateQuoteImages() {
     if (!quotes) return alert("Generate quotes first.");
 
     try {
+        await consumeUserCredits("ai_qoute_images");
+
         const res = await fetch('/transcription/quote_images', {
             method: 'POST',
-            headers: {'Content-Type': 'application/json'},
+            headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ quotes })
         });
 
@@ -264,9 +312,10 @@ async function generateQuoteImages() {
         });
     } catch (err) {
         document.getElementById("quoteImagesResult").innerText =
-            "❌ Failed to generate quote images. Server says: " + err.message;
+            "❌ Not enough credits: " + err.message;
     }
 }
+
 
 
 
@@ -375,6 +424,13 @@ async function analyzeEnhancedAudio() {
     const resultEl = document.getElementById("analysisResults");
     if (!activeAudioBlob) return alert("No audio loaded. Enhance or Isolate first.");
 
+    try {
+        await consumeUserCredits("ai_audio_analysis");
+    } catch (err) {
+        resultEl.innerText = `❌ Not enough credits: ${err.message}`;
+        return;
+    }
+
     resultEl.innerText = "🔍 Analyzing...";
     const formData = new FormData();
     formData.append("audio", activeAudioBlob, "processed_audio.wav");
@@ -394,10 +450,17 @@ async function analyzeEnhancedAudio() {
     }
 }
 
+
 async function cutAudio() {
     const start = parseFloat(document.getElementById("startTime").value);
     const end = parseFloat(document.getElementById("endTime").value);
     if (!activeAudioId || isNaN(start) || isNaN(end) || start >= end) return alert("Invalid times or no audio ID.");
+
+    try {
+        await consumeUserCredits("audio_cutting");
+    } catch (err) {
+        return alert("❌ Not enough credits: " + err.message);
+    }
 
     const res = await fetch('/clip_audio', {
         method: 'POST',
@@ -418,8 +481,15 @@ async function cutAudio() {
     dl.style.display = "inline-block";
 }
 
+
 async function aiCutAudio() {
     if (!activeAudioId) return alert("No audio loaded.");
+
+    try {
+        await consumeUserCredits("ai_audio_cutting");
+    } catch (err) {
+        return alert("❌ Not enough credits: " + err.message);
+    }
 
     const res = await fetch('/ai_cut_audio', {
         method: 'POST',
@@ -436,12 +506,19 @@ async function aiCutAudio() {
         .join("\n") || "No suggested cuts found.";
 }
 
+
 async function enhanceVideo() {
     const fileInput = document.getElementById('videoUploader');
     const file = fileInput.files[0];
     if (!file) {
         alert('Please upload a video file.');
         return;
+    }
+
+    try {
+        await consumeUserCredits("video_enhancement");
+    } catch (err) {
+        return alert("❌ Not enough credits: " + err.message);
     }
 
     const videoResult = document.getElementById('videoResult');
@@ -451,7 +528,6 @@ async function enhanceVideo() {
     formData.append('video', file);
 
     try {
-        // Step 1: Upload the video file and get a video_id
         const uploadResponse = await fetch('/ai_videoedit', {
             method: 'POST',
             body: formData,
@@ -460,39 +536,34 @@ async function enhanceVideo() {
         if (!uploadResponse.ok) {
             throw new Error(`Video upload failed: ${uploadResponse.statusText}`);
         }
-        
+
         const uploadResult = await uploadResponse.json();
         const video_id = uploadResult.video_id;
-        if (!video_id) {
-            throw new Error('No video_id returned from upload.');
-        }
-        
+        if (!video_id) throw new Error('No video_id returned from upload.');
+
         videoResult.innerText = "🔄 Enhancing video... Please wait.";
-        
-        // Step 2: Call the enhance endpoint with the video_id
+
         const enhanceResponse = await fetch('/ai_videoenhance', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ video_id })
         });
-        
+
         if (!enhanceResponse.ok) {
             throw new Error(`Enhancement failed: ${enhanceResponse.statusText}`);
         }
-        
+
         const enhanceResult = await enhanceResponse.json();
         const processed_id = enhanceResult.processed_video_id;
-        if (!processed_id) {
-            throw new Error('No processed_video_id returned from enhancement.');
-        }
-        
-        // Step 3: Construct video URL from processed_id and display the video
+        if (!processed_id) throw new Error('No processed_video_id returned from enhancement.');
+
         const videoURL = `/get_video/${processed_id}`;
         videoResult.innerHTML = `<video controls src="${videoURL}" style="width: 100%; margin-top: 1rem;"></video>`;
     } catch (err) {
         videoResult.innerText = `❌ ${err.message}`;
     }
 }
+
 
 function previewOriginalAudio() {
     const fileInput = document.getElementById('audioUploader');
