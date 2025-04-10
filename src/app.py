@@ -21,18 +21,17 @@ from backend.routes.guestpage import guestpage_bp
 from backend.routes.guest_to_eposide import guesttoepisode_bp
 from backend.utils.email_utils import send_email
 from backend.utils.scheduler import start_scheduler
-
-from backend.routes.transcription import transcription_bp
 from backend.routes.landingpage import landingpage_bp
 from dotenv import load_dotenv
 from backend.utils import venvupdate
 from backend.database.mongo_connection import collection
 from backend.routes.Mailing_list import Mailing_list_bp
 from backend.routes.user import user_bp
-from backend.routes.audio_routes import audio_bp
-from backend.routes.video_routes import video_bp
-
 from backend.routes.highlight import highlights_bp
+#from backend.routes.audio_routes import audio_bp
+#from backend.routes.video_routes import video_bp
+#from backend.routes.transcription import transcription_bp
+
 
 
 if os.getenv("SKIP_VENV_UPDATE", "false").lower() not in ("true", "1", "yes"):
@@ -70,6 +69,7 @@ app.config["PREFERRED URL SCHEME"] = "https"
 # Register blueprints for different routes
 app.register_blueprint(auth_bp)
 app.register_blueprint(user_bp)
+app.register_blueprint(forgotpass_bp)
 app.register_blueprint(podcast_bp)  # Register the podcast blueprint
 app.register_blueprint(dashboard_bp)
 app.register_blueprint(pod_management_bp)
@@ -92,7 +92,13 @@ app.register_blueprint(audio_bp)
 app.register_blueprint(video_bp)
 # Register the guest_form blueprint with URL prefix
 
+app.register_blueprint(guest_form_bp, url_prefix="/guest-form")  # Register the guest_form blueprint with URL prefix
+app.register_blueprint(user_bp)
+
 app.register_blueprint(landingpage_bp)
+#app.register_blueprint(transcription_bp)
+#app.register_blueprint(audio_bp)
+#app.register_blueprint(video_bp) # Register the guest_form blueprint with URL prefix
 
 # Set the application environment (defaults to production)
 APP_ENV = os.getenv("APP_ENV", "production")
