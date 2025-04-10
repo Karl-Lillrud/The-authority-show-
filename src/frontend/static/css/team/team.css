@@ -57,7 +57,7 @@ body {
 /* App Container */
 .app-container {
   display: flex;
-  min-height: calc(100vh - var(--header-height));
+  min-height: calc(100vh - 116px - 60px);
   position: relative;
   overflow: hidden;
 }

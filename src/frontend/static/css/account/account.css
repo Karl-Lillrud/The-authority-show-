@@ -343,7 +343,7 @@ button {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 1rem;
+  margin-bottom: 2rem;
 }
 
 .profile-pic-wrapper {
@@ -352,50 +352,72 @@ button {
   height: 120px;
   border-radius: 50%;
   overflow: hidden;
+  border: 3px solid var(--primary-light);
 }
 
 #profile-pic {
   width: 100%;
   height: 100%;
   object-fit: cover;
-  border-radius: 50%;
 }
 
-.profile-pic-overlay {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background-color: rgba(0, 0, 0, 0.5);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  opacity: 0;
-  transition: opacity 0.2s ease;
-  cursor: pointer;
+/* Style for the profile picture label */
+.profile-pic-label {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--foreground);
+  margin-bottom: 0.5rem;
+  text-align: center;
+  display: block;
 }
 
-.profile-pic-wrapper:hover .profile-pic-overlay {
-  opacity: 1;
-}
-
-.edit-icon {
-  color: white;
-}
-
+/* Ensure the button is centered and below the image */
 .upload-button {
-  background-color: transparent;
-  color: var(--primary);
+  display: block;
+  margin: 0.5rem auto 0;
+  background-color: var(--primary);
+  color: white;
   border: none;
+  border-radius: var(--radius);
+  padding: 0.75rem 1.5rem;
   font-size: 0.875rem;
   font-weight: 500;
-  padding: 0;
+  text-align: center;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
 }
 
 .upload-button:hover {
-  color: var(--primary-hover);
-  text-decoration: underline;
+  background-color: var(--primary-hover);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* Change the upload button to match primary button style */
+#upload-pic {
+  background-color: var(--primary);
+  color: white;
+  border: none;
+  border-radius: var(--radius);
+  padding: 0.75rem 1.5rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  text-align: center;
+  cursor: pointer;
+  transition: background-color 0.2s ease, transform 0.1s ease;
+  display: block;
+  margin: 0.5rem auto 0;
+}
+
+#upload-pic:hover {
+  background-color: var(--primary-hover);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+#upload-pic:active {
+  transform: translateY(1px);
+  animation: pulse 0.5s;
 }
 
 .profile-form {
@@ -403,6 +425,48 @@ button {
   flex-direction: column;
   gap: 1.5rem;
   width: 100%;
+}
+
+/* Profile Info Card Styles */
+.profile-info-card {
+  background-color: var(--background);
+  border-radius: var(--radius);
+  padding: 1.5rem;
+  margin-bottom: 1.5rem;
+  border: 1px solid var(--border);
+  box-shadow: var(--card-shadow);
+}
+
+.profile-info-item {
+  display: flex;
+  margin-bottom: 1.25rem;
+  padding-bottom: 1.25rem;
+  border-bottom: 1px solid var(--border);
+}
+
+.profile-info-item:last-child {
+  margin-bottom: 0;
+  padding-bottom: 0;
+  border-bottom: none;
+}
+
+.info-label {
+  flex: 0 0 30%;
+  font-weight: 600;
+  color: var(--muted-foreground);
+  font-size: 0.875rem;
+}
+
+.info-value {
+  flex: 0 0 70%;
+  font-size: 1rem;
+  color: var(--foreground);
+}
+
+.profile-actions {
+  margin-top: 1.5rem;
+  display: flex;
+  justify-content: flex-start;
 }
 
 /* Notifications Container */
@@ -974,6 +1038,20 @@ input:invalid {
 
 input:focus:invalid {
   box-shadow: 0 0 0 2px rgba(239, 68, 68, 0.2);
+}
+/* Add this to your CSS file */
+.save-profile-btn {
+  margin-top: 1rem;
+  margin-bottom: 1rem;
+  width: auto;
+  padding: 0.75rem 1.5rem;
+}
+
+/* Update form-actions to only have the cancel button positioned appropriately */
+.profile-form .form-actions {
+  margin-top: 0.5rem;
+  display: flex;
+  justify-content: flex-end;
 }
 
 /* Animation for form submission */
