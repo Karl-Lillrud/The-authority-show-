@@ -255,7 +255,7 @@ async function enhanceAudio() {
         const result = await response.json();
         enhancedAudioId = result.enhanced_audio;
 
-        const audioRes = await fetch(`/get_file/${enhancedAudioId}`);
+        const audioRes = await fetch(`/transcription/get_file/${enhancedAudioId}`);
         const blob = await audioRes.blob();
         enhancedAudioBlob = blob;
 
@@ -310,13 +310,17 @@ async function cutAudio() {
 
     const res = await fetch('/clip_audio', {
         method: 'POST',
-        headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({ file_id: enhancedAudioId, start_time: start, end_time: end })
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            file_id: enhancedAudioId,
+            clips: [{ start: start, end: end }]
+        })
     });
+    
 
     const data = await res.json();
     const cutAudioId = data.clipped_audio;
-    const audioRes = await fetch(`/get_file/${cutAudioId}`);
+    const audioRes = await fetch(`transcription/get_file/${cutAudioId}`);
     const blob = await audioRes.blob();
     const url = URL.createObjectURL(blob);
 
