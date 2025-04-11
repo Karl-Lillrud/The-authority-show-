@@ -47,8 +47,12 @@ API_BASE_URL = os.getenv("API_BASE_URL", "http://127.0.0.1:8000")
 @auth_bp.route("/signin", methods=["GET"], endpoint="signin")
 @auth_bp.route("/", methods=["GET"])
 def signin_page():
+    # Check if the user has an active session cookie
+    if "user_id" in session and session.get("user_id"):
+        return redirect("/dashboard")  # Redirect to dashboard if session is active
+
     if request.cookies.get("remember_me") == "true":
-        return redirect("/dashboard")
+        return redirect("/podprofile")  # Redirect to podprofile instead of dashboard
     return render_template("signin/signin.html", API_BASE_URL=API_BASE_URL)
 
 
@@ -88,48 +92,6 @@ def logout_user():
     if isinstance(response, dict):
         return jsonify(response), 200
     return jsonify({"message": "Logout successful"}), 200
-
-
-@auth_bp.route("/register", methods=["GET"])
-def register_page():
-    # Get the invite token from the URL parameters
-    invite_token = request.args.get("token")
-
-    if invite_token:
-        # Verify the invite token
-        invite_service = TeamInviteService()
-        response, status = invite_service.verify_invite(invite_token)
-
-        if status == 200:
-            # Render the team member registration form with the invite data
-            return render_template(
-                "team/register-team-member.html",
-                email=response.get("email"),
-                team_name=response.get("teamName", "the team"),
-                invite_token=invite_token,
-            )
-        else:
-            flash(response.get("error", "Invalid invitation link"), "error")
-            return redirect(url_for("auth_bp.signin"))
-
-    # Regular registration page if no token
-    return render_template("register/register.html")
-
-
-@auth_bp.route("/register", methods=["POST"])
-def register_submit():
-    if request.content_type != "application/json":
-        return (
-            jsonify({"error": "Invalid Content-Type. Expected application/json"}),
-            415,
-        )
-
-    data = request.get_json()
-    response, status_code = auth_repo.register(data)
-    # Convert possible Response object into a JSON dict
-    if hasattr(response, "get_json"):
-        response = response.get_json()
-    return jsonify(response), status_code
 
 
 @auth_bp.route("/register-team-member", methods=["GET"])
@@ -207,7 +169,7 @@ def send_login_link():
 
     try:
         # Construct the log-in link
-        login_link = f"{request.host_url}podprofile?email={email}"  # Updated to redirect to podprofile
+        login_link = f"{request.host_url}podprofile?email={email}"  # Redirect to podprofile
         logger.info(f"Generated log-in link for {email}: {login_link}")
 
         # Send the log-in link via email

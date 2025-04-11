@@ -2,8 +2,6 @@ import os
 import logging
 from flask import Flask, request, session, g, jsonify, render_template
 from flask_cors import CORS
-from backend.routes.auth import auth_bp
-from backend.routes.forgot_pass import forgotpass_bp
 from backend.routes.podcast import podcast_bp  # Import the podcast blueprint
 from backend.routes.dashboard import dashboard_bp
 from backend.routes.pod_management import pod_management_bp
@@ -20,7 +18,6 @@ from backend.routes.podprofile import podprofile_bp  # Import the podprofile blu
 from backend.routes.frontend import frontend_bp  # Import the frontend blueprint
 from backend.routes.guestpage import guestpage_bp
 from backend.routes.guest_to_eposide import guesttoepisode_bp
-from backend.routes.guest_form import guest_form_bp  # Import the guest_form blueprint
 from backend.utils.email_utils import send_email
 from backend.utils.scheduler import start_scheduler
 from backend.routes.landingpage import landingpage_bp
@@ -30,9 +27,10 @@ from backend.database.mongo_connection import collection
 from backend.routes.Mailing_list import Mailing_list_bp
 from backend.routes.user import user_bp
 from backend.routes.highlight import highlights_bp
-#from backend.routes.audio_routes import audio_bp
-#from backend.routes.video_routes import video_bp
-#from backend.routes.transcription import transcription_bp
+from backend.routes.audio_routes import audio_bp
+from backend.routes.video_routes import video_bp
+from backend.routes.transcription import transcription_bp
+from backend.routes.guest_form import guest_form_bp  # Import the guest_form_bp blueprint
 
 
 
@@ -69,8 +67,7 @@ app.secret_key = os.getenv("SECRET_KEY")
 app.config["PREFERRED URL SCHEME"] = "https"
 
 # Register blueprints for different routes
-app.register_blueprint(auth_bp)
-app.register_blueprint(forgotpass_bp)
+app.register_blueprint(user_bp)
 app.register_blueprint(podcast_bp)  # Register the podcast blueprint
 app.register_blueprint(dashboard_bp)
 app.register_blueprint(pod_management_bp)
@@ -88,12 +85,14 @@ app.register_blueprint(episode_bp)
 app.register_blueprint(podprofile_bp)  # Register the podprofile blueprint
 app.register_blueprint(frontend_bp)  # Register the frontend blueprint
 app.register_blueprint(guesttoepisode_bp)
+app.register_blueprint(transcription_bp)
+app.register_blueprint(audio_bp)
+app.register_blueprint(video_bp)
+# Register the guest_form blueprint with URL prefix
+
 app.register_blueprint(guest_form_bp, url_prefix="/guest-form")  # Register the guest_form blueprint with URL prefix
-app.register_blueprint(user_bp)
+
 app.register_blueprint(landingpage_bp)
-#app.register_blueprint(transcription_bp)
-#app.register_blueprint(audio_bp)
-#app.register_blueprint(video_bp) # Register the guest_form blueprint with URL prefix
 
 # Set the application environment (defaults to production)
 APP_ENV = os.getenv("APP_ENV", "production")
