@@ -1,1 +1,43 @@
+/* * * * * * * * * * * * * * * * * * * * * * * * * * * */
 /* :root variables for color, typography, spacing, etc */
+/* * * * * * * * * * * * * * * * * * * * * * * * * * * */
+:root {
+  /* Background Colors */
+  --background-light: #eff2f9;
+  --background-dark: #1c1c1c;
+
+  --light-shadow-light: #ffffff;
+  --dark-shadow-light: rgba(22, 24, 29, 0.15);
+
+  --light-shadow-dark: rgba(255, 255, 255, 0.1);
+  --dark-shadow-dark: rgba(0, 0, 0, 0.8);
+
+  /* Text Colors */
+  --text-color-light: #6e7f8d;
+  --text-color-dark: #b3b3b3;
+
+  --highlight-color: #ff7f3f;
+  --highlight-hover: #e0662c;
+  
+  --error-color: #ff3b30;
+  --success-color: #4caf50;
+
+  /* Typography */
+  --font-primary: "Inter", "Segoe UI", "Arial", sans-serif;
+  --font-secondary: "Avenir Next", sans-serif;
+
+  /* Spacing */
+  --spacing-xs: 4px;
+  --spacing-sm: 8px;
+  --spacing-md: 16px;
+  --spacing-lg: 24px;
+  --spacing-xl: 32px;
+
+  /* Border Radiuses */
+  --radius-large: 50px;
+  --radius-medium: 12px;
+  --radius-small: 12px;
+
+  /* Transitions */
+  --transition-normal: 0.3s ease;
+}
