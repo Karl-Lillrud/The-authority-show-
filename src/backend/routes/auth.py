@@ -76,40 +76,6 @@ def logout_user():
     return jsonify({"message": "Logout successful"}), 200
 
 
-@auth_bp.route("/register-team-member", methods=["GET"])
-def register_team_member_page():
-    return render_template("register/register_team_member.html")
-
-
-@auth_bp.route("/register-team-member", methods=["POST"])
-def register_team_member_submit():
-    if request.content_type != "application/json":
-        return (
-            jsonify({"error": "Invalid Content-Type. Expected application/json"}),
-            415,
-        )
-
-    data = request.get_json()
-    response, status_code = auth_repo.register_team_member(data)
-    # Convert possible Response object into a JSON dict
-    if hasattr(response, "get_json"):
-        response = response.get_json()
-
-    if status_code == 201:
-        invite_token = data.get("inviteToken")
-        if invite_token:
-            invite_service = TeamInviteService()
-            invite_response, invite_status = invite_service.process_registration(
-                user_id=response.get("userId"),
-                email=data.get("email"),
-                invite_token=invite_token,
-            )
-            if invite_status == 201:
-                response["teamId"] = invite_response.get("teamId")
-                response["teamMessage"] = invite_response.get("message")
-    return jsonify(response), status_code
-
-
 @auth_bp.route("/verify-and-signin", methods=["POST"], endpoint="verify_and_signin")
 def verify_and_signin():
     """
