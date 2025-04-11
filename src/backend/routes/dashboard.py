@@ -21,8 +21,8 @@ def dashboard():
     if "user_id" not in session or not session.get("user_id"):
         logger.warning("User is not logged in. Redirecting to sign-in page.")
         return redirect(url_for("auth_bp.signin", error="You must be logged in to access the dashboard."))
-    
-    logger.info(f"User {session['email']} accessed the dashboard.")
+
+    logger.info(f"User {session.get('email', 'Unknown')} accessed the dashboard.")
     return render_template("dashboard/dashboard.html")
 
 
@@ -93,9 +93,10 @@ def podcastmanagement():
     """
     if "user_id" not in session or not session.get("user_id"):
         logger.warning("User is not logged in. Redirecting to sign-in page.")
+        logger.debug(f"Session contents: {session}")  # Debug log
         return redirect(url_for("auth_bp.signin", error="You must be logged in to access the dashboard."))
     
-    logger.info(f"User {session['email']} accessed the podcast management page.")
+    logger.info(f"User {session.get('email', 'Unknown')} accessed the podcast management page.")
     return render_template("podcastmanagement/podcastmanagement.html")
 
 
@@ -109,8 +110,14 @@ def taskmanagement():
 
 @dashboard_bp.route("/podprofile", methods=["GET", "POST"])
 def podprofile():
-    if not g.user_id:
-        return redirect(url_for("auth_bp.signin"))  # Updated endpoint
+    """
+    Serves the podprofile page.
+    """
+    if "user_id" not in session or not session.get("user_id"):
+        logger.warning("User is not logged in. Redirecting to sign-in page.")
+        return redirect(url_for("auth_bp.signin", error="You must be logged in to access this page."))
+
+    logger.info(f"User {session.get('email', 'Unknown')} accessed the podprofile page.")
     return render_template("podprofile/podprofile.html")
 
 
