@@ -42,6 +42,8 @@ body {
   color: var(--text-color-light);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  line-height: 1.5;
+  font-size: 14px;
 }
 
 img {
@@ -99,22 +101,16 @@ header {
   flex-direction: row; /* Håll innehållet i rad */
   justify-content: space-between; /* Sprid ut innehållet horisontellt */
   align-items: center; /* Centrera innehållet vertikalt */
-  padding: var(--spacing-sm) var(--spacing-lg);
+  padding: 8px 24px;
   background-color: #ffffff;
   color: var(--text-color-light);
   box-shadow: 0 4px 10px -2px rgba(0, 0, 0, 0.08);
-  border-radius: var(--radius-medium);
-  transition: all var(--transition-normal);
+  transition: all 0.3s ease;
   position: relative;
   z-index: 100;
   width: 100%; /* Ensure header takes full width */
   box-sizing: border-box; /* Include padding in width calculation */
   min-height: 116px;
-}
-
-header:hover {
-  box-shadow: 0 8px 15px -5px rgba(0, 0, 0, 0.1),
-    0 4px 6px -2px rgba(0, 0, 0, 0.05);
 }
 
 /* Logo – Reduced size */
@@ -202,13 +198,13 @@ header:hover {
   background: white;
   color: var(--text-color-light);
   border: 1px solid rgba(0, 0, 0, 0.1);
-  border-radius: var(--radius-small);
+  border-radius: 12px;
   font-family: var(--font-primary);
   font-size: 0.85rem;
   cursor: pointer;
   min-width: 160px;
   padding: 6px 12px;
-  transition: all var(--transition-normal);
+  transition: all 0.3s ease;
   box-shadow: 0 4px 10px -5px rgba(0, 0, 0, 0.1);
   display: flex;
   align-items: center;
@@ -230,7 +226,7 @@ header:hover {
   width: 100%;
   background: white;
   border-radius: var(--radius-small);
-  box-shadow: 0 8px 15px -5px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 8px 15px -5px rgba(0, 0, 0, 0.1), 0 0px 10px rgba(0, 0, 0, 0.05);
   padding: var(--spacing-xs) 0;
   z-index: 100;
 }
@@ -243,12 +239,11 @@ header:hover {
   padding: 8px 12px;
   cursor: pointer;
   font-size: 0.85rem;
-  transition: background 0.2s ease, color 0.2s ease;
+  transition: all 0.3s cubic-bezier(0.68, -0.55, 0.27, 1.55);
 }
 
 #header-dropdown-options .dropdown-option:hover {
-  background: var(--highlight-color);
-  color: #fff;
+  color: var(--highlight-color);
   border-radius: 0;
 }
 
@@ -301,7 +296,7 @@ header:hover {
   min-width: 200px;
   background: white;
   box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1),
-    0 8px 10px -6px rgba(0, 0, 0, 0.05);
+  0 0px 10px rgba(0, 0, 0, 0.05);
   border-radius: var(--radius-medium);
   padding: var(--spacing-md);
   flex-direction: column;
@@ -537,9 +532,7 @@ header:hover {
   align-items: center;
   transition: box-shadow 0.3s ease;
 }
-.credits-info:hover {
-  box-shadow: 0 4px 10px rgba(255,115,0,0.4);
-}
+
 .credits-info #user-credits {
   margin-left: 4px; /* Adjust the value as needed */
 }

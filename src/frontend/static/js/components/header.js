@@ -79,7 +79,7 @@ async function populateHeaderPodcastDropdown() {
       dropdownOptions.appendChild(option);
     });
 
-    dropdownSelected.addEventListener("click", () => {
+    dropdownContainer.addEventListener("click", () => {
       dropdownOptions.style.display =
         dropdownOptions.style.display === "block" ? "none" : "block";
     });

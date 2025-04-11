@@ -1,4 +1,4 @@
-import { showNotification, showConfirmationPopup } from "./notifications.js";
+import { showNotification, showConfirmationPopup } from "../components/notifications.js";
 import { edit } from "./teamSvg.js";
 import { closeModal } from "./modals.js";
 import { getTeamsRequest } from "/static/requests/teamRequests.js";
