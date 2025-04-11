@@ -1,13 +1,3 @@
-export function forgotPasswordRequest(email) {
-  return fetch("/forgotpassword", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({ email }),
-  }).then((res) => res.json());
-}
-
 export function enterCodeRequest(email, code) {
   return fetch("/enter-code", {
     method: "POST",
