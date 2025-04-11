@@ -1,1 +1,1 @@
-// File removed as it is specific to /forgot-pass
+// File deleted.

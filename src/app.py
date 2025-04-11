@@ -91,7 +91,6 @@ app.register_blueprint(video_bp)
 # Register the guest_form blueprint with URL prefix
 
 app.register_blueprint(guest_form_bp, url_prefix="/guest-form")  # Register the guest_form blueprint with URL prefix
-app.register_blueprint(user_bp)
 
 app.register_blueprint(landingpage_bp)
 

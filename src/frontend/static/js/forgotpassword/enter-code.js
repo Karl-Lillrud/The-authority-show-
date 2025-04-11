@@ -1,2 +1,1 @@
-// enter-code.js
-// Remove entire file content as it is specific to /forgot-pass
+// File deleted.
