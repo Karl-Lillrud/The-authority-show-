@@ -31,14 +31,39 @@ class GuestRepository:
 
             # Parse and make publish_date offset-aware
             try:
-                publish_date_parsed = email.utils.parsedate(episode["publishDate"])
-                publish_date = datetime(
-                    *publish_date_parsed[:6]
-                )  # Convert to datetime object
-                publish_date = publish_date.replace(
-                    tzinfo=timezone.utc
-                )  # Make it offset-aware
+                # Check if publishDate exists and is not None
+                if "publishDate" in episode and episode["publishDate"] is not None:
+                    publish_date = None
+                    publish_date_str = episode["publishDate"]
+                    
+                    # Try parsing as RFC 2822 format first (email.utils.parsedate)
+                    try:
+                        publish_date_parsed = email.utils.parsedate(publish_date_str)
+                        if publish_date_parsed:
+                            publish_date = datetime(
+                                *publish_date_parsed[:6]
+                            ).replace(tzinfo=timezone.utc)
+                    except Exception:
+                        # If RFC 2822 parsing fails, log it but continue to try ISO format
+                        logger.info(f"RFC 2822 date parsing failed for: {publish_date_str}")
+                    
+                    # If RFC 2822 parsing failed, try ISO format
+                    if not publish_date:
+                        try:
+                            publish_date = datetime.fromisoformat(publish_date_str.replace('Z', '+00:00'))
+                            publish_date = publish_date.replace(tzinfo=timezone.utc)
+                        except Exception as e:
+                            logger.warning(f"ISO date parsing failed for: {publish_date_str}, error: {str(e)}")
+                    
+                    # If both parsing methods failed, use current date
+                    if not publish_date:
+                        logger.warning(f"All date parsing methods failed for: {publish_date_str}, using current date")
+                        publish_date = current_date
+                else:
+                    # If publishDate is missing or None, use current date
+                    publish_date = current_date
             except Exception as e:
+                logger.exception(f"Error parsing publish date: {str(e)}")
                 return {"error": f"Invalid publish date format: {str(e)}"}, 400
 
             guest_data = GuestSchema().load(data)
