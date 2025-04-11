@@ -1,4 +1,4 @@
-from flask import Blueprint, request, jsonify, g
+from flask import Blueprint, request, jsonify, g, render_template
 from backend.models.accounts import AccountSchema
 import logging
 from backend.repository.account_repository import AccountRepository
@@ -48,3 +48,7 @@ def edit_account():
     except Exception as e:
         logger.error("❌ ERROR: %s", e)
         return jsonify({"error": f"Failed to edit account: {str(e)}"}), 500
+
+@account_bp.route("/buy_credits", methods=["GET"])
+def buy_credits():
+    return render_template("account/buy_credits.html")
