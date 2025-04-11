@@ -7,6 +7,8 @@
   --background-light: #eff2f9;
   --background-dark: #1c1c1c;
 
+  --shadow-light: rgba(22, 24, 29, 0.23);
+
   --light-shadow-light: #ffffff;
   --dark-shadow-light: rgba(22, 24, 29, 0.15);
 
@@ -47,13 +49,19 @@
   --transition-normal: 0.3s ease;
 
   /* Box Shadows */
+  --card-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05),
+  0 8px 10px -6px rgba(0, 0, 0, 0.02);
   --card-shadow2: 0 12px 24px -6px rgba(0, 0, 0, 0.06), 
   0 6px 12px -4px rgba(0, 0, 0, 0.03);
   --card-shadow-hover: 0 18px 36px -8px rgba(0, 0, 0, 0.12), 
   0 8px 16px -4px rgba(0, 0, 0, 0.06);
+  --card-shadow-hover2: 0 20px 35px -10px rgba(0, 0, 0, 0.1),
+  0 10px 15px -5px rgba(0, 0, 0, 0.05);
+  --button-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1),
+  0 2px 4px -1px rgba(0, 0, 0, 0.06);
 
 
-  
+
   /* * * * * * * * * * * * * * * * */
   /* Unique page related variables */
   /* * * * * * * * * * * * * * * * */
