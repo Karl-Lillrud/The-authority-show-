@@ -282,7 +282,6 @@ body.dark-mode .button-secondary:hover {
 .help-text {
   visibility: hidden;
   position: absolute;
-  right: calc(130% + var(--spacing-sm)); /* Move the tooltip further to the left */
   top: 50%; /* Center vertically relative to the button */
   transform: translateY(-50%); /* Adjust to be vertically centered */
   margin-right: 0; /* Remove additional margin */
@@ -409,6 +408,39 @@ body.dark-mode .help-button {
 
 .label-group {
   position: relative;
+}
+
+.label-group .help-button {
+  width: 16px;
+  height: 16px;
+  font-size: 12px;
+  background-color: var(--text-color-light);
+  color: white;
+  font-weight: bold;
+  border: none;
+  border-radius: 50%;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.label-group .help-text {
+  visibility: hidden;
+  position: absolute;
+  right: calc(120% + var(--spacing-sm)); /* Move the tooltip to the left of the button */
+  top: 50%;
+  transform: translateY(-50%);
+  width: 300px;
+  background-color: #333;
+  color: white;
+  padding: var(--spacing-md);
+  border-radius: var(--border-radius-sm);
+  font-size: 0.9rem;
+  box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.2);
+  z-index: 100;
+  text-align: left;
+  transition: opacity 0.3s, visibility 0.3s;
 }
 
 .label-group:hover .help-text {
@@ -966,7 +998,7 @@ body.dark-mode .error-container {
 #connectCalendar {
   margin-top: var(--spacing-sm); /* Add spacing above the button */
   margin-bottom: var(--spacing-sm); /* Add spacing below the button */
-  margin-bottom: calc(var(--spacing-md) + 50px);
+  margin-bottom: calc(var(--spacing-md) + 60px);
   /* Add 50px extra space below the button */
 }
 
@@ -987,18 +1019,16 @@ body.dark-mode .error-container {
   align-items: center;
   justify-content: center;
   position: absolute;
-  right: 10px;
+  right: -30px;
   top: 50%;
-  transform: translateY(-50%);
+  transform: translateY(-30%);
 }
 
 .calendar-help-text {
   visibility: hidden;
   position: absolute;
-  left: calc(200% + var(--spacing-xs)); /* Move the tooltip to the right of the button */
-  top: 50%; /* Center vertically relative to the button */
-  transform: translateY(-50%); /* Adjust to be vertically centered */
-  margin-left: 0;
+  top: 50%;
+  transform: translateY(-50%);
   width: 300px;
   background-color: #333;
   color: white;
@@ -1007,7 +1037,7 @@ body.dark-mode .error-container {
   font-size: 0.9rem;
   box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.2);
   z-index: 100;
-  text-align: left; /* Align text to the left */
+  text-align: left;
   transition: opacity 0.3s, visibility 0.3s;
 }
 
