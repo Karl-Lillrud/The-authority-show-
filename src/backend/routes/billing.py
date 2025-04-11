@@ -51,7 +51,7 @@ def payment_success():
 
     try:
         handle_successful_payment(session, user_id)
-        return redirect("/account")  # or dashboard
+        return redirect("/dashboard")  # or dashboard
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
