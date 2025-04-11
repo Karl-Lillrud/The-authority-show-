@@ -208,7 +208,7 @@ def verify_login_token():
         # Log the user in (e.g., create a session)
         session["user_id"] = str(collection.find_one({"email": email})["_id"])  # Ensure user_id is set
         session["email"] = email
-        return jsonify({"redirect_url": "/dashboard"}), 200
+        return jsonify({"redirect_url": "/podprofile"}), 200  # Redirect to /podprofile
     except Exception as e:
         logger.error(f"Invalid or expired token: {e}")
         return jsonify({"error": "Invalid or expired token"}), 400
@@ -232,7 +232,7 @@ def signin():
         if user:
             session["user_id"] = str(user["_id"])  # Set user_id in session
             session["email"] = user["email"]
-            return jsonify({"redirect_url": "/dashboard"}), 200
+            return jsonify({"redirect_url": "/podprofile"}), 200  # Redirect to /podprofile
         else:
             return jsonify({"error": "Invalid email or password"}), 401
     except Exception as e:

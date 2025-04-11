@@ -80,8 +80,8 @@ document.addEventListener("DOMContentLoaded", function () {
     }
 
     try {
-      const response = await signin(email, password);
-      window.location.href = response.redirect_url || "/dashboard"; // Redirect to dashboard
+      const redirectUrl = await signin(email, password);
+      window.location.href = redirectUrl || "/podprofile"; // Default to /podprofile
     } catch (error) {
       errorMessage.textContent = error.message;
       errorMessage.style.display = "block";

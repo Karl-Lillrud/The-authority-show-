@@ -11,7 +11,7 @@ export async function signin(email, password, remember) {
     }
 
     const result = await response.json();
-    return result.redirect_url || "/dashboard";
+    return result.redirect_url || "/podprofile"; // Redirect to /podprofile
   } catch (error) {
     throw new Error(error.message);
   }
