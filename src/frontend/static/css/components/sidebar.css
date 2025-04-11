@@ -22,7 +22,7 @@
 .sidebar {
   position: absolute;
   top: 0;
-  height: calc(100vh - var(--header-height, 80px));
+  min-height: 100%;
   width: var(--sidebar-width);
   background-color: var(--sidebar-bg);
   border-right: 1px solid var(--sidebar-border);
@@ -310,7 +310,6 @@
   padding: var(--spacing-lg);
   transition: margin-left var(--transition-normal);
   margin-left: 0; /* reduce or remove the sidebar offset */
-  min-height: calc(100vh - var(--header-height, 60px));
 }
 
 .sidebar.collapsed + .main-content {
@@ -318,6 +317,10 @@
 }
 
 @media (max-width: 768px) {
+  .main-content {
+    min-height: auto;
+  }
+  
   .sidebar {
     width: 100%;
     height: auto;
@@ -330,6 +333,7 @@
 
   .sidebar-header {
     padding: var(--spacing-md); /* Minska padding */
+    display: none;
   }
 
   .sidebar-menu-link {
@@ -354,6 +358,7 @@
 
   .sidebar-footer {
     padding: var(--spacing-sm); /* Minska padding */
+    display: none;
   }
 
   /* Se till att sidebar-content alltid är synlig */
@@ -405,6 +410,7 @@
     display: block; /* Ändra från grid till block */
     margin-top: var(--spacing-md);
     border-top: 1px solid var(--sidebar-border);
+    border-bottom: 0px;
   }
 
   .sidebar-action-button {
