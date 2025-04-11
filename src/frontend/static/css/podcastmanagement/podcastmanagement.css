@@ -1,20 +1,5 @@
 :root {
-  --background-light: #eff2f9;
-  --light-shadow-light: #ffffff;
-  --dark-shadow-light: rgba(22, 24, 29, 0.15);
-  --text-color-light: #6e7f8d;
-  --highlight-color: #ff7f3f;
-  --highlight-hover: #e0662c;
-  --success-color: #4caf50;
   --danger-color: #e74c3c;
-  --font-primary: "Inter", "Segoe UI", "Arial", sans-serif;
-  --spacing-xs: 4px;
-  --spacing-sm: 6px;
-  --spacing-md: 12px;
-  --spacing-lg: 18px;
-  --spacing-xl: 24px;
-  --radius-small: 5px;
-  --radius-medium: 10px;
   --radius-large: 16px;
   --transition-fast: 0.2s ease;
   --transition-normal: 0.3s ease;
@@ -26,23 +11,10 @@
     0 2px 3px -1px rgba(0, 0, 0, 0.06);
 }
 
-/* Base styles */
-html,
-body {
-  height: 100%;
-  margin: 0;
-  background-color: var(--background-light);
-  font-family: var(--font-primary);
-  color: var(--text-color-light);
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-  font-size: 14px;
-}
-
 /* App Container */
 .app-container {
   display: flex;
-  height: calc(100vh - var(--header-height, 60px));
+  height: calc(100vh - 116px - 60px);
   margin-top: 0;
   position: relative;
   overflow: hidden;
@@ -55,7 +27,6 @@ body {
   display: flex;
   flex-direction: column;
   gap: var(--spacing-lg);
-  margin-top: var(--spacing-lg);
   align-items: center;
   padding-bottom: 3rem;
 }
@@ -283,7 +254,6 @@ body {
   border-radius: var(--radius-large);
   box-shadow: var(--card-shadow);
   overflow: hidden;
-  margin-top: var(--spacing-lg);
   border: 1px solid rgba(0, 0, 0, 0.03);
 }
 
@@ -1471,7 +1441,7 @@ select:invalid {
 /* Decorative orange panel at the top of the page */
 .decorative-header {
   width: 100%;
-  height: 90px;
+  /*height: 90px;*/
   background: linear-gradient(135deg, #ff7f3f, #e0662c);
   position: relative;
   z-index: 1;
@@ -1859,6 +1829,11 @@ select:invalid {
 
 /* Responsive adjustments */
 @media (max-width: 768px) {
+  .app-container {
+    flex-direction: column;
+    overflow-y: auto; /* Lägg till detta för att behålla scroll på hela appen om det behövs */
+  }
+
   .podcast-header-section {
     flex-direction: column;
   }
