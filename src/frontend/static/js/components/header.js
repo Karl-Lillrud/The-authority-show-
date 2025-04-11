@@ -5,6 +5,18 @@ document.addEventListener("DOMContentLoaded", () => {
   populateLandingPageDropdown();
   setDynamicPageTitle();
   populateUserCredits();
+
+  const buyBtn = document.getElementById("buy-credits-btn");
+  if (buyBtn) {
+    buyBtn.addEventListener("click", () => {
+      const user_id = localStorage.getItem("user_id");
+      if (!user_id) {
+        alert("You must be logged in to purchase credits.");
+        return;
+      }
+      window.location.href = `/billing?user_id=${user_id}`;
+    });
+  }
 });
 
 // 🔽 Landing Page Dropdown

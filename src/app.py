@@ -23,7 +23,7 @@ from backend.routes.guest_to_eposide import guesttoepisode_bp
 from backend.routes.guest_form import guest_form_bp  # Import the guest_form blueprint
 from backend.utils.email_utils import send_email
 from backend.utils.scheduler import start_scheduler
-
+from backend.routes.billing import billing_bp
 from backend.routes.transcription import transcription_bp
 from backend.routes.landingpage import landingpage_bp
 from dotenv import load_dotenv
@@ -97,7 +97,7 @@ app.register_blueprint(transcription_bp, url_prefix="/transcription")
 app.register_blueprint(audio_bp)
 app.register_blueprint(video_bp)
 # Register the guest_form blueprint with URL prefix
-
+app.register_blueprint(billing_bp)
 app.register_blueprint(landingpage_bp)
 
 # Set the application environment (defaults to production)

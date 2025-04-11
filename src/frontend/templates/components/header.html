@@ -22,17 +22,23 @@
       </div>
     </div>
     <!-- New Credits Display Field -->
-    <script>
-      const currentUserID = "{{ session['user_id'] or '' }}";
-    </script>
-    <div class="credits-info">
-      Credits: <span id="user-credits">Loading...</span>
+    <!-- Credits & Buy Button -->
+    <div class="credits-wrapper">
+      <span class="credit-text">Credits: <span id="user-credits">Loading...</span></span>
+      <button id="buy-credits-btn">💳 Buy Credits</button>
     </div>
+
+    <!-- Hamburger menu -->
     <div class="menu-toggle" onclick="toggleMenu()">
       <span></span>
       <span></span>
       <span></span>
     </div>
+  </nav>
+
+  <script>
+    const currentUserID = "{{ session['user_id'] or '' }}";
+  </script>
     <div class="menu" id="menu">
       <a href="{{ url_for('dashboard_bp.account') }}">Account</a>
       <a href="{{ url_for('dashboard_bp.taskmanagement') }}">Episode To-Do</a>

@@ -49,6 +49,7 @@ def edit_account():
         logger.error("❌ ERROR: %s", e)
         return jsonify({"error": f"Failed to edit account: {str(e)}"}), 500
 
-@account_bp.route("/buy_credits", methods=["GET"])
+@account_bp.route("/billing", methods=["GET"])
 def buy_credits():
-    return render_template("account/buy_credits.html")
+    user_id = request.args.get("user_id")  # ✅ extract it from query
+    return render_template("billing/billing.html", user_id=user_id)
