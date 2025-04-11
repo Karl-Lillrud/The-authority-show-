@@ -148,4 +148,20 @@
   /* Taskmanagement related variables */
   --taskmanagement-radius-small: 6px;
   --taskmanagement-radius-large: 20px;
+
+  /* RegisterTeam related variables */
+  --registerteam-radius-small: 6px;
+  --registerteam-radius-large: 20px;
+
+  /* Team related variables */
+  --team-highlight-color: #ff6f61;
+  --team-highlight-hover: #e65a4d;
+  --team-spacing-xs: 6px;
+  --team-spacing-sm: 12px;
+  --team-spacing-md: 20px;
+  --team-spacing-lg: 30px;
+  --team-spacing-xl: 40px;
+  --team-radius-small: 8px;
+  --team-radius-medium: 14px;
+  --team-radius-large: 24px;
 }
