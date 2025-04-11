@@ -144,4 +144,8 @@
     0 8px 12px -5px rgba(0, 0, 0, 0.05);
   --podcastmanagement-button-shadow: 0 3px 5px -1px rgba(0, 0, 0, 0.1),
     0 2px 3px -1px rgba(0, 0, 0, 0.06);
+
+  /* Taskmanagement related variables */
+  --taskmanagement-radius-small: 6px;
+  --taskmanagement-radius-large: 20px;
 }
