@@ -1,4 +1,4 @@
-// emailjs.init("your_user_id") // Initializes EmailJS (If you want to use it) - Removed initialization as per instructions
+// emailjs.init("your_user_id") // Initializes EmailJS (If you want to use it) - Removed initialization as per instructions .
 
 const form = document.getElementById("guestForm")
 const availableDates = ["2025-03-10", "2025-03-15", "2025-03-20"]
