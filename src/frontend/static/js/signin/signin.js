@@ -41,4 +41,50 @@ document.addEventListener("DOMContentLoaded", function () {
       }
     });
   }
+
+  const urlParams = new URLSearchParams(window.location.search);
+  const token = urlParams.get("token");
+
+  if (token) {
+    // Automatically log in the user using the token
+    fetch("/verify-login-token", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ token }),
+    })
+      .then((response) => response.json())
+      .then((data) => {
+        if (data.redirect_url) {
+          window.location.href = data.redirect_url;
+        } else {
+          alert(data.error || "Failed to log in with the provided link.");
+        }
+      })
+      .catch((error) => {
+        console.error("Error:", error);
+        alert("An error occurred. Please try again.");
+      });
+  }
+
+  const form = document.getElementById("login-form");
+  form.addEventListener("submit", async function (event) {
+    event.preventDefault();
+
+    const email = emailInput.value.trim();
+    const password = document.getElementById("password").value.trim();
+
+    if (!email || !password) {
+      errorMessage.textContent = "Please enter both email and password.";
+      errorMessage.style.display = "block";
+      return;
+    }
+
+    try {
+      const response = await signin(email, password);
+      window.location.href = response.redirect_url || "/dashboard"; // Redirect to dashboard
+    } catch (error) {
+      errorMessage.textContent = error.message;
+      errorMessage.style.display = "block";
+    }
+  });
 });

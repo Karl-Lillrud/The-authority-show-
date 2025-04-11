@@ -1,9 +1,11 @@
-from flask import Blueprint, request, jsonify, redirect, render_template, flash, url_for, session
+from flask import Blueprint, request, jsonify, redirect, render_template, flash, url_for, session, current_app
 from backend.repository.auth_repository import AuthRepository
 from backend.services.TeamInviteService import TeamInviteService
 from backend.services.authService import AuthService
 import os
 import logging  # Add logging import
+from itsdangerous import URLSafeTimedSerializer
+from backend.database.mongo_connection import collection  # Add this import
 
 # Define Blueprint
 auth_bp = Blueprint("auth_bp", __name__)
@@ -44,9 +46,12 @@ def send_verification_code():
 API_BASE_URL = os.getenv("API_BASE_URL", "http://127.0.0.1:8000")
 
 
-@auth_bp.route("/signin", methods=["GET"], endpoint="signin")
-@auth_bp.route("/", methods=["GET"])
+@auth_bp.route("/signin", methods=["GET"], endpoint="signin_page")
+@auth_bp.route("/", methods=["GET"], endpoint="root_signin_page")
 def signin_page():
+    """
+    Serves the sign-in page.
+    """
     # Check if the user has an active session cookie
     if "user_id" in session and session.get("user_id"):
         return redirect("/dashboard")  # Redirect to dashboard if session is active
@@ -56,8 +61,7 @@ def signin_page():
     return render_template("signin/signin.html", API_BASE_URL=API_BASE_URL)
 
 
-@auth_bp.route("/signin", methods=["POST"])
-@auth_bp.route("/", methods=["POST"])
+@auth_bp.route("/signin", methods=["POST"], endpoint="signin_submit")
 def signin_submit():
     """
     Handle OTP-based sign-in.
@@ -128,7 +132,7 @@ def register_team_member_submit():
     return jsonify(response), status_code
 
 
-@auth_bp.route("/verify-and-signin", methods=["POST"])
+@auth_bp.route("/verify-and-signin", methods=["POST"], endpoint="verify_and_signin")
 def verify_and_signin():
     """
     Endpoint to verify the code and sign in the user.
@@ -151,7 +155,7 @@ def verify_and_signin():
         return jsonify({"error": f"Failed to verify code: {str(e)}"}), 500
 
 
-@auth_bp.route("/send-login-link", methods=["POST"])
+@auth_bp.route("/send-login-link", methods=["POST"], endpoint="send_login_link")
 def send_login_link():
     """
     Endpoint to send a log-in link to the user's email.
@@ -168,8 +172,12 @@ def send_login_link():
         return jsonify({"error": "Email is required"}), 400
 
     try:
+        # Generate a secure token
+        serializer = URLSafeTimedSerializer(current_app.config["SECRET_KEY"])
+        token = serializer.dumps(email, salt="login-link-salt")
+
         # Construct the log-in link
-        login_link = f"{request.host_url}podprofile?email={email}"  # Redirect to podprofile
+        login_link = f"{request.host_url}signin?token={token}"
         logger.info(f"Generated log-in link for {email}: {login_link}")
 
         # Send the log-in link via email
@@ -180,3 +188,53 @@ def send_login_link():
     except Exception as e:
         logger.error(f"Error sending log-in link for {email}: {e}", exc_info=True)
         return jsonify({"error": "Failed to send log-in link. Please try again later."}), 500
+
+
+@auth_bp.route("/verify-login-token", methods=["POST"], endpoint="verify_login_token")
+def verify_login_token():
+    """
+    Endpoint to verify the login token and log the user in.
+    """
+    data = request.get_json()
+    token = data.get("token")
+
+    if not token:
+        return jsonify({"error": "Token is required"}), 400
+
+    try:
+        serializer = URLSafeTimedSerializer(current_app.config["SECRET_KEY"])
+        email = serializer.loads(token, salt="login-link-salt", max_age=600)  # Token valid for 10 minutes
+
+        # Log the user in (e.g., create a session)
+        session["user_id"] = str(collection.find_one({"email": email})["_id"])  # Ensure user_id is set
+        session["email"] = email
+        return jsonify({"redirect_url": "/dashboard"}), 200
+    except Exception as e:
+        logger.error(f"Invalid or expired token: {e}")
+        return jsonify({"error": "Invalid or expired token"}), 400
+
+
+@auth_bp.route("/signin", methods=["POST"], endpoint="signin")
+def signin():
+    """
+    Handles user sign-in.
+    """
+    data = request.get_json()
+    email = data.get("email")
+    password = data.get("password")
+
+    if not email or not password:
+        return jsonify({"error": "Email and password are required"}), 400
+
+    try:
+        # Authenticate user
+        user = auth_service.authenticate_user(email, password)
+        if user:
+            session["user_id"] = str(user["_id"])  # Set user_id in session
+            session["email"] = user["email"]
+            return jsonify({"redirect_url": "/dashboard"}), 200
+        else:
+            return jsonify({"error": "Invalid email or password"}), 401
+    except Exception as e:
+        logger.error(f"Error during sign-in: {e}", exc_info=True)
+        return jsonify({"error": "An error occurred during sign-in"}), 500

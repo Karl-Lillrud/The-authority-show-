@@ -16,28 +16,8 @@ dashboard_bp = Blueprint("dashboard_bp", __name__)
 @dashboard_bp.route("/dashboard", methods=["GET"])
 def dashboard():
     """
-    Serves the dashboard page if the user is logged in or verifies log-in link.
+    Serves the dashboard page if the user is logged in.
     """
-    email = request.args.get("email")
-
-    if email:
-        # Authenticate the user via log-in link
-        try:
-            logger.debug(f"Authenticating user via log-in link for email: {email}")
-            result = authService.verify_code_and_login(email)
-            logger.debug(f"Authentication result for email {email}: {result}")
-
-            if result.get("user"):
-                session["user_id"] = str(result["user"]["_id"])
-                session["email"] = result["user"]["email"]
-                logger.info(f"User {email} authenticated via log-in link.")
-            else:
-                logger.warning(f"Failed to authenticate user via log-in link for email: {email}. Reason: {result.get('error', 'Unknown error')}")
-                return redirect(url_for("auth_bp.signin", error=result.get("error", "Invalid log-in link.")))
-        except Exception as e:
-            logger.error(f"Error authenticating user via log-in link for email {email}: {e}", exc_info=True)
-            return redirect(url_for("auth_bp.signin", error="Failed to authenticate. Please try again later."))
-
     if "user_id" not in session or not session.get("user_id"):
         logger.warning("User is not logged in. Redirecting to sign-in page.")
         return redirect(url_for("auth_bp.signin", error="You must be logged in to access the dashboard."))

@@ -92,7 +92,6 @@ class AuthService:
         """
         Send a log-in link to the user's email.
         """
-        logger.info(f"Generated log-in link: {login_link}")  # Log the generated link for debugging
         subject = "Your Log-In Link for PodManager"
         body = f"""
         <html>
