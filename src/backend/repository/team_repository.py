@@ -1,5 +1,6 @@
 import logging
 import uuid
+import json
 from datetime import datetime, timezone
 from marshmallow import ValidationError
 from backend.database.mongo_connection import collection
@@ -176,21 +177,27 @@ class TeamRepository:
             team_schema = TeamSchema()
             validated_data = team_schema.load(data, partial=True)
 
-            update_fields = {
-                k: v.strip() if isinstance(v, str) else v
-                for k, v in validated_data.items()
-            }
+            def are_values_different(old, new):
+                if isinstance(old, str) and isinstance(new, str):
+                    return old.strip() != new.strip()
+                return json.dumps(old, sort_keys=True) != json.dumps(new, sort_keys=True)
+
+            update_fields = {}
+            for key, new_value in validated_data.items():
+                current_value = team.get(key)
+                if are_values_different(current_value, new_value):
+                    update_fields[key] = new_value
+                    logger.debug(f"[edit_team] Field '{key}' changed: OLD={current_value}, NEW={new_value}")
+
+            logger.debug(f"[edit_team] Final update fields: {update_fields}")
 
             if update_fields:
                 result = self.teams_collection.update_one(
                     {"_id": team_id}, {"$set": update_fields}
                 )
-                if result.modified_count > 0:
-                    return {"message": "Team updated successfully!"}, 200
-                else:
-                    return {"message": "No changes made to the team."}, 200
+                return {"message": "Team updated successfully!"}, 200
             else:
-                return {"message": "No valid fields provided for update."}, 400
+                return {"message": "No changes made to the team."}, 200
 
         except ValidationError as err:
             return {"error": "Invalid data", "details": err.messages}, 400
