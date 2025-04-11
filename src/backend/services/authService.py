@@ -7,7 +7,7 @@ import hashlib
 import pytz
 from datetime import datetime, timedelta
 from timezonefinder import TimezoneFinder
-from flask import jsonify, session
+from flask import jsonify, session, request
 from werkzeug.security import check_password_hash
 from backend.database.mongo_connection import collection
 from backend.services.teamService import TeamService
@@ -100,6 +100,11 @@ class AuthService:
                 <p>Click the link below to log in to your PodManager account:</p>
                 <a href="{login_link}" style="color: #ff7f3f; text-decoration: none;">Log In</a>
                 <p>This link is valid for 10 minutes. If you did not request this, please ignore this email.</p>
+                <p>By clicking the link, you agree to our 
+                    <a href="{request.host_url}terms-of-service" style="color: #ff7f3f; text-decoration: none;">Terms of Service</a> 
+                    and 
+                    <a href="{request.host_url}privacy-policy" style="color: #ff7f3f; text-decoration: none;">Privacy Policy</a>.
+                </p>
                 <p>Best regards,<br>PodManager Team</p>
             </body>
         </html>
