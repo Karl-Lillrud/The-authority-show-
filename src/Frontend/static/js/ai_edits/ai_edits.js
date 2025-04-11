@@ -100,13 +100,19 @@ function showTab(tabName) {
                 <h3>🔊 Choose Audio Processing Method</h3>
                 <p style="margin-bottom: 1rem;">Select one of the following enhancements for your uploaded audio file:</p>
 
-                <div id="voiceIsolationSection" style="margin-bottom: 1.5rem;">
-                    <h4>🎤 <strong>Voice Isolation (Powered by ElevenLabs)</strong></h4>
-                    <button class="btn ai-edit-button" onclick="runVoiceIsolation()">
-                      ${labelWithCredits("🎙️ Isolate Voice", "voice_isolation")}
-                    </button>
-                    <div id="isolatedVoiceResult" style="margin-top: 1rem;"></div>
-                </div>
+            <div id="voiceIsolationSection" style="margin-bottom: 1.5rem;">
+            <h4>🎤 <strong>Voice Isolation (Powered by ElevenLabs)</strong></h4>
+            <button class="btn ai-edit-button" onclick="runVoiceIsolation()">
+                ${labelWithCredits("🎙️ Isolate Voice", "voice_isolation")}
+            </button>
+            <div id="isolatedVoiceResult" style="margin-top: 1rem;"></div>
+            <a id="downloadIsolatedVoice"
+                class="inline-block mt-2 bg-orange-500 text-white px-4 py-2 rounded-2xl shadow hover:shadow-lg transition"
+                style="display: none;"
+                download="isolated_voice.wav">
+                📥 Download Isolated Voice
+            </a>
+            </div>
 
                 <div id="audioEnhancementSection">
                     <h4>🎚️ <strong>Audio Enhancement (Noise Reduction & Normalization)</strong></h4>
