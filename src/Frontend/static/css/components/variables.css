@@ -41,9 +41,9 @@
   --spacing-xl: 32px;
 
   /* Border Radiuses */
-  --radius-large: 50px;
-  --radius-medium: 12px;
   --radius-small: 12px;
+  --radius-medium: 12px;
+  --radius-large: 50px;
 
   /* Breakpoints */
   --breakpoint-xs: 360px;
@@ -53,6 +53,7 @@
   --breakpoint-xl: 1200px;
 
   /* Transitions */
+  --transition-fast: 0.2s ease;
   --transition-normal: 0.3s ease;
 
   /* Box Shadows */
@@ -121,4 +122,13 @@
   0 2px 4px -1px rgba(0, 0, 0, 0.06);
   --account-shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 
   0 4px 6px -2px rgba(0, 0, 0, 0.05);
+
+  /* Podcastmanagement related variables */
+  --podcastmanagement-radius-large: 16px;
+  --podcastmanagement-card-shadow: 0 8px 20px -5px rgba(0, 0, 0, 0.05),
+    0 6px 8px -6px rgba(0, 0, 0, 0.02);
+  --podcastmanagement-card-shadow-hover: 0 16px 28px -8px rgba(0, 0, 0, 0.1),
+    0 8px 12px -5px rgba(0, 0, 0, 0.05);
+  --podcastmanagement-button-shadow: 0 3px 5px -1px rgba(0, 0, 0, 0.1),
+    0 2px 3px -1px rgba(0, 0, 0, 0.06);
 }
