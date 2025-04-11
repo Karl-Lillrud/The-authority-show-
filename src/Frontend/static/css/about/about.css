@@ -301,8 +301,9 @@ p {
 
 /* Simplified Footer */
 .footer {
-    background-color: var(--dark);
-    color: white;
+    background-color: white;
+    box-shadow: var(--shadow);
+    color: #ff9f33;
     padding: 2rem 0;
     text-align: center;
 }
@@ -315,19 +316,19 @@ p {
 }
 
 .footer-links a {
-    color: var(--gray-light);
+    color: #ff9f33;
     text-decoration: none;
     transition: color 0.3s ease;
     font-size: 0.9rem;
 }
 
 .footer-links a:hover {
-    color: white;
+    color: rgb(255, 50, 0);
 }
 
 .copyright {
     font-size: 0.9rem;
-    color: var(--gray-light);
+    color: #ff9f33;
     margin-top: 1rem;
 }
 

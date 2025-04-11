@@ -1,4 +1,4 @@
-emailjs.init("your_user_id") // Initializes EmailJS (If you want to use it)
+// emailjs.init("your_user_id") // Initializes EmailJS (If you want to use it) - Removed initialization as per instructions
 
 const form = document.getElementById("guestForm")
 const availableDates = ["2025-03-10", "2025-03-15", "2025-03-20"]
@@ -297,7 +297,6 @@ document.addEventListener("DOMContentLoaded", () => {
   const confirmDateTimeBtn = document.getElementById("confirmDateTime")
   const selectedDateTime = document.getElementById("selectedDateTime")
   const timePickerContainer = document.getElementById("timePickerContainer")
-  const timePicker = document.getElementById("timePicker")
   const calendarPicker = document.getElementById("calendarPicker")
 
   const prevMonthBtn = document.getElementById("prevMonth")
@@ -310,7 +309,6 @@ document.addEventListener("DOMContentLoaded", () => {
   let currentYear = new Date().getFullYear()
 
   // Global variables to store calendar data
-  // These need to be accessible throughout the module
   let globalBusyDates = []
   let globalBusyTimes = {}
   let globalWorkingHours = { start: "09:00:00", end: "17:00:00" }
@@ -490,7 +488,7 @@ document.addEventListener("DOMContentLoaded", () => {
       localStorage.setItem("recordingDate", selectedDate.toISOString().split("T")[0])
       localStorage.setItem("selectedDateText", selectedDate.toDateString())
     }
-    localStorage.setItem("recordingTime", timePicker.value)
+    localStorage.setItem("recordingTime", document.querySelector(".time-slot.selected")?.dataset.time || "")
   }
 
   // Load saved date & time from localStorage
@@ -502,12 +500,13 @@ document.addEventListener("DOMContentLoaded", () => {
     if (savedDate) {
       selectedDate = new Date(savedDate)
       document.getElementById("recordingDate").value = savedDate
-      selectedDateTime.textContent = `Selected: ${savedDateText} at ${savedTime}`
-      generateCalendar() // Refresh calendar with the selected date
-    }
 
-    if (savedTime) {
-      document.getElementById("recordingTime").value = savedTime
+      if (savedTime) {
+        selectedDateTime.textContent = `Selected: ${savedDateText} at ${savedTime}`
+        document.getElementById("recordingTime").value = savedTime
+      }
+
+      generateCalendar() // Refresh calendar with the selected date
     }
   }
 
@@ -642,7 +641,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // Populate time slots based on working hours and busy times
   function populateTimeSlots() {
-    timePicker.innerHTML = "" // Clear existing options
+    timePickerContainer.innerHTML = "" // Clear existing content
     timePickerContainer.classList.remove("hidden")
 
     if (!selectedDate) return
@@ -657,64 +656,75 @@ document.addEventListener("DOMContentLoaded", () => {
     const workingStart = parseTime(globalWorkingHours.start)
     const workingEnd = parseTime(globalWorkingHours.end)
 
-    // Create a group for available times
-    const availableGroup = document.createElement("optgroup")
-    availableGroup.label = "Available Times"
+    // Create a time slots container
+    const timeSlotsContainer = document.createElement("div")
+    timeSlotsContainer.className = "time-slots-container"
 
-    // Create a group for unavailable times (to show them but make them unselectable)
-    const unavailableGroup = document.createElement("optgroup")
-    unavailableGroup.label = "Unavailable Times"
+    // Create a heading
+    const heading = document.createElement("h3")
+    heading.className = "text-lg font-semibold mb-3"
+    heading.textContent = "Available Times"
+    timePickerContainer.appendChild(heading)
 
     // Track if we have any available times
     let hasAvailableTimes = false
 
-    // Loop over each hour in the working hours and add it to the time picker
+    // Create time slots in 1-hour increments
     for (let hour = workingStart.hour; hour <= workingEnd.hour; hour++) {
-      const time = `${hour.toString().padStart(2, "0")}:00` // Set the time to the full hour
-      const timeStr = `${time}:00` // Add seconds for comparison
+      // Skip if we're at the end time
+      if (hour === workingEnd.hour) continue
+
+      const timeStr = `${hour.toString().padStart(2, "0")}:00`
+      const fullTimeStr = `${timeStr}:00` // Add seconds for comparison
 
       // Check if this time is busy
-      const isBusy = isTimeBusy(time, busySlots)
+      const isBusy = isTimeBusy(timeStr, busySlots)
 
-      const timeOption = document.createElement("option")
-      timeOption.value = time
-      timeOption.textContent = time
-
-      if (isBusy) {
-        // Add to unavailable group with styling
-        timeOption.disabled = true // Disable the option
-        timeOption.classList.add("line-through", "text-red-500") // Cross it out visually
-        timeOption.textContent = `${time} (Unavailable)` // Add unavailable label
-        unavailableGroup.appendChild(timeOption)
-      } else {
-        // Add to available group
-        availableGroup.appendChild(timeOption)
+      // Only add available time slots
+      if (!isBusy) {
         hasAvailableTimes = true
+
+        const timeSlot = document.createElement("div")
+        timeSlot.className = "time-slot available"
+        timeSlot.dataset.time = timeStr
+        timeSlot.textContent = timeStr
+
+        timeSlot.addEventListener("click", () => {
+          // Remove selected class from all time slots
+          document.querySelectorAll(".time-slot").forEach((slot) => {
+            slot.classList.remove("selected")
+          })
+
+          // Add selected class to this time slot
+          timeSlot.classList.add("selected")
+
+          // Show confirm button
+          confirmDateTimeBtn.classList.remove("hidden")
+        })
+
+        timeSlotsContainer.appendChild(timeSlot)
       }
     }
 
-    // Add available times first
-    if (hasAvailableTimes) {
-      timePicker.appendChild(availableGroup)
-    } else {
-      // If no available times, add a message
-      const noTimesOption = document.createElement("option")
-      noTimesOption.disabled = true
-      noTimesOption.textContent = "No available times for this date"
-      timePicker.appendChild(noTimesOption)
-    }
+    timePickerContainer.appendChild(timeSlotsContainer)
 
-    // Add unavailable times for reference
-    if (unavailableGroup.children.length > 0) {
-      timePicker.appendChild(unavailableGroup)
+    // Show message if no available times
+    if (!hasAvailableTimes) {
+      const noTimesMessage = document.createElement("p")
+      noTimesMessage.className = "text-center text-gray-500 my-4"
+      noTimesMessage.textContent = "No available times for this date"
+      timePickerContainer.appendChild(noTimesMessage)
     }
 
     confirmDateTimeBtn.classList.remove("hidden")
 
     // Restore the selected time after refresh
     const savedTime = localStorage.getItem("recordingTime")
-    if (savedTime && !isTimeBusy(savedTime, busySlots)) {
-      timePicker.value = savedTime
+    if (savedTime) {
+      const savedTimeSlot = document.querySelector(`.time-slot[data-time="${savedTime}"]`)
+      if (savedTimeSlot) {
+        savedTimeSlot.classList.add("selected")
+      }
     }
   }
 
@@ -752,7 +762,8 @@ document.addEventListener("DOMContentLoaded", () => {
   // Confirm selection & prevent unwanted validation
   confirmDateTimeBtn.addEventListener("click", (e) => {
     e.preventDefault()
-    const selectedTime = timePicker.value
+    const selectedTimeSlot = document.querySelector(".time-slot.selected")
+    const selectedTime = selectedTimeSlot ? selectedTimeSlot.dataset.time : null
 
     if (selectedDate && selectedTime) {
       document.getElementById("recordingDate").value = formatDate(selectedDate)
@@ -761,6 +772,8 @@ document.addEventListener("DOMContentLoaded", () => {
       dateTimeContainer.classList.add("hidden")
 
       saveDateTime() // Save selection to localStorage
+    } else {
+      alert("Please select both a date and time.")
     }
   })
 
@@ -860,7 +873,6 @@ document.addEventListener("DOMContentLoaded", () => {
       })
   })
 })
-
 
 // Submit form data to the backend and create a Google Calendar event
 async function createGoogleCalendarEvent(formData) {
