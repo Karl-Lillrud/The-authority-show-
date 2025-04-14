@@ -150,7 +150,8 @@ def get_guests_by_episode(episode_id):
 
     try:
         # Query the database for guests linked to the given episode ID
-        guests = list(collection.database.Guests.find({"episode_id": episode_id}))
+        guests = list(collection.database.Guests.find({"episodeId": episode_id}))
+
         for guest in guests:
             guest["_id"] = str(guest["_id"])  # Convert ObjectId to string for JSON serialization
 

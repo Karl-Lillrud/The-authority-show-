@@ -1,5 +1,6 @@
 from backend.database.mongo_connection import collection
 from datetime import datetime, timezone
+from dateutil.parser import isoparse
 import uuid
 import logging
 from backend.models.guests import GuestSchema
@@ -16,10 +17,24 @@ class GuestRepository:
 
     def add_guest(self, data, user_id):
         try:
-            episode_id = data.get("episodeId")
+            logger.info(f"📩 Incoming raw guest data: {data} (type: {type(data)})")
+            logger.info(f"🗝️ Incoming data keys: {list(data.keys())}")
 
-            # Fetch the episode and ensure it contains the 'podcast_id' field
+            # ✅ First, validate schema
+            try:
+                logger.info(f"🎯 Attempting to validate guest data against GuestSchema...")
+                guest_data = GuestSchema().load(data)
+                logger.info(f"✅ Guest data passed schema validation: {guest_data}")
+            except Exception as e:
+                logger.exception("❌ Unexpected error during schema validation")
+                return {"error": "Something went wrong during validation"}, 400
+
+
+            # 🔍 Then fetch episode and validate related info
+            episode_id = data.get("episodeId")
             episode = collection.database.Episodes.find_one({"_id": episode_id})
+            logger.info(f"📄 Queried episode: {episode}")
+
             if not episode:
                 logger.error(f"Episode with ID {episode_id} not found.")
                 return {"error": "Episode not found"}, 404
@@ -27,23 +42,14 @@ class GuestRepository:
                 logger.warning(f"Episode with ID {episode_id} is missing 'podcast_id'.")
                 return {"error": "Episode missing 'podcast_id' field"}, 400
 
-            current_date = datetime.now(timezone.utc)
-
-            # Parse and make publish_date offset-aware
+            # 📅 Parse publish date
             try:
-                publish_date_parsed = email.utils.parsedate(episode["publishDate"])
-                publish_date = datetime(
-                    *publish_date_parsed[:6]
-                )  # Convert to datetime object
-                publish_date = publish_date.replace(
-                    tzinfo=timezone.utc
-                )  # Make it offset-aware
+                publish_date = isoparse(episode["publishDate"]).astimezone(timezone.utc)
             except Exception as e:
                 return {"error": f"Invalid publish date format: {str(e)}"}, 400
 
-            guest_data = GuestSchema().load(data)
+            # 🆔 Create guest item
             guest_id = str(uuid.uuid4())
-
             guest_item = {
                 "_id": guest_id,
                 "episodeId": episode_id,
@@ -63,13 +69,16 @@ class GuestRepository:
                 "user_id": user_id,
             }
 
+            logger.info(f"📦 Inserting guest into DB: {guest_item}")
             self.collection.insert_one(guest_item)
+            logger.info("✅ Guest inserted successfully")
 
             return {"message": "Guest added successfully", "guest_id": guest_id}, 201
 
         except Exception as e:
             logger.exception("❌ ERROR: Failed to add guest")
             return {"error": f"Failed to add guest: {str(e)}"}, 500
+
 
     def get_guests(self, user_id):
         """
@@ -195,10 +204,29 @@ class GuestRepository:
         Get all guests for a specific episode
         """
         try:
+            logger.info(f"🌐 get_guests_by_episode() called with: {episode_id} ({type(episode_id)})")
+
+            first_guest = self.collection.find_one()
+            logger.info(f"🧾 First guest raw doc: {first_guest}")
+
+            
+
+            logger.info(f"🔍 Querying guests with filter: {{'episodeId': {repr(str(episode_id))}}}")
+            all_guests = list(self.collection.find({}))
+            for g in all_guests:
+                logger.info(f"📋 Guest in DB — ID: {g.get('_id')} | episodeId: {g.get('episodeId')} | name: {g.get('name')}")
+            logger.info(f"📋 All guests in DB:\n" + "\n".join([str(g) for g in all_guests]))
+            guests_cursor = self.collection.find({"episodeId": str(episode_id)})
+
+            logger.info(f"🔍 Looking for guests linked to episodeId: {episode_id} (type: {type(episode_id)})")
+
             # Fetch guests for the specific episode
-            guests_cursor = self.collection.find({"episodeId": episode_id})
+            guests_cursor = self.collection.find({"episodeId": str(episode_id)})
+
             guest_list = []
             for guest in guests_cursor:
+                logger.info(f"👀 Guest found for episode: {guest}")
+
                 guest_list.append(
                     {
                         "id": str(guest.get("_id")),

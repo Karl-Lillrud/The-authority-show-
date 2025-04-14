@@ -9,7 +9,7 @@ class GuestSchema(Schema):
     tags = fields.List(fields.Str())
     description = fields.Str()
     bio = fields.Str()
-    email = fields.Email()
+    email = fields.Email(required=True)
     linkedin = fields.Str()
     twitter = fields.Str()
     areasOfInterest = fields.List(fields.Str())

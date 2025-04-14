@@ -1,6 +1,6 @@
 from flask import url_for
 from backend.database.mongo_connection import collection
-from backend.utils.email_utils import send_guest_invitation_email
+from backend.utils.email_utils import send_guest_invitation
 import logging
 
 logger = logging.getLogger(__name__)
@@ -54,12 +54,13 @@ class InvitationService:
                     )
 
                     # Send the invitation email
-                    send_guest_invitation_email(
-                        guest_data["name"],
-                        guest_data["email"],
-                        guest_form_url,
-                        podcast_name,  # Pass the podcast name
-                    )
+                    send_guest_invitation({
+                        "name": guest_data["name"],
+                        "email": guest_data["email"],
+                        "episodeId": guest_data["episodeId"],
+                        "formLink": guest_form_url,
+                        "podcastName": podcast_name
+                    })
 
                     logger.info(f"Guest invitation email sent to {guest_data['email']}")
                     return {"message": "Guest added and invitation email sent successfully", "guest_id": guest_id}, 201

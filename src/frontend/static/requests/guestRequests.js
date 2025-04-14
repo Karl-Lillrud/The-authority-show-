@@ -17,7 +17,7 @@ export async function send_guest_invitation({ name, email, episodeId }) {
 }
 
 export async function addGuestRequest(payload) {
-  const res = await fetch("/add_guests", {
+  const res = await fetch("/add_guest", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(payload)

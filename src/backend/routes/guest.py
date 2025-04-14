@@ -1,7 +1,7 @@
 from flask import request, jsonify, Blueprint, g, session, url_for
 from backend.repository.guest_repository import GuestRepository
 from backend.database.mongo_connection import collection
-from backend.utils.email_utils import send_email, send_guest_invitation_email
+from backend.utils.email_utils import send_email, send_guest_invitation
 from backend.services.invitation_service import InvitationService
 import logging
 
@@ -20,7 +20,7 @@ logger = logging.getLogger(__name__)
 @guest_bp.route("/add_guest", methods=["POST"])
 def add_guest():
     """
-    Adds a guest to the system and sends an invitation email.
+    Adds a guest to the system.
     """
     try:
         data = request.json
@@ -28,14 +28,16 @@ def add_guest():
         if not user_id:
             return {"error": "User not authenticated"}, 401
 
-        # Add the guest to the database and send the invitation email
-        response, status_code = InvitationService.send_guest_invitation(user_id, data)
+        logger.info(f"📥 /add_guest route received data: {data} (type: {type(data)})")
 
+        # 🛠️ Use your repo function that does schema validation + DB insert
+        response, status_code = guest_repo.add_guest(data, user_id)
         return jsonify(response), status_code
 
     except Exception as e:
-        logger.error(f"Failed to add guest: {e}", exc_info=True)
+        logger.error(f"❌ Failed to add guest: {e}", exc_info=True)
         return jsonify({"error": f"Failed to add guest: {str(e)}"}), 500
+
 
 @guest_bp.route("/get_guests", methods=["GET"])
 def get_guests():
@@ -78,9 +80,11 @@ def delete_guest(guest_id):
         logger.error("❌ ERROR: %s", e)
         return jsonify({"error": f"Failed to delete guest: {str(e)}"}), 500
 
-@guest_bp.route("/get_guests_by_episode/<episode_id>", methods=["GET"])
+@guest_bp.route("/get_guests_by_episode/<episode_id>", methods=["GET"]) 
 def get_guests_by_episode(episode_id):
     """Fetch all guest profiles linked to a specific episode ID."""
+    logger.info(f"📡 Route hit: /get_guests_by_episode/{episode_id} (type: {type(episode_id)})")
+    
     if not hasattr(g, "user_id") or not g.user_id:
         return jsonify({"error": "Unauthorized"}), 401
 
