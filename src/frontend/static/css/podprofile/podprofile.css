@@ -159,7 +159,6 @@ button {
   width: auto; /* Make the button smaller */
   padding: var(--spacing-xs) var(--spacing-md); /* Adjust padding */
   position: absolute; /* Position it relative to the container */
-  bottom: var(--spacing-md); /* Place it at the bottom of the container */
   right: var(--spacing-md); /* Align it to the right inside the container */
   font-size: 0.9rem; /* Slightly smaller font size */
 }
@@ -210,7 +209,6 @@ body.dark-mode .button-secondary:hover {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  margin-left: 0.5cm; /* Reduced margin from 2cm to 0.5cm */
   vertical-align: middle; /* Align with the label */
   transform: translate(-4mm, -1mm); /* Moved 2mm up and 2mm left */
 }
@@ -344,6 +342,9 @@ body.dark-mode .help-button {
 
 .label-group {
   position: relative;
+  display: inline-flex; 
+  align-items: center; 
+  gap: 0.25rem
 }
 
 .label-group .help-button {
@@ -363,6 +364,7 @@ body.dark-mode .help-button {
 
 .label-group .help-text {
   visibility: hidden;
+  opacity: 0;
   position: absolute;
   right: calc(120% + var(--spacing-sm)); /* Move the tooltip to the left of the button */
   top: 50%;
@@ -379,7 +381,7 @@ body.dark-mode .help-button {
   transition: opacity 0.3s, visibility 0.3s;
 }
 
-.label-group:hover .help-text {
+.label-group .help-button:hover + .help-text {
   visibility: visible;
   opacity: 1;
 }
@@ -933,9 +935,7 @@ body.dark-mode .error-container {
 
 #connectCalendar {
   margin-top: var(--spacing-sm); /* Add spacing above the button */
-  margin-bottom: var(--spacing-sm); /* Add spacing below the button */
-  margin-bottom: calc(var(--spacing-md) + 60px);
-  /* Add 50px extra space below the button */
+  margin-bottom: var(--spacing-md);
 }
 
 .connect-calendar-button {
@@ -955,7 +955,6 @@ body.dark-mode .error-container {
   align-items: center;
   justify-content: center;
   position: absolute;
-  right: -30px;
   top: 50%;
   transform: translateY(-30%);
 }
@@ -980,4 +979,12 @@ body.dark-mode .error-container {
 .calendar-help-button:hover .calendar-help-text {
   visibility: visible;
   opacity: 1;
+}
+
+#rssLabel {
+  margin-right: var(--spacing-md);
+}
+
+#rss-help-button {
+  margin-bottom: calc(var(--spacing-xs) * -1);
 }
