@@ -135,6 +135,7 @@ soundfile
 soupsieve
 sqlparse
 streamlit
+stripe
 sympy
 tenacity
 textblob

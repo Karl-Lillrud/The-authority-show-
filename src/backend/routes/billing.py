@@ -32,8 +32,8 @@ def create_checkout_session():
                 'quantity': 1,
             }],
             mode='payment',
-            success_url=f"{os.getenv('APP_BASE_URL')}/credits/success?session_id={{CHECKOUT_SESSION_ID}}&user_id={user_id}",
-            cancel_url=f"{os.getenv('APP_BASE_URL')}/credits/cancel",
+            success_url=f"{os.getenv('API_BASE_URL')}/credits/success?session_id={{CHECKOUT_SESSION_ID}}&user_id={user_id}",
+            cancel_url=f"{os.getenv('API_BASE_URL')}/credits/cancel",
         )
         return jsonify({'sessionId': session.id})
     except Exception as e:
