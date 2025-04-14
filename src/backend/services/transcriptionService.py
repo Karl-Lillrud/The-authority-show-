@@ -9,6 +9,7 @@ from elevenlabs.client import ElevenLabs
 from backend.database.mongo_connection import fs
 from backend.utils.ai_utils import remove_filler_words
 from backend.utils.text_utils import generate_ai_suggestions, generate_show_notes, generate_ai_quotes, generate_ai_quotes, generate_quote_images,translate_text
+from backend.utils.text_utils import analyze_emotions, suggest_sound_effects
 
 logger = logging.getLogger(__name__)
 client = ElevenLabs(api_key=os.getenv("ELEVENLABS_API_KEY"))
@@ -101,3 +102,8 @@ class TranscriptionService:
         logger.info(f"🌍 Translating transcript to {language}...")
         return translate_text(text, language)
 
+    def get_sentiment_and_sfx(self, transcript_text: str):
+        logger.info("🔍 Running sentiment & sound suggestion analysis...")
+        emotion_data = analyze_emotions(transcript_text)
+        sfx_suggestions = suggest_sound_effects(emotion_data)
+        return {"emotions": emotion_data, "sound_effects": sfx_suggestions}
