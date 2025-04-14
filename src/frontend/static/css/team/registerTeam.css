@@ -1,13 +1,3 @@
-  body {
-    font-family: var(--font-primary);
-    background-color: var(--background-light);
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    height: 100vh;
-    margin: 0;
-  }
-  
   .container {
     width: 100%;
     max-width: 450px;
