@@ -115,11 +115,10 @@ footer {
   display: flex;
   justify-content: center;
   align-items: center;
-  padding: var(--spacing-md) var(--spacing-lg);
   box-shadow: 0 -10px 25px -5px rgba(0, 0, 0, 0.05),
     0 -8px 10px -6px rgba(0, 0, 0, 0.02);
-  border-radius: var(--radius-medium);
-  transition: all var(--transition-normal);
+  transition: all 0.3s ease;
+  min-height: 60px;
 }
 
 footer a {

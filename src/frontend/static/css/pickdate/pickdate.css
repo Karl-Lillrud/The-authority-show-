@@ -1,35 +1,3 @@
-/* css/styles.css */
-:root {
-  /* Color Variables */
-  --background-light: #eff2f9;
-  --background-dark: #1c1c1c;
-  --light-shadow-light: #ffffff;
-  --dark-shadow-light: rgba(22, 24, 29, 0.23);
-  --light-shadow-dark: rgba(255, 255, 255, 0.1);
-  --dark-shadow-dark: rgba(0, 0, 0, 0.8);
-  --text-color-light: #6e7f8d;
-  --text-color-dark: #b3b3b3;
-  --highlight-color: #ff7f3f;
-  --error-color: #ff3b30;
-  --success-color: #4caf50;
-  --font-primary: "Campton", sans-serif;
-  --font-secondary: "Avenir Next", sans-serif;
-
-  /* Spacing */
-  --spacing-xs: 4px;
-  --spacing-sm: 8px;
-  --spacing-md: 16px;
-  --spacing-lg: 24px;
-  --spacing-xl: 32px;
-
-  /* Breakpoints */
-  --breakpoint-xs: 360px;
-  --breakpoint-sm: 576px;
-  --breakpoint-md: 768px;
-  --breakpoint-lg: 992px;
-  --breakpoint-xl: 1200px;
-}
-
 body {
   margin: 0;
   font-family: var(--font-primary);

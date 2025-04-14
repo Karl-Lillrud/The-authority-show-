@@ -1,35 +1,3 @@
-:root {
-  --background-light: #eff2f9;
-  --background-dark: #1c1c1c;
-  --light-shadow-light: #ffffff;
-  --dark-shadow-light: rgba(22, 24, 29, 0.15);
-  --light-shadow-dark: rgba(255, 255, 255, 0.1);
-  --dark-shadow-dark: rgba(0, 0, 0, 0.8);
-  --text-color-light: #6e7f8d;
-  --text-color-dark: #b3b3b3;
-  --highlight-color: #ff7f3f;
-  --highlight-hover: #e0662c;
-  --error-color: #ff3b30;
-  --success-color: #4caf50;
-  --font-primary: "Inter", "Segoe UI", "Arial", sans-serif;
-  --font-secondary: "Avenir Next", sans-serif;
-  --spacing-xs: 4px;
-  --spacing-sm: 8px;
-  --spacing-md: 16px;
-  --spacing-lg: 24px;
-  --spacing-xl: 32px;
-  --radius-large: 20px;
-  --radius-medium: 12px;
-  --radius-small: 6px;
-  --transition-normal: 0.3s ease;
-  --card-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05),
-    0 8px 10px -6px rgba(0, 0, 0, 0.02);
-  --card-shadow-hover: 0 20px 35px -10px rgba(0, 0, 0, 0.1),
-    0 10px 15px -5px rgba(0, 0, 0, 0.05);
-  --button-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1),
-    0 2px 4px -1px rgba(0, 0, 0, 0.06);
-}
-
 /* Reset styles - only apply to dashboard elements to avoid conflicts */
 .dashboard * {
   margin: 0;
@@ -100,7 +68,7 @@
 
 .action-button:hover {
   transform: translateY(-2px);
-  box-shadow: var(--card-shadow-hover);
+  box-shadow: var(--card-shadow-hover2);
   color: var(--highlight-color);
 }
 
@@ -130,7 +98,7 @@
 
 .stat-card:hover {
   transform: translateY(-3px);
-  box-shadow: var(--card-shadow-hover);
+  box-shadow: var(--card-shadow-hover2);
 }
 
 .stat-icon {
@@ -491,7 +459,7 @@
 
 .episode-card:hover {
   transform: translateY(-5px);
-  box-shadow: var(--card-shadow-hover);
+  box-shadow: var(--card-shadow-hover2);
 }
 
 .card-header {
