@@ -21,7 +21,7 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: var(--team-spacing-xl);
+  margin-bottom: var(--team-spacing-sm);
   flex-wrap: wrap;
   gap: var(--team-spacing-md);
 }
@@ -39,7 +39,7 @@
   display: grid;
   grid-template-columns: 1fr;
   gap: var(--team-spacing-lg);
-  margin-top: var(--team-spacing-xl);
+  margin-top: var(--team-spacing-sm);
   padding-bottom: var(--team-spacing-lg); /* Extra utrymme längst ner */
 }
 
