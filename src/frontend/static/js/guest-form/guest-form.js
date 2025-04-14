@@ -781,7 +781,114 @@ document.addEventListener("DOMContentLoaded", () => {
   fetchAvailableDates()
 })
 
+// Add a function to explicitly delete a Google Calendar event
+// Add this function after the other calendar-related functions:
+
+function deleteGoogleCalendarEvent(eventId, googleCalToken) {
+  if (!eventId || !googleCalToken) {
+    console.error("Missing event ID or Google Calendar token for deletion")
+    return Promise.reject("Missing event ID or token")
+  }
+
+  console.log(`Attempting to delete calendar event: ${eventId}`)
+
+  return fetch("/guest-form/delete-calendar-event", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      eventId: eventId,
+      googleCalToken: googleCalToken,
+    }),
+  })
+    .then((response) => {
+      if (!response.ok) {
+        return response.json().then((data) => Promise.reject(data.error || "Failed to delete event"))
+      }
+      return response.json()
+    })
+    .then((data) => {
+      console.log("Successfully deleted calendar event:", eventId)
+      return data
+    })
+}
+
 // Existing logic or functions here...
+document.addEventListener("DOMContentLoaded", () => {
+  const guestId = new URLSearchParams(window.location.search).get("guestId") // Get guestId from URL
+  let currentGuestData = null // Store the current guest data for reference
+  let currentCalendarEventId = null // Store the current calendar event ID
+
+  // Create a hidden field for the calendar event ID
+  const calendarEventIdField = document.createElement("input")
+  calendarEventIdField.type = "hidden"
+  calendarEventIdField.id = "calendarEventId"
+  calendarEventIdField.name = "calendarEventId" // Add name attribute for form submission
+  document.getElementById("guestForm").appendChild(calendarEventIdField)
+
+  // Fetch guest details if guestId is available
+  if (guestId) {
+    fetch(`/get_guests_by_id/${guestId}`, { method: "GET" })
+      .then((response) => response.json())
+      .then((data) => {
+        if (data.guest) {
+          // Store the current guest data
+          currentGuestData = data.guest
+          currentCalendarEventId = data.guest.calendarEventId // Store the calendar event ID if it exists
+
+          console.log("Retrieved guest data:", data.guest)
+          console.log("Calendar Event ID:", currentCalendarEventId)
+
+          if (currentCalendarEventId) {
+            calendarEventIdField.value = currentCalendarEventId
+            console.log("Set calendar event ID field to:", calendarEventIdField.value)
+          }
+
+          // Populate the form with the guest data - map to schema fields
+          document.getElementById("firstName").value = data.guest.name || ""
+          document.getElementById("email").value = data.guest.email || ""
+          document.getElementById("bio").value = data.guest.bio || ""
+          document.getElementById("interest").value = data.guest.areasOfInterest
+            ? data.guest.areasOfInterest.join(", ")
+            : ""
+          document.getElementById("recordingDate").value = data.guest.scheduled
+            ? new Date(data.guest.scheduled).toISOString().split("T")[0]
+            : ""
+          document.getElementById("recordingTime").value = data.guest.scheduled
+            ? new Date(data.guest.scheduled).toTimeString().slice(0, 5)
+            : ""
+          document.getElementById("company").value = data.guest.company || ""
+          document.getElementById("phone").value = data.guest.phone || ""
+          document.getElementById("list").value = data.guest.tags ? data.guest.tags.join(", ") : ""
+          document.getElementById("notes").value = data.guest.notes || ""
+
+          // Handle social media links
+          if (data.guest.linkedin) {
+            addSocialMedia("LinkedIn", data.guest.linkedin)
+          }
+          if (data.guest.twitter) {
+            addSocialMedia("Twitter", data.guest.twitter)
+          }
+
+          // If there's an image, display it
+          if (data.guest.image) {
+            const imagePreview = document.getElementById("imagePreview")
+            const previewContainer = document.getElementById("imagePreviewContainer")
+            imagePreview.src = data.guest.image
+            previewContainer.classList.remove("hidden")
+            localStorage.setItem("imageData", data.guest.image)
+          }
+        } else {
+          alert("Guest not found")
+        }
+      })
+      .catch((error) => {
+        console.error("Error fetching guest details:", error)
+        alert("An error occurred while fetching guest details.")
+      })
+  }
+})
 
 // Add this at the end of the file or inside the DOMContentLoaded listener
 document.addEventListener("DOMContentLoaded", () => {
@@ -790,48 +897,81 @@ document.addEventListener("DOMContentLoaded", () => {
   form.addEventListener("submit", (event) => {
     event.preventDefault()
 
-    // Generate a unique guest ID
-    const guestId = "guest_" + Date.now() + "_" + Math.random().toString(36).substr(2, 9)
+    // Replace the guestId generation code with this:
+    const urlParams = new URLSearchParams(window.location.search)
+    const guestId = urlParams.get("guestId")
 
-    // Get profile photo data if available
-    const profilePhotoInput = document.getElementById("profilePhoto")
-    let profilePhotoData = null
-    if (profilePhotoInput.files.length > 0) {
-      profilePhotoData = localStorage.getItem("imageData") // Get the base64 image data
+    if (!guestId) {
+      console.error("No guestId found in URL parameters")
+      alert("Error: No guest ID provided")
+      return // Exit the submit handler if no guestId is available
     }
 
-    // Get social media data
+    const profilePhotoData = localStorage.getItem("imageData")
     const socialMediaData = JSON.parse(localStorage.getItem("socialMediaData") || "[]")
-
-    // Get recommended guests data
     const recommendedGuestData = JSON.parse(localStorage.getItem("recommendedGuestData") || "[]")
 
-    // Safely get the values from all form fields
+    // Extract interest tags from comma-separated list
+    const interestTags = document
+      .getElementById("interest")
+      .value.split(",")
+      .map((tag) => tag.trim())
+      .filter((tag) => tag.length > 0)
+
+    // Extract list tags from comma-separated list
+    const listTags = document
+      .getElementById("list")
+      .value.split(",")
+      .map((tag) => tag.trim())
+      .filter((tag) => tag.length > 0)
+
+    // Create a timestamp for the scheduled date/time
+    const recordingDate = document.getElementById("recordingDate").value
+    const recordingTime = document.getElementById("recordingTime").value
+    const scheduledTimestamp =
+      recordingDate && recordingTime ? new Date(`${recordingDate}T${recordingTime}:00`).getTime() : null
+
+    // Extract LinkedIn and Twitter from social media data
+    let linkedinUrl = ""
+    let twitterUrl = ""
+    socialMediaData.forEach((item) => {
+      if (item.platform === "LinkedIn") linkedinUrl = item.link
+      if (item.platform === "Twitter") twitterUrl = item.link
+    })
+
+    // Get the calendar event ID if it exists
+    const calendarEventId = document.getElementById("calendarEventId")?.value || null
+    console.log("Calendar Event ID at form submission:", calendarEventId)
+
+    // Map form data to match the database schema
     const formData = {
-      guestId: guestId, // Include the generated guest ID
-      firstName: document.getElementById("firstName").value,
+      id: guestId, // Use the existing ID
+      name: document.getElementById("firstName").value,
       email: document.getElementById("email").value,
       bio: document.getElementById("bio").value,
-      interest: document.getElementById("interest").value,
-      recordingDate: document.getElementById("recordingDate").value,
-      recordingTime: document.getElementById("recordingTime").value,
+      areasOfInterest: interestTags,
+      scheduled: scheduledTimestamp,
       company: document.getElementById("company").value,
       phone: document.getElementById("phone").value,
-      socialMedia: socialMediaData,
-      recommendedGuests: recommendedGuestData,
-      list: document.getElementById("list").value,
+      linkedin: linkedinUrl,
+      twitter: twitterUrl,
+      tags: listTags,
       notes: document.getElementById("notes").value,
-      updatesOption: document.querySelector('input[name="updatesOption"]:checked').value,
-      profilePhoto: profilePhotoData,
+      image: profilePhotoData,
+      // Include additional fields that might not be in the form but are in the schema
+      status: "pending", // Default status
+      // Store the recommended guests in a custom field
+      recommendedGuests: recommendedGuestData,
+      // Store the Google Calendar token for event creation
       googleCalToken:
         new URLSearchParams(window.location.search).get("googleCal") || localStorage.getItem("googleCalToken") || "",
+      // Store the current calendar event ID if it exists
+      calendarEventId: calendarEventId,
     }
 
-    console.log("Submitting form data:", formData)
-
-    // Send the form data to the backend
-    fetch("/guest-form", {
-      method: "POST",
+    // Send the form data to update the guest
+    fetch(`/edit_guests/${guestId}`, {
+      method: "PUT",
       headers: {
         "Content-Type": "application/json",
       },
@@ -839,73 +979,73 @@ document.addEventListener("DOMContentLoaded", () => {
     })
       .then((response) => response.json())
       .then((data) => {
-        console.log("Form submission success:", data)
-        alert("Guest form submitted successfully!")
-        form.reset() // Reset the form after submission
+        if (data.message === "Guest updated successfully") {
+          alert("Guest information updated successfully!")
 
-        // Clear localStorage items
-        localStorage.removeItem("imageData")
-        localStorage.removeItem("socialMediaData")
-        localStorage.removeItem("recommendedGuestData")
-        localStorage.removeItem("recordingDate")
-        localStorage.removeItem("recordingTime")
-        localStorage.removeItem("selectedDateText")
+          // Update Google Calendar event if the recording date or time changed
+          const googleCalToken = formData.googleCalToken
+          if (googleCalToken && recordingDate && recordingTime) {
+            console.log("Updating calendar event with ID:", calendarEventId)
 
-        // Clear any previews
-        const imagePreviewContainer = document.getElementById("imagePreviewContainer")
-        if (imagePreviewContainer) {
-          imagePreviewContainer.classList.add("hidden")
+            // First delete the existing event if there is one
+            let deletePromise = Promise.resolve()
+            if (calendarEventId) {
+              console.log("Deleting existing calendar event:", calendarEventId)
+              deletePromise = deleteGoogleCalendarEvent(calendarEventId, googleCalToken).catch((error) => {
+                console.warn("Error deleting calendar event, continuing with creation:", error)
+                // Continue even if deletion fails
+                return Promise.resolve()
+              })
+            }
+
+            // After deletion (or if no deletion needed), create the new event
+            deletePromise.then(() => {
+              const eventData = {
+                summary: `Podcast Recording: ${formData.name}`,
+                description: `Recording with ${formData.name} from ${formData.company || "N/A"}`,
+                start: {
+                  dateTime: `${recordingDate}T${recordingTime}:00`,
+                  timeZone: "Europe/Stockholm",
+                },
+                end: {
+                  dateTime: `${recordingDate}T${recordingTime}:30`,
+                  timeZone: "Europe/Stockholm", // Adjust duration as necessary
+                },
+                attendees: [{ email: formData.email }],
+                googleCalToken: googleCalToken, // Add the token to the request body
+                guestId: guestId, // Include the guest ID for updating the record
+              }
+
+              // Send the event data to create a new calendar event
+              fetch("/guest-form/create-google-calendar-event", {
+                method: "POST",
+                headers: {
+                  "Content-Type": "application/json",
+                },
+                body: JSON.stringify(eventData),
+              })
+                .then((calendarResponse) => calendarResponse.json())
+                .then((calendarData) => {
+                  console.log("Google Calendar event created:", calendarData)
+
+                  // If we got a new event ID, store it in the hidden field
+                  if (calendarData.eventId) {
+                    document.getElementById("calendarEventId").value = calendarData.eventId
+                  }
+                })
+                .catch((calendarError) => {
+                  console.error("Error creating Google Calendar event:", calendarError)
+                })
+            })
+          }
+
+          // Don't reset the form after successful submission to allow for additional edits
+          // form.reset();
         }
-
-        // Clear social media and recommended guest containers
-        document.getElementById("socialMediaContainer").innerHTML = ""
-        document.getElementById("recommendedGuestContainer").innerHTML = ""
-        socialMediaCount = 0
-        recommendedGuestCount = 0
-
-        // Show the add buttons again
-        document.getElementById("addSocialButton").classList.remove("hidden")
-        document.getElementById("addGuestButton").classList.remove("hidden")
       })
       .catch((error) => {
         console.error("Error during form submission:", error)
-        alert("An error occurred during submission.")
+        alert("An error occurred while updating the guest.")
       })
   })
 })
-
-// Submit form data to the backend and create a Google Calendar event
-async function createGoogleCalendarEvent(formData) {
-  const eventData = {
-    summary: `Podcast Recording: ${formData.firstName}`,
-    description: `Recording with ${formData.firstName} from ${formData.company}`,
-    start: {
-      dateTime: `${formData.recordingDate}T${formData.recordingTime}:00`,
-      timeZone: "Europe/Stockholm", // Adjust to your time zone
-    },
-    end: {
-      dateTime: `${formData.recordingDate}T${formData.recordingTime}:30`, // 30-minute default duration
-      timeZone: "Europe/Stockholm",
-    },
-    attendees: [
-      {
-        email: formData.email,
-      },
-    ],
-    googleCalToken: formData.googleCalToken, // Make sure to include the token
-  }
-
-  // Send the event data to the backend to create a calendar event
-  const res = await fetch("/create-google-calendar-event", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify(eventData),
-  })
-
-  if (!res.ok) {
-    const errorData = await res.json()
-    throw new Error(errorData.error || "Failed to create Google Calendar event.")
-  }
-}

@@ -12,6 +12,8 @@ class GuestSchema(Schema):
     email = fields.Email()
     linkedin = fields.Str()
     twitter = fields.Str()
+    company = fields.Str()
+    phone = fields.Int()
     areasOfInterest = fields.List(fields.Str())
     status = fields.Str()
     scheduled = fields.Int() #Schedule sen

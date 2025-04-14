@@ -86,6 +86,7 @@ class GuestRepository:
                 "completed": 0,
                 "created_at": datetime.now(timezone.utc),
                 "user_id": user_id,
+                "calendarEventId": guest_data.get("calendarEventId", "")  # Store calendar event ID
             }
 
             self.collection.insert_one(guest_item)
@@ -115,6 +116,7 @@ class GuestRepository:
                     "linkedin": 1,
                     "twitter": 1,
                     "areasOfInterest": 1,
+                    "calendarEventId": 1,  # Include calendar event ID
                 },
             )
 
@@ -139,6 +141,7 @@ class GuestRepository:
                         "linkedin": guest.get("linkedin", ""),
                         "twitter": guest.get("twitter", ""),
                         "areasOfInterest": guest.get("areasOfInterest", []),
+                        "calendarEventId": guest.get("calendarEventId", ""),  # Include calendar event ID
                     }
                 )
 
@@ -179,6 +182,11 @@ class GuestRepository:
             episode_id = data.get("episodeId")
             if episode_id is not None:
                 update_fields["episodeId"] = episode_id
+
+            # If calendarEventId is provided, update it
+            calendar_event_id = data.get("calendarEventId")
+            if calendar_event_id is not None:
+                update_fields["calendarEventId"] = calendar_event_id
 
             logger.info("📝 Update Fields: %s", update_fields)
 
@@ -236,6 +244,7 @@ class GuestRepository:
                         "linkedin": guest.get("linkedin"),
                         "twitter": guest.get("twitter"),
                         "areasOfInterest": guest.get("areasOfInterest", []),
+                        "calendarEventId": guest.get("calendarEventId", ""),  # Include calendar event ID
                     }
                 )
 
@@ -267,6 +276,11 @@ class GuestRepository:
                     "linkedin": 1,
                     "twitter": 1,
                     "areasOfInterest": 1,
+                    "calendarEventId": 1,  # Include calendar event ID
+                    "company": 1,
+                    "phone": 1,
+                    "scheduled": 1,
+                    "notes": 1,
                 },
             )
 
@@ -284,6 +298,11 @@ class GuestRepository:
                 "linkedin": guest_cursor.get("linkedin", ""),
                 "twitter": guest_cursor.get("twitter", ""),
                 "areasOfInterest": guest_cursor.get("areasOfInterest", []),
+                "calendarEventId": guest_cursor.get("calendarEventId", ""),  # Include calendar event ID
+                "company": guest_cursor.get("company", ""),
+                "phone": guest_cursor.get("phone", ""),
+                "scheduled": guest_cursor.get("scheduled", 0),
+                "notes": guest_cursor.get("notes", ""),
             }
 
             return {"message": "Guest fetched successfully", "guest": guest}, 200
@@ -367,3 +386,22 @@ class GuestRepository:
         except Exception as e:
             logger.exception("❌ ERROR: Failed to save Google refresh token")
             return {"error": f"Failed to save Google refresh token: {str(e)}"}, 500
+            
+    def update_calendar_event_id(self, guest_id, event_id):
+        """
+        Update the calendar event ID for a guest.
+        """
+        try:
+            result = self.collection.update_one(
+                {"_id": guest_id},
+                {"$set": {"calendarEventId": event_id}}
+            )
+            if result.modified_count > 0:
+                logger.info(f"Updated calendar event ID for guest {guest_id}: {event_id}")
+                return {"message": "Calendar event ID updated successfully"}, 200
+            else:
+                logger.warning(f"Failed to update calendar event ID for guest {guest_id}")
+                return {"error": "Failed to update calendar event ID"}, 500
+        except Exception as e:
+            logger.exception(f"❌ ERROR: Failed to update calendar event ID: {e}")
+            return {"error": f"Failed to update calendar event ID: {str(e)}"}, 500
