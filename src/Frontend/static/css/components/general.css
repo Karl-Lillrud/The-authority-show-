@@ -2,6 +2,12 @@
 /* General CSS for universal selector (*), html, body, etc */
 /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
 html,
 body {
   width: 100%;
