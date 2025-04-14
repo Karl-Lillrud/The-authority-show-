@@ -369,6 +369,9 @@ body.dark-mode .help-button {
 
 .label-group {
   position: relative;
+  display: inline-flex; 
+  align-items: center; 
+  gap: 0.25rem
 }
 
 .label-group .help-button {
@@ -1003,3 +1006,8 @@ body.dark-mode .error-container {
   visibility: visible;
   opacity: 1;
 }
+
+#rssLabel {
+  margin-right: var(--spacing-md);
+}
+
