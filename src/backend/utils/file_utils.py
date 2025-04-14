@@ -15,17 +15,31 @@ def enhance_audio_with_ffmpeg(input_path: str, output_path: str) -> bool:
             "ffmpeg",
             "-y",
             "-i", input_path,
+            "-ac", "1",                # Mono
+            "-ar", "16000",            # 16 kHz (standard for speech)
+            "-sample_fmt", "s16",      # 16-bit PCM
+            "-c:a", "pcm_s16le",       # WAV browser-compatible format
             "-af",
-            "afftdn=nf=-25,highpass=f=50,highpass=f=60,highpass=f=70,"
-            "equalizer=f=50:t=q:w=1:g=-40,equalizer=f=60:t=q:w=1:g=-40,"
+            "afftdn=nf=-25,"
+            "highpass=f=50,highpass=f=60,highpass=f=70,"
+            "equalizer=f=50:t=q:w=1:g=-40,"
+            "equalizer=f=60:t=q:w=1:g=-40,"
             "highpass=f=100,loudnorm",
             output_path
         ]
         subprocess.run(ffmpeg_cmd, check=True)
+
+        # Optional: Debug check
+        import soundfile as sf
+        info = sf.info(output_path)
+        logger.info(f"✅ Output WAV info: {info}")
+
         return os.path.exists(output_path)
     except Exception as e:
-        logger.error(f"Error during FFmpeg audio enhancement: {str(e)}")
+        logger.error(f"❌ FFmpeg enhancement error: {str(e)}")
         return False
+
+
 
 
 def detect_background_noise(audio_path: str, threshold=1000, max_freq=500) -> str:

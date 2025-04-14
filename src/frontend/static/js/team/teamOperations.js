@@ -1,4 +1,4 @@
-import { showNotification } from "./notifications.js"
+import { showNotification } from "../components/notifications.js"
 import { updateTeamsUI } from "./teamUI.js"
 import {
   addTeamRequest,

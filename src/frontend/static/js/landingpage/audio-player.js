@@ -1,6 +1,59 @@
-// Select elements
-const audioPlayer = document.getElementById("audio-player");
-const audioSource = document.getElementById("audio-source");
+// This function initializes a custom audio player instance given its wrapper element.
+// It assumes that within the wrapper, there is an <audio> element, a play button (.play-btn),
+// a range input (.seek-bar), and a time display (.time-display).
+function initCustomAudioPlayer(wrapperElement) {
+    const audio = wrapperElement.querySelector("audio");
+    const playBtn = wrapperElement.querySelector(".play-btn");
+    const seekBar = wrapperElement.querySelector(".seek-bar");
+    const timeDisplay = wrapperElement.querySelector(".time-display");
+
+    function updateTime() {
+        const current = formatTime(audio.currentTime);
+        const duration = formatTime(audio.duration);
+        timeDisplay.textContent = `${current} / ${duration}`;
+    }
+
+    audio.addEventListener("loadedmetadata", () => {
+        seekBar.max = Math.floor(audio.duration);
+        updateTime();
+    });
+
+    audio.addEventListener("timeupdate", () => {
+        seekBar.value = Math.floor(audio.currentTime);
+        updateTime();
+    });
+
+    playBtn.addEventListener("click", () => {
+        if (audio.paused) {
+            audio.play();
+            playBtn.textContent = "⏸";
+        } else {
+            audio.pause();
+            playBtn.textContent = "▶";
+        }
+    });
+
+    seekBar.addEventListener("input", () => {
+        audio.currentTime = seekBar.value;
+        updateTime();
+    });
+}
+
+// Helper function to format seconds as mm:ss
+function formatTime(seconds) {
+    const mins = Math.floor(seconds / 60);
+    const secs = Math.floor(seconds % 60).toString().padStart(2, '0');
+    return `${mins}:${secs}`;
+}
+
+// Expose the initializer for use in other scripts
+window.initCustomAudioPlayer = initCustomAudioPlayer;
+
+
+// --------------------
+// Main Audio Player Code - Updated
+// --------------------
+const audio = document.getElementById("audio");
 const playBtn = document.getElementById("play-btn");
 const seekBar = document.getElementById("seek-bar");
 const currentTimeEl = document.getElementById("current-time");
@@ -9,49 +62,40 @@ const rewindBtn = document.getElementById("rewind-btn");
 const forwardBtn = document.getElementById("forward-btn");
 const speedBtn = document.getElementById("speed-btn");
 
-// ✅ Check if an audio file exists
-if (!audioSource.src || audioSource.src.trim() === "") {
-    console.error("❌ No audio file found!");
-    audioPlayer.style.display = "none"; // Hide player if no audio
-} else {
-    console.log("🎵 Audio file loaded:", audioSource.src);
-    audioPlayer.load(); // Ensure audio loads correctly
-}
-
 // Play/Pause Functionality
 playBtn.addEventListener("click", () => {
-    if (audioPlayer.paused) {
-        audioPlayer.play();
-        playBtn.innerHTML = '<i class="fas fa-pause"></i>';
+    if (audio.paused) {
+        audio.play();
+        playBtn.innerHTML = '⏸️'; // Pause icon
     } else {
-        audioPlayer.pause();
-        playBtn.innerHTML = '<i class="fas fa-play"></i>';
+        audio.pause();
+        playBtn.innerHTML = '▶️'; // Play icon
     }
 });
 
 // Update Seek Bar
-audioPlayer.addEventListener("timeupdate", () => {
-    const currentTime = formatTime(audioPlayer.currentTime);
-    const duration = formatTime(audioPlayer.duration);
-    seekBar.value = (audioPlayer.currentTime / audioPlayer.duration) * 100 || 0;
+audio.addEventListener("timeupdate", () => {
+    const currentTime = formatTime(audio.currentTime);
+    const duration = formatTime(audio.duration);
+    seekBar.value = (audio.currentTime / audio.duration) * 100 || 0;
     currentTimeEl.innerText = currentTime;
     durationEl.innerText = duration;
 });
 
 // Seek Bar Control
 seekBar.addEventListener("input", () => {
-    audioPlayer.currentTime = (seekBar.value / 100) * audioPlayer.duration;
+    audio.currentTime = (seekBar.value / 100) * audio.duration;
 });
 
 // Rewind & Forward 15 seconds
-rewindBtn.addEventListener("click", () => audioPlayer.currentTime -= 15);
-forwardBtn.addEventListener("click", () => audioPlayer.currentTime += 15);
+rewindBtn.addEventListener("click", () => audio.currentTime -= 15);
+forwardBtn.addEventListener("click", () => audio.currentTime += 15);
 
 // Playback Speed Toggle
 let speed = 1;
 speedBtn.addEventListener("click", () => {
     speed = speed === 1 ? 1.5 : speed === 1.5 ? 2 : 1;
-    audioPlayer.playbackRate = speed;
+    audio.playbackRate = speed;
     speedBtn.innerText = speed + "x";
 });
 

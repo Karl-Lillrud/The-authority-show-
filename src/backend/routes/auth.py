@@ -3,6 +3,7 @@ from backend.repository.auth_repository import AuthRepository
 from backend.services.TeamInviteService import TeamInviteService
 from backend.services.authService import AuthService
 import os
+import logging  # Add logging import
 
 # Define Blueprint
 auth_bp = Blueprint("auth_bp", __name__)
@@ -11,6 +12,10 @@ auth_bp = Blueprint("auth_bp", __name__)
 auth_repo = AuthRepository()
 
 auth_service = AuthService()
+
+# Configure logger
+logger = logging.getLogger(__name__)
+logging.basicConfig(level=logging.INFO)
 
 # Instantiate AuthService
 @auth_bp.route("/send-verification-code", methods=["POST"])
@@ -144,3 +149,58 @@ def register_team_member_submit():
                 response["teamId"] = invite_response.get("teamId")
                 response["teamMessage"] = invite_response.get("message")
     return jsonify(response), status_code
+
+
+@auth_bp.route("/verify-and-signin", methods=["POST"])
+def verify_and_signin():
+    """
+    Endpoint to verify the code and sign in the user.
+    """
+    if request.content_type != "application/json":
+        return jsonify({"error": "Invalid Content-Type. Expected application/json"}), 415
+
+    data = request.get_json()
+    email = data.get("email")
+    code = data.get("code")
+
+    if not email or not code:
+        return jsonify({"error": "Email and code are required"}), 400
+
+    try:
+        # Call the AuthService to verify the code and log in the user
+        result = auth_service.verify_code_and_login(email, code)
+        return jsonify(result), result.get("status", 200)
+    except Exception as e:
+        return jsonify({"error": f"Failed to verify code: {str(e)}"}), 500
+
+
+@auth_bp.route("/send-login-link", methods=["POST"])
+def send_login_link():
+    """
+    Endpoint to send a log-in link to the user's email.
+    """
+    if request.content_type != "application/json":
+        return jsonify({"error": "Invalid Content-Type. Expected application/json"}), 415
+
+    data = request.get_json()
+    email = data.get("email")
+
+    if not email:
+        return jsonify({"error": "Email is required"}), 400
+
+    try:
+        # Generate a verification code and save it in the database
+        verification_code = auth_service.generate_verification_code(email)
+        logger.info(f"Generated verification code for {email}: {verification_code}")  # Log the code for debugging
+
+        # Construct the log-in link
+        login_link = f"{request.host_url}dashboard?email={email}&code={verification_code}"
+        logger.info(f"Generated log-in link for {email}: {login_link}")  # Log the link for debugging
+
+        # Send the log-in link via email
+        auth_service.send_login_email(email, login_link)
+
+        return jsonify({"message": "Log-in link sent successfully"}), 200
+    except Exception as e:
+        logger.error(f"Error sending log-in link: {e}", exc_info=True)
+        return jsonify({"error": "Failed to send log-in link. Please try again later."}), 500
