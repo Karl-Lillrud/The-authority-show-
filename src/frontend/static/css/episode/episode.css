@@ -122,10 +122,13 @@ html {
 
 /* Center the audio player */
 .audio-player {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  height: 100vh; /* Centers it vertically on the page */
+  background: #1c1c1c;
+  padding: 20px;
+  border-radius: 10px;
+  text-align: center;
+  max-width: 700px;
+  margin: 50px auto; /* Center it and ensure it's not stretching */
+  color: white;
 }
 
 audio {
