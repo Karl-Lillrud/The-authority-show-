@@ -145,7 +145,7 @@ function showTab(tabName) {
                   ${labelWithCredits("✂ Cut", "audio_cutting")}
                 </button>
                 <div id="cutResult"></div>
-                <a id="downloadCut" style="display:none;" download="cut_audio.wav">📥 Download Cut</a>
+                <a id="downloadCut" class="btn ai-edit-button" download="cut_audio.wav">📥 Download Cut</a>
             </div>
 
             <div id="aiCuttingSection" style="display: none;">
