@@ -236,7 +236,6 @@ body.dark-mode .button-secondary:hover {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  margin-left: 0.5cm; /* Reduced margin from 2cm to 0.5cm */
   vertical-align: middle; /* Align with the label */
   transform: translate(-4mm, -1mm); /* Moved 2mm up and 2mm left */
 }
@@ -959,7 +958,6 @@ body.dark-mode .error-container {
 
 #connectCalendar {
   margin-top: var(--spacing-sm); /* Add spacing above the button */
-  margin-bottom: var(--spacing-sm); /* Add spacing below the button */
   margin-bottom: var(--spacing-md);
 }
 
@@ -980,7 +978,6 @@ body.dark-mode .error-container {
   align-items: center;
   justify-content: center;
   position: absolute;
-  right: -30px;
   top: 50%;
   transform: translateY(-30%);
 }
