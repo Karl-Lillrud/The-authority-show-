@@ -42,19 +42,19 @@
               </a>
             </li>
             <li class="sidebar-menu-item active">
-              <a href="#" class="sidebar-menu-link">
+              <a href="/podcastmanagement"  class="sidebar-menu-link">
                 <span id="podcasts-icon" class="sidebar-icon"></span>
                 <span>Podcasts</span>
               </a>
             </li>
   
-            <li class="sidebar-menu-item">
+            <li class="sidebar-menu-item hide-sidebar-menu-item">
               <a href="#" class="sidebar-menu-link">
                 <span id="episodes-icon" class="sidebar-icon"></span>
                 <span>Episodes</span>
               </a>
             </li>
-            <li class="sidebar-menu-item">
+            <li class="sidebar-menu-item hide-sidebar-menu-item">
               <a href="#" class="sidebar-menu-link" id="guests-link">
                 <span id="guests-icon" class="sidebar-icon"></span>
                 <span>Guests</span>
@@ -414,5 +414,4 @@
     type="module"
     src="{{ url_for('static', filename='js/podcastmanagement/podcastmanagement.js') }}"
   ></script>
-  {% endblock %}
-  
+{% endblock %}

@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <title>Missing Information Request</title>
+  </head>
+  <body>
+    <!--should be checking for status: not recorded and then check if anything in the guests information for exmaple linkedin/twitter/bio etc is empty/null and then send out the email -->
+    <h1>Hi {{ guest_name }},</h1>
+    <p>Great to see that you locked in a time in my calendar for the recording of our episode together.</p>
+    <p>I just had a look and can't see that you submitted some off your personal information to the guest form.</p>
+    <p>Would you please be so kind and submit all the details here:</p>
+    <p><a href="https://docs.google.com/forms/d/e/1FAIpQLSfLFPe79xmbvadpIC_kR3bYgiygRnPy6ounn5e25DcdriP9gA/viewform?usp=sf_link" target="_blank">Submit Your Details</a></p>
+    <p>Thank you!</p>
+    <p>Best regards,<br>{{ podName }}</p>
+  </body>
+</html>

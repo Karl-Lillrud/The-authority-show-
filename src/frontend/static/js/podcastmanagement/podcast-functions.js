@@ -520,6 +520,7 @@
     
       updateEditButtons();
     }
+<<<<<<< HEAD
     
     
     /** 
@@ -611,6 +612,124 @@
             noEpisodes.className = "no-episodes-message";
             noEpisodes.textContent = "No episodes available.";
             episodesContainer.appendChild(noEpisodes);
+=======
+
+    async function processInputs() {
+      const logoPromise = handleFileInput(logoInput, "logoUrl");
+      const bannerPromise = handleFileInput(bannerInput, "bannerUrl");
+      const hostImagePromise = handleFileInput(hostImageInput, "hostImage");
+
+      // Wait for all file inputs to be processed
+      const [logoChanged, bannerChanged, hostImageChanged] = await Promise.all([
+        logoPromise,
+        bannerPromise,
+        hostImagePromise
+      ]);
+
+      // Submit podcast data
+      await submitPodcast(data);
+    }
+
+    // Start processing the inputs
+    processInputs();
+  });
+}
+
+// Function to render podcast options in a select element
+export function renderPodcastSelection(podcasts) {
+  const podcastSelect = document.getElementById("podcast-select");
+  podcastSelect.innerHTML = ""; // Clear existing options
+
+  // Add a default "Select Podcast" option
+  const defaultOption = document.createElement("option");
+  defaultOption.value = "";
+  defaultOption.textContent = "Select Podcast";
+  podcastSelect.appendChild(defaultOption);
+
+  podcasts.forEach((podcast) => {
+    const option = document.createElement("option");
+    option.value = podcast._id;
+    option.textContent = podcast.podName;
+    podcastSelect.appendChild(option);
+  });
+}
+
+// Initialize podcast functions
+export function initPodcastFunctions() {
+  renderPodcastList();
+
+  // Show form for adding a podcast
+  document.getElementById("add-podcast-btn").addEventListener("click", () => {
+    resetForm();
+    shared.selectedPodcastId = null;
+    document.getElementById("form-popup").style.display = "flex";
+    document.querySelector(".form-title").textContent = "Add New Podcast";
+    document.querySelector(".save-btn").textContent = "Save Podcast";
+  });
+
+  // Close the form popup
+  document.getElementById("close-form-popup").addEventListener("click", () => {
+    document.getElementById("form-popup").style.display = "none";
+  });
+
+  // Cancel button in form
+  document.getElementById("cancel-form-btn").addEventListener("click", () => {
+    document.getElementById("form-popup").style.display = "none";
+  });
+
+  // Setup podcast form submission
+  handlePodcastFormSubmission();
+}
+
+// Function to show a custom confirmation modal
+function showDeleteConfirmationModal(message, onConfirm, onCancel) {
+  const modal = document.createElement("div");
+  modal.className = "popup";
+  modal.style.display = "flex";
+
+  modal.innerHTML = `
+    <div class="form-box">
+      <h2 class="form-title">Confirm Deletion</h2>
+      <p>${message}</p>
+      <div class="form-actions">
+        <button class="cancel-btn" id="cancel-delete-btn">Cancel</button>
+        <button class="delete-btn" id="confirm-delete-btn">Delete</button>
+      </div>
+    </div>
+  `;
+
+  document.body.appendChild(modal);
+
+  // Event listeners for buttons
+  modal.querySelector("#cancel-delete-btn").addEventListener("click", () => {
+    document.body.removeChild(modal);
+    if (onCancel) onCancel();
+  });
+
+  modal.querySelector("#confirm-delete-btn").addEventListener("click", () => {
+    document.body.removeChild(modal);
+    if (onConfirm) onConfirm();
+  });
+}
+
+// Update delete button event listener to use the custom modal
+document.querySelectorAll(".delete-btn-home").forEach((button) => {
+  button.addEventListener("click", async (e) => {
+    const podcastId = e.target.closest("button").getAttribute("data-id");
+    showDeleteConfirmationModal(
+      "Are you sure you want to delete this podcast?",
+      async () => {
+        try {
+          await deletePodcast(podcastId);
+          showNotification(
+            "Success",
+            "Podcast deleted successfully!",
+            "success"
+          );
+          e.target.closest(".podcast-card")?.remove();
+          if (document.querySelectorAll(".podcast-card").length === 0) {
+            renderPodcastList();
+>>>>>>> 8ee4e46f9b83533369d0278ffbb0945f57ef1a71
           }
         })
         .catch((error) => {

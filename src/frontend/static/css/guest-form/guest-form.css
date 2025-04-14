@@ -1,6 +1,6 @@
 body {
   background-size: cover;
-  background-color:  aliceblue;
+  background-color: aliceblue;
   background-position: center;
   background-attachment: fixed;
   margin: 0;
@@ -23,7 +23,7 @@ body {
 }
 
 #addGuestButton {
-  background-color:coral; /* Bakgrundsfärg */
+  background-color: coral; /* Bakgrundsfärg */
   color: white; /* Textfärg */
   position: relative;
   top: 1vh;
@@ -35,11 +35,10 @@ body {
 
 #addGuestButton:hover {
   background-color: rgb(202, 209, 215);
-
 }
 
 #profilePhotoLabel {
-  background-color:coral; /* Bakgrundsfärg */
+  background-color: coral; /* Bakgrundsfärg */
   color: white; /* Textfärg */
   padding: 0.5rem 1rem; /* Inre marginaler (vertikal och horisontell) */
   border-radius: 0.375rem; /* Rundade hörn */
@@ -47,22 +46,21 @@ body {
   display: inline-block; /* Gör etiketten inline-block för att den ska bete sig som en knapp */
   margin-top: 0.5rem; /* Övre marginal */
 }
-
-#profilePhotoLabel:hover{  
+#profilePhotoLabel:hover {
   background-color: rgb(202, 209, 215);
 }
 
 #openDatePicker {
   display: flex;
-  align-items: center; 
-  gap: 0.5rem; 
-  background-color: coral; 
-  color: white; 
+  align-items: center;
+  gap: 0.5rem;
+  background-color: coral;
+  color: white;
   padding: 0.5rem 1rem;
-  border-radius: 0.5rem; 
-  transition: all 0.3s ease; 
-  border: none; 
-  cursor: pointer; 
+  border-radius: 0.5rem;
+  transition: all 0.3s ease;
+  border: none;
+  cursor: pointer;
 }
 
 #openDatePicker svg {
@@ -76,11 +74,9 @@ body {
 #openDatePicker:hover {
   background-color: rgb(202, 209, 215);
 }
-
-
 button[type="submit"] {
   width: 100%; /* Fyller hela bredden av föräldraelementet, motsvarande w-full */
-  background-color:  #ff7f50;
+  background-color: #ff7f50;
   color: white; /* Textfärg, motsvarande text-white */
   padding: 0.5rem 0; /* Padding på toppen och botten (py-2) */
   border-radius: 0.5rem; /* Rundade hörn, motsvarande rounded-lg */
@@ -94,55 +90,90 @@ button[type="submit"]:hover {
   background-color: rgb(202, 209, 215);
 }
 
+#calendarPicker {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+}
 
+/* Add styles for the calendar to better indicate unavailable dates */
+#calendarPicker button {
+  transition: all 0.2s ease;
+  position: relative;
+}
 
-   #calendarPicker {
-      display: grid;
-      grid-template-columns: repeat(7, 1fr);
-    }
+#calendarPicker button.line-through {
+  text-decoration: line-through;
+  opacity: 0.7;
+}
 
-    .input-field {
-      width: 100%;
-      padding: 10px;
-      margin-top: 5px;
-      border: 1px solid orange;
-      border-radius: 15px;
-      outline: none;
-      transition: all 0.3s;
-    }
+#calendarPicker button.line-through::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background-color: rgba(239, 68, 68, 0.7); /* Red color with transparency */
+  transform: rotate(-45deg);
+}
 
-    .input-field:focus {
-      box-shadow: 0 0 5px rgba(0, 123, 255, 0.5);
-    }
+/* Style for the time picker to show unavailable times */
+#timePicker option:disabled {
+  color: #ef4444; /* Red color for unavailable times */
+  font-style: italic; /* Italicized to make them visually different */
+}
 
-    .error-message {
-      color: red;
-      font-size: 14px;
-      margin-top: 15px;
-    }
+#timePicker option.line-through {
+  text-decoration: line-through;
+  color: #ef4444; /* Red color for crossed-off times */
+}
 
+#timePicker optgroup {
+  font-weight: bold;
+  color: #4b5563;
+}
+
+.input-field {
+  width: 100%;
+  padding: 10px;
+  margin-top: 5px;
+  border: 1px solid orange;
+  border-radius: 15px;
+  outline: none;
+  transition: all 0.3s;
+}
+
+.input-field:focus {
+  box-shadow: 0 0 5px rgba(0, 123, 255, 0.5);
+}
+
+.error-message {
+  color: red;
+  font-size: 14px;
+  margin-top: 15px;
+}
 
 .footer {
   background-color: #ff7f50;
-  position:relative;
+  position: relative;
   top: 200vh;
   height: 17vh;
   margin-top: 7vh;
   text-align: center;
-  padding: 1rem ; 
+  padding: 1rem;
 }
 
 .footer-text {
   color: white;
-  font-size: 18px; 
-  margin-bottom: 1px; 
+  font-size: 18px;
+  margin-bottom: 1px;
 }
 
 .footer-logo {
-  margin-top: 0px; 
-  width: 90px; 
-  height: auto; 
-  display: block; 
+  margin-top: 0px;
+  width: 90px;
+  height: auto;
+  display: block;
   margin-left: auto;
-  margin-right: auto; 
+  margin-right: auto;
 }

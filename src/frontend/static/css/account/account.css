@@ -76,6 +76,16 @@ button {
 
 .account-header {
   margin-bottom: 2rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  position: relative;
+}
+
+.header-content {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
   position: relative;
 }
 
@@ -83,6 +93,66 @@ button {
   font-size: 1.75rem;
   font-weight: 700;
   color: var(--card-foreground);
+}
+
+.notifications-container {
+  position: absolute;
+  top: -1.75rem; 
+  left: 25rem; 
+  transform: translateY(-50%);
+  z-index: 10;
+  width: auto;
+  text-align: left; 
+}
+
+.notification {
+  padding: 0.5rem 1rem;
+  border-radius: var(--radius);
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: white;
+  background-color: var(--warning);
+  box-shadow: var(--shadow-sm);
+  animation: fadeIn 0.3s ease-in-out;
+  margin-bottom: 0.5rem;
+}
+
+.notification.warning {
+  background-color: var(--warning);
+}
+
+.notification.error {
+  background-color: var(--destructive);
+}
+
+.notification.success {
+  background-color: var(--success);
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.notification.fade-out {
+  animation: fadeOut 0.3s ease-in-out;
+}
+
+@keyframes fadeOut {
+  from {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  to {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
 }
 
 .back-link {
@@ -333,6 +403,61 @@ button {
   flex-direction: column;
   gap: 1.5rem;
   width: 100%;
+}
+
+/* Notifications Container */
+.notifications-container {
+  margin-top: 1rem;
+  margin-bottom: 1rem;
+}
+
+.notification {
+  padding: 0.75rem 1rem;
+  border-radius: var(--radius);
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: white;
+  background-color: var(--warning);
+  box-shadow: var(--shadow-sm);
+  animation: fadeIn 0.3s ease-in-out;
+}
+
+.notification.warning {
+  background-color: var(--warning);
+}
+
+.notification.error {
+  background-color: var(--destructive);
+}
+
+.notification.success {
+  background-color: var(--success);
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.notification.fade-out {
+  animation: fadeOut 0.3s ease-in-out;
+}
+
+@keyframes fadeOut {
+  from {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  to {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
 }
 
 /* Form Elements */
@@ -608,6 +733,10 @@ input:focus {
   border-radius: var(--radius);
   padding: 1.5rem;
   transition: transform 0.2s ease, box-shadow 0.2s ease;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  display: flex; 
+  flex-direction: column; 
+  height: 100%; 
 }
 
 .plan-card:hover {
@@ -640,6 +769,7 @@ input:focus {
 
 .plan-features {
   margin-bottom: 1.5rem;
+  flex-grow: 1;
 }
 
 .plan-features ul {
@@ -668,6 +798,7 @@ input:focus {
   font-size: 0.875rem;
   font-weight: 500;
   text-align: center;
+  margin-top: auto;
 }
 
 .plan-button.current {
@@ -675,6 +806,7 @@ input:focus {
   color: var(--muted-foreground);
   border: 1px solid var(--border);
   cursor: default;
+  padding: 0.75rem 1.5rem;
 }
 
 /* Billing History */
@@ -871,6 +1003,11 @@ input:focus:invalid {
     flex: none;
     width: 100%;
     position: static;
+  }
+
+  .notifications-container {
+    top: 37.5rem;
+    left: 20%;
   }
 }
 
