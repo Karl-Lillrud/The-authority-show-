@@ -147,7 +147,7 @@ button {
   margin-bottom: 0.5rem;
   border-radius: var(--account-radius);
   color: var(--account-foreground);
-  font-weight: 500;
+  font-weight: 300;
   cursor: pointer;
   transition: background-color 0.2s ease, color 0.2s ease;
   position: relative;
@@ -176,7 +176,7 @@ button {
 .sidebar-item.active {
   background-color: var(--account-primary-light);
   color: var(--account-primary);
-  font-weight: 600;
+  font-weight: 700;
 }
 
 .sidebar-item.active .icon {
@@ -201,6 +201,7 @@ button {
   border-radius: var(--account-radius);
   color: var(--account-muted-foreground);
   font-size: 0.875rem;
+  font-weight: 300;
   cursor: pointer;
   transition: background-color 0.2s ease, color 0.2s ease;
 }
@@ -213,7 +214,7 @@ button {
 .submenu-item.active {
   background-color: var(--account-primary-light);
   color: var(--account-primary);
-  font-weight: 500;
+  font-weight: 700;
 }
 
 .back-button {
