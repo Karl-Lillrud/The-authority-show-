@@ -4,9 +4,11 @@ from backend.services.TeamInviteService import TeamInviteService
 from backend.services.authService import AuthService
 import os
 import logging  # Add logging import
-from itsdangerous import URLSafeTimedSerializer
+from itsdangerous import URLSafeTimedSerializer, SignatureExpired, BadSignature
 from backend.database.mongo_connection import collection
 from datetime import datetime  
+from bson import ObjectId  # Add this import for ObjectId
+import uuid  # Add this import for generating unique IDs
 
 # Define Blueprint
 auth_bp = Blueprint("auth_bp", __name__)
@@ -100,16 +102,26 @@ def verify_and_signin():
             user = collection.find_one({"email": email})
             if not user:
                 # Create a new user if not existing
-                user = {
+                user_data = {
+                    "id": str(uuid.uuid4()),  # Generate a unique UUID for the user ID
                     "email": email,
                     "created_at": datetime.utcnow(),
-                    "roles": ["user"]  # Default roles
                 }
-                collection.insert_one(user)
-                user["_id"] = str(user["_id"])  # Ensure _id is stringified
+                collection.insert_one(user_data)
+                user = collection.find_one({"id": user_data["id"]})
+
+                # Create an account for the user
+                account_data = {
+                    "id": str(uuid.uuid4()),  # Generate a unique UUID for the account ID
+                    "userId": user["id"],
+                    "email": email,
+                    "created_at": datetime.utcnow(),
+                    "isActive": True,
+                }
+                collection.database.Accounts.insert_one(account_data)
 
             # Log the user in by setting session variables
-            session["user_id"] = str(user["_id"])
+            session["user_id"] = user["id"]
             session["email"] = user["email"]
 
             return jsonify(result), 200
@@ -179,21 +191,27 @@ def verify_login_token():
         if not user:
             # Create a new user if not existing
             user_data = {
+                "id": str(uuid.uuid4()),  # Generate a unique UUID for the user ID
                 "email": email,
                 "createdAt": datetime.utcnow(),
-                "roles": ["user"]  # Default roles
             }
-            result = collection.insert_one(user_data)  # Insert user and get result
-            user = collection.find_one({"_id": result.inserted_id})  # Retrieve the inserted user
+            collection.insert_one(user_data)
+            user = collection.find_one({"id": user_data["id"]})
 
         # Log the user in by setting session variables
-        session["user_id"] = str(user["_id"])
+        session["user_id"] = user["id"]
         session["email"] = user["email"]
 
         return jsonify({"redirect_url": "/podprofile"}), 200  # Redirect to /podprofile
+    except SignatureExpired:
+        logger.error("Token has expired")
+        return jsonify({"error": "Token has expired"}), 400
+    except BadSignature:
+        logger.error("Invalid token signature")
+        return jsonify({"error": "Invalid token"}), 400
     except Exception as e:
-        logger.error(f"Invalid or expired token: {e}")
-        return jsonify({"error": "Invalid or expired token"}), 400
+        logger.error(f"Unexpected error during token verification: {e}")
+        return jsonify({"error": "An unexpected error occurred"}), 500
 
 
 @auth_bp.route("/signin", methods=["POST"], endpoint="signin")

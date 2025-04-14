@@ -100,17 +100,17 @@ document.addEventListener("DOMContentLoaded", function () {
     }
 
     try {
-        const response = await fetch("/verify-and-signin", {
+        const response = await fetch("/verify-login-token", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ email, code }),
+            body: JSON.stringify({ token: code }),
         });
 
         const result = await response.json();
         if (response.ok) {
-            window.location.href = result.redirect_url || "/dashboard";
+            window.location.href = result.redirect_url || "/";
         } else {
-            alert(result.error || "Verification failed.");
+            alert(result.error || "Verification failed. Please try again.");
         }
     } catch (error) {
         console.error("Error:", error);
