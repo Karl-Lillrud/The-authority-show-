@@ -1,3 +1,20 @@
 /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 /* General CSS for universal selector (*), html, body, etc */
 /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
+
+html,
+body {
+  width: 100%;
+  max-width: 100%;
+  margin: 0;
+  padding: 0;
+  overflow-x: hidden;
+  box-sizing: border-box;
+  font-family: var(--font-primary);
+  background-color: var(--background-light);
+  color: var(--text-color-light);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  line-height: 1.5;
+  font-size: 14px;
+}
