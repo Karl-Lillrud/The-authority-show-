@@ -125,6 +125,7 @@
   cursor: pointer; /* Ensure cursor shows it's clickable */
   position: relative; /* For z-index stacking */
   z-index: 1; /* Ensure it's above any decorative elements */
+  font-weight: 300; /* Thin font weight by default */
 }
 
 /* Improve hover state */
@@ -137,6 +138,7 @@
 .sidebar-menu-item.active .sidebar-menu-link {
   background-color: var(--sidebar-item-active); /* Light orange background */
   color: var(--highlight-color); /* Orange text */
+  font-weight: 700; /* Bold font weight when active */
 }
 
 .sidebar-icon {
