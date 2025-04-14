@@ -88,15 +88,15 @@ app.register_blueprint(episode_bp)
 app.register_blueprint(podprofile_bp)  # Register the podprofile blueprint
 app.register_blueprint(frontend_bp)  # Register the frontend blueprint
 app.register_blueprint(guesttoepisode_bp)
-app.register_blueprint(transcription_bp)
-app.register_blueprint(audio_bp)
+app.register_blueprint(transcription_bp, url_prefix="/transcription", name="transcription_main")
+app.register_blueprint(audio_bp, name="audio_main")
 app.register_blueprint(video_bp)
 # Register the guest_form blueprint with URL prefix
 
 
 app.register_blueprint(transcription_bp, url_prefix="/transcription")
-app.register_blueprint(audio_bp)
-app.register_blueprint(video_bp)
+app.register_blueprint(audio_bp, name="audio_secondary")
+app.register_blueprint(video_bp, name="video_secondary")
 app.register_blueprint(billing_bp)
 
 app.register_blueprint(guest_form_bp, url_prefix="/guest-form")  # Register the guest_form blueprint with URL prefix

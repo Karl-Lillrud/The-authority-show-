@@ -72,11 +72,11 @@ def signin_submit():
 
 @auth_bp.route("/logout", methods=["GET"])
 def logout_user():
-    response = auth_repo.logout()
-    # Ensure the response is JSON-serializable
-    if isinstance(response, dict):
-        return jsonify(response), 200
-    return jsonify({"message": "Logout successful"}), 200
+    """
+    Logs out the user by clearing the session.
+    """
+    session.clear()  # Clear all session data
+    return jsonify({"message": "Logout successful", "redirect_url": "/signin"}), 200
 
 
 @auth_bp.route("/verify-and-signin", methods=["POST"], endpoint="verify_and_signin")
