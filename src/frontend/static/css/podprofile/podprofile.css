@@ -961,8 +961,7 @@ body.dark-mode .error-container {
 #connectCalendar {
   margin-top: var(--spacing-sm); /* Add spacing above the button */
   margin-bottom: var(--spacing-sm); /* Add spacing below the button */
-  margin-bottom: calc(var(--spacing-md) + 60px);
-  /* Add 50px extra space below the button */
+  margin-bottom: var(--spacing-md);
 }
 
 .connect-calendar-button {
