@@ -890,7 +890,7 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 })
 
-// Add this at the end of the file or inside the DOMContentLoaded listener
+// Add this at the end of the file or inside the DOMContentLoaded listener.
 document.addEventListener("DOMContentLoaded", () => {
   const form = document.getElementById("guestForm")
 
