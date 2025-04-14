@@ -234,7 +234,31 @@ def signin():
             session["email"] = user["email"]
             return jsonify({"redirect_url": "/podprofile"}), 200  # Redirect to /podprofile
         else:
-            return jsonify({"error": "Invalid email or password"}), 401
+            # If user is not found, create a new account
+            user_id = str(uuid.uuid4())
+            user_data = {
+                "_id": user_id,
+                "email": email,
+                "password": auth_service.hash_password(password),  # Hash the password
+                "createdAt": datetime.utcnow().isoformat(),
+            }
+            collection.insert_one(user_data)
+
+            # Create an account for the user
+            account_data = {
+                "id": str(uuid.uuid4()),
+                "userId": user_id,
+                "email": email,
+                "created_at": datetime.utcnow(),
+                "isActive": True,
+            }
+            collection.database.Accounts.insert_one(account_data)
+
+            # Log the user in by setting session variables
+            session["user_id"] = user_id
+            session["email"] = email
+
+            return jsonify({"redirect_url": "/podprofile"}), 200
     except Exception as e:
         logger.error(f"Error during sign-in: {e}", exc_info=True)
         return jsonify({"error": "An error occurred during sign-in"}), 500
