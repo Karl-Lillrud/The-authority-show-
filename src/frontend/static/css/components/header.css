@@ -252,9 +252,9 @@ header {
 .menu-toggle {
   display: flex;
   flex-direction: column;
-  justify-content: space-between;
-  width: 50px;
-  height: 11px; /* Reduced height to squeeze lines together */
+  justify-content: space-around;
+  width: 65px;
+  height: 26px;
   cursor: pointer;
   position: relative;
   z-index: 101;
@@ -262,7 +262,7 @@ header {
 
 .menu-toggle span {
   display: block;
-  height: 3px; /* Increased thickness from 2px to 3px */
+  height: 2px;
   width: 100%;
   background: var(--text-color-light);
   border-radius: 3px; /* Slightly rounder edges */
@@ -272,8 +272,7 @@ header {
 
 /* Hamburger animation */
 .menu-toggle.active span:nth-child(1) {
-  transform: translateY(2px) rotate(-45deg); /* Increased translateY for better visibility */
-  width: 90%; /* Slightly reduce width for better alignment */
+  transform: translateY(9px) rotate(-45deg); /* Increased translateY for better visibility */
 }
 
 .menu-toggle.active span:nth-child(2) {
@@ -281,8 +280,7 @@ header {
 }
 
 .menu-toggle.active span:nth-child(3) {
-  transform: translateY(-6px) rotate(45deg); /* Increased translateY for better visibility */
-  width: 90%; /* Slightly reduce width for better alignment */
+  transform: translateY(-8px) rotate(45deg); /* Increased translateY for better visibility */
 }
 
 .header-nav .menu-toggle:hover span {
