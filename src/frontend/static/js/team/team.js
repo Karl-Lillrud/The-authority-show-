@@ -31,30 +31,84 @@ function initSidebarIcons() {
   if (addMemberIcon) addMemberIcon.innerHTML = sidebarIcons.add;
 }
 
+// Error handling wrapper function
+async function safeApiCall(apiFunction, errorMessage) {
+  try {
+    return await apiFunction();
+  } catch (error) {
+    console.error(`${errorMessage}:`, error);
+    showNotification("Error", `${errorMessage}. ${error.message}`, "error");
+    return null;
+  }
+}
+
 // Initialize the page
 document.addEventListener("DOMContentLoaded", async () => {
   // Initialize sidebar
   initSidebar();
   initSidebarIcons();
 
-  // Fetch teams data
-  const teams = await getTeamsRequest();
-  updateTeamsUI(teams);
+  // Fetch teams data with improved error handling
+  const teams = await safeApiCall(
+    getTeamsRequest,
+    "Failed to fetch teams data"
+  );
+  if (teams) {
+    updateTeamsUI(teams);
+  }
 
-  // Initialize podcast dropdown
+  // Initialize search functionality
+  const searchInput = document.getElementById("teamSearch");
+  const clearSearchBtn = document.getElementById("clearSearch");
+  
+  if (searchInput && clearSearchBtn) {
+    searchInput.addEventListener("input", () => {
+      const searchTerm = searchInput.value.toLowerCase();
+      const teamCards = document.querySelectorAll(".team-card");
+      
+      teamCards.forEach(card => {
+        const teamName = card.querySelector("h2").textContent.toLowerCase();
+        const teamDescription = card.querySelector(".description-text")?.textContent.toLowerCase() || "";
+        
+        if (teamName.includes(searchTerm) || teamDescription.includes(searchTerm)) {
+          card.style.display = "flex";
+        } else {
+          card.style.display = "none";
+        }
+      });
+      
+      // Show/hide clear button
+      clearSearchBtn.style.display = searchInput.value ? "flex" : "none";
+    });
+    
+    clearSearchBtn.addEventListener("click", () => {
+      searchInput.value = "";
+      const teamCards = document.querySelectorAll(".team-card");
+      teamCards.forEach(card => {
+        card.style.display = "flex";
+      });
+      clearSearchBtn.style.display = "none";
+    });
+    
+    // Initially hide clear button
+    clearSearchBtn.style.display = "none";
+  }
+
+  // Initialize podcast dropdown with improved error handling
   async function populatePodcastDropdown() {
     const podcastDropdown = document.getElementById("podcastDropdown");
     if (podcastDropdown) {
-      try {
-        const podcasts = await fetchPodcasts();
+      const podcasts = await safeApiCall(
+        fetchPodcasts,
+        "Failed to fetch podcasts"
+      );
+      if (podcasts) {
         podcasts.forEach((podcast) => {
           const option = document.createElement("option");
           option.value = podcast._id;
           option.textContent = podcast.podName;
           podcastDropdown.appendChild(option);
         });
-      } catch (err) {
-        console.error("Error fetching podcasts:", err);
       }
     }
   }
@@ -65,22 +119,58 @@ document.addEventListener("DOMContentLoaded", async () => {
   const addTeamForm = addTeamModal
     ? addTeamModal.querySelector("form")
     : document.querySelector("form");
+  const teamFormValidation = document.getElementById("teamFormValidation");
 
   if (addTeamForm) {
     addTeamForm.addEventListener("submit", async (event) => {
       event.preventDefault();
       const formData = new FormData(addTeamForm);
 
+      // Form validation
+      const name = formData.get("name");
+      const email = formData.get("email");
+      
+      if (!name || !email) {
+        if (teamFormValidation) {
+          teamFormValidation.textContent = "Team name and email are required";
+          teamFormValidation.classList.add("show");
+        } else {
+          showNotification("Error", "Team name and email are required", "error");
+        }
+        return;
+      }
+      
+      if (!email.includes('@')) {
+        if (teamFormValidation) {
+          teamFormValidation.textContent = "Please enter a valid email address";
+          teamFormValidation.classList.add("show");
+        } else {
+          showNotification("Error", "Please enter a valid email address", "error");
+        }
+        return;
+      }
+
+      // Hide validation message if validation passes
+      if (teamFormValidation) {
+        teamFormValidation.classList.remove("show");
+      }
+
       // Extract the selected podcast ID from the form
       const podcastId = formData.get("podcastId");
       const payload = {
-        name: formData.get("name"),
-        email: formData.get("email"),
+        name: name,
+        email: email,
         description: formData.get("description"),
         members: [] // Members is empty as it's not used here
       };
 
       try {
+        // Show loading indicator
+        window.showLoading && window.showLoading();
+        
+        // Show loading notification
+        showNotification("Processing", "Creating team...", "info");
+        
         const response = await addTeam(payload);
         console.log("Add team response:", response);
         const teamId = response.team_id;
@@ -92,12 +182,19 @@ document.addEventListener("DOMContentLoaded", async () => {
           const updateResponse = await updatePodcastTeam(podcastId, teamId);
           console.log("Podcast updated with teamId:", updateResponse);
         }
+        
+        // Reset form
+        addTeamForm.reset();
+        
         closeModal(addTeamModal);
         const teams = await getTeamsRequest();
         updateTeamsUI(teams);
       } catch (error) {
         console.error("Error adding team:", error);
-        showNotification("Error", "Failed to create team.", "error");
+        showNotification("Error", `Failed to create team: ${error.message}`, "error");
+      } finally {
+        // Hide loading indicator
+        window.hideLoading && window.hideLoading();
       }
     });
   }
@@ -110,6 +207,15 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     if (openModalBtn) {
       openModalBtn.addEventListener("click", () => {
+        // Reset form before opening
+        if (addTeamForm) {
+          addTeamForm.reset();
+          
+          // Clear validation message
+          if (teamFormValidation) {
+            teamFormValidation.classList.remove("show");
+          }
+        }
         addTeamModal.classList.add("show");
         addTeamModal.setAttribute("aria-hidden", "false");
       });
@@ -141,18 +247,26 @@ document.addEventListener("DOMContentLoaded", async () => {
   const cancelAddMember = document.getElementById("cancelAddMember");
   const addMemberForm = document.getElementById("addMemberForm");
   const teamSelect = document.getElementById("teamSelect");
+  const memberEmail = document.getElementById("memberEmail");
+  const memberRole = document.getElementById("memberRole");
+  const memberFormValidation = document.getElementById("memberFormValidation");
 
-  // Function to fetch teams and populate dropdown
+  // Function to fetch teams and populate dropdown with improved error handling
   async function populateTeamDropdown() {
     try {
-      const teams = await getTeamsRequest();
-      teamSelect.innerHTML = '<option value="">Select a Team</option>';
-      teams.forEach((team) => {
-        const option = document.createElement("option");
-        option.value = team._id;
-        option.textContent = team.name;
-        teamSelect.appendChild(option);
-      });
+      const teams = await safeApiCall(
+        getTeamsRequest,
+        "Failed to fetch teams for dropdown"
+      );
+      if (teams) {
+        teamSelect.innerHTML = '<option value="">Select a Team</option>';
+        teams.forEach((team) => {
+          const option = document.createElement("option");
+          option.value = team._id;
+          option.textContent = team.name;
+          teamSelect.appendChild(option);
+        });
+      }
     } catch (err) {
       console.error("Error fetching teams for dropdown:", err);
     }
@@ -162,8 +276,22 @@ document.addEventListener("DOMContentLoaded", async () => {
   if (addMemberBtnSidebar && addMemberModal) {
     addMemberBtnSidebar.addEventListener("click", () => {
       populateTeamDropdown();
+      // Reset form
+      if (addMemberForm) {
+        addMemberForm.reset();
+        
+        // Clear validation message
+        if (memberFormValidation) {
+          memberFormValidation.classList.remove("show");
+        }
+      }
       addMemberModal.classList.add("show");
       addMemberModal.setAttribute("aria-hidden", "false");
+      
+      // Focus on the first input field for better UX
+      if (memberEmail) {
+        setTimeout(() => memberEmail.focus(), 100);
+      }
     });
   }
 
@@ -181,12 +309,59 @@ document.addEventListener("DOMContentLoaded", async () => {
     });
   }
 
-  // Handle Add Member form submission
+  // Add form validation before submission
   if (addMemberForm) {
     // Remove any previously registered event handlers
     addMemberForm.removeEventListener("submit", handleAddMemberFormSubmission);
-    // Add the event handler
-    addMemberForm.addEventListener("submit", handleAddMemberFormSubmission);
+    
+    // Add custom validation
+    addMemberForm.addEventListener("submit", (event) => {
+      event.preventDefault();
+      
+      // Validate email
+      if (!memberEmail.value || !memberEmail.value.includes('@')) {
+        if (memberFormValidation) {
+          memberFormValidation.textContent = "Please enter a valid email address";
+          memberFormValidation.classList.add("show");
+        } else {
+          showNotification("Error", "Please enter a valid email address", "error");
+        }
+        memberEmail.focus();
+        return;
+      }
+      
+      // Validate team selection
+      if (!teamSelect.value) {
+        if (memberFormValidation) {
+          memberFormValidation.textContent = "Please select a team";
+          memberFormValidation.classList.add("show");
+        } else {
+          showNotification("Error", "Please select a team", "error");
+        }
+        teamSelect.focus();
+        return;
+      }
+      
+      // Validate role selection
+      if (!memberRole.value) {
+        if (memberFormValidation) {
+          memberFormValidation.textContent = "Please select a role";
+          memberFormValidation.classList.add("show");
+        } else {
+          showNotification("Error", "Please select a role", "error");
+        }
+        memberRole.focus();
+        return;
+      }
+      
+      // Hide validation message if validation passes
+      if (memberFormValidation) {
+        memberFormValidation.classList.remove("show");
+      }
+      
+      // If validation passes, proceed with submission
+      handleAddMemberFormSubmission(event);
+    });
   }
 
   // Initialize menu item event listeners
@@ -206,6 +381,58 @@ document.addEventListener("DOMContentLoaded", async () => {
       teamsMenuItem.classList.remove("active");
       membersMenuItem.classList.add("active");
       switchToMembersView();
+    });
+  }
+  
+  // Add loading indicator
+  const mainContent = document.querySelector('.main-content');
+  if (mainContent) {
+    const loadingIndicator = document.createElement('div');
+    loadingIndicator.className = 'loading-indicator';
+    loadingIndicator.innerHTML = '<div class="spinner"></div><p>Loading...</p>';
+    loadingIndicator.style.display = 'none';
+    mainContent.appendChild(loadingIndicator);
+    
+    // Show loading indicator when making API calls
+    window.showLoading = function() {
+      loadingIndicator.style.display = 'flex';
+    };
+    
+    window.hideLoading = function() {
+      loadingIndicator.style.display = 'none';
+    };
+  }
+  
+  // Edit Member Modal validation
+  const editMemberForm = document.getElementById("editMemberForm");
+  const editMemberFormValidation = document.getElementById("editMemberFormValidation");
+  const editMemberEmail = document.getElementById("editMemberEmail");
+  const editMemberRole = document.getElementById("editMemberRole");
+  const saveEditMemberBtn = document.getElementById("saveEditMemberBtn");
+  
+  if (saveEditMemberBtn && editMemberFormValidation) {
+    saveEditMemberBtn.addEventListener("click", () => {
+      // Validate email
+      if (!editMemberEmail.value || !editMemberEmail.value.includes('@')) {
+        editMemberFormValidation.textContent = "Please enter a valid email address";
+        editMemberFormValidation.classList.add("show");
+        editMemberEmail.focus();
+        return;
+      }
+      
+      // Validate role selection
+      if (editMemberRole && !editMemberRole.value) {
+        editMemberFormValidation.textContent = "Please select a role";
+        editMemberFormValidation.classList.add("show");
+        editMemberRole.focus();
+        return;
+      }
+      
+      // Hide validation message if validation passes
+      editMemberFormValidation.classList.remove("show");
+      
+      // Continue with the original save functionality
+      // This assumes there's an existing event handler for this button
     });
   }
 });
