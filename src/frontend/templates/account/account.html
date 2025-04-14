@@ -28,8 +28,6 @@
       </a>
       <div class="header-content">
         <h1>Account Settings</h1>
-        <!-- Notification Container -->
-        <div id="header-notifications" class="notifications-container"></div>
       </div>
     </div>
 
@@ -57,7 +55,6 @@
             </li>
             <ul class="submenu">
               <li class="submenu-item" data-target="security-2fa" tabindex="0">Two-Factor Authentication</li>
-              <li class="submenu-item" data-target="security-recovery" tabindex="0">Password Recovery</li>
             </ul>
             <li class="sidebar-item" data-toggle="submenu" tabindex="0">
               <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon">
@@ -89,6 +86,12 @@
               <li class="submenu-item" data-target="subscription-choose" tabindex="0">Choose Subscription</li>
               <li class="submenu-item" data-target="subscription-change" tabindex="0">Change Subscription</li>
             </ul>
+            <button id="back-to-main-menu" class="back-button">
+              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon">
+                <path d="m15 18-6-6 6-6"></path>
+              </svg>
+              Back to Main Menu
+            </button>
           </ul>
         </nav>
       </aside>
@@ -168,6 +171,40 @@
             </form>
           </div>
 
+          <!-- Security - 2FA Section -->
+          <div id="security-2fa" class="settings-section">
+            <div class="section-header">
+              <h2>Two-Factor Authentication</h2>
+              <p>Add an extra layer of security to your account</p>
+            </div>
+            
+            <div class="security-content">
+              <div class="info-card">
+                <div class="info-card-icon">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10"></path>
+                  </svg>
+                </div>
+                <div class="info-card-content">
+                  <h3>Protect your account</h3>
+                  <p>Two-factor authentication adds an additional layer of security to your account by requiring more than just a password to sign in.</p>
+                </div>
+              </div>
+              
+              <div class="toggle-container">
+                <label class="toggle">
+                  <span class="toggle-label">Enable Two-Factor Authentication</span>
+                  <input type="checkbox" id="enable-2fa">
+                  <span class="toggle-switch"></span>
+                </label>
+              </div>
+              
+              <div class="form-actions">
+                <button type="button" class="primary-button">Set Up 2FA</button>
+              </div>
+            </div>
+          </div>
+          
           <!-- Subscription Sections -->
           <div class="subscription-sections">
             <div id="subscription-choose" class="settings-section">

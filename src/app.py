@@ -2,6 +2,7 @@ import os
 import logging
 from flask import Flask, request, session, g, jsonify, render_template
 from flask_cors import CORS
+from backend.routes.auth import auth_bp
 from backend.routes.podcast import podcast_bp  # Import the podcast blueprint
 from backend.routes.dashboard import dashboard_bp
 from backend.routes.pod_management import pod_management_bp
