@@ -94,7 +94,6 @@ document.addEventListener("DOMContentLoaded", () => {
       // If submenu is already visible, hide it
       if (submenu.style.display === "block") {
         submenu.style.display = "none"
-        document.getElementById("back-to-main-menu").style.display = "none"
         return
       }
 
@@ -113,7 +112,6 @@ document.addEventListener("DOMContentLoaded", () => {
       // Show the clicked submenu
       if (submenu && submenu.classList.contains("submenu")) {
         submenu.style.display = "block"
-        document.getElementById("back-to-main-menu").style.display = "flex"
       }
       
     })
@@ -166,22 +164,6 @@ document.addEventListener("DOMContentLoaded", () => {
         targetSection.classList.add("active")
       }
     })
-  })
-
-  // Back to Main Menu button functionality
-  document.getElementById("back-to-main-menu").addEventListener("click", function () {
-    // Hide all submenus
-    document.querySelectorAll(".submenu").forEach((menu) => {
-      menu.style.display = "none"
-    })
-
-    // Remove active class from all toggle items
-    document.querySelectorAll('.sidebar-item[data-toggle="submenu"]').forEach((item) => {
-      item.classList.remove("active")
-    })
-
-    // Hide the back button
-    this.style.display = "none"
   })
 
   // Toggle password visibility
