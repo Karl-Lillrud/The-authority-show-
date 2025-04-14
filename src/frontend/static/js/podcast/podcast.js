@@ -1,6 +1,6 @@
 import { fetchPodcast } from "/static/requests/podcastRequests.js";
 import { fetchEpisodesByPodcast } from "/static/requests/episodeRequest.js";
-import { fetchGuestsRequest } from "/static/requests/guestRequests.js"; // Ensure to use the correct method for fetching guests
+import { fetchGuestsRequest } from "/static/requests/guestRequests.js";
 import { fetchTasks } from "/static/requests/podtaskRequest.js";
 import { getTeamsRequest } from "/static/requests/teamRequests.js";
 
@@ -13,7 +13,10 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   try {
     // Fetch podcast details
-    const podcastData = await fetchPodcast(podcastId);
+    const podcastData = await fetchPodcast(podcastId).catch(error => {
+      console.error("Failed to fetch podcast details:", error);
+      return null;
+    });
     if (!podcastData || !podcastData.podcast) {
       console.error("Failed to fetch podcast details.");
       return;
@@ -33,38 +36,51 @@ document.addEventListener("DOMContentLoaded", async () => {
       </div>
     `;
 
-        // Fetch episodes and display with Transcript button
-    const episodesData = await fetchEpisodesByPodcast(podcastId);
+    // Fetch episodes and display with Transcript button
+    const episodesData = await fetchEpisodesByPodcast(podcastId).catch(error => {
+      console.error("Failed to fetch episodes:", error);
+      return [];
+    });
     const episodesDiv = document.getElementById("episodes-container");
     if (episodesData && episodesData.length > 0) {
       episodesDiv.innerHTML = episodesData.map(
-        episode => `
-          <div class="card">
-            <h4>${episode.title}</h4>
-            <p><strong>Duration:</strong> ${episode.duration || 'N/A'}</p>
-            <p><strong>Release Date:</strong> ${episode.publishDate || 'N/A'}</p>
-            <button class="btn ai-edit-btn" data-episode-id="${episode.id}">
-              AI Edit
-            </button>
-          </div>
-        `
+        episode => {
+          const episodeId = episode.id || episode._id || "unknown";
+          return `
+            <div class="card">
+              <h4>${episode.title}</h4>
+              <p><strong>Duration:</strong> ${episode.duration || 'N/A'}</p>
+              <p><strong>Release Date:</strong> ${episode.publishDate || 'N/A'}</p>
+              <button class="btn ai-edit-btn" data-episode-id="${episodeId}">
+                AI Edit
+              </button>
+            </div>
+          `;
+        }
       ).join("");
-      
     } else {
       episodesDiv.innerHTML = "<p>No episodes found for this podcast.</p>";
     }
-// Right after rendering episode cards
-document.querySelectorAll('.ai-edit-btn').forEach(button => {
-  button.addEventListener('click', () => {
-    const host = window.location.hostname;
-    const protocol = window.location.protocol.includes("https") ? "https" : "http";
-    const streamlitURL = `${protocol}://${host}:8501/`;
 
-    window.open(streamlitURL, '_blank');
-  });
-});
+    // Right after rendering episode cards
+    document.querySelectorAll('.ai-edit-btn').forEach(button => {
+      button.addEventListener('click', () => {
+        const episodeId = button.getAttribute('data-episode-id');
+        if (!episodeId || episodeId === "unknown") {
+          alert("Invalid episode ID. Please try again.");
+          return;
+        }
+        const aiEditsURL = `/transcription/ai_edits?episodeId=${episodeId}`;
+        console.log("Navigating to:", aiEditsURL); // Debugging
+        window.location.href = aiEditsURL;
+      });
+    });
+
     // Fetch guests, filter, and display
-    const guests = await fetchGuestsRequest();
+    const guests = await fetchGuestsRequest().catch(error => {
+      console.error("Failed to fetch guests:", error);
+      return [];
+    });
     const filteredGuests = guests.filter(guest => guest.podcastId === podcastId);
     const guestsDiv = document.getElementById("guests-container");
     if (filteredGuests.length > 0) {
@@ -82,7 +98,10 @@ document.querySelectorAll('.ai-edit-btn').forEach(button => {
     }
 
     // Fetch tasks and filter by podcastId, then display
-    const tasksData = await fetchTasks();
+    const tasksData = await fetchTasks().catch(error => {
+      console.error("Failed to fetch tasks:", error);
+      return [];
+    });
     const filteredTasks = tasksData.filter(task => task.podcastId === podcastId);
     const tasksDiv = document.getElementById("tasks-container");
     if (filteredTasks.length > 0) {
@@ -100,7 +119,10 @@ document.querySelectorAll('.ai-edit-btn').forEach(button => {
     }
 
     // Fetch teams, filter by podcast's teamId, and display
-    const teams = await getTeamsRequest();
+    const teams = await getTeamsRequest().catch(error => {
+      console.error("Failed to fetch teams:", error);
+      return [];
+    });
     const filteredTeams = teams.filter(team => team._id === podcast.teamId);
     const teamsDiv = document.getElementById("teams-container");
     if (filteredTeams.length > 0) {

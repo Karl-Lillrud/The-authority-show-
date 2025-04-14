@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>PodManagerAI</title>
+  <link rel="stylesheet" href="/static/css/ai_edits/ai_edits.css" />
+  <link rel="stylesheet" href="/static/css/dashboard/dashboard.css" />
+</head>
+<body>
+  <div id="app">
+    {% include "components/header.html" %}
+
+    <div class="dashboard dashboard-content">
+      <main>
+        <div id="tabs">
+          <button onclick="showTab('transcription')" id="tab-transcription">🎙 AI-Powered Transcription</button>
+          <button onclick="showTab('audio')" id="tab-audio">🎵 AI Audio Enhancement</button>
+          <button onclick="showTab('video')" id="tab-video">📹 AI Video Enhancement</button>
+        </div>
+
+        <!-- EMPTY: JS will inject content -->
+        <div id="content"></div>
+      </main>
+    </div>
+  </div>
+
+  <script>
+    const episodeId = "{{ episode_id }}";
+    console.log("Loaded AI Edits page for episode ID:", episodeId);
+
+    // Load default tab on page load
+    window.addEventListener("DOMContentLoaded", () => {
+      showTab('transcription');
+    });
+  
+  window.CURRENT_USER_ID = "{{ user_id }}";
+  localStorage.setItem("user_id", "{{ user_id }}");
+  </script>
+  <script src="/static/js/landingpage/audio-player.js"></script>
+  <script src="/static/js/ai_edits/ai_edits.js"></script>
+</body>
+</html>

@@ -285,6 +285,13 @@ class AuthRepository:
                             "ownerName": email.split("@")[0],  # Example owner name
                             # accountId is derived from user_id within add_podcast
                             "teamId": team_id,  # Link podcast to the team
+                            "logoUrl": "https://d3t3ozftmdmh3i.cloudfront.net/staging/podcast_uploaded_nologo/42425076/42425076-1731361782842-b9ba09e6cabe6.jpg",
+                            "description": "This is a sample podcast created for demonstration purposes.",
+                            "category": "Technology",
+                            "language": "English",
+                            "hostName": "Karl Lillrud",
+                            "ownerName": "Karl Lillrud",
+                            "podUrl": "https://www.example.com",
                         }
                         podcast_response, podcast_status = (
                             self.podcast_repo.add_podcast(user_id, podcast_data)
