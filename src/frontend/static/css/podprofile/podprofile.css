@@ -186,7 +186,6 @@ button {
   width: auto; /* Make the button smaller */
   padding: var(--spacing-xs) var(--spacing-md); /* Adjust padding */
   position: absolute; /* Position it relative to the container */
-  bottom: var(--spacing-md); /* Place it at the bottom of the container */
   right: var(--spacing-md); /* Align it to the right inside the container */
   font-size: 0.9rem; /* Slightly smaller font size */
 }
