@@ -178,13 +178,13 @@ def verify_login_token():
         user = collection.find_one({"email": email})
         if not user:
             # Create a new user if not existing
-            user = {
+            user_data = {
                 "email": email,
                 "createdAt": datetime.utcnow(),
                 "roles": ["user"]  # Default roles
             }
-            collection.insert_one(user)
-            user["_id"] = str(user["_id"])  # Ensure _id is stringified
+            result = collection.insert_one(user_data)  # Insert user and get result
+            user = collection.find_one({"_id": result.inserted_id})  # Retrieve the inserted user
 
         # Log the user in by setting session variables
         session["user_id"] = str(user["_id"])
