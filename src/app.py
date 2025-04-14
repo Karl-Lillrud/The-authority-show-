@@ -20,6 +20,7 @@ from backend.routes.guestpage import guestpage_bp
 from backend.routes.guest_to_eposide import guesttoepisode_bp
 from backend.utils.email_utils import send_email
 from backend.utils.scheduler import start_scheduler
+from backend.routes.billing import billing_bp
 from backend.routes.landingpage import landingpage_bp
 from dotenv import load_dotenv
 from backend.utils import venvupdate
@@ -32,6 +33,7 @@ from backend.routes.video_routes import video_bp
 from backend.routes.transcription import transcription_bp
 from backend.routes.guest_form import guest_form_bp  # Import the guest_form_bp blueprint
 from backend.routes.auth import auth_bp  # Import the auth blueprint
+
 
 
 
@@ -91,10 +93,18 @@ app.register_blueprint(audio_bp)
 app.register_blueprint(video_bp)
 # Register the guest_form blueprint with URL prefix
 
+
+app.register_blueprint(transcription_bp, url_prefix="/transcription")
+app.register_blueprint(audio_bp)
+app.register_blueprint(video_bp)
+app.register_blueprint(billing_bp)
+
 app.register_blueprint(guest_form_bp, url_prefix="/guest-form")  # Register the guest_form blueprint with URL prefix
 
 app.register_blueprint(landingpage_bp)
+
 app.register_blueprint(auth_bp, url_prefix="/")  # Register the auth blueprint
+
 
 # Set the application environment (defaults to production)
 APP_ENV = os.getenv("APP_ENV", "production")

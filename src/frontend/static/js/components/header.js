@@ -1,17 +1,22 @@
 import { fetchPodcasts } from "/static/requests/podcastRequests.js";
 
 document.addEventListener("DOMContentLoaded", () => {
-  const aiEditLink = document.getElementById("ai-edit-link");
-  if (aiEditLink) {
-    const host = window.location.hostname;
-    const streamlitURL = `http://${host}:8501/`;
-    aiEditLink.href = streamlitURL;
-  }
-
   populateHeaderPodcastDropdown();
   populateLandingPageDropdown();
   setDynamicPageTitle();
   populateUserCredits();
+
+  const buyBtn = document.getElementById("buy-credits-btn");
+  if (buyBtn) {
+    buyBtn.addEventListener("click", () => {
+      const user_id = localStorage.getItem("user_id");
+      if (!user_id) {
+        alert("You must be logged in to purchase credits.");
+        return;
+      }
+      window.location.href = `/billing?user_id=${user_id}`;
+    });
+  }
 });
 
 // 🔽 Landing Page Dropdown
