@@ -1,9 +1,8 @@
-# src/backend/routes/transcript/transcription.py
 import os
 import logging
 import subprocess
 from datetime import datetime
-from flask import Blueprint, request, jsonify
+from flask import Blueprint, request, jsonify, render_template, session
 import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
@@ -16,7 +15,6 @@ from backend.services.transcriptionService import TranscriptionService
 from backend.services.audioService import AudioService
 from backend.services.videoService import VideoService
 from backend.repository.ai_models import fetch_file, save_file, get_file_by_id
-
 
 transcription_bp = Blueprint("transcription", __name__)
 logger = logging.getLogger(__name__)
@@ -233,8 +231,6 @@ def get_audio_info():
 
         logger.info(f"📤 Waveform saved to MongoDB GridFS with ID: {waveform_file_id}")
 
-        logger.info(f"📤 Waveform saved to MongoDB GridFS with ID: {waveform_file_id}")
-
         # Cleanup temp files
         os.remove(temp_file_path)
         os.remove(waveform_path)
@@ -267,3 +263,17 @@ def isolate_voice():
         logger.error(f"Voice isolation error: {str(e)}")
         return jsonify({"error": str(e)}), 500
 
+
+@transcription_bp.route("/ai_edits", methods=["GET"])
+def render_ai_edits():
+    episode_id = request.args.get("episodeId")
+    if not episode_id or episode_id == "unknown":
+        logger.error(f"❌ Invalid or missing episode ID: {episode_id}")
+        return jsonify({"error": "Invalid or missing episode ID"}), 400
+
+    logger.info(f"✅ Rendering AI Edits page for episode ID: {episode_id}")
+    try:
+        return render_template("ai_edits/ai_edits.html", episode_id=episode_id, user_id=session.get("user_id"))
+    except Exception as e:
+        logger.error(f"Error rendering ai_edits.html: {e}")
+        return jsonify({"error": "Failed to render AI Edits page"}), 500

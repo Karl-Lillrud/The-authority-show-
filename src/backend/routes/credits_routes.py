@@ -36,3 +36,16 @@ def get_available_credits():
 
     available = credit_doc.get("availableCredits", 0)
     return jsonify({"availableCredits": available})
+
+@credits_bp.route('/api/credits/check', methods=['GET'])
+def check_user_credits():
+    user_id = request.args.get("user_id")
+    if not user_id:
+        return jsonify({"error": "User id is required."}), 400
+
+    credit_doc = credits.find_one({"user_id": user_id})
+    if not credit_doc:
+        return jsonify({"error": "Credits not found."}), 404
+
+    available = credit_doc.get("availableCredits", 0)
+    return jsonify({"availableCredits": available})
