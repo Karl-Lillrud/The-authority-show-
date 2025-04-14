@@ -67,66 +67,6 @@ button {
   color: var(--account-card-foreground);
 }
 
-.notifications-container {
-  position: absolute;
-  top: -1.75rem; 
-  left: 25rem; 
-  transform: translateY(-50%);
-  z-index: 10;
-  width: auto;
-  text-align: left; 
-}
-
-.notification {
-  padding: 0.5rem 1rem;
-  border-radius: var(--account-radius);
-  font-size: 0.875rem;
-  font-weight: 500;
-  color: white;
-  background-color: var(--account-warning);
-  box-shadow: var(--account-shadow-sm);
-  animation: fadeIn 0.3s ease-in-out;
-  margin-bottom: 0.5rem;
-}
-
-.notification.warning {
-  background-color: var(--account-warning);
-}
-
-.notification.error {
-  background-color: var(--account-destructive);
-}
-
-.notification.success {
-  background-color: var(--account-success);
-}
-
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-    transform: translateY(-10px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-.notification.fade-out {
-  animation: fadeOut 0.3s ease-in-out;
-}
-
-@keyframes fadeOut {
-  from {
-    opacity: 1;
-    transform: translateY(0);
-  }
-  to {
-    opacity: 0;
-    transform: translateY(-10px);
-  }
-}
-
 .back-link {
   display: inline-flex;
   align-items: center;
@@ -439,61 +379,6 @@ button {
   margin-top: 1.5rem;
   display: flex;
   justify-content: flex-start;
-}
-
-/* Notifications Container */
-.notifications-container {
-  margin-top: 1rem;
-  margin-bottom: 1rem;
-}
-
-.notification {
-  padding: 0.75rem 1rem;
-  border-radius: var(--account-radius);
-  font-size: 0.875rem;
-  font-weight: 500;
-  color: white;
-  background-color: var(--account-warning);
-  box-shadow: var(--account-shadow-sm);
-  animation: fadeIn 0.3s ease-in-out;
-}
-
-.notification.warning {
-  background-color: var(--account-warning);
-}
-
-.notification.error {
-  background-color: var(--account-destructive);
-}
-
-.notification.success {
-  background-color: var(--account-success);
-}
-
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-    transform: translateY(-10px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-.notification.fade-out {
-  animation: fadeOut 0.3s ease-in-out;
-}
-
-@keyframes fadeOut {
-  from {
-    opacity: 1;
-    transform: translateY(0);
-  }
-  to {
-    opacity: 0;
-    transform: translateY(-10px);
-  }
 }
 
 /* Form Elements */
@@ -1053,11 +938,6 @@ input:focus:invalid {
     flex: none;
     width: 100%;
     position: static;
-  }
-
-  .notifications-container {
-    top: 37.5rem;
-    left: 20%;
   }
 }
 

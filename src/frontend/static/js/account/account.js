@@ -5,6 +5,7 @@ import {
   deleteUserAccount,
   subscribeUser,
 } from "/static/requests/accountRequests.js"
+import { showNotification } from "../components/notifications.js";
 
 document.addEventListener("DOMContentLoaded", () => {
     // Hides the edit buttons when in non-edit mode
@@ -60,7 +61,7 @@ document.addEventListener("DOMContentLoaded", () => {
     })
     .catch((error) => {
       console.error("Error:", error);
-      showNotification("Failed to load profile data", "error");
+      showNotification("Error", "Failed to load profile data", "error");
     });
 
   // Cancel edit button (switches back to view mode)
@@ -219,12 +220,12 @@ document.addEventListener("DOMContentLoaded", () => {
 
       // Validate required fields
       if (!fullName.trim()) {
-        showNotification("Full name is required", "error");
+        showNotification("Error", "Full name is required", "error");
         return;
       }
 
       if (!email.trim()) {
-        showNotification("Email is required", "error");
+        showNotification("Error", "Email is required", "error");
         return;
       }
 
@@ -237,7 +238,7 @@ document.addEventListener("DOMContentLoaded", () => {
       updateProfile(profileData)
         .then((data) => {
           if (data.message) {
-            showNotification("Profile updated successfully!", "success");
+            showNotification("Success", "Profile updated successfully!", "success");
             // Update the display values in the read-only view
             document.getElementById("display-full-name").textContent = fullName || "Not provided";
             document.getElementById("display-email").textContent = email || "Not provided";
@@ -245,12 +246,12 @@ document.addEventListener("DOMContentLoaded", () => {
             // Switch back to view mode
             toggleProfileMode(false);
           } else {
-            showNotification("Failed to update profile", "error");
+            showNotification("Error", "Failed to update profile", "error");
           }
         })
         .catch((error) => {
           console.error("Error:", error);
-          showNotification("An error occurred while updating profile", "error");
+          showNotification("Error", "An error occurred while updating profile", "error");
         });
     });
   }
@@ -359,24 +360,24 @@ document.addEventListener("DOMContentLoaded", () => {
 
       // Validate password fields
       if (!currentPassword) {
-        showNotification("Current password is required", "error")
+        showNotification("Error", "Current password is required", "error")
         return
       }
 
       if (!newPassword) {
-        showNotification("New password is required", "error")
+        showNotification("Error", "New password is required", "error")
         return
       }
 
       if (newPassword !== confirmPassword) {
-        showNotification("New passwords do not match", "error")
+        showNotification("Error", "New passwords do not match", "error")
         return
       }
 
       // Check password strength
       const strength = calculatePasswordStrength(newPassword)
       if (strength < 2) {
-        showNotification("Password is too weak. Please choose a stronger password.", "error")
+        showNotification("Error", "Password is too weak. Please choose a stronger password.", "error")
         return
       }
 
@@ -388,15 +389,15 @@ document.addEventListener("DOMContentLoaded", () => {
       updatePassword(passwordData)
         .then((data) => {
           if (data.message) {
-            showNotification("Password updated successfully!", "success")
+            showNotification("Success", "Password updated successfully!", "success")
             passwordForm.reset()
           } else {
-            showNotification("Failed to update password", "error")
+            showNotification("Error", "Failed to update password", "error")
           }
         })
         .catch((error) => {
           console.error("Error:", error)
-          showNotification("An error occurred while updating password", "error")
+          showNotification("Error", "An error occurred while updating password", "error")
         })
     })
   }
@@ -412,17 +413,17 @@ document.addEventListener("DOMContentLoaded", () => {
       const email = document.getElementById("email").value
 
       if (confirmText !== "DELETE") {
-        showNotification("Please type DELETE to confirm account deletion", "error")
+        showNotification("Error", "Please type DELETE to confirm account deletion", "error")
         return
       }
 
       if (!password) {
-        showNotification("Password is required to delete your account", "error")
+        showNotification("Error", "Password is required to delete your account", "error")
         return
       }
 
       if (!email) {
-        showNotification("Email is required to delete your account", "error")
+        showNotification("Error", "Email is required to delete your account", "error")
         return
       }
 
@@ -435,7 +436,7 @@ document.addEventListener("DOMContentLoaded", () => {
       deleteUserAccount(confirmData)
         .then((data) => {
           if (data.message) {
-            showNotification("Account deleted successfully", "success")
+            showNotification("Success", "Account deleted successfully", "success")
             // Redirect to logout or home page after successful deletion
             if (data.redirect) {
               setTimeout(() => {
@@ -447,12 +448,12 @@ document.addEventListener("DOMContentLoaded", () => {
               }, 2000)
             }
           } else {
-            showNotification("Failed to delete account", "error")
+            showNotification("Error", "Failed to delete account", "error")
           }
         })
         .catch((error) => {
           console.error("Error:", error)
-          showNotification("An error occurred while deleting account", "error")
+          showNotification("Error", "An error occurred while deleting account", "error")
         })
     })
   }
@@ -466,21 +467,21 @@ document.addEventListener("DOMContentLoaded", () => {
       const email = document.getElementById("subscription-email").value
 
       if (!email) {
-        showNotification("Email is required to subscribe", "error")
+        showNotification("Error", "Email is required to subscribe", "error")
         return
       }
 
       subscribeUser(email)
         .then((data) => {
           if (data.message) {
-            showNotification("Successfully subscribed to newsletter!", "success")
+            showNotification("Success", "Successfully subscribed to newsletter!", "success")
           } else {
-            showNotification("Failed to subscribe", "error")
+            showNotification("Error", "Failed to subscribe", "error")
           }
         })
         .catch((error) => {
           console.error("Error:", error)
-          showNotification("An error occurred while subscribing", "error")
+          showNotification("Error", "An error occurred while subscribing", "error")
         })
     })
   }
@@ -628,27 +629,6 @@ function triggerFileUpload() {
   document.body.appendChild(fileInput);
   fileInput.click();
   document.body.removeChild(fileInput);
-}
-
-function showNotification(message, type) {
-  const notificationContainer = document.getElementById("header-notifications");
-  if (!notificationContainer) return;
-
-  // Create notification element
-  const notification = document.createElement("div");
-  notification.className = `notification ${type}`;
-  notification.textContent = message;
-
-  // Add notification to the container
-  notificationContainer.appendChild(notification);
-
-  // Remove notification after 3 seconds
-  setTimeout(() => {
-    notification.classList.add("fade-out");
-    setTimeout(() => {
-      notificationContainer.removeChild(notification);
-    }, 300);
-  }, 3000);
 }
 
 // Add this to your HTML, inside the profile-pic-container
