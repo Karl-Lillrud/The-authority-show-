@@ -5,7 +5,8 @@ from backend.services.authService import AuthService
 import os
 import logging  # Add logging import
 from itsdangerous import URLSafeTimedSerializer
-from backend.database.mongo_connection import collection  # Add this import
+from backend.database.mongo_connection import collection
+from datetime import datetime  
 
 # Define Blueprint
 auth_bp = Blueprint("auth_bp", __name__)
@@ -92,10 +93,34 @@ def verify_and_signin():
         return jsonify({"error": "Email and code are required"}), 400
 
     try:
-        # Call the AuthService to verify the code and log in the user
+        # Call the AuthService to verify the code
         result = auth_service.verify_code_and_login(email, code)
-        return jsonify(result), result.get("status", 200)
+
+        if result.get("status") == 200:
+            user = collection.find_one({"email": email})
+            if not user:
+                # Create a new user if not existing
+                user = {
+                    "email": email,
+                    "created_at": datetime.utcnow(),
+                    "roles": ["user"]  # Default roles
+                }
+                collection.insert_one(user)
+                user["_id"] = str(user["_id"])  # Ensure _id is stringified
+
+            # Log the user in by setting session variables
+            session["user_id"] = str(user["_id"])
+            session["email"] = user["email"]
+
+            return jsonify(result), 200
+        elif result.get("status") == 400:
+            logger.warning(f"Invalid or expired code for email: {email}")
+            return jsonify({"error": "Invalid or expired code"}), 400
+        else:
+            logger.error(f"Unexpected error during code verification: {result}")
+            return jsonify({"error": "An unexpected error occurred"}), 500
     except Exception as e:
+        logger.error(f"Error verifying code for email {email}: {e}", exc_info=True)
         return jsonify({"error": f"Failed to verify code: {str(e)}"}), 500
 
 
@@ -149,9 +174,22 @@ def verify_login_token():
         serializer = URLSafeTimedSerializer(current_app.config["SECRET_KEY"])
         email = serializer.loads(token, salt="login-link-salt", max_age=600)  # Token valid for 10 minutes
 
-        # Log the user in (e.g., create a session)
-        session["user_id"] = str(collection.find_one({"email": email})["_id"])  # Ensure user_id is set
-        session["email"] = email
+        # Check if the user exists in the database
+        user = collection.find_one({"email": email})
+        if not user:
+            # Create a new user if not existing
+            user = {
+                "email": email,
+                "createdAt": datetime.utcnow(),
+                "roles": ["user"]  # Default roles
+            }
+            collection.insert_one(user)
+            user["_id"] = str(user["_id"])  # Ensure _id is stringified
+
+        # Log the user in by setting session variables
+        session["user_id"] = str(user["_id"])
+        session["email"] = user["email"]
+
         return jsonify({"redirect_url": "/podprofile"}), 200  # Redirect to /podprofile
     except Exception as e:
         logger.error(f"Invalid or expired token: {e}")

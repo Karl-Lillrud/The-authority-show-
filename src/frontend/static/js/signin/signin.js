@@ -87,4 +87,34 @@ document.addEventListener("DOMContentLoaded", function () {
       errorMessage.style.display = "block";
     }
   });
+
+  const verificationCodeForm = document.getElementById("verification-code-form");
+  verificationCodeForm.addEventListener("submit", async function (event) {
+    event.preventDefault();
+    const email = document.getElementById("verification-email").value.trim();
+    const code = document.getElementById("verification-code").value.trim();
+
+    if (!email || !code) {
+        alert("Please enter both email and verification code.");
+        return;
+    }
+
+    try {
+        const response = await fetch("/verify-and-signin", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ email, code }),
+        });
+
+        const result = await response.json();
+        if (response.ok) {
+            window.location.href = result.redirect_url || "/dashboard";
+        } else {
+            alert(result.error || "Verification failed.");
+        }
+    } catch (error) {
+        console.error("Error:", error);
+        alert("An error occurred. Please try again.");
+    }
+  });
 });
