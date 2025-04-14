@@ -253,8 +253,8 @@ header {
   display: flex;
   flex-direction: column;
   justify-content: space-between;
-  width: 28px; /* Reduced from 30px */
-  height: 22px; /* Reduced from 24px */
+  width: 50px;
+  height: 11px; /* Reduced height to squeeze lines together */
   cursor: pointer;
   position: relative;
   z-index: 101;
@@ -262,17 +262,18 @@ header {
 
 .menu-toggle span {
   display: block;
-  height: 2px; /* Reduced from 3px */
+  height: 3px; /* Increased thickness from 2px to 3px */
   width: 100%;
   background: var(--text-color-light);
-  border-radius: 2px;
+  border-radius: 3px; /* Slightly rounder edges */
   transition: all 0.3s cubic-bezier(0.68, -0.55, 0.27, 1.55);
   transform-origin: center;
 }
 
 /* Hamburger animation */
 .menu-toggle.active span:nth-child(1) {
-  transform: translateY(10px) rotate(45deg);
+  transform: translateY(2px) rotate(-45deg); /* Increased translateY for better visibility */
+  width: 90%; /* Slightly reduce width for better alignment */
 }
 
 .menu-toggle.active span:nth-child(2) {
@@ -280,7 +281,8 @@ header {
 }
 
 .menu-toggle.active span:nth-child(3) {
-  transform: translateY(-10px) rotate(-45deg);
+  transform: translateY(-6px) rotate(45deg); /* Increased translateY for better visibility */
+  width: 90%; /* Slightly reduce width for better alignment */
 }
 
 .header-nav .menu-toggle:hover span {
