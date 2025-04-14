@@ -238,3 +238,23 @@ def generate_quote_images(quotes: List[str]) -> List[str]:
             logger.error(f"❌ Failed to generate image for quote: {quote} | Error: {e}")
             urls.append("")
     return urls
+
+def suggest_sound_effects(emotion_data: List[dict]) -> List[dict]:
+    """
+    For each sentence with its emotion, suggest a sound effect.
+    """
+    suggestions = []
+    for entry in emotion_data:
+        sentence = entry["text"]
+        top_emotion = entry["emotions"][0]["label"]
+
+        # Map emotion to a prompt (can be improved with GPT later)
+        effect_prompt = f"{top_emotion} ambient background sound for: '{sentence}'"
+
+        # Send this to ElevenLabs API or use local mapping
+        suggestions.append({
+            "timestamp_text": sentence,
+            "emotion": top_emotion,
+            "suggested_effect": f"https://elevenlabs.io/sfx?q={top_emotion}"  # Placeholder
+        })
+    return suggestions
