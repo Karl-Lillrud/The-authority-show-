@@ -1012,3 +1012,6 @@ body.dark-mode .error-container {
   margin-right: var(--spacing-md);
 }
 
+#rss-help-button {
+  margin-bottom: calc(var(--spacing-xs) * -1);
+}
