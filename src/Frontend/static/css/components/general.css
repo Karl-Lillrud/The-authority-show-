@@ -18,6 +18,9 @@ body {
   box-sizing: border-box;
   font-family: var(--font-primary);
   background-color: var(--background-light);
+  background-size: cover;
+  background-position: center;
+  background-attachment: fixed;
   color: var(--text-color-light);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
