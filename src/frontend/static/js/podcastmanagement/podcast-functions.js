@@ -9,12 +9,12 @@ import {
   fetchEpisode
 } from "../../../static/requests/episodeRequest.js";
 import {
-  showNotification,
   updateEditButtons,
   shared
 } from "./podcastmanagement.js";
 import { createPlayButton, playAudio, playMedia } from "./episode-functions.js";
 import { renderEpisodeDetail } from "./episode-functions.js";
+import { showNotification } from "../components/notifications.js";
 
 // Function to set image source with fallback
 function setImageSource(imgElement, customSrc, mockSrc) {
