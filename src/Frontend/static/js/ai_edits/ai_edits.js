@@ -131,7 +131,9 @@ function showTab(tabName) {
                 </button>
                 <pre id="analysisResults"></pre>
                 <div id="soundEffectTimeline" style="margin-top: 1rem;"></div>
-                <a id="downloadEnhanced" style="display:none;" download="processed_audio.wav">📥 Download Processed Audio</a>
+                <a id="downloadEnhanced" class="btn ai-edit-button" download="processed_audio.wav">
+                     📥 Download Processed Audio
+                </a>
             </div>
 
             <div id="audioCuttingSection" style="display: none;">
