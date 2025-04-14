@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>About PodManager | Professional Podcast Management</title>
+    <!-- global stylesheets -->
+    <link
+    rel="stylesheet"
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
+    />
+    <link
+      rel="stylesheet"
+      href="{{ url_for('static', filename='css/components/variables.css') }}"
+    />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link
+    rel="stylesheet"
+    href="{{ url_for('static', filename='css/about/about.css') }}"
+  />
+  <script>src="{{ url_for('static', filename='js/about/about.js') }}"</script>
+</head>
+<body>
+    <!-- Simplified Navigation -->
+    <nav class="navbar">
+        <div class="navbar-container">
+            <a href="/dashboard" class="logo">
+                <i class="fas fa-podcast"></i>
+                PodManager
+            </a>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section class="hero">
+        <div class="container">
+            <h1>Elevate Your Podcast Production</h1>
+            <p>PodManager is the all-in-one podcast management platform designed to streamline your workflow and enhance your content quality.</p>
+            <a href="/" class="btn">Get Started Now</a>
+        </div>
+    </section>
+
+    <!-- Overview Section -->
+    <section class="features">
+        <div class="container">
+            <div class="section-title">
+                <h2>Overview</h2>
+            </div>
+            <p>PodManager is a powerful podcast management platform designed to streamline the podcasting experience for creators. With features that assist in guest management, episode organization, team collaboration, task management, and audio enhancement, it's the all-in-one solution for podcasters looking to elevate their production workflow.</p>
+        </div>
+    </section>
+
+    <!-- Features Section -->
+    <section class="features">
+        <div class="container">
+            <div class="section-title">
+                <h2>Key Features</h2>
+            </div>
+            <div class="features-grid">
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-user-friends"></i>
+                    </div>
+                    <h3>Guest Management</h3>
+                    <p>Invite and manage guests with ease. The platform integrates with your calendar to allow guests to select available times, fill out necessary information, and confirm their participation.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-microphone-alt"></i>
+                    </div>
+                    <h3>Podcast Episode Management</h3>
+                    <p>Easily add episodes and invite guests to your podcast. Keep track of your guest appearances, manage their details, and ensure everything runs smoothly for each recording session.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-users"></i>
+                    </div>
+                    <h3>Team Collaboration</h3>
+                    <p>Create a team for your podcast and assign specific roles to each team member. Whether you need help with editing, social media management, or content creation, team collaboration is made simple.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-tasks"></i>
+                    </div>
+                    <h3>Task Management</h3>
+                    <p>Stay on top of all podcast-related tasks. Add both pre-existing tasks or create custom ones tailored to your workflow. You can assign tasks to your team members, ensuring everyone knows their responsibilities.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-robot"></i>
+                    </div>
+                    <h3>AI-Powered Podcast Editing</h3>
+                    <p>Take advantage of advanced AI features to enhance your podcast episodes. Reduce noise, enhance voice clarity, and even generate quotes directly from the episode for a professional sound.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-chart-line"></i>
+                    </div>
+                    <h3>Analytics & Insights</h3>
+                    <p>Track your podcast performance with detailed analytics. Understand your audience better, see which episodes perform best, and make data-driven decisions to grow your podcast.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Why Choose Section -->
+    <section class="why-choose">
+        <div class="container">
+            <div class="section-title">
+                <h2>Why Choose PodManager?</h2>
+            </div>
+            <div class="why-choose-content">
+                <div class="why-choose-text">
+                    <p>PodManager simplifies podcast creation and management. Whether you're a solo creator or leading a team, this platform brings all the essential tools together in one place.</p>
+                    <p>It's designed to help you manage every aspect of your podcast from start to finish, ensuring efficiency and high-quality production at every step.</p>
+                    <ul class="benefits-list">
+                        <li>Save time with streamlined workflows</li>
+                        <li>Improve audio quality with AI-powered tools</li>
+                        <li>Enhance team collaboration and communication</li>
+                        <li>Simplify guest booking and management</li>
+                        <li>Scale your podcast production efficiently</li>
+                    </ul>
+                </div>
+                <div class="why-choose-image">
+                    <img src="https://images.unsplash.com/photo-1590602847861-f357a9332bbc?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=600&q=80" alt="Podcast studio setup">
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- CTA Section -->
+    <section class="cta">
+        <div class="container">
+            <h2>Ready to Transform Your Podcast?</h2>
+            <p>Join thousands of podcasters who have elevated their production quality and streamlined their workflow with PodManager.</p>
+            <a href="/" class="btn btn-light">Register Now</a>
+        </div>
+    </section>
+
+    <!-- Simplified Footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-links">
+                <a href="{{ url_for('frontend.privacy_policy_page') }}">Privacy Policy</a> |
+                <a href="{{ url_for('frontend.terms_of_service_page') }}">Terms of Service</a> |
+                <a href="{{ url_for('frontend.about_page') }}">About PodManager</a>
+            </div>
+            <div class="copyright">
+                <p>&copy; 2023 PodManager. All rights reserved.</p>
+            </div>
+        </div>
+    </footer>
+</body>
+</html>

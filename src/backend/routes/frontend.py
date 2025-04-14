@@ -44,3 +44,7 @@ def terms_of_service_page():
 @frontend_bp.route("/privacy-policy")
 def privacy_policy_page():
     return render_template("privacy-policy/privacy-policy.html")
+
+@frontend_bp.route("/about")
+def about_page():
+    return render_template("about/about.html")
