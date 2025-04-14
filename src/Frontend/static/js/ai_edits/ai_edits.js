@@ -130,6 +130,7 @@ function showTab(tabName) {
                   ${labelWithCredits("📊 Analyze", "ai_audio_analysis")}
                 </button>
                 <pre id="analysisResults"></pre>
+                <div id="soundEffectTimeline" style="margin-top: 1rem;"></div>
                 <a id="downloadEnhanced" style="display:none;" download="processed_audio.wav">📥 Download Processed Audio</a>
             </div>
 
@@ -444,13 +445,38 @@ async function analyzeEnhancedAudio() {
     try {
         const res = await fetch("/audio_analysis", { method: "POST", body: formData });
         const data = await res.json();
+
         resultEl.innerText = `
-📊 Emotion: ${data.emotion}
 📊 Sentiment: ${data.sentiment}
 📊 Clarity Score: ${data.clarity_score}
 📊 Background Noise: ${data.background_noise}
-📊 Speech Rate (WPM): ${data.speech_rate}
         `;
+
+        const timeline = document.getElementById("soundEffectTimeline");
+        timeline.innerHTML = "<h4>🎧 AI-Driven Sound Suggestions</h4>";
+
+        if (data.sound_effect_suggestions?.length) {
+            data.sound_effect_suggestions.forEach((entry, i) => {
+                const div = document.createElement("div");
+                div.style.padding = "8px";
+                div.style.marginBottom = "8px";
+                div.style.border = "1px solid #ccc";
+                div.style.borderRadius = "10px";
+                div.style.backgroundColor = "#f9f9f9";
+
+                div.innerHTML = `
+<strong>📍 Text:</strong> "${entry.timestamp_text}"<br/>
+<strong>🎭 Emotion:</strong> ${entry.emotion}<br/>
+<strong>🎵 Suggested Effect:</strong> 
+<a href="${entry.suggested_effect}" target="_blank">${entry.suggested_effect}</a>
+                `;
+
+                timeline.appendChild(div);
+            });
+        } else {
+            timeline.innerHTML += "<p>No sound suggestions found.</p>";
+        }
+
     } catch (err) {
         resultEl.innerText = `❌ Analysis failed: ${err.message}`;
     }
@@ -637,4 +663,3 @@ async function consumeUserCredits(featureKey) {
 
     return result.data;
 }
-
