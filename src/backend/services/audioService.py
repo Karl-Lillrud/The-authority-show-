@@ -6,12 +6,12 @@ import subprocess
 from backend.database.mongo_connection import get_fs
 from backend.utils.file_utils import enhance_audio_with_ffmpeg, detect_background_noise, convert_audio_to_wav
 from backend.utils.ai_utils import (
-    remove_filler_words, calculate_clarity_score, analyze_sentiment
+    remove_filler_words, calculate_clarity_score, analyze_sentiment,analyze_emotions
 )
 from backend.utils.text_utils import (
     transcribe_with_whisper, detect_filler_words, classify_sentence_relevance,
     analyze_certainty_levels, get_sentence_timestamps, detect_long_pauses,
-    generate_ai_show_notes
+    generate_ai_show_notes, suggest_sound_effects,translate_text
 )
 from backend.repository.ai_models import save_file, get_file_data, get_file_by_id
 from elevenlabs.client import ElevenLabs
@@ -56,6 +56,11 @@ class AudioService:
         noise_result = detect_background_noise(temp_path)
         sentiment_result = analyze_sentiment(transcript)
 
+        # NEW: Sentence-level emotion + sound suggestion
+        translated_text = translate_text(transcript, "English")
+        emotion_data = analyze_emotions(translated_text)
+        sound_effects = suggest_sound_effects(emotion_data)
+
         os.remove(temp_path)
 
         return {
@@ -64,6 +69,8 @@ class AudioService:
             "clarity_score": clarity_score,
             "background_noise": noise_result,
             "sentiment": sentiment_result,
+            "emotions": emotion_data,            # NEW
+            "sound_effect_suggestions": sound_effects  # NEW
         }
 
     def cut_audio(self, file_id: str, start_time: float, end_time: float) -> str:
