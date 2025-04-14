@@ -11,6 +11,15 @@
       href="{{ url_for('static', filename='favicon/favicon.ico') }}"
     />
     <link rel="canonical" href="https://app.podmanager.ai" />
+    <!-- global stylesheets -->
+    <link
+    rel="stylesheet"
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
+    />
+    <link
+      rel="stylesheet"
+      href="{{ url_for('static', filename='css/components/variables.css') }}"
+    />
   </head>
   <body>
     <!-- Logo -->
@@ -64,10 +73,6 @@
               placeholder="Password"
               required
             />
-          </div>
-
-          <div class="forgot-password-link">
-            <a href="/forgotpassword" class="link">Forgot Password?</a>
           </div>
 
           <div class="form-actions">

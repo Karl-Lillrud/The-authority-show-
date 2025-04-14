@@ -1,45 +1,4 @@
 @import url("../podcastmanagement/podcastmanagement.css");
-
-:root {
-  --background-light: #f5f7fa;
-  --light-shadow-light: #ffffff;
-  --dark-shadow-light: rgba(22, 24, 29, 0.1);
-  --text-color-light: #5a6a78;
-  --highlight-color: #ff6f61;
-  --highlight-hover: #e65a4d;
-  --success-color: #34c759;
-  --danger-color: #ff3b30;
-  --font-primary: "Inter", "Segoe UI", "Arial", sans-serif;
-  --spacing-xs: 6px;
-  --spacing-sm: 12px;
-  --spacing-md: 20px;
-  --spacing-lg: 30px;
-  --spacing-xl: 40px;
-  --radius-small: 8px;
-  --radius-medium: 14px;
-  --radius-large: 24px;
-  --transition-fast: 0.25s ease;
-  --transition-normal: 0.35s ease;
-  --card-shadow: 0 12px 24px -6px rgba(0, 0, 0, 0.06),
-    0 6px 12px -4px rgba(0, 0, 0, 0.03);
-  --card-shadow-hover: 0 18px 36px -8px rgba(0, 0, 0, 0.12),
-    0 8px 16px -4px rgba(0, 0, 0, 0.06);
-  --button-shadow: 0 5px 10px -2px rgba(0, 0, 0, 0.08),
-    0 3px 6px -2px rgba(0, 0, 0, 0.04);
-
-  /* Sidebar variables */
-  --sidebar-width: 280px;
-  --sidebar-collapsed-width: 90px;
-  --sidebar-bg: #ffffff;
-  --sidebar-border: rgba(0, 0, 0, 0.04);
-  --sidebar-item-hover: rgba(255, 111, 97, 0.12);
-  --sidebar-item-active: rgba(255, 111, 97, 0.18);
-
-  /* Header height for calculations */
-  --header-height: 64px;
-  --footer-height: 60px;
-}
-
 /* Base styles */
 html,
 body {
@@ -64,7 +23,7 @@ body {
 .main-content {
   flex: 1;
   overflow-y: auto; /* Behåller scroll-funktionen */
-  padding: var(--spacing-lg);
+  padding: var(--team-spacing-lg);
   transition: margin-left var(--transition-normal);
   margin-left: var(--sidebar-width);
   box-sizing: border-box;
@@ -74,9 +33,9 @@ body {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: var(--spacing-xl);
+  margin-bottom: var(--team-spacing-sm);
   flex-wrap: wrap;
-  gap: var(--spacing-md);
+  gap: var(--team-spacing-md);
 }
 
 .main-header h1 {
@@ -91,21 +50,21 @@ body {
 .card-container {
   display: grid;
   grid-template-columns: 1fr;
-  gap: var(--spacing-lg);
-  margin-top: var(--spacing-xl);
-  padding-bottom: var(--spacing-lg); /* Extra utrymme längst ner */
+  gap: var(--team-spacing-lg);
+  margin-top: var(--team-spacing-sm);
+  padding-bottom: var(--team-spacing-lg); /* Extra utrymme längst ner */
 }
 
 .team-card {
   background: linear-gradient(135deg, #ffffff 0%, #fafafa 100%);
-  border-radius: var(--radius-large);
+  border-radius: var(--team-radius-large);
   overflow: hidden;
   box-shadow: var(--card-shadow);
   transition: all var(--transition-normal);
   border: 1px solid rgba(0, 0, 0, 0.02);
   display: flex;
   flex-direction: column;
-  padding: var(--spacing-md);
+  padding: var(--team-spacing-md);
 }
 
 .team-card:hover {
@@ -114,7 +73,7 @@ body {
 
 .team-card-header {
   position: relative;
-  padding: var(--spacing-lg);
+  padding: var(--team-spacing-lg);
   border-bottom: 1px solid rgba(0, 0, 0, 0.04);
   background: linear-gradient(
     90deg,
@@ -123,7 +82,7 @@ body {
   );
   display: flex;
   flex-direction: column;
-  gap: var(--spacing-sm);
+  gap: var(--team-spacing-sm);
 }
 
 .team-card-header h2 {
@@ -142,10 +101,10 @@ body {
 
 .team-card .edit-icon-btn {
   position: absolute;
-  top: var(--spacing-sm);
-  right: var(--spacing-sm);
+  top: var(--team-spacing-sm);
+  right: var(--team-spacing-sm);
   background-color: #ffffff;
-  color: var(--highlight-color);
+  color: var(--team-highlight-color);
   border: none;
   border-radius: 50%;
   cursor: pointer;
@@ -186,10 +145,10 @@ body {
 }
 
 .team-card-body {
-  padding: var(--spacing-lg);
+  padding: var(--team-spacing-lg);
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: var(--spacing-lg);
+  gap: var(--team-spacing-lg);
 }
 
 .team-card-body p {
@@ -266,7 +225,7 @@ body {
     rgba(255, 111, 97, 0.12),
     rgba(255, 111, 97, 0.06)
   );
-  color: var(--highlight-color);
+  color: var(--team-highlight-color);
   padding: 6px 12px;
   border-radius: 20px;
   font-size: 0.85rem;
@@ -335,9 +294,9 @@ body {
 
 .form-box {
   background: linear-gradient(145deg, #ffffff, #f9fafb);
-  border-radius: var(--radius-large);
+  border-radius: var(--team-radius-large);
   box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
-  padding: var(--spacing-xl);
+  padding: var(--team-spacing-xl);
   width: 90%;
   max-width: 850px;
   max-height: 90vh;
@@ -352,8 +311,8 @@ body {
 
 .close-btn {
   position: absolute;
-  top: var(--spacing-md);
-  right: var(--spacing-md);
+  top: var(--team-spacing-md);
+  right: var(--team-spacing-md);
   width: 44px;
   height: 44px;
   font-size: 1.6rem;
@@ -369,13 +328,13 @@ body {
 }
 
 .close-btn:hover {
-  color: var(--highlight-color);
+  color: var(--team-highlight-color);
   transform: rotate(90deg) scale(1.05);
   box-shadow: 0 5px 12px rgba(0, 0, 0, 0.15);
 }
 
 .form-title {
-  margin: 0 0 var(--spacing-lg);
+  margin: 0 0 var(--team-spacing-lg);
   color: rgba(0, 0, 0, 0.85);
   text-align: center;
   font-size: 1.9rem;
@@ -392,18 +351,18 @@ body {
   transform: translateX(-50%);
   width: 70px;
   height: 4px;
-  background: var(--highlight-color);
+  background: var(--team-highlight-color);
   border-radius: 4px;
 }
 
 .form-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: var(--spacing-lg);
+  gap: var(--team-spacing-lg);
 }
 
 .field-group {
-  margin-bottom: var(--spacing-md);
+  margin-bottom: var(--team-spacing-md);
 }
 
 .field-group.full-width {
@@ -412,7 +371,7 @@ body {
 
 .field-group label {
   display: block;
-  margin-bottom: var(--spacing-sm);
+  margin-bottom: var(--team-spacing-sm);
   font-weight: 600;
   color: rgba(0, 0, 0, 0.65);
   font-size: 0.95rem;
@@ -428,7 +387,7 @@ body {
   transform: translateY(-50%);
   width: 4px;
   height: 16px;
-  background-color: var(--highlight-color);
+  background-color: var(--team-highlight-color);
   border-radius: 2px;
 }
 
@@ -438,7 +397,7 @@ body {
   width: 100%;
   padding: 14px 18px;
   border: 1px solid rgba(0, 0, 0, 0.08);
-  border-radius: var(--radius-medium);
+  border-radius: var(--team-radius-medium);
   background: #fff;
   color: rgba(0, 0, 0, 0.85);
   font-size: 1rem;
@@ -449,7 +408,7 @@ body {
 .field-group input:focus,
 .field-group select:focus,
 .field-group textarea:focus {
-  border-color: var(--highlight-color);
+  border-color: var(--team-highlight-color);
   box-shadow: 0 0 0 4px rgba(255, 111, 97, 0.15);
   outline: none;
 }
@@ -473,7 +432,7 @@ body {
 .field-edit-btn {
   background-color: transparent;
   border: none;
-  color: var(--highlight-color);
+  color: var(--team-highlight-color);
   cursor: pointer;
   width: 30px;
   height: 30px;
@@ -497,9 +456,9 @@ body {
 .form-actions {
   display: flex;
   justify-content: flex-end;
-  gap: var(--spacing-md);
-  margin-top: var(--spacing-lg);
-  padding-top: var(--spacing-md);
+  gap: var(--team-spacing-md);
+  margin-top: var(--team-spacing-lg);
+  padding-top: var(--team-spacing-md);
   border-top: 1px solid rgba(0, 0, 0, 0.04);
 }
 
@@ -511,7 +470,7 @@ body {
   font-size: 0.95rem;
   line-height: 1.2;
   border: none;
-  border-radius: var(--radius-medium);
+  border-radius: var(--team-radius-medium);
   font-weight: 600;
   cursor: pointer;
   transition: all var(--transition-fast);
@@ -523,8 +482,8 @@ body {
 .save-btn {
   background: linear-gradient(
     135deg,
-    var(--highlight-color),
-    var(--highlight-hover)
+    var(--team-highlight-color),
+    var(--team-highlight-hover)
   );
   color: white;
   box-shadow: var(--button-shadow);
@@ -553,7 +512,7 @@ body {
 
 .cancel-btn:hover {
   transform: translateY(-2px);
-  color: var(--highlight-color);
+  color: var(--team-highlight-color);
   box-shadow: 0 6px 12px rgba(0, 0, 0, 0.1);
 }
 
@@ -570,7 +529,7 @@ body {
   background-color: rgba(231, 76, 60, 0.1);
   color: var(--danger-color);
   border: none;
-  border-radius: var(--radius-small);
+  border-radius: var(--team-radius-small);
   width: 40px;
   height: 40px;
   display: flex;
@@ -616,7 +575,7 @@ body {
   font-size: 0.95rem;
   line-height: 1.2;
   border: none;
-  border-radius: var(--radius-medium);
+  border-radius: var(--team-radius-medium);
   cursor: pointer;
   box-shadow: var(--button-shadow);
   display: flex;
@@ -650,11 +609,11 @@ body {
 /* Member Card Styles */
 .member-card {
   background: linear-gradient(135deg, #ffffff 0%, #f9fafb 100%);
-  border-radius: var(--radius-large);
+  border-radius: var(--team-radius-large);
   box-shadow: var(--card-shadow);
   transition: all var(--transition-normal);
   border: 1px solid rgba(0, 0, 0, 0.02);
-  padding: var(--spacing-lg);
+  padding: var(--team-spacing-lg);
   position: relative;
 }
 
@@ -666,14 +625,14 @@ body {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: var(--spacing-md);
+  margin-bottom: var(--team-spacing-md);
   position: relative;
   background: linear-gradient(
     90deg,
     rgba(255, 111, 97, 0.05),
     rgba(255, 111, 97, 0.02)
   );
-  padding: var(--spacing-lg); /* Liknande team-card-header */
+  padding: var(--team-spacing-lg); /* Liknande team-card-header */
 }
 
 .member-card-header h3 {
@@ -697,10 +656,10 @@ body {
 
 .member-card .edit-icon-btn {
   position: absolute;
-  top: var(--spacing-sm) !important;
-  right: var(--spacing-sm) !important;
+  top: var(--team-spacing-sm) !important;
+  right: var(--team-spacing-sm) !important;
   background-color: #ffffff;
-  color: var(--highlight-color);
+  color: var(--team-highlight-color);
   border: none;
   border-radius: 50%;
   cursor: pointer;
@@ -743,7 +702,7 @@ body {
 .member-card-body {
   display: flex;
   flex-direction: column;
-  gap: var(--spacing-sm);
+  gap: var(--team-spacing-sm);
 }
 
 .member-card-body p {
@@ -763,13 +722,13 @@ body {
 .member-card-footer {
   display: flex;
   justify-content: flex-end;
-  gap: var(--spacing-sm);
-  margin-top: var(--spacing-md);
+  gap: var(--team-spacing-sm);
+  margin-top: var(--team-spacing-md);
 }
 
 .member-card-footer .btn {
   padding: 10px 20px;
-  border-radius: var(--radius-medium);
+  border-radius: var(--team-radius-medium);
   font-weight: 600;
   font-size: 0.9rem;
   transition: all var(--transition-fast);
@@ -778,12 +737,12 @@ body {
 .member-card-footer .edit-member-btn {
   background: linear-gradient(
     135deg,
-    var(--highlight-color),
-    var(--highlight-hover)
+    var(--team-highlight-color),
+    var(--team-highlight-hover)
   );
   color: white;
   border: none;
-  border-radius: var(--radius-medium);
+  border-radius: var(--team-radius-medium);
   padding: 12px 28px;
   font-size: 1rem;
   font-weight: 600;
@@ -1054,7 +1013,7 @@ body {
 
   .main-content {
     margin-left: 0;
-    padding: var(--spacing-md);
+    padding: var(--team-spacing-md);
     overflow-y: auto; /* Behåller inre scroll */
     min-height: auto; /* Tar bort min-height för att inte begränsa scroll */
     height: calc(
@@ -1069,7 +1028,7 @@ body {
   .main-header {
     flex-direction: column;
     align-items: flex-start;
-    gap: var(--spacing-sm);
+    gap: var(--team-spacing-sm);
   }
 
   .main-header h1 {
@@ -1077,16 +1036,16 @@ body {
   }
 
   .card-container {
-    gap: var(--spacing-md);
-    padding-bottom: var(--spacing-md);
+    gap: var(--team-spacing-md);
+    padding-bottom: var(--team-spacing-md);
   }
 
   .team-card {
-    padding: var(--spacing-sm);
+    padding: var(--team-spacing-sm);
   }
 
   .team-card-header {
-    padding: var(--spacing-md);
+    padding: var(--team-spacing-md);
   }
 
   .team-card-header h2 {
@@ -1094,8 +1053,8 @@ body {
   }
 
   .team-card-body {
-    padding: var(--spacing-md);
-    gap: var(--spacing-sm);
+    padding: var(--team-spacing-md);
+    gap: var(--team-spacing-sm);
   }
 
   .team-card-body p {
@@ -1130,7 +1089,7 @@ body {
   }
 
   .member-card {
-    padding: var(--spacing-md);
+    padding: var(--team-spacing-md);
   }
 
   .member-card-header h3 {
@@ -1151,17 +1110,17 @@ body {
 
 @media (max-width: 576px) {
   :root {
-    --spacing-lg: 20px;
-    --spacing-md: 15px;
-    --spacing-sm: 10px;
-    --spacing-xs: 5px;
-    --radius-large: 16px;
-    --radius-medium: 10px;
-    --radius-small: 6px;
+    --team-spacing-lg: 20px;
+    --team-spacing-md: 15px;
+    --team-spacing-sm: 10px;
+    --team-spacing-xs: 5px;
+    --team-radius-large: 16px;
+    --team-radius-medium: 10px;
+    --team-radius-small: 6px;
   }
 
   .main-content {
-    padding: var(--spacing-sm);
+    padding: var(--team-spacing-sm);
     height: calc(100vh - var(--header-height)); /* Behåller scroll */
   }
 
@@ -1170,17 +1129,17 @@ body {
   }
 
   .card-container {
-    gap: var(--spacing-md);
-    padding-bottom: var(--spacing-md);
+    gap: var(--team-spacing-md);
+    padding-bottom: var(--team-spacing-md);
   }
 
   .team-card {
-    padding: var(--spacing-sm);
+    padding: var(--team-spacing-sm);
   }
 
   .team-card-header {
-    padding: var(--spacing-sm);
-    gap: var(--spacing-xs);
+    padding: var(--team-spacing-sm);
+    gap: var(--team-spacing-xs);
   }
 
   .team-card-header h2 {
@@ -1192,8 +1151,8 @@ body {
   }
 
   .team-card-body {
-    padding: var(--spacing-sm);
-    gap: var(--spacing-sm);
+    padding: var(--team-spacing-sm);
+    gap: var(--team-spacing-sm);
   }
 
   .team-card-body p {
@@ -1218,13 +1177,13 @@ body {
 
   .form-box {
     width: 95%;
-    padding: var(--spacing-md);
-    border-radius: var(--radius-medium);
+    padding: var(--team-spacing-md);
+    border-radius: var(--team-radius-medium);
   }
 
   .form-title {
     font-size: 1.5rem;
-    margin-bottom: var(--spacing-md);
+    margin-bottom: var(--team-spacing-md);
   }
 
   .form-title::after {
@@ -1242,12 +1201,12 @@ body {
   .field-group textarea {
     padding: 10px 14px;
     font-size: 0.9rem;
-    border-radius: var(--radius-small);
+    border-radius: var(--team-radius-small);
   }
 
   .form-actions {
     flex-direction: column;
-    gap: var(--spacing-sm);
+    gap: var(--team-spacing-sm);
   }
 
   .save-btn,
@@ -1304,7 +1263,7 @@ body {
   }
 
   .member-card {
-    padding: var(--spacing-sm);
+    padding: var(--team-spacing-sm);
   }
 
   .member-card-header h3 {
@@ -1333,7 +1292,7 @@ body {
   }
 
   .member-card-footer {
-    gap: var(--spacing-xs);
+    gap: var(--team-spacing-xs);
   }
 
   .member-card-footer .edit-member-btn {
@@ -1370,36 +1329,36 @@ body {
 /* Media query från 500px */
 @media (max-width: 500px) {
   :root {
-    --spacing-lg: 20px;
-    --spacing-md: 15px;
-    --spacing-sm: 10px;
-    --spacing-xs: 5px;
-    --radius-large: 16px;
-    --radius-medium: 10px;
-    --radius-small: 6px;
+    --team-spacing-lg: 20px;
+    --team-spacing-md: 15px;
+    --team-spacing-sm: 10px;
+    --team-spacing-xs: 5px;
+    --team-radius-large: 16px;
+    --team-radius-medium: 10px;
+    --team-radius-small: 6px;
   }
 
   .main-content {
-    padding: var(--spacing-sm);
+    padding: var(--team-spacing-sm);
     margin-left: 0;
     height: calc(100vh - var(--header-height));
   }
 
   .card-container {
-    gap: var(--spacing-md);
-    padding-bottom: var(--spacing-md);
+    gap: var(--team-spacing-md);
+    padding-bottom: var(--team-spacing-md);
   }
 
   /* Team Card */
   .team-card {
-    padding: var(--spacing-sm);
+    padding: var(--team-spacing-sm);
     min-width: 0;
-    border-radius: var(--radius-medium);
+    border-radius: var(--team-radius-medium);
   }
 
   .team-card-header {
-    padding: var(--spacing-sm);
-    gap: var(--spacing-xs);
+    padding: var(--team-spacing-sm);
+    gap: var(--team-spacing-xs);
     flex-direction: column;
     align-items: flex-start;
   }
@@ -1415,8 +1374,8 @@ body {
   }
 
   .team-card-body {
-    padding: var(--spacing-sm);
-    gap: var(--spacing-sm);
+    padding: var(--team-spacing-sm);
+    gap: var(--team-spacing-sm);
     grid-template-columns: 1fr;
   }
 
@@ -1443,17 +1402,17 @@ body {
 
   /* Member Card */
   .member-card {
-    padding: var(--spacing-sm);
+    padding: var(--team-spacing-sm);
     min-width: 0;
-    border-radius: var(--radius-medium);
+    border-radius: var(--team-radius-medium);
   }
 
   .member-card-header {
-    padding: var(--spacing-sm);
-    margin-bottom: var(--spacing-sm);
+    padding: var(--team-spacing-sm);
+    margin-bottom: var(--team-spacing-sm);
     flex-direction: column;
     align-items: flex-start;
-    gap: var(--spacing-xs);
+    gap: var(--team-spacing-xs);
   }
 
   .member-card-header h3 {
@@ -1486,7 +1445,7 @@ body {
   }
 
   .member-card-body {
-    gap: var(--spacing-sm);
+    gap: var(--team-spacing-sm);
   }
 
   .member-card-body p {
@@ -1500,8 +1459,8 @@ body {
   }
 
   .member-card-footer {
-    margin-top: var(--spacing-md);
-    gap: var(--spacing-sm);
+    margin-top: var(--team-spacing-md);
+    gap: var(--team-spacing-sm);
     flex-wrap: wrap;
   }
 
@@ -1531,12 +1490,12 @@ body {
 /* Media query för 400px */
 @media (max-width: 400px) {
   :root {
-    --spacing-lg: 15px;
-    --spacing-md: 12px;
-    --spacing-sm: 8px;
-    --spacing-xs: 4px;
-    --radius-large: 12px;
-    --radius-medium: 8px;
+    --team-spacing-lg: 15px;
+    --team-spacing-md: 12px;
+    --team-spacing-sm: 8px;
+    --team-spacing-xs: 4px;
+    --team-radius-large: 12px;
+    --team-radius-medium: 8px;
   }
 
   .team-card-header h2 {
@@ -1586,11 +1545,11 @@ body {
 /* Media query för 350px */
 @media (max-width: 350px) {
   :root {
-    --spacing-lg: 12px;
-    --spacing-md: 10px;
-    --spacing-sm: 6px;
-    --spacing-xs: 3px;
-    --radius-large: 10px;
+    --team-spacing-lg: 12px;
+    --team-spacing-md: 10px;
+    --team-spacing-sm: 6px;
+    --team-spacing-xs: 3px;
+    --team-radius-large: 10px;
   }
 
   .team-card-header h2 {
@@ -1640,12 +1599,12 @@ body {
 /* Media query för 300px */
 @media (max-width: 300px) {
   :root {
-    --spacing-lg: 10px;
-    --spacing-md: 8px;
-    --spacing-sm: 5px;
-    --spacing-xs: 2px;
-    --radius-large: 8px;
-    --radius-medium: 6px;
+    --team-spacing-lg: 10px;
+    --team-spacing-md: 8px;
+    --team-spacing-sm: 5px;
+    --team-spacing-xs: 2px;
+    --team-radius-large: 8px;
+    --team-radius-medium: 6px;
   }
 
   .main-content {
