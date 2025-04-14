@@ -155,4 +155,12 @@ def publish(episode_id):
         logger.error(f"Error publishing episode {episode_id}: {e}", exc_info=True)
         return jsonify({"error": "Failed to publish episode"}), 500
 
-# Other routes for episodes omitted for brevity
+@episode_bp.route("/episode/new", methods=["GET"])
+def new_episode():
+    try:
+        # Example logic for creating a new episode
+        return jsonify({"message": "New episode endpoint is working!"}), 200
+    except Exception as e:
+        logger.error("❌ ERROR in new_episode: %s", str(e))
+        return jsonify({"error": "Failed to process the request"}), 500
+

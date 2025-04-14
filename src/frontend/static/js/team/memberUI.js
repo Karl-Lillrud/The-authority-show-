@@ -1,4 +1,4 @@
-import { showNotification, showConfirmationPopup } from "./notifications.js";
+import { showNotification, showConfirmationPopup } from "../components/notifications.js";
 import { edit } from "./teamSvg.js";
 import { closeModal } from "./modals.js";
 import { getTeamsRequest } from "/static/requests/teamRequests.js";
@@ -25,7 +25,7 @@ export async function renderMembersView() {
     const teams = await getTeamsRequest();
     const membersView = document.getElementById("members-view-container");
     if (!teams || teams.length === 0) {
-      membersView.innerHTML = `<p>No teams available.</p>`;
+      membersView.innerHTML = `<p>No members available.</p>`;
       return;
     }
     for (const team of teams) {
@@ -548,6 +548,7 @@ export async function handleAddMemberFormSubmission(e) {
   }
 
   try {
+    document.getElementById("addMemberModal").classList.remove("show");
     const inviteResult = await sendTeamInviteRequest(teamId, email, role);
     const addMemberResult = await addTeamMemberRequest(teamId, email, role);
 
@@ -557,7 +558,6 @@ export async function handleAddMemberFormSubmission(e) {
     }
 
     showNotification("Success", "Member added successfully!", "success");
-    document.getElementById("addMemberModal").classList.remove("show");
     const teams = await getTeamsRequest();
     updateTeamsUI(teams);
   } catch (error) {

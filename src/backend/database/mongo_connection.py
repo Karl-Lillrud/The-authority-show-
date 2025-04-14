@@ -13,12 +13,13 @@ load_dotenv()
 
 # MongoDB Configuration
 MONGODB_URI = os.getenv("MONGODB_URI")
-DATABASE_NAME = "Podmanager"  # Database name
-COLLECTION_NAME = "Users"  # Collection for users
-PODCAST_NAME = "Podcasts"  # Collection for podcasts
-EPISODE_NAME = "Episodes"  # Collection for episodes
-MAILING_LIST_COLLECTION_NAME = "MailingList"  # Mailing List collection
-SUBSCRIPTIONS_LIST_COLLECTION = "subscriptions_collection"  # Subscriptions collection
+DATABASE_NAME = "Podmanager"
+COLLECTION_NAME = "Users"
+PODCAST_NAME = "Podcasts"
+EPISODE_NAME = "Episodes"
+CREDITS = "Credits"
+MAILING_LIST_COLLECTION_NAME = "MailingList"  # Add MailingList collection
+SUBSCRIPTIONS_LIST_COLLECTION = "subscriptions_collection"
 
 # Raise an error if MONGODB_URI is missing
 if not MONGODB_URI:
@@ -35,21 +36,13 @@ try:
 
     # Select the database using DATABASE_NAME
     database = client[DATABASE_NAME]
-
-    # Access individual collections
-    collection = database[COLLECTION_NAME]  # Users collection
-    podcasts = database[PODCAST_NAME]  # Podcasts collection
-    episodes = database[EPISODE_NAME]  # Episodes collection
-    mailing_list_collection = database[
-        MAILING_LIST_COLLECTION_NAME
-    ]  # Mailing List collection
-    subscriptions_collection = database[
-        SUBSCRIPTIONS_LIST_COLLECTION
-    ]  # Subscriptions collection
-
-    # Initialize GridFS for file storage
-    fs = GridFS(database)
-
+    collection = database[COLLECTION_NAME]
+    podcasts = database[PODCAST_NAME]
+    episodes = database[EPISODE_NAME]
+    credits = database[CREDITS]
+    mailing_list_collection = database[MAILING_LIST_COLLECTION_NAME]  # MailingList collection
+    subscriptions_collection = database[SUBSCRIPTIONS_LIST_COLLECTION]
+    fs = GridFS(database)  # Initialize GridFS
     logger.info("MongoDB connection and GridFS initialized successfully.")
 except Exception as e:
     # Log error if connection fails

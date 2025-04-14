@@ -5,6 +5,7 @@ import logging
 from backend.models.guests import GuestSchema
 from marshmallow import ValidationError
 import email.utils  # Import to handle parsing date format
+from google.oauth2.credentials import Credentials
 
 logger = logging.getLogger(__name__)
 
@@ -17,9 +18,14 @@ class GuestRepository:
         try:
             episode_id = data.get("episodeId")
 
+            # Fetch the episode and ensure it contains the 'podcast_id' field
             episode = collection.database.Episodes.find_one({"_id": episode_id})
             if not episode:
+                logger.error(f"Episode with ID {episode_id} not found.")
                 return {"error": "Episode not found"}, 404
+            if "podcast_id" not in episode:
+                logger.warning(f"Episode with ID {episode_id} is missing 'podcast_id'.")
+                return {"error": "Episode missing 'podcast_id' field"}, 400
 
             current_date = datetime.now(timezone.utc)
 
@@ -319,3 +325,20 @@ class GuestRepository:
         except Exception as e:
             logger.error(f"Failed to delete guests: {e}", exc_info=True)
             return 0
+
+    def save_google_refresh_token(self, user_id, refresh_token):
+        """
+        Save the Google OAuth2 refresh token in the Users collection.
+        """
+        try:
+            result = collection.database.Users.update_one(
+                {"_id": str(user_id)},
+                {"$set": {"googleRefresh": refresh_token}},  # Save as googleRefresh
+                upsert=True
+            )
+            if result.modified_count > 0 or result.upserted_id:
+                return {"message": "Google refresh token saved successfully"}, 200
+            return {"error": "Failed to save Google refresh token"}, 500
+        except Exception as e:
+            logger.exception("❌ ERROR: Failed to save Google refresh token")
+            return {"error": f"Failed to save Google refresh token: {str(e)}"}, 500

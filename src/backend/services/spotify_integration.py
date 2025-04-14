@@ -15,9 +15,15 @@ load_dotenv()
 logger = logging.getLogger(__name__)
 
 # Initialize Google Cloud Storage client
-storage_client = storage.Client.from_service_account_json(
-    os.getenv("GOOGLE_CLOUD_SERVICE_ACCOUNT_KEY")
-)
+service_account_key_path = os.getenv("GOOGLE_CLOUD_SERVICE_ACCOUNT_KEY")
+if not service_account_key_path:
+    logger.error(
+        "The environment variable 'GOOGLE_CLOUD_SERVICE_ACCOUNT_KEY' is not set or is empty. "
+        "Please ensure it is defined in your environment or .env file."
+    )
+    raise ValueError("Missing 'GOOGLE_CLOUD_SERVICE_ACCOUNT_KEY' environment variable.")
+
+storage_client = storage.Client.from_service_account_json(service_account_key_path)
 bucket_name = os.getenv("GOOGLE_CLOUD_BUCKET_NAME")
 
 

@@ -28,6 +28,9 @@ transcription_service = TranscriptionService()
 audio_service = AudioService()
 video_service = VideoService()
 
+# Ensure transcription_b is defined
+transcription_b = "Placeholder for transcription_b functionality"  # Replace with actual implementation if needed
+
 @transcription_bp.route("/transcribe", methods=["POST"])
 def transcribe():
     if "file" not in request.files:
@@ -263,4 +266,4 @@ def isolate_voice():
     except Exception as e:
         logger.error(f"Voice isolation error: {str(e)}")
         return jsonify({"error": str(e)}), 500
-    
+
