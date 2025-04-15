@@ -1,8 +1,13 @@
-// Function to open the Email Config popup
-function openEmailConfigPopup() {
+// emailconfig-functions.js
+export function openEmailConfigPopup(podcastId) {
   const popup = document.getElementById("email-config-popup");
   popup.style.display = "flex";
-  fetchOutbox(); // Fetch and display the outbox when the popup opens
+
+  // Store the podcast ID for later use
+  popup.setAttribute("data-podcast-id", podcastId);
+
+  // Fetch the outbox emails for the selected podcast
+  fetchOutbox(podcastId);
 }
 
 // Function to close the Email Config popup
@@ -10,6 +15,15 @@ function closeEmailConfigPopup() {
   const popup = document.getElementById("email-config-popup");
   popup.style.display = "none";
 }
+
+// Attach event listeners for the close buttons
+document
+  .getElementById("close-email-config-popup")
+  .addEventListener("click", closeEmailConfigPopup);
+
+document
+  .getElementById("close-email-config-btn")
+  .addEventListener("click", closeEmailConfigPopup);
 
 async function saveTriggerConfig() {
   const triggerSelect = document.getElementById("trigger-select");
@@ -21,14 +35,13 @@ async function saveTriggerConfig() {
   };
 
   try {
-    const response = await fetch("/api/save-trigger", {
+    const response = await fetch("/save-trigger", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(triggerData),
     });
 
     if (response.ok) {
-      const result = await response.json();
       alert("Trigger saved successfully!");
     } else {
       const error = await response.json();
@@ -40,12 +53,12 @@ async function saveTriggerConfig() {
   }
 }
 
-async function fetchOutbox() {
+async function fetchOutbox(podcastId) {
   const outboxTable = document.getElementById("outbox-table");
   outboxTable.innerHTML = ""; // Clear existing rows
 
   try {
-    const response = await fetch("/api/outbox");
+    const response = await fetch(`/outbox?podcastId=${podcastId}`);
     const data = await response.json();
 
     if (data.success) {
@@ -69,22 +82,14 @@ async function fetchOutbox() {
 }
 
 export function initEmailConfigFunctions() {
-  // Open popup
-  document
-    .getElementById("email-config-btn")
-    .addEventListener("click", openEmailConfigPopup);
-
-  // Close popup
-  document
-    .getElementById("close-email-config-popup")
-    .addEventListener("click", closeEmailConfigPopup);
-
-  document
-    .getElementById("close-email-config-btn")
-    .addEventListener("click", closeEmailConfigPopup);
-
-  // Save trigger configuration
-  document
-    .getElementById("save-trigger-btn")
-    .addEventListener("click", saveTriggerConfig);
+  const emailConfigButtons = document.querySelectorAll(".email-config-link");
+  emailConfigButtons.forEach((button) => {
+    button.addEventListener("click", (e) => {
+      const podcastId = e.target.dataset.id; // Get the podcast ID from the button's data attribute
+      openEmailConfigPopup(podcastId); // Open the email configuration popup
+    });
+  });
 }
+
+// Call this function after the DOM is fully loaded
+document.addEventListener("DOMContentLoaded", initEmailConfigFunctions);

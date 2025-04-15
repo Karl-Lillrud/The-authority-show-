@@ -69,57 +69,49 @@ def parse_publish_date(publish_date):
 
 def check_and_send_emails():
     today = datetime.now(timezone.utc)
-
     sent_emails = load_sent_emails()
 
     triggers = {
-        "booking": {"status": "Not Recorded", "time_check": None},  # Send immediately
-        "preparation": {"status": "Not Recorded", "time_check": timedelta(days=1)},  # 1 day before publishDate
-        "missing_info": {"status": "Not Recorded", "time_check": timedelta(days=20)},  # 20 days before publishDate
-        "publishing_reminder": {"status": "Recorded", "time_check": timedelta(days=7)},  # 7 days before publishDate
-        "join_link": {"status": "Not Recorded", "time_check": timedelta(hours=1)},  # 1 hour before publishDate
-        "thank_you": {"status": "Published", "time_check": timedelta(days=0)},  # Immediately after publishDate
-        "recommendations": {"status": "Published", "time_check": timedelta(days=14)},  # 14 days after publishDate
-        "suggestions": {"status": "Published", "time_check": timedelta(days=0)},  # Immediately after publishDate
-        "missing_social_media": {"status": "Recorded", "time_check": None},  # Special trigger for missing social media
+        "booking": {"status": "Not Recorded", "time_check": None},
+        "preparation": {"status": "Not Recorded", "time_check": timedelta(days=1)},
+        "missing_info": {"status": "Not Recorded", "time_check": timedelta(days=20)},
+        "publishing_reminder": {"status": "Recorded", "time_check": timedelta(days=7)},
+        "join_link": {"status": "Not Recorded", "time_check": timedelta(hours=1)},
+        "thank_you": {"status": "Published", "time_check": timedelta(days=0)},
+        "recommendations": {"status": "Published", "time_check": timedelta(days=14)},
+        "suggestions": {"status": "Published", "time_check": timedelta(days=0)},
+        "missing_social_media": {"status": "Recorded", "time_check": None},
     }
 
-    # Process each trigger
     for trigger_name, trigger_details in triggers.items():
-        logger.info(f"Starting to process trigger: {trigger_name}")
+        logger.info(f"Processing trigger: {trigger_name}")
 
-        # Extract status and time_check for the trigger
         required_status = trigger_details["status"]
         time_check = trigger_details["time_check"]
 
-        # Build the query
         query = {"status": required_status}
         if time_check is not None:
-            if time_check > timedelta(0):  # Before publishDate
+            if time_check > timedelta(0):
                 query["publishDate"] = {"$gte": today, "$lte": today + time_check}
-            else:  # After publishDate
+            else:
                 query["publishDate"] = {"$gte": today + time_check, "$lte": today}
 
-        # Special logic for missing_social_media trigger
         if trigger_name == "missing_social_media":
-            query = {
-                "status": "Published",  # Only check for published episodes
-            }
+            query = {"status": "Published"}
 
         try:
-            # Execute the query
             episodes = list(episode_collection.find(query))
-            logger.info(f"Found {len(episodes)} episodes matching the trigger '{trigger_name}'.")
+            logger.info(f"Found {len(episodes)} episodes for trigger '{trigger_name}'.")
 
             for episode in episodes:
                 episode_id = str(episode["_id"])
+                podcast_id = str(episode.get("podcast_id"))  # Fetch the correct podcast_id
 
                 # Skip if the email for this trigger has already been sent
-                if episode_id in sent_emails and sent_emails[episode_id].get(trigger_name):
+                if episode_id in sent_emails and sent_emails[episode_id]["triggers"].get(trigger_name):
                     logger.info(f"Trigger '{trigger_name}' already processed for episode {episode['title']}.")
                     continue
 
-                # Process the episode
                 guest_id = episode.get("guid")
                 if not guest_id:
                     logger.warning(f"Episode {episode['title']} (ID: {episode_id}) does not have a valid 'guid'. Skipping...")
@@ -130,31 +122,27 @@ def check_and_send_emails():
                     logger.warning(f"No valid guest found for episode {episode['title']} (Guest GUID: {guest_id}).")
                     continue
 
-                # Check for missing social media handles
-                if not guest.get("linkedin") or guest.get("linkedin") == "" or not guest.get("twitter") or guest.get("twitter") == "":
-                    # Send the email
-                    try:
-                        subject = "Missing Social Media Information"
-                        template_path = "emails/missing_social_media_email.html"
-                        email_body = render_template(
-                            template_path,
-                            guest_name=guest["name"],
-                            social_network="LinkedIn or Twitter",
-                            podName="The Authority Show"
-                        )
-                        send_email(guest["email"], subject, email_body)
-                        logger.info(f"Email sent to {guest['name']} ({guest['email']}) for trigger '{trigger_name}'.")
+                subject = f"{trigger_name.capitalize()} Email"
+                template_path = f"emails/{trigger_name}_email.html"
 
-                        # Mark the trigger as processed
-                        if episode_id not in sent_emails:
-                            sent_emails[episode_id] = {}
-                        sent_emails[episode_id][trigger_name] = True
-                        save_sent_emails(sent_emails)
+                try:
+                    email_body = render_template(
+                        template_path,
+                        guest_name=guest["name"],
+                        podName="The Authority Show",
+                        episode_title=episode["title"]
+                    )
+                    send_email(guest["email"], subject, email_body)
+                    logger.info(f"Email sent to {guest['name']} ({guest['email']}) for trigger '{trigger_name}'.")
 
-                    except Exception as e:
-                        logger.error(f"Failed to send email to {guest['name']} ({guest['email']}): {str(e)}")
-                else:
-                    logger.info(f"Guest {guest['name']} has all required social media handles. Skipping...")
+                    # Save the email as sent
+                    if episode_id not in sent_emails:
+                        sent_emails[episode_id] = {"podcastId": podcast_id, "triggers": {}}
+                    sent_emails[episode_id]["triggers"][trigger_name] = True
+                    save_sent_emails(sent_emails)
+
+                except Exception as e:
+                    logger.error(f"Failed to send email to {guest['name']} ({guest['email']}): {str(e)}")
 
         except Exception as e:
             logger.error(f"Error processing trigger '{trigger_name}': {str(e)}")
@@ -165,15 +153,14 @@ def check_and_send_emails():
 def start_scheduler(app):
     """Start the scheduler."""
     scheduler = BackgroundScheduler()
-    #Change depending on when we want to run the check_and_send_emails function
+    # Run the check_and_send_emails function every 30 seconds
     scheduler.add_job(
         lambda: app.app_context().push() or check_and_send_emails(),
-        "cron",
-        hour=17,
-        minute=00
+        "interval",
+        seconds=30
     )
     scheduler.start()
-    logger.info("Scheduler started. Running checks for emails every day at choosen time.")
+    logger.info("Scheduler started. Running checks for emails every 30 seconds for testing.")
 
 if __name__ == "__main__":
     from app import app 

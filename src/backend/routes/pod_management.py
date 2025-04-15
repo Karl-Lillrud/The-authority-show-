@@ -8,10 +8,19 @@ from flask import (
     url_for,
     flash,
 )
-from backend.database.mongo_connection import collection, collection as team_collection
+from backend.database.mongo_connection import database, collection, collection as team_collection
+from bson import ObjectId
+from datetime import datetime
+import logging
+import json
+import os
 
 dashboardmanagement_bp = Blueprint("dashboardmanagement_bp", __name__)
 pod_management_bp = Blueprint("pod_management", __name__)
+
+# Define collections
+episode_collection = database["Episodes"]
+guest_collection = database["Guests"]
 
 
 @dashboardmanagement_bp.route("/load_all_guests", methods=["GET"])
@@ -49,3 +58,44 @@ def invite():
         )
         flash("You have successfully joined the team!", "success")
     return redirect(url_for("register_bp.register", email=email))
+
+
+@pod_management_bp.route("/outbox", methods=["GET"])
+def get_outbox():
+    podcast_id = request.args.get("podcastId")
+    try:
+        # Load sent_emails.json
+        sent_emails_path = os.path.join(os.path.dirname(__file__), "../../sent_emails.json")
+        with open(sent_emails_path, "r") as file:
+            sent_emails = json.load(file)
+
+        # Filter emails by podcast ID
+        emails = []
+        for episode_id, email_data in sent_emails.items():
+            if email_data["podcastId"] == podcast_id:
+                for trigger_name, is_sent in email_data["triggers"].items():
+                    if is_sent:
+                        # Fetch the episode
+                        episode = episode_collection.find_one({"_id": ObjectId(episode_id)})
+                        if not episode:
+                            continue
+
+                        # Fetch the guest using the `guid` field
+                        guest = guest_collection.find_one({"_id": episode.get("guid")})
+                        if not guest:
+                            logging.warning(f"No guest found for episode {episode['title']} (GUID: {episode.get('guid')}).")
+                        guest_email = guest["email"] if guest else "Unknown"
+
+                        # Append email details
+                        emails.append({
+                            "episode_id": episode_id,
+                            "trigger_name": trigger_name,
+                            "guest_email": guest_email,
+                            "subject": f"{trigger_name.capitalize()} Email",
+                            "timestamp": datetime.now().isoformat()  # Replace with actual timestamp if available
+                        })
+
+        return jsonify({"success": True, "data": emails})
+    except Exception as e:
+        logging.error(f"Error fetching outbox: {str(e)}")
+        return jsonify({"success": False, "error": str(e)})

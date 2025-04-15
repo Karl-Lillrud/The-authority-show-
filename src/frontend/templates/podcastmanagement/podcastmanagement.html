@@ -78,11 +78,6 @@
           <button id="add-guest-btn" class="sidebar-action-button">
             <span id="add-icon-guest" class="sidebar-icon"></span>
             <span>Add Guest</span>
-          </button>
-          <button id="email-config-btn" class="sidebar-action-button">
-            <span id="email-config-icon" class="sidebar-icon"></span>
-            <span>Email Config</span>
-          </button>
         </div>
       </div>
       <div class="sidebar-footer">
@@ -472,5 +467,9 @@
   <script
     type="module"
     src="{{ url_for('static', filename='js/podcastmanagement/podcastmanagement.js') }}"
+  ></script>
+  <script 
+    type="module"
+    src="{{ url_for('static', filename='js/podcastmanagement/emailconfig-functions.js') }}"
   ></script>
 {% endblock %}

@@ -3,6 +3,7 @@ import { initEpisodeFunctions } from "./episode-functions.js";
 import { initGuestFunctions } from "./guest-functions.js";
 import { svgpodcastmanagement } from "./svgpodcastmanagement.js";
 import { showNotification } from "../components/notifications.js";
+import { initEmailConfigFunctions } from "./emailconfig-functions.js";
 
 console.log("podcastmanagement.js loaded");
 
