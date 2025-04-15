@@ -658,11 +658,6 @@
   border-radius: var(--radius-medium);
 }
 
-.episodes-preview-title {
-  margin-bottom: 6px;
-  font-size: 0.8rem;
-}
-
 .podcast-episode-item {
   display: flex;
   justify-content: space-between;
@@ -1649,10 +1644,7 @@ select:invalid {
 }
 
 .scheduling-item h3 {
-  font-size: 0.9rem;
   color: rgba(0, 0, 0, 0.6);
-  font-weight: 600;
-  margin-bottom: 0.4rem;
 }
 
 /* Social media section */
