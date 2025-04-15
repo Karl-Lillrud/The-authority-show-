@@ -1,5 +1,5 @@
 # File: backend/routes/billing.py
-from flask import Blueprint, request, jsonify, redirect
+from flask import Blueprint, request, jsonify, redirect, session, g
 import stripe
 import os
 from backend.services.billingService import handle_successful_payment
@@ -11,15 +11,21 @@ stripe.api_key = os.getenv("STRIPE_SECRET_KEY")
 
 @billing_bp.route("/create-checkout-session", methods=["POST"])
 def create_checkout_session():
+    # Get user_id from Flask session instead of request body
+    user_id = g.user_id
+    
+    # Get amount from request data
     data = request.get_json()
-    user_id = data.get("user_id")
     amount = data.get("amount")  # in dollars
 
-    if not user_id or not amount:
-        return jsonify({"error": "Missing user_id or amount"}), 400
+    if not user_id:
+        return jsonify({"error": "User not authenticated"}), 401
+        
+    if not amount:
+        return jsonify({"error": "Missing amount"}), 400
 
     try:
-        session = stripe.checkout.Session.create(
+        checkout_session = stripe.checkout.Session.create(
             payment_method_types=['card'],
             line_items=[{
                 'price_data': {
@@ -27,31 +33,34 @@ def create_checkout_session():
                     'product_data': {
                         'name': f'{amount} USD for Credits'
                     },
-                    'unit_amount': int(amount * 100),  # Stripe takes cents
+                    'unit_amount': int(float(amount) * 100),  # Stripe takes cents
                 },
                 'quantity': 1,
             }],
             mode='payment',
-            success_url=f"{os.getenv('API_BASE_URL')}/credits/success?session_id={{CHECKOUT_SESSION_ID}}&user_id={user_id}",
+            success_url=f"{os.getenv('API_BASE_URL')}/credits/success?session_id={{CHECKOUT_SESSION_ID}}",
             cancel_url=f"{os.getenv('API_BASE_URL')}/credits/cancel",
         )
-        return jsonify({'sessionId': session.id})
+        return jsonify({'sessionId': checkout_session.id})
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
 @billing_bp.route("/credits/success", methods=["GET"])
 def payment_success():
     session_id = request.args.get("session_id")
-    user_id = request.args.get("user_id")
+    # Get user_id from Flask session instead of query parameter
+    user_id = g.user_id
 
-    if not session_id or not user_id:
-        return jsonify({"error": "Missing session ID or user ID"}), 400
-
-    session = stripe.checkout.Session.retrieve(session_id)
+    if not session_id:
+        return jsonify({"error": "Missing session ID"}), 400
+        
+    if not user_id:
+        return jsonify({"error": "User not authenticated"}), 401
 
     try:
-        handle_successful_payment(session, user_id)
-        return redirect("/dashboard")  # or dashboard
+        stripe_session = stripe.checkout.Session.retrieve(session_id)
+        handle_successful_payment(stripe_session, user_id)
+        return redirect("/dashboard")
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
