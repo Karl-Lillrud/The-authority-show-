@@ -91,3 +91,21 @@ def get_guests_by_episode(episode_id):
     except Exception as e:
         logger.exception("❌ ERROR: Failed to fetch guests by episode")
         return jsonify({"error": f"Failed to fetch guests by episode: {str(e)}"}), 500
+
+@guest_bp.route("/get_guests_by_id/<guest_id>", methods=["GET"])
+def get_guest_by_id(guest_id):
+    """Fetch a guest by their unique guest_id."""
+    try:
+        # Fetch guest from the repository
+        response, status_code = guest_repo.get_guest_by_id(g.user_id, guest_id)
+        
+        # If guest is found, return it
+        if status_code == 200:
+            return jsonify(response), status_code
+        # If guest not found, return 404 error
+        else:
+            return jsonify(response), status_code
+    except Exception as e:
+        logger.error(f"Error fetching guest by ID: {e}")
+        return jsonify({"error": f"An error occurred: {str(e)}"}), 500
+
