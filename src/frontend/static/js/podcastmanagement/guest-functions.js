@@ -8,11 +8,11 @@ import {
 } from "../../../static/requests/episodeRequest.js";
 import { fetchPodcasts } from "../../../static/requests/podcastRequests.js";
 import {
-  showNotification,
   updateEditButtons,
   shared
 } from "./podcastmanagement.js";
 import { renderEpisodeDetail } from "./episode-functions.js";
+import { showNotification } from "../components/notifications.js";
 
 /// New function to fetch and render guest options into a select element
 export async function renderGuestSelection(

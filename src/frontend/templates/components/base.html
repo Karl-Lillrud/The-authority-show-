@@ -26,11 +26,20 @@
       href="{{ url_for('static', filename='favicon/site.webmanifest') }}"
     />
     <title>PodManager</title>
-    <!-- other head content -->
+    <!-- global stylesheets -->
     <link
     rel="stylesheet"
     href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
     />
+    <link
+      rel="stylesheet"
+      href="{{ url_for('static', filename='css/components/variables.css') }}"
+    />
+    <link
+      rel="stylesheet"
+      href="{{ url_for('static', filename='css/components/general.css') }}"
+    />
+    <!-- other head content -->
   </head>
   <body style="display: flex; flex-direction: column; min-height: 100vh">
     <iframe src="https://www.googletagmanager.com/ns.html?id=GTM-N7Q86CWB" height="0" width="0" style="display:none;visibility:hidden"></iframe>
