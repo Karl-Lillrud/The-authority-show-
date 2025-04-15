@@ -22,10 +22,28 @@ logger = logging.getLogger(__name__)
 def create_account_route():
     try:
         data = request.get_json()
-        response, status_code = account_repo.create_account(data)  # ✅ Use account_repo instance
+        account_data = {
+            "id": str(uuid.uuid4()),
+            "ownerId": data.get("ownerId"),
+            "subscriptionId": str(uuid.uuid4()),
+            "creditId": str(uuid.uuid4()),
+            "email": data["email"],
+            "isCompany": data.get("isCompany", False),
+            "companyName": data.get("companyName", ""),
+            "paymentInfo": data.get("paymentInfo", ""),
+            "subscriptionStatus": "active",
+            "createdAt": datetime.utcnow(),
+            "referralBonus": 0,
+            "subscriptionStart": datetime.utcnow(),
+            "subscriptionEnd": None,
+            "isActive": True,
+            "created_at": datetime.utcnow(),
+            "isFirstLogin": True,
+        }
+        response, status_code = account_repo.create_account(account_data)
         return jsonify(response), status_code
     except Exception as e:
-        print(f"❌ ERROR: {e}")
+        logger.error(f"Error creating account: {e}", exc_info=True)
         return jsonify({"error": f"Error creating account: {str(e)}"}), 500
 
 @account_bp.route("/get_account", methods=["GET"])

@@ -204,11 +204,22 @@ def verify_login_token():
         if not account:
             logger.info(f"No account found for user {user['id']}. Creating a new account.")
             account_data = {
-                "id": str(uuid.uuid4()),  # Generate a unique UUID for the account ID
-                "userId": user["id"],
+                "id": str(uuid.uuid4()),
+                "ownerId": user["id"],
+                "subscriptionId": str(uuid.uuid4()),
+                "creditId": str(uuid.uuid4()),
                 "email": email,
-                "created_at": datetime.utcnow(),
+                "isCompany": False,
+                "companyName": "",
+                "paymentInfo": "",
+                "subscriptionStatus": "active",
+                "createdAt": datetime.utcnow(),
+                "referralBonus": 0,
+                "subscriptionStart": datetime.utcnow(),
+                "subscriptionEnd": None,
                 "isActive": True,
+                "created_at": datetime.utcnow(),
+                "isFirstLogin": True,
             }
             collection.database.Accounts.insert_one(account_data)
 
