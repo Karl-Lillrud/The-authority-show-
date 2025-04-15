@@ -43,39 +43,22 @@ class AuthRepository:
             # Set up user session
             self._setup_session(user, remember)
 
-            # Get user's personal account
-            user_account = self.account_collection.find_one(
-                {"userId": session["user_id"]}
-            )
+            # Ensure account exists for the user
+            user_account = self.account_collection.find_one({"userId": str(user["_id"])})
+            if not user_account:
+                account_data = {
+                    "id": str(uuid.uuid4()),
+                    "userId": str(user["_id"]),
+                    "email": email,
+                    "created_at": datetime.utcnow(),
+                    "isActive": True,
+                }
+                self.account_collection.insert_one(account_data)
 
-            # Get teams the user belongs to
-            team_list = self._get_user_teams(session["user_id"])
-
-            # Determine which account to use (personal or team)
-            active_account = self._determine_active_account(user_account, team_list)
-            if not active_account:
-                return {"error": "No account or team-associated account found"}, 403
-
-            # Prepare response data
-            account_id = active_account.get("_id")
-            redirect_url = "/podprofile" if user_account else "/podcastmanager"
-
-            response = {
-                "message": "Login successful",
-                "redirect_url": redirect_url,
-                "teams": team_list,
-                "accountId": str(account_id),
-                "isTeamMember": user.get("isTeamMember", False),
-                "usingTeamAccount": bool(
-                    not user_account and active_account != user_account
-                ),
-            }
-
-            return response, 200
-
+            return {"redirect_url": "/podprofile"}, 200
         except Exception as e:
-            logger.error("Error during login: %s", e, exc_info=True)
-            return {"error": f"Error during login: {str(e)}"}, 500
+            logger.error(f"Error during sign-in: {e}", exc_info=True)
+            return {"error": "An error occurred during sign-in"}, 500
 
     def _authenticate_user(self, email, password):
         """Authenticate user with email and password."""
@@ -186,6 +169,12 @@ class AuthRepository:
 
             if self.user_collection.find_one({"email": email}):
                 return {"error": "Email already registered."}, 409
+
+            # Kontrollera om ett konto redan finns för e-postadressen
+            existing_account = self.account_collection.find_one({"email": email})
+            if existing_account:
+                logger.warning(f"Account already exists for email {email}.")
+                return {"error": "Account already exists for this email."}, 400
 
             user_id = str(uuid.uuid4())
             hashed_password = generate_password_hash(password)

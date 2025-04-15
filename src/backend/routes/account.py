@@ -22,6 +22,14 @@ logger = logging.getLogger(__name__)
 def create_account_route():
     try:
         data = request.get_json()
+        email = data["email"]
+
+        # Kontrollera om ett konto redan finns för e-postadressen
+        existing_account = collection.database.Accounts.find_one({"email": email})
+        if existing_account:
+            logger.warning(f"Account already exists for email {email}.")
+            return jsonify({"error": "Account already exists for this email."}), 400
+
         account_data = {
             "id": str(uuid.uuid4()),
             "ownerId": data.get("ownerId"),
