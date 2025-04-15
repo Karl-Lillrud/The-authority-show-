@@ -1,29 +1,3 @@
-:root {
-    --primary: #ff8c00;
-    --primary-dark: #e67e00;
-    --secondary: #ff9f33;
-    --dark: #1e293b;
-    --light: #f8fafc;
-    --gray: #64748b;
-    --gray-light: #e2e8f0;
-    --success: #10b981;
-    --radius: 8px;
-    --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-}
-
-* {
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
-}
-
-body {
-    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
-    line-height: 1.6;
-    color: var(--dark);
-    background-color: var(--light);
-}
-
 /* Typography */
 h1, h2, h3, h4, h5, h6 {
     font-weight: 700;
@@ -42,7 +16,7 @@ h2 {
 
 h3 {
     font-size: 1.5rem;
-    color: var(--primary);
+    color: var(--about-primary);
     margin-top: 1.5rem;
 }
 
@@ -62,7 +36,7 @@ p {
 /* Simplified Navigation */
 .navbar {
     background-color: white;
-    box-shadow: var(--shadow);
+    box-shadow: var(--about-shadow);
     position: fixed;
     top: 0;
     left: 0;
@@ -83,7 +57,7 @@ p {
     align-items: center;
     font-weight: 700;
     font-size: 1.5rem;
-    color: var(--primary);
+    color: var(--about-primary);
     text-decoration: none;
 }
 
@@ -101,7 +75,7 @@ p {
 .hero h1 {
     font-size: 3rem;
     margin-bottom: 1.5rem;
-    background: linear-gradient(to right, var(--primary), var(--secondary));
+    background: linear-gradient(to right, var(--about-primary), var(--about-secondary));
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
@@ -111,15 +85,15 @@ p {
     font-size: 1.25rem;
     max-width: 800px;
     margin: 0 auto 2rem;
-    color: var(--gray);
+    color: var(--about-gray);
 }
 
 .btn {
     display: inline-block;
-    background-color: var(--primary);
+    background-color: var(--about-primary);
     color: white;
     padding: 0.75rem 1.5rem;
-    border-radius: var(--radius);
+    border-radius: var(--about-radius);
     text-decoration: none;
     font-weight: 600;
     transition: background-color 0.3s ease, transform 0.2s ease;
@@ -128,7 +102,7 @@ p {
 }
 
 .btn:hover {
-    background-color: var(--primary-dark);
+    background-color: var(--about-primary-dark);
     transform: translateY(-2px);
 }
 
@@ -155,7 +129,7 @@ p {
     transform: translateX(-50%);
     width: 50px;
     height: 3px;
-    background-color: var(--primary);
+    background-color: var(--about-primary);
 }
 
 .features-grid {
@@ -166,9 +140,9 @@ p {
 
 .feature-card {
     background-color: white;
-    border-radius: var(--radius);
+    border-radius: var(--about-radius);
     padding: 2rem;
-    box-shadow: var(--shadow);
+    box-shadow: var(--about-shadow);
     transition: transform 0.3s ease, box-shadow 0.3s ease;
 }
 
@@ -179,7 +153,7 @@ p {
 
 .feature-icon {
     font-size: 2.5rem;
-    color: var(--primary);
+    color: var(--about-primary);
     margin-bottom: 1rem;
 }
 
@@ -234,7 +208,7 @@ p {
     top: 0.5rem;
     width: 1.25rem;
     height: 1.25rem;
-    background-color: var(--primary);
+    background-color: var(--about-primary);
     mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='20 6 9 17 4 12'%3E%3C/polyline%3E%3C/svg%3E");
     -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='20 6 9 17 4 12'%3E%3C/polyline%3E%3C/svg%3E");
     mask-size: contain;
@@ -245,9 +219,9 @@ p {
 
 .why-choose-image {
     flex: 1;
-    border-radius: var(--radius);
+    border-radius: var(--about-radius);
     overflow: hidden;
-    box-shadow: var(--shadow);
+    box-shadow: var(--about-shadow);
     position: relative;
 }
 
@@ -276,7 +250,7 @@ p {
 /* CTA Section */
 .cta {
     padding: 5rem 0;
-    background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+    background: linear-gradient(135deg, var(--about-primary) 0%, var(--about-secondary) 100%);
     color: white;
     text-align: center;
 }
@@ -292,16 +266,16 @@ p {
 
 .btn-light {
     background-color: white;
-    color: var(--primary);
+    color: var(--about-primary);
 }
 
 .btn-light:hover {
-    background-color: var(--gray-light);
+    background-color: var(--about-gray-light);
 }
 
 /* Simplified Footer */
 .footer {
-    background-color: var(--dark);
+    background-color: var(--about-dark);
     color: white;
     padding: 2rem 0;
     text-align: center;
@@ -315,7 +289,7 @@ p {
 }
 
 .footer-links a {
-    color: var(--gray-light);
+    color: var(--about-gray-light);
     text-decoration: none;
     transition: color 0.3s ease;
     font-size: 0.9rem;
@@ -327,7 +301,7 @@ p {
 
 .copyright {
     font-size: 0.9rem;
-    color: var(--gray-light);
+    color: var(--about-gray-light);
     margin-top: 1rem;
 }
 

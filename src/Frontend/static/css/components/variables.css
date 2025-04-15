@@ -1,0 +1,167 @@
+/* * * * * * * * * * * * * * * * * * * * * * * * * * * */
+/* :root variables for color, typography, spacing, etc */
+/* * * * * * * * * * * * * * * * * * * * * * * * * * * */
+
+:root {
+  /* Background Colors */
+  --background-light: #f8fafc;
+  --background-dark: #1c1c1c;
+
+  --light-shadow-light: #ffffff;
+  --dark-shadow-light: rgba(22, 24, 29, 0.15);
+
+  --light-shadow-dark: rgba(255, 255, 255, 0.1);
+  --dark-shadow-dark: rgba(0, 0, 0, 0.8);
+
+  --shadow-light: rgba(22, 24, 29, 0.23);
+  --shadow-dark: rgba(0, 0, 0, 0.8);
+
+  --card-bg-light: #ffffff;
+  --card-bg-dark: #2a2a2a;
+
+  /* Text Colors */
+  --text-color-light: #6e7f8d;
+  --text-color-dark: #b3b3b3;
+
+  --highlight-color: #ff7f3f;
+  --highlight-hover: #e0662c;
+
+  /* Validation Colors */
+  --error-color: #ff3b30;
+  --danger-color: #ff3b30;
+  --success-color: #4caf50;
+
+  /* Unique Colors */
+  --spotify-green: #1db954;
+  --apple-purple: #a34fbe;
+
+  /* Typography */
+  --font-primary: "Inter", "Segoe UI", "Arial", sans-serif;
+  --font-secondary: "Avenir Next", sans-serif;
+
+  /* Spacing */
+  --spacing-xs: 4px;
+  --spacing-sm: 8px;
+  --spacing-sm2: 12px;
+  --spacing-md: 16px;
+  --spacing-md2: 20px;
+  --spacing-lg: 24px;
+  --spacing-xl: 32px;
+
+  /* Border Radiuses */
+  --radius-small: 12px;
+  --radius-medium: 12px;
+  --radius-large: 50px;
+
+  --border-radius-sm: 10px;
+  --border-radius-md: 20px;
+  --border-radius-lg: 30px;
+  --border-radius-xl: 40px;
+
+  /* Breakpoints */
+  --breakpoint-xs: 360px;
+  --breakpoint-sm: 576px;
+  --breakpoint-md: 768px;
+  --breakpoint-lg: 992px;
+  --breakpoint-xl: 1200px;
+
+  /* Transitions */
+  --transition-fast: 0.2s ease;
+  --transition-normal: 0.3s ease;
+
+  /* Box Shadows */
+  --card-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05),
+  0 8px 10px -6px rgba(0, 0, 0, 0.02);
+  --card-shadow2: 0 12px 24px -6px rgba(0, 0, 0, 0.06), 
+  0 6px 12px -4px rgba(0, 0, 0, 0.03);
+  --card-shadow-hover: 0 18px 36px -8px rgba(0, 0, 0, 0.12), 
+  0 8px 16px -4px rgba(0, 0, 0, 0.06);
+  --card-shadow-hover2: 0 20px 35px -10px rgba(0, 0, 0, 0.1),
+  0 10px 15px -5px rgba(0, 0, 0, 0.05);
+  --button-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1),
+  0 2px 4px -1px rgba(0, 0, 0, 0.06);
+
+
+
+  /* * * * * * * * * * * * * * * * */
+  /* Unique page related variables */
+  /* * * * * * * * * * * * * * * * */
+
+  /* Sidebar related variables */
+  --sidebar-width: 260px;
+  --sidebar-collapsed-width: 80px;
+  --sidebar-bg: #ffffff;
+  --sidebar-border: rgba(0, 0, 0, 0.05);
+  --sidebar-item-hover: rgba(255, 127, 63, 0.1);
+  --sidebar-item-active: rgba(255, 127, 63, 0.15);
+
+  /* About related variables */
+  --about-primary: #ff8c00;
+  --about-primary-dark: #e67e00;
+  --about-secondary: #ff9f33;
+  --about-dark: #1e293b;
+  --about-light: #f8fafc;
+  --about-gray: #64748b;
+  --about-gray-light: #e2e8f0;
+  --about-success: #10b981;
+  --about-radius: 8px;
+  --about-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 
+  0 2px 4px -1px rgba(0, 0, 0, 0.06);
+
+  /* Account related variables */
+  --account-primary: #ff7f3f;
+  --account-primary-hover: #ff6b20;
+  --account-primary-light: rgba(255, 127, 63, 0.1);
+  --account-background: #f8fafc;
+  --account-foreground: #334155;
+  --account-muted: #94a3b8;
+  --account-muted-foreground: #64748b;
+  --account-border: #e2e8f0;
+  --account-input: #f1f5f9;
+  --account-ring: rgba(255, 127, 63, 0.3);
+  --account-radius: 0.5rem;
+  --account-card: #ffffff;
+  --account-card-foreground: #334155;
+  --account-destructive: #ef4444;
+  --account-destructive-foreground: #ffffff;
+  --account-success: #10b981;
+  --account-warning: #f59e0b;
+  --account-font-sans: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Open Sans",
+  "Helvetica Neue", sans-serif;
+  --account-shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  --account-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 
+  0 1px 2px 0 rgba(0, 0, 0, 0.06);
+  --account-shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 
+  0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  --account-shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 
+  0 4px 6px -2px rgba(0, 0, 0, 0.05);
+
+  /* Podcastmanagement related variables */
+  --podcastmanagement-radius-large: 16px;
+  --podcastmanagement-card-shadow: 0 8px 20px -5px rgba(0, 0, 0, 0.05),
+    0 6px 8px -6px rgba(0, 0, 0, 0.02);
+  --podcastmanagement-card-shadow-hover: 0 16px 28px -8px rgba(0, 0, 0, 0.1),
+    0 8px 12px -5px rgba(0, 0, 0, 0.05);
+  --podcastmanagement-button-shadow: 0 3px 5px -1px rgba(0, 0, 0, 0.1),
+    0 2px 3px -1px rgba(0, 0, 0, 0.06);
+
+  /* Taskmanagement related variables */
+  --taskmanagement-radius-small: 6px;
+  --taskmanagement-radius-large: 20px;
+
+  /* RegisterTeam related variables */
+  --registerteam-radius-small: 6px;
+  --registerteam-radius-large: 20px;
+
+  /* Team related variables */
+  --team-highlight-color: #ff6f61;
+  --team-highlight-hover: #e65a4d;
+  --team-spacing-xs: 6px;
+  --team-spacing-sm: 12px;
+  --team-spacing-md: 20px;
+  --team-spacing-lg: 30px;
+  --team-spacing-xl: 40px;
+  --team-radius-small: 8px;
+  --team-radius-medium: 14px;
+  --team-radius-large: 24px;
+}

@@ -11,6 +11,19 @@
       href="{{ url_for('static', filename='favicon/favicon.ico') }}"
     />
     <link rel="canonical" href="https://app.podmanager.ai" />
+    <!-- global stylesheets -->
+    <link
+    rel="stylesheet"
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
+    />
+    <link
+      rel="stylesheet"
+      href="{{ url_for('static', filename='css/components/variables.css') }}"
+    />
+    <link
+      rel="stylesheet"
+      href="{{ url_for('static', filename='css/components/general.css') }}"
+    />
   </head>
   <body>
     <!-- Logo -->
@@ -46,6 +59,7 @@
           />
         </div>
 
+<<<<<<< HEAD
         <div class="form-actions">
           <button
             type="button"
@@ -66,6 +80,75 @@
           >
         </div>
       </form>
+=======
+          <div class="form-actions">
+            <!-- Button to send log-in link -->
+            <button
+              type="button"
+              id="send-login-link-button"
+              class="button button-secondary"
+            >
+              Send Log-In Link
+            </button>
+            <!-- Sign In button -->
+            <button type="submit" class="button button-primary">Sign In</button>
+          </div>
+
+          <div class="register-link">
+            <a href="{{ url_for('auth_bp.register_page') }}" class="link">
+              Don't Have an Account? Register Here</a
+            >
+          </div>
+          <div class="policy-links">
+            <a href="{{ url_for('frontend.terms_of_service_page') }}" class="link"
+              >Terms of Service</a
+            >
+            |
+            <a href="{{ url_for('frontend.privacy_policy_page') }}" class="link"
+              >Privacy Policy</a
+            >
+            |
+            <a href="{{ url_for('frontend.about_page') }}" class="link"
+              >About PodManager</a
+            >
+          </div>
+        </form>
+      </div>
+
+      <!-- New container for "Sign In with Verification Code" -->
+      <div id="verification-code-container" style="display: none;">
+        <h2>Sign In with Verification Code</h2>
+        <form id="verification-code-form">
+          <div class="input-group">
+            <input
+              type="email"
+              id="verification-email"
+              class="input"
+              placeholder="Enter your email"
+              required
+            />
+          </div>
+          <div class="input-group" id="verification-code-group" style="display: none;">
+            <input
+              type="text"
+              id="verification-code"
+              class="input"
+              placeholder="Enter verification code"
+              required
+            />
+          </div>
+          <div class="form-actions">
+            <button type="submit" class="button button-primary">Verify and Sign In</button>
+          </div>
+        </form>
+        <p><a href="/" class="link">Back to Login</a></p>
+      </div>
+    </div>
+    <div class="form-actions">
+      <a href="/dashboard" class="button button-secondary">
+        Back to Dashboard
+      </a>
+>>>>>>> deb87ab66e9d7742ed4939caf57c51ee4c585832
     </div>
     <script type="module" src="{{ url_for('static', filename='js/signin/signin.js') }}"></script>
   </body>
