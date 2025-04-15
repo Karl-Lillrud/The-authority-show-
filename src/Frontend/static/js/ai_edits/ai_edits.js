@@ -177,7 +177,6 @@ function showTab(tabName) {
     }
 }
 
-
 let rawTranscript = "";
 let fullTranscript = "";
 
@@ -257,7 +256,6 @@ async function generateAISuggestions() {
     }
 }
 
-
 async function generateShowNotes() {
     try {
         await consumeUserCredits("show_notes");
@@ -276,8 +274,6 @@ async function generateShowNotes() {
     }
 }
 
-
-
 async function generateQuotes() {
     try {
         await consumeUserCredits("ai_quotes");
@@ -295,8 +291,6 @@ async function generateQuotes() {
             "❌ Not enough credits: " + err.message;
     }
 }
-
-
 
 async function generateQuoteImages() {
     const quotes = document.getElementById("quotesResult").innerText;
@@ -327,9 +321,6 @@ async function generateQuoteImages() {
             "❌ Not enough credits: " + err.message;
     }
 }
-
-
-
 
 async function enhanceAudio() {
     const input = document.getElementById('audioUploader');
@@ -383,7 +374,6 @@ async function enhanceAudio() {
         audioControls.innerHTML = `❌ Error: ${err.message}`;
     }
 }
-
 
 async function runVoiceIsolation() {
     const input = document.getElementById('audioUploader');
@@ -544,9 +534,6 @@ window.selectedSoundFX = {};
 
 renderSfxDebug();
 
-
-
-
 async function cutAudio() {
     const start = parseFloat(document.getElementById("startTime").value);
     const end = parseFloat(document.getElementById("endTime").value);
@@ -577,7 +564,6 @@ async function cutAudio() {
     dl.style.display = "inline-block";
 }
 
-
 async function aiCutAudio() {
     if (!activeAudioId) return alert("No audio loaded.");
 
@@ -601,7 +587,6 @@ async function aiCutAudio() {
         .map(c => `💬 "${c.sentence}" (${c.start}s - ${c.end}s) | Confidence: ${c.certainty_score}`)
         .join("\n") || "No suggested cuts found.";
 }
-
 
 async function enhanceVideo() {
     const fileInput = document.getElementById('videoUploader');
