@@ -10,7 +10,9 @@ from backend.routes.podtask import podtask_bp
 from backend.routes.account import account_bp
 from backend.routes.credits_routes import credits_bp
 from backend.routes.team import team_bp
-from backend.routes.guest import guest_bp  # Ensure the guest blueprint is correctly imported
+from backend.routes.guest import (
+    guest_bp,
+)  # Ensure the guest blueprint is correctly imported
 from backend.routes.user_to_team import usertoteam_bp
 from backend.routes.invitation import invitation_bp
 from backend.routes.google_calendar import google_calendar_bp
@@ -33,8 +35,7 @@ from backend.routes.highlight import highlights_bp
 from backend.routes.audio_routes import audio_bp
 from backend.routes.video_routes import video_bp
 from backend.routes.transcription import transcription_bp
-
-
+from colorama import Fore, Style, init  # Import colorama for styled logs
 
 if os.getenv("SKIP_VENV_UPDATE", "false").lower() not in ("true", "1", "yes"):
     venvupdate.update_venv_and_requirements()
@@ -79,7 +80,7 @@ app.register_blueprint(Mailing_list_bp)
 app.register_blueprint(guest_bp)  # Ensure the guest blueprint is correctly registered
 app.register_blueprint(guestpage_bp)
 app.register_blueprint(account_bp)
-app.register_blueprint(credits_bp)  
+app.register_blueprint(credits_bp)
 app.register_blueprint(usertoteam_bp)
 app.register_blueprint(invitation_bp)
 app.register_blueprint(google_calendar_bp)  # Register the google_calendar blueprint
@@ -91,7 +92,9 @@ app.register_blueprint(transcription_bp, url_prefix="/transcription")
 app.register_blueprint(audio_bp)
 app.register_blueprint(video_bp)
 app.register_blueprint(billing_bp)
-app.register_blueprint(guest_form_bp, url_prefix="/guest-form")  # Register the guest_form blueprint with URL prefix
+app.register_blueprint(
+    guest_form_bp, url_prefix="/guest-form"
+)  # Register the guest_form blueprint with URL prefix
 app.register_blueprint(user_bp)
 app.register_blueprint(landingpage_bp)
 
@@ -102,27 +105,47 @@ APP_ENV = os.getenv("APP_ENV", "production")
 # Set the API base URL depending on the environment
 API_BASE_URL = os.getenv("API_BASE_URL")
 
+# Initialize colorama
+init(autoreset=True)
+
 # Configure logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-# Log the configuration
-logger.info(f"API_BASE_URL: {API_BASE_URL}")
-logger.info(f"MONGODB_URI: {os.getenv('MONGODB_URI')}")
-logger.info(f"APP_ENV: {APP_ENV}")
+# Styled log messages
+logger.info(f"{Fore.GREEN}========================================")
+logger.info(f"{Fore.CYAN}✓ Starting...")
+logger.info(f"{Fore.YELLOW}EMAIL_USER: {os.getenv('EMAIL_USER', 'Not Set')}")
+logger.info(f"{Fore.YELLOW}EMAIL_PASS: {os.getenv('EMAIL_PASS', 'Not Set')}")
+logger.info(f"{Fore.GREEN}========================================")
+logger.info(f"{Fore.CYAN}🚀 Server is running!")
+logger.info(
+    f"{Fore.MAGENTA}🌐 Local:        {os.getenv('LOCAL_BASE_URL', 'http://127.0.0.1:8000')}"
+)
+logger.info(f"{Fore.MAGENTA}🌐 Network:      http://192.168.0.4:8000")
+logger.info(f"{Fore.GREEN}========================================")
+logger.info(f"{Fore.CYAN}📧 Email Configuration:")
+logger.info(f"{Fore.YELLOW}   EMAIL_USER: {os.getenv('EMAIL_USER', 'Not Set')}")
+logger.info(f"{Fore.YELLOW}   EMAIL_PASS: {os.getenv('EMAIL_PASS', 'Not Set')}")
+logger.info(f"{Fore.GREEN}========================================")
 
 
 # Log the request with user info
 @app.before_request
 def load_user():
     g.user_id = session.get("user_id")
-    logger.info(f"Request to {request.path} by user {g.user_id}")
+    logger.info(f"{Fore.BLUE}Request to {request.path} by user {g.user_id}")
 
 
 start_scheduler(app)
 
-# Run the app
+# Styled startup message
 if __name__ == "__main__":
+    logger.info(f"{Fore.GREEN}========================================")
+    logger.info(f"{Fore.CYAN}🚀 Server is running!")
+    logger.info(f"{Fore.MAGENTA}🌐 Local:        http://127.0.0.1:8000")
+    logger.info(f"{Fore.MAGENTA}🌐 Network:      http://192.168.0.4:8000")
+    logger.info(f"{Fore.GREEN}========================================")
     app.run(
         host="0.0.0.0", port=8000, debug=True
     )  # Ensure the port matches your request URL
