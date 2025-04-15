@@ -1071,14 +1071,11 @@
 }
 
 .form-title {
-  margin-top: 0;
   margin-bottom: var(--spacing-lg);
-  color: rgba(0, 0, 0, 0.8);
   text-align: center;
-  font-size: 1.6rem;
+  font-size: 1.9rem;
   position: relative;
   padding-bottom: 12px;
-  font-weight: 700;
 }
 
 .form-title::after {
