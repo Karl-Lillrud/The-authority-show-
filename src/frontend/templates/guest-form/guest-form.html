@@ -143,8 +143,11 @@
             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5">
               <path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10m-11 9h12a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
             </svg>
+            <span>Select Date & Time</span>
           </button>
           
+          <!-- Calendar error message placeholder -->
+          <p id="calendarError" class="text-red-500 text-sm mt-1 hidden"></p>
 
           <!-- Inline Calendar + Time Picker (Initially Hidden) -->
           <div id="dateTimeContainer" class="hidden mt-4 p-4 bg-white shadow-lg rounded-lg w-full max-w-md">
@@ -163,13 +166,10 @@
             <div id="calendarPicker" class="grid grid-cols-7 gap-2"></div>
 
             <!-- Time Picker -->
-            <div id="timePickerContainer" class="mt-4 hidden">
-              <label class="block text-gray-600 font-medium">Select Time</label>
-              <select id="timePicker" class="w-full border p-2 rounded"></select>
-            </div>
+            <div id="timePickerContainer" class="mt-4 hidden"></div>
 
             <!-- Confirm Button -->
-            <button id="confirmDateTime" class="bg-[#ff3b30] text-white px-4 py-2 rounded hidden mt-4">Confirm</button>
+            <button id="confirmDateTime" class="bg-[#ff3b30] text-white px-4 py-2 rounded hidden mt-4 w-full">Confirm Selection</button>
           </div>
 
           <!-- Display selected date & time -->
@@ -215,10 +215,6 @@
         <!-- Container where recommended guest fields will be added -->
         <div id="recommendedGuestContainer" class="mt-4 space-y-4"></div>
         <!-- list of other people -->
-        <div>
-          <label class="block text-gray-600 font-medium">List of other people you think we should invite</label>
-          <textarea id="list" class="input-field" placeholder="List them here"></textarea>
-        </div>
 
         <!-- General added notes etc -->
         <div>
