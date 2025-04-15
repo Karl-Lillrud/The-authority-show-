@@ -180,6 +180,7 @@ def verify_login_token():
     token = data.get("token")
 
     if not token:
+        logger.error("Token is missing in the request.")
         return jsonify({"error": "Token is required"}), 400
 
     try:
@@ -189,7 +190,7 @@ def verify_login_token():
         # Check if the user exists in the database
         user = collection.find_one({"email": email})
         if not user:
-            # Create a new user if not existing
+            logger.warning(f"No user found for email: {email}. Creating a new user.")
             user_data = {
                 "id": str(uuid.uuid4()),  # Generate a unique UUID for the user ID
                 "email": email,
@@ -198,20 +199,35 @@ def verify_login_token():
             collection.insert_one(user_data)
             user = collection.find_one({"id": user_data["id"]})
 
+        # Check if an account exists for the user
+        account = collection.database.Accounts.find_one({"userId": user["id"]})
+        if not account:
+            logger.info(f"No account found for user {user['id']}. Creating a new account.")
+            account_data = {
+                "id": str(uuid.uuid4()),  # Generate a unique UUID for the account ID
+                "userId": user["id"],
+                "email": email,
+                "created_at": datetime.utcnow(),
+                "isActive": True,
+            }
+            collection.database.Accounts.insert_one(account_data)
+
         # Log the user in by setting session variables
         session["user_id"] = user["id"]
         session["email"] = user["email"]
 
+        logger.info(f"User {email} successfully logged in via token.")
         return jsonify({"redirect_url": "/podprofile"}), 200  # Redirect to /podprofile
+
     except SignatureExpired:
-        logger.error("Token has expired")
+        logger.error("The provided token has expired.")
         return jsonify({"error": "Token has expired"}), 400
     except BadSignature:
-        logger.error("Invalid token signature")
+        logger.error("The provided token has an invalid signature.")
         return jsonify({"error": "Invalid token"}), 400
     except Exception as e:
-        logger.error(f"Unexpected error during token verification: {e}")
-        return jsonify({"error": "An unexpected error occurred"}), 500
+        logger.error(f"Unexpected error during token verification: {e}", exc_info=True)
+        return jsonify({"error": "An unexpected error occurred during token verification"}), 500
 
 
 # Ensure account creation logic is properly integrated
