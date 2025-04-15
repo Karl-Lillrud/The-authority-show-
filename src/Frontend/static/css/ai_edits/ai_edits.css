@@ -1,6 +1,6 @@
 /* Global Styles */
 body {
-    font-family: 'Inter', sans-serif;
+    font-family: var(--font-primary);
     margin: 0;
     padding: 0;
     background-color: var(--background-light);
@@ -40,7 +40,7 @@ body {
   
   /* Content Box */
   #content {
-    background-color: #ffffff;
+    background-color: var(--card-bg-light);
     padding: 1.5rem;
     border-radius: 1rem;
     box-shadow: 0 4px 12px rgba(255, 115, 0, 0.1);
@@ -88,18 +88,18 @@ body {
   }
  /* Enhanced styling for AI Edit buttons */
 .btn.ai-edit-button {
-    background-color: var(--highlight-color); /* e.g. #ff7f3f */
+    background-color: var(--highlight-color); 
     color: white;
-    padding: 10px 20px;      /* Increased padding for a more substantial button */
-    font-size: 1rem;         /* Consistent font size */
+    padding: 10px 20px;      
+    font-size: 1rem;         
     font-weight: 600;
     border: none;
-    border-radius: var(--radius-medium);  /* Uses your predefined radius (e.g. 12px) */
+    border-radius: var(--radius-medium);  
     cursor: pointer;
     transition: background-color 0.3s ease, transform 0.2s ease, box-shadow 0.2s ease;
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-    margin: 0.5rem 0;        /* Add some vertical spacing between buttons */
-    display: inline-block;   /* Ensure buttons behave as inline-block elements */
+    margin: 0.5rem 0;       
+    display: inline-block;   
 }
 
 .btn.ai-edit-button:hover {
@@ -111,12 +111,12 @@ body {
 .result-field pre {
   max-height: 300px;
   overflow-y: auto;
-  overflow-x: hidden;         /* 🔧 prevents horizontal scroll */
+  overflow-x: hidden;         
   padding: 8px;
   background-color: #f9f9f9;
   border: 1px solid #ddd;
   border-radius: 0.75rem;
-  white-space: pre-wrap;      /* 🔧 allows wrapping of long lines */
-  word-break: break-word;     /* optional: wraps long single words */
+  white-space: pre-wrap;      
+  word-break: break-word;     
 }
 
