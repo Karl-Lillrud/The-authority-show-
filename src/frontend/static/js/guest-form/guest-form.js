@@ -73,6 +73,7 @@ function addSocialMedia(selectedPlatform = "", profileLink = "") {
   setTimeout(() => input.focus(), 200)
 }
 
+// Update the saveSocialMedia function to store data in the format we need
 function saveSocialMedia() {
   const socialData = []
   document.querySelectorAll("#socialMediaContainer div").forEach((div) => {
@@ -85,8 +86,9 @@ function saveSocialMedia() {
   localStorage.setItem("socialMediaCount", socialData.length)
 }
 
+// Update the loadSavedSocialMedia function to handle both new and old data structures
 function loadSavedSocialMedia() {
-  const savedData = JSON.parse(localStorage.getItem("socialMediaData")) || []
+  const savedData = JSON.parse(localStorage.getItem("socialMediaData") || "[]")
   socialMediaCount = savedData.length // Restore the correct count
 
   savedData.forEach(({ platform, link }) => addSocialMedia(platform, link))
@@ -815,6 +817,7 @@ function deleteGoogleCalendarEvent(eventId, googleCalToken) {
 }
 
 // Existing logic or functions here...
+// Update the guest data loading section to handle both new and old data structures
 document.addEventListener("DOMContentLoaded", () => {
   const guestId = new URLSearchParams(window.location.search).get("guestId") // Get guestId from URL
   let currentGuestData = null // Store the current guest data for reference
@@ -860,15 +863,28 @@ document.addEventListener("DOMContentLoaded", () => {
             : ""
           document.getElementById("company").value = data.guest.company || ""
           document.getElementById("phone").value = data.guest.phone || ""
-          document.getElementById("list").value = data.guest.tags ? data.guest.tags.join(", ") : ""
           document.getElementById("notes").value = data.guest.notes || ""
 
-          // Handle social media links
-          if (data.guest.linkedin) {
-            addSocialMedia("LinkedIn", data.guest.linkedin)
-          }
-          if (data.guest.twitter) {
-            addSocialMedia("Twitter", data.guest.twitter)
+          // Clear any existing social media data
+          localStorage.removeItem("socialMediaData")
+
+          // Handle social media links - check both structures
+          if (data.guest.socialmedia) {
+            // Handle socialmedia object if it exists
+            const socialMediaPlatforms = ["linkedin", "twitter", "instagram", "facebook", "tiktok", "whatsapp"]
+            socialMediaPlatforms.forEach((platform) => {
+              if (data.guest.socialmedia[platform]) {
+                addSocialMedia(platform.charAt(0).toUpperCase() + platform.slice(1), data.guest.socialmedia[platform])
+              }
+            })
+          } else {
+            // Fallback for legacy data structure
+            if (data.guest.linkedin) {
+              addSocialMedia("LinkedIn", data.guest.linkedin)
+            }
+            if (data.guest.twitter) {
+              addSocialMedia("Twitter", data.guest.twitter)
+            }
           }
 
           // If there's an image, display it
@@ -894,6 +910,9 @@ document.addEventListener("DOMContentLoaded", () => {
 document.addEventListener("DOMContentLoaded", () => {
   const form = document.getElementById("guestForm")
 
+  // In the form submission event handler, modify the formData object to match what the backend expects
+  // Replace the existing form submission code with this updated version
+
   form.addEventListener("submit", (event) => {
     event.preventDefault()
 
@@ -918,25 +937,26 @@ document.addEventListener("DOMContentLoaded", () => {
       .map((tag) => tag.trim())
       .filter((tag) => tag.length > 0)
 
-    // Extract list tags from comma-separated list
-    const listTags = document
-      .getElementById("list")
-      .value.split(",")
-      .map((tag) => tag.trim())
-      .filter((tag) => tag.length > 0)
-
     // Create a timestamp for the scheduled date/time
     const recordingDate = document.getElementById("recordingDate").value
     const recordingTime = document.getElementById("recordingTime").value
     const scheduledTimestamp =
       recordingDate && recordingTime ? new Date(`${recordingDate}T${recordingTime}:00`).getTime() : null
 
-    // Extract LinkedIn and Twitter from social media data
+    // Extract LinkedIn and Twitter from social media data for backward compatibility
     let linkedinUrl = ""
     let twitterUrl = ""
+
+    // Create socialmedia object for future use
+    const socialmedia = {}
+
     socialMediaData.forEach((item) => {
-      if (item.platform === "LinkedIn") linkedinUrl = item.link
-      if (item.platform === "Twitter") twitterUrl = item.link
+      const platform = item.platform.toLowerCase()
+      socialmedia[platform] = item.link
+
+      // Also set top-level fields for linkedin and twitter for backward compatibility
+      if (platform === "linkedin") linkedinUrl = item.link
+      if (platform === "twitter") twitterUrl = item.link
     })
 
     // Get the calendar event ID if it exists
@@ -953,9 +973,6 @@ document.addEventListener("DOMContentLoaded", () => {
       scheduled: scheduledTimestamp,
       company: document.getElementById("company").value,
       phone: document.getElementById("phone").value,
-      linkedin: linkedinUrl,
-      twitter: twitterUrl,
-      tags: listTags,
       notes: document.getElementById("notes").value,
       image: profilePhotoData,
       // Include additional fields that might not be in the form but are in the schema
@@ -967,7 +984,18 @@ document.addEventListener("DOMContentLoaded", () => {
         new URLSearchParams(window.location.search).get("googleCal") || localStorage.getItem("googleCalToken") || "",
       // Store the current calendar event ID if it exists
       calendarEventId: calendarEventId,
+      // Add futureOpportunities field
+      futureOpportunities: document.querySelector('input[name="updatesOption"]:checked').value === "yes",
+      // Add socialmedia object for future use
+      socialmedia: socialmedia,
+      // Keep empty tags array to match existing structure
+      tags: [],
+      // Add linkedin and twitter at the top level for backward compatibility
+      linkedin: linkedinUrl,
+      twitter: twitterUrl,
     }
+
+    console.log("Submitting form data:", formData)
 
     // Send the form data to update the guest
     fetch(`/edit_guests/${guestId}`, {

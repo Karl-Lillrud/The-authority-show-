@@ -169,13 +169,17 @@ class GuestRepository:
             update_fields = {
                 "name": data.get("name", "").strip(),
                 "image": data.get("image", "default-profile.png"),
-                "tags": data.get("tags", []),
-                "description": data.get("description", ""),
                 "bio": data.get("bio", data.get("description", "")),
                 "email": data.get("email", "").strip(),
-                "linkedin": data.get("linkedin", "").strip(),
-                "twitter": data.get("twitter", "").strip(),
                 "areasOfInterest": data.get("areasOfInterest", []),
+                # Add new fields
+                "company": data.get("company", ""),
+                "phone": data.get("phone", ""),
+                "notes": data.get("notes", ""),
+                "scheduled": data.get("scheduled", 0),
+                "recommendedGuests": data.get("recommendedGuests", []),
+                "futureOpportunities": data.get("futureOpportunities", False),
+                "socialmedia": data.get("socialmedia", {})
             }
 
             # If episodeId is provided, update the guest's episodeId
