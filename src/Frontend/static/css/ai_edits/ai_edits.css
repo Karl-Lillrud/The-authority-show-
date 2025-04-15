@@ -108,6 +108,30 @@ body {
     box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
 } 
 
+.btn.ai-sound-sug-button {
+  background-color: var(--highlight-color);
+  color: white;
+  /* Minska padding ytterligare för att göra knappen mindre */
+  padding: calc(var(--spacing-xs) / 2) var(--spacing-sm);      
+  /* Minska fontstorleken */
+  font-size: 0.75rem;         
+  font-weight: 600;
+  border: none;
+  border-radius: var(--radius-medium);
+  cursor: pointer;
+  transition: background-color 0.3s ease, transform 0.2s ease, box-shadow 0.2s ease;
+  box-shadow: var(--button-shadow);
+  /* Minska margin */
+  margin: calc(var(--spacing-xs) / 2);       
+  display: inline-block;
+}
+
+.btn.ai-sound-sug-button:hover {
+  background-color: var(--highlight-hover);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+}
+
 .result-field pre {
   max-height: 300px;
   overflow-y: auto;
