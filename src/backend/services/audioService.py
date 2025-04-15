@@ -134,13 +134,14 @@ class AudioService:
 
         try:
             client = ElevenLabs()
-            result = client.speech_to_text.convert(
-                file=open(temp_path, "rb"),
-                model_id="scribe_v1",
-                num_speakers=2,
-                diarize=True,
-                timestamps_granularity="word"
-            )
+            with open(temp_path, "rb") as f:
+                result = client.speech_to_text.convert(
+                    file=f,
+                    model_id="scribe_v1",
+                    num_speakers=2,
+                    diarize=True,
+                    timestamps_granularity="word"
+                )
 
             transcript = result.text.strip()
             word_timings = [
