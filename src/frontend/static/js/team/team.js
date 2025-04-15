@@ -84,7 +84,6 @@ document.addEventListener("DOMContentLoaded", async () => {
         const response = await addTeam(payload);
         console.log("Add team response:", response);
         const teamId = response.team_id;
-        showNotification("Success", "Team successfully created!", "success");
 
         // If a podcast was selected, update it with the new team ID
         if (podcastId) {
