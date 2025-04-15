@@ -1,11 +1,3 @@
-body {
-    font-family: 'Inter', sans-serif;
-    background-color: #F4F4F4;
-    color: #404040;
-    margin: 0;
-    padding: 0;
-  }
-  
   .container {
     max-width: 800px;
     margin: 4rem auto;

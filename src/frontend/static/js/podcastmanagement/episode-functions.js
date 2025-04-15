@@ -7,12 +7,12 @@ import {
 import { fetchPodcasts } from "../../../static/requests/podcastRequests.js";
 import { fetchGuestsByEpisode } from "../../../static/requests/guestRequests.js";
 import {
-  showNotification,
   updateEditButtons,
   shared
 } from "./podcastmanagement.js";
 import { renderPodcastSelection, viewPodcast } from "./podcast-functions.js";
 import { renderGuestDetail } from "./guest-functions.js";
+import { showNotification } from "../components/notifications.js";
 
 // Add this function to create a play button with SVG icon
 export function createPlayButton(size = "medium") {

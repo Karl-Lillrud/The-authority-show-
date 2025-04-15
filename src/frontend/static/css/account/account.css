@@ -1,52 +1,4 @@
-/* :root variables for account-specific styles */
-:root {
-  /* Background Colors */
-  --account-background: #f8fafc;
-  --account-card: #ffffff;
-
-  /* Text Colors */
-  --account-foreground: #334155;
-  --account-muted-foreground: #64748b;
-
-  /* Primary Colors */
-  --account-primary: #ff7f3f;
-  --account-primary-hover: #ff6b20;
-  --account-primary-light: rgba(255, 127, 63, 0.1);
-
-  /* Validation Colors */
-  --account-destructive: #ef4444;
-  --account-success: #10b981;
-  --account-warning: #f59e0b;
-
-  /* Borders and Shadows */
-  --account-border: #e2e8f0;
-  --account-radius: 0.5rem;
-  --account-shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
-  --account-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
-  --account-shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-
-  /* Typography */
-  --account-font-sans: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Open Sans", "Helvetica Neue", sans-serif;
-
-  /* Miscellaneous */
-  --account-ring: rgba(255, 127, 63, 0.3);
-}
-
 /* Base Styles */
-* {
-  margin: 0;
-  padding: 0;
-}
-
-body {
-  font-family: var(--account-font-sans);
-  background-color: var(--account-background);
-  color: var(--account-foreground);
-  line-height: 1.5;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-}
-
 h1,
 h2,
 h3,
@@ -101,66 +53,6 @@ button {
   color: var(--account-foreground);
 }
 
-.notifications-container {
-  position: absolute;
-  top: -1.75rem; 
-  left: 25rem; 
-  transform: translateY(-50%);
-  z-index: 10;
-  width: auto;
-  text-align: left; 
-}
-
-.notification {
-  padding: 0.5rem 1rem;
-  border-radius: var(--account-radius);
-  font-size: 0.875rem;
-  font-weight: 500;
-  color: white;
-  background-color: var(--account-warning);
-  box-shadow: var(--account-shadow-sm);
-  animation: fadeIn 0.3s ease-in-out;
-  margin-bottom: 0.5rem;
-}
-
-.notification.warning {
-  background-color: var(--account-warning);
-}
-
-.notification.error {
-  background-color: var(--account-destructive);
-}
-
-.notification.success {
-  background-color: var(--account-success);
-}
-
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-    transform: translateY(-10px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-.notification.fade-out {
-  animation: fadeOut 0.3s ease-in-out;
-}
-
-@keyframes fadeOut {
-  from {
-    opacity: 1;
-    transform: translateY(0);
-  }
-  to {
-    opacity: 0;
-    transform: translateY(-10px);
-  }
-}
-
 .back-link {
   display: inline-flex;
   align-items: center;
@@ -207,7 +99,7 @@ button {
   margin-bottom: 0.5rem;
   border-radius: var(--account-radius);
   color: var(--account-foreground);
-  font-weight: 500;
+  font-weight: 300;
   cursor: pointer;
   transition: background-color 0.2s ease, color 0.2s ease;
   position: relative;
@@ -236,7 +128,7 @@ button {
 .sidebar-item.active {
   background-color: var(--account-primary-light);
   color: var(--account-primary);
-  font-weight: 600;
+  font-weight: 700;
 }
 
 .sidebar-item.active .icon {
@@ -261,6 +153,7 @@ button {
   border-radius: var(--account-radius);
   color: var(--account-muted-foreground);
   font-size: 0.875rem;
+  font-weight: 300;
   cursor: pointer;
   transition: background-color 0.2s ease, color 0.2s ease;
 }
@@ -273,7 +166,7 @@ button {
 .submenu-item.active {
   background-color: var(--account-primary-light);
   color: var(--account-primary);
-  font-weight: 500;
+  font-weight: 700;
 }
 
 .back-button {
@@ -487,61 +380,6 @@ button {
   margin-top: 1.5rem;
   display: flex;
   justify-content: flex-start;
-}
-
-/* Notifications Container */
-.notifications-container {
-  margin-top: 1rem;
-  margin-bottom: 1rem;
-}
-
-.notification {
-  padding: 0.75rem 1rem;
-  border-radius: var(--account-radius);
-  font-size: 0.875rem;
-  font-weight: 500;
-  color: white;
-  background-color: var(--account-warning);
-  box-shadow: var(--account-shadow-sm);
-  animation: fadeIn 0.3s ease-in-out;
-}
-
-.notification.warning {
-  background-color: var(--account-warning);
-}
-
-.notification.error {
-  background-color: var(--account-destructive);
-}
-
-.notification.success {
-  background-color: var(--account-success);
-}
-
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-    transform: translateY(-10px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-.notification.fade-out {
-  animation: fadeOut 0.3s ease-in-out;
-}
-
-@keyframes fadeOut {
-  from {
-    opacity: 1;
-    transform: translateY(0);
-  }
-  to {
-    opacity: 0;
-    transform: translateY(-10px);
-  }
 }
 
 /* Form Elements */
@@ -1101,11 +939,6 @@ input:focus:invalid {
     flex: none;
     width: 100%;
     position: static;
-  }
-
-  .notifications-container {
-    top: 37.5rem;
-    left: 20%;
   }
 }
 

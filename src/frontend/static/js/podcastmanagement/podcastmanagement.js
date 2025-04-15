@@ -3,6 +3,7 @@ import { initEpisodeFunctions } from "./episode-functions.js";
 import { renderPodcastDetail } from "./podcast-functions.js";
 import { initGuestFunctions } from "./guest-functions.js";
 import { svgpodcastmanagement } from "./svgpodcastmanagement.js";
+import { showNotification } from "../components/notifications.js";
 
 console.log("podcastmanagement.js loaded");
 
@@ -29,72 +30,6 @@ function initializeSvgIcons() {
     svgpodcastmanagement.add;
 }
 
-// Notification system
-export function showNotification(title, message, type = "info") {
-  // Remove any existing notification
-  const existingNotification = document.querySelector(".notification");
-  if (existingNotification) {
-    existingNotification.remove();
-  }
-
-  // Create notification elements
-  const notification = document.createElement("div");
-  notification.className = `notification ${type}`;
-
-  // Icon based on type
-  let iconSvg = "";
-  if (type === "success") {
-    iconSvg = svgpodcastmanagement.success;
-  } else if (type === "error") {
-    iconSvg = svgpodcastmanagement.error;
-  } else {
-    iconSvg = svgpodcastmanagement.defaultIcon;
-  }
-
-  notification.innerHTML = `
-  <div class="notification-icon">${iconSvg}</div>
-  <div class="notification-content">
-    <div class="notification-title">${title}</div>
-    <div class="notification-message">${message}</div>
-  </div>
-  <div class="notification-close">
-    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-      <line x1="18" y1="6" x2="6" y2="18"></line>
-      <line x1="6" y1="6" x2="18" y2="18"></line>
-    </svg>
-  </div>
-  `;
-
-  // Add to DOM
-  document.body.appendChild(notification);
-
-  // Add event listener to close button
-  notification
-    .querySelector(".notification-close")
-    .addEventListener("click", () => {
-      notification.classList.remove("show");
-      setTimeout(() => {
-        notification.remove();
-      }, 500);
-    });
-
-  // Show notification with animation
-  setTimeout(() => {
-    notification.classList.add("show");
-  }, 10);
-
-  // Auto hide after 5 seconds
-  setTimeout(() => {
-    if (document.body.contains(notification)) {
-      notification.classList.remove("show");
-      setTimeout(() => {
-        if (document.body.contains(notification)) {
-          notification.remove();
-        }
-      }, 500);
-    }
-  }, 5000);
-}
 
 // Function to update edit buttons to use pen icons
 export function updateEditButtons() {
