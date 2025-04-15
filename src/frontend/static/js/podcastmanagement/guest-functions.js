@@ -436,34 +436,19 @@ export function initGuestFunctions() {
       const guestDescription = document
         .getElementById("guest-description")
         .value.trim();
-      const guestTags = document
-        .getElementById("guest-tags")
-        .value.split(",")
-        .map((tag) => tag.trim())
-        .filter(Boolean);
       const guestAreas = document
         .getElementById("guest-areas")
         .value.split(",")
         .map((area) => area.trim())
         .filter(Boolean);
       const guestEmail = document.getElementById("guest-email").value.trim();
-      const guestLinkedIn = document
-        .getElementById("guest-linkedin")
-        .value.trim();
-      const guestTwitter = document
-        .getElementById("guest-twitter")
-        .value.trim();
-
       // Log the collected data
       console.log("Collected Guest Data:", {
         episodeId,
         guestName,
         guestDescription,
-        guestTags,
         guestAreas,
-        guestEmail,
-        guestLinkedIn,
-        guestTwitter
+        guestEmail
       });
 
       // Ensure required fields are filled in
@@ -474,11 +459,8 @@ export function initGuestFunctions() {
             episodeId,
             name: guestName,
             description: guestDescription,
-            tags: guestTags,
             areasOfInterest: guestAreas,
-            email: guestEmail,
-            linkedin: guestLinkedIn,
-            twitter: guestTwitter
+            email: guestEmail
           });
 
           // Fetch the episode details
@@ -489,11 +471,8 @@ export function initGuestFunctions() {
             episodeId, // Ensure episodeId is correctly set
             name: guestName,
             description: guestDescription,
-            tags: guestTags,
             areasOfInterest: guestAreas,
-            email: guestEmail,
-            linkedin: guestLinkedIn,
-            twitter: guestTwitter
+            email: guestEmail
           });
 
           // Log the response from the backend
