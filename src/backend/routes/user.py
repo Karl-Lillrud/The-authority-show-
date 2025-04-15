@@ -20,14 +20,16 @@ def get_profile():
 
     response, status_code = user_repo.get_profile(str(g.user_id))
     if status_code == 404:  # If profile not found, ensure account creation
-        account_data = {
-            "id": str(uuid.uuid4()),
-            "userId": str(g.user_id),
-            "email": g.email,
-            "created_at": datetime.utcnow(),
-            "isActive": True,
-        }
-        collection.database.Accounts.insert_one(account_data)
+        account = collection.database.Accounts.find_one({"userId": str(g.user_id)})
+        if not account:
+            account_data = {
+                "id": str(uuid.uuid4()),
+                "userId": str(g.user_id),
+                "email": g.email,
+                "created_at": datetime.utcnow(),
+                "isActive": True,
+            }
+            collection.database.Accounts.insert_one(account_data)
     return jsonify(response), status_code
 
 
