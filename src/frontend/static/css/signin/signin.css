@@ -1,32 +1,5 @@
-:root {
-  --bg-light: #eff2f9;
-  --bg-dark: #1c1c1c;
-  --shadow-light: rgba(22, 24, 29, 0.23);
-  --shadow-dark: rgba(0, 0, 0, 0.8);
-  --text-light: #6e7f8d;
-  --text-dark: #b3b3b3;
-  --highlight: #ff7f3f;
-  --font-primary: "Campton", sans-serif;
-}
-
-body {
-  font-family: var(--font-primary);
-  background-image: url("https://app.podmanager.ai/static/images/PodManager-AI-Background.jpeg");
-  background-size: cover;
-  background-position: center;
-  background-color: var(--bg-light); /* Fallback color */
-  color: var(--text-light);
-  height: 100vh;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  margin: 0;
-  transition: background-color 0.3s ease, color 0.3s ease;
-}
-
 .image {
   width: 100vw;
-  height: 100vh;
   overflow: hidden;
   position: relative;
 }
@@ -40,7 +13,7 @@ body {
 }
 
 .center-box {
-  background-color: var(--bg-light);
+  background-color: var(--background-light);
   height: 65vh;
   width: 25%;
   position: fixed;
@@ -82,7 +55,7 @@ body {
   border: none;
   cursor: pointer;
   font-family: var(--font-primary);
-  background: var(--bg-light);
+  background: var(--background-light);
   box-shadow: -5px -5px 10px white, 5px 5px 10px var(--shadow-light);
   transition: all 0.3s ease;
 }
@@ -106,7 +79,7 @@ body {
   border-radius: 20px;
   width: 70%;
   border: #ff7f3f 1.3px solid;
-  background: var(--bg-light);
+  background: var(--background-light);
   box-shadow: inset -5px -5px 10px white, inset 5px 5px 10px var(--shadow-light);
   transition: all 0.3s ease;
   margin: 19px;
@@ -118,7 +91,7 @@ body {
 }
 
 .link {
-  color: var(--highlight);
+  color: var(--highlight-color);
   text-decoration: none;
   font-size: 16px;
 }
@@ -135,14 +108,14 @@ body {
 
 .error-message {
   font-size: 18px;
-  color: var(--highlight);
+  color: var(--highlight-color);
   margin-bottom: 15px;
   text-align: center;
 }
 
 .success-message {
   font-size: 18px;
-  color: var(--highlight);
+  color: var(--highlight-color);
   margin-bottom: 15px;
   text-align: center;
 }

@@ -1,13 +1,3 @@
-body {
-  background-size: cover;
-  background-color: aliceblue;
-  background-position: center;
-  background-attachment: fixed;
-  margin: 0;
-  width: 100%;
-  height: 90vh;
-}
-
 #guestFormContainer {
   background-color: aliceblue;
   padding: 24px;

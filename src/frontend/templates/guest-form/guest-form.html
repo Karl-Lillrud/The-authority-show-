@@ -5,6 +5,19 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>GUEST REGISTRATION</title>
+  <!-- global stylesheets -->
+  <link
+  rel="stylesheet"
+  href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
+  />
+  <link
+    rel="stylesheet"
+    href="{{ url_for('static', filename='css/components/variables.css') }}"
+  />
+  <link
+    rel="stylesheet"
+    href="{{ url_for('static', filename='css/components/general.css') }}"
+  />
   <!-- Other -->
   <link rel="stylesheet" href="{{ url_for('static', filename='css/guest-form/guest-form.css') }}"> <!-- Link to the CSS file -->
   <script src="https://cdn.jsdelivr.net/npm/emailjs-com@2.6.4/dist/email.min.js"></script>
@@ -94,18 +107,18 @@
         </div>
 
         <!--- Asks for Full Name -->
-        <div>
-          <label class="block text-gray-600 font-medium">Name *</label>
-          <input type="text" id="first name" class="input-field" placeholder="Enter your First name" required>
-          <p id="firstnameError" class="error-message"></p>
-        </div>
+<div>
+  <label class="block text-gray-600 font-medium">Name *</label>
+  <input type="text" id="firstName" class="input-field" placeholder="Enter your First name" required>
+  <p id="firstnameError" class="error-message"></p>
+</div>
 
-        <!--- Asks for email adress -->
-        <div>
-          <label class="block text-gray-600 font-medium">Email *</label>
-          <input type="text" id="email" class="input-field" placeholder="Enter your email" required>
-          <p id="emailError" class="error-message"></p>
-        </div>
+<!--- Asks for email address -->
+<div>
+  <label class="block text-gray-600 font-medium">Email *</label>
+  <input type="text" id="email" class="input-field" placeholder="Enter your email" required>
+  <p id="emailError" class="error-message"></p>
+</div>
 
               <!--- Bio -->
         <div>
@@ -215,7 +228,7 @@
 
         <!--- Question about future opportunities -->
         <label class="block text-gray-600 font-medium">Would you be interested in future opportunities? Like live events,
-        guest panel discussions, or special episodes. We’d love to keep the collaboration going!</label>
+        guest panel discussions, or special episodes. We'd love to keep the collaboration going!</label>
 
         <!-- Yes/No Radio Buttons -->
         <div class="flex gap-4 mt-2">

@@ -1,67 +1,3 @@
-:root {
-  /* Color Palette */
-  --background-light: #eff2f9;
-  --background-dark: #1c1c1c;
-  --light-shadow-light: #ffffff;
-  --dark-shadow-light: rgba(22, 24, 29, 0.23);
-  --light-shadow-dark: rgba(255, 255, 255, 0.1);
-  --dark-shadow-dark: rgba(0, 0, 0, 0.8);
-  --text-color-light: #6e7f8d;
-  --text-color-dark: #b3b3b3;
-  --highlight-color: #ff7f3f;
-  --error-color: #ff3b30;
-  --success-color: #4caf50;
-  --card-bg-light: #ffffff;
-  --card-bg-dark: #2a2a2a;
-  --card-shadow: 0 8px 30px rgba(0, 0, 0, 0.12);
-  --spotify-green: #1db954;
-  --apple-purple: #a34fbe;
-
-  /* Typography */
-  --font-primary: "Campton", sans-serif;
-  --font-secondary: "Avenir Next", sans-serif;
-
-  /* Spacing */
-  --spacing-xs: 4px;
-  --spacing-sm: 8px;
-  --spacing-md: 16px;
-  --spacing-lg: 24px;
-  --spacing-xl: 32px;
-
-  /* Border Radius */
-  --border-radius-sm: 10px;
-  --border-radius-md: 20px;
-  --border-radius-lg: 30px;
-  --border-radius-xl: 40px;
-}
-
-/* Reset */
-*,
-*::before,
-*::after {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
-}
-
-html,
-body {
-  height: 100%;
-  width: 100%;
-  overflow-x: hidden;
-}
-
-body {
-  font-family: var(--font-primary);
-  background-color: var(--background-light);
-  color: var(--text-color-light);
-  line-height: 1.6;
-  display: flex;
-  flex-direction: column;
-  min-height: 100vh;
-  transition: background-color 0.3s ease, color 0.3s ease;
-}
-
 /* Header and Logo */
 header {
   position: relative;
@@ -223,7 +159,6 @@ button {
   width: auto; /* Make the button smaller */
   padding: var(--spacing-xs) var(--spacing-md); /* Adjust padding */
   position: absolute; /* Position it relative to the container */
-  bottom: var(--spacing-md); /* Place it at the bottom of the container */
   right: var(--spacing-md); /* Align it to the right inside the container */
   font-size: 0.9rem; /* Slightly smaller font size */
 }
@@ -274,7 +209,6 @@ body.dark-mode .button-secondary:hover {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  margin-left: 0.5cm; /* Reduced margin from 2cm to 0.5cm */
   vertical-align: middle; /* Align with the label */
   transform: translate(-4mm, -1mm); /* Moved 2mm up and 2mm left */
 }
@@ -282,7 +216,6 @@ body.dark-mode .button-secondary:hover {
 .help-text {
   visibility: hidden;
   position: absolute;
-  right: calc(130% + var(--spacing-sm)); /* Move the tooltip further to the left */
   top: 50%; /* Center vertically relative to the button */
   transform: translateY(-50%); /* Adjust to be vertically centered */
   margin-right: 0; /* Remove additional margin */
@@ -409,9 +342,46 @@ body.dark-mode .help-button {
 
 .label-group {
   position: relative;
+  display: inline-flex; 
+  align-items: center; 
+  gap: 0.25rem
 }
 
-.label-group:hover .help-text {
+.label-group .help-button {
+  width: 16px;
+  height: 16px;
+  font-size: 12px;
+  background-color: var(--text-color-light);
+  color: white;
+  font-weight: bold;
+  border: none;
+  border-radius: 50%;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.label-group .help-text {
+  visibility: hidden;
+  opacity: 0;
+  position: absolute;
+  right: calc(120% + var(--spacing-sm)); /* Move the tooltip to the left of the button */
+  top: 50%;
+  transform: translateY(-50%);
+  width: 300px;
+  background-color: #333;
+  color: white;
+  padding: var(--spacing-md);
+  border-radius: var(--border-radius-sm);
+  font-size: 0.9rem;
+  box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.2);
+  z-index: 100;
+  text-align: left;
+  transition: opacity 0.3s, visibility 0.3s;
+}
+
+.label-group .help-button:hover + .help-text {
   visibility: visible;
   opacity: 1;
 }
@@ -424,7 +394,7 @@ body.dark-mode .help-button {
   border-radius: var(--border-radius-xl);
   overflow: hidden;
   background-color: var(--card-bg-light);
-  box-shadow: var(--card-shadow);
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12);
   transition: all 0.3s ease;
   display: flex;
   flex-direction: column;
@@ -965,9 +935,7 @@ body.dark-mode .error-container {
 
 #connectCalendar {
   margin-top: var(--spacing-sm); /* Add spacing above the button */
-  margin-bottom: var(--spacing-sm); /* Add spacing below the button */
-  margin-bottom: calc(var(--spacing-md) + 50px);
-  /* Add 50px extra space below the button */
+  margin-bottom: var(--spacing-md);
 }
 
 .connect-calendar-button {
@@ -987,18 +955,15 @@ body.dark-mode .error-container {
   align-items: center;
   justify-content: center;
   position: absolute;
-  right: 10px;
   top: 50%;
-  transform: translateY(-50%);
+  transform: translateY(-30%);
 }
 
 .calendar-help-text {
   visibility: hidden;
   position: absolute;
-  left: calc(200% + var(--spacing-xs)); /* Move the tooltip to the right of the button */
-  top: 50%; /* Center vertically relative to the button */
-  transform: translateY(-50%); /* Adjust to be vertically centered */
-  margin-left: 0;
+  top: 50%;
+  transform: translateY(-50%);
   width: 300px;
   background-color: #333;
   color: white;
@@ -1007,11 +972,19 @@ body.dark-mode .error-container {
   font-size: 0.9rem;
   box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.2);
   z-index: 100;
-  text-align: left; /* Align text to the left */
+  text-align: left;
   transition: opacity 0.3s, visibility 0.3s;
 }
 
 .calendar-help-button:hover .calendar-help-text {
   visibility: visible;
   opacity: 1;
+}
+
+#rssLabel {
+  margin-right: var(--spacing-md);
+}
+
+#rss-help-button {
+  margin-bottom: calc(var(--spacing-xs) * -1);
 }
