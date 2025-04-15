@@ -3,6 +3,7 @@ import logging
 import tempfile
 import requests
 import subprocess
+from pydub import AudioSegment, silence
 from backend.database.mongo_connection import get_fs
 from backend.utils.file_utils import enhance_audio_with_ffmpeg, detect_background_noise, convert_audio_to_wav
 from backend.utils.ai_utils import (
@@ -135,13 +136,15 @@ class AudioService:
         try:
             client = ElevenLabs()
             with open(temp_path, "rb") as f:
-                result = client.speech_to_text.convert(
-                    file=f,
-                    model_id="scribe_v1",
-                    num_speakers=2,
-                    diarize=True,
-                    timestamps_granularity="word"
-                )
+                audio_bytes = f.read()
+
+            result = client.speech_to_text.convert(
+                file=audio_bytes,
+                model_id="scribe_v1",
+                num_speakers=2,
+                diarize=True,
+                timestamps_granularity="word"
+            )
 
             transcript = result.text.strip()
             word_timings = [
@@ -155,10 +158,27 @@ class AudioService:
             filler_sentences = detect_filler_words(transcript)
             sentence_certainty = analyze_certainty_levels(transcript)
 
+            logger.info(f"📊 Certainty results: {sentence_certainty}")
+
             sentence_timestamps = []
+            audio = AudioSegment.from_wav(temp_path)
+            cut_file_ids = []
+
             for idx, entry in enumerate(sentence_certainty):
+                logger.info(f"🔍 Sentence {idx}: {entry['sentence']} | Certainty: {entry.get('certainty')}")
+                if entry["certainty"] <= 0:
+                    continue
+
                 timestamps = get_sentence_timestamps(entry["sentence"], word_timings)
-                entry.update({"start": timestamps["start"], "end": timestamps["end"], "id": idx})
+                start_ms = int(timestamps["start"] * 1000)
+                end_ms = int(timestamps["end"] * 1000)
+
+                entry.update({
+                    "start": timestamps["start"],
+                    "end": timestamps["end"],
+                    "id": idx
+                })
+
                 sentence_timestamps.append({
                     "id": idx,
                     "sentence": entry["sentence"],
@@ -166,34 +186,49 @@ class AudioService:
                     "end": timestamps["end"]
                 })
 
-            suggested_cuts = [
-                {
-                    "sentence": e["sentence"],
-                    "certainty_level": e["certainty_level"],
-                    "certainty_score": e["certainty"],
-                    "start": e["start"],
-                    "end": e["end"]
-                } for e in sentence_certainty if e["certainty"] >= 0.6
-            ]
+                cut = audio[start_ms:end_ms]
+                with tempfile.NamedTemporaryFile(suffix=".wav", delete=False) as tmp:
+                    cut.export(tmp.name, format="wav")
+                    tmp_path = tmp.name
+
+                with open(tmp_path, "rb") as f:
+                    file_id = save_file(
+                        f.read(),
+                        filename=f"cut_{idx}.wav",
+                        metadata={"type": "ai_cut", "source": filename}
+                    )
+                    cut_file_ids.append(file_id)
+
+                os.remove(tmp_path)
 
             sentiment = analyze_sentiment(transcript)
             show_notes = generate_ai_show_notes(transcript)
 
             return {
-                "message": "✅ AI Audio processing completed",
+                "message": "✅ AI Audio processing completed with clips",
                 "cleaned_transcript": cleaned_transcript,
                 "background_noise": noise_result,
                 "filler_sentences": filler_sentences,
                 "sentence_certainty_scores": sentence_certainty,
                 "sentence_timestamps": sentence_timestamps,
-                "suggested_cuts": suggested_cuts,
+                "suggested_cuts": [
+                    {
+                        "sentence": e["sentence"],
+                        "certainty_level": e["certainty_level"],
+                        "certainty_score": e["certainty"],
+                        "start": e["start"],
+                        "end": e["end"]
+                    } for e in sentence_certainty if e["certainty"] >= 0.1
+                ],
                 "sentiment": sentiment,
                 "long_pauses": detect_long_pauses(temp_path),
                 "ai_show_notes": show_notes,
+                "cut_file_ids": cut_file_ids
             }
 
         finally:
-            os.remove(temp_path)
+            if os.path.exists(temp_path):
+                os.remove(temp_path)
             logger.info(f"🗑️ Temp file cleaned up: {temp_path}")
 
     def ai_cut_audio_from_id(self, file_id: str) -> dict:
@@ -245,3 +280,68 @@ class AudioService:
         finally:
             os.remove(temp_path)
             logger.info(f"🗑️ Temp file cleaned up: {temp_path}")
+
+    def split_audio_on_silence(wav_path, min_len=500, silence_thresh_db=-35):
+        audio = AudioSegment.from_wav(wav_path)
+        chunks = silence.split_on_silence(
+            audio,
+            min_silence_len=min_len,
+            silence_thresh=audio.dBFS + silence_thresh_db,
+            keep_silence=200  # pad before and after
+        )
+        return chunks
+
+    def apply_cuts_and_return_new_file(self, file_id: str, cuts: list[dict]) -> str:
+        """
+        Removes specified segments from the audio and returns a new cleaned file.
+        cuts = [{ "start": float, "end": float }, ...]
+        """
+        logger.info(f"✂️ Applying cuts to file ID: {file_id}")
+        audio_data = get_file_data(file_id)
+
+        with tempfile.NamedTemporaryFile(delete=False, suffix=".wav") as tmp:
+            tmp.write(audio_data)
+            tmp_path = tmp.name
+
+        try:
+            audio = AudioSegment.from_wav(tmp_path)
+            duration_ms = len(audio)
+            logger.info(f"📏 Original audio duration: {duration_ms / 1000:.2f}s")
+
+            # Sort cuts and convert to milliseconds
+            cuts_ms = sorted([(int(c['start'] * 1000), int(c['end'] * 1000)) for c in cuts])
+            logger.info(f"🔪 Cuts to apply (ms): {cuts_ms}")
+
+            # Build list of "keep" segments
+            keep_segments = []
+            last_end = 0
+            for start, end in cuts_ms:
+                if last_end < start:
+                    keep_segments.append(audio[last_end:start])
+                last_end = end
+            if last_end < duration_ms:
+                keep_segments.append(audio[last_end:])
+
+            # Combine segments
+            cleaned_audio = sum(keep_segments)
+
+            with tempfile.NamedTemporaryFile(suffix=".wav", delete=False) as out_tmp:
+                cleaned_path = out_tmp.name
+                cleaned_audio.export(cleaned_path, format="wav")
+
+            with open(cleaned_path, "rb") as f:
+                cleaned_bytes = f.read()
+
+            cleaned_file_id = save_file(
+                cleaned_bytes,
+                filename=f"cleaned_{file_id}.wav",
+                metadata={"type": "ai_cut_cleaned", "source": file_id, "segments_removed": len(cuts)}
+            )
+
+            logger.info(f"✅ Cleaned file saved with ID: {cleaned_file_id}")
+            return cleaned_file_id
+
+        finally:
+            for path in [tmp_path, cleaned_path]:
+                if os.path.exists(path):
+                    os.remove(path)

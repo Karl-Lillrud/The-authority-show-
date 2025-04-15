@@ -583,7 +583,6 @@ async function aiCutAudio() {
         return;
     }
 
-    // Optionally show a spinner or processing message in the transcript container
     document.getElementById("aiTranscript").innerText = "🔄 Processing AI Cut... Please wait.";
 
     try {
@@ -595,14 +594,48 @@ async function aiCutAudio() {
 
         if (response.ok) {
             const data = await response.json();
-            // Update transcript container
             document.getElementById("aiTranscript").innerText = data.cleaned_transcript || "No transcript available.";
 
-            // Update suggested cuts container
-            document.getElementById("aiSuggestedCuts").innerText =
-                (data.suggested_cuts || [])
-                    .map(c => `💬 "${c.sentence}" (${c.start}s - ${c.end}s) | Confidence: ${c.certainty_score}`)
-                    .join("\n") || "No suggested cuts found.";
+            const suggestedCuts = data.suggested_cuts || [];
+            const cutsContainer = document.getElementById("aiSuggestedCuts");
+
+            if (!suggestedCuts.length) {
+                cutsContainer.innerText = "No suggested cuts found.";
+                return;
+            }
+
+            cutsContainer.innerHTML = "";
+            window.selectedAiCuts = {};
+
+            suggestedCuts.forEach((cut, index) => {
+                const checkbox = document.createElement("input");
+                checkbox.type = "checkbox";
+                checkbox.checked = true;
+                checkbox.dataset.index = index;
+                checkbox.onchange = () => {
+                    if (checkbox.checked) {
+                        window.selectedAiCuts[index] = cut;
+                    } else {
+                        delete window.selectedAiCuts[index];
+                    }
+                };
+                window.selectedAiCuts[index] = cut;
+
+                const label = document.createElement("label");
+                label.innerText = `💬 "${cut.sentence}" (${cut.start}s - ${cut.end}s) | Confidence: ${cut.certainty_score.toFixed(2)}`;
+
+                const div = document.createElement("div");
+                div.appendChild(checkbox);
+                div.appendChild(label);
+                cutsContainer.appendChild(div);
+            });
+
+            const applyBtn = document.createElement("button");
+            applyBtn.className = "btn ai-edit-button";
+            applyBtn.innerText = "✅ Apply AI Cuts";
+            applyBtn.onclick = applySelectedCuts;
+
+            cutsContainer.appendChild(applyBtn);
         } else {
             alert(`❌ Error: ${response.status} - ${response.statusText}`);
         }
@@ -610,6 +643,50 @@ async function aiCutAudio() {
         alert(`❌ AI cut failed: ${error.message}`);
     }
 }
+
+async function applySelectedCuts() {
+    const cuts = Object.values(window.selectedAiCuts || {});
+    if (!cuts.length) {
+        alert("No cuts selected.");
+        return;
+    }
+
+    const payload = {
+        file_id: activeAudioId,
+        cuts: cuts.map(c => ({ start: c.start, end: c.end }))
+    };
+
+    const res = await fetch('/apply_ai_cuts', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+    });
+
+    const data = await res.json();
+    if (!data.cleaned_file_id) {
+        alert("❌ Failed to apply AI cuts.");
+        return;
+    }
+
+    const audioRes = await fetch(`/transcription/get_file/${data.cleaned_file_id}`);
+    const blob = await audioRes.blob();
+    const url = URL.createObjectURL(blob);
+
+    const section = document.getElementById("aiCuttingSection");
+    const player = document.createElement("audio");
+    player.controls = true;
+    player.src = url;
+    section.appendChild(document.createElement("hr"));
+    section.appendChild(player);
+
+    const dl = document.createElement("a");
+    dl.href = url;
+    dl.download = "ai_cleaned_audio.wav";
+    dl.className = "btn ai-edit-button";
+    dl.innerText = "📥 Download Cleaned Audio";
+    section.appendChild(dl);
+}
+
 
 async function enhanceVideo() {
     const fileInput = document.getElementById('videoUploader');
