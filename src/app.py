@@ -119,16 +119,16 @@ logger.info(f"{Fore.YELLOW}API Base URL: {os.getenv('API_BASE_URL')}")
 logger.info(f"{Fore.YELLOW}MongoDB URI: {os.getenv('MONGODB_URI')}")
 logger.info(f"{Fore.GREEN}========================================")
 logger.info(f"{Fore.CYAN}📧 Email Configuration:")
-logger.info(f"{Fore.YELLOW}   EMAIL_USER: {os.getenv('EMAIL_USER', 'Not Set')}")
+logger.info(f"{Fore.YELLOW}EMAIL_USER: {os.getenv('EMAIL_USER', 'Not Set')}")
 logger.info(
-    f"{Fore.YELLOW}   EMAIL_PASS: {'Set' if os.getenv('EMAIL_PASS') else 'Not Set'}"
+    f"{Fore.YELLOW}EMAIL_PASS: {'**** **** **** ****' if os.getenv('EMAIL_PASS') else 'Not Set'}"
 )
 logger.info(f"{Fore.GREEN}========================================")
 logger.info(f"{Fore.CYAN}🚀 Server is running!")
 logger.info(
-    f"{Fore.MAGENTA}🌐 Local:        {os.getenv('LOCAL_BASE_URL', 'http://127.0.0.1:8000')}"
+    f"{Fore.MAGENTA}🌐 Local:  {os.getenv('LOCAL_BASE_URL', 'http://127.0.0.1:8000')}"
 )
-logger.info(f"{Fore.MAGENTA}🌐 Network:      http://192.168.0.4:8000")
+logger.info(f"{Fore.MAGENTA}🌐 Network: http://192.168.0.4:8000")
 logger.info(f"{Fore.GREEN}========================================")
 
 
