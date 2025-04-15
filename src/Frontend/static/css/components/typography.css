@@ -1,3 +1,15 @@
 /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 /* General CSS styling for typography such as paragraphs, headings, buttons, etc */
 /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-primary);
+  font-weight: 700;
+  color: var(--headings-color-light);
+}
+
+p {
+  font-family: var(--font-primary);
+  font-weight: 400;
+  color: var(--text-color-light);
+}
