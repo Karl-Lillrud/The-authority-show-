@@ -776,18 +776,15 @@ async function consumeUserCredits(featureKey) {
 
 function acceptSfx(index, emotion, url) {
     selectedSoundFX[index] = { emotion, sfxUrl: url };
-    renderSfxDebug();
 }
 
 function rejectSfx(index) {
     delete selectedSoundFX[index];
-    renderSfxDebug();
 }
 
 function replaceSfx(index, url) {
     if (selectedSoundFX[index]) {
         selectedSoundFX[index].sfxUrl = url;
-        renderSfxDebug();
     }
 }
 
