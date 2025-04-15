@@ -116,12 +116,12 @@ logger = logging.getLogger(__name__)
 logger.info(f"{Fore.GREEN}========================================")
 logger.info(f"{Fore.CYAN}✓ Starting server...")
 logger.info(f"{Fore.YELLOW}API Base URL: {os.getenv('API_BASE_URL')}")
-logger.info(f"{Fore.YELLOW}MongoDB URI: {os.getenv('MONGODB_URI')}")
+logger.info(f"{Fore.YELLOW}MongoDB URI:  {os.getenv('MONGODB_URI')}")
 logger.info(f"{Fore.GREEN}========================================")
 logger.info(f"{Fore.CYAN}📧 Email Configuration:")
-logger.info(f"{Fore.YELLOW}EMAIL_USER: {os.getenv('EMAIL_USER', 'Not Set')}")
+logger.info(f"{Fore.BLUE}EMAIL_USER: {os.getenv('EMAIL_USER', 'Not Set')}")
 logger.info(
-    f"{Fore.YELLOW}EMAIL_PASS: {'**** **** **** ****' if os.getenv('EMAIL_PASS') else 'Not Set'}"
+    f"{Fore.BLUE}EMAIL_PASS: {'**** **** **** ****' if os.getenv('EMAIL_PASS') else 'Not Set'}"
 )
 logger.info(f"{Fore.GREEN}========================================")
 logger.info(f"{Fore.CYAN}🚀 Server is running!")
