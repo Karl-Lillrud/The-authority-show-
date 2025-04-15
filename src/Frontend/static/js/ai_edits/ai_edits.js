@@ -131,6 +131,7 @@ function showTab(tabName) {
                 </button>
                 <pre id="analysisResults"></pre>
                 <div id="soundEffectTimeline" style="margin-top: 1rem;"></div>
+                <div id="approvedSfxDebug" style="font-size: 0.9em; color: gray;"></div>
                 <a id="downloadEnhanced" class="btn ai-edit-button" download="processed_audio.wav">
                      📥 Download Processed Audio
                 </a>
@@ -441,6 +442,7 @@ async function analyzeEnhancedAudio() {
     }
 
     resultEl.innerText = "🔍 Analyzing...";
+
     const formData = new FormData();
     formData.append("audio", activeAudioBlob, "processed_audio.wav");
 
@@ -457,32 +459,91 @@ async function analyzeEnhancedAudio() {
         const timeline = document.getElementById("soundEffectTimeline");
         timeline.innerHTML = "<h4>🎧 AI-Driven Sound Suggestions</h4>";
 
-        if (data.sound_effect_suggestions?.length) {
-            data.sound_effect_suggestions.forEach((entry, i) => {
-                const div = document.createElement("div");
-                div.style.padding = "8px";
-                div.style.marginBottom = "8px";
-                div.style.border = "1px solid #ccc";
-                div.style.borderRadius = "10px";
-                div.style.backgroundColor = "#f9f9f9";
+        window.selectedSoundFX = {};
 
-                div.innerHTML = `
-<strong>📍 Text:</strong> "${entry.timestamp_text}"<br/>
-<strong>🎭 Emotion:</strong> ${entry.emotion}<br/>
-<strong>🎵 Suggested Effect:</strong> 
-<a href="${entry.suggested_effect}" target="_blank">${entry.suggested_effect}</a>
-                `;
+        (data.sound_effect_suggestions || []).forEach((entry, i) => {
+            const container = document.createElement("div");
+            container.className = "sound-suggestion";
+            container.style.marginBottom = "1.25rem";
+            container.style.padding = "12px";
+            container.style.border = "1px solid #ccc";
+            container.style.borderRadius = "10px";
+            container.style.background = "#f9f9f9";
 
-                timeline.appendChild(div);
-            });
-        } else {
-            timeline.innerHTML += "<p>No sound suggestions found.</p>";
-        }
+            const sfxList = entry.sfx_options || [];
+            const preview = sfxList.length
+                ? `<audio controls src="${sfxList[0]}" style="width: 100%; margin: 6px 0;"></audio>`
+                : "<em>No audio preview available.</em>";
 
+                container.innerHTML = `
+                <p><strong>📍 Text:</strong> ${entry.timestamp_text}</p>
+                <p><strong>🎭 Emotion:</strong> ${entry.emotion}</p>
+                ${preview}
+                <input type="hidden" value="${sfxList[0]}" />
+                <div style="margin-top: 0.5rem;">
+                    <button onclick="acceptSfx(${i}, '${entry.emotion}', '${sfxList[0]}')">✅ Accept</button>
+                    <button onclick="rejectSfx(${i})">❌ Reject</button>
+                    <select onchange="replaceSfx(${i}, this.value)">
+                        ${sfxList.map(url => `<option value="${url}">${url.split("/").pop()}</option>`).join("")}
+                    </select>
+                </div>
+            `;
+
+            timeline.appendChild(container);
+
+            if (sfxList.length) {
+                selectedSoundFX[i] = { emotion: entry.emotion, sfxUrl: sfxList[0] };
+            }
+        });
+
+        renderSfxDebug();
     } catch (err) {
         resultEl.innerText = `❌ Analysis failed: ${err.message}`;
     }
 }
+
+const timeline = document.getElementById("soundEffectTimeline");
+timeline.innerHTML = "<h4>🎧 AI-Driven Sound Suggestions</h4>";
+
+window.selectedSoundFX = {};
+
+(data.sound_effect_suggestions || []).forEach((entry, i) => {
+    const container = document.createElement("div");
+    container.className = "sound-suggestion";
+    container.style.marginBottom = "1.25rem";
+    container.style.padding = "12px";
+    container.style.border = "1px solid #ccc";
+    container.style.borderRadius = "10px";
+    container.style.background = "#f9f9f9";
+
+    const sfxList = entry.sfx_options || [];
+    const preview = sfxList.length
+        ? `<audio controls src="${sfxList[0]}" style="width: 100%; margin: 6px 0;"></audio>`
+        : "<em>No audio preview available.</em>";
+
+    container.innerHTML = `
+        <p><strong>📍 Text:</strong> ${entry.timestamp_text}</p>
+        <p><strong>🎭 Emotion:</strong> ${entry.emotion}</p>
+        ${preview}
+        <div style="margin-top: 0.5rem;">
+            <button onclick="acceptSfx(${i}, '${entry.emotion}', '${sfxList[0]}')">✅ Accept</button>
+            <button onclick="rejectSfx(${i})">❌ Reject</button>
+            <select onchange="replaceSfx(${i}, this.value)">
+                ${sfxList.map(url => `<option value="${url}">${url.split("/").pop()}</option>`).join("")}
+            </select>
+        </div>
+    `;
+
+    timeline.appendChild(container);
+
+    if (sfxList.length) {
+        selectedSoundFX[i] = { emotion: entry.emotion, sfxUrl: sfxList[0] };
+    }
+});
+
+renderSfxDebug();
+
+
 
 
 async function cutAudio() {
@@ -664,4 +725,28 @@ async function consumeUserCredits(featureKey) {
     await fetchUserCredits(CURRENT_USER_ID);
 
     return result.data;
+}
+
+function acceptSfx(index, emotion, url) {
+    selectedSoundFX[index] = { emotion, sfxUrl: url };
+    renderSfxDebug();
+}
+
+function rejectSfx(index) {
+    delete selectedSoundFX[index];
+    renderSfxDebug();
+}
+
+function replaceSfx(index, url) {
+    if (selectedSoundFX[index]) {
+        selectedSoundFX[index].sfxUrl = url;
+        renderSfxDebug();
+    }
+}
+
+function renderSfxDebug() {
+    const debug = document.getElementById("approvedSfxDebug");
+    debug.innerText = `🎛️ Selected SFX:\n` + Object.entries(selectedSoundFX)
+        .map(([k, v]) => `#${k} → ${v.emotion}: ${v.sfxUrl.split("/").pop()}`)
+        .join("\n");
 }

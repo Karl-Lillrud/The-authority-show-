@@ -7,12 +7,15 @@ import logging
 import subprocess
 import base64
 import requests
+import time
 from pathlib import Path
 from typing import List
 from transformers import pipeline
+from io import BytesIO
 import streamlit as st  # Needed for download_button_text
 
 API_BASE_URL = os.getenv("API_BASE_URL")
+ELEVENLABS_API_KEY = os.getenv("ELEVENLABS_API_KEY")
 logger = logging.getLogger(__name__)
 
 def format_transcription(transcription):
@@ -33,26 +36,23 @@ def download_button_text(label, text, filename, key_prefix=""):
 
 
 def translate_text(text: str, target_language: str) -> str:
-    """
-    Translate the given text to the target language using GPT.
-    """
-    if not text.strip():
-        return ""
-
     prompt = f"Translate the following transcript to {target_language}:\n\n{text}"
-
-    try:
-        response = openai.ChatCompletion.create(
-            model="gpt-4",
-            messages=[
-                {"role": "system", "content": "You are a professional translator."},
-                {"role": "user", "content": prompt}
-            ]
-        )
-        return response["choices"][0]["message"]["content"].strip()
-    except Exception as e:
-        logger.error(f"❌ Translation failed: {str(e)}")
-        return f"Error during translation: {str(e)}"
+    retries = 3
+    for attempt in range(retries):
+        try:
+            response = openai.ChatCompletion.create(
+                model="gpt-4",
+                messages=[
+                    {"role": "system", "content": "You are a professional translator."},
+                    {"role": "user", "content": prompt}
+                ]
+            )
+            return response["choices"][0]["message"]["content"].strip()
+        except Exception as e:
+            logger.warning(f"Retry {attempt+1}/{retries} failed: {e}")
+            time.sleep(1)
+    logger.error("❌ Translation permanently failed after retries.")
+    return "⚠️ Failed to translate. Try again later."
 
 def generate_ai_suggestions(text):
     prompt = f"""
@@ -239,22 +239,58 @@ def generate_quote_images(quotes: List[str]) -> List[str]:
             urls.append("")
     return urls
 
-def suggest_sound_effects(emotion_data: List[dict]) -> List[dict]:
-    """
-    For each sentence with its emotion, suggest a sound effect.
-    """
+def fetch_sfx_for_emotion(emotion: str, limit=1) -> List[str]:
+    try:
+        generation_url = "https://api.elevenlabs.io/v1/sound-generation"
+        headers = {
+            "xi-api-key": ELEVENLABS_API_KEY,
+            "Content-Type": "application/json"
+        }
+
+        payload = {
+            "text": f"{emotion} sound effect",
+            "duration_seconds": 4,
+            "prompt_influence": 0.6
+        }
+
+        # 🔄 Send request
+        res = requests.post(generation_url, headers=headers, json=payload)
+        print("📡 SFX gen status:", res.status_code)
+        print("📥 SFX headers:", res.headers)
+
+        if "audio/mpeg" in res.headers.get("Content-Type", ""):
+            audio_data = res.content
+            buffer = BytesIO(audio_data)
+
+            # Encode audio data to base64 string for frontend embedding
+            b64_audio = base64.b64encode(buffer.read()).decode("utf-8")
+            return [f"data:audio/mpeg;base64,{b64_audio}"]
+
+        else:
+            print("⚠️ Unexpected content type:", res.headers.get("Content-Type"))
+            return []
+
+    except Exception as e:
+        print(f"⚠️ Failed to fetch SFX for '{emotion}': {e}")
+        return []
+
+def suggest_sound_effects(emotion_data):
     suggestions = []
+
     for entry in emotion_data:
-        sentence = entry["text"]
-        top_emotion = entry["emotions"][0]["label"]
+        emotion = entry["emotions"][0]["label"]
+        text = entry["text"]
 
-        # Map emotion to a prompt (can be improved with GPT later)
-        effect_prompt = f"{top_emotion} ambient background sound for: '{sentence}'"
+        sfx_options = fetch_sfx_for_emotion(emotion)
 
-        # Send this to ElevenLabs API or use local mapping
         suggestions.append({
-            "timestamp_text": sentence,
-            "emotion": top_emotion,
-            "suggested_effect": f"https://elevenlabs.io/sfx?q={top_emotion}"  # Placeholder
+            "timestamp_text": text,
+            "emotion": emotion,
+            "sfx_options": sfx_options
         })
+
     return suggestions
+
+
+
+
