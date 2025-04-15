@@ -2,6 +2,9 @@ from flask import Blueprint, request, jsonify, g, render_template
 from backend.models.accounts import AccountSchema
 import logging
 from backend.repository.account_repository import AccountRepository
+import uuid
+from datetime import datetime
+from backend.database.mongo_connection import collection  # Add this import
 
 # Define Blueprint
 account_bp = Blueprint("account_bp", __name__)
@@ -31,6 +34,17 @@ def get_account_route():
         return jsonify({"error": "Unauthorized"}), 401
 
     response, status_code = account_repo.get_account_by_user(str(g.user_id))
+    if status_code == 404:  # If account not found, create one
+        account_data = {
+            "id": str(uuid.uuid4()),
+            "userId": str(g.user_id),
+            "email": g.email,
+            "created_at": datetime.utcnow(),
+            "isActive": True,
+        }
+        collection.database.Accounts.insert_one(account_data)
+        response = account_data
+        status_code = 201
     return jsonify(response), status_code
 
 # Route to update user profile data

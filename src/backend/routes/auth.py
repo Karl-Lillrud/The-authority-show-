@@ -214,6 +214,7 @@ def verify_login_token():
         return jsonify({"error": "An unexpected error occurred"}), 500
 
 
+# Ensure account creation logic is properly integrated
 @auth_bp.route("/signin", methods=["POST"], endpoint="signin")
 def signin():
     """
@@ -232,6 +233,19 @@ def signin():
         if user:
             session["user_id"] = str(user["_id"])  # Set user_id in session
             session["email"] = user["email"]
+            
+            # Ensure account exists for the user
+            account = collection.database.Accounts.find_one({"userId": str(user["_id"])})
+            if not account:
+                account_data = {
+                    "id": str(uuid.uuid4()),
+                    "userId": str(user["_id"]),
+                    "email": email,
+                    "created_at": datetime.utcnow(),
+                    "isActive": True,
+                }
+                collection.database.Accounts.insert_one(account_data)
+
             return jsonify({"redirect_url": "/podprofile"}), 200  # Redirect to /podprofile
         else:
             # If user is not found, create a new account
