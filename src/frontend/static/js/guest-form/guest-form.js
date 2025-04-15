@@ -5,7 +5,7 @@ const availableDates = ["2025-03-10", "2025-03-15", "2025-03-20"]
 
 // Function for social media submission
 let socialMediaCount = 0
-const maxSocialMedia = 3
+const maxSocialMedia = 6
 
 // Loads saved social media on page load
 document.addEventListener("DOMContentLoaded", loadSavedSocialMedia)
