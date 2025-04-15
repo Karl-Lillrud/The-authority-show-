@@ -154,8 +154,14 @@ function showTab(tabName) {
                 <button class="btn ai-edit-button" onclick="aiCutAudio()">
                   ${labelWithCredits("🧠 Run AI Cut", "ai_audio_cutting")}
                 </button>
+                <div class="result-field">
+                <h4>Transcript</h4>
                 <pre id="aiTranscript"></pre>
+                </div>
+                <div class="result-field">
+                <h4>Suggested Cuts</h4>
                 <pre id="aiSuggestedCuts"></pre>
+                </div>
             </div>
         `;
     } else if (tabName === 'video') {
@@ -565,27 +571,44 @@ async function cutAudio() {
 }
 
 async function aiCutAudio() {
-    if (!activeAudioId) return alert("No audio loaded.");
+    if (!activeAudioId) {
+        alert('No audio loaded.');
+        return;
+    }
 
     try {
         await consumeUserCredits("ai_audio_cutting");
     } catch (err) {
-        return alert("❌ Not enough credits: " + err.message);
+        alert(`❌ Not enough credits: ${err.message}`);
+        return;
     }
 
-    const res = await fetch('/ai_cut_audio', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ file_id: activeAudioId })
-    });
+    // Optionally show a spinner or processing message in the transcript container
+    document.getElementById("aiTranscript").innerText = "🔄 Processing AI Cut... Please wait.";
 
-    const data = await res.json();
-    if (!res.ok || !data.cleaned_transcript) return alert("❌ AI cut failed.");
+    try {
+        const response = await fetch('/ai_cut_audio', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ file_id: activeAudioId })
+        });
 
-    document.getElementById("aiTranscript").innerText = data.cleaned_transcript;
-    document.getElementById("aiSuggestedCuts").innerText = (data.suggested_cuts || [])
-        .map(c => `💬 "${c.sentence}" (${c.start}s - ${c.end}s) | Confidence: ${c.certainty_score}`)
-        .join("\n") || "No suggested cuts found.";
+        if (response.ok) {
+            const data = await response.json();
+            // Update transcript container
+            document.getElementById("aiTranscript").innerText = data.cleaned_transcript || "No transcript available.";
+
+            // Update suggested cuts container
+            document.getElementById("aiSuggestedCuts").innerText =
+                (data.suggested_cuts || [])
+                    .map(c => `💬 "${c.sentence}" (${c.start}s - ${c.end}s) | Confidence: ${c.certainty_score}`)
+                    .join("\n") || "No suggested cuts found.";
+        } else {
+            alert(`❌ Error: ${response.status} - ${response.statusText}`);
+        }
+    } catch (error) {
+        alert(`❌ AI cut failed: ${error.message}`);
+    }
 }
 
 async function enhanceVideo() {
