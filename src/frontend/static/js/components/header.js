@@ -9,12 +9,8 @@ document.addEventListener("DOMContentLoaded", () => {
   const buyBtn = document.getElementById("buy-credits-btn");
   if (buyBtn) {
     buyBtn.addEventListener("click", () => {
-      const user_id = localStorage.getItem("user_id");
-      if (!user_id) {
-        alert("You must be logged in to purchase credits.");
-        return;
-      }
-      window.location.href = `/billing?user_id=${user_id}`;
+      // Remove localStorage dependency and navigate directly to billing
+      window.location.href = `/billing`;
     });
   }
 });
@@ -101,24 +97,27 @@ async function populateHeaderPodcastDropdown() {
 
 // Function to fetch and display user credits
 async function populateUserCredits() {
-  let user_id = new URLSearchParams(window.location.search).get("user_id");
-  if (!user_id || user_id === "null") {
-    user_id = currentUserID || localStorage.getItem("user_id");
-  }
-  console.log("populateUserCredits: user_id =", user_id);
-  if (!user_id) {
-    console.warn("No user id provided, credits will not be fetched.");
-    return;
-  }
-
   try {
-    const response = await fetch(`/api/credits?user_id=${user_id}`);
-    if (!response.ok) throw new Error("Failed to fetch credits");
-    const data = await response.json();
     const creditsElement = document.getElementById("user-credits");
+    if (!creditsElement) return; // Skip if element doesn't exist
+    
+    const response = await fetch('/api/credits', {
+      credentials: 'same-origin' // Include cookies for auth
+    });
+    
+    // Handle non-JSON responses or errors
+    if (!response.ok) {
+      console.warn("Failed to fetch credits:", response.status);
+      creditsElement.textContent = "-";
+      return;
+    }
+
+    const data = await response.json();
     creditsElement.textContent = data.availableCredits;
   } catch (err) {
     console.error("Error fetching user credits:", err);
+    const creditsElement = document.getElementById("user-credits");
+    if (creditsElement) creditsElement.textContent = "-";
   }
 }
 
