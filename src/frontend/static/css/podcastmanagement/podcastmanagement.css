@@ -70,15 +70,6 @@
   margin-bottom: var(--spacing-sm);
 }
 
-.podcast-title {
-  font-size: 1.4rem;
-  font-weight: 700;
-  margin-bottom: 0.5rem;
-  color: rgba(0, 0, 0, 0.85);
-  letter-spacing: -0.5px;
-  line-height: 1.2;
-}
-
 .podcast-meta {
   color: var(--text-color-light);
   font-size: 0.8rem;
@@ -368,15 +359,6 @@
   gap: var(--spacing-sm);
 }
 
-.detail-title {
-  font-size: 1.8rem;
-  font-weight: 700;
-  margin-bottom: 0.4rem;
-  color: rgba(0, 0, 0, 0.85);
-  letter-spacing: -0.5px;
-  line-height: 1.2;
-}
-
 .detail-category {
   color: var(--highlight-color);
   font-size: 0.9rem;
@@ -591,13 +573,6 @@
 .episode-content {
   flex: 1;
   margin-right: 12px;
-}
-
-.episode-title {
-  font-weight: 600;
-  color: rgba(0, 0, 0, 0.8);
-  margin-bottom: 4px;
-  font-size: 0.9rem;
 }
 
 .episode-meta {
@@ -1518,12 +1493,8 @@ select:invalid {
 }
 
 .section-title {
-  font-size: 1.2rem;
-  margin-bottom: var(--spacing-sm);
-  color: rgba(0, 0, 0, 0.8);
-  font-weight: 700;
   position: relative;
-  padding-bottom: 6px;
+  padding-bottom: var(--spacing-sm);
 }
 
 .section-title::after {
@@ -1610,14 +1581,6 @@ select:invalid {
   align-items: flex-start;
   gap: var(--spacing-xs);
   margin-bottom: var(--spacing-xs);
-}
-
-.episode-title {
-  font-size: 0.95rem;
-  font-weight: 600;
-  color: rgba(0, 0, 0, 0.8);
-  margin: 0;
-  flex: 1;
 }
 
 .episode-status {

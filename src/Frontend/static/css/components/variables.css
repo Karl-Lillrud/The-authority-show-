@@ -43,7 +43,7 @@
 
   /* Spacing */
   --spacing-xs: 4px;
-  --spacing-sm: 8px;
+  --spacing-sm: 8px;  /* Margin & padding for headings, etc */
   --spacing-sm2: 12px;
   --spacing-md: 16px;
   --spacing-md2: 20px;
