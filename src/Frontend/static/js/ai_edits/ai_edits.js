@@ -168,9 +168,12 @@ function showTab(tabName) {
                 <video id="originalVideoPlayer" controls style="width: 100%"></video>
             </div>
             <button class="btn ai-edit-button" onclick="enhanceVideo()">
-              ${labelWithCredits("✨ Enhance Video", "video_enhancement")}
+            ${labelWithCredits("✨ Enhance Video", "video_enhancement")}
             </button>
             <div id="videoResult"></div>
+            <a id="downloadVideo" class="btn ai-edit-button" download="enhanced_video.mp4" style="display: none;">
+            📥 Download Enhanced Video
+            </a>
         `;
     }
 }
@@ -654,11 +657,16 @@ async function enhanceVideo() {
 
         const videoURL = `/get_video/${processed_id}`;
         videoResult.innerHTML = `<video controls src="${videoURL}" style="width: 100%; margin-top: 1rem;"></video>`;
+
+        // Update the download button for video
+        const dl = document.getElementById("downloadVideo");
+        dl.href = videoURL;
+        dl.style.display = "inline-block";
+
     } catch (err) {
         videoResult.innerText = `❌ ${err.message}`;
     }
 }
-
 
 function previewOriginalAudio() {
     const fileInput = document.getElementById('audioUploader');
