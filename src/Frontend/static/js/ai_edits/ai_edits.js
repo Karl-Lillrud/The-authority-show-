@@ -454,91 +454,47 @@ async function analyzeEnhancedAudio() {
 📊 Background Noise: ${data.background_noise}
         `;
 
+        
         const timeline = document.getElementById("soundEffectTimeline");
-        timeline.innerHTML = "<h4>🎧 AI-Driven Sound Suggestions</h4>";
+        timeline.innerHTML = `<h4>🎧 AI-Driven Sound Suggestions</h4>`;
 
         window.selectedSoundFX = {};
 
         (data.sound_effect_suggestions || []).forEach((entry, i) => {
-            const container = document.createElement("div");
-            container.className = "sound-suggestion";
-            container.style.marginBottom = "1.25rem";
-            container.style.padding = "12px";
-            container.style.border = "1px solid #ccc";
-            container.style.borderRadius = "10px";
-            container.style.background = "#f9f9f9";
+        const container = document.createElement("div");
+        container.className = "sound-suggestion";
 
-            const sfxList = entry.sfx_options || [];
-            const preview = sfxList.length
-                ? `<audio controls src="${sfxList[0]}" style="width: 100%; margin: 6px 0;"></audio>`
-                : "<em>No audio preview available.</em>";
+        const sfxList = entry.sfx_options || [];
+        const preview = sfxList.length
+            ? `<audio controls src="${sfxList[0]}" class="sfx-preview"></audio>`
+            : "<em>No audio preview available.</em>";
 
-                container.innerHTML = `
-                <p><strong>📍 Text:</strong> ${entry.timestamp_text}</p>
-                <p><strong>🎭 Emotion:</strong> ${entry.emotion}</p>
-                ${preview}
-                <div style="margin-top: 0.5rem;">
-                    <button onclick="acceptSfx(${i}, '${entry.emotion}', '${sfxList[0]}')">✅ Accept</button>
-                    <button onclick="rejectSfx(${i})">❌ Reject</button>
-                    <select onchange="replaceSfx(${i}, this.value)">
-                        ${sfxList.map(url => `<option value="${url}">${url.split("/").pop()}</option>`).join("")}
-                    </select>
-                </div>
-            `;
+        container.innerHTML = `
+            <p class="sfx-text"><strong>📍 Text:</strong> ${entry.timestamp_text}</p>
+            <p class="sfx-emotion"><strong>🎭 Emotion:</strong> ${entry.emotion}</p>
+            ${preview}
+            <div class="sfx-actions">
+            <button class="btn ai-sound-sug-button" onclick="acceptSfx(${i}, '${entry.emotion}', '${sfxList[0]}')">✅ Accept</button>
+            <button class="btn ai-sound-sug-button" onclick="rejectSfx(${i})">❌ Reject</button>
+            <select class="sfx-select" onchange="replaceSfx(${i}, this.value)">
+                ${sfxList.map(url => `<option value="${url}">${url.split("/").pop()}</option>`).join('')}
+            </select>
+            </div>
+        `;
 
-            timeline.appendChild(container);
+        timeline.appendChild(container);
 
-            if (sfxList.length) {
-                selectedSoundFX[i] = { emotion: entry.emotion, sfxUrl: sfxList[0] };
-            }
+        if (sfxList.length) {
+            selectedSoundFX[i] = { emotion: entry.emotion, sfxUrl: sfxList[0] };
+        }
         });
 
         renderSfxDebug();
+
     } catch (err) {
         resultEl.innerText = `❌ Analysis failed: ${err.message}`;
     }
 }
-
-const timeline = document.getElementById("soundEffectTimeline");
-timeline.innerHTML = "<h4>🎧 AI-Driven Sound Suggestions</h4>";
-
-window.selectedSoundFX = {};
-
-(data.sound_effect_suggestions || []).forEach((entry, i) => {
-    const container = document.createElement("div");
-    container.className = "sound-suggestion";
-    container.style.marginBottom = "1.25rem";
-    container.style.padding = "12px";
-    container.style.border = "1px solid #ccc";
-    container.style.borderRadius = "10px";
-    container.style.background = "#f9f9f9";
-
-    const sfxList = entry.sfx_options || [];
-    const preview = sfxList.length
-        ? `<audio controls src="${sfxList[0]}" style="width: 100%; margin: 6px 0;"></audio>`
-        : "<em>No audio preview available.</em>";
-
-    container.innerHTML = `
-        <p><strong>📍 Text:</strong> ${entry.timestamp_text}</p>
-        <p><strong>🎭 Emotion:</strong> ${entry.emotion}</p>
-        ${preview}
-        <div style="margin-top: 0.5rem;">
-            <button onclick="acceptSfx(${i}, '${entry.emotion}', '${sfxList[0]}')">✅ Accept</button>
-            <button onclick="rejectSfx(${i})">❌ Reject</button>
-            <select onchange="replaceSfx(${i}, this.value)">
-                ${sfxList.map(url => `<option value="${url}">${url.split("/").pop()}</option>`).join("")}
-            </select>
-        </div>
-    `;
-
-    timeline.appendChild(container);
-
-    if (sfxList.length) {
-        selectedSoundFX[i] = { emotion: entry.emotion, sfxUrl: sfxList[0] };
-    }
-});
-
-renderSfxDebug();
 
 async function cutAudio() {
     const start = parseFloat(document.getElementById("startTime").value);
