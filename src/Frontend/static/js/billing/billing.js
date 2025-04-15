@@ -14,7 +14,7 @@ async function buyCredits(credits, amount) {
 
     const data = await res.json();
     if (data.sessionId) {
-      const stripe = Stripe("YOUR_STRIPE_PUBLIC_KEY"); // Replace with your Stripe public key
+      const stripe = Stripe("pk_test_51R4IEVPSYBEkSARW1VDrIwirpgzraNlH1Ms4JDcrHBytkClnLwLIdaTV6zb9FrwYoBmpRqgtnJXGR5Q0VUKYfX7s00kmz7AEQk"); 
       await stripe.redirectToCheckout({ sessionId: data.sessionId });
     } else {
       document.getElementById("checkoutStatus").textContent =
