@@ -131,7 +131,6 @@ function showTab(tabName) {
                 </button>
                 <pre id="analysisResults"></pre>
                 <div id="soundEffectTimeline" style="margin-top: 1rem;"></div>
-                <div id="approvedSfxDebug" style="font-size: 0.9em; color: gray;"></div>
                 <a id="downloadEnhanced" class="btn ai-edit-button" download="processed_audio.wav">
                      📥 Download Processed Audio
                 </a>
@@ -482,7 +481,6 @@ async function analyzeEnhancedAudio() {
                 <p><strong>📍 Text:</strong> ${entry.timestamp_text}</p>
                 <p><strong>🎭 Emotion:</strong> ${entry.emotion}</p>
                 ${preview}
-                <input type="hidden" value="${sfxList[0]}" />
                 <div style="margin-top: 0.5rem;">
                     <button onclick="acceptSfx(${i}, '${entry.emotion}', '${sfxList[0]}')">✅ Accept</button>
                     <button onclick="rejectSfx(${i})">❌ Reject</button>
@@ -752,9 +750,4 @@ function replaceSfx(index, url) {
     }
 }
 
-function renderSfxDebug() {
-    const debug = document.getElementById("approvedSfxDebug");
-    debug.innerText = `🎛️ Selected SFX:\n` + Object.entries(selectedSoundFX)
-        .map(([k, v]) => `#${k} → ${v.emotion}: ${v.sfxUrl.split("/").pop()}`)
-        .join("\n");
-}
+
