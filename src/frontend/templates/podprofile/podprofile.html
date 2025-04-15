@@ -15,6 +15,10 @@
     />
     <link
       rel="stylesheet"
+      href="{{ url_for('static', filename='css/components/general.css') }}"
+    />
+    <link
+      rel="stylesheet"
       href="{{ url_for('static', filename='css/podprofile/podprofile.css') }}"
     />
     <link
@@ -67,7 +71,7 @@
         
         <!-- Connect Your Calendar Button -->
         <div class="form-group">
-          <div class="label-group" style="display: inline-flex; align-items: center; gap: 0.25rem;">
+          <div class="label-group">
             <button class="help-button calendar-help-button" title="Click to learn more">?</button>
             <span class="help-text">
               To connect your Google Calendar, click the button below and follow the
@@ -82,12 +86,9 @@
 
         <form id="podNameForm">
           <div class="form-group">
-            <div
-              class="label-group"
-              style="display: inline-flex; align-items: center; gap: 0.25rem"
-            >
-              <label for="podRss">RSS</label>
-              <button class="help-button">?</button>
+            <div class="label-group">
+              <label for="podRss" id="rssLabel">RSS</label>
+              <button class="help-button" id="rss-help-button">?</button>
               <span class="help-text">
                 To find your podcast's RSS feed URL, log in to your podcast
                 hosting platform, navigate to your podcast settings or
@@ -105,12 +106,7 @@
             <button type="button" class="button-primary" id="goToEmailSection">
               Next
             </button>
-            <button
-              type="button"
-              class="button-secondary"
-              id="skipButton"
-              onclick="window.location.href='/podcastmanagement'"
-            >
+            <button type="button" class="button-secondary" id="skipButton" onclick="window.location.href='/podcastmanagement'">
               Skip
             </button>
           </div>

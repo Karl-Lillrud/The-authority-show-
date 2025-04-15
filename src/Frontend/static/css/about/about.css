@@ -1,16 +1,3 @@
-* {
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
-}
-
-body {
-    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
-    line-height: 1.6;
-    color: var(--about-dark);
-    background-color: var(--about-light);
-}
-
 /* Typography */
 h1, h2, h3, h4, h5, h6 {
     font-weight: 700;

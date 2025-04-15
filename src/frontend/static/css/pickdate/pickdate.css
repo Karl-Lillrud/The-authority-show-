@@ -1,11 +1,3 @@
-body {
-  margin: 0;
-  font-family: var(--font-primary);
-  background-color: var(--background-light);
-  color: var(--text-color-light);
-  transition: background-color 0.3s ease, color 0.3s ease;
-}
-
 /* Header Styling using Neumorphism */
 .neu-header {
   background-color: var(--background-light);
