@@ -1,6 +1,6 @@
 body {
-    font-family: 'Inter', sans-serif;
-    background-color: #F4F4F4;
+    font-family: var(--font-primary);
+    background-color: var(--background-light);
     color: #404040;
     margin: 0;
     padding: 0;
@@ -9,16 +9,16 @@ body {
   .container {
     max-width: 800px;
     margin: 4rem auto;
-    background: #ffffff;
+    background: var(--background-light);
     padding: 2rem;
-    border-radius: 1rem;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+    border-radius: var(--radius-medium);
+    box-shadow: var(--card-shadow);
   }
   
   h1 {
     font-size: 2rem;
     font-weight: bold;
-    color: #FF7300;
+    color: var(--highlight-color);
     margin-bottom: 1rem;
   }
   
@@ -34,12 +34,12 @@ body {
   }
   
   .credit-card {
-    background-color: #ffffff;
+    background-color: var(--card-bg-light);
     border: 1px solid #e5e5e5;
     padding: 1.5rem;
-    border-radius: 1rem;
-    transition: all 0.3s ease;
-    box-shadow: 0 2px 6px rgba(255, 115, 0, 0.05);
+    border-radius: var(--radius-medium);
+    transition: all var(--transition-normal);
+    box-shadow: var(--card-shadow2);
   }
   
   .credit-card:hover {
@@ -67,19 +67,20 @@ body {
   }
   
   .credit-card button {
-    background-color: #FF7300;
+    background-color: var(--highlight-color);
     color: white;
     font-weight: 600;
     border: none;
-    border-radius: 1rem;
+    border-radius: var(--radius-medium);
     padding: 0.5rem 1.5rem;
     cursor: pointer;
-    transition: all 0.3s ease;
+    transition: all var(--transition-normal);
     width: 100%;
+    box-shadow: var(--button-shadow);
   }
   
   .credit-card button:hover {
-    background-color: #e86400;
+    background-color: var(--highlight-hover);
     box-shadow: 0 0 8px rgba(255, 115, 0, 0.4);
   }
   
