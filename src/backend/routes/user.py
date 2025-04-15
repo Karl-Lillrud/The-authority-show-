@@ -6,7 +6,7 @@ from datetime import datetime
 from backend.database.mongo_connection import collection  # Add this import
 
 # Define Blueprint
-user_bp = Blueprint("user_bp", __name__)
+user_bp = Blueprint("user_bp", __name__, url_prefix="/user")  # Use a unique name
 
 # Instantiate the User Repository
 user_repo = UserRepository()

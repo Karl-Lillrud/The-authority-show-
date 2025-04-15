@@ -35,7 +35,7 @@ from backend.routes.audio_routes import audio_bp
 from backend.routes.video_routes import video_bp
 from backend.routes.transcription import transcription_bp
 
-from backend.routes.guest_form import guest_form_bp  # Import the guest_form_bp blueprint
+from backend.routes.guest_form import guest_form_bp  # Ensure the import matches the updated blueprint name
 from backend.routes.auth import auth_bp  # Import the auth blueprint
 
 from colorama import Fore, Style, init  # Import colorama for styled logs
@@ -74,7 +74,7 @@ app.secret_key = os.getenv("SECRET_KEY")
 app.config["PREFERRED URL SCHEME"] = "https"
 
 # Register blueprints for different routes
-app.register_blueprint(user_bp)
+app.register_blueprint(user_bp, name="user_bp_unique")  # Ensure the name matches the updated blueprint
 app.register_blueprint(podcast_bp)  # Register the podcast blueprint
 app.register_blueprint(dashboard_bp)
 app.register_blueprint(pod_management_bp)
@@ -104,13 +104,10 @@ app.register_blueprint(video_bp, name="video_secondary")
 app.register_blueprint(billing_bp)
 
 
-app.register_blueprint(guest_form_bp, url_prefix="/guest-form")  # Register the guest_form blueprint with URL prefix
+app.register_blueprint(guest_form_bp, url_prefix="/guest-form")  # Use the updated blueprint name
 
 
-app.register_blueprint(
-    guest_form_bp, url_prefix="/guest-form"
-)  # Register the guest_form blueprint with URL prefix
-app.register_blueprint(user_bp)
+app.register_blueprint(user_bp)  # Ensure the name matches the updated Blueprint
 
 app.register_blueprint(landingpage_bp)
 

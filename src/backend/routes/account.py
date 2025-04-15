@@ -1,10 +1,11 @@
-from flask import Blueprint, request, jsonify, g, render_template
+from flask import Blueprint, request, jsonify, g, render_template, session
 from backend.models.accounts import AccountSchema
 import logging
 from backend.repository.account_repository import AccountRepository
 import uuid
 from datetime import datetime
 from backend.database.mongo_connection import collection  # Add this import
+from bson import ObjectId  # Import ObjectId for type checking
 
 # Define Blueprint
 account_bp = Blueprint("account_bp", __name__)
@@ -14,6 +15,12 @@ account_repo = AccountRepository()
 
 # Configure logger
 logger = logging.getLogger(__name__)
+
+# Middleware to populate g.email
+@account_bp.before_request
+def populate_user_context():
+    if not hasattr(g, "email"):
+        g.email = session.get("email")  # Retrieve email from session if available
 
 # SHOULD ONLY BE USED FOR SPECIFIC DATA CRUD OPERATIONS
 # EXTRA FUNCTIONALITY BESIDES CRUD OPERATIONS SHOULD BE IN SERVICES
@@ -26,7 +33,7 @@ def create_account_route():
 
         # Kontrollera om ett konto redan finns för e-postadressen
         existing_account = collection.database.Accounts.find_one({"email": email})
-        if existing_account:
+        if (existing_account):
             logger.warning(f"Account already exists for email {email}.")
             return jsonify({"error": "Account already exists for this email."}), 400
 
@@ -71,6 +78,14 @@ def get_account_route():
         collection.database.Accounts.insert_one(account_data)
         response = account_data
         status_code = 201
+
+    # Convert ObjectId fields to strings
+    if isinstance(response, dict):
+        response = {
+            key: str(value) if isinstance(value, ObjectId) else value
+            for key, value in response.items()
+        }
+
     return jsonify(response), status_code
 
 # Route to update user profile data
