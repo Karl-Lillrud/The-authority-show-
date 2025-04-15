@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Enter Reset Code</title>
+    <!-- global stylesheets -->
+    <link
+    rel="stylesheet"
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
+    />
+    <link
+      rel="stylesheet"
+      href="{{ url_for('static', filename='css/components/variables.css') }}"
+    />
+    <link
+      rel="stylesheet"
+      href="{{ url_for('static', filename='css/components/general.css') }}"
+    />
+    <link
+      rel="stylesheet"
+      href="{{ url_for('static', filename='css/forgot-password/forgot-password.css') }}"
+    />
+  </head>
+  <body>
+    <div class="logo-container">
+      <img
+        src="{{ url_for('static', filename='images/PodManagerLogo.png') }}"
+        alt="PodManager Logo"
+      />
+    </div>
+    <div class="image">
+      <img
+        src="{{ url_for('static', filename='images/WhatsApp Image.jpeg') }}"
+        alt="Beskrivning av bilden"
+      />
+    </div>
+    <div class="center-box">
+      <h1 class="title">Enter Reset Code</h1>
+      <p>Please enter the reset code you received via email to proceed.</p>
+
+      <div
+        id="success-message"
+        class="success-message"
+        style="display: none"
+      ></div>
+      <div id="error-message" class="error-message" style="display: none"></div>
+
+      <form id="enterCodeForm">
+        <div class="input-group">
+          <input
+            type="email"
+            id="email"
+            class="input"
+            placeholder="Enter your email"
+            required
+          />
+        </div>
+        <div class="input-group">
+          <input
+            type="text"
+            id="code"
+            class="input"
+            placeholder="Enter reset code"
+            required
+          />
+        </div>
+        <div class="form-actions" style="margin-top: 40px">
+          <button type="submit" class="button button-primary">
+            Verify Code
+          </button>
+        </div>
+      </form>
+
+      <div class="form-actions">
+        <button id="resendCode" class="button">Resend Code</button>
+      </div>
+      <p><a href="/" class="link">Back to Login</a></p>
+    </div>
+    <script type="module" src="{{ url_for('static', filename='js/forgotpassword/enter-code.js') }}"></script>
+  </body>
+</html>

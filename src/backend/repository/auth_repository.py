@@ -232,140 +232,90 @@ class AuthRepository:
                     logger.info(
                         f"✅ New user {user_id}. Creating default team, podcast, and episodes."
                     )
-
-                    # 1. Create Default Team
-                    team_data = {
-                        "name": f"{email.split('@')[0]}'s Team",
-                        "members": [
-                            {
-                                "userId": str(uuid.uuid4()),
-                                "email": "john.doe@example.com",
-                                "fullName": "John Doe",
-                                "role": "Copywriter",
-                                "completedTasks": 42,
-                                "points": 1250,
-                                "monthsWon": 3,
-                                "goal": 85,
-                            },
-                            {
-                                "userId": str(uuid.uuid4()),
-                                "email": "anna.smith@example.com",
-                                "fullName": "Anna Smith",
-                                "role": "Researcher",
-                                "completedTasks": 38,
-                                "points": 1120,
-                                "monthsWon": 2,
-                                "goal": 76,
-                            },
-                            {
-                                "userId": str(uuid.uuid4()),
-                                "email": "robert.johnson@example.com",
-                                "fullName": "Robert Johnson",
-                                "role": "Webmaster",
-                                "completedTasks": 35,
-                                "points": 980,
-                                "monthsWon": 1,
-                                "goal": 68,
-                            },
-                        ],
+                    # 1. Create Default Podcast (linked to account and team)
+                    podcast_data = {
+                        "podName": "My Example Podcast",
+                        "ownerName": email.split("@")[0],  # Example owner name
+                        # accountId is derived from user_id within add_podcast
+                        "teamId": "",  # Link podcast to the team
+                        "logoUrl": "https://d3t3ozftmdmh3i.cloudfront.net/staging/podcast_uploaded_nologo/42425076/42425076-1731361782842-b9ba09e6cabe6.jpg",
+                        "description": "This is a sample podcast created for demonstration purposes.",
+                        "category": "Technology",
+                        "language": "English",
+                        "hostName": "Karl Lillrud",
+                        "ownerName": "Karl Lillrud",
+                        "podUrl": "https://www.example.com",
                     }
-                    team_response, team_status = self.team_repo.add_team(
-                        user_id, email, team_data
+
+                    podcast_response, podcast_status = (
+                        self.podcast_repo.add_podcast(user_id, podcast_data)
                     )
 
-                    if team_status == 201:
-                        team_id = team_response["team_id"]
+                    if podcast_status == 201:
+                        podcast_id = podcast_response["podcast_id"]
                         logger.info(
-                            f"✅ Default team created: {team_id} for user {user_id}"
+                            f"✅ Default podcast created: {podcast_id} for user {user_id}"
                         )
 
-                        # 2. Create Default Podcast (linked to account and team)
-                        podcast_data = {
-                            "podName": "My Example Podcast",
-                            "ownerName": email.split("@")[0],  # Example owner name
-                            # accountId is derived from user_id within add_podcast
-                            "teamId": team_id,  # Link podcast to the team
-                            "logoUrl": "https://d3t3ozftmdmh3i.cloudfront.net/staging/podcast_uploaded_nologo/42425076/42425076-1731361782842-b9ba09e6cabe6.jpg",
-                            "description": "This is a sample podcast created for demonstration purposes.",
-                            "category": "Technology",
-                            "language": "English",
-                            "hostName": "Karl Lillrud",
-                            "ownerName": "Karl Lillrud",
-                            "podUrl": "https://www.example.com",
+                        # 2. Create Example Episodes
+                        now = datetime.now(timezone.utc)
+                        one_week_future = now + timedelta(days=7)
+                        two_weeks_future = now + timedelta(days=14)
+
+                        episode_data_1 = {
+                            "podcastId": podcast_id,
+                            "title": "Example Episode 1: Getting Started",
+                            "description": "This is your first example episode, scheduled for next week.",
+                            "publishDate": one_week_future.isoformat(),
+                            "status": "Not Recorded",  # Changed from "Active" to "Not Recorded"
+                            "recordingAt": one_week_future.isoformat(),
+                            "duration": 45,
+                            "isHidden": False,
+                            "author": email.split("@")[0],
                         }
-                        podcast_response, podcast_status = (
-                            self.podcast_repo.add_podcast(user_id, podcast_data)
+                        episode_data_2 = {
+                            "podcastId": podcast_id,
+                            "title": "Example Episode 2: Exploring Features",
+                            "description": "Discover what you can do with PodManager, scheduled in two weeks.",
+                            "publishDate": two_weeks_future.isoformat(),
+                            "status": "Not Scheduled",  # Changed from "Active" to "Not Scheduled"
+                            "recordingAt": two_weeks_future.isoformat(),
+                            "duration": 60,
+                            "isHidden": False,
+                            "author": email.split("@")[0],
+                        }
+
+                        # Register Episode 1
+                        ep1_resp, ep1_stat = self.episode_repo.register_episode(
+                            episode_data_1, user_id
                         )
-
-                        if podcast_status == 201:
-                            podcast_id = podcast_response["podcast_id"]
+                        if ep1_stat == 201:
                             logger.info(
-                                f"✅ Default podcast created: {podcast_id} for user {user_id}"
+                                f"✅ Example episode 1 created for podcast {podcast_id}"
                             )
-
-                            # 3. Create Example Episodes
-                            now = datetime.now(timezone.utc)
-                            one_week_future = now + timedelta(days=7)
-                            two_weeks_future = now + timedelta(days=14)
-
-                            episode_data_1 = {
-                                "podcastId": podcast_id,
-                                "title": "Example Episode 1: Getting Started",
-                                "description": "This is your first example episode, scheduled for next week.",
-                                "publishDate": one_week_future.isoformat(),
-                                "status": "Not Recorded",  # Changed from "Active" to "Not Recorded"
-                                "recordingAt": one_week_future.isoformat(),
-                                "duration": 45,
-                                "isHidden": False,
-                                "author": email.split("@")[0],
-                            }
-                            episode_data_2 = {
-                                "podcastId": podcast_id,
-                                "title": "Example Episode 2: Exploring Features",
-                                "description": "Discover what you can do with PodManager, scheduled in two weeks.",
-                                "publishDate": two_weeks_future.isoformat(),
-                                "status": "Not Scheduled",  # Changed from "Active" to "Not Scheduled"
-                                "recordingAt": two_weeks_future.isoformat(),
-                                "duration": 60,
-                                "isHidden": False,
-                                "author": email.split("@")[0],
-                            }
-
-                            # Register Episode 1
-                            ep1_resp, ep1_stat = self.episode_repo.register_episode(
-                                episode_data_1, user_id
-                            )
-                            if ep1_stat == 201:
-                                logger.info(
-                                    f"✅ Example episode 1 created for podcast {podcast_id}"
-                                )
-                            else:
-                                logger.error(
-                                    f"❌ Failed to create example episode 1 for user {user_id}: {ep1_resp}"
-                                )
-
-                            # Register Episode 2
-                            ep2_resp, ep2_stat = self.episode_repo.register_episode(
-                                episode_data_2, user_id
-                            )
-                            if ep2_stat == 201:
-                                logger.info(
-                                    f"✅ Example episode 2 created for podcast {podcast_id}"
-                                )
-                            else:
-                                logger.error(
-                                    f"❌ Failed to create example episode 2 for user {user_id}: {ep2_resp}"
-                                )
-
                         else:
                             logger.error(
-                                f"❌ Failed to create default podcast for user {user_id}. Response: {podcast_response}"
+                                f"❌ Failed to create example episode 1 for user {user_id}: {ep1_resp}"
                             )
-                            # Optionally attempt to clean up team if podcast failed? Depends on requirements.
+
+                        # Register Episode 2
+                        ep2_resp, ep2_stat = self.episode_repo.register_episode(
+                            episode_data_2, user_id
+                        )
+                        if ep2_stat == 201:
+                            logger.info(
+                                f"✅ Example episode 2 created for podcast {podcast_id}"
+                            )
+                        else:
+                            logger.error(
+                                f"❌ Failed to create example episode 2 for user {user_id}: {ep2_resp}"
+                            )
                     else:
                         logger.error(
-                            f"❌ Failed to create default team for user {user_id}. Response: {team_response}"
+                            f"❌ Failed to create default podcast for user {user_id}. Response: {podcast_response}"
                         )
+                        # Optionally attempt to clean up team if podcast failed? Depends on requirements.
+                    
                 elif podcast_check_status != 200:
                     logger.warning(
                         f"⚠️ Could not verify podcast presence for user {user_id} (status {podcast_check_status}). Skipping default data creation."

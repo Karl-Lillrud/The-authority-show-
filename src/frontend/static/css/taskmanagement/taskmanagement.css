@@ -1,15 +1,3 @@
-/* Base styles */
-html,
-body {
-  height: 100%;
-  margin: 0;
-  background-color: var(--background-light);
-  font-family: var(--font-primary);
-  color: var(--text-color-light);
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-}
-
 /* App Container */
 .app-container {
   display: flex;
