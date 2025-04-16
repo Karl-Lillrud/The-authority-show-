@@ -54,7 +54,7 @@ p {
 /* General CSS styling for links, buttons, etc */
 /* * * * * * * * * * * * * * * * * * * * * * * */
 
-/* Links */
+/* General Links */
 a {
   color: var(--highlight-color);
   font-weight: 500;
@@ -68,7 +68,7 @@ a:hover {
 }
 
 
-/* Buttons */
+/* General Buttons */
 button {
   border-radius: var(--radius-medium);
   font-weight: 600;
@@ -78,6 +78,7 @@ button {
 }
 
 
+/* Popup Buttons */
 .save-btn, .cancel-btn, .delete-btn {
   padding: 8px 16px;
   border: none;
@@ -117,7 +118,6 @@ button {
 }
 
 
-/* The round close button at the top right of popup windows */
 .close-btn {
   position: absolute;
   top: var(--spacing-sm);

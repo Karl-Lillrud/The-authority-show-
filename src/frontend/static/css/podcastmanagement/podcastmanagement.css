@@ -1008,31 +1008,6 @@
   transform: scale(1);
 }
 
-.close-btn {
-  position: absolute;
-  top: var(--spacing-sm);
-  right: var(--spacing-sm);
-  width: 32px;
-  height: 32px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 1.2rem;
-  color: var(--text-color-light);
-  background-color: white;
-  border-radius: 50%;
-  cursor: pointer;
-  transition: all var(--transition-normal);
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-  z-index: 10;
-}
-
-.close-btn:hover {
-  color: var(--highlight-color);
-  transform: rotate(90deg);
-  box-shadow: 0 3px 6px rgba(0, 0, 0, 0.15);
-}
-
 /* Form Box */
 .form-box {
   background-color: white;
@@ -1188,26 +1163,6 @@ select:invalid {
 }
 
 /* Buttons */
-.save-btn,
-.cancel-btn,
-.delete-btn {
-  padding: 8px 16px;
-  border: none;
-  border-radius: var(--radius-medium);
-  font-weight: 600;
-  cursor: pointer;
-  transition: all var(--transition-normal);
-  font-size: 0.9rem;
-  letter-spacing: 0.5px;
-}
-
-.save-btn {
-  background-color: var(--highlight-color);
-  color: white;
-  box-shadow: var(--podcastmanagement-button-shadow);
-  position: relative;
-  overflow: hidden;
-}
 
 .save-btn::after {
   content: "";
@@ -1225,41 +1180,8 @@ select:invalid {
   transition: 0.5s;
 }
 
-.save-btn:hover {
-  background-color: var(--highlight-hover);
-  transform: translateY(-2px);
-  box-shadow: 0 4px 8px -3px rgba(0, 0, 0, 0.2);
-}
-
 .save-btn:hover::after {
   left: 100%;
-}
-
-.cancel-btn {
-  background-color: white;
-  color: var(--text-color-light);
-  box-shadow: var(--podcastmanagement-button-shadow);
-  border: 1px solid rgba(0, 0, 0, 0.05);
-}
-
-.cancel-btn:hover {
-  transform: translateY(-2px);
-  color: var(--highlight-color);
-  box-shadow: 0 4px 8px -3px rgba(0, 0, 0, 0.1);
-}
-
-.delete-btn {
-  background-color: rgba(231, 76, 60, 0.1);
-  color: var(--danger-color);
-  box-shadow: var(--podcastmanagement-button-shadow);
-  font-size: 0.85rem;
-  padding: 6px 14px;
-}
-
-.delete-btn:hover {
-  background-color: rgba(231, 76, 60, 0.2);
-  transform: translateY(-2px);
-  box-shadow: 0 4px 8px -3px rgba(231, 76, 60, 0.2);
 }
 
 /* Responsive Design */
