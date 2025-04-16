@@ -2,19 +2,15 @@ import uuid
 from datetime import datetime
 from backend.database.mongo_connection import collection
 from backend.models.accounts import AccountSchema
-from backend.services.creditService import initialize_credits  # Import initialize_credits
+from backend.services.creditService import initialize_credits
 import logging
 
 logger = logging.getLogger(__name__)
 
-# THIS GETS IMPORTED INTO ROUTES
-# USE FOR CRUD OPERATIONS ONLY
-# SERVICES SHOULD BE USED FOR EXTRA FUNCTIONALITY INTO REPOSITORY
-
 
 class AccountRepository:
     def __init__(self):
-        self.collection = collection.database.Accounts  # Use the Accounts collection
+        self.collection = collection.database.Accounts
 
     def create_account(self, data):
         try:
@@ -26,43 +22,43 @@ class AccountRepository:
                 raise ValueError("Missing required fields: userId and email")
 
             # Check for existing account by email or userId
-            existing_account = self.collection.find_one({
-                "$or": [
-                    {"email": data["email"]},
-                    {"userId": data["userId"]}
-                ]
-            })
+            existing_account = self.collection.find_one(
+                {"$or": [{"email": data["email"]}, {"userId": data["userId"]}]}
+            )
             if existing_account:
                 raise ValueError("Account already exists for this email or userId.")
 
+            # Use string _id instead of ObjectId
+            account_id = str(uuid.uuid4())
             account_document = {
-                "_id": data["id"],
-                "ownerId": data["ownerId"],
-                "subscriptionId": data["subscriptionId"],
-                "creditId": data["creditId"],
+                "_id": account_id,
+                "userId": data["userId"],
                 "email": data["email"],
-                "isCompany": data["isCompany"],
-                "companyName": data["companyName"],
-                "paymentInfo": data["paymentInfo"],
-                "subscriptionStatus": data["subscriptionStatus"],
-                "createdAt": data["createdAt"],
-                "referralBonus": data["referralBonus"],
-                "subscriptionStart": data["subscriptionStart"],
-                "subscriptionEnd": data["subscriptionEnd"],
-                "isActive": data["isActive"],
-                "created_at": data["created_at"],
-                "isFirstLogin": data["isFirstLogin"],
+                "ownerId": data.get("ownerId"),
+                "subscriptionId": data.get("subscriptionId"),
+                "creditId": data.get("creditId"),
+                "isCompany": data.get("isCompany", False),
+                "companyName": data.get("companyName", ""),
+                "paymentInfo": data.get("paymentInfo", ""),
+                "subscriptionStatus": data.get("subscriptionStatus", "active"),
+                "createdAt": data.get("createdAt", datetime.utcnow()),
+                "referralBonus": data.get("referralBonus", 0),
+                "subscriptionStart": data.get("subscriptionStart", datetime.utcnow()),
+                "subscriptionEnd": data.get("subscriptionEnd"),
+                "isActive": data.get("isActive", True),
+                "created_at": data.get("created_at", datetime.utcnow()),
+                "isFirstLogin": data.get("isFirstLogin", True),
             }
 
             # Insert account into the database
             self.collection.insert_one(account_document)
             logger.info(f"Account created successfully: {account_document}")
 
-            initialize_credits(data["userId"])  # Call initialize_credits here
+            initialize_credits(data["userId"])
 
             return {
                 "message": "Account created successfully",
-                "accountId": account_document["_id"],
+                "accountId": account_id,
             }, 201
 
         except ValueError as ve:
@@ -74,12 +70,12 @@ class AccountRepository:
 
     def get_account(self, account_id):
         try:
-            account = self.collection.find_one({"id": account_id})
+            account = self.collection.find_one({"_id": account_id})
             if not account:
                 return {"error": "Account not found"}, 404
 
             schema = AccountSchema()
-            result = schema.dump(account)  # Serialize the account data
+            result = schema.dump(account)
 
             return {"account": result}, 200
 
@@ -92,7 +88,7 @@ class AccountRepository:
             account = self.collection.find_one({"userId": user_id})
             if not account:
                 return {"error": "Account not found"}, 404
-            
+
             return {"account": account}, 200
 
         except Exception as e:
@@ -113,8 +109,7 @@ class AccountRepository:
         except Exception as e:
             logger.error(f"Error updating profile: {e}", exc_info=True)
             return {"error": f"Error updating profile: {str(e)}"}, 500
-    
-    # Delete account when user is deleted
+
     def delete_by_user(self, user_id):
         try:
             result = self.collection.delete_many({"userId": user_id})

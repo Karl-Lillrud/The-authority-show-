@@ -4,8 +4,8 @@ import logging
 from backend.repository.account_repository import AccountRepository
 import uuid
 from datetime import datetime
-from backend.database.mongo_connection import collection  # Add this import
-from bson import ObjectId  # Import ObjectId for type checking
+from backend.database.mongo_connection import collection
+from bson import ObjectId
 
 # Define Blueprint
 account_bp = Blueprint("account_bp", __name__)
@@ -16,14 +16,13 @@ account_repo = AccountRepository()
 # Configure logger
 logger = logging.getLogger(__name__)
 
+
 # Middleware to populate g.email
 @account_bp.before_request
 def populate_user_context():
     if not hasattr(g, "email"):
-        g.email = session.get("email")  # Retrieve email from session if available
+        g.email = session.get("email")
 
-# SHOULD ONLY BE USED FOR SPECIFIC DATA CRUD OPERATIONS
-# EXTRA FUNCTIONALITY BESIDES CRUD OPERATIONS SHOULD BE IN SERVICES
 
 @account_bp.route("/create_account", methods=["POST"])
 def create_account_route():
@@ -31,14 +30,15 @@ def create_account_route():
         data = request.get_json()
         email = data["email"]
 
-        # Kontrollera om ett konto redan finns för e-postadressen
+        # Check if an account already exists for the email
         existing_account = collection.database.Accounts.find_one({"email": email})
-        if (existing_account):
+        if existing_account:
             logger.warning(f"Account already exists for email {email}.")
             return jsonify({"error": "Account already exists for this email."}), 400
 
         account_data = {
-            "id": str(uuid.uuid4()),
+            "_id": str(uuid.uuid4()),
+            "userId": data.get("userId"),
             "ownerId": data.get("ownerId"),
             "subscriptionId": str(uuid.uuid4()),
             "creditId": str(uuid.uuid4()),
@@ -61,6 +61,7 @@ def create_account_route():
         logger.error(f"Error creating account: {e}", exc_info=True)
         return jsonify({"error": f"Error creating account: {str(e)}"}), 500
 
+
 @account_bp.route("/get_account", methods=["GET"])
 def get_account_route():
     if not hasattr(g, "user_id") or not g.user_id:
@@ -72,11 +73,14 @@ def get_account_route():
         return jsonify({"error": "User not found"}), 404
 
     # Convert ObjectId fields to strings
-    user = {key: str(value) if isinstance(value, ObjectId) else value for key, value in user.items()}
+    user = {
+        key: str(value) if isinstance(value, ObjectId) else value
+        for key, value in user.items()
+    }
 
     return jsonify(user), 200
 
-# Route to update user profile data
+
 @account_bp.route("/edit_account", methods=["PUT"])
 def edit_account():
     if not hasattr(g, "user_id") or not g.user_id:
@@ -92,7 +96,8 @@ def edit_account():
         logger.error("❌ ERROR: %s", e)
         return jsonify({"error": f"Failed to edit account: {str(e)}"}), 500
 
+
 @account_bp.route("/billing", methods=["GET"])
 def buy_credits():
-    user_id = request.args.get("user_id")  # ✅ extract it from query
+    user_id = request.args.get("user_id")
     return render_template("billing/billing.html", user_id=user_id)
