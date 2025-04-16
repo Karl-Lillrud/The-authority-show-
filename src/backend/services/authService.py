@@ -85,20 +85,9 @@ class AuthService:
                     "_id": str(uuid.uuid4()),  # Use _id instead of id
                     "email": email,
                     "created_at": datetime.utcnow(),
-                }
-                self.user_collection.insert_one(user_data)
-
-            # Ensure account creation
-            account = self.account_service.get_user_account(user_data["_id"])
-            if not account:
-                account_data = {
-                    "_id": str(uuid.uuid4()),  # Use _id instead of id
-                    "userId": user_data["_id"],
-                    "email": email,
-                    "created_at": datetime.utcnow(),
                     "isActive": True,
                 }
-                self.account_service.create_account(account_data)
+                self.user_collection.insert_one(user_data)
 
             # Set up the session for the user
             session["user_id"] = str(user_data["_id"])

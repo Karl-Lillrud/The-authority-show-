@@ -66,27 +66,15 @@ def get_account_route():
     if not hasattr(g, "user_id") or not g.user_id:
         return jsonify({"error": "Unauthorized"}), 401
 
-    response, status_code = account_repo.get_account_by_user(str(g.user_id))
-    if status_code == 404:  # If account not found, create one
-        account_data = {
-            "id": str(uuid.uuid4()),
-            "userId": str(g.user_id),
-            "email": g.email,
-            "created_at": datetime.utcnow(),
-            "isActive": True,
-        }
-        collection.database.Accounts.insert_one(account_data)
-        response = account_data
-        status_code = 201
+    # Fetch user data from the Users collection
+    user = collection.database.Users.find_one({"_id": g.user_id})
+    if not user:
+        return jsonify({"error": "User not found"}), 404
 
     # Convert ObjectId fields to strings
-    if isinstance(response, dict):
-        response = {
-            key: str(value) if isinstance(value, ObjectId) else value
-            for key, value in response.items()
-        }
+    user = {key: str(value) if isinstance(value, ObjectId) else value for key, value in user.items()}
 
-    return jsonify(response), status_code
+    return jsonify(user), 200
 
 # Route to update user profile data
 @account_bp.route("/edit_account", methods=["PUT"])

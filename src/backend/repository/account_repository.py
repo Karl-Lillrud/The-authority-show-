@@ -25,6 +25,16 @@ class AccountRepository:
             if "userId" not in data or "email" not in data:
                 raise ValueError("Missing required fields: userId and email")
 
+            # Check for existing account by email or userId
+            existing_account = self.collection.find_one({
+                "$or": [
+                    {"email": data["email"]},
+                    {"userId": data["userId"]}
+                ]
+            })
+            if existing_account:
+                raise ValueError("Account already exists for this email or userId.")
+
             account_document = {
                 "_id": data["id"],
                 "ownerId": data["ownerId"],
