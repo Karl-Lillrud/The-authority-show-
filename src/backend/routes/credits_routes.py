@@ -1,6 +1,7 @@
-from flask import Blueprint, request, jsonify
+from flask import Blueprint, request, jsonify, g
 from backend.services.creditService import get_user_credits, consume_credits
 from backend.database.mongo_connection import credits
+
 credits_bp = Blueprint("credits_bp", __name__)
 
 @credits_bp.route("/credits/<user_id>", methods=["GET"])
@@ -26,13 +27,15 @@ def consume():
 
 @credits_bp.route('/api/credits', methods=['GET'])
 def get_available_credits():
-    user_id = request.args.get("user_id")
+    # Get user_id from session
+    user_id = g.user_id
+    
     if not user_id:
-        return jsonify({"error": "User id is required."}), 400
+        return jsonify({"error": "User not authenticated"}), 401
 
     credit_doc = credits.find_one({"user_id": user_id})
     if not credit_doc:
-        return jsonify({"error": "Credits not found."}), 404
+        return jsonify({"availableCredits": 0})  # Return 0 if no credits found
 
     available = credit_doc.get("availableCredits", 0)
     return jsonify({"availableCredits": available})
