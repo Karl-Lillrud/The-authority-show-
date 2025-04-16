@@ -54,25 +54,37 @@ async function saveTriggerConfig() {
 }
 
 async function fetchOutbox(podcastId) {
-  const outboxTable = document.getElementById("outbox-table");
-  outboxTable.innerHTML = ""; // Clear existing rows
+  const outboxContainer = document.getElementById("outbox-container");
+  outboxContainer.innerHTML = ""; // Clear existing emails
 
   try {
     const response = await fetch(`/outbox?podcastId=${podcastId}`);
     const data = await response.json();
 
     if (data.success) {
-      data.data.forEach((email) => {
-        const row = document.createElement("tr");
-        row.innerHTML = `
-          <td>${email.episode_id}</td>
-          <td>${email.trigger_name}</td>
-          <td>${email.guest_email}</td>
-          <td>${email.subject}</td>
-          <td>${new Date(email.timestamp).toLocaleString()}</td>
-        `;
-        outboxTable.appendChild(row);
-      });
+      if (data.data.length > 0) {
+        data.data.forEach((email) => {
+          const emailCard = document.createElement("div");
+          emailCard.className = "email-card";
+
+          const emailTime = new Date(email.timestamp).toLocaleString();
+
+          emailCard.innerHTML = `
+            <div class="email-header">
+              <span class="email-recipient">To: ${email.guest_email}</span>
+              <span class="email-time">${emailTime}</span>
+            </div>
+            <div class="email-body">
+              <p class="email-subject"><strong>Subject:</strong> ${email.subject}</p>
+              <p class="email-content">${email.content || "No content available."}</p>
+            </div>
+          `;
+
+          outboxContainer.appendChild(emailCard);
+        });
+      } else {
+        outboxContainer.innerHTML = `<p class="no-emails-message">No emails found for this podcast.</p>`;
+      }
     } else {
       console.error("Failed to fetch outbox:", data.error);
     }

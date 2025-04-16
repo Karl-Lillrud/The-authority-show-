@@ -14,6 +14,7 @@ from datetime import datetime
 import logging
 import json
 import os
+from backend.utils.scheduler import render_email_content  # Import the reusable function
 
 dashboardmanagement_bp = Blueprint("dashboardmanagement_bp", __name__)
 pod_management_bp = Blueprint("pod_management", __name__)
@@ -86,12 +87,16 @@ def get_outbox():
                             logging.warning(f"No guest found for episode {episode['title']} (GUID: {episode.get('guid')}).")
                         guest_email = guest["email"] if guest else "Unknown"
 
+                        # Render the email content using the reusable function
+                        email_content = render_email_content(trigger_name, guest, episode)
+
                         # Append email details
                         emails.append({
                             "episode_id": episode_id,
                             "trigger_name": trigger_name,
                             "guest_email": guest_email,
                             "subject": f"{trigger_name.capitalize()} Email",
+                            "content": email_content,  # Use the rendered email content
                             "timestamp": datetime.now().isoformat()  # Replace with actual timestamp if available
                         })
 

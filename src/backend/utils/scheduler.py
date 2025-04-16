@@ -67,6 +67,23 @@ def parse_publish_date(publish_date):
         logger.error(f"Invalid type for publishDate: {type(publish_date)}. Error: {str(e)}")
         return None
 
+def render_email_content(trigger_name, guest, episode):
+    """
+    Render the email content for a given trigger, guest, and episode.
+    """
+    try:
+        template_path = f"emails/{trigger_name}_email.html"
+        email_body = render_template(
+            template_path,
+            guest_name=guest["name"],
+            podName="The Authority Show",
+            episode_title=episode["title"]
+        )
+        return email_body
+    except Exception as e:
+        logger.error(f"Error rendering email template {template_path}: {str(e)}")
+        return "Error loading email content."
+
 def check_and_send_emails():
     today = datetime.now(timezone.utc)
     sent_emails = load_sent_emails()
@@ -123,15 +140,9 @@ def check_and_send_emails():
                     continue
 
                 subject = f"{trigger_name.capitalize()} Email"
-                template_path = f"emails/{trigger_name}_email.html"
 
                 try:
-                    email_body = render_template(
-                        template_path,
-                        guest_name=guest["name"],
-                        podName="The Authority Show",
-                        episode_title=episode["title"]
-                    )
+                    email_body = render_email_content(trigger_name, guest, episode)
                     send_email(guest["email"], subject, email_body)
                     logger.info(f"Email sent to {guest['name']} ({guest['email']}) for trigger '{trigger_name}'.")
 

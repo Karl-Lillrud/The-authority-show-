@@ -766,7 +766,9 @@
 
 /* No episodes message */
 .no-episodes-message {
-  font-size: 0.7rem;
+  text-align: center;
+  color: #888888;
+  font-size: 1rem;
   font-style: italic;
 }
 
@@ -1788,4 +1790,68 @@ select:invalid {
     max-width: 250px;
     margin: 0 auto;
   }
+}
+
+/* Outbox Styles */
+.outbox-container {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  padding: 1rem;
+  background-color: #f9f9f9;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.email-card {
+  display: flex;
+  flex-direction: column;
+  padding: 1rem;
+  background-color: #ffffff;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  font-family: Arial, sans-serif;
+}
+
+.email-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.5rem;
+  font-size: 0.9rem;
+  color: #555555;
+}
+
+.email-recipient {
+  font-weight: bold;
+  color: #333333;
+}
+
+.email-time {
+  font-size: 0.85rem;
+  color: #888888;
+}
+
+.email-body {
+  font-size: 0.95rem;
+  color: #444444;
+  line-height: 1.5;
+}
+
+.email-subject {
+  font-weight: bold;
+  margin-bottom: 0.5rem;
+}
+
+.email-content {
+  margin-top: 0.5rem;
+  white-space: pre-wrap; /* Preserve line breaks in email content */
+  color: #555555;
+}
+
+.no-emails-message {
+  text-align: center;
+  color: #888888;
+  font-size: 1rem;
 }
