@@ -1,880 +1,1171 @@
-<<<<<<< HEAD:src/frontend/templates/dashboard/taskmanagement.html
-{% extends "dashboard/components/base.html" %} {% block title %}Podcast Task
-Management{% endblock %} {% block content %}
-<!-- Guest Selection Popup -->
-<link
-  rel="stylesheet"
-  href="{{ url_for('static', filename='css/taskmanagement.css') }}"
-/>
-
-<!-- Back Arrow -->
-<a
-  href="{{ url_for('dashboard_bp.dashboard') }}"
-  class="back-arrow"
-  id="dashboard-button"
-  >&#8592; Dashboard</a
->
-
-<div class="task-header-buttons" style="justify-content: center">
-  <div class="button-group">
-    <button id="load-default-btn" onclick="openDefaultTasksPopup()">
-      Add Default Tasks
-    </button>
-    <button id="add-task-btn" onclick="openTaskModal()">
-      + Add Custom Task
-    </button>
-  </div>
-
-  <!-- Wrapper för att flytta Select Episode till höger -->
-  <div class="dropdown-wrapper">
-    <div class="dropdown view-episode-dropdown">
-      <button class="dropbtn" onclick="viewEpisodes()">
-        View Episodes
-      </button>
-    </div>
-  </div>
-</div>
-
-<!-- Add the selected-guest element here -->
-<div id="selected-guest" data-guest-id="" style="display: none;"></div>
-
-<div class="task-list-container">
-  <!-- Current Tasks Header -->
-  <h3 class="current-tasks-header">Pod Tasks</h3>
-
-  <!-- Ordered Task List -->
-  <ol id="task-list" class="sortable responsive-task-list">
-    <!-- Dynamically injected tasks will appear here -->
-  </ol>
-
-  <!-- Add Tasks to Episode and Back Button Container -->
-  <div class="add-tasks-button-container">
-    <div class="dropdown add-tasks-dropdown">
-      <button class="dropbtn" onclick="openAddTasksEpisodePopup()">
-        Add Tasks To Episode
-      </button>
-      <div class="dropdown-content" id="add-tasks-episode-dropdown"></div>
-      <!-- Episodes will be dynamically populated here -->
-    </div>
-  </div>
-</div>
-
-<!-- Task Modal -->
-<div id="task-modal" class="popup" style="display: none">
-  <div class="popup-content">
-    <span class="close-btn" onclick="closeModal()">&times;</span>
-    <h2 id="modal-title">Create New Task</h2>
-
-    <label for="task-name">Task Name:</label>
-    <input type="text" id="task-name" placeholder="Enter task name" />
-
-    <label for="task-dependencies">Dependent on Other Task(s):</label>
-    <select id="task-dependencies" multiple>
-      <!-- Options dynamically populated -->
-    </select>
-
-    <label for="task-type">Task Type & Action:</label>
-    <select id="task-type">
-      <option value="manual">Manual</option>
-      <option value="email">Automated - Email</option>
-      <option value="system">Automated - System Action</option>
-      <option value="ai">Automated - AI Script</option>
-    </select>
-
-    <div id="action-details" class="hidden">
-      <label for="action-details-input">Action Details:</label>
-      <input
-        type="text"
-        id="action-details-input"
-        placeholder="Enter details"
-      />
-    </div>
-
-    <label for="due-time">Due Time Since Recording Date:</label>
-    <input type="text" id="due-time" placeholder="Enter days" />
-
-    <label for="task-description">Task Description:</label>
-    <textarea id="task-description" placeholder="Enter task details"></textarea>
-
-    <label for="action-link">Action Link:</label>
-    <input type="text" id="action-link" placeholder="Enter external link" />
-    <input type="text" id="action-link-desc" placeholder="Describe the link" />
-
-    <label>
-      <input type="checkbox" id="submission-required" /> Require Information
-      Submission
-    </label>
-
-    <div class="modal-buttons">
-      <button id="save-task-btn">Save Task</button>
-      <button class="cancel-btn" onclick="closeModal()">Cancel</button>
-    </div>
-  </div>
-</div>
-
-<!-- Default Tasks Popup -->
-<div id="default-tasks-popup" class="popup" style="display: none">
-  <div class="popup-content">
-    <span class="close-btn" onclick="closeDefaultTasksPopup()">&times;</span>
-    <h2>Select Default Tasks</h2>
-    <button id="select-all-default-btn" onclick="selectAllDefaultTasks()">
-      Select All
-    </button>
-    <div id="default-tasks-list">
-      <!-- Default tasks will be dynamically populated -->
-    </div>
-    <div class="modal-buttons">
-      <button id="add-default-tasks-btn" onclick="addSelectedDefaultTasks()">
-        Add Selected Tasks
-      </button>
-      <button class="cancel-btn" onclick="closeDefaultTasksPopup()">
-        Cancel
-      </button>
-    </div>
-  </div>
-</div>
-
-<!-- Episodes Popup -->
-<div id="episodes-popup" class="popup" style="display: none">
-  <div class="popup-content">
-    <h2>Select Episode</h2>
-    <div id="episodes-list">
-      <!-- Episodes will be dynamically populated here -->
-    </div>
-    <div class="modal-buttons" style="justify-content: flex-end">
-      <button class="cancel-btn" onclick="closeEpisodesPopup()">Cancel</button>
-    </div>
-  </div>
-</div>
-
-<div id="add-tasks-episode-popup" class="popup" style="display: none">
-  <div class="popup-content">
-    <h2>Add tasks to</h2>
-    <div id="add-tasks-episode-list">
-      <!-- Episodes will be dynamically populated here -->
-    </div>
-    <div class="modal-buttons" style="justify-content: flex-end">
-      <button class="cancel-btn" onclick="closeAddTasksEpisodePopup()">
-        Cancel
-      </button>
-    </div>
-  </div>
-</div>
-
-<!-- Add this script tag to load SortableJS library -->
-<script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
-
-<script type="module">
-  import {
-    fetchTasks,
-    fetchTask,
-    saveTask,
-    updateTask,
-    deleteTask,
-    fetchDefaultTasks,
-    deleteDefaultTask,
-    addSelectedDefaultTasks,
-    addTasksToEpisode,
-    fetchLocalDefaultTasks
-  } from "{{ url_for('static', filename='requests/podtaskRequest.js') }}";
-  import {
-    fetchEpisodes,
-    viewEpisodeTasks,
-  } from "{{ url_for('static', filename='requests/episodeRequest.js') }}";
-
-  document.addEventListener("DOMContentLoaded", function () {
-    const form = document.getElementById("add-task-form");
-
-    if (form) {
-      form.addEventListener("submit", function (e) {
-        e.preventDefault(); // Prevent the form from submitting the traditional way
-
-        // Collect form data
-        const taskName = document.getElementById("task-name").value.trim();
-        const taskDescription = document
-          .getElementById("task-description")
-          .value.trim();
-        const dueTime = document.getElementById("due-time").value.trim();
-        const actionLink = document.getElementById("action-link").value.trim();
-        const actionLinkDesc = document
-          .getElementById("action-link-desc")
-          .value.trim();
-        const submissionRequired = document.getElementById(
-          "submission-required"
-        ).checked;
-
-        const data = {
-          taskName,
-          taskDescription,
-          dueTime,
-          actionLink,
-          actionLinkDesc,
-          submissionRequired
-        };
-
-        saveTask(data)
-          .then((response) => {
-            if (response.error) {
-              alert(`Error: ${response.error}`);
-            } else {
-              alert("Task added successfully!");
-              window.location.href = response.redirect_url;
-            }
-          })
-          .catch((error) => {
-            console.error("Error:", error);
-            alert("There was an error with the registration process.");
-          });
-      });
+document.addEventListener('DOMContentLoaded', function() {
+  // Mock data for templates and episodes
+  const templates = [
+    {
+      id: 'template1',
+      name: 'Podcast Episode Template',
+      tasks: [
+        { id: 'task1', name: 'Prepare outline', dueDate: '3 days before recording', assignee: 'John Doe', status: 'completed', dependencies: [], workspaceEnabled: false, type: 'generic', description: 'Create a detailed outline for the episode.' },
+        { id: 'task2', name: 'Guest outreach', dueDate: '2 weeks before recording', assignee: 'Alice Smith', status: 'completed', dependencies: [], workspaceEnabled: false, type: 'generic', description: 'Contact potential guests and schedule interviews.' },
+        { id: 'task3', name: 'Record episode', dueDate: 'Recording day', assignee: 'John Doe', status: 'completed', dependencies: ['task1', 'task2'], workspaceEnabled: false, type: 'generic', description: 'Record the episode with the guest.' },
+        { id: 'task4', name: 'Audio editing', dueDate: '1 day after recording', assignee: 'Bob Johnson', status: 'in-progress', dependencies: ['task3'], workspaceEnabled: true, type: 'audio-editing', description: 'Edit the audio to remove errors and improve sound quality.' },
+        { id: 'task5', name: 'Transcription', dueDate: '2 days after recording', assignee: 'Alice Smith', status: 'not-started', dependencies: ['task4'], workspaceEnabled: true, type: 'transcription', description: 'Transcribe the episode for accessibility and SEO.' },
+        { id: 'task6', name: 'Show notes', dueDate: '3 days after recording', assignee: 'John Doe', status: 'not-started', dependencies: ['task5'], workspaceEnabled: false, type: 'generic', description: 'Write detailed show notes for the episode.' },
+        { id: 'task7', name: 'Create social media posts', dueDate: '4 days after recording', assignee: 'Alice Smith', status: 'not-started', dependencies: ['task6'], workspaceEnabled: false, type: 'generic', description: 'Create engaging social media posts to promote the episode.' },
+        { id: 'task8', name: 'Publish episode', dueDate: '5 days after recording', assignee: 'John Doe', status: 'not-started', dependencies: ['task7'], workspaceEnabled: false, type: 'generic', description: 'Publish the episode to all platforms.' }
+      ]
+    },
+    {
+      id: 'template2',
+      name: 'YouTube Video Template',
+      tasks: [
+        { id: 'task9', name: 'Script writing', dueDate: '5 days before filming', assignee: 'John Doe', status: 'completed', dependencies: [], workspaceEnabled: false, type: 'generic', description: 'Write a detailed script for the video.' },
+        { id: 'task10', name: 'Filming', dueDate: 'Filming day', assignee: 'Bob Johnson', status: 'completed', dependencies: ['task9'], workspaceEnabled: false, type: 'generic', description: 'Film the video according to the script.' },
+        { id: 'task11', name: 'Video editing', dueDate: '2 days after filming', assignee: 'Bob Johnson', status: 'in-progress', dependencies: ['task10'], workspaceEnabled: false, type: 'generic', description: 'Edit the video to create a polished final product.' },
+        { id: 'task12', name: 'Thumbnail design', dueDate: '3 days after filming', assignee: 'Alice Smith', status: 'not-started', dependencies: ['task11'], workspaceEnabled: false, type: 'generic', description: 'Design an eye-catching thumbnail for the video.' },
+        { id: 'task13', name: 'SEO optimization', dueDate: '4 days after filming', assignee: 'John Doe', status: 'not-started', dependencies: ['task11'], workspaceEnabled: false, type: 'generic', description: 'Optimize the video title, description, and tags for search engines.' },
+        { id: 'task14', name: 'Publish video', dueDate: '5 days after filming', assignee: 'John Doe', status: 'not-started', dependencies: ['task12', 'task13'], workspaceEnabled: false, type: 'generic', description: 'Publish the video to YouTube.' }
+      ]
     }
+  ];
 
-    // Fetch tasks on page load
-    fetchTasks()
-      .then((tasks) => {
-        const taskList = document.getElementById("task-list");
-        taskList.innerHTML = ""; // Clear existing tasks
+  const episodes = [
+    { number: 40, title: 'The Future of Podcasting', recordingDate: '2024-07-15', releaseDate: '2024-07-22', completedTasks: 5, totalTasks: 8 },
+    { number: 41, title: 'Remote Recording Tips', recordingDate: '2024-07-22', releaseDate: '2024-07-29', completedTasks: 3, totalTasks: 8 },
+    { number: 42, title: 'Monetizing Your Podcast', recordingDate: '2024-07-29', releaseDate: '2024-08-05', completedTasks: 2, totalTasks: 8 }
+  ];
 
-        tasks.forEach((task) => {
-          let li = document.createElement("li");
-          li.classList.add("task-item");
-          li.innerHTML = `
-            <div class="task-details">
-              <span class="task-name">${task.taskname}</span>
-              <div class="task-actions">
-                <button class="edit-btn" onclick="editTask('${task._id}')">Edit</button>
-                <button class="delete-btn" onclick="deleteTask('${task._id}')">Delete</button>
-              </div>
-            </div>
-          `;
-          taskList.appendChild(li);
-        });
-      })
-      .catch((error) => {
-        console.error("Error fetching tasks:", error);
-        alert("Failed to fetch tasks.");
-      });
-
-  });
-
-  window.editTask = async function (taskId) {
-    const task = await fetchTask(taskId);
-
-    // Pre-fill the modal fields with fetched task data
-    document.getElementById("task-name").value =
-      task.taskname || task.task_name;
-    document.getElementById("task-description").value = task.Description || "";
-    document.getElementById("due-time").value = task.DayCount || "";
-    document.getElementById("action-link").value = task.ActionUrl || "";
-    document.getElementById("action-link-desc").value = task.UrlDescribe || "";
-    document.getElementById("submission-required").checked =
-      task.SubimissionReq || false;
-
-    // Set modal title and update button action
-    document.getElementById("modal-title").innerText = "Edit Task";
-    document.getElementById("task-modal").style.display = "flex";
-    document
-      .getElementById("save-task-btn")
-      .setAttribute("onclick", `updateTask('${task._id}')`);
+  // State management
+  let state = {
+    activeTemplate: templates[0],
+    activeTab: 'tasks',
+    selectedEpisode: episodes[0],
+    selectedTask: null,
+    showTimeline: true,
+    expandedTasks: {},
+    completedTasks: {}
   };
 
-  window.updateTask = async function (taskId) {
-    const taskName = document.getElementById("task-name").value.trim();
-    const taskDescription = document
-      .getElementById("task-description")
-      .value.trim();
-    const dueTime = document.getElementById("due-time").value.trim();
-    const actionLink = document.getElementById("action-link").value.trim();
-    const actionLinkDesc = document
-      .getElementById("action-link-desc")
-      .value.trim();
-    const submissionRequired = document.getElementById(
-      "submission-required"
-    ).checked;
+  // Initialize the UI
+  initUI();
 
-    const updatedTask = {
-      taskname: taskName,
-      Description: taskDescription,
-      DayCount: parseInt(dueTime) || 0,
-      actionurl: actionLink,
-      externalurl: actionLinkDesc,
-      submission: submissionRequired ? "Required" : "Optional"
-    };
-
-    await updateTask(taskId, updatedTask);
-    closeModal();
-    fetchTasks(); // Refresh the task list to reflect changes
-  };
-
-  window.deleteTask = async function (taskId) {
-    await deleteTask(taskId);
-    fetchTasks(); // Refresh tasks
-  };
-
-  function closeModal() {
-    document.getElementById("task-modal").style.display = "none";
+  function initUI() {
+    // Populate episode dropdown
+    populateEpisodeDropdown();
+    
+    // Populate template selector
+    populateTemplateSelector();
+    
+    // Populate task list
+    renderTaskList();
+    
+    // Populate kanban board
+    renderKanbanBoard();
+    
+    // Populate timeline
+    renderTimeline();
+    
+    // Set up tab switching
+    setupTabs();
+    
+    // Set up timeline toggle
+    setupTimelineToggle();
+    
+    // Set up episode dropdown
+    setupEpisodeDropdown();
+    
+    // Update progress bar
+    updateProgressBar();
   }
 
-  // Define the selectGuest function
-  window.selectGuest = function (guestId, guestName, guestImage) {
-    document.getElementById("selected-guest").textContent = guestName;
-    document.getElementById("selected-guest").dataset.guestId = guestId; // Set guestId
-    const guestImageElement = document.getElementById("selected-guest-image");
-    guestImageElement.src = guestImage;
-    guestImageElement.style.display = "block";
-    document.getElementById("guest-popup").style.display = "none";
-    document.getElementById("task-management").style.display = "block";
+  function populateEpisodeDropdown() {
+    const dropdown = document.getElementById('episodeDropdown');
+    dropdown.innerHTML = '';
+    
+    episodes.forEach(episode => {
+      const item = document.createElement('div');
+      item.className = 'dropdown-item';
+      item.innerHTML = `<span class="font-medium">Episode ${episode.number}:</span> ${episode.title}`;
+      item.addEventListener('click', () => {
+        selectEpisode(episode);
+        toggleEpisodeDropdown();
+      });
+      dropdown.appendChild(item);
+    });
+  }
 
-    // Load and display default tasks
-    fetch(
-      "{{ url_for('static', filename='defaulttaskdata/default_tasks.json') }}"
-    )
-      .then((response) => response.json())
-      .then((defaultTasks) => {
-        const taskList = document.getElementById("task-list");
-        taskList.innerHTML = ""; // Clear existing tasks
+  function populateTemplateSelector() {
+    const templateSelector = document.getElementById('templateSelector');
+    templateSelector.innerHTML = '';
+    
+    templates.forEach(template => {
+      const item = document.createElement('div');
+      item.className = `template-item ${template.id === state.activeTemplate.id ? 'active' : ''}`;
+      item.innerHTML = `
+        <div class="template-header">
+          <i class="fas fa-file-alt text-muted"></i>
+          <span class="template-name">${template.name}</span>
+        </div>
+        <div class="template-tasks">${template.tasks.length} tasks</div>
+      `;
+      item.addEventListener('click', () => selectTemplate(template));
+      templateSelector.appendChild(item);
+    });
+    
+    // Add template actions
+    const actionsDiv = document.createElement('div');
+    actionsDiv.className = 'template-actions';
+    actionsDiv.innerHTML = `
+      <button class="btn btn-outline btn-sm btn-full">
+        <i class="fas fa-plus"></i>
+        <span>New Template</span>
+      </button>
+      <div class="flex gap-2 mt-4">
+        <button class="btn btn-outline btn-sm btn-full">
+          <i class="fas fa-copy"></i>
+          <span>Duplicate</span>
+        </button>
+        <button class="btn btn-outline btn-sm btn-full">
+          <i class="fas fa-cog"></i>
+          <span>Customize</span>
+        </button>
+      </div>
+    `;
+    templateSelector.appendChild(actionsDiv);
+  }
 
-        defaultTasks.forEach((task) => {
-          let li = document.createElement("li");
-          li.classList.add("task-item");
-          li.innerHTML = `
-            <div class="task-details">
-              <span class="task-name">${task}</span>
-              <div class="task-actions">
-                <button class="edit-btn" onclick="editTask('${task._id}')">Edit</button>
-                <button class="delete-btn" onclick="deleteTask('${task._id}')">Delete</button>
+  function renderTaskList() {
+    const taskList = document.getElementById('taskList');
+    taskList.innerHTML = '';
+    
+    state.activeTemplate.tasks.forEach(task => {
+      const isCompleted = state.completedTasks[task.id] || task.status === 'completed';
+      const isExpanded = state.expandedTasks[task.id] || false;
+      
+      const taskItem = document.createElement('div');
+      taskItem.className = 'task-item';
+      taskItem.innerHTML = `
+        <div class="task-header ${isCompleted ? 'completed' : ''}">
+          <div class="task-checkbox ${isCompleted ? 'checked' : ''}" data-task-id="${task.id}">
+            ${isCompleted ? '<i class="fas fa-check"></i>' : ''}
+          </div>
+          <button class="task-expand" data-task-id="${task.id}">
+            <i class="fas fa-chevron-${isExpanded ? 'down' : 'right'}"></i>
+          </button>
+          <div class="task-content">
+            <div class="task-name ${isCompleted ? 'completed' : ''}">${task.name}</div>
+            ${!isExpanded ? `
+              <div class="task-meta">
+                <div class="task-meta-item">
+                  <i class="fas fa-clock"></i>
+                  <span>${task.dueDate}</span>
+                </div>
+                <div class="task-meta-item">
+                  <i class="fas fa-user"></i>
+                  <span>${task.assignee}</span>
+                </div>
+                ${task.dependencies.length > 0 ? `
+                  <span class="task-badge">${task.dependencies.length} ${task.dependencies.length === 1 ? 'dependency' : 'dependencies'}</span>
+                ` : ''}
               </div>
-            </div>
-          `;
-          taskList.appendChild(li);
-        });
-      })
-      .catch((error) => {
-        console.error("Error loading default tasks:", error);
-        alert("Failed to load default tasks.");
-      });
-  };
-
-  window.viewEpisodes = async function () {
-    const guestId = document.getElementById("selected-guest").dataset.guestId;
-    const episodes = await fetchEpisodes(guestId);
-    const episodesList = document.getElementById("episodes-list");
-    episodesList.innerHTML = ""; // Clear existing episodes
-
-    if (episodes.length === 0) {
-      let noEpisodesItem = document.createElement("p");
-      noEpisodesItem.textContent = "No episodes found";
-      episodesList.appendChild(noEpisodesItem);
-    } else {
-      episodes.forEach((episode) => {
-        let episodeItem = document.createElement("a");
-        episodeItem.href = "#";
-        episodeItem.textContent = episode.title;
-        episodeItem.onclick = async (event) => {
-          event.preventDefault();
-          await viewEpisodeTasks(episode._id);
-        };
-        episodesList.appendChild(episodeItem);
-      });
-    }
-
-    document.getElementById("episodes-popup").style.display = "flex";
-  };
-
-  window.viewEpisodeTasks = async function (episodeId) {
-    const tasks = await fetchEpisodeTasks(episodeId);
-    const taskList = document.getElementById("task-list");
-    taskList.innerHTML = ""; // Clear existing tasks
-
-    if (tasks.length === 0) {
-      let noTasksItem = document.createElement("li");
-      noTasksItem.classList.add("task-item");
-      noTasksItem.textContent = "No tasks found";
-      taskList.appendChild(noTasksItem);
-    } else {
-      tasks.forEach((task) => {
-        let li = document.createElement("li");
-        li.classList.add("task-item");
-        li.innerHTML = `
-          <div class="task-details">
-            <span class="task-name">${task.taskname}</span>
-            <div class="task-actions">
-              <button class="edit-btn" onclick="editTask('${task._id}')">Edit</button>
-              <button class="delete-btn" onclick="deleteTask('${task._id}')">Delete</button>
+            ` : ''}
+          </div>
+          <div class="task-actions">
+            ${task.hasDependencyWarning ? '<i class="fas fa-exclamation-circle text-warning"></i>' : ''}
+            ${task.workspaceEnabled ? `
+              <button class="btn-icon text-primary" data-workspace-task-id="${task.id}">
+                <i class="fas fa-laptop"></i>
+              </button>
+            ` : ''}
+            <div class="dropdown">
+              <button class="btn-icon dropdown-toggle">
+                <i class="fas fa-ellipsis-h"></i>
+              </button>
+              <!-- Dropdown menu would go here -->
             </div>
           </div>
-        `;
-        taskList.appendChild(li);
-      });
-    }
-
-    document.getElementById("episodes-popup").style.display = "none";
-  };
-
-  window.openTaskModal = function () {
-    document.getElementById("task-modal").style.display = "flex";
-  };
-
-  window.closeModal = function () {
-    document.getElementById("task-modal").style.display = "none";
-  };
-
-  window.openDefaultTasksPopup = async function () {
-    document.getElementById("default-tasks-popup").style.display = "flex";
-
-    const defaultTasks = await fetchLocalDefaultTasks();
-    const defaultTasksList = document.getElementById("default-tasks-list");
-    defaultTasksList.innerHTML = ""; // Clear existing tasks
-
-    defaultTasks.forEach((task, index) => {
-      let div = document.createElement("div");
-      div.classList.add("default-task-item");
-      div.innerHTML = `
-        <span>${task}</span>
-        <input type="checkbox" id="default-task-${index}" value="${task}">
+        </div>
+        
+        <div class="task-details ${isExpanded ? 'expanded' : ''}">
+          <p class="task-description">${task.description}</p>
+          
+          ${task.dependencies.length > 0 ? `
+            <div class="task-dependencies">
+              <h4 class="task-dependencies-title">Dependencies:</h4>
+              <ul class="task-dependencies-list">
+                ${task.dependencies.map(dep => `
+                  <li class="task-dependencies-item"><span>•</span> ${dep}</li>
+                `).join('')}
+              </ul>
+            </div>
+          ` : ''}
+          
+          <div class="task-footer">
+            <div class="task-footer-meta">
+              <div class="task-meta-item">
+                <i class="fas fa-clock"></i>
+                <span>Due: ${task.dueDate}</span>
+              </div>
+              <div class="task-meta-item">
+                <i class="fas fa-user"></i>
+                <span>Assigned to: ${task.assignee}</span>
+              </div>
+            </div>
+            
+            <div class="task-footer-actions">
+              <button class="btn btn-outline btn-sm">
+                <i class="fas fa-comment"></i>
+                <span>Comments (2)</span>
+              </button>
+              
+              ${task.workspaceEnabled ? `
+                <button class="btn btn-outline btn-sm workspace-btn" data-workspace-task-id="${task.id}">
+                  <i class="fas fa-laptop"></i>
+                  <span>Open in Workspace</span>
+                </button>
+              ` : ''}
+            </div>
+          </div>
+        </div>
       `;
-      defaultTasksList.appendChild(div);
+      
+      taskList.appendChild(taskItem);
     });
-  };
+    
+    // Add event listeners for task interactions
+    setupTaskInteractions();
+  }
 
-  window.closeDefaultTasksPopup = function () {
-    document.getElementById("default-tasks-popup").style.display = "none";
-  };
+  function renderKanbanBoard() {
+    const kanbanBoard = document.getElementById('kanbanBoard');
+    kanbanBoard.innerHTML = '';
+    
+    const columns = [
+      { id: 'todo', title: 'To Do', color: 'kanban-column-todo' },
+      { id: 'in-progress', title: 'In Progress', color: 'kanban-column-progress' },
+      { id: 'ready', title: 'Ready for Publishing', color: 'kanban-column-ready' },
+      { id: 'published', title: 'Published', color: 'kanban-column-published' },
+    ];
+    
+    // Group tasks by status
+    const tasksByStatus = {
+      'todo': state.activeTemplate.tasks.filter(task => task.status === 'not-started' || !task.status),
+      'in-progress': state.activeTemplate.tasks.filter(task => task.status === 'in-progress'),
+      'ready': state.activeTemplate.tasks.filter(task => task.status === 'ready'),
+      'published': state.activeTemplate.tasks.filter(task => task.status === 'completed'),
+    };
+    
+    columns.forEach(column => {
+      const columnDiv = document.createElement('div');
+      columnDiv.className = `kanban-column ${column.color}`;
+      columnDiv.innerHTML = `
+        <div class="kanban-column-header">
+          <span>${column.title}</span>
+          <span class="badge">${tasksByStatus[column.id].length}</span>
+        </div>
+        <div class="kanban-column-content" data-column-id="${column.id}">
+          ${tasksByStatus[column.id].map(task => `
+            <div class="kanban-task" draggable="true" data-task-id="${task.id}">
+              <div class="kanban-task-header">
+                <h3 class="kanban-task-title">${task.name}</h3>
+                <div class="dropdown">
+                  <button class="btn-icon dropdown-toggle">
+                    <i class="fas fa-ellipsis-h"></i>
+                  </button>
+                </div>
+              </div>
+              <div class="kanban-task-meta">
+                <div class="task-meta-item">
+                  <i class="fas fa-clock"></i>
+                  <span>${task.dueDate}</span>
+                </div>
+              </div>
+              <div class="kanban-task-footer">
+                <div class="kanban-task-assignee ${
+                  task.assignee === 'John Doe' ? 'bg-blue' :
+                  task.assignee === 'Alice Smith' ? 'bg-green' :
+                  task.assignee === 'Bob Johnson' ? 'bg-purple' : ''
+                }">
+                  ${
+                    task.assignee === 'John Doe' ? 'JD' :
+                    task.assignee === 'Alice Smith' ? 'AS' :
+                    task.assignee === 'Bob Johnson' ? 'BJ' : ''
+                  }
+                </div>
+                ${task.workspaceEnabled ? `
+                  <button class="btn-icon text-primary workspace-btn" data-workspace-task-id="${task.id}">
+                    <i class="fas fa-laptop"></i>
+                  </button>
+                ` : ''}
+              </div>
+            </div>
+          `).join('')}
+        </div>
+      `;
+      
+      kanbanBoard.appendChild(columnDiv);
+    });
+    
+    // Set up drag and drop for kanban tasks
+    setupKanbanDragDrop();
+  }
 
-  window.closeEpisodesPopup = function () {
-    document.getElementById("episodes-popup").style.display = "none";
-  };
+  function renderTimeline() {
+    const timeline = document.getElementById('timeline');
+    timeline.innerHTML = '';
+    
+    // Update timeline header dates
+    document.getElementById('timelineRecordingDate').textContent = state.selectedEpisode.recordingDate;
+    document.getElementById('timelineReleaseDate').textContent = state.selectedEpisode.releaseDate;
+    
+    // Group tasks by due date
+    const tasksByDueDate = {};
+    state.activeTemplate.tasks.forEach(task => {
+      if (!tasksByDueDate[task.dueDate]) {
+        tasksByDueDate[task.dueDate] = [];
+      }
+      tasksByDueDate[task.dueDate].push(task);
+    });
+    
+    // Sort dates for timeline
+    const sortedDates = Object.keys(tasksByDueDate).sort((a, b) => {
+      // Sort "before recording" dates first
+      if (a.includes('before') && b.includes('after')) return -1;
+      if (a.includes('after') && b.includes('before')) return 1;
+      
+      // Extract number of days
+      const daysA = parseInt(a.match(/\d+/)?.[0] || '0');
+      const daysB = parseInt(b.match(/\d+/)?.[0] || '0');
+      
+      // For "before" dates, higher number comes first
+      if (a.includes('before') && b.includes('before')) return daysB - daysA;
+      
+      // For "after" dates, lower number comes first
+      if (a.includes('after') && b.includes('after')) return daysA - daysB;
+      
+      // Recording day is in the middle
+      if (a === 'Recording day') return b.includes('before') ? 1 : -1;
+      if (b === 'Recording day') return a.includes('before') ? -1 : 1;
+      
+      return 0;
+    });
+    
+    sortedDates.forEach(date => {
+      const timelineItem = document.createElement('div');
+      timelineItem.className = 'timeline-item';
+      
+      const isRecordingDay = date === 'Recording day';
+      
+      timelineItem.innerHTML = `
+        <div class="timeline-node ${isRecordingDay ? 'recording-day' : ''}">
+          ${isRecordingDay ? '<i class="fas fa-circle"></i>' : ''}
+        </div>
+        <div class="timeline-date">${date}</div>
+        <div class="timeline-tasks">
+          ${tasksByDueDate[date].map(task => `
+            <div class="timeline-task ${task.status === 'completed' ? 'completed' : ''}">
+              ${task.status === 'completed' ? 
+                '<i class="fas fa-check-circle text-success"></i>' : 
+                '<i class="far fa-circle text-muted"></i>'
+              }
+              <span>${task.name}</span>
+            </div>
+          `).join('')}
+        </div>
+      `;
+      
+      timeline.appendChild(timelineItem);
+    });
+  }
 
-  window.openAddTasksEpisodePopup = async function () {
-    const guestId = document.getElementById("selected-guest").dataset.guestId;
-    const episodes = await fetchEpisodes(guestId);
-    const episodesList = document.getElementById("add-tasks-episode-list");
-    episodesList.innerHTML = ""; // Clear existing episodes
+  function setupTabs() {
+    const tabButtons = document.querySelectorAll('.tab-btn');
+    const tabPanes = document.querySelectorAll('.tab-pane');
+    
+    tabButtons.forEach(button => {
+      button.addEventListener('click', () => {
+        const tabId = button.getAttribute('data-tab');
+        
+        // Update active state
+        tabButtons.forEach(btn => btn.classList.remove('active'));
+        tabPanes.forEach(pane => pane.classList.remove('active'));
+        
+        button.classList.add('active');
+        document.getElementById(`${tabId}-tab`).classList.add('active');
+        
+        state.activeTab = tabId;
+      });
+    });
+  }
 
-    if (episodes.length === 0) {
-      let noEpisodesItem = document.createElement("p");
-      noEpisodesItem.textContent = "No episodes found";
-      episodesList.appendChild(noEpisodesItem);
+  function setupTimelineToggle() {
+    const toggleBtn = document.getElementById('toggleTimelineBtn');
+    const sidebar = document.getElementById('timelineSidebar');
+    
+    toggleBtn.addEventListener('click', () => {
+      state.showTimeline = !state.showTimeline;
+      
+      if (state.showTimeline) {
+        sidebar.classList.remove('collapsed');
+        toggleBtn.innerHTML = '<i class="fas fa-chevron-right"></i>';
+      } else {
+        sidebar.classList.add('collapsed');
+        toggleBtn.innerHTML = '<i class="fas fa-chevron-left"></i>';
+      }
+    });
+  }
+
+  function setupEpisodeDropdown() {
+    const dropdownBtn = document.getElementById('episodeDropdownBtn');
+    const dropdown = document.getElementById('episodeDropdown');
+    
+    dropdownBtn.addEventListener('click', toggleEpisodeDropdown);
+    
+    // Close dropdown when clicking outside
+    document.addEventListener('click', (event) => {
+      if (!event.target.closest('#episodeDropdownBtn') && !event.target.closest('#episodeDropdown')) {
+        dropdown.classList.remove('show');
+      }
+    });
+  }
+
+  function toggleEpisodeDropdown() {
+    const dropdown = document.getElementById('episodeDropdown');
+    dropdown.classList.toggle('show');
+  }
+
+  function selectEpisode(episode) {
+    state.selectedEpisode = episode;
+    
+    // Update UI
+    document.getElementById('currentEpisodeNumber').textContent = `Episode ${episode.number}`;
+    document.getElementById('episodeTitle').textContent = episode.title;
+    document.getElementById('recordingDate').textContent = `Recording Date: ${episode.recordingDate}`;
+    
+    // Update progress bar
+    updateProgressBar();
+    
+    // Update timeline
+    renderTimeline();
+  }
+
+  function selectTemplate(template) {
+    state.activeTemplate = template;
+    
+    // Update UI
+    populateTemplateSelector();
+    renderTaskList();
+    renderKanbanBoard();
+    renderTimeline();
+  }
+
+  function updateProgressBar() {
+    const { completedTasks, totalTasks } = state.selectedEpisode;
+    const percentage = Math.round((completedTasks / totalTasks) * 100);
+    
+    document.getElementById('progressText').textContent = `${completedTasks} of ${totalTasks} tasks completed (${percentage}%)`;
+    document.getElementById('progressBar').style.width = `${percentage}%`;
+  }
+
+  function setupTaskInteractions() {
+    // Task checkbox toggle
+    document.querySelectorAll('.task-checkbox').forEach(checkbox => {
+      checkbox.addEventListener('click', () => {
+        const taskId = checkbox.getAttribute('data-task-id');
+        toggleTaskCompletion(taskId);
+      });
+    });
+    
+    // Task expand/collapse
+    document.querySelectorAll('.task-expand').forEach(button => {
+      button.addEventListener('click', () => {
+        const taskId = button.getAttribute('data-task-id');
+        toggleTaskExpansion(taskId);
+      });
+    });
+    
+    // Workspace buttons
+    document.querySelectorAll('.workspace-btn, [data-workspace-task-id]').forEach(button => {
+      button.addEventListener('click', () => {
+        const taskId = button.getAttribute('data-workspace-task-id');
+        openTaskInWorkspace(taskId);
+      });
+    });
+  }
+
+  function toggleTaskCompletion(taskId) {
+    state.completedTasks[taskId] = !state.completedTasks[taskId];
+    renderTaskList();
+    renderKanbanBoard();
+    renderTimeline();
+  }
+
+  function toggleTaskExpansion(taskId) {
+    state.expandedTasks[taskId] = !state.expandedTasks[taskId];
+    renderTaskList();
+  }
+
+  function openTaskInWorkspace(taskId) {
+    const task = state.activeTemplate.tasks.find(t => t.id === taskId);
+    if (task) {
+      state.selectedTask = task;
+      
+      // Switch to workspace tab
+      document.querySelector('.tab-btn[data-tab="workspace"]').click();
+      
+      // Render workspace with selected task
+      renderWorkspace();
+    }
+  }
+
+  function setupKanbanDragDrop() {
+    const draggables = document.querySelectorAll('.kanban-task');
+    const dropZones = document.querySelectorAll('.kanban-column-content');
+    
+    draggables.forEach(draggable => {
+      draggable.addEventListener('dragstart', () => {
+        draggable.classList.add('dragging');
+      });
+      
+      draggable.addEventListener('dragend', () => {
+        draggable.classList.remove('dragging');
+      });
+    });
+    
+    dropZones.forEach(zone => {
+      zone.addEventListener('dragover', e => {
+        e.preventDefault();
+        zone.classList.add('drag-over');
+      });
+      
+      zone.addEventListener('dragleave', () => {
+        zone.classList.remove('drag-over');
+      });
+      
+      zone.addEventListener('drop', e => {
+        e.preventDefault();
+        zone.classList.remove('drag-over');
+        
+        const dragging = document.querySelector('.dragging');
+        if (dragging) {
+          const taskId = dragging.getAttribute('data-task-id');
+          const columnId = zone.getAttribute('data-column-id');
+          
+          // Update task status based on column
+          updateTaskStatus(taskId, columnId);
+          
+          // Re-render kanban board
+          renderKanbanBoard();
+        }
+      });
+    });
+  }
+
+  function updateTaskStatus(taskId, columnId) {
+    const task = state.activeTemplate.tasks.find(t => t.id === taskId);
+    if (task) {
+      switch (columnId) {
+        case 'todo':
+          task.status = 'not-started';
+          break;
+        case 'in-progress':
+          task.status = 'in-progress';
+          break;
+        case 'ready':
+          task.status = 'ready';
+          break;
+        case 'published':
+          task.status = 'completed';
+          break;
+      }
+    }
+  }
+
+  function renderWorkspace() {
+    const workspaceArea = document.getElementById('workspaceArea');
+    
+    if (!state.selectedTask) {
+      workspaceArea.innerHTML = `
+        <div class="workspace-placeholder">
+          <i class="fas fa-laptop"></i>
+          <h3>No task selected</h3>
+          <p>Select a task from the task list to open it in the workspace. Tasks with the <i class="fas fa-laptop"></i> icon can be worked on directly in this workspace.</p>
+        </div>
+      `;
+      return;
+    }
+    
+    const task = state.selectedTask;
+    
+    // Determine which workspace to show based on task type
+    let workspaceContent = '';
+    
+    if (task.type === 'audio-editing') {
+      workspaceContent = renderAudioEditingWorkspace(task);
+    } else if (task.type === 'transcription') {
+      workspaceContent = renderTranscriptionWorkspace(task);
     } else {
-      episodes.forEach((episode) => {
-        let episodeItem = document.createElement("a");
-        episodeItem.href = "#";
-        episodeItem.textContent = episode.title;
-        episodeItem.onclick = async (event) => {
-          event.preventDefault();
-          await addTasksToEpisode(episode._id, guestId, []); // Pass an empty array for tasks for now
-        };
-        episodesList.appendChild(episodeItem);
+      workspaceContent = renderGenericWorkspace(task);
+    }
+    
+    workspaceArea.innerHTML = workspaceContent;
+    
+    // Set up workspace interactions
+    setupWorkspaceInteractions();
+  }
+
+  function renderAudioEditingWorkspace(task) {
+    return `
+      <div class="workspace-content">
+        <div class="workspace-header">
+          <div>
+            <h3 class="workspace-title">${task.name}</h3>
+            <p class="workspace-subtitle">Audio editing workspace</p>
+          </div>
+          <button class="btn btn-primary">
+            <i class="fas fa-save"></i>
+            <span>Save Changes</span>
+          </button>
+        </div>
+        
+        <div class="card mb-4">
+          <div class="card-content">
+            <div class="audio-file">
+              <i class="fas fa-file-audio text-primary audio-icon"></i>
+              <div>
+                <h4 class="audio-title">Episode42_raw.mp3</h4>
+                <p class="audio-meta">48:32 • 44.1kHz • Stereo</p>
+              </div>
+            </div>
+            
+            <div class="audio-waveform">
+              <div class="waveform-placeholder">Audio waveform visualization</div>
+            </div>
+            
+            <div class="audio-controls">
+              <div class="playback-controls">
+                <button class="btn btn-outline btn-icon"><i class="fas fa-backward"></i></button>
+                <button id="playButton" class="btn btn-primary btn-icon play-btn"><i class="fas fa-play"></i></button>
+                <button class="btn btn-outline btn-icon"><i class="fas fa-forward"></i></button>
+              </div>
+              
+              <div class="volume-control">
+                <i class="fas fa-volume-up"></i>
+                <input type="range" min="0" max="100" value="80" class="volume-slider">
+              </div>
+              
+              <div class="time-display">12:34 / 48:32</div>
+            </div>
+          </div>
+        </div>
+        
+        <div class="workspace-tabs">
+          <div class="workspace-tab-list">
+            <button class="workspace-tab active" data-workspace-tab="tools">AI Tools</button>
+            <button class="workspace-tab" data-workspace-tab="effects">Effects</button>
+            <button class="workspace-tab" data-workspace-tab="markers">Markers</button>
+          </div>
+          
+          <div class="workspace-tab-content active" id="tools-tab">
+            <div class="card">
+              <div class="card-content">
+                <h4 class="workspace-section-title">
+                  <i class="fas fa-magic text-primary"></i>
+                  <span>AI Audio Enhancement</span>
+                </h4>
+                
+                <div class="enhancement-controls">
+                  <div class="enhancement-slider">
+                    <div class="enhancement-slider-header">
+                      <label for="enhancement-level" class="enhancement-label">
+                        <i class="fas fa-sparkles text-warning"></i>
+                        <span>Enhancement Level</span>
+                      </label>
+                      <span class="enhancement-value">50%</span>
+                    </div>
+                    <input type="range" id="enhancement-level" min="0" max="100" value="50" class="enhancement-range">
+                  </div>
+                  
+                  <div class="enhancement-options">
+                    <div class="enhancement-option">
+                      <input type="checkbox" id="noise-reduction" checked>
+                      <label for="noise-reduction">Noise Reduction</label>
+                    </div>
+                    <div class="enhancement-option">
+                      <input type="checkbox" id="echo-reduction">
+                      <label for="echo-reduction">Echo Reduction</label>
+                    </div>
+                    <div class="enhancement-option">
+                      <input type="checkbox" id="voice-enhancement" checked>
+                      <label for="voice-enhancement">Voice Enhancement</label>
+                    </div>
+                  </div>
+                  
+                  <button id="applyAiBtn" class="btn btn-primary btn-full">
+                    <i class="fas fa-magic"></i>
+                    <span>Apply AI Enhancement</span>
+                  </button>
+                  
+                  <div class="enhancement-note">
+                    <i class="fas fa-exclamation-circle"></i>
+                    <p>AI enhancement uses machine learning to improve audio quality. Results may vary based on the original recording quality.</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            <div class="workspace-actions">
+              <button class="btn btn-outline">
+                <i class="fas fa-headphones"></i>
+                <span>Preview Changes</span>
+              </button>
+              
+              <div class="workspace-action-group">
+                <button class="btn btn-outline">
+                  <i class="fas fa-check-circle"></i>
+                  <span>Mark as Complete</span>
+                </button>
+                <button class="btn btn-primary">
+                  <i class="fas fa-save"></i>
+                  <span>Save & Export</span>
+                </button>
+              </div>
+            </div>
+          </div>
+          
+          <div class="workspace-tab-content" id="effects-tab">
+            <div class="card">
+              <div class="card-content">
+                <h4 class="workspace-section-title">Audio Effects</h4>
+                <p class="workspace-description">Standard audio effects like EQ, compression, and normalization would be available here.</p>
+              </div>
+            </div>
+          </div>
+          
+          <div class="workspace-tab-content" id="markers-tab">
+            <div class="card">
+              <div class="card-content">
+                <h4 class="workspace-section-title">Audio Markers</h4>
+                <p class="workspace-description">Add markers to important points in your audio for easier navigation and editing.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    `;
+  }
+
+  function renderTranscriptionWorkspace(task) {
+    return `
+      <div class="workspace-content">
+        <div class="workspace-header">
+          <div>
+            <h3 class="workspace-title">${task.name}</h3>
+            <p class="workspace-subtitle">Transcription workspace</p>
+          </div>
+          <button class="btn btn-primary">
+            <i class="fas fa-save"></i>
+            <span>Save Transcript</span>
+          </button>
+        </div>
+        
+        <div class="transcription-grid">
+          <div class="card">
+            <div class="card-content">
+              <div class="audio-file">
+                <i class="fas fa-file-audio text-primary audio-icon"></i>
+                <div>
+                  <h4 class="audio-title">Episode42_final.mp3</h4>
+                  <p class="audio-meta">48:32 • 44.1kHz • Stereo</p>
+                </div>
+              </div>
+              
+              <div class="mini-player">
+                <button id="playButton" class="btn btn-outline btn-icon play-btn">
+                  <i class="fas fa-play"></i>
+                </button>
+                <div class="mini-player-progress">
+                  <div class="mini-player-bar" style="width: 25%"></div>
+                </div>
+                <span class="mini-player-time">12:34</span>
+              </div>
+              
+              <div class="transcription-options">
+                <h4 class="workspace-section-title">
+                  <i class="fas fa-magic text-primary"></i>
+                  <span>AI Transcription</span>
+                </h4>
+                <button id="generateTranscriptBtn" class="btn btn-outline btn-sm">
+                  <span>Generate Transcript</span>
+                </button>
+                
+                <div class="transcription-option">
+                  <input type="checkbox" id="speaker-detection" checked>
+                  <label for="speaker-detection">Speaker Detection</label>
+                </div>
+                
+                <div class="transcription-option">
+                  <input type="checkbox" id="punctuation" checked>
+                  <label for="punctuation">Auto Punctuation</label>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <div class="card">
+            <div class="card-content">
+              <div class="transcript-header">
+                <i class="fas fa-file-alt text-primary transcript-icon"></i>
+                <div>
+                  <h4 class="transcript-title">Transcript</h4>
+                  <p class="transcript-meta">Edit and review the generated transcript</p>
+                </div>
+              </div>
+              
+              <textarea class="transcript-editor" placeholder="Transcript will appear here after generation..."></textarea>
+              
+              <div class="transcript-actions">
+                <button class="btn btn-outline btn-sm">
+                  <i class="fas fa-file-export"></i>
+                  <span>Export as Text</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <div class="workspace-actions">
+          <button class="btn btn-outline">
+            <i class="fas fa-microphone"></i>
+            <span>Record Additional Notes</span>
+          </button>
+          
+          <button class="btn btn-primary">
+            <i class="fas fa-check-circle"></i>
+            <span>Mark Task as Complete</span>
+          </button>
+        </div>
+      </div>
+    `;
+  }
+
+  function renderGenericWorkspace(task) {
+    return `
+      <div class="workspace-generic">
+        <div class="workspace-generic-icon">
+          <i class="fas fa-laptop"></i>
+        </div>
+        <h3 class="workspace-generic-title">${task.name}</h3>
+        <p class="workspace-generic-description">
+          This task doesn't have a specialized workspace yet. You can still track its progress and mark it as complete.
+        </p>
+        <button class="btn btn-primary">
+          <i class="fas fa-check-circle"></i>
+          <span>Mark Task as Complete</span>
+        </button>
+      </div>
+    `;
+  }
+
+  function setupWorkspaceInteractions() {
+    // Play/pause button
+    const playButton = document.getElementById('playButton');
+    if (playButton) {
+      playButton.addEventListener('click', togglePlayback);
+    }
+    
+    // Apply AI button
+    const applyAiBtn = document.getElementById('applyAiBtn');
+    if (applyAiBtn) {
+      applyAiBtn.addEventListener('click', applyAiEnhancement);
+    }
+    
+    // Generate transcript button
+    const generateTranscriptBtn = document.getElementById('generateTranscriptBtn');
+    if (generateTranscriptBtn) {
+      generateTranscriptBtn.addEventListener('click', generateTranscript);
+    }
+    
+    // Workspace tabs
+    const workspaceTabs = document.querySelectorAll('.workspace-tab');
+    if (workspaceTabs.length > 0) {
+      workspaceTabs.forEach(tab => {
+        tab.addEventListener('click', () => {
+          const tabId = tab.getAttribute('data-workspace-tab');
+          
+          // Update active state
+          workspaceTabs.forEach(t => t.classList.remove('active'));
+          document.querySelectorAll('.workspace-tab-content').forEach(c => c.classList.remove('active'));
+          
+          tab.classList.add('active');
+          document.getElementById(`${tabId}-tab`).classList.add('active');
+        });
       });
     }
+  }
 
-    document.getElementById("add-tasks-episode-popup").style.display = "flex";
-  };
-
-  window.closeAddTasksEpisodePopup = function () {
-    document.getElementById("add-tasks-episode-popup").style.display = "none";
-  };
-</script>
-
-<script type="module" src="{{ url_for('static', filename='requests/episodeRequest.js') }}"></script>
-<script type="module" src="{{ url_for('static', filename='js/taskManagement.js') }}"></script>
-
-{% endblock %}
-=======
-import {
-    fetchTasks,
-    fetchTask,
-    saveTask,
-    updateTask,
-    deleteTask,
-    fetchDefaultTasks,
-    deleteDefaultTask,
-    addSelectedDefaultTasks,
-    addTasksToEpisode,
-    fetchLocalDefaultTasks
-  } from "/static/requests/podtaskRequest.js";
-  import {
-    fetchEpisodes,
-    viewEpisodeTasks,
-  } from "/static/requests/episodeRequest.js";
-
-  document.addEventListener("DOMContentLoaded", function () {
-    const form = document.getElementById("add-task-form");
-
-    if (form) {
-      form.addEventListener("submit", function (e) {
-        e.preventDefault(); // Prevent the form from submitting the traditional way
-
-        // Collect form data
-        const taskName = document.getElementById("task-name").value.trim();
-        const taskDescription = document
-          .getElementById("task-description")
-          .value.trim();
-        const dueTime = document.getElementById("due-time").value.trim();
-        const actionLink = document.getElementById("action-link").value.trim();
-        const actionLinkDesc = document
-          .getElementById("action-link-desc")
-          .value.trim();
-        const submissionRequired = document.getElementById(
-          "submission-required"
-        ).checked;
-
-        const data = {
-          taskName,
-          taskDescription,
-          dueTime,
-          actionLink,
-          actionLinkDesc,
-          submissionRequired
-        };
-
-        saveTask(data)
-          .then((response) => {
-            if (response.error) {
-              alert(`Error: ${response.error}`);
-            } else {
-              alert("Task added successfully!");
-              window.location.href = response.redirect_url;
-            }
-          })
-          .catch((error) => {
-            console.error("Error:", error);
-            alert("There was an error with the registration process.");
-          });
-      });
+  function togglePlayback() {
+    const playButton = document.getElementById('playButton');
+    const isPlaying = playButton.classList.contains('playing');
+    
+    if (isPlaying) {
+      playButton.classList.remove('playing');
+      playButton.innerHTML = '<i class="fas fa-play"></i>';
+    } else {
+      playButton.classList.add('playing');
+      playButton.innerHTML = '<i class="fas fa-pause"></i>';
     }
+  }
 
-  // Fetch tasks on page load
-  fetchTasks();
-  document.title = "To-Do Workflow";
+  function applyAiEnhancement() {
+    const button = document.getElementById('applyAiBtn');
+    button.disabled = true;
+    button.innerHTML = '<span class="spinner">⟳</span> Processing...';
+    
+    // Simulate AI processing
+    setTimeout(() => {
+      button.disabled = false;
+      button.innerHTML = '<i class="fas fa-magic"></i> Apply AI Enhancement';
+      alert('AI enhancement applied successfully!');
+    }, 2000);
+  }
 });
 
-// Fetch tasks from the server
-async function fetchTasks() {
-  try {
-    const response = await fetch("/api/tasks");
-    if (!response.ok) {
-      throw new Error("Failed to fetch tasks");
-    }
+// Episode data
+const episodes = [
+  {
+    id: "ep-42",
+    number: 42,
+    title: "The Future of Podcasting",
+    recordingDate: "2025-05-01",
+    releaseDate: "2025-05-08",
+    completedTasks: 8,
+    totalTasks: 15,
+    status: "editing",
+  },
+  {
+    id: "ep-41",
+    number: 41,
+    title: "Interview with Tech Innovator",
+    recordingDate: "2025-04-24",
+    releaseDate: "2025-05-01",
+    completedTasks: 12,
+    totalTasks: 15,
+    status: "publishing",
+  },
+  {
+    id: "ep-40",
+    number: 40,
+    title: "AI Revolution in Content Creation",
+    recordingDate: "2025-04-17",
+    releaseDate: "2025-04-24",
+    completedTasks: 15,
+    totalTasks: 15,
+    status: "published",
+  },
+  {
+    id: "ep-39",
+    number: 39,
+    title: "The Science of Sound Design",
+    recordingDate: "2025-04-10",
+    releaseDate: "2025-04-17",
+    completedTasks: 15,
+    totalTasks: 15,
+    status: "published",
+  },
+  {
+    id: "ep-43",
+    number: 43,
+    title: "Remote Recording Best Practices",
+    recordingDate: "2025-05-08",
+    releaseDate: "2025-05-15",
+    completedTasks: 3,
+    totalTasks: 15,
+    status: "planning",
+  },
+  {
+    id: "ep-44",
+    number: 44,
+    title: "Monetization Strategies for Podcasters",
+    recordingDate: "2025-05-15",
+    releaseDate: "2025-05-22",
+    completedTasks: 1,
+    totalTasks: 15,
+    status: "planning",
+  },
+];
 
-    const tasks = await response.json();
-    renderTasks(tasks);
-  } catch (error) {
-    console.error("Error fetching tasks:", error);
-    // Show some sample tasks for demonstration
-    renderSampleTasks();
-  }
-}
-
-// Render tasks to the task list
-function renderTasks(tasks) {
-  const taskList = document.getElementById("task-list");
-  if (!taskList) return;
-
-  taskList.innerHTML = ""; // Clear existing tasks
-
-  if (tasks.length === 0) {
-    taskList.innerHTML =
-      '<li class="empty-message">No tasks found. Add some tasks to get started.</li>';
-    return;
-  }
-
-  tasks.forEach((task) => {
-    const li = document.createElement("li");
-    li.innerHTML = `
-      <div class="task-details">
-        <span class="task-name">${task.taskname || task.name}</span>
-        <div class="task-actions">
-          <button class="edit-btn" onclick="editTask('${
-            task._id || task.id
-          }')">Edit</button>
-          <button class="delete-btn" onclick="deleteTask('${
-            task._id || task.id
-          }')">Delete</button>
-        </div>
-      </div>
-    `;
-
-    taskList.appendChild(li);
-  });
-}
-
-// Render sample tasks for demonstration
-function renderSampleTasks() {
-  const sampleTasks = [
-    { id: "task1", name: "Send guest confirmation email" },
-    { id: "task2", name: "Prepare interview questions" },
-    { id: "task3", name: "Schedule recording session" },
-    { id: "task4", name: "Send reminder 24 hours before recording" },
-    { id: "task5", name: "Edit and process audio" }
-  ];
-  console.log("Welcome to the To-Do Workflow");
-  renderTasks(sampleTasks);
-}
-
-// Modal functions
-function openTaskModal() {
-  document.getElementById("task-modal").style.display = "flex";
-  document.getElementById("modal-title").innerText = "Create New To-Do";
-  // Reset form fields
-  document.getElementById("task-name").value = "";
-  document.getElementById("task-description").value = "";
-  document.getElementById("due-time").value = "";
-  document.getElementById("action-link").value = "";
-  document.getElementById("action-link-desc").value = "";
-  document.getElementById("submission-required").checked = false;
-
-  // Set the save button to create a new task
-  const saveButton = document.getElementById("save-task-btn");
-  saveButton.onclick = saveTask;
-}
-
-function closeModal() {
-  document.getElementById("task-modal").style.display = "none";
-}
-
-function openDefaultTasksPopup() {
-  document.getElementById("default-tasks-popup").style.display = "flex";
-  loadDefaultTasks();
-}
-
-function closeDefaultTasksPopup() {
-  document.getElementById("default-tasks-popup").style.display = "none";
-}
-
-// Load default tasks
-async function loadDefaultTasks() {
-  try {
-    const response = await fetch("/api/default-tasks");
-    if (!response.ok) {
-      throw new Error("Failed to fetch default tasks");
-    }
-
-    const defaultTasks = await response.json();
-    renderDefaultTasks(defaultTasks);
-  } catch (error) {
-    console.error("Error loading default tasks:", error);
-    // Show some sample default tasks for demonstration
-    renderSampleDefaultTasks();
-  }
-}
-
-// Render default tasks
-function renderDefaultTasks(tasks) {
-  const defaultTasksList = document.getElementById("default-tasks-list");
-  if (!defaultTasksList) return;
-
-  defaultTasksList.innerHTML = ""; // Clear existing tasks
-
-  tasks.forEach((task, index) => {
-    const div = document.createElement("div");
-    div.classList.add("default-task-item");
-    div.innerHTML = `
-      <span>${task.name || task}</span>
-      <input type="checkbox" id="default-task-${index}" value="${
-      task.id || "task" + index
-    }">
-    `;
-
-    defaultTasksList.appendChild(div);
-  });
-}
-
-// Render sample default tasks for demonstration
-function renderSampleDefaultTasks() {
-  const sampleDefaultTasks = [
-    "Send guest confirmation email",
-    "Prepare interview questions",
-    "Schedule recording session",
-    "Send reminder 24 hours before recording",
-    "Edit and process audio",
-    "Create show notes",
-    "Schedule social media posts",
-    "Upload to podcast platforms"
-  ];
-
-  renderDefaultTasks(sampleDefaultTasks);
-}
-
-function selectAllDefaultTasks() {
-  const checkboxes = document.querySelectorAll(
-    '#default-tasks-list input[type="checkbox"]'
-  );
-  checkboxes.forEach((checkbox) => {
-    checkbox.checked = true;
-  });
-}
-
-function addSelectedDefaultTasks() {
-  const checkboxes = document.querySelectorAll(
-    '#default-tasks-list input[type="checkbox"]:checked'
-  );
-  const taskList = document.getElementById("task-list");
-
-  checkboxes.forEach((checkbox) => {
-    const taskName = checkbox.parentElement.querySelector("span").textContent;
-
-    // Create new task item
-    const li = document.createElement("li");
-    li.innerHTML = `
-      <div class="task-details">
-        <span class="task-name">${taskName}</span>
-        <div class="task-actions">
-          <button class="edit-btn" onclick="editTask('${checkbox.value}')">Edit</button>
-          <button class="delete-btn" onclick="deleteTask('${checkbox.value}')">Delete</button>
-        </div>
-      </div>
-    `;
-
-    taskList.appendChild(li);
-  });
-
-  closeDefaultTasksPopup();
-}
-
-function viewEpisodes() {
-  document.getElementById("episodes-popup").style.display = "flex";
-  loadEpisodes();
-}
-
-function closeEpisodesPopup() {
-  document.getElementById("episodes-popup").style.display = "none";
-}
-
-// Load episodes
-async function loadEpisodes() {
-  try {
-    const response = await fetch("/api/episodes");
-    if (!response.ok) {
-      throw new Error("Failed to fetch episodes");
-    }
-
-    const episodes = await response.json();
-    renderEpisodes(episodes);
-  } catch (error) {
-    console.error("Error loading episodes:", error);
-    // Show some sample episodes for demonstration
-    renderSampleEpisodes();
-  }
-}
-
-// Render episodes
-function renderEpisodes(episodes) {
-  const episodesList = document.getElementById("episodes-list");
-  if (!episodesList) return;
-
-  episodesList.innerHTML = ""; // Clear existing episodes
-
-    if (episodes.length === 0) {
-      let noEpisodesItem = document.createElement("p");
-      noEpisodesItem.textContent = "No episodes found";
-      episodesList.appendChild(noEpisodesItem);
-    } else {
-      episodes.forEach((episode) => {
-        let episodeItem = document.createElement("a");
-        episodeItem.href = "#";
-        episodeItem.textContent = episode.title;
-        episodeItem.onclick = async (event) => {
-          event.preventDefault();
-          await viewEpisodeTasks(episode._id);
-        };
-        episodesList.appendChild(episodeItem);
-      });
-    }
-
-    document.getElementById("episodes-popup").style.display = "flex";
-  };
-
-  window.viewEpisodeTasks = async function (episodeId) {
-    const tasks = await fetchEpisodeTasks(episodeId);
-    const taskList = document.getElementById("task-list");
-    taskList.innerHTML = ""; // Clear existing tasks
-
-    if (tasks.length === 0) {
-      let noTasksItem = document.createElement("li");
-      noTasksItem.classList.add("task-item");
-      noTasksItem.textContent = "No tasks found";
-      taskList.appendChild(noTasksItem);
-    } else {
-      tasks.forEach((task) => {
-        let li = document.createElement("li");
-        li.classList.add("task-item");
-        li.innerHTML = `
-          <div class="task-details">
-            <span class="task-name">${task.taskname}</span>
-            <div class="task-actions">
-              <button class="edit-btn" onclick="editTask('${task._id}')">Edit</button>
-              <button class="delete-btn" onclick="deleteTask('${task._id}')">Delete</button>
-            </div>
-          </div>
-        `;
-        taskList.appendChild(li);
-      });
-    }
-
-    document.getElementById("episodes-popup").style.display = "none";
-  };
-
-  window.openTaskModal = function () {
-    document.getElementById("task-modal").style.display = "flex";
-  };
-
-  window.closeModal = function () {
-    document.getElementById("task-modal").style.display = "none";
-  };
-
-  window.openDefaultTasksPopup = async function () {
-    document.getElementById("default-tasks-popup").style.display = "flex";
-
-    const defaultTasks = await fetchLocalDefaultTasks();
-    const defaultTasksList = document.getElementById("default-tasks-list");
-    defaultTasksList.innerHTML = ""; // Clear existing tasks
-
-    defaultTasks.forEach((task, index) => {
-      let div = document.createElement("div");
-      div.classList.add("default-task-item");
-      div.innerHTML = `
-        <span>${task}</span>
-        <input type="checkbox" id="default-task-${index}" value="${task}">
-      `;
-      defaultTasksList.appendChild(div);
-    });
-  };
-
-  window.closeDefaultTasksPopup = function () {
-    document.getElementById("default-tasks-popup").style.display = "none";
-  };
-
-  window.closeEpisodesPopup = function () {
-    document.getElementById("episodes-popup").style.display = "none";
-  };
-
-  window.openAddTasksEpisodePopup = async function () {
-    const guestId = document.getElementById("selected-guest").dataset.guestId;
-    const episodes = await fetchEpisodes(guestId);
-    const episodesList = document.getElementById("add-tasks-episode-list");
-    episodesList.innerHTML = ""; // Clear existing episodes
-
-    if (episodes.length === 0) {
-      let noEpisodesItem = document.createElement("p");
-      noEpisodesItem.textContent = "No episodes found";
-      episodesList.appendChild(noEpisodesItem);
-    } else {
-      episodes.forEach((episode) => {
-        let episodeItem = document.createElement("a");
-        episodeItem.href = "#";
-        episodeItem.textContent = episode.title;
-        episodeItem.onclick = async (event) => {
-          event.preventDefault();
-          await addTasksToEpisode(episode._id, guestId, []); // Pass an empty array for tasks for now
-        };
-        episodesList.appendChild(episodeItem);
-      });
-    }
-
-    document.getElementById("add-tasks-episode-popup").style.display = "flex";
-  };
-
-  window.closeAddTasksEpisodePopup = function () {
-    document.getElementById("add-tasks-episode-popup").style.display = "none";
-  };
->>>>>>> 69c2325670bcb7ce9e73d39f49227887426af2db:src/frontend/static/js/taskmanagement/taskmanagement.js
+// Template data
+const templates = [
+  {
+    id: "default-template",
+    name: "Default Podcast Template",
+    description: "Standard workflow for podcast episodes",
+    tasks: [
+      {
+        id: "task-1",
+        name: "Schedule recording session",
+        description: "Set up a time for recording the episode with the host and any guests.",
+        dueDate: "7 days before recording",
+        assignee: "Alice Smith",
+        dependencies: [],
+        isDependent: true,
+        type: "planning",
+        status: "completed",
+      },
+      {
+        id: "task-2",
+        name: "Prepare episode script/outline",
+        description:
+          "Create a detailed outline or script for the episode, including key talking points and questions for guests.",
+        dueDate: "3 days before recording",
+        assignee: "John Doe",
+        dependencies: ["Schedule recording session"],
+        hasDependencyWarning: true,
+        type: "planning",
+        status: "completed",
+      },
+      {
+        id: "task-3",
+        name: "Send prep materials to guest",
+        description: "Share episode outline, technical requirements, and any other relevant information with the guest.",
+        dueDate: "2 days before recording",
+        assignee: "Alice Smith",
+        dependencies: ["Prepare episode script/outline"],
+        type: "planning",
+        status: "completed",
+      },
+      {
+        id: "task-4",
+        name: "Test recording equipment",
+        description: "Ensure all microphones, headphones, and recording software are working properly.",
+        dueDate: "1 day before recording",
+        assignee: "Bob Johnson",
+        dependencies: [],
+        type: "generic",
+        status: "completed",
+      },
+      {
+        id: "task-5",
+        name: "Record episode",
+        description: "Conduct the actual recording session with host and guest(s).",
+        dueDate: "Recording day",
+        assignee: "John Doe",
+        dependencies: ["Test recording equipment", "Send prep materials to guest"],
+        type: "generic",
+        status: "completed",
+      },
+      {
+        id: "task-6",
+        name: "Edit audio",
+        description: "Clean up audio, remove mistakes, and enhance sound quality.",
+        dueDate: "2 days after recording",
+        assignee: "Bob Johnson",
+        dependencies: ["Record episode"],
+        workspaceEnabled: true,
+        type: "audio-editing",
+        status: "in-progress",
+      },
+      {
+        id: "task-7",
+        name: "Generate transcript",
+        description: "Create a text transcript of the episode for accessibility and SEO.",
+        dueDate: "3 days after recording",
+        assignee: "Bob Johnson",
+        dependencies: ["Edit audio"],
+        workspaceEnabled: true,
+        type: "transcription",
+        status: "not-started",
+      },
+      {
+        id: "task-8",
+        name: "Prepare show notes",
+        description: "Write detailed show notes including timestamps, links, and key takeaways.",
+        dueDate: "3 days after recording",
+        assignee: "Alice Smith",
+        dependencies: ["Generate transcript"],
+        type: "generic",
+        status: "not-started",
+      },
+      {
+        id: "task-9",
+        name: "Create promotional graphics",
+        description: "Design social media graphics and episode artwork.",
+        dueDate: "4 days after recording",
+        assignee: "Alice Smith",
+        dependencies: ["Edit audio"],
+        type: "promotion",
+        status: "not-started",
+      },
+      {
+        id: "task-10",
+        name: "Upload and schedule episode",
+        description: "Upload the episode to podcast hosting platform and schedule for release.",
+        dueDate: "5 days after recording",
+        assignee: "Alice Smith",
+        dependencies: ["Edit audio", "Prepare show notes"],
+        type: "generic",
+        status: "not-started",
+      },
+      {
+        id: "task-11",
+        name: "Publish episode",
+        description: "Make the episode live on all podcast platforms.",
+        dueDate: "7 days after recording",
+        assignee: "Alice Smith",
+        dependencies: ["Upload and schedule episode"],
+        type: "generic",
+        status: "not-started",
+      },
+      {
+        id: "task-12",
+        name: "Social media promotion",
+        description: "Share the episode across all social media channels.",
+        dueDate: "7 days after recording",
+        assignee: "Alice Smith",
+        dependencies: ["Publish episode", "Create promotional graphics"],
+        type: "promotion",
+        status: "not-started",
+      },
+      {
+        id: "task-13",
+        name: "Send thank you to guest",
+        description: "Send a thank you note and the published episode link to the guest.",
+        dueDate: "8 days after recording",
+        assignee: "John Doe",
+        dependencies: ["Publish episode"],
+        type: "generic",
+        status: "not-started",
+      },
+      {
+        id: "task-14",
+        name: "Analyze episode performance",
+        description: "Review download statistics and listener feedback.",
+        dueDate: "14 days after recording",
+        assignee: "John Doe",
+        dependencies: ["Publish episode"],
+        type: "generic",
+        status: "not-started",
+      },
+      {
+        id: "task-15",
+        name: "Plan next episode",
+        description: "Begin planning the topic and potential guests for the next episode.",
+        dueDate: "14 days after recording",
+        assignee: "John Doe",
+        dependencies: ["Analyze episode performance"],
+        type: "planning",
+        status: "not-started",
+      },
+    ],
+  },
+  {
+    id: "guest-interview-template",
+    name: "Guest Interview Template",
+    description: "Specialized workflow for episodes with guest interviews",
+    tasks: [
+      // Similar task structure as above but for guest interviews
+      // Abbreviated for brevity
+    ],
+  },
+];
