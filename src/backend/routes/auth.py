@@ -247,7 +247,7 @@ def verify_login_token():
         )  # Token valid for 10 minutes
 
         # Check if the user exists in the database
-        user = collection.find_one({"email": email})
+        user = collection.database.Users.find_one({"email": email})
         if not user:
             logger.warning(f"No user found for email: {email}. Creating a new user.")
             user_data = {
@@ -255,10 +255,10 @@ def verify_login_token():
                 "email": email,
                 "createdAt": datetime.utcnow(),
             }
-            collection.insert_one(user_data)
-            user = collection.find_one({"_id": user_data["_id"]})
+            collection.database.Users.insert_one(user_data)
+            user = collection.database.Users.find_one({"_id": user_data["_id"]})
 
-        # Kontrollera om ett konto redan finns för e-postadressen
+        # Check if an account already exists for the email
         account = collection.database.Accounts.find_one({"email": email})
         if not account:
             logger.info(f"No account found for email {email}. Creating a new account.")

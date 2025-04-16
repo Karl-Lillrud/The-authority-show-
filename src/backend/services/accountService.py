@@ -55,3 +55,19 @@ class AccountService:
             return self.get_account_by_user_id(member_id)
         
         return None
+
+    def create_account_if_not_exists(self, account_data):
+        """Create an account only if it does not already exist."""
+        existing_account = self.account_collection.find_one({
+            "$or": [
+                {"email": account_data["email"]},
+                {"userId": account_data["userId"]}
+            ]
+        })
+        if existing_account:
+            logger.info(f"Account already exists for email {account_data['email']} or userId {account_data['userId']}.")
+            return existing_account
+
+        self.account_collection.insert_one(account_data)
+        logger.info(f"Account created successfully: {account_data}")
+        return account_data
