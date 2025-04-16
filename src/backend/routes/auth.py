@@ -64,7 +64,34 @@ def signin_submit():
         session["user_id"] = str(user["_id"])
         session["email"] = user["email"]
         logger.info(f"User {user['email']} logged in successfully.")
-        return jsonify({"redirect_url": "/dashboard"}), 200
+
+        # Check if an account exists for the user
+        account = collection.database.Accounts.find_one({"email": email})
+        if not account:
+            account_data = {
+                "id": str(uuid.uuid4()),
+                "ownerId": str(user["_id"]),
+                "subscriptionId": str(uuid.uuid4()),
+                "creditId": str(uuid.uuid4()),
+                "email": email,
+                "isCompany": False,
+                "companyName": "",
+                "paymentInfo": "",
+                "subscriptionStatus": "active",
+                "createdAt": datetime.utcnow(),
+                "referralBonus": 0,
+                "subscriptionStart": datetime.utcnow(),
+                "subscriptionEnd": None,
+                "isActive": True,
+                "created_at": datetime.utcnow(),
+                "isFirstLogin": True,
+            }
+            collection.database.Accounts.insert_one(account_data)
+
+        # Set the remember_me cookie
+        response = jsonify({"redirect_url": "/dashboard"})
+        response.set_cookie("remember_me", "true", max_age=30*24*60*60)  # Cookie valid for 30 days
+        return response, 200
     else:
         logger.warning("Failed OTP login attempt.")
         return jsonify({"error": response.get("error", "Invalid OTP")}), 401
@@ -73,10 +100,14 @@ def signin_submit():
 @auth_bp.route("/logout", methods=["GET"])
 def logout_user():
     """
-    Logs out the user by clearing the session.
+    Logs out the user by clearing the session and removing the remember_me cookie.
     """
     session.clear()  # Clear all session data
-    return jsonify({"message": "Logout successful", "redirect_url": "/signin"}), 200
+
+    # Remove the remember_me cookie
+    response = jsonify({"message": "Logout successful", "redirect_url": "/signin"})
+    response.delete_cookie("remember_me")
+    return response, 200
 
 
 @auth_bp.route("/verify-and-signin", methods=["POST"], endpoint="verify_and_signin")
