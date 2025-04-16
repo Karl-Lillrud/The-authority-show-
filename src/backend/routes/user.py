@@ -20,11 +20,13 @@ def get_profile():
 
     response, status_code = user_repo.get_profile(str(g.user_id))
     if status_code == 404:  # If profile not found, ensure account creation
-        account = collection.database.Accounts.find_one({"userId": str(g.user_id)})
+        account = collection.database.Accounts.find_one(
+            {"ownerId": str(g.user_id)}
+        )  # Query by ownerId
         if not account:
             account_data = {
-                "id": str(uuid.uuid4()),
-                "userId": str(g.user_id),
+                "_id": str(uuid.uuid4()),  # Changed from "id" to "_id"
+                "ownerId": str(g.user_id),  # Use ownerId
                 "email": g.email,
                 "created_at": datetime.utcnow(),
                 "isActive": True,
@@ -43,6 +45,7 @@ def update_profile():
     response, status_code = user_repo.update_profile(str(g.user_id), data)
     return jsonify(response), status_code
 
+
 """
 # Route to update password
 @user_bp.route("/update_password", methods=["PUT"])
@@ -55,6 +58,7 @@ def update_password():
     return jsonify(response), status_code
 
 """
+
 
 # Route to delete user account and associated data
 @user_bp.route("/delete_user", methods=["DELETE"])

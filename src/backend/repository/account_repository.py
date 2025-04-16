@@ -17,24 +17,24 @@ class AccountRepository:
             if not data:
                 raise ValueError("No data received or invalid JSON.")
 
-            # Check for required fields
-            if "userId" not in data or "email" not in data:
-                raise ValueError("Missing required fields: userId and email")
+            # Check for required fields (ownerId instead of userId)
+            if "ownerId" not in data or "email" not in data:
+                raise ValueError("Missing required fields: ownerId and email")
 
-            # Check for existing account by email or userId
+            # Check for existing account by email or ownerId
             existing_account = self.collection.find_one(
-                {"$or": [{"email": data["email"]}, {"userId": data["userId"]}]}
+                {"$or": [{"email": data["email"]}, {"ownerId": data["ownerId"]}]}
             )
             if existing_account:
-                raise ValueError("Account already exists for this email or userId.")
+                raise ValueError("Account already exists for this email or owner.")
 
             # Use string _id instead of ObjectId
             account_id = str(uuid.uuid4())
             account_document = {
                 "_id": account_id,
-                "userId": data["userId"],
+                "ownerId": data["ownerId"],  # Ensure ownerId is set
+                "userId": data.get("userId"),  # Keep if needed for other relations
                 "email": data["email"],
-                "ownerId": data.get("ownerId"),
                 "subscriptionId": data.get("subscriptionId"),
                 "creditId": data.get("creditId"),
                 "isCompany": data.get("isCompany", False),
@@ -54,7 +54,7 @@ class AccountRepository:
             self.collection.insert_one(account_document)
             logger.info(f"Account created successfully: {account_document}")
 
-            initialize_credits(data["userId"])
+            initialize_credits(data["ownerId"])
 
             return {
                 "message": "Account created successfully",
@@ -83,9 +83,10 @@ class AccountRepository:
             logger.error(f"Failed to fetch account: {e}")
             return {"error": f"Failed to fetch account: {str(e)}"}, 500
 
-    def get_account_by_user(self, user_id):
+    def get_account_by_user(self, user_id):  # user_id is the owner's ID
         try:
-            account = self.collection.find_one({"userId": user_id})
+            # Find account by ownerId
+            account = self.collection.find_one({"ownerId": user_id})  # Query by ownerId
             if not account:
                 return {"error": "Account not found"}, 404
 
@@ -95,14 +96,17 @@ class AccountRepository:
             logger.error(f"Failed to fetch account: {e}")
             return {"error": f"Failed to fetch account: {str(e)}"}, 500
 
-    def edit_account(self, user_id, data):
+    def edit_account(self, user_id, data):  # user_id is the owner's ID
         try:
             updates = {k: v for k, v in data.items() if v is not None}
 
             if not updates:
                 return {"error": "No valid fields provided for update"}, 400
 
-            self.collection.update_one({"userId": user_id}, {"$set": updates})
+            # Update account based on ownerId
+            self.collection.update_one(
+                {"ownerId": user_id}, {"$set": updates}
+            )  # Query by ownerId
 
             return {"message": "Profile updated successfully!"}, 200
 
@@ -110,9 +114,12 @@ class AccountRepository:
             logger.error(f"Error updating profile: {e}", exc_info=True)
             return {"error": f"Error updating profile: {str(e)}"}, 500
 
-    def delete_by_user(self, user_id):
+    def delete_by_user(self, user_id):  # user_id is the owner's ID
         try:
-            result = self.collection.delete_many({"userId": user_id})
+            # Delete accounts based on ownerId
+            result = self.collection.delete_many(
+                {"ownerId": user_id}
+            )  # Query by ownerId
             logger.info(f"Deleted {result.deleted_count} accounts for user {user_id}")
             return result.deleted_count
         except Exception as e:

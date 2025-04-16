@@ -83,7 +83,7 @@ def signin_submit():
         if not account:
             account_data = {
                 "_id": str(uuid.uuid4()),
-                "userId": str(user["_id"]),  # Changed from ownerId to userId
+                "ownerId": str(user["_id"]),  # Use ownerId
                 "subscriptionId": str(uuid.uuid4()),
                 "creditId": str(uuid.uuid4()),
                 "email": email,
@@ -162,7 +162,7 @@ def verify_and_signin():
                 # Create an account for the user
                 account_data = {
                     "_id": str(uuid.uuid4()),  # changed from "id" to "_id"
-                    "userId": user["_id"],
+                    "ownerId": user["_id"],  # Use ownerId
                     "email": email,
                     "created_at": datetime.utcnow(),
                     "isActive": True,
@@ -264,7 +264,7 @@ def verify_login_token():
             logger.info(f"No account found for email {email}. Creating a new account.")
             account_data = {
                 "_id": str(uuid.uuid4()),  # Use _id instead of id
-                "userId": user["_id"],  # Changed from ownerId to userId
+                "ownerId": user["_id"],  # Use ownerId
                 "subscriptionId": str(uuid.uuid4()),
                 "creditId": str(uuid.uuid4()),
                 "email": email,
@@ -331,12 +331,12 @@ def signin():
 
             # Ensure account exists for the user
             account = collection.database.Accounts.find_one(
-                {"userId": str(user["_id"])}
-            )
+                {"ownerId": str(user["_id"])}
+            )  # Query by ownerId
             if not account:
                 account_data = {
                     "_id": str(uuid.uuid4()),  # changed from "id" to "_id"
-                    "userId": str(user["_id"]),
+                    "ownerId": str(user["_id"]),  # Use ownerId
                     "email": email,
                     "created_at": datetime.utcnow(),
                     "isActive": True,

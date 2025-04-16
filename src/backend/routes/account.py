@@ -38,8 +38,10 @@ def create_account_route():
 
         account_data = {
             "_id": str(uuid.uuid4()),
+            "ownerId": data.get(
+                "ownerId"
+            ),  # Ensure ownerId is provided or derived correctly
             "userId": data.get("userId"),
-            "ownerId": data.get("ownerId"),
             "subscriptionId": str(uuid.uuid4()),
             "creditId": str(uuid.uuid4()),
             "email": data["email"],
@@ -67,18 +69,41 @@ def get_account_route():
     if not hasattr(g, "user_id") or not g.user_id:
         return jsonify({"error": "Unauthorized"}), 401
 
-    # Fetch user data from the Users collection
-    user = collection.database.Users.find_one({"_id": g.user_id})
-    if not user:
-        return jsonify({"error": "User not found"}), 404
+    # Fetch account using ownerId
+    response, status_code = account_repo.get_account_by_user(
+        str(g.user_id)
+    )  # This now queries by ownerId
 
-    # Convert ObjectId fields to strings
-    user = {
-        key: str(value) if isinstance(value, ObjectId) else value
-        for key, value in user.items()
-    }
+    if status_code == 404:  # If account not found, create one
+        account_data = {
+            "_id": str(uuid.uuid4()),  # Changed from "id" to "_id"
+            "ownerId": str(g.user_id),  # Use ownerId
+            "email": g.email,
+            "created_at": datetime.utcnow(),
+            "isActive": True,
+        }
+        collection.database.Accounts.insert_one(account_data)
+        response = account_data  # Return the created data
+        status_code = 201  # Status code for creation
 
-    return jsonify(user), 200
+    # Convert ObjectId fields to strings if necessary (response might be the created dict)
+    if isinstance(response, dict):
+        # Ensure the response structure matches expectations, especially if it came from create_account
+        if "account" in response:  # If response came from get_account_by_user
+            account_details = response["account"]
+        else:  # If response is the newly created account_data
+            account_details = response
+
+        account_details = {
+            key: str(value) if isinstance(value, ObjectId) else value
+            for key, value in account_details.items()
+        }
+        # Adjust the final response structure if needed
+        response = (
+            {"account": account_details} if "account" not in response else response
+        )
+
+    return jsonify(response), status_code
 
 
 @account_bp.route("/edit_account", methods=["PUT"])
