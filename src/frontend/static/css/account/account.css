@@ -1,15 +1,4 @@
 /* Base Styles */
-h1,
-h2,
-h3,
-h4,
-h5,
-h6 {
-  font-weight: 600;
-  line-height: 1.25;
-  margin-bottom: 0.5rem;
-}
-
 a {
   color: var(--account-primary);
   text-decoration: none;
@@ -45,12 +34,6 @@ button {
   align-items: center;
   justify-content: space-between;
   position: relative;
-}
-
-.account-header h1 {
-  font-size: 1.75rem;
-  font-weight: 700;
-  color: var(--account-foreground);
 }
 
 .back-link {
@@ -227,15 +210,7 @@ button {
   margin-bottom: 2rem;
 }
 
-.section-header h2 {
-  font-size: 1.5rem;
-  font-weight: 600;
-  color: var(--account-card-foreground);
-  margin-bottom: 0.5rem;
-}
-
 .section-header p {
-  color: var(--account-muted-foreground);
   font-size: 0.875rem;
 }
 
@@ -608,12 +583,6 @@ input:focus {
   flex-shrink: 0;
 }
 
-.info-card-content h3 {
-  font-size: 1rem;
-  font-weight: 600;
-  margin-bottom: 0.5rem;
-}
-
 .info-card-content p {
   font-size: 0.875rem;
   color: var(--account-muted-foreground);
@@ -673,8 +642,6 @@ input:focus {
 
 .plan-header h3 {
   font-size: 1.25rem;
-  font-weight: 600;
-  margin-bottom: 0.5rem;
 }
 
 .plan-price {
@@ -737,8 +704,6 @@ input:focus {
 }
 
 .billing-history h3 {
-  font-size: 1rem;
-  font-weight: 600;
   margin-bottom: 1rem;
 }
 
