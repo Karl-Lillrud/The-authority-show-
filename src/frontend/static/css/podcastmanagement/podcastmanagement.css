@@ -108,25 +108,6 @@
   flex-wrap: nowrap;
 }
 
-.action-btn {
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
-  border: none;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  background-color: white;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08);
-  transition: all var(--transition-normal);
-  position: relative;
-}
-
-.action-btn:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 3px 6px rgba(0, 0, 0, 0.12);
-}
 
 .action-btn.edit-btn::after {
   content: "Edit";
@@ -296,27 +277,6 @@
 .top-right-actions .edit-btn:hover {
   transform: translateY(-2px);
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-}
-
-.back-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.4rem;
-  background: white;
-  border: none;
-  color: var(--text-color-light);
-  font-weight: 600;
-  cursor: pointer;
-  padding: 8px 12px;
-  border-radius: var(--radius-medium);
-  box-shadow: var(--podcastmanagement-button-shadow);
-  transition: all var(--transition-normal);
-  font-size: 0.8rem;
-}
-
-.back-btn:hover {
-  transform: translateX(-4px);
-  color: var(--highlight-color);
 }
 
 .detail-content {
@@ -686,6 +646,7 @@
   width: 20px;
   height: 20px;
   display: flex;
+  padding: 5px;
   align-items: center;
   justify-content: center;
   cursor: pointer;

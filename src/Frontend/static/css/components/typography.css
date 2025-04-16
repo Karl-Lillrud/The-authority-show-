@@ -166,4 +166,40 @@ button {
 }
 
 
-/* Small CRUD Buttons */
+/* Back button */
+.back-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  background: white;
+  border: none;
+  color: var(--text-color-light);
+  padding: var(--spacing-sm) var(--spacing-sm2);
+  box-shadow: var(--podcastmanagement-button-shadow);
+  font-size: 0.8rem;
+}
+.back-btn:hover {
+  transform: translateX(-4px);
+  color: var(--highlight-color);
+}
+
+
+/* Small Round CRUD Buttons */
+.action-btn {
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  color: var(--highlight-color);
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: white;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08);
+  position: relative;
+}
+.action-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 3px 6px rgba(0, 0, 0, 0.12);
+}
+
