@@ -1,160 +1,135 @@
-document.addEventListener('DOMContentLoaded', function() {
-  // Mock data for templates and episodes
-  const templates = [
-    {
-      id: 'template1',
-      name: 'Podcast Episode Template',
-      tasks: [
-        { id: 'task1', name: 'Prepare outline', dueDate: '3 days before recording', assignee: 'John Doe', status: 'completed', dependencies: [], workspaceEnabled: false, type: 'generic', description: 'Create a detailed outline for the episode.' },
-        { id: 'task2', name: 'Guest outreach', dueDate: '2 weeks before recording', assignee: 'Alice Smith', status: 'completed', dependencies: [], workspaceEnabled: false, type: 'generic', description: 'Contact potential guests and schedule interviews.' },
-        { id: 'task3', name: 'Record episode', dueDate: 'Recording day', assignee: 'John Doe', status: 'completed', dependencies: ['task1', 'task2'], workspaceEnabled: false, type: 'generic', description: 'Record the episode with the guest.' },
-        { id: 'task4', name: 'Audio editing', dueDate: '1 day after recording', assignee: 'Bob Johnson', status: 'in-progress', dependencies: ['task3'], workspaceEnabled: true, type: 'audio-editing', description: 'Edit the audio to remove errors and improve sound quality.' },
-        { id: 'task5', name: 'Transcription', dueDate: '2 days after recording', assignee: 'Alice Smith', status: 'not-started', dependencies: ['task4'], workspaceEnabled: true, type: 'transcription', description: 'Transcribe the episode for accessibility and SEO.' },
-        { id: 'task6', name: 'Show notes', dueDate: '3 days after recording', assignee: 'John Doe', status: 'not-started', dependencies: ['task5'], workspaceEnabled: false, type: 'generic', description: 'Write detailed show notes for the episode.' },
-        { id: 'task7', name: 'Create social media posts', dueDate: '4 days after recording', assignee: 'Alice Smith', status: 'not-started', dependencies: ['task6'], workspaceEnabled: false, type: 'generic', description: 'Create engaging social media posts to promote the episode.' },
-        { id: 'task8', name: 'Publish episode', dueDate: '5 days after recording', assignee: 'John Doe', status: 'not-started', dependencies: ['task7'], workspaceEnabled: false, type: 'generic', description: 'Publish the episode to all platforms.' }
-      ]
-    },
-    {
-      id: 'template2',
-      name: 'YouTube Video Template',
-      tasks: [
-        { id: 'task9', name: 'Script writing', dueDate: '5 days before filming', assignee: 'John Doe', status: 'completed', dependencies: [], workspaceEnabled: false, type: 'generic', description: 'Write a detailed script for the video.' },
-        { id: 'task10', name: 'Filming', dueDate: 'Filming day', assignee: 'Bob Johnson', status: 'completed', dependencies: ['task9'], workspaceEnabled: false, type: 'generic', description: 'Film the video according to the script.' },
-        { id: 'task11', name: 'Video editing', dueDate: '2 days after filming', assignee: 'Bob Johnson', status: 'in-progress', dependencies: ['task10'], workspaceEnabled: false, type: 'generic', description: 'Edit the video to create a polished final product.' },
-        { id: 'task12', name: 'Thumbnail design', dueDate: '3 days after filming', assignee: 'Alice Smith', status: 'not-started', dependencies: ['task11'], workspaceEnabled: false, type: 'generic', description: 'Design an eye-catching thumbnail for the video.' },
-        { id: 'task13', name: 'SEO optimization', dueDate: '4 days after filming', assignee: 'John Doe', status: 'not-started', dependencies: ['task11'], workspaceEnabled: false, type: 'generic', description: 'Optimize the video title, description, and tags for search engines.' },
-        { id: 'task14', name: 'Publish video', dueDate: '5 days after filming', assignee: 'John Doe', status: 'not-started', dependencies: ['task12', 'task13'], workspaceEnabled: false, type: 'generic', description: 'Publish the video to YouTube.' }
-      ]
-    }
-  ];
-
-  const episodes = [
-    { number: 40, title: 'The Future of Podcasting', recordingDate: '2024-07-15', releaseDate: '2024-07-22', completedTasks: 5, totalTasks: 8 },
-    { number: 41, title: 'Remote Recording Tips', recordingDate: '2024-07-22', releaseDate: '2024-07-29', completedTasks: 3, totalTasks: 8 },
-    { number: 42, title: 'Monetizing Your Podcast', recordingDate: '2024-07-29', releaseDate: '2024-08-05', completedTasks: 2, totalTasks: 8 }
-  ];
-
+document.addEventListener("DOMContentLoaded", () => {
   // State management
-  let state = {
+  const state = {
+    activePodcast: podcasts[0],
     activeTemplate: templates[0],
-    activeTab: 'tasks',
-    selectedEpisode: episodes[0],
+    activeTab: "tasks",
+    selectedEpisode: episodes.find((ep) => ep.podcastId === podcasts[0].id) || episodes[0],
     selectedTask: null,
     showTimeline: true,
     expandedTasks: {},
-    completedTasks: {}
-  };
+    completedTasks: {},
+  }
 
   // Initialize the UI
-  initUI();
+  initUI()
 
   function initUI() {
+    // Populate podcast selector
+    populatePodcastSelector()
+
+    // Populate episodes list for the active podcast
+    populateEpisodesList()
+
     // Populate episode dropdown
-    populateEpisodeDropdown();
-    
-    // Populate template selector
-    populateTemplateSelector();
-    
+    populateEpisodeDropdown()
+
     // Populate task list
-    renderTaskList();
-    
+    renderTaskList()
+
     // Populate kanban board
-    renderKanbanBoard();
-    
+    renderKanbanBoard()
+
     // Populate timeline
-    renderTimeline();
-    
+    renderTimeline()
+
     // Set up tab switching
-    setupTabs();
-    
+    setupTabs()
+
     // Set up timeline toggle
-    setupTimelineToggle();
-    
+    setupTimelineToggle()
+
     // Set up episode dropdown
-    setupEpisodeDropdown();
-    
+    setupEpisodeDropdown()
+
     // Update progress bar
-    updateProgressBar();
+    updateProgressBar()
+  }
+
+  function populatePodcastSelector() {
+    const podcastSelector = document.getElementById("podcastSelector")
+    podcastSelector.innerHTML = ""
+
+    podcasts.forEach((podcast) => {
+      const item = document.createElement("div")
+      item.className = `podcast-item ${podcast.id === state.activePodcast.id ? "active" : ""}`
+      item.innerHTML = `
+        <div class="podcast-header">
+          <i class="fas fa-podcast"></i>
+          <span class="podcast-name">${podcast.name}</span>
+        </div>
+        <div class="podcast-meta">${podcast.episodeCount} episodes • ${podcast.description}</div>
+      `
+      item.addEventListener("click", () => selectPodcast(podcast))
+      podcastSelector.appendChild(item)
+    })
+  }
+
+  function populateEpisodesList() {
+    const episodesList = document.getElementById("episodesList")
+    episodesList.innerHTML = ""
+
+    // Filter episodes for the active podcast
+    const podcastEpisodes = episodes.filter((ep) => ep.podcastId === state.activePodcast.id)
+
+    podcastEpisodes.forEach((episode) => {
+      const item = document.createElement("div")
+      item.className = `episode-item ${episode.id === state.selectedEpisode.id ? "active" : ""}`
+      item.innerHTML = `
+        <span class="episode-number">#${episode.number}</span>
+        <div class="episode-info">
+          <div class="episode-name">${episode.title}</div>
+          <div class="episode-date">${episode.recordingDate}</div>
+        </div>
+        <span class="episode-status ${episode.status}">${episode.status}</span>
+      `
+      item.addEventListener("click", () => selectEpisode(episode))
+      episodesList.appendChild(item)
+    })
   }
 
   function populateEpisodeDropdown() {
-    const dropdown = document.getElementById('episodeDropdown');
-    dropdown.innerHTML = '';
-    
-    episodes.forEach(episode => {
-      const item = document.createElement('div');
-      item.className = 'dropdown-item';
-      item.innerHTML = `<span class="font-medium">Episode ${episode.number}:</span> ${episode.title}`;
-      item.addEventListener('click', () => {
-        selectEpisode(episode);
-        toggleEpisodeDropdown();
-      });
-      dropdown.appendChild(item);
-    });
-  }
+    const dropdown = document.getElementById("episodeDropdown")
+    dropdown.innerHTML = ""
 
-  function populateTemplateSelector() {
-    const templateSelector = document.getElementById('templateSelector');
-    templateSelector.innerHTML = '';
-    
-    templates.forEach(template => {
-      const item = document.createElement('div');
-      item.className = `template-item ${template.id === state.activeTemplate.id ? 'active' : ''}`;
-      item.innerHTML = `
-        <div class="template-header">
-          <i class="fas fa-file-alt text-muted"></i>
-          <span class="template-name">${template.name}</span>
-        </div>
-        <div class="template-tasks">${template.tasks.length} tasks</div>
-      `;
-      item.addEventListener('click', () => selectTemplate(template));
-      templateSelector.appendChild(item);
-    });
-    
-    // Add template actions
-    const actionsDiv = document.createElement('div');
-    actionsDiv.className = 'template-actions';
-    actionsDiv.innerHTML = `
-      <button class="btn btn-outline btn-sm btn-full">
-        <i class="fas fa-plus"></i>
-        <span>New Template</span>
-      </button>
-      <div class="flex gap-2 mt-4">
-        <button class="btn btn-outline btn-sm btn-full">
-          <i class="fas fa-copy"></i>
-          <span>Duplicate</span>
-        </button>
-        <button class="btn btn-outline btn-sm btn-full">
-          <i class="fas fa-cog"></i>
-          <span>Customize</span>
-        </button>
-      </div>
-    `;
-    templateSelector.appendChild(actionsDiv);
+    // Filter episodes for the active podcast
+    const podcastEpisodes = episodes.filter((ep) => ep.podcastId === state.activePodcast.id)
+
+    podcastEpisodes.forEach((episode) => {
+      const item = document.createElement("div")
+      item.className = "dropdown-item"
+      item.innerHTML = `<span class="font-medium">Episode ${episode.number}:</span> ${episode.title}`
+      item.addEventListener("click", () => {
+        selectEpisode(episode)
+        toggleEpisodeDropdown()
+      })
+      dropdown.appendChild(item)
+    })
   }
 
   function renderTaskList() {
-    const taskList = document.getElementById('taskList');
-    taskList.innerHTML = '';
-    
-    state.activeTemplate.tasks.forEach(task => {
-      const isCompleted = state.completedTasks[task.id] || task.status === 'completed';
-      const isExpanded = state.expandedTasks[task.id] || false;
-      
-      const taskItem = document.createElement('div');
-      taskItem.className = 'task-item';
+    const taskList = document.getElementById("taskList")
+    taskList.innerHTML = ""
+
+    state.activeTemplate.tasks.forEach((task) => {
+      const isCompleted = state.completedTasks[task.id] || task.status === "completed"
+      const isExpanded = state.expandedTasks[task.id] || false
+
+      const taskItem = document.createElement("div")
+      taskItem.className = "task-item"
       taskItem.innerHTML = `
-        <div class="task-header ${isCompleted ? 'completed' : ''}">
-          <div class="task-checkbox ${isCompleted ? 'checked' : ''}" data-task-id="${task.id}">
-            ${isCompleted ? '<i class="fas fa-check"></i>' : ''}
+        <div class="task-header ${isCompleted ? "completed" : ""}">
+          <div class="task-checkbox ${isCompleted ? "checked" : ""}" data-task-id="${task.id}">
+            ${isCompleted ? '<i class="fas fa-check"></i>' : ""}
           </div>
           <button class="task-expand" data-task-id="${task.id}">
-            <i class="fas fa-chevron-${isExpanded ? 'down' : 'right'}"></i>
+            <i class="fas fa-chevron-${isExpanded ? "down" : "right"}"></i>
           </button>
           <div class="task-content">
-            <div class="task-name ${isCompleted ? 'completed' : ''}">${task.name}</div>
-            ${!isExpanded ? `
+            <div class="task-name ${isCompleted ? "completed" : ""}">${task.name}</div>
+            ${
+              !isExpanded
+                ? `
               <div class="task-meta">
                 <div class="task-meta-item">
                   <i class="fas fa-clock"></i>
@@ -164,19 +139,29 @@ document.addEventListener('DOMContentLoaded', function() {
                   <i class="fas fa-user"></i>
                   <span>${task.assignee}</span>
                 </div>
-                ${task.dependencies.length > 0 ? `
-                  <span class="task-badge">${task.dependencies.length} ${task.dependencies.length === 1 ? 'dependency' : 'dependencies'}</span>
-                ` : ''}
+                ${
+                  task.dependencies.length > 0
+                    ? `
+                  <span class="task-badge">${task.dependencies.length} ${task.dependencies.length === 1 ? "dependency" : "dependencies"}</span>
+                `
+                    : ""
+                }
               </div>
-            ` : ''}
+            `
+                : ""
+            }
           </div>
           <div class="task-actions">
-            ${task.hasDependencyWarning ? '<i class="fas fa-exclamation-circle text-warning"></i>' : ''}
-            ${task.workspaceEnabled ? `
+            ${task.hasDependencyWarning ? '<i class="fas fa-exclamation-circle text-warning"></i>' : ""}
+            ${
+              task.workspaceEnabled
+                ? `
               <button class="btn-icon text-primary" data-workspace-task-id="${task.id}">
                 <i class="fas fa-laptop"></i>
               </button>
-            ` : ''}
+            `
+                : ""
+            }
             <div class="dropdown">
               <button class="btn-icon dropdown-toggle">
                 <i class="fas fa-ellipsis-h"></i>
@@ -186,19 +171,27 @@ document.addEventListener('DOMContentLoaded', function() {
           </div>
         </div>
         
-        <div class="task-details ${isExpanded ? 'expanded' : ''}">
+        <div class="task-details ${isExpanded ? "expanded" : ""}">
           <p class="task-description">${task.description}</p>
           
-          ${task.dependencies.length > 0 ? `
+          ${
+            task.dependencies.length > 0
+              ? `
             <div class="task-dependencies">
               <h4 class="task-dependencies-title">Dependencies:</h4>
               <ul class="task-dependencies-list">
-                ${task.dependencies.map(dep => `
+                ${task.dependencies
+                  .map(
+                    (dep) => `
                   <li class="task-dependencies-item"><span>•</span> ${dep}</li>
-                `).join('')}
+                `,
+                  )
+                  .join("")}
               </ul>
             </div>
-          ` : ''}
+          `
+              : ""
+          }
           
           <div class="task-footer">
             <div class="task-footer-meta">
@@ -218,53 +211,59 @@ document.addEventListener('DOMContentLoaded', function() {
                 <span>Comments (2)</span>
               </button>
               
-              ${task.workspaceEnabled ? `
+              ${
+                task.workspaceEnabled
+                  ? `
                 <button class="btn btn-outline btn-sm workspace-btn" data-workspace-task-id="${task.id}">
                   <i class="fas fa-laptop"></i>
                   <span>Open in Workspace</span>
                 </button>
-              ` : ''}
+              `
+                  : ""
+              }
             </div>
           </div>
         </div>
-      `;
-      
-      taskList.appendChild(taskItem);
-    });
-    
+      `
+
+      taskList.appendChild(taskItem)
+    })
+
     // Add event listeners for task interactions
-    setupTaskInteractions();
+    setupTaskInteractions()
   }
 
   function renderKanbanBoard() {
-    const kanbanBoard = document.getElementById('kanbanBoard');
-    kanbanBoard.innerHTML = '';
-    
+    const kanbanBoard = document.getElementById("kanbanBoard")
+    kanbanBoard.innerHTML = ""
+
     const columns = [
-      { id: 'todo', title: 'To Do', color: 'kanban-column-todo' },
-      { id: 'in-progress', title: 'In Progress', color: 'kanban-column-progress' },
-      { id: 'ready', title: 'Ready for Publishing', color: 'kanban-column-ready' },
-      { id: 'published', title: 'Published', color: 'kanban-column-published' },
-    ];
-    
+      { id: "todo", title: "To Do", color: "kanban-column-todo" },
+      { id: "in-progress", title: "In Progress", color: "kanban-column-progress" },
+      { id: "ready", title: "Ready for Publishing", color: "kanban-column-ready" },
+      { id: "published", title: "Published", color: "kanban-column-published" },
+    ]
+
     // Group tasks by status
     const tasksByStatus = {
-      'todo': state.activeTemplate.tasks.filter(task => task.status === 'not-started' || !task.status),
-      'in-progress': state.activeTemplate.tasks.filter(task => task.status === 'in-progress'),
-      'ready': state.activeTemplate.tasks.filter(task => task.status === 'ready'),
-      'published': state.activeTemplate.tasks.filter(task => task.status === 'completed'),
-    };
-    
-    columns.forEach(column => {
-      const columnDiv = document.createElement('div');
-      columnDiv.className = `kanban-column ${column.color}`;
+      todo: state.activeTemplate.tasks.filter((task) => task.status === "not-started" || !task.status),
+      "in-progress": state.activeTemplate.tasks.filter((task) => task.status === "in-progress"),
+      ready: state.activeTemplate.tasks.filter((task) => task.status === "ready"),
+      published: state.activeTemplate.tasks.filter((task) => task.status === "completed"),
+    }
+
+    columns.forEach((column) => {
+      const columnDiv = document.createElement("div")
+      columnDiv.className = `kanban-column ${column.color}`
       columnDiv.innerHTML = `
         <div class="kanban-column-header">
           <span>${column.title}</span>
           <span class="badge">${tasksByStatus[column.id].length}</span>
         </div>
         <div class="kanban-column-content" data-column-id="${column.id}">
-          ${tasksByStatus[column.id].map(task => `
+          ${tasksByStatus[column.id]
+            .map(
+              (task) => `
             <div class="kanban-task" draggable="true" data-task-id="${task.id}">
               <div class="kanban-task-header">
                 <h3 class="kanban-task-title">${task.name}</h3>
@@ -282,308 +281,342 @@ document.addEventListener('DOMContentLoaded', function() {
               </div>
               <div class="kanban-task-footer">
                 <div class="kanban-task-assignee ${
-                  task.assignee === 'John Doe' ? 'bg-blue' :
-                  task.assignee === 'Alice Smith' ? 'bg-green' :
-                  task.assignee === 'Bob Johnson' ? 'bg-purple' : ''
+                  task.assignee === "John Doe"
+                    ? "bg-blue"
+                    : task.assignee === "Alice Smith"
+                      ? "bg-green"
+                      : task.assignee === "Bob Johnson"
+                        ? "bg-purple"
+                        : ""
                 }">
                   ${
-                    task.assignee === 'John Doe' ? 'JD' :
-                    task.assignee === 'Alice Smith' ? 'AS' :
-                    task.assignee === 'Bob Johnson' ? 'BJ' : ''
+                    task.assignee === "John Doe"
+                      ? "JD"
+                      : task.assignee === "Alice Smith"
+                        ? "AS"
+                        : task.assignee === "Bob Johnson"
+                          ? "BJ"
+                          : ""
                   }
                 </div>
-                ${task.workspaceEnabled ? `
+                ${
+                  task.workspaceEnabled
+                    ? `
                   <button class="btn-icon text-primary workspace-btn" data-workspace-task-id="${task.id}">
                     <i class="fas fa-laptop"></i>
                   </button>
-                ` : ''}
+                `
+                    : ""
+                }
               </div>
             </div>
-          `).join('')}
+          `,
+            )
+            .join("")}
         </div>
-      `;
-      
-      kanbanBoard.appendChild(columnDiv);
-    });
-    
+      `
+
+      kanbanBoard.appendChild(columnDiv)
+    })
+
     // Set up drag and drop for kanban tasks
-    setupKanbanDragDrop();
+    setupKanbanDragDrop()
   }
 
   function renderTimeline() {
-    const timeline = document.getElementById('timeline');
-    timeline.innerHTML = '';
-    
+    const timeline = document.getElementById("timeline")
+    timeline.innerHTML = ""
+
     // Update timeline header dates
-    document.getElementById('timelineRecordingDate').textContent = state.selectedEpisode.recordingDate;
-    document.getElementById('timelineReleaseDate').textContent = state.selectedEpisode.releaseDate;
-    
+    document.getElementById("timelineRecordingDate").textContent = state.selectedEpisode.recordingDate
+    document.getElementById("timelineReleaseDate").textContent = state.selectedEpisode.releaseDate
+
     // Group tasks by due date
-    const tasksByDueDate = {};
-    state.activeTemplate.tasks.forEach(task => {
+    const tasksByDueDate = {}
+    state.activeTemplate.tasks.forEach((task) => {
       if (!tasksByDueDate[task.dueDate]) {
-        tasksByDueDate[task.dueDate] = [];
+        tasksByDueDate[task.dueDate] = []
       }
-      tasksByDueDate[task.dueDate].push(task);
-    });
-    
+      tasksByDueDate[task.dueDate].push(task)
+    })
+
     // Sort dates for timeline
     const sortedDates = Object.keys(tasksByDueDate).sort((a, b) => {
       // Sort "before recording" dates first
-      if (a.includes('before') && b.includes('after')) return -1;
-      if (a.includes('after') && b.includes('before')) return 1;
-      
+      if (a.includes("before") && b.includes("after")) return -1
+      if (a.includes("after") && b.includes("before")) return 1
+
       // Extract number of days
-      const daysA = parseInt(a.match(/\d+/)?.[0] || '0');
-      const daysB = parseInt(b.match(/\d+/)?.[0] || '0');
-      
+      const daysA = Number.parseInt(a.match(/\d+/)?.[0] || "0")
+      const daysB = Number.parseInt(b.match(/\d+/)?.[0] || "0")
+
       // For "before" dates, higher number comes first
-      if (a.includes('before') && b.includes('before')) return daysB - daysA;
-      
+      if (a.includes("before") && b.includes("before")) return daysB - daysA
+
       // For "after" dates, lower number comes first
-      if (a.includes('after') && b.includes('after')) return daysA - daysB;
-      
+      if (a.includes("after") && b.includes("after")) return daysA - daysB
+
       // Recording day is in the middle
-      if (a === 'Recording day') return b.includes('before') ? 1 : -1;
-      if (b === 'Recording day') return a.includes('before') ? -1 : 1;
-      
-      return 0;
-    });
-    
-    sortedDates.forEach(date => {
-      const timelineItem = document.createElement('div');
-      timelineItem.className = 'timeline-item';
-      
-      const isRecordingDay = date === 'Recording day';
-      
+      if (a === "Recording day") return b.includes("before") ? 1 : -1
+      if (b === "Recording day") return a.includes("before") ? -1 : 1
+
+      return 0
+    })
+
+    sortedDates.forEach((date) => {
+      const timelineItem = document.createElement("div")
+      timelineItem.className = "timeline-item"
+
+      const isRecordingDay = date === "Recording day"
+
       timelineItem.innerHTML = `
-        <div class="timeline-node ${isRecordingDay ? 'recording-day' : ''}">
-          ${isRecordingDay ? '<i class="fas fa-circle"></i>' : ''}
+        <div class="timeline-node ${isRecordingDay ? "recording-day" : ""}">
+          ${isRecordingDay ? '<i class="fas fa-circle"></i>' : ""}
         </div>
         <div class="timeline-date">${date}</div>
         <div class="timeline-tasks">
-          ${tasksByDueDate[date].map(task => `
-            <div class="timeline-task ${task.status === 'completed' ? 'completed' : ''}">
-              ${task.status === 'completed' ? 
-                '<i class="fas fa-check-circle text-success"></i>' : 
-                '<i class="far fa-circle text-muted"></i>'
+          ${tasksByDueDate[date]
+            .map(
+              (task) => `
+            <div class="timeline-task ${task.status === "completed" ? "completed" : ""}">
+              ${
+                task.status === "completed"
+                  ? '<i class="fas fa-check-circle text-success"></i>'
+                  : '<i class="far fa-circle text-muted"></i>'
               }
               <span>${task.name}</span>
             </div>
-          `).join('')}
+          `,
+            )
+            .join("")}
         </div>
-      `;
-      
-      timeline.appendChild(timelineItem);
-    });
+      `
+
+      timeline.appendChild(timelineItem)
+    })
   }
 
   function setupTabs() {
-    const tabButtons = document.querySelectorAll('.tab-btn');
-    const tabPanes = document.querySelectorAll('.tab-pane');
-    
-    tabButtons.forEach(button => {
-      button.addEventListener('click', () => {
-        const tabId = button.getAttribute('data-tab');
-        
+    const tabButtons = document.querySelectorAll(".tab-btn")
+    const tabPanes = document.querySelectorAll(".tab-pane")
+
+    tabButtons.forEach((button) => {
+      button.addEventListener("click", () => {
+        const tabId = button.getAttribute("data-tab")
+
         // Update active state
-        tabButtons.forEach(btn => btn.classList.remove('active'));
-        tabPanes.forEach(pane => pane.classList.remove('active'));
-        
-        button.classList.add('active');
-        document.getElementById(`${tabId}-tab`).classList.add('active');
-        
-        state.activeTab = tabId;
-      });
-    });
+        tabButtons.forEach((btn) => btn.classList.remove("active"))
+        tabPanes.forEach((pane) => pane.classList.remove("active"))
+
+        button.classList.add("active")
+        document.getElementById(`${tabId}-tab`).classList.add("active")
+
+        state.activeTab = tabId
+      })
+    })
   }
 
   function setupTimelineToggle() {
-    const toggleBtn = document.getElementById('toggleTimelineBtn');
-    const sidebar = document.getElementById('timelineSidebar');
-    
-    toggleBtn.addEventListener('click', () => {
-      state.showTimeline = !state.showTimeline;
-      
+    const toggleBtn = document.getElementById("toggleTimelineBtn")
+    const sidebar = document.getElementById("timelineSidebar")
+
+    toggleBtn.addEventListener("click", () => {
+      state.showTimeline = !state.showTimeline
+
       if (state.showTimeline) {
-        sidebar.classList.remove('collapsed');
-        toggleBtn.innerHTML = '<i class="fas fa-chevron-right"></i>';
+        sidebar.classList.remove("collapsed")
+        toggleBtn.innerHTML = '<i class="fas fa-chevron-right"></i>'
       } else {
-        sidebar.classList.add('collapsed');
-        toggleBtn.innerHTML = '<i class="fas fa-chevron-left"></i>';
+        sidebar.classList.add("collapsed")
+        toggleBtn.innerHTML = '<i class="fas fa-chevron-left"></i>'
       }
-    });
+    })
   }
 
   function setupEpisodeDropdown() {
-    const dropdownBtn = document.getElementById('episodeDropdownBtn');
-    const dropdown = document.getElementById('episodeDropdown');
-    
-    dropdownBtn.addEventListener('click', toggleEpisodeDropdown);
-    
+    const dropdownBtn = document.getElementById("episodeDropdownBtn")
+    const dropdown = document.getElementById("episodeDropdown")
+
+    dropdownBtn.addEventListener("click", toggleEpisodeDropdown)
+
     // Close dropdown when clicking outside
-    document.addEventListener('click', (event) => {
-      if (!event.target.closest('#episodeDropdownBtn') && !event.target.closest('#episodeDropdown')) {
-        dropdown.classList.remove('show');
+    document.addEventListener("click", (event) => {
+      if (!event.target.closest("#episodeDropdownBtn") && !event.target.closest("#episodeDropdown")) {
+        dropdown.classList.remove("show")
       }
-    });
+    })
   }
 
   function toggleEpisodeDropdown() {
-    const dropdown = document.getElementById('episodeDropdown');
-    dropdown.classList.toggle('show');
+    const dropdown = document.getElementById("episodeDropdown")
+    dropdown.classList.toggle("show")
+  }
+
+  function selectPodcast(podcast) {
+    state.activePodcast = podcast
+
+    // Find the first episode of this podcast
+    const firstEpisode = episodes.find((ep) => ep.podcastId === podcast.id)
+    if (firstEpisode) {
+      state.selectedEpisode = firstEpisode
+    }
+
+    // Update UI
+    populatePodcastSelector()
+    populateEpisodesList()
+    populateEpisodeDropdown()
+
+    // Update episode display
+    updateEpisodeDisplay()
   }
 
   function selectEpisode(episode) {
-    state.selectedEpisode = episode;
-    
+    state.selectedEpisode = episode
+
     // Update UI
-    document.getElementById('currentEpisodeNumber').textContent = `Episode ${episode.number}`;
-    document.getElementById('episodeTitle').textContent = episode.title;
-    document.getElementById('recordingDate').textContent = `Recording Date: ${episode.recordingDate}`;
-    
-    // Update progress bar
-    updateProgressBar();
-    
-    // Update timeline
-    renderTimeline();
+    populateEpisodesList()
+    updateEpisodeDisplay()
   }
 
-  function selectTemplate(template) {
-    state.activeTemplate = template;
-    
-    // Update UI
-    populateTemplateSelector();
-    renderTaskList();
-    renderKanbanBoard();
-    renderTimeline();
+  function updateEpisodeDisplay() {
+    // Update header
+    document.getElementById("currentEpisodeNumber").textContent = `Episode ${state.selectedEpisode.number}`
+    document.getElementById("episodeTitle").textContent = state.selectedEpisode.title
+    document.getElementById("recordingDate").textContent = `Recording Date: ${state.selectedEpisode.recordingDate}`
+
+    // Update progress bar
+    updateProgressBar()
+
+    // Update timeline
+    renderTimeline()
   }
 
   function updateProgressBar() {
-    const { completedTasks, totalTasks } = state.selectedEpisode;
-    const percentage = Math.round((completedTasks / totalTasks) * 100);
-    
-    document.getElementById('progressText').textContent = `${completedTasks} of ${totalTasks} tasks completed (${percentage}%)`;
-    document.getElementById('progressBar').style.width = `${percentage}%`;
+    const { completedTasks, totalTasks } = state.selectedEpisode
+    const percentage = Math.round((completedTasks / totalTasks) * 100)
+
+    document.getElementById("progressText").textContent =
+      `${completedTasks} of ${totalTasks} tasks completed (${percentage}%)`
+    document.getElementById("progressBar").style.width = `${percentage}%`
   }
 
   function setupTaskInteractions() {
     // Task checkbox toggle
-    document.querySelectorAll('.task-checkbox').forEach(checkbox => {
-      checkbox.addEventListener('click', () => {
-        const taskId = checkbox.getAttribute('data-task-id');
-        toggleTaskCompletion(taskId);
-      });
-    });
-    
+    document.querySelectorAll(".task-checkbox").forEach((checkbox) => {
+      checkbox.addEventListener("click", () => {
+        const taskId = checkbox.getAttribute("data-task-id")
+        toggleTaskCompletion(taskId)
+      })
+    })
+
     // Task expand/collapse
-    document.querySelectorAll('.task-expand').forEach(button => {
-      button.addEventListener('click', () => {
-        const taskId = button.getAttribute('data-task-id');
-        toggleTaskExpansion(taskId);
-      });
-    });
-    
+    document.querySelectorAll(".task-expand").forEach((button) => {
+      button.addEventListener("click", () => {
+        const taskId = button.getAttribute("data-task-id")
+        toggleTaskExpansion(taskId)
+      })
+    })
+
     // Workspace buttons
-    document.querySelectorAll('.workspace-btn, [data-workspace-task-id]').forEach(button => {
-      button.addEventListener('click', () => {
-        const taskId = button.getAttribute('data-workspace-task-id');
-        openTaskInWorkspace(taskId);
-      });
-    });
+    document.querySelectorAll(".workspace-btn, [data-workspace-task-id]").forEach((button) => {
+      button.addEventListener("click", () => {
+        const taskId = button.getAttribute("data-workspace-task-id")
+        openTaskInWorkspace(taskId)
+      })
+    })
   }
 
   function toggleTaskCompletion(taskId) {
-    state.completedTasks[taskId] = !state.completedTasks[taskId];
-    renderTaskList();
-    renderKanbanBoard();
-    renderTimeline();
+    state.completedTasks[taskId] = !state.completedTasks[taskId]
+    renderTaskList()
+    renderKanbanBoard()
+    renderTimeline()
   }
 
   function toggleTaskExpansion(taskId) {
-    state.expandedTasks[taskId] = !state.expandedTasks[taskId];
-    renderTaskList();
+    state.expandedTasks[taskId] = !state.expandedTasks[taskId]
+    renderTaskList()
   }
 
   function openTaskInWorkspace(taskId) {
-    const task = state.activeTemplate.tasks.find(t => t.id === taskId);
+    const task = state.activeTemplate.tasks.find((t) => t.id === taskId)
     if (task) {
-      state.selectedTask = task;
-      
+      state.selectedTask = task
+
       // Switch to workspace tab
-      document.querySelector('.tab-btn[data-tab="workspace"]').click();
-      
+      document.querySelector('.tab-btn[data-tab="workspace"]').click()
+
       // Render workspace with selected task
-      renderWorkspace();
+      renderWorkspace()
     }
   }
 
   function setupKanbanDragDrop() {
-    const draggables = document.querySelectorAll('.kanban-task');
-    const dropZones = document.querySelectorAll('.kanban-column-content');
-    
-    draggables.forEach(draggable => {
-      draggable.addEventListener('dragstart', () => {
-        draggable.classList.add('dragging');
-      });
-      
-      draggable.addEventListener('dragend', () => {
-        draggable.classList.remove('dragging');
-      });
-    });
-    
-    dropZones.forEach(zone => {
-      zone.addEventListener('dragover', e => {
-        e.preventDefault();
-        zone.classList.add('drag-over');
-      });
-      
-      zone.addEventListener('dragleave', () => {
-        zone.classList.remove('drag-over');
-      });
-      
-      zone.addEventListener('drop', e => {
-        e.preventDefault();
-        zone.classList.remove('drag-over');
-        
-        const dragging = document.querySelector('.dragging');
+    const draggables = document.querySelectorAll(".kanban-task")
+    const dropZones = document.querySelectorAll(".kanban-column-content")
+
+    draggables.forEach((draggable) => {
+      draggable.addEventListener("dragstart", () => {
+        draggable.classList.add("dragging")
+      })
+
+      draggable.addEventListener("dragend", () => {
+        draggable.classList.remove("dragging")
+      })
+    })
+
+    dropZones.forEach((zone) => {
+      zone.addEventListener("dragover", (e) => {
+        e.preventDefault()
+        zone.classList.add("drag-over")
+      })
+
+      zone.addEventListener("dragleave", () => {
+        zone.classList.remove("drag-over")
+      })
+
+      zone.addEventListener("drop", (e) => {
+        e.preventDefault()
+        zone.classList.remove("drag-over")
+
+        const dragging = document.querySelector(".dragging")
         if (dragging) {
-          const taskId = dragging.getAttribute('data-task-id');
-          const columnId = zone.getAttribute('data-column-id');
-          
+          const taskId = dragging.getAttribute("data-task-id")
+          const columnId = zone.getAttribute("data-column-id")
+
           // Update task status based on column
-          updateTaskStatus(taskId, columnId);
-          
+          updateTaskStatus(taskId, columnId)
+
           // Re-render kanban board
-          renderKanbanBoard();
+          renderKanbanBoard()
         }
-      });
-    });
+      })
+    })
   }
 
   function updateTaskStatus(taskId, columnId) {
-    const task = state.activeTemplate.tasks.find(t => t.id === taskId);
+    const task = state.activeTemplate.tasks.find((t) => t.id === taskId)
     if (task) {
       switch (columnId) {
-        case 'todo':
-          task.status = 'not-started';
-          break;
-        case 'in-progress':
-          task.status = 'in-progress';
-          break;
-        case 'ready':
-          task.status = 'ready';
-          break;
-        case 'published':
-          task.status = 'completed';
-          break;
+        case "todo":
+          task.status = "not-started"
+          break
+        case "in-progress":
+          task.status = "in-progress"
+          break
+        case "ready":
+          task.status = "ready"
+          break
+        case "published":
+          task.status = "completed"
+          break
       }
     }
   }
 
   function renderWorkspace() {
-    const workspaceArea = document.getElementById('workspaceArea');
-    
+    const workspaceArea = document.getElementById("workspaceArea")
+
     if (!state.selectedTask) {
       workspaceArea.innerHTML = `
         <div class="workspace-placeholder">
@@ -591,27 +624,27 @@ document.addEventListener('DOMContentLoaded', function() {
           <h3>No task selected</h3>
           <p>Select a task from the task list to open it in the workspace. Tasks with the <i class="fas fa-laptop"></i> icon can be worked on directly in this workspace.</p>
         </div>
-      `;
-      return;
+      `
+      return
     }
-    
-    const task = state.selectedTask;
-    
+
+    const task = state.selectedTask
+
     // Determine which workspace to show based on task type
-    let workspaceContent = '';
-    
-    if (task.type === 'audio-editing') {
-      workspaceContent = renderAudioEditingWorkspace(task);
-    } else if (task.type === 'transcription') {
-      workspaceContent = renderTranscriptionWorkspace(task);
+    let workspaceContent = ""
+
+    if (task.type === "audio-editing") {
+      workspaceContent = renderAudioEditingWorkspace(task)
+    } else if (task.type === "transcription") {
+      workspaceContent = renderTranscriptionWorkspace(task)
     } else {
-      workspaceContent = renderGenericWorkspace(task);
+      workspaceContent = renderGenericWorkspace(task)
     }
-    
-    workspaceArea.innerHTML = workspaceContent;
-    
+
+    workspaceArea.innerHTML = workspaceContent
+
     // Set up workspace interactions
-    setupWorkspaceInteractions();
+    setupWorkspaceInteractions()
   }
 
   function renderAudioEditingWorkspace(task) {
@@ -633,7 +666,7 @@ document.addEventListener('DOMContentLoaded', function() {
             <div class="audio-file">
               <i class="fas fa-file-audio text-primary audio-icon"></i>
               <div>
-                <h4 class="audio-title">Episode42_raw.mp3</h4>
+                <h4 class="audio-title">Episode${state.selectedEpisode.number}_raw.mp3</h4>
                 <p class="audio-meta">48:32 • 44.1kHz • Stereo</p>
               </div>
             </div>
@@ -752,7 +785,7 @@ document.addEventListener('DOMContentLoaded', function() {
           </div>
         </div>
       </div>
-    `;
+    `
   }
 
   function renderTranscriptionWorkspace(task) {
@@ -775,7 +808,7 @@ document.addEventListener('DOMContentLoaded', function() {
               <div class="audio-file">
                 <i class="fas fa-file-audio text-primary audio-icon"></i>
                 <div>
-                  <h4 class="audio-title">Episode42_final.mp3</h4>
+                  <h4 class="audio-title">Episode${state.selectedEpisode.number}_final.mp3</h4>
                   <p class="audio-meta">48:32 • 44.1kHz • Stereo</p>
                 </div>
               </div>
@@ -846,7 +879,7 @@ document.addEventListener('DOMContentLoaded', function() {
           </button>
         </div>
       </div>
-    `;
+    `
   }
 
   function renderGenericWorkspace(task) {
@@ -864,77 +897,120 @@ document.addEventListener('DOMContentLoaded', function() {
           <span>Mark Task as Complete</span>
         </button>
       </div>
-    `;
+    `
   }
 
   function setupWorkspaceInteractions() {
     // Play/pause button
-    const playButton = document.getElementById('playButton');
+    const playButton = document.getElementById("playButton")
     if (playButton) {
-      playButton.addEventListener('click', togglePlayback);
+      playButton.addEventListener("click", togglePlayback)
     }
-    
+
     // Apply AI button
-    const applyAiBtn = document.getElementById('applyAiBtn');
+    const applyAiBtn = document.getElementById("applyAiBtn")
     if (applyAiBtn) {
-      applyAiBtn.addEventListener('click', applyAiEnhancement);
+      applyAiBtn.addEventListener("click", applyAiEnhancement)
     }
-    
+
     // Generate transcript button
-    const generateTranscriptBtn = document.getElementById('generateTranscriptBtn');
+    const generateTranscriptBtn = document.getElementById("generateTranscriptBtn")
     if (generateTranscriptBtn) {
-      generateTranscriptBtn.addEventListener('click', generateTranscript);
+      generateTranscriptBtn.addEventListener("click", generateTranscript)
     }
-    
+
     // Workspace tabs
-    const workspaceTabs = document.querySelectorAll('.workspace-tab');
+    const workspaceTabs = document.querySelectorAll(".workspace-tab")
     if (workspaceTabs.length > 0) {
-      workspaceTabs.forEach(tab => {
-        tab.addEventListener('click', () => {
-          const tabId = tab.getAttribute('data-workspace-tab');
-          
+      workspaceTabs.forEach((tab) => {
+        tab.addEventListener("click", () => {
+          const tabId = tab.getAttribute("data-workspace-tab")
+
           // Update active state
-          workspaceTabs.forEach(t => t.classList.remove('active'));
-          document.querySelectorAll('.workspace-tab-content').forEach(c => c.classList.remove('active'));
-          
-          tab.classList.add('active');
-          document.getElementById(`${tabId}-tab`).classList.add('active');
-        });
-      });
+          workspaceTabs.forEach((t) => t.classList.remove("active"))
+          document.querySelectorAll(".workspace-tab-content").forEach((c) => c.classList.remove("active"))
+
+          tab.classList.add("active")
+          document.getElementById(`${tabId}-tab`).classList.add("active")
+        })
+      })
     }
   }
 
   function togglePlayback() {
-    const playButton = document.getElementById('playButton');
-    const isPlaying = playButton.classList.contains('playing');
-    
+    const playButton = document.getElementById("playButton")
+    const isPlaying = playButton.classList.contains("playing")
+
     if (isPlaying) {
-      playButton.classList.remove('playing');
-      playButton.innerHTML = '<i class="fas fa-play"></i>';
+      playButton.classList.remove("playing")
+      playButton.innerHTML = '<i class="fas fa-play"></i>'
     } else {
-      playButton.classList.add('playing');
-      playButton.innerHTML = '<i class="fas fa-pause"></i>';
+      playButton.classList.add("playing")
+      playButton.innerHTML = '<i class="fas fa-pause"></i>'
     }
   }
 
   function applyAiEnhancement() {
-    const button = document.getElementById('applyAiBtn');
-    button.disabled = true;
-    button.innerHTML = '<span class="spinner">⟳</span> Processing...';
-    
+    const button = document.getElementById("applyAiBtn")
+    button.disabled = true
+    button.innerHTML = '<span class="spinner">⟳</span> Processing...'
+
     // Simulate AI processing
     setTimeout(() => {
-      button.disabled = false;
-      button.innerHTML = '<i class="fas fa-magic"></i> Apply AI Enhancement';
-      alert('AI enhancement applied successfully!');
-    }, 2000);
+      button.disabled = false
+      button.innerHTML = '<i class="fas fa-magic"></i> Apply AI Enhancement'
+      alert("AI enhancement applied successfully!")
+    }, 2000)
   }
-});
+
+  function generateTranscript() {
+    const button = document.getElementById("generateTranscriptBtn")
+    button.disabled = true
+    button.textContent = "Processing..."
+
+    // Simulate transcript generation
+    setTimeout(() => {
+      button.disabled = false
+      button.textContent = "Generate Transcript"
+
+      const textarea = document.querySelector(".transcript-editor")
+      if (textarea) {
+        textarea.value = `Host: Welcome to Episode ${state.selectedEpisode.number} of our podcast, where we discuss ${state.selectedEpisode.title}.\n\nGuest: Thanks for having me! I'm excited to share my thoughts on this topic.\n\nHost: Let's start by talking about the key points we outlined in our prep session...`
+      }
+    }, 2000)
+  }
+})
+
+// Podcast data
+const podcasts = [
+  {
+    id: "podcast-1",
+    name: "Tech Talk Weekly",
+    description: "Weekly discussions about the latest in technology",
+    episodeCount: 42,
+    coverImage: "tech-talk.jpg",
+  },
+  {
+    id: "podcast-2",
+    name: "Creative Minds",
+    description: "Interviews with creative professionals",
+    episodeCount: 28,
+    coverImage: "creative-minds.jpg",
+  },
+  {
+    id: "podcast-3",
+    name: "Business Insights",
+    description: "Strategies and insights for entrepreneurs",
+    episodeCount: 15,
+    coverImage: "business-insights.jpg",
+  },
+]
 
 // Episode data
 const episodes = [
   {
     id: "ep-42",
+    podcastId: "podcast-1",
     number: 42,
     title: "The Future of Podcasting",
     recordingDate: "2025-05-01",
@@ -945,6 +1021,7 @@ const episodes = [
   },
   {
     id: "ep-41",
+    podcastId: "podcast-1",
     number: 41,
     title: "Interview with Tech Innovator",
     recordingDate: "2025-04-24",
@@ -955,6 +1032,7 @@ const episodes = [
   },
   {
     id: "ep-40",
+    podcastId: "podcast-1",
     number: 40,
     title: "AI Revolution in Content Creation",
     recordingDate: "2025-04-17",
@@ -965,6 +1043,7 @@ const episodes = [
   },
   {
     id: "ep-39",
+    podcastId: "podcast-1",
     number: 39,
     title: "The Science of Sound Design",
     recordingDate: "2025-04-10",
@@ -975,6 +1054,7 @@ const episodes = [
   },
   {
     id: "ep-43",
+    podcastId: "podcast-1",
     number: 43,
     title: "Remote Recording Best Practices",
     recordingDate: "2025-05-08",
@@ -985,6 +1065,7 @@ const episodes = [
   },
   {
     id: "ep-44",
+    podcastId: "podcast-1",
     number: 44,
     title: "Monetization Strategies for Podcasters",
     recordingDate: "2025-05-15",
@@ -993,7 +1074,51 @@ const episodes = [
     totalTasks: 15,
     status: "planning",
   },
-];
+  {
+    id: "ep-28",
+    podcastId: "podcast-2",
+    number: 28,
+    title: "Interview with Award-Winning Designer",
+    recordingDate: "2025-05-03",
+    releaseDate: "2025-05-10",
+    completedTasks: 6,
+    totalTasks: 15,
+    status: "editing",
+  },
+  {
+    id: "ep-27",
+    podcastId: "podcast-2",
+    number: 27,
+    title: "Creative Process Deep Dive",
+    recordingDate: "2025-04-26",
+    releaseDate: "2025-05-03",
+    completedTasks: 14,
+    totalTasks: 15,
+    status: "publishing",
+  },
+  {
+    id: "ep-15",
+    podcastId: "podcast-3",
+    number: 15,
+    title: "Startup Funding Strategies",
+    recordingDate: "2025-05-05",
+    releaseDate: "2025-05-12",
+    completedTasks: 5,
+    totalTasks: 15,
+    status: "editing",
+  },
+  {
+    id: "ep-14",
+    podcastId: "podcast-3",
+    number: 14,
+    title: "Marketing on a Budget",
+    recordingDate: "2025-04-28",
+    releaseDate: "2025-05-05",
+    completedTasks: 13,
+    totalTasks: 15,
+    status: "publishing",
+  },
+]
 
 // Template data
 const templates = [
@@ -1028,7 +1153,8 @@ const templates = [
       {
         id: "task-3",
         name: "Send prep materials to guest",
-        description: "Share episode outline, technical requirements, and any other relevant information with the guest.",
+        description:
+          "Share episode outline, technical requirements, and any other relevant information with the guest.",
         dueDate: "2 days before recording",
         assignee: "Alice Smith",
         dependencies: ["Prepare episode script/outline"],
@@ -1159,13 +1285,4 @@ const templates = [
       },
     ],
   },
-  {
-    id: "guest-interview-template",
-    name: "Guest Interview Template",
-    description: "Specialized workflow for episodes with guest interviews",
-    tasks: [
-      // Similar task structure as above but for guest interviews
-      // Abbreviated for brevity
-    ],
-  },
-];
+]

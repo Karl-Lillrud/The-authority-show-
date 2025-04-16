@@ -5,9 +5,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Episode ToDo</title>
   <link
-    rel="stylesheet"
-    href="{{ url_for('static', filename='css/taskmanagement/taskmanagement.css') }}"
-  />
+  rel="stylesheet"
+  href="{{ url_for('static', filename='css/taskmanagement/taskmanagement.css') }}"
+/>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 <body>
@@ -61,31 +61,20 @@
       <div class="sidebar left-sidebar">
         <div class="card">
           <div class="card-content">
-            <h2 class="section-title">Templates</h2>
-            <div id="templateSelector" class="template-selector">
-              <!-- Templates will be populated by JavaScript -->
+            <h2 class="section-title">Podcasts</h2>
+            <div id="podcastSelector" class="podcast-selector">
+              <!-- Podcasts will be populated by JavaScript -->
             </div>
 
-            <div class="team-section">
-              <h3 class="subsection-title">Team</h3>
-              <div class="team-members">
-                <div class="team-member">
-                  <div class="avatar bg-blue">JD</div>
-                  <span>John Doe (Host)</span>
-                </div>
-                <div class="team-member">
-                  <div class="avatar bg-green">AS</div>
-                  <span>Alice Smith (Producer)</span>
-                </div>
-                <div class="team-member">
-                  <div class="avatar bg-purple">BJ</div>
-                  <span>Bob Johnson (Editor)</span>
-                </div>
-                <button class="btn btn-outline btn-sm btn-full">
-                  <i class="fas fa-plus"></i>
-                  Add Team Member
-                </button>
+            <div class="episodes-section">
+              <h3 class="subsection-title">Episodes</h3>
+              <div id="episodesList" class="episodes-list">
+                <!-- Episodes will be populated by JavaScript -->
               </div>
+              <button class="btn btn-outline btn-sm btn-full mt-4">
+                <i class="fas fa-plus"></i>
+                Add New Episode
+              </button>
             </div>
           </div>
         </div>
