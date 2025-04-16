@@ -45,11 +45,6 @@
   height: auto;
 }
 
-.title {
-  color: rgba(0, 0, 0, 0.543);
-  margin-bottom: 20px;
-}
-
 .button {
   padding: 10px 20px;
   border-radius: 25px;
