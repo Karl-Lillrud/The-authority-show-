@@ -293,7 +293,7 @@ class AudioService:
 
     def apply_cuts_and_return_new_file(self, file_id: str, cuts: list[dict]) -> str:
         """
-        Removes specified segments from the audio and returns a new cleaned file.
+        Keeps only the specified segments and returns a new file.
         cuts = [{ "start": float, "end": float }, ...]
         """
         logger.info(f"✂️ Applying cuts to file ID: {file_id}")
@@ -310,20 +310,11 @@ class AudioService:
 
             # Sort cuts and convert to milliseconds
             cuts_ms = sorted([(int(c['start'] * 1000), int(c['end'] * 1000)) for c in cuts])
-            logger.info(f"🔪 Cuts to apply (ms): {cuts_ms}")
+            logger.info(f"✅ Cuts to keep (ms): {cuts_ms}")
 
-            # Build list of "keep" segments
-            keep_segments = []
-            last_end = 0
-            for start, end in cuts_ms:
-                if last_end < start:
-                    keep_segments.append(audio[last_end:start])
-                last_end = end
-            if last_end < duration_ms:
-                keep_segments.append(audio[last_end:])
-
-            # Combine segments
-            cleaned_audio = sum(keep_segments)
+            # Keep only those segments
+            kept_segments = [audio[start:end] for start, end in cuts_ms]
+            cleaned_audio = sum(kept_segments)
 
             with tempfile.NamedTemporaryFile(suffix=".wav", delete=False) as out_tmp:
                 cleaned_path = out_tmp.name
@@ -335,7 +326,7 @@ class AudioService:
             cleaned_file_id = save_file(
                 cleaned_bytes,
                 filename=f"cleaned_{file_id}.wav",
-                metadata={"type": "ai_cut_cleaned", "source": file_id, "segments_removed": len(cuts)}
+                metadata={"type": "ai_cut_cleaned", "source": file_id, "segments_kept": len(cuts)}
             )
 
             logger.info(f"✅ Cleaned file saved with ID: {cleaned_file_id}")
@@ -345,3 +336,4 @@ class AudioService:
             for path in [tmp_path, cleaned_path]:
                 if os.path.exists(path):
                     os.remove(path)
+

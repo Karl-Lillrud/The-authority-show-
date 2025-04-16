@@ -139,15 +139,25 @@ def analyze_certainty_levels(transcription):
         })
     return result_list
 
-def get_sentence_timestamps(sentence, word_timings, prev_end_time=0):
-    words = sentence.split()
+def get_sentence_timestamps(sentence, word_timings, prev_end_time=0.0):
+    def normalize(word):
+        return word.strip().lower().strip(",.?!():;\"'")
+
+    words = [normalize(w) for w in sentence.split()]
     if not words:
         return {"start": prev_end_time, "end": prev_end_time + 2.0}
 
-    first_word, last_word = words[0], words[-1]
+    first_word = words[0]
+    last_word = words[-1]
 
-    start = next((w["start"] for w in word_timings if w["word"] == first_word and w["start"] >= prev_end_time), prev_end_time)
-    end = next((w["end"] for w in word_timings if w["word"] == last_word and w["end"] >= start), start + 2.0)
+    start = next(
+        (w["start"] for w in word_timings if normalize(w["word"]) == first_word and w["start"] >= prev_end_time),
+        prev_end_time
+    )
+    end = next(
+        (w["end"] for w in word_timings if normalize(w["word"]) == last_word and w["end"] >= start),
+        start + 2.0
+    )
 
     if end - start < 0.5:
         end += 0.5
