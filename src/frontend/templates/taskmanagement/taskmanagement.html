@@ -15,15 +15,6 @@
     <header class="header">
       <div class="header-content">
         <div class="header-left">
-          <div class="episode-selector">
-            <button id="episodeDropdownBtn" class="btn btn-outline">
-              <span id="currentEpisodeNumber">Episode 42</span>
-              <i class="fas fa-chevron-down"></i>
-            </button>
-            <div id="episodeDropdown" class="dropdown-content">
-              <!-- Episodes will be populated by JavaScript -->
-            </div>
-          </div>
           <h1 id="episodeTitle" class="episode-title">The Future of Podcasting</h1>
           <div class="episode-meta">
             <i class="fas fa-calendar"></i>
@@ -32,16 +23,6 @@
               <i class="fas fa-edit"></i>
             </button>
           </div>
-        </div>
-        <div class="header-right">
-          <button class="btn btn-outline">
-            <i class="fas fa-cog"></i>
-            <span>Settings</span>
-          </button>
-          <button class="btn btn-primary">
-            <i class="fas fa-plus"></i>
-            <span>New Episode</span>
-          </button>
         </div>
       </div>
 
@@ -182,9 +163,6 @@
 
       <!-- Right Sidebar (Timeline) -->
       <div id="timelineSidebar" class="sidebar right-sidebar">
-        <button id="toggleTimelineBtn" class="toggle-timeline-btn">
-          <i class="fas fa-chevron-right"></i>
-        </button>
         <div class="card">
           <div class="card-content">
             <div class="tab-header">
@@ -204,21 +182,6 @@
         </div>
       </div>
     </div>
-
-    <div class="footer">
-      <div class="card">
-        <div class="card-content">
-          <div class="about-section">
-            <i class="fas fa-info-circle"></i>
-            <div>
-              <h3>About Episode ToDo</h3>
-              <p>Episode ToDo is a workflow management tool designed specifically for podcast production teams. It allows podcasters to create, track, and manage recurring tasks for each episode with customizable templates, dependency management, and team collaboration features.</p>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
 
   <!-- Task Detail Modal -->
   <div id="taskModal" class="modal">
@@ -259,6 +222,6 @@
     </div>
   </div>
 
-  <script src="{{ url_for('static', filename='js/taskmanagement/taskmanagement.js') }}"></script>
+  <script type="module" src="{{ url_for('static', filename='js/taskmanagement/taskmanagement.js') }}"></script>
 </body>
 </html>

@@ -1,10 +1,28 @@
-document.addEventListener("DOMContentLoaded", () => {
+"use client"
+
+import { fetchPodcasts } from "/static/requests/podcastRequests.js"
+import { fetchAllEpisodes, fetchEpisodesByPodcast } from "/static/requests/episodeRequest.js"
+import {
+  fetchTasks,
+  fetchTask,
+  saveTask,
+  updateTask,
+  deleteTask,
+  fetchLocalDefaultTasks,
+  addDefaultTasksToEpisode,
+} from "/static/requests/podtaskRequest.js"
+
+document.addEventListener("DOMContentLoaded", async () => {
   // State management
   const state = {
-    activePodcast: podcasts[0],
-    activeTemplate: templates[0],
+    podcasts: [],
+    episodes: [],
+    tasks: [],
+    templates: [],
+    activePodcast: null,
+    activeTemplate: null,
     activeTab: "tasks",
-    selectedEpisode: episodes.find((ep) => ep.podcastId === podcasts[0].id) || episodes[0],
+    selectedEpisode: null,
     selectedTask: null,
     showTimeline: true,
     expandedTasks: {},
@@ -12,9 +30,109 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   // Initialize the UI
+  await initData()
   initUI()
 
+  async function initData() {
+    try {
+      console.log("Fetching data from database...")
+
+      // Fetch podcasts
+      const podcastsData = await fetchPodcasts()
+      console.log("Podcasts data:", podcastsData)
+      state.podcasts = podcastsData.podcast || [] // Note: using podcast instead of podcasts based on your other files
+
+      if (state.podcasts.length > 0) {
+        state.activePodcast = state.podcasts[0]
+
+        // Fetch episodes for the active podcast
+        const episodesData = await fetchEpisodesByPodcast(state.activePodcast._id) // Note: using _id instead of id based on your other files
+        console.log("Episodes data:", episodesData)
+        state.episodes = episodesData || []
+
+        if (state.episodes.length > 0) {
+          state.selectedEpisode = state.episodes[0]
+
+          // Fetch tasks for the selected episode
+          const tasksData = await fetchTasks()
+          console.log("Tasks data:", tasksData)
+
+          // Filter tasks for the selected episode
+          state.tasks = tasksData
+            ? tasksData.filter(
+                (task) => task.episodeId === state.selectedEpisode._id || task.episodeId === state.selectedEpisode.id,
+              )
+            : []
+        }
+      } else {
+        // If no podcasts, try to fetch all episodes
+        const allEpisodes = await fetchAllEpisodes()
+        console.log("All episodes data:", allEpisodes)
+        state.episodes = allEpisodes || []
+
+        if (state.episodes.length > 0) {
+          state.selectedEpisode = state.episodes[0]
+
+          // Fetch tasks for the selected episode
+          const tasksData = await fetchTasks()
+          console.log("Tasks data:", tasksData)
+
+          // Filter tasks for the selected episode
+          state.tasks = tasksData
+            ? tasksData.filter(
+                (task) => task.episodeId === state.selectedEpisode._id || task.episodeId === state.selectedEpisode.id,
+              )
+            : []
+        }
+      }
+
+      // Fetch default tasks for templates
+      const defaultTasksData = await fetchLocalDefaultTasks()
+      console.log("Default tasks data:", defaultTasksData)
+
+      // Create template from default tasks
+      state.templates = [
+        {
+          id: "default-template",
+          name: "Default Podcast Template",
+          description: "Standard workflow for podcast episodes",
+          tasks: Array.isArray(defaultTasksData)
+            ? defaultTasksData.map((taskName, index) => ({
+                id: `default-${index}`,
+                name: taskName,
+                description: `Default task: ${taskName}`,
+                status: "not-started",
+                dueDate: "Before recording",
+                assignee: "Unassigned",
+              }))
+            : [],
+        },
+      ]
+
+      state.activeTemplate = state.templates[0]
+
+      console.log("Initialized data:", {
+        podcasts: state.podcasts,
+        episodes: state.episodes,
+        tasks: state.tasks,
+        templates: state.templates,
+      })
+    } catch (error) {
+      console.error("Error initializing data:", error)
+      alert("Failed to load data. Please refresh the page.")
+    }
+  }
+
   function initUI() {
+    // Check if we have the necessary data to initialize the UI
+    if (!state.activeTemplate) {
+      console.warn("Cannot initialize UI: Missing template data")
+      return
+    }
+
+    // Even if we don't have podcasts or episodes, we can still show the UI with empty states
+    console.log("Initializing UI with available data")
+
     // Populate podcast selector
     populatePodcastSelector()
 
@@ -48,17 +166,24 @@ document.addEventListener("DOMContentLoaded", () => {
 
   function populatePodcastSelector() {
     const podcastSelector = document.getElementById("podcastSelector")
+    if (!podcastSelector) return
+
     podcastSelector.innerHTML = ""
 
-    podcasts.forEach((podcast) => {
+    if (state.podcasts.length === 0) {
+      podcastSelector.innerHTML = `<div class="empty-state">No podcasts available</div>`
+      return
+    }
+
+    state.podcasts.forEach((podcast) => {
       const item = document.createElement("div")
-      item.className = `podcast-item ${podcast.id === state.activePodcast.id ? "active" : ""}`
+      item.className = `podcast-item ${podcast._id === state.activePodcast?._id ? "active" : ""}`
       item.innerHTML = `
         <div class="podcast-header">
           <i class="fas fa-podcast"></i>
-          <span class="podcast-name">${podcast.name}</span>
+          <span class="podcast-name">${podcast.podName || podcast.name || "Unnamed Podcast"}</span>
         </div>
-        <div class="podcast-meta">${podcast.episodeCount} episodes • ${podcast.description}</div>
+        <div class="podcast-meta">${podcast.episodeCount || 0} episodes • ${podcast.description || ""}</div>
       `
       item.addEventListener("click", () => selectPodcast(podcast))
       podcastSelector.appendChild(item)
@@ -67,21 +192,35 @@ document.addEventListener("DOMContentLoaded", () => {
 
   function populateEpisodesList() {
     const episodesList = document.getElementById("episodesList")
+    if (!episodesList) return
+
     episodesList.innerHTML = ""
 
+    if (!state.activePodcast || state.episodes.length === 0) {
+      episodesList.innerHTML = `<div class="empty-state">No episodes available</div>`
+      return
+    }
+
     // Filter episodes for the active podcast
-    const podcastEpisodes = episodes.filter((ep) => ep.podcastId === state.activePodcast.id)
+    const podcastEpisodes = state.episodes.filter(
+      (ep) => ep.podcastId === state.activePodcast._id || ep.podcast_id === state.activePodcast._id,
+    )
+
+    if (podcastEpisodes.length === 0) {
+      episodesList.innerHTML = `<div class="empty-state">No episodes for this podcast</div>`
+      return
+    }
 
     podcastEpisodes.forEach((episode) => {
       const item = document.createElement("div")
-      item.className = `episode-item ${episode.id === state.selectedEpisode.id ? "active" : ""}`
+      item.className = `episode-item ${episode._id === state.selectedEpisode?._id ? "active" : ""}`
       item.innerHTML = `
-        <span class="episode-number">#${episode.number}</span>
+        <span class="episode-number">#${episode.number || 1}</span>
         <div class="episode-info">
-          <div class="episode-name">${episode.title}</div>
-          <div class="episode-date">${episode.recordingDate}</div>
+          <div class="episode-name">${episode.title || "Untitled Episode"}</div>
+          <div class="episode-date">${episode.recordingDate || episode.recordingAt || episode.publishDate || "Not scheduled"}</div>
         </div>
-        <span class="episode-status ${episode.status}">${episode.status}</span>
+        <span class="episode-status ${episode.status?.toLowerCase() || "planning"}">${episode.status || "Planning"}</span>
       `
       item.addEventListener("click", () => selectEpisode(episode))
       episodesList.appendChild(item)
@@ -90,15 +229,29 @@ document.addEventListener("DOMContentLoaded", () => {
 
   function populateEpisodeDropdown() {
     const dropdown = document.getElementById("episodeDropdown")
+    if (!dropdown) return
+
     dropdown.innerHTML = ""
 
+    if (!state.activePodcast || state.episodes.length === 0) {
+      dropdown.innerHTML = `<div class="dropdown-item">No episodes available</div>`
+      return
+    }
+
     // Filter episodes for the active podcast
-    const podcastEpisodes = episodes.filter((ep) => ep.podcastId === state.activePodcast.id)
+    const podcastEpisodes = state.episodes.filter(
+      (ep) => ep.podcastId === state.activePodcast._id || ep.podcast_id === state.activePodcast._id,
+    )
+
+    if (podcastEpisodes.length === 0) {
+      dropdown.innerHTML = `<div class="dropdown-item">No episodes for this podcast</div>`
+      return
+    }
 
     podcastEpisodes.forEach((episode) => {
       const item = document.createElement("div")
       item.className = "dropdown-item"
-      item.innerHTML = `<span class="font-medium">Episode ${episode.number}:</span> ${episode.title}`
+      item.innerHTML = `<span class="font-medium">Episode ${episode.number || 1}:</span> ${episode.title || "Untitled Episode"}`
       item.addEventListener("click", () => {
         selectEpisode(episode)
         toggleEpisodeDropdown()
@@ -109,20 +262,98 @@ document.addEventListener("DOMContentLoaded", () => {
 
   function renderTaskList() {
     const taskList = document.getElementById("taskList")
+    if (!taskList) return
+
     taskList.innerHTML = ""
 
-    state.activeTemplate.tasks.forEach((task) => {
-      const isCompleted = state.completedTasks[task.id] || task.status === "completed"
-      const isExpanded = state.expandedTasks[task.id] || false
+    // Check if we have tasks for the selected episode
+    const episodeTasks = state.tasks.filter(
+      (task) => task.episodeId === state.selectedEpisode?._id || task.episodeId === state.selectedEpisode?.id,
+    )
+
+    // If we have episode-specific tasks, use those; otherwise, use template tasks
+    const tasksToRender = episodeTasks.length > 0 ? episodeTasks : state.activeTemplate?.tasks || []
+
+    if (tasksToRender.length === 0) {
+      taskList.innerHTML = `
+        <div class="empty-task-list">
+          <p>No tasks available</p>
+          <div class="task-actions">
+            <button class="btn add-task-btn" id="add-new-task">
+              <i class="fas fa-plus"></i> Add Task
+            </button>
+            <button class="btn import-tasks-btn" id="import-default-tasks">
+              <i class="fas fa-download"></i> Import Default Tasks
+            </button>
+          </div>
+        </div>
+      `
+
+      // Add event listeners for the buttons
+      const addTaskBtn = document.getElementById("add-new-task")
+      if (addTaskBtn) {
+        addTaskBtn.addEventListener("click", () =>
+          showAddTaskPopup(state.selectedEpisode?._id || state.selectedEpisode?.id),
+        )
+      }
+
+      const importTasksBtn = document.getElementById("import-default-tasks")
+      if (importTasksBtn) {
+        importTasksBtn.addEventListener("click", () =>
+          showImportTasksPopup(state.selectedEpisode?._id || state.selectedEpisode?.id),
+        )
+      }
+
+      return
+    }
+
+    // Add task management actions at the top
+    const taskActions = document.createElement("div")
+    taskActions.className = "task-management-actions"
+    taskActions.innerHTML = `
+      <div class="task-header">
+        <h3>Tasks</h3>
+        <div class="task-header-actions">
+          <button class="btn import-tasks-btn" id="import-default-tasks">
+            <i class="fas fa-download"></i> Import
+          </button>
+          <button class="btn add-task-btn" id="add-new-task">
+            <i class="fas fa-plus"></i> Add Task
+          </button>
+        </div>
+      </div>
+    `
+    taskList.appendChild(taskActions)
+
+    // Add event listeners for the buttons
+    const addTaskBtn = document.getElementById("add-new-task")
+    if (addTaskBtn) {
+      addTaskBtn.addEventListener("click", () =>
+        showAddTaskPopup(state.selectedEpisode?._id || state.selectedEpisode?.id),
+      )
+    }
+
+    const importTasksBtn = document.getElementById("import-default-tasks")
+    if (importTasksBtn) {
+      importTasksBtn.addEventListener("click", () =>
+        showImportTasksPopup(state.selectedEpisode?._id || state.selectedEpisode?.id),
+      )
+    }
+
+    // Render each task
+    tasksToRender.forEach((task) => {
+      const isCompleted = state.completedTasks[task.id || task._id] || task.status === "completed"
+      const isExpanded = state.expandedTasks[task.id || task._id] || false
 
       const taskItem = document.createElement("div")
       taskItem.className = "task-item"
+      taskItem.dataset.taskId = task.id || task._id
       taskItem.innerHTML = `
         <div class="task-header ${isCompleted ? "completed" : ""}">
-          <div class="task-checkbox ${isCompleted ? "checked" : ""}" data-task-id="${task.id}">
+          <div class="task-checkbox ${isCompleted ? "checked" : ""}" data-task-id="${task.id || task._id}">
             ${isCompleted ? '<i class="fas fa-check"></i>' : ""}
           </div>
-          <button class="task-expand" data-task-id="${task.id}">
+          <button class="task-expand" data-task-id="${task.id || task._id}">
             <i class="fas fa-chevron-${isExpanded ? "down" : "right"}"></i>
           </button>
           <div class="task-content">
@@ -133,14 +364,14 @@ document.addEventListener("DOMContentLoaded", () => {
               <div class="task-meta">
                 <div class="task-meta-item">
                   <i class="fas fa-clock"></i>
-                  <span>${task.dueDate}</span>
+                  <span>${task.dueDate || "No due date"}</span>
                 </div>
                 <div class="task-meta-item">
                   <i class="fas fa-user"></i>
-                  <span>${task.assignee}</span>
+                  <span>${task.assignee || "Unassigned"}</span>
                 </div>
                 ${
-                  task.dependencies.length > 0
+                  task.dependencies && task.dependencies.length > 0
                     ? `
                   <span class="task-badge">${task.dependencies.length} ${task.dependencies.length === 1 ? "dependency" : "dependencies"}</span>
                 `
@@ -153,29 +384,29 @@ document.addEventListener("DOMContentLoaded", () => {
           </div>
           <div class="task-actions">
             ${task.hasDependencyWarning ? '<i class="fas fa-exclamation-circle text-warning"></i>' : ""}
+            <button class="task-action-btn edit-task-btn" title="Edit Task" data-task-id="${task.id || task._id}">
+              <i class="fas fa-edit"></i>
+            </button>
+            <button class="task-action-btn delete-task-btn" title="Delete Task" data-task-id="${task.id || task._id}">
+              <i class="fas fa-trash"></i>
+            </button>
             ${
               task.workspaceEnabled
                 ? `
-              <button class="btn-icon text-primary" data-workspace-task-id="${task.id}">
+              <button class="btn-icon text-primary workspace-btn" data-workspace-task-id="${task.id || task._id}">
                 <i class="fas fa-laptop"></i>
               </button>
             `
                 : ""
             }
-            <div class="dropdown">
-              <button class="btn-icon dropdown-toggle">
-                <i class="fas fa-ellipsis-h"></i>
-              </button>
-              <!-- Dropdown menu would go here -->
-            </div>
           </div>
         </div>
         
         <div class="task-details ${isExpanded ? "expanded" : ""}">
-          <p class="task-description">${task.description}</p>
+          <p class="task-description">${task.description || "No description available"}</p>
           
           ${
-            task.dependencies.length > 0
+            task.dependencies && task.dependencies.length > 0
               ? `
             <div class="task-dependencies">
               <h4 class="task-dependencies-title">Dependencies:</h4>
@@ -197,24 +428,24 @@ document.addEventListener("DOMContentLoaded", () => {
             <div class="task-footer-meta">
               <div class="task-meta-item">
                 <i class="fas fa-clock"></i>
-                <span>Due: ${task.dueDate}</span>
+                <span>Due: ${task.dueDate || "No due date"}</span>
               </div>
               <div class="task-meta-item">
                 <i class="fas fa-user"></i>
-                <span>Assigned to: ${task.assignee}</span>
+                <span>Assigned to: ${task.assignee || "Unassigned"}</span>
               </div>
             </div>
             
             <div class="task-footer-actions">
               <button class="btn btn-outline btn-sm">
                 <i class="fas fa-comment"></i>
-                <span>Comments (2)</span>
+                <span>Comments (${task.comments?.length || 0})</span>
               </button>
               
               ${
                 task.workspaceEnabled
                   ? `
-                <button class="btn btn-outline btn-sm workspace-btn" data-workspace-task-id="${task.id}">
+                <button class="btn btn-outline btn-sm workspace-btn" data-workspace-task-id="${task.id || task._id}">
                   <i class="fas fa-laptop"></i>
                   <span>Open in Workspace</span>
                 </button>
@@ -229,12 +460,42 @@ document.addEventListener("DOMContentLoaded", () => {
       taskList.appendChild(taskItem)
     })
 
+    // Add workflow actions at the bottom
+    const workflowActions = document.createElement("div")
+    workflowActions.className = "workflow-actions"
+    workflowActions.innerHTML = `
+      <button class="btn save-workflow-btn" id="save-workflow">
+        <i class="fas fa-save"></i> Save Workflow
+      </button>
+      <button class="btn import-workflow-btn" id="import-workflow">
+        <i class="fas fa-download"></i> Import Workflow
+      </button>
+    `
+    taskList.appendChild(workflowActions)
+
+    // Add event listeners for workflow buttons
+    const saveWorkflowBtn = document.getElementById("save-workflow")
+    if (saveWorkflowBtn) {
+      saveWorkflowBtn.addEventListener("click", () =>
+        saveWorkflow(state.selectedEpisode?._id || state.selectedEpisode?.id),
+      )
+    }
+
+    const importWorkflowBtn = document.getElementById("import-workflow")
+    if (importWorkflowBtn) {
+      importWorkflowBtn.addEventListener("click", () =>
+        importWorkflow(state.selectedEpisode?._id || state.selectedEpisode?.id),
+      )
+    }
+
     // Add event listeners for task interactions
     setupTaskInteractions()
   }
 
   function renderKanbanBoard() {
     const kanbanBoard = document.getElementById("kanbanBoard")
+    if (!kanbanBoard) return
+
     kanbanBoard.innerHTML = ""
 
     const columns = [
@@ -244,12 +505,22 @@ document.addEventListener("DOMContentLoaded", () => {
       { id: "published", title: "Published", color: "kanban-column-published" },
     ]
 
+    // Check if we have tasks for the selected episode
+    const episodeTasks = state.tasks.filter(
+      (task) => task.episodeId === state.selectedEpisode?._id || task.episodeId === state.selectedEpisode?.id,
+    )
+
+    // If we have episode-specific tasks, use those; otherwise, use template tasks
+    const tasksToRender = episodeTasks.length > 0 ? episodeTasks : state.activeTemplate?.tasks || []
+
     // Group tasks by status
     const tasksByStatus = {
-      todo: state.activeTemplate.tasks.filter((task) => task.status === "not-started" || !task.status),
-      "in-progress": state.activeTemplate.tasks.filter((task) => task.status === "in-progress"),
-      ready: state.activeTemplate.tasks.filter((task) => task.status === "ready"),
-      published: state.activeTemplate.tasks.filter((task) => task.status === "completed"),
+      todo:
+        tasksToRender.filter((task) => task.status === "not-started" || task.status === "incomplete" || !task.status) ||
+        [],
+      "in-progress": tasksToRender.filter((task) => task.status === "in-progress") || [],
+      ready: tasksToRender.filter((task) => task.status === "ready") || [],
+      published: tasksToRender.filter((task) => task.status === "completed") || [],
     }
 
     columns.forEach((column) => {
@@ -261,58 +532,54 @@ document.addEventListener("DOMContentLoaded", () => {
           <span class="badge">${tasksByStatus[column.id].length}</span>
         </div>
         <div class="kanban-column-content" data-column-id="${column.id}">
-          ${tasksByStatus[column.id]
-            .map(
-              (task) => `
-            <div class="kanban-task" draggable="true" data-task-id="${task.id}">
-              <div class="kanban-task-header">
-                <h3 class="kanban-task-title">${task.name}</h3>
-                <div class="dropdown">
-                  <button class="btn-icon dropdown-toggle">
-                    <i class="fas fa-ellipsis-h"></i>
-                  </button>
+          ${
+            tasksByStatus[column.id].length === 0
+              ? `<div class="kanban-empty">No tasks</div>`
+              : tasksByStatus[column.id]
+                  .map(
+                    (task) => `
+              <div class="kanban-task" draggable="true" data-task-id="${task.id || task._id}">
+                <div class="kanban-task-header">
+                  <h3 class="kanban-task-title">${task.name}</h3>
+                  <div class="dropdown">
+                    <button class="btn-icon dropdown-toggle">
+                      <i class="fas fa-ellipsis-h"></i>
+                    </button>
+                  </div>
                 </div>
-              </div>
-              <div class="kanban-task-meta">
-                <div class="task-meta-item">
-                  <i class="fas fa-clock"></i>
-                  <span>${task.dueDate}</span>
+                <div class="kanban-task-meta">
+                  <div class="task-meta-item">
+                    <i class="fas fa-clock"></i>
+                    <span>${task.dueDate || "No due date"}</span>
+                  </div>
                 </div>
-              </div>
-              <div class="kanban-task-footer">
-                <div class="kanban-task-assignee ${
-                  task.assignee === "John Doe"
-                    ? "bg-blue"
-                    : task.assignee === "Alice Smith"
-                      ? "bg-green"
-                      : task.assignee === "Bob Johnson"
-                        ? "bg-purple"
-                        : ""
-                }">
-                  ${
+                <div class="kanban-task-footer">
+                  <div class="kanban-task-assignee ${
                     task.assignee === "John Doe"
-                      ? "JD"
+                      ? "bg-blue"
                       : task.assignee === "Alice Smith"
-                        ? "AS"
+                        ? "bg-green"
                         : task.assignee === "Bob Johnson"
-                          ? "BJ"
+                          ? "bg-purple"
                           : ""
+                  }">
+                    ${task.assignee ? task.assignee.split(" ").map((name) => name[0]) : "UN"}
+                  </div>
+                  ${
+                    task.workspaceEnabled
+                      ? `
+                    <button class="btn-icon text-primary workspace-btn" data-workspace-task-id="${task.id || task._id}">
+                      <i class="fas fa-laptop"></i>
+                    </button>
+                  `
+                      : ""
                   }
                 </div>
-                ${
-                  task.workspaceEnabled
-                    ? `
-                  <button class="btn-icon text-primary workspace-btn" data-workspace-task-id="${task.id}">
-                    <i class="fas fa-laptop"></i>
-                  </button>
-                `
-                    : ""
-                }
               </div>
-            </div>
-          `,
-            )
-            .join("")}
+            `,
+                  )
+                  .join("")
+          }
         </div>
       `
 
@@ -325,15 +592,42 @@ document.addEventListener("DOMContentLoaded", () => {
 
   function renderTimeline() {
     const timeline = document.getElementById("timeline")
+    if (!timeline) return
+
     timeline.innerHTML = ""
 
+    if (!state.selectedEpisode) {
+      timeline.innerHTML = "<p>No episode selected</p>"
+      return
+    }
+
     // Update timeline header dates
-    document.getElementById("timelineRecordingDate").textContent = state.selectedEpisode.recordingDate
-    document.getElementById("timelineReleaseDate").textContent = state.selectedEpisode.releaseDate
+    const timelineRecordingDate = document.getElementById("timelineRecordingDate")
+    const timelineReleaseDate = document.getElementById("timelineReleaseDate")
+
+    if (timelineRecordingDate) {
+      timelineRecordingDate.textContent =
+        state.selectedEpisode.recordingDate || state.selectedEpisode.recordingAt || "Not scheduled"
+    }
+
+    if (timelineReleaseDate) {
+      timelineReleaseDate.textContent =
+        state.selectedEpisode.releaseDate || state.selectedEpisode.publishDate || "Not scheduled"
+    }
+
+    // Check if we have tasks for the selected episode
+    const episodeTasks = state.tasks.filter(
+      (task) => task.episodeId === state.selectedEpisode?._id || task.episodeId === state.selectedEpisode?.id,
+    )
+
+    // If we have episode-specific tasks, use those; otherwise, use template tasks
+    const tasksToRender = episodeTasks.length > 0 ? episodeTasks : state.activeTemplate?.tasks || []
 
     // Group tasks by due date
     const tasksByDueDate = {}
-    state.activeTemplate.tasks.forEach((task) => {
+    tasksToRender.forEach((task) => {
+      if (!task.dueDate) return
+
       if (!tasksByDueDate[task.dueDate]) {
         tasksByDueDate[task.dueDate] = []
       }
@@ -362,6 +656,11 @@ document.addEventListener("DOMContentLoaded", () => {
 
       return 0
     })
+
+    if (sortedDates.length === 0) {
+      timeline.innerHTML = "<p>No tasks with due dates available</p>"
+      return
+    }
 
     sortedDates.forEach((date) => {
       const timelineItem = document.createElement("div")
@@ -409,7 +708,7 @@ document.addEventListener("DOMContentLoaded", () => {
         tabPanes.forEach((pane) => pane.classList.remove("active"))
 
         button.classList.add("active")
-        document.getElementById(`${tabId}-tab`).classList.add("active")
+        document.getElementById(`${tabId}-tab`)?.classList.add("active")
 
         state.activeTab = tabId
       })
@@ -419,6 +718,8 @@ document.addEventListener("DOMContentLoaded", () => {
   function setupTimelineToggle() {
     const toggleBtn = document.getElementById("toggleTimelineBtn")
     const sidebar = document.getElementById("timelineSidebar")
+
+    if (!toggleBtn || !sidebar) return
 
     toggleBtn.addEventListener("click", () => {
       state.showTimeline = !state.showTimeline
@@ -437,6 +738,8 @@ document.addEventListener("DOMContentLoaded", () => {
     const dropdownBtn = document.getElementById("episodeDropdownBtn")
     const dropdown = document.getElementById("episodeDropdown")
 
+    if (!dropdownBtn || !dropdown) return
+
     dropdownBtn.addEventListener("click", toggleEpisodeDropdown)
 
     // Close dropdown when clicking outside
@@ -449,40 +752,95 @@ document.addEventListener("DOMContentLoaded", () => {
 
   function toggleEpisodeDropdown() {
     const dropdown = document.getElementById("episodeDropdown")
-    dropdown.classList.toggle("show")
+    if (dropdown) {
+      dropdown.classList.toggle("show")
+    }
   }
 
-  function selectPodcast(podcast) {
+  async function selectPodcast(podcast) {
     state.activePodcast = podcast
 
-    // Find the first episode of this podcast
-    const firstEpisode = episodes.find((ep) => ep.podcastId === podcast.id)
-    if (firstEpisode) {
-      state.selectedEpisode = firstEpisode
+    try {
+      // Fetch episodes for the selected podcast
+      const episodesData = await fetchEpisodesByPodcast(podcast._id)
+      console.log("Episodes for selected podcast:", episodesData)
+      state.episodes = episodesData || []
+
+      // Find the first episode of this podcast
+      if (state.episodes.length > 0) {
+        state.selectedEpisode = state.episodes[0]
+
+        // Fetch tasks for the selected episode
+        const tasksData = await fetchTasks()
+        console.log("Tasks data for selected episode:", tasksData)
+
+        // Filter tasks for the selected episode
+        state.tasks = tasksData
+          ? tasksData.filter(
+              (task) => task.episodeId === state.selectedEpisode._id || task.episodeId === state.selectedEpisode.id,
+            )
+          : []
+      } else {
+        state.selectedEpisode = null
+        state.tasks = []
+      }
+
+      // Update UI
+      populatePodcastSelector()
+      populateEpisodesList()
+      populateEpisodeDropdown()
+
+      // Update episode display
+      updateEpisodeDisplay()
+    } catch (error) {
+      console.error("Error fetching episodes for podcast:", error)
+      alert("Failed to load episodes for the selected podcast.")
     }
-
-    // Update UI
-    populatePodcastSelector()
-    populateEpisodesList()
-    populateEpisodeDropdown()
-
-    // Update episode display
-    updateEpisodeDisplay()
   }
 
-  function selectEpisode(episode) {
+  async function selectEpisode(episode) {
     state.selectedEpisode = episode
 
-    // Update UI
-    populateEpisodesList()
-    updateEpisodeDisplay()
+    try {
+      // Fetch tasks for the selected episode
+      const tasksData = await fetchTasks()
+      console.log("Tasks data for selected episode:", tasksData)
+
+      // Filter tasks for the selected episode
+      state.tasks = tasksData
+        ? tasksData.filter((task) => task.episodeId === episode._id || task.episodeId === episode.id)
+        : []
+
+      // Update UI
+      populateEpisodesList()
+      updateEpisodeDisplay()
+      renderTaskList()
+      renderKanbanBoard()
+      renderTimeline()
+    } catch (error) {
+      console.error("Error fetching tasks for episode:", error)
+    }
   }
 
   function updateEpisodeDisplay() {
+    if (!state.selectedEpisode) return
+
     // Update header
-    document.getElementById("currentEpisodeNumber").textContent = `Episode ${state.selectedEpisode.number}`
-    document.getElementById("episodeTitle").textContent = state.selectedEpisode.title
-    document.getElementById("recordingDate").textContent = `Recording Date: ${state.selectedEpisode.recordingDate}`
+    const currentEpisodeNumber = document.getElementById("currentEpisodeNumber")
+    const episodeTitle = document.getElementById("episodeTitle")
+    const recordingDate = document.getElementById("recordingDate")
+
+    if (currentEpisodeNumber) {
+      currentEpisodeNumber.textContent = `Episode ${state.selectedEpisode.number || 1}`
+    }
+
+    if (episodeTitle) {
+      episodeTitle.textContent = state.selectedEpisode.title || "Untitled Episode"
+    }
+
+    if (recordingDate) {
+      recordingDate.textContent = `Recording Date: ${state.selectedEpisode.recordingDate || state.selectedEpisode.recordingAt || "Not scheduled"}`
+    }
 
     // Update progress bar
     updateProgressBar()
@@ -492,12 +850,34 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   function updateProgressBar() {
-    const { completedTasks, totalTasks } = state.selectedEpisode
-    const percentage = Math.round((completedTasks / totalTasks) * 100)
+    if (!state.selectedEpisode) return
 
-    document.getElementById("progressText").textContent =
-      `${completedTasks} of ${totalTasks} tasks completed (${percentage}%)`
-    document.getElementById("progressBar").style.width = `${percentage}%`
+    // Check if we have tasks for the selected episode
+    const episodeTasks = state.tasks.filter(
+      (task) => task.episodeId === state.selectedEpisode._id || task.episodeId === state.selectedEpisode.id,
+    )
+
+    // If we have episode-specific tasks, use those; otherwise, use template tasks
+    const tasksToRender = episodeTasks.length > 0 ? episodeTasks : state.activeTemplate?.tasks || []
+
+    // Calculate completed tasks
+    const completedTasks =
+      tasksToRender.filter((task) => task.status === "completed" || state.completedTasks[task.id || task._id]).length ||
+      0
+
+    const totalTasks = tasksToRender.length || 0
+    const percentage = totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0
+
+    const progressText = document.getElementById("progressText")
+    const progressBar = document.getElementById("progressBar")
+
+    if (progressText) {
+      progressText.textContent = `${completedTasks} of ${totalTasks} tasks completed (${percentage}%)`
+    }
+
+    if (progressBar) {
+      progressBar.style.width = `${percentage}%`
+    }
   }
 
   function setupTaskInteractions() {
@@ -517,6 +897,22 @@ document.addEventListener("DOMContentLoaded", () => {
       })
     })
 
+    // Edit task buttons
+    document.querySelectorAll(".edit-task-btn").forEach((button) => {
+      button.addEventListener("click", () => {
+        const taskId = button.getAttribute("data-task-id")
+        showEditTaskPopup(taskId)
+      })
+    })
+
+    // Delete task buttons
+    document.querySelectorAll(".delete-task-btn").forEach((button) => {
+      button.addEventListener("click", () => {
+        const taskId = button.getAttribute("data-task-id")
+        confirmDeleteTask(taskId)
+      })
+    })
+
     // Workspace buttons
     document.querySelectorAll(".workspace-btn, [data-workspace-task-id]").forEach((button) => {
       button.addEventListener("click", () => {
@@ -526,11 +922,38 @@ document.addEventListener("DOMContentLoaded", () => {
     })
   }
 
-  function toggleTaskCompletion(taskId) {
-    state.completedTasks[taskId] = !state.completedTasks[taskId]
+  async function toggleTaskCompletion(taskId) {
+    // Find the task in either state.tasks or template tasks
+    let task = state.tasks.find((t) => t.id === taskId || t._id === taskId)
+
+    // If not found in state.tasks, check template tasks
+    if (!task && state.activeTemplate) {
+      task = state.activeTemplate.tasks.find((t) => t.id === taskId || t._id === taskId)
+    }
+
+    if (!task) return
+
+    // Toggle completion state
+    const newStatus = task.status === "completed" ? "incomplete" : "completed"
+    state.completedTasks[taskId] = newStatus === "completed"
+
+    // If this is a real task (not a template task), update it in the database
+    if (task.episodeId) {
+      try {
+        await updateTask(taskId, { status: newStatus })
+        console.log(`Task ${taskId} status updated to ${newStatus}`)
+      } catch (error) {
+        console.error("Error updating task status:", error)
+        // Revert the state change if the API call fails
+        state.completedTasks[taskId] = !state.completedTasks[taskId]
+      }
+    }
+
+    // Update UI
     renderTaskList()
     renderKanbanBoard()
     renderTimeline()
+    updateProgressBar()
   }
 
   function toggleTaskExpansion(taskId) {
@@ -539,12 +962,19 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   function openTaskInWorkspace(taskId) {
-    const task = state.activeTemplate.tasks.find((t) => t.id === taskId)
+    // Find the task in either state.tasks or template tasks
+    let task = state.tasks.find((t) => t.id === taskId || t._id === taskId)
+
+    // If not found in state.tasks, check template tasks
+    if (!task && state.activeTemplate) {
+      task = state.activeTemplate.tasks.find((t) => t.id === taskId || t._id === taskId)
+    }
+
     if (task) {
       state.selectedTask = task
 
       // Switch to workspace tab
-      document.querySelector('.tab-btn[data-tab="workspace"]').click()
+      document.querySelector('.tab-btn[data-tab="workspace"]')?.click()
 
       // Render workspace with selected task
       renderWorkspace()
@@ -589,33 +1019,62 @@ document.addEventListener("DOMContentLoaded", () => {
 
           // Re-render kanban board
           renderKanbanBoard()
+
+          // Update task list and timeline to reflect status changes
+          renderTaskList()
+          renderTimeline()
+          updateProgressBar()
         }
       })
     })
   }
 
-  function updateTaskStatus(taskId, columnId) {
-    const task = state.activeTemplate.tasks.find((t) => t.id === taskId)
-    if (task) {
-      switch (columnId) {
-        case "todo":
-          task.status = "not-started"
-          break
-        case "in-progress":
-          task.status = "in-progress"
-          break
-        case "ready":
-          task.status = "ready"
-          break
-        case "published":
-          task.status = "completed"
-          break
+  async function updateTaskStatus(taskId, columnId) {
+    // Find the task in either state.tasks or template tasks
+    let task = state.tasks.find((t) => t.id === taskId || t._id === taskId)
+
+    // If not found in state.tasks, check template tasks
+    if (!task && state.activeTemplate) {
+      task = state.activeTemplate.tasks.find((t) => t.id === taskId || t._id === taskId)
+    }
+
+    if (!task) return
+
+    let newStatus
+    switch (columnId) {
+      case "todo":
+        newStatus = "not-started"
+        break
+      case "in-progress":
+        newStatus = "in-progress"
+        break
+      case "ready":
+        newStatus = "ready"
+        break
+      case "published":
+        newStatus = "completed"
+        break
+      default:
+        newStatus = "not-started"
+    }
+
+    // Update task status
+    task.status = newStatus
+
+    // If this is a real task (not a template task), update it in the database
+    if (task.episodeId) {
+      try {
+        await updateTask(taskId, { status: newStatus })
+        console.log(`Task ${taskId} status updated to ${newStatus}`)
+      } catch (error) {
+        console.error("Error updating task status:", error)
       }
     }
   }
 
   function renderWorkspace() {
     const workspaceArea = document.getElementById("workspaceArea")
+    if (!workspaceArea) return
 
     if (!state.selectedTask) {
       workspaceArea.innerHTML = `
@@ -666,7 +1125,7 @@ document.addEventListener("DOMContentLoaded", () => {
             <div class="audio-file">
               <i class="fas fa-file-audio text-primary audio-icon"></i>
               <div>
-                <h4 class="audio-title">Episode${state.selectedEpisode.number}_raw.mp3</h4>
+                <h4 class="audio-title">Episode${state.selectedEpisode?.number || 1}_raw.mp3</h4>
                 <p class="audio-meta">48:32 • 44.1kHz • Stereo</p>
               </div>
             </div>
@@ -808,7 +1267,7 @@ document.addEventListener("DOMContentLoaded", () => {
               <div class="audio-file">
                 <i class="fas fa-file-audio text-primary audio-icon"></i>
                 <div>
-                  <h4 class="audio-title">Episode${state.selectedEpisode.number}_final.mp3</h4>
+                  <h4 class="audio-title">Episode${state.selectedEpisode?.number || 1}_final.mp3</h4>
                   <p class="audio-meta">48:32 • 44.1kHz • Stereo</p>
                 </div>
               </div>
@@ -931,7 +1390,7 @@ document.addEventListener("DOMContentLoaded", () => {
           document.querySelectorAll(".workspace-tab-content").forEach((c) => c.classList.remove("active"))
 
           tab.classList.add("active")
-          document.getElementById(`${tabId}-tab`).classList.add("active")
+          document.getElementById(`${tabId}-tab`)?.classList.add("active")
         })
       })
     }
@@ -939,6 +1398,8 @@ document.addEventListener("DOMContentLoaded", () => {
 
   function togglePlayback() {
     const playButton = document.getElementById("playButton")
+    if (!playButton) return
+
     const isPlaying = playButton.classList.contains("playing")
 
     if (isPlaying) {
@@ -952,6 +1413,8 @@ document.addEventListener("DOMContentLoaded", () => {
 
   function applyAiEnhancement() {
     const button = document.getElementById("applyAiBtn")
+    if (!button) return
+
     button.disabled = true
     button.innerHTML = '<span class="spinner">⟳</span> Processing...'
 
@@ -965,6 +1428,8 @@ document.addEventListener("DOMContentLoaded", () => {
 
   function generateTranscript() {
     const button = document.getElementById("generateTranscriptBtn")
+    if (!button) return
+
     button.disabled = true
     button.textContent = "Processing..."
 
@@ -975,314 +1440,405 @@ document.addEventListener("DOMContentLoaded", () => {
 
       const textarea = document.querySelector(".transcript-editor")
       if (textarea) {
-        textarea.value = `Host: Welcome to Episode ${state.selectedEpisode.number} of our podcast, where we discuss ${state.selectedEpisode.title}.\n\nGuest: Thanks for having me! I'm excited to share my thoughts on this topic.\n\nHost: Let's start by talking about the key points we outlined in our prep session...`
+        textarea.value = `Host: Welcome to Episode ${state.selectedEpisode?.number || 1} of our podcast, where we discuss ${state.selectedEpisode?.title || "our topic"}.\n\nGuest: Thanks for having me! I'm excited to share my thoughts on this topic.\n\nHost: Let's start by talking about the key points we outlined in our prep session...`
       }
     }, 2000)
   }
+
+  // Task Management Functions
+  async function showAddTaskPopup(episodeId) {
+    if (!episodeId) {
+      console.error("No episode ID provided for adding task")
+      return
+    }
+
+    const popupHTML = `
+      <div id="task-popup" class="popup">
+        <div class="popup-content">
+          <div class="modal-header">
+            <h2>Add New Task</h2>
+            <button class="close-btn">&times;</button>
+          </div>
+          <div class="popup-body">
+            <form id="task-form">
+              <input type="hidden" id="task-episode-id" value="${episodeId}">
+              <div class="form-group">
+                <label for="task-title">Task Title</label>
+                <input type="text" id="task-title" class="form-control" placeholder="What needs to be done?" required>
+              </div>
+              <div class="form-group">
+                <label for="task-description">Description</label>
+                <textarea id="task-description" class="form-control" placeholder="Add more details about this task..."></textarea>
+              </div>
+              <div class="form-group">
+                <label for="task-due-date">Due Date</label>
+                <select id="task-due-date" class="form-control">
+                  <option value="Before recording">Before Recording</option>
+                  <option value="Recording day">Recording Day</option>
+                  <option value="After recording">After Recording</option>
+                </select>
+              </div>
+              <div class="modal-footer">
+                <button type="button" id="cancel-add-btn" class="btn cancel-btn">Cancel</button>
+                <button type="submit" class="btn save-btn">
+                  <i class="fas fa-check"></i> Create Task
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+    `
+
+    document.body.insertAdjacentHTML("beforeend", popupHTML)
+    const popup = document.getElementById("task-popup")
+
+    // Show the popup
+    popup.style.display = "flex"
+
+    // Add class to animate in
+    setTimeout(() => {
+      popup.querySelector(".popup-content").classList.add("show")
+    }, 10)
+
+    // Close button event
+    const closeBtn = popup.querySelector(".close-btn")
+    closeBtn.addEventListener("click", () => {
+      closePopup(popup)
+    })
+
+    // Cancel button event
+    const cancelBtn = document.getElementById("cancel-add-btn")
+    cancelBtn.addEventListener("click", () => {
+      closePopup(popup)
+    })
+
+    // Close when clicking outside
+    popup.addEventListener("click", (e) => {
+      if (e.target === popup) {
+        closePopup(popup)
+      }
+    })
+
+    // Form submission
+    const form = document.getElementById("task-form")
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault()
+      const title = document.getElementById("task-title").value
+      const description = document.getElementById("task-description").value
+      const dueDate = document.getElementById("task-due-date").value
+
+      const taskData = {
+        name: title,
+        description,
+        episodeId: episodeId,
+        dueDate: dueDate,
+        status: "not-started",
+      }
+
+      try {
+        // Show loading state
+        const saveBtn = form.querySelector(".save-btn")
+        const originalText = saveBtn.innerHTML
+        saveBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...'
+        saveBtn.disabled = true
+
+        const result = await saveTask(taskData)
+        console.log("Task saved:", result)
+
+        // Refresh tasks
+        const tasksData = await fetchTasks()
+        state.tasks = tasksData ? tasksData.filter((task) => task.episodeId === episodeId) : []
+
+        closePopup(popup)
+        renderTaskList()
+        renderKanbanBoard()
+        renderTimeline()
+        updateProgressBar()
+      } catch (error) {
+        console.error("Error saving task:", error)
+        // Reset button state
+        const saveBtn = form.querySelector(".save-btn")
+        saveBtn.innerHTML = originalText
+        saveBtn.disabled = false
+        alert("Failed to save task. Please try again.")
+      }
+    })
+  }
+
+  async function showEditTaskPopup(taskId) {
+    try {
+      const response = await fetchTask(taskId)
+
+      if (!response || !response[0] || !response[0].podtask) {
+        console.error("Task not found:", taskId)
+        return
+      }
+
+      const task = response[0].podtask
+      console.log("Fetched task data:", task)
+
+      const { name, description, status, dueDate } = task
+
+      const modalHTML = `
+        <div id="edit-task-modal" class="popup">
+          <div class="popup-content">
+            <div class="modal-header">
+              <h2>Edit Task</h2>
+              <button class="close-btn">&times;</button>
+            </div>
+            <div class="popup-body">
+              <form id="edit-task-form">
+                <input type="hidden" id="edit-task-id" value="${taskId}">
+                <div class="form-group">
+                  <label for="edit-task-title">Task Title</label>
+                  <input type="text" id="edit-task-title" class="form-control" value="${name || ""}" required>
+                </div>
+                <div class="form-group">
+                  <label for="edit-task-description">Description</label>
+                  <textarea id="edit-task-description" class="form-control">${description || ""}</textarea>
+                </div>
+                <div class="form-group">
+                  <label for="edit-task-due-date">Due Date</label>
+                  <select id="edit-task-due-date" class="form-control">
+                    <option value="Before recording" ${dueDate === "Before recording" ? "selected" : ""}>Before Recording</option>
+                    <option value="Recording day" ${dueDate === "Recording day" ? "selected" : ""}>Recording Day</option>
+                    <option value="After recording" ${dueDate === "After recording" ? "selected" : ""}>After Recording</option>
+                  </select>
+                </div>
+                <div class="form-group">
+                  <label for="edit-task-status">Status</label>
+                  <select id="edit-task-status" class="form-control">
+                    <option value="not-started" ${status === "not-started" || status === "incomplete" ? "selected" : ""}>Not Started</option>
+                    <option value="in-progress" ${status === "in-progress" ? "selected" : ""}>In Progress</option>
+                    <option value="ready" ${status === "ready" ? "selected" : ""}>Ready</option>
+                    <option value="completed" ${status === "completed" ? "selected" : ""}>Completed</option>
+                  </select>
+                </div>
+                <div class="modal-footer">
+                  <button type="button" id="cancel-edit-btn" class="btn cancel-btn">Cancel</button>
+                  <button type="submit" class="btn save-btn">
+                    <i class="fas fa-save"></i> Save Changes
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+      `
+
+      document.body.insertAdjacentHTML("beforeend", modalHTML)
+
+      const modal = document.getElementById("edit-task-modal")
+      modal.style.display = "flex"
+
+      setTimeout(() => {
+        modal.querySelector(".popup-content").classList.add("show")
+      }, 10)
+
+      const closeBtn = modal.querySelector(".close-btn")
+      closeBtn.addEventListener("click", () => closeEditModal(modal))
+
+      const cancelBtn = document.getElementById("cancel-edit-btn")
+      cancelBtn.addEventListener("click", () => closeEditModal(modal))
+
+      modal.addEventListener("click", (e) => {
+        if (e.target === modal) {
+          closeEditModal(modal)
+        }
+      })
+
+      const form = document.getElementById("edit-task-form")
+      form.addEventListener("submit", async (e) => {
+        e.preventDefault()
+
+        const title = document.getElementById("edit-task-title").value
+        const description = document.getElementById("edit-task-description").value
+        const dueDate = document.getElementById("edit-task-due-date").value
+        const status = document.getElementById("edit-task-status").value
+
+        const taskData = {
+          name: title,
+          description,
+          dueDate,
+          status,
+        }
+
+        try {
+          // Show loading state
+          const saveBtn = form.querySelector(".save-btn")
+          const originalText = saveBtn.innerHTML
+          saveBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...'
+          saveBtn.disabled = true
+
+          await updateTask(taskId, taskData)
+          console.log("Task updated:", taskData)
+
+          // Refresh tasks
+          const tasksData = await fetchTasks()
+          state.tasks = tasksData
+            ? tasksData.filter(
+                (task) => task.episodeId === state.selectedEpisode._id || task.episodeId === state.selectedEpisode.id,
+              )
+            : []
+
+          closeEditModal(modal)
+          renderTaskList()
+          renderKanbanBoard()
+          renderTimeline()
+          updateProgressBar()
+        } catch (error) {
+          console.error("Error updating task:", error)
+          // Reset button state
+          const saveBtn = form.querySelector(".save-btn")
+          saveBtn.innerHTML = originalText
+          saveBtn.disabled = false
+          alert("Failed to update task. Please try again.")
+        }
+      })
+    } catch (error) {
+      console.error("Error fetching task for editing:", error)
+      alert("Failed to load task for editing. Please try again.")
+    }
+  }
+
+  function closeEditModal(modal) {
+    modal.querySelector(".popup-content").classList.remove("show")
+    setTimeout(() => {
+      modal.style.display = "none"
+      modal.remove()
+    }, 200)
+  }
+
+  async function confirmDeleteTask(taskId) {
+    const confirmDelete = confirm("Are you sure you want to delete this task?")
+    if (confirmDelete) {
+      try {
+        await deleteTask(taskId)
+        console.log("Task deleted:", taskId)
+
+        // Refresh tasks
+        const tasksData = await fetchTasks()
+        state.tasks = tasksData
+          ? tasksData.filter(
+              (task) => task.episodeId === state.selectedEpisode._id || task.episodeId === state.selectedEpisode.id,
+            )
+          : []
+
+        renderTaskList()
+        renderKanbanBoard()
+        renderTimeline()
+        updateProgressBar()
+      } catch (error) {
+        console.error("Error deleting task:", error)
+        alert("Failed to delete task. Please try again.")
+      }
+    }
+  }
+
+  async function showImportTasksPopup(episodeId) {
+    if (!episodeId) {
+      console.error("No episode ID provided for importing tasks")
+      return
+    }
+
+    const popupHTML = `
+      <div id="import-tasks-popup" class="popup">
+        <div class="popup-content">
+          <div class="modal-header">
+            <h2>Import Default Tasks</h2>
+            <button class="close-btn">&times;</button>
+          </div>
+          <div class="popup-body">
+            <p>Importing default tasks will add a set of predefined tasks to this episode.</p>
+            <p>Are you sure you want to continue?</p>
+          </div>
+          <div class="modal-footer">
+            <button type="button" id="cancel-import-btn" class="btn cancel-btn">Cancel</button>
+            <button type="button" id="confirm-import-btn" class="btn save-btn">
+              <i class="fas fa-download"></i> Import Tasks
+            </button>
+          </div>
+        </div>
+      </div>
+    `
+
+    document.body.insertAdjacentHTML("beforeend", popupHTML)
+    const popup = document.getElementById("import-tasks-popup")
+
+    // Show the popup
+    popup.style.display = "flex"
+
+    // Add class to animate in
+    setTimeout(() => {
+      popup.querySelector(".popup-content").classList.add("show")
+    }, 10)
+
+    // Close button event
+    const closeBtn = popup.querySelector(".close-btn")
+    closeBtn.addEventListener("click", () => {
+      closePopup(popup)
+    })
+
+    // Cancel button event
+    const cancelBtn = document.getElementById("cancel-import-btn")
+    cancelBtn.addEventListener("click", () => {
+      closePopup(popup)
+    })
+
+    // Close when clicking outside
+    popup.addEventListener("click", (e) => {
+      if (e.target === popup) {
+        closePopup(popup)
+      }
+    })
+
+    // Confirm import button event
+    const confirmImportBtn = document.getElementById("confirm-import-btn")
+    confirmImportBtn.addEventListener("click", async () => {
+      try {
+        // Show loading state
+        const originalText = confirmImportBtn.innerHTML
+        confirmImportBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Importing...'
+        confirmImportBtn.disabled = true
+
+        await addDefaultTasksToEpisode(episodeId)
+        console.log("Default tasks added to episode:", episodeId)
+
+        // Refresh tasks
+        const tasksData = await fetchTasks()
+        state.tasks = tasksData ? tasksData.filter((task) => task.episodeId === episodeId) : []
+
+        closePopup(popup)
+        renderTaskList()
+        renderKanbanBoard()
+        renderTimeline()
+        updateProgressBar()
+      } catch (error) {
+        console.error("Error importing default tasks:", error)
+        // Reset button state
+        confirmImportBtn.innerHTML = originalText
+        confirmImportBtn.disabled = false
+        alert("Failed to import default tasks. Please try again.")
+      }
+    })
+  }
+
+  function closePopup(popup) {
+    popup.querySelector(".popup-content").classList.remove("show")
+    setTimeout(() => {
+      popup.style.display = "none"
+      popup.remove()
+    }, 200)
+  }
+
+  async function saveWorkflow(episodeId) {
+    console.log("Saving workflow for episode:", episodeId)
+    alert("Workflow saved successfully!")
+  }
+
+  async function importWorkflow(episodeId) {
+    console.log("Importing workflow for episode:", episodeId)
+    alert("Workflow imported successfully!")
+  }
 })
-
-// Podcast data
-const podcasts = [
-  {
-    id: "podcast-1",
-    name: "Tech Talk Weekly",
-    description: "Weekly discussions about the latest in technology",
-    episodeCount: 42,
-    coverImage: "tech-talk.jpg",
-  },
-  {
-    id: "podcast-2",
-    name: "Creative Minds",
-    description: "Interviews with creative professionals",
-    episodeCount: 28,
-    coverImage: "creative-minds.jpg",
-  },
-  {
-    id: "podcast-3",
-    name: "Business Insights",
-    description: "Strategies and insights for entrepreneurs",
-    episodeCount: 15,
-    coverImage: "business-insights.jpg",
-  },
-]
-
-// Episode data
-const episodes = [
-  {
-    id: "ep-42",
-    podcastId: "podcast-1",
-    number: 42,
-    title: "The Future of Podcasting",
-    recordingDate: "2025-05-01",
-    releaseDate: "2025-05-08",
-    completedTasks: 8,
-    totalTasks: 15,
-    status: "editing",
-  },
-  {
-    id: "ep-41",
-    podcastId: "podcast-1",
-    number: 41,
-    title: "Interview with Tech Innovator",
-    recordingDate: "2025-04-24",
-    releaseDate: "2025-05-01",
-    completedTasks: 12,
-    totalTasks: 15,
-    status: "publishing",
-  },
-  {
-    id: "ep-40",
-    podcastId: "podcast-1",
-    number: 40,
-    title: "AI Revolution in Content Creation",
-    recordingDate: "2025-04-17",
-    releaseDate: "2025-04-24",
-    completedTasks: 15,
-    totalTasks: 15,
-    status: "published",
-  },
-  {
-    id: "ep-39",
-    podcastId: "podcast-1",
-    number: 39,
-    title: "The Science of Sound Design",
-    recordingDate: "2025-04-10",
-    releaseDate: "2025-04-17",
-    completedTasks: 15,
-    totalTasks: 15,
-    status: "published",
-  },
-  {
-    id: "ep-43",
-    podcastId: "podcast-1",
-    number: 43,
-    title: "Remote Recording Best Practices",
-    recordingDate: "2025-05-08",
-    releaseDate: "2025-05-15",
-    completedTasks: 3,
-    totalTasks: 15,
-    status: "planning",
-  },
-  {
-    id: "ep-44",
-    podcastId: "podcast-1",
-    number: 44,
-    title: "Monetization Strategies for Podcasters",
-    recordingDate: "2025-05-15",
-    releaseDate: "2025-05-22",
-    completedTasks: 1,
-    totalTasks: 15,
-    status: "planning",
-  },
-  {
-    id: "ep-28",
-    podcastId: "podcast-2",
-    number: 28,
-    title: "Interview with Award-Winning Designer",
-    recordingDate: "2025-05-03",
-    releaseDate: "2025-05-10",
-    completedTasks: 6,
-    totalTasks: 15,
-    status: "editing",
-  },
-  {
-    id: "ep-27",
-    podcastId: "podcast-2",
-    number: 27,
-    title: "Creative Process Deep Dive",
-    recordingDate: "2025-04-26",
-    releaseDate: "2025-05-03",
-    completedTasks: 14,
-    totalTasks: 15,
-    status: "publishing",
-  },
-  {
-    id: "ep-15",
-    podcastId: "podcast-3",
-    number: 15,
-    title: "Startup Funding Strategies",
-    recordingDate: "2025-05-05",
-    releaseDate: "2025-05-12",
-    completedTasks: 5,
-    totalTasks: 15,
-    status: "editing",
-  },
-  {
-    id: "ep-14",
-    podcastId: "podcast-3",
-    number: 14,
-    title: "Marketing on a Budget",
-    recordingDate: "2025-04-28",
-    releaseDate: "2025-05-05",
-    completedTasks: 13,
-    totalTasks: 15,
-    status: "publishing",
-  },
-]
-
-// Template data
-const templates = [
-  {
-    id: "default-template",
-    name: "Default Podcast Template",
-    description: "Standard workflow for podcast episodes",
-    tasks: [
-      {
-        id: "task-1",
-        name: "Schedule recording session",
-        description: "Set up a time for recording the episode with the host and any guests.",
-        dueDate: "7 days before recording",
-        assignee: "Alice Smith",
-        dependencies: [],
-        isDependent: true,
-        type: "planning",
-        status: "completed",
-      },
-      {
-        id: "task-2",
-        name: "Prepare episode script/outline",
-        description:
-          "Create a detailed outline or script for the episode, including key talking points and questions for guests.",
-        dueDate: "3 days before recording",
-        assignee: "John Doe",
-        dependencies: ["Schedule recording session"],
-        hasDependencyWarning: true,
-        type: "planning",
-        status: "completed",
-      },
-      {
-        id: "task-3",
-        name: "Send prep materials to guest",
-        description:
-          "Share episode outline, technical requirements, and any other relevant information with the guest.",
-        dueDate: "2 days before recording",
-        assignee: "Alice Smith",
-        dependencies: ["Prepare episode script/outline"],
-        type: "planning",
-        status: "completed",
-      },
-      {
-        id: "task-4",
-        name: "Test recording equipment",
-        description: "Ensure all microphones, headphones, and recording software are working properly.",
-        dueDate: "1 day before recording",
-        assignee: "Bob Johnson",
-        dependencies: [],
-        type: "generic",
-        status: "completed",
-      },
-      {
-        id: "task-5",
-        name: "Record episode",
-        description: "Conduct the actual recording session with host and guest(s).",
-        dueDate: "Recording day",
-        assignee: "John Doe",
-        dependencies: ["Test recording equipment", "Send prep materials to guest"],
-        type: "generic",
-        status: "completed",
-      },
-      {
-        id: "task-6",
-        name: "Edit audio",
-        description: "Clean up audio, remove mistakes, and enhance sound quality.",
-        dueDate: "2 days after recording",
-        assignee: "Bob Johnson",
-        dependencies: ["Record episode"],
-        workspaceEnabled: true,
-        type: "audio-editing",
-        status: "in-progress",
-      },
-      {
-        id: "task-7",
-        name: "Generate transcript",
-        description: "Create a text transcript of the episode for accessibility and SEO.",
-        dueDate: "3 days after recording",
-        assignee: "Bob Johnson",
-        dependencies: ["Edit audio"],
-        workspaceEnabled: true,
-        type: "transcription",
-        status: "not-started",
-      },
-      {
-        id: "task-8",
-        name: "Prepare show notes",
-        description: "Write detailed show notes including timestamps, links, and key takeaways.",
-        dueDate: "3 days after recording",
-        assignee: "Alice Smith",
-        dependencies: ["Generate transcript"],
-        type: "generic",
-        status: "not-started",
-      },
-      {
-        id: "task-9",
-        name: "Create promotional graphics",
-        description: "Design social media graphics and episode artwork.",
-        dueDate: "4 days after recording",
-        assignee: "Alice Smith",
-        dependencies: ["Edit audio"],
-        type: "promotion",
-        status: "not-started",
-      },
-      {
-        id: "task-10",
-        name: "Upload and schedule episode",
-        description: "Upload the episode to podcast hosting platform and schedule for release.",
-        dueDate: "5 days after recording",
-        assignee: "Alice Smith",
-        dependencies: ["Edit audio", "Prepare show notes"],
-        type: "generic",
-        status: "not-started",
-      },
-      {
-        id: "task-11",
-        name: "Publish episode",
-        description: "Make the episode live on all podcast platforms.",
-        dueDate: "7 days after recording",
-        assignee: "Alice Smith",
-        dependencies: ["Upload and schedule episode"],
-        type: "generic",
-        status: "not-started",
-      },
-      {
-        id: "task-12",
-        name: "Social media promotion",
-        description: "Share the episode across all social media channels.",
-        dueDate: "7 days after recording",
-        assignee: "Alice Smith",
-        dependencies: ["Publish episode", "Create promotional graphics"],
-        type: "promotion",
-        status: "not-started",
-      },
-      {
-        id: "task-13",
-        name: "Send thank you to guest",
-        description: "Send a thank you note and the published episode link to the guest.",
-        dueDate: "8 days after recording",
-        assignee: "John Doe",
-        dependencies: ["Publish episode"],
-        type: "generic",
-        status: "not-started",
-      },
-      {
-        id: "task-14",
-        name: "Analyze episode performance",
-        description: "Review download statistics and listener feedback.",
-        dueDate: "14 days after recording",
-        assignee: "John Doe",
-        dependencies: ["Publish episode"],
-        type: "generic",
-        status: "not-started",
-      },
-      {
-        id: "task-15",
-        name: "Plan next episode",
-        description: "Begin planning the topic and potential guests for the next episode.",
-        dueDate: "14 days after recording",
-        assignee: "John Doe",
-        dependencies: ["Analyze episode performance"],
-        type: "planning",
-        status: "not-started",
-      },
-    ],
-  },
-]
