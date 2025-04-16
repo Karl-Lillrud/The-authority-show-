@@ -6,6 +6,7 @@ from backend.services.billingService import handle_successful_payment
 from backend.services.subscriptionService import SubscriptionService
 from backend.database.mongo_connection import collection
 import logging
+from datetime import datetime
 
 billing_bp = Blueprint("billing_bp", __name__)
 subscription_service = SubscriptionService()
@@ -115,4 +116,65 @@ def get_subscription():
             return jsonify({"error": "No subscription found"}), 404
     except Exception as e:
         logger.error(f"Error fetching subscription: {str(e)}")
+        return jsonify({"error": str(e)}), 500
+
+@billing_bp.route("/cancel-subscription", methods=["POST"])
+def cancel_subscription():
+    try:
+        # Get user ID from session or context
+        user_id = session.get("user_id")
+        
+        if not user_id:
+            return jsonify({"error": "User not authenticated"}), 401
+        
+        # Find user's subscription
+        account = collection.database.Accounts.find_one({"userId": user_id})
+        if not account:
+            return jsonify({"error": "Account not found"}), 404
+            
+        # Get the current subscription end date to include in the response
+        subscription_end = account.get("subscriptionEnd")
+        
+        # Update subscription status to cancelled
+        update_result = collection.database.Accounts.update_one(
+            {"userId": user_id},
+            {"$set": {
+                "subscriptionStatus": "cancelled",
+                "lastUpdated": datetime.utcnow().isoformat()
+            }}
+        )
+        
+        if update_result.modified_count == 0:
+            return jsonify({"error": "Failed to update subscription status"}), 500
+            
+        # Also update in subscriptions collection if it exists
+        subscription_result = collection.database.subscriptions_collection.update_one(
+            {"user_id": user_id, "status": "active"},
+            {"$set": {
+                "status": "cancelled",
+                "cancelled_at": datetime.utcnow().isoformat()
+            }}
+        )
+        
+        logger.info(f"Cancelled subscription for user {user_id}. Account update: {update_result.modified_count}, Subscription update: {subscription_result.modified_count if subscription_result else 0}")
+        
+        # Return the end date with the success message
+        end_date_display = None
+        if subscription_end:
+            try:
+                # If the date is stored as an ISO string, parse it for display
+                end_date = datetime.fromisoformat(subscription_end.replace('Z', '+00:00'))
+                end_date_display = end_date.strftime("%Y-%m-%d")
+            except (ValueError, AttributeError):
+                # If there's an error parsing, just use the raw value
+                end_date_display = subscription_end
+        
+        return jsonify({
+            "message": "Subscription cancelled successfully", 
+            "endDate": end_date_display,
+            "willRenew": False
+        }), 200
+        
+    except Exception as e:
+        logger.error(f"Error cancelling subscription: {str(e)}")
         return jsonify({"error": str(e)}), 500

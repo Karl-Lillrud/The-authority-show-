@@ -16,10 +16,13 @@ class SubscriptionService:
             logger.warning(f"No account found for user {user_id}")
             return None
         
+        status = account.get("subscriptionStatus", "inactive")
+        
         subscription_data = {
             "plan": account.get("subscriptionPlan", "Free"),
-            "status": account.get("subscriptionStatus", "inactive"),
-            "end_date": account.get("subscriptionEnd", None)
+            "status": status,
+            "end_date": account.get("subscriptionEnd", None),
+            "is_cancelled": status == "cancelled"
         }
         
         return subscription_data
