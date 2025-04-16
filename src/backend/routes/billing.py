@@ -42,11 +42,15 @@ def create_checkout_session():
                     'product_data': {
                         'name': product_name
                     },
-                    'unit_amount': int(float(amount) * 100),  # Stripe takes cents
+                    'unit_amount': int(float(amount) * 100),
+                    'recurring': {  # Add recurring configuration
+                        'interval': 'month',
+                        'interval_count': 1
+                    }
                 },
                 'quantity': 1,
             }],
-            mode='payment',
+            mode='subscription',  # Change mode from 'payment' to 'subscription'
             success_url=f"{os.getenv('API_BASE_URL')}/credits/success?session_id={{CHECKOUT_SESSION_ID}}&plan={plan or ''}",
             cancel_url=f"{os.getenv('API_BASE_URL')}/credits/cancel",
             metadata={
