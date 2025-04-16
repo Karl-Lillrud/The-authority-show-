@@ -49,3 +49,95 @@ p {
   font-size: 14px;
   color: var(--text-color-light);
 }
+
+/* * * * * * * * * * * * * * * * * * * * * * * */
+/* General CSS styling for links, buttons, etc */
+/* * * * * * * * * * * * * * * * * * * * * * * */
+
+/* Links */
+a {
+  color: var(--highlight-color);
+  font-weight: 500;
+  cursor: pointer;
+  text-decoration: none;
+  transition: color var(--transition-normal), text-decoration 0.2s ease;
+}
+a:hover {
+  color: var(--highlight-hover);
+  text-decoration: underline;
+}
+
+
+/* Buttons */
+button {
+  border-radius: var(--radius-medium);
+  font-weight: 600;
+  cursor: pointer;
+  letter-spacing: 0.5px;
+  transition: all var(--transition-normal);
+}
+
+
+.save-btn, .cancel-btn, .delete-btn {
+  padding: 8px 16px;
+  border: none;
+  box-shadow: var(--podcastmanagement-button-shadow);
+}
+.save-btn:hover, .cancel-btn:hover, .delete-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px -3px rgba(0, 0, 0, 0.1);
+}
+
+
+.save-btn {
+  background-color: var(--highlight-color);
+  color: white;
+}
+.save-btn:hover {
+  background-color: var(--highlight-hover);
+}
+
+
+.cancel-btn {
+  background-color: white;
+  color: var(--text-color-light);
+  border: 1px solid rgba(0, 0, 0, 0.05);
+}
+.canel-btn:hover {
+  color: var(--highlight-color);
+}
+
+
+.delete-btn {
+  background-color: rgba(231, 76, 60, 0.1);
+  color: var(--danger-color);
+}
+.delete-btn:hover {
+  background-color: rgba(231, 76, 60, 0.2);
+}
+
+
+/* The round close button at the top right of popup windows */
+.close-btn {
+  position: absolute;
+  top: var(--spacing-sm);
+  right: var(--spacing-sm);
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.2rem;
+  color: var(--text-color-light);
+  background-color: white;
+  border-radius: 50%;
+  cursor: pointer;
+  transition: all var(--transition-normal);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  z-index: 10;
+}
+.close-btn:hover {
+  color: var(--highlight-color);
+  transform: rotate(90deg);
+  box-shadow: 0 3px 6px rgba(0, 0, 0, 0.15);
+}

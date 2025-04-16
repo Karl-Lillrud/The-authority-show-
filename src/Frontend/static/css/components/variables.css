@@ -52,7 +52,7 @@
 
   /* Border Radiuses */
   --radius-small: 12px;
-  --radius-medium: 12px;
+  --radius-medium: 12px;  /* For buttons */
   --radius-large: 50px;
 
   --border-radius-sm: 10px;
