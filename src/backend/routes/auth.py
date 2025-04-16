@@ -1,4 +1,14 @@
-from flask import Blueprint, request, jsonify, redirect, render_template, flash, url_for, session, current_app
+from flask import (
+    Blueprint,
+    request,
+    jsonify,
+    redirect,
+    render_template,
+    flash,
+    url_for,
+    session,
+    current_app,
+)
 from backend.repository.auth_repository import AuthRepository
 from backend.services.TeamInviteService import TeamInviteService
 from backend.services.authService import AuthService
@@ -6,7 +16,7 @@ import os
 import logging  # Add logging import
 from itsdangerous import URLSafeTimedSerializer, SignatureExpired, BadSignature
 from backend.database.mongo_connection import collection
-from datetime import datetime  
+from datetime import datetime
 from bson import ObjectId  # Add this import for ObjectId
 import uuid  # Add this import for generating unique IDs
 
@@ -48,7 +58,10 @@ def signin_submit():
     Handle OTP-based sign-in.
     """
     if request.content_type != "application/json":
-        return jsonify({"error": "Invalid Content-Type. Expected application/json"}), 415
+        return (
+            jsonify({"error": "Invalid Content-Type. Expected application/json"}),
+            415,
+        )
 
     data = request.get_json()
     email = data.get("email")
@@ -90,7 +103,9 @@ def signin_submit():
 
         # Set the remember_me cookie
         response = jsonify({"redirect_url": "/dashboard"})
-        response.set_cookie("remember_me", "true", max_age=30*24*60*60)  # Cookie valid for 30 days
+        response.set_cookie(
+            "remember_me", "true", max_age=30 * 24 * 60 * 60
+        )  # Cookie valid for 30 days
         return response, 200
     else:
         logger.warning("Failed OTP login attempt.")
@@ -116,7 +131,10 @@ def verify_and_signin():
     Endpoint to verify the code and sign in the user.
     """
     if request.content_type != "application/json":
-        return jsonify({"error": "Invalid Content-Type. Expected application/json"}), 415
+        return (
+            jsonify({"error": "Invalid Content-Type. Expected application/json"}),
+            415,
+        )
 
     data = request.get_json()
     email = data.get("email")
@@ -143,7 +161,9 @@ def verify_and_signin():
 
                 # Create an account for the user
                 account_data = {
-                    "id": str(uuid.uuid4()),  # Generate a unique UUID for the account ID
+                    "id": str(
+                        uuid.uuid4()
+                    ),  # Generate a unique UUID for the account ID
                     "userId": user["id"],
                     "email": email,
                     "created_at": datetime.utcnow(),
@@ -174,7 +194,10 @@ def send_login_link():
     """
     if request.content_type != "application/json":
         logger.error("Invalid Content-Type. Expected application/json")
-        return jsonify({"error": "Invalid Content-Type. Expected application/json"}), 415
+        return (
+            jsonify({"error": "Invalid Content-Type. Expected application/json"}),
+            415,
+        )
 
     data = request.get_json()
     email = data.get("email")
@@ -199,7 +222,10 @@ def send_login_link():
         return jsonify({"message": "Log-in link sent successfully"}), 200
     except Exception as e:
         logger.error(f"Error sending log-in link for {email}: {e}", exc_info=True)
-        return jsonify({"error": "Failed to send log-in link. Please try again later."}), 500
+        return (
+            jsonify({"error": "Failed to send log-in link. Please try again later."}),
+            500,
+        )
 
 
 @auth_bp.route("/verify-login-token", methods=["POST"], endpoint="verify_login_token")
@@ -216,27 +242,29 @@ def verify_login_token():
 
     try:
         serializer = URLSafeTimedSerializer(current_app.config["SECRET_KEY"])
-        email = serializer.loads(token, salt="login-link-salt", max_age=600)  # Token valid for 10 minutes
+        email = serializer.loads(
+            token, salt="login-link-salt", max_age=600
+        )  # Token valid for 10 minutes
 
         # Check if the user exists in the database
         user = collection.find_one({"email": email})
         if not user:
             logger.warning(f"No user found for email: {email}. Creating a new user.")
             user_data = {
-                "id": str(uuid.uuid4()),  # Generate a unique UUID for the user ID
+                "_id": str(uuid.uuid4()),  # Use _id instead of id
                 "email": email,
                 "createdAt": datetime.utcnow(),
             }
             collection.insert_one(user_data)
-            user = collection.find_one({"id": user_data["id"]})
+            user = collection.find_one({"_id": user_data["_id"]})
 
         # Kontrollera om ett konto redan finns för e-postadressen
         account = collection.database.Accounts.find_one({"email": email})
         if not account:
             logger.info(f"No account found for email {email}. Creating a new account.")
             account_data = {
-                "id": str(uuid.uuid4()),
-                "ownerId": user["id"],
+                "_id": str(uuid.uuid4()),  # Use _id instead of id
+                "ownerId": user["_id"],
                 "subscriptionId": str(uuid.uuid4()),
                 "creditId": str(uuid.uuid4()),
                 "email": email,
@@ -254,10 +282,12 @@ def verify_login_token():
             }
             collection.database.Accounts.insert_one(account_data)
         else:
-            logger.info(f"Account already exists for email {email}. Skipping account creation.")
+            logger.info(
+                f"Account already exists for email {email}. Skipping account creation."
+            )
 
         # Log the user in by setting session variables
-        session["user_id"] = user["id"]
+        session["user_id"] = user["_id"]
         session["email"] = user["email"]
 
         logger.info(f"User {email} successfully logged in via token.")
@@ -271,7 +301,12 @@ def verify_login_token():
         return jsonify({"error": "Invalid token"}), 400
     except Exception as e:
         logger.error(f"Unexpected error during token verification: {e}", exc_info=True)
-        return jsonify({"error": "An unexpected error occurred during token verification"}), 500
+        return (
+            jsonify(
+                {"error": "An unexpected error occurred during token verification"}
+            ),
+            500,
+        )
 
 
 # Ensure account creation logic is properly integrated
@@ -293,9 +328,11 @@ def signin():
         if user:
             session["user_id"] = str(user["_id"])  # Set user_id in session
             session["email"] = user["email"]
-            
+
             # Ensure account exists for the user
-            account = collection.database.Accounts.find_one({"userId": str(user["_id"])})
+            account = collection.database.Accounts.find_one(
+                {"userId": str(user["_id"])}
+            )
             if not account:
                 account_data = {
                     "id": str(uuid.uuid4()),
@@ -306,7 +343,10 @@ def signin():
                 }
                 collection.database.Accounts.insert_one(account_data)
 
-            return jsonify({"redirect_url": "/podprofile"}), 200  # Redirect to /podprofile
+            return (
+                jsonify({"redirect_url": "/podprofile"}),
+                200,
+            )  # Redirect to /podprofile
         else:
             return jsonify({"error": "Invalid email or password"}), 401
     except Exception as e:
