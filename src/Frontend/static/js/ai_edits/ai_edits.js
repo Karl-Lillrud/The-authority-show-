@@ -63,10 +63,11 @@ function showTab(tabName) {
                 </div>
                 <div class="result-group">
                     <button class="btn ai-edit-button" onclick="generateShowNotes()">
-                      ${labelWithCredits("📝 Show Notes", "show_notes")}
+                        ${labelWithCredits("📝 Show Notes", "show_notes")}
                     </button>
                     <div class="result-field">
-                        <pre id="showNotesResult"></pre>
+                        <h4>Generated Show Notes</h4>
+                        <pre id="showNotesResult" style="white-space: pre-wrap; font-size: 1em; padding: 0.5rem; background-color: #f9f9f9; border-radius: 8px;"></pre>
                     </div>
                 </div>
                 <div class="result-group">
@@ -254,11 +255,22 @@ async function generateAISuggestions() {
             body: JSON.stringify({ transcript: rawTranscript })
         });
 
-        const data = await res.json();
-        document.getElementById("aiSuggestionsResult").innerText = data.ai_suggestions || "No suggestions.";
+        if (res.ok) {
+            const data = await res.json();
+            // Assuming your API returns `primary_suggestions` and `additional_suggestions`
+            document.getElementById("aiSuggestionsPrimary").innerText =
+                data.primary_suggestions || "No primary suggestions.";
+            document.getElementById("aiSuggestionsAdditional").innerText =
+                (data.additional_suggestions || []).join("\n") || "No additional suggestions.";
+        } else {
+            document.getElementById("aiSuggestionsPrimary").innerText =
+                `❌ Error: ${res.status} - ${res.statusText}`;
+            document.getElementById("aiSuggestionsAdditional").innerText = "";
+        }
     } catch (err) {
-        document.getElementById("aiSuggestionsResult").innerText =
+        document.getElementById("aiSuggestionsPrimary").innerText =
             "❌ Not enough credits: " + err.message;
+        document.getElementById("aiSuggestionsAdditional").innerText = "";
     }
 }
 
