@@ -83,12 +83,19 @@ button[type="submit"]:hover {
 #calendarPicker {
   display: grid;
   grid-template-columns: repeat(7, 1fr);
+  gap: 4px;
+  margin-bottom: 20px;
 }
 
 /* Add styles for the calendar to better indicate unavailable dates */
 #calendarPicker button {
   transition: all 0.2s ease;
   position: relative;
+  height: 40px;
+  width: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 #calendarPicker button.line-through {
@@ -107,20 +114,42 @@ button[type="submit"]:hover {
   transform: rotate(-45deg);
 }
 
-/* Style for the time picker to show unavailable times */
-#timePicker option:disabled {
-  color: #ef4444; /* Red color for unavailable times */
-  font-style: italic; /* Italicized to make them visually different */
+/* New time slots styling */
+.time-slots-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 10px;
+  max-height: 200px;
+  overflow-y: auto;
+  padding: 5px;
 }
 
-#timePicker option.line-through {
-  text-decoration: line-through;
-  color: #ef4444; /* Red color for crossed-off times */
+.time-slot {
+  padding: 8px 12px;
+  border-radius: 4px;
+  cursor: pointer;
+  text-align: center;
+  font-size: 14px;
+  transition: all 0.2s ease;
 }
 
-#timePicker optgroup {
-  font-weight: bold;
-  color: #4b5563;
+.time-slot.available {
+  background-color: #e6f7ff;
+  border: 1px solid #91d5ff;
+  color: #1890ff;
+}
+
+.time-slot.selected {
+  background-color: #1890ff;
+  border: 1px solid #096dd9;
+  color: white;
+  transform: scale(1.05);
+}
+
+.time-slot.available:hover {
+  background-color: #bae7ff;
+  transform: translateY(-2px);
 }
 
 .input-field {
