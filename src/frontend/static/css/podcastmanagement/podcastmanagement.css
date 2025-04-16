@@ -131,18 +131,6 @@
   visibility: visible;
 }
 
-.view-btn {
-  color: var(--highlight-color);
-}
-
-.edit-btn {
-  color: var(--highlight-color);
-}
-
-.delete-btn {
-  color: var(--danger-color);
-}
-
 .podcast-footer {
   padding: var(--spacing-sm) var(--spacing-lg);
   border-top: 1px solid rgba(0, 0, 0, 0.05);
@@ -231,27 +219,6 @@
 }
 
 /* Edit button styling */
-.top-right-actions .edit-btn {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
-  background-color: white;
-  color: var(--highlight-color);
-  box-shadow: var(--podcastmanagement-button-shadow);
-  border: none;
-  cursor: pointer;
-  transition: all var(--transition-normal);
-  position: relative;
-}
-
-.top-right-actions .edit-btn svg {
-  width: 16px;
-  height: 16px;
-}
-
 .top-right-actions .edit-btn::after {
   content: "Edit";
   position: absolute;

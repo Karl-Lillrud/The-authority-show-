@@ -142,8 +142,8 @@ button {
   position: absolute;
   top: var(--team-spacing-sm);
   right: var(--team-spacing-sm);
-  width: 44px;
-  height: 44px;
+  width: 40px;
+  height: 40px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -203,3 +203,6 @@ button {
   box-shadow: 0 3px 6px rgba(0, 0, 0, 0.12);
 }
 
+.action-btn.delete-btn-home {
+  color: var(--danger-color);
+}
