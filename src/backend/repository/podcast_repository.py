@@ -17,13 +17,29 @@ class PodcastRepository:
 
     def add_podcast(self, user_id, data):
         try:
+            # Add Logging Here
+            logger.info(f"Attempting to add podcast for user_id: {user_id}")
             # Fetch the account document for the logged-in user
             user_account = collection.database.Accounts.find_one({"userId": user_id})
-            if not user_account:
-                raise ValueError("No account associated with this user")
 
-            # Get the account ID
-            account_id = user_account.get("id", str(user_account["_id"]))
+            # Add Logging Here
+            if not user_account:
+                logger.error(f"Account lookup failed for userId: {user_id}")
+                # You might want to log the count of accounts for this user to see if any exist at all
+                account_count = collection.database.Accounts.count_documents(
+                    {"userId": user_id}
+                )
+                logger.error(
+                    f"Total accounts found for userId {user_id}: {account_count}"
+                )
+                raise ValueError("No account associated with this user")
+            else:
+                logger.info(
+                    f"Found account for userId {user_id}: Account _id: {user_account.get('_id')}"
+                )
+
+            # Get the account ID (use _id as primary)
+            account_id = str(user_account["_id"])  # Prefer _id
 
             # Inject the accountId into the data
             data["accountId"] = account_id
@@ -36,14 +52,15 @@ class PodcastRepository:
 
             validated_data = schema.load(data)
 
-            # Ensure account exists and belongs to the user
-            account_query = (
-                {"userId": user_id, "id": account_id}
-                if "id" in user_account
-                else {"userId": user_id, "_id": user_account["_id"]}
+            # Ensure account exists and belongs to the user (redundant check, but safe)
+            account = collection.database.Accounts.find_one(
+                {"_id": account_id, "userId": user_id}
             )
-            account = collection.database.Accounts.find_one(account_query)
             if not account:
+                # This should ideally not happen if the first lookup succeeded
+                logger.error(
+                    f"Consistency check failed: Account _id {account_id} not found or doesn't belong to user {user_id}"
+                )
                 raise ValueError("Invalid account ID or no permission to add podcast.")
 
             # Generate a unique podcast ID
@@ -87,12 +104,19 @@ class PodcastRepository:
                 raise ValueError("Failed to add podcast.")
 
         except ValueError as e:
+            logger.error(
+                f"ValueError in add_podcast for user {user_id}: {e}"
+            )  # Log the specific error
             if isinstance(e.args[0], str):
                 return {"error": e.args[0]}, 400
             else:
                 return {"error": e.args[0], "details": e.args[1]}, 400
 
         except Exception as e:
+            logger.error(
+                f"General Exception in add_podcast for user {user_id}: {e}",
+                exc_info=True,
+            )  # Log general errors
             return {"error": "Failed to add podcast", "details": str(e)}, 500
 
     def get_podcasts(self, user_id):
