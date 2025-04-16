@@ -129,19 +129,21 @@ logger = logging.getLogger(__name__)
 
 # Styled log messages
 logger.info(f"{Fore.GREEN}========================================")
-logger.info(f"{Fore.CYAN}✓ Starting...")
-logger.info(f"{Fore.YELLOW}EMAIL_USER: {os.getenv('EMAIL_USER', 'Not Set')}")
-logger.info(f"{Fore.YELLOW}EMAIL_PASS: {os.getenv('EMAIL_PASS', 'Not Set')}")
+logger.info(f"{Fore.CYAN}✓ Starting server...")
+logger.info(f"{Fore.YELLOW}API Base URL: {os.getenv('API_BASE_URL')}")
+logger.info(f"{Fore.YELLOW}MongoDB URI:  {os.getenv('MONGODB_URI')}")
+logger.info(f"{Fore.GREEN}========================================")
+logger.info(f"{Fore.CYAN}📧 Email Configuration:")
+logger.info(f"{Fore.BLUE}EMAIL_USER: {os.getenv('EMAIL_USER', 'Not Set')}")
+logger.info(
+    f"{Fore.BLUE}EMAIL_PASS: {'**** **** **** ****' if os.getenv('EMAIL_PASS') else 'Not Set'}"
+)
 logger.info(f"{Fore.GREEN}========================================")
 logger.info(f"{Fore.CYAN}🚀 Server is running!")
 logger.info(
-    f"{Fore.MAGENTA}🌐 Local:        {os.getenv('LOCAL_BASE_URL', 'http://127.0.0.1:8000')}"
+    f"{Fore.MAGENTA}🌐 Local:  {os.getenv('LOCAL_BASE_URL', 'http://127.0.0.1:8000')}"
 )
-logger.info(f"{Fore.MAGENTA}🌐 Network:      http://192.168.0.4:8000")
-logger.info(f"{Fore.GREEN}========================================")
-logger.info(f"{Fore.CYAN}📧 Email Configuration:")
-logger.info(f"{Fore.YELLOW}   EMAIL_USER: {os.getenv('EMAIL_USER', 'Not Set')}")
-logger.info(f"{Fore.YELLOW}   EMAIL_PASS: {os.getenv('EMAIL_PASS', 'Not Set')}")
+logger.info(f"{Fore.MAGENTA}🌐 Network: http://192.168.0.4:8000")
 logger.info(f"{Fore.GREEN}========================================")
 
 
@@ -156,11 +158,6 @@ start_scheduler(app)
 
 # Styled startup message
 if __name__ == "__main__":
-    logger.info(f"{Fore.GREEN}========================================")
-    logger.info(f"{Fore.CYAN}🚀 Server is running!")
-    logger.info(f"{Fore.MAGENTA}🌐 Local:        http://127.0.0.1:8000")
-    logger.info(f"{Fore.MAGENTA}🌐 Network:      http://192.168.0.4:8000")
-    logger.info(f"{Fore.GREEN}========================================")
     app.run(
         host="0.0.0.0", port=8000, debug=True
     )  # Ensure the port matches your request URL

@@ -851,6 +851,7 @@ function handlePodcastFormSubmission() {
               "Podcast added successfully!",
               "success"
             );
+            await renderPodcastList();
             document.getElementById("form-popup").style.display = "none";
             document.getElementById("podcast-list").style.display = "flex";
           }
