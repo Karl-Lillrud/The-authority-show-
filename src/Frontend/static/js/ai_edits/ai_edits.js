@@ -31,7 +31,7 @@ function labelWithCredits(text, key) {
 
 function showTab(tabName) {
     const content = document.getElementById('content');
-    content.innerHTML = ''; // Clear existing content
+    content.innerHTML = ''; // Rensa befintligt innehåll
 
     if (tabName === 'transcription') {
         content.innerHTML = `
@@ -43,54 +43,8 @@ function showTab(tabName) {
             <div class="result-field">
                 <pre id="transcriptionResult"></pre>
             </div>
-
             <div id="enhancementTools" style="display:none;">
-                <hr/>
-                <h3>🔧 Enhancement Tools</h3>
-                <div class="result-group">
-                    <button class="btn ai-edit-button" onclick="generateCleanTranscript()">🧹 Clean Transcript</button>
-                    <div class="result-field">
-                        <pre id="cleanTranscriptResult"></pre>
-                    </div>
-                </div>
-                <div class="result-group">
-                    <button class="btn ai-edit-button" onclick="generateAISuggestions()">
-                        ${labelWithCredits("🤖 AI Suggestions", "ai_suggestions")}
-                    </button>
-                    <div class="result-field">
-                        <h4>Primary Suggestions</h4>
-                        <pre id="aiSuggestionsPrimary"></pre>
-                    </div>
-                    <div class="result-field">
-                        <h4>Additional Suggestions</h4>
-                        <pre id="aiSuggestionsAdditional"></pre>
-                    </div>
-                </div>
-                <div class="result-group">
-                    <button class="btn ai-edit-button" onclick="generateShowNotes()">
-                        ${labelWithCredits("📝 Show Notes", "show_notes")}
-                    </button>
-                    <div class="result-field">
-                        <h4>Generated Show Notes</h4>
-                        <pre id="showNotesResult" style="white-space: pre-wrap; font-size: 1em; padding: 0.5rem; background-color: #f9f9f9; border-radius: 8px;"></pre>
-                    </div>
-                </div>
-                <div class="result-group">
-                    <button class="btn ai-edit-button" onclick="generateQuotes()">
-                      ${labelWithCredits("💬 Generate Quotes", "ai_quotes")}
-                    </button>
-                    <div class="result-field">
-                        <pre id="quotesResult"></pre>
-                    </div>
-                </div>
-                <div class="result-group">
-                    <button class="btn ai-edit-button" onclick="generateQuoteImages()">
-                      ${labelWithCredits("🖼️ Generate Quote Images", "ai_qoute_images")}
-                    </button>
-                    <div class="result-field">
-                        <div id="quoteImagesResult"></div>
-                    </div>
-                </div>
+                <!-- Ytterligare verktyg... -->
             </div>
         `;
     } else if (tabName === 'audio') {
@@ -104,22 +58,20 @@ function showTab(tabName) {
 
             <div style="margin-top: 1rem; padding: 1rem; border: 1px solid #ddd; border-radius: 12px;">
                 <h3>🔊 Choose Audio Processing Method</h3>
-                <p style="margin-bottom: 1rem;">Select one of the following enhancements for your uploaded audio file:</p>
-
-            <div id="voiceIsolationSection" style="margin-bottom: 1.5rem;">
-            <h4>🎤 <strong>Voice Isolation (Powered by ElevenLabs)</strong></h4>
-            <button class="btn ai-edit-button" onclick="runVoiceIsolation()">
-                ${labelWithCredits("🎙️ Isolate Voice", "voice_isolation")}
-            </button>
-            <div id="isolatedVoiceResult" style="margin-top: 1rem;"></div>
-            <a id="downloadIsolatedVoice"
-                class="inline-block mt-2 bg-orange-500 text-white px-4 py-2 rounded-2xl shadow hover:shadow-lg transition"
-                style="display: none;"
-                download="isolated_voice.wav">
-                📥 Download Isolated Voice
-            </a>
-            </div>
-
+                <p style="margin-bottom: 1rem;">Select one of the following enhancements:</p>
+                <div id="voiceIsolationSection" style="margin-bottom: 1.5rem;">
+                    <h4>🎤 <strong>Voice Isolation (Powered by ElevenLabs)</strong></h4>
+                    <button class="btn ai-edit-button" onclick="runVoiceIsolation()">
+                        ${labelWithCredits("🎙️ Isolate Voice", "voice_isolation")}
+                    </button>
+                    <div id="isolatedVoiceResult" style="margin-top: 1rem;"></div>
+                    <a id="downloadIsolatedVoice"
+                       class="inline-block mt-2 bg-orange-500 text-white px-4 py-2 rounded-2xl shadow hover:shadow-lg transition"
+                       style="display: none;"
+                       download="isolated_voice.wav">
+                       📥 Download Isolated Voice
+                    </a>
+                </div>
                 <div id="audioEnhancementSection">
                     <h4>🎚️ <strong>Audio Enhancement (Noise Reduction & Normalization)</strong></h4>
                     <button class="btn ai-edit-button" onclick="enhanceAudio()">
@@ -136,6 +88,7 @@ function showTab(tabName) {
                   ${labelWithCredits("📊 Analyze", "ai_audio_analysis")}
                 </button>
                 <pre id="analysisResults"></pre>
+                <!-- Här injiceras knappen för sound suggestions dynamiskt -->
                 <div id="soundEffectTimeline" style="margin-top: 1rem;"></div>
                 <a id="downloadEnhanced" class="btn ai-edit-button" download="processed_audio.wav">
                      📥 Download Processed Audio
@@ -161,12 +114,12 @@ function showTab(tabName) {
                   ${labelWithCredits("🧠 Run AI Cut", "ai_audio_cutting")}
                 </button>
                 <div class="result-field">
-                <h4>Transcript</h4>
-                <pre id="aiTranscript"></pre>
+                    <h4>Transcript</h4>
+                    <pre id="aiTranscript"></pre>
                 </div>
                 <div class="result-field">
-                <h4>Suggested Cuts</h4>
-                <pre id="aiSuggestedCuts"></pre>
+                    <h4>Suggested Cuts</h4>
+                    <pre id="aiSuggestedCuts"></pre>
                 </div>
             </div>
         `;
@@ -447,7 +400,16 @@ async function runVoiceIsolation() {
 
 async function analyzeEnhancedAudio() {
     const resultEl = document.getElementById("analysisResults");
-    if (!activeAudioBlob) return alert("No audio loaded. Enhance or Isolate first.");
+    const timeline = document.getElementById("soundEffectTimeline");
+
+    if (!resultEl || !timeline) {
+        console.error("Elementen 'analysisResults' eller 'soundEffectTimeline' saknas. Se till att du är på 'audio'-fliken.");
+        return;
+    }
+    if (!activeAudioBlob) {
+        alert("No audio loaded. Enhance or Isolate first.");
+        return;
+    }
 
     try {
         await consumeUserCredits("ai_audio_analysis");
@@ -457,11 +419,11 @@ async function analyzeEnhancedAudio() {
     }
 
     resultEl.innerText = "🔍 Analyzing...";
-
     const formData = new FormData();
     formData.append("audio", activeAudioBlob, "processed_audio.wav");
 
     try {
+        // Gör ett enda anrop som returnerar både analysresultat och sound suggestions-data
         const res = await fetch("/audio_analysis", { method: "POST", body: formData });
         const data = await res.json();
 
@@ -471,42 +433,51 @@ async function analyzeEnhancedAudio() {
 📊 Background Noise: ${data.background_noise}
         `;
 
-        
-        const timeline = document.getElementById("soundEffectTimeline");
-        timeline.innerHTML = `<h4>🎧 AI-Driven Sound Suggestions</h4>`;
+        // Rensa timeline och lägg in en knapp som, när den klickas, renderar sound suggestions direkt
+        timeline.innerHTML = "";
+        const sfxBtn = document.createElement("button");
+        sfxBtn.className = "btn ai-edit-button";
+        sfxBtn.innerText = "🎧 Show Sound Suggestions";
+        sfxBtn.onclick = function() {
+            // Inline-rendering av sound suggestions utan att skapa en separat funktion
+            timeline.innerHTML = "<h4>🎧 AI-Driven Sound Suggestions</h4>";
+            window.selectedSoundFX = {};
 
-        window.selectedSoundFX = {};
+            (data.sound_effect_suggestions || []).forEach((entry, i) => {
+                const container = document.createElement("div");
+                container.className = "sound-suggestion";
+                const sfxList = entry.sfx_options || [];
+                const preview = sfxList.length
+                    ? `<audio controls src="${sfxList[0]}" class="sfx-preview"></audio>`
+                    : "<em>No audio preview available.</em>";
 
-        (data.sound_effect_suggestions || []).forEach((entry, i) => {
-        const container = document.createElement("div");
-        container.className = "sound-suggestion";
+                container.innerHTML = `
+                    <p class="sfx-text"><strong>📍 Text:</strong> ${entry.timestamp_text}</p>
+                    <p class="sfx-emotion"><strong>🎭 Emotion:</strong> ${entry.emotion}</p>
+                    ${preview}
+                    <div class="sfx-actions">
+                        <button class="btn ai-sound-sug-button" onclick="acceptSfx(${i}, '${entry.emotion}', '${sfxList[0]}')">✅ Accept</button>
+                        <button class="btn ai-sound-sug-button" onclick="rejectSfx(${i})">❌ Reject</button>
+                        <select class="sfx-select" onchange="replaceSfx(${i}, this.value)">
+                            ${sfxList.map(url => `<option value="${url}">${url.split("/").pop()}</option>`).join('')}
+                        </select>
+                    </div>
+                `;
+                timeline.appendChild(container);
+                if (sfxList.length) {
+                    window.selectedSoundFX[i] = { emotion: entry.emotion, sfxUrl: sfxList[0] };
+                }
+            });
 
-        const sfxList = entry.sfx_options || [];
-        const preview = sfxList.length
-            ? `<audio controls src="${sfxList[0]}" class="sfx-preview"></audio>`
-            : "<em>No audio preview available.</em>";
+            // Lägg eventuellt till en knapp för att applicera de valda sound effects
+            const applyBtn = document.createElement("button");
+            applyBtn.className = "btn accept-all-sfx";
+            applyBtn.innerText = labelWithCredits("✅ Apply Selected Sound Effects", "sound_suggestions");
+            applyBtn.onclick = applyAllSuggestedSfx;
+            timeline.appendChild(applyBtn);
+        };
 
-        container.innerHTML = `
-            <p class="sfx-text"><strong>📍 Text:</strong> ${entry.timestamp_text}</p>
-            <p class="sfx-emotion"><strong>🎭 Emotion:</strong> ${entry.emotion}</p>
-            ${preview}
-            <div class="sfx-actions">
-            <button class="btn ai-sound-sug-button" onclick="acceptSfx(${i}, '${entry.emotion}', '${sfxList[0]}')">✅ Accept</button>
-            <button class="btn ai-sound-sug-button" onclick="rejectSfx(${i})">❌ Reject</button>
-            <select class="sfx-select" onchange="replaceSfx(${i}, this.value)">
-                ${sfxList.map(url => `<option value="${url}">${url.split("/").pop()}</option>`).join('')}
-            </select>
-            </div>
-        `;
-
-        timeline.appendChild(container);
-
-        if (sfxList.length) {
-            selectedSoundFX[i] = { emotion: entry.emotion, sfxUrl: sfxList[0] };
-        }
-        });
-
-        renderSfxDebug();
+        timeline.appendChild(sfxBtn);
 
     } catch (err) {
         resultEl.innerText = `❌ Analysis failed: ${err.message}`;
