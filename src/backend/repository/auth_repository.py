@@ -43,39 +43,24 @@ class AuthRepository:
             # Set up user session
             self._setup_session(user, remember)
 
-            # Get user's personal account
+            # Ensure account exists for the user
             user_account = self.account_collection.find_one(
-                {"userId": session["user_id"]}
+                {"userId": str(user["_id"])}
             )
+            if not user_account:
+                account_data = {
+                    "id": str(uuid.uuid4()),
+                    "userId": str(user["_id"]),
+                    "email": email,
+                    "created_at": datetime.utcnow(),
+                    "isActive": True,
+                }
+                self.account_collection.insert_one(account_data)
 
-            # Get teams the user belongs to
-            team_list = self._get_user_teams(session["user_id"])
-
-            # Determine which account to use (personal or team)
-            active_account = self._determine_active_account(user_account, team_list)
-            if not active_account:
-                return {"error": "No account or team-associated account found"}, 403
-
-            # Prepare response data
-            account_id = active_account.get("_id")
-            redirect_url = "/podprofile" if user_account else "/podcastmanager"
-
-            response = {
-                "message": "Login successful",
-                "redirect_url": redirect_url,
-                "teams": team_list,
-                "accountId": str(account_id),
-                "isTeamMember": user.get("isTeamMember", False),
-                "usingTeamAccount": bool(
-                    not user_account and active_account != user_account
-                ),
-            }
-
-            return response, 200
-
+            return {"redirect_url": "/podprofile"}, 200
         except Exception as e:
-            logger.error("Error during login: %s", e, exc_info=True)
-            return {"error": f"Error during login: {str(e)}"}, 500
+            logger.error(f"Error during sign-in: {e}", exc_info=True)
+            return {"error": "An error occurred during sign-in"}, 500
 
     def _authenticate_user(self, email, password):
         """Authenticate user with email and password."""
@@ -187,6 +172,12 @@ class AuthRepository:
             if self.user_collection.find_one({"email": email}):
                 return {"error": "Email already registered."}, 409
 
+            # Kontrollera om ett konto redan finns för e-postadressen
+            existing_account = self.account_collection.find_one({"email": email})
+            if existing_account:
+                logger.warning(f"Account already exists for email {email}.")
+                return {"error": "Account already exists for this email."}, 400
+
             user_id = str(uuid.uuid4())
             hashed_password = generate_password_hash(password)
 
@@ -200,7 +191,8 @@ class AuthRepository:
             self.user_collection.insert_one(user_document)
 
             account_data = {
-                "userId": user_id,
+                "_id": str(uuid.uuid4()),  # Use _id instead of id
+                "userId": user_document["_id"],
                 "email": email,
                 "companyName": data.get("companyName", ""),
                 "isCompany": data.get("isCompany", False),
@@ -217,171 +209,6 @@ class AuthRepository:
                 }, 500
 
             account_id = account_response["accountId"]
-
-            # --- BEGIN: Add default data for new user ---
-            try:
-                # Check if this user already has podcasts (indicator of prior setup)
-                podcast_check_response, podcast_check_status = (
-                    self.podcast_repo.get_podcasts(user_id)
-                )
-
-                # Proceed only if the check was successful and returned no podcasts
-                if podcast_check_status == 200 and not podcast_check_response.get(
-                    "podcast"
-                ):
-                    logger.info(
-                        f"✅ New user {user_id}. Creating default team, podcast, and episodes."
-                    )
-
-                    # 1. Create Default Team
-                    team_data = {
-                        "name": f"{email.split('@')[0]}'s Team",
-                        "members": [
-                            {
-                                "userId": str(uuid.uuid4()),
-                                "email": "john.doe@example.com",
-                                "fullName": "John Doe",
-                                "role": "Copywriter",
-                                "completedTasks": 42,
-                                "points": 1250,
-                                "monthsWon": 3,
-                                "goal": 85,
-                            },
-                            {
-                                "userId": str(uuid.uuid4()),
-                                "email": "anna.smith@example.com",
-                                "fullName": "Anna Smith",
-                                "role": "Researcher",
-                                "completedTasks": 38,
-                                "points": 1120,
-                                "monthsWon": 2,
-                                "goal": 76,
-                            },
-                            {
-                                "userId": str(uuid.uuid4()),
-                                "email": "robert.johnson@example.com",
-                                "fullName": "Robert Johnson",
-                                "role": "Webmaster",
-                                "completedTasks": 35,
-                                "points": 980,
-                                "monthsWon": 1,
-                                "goal": 68,
-                            },
-                        ],
-                    }
-                    team_response, team_status = self.team_repo.add_team(
-                        user_id, email, team_data
-                    )
-
-                    if team_status == 201:
-                        team_id = team_response["team_id"]
-                        logger.info(
-                            f"✅ Default team created: {team_id} for user {user_id}"
-                        )
-
-                        # 2. Create Default Podcast (linked to account and team)
-                        podcast_data = {
-                            "podName": "My Example Podcast",
-                            "ownerName": email.split("@")[0],  # Example owner name
-                            # accountId is derived from user_id within add_podcast
-                            "teamId": team_id,  # Link podcast to the team
-                            "logoUrl": "https://d3t3ozftmdmh3i.cloudfront.net/staging/podcast_uploaded_nologo/42425076/42425076-1731361782842-b9ba09e6cabe6.jpg",
-                            "description": "This is a sample podcast created for demonstration purposes.",
-                            "category": "Technology",
-                            "language": "English",
-                            "hostName": "Karl Lillrud",
-                            "ownerName": "Karl Lillrud",
-                            "podUrl": "https://www.example.com",
-                        }
-                        podcast_response, podcast_status = (
-                            self.podcast_repo.add_podcast(user_id, podcast_data)
-                        )
-
-                        if podcast_status == 201:
-                            podcast_id = podcast_response["podcast_id"]
-                            logger.info(
-                                f"✅ Default podcast created: {podcast_id} for user {user_id}"
-                            )
-
-                            # 3. Create Example Episodes
-                            now = datetime.now(timezone.utc)
-                            one_week_future = now + timedelta(days=7)
-                            two_weeks_future = now + timedelta(days=14)
-
-                            episode_data_1 = {
-                                "podcastId": podcast_id,
-                                "title": "Example Episode 1: Getting Started",
-                                "description": "This is your first example episode, scheduled for next week.",
-                                "publishDate": one_week_future.isoformat(),
-                                "status": "Not Recorded",  # Changed from "Active" to "Not Recorded"
-                                "recordingAt": one_week_future.isoformat(),
-                                "duration": 45,
-                                "isHidden": False,
-                                "author": email.split("@")[0],
-                            }
-                            episode_data_2 = {
-                                "podcastId": podcast_id,
-                                "title": "Example Episode 2: Exploring Features",
-                                "description": "Discover what you can do with PodManager, scheduled in two weeks.",
-                                "publishDate": two_weeks_future.isoformat(),
-                                "status": "Not Scheduled",  # Changed from "Active" to "Not Scheduled"
-                                "recordingAt": two_weeks_future.isoformat(),
-                                "duration": 60,
-                                "isHidden": False,
-                                "author": email.split("@")[0],
-                            }
-
-                            # Register Episode 1
-                            ep1_resp, ep1_stat = self.episode_repo.register_episode(
-                                episode_data_1, user_id
-                            )
-                            if ep1_stat == 201:
-                                logger.info(
-                                    f"✅ Example episode 1 created for podcast {podcast_id}"
-                                )
-                            else:
-                                logger.error(
-                                    f"❌ Failed to create example episode 1 for user {user_id}: {ep1_resp}"
-                                )
-
-                            # Register Episode 2
-                            ep2_resp, ep2_stat = self.episode_repo.register_episode(
-                                episode_data_2, user_id
-                            )
-                            if ep2_stat == 201:
-                                logger.info(
-                                    f"✅ Example episode 2 created for podcast {podcast_id}"
-                                )
-                            else:
-                                logger.error(
-                                    f"❌ Failed to create example episode 2 for user {user_id}: {ep2_resp}"
-                                )
-
-                        else:
-                            logger.error(
-                                f"❌ Failed to create default podcast for user {user_id}. Response: {podcast_response}"
-                            )
-                            # Optionally attempt to clean up team if podcast failed? Depends on requirements.
-                    else:
-                        logger.error(
-                            f"❌ Failed to create default team for user {user_id}. Response: {team_response}"
-                        )
-                elif podcast_check_status != 200:
-                    logger.warning(
-                        f"⚠️ Could not verify podcast presence for user {user_id} (status {podcast_check_status}). Skipping default data creation."
-                    )
-                else:  # podcast_check_status == 200 and podcasts exist
-                    logger.info(
-                        f"ℹ️ User {user_id} already has podcasts. Skipping default data creation."
-                    )
-
-            except Exception as default_data_err:
-                # Log error but don't fail registration
-                logger.error(
-                    f"❌ Error creating default data for user {user_id}: {default_data_err}",
-                    exc_info=True,
-                )
-            # --- END: Add default data for new user ---
 
             return {
                 "message": "Registration successful!",

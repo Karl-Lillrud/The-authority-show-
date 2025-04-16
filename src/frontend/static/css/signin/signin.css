@@ -95,12 +95,6 @@
   text-decoration: underline;
 }
 
-.register-link {
-  margin-top: auto;
-  text-align: center;
-  padding-bottom: 20px;
-}
-
 .error-message {
   font-size: 18px;
   color: var(--highlight-color);

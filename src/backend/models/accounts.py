@@ -14,5 +14,6 @@ class AccountSchema(Schema):
     referralBonus = fields.Int()
     subscriptionStart = fields.DateTime()
     subscriptionEnd = fields.DateTime()
-    isActive = fields.Bool()
+    isActive = fields.Bool(required=True)
+    created_at = fields.DateTime(required=True)
     isFirstLogin = fields.Bool()

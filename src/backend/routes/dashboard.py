@@ -21,8 +21,8 @@ def dashboard():
     if "user_id" not in session or not session.get("user_id"):
         logger.warning("User is not logged in. Redirecting to sign-in page.")
         return redirect(url_for("auth_bp.signin", error="You must be logged in to access the dashboard."))
-    
-    logger.info(f"User {session['email']} accessed the dashboard.")
+
+    logger.info(f"User {session.get('email', 'Unknown')} accessed the dashboard.")
     return render_template("dashboard/dashboard.html")
 
 
@@ -93,9 +93,10 @@ def podcastmanagement():
     """
     if "user_id" not in session or not session.get("user_id"):
         logger.warning("User is not logged in. Redirecting to sign-in page.")
+        logger.debug(f"Session contents: {session}")  # Debug log
         return redirect(url_for("auth_bp.signin", error="You must be logged in to access the dashboard."))
     
-    logger.info(f"User {session['email']} accessed the podcast management page.")
+    logger.info(f"User {session.get('email', 'Unknown')} accessed the podcast management page.")
     return render_template("podcastmanagement/podcastmanagement.html")
 
 
@@ -109,8 +110,14 @@ def taskmanagement():
 
 @dashboard_bp.route("/podprofile", methods=["GET", "POST"])
 def podprofile():
-    if not g.user_id:
-        return redirect(url_for("auth_bp.signin"))  # Updated endpoint
+    """
+    Serves the podprofile page.
+    """
+    if "user_id" not in session or not session.get("user_id"):
+        logger.warning("User is not logged in. Redirecting to sign-in page.")
+        return redirect(url_for("auth_bp.signin", error="You must be logged in to access this page."))
+
+    logger.info(f"User {session.get('email', 'Unknown')} accessed the podprofile page.")
     return render_template("podprofile/podprofile.html")
 
 
@@ -139,23 +146,25 @@ def podcast(podcast_id):
     # Store podcast_id in session or inject into template if needed
     return render_template("podcast/podcast.html", podcast_id=podcast_id)
 
-@dashboard_bp.route("/get_guests_by_episode/<episode_id>", methods=["GET"])
-def get_guests_by_episode(episode_id):
-    """
-    Fetches guests associated with a specific episode.
-    """
-    if "user_id" not in session or not session.get("user_id"):
-        logger.warning("User is not logged in. Redirecting to sign-in page.")
-        return redirect(url_for("auth_bp.signin", error="You must be logged in to access this resource."))
+#Kommenterat ut nedanstående, pga guests kan ej fetchas då vi har 2st get med samma namn här och i guest.py
 
-    try:
-        # Query the database for guests linked to the given episode ID
-        guests = list(collection.database.Guests.find({"episode_id": episode_id}))
-        for guest in guests:
-            guest["_id"] = str(guest["_id"])  # Convert ObjectId to string for JSON serialization
+#@dashboard_bp.route("/get_guests_by_episode/<episode_id>", methods=["GET"])
+# def get_guests_by_episode(episode_id):
+#     """
+#     Fetches guests associated with a specific episode.
+#     """
+#     if "user_id" not in session or not session.get("user_id"):
+#         logger.warning("User is not logged in. Redirecting to sign-in page.")
+#         return redirect(url_for("auth_bp.signin", error="You must be logged in to access this resource."))
 
-        logger.info(f"Fetched {len(guests)} guests for episode {episode_id}.")
-        return jsonify({"guests": guests}), 200
-    except Exception as e:
-        logger.error(f"Error fetching guests for episode {episode_id}: {e}", exc_info=True)
-        return jsonify({"error": "Failed to fetch guests. Please try again later."}), 500
+#     try:
+#         # Query the database for guests linked to the given episode ID
+#         guests = list(collection.database.Guests.find({"episode_id": episode_id}))
+#         for guest in guests:
+#             guest["_id"] = str(guest["_id"])  # Convert ObjectId to string for JSON serialization
+
+#         logger.info(f"Fetched {len(guests)} guests for episode {episode_id}.")
+#         return jsonify({"guests": guests}), 200
+#     except Exception as e:
+#         logger.error(f"Error fetching guests for episode {episode_id}: {e}", exc_info=True)
+#         return jsonify({"error": "Failed to fetch guests. Please try again later."}), 500
