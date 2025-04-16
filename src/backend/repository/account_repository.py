@@ -25,37 +25,30 @@ class AccountRepository:
             if "userId" not in data or "email" not in data:
                 raise ValueError("Missing required fields: userId and email")
 
-            user_id = data["userId"]
-            email = data["email"]
-            company_name = data.get("companyName", "")
-            is_company = data.get("isCompany", False)
-
-            subscription_id = str(uuid.uuid4())  # Generate unique subscription ID
-            account_id = str(uuid.uuid4())  # Generate unique account ID
-
-            # Create account document
             account_document = {
-                "_id": account_id,
-                "userId": user_id,
-                "subscriptionId": subscription_id,
-                "email": email,
-                "isCompany": is_company,
-                "companyName": company_name,
-                "paymentInfo": "",  # Placeholder for payment info
-                "subscriptionStatus": "active",
-                "createdAt": datetime.utcnow().isoformat(),
-                "referralBonus": 0,
-                "subscriptionStart": datetime.utcnow().isoformat(),
-                "subscriptionEnd": "",
-                "isActive": True,
-                "isFirstLogin": True,
+                "_id": data["id"],
+                "ownerId": data["ownerId"],
+                "subscriptionId": data["subscriptionId"],
+                "creditId": data["creditId"],
+                "email": data["email"],
+                "isCompany": data["isCompany"],
+                "companyName": data["companyName"],
+                "paymentInfo": data["paymentInfo"],
+                "subscriptionStatus": data["subscriptionStatus"],
+                "createdAt": data["createdAt"],
+                "referralBonus": data["referralBonus"],
+                "subscriptionStart": data["subscriptionStart"],
+                "subscriptionEnd": data["subscriptionEnd"],
+                "isActive": data["isActive"],
+                "created_at": data["created_at"],
+                "isFirstLogin": data["isFirstLogin"],
             }
 
             # Insert account into the database
             self.collection.insert_one(account_document)
-            logger.info("Inserted account into database: %s", account_document)
+            logger.info(f"Account created successfully: {account_document}")
 
-            initialize_credits(user_id)  # Call initialize_credits here
+            initialize_credits(data["userId"])  # Call initialize_credits here
 
             return {
                 "message": "Account created successfully",

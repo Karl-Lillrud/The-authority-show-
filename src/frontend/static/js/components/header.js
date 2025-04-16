@@ -170,9 +170,20 @@ if (cancelLogout) {
   });
 }
 if (confirmLogout) {
-  confirmLogout.addEventListener("click", () => {
-    document.cookie = "remember_me=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
-    window.location.href = logoutLink.href;
+  confirmLogout.addEventListener("click", async () => {
+    try {
+      const response = await fetch("/logout", { method: "GET" });
+      const result = await response.json();
+      if (response.ok) {
+        window.location.href = result.redirect_url || "/signin";
+      } else {
+        console.error("Logout failed:", result.message);
+        alert("Failed to log out. Please try again.");
+      }
+    } catch (error) {
+      console.error("Error during logout:", error);
+      alert("An error occurred. Please try again.");
+    }
   });
 }
 window.addEventListener("click", (e) => {

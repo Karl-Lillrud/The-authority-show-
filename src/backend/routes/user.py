@@ -1,9 +1,12 @@
 import logging
 from flask import Blueprint, request, jsonify, g
 from backend.repository.user_repository import UserRepository
+import uuid
+from datetime import datetime
+from backend.database.mongo_connection import collection  # Add this import
 
 # Define Blueprint
-user_bp = Blueprint("user_bp", __name__)
+user_bp = Blueprint("user_bp", __name__, url_prefix="/user")  # Use a unique name
 
 # Instantiate the User Repository
 user_repo = UserRepository()
@@ -16,6 +19,17 @@ def get_profile():
         return jsonify({"error": "Unauthorized"}), 401
 
     response, status_code = user_repo.get_profile(str(g.user_id))
+    if status_code == 404:  # If profile not found, ensure account creation
+        account = collection.database.Accounts.find_one({"userId": str(g.user_id)})
+        if not account:
+            account_data = {
+                "id": str(uuid.uuid4()),
+                "userId": str(g.user_id),
+                "email": g.email,
+                "created_at": datetime.utcnow(),
+                "isActive": True,
+            }
+            collection.database.Accounts.insert_one(account_data)
     return jsonify(response), status_code
 
 

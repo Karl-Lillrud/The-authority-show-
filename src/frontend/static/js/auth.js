@@ -23,9 +23,10 @@ document.addEventListener("DOMContentLoaded", () => {
     // Get API base URL from the HTML template
     const API_BASE_URL = document.body.getAttribute("data-api-base-url");
   
+    const errorMessage = document.getElementById("error-message");
+  
     // Login form submission
     const loginForm = document.getElementById("login-form");
-    const errorMessage = document.getElementById("error-message");
   
     loginForm.addEventListener("submit", async (event) => {
       event.preventDefault();
@@ -48,60 +49,10 @@ document.addEventListener("DOMContentLoaded", () => {
         if (result.redirect_url) {
           window.location.href = result.redirect_url;
         } else {
-          window.location.href = "/";
+          window.location.href = "/podprofile"; // Redirect to podprofile
         }
       } catch (error) {
         errorMessage.textContent = error.message;
-        errorMessage.style.display = "block";
-      }
-    });
-  
-    // Register form submission
-    const registerForm = document.getElementById("register-form");
-    const errorMessage = document.getElementById("error-message");
-  
-    registerForm.addEventListener("submit", async (event) => {
-      event.preventDefault();
-  
-      const email = document.getElementById("reg-email").value;
-      const password = document.getElementById("reg-password").value;
-  
-      try {
-        const response = await fetch(`${API_BASE_URL}/register`, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json"
-          },
-          body: JSON.stringify({ email, password })
-        });
-  
-        if (response.ok) {
-          // Automatically log in the user
-          const loginResponse = await fetch(`${API_BASE_URL}/signin`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ email, password })
-          });
-  
-          if (!loginResponse.ok) {
-            throw new Error("Registration successful, but failed to log in.");
-          }
-  
-          const loginResult = await loginResponse.json();
-          if (loginResult.redirect_url) {
-            window.location.href = loginResult.redirect_url;
-          } else {
-            window.location.href = "/";
-          }
-        } else {
-          const result = await response.json();
-          errorMessage.textContent =
-            result.error || "An error occurred. Please try again.";
-          errorMessage.style.display = "block";
-        }
-      } catch (error) {
-        console.error("Error:", error);
-        errorMessage.textContent = "Something went wrong. Please try again.";
         errorMessage.style.display = "block";
       }
     });

@@ -21,7 +21,6 @@ from backend.routes.podprofile import podprofile_bp  # Import the podprofile blu
 from backend.routes.frontend import frontend_bp  # Import the frontend blueprint
 from backend.routes.guestpage import guestpage_bp
 from backend.routes.guest_to_eposide import guesttoepisode_bp
-from backend.routes.guest_form import guest_form_bp  # Import the guest_form blueprint
 from backend.utils.email_utils import send_email
 from backend.utils.scheduler import start_scheduler
 from backend.routes.billing import billing_bp
@@ -35,7 +34,12 @@ from backend.routes.highlight import highlights_bp
 from backend.routes.audio_routes import audio_bp
 from backend.routes.video_routes import video_bp
 from backend.routes.transcription import transcription_bp
+
+from backend.routes.guest_form import guest_form_bp  # Ensure the import matches the updated blueprint name
+from backend.routes.auth import auth_bp  # Import the auth blueprint
+
 from colorama import Fore, Style, init  # Import colorama for styled logs
+
 
 if os.getenv("SKIP_VENV_UPDATE", "false").lower() not in ("true", "1", "yes"):
     venvupdate.update_venv_and_requirements()
@@ -70,7 +74,7 @@ app.secret_key = os.getenv("SECRET_KEY")
 app.config["PREFERRED URL SCHEME"] = "https"
 
 # Register blueprints for different routes
-app.register_blueprint(auth_bp)
+app.register_blueprint(user_bp, name="user_bp_unique")  # Ensure the name matches the updated blueprint
 app.register_blueprint(podcast_bp)  # Register the podcast blueprint
 app.register_blueprint(dashboard_bp)
 app.register_blueprint(pod_management_bp)
@@ -88,15 +92,26 @@ app.register_blueprint(episode_bp)
 app.register_blueprint(podprofile_bp)  # Register the podprofile blueprint
 app.register_blueprint(frontend_bp)  # Register the frontend blueprint
 app.register_blueprint(guesttoepisode_bp)
-app.register_blueprint(transcription_bp, url_prefix="/transcription")
-app.register_blueprint(audio_bp)
+app.register_blueprint(transcription_bp, url_prefix="/transcription", name="transcription_main")
+app.register_blueprint(audio_bp, name="audio_main")
 app.register_blueprint(video_bp)
+# Register the guest_form blueprint with URL prefix
+
+
+app.register_blueprint(transcription_bp, url_prefix="/transcription")
+app.register_blueprint(audio_bp, name="audio_secondary")
+app.register_blueprint(video_bp, name="video_secondary")
 app.register_blueprint(billing_bp)
-app.register_blueprint(
-    guest_form_bp, url_prefix="/guest-form"
-)  # Register the guest_form blueprint with URL prefix
-app.register_blueprint(user_bp)
+
+
+app.register_blueprint(guest_form_bp, url_prefix="/guest-form")  # Use the updated blueprint name
+
+
+app.register_blueprint(user_bp)  # Ensure the name matches the updated Blueprint
+
 app.register_blueprint(landingpage_bp)
+
+app.register_blueprint(auth_bp, url_prefix="/")  # Register the auth blueprint
 
 
 # Set the application environment (defaults to production)
