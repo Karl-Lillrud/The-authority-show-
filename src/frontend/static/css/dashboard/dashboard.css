@@ -394,13 +394,6 @@
   flex: 1;
 }
 
-.timeline-content h4 {
-  font-size: 0.95rem;
-  font-weight: 600;
-  color: rgba(0, 0, 0, 0.8);
-  margin-bottom: 2px;
-}
-
 .timeline-content p {
   font-size: 0.85rem;
   color: var(--text-color-light);
