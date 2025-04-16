@@ -55,10 +55,15 @@ function showTab(tabName) {
                 </div>
                 <div class="result-group">
                     <button class="btn ai-edit-button" onclick="generateAISuggestions()">
-                      ${labelWithCredits("🤖 AI Suggestions", "ai_suggestions")}
+                        ${labelWithCredits("🤖 AI Suggestions", "ai_suggestions")}
                     </button>
                     <div class="result-field">
-                        <pre id="aiSuggestionsResult"></pre>
+                        <h4>Primary Suggestions</h4>
+                        <pre id="aiSuggestionsPrimary"></pre>
+                    </div>
+                    <div class="result-field">
+                        <h4>Additional Suggestions</h4>
+                        <pre id="aiSuggestionsAdditional"></pre>
                     </div>
                 </div>
                 <div class="result-group">
