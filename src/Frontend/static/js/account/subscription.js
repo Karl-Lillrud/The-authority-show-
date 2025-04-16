@@ -101,21 +101,57 @@ async function updateSubscriptionUI() {
     const currentPlanElement = document.getElementById("current-plan");
     const statusElement = document.getElementById("subscription-status");
     const expiryElement = document.getElementById("subscription-expiry");
+    const renewalTextElement = document.getElementById("renewal-text");
+    const cancelButton = document.getElementById("cancel-subscription-btn");
     
-    if (!currentPlanElement || !statusElement || !expiryElement) {
+    if (!currentPlanElement || !statusElement || !expiryElement || !renewalTextElement) {
       console.warn("Subscription UI elements not found");
       return;
     }
     
     if (subscription) {
       currentPlanElement.textContent = subscription.plan || "Free";
-      statusElement.textContent = subscription.status || "Inactive";
       
+      // Update the expiry date display
       if (subscription.end_date) {
         const endDate = new Date(subscription.end_date);
         expiryElement.textContent = endDate.toLocaleDateString();
       } else {
         expiryElement.textContent = "N/A";
+      }
+      
+      // Update status with cancelled indicator if needed
+      if (subscription.is_cancelled) {
+        statusElement.textContent = "Cancelled";
+        statusElement.classList.add("cancelled");
+        
+        // Update renewal text for cancelled subscription
+        renewalTextElement.textContent = `Your subscription will not renew. Access ends on ${expiryElement.textContent}.`;
+        renewalTextElement.classList.add("cancellation-notice");
+        
+        // Disable cancel button if it exists
+        if (cancelButton) {
+          cancelButton.disabled = true;
+          cancelButton.textContent = "Subscription Cancelled";
+        }
+      } else {
+        statusElement.textContent = subscription.status || "Inactive";
+        statusElement.classList.remove("cancelled");
+        
+        // Update renewal text for active subscription
+        if (subscription.status === "active" && subscription.end_date) {
+          renewalTextElement.textContent = `Your subscription will automatically renew on ${expiryElement.textContent}.`;
+          renewalTextElement.classList.remove("cancellation-notice");
+        } else {
+          renewalTextElement.textContent = `Expiry date: ${expiryElement.textContent}`;
+          renewalTextElement.classList.remove("cancellation-notice");
+        }
+        
+        // Enable cancel button if subscription is active
+        if (cancelButton && subscription.status === "active" && subscription.plan !== "Free") {
+          cancelButton.disabled = false;
+          cancelButton.textContent = "Cancel Subscription";
+        }
       }
       
       // Update UI based on current plan
@@ -126,7 +162,7 @@ async function updateSubscriptionUI() {
         if (planName === subscription.plan) {
           card.classList.add("current-plan");
           if (upgradeBtn) {
-            upgradeBtn.textContent = "Current Plan";
+            upgradeBtn.textContent = subscription.is_cancelled ? "Cancelled" : "Current Plan";
             upgradeBtn.disabled = true;
           }
         } else {
@@ -138,10 +174,116 @@ async function updateSubscriptionUI() {
       currentPlanElement.textContent = "Free";
       statusElement.textContent = "Inactive";
       expiryElement.textContent = "N/A";
+      renewalTextElement.textContent = "Expiry date: N/A";
+      
+      // Disable cancel button if it exists
+      if (cancelButton) {
+        cancelButton.disabled = true;
+      }
     }
   } catch (err) {
     console.error("Error updating subscription UI:", err);
   }
+}
+
+/**
+ * Shows a confirmation popup for cancelling a subscription
+ */
+function showCancellationConfirmation() {
+  // Create confirmation popup
+  const popup = document.createElement('div');
+  popup.className = 'confirmation-popup';
+  
+  // Ensure CSS is loaded
+  const cssLink = document.querySelector('link[href*="subscription.css"]');
+  if (!cssLink) {
+    // Create and append the CSS link if not already present
+    const link = document.createElement('link');
+    link.rel = 'stylesheet';
+    link.href = '/static/css/account/subscription.css';
+    document.head.appendChild(link);
+  }
+  
+  popup.innerHTML = `
+    <div class="confirmation-content">
+      <h3>Cancel Subscription</h3>
+      <p>Are you sure you want to cancel your subscription? You'll lose access to premium features at the end of your current billing period.</p>
+      <div class="confirmation-buttons">
+        <button class="cancel-btn">No, Keep My Plan</button>
+        <button class="confirm-btn">Yes, Cancel</button>
+      </div>
+    </div>
+  `;
+  
+  document.body.appendChild(popup);
+  
+  // Add animation after a short delay to ensure CSS transitions work
+  setTimeout(() => popup.classList.add('active'), 10);
+  
+  // Add event listeners
+  const cancelBtn = popup.querySelector('.cancel-btn');
+  const confirmBtn = popup.querySelector('.confirm-btn');
+  
+  // Close popup when cancel is clicked
+  cancelBtn.addEventListener('click', () => {
+    popup.classList.remove('active');
+    setTimeout(() => popup.remove(), 300);
+  });
+  
+  // Handle confirmation action
+  confirmBtn.addEventListener('click', async () => {
+    try {
+      // Show loading state on button
+      confirmBtn.innerHTML = `
+        <svg class="spinner" viewBox="0 0 50 50">
+          <circle class="path" cx="25" cy="25" r="20" fill="none" stroke-width="5"></circle>
+        </svg>
+        Processing...
+      `;
+      confirmBtn.disabled = true;
+      
+      // Make API call to cancel subscription
+      const response = await fetch('/cancel-subscription', {
+        method: 'POST',
+        headers: { 
+          'Content-Type': 'application/json' 
+        },
+        body: JSON.stringify({})
+      });
+      
+      if (response.ok) {
+        // Parse the response to get any additional data
+        const data = await response.json();
+        
+        // Show success notification with end date if available
+        let successMessage = 'Your subscription has been cancelled.';
+        if (data.endDate) {
+          successMessage = `Your subscription will not renew. You will have access until ${data.endDate}.`;
+        }
+        
+        showNotification('Success', successMessage, 'success');
+        
+        // Update UI to reflect cancelled status
+        updateSubscriptionUI();
+      } else {
+        // Handle error
+        const data = await response.json();
+        showNotification('Error', data.error || 'Failed to cancel subscription', 'error');
+      }
+      
+      // Close popup
+      popup.classList.remove('active');
+      setTimeout(() => popup.remove(), 300);
+      
+    } catch (err) {
+      console.error('Error cancelling subscription:', err);
+      showNotification('Error', 'An error occurred while processing your request.', 'error');
+      
+      // Reset button state
+      confirmBtn.innerHTML = 'Yes, Cancel';
+      confirmBtn.disabled = false;
+    }
+  });
 }
 
 // Initialize subscription buttons when document is loaded
@@ -160,9 +302,15 @@ document.addEventListener("DOMContentLoaded", function() {
     enterpriseButton.addEventListener('click', () => upgradeSubscription('Enterprise', 29.99));
   }
   
+  // Add cancel subscription button handler
+  const cancelSubscriptionBtn = document.getElementById('cancel-subscription-btn');
+  if (cancelSubscriptionBtn) {
+    cancelSubscriptionBtn.addEventListener('click', showCancellationConfirmation);
+  }
+  
   // Update UI with current subscription data
   updateSubscriptionUI();
 });
 
 // Export functions for use in other files
-export { upgradeSubscription, getCurrentSubscription, updateSubscriptionUI };
+export { upgradeSubscription, getCurrentSubscription, updateSubscriptionUI, showCancellationConfirmation };
