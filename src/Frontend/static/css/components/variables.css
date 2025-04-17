@@ -20,6 +20,8 @@
   --card-bg-dark: #2a2a2a;
 
   /* Text Colors */
+  --headings-color-light: rgba(0, 0, 0, 0.85);
+
   --text-color-light: #6e7f8d;
   --text-color-dark: #b3b3b3;
 
@@ -40,8 +42,8 @@
   --font-secondary: "Avenir Next", sans-serif;
 
   /* Spacing */
-  --spacing-xs: 4px;
-  --spacing-sm: 8px;
+  --spacing-xs: 4px;  /* Margin & padding for small headings, etc */
+  --spacing-sm: 8px;  /* Margin & padding for large headings, etc */
   --spacing-sm2: 12px;
   --spacing-md: 16px;
   --spacing-md2: 20px;
@@ -50,7 +52,7 @@
 
   /* Border Radiuses */
   --radius-small: 12px;
-  --radius-medium: 12px;
+  --radius-medium: 12px;  /* For buttons */
   --radius-large: 50px;
 
   --border-radius-sm: 10px;
