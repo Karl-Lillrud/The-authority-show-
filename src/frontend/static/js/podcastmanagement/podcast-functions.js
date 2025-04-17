@@ -527,10 +527,185 @@ export function renderPodcastDetail(podcast) {
               formPopup.style.display = "none";
             }
           });
+<<<<<<< HEAD
           // Keep detail visible
           document.getElementById("podcast-detail").style.display = "block";
         } catch (error) {
           showNotification("Error", "Failed to fetch podcast details", "error");
+=======
+
+          episodesContainer.appendChild(episodeCard);
+        });
+      } else {
+        const noEpisodes = document.createElement("p");
+        noEpisodes.className = "no-episodes-message";
+        noEpisodes.textContent = "No episodes available.";
+        episodesContainer.appendChild(noEpisodes);
+      }
+    })
+    .catch((error) => {
+      console.error("Error fetching episodes:", error);
+      const episodesContainer = document.getElementById("episodes-container");
+      if (episodesContainer) {
+        episodesContainer.innerHTML =
+          '<p class="error-message">Failed to load episodes.</p>';
+      }
+    });
+
+  // Update edit buttons after rendering
+  updateEditButtons();
+}
+
+// Function to handle podcast form submission
+function handlePodcastFormSubmission() {
+  const form = document.getElementById("register-podcast-form");
+
+  form.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    console.log("Form submitted");
+
+    // Retrieve regular input values
+    const podName = document.getElementById("pod-name")?.value.trim() || "";
+    const email = document.getElementById("email")?.value.trim() || "";
+    const category = document.getElementById("category")?.value.trim() || "";
+
+    if (!podName) {
+      showNotification(
+        "Missing Field",
+        "Please fill in the Podcast Name field.",
+        "error"
+      );
+      return;
+    }
+
+    // Build the data object from other form fields
+    const data = {
+      teamId: "",
+      podName,
+      author: document.getElementById("pod-author")?.value.trim() || "",
+      language: document.getElementById("pod-language")?.value.trim() || "",
+      rssFeed: document.getElementById("pod-rss")?.value.trim() || "",
+      googleCal: document.getElementById("google-cal")?.value.trim() || null,
+      guestUrl: document.getElementById("guest-form-url")?.value.trim() || null,
+      email,
+      description: document.getElementById("description")?.value.trim() || "",
+      bannerUrl: document.getElementById("banner")?.value.trim() || "",
+      tagline: document.getElementById("tagline")?.value.trim() || "",
+      hostBio: document.getElementById("hostBio")?.value.trim() || "",
+      hostImage: document.getElementById("hostImage")?.value.trim() || "",
+      // the logoUrl field will be replaced if a logo is uploaded
+
+      category,
+      socialMedia: [
+        document.getElementById("facebook")?.value.trim() || " ",
+        document.getElementById("instagram")?.value.trim() || " ",
+        document.getElementById("linkedin")?.value.trim() || " ",
+        document.getElementById("twitter")?.value.trim() || " ",
+        document.getElementById("tiktok")?.value.trim() || " ",
+        document.getElementById("pinterest")?.value.trim() || " ",
+        document.getElementById("youtube")?.value.trim() || " "
+      ].filter((link) => link)
+    };
+
+    // Remove any keys with null or empty values
+    Object.keys(data).forEach((key) => {
+      if (
+        data[key] === null ||
+        (Array.isArray(data[key]) && data[key].length === 0) ||
+        data[key] === ""
+      ) {
+        delete data[key];
+      }
+    });
+
+    // Function to continue submission after processing the logo (if any)
+    async function submitPodcast(updatedData) {
+      try {
+        let responseData;
+        if (shared.selectedPodcastId) {
+          responseData = await updatePodcast(
+            shared.selectedPodcastId,
+            updatedData
+          );
+          if (!responseData.error) {
+            showNotification(
+              "Success",
+              "Podcast updated successfully!",
+              "success"
+            );
+            // Fetch updated podcasts list after updating
+            await renderPodcastList();
+            document.getElementById("form-popup").style.display = "none";
+            document.getElementById("podcast-detail").style.display = "block";
+          }
+        } else {
+          responseData = await addPodcast(updatedData);
+          if (!responseData.error) {
+            showNotification(
+              "Success",
+              "Podcast added successfully!",
+              "success"
+            );
+            await renderPodcastList();
+            document.getElementById("form-popup").style.display = "none";
+            document.getElementById("podcast-list").style.display = "flex";
+          }
+        }
+
+        if (responseData.error) {
+          showNotification(
+            "Error",
+            responseData.details
+              ? JSON.stringify(responseData.details)
+              : responseData.error,
+            "error"
+          );
+        } else {
+          resetForm();
+        }
+      } catch (error) {
+        console.error("Error:", error);
+        showNotification(
+          "Error",
+          shared.selectedPodcastId
+            ? "Failed to update podcast."
+            : "Failed to add podcast.",
+          "error"
+        );
+      }
+    }
+
+    // Check for a logo, banner and host image file and convert it to a Base64 string if one is selected
+    const logoInput = document.getElementById("logo");
+    const bannerInput = document.getElementById("banner");
+    const hostImageInput = document.getElementById("host-image");
+
+    async function handleFileInput(inputElement, dataProperty) {
+      return new Promise((resolve) => {
+        if (inputElement && inputElement.files[0]) {
+          const file = inputElement.files[0];
+          const reader = new FileReader();
+          reader.onerror = () => {
+            // Notify if file reading fails
+            showNotification(
+              "Error",
+              "Failed to read file for " + dataProperty,
+              "error"
+            );
+            resolve(false);
+          };
+          reader.onloadend = () => {
+            data[dataProperty] = reader.result; // update with new image
+            resolve(true);
+          };
+          reader.readAsDataURL(file);
+        } else {
+          // If editing and no new image is selected, do not overwrite the existing property
+          if (shared.selectedPodcastId) {
+            delete data[dataProperty];
+          }
+          resolve(false);
+>>>>>>> b52103275ea764fed931439befbc62b93a28281e
         }
       });
     

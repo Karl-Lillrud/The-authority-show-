@@ -548,7 +548,9 @@ export function initEpisodeFunctions() {
       const data = Object.fromEntries(formData.entries());
 
       // Ensure recordingAt is in the correct format
-      if (data.recordingAt) {
+      if (data.recordingAt === '') {
+        data.recordingAt = null; // Set to null if no date is provided
+      } else if (data.recordingAt) {
         const recordingAt = new Date(data.recordingAt);
         if (isNaN(recordingAt.getTime())) {
           showNotification(
