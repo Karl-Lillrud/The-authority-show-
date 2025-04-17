@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Podmanager Lobby</title>
+  <link rel="stylesheet" type="text/css" href="Lobby.css">
+</head>
+<body>
+
+    <nav>
+      <div class="brand">
+        <img src="../Icons/Logo.png" alt="Podmanager Logo" />
+      </div>
+      <h1>Welcome to Podmanager</h1>
+      <p>Create, join, and manage your podcast calls with ease</p>
+    </nav>
+
+  <div class="container">
+    <div class="search-bar">
+      <input type="text" placeholder="Search for calls..." />
+    </div>
+    <div class="action-buttons">
+      <button id="createCallBtn">Create Call</button>
+      <button id="joinCallBtn">Join Call</button>
+      <button id="backBtn">Back</button>
+    </div>
+    <section class="section" id="recentCallsSection">
+      <h2>Recent Active Calls</h2>
+      <div class="card-grid" id="recentCalls">
+        <div class="card">
+          <h3>Call #101</h3>
+          <p>Started 10 minutes ago</p>
+        </div>
+        <div class="card">
+          <h3>Call #102</h3>
+          <p>Started 20 minutes ago</p>
+        </div>
+      </div>
+    </section>
+    <section class="section" id="yourCallsSection">
+      <h2>Your Calls</h2>
+      <div class="card-grid" id="yourCalls">
+        <div class="card">
+          <h3>My Call #A1</h3>
+          <p>Paused – Resume Call</p>
+        </div>
+        <div class="card">
+          <h3>My Call #B2</h3>
+          <p>Paused – Resume Call</p>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <footer>
+    &copy; 2025 Podmanager. All Rights Reserved. | <a href="#">Privacy Policy</a> | <a href="#">Terms of Service</a>
+  </footer>
+
+  <div class="modal-overlay" id="modalOverlay">
+    <div class="modal" id="modalContent">
+      <span class="close-btn" id="modalClose">&times;</span>
+      <h2 id="modalTitle">Modal Title</h2>
+      <form id="modalForm">
+        <label for="callTitle">Call Title</label>
+        <input type="text" id="callTitle" name="callTitle" placeholder="Enter call title" required />
+        <label for="callDetails">Details</label>
+        <textarea id="callDetails" name="callDetails" placeholder="Enter call details" rows="4"></textarea>
+        <button type="submit" id="modalSubmit">Submit</button>
+      </form>
+    </div>
+  </div>
+
+  <script src="Lobby.js"></script>
+</body>
+</html>

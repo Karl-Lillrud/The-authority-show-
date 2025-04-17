@@ -1,0 +1,88 @@
+body {
+    margin: 0;
+    font-family: Arial, sans-serif;
+    background: antiquewhite;
+    color: white;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+  }
+  
+  .greenroom-container {
+    background: linear-gradient(to bottom, #FFD580 0%, #FFA500 50%, #CC5500 100%);
+    padding: 30px;
+    border-radius: 12px;
+    width: 90%;
+    max-width: 600px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    text-align: center;
+  }
+  
+  .video-preview {
+    background: black;
+    padding: 8px;
+    border-radius: 8px;
+    position: relative;
+  }
+  
+  video {
+    width: 100%;
+    border-radius: 8px;
+  }
+  
+  .audio-test, .username-input {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+  
+  select, input {
+    width: 100%;
+    padding: 8px;
+    border-radius: 6px;
+    border: none;
+    outline: none;
+  }
+  
+  button {
+    padding: 10px;
+    border: none;
+    background-color: red;
+    color: white;
+    font-weight: bold;
+    border-radius: 6px;
+    cursor: pointer;
+  }
+  
+  button:hover {
+    background-color: darkred;
+  }
+  
+  #micStatus {
+    font-size: 0.9rem;
+    color: white;
+  }
+
+  .meeting .icon {
+    position: fixed;
+    padding: 12% 5%;
+    top: 0;
+    left: 0;
+    width: 400px;
+    height: 400px;
+    }
+  .meeting .icon2 {
+    position: fixed;
+    padding: 12% 5%;
+    top: 0;
+    right: 0;
+    width: 400px;
+    height: 400px;
+    }
+
+
+  

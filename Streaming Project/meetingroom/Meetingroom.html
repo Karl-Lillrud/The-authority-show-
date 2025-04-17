@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Podmanager Meeting</title>
+  <link rel="stylesheet" href="../meetingroom/Meetingroom.css">
+  
+</head>
+<body>
+
+  <div class="header">
+    <h1>Hello</h1>
+  </div>
+
+  <nav>
+  <div class="timer" id="timer">00:00:00</div>
+
+    <div class="meeting" id="meeting">
+      <img src="../Icons/Logo.png" alt="meeting" class="icon">
+    </div>
+
+    <div class="toolbar" >
+      <button class="btn btn1">
+        <img src="../Icons/User.png" alt="participants" class="icon">
+      </button>
+      <button class="btn btn2">
+        <img src="../Icons/Chat.png" alt="chat" class="icon">
+      </button>
+      <button class="btn btn3">
+        <img src="../Icons/Room.png" alt="room" class="icon">
+      </button>
+      <button class="btn btn4">
+        <img src="../Icons/Camera.png" alt="camera" class="icon">
+      </button>
+      <button class="btn btn5" id="micToggle">
+        <img src="../Icons/Mic.png" alt="mic" class="icon" id="micIcon">
+      </button>
+      <button class="btn btn6">
+        <img src="../Icons/Share.png" alt="share" class="icon">
+      </button>
+      <button class="btn btn7">
+        <img src="../Icons/Options.png" alt="settings" class="icon">
+      </button>
+      <button class="btn btn8">
+        <img src="../Icons/End-call.png" alt="end-call" class="icon">
+        <span class="btn-text"></span>
+      </button>
+    </div>
+  </nav>
+
+  <div class="container" id="meetingcontainer">
+    <div class="card">
+      <div class="image-wrapper">
+        <img src="your-image.jpg" alt="Preview">
+        <button class="fullscreen-btn">⛶</button>
+      </div>
+    </div>
+  </div>
+  
+
+  <div class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+      <h2 id="sidebarTitle">Sidebar</h2>
+      <h3>Total Participants: <span id="userCount">0</span></h3>
+    </div>
+    <div class="sidebar-content" id="sidebarContent">
+      <!-- Dynamically loaded content goes here -->
+    </div>
+  </div>
+  
+
+  <script src="../meetingroom/Meetingroom.js"></script>
+  <div class="footer"></div>
+  <script>
+  </script>
+</body>
+</html>

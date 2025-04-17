@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Green Room</title>
+  <link rel="stylesheet" href="greenroom.css">
+</head>
+<body>
+
+    <div class="meeting" id="meeting">
+        <img src="../Icons/Logo.png" alt="meeting" class="icon">
+        <img src="../Icons/Logo.png" alt="meeting" class="icon2">
+      </div>
+
+  <div class="greenroom-container">
+    <h1>Welcome to the Green Room</h1>
+    
+
+    <div class="video-preview">
+      <video id="cameraPreview" autoplay muted playsinline style="width: 100%; max-height: 240px; border-radius: 8px; background: #000;"></video>
+      <p>Camera Preview</p>
+    </div>
+
+    <div class="audio-test">
+      <label for="cameraSelect">Camera:</label>
+      <select id="cameraSelect"></select>
+      <label for="micSelect">Microphone:</label>
+      <select id="micSelect"></select>
+      <button id="micTestBtn">Test Mic</button>
+      <span id="micStatus">Not testing</span>
+    </div>
+
+    <div class="username-input">
+      <label for="username">Display Name:</label>
+      <input type="text" id="username" placeholder="Enter your name">
+    </div>
+
+    <div class="greenroom-actions">
+      <button id="joinRoomBtn">Join Room</button>
+    </div>
+  </div>
+
+  <script src="greenroom.js"></script>
+</body>
+</html>
