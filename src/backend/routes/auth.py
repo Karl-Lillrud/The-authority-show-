@@ -83,7 +83,7 @@ def signin_submit():
         if not account:
             account_data = {
                 "id": str(uuid.uuid4()),
-                "ownerId": str(user["_id"]),
+                "userId": str(user["_id"]),  # Replace ownerId with userId
                 "subscriptionId": str(uuid.uuid4()),
                 "creditId": str(uuid.uuid4()),
                 "email": email,
@@ -264,7 +264,7 @@ def verify_login_token():
             logger.info(f"No account found for email {email}. Creating a new account.")
             account_data = {
                 "_id": str(uuid.uuid4()),  # Use _id instead of id
-                "ownerId": user["_id"],
+                "userId": user["_id"],  # Replace ownerId with userId
                 "subscriptionId": str(uuid.uuid4()),
                 "creditId": str(uuid.uuid4()),
                 "email": email,

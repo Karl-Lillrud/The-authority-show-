@@ -39,7 +39,7 @@ def create_account_route():
 
         account_data = {
             "id": str(uuid.uuid4()),
-            "ownerId": data.get("ownerId"),
+            "userId": data.get("userId"),  # Replace ownerId with userId
             "subscriptionId": str(uuid.uuid4()),
             "creditId": str(uuid.uuid4()),
             "email": data["email"],

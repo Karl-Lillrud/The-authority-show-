@@ -37,7 +37,7 @@ class AccountRepository:
 
             account_document = {
                 "_id": data["id"],
-                "ownerId": data["ownerId"],
+                "userId": data["userId"],  # Replace ownerId with userId
                 "subscriptionId": data["subscriptionId"],
                 "creditId": data["creditId"],
                 "email": data["email"],

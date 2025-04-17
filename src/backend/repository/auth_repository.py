@@ -368,27 +368,3 @@ class AuthRepository:
             )  # Debug log
             raise
 
-
-def validate_email(email):
-    # ...existing code...
-    domain = email.split("@")[-1]
-    try:
-        # For dnspython v2+, use resolve instead of query
-        answers = dns.resolver.resolve(domain, "MX")
-    except Exception as e:
-        raise Exception(f"MX lookup failed for domain '{domain}': {e}")
-    # ...existing code...
-
-
-def validate_password(password):
-    # Actual existing validation logic should be here (if any was originally present)
-    if not password:
-        return {"error": "Password is required."}, 400
-    if len(password) < 8:
-        return {"error": "Password must be at least 8 characters long."}, 400
-    if not any(char.isdigit() for char in password) or not any(
-        char.isalpha() for char in password
-    ):
-        return {"error": "Password must contain both letters and numbers."}, 400
-    # If the function passed all checks, return None (indicating no error)
-    return None
