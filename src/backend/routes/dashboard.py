@@ -100,11 +100,11 @@ def podcastmanagement():
 
 
 # ✅ Serves the tasks page
-@dashboard_bp.route("/taskmanagement", methods=["GET"])
-def taskmanagement():
+@dashboard_bp.route("/episode-to-do", methods=["GET"])
+def episodetodo():
     if not g.user_id:
         return redirect(url_for("auth_bp.signin"))  # Updated endpoint
-    return render_template("taskmanagement/taskmanagement.html")
+    return render_template("episode-to-do/episode-to-do.html")
 
 
 @dashboard_bp.route("/podprofile", methods=["GET", "POST"])
