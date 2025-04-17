@@ -2,7 +2,7 @@ import { fetchAllEpisodes } from "/static/requests/episodeRequest.js";
 import { fetchGuestsByEpisode } from "/static/requests/guestRequests.js";
 import { fetchPodcast, fetchPodcasts } from "/static/requests/podcastRequests.js";
 import { fetchAccount, updateAccount } from "/static/requests/accountRequests.js";
-import { initTaskManagement } from "/static/js/dashboard/task.js";
+import { initEpisodeToDo } from "/static/js/dashboard/episode-to-do.js";
 
 document.addEventListener("DOMContentLoaded", () => {
   initWelcomePopup();
@@ -210,7 +210,7 @@ function displaySampleEpisodes() {
   });
 
   // Initialize task management after creating cards
-  initTaskManagement();
+  initEpisodeToDo();
 }
 
 async function displayEpisodes(episodes, container) {
@@ -231,7 +231,7 @@ async function displayEpisodes(episodes, container) {
   }
 
   // Initialize task management after creating all cards
-  initTaskManagement();
+  initEpisodeToDo();
 }
 
 function createEpisodeCard(episode) {
