@@ -10,7 +10,7 @@ from backend.repository.team_repository import TeamRepository
 from backend.repository.podcast_repository import PodcastRepository
 from backend.repository.episode_repository import EpisodeRepository
 import logging
-import dns.resolver  # Ensure dnspython is properly imported
+import dns.resolver
 
 logger = logging.getLogger(__name__)
 
@@ -49,7 +49,7 @@ class AuthRepository:
             )
             if not user_account:
                 account_data = {
-                    "id": str(uuid.uuid4()),
+                    "_id": str(uuid.uuid4()),
                     "userId": str(user["_id"]),
                     "email": email,
                     "created_at": datetime.utcnow(),
@@ -86,11 +86,9 @@ class AuthRepository:
 
     def _determine_active_account(self, user_account, team_list):
         """Determine which account to use - personal or team."""
-        # If user has personal account, use it
         if user_account:
             return user_account
 
-        # If no personal account but user is in teams, try to use team account
         if not team_list:
             return None
 
@@ -99,12 +97,10 @@ class AuthRepository:
         logger.info(f"🔹 First team details: {first_team}")
         logger.info(f"🔹 Team ID: {team_id}")
 
-        # Try to find team owner's account first
         owner_account = self._find_team_owner_account(team_id)
         if owner_account:
             return owner_account
 
-        # Fallback: try to find any team member's account
         return self._find_any_team_member_account(team_id)
 
     def _find_team_owner_account(self, team_id):
@@ -172,7 +168,6 @@ class AuthRepository:
             if self.user_collection.find_one({"email": email}):
                 return {"error": "Email already registered."}, 409
 
-            # Kontrollera om ett konto redan finns för e-postadressen
             existing_account = self.account_collection.find_one({"email": email})
             if existing_account:
                 logger.warning(f"Account already exists for email {email}.")
@@ -191,11 +186,21 @@ class AuthRepository:
             self.user_collection.insert_one(user_document)
 
             account_data = {
-                "_id": str(uuid.uuid4()),  # Use _id instead of id
-                "userId": user_document["_id"],
+                "_id": str(uuid.uuid4()),
+                "userId": user_id,
                 "email": email,
                 "companyName": data.get("companyName", ""),
                 "isCompany": data.get("isCompany", False),
+                "subscriptionId": str(uuid.uuid4()),
+                "creditId": str(uuid.uuid4()),
+                "subscriptionStatus": "active",
+                "createdAt": datetime.utcnow(),
+                "referralBonus": 0,
+                "subscriptionStart": datetime.utcnow(),
+                "subscriptionEnd": None,
+                "isActive": True,
+                "created_at": datetime.utcnow(),
+                "isFirstLogin": True,
             }
 
             account_response, status_code = self.account_repo.create_account(
@@ -219,7 +224,6 @@ class AuthRepository:
 
         except Exception as e:
             logger.error("Error during registration: %s", e, exc_info=True)
-            # Check if the error response needs to be JSON serializable
             error_message = f"Error during registration: {str(e)}"
             status_code = 500
             if (
@@ -227,64 +231,56 @@ class AuthRepository:
                 and len(e.args) > 1
                 and isinstance(e.args[1], dict)
             ):
-                # Handle validation errors more gracefully if needed
                 error_message = e.args[0]
-                status_code = 400  # Or appropriate status code
-            elif "duplicate key" in str(e).lower():  # Basic check for duplicate errors
-                error_message = "An account related error occurred. Please try again or contact support."  # More generic message
-
+                status_code = 400
+            elif "duplicate key" in str(e).lower():
+                error_message = "An account related error occurred. Please try again or contact support."
             return {"error": error_message}, status_code
 
     def register_team_member(self, data):
         try:
-            logger.info("🔹 Received registration data: %s", data)  # Debug log
+            logger.info("🔹 Received registration data: %s", data)
             invite_token = data.get("inviteToken")
             if not invite_token:
-                logger.error("❌ Missing invite token")  # Debug log
+                logger.error("❌ Missing invite token")
                 raise ValueError("Missing invite token")
 
-            # Fetch invite details
             invite = self.invite_collection.find_one({"_id": invite_token})
             if not invite:
-                logger.error(f"❌ Invalid invite token: {invite_token}")  # Debug log
+                logger.error(f"❌ Invalid invite token: {invite_token}")
                 raise ValueError("Invalid invite token")
 
-            # Ensure role is present in the invite
             role = invite.get("role")
             if not role:
-                logger.error(f"❌ Missing role in invite: {invite}")  # Debug log
-                raise KeyError("role")  # Explicitly raise KeyError if role is missing
+                logger.error(f"❌ Missing role in invite: {invite}")
+                raise KeyError("role")
 
-            logger.info("✅ Role extracted from invite: %s", role)  # Debug log
+            logger.info("✅ Role extracted from invite: %s", role)
 
             required_fields = ["email", "password", "fullName", "phone"]
             for field in required_fields:
                 if field not in data or not data[field]:
-                    logger.error(f"❌ Missing required field: {field}")  # Debug log
+                    logger.error(f"❌ Missing required field: {field}")
                     return {"error": f"Missing required field: {field}"}, 400
 
             email = data["email"].lower().strip()
             password = data["password"]
 
-            # Validate invite status
             if invite.get("status") != "pending":
-                logger.error(f"❌ Invite is not pending: {invite}")  # Debug log
+                logger.error(f"❌ Invite is not pending: {invite}")
                 return {"error": "Invite is not valid or already used."}, 400
 
-            # Validate email matches the invite
             if invite["email"].lower() != email:
                 logger.error(
                     f"❌ Email mismatch! Invited: {invite['email']} - Registering: {email}"
-                )  # Debug log
+                )
                 return {"error": "The email does not match the invitation."}, 400
 
-            # Check if the email is already registered
             existing_user = self.user_collection.find_one({"email": email})
             if existing_user:
-                logger.error("❌ Email already exists: %s", email)  # Debug log
+                logger.error("❌ Email already exists: %s", email)
                 return {"error": "Email already registered."}, 409
 
-            # Proceed with user registration
             user_id = str(uuid.uuid4())
             hashed_password = generate_password_hash(password)
 
@@ -298,11 +294,10 @@ class AuthRepository:
                 "createdAt": datetime.utcnow().isoformat(),
             }
 
-            logger.info("✅ User document to insert: %s", user_document)  # Debug log
+            logger.info("✅ User document to insert: %s", user_document)
             self.user_collection.insert_one(user_document)
-            logger.info("✅ User successfully inserted into database!")  # Debug log
+            logger.info("✅ User successfully inserted into database!")
 
-            # Add user to the team
             user_to_team_data = {
                 "userId": user_id,
                 "teamId": invite["teamId"],
@@ -313,19 +308,12 @@ class AuthRepository:
             )
 
             if status_code != 201:
-                logger.error(
-                    f"❌ Failed to add user to team: {add_result}"
-                )  # Debug log
-                self.user_collection.delete_one(
-                    {"_id": user_id}
-                )  # Rollback user creation
+                logger.error(f"❌ Failed to add user to team: {add_result}")
+                self.user_collection.delete_one({"_id": user_id})
                 return {"error": "Failed to add user to team."}, 500
 
-            logger.info(
-                f"✅ User successfully linked to team {invite['teamId']}"
-            )  # Debug log
+            logger.info(f"✅ User successfully linked to team {invite['teamId']}")
 
-            # Update the team's members array with fullName and phone
             self.teams_collection.update_one(
                 {"_id": invite["teamId"], "members.email": email},
                 {
@@ -339,9 +327,8 @@ class AuthRepository:
             )
             logger.info(
                 f"✅ Team {invite['teamId']} members updated with user details."
-            )  # Debug log
+            )
 
-            # Mark the invite as accepted
             self.invite_collection.update_one(
                 {"_id": invite_token},
                 {
@@ -351,7 +338,7 @@ class AuthRepository:
                     }
                 },
             )
-            logger.info("✅ Invitation marked as used")  # Debug log
+            logger.info("✅ Invitation marked as used")
 
             return {
                 "message": "Team member registration successful!",
@@ -360,28 +347,22 @@ class AuthRepository:
             }, 201
 
         except KeyError as e:
-            logger.error("Error during team member registration: %s", e)  # Debug log
+            logger.error("Error during team member registration: %s", e)
             raise
         except Exception as e:
-            logger.error(
-                "Error during team member registration: %s", e, exc_info=True
-            )  # Debug log
+            logger.error("Error during team member registration: %s", e, exc_info=True)
             raise
 
 
 def validate_email(email):
-    # ...existing code...
     domain = email.split("@")[-1]
     try:
-        # For dnspython v2+, use resolve instead of query
         answers = dns.resolver.resolve(domain, "MX")
     except Exception as e:
         raise Exception(f"MX lookup failed for domain '{domain}': {e}")
-    # ...existing code...
 
 
 def validate_password(password):
-    # Actual existing validation logic should be here (if any was originally present)
     if not password:
         return {"error": "Password is required."}, 400
     if len(password) < 8:
@@ -390,5 +371,4 @@ def validate_password(password):
         char.isalpha() for char in password
     ):
         return {"error": "Password must contain both letters and numbers."}, 400
-    # If the function passed all checks, return None (indicating no error)
     return None

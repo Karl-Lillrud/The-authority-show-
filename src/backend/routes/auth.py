@@ -82,8 +82,8 @@ def signin_submit():
         account = collection.database.Accounts.find_one({"email": email})
         if not account:
             account_data = {
-                "id": str(uuid.uuid4()),
-                "ownerId": str(user["_id"]),
+                "_id": str(uuid.uuid4()),
+                "ownerId": str(user["_id"]),  # Use ownerId
                 "subscriptionId": str(uuid.uuid4()),
                 "creditId": str(uuid.uuid4()),
                 "email": email,
@@ -152,19 +152,17 @@ def verify_and_signin():
             if not user:
                 # Create a new user if not existing
                 user_data = {
-                    "id": str(uuid.uuid4()),  # Generate a unique UUID for the user ID
+                    "_id": str(uuid.uuid4()),  # changed from "id" to "_id"
                     "email": email,
                     "created_at": datetime.utcnow(),
                 }
                 collection.insert_one(user_data)
-                user = collection.find_one({"id": user_data["id"]})
+                user = collection.find_one({"_id": user_data["_id"]})
 
                 # Create an account for the user
                 account_data = {
-                    "id": str(
-                        uuid.uuid4()
-                    ),  # Generate a unique UUID for the account ID
-                    "userId": user["id"],
+                    "_id": str(uuid.uuid4()),  # changed from "id" to "_id"
+                    "ownerId": user["_id"],  # Use ownerId
                     "email": email,
                     "created_at": datetime.utcnow(),
                     "isActive": True,
@@ -172,7 +170,9 @@ def verify_and_signin():
                 collection.database.Accounts.insert_one(account_data)
 
             # Log the user in by setting session variables
-            session["user_id"] = user["id"]
+            session["user_id"] = user[
+                "_id"
+            ]  # Changed here from user["id"] to user["_id"]
             session["email"] = user["email"]
 
             return jsonify(result), 200
@@ -264,7 +264,7 @@ def verify_login_token():
             logger.info(f"No account found for email {email}. Creating a new account.")
             account_data = {
                 "_id": str(uuid.uuid4()),  # Use _id instead of id
-                "ownerId": user["_id"],
+                "ownerId": user["_id"],  # Use ownerId
                 "subscriptionId": str(uuid.uuid4()),
                 "creditId": str(uuid.uuid4()),
                 "email": email,
@@ -331,12 +331,12 @@ def signin():
 
             # Ensure account exists for the user
             account = collection.database.Accounts.find_one(
-                {"userId": str(user["_id"])}
-            )
+                {"ownerId": str(user["_id"])}
+            )  # Query by ownerId
             if not account:
                 account_data = {
-                    "id": str(uuid.uuid4()),
-                    "userId": str(user["_id"]),
+                    "_id": str(uuid.uuid4()),  # changed from "id" to "_id"
+                    "ownerId": str(user["_id"]),  # Use ownerId
                     "email": email,
                     "created_at": datetime.utcnow(),
                     "isActive": True,
