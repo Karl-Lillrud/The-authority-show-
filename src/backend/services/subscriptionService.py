@@ -1,6 +1,7 @@
 from datetime import datetime, timedelta
 from backend.database.mongo_connection import collection
 import logging
+import uuid
 
 logger = logging.getLogger(__name__)
 
@@ -11,9 +12,15 @@ class SubscriptionService:
     
     def get_user_subscription(self, user_id):
         """Get a user's current subscription details"""
+        # First try looking up by userId
         account = self.accounts_collection.find_one({"userId": user_id})
+        
+        # If not found, try looking up by ownerId (for backward compatibility)
         if not account:
-            logger.warning(f"No account found for user {user_id}")
+            account = self.accounts_collection.find_one({"ownerId": user_id})
+            
+        if not account:
+            logger.warning(f"No account found for user {user_id} (tried both userId and ownerId)")
             return None
         
         status = account.get("subscriptionStatus", "inactive")
@@ -30,28 +37,30 @@ class SubscriptionService:
     def update_user_subscription(self, user_id, plan_name, stripe_session):
         """
         Update a user's subscription based on the purchased plan.
-        
-        Args:
-            user_id: The user's ID
-            plan_name: The name of the plan (e.g. "Pro", "Enterprise")
-            stripe_session: The Stripe checkout session object
         """
         try:
             # Get the amount paid in the Stripe session
             amount_paid = stripe_session['amount_total'] / 100  # Convert cents to dollars
             
-            # Retrieve the user's account
+            # First try to find account by userId
             account = self.accounts_collection.find_one({"userId": user_id})
+            
+            # If not found, try looking up by ownerId
             if not account:
-                raise ValueError(f"No account found for user {user_id}")
+                account = self.accounts_collection.find_one({"ownerId": user_id})
+                
+            if not account:
+                raise ValueError(f"No account found for user {user_id} (tried both userId and ownerId)")
             
             # Calculate subscription end date (1 month from now)
             start_date = datetime.utcnow()
             end_date = start_date + timedelta(days=30)
             
-            # Update the user's subscription details
+            # Update the user's subscription details - use the field that was found
+            filter_query = {"userId": user_id} if "userId" in account else {"ownerId": user_id}
+            
             update_result = self.accounts_collection.update_one(
-                {"userId": user_id},
+                filter_query,
                 {"$set": {
                     "subscriptionStatus": "active",
                     "subscriptionPlan": plan_name,
@@ -67,6 +76,7 @@ class SubscriptionService:
             
             # Also record in the subscriptions collection
             subscription_data = {
+                "_id": str(uuid.uuid4()),  # Generate a UUID string for _id
                 "user_id": user_id,
                 "plan": plan_name,
                 "amount": amount_paid,
