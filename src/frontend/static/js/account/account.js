@@ -392,7 +392,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
       const confirmText = document.getElementById("delete-confirm").value
       const password = document.getElementById("delete-password").value
-      const email = document.getElementById("email").value
+      const email = document.getElementById("delete-email").value
 
       if (confirmText !== "DELETE") {
         showNotification("Error", "Please type DELETE to confirm account deletion", "error")
