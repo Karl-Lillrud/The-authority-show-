@@ -199,6 +199,37 @@ def send_email(to_email, subject, body, image_path=None):
         return {"error": f"Unexpected error: {str(e)}"}
 
 
+def send_login_email(email, login_link):
+    """
+    Sends a login link email to the user and prints the link to the terminal.
+    """
+    try:
+        subject = "Din inloggningslänk för PodManager"
+        body = f"""
+        <html>
+            <body>
+                <p>Hej,</p>
+                <p>Klicka på länken nedan för att logga in på ditt PodManager-konto:</p>
+                <a href="{login_link}" style="color: #ff7f3f; text-decoration: none;">Logga in</a>
+                <p>Länken är giltig i 10 minuter. Om du inte begärde detta, ignorera detta email.</p>
+                <p>Best regards,<br>PodManager Team</p>
+            </body>
+        </html>
+        """
+        print(f"Inloggningslänk för {email}: {login_link}")  # Skriv ut i terminalen
+        result = send_email(email, subject, body)
+        if result.get("success"):
+            logger.info(f"Inloggningslänk skickad till {email}.")
+        else:
+            logger.error(
+                f"Misslyckades att skicka email till {email}: {result.get('error')}"
+            )
+        return result
+    except Exception as e:
+        logger.error(f"Fel vid sändning av email till {email}: {e}", exc_info=True)
+        return {"error": f"Fel vid sändning av email: {str(e)}"}
+
+
 def send_team_invite_email(
     email, invite_token, team_name=None, inviter_name=None, role=None
 ):

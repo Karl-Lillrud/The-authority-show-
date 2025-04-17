@@ -10,7 +10,7 @@ from werkzeug.security import check_password_hash
 from backend.database.mongo_connection import collection
 from backend.services.teamService import TeamService
 from backend.services.accountService import AccountService
-from backend.utils.email_utils import send_email
+from backend.utils.email_utils import send_login_email  # Importera från email_utils
 from itsdangerous import URLSafeTimedSerializer, SignatureExpired, BadSignature
 
 logger = logging.getLogger(__name__)
@@ -120,34 +120,6 @@ class AuthService:
                 f"Fel vid OTP-verifiering för email {email}: {e}", exc_info=True
             )
             return {"error": f"Fel vid autentisering: {str(e)}"}, 500
-
-    def send_login_email(self, email, login_link):
-        """Skicka en inloggningslänk till användarens email och skriv ut länken i terminalen."""
-        try:
-            subject = "Din inloggningslänk för PodManager"
-            body = f"""
-            <html>
-                <body>
-                    <p>Hej,</p>
-                    <p>Klicka på länken nedan för att logga in på ditt PodManager-konto:</p>
-                    <a href="{login_link}" style="color: #ff7f3f; text-decoration: none;">Logga in</a>
-                    <p>Länken är giltig i 10 minuter. Om du inte begärde detta, ignorera detta email.</p>
-                    <p>Best regards,<br>PodManager Team</p>
-                </body>
-            </html>
-            """
-            print(f"Inloggningslänk för {email}: {login_link}")  # Skriv ut i terminalen
-            result = send_email(email, subject, body)
-            if result.get("success"):
-                logger.info(f"Inloggningslänk skickad till {email}.")
-            else:
-                logger.error(
-                    f"Misslyckades att skicka email till {email}: {result.get('error')}"
-                )
-            return result
-        except Exception as e:
-            logger.error(f"Fel vid sändning av email till {email}: {e}", exc_info=True)
-            return {"error": f"Fel vid sändning av email: {str(e)}"}
 
     def verify_login_token(self, token):
         """Verifiera inloggningstoken och logga in användaren."""

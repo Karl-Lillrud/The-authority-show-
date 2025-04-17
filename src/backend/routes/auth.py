@@ -1,5 +1,6 @@
 from flask import Blueprint, request, jsonify, redirect, render_template, session
 from backend.services.authService import AuthService
+from backend.utils.email_utils import send_login_email
 import logging
 from itsdangerous import URLSafeTimedSerializer, SignatureExpired, BadSignature
 from flask import current_app
@@ -39,16 +40,34 @@ def send_login_link():
         return jsonify({"error": "Email krävs"}), 400
 
     try:
+        # Kontrollera att SECRET_KEY är konfigurerad
+        if not current_app.config.get("SECRET_KEY"):
+            logger.error("SECRET_KEY är inte konfigurerad")
+            return jsonify({"error": "Serverkonfigurationsfel: SECRET_KEY saknas"}), 500
+
         serializer = URLSafeTimedSerializer(current_app.config["SECRET_KEY"])
         token = serializer.dumps(email, salt="login-link-salt")
         login_link = f"{request.host_url}signin?token={token}"
-        auth_service.send_login_email(email, login_link)
-        return jsonify({"message": "Inloggningslänk skickad"}), 200
+        result = send_login_email(email, login_link)
+        if result.get("success"):
+            return jsonify({"message": "Inloggningslänk skickad"}), 200
+        else:
+            logger.error(
+                f"Misslyckades att skicka inloggningslänk till {email}: {result.get('error')}"
+            )
+            return (
+                jsonify(
+                    {
+                        "error": f"Misslyckades att skicka inloggningslänk: {result.get('error')}"
+                    }
+                ),
+                500,
+            )
     except Exception as e:
         logger.error(
-            f"Fel vid sändning av inloggningslänk för {email}: {e}", exc_info=True
+            f"Fel vid sändning av inloggningslänk för {email}: {str(e)}", exc_info=True
         )
-        return jsonify({"error": "Misslyckades att skicka inloggningslänk"}), 500
+        return jsonify({"error": f"Internt serverfel: {str(e)}"}), 500
 
 
 @auth_bp.route("/verify-login-token", methods=["POST"], endpoint="verify_login_token")
