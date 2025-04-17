@@ -1,11 +1,11 @@
 from flask import Blueprint, request, jsonify, g
 from backend.repository.user_repository import UserRepository
-from backend.services.accountService import AccountService
+
+# from backend.services.accountService import AccountService
 import logging
 
 user_bp = Blueprint("user_bp", __name__, url_prefix="/user")
 user_repo = UserRepository()
-account_service = AccountService()
 logger = logging.getLogger(__name__)
 
 
