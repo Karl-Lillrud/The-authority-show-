@@ -497,42 +497,245 @@ export function renderPodcastDetail(podcast) {
             <p class="podcast-description">${podcast.description || "No description available."}</p>
           </div>
     
-          <!-- Episodes section -->
-          <div class="podcast-episodes-section">
-            <h2 class="section-title">Episodes</h2>
-            <div id="episodes-container" class="episodes-list-container"></div>
+    <!-- Episodes section -->
+    <div class="podcast-episodes-section">
+      <h2 class="section-title">Episodes</h2>
+      <div id="episodes-container" class="episodes-list-container"></div>
+    </div>
+    
+    <!-- Additional details section -->
+    <div class="podcast-details-section">
+      <div class="details-column">
+        <h2 class="section-title">RSS Feed</h2>
+        ${
+          podcast.rssFeed
+            ? `<a href="${podcast.rssFeed}" target="_blank" class="detail-link">${podcast.rssFeed}</a>`
+            : "<p>Not specified</p>"
+        }
+      </div>
+      
+      <div class="details-column">
+        <h2 class="section-title">Scheduling</h2>
+        <div class="scheduling-details">
+          <div class="scheduling-item">
+            <h3>Google Calendar</h3>
+            ${
+              podcast.googleCal
+                ? `<a href="${podcast.googleCal}" target="_blank" class="calendar-link">
+                    ${shared.svgpodcastmanagement.calendar}
+                    Calendar Link
+                  </a>`
+                : `<p class="calendar-link">
+                    ${shared.svgpodcastmanagement.calendar}
+                    Not connected
+                  </p>`
+            }
+          </div>
+          <div class="scheduling-item">
+            <h3>Guest Form URL</h3>
+            ${
+              podcast.guestUrl
+                ? `<a href="${podcast.guestUrl}" target="_blank" class="detail-link">${podcast.guestUrl}</a>`
+                : "<p>Not specified</p>"
+            }
           </div>
         </div>
-      `;
+      </div>
+    </div>
     
-      // BACK-TO-LIST button
-      document.getElementById("back-to-list").addEventListener("click", () => {
-        document.getElementById("podcast-detail").style.display = "none";
-        renderPodcastList();
-        document.getElementById("podcast-list").style.display = "flex";
-      });
-    
-      // EDIT button
-      document.getElementById("edit-podcast-btn").addEventListener("click", async () => {
+    <!-- Social media section -->
+    <div class="podcast-social-section">
+      <h2 class="section-title">Social Media</h2>
+      <div class="social-links">
+        ${
+          podcast.socialMedia && podcast.socialMedia[0]
+            ? `<a href="${podcast.socialMedia[0]}" target="_blank" class="social-link">
+                ${shared.svgpodcastmanagement.facebook}
+                Facebook
+              </a>`
+            : ""
+        }
+        ${
+          podcast.socialMedia && podcast.socialMedia[1]
+            ? `<a href="${podcast.socialMedia[1]}" target="_blank" class="social-link">
+                ${shared.svgpodcastmanagement.instagram}
+                Instagram
+              </a>`
+            : ""
+        }
+        ${
+          podcast.socialMedia && podcast.socialMedia[2]
+            ? `<a href="${podcast.socialMedia[2]}" target="_blank" class="social-link">
+                ${shared.svgpodcastmanagement.linkedin}
+                LinkedIn
+              </a>`
+            : ""
+        }
+        ${
+          podcast.socialMedia && podcast.socialMedia[3]
+            ? `<a href="${podcast.socialMedia[3]}" target="_blank" class="social-link">
+                ${shared.svgpodcastmanagement.twitter}
+                Twitter
+              </a>`
+            : ""
+        }
+        ${
+          podcast.socialMedia && podcast.socialMedia[4]
+            ? `<a href="${podcast.socialMedia[4]}" target="_blank" class="social-link">
+                ${shared.svgpodcastmanagement.tiktok}
+                TikTok
+              </a>`
+            : ""
+        }
+      </div>
+    </div>
+  </div>
+  
+  <div class="detail-actions">
+    <button class="delete-btn" id="delete-podcast-btn" data-id="${podcast._id}">
+      <span class="icon">${shared.svgpodcastmanagement.delete}</span>
+      Delete Podcast
+    </button>
+  </div>
+  `;
+
+  // Back button event listener
+  document.getElementById("back-to-list").addEventListener("click", () => {
+    // Hide podcast details view
+    document.getElementById("podcast-detail").style.display = "none";
+    // Re-render the podcast list to include the new episode
+    renderPodcastList();
+    // Show podcast list view
+    document.getElementById("podcast-list").style.display = "flex";
+  });
+
+  // Edit button event listener
+  document
+    .getElementById("edit-podcast-btn")
+    .addEventListener("click", async () => {
+      try {
+        const podcastId = document
+          .getElementById("edit-podcast-btn")
+          .getAttribute("data-id");
+        const response = await fetchPodcast(podcastId);
+        displayPodcastDetails(response.podcast);
+        shared.selectedPodcastId = podcastId;
+
+        // Show the form popup and keep podcast details visible in the background
+        const formPopup = document.getElementById("form-popup");
+        formPopup.style.display = "flex";
+        formPopup.addEventListener("click", (event) => {
+          if (event.target === formPopup) {
+            formPopup.style.display = "none";
+          }
+        });
+
+        // Ensure podcast details remain visible
+        document.getElementById("podcast-detail").style.display = "block";
+      } catch (error) {
+        showNotification("Error", "Failed to fetch podcast details", "error");
+      }
+    });
+
+  // Delete button event listener
+  document
+    .getElementById("delete-podcast-btn")
+    .addEventListener("click", async () => {
+      if (confirm("Are you sure you want to delete this podcast?")) {
         try {
-          const response = await fetchPodcast(podcast._id);
-          displayPodcastDetails(response.podcast);
-          shared.selectedPodcastId = podcast._id;
-    
-          // Show the form popup
-          const formPopup = document.getElementById("form-popup");
-          formPopup.style.display = "flex";
-          formPopup.addEventListener("click", (event) => {
-            if (event.target === formPopup) {
-              formPopup.style.display = "none";
+          const podcastId = document
+            .getElementById("delete-podcast-btn")
+            .getAttribute("data-id");
+          await deletePodcast(podcastId);
+          showNotification(
+            "Success",
+            "Podcast deleted successfully!",
+            "success"
+          );
+          document.getElementById("podcast-detail").style.display = "none";
+          renderPodcastList();
+          document.getElementById("podcast-list").style.display = "flex";
+        } catch (error) {
+          showNotification("Error", "Failed to delete podcast.", "error");
+        }
+      }
+    });
+
+  // Render episodes in a vertical list
+  fetchEpisodesByPodcast(podcast._id)
+    .then((episodes) => {
+      const episodesContainer = document.getElementById("episodes-container");
+      episodesContainer.innerHTML = "";
+
+      if (episodes && episodes.length) {
+        episodes.forEach((ep) => {
+          const episodeCard = document.createElement("div");
+          episodeCard.className = "episode-list-item";
+          episodeCard.setAttribute("data-episode-id", ep._id);
+
+          const publishDate = ep.publishDate
+            ? new Date(ep.publishDate).toLocaleDateString()
+            : "No date";
+
+          // Convert duration from seconds to minutes and seconds
+          const durationMinutes = Math.floor(ep.duration / 60);
+          const durationSeconds = ep.duration % 60;
+          const formattedDuration = `${durationMinutes}m ${durationSeconds}s`;
+
+          const description = ep.description
+            ? ep.description
+            : "No description available.";
+
+          episodeCard.innerHTML = `
+            <div class="episode-content">
+              <div class="episode-header">
+                <h3 class="episode-title">${ep.title}</h3>
+                ${
+                  ep.status
+                    ? `<span class="episode-status">${ep.status}</span>`
+                    : ""
+                }
+              </div>
+              <div class="episode-meta">
+                <span class="episode-date">Published: ${publishDate}</span>
+                <span class="episode-duration">${formattedDuration}</span>
+              </div>
+              <div class="episode-description">${description}</div>
+            </div>
+            <div class="episode-actions">
+              ${
+                ep.audioUrl
+                  ? `<button class="episode-play-btn"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg></button>`
+                  : ""
+              }
+              <button class="view-episode-btn">View Details</button>
+            </div>
+          `;
+
+          // Add play button event listener if audio URL exists
+          if (ep.audioUrl) {
+            episodeCard
+              .querySelector(".episode-play-btn")
+              .addEventListener("click", (e) => {
+                e.stopPropagation();
+                playAudio(ep.audioUrl, ep.title);
+              });
+          }
+
+          // Add view button event listener
+          episodeCard
+            .querySelector(".view-episode-btn")
+            .addEventListener("click", (e) => {
+              e.stopPropagation();
+              renderEpisodeDetail(ep);
+            });
+
+          // Add click event to card (excluding buttons)
+          episodeCard.addEventListener("click", (e) => {
+            if (!e.target.closest("button")) {
+              renderEpisodeDetail(ep);
             }
           });
-<<<<<<< HEAD
-          // Keep detail visible
-          document.getElementById("podcast-detail").style.display = "block";
-        } catch (error) {
-          showNotification("Error", "Failed to fetch podcast details", "error");
-=======
 
           episodesContainer.appendChild(episodeCard);
         });
@@ -705,108 +908,9 @@ function handlePodcastFormSubmission() {
             delete data[dataProperty];
           }
           resolve(false);
->>>>>>> b52103275ea764fed931439befbc62b93a28281e
         }
       });
-    
-      // Render episodes
-      loadEpisodesForPodcast(podcast._id);
-    
-      updateEditButtons();
     }
-<<<<<<< HEAD
-    
-    
-    /** 
-     * Helper function to fetch and display episodes in the #episodes-container 
-     * for the specified podcastId.
-     */
-    function loadEpisodesForPodcast(podcastId) {
-      fetchEpisodesByPodcast(podcastId)
-        .then((episodes) => {
-          const episodesContainer = document.getElementById("episodes-container");
-          episodesContainer.innerHTML = "";
-    
-          if (episodes && episodes.length) {
-            episodes.forEach((ep) => {
-              const episodeCard = document.createElement("div");
-              episodeCard.className = "episode-list-item";
-              episodeCard.setAttribute("data-episode-id", ep._id);
-    
-              const publishDate = ep.publishDate
-                ? new Date(ep.publishDate).toLocaleDateString()
-                : "No date";
-    
-              // Convert duration from seconds to Xm Ys
-              const durationMinutes = Math.floor(ep.duration / 60);
-              const durationSeconds = ep.duration % 60;
-              const formattedDuration = `${durationMinutes}m ${durationSeconds}s`;
-    
-              const description = ep.description || "No description available.";
-    
-              episodeCard.innerHTML = `
-                <div class="episode-content">
-                  <div class="episode-header">
-                    <h3 class="episode-title">${ep.title}</h3>
-                    ${
-                      ep.status
-                        ? `<span class="episode-status">${ep.status}</span>`
-                        : ""
-                    }
-                  </div>
-                  <div class="episode-meta">
-                    <span class="episode-date">Published: ${publishDate}</span>
-                    <span class="episode-duration">${formattedDuration}</span>
-                  </div>
-                  <div class="episode-description">${description}</div>
-                </div>
-                <div class="episode-actions">
-                  ${
-                    ep.audioUrl
-                      ? `<button class="episode-play-btn">
-                          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16"
-                            viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                            stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <polygon points="5 3 19 12 5 21 5 3"></polygon>
-                          </svg>
-                        </button>`
-                      : ""
-                  }
-                  <button class="view-episode-btn">View Details</button>
-                </div>
-              `;
-    
-              // If there's an audioUrl, set up the play button
-              if (ep.audioUrl) {
-                episodeCard
-                  .querySelector(".episode-play-btn")
-                  .addEventListener("click", (e) => {
-                    e.stopPropagation();
-                    playAudio(ep.audioUrl, ep.title);
-                  });
-              }
-    
-              // "View Details" button
-              episodeCard.querySelector(".view-episode-btn").addEventListener("click", (ev) => {
-                ev.stopPropagation();
-                renderEpisodeDetail(ep);
-              });
-    
-              // If you click the card (not the button), also show details
-              episodeCard.addEventListener("click", (ev) => {
-                if (!ev.target.closest("button")) {
-                  renderEpisodeDetail(ep);
-                }
-              });
-    
-              episodesContainer.appendChild(episodeCard);
-            });
-          } else {
-            const noEpisodes = document.createElement("p");
-            noEpisodes.className = "no-episodes-message";
-            noEpisodes.textContent = "No episodes available.";
-            episodesContainer.appendChild(noEpisodes);
-=======
 
     async function processInputs() {
       const logoPromise = handleFileInput(logoInput, "logoUrl");
@@ -923,310 +1027,11 @@ document.querySelectorAll(".delete-btn-home").forEach((button) => {
           e.target.closest(".podcast-card")?.remove();
           if (document.querySelectorAll(".podcast-card").length === 0) {
             renderPodcastList();
->>>>>>> 8ee4e46f9b83533369d0278ffbb0945f57ef1a71
           }
-        })
-        .catch((error) => {
-          console.error("Error fetching episodes:", error);
-          const episodesContainer = document.getElementById("episodes-container");
-          if (episodesContainer) {
-            episodesContainer.innerHTML =
-              '<p class="error-message">Failed to load episodes.</p>';
-          }
-        });
-    }
-    
-    /**
-     * Submits the "Add / Edit Podcast" form
-     */
-    function handlePodcastFormSubmission() {
-      const form = document.getElementById("register-podcast-form");
-    
-      form.addEventListener("submit", async (e) => {
-        e.preventDefault();
-        console.log("Form submitted");
-    
-        // Basic fields
-        const podName = document.getElementById("pod-name")?.value.trim() || "";
-        const email = document.getElementById("email")?.value.trim() || "";
-        const category = document.getElementById("category")?.value.trim() || "";
-    
-        if (!podName) {
-          showNotification("Missing Field", "Please fill in the Podcast Name field.", "error");
-          return;
+        } catch (error) {
+          showNotification("Error", "Failed to delete podcast.", "error");
         }
-    
-        // Build data from the rest of the form
-        const data = {
-          teamId: "",
-          podName,
-          author: document.getElementById("pod-author")?.value.trim() || "",
-          language: document.getElementById("pod-language")?.value.trim() || "",
-          rssFeed: document.getElementById("pod-rss")?.value.trim() || "",
-          googleCal: document.getElementById("google-cal")?.value.trim() || null,
-          guestUrl: document.getElementById("guest-form-url")?.value.trim() || null,
-          email,
-          description: document.getElementById("description")?.value.trim() || "",
-          bannerUrl: document.getElementById("banner")?.value.trim() || "",
-          tagline: document.getElementById("tagline")?.value.trim() || "",
-          hostBio: document.getElementById("hostBio")?.value.trim() || "",
-          hostImage: document.getElementById("hostImage")?.value.trim() || "",
-          category,
-          socialMedia: [
-            document.getElementById("facebook")?.value.trim() || " ",
-            document.getElementById("instagram")?.value.trim() || " ",
-            document.getElementById("linkedin")?.value.trim() || " ",
-            document.getElementById("twitter")?.value.trim() || " ",
-            document.getElementById("tiktok")?.value.trim() || " ",
-            document.getElementById("pinterest")?.value.trim() || " ",
-            document.getElementById("youtube")?.value.trim() || " "
-          ].filter((link) => link)
-        };
-    
-        // Remove null/empty
-        Object.keys(data).forEach((key) => {
-          if (
-            data[key] === null ||
-            (Array.isArray(data[key]) && data[key].length === 0) ||
-            data[key] === ""
-          ) {
-            delete data[key];
-          }
-        });
-    
-        // Actually submit the data after processing images
-        async function submitPodcast(updatedData) {
-          try {
-            let responseData;
-            if (shared.selectedPodcastId) {
-              // EDIT
-              responseData = await updatePodcast(shared.selectedPodcastId, updatedData);
-              if (!responseData.error) {
-                showNotification("Success", "Podcast updated successfully!", "success");
-                await renderPodcastList();
-                document.getElementById("form-popup").style.display = "none";
-                document.getElementById("podcast-detail").style.display = "block";
-              }
-            } else {
-              // CREATE
-              responseData = await addPodcast(updatedData);
-              if (!responseData.error) {
-                showNotification("Success", "Podcast added successfully!", "success");
-                document.getElementById("form-popup").style.display = "none";
-                document.getElementById("podcast-list").style.display = "flex";
-              }
-            }
-    
-            if (responseData && responseData.error) {
-              showNotification(
-                "Error",
-                responseData.details
-                  ? JSON.stringify(responseData.details)
-                  : responseData.error,
-                "error"
-              );
-            } else {
-              resetForm();
-            }
-          } catch (error) {
-            console.error("Error:", error);
-            showNotification(
-              "Error",
-              shared.selectedPodcastId ? "Failed to update podcast." : "Failed to add podcast.",
-              "error"
-            );
-          }
-        }
-    
-        // Reading any selected image files
-        const logoInput = document.getElementById("logo");
-        const bannerInput = document.getElementById("banner");
-        const hostImageInput = document.getElementById("host-image");
-    
-        async function handleFileInput(inputElement, dataProperty) {
-          return new Promise((resolve) => {
-            if (inputElement && inputElement.files[0]) {
-              const file = inputElement.files[0];
-              const reader = new FileReader();
-              reader.onerror = () => {
-                showNotification("Error", "Failed to read file for " + dataProperty, "error");
-                resolve(false);
-              };
-              reader.onloadend = () => {
-                data[dataProperty] = reader.result; // Base64
-                resolve(true);
-              };
-              reader.readAsDataURL(file);
-            } else {
-              // If editing and no new image selected, don't overwrite
-              if (shared.selectedPodcastId) {
-                delete data[dataProperty];
-              }
-              resolve(false);
-            }
-          });
-        }
-    
-        async function processInputs() {
-          const logoPromise = handleFileInput(logoInput, "logoUrl");
-          const bannerPromise = handleFileInput(bannerInput, "bannerUrl");
-          const hostImagePromise = handleFileInput(hostImageInput, "hostImage");
-    
-          await Promise.all([logoPromise, bannerPromise, hostImagePromise]);
-          await submitPodcast(data);
-        }
-    
-        processInputs();
-      });
-    }
-    
-    /**
-     * Renders a list of podcasts in a SELECT element
-     */
-    export function renderPodcastSelection(podcasts) {
-      const podcastSelect = document.getElementById("podcast-select");
-      if (!podcastSelect) return;
-    
-      // Clear existing
-      podcastSelect.innerHTML = "";
-      // Default
-      const defaultOption = document.createElement("option");
-      defaultOption.value = "";
-      defaultOption.textContent = "Select Podcast";
-      podcastSelect.appendChild(defaultOption);
-    
-      // Fill with real data
-      podcasts.forEach((podcast) => {
-        const option = document.createElement("option");
-        option.value = podcast._id;
-        option.textContent = podcast.podName;
-        podcastSelect.appendChild(option);
-      });
-    }
-    
-    /**
-     * Main initialization function for all "podcast" flows
-     */
-    export function initPodcastFunctions() {
-      // Render the initial list
-      renderPodcastList();
-    
-      // "Add Podcast" button
-      const addPodcastBtn = document.getElementById("add-podcast-btn");
-      if (addPodcastBtn) {
-        addPodcastBtn.addEventListener("click", () => {
-          resetForm();
-          shared.selectedPodcastId = null;
-          document.getElementById("form-popup").style.display = "flex";
-          document.querySelector(".form-title").textContent = "Add New Podcast";
-          document.querySelector(".save-btn").textContent = "Save Podcast";
-        });
       }
-    
-      // Close the form popup
-      const closePopupBtn = document.getElementById("close-form-popup");
-      if (closePopupBtn) {
-        closePopupBtn.addEventListener("click", () => {
-          document.getElementById("form-popup").style.display = "none";
-          document.getElementById("podcast-detail").style.display = "block";
-        });
-      }
-    
-      // Cancel button in form
-      const cancelFormBtn = document.getElementById("cancel-form-btn");
-      if (cancelFormBtn) {
-        cancelFormBtn.addEventListener("click", () => {
-          document.getElementById("form-popup").style.display = "none";
-          document.getElementById("podcast-detail").style.display = "none";
-          document.getElementById("podcast-list").style.display = "flex";
-        });
-      }
-    
-      // Setup the submission logic
-      handlePodcastFormSubmission();
-    }
-    
-    /**
-     * Custom modal for deleting a podcast
-     */
-    function showDeleteConfirmationModal(message, onConfirm, onCancel) {
-      const modal = document.createElement("div");
-      modal.className = "popup";
-      modal.style.display = "flex";
-    
-      modal.innerHTML = `
-        <div class="form-box">
-          <h2 class="form-title">Confirm Deletion</h2>
-          <p>${message}</p>
-          <div class="form-actions">
-            <button class="cancel-btn" id="cancel-delete-btn">Cancel</button>
-            <button class="delete-btn" id="confirm-delete-btn">Delete</button>
-          </div>
-        </div>
-      `;
-    
-      document.body.appendChild(modal);
-    
-      modal.querySelector("#cancel-delete-btn").addEventListener("click", () => {
-        document.body.removeChild(modal);
-        if (onCancel) onCancel();
-      });
-    
-      modal.querySelector("#confirm-delete-btn").addEventListener("click", () => {
-        document.body.removeChild(modal);
-        if (onConfirm) onConfirm();
-      });
-    }
-    
-    /**
-     * A global function for playing audio. This is attached to window so
-     * that "onclick" HTML attributes can reference it in the template string.
-     */
-    function attachInlineAudioPlayer(containerElement, audioUrl, title) {
-      // Remove an existing audio element if only one at a time
-      const oldAudio = containerElement.querySelector(".inline-audio-player");
-      if (oldAudio) {
-        oldAudio.remove();
-      }
-    
-      // Optional: Add a small title under the image
-      const audioTitle = document.createElement("div");
-      audioTitle.classList.add("inline-audio-title");
-      audioTitle.textContent = title;
-      containerElement.appendChild(audioTitle);
-    
-      // Create the <audio>
-      const audioEl = document.createElement("audio");
-      audioEl.classList.add("inline-audio-player");
-      audioEl.controls = true;
-      audioEl.autoplay = true;
-      audioEl.innerHTML = `<source src="${audioUrl}" type="audio/mpeg">`;
-    
-      // Append below the image in the same container
-      containerElement.appendChild(audioEl);
-    }
-    
-    /***************************************
-      3) USING IT (example)
-    ***************************************/
-    function renderPodcastCard(podcast) {
-      const card = document.createElement("div");
-      // ... your card HTML ...
-      const imageContainer = document.createElement("div");
-      imageContainer.classList.add("podcast-image-container");
-      imageContainer.style.backgroundImage = `url('${podcast.imageUrl}')`;
-    
-      // Create a "Play" button
-      const playButton = document.createElement("button");
-      playButton.textContent = "Play Episode";
-      playButton.addEventListener("click", (e) => {
-        e.stopPropagation();
-        attachInlineAudioPlayer(imageContainer, podcast.audioUrl, podcast.podName);
-      });
-    
-      card.appendChild(imageContainer);
-      card.appendChild(playButton);
-    
-      return card;
-    };
-    
+    );
+  });
+});
