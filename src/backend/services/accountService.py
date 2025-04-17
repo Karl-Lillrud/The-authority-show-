@@ -1,73 +1,112 @@
-# account_service.py
 import logging
+from datetime import datetime
+import uuid
 from backend.database.mongo_connection import collection
 
 logger = logging.getLogger(__name__)
 
+
 class AccountService:
     def __init__(self):
         self.account_collection = collection.database.Accounts
-        self.team_service = None  # Will be set after initialization to avoid circular import
-    
+        self.team_service = None  # Sätts senare för att undvika cirkulär import
+
     def set_team_service(self, team_service):
-        """Set the team service to avoid circular dependency."""
+        """Sätt team service för att undvika cirkulär import."""
         self.team_service = team_service
-    
+
+    def create_account_if_not_exists(
+        self, user_id, email, is_company=False, company_name=""
+    ):
+        """Skapa ett konto om det inte redan finns för användaren."""
+        existing_account = self.account_collection.find_one(
+            {"$or": [{"email": email}, {"ownerId": user_id}]}
+        )
+        if existing_account:
+            logger.info(f"Konto finns redan för email {email} eller userId {user_id}.")
+            return existing_account, 200
+
+        account_data = {
+            "_id": str(uuid.uuid4()),
+            "ownerId": user_id,
+            "email": email,
+            "isCompany": is_company,
+            "companyName": company_name,
+            "subscriptionId": str(uuid.uuid4()),
+            "creditId": str(uuid.uuid4()),
+            "subscriptionStatus": "active",
+            "createdAt": datetime.utcnow(),
+            "referralBonus": 0,
+            "subscriptionStart": datetime.utcnow(),
+            "subscriptionEnd": None,
+            "isActive": True,
+            "created_at": datetime.utcnow(),
+            "isFirstLogin": True,
+        }
+        self.account_collection.insert_one(account_data)
+        logger.info(f"Konto skapat för userId {user_id}, email {email}.")
+        return account_data, 201
+
     def get_user_account(self, user_id):
-        """Get personal account for a user."""
-        return self.account_collection.find_one({"userId": user_id})
-    
-    def get_account_by_user_id(self, user_id):
-        """Get account by user ID."""
-        account = self.account_collection.find_one({"userId": user_id})
-        if account:
-            logger.info(f"🔹 Found account for user: {account['_id']}")
-            return account
-        else:
-            logger.warning(f"⚠️ No account found for user with ID: {user_id}")
+        """Hämta konto för en användare baserat på ownerId."""
+        account = self.account_collection.find_one({"ownerId": user_id})
+        if not account:
+            logger.warning(f"Inget konto hittades för userId {user_id}.")
             return None
-    
+        logger.info(f"Konto hittades för userId {user_id}: {account['_id']}.")
+        return account
+
     def determine_active_account(self, user_id, user_account, team_list):
-        """Determine which account to use - personal or team."""
-        # If user has personal account, use it
+        """Bestäm vilket konto som ska användas - personligt eller teamkonto."""
         if user_account:
+            logger.info(f"Använder personligt konto för userId {user_id}.")
             return user_account
-        
-        # If no personal account but user is in teams, try to use team account
+
         if not team_list:
+            logger.warning(f"Inga team hittades för userId {user_id}.")
             return None
-            
+
         first_team = team_list[0]
         team_id = first_team.get("_id")
-        logger.info(f"🔹 First team details: {first_team}")
-        logger.info(f"🔹 Team ID: {team_id}")
-        
-        # Try to find team owner's account first
-        owner_id = self.team_service.find_team_owner(team_id)
+        logger.info(f"Första teamet: {team_id}")
+
+        owner_id = (
+            self.team_service.find_team_owner(team_id) if self.team_service else None
+        )
         if owner_id:
-            owner_account = self.get_account_by_user_id(owner_id)
+            owner_account = self.get_user_account(owner_id)
             if owner_account:
+                logger.info(f"Använder teamägarens konto för team {team_id}.")
                 return owner_account
-        
-        # Fallback: try to find any team member's account
-        member_id = self.team_service.find_any_team_member(team_id)
-        if member_id and member_id != user_id:  # Avoid finding the same user
-            return self.get_account_by_user_id(member_id)
-        
+
+        member_id = (
+            self.team_service.find_any_team_member(team_id)
+            if self.team_service
+            else None
+        )
+        if member_id and member_id != user_id:
+            member_account = self.get_user_account(member_id)
+            if member_account:
+                logger.info(f"Använder teammedlems konto för team {team_id}.")
+                return member_account
+
+        logger.warning(f"Inget aktivt konto hittades för userId {user_id}.")
         return None
 
-    def create_account_if_not_exists(self, account_data):
-        """Create an account only if it does not already exist."""
-        existing_account = self.account_collection.find_one({
-            "$or": [
-                {"email": account_data["email"]},
-                {"userId": account_data["userId"]}
-            ]
-        })
-        if existing_account:
-            logger.info(f"Account already exists for email {account_data['email']} or userId {account_data['userId']}.")
-            return existing_account
+    def update_account(self, user_id, updates):
+        """Uppdatera konto baserat på ownerId."""
+        if not updates:
+            logger.warning("Inga giltiga fält angivna för uppdatering.")
+            return {"error": "Inga giltiga fält angivna för uppdatering"}, 400
 
-        self.account_collection.insert_one(account_data)
-        logger.info(f"Account created successfully: {account_data}")
-        return account_data
+        result = self.account_collection.update_one(
+            {"ownerId": user_id}, {"$set": updates}
+        )
+        if result.matched_count == 0:
+            logger.warning(
+                f"Inget konto hittades för userId {user_id} vid uppdatering."
+            )
+            return {"error": "Konto hittades inte"}, 404
+
+        logger.info(f"Konto uppdaterat för userId {user_id}.")
+        return {"message": "Konto uppdaterat framgångsrikt"}, 200

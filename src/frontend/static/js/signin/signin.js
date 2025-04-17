@@ -12,6 +12,7 @@ document.addEventListener("DOMContentLoaded", function () {
       if (!email) {
         errorMessage.textContent = "Please enter your email.";
         errorMessage.style.display = "block";
+        successMessage.style.display = "none";
         return;
       }
 
@@ -19,7 +20,7 @@ document.addEventListener("DOMContentLoaded", function () {
         const response = await fetch("/send-login-link", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ email }),
+          body: JSON.stringify({ email })
         });
 
         const result = await response.json();
@@ -34,14 +35,17 @@ document.addEventListener("DOMContentLoaded", function () {
           successMessage.style.display = "none";
         }
       } catch (error) {
-        console.error("Error:", error);
+        console.error("Error sending login link:", error);
         errorMessage.textContent = "An error occurred. Please try again.";
         errorMessage.style.display = "block";
         successMessage.style.display = "none";
       }
     });
+  } else {
+    console.warn("Send login link button not found in DOM");
   }
 
+  // Handle token-based login from URL
   const urlParams = new URLSearchParams(window.location.search);
   const token = urlParams.get("token");
 
@@ -50,71 +54,76 @@ document.addEventListener("DOMContentLoaded", function () {
     fetch("/verify-login-token", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ token }),
+      body: JSON.stringify({ token })
     })
-      .then((response) => response.json())
+      .then(async (response) => {
+        if (!response.ok) {
+          const text = await response.text();
+          throw new Error(
+            `HTTP error! Status: ${response.status}, Response: ${text}`
+          );
+        }
+        return response.json();
+      })
       .then((data) => {
         if (data.redirect_url) {
           window.location.href = data.redirect_url;
         } else {
-          alert(data.error || "Failed to log in with the provided link.");
+          errorMessage.textContent =
+            data.error || "Failed to log in with the provided link.";
+          errorMessage.style.display = "block";
+          successMessage.style.display = "none";
         }
       })
       .catch((error) => {
-        console.error("Error:", error);
-        alert("An error occurred. Please try again.");
+        console.error("Error verifying token:", error);
+        errorMessage.textContent =
+          "An error occurred during login. Please try again.";
+        errorMessage.style.display = "block";
+        successMessage.style.display = "none";
       });
   }
 
-  const form = document.getElementById("login-form");
-  form.addEventListener("submit", async function (event) {
-    event.preventDefault();
+  // Handle email/password login form (if used)
+  const form = document.getElementById("signin-form");
+  if (form) {
+    form.addEventListener("submit", async function (event) {
+      event.preventDefault();
 
-    const email = emailInput.value.trim();
-    const password = document.getElementById("password").value.trim();
+      const email = emailInput.value.trim();
+      const password = document.getElementById("password")?.value?.trim();
 
-    if (!email || !password) {
-      errorMessage.textContent = "Please enter both email and password.";
-      errorMessage.style.display = "block";
-      return;
-    }
-
-    try {
-      const redirectUrl = await signin(email, password);
-      window.location.href = redirectUrl || "/podprofile"; // Default to /podprofile
-    } catch (error) {
-      errorMessage.textContent = error.message;
-      errorMessage.style.display = "block";
-    }
-  });
-
-  const verificationCodeForm = document.getElementById("verification-code-form");
-  verificationCodeForm.addEventListener("submit", async function (event) {
-    event.preventDefault();
-    const email = document.getElementById("verification-email").value.trim();
-    const code = document.getElementById("verification-code").value.trim();
-
-    if (!email || !code) {
-        alert("Please enter both email and verification code.");
+      if (!email || (password !== undefined && !password)) {
+        errorMessage.textContent = "Please enter both email and password.";
+        errorMessage.style.display = "block";
+        successMessage.style.display = "none";
         return;
-    }
+      }
 
-    try {
-        const response = await fetch("/verify-login-token", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ token: code }),
+      try {
+        const response = await fetch("/signin", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email, password })
         });
 
         const result = await response.json();
         if (response.ok) {
-            window.location.href = result.redirect_url || "/";
+          window.location.href = result.redirect_url || "/podprofile";
         } else {
-            alert(result.error || "Verification failed. Please try again.");
+          errorMessage.textContent =
+            result.error || "Failed to sign in. Please try again.";
+          errorMessage.style.display = "block";
+          successMessage.style.display = "none";
         }
-    } catch (error) {
-        console.error("Error:", error);
-        alert("An error occurred. Please try again.");
-    }
-  });
+      } catch (error) {
+        console.error("Error during sign-in:", error);
+        errorMessage.textContent = "An error occurred. Please try again.";
+        errorMessage.style.display = "block";
+        successMessage.style.display = "none";
+      }
+    });
+  } else {
+    console.warn("Sign-in form not found in DOM");
+  }
 });

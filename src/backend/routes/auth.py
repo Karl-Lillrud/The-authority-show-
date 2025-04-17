@@ -1,354 +1,119 @@
-from flask import (
-    Blueprint,
-    request,
-    jsonify,
-    redirect,
-    render_template,
-    flash,
-    url_for,
-    session,
-    current_app,
-)
-from backend.repository.auth_repository import AuthRepository
-from backend.services.TeamInviteService import TeamInviteService
+from flask import Blueprint, request, jsonify, redirect, render_template, session
 from backend.services.authService import AuthService
-import os
-import logging  # Add logging import
+from backend.utils.email_utils import send_login_email
+import logging
 from itsdangerous import URLSafeTimedSerializer, SignatureExpired, BadSignature
-from backend.database.mongo_connection import collection
-from datetime import datetime
-from bson import ObjectId  # Add this import for ObjectId
-import uuid  # Add this import for generating unique IDs
+from flask import current_app
 
-# Define Blueprint
 auth_bp = Blueprint("auth_bp", __name__)
-
-# Instantiate the Auth Repository
-auth_repo = AuthRepository()
-
 auth_service = AuthService()
-
-# Configure logger
 logger = logging.getLogger(__name__)
-logging.basicConfig(level=logging.INFO)
-
-# Instantiate AuthService
-
-API_BASE_URL = os.getenv("API_BASE_URL", "http://127.0.0.1:8000")
 
 
 @auth_bp.route("/signin", methods=["GET"], endpoint="signin_page")
 @auth_bp.route("/", methods=["GET"], endpoint="root_signin_page")
 def signin_page():
-    """
-    Serves the sign-in page.
-    """
-    # Check if the user has an active session cookie
     if "user_id" in session and session.get("user_id"):
-        return redirect("/dashboard")  # Redirect to dashboard if session is active
-
+        return redirect("/dashboard")
     if request.cookies.get("remember_me") == "true":
-        return redirect("/podprofile")  # Redirect to podprofile instead of dashboard
-    return render_template("signin/signin.html", API_BASE_URL=API_BASE_URL)
+        return redirect("/podprofile")
+    return render_template("signin/signin.html")
 
 
-@auth_bp.route("/signin", methods=["POST"], endpoint="signin_submit")
-def signin_submit():
-    """
-    Handle OTP-based sign-in.
-    """
-    if request.content_type != "application/json":
-        return (
-            jsonify({"error": "Invalid Content-Type. Expected application/json"}),
-            415,
-        )
-
+@auth_bp.route("/signin", methods=["POST"], endpoint="signin")
+def signin():
     data = request.get_json()
-    email = data.get("email")
-    otp = data.get("otp")
-
-    if not email or not otp:
-        return jsonify({"error": "Email and OTP are required"}), 400
-
-    response, status_code = auth_service.verify_otp_and_login(email, otp)
-
-    if status_code == 200 and response.get("user_authenticated"):
-        user = response.get("user")
-        session["user_id"] = str(user["_id"])
-        session["email"] = user["email"]
-        logger.info(f"User {user['email']} logged in successfully.")
-
-        # Check if an account exists for the user
-        account = collection.database.Accounts.find_one({"email": email})
-        if not account:
-            account_data = {
-                "_id": str(uuid.uuid4()),
-                "ownerId": str(user["_id"]),  # Use ownerId
-                "subscriptionId": str(uuid.uuid4()),
-                "creditId": str(uuid.uuid4()),
-                "email": email,
-                "isCompany": False,
-                "companyName": "",
-                "paymentInfo": "",
-                "subscriptionStatus": "active",
-                "createdAt": datetime.utcnow(),
-                "referralBonus": 0,
-                "subscriptionStart": datetime.utcnow(),
-                "subscriptionEnd": None,
-                "isActive": True,
-                "created_at": datetime.utcnow(),
-                "isFirstLogin": True,
-            }
-            collection.database.Accounts.insert_one(account_data)
-
-        # Set the remember_me cookie
-        response = jsonify({"redirect_url": "/dashboard"})
-        response.set_cookie(
-            "remember_me", "true", max_age=30 * 24 * 60 * 60
-        )  # Cookie valid for 30 days
-        return response, 200
-    else:
-        logger.warning("Failed OTP login attempt.")
-        return jsonify({"error": response.get("error", "Invalid OTP")}), 401
-
-
-@auth_bp.route("/logout", methods=["GET"])
-def logout_user():
-    """
-    Logs out the user by clearing the session and removing the remember_me cookie.
-    """
-    session.clear()  # Clear all session data
-
-    # Remove the remember_me cookie
-    response = jsonify({"message": "Logout successful", "redirect_url": "/signin"})
-    response.delete_cookie("remember_me")
-    return response, 200
-
-
-@auth_bp.route("/verify-and-signin", methods=["POST"], endpoint="verify_and_signin")
-def verify_and_signin():
-    """
-    Endpoint to verify the code and sign in the user.
-    """
-    if request.content_type != "application/json":
-        return (
-            jsonify({"error": "Invalid Content-Type. Expected application/json"}),
-            415,
-        )
-
-    data = request.get_json()
-    email = data.get("email")
-    code = data.get("code")
-
-    if not email or not code:
-        return jsonify({"error": "Email and code are required"}), 400
-
-    try:
-        # Call the AuthService to verify the code
-        result = auth_service.verify_code_and_login(email, code)
-
-        if result.get("status") == 200:
-            user = collection.find_one({"email": email})
-            if not user:
-                # Create a new user if not existing
-                user_data = {
-                    "_id": str(uuid.uuid4()),  # changed from "id" to "_id"
-                    "email": email,
-                    "created_at": datetime.utcnow(),
-                }
-                collection.insert_one(user_data)
-                user = collection.find_one({"_id": user_data["_id"]})
-
-                # Create an account for the user
-                account_data = {
-                    "_id": str(uuid.uuid4()),  # changed from "id" to "_id"
-                    "ownerId": user["_id"],  # Use ownerId
-                    "email": email,
-                    "created_at": datetime.utcnow(),
-                    "isActive": True,
-                }
-                collection.database.Accounts.insert_one(account_data)
-
-            # Log the user in by setting session variables
-            session["user_id"] = user[
-                "_id"
-            ]  # Changed here from user["id"] to user["_id"]
-            session["email"] = user["email"]
-
-            return jsonify(result), 200
-        elif result.get("status") == 400:
-            logger.warning(f"Invalid or expired code for email: {email}")
-            return jsonify({"error": "Invalid or expired code"}), 400
-        else:
-            logger.error(f"Unexpected error during code verification: {result}")
-            return jsonify({"error": "An unexpected error occurred"}), 500
-    except Exception as e:
-        logger.error(f"Error verifying code for email {email}: {e}", exc_info=True)
-        return jsonify({"error": f"Failed to verify code: {str(e)}"}), 500
+    response, status_code = auth_service.signin(data)
+    if status_code == 200:
+        response_obj = jsonify(response)
+        response_obj.set_cookie("remember_me", "true", max_age=30 * 24 * 60 * 60)
+        return response_obj, 200
+    return jsonify(response), status_code
 
 
 @auth_bp.route("/send-login-link", methods=["POST"], endpoint="send_login_link")
 def send_login_link():
-    """
-    Endpoint to send a log-in link to the user's email.
-    """
-    if request.content_type != "application/json":
-        logger.error("Invalid Content-Type. Expected application/json")
-        return (
-            jsonify({"error": "Invalid Content-Type. Expected application/json"}),
-            415,
-        )
-
     data = request.get_json()
     email = data.get("email")
-
     if not email:
-        logger.error("Email is required but not provided")
-        return jsonify({"error": "Email is required"}), 400
+        logger.error("Email saknas i begäran")
+        return jsonify({"error": "Email krävs"}), 400
 
     try:
-        # Generate a secure token
+        # Kontrollera att SECRET_KEY är konfigurerad
+        if not current_app.config.get("SECRET_KEY"):
+            logger.error("SECRET_KEY är inte konfigurerad")
+            return jsonify({"error": "Serverkonfigurationsfel: SECRET_KEY saknas"}), 500
+
         serializer = URLSafeTimedSerializer(current_app.config["SECRET_KEY"])
         token = serializer.dumps(email, salt="login-link-salt")
-
-        # Construct the log-in link
         login_link = f"{request.host_url}signin?token={token}"
-        logger.info(f"Generated log-in link for {email}: {login_link}")
-
-        # Send the log-in link via email
-        auth_service.send_login_email(email, login_link)
-
-        logger.info(f"Log-in link sent successfully to {email}")
-        return jsonify({"message": "Log-in link sent successfully"}), 200
+        result = send_login_email(email, login_link)
+        if result.get("success"):
+            return jsonify({"message": "Inloggningslänk skickad"}), 200
+        else:
+            logger.error(
+                f"Misslyckades att skicka inloggningslänk till {email}: {result.get('error')}"
+            )
+            return (
+                jsonify(
+                    {
+                        "error": f"Misslyckades att skicka inloggningslänk: {result.get('error')}"
+                    }
+                ),
+                500,
+            )
     except Exception as e:
-        logger.error(f"Error sending log-in link for {email}: {e}", exc_info=True)
-        return (
-            jsonify({"error": "Failed to send log-in link. Please try again later."}),
-            500,
+        logger.error(
+            f"Fel vid sändning av inloggningslänk för {email}: {str(e)}", exc_info=True
         )
+        return jsonify({"error": f"Internt serverfel: {str(e)}"}), 500
 
 
 @auth_bp.route("/verify-login-token", methods=["POST"], endpoint="verify_login_token")
 def verify_login_token():
-    """
-    Endpoint to verify the login token and log the user in.
-    """
     data = request.get_json()
     token = data.get("token")
-
     if not token:
-        logger.error("Token is missing in the request.")
-        return jsonify({"error": "Token is required"}), 400
+        logger.error("Token saknas i begäran")
+        return jsonify({"error": "Token krävs"}), 400
 
     try:
-        serializer = URLSafeTimedSerializer(current_app.config["SECRET_KEY"])
-        email = serializer.loads(
-            token, salt="login-link-salt", max_age=600
-        )  # Token valid for 10 minutes
-
-        # Check if the user exists in the database
-        user = collection.database.Users.find_one({"email": email})
-        if not user:
-            logger.warning(f"No user found for email: {email}. Creating a new user.")
-            user_data = {
-                "_id": str(uuid.uuid4()),  # Use _id instead of id
-                "email": email,
-                "createdAt": datetime.utcnow(),
-            }
-            collection.database.Users.insert_one(user_data)
-            user = collection.database.Users.find_one({"_id": user_data["_id"]})
-
-        # Check if an account already exists for the email
-        account = collection.database.Accounts.find_one({"email": email})
-        if not account:
-            logger.info(f"No account found for email {email}. Creating a new account.")
-            account_data = {
-                "_id": str(uuid.uuid4()),  # Use _id instead of id
-                "ownerId": user["_id"],  # Use ownerId
-                "subscriptionId": str(uuid.uuid4()),
-                "creditId": str(uuid.uuid4()),
-                "email": email,
-                "isCompany": False,
-                "companyName": "",
-                "paymentInfo": "",
-                "subscriptionStatus": "active",
-                "createdAt": datetime.utcnow(),
-                "referralBonus": 0,
-                "subscriptionStart": datetime.utcnow(),
-                "subscriptionEnd": None,
-                "isActive": True,
-                "created_at": datetime.utcnow(),
-                "isFirstLogin": True,
-            }
-            collection.database.Accounts.insert_one(account_data)
-        else:
-            logger.info(
-                f"Account already exists for email {email}. Skipping account creation."
-            )
-
-        # Log the user in by setting session variables
-        session["user_id"] = user["_id"]
-        session["email"] = user["email"]
-
-        logger.info(f"User {email} successfully logged in via token.")
-        return jsonify({"redirect_url": "/podprofile"}), 200  # Redirect to /podprofile
-
+        response, status_code = auth_service.verify_login_token(token)
+        return jsonify(response), status_code
     except SignatureExpired:
-        logger.error("The provided token has expired.")
-        return jsonify({"error": "Token has expired"}), 400
+        logger.error("Token har gått ut")
+        return jsonify({"error": "Token har gått ut"}), 400
     except BadSignature:
-        logger.error("The provided token has an invalid signature.")
-        return jsonify({"error": "Invalid token"}), 400
+        logger.error("Ogiltig token")
+        return jsonify({"error": "Ogiltig token"}), 400
     except Exception as e:
-        logger.error(f"Unexpected error during token verification: {e}", exc_info=True)
-        return (
-            jsonify(
-                {"error": "An unexpected error occurred during token verification"}
-            ),
-            500,
-        )
+        logger.error(f"Fel vid verifiering av token: {e}", exc_info=True)
+        return jsonify({"error": f"Internt serverfel: {str(e)}"}), 500
 
 
-# Ensure account creation logic is properly integrated
-@auth_bp.route("/signin", methods=["POST"], endpoint="signin")
-def signin():
-    """
-    Handles user sign-in.
-    """
+@auth_bp.route("/verify-otp", methods=["POST"], endpoint="verify_otp")
+def verify_otp():
     data = request.get_json()
     email = data.get("email")
-    password = data.get("password")
-
-    if not email or not password:
-        return jsonify({"error": "Email and password are required"}), 400
+    otp = data.get("otp")
+    if not email or not otp:
+        logger.error("Email eller OTP saknas i begäran")
+        return jsonify({"error": "Email och OTP krävs"}), 400
 
     try:
-        # Authenticate user
-        user = auth_service.authenticate_user(email, password)
-        if user:
-            session["user_id"] = str(user["_id"])  # Set user_id in session
-            session["email"] = user["email"]
-
-            # Ensure account exists for the user
-            account = collection.database.Accounts.find_one(
-                {"ownerId": str(user["_id"])}
-            )  # Query by ownerId
-            if not account:
-                account_data = {
-                    "_id": str(uuid.uuid4()),  # changed from "id" to "_id"
-                    "ownerId": str(user["_id"]),  # Use ownerId
-                    "email": email,
-                    "created_at": datetime.utcnow(),
-                    "isActive": True,
-                }
-                collection.database.Accounts.insert_one(account_data)
-
-            return (
-                jsonify({"redirect_url": "/podprofile"}),
-                200,
-            )  # Redirect to /podprofile
-        else:
-            return jsonify({"error": "Invalid email or password"}), 401
+        response, status_code = auth_service.verify_otp_and_login(email, otp)
+        return jsonify(response), status_code
     except Exception as e:
-        logger.error(f"Error during sign-in: {e}", exc_info=True)
-        return jsonify({"error": "An error occurred during sign-in"}), 500
+        logger.error(f"Fel vid OTP-verifiering: {e}", exc_info=True)
+        return jsonify({"error": f"Internt serverfel: {str(e)}"}), 500
+
+
+@auth_bp.route("/logout", methods=["GET"])
+def logout_user():
+    session.clear()
+    response = jsonify(
+        {"message": "Utloggning framgångsrik", "redirect_url": "/signin"}
+    )
+    response.delete_cookie("remember_me")
+    return response, 200
