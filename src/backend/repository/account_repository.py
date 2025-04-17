@@ -1,7 +1,6 @@
 import uuid
 from datetime import datetime
 from backend.database.mongo_connection import collection
-from backend.models.accounts import AccountSchema
 from backend.services.creditService import initialize_credits
 import logging
 
@@ -14,114 +13,82 @@ class AccountRepository:
 
     def create_account(self, data):
         try:
-            if not data:
-                raise ValueError("No data received or invalid JSON.")
+            if not data or "ownerId" not in data or "email" not in data:
+                return {"error": "ownerId och email krävs"}, 400
 
-            # Check for required fields (ownerId instead of userId)
-            if "ownerId" not in data or "email" not in data:
-                raise ValueError("Missing required fields: ownerId and email")
-
-            # Check for existing account by email or ownerId
             existing_account = self.collection.find_one(
                 {"$or": [{"email": data["email"]}, {"ownerId": data["ownerId"]}]}
             )
             if existing_account:
-                raise ValueError("Account already exists for this email or owner.")
+                return {"error": "Konto finns redan för denna email eller ägare"}, 400
 
-            # Use string _id instead of ObjectId
             account_id = str(uuid.uuid4())
             account_document = {
                 "_id": account_id,
-                "ownerId": data["ownerId"],  # Ensure ownerId is set
-                "userId": data.get("userId"),  # Keep if needed for other relations
+                "ownerId": data["ownerId"],
                 "email": data["email"],
-                "subscriptionId": data.get("subscriptionId"),
-                "creditId": data.get("creditId"),
+                "subscriptionId": data.get("subscriptionId", str(uuid.uuid4())),
+                "creditId": data.get("creditId", str(uuid.uuid4())),
                 "isCompany": data.get("isCompany", False),
                 "companyName": data.get("companyName", ""),
-                "paymentInfo": data.get("paymentInfo", ""),
                 "subscriptionStatus": data.get("subscriptionStatus", "active"),
-                "createdAt": data.get("createdAt", datetime.utcnow()),
+                "createdAt": datetime.utcnow(),
                 "referralBonus": data.get("referralBonus", 0),
-                "subscriptionStart": data.get("subscriptionStart", datetime.utcnow()),
+                "subscriptionStart": datetime.utcnow(),
                 "subscriptionEnd": data.get("subscriptionEnd"),
                 "isActive": data.get("isActive", True),
-                "created_at": data.get("created_at", datetime.utcnow()),
+                "created_at": datetime.utcnow(),
                 "isFirstLogin": data.get("isFirstLogin", True),
             }
-
-            # Insert account into the database
             self.collection.insert_one(account_document)
-            logger.info(f"Account created successfully: {account_document}")
-
+            logger.info(f"Konto skapat: {account_id}")
             initialize_credits(data["ownerId"])
+            return {"message": "Konto skapat", "accountId": account_id}, 201
 
-            return {
-                "message": "Account created successfully",
-                "accountId": account_id,
-            }, 201
-
-        except ValueError as ve:
-            logger.error("ValueError: %s", ve)
-            return {"error": str(ve)}, 400
         except Exception as e:
-            logger.error("Error creating account: %s", e, exc_info=True)
-            return {"error": f"Error creating account: {str(e)}"}, 500
+            logger.error(f"Fel vid skapande av konto: {e}", exc_info=True)
+            return {"error": f"Fel vid skapande av konto: {str(e)}"}, 500
 
     def get_account(self, account_id):
         try:
             account = self.collection.find_one({"_id": account_id})
             if not account:
-                return {"error": "Account not found"}, 404
-
-            schema = AccountSchema()
-            result = schema.dump(account)
-
-            return {"account": result}, 200
-
-        except Exception as e:
-            logger.error(f"Failed to fetch account: {e}")
-            return {"error": f"Failed to fetch account: {str(e)}"}, 500
-
-    def get_account_by_user(self, user_id):  # user_id is the owner's ID
-        try:
-            # Find account by ownerId
-            account = self.collection.find_one({"ownerId": user_id})  # Query by ownerId
-            if not account:
-                return {"error": "Account not found"}, 404
-
+                return {"error": "Konto hittades inte"}, 404
             return {"account": account}, 200
-
         except Exception as e:
-            logger.error(f"Failed to fetch account: {e}")
-            return {"error": f"Failed to fetch account: {str(e)}"}, 500
+            logger.error(f"Fel vid hämtning av konto: {e}", exc_info=True)
+            return {"error": f"Fel vid hämtning av konto: {str(e)}"}, 500
 
-    def edit_account(self, user_id, data):  # user_id is the owner's ID
+    def get_account_by_user(self, user_id):
+        try:
+            account = self.collection.find_one({"ownerId": user_id})
+            if not account:
+                return {"error": "Konto hittades inte"}, 404
+            return {"account": account}, 200
+        except Exception as e:
+            logger.error(f"Fel vid hämtning av konto: {e}", exc_info=True)
+            return {"error": f"Fel vid hämtning av konto: {str(e)}"}, 500
+
+    def edit_account(self, user_id, data):
         try:
             updates = {k: v for k, v in data.items() if v is not None}
-
             if not updates:
-                return {"error": "No valid fields provided for update"}, 400
+                return {"error": "Inga giltiga fält angivna för uppdatering"}, 400
 
-            # Update account based on ownerId
-            self.collection.update_one(
-                {"ownerId": user_id}, {"$set": updates}
-            )  # Query by ownerId
+            result = self.collection.update_one({"ownerId": user_id}, {"$set": updates})
+            if result.matched_count == 0:
+                return {"error": "Konto hittades inte"}, 404
 
-            return {"message": "Profile updated successfully!"}, 200
-
+            return {"message": "Konto uppdaterat framgångsrikt"}, 200
         except Exception as e:
-            logger.error(f"Error updating profile: {e}", exc_info=True)
-            return {"error": f"Error updating profile: {str(e)}"}, 500
+            logger.error(f"Fel vid uppdatering av konto: {e}", exc_info=True)
+            return {"error": f"Fel vid uppdatering av konto: {str(e)}"}, 500
 
-    def delete_by_user(self, user_id):  # user_id is the owner's ID
+    def delete_by_user(self, user_id):
         try:
-            # Delete accounts based on ownerId
-            result = self.collection.delete_many(
-                {"ownerId": user_id}
-            )  # Query by ownerId
-            logger.info(f"Deleted {result.deleted_count} accounts for user {user_id}")
+            result = self.collection.delete_many({"ownerId": user_id})
+            logger.info(f"Raderade {result.deleted_count} konton för userId {user_id}")
             return result.deleted_count
         except Exception as e:
-            logger.error(f"Failed to delete accounts: {e}", exc_info=True)
+            logger.error(f"Fel vid radering av konton: {e}", exc_info=True)
             return 0
