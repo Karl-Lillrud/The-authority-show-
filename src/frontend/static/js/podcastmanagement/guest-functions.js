@@ -1,6 +1,7 @@
 import {
   fetchGuestsRequest,
-  addGuestRequest
+  addGuestRequest,
+  deleteGuestRequest
 } from "../../../static/requests/guestRequests.js";
 import {
   fetchEpisodesByPodcast,
@@ -338,7 +339,7 @@ export function renderGuestDetail(guest) {
 </div>
 
 <div class="detail-actions">
-  <button class="delete-btn" id="delete-guest-btn" data-id="${guest._id}">
+  <button class="delete-btn" id="delete-guest-btn" data-id="${guest.id}">
     ${shared.svgpodcastmanagement.delete} Delete Guest
   </button>
 </div>
@@ -399,10 +400,22 @@ export function renderGuestDetail(guest) {
   });
 
   // Delete button event listener
-  document.getElementById("delete-guest-btn").addEventListener("click", () => {
+  document.getElementById("delete-guest-btn").addEventListener("click", async () => {
     if (confirm("Are you sure you want to delete this guest?")) {
-      // Logic to delete the guest
-      console.log("Delete guest:", guest._id);
+      try {
+        const response = await deleteGuestRequest(guest.id);
+        if (response && response.message === "Guest deleted successfully") {
+          console.log("Guest deleted:", guest.id);
+          showNotification("Success", "Guest deleted successfully!", "success");
+          // Optionally, refresh the guest list or navigate away
+        } else {
+          console.error("Failed to delete guest:", response.error || "Unknown error");
+          showNotification("Error", response.error || "Failed to delete guest.", "error");
+        }
+      } catch (error) {
+        console.error("Error deleting guest:", error);
+        showNotification("Error", "An error occurred while deleting the guest.", "error");
+      }
     }
   });
 }
