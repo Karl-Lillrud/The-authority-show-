@@ -134,6 +134,12 @@ async function updateSubscriptionUI() {
           cancelButton.disabled = true;
           cancelButton.textContent = "Subscription Cancelled";
         }
+        
+        // Remove any existing renewal message element
+        const renewalMessageElement = document.querySelector(".renewal-message");
+        if (renewalMessageElement) {
+          renewalMessageElement.remove();
+        }
       } else {
         statusElement.textContent = subscription.status || "Inactive";
         statusElement.classList.remove("cancelled");
@@ -159,14 +165,46 @@ async function updateSubscriptionUI() {
         const planName = card.querySelector("h3").textContent.trim();
         const upgradeBtn = card.querySelector(".plan-button");
         
-        if (planName === subscription.plan) {
+        if (planName === "Free") {
+          // Special handling for Free tier
+          if (subscription.plan === "Free" || 
+              (subscription.is_cancelled && subscription.status !== "active")) {
+            // Only show Free as current plan if user is actually on Free plan
+            // or their paid subscription is already inactive
+            card.classList.add("current-plan");
+            if (upgradeBtn) {
+              upgradeBtn.textContent = "Current Plan";
+              upgradeBtn.disabled = true;
+            }
+          } else if (subscription.is_cancelled && subscription.status === "active") {
+            // If paid plan is cancelled but still active, show "Default Plan"
+            card.classList.remove("current-plan");
+            if (upgradeBtn) {
+              upgradeBtn.textContent = "Default Plan";
+              upgradeBtn.disabled = true;
+            }
+          } else {
+            // Free is not the current plan and not cancelled
+            card.classList.remove("current-plan");
+            if (upgradeBtn) {
+              upgradeBtn.textContent = "Default Plan";
+              upgradeBtn.disabled = true;
+            }
+          }
+        } else if (planName === subscription.plan) {
+          // Handle the current subscription plan
           card.classList.add("current-plan");
           if (upgradeBtn) {
             upgradeBtn.textContent = subscription.is_cancelled ? "Cancelled" : "Current Plan";
             upgradeBtn.disabled = true;
           }
         } else {
+          // Handle other plans
           card.classList.remove("current-plan");
+          if (upgradeBtn) {
+            upgradeBtn.textContent = "Upgrade";
+            upgradeBtn.disabled = false;
+          }
         }
       });
     } else {
