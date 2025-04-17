@@ -10,7 +10,7 @@ document.addEventListener("DOMContentLoaded", function () {
       const email = emailInput.value.trim();
 
       if (!email) {
-        errorMessage.textContent = "Please enter your email.";
+        errorMessage.textContent = "Vänligen ange din e-postadress.";
         errorMessage.style.display = "block";
         successMessage.style.display = "none";
         return;
@@ -25,24 +25,27 @@ document.addEventListener("DOMContentLoaded", function () {
 
         const result = await response.json();
         if (response.ok) {
-          successMessage.textContent = "Log-in link sent to your email!";
+          successMessage.textContent =
+            "Inloggningslänk har skickats till din e-post!";
           successMessage.style.display = "block";
           errorMessage.style.display = "none";
         } else {
           errorMessage.textContent =
-            result.error || "Failed to send log-in link.";
+            result.error ||
+            "Misslyckades att skicka inloggningslänk. Försök igen senare.";
           errorMessage.style.display = "block";
           successMessage.style.display = "none";
         }
       } catch (error) {
-        console.error("Error sending login link:", error);
-        errorMessage.textContent = "An error occurred. Please try again.";
+        console.error("Fel vid sändning av inloggningslänk:", error);
+        errorMessage.textContent =
+          "Ett oväntat fel uppstod vid sändning av inloggningslänk. Försök igen senare.";
         errorMessage.style.display = "block";
         successMessage.style.display = "none";
       }
     });
   } else {
-    console.warn("Send login link button not found in DOM");
+    console.warn("Knappen för att skicka inloggningslänk hittades inte i DOM");
   }
 
   // Handle token-based login from URL
@@ -58,9 +61,11 @@ document.addEventListener("DOMContentLoaded", function () {
     })
       .then(async (response) => {
         if (!response.ok) {
-          const text = await response.text();
+          const result = await response.json();
           throw new Error(
-            `HTTP error! Status: ${response.status}, Response: ${text}`
+            `HTTP-fel! Status: ${response.status}, Meddelande: ${
+              result.error || "Okänt fel"
+            }`
           );
         }
         return response.json();
@@ -70,15 +75,27 @@ document.addEventListener("DOMContentLoaded", function () {
           window.location.href = data.redirect_url;
         } else {
           errorMessage.textContent =
-            data.error || "Failed to log in with the provided link.";
+            data.error || "Misslyckades att logga in med den angivna länken.";
           errorMessage.style.display = "block";
           successMessage.style.display = "none";
         }
       })
       .catch((error) => {
-        console.error("Error verifying token:", error);
-        errorMessage.textContent =
-          "An error occurred during login. Please try again.";
+        console.error("Fel vid verifiering av token:", error);
+        const errorMsg = error.message.toLowerCase();
+        if (errorMsg.includes("misslyckades att skapa konto")) {
+          errorMessage.textContent =
+            "Misslyckades att skapa konto. Kontrollera att din e-post är korrekt eller kontakta support.";
+        } else if (errorMsg.includes("token har gått ut")) {
+          errorMessage.textContent =
+            "Inloggningslänken har gått ut. Skicka en ny länk.";
+        } else if (errorMsg.includes("ogiltig token")) {
+          errorMessage.textContent =
+            "Inloggningslänken är ogiltig. Försök med en ny länk.";
+        } else {
+          errorMessage.textContent =
+            "Ett fel uppstod under inloggningen. Försök igen eller kontakta support.";
+        }
         errorMessage.style.display = "block";
         successMessage.style.display = "none";
       });
@@ -94,7 +111,7 @@ document.addEventListener("DOMContentLoaded", function () {
       const password = document.getElementById("password")?.value?.trim();
 
       if (!email || (password !== undefined && !password)) {
-        errorMessage.textContent = "Please enter both email and password.";
+        errorMessage.textContent = "Vänligen ange både e-post och lösenord.";
         errorMessage.style.display = "block";
         successMessage.style.display = "none";
         return;
@@ -112,18 +129,18 @@ document.addEventListener("DOMContentLoaded", function () {
           window.location.href = result.redirect_url || "/podprofile";
         } else {
           errorMessage.textContent =
-            result.error || "Failed to sign in. Please try again.";
+            result.error || "Misslyckades att logga in. Försök igen.";
           errorMessage.style.display = "block";
           successMessage.style.display = "none";
         }
       } catch (error) {
-        console.error("Error during sign-in:", error);
-        errorMessage.textContent = "An error occurred. Please try again.";
+        console.error("Fel under inloggning:", error);
+        errorMessage.textContent = "Ett fel uppstod. Försök igen.";
         errorMessage.style.display = "block";
         successMessage.style.display = "none";
       }
     });
   } else {
-    console.warn("Sign-in form not found in DOM");
+    console.warn("Inloggningsformulär hittades inte i DOM");
   }
 });

@@ -1,8 +1,7 @@
-import uuid
+import logging
 from datetime import datetime
 from backend.database.mongo_connection import collection
-from backend.services.creditService import initialize_credits
-import logging
+from backend.repository.auth_repository import AuthRepository
 
 logger = logging.getLogger(__name__)
 
@@ -10,40 +9,25 @@ logger = logging.getLogger(__name__)
 class AccountRepository:
     def __init__(self):
         self.collection = collection.database.Accounts
+        self.auth_repository = AuthRepository()
 
     def create_account(self, data):
         try:
             if not data or "ownerId" not in data or "email" not in data:
                 return {"error": "ownerId och email krävs"}, 400
 
-            existing_account = self.collection.find_one(
-                {"$or": [{"email": data["email"]}, {"ownerId": data["ownerId"]}]}
-            )
-            if existing_account:
-                return {"error": "Konto finns redan för denna email eller ägare"}, 400
-
-            account_id = str(uuid.uuid4())
-            account_document = {
-                "_id": account_id,
-                "ownerId": data["ownerId"],
-                "email": data["email"],
-                "subscriptionId": data.get("subscriptionId", str(uuid.uuid4())),
-                "creditId": data.get("creditId", str(uuid.uuid4())),
-                "isCompany": data.get("isCompany", False),
-                "companyName": data.get("companyName", ""),
-                "subscriptionStatus": data.get("subscriptionStatus", "active"),
-                "createdAt": datetime.utcnow(),
-                "referralBonus": data.get("referralBonus", 0),
-                "subscriptionStart": datetime.utcnow(),
-                "subscriptionEnd": data.get("subscriptionEnd"),
-                "isActive": data.get("isActive", True),
-                "created_at": datetime.utcnow(),
-                "isFirstLogin": data.get("isFirstLogin", True),
-            }
-            self.collection.insert_one(account_document)
-            logger.info(f"Konto skapat: {account_id}")
-            initialize_credits(data["ownerId"])
-            return {"message": "Konto skapat", "accountId": account_id}, 201
+            # Use AuthRepository to create or retrieve account
+            account_result, status_code = self.auth_repository.create_account(data)
+            if status_code in [200, 201]:
+                logger.info(
+                    f"Konto {'skapat' if status_code == 201 else 'hittades'} för ownerId {data['ownerId']}: {account_result['accountId']}"
+                )
+                return account_result, status_code
+            else:
+                logger.error(
+                    f"Misslyckades att skapa/hämta konto för ownerId {data['ownerId']}: {account_result.get('error')}"
+                )
+                return account_result, status_code
 
         except Exception as e:
             logger.error(f"Fel vid skapande av konto: {e}", exc_info=True)
