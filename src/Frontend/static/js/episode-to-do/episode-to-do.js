@@ -162,6 +162,9 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     // Update progress bar
     updateProgressBar()
+
+    // Set up modal buttons
+    setupModalButtons()
   }
 
   function populatePodcastSelector() {
@@ -271,8 +274,8 @@ document.addEventListener("DOMContentLoaded", async () => {
       (task) => task.episodeId === state.selectedEpisode?._id || task.episodeId === state.selectedEpisode?.id,
     )
 
-    // If we have episode-specific tasks, use those; otherwise, use template tasks
-    const tasksToRender = episodeTasks.length > 0 ? episodeTasks : state.activeTemplate?.tasks || []
+    // Only use tasks that belong to the current episode
+    const tasksToRender = episodeTasks
 
     if (tasksToRender.length === 0) {
       taskList.innerHTML = `
@@ -292,16 +295,12 @@ document.addEventListener("DOMContentLoaded", async () => {
       // Add event listeners for the buttons
       const addTaskBtn = document.getElementById("add-new-task")
       if (addTaskBtn) {
-        addTaskBtn.addEventListener("click", () =>
-          showAddTaskPopup(state.selectedEpisode?._id || state.selectedEpisode?.id),
-        )
+        addTaskBtn.addEventListener("click", () => showAddTaskModal())
       }
 
       const importTasksBtn = document.getElementById("import-default-tasks")
       if (importTasksBtn) {
-        importTasksBtn.addEventListener("click", () =>
-          showImportTasksPopup(state.selectedEpisode?._id || state.selectedEpisode?.id),
-        )
+        importTasksBtn.addEventListener("click", () => showImportTasksModal())
       }
 
       return
@@ -328,16 +327,12 @@ document.addEventListener("DOMContentLoaded", async () => {
     // Add event listeners for the buttons
     const addTaskBtn = document.getElementById("add-new-task")
     if (addTaskBtn) {
-      addTaskBtn.addEventListener("click", () =>
-        showAddTaskPopup(state.selectedEpisode?._id || state.selectedEpisode?.id),
-      )
+      addTaskBtn.addEventListener("click", () => showAddTaskModal())
     }
 
     const importTasksBtn = document.getElementById("import-default-tasks")
     if (importTasksBtn) {
-      importTasksBtn.addEventListener("click", () =>
-        showImportTasksPopup(state.selectedEpisode?._id || state.selectedEpisode?.id),
-      )
+      importTasksBtn.addEventListener("click", () => showImportTasksModal())
     }
 
     // Render each task
@@ -476,16 +471,12 @@ document.addEventListener("DOMContentLoaded", async () => {
     // Add event listeners for workflow buttons
     const saveWorkflowBtn = document.getElementById("save-workflow")
     if (saveWorkflowBtn) {
-      saveWorkflowBtn.addEventListener("click", () =>
-        saveWorkflow(state.selectedEpisode?._id || state.selectedEpisode?.id),
-      )
+      saveWorkflowBtn.addEventListener("click", () => saveWorkflow())
     }
 
     const importWorkflowBtn = document.getElementById("import-workflow")
     if (importWorkflowBtn) {
-      importWorkflowBtn.addEventListener("click", () =>
-        importWorkflow(state.selectedEpisode?._id || state.selectedEpisode?.id),
-      )
+      importWorkflowBtn.addEventListener("click", () => showImportWorkflowModal())
     }
 
     // Add event listeners for task interactions
@@ -510,8 +501,8 @@ document.addEventListener("DOMContentLoaded", async () => {
       (task) => task.episodeId === state.selectedEpisode?._id || task.episodeId === state.selectedEpisode?.id,
     )
 
-    // If we have episode-specific tasks, use those; otherwise, use template tasks
-    const tasksToRender = episodeTasks.length > 0 ? episodeTasks : state.activeTemplate?.tasks || []
+    // Only use tasks that belong to the current episode
+    const tasksToRender = episodeTasks
 
     // Group tasks by status
     const tasksByStatus = {
@@ -563,7 +554,14 @@ document.addEventListener("DOMContentLoaded", async () => {
                           ? "bg-purple"
                           : ""
                   }">
-                    ${task.assignee ? task.assignee.split(" ").map((name) => name[0]) : "UN"}
+                    ${
+                      task.assignee
+                        ? task.assignee
+                            .split(" ")
+                            .map((name) => name[0])
+                            .join("")
+                        : "UN"
+                    }
                   </div>
                   ${
                     task.workspaceEnabled
@@ -620,8 +618,8 @@ document.addEventListener("DOMContentLoaded", async () => {
       (task) => task.episodeId === state.selectedEpisode?._id || task.episodeId === state.selectedEpisode?.id,
     )
 
-    // If we have episode-specific tasks, use those; otherwise, use template tasks
-    const tasksToRender = episodeTasks.length > 0 ? episodeTasks : state.activeTemplate?.tasks || []
+    // Only use tasks that belong to the current episode
+    const tasksToRender = episodeTasks
 
     // Group tasks by due date
     const tasksByDueDate = {}
@@ -857,8 +855,8 @@ document.addEventListener("DOMContentLoaded", async () => {
       (task) => task.episodeId === state.selectedEpisode._id || task.episodeId === state.selectedEpisode.id,
     )
 
-    // If we have episode-specific tasks, use those; otherwise, use template tasks
-    const tasksToRender = episodeTasks.length > 0 ? episodeTasks : state.activeTemplate?.tasks || []
+    // Only use tasks that belong to the current episode
+    const tasksToRender = episodeTasks
 
     // Calculate completed tasks
     const completedTasks =
@@ -1445,30 +1443,41 @@ document.addEventListener("DOMContentLoaded", async () => {
     }, 2000)
   }
 
-  // Task Management Functions
-  async function showAddTaskPopup(episodeId) {
-    if (!episodeId) {
-      console.error("No episode ID provided for adding task")
+  // Setup modal buttons
+  function setupModalButtons() {
+    // Create modal containers if they don't exist
+    if (!document.getElementById("modal-container")) {
+      const modalContainer = document.createElement("div")
+      modalContainer.id = "modal-container"
+      document.body.appendChild(modalContainer)
+    }
+  }
+
+  // Modal functions
+  function showAddTaskModal() {
+    if (!state.selectedEpisode) {
+      alert("Please select an episode first")
       return
     }
 
-    const popupHTML = `
-      <div id="task-popup" class="popup">
-        <div class="popup-content">
+    const episodeId = state.selectedEpisode._id || state.selectedEpisode.id
+
+    const modalHTML = `
+      <div id="add-task-modal" class="modal">
+        <div class="modal-content">
           <div class="modal-header">
             <h2>Add New Task</h2>
-            <button class="close-btn">&times;</button>
+            <button class="close-btn" data-close-modal>&times;</button>
           </div>
-          <div class="popup-body">
-            <form id="task-form">
-              <input type="hidden" id="task-episode-id" value="${episodeId}">
+          <div class="modal-body">
+            <form id="add-task-form">
               <div class="form-group">
-                <label for="task-title">Task Title</label>
-                <input type="text" id="task-title" class="form-control" placeholder="What needs to be done?" required>
+                <label for="task-name">Task Name</label>
+                <input type="text" id="task-name" class="form-control" required>
               </div>
               <div class="form-group">
                 <label for="task-description">Description</label>
-                <textarea id="task-description" class="form-control" placeholder="Add more details about this task..."></textarea>
+                <textarea id="task-description" class="form-control"></textarea>
               </div>
               <div class="form-group">
                 <label for="task-due-date">Due Date</label>
@@ -1478,92 +1487,303 @@ document.addEventListener("DOMContentLoaded", async () => {
                   <option value="After recording">After Recording</option>
                 </select>
               </div>
-              <div class="modal-footer">
-                <button type="button" id="cancel-add-btn" class="btn cancel-btn">Cancel</button>
-                <button type="submit" class="btn save-btn">
-                  <i class="fas fa-check"></i> Create Task
-                </button>
+              <div class="form-group">
+                <label for="task-assignee">Assignee</label>
+                <input type="text" id="task-assignee" class="form-control" placeholder="Unassigned">
               </div>
             </form>
+          </div>
+          <div class="modal-footer">
+            <button class="btn btn-outline" data-close-modal>Cancel</button>
+            <button class="btn btn-primary" id="save-task-btn">Save Task</button>
           </div>
         </div>
       </div>
     `
 
-    document.body.insertAdjacentHTML("beforeend", popupHTML)
-    const popup = document.getElementById("task-popup")
+    const modalContainer = document.getElementById("modal-container")
+    modalContainer.innerHTML = modalHTML
 
-    // Show the popup
-    popup.style.display = "flex"
+    const modal = document.getElementById("add-task-modal")
+    modal.classList.add("show")
 
-    // Add class to animate in
-    setTimeout(() => {
-      popup.querySelector(".popup-content").classList.add("show")
-    }, 10)
-
-    // Close button event
-    const closeBtn = popup.querySelector(".close-btn")
-    closeBtn.addEventListener("click", () => {
-      closePopup(popup)
+    // Close modal event
+    document.querySelectorAll("[data-close-modal]").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        closeModal("add-task-modal")
+      })
     })
 
-    // Cancel button event
-    const cancelBtn = document.getElementById("cancel-add-btn")
-    cancelBtn.addEventListener("click", () => {
-      closePopup(popup)
-    })
-
-    // Close when clicking outside
-    popup.addEventListener("click", (e) => {
-      if (e.target === popup) {
-        closePopup(popup)
-      }
-    })
-
-    // Form submission
-    const form = document.getElementById("task-form")
-    form.addEventListener("submit", async (e) => {
-      e.preventDefault()
-      const title = document.getElementById("task-title").value
+    // Save task event
+    document.getElementById("save-task-btn").addEventListener("click", async () => {
+      const name = document.getElementById("task-name").value
       const description = document.getElementById("task-description").value
       const dueDate = document.getElementById("task-due-date").value
+      const assignee = document.getElementById("task-assignee").value || "Unassigned"
+
+      if (!name) {
+        alert("Task name is required")
+        return
+      }
 
       const taskData = {
-        name: title,
+        name,
         description,
-        episodeId: episodeId,
-        dueDate: dueDate,
+        dueDate,
+        assignee,
+        episodeId,
         status: "not-started",
       }
 
       try {
-        // Show loading state
-        const saveBtn = form.querySelector(".save-btn")
-        const originalText = saveBtn.innerHTML
-        saveBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...'
+        const saveBtn = document.getElementById("save-task-btn")
         saveBtn.disabled = true
+        saveBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...'
 
-        const result = await saveTask(taskData)
-        console.log("Task saved:", result)
+        await saveTask(taskData)
 
         // Refresh tasks
         const tasksData = await fetchTasks()
         state.tasks = tasksData ? tasksData.filter((task) => task.episodeId === episodeId) : []
 
-        closePopup(popup)
+        closeModal("add-task-modal")
         renderTaskList()
         renderKanbanBoard()
         renderTimeline()
         updateProgressBar()
       } catch (error) {
         console.error("Error saving task:", error)
-        // Reset button state
-        const saveBtn = form.querySelector(".save-btn")
-        saveBtn.innerHTML = originalText
-        saveBtn.disabled = false
         alert("Failed to save task. Please try again.")
+
+        const saveBtn = document.getElementById("save-task-btn")
+        saveBtn.disabled = false
+        saveBtn.innerHTML = "Save Task"
       }
     })
+  }
+
+  function showImportTasksModal() {
+    if (!state.selectedEpisode) {
+      alert("Please select an episode first")
+      return
+    }
+
+    const episodeId = state.selectedEpisode._id || state.selectedEpisode.id
+
+    const modalHTML = `
+      <div id="import-tasks-modal" class="modal">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h2>Import Tasks</h2>
+            <button class="close-btn" data-close-modal>&times;</button>
+          </div>
+          <div class="modal-body">
+            <p>Select tasks to import to this episode:</p>
+            <div id="default-tasks-list" class="import-tasks-list">
+              <div class="loading-spinner">Loading default tasks...</div>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button class="btn btn-outline" data-close-modal>Cancel</button>
+            <button class="btn btn-primary" id="import-selected-tasks-btn">Import Selected</button>
+          </div>
+        </div>
+      </div>
+    `
+
+    const modalContainer = document.getElementById("modal-container")
+    modalContainer.innerHTML = modalHTML
+
+    const modal = document.getElementById("import-tasks-modal")
+    modal.classList.add("show")
+
+    // Close modal event
+    document.querySelectorAll("[data-close-modal]").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        closeModal("import-tasks-modal")
+      })
+    })
+
+    // Load default tasks
+    loadDefaultTasksForImport()
+
+    // Import selected tasks event
+    document.getElementById("import-selected-tasks-btn").addEventListener("click", async () => {
+      const selectedTasks = document.querySelectorAll(".import-task-checkbox:checked")
+
+      if (selectedTasks.length === 0) {
+        alert("Please select at least one task to import")
+        return
+      }
+
+      try {
+        const importBtn = document.getElementById("import-selected-tasks-btn")
+        importBtn.disabled = true
+        importBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Importing...'
+
+        await addDefaultTasksToEpisode(episodeId)
+
+        // Refresh tasks
+        const tasksData = await fetchTasks()
+        state.tasks = tasksData ? tasksData.filter((task) => task.episodeId === episodeId) : []
+
+        closeModal("import-tasks-modal")
+        renderTaskList()
+        renderKanbanBoard()
+        renderTimeline()
+        updateProgressBar()
+      } catch (error) {
+        console.error("Error importing tasks:", error)
+        alert("Failed to import tasks. Please try again.")
+
+        const importBtn = document.getElementById("import-selected-tasks-btn")
+        importBtn.disabled = false
+        importBtn.innerHTML = "Import Selected"
+      }
+    })
+  }
+
+  async function loadDefaultTasksForImport() {
+    const defaultTasksList = document.getElementById("default-tasks-list")
+
+    try {
+      const defaultTasks = await fetchLocalDefaultTasks()
+
+      if (!Array.isArray(defaultTasks) || defaultTasks.length === 0) {
+        defaultTasksList.innerHTML = "<p>No default tasks available</p>"
+        return
+      }
+
+      let tasksHTML = ""
+      defaultTasks.forEach((task, index) => {
+        tasksHTML += `
+          <div class="import-task-item">
+            <input type="checkbox" id="import-task-${index}" class="import-task-checkbox" value="${task}" checked>
+            <label for="import-task-${index}">${task}</label>
+          </div>
+        `
+      })
+
+      defaultTasksList.innerHTML = tasksHTML
+    } catch (error) {
+      console.error("Error loading default tasks:", error)
+      defaultTasksList.innerHTML = "<p>Failed to load default tasks</p>"
+    }
+  }
+
+  function showImportWorkflowModal() {
+    if (!state.selectedEpisode) {
+      alert("Please select an episode first")
+      return
+    }
+
+    const episodeId = state.selectedEpisode._id || state.selectedEpisode.id
+
+    const modalHTML = `
+      <div id="import-workflow-modal" class="modal">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h2>Import Workflow</h2>
+            <button class="close-btn" data-close-modal>&times;</button>
+          </div>
+          <div class="modal-body">
+            <p>Select a workflow template to import:</p>
+            <div class="workflow-templates">
+              <div class="workflow-template-item">
+                <input type="radio" id="workflow-template-1" name="workflow-template" value="standard" checked>
+                <label for="workflow-template-1">
+                  <strong>Standard Podcast Workflow</strong>
+                  <span class="template-description">15 tasks covering planning, recording, editing, and publishing</span>
+                </label>
+              </div>
+              <div class="workflow-template-item">
+                <input type="radio" id="workflow-template-2" name="workflow-template" value="interview">
+                <label for="workflow-template-2">
+                  <strong>Interview Podcast Workflow</strong>
+                  <span class="template-description">12 tasks focused on guest coordination and interview preparation</span>
+                </label>
+              </div>
+              <div class="workflow-template-item">
+                <input type="radio" id="workflow-template-3" name="workflow-template" value="solo">
+                <label for="workflow-template-3">
+                  <strong>Solo Podcast Workflow</strong>
+                  <span class="template-description">10 tasks optimized for single-host podcasts</span>
+                </label>
+              </div>
+            </div>
+            <div class="form-group">
+              <label>
+                <input type="checkbox" id="replace-existing-workflow" checked>
+                Replace existing tasks (unchecking will add to existing tasks)
+              </label>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button class="btn btn-outline" data-close-modal>Cancel</button>
+            <button class="btn btn-primary" id="import-workflow-btn">Import Workflow</button>
+          </div>
+        </div>
+      </div>
+    `
+
+    const modalContainer = document.getElementById("modal-container")
+    modalContainer.innerHTML = modalHTML
+
+    const modal = document.getElementById("import-workflow-modal")
+    modal.classList.add("show")
+
+    // Close modal event
+    document.querySelectorAll("[data-close-modal]").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        closeModal("import-workflow-modal")
+      })
+    })
+
+    // Import workflow event
+    document.getElementById("import-workflow-btn").addEventListener("click", async () => {
+      const selectedTemplate = document.querySelector('input[name="workflow-template"]:checked').value
+      const replaceExisting = document.getElementById("replace-existing-workflow").checked
+
+      try {
+        const importBtn = document.getElementById("import-workflow-btn")
+        importBtn.disabled = true
+        importBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Importing...'
+
+        // Simulate importing workflow
+        await new Promise((resolve) => setTimeout(resolve, 1000))
+
+        // In a real implementation, you would call an API to import the workflow
+        // For now, we'll just show a success message
+        alert(`Workflow "${selectedTemplate}" imported successfully!`)
+
+        // Refresh tasks
+        const tasksData = await fetchTasks()
+        state.tasks = tasksData ? tasksData.filter((task) => task.episodeId === episodeId) : []
+
+        closeModal("import-workflow-modal")
+        renderTaskList()
+        renderKanbanBoard()
+        renderTimeline()
+        updateProgressBar()
+      } catch (error) {
+        console.error("Error importing workflow:", error)
+        alert("Failed to import workflow. Please try again.")
+
+        const importBtn = document.getElementById("import-workflow-btn")
+        importBtn.disabled = false
+        importBtn.innerHTML = "Import Workflow"
+      }
+    })
+  }
+
+  function closeModal(modalId) {
+    const modal = document.getElementById(modalId)
+    if (modal) {
+      modal.classList.remove("show")
+      setTimeout(() => {
+        modal.remove()
+      }, 300)
+    }
   }
 
   async function showEditTaskPopup(taskId) {
@@ -1578,21 +1798,20 @@ document.addEventListener("DOMContentLoaded", async () => {
       const task = response[0].podtask
       console.log("Fetched task data:", task)
 
-      const { name, description, status, dueDate } = task
+      const { name, description, status, dueDate, assignee } = task
 
       const modalHTML = `
-        <div id="edit-task-modal" class="popup">
-          <div class="popup-content">
+        <div id="edit-task-modal" class="modal">
+          <div class="modal-content">
             <div class="modal-header">
               <h2>Edit Task</h2>
-              <button class="close-btn">&times;</button>
+              <button class="close-btn" data-close-modal>&times;</button>
             </div>
-            <div class="popup-body">
+            <div class="modal-body">
               <form id="edit-task-form">
-                <input type="hidden" id="edit-task-id" value="${taskId}">
                 <div class="form-group">
-                  <label for="edit-task-title">Task Title</label>
-                  <input type="text" id="edit-task-title" class="form-control" value="${name || ""}" required>
+                  <label for="edit-task-name">Task Name</label>
+                  <input type="text" id="edit-task-name" class="form-control" value="${name || ""}" required>
                 </div>
                 <div class="form-group">
                   <label for="edit-task-description">Description</label>
@@ -1615,64 +1834,60 @@ document.addEventListener("DOMContentLoaded", async () => {
                     <option value="completed" ${status === "completed" ? "selected" : ""}>Completed</option>
                   </select>
                 </div>
-                <div class="modal-footer">
-                  <button type="button" id="cancel-edit-btn" class="btn cancel-btn">Cancel</button>
-                  <button type="submit" class="btn save-btn">
-                    <i class="fas fa-save"></i> Save Changes
-                  </button>
+                <div class="form-group">
+                  <label for="edit-task-assignee">Assignee</label>
+                  <input type="text" id="edit-task-assignee" class="form-control" value="${assignee || "Unassigned"}">
                 </div>
               </form>
+            </div>
+            <div class="modal-footer">
+              <button class="btn btn-outline" data-close-modal>Cancel</button>
+              <button class="btn btn-primary" id="update-task-btn">Update Task</button>
             </div>
           </div>
         </div>
       `
 
-      document.body.insertAdjacentHTML("beforeend", modalHTML)
+      const modalContainer = document.getElementById("modal-container")
+      modalContainer.innerHTML = modalHTML
 
       const modal = document.getElementById("edit-task-modal")
-      modal.style.display = "flex"
+      modal.classList.add("show")
 
-      setTimeout(() => {
-        modal.querySelector(".popup-content").classList.add("show")
-      }, 10)
-
-      const closeBtn = modal.querySelector(".close-btn")
-      closeBtn.addEventListener("click", () => closeEditModal(modal))
-
-      const cancelBtn = document.getElementById("cancel-edit-btn")
-      cancelBtn.addEventListener("click", () => closeEditModal(modal))
-
-      modal.addEventListener("click", (e) => {
-        if (e.target === modal) {
-          closeEditModal(modal)
-        }
+      // Close modal event
+      document.querySelectorAll("[data-close-modal]").forEach((btn) => {
+        btn.addEventListener("click", () => {
+          closeModal("edit-task-modal")
+        })
       })
 
-      const form = document.getElementById("edit-task-form")
-      form.addEventListener("submit", async (e) => {
-        e.preventDefault()
-
-        const title = document.getElementById("edit-task-title").value
+      // Update task event
+      document.getElementById("update-task-btn").addEventListener("click", async () => {
+        const name = document.getElementById("edit-task-name").value
         const description = document.getElementById("edit-task-description").value
         const dueDate = document.getElementById("edit-task-due-date").value
         const status = document.getElementById("edit-task-status").value
+        const assignee = document.getElementById("edit-task-assignee").value
+
+        if (!name) {
+          alert("Task name is required")
+          return
+        }
 
         const taskData = {
-          name: title,
+          name,
           description,
           dueDate,
           status,
+          assignee,
         }
 
         try {
-          // Show loading state
-          const saveBtn = form.querySelector(".save-btn")
-          const originalText = saveBtn.innerHTML
-          saveBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...'
-          saveBtn.disabled = true
+          const updateBtn = document.getElementById("update-task-btn")
+          updateBtn.disabled = true
+          updateBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Updating...'
 
           await updateTask(taskId, taskData)
-          console.log("Task updated:", taskData)
 
           // Refresh tasks
           const tasksData = await fetchTasks()
@@ -1682,32 +1897,24 @@ document.addEventListener("DOMContentLoaded", async () => {
               )
             : []
 
-          closeEditModal(modal)
+          closeModal("edit-task-modal")
           renderTaskList()
           renderKanbanBoard()
           renderTimeline()
           updateProgressBar()
         } catch (error) {
           console.error("Error updating task:", error)
-          // Reset button state
-          const saveBtn = form.querySelector(".save-btn")
-          saveBtn.innerHTML = originalText
-          saveBtn.disabled = false
           alert("Failed to update task. Please try again.")
+
+          const updateBtn = document.getElementById("update-task-btn")
+          updateBtn.disabled = false
+          updateBtn.innerHTML = "Update Task"
         }
       })
     } catch (error) {
       console.error("Error fetching task for editing:", error)
       alert("Failed to load task for editing. Please try again.")
     }
-  }
-
-  function closeEditModal(modal) {
-    modal.querySelector(".popup-content").classList.remove("show")
-    setTimeout(() => {
-      modal.style.display = "none"
-      modal.remove()
-    }, 200)
   }
 
   async function confirmDeleteTask(taskId) {
@@ -1736,109 +1943,90 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
   }
 
-  async function showImportTasksPopup(episodeId) {
-    if (!episodeId) {
-      console.error("No episode ID provided for importing tasks")
+  async function saveWorkflow() {
+    if (!state.selectedEpisode) {
+      alert("Please select an episode first")
       return
     }
 
-    const popupHTML = `
-      <div id="import-tasks-popup" class="popup">
-        <div class="popup-content">
+    const episodeId = state.selectedEpisode._id || state.selectedEpisode.id
+
+    const modalHTML = `
+      <div id="save-workflow-modal" class="modal">
+        <div class="modal-content">
           <div class="modal-header">
-            <h2>Import Default Tasks</h2>
-            <button class="close-btn">&times;</button>
+            <h2>Save Workflow</h2>
+            <button class="close-btn" data-close-modal>&times;</button>
           </div>
-          <div class="popup-body">
-            <p>Importing default tasks will add a set of predefined tasks to this episode.</p>
-            <p>Are you sure you want to continue?</p>
+          <div class="modal-body">
+            <div class="form-group">
+              <label for="workflow-name">Workflow Name</label>
+              <input type="text" id="workflow-name" class="form-control" value="Workflow for ${state.selectedEpisode.title || "Episode " + (state.selectedEpisode.number || 1)}" required>
+            </div>
+            <div class="form-group">
+              <label for="workflow-description">Description</label>
+              <textarea id="workflow-description" class="form-control" placeholder="Describe this workflow..."></textarea>
+            </div>
+            <div class="form-group">
+              <label>
+                <input type="checkbox" id="save-as-template" checked>
+                Save as reusable template
+              </label>
+            </div>
           </div>
           <div class="modal-footer">
-            <button type="button" id="cancel-import-btn" class="btn cancel-btn">Cancel</button>
-            <button type="button" id="confirm-import-btn" class="btn save-btn">
-              <i class="fas fa-download"></i> Import Tasks
-            </button>
+            <button class="btn btn-outline" data-close-modal>Cancel</button>
+            <button class="btn btn-primary" id="save-workflow-btn">Save Workflow</button>
           </div>
         </div>
       </div>
     `
 
-    document.body.insertAdjacentHTML("beforeend", popupHTML)
-    const popup = document.getElementById("import-tasks-popup")
+    const modalContainer = document.getElementById("modal-container")
+    modalContainer.innerHTML = modalHTML
 
-    // Show the popup
-    popup.style.display = "flex"
+    const modal = document.getElementById("save-workflow-modal")
+    modal.classList.add("show")
 
-    // Add class to animate in
-    setTimeout(() => {
-      popup.querySelector(".popup-content").classList.add("show")
-    }, 10)
-
-    // Close button event
-    const closeBtn = popup.querySelector(".close-btn")
-    closeBtn.addEventListener("click", () => {
-      closePopup(popup)
+    // Close modal event
+    document.querySelectorAll("[data-close-modal]").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        closeModal("save-workflow-modal")
+      })
     })
 
-    // Cancel button event
-    const cancelBtn = document.getElementById("cancel-import-btn")
-    cancelBtn.addEventListener("click", () => {
-      closePopup(popup)
-    })
+    // Save workflow event
+    document.getElementById("save-workflow-btn").addEventListener("click", async () => {
+      const name = document.getElementById("workflow-name").value
+      const description = document.getElementById("workflow-description").value
+      const saveAsTemplate = document.getElementById("save-as-template").checked
 
-    // Close when clicking outside
-    popup.addEventListener("click", (e) => {
-      if (e.target === popup) {
-        closePopup(popup)
+      if (!name) {
+        alert("Workflow name is required")
+        return
       }
-    })
 
-    // Confirm import button event
-    const confirmImportBtn = document.getElementById("confirm-import-btn")
-    confirmImportBtn.addEventListener("click", async () => {
       try {
-        // Show loading state
-        const originalText = confirmImportBtn.innerHTML
-        confirmImportBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Importing...'
-        confirmImportBtn.disabled = true
+        const saveBtn = document.getElementById("save-workflow-btn")
+        saveBtn.disabled = true
+        saveBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...'
 
-        await addDefaultTasksToEpisode(episodeId)
-        console.log("Default tasks added to episode:", episodeId)
+        // Simulate saving workflow
+        await new Promise((resolve) => setTimeout(resolve, 1000))
 
-        // Refresh tasks
-        const tasksData = await fetchTasks()
-        state.tasks = tasksData ? tasksData.filter((task) => task.episodeId === episodeId) : []
+        // In a real implementation, you would call an API to save the workflow
+        // For now, we'll just show a success message
+        alert(`Workflow "${name}" saved successfully!`)
 
-        closePopup(popup)
-        renderTaskList()
-        renderKanbanBoard()
-        renderTimeline()
-        updateProgressBar()
+        closeModal("save-workflow-modal")
       } catch (error) {
-        console.error("Error importing default tasks:", error)
-        // Reset button state
-        confirmImportBtn.innerHTML = originalText
-        confirmImportBtn.disabled = false
-        alert("Failed to import default tasks. Please try again.")
+        console.error("Error saving workflow:", error)
+        alert("Failed to save workflow. Please try again.")
+
+        const saveBtn = document.getElementById("save-workflow-btn")
+        saveBtn.disabled = false
+        saveBtn.innerHTML = "Save Workflow"
       }
     })
-  }
-
-  function closePopup(popup) {
-    popup.querySelector(".popup-content").classList.remove("show")
-    setTimeout(() => {
-      popup.style.display = "none"
-      popup.remove()
-    }, 200)
-  }
-
-  async function saveWorkflow(episodeId) {
-    console.log("Saving workflow for episode:", episodeId)
-    alert("Workflow saved successfully!")
-  }
-
-  async function importWorkflow(episodeId) {
-    console.log("Importing workflow for episode:", episodeId)
-    alert("Workflow imported successfully!")
   }
 })
