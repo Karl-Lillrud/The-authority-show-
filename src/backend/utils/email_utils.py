@@ -9,12 +9,18 @@ from flask import render_template, Blueprint, request, jsonify, url_for, redirec
 import urllib.parse
 import requests
 from backend.repository.guest_repository import GuestRepository
+from google.auth.transport.requests import Request
+from google.oauth2.credentials import Credentials
+from google_auth_oauthlib.flow import InstalledAppFlow
+from backend.utils.config_utils import get_client_secret
 
 # Load environment variables once
 load_dotenv(override=True)
 
 EMAIL_USER = os.getenv("EMAIL_USER")
-EMAIL_PASS = os.getenv("EMAIL_PASS")
+EMAIL_PASSWORD = os.getenv("EMAIL_PASSWORD")
+CLIENT_SECRET = get_client_secret()
+TOKEN_FILE = os.getenv("TOKEN_FILE")
 SMTP_SERVER = os.getenv("SMTP_SERVER")
 SMTP_PORT = os.getenv("SMTP_PORT")
 
@@ -94,7 +100,7 @@ def calendar_callback():
             return jsonify({"error": "Missing authorization code"}), 400
 
         client_id = os.getenv("GOOGLE_CLIENT_ID")
-        client_secret = os.getenv("GOOGLE_CLIENT_SECRET")
+        client_secret = CLIENT_SECRET
         redirect_uri = os.getenv("GOOGLE_REDIRECT_URI")
 
         if not client_id or not client_secret or not redirect_uri:
@@ -144,21 +150,37 @@ def calendar_callback():
         return jsonify({"error": f"Internal server error: {str(e)}"}), 500
 
 
+def get_oauth2_credentials():
+    """
+    Get OAuth2 credentials for Gmail API.
+    """
+    creds = None
+    if os.path.exists(TOKEN_FILE):
+        creds = Credentials.from_authorized_user_file(TOKEN_FILE, SCOPES)
+    if not creds or not creds.valid:
+        if creds and creds.expired and creds.refresh_token:
+            creds.refresh(Request())
+        else:
+            flow = InstalledAppFlow.from_client_secrets_file(CLIENT_SECRET_FILE, SCOPES)
+            creds = flow.run_local_server(port=0)
+        with open(TOKEN_FILE, "w") as token:
+            token.write(creds.to_json())
+    return creds
+
+
 def send_email(to_email, subject, body, image_path=None):
     """
-    Sends an email with optional inline image attachments.
+    Sends an email using Microsoft 365 SMTP server.
     """
-    msg = MIMEMultipart("alternative")
-    msg["From"] = EMAIL_USER
-    msg["To"] = to_email
-    msg["Subject"] = subject
+    try:
+        # Create the email message
+        msg = MIMEMultipart("alternative")
+        msg["From"] = EMAIL_USER
+        msg["To"] = to_email
+        msg["Subject"] = subject
+        msg.attach(MIMEText(body, "html"))
 
-    plain_text = "This is the plain-text version of the email. Please view it in an HTML-compatible email client."
-    msg.attach(MIMEText(plain_text, "plain"))
-    msg.attach(MIMEText(body, "html"))
-
-    if image_path and os.path.exists(image_path):
-        try:
+        if image_path and os.path.exists(image_path):
             with open(image_path, "rb") as img_file:
                 img = MIMEImage(img_file.read(), _subtype="png")
                 img.add_header("Content-ID", "<pod_manager_logo>")
@@ -166,37 +188,23 @@ def send_email(to_email, subject, body, image_path=None):
                     "Content-Disposition", "inline", filename="PodManagerLogo.png"
                 )
                 msg.attach(img)
-            logger.info("✅ Attached inline image successfully.")
-        except Exception as e:
-            logger.error(f"❌ Failed to attach image: {e}")
 
-    try:
-        logger.info(f"📡 Connecting to SMTP server {SMTP_SERVER}:{SMTP_PORT}")
+        # Connect to Microsoft 365 SMTP server
+        logger.info(
+            f"📡 Connecting to Microsoft 365 SMTP server {SMTP_SERVER}:{SMTP_PORT}"
+        )
         with smtplib.SMTP(SMTP_SERVER, SMTP_PORT) as server:
+            server.ehlo()
             server.starttls()
+            server.ehlo()
             logger.info(f"🔐 Logging in as {EMAIL_USER}")
-            server.login(EMAIL_USER, EMAIL_PASS)
+            server.login(EMAIL_USER, EMAIL_PASSWORD)
             server.sendmail(EMAIL_USER, to_email, msg.as_string())
             logger.info(f"✅ Email successfully sent to {to_email}")
             return {"success": True}
-    except smtplib.SMTPAuthenticationError as e:
-        logger.error(f"❌ Authentication failed: {e}")
-        print(
-            f"Email could not be sent to {to_email}. Content:\nSubject: {subject}\nBody: {body}"
-        )
-        return {"error": f"Authentication failed: {str(e)}"}
-    except smtplib.SMTPException as e:
-        logger.error(f"❌ Failed to send email to {to_email}: {e}")
-        print(
-            f"Email could not be sent to {to_email}. Content:\nSubject: {subject}\nBody: {body}"
-        )
-        return {"error": f"SMTP error: {str(e)}"}
     except Exception as e:
-        logger.error(f"❌ Failed to send email to {to_email}: {e}")
-        print(
-            f"Email could not be sent to {to_email}. Content:\nSubject: {subject}\nBody: {body}"
-        )
-        return {"error": f"Unexpected error: {str(e)}"}
+        logger.error(f"❌ Failed to send email to {to_email}: {e}", exc_info=True)
+        return {"error": f"Failed to send email: {str(e)}"}
 
 
 def send_login_email(email, login_link):
@@ -216,18 +224,22 @@ def send_login_email(email, login_link):
             </body>
         </html>
         """
-        print(f"Inloggningslänk för {email}: {login_link}")  # Skriv ut i terminalen
+        logger.info(f"📧 Preparing to send login email to {email}")
+        logger.debug(f"Login link: {login_link}")
+
         result = send_email(email, subject, body)
         if result.get("success"):
-            logger.info(f"Inloggningslänk skickad till {email}.")
+            logger.info(f"✅ Login email sent successfully to {email}")
         else:
             logger.error(
-                f"Misslyckades att skicka email till {email}: {result.get('error')}"
+                f"❌ Failed to send login email to {email}: {result.get('error')}"
             )
         return result
     except Exception as e:
-        logger.error(f"Fel vid sändning av email till {email}: {e}", exc_info=True)
-        return {"error": f"Fel vid sändning av email: {str(e)}"}
+        logger.error(
+            f"❌ Error while sending login email to {email}: {e}", exc_info=True
+        )
+        return {"error": f"Error while sending login email: {str(e)}"}
 
 
 def send_team_invite_email(
