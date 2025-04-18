@@ -44,7 +44,9 @@ class AuthRepository:
             self._setup_session(user, remember)
 
             # Ensure account exists for the user
-            user_account = self.account_collection.find_one({"userId": str(user["_id"])})
+            user_account = self.account_collection.find_one(
+                {"userId": str(user["_id"])}
+            )
             if not user_account:
                 account_data = {
                     "id": str(uuid.uuid4()),
@@ -189,7 +191,8 @@ class AuthRepository:
             self.user_collection.insert_one(user_document)
 
             account_data = {
-                "userId": user_id,
+                "_id": str(uuid.uuid4()),  # Use _id instead of id
+                "userId": user_document["_id"],
                 "email": email,
                 "companyName": data.get("companyName", ""),
                 "isCompany": data.get("isCompany", False),
