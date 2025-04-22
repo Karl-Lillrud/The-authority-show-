@@ -163,32 +163,6 @@ endblock %} {% block content %}
               </div>
             </section>
 
-            <!-- Shopping Cart (Right Sidebar) - Moved inside the store-content -->
-            <div class="shopping-cart-sidebar hidden" id="shoppingCart">
-              <div class="cart-header">
-                <h3>Your Cart</h3>
-                <span class="cart-item-count">0 items</span>
-                <button class="close-cart-btn" id="closeCartBtn">
-                  <span class="svg-placeholder close-icon"></span>
-                </button>
-              </div>
-              <div class="cart-content">
-                <div class="cart-items" id="cartItems">
-                  <!-- Cart items will be added here dynamically -->
-                  <div class="empty-cart-message">Your cart is empty</div>
-                </div>
-                <div class="cart-footer">
-                  <div class="cart-total">
-                    <span>Total:</span>
-                    <span class="total-amount">$0.00</span>
-                  </div>
-                  <button class="checkout-btn" id="checkoutBtn" disabled>
-                    Complete the Purchase
-                  </button>
-                </div>
-              </div>
-            </div>
-
             <!-- Landing Page Styles Section -->
             <section class="store-section landing-styles-section">
               <div class="section-header">
@@ -445,7 +419,37 @@ endblock %} {% block content %}
         </div>
       </main>
     </div>
+    <!-- End of .store div -->
+
+    <!-- Shopping Cart (Right Sidebar) - Moved outside .store -->
+    <div class="shopping-cart-sidebar" id="shoppingCart">
+      <!-- Removed hidden class initially -->
+      <div class="cart-header">
+        <h3>Your Cart</h3>
+        <span class="cart-item-count">0 items</span>
+        <button class="close-cart-btn" id="closeCartBtn">
+          <span class="svg-placeholder close-icon"></span>
+        </button>
+      </div>
+      <div class="cart-content">
+        <div class="cart-items" id="cartItems">
+          <!-- Cart items will be added here dynamically -->
+          <div class="empty-cart-message">Your cart is empty</div>
+        </div>
+        <div class="cart-footer">
+          <div class="cart-total">
+            <span>Total:</span>
+            <span class="total-amount">$0.00</span>
+          </div>
+          <button class="checkout-btn" id="checkoutBtn" disabled>
+            Complete the Purchase
+          </button>
+        </div>
+      </div>
+    </div>
+    <!-- End of .shopping-cart-sidebar -->
   </div>
+  <!-- End of .store-container -->
 
   <script src="{{ url_for('static', filename='js/store/store.js') }}"></script>
   <script src="{{ url_for('static', filename='js/store/svgstore.js') }}"></script>

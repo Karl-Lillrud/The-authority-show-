@@ -4,6 +4,17 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // Initialize SVG icons
   initializeSvgIcons();
+
+  // Match sidebar height on initial load - DISABLED
+  // matchSidebarHeight();
+});
+
+// Add resize event listener
+window.addEventListener("resize", () => {
+  // Match sidebar height on resize - DISABLED
+  // matchSidebarHeight();
+  // Re-evaluate cart setup on resize for responsive behavior
+  setupCart();
 });
 
 function initializeStore() {
@@ -72,51 +83,81 @@ function setupAddToCartButtons() {
 }
 
 function setupCart() {
-  const cartButton = document.getElementById("cartButton");
-  const closeCartBtn = document.getElementById("closeCartBtn");
-  const shoppingCart = document.getElementById("shoppingCart");
+  const cartButton = document.getElementById("cartButton"); // Button to open modal
+  const closeCartBtn = document.getElementById("closeCartBtn"); // Button inside modal
+  const shoppingCart = document.getElementById("shoppingCart"); // The sidebar/modal
   const checkoutBtn = document.getElementById("checkoutBtn");
+  const viewportWidth = window.innerWidth;
+
+  // Remove previous listeners to avoid duplicates on resize
+  cartButton.replaceWith(cartButton.cloneNode(true));
+  closeCartBtn.replaceWith(closeCartBtn.cloneNode(true));
+  document.removeEventListener("click", closeCartOnClickOutside);
+  shoppingCart.replaceWith(shoppingCart.cloneNode(true)); // Might reset cart items, consider alternatives if needed
+
+  // Re-fetch elements after cloning
+  const newCartButton = document.getElementById("cartButton");
+  const newCloseCartBtn = document.getElementById("closeCartBtn");
+  const newShoppingCart = document.getElementById("shoppingCart");
+  const newCheckoutBtn = document.getElementById("checkoutBtn"); // Re-fetch checkout button too
 
   // Initialize cart from localStorage if available
-  loadCartFromStorage();
+  loadCartFromStorage(); // Ensure this repopulates the newShoppingCart if cloned
 
-  // Toggle cart visibility when cart button is clicked
-  cartButton.addEventListener("click", (e) => {
-    e.stopPropagation(); // Prevent document click from immediately closing it
-    shoppingCart.classList.toggle("hidden");
-  });
+  if (viewportWidth <= 992) {
+    // Mobile: Modal behavior
+    newShoppingCart.classList.add("hidden"); // Start hidden on mobile
+    newShoppingCart.style.height = ""; // Ensure height is not fixed
 
-  // Close cart when close button is clicked
-  closeCartBtn.addEventListener("click", () => {
-    shoppingCart.classList.add("hidden");
-  });
+    newCartButton.addEventListener("click", (e) => {
+      e.stopPropagation();
+      newShoppingCart.classList.remove("hidden");
+    });
 
-  // Close cart when clicking outside
-  document.addEventListener("click", (e) => {
-    if (!shoppingCart.contains(e.target) && e.target !== cartButton) {
-      shoppingCart.classList.add("hidden");
-    }
-  });
+    newCloseCartBtn.addEventListener("click", () => {
+      newShoppingCart.classList.add("hidden");
+    });
 
-  // Prevent clicks inside the cart from closing it
-  shoppingCart.addEventListener("click", (e) => {
-    e.stopPropagation();
-  });
+    document.addEventListener("click", closeCartOnClickOutside);
 
-  // Handle checkout
-  checkoutBtn.addEventListener("click", function () {
+    newShoppingCart.addEventListener("click", (e) => {
+      e.stopPropagation();
+    });
+  } else {
+    // Desktop: Sidebar is always visible
+    newShoppingCart.classList.remove("hidden"); // Ensure visible
+    document.removeEventListener("click", closeCartOnClickOutside); // Remove outside click listener
+    // matchSidebarHeight(); // Ensure height is matched - DISABLED
+  }
+
+  // Handle checkout (attach to the potentially new button)
+  newCheckoutBtn.addEventListener("click", function () {
     if (this.disabled) return;
-
-    // Simulate checkout process
     alert("Processing your order...");
-
-    // In a real application, you would redirect to a checkout page or open a modal
     setTimeout(() => {
       alert("Thank you for your purchase!");
       clearCart();
-      shoppingCart.classList.add("hidden");
+      if (viewportWidth <= 992) {
+        // Only hide modal on mobile
+        newShoppingCart.classList.add("hidden");
+      }
     }, 1500);
   });
+}
+
+// Define the outside click handler separately
+function closeCartOnClickOutside(e) {
+  const shoppingCart = document.getElementById("shoppingCart");
+  const cartButton = document.getElementById("cartButton");
+  if (
+    shoppingCart &&
+    cartButton &&
+    !shoppingCart.contains(e.target) &&
+    e.target !== cartButton &&
+    !cartButton.contains(e.target)
+  ) {
+    shoppingCart.classList.add("hidden");
+  }
 }
 
 // Cart functionality
@@ -338,5 +379,40 @@ function loadCartFromStorage() {
       console.error("Error loading cart from storage:", error);
       cart = [];
     }
+  }
+}
+
+// Function to match sidebar height to credit packs section height - DISABLED
+/*
+function matchSidebarHeight() {
+  const creditPacksSection = document.querySelector('.credit-packs-section');
+  const shoppingCart = document.getElementById('shoppingCart');
+  const viewportWidth = window.innerWidth;
+
+  if (creditPacksSection && shoppingCart) {
+    if (viewportWidth > 992) {
+      // Desktop: Match height and ensure it's visible
+      shoppingCart.classList.remove('hidden'); // Make sure it's not hidden
+      const creditPacksHeight = creditPacksSection.offsetHeight;
+      shoppingCart.style.height = `${creditPacksHeight}px`;
+    } else {
+      // Mobile: Reset height for modal behavior
+      shoppingCart.style.height = ''; // Reset height
+      // Hidden state is managed by setupCart based on clicks
+    }
+  }
+}
+*/
+// Add a placeholder function if needed, or just remove the calls
+function matchSidebarHeight() {
+  // Placeholder - height matching disabled for now
+  const shoppingCart = document.getElementById("shoppingCart");
+  const viewportWidth = window.innerWidth;
+  if (shoppingCart && viewportWidth <= 992) {
+    // Ensure height is reset on mobile if JS was setting it
+    shoppingCart.style.height = "";
+  } else if (shoppingCart && viewportWidth > 992) {
+    // Ensure height is reset on desktop too, as JS is disabled
+    shoppingCart.style.height = "";
   }
 }

@@ -3,18 +3,24 @@
   display: flex;
   min-height: 100vh;
   position: relative;
+  align-items: flex-start; /* Align children (store and sidebar) to the top */
+  gap: var(--spacing-lg); /* Add gap between store and sidebar */
+  /* Adjust padding/max-width if needed, maybe move max-width here */
+  max-width: 1600px; /* Example max-width for the whole container */
+  margin: 0 auto; /* Center the container */
+  padding: 0 var(--spacing-lg); /* Add horizontal padding */
 }
 
 .store {
   font-family: var(--font-primary);
   color: var(--text-color-light);
   line-height: 1.5;
-  max-width: 1200px;
-  margin: 20px auto;
+  /* max-width: 1200px; <-- Removed, let flex item grow */
+  margin: 20px 0; /* Keep vertical margin, remove horizontal auto */
   position: relative;
-  z-index: 2;
-  padding: 0 var(--spacing-lg);
-  flex: 1;
+  z-index: 2; /* Keep z-index if needed */
+  padding: 0; /* Remove padding, container handles it */
+  flex: 1; /* Allow store to take up remaining space */
 }
 
 /* Store Header */
@@ -111,6 +117,11 @@
   display: flex;
   align-items: center;
   justify-content: center;
+}
+
+/* Hide close button on desktop */
+.close-cart-btn {
+  display: none;
 }
 
 .close-cart-btn:hover {
@@ -394,24 +405,22 @@
 
 /* Shopping Cart Sidebar */
 .shopping-cart-sidebar {
-  width: 320px;
+  width: 320px; /* Fixed width for the sidebar */
+  flex-shrink: 0; /* Prevent sidebar from shrinking */
   background-color: white;
   box-shadow: -4px 0 10px rgba(0, 0, 0, 0.05);
-  display: flex;
-  flex-direction: column;
-  position: absolute;
-  top: 0;
-  right: 0;
-  height: auto;
-  max-height: calc(100% - 40px);
-  z-index: 100;
-  transition: transform 0.3s ease;
+  display: flex; /* Keep flex */
+  flex-direction: column; /* Keep column */
+  position: sticky; /* Make it sticky */
+  top: 255px; /* Increased from 20px (20px + ~3cm/114px) */
+  /* height: auto; <-- Height is auto unless JS sets it */
+  max-height: calc(
+    100vh - 154px
+  ); /* Adjust max-height based on new top value */
   border-radius: var(--radius-large);
   border: 1px solid rgba(0, 0, 0, 0.03);
-}
-
-.shopping-cart-sidebar.hidden {
-  transform: translateX(100%);
+  margin-left: 0; /* Removed margin, container gap handles spacing */
+  margin-top: 20px; /* Match the top margin of the .store div for initial alignment */
 }
 
 .cart-header {
@@ -445,7 +454,7 @@
   flex: 1;
   overflow-y: auto;
   padding: var(--spacing-md);
-  max-height: 500px;
+  /* Removed max-height: 500px; */
 }
 
 .cart-items {
@@ -636,23 +645,48 @@
 @media (max-width: 992px) {
   .store-container {
     flex-direction: column;
+    align-items: stretch; /* Reset alignment for column */
+    gap: 0; /* Reset gap */
+    padding: 0; /* Reset container padding */
+    max-width: none; /* Remove max-width */
+    margin: 0;
+  }
+
+  .store {
+    margin-bottom: 0;
+    margin-top: 20px; /* Keep top margin */
+    padding: 0 var(--spacing-md); /* Add padding back to store div */
   }
 
   .shopping-cart-sidebar {
+    /* Restore modal styles */
     position: fixed;
-    top: 50%;
+    top: 50%; /* Keep centered for modal */
     left: 50%;
     transform: translate(-50%, -50%);
     width: 90%;
     max-width: 400px;
-    height: auto;
-    max-height: 80vh;
+    height: auto; /* Modal height is auto */
+    max-height: 80vh; /* Modal max height */
     box-shadow: 0 0 20px rgba(0, 0, 0, 0.2);
+    z-index: 1000; /* Ensure modal is on top */
+    margin-left: 0; /* Reset margin */
+    margin-top: 0; /* Reset margin */
+  }
+
+  /* Show cart button on mobile */
+  .action-button.view-cart {
+    display: flex; /* Or inline-flex */
   }
 
   .shopping-cart-sidebar.hidden {
-    display: none;
-    transform: translate(-50%, -50%);
+    display: none; /* Use display none for modal */
+    transform: translate(-50%, -50%); /* Keep transform for centering */
+  }
+
+  /* Show close button in modal */
+  .close-cart-btn {
+    display: flex;
   }
 
   .store {
@@ -660,7 +694,9 @@
   }
 
   .cart-content {
-    max-height: none; /* Let the sidebar expand naturally */
+    max-height: calc(
+      80vh - 120px
+    ); /* Adjust based on header/footer height in modal */
   }
 }
 
