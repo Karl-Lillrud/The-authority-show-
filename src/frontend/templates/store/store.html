@@ -420,24 +420,21 @@ endblock %} {% block content %}
       <div class="cart-header">
         <h3>Your Cart</h3>
         <span class="cart-item-count">0 items</span>
-        <button class="toggle-cart-btn" id="toggleCartBtn">
-          <span class="svg-placeholder cart-toggle-icon"></span>
-        </button>
       </div>
       <div class="cart-content">
         <div class="cart-items" id="cartItems">
           <!-- Cart items will be added here dynamically -->
           <div class="empty-cart-message">Your cart is empty</div>
         </div>
-      </div>
-      <div class="cart-footer">
-        <div class="cart-total">
-          <span>Total:</span>
-          <span class="total-amount">$0.00</span>
+        <div class="cart-footer">
+          <div class="cart-total">
+            <span>Total:</span>
+            <span class="total-amount">$0.00</span>
+          </div>
+          <button class="checkout-btn" id="checkoutBtn" disabled>
+            Complete the Purchase
+          </button>
         </div>
-        <button class="checkout-btn" id="checkoutBtn" disabled>
-          Complete the Purchase
-        </button>
       </div>
     </div>
   </div>

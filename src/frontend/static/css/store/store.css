@@ -357,8 +357,9 @@
   transition: transform 0.3s ease;
   position: sticky;
   top: 0;
-  height: 100vh;
+  height: auto;
   z-index: 100;
+  align-self: flex-start; /* Add this line */
 }
 
 .shopping-cart-sidebar.collapsed {
@@ -596,22 +597,22 @@
   .shopping-cart-sidebar {
     width: 100%;
     height: auto;
-    position: fixed;
-    bottom: 0;
-    top: auto;
+    position: relative; /* Changed from fixed to relative */
+    /* Removed bottom and top properties */
     box-shadow: 0 -4px 10px rgba(0, 0, 0, 0.1);
+    align-self: auto; /* Reset align-self for mobile layout if needed, or remove if not needed */
   }
 
   .shopping-cart-sidebar.collapsed {
-    transform: translateY(calc(100% - 60px));
+    transform: none;
   }
 
   .store {
-    margin-bottom: 60px;
+    margin-bottom: 0;
   }
 
   .cart-content {
-    max-height: 300px;
+    max-height: none; /* Let the sidebar expand naturally */
   }
 }
 

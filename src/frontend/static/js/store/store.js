@@ -53,6 +53,7 @@ function setupAddToCartButtons() {
       const productType = productCard.getAttribute("data-product-type");
       const productPrice = parseFloat(productCard.getAttribute("data-price"));
 
+      // Add product to cart without checking for collapse
       addToCart(productId, productName, productType, productPrice);
 
       // Update button state
@@ -64,28 +65,18 @@ function setupAddToCartButtons() {
         this.textContent = "Add to Cart";
         this.classList.remove("in-cart");
       }, 2000);
-
-      // Ensure cart is visible when adding items
-      const shoppingCart = document.getElementById("shoppingCart");
-      if (shoppingCart.classList.contains("collapsed")) {
-        toggleCart();
-      }
     });
   });
 }
 
 function setupCart() {
-  const toggleCartBtn = document.getElementById("toggleCartBtn");
-  const shoppingCart = document.getElementById("shoppingCart");
+  // Removed toggle-cart functionality since the sidebar is always expanded.
   const checkoutBtn = document.getElementById("checkoutBtn");
 
   // Initialize cart from localStorage if available
   loadCartFromStorage();
 
-  // Toggle cart visibility
-  toggleCartBtn.addEventListener("click", function () {
-    toggleCart();
-  });
+  // Removed event listener for toggleCartBtn
 
   // Handle checkout
   checkoutBtn.addEventListener("click", function () {
@@ -100,19 +91,6 @@ function setupCart() {
       clearCart();
     }, 1500);
   });
-}
-
-function toggleCart() {
-  const shoppingCart = document.getElementById("shoppingCart");
-  const toggleCartBtn = document.getElementById("toggleCartBtn");
-
-  shoppingCart.classList.toggle("collapsed");
-
-  // Update toggle icon
-  const isCollapsed = shoppingCart.classList.contains("collapsed");
-  toggleCartBtn.innerHTML = isCollapsed
-    ? '<span class="svg-placeholder cart-expand-icon"></span>'
-    : '<span class="svg-placeholder cart-collapse-icon"></span>';
 }
 
 // Cart functionality
