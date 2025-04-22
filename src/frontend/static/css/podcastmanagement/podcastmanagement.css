@@ -70,15 +70,6 @@
   margin-bottom: var(--spacing-sm);
 }
 
-.podcast-title {
-  font-size: 1.4rem;
-  font-weight: 700;
-  margin-bottom: 0.5rem;
-  color: rgba(0, 0, 0, 0.85);
-  letter-spacing: -0.5px;
-  line-height: 1.2;
-}
-
 .podcast-meta {
   color: var(--text-color-light);
   font-size: 0.8rem;
@@ -117,25 +108,6 @@
   flex-wrap: nowrap;
 }
 
-.action-btn {
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
-  border: none;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  background-color: white;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08);
-  transition: all var(--transition-normal);
-  position: relative;
-}
-
-.action-btn:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 3px 6px rgba(0, 0, 0, 0.12);
-}
 
 .action-btn.edit-btn::after {
   content: "Edit";
@@ -157,18 +129,6 @@
 .action-btn.edit-btn:hover::after {
   opacity: 1;
   visibility: visible;
-}
-
-.view-btn {
-  color: var(--highlight-color);
-}
-
-.edit-btn {
-  color: var(--highlight-color);
-}
-
-.delete-btn {
-  color: var(--danger-color);
 }
 
 .podcast-footer {
@@ -285,6 +245,7 @@
 .top-right-actions .edit-btn::after,
 .top-right-actions .publish-btn::after {
   content: attr(data-tooltip);
+
   position: absolute;
   bottom: -25px;
   left: 50%;
@@ -310,27 +271,6 @@
 .top-right-actions .publish-btn:hover {
   transform: translateY(-2px);
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-}
-
-.back-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.4rem;
-  background: white;
-  border: none;
-  color: var(--text-color-light);
-  font-weight: 600;
-  cursor: pointer;
-  padding: 8px 12px;
-  border-radius: var(--radius-medium);
-  box-shadow: var(--podcastmanagement-button-shadow);
-  transition: all var(--transition-normal);
-  font-size: 0.8rem;
-}
-
-.back-btn:hover {
-  transform: translateX(-4px);
-  color: var(--highlight-color);
 }
 
 .detail-content {
@@ -371,15 +311,6 @@
   display: flex;
   flex-direction: column;
   gap: var(--spacing-sm);
-}
-
-.detail-title {
-  font-size: 1.8rem;
-  font-weight: 700;
-  margin-bottom: 0.4rem;
-  color: rgba(0, 0, 0, 0.85);
-  letter-spacing: -0.5px;
-  line-height: 1.2;
 }
 
 .detail-category {
@@ -598,13 +529,6 @@
   margin-right: 12px;
 }
 
-.episode-title {
-  font-weight: 600;
-  color: rgba(0, 0, 0, 0.8);
-  margin-bottom: 4px;
-  font-size: 0.9rem;
-}
-
 .episode-meta {
   font-size: 0.7rem;
   color: var(--text-color-light);
@@ -688,11 +612,6 @@
   border-radius: var(--radius-medium);
 }
 
-.episodes-preview-title {
-  margin-bottom: 6px;
-  font-size: 0.8rem;
-}
-
 .podcast-episode-item {
   display: flex;
   justify-content: space-between;
@@ -721,6 +640,7 @@
   width: 20px;
   height: 20px;
   display: flex;
+  padding: 5px;
   align-items: center;
   justify-content: center;
   cursor: pointer;
@@ -1043,31 +963,6 @@
   transform: scale(1);
 }
 
-.close-btn {
-  position: absolute;
-  top: var(--spacing-sm);
-  right: var(--spacing-sm);
-  width: 32px;
-  height: 32px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 1.2rem;
-  color: var(--text-color-light);
-  background-color: white;
-  border-radius: 50%;
-  cursor: pointer;
-  transition: all var(--transition-normal);
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-  z-index: 10;
-}
-
-.close-btn:hover {
-  color: var(--highlight-color);
-  transform: rotate(90deg);
-  box-shadow: 0 3px 6px rgba(0, 0, 0, 0.15);
-}
-
 /* Form Box */
 .form-box {
   background-color: white;
@@ -1106,14 +1001,11 @@
 }
 
 .form-title {
-  margin-top: 0;
   margin-bottom: var(--spacing-lg);
-  color: rgba(0, 0, 0, 0.8);
   text-align: center;
-  font-size: 1.6rem;
+  font-size: 1.9rem;
   position: relative;
   padding-bottom: 12px;
-  font-weight: 700;
 }
 
 .form-title::after {
@@ -1200,26 +1092,6 @@
 }
 
 /* Buttons */
-.save-btn,
-.cancel-btn,
-.delete-btn {
-  padding: 8px 16px;
-  border: none;
-  border-radius: var(--radius-medium);
-  font-weight: 600;
-  cursor: pointer;
-  transition: all var(--transition-normal);
-  font-size: 0.9rem;
-  letter-spacing: 0.5px;
-}
-
-.save-btn {
-  background-color: var(--highlight-color);
-  color: white;
-  box-shadow: var(--podcastmanagement-button-shadow);
-  position: relative;
-  overflow: hidden;
-}
 
 .save-btn::after {
   content: "";
@@ -1237,41 +1109,8 @@
   transition: 0.5s;
 }
 
-.save-btn:hover {
-  background-color: var(--highlight-hover);
-  transform: translateY(-2px);
-  box-shadow: 0 4px 8px -3px rgba(0, 0, 0, 0.2);
-}
-
 .save-btn:hover::after {
   left: 100%;
-}
-
-.cancel-btn {
-  background-color: white;
-  color: var(--text-color-light);
-  box-shadow: var(--podcastmanagement-button-shadow);
-  border: 1px solid rgba(0, 0, 0, 0.05);
-}
-
-.cancel-btn:hover {
-  transform: translateY(-2px);
-  color: var(--highlight-color);
-  box-shadow: 0 4px 8px -3px rgba(0, 0, 0, 0.1);
-}
-
-.delete-btn {
-  background-color: rgba(231, 76, 60, 0.1);
-  color: var(--danger-color);
-  box-shadow: var(--podcastmanagement-button-shadow);
-  font-size: 0.85rem;
-  padding: 6px 14px;
-}
-
-.delete-btn:hover {
-  background-color: rgba(231, 76, 60, 0.2);
-  transform: translateY(-2px);
-  box-shadow: 0 4px 8px -3px rgba(231, 76, 60, 0.2);
 }
 
 /* Responsive Design */
@@ -1497,12 +1336,8 @@
 }
 
 .section-title {
-  font-size: 1.2rem;
-  margin-bottom: var(--spacing-sm);
-  color: rgba(0, 0, 0, 0.8);
-  font-weight: 700;
   position: relative;
-  padding-bottom: 6px;
+  padding-bottom: var(--spacing-sm);
 }
 
 .section-title::after {
@@ -1591,14 +1426,6 @@
   margin-bottom: var(--spacing-xs);
 }
 
-.episode-title {
-  font-size: 0.95rem;
-  font-weight: 600;
-  color: rgba(0, 0, 0, 0.8);
-  margin: 0;
-  flex: 1;
-}
-
 .episode-status {
   font-size: 0.7rem;
   padding: 3px 6px;
@@ -1665,10 +1492,7 @@
 }
 
 .scheduling-item h3 {
-  font-size: 0.9rem;
   color: rgba(0, 0, 0, 0.6);
-  font-weight: 600;
-  margin-bottom: 0.4rem;
 }
 
 /* Social media section */

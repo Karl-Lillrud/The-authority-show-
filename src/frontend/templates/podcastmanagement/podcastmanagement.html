@@ -89,7 +89,10 @@
           <span id="toggle-sidebar-icon"></span>
         </button>
       </div>
-    </div>
+<div class="container">
+  <!-- Sidebar -->
+  <aside class="sidebar">
+    <!-- Add sidebar content here -->
   </aside>
 
   <!-- Main Content -->
@@ -102,7 +105,63 @@
 
     <!-- Add your content here -->
 
+    <!-- New popup container for adding a guest -->
+    <div id="guest-popup" class="popup" style="display: none">
+      <div class="form-box">
+        <span id="close-guest-popup" class="close-btn">&times;</span>
+        <h2 class="form-title">Add Guest</h2>
+        <form id="add-guest-form">
+          <div class="field-group full-width">
+            <label for="podcast-select-guest">Select Podcast</label>
+            <select
+              id="podcast-select-guest"
+              name="podcastId"
+              required
+            ></select>
+          </div>
+          <div class="field-group full-width">
+            <label for="episode-id">Episode ID</label>
+            <select id="episode-id" name="episodeId" required></select>
+          </div>
+          <div class="field-group full-width">
+            <label for="guest-name">Guest Name</label>
+            <input type="text" id="guest-name" name="guestName" required />
+          </div>
+          <div class="field-group full-width">
+            <label for="guest-description">Guest Description</label>
+            <input
+              type="text"
+              id="guest-description"
+              name="guestDescription"
+              required
+            />
+          </div>
+          <div class="field-group full-width">
+            <label for="guest-areas">Areas of Interest (comma separated)</label>
+            <input type="text" id="guest-areas" name="guestAreas" />
+          </div>
+          <div class="field-group full-width">
+            <label for="guest-email">Email</label>
+            <input type="email" id="guest-email" name="guestEmail" required />
+          </div>
+          <div class="form-actions">
+            <button type="button" id="cancel-guest-btn" class="cancel-btn">
+              Cancel
+            </button>
+            <button type="submit" class="save-btn">Add Guest</button>
+          </div>
+        </form>
+      </div>
+    </div>
   </main>
 </div>
 
+<script
+  type="module"
+  src="{{ url_for('static', filename='js/components/sidebar.js') }}"
+></script>
+<script
+  type="module"
+  src="{{ url_for('static', filename='js/podcastmanagement/podcastmanagement.js') }}"
+></script>
 {% endblock %}

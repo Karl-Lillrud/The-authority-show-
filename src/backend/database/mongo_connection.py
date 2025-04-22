@@ -4,12 +4,16 @@ import os
 from dotenv import load_dotenv
 import logging
 from gridfs import GridFS
+from colorama import Fore, Style, init  # Import colorama for styled logs
 
 # Create a blueprint for MongoDB (this can be used for modular Flask apps)
 mongo_bp = Blueprint("mongo_bp", __name__)
 
 # Load environment variables from .env
 load_dotenv()
+
+# Initialize colorama
+init(autoreset=True)
 
 # MongoDB Configuration
 MONGODB_URI = os.getenv("MONGODB_URI")
@@ -40,18 +44,16 @@ try:
     podcasts = database[PODCAST_NAME]
     episodes = database[EPISODE_NAME]
     credits = database[CREDITS]
-    mailing_list_collection = database[MAILING_LIST_COLLECTION_NAME]  # MailingList collection
+    mailing_list_collection = database[MAILING_LIST_COLLECTION_NAME]
     subscriptions_collection = database[SUBSCRIPTIONS_LIST_COLLECTION]
     fs = GridFS(database)  # Initialize GridFS
-    logger.info("MongoDB connection and GridFS initialized successfully.")
+    logger.info(f"{Fore.GREEN}✅ MongoDB connected successfully!")
 except Exception as e:
     # Log error if connection fails
-    logger.error(f"Failed to connect to MongoDB or initialize GridFS: {e}")
+    logger.error(f"{Fore.RED}❌ Failed to connect to MongoDB or initialize GridFS: {e}")
     raise
 
 # Functions to access MongoDB and GridFS
-
-
 def get_db():
     """Returns the database connection object"""
     return database

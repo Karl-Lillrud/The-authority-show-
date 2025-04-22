@@ -2,43 +2,7 @@
 /*      PodManager.ai Guestpage    */
 /* =============================== */
 
-/* 1. Global Variables & Reset */
-:root {
-  --primary-color: #FF7300;       /* Bright Orange (CTAs, highlights) */
-  --secondary-color: #F4F4F4;     /* Light Gray (bakgrund) */
-  --accent-dark: #404040;         /* Dark Gray (för text) */
-  --white: #FFFFFF;              /* Vit (för kontrast) */
-  --hover-glow: rgba(255, 115, 0, 0.4);
-
-  /* Typografi */
-  --font-h1: 2rem;       /* H1 (exempel text-3xl) */
-  --font-h2: 1.75rem;    /* H2 (exempel text-2xl) */
-  --font-h3: 1.5rem;     /* H3 (exempel text-xl) */
-  --font-body: 1rem;     /* Body text (exempel text-base) */
-  --font-small: 0.875rem;/* Små texter (exempel text-sm) */
-
-  /* Spacing */
-  --navbar-height: 4rem; /* 80px */
-}
-
 /* Grundläggande reset */
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
-}
-
-body {
-  font-family: 'Inter', sans-serif;
-  background-color: var(--secondary-color);
-  color: var(--accent-dark);
-  line-height: 1.6;
-}
-
-html {
-  scroll-behavior: smooth;
-}
-
 section {
   background-color: transparent;
   transition: background 0.5s ease-in-out;

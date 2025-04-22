@@ -15,17 +15,29 @@ class PodcastRepository:
     def __init__(self):
         self.collection = collection.database.Podcasts
 
-    def add_podcast(self, user_id, data):
+    def add_podcast(self, user_id, data):  # user_id here is the owner's ID
         try:
-            # Fetch the account document for the logged-in user
-            user_account = collection.database.Accounts.find_one({"userId": user_id})
+            logger.info(f"Attempting to add podcast for owner_id: {user_id}")
+            # Fetch the account document for the logged-in user using ownerId
+            user_account = collection.database.Accounts.find_one(
+                {"ownerId": user_id}
+            )  # Query by ownerId
+
             if not user_account:
-                raise ValueError("No account associated with this user")
+                logger.error(f"Account lookup failed for ownerId: {user_id}")
+                account_count = collection.database.Accounts.count_documents(
+                    {"ownerId": user_id}
+                )
+                logger.error(
+                    f"Total accounts found for ownerId {user_id}: {account_count}"
+                )
+                raise ValueError("No account associated with this user (owner)")
+            else:
+                logger.info(
+                    f"Found account for ownerId {user_id}: Account _id: {user_account.get('_id')}"
+                )
 
-            # Get the account ID
-            account_id = user_account.get("id", str(user_account["_id"]))
-
-            # Inject the accountId into the data
+            account_id = str(user_account["_id"])
             data["accountId"] = account_id
 
             # Validate data using PodcastSchema
@@ -36,14 +48,14 @@ class PodcastRepository:
 
             validated_data = schema.load(data)
 
-            # Ensure account exists and belongs to the user
-            account_query = (
-                {"userId": user_id, "id": account_id}
-                if "id" in user_account
-                else {"userId": user_id, "_id": user_account["_id"]}
-            )
-            account = collection.database.Accounts.find_one(account_query)
+            # Ensure account exists and belongs to the user (redundant check, but safe)
+            account = collection.database.Accounts.find_one(
+                {"_id": account_id, "ownerId": user_id}
+            )  # Check ownerId here too
             if not account:
+                logger.error(
+                    f"Consistency check failed: Account _id {account_id} not found or doesn't belong to owner {user_id}"
+                )
                 raise ValueError("Invalid account ID or no permission to add podcast.")
 
             # Generate a unique podcast ID
@@ -87,24 +99,28 @@ class PodcastRepository:
                 raise ValueError("Failed to add podcast.")
 
         except ValueError as e:
+            logger.error(
+                f"ValueError in add_podcast for user {user_id}: {e}"
+            )  # Log the specific error
             if isinstance(e.args[0], str):
                 return {"error": e.args[0]}, 400
             else:
                 return {"error": e.args[0], "details": e.args[1]}, 400
 
         except Exception as e:
+            logger.error(
+                f"General Exception in add_podcast for user {user_id}: {e}",
+                exc_info=True,
+            )  # Log general errors
             return {"error": "Failed to add podcast", "details": str(e)}, 500
 
-    def get_podcasts(self, user_id):
+    def get_podcasts(self, user_id):  # user_id is the owner's ID
         try:
+            # Find accounts owned by the user
             user_accounts = list(
-                collection.database.Accounts.find(
-                    {"userId": user_id}, {"id": 1, "_id": 1}
-                )
-            )
-            user_account_ids = [
-                account.get("id", str(account["_id"])) for account in user_accounts
-            ]
+                collection.database.Accounts.find({"ownerId": user_id}, {"_id": 1})
+            )  # Query by ownerId
+            user_account_ids = [str(account["_id"]) for account in user_accounts]
 
             if not user_account_ids:
                 return {"podcast": []}, 200  # No podcasts if no accounts
@@ -125,6 +141,7 @@ class PodcastRepository:
         Fetch a podcast by its ID.
         """
         try:
+<<<<<<< 884-migrate-branch-666-to-fix
             logger.info(f"Fetching podcast by ID: {podcast_id}")
             podcast = self.collection.find_one({"_id": podcast_id})
             if podcast:
@@ -133,6 +150,28 @@ class PodcastRepository:
             else:
                 logger.warning(f"Podcast with ID {podcast_id} not found.")
             return podcast
+=======
+            user_accounts = list(
+                collection.database.Accounts.find(
+                    {"ownerId": user_id}, {"id": 1, "_id": 1}
+                )
+            )
+            user_account_ids = [
+                account.get("id", str(account["_id"])) for account in user_accounts
+            ]
+
+            if not user_account_ids:
+                return {"error": "No accounts found for user"}, 403
+
+            podcast = self.collection.find_one(
+                {"_id": podcast_id, "accountId": {"$in": user_account_ids}}
+            )
+            if not podcast:
+                return {"error": "Podcast not found or unauthorized"}, 404
+
+            podcast["_id"] = str(podcast["_id"])
+            return {"podcast": podcast}, 200
+>>>>>>> dev
         except Exception as e:
             logger.error(f"Error fetching podcast by ID {podcast_id}: {e}")
             return None
@@ -142,7 +181,7 @@ class PodcastRepository:
             # Fetch user account IDs
             user_accounts = list(
                 collection.database.Accounts.find(
-                    {"userId": user_id}, {"id": 1, "_id": 1}
+                    {"ownerId": user_id}, {"id": 1, "_id": 1}
                 )
             )
             user_account_ids = [
@@ -180,7 +219,7 @@ class PodcastRepository:
             # Fetch user account IDs
             user_accounts = list(
                 collection.database.Accounts.find(
-                    {"userId": user_id}, {"id": 1, "_id": 1}
+                    {"ownerId": user_id}, {"id": 1, "_id": 1}
                 )
             )
             user_account_ids = [
@@ -250,7 +289,7 @@ class PodcastRepository:
     # Delete podcast associated with user when user account is deleted
     def delete_by_user(self, user_id):
         try:
-            accounts = list(collection.database.Accounts.find({"userId": user_id}))
+            accounts = list(collection.database.Accounts.find({"ownerId": user_id}))
             account_ids = [str(a.get("id", a["_id"])) for a in accounts]
             result = self.collection.delete_many({"accountId": {"$in": account_ids}})
             logger.info(

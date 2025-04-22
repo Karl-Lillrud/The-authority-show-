@@ -15,6 +15,14 @@
     />
     <link
       rel="stylesheet"
+      href="{{ url_for('static', filename='css/components/general.css') }}"
+    />
+    <link
+    rel="stylesheet"
+    href="{{ url_for('static', filename='css/components/typography.css') }}"
+    />
+    <link
+      rel="stylesheet"
       href="{{ url_for('static', filename='css/podprofile/podprofile.css') }}"
     />
     <link
@@ -67,7 +75,7 @@
         
         <!-- Connect Your Calendar Button -->
         <div class="form-group">
-          <div class="label-group" style="display: inline-flex; align-items: center; gap: 0.25rem;">
+          <div class="label-group">
             <button class="help-button calendar-help-button" title="Click to learn more">?</button>
             <span class="help-text">
               To connect your Google Calendar, click the button below and follow the
@@ -82,12 +90,9 @@
 
         <form id="podNameForm">
           <div class="form-group">
-            <div
-              class="label-group"
-              style="display: inline-flex; align-items: center; gap: 0.25rem"
-            >
-              <label for="podRss">RSS</label>
-              <button class="help-button">?</button>
+            <div class="label-group">
+              <label for="podRss" id="rssLabel">RSS</label>
+              <button class="help-button" id="rss-help-button">?</button>
               <span class="help-text">
                 To find your podcast's RSS feed URL, log in to your podcast
                 hosting platform, navigate to your podcast settings or
@@ -105,12 +110,7 @@
             <button type="button" class="button-primary" id="goToEmailSection">
               Next
             </button>
-            <button
-              type="button"
-              class="button-secondary"
-              id="skipButton"
-              onclick="window.location.href='/podcastmanagement'"
-            >
+            <button type="button" class="button-secondary" id="skipButton" onclick="window.location.href='/podcastmanagement'">
               Skip
             </button>
           </div>
@@ -122,6 +122,33 @@
         <!-- Podcast info will be inserted here by JavaScript -->
       </div>
     </main>
+
+    <!-- Welcome Popup -->
+  <div id="welcome-popup" class="popup">
+    <div class="popup-content">
+      <span id="close-welcome-popup" class="close-btn">&times;</span>
+      <h2>Welcome to PodManager.ai!</h2>
+      <div class="popup-body">
+        <p>🎉 <strong>Congratulations!</strong></p>
+        <p>
+          Your spot in the Beta Tester queue is secured! Get ready for your
+          exclusive sneak peek...
+        </p>
+        <p>
+          💰 To get you started, we've added <strong>3,500 credits</strong> to
+          your account!
+        </p>
+        <p>
+          PodManager.ai will revolutionize your podcast production with
+          AI-driven workflow automation, seamless guest management, and faster
+          episode production - so you can focus on creating amazing content!
+        </p>
+        <p>✨ Check your email now for more exciting features!</p>
+        <button id="get-started-btn" class="btn save-btn">Get Started</button>
+      </div>
+    </div>
+  </div>
+  
     <script
       type="module"
       src="{{ url_for('static', filename='js/podprofile/podprofile.js') }}"

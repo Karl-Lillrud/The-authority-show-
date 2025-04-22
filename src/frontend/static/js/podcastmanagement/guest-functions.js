@@ -1,6 +1,7 @@
 import {
   fetchGuestsRequest,
-  addGuestRequest
+  addGuestRequest,
+  deleteGuestRequest
 } from "../../../static/requests/guestRequests.js";
 import {
   fetchEpisodesByPodcast,
@@ -277,7 +278,7 @@ export function renderGuestDetail(guest) {
 </div>
 
 <div class="detail-actions">
-  <button class="delete-btn" id="delete-guest-btn" data-id="${guest._id}">
+  <button class="delete-btn" id="delete-guest-btn" data-id="${guest.id}">
     ${shared.svgpodcastmanagement.delete} Delete Guest
   </button>
 </div>
@@ -338,10 +339,22 @@ export function renderGuestDetail(guest) {
   });
 
   // Delete button event listener
-  document.getElementById("delete-guest-btn").addEventListener("click", () => {
+  document.getElementById("delete-guest-btn").addEventListener("click", async () => {
     if (confirm("Are you sure you want to delete this guest?")) {
-      // Logic to delete the guest
-      console.log("Delete guest:", guest._id);
+      try {
+        const response = await deleteGuestRequest(guest.id);
+        if (response && response.message === "Guest deleted successfully") {
+          console.log("Guest deleted:", guest.id);
+          showNotification("Success", "Guest deleted successfully!", "success");
+          // Optionally, refresh the guest list or navigate away
+        } else {
+          console.error("Failed to delete guest:", response.error || "Unknown error");
+          showNotification("Error", response.error || "Failed to delete guest.", "error");
+        }
+      } catch (error) {
+        console.error("Error deleting guest:", error);
+        showNotification("Error", "An error occurred while deleting the guest.", "error");
+      }
     }
   });
 }
@@ -373,35 +386,80 @@ export function initGuestFunctions() {
       const guestDescription = document
         .getElementById("guest-description")
         .value.trim();
-      const guestTags = document
-        .getElementById("guest-tags")
-        .value.split(",")
-        .map((tag) => tag.trim())
-        .filter(Boolean);
       const guestAreas = document
         .getElementById("guest-areas")
         .value.split(",")
         .map((area) => area.trim())
         .filter(Boolean);
       const guestEmail = document.getElementById("guest-email").value.trim();
-      const guestLinkedIn = document
-        .getElementById("guest-linkedin")
-        .value.trim();
-      const guestTwitter = document
-        .getElementById("guest-twitter")
-        .value.trim();
+// Collect guest data from form
+const guestName = document.getElementById("guest-name").value.trim();
+const guestEmail = document.getElementById("guest-email").value.trim();
+const guestDescription = document.getElementById("guest-description").value.trim();
+const guestAreas = document.getElementById("guest-areas").value.trim();
+const guestLinkedIn = document.getElementById("guest-linkedin").value.trim();
+const guestTwitter = document.getElementById("guest-twitter").value.trim();
+const episodeId = document.getElementById("episode-id").value.trim();
 
-      if (guestName && guestEmail && episodeId) {
-        try {
+// Log the collected data
+console.log("Collected Guest Data:", {
+  episodeId,
+  guestName,
+  guestDescription,
+  guestAreas,
+  guestEmail,
+  guestLinkedIn,
+  guestTwitter
+});
+
+// Ensure required fields are filled in
+if (guestName && guestEmail && episodeId) {
+  try {
+    // Log before sending the request
+    console.log("Sending request to addGuestRequest with payload:", {
+      episodeId,
+      name: guestName,
+      description: guestDescription,
+      areasOfInterest: guestAreas,
+      email: guestEmail,
+      linkedin: guestLinkedIn,
+      twitter: guestTwitter
+    });
+
+    // Fetch the episode details
+    const episode = await fetchEpisode(episodeId);
+
+    // Proceed with guest addition logic
+    // Assuming `addGuestRequest` is a function that sends the request to add a guest
+    const response = await addGuestRequest({
+      episodeId,
+      name: guestName,
+      description: guestDescription,
+      areasOfInterest: guestAreas,
+      email: guestEmail,
+      linkedin: guestLinkedIn,
+      twitter: guestTwitter
+    });
+
+    if (response.success) {
+      showNotification("Success", "Guest added successfully!", "success");
+    } else {
+      showNotification("Error", "Failed to add guest.", "error");
+    }
+  } catch (error) {
+    console.error("Error adding guest:", error);
+    showNotification("Error", "An error occurred while adding the guest.", "error");
+  }
+} else {
+  showNotification("Error", "Please fill in all required fields.", "error");
+}
+
           const guest = await addGuestRequest({
             episodeId, // Ensure episodeId is correctly set
             name: guestName,
             description: guestDescription,
-            tags: guestTags,
             areasOfInterest: guestAreas,
-            email: guestEmail,
-            linkedin: guestLinkedIn,
-            twitter: guestTwitter
+            email: guestEmail
           });
           closeAddGuestPopup();
           showNotification("Success", "Guest added successfully!", "success");
