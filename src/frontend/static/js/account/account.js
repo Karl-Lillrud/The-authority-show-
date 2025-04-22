@@ -5,7 +5,7 @@ import {
   deleteUserAccount,
   subscribeUser,
 } from "/static/requests/accountRequests.js"
-import { showNotification } from "../omponents/notifications.js";
+//import { showNotification } from "../components/notifications.js";
 
 document.addEventListener("DOMContentLoaded", () => {
     // Hides the edit buttons when in non-edit mode
@@ -501,21 +501,6 @@ document.addEventListener("DOMContentLoaded", () => {
     if (password.match(/[^A-Za-z0-9]/)) strength++
 
     return strength
-  }
-  
-  // Add event listener for the cancel subscription button
-  const cancelSubscriptionBtn = document.getElementById('cancel-subscription-btn');
-  if (cancelSubscriptionBtn) {
-    console.log("Cancel subscription button found, adding event listener");
-    cancelSubscriptionBtn.addEventListener('click', function() {
-      console.log("Cancel button clicked");
-      // Import the function from subscription.js if needed
-      import('./subscription.js').then(module => {
-        module.showCancellationConfirmation();
-      });
-    });
-  } else {
-    console.log("Cancel subscription button not found in DOM");
   }
 })
 
