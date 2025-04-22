@@ -239,3 +239,43 @@ def cancel_subscription():
     except Exception as e:
         logger.error(f"Error cancelling subscription: {str(e)}", exc_info=True)
         return jsonify({"error": f"Error cancelling subscription: {str(e)}"}), 500
+
+@billing_bp.route("/api/purchases/history", methods=["GET"])
+def get_purchase_history():
+    user_id = g.user_id
+    
+    if not user_id:
+        return jsonify({"error": "User not authenticated"}), 401
+    
+    try:
+        # Get credits for the user to include in the response
+        credits_doc = collection.database.Credits.find_one({"user_id": user_id})
+        available_credits = credits_doc.get("availableCredits", 0) if credits_doc else 0
+        
+        # Get purchase history from the database
+        purchases = list(collection.database.Purchases.find(
+            {"user_id": user_id},
+            {"_id": 0, "date": 1, "amount": 1, "description": 1, "status": 1}
+        ).sort("date", -1))
+        
+        # Format dates for JSON
+        for purchase in purchases:
+            if "date" in purchase:
+                purchase["date"] = purchase["date"].isoformat()
+        
+        # If no purchases but user has credits, add a "system grant" entry
+        if not purchases and available_credits > 0:
+            purchases.append({
+                "date": datetime.utcnow().isoformat(),
+                "amount": 0.00,
+                "description": f"System credit grant ({available_credits} credits)",
+                "status": "Granted"
+            })
+        
+        return jsonify({
+            "purchases": purchases,
+            "availableCredits": available_credits
+        })
+    except Exception as e:
+        logger.error(f"Error fetching purchase history: {str(e)}")
+        return jsonify({"error": str(e)}), 500

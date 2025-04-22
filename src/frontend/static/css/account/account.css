@@ -742,12 +742,53 @@ input:focus {
   color: var(--account-success);
   border-radius: 9999px;
   font-size: 0.75rem;
-  font-weight: 500;
 }
 
 .invoice-link {
   color: var(--account-primary);
   font-weight: 500;
+}
+
+/* Update the billing history styling */
+.empty-history-message {
+  text-align: center;
+  padding: 1.5rem;
+  color: var(--account-muted-foreground);
+  font-style: italic;
+}
+
+.loading-row {
+  text-align: center;
+  color: var(--account-muted-foreground);
+  padding: 1rem 0;
+}
+
+/* Status classes for different purchase states */
+.status-paid {
+  display: inline-block;
+  padding: 0.25rem 0.5rem;
+  background-color: rgba(16, 185, 129, 0.1);
+  color: var(--account-success);
+  border-radius: 9999px;
+  font-size: 0.75rem;
+}
+
+.status-pending {
+  display: inline-block;
+  padding: 0.25rem 0.5rem;
+  background-color: rgba(245, 158, 11, 0.1);
+  color: #f59e0b;
+  border-radius: 9999px;
+  font-size: 0.75rem;
+}
+
+.status-failed {
+  display: inline-block;
+  padding: 0.25rem 0.5rem;
+  background-color: rgba(239, 68, 68, 0.1);
+  color: #ef4444;
+  border-radius: 9999px;
+  font-size: 0.75rem;
 }
 
 /* Payment Methods */
@@ -961,6 +1002,17 @@ input:focus:invalid {
     width: 100%;
     justify-content: space-between;
     margin-top: 0.5rem;
+  }
+}
+
+@media (max-width: 640px) {
+  .billing-header, .billing-row {
+    grid-template-columns: 1fr 2fr 1fr;
+  }
+  
+  .billing-header .billing-cell:nth-child(4),
+  .billing-row .billing-cell:nth-child(4) {
+    display: none;
   }
 }
 
