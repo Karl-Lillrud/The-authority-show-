@@ -191,3 +191,25 @@ def get_workflows():
     except Exception as e:
         return jsonify({"error": f"Failed to fetch workflows: {str(e)}"}), 500
 
+
+@podtask_bp.route("/delete_workflow/<workflow_id>", methods=["DELETE"])
+def delete_workflow(workflow_id):
+    if not g.user_id:
+        return jsonify({"error": "Unauthorized"}), 401
+
+    try:
+        # Check if the workflow exists
+        workflow = collection.database.Workflows.find_one({"_id": workflow_id, "user_id": g.user_id})
+        if not workflow:
+            return jsonify({"error": "Workflow not found or you do not have permission to delete it"}), 404
+
+        # Delete the workflow
+        result = collection.database.Workflows.delete_one({"_id": workflow_id, "user_id": g.user_id})
+
+        if result.deleted_count > 0:
+            return jsonify({"message": "Workflow deleted successfully"}), 200
+        else:
+            return jsonify({"error": "Failed to delete workflow"}), 500
+
+    except Exception as e:
+        return jsonify({"error": f"Failed to delete workflow: {str(e)}"}), 500
