@@ -5,7 +5,7 @@ import {
   deleteUserAccount,
   subscribeUser,
 } from "/static/requests/accountRequests.js"
-//import { showNotification } from "../components/notifications.js";
+import { showNotification } from "../components/notifications.js";
 
 document.addEventListener("DOMContentLoaded", () => {
     // Hides the edit buttons when in non-edit mode
