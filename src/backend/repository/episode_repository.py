@@ -15,8 +15,7 @@ class EpisodeRepository:
     def register_episode(self, data, user_id):
         """Register a new episode for the given user."""
         try:
-
-            user_account = self.accounts_collection.find_one({"userId": user_id})
+            user_account = self.accounts_collection.find_one({"ownerId": user_id})
             if not user_account:
                 return {"error": "No account associated with this user"}, 403
 
@@ -208,9 +207,7 @@ class EpisodeRepository:
             return result.deleted_count
         except Exception as e:
 
-            logger.error(
-                f"❌ ERROR deleting episodes: {str(e)}"
-            )
+            logger.error(f"❌ ERROR deleting episodes: {str(e)}")
             return {"error": f"Failed to delete episodes: {str(e)}"}, 500
 
     def get_episode_detail_with_podcast(self, episode_id):
