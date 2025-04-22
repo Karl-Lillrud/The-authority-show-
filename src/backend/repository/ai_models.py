@@ -4,6 +4,9 @@ from flask import Response, jsonify
 import gridfs
 from gridfs.errors import NoFile
 from backend.database.mongo_connection import get_fs
+from backend.repository.episode_repository import EpisodeRepository
+
+episode_repo = EpisodeRepository()
 
 fs = get_fs()
 
@@ -60,3 +63,25 @@ def get_file_by_id(file_id: str):
     except NoFile:
         raise FileNotFoundError("File not found in GridFS.")
 
+def add_audio_edit_to_episode(episode_id: str, file_id: str, edit_type: str, filename: str, metadata: dict = None):
+    """
+    Push a new audio edit entry into the episode's `audioEdits` array.
+    """
+    metadata = metadata or {}
+
+    edit_entry = {
+        "fileId": str(file_id),
+        "editType": edit_type,
+        "filename": filename,
+        "createdAt": datetime.utcnow().isoformat(),
+        "metadata": metadata
+    }
+
+    try:
+        result = episode_repo.collection.update_one(
+            {"_id": episode_id},
+            {"$push": {"audioEdits": edit_entry}}
+        )
+        return result.modified_count == 1
+    except Exception as e:
+        raise RuntimeError(f"Failed to add audio edit to episode: {str(e)}")
