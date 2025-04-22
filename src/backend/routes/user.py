@@ -21,10 +21,13 @@ def get_profile():
 @user_bp.route("/update_profile", methods=["PUT"])
 def update_profile():
     if not hasattr(g, "user_id") or not g.user_id:
+        logger.error(f"Unauthorized access attempt by user {g.user_id}")
         return jsonify({"error": "Obehörig"}), 401
 
     data = request.get_json()
+    logger.info(f"Received data to update profile: {data}")
     response, status_code = user_repo.update_profile(str(g.user_id), data)
+    logger.info(f"Profile updated for user {g.user_id}: {response}")
     return jsonify(response), status_code
 
 

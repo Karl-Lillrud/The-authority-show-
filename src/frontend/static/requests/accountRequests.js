@@ -10,19 +10,20 @@ export function fetchProfile() {
 
 // Update profile data
 export function updateProfile(profileData) {
-  return fetch('/update_profile', {
+  return fetch('/user/update_profile', {
     method: 'PUT',
     headers: {
       'Content-Type': 'application/json',
     },
     body: JSON.stringify(profileData),
   })
-    .then(response => response.json())
-    .catch(error => {
-      console.error('Error updating profile:', error);
-      throw new Error('Failed to update profile');
-    });
+  .then(response => response.json())
+  .catch(error => {
+    console.error('Error updating profile:', error);
+    throw new Error('Failed to update profile');
+  });
 }
+
 
 // Fetch account data
 export function fetchAccount() {
