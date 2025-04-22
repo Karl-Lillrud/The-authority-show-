@@ -249,7 +249,7 @@ def generate_quote_images(quotes: List[str]) -> List[str]:
             urls.append("")
     return urls
 
-def fetch_sfx_for_emotion( emotion: str, limit=1) -> List[str]:
+def fetch_sfx_for_emotion( emotion: str, category: str, limit=1) -> List[str]:
     try:
         generation_url = "https://api.elevenlabs.io/v1/sound-generation"
         headers = {
@@ -258,11 +258,11 @@ def fetch_sfx_for_emotion( emotion: str, limit=1) -> List[str]:
         }
 
         payload = {
-            "text": f"Create a seamless loop of ambient background music for a True Crime podcast with a {emotion} mood. Use soft drones, mellow pads, and faint echoes to build a somber atmosphere that supports narration without distraction. Keep the dynamics gentle, transitions smooth, and ensure the track loops naturally. Avoid sharp or bright sounds.",
+            "text": f"Create a seamless loop of ambient background music for a {category} podcast with a {emotion} mood. Use soft drones, mellow pads, and faint echoes to build a somber atmosphere that supports narration without distraction. Keep the dynamics gentle, transitions smooth, and ensure the track loops naturally. Avoid sharp or bright sounds.",
             "duration_seconds": 3,
             "prompt_influence": 1
         }
-
+        print("DEBUG: SFX Generation Payload:", payload)
         # 🔄 Send request
         res = requests.post(generation_url, headers=headers, json=payload)
         print("📡 SFX gen status:", res.status_code)
@@ -284,14 +284,14 @@ def fetch_sfx_for_emotion( emotion: str, limit=1) -> List[str]:
         print(f"⚠️ Failed to fetch SFX for '{emotion}': {e}")
         return []
 
-def suggest_sound_effects(emotion_data):
+def suggest_sound_effects(emotion_data, category: str = "general"):
     suggestions = []
 
     for entry in emotion_data:
         emotion = entry["emotions"][0]["label"]
         text = entry["text"]
 
-        sfx_options = fetch_sfx_for_emotion(emotion)
+        sfx_options = fetch_sfx_for_emotion(emotion, category)
 
         suggestions.append({
             "timestamp_text": text,
