@@ -7,14 +7,24 @@ import { getTeamsRequest } from "/static/requests/teamRequests.js";
 
 
 
-document.addEventListener("DOMContentLoaded", () => {
+document.addEventListener("DOMContentLoaded", async () => {
   fetchAndDisplayEpisodesWithGuests();
   initializeSvgIcons();
   initProgressCircles();
   initDashboardActions();
   createTeamLeaderBoardRows();
-  updateStatCounts();
+  try {
+    // Wait for all fetch functions to complete before animation begins
+    await fetchAndDisplayPodcastCount();
+    await fetchAndDisplayEpisodeCount();
+    await fetchAndDisplayGuestCount();
+    updateStatCounts();
+  } catch (error) {
+    console.error("Error initializing dashboard:", error);
+  }
 });
+
+
 
 function initProgressCircles() {
   const progressCircles = document.querySelectorAll(".progress-circle");
@@ -80,6 +90,39 @@ function animateCount(element, start, end, duration) {
     }
   };
   window.requestAnimationFrame(step);
+}
+
+// fetch and display podcast count
+async function fetchAndDisplayPodcastCount() {
+  try {
+    const allPodcasts = await fetchPodcasts();
+    const podcastValue = document.getElementById("podcast-count");
+    podcastValue.innerHTML = allPodcasts.podcast.length;
+  } catch (error) {
+    console.error("Error fetching podcast data:", error);
+  }
+}
+
+// fetch and display episode count
+async function fetchAndDisplayEpisodeCount() {
+  try {
+    const allEpisodes = await fetchAllEpisodes();
+    const episodeValue = document.getElementById("episode-count");
+    episodeValue.innerHTML = allEpisodes.length;
+  } catch (error) {
+    console.error("Error fetching episode data:", error);
+  }
+}
+
+// fetch and display guest count 
+async function fetchAndDisplayGuestCount() {
+  try {
+    const allGuests = await fetchGuestsRequest();
+    const guestValue = document.getElementById("guest-count");
+    guestValue.innerHTML = allGuests.length;
+  } catch (error) {
+    console.error("Error fetching guest data:", error);
+  }
 }
 
 async function createTeamLeaderBoardRows() {
