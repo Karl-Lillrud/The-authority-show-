@@ -225,7 +225,8 @@ def send_login_email(email, login_link):
         </html>
         """
         logger.info(f"📧 Preparing to send login email to {email}")
-        logger.debug(f"Login link: {login_link}")
+        # Change logging level from debug to info to ensure it's printed
+        logger.info(f"Login link: {login_link}")
 
         result = send_email(email, subject, body)
         if result.get("success"):
