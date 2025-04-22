@@ -249,7 +249,7 @@ def generate_quote_images(quotes: List[str]) -> List[str]:
             urls.append("")
     return urls
 
-def fetch_sfx_for_emotion(emotion: str, limit=1) -> List[str]:
+def fetch_sfx_for_emotion( emotion: str, limit=1) -> List[str]:
     try:
         generation_url = "https://api.elevenlabs.io/v1/sound-generation"
         headers = {
@@ -258,9 +258,9 @@ def fetch_sfx_for_emotion(emotion: str, limit=1) -> List[str]:
         }
 
         payload = {
-            "text": f"{emotion} sound effect",
-            "duration_seconds": 4,
-            "prompt_influence": 0.6
+            "text": f"Create a seamless loop of ambient background music for a True Crime podcast with a {emotion} mood. Use soft drones, mellow pads, and faint echoes to build a somber atmosphere that supports narration without distraction. Keep the dynamics gentle, transitions smooth, and ensure the track loops naturally. Avoid sharp or bright sounds.",
+            "duration_seconds": 3,
+            "prompt_influence": 1
         }
 
         # 🔄 Send request
