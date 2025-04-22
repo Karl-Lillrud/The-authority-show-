@@ -36,7 +36,7 @@ export async function renderMembersView() {
           card.innerHTML = `
   <div class="member-card-header" style="position: relative;">
     <h3 class="text-truncate">${member.email}</h3>
-    <button class="edit-icon-btn" style="position: absolute; top: 8px; right: 8px;">${edit}</button>
+    <button class="action-btn edit-icon-btn" style="position: absolute; top: 8px; right: 8px;">${edit}</button>
   </div>
   <div class="member-card-body">
     ${

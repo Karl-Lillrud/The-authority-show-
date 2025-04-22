@@ -1,23 +1,4 @@
-* {
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
-}
-
-body {
-    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
-    line-height: 1.6;
-    color: var(--about-dark);
-    background-color: var(--about-light);
-}
-
 /* Typography */
-h1, h2, h3, h4, h5, h6 {
-    font-weight: 700;
-    line-height: 1.2;
-    margin-bottom: 1rem;
-}
-
 h1 {
     font-size: 2.5rem;
 }
@@ -288,8 +269,9 @@ p {
 
 /* Simplified Footer */
 .footer {
-    background-color: var(--about-dark);
-    color: white;
+    background-color: white;
+    box-shadow: var(--shadow);
+    color: #ff9f33;
     padding: 2rem 0;
     text-align: center;
 }
@@ -302,19 +284,19 @@ p {
 }
 
 .footer-links a {
-    color: var(--about-gray-light);
+    color: #ff9f33;
     text-decoration: none;
     transition: color 0.3s ease;
     font-size: 0.9rem;
 }
 
 .footer-links a:hover {
-    color: white;
+    color: rgb(255, 50, 0);
 }
 
 .copyright {
     font-size: 0.9rem;
-    color: var(--about-gray-light);
+    color: #ff9f33;
     margin-top: 1rem;
 }
 

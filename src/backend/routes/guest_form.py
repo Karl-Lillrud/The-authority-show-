@@ -9,7 +9,7 @@ import os
 from backend.repository.user_repository import UserRepository
 from google.auth.transport.requests import Request
 
-guest_form_bp = Blueprint("guest_form", __name__)
+guest_form_bp = Blueprint("guest_form_bp", __name__)  # Use a unique name for the blueprint
 logger = logging.getLogger(__name__)
 
 @guest_form_bp.route("/", methods=["GET", "POST"])
@@ -25,9 +25,21 @@ def guest_form():
         
         if google_cal_token:
             try:
-                # Now this call will work correctly with the two parameters
-                create_google_calendar_event(data, google_cal_token)  # Create the event in Google Calendar
-                return jsonify({"message": "Guest form submitted and event created successfully"}), 200
+                # Check if there's an existing calendar event to delete
+                existing_event_id = data.get("calendarEventId")
+                if existing_event_id:
+                    # Delete the existing event before creating a new one
+                    delete_google_calendar_event(existing_event_id, google_cal_token)
+                    logger.info(f"Deleted existing calendar event: {existing_event_id}")
+                
+                # Now create a new event
+                event_result = create_google_calendar_event(data, google_cal_token)
+                
+                # Update the guest record with the new event ID
+                if event_result and 'id' in event_result:
+                    update_guest_calendar_event_id(guest_id, event_result['id'])
+                    
+                return jsonify({"message": "Guest form submitted and event created successfully", "eventId": event_result.get('id')}), 200
             except Exception as e:
                 logger.error(f"Error creating Google Calendar event: {str(e)}")
                 return jsonify({"error": "Failed to create Google Calendar event"}), 500
@@ -107,6 +119,61 @@ def create_google_calendar_event(data, google_cal_token):
         raise error
 
 
+def delete_google_calendar_event(event_id, google_cal_token):
+    """
+    Delete a Google Calendar event using the Google Calendar API.
+    """
+    try:
+        # Retrieve Google Calendar token and user information
+        user_id = session.get("user_id")
+        user_repo = UserRepository()
+        user = user_repo.get_user_by_id(user_id)
+
+        # Refresh the credentials using the access token and refresh token
+        credentials = Credentials(
+            token=google_cal_token,
+            refresh_token=user.get("googleCalRefreshToken"),
+            token_uri="https://oauth2.googleapis.com/token",
+            client_id=os.getenv("GOOGLE_CLIENT_ID"),
+            client_secret=os.getenv("GOOGLE_CLIENT_SECRET")
+        )
+
+        if credentials.expired and credentials.refresh_token:
+            credentials.refresh(Request())  # Refresh expired token
+
+        # Create the Google Calendar service instance
+        service = build("calendar", "v3", credentials=credentials)
+        
+        # Delete the event from the user's primary calendar
+        service.events().delete(
+            calendarId='primary',
+            eventId=event_id
+        ).execute()
+
+        logger.info(f"Deleted event: {event_id}")
+        return True
+
+    except HttpError as error:
+        logger.error(f"An error occurred while deleting the event: {error}")
+        raise error
+
+
+def update_guest_calendar_event_id(guest_id, event_id):
+    """
+    Update the guest record with the calendar event ID.
+    """
+    try:
+        collection.database.Guests.update_one(
+            {"_id": guest_id},
+            {"$set": {"calendarEventId": event_id}}
+        )
+        logger.info(f"Updated guest {guest_id} with calendar event ID {event_id}")
+        return True
+    except Exception as e:
+        logger.error(f"Error updating guest with calendar event ID: {e}")
+        return False
+
+
 def save_guest_to_db(data):
     """
     Function to save guest data to the database.
@@ -128,7 +195,8 @@ def save_guest_to_db(data):
         "updatesOption": data.get("updatesOption", "no"),
         "profilePhoto": data.get("profilePhoto"),
         "createdAt": datetime.now(),
-        "status": "pending"  # Initial status for the guest
+        "status": "pending",  # Initial status for the guest
+        "calendarEventId": data.get("calendarEventId")  # Store the calendar event ID
     }
     # Save the guest data to the guests collection
     guest_id = collection.database.Guests.insert_one(guest_data).inserted_id
@@ -138,16 +206,19 @@ def save_guest_to_db(data):
 @guest_form_bp.route("/create-google-calendar-event", methods=["POST"])
 def create_calendar_event_route():
     """
-    Create a Google Calendar event using the Google Calendar API.
+    Create or update a Google Calendar event using the Google Calendar API.
+    If an existing event ID is provided, it will delete that event before creating a new one.
     """
     try:
         data = request.get_json()
+        logger.info(f"Received calendar event data: {data}")
 
         # Ensure necessary data is provided
         if not data.get('summary') or not data.get('start') or not data.get('end'):
             return jsonify({'error': 'Missing required fields'}), 400
 
         google_cal_token = data.get('googleCalToken')  # The token sent from frontend
+        existing_event_id = data.get('calendarEventId')  # Get existing event ID if available
 
         if not google_cal_token:
             return jsonify({"error": "Google Calendar token is missing."}), 400
@@ -174,6 +245,24 @@ def create_calendar_event_route():
 
         # Create Google Calendar service instance
         service = build("calendar", "v3", credentials=credentials)
+        
+        # If there's an existing event ID, delete it first
+        if existing_event_id:
+            try:
+                logger.info(f"Attempting to delete existing calendar event: {existing_event_id}")
+                service.events().delete(
+                    calendarId='primary',
+                    eventId=existing_event_id
+                ).execute()
+                logger.info(f"Successfully deleted existing calendar event: {existing_event_id}")
+            except HttpError as error:
+                # If the event doesn't exist, just log it and continue
+                if error.resp.status == 404:
+                    logger.warning(f"Event {existing_event_id} not found, continuing with creation")
+                else:
+                    logger.error(f"Error deleting event {existing_event_id}: {error}")
+                    return jsonify({'error': f"Error deleting existing event: {str(error)}"}), 500
+
         event = {
             'summary': data['summary'],
             'description': data.get('description', ''),
@@ -194,7 +283,20 @@ def create_calendar_event_route():
             body=event
         ).execute()
 
-        logger.info(f"Created event: {event_result['summary']} at {event_result['start']['dateTime']}")
+        logger.info(f"Created new event: {event_result['summary']} at {event_result['start']['dateTime']} with ID: {event_result['id']}")
+        
+        # If this is updating a guest record, update the calendar event ID
+        guest_id = data.get('guestId')
+        if guest_id:
+            try:
+                collection.database.Guests.update_one(
+                    {"_id": guest_id},
+                    {"$set": {"calendarEventId": event_result['id']}}
+                )
+                logger.info(f"Updated guest {guest_id} with new calendar event ID {event_result['id']}")
+            except Exception as e:
+                logger.error(f"Error updating guest with calendar event ID: {e}")
+
         return jsonify({
             'message': 'Google Calendar event created successfully',
             'eventId': event_result['id']
@@ -205,7 +307,7 @@ def create_calendar_event_route():
         return jsonify({'error': str(error)}), 500
 
     except Exception as e:
-        logger.error(f"Error creating Google Calendar event: {e}")
+        logger.error(f"Error creating Google Calendar event: {e}", exc_info=True)
         return jsonify({'error': f"An error occurred: {str(e)}"}), 500
 
 @guest_form_bp.route("/available_dates", methods=["GET"])
@@ -318,3 +420,75 @@ def available_dates():
     except Exception as e:
         logger.error(f"Error fetching available dates: {e}", exc_info=True)
         return jsonify({"error": f"Failed to fetch available dates: {str(e)}"}), 500
+
+# Add a new route to explicitly handle calendar event deletion
+
+@guest_form_bp.route("/delete-calendar-event", methods=["POST"])
+def delete_calendar_event_route():
+    """
+    Delete a Google Calendar event using the Google Calendar API.
+    """
+    try:
+        data = request.get_json()
+        
+        # Ensure necessary data is provided
+        event_id = data.get('eventId')
+        google_cal_token = data.get('googleCalToken')
+        
+        if not event_id:
+            return jsonify({'error': 'Missing event ID'}), 400
+            
+        if not google_cal_token:
+            return jsonify({"error": "Google Calendar token is missing."}), 400
+
+        # Retrieve user info and credentials for Google Calendar API
+        user_id = session.get("user_id")
+        user_repo = UserRepository()
+        user = user_repo.get_user_by_id(user_id)
+
+        if not user:
+            return jsonify({"error": "User not found."}), 404
+
+        credentials = Credentials(
+            token=google_cal_token,
+            refresh_token=user.get("googleCalRefreshToken"),
+            token_uri="https://oauth2.googleapis.com/token",
+            client_id=os.getenv("GOOGLE_CLIENT_ID"),
+            client_secret=os.getenv("GOOGLE_CLIENT_SECRET")
+        )
+
+        # Refresh the credentials if expired
+        if credentials.expired and credentials.refresh_token:
+            credentials.refresh(Request())  # Refresh the credentials
+
+        # Create Google Calendar service instance
+        service = build("calendar", "v3", credentials=credentials)
+        
+        # Delete the event
+        try:
+            service.events().delete(
+                calendarId='primary',
+                eventId=event_id
+            ).execute()
+            logger.info(f"Successfully deleted calendar event: {event_id}")
+            
+            return jsonify({
+                'message': 'Google Calendar event deleted successfully',
+                'eventId': event_id
+            }), 200
+            
+        except HttpError as error:
+            # If the event doesn't exist, return success anyway
+            if error.resp.status == 404:
+                logger.warning(f"Event {event_id} not found, but considering deletion successful")
+                return jsonify({
+                    'message': 'Event not found, but considering deletion successful',
+                    'eventId': event_id
+                }), 200
+            else:
+                logger.error(f"Error deleting event {event_id}: {error}")
+                return jsonify({'error': f"Error deleting event: {str(error)}"}), 500
+
+    except Exception as e:
+        logger.error(f"Error deleting Google Calendar event: {e}", exc_info=True)
+        return jsonify({'error': f"An error occurred: {str(e)}"}), 500

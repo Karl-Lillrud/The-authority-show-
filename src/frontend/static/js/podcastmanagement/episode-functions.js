@@ -7,12 +7,12 @@ import {
 import { fetchPodcasts } from "../../../static/requests/podcastRequests.js";
 import { fetchGuestsByEpisode } from "../../../static/requests/guestRequests.js";
 import {
-  showNotification,
   updateEditButtons,
   shared
 } from "./podcastmanagement.js";
 import { renderPodcastSelection, viewPodcast } from "./podcast-functions.js";
 import { renderGuestDetail } from "./guest-functions.js";
+import { showNotification } from "../components/notifications.js";
 
 // Add this function to create a play button with SVG icon
 export function createPlayButton(size = "medium") {
@@ -548,7 +548,9 @@ export function initEpisodeFunctions() {
       const data = Object.fromEntries(formData.entries());
 
       // Ensure recordingAt is in the correct format
-      if (data.recordingAt) {
+      if (data.recordingAt === '') {
+        data.recordingAt = null; // Set to null if no date is provided
+      } else if (data.recordingAt) {
         const recordingAt = new Date(data.recordingAt);
         if (isNaN(recordingAt.getTime())) {
           showNotification(

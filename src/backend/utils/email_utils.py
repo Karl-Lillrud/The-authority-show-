@@ -3,18 +3,24 @@ import logging
 import os
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
-from email.mime.image import MIMEImage  # Added for inline image support
+from email.mime.image import MIMEImage
 from dotenv import load_dotenv
 from flask import render_template, Blueprint, request, jsonify, url_for, redirect
 import urllib.parse
 import requests
 from backend.repository.guest_repository import GuestRepository
+from google.auth.transport.requests import Request
+from google.oauth2.credentials import Credentials
+from google_auth_oauthlib.flow import InstalledAppFlow
+from backend.utils.config_utils import get_client_secret
 
 # Load environment variables once
 load_dotenv(override=True)
 
 EMAIL_USER = os.getenv("EMAIL_USER")
-EMAIL_PASS = os.getenv("EMAIL_PASS")
+EMAIL_PASSWORD = os.getenv("EMAIL_PASSWORD")
+CLIENT_SECRET = get_client_secret()
+TOKEN_FILE = os.getenv("TOKEN_FILE")
 SMTP_SERVER = os.getenv("SMTP_SERVER")
 SMTP_PORT = os.getenv("SMTP_PORT")
 
@@ -24,6 +30,7 @@ logger = logging.getLogger(__name__)
 google_calendar_bp = Blueprint("google_calendar", __name__)
 guest_repo = GuestRepository()
 
+
 @google_calendar_bp.route("/save_google_refresh_token", methods=["POST"])
 def save_google_refresh_token():
     """
@@ -31,17 +38,14 @@ def save_google_refresh_token():
     """
     try:
         data = request.json
-        refresh_token = data.get("refreshToken")  # Ensure it's named refreshToken
-        user_id = request.headers.get("User-ID")  # Assume User-ID is passed in headers
+        refresh_token = data.get("refreshToken")
+        user_id = request.headers.get("User-ID")
 
         if not refresh_token or not user_id:
             return jsonify({"error": "Missing refresh token or user ID"}), 400
 
-        # Save the refresh token as googleRefresh
         result = collection.database.Users.update_one(
-            {"_id": user_id},
-            {"$set": {"googleRefresh": refresh_token}},  # Save as googleRefresh
-            upsert=True
+            {"_id": user_id}, {"$set": {"googleRefresh": refresh_token}}, upsert=True
         )
 
         if result.modified_count > 0 or result.upserted_id:
@@ -78,7 +82,7 @@ def connect_google_calendar():
         }
 
         auth_url = f"{os.getenv('GOOGLE_OAUTH_URL')}?{urllib.parse.urlencode(params)}"
-        return redirect(auth_url)  # Redirect the user to the Google OAuth page
+        return redirect(auth_url)
     except Exception as e:
         logger.exception("❌ ERROR: Failed to generate Google OAuth URL")
         return jsonify({"error": f"Failed to generate Google OAuth URL: {str(e)}"}), 500
@@ -96,7 +100,7 @@ def calendar_callback():
             return jsonify({"error": "Missing authorization code"}), 400
 
         client_id = os.getenv("GOOGLE_CLIENT_ID")
-        client_secret = os.getenv("GOOGLE_CLIENT_SECRET")
+        client_secret = CLIENT_SECRET
         redirect_uri = os.getenv("GOOGLE_REDIRECT_URI")
 
         if not client_id or not client_secret or not redirect_uri:
@@ -112,22 +116,21 @@ def calendar_callback():
             "grant_type": "authorization_code",
         }
 
-        logger.info(f"🔗 Sending token exchange request to {token_url} with payload: {payload}")
-
+        logger.info(f"🔗 Sending token exchange request to {token_url}")
         response = requests.post(token_url, data=payload)
         if response.status_code != 200:
-            logger.error(f"❌ ERROR: Failed to exchange code for tokens: {response.text}")
+            logger.error(
+                f"❌ ERROR: Failed to exchange code for tokens: {response.text}"
+            )
             return jsonify({"error": "Failed to exchange code for tokens"}), 500
 
         tokens = response.json()
-        logger.info(f"✅ Token exchange successful: {tokens}")
-
+        logger.info(f"✅ Token exchange successful")
         refresh_token = tokens.get("refresh_token")
         if not refresh_token:
             logger.warning("⚠️ WARNING: No refresh token received")
             return jsonify({"error": "No refresh token received"}), 400
 
-        # Save the refresh token in the Users collection
         user_id = request.headers.get("User-ID")
         if not user_id:
             logger.error("❌ ERROR: Missing user ID in headers")
@@ -135,7 +138,9 @@ def calendar_callback():
 
         save_result = guest_repo.save_google_refresh_token(user_id, refresh_token)
         if save_result[1] != 200:
-            logger.error(f"❌ ERROR: Failed to save refresh token: {save_result[0]['error']}")
+            logger.error(
+                f"❌ ERROR: Failed to save refresh token: {save_result[0]['error']}"
+            )
             return jsonify({"error": "Failed to save refresh token"}), 500
 
         return jsonify({"message": "Google calendar connected successfully"}), 200
@@ -145,49 +150,97 @@ def calendar_callback():
         return jsonify({"error": f"Internal server error: {str(e)}"}), 500
 
 
+def get_oauth2_credentials():
+    """
+    Get OAuth2 credentials for Gmail API.
+    """
+    creds = None
+    if os.path.exists(TOKEN_FILE):
+        creds = Credentials.from_authorized_user_file(TOKEN_FILE, SCOPES)
+    if not creds or not creds.valid:
+        if creds and creds.expired and creds.refresh_token:
+            creds.refresh(Request())
+        else:
+            flow = InstalledAppFlow.from_client_secrets_file(CLIENT_SECRET_FILE, SCOPES)
+            creds = flow.run_local_server(port=0)
+        with open(TOKEN_FILE, "w") as token:
+            token.write(creds.to_json())
+    return creds
+
+
 def send_email(to_email, subject, body, image_path=None):
     """
-    Sends an email with optional inline image attachments.
+    Sends an email using Microsoft 365 SMTP server.
     """
-    msg = MIMEMultipart("alternative")
-    msg["From"] = EMAIL_USER
-    msg["To"] = to_email
-    msg["Subject"] = subject
+    try:
+        # Create the email message
+        msg = MIMEMultipart("alternative")
+        msg["From"] = EMAIL_USER
+        msg["To"] = to_email
+        msg["Subject"] = subject
+        msg.attach(MIMEText(body, "html"))
 
-    # Add plain-text version
-    plain_text = "This is the plain-text version of the email. Please view it in an HTML-compatible email client."
-    msg.attach(MIMEText(plain_text, "plain"))
-
-    # Attach the HTML content
-    msg.attach(MIMEText(body, "html"))
-
-    # Attach inline image if provided
-    if image_path and os.path.exists(image_path):
-        try:
+        if image_path and os.path.exists(image_path):
             with open(image_path, "rb") as img_file:
                 img = MIMEImage(img_file.read(), _subtype="png")
                 img.add_header("Content-ID", "<pod_manager_logo>")
-                img.add_header("Content-Disposition", "inline", filename="PodManagerLogo.png")
+                img.add_header(
+                    "Content-Disposition", "inline", filename="PodManagerLogo.png"
+                )
                 msg.attach(img)
-            logger.info("✅ Attached inline image successfully.")
-        except Exception as e:
-            logger.error(f"❌ Failed to attach image: {e}")
 
-    try:
-        logger.info(f"📡 Connecting to SMTP server {SMTP_SERVER}:{SMTP_PORT}")
+        # Connect to Microsoft 365 SMTP server
+        logger.info(
+            f"📡 Connecting to Microsoft 365 SMTP server {SMTP_SERVER}:{SMTP_PORT}"
+        )
         with smtplib.SMTP(SMTP_SERVER, SMTP_PORT) as server:
+            server.ehlo()
             server.starttls()
+            server.ehlo()
             logger.info(f"🔐 Logging in as {EMAIL_USER}")
-            server.login(EMAIL_USER, EMAIL_PASS)
+            server.login(EMAIL_USER, EMAIL_PASSWORD)
             server.sendmail(EMAIL_USER, to_email, msg.as_string())
             logger.info(f"✅ Email successfully sent to {to_email}")
             return {"success": True}
-    except smtplib.SMTPAuthenticationError as e:
-        logger.error(f"❌ Authentication failed: {e}")
-        return {"error": "Authentication failed. Check your email credentials."}
     except Exception as e:
-        logger.error(f"❌ Failed to send email to {to_email}: {e}")
-        return {"error": str(e)}
+        logger.error(f"❌ Failed to send email to {to_email}: {e}", exc_info=True)
+        return {"error": f"Failed to send email: {str(e)}"}
+
+
+def send_login_email(email, login_link):
+    """
+    Sends a login link email to the user and prints the link to the terminal.
+    """
+    try:
+        subject = "Din inloggningslänk för PodManager"
+        body = f"""
+        <html>
+            <body>
+                <p>Hej,</p>
+                <p>Klicka på länken nedan för att logga in på ditt PodManager-konto:</p>
+                <a href="{login_link}" style="color: #ff7f3f; text-decoration: none;">Logga in</a>
+                <p>Länken är giltig i 10 minuter. Om du inte begärde detta, ignorera detta email.</p>
+                <p>Best regards,<br>PodManager Team</p>
+            </body>
+        </html>
+        """
+        logger.info(f"📧 Preparing to send login email to {email}")
+        # Change logging level from debug to info to ensure it's printed
+        logger.info(f"Login link: {login_link}")
+
+        result = send_email(email, subject, body)
+        if result.get("success"):
+            logger.info(f"✅ Login email sent successfully to {email}")
+        else:
+            logger.error(
+                f"❌ Failed to send login email to {email}: {result.get('error')}"
+            )
+        return result
+    except Exception as e:
+        logger.error(
+            f"❌ Error while sending login email to {email}: {e}", exc_info=True
+        )
+        return {"error": f"Error while sending login email: {str(e)}"}
 
 
 def send_team_invite_email(
@@ -196,24 +249,17 @@ def send_team_invite_email(
     """
     Sends an invitation email for a team membership with an inline logo.
     """
-    # 🔹 Force LOCALHOST for debugging
     base_url = "http://127.0.0.1:8000"
-
-    # Create the registration link with the invite token, team name, and role
     registration_link = f"{base_url}/register_team_member?token={invite_token}"
-
-    # Add team name and role parameters if available
     if team_name:
-        registration_link += f"&teamName={team_name}"
+        registration_link += f"&teamName={urllib.parse.quote(team_name)}"
+    if role:
+        registration_link += f"&role={urllib.parse.quote(role)}"
 
-    # Add role parameter (using default if not provided)
-    registration_link += f"&role={role}"
-
-    # ✅ Log the generated URL before sending the email
-    logger.info(f"🔗 Forced LOCALHOST invite URL: {registration_link} for {email}")
+    logger.info(f"🔗 Team invite URL: {registration_link} for {email}")
+    print(f"Team invite link for {email}: {registration_link}")
 
     subject = "You've been invited to join a team!"
-
     team_info = f"the team at {team_name}" if team_name else "a team"
     inviter_info = f" by {inviter_name}" if inviter_name else ""
 
@@ -250,10 +296,7 @@ def send_team_invite_email(
     </html>
     """
 
-    # Path to the PodManager logo
     image_path = "src/frontend/static/images/PodManagerLogo.png"
-
-    # 🔹 Call send_email() with inline image support
     return send_email(email, subject, body, image_path=image_path)
 
 
@@ -262,17 +305,17 @@ def send_guest_invitation_email(guest_name, guest_email, guest_form_url, podcast
     Sends an invitation email to a guest with a link to the guest form.
     """
     try:
-        # Render the email body using the guest-email.html template
         body = render_template(
             "guest-email/guest-email.html",
             guest_name=guest_name,
             guest_form_url=guest_form_url,
             podcast_name=podcast_name,
         )
-
         subject = f"You're Invited to Join {podcast_name} as a Guest!"
         return send_email(guest_email, subject, body)
-
     except Exception as e:
         logger.error(f"Failed to send guest invitation email: {e}", exc_info=True)
+        print(
+            f"Guest invitation email could not be sent to {guest_email}. Content:\nSubject: {subject}\nBody: {body}"
+        )
         return {"error": f"Failed to send guest invitation email: {str(e)}"}

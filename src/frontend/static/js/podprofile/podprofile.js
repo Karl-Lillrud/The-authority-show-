@@ -2,9 +2,11 @@ import { fetchRSSData, addPodcast } from "../../requests/podcastRequests.js" // 
 import { sendInvitationEmail } from "../../requests/invitationRequests.js"
 import { registerEpisode } from "../../requests/episodeRequest.js"
 import { createLoadingBar } from "../../js/components/loading-bar.js" // Updated import
+import { fetchAccount, updateAccount } from "/static/requests/accountRequests.js";
 
 document.addEventListener("DOMContentLoaded", () => {
   // DOM Elements
+  initWelcomePopup();
   const darkModeToggle = document.getElementById("dark-mode-toggle")
   const goToEmailSection = document.getElementById("goToEmailSection")
   const podNameSection = document.getElementById("pod-name-section")
@@ -477,6 +479,49 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // Setup episode interactions after rendering
     setupEpisodeInteractions()
+  }
+
+  async function initWelcomePopup() {
+    try {
+      const result = await fetchAccount();
+      const account = result.account;
+      if (account.isFirstLogin) {
+        const welcomePopup = document.getElementById("welcome-popup");
+        const closeWelcomePopup = document.getElementById("close-welcome-popup");
+        const getStartedBtn = document.getElementById("get-started-btn");
+        if (!welcomePopup) return;
+        welcomePopup.style.display = "flex";
+  
+        closeWelcomePopup.addEventListener("click", () => {
+          welcomePopup.style.display = "none";
+          disableWelcomePopup();
+        });
+  
+        getStartedBtn.addEventListener("click", () => {
+          welcomePopup.style.display = "none";
+          disableWelcomePopup();
+        });
+  
+        welcomePopup.addEventListener("click", (e) => {
+          if (e.target === welcomePopup) {
+            welcomePopup.style.display = "none";
+            disableWelcomePopup();
+          }
+        });
+            return;
+      }
+    } catch (error) {
+      console.error("Error initializing welcome popup:", error);
+    }
+  }
+  
+  async function disableWelcomePopup() {
+    try {
+      const data = { isFirstLogin: false }  
+      await updateAccount(data);
+    } catch (error) {
+      console.error("Error disabling welcome popup:", error);
+    }
   }
 
   // Function to setup episode interactions

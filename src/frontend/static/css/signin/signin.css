@@ -1,21 +1,5 @@
-body {
-  font-family: var(--font-primary);
-  background-image: url("https://app.podmanager.ai/static/images/PodManager-AI-Background.jpeg");
-  background-size: cover;
-  background-position: center;
-  background-color: var(--background-light); /* Fallback color */
-  color: var(--text-color-light);
-  height: 100vh;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  margin: 0;
-  transition: background-color 0.3s ease, color 0.3s ease;
-}
-
 .image {
   width: 100vw;
-  height: 100vh;
   overflow: hidden;
   position: relative;
 }
@@ -58,11 +42,6 @@ body {
 .logo-container img {
   width: 100%;
   height: auto;
-}
-
-.title {
-  color: rgba(0, 0, 0, 0.543);
-  margin-bottom: 20px;
 }
 
 .button {
@@ -114,12 +93,6 @@ body {
 
 .link:hover {
   text-decoration: underline;
-}
-
-.register-link {
-  margin-top: auto;
-  text-align: center;
-  padding-bottom: 20px;
 }
 
 .error-message {

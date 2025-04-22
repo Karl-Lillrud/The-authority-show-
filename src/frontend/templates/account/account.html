@@ -28,8 +28,6 @@
       </a>
       <div class="header-content">
         <h1>Account Settings</h1>
-        <!-- Notification Container -->
-        <div id="header-notifications" class="notifications-container"></div>
       </div>
     </div>
 
@@ -57,7 +55,6 @@
             </li>
             <ul class="submenu">
               <li class="submenu-item" data-target="security-2fa" tabindex="0">Two-Factor Authentication</li>
-              <li class="submenu-item" data-target="security-recovery" tabindex="0">Password Recovery</li>
             </ul>
             <li class="sidebar-item" data-toggle="submenu" tabindex="0">
               <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon">
@@ -89,6 +86,12 @@
               <li class="submenu-item" data-target="subscription-choose" tabindex="0">Choose Subscription</li>
               <li class="submenu-item" data-target="subscription-change" tabindex="0">Change Subscription</li>
             </ul>
+            <button id="back-to-main-menu" class="back-button">
+              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon">
+                <path d="m15 18-6-6 6-6"></path>
+              </svg>
+              Back to Main Menu
+            </button>
           </ul>
         </nav>
       </aside>
@@ -166,6 +169,87 @@
               <button type="submit" class="primary-button save-profile-btn">Save Changes</button>
 
             </form>
+          </div>
+
+          <!-- Security - 2FA Section -->
+          <div id="security-2fa" class="settings-section">
+            <div class="section-header">
+              <h2>Two-Factor Authentication</h2>
+              <p>Add an extra layer of security to your account</p>
+            </div>
+            
+            <div class="security-content">
+              <div class="info-card">
+                <div class="info-card-icon">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10"></path>
+                  </svg>
+                </div>
+                <div class="info-card-content">
+                  <h3>Protect your account</h3>
+                  <p>Two-factor authentication adds an additional layer of security to your account by requiring more than just a password to sign in.</p>
+                </div>
+              </div>
+              
+              <div class="toggle-container">
+                <label class="toggle">
+                  <span class="toggle-label">Enable Two-Factor Authentication</span>
+                  <input type="checkbox" id="enable-2fa">
+                  <span class="toggle-switch"></span>
+                </label>
+              </div>
+              
+              <div class="form-actions">
+                <button type="button" class="primary-button">Set Up 2FA</button>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Settings - Delete Account Section -->
+          <div id="settings-delete" class="settings-section">
+            <div class="section-header">
+              <h2>Delete Account</h2>
+              <p>Permanently delete your account and all associated data</p>
+            </div>
+            
+            <div class="delete-content">
+              <div class="warning-card">
+                <div class="warning-icon">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"></path>
+                    <path d="M12 9v4"></path>
+                    <path d="M12 17h.01"></path>
+                  </svg>
+                </div>
+                <div class="warning-content">
+                  <h3>Warning: This action cannot be undone</h3>
+                  <p>Deleting your account will permanently remove all your data, including profile information, settings, and subscription details. This action cannot be reversed.</p>
+                </div>
+              </div>
+              
+              <form class="delete-form">
+                <div class="form-group"></div>
+                  <label for="delete-confirm">Type "DELETE" to confirm <span class="required">*</span></label>
+                  <input type="text" id="delete-confirm" name="delete_confirm" placeholder="DELETE" required>
+                </div>
+
+                <div class="form-group">
+                  <label for="delete-email">Confirm your email <span class="required">*</span></label>
+                  <input type="email" id="delete-email" name="delete_email" placeholder="Enter your email" required>
+                  <div class="form-hint">Enter your email address to confirm deletion</div>
+                </div>
+                
+                <div class="form-group">
+                  <label for="delete-password">Enter your password <span class="required">*</span></label>
+                  <input type="password" id="delete-password" name="delete_password" placeholder="Enter your password" required>
+                </div>
+                
+                <div class="form-actions">
+                  <button type="submit" class="danger-button">Permanently Delete Account</button>
+                  <button type="button" class="secondary-button">Cancel</button>
+                </div>
+              </form>
+            </div>
           </div>
 
           <!-- Subscription Sections -->
@@ -257,10 +341,21 @@
                       </svg>
                     </div>
                     <div class="info-card-content">
-                      <h3>Current Plan: Free</h3>
-                      <p>Your subscription renews on <strong>January 1, 2026</strong></p>
+                      <h3>Current Plan: <span id="current-plan">Free</span></h3>
+                      <p>Status: <span id="subscription-status">Inactive</span></p>
+                      <p id="renewal-text">Expiry date: <strong><span id="subscription-expiry">N/A</span></strong></p>
                     </div>
                   </div>
+                </div>
+                
+                <div class="subscription-actions">
+                  <button id="cancel-subscription-btn" class="secondary-button">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M18 6 6 18"></path>
+                      <path d="m6 6 12 12"></path>
+                    </svg>
+                    Cancel Subscription
+                  </button>
                 </div>
                 
                 <div class="billing-history">
@@ -299,6 +394,7 @@
                     <div class="payment-card-details">
                       <div class="card-name">Visa ending in 4242</div>
                       <div class="card-expiry">Expires 12/25</div>
+                      <div class="card-type">Used for recurring payments</div>
                     </div>
                     <div class="payment-card-actions">
                       <button class="text-button">Edit</button>
@@ -321,6 +417,8 @@
       </section>
     </div>
   </div>
+  <script src="https://js.stripe.com/v3/"></script>
+  <script type="module" src="{{ url_for('frontend.static_files', filename='js/account/subscription.js') }}"></script>
   <script type="module" src="{{ url_for('frontend.static_files', filename='js/account/account.js') }}"></script>
 {% endblock %}
 
