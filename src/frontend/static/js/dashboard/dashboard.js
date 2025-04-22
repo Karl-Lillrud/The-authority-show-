@@ -33,7 +33,8 @@ function initDashboardActions() {
 
   if (createPodcastBtn) {
     createPodcastBtn.addEventListener("click", () => {
-      window.location.href = "/podcast/new";
+      sessionStorage.setItem("Addpodcast", "true");
+      window.location.href = "/podcastmanagement";
     });
   }
 
