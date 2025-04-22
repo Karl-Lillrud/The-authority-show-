@@ -3,6 +3,8 @@ import { fetchGuestsByEpisode } from "/static/requests/guestRequests.js";
 import { fetchPodcast, fetchPodcasts } from "/static/requests/podcastRequests.js";
 import { initTaskManagement } from "/static/js/dashboard/task.js";
 import { svgdashboard } from "./svgdashboard.js";
+import { getTeamsRequest } from "/static/requests/teamRequests.js";
+
 
 
 document.addEventListener("DOMContentLoaded", () => {
@@ -10,6 +12,7 @@ document.addEventListener("DOMContentLoaded", () => {
   initializeSvgIcons();
   initProgressCircles();
   initDashboardActions();
+  createTeamLeaderBoardRows();
   updateStatCounts();
 });
 
@@ -18,7 +21,9 @@ function initProgressCircles() {
 
   progressCircles.forEach((circle) => {
     const progress = circle.getAttribute("data-progress");
-    circle.style.setProperty("--progress", progress + "%");
+    if (progress) {
+      circle.style.setProperty("--progress", progress);
+    }
   });
 }
 
@@ -74,6 +79,74 @@ function animateCount(element, start, end, duration) {
     }
   };
   window.requestAnimationFrame(step);
+}
+
+async function createTeamLeaderBoardRows() {
+  try {
+    const myTeam = await getTeamsRequest();
+    const teamContainer = document.querySelector(".leaderboard-body");
+    teamContainer.innerHTML = "";
+
+    // <---- Generating random data can be removed after when the rest are ready ----->
+    const generateRandomData = () => ({
+      completedTasks: Math.floor(Math.random() * 50) + 1, // 1 to 50
+      points: Math.floor(Math.random() * 4901) + 100, // 100 to 5000
+      monthsWon: Math.floor(Math.random() * 25) + 1, // 1 to 25
+      goalPercentage: Math.floor(Math.random() * 85) + 1, // 1 to 85
+    });
+    const teamWithRandomData = myTeam.map((member) => {
+      const randomData = generateRandomData();
+      return { ...member, ...randomData };
+    });
+    // <---- End of random data generation ----->
+
+    const sortedTeam = teamWithRandomData.sort(
+      (a, b) => b.goalPercentage - a.goalPercentage
+    );
+
+    const topThreeTeam = sortedTeam.slice(0, 3);
+
+    topThreeTeam.forEach((member) => {
+      const initials = member.name
+        .split(" ")
+        .map((word) => word[0])
+        .join("")
+        .toUpperCase();
+
+      const row = `
+        <tr>
+          <td>
+            <div class="member-info">
+              <div class="member-avatar">${initials}</div>
+              <span>${member.name}</span>
+            </div>
+          </td>
+          <td>${member.completedTasks}</td>
+          <td>
+            <div class="points">
+              <span>${member.points.toLocaleString()}</span>
+              <div class="progress-bar">
+                <div class="progress" style="width: ${member.goalPercentage}%"></div>
+              </div>
+            </div>
+          </td>
+          <td>${member.monthsWon}</td>
+          <td>
+            <div class="goal-progress">
+              <span>${member.goalPercentage}%</span>
+              <div class="progress-circle" data-progress="${member.goalPercentage}"></div>
+            </div>
+          </td>
+        </tr>
+      `;
+
+      teamContainer.insertAdjacentHTML("beforeend", row);
+    });
+
+    initProgressCircles();
+  } catch (error) {
+    console.error("Error fetching team data:", error);
+  }
 }
 
 async function fetchAndDisplayEpisodesWithGuests() {

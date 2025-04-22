@@ -316,8 +316,8 @@
   border-radius: 50%;
   background: conic-gradient(
     var(--highlight-color) 0%,
-    var(--highlight-color) var(--progress),
-    rgba(0, 0, 0, 0.05) var(--progress),
+    var(--highlight-color) calc(var(--progress, 0) * 1%),
+    rgba(0, 0, 0, 0.05) calc(var(--progress, 0) * 1%),
     rgba(0, 0, 0, 0.05) 100%
   );
   position: relative;
