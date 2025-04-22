@@ -49,8 +49,9 @@ def initialize_credits(user_id: str, initial_amount=3000):
     """Initialize credits for a new user."""
     existing = get_credits_by_user_id(user_id)
     if not existing:
+        # Add a prefix to prevent MongoDB from interpreting as ObjectId
         credit_doc = {
-            "_id": str(uuid.uuid4()),  # Use string ID instead of ObjectId
+            "_id": str(uuid.uuid4()),  # UUID format is different from ObjectId, so it stays as string
             "user_id": user_id,
             "availableCredits": initial_amount,
             "usedCredits": 0,
@@ -65,6 +66,7 @@ def initialize_credits(user_id: str, initial_amount=3000):
                 "status": "completed"
             }]
         }
+        # Use insert_one without allowing _id conversion
         collection.database.Credits.insert_one(credit_doc)
 
 def deduct_credits(user_id, feature_name):
