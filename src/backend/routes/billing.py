@@ -123,29 +123,86 @@ def cancel_subscription():
     try:
         # Get user ID from session or context
         user_id = session.get("user_id")
+        logger.info(f"Cancel subscription requested for user_id: {user_id}")
+        
+        # Debug: Print the full session
+        logger.debug(f"Session contents: {session}")
+        
+        # Also check g.user_id if session.user_id is not available
+        if not user_id:
+            user_id = getattr(g, 'user_id', None)
+            logger.info(f"Trying g.user_id instead: {user_id}")
         
         if not user_id:
+            logger.error("Cancellation failed: User not authenticated")
             return jsonify({"error": "User not authenticated"}), 401
         
         # Find user's subscription
         account = collection.database.Accounts.find_one({"userId": user_id})
+        logger.debug(f"Account found: {bool(account)}")
+        if account:
+            logger.debug(f"Account details: userId={account.get('userId')}, subscriptionStatus={account.get('subscriptionStatus')}, subscriptionPlan={account.get('subscriptionPlan')}")
+        
         if not account:
+            # Try looking with ownerId as fallback
+            logger.info(f"Account not found with userId, trying with ownerId...")
+            account = collection.database.Accounts.find_one({"ownerId": user_id})
+            if account:
+                logger.info(f"Account found with ownerId")
+                logger.debug(f"Account details: ownerId={account.get('ownerId')}, subscriptionStatus={account.get('subscriptionStatus')}, subscriptionPlan={account.get('subscriptionPlan')}")
+        
+        if not account:
+            logger.error(f"Cancellation failed: Account not found for user {user_id}")
             return jsonify({"error": "Account not found"}), 404
             
         # Get the current subscription end date to include in the response
         subscription_end = account.get("subscriptionEnd")
+        logger.info(f"Current subscription end date: {subscription_end}")
+        
+        # Check if subscription already cancelled
+        if account.get("subscriptionStatus") == "cancelled":
+            logger.info(f"Subscription already cancelled for user {user_id}")
+            
+            # Return info even if already cancelled
+            end_date_display = None
+            if subscription_end:
+                try:
+                    end_date = datetime.fromisoformat(subscription_end.replace('Z', '+00:00'))
+                    end_date_display = end_date.strftime("%Y-%m-%d")
+                except (ValueError, AttributeError) as e:
+                    logger.error(f"Error parsing date: {e}")
+                    end_date_display = subscription_end
+            
+            return jsonify({
+                "message": "Subscription was already cancelled", 
+                "endDate": end_date_display,
+                "willRenew": False
+            }), 200
         
         # Update subscription status to cancelled
+        update_query = {"userId": user_id}
+        if "ownerId" in account and not account.get("userId"):
+            # Use ownerId for update if that's what we found
+            update_query = {"ownerId": user_id}
+            
+        logger.debug(f"Update query: {update_query}")
+        
         update_result = collection.database.Accounts.update_one(
-            {"userId": user_id},
+            update_query,
             {"$set": {
                 "subscriptionStatus": "cancelled",
                 "lastUpdated": datetime.utcnow().isoformat()
             }}
         )
         
+        logger.info(f"Account update result: matched={update_result.matched_count}, modified={update_result.modified_count}")
+        
         if update_result.modified_count == 0:
-            return jsonify({"error": "Failed to update subscription status"}), 500
+            if update_result.matched_count > 0:
+                logger.warning(f"Document matched but not modified - likely already has same values")
+            else:
+                logger.error(f"Failed to update subscription status - no document matched")
+                return jsonify({"error": "Failed to update subscription status"}), 500
             
         # Also update in subscriptions collection if it exists
         subscription_result = collection.database.subscriptions_collection.update_one(
@@ -156,6 +213,8 @@ def cancel_subscription():
             }}
         )
         
+        logger.info(f"Subscription collection update result: matched={subscription_result.matched_count if subscription_result else 'N/A'}, modified={subscription_result.modified_count if subscription_result else 'N/A'}")
+        
         logger.info(f"Cancelled subscription for user {user_id}. Account update: {update_result.modified_count}, Subscription update: {subscription_result.modified_count if subscription_result else 0}")
         
         # Return the end date with the success message
@@ -165,8 +224,10 @@ def cancel_subscription():
                 # If the date is stored as an ISO string, parse it for display
                 end_date = datetime.fromisoformat(subscription_end.replace('Z', '+00:00'))
                 end_date_display = end_date.strftime("%Y-%m-%d")
-            except (ValueError, AttributeError):
+                logger.debug(f"Formatted end date: {end_date_display}")
+            except (ValueError, AttributeError) as e:
                 # If there's an error parsing, just use the raw value
+                logger.error(f"Error parsing end date: {e}")
                 end_date_display = subscription_end
         
         return jsonify({
@@ -176,5 +237,5 @@ def cancel_subscription():
         }), 200
         
     except Exception as e:
-        logger.error(f"Error cancelling subscription: {str(e)}")
-        return jsonify({"error": str(e)}), 500
+        logger.error(f"Error cancelling subscription: {str(e)}", exc_info=True)
+        return jsonify({"error": f"Error cancelling subscription: {str(e)}"}), 500

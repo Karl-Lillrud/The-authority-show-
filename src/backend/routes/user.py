@@ -1,5 +1,6 @@
 from flask import Blueprint, request, jsonify, g
 from backend.repository.user_repository import UserRepository
+from backend.utils.blob_storage import upload_file_to_blob
 
 # from backend.services.accountService import AccountService
 import logging
@@ -21,10 +22,13 @@ def get_profile():
 @user_bp.route("/update_profile", methods=["PUT"])
 def update_profile():
     if not hasattr(g, "user_id") or not g.user_id:
+        logger.error(f"Unauthorized access attempt by user {g.user_id}")
         return jsonify({"error": "Obehörig"}), 401
 
     data = request.get_json()
+    logger.info(f"Received data to update profile: {data}")
     response, status_code = user_repo.update_profile(str(g.user_id), data)
+    logger.info(f"Profile updated for user {g.user_id}: {response}")
     return jsonify(response), status_code
 
 
@@ -37,3 +41,30 @@ def delete_user():
     except Exception as e:
         logger.error(f"Fel vid radering av användare: {e}", exc_info=True)
         return jsonify({"error": f"Fel vid radering: {str(e)}"}), 500
+
+
+@user_bp.route("/upload_profile_picture", methods=["POST"])
+def upload_profile_picture():
+    if not hasattr(g, "user_id") or not g.user_id:
+        return jsonify({"error": "Unauthorized"}), 401
+
+    try:
+        file = request.files.get("profile_picture")
+        if not file:
+            return jsonify({"error": "No file provided"}), 400
+
+        # Define the container name and blob path
+        container_name = "podmanagerfiles"
+        blob_path = f"user/{g.user_id}/profile/{file.filename}"
+
+        # Upload the file to Azure Blob Storage
+        blob_url = upload_file_to_blob(container_name, blob_path, file)
+
+        # Update the user's profile picture URL in the database
+        user_repo.update_profile(g.user_id, {"profile_picture_url": blob_url})
+
+        return jsonify({"message": "Profile picture uploaded successfully", "url": blob_url}), 200
+
+    except Exception as e:
+        logger.error(f"Error uploading profile picture: {e}", exc_info=True)
+        return jsonify({"error": f"Failed to upload profile picture: {str(e)}"}), 500
