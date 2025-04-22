@@ -109,6 +109,12 @@ async function updateSubscriptionUI() {
       return;
     }
     
+    // Make sure cancel button exists
+    if (cancelButton) {
+      // Default to hidden
+      cancelButton.style.display = 'none';
+    }
+    
     if (subscription) {
       currentPlanElement.textContent = subscription.plan || "Free";
       
@@ -132,13 +138,7 @@ async function updateSubscriptionUI() {
         // Disable cancel button if it exists
         if (cancelButton) {
           cancelButton.disabled = true;
-          cancelButton.textContent = "Subscription Cancelled";
-        }
-        
-        // Remove any existing renewal message element
-        const renewalMessageElement = document.querySelector(".renewal-message");
-        if (renewalMessageElement) {
-          renewalMessageElement.remove();
+          cancelButton.style.display = 'none'; // Hide it completely
         }
       } else {
         statusElement.textContent = subscription.status || "Inactive";
@@ -153,10 +153,14 @@ async function updateSubscriptionUI() {
           renewalTextElement.classList.remove("cancellation-notice");
         }
         
-        // Enable cancel button if subscription is active
+        // Enable and show cancel button if subscription is active and paid
         if (cancelButton && subscription.status === "active" && subscription.plan !== "Free") {
           cancelButton.disabled = false;
           cancelButton.textContent = "Cancel Subscription";
+          cancelButton.style.display = 'flex'; // Show it
+        } else if (cancelButton) {
+          // Hide button for free plan or inactive subscriptions
+          cancelButton.style.display = 'none';
         }
       }
       
@@ -280,18 +284,36 @@ function showCancellationConfirmation() {
       `;
       confirmBtn.disabled = true;
       
+      console.log("Sending cancel subscription request to server...");
+      
       // Make API call to cancel subscription
       const response = await fetch('/cancel-subscription', {
         method: 'POST',
         headers: { 
           'Content-Type': 'application/json' 
         },
-        body: JSON.stringify({})
+        credentials: 'same-origin',
+        body: JSON.stringify({}) 
       });
+      
+      console.log("Response received:", response.status, response.statusText);
+      
+      if (response.status === 404) {
+        console.error("Endpoint not found (404). The cancel-subscription route may not be properly registered.");
+        showNotification('Error', 'The subscription cancellation service is currently unavailable. Please contact support.', 'error');
+        
+        // Reset button state
+        confirmBtn.innerHTML = 'Yes, Cancel';
+        confirmBtn.disabled = false;
+        
+        // Don't close popup immediately on error
+        return;
+      }
       
       if (response.ok) {
         // Parse the response to get any additional data
         const data = await response.json();
+        console.log("Cancellation successful with data:", data);
         
         // Show success notification with end date if available
         let successMessage = 'Your subscription has been cancelled.';
@@ -302,20 +324,31 @@ function showCancellationConfirmation() {
         showNotification('Success', successMessage, 'success');
         
         // Update UI to reflect cancelled status
-        updateSubscriptionUI();
+        setTimeout(() => {
+          updateSubscriptionUI();
+        }, 500);
+        
+        // Close popup
+        popup.classList.remove('active');
+        setTimeout(() => popup.remove(), 300);
       } else {
         // Handle error
-        const data = await response.json();
-        showNotification('Error', data.error || 'Failed to cancel subscription', 'error');
+        try {
+          const errorData = await response.json();
+          console.error("Cancellation error:", errorData);
+          showNotification('Error', errorData.error || 'Failed to cancel subscription', 'error');
+        } catch (jsonError) {
+          console.error("Error parsing error response:", jsonError);
+          showNotification('Error', `Server error (${response.status}): Failed to cancel subscription`, 'error');
+        }
+        
+        // Reset button state
+        confirmBtn.innerHTML = 'Yes, Cancel';
+        confirmBtn.disabled = false;
       }
-      
-      // Close popup
-      popup.classList.remove('active');
-      setTimeout(() => popup.remove(), 300);
-      
     } catch (err) {
       console.error('Error cancelling subscription:', err);
-      showNotification('Error', 'An error occurred while processing your request.', 'error');
+      showNotification('Error', 'An error occurred while processing your request: ' + err.message, 'error');
       
       // Reset button state
       confirmBtn.innerHTML = 'Yes, Cancel';
@@ -343,7 +376,14 @@ document.addEventListener("DOMContentLoaded", function() {
   // Add cancel subscription button handler
   const cancelSubscriptionBtn = document.getElementById('cancel-subscription-btn');
   if (cancelSubscriptionBtn) {
-    cancelSubscriptionBtn.addEventListener('click', showCancellationConfirmation);
+    console.log("Cancel subscription button found in subscription.js");
+    cancelSubscriptionBtn.addEventListener('click', function(e) {
+      console.log("Cancel button clicked in subscription.js");
+      e.preventDefault(); // Prevent any default form submission
+      showCancellationConfirmation();
+    });
+  } else {
+    console.log("Cancel subscription button not found in subscription.js");
   }
   
   // Update UI with current subscription data

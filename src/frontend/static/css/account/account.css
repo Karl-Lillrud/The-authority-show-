@@ -569,6 +569,7 @@ input:focus {
   background-color: var(--account-primary-light);
   border-radius: var(--account-radius);
   margin-bottom: 1.5rem;
+  position: relative; /* Add position relative to contain absolute elements */
 }
 
 .info-card-icon {
@@ -581,6 +582,10 @@ input:focus {
   border-radius: 50%;
   color: white;
   flex-shrink: 0;
+}
+
+.info-card-content {
+  flex: 1; /* Take remaining space */
 }
 
 .info-card-content p {
@@ -963,5 +968,43 @@ input:focus:invalid {
 #subscription-change {
   align-self: flex-start; /* Align these sections to the right */
   width: 100%; /* Adjust width as needed */
+}
+
+/* Subscription actions styling */
+.subscription-actions {
+  margin-top: 1.5rem;
+  display: flex;
+  justify-content: flex-end; /* Changed from flex-start to flex-end */
+}
+
+/* Style the cancel subscription button */
+#cancel-subscription-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.6rem 1rem; /* Slightly smaller padding */
+  font-size: 0.85rem; /* Slightly smaller font size */
+  border-radius: var(--account-radius);
+  transition: all 0.2s ease;
+}
+
+#cancel-subscription-btn:hover {
+  background-color: var(--account-border);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* Initially hide the cancel button (for non-subscribers) */
+#cancel-subscription-btn {
+  display: none;
+}
+
+/* Show the button only when active (controlled by JavaScript) */
+#cancel-subscription-btn:not([disabled]) {
+  display: flex;
+}
+
+#cancel-subscription-btn:disabled {
+  display: none; /* Hide when disabled instead of showing grayed out */
 }
 
