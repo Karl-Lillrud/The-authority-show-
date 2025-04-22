@@ -205,6 +205,53 @@
             </div>
           </div>
           
+          <!-- Settings - Delete Account Section -->
+          <div id="settings-delete" class="settings-section">
+            <div class="section-header">
+              <h2>Delete Account</h2>
+              <p>Permanently delete your account and all associated data</p>
+            </div>
+            
+            <div class="delete-content">
+              <div class="warning-card">
+                <div class="warning-icon">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"></path>
+                    <path d="M12 9v4"></path>
+                    <path d="M12 17h.01"></path>
+                  </svg>
+                </div>
+                <div class="warning-content">
+                  <h3>Warning: This action cannot be undone</h3>
+                  <p>Deleting your account will permanently remove all your data, including profile information, settings, and subscription details. This action cannot be reversed.</p>
+                </div>
+              </div>
+              
+              <form class="delete-form">
+                <div class="form-group"></div>
+                  <label for="delete-confirm">Type "DELETE" to confirm <span class="required">*</span></label>
+                  <input type="text" id="delete-confirm" name="delete_confirm" placeholder="DELETE" required>
+                </div>
+
+                <div class="form-group">
+                  <label for="delete-email">Confirm your email <span class="required">*</span></label>
+                  <input type="email" id="delete-email" name="delete_email" placeholder="Enter your email" required>
+                  <div class="form-hint">Enter your email address to confirm deletion</div>
+                </div>
+                
+                <div class="form-group">
+                  <label for="delete-password">Enter your password <span class="required">*</span></label>
+                  <input type="password" id="delete-password" name="delete_password" placeholder="Enter your password" required>
+                </div>
+                
+                <div class="form-actions">
+                  <button type="submit" class="danger-button">Permanently Delete Account</button>
+                  <button type="button" class="secondary-button">Cancel</button>
+                </div>
+              </form>
+            </div>
+          </div>
+
           <!-- Subscription Sections -->
           <div class="subscription-sections">
             <div id="subscription-choose" class="settings-section">
@@ -294,10 +341,21 @@
                       </svg>
                     </div>
                     <div class="info-card-content">
-                      <h3>Current Plan: Free</h3>
-                      <p>Your subscription renews on <strong>January 1, 2026</strong></p>
+                      <h3>Current Plan: <span id="current-plan">Free</span></h3>
+                      <p>Status: <span id="subscription-status">Inactive</span></p>
+                      <p id="renewal-text">Expiry date: <strong><span id="subscription-expiry">N/A</span></strong></p>
                     </div>
                   </div>
+                </div>
+                
+                <div class="subscription-actions">
+                  <button id="cancel-subscription-btn" class="secondary-button">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M18 6 6 18"></path>
+                      <path d="m6 6 12 12"></path>
+                    </svg>
+                    Cancel Subscription
+                  </button>
                 </div>
                 
                 <div class="billing-history">
@@ -336,6 +394,7 @@
                     <div class="payment-card-details">
                       <div class="card-name">Visa ending in 4242</div>
                       <div class="card-expiry">Expires 12/25</div>
+                      <div class="card-type">Used for recurring payments</div>
                     </div>
                     <div class="payment-card-actions">
                       <button class="text-button">Edit</button>
@@ -358,6 +417,8 @@
       </section>
     </div>
   </div>
+  <script src="https://js.stripe.com/v3/"></script>
+  <script type="module" src="{{ url_for('frontend.static_files', filename='js/account/subscription.js') }}"></script>
   <script type="module" src="{{ url_for('frontend.static_files', filename='js/account/account.js') }}"></script>
 {% endblock %}
 

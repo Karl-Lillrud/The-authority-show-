@@ -44,11 +44,6 @@
   height: auto;
 }
 
-.title {
-  color: rgba(0, 0, 0, 0.543);
-  margin-bottom: 20px;
-}
-
 .button {
   padding: 10px 20px;
   border-radius: 25px;
@@ -98,12 +93,6 @@
 
 .link:hover {
   text-decoration: underline;
-}
-
-.register-link {
-  margin-top: auto;
-  text-align: center;
-  padding-bottom: 20px;
 }
 
 .error-message {

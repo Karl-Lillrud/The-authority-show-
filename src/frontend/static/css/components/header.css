@@ -494,11 +494,6 @@ header {
   gap: 0.5rem;
 }
 
-.credit-text {
-  font-size: 0.9rem;
-  color: #404040;
-}
-
 .credits-wrapper {
   display: flex;
   align-items: center;
@@ -510,8 +505,8 @@ header {
 }
 
 .credit-text {
-  font-size: 0.9rem;
-  color: #404040;
+  font-size: 1rem;
+  color: #FF7300;
 }
 
 #buy-credits-btn {
