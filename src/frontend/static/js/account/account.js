@@ -502,7 +502,32 @@ document.addEventListener("DOMContentLoaded", () => {
 
     return strength
   }
-})
+
+  // Add this function to fetch and update credits
+  fetchUserCredits();
+});
+
+// Function to fetch user credits
+async function fetchUserCredits() {
+  try {
+    const creditsElement = document.getElementById("available-credits");
+    if (!creditsElement) return; // Skip if element doesn't exist
+    
+    const response = await fetch('/api/credits', {
+      credentials: 'same-origin' // Include cookies for auth
+    });
+    
+    if (!response.ok) {
+      console.warn("Failed to fetch credits:", response.status);
+      return;
+    }
+
+    const data = await response.json();
+    creditsElement.textContent = data.availableCredits;
+  } catch (err) {
+    console.error("Error fetching user credits:", err);
+  }
+}
 
 // Function to toggle between view and edit modes
 function toggleProfileMode(isEditMode) {
