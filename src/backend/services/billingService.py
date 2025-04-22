@@ -1,7 +1,8 @@
 # backend/services/billingService.py
 from datetime import datetime
 from backend.repository.credits_repository import get_credits_by_user_id, update_credits
-from backend.services.creditService import initialize_credits  # Add this import
+from backend.services.creditService import initialize_credits
+from backend.database.mongo_connection import collection  # Add this import for the collection function
 
 def handle_successful_payment(session, user_id):
     amount_paid = session['amount_total'] / 100
@@ -20,3 +21,14 @@ def handle_successful_payment(session, user_id):
         "lastUpdated": datetime.utcnow()
     }
     update_credits(user_id, updated)
+    
+    # Log the purchase to the database
+    purchase_data = {
+        "user_id": user_id,
+        "date": datetime.utcnow(),
+        "amount": amount_paid,
+        "description": f"Credit purchase ({credits_to_add} credits)",
+        "status": "Paid",
+        "session_id": session.id
+    }
+    collection.database.Purchases.insert_one(purchase_data)

@@ -287,22 +287,19 @@
                 <div class="billing-table">
                   <div class="billing-header">
                     <div class="billing-cell">Date</div>
+                    <div class="billing-cell">Description</div>
                     <div class="billing-cell">Amount</div>
                     <div class="billing-cell">Status</div>
-                    <div class="billing-cell">Invoice</div>
                   </div>
-                  <div class="billing-row">
-                    <div class="billing-cell">Dec 1, 2024</div>
-                    <div class="billing-cell">$0.00</div>
-                    <div class="billing-cell"><span class="status-paid">Paid</span></div>
-                    <div class="billing-cell"><a href="#" class="invoice-link">View</a></div>
+                  <div id="billing-history-rows">
+                    <!-- Purchases will be loaded here -->
+                    <div class="billing-row loading-row">
+                      <div class="billing-cell" colspan="4">Loading purchase history...</div>
+                    </div>
                   </div>
-                  <div class="billing-row">
-                    <div class="billing-cell">Nov 1, 2024</div>
-                    <div class="billing-cell">$0.00</div>
-                    <div class="billing-cell"><span class="status-paid">Paid</span></div>
-                    <div class="billing-cell"><a href="#" class="invoice-link">View</a></div>
-                  </div>
+                </div>
+                <div id="no-purchases-message" style="display: none;" class="empty-history-message">
+                  No purchase history available.
                 </div>
               </div>
               
