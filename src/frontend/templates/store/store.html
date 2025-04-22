@@ -41,6 +41,11 @@ endblock %} {% block content %}
             <span class="svg-placeholder credits-icon"></span>
             My Credits
           </button>
+          <button class="action-button view-cart" id="cartButton">
+            <span class="svg-placeholder cart-icon"></span>
+            Your Cart
+            <span class="cart-notification" id="cartNotification">0</span>
+          </button>
         </div>
       </div>
 
@@ -157,6 +162,32 @@ endblock %} {% block content %}
                 </div>
               </div>
             </section>
+
+            <!-- Shopping Cart (Right Sidebar) - Moved inside the store-content -->
+            <div class="shopping-cart-sidebar hidden" id="shoppingCart">
+              <div class="cart-header">
+                <h3>Your Cart</h3>
+                <span class="cart-item-count">0 items</span>
+                <button class="close-cart-btn" id="closeCartBtn">
+                  <span class="svg-placeholder close-icon"></span>
+                </button>
+              </div>
+              <div class="cart-content">
+                <div class="cart-items" id="cartItems">
+                  <!-- Cart items will be added here dynamically -->
+                  <div class="empty-cart-message">Your cart is empty</div>
+                </div>
+                <div class="cart-footer">
+                  <div class="cart-total">
+                    <span>Total:</span>
+                    <span class="total-amount">$0.00</span>
+                  </div>
+                  <button class="checkout-btn" id="checkoutBtn" disabled>
+                    Complete the Purchase
+                  </button>
+                </div>
+              </div>
+            </div>
 
             <!-- Landing Page Styles Section -->
             <section class="store-section landing-styles-section">
@@ -413,29 +444,6 @@ endblock %} {% block content %}
           </div>
         </div>
       </main>
-    </div>
-
-    <!-- Shopping Cart (Right Sidebar) -->
-    <div class="shopping-cart-sidebar" id="shoppingCart">
-      <div class="cart-header">
-        <h3>Your Cart</h3>
-        <span class="cart-item-count">0 items</span>
-      </div>
-      <div class="cart-content">
-        <div class="cart-items" id="cartItems">
-          <!-- Cart items will be added here dynamically -->
-          <div class="empty-cart-message">Your cart is empty</div>
-        </div>
-        <div class="cart-footer">
-          <div class="cart-total">
-            <span>Total:</span>
-            <span class="total-amount">$0.00</span>
-          </div>
-          <button class="checkout-btn" id="checkoutBtn" disabled>
-            Complete the Purchase
-          </button>
-        </div>
-      </div>
     </div>
   </div>
 

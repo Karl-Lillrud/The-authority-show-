@@ -1,4 +1,4 @@
-document.addEventListener("DOMContentLoaded", function () {
+document.addEventListener("DOMContentLoaded", () => {
   // Initialize the store
   initializeStore();
 
@@ -51,9 +51,11 @@ function setupAddToCartButtons() {
 
       const productName = productCard.querySelector("h3").textContent;
       const productType = productCard.getAttribute("data-product-type");
-      const productPrice = parseFloat(productCard.getAttribute("data-price"));
+      const productPrice = Number.parseFloat(
+        productCard.getAttribute("data-price")
+      );
 
-      // Add product to cart without checking for collapse
+      // Add product to cart
       addToCart(productId, productName, productType, productPrice);
 
       // Update button state
@@ -70,13 +72,36 @@ function setupAddToCartButtons() {
 }
 
 function setupCart() {
-  // Removed toggle-cart functionality since the sidebar is always expanded.
+  const cartButton = document.getElementById("cartButton");
+  const closeCartBtn = document.getElementById("closeCartBtn");
+  const shoppingCart = document.getElementById("shoppingCart");
   const checkoutBtn = document.getElementById("checkoutBtn");
 
   // Initialize cart from localStorage if available
   loadCartFromStorage();
 
-  // Removed event listener for toggleCartBtn
+  // Toggle cart visibility when cart button is clicked
+  cartButton.addEventListener("click", (e) => {
+    e.stopPropagation(); // Prevent document click from immediately closing it
+    shoppingCart.classList.toggle("hidden");
+  });
+
+  // Close cart when close button is clicked
+  closeCartBtn.addEventListener("click", () => {
+    shoppingCart.classList.add("hidden");
+  });
+
+  // Close cart when clicking outside
+  document.addEventListener("click", (e) => {
+    if (!shoppingCart.contains(e.target) && e.target !== cartButton) {
+      shoppingCart.classList.add("hidden");
+    }
+  });
+
+  // Prevent clicks inside the cart from closing it
+  shoppingCart.addEventListener("click", (e) => {
+    e.stopPropagation();
+  });
 
   // Handle checkout
   checkoutBtn.addEventListener("click", function () {
@@ -89,6 +114,7 @@ function setupCart() {
     setTimeout(() => {
       alert("Thank you for your purchase!");
       clearCart();
+      shoppingCart.classList.add("hidden");
     }, 1500);
   });
 }
@@ -117,6 +143,9 @@ function addToCart(productId, productName, productType, productPrice) {
   // Update cart UI
   updateCartUI();
 
+  // Update notification badge
+  updateCartNotification();
+
   // Save cart to localStorage
   saveCartToStorage();
 }
@@ -126,6 +155,9 @@ function removeFromCart(productId) {
 
   // Update cart UI
   updateCartUI();
+
+  // Update notification badge
+  updateCartNotification();
 
   // Save cart to localStorage
   saveCartToStorage();
@@ -145,6 +177,9 @@ function updateItemQuantity(productId, newQuantity) {
       // Update cart UI
       updateCartUI();
 
+      // Update notification badge
+      updateCartNotification();
+
       // Save cart to localStorage
       saveCartToStorage();
     }
@@ -156,6 +191,9 @@ function clearCart() {
 
   // Update cart UI
   updateCartUI();
+
+  // Update notification badge
+  updateCartNotification();
 
   // Save cart to localStorage
   saveCartToStorage();
@@ -257,6 +295,19 @@ function updateCartUI() {
   }
 }
 
+function updateCartNotification() {
+  const cartNotification = document.getElementById("cartNotification");
+  const itemCount = cart.reduce((total, item) => total + item.quantity, 0);
+
+  if (itemCount > 0) {
+    cartNotification.textContent = itemCount;
+    cartNotification.classList.add("visible");
+  } else {
+    cartNotification.textContent = "0";
+    cartNotification.classList.remove("visible");
+  }
+}
+
 function formatProductType(type) {
   switch (type) {
     case "credit":
@@ -282,6 +333,7 @@ function loadCartFromStorage() {
     try {
       cart = JSON.parse(savedCart);
       updateCartUI();
+      updateCartNotification();
     } catch (error) {
       console.error("Error loading cart from storage:", error);
       cart = [];
