@@ -2,9 +2,12 @@ import { fetchAllEpisodes } from "/static/requests/episodeRequest.js";
 import { fetchGuestsByEpisode } from "/static/requests/guestRequests.js";
 import { fetchPodcast, fetchPodcasts } from "/static/requests/podcastRequests.js";
 import { initTaskManagement } from "/static/js/dashboard/task.js";
+import { svgdashboard } from "./svgdashboard.js";
+
 
 document.addEventListener("DOMContentLoaded", () => {
   fetchAndDisplayEpisodesWithGuests();
+  initializeSvgIcons();
   initProgressCircles();
   initDashboardActions();
   updateStatCounts();
@@ -34,6 +37,19 @@ function initDashboardActions() {
       window.location.href = "/episode/new";
     });
   }
+}
+
+function initializeSvgIcons() {
+  document.querySelector(".create-podcast-icon").innerHTML = svgdashboard.createPodcast;
+  document.querySelector(".schedule-episode-icon").innerHTML = svgdashboard.scheduleEpisode;
+  document.querySelector(".podcast-icon").innerHTML = svgdashboard.podcastIcon;
+  document.querySelector(".episode-icon").innerHTML = svgdashboard.episodeIcon;
+  document.querySelector(".guest-icon").innerHTML = svgdashboard.guestIcon;
+  document.querySelector(".task-icon").innerHTML = svgdashboard.taskIcon;
+  document.querySelector(".completed-icon").innerHTML = svgdashboard.completedIcon;
+  document.querySelector(".scheduled-icon").innerHTML = svgdashboard.scheduledIcon;
+  document.querySelector(".published-icon").innerHTML = svgdashboard.publishedIcon;
+  document.querySelector(".pending-icon").innerHTML = svgdashboard.pendingIcon;
 }
 
 function updateStatCounts() {

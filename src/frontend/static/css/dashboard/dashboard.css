@@ -97,6 +97,12 @@
   color: white;
 }
 
+.svg-placeholder {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
 .podcast-icon {
   background-color: #4caf50;
 }
