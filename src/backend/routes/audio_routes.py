@@ -74,3 +74,15 @@ def ai_cut_audio():
     except Exception as e:
         logger.error(f"AI cut failed: {str(e)}")
         return jsonify({"error": str(e)}), 500
+    
+@audio_bp.route("/apply_ai_cuts", methods=["POST"])
+def apply_ai_cuts():
+    data = request.json
+    file_id = data["file_id"]
+    cuts = data["cuts"]
+    try:
+        cleaned_id = audio_service.apply_cuts_and_return_new_file(file_id, cuts)
+        return jsonify({"cleaned_file_id": cleaned_id}), 200
+    except Exception as e:
+        logger.error(f"❌ Error applying AI cuts: {str(e)}")
+        return jsonify({"error": str(e)}), 500
