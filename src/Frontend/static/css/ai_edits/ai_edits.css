@@ -1,4 +1,14 @@
 /* Global Styles */
+
+body {
+    font-family: var(--font-primary);
+    margin: 0;
+    padding: 0;
+    background-color: var(--background-light);
+    color: #404040;
+  }
+  
+
   /* Tabs */
   #tabs {
     display: flex;
@@ -32,7 +42,7 @@
   
   /* Content Box */
   #content {
-    background-color: #ffffff;
+    background-color: var(--card-bg-light);
     padding: 1.5rem;
     border-radius: 1rem;
     box-shadow: 0 4px 12px rgba(255, 115, 0, 0.1);
@@ -80,18 +90,18 @@
   }
  /* Enhanced styling for AI Edit buttons */
 .btn.ai-edit-button {
-    background-color: var(--highlight-color); /* e.g. #ff7f3f */
+    background-color: var(--highlight-color); 
     color: white;
-    padding: 10px 20px;      /* Increased padding for a more substantial button */
-    font-size: 1rem;         /* Consistent font size */
+    padding: var(--spacing-md) var(--spacing-lg);      
+    font-size: 1rem;         
     font-weight: 600;
     border: none;
-    border-radius: var(--radius-medium);  /* Uses your predefined radius (e.g. 12px) */
+    border-radius: var(--radius-medium);  
     cursor: pointer;
     transition: background-color 0.3s ease, transform 0.2s ease, box-shadow 0.2s ease;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-    margin: 0.5rem 0;        /* Add some vertical spacing between buttons */
-    display: inline-block;   /* Ensure buttons behave as inline-block elements */
+    box-shadow: var(--button-shadow);
+    margin: var(--spacing-sm);       
+    display: inline-block;   
 }
 
 .btn.ai-edit-button:hover {
@@ -100,106 +110,39 @@
     box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
 } 
 
+.btn.ai-sound-sug-button {
+  background-color: var(--highlight-color);
+  color: white;
+  /* Minska padding ytterligare för att göra knappen mindre */
+  padding: calc(var(--spacing-xs) / 2) var(--spacing-sm);      
+  /* Minska fontstorleken */
+  font-size: 0.75rem;         
+  font-weight: 600;
+  border: none;
+  border-radius: var(--radius-medium);
+  cursor: pointer;
+  transition: background-color 0.3s ease, transform 0.2s ease, box-shadow 0.2s ease;
+  box-shadow: var(--button-shadow);
+  /* Minska margin */
+  margin: calc(var(--spacing-xs) / 2);       
+  display: inline-block;
+}
+
+.btn.ai-sound-sug-button:hover {
+  background-color: var(--highlight-hover);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+}
+
 .result-field pre {
   max-height: 300px;
   overflow-y: auto;
-  overflow-x: hidden;         /* 🔧 prevents horizontal scroll */
+  overflow-x: hidden;         
   padding: 8px;
   background-color: #f9f9f9;
   border: 1px solid #ddd;
   border-radius: 0.75rem;
-  white-space: pre-wrap;      /* 🔧 allows wrapping of long lines */
-  word-break: break-word;     /* optional: wraps long single words */
+  white-space: pre-wrap;      
+  word-break: break-word;     
 }
 
-/* Removed unused PodManager Audio Player Styling */
-/*
-.podmanager-audio {
-  width: 100%;
-  height: 48px;
-  background-color: #ffffff;
-  border-radius: 1rem;
-  border: 1px solid #e5e7eb;
-  box-shadow: 0 4px 8px rgba(255, 115, 0, 0.15);
-  transition: box-shadow 0.3s ease;
-  padding: 4px;
-}
-
-.podmanager-audio:hover {
-  box-shadow: 0 6px 14px rgba(255, 115, 0, 0.3);
-  outline: 2px solid rgba(255, 115, 0, 0.15);
-}
-
-.audio-label {
-  font-family: 'Inter', sans-serif;
-  font-weight: 600;
-  color: #404040;
-  margin-bottom: 0.25rem;
-}
-
-.audio-label::before {
-  content: "🎧 ";
-}
-
-.custom-audio-wrapper {
-  background: #ffffff;
-  border: 1px solid #f4f4f4;
-  border-radius: 1rem;
-  padding: 1rem;
-  box-shadow: 0 4px 8px rgba(255, 115, 0, 0.1);
-  margin-top: 1rem;
-  font-family: 'Inter', sans-serif;
-}
-
-.audio-status {
-  font-weight: 600;
-  color: #404040;
-  margin-bottom: 0.5rem;
-}
-
-.custom-audio-player {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-  width: 100%;
-}
-
-.play-btn {
-  background-color: #FF7300;
-  color: white;
-  border: none;
-  padding: 0.5rem 1rem;
-  font-weight: bold;
-  border-radius: 999px;
-  cursor: pointer;
-  box-shadow: 0 2px 6px rgba(255, 115, 0, 0.4);
-  transition: background 0.2s;
-}
-
-.play-btn:hover {
-  background-color: #e66700;
-}
-
-.seek-bar {
-  flex: 1;
-  appearance: none;
-  height: 6px;
-  border-radius: 999px;
-  background: #ddd;
-  outline: none;
-}
-
-.seek-bar::-webkit-slider-thumb {
-  appearance: none;
-  height: 14px;
-  width: 14px;
-  border-radius: 50%;
-  background: #FF7300;
-  cursor: pointer;
-}
-
-.time-display {
-  font-size: 0.875rem;
-  color: #404040;
-}
-*/

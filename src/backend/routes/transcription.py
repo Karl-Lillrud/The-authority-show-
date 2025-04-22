@@ -277,3 +277,17 @@ def render_ai_edits():
     except Exception as e:
         logger.error(f"Error rendering ai_edits.html: {e}")
         return jsonify({"error": "Failed to render AI Edits page"}), 500
+    
+@transcription_bp.route("/analyze_sentiment_sfx", methods=["POST"])
+def analyze_sentiment_sfx():
+    data = request.json
+    transcript = data.get("transcript", "")
+    if not transcript:
+        return jsonify({"error": "No transcript provided"}), 400
+
+    try:
+        result = transcription_service.get_sentiment_and_sfx(transcript)
+        return jsonify(result)
+    except Exception as e:
+        logger.error(f"Error analyzing sentiment + SFX: {str(e)}")
+        return jsonify({"error": str(e)}), 500
