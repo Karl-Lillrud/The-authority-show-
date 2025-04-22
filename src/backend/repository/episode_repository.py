@@ -58,6 +58,7 @@ class EpisodeRepository:
                 "author": validated.get("author"),
                 "isHidden": validated.get("isHidden"),
                 "recordingAt": validated.get("recordingAt"),
+                "audioEdits": [],
             }
 
             self.collection.insert_one(episode_doc)

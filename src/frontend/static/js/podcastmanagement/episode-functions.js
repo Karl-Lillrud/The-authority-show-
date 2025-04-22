@@ -79,6 +79,7 @@ export function playAudio(audioUrl, episodeTitle) {
 
 // Function to render episode detail
 export function renderEpisodeDetail(episode) {
+  sessionStorage.setItem("selected_episode_id", episode._id);
   const episodeDetailElement = document.getElementById("podcast-detail");
   const publishDate = episode.publishDate
     ? new Date(episode.publishDate).toLocaleString()

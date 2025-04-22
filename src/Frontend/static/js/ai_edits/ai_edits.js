@@ -7,6 +7,12 @@ let activeAudioBlob = null;
 let activeAudioId = null;
 
 window.CURRENT_USER_ID = localStorage.getItem("user_id");
+const urlParams = new URLSearchParams(window.location.search);
+const episodeIdFromUrl = urlParams.get("episodeId");
+if (episodeIdFromUrl) {
+    sessionStorage.setItem("selected_episode_id", episodeIdFromUrl);
+}
+console.log("✅ Using episode ID:", sessionStorage.getItem("selected_episode_id"));
 
 const CREDIT_COSTS = {
     ai_audio_analysis: 300,
@@ -304,6 +310,13 @@ async function enhanceAudio() {
     const file = input.files[0];
     if (!file) return alert("Upload an audio file first.");
 
+    // Check for selected episode
+    const episodeId = sessionStorage.getItem("selected_episode_id");
+    if (!episodeId) {
+        alert("❌ No episode selected. Please select or open an episode first.");
+        return;
+    }
+
     try {
         await consumeUserCredits("audio_enhancment");
     } catch (err) {
@@ -311,9 +324,11 @@ async function enhanceAudio() {
         return;
     }
 
-    audioControls.innerHTML = "🔄 Enhancing... Please wait.";
     const formData = new FormData();
     formData.append("audio", file);
+    formData.append("episode_id", episodeId); // ✅ Append episode ID
+
+    audioControls.innerHTML = "🔄 Enhancing... Please wait.";
 
     try {
         const response = await fetch("/audio/enhancement", {
@@ -333,16 +348,15 @@ async function enhanceAudio() {
 
         const url = URL.createObjectURL(blob);
 
-        // Inject plain audio player without custom styling
         audioControls.innerHTML = `
             <p>Audio enhancement complete!</p>
             <audio controls src="${url}" style="width: 100%;"></audio>
         `;
 
-        // Enable other sections of the interface
         document.getElementById("audioAnalysisSection").style.display = "block";
         document.getElementById("audioCuttingSection").style.display = "block";
         document.getElementById("aiCuttingSection").style.display = "block";
+
         const dl = document.getElementById("downloadEnhanced");
         dl.href = url;
         dl.style.display = "inline-block";
@@ -350,6 +364,8 @@ async function enhanceAudio() {
         audioControls.innerHTML = `❌ Error: ${err.message}`;
     }
 }
+
+
 
 async function runVoiceIsolation() {
     const input = document.getElementById('audioUploader');

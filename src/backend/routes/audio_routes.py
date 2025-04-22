@@ -9,20 +9,20 @@ audio_service = AudioService()
 
 @audio_bp.route("/audio/enhancement", methods=["POST"])
 def audio_enhancement():
-    if "audio" not in request.files:
-        return jsonify({"error": "No audio file provided"}), 400
+    if "audio" not in request.files or "episode_id" not in request.form:
+        return jsonify({"error": "Audio file and episode_id are required"}), 400
 
     audio_file = request.files["audio"]
+    episode_id = request.form["episode_id"]
     filename = audio_file.filename
     audio_bytes = audio_file.read()
 
     try:
-        enhanced_file_id = audio_service.enhance_audio(audio_bytes, filename)
+        enhanced_file_id = audio_service.enhance_audio(audio_bytes, filename, episode_id)
         return jsonify({"enhanced_audio": enhanced_file_id})
     except Exception as e:
         logger.error(f"Error enhancing audio: {str(e)}")
         return jsonify({"error": str(e)}), 500
-
 
 @audio_bp.route("/audio_analysis", methods=["POST"])
 def audio_analysis():

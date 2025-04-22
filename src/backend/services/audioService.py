@@ -14,33 +14,47 @@ from backend.utils.text_utils import (
     analyze_certainty_levels, get_sentence_timestamps, detect_long_pauses,
     generate_ai_show_notes, suggest_sound_effects,translate_text
 )
-from backend.repository.ai_models import save_file, get_file_data, get_file_by_id
+from backend.repository.ai_models import save_file, get_file_data, get_file_by_id, add_audio_edit_to_episode
 from elevenlabs.client import ElevenLabs
 
 logger = logging.getLogger(__name__)
 fs = get_fs()
 
 class AudioService:
-    def enhance_audio(self, audio_bytes: bytes, filename: str) -> str:
+    def enhance_audio(self, audio_bytes: bytes, filename: str, episode_id: str) -> str:
+        # 1. Save input to temp WAV file
         with tempfile.NamedTemporaryFile(delete=False, suffix=".wav") as tmp:
             tmp.write(audio_bytes)
             temp_in_path = tmp.name
 
+        # 2. Prepare output path
         temp_out_path = temp_in_path.replace(".wav", "_enhanced.wav")
         success = enhance_audio_with_ffmpeg(temp_in_path, temp_out_path)
 
         if not success:
             raise RuntimeError("FFmpeg enhancement failed")
 
+        # 3. Read enhanced data
         with open(temp_out_path, "rb") as f:
             enhanced_data = f.read()
 
+        # 4. Save to GridFS
         enhanced_file_id = save_file(
             enhanced_data,
             filename=f"enhanced_{filename}",
-            metadata={"type": "transcription", "enhanced": True}
+            metadata={"type": "audio", "enhanced": True}
         )
 
+        # 5. Add reference to episode
+        add_audio_edit_to_episode(
+            episode_id=episode_id,
+            file_id=enhanced_file_id,
+            edit_type="enhanced",
+            filename=f"enhanced_{filename}",
+            metadata={"source": filename, "enhanced": True}
+        )
+
+        # 6. Cleanup temp files
         os.remove(temp_in_path)
         os.remove(temp_out_path)
 
