@@ -1,5 +1,14 @@
 import logging
-from flask import g, redirect, render_template, url_for, Blueprint, request, session, jsonify
+from flask import (
+    g,
+    redirect,
+    render_template,
+    url_for,
+    Blueprint,
+    request,
+    session,
+    jsonify,
+)
 from backend.database.mongo_connection import collection
 from backend.services.authService import AuthService  # Ensure authService is imported
 
@@ -12,6 +21,7 @@ authService = AuthService()
 
 dashboard_bp = Blueprint("dashboard_bp", __name__)
 
+
 # 📌 Dashboard
 @dashboard_bp.route("/dashboard", methods=["GET"])
 def dashboard():
@@ -20,7 +30,11 @@ def dashboard():
     """
     if "user_id" not in session or not session.get("user_id"):
         logger.warning("User is not logged in. Redirecting to sign-in page.")
-        return redirect(url_for("auth_bp.signin", error="You must be logged in to access the dashboard."))
+        return redirect(
+            url_for(
+                "auth_bp.signin", error="You must be logged in to access the dashboard."
+            )
+        )
 
     logger.info(f"User {session.get('email', 'Unknown')} accessed the dashboard.")
     return render_template("dashboard/dashboard.html")
@@ -94,9 +108,15 @@ def podcastmanagement():
     if "user_id" not in session or not session.get("user_id"):
         logger.warning("User is not logged in. Redirecting to sign-in page.")
         logger.debug(f"Session contents: {session}")  # Debug log
-        return redirect(url_for("auth_bp.signin", error="You must be logged in to access the dashboard."))
-    
-    logger.info(f"User {session.get('email', 'Unknown')} accessed the podcast management page.")
+        return redirect(
+            url_for(
+                "auth_bp.signin", error="You must be logged in to access the dashboard."
+            )
+        )
+
+    logger.info(
+        f"User {session.get('email', 'Unknown')} accessed the podcast management page."
+    )
     return render_template("podcastmanagement/podcastmanagement.html")
 
 
@@ -115,7 +135,11 @@ def podprofile():
     """
     if "user_id" not in session or not session.get("user_id"):
         logger.warning("User is not logged in. Redirecting to sign-in page.")
-        return redirect(url_for("auth_bp.signin", error="You must be logged in to access this page."))
+        return redirect(
+            url_for(
+                "auth_bp.signin", error="You must be logged in to access this page."
+            )
+        )
 
     logger.info(f"User {session.get('email', 'Unknown')} accessed the podprofile page.")
     return render_template("podprofile/podprofile.html")
@@ -127,10 +151,12 @@ def team():
         return redirect(url_for("auth_bp.signin"))  # Updated endpoint
     return render_template("team/team.html")
 
+
 @dashboard_bp.route("/register_team_member", methods=["GET"])
 def register_team_member():
     """Serves the team member registration page."""
     return render_template("team/register_team_member.html")
+
 
 @dashboard_bp.route("/addmember", methods=["GET"])
 def addmember():
@@ -138,17 +164,37 @@ def addmember():
         return redirect(url_for("auth_bp.signin"))  # Updated endpoint
     return render_template("team/addmember.html")
 
+
 @dashboard_bp.route("/podcast/<podcast_id>", methods=["GET"])
 def podcast(podcast_id):
     if not g.user_id:
         return redirect(url_for("auth_bp.signin"))
-    
+
     # Store podcast_id in session or inject into template if needed
     return render_template("podcast/podcast.html", podcast_id=podcast_id)
 
-#Kommenterat ut nedanstående, pga guests kan ej fetchas då vi har 2st get med samma namn här och i guest.py
 
-#@dashboard_bp.route("/get_guests_by_episode/<episode_id>", methods=["GET"])
+# ✅ Serves the store page
+@dashboard_bp.route("/store", methods=["GET"])
+def store():
+    """
+    Serves the store page.
+    """
+    if "user_id" not in session or not session.get("user_id"):
+        logger.warning("User is not logged in. Redirecting to sign-in page.")
+        return redirect(
+            url_for(
+                "auth_bp.signin", error="You must be logged in to access the store."
+            )
+        )
+
+    logger.info(f"User {session.get('email', 'Unknown')} accessed the store page.")
+    return render_template("store/store.html")
+
+
+# Kommenterat ut nedanstående, pga guests kan ej fetchas då vi har 2st get med samma namn här och i guest.py
+
+# @dashboard_bp.route("/get_guests_by_episode/<episode_id>", methods=["GET"])
 # def get_guests_by_episode(episode_id):
 #     """
 #     Fetches guests associated with a specific episode.

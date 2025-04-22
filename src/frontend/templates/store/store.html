@@ -1,0 +1,448 @@
+{% extends "/components/base.html" %} {% block title %}PodManager Store{%
+endblock %} {% block content %}
+<head>
+  <script
+    async
+    src="https://www.googletagmanager.com/gtag/js?id=G-PTPQQ5WSQV"
+  ></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag() {
+      dataLayer.push(arguments);
+    }
+    gtag("js", new Date());
+    gtag("config", "G-PTPQQ5WSQV");
+  </script>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>PodManager.ai Store</title>
+  <link
+    rel="stylesheet"
+    href="{{ url_for('static', filename='css/store/store.css') }}"
+  />
+</head>
+<body>
+  <div class="store-container">
+    <div class="store">
+      <!-- Store Header -->
+      <div class="store-header">
+        <div class="welcome-message">
+          <h1>PodManager Store</h1>
+          <p>
+            Enhance your podcast experience with premium features and credits
+          </p>
+        </div>
+        <div class="store-actions">
+          <button class="action-button view-history">
+            <span class="svg-placeholder history-icon"></span>
+            Purchase History
+          </button>
+          <button class="action-button view-credits">
+            <span class="svg-placeholder credits-icon"></span>
+            My Credits
+          </button>
+        </div>
+      </div>
+
+      <!-- Main Content -->
+      <main class="main-content">
+        <!-- Store Content -->
+        <div class="store-content">
+          <div class="store-grid">
+            <!-- Credit Packs Section -->
+            <section class="store-section credit-packs-section">
+              <div class="section-header">
+                <h2>Credit Packs</h2>
+                <span class="section-description"
+                  >Purchase credits to use across PodManager features</span
+                >
+              </div>
+              <div class="cards-container">
+                <div
+                  class="product-card"
+                  data-product-id="credit-basic"
+                  data-product-type="credit"
+                  data-price="9.99"
+                >
+                  <div class="product-badge">Popular</div>
+                  <div class="product-header">
+                    <div class="product-icon credit-icon">
+                      <span class="svg-placeholder credit-small-icon"></span>
+                    </div>
+                    <h3>Basic Pack</h3>
+                  </div>
+                  <div class="product-price">
+                    <span class="price-amount">$9.99</span>
+                    <span class="price-period">one-time</span>
+                  </div>
+                  <div class="product-features">
+                    <ul>
+                      <li>100 AI Credits</li>
+                      <li>Valid for 30 days</li>
+                      <li>Use for transcriptions</li>
+                      <li>Use for summaries</li>
+                    </ul>
+                  </div>
+                  <button
+                    class="add-to-cart-btn"
+                    data-product-id="credit-basic"
+                  >
+                    Add to Cart
+                  </button>
+                </div>
+
+                <div
+                  class="product-card"
+                  data-product-id="credit-pro"
+                  data-product-type="credit"
+                  data-price="24.99"
+                >
+                  <div class="product-badge">Best Value</div>
+                  <div class="product-header">
+                    <div class="product-icon credit-icon">
+                      <span class="svg-placeholder credit-medium-icon"></span>
+                    </div>
+                    <h3>Pro Pack</h3>
+                  </div>
+                  <div class="product-price">
+                    <span class="price-amount">$24.99</span>
+                    <span class="price-period">one-time</span>
+                  </div>
+                  <div class="product-features">
+                    <ul>
+                      <li>300 AI Credits</li>
+                      <li>Valid for 60 days</li>
+                      <li>Use for transcriptions</li>
+                      <li>Use for summaries</li>
+                      <li>Priority processing</li>
+                    </ul>
+                  </div>
+                  <button class="add-to-cart-btn" data-product-id="credit-pro">
+                    Add to Cart
+                  </button>
+                </div>
+
+                <div
+                  class="product-card"
+                  data-product-id="credit-premium"
+                  data-product-type="credit"
+                  data-price="49.99"
+                >
+                  <div class="product-header">
+                    <div class="product-icon credit-icon">
+                      <span class="svg-placeholder credit-large-icon"></span>
+                    </div>
+                    <h3>Premium Pack</h3>
+                  </div>
+                  <div class="product-price">
+                    <span class="price-amount">$49.99</span>
+                    <span class="price-period">one-time</span>
+                  </div>
+                  <div class="product-features">
+                    <ul>
+                      <li>750 AI Credits</li>
+                      <li>Valid for 90 days</li>
+                      <li>Use for transcriptions</li>
+                      <li>Use for summaries</li>
+                      <li>Priority processing</li>
+                      <li>Advanced AI features</li>
+                    </ul>
+                  </div>
+                  <button
+                    class="add-to-cart-btn"
+                    data-product-id="credit-premium"
+                  >
+                    Add to Cart
+                  </button>
+                </div>
+              </div>
+            </section>
+
+            <!-- Landing Page Styles Section -->
+            <section class="store-section landing-styles-section">
+              <div class="section-header">
+                <h2>Landing Page Styles</h2>
+                <span class="section-description"
+                  >Professional designs for your podcast landing pages</span
+                >
+              </div>
+              <div class="cards-container">
+                <div
+                  class="product-card"
+                  data-product-id="style-minimal"
+                  data-product-type="style"
+                  data-price="19.99"
+                >
+                  <div class="product-header">
+                    <div class="product-icon style-icon">
+                      <span class="svg-placeholder style-minimal-icon"></span>
+                    </div>
+                    <h3>Minimal Style</h3>
+                  </div>
+                  <div class="product-preview">
+                    <img
+                      src="{{ url_for('static', filename='images/store/minimal-style-preview.jpg') }}"
+                      alt="Minimal Style Preview"
+                      class="style-preview"
+                    />
+                  </div>
+                  <div class="product-price">
+                    <span class="price-amount">$19.99</span>
+                    <span class="price-period">one-time</span>
+                  </div>
+                  <div class="product-features">
+                    <ul>
+                      <li>Clean, modern design</li>
+                      <li>Mobile responsive</li>
+                      <li>Easy customization</li>
+                      <li>SEO optimized</li>
+                    </ul>
+                  </div>
+                  <button
+                    class="add-to-cart-btn"
+                    data-product-id="style-minimal"
+                  >
+                    Add to Cart
+                  </button>
+                </div>
+
+                <div
+                  class="product-card"
+                  data-product-id="style-premium"
+                  data-product-type="style"
+                  data-price="29.99"
+                >
+                  <div class="product-badge">Popular</div>
+                  <div class="product-header">
+                    <div class="product-icon style-icon">
+                      <span class="svg-placeholder style-premium-icon"></span>
+                    </div>
+                    <h3>Premium Style</h3>
+                  </div>
+                  <div class="product-preview">
+                    <img
+                      src="{{ url_for('static', filename='images/store/premium-style-preview.jpg') }}"
+                      alt="Premium Style Preview"
+                      class="style-preview"
+                    />
+                  </div>
+                  <div class="product-price">
+                    <span class="price-amount">$29.99</span>
+                    <span class="price-period">one-time</span>
+                  </div>
+                  <div class="product-features">
+                    <ul>
+                      <li>Professional design</li>
+                      <li>Mobile responsive</li>
+                      <li>Advanced customization</li>
+                      <li>SEO optimized</li>
+                      <li>Email capture form</li>
+                    </ul>
+                  </div>
+                  <button
+                    class="add-to-cart-btn"
+                    data-product-id="style-premium"
+                  >
+                    Add to Cart
+                  </button>
+                </div>
+
+                <div
+                  class="product-card"
+                  data-product-id="style-enterprise"
+                  data-product-type="style"
+                  data-price="49.99"
+                >
+                  <div class="product-header">
+                    <div class="product-icon style-icon">
+                      <span
+                        class="svg-placeholder style-enterprise-icon"
+                      ></span>
+                    </div>
+                    <h3>Enterprise Style</h3>
+                  </div>
+                  <div class="product-preview">
+                    <img
+                      src="{{ url_for('static', filename='images/store/enterprise-style-preview.jpg') }}"
+                      alt="Enterprise Style Preview"
+                      class="style-preview"
+                    />
+                  </div>
+                  <div class="product-price">
+                    <span class="price-amount">$49.99</span>
+                    <span class="price-period">one-time</span>
+                  </div>
+                  <div class="product-features">
+                    <ul>
+                      <li>Premium design</li>
+                      <li>Mobile responsive</li>
+                      <li>Full customization</li>
+                      <li>SEO optimized</li>
+                      <li>Email capture form</li>
+                      <li>Analytics integration</li>
+                      <li>Priority support</li>
+                    </ul>
+                  </div>
+                  <button
+                    class="add-to-cart-btn"
+                    data-product-id="style-enterprise"
+                  >
+                    Add to Cart
+                  </button>
+                </div>
+              </div>
+            </section>
+
+            <!-- Subscription Upgrades Section -->
+            <section class="store-section subscription-section">
+              <div class="section-header">
+                <h2>Subscription Upgrades</h2>
+                <span class="section-description"
+                  >Enhance your PodManager experience with premium
+                  features</span
+                >
+              </div>
+              <div class="cards-container">
+                <div
+                  class="product-card subscription-card"
+                  data-product-id="sub-pro"
+                  data-product-type="subscription"
+                  data-price="14.99"
+                >
+                  <div class="product-header">
+                    <div class="product-icon subscription-icon">
+                      <span
+                        class="svg-placeholder subscription-pro-icon"
+                      ></span>
+                    </div>
+                    <h3>Pro Subscription</h3>
+                  </div>
+                  <div class="product-price">
+                    <span class="price-amount">$14.99</span>
+                    <span class="price-period">/month</span>
+                  </div>
+                  <div class="product-features">
+                    <ul>
+                      <li>5 Active Podcasts</li>
+                      <li>100 AI Credits/month</li>
+                      <li>Advanced analytics</li>
+                      <li>Email notifications</li>
+                      <li>Priority support</li>
+                    </ul>
+                  </div>
+                  <button class="add-to-cart-btn" data-product-id="sub-pro">
+                    Add to Cart
+                  </button>
+                </div>
+
+                <div
+                  class="product-card subscription-card"
+                  data-product-id="sub-team"
+                  data-product-type="subscription"
+                  data-price="29.99"
+                >
+                  <div class="product-badge">Best Value</div>
+                  <div class="product-header">
+                    <div class="product-icon subscription-icon">
+                      <span
+                        class="svg-placeholder subscription-team-icon"
+                      ></span>
+                    </div>
+                    <h3>Team Subscription</h3>
+                  </div>
+                  <div class="product-price">
+                    <span class="price-amount">$29.99</span>
+                    <span class="price-period">/month</span>
+                  </div>
+                  <div class="product-features">
+                    <ul>
+                      <li>10 Active Podcasts</li>
+                      <li>300 AI Credits/month</li>
+                      <li>Team collaboration</li>
+                      <li>Advanced analytics</li>
+                      <li>Email notifications</li>
+                      <li>Priority support</li>
+                      <li>Custom branding</li>
+                    </ul>
+                  </div>
+                  <button class="add-to-cart-btn" data-product-id="sub-team">
+                    Add to Cart
+                  </button>
+                </div>
+
+                <div
+                  class="product-card subscription-card"
+                  data-product-id="sub-enterprise"
+                  data-product-type="subscription"
+                  data-price="79.99"
+                >
+                  <div class="product-header">
+                    <div class="product-icon subscription-icon">
+                      <span
+                        class="svg-placeholder subscription-enterprise-icon"
+                      ></span>
+                    </div>
+                    <h3>Enterprise Subscription</h3>
+                  </div>
+                  <div class="product-price">
+                    <span class="price-amount">$79.99</span>
+                    <span class="price-period">/month</span>
+                  </div>
+                  <div class="product-features">
+                    <ul>
+                      <li>Unlimited Podcasts</li>
+                      <li>1000 AI Credits/month</li>
+                      <li>Team collaboration</li>
+                      <li>Advanced analytics</li>
+                      <li>Email notifications</li>
+                      <li>Priority support</li>
+                      <li>Custom branding</li>
+                      <li>API access</li>
+                      <li>Dedicated account manager</li>
+                    </ul>
+                  </div>
+                  <button
+                    class="add-to-cart-btn"
+                    data-product-id="sub-enterprise"
+                  >
+                    Add to Cart
+                  </button>
+                </div>
+              </div>
+            </section>
+          </div>
+        </div>
+      </main>
+    </div>
+
+    <!-- Shopping Cart (Right Sidebar) -->
+    <div class="shopping-cart-sidebar" id="shoppingCart">
+      <div class="cart-header">
+        <h3>Your Cart</h3>
+        <span class="cart-item-count">0 items</span>
+        <button class="toggle-cart-btn" id="toggleCartBtn">
+          <span class="svg-placeholder cart-toggle-icon"></span>
+        </button>
+      </div>
+      <div class="cart-content">
+        <div class="cart-items" id="cartItems">
+          <!-- Cart items will be added here dynamically -->
+          <div class="empty-cart-message">Your cart is empty</div>
+        </div>
+      </div>
+      <div class="cart-footer">
+        <div class="cart-total">
+          <span>Total:</span>
+          <span class="total-amount">$0.00</span>
+        </div>
+        <button class="checkout-btn" id="checkoutBtn" disabled>
+          Complete the Purchase
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <script src="{{ url_for('static', filename='js/store/store.js') }}"></script>
+  <script src="{{ url_for('static', filename='js/store/svgstore.js') }}"></script>
+</body>
+{% endblock %}
