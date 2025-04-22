@@ -1,17 +1,29 @@
-# backend/services/billingService.py
 from datetime import datetime
 import uuid
 from backend.repository.credits_repository import get_credits_by_user_id, update_credits, log_credit_transaction
 from backend.services.creditService import initialize_credits
 from backend.database.mongo_connection import collection
+from backend.utils.credit_costs import CREDIT_COSTS
 
 def handle_successful_payment(session, user_id):
     amount_paid = session['amount_total'] / 100
-    credits_to_add = int(amount_paid * 1000)
 
+    # 🧠 Prefer metadata-provided credits (from frontend/session creation)
+    metadata = session.get("metadata", {})
+    plan = metadata.get("plan", "")
+    credits_to_add = int(metadata.get("credits", 0))
+
+    # 🛡 Fallback: use credit_costs.py plan mapping
+    if credits_to_add == 0 and plan:
+        credits_to_add = CREDIT_COSTS.get(f"{plan}_pack", 0)
+
+    # 🧯 Final fallback: default multiplier
+    if credits_to_add == 0:
+        credits_to_add = int(amount_paid * 1000)
+
+    # 🔄 Credit account management
     existing = get_credits_by_user_id(user_id)
     if not existing:
-        # Create credits account if it doesn't exist
         initialize_credits(user_id)
         existing = get_credits_by_user_id(user_id)
         if not existing:
@@ -22,10 +34,10 @@ def handle_successful_payment(session, user_id):
         "lastUpdated": datetime.utcnow()
     }
     update_credits(user_id, updated)
-    
-    # Log the purchase to the database with string ID
+
+    # 🧾 Purchase log
     purchase_data = {
-        "_id": str(uuid.uuid4()),  # Use string UUID instead of auto-generated ObjectId
+        "_id": str(uuid.uuid4()),
         "user_id": user_id,
         "date": datetime.utcnow(),
         "amount": amount_paid,
@@ -33,8 +45,8 @@ def handle_successful_payment(session, user_id):
         "status": "Paid",
         "session_id": session.id
     }
-    
-    # Also add to credits history
+
+    # 🪙 Credit transaction log
     credit_entry = {
         "_id": str(uuid.uuid4()),
         "timestamp": datetime.utcnow(),
@@ -44,5 +56,4 @@ def handle_successful_payment(session, user_id):
         "status": "completed"
     }
     log_credit_transaction(user_id, credit_entry)
-    
     collection.database.Purchases.insert_one(purchase_data)

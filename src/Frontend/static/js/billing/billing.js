@@ -6,11 +6,10 @@ async function buyCredits(credits, amount) {
     const res = await fetch("/create-checkout-session", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ amount }),
-      credentials: "same-origin" // Important: include cookies for session
+      body: JSON.stringify({ amount, credits }),  // ✅ FIXED HERE
+      credentials: "same-origin"
     });
 
-    // Check if response is JSON or HTML (likely login redirect)
     const contentType = res.headers.get("content-type");
     if (contentType && contentType.includes("text/html")) {
       if (statusElement) statusElement.textContent = "Session expired. Please log in again.";
