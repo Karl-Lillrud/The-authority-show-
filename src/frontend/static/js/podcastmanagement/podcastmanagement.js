@@ -57,6 +57,21 @@ function observeEditButtons() {
   observer.observe(document.body, { childList: true, subtree: true });
 }
 
+
+function checkAndTriggerAddPodcast() {
+  const addPodcastFlag = sessionStorage.getItem("Addpodcast");
+
+  if (addPodcastFlag === "true") {
+    // simulate a click
+    const addPodcastBtn = document.getElementById("add-podcast-btn");
+    if (addPodcastBtn) {
+        addPodcastBtn.click();
+    }
+    // Reset the session storage flag to prevent repeated actions
+    sessionStorage.setItem("Addpodcast", "false");
+  }
+}
+
 // Function to close popups when clicking outside
 function enablePopupCloseOnOutsideClick() {
   // Handle existing popups
@@ -103,6 +118,9 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // Add this line to update edit buttons when the page loads
   updateEditButtons();
+
+  // check if user is being redirected from dashboard to add a podcast
+  checkAndTriggerAddPodcast();
 
   // Observe DOM for changes to update edit buttons
   observeEditButtons();

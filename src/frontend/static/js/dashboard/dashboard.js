@@ -2,20 +2,38 @@ import { fetchAllEpisodes } from "/static/requests/episodeRequest.js";
 import { fetchGuestsByEpisode } from "/static/requests/guestRequests.js";
 import { fetchPodcast, fetchPodcasts } from "/static/requests/podcastRequests.js";
 import { initTaskManagement } from "/static/js/dashboard/task.js";
+import { svgdashboard } from "./svgdashboard.js";
+import { getTeamsRequest } from "/static/requests/teamRequests.js";
 
-document.addEventListener("DOMContentLoaded", () => {
+
+
+document.addEventListener("DOMContentLoaded", async () => {
   fetchAndDisplayEpisodesWithGuests();
+  initializeSvgIcons();
   initProgressCircles();
   initDashboardActions();
-  updateStatCounts();
+  createTeamLeaderBoardRows();
+  try {
+    // Wait for all fetch functions to complete before animation begins
+    await fetchAndDisplayPodcastCount();
+    await fetchAndDisplayEpisodeCount();
+    await fetchAndDisplayGuestCount();
+    updateStatCounts();
+  } catch (error) {
+    console.error("Error initializing dashboard:", error);
+  }
 });
+
+
 
 function initProgressCircles() {
   const progressCircles = document.querySelectorAll(".progress-circle");
 
   progressCircles.forEach((circle) => {
     const progress = circle.getAttribute("data-progress");
-    circle.style.setProperty("--progress", progress + "%");
+    if (progress) {
+      circle.style.setProperty("--progress", progress);
+    }
   });
 }
 
@@ -25,7 +43,8 @@ function initDashboardActions() {
 
   if (createPodcastBtn) {
     createPodcastBtn.addEventListener("click", () => {
-      window.location.href = "/podcast/new";
+      sessionStorage.setItem("Addpodcast", "true");
+      window.location.href = "/podcastmanagement";
     });
   }
 
@@ -34,6 +53,19 @@ function initDashboardActions() {
       window.location.href = "/episode/new";
     });
   }
+}
+
+function initializeSvgIcons() {
+  document.querySelector(".create-podcast-icon").innerHTML = svgdashboard.createPodcast;
+  document.querySelector(".schedule-episode-icon").innerHTML = svgdashboard.scheduleEpisode;
+  document.querySelector(".podcast-icon").innerHTML = svgdashboard.podcastIcon;
+  document.querySelector(".episode-icon").innerHTML = svgdashboard.episodeIcon;
+  document.querySelector(".guest-icon").innerHTML = svgdashboard.guestIcon;
+  document.querySelector(".task-icon").innerHTML = svgdashboard.taskIcon;
+  document.querySelector(".completed-icon").innerHTML = svgdashboard.completedIcon;
+  document.querySelector(".scheduled-icon").innerHTML = svgdashboard.scheduledIcon;
+  document.querySelector(".published-icon").innerHTML = svgdashboard.publishedIcon;
+  document.querySelector(".pending-icon").innerHTML = svgdashboard.pendingIcon;
 }
 
 function updateStatCounts() {
@@ -58,6 +90,107 @@ function animateCount(element, start, end, duration) {
     }
   };
   window.requestAnimationFrame(step);
+}
+
+// fetch and display podcast count
+async function fetchAndDisplayPodcastCount() {
+  try {
+    const allPodcasts = await fetchPodcasts();
+    const podcastValue = document.getElementById("podcast-count");
+    podcastValue.innerHTML = allPodcasts.podcast.length;
+  } catch (error) {
+    console.error("Error fetching podcast data:", error);
+  }
+}
+
+// fetch and display episode count
+async function fetchAndDisplayEpisodeCount() {
+  try {
+    const allEpisodes = await fetchAllEpisodes();
+    const episodeValue = document.getElementById("episode-count");
+    episodeValue.innerHTML = allEpisodes.length;
+  } catch (error) {
+    console.error("Error fetching episode data:", error);
+  }
+}
+
+// fetch and display guest count 
+async function fetchAndDisplayGuestCount() {
+  try {
+    const allGuests = await fetchGuestsRequest();
+    const guestValue = document.getElementById("guest-count");
+    guestValue.innerHTML = allGuests.length;
+  } catch (error) {
+    console.error("Error fetching guest data:", error);
+  }
+}
+
+async function createTeamLeaderBoardRows() {
+  try {
+    const myTeam = await getTeamsRequest();
+    const teamContainer = document.querySelector(".leaderboard-body");
+    teamContainer.innerHTML = "";
+
+    // <---- Generating random data can be removed after when the rest are ready ----->
+    const generateRandomData = () => ({
+      completedTasks: Math.floor(Math.random() * 50) + 1, // 1 to 50
+      points: Math.floor(Math.random() * 4901) + 100, // 100 to 5000
+      monthsWon: Math.floor(Math.random() * 25) + 1, // 1 to 25
+      goalPercentage: Math.floor(Math.random() * 85) + 1, // 1 to 85
+    });
+    const teamWithRandomData = myTeam.map((member) => {
+      const randomData = generateRandomData();
+      return { ...member, ...randomData };
+    });
+    // <---- End of random data generation ----->
+
+    const sortedTeam = teamWithRandomData.sort(
+      (a, b) => b.goalPercentage - a.goalPercentage
+    );
+
+    const topThreeTeam = sortedTeam.slice(0, 3);
+
+    topThreeTeam.forEach((member) => {
+      const initials = member.name
+        .split(" ")
+        .map((word) => word[0])
+        .join("")
+        .toUpperCase();
+
+      const row = `
+        <tr>
+          <td>
+            <div class="member-info">
+              <div class="member-avatar">${initials}</div>
+              <span>${member.name}</span>
+            </div>
+          </td>
+          <td>${member.completedTasks}</td>
+          <td>
+            <div class="points">
+              <span>${member.points.toLocaleString()}</span>
+              <div class="progress-bar">
+                <div class="progress" style="width: ${member.goalPercentage}%"></div>
+              </div>
+            </div>
+          </td>
+          <td>${member.monthsWon}</td>
+          <td>
+            <div class="goal-progress">
+              <span>${member.goalPercentage}%</span>
+              <div class="progress-circle" data-progress="${member.goalPercentage}"></div>
+            </div>
+          </td>
+        </tr>
+      `;
+
+      teamContainer.insertAdjacentHTML("beforeend", row);
+    });
+
+    initProgressCircles();
+  } catch (error) {
+    console.error("Error fetching team data:", error);
+  }
 }
 
 async function fetchAndDisplayEpisodesWithGuests() {

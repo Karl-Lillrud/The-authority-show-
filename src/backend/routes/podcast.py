@@ -105,6 +105,13 @@ def delete_podcast(podcast_id):
         return jsonify({"error": f"Failed to delete podcast: {str(e)}"}), 500
 
 
+# NOTE: The endpoint '/add_episode' called by the frontend (registerEpisode in episodeRequest.js)
+# is NOT defined in this blueprint. It should be handled in a separate
+# episode-specific blueprint (e.g., episode_bp in episode.py) which uses
+# an EpisodeRepository to save episode data linked to a podcastId and accountId.
+# Ensure that endpoint exists and correctly handles user authentication and data saving.
+
+
 @podcast_bp.route("/fetch_rss", methods=["POST"])
 def fetch_rss():
     """

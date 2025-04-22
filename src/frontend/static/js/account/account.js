@@ -585,6 +585,31 @@ function updatePasswordStrength(password) {
   }
 }
 
+function uploadProfilePicture(file) {
+  const formData = new FormData();
+  formData.append("profile_picture", file);
+
+  fetch("/user/upload_profile_picture", {
+    method: "POST",
+    body: formData,
+  })
+    .then((response) => response.json())
+    .then((data) => {
+      if (data.url) {
+        // Update the profile picture on the page
+        const profilePic = document.getElementById("profile-pic");
+        profilePic.src = data.url;
+        showNotification("Success", "Profile picture updated successfully!", "success");
+      } else {
+        showNotification("Error", data.error || "Failed to upload profile picture", "error");
+      }
+    })
+    .catch((error) => {
+      console.error("Error uploading profile picture:", error);
+      showNotification("Error", "An error occurred while uploading profile picture", "error");
+    });
+}
+
 function triggerFileUpload() {
   const fileInput = document.createElement("input");
   fileInput.type = "file";
@@ -593,24 +618,25 @@ function triggerFileUpload() {
 
   fileInput.addEventListener("change", function () {
     if (this.files && this.files[0]) {
-      const reader = new FileReader();
-
-      reader.onload = (e) => {
-        // Update the profile image in both view and edit modes
-        const profilePic = document.getElementById("profile-pic");
-        profilePic.src = e.target.result;
-
-        // Here you would typically upload the file to your server
-        // uploadProfilePicture(fileInput.files[0]);
-      };
-
-      reader.readAsDataURL(this.files[0]);
+      uploadProfilePicture(this.files[0]);
     }
   });
 
   document.body.appendChild(fileInput);
   fileInput.click();
   document.body.removeChild(fileInput);
+}
+
+// Attach event listeners to the upload button and overlay
+const profilePicOverlay = document.querySelector(".profile-pic-overlay");
+const uploadButton = document.getElementById("upload-pic");
+
+if (profilePicOverlay) {
+  profilePicOverlay.addEventListener("click", triggerFileUpload);
+}
+
+if (uploadButton) {
+  uploadButton.addEventListener("click", triggerFileUpload);
 }
 
 // Add this to your HTML, inside the profile-pic-container
