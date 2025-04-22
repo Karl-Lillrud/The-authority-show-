@@ -120,6 +120,29 @@ async function updateSubscriptionUI() {
         expiryElement.textContent = "N/A";
       }
       
+      // For cancelled subscriptions:
+      if (subscription.is_cancelled) {
+        statusElement.textContent = "Cancelled";
+        statusElement.classList.add("cancelled");
+        
+        // Update renewal text for cancelled subscription
+        renewalTextElement.textContent = `Your subscription will not renew. Access ends on ${expiryElement.textContent}.`;
+        renewalTextElement.classList.add("cancellation-notice");
+        
+        // Disable cancel button if it exists
+        if (cancelButton) {
+          cancelButton.disabled = true;
+          cancelButton.textContent = "Subscription Cancelled";
+        }
+      }
+
+      // For active subscriptions:
+      // Enable cancel button if subscription is active
+      if (cancelButton && subscription.status === "active" && subscription.plan !== "Free") {
+        cancelButton.disabled = false;
+        cancelButton.textContent = "Cancel Subscription";
+      }
+      
       // Update status with cancelled indicator if needed
       if (subscription.is_cancelled) {
         statusElement.textContent = "Cancelled";
@@ -348,6 +371,22 @@ document.addEventListener("DOMContentLoaded", function() {
   
   // Update UI with current subscription data
   updateSubscriptionUI();
+});
+
+// At the bottom of your DOMContentLoaded event listener
+document.addEventListener("DOMContentLoaded", function() {
+  // Add cancel subscription button handler
+  const cancelSubscriptionBtn = document.getElementById('cancel-subscription-btn');
+  if (cancelSubscriptionBtn) {
+    console.log("Cancel subscription button found in subscription.js");
+    cancelSubscriptionBtn.addEventListener('click', function(e) {
+      console.log("Cancel button clicked in subscription.js");
+      e.preventDefault(); // Prevent any default form submission
+      showCancellationConfirmation();
+    });
+  } else {
+    console.log("Cancel subscription button not found in subscription.js");
+  }
 });
 
 // Export functions for use in other files
