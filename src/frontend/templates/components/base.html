@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="{{ session.language or 'en' }}" dir="{{ 'rtl' if session.language == 'ar' else 'ltr' }}">
   <head>
     <meta charset="UTF-8" />
     <script>
@@ -25,7 +25,7 @@
       rel="manifest"
       href="{{ url_for('static', filename='favicon/site.webmanifest') }}"
     />
-    <title>PodManager</title>
+    <title>{{ _('PodManager') }}</title>
     <!-- global stylesheets -->
     <link
     rel="stylesheet"
@@ -43,11 +43,30 @@
     rel="stylesheet"
     href="{{ url_for('static', filename='css/components/typography.css') }}"
     />
+    <!-- RTL Support -->
+    <style>
+      [dir="rtl"] {
+        text-align: right;
+      }
+      [dir="rtl"] .float-right {
+        float: left !important;
+      }
+      [dir="rtl"] .float-left {
+        float: right !important;
+      }
+      [dir="rtl"] .text-right {
+        text-align: left !important;
+      }
+      [dir="rtl"] .text-left {
+        text-align: right !important;
+      }
+    </style>
     <!-- other head content -->
   </head>
   <body style="display: flex; flex-direction: column; min-height: 100vh">
     <iframe src="https://www.googletagmanager.com/ns.html?id=GTM-N7Q86CWB" height="0" width="0" style="display:none;visibility:hidden"></iframe>
     {% include 'components/header.html' %}
+    {% include 'components/language_selector.html' %}
     <main style="flex: 1">{% block content %}{% endblock %}</main>
     {% include 'components/footer.html' %}
   </body>

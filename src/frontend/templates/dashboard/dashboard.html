@@ -1,5 +1,6 @@
-{% extends "/components/base.html" %} {% block title %}Podcast Management{%
-  endblock %} {% block content %}
+{% extends "/components/base.html" %}
+{% block title %}{{ _('Podcast Management') }}{% endblock %}
+{% block content %}
   <head>
     <script
       async
@@ -16,7 +17,7 @@
     </script>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>PodManager.ai Dashboard</title>
+    <title>{{ _('PodManager.ai Dashboard') }}</title>
     <link
       rel="stylesheet"
       href="{{ url_for('static', filename='css/dashboard/dashboard.css') }}"
@@ -31,17 +32,17 @@
       <!-- Dashboard Header -->
       <div class="dashboard-header">
         <div class="welcome-message">
-          <h1>Welcome to your Podcast Dashboard</h1>
-          <p>Here is an overview of your podcasts and activities</p>
+          <h1>{{ _('Welcome to your Podcast Dashboard') }}</h1>
+          <p>{{ _('Here is an overview of your podcasts and activities') }}</p>
         </div>
         <div class="dashboard-actions">
           <button class="action-button create-podcast">
             <span class="svg-placeholder create-podcast-icon"></span>
-            Create New Podcast
+            {{ _('Create New Podcast') }}
           </button>
           <button class="action-button schedule-episode">
             <span class="svg-placeholder schedule-episode-icon"></span>
-            Schedule Episode
+            {{ _('Schedule Episode') }}
           </button>
         </div>
       </div>
@@ -54,7 +55,7 @@
           </div>
           <div class="stat-content">
             <h3 class="stat-value" id="podcast-count">0</h3>
-            <p class="stat-label">Active Podcasts</p>
+            <p class="stat-label">{{ _('Active Podcasts') }}</p>
           </div>
         </div>
         <div class="stat-card">
@@ -63,7 +64,7 @@
           </div>
           <div class="stat-content">
             <h3 class="stat-value" id="episode-count">0</h3>
-            <p class="stat-label">Total Episodes</p>
+            <p class="stat-label">{{ _('Total Episodes') }}</p>
           </div>
         </div>
         <div class="stat-card">
@@ -72,7 +73,7 @@
           </div>
           <div class="stat-content">
             <h3 class="stat-value" id="guest-count">0</h3>
-            <p class="stat-label">Guests</p>
+            <p class="stat-label">{{ _('Guests') }}</p>
           </div>
         </div>
         <div class="stat-card">
@@ -81,7 +82,7 @@
           </div>
           <div class="stat-content">
             <h3 class="stat-value" id="task-count">0</h3>
-            <p class="stat-label">Tasks</p>
+            <p class="stat-label">{{ _('Tasks') }}</p>
           </div>
         </div>
       </div>
@@ -94,18 +95,18 @@
             <!-- Team Leaderboard -->
             <section class="leaderboard-section">
               <div class="section-header">
-                <h2>Team Leaderboard</h2>
-                <a href="#" class="view-all">View All</a>
+                <h2>{{ _('Team Leaderboard') }}</h2>
+                <a href="#" class="view-all">{{ _('View All') }}</a>
               </div>
               <div class="team-leaderboard">
                 <table class="leaderboard-table">
                   <thead>
                     <tr>
-                      <th>Name</th>
-                      <th>Completed Tasks</th>
-                      <th>Points</th>
-                      <th>Months Won</th>
-                      <th>Goal</th>
+                      <th>{{ _('Name') }}</th>
+                      <th>{{ _('Completed Tasks') }}</th>
+                      <th>{{ _('Points') }}</th>
+                      <th>{{ _('Months Won') }}</th>
+                      <th>{{ _('Goal') }}</th>
                     </tr>
                   </thead>
                   <tbody class="leaderboard-body">
@@ -189,8 +190,8 @@
             <!-- Recent Activity -->
             <section class="activity-section">
               <div class="section-header">
-                <h2>Recent Activity</h2>
-                <a href="#" class="view-all">View All</a>
+                <h2>{{ _('Recent Activity') }}</h2>
+                <a href="#" class="view-all">{{ _('View All') }}</a>
               </div>
               <div class="activity-timeline">
                 <div class="timeline-item">
@@ -198,9 +199,9 @@
                     <span class="svg-placeholder completed-icon"></span>
                   </div>
                   <div class="timeline-content">
-                    <h4>Episode Recorded</h4>
-                    <p>Marketing Insights with Sarah Johnson</p>
-                    <span class="timeline-time">Today, 10:30</span>
+                    <h4>{{ _('Episode Recorded') }}</h4>
+                    <p>{{ _('Marketing Insights with Sarah Johnson') }}</p>
+                    <span class="timeline-time">{{ _('Today') }}, 10:30</span>
                   </div>
                 </div>
                 <div class="timeline-item">
@@ -208,9 +209,9 @@
                     <span class="svg-placeholder scheduled-icon"></span>
                   </div>
                   <div class="timeline-content">
-                    <h4>Guest Confirmed</h4>
-                    <p>Tech Trends with Michael Chen</p>
-                    <span class="timeline-time">Yesterday, 15:45</span>
+                    <h4>{{ _('Guest Confirmed') }}</h4>
+                    <p>{{ _('Tech Trends with Michael Chen') }}</p>
+                    <span class="timeline-time">{{ _('Yesterday') }}, 15:45</span>
                   </div>
                 </div>
                 <div class="timeline-item">
@@ -218,8 +219,8 @@
                     <span class="svg-placeholder published-icon"></span>
                   </div>
                   <div class="timeline-content">
-                    <h4>Episode Published</h4>
-                    <p>The Future of AI with Dr. Emily Roberts</p>
+                    <h4>{{ _('Episode Published') }}</h4>
+                    <p>{{ _('The Future of AI with Dr. Emily Roberts') }}</p>
                     <span class="timeline-time">Oct 15, 2023</span>
                   </div>
                 </div>
@@ -228,8 +229,8 @@
                     <span class="svg-placeholder pending-icon"></span>
                   </div>
                   <div class="timeline-content">
-                    <h4>Editing in Progress</h4>
-                    <p>Startup Success Stories with Alex Turner</p>
+                    <h4>{{ _('Editing in Progress') }}</h4>
+                    <p>{{ _('Startup Success Stories with Alex Turner') }}</p>
                     <span class="timeline-time">Oct 12, 2023</span>
                   </div>
                 </div>
@@ -239,8 +240,8 @@
             <!-- Recent Episodes -->
             <section class="episodes-section">
               <div class="section-header">
-                <h2>Active Episodes</h2>
-                <a href="#" class="view-all">View All</a>
+                <h2>{{ _('Active Episodes') }}</h2>
+                <a href="#" class="view-all">{{ _('View All') }}</a>
               </div>
               <div class="cards-container">
                 <!-- Episodes will be loaded here via JavaScript -->

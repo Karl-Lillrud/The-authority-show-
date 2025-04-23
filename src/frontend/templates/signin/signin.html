@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="{{ session.language or 'en' }}" dir="{{ 'rtl' if session.language == 'ar' else 'ltr' }}">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Sign In</title>
+    <title>{{ _('Sign In') }} - {{ _('The Authority Show') }}</title>
     <link rel="stylesheet" href="/static/css/signin/signin.css" />
     <link
       rel="icon"
@@ -28,37 +28,68 @@
     rel="stylesheet"
     href="{{ url_for('static', filename='css/components/typography.css') }}"
     />
+    <!-- RTL Support -->
+    <style>
+      [dir="rtl"] {
+        text-align: right;
+      }
+      [dir="rtl"] .float-right {
+        float: left !important;
+      }
+      [dir="rtl"] .float-left {
+        float: right !important;
+      }
+      [dir="rtl"] .text-right {
+        text-align: left !important;
+      }
+      [dir="rtl"] .text-left {
+        text-align: right !important;
+      }
+    </style>
   </head>
   <body>
     <!-- Logo -->
     <div class="logo-container">
       <img
         src="{{ url_for('static', filename='images/PodManagerLogo.png') }}"
-        alt="PodManager Logo"
+        alt="{{ _('PodManager Logo') }}"
       />
+    </div>
+
+    <!-- Language Selector -->
+    <div class="language-selector">
+      {% for lang_code, lang_name in config.LANGUAGES.items() %}
+        <a href="{{ url_for('set_language', lang=lang_code) }}"
+           class="language-option {% if session.language == lang_code %}active{% endif %}"
+           data-lang="{{ lang_code }}"
+           hreflang="{{ lang_code }}">
+            {{ lang_name }}
+        </a>
+      {% endfor %}
     </div>
 
     <div class="image">
       <img
         src="{{ url_for('static', filename='images/PodManager-AI-Background.jpeg') }}"
-        alt="Podcast Background"
+        alt="{{ _('Podcast Background') }}"
       />
     </div>
 
     <div class="center-box">
-      <h1 class="title">Sign In</h1>
+      <h1 class="title">{{ _('Sign In') }}</h1>
+      <p class="subtitle">{{ _('Welcome back') }}</p>
       <div id="success-message" class="success-message" style="display: none"></div>
       <div id="error-message" class="error-message" style="display: none"></div>
 
       <form id="signin-form">
         <div class="input-group">
-          <label for="email" class="label"></label>
+          <label for="email" class="label">{{ _('Email') }}</label>
           <input
             type="email"
             id="email"
             name="email"
             class="input"
-            placeholder="Email"
+            placeholder="{{ _('Enter your email') }}"
             required
           />
         </div>
@@ -69,18 +100,22 @@
             id="send-login-link-button"
             class="button button-primary"
           >
-            Send Log-In Link
+            {{ _('Send Log-In Link') }}
           </button>
         </div>
 
         <div class="policy-links">
           <a href="{{ url_for('frontend.terms_of_service_page') }}" class="link"
-            >Terms of Service</a
+            >{{ _('Terms of Service') }}</a
           >
           |
           <a href="{{ url_for('frontend.privacy_policy_page') }}" class="link"
-            >Privacy Policy</a
+            >{{ _('Privacy Policy') }}</a
           >
+        </div>
+
+        <div class="signup-link">
+          <p>{{ _("Don't have an account?") }} <a href="{{ url_for('frontend.signup_page') }}" class="link">{{ _('Sign up') }}</a></p>
         </div>
       </form>
     </div>

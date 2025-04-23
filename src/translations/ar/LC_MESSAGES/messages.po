@@ -1,0 +1,347 @@
+# Arabic translations for The Authority Show
+# Copyright (C) 2024 The Authority Show
+# This file is distributed under the same license as the The Authority Show project.
+msgid ""
+msgstr ""
+"Project-Id-Version: PROJECT VERSION\n"
+"Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
+"POT-Creation-Date: 2024-03-19 12:00+0000\n"
+"PO-Revision-Date: 2024-03-19 12:00+0000\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language: ar\n"
+"Language-Team: ar <LL@li.org>\n"
+"Plural-Forms: nplurals=6; plural=(n==0 ? 0 : n==1 ? 1 : n==2 ? 2 : n%100>=3 && n%100<=10 ? 3 : n%100>=11 ? 4 : 5);\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.14.0\n"
+
+msgid "Podcast Management"
+msgstr "إدارة البودكاست"
+
+msgid "PodManager.ai Dashboard"
+msgstr "لوحة تحكم PodManager.ai"
+
+msgid "Welcome to your Podcast Dashboard"
+msgstr "مرحباً بك في لوحة تحكم البودكاست"
+
+msgid "Here is an overview of your podcasts and activities"
+msgstr "هذه نظرة عامة على البودكاست والأنشطة الخاصة بك"
+
+msgid "Create New Podcast"
+msgstr "إنشاء بودكاست جديد"
+
+msgid "Schedule Episode"
+msgstr "جدولة حلقة"
+
+msgid "Active Podcasts"
+msgstr "البودكاست النشطة"
+
+msgid "Total Episodes"
+msgstr "إجمالي الحلقات"
+
+msgid "Guests"
+msgstr "الضيوف"
+
+msgid "Tasks"
+msgstr "المهام"
+
+msgid "Team Leaderboard"
+msgstr "لوحة صدارة الفريق"
+
+msgid "View All"
+msgstr "عرض الكل"
+
+msgid "Name"
+msgstr "الاسم"
+
+msgid "Completed Tasks"
+msgstr "المهام المكتملة"
+
+msgid "Points"
+msgstr "النقاط"
+
+msgid "Months Won"
+msgstr "الأشهر المكتسبة"
+
+msgid "Goal"
+msgstr "الهدف"
+
+msgid "Recent Activity"
+msgstr "النشاط الأخير"
+
+msgid "Active Episodes"
+msgstr "الحلقات النشطة"
+
+msgid "No active episodes found."
+msgstr "لم يتم العثور على حلقات نشطة."
+
+msgid "Welcome"
+msgstr "مرحباً"
+
+msgid "Sign In"
+msgstr "تسجيل الدخول"
+
+msgid "Sign Up"
+msgstr "إنشاء حساب"
+
+msgid "Dashboard"
+msgstr "لوحة التحكم"
+
+msgid "Profile"
+msgstr "الملف الشخصي"
+
+msgid "Settings"
+msgstr "الإعدادات"
+
+msgid "Logout"
+msgstr "تسجيل الخروج"
+
+msgid "Email"
+msgstr "البريد الإلكتروني"
+
+msgid "Password"
+msgstr "كلمة المرور"
+
+msgid "Remember me"
+msgstr "تذكرني"
+
+msgid "Forgot password?"
+msgstr "نسيت كلمة المرور؟"
+
+msgid "Podcast"
+msgstr "بودكاست"
+
+msgid "Episodes"
+msgstr "الحلقات"
+
+msgid "Team"
+msgstr "الفريق"
+
+msgid "Calendar"
+msgstr "التقويم"
+
+msgid "Billing"
+msgstr "الفواتير"
+
+msgid "Create New Episode"
+msgstr "إنشاء حلقة جديدة"
+
+msgid "Edit Episode"
+msgstr "تعديل الحلقة"
+
+msgid "Delete Episode"
+msgstr "حذف الحلقة"
+
+msgid "Save"
+msgstr "حفظ"
+
+msgid "Cancel"
+msgstr "إلغاء"
+
+msgid "Search"
+msgstr "بحث"
+
+msgid "Filter"
+msgstr "تصفية"
+
+msgid "Sort by"
+msgstr "ترتيب حسب"
+
+msgid "Date"
+msgstr "التاريخ"
+
+msgid "Title"
+msgstr "العنوان"
+
+msgid "Status"
+msgstr "الحالة"
+
+msgid "Published"
+msgstr "منشور"
+
+msgid "Draft"
+msgstr "مسودة"
+
+msgid "Scheduled"
+msgstr "مجدول"
+
+msgid "Add Guest"
+msgstr "إضافة ضيف"
+
+msgid "Edit Guest"
+msgstr "تعديل بيانات الضيف"
+
+msgid "Delete Guest"
+msgstr "حذف الضيف"
+
+msgid "Phone"
+msgstr "الهاتف"
+
+msgid "Company"
+msgstr "الشركة"
+
+msgid "Position"
+msgstr "المنصب"
+
+msgid "Bio"
+msgstr "السيرة الذاتية"
+
+msgid "Social Media"
+msgstr "وسائل التواصل الاجتماعي"
+
+msgid "Add Team Member"
+msgstr "إضافة عضو فريق"
+
+msgid "Edit Team Member"
+msgstr "تعديل بيانات عضو الفريق"
+
+msgid "Remove Team Member"
+msgstr "إزالة عضو الفريق"
+
+msgid "Role"
+msgstr "الدور"
+
+msgid "Permissions"
+msgstr "الصلاحيات"
+
+msgid "Admin"
+msgstr "مدير"
+
+msgid "Editor"
+msgstr "محرر"
+
+msgid "Viewer"
+msgstr "مشاهد"
+
+msgid "Invite"
+msgstr "دعوة"
+
+msgid "Accept"
+msgstr "قبول"
+
+msgid "Reject"
+msgstr "رفض"
+
+msgid "Pending"
+msgstr "قيد الانتظار"
+
+msgid "Active"
+msgstr "نشط"
+
+msgid "Inactive"
+msgstr "غير نشط"
+
+msgid "Subscription"
+msgstr "الاشتراك"
+
+msgid "Plan"
+msgstr "الخطة"
+
+msgid "Payment"
+msgstr "الدفع"
+
+msgid "Invoice"
+msgstr "فاتورة"
+
+msgid "Amount"
+msgstr "المبلغ"
+
+msgid "Currency"
+msgstr "العملة"
+
+msgid "Paid"
+msgstr "مدفوع"
+
+msgid "Unpaid"
+msgstr "غير مدفوع"
+
+msgid "Processing"
+msgstr "قيد المعالجة"
+
+msgid "Failed"
+msgstr "فشل"
+
+msgid "Account"
+msgstr "الحساب"
+
+msgid "Notifications"
+msgstr "الإشعارات"
+
+msgid "Language"
+msgstr "اللغة"
+
+msgid "Theme"
+msgstr "المظهر"
+
+msgid "Light"
+msgstr "فاتح"
+
+msgid "Dark"
+msgstr "داكن"
+
+msgid "System"
+msgstr "النظام"
+
+msgid "Help"
+msgstr "المساعدة"
+
+msgid "Support"
+msgstr "الدعم"
+
+msgid "Documentation"
+msgstr "التوثيق"
+
+msgid "Feedback"
+msgstr "الملاحظات"
+
+msgid "About"
+msgstr "حول"
+
+msgid "Welcome back"
+msgstr "مرحباً بعودتك"
+
+msgid "Don't have an account?"
+msgstr "ليس لديك حساب؟"
+
+msgid "Sign up"
+msgstr "إنشاء حساب"
+
+msgid "Enter your email"
+msgstr "أدخل بريدك الإلكتروني"
+
+msgid "Enter your password"
+msgstr "أدخل كلمة المرور"
+
+msgid "The Authority Show"
+msgstr "ذا أثورتي شو"
+
+msgid "Episode Recorded"
+msgstr "تم تسجيل الحلقة"
+
+msgid "Marketing Insights with Sarah Johnson"
+msgstr "رؤى تسويقية مع سارة جونسون"
+
+msgid "Today"
+msgstr "اليوم"
+
+msgid "Guest Confirmed"
+msgstr "تم تأكيد الضيف"
+
+msgid "Tech Trends with Michael Chen"
+msgstr "اتجاهات التكنولوجيا مع مايكل تشن"
+
+msgid "Yesterday"
+msgstr "أمس"
+
+msgid "Episode Published"
+msgstr "تم نشر الحلقة"
+
+msgid "The Future of AI with Dr. Emily Roberts"
+msgstr "مستقبل الذكاء الاصطناعي مع د. إيميلي روبرتس"
+
+msgid "Editing in Progress"
+msgstr "جاري التحرير"
+
+msgid "Startup Success Stories with Alex Turner"
+msgstr "قصص نجاح الشركات الناشئة مع أليكس تيرنر" 

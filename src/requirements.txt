@@ -31,3 +31,4 @@ torch
 torchvision
 transformers
 Werkzeug
+Flask-Babel

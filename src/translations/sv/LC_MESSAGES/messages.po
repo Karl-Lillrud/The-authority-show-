@@ -1,0 +1,359 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: PROJECT VERSION\n"
+"Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
+"POT-Creation-Date: 2024-03-19 12:00+0000\n"
+"PO-Revision-Date: 2024-03-19 12:00+0000\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language: sv\n"
+"Language-Team: sv <LL@li.org>\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.14.0\n"
+
+msgid "PodManager"
+msgstr "PodManager"
+
+msgid "Language"
+msgstr "Språk"
+
+msgid "Welcome"
+msgstr "Välkommen"
+
+msgid "Sign In"
+msgstr "Logga in"
+
+msgid "Welcome back"
+msgstr "Välkommen tillbaka"
+
+msgid "Sign Up"
+msgstr "Registrera dig"
+
+msgid "Dashboard"
+msgstr "Instrumentpanel"
+
+msgid "Profile"
+msgstr "Profil"
+
+msgid "Settings"
+msgstr "Inställningar"
+
+msgid "Logout"
+msgstr "Logga ut"
+
+msgid "Email"
+msgstr "E-post"
+
+msgid "Password"
+msgstr "Lösenord"
+
+msgid "Remember me"
+msgstr "Kom ihåg mig"
+
+msgid "Forgot password?"
+msgstr "Glömt lösenord?"
+
+msgid "Don't have an account?"
+msgstr "Har du inget konto?"
+
+msgid "Sign up"
+msgstr "Registrera dig"
+
+msgid "Enter your email"
+msgstr "Ange din e-post"
+
+msgid "Enter your password"
+msgstr "Ange ditt lösenord"
+
+msgid "Podcast"
+msgstr "Podcast"
+
+msgid "Episodes"
+msgstr "Avsnitt"
+
+msgid "Guests"
+msgstr "Gäster"
+
+msgid "Team"
+msgstr "Team"
+
+msgid "Calendar"
+msgstr "Kalender"
+
+msgid "Billing"
+msgstr "Fakturering"
+
+msgid "Create New Episode"
+msgstr "Skapa nytt avsnitt"
+
+msgid "Edit Episode"
+msgstr "Redigera avsnitt"
+
+msgid "Delete Episode"
+msgstr "Ta bort avsnitt"
+
+msgid "Save"
+msgstr "Spara"
+
+msgid "Cancel"
+msgstr "Avbryt"
+
+msgid "Search"
+msgstr "Sök"
+
+msgid "Filter"
+msgstr "Filtrera"
+
+msgid "Sort by"
+msgstr "Sortera efter"
+
+msgid "Date"
+msgstr "Datum"
+
+msgid "Title"
+msgstr "Titel"
+
+msgid "Status"
+msgstr "Status"
+
+msgid "Published"
+msgstr "Publicerad"
+
+msgid "Draft"
+msgstr "Utkast"
+
+msgid "Scheduled"
+msgstr "Schemalagd"
+
+msgid "Add Guest"
+msgstr "Lägg till gäst"
+
+msgid "Edit Guest"
+msgstr "Redigera gäst"
+
+msgid "Delete Guest"
+msgstr "Ta bort gäst"
+
+msgid "Name"
+msgstr "Namn"
+
+msgid "Phone"
+msgstr "Telefon"
+
+msgid "Company"
+msgstr "Företag"
+
+msgid "Position"
+msgstr "Position"
+
+msgid "Bio"
+msgstr "Biografi"
+
+msgid "Social Media"
+msgstr "Sociala medier"
+
+msgid "Add Team Member"
+msgstr "Lägg till teammedlem"
+
+msgid "Edit Team Member"
+msgstr "Redigera teammedlem"
+
+msgid "Remove Team Member"
+msgstr "Ta bort teammedlem"
+
+msgid "Role"
+msgstr "Roll"
+
+msgid "Permissions"
+msgstr "Behörigheter"
+
+msgid "Admin"
+msgstr "Administratör"
+
+msgid "Editor"
+msgstr "Redaktör"
+
+msgid "Viewer"
+msgstr "Visare"
+
+msgid "Invite"
+msgstr "Bjud in"
+
+msgid "Accept"
+msgstr "Acceptera"
+
+msgid "Reject"
+msgstr "Avvisa"
+
+msgid "Pending"
+msgstr "Väntar"
+
+msgid "Active"
+msgstr "Aktiv"
+
+msgid "Inactive"
+msgstr "Inaktiv"
+
+msgid "Subscription"
+msgstr "Prenumeration"
+
+msgid "Plan"
+msgstr "Plan"
+
+msgid "Payment"
+msgstr "Betalning"
+
+msgid "Invoice"
+msgstr "Faktura"
+
+msgid "Amount"
+msgstr "Belopp"
+
+msgid "Currency"
+msgstr "Valuta"
+
+msgid "Date"
+msgstr "Datum"
+
+msgid "Status"
+msgstr "Status"
+
+msgid "Paid"
+msgstr "Betald"
+
+msgid "Unpaid"
+msgstr "Obetald"
+
+msgid "Processing"
+msgstr "Bearbetas"
+
+msgid "Failed"
+msgstr "Misslyckades"
+
+msgid "Settings"
+msgstr "Inställningar"
+
+msgid "Account"
+msgstr "Konto"
+
+msgid "Notifications"
+msgstr "Aviseringar"
+
+msgid "Language"
+msgstr "Språk"
+
+msgid "Theme"
+msgstr "Tema"
+
+msgid "Light"
+msgstr "Ljust"
+
+msgid "Dark"
+msgstr "Mörkt"
+
+msgid "System"
+msgstr "System"
+
+msgid "Help"
+msgstr "Hjälp"
+
+msgid "Support"
+msgstr "Support"
+
+msgid "Documentation"
+msgstr "Dokumentation"
+
+msgid "Feedback"
+msgstr "Feedback"
+
+msgid "About"
+msgstr "Om"
+
+msgid "The Authority Show"
+msgstr "The Authority Show"
+
+msgid "Podcast Management"
+msgstr "Podcasthantering"
+
+msgid "PodManager.ai Dashboard"
+msgstr "PodManager.ai Instrumentpanel"
+
+msgid "Welcome to your Podcast Dashboard"
+msgstr "Välkommen till din Podcastinstrumentpanel"
+
+msgid "Here is an overview of your podcasts and activities"
+msgstr "Här är en översikt över dina podcasts och aktiviteter"
+
+msgid "Create New Podcast"
+msgstr "Skapa ny Podcast"
+
+msgid "Schedule Episode"
+msgstr "Schemalägg Avsnitt"
+
+msgid "Active Podcasts"
+msgstr "Aktiva Podcasts"
+
+msgid "Total Episodes"
+msgstr "Totalt Antal Avsnitt"
+
+msgid "Tasks"
+msgstr "Uppgifter"
+
+msgid "Team Leaderboard"
+msgstr "Lagrankning"
+
+msgid "View All"
+msgstr "Visa Alla"
+
+msgid "Completed Tasks"
+msgstr "Avslutade Uppgifter"
+
+msgid "Points"
+msgstr "Poäng"
+
+msgid "Months Won"
+msgstr "Vunna Månader"
+
+msgid "Goal"
+msgstr "Mål"
+
+msgid "Recent Activity"
+msgstr "Senaste Aktivitet"
+
+msgid "Active Episodes"
+msgstr "Aktiva Avsnitt"
+
+msgid "No active episodes found."
+msgstr "Inga aktiva avsnitt hittades."
+
+msgid "Episode Recorded"
+msgstr "Avsnitt inspelat"
+
+msgid "Marketing Insights with Sarah Johnson"
+msgstr "Marknadsföringsinsikter med Sarah Johnson"
+
+msgid "Today"
+msgstr "Idag"
+
+msgid "Guest Confirmed"
+msgstr "Gäst bekräftad"
+
+msgid "Tech Trends with Michael Chen"
+msgstr "Tekniktrender med Michael Chen"
+
+msgid "Yesterday"
+msgstr "Igår"
+
+msgid "Episode Published"
+msgstr "Avsnitt publicerat"
+
+msgid "The Future of AI with Dr. Emily Roberts"
+msgstr "AI:s framtid med Dr. Emily Roberts"
+
+msgid "Editing in Progress"
+msgstr "Redigering pågår"
+
+msgid "Startup Success Stories with Alex Turner"
+msgstr "Framgångshistorier för startups med Alex Turner" 

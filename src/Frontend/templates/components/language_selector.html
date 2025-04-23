@@ -1,0 +1,43 @@
+<!-- Language Selector Component -->
+<div class="language-selector">
+    {% for lang_code, lang_name in config.LANGUAGES.items() %}
+        <a href="{{ url_for('set_language', lang=lang_code) }}"
+           class="language-option {% if session.language == lang_code %}active{% endif %}"
+           data-lang="{{ lang_code }}">
+            {{ lang_name }}
+        </a>
+    {% endfor %}
+</div>
+
+<style>
+.language-selector {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    padding: 5px;
+}
+
+.language-option {
+    padding: 5px 10px;
+    border-radius: 4px;
+    text-decoration: none;
+    color: #666;
+    font-size: 14px;
+    transition: all 0.3s ease;
+}
+
+.language-option:hover {
+    background-color: #f0f0f0;
+    color: #333;
+}
+
+.language-option.active {
+    background-color: #007bff;
+    color: white;
+}
+
+/* RTL Support */
+[dir="rtl"] .language-selector {
+    flex-direction: row-reverse;
+}
+</style> 

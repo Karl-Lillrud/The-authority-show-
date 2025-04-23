@@ -1,7 +1,8 @@
 import os
 import logging
-from flask import Flask, request, session, g, jsonify, render_template
+from flask import Flask, request, session, g, jsonify, render_template, redirect, url_for
 from flask_cors import CORS
+from flask_babel import Babel, gettext as _, lazy_gettext as _l
 from backend.routes.auth import auth_bp
 from backend.routes.podcast import podcast_bp  # Import the podcast blueprint
 from backend.routes.dashboard import dashboard_bp
@@ -51,6 +52,44 @@ static_folder = os.path.join(
 
 app = Flask(__name__, template_folder=template_folder, static_folder=static_folder)
 
+# Configure Babel
+babel = Babel(app)
+
+# Configure available languages
+app.config['LANGUAGES'] = {
+    'en': 'English',
+    'sv': 'Svenska',
+    'ar': 'العربية'
+}
+
+# Configure default language
+app.config['BABEL_DEFAULT_LOCALE'] = 'en'
+
+def get_locale():
+    # Check if language is set in session
+    if 'language' in session:
+        return session['language']
+    # Try to get language from user preferences
+    if g.user_id:
+        user = collection.find_one({'_id': g.user_id})
+        if user and 'language' in user:
+            return user['language']
+    # Try to get language from browser
+    return request.accept_languages.best_match(app.config['LANGUAGES'].keys())
+
+babel.init_app(app, locale_selector=get_locale)
+
+@app.route('/set_language/<lang>')
+def set_language(lang):
+    if lang in app.config['LANGUAGES']:
+        session['language'] = lang
+        # Update user preferences if logged in
+        if g.user_id:
+            collection.update_one(
+                {'_id': g.user_id},
+                {'$set': {'language': lang}}
+            )
+    return redirect(request.referrer or url_for('frontend_bp.podprofile'))
 
 CORS(
     app,
