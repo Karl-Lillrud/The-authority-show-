@@ -14,7 +14,6 @@ class PodcastRepository:
     def __init__(self):
         self.collection = collection.database.Podcasts
         self.activity_service = ActivityService()
-        self.episode_repo = EpisodeRepository()  # Add EpisodeRepository
         self.episode_repository = EpisodeRepository()
 
     def add_podcast(self, user_id, data):
