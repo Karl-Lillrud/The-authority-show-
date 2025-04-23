@@ -96,6 +96,10 @@ class AuthRepository:
                 "subscriptionEnd": data.get("subscriptionEnd"),
                 "referralBonus": data.get("referralBonus", 0),
                 "isFirstLogin": data.get("isFirstLogin", True),
+                "lastUpdated": datetime.utcnow().isoformat(),
+                "subscriptionAmount": 0,  
+                "subscriptionPlan": "Free"                   
+                 
             }
             logger.debug(f"Attempting to create account with data: {account_data}")
             result = self.account_collection.insert_one(account_data)
