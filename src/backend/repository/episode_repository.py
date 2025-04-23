@@ -67,7 +67,7 @@ class EpisodeRepository:
             # --- Log activity for episode created ---
             try:
                 self.activity_service.log_activity(
-                    user_id=user_id,
+                    user_id=str(user_id),
                     activity_type="episode_created",
                     description=f"Created episode '{episode_doc.get('title', '')}'",
                     details={
@@ -130,7 +130,7 @@ class EpisodeRepository:
                 # --- Log activity for episode deleted ---
                 try:
                     self.activity_service.log_activity(
-                        user_id=user_id,
+                        user_id=str(user_id),
                         activity_type="episode_deleted",
                         description=f"Deleted episode '{ep.get('title', '')}'",
                         details={"episodeId": episode_id, "title": ep.get("title", "")},
@@ -210,6 +210,22 @@ class EpisodeRepository:
                         update_fields[field] = data[field]
 
             self.collection.update_one({"_id": episode_id}, {"$set": update_fields})
+
+            # --- Log activity for episode updated ---
+            try:
+                self.activity_service.log_activity(
+                    user_id=str(user_id),
+                    activity_type="episode_updated",
+                    description=f"Updated episode '{ep.get('title', '')}'",
+                    details={"episodeId": episode_id, "title": ep.get("title", "")},
+                )
+            except Exception as act_err:
+                logger.error(
+                    f"Failed to log episode_updated activity: {act_err}",
+                    exc_info=True,
+                )
+            # --- End activity log ---
+
             return {"message": "Episode updated"}, 200
 
         except Exception as e:

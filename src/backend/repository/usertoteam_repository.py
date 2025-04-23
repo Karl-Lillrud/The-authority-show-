@@ -58,16 +58,18 @@ class UserToTeamRepository:
             if result.inserted_id:
                 # --- Log activity for joining a team ---
                 try:
-                    self.activity_service.log_activity(
-                        user_id=user_id,
-                        activity_type="team_joined",
-                        description=f"Joined team '{team.get('name', '')}' as {role}.",
-                        details={
-                            "teamId": team_id,
-                            "teamName": team.get("name", ""),
-                            "role": role,
-                        },
-                    )
+                    # Only log if not creator (creator is logged in TeamRepository)
+                    if role != "creator":
+                        self.activity_service.log_activity(
+                            user_id=user_id,
+                            activity_type="team_joined",
+                            description=f"Joined team '{team.get('name', '')}' as {role}.",
+                            details={
+                                "teamId": team_id,
+                                "teamName": team.get("name", ""),
+                                "role": role,
+                            },
+                        )
                 except Exception as act_err:
                     logger.error(
                         f"Failed to log team_joined activity: {act_err}", exc_info=True
