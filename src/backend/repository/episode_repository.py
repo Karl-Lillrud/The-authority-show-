@@ -1,8 +1,9 @@
-from backend.database.mongo_connection import collection
+from backend.services.subscriptionService import SubscriptionService
+from backend.models.episodes import EpisodeSchema
 from datetime import datetime, timezone
+from backend.database.mongo_connection import collection
 import uuid
 import logging
-from backend.models.episodes import EpisodeSchema
 
 logger = logging.getLogger(__name__)
 
@@ -11,6 +12,7 @@ class EpisodeRepository:
     def __init__(self):
         self.collection = collection.database.Episodes
         self.accounts_collection = collection.database.Accounts
+        self.subscription_service = SubscriptionService()  # ✅ fixed naming
 
     def register_episode(self, data, user_id):
         """Register a new episode for the given user."""
@@ -18,6 +20,10 @@ class EpisodeRepository:
             user_account = self.accounts_collection.find_one({"ownerId": user_id})
             if not user_account:
                 return {"error": "No account associated with this user"}, 403
+
+            can_create, reason = self.subscription_service.can_create_episode(user_id)
+            if not can_create:
+                return {"error": "Episode limit reached", "reason": reason}, 403
 
             account_id = user_account.get("id", str(user_account["_id"]))
             schema = EpisodeSchema()
@@ -69,6 +75,7 @@ class EpisodeRepository:
         except Exception as e:
             logger.error("❌ ERROR registering episode: %s", str(e))
             return {"error": f"Failed to register episode: {str(e)}"}, 500
+
 
     def get_episode(self, episode_id, user_id):
         """Get a single episode by its ID and user."""
