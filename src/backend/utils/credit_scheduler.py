@@ -123,6 +123,45 @@ def init_scheduler():
     except Exception as e:
         logger.error(f"Failed to initialize or start the scheduler: {e}", exc_info=True)
 
+def init_credit_scheduler(app):
+    """
+    Flask app-aware wrapper for initializing the credit scheduler.
+    This ensures the job runs within the Flask application context.
+    """
+    try:
+        # Make the job run within Flask's application context
+        original_job = monthly_credit_reset_job
+        
+        # Create a wrapped job function that pushes the app context
+        def context_wrapped_job():
+            with app.app_context():
+                original_job()
+        
+        # Schedule using the wrapped job
+        scheduler.add_job(
+            context_wrapped_job,
+            'cron',
+            day=1,
+            hour=0,
+            minute=5,
+            id='monthly_credit_reset',
+            replace_existing=True
+        )
+        
+        # Start the scheduler if not already running
+        if not scheduler.running:
+            scheduler.start()
+            logger.info("Credit reset scheduler initialized and started.")
+            logger.info(f"Next reset run time: {scheduler.get_job('monthly_credit_reset').next_run_time}")
+            
+            # Register shutdown handler
+            atexit.register(shutdown_scheduler)
+        else:
+            logger.info("Scheduler already running, added/updated the monthly reset job.")
+    
+    except Exception as e:
+        logger.error(f"Failed to initialize credit scheduler: {e}", exc_info=True)
+
 def shutdown_scheduler():
     """Shuts down the scheduler gracefully."""
     if scheduler.running:
