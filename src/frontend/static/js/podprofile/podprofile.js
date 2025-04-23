@@ -162,26 +162,28 @@ document.addEventListener("DOMContentLoaded", () => {
               podcastId: podcastId,
               title: episode.title,
               description: episode.description,
-              publishDate: episode.pubDate, // Correctly map pubDate to publishDate
+              publishDate: episode.pubDate,
               duration: episode.duration,
               audioUrl: episode.audio.url,
               fileSize: episode.audio.length,
               fileType: episode.audio.type,
               guid: episode.guid,
-              season: episode.season || null, // Ensure season is included
-              episode: episode.episode || null, // Ensure episode is included
-              episodeType: episode.episodeType || null, // Ensure episodeType is included
-              explicit: episode.explicit || null, // Ensure explicit is included
-              imageUrl: episode.image || episode.imageUrl || "/placeholder.svg?height=300&width=300", // updated field
-              keywords: episode.keywords || null, // Ensure keywords is included
-              chapters: episode.chapters || null, // Ensure chapters is included
-              link: episode.link || null, // Ensure link is included
-              subtitle: episode.subtitle || null, // Ensure subtitle is included
-              summary: episode.summary || null, // Ensure summary is included
-              author: episode.author || null, // Ensure author is included
-              isHidden: episode.isHidden || null, // Ensure isHidden is included
-              status: 'published' // Add this line to mark RSS episodes as published
+              season: episode.season || null,
+              episode: episode.episode || null,
+              episodeType: episode.episodeType || null,
+              explicit: episode.explicit || null,
+              imageUrl: episode.image || episode.imageUrl || "/placeholder.svg?height=300&width=300",
+              keywords: episode.keywords || null,
+              chapters: episode.chapters || null,
+              link: episode.link || null,
+              subtitle: episode.subtitle || null,
+              summary: episode.summary || null,
+              author: episode.author || null,
+              isHidden: episode.isHidden || null,
+              status: 'published',
+              isImported: true // ✅ Explicitly mark as imported
             })
+            
             console.log("Episode registered successfully:", registerResponse) // Added log
           } catch (error) {
             console.error("Error registering episode:", error) // Added log

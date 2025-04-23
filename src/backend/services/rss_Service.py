@@ -123,7 +123,8 @@ class RSSService:
                         "author": entry.get("author", ""),
                         "isHidden": entry.get("itunes_isHidden", None),
                         "duration": duration_seconds,
-                        "isImported": True  
+                        "isImported": True,
+                        "source": "rss"  
                     }
                 episodes.append(episode)
 
@@ -148,7 +149,7 @@ class RSSService:
                 "itunesOwner": itunes_owner,
                 "email": itunes_owner.get("email", ""),
                 "categories": categories,
-                "episodes": episodes[:10],  # Limit to first 10 episodes
+                "episodes": episodes  
             }, 200
 
         except Exception as e:

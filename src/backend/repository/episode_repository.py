@@ -1,11 +1,10 @@
 from backend.services.subscriptionService import SubscriptionService
-from backend.models.episodes import EpisodeSchema
 from datetime import datetime, timezone
 from backend.database.mongo_connection import collection
 import uuid
 import logging
 from backend.models.episodes import EpisodeSchema
-from backend.services.activity_service import ActivityService  # Add this import
+from backend.services.activity_service import ActivityService
 
 logger = logging.getLogger(__name__)
 
@@ -14,7 +13,8 @@ class EpisodeRepository:
     def __init__(self):
         self.collection = collection.database.Episodes
         self.accounts_collection = collection.database.Accounts
-        self.activity_service = ActivityService()  # Add this line
+        self.activity_service = ActivityService()
+        self.subscription_service = SubscriptionService()
 
     def register_episode(self, data, user_id):
         """Register a new episode for the given user."""
@@ -23,12 +23,25 @@ class EpisodeRepository:
             if not user_account:
                 return {"error": "No account associated with this user"}, 403
 
-            
-            is_imported = data.get("isImported", False)
-            if not is_imported:
-                can_create, reason = self.subscription_service.can_create_episode(user_id)
-                if not can_create:
-                    return {"error": "Episode limit reached", "reason": reason}, 403
+            logger.debug(f"📥 Raw incoming data to register_episode: {data}")
+
+            # ✅ Always set is_imported = True if the source is RSS
+            is_imported = False
+            if data.get("source") == "rss":
+                is_imported = True
+                data["isImported"] = True  # ✅ Force into payload
+            elif "isImported" in data:
+                is_imported = data["isImported"]
+
+            if isinstance(is_imported, str):
+                is_imported = is_imported.lower() == "true"
+
+            logger.info(f"🧪 is_imported interpreted as: {is_imported} for user {user_id}")
+            logger.info(f"🔍 Checking if user {user_id} can create episode with is_imported={is_imported}")
+
+            can_create, reason = self.subscription_service.can_create_episode(user_id, is_imported=is_imported)
+            if not can_create:
+                return {"error": "Episode limit reached", "reason": reason}, 403
 
             account_id = user_account.get("id", str(user_account["_id"]))
             schema = EpisodeSchema()
@@ -38,43 +51,21 @@ class EpisodeRepository:
                 return {"error": "Invalid data", "details": errors}, 400
 
             validated = schema.load(data)
+            validated["isImported"] = is_imported  # 🔐 Final overwrite
+
             episode_id = str(uuid.uuid4())
 
             episode_doc = {
+                **validated,
                 "_id": episode_id,
-                "podcast_id": validated.get("podcastId"),
-                "title": validated.get("title"),
-                "description": validated.get("description"),
-                "publishDate": validated.get("publishDate"),
-                "duration": validated.get("duration"),
-                "status": validated.get("status"),
                 "userid": str(user_id),
                 "accountId": account_id,
                 "created_at": datetime.now(timezone.utc),
-                "updated_at": datetime.now(timezone.utc),
-                "audioUrl": validated.get("audioUrl"),
-                "fileSize": validated.get("fileSize"),
-                "fileType": validated.get("fileType"),
-                "guid": validated.get("guid"),
-                "season": validated.get("season"),
-                "episode": validated.get("episode"),
-                "episodeType": validated.get("episodeType"),
-                "explicit": validated.get("explicit"),
-                "imageUrl": validated.get("imageUrl"),
-                "keywords": validated.get("keywords"),
-                "chapters": validated.get("chapters"),
-                "link": validated.get("link"),
-                "subtitle": validated.get("subtitle"),
-                "summary": validated.get("summary"),
-                "author": validated.get("author"),
-                "isHidden": validated.get("isHidden"),
-                "recordingAt": validated.get("recordingAt"),
-                "isImported": is_imported
+                "updated_at": datetime.now(timezone.utc)
             }
 
             self.collection.insert_one(episode_doc)
 
-            # --- Log activity for episode created ---
             try:
                 self.activity_service.log_activity(
                     user_id=str(user_id),
@@ -87,10 +78,7 @@ class EpisodeRepository:
                     },
                 )
             except Exception as act_err:
-                logger.error(
-                    f"Failed to log episode_created activity: {act_err}", exc_info=True
-                )
-            # --- End activity log ---
+                logger.error(f"Failed to log episode_created activity: {act_err}", exc_info=True)
 
             return {
                 "message": "Episode registered successfully",
@@ -100,9 +88,6 @@ class EpisodeRepository:
         except Exception as e:
             logger.error("❌ ERROR registering episode: %s", str(e))
             return {"error": f"Failed to register episode: {str(e)}"}, 500
-
-
-
     def get_episode(self, episode_id, user_id):
         """Get a single episode by its ID and user."""
         try:
