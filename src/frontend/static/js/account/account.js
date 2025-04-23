@@ -502,7 +502,46 @@ document.addEventListener("DOMContentLoaded", () => {
 
     return strength
   }
-})
+
+  // Add this function to fetch and update credits
+  fetchUserCredits();
+
+  // Load purchases when the purchases section is opened
+  const purchasesNavItem = document.querySelector('li[data-target="settings-purchases"]');
+  if (purchasesNavItem) {
+    purchasesNavItem.addEventListener('click', () => {
+      fetchPurchaseHistory();
+    });
+  }
+  
+  // Also add this to check if we're already on the purchases page and need to load data
+  if (document.getElementById('settings-purchases') && 
+      document.getElementById('settings-purchases').classList.contains('active')) {
+    fetchPurchaseHistory();
+  }
+});
+
+// Function to fetch user credits
+async function fetchUserCredits() {
+  try {
+    const creditsElement = document.getElementById("available-credits");
+    if (!creditsElement) return; // Skip if element doesn't exist
+    
+    const response = await fetch('/api/credits', {
+      credentials: 'same-origin' // Include cookies for auth
+    });
+    
+    if (!response.ok) {
+      console.warn("Failed to fetch credits:", response.status);
+      return;
+    }
+
+    const data = await response.json();
+    creditsElement.textContent = data.availableCredits;
+  } catch (err) {
+    console.error("Error fetching user credits:", err);
+  }
+}
 
 // Function to toggle between view and edit modes
 function toggleProfileMode(isEditMode) {
@@ -585,6 +624,31 @@ function updatePasswordStrength(password) {
   }
 }
 
+function uploadProfilePicture(file) {
+  const formData = new FormData();
+  formData.append("profile_picture", file);
+
+  fetch("/user/upload_profile_picture", {
+    method: "POST",
+    body: formData,
+  })
+    .then((response) => response.json())
+    .then((data) => {
+      if (data.url) {
+        // Update the profile picture on the page
+        const profilePic = document.getElementById("profile-pic");
+        profilePic.src = data.url;
+        showNotification("Success", "Profile picture updated successfully!", "success");
+      } else {
+        showNotification("Error", data.error || "Failed to upload profile picture", "error");
+      }
+    })
+    .catch((error) => {
+      console.error("Error uploading profile picture:", error);
+      showNotification("Error", "An error occurred while uploading profile picture", "error");
+    });
+}
+
 function triggerFileUpload() {
   const fileInput = document.createElement("input");
   fileInput.type = "file";
@@ -593,24 +657,25 @@ function triggerFileUpload() {
 
   fileInput.addEventListener("change", function () {
     if (this.files && this.files[0]) {
-      const reader = new FileReader();
-
-      reader.onload = (e) => {
-        // Update the profile image in both view and edit modes
-        const profilePic = document.getElementById("profile-pic");
-        profilePic.src = e.target.result;
-
-        // Here you would typically upload the file to your server
-        // uploadProfilePicture(fileInput.files[0]);
-      };
-
-      reader.readAsDataURL(this.files[0]);
+      uploadProfilePicture(this.files[0]);
     }
   });
 
   document.body.appendChild(fileInput);
   fileInput.click();
   document.body.removeChild(fileInput);
+}
+
+// Attach event listeners to the upload button and overlay
+const profilePicOverlay = document.querySelector(".profile-pic-overlay");
+const uploadButton = document.getElementById("upload-pic");
+
+if (profilePicOverlay) {
+  profilePicOverlay.addEventListener("click", triggerFileUpload);
+}
+
+if (uploadButton) {
+  uploadButton.addEventListener("click", triggerFileUpload);
 }
 
 // Add this to your HTML, inside the profile-pic-container
@@ -628,4 +693,86 @@ if (profilePicContainer) {
     </div>
     <button id="upload-pic" class="secondary-button">Change Photo</button>
   `;
+}
+
+// Fetch and display purchase history
+async function fetchPurchaseHistory() {
+  try {
+    console.log("Fetching purchase history...");
+    const response = await fetch('/api/purchases/history', {
+      credentials: 'same-origin' // Include cookies for auth
+    });
+    
+    if (!response.ok) {
+      throw new Error(`Failed to fetch purchase history: ${response.status}`);
+    }
+    
+    const data = await response.json();
+    console.log("Received purchase data:", data);
+    displayPurchaseHistory(data.purchases || []);
+    
+    // Also update available credits if that data is included
+    if (data.availableCredits !== undefined) {
+      document.getElementById('available-credits').textContent = data.availableCredits;
+    }
+  } catch (err) {
+    console.error("Error fetching purchase history:", err);
+    displayPurchaseHistory([]);
+  }
+}
+
+function displayPurchaseHistory(purchases) {
+  const historyContainer = document.getElementById('billing-history-rows');
+  const noHistoryMessage = document.getElementById('no-purchases-message');
+  
+  if (!historyContainer) return;
+  
+  // Clear loading message
+  historyContainer.innerHTML = '';
+  
+  if (!purchases || purchases.length === 0) {
+    // Show no history message
+    noHistoryMessage.style.display = 'block';
+    return;
+  }
+  
+  // Hide no history message if we have purchases
+  noHistoryMessage.style.display = 'none';
+  
+  // Sort purchases by date, newest first
+  purchases.sort((a, b) => new Date(b.date) - new Date(a.date));
+  
+  // Add each purchase to the table
+  purchases.forEach(purchase => {
+    const date = new Date(purchase.date);
+    // Include both date and time in the formatted date
+    const formattedDate = date.toLocaleDateString('en-US', { 
+      year: 'numeric', 
+      month: 'short', 
+      day: 'numeric' 
+    }) + ' ' + date.toLocaleTimeString('en-US', {
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+    
+    // Check if this is a subscription entry
+    const isSubscription = purchase.type === 'subscription' || 
+      (purchase.description && purchase.description.toLowerCase().includes('subscription'));
+    
+    // Add subscription-row class for subscription entries
+    const rowClass = isSubscription ? 'billing-row subscription-row' : 'billing-row';
+    
+    const row = document.createElement('div');
+    row.className = rowClass;
+    row.innerHTML = `
+      <div class="billing-cell">${formattedDate}</div>
+      <div class="billing-cell">${purchase.description || 'Credit purchase'}</div>
+      <div class="billing-cell">$${parseFloat(purchase.amount).toFixed(2)}</div>
+      <div class="billing-cell">
+        <span class="status-${purchase.status.toLowerCase()}">${purchase.status}</span>
+      </div>
+    `;
+    
+    historyContainer.appendChild(row);
+  });
 }

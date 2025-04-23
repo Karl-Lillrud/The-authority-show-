@@ -16,55 +16,61 @@ stripe.api_key = os.getenv("STRIPE_SECRET_KEY")
 
 @billing_bp.route("/create-checkout-session", methods=["POST"])
 def create_checkout_session():
-    # Get user_id from Flask session
     user_id = g.user_id
-    
-    # Get data from request
     data = request.get_json()
     amount = data.get("amount")  # in dollars
-    plan = data.get("plan")      # optional plan name
+    plan = data.get("plan")      # optional: "basic", "premium", etc.
+    credits = data.get("credits")  # optional: how many credits to add
 
     if not user_id:
         return jsonify({"error": "User not authenticated"}), 401
-        
+
     if not amount:
         return jsonify({"error": "Missing amount"}), 400
 
     try:
-        # Set product name based on whether this is a subscription or credits purchase
+        # Create the common metadata
+        metadata = {
+            "user_id": user_id,
+            "is_subscription": "true" if plan else "false",
+            "plan": plan or ""
+        }
+
+        if credits:
+            metadata["credits"] = str(credits)
+
         product_name = f'{plan} Subscription' if plan else f'{amount} USD for Credits'
-        
-        # Create Stripe checkout session
+
+        # Build price_data conditionally
+        price_data = {
+            'currency': 'usd',
+            'product_data': {'name': product_name},
+            'unit_amount': int(float(amount) * 100)
+        }
+
+        if plan:
+            price_data['recurring'] = {
+                'interval': 'month',
+                'interval_count': 1
+            }
+
         checkout_session = stripe.checkout.Session.create(
             payment_method_types=['card'],
             line_items=[{
-                'price_data': {
-                    'currency': 'usd',
-                    'product_data': {
-                        'name': product_name
-                    },
-                    'unit_amount': int(float(amount) * 100),
-                    'recurring': {  # Add recurring configuration
-                        'interval': 'month',
-                        'interval_count': 1
-                    }
-                },
+                'price_data': price_data,
                 'quantity': 1,
             }],
-            mode='subscription',  # Change mode from 'payment' to 'subscription'
+            mode='subscription' if plan else 'payment',
             success_url=f"{os.getenv('API_BASE_URL')}/credits/success?session_id={{CHECKOUT_SESSION_ID}}&plan={plan or ''}",
             cancel_url=f"{os.getenv('API_BASE_URL')}/credits/cancel",
-            metadata={
-                'user_id': user_id,
-                'is_subscription': 'true' if plan else 'false',
-                'plan': plan or ''
-            }
+            metadata=metadata
         )
-        
+
         return jsonify({'sessionId': checkout_session.id})
     except Exception as e:
         logger.error(f"Stripe session creation error: {str(e)}")
         return jsonify({'error': str(e)}), 500
+
 
 @billing_bp.route("/credits/success", methods=["GET"])
 def payment_success():
@@ -239,3 +245,43 @@ def cancel_subscription():
     except Exception as e:
         logger.error(f"Error cancelling subscription: {str(e)}", exc_info=True)
         return jsonify({"error": f"Error cancelling subscription: {str(e)}"}), 500
+
+@billing_bp.route("/api/purchases/history", methods=["GET"])
+def get_purchase_history():
+    user_id = g.user_id
+    
+    if not user_id:
+        return jsonify({"error": "User not authenticated"}), 401
+    
+    try:
+        # Get credits for the user to include in the response
+        credits_doc = collection.database.Credits.find_one({"user_id": user_id})
+        available_credits = credits_doc.get("availableCredits", 0) if credits_doc else 0
+        
+        # Get purchase history from the database
+        purchases = list(collection.database.Purchases.find(
+            {"user_id": user_id},
+            {"_id": 0, "date": 1, "amount": 1, "description": 1, "status": 1}
+        ).sort("date", -1))
+        
+        # Format dates for JSON
+        for purchase in purchases:
+            if "date" in purchase:
+                purchase["date"] = purchase["date"].isoformat()
+        
+        # If no purchases but user has credits, add a "system grant" entry
+        if not purchases and available_credits > 0:
+            purchases.append({
+                "date": datetime.utcnow().isoformat(),
+                "amount": 0.00,
+                "description": f"System credit grant ({available_credits} credits)",
+                "status": "Granted"
+            })
+        
+        return jsonify({
+            "purchases": purchases,
+            "availableCredits": available_credits
+        })
+    except Exception as e:
+        logger.error(f"Error fetching purchase history: {str(e)}")
+        return jsonify({"error": str(e)}), 500

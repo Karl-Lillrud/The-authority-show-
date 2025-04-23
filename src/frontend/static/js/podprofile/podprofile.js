@@ -483,9 +483,9 @@ document.addEventListener("DOMContentLoaded", () => {
 
   async function initWelcomePopup() {
     try {
-      const result = await fetchAccount();
-      const account = result.account;
-      if (account.isFirstLogin) {
+      const wrapper = await fetchAccount();
+      const user = wrapper.account;
+      if (user.isFirstLogin) {
         const welcomePopup = document.getElementById("welcome-popup");
         const closeWelcomePopup = document.getElementById("close-welcome-popup");
         const getStartedBtn = document.getElementById("get-started-btn");
