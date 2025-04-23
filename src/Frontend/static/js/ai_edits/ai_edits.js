@@ -337,15 +337,14 @@ async function enhanceAudio() {
         });
 
         const result = await response.json();
-        enhancedAudioId = result.enhanced_audio;
-
-        const audioRes = await fetch(`/transcription/get_file/${enhancedAudioId}`);
+        const blobUrl = result.enhanced_audio_url;
+        const audioRes = await fetch(`/get_enhanced_audio?url=${encodeURIComponent(blobUrl)}`);
         const blob = await audioRes.blob();
+        
         enhancedAudioBlob = blob;
-
         activeAudioBlob = blob;
-        activeAudioId = enhancedAudioId;
-
+        activeAudioId = "external"; // eller sätt blobUrl om du behöver unikt ID
+        
         const url = URL.createObjectURL(blob);
 
         audioControls.innerHTML = `

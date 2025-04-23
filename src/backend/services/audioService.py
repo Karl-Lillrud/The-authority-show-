@@ -3,63 +3,60 @@ import logging
 import tempfile
 import requests
 import subprocess
+import base64
 from typing import Optional
 from pydub import AudioSegment, silence
 from backend.database.mongo_connection import get_fs
 from backend.utils.file_utils import enhance_audio_with_ffmpeg, detect_background_noise, convert_audio_to_wav
 from backend.utils.ai_utils import (
-    remove_filler_words, calculate_clarity_score, analyze_sentiment,analyze_emotions
+    remove_filler_words, calculate_clarity_score, analyze_sentiment, analyze_emotions
 )
 from backend.utils.text_utils import (
     transcribe_with_whisper, detect_filler_words, classify_sentence_relevance,
     analyze_certainty_levels, get_sentence_timestamps, detect_long_pauses,
-    generate_ai_show_notes, suggest_sound_effects,translate_text
+    generate_ai_show_notes, suggest_sound_effects, translate_text
 )
 from backend.repository.ai_models import save_file, get_file_data, get_file_by_id, add_audio_edit_to_episode
 from elevenlabs.client import ElevenLabs
+from backend.utils.blob_storage import upload_file_to_blob
+from backend.repository.episode_repository import EpisodeRepository
+from flask import g
 
 logger = logging.getLogger(__name__)
 fs = get_fs()
+episode_repo = EpisodeRepository()
 
 class AudioService:
     def enhance_audio(self, audio_bytes: bytes, filename: str, episode_id: str) -> str:
-        # 1. Save input to temp WAV file
         with tempfile.NamedTemporaryFile(delete=False, suffix=".wav") as tmp:
             tmp.write(audio_bytes)
             temp_in_path = tmp.name
 
-        # 2. Prepare output path
         temp_out_path = temp_in_path.replace(".wav", "_enhanced.wav")
         success = enhance_audio_with_ffmpeg(temp_in_path, temp_out_path)
 
         if not success:
             raise RuntimeError("FFmpeg enhancement failed")
 
-        # 3. Read enhanced data
         with open(temp_out_path, "rb") as f:
             enhanced_data = f.read()
 
-        # 4. Save to GridFS
-        enhanced_file_id = save_file(
-            enhanced_data,
-            filename=f"enhanced_{filename}",
-            metadata={"type": "audio", "enhanced": True}
-        )
+        podcast_id = episode_repo.get_podcast_id_by_episode(episode_id)
+        blob_path = f"users/{g.user_id}/podcasts/{podcast_id}/episodes/{episode_id}/audio/enhanced_{filename}"
+        blob_url = upload_file_to_blob("podmanagerfiles", blob_path, enhanced_data)
 
-        # 5. Add reference to episode
         add_audio_edit_to_episode(
             episode_id=episode_id,
-            file_id=enhanced_file_id,
+            file_id="external",
             edit_type="enhanced",
             filename=f"enhanced_{filename}",
-            metadata={"source": filename, "enhanced": True}
+            metadata={"source": filename, "enhanced": True, "blob_url": blob_url}
         )
 
-        # 6. Cleanup temp files
         os.remove(temp_in_path)
         os.remove(temp_out_path)
 
-        return enhanced_file_id
+        return blob_url
 
     def analyze_audio(self, audio_bytes: bytes):
         with tempfile.NamedTemporaryFile(delete=False, suffix=".wav") as tmp:
@@ -96,12 +93,6 @@ class AudioService:
         if start_time is None or end_time is None or start_time >= end_time:
             raise ValueError("Invalid timestamps.")
 
-        clipped_filename = f"clipped_{file_id}.wav"
-        existing = fs.find_one({"filename": clipped_filename})
-        if existing:
-            logger.info(f"✅ Clipped version exists: {existing._id}")
-            return str(existing._id)
-
         audio_data = get_file_data(file_id)
 
         with tempfile.NamedTemporaryFile(delete=False, suffix=".wav") as tmp_in:
@@ -111,34 +102,39 @@ class AudioService:
         output_path = input_path.replace(".wav", "_clipped.wav")
 
         try:
-            ffmpeg_cmd = f'ffmpeg -y -i "{input_path}" -ss {start_time} -to {end_time} -c copy "{output_path}"'
-            subprocess.run(ffmpeg_cmd, shell=True, check=True)
+            subprocess.run([
+                "ffmpeg", "-y", "-i", input_path,
+                "-ss", str(start_time), "-to", str(end_time),
+                "-c", "copy", output_path
+            ], check=True)
 
             with open(output_path, "rb") as f:
                 clipped_data = f.read()
 
-            clipped_file_id = save_file(
-                clipped_data,
-                filename=clipped_filename,
-                metadata={"type": "transcription", "clipped": True}
-            )
+            episode, status = episode_repo.get_episode(episode_id, user_id=None)
+            if not episode or status != 200:
+                raise ValueError(f"Episode {episode_id} not found")
+            podcast_id = episode.get("podcast_id")
+            user_id = episode.get("userid")
+            filename = f"clipped_{file_id}.wav"
 
-            # 🔁 Save to episode's audioEdits
+            blob_path = f"users/{user_id}/podcasts/{podcast_id}/episodes/{episode_id}/audio/{filename}"
+            blob_url = upload_file_to_blob("podmanagerfiles", blob_path, clipped_data)
+
             add_audio_edit_to_episode(
                 episode_id=episode_id,
-                file_id=clipped_file_id,
-                edit_type="clipped",
-                filename=clipped_filename,
-                metadata={"source": file_id, "start": start_time, "end": end_time}
+                file_id="external",
+                edit_type="manual_clip",
+                filename=filename,
+                metadata={"blob_url": blob_url, "start": start_time, "end": end_time}
             )
 
-            logger.info(f"✅ Clipped audio saved with ID: {clipped_file_id}")
-            return clipped_file_id
-
+            return blob_url
         finally:
             for path in [input_path, output_path]:
                 if os.path.exists(path):
                     os.remove(path)
+
 
     def ai_cut_audio(self, file_bytes: bytes, filename: str, episode_id: Optional[str] = None) -> dict:
         ext = os.path.splitext(filename)[1].lower()
@@ -261,7 +257,7 @@ class AudioService:
     
     def isolate_voice(self, audio_bytes: bytes, filename: str, episode_id: str) -> str:
         """
-        Use ElevenLabs Audio Isolation API to extract vocals and save result to MongoDB.
+        Use ElevenLabs Audio Isolation API to extract vocals and save result to Azure Blob Storage.
         """
         logger.info(f"🎙️ Starting voice isolation for file: {filename}")
 
@@ -286,27 +282,29 @@ class AudioService:
             isolated_audio = response.content
             isolated_filename = f"isolated_{filename}"
 
-            file_id = save_file(
-                isolated_audio,
-                filename=isolated_filename,
-                metadata={"type": "voice_isolated", "source": filename}
-            )
+            # 🔍 Hämta podcast_id från databasen
+            repo = EpisodeRepository()
+            podcast_id = repo.get_podcast_id_by_episode(episode_id)
 
-            # 🧠 Save to episode's audioEdits
+            # 🔼 Ladda upp till Azure Blob Storage
+            blob_path = f"users/{g.user_id}/podcasts/{podcast_id}/episodes/{episode_id}/audio/{isolated_filename}"
+            base64_audio = base64.b64encode(isolated_audio).decode("utf-8")
+            blob_url = upload_file_to_blob("podmanagerfiles", blob_path, base64_audio)
+
+            # 🧠 Spara metadata till MongoDB
             add_audio_edit_to_episode(
                 episode_id=episode_id,
-                file_id=file_id,
+                file_id="external",
                 edit_type="voice_isolated",
                 filename=isolated_filename,
-                metadata={"source": filename}
+                metadata={"source": filename, "blob_url": blob_url}
             )
 
-            logger.info(f"✅ Isolated voice saved to MongoDB with ID: {file_id}")
-            return file_id
+            logger.info(f"✅ Isolated voice uploaded to Azure: {blob_url}")
+            return blob_url
 
         finally:
             os.remove(temp_path)
-
 
     def split_audio_on_silence(wav_path, min_len=500, silence_thresh_db=-35):
         audio = AudioSegment.from_wav(wav_path)
@@ -318,11 +316,7 @@ class AudioService:
         )
         return chunks
 
-    def apply_cuts_and_return_new_file(self, file_id: str, cuts: list[dict]) -> str:
-        """
-        Keeps only the specified segments and returns a new file.
-        cuts = [{ "start": float, "end": float }, ...]
-        """
+    def apply_cuts_and_return_new_file(self, file_id: str, cuts: list[dict], episode_id: str) -> str:
         logger.info(f"✂️ Applying cuts to file ID: {file_id}")
         audio_data = get_file_data(file_id)
 
@@ -333,48 +327,47 @@ class AudioService:
         try:
             audio = AudioSegment.from_wav(tmp_path)
             duration_ms = len(audio)
-            logger.info(f"📏 Original audio duration: {duration_ms / 1000:.2f}s")
-
-            # ✅ Convert to ms and filter out invalid cuts
             cuts_ms = sorted([
                 (int(c["start"] * 1000), int(c["end"] * 1000))
                 for c in cuts
-                if "start" in c and "end" in c
+                if 0 <= c["start"] < c["end"] <= duration_ms / 1000
             ])
-            cuts_ms = [(start, end) for start, end in cuts_ms if 0 <= start < end <= duration_ms]
 
-            # ✅ Merge overlapping segments
-            merged_cuts = []
+            merged = []
             for start, end in cuts_ms:
-                if merged_cuts and start <= merged_cuts[-1][1]:
-                    merged_cuts[-1] = (merged_cuts[-1][0], max(merged_cuts[-1][1], end))
+                if merged and start <= merged[-1][1]:
+                    merged[-1] = (merged[-1][0], max(merged[-1][1], end))
                 else:
-                    merged_cuts.append((start, end))
+                    merged.append((start, end))
 
-            logger.info(f"✅ Cleaned cuts (ms): {merged_cuts}")
-
-            # ✂️ Apply cuts
-            kept_segments = [audio[start:end] for start, end in merged_cuts]
-            cleaned_audio = sum(kept_segments)
-
-            logger.info(f"📏 Final cleaned audio duration: {len(cleaned_audio) / 1000:.2f}s")
+            segments = [audio[start:end] for start, end in merged]
+            final_audio = sum(segments)
 
             with tempfile.NamedTemporaryFile(suffix=".wav", delete=False) as out_tmp:
                 cleaned_path = out_tmp.name
-                cleaned_audio.export(cleaned_path, format="wav")
+                final_audio.export(cleaned_path, format="wav")
 
             with open(cleaned_path, "rb") as f:
                 cleaned_bytes = f.read()
 
-            cleaned_file_id = save_file(
-                cleaned_bytes,
-                filename=f"cleaned_{file_id}.wav",
-                metadata={"type": "ai_cut_cleaned", "source": file_id, "segments_kept": len(merged_cuts)}
+            episode = episode_repo.get_episode(episode_id, user_id=None)[0]
+            podcast_id = episode.get("podcast_id")
+            user_id = episode.get("userid")
+            filename = f"cleaned_{file_id}.wav"
+
+            blob_path = f"users/{user_id}/podcasts/{podcast_id}/episodes/{episode_id}/audio/{filename}"
+            base64_audio = base64.b64encode(cleaned_bytes).decode("utf-8")
+            blob_url = upload_file_to_blob("podmanagerfiles", blob_path, base64_audio)
+
+            add_audio_edit_to_episode(
+                episode_id=episode_id,
+                file_id="external",
+                edit_type="ai_cut_cleaned",
+                filename=filename,
+                metadata={"blob_url": blob_url, "segments_kept": len(merged)}
             )
 
-            logger.info(f"✅ Cleaned file saved with ID: {cleaned_file_id}")
-            return cleaned_file_id
-
+            return blob_url
         finally:
             for path in [tmp_path, cleaned_path]:
                 if os.path.exists(path):

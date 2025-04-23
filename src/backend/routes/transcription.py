@@ -259,8 +259,8 @@ def isolate_voice():
     audio_bytes = audio_file.read()
 
     try:
-        isolated_file_id = audio_service.isolate_voice(audio_bytes, filename, episode_id)
-        return jsonify({"isolated_file_id": isolated_file_id})
+        blob_url = audio_service.isolate_voice(audio_bytes, filename, episode_id)
+        return jsonify({"isolated_blob_url": blob_url})  # ✅ return blob_url instead of file_id
     except Exception as e:
         logger.error(f"Error during voice isolation: {str(e)}")
         return jsonify({"error": str(e)}), 500
