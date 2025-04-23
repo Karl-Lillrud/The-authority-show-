@@ -48,6 +48,18 @@ def get_episodes():
 def delete_episode(episode_id):
     if not hasattr(g, "user_id") or not g.user_id:
         return jsonify({"error": "Unauthorized"}), 401
+
+    # Check if the episode is published before deleting
+    try:
+        episode_data, status_code = episode_repo.get_episode(episode_id, g.user_id)
+        if status_code != 200:
+            return jsonify(episode_data), status_code  # Return original error if not found or other issue
+        if episode_data.get("status") == "published":
+            return jsonify({"error": "Published episodes cannot be deleted"}), 403  # Forbidden
+    except Exception as e:
+        logger.error(f"Error checking episode status before delete: {e}")
+        return jsonify({"error": "Failed to check episode status"}), 500
+
     return episode_repo.delete_episode(episode_id, g.user_id)
 
 
@@ -60,6 +72,18 @@ def update_episode(episode_id):
             jsonify({"error": "Invalid Content-Type. Expected application/json"}),
             415,
         )
+
+    # Check if the episode is published before updating
+    try:
+        episode_data, status_code = episode_repo.get_episode(episode_id, g.user_id)
+        if status_code != 200:
+            return jsonify(episode_data), status_code  # Return original error if not found or other issue
+        if episode_data.get("status") == "published":
+            return jsonify({"error": "Published episodes cannot be modified"}), 403  # Forbidden
+    except Exception as e:
+        logger.error(f"Error checking episode status before update: {e}")
+        return jsonify({"error": "Failed to check episode status"}), 500
+
     data = request.get_json()
     return episode_repo.update_episode(episode_id, g.user_id, data)
 
