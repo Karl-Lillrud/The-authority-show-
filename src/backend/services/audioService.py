@@ -256,19 +256,16 @@ class AudioService:
         return self.ai_cut_audio(audio_bytes, filename, episode_id=episode_id)
     
     def isolate_voice(self, audio_bytes: bytes, filename: str, episode_id: str) -> str:
-        """
-        Use ElevenLabs Audio Isolation API to extract vocals and save result to Azure Blob Storage.
-        """
         logger.info(f"🎙️ Starting voice isolation for file: {filename}")
 
         with tempfile.NamedTemporaryFile(delete=False, suffix=".wav") as tmp:
             tmp.write(audio_bytes)
-            temp_path = tmp.name
+            temp_input_path = tmp.name
 
         try:
             logger.info("🔄 Sending audio to ElevenLabs voice isolation endpoint...")
 
-            with open(temp_path, "rb") as f:
+            with open(temp_input_path, "rb") as f:
                 response = requests.post(
                     "https://api.elevenlabs.io/v1/audio-isolation",
                     headers={"xi-api-key": os.getenv("ELEVENLABS_API_KEY")},
@@ -279,18 +276,21 @@ class AudioService:
                 logger.error(f"❌ Voice isolation failed: {response.status_code} {response.text}")
                 raise RuntimeError(f"Voice isolation failed: {response.status_code} {response.text}")
 
-            isolated_audio = response.content
-            isolated_filename = f"isolated_{filename}"
+            # Spara det isolerade ljudet till temporär fil
+            temp_output_path = temp_input_path.replace(".wav", "_isolated.wav")
+            with open(temp_output_path, "wb") as out_file:
+                out_file.write(response.content)
 
-            # 🔍 Hämta podcast_id från databasen
+            with open(temp_output_path, "rb") as f:
+                isolated_data = f.read()
+
+            isolated_filename = f"isolated_{filename}"
             repo = EpisodeRepository()
             podcast_id = repo.get_podcast_id_by_episode(episode_id)
 
-            # 🔼 Ladda upp till Azure Blob Storage
             blob_path = f"users/{g.user_id}/podcasts/{podcast_id}/episodes/{episode_id}/audio/{isolated_filename}"
-            blob_url = upload_file_to_blob("podmanagerfiles", blob_path, isolated_audio)
+            blob_url = upload_file_to_blob("podmanagerfiles", blob_path, isolated_data)
 
-            # 🧠 Spara metadata till MongoDB
             add_audio_edit_to_episode(
                 episode_id=episode_id,
                 file_id="external",
@@ -303,7 +303,10 @@ class AudioService:
             return blob_url
 
         finally:
-            os.remove(temp_path)
+            os.remove(temp_input_path)
+            if os.path.exists(temp_output_path):
+                os.remove(temp_output_path)
+
 
     def split_audio_on_silence(wav_path, min_len=500, silence_thresh_db=-35):
         audio = AudioSegment.from_wav(wav_path)
