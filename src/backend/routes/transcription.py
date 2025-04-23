@@ -28,23 +28,14 @@ transcription_service = TranscriptionService()
 audio_service = AudioService()
 video_service = VideoService()
 
+MAX_DURATION_SECONDS = 60 * 60
+
 @transcription_bp.route("/transcribe", methods=["POST"])
 def transcribe():
     if "file" not in request.files:
         return jsonify({"error": "No file provided"}), 400
 
     file = request.files["file"]
-
-    # 🔒 File size limit check
-    file.seek(0, os.SEEK_END)
-    file_length = file.tell()
-    file.seek(0)  # Reset pointer
-
-    max_upload_size = 1 * 1024 * 1024 * 1024  # 1 GB
-    if file_length > max_upload_size:
-        return jsonify({
-            "error": f"File too large ({round(file_length / (1024 * 1024), 2)} MB). Max allowed size is 1024 MB (1 GB)."
-        }), 413
     filename = file.filename
     file_ext = os.path.splitext(filename)[-1].lower()
     is_video = file_ext in ["mp4", "mov", "avi", "mkv", "webm"]
@@ -67,6 +58,23 @@ def transcribe():
         else:
             audio_bytes = file.read()
 
+        # Save audio_bytes to a temp WAV file
+        with tempfile.NamedTemporaryFile(delete=False, suffix=".wav") as temp_audio:
+            temp_audio.write(audio_bytes)
+            temp_audio_path = temp_audio.name
+
+        # Check duration using soundfile
+        data, samplerate = sf.read(temp_audio_path)
+        duration = len(data) / samplerate
+
+        # Cleanup temp file
+        os.remove(temp_audio_path)
+
+        if duration > MAX_DURATION_SECONDS:
+            return jsonify({
+                "error": f"Audio too long ({round(duration / 60, 2)} minutes). Max allowed is 60 minutes."
+            }), 400
+        
         # 🧠 Transcribe using service
         result = transcription_service.transcribe_audio(audio_bytes, filename)
 
