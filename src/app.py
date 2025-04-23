@@ -67,16 +67,21 @@ app.config['LANGUAGES'] = {
 app.config['BABEL_DEFAULT_LOCALE'] = 'en'
 
 def get_locale():
-    # Check if language is set in session
+    # First try to get language from browser
+    browser_lang = request.accept_languages.best_match(app.config['LANGUAGES'].keys())
+    
+    # Then check if language is set in session
     if 'language' in session:
         return session['language']
-    # Try to get language from user preferences
+    
+    # Try to get language from user preferences if logged in
     if g.user_id:
         user = collection.find_one({'_id': g.user_id})
         if user and 'language' in user:
             return user['language']
-    # Try to get language from browser
-    return request.accept_languages.best_match(app.config['LANGUAGES'].keys())
+    
+    # If no language is set, use browser language or default to English
+    return browser_lang or 'en'
 
 babel.init_app(app, locale_selector=get_locale)
 
@@ -91,6 +96,20 @@ def set_language(lang):
                 {'$set': {'language': lang}}
             )
     return redirect(request.referrer or url_for('frontend_bp.podprofile'))
+
+@app.route('/test-language')
+def test_language():
+    browser_lang = request.accept_languages.best_match(app.config['LANGUAGES'].keys())
+    current_lang = get_locale()
+    session_lang = session.get('language')
+    
+    return jsonify({
+        'browser_language': browser_lang,
+        'current_language': current_lang,
+        'session_language': session_lang,
+        'available_languages': app.config['LANGUAGES'],
+        'accept_languages': str(request.accept_languages)
+    })
 
 CORS(
     app,

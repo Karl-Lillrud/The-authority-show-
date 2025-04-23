@@ -48,3 +48,7 @@ def privacy_policy_page():
 @frontend_bp.route("/about")
 def about_page():
     return render_template("about/about.html")
+
+@frontend_bp.route("/signup")
+def signup_page():
+    return render_template("signup/signup.html")
