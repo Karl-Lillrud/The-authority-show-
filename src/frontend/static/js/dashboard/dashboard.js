@@ -510,12 +510,14 @@ function getActivityIconClass(activityType) {
     episode_updated: "scheduled",
     episode_deleted: "published",
     team_created: "completed",
-    tasks_added: "pending"
+    tasks_added: "pending",
+    podcast_created: "podcast" // <-- Add this line
   };
   return iconMap[activityType] || "pending";
 }
 
 function formatActivityType(type) {
+  if (type === "podcast_created") return "Podcast Created";
   return type
     .replace(/_/g, " ")
     .toLowerCase()

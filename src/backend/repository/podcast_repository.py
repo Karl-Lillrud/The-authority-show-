@@ -6,6 +6,7 @@ import logging
 import urllib.request
 import feedparser
 from backend.services.rss_Service import RSSService  # Import RSSService
+from backend.services.activity_service import ActivityService  # Add this import
 
 
 logger = logging.getLogger(__name__)
@@ -14,6 +15,7 @@ logger = logging.getLogger(__name__)
 class PodcastRepository:
     def __init__(self):
         self.collection = collection.database.Podcasts
+        self.activity_service = ActivityService()  # Add this line
 
     def add_podcast(self, user_id, data):  # user_id here is the owner's ID
         try:
@@ -90,6 +92,24 @@ class PodcastRepository:
             # Insert into database
             result = self.collection.insert_one(podcast_item)
             if result.inserted_id:
+                # --- Add activity log for podcast creation using ActivityService ---
+                try:
+                    self.activity_service.log_activity(
+                        user_id=user_id,
+                        activity_type="podcast_created",
+                        description=f"Created podcast '{podcast_item.get('podName', '')}'",
+                        details={
+                            "podcastId": podcast_id,
+                            "podcastName": podcast_item.get("podName", ""),
+                        },
+                    )
+                except Exception as act_err:
+                    logger.error(
+                        f"Failed to log podcast_created activity: {act_err}",
+                        exc_info=True,
+                    )
+                # --- End activity log ---
+
                 return {
                     "message": "Podcast added successfully",
                     "podcast_id": podcast_id,
