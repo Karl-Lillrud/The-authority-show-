@@ -284,67 +284,17 @@ class PodcastRepository:
             return {"error": f"Error fetching RSS feed: {str(e)}"}, 500
 
     def addPodcastWithRss(self, user_id, rss_url):
-        """Fetch RSS data and add a podcast with its episodes."""
+        """
+        Fetch RSS data using RSSService and add a podcast to the repository.
+        """
         try:
             # Fetch RSS data
             rss_data, status_code = RSSService.fetch_rss_feed(rss_url)
             if status_code != 200:
                 return {"error": "Failed to fetch RSS feed", "details": rss_data}, 400
 
-            # Prepare podcast data from RSS
-            podcast_data = {
-                "podName": rss_data.get("title", ""),
-                "ownerName": rss_data.get("itunesOwner", {}).get("name", ""),
-                "email": rss_data.get("itunesOwner", {}).get("email", ""),
-                "description": rss_data.get("description", ""),
-                "logoUrl": rss_data.get("logoUrl", ""),
-                "category": rss_data.get("categories", [{}])[0].get("main", ""),
-                "language": rss_data.get("language", ""),
-                "author": rss_data.get("author", ""),
-                "copyright_info": rss_data.get("copyright_info", ""),
-                "rssFeed": rss_url,
-            }
-
-            # Add podcast
-            podcast_result, status_code = self.add_podcast(user_id, podcast_data)
-            if status_code != 201:
-                return podcast_result, status_code
-
-            podcast_id = podcast_result["podcast_id"]
-
-            # Register episodes from RSS feed
-            for episode in rss_data.get("episodes", []):
-                episode_data = {
-                    "podcastId": podcast_id,
-                    "title": episode.get("title", ""),
-                    "description": episode.get("description", ""),
-                    "publishDate": episode.get("pubDate", ""),
-                    "duration": episode.get("duration", None),
-                    "status": "published",
-                    "audioUrl": episode.get("audio", {}).get("url", ""),
-                    "fileSize": episode.get("audio", {}).get("length", ""),
-                    "fileType": episode.get("audio", {}).get("type", ""),
-                    "guid": episode.get("guid", ""),
-                    "season": episode.get("season", None),
-                    "episode": episode.get("episode", None),
-                    "episodeType": episode.get("episodeType", None),
-                    "explicit": episode.get("explicit", None),
-                    "imageUrl": episode.get("image", ""),
-                    "keywords": episode.get("keywords", None),
-                    "chapters": episode.get("chapters", None),
-                    "link": episode.get("link", ""),
-                    "subtitle": episode.get("subtitle", ""),
-                    "summary": episode.get("summary", ""),
-                    "author": episode.get("author", ""),
-                    "isHidden": episode.get("isHidden", None),
-                    "isImported": True,  # Ensure isImported is set for RSS episodes
-                }
-                self.episode_repo.register_episode(episode_data, user_id)
-
-            return {
-                "message": "Podcast and episodes added successfully",
-                "podcast_id": podcast_id,
-            }, 201
+            # Call existing add_podcast method
+            return self.add_podcast(user_id)
 
         except Exception as e:
             logger.error("Error in addPodcastWithRss: %s", e, exc_info=True)
