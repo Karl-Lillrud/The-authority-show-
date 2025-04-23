@@ -1,3 +1,5 @@
+#isAdded: true
+
 PLAN_BENEFITS = {
     "FREE": {
         "credits": 3000,

@@ -88,7 +88,7 @@ class SubscriptionService:
             raise Exception(f"Error updating subscription: {str(e)}")
 
     def can_create_episode(self, user_id):
-        """Check if the user can create a new episode within the current subscription period."""
+
         try:
             account = self._get_account(user_id)
             if not account:
@@ -102,7 +102,7 @@ class SubscriptionService:
             plan = sub["plan"]
 
             episode_slots = benefits.get("episode_slots", 0)
-            extra_slots = account.get("extra_episode_slots", 0)  # ✅ Optional extra slots
+            extra_slots = account.get("extra_episode_slots", 0)  # Optional extra slots
             total_allowed_slots = episode_slots + extra_slots
 
             if benefits.get("max_slots") == "Unlimited":
@@ -112,9 +112,14 @@ class SubscriptionService:
             start = parse_date(sub["start_date"]) if sub.get("start_date") else now - timedelta(days=30)
             end = parse_date(sub["end_date"]) if sub.get("end_date") else now
 
+            # Only count episodes that are NOT RSS-imported
             count = self.episodes_collection.count_documents({
                 "userid": str(user_id),
-                "created_at": {"$gte": start, "$lte": end}
+                "created_at": {"$gte": start, "$lte": end},
+                "$or": [
+                    {"isImported": {"$exists": False}},
+                    {"isImported": False}
+                ]
             })
 
             if count < total_allowed_slots:
@@ -128,4 +133,5 @@ class SubscriptionService:
         except Exception as e:
             logger.error(f"❌ Error checking create-episode permission for user {user_id}: {str(e)}")
             return False, "Internal server error"
+
 
