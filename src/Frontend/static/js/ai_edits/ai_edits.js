@@ -304,18 +304,27 @@ async function generateQuoteImages() {
     }
 }
 
+async function fetchAudioFromBlobUrl(blobUrl) {
+    try {
+        const res = await fetch(blobUrl);
+        if (!res.ok) throw new Error(`Failed to fetch audio: ${res.statusText}`);
+        const blob = await res.blob();
+        const objectUrl = URL.createObjectURL(blob);
+        return { blob, objectUrl };
+    } catch (err) {
+        console.error("Error fetching audio from blob URL:", err);
+        throw err;
+    }
+}
+
 async function enhanceAudio() {
     const input = document.getElementById('audioUploader');
     const audioControls = document.getElementById('audioControls');
     const file = input.files[0];
     if (!file) return alert("Upload an audio file first.");
 
-    // Check for selected episode
     const episodeId = sessionStorage.getItem("selected_episode_id");
-    if (!episodeId) {
-        alert("❌ No episode selected. Please select or open an episode first.");
-        return;
-    }
+    if (!episodeId) return alert("❌ No episode selected.");
 
     try {
         await consumeUserCredits("audio_enhancment");
@@ -326,7 +335,7 @@ async function enhanceAudio() {
 
     const formData = new FormData();
     formData.append("audio", file);
-    formData.append("episode_id", episodeId); // ✅ Append episode ID
+    formData.append("episode_id", episodeId);
 
     audioControls.innerHTML = "🔄 Enhancing... Please wait.";
 
@@ -338,14 +347,15 @@ async function enhanceAudio() {
 
         const result = await response.json();
         const blobUrl = result.enhanced_audio_url;
+
+        // ✅ Use backend proxy to avoid CORS
         const audioRes = await fetch(`/get_enhanced_audio?url=${encodeURIComponent(blobUrl)}`);
         const blob = await audioRes.blob();
-        
+        const url = URL.createObjectURL(blob);
+
         enhancedAudioBlob = blob;
         activeAudioBlob = blob;
-        activeAudioId = "external"; // eller sätt blobUrl om du behöver unikt ID
-        
-        const url = URL.createObjectURL(blob);
+        activeAudioId = "external";
 
         audioControls.innerHTML = `
             <p>Audio enhancement complete!</p>
@@ -364,18 +374,16 @@ async function enhanceAudio() {
     }
 }
 
+
+
 async function runVoiceIsolation() {
     const input = document.getElementById('audioUploader');
     const file = input.files[0];
     if (!file) return alert("Upload an audio file first.");
 
     const resultContainer = document.getElementById("isolatedVoiceResult");
-
-    // 🧠 Kontrollera att vi har ett episode ID
     const episodeId = sessionStorage.getItem("selected_episode_id");
-    if (!episodeId) {
-        return alert("❌ No episode selected. Please open or select an episode.");
-    }
+    if (!episodeId) return alert("❌ No episode selected.");
 
     try {
         await consumeUserCredits("voice_isolation");
@@ -388,7 +396,7 @@ async function runVoiceIsolation() {
 
     const formData = new FormData();
     formData.append("audio", file);
-    formData.append("episode_id", episodeId); // 🧠 Viktigt!
+    formData.append("episode_id", episodeId);
 
     try {
         const response = await fetch("/transcription/voice_isolate", {
@@ -397,33 +405,28 @@ async function runVoiceIsolation() {
         });
 
         const data = await response.json();
+        if (!response.ok) throw new Error(data.error || "Voice isolation failed.");
 
-        if (!response.ok) {
-            throw new Error(data.error || "Voice isolation failed.");
-        }
+        const blobUrl = data.isolated_blob_url;
 
-        isolatedAudioId = data.isolated_file_id;
-
-        // 🎧 Hämta den isolerade filen
-        const audioRes = await fetch(`/transcription/get_file/${isolatedAudioId}`);
+        // ✅ Use backend proxy to avoid CORS
+        const audioRes = await fetch(`/transcription/get_isolated_audio?url=${encodeURIComponent(blobUrl)}`);
         const blob = await audioRes.blob();
-        isolatedAudioBlob = blob;
-
-        activeAudioBlob = blob;
-        activeAudioId = isolatedAudioId;
-
         const url = URL.createObjectURL(blob);
+
+        isolatedAudioBlob = blob;
+        activeAudioBlob = blob;
+        activeAudioId = "external";
+
         resultContainer.innerHTML = `
             <p>🎧 Isolated Audio</p>
             <audio controls src="${url}" style="width: 100%;"></audio>
         `;
 
-        // Visa extra verktyg
         document.getElementById("audioAnalysisSection").style.display = "block";
         document.getElementById("audioCuttingSection").style.display = "block";
         document.getElementById("aiCuttingSection").style.display = "block";
 
-        // Visa nedladdningslänk
         const dl = document.getElementById("downloadIsolatedVoice");
         dl.href = url;
         dl.style.display = "inline-block";
@@ -432,6 +435,8 @@ async function runVoiceIsolation() {
         resultContainer.innerText = `❌ Isolation failed: ${err.message}`;
     }
 }
+
+
 
 async function analyzeEnhancedAudio() {
     const resultEl = document.getElementById("analysisResults");
@@ -844,5 +849,3 @@ function replaceSfx(index, url) {
         selectedSoundFX[index].sfxUrl = url;
     }
 }
-
-

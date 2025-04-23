@@ -288,8 +288,7 @@ class AudioService:
 
             # 🔼 Ladda upp till Azure Blob Storage
             blob_path = f"users/{g.user_id}/podcasts/{podcast_id}/episodes/{episode_id}/audio/{isolated_filename}"
-            base64_audio = base64.b64encode(isolated_audio).decode("utf-8")
-            blob_url = upload_file_to_blob("podmanagerfiles", blob_path, base64_audio)
+            blob_url = upload_file_to_blob("podmanagerfiles", blob_path, isolated_audio)
 
             # 🧠 Spara metadata till MongoDB
             add_audio_edit_to_episode(

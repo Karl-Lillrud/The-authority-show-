@@ -3,13 +3,14 @@ import os
 import logging
 import subprocess
 from datetime import datetime
-from flask import Blueprint, request, jsonify, render_template, session
+from flask import Blueprint, request, jsonify, render_template, session,Response
 import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 import numpy as np
 import soundfile as sf
 import tempfile
+import requests
 from elevenlabs.client import ElevenLabs
 from backend.database.mongo_connection import get_fs
 from backend.services.transcriptionService import TranscriptionService
@@ -263,6 +264,17 @@ def isolate_voice():
         return jsonify({"isolated_blob_url": blob_url})  # ✅ return blob_url instead of file_id
     except Exception as e:
         logger.error(f"Error during voice isolation: {str(e)}")
+        return jsonify({"error": str(e)}), 500
+    
+@transcription_bp.route("/get_isolated_audio", methods=["GET"])
+def get_isolated_audio():
+    url = request.args.get("url")
+    if not url:
+        return jsonify({"error": "Missing URL"}), 400
+    try:
+        response = requests.get(url)
+        return Response(response.content, content_type="audio/wav")
+    except Exception as e:
         return jsonify({"error": str(e)}), 500
 
 @transcription_bp.route("/ai_edits", methods=["GET"])
