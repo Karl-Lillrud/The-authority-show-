@@ -28,8 +28,9 @@ img {
   transition: color var(--transition-normal);
 }
 
- /* Triangle styles */
- .triangle-down, .triangle-up {
+/* Triangle styles */
+.triangle-down,
+.triangle-up {
   width: 0;
   height: 0;
   border-left: 5px solid transparent;
@@ -107,7 +108,6 @@ header {
   overflow: visible;
   text-overflow: ellipsis;
 }
-
 
 /* Header Nav (Menus on the far right) */
 .header-nav {
@@ -193,7 +193,6 @@ header {
   border-radius: 0;
 }
 
-
 /* Menu Toggle (Hamburger) */
 .menu-toggle {
   display: flex;
@@ -242,12 +241,12 @@ header {
   min-width: 200px;
   background: white;
   box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1),
-  0 0px 10px rgba(0, 0, 0, 0.05);
+    0 0px 10px rgba(0, 0, 0, 0.05);
   border-radius: var(--radius-medium);
   padding: var(--spacing-md);
   flex-direction: column;
   gap: var(--spacing-sm);
-  z-index: 100;
+  z-index: 9999; /* Increased z-index to always be on top */
   transition: all 0.3s cubic-bezier(0.68, -0.55, 0.27, 1.55);
   transform-origin: top right;
   transform: scale(0.95);
@@ -259,6 +258,12 @@ header {
   flex-direction: column;
   transform: scale(1);
   opacity: 1;
+  z-index: 9999; /* Ensure active menu stays on top */
+}
+
+.menu,
+.menu.active {
+  z-index: 10000; /* Increased z-index to ensure hamburger menu overlays the shopping cart */
 }
 
 .menu a {
@@ -476,8 +481,8 @@ header {
 }
 .credits-info {
   padding: 8px 12px;
-  background-color: #F4F4F4; /* Light Gray background */
-  border: 1px solid #E0E0E0;
+  background-color: #f4f4f4; /* Light Gray background */
+  border: 1px solid #e0e0e0;
   border-radius: 1rem; /* Rounded corners (approx. rounded-2xl) */
   font-size: 0.85rem;
   color: #404040; /* Darker text */
@@ -500,7 +505,7 @@ header {
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  background-color: #F4F4F4;
+  background-color: #f4f4f4;
   padding: 0.3rem 0.8rem;
   border-radius: 2rem;
   box-shadow: 0 1px 4px rgba(0, 0, 0, 0.05);
@@ -508,11 +513,11 @@ header {
 
 .credit-text {
   font-size: 1rem;
-  color: #FF7300;
+  color: #ff7300;
 }
 
 #buy-credits-btn {
-  background-color: #FF7300;
+  background-color: #ff7300;
   color: #fff;
   padding: 0.25rem 0.9rem;
   font-size: 0.75rem;
@@ -526,7 +531,7 @@ header {
 
 #buy-credits-btn:hover {
   box-shadow: 0 4px 12px rgba(255, 115, 0, 0.4);
-}/* Ensure the dropdown container is clickable across the whole width */
+} /* Ensure the dropdown container is clickable across the whole width */
 #headerPodcastDropdown {
   padding: 8px 12px; /* Matchar credits-info padding */
   background-color: #F4F4F4; /* Matchar credits-info bakgrundsfärg */

@@ -10,7 +10,7 @@ document.addEventListener("DOMContentLoaded", () => {
   if (buyBtn) {
     buyBtn.addEventListener("click", () => {
       // Remove localStorage dependency and navigate directly to billing
-      window.location.href = `/billing`;
+      window.location.href = `/store`;
     });
   }
 });
@@ -59,7 +59,8 @@ async function populateLandingPageDropdown() {
 // 🔽 Header Dropdown for `/podcast/:id`
 async function populateHeaderPodcastDropdown() {
   const dropdownContainer = document.getElementById("headerPodcastDropdown");
-  const dropdownSelected = dropdownContainer.querySelector(".dropdown-selected");
+  const dropdownSelected =
+    dropdownContainer.querySelector(".dropdown-selected");
   const dropdownOptions = dropdownContainer.querySelector(".dropdown-options");
 
   try {
@@ -100,11 +101,11 @@ async function populateUserCredits() {
   try {
     const creditsElement = document.getElementById("user-credits");
     if (!creditsElement) return; // Skip if element doesn't exist
-    
-    const response = await fetch('/api/credits', {
-      credentials: 'same-origin' // Include cookies for auth
+
+    const response = await fetch("/api/credits", {
+      credentials: "same-origin" // Include cookies for auth
     });
-    
+
     // Handle non-JSON responses or errors
     if (!response.ok) {
       console.warn("Failed to fetch credits:", response.status);
@@ -216,7 +217,7 @@ function setDynamicPageTitle() {
       "/dashboard": "Dashboard",
       "/team": "Team Management",
       "/guest": "Guest View",
-      "/taskmanagement": "Episode To-Do",
+      "/taskmanagement": "Episode To-Do"
     };
 
     const currentPath = window.location.pathname;
