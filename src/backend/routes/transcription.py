@@ -250,18 +250,19 @@ def get_audio_info():
 
 @transcription_bp.route("/voice_isolate", methods=["POST"])
 def isolate_voice():
-    if "audio" not in request.files:
-        return jsonify({"error": "No audio provided"}), 400
+    if "audio" not in request.files or "episode_id" not in request.form:
+        return jsonify({"error": "Audio file and episode_id are required"}), 400
 
-    file = request.files["audio"]
-    filename = file.filename
-    audio_bytes = file.read()
+    audio_file = request.files["audio"]
+    episode_id = request.form["episode_id"]
+    filename = audio_file.filename
+    audio_bytes = audio_file.read()
 
     try:
-        file_id = audio_service.isolate_voice(audio_bytes, filename)
-        return jsonify({"isolated_file_id": file_id}), 200
+        isolated_file_id = audio_service.isolate_voice(audio_bytes, filename, episode_id)
+        return jsonify({"isolated_file_id": isolated_file_id})
     except Exception as e:
-        logger.error(f"Voice isolation error: {str(e)}")
+        logger.error(f"Error during voice isolation: {str(e)}")
         return jsonify({"error": str(e)}), 500
 
 @transcription_bp.route("/ai_edits", methods=["GET"])

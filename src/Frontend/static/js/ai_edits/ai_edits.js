@@ -365,8 +365,6 @@ async function enhanceAudio() {
     }
 }
 
-
-
 async function runVoiceIsolation() {
     const input = document.getElementById('audioUploader');
     const file = input.files[0];
@@ -374,22 +372,40 @@ async function runVoiceIsolation() {
 
     const resultContainer = document.getElementById("isolatedVoiceResult");
 
+    // 🧠 Kontrollera att vi har ett episode ID
+    const episodeId = sessionStorage.getItem("selected_episode_id");
+    if (!episodeId) {
+        return alert("❌ No episode selected. Please open or select an episode.");
+    }
+
     try {
         await consumeUserCredits("voice_isolation");
     } catch (err) {
         resultContainer.innerText = `❌ Not enough credits: ${err.message}`;
         return;
     }
+
     resultContainer.innerText = "🎙️ Isolating voice using ElevenLabs...";
 
     const formData = new FormData();
     formData.append("audio", file);
+    formData.append("episode_id", episodeId); // 🧠 Viktigt!
 
     try {
-        const response = await fetch("/transcription/voice_isolate", { method: "POST", body: formData });
+        const response = await fetch("/transcription/voice_isolate", {
+            method: "POST",
+            body: formData
+        });
+
         const data = await response.json();
+
+        if (!response.ok) {
+            throw new Error(data.error || "Voice isolation failed.");
+        }
+
         isolatedAudioId = data.isolated_file_id;
 
+        // 🎧 Hämta den isolerade filen
         const audioRes = await fetch(`/transcription/get_file/${isolatedAudioId}`);
         const blob = await audioRes.blob();
         isolatedAudioBlob = blob;
@@ -399,17 +415,21 @@ async function runVoiceIsolation() {
 
         const url = URL.createObjectURL(blob);
         resultContainer.innerHTML = `
-            <p>Isolated Audio</p>
+            <p>🎧 Isolated Audio</p>
             <audio controls src="${url}" style="width: 100%;"></audio>
         `;
+
+        // Visa extra verktyg
         document.getElementById("audioAnalysisSection").style.display = "block";
         document.getElementById("audioCuttingSection").style.display = "block";
         document.getElementById("aiCuttingSection").style.display = "block";
 
+        // Visa nedladdningslänk
         const dl = document.getElementById("downloadIsolatedVoice");
         dl.href = url;
         dl.style.display = "inline-block";
     } catch (err) {
+        console.error("Voice isolation failed:", err);
         resultContainer.innerText = `❌ Isolation failed: ${err.message}`;
     }
 }

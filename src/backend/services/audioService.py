@@ -249,7 +249,7 @@ class AudioService:
         audio_bytes, filename = get_file_by_id(file_id)
         return self.ai_cut_audio(audio_bytes, filename)
     
-    def isolate_voice(self, audio_bytes: bytes, filename: str) -> str:
+    def isolate_voice(self, audio_bytes: bytes, filename: str, episode_id: str) -> str:
         """
         Use ElevenLabs Audio Isolation API to extract vocals and save result to MongoDB.
         """
@@ -265,9 +265,7 @@ class AudioService:
             with open(temp_path, "rb") as f:
                 response = requests.post(
                     "https://api.elevenlabs.io/v1/audio-isolation",
-                    headers={
-                        "xi-api-key": os.getenv("ELEVENLABS_API_KEY")
-                    },
+                    headers={"xi-api-key": os.getenv("ELEVENLABS_API_KEY")},
                     files={"audio": f}
                 )
 
@@ -276,24 +274,29 @@ class AudioService:
                 raise RuntimeError(f"Voice isolation failed: {response.status_code} {response.text}")
 
             isolated_audio = response.content
-
             isolated_filename = f"isolated_{filename}"
+
             file_id = save_file(
                 isolated_audio,
                 filename=isolated_filename,
                 metadata={"type": "voice_isolated", "source": filename}
             )
 
+            # 🧠 Save to episode's audioEdits
+            add_audio_edit_to_episode(
+                episode_id=episode_id,
+                file_id=file_id,
+                edit_type="voice_isolated",
+                filename=isolated_filename,
+                metadata={"source": filename}
+            )
+
             logger.info(f"✅ Isolated voice saved to MongoDB with ID: {file_id}")
             return file_id
 
-        except Exception as e:
-            logger.error(f"❌ Voice isolation failed: {str(e)}")
-            raise RuntimeError(f"Voice isolation failed: {str(e)}")
-
         finally:
             os.remove(temp_path)
-            logger.info(f"🗑️ Temp file cleaned up: {temp_path}")
+
 
     def split_audio_on_silence(wav_path, min_len=500, silence_thresh_db=-35):
         audio = AudioSegment.from_wav(wav_path)
