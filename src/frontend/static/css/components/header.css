@@ -54,7 +54,7 @@ header {
   justify-content: space-between; /* Sprid ut innehållet horisontellt */
   align-items: center; /* Centrera innehållet vertikalt */
   padding: 8px 24px;
-  background-color: #ffffff;
+  background-color: #ffffff; /* Original background color */
   color: var(--text-color-light);
   box-shadow: 0 4px 10px -2px rgba(0, 0, 0, 0.08);
   transition: all 0.3s ease;
@@ -146,27 +146,21 @@ header {
 /* Podcast Selector */
 /* Header Podcast Dropdown Cleanup */
 #headerPodcastDropdown {
-  position: relative;
-  background: white;
-  color: var(--text-color-light);
-  border: 1px solid rgba(0, 0, 0, 0.1);
-  border-radius: 12px;
-  font-family: var(--font-primary);
-  font-size: 0.85rem;
-  cursor: pointer;
-  min-width: 160px;
-  padding: 6px 12px;
-  transition: all 0.3s ease;
-  box-shadow: 0 4px 10px -5px rgba(0, 0, 0, 0.1);
+  padding: 0.3rem 0.8rem; /* Match credits padding */
+  background-color: #F4F4F4; /* Match credits background */
+  border: 1px solid #E0E0E0; /* Match credits border */
+  border-radius: 2rem; /* Match credits border radius */
+  font-size: 1rem; /* Match credits font size */
+  color: #404040; /* Match credits text color */
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  z-index: 10;
+  gap: 0.5rem; /* Match credits gap */
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.05); /* Match credits shadow */
+  cursor: pointer;
 }
 
 #headerPodcastDropdown:hover {
-  border-color: var(--highlight-color);
-  background-color: #fdfdfd;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1); /* Match credits hover effect */
 }
 
 /* Dropdown options inside header dropdown */
@@ -323,6 +317,7 @@ header {
   color: #fff;
 }
 
+
 .custom-dropdown {
   position: relative;
   width: 150px; /* Minskad bredd */
@@ -336,6 +331,13 @@ header {
   font-size: 0.75rem; /* Minskad fontstorlek */
   color: var(--text-color-light);
 }
+
+.custom-dropdown:hover {
+    box-shadow: 0 4px 10px rgba(255, 115, 0, 0.4); /* Keep original hover effect */
+}
+
+  
+  
 
 .custom-dropdown .dropdown-lp-selected {
   padding: var(--spacing-xs) var(--spacing-xs); /* Minskad padding */
@@ -526,24 +528,20 @@ header {
   box-shadow: 0 4px 12px rgba(255, 115, 0, 0.4);
 }/* Ensure the dropdown container is clickable across the whole width */
 #headerPodcastDropdown {
-  position: relative;
-  background: white;
-  color: var(--text-color-light);
-  border: 1px solid rgba(0, 0, 0, 0.1);
-  border-radius: 12px;
-  font-family: var(--font-primary);
-  font-size: 0.85rem;
-  cursor: pointer;
-  min-width: 160px;
-  padding: 6px 12px;
-  transition: all 0.3s ease;
-  box-shadow: 0 4px 10px -5px rgba(0, 0, 0, 0.1);
+  padding: 8px 12px; /* Matchar credits-info padding */
+  background-color: #F4F4F4; /* Matchar credits-info bakgrundsfärg */
+  border: 1px solid #E0E0E0; /* Matchar credits-info border */
+  border-radius: 1rem; /* Matchar credits-info border-radius */
+  font-size: 0.85rem; /* Matchar credits-info fontstorlek */
+  color: #404040; /* Matchar credits-info textfärg */
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  z-index: 10;
-  margin-right: 4px; /* Move the dropdown closer to credits */
+  gap: 0.5rem; /* Matchar credits-info gap */
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.05); /* Matchar credits-info skugga */
+  cursor: pointer;
+  transition: box-shadow 0.3s ease; /* Matchar credits-info transition */
 }
+
 
 /* Add the down arrow icon inside the select dropdown */
 #headerPodcastDropdown::after {
@@ -560,8 +558,9 @@ header {
 
 /* Hover effect */
 #headerPodcastDropdown:hover {
-  border-color: var(--highlight-color);
+  
   background-color: #fdfdfd;
+  box-shadow: 0 4px 12px rgba(255, 115, 0, 0.4); /* Matchar credits-info hover-effekt */
 }
 
 /* Remove the original "select" element appearance */
@@ -579,7 +578,7 @@ header {
 /* Make the dropdown container area fully clickable */
 #headerPodcastDropdown {
   pointer-events: all;
-  width: 100%;
+  width: fit-content;
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -619,6 +618,7 @@ header {
 }
 
 #header-dropdown-options .dropdown-option:hover {
+  background-color: #f4f4f4;
   color: var(--highlight-color);
   border-radius: 0;
 }
