@@ -11,7 +11,7 @@ import numpy as np
 import soundfile as sf
 import tempfile
 from elevenlabs.client import ElevenLabs
-from backend.database.mongo_connection import get_fs
+from backend.database.mongo_connection import get_fs, get_db
 from backend.services.transcriptionService import TranscriptionService
 from backend.services.audioService import AudioService
 from backend.services.videoService import VideoService
@@ -21,6 +21,7 @@ from backend.utils.transcription_utils import check_audio_duration
 transcription_bp = Blueprint("transcription", __name__)
 logger = logging.getLogger(__name__)
 fs = get_fs()
+db = get_db()
 
 # Services
 client = ElevenLabs(api_key=os.getenv("ELEVENLABS_API_KEY"))
@@ -56,17 +57,37 @@ def transcribe():
         else:
             audio_bytes = file.read()
 
-        try:
-            #Change duration here!!
-            check_audio_duration(audio_bytes, max_duration_seconds=36)
-        except ValueError as e:
-            return jsonify({"error": str(e)}), 400
-        
-        # 🧠 Transcribe using service
-        result = transcription_service.transcribe_audio(audio_bytes, filename)
+        user_id = session.get("user_id")
+        account = db["Accounts"].find_one({"userId": str(user_id)})
+        if account:
+            subscription_plan = account.get("subscriptionPlan", "free")
+        else:
+            logger.warning(f"No account found for user_id: {user_id}. Defaulting to 'free' tier.")
+            subscription_plan = "free"
 
+        # ⏱️ Set tier-based limits
+        tier_limits = {
+            "free": 5,
+            "pro": 30 * 60,
+            "studio": 60 * 60,
+            "enterprise": 180 * 60
+        }
+        max_duration = tier_limits.get(subscription_plan.lower(), 5 * 60)
+        logger.info(f"🛡️ Max transcription duration: {max_duration} seconds")
+
+        # 🛡️ Check audio duration
+        logger.info(f"🔍 Checking audio duration...")
+        check_audio_duration(audio_bytes, max_duration_seconds=max_duration)
+        logger.info(f"✅ Audio duration is within allowed limit.")
+
+        # 🧠 Transcribe
+        logger.info(f"🧠 Starting transcription for file: {filename}")
+        result = transcription_service.transcribe_audio(audio_bytes, filename)
+        logger.info(f"✅ Transcription completed successfully.")
         return jsonify(result)
 
+    except ValueError as e:
+        return jsonify({"error": str(e)}), 400
     except Exception as e:
         logger.error(f"Transcription failed: {e}", exc_info=True)
         return jsonify({"error": "Transcription failed", "details": str(e)}), 500
