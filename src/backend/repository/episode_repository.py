@@ -25,14 +25,7 @@ class EpisodeRepository:
 
             logger.debug(f"📥 Raw incoming data to register_episode: {data}")
 
-            # ✅ Always set is_imported = True if the source is RSS
-            is_imported = False
-            if data.get("source") == "rss":
-                is_imported = True
-                data["isImported"] = True  # ✅ Force into payload
-            elif "isImported" in data:
-                is_imported = data["isImported"]
-
+            is_imported = data.get("isImported", False)
             if isinstance(is_imported, str):
                 is_imported = is_imported.lower() == "true"
 
@@ -51,7 +44,7 @@ class EpisodeRepository:
                 return {"error": "Invalid data", "details": errors}, 400
 
             validated = schema.load(data)
-            validated["isImported"] = is_imported  # 🔐 Final overwrite
+            validated["isImported"] = is_imported
 
             episode_id = str(uuid.uuid4())
 
@@ -88,6 +81,8 @@ class EpisodeRepository:
         except Exception as e:
             logger.error("❌ ERROR registering episode: %s", str(e))
             return {"error": f"Failed to register episode: {str(e)}"}, 500
+
+
     def get_episode(self, episode_id, user_id):
         """Get a single episode by its ID and user."""
         try:

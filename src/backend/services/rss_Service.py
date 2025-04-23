@@ -123,8 +123,7 @@ class RSSService:
                         "author": entry.get("author", ""),
                         "isHidden": entry.get("itunes_isHidden", None),
                         "duration": duration_seconds,
-                        "isImported": True,
-                        "source": "rss"  
+                        "isImported": True, 
                     }
                 episodes.append(episode)
 

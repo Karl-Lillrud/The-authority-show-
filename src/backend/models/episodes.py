@@ -22,7 +22,6 @@ class EpisodeSchema(Schema):
     author = fields.String()
     isHidden = fields.Boolean(allow_none=True)
     duration = fields.Integer(allow_none=True)
-    source = fields.String(allow_none=True)
     isImported = fields.Boolean(allow_none=True)
     fileSize = fields.String(allow_none=True)
     fileType = fields.String(allow_none=True)
