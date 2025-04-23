@@ -3,6 +3,7 @@ from datetime import datetime, timezone
 import uuid
 import logging
 from backend.models.episodes import EpisodeSchema
+from backend.services.activity_service import ActivityService  # Add this import
 
 logger = logging.getLogger(__name__)
 
@@ -11,6 +12,7 @@ class EpisodeRepository:
     def __init__(self):
         self.collection = collection.database.Episodes
         self.accounts_collection = collection.database.Accounts
+        self.activity_service = ActivityService()  # Add this line
 
     def register_episode(self, data, user_id):
         """Register a new episode for the given user."""
@@ -61,6 +63,25 @@ class EpisodeRepository:
             }
 
             self.collection.insert_one(episode_doc)
+
+            # --- Log activity for episode created ---
+            try:
+                self.activity_service.log_activity(
+                    user_id=user_id,
+                    activity_type="episode_created",
+                    description=f"Created episode '{episode_doc.get('title', '')}'",
+                    details={
+                        "episodeId": episode_id,
+                        "podcastId": episode_doc.get("podcast_id", ""),
+                        "title": episode_doc.get("title", ""),
+                    },
+                )
+            except Exception as act_err:
+                logger.error(
+                    f"Failed to log episode_created activity: {act_err}", exc_info=True
+                )
+            # --- End activity log ---
+
             return {
                 "message": "Episode registered successfully",
                 "episode_id": episode_id,
@@ -106,6 +127,20 @@ class EpisodeRepository:
 
             result = self.collection.delete_one({"_id": episode_id})
             if result.deleted_count == 1:
+                # --- Log activity for episode deleted ---
+                try:
+                    self.activity_service.log_activity(
+                        user_id=user_id,
+                        activity_type="episode_deleted",
+                        description=f"Deleted episode '{ep.get('title', '')}'",
+                        details={"episodeId": episode_id, "title": ep.get("title", "")},
+                    )
+                except Exception as act_err:
+                    logger.error(
+                        f"Failed to log episode_deleted activity: {act_err}",
+                        exc_info=True,
+                    )
+                # --- End activity log ---
                 return {"message": "Episode deleted successfully"}, 200
             return {"error": "Failed to delete episode"}, 500
         except Exception as e:

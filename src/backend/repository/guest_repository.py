@@ -6,6 +6,7 @@ from backend.models.guests import GuestSchema
 from marshmallow import ValidationError
 import email.utils  # Import to handle parsing date format
 from google.oauth2.credentials import Credentials
+from backend.services.activity_service import ActivityService  # Add this import
 
 logger = logging.getLogger(__name__)
 
@@ -13,6 +14,7 @@ logger = logging.getLogger(__name__)
 class GuestRepository:
     def __init__(self):
         self.collection = collection.database.Guests
+        self.activity_service = ActivityService()  # Add this line
 
     def add_guest(self, data, user_id):
         try:
@@ -35,29 +37,37 @@ class GuestRepository:
                 if "publishDate" in episode and episode["publishDate"] is not None:
                     publish_date = None
                     publish_date_str = episode["publishDate"]
-                    
+
                     # Try parsing as RFC 2822 format first (email.utils.parsedate)
                     try:
                         publish_date_parsed = email.utils.parsedate(publish_date_str)
                         if publish_date_parsed:
-                            publish_date = datetime(
-                                *publish_date_parsed[:6]
-                            ).replace(tzinfo=timezone.utc)
+                            publish_date = datetime(*publish_date_parsed[:6]).replace(
+                                tzinfo=timezone.utc
+                            )
                     except Exception:
                         # If RFC 2822 parsing fails, log it but continue to try ISO format
-                        logger.info(f"RFC 2822 date parsing failed for: {publish_date_str}")
-                    
+                        logger.info(
+                            f"RFC 2822 date parsing failed for: {publish_date_str}"
+                        )
+
                     # If RFC 2822 parsing failed, try ISO format
                     if not publish_date:
                         try:
-                            publish_date = datetime.fromisoformat(publish_date_str.replace('Z', '+00:00'))
+                            publish_date = datetime.fromisoformat(
+                                publish_date_str.replace("Z", "+00:00")
+                            )
                             publish_date = publish_date.replace(tzinfo=timezone.utc)
                         except Exception as e:
-                            logger.warning(f"ISO date parsing failed for: {publish_date_str}, error: {str(e)}")
-                    
+                            logger.warning(
+                                f"ISO date parsing failed for: {publish_date_str}, error: {str(e)}"
+                            )
+
                     # If both parsing methods failed, use current date
                     if not publish_date:
-                        logger.warning(f"All date parsing methods failed for: {publish_date_str}, using current date")
+                        logger.warning(
+                            f"All date parsing methods failed for: {publish_date_str}, using current date"
+                        )
                         publish_date = current_date
                 else:
                     # If publishDate is missing or None, use current date
@@ -83,10 +93,30 @@ class GuestRepository:
                 "completed": 0,
                 "created_at": datetime.now(timezone.utc),
                 "user_id": user_id,
-                "calendarEventId": guest_data.get("calendarEventId", "")  # Store calendar event ID
+                "calendarEventId": guest_data.get(
+                    "calendarEventId", ""
+                ),  # Store calendar event ID
             }
 
             self.collection.insert_one(guest_item)
+
+            # --- Log activity for guest added ---
+            try:
+                self.activity_service.log_activity(
+                    user_id=user_id,
+                    activity_type="guest_added",
+                    description=f"Added guest '{guest_item['name']}' to episode.",
+                    details={
+                        "guestId": guest_id,
+                        "episodeId": episode_id,
+                        "guestName": guest_item["name"],
+                    },
+                )
+            except Exception as act_err:
+                logger.error(
+                    f"Failed to log guest_added activity: {act_err}", exc_info=True
+                )
+            # --- End activity log ---
 
             return {"message": "Guest added successfully", "guest_id": guest_id}, 201
 
@@ -138,7 +168,9 @@ class GuestRepository:
                         "linkedin": guest.get("linkedin", ""),
                         "twitter": guest.get("twitter", ""),
                         "areasOfInterest": guest.get("areasOfInterest", []),
-                        "calendarEventId": guest.get("calendarEventId", ""),  # Include calendar event ID
+                        "calendarEventId": guest.get(
+                            "calendarEventId", ""
+                        ),  # Include calendar event ID
                     }
                 )
 
@@ -176,7 +208,7 @@ class GuestRepository:
                 "scheduled": data.get("scheduled", 0),
                 "recommendedGuests": data.get("recommendedGuests", []),
                 "futureOpportunities": data.get("futureOpportunities", False),
-                "socialmedia": data.get("socialmedia", {})
+                "socialmedia": data.get("socialmedia", {}),
             }
 
             # If episodeId is provided, update the guest's episodeId
@@ -211,12 +243,25 @@ class GuestRepository:
         """
         try:
             user_id_str = str(user_id)
-            # Use "user_id" to ensure proper matching
             result = self.collection.delete_one(
                 {"_id": guest_id, "user_id": user_id_str}
             )
             if result.deleted_count == 0:
                 return {"error": "Guest not found or unauthorized"}, 404
+
+            # --- Log activity for guest deleted ---
+            try:
+                self.activity_service.log_activity(
+                    user_id=user_id,
+                    activity_type="guest_deleted",
+                    description=f"Deleted guest with ID '{guest_id}'.",
+                    details={"guestId": guest_id},
+                )
+            except Exception as act_err:
+                logger.error(
+                    f"Failed to log guest_deleted activity: {act_err}", exc_info=True
+                )
+            # --- End activity log ---
 
             return {"message": "Guest deleted successfully"}, 200
 
@@ -245,7 +290,9 @@ class GuestRepository:
                         "linkedin": guest.get("linkedin"),
                         "twitter": guest.get("twitter"),
                         "areasOfInterest": guest.get("areasOfInterest", []),
-                        "calendarEventId": guest.get("calendarEventId", ""),  # Include calendar event ID
+                        "calendarEventId": guest.get(
+                            "calendarEventId", ""
+                        ),  # Include calendar event ID
                     }
                 )
 
@@ -299,7 +346,9 @@ class GuestRepository:
                 "linkedin": guest_cursor.get("linkedin", ""),
                 "twitter": guest_cursor.get("twitter", ""),
                 "areasOfInterest": guest_cursor.get("areasOfInterest", []),
-                "calendarEventId": guest_cursor.get("calendarEventId", ""),  # Include calendar event ID
+                "calendarEventId": guest_cursor.get(
+                    "calendarEventId", ""
+                ),  # Include calendar event ID
                 "company": guest_cursor.get("company", ""),
                 "phone": guest_cursor.get("phone", ""),
                 "scheduled": guest_cursor.get("scheduled", 0),
@@ -379,7 +428,7 @@ class GuestRepository:
             result = collection.database.Users.update_one(
                 {"_id": str(user_id)},
                 {"$set": {"googleRefresh": refresh_token}},  # Save as googleRefresh
-                upsert=True
+                upsert=True,
             )
             if result.modified_count > 0 or result.upserted_id:
                 return {"message": "Google refresh token saved successfully"}, 200
@@ -387,21 +436,24 @@ class GuestRepository:
         except Exception as e:
             logger.exception("❌ ERROR: Failed to save Google refresh token")
             return {"error": f"Failed to save Google refresh token: {str(e)}"}, 500
-            
+
     def update_calendar_event_id(self, guest_id, event_id):
         """
         Update the calendar event ID for a guest.
         """
         try:
             result = self.collection.update_one(
-                {"_id": guest_id},
-                {"$set": {"calendarEventId": event_id}}
+                {"_id": guest_id}, {"$set": {"calendarEventId": event_id}}
             )
             if result.modified_count > 0:
-                logger.info(f"Updated calendar event ID for guest {guest_id}: {event_id}")
+                logger.info(
+                    f"Updated calendar event ID for guest {guest_id}: {event_id}"
+                )
                 return {"message": "Calendar event ID updated successfully"}, 200
             else:
-                logger.warning(f"Failed to update calendar event ID for guest {guest_id}")
+                logger.warning(
+                    f"Failed to update calendar event ID for guest {guest_id}"
+                )
                 return {"error": "Failed to update calendar event ID"}, 500
         except Exception as e:
             logger.exception(f"❌ ERROR: Failed to update calendar event ID: {e}")
