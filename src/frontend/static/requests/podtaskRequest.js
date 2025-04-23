@@ -275,3 +275,23 @@ export async function deleteWorkflow(workflowId) {
     throw error;
   }
 }
+
+export async function updateWorkflow(workflowId, updateData) {
+  try {
+    const response = await fetch(`/update_workflow/${workflowId}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(updateData),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.error || `Failed to update workflow: ${response.statusText}`);
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error("Error updating workflow:", error);
+    throw error;
+  }
+}

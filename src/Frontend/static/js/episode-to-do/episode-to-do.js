@@ -1481,9 +1481,6 @@ document.addEventListener("DOMContentLoaded", async () => {
         </div>
         
         <div class="workflow-actions">
-          <button id="create-workflow-btn" class="btn btn-primary">
-            <i class="fas fa-plus"></i> Create New Workflow
-          </button>
           <button id="save-workflow-changes-btn" class="btn btn-success" disabled>
             <i class="fas fa-save"></i> Save Changes
           </button>
@@ -1881,29 +1878,32 @@ document.addEventListener("DOMContentLoaded", async () => {
       saveBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...'
       saveBtn.disabled = true
 
-      // Call the server to update the workflow
-      const response = await fetch("/update_workflow", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          workflowId: workflowId,
-          tasks: workflow.tasks,
-        }),
+      // Import the updateWorkflow function if it's not already imported
+      // This assumes you've imported other functions from podtaskRequest.js already
+      const { updateWorkflow } = await import("/static/requests/podtaskRequest.js")
+
+      // Call the updateWorkflow function with the workflow data
+      const result = await updateWorkflow(workflowId, {
+        tasks: workflow.tasks,
+        name: workflow.name,
+        description: workflow.description,
       })
 
-      if (response.ok) {
-        alert("Workflow updated successfully!")
-      } else {
-        const result = await response.json()
-        throw new Error(result.error || "Failed to update workflow")
-      }
-    } catch (error) {
-      console.error("Error saving workflow changes:", error)
-      alert("Failed to save workflow changes. Please try again.")
-    } finally {
-      const saveBtn = document.getElementById("save-workflow-changes-btn")
+      alert("Workflow updated successfully!")
+
+      // Reset button state
       saveBtn.innerHTML = '<i class="fas fa-save"></i> Save Changes'
       saveBtn.disabled = false
+    } catch (error) {
+      console.error("Error saving workflow changes:", error)
+      alert("Failed to save workflow changes: " + (error.message || "Unknown error"))
+
+      // Reset button state
+      const saveBtn = document.getElementById("save-workflow-changes-btn")
+      if (saveBtn) {
+        saveBtn.innerHTML = '<i class="fas fa-save"></i> Save Changes'
+        saveBtn.disabled = false
+      }
     }
   }
 
