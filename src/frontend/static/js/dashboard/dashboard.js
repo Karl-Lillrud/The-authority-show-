@@ -473,7 +473,8 @@ async function fetchAndDisplayActivities() {
       return;
     }
 
-    activities.forEach((activity) => {
+    // Only show the first 5 activities, but allow scroll for more
+    activities.slice(0, 5).forEach((activity) => {
       const iconClass = getActivityIconClass(activity.type);
       const timelineItem = `
                 <div class="timeline-item">
@@ -491,6 +492,28 @@ async function fetchAndDisplayActivities() {
             `;
       timelineContainer.insertAdjacentHTML("beforeend", timelineItem);
     });
+
+    // If there are more than 5, show the rest (hidden by scroll)
+    if (activities.length > 5) {
+      activities.slice(5).forEach((activity) => {
+        const iconClass = getActivityIconClass(activity.type);
+        const timelineItem = `
+                  <div class="timeline-item">
+                      <div class="timeline-icon ${iconClass}">
+                          <span class="svg-placeholder ${iconClass}-icon"></span>
+                      </div>
+                      <div class="timeline-content">
+                          <h4>${formatActivityType(activity.type)}</h4>
+                          <p>${activity.description}</p>
+                          <span class="timeline-time">${formatDate(
+                            activity.createdAt
+                          )}</span>
+                      </div>
+                  </div>
+              `;
+        timelineContainer.insertAdjacentHTML("beforeend", timelineItem);
+      });
+    }
 
     initializeSvgIcons();
   } catch (error) {
