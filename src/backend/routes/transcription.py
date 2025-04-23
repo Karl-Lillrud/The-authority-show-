@@ -59,17 +59,17 @@ def transcribe():
         else:
             audio_bytes = file.read()
 
-         # 🔍 Get subscription plan
+         #Get subscription plan
         user_id = session.get("user_id")
         subscription = subscription_service.get_user_subscription(user_id)
         subscription_plan = subscription["plan"] if subscription else "free"
 
-        # ⏱️ Tier-based duration limits
+        #Tier-based duration limits
         tier_limits = {
-            "free": 5,            # 5 seconds for free tier
-            "pro": 30 * 60,       # 30 minutes
-            "studio": 60 * 60,    # 60 minutes
-            "enterprise": 180 * 60  # 180 minutes
+            "free": 5,            # 5 DEMO TESTING CHANGE TO 60*60 aka 1h
+            "pro": 60 * 60,       # 1h
+            "studio": 120 * 60,    # 2h
+            "enterprise": 240 * 60  # 4h 
         }
         max_duration = tier_limits.get(subscription_plan.lower(), 5 * 60)
         logger.info(f"🛡️ Subscription plan: {subscription_plan}, Max transcription duration: {max_duration} seconds")
