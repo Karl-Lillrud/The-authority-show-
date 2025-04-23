@@ -40,7 +40,7 @@ def transcribe():
     file_length = file.tell()
     file.seek(0)  # Reset pointer
 
-    max_upload_size = 1 * 1024 * 1024  # 1 GB
+    max_upload_size = 1 * 1024 * 1024 * 1024  # 1 GB
     if file_length > max_upload_size:
         return jsonify({
             "error": f"File too large ({round(file_length / (1024 * 1024), 2)} MB). Max allowed size is 1024 MB (1 GB)."
