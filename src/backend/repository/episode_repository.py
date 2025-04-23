@@ -23,9 +23,12 @@ class EpisodeRepository:
             if not user_account:
                 return {"error": "No account associated with this user"}, 403
 
-            can_create, reason = self.subscription_service.can_create_episode(user_id)
-            if not can_create:
-                return {"error": "Episode limit reached", "reason": reason}, 403
+            
+            is_imported = data.get("isImported", False)
+            if not is_imported:
+                can_create, reason = self.subscription_service.can_create_episode(user_id)
+                if not can_create:
+                    return {"error": "Episode limit reached", "reason": reason}, 403
 
             account_id = user_account.get("id", str(user_account["_id"]))
             schema = EpisodeSchema()
@@ -66,6 +69,7 @@ class EpisodeRepository:
                 "author": validated.get("author"),
                 "isHidden": validated.get("isHidden"),
                 "recordingAt": validated.get("recordingAt"),
+                "isImported": is_imported
             }
 
             self.collection.insert_one(episode_doc)
@@ -96,6 +100,7 @@ class EpisodeRepository:
         except Exception as e:
             logger.error("❌ ERROR registering episode: %s", str(e))
             return {"error": f"Failed to register episode: {str(e)}"}, 500
+
 
 
     def get_episode(self, episode_id, user_id):

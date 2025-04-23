@@ -130,3 +130,52 @@ class SubscriptionService:
                 f"Error updating subscription for user {user_id} with plan {plan_name}: {str(e)}"
             )
             raise Exception(f"Error updating subscription: {str(e)}")
+
+    def can_create_episode(self, user_id):
+
+        try:
+            account = self._get_account(user_id)
+            if not account:
+                return False, "Account not found"
+
+            sub = self.get_user_subscription(user_id)
+            if not sub:
+                return False, "Subscription info not found"
+
+            benefits = sub["benefits"]
+            plan = sub["plan"]
+
+            episode_slots = benefits.get("episode_slots", 0)
+            extra_slots = account.get("extra_episode_slots", 0)  # Optional extra slots
+            total_allowed_slots = episode_slots + extra_slots
+
+            if benefits.get("max_slots") == "Unlimited":
+                return True, "Unlimited episodes allowed"
+
+            now = datetime.utcnow()
+            start = parse_date(sub["start_date"]) if sub.get("start_date") else now - timedelta(days=30)
+            end = parse_date(sub["end_date"]) if sub.get("end_date") else now
+
+            # Only count episodes that are NOT RSS-imported
+            count = self.episodes_collection.count_documents({
+                "userid": str(user_id),
+                "created_at": {"$gte": start, "$lte": end},
+                "$or": [
+                    {"isImported": {"$exists": False}},
+                    {"isImported": False}
+                ]
+            })
+
+            if count < total_allowed_slots:
+                return True, f"{count} < allowed {total_allowed_slots}"
+            else:
+                if extra_slots > 0:
+                    return False, f"You’ve used your {episode_slots} base slots and all {extra_slots} extra slot(s). Upgrade your plan to create more episodes."
+                else:
+                    return False, f"You’ve used your {episode_slots} free episode slots. Upgrade your plan to unlock more."
+
+        except Exception as e:
+            logger.error(f"❌ Error checking create-episode permission for user {user_id}: {str(e)}")
+            return False, "Internal server error"
+
+
