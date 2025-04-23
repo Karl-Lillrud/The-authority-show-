@@ -3,7 +3,8 @@ from backend.database.mongo_connection import collection
 from backend.utils.subscription_access import PLAN_BENEFITS
 import logging
 import uuid
-from backend.services.activity_service import ActivityService  # Add this import
+from backend.services.activity_service import ActivityService
+from dateutil.parser import parse
 
 logger = logging.getLogger(__name__)
 
@@ -12,24 +13,30 @@ class SubscriptionService:
     def __init__(self):
         self.accounts_collection = collection.database.Accounts
         self.subscriptions_collection = collection.database.subscriptions_collection
-        self.activity_service = ActivityService()  # Add this line
+        self.episodes_collection = (
+            collection.database.Episodes
+        )  # Add episodes collection
+        self.activity_service = ActivityService()
 
-    def get_user_subscription(self, user_id):
-        """Get a user's current subscription details"""
-        # First try looking up by userId
+    def _get_account(self, user_id):
+        """Helper method to find account by user_id or ownerId."""
         account = self.accounts_collection.find_one({"userId": user_id})
-
-        # If not found, try looking up by ownerId (for backward compatibility)
         if not account:
             account = self.accounts_collection.find_one({"ownerId": user_id})
+        return account
 
+    def get_user_subscription(self, user_id):
+        """Get a user's current subscription details."""
+        account = self._get_account(user_id)
         if not account:
-            logger.warning(
-                f"No account found for user {user_id} (tried both userId and ownerId)"
-            )
+            logger.warning(f"No account found for user {user_id}")
             return None
 
         status = account.get("subscriptionStatus", "inactive")
+        plan = account.get("subscriptionPlan", "FREE")  # Default to FREE if no plan
+
+        # Fetch benefits from PLAN_BENEFITS
+        benefits = PLAN_BENEFITS.get(plan, PLAN_BENEFITS["FREE"])
 
         subscription_data = {
             "plan": plan,
@@ -37,37 +44,24 @@ class SubscriptionService:
             "start_date": account.get("subscriptionStart", None),
             "end_date": account.get("subscriptionEnd", None),
             "is_cancelled": status == "cancelled",
+            "benefits": benefits,
         }
 
         return subscription_data
 
     def update_user_subscription(self, user_id, plan_name, stripe_session):
-        """
-        Update a user's subscription based on the purchased plan.
-        """
+        """Update a user's subscription based on the purchased plan."""
         try:
-            # Get the amount paid in the Stripe session
             amount_paid = (
                 stripe_session["amount_total"] / 100
             )  # Convert cents to dollars
-
-            # First try to find account by userId
-            account = self.accounts_collection.find_one({"userId": user_id})
-
-            # If not found, try looking up by ownerId
+            account = self._get_account(user_id)
             if not account:
-                account = self.accounts_collection.find_one({"ownerId": user_id})
+                raise ValueError(f"No account found for user {user_id}")
 
-            if not account:
-                raise ValueError(
-                    f"No account found for user {user_id} (tried both userId and ownerId)"
-                )
-
-            # Calculate subscription end date (1 month from now)
             start_date = datetime.utcnow()
             end_date = start_date + timedelta(days=30)
 
-            # Update the user's subscription details - use the field that was found
             filter_query = (
                 {"userId": user_id} if "userId" in account else {"ownerId": user_id}
             )
@@ -89,7 +83,6 @@ class SubscriptionService:
             if update_result.modified_count == 0:
                 raise ValueError(f"Failed to update subscription for user {user_id}")
 
-            # Also record in the subscriptions collection
             subscription_data = {
                 "_id": str(uuid.uuid4()),
                 "user_id": user_id,
@@ -104,7 +97,6 @@ class SubscriptionService:
 
             self.subscriptions_collection.insert_one(subscription_data)
 
-            # --- Log subscription activity ---
             try:
                 self.activity_service.log_activity(
                     user_id=user_id,
@@ -121,7 +113,6 @@ class SubscriptionService:
                     f"Failed to log subscription_updated activity: {act_err}",
                     exc_info=True,
                 )
-            # --- End activity log ---
 
             return True
 
@@ -132,7 +123,7 @@ class SubscriptionService:
             raise Exception(f"Error updating subscription: {str(e)}")
 
     def can_create_episode(self, user_id):
-
+        """Check if the user can create a new episode based on their subscription."""
         try:
             account = self._get_account(user_id)
             if not account:
@@ -153,29 +144,38 @@ class SubscriptionService:
                 return True, "Unlimited episodes allowed"
 
             now = datetime.utcnow()
-            start = parse_date(sub["start_date"]) if sub.get("start_date") else now - timedelta(days=30)
-            end = parse_date(sub["end_date"]) if sub.get("end_date") else now
+            start = (
+                parse(sub["start_date"])
+                if sub.get("start_date")
+                else now - timedelta(days=30)
+            )
+            end = parse(sub["end_date"]) if sub.get("end_date") else now
 
-            # Only count episodes that are NOT RSS-imported
-            count = self.episodes_collection.count_documents({
-                "userid": str(user_id),
-                "created_at": {"$gte": start, "$lte": end},
-                "$or": [
-                    {"isImported": {"$exists": False}},
-                    {"isImported": False}
-                ]
-            })
+            # Count only non-imported episodes (manually created)
+            count = self.episodes_collection.count_documents(
+                {
+                    "userid": str(user_id),
+                    "created_at": {"$gte": start, "$lte": end},
+                    "$or": [{"isImported": {"$exists": False}}, {"isImported": False}],
+                }
+            )
 
             if count < total_allowed_slots:
                 return True, f"{count} < allowed {total_allowed_slots}"
             else:
                 if extra_slots > 0:
-                    return False, f"You’ve used your {episode_slots} base slots and all {extra_slots} extra slot(s). Upgrade your plan to create more episodes."
+                    return (
+                        False,
+                        f"You’ve used your {episode_slots} base slots and all {extra_slots} extra slot(s). Upgrade your plan to create more episodes.",
+                    )
                 else:
-                    return False, f"You’ve used your {episode_slots} free episode slots. Upgrade your plan to unlock more."
+                    return (
+                        False,
+                        f"You’ve used your {episode_slots} episode slots. Upgrade your plan to unlock more.",
+                    )
 
         except Exception as e:
-            logger.error(f"❌ Error checking create-episode permission for user {user_id}: {str(e)}")
+            logger.error(
+                f"Error checking create-episode permission for user {user_id}: {str(e)}"
+            )
             return False, "Internal server error"
-
-

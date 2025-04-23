@@ -3,11 +3,9 @@ from datetime import datetime, timezone
 from backend.database.mongo_connection import collection
 from backend.models.podcasts import PodcastSchema
 import logging
-import urllib.request
-import feedparser
-from backend.services.rss_Service import RSSService  # Import RSSService
-from backend.services.activity_service import ActivityService  # Add this import
-
+from backend.services.rss_Service import RSSService
+from backend.services.activity_service import ActivityService
+from backend.repository.episode_repository import EpisodeRepository
 
 logger = logging.getLogger(__name__)
 
@@ -15,15 +13,14 @@ logger = logging.getLogger(__name__)
 class PodcastRepository:
     def __init__(self):
         self.collection = collection.database.Podcasts
-        self.activity_service = ActivityService()  # Add this line
+        self.activity_service = ActivityService()
+        self.episode_repo = EpisodeRepository()  # Add EpisodeRepository
 
-    def add_podcast(self, user_id, data):  # user_id here is the owner's ID
+    def add_podcast(self, user_id, data):
+        """Add a podcast for the user."""
         try:
             logger.info(f"Attempting to add podcast for owner_id: {user_id}")
-            # Fetch the account document for the logged-in user using ownerId
-            user_account = collection.database.Accounts.find_one(
-                {"ownerId": user_id}
-            )  # Query by ownerId
+            user_account = collection.database.Accounts.find_one({"ownerId": user_id})
 
             if not user_account:
                 logger.error(f"Account lookup failed for ownerId: {user_id}")
@@ -34,15 +31,10 @@ class PodcastRepository:
                     f"Total accounts found for ownerId {user_id}: {account_count}"
                 )
                 raise ValueError("No account associated with this user (owner)")
-            else:
-                logger.info(
-                    f"Found account for ownerId {user_id}: Account _id: {user_account.get('_id')}"
-                )
 
             account_id = str(user_account["_id"])
             data["accountId"] = account_id
 
-            # Validate data using PodcastSchema
             schema = PodcastSchema()
             errors = schema.validate(data)
             if errors:
@@ -50,17 +42,15 @@ class PodcastRepository:
 
             validated_data = schema.load(data)
 
-            # Ensure account exists and belongs to the user (redundant check, but safe)
             account = collection.database.Accounts.find_one(
                 {"_id": account_id, "ownerId": user_id}
-            )  # Check ownerId here too
+            )
             if not account:
                 logger.error(
                     f"Consistency check failed: Account _id {account_id} not found or doesn't belong to owner {user_id}"
                 )
                 raise ValueError("Invalid account ID or no permission to add podcast.")
 
-            # Generate a unique podcast ID
             podcast_id = str(uuid.uuid4())
             podcast_item = {
                 "_id": podcast_id,
@@ -89,10 +79,8 @@ class PodcastRepository:
                 "hostImage": validated_data.get("hostImage", ""),
             }
 
-            # Insert into database
             result = self.collection.insert_one(podcast_item)
             if result.inserted_id:
-                # --- Add activity log for podcast creation using ActivityService ---
                 try:
                     self.activity_service.log_activity(
                         user_id=user_id,
@@ -108,7 +96,6 @@ class PodcastRepository:
                         f"Failed to log podcast_created activity: {act_err}",
                         exc_info=True,
                     )
-                # --- End activity log ---
 
                 return {
                     "message": "Podcast added successfully",
@@ -119,9 +106,7 @@ class PodcastRepository:
                 raise ValueError("Failed to add podcast.")
 
         except ValueError as e:
-            logger.error(
-                f"ValueError in add_podcast for user {user_id}: {e}"
-            )  # Log the specific error
+            logger.error(f"ValueError in add_podcast for user {user_id}: {e}")
             if isinstance(e.args[0], str):
                 return {"error": e.args[0]}, 400
             else:
@@ -131,19 +116,19 @@ class PodcastRepository:
             logger.error(
                 f"General Exception in add_podcast for user {user_id}: {e}",
                 exc_info=True,
-            )  # Log general errors
+            )
             return {"error": "Failed to add podcast", "details": str(e)}, 500
 
-    def get_podcasts(self, user_id):  # user_id is the owner's ID
+    def get_podcasts(self, user_id):
+        """Get all podcasts for the user."""
         try:
-            # Find accounts owned by the user
             user_accounts = list(
                 collection.database.Accounts.find({"ownerId": user_id}, {"_id": 1})
-            )  # Query by ownerId
+            )
             user_account_ids = [str(account["_id"]) for account in user_accounts]
 
             if not user_account_ids:
-                return {"podcast": []}, 200  # No podcasts if no accounts
+                return {"podcast": []}, 200
 
             podcasts = list(
                 self.collection.find({"accountId": {"$in": user_account_ids}})
@@ -157,6 +142,7 @@ class PodcastRepository:
             return {"error": "Failed to fetch podcasts", "details": str(e)}, 500
 
     def get_podcast_by_id(self, user_id, podcast_id):
+        """Get a specific podcast by ID."""
         try:
             user_accounts = list(
                 collection.database.Accounts.find(
@@ -182,8 +168,8 @@ class PodcastRepository:
             return {"error": f"Failed to fetch podcast: {str(e)}"}, 500
 
     def delete_podcast(self, user_id, podcast_id):
+        """Delete a podcast if it belongs to the user."""
         try:
-            # Fetch user account IDs
             user_accounts = list(
                 collection.database.Accounts.find(
                     {"ownerId": user_id}, {"id": 1, "_id": 1}
@@ -196,17 +182,14 @@ class PodcastRepository:
             if not user_account_ids:
                 raise ValueError("No accounts found for user")
 
-            # Find podcast by podcast_id and accountId
             podcast = self.collection.find_one(
                 {"_id": podcast_id, "accountId": {"$in": user_account_ids}}
             )
             if not podcast:
                 raise ValueError("Podcast not found or unauthorized")
 
-            # Perform delete operation
             result = self.collection.delete_one({"_id": podcast_id})
             if result.deleted_count == 1:
-                # --- Add activity log for podcast deletion ---
                 try:
                     self.activity_service.log_activity(
                         user_id=user_id,
@@ -222,23 +205,19 @@ class PodcastRepository:
                         f"Failed to log podcast_deleted activity: {act_err}",
                         exc_info=True,
                     )
-                # --- End activity log ---
                 return {"message": "Podcast deleted successfully"}, 200
             else:
                 return {"error": "Failed to delete podcast"}, 500
 
         except ValueError as e:
-            # Handle specific errors like no accounts found or podcast not found
-            return {
-                "error": str(e)
-            }, 400  # Return a 400 Bad Request for known business errors
+            return {"error": str(e)}, 400
 
         except Exception as e:
             return {"error": "Failed to delete podcast", "details": str(e)}, 500
 
     def edit_podcast(self, user_id, podcast_id, data):
+        """Edit a podcast if it belongs to the user."""
         try:
-            # Fetch user account IDs
             user_accounts = list(
                 collection.database.Accounts.find(
                     {"ownerId": user_id}, {"id": 1, "_id": 1}
@@ -251,29 +230,23 @@ class PodcastRepository:
             if not user_account_ids:
                 raise ValueError("No accounts found for user")
 
-            # Find podcast by podcast_id and accountId
             podcast = self.collection.find_one(
                 {"_id": podcast_id, "accountId": {"$in": user_account_ids}}
             )
             if not podcast:
                 raise ValueError("Podcast not found or unauthorized")
 
-            # Validate input data using schema
             schema = PodcastSchema(partial=True)
             errors = schema.validate(data)
             if errors:
                 raise ValueError("Invalid data", errors)
 
-            # Prepare update data by filtering out None values
             update_data = {
                 key: value for key, value in data.items() if value is not None
             }
             if not update_data:
-                return {
-                    "message": "No update data provided"
-                }, 200  # No actual update needed
+                return {"message": "No update data provided"}, 200
 
-            # Perform update operation
             result = self.collection.update_one(
                 {"_id": podcast_id}, {"$set": update_data}
             )
@@ -284,32 +257,91 @@ class PodcastRepository:
                 return {"message": "No changes made to the podcast"}, 200
 
         except ValueError as e:
-            # Specific business logic error
             if isinstance(e.args[0], str):
-                return {
-                    "error": e.args[0]
-                }, 400  # Return specific error with 400 for bad input
+                return {"error": e.args[0]}, 400
             else:
-                return {
-                    "error": e.args[0],
-                    "details": e.args[1],
-                }, 400  # For validation errors
+                return {"error": e.args[0], "details": e.args[1]}, 400
 
         except Exception as e:
             return {"error": "Failed to update podcast", "details": str(e)}, 500
 
     def fetch_rss_feed(self, rss_url):
+        """Fetch RSS feed using RSSService."""
         try:
-            # Delegate RSS fetching to RSSService
             return RSSService.fetch_rss_feed(rss_url)
         except Exception as e:
-            logger.error(
-                "❌ ERROR fetching RSS feed: %s", e, exc_info=True
-            )  # Added error log
+            logger.error("❌ ERROR fetching RSS feed: %s", e, exc_info=True)
             return {"error": f"Error fetching RSS feed: {str(e)}"}, 500
 
-    # Delete podcast associated with user when user account is deleted
+    def addPodcastWithRss(self, user_id, rss_url):
+        """Fetch RSS data and add a podcast with its episodes."""
+        try:
+            # Fetch RSS data
+            rss_data, status_code = RSSService.fetch_rss_feed(rss_url)
+            if status_code != 200:
+                return {"error": "Failed to fetch RSS feed", "details": rss_data}, 400
+
+            # Prepare podcast data from RSS
+            podcast_data = {
+                "podName": rss_data.get("title", ""),
+                "ownerName": rss_data.get("itunesOwner", {}).get("name", ""),
+                "email": rss_data.get("itunesOwner", {}).get("email", ""),
+                "description": rss_data.get("description", ""),
+                "logoUrl": rss_data.get("logoUrl", ""),
+                "category": rss_data.get("categories", [{}])[0].get("main", ""),
+                "language": rss_data.get("language", ""),
+                "author": rss_data.get("author", ""),
+                "copyright_info": rss_data.get("copyright_info", ""),
+                "rssFeed": rss_url,
+            }
+
+            # Add podcast
+            podcast_result, status_code = self.add_podcast(user_id, podcast_data)
+            if status_code != 201:
+                return podcast_result, status_code
+
+            podcast_id = podcast_result["podcast_id"]
+
+            # Register episodes from RSS feed
+            for episode in rss_data.get("episodes", []):
+                episode_data = {
+                    "podcastId": podcast_id,
+                    "title": episode.get("title", ""),
+                    "description": episode.get("description", ""),
+                    "publishDate": episode.get("pubDate", ""),
+                    "duration": episode.get("duration", None),
+                    "status": "published",
+                    "audioUrl": episode.get("audio", {}).get("url", ""),
+                    "fileSize": episode.get("audio", {}).get("length", ""),
+                    "fileType": episode.get("audio", {}).get("type", ""),
+                    "guid": episode.get("guid", ""),
+                    "season": episode.get("season", None),
+                    "episode": episode.get("episode", None),
+                    "episodeType": episode.get("episodeType", None),
+                    "explicit": episode.get("explicit", None),
+                    "imageUrl": episode.get("image", ""),
+                    "keywords": episode.get("keywords", None),
+                    "chapters": episode.get("chapters", None),
+                    "link": episode.get("link", ""),
+                    "subtitle": episode.get("subtitle", ""),
+                    "summary": episode.get("summary", ""),
+                    "author": episode.get("author", ""),
+                    "isHidden": episode.get("isHidden", None),
+                    "isImported": True,  # Ensure isImported is set for RSS episodes
+                }
+                self.episode_repo.register_episode(episode_data, user_id)
+
+            return {
+                "message": "Podcast and episodes added successfully",
+                "podcast_id": podcast_id,
+            }, 201
+
+        except Exception as e:
+            logger.error("Error in addPodcastWithRss: %s", e, exc_info=True)
+            return {"error": "Failed to add podcast with RSS", "details": str(e)}, 500
+
     def delete_by_user(self, user_id):
+        """Delete podcasts associated with user when user account is deleted."""
         try:
             accounts = list(collection.database.Accounts.find({"ownerId": user_id}))
             account_ids = [str(a.get("id", a["_id"])) for a in accounts]
@@ -321,20 +353,3 @@ class PodcastRepository:
         except Exception as e:
             logger.error(f"Failed to delete podcasts: {e}", exc_info=True)
             return 0
-
-    def addPodcastWithRss(self, user_id, rss_url):
-        """
-        Fetch RSS data using RSSService and add a podcast to the repository.
-        """
-        try:
-            # Fetch RSS data
-            rss_data, status_code = RSSService.fetch_rss_feed(rss_url)
-            if status_code != 200:
-                return {"error": "Failed to fetch RSS feed", "details": rss_data}, 400
-
-            # Call existing add_podcast method
-            return self.add_podcast(user_id)
-
-        except Exception as e:
-            logger.error("Error in addPodcastWithRss: %s", e, exc_info=True)
-            return {"error": "Failed to add podcast with RSS", "details": str(e)}, 500
