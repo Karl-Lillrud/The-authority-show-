@@ -179,7 +179,8 @@ async function transcribe() {
             resultContainer.innerText = rawTranscript;
             document.getElementById("enhancementTools").style.display = "block";
         } else {
-            resultContainer.innerText = `❌ Error: ${response.status} - ${response.statusText}`;
+            const errorData = await response.json();
+            resultContainer.innerText = `❌ Error: ${errorData.error || response.statusText}`;
         }
     } catch (error) {
         resultContainer.innerText = `❌ Transcription failed: ${error.message}`;
