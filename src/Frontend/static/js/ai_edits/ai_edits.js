@@ -666,7 +666,8 @@ async function applySelectedCuts() {
 
     const payload = {
         file_id: activeAudioId,
-        cuts: cuts.map(c => ({ start: c.start, end: c.end }))
+        cuts: cuts.map(c => ({ start: c.start, end: c.end })),
+        episode_id: sessionStorage.getItem("selected_episode_id") // 💾 Viktigt!
     };
 
     const res = await fetch('/apply_ai_cuts', {

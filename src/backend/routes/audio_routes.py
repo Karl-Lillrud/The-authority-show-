@@ -2,6 +2,7 @@
 import logging
 from flask import Blueprint, request, jsonify
 from backend.services.audioService import AudioService
+from backend.repository.ai_models import get_file_by_id, add_audio_edit_to_episode
 
 logger = logging.getLogger(__name__)
 audio_bp = Blueprint("audio_bp", __name__)
@@ -65,17 +66,20 @@ def clip_audio():
 def ai_cut_audio():
     try:
         file_id = request.json.get("file_id")
+        episode_id = request.json.get("episode_id")  # ✅ Fetch from request
+
         logger.info(f"🔍 Received AI Cut request for file_id: {file_id}")
 
         if not file_id:
             return jsonify({"error": "file_id is required"}), 400
 
-        result = audio_service.ai_cut_audio_from_id(file_id)
+        result = audio_service.ai_cut_audio_from_id(file_id, episode_id=episode_id)  # ✅ Pass along
         return jsonify(result)
 
     except Exception as e:
         logger.error(f"AI cut failed: {str(e)}")
         return jsonify({"error": str(e)}), 500
+
     
 @audio_bp.route("/apply_ai_cuts", methods=["POST"])
 def apply_ai_cuts():
@@ -84,6 +88,23 @@ def apply_ai_cuts():
     cuts = data["cuts"]
     try:
         cleaned_id = audio_service.apply_cuts_and_return_new_file(file_id, cuts)
+
+        # 🧠 Hämta filnamn
+        _, original_filename = get_file_by_id(file_id)
+        cleaned_filename = f"cleaned_{original_filename}"
+
+        # 🧠 Hämta episod-ID från filens metadata (om du sparar det där) eller skicka med i requesten
+        episode_id = data.get("episode_id")  # Du kan börja skicka med det från frontend!
+
+        if episode_id:
+            add_audio_edit_to_episode(
+                episode_id=episode_id,
+                file_id=cleaned_id,
+                edit_type="ai_cut",
+                filename=cleaned_filename,
+                metadata={"source": original_filename, "applied_ai_cuts": cuts}
+            )
+
         return jsonify({"cleaned_file_id": cleaned_id}), 200
     except Exception as e:
         logger.error(f"❌ Error applying AI cuts: {str(e)}")

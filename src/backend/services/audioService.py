@@ -3,6 +3,7 @@ import logging
 import tempfile
 import requests
 import subprocess
+from typing import Optional
 from pydub import AudioSegment, silence
 from backend.database.mongo_connection import get_fs
 from backend.utils.file_utils import enhance_audio_with_ffmpeg, detect_background_noise, convert_audio_to_wav
@@ -139,7 +140,7 @@ class AudioService:
                 if os.path.exists(path):
                     os.remove(path)
 
-    def ai_cut_audio(self, file_bytes: bytes, filename: str) -> dict:
+    def ai_cut_audio(self, file_bytes: bytes, filename: str, episode_id: Optional[str] = None) -> dict:
         ext = os.path.splitext(filename)[1].lower()
         if ext not in [".mp3", ".wav"]:
             raise ValueError("Unsupported audio format")
@@ -254,9 +255,9 @@ class AudioService:
                 os.remove(temp_path)
             logger.info(f"🗑️ Temp file cleaned up: {temp_path}")
 
-    def ai_cut_audio_from_id(self, file_id: str) -> dict:
+    def ai_cut_audio_from_id(self, file_id: str, episode_id: Optional[str] = None) -> dict:
         audio_bytes, filename = get_file_by_id(file_id)
-        return self.ai_cut_audio(audio_bytes, filename)
+        return self.ai_cut_audio(audio_bytes, filename, episode_id=episode_id)
     
     def isolate_voice(self, audio_bytes: bytes, filename: str, episode_id: str) -> str:
         """
@@ -334,13 +335,29 @@ class AudioService:
             duration_ms = len(audio)
             logger.info(f"📏 Original audio duration: {duration_ms / 1000:.2f}s")
 
-            # Sort cuts and convert to milliseconds
-            cuts_ms = sorted([(int(c['start'] * 1000), int(c['end'] * 1000)) for c in cuts])
-            logger.info(f"✅ Cuts to keep (ms): {cuts_ms}")
+            # ✅ Convert to ms and filter out invalid cuts
+            cuts_ms = sorted([
+                (int(c["start"] * 1000), int(c["end"] * 1000))
+                for c in cuts
+                if "start" in c and "end" in c
+            ])
+            cuts_ms = [(start, end) for start, end in cuts_ms if 0 <= start < end <= duration_ms]
 
-            # Keep only those segments
-            kept_segments = [audio[start:end] for start, end in cuts_ms]
+            # ✅ Merge overlapping segments
+            merged_cuts = []
+            for start, end in cuts_ms:
+                if merged_cuts and start <= merged_cuts[-1][1]:
+                    merged_cuts[-1] = (merged_cuts[-1][0], max(merged_cuts[-1][1], end))
+                else:
+                    merged_cuts.append((start, end))
+
+            logger.info(f"✅ Cleaned cuts (ms): {merged_cuts}")
+
+            # ✂️ Apply cuts
+            kept_segments = [audio[start:end] for start, end in merged_cuts]
             cleaned_audio = sum(kept_segments)
+
+            logger.info(f"📏 Final cleaned audio duration: {len(cleaned_audio) / 1000:.2f}s")
 
             with tempfile.NamedTemporaryFile(suffix=".wav", delete=False) as out_tmp:
                 cleaned_path = out_tmp.name
@@ -352,7 +369,7 @@ class AudioService:
             cleaned_file_id = save_file(
                 cleaned_bytes,
                 filename=f"cleaned_{file_id}.wav",
-                metadata={"type": "ai_cut_cleaned", "source": file_id, "segments_kept": len(cuts)}
+                metadata={"type": "ai_cut_cleaned", "source": file_id, "segments_kept": len(merged_cuts)}
             )
 
             logger.info(f"✅ Cleaned file saved with ID: {cleaned_file_id}")
@@ -362,4 +379,3 @@ class AudioService:
             for path in [tmp_path, cleaned_path]:
                 if os.path.exists(path):
                     os.remove(path)
-
