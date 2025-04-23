@@ -1,5 +1,5 @@
 CREDIT_COSTS = {
-    # ai services
+    #ai services
     "ai_audio_analysis": 300,
     "ai_audio_cutting": 500,
     "ai_quotes": 200,
@@ -13,10 +13,12 @@ CREDIT_COSTS = {
     "video_cutting": 800,
     "video_enhancement": 800,
     "voice_isolation": 500,
+
     # credits
     "basic_pack": 2500,
     "pro_pack": 5000,
     "studio_pack": 12000,
     "episode_pack": 5000,
+
     # Add more plans and their corresponding credit costs here
 }

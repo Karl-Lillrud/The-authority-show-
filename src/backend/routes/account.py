@@ -62,7 +62,7 @@ def get_account_route():
     if not hasattr(g, "user_id") or not g.user_id:
         return jsonify({"error": "Obehörig"}), 401
 
-    account = account_repo.get_user_account(str(g.user_id))
+    account = account_repo.get_account_by_user(str(g.user_id))
     if not account:
         return jsonify({"error": "Konto hittades inte"}), 404
 

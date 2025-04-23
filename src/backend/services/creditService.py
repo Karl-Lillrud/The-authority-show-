@@ -1,5 +1,6 @@
 # src/backend/services/creditService.py
 from datetime import datetime
+import uuid
 from backend.database.mongo_connection import collection
 from backend.utils.credit_costs import CREDIT_COSTS
 from backend.repository.credits_repository import (
@@ -45,14 +46,28 @@ def consume_credits(user_id, feature_name):
     return {"remaining": new_available, "used": new_used}
 
 def initialize_credits(user_id: str, initial_amount=3000):
-    collection.database.Credits.insert_one({
-        "user_id": user_id,
-        "availableCredits": initial_amount,
-        "usedCredits": 0,
-        "creditLimit": initial_amount,
-        "lastUpdated": datetime.utcnow(),
-        "creditsHistory": []
-    })
+    """Initialize credits for a new user."""
+    existing = get_credits_by_user_id(user_id)
+    if not existing:
+        # Add a prefix to prevent MongoDB from interpreting as ObjectId
+        credit_doc = {
+            "_id": str(uuid.uuid4()),  # UUID format is different from ObjectId, so it stays as string
+            "user_id": user_id,
+            "availableCredits": initial_amount,
+            "usedCredits": 0,
+            "creditLimit": 3000,
+            "lastUpdated": datetime.utcnow(),
+            "creditsHistory": [{
+                "_id": str(uuid.uuid4()),
+                "timestamp": datetime.utcnow(),
+                "amount": initial_amount,
+                "type": "initial",
+                "description": "Initial credit allocation",
+                "status": "completed"
+            }]
+        }
+        # Use insert_one without allowing _id conversion
+        collection.database.Credits.insert_one(credit_doc)
 
 def deduct_credits(user_id, feature_name):
     cost = CREDIT_COSTS.get(feature_name)
