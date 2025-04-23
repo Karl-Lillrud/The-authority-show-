@@ -71,16 +71,21 @@ function initializeSvgIcons() {
     { selector: ".scheduled-icon", svg: svgdashboard.scheduledIcon },
     { selector: ".published-icon", svg: svgdashboard.publishedIcon },
     { selector: ".pending-icon", svg: svgdashboard.pendingIcon },
-    { selector: ".podcast-deleted-icon", svg: svgdashboard.podcastIcon }
+    { selector: ".episode-created-icon", svg: svgdashboard.episodeCreatedIcon },
+    { selector: ".episode-updated-icon", svg: svgdashboard.episodeUpdatedIcon },
+    { selector: ".episode-deleted-icon", svg: svgdashboard.episodeDeletedIcon },
+    { selector: ".team-created-icon", svg: svgdashboard.teamCreatedIcon },
+    { selector: ".team-deleted-icon", svg: svgdashboard.teamDeletedIcon },
+    { selector: ".tasks-added-icon", svg: svgdashboard.tasksAddedIcon },
+    { selector: ".podcast-created-icon", svg: svgdashboard.podcastCreatedIcon },
+    { selector: ".podcast-deleted-icon", svg: svgdashboard.podcastDeletedIcon }
   ];
 
   iconSelectors.forEach(({ selector, svg }) => {
-    const element = document.querySelector(selector);
-    if (element) {
+    // Use querySelectorAll to update all matching elements
+    document.querySelectorAll(selector).forEach((element) => {
       element.innerHTML = svg;
-    } else {
-      console.warn(`Element with selector ${selector} not found in the DOM.`);
-    }
+    });
   });
 }
 
@@ -530,13 +535,13 @@ async function fetchAndDisplayActivities() {
 
 function getActivityIconClass(activityType) {
   const iconMap = {
-    episode_created: "completed",
-    episode_updated: "scheduled",
-    episode_deleted: "published",
-    team_created: "completed",
-    team_deleted: "podcast-deleted",
-    tasks_added: "pending",
-    podcast_created: "podcast",
+    episode_created: "episode-created",
+    episode_updated: "episode-updated",
+    episode_deleted: "episode-deleted",
+    team_created: "team-created",
+    team_deleted: "team-deleted",
+    tasks_added: "tasks-added",
+    podcast_created: "podcast-created",
     podcast_deleted: "podcast-deleted"
   };
   return iconMap[activityType] || "pending";
