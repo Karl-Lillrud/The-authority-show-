@@ -9,18 +9,18 @@ let activeAudioId = null;
 window.CURRENT_USER_ID = localStorage.getItem("user_id");
 
 const CREDIT_COSTS = {
-    ai_audio_analysis: 300,
-    ai_audio_cutting: 500,
-    ai_quotes: 200,
-    ai_qoute_images: 1000,
-    ai_suggestions: 300,
+    ai_audio_analysis: 800,
+    ai_audio_cutting: 800,
+    ai_quotes: 800,
+    ai_qoute_images: 800,
+    ai_suggestions: 800,
     audio_cutting: 500,
     audio_enhancment: 500,
-    show_notes: 250,
-    transcription: 600,
-    translation: 150,
-    video_cutting: 800,
-    video_enhancement: 800,
+    show_notes: 500,
+    transcription: 500,
+    translation: 500,
+    video_cutting: 500,
+    video_enhancement: 500,
     voice_isolation: 500
 };
 
