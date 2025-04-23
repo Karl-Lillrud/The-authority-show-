@@ -745,14 +745,25 @@ function displayPurchaseHistory(purchases) {
   // Add each purchase to the table
   purchases.forEach(purchase => {
     const date = new Date(purchase.date);
+    // Include both date and time in the formatted date
     const formattedDate = date.toLocaleDateString('en-US', { 
       year: 'numeric', 
       month: 'short', 
       day: 'numeric' 
+    }) + ' ' + date.toLocaleTimeString('en-US', {
+      hour: '2-digit',
+      minute: '2-digit'
     });
     
+    // Check if this is a subscription entry
+    const isSubscription = purchase.type === 'subscription' || 
+      (purchase.description && purchase.description.toLowerCase().includes('subscription'));
+    
+    // Add subscription-row class for subscription entries
+    const rowClass = isSubscription ? 'billing-row subscription-row' : 'billing-row';
+    
     const row = document.createElement('div');
-    row.className = 'billing-row';
+    row.className = rowClass;
     row.innerHTML = `
       <div class="billing-cell">${formattedDate}</div>
       <div class="billing-cell">${purchase.description || 'Credit purchase'}</div>
