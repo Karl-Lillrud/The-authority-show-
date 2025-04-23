@@ -13,6 +13,7 @@ import tempfile
 from elevenlabs.client import ElevenLabs
 from backend.database.mongo_connection import get_fs, get_db
 from backend.services.transcriptionService import TranscriptionService
+from backend.services.subscriptionService import SubscriptionService
 from backend.services.audioService import AudioService
 from backend.services.videoService import VideoService
 from backend.repository.ai_models import fetch_file, save_file, get_file_by_id
@@ -28,6 +29,7 @@ client = ElevenLabs(api_key=os.getenv("ELEVENLABS_API_KEY"))
 transcription_service = TranscriptionService()
 audio_service = AudioService()
 video_service = VideoService()
+subscription_service = SubscriptionService()
 
 @transcription_bp.route("/transcribe", methods=["POST"])
 def transcribe():
@@ -57,39 +59,37 @@ def transcribe():
         else:
             audio_bytes = file.read()
 
+         # 🔍 Get subscription plan
         user_id = session.get("user_id")
-        account = db["Accounts"].find_one({"userId": str(user_id)})
-        if account:
-            subscription_plan = account.get("subscriptionPlan", "free")
-        else:
-            logger.warning(f"No account found for user_id: {user_id}. Defaulting to 'free' tier.")
-            subscription_plan = "free"
+        subscription = subscription_service.get_user_subscription(user_id)
+        subscription_plan = subscription["plan"] if subscription else "free"
 
-        # ⏱️ Set tier-based limits
+        # ⏱️ Tier-based duration limits
         tier_limits = {
-            "free": 5,
-            "pro": 30 * 60,
-            "studio": 60 * 60,
-            "enterprise": 180 * 60
+            "free": 5,            # 5 seconds for free tier
+            "pro": 30 * 60,       # 30 minutes
+            "studio": 60 * 60,    # 60 minutes
+            "enterprise": 180 * 60  # 180 minutes
         }
         max_duration = tier_limits.get(subscription_plan.lower(), 5 * 60)
-        logger.info(f"🛡️ Max transcription duration: {max_duration} seconds")
+        logger.info(f"🛡️ Subscription plan: {subscription_plan}, Max transcription duration: {max_duration} seconds")
 
         # 🛡️ Check audio duration
-        logger.info(f"🔍 Checking audio duration...")
+        logger.info("🔍 Checking audio duration...")
         check_audio_duration(audio_bytes, max_duration_seconds=max_duration)
-        logger.info(f"✅ Audio duration is within allowed limit.")
+        logger.info("✅ Audio duration is within allowed limit.")
 
         # 🧠 Transcribe
         logger.info(f"🧠 Starting transcription for file: {filename}")
         result = transcription_service.transcribe_audio(audio_bytes, filename)
-        logger.info(f"✅ Transcription completed successfully.")
+        logger.info("✅ Transcription completed successfully.")
         return jsonify(result)
 
     except ValueError as e:
+        logger.warning(f"⚠️ {e}")
         return jsonify({"error": str(e)}), 400
     except Exception as e:
-        logger.error(f"Transcription failed: {e}", exc_info=True)
+        logger.error(f"❌ Transcription failed: {e}", exc_info=True)
         return jsonify({"error": "Transcription failed", "details": str(e)}), 500
 
 @transcription_bp.route("/clean", methods=["POST"])
