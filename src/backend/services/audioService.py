@@ -88,7 +88,7 @@ class AudioService:
             "sound_effect_suggestions": sound_effects  # NEW
         }
 
-    def cut_audio(self, file_id: str, start_time: float, end_time: float) -> str:
+    def cut_audio(self, file_id: str, start_time: float, end_time: float, episode_id: str) -> str:
         logger.info(f"📥 Request to clip audio file with ID: {file_id}")
         logger.info(f"🕒 Timestamps to clip: start={start_time}, end={end_time}")
 
@@ -120,6 +120,15 @@ class AudioService:
                 clipped_data,
                 filename=clipped_filename,
                 metadata={"type": "transcription", "clipped": True}
+            )
+
+            # 🔁 Save to episode's audioEdits
+            add_audio_edit_to_episode(
+                episode_id=episode_id,
+                file_id=clipped_file_id,
+                edit_type="clipped",
+                filename=clipped_filename,
+                metadata={"source": file_id, "start": start_time, "end": end_time}
             )
 
             logger.info(f"✅ Clipped audio saved with ID: {clipped_file_id}")

@@ -45,15 +45,17 @@ def clip_audio():
     data = request.json
     file_id = data.get("file_id")
     clips = data.get("clips", [])
+    episode_id = data.get("episode_id")  # 👈 nytt
 
-    if not file_id or not clips:
+    if not file_id or not clips or not episode_id:
         return jsonify({"error": "Invalid request data"}), 400
 
     try:
-        # Example: just handle the first clip
+        # Just handle the first clip for now
         start_time = clips[0]["start"]
         end_time = clips[0]["end"]
-        clipped_id = audio_service.cut_audio(file_id, start_time, end_time)
+
+        clipped_id = audio_service.cut_audio(file_id, start_time, end_time, episode_id=episode_id)  # 👈 ändrat
         return jsonify({"clipped_audio": clipped_id})
     except Exception as e:
         logger.error(f"Error clipping audio: {str(e)}")
