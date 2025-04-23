@@ -70,7 +70,8 @@ function initializeSvgIcons() {
     { selector: ".completed-icon", svg: svgdashboard.completedIcon },
     { selector: ".scheduled-icon", svg: svgdashboard.scheduledIcon },
     { selector: ".published-icon", svg: svgdashboard.publishedIcon },
-    { selector: ".pending-icon", svg: svgdashboard.pendingIcon }
+    { selector: ".pending-icon", svg: svgdashboard.pendingIcon },
+    { selector: ".podcast-deleted-icon", svg: svgdashboard.podcastIcon }
   ];
 
   iconSelectors.forEach(({ selector, svg }) => {
@@ -534,7 +535,8 @@ function getActivityIconClass(activityType) {
     episode_deleted: "published",
     team_created: "completed",
     tasks_added: "pending",
-    podcast_created: "podcast" // <-- Add this line
+    podcast_created: "podcast",
+    podcast_deleted: "podcast-deleted" // <-- Add this line
   };
   return iconMap[activityType] || "pending";
 }

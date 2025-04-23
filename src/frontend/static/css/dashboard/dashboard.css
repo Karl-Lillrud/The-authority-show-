@@ -396,6 +396,14 @@
   background-color: #ff9800;
 }
 
+.timeline-icon.podcast {
+  background-color: #4caf50; /* Same as podcastIcon */
+}
+
+.timeline-icon.podcast-deleted {
+  background-color: #e74c3c; /* Red for deleted podcast */
+}
+
 .timeline-content {
   flex: 1;
 }

@@ -206,6 +206,23 @@ class PodcastRepository:
             # Perform delete operation
             result = self.collection.delete_one({"_id": podcast_id})
             if result.deleted_count == 1:
+                # --- Add activity log for podcast deletion ---
+                try:
+                    self.activity_service.log_activity(
+                        user_id=user_id,
+                        activity_type="podcast_deleted",
+                        description=f"Deleted podcast '{podcast.get('podName', '')}'",
+                        details={
+                            "podcastId": podcast_id,
+                            "podcastName": podcast.get("podName", ""),
+                        },
+                    )
+                except Exception as act_err:
+                    logger.error(
+                        f"Failed to log podcast_deleted activity: {act_err}",
+                        exc_info=True,
+                    )
+                # --- End activity log ---
                 return {"message": "Podcast deleted successfully"}, 200
             else:
                 return {"error": "Failed to delete podcast"}, 500
