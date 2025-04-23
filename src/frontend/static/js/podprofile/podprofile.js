@@ -180,6 +180,7 @@ document.addEventListener("DOMContentLoaded", () => {
               summary: episode.summary || null, // Ensure summary is included
               author: episode.author || null, // Ensure author is included
               isHidden: episode.isHidden || null, // Ensure isHidden is included
+              status: 'published' // Add this line to mark RSS episodes as published
             })
             console.log("Episode registered successfully:", registerResponse) // Added log
           } catch (error) {
