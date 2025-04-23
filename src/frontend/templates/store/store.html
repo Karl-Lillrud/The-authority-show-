@@ -67,7 +67,7 @@ endblock %} {% block content %}
                   class="product-card"
                   data-product-id="credit-basic"
                   data-product-type="credit"
-                  data-price="9.99"
+                  data-price="7.99"
                 >
                   <div class="product-badge">Popular</div>
                   <div class="product-header">
@@ -77,15 +77,16 @@ endblock %} {% block content %}
                     <h3>Basic Pack</h3>
                   </div>
                   <div class="product-price">
-                    <span class="price-amount">$9.99</span>
+                    <span class="price-amount">$7.99</span>
                     <span class="price-period">one-time</span>
                   </div>
                   <div class="product-features">
                     <ul>
-                      <li>100 AI Credits</li>
-                      <li>Valid for 30 days</li>
-                      <li>Use for transcriptions</li>
-                      <li>Use for summaries</li>
+                      <li>2,500 credits</li>
+                      <li>
+                        Credits never expire and carry over each month until
+                        used
+                      </li>
                     </ul>
                   </div>
                   <button
@@ -100,7 +101,7 @@ endblock %} {% block content %}
                   class="product-card"
                   data-product-id="credit-pro"
                   data-product-type="credit"
-                  data-price="24.99"
+                  data-price="14.99"
                 >
                   <div class="product-badge">Best Value</div>
                   <div class="product-header">
@@ -110,16 +111,16 @@ endblock %} {% block content %}
                     <h3>Pro Pack</h3>
                   </div>
                   <div class="product-price">
-                    <span class="price-amount">$24.99</span>
+                    <span class="price-amount">$14.99</span>
                     <span class="price-period">one-time</span>
                   </div>
                   <div class="product-features">
                     <ul>
-                      <li>300 AI Credits</li>
-                      <li>Valid for 60 days</li>
-                      <li>Use for transcriptions</li>
-                      <li>Use for summaries</li>
-                      <li>Priority processing</li>
+                      <li>5,000 credits</li>
+                      <li>
+                        Credits never expire and carry over each month until
+                        used
+                      </li>
                     </ul>
                   </div>
                   <button class="add-to-cart-btn" data-product-id="credit-pro">
@@ -131,26 +132,25 @@ endblock %} {% block content %}
                   class="product-card"
                   data-product-id="credit-premium"
                   data-product-type="credit"
-                  data-price="49.99"
+                  data-price="29.99"
                 >
                   <div class="product-header">
                     <div class="product-icon credit-icon">
                       <span class="svg-placeholder credit-large-icon"></span>
                     </div>
-                    <h3>Premium Pack</h3>
+                    <h3>Studio Pack</h3>
                   </div>
                   <div class="product-price">
-                    <span class="price-amount">$49.99</span>
+                    <span class="price-amount">$29.99</span>
                     <span class="price-period">one-time</span>
                   </div>
                   <div class="product-features">
                     <ul>
-                      <li>750 AI Credits</li>
-                      <li>Valid for 90 days</li>
-                      <li>Use for transcriptions</li>
-                      <li>Use for summaries</li>
-                      <li>Priority processing</li>
-                      <li>Advanced AI features</li>
+                      <li>12,000 credits</li>
+                      <li>
+                        Credits never expire and carry over each month until
+                        used
+                      </li>
                     </ul>
                   </div>
                   <button
@@ -158,6 +158,134 @@ endblock %} {% block content %}
                     data-product-id="credit-premium"
                   >
                     Add to Cart
+                  </button>
+                </div>
+              </div>
+            </section>
+
+            <!-- Subscription Upgrades Section -->
+            <section class="store-section subscription-section">
+              <div class="section-header">
+                <h2>Subscriptions</h2>
+                <span class="section-description"
+                  >Enhance your PodManager experience with premium team
+                  features</span
+                >
+              </div>
+              <div class="cards-container">
+                <div
+                  class="product-card subscription-card"
+                  data-product-id="sub-standard"
+                  data-product-type="subscription"
+                  data-price="29.99"
+                >
+                  <div class="product-header">
+                    <div class="product-icon subscription-icon">
+                      <span
+                        class="svg-placeholder subscription-pro-icon"
+                      ></span>
+                    </div>
+                    <h3>Pro Subscription</h3>
+                  </div>
+                  <div class="product-price">
+                    <span class="price-amount">$29.99</span>
+                    <span class="price-period">/month</span>
+                  </div>
+                  <div class="product-features">
+                    <ul>
+                      <li>
+                        10,000 Credits at Month's Start (resets monthly, no
+                        carry-over)
+                      </li>
+                      <li>3 Episode Slots / Month</li>
+                      <li>
+                        1 Extra Episode Slot - 5,000 Credits (Max. 5 Total
+                        Slots)
+                      </li>
+                      <li>Free Podcast Landing Page</li>
+                    </ul>
+                  </div>
+                  <button
+                    class="add-to-cart-btn"
+                    data-product-id="sub-standard"
+                  >
+                    Add to Cart
+                  </button>
+                </div>
+
+                <div
+                  class="product-card subscription-card"
+                  data-product-id="sub-pro"
+                  data-product-type="subscription"
+                  data-price="69.00"
+                >
+                  <div class="product-badge">Best Value</div>
+                  <div class="product-header">
+                    <div class="product-icon subscription-icon">
+                      <span
+                        class="svg-placeholder subscription-team-icon"
+                      ></span>
+                    </div>
+                    <h3>Studio Subscription</h3>
+                  </div>
+                  <div class="product-price">
+                    <span class="price-amount">$69.00</span>
+                    <span class="price-period">/month</span>
+                  </div>
+                  <div class="product-features">
+                    <ul>
+                      <li>
+                        20,000 Credits at Month's Start (resets monthly, no
+                        carry-over)
+                      </li>
+                      <li>4 Episode Slots / Month</li>
+                      <li>
+                        1 Extra Episode Slot - 5,000 Credits (Max. 6 Total
+                        Slots)
+                      </li>
+                      <li>
+                        Free Podcast Landing Page (Option to Host on Own Domain)
+                      </li>
+                    </ul>
+                  </div>
+                  <button class="add-to-cart-btn" data-product-id="sub-pro">
+                    Add to Cart
+                  </button>
+                </div>
+
+                <div
+                  class="product-card subscription-card"
+                  data-product-id="sub-enterprise"
+                  data-product-type="subscription"
+                  data-price="0.00"
+                >
+                  <div class="product-header">
+                    <div class="product-icon subscription-icon">
+                      <span
+                        class="svg-placeholder subscription-enterprise-icon"
+                      ></span>
+                    </div>
+                    <h3>Enterprise Subscription</h3>
+                  </div>
+                  <div class="product-price">
+                    <span class="price-amount">Contact Us</span>
+                    <span class="price-period">for pricing</span>
+                  </div>
+                  <div class="product-features">
+                    <ul>
+                      <li>Pricing Based on Annual Episodes</li>
+                      <li>Total Unlock of Pricings</li>
+                      <li>All The Episode Slots You Need</li>
+                      <li>Team Collaboration</li>
+                      <li>Yearly Re-Contracting</li>
+                      <li>Landing Page On Your Own Domain</li>
+                    </ul>
+                  </div>
+                  <button
+                    class="add-to-cart-btn"
+                    data-product-id="sub-enterprise"
+                  >
+                    Contact Us
                   </button>
                 </div>
               </div>
@@ -297,133 +425,14 @@ endblock %} {% block content %}
                 </div>
               </div>
             </section>
-
-            <!-- Subscription Upgrades Section -->
-            <section class="store-section subscription-section">
-              <div class="section-header">
-                <h2>Subscription Upgrades</h2>
-                <span class="section-description"
-                  >Enhance your PodManager experience with premium
-                  features</span
-                >
-              </div>
-              <div class="cards-container">
-                <div
-                  class="product-card subscription-card"
-                  data-product-id="sub-pro"
-                  data-product-type="subscription"
-                  data-price="14.99"
-                >
-                  <div class="product-header">
-                    <div class="product-icon subscription-icon">
-                      <span
-                        class="svg-placeholder subscription-pro-icon"
-                      ></span>
-                    </div>
-                    <h3>Pro Subscription</h3>
-                  </div>
-                  <div class="product-price">
-                    <span class="price-amount">$14.99</span>
-                    <span class="price-period">/month</span>
-                  </div>
-                  <div class="product-features">
-                    <ul>
-                      <li>5 Active Podcasts</li>
-                      <li>100 AI Credits/month</li>
-                      <li>Advanced analytics</li>
-                      <li>Email notifications</li>
-                      <li>Priority support</li>
-                    </ul>
-                  </div>
-                  <button class="add-to-cart-btn" data-product-id="sub-pro">
-                    Add to Cart
-                  </button>
-                </div>
-
-                <div
-                  class="product-card subscription-card"
-                  data-product-id="sub-team"
-                  data-product-type="subscription"
-                  data-price="29.99"
-                >
-                  <div class="product-badge">Best Value</div>
-                  <div class="product-header">
-                    <div class="product-icon subscription-icon">
-                      <span
-                        class="svg-placeholder subscription-team-icon"
-                      ></span>
-                    </div>
-                    <h3>Team Subscription</h3>
-                  </div>
-                  <div class="product-price">
-                    <span class="price-amount">$29.99</span>
-                    <span class="price-period">/month</span>
-                  </div>
-                  <div class="product-features">
-                    <ul>
-                      <li>10 Active Podcasts</li>
-                      <li>300 AI Credits/month</li>
-                      <li>Team collaboration</li>
-                      <li>Advanced analytics</li>
-                      <li>Email notifications</li>
-                      <li>Priority support</li>
-                      <li>Custom branding</li>
-                    </ul>
-                  </div>
-                  <button class="add-to-cart-btn" data-product-id="sub-team">
-                    Add to Cart
-                  </button>
-                </div>
-
-                <div
-                  class="product-card subscription-card"
-                  data-product-id="sub-enterprise"
-                  data-product-type="subscription"
-                  data-price="79.99"
-                >
-                  <div class="product-header">
-                    <div class="product-icon subscription-icon">
-                      <span
-                        class="svg-placeholder subscription-enterprise-icon"
-                      ></span>
-                    </div>
-                    <h3>Enterprise Subscription</h3>
-                  </div>
-                  <div class="product-price">
-                    <span class="price-amount">$79.99</span>
-                    <span class="price-period">/month</span>
-                  </div>
-                  <div class="product-features">
-                    <ul>
-                      <li>Unlimited Podcasts</li>
-                      <li>1000 AI Credits/month</li>
-                      <li>Team collaboration</li>
-                      <li>Advanced analytics</li>
-                      <li>Email notifications</li>
-                      <li>Priority support</li>
-                      <li>Custom branding</li>
-                      <li>API access</li>
-                      <li>Dedicated account manager</li>
-                    </ul>
-                  </div>
-                  <button
-                    class="add-to-cart-btn"
-                    data-product-id="sub-enterprise"
-                  >
-                    Add to Cart
-                  </button>
-                </div>
-              </div>
-            </section>
           </div>
         </div>
       </main>
     </div>
     <!-- End of .store div -->
 
-    <!-- Shopping Cart (Right Sidebar) - Moved outside .store -->
+    <!-- Shopping Cart (Right Sidebar) -->
     <div class="shopping-cart-sidebar" id="shoppingCart">
-      <!-- Removed hidden class initially -->
       <div class="cart-header">
         <h3>Your Cart</h3>
         <span class="cart-item-count">0 items</span>
@@ -433,7 +442,6 @@ endblock %} {% block content %}
       </div>
       <div class="cart-content">
         <div class="cart-items" id="cartItems">
-          <!-- Cart items will be added here dynamically -->
           <div class="empty-cart-message">Your cart is empty</div>
         </div>
         <div class="cart-footer">
@@ -447,9 +455,7 @@ endblock %} {% block content %}
         </div>
       </div>
     </div>
-    <!-- End of .shopping-cart-sidebar -->
   </div>
-  <!-- End of .store-container -->
 
   <script src="{{ url_for('static', filename='js/store/store.js') }}"></script>
   <script src="{{ url_for('static', filename='js/store/svgstore.js') }}"></script>
