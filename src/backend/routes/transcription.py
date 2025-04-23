@@ -16,7 +16,7 @@ from backend.services.transcriptionService import TranscriptionService
 from backend.services.audioService import AudioService
 from backend.services.videoService import VideoService
 from backend.repository.ai_models import fetch_file, save_file, get_file_by_id
-
+from backend.utils.transcription_utils import check_audio_duration
 
 transcription_bp = Blueprint("transcription", __name__)
 logger = logging.getLogger(__name__)
@@ -27,8 +27,6 @@ client = ElevenLabs(api_key=os.getenv("ELEVENLABS_API_KEY"))
 transcription_service = TranscriptionService()
 audio_service = AudioService()
 video_service = VideoService()
-
-MAX_DURATION_SECONDS = 60 * 60
 
 @transcription_bp.route("/transcribe", methods=["POST"])
 def transcribe():
@@ -58,22 +56,11 @@ def transcribe():
         else:
             audio_bytes = file.read()
 
-        # Save audio_bytes to a temp WAV file
-        with tempfile.NamedTemporaryFile(delete=False, suffix=".wav") as temp_audio:
-            temp_audio.write(audio_bytes)
-            temp_audio_path = temp_audio.name
-
-        # Check duration using soundfile
-        data, samplerate = sf.read(temp_audio_path)
-        duration = len(data) / samplerate
-
-        # Cleanup temp file
-        os.remove(temp_audio_path)
-
-        if duration > MAX_DURATION_SECONDS:
-            return jsonify({
-                "error": f"Audio too long ({round(duration / 60, 2)} minutes). Max allowed is 60 minutes."
-            }), 400
+        try:
+            #Change duration here!!
+            check_audio_duration(audio_bytes, max_duration_seconds=36)
+        except ValueError as e:
+            return jsonify({"error": str(e)}), 400
         
         # 🧠 Transcribe using service
         result = transcription_service.transcribe_audio(audio_bytes, filename)
