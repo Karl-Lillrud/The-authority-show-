@@ -257,8 +257,8 @@ def fetch_sfx_for_emotion(
     emotion: str,
     category: str,
     *,
-    target_duration: int = 30,      # total längd i s
-    loop_src_seconds: int = 5,      # HUR LÅNGT klipp du hämtar från ElevenLabs
+    target_duration: int = 20,      # total längd i s
+    loop_src_seconds: int = 3,      # HUR LÅNGT klipp du hämtar från ElevenLabs
     crossfade_ms: int = 250         # syr ihop start/slut på segmentet
 ) -> List[str]:
     """
