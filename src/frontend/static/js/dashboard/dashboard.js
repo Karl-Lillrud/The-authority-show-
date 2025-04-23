@@ -534,9 +534,10 @@ function getActivityIconClass(activityType) {
     episode_updated: "scheduled",
     episode_deleted: "published",
     team_created: "completed",
+    team_deleted: "podcast-deleted",
     tasks_added: "pending",
     podcast_created: "podcast",
-    podcast_deleted: "podcast-deleted" // <-- Add this line
+    podcast_deleted: "podcast-deleted"
   };
   return iconMap[activityType] || "pending";
 }
