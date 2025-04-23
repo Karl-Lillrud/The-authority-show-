@@ -20,8 +20,8 @@ def get_activities():
         activities_collection = collection.database.Activities
         activities = list(
             activities_collection.find({"userId": g.user_id})
-            .sort("createdAt", -1)  # Nyaste först
-            .limit(10)  # Begränsa till 10 senaste
+            .sort("createdAt", -1)
+            .limit(30)  # Increase from 10 to 30
         )
         for activity in activities:
             activity["_id"] = str(activity["_id"])
