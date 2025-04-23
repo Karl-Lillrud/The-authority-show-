@@ -8,11 +8,14 @@ import subprocess
 import base64
 import requests
 import time
+import math
 from pathlib import Path
 from typing import List
 from transformers import pipeline
 from io import BytesIO
 import streamlit as st  # Needed for download_button_text
+from pydub import AudioSegment
+
 
 API_BASE_URL = os.getenv("API_BASE_URL")
 ELEVENLABS_API_KEY = os.getenv("ELEVENLABS_API_KEY")
@@ -249,49 +252,87 @@ def generate_quote_images(quotes: List[str]) -> List[str]:
             urls.append("")
     return urls
 
-def fetch_sfx_for_emotion( emotion: str, category: str, limit=1) -> List[str]:
-    try:
-        generation_url = "https://api.elevenlabs.io/v1/sound-generation"
-        headers = {
-            "xi-api-key": ELEVENLABS_API_KEY,
-            "Content-Type": "application/json"
-        }
+import math
+from io import BytesIO
+from typing import List
 
-        payload = {
-            "text": f"Create a seamless loop of ambient background music for a {category} podcast with a {emotion} mood. Use soft drones, mellow pads, and faint echoes to build a somber atmosphere that supports narration without distraction. Keep the dynamics gentle, transitions smooth, and ensure the track loops naturally. Avoid sharp or bright sounds.",
-            "duration_seconds": 3,
-            "prompt_influence": 1
-        }
-        print("DEBUG: SFX Generation Payload:", payload)
-        # 🔄 Send request
-        res = requests.post(generation_url, headers=headers, json=payload)
-        print("📡 SFX gen status:", res.status_code)
-        print("📥 SFX headers:", res.headers)
+from pydub import AudioSegment
+import base64, requests, logging
 
-        if "audio/mpeg" in res.headers.get("Content-Type", ""):
-            audio_data = res.content
-            buffer = BytesIO(audio_data)
+def fetch_sfx_for_emotion(
+    emotion: str,
+    category: str,
+    *,
+    target_duration: int = 30,     # längd i sekunder som du vill ha i UI:t
+    loop_src_seconds: int = 3      # hur långt klippet du hämtar från ElevenLabs
+) -> List[str]:
+    """
+    Hämtar ett kort (3 s) loop-vänligt klipp från ElevenLabs,
+    loopar det lokalt till `target_duration` sekunder och
+    returnerar det som en base64-data-URL (audio/mpeg).
+    """
+    generation_url = "https://api.elevenlabs.io/v1/sound-generation"
+    headers = {
+        "xi-api-key": ELEVENLABS_API_KEY,
+        "Content-Type": "application/json"
+    }
 
-            # Encode audio data to base64 string for frontend embedding
-            b64_audio = base64.b64encode(buffer.read()).decode("utf-8")
-            return [f"data:audio/mpeg;base64,{b64_audio}"]
+    payload = {
+        "text":
+            f"Create a seamless loop of ambient background music for a "
+            f"{category} podcast with a {emotion} mood. "
+            "Use soft drones, mellow pads, and faint echoes to build a somber "
+            "atmosphere that supports narration without distraction. "
+            "Keep the dynamics gentle, transitions smooth, and ensure the track "
+            "loops naturally. Avoid sharp or bright sounds.",
+        "duration_seconds": loop_src_seconds,
+        "prompt_influence": 1
+    }
 
-        else:
-            print("⚠️ Unexpected content type:", res.headers.get("Content-Type"))
-            return []
+    logger.debug("SFX-payload → %s", payload)
+    res = requests.post(generation_url, headers=headers, json=payload)
+    logger.debug("SFX status=%s  Content-Type=%s",
+                 res.status_code, res.headers.get("Content-Type"))
 
-    except Exception as e:
-        print(f"⚠️ Failed to fetch SFX for '{emotion}': {e}")
+    if "audio/mpeg" not in res.headers.get("Content-Type", ""):
+        logger.warning("Unexpected SFX content type – skipping.")
         return []
 
-def suggest_sound_effects(emotion_data, category: str = "general"):
-    suggestions = []
+    # 1) Ladda det korta klippet i pydub
+    loop_seg = AudioSegment.from_file(BytesIO(res.content), format="mp3")
 
+    # 2) Bygg ett längre segment genom upprepning
+    need_ms   = target_duration * 1000
+    repeats   = math.ceil(need_ms / len(loop_seg))
+    long_seg  = (loop_seg * repeats)[:need_ms]   # trim till exakt längd
+
+    # 3) Exportera till MP3-bytes
+    out_buf = BytesIO()
+    long_seg.export(out_buf, format="mp3", bitrate="192k")
+
+    b64_audio = base64.b64encode(out_buf.getvalue()).decode("utf-8")
+    return [f"data:audio/mpeg;base64,{b64_audio}"]
+
+
+def suggest_sound_effects(
+    emotion_data,
+    *,
+    category: str = "general",
+    target_duration: int = 30      # för vidarebrytning i UI:t
+):
+    """
+    Returnerar en lista med långa, loopade SFX-förslag.
+    """
+    suggestions = []
     for entry in emotion_data:
         emotion = entry["emotions"][0]["label"]
-        text = entry["text"]
+        text    = entry["text"]
 
-        sfx_options = fetch_sfx_for_emotion(emotion, category)
+        sfx_options = fetch_sfx_for_emotion(
+            emotion,
+            category,
+            target_duration=target_duration
+        )
 
         suggestions.append({
             "timestamp_text": text,
