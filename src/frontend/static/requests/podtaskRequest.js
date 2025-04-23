@@ -257,21 +257,21 @@ export async function getWorkflows() {
 
 export async function deleteWorkflow(workflowId) {
   try {
-    const response = await fetch(`/delete_workflow`, {
-      method: "POST",
+    // Ensure workflowId is included in the URL
+    const response = await fetch(`/delete_workflow/${workflowId}`, {
+      method: "DELETE", // DELETE method
       headers: {
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({ workflowId }),
-    })
+    });
 
     if (!response.ok) {
-      throw new Error(`Failed to delete workflow: ${response.statusText}`)
+      throw new Error(`Failed to delete workflow: ${response.statusText}`);
     }
 
-    return await response.json()
+    return await response.json();
   } catch (error) {
-    console.error("Error deleting workflow:", error)
-    throw error
+    console.error("Error deleting workflow:", error);
+    throw error;
   }
 }
