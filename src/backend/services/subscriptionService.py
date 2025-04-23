@@ -1,5 +1,6 @@
 from datetime import datetime, timedelta
 from backend.database.mongo_connection import collection
+from backend.utils.subscription_access import PLAN_BENEFITS
 import logging
 import uuid
 from backend.services.activity_service import ActivityService  # Add this import
@@ -31,8 +32,9 @@ class SubscriptionService:
         status = account.get("subscriptionStatus", "inactive")
 
         subscription_data = {
-            "plan": account.get("subscriptionPlan", "Free"),
+            "plan": plan,
             "status": status,
+            "start_date": account.get("subscriptionStart", None),
             "end_date": account.get("subscriptionEnd", None),
             "is_cancelled": status == "cancelled",
         }
@@ -89,12 +91,12 @@ class SubscriptionService:
 
             # Also record in the subscriptions collection
             subscription_data = {
-                "_id": str(uuid.uuid4()),  # Generate a UUID string for _id
+                "_id": str(uuid.uuid4()),
                 "user_id": user_id,
                 "plan": plan_name,
                 "amount": amount_paid,
                 "start_date": start_date.isoformat(),
-                "end_date": end_date.isoformat(),
+                "end_date": end_date.isoformat() if end_date else None,
                 "status": "active",
                 "payment_id": stripe_session.id,
                 "created_at": datetime.utcnow().isoformat(),
@@ -122,6 +124,9 @@ class SubscriptionService:
             # --- End activity log ---
 
             return True
+
         except Exception as e:
-            logger.error(f"Error updating subscription: {str(e)}")
+            logger.error(
+                f"Error updating subscription for user {user_id} with plan {plan_name}: {str(e)}"
+            )
             raise Exception(f"Error updating subscription: {str(e)}")

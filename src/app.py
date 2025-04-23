@@ -24,6 +24,7 @@ from backend.routes.guest_to_eposide import guesttoepisode_bp
 from backend.routes.guest_form import guest_form_bp  # Import the guest_form blueprint
 from backend.utils.email_utils import send_email
 from backend.utils.scheduler import start_scheduler
+from backend.utils.credit_scheduler import init_credit_scheduler  # Add this import
 from backend.routes.billing import billing_bp
 from backend.routes.landingpage import landingpage_bp
 from dotenv import load_dotenv
@@ -142,6 +143,7 @@ def load_user():
 
 
 start_scheduler(app)
+init_credit_scheduler(app)  # Add this line after start_scheduler
 
 # Styled startup message
 if __name__ == "__main__":

@@ -55,7 +55,7 @@ def upload_profile_picture():
 
         # Define the container name and blob path
         container_name = "podmanagerfiles"
-        blob_path = f"user/{g.user_id}/profile/{file.filename}"
+        blob_path = f"users/{g.user_id}/profile/{file.filename}"
 
         # Upload the file to Azure Blob Storage
         blob_url = upload_file_to_blob(container_name, blob_path, file)
