@@ -252,24 +252,20 @@ def generate_quote_images(quotes: List[str]) -> List[str]:
             urls.append("")
     return urls
 
-import math
-from io import BytesIO
-from typing import List
-
-from pydub import AudioSegment
-import base64, requests, logging
 
 def fetch_sfx_for_emotion(
     emotion: str,
     category: str,
     *,
-    target_duration: int = 30,     # längd i sekunder som du vill ha i UI:t
-    loop_src_seconds: int = 3      # hur långt klippet du hämtar från ElevenLabs
+    target_duration: int = 30,      # total längd i s
+    loop_src_seconds: int = 5,      # HUR LÅNGT klipp du hämtar från ElevenLabs
+    crossfade_ms: int = 250         # syr ihop start/slut på segmentet
 ) -> List[str]:
     """
-    Hämtar ett kort (3 s) loop-vänligt klipp från ElevenLabs,
-    loopar det lokalt till `target_duration` sekunder och
-    returnerar det som en base64-data-URL (audio/mpeg).
+    1. Hämtar ett kort loop-segment (default 5 s) från ElevenLabs.
+    2. Gör en kort crossfade på segmentets egna start/slut.
+    3. Loopar segmentet tills vi uppnår target_duration (default 30 s).
+    4. Returnerar en base64-kodad MP3-data-URL.
     """
     generation_url = "https://api.elevenlabs.io/v1/sound-generation"
     headers = {
@@ -279,39 +275,40 @@ def fetch_sfx_for_emotion(
 
     payload = {
         "text":
-            f"Create a seamless loop of ambient background music for a "
-            f"{category} podcast with a {emotion} mood. "
-            "Use soft drones, mellow pads, and faint echoes to build a somber "
-            "atmosphere that supports narration without distraction. "
-            "Keep the dynamics gentle, transitions smooth, and ensure the track "
-            "loops naturally. Avoid sharp or bright sounds.",
+            f"Create a perfectly seamless {loop_src_seconds}-second loop of "
+            f"ambient background music for a {category} podcast with a "
+            f"{emotion} mood. The first and last 250 ms must share the same "
+            f"pad tone so the loop point is inaudible. Use soft drones, mellow "
+            "pads, faint echoes, no sharp sounds.",
         "duration_seconds": loop_src_seconds,
         "prompt_influence": 1
     }
 
-    logger.debug("SFX-payload → %s", payload)
     res = requests.post(generation_url, headers=headers, json=payload)
-    logger.debug("SFX status=%s  Content-Type=%s",
-                 res.status_code, res.headers.get("Content-Type"))
-
     if "audio/mpeg" not in res.headers.get("Content-Type", ""):
-        logger.warning("Unexpected SFX content type – skipping.")
+        logger.warning("ElevenLabs svarade inte med audio/mpeg – hoppar över.")
         return []
 
-    # 1) Ladda det korta klippet i pydub
-    loop_seg = AudioSegment.from_file(BytesIO(res.content), format="mp3")
+    # -- 1: ladda segmentet
+    seg = AudioSegment.from_file(BytesIO(res.content), format="mp3")
 
-    # 2) Bygg ett längre segment genom upprepning
-    need_ms   = target_duration * 1000
-    repeats   = math.ceil(need_ms / len(loop_seg))
-    long_seg  = (loop_seg * repeats)[:need_ms]   # trim till exakt längd
+    # -- 2: gör segmentet själv-loopbart (crossfade head ↔ tail)
+    if crossfade_ms:
+        head = seg[:crossfade_ms].fade_out(crossfade_ms)
+        tail = seg[-crossfade_ms:].fade_in(crossfade_ms)
+        body = seg[crossfade_ms:-crossfade_ms]
+        seg  = head.overlay(tail) + body
 
-    # 3) Exportera till MP3-bytes
-    out_buf = BytesIO()
-    long_seg.export(out_buf, format="mp3", bitrate="192k")
+    # -- 3: loopa segmentet tills vi nått target_duration
+    need_ms  = target_duration * 1000
+    repeats  = math.ceil(need_ms / len(seg))
+    full_seg = (seg * repeats)[:need_ms]
 
-    b64_audio = base64.b64encode(out_buf.getvalue()).decode("utf-8")
-    return [f"data:audio/mpeg;base64,{b64_audio}"]
+    # -- 4: exportera till MP3 → base64
+    buf = BytesIO()
+    full_seg.export(buf, format="mp3", bitrate="192k")
+    b64 = base64.b64encode(buf.getvalue()).decode("utf-8")
+    return [f"data:audio/mpeg;base64,{b64}"]
 
 
 def suggest_sound_effects(
