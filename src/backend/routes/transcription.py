@@ -34,6 +34,17 @@ def transcribe():
         return jsonify({"error": "No file provided"}), 400
 
     file = request.files["file"]
+
+    # 🔒 File size limit check
+    file.seek(0, os.SEEK_END)
+    file_length = file.tell()
+    file.seek(0)  # Reset pointer
+
+    max_upload_size = 1 * 1024 * 1024  # 1 GB
+    if file_length > max_upload_size:
+        return jsonify({
+            "error": f"File too large ({round(file_length / (1024 * 1024), 2)} MB). Max allowed size is 1024 MB (1 GB)."
+        }), 400
     filename = file.filename
     file_ext = os.path.splitext(filename)[-1].lower()
     is_video = file_ext in ["mp4", "mov", "avi", "mkv", "webm"]
