@@ -412,7 +412,7 @@
 }
 
 .activity-timeline-scroll {
-  max-height: 420px; /* Adjust height for ~5 items depending on your item height */
+  max-height: 600px; /* Adjust height for ~5 items depending on your item height */
   overflow-y: auto;
   padding-right: 4px; /* For scrollbar space */
 }
