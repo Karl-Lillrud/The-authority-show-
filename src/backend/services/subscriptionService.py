@@ -3,29 +3,33 @@ from backend.database.mongo_connection import collection
 from backend.utils.subscription_access import PLAN_BENEFITS
 import logging
 import uuid
-from dateutil.parser import parse as parse_date
+from backend.services.activity_service import ActivityService  # Add this import
 
 logger = logging.getLogger(__name__)
+
 
 class SubscriptionService:
     def __init__(self):
         self.accounts_collection = collection.database.Accounts
         self.subscriptions_collection = collection.database.subscriptions_collection
-        self.episodes_collection = collection.database.Episodes
-
-    def _get_account(self, user_id):
-        return self.accounts_collection.find_one({"userId": user_id}) or \
-               self.accounts_collection.find_one({"ownerId": user_id})
+        self.activity_service = ActivityService()  # Add this line
 
     def get_user_subscription(self, user_id):
-        """Get a user's current subscription details with benefits."""
-        account = self._get_account(user_id)
+        """Get a user's current subscription details"""
+        # First try looking up by userId
+        account = self.accounts_collection.find_one({"userId": user_id})
+
+        # If not found, try looking up by ownerId (for backward compatibility)
         if not account:
-            logger.warning(f"No account found for user {user_id} (tried both userId and ownerId)")
+            account = self.accounts_collection.find_one({"ownerId": user_id})
+
+        if not account:
+            logger.warning(
+                f"No account found for user {user_id} (tried both userId and ownerId)"
+            )
             return None
 
         status = account.get("subscriptionStatus", "inactive")
-        plan = account.get("subscriptionPlan", "FREE").upper()
 
         subscription_data = {
             "plan": plan,
@@ -33,41 +37,59 @@ class SubscriptionService:
             "start_date": account.get("subscriptionStart", None),
             "end_date": account.get("subscriptionEnd", None),
             "is_cancelled": status == "cancelled",
-            "benefits": PLAN_BENEFITS.get(plan, PLAN_BENEFITS["FREE"])
         }
 
         return subscription_data
 
     def update_user_subscription(self, user_id, plan_name, stripe_session):
-        """Update a user's subscription based on the purchased plan."""
+        """
+        Update a user's subscription based on the purchased plan.
+        """
         try:
-            plan_name = plan_name.upper()
-            if plan_name not in PLAN_BENEFITS:
-                raise ValueError(f"Invalid plan name: {plan_name}. Must be one of {list(PLAN_BENEFITS.keys())}")
+            # Get the amount paid in the Stripe session
+            amount_paid = (
+                stripe_session["amount_total"] / 100
+            )  # Convert cents to dollars
 
-            amount_paid = stripe_session['amount_total'] / 100
-            account = self._get_account(user_id)
+            # First try to find account by userId
+            account = self.accounts_collection.find_one({"userId": user_id})
+
+            # If not found, try looking up by ownerId
             if not account:
-                raise ValueError(f"No account found for user {user_id}")
+                account = self.accounts_collection.find_one({"ownerId": user_id})
 
+            if not account:
+                raise ValueError(
+                    f"No account found for user {user_id} (tried both userId and ownerId)"
+                )
+
+            # Calculate subscription end date (1 month from now)
             start_date = datetime.utcnow()
-            end_date = start_date + timedelta(days=30) if plan_name != "FREE" else None
-            filter_query = {"userId": user_id} if "userId" in account else {"ownerId": user_id}
+            end_date = start_date + timedelta(days=30)
 
-            update_data = {
-                "subscriptionStatus": "active",
-                "subscriptionPlan": plan_name,
-                "subscriptionAmount": amount_paid,
-                "subscriptionStart": start_date.isoformat(),
-                "lastUpdated": datetime.utcnow().isoformat()
-            }
-            if end_date:
-                update_data["subscriptionEnd"] = end_date.isoformat()
+            # Update the user's subscription details - use the field that was found
+            filter_query = (
+                {"userId": user_id} if "userId" in account else {"ownerId": user_id}
+            )
 
-            update_result = self.accounts_collection.update_one(filter_query, {"$set": update_data})
+            update_result = self.accounts_collection.update_one(
+                filter_query,
+                {
+                    "$set": {
+                        "subscriptionStatus": "active",
+                        "subscriptionPlan": plan_name,
+                        "subscriptionAmount": amount_paid,
+                        "subscriptionStart": start_date.isoformat(),
+                        "subscriptionEnd": end_date.isoformat(),
+                        "lastUpdated": datetime.utcnow().isoformat(),
+                    }
+                },
+            )
+
             if update_result.modified_count == 0:
                 raise ValueError(f"Failed to update subscription for user {user_id}")
 
+            # Also record in the subscriptions collection
             subscription_data = {
                 "_id": str(uuid.uuid4()),
                 "user_id": user_id,
@@ -77,14 +99,36 @@ class SubscriptionService:
                 "end_date": end_date.isoformat() if end_date else None,
                 "status": "active",
                 "payment_id": stripe_session.id,
-                "created_at": datetime.utcnow().isoformat()
+                "created_at": datetime.utcnow().isoformat(),
             }
 
             self.subscriptions_collection.insert_one(subscription_data)
+
+            # --- Log subscription activity ---
+            try:
+                self.activity_service.log_activity(
+                    user_id=user_id,
+                    activity_type="subscription_updated",
+                    description=f"Subscription updated to '{plan_name}' plan.",
+                    details={
+                        "plan": plan_name,
+                        "amount": amount_paid,
+                        "end_date": end_date.isoformat(),
+                    },
+                )
+            except Exception as act_err:
+                logger.error(
+                    f"Failed to log subscription_updated activity: {act_err}",
+                    exc_info=True,
+                )
+            # --- End activity log ---
+
             return True
 
         except Exception as e:
-            logger.error(f"Error updating subscription for user {user_id} with plan {plan_name}: {str(e)}")
+            logger.error(
+                f"Error updating subscription for user {user_id} with plan {plan_name}: {str(e)}"
+            )
             raise Exception(f"Error updating subscription: {str(e)}")
 
     def can_create_episode(self, user_id):

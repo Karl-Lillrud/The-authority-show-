@@ -1322,6 +1322,20 @@ select:invalid {
 
 .meta-label {
   font-weight: 600;
+  margin-right: 0.25rem;
+  color: rgba(0, 0, 0, 0.6);
+  display: inline;
+  font-size: inherit;
+  margin: 0;
+  padding: 0;
+}
+
+.podcast-meta h4.meta-label {
+  display: inline;
+  font-size: inherit;
+  margin: 0;
+  padding: 0;
+  font-weight: 600;
   color: rgba(0, 0, 0, 0.6);
 }
 
@@ -1590,4 +1604,13 @@ select:invalid {
     max-width: 250px;
     margin: 0 auto;
   }
+}
+
+.page-title {
+  font-size: 2rem;
+  font-weight: 600;
+  color: var(--text-color-dark, #333);
+  margin-bottom: 2rem;
+  padding: 0 1rem;
+  width: 100%;
 }

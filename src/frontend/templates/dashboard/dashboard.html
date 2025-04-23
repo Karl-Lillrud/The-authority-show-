@@ -1,255 +1,255 @@
 {% extends "/components/base.html" %} {% block title %}Podcast Management{%
-  endblock %} {% block content %}
-  <head>
-    <script
-      async
-      src="https://www.googletagmanager.com/gtag/js?id=G-PTPQQ5WSQV"
-    ></script>
-    <script>
-      window.dataLayer = window.dataLayer || [];
-      function gtag() {
-        dataLayer.push(arguments);
-      }
-      gtag("js", new Date());
-  
-      gtag("config", "G-PTPQQ5WSQV");
-    </script>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>PodManager.ai Dashboard</title>
-    <link
-      rel="stylesheet"
-      href="{{ url_for('static', filename='css/dashboard/dashboard.css') }}"
-    />
-    <link
-      rel="stylesheet"
-      href="{{ url_for('static', filename='css/dashboard/task.css') }}"
-    />
-  </head>
-  <body>
-    <div class="dashboard">
-      <!-- Dashboard Header -->
-      <div class="dashboard-header">
-        <div class="welcome-message">
-          <h1>Welcome to your Podcast Dashboard</h1>
-          <p>Here is an overview of your podcasts and activities</p>
-        </div>
-        <div class="dashboard-actions">
-          <button class="action-button create-podcast">
-            <span class="svg-placeholder create-podcast-icon"></span>
-            Create New Podcast
-          </button>
-          <button class="action-button schedule-episode">
-            <span class="svg-placeholder schedule-episode-icon"></span>
-            Schedule Episode
-          </button>
-        </div>
+endblock %} {% block content %}
+<head>
+  <script
+    async
+    src="https://www.googletagmanager.com/gtag/js?id=G-PTPQQ5WSQV"
+  ></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag() {
+      dataLayer.push(arguments);
+    }
+    gtag("js", new Date());
+
+    gtag("config", "G-PTPQQ5WSQV");
+  </script>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>PodManager.ai Dashboard</title>
+  <link
+    rel="stylesheet"
+    href="{{ url_for('static', filename='css/dashboard/dashboard.css') }}"
+  />
+  <link
+    rel="stylesheet"
+    href="{{ url_for('static', filename='css/dashboard/task.css') }}"
+  />
+</head>
+<body>
+  <div class="dashboard">
+    <!-- Dashboard Header -->
+    <div class="dashboard-header">
+      <div class="welcome-message">
+        <h1>Welcome to your Podcast Dashboard</h1>
+        <p>Here is an overview of your podcasts and activities</p>
       </div>
-  
-      <!-- Stats Overview -->
-      <div class="stats-overview">
-        <div class="stat-card">
-          <div class="stat-icon podcast-icon">
-            <span class="svg-placeholder podcast-icon"></span>
-          </div>
-          <div class="stat-content">
-            <h3 class="stat-value" id="podcast-count">0</h3>
-            <p class="stat-label">Active Podcasts</p>
-          </div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-icon episode-icon">
-            <span class="svg-placeholder episode-icon"></span>
-          </div>
-          <div class="stat-content">
-            <h3 class="stat-value" id="episode-count">0</h3>
-            <p class="stat-label">Total Episodes</p>
-          </div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-icon guest-icon">
-            <span class="svg-placeholder guest-icon"></span>
-          </div>
-          <div class="stat-content">
-            <h3 class="stat-value" id="guest-count">0</h3>
-            <p class="stat-label">Guests</p>
-          </div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-icon task-icon">
-            <span class="svg-placeholder task-icon"></span>
-          </div>
-          <div class="stat-content">
-            <h3 class="stat-value" id="task-count">0</h3>
-            <p class="stat-label">Tasks</p>
-          </div>
-        </div>
+      <div class="dashboard-actions">
+        <button class="action-button create-podcast">
+          <span class="svg-placeholder create-podcast-icon"></span>
+          Create New Podcast
+        </button>
+        <button class="action-button schedule-episode">
+          <span class="svg-placeholder schedule-episode-icon"></span>
+          Schedule Episode
+        </button>
       </div>
-  
-      <!-- Main Content -->
-      <main class="main-content">
-        <!-- Dashboard Content -->
-        <div class="dashboard-content">
-          <div class="dashboard-grid">
-            <!-- Team Leaderboard -->
-            <section class="leaderboard-section">
-              <div class="section-header">
-                <h2>Team Leaderboard</h2>
-                <a href="#" class="view-all">View All</a>
-              </div>
-              <div class="team-leaderboard">
-                <table class="leaderboard-table">
-                  <thead>
-                    <tr>
-                      <th>Name</th>
-                      <th>Completed Tasks</th>
-                      <th>Points</th>
-                      <th>Months Won</th>
-                      <th>Goal</th>
-                    </tr>
-                  </thead>
-                  <tbody class="leaderboard-body">
-                    <tr>
-                      <td>
-                        <div class="member-info">
-                          <div class="member-avatar">JD</div>
-                          <span>John Doe</span>
-                        </div>
-                      </td>
-                      <td>42</td>
-                      <td>
-                        <div class="points">
-                          <span>1,250</span>
-                          <div class="progress-bar">
-                            <div class="progress" style="width: 85%"></div>
-                          </div>
-                        </div>
-                      </td>
-                      <td>3</td>
-                      <td>
-                        <div class="goal-progress">
-                          <span>85%</span>
-                          <div class="progress-circle" data-progress="85"></div>
-                        </div>
-                      </td>
-                    </tr>
-                    <tr>
-                      <td>
-                        <div class="member-info">
-                          <div class="member-avatar">AS</div>
-                          <span>Anna Smith</span>
-                        </div>
-                      </td>
-                      <td>38</td>
-                      <td>
-                        <div class="points">
-                          <span>1,120</span>
-                          <div class="progress-bar">
-                            <div class="progress" style="width: 76%"></div>
-                          </div>
-                        </div>
-                      </td>
-                      <td>2</td>
-                      <td>
-                        <div class="goal-progress">
-                          <span>76%</span>
-                          <div class="progress-circle" data-progress="76"></div>
-                        </div>
-                      </td>
-                    </tr>
-                    <tr>
-                      <td>
-                        <div class="member-info">
-                          <div class="member-avatar">RJ</div>
-                          <span>Robert Johnson</span>
-                        </div>
-                      </td>
-                      <td>35</td>
-                      <td>
-                        <div class="points">
-                          <span>980</span>
-                          <div class="progress-bar">
-                            <div class="progress" style="width: 68%"></div>
-                          </div>
-                        </div>
-                      </td>
-                      <td>1</td>
-                      <td>
-                        <div class="goal-progress">
-                          <span>68%</span>
-                          <div class="progress-circle" data-progress="68"></div>
-                        </div>
-                      </td>
-                    </tr>
-                  </tbody>
-                </table>
-              </div>
-            </section>
-  
-            <!-- Recent Activity -->
-            <section class="activity-section">
-              <div class="section-header">
-                <h2>Recent Activity</h2>
-                <a href="#" class="view-all">View All</a>
-              </div>
-              <div class="activity-timeline">
-                <div class="timeline-item">
-                  <div class="timeline-icon completed">
-                    <span class="svg-placeholder completed-icon"></span>
-                  </div>
-                  <div class="timeline-content">
-                    <h4>Episode Recorded</h4>
-                    <p>Marketing Insights with Sarah Johnson</p>
-                    <span class="timeline-time">Today, 10:30</span>
-                  </div>
-                </div>
-                <div class="timeline-item">
-                  <div class="timeline-icon scheduled">
-                    <span class="svg-placeholder scheduled-icon"></span>
-                  </div>
-                  <div class="timeline-content">
-                    <h4>Guest Confirmed</h4>
-                    <p>Tech Trends with Michael Chen</p>
-                    <span class="timeline-time">Yesterday, 15:45</span>
-                  </div>
-                </div>
-                <div class="timeline-item">
-                  <div class="timeline-icon published">
-                    <span class="svg-placeholder published-icon"></span>
-                  </div>
-                  <div class="timeline-content">
-                    <h4>Episode Published</h4>
-                    <p>The Future of AI with Dr. Emily Roberts</p>
-                    <span class="timeline-time">Oct 15, 2023</span>
-                  </div>
-                </div>
-                <div class="timeline-item">
-                  <div class="timeline-icon pending">
-                    <span class="svg-placeholder pending-icon"></span>
-                  </div>
-                  <div class="timeline-content">
-                    <h4>Editing in Progress</h4>
-                    <p>Startup Success Stories with Alex Turner</p>
-                    <span class="timeline-time">Oct 12, 2023</span>
-                  </div>
-                </div>
-              </div>
-            </section>
-  
-            <!-- Recent Episodes -->
-            <section class="episodes-section">
-              <div class="section-header">
-                <h2>Active Episodes</h2>
-                <a href="#" class="view-all">View All</a>
-              </div>
-              <div class="cards-container">
-                <!-- Episodes will be loaded here via JavaScript -->
-              </div>
-            </section>
-          </div>
-        </div>
-      </main>
     </div>
+
+    <!-- Stats Overview -->
+    <div class="stats-overview">
+      <div class="stat-card">
+        <div class="stat-icon podcast-icon">
+          <span class="svg-placeholder podcast-icon"></span>
+        </div>
+        <div class="stat-content">
+          <h3 class="stat-value" id="podcast-count">0</h3>
+          <p class="stat-label">Active Podcasts</p>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon episode-icon">
+          <span class="svg-placeholder episode-icon"></span>
+        </div>
+        <div class="stat-content">
+          <h3 class="stat-value" id="episode-count">0</h3>
+          <p class="stat-label">Total Episodes</p>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon guest-icon">
+          <span class="svg-placeholder guest-icon"></span>
+        </div>
+        <div class="stat-content">
+          <h3 class="stat-value" id="guest-count">0</h3>
+          <p class="stat-label">Guests</p>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon task-icon">
+          <span class="svg-placeholder task-icon"></span>
+        </div>
+        <div class="stat-content">
+          <h3 class="stat-value" id="task-count">0</h3>
+          <p class="stat-label">Tasks</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Main Content -->
+    <main class="main-content">
+      <!-- Dashboard Content -->
+      <div class="dashboard-content">
+        <div class="dashboard-grid">
+          <!-- Team Leaderboard -->
+          <section class="leaderboard-section">
+            <div class="section-header">
+              <h2>Team Leaderboard</h2>
+              <a href="#" class="view-all">View All</a>
+            </div>
+            <div class="team-leaderboard">
+              <table class="leaderboard-table">
+                <thead>
+                  <tr>
+                    <th>Name</th>
+                    <th>Completed Tasks</th>
+                    <th>Points</th>
+                    <th>Months Won</th>
+                    <th>Goal</th>
+                  </tr>
+                </thead>
+                <tbody class="leaderboard-body">
+                  <tr>
+                    <td>
+                      <div class="member-info">
+                        <div class="member-avatar">JD</div>
+                        <span>John Doe</span>
+                      </div>
+                    </td>
+                    <td>42</td>
+                    <td>
+                      <div class="points">
+                        <span>1,250</span>
+                        <div class="progress-bar">
+                          <div class="progress" style="width: 85%"></div>
+                        </div>
+                      </div>
+                    </td>
+                    <td>3</td>
+                    <td>
+                      <div class="goal-progress">
+                        <span>85%</span>
+                        <div class="progress-circle" data-progress="85"></div>
+                      </div>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td>
+                      <div class="member-info">
+                        <div class="member-avatar">AS</div>
+                        <span>Anna Smith</span>
+                      </div>
+                    </td>
+                    <td>38</td>
+                    <td>
+                      <div class="points">
+                        <span>1,120</span>
+                        <div class="progress-bar">
+                          <div class="progress" style="width: 76%"></div>
+                        </div>
+                      </div>
+                    </td>
+                    <td>2</td>
+                    <td>
+                      <div class="goal-progress">
+                        <span>76%</span>
+                        <div class="progress-circle" data-progress="76"></div>
+                      </div>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td>
+                      <div class="member-info">
+                        <div class="member-avatar">RJ</div>
+                        <span>Robert Johnson</span>
+                      </div>
+                    </td>
+                    <td>35</td>
+                    <td>
+                      <div class="points">
+                        <span>980</span>
+                        <div class="progress-bar">
+                          <div class="progress" style="width: 68%"></div>
+                        </div>
+                      </div>
+                    </td>
+                    <td>1</td>
+                    <td>
+                      <div class="goal-progress">
+                        <span>68%</span>
+                        <div class="progress-circle" data-progress="68"></div>
+                      </div>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </section>
+
+          <!-- Recent Activity -->
+          <section class="activity-section">
+            <div class="section-header">
+              <h2>Recent Activity</h2>
+              <a href="#" class="view-all">View All</a>
+            </div>
+            <div class="activity-timeline activity-timeline-scroll">
+              <div class="timeline-item">
+                <div class="timeline-icon completed">
+                  <span class="svg-placeholder completed-icon"></span>
+                </div>
+                <div class="timeline-content">
+                  <h4>Episode Recorded</h4>
+                  <p>Marketing Insights with Sarah Johnson</p>
+                  <span class="timeline-time">Today, 10:30</span>
+                </div>
+              </div>
+              <div class="timeline-item">
+                <div class="timeline-icon scheduled">
+                  <span class="svg-placeholder scheduled-icon"></span>
+                </div>
+                <div class="timeline-content">
+                  <h4>Guest Confirmed</h4>
+                  <p>Tech Trends with Michael Chen</p>
+                  <span class="timeline-time">Yesterday, 15:45</span>
+                </div>
+              </div>
+              <div class="timeline-item">
+                <div class="timeline-icon published">
+                  <span class="svg-placeholder published-icon"></span>
+                </div>
+                <div class="timeline-content">
+                  <h4>Episode Published</h4>
+                  <p>The Future of AI with Dr. Emily Roberts</p>
+                  <span class="timeline-time">Oct 15, 2023</span>
+                </div>
+              </div>
+              <div class="timeline-item">
+                <div class="timeline-icon pending">
+                  <span class="svg-placeholder pending-icon"></span>
+                </div>
+                <div class="timeline-content">
+                  <h4>Editing in Progress</h4>
+                  <p>Startup Success Stories with Alex Turner</p>
+                  <span class="timeline-time">Oct 12, 2023</span>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <!-- Recent Episodes -->
+          <section class="episodes-section">
+            <div class="section-header">
+              <h2>Active Episodes</h2>
+              <a href="#" class="view-all">View All</a>
+            </div>
+            <div class="cards-container">
+              <!-- Episodes will be loaded here via JavaScript -->
+            </div>
+          </section>
+        </div>
+      </div>
+    </main>
+  </div>
 
   <script
     type="module"
