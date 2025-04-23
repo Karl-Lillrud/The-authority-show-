@@ -294,6 +294,15 @@
   color: #6a1b9a;
 }
 
+/* Episode icon styling */
+.episode-icon::before {
+  background: linear-gradient(135deg, #ff9800 0%, #f57c00 100%);
+}
+
+.episode-icon svg {
+  color: #f57c00;
+}
+
 .product-header h3 {
   font-size: 1.2rem;
   font-weight: 700;
