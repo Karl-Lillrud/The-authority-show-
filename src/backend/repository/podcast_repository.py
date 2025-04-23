@@ -15,6 +15,7 @@ class PodcastRepository:
         self.collection = collection.database.Podcasts
         self.activity_service = ActivityService()
         self.episode_repo = EpisodeRepository()  # Add EpisodeRepository
+        self.episode_repository = EpisodeRepository()
 
     def add_podcast(self, user_id, data):
         """Add a podcast for the user."""
@@ -168,7 +169,7 @@ class PodcastRepository:
             return {"error": f"Failed to fetch podcast: {str(e)}"}, 500
 
     def delete_podcast(self, user_id, podcast_id):
-        """Delete a podcast if it belongs to the user."""
+        """Delete a podcast and its associated episodes."""
         try:
             user_accounts = list(
                 collection.database.Accounts.find(
@@ -205,7 +206,17 @@ class PodcastRepository:
                         f"Failed to log podcast_deleted activity: {act_err}",
                         exc_info=True,
                     )
-                return {"message": "Podcast deleted successfully"}, 200
+
+                # Delete associated episodes
+                episode_result = self.episode_repository.delete_episodes_by_podcast(
+                    podcast_id
+                )
+                if episode_result.get("error"):
+                    return episode_result
+
+                return {
+                    "message": "Podcast and associated episodes deleted successfully"
+                }, 200
             else:
                 return {"error": "Failed to delete podcast"}, 500
 

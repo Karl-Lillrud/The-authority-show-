@@ -267,3 +267,17 @@ class EpisodeRepository:
         except Exception as e:
             logger.error(f"Failed to fetch episode with podcast: {str(e)}")
             return None, None
+
+    def delete_episodes_by_podcast(self, podcast_id):
+        """Delete all episodes associated with a specific podcast."""
+        try:
+            result = self.collection.delete_many({"podcast_id": podcast_id})
+            logger.info(
+                f"Deleted {result.deleted_count} episodes for podcast {podcast_id}"
+            )
+            return {"message": f"Deleted {result.deleted_count} episodes"}, 200
+        except Exception as e:
+            logger.error(
+                f"Failed to delete episodes for podcast {podcast_id}: {str(e)}"
+            )
+            return {"error": f"Failed to delete episodes: {str(e)}"}, 500
