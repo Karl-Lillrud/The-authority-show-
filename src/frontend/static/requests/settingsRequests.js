@@ -41,14 +41,14 @@ function updatePaymentMethodsDisplay() {
     dropdown.disabled = true;
   } else {
     dropdown.disabled = false;
-    paymentMethods.forEach((pm, index) => {
+    paymentMethods.forEach((sub, index) => {
       const opt = document.createElement("option");
       opt.value = index;
-      const cardInfo = pm.cardNumber
-        ? `Card ending in ${pm.cardNumber.slice(-4)}`
+      const cardInfo = sub.cardNumber
+        ? `Card ending in ${sub.cardNumber.slice(-4)}`
         : "Unknown Card";
-      opt.textContent = `${index + 1}. ${cardInfo} | Exp: ${pm.expiry
-        } | Holder: ${pm.holderName}`;
+      opt.textContent = `${index + 1}. ${cardInfo} | Exp: ${sub.expiry
+        } | Holder: ${sub.holderName}`;
       dropdown.appendChild(opt);
     });
   }
@@ -98,10 +98,10 @@ function showPaymentMethodForm(mode, paymentMethodIndex = null) {
   formOverlay.appendChild(formDiv);
   document.body.appendChild(formOverlay);
   if (mode === "update" && paymentMethodIndex !== null) {
-    const pm = paymentMethods[paymentMethodIndex];
-    document.getElementById("card-number").value = pm.cardNumber || "";
-    document.getElementById("expiry").value = pm.expiry || "";
-    document.getElementById("holder-name").value = pm.holderName || "";
+    const sub = paymentMethods[paymentMethodIndex];
+    document.getElementById("card-number").value = sub.cardNumber || "";
+    document.getElementById("expiry").value = sub.expiry || "";
+    document.getElementById("holder-name").value = sub.holderName || "";
   }
   document
     .getElementById("payment-method-form")

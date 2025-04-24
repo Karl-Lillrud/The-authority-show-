@@ -226,8 +226,9 @@ def send_login_email(email, login_link):
         </html>
         """
         logger.info(f"📧 Preparing to send login email to {email}")
-        # Change logging level from debug to info to ensure it's printed
-        logger.info(f"Login link: {login_link}")
+
+        # Print the login link in pink color to the terminal
+        print(f"\033[95mLogin link for {email}: {login_link}\033[0m", flush=True)
 
         result = send_email(email, subject, body)
         if result.get("success"):
@@ -268,7 +269,7 @@ def send_team_invite_email(
     Sends an invitation email for a team membership with an inline logo.
     """
     # Use API_BASE_URL from environment variables, fallback to localhost
-    base_url = os.getenv('API_BASE_URL', 'http://127.0.0.1:8000')
+    base_url = os.getenv("API_BASE_URL", "http://127.0.0.1:8000")
     registration_link = f"{base_url}/register_team_member?token={invite_token}"
     if team_name:
         registration_link += f"&teamName={urllib.parse.quote(team_name)}"
