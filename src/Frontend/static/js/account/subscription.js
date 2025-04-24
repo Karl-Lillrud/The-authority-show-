@@ -466,7 +466,7 @@ document.addEventListener('DOMContentLoaded', function() {
   const urlParams = new URLSearchParams(window.location.search);
   if (urlParams.get('subscription_updated') === 'true') {
     // Force refresh credits display
-    fetchUserCredits();
+    fetchStoreCredits();
     // Update the subscription UI
     updateSubscriptionUI();
     // Clear the URL parameter
@@ -477,7 +477,7 @@ document.addEventListener('DOMContentLoaded', function() {
 /**
  * Fetches the current user's available credits
  */
-async function fetchUserCredits() {
+async function fetchStoreCredits() {
   try {
     const creditsElement = document.getElementById("available-credits");
     if (!creditsElement) return;
@@ -493,15 +493,15 @@ async function fetchUserCredits() {
       creditsElement.textContent = data.availableCredits;
       
       // Optionally, if you have elements for showing the breakdown:
-      const pmElement = document.getElementById("subscription-credits");
+      const subElement = document.getElementById("subscription-credits");
       const userElement = document.getElementById("purchased-credits");
       
-      if (pmElement) {
-        pmElement.textContent = data.pmCredits || 0;
+      if (subElement) {
+        subElement.textContent = data.subCredits || 0;
       }
       
       if (userElement) {
-        userElement.textContent = data.userCredits || 0;
+        userElement.textContent = data.storeCredits || 0;
       }
     }
   } catch (err) {

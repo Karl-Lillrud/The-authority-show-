@@ -118,7 +118,7 @@ class SubscriptionService:
             try:
                 from backend.services.creditService import update_subscription_credits
                 
-                # This will update the pmCredits to match the plan's credit allocation
+                # This will update the subCredits to match the plan's credit allocation
                 updated_credits = update_subscription_credits(user_id, plan_name)
                 logger.info(f"Updated credits for user {user_id} to {plan_benefits.get('credits', 0)} credits based on {plan_name} plan")
                 
