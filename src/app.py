@@ -130,7 +130,13 @@ logger.info(f"{Fore.CYAN}🚀 Server is running!")
 logger.info(
     f"{Fore.MAGENTA}🌐 Local:  {os.getenv('LOCAL_BASE_URL', 'http://127.0.0.1:8000')}"
 )
-logger.info(f"{Fore.MAGENTA}🌐 Network: http://192.168.0.4:8000")
+# Append :8000 to the API_BASE_URL for the network log
+api_base_url_for_network = os.getenv('API_BASE_URL', 'Not Set')
+if api_base_url_for_network != 'Not Set':
+    # Simple check to avoid adding port if already present (optional, adjust as needed)
+    if ':' not in api_base_url_for_network.split('//')[-1]:
+         api_base_url_for_network += ':8000'
+logger.info(f"{Fore.MAGENTA}🌐 Network: {api_base_url_for_network}")
 logger.info(f"{Fore.GREEN}========================================")
 
 
