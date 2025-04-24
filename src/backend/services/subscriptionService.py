@@ -5,6 +5,7 @@ import logging
 import uuid
 from dateutil.parser import parse as parse_date
 from backend.services.activity_service import ActivityService  # Add this import
+from dateutil.parser import parse as parse_date  
 
 logger = logging.getLogger(__name__)
 
@@ -35,7 +36,7 @@ class SubscriptionService:
         plan = account.get("subscriptionPlan", "free")
 
         subscription_data = {
-            "plan": plan,
+            "plan": account.get("subscriptionPlan", "FREE"),
             "status": status,
             "start_date": account.get("subscriptionStart"),
             "end_date": account.get("subscriptionEnd"),
@@ -71,6 +72,9 @@ class SubscriptionService:
             start_date = datetime.utcnow()
             end_date = start_date + timedelta(days=30)
 
+            # Get the plan benefits from subscription_access.py
+            plan_benefits = PLAN_BENEFITS.get(plan_name.upper(), PLAN_BENEFITS["FREE"])
+
             # Update the user's subscription details - use the field that was found
             filter_query = (
                 {"userId": user_id} if "userId" in account else {"ownerId": user_id}
@@ -86,6 +90,7 @@ class SubscriptionService:
                         "subscriptionStart": start_date.isoformat(),
                         "subscriptionEnd": end_date.isoformat(),
                         "lastUpdated": datetime.utcnow().isoformat(),
+                        "benefits": plan_benefits,  # Add the plan benefits
                     }
                 },
             )
@@ -97,16 +102,31 @@ class SubscriptionService:
             subscription_data = {
                 "_id": str(uuid.uuid4()),
                 "user_id": user_id,
-                "plan": plan_name,
+                "plan": account.get("subscriptionPlan", "FREE"),
                 "amount": amount_paid,
                 "start_date": start_date.isoformat(),
                 "end_date": end_date.isoformat() if end_date else None,
                 "status": "active",
                 "payment_id": stripe_session.id,
                 "created_at": datetime.utcnow().isoformat(),
+                "benefits": plan_benefits,  # Add the plan benefits
             }
 
             self.subscriptions_collection.insert_one(subscription_data)
+
+            # Update the user's credits based on the subscription plan
+            try:
+                from backend.services.creditService import update_subscription_credits
+                
+                # This will update the pmCredits to match the plan's credit allocation
+                updated_credits = update_subscription_credits(user_id, plan_name)
+                logger.info(f"Updated credits for user {user_id} to {plan_benefits.get('credits', 0)} credits based on {plan_name} plan")
+                
+                # Include the updated credit information in the return value
+                return True, updated_credits
+            except Exception as credit_err:
+                logger.error(f"Failed to update subscription credits: {credit_err}", exc_info=True)
+                return True, None
 
             # --- Log subscription activity ---
             try:
@@ -118,6 +138,7 @@ class SubscriptionService:
                         "plan": plan_name,
                         "amount": amount_paid,
                         "end_date": end_date.isoformat(),
+                        "credits": plan_benefits.get("credits", 0),  # Add credits to the activity log
                     },
                 )
             except Exception as act_err:
