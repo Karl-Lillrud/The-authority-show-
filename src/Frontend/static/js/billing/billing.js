@@ -81,8 +81,6 @@ async function buyCredits(credits, amount) {
 
     const data = await res.json();
     if (data.sessionId) {
-      console.log("Redirecting to Stripe with sessionId:", data.sessionId);
-      await stripe.redirectToCheckout({ sessionId: data.sessionId });
       // Use the globally initialized stripe object
       if (statusElement) statusElement.textContent = "Redirecting to payment...";
       await stripe.redirectToCheckout({ sessionId: data.sessionId });
