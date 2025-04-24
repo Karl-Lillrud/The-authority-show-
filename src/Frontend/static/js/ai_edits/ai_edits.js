@@ -442,86 +442,79 @@ async function analyzeEnhancedAudio() {
     const resultEl = document.getElementById("analysisResults");
     const timeline = document.getElementById("soundEffectTimeline");
 
-    if (!resultEl || !timeline) {
-        console.error("Elementen 'analysisResults' eller 'soundEffectTimeline' saknas. Se till att du är på 'audio'-fliken.");
-        return;
-    }
+    /* --- grundkontroller ----------------------------------------- */
     if (!activeAudioBlob) {
         alert("No audio loaded. Enhance or Isolate first.");
         return;
     }
 
-    try {
-        await consumeUserCredits("ai_audio_analysis");
-    } catch (err) {
+    try { await consumeUserCredits("ai_audio_analysis"); }
+    catch (err) {
         resultEl.innerText = `❌ Not enough credits: ${err.message}`;
         return;
     }
 
+    /* --- skicka filen -------------------------------------------- */
     resultEl.innerText = "🔍 Analyzing...";
-    const formData = new FormData();
-    formData.append("audio", activeAudioBlob, "processed_audio.wav");
+    const fd = new FormData();
+    fd.append("audio", activeAudioBlob, "processed_audio.wav");
 
     try {
-        // Gör ett enda anrop som returnerar både analysresultat och sound suggestions-data
-        const res = await fetch("/audio_analysis", { method: "POST", body: formData });
+        const res  = await fetch("/audio_analysis", { method: "POST", body: fd });
         const data = await res.json();
 
+        /* --- 1. visa text-statistik -------------------------------- */
         resultEl.innerText = `
-📊 Sentiment: ${data.sentiment}
-📊 Clarity Score: ${data.clarity_score}
+📊 Sentiment:        ${data.sentiment}
+📊 Clarity Score:    ${data.clarity_score}
 📊 Background Noise: ${data.background_noise}
         `;
 
-        // Rensa timeline och lägg in en knapp som, när den klickas, renderar sound suggestions direkt
+        /* --- 2. rensa / fyll tidslinje ----------------------------- */
         timeline.innerHTML = "";
-        const sfxBtn = document.createElement("button");
-        sfxBtn.className = "btn ai-edit-button";
-        sfxBtn.innerText = "🎧 Show Sound Suggestions";
-        sfxBtn.onclick = function() {
-            // Inline-rendering av sound suggestions utan att skapa en separat funktion
-            timeline.innerHTML = "<h4>🎧 AI-Driven Sound Suggestions</h4>";
-            window.selectedSoundFX = {};
 
-            (data.sound_effect_suggestions || []).forEach((entry, i) => {
-                const container = document.createElement("div");
-                container.className = "sound-suggestion";
-                const sfxList = entry.sfx_options || [];
-                const preview = sfxList.length
-                    ? `<audio controls src="${sfxList[0]}" class="sfx-preview"></audio>`
-                    : "<em>No audio preview available.</em>";
+        /* 2a. separat bakgrunds-loop (frivillig) */
+        if (data.background_clip) {
+            timeline.innerHTML += `
+                <h4>🔈 Background Loop (30 s)</h4>
+                <audio controls src="${data.background_clip}" style="width:100%"></audio>
+                <hr/>
+            `;
+        }
 
-                container.innerHTML = `
-                    <p class="sfx-text"><strong>📍 Text:</strong> ${entry.timestamp_text}</p>
-                    <p class="sfx-emotion"><strong>🎭 Emotion:</strong> ${entry.emotion}</p>
-                    ${preview}
-                    <div class="sfx-actions">
-                        <button class="btn ai-sound-sug-button" onclick="acceptSfx(${i}, '${entry.emotion}', '${sfxList[0]}')">✅ Accept</button>
-                        <button class="btn ai-sound-sug-button" onclick="rejectSfx(${i})">❌ Reject</button>
-                        <select class="sfx-select" onchange="replaceSfx(${i}, this.value)">
-                            ${sfxList.map(url => `<option value="${url}">${url.split("/").pop()}</option>`).join('')}
-                        </select>
-                    </div>
-                `;
-                timeline.appendChild(container);
-                if (sfxList.length) {
-                    window.selectedSoundFX[i] = { emotion: entry.emotion, sfxUrl: sfxList[0] };
-                }
-            });
-
-            // Lägg eventuellt till en knapp för att applicera de valda sound effects
-            const applyBtn = document.createElement("button");
-            applyBtn.className = "btn accept-all-sfx";
-            applyBtn.innerText = labelWithCredits("✅ Apply Selected Sound Effects", "sound_suggestions");
-            applyBtn.onclick = applyAllSuggestedSfx;
-            timeline.appendChild(applyBtn);
-        };
-
-        timeline.appendChild(sfxBtn);
+        /* 2b. mixad fil över hela klippet */
+        if (data.merged_audio) {
+            timeline.innerHTML += `
+                <h4>🎶 Mixed Preview</h4>
+                <audio controls src="${data.merged_audio}"
+                       style="width:100%;" title="Mixed audio"></audio>
+            `;
+        }
 
     } catch (err) {
         resultEl.innerText = `❌ Analysis failed: ${err.message}`;
     }
+}
+
+/* Hjälper att rendera suggestion-listan */
+function renderSoundSuggestions(data, timeline) {
+    timeline.innerHTML = "<h4>🎧 AI-Driven Sound Suggestions</h4>";
+    window.selectedSoundFX = {};
+
+    (data.sound_effect_suggestions || []).forEach((entry, i) => {
+        const sfxList = entry.sfx_options || [];
+        const container = document.createElement("div");
+        container.className = "sound-suggestion";
+        container.innerHTML = `
+            <p><strong>📍 Text:</strong> ${entry.timestamp_text}</p>
+            <p><strong>🎭 Emotion:</strong> ${entry.emotion}</p>
+            ${sfxList.length ? `<audio controls src="${sfxList[0]}" class="sfx-preview"></audio>` : "<em>No preview.</em>"}
+        `;
+        timeline.appendChild(container);
+        if (sfxList.length) {
+            window.selectedSoundFX[i] = { emotion: entry.emotion, sfxUrl: sfxList[0] };
+        }
+    });
 }
 
 async function cutAudio() {

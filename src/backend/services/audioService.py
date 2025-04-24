@@ -1,9 +1,4 @@
-import os
-import logging
-import tempfile
-import requests
-import subprocess
-import base64
+import os, logging, tempfile, requests, subprocess, base64
 from typing import Optional
 from pydub import AudioSegment, silence
 from backend.database.mongo_connection import get_fs
@@ -14,7 +9,8 @@ from backend.utils.ai_utils import (
 from backend.utils.text_utils import (
     transcribe_with_whisper, detect_filler_words, classify_sentence_relevance,
     analyze_certainty_levels, get_sentence_timestamps, detect_long_pauses,
-    generate_ai_show_notes, suggest_sound_effects, translate_text
+    generate_ai_show_notes, suggest_sound_effects, translate_text, mix_background,
+    pick_dominant_emotion, fetch_sfx_for_emotion
 )
 from backend.repository.ai_models import save_file, get_file_data, get_file_by_id, add_audio_edit_to_episode
 from elevenlabs.client import ElevenLabs
@@ -63,28 +59,41 @@ class AudioService:
             tmp.write(audio_bytes)
             temp_path = tmp.name
 
-        transcript = transcribe_with_whisper(temp_path)
-        cleaned = remove_filler_words(transcript)
-        clarity_score = calculate_clarity_score(cleaned)
-        noise_result = detect_background_noise(temp_path)
-        sentiment_result = analyze_sentiment(transcript)
+        try:
+            # 1) Grunddata ---------------------------------------------------
+            transcript    = transcribe_with_whisper(temp_path)
+            cleaned       = remove_filler_words(transcript)
+            clarity_score = calculate_clarity_score(cleaned)
+            noise_result  = detect_background_noise(temp_path)
+            sentiment     = analyze_sentiment(transcript)
 
-        # NEW: Sentence-level emotion + sound suggestion
-        translated_text = translate_text(transcript, "English")
-        emotion_data = analyze_emotions(translated_text)
-        sound_effects = suggest_sound_effects(emotion_data)
+            # 2) Emotion-analys ---------------------------------------------
+            translated    = translate_text(transcript, "English")
+            emotion_data  = analyze_emotions(translated)
 
-        os.remove(temp_path)
+            dominant      = pick_dominant_emotion(emotion_data)
+            bg_b64        = fetch_sfx_for_emotion(dominant, "general")[0]   # 30 s-klipp
 
-        return {
-            "transcript": transcript,
-            "cleaned_transcript": cleaned,
-            "clarity_score": clarity_score,
-            "background_noise": noise_result,
-            "sentiment": sentiment_result,
-            "emotions": emotion_data,            # NEW
-            "sound_effect_suggestions": sound_effects  # NEW
-        }
+            # 3) Mixa bakgrunden under originalet ---------------------------
+            merged_wav    = mix_background(audio_bytes, bg_b64, bg_gain_db=-15)
+
+            #    👉 lägg till data-prefixet här!
+            merged_b64    = "data:audio/wav;base64," + base64.b64encode(merged_wav).decode("utf-8")
+
+            # 4) Returnera ---------------------------------------------------
+            return {
+                "transcript":         transcript,
+                "cleaned_transcript": cleaned,
+                "clarity_score":      clarity_score,
+                "background_noise":   noise_result,
+                "sentiment":          sentiment,
+                "emotions":           emotion_data,
+                "background_clip":    bg_b64,     # ett enda 30-sek-klipp
+                "merged_audio":       merged_b64  # nu med korrekt prefix
+            }
+
+        finally:
+            os.remove(temp_path)
 
     def cut_audio(self, file_id: str, start_time: float, end_time: float, episode_id: str) -> str:
         logger.info(f"📥 Request to clip audio file with ID: {file_id}")
