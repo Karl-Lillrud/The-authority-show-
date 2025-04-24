@@ -108,7 +108,6 @@
   flex-wrap: nowrap;
 }
 
-
 .action-btn.edit-btn::after {
   content: "Edit";
   position: absolute;
@@ -939,6 +938,56 @@
 /* Form Box */
 .form-box {
   background-color: white;
+  border-radius: var(--radius-medium);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+  padding: var(--spacing-lg);
+  width: 90%;
+  max-width: 400px;
+  text-align: center;
+}
+
+.form-title {
+  font-size: 1.5rem;
+  margin-bottom: var(--spacing-md);
+}
+
+.form-actions {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--spacing-sm);
+  margin-top: var(--spacing-md);
+}
+
+.cancel-btn {
+  background-color: #f4f4f4;
+  color: #333;
+  border: none;
+  padding: 8px 16px;
+  border-radius: var(--radius-small);
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.cancel-btn:hover {
+  background-color: #e0e0e0;
+}
+
+.save-btn {
+  background-color: var(--highlight-color);
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: var(--radius-small);
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.save-btn:hover {
+  background-color: var(--highlight-hover);
+}
+
+.form-box {
+  background-color: white;
   border-radius: var(--podcastmanagement-radius-large);
   box-shadow: 0 20px 40px -10px rgba(0, 0, 0, 0.25);
   padding: var(--spacing-lg);
@@ -1322,6 +1371,20 @@ select:invalid {
 
 .meta-label {
   font-weight: 600;
+  margin-right: 0.25rem;
+  color: rgba(0, 0, 0, 0.6);
+  display: inline;
+  font-size: inherit;
+  margin: 0;
+  padding: 0;
+}
+
+.podcast-meta h4.meta-label {
+  display: inline;
+  font-size: inherit;
+  margin: 0;
+  padding: 0;
+  font-weight: 600;
   color: rgba(0, 0, 0, 0.6);
 }
 
@@ -1590,4 +1653,13 @@ select:invalid {
     max-width: 250px;
     margin: 0 auto;
   }
+}
+
+.page-title {
+  font-size: 2rem;
+  font-weight: 600;
+  color: var(--text-color-dark, #333);
+  margin-bottom: 0;
+  padding: 0 1rem;
+  width: 100%;
 }

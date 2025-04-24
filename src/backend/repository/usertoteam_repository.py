@@ -4,6 +4,7 @@ from backend.database.mongo_connection import collection
 from backend.models.users_to_teams import UserToTeamSchema
 from marshmallow import ValidationError
 from uuid import uuid4
+from backend.services.activity_service import ActivityService  # Add this import
 
 logger = logging.getLogger(__name__)
 
@@ -13,6 +14,7 @@ class UserToTeamRepository:
         self.users_to_teams_collection = collection.database.UsersToTeams
         self.teams_collection = collection.database.Teams
         self.users_collection = collection.database.Users
+        self.activity_service = ActivityService()  # Add this line
 
     def add_user_to_team(self, data):
         try:
@@ -54,6 +56,25 @@ class UserToTeamRepository:
             result = self.users_to_teams_collection.insert_one(user_to_team_item)
 
             if result.inserted_id:
+                # --- Log activity for joining a team ---
+                try:
+                    # Only log if not creator (creator is logged in TeamRepository)
+                    if role != "creator":
+                        self.activity_service.log_activity(
+                            user_id=user_id,
+                            activity_type="team_joined",
+                            description=f"Joined team '{team.get('name', '')}' as {role}.",
+                            details={
+                                "teamId": team_id,
+                                "teamName": team.get("name", ""),
+                                "role": role,
+                            },
+                        )
+                except Exception as act_err:
+                    logger.error(
+                        f"Failed to log team_joined activity: {act_err}", exc_info=True
+                    )
+                # --- End activity log ---
                 return {
                     "message": "User added to team successfully",
                     "user_to_team_id": user_to_team_id,
@@ -92,6 +113,19 @@ class UserToTeamRepository:
             if result.deleted_count == 0:
                 return {"error": "Failed to remove user from team."}, 500
 
+            # --- Log activity for leaving a team ---
+            try:
+                self.activity_service.log_activity(
+                    user_id=validated_data["userId"],
+                    activity_type="team_left",
+                    description=f"Left team '{user_team_relation.get('teamId', '')}'.",
+                    details={"teamId": user_team_relation.get("teamId", "")},
+                )
+            except Exception as act_err:
+                logger.error(
+                    f"Failed to log team_left activity: {act_err}", exc_info=True
+                )
+            # --- End activity log ---
             return {"message": "User removed from team successfully"}, 200
 
         except ValidationError as err:

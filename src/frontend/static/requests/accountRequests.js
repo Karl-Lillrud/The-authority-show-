@@ -24,16 +24,25 @@ export function updateProfile(profileData) {
   });
 }
 
-
-// Fetch account data
-export function fetchAccount() {
-  return fetch('/get_account')
-    .then(response => response.json())
-    .catch(error => {
-      console.error('Error fetching account data:', error);
-      throw new Error('Failed to fetch account data');
-    });
-}
+  // Fetch account data
+  export function fetchAccount() {
+    return fetch('/get_account')
+      .then(response => {
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        return response.json();
+      })
+      .then(data => {
+        // Extract the account object from the array
+        const account = data.account[0]; // Access the first element of the array
+        return account; // Return the account object
+      })
+      .catch(error => {
+        console.error('Error fetching account data:', error);
+        throw new Error('Failed to fetch account data');
+      });
+  }
 
 // Update account data
 export function updateAccount(accountData) {

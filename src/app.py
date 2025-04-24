@@ -24,6 +24,7 @@ from backend.routes.guest_to_eposide import guesttoepisode_bp
 from backend.routes.guest_form import guest_form_bp  # Import the guest_form blueprint
 from backend.utils.email_utils import send_email
 from backend.utils.scheduler import start_scheduler
+from backend.utils.credit_scheduler import init_credit_scheduler  # Add this import
 from backend.routes.billing import billing_bp
 from backend.routes.landingpage import landingpage_bp
 from dotenv import load_dotenv
@@ -36,6 +37,7 @@ from backend.routes.audio_routes import audio_bp
 from backend.routes.video_routes import video_bp
 from backend.routes.transcription import transcription_bp
 from colorama import Fore, Style, init  # Import colorama for styled logs
+from backend.routes.activity import activity_bp
 
 if os.getenv("SKIP_VENV_UPDATE", "false").lower() not in ("true", "1", "yes"):
     venvupdate.update_venv_and_requirements()
@@ -97,7 +99,7 @@ app.register_blueprint(
 )  # Register the guest_form blueprint with URL prefix
 app.register_blueprint(user_bp)
 app.register_blueprint(landingpage_bp)
-
+app.register_blueprint(activity_bp)
 
 # Set the application environment (defaults to production)
 APP_ENV = os.getenv("APP_ENV", "production")
@@ -140,6 +142,7 @@ def load_user():
 
 
 start_scheduler(app)
+init_credit_scheduler(app)  # Add this line after start_scheduler
 
 # Styled startup message
 if __name__ == "__main__":
