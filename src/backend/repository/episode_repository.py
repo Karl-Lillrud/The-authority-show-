@@ -4,6 +4,8 @@ from datetime import datetime, timezone
 from backend.database.mongo_connection import collection
 import uuid
 import logging
+from backend.models.episodes import EpisodeSchema
+from backend.services.activity_service import ActivityService  # Add this import
 
 logger = logging.getLogger(__name__)
 
@@ -12,7 +14,7 @@ class EpisodeRepository:
     def __init__(self):
         self.collection = collection.database.Episodes
         self.accounts_collection = collection.database.Accounts
-        self.subscription_service = SubscriptionService()  # ✅ fixed naming
+        self.activity_service = ActivityService()  # Add this line
 
     def register_episode(self, data, user_id):
         """Register a new episode for the given user."""
@@ -21,9 +23,12 @@ class EpisodeRepository:
             if not user_account:
                 return {"error": "No account associated with this user"}, 403
 
-            can_create, reason = self.subscription_service.can_create_episode(user_id)
-            if not can_create:
-                return {"error": "Episode limit reached", "reason": reason}, 403
+            
+            is_imported = data.get("isImported", False)
+            if not is_imported:
+                can_create, reason = self.subscription_service.can_create_episode(user_id)
+                if not can_create:
+                    return {"error": "Episode limit reached", "reason": reason}, 403
 
             account_id = user_account.get("id", str(user_account["_id"]))
             schema = EpisodeSchema()
@@ -64,9 +69,29 @@ class EpisodeRepository:
                 "author": validated.get("author"),
                 "isHidden": validated.get("isHidden"),
                 "recordingAt": validated.get("recordingAt"),
+                "isImported": is_imported
             }
 
             self.collection.insert_one(episode_doc)
+
+            # --- Log activity for episode created ---
+            try:
+                self.activity_service.log_activity(
+                    user_id=str(user_id),
+                    activity_type="episode_created",
+                    description=f"Created episode '{episode_doc.get('title', '')}'",
+                    details={
+                        "episodeId": episode_id,
+                        "podcastId": episode_doc.get("podcast_id", ""),
+                        "title": episode_doc.get("title", ""),
+                    },
+                )
+            except Exception as act_err:
+                logger.error(
+                    f"Failed to log episode_created activity: {act_err}", exc_info=True
+                )
+            # --- End activity log ---
+
             return {
                 "message": "Episode registered successfully",
                 "episode_id": episode_id,
@@ -75,6 +100,7 @@ class EpisodeRepository:
         except Exception as e:
             logger.error("❌ ERROR registering episode: %s", str(e))
             return {"error": f"Failed to register episode: {str(e)}"}, 500
+
 
 
     def get_episode(self, episode_id, user_id):
@@ -113,6 +139,20 @@ class EpisodeRepository:
 
             result = self.collection.delete_one({"_id": episode_id})
             if result.deleted_count == 1:
+                # --- Log activity for episode deleted ---
+                try:
+                    self.activity_service.log_activity(
+                        user_id=str(user_id),
+                        activity_type="episode_deleted",
+                        description=f"Deleted episode '{ep.get('title', '')}'",
+                        details={"episodeId": episode_id, "title": ep.get("title", "")},
+                    )
+                except Exception as act_err:
+                    logger.error(
+                        f"Failed to log episode_deleted activity: {act_err}",
+                        exc_info=True,
+                    )
+                # --- End activity log ---
                 return {"message": "Episode deleted successfully"}, 200
             return {"error": "Failed to delete episode"}, 500
         except Exception as e:
@@ -182,6 +222,22 @@ class EpisodeRepository:
                         update_fields[field] = data[field]
 
             self.collection.update_one({"_id": episode_id}, {"$set": update_fields})
+
+            # --- Log activity for episode updated ---
+            try:
+                self.activity_service.log_activity(
+                    user_id=str(user_id),
+                    activity_type="episode_updated",
+                    description=f"Updated episode '{ep.get('title', '')}'",
+                    details={"episodeId": episode_id, "title": ep.get("title", "")},
+                )
+            except Exception as act_err:
+                logger.error(
+                    f"Failed to log episode_updated activity: {act_err}",
+                    exc_info=True,
+                )
+            # --- End activity log ---
+
             return {"message": "Episode updated"}, 200
 
         except Exception as e:
