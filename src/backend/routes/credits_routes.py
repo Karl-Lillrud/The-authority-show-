@@ -27,18 +27,27 @@ def consume():
 
 @credits_bp.route('/api/credits', methods=['GET'])
 def get_available_credits():
+    from backend.services.creditManagement import CreditService
+    
     # Get user_id from session
     user_id = g.user_id
     
     if not user_id:
         return jsonify({"error": "User not authenticated"}), 401
 
-    credit_doc = credits.find_one({"user_id": user_id})
-    if not credit_doc:
+    # Use CreditService which already handles the calculation of availableCredits
+    credit_service = CreditService()
+    credits_data = credit_service.get_user_credits(user_id)
+    
+    if not credits_data:
         return jsonify({"availableCredits": 0})  # Return 0 if no credits found
-
-    available = credit_doc.get("availableCredits", 0)
-    return jsonify({"availableCredits": available})
+    
+    # CreditService already calculates availableCredits from pmCredits + userCredits
+    return jsonify({
+        "availableCredits": credits_data.get("availableCredits", 0),
+        "pmCredits": credits_data.get("pmCredits", 0),
+        "userCredits": credits_data.get("userCredits", 0)
+    })
 
 @credits_bp.route('/api/credits/check', methods=['GET'])
 def check_user_credits():
