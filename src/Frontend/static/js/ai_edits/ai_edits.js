@@ -39,21 +39,62 @@ function showTab(tabName) {
     const content = document.getElementById('content');
     content.innerHTML = ''; // Rensa befintligt innehåll
 
-    if (tabName === 'transcription') {
-        content.innerHTML = `
-            <h2>🎙 AI-Powered Transcription</h2>
-            <input type="file" id="fileUploader" accept="audio/*,video/*">
-            <button class="btn ai-edit-button" onclick="transcribe()">
-              ${labelWithCredits("▶ Transcribe", "transcription")}
-            </button>
-            <div class="result-field">
-                <pre id="transcriptionResult"></pre>
-            </div>
-            <div id="enhancementTools" style="display:none;">
-                <!-- Ytterligare verktyg... -->
-            </div>
-        `;
-    } else if (tabName === 'audio') {
+    
+        if (tabName === 'transcription') {
+            content.innerHTML = `
+                <h2>🎙 AI-Powered Transcription</h2>
+                <input type="file" id="fileUploader" accept="audio/*,video/*">
+                <button class="btn ai-edit-button" onclick="transcribe()">
+                  ${labelWithCredits("▶ Transcribe", "transcription")}
+                </button>
+                <div class="result-field">
+                    <pre id="transcriptionResult"></pre>
+                </div>
+    
+                <div id="enhancementTools" style="display:none;">
+                    <hr/>
+                    <h3>🔧 Enhancement Tools</h3>
+                    <div class="result-group">
+                        <button class="btn ai-edit-button" onclick="generateCleanTranscript()">🧹 Clean Transcript</button>
+                        <div class="result-field">
+                            <pre id="cleanTranscriptResult"></pre>
+                        </div>
+                    </div>
+                    <div class="result-group">
+                        <button class="btn ai-edit-button" onclick="generateAISuggestions()">
+                          ${labelWithCredits("🤖 AI Suggestions", "ai_suggestions")}
+                        </button>
+                        <div class="result-field">
+                            <pre id="aiSuggestionsResult"></pre>
+                        </div>
+                    </div>
+                    <div class="result-group">
+                        <button class="btn ai-edit-button" onclick="generateShowNotes()">
+                          ${labelWithCredits("📝 Show Notes", "show_notes")}
+                        </button>
+                        <div class="result-field">
+                            <pre id="showNotesResult"></pre>
+                        </div>
+                    </div>
+                    <div class="result-group">
+                        <button class="btn ai-edit-button" onclick="generateQuotes()">
+                          ${labelWithCredits("💬 Generate Quotes", "ai_quotes")}
+                        </button>
+                        <div class="result-field">
+                            <pre id="quotesResult"></pre>
+                        </div>
+                    </div>
+                    <div class="result-group">
+                        <button class="btn ai-edit-button" onclick="generateQuoteImages()">
+                          ${labelWithCredits("🖼️ Generate Quote Images", "ai_qoute_images")}
+                        </button>
+                        <div class="result-field">
+                            <div id="quoteImagesResult"></div>
+                        </div>
+                    </div>
+                </div>
+            `;
+    }   else if (tabName === 'audio') {
         content.innerHTML = `
             <h2>🎵 AI Audio Enhancement</h2>
             <input type="file" id="audioUploader" accept="audio/*" onchange="previewOriginalAudio()">
