@@ -6,10 +6,7 @@ import {
 } from "../../../static/requests/episodeRequest.js";
 import { fetchPodcasts } from "../../../static/requests/podcastRequests.js";
 import { fetchGuestsByEpisode } from "../../../static/requests/guestRequests.js";
-import {
-  updateEditButtons,
-  shared
-} from "./podcastmanagement.js";
+import { updateEditButtons, shared } from "./podcastmanagement.js";
 import { renderPodcastSelection, viewPodcast } from "./podcast-functions.js";
 import { renderGuestDetail } from "./guest-functions.js";
 import { showNotification } from "../components/notifications.js";
@@ -548,7 +545,7 @@ export function initEpisodeFunctions() {
       const data = Object.fromEntries(formData.entries());
 
       // Ensure recordingAt is in the correct format
-      if (data.recordingAt === '') {
+      if (data.recordingAt === "") {
         data.recordingAt = null; // Set to null if no date is provided
       } else if (data.recordingAt) {
         const recordingAt = new Date(data.recordingAt);
@@ -614,4 +611,74 @@ export function initEpisodeFunctions() {
         showNotification("Error", "Failed to create episode.", "error");
       }
     });
+
+  document
+    .getElementById("create-episode-form")
+    .addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const formData = new FormData(e.target);
+      const data = Object.fromEntries(formData.entries());
+
+      if (!data.podcastId || !data.title || !data.publishDate) {
+        showNotification(
+          "Missing Fields",
+          "Please fill in all required fields.",
+          "error"
+        );
+        return;
+      }
+
+      try {
+        const result = await registerEpisode(data);
+        console.log("Result from registerEpisode:", result);
+        if (result.message) {
+          showNotification(
+            "Success",
+            "Episode created successfully!",
+            "success"
+          );
+          document.getElementById("episode-form-popup").style.display = "none";
+        }
+      } catch (error) {
+        if (error.message === "Episode limit reached") {
+          showEpisodeLimitPopup(); // Visa popup för episodgräns
+        } else {
+          showNotification("Error", "Failed to create episode.", "error");
+        }
+      }
+    });
+
+  // Funktion för att visa popup när episodgränsen nås
+  function showEpisodeLimitPopup() {
+    const popup = document.createElement("div");
+    popup.className = "popup";
+    popup.style.display = "flex";
+
+    popup.innerHTML = `
+      <div class="form-box">
+        <h2 class="form-title">Episode Limit Reached</h2>
+        <p>You have reached your episode limit. Buy more slots to create additional episodes.</p>
+        <div class="form-actions">
+          <button class="cancel-btn" id="close-limit-popup">Cancel</button>
+          <button class="save-btn" id="buy-credits-btn-popup">Buy Credits</button>
+        </div>
+      </div>
+    `;
+
+    document.body.appendChild(popup);
+
+    // Stäng popup
+    document
+      .getElementById("close-limit-popup")
+      .addEventListener("click", () => {
+        document.body.removeChild(popup);
+      });
+
+    // Navigera till store
+    document
+      .getElementById("buy-credits-btn-popup")
+      .addEventListener("click", () => {
+        window.location.href = "/store";
+      });
+  }
 }
