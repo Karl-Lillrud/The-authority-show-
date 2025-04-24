@@ -383,3 +383,110 @@ class AudioService:
             for path in [tmp_path, cleaned_path]:
                 if os.path.exists(path):
                     os.remove(path)
+
+    def apply_cuts_and_return_bytes(self, file_id: str, cuts: list[dict]) -> tuple[bytes, str]:
+        audio_data = get_file_data(file_id)
+
+        with tempfile.NamedTemporaryFile(delete=False, suffix=".wav") as tmp:
+            tmp.write(audio_data)
+            tmp_path = tmp.name
+
+        try:
+            audio = AudioSegment.from_wav(tmp_path)
+            cuts_ms = sorted([
+                (int(c["start"] * 1000), int(c["end"] * 1000))
+                for c in cuts if 0 <= c["start"] < c["end"]
+            ])
+
+            merged = []
+            for start, end in cuts_ms:
+                if merged and start <= merged[-1][1]:
+                    merged[-1] = (merged[-1][0], max(merged[-1][1], end))
+                else:
+                    merged.append((start, end))
+
+            segments = [audio[start:end] for start, end in merged]
+            final_audio = sum(segments)
+
+            with tempfile.NamedTemporaryFile(suffix=".wav", delete=False) as out_tmp:
+                cleaned_path = out_tmp.name
+                final_audio.export(cleaned_path, format="wav")
+
+            with open(cleaned_path, "rb") as f:
+                cleaned_bytes = f.read()
+
+            filename = f"cleaned_{file_id}.wav"
+            return cleaned_bytes, filename
+        finally:
+            for path in [tmp_path, cleaned_path]:
+                if os.path.exists(path):
+                    os.remove(path)
+
+    def cut_audio_to_bytes(self, file_id: str, start_time: float, end_time: float) -> tuple[bytes, str]:
+        logger.info(f"📥 Cutting audio ID: {file_id} from {start_time}s to {end_time}s")
+
+        if start_time is None or end_time is None or start_time >= end_time:
+            raise ValueError("Invalid timestamps.")
+
+        audio_data = get_file_data(file_id)
+
+        with tempfile.NamedTemporaryFile(delete=False, suffix=".wav") as tmp_in:
+            tmp_in.write(audio_data)
+            input_path = tmp_in.name
+
+        output_path = input_path.replace(".wav", "_clipped.wav")
+
+        try:
+            subprocess.run([
+                "ffmpeg", "-y", "-i", input_path,
+                "-ss", str(start_time), "-to", str(end_time),
+                "-c", "copy", output_path
+            ], check=True)
+
+            with open(output_path, "rb") as f:
+                clipped_data = f.read()
+
+            filename = os.path.basename(output_path)
+            return clipped_data, filename
+        finally:
+            for path in [input_path, output_path]:
+                if os.path.exists(path):
+                    os.remove(path)
+
+    def cut_audio_from_blob(self, audio_bytes: bytes, filename: str, episode_id: str, start_time: float, end_time: float) -> str:
+        with tempfile.NamedTemporaryFile(delete=False, suffix=".wav") as tmp_in:
+            tmp_in.write(audio_bytes)
+            input_path = tmp_in.name
+
+        output_path = input_path.replace(".wav", "_clipped.wav")
+
+        try:
+            subprocess.run([
+                "ffmpeg", "-y", "-i", input_path,
+                "-ss", str(start_time), "-to", str(end_time),
+                "-c", "copy", output_path
+            ], check=True)
+
+            with open(output_path, "rb") as f:
+                clipped_data = f.read()
+
+            podcast_id = episode_repo.get_podcast_id_by_episode(episode_id)
+            blob_path = f"users/{g.user_id}/podcasts/{podcast_id}/episodes/{episode_id}/audio/clipped_{filename}"
+            blob_url = upload_file_to_blob("podmanagerfiles", blob_path, clipped_data)
+
+            add_audio_edit_to_episode(
+                episode_id=episode_id,
+                file_id="external",
+                edit_type="manual_clip",
+                filename=f"clipped_{filename}",
+                metadata={"blob_url": blob_url, "start": start_time, "end": end_time}
+            )
+
+            return blob_url
+        finally:
+            for path in [input_path, output_path]:
+                if os.path.exists(path):
+                    os.remove(path)
+
+
+

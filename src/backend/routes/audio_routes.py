@@ -82,8 +82,7 @@ def clip_audio():
 
         podcast_id = episode_repo.get_podcast_id_by_episode(episode_id)
         blob_path = f"users/{g.user_id}/podcasts/{podcast_id}/episodes/{episode_id}/audio/{filename}"
-        base64_audio = base64.b64encode(clipped_bytes).decode("utf-8")
-        blob_url = upload_file_to_blob("podmanagerfiles", blob_path, base64_audio)
+        blob_url = upload_file_to_blob("podmanagerfiles", blob_path, clipped_bytes)
 
         add_audio_edit_to_episode(
             episode_id=episode_id,
@@ -97,6 +96,7 @@ def clip_audio():
     except Exception as e:
         logger.error(f"Error clipping audio: {str(e)}")
         return jsonify({"error": str(e)}), 500
+
 
 @audio_bp.route("/ai_cut_audio", methods=["POST"])
 def ai_cut_audio():
@@ -127,8 +127,7 @@ def apply_ai_cuts():
 
         podcast_id = episode_repo.get_podcast_id_by_episode(episode_id)
         blob_path = f"users/{g.user_id}/podcasts/{podcast_id}/episodes/{episode_id}/audio/{cleaned_filename}"
-        base64_audio = base64.b64encode(cleaned_bytes).decode("utf-8")
-        blob_url = upload_file_to_blob("podmanagerfiles", blob_path, base64_audio)
+        blob_url = upload_file_to_blob("podmanagerfiles", blob_path, cleaned_bytes)
 
         add_audio_edit_to_episode(
             episode_id=episode_id,
@@ -138,7 +137,42 @@ def apply_ai_cuts():
             metadata={"blob_url": blob_url, "applied_ai_cuts": cuts}
         )
 
-        return jsonify({"cleaned_file_url": blob_url}), 200
+        return jsonify({"cleaned_file_url": blob_url})
     except Exception as e:
         logger.error(f"❌ Error applying AI cuts: {str(e)}")
+        return jsonify({"error": str(e)}), 500
+
+@audio_bp.route("/cut_from_blob", methods=["POST"])
+def cut_audio_from_blob():
+    if "audio" not in request.files or "episode_id" not in request.form:
+        return jsonify({"error": "Audio file and episode_id are required"}), 400
+
+    try:
+        audio_file = request.files["audio"]
+        episode_id = request.form["episode_id"]
+        start = float(request.form["start"])
+        end = float(request.form["end"])
+        filename = audio_file.filename
+        audio_bytes = audio_file.read()
+
+        blob_url = audio_service.cut_audio_from_blob(audio_bytes, filename, episode_id, start, end)
+        return jsonify({"clipped_audio_url": blob_url})
+    except Exception as e:
+        logger.error(f"Error cutting audio from blob: {str(e)}")
+        return jsonify({"error": str(e)}), 500
+
+@audio_bp.route("/get_clipped_audio", methods=["GET"])
+def get_clipped_audio():
+    url = request.args.get("url")
+    if not url:
+        return jsonify({"error": "Missing URL"}), 400
+
+    try:
+        response = requests.get(url)
+        response.raise_for_status()
+
+        content_type = "audio/mpeg" if url.lower().endswith(".mp3") else "audio/wav"
+        return Response(response.content, content_type=content_type)
+    except Exception as e:
+        logger.error(f"Error fetching clipped audio from blob: {str(e)}")
         return jsonify({"error": str(e)}), 500

@@ -527,20 +527,8 @@ async function cutAudio() {
     const end = parseFloat(endInput.value);
 
     const episodeId = sessionStorage.getItem("selected_episode_id");
-    if (!episodeId) {
-        alert("⚠️ No episode selected.");
-        return;
-    }
-
-    if (!activeAudioId) {
-        alert("⚠️ No audio loaded. Please enhance or isolate first.");
-        return;
-    }
-
-    if (isNaN(start) || isNaN(end) || start >= end) {
-        alert("⚠️ Invalid start or end time.");
-        return;
-    }
+    if (!episodeId || !activeAudioBlob) return alert("⚠️ No audio or episode selected.");
+    if (isNaN(start) || isNaN(end) || start >= end) return alert("⚠️ Invalid timestamps.");
 
     try {
         await consumeUserCredits("audio_cutting");
@@ -549,23 +537,26 @@ async function cutAudio() {
         return;
     }
 
+    const formData = new FormData();
+    formData.append("audio", new File([activeAudioBlob], "clip.wav", { type: "audio/wav" }));
+    formData.append("episode_id", episodeId);
+    formData.append("start", start);
+    formData.append("end", end);
+
     try {
-        const res = await fetch('/clip_audio', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                file_id: activeAudioId,
-                clips: [{ start, end }],
-                episode_id: episodeId // 👈 skickar med detta till backend
-            })
+        const response = await fetch("/cut_from_blob", {
+            method: "POST",
+            body: formData
         });
 
-        const data = await res.json();
-        if (!res.ok || !data.clipped_audio) {
-            throw new Error(data.error || "No clipped audio returned.");
+        const result = await response.json();
+        if (!response.ok || !result.clipped_audio_url) {
+            throw new Error(result.error || "Clipping failed.");
         }
 
-        const audioRes = await fetch(`/transcription/get_file/${data.clipped_audio}`);
+        const proxyUrl = `/get_clipped_audio?url=${encodeURIComponent(result.clipped_audio_url)}`;
+        const audioRes = await fetch(proxyUrl);
+        if (!audioRes.ok) throw new Error("Failed to fetch clipped audio.");
         const blob = await audioRes.blob();
         const url = URL.createObjectURL(blob);
 
@@ -574,83 +565,56 @@ async function cutAudio() {
         dl.download = "clipped_audio.wav";
         dl.style.display = "inline-block";
 
+        activeAudioBlob = blob;
+        activeAudioId = "external";
     } catch (err) {
         alert(`❌ Cut failed: ${err.message}`);
     }
 }
 
 
-async function aiCutAudio() {
-    if (!activeAudioId) {
-        alert('No audio loaded.');
-        return;
-    }
+async function applySelectedCuts() {
+    const cuts = Object.values(window.selectedAiCuts || {});
+    if (!cuts.length) return alert("No cuts selected.");
+
+    const payload = {
+        file_id: activeAudioId,
+        cuts: cuts.map(c => ({ start: c.start, end: c.end })),
+        episode_id: sessionStorage.getItem("selected_episode_id")
+    };
 
     try {
-        await consumeUserCredits("ai_audio_cutting");
-    } catch (err) {
-        alert(`❌ Not enough credits: ${err.message}`);
-        return;
-    }
-
-    document.getElementById("aiTranscript").innerText = "🔄 Processing AI Cut... Please wait.";
-
-    try {
-        const response = await fetch('/ai_cut_audio', {
+        const res = await fetch('/apply_ai_cuts', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ file_id: activeAudioId })
+            body: JSON.stringify(payload)
         });
 
-        if (response.ok) {
-            const data = await response.json();
-            document.getElementById("aiTranscript").innerText = data.cleaned_transcript || "No transcript available.";
-
-            const suggestedCuts = data.suggested_cuts || [];
-            const cutsContainer = document.getElementById("aiSuggestedCuts");
-
-            if (!suggestedCuts.length) {
-                cutsContainer.innerText = "No suggested cuts found.";
-                return;
-            }
-
-            cutsContainer.innerHTML = "";
-            window.selectedAiCuts = {};
-
-            suggestedCuts.forEach((cut, index) => {
-                const checkbox = document.createElement("input");
-                checkbox.type = "checkbox";
-                checkbox.checked = true;
-                checkbox.dataset.index = index;
-                checkbox.onchange = () => {
-                    if (checkbox.checked) {
-                        window.selectedAiCuts[index] = cut;
-                    } else {
-                        delete window.selectedAiCuts[index];
-                    }
-                };
-                window.selectedAiCuts[index] = cut;
-
-                const label = document.createElement("label");
-                label.innerText = `💬 "${cut.sentence}" (${cut.start}s - ${cut.end}s) | Confidence: ${cut.certainty_score.toFixed(2)}`;
-
-                const div = document.createElement("div");
-                div.appendChild(checkbox);
-                div.appendChild(label);
-                cutsContainer.appendChild(div);
-            });
-
-            const applyBtn = document.createElement("button");
-            applyBtn.className = "btn ai-edit-button";
-            applyBtn.innerText = "✅ Apply AI Cuts";
-            applyBtn.onclick = applySelectedCuts;
-
-            cutsContainer.appendChild(applyBtn);
-        } else {
-            alert(`❌ Error: ${response.status} - ${response.statusText}`);
+        const data = await res.json();
+        if (!data.cleaned_file_url) {
+            throw new Error(data.error || "No cleaned file returned.");
         }
-    } catch (error) {
-        alert(`❌ AI cut failed: ${error.message}`);
+
+        const { blob, objectUrl: url } = await fetchAudioFromBlobUrl(data.cleaned_file_url);
+
+        const section = document.getElementById("aiCuttingSection");
+        const player = document.createElement("audio");
+        player.controls = true;
+        player.src = url;
+        section.appendChild(document.createElement("hr"));
+        section.appendChild(player);
+
+        const dl = document.createElement("a");
+        dl.href = url;
+        dl.download = "ai_cleaned_audio.wav";
+        dl.className = "btn ai-edit-button";
+        dl.innerText = "📥 Download Cleaned Audio";
+        section.appendChild(dl);
+
+        activeAudioBlob = blob;
+        activeAudioId = "external";
+    } catch (err) {
+        alert(`❌ Apply failed: ${err.message}`);
     }
 }
 
@@ -664,7 +628,7 @@ async function applySelectedCuts() {
     const payload = {
         file_id: activeAudioId,
         cuts: cuts.map(c => ({ start: c.start, end: c.end })),
-        episode_id: sessionStorage.getItem("selected_episode_id") // 💾 Viktigt!
+        episode_id: sessionStorage.getItem("selected_episode_id")
     };
 
     const res = await fetch('/apply_ai_cuts', {
@@ -674,14 +638,12 @@ async function applySelectedCuts() {
     });
 
     const data = await res.json();
-    if (!data.cleaned_file_id) {
+    if (!data.cleaned_file_url) {
         alert("❌ Failed to apply AI cuts.");
         return;
     }
 
-    const audioRes = await fetch(`/transcription/get_file/${data.cleaned_file_id}`);
-    const blob = await audioRes.blob();
-    const url = URL.createObjectURL(blob);
+    const { blob, objectUrl: url } = await fetchAudioFromBlobUrl(data.cleaned_file_url);
 
     const section = document.getElementById("aiCuttingSection");
     const player = document.createElement("audio");
@@ -696,8 +658,62 @@ async function applySelectedCuts() {
     dl.className = "btn ai-edit-button";
     dl.innerText = "📥 Download Cleaned Audio";
     section.appendChild(dl);
+
+    // 🧠 Uppdatera aktivt ljud i sessionen
+    activeAudioBlob = blob;
+    activeAudioId = "external";
 }
 
+async function cutAudioFromBlob() {
+    const startInput = document.getElementById("startTime");
+    const endInput = document.getElementById("endTime");
+    const cutResult = document.getElementById("cutResult");
+    const dl = document.getElementById("downloadCut");
+
+    const start = parseFloat(startInput.value);
+    const end = parseFloat(endInput.value);
+
+    const episodeId = sessionStorage.getItem("selected_episode_id");
+    if (!episodeId || !activeAudioBlob) return alert("⚠️ No audio or episode selected.");
+    if (isNaN(start) || isNaN(end) || start >= end) return alert("⚠️ Invalid timestamps.");
+
+    try {
+        await consumeUserCredits("audio_cutting");
+    } catch (err) {
+        alert(`❌ Not enough credits: ${err.message}`);
+        return;
+    }
+
+    const formData = new FormData();
+    formData.append("audio", new File([activeAudioBlob], "clip.wav", { type: "audio/wav" }));
+    formData.append("episode_id", episodeId);
+    formData.append("start", start);
+    formData.append("end", end);
+
+    try {
+        const response = await fetch("/cut_from_blob", {
+            method: "POST",
+            body: formData
+        });
+
+        const result = await response.json();
+        if (!response.ok || !result.clipped_audio_url) {
+            throw new Error(result.error || "Clipping failed.");
+        }
+
+        const { blob, objectUrl: url } = await fetchAudioFromBlobUrl(result.clipped_audio_url);
+
+        cutResult.innerHTML = `<audio controls src="${url}" style="width: 100%;"></audio>`;
+        dl.href = url;
+        dl.download = "clipped_audio.wav";
+        dl.style.display = "inline-block";
+
+        activeAudioBlob = blob;
+        activeAudioId = "external";
+    } catch (err) {
+        alert(`❌ Cut failed: ${err.message}`);
+    }
+}
 
 async function enhanceVideo() {
     const fileInput = document.getElementById('videoUploader');
