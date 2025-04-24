@@ -442,7 +442,7 @@ async function analyzeEnhancedAudio() {
     const resultEl = document.getElementById("analysisResults");
     const timeline = document.getElementById("soundEffectTimeline");
 
-    /* --- grundkontroller ----------------------------------------- */
+    /* --- grund-kontroller --------------------------------------- */
     if (!activeAudioBlob) {
         alert("No audio loaded. Enhance or Isolate first.");
         return;
@@ -454,7 +454,6 @@ async function analyzeEnhancedAudio() {
         return;
     }
 
-    /* --- skicka filen -------------------------------------------- */
     resultEl.innerText = "🔍 Analyzing...";
     const fd = new FormData();
     fd.append("audio", activeAudioBlob, "processed_audio.wav");
@@ -462,18 +461,29 @@ async function analyzeEnhancedAudio() {
     try {
         const res  = await fetch("/audio_analysis", { method: "POST", body: fd });
         const data = await res.json();
+        console.log("JSON from /audio_analysis", data);   // debug
 
-        /* --- 1. visa text-statistik -------------------------------- */
+        /* --- 1. räkna topp-emotioner ----------------------------- */
+        const emoFreq = {};
+        (data.emotions || []).forEach(row => {
+        const lab = row.emotions[0].label;
+        emoFreq[lab] = (emoFreq[lab] || 0) + 1;
+        });
+
+        const topEmo = Object.entries(emoFreq)
+                            .sort((a, b) => b[1] - a[1])[0]?.[0] || "–";
+
+        /* --- 2. skriv resultat-text ------------------------------ */
         resultEl.innerText = `
-📊 Sentiment:        ${data.sentiment}
-📊 Clarity Score:    ${data.clarity_score}
-📊 Background Noise: ${data.background_noise}
+📊 Sentiment:        ${data.sentiment        ?? "–"}
+📊 Clarity Score:    ${data.clarity_score    ?? "–"}
+📊 Background Noise: ${data.background_noise ?? "–"}
+📊 Top Emotions:     ${topEmo}
         `;
 
-        /* --- 2. rensa / fyll tidslinje ----------------------------- */
+        /* --- 3. fyll tidslinjen ---------------------------------- */
         timeline.innerHTML = "";
 
-        /* 2a. separat bakgrunds-loop (frivillig) */
         if (data.background_clip) {
             timeline.innerHTML += `
                 <h4>🔈 Background Loop (30 s)</h4>
@@ -482,7 +492,6 @@ async function analyzeEnhancedAudio() {
             `;
         }
 
-        /* 2b. mixad fil över hela klippet */
         if (data.merged_audio) {
             timeline.innerHTML += `
                 <h4>🎶 Mixed Preview</h4>
