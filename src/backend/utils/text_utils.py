@@ -319,7 +319,7 @@ def mix_background(
     original_wav_bytes: bytes,
     bg_b64_url: str,
     *,
-    bg_gain_db: float = -15.0   # dämpa bakgrunden
+    bg_gain_db: float = -45.0   # dämpa bakgrunden
 ) -> bytes:
     """
     • Avkoda original (WAV) + bakgrund (base64-MP3).
