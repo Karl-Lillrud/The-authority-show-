@@ -17,14 +17,14 @@ class CreditsSchema(Schema):
     """Schema for the main user credits document."""
     _id = fields.Str(load_default=lambda: str(uuid.uuid4()))
     user_id = fields.Str(required=True)
-    pmCredits = fields.Int(load_default=0, validate=validate.Range(min=0)) # Current month's PM credits
-    userCredits = fields.Int(load_default=0, validate=validate.Range(min=0)) # Purchased credits
+    subCredits = fields.Int(load_default=0, validate=validate.Range(min=0)) # Current month's PM credits
+    storeCredits = fields.Int(load_default=0, validate=validate.Range(min=0)) # Purchased credits
     # availableCredits is calculated, not stored
     usedCredits = fields.Int(load_default=0, validate=validate.Range(min=0)) # Lifetime used credits
     lastUpdated = fields.DateTime(load_default=datetime.utcnow) # Tracks last update, crucial for reset
-    carryOverUserCredits = fields.Bool(load_default=True) # Determines if userCredits reset monthly
-    lastPmResetMonth = fields.Int(allow_none=True) # Store the month (1-12) of the last pmCredits reset
-    lastPmResetYear = fields.Int(allow_none=True) # Store the year of the last pmCredits reset
+    carryOverstoreCredits = fields.Bool(load_default=True) # Determines if storeCredits reset monthly
+    lastPmResetMonth = fields.Int(allow_none=True) # Store the month (1-12) of the last subCredits reset
+    lastPmResetYear = fields.Int(allow_none=True) # Store the year of the last subCredits reset
     creditsHistory = fields.List(fields.Nested(CreditHistoryEntrySchema), load_default=list)
 
     

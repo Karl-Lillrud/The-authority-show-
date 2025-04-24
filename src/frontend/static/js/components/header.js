@@ -4,7 +4,7 @@ document.addEventListener("DOMContentLoaded", () => {
   populateHeaderPodcastDropdown();
   populateLandingPageDropdown();
   setDynamicPageTitle();
-  populateUserCredits();
+  populateStoreCredits();
 
   const buyBtn = document.getElementById("buy-credits-btn");
   if (buyBtn) {
@@ -97,7 +97,7 @@ async function populateHeaderPodcastDropdown() {
 }
 
 // Function to fetch and display user credits
-async function populateUserCredits() {
+async function populateStoreCredits() {
   try {
     const creditsElement = document.getElementById("user-credits");
     if (!creditsElement) return; // Skip if element doesn't exist

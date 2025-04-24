@@ -504,7 +504,7 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   // Add this function to fetch and update credits
-  fetchUserCredits();
+  fetchStoreCredits();
 
   // Load purchases when the purchases section is opened
   const purchasesNavItem = document.querySelector('li[data-target="settings-purchases"]');
@@ -522,7 +522,7 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 
 // Function to fetch user credits
-async function fetchUserCredits() {
+async function fetchStoreCredits() {
   try {
     const creditsElement = document.getElementById("available-credits");
     if (!creditsElement) return; // Skip if element doesn't exist
