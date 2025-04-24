@@ -67,11 +67,11 @@
             </button>
             <button class="tab-btn" data-tab="kanban">
               <i class="fas fa-columns"></i>
-              <span>Kanban</span>
+              <span>Progress Board</span>
             </button>
             <button class="tab-btn" data-tab="dependencies">
               <i class="fas fa-file-alt"></i>
-              <span>Dependencies</span>
+              <span>Workflows</span>
             </button>
             <button class="tab-btn" data-tab="workspace">
               <i class="fas fa-laptop"></i>
@@ -99,11 +99,7 @@
               <div class="card">
                 <div class="card-content">
                   <div class="tab-header">
-                    <h2 class="section-title">Kanban Board</h2>
-                    <button class="btn btn-outline btn-sm">
-                      <i class="fas fa-cog"></i>
-                      <span>Board Settings</span>
-                    </button>
+                    <h2 class="section-title">Progress Board</h2>
                   </div>
                   <div id="kanbanBoard" class="kanban-board">
                     <!-- Kanban columns will be populated by JavaScript -->
@@ -116,7 +112,7 @@
             <div id="dependencies-tab" class="tab-pane">
               <div class="card">
                 <div class="card-content">
-                  <h2 class="section-title">Dependency Management</h2>
+                  <h2 class="section-title">Workflow Management</h2>
                   <div id="dependencyView" class="dependency-view">
                     <!-- Dependencies will be populated by JavaScript -->
                   </div>
@@ -204,6 +200,18 @@
     </div>
   </div>
 
-  <script type="module" src="{{ url_for('static', filename='js/episode-to-do/episode-to-do.js') }}"></script>
+  <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+  <!-- Load utility functions first -->
+  <script type="module" src="{{ url_for('static', filename='js/episode-to-do/utils.js') }}"></script>
+  
+  <!-- Load individual module files -->
+  <script type="module" src="{{ url_for('static', filename='js/episode-to-do/task-page.js') }}"></script>
+  <script type="module" src="{{ url_for('static', filename='js/episode-to-do/kanban-page.js') }}"></script>
+  <script type="module" src="{{ url_for('static', filename='js/episode-to-do/workflow-page.js') }}"></script>
+  <script type="module" src="{{ url_for('static', filename='js/episode-to-do/workspace-page.js') }}"></script>
+  <script type="module" src="{{ url_for('static', filename='js/episode-to-do/sidebar-header.js') }}"></script>
+  
+  <!-- Load the main entry point last -->
+  <script type="module" src="{{ url_for('static', filename='js/episode-to-do/main.js') }}"></script>
 </body>
 </html>

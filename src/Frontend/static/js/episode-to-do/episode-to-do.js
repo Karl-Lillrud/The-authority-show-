@@ -11,6 +11,7 @@ import {
   fetchLocalDefaultTasks,
   deleteWorkflow,
 } from "/static/requests/podtaskRequest.js"
+import { fetchProfile } from "/static/requests/accountRequests.js"
 
 document.addEventListener("DOMContentLoaded", async () => {
   // State management
@@ -194,6 +195,9 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     // Add global CSS for modals
     addModalStyles()
+
+    // Add flatpickr CSS and JS
+    addFlatpickrStyles()
   }
 
   // Add global CSS for modals
@@ -332,8 +336,74 @@ document.addEventListener("DOMContentLoaded", async () => {
         color: #666;
         margin-top: 5px;
       }
+      
+      /* Dependency visualization styles */
+      .task-dependency-warning {
+        background-color: #fff3cd;
+        border: 1px solid #ffeeba;
+        border-radius: 4px;
+        padding: 8px 12px;
+        margin-top: 8px;
+        color: #856404;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+      
+      .task-dependency-list {
+        margin: 5px 0;
+        padding-left: 20px;
+      }
+      
+      .task-dependency-item {
+        display: flex;
+        align-items: center;
+        gap: 5px;
+        margin-bottom: 3px;
+      }
+      
+      .dependency-status {
+        display: inline-block;
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+      }
+      
+      .dependency-status.completed {
+        background-color: #4CAF50;
+      }
+      
+      .dependency-status.pending {
+        background-color: #f0ad4e;
+      }
+      
+      .task-checkbox.disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+        background-color: #f8f9fa;
+      }
     `
     document.head.appendChild(style)
+  }
+
+  // Add flatpickr for date/time picker
+  function addFlatpickrStyles() {
+    // Add flatpickr CSS
+    const flatpickrCSS = document.createElement("link")
+    flatpickrCSS.rel = "stylesheet"
+    flatpickrCSS.href = "https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css"
+    document.head.appendChild(flatpickrCSS)
+
+    // Add flatpickr theme (optional)
+    const flatpickrTheme = document.createElement("link")
+    flatpickrTheme.rel = "stylesheet"
+    flatpickrTheme.href = "https://cdn.jsdelivr.net/npm/flatpickr/dist/themes/material_blue.css"
+    document.head.appendChild(flatpickrTheme)
+
+    // Add flatpickr JS
+    const flatpickrScript = document.createElement("script")
+    flatpickrScript.src = "https://cdn.jsdelivr.net/npm/flatpickr"
+    document.head.appendChild(flatpickrScript)
   }
 
   function populatePodcastSelector() {
@@ -507,103 +577,131 @@ document.addEventListener("DOMContentLoaded", async () => {
               })
             : []
 
+        // Get dependency statuses for display
+        const dependencyStatuses =
+          task.dependencies && task.dependencies.length > 0
+            ? task.dependencies.map((depId) => {
+                const depTask = tasksToRender.find((t) => (t.id || t._id) === depId)
+                return depTask ? (depTask.status === "completed" ? "completed" : "pending") : "pending"
+              })
+            : []
+
         const taskItem = document.createElement("div")
         taskItem.className = "task-item"
         taskItem.dataset.taskId = task.id || task._id
         taskItem.innerHTML = `
-        <div class="task-header ${isCompleted ? "completed" : ""}">
-          <div class="task-checkbox ${isCompleted ? "checked" : ""} ${hasDependencyWarning && !isCompleted ? "disabled" : ""}" data-task-id="${task.id || task._id}">
-            ${isCompleted ? '<i class="fas fa-check"></i>' : ""}
-          </div>
-          <button class="task-expand" data-task-id="${task.id || task._id}">
-            <i class="fas fa-chevron-${isExpanded ? "down" : "right"}"></i>
-          </button>
-          <div class="task-content">
-            <div class="task-name ${isCompleted ? "completed" : ""}">${task.name}</div>
-            ${
-              !isExpanded
-                ? `
-              <div class="task-meta">
-                <div class="task-meta-item">
-                  <i class="fas fa-clock"></i>
-                  <span>${task.dueDate || "No due date"}</span>
-                </div>
-                <div class="task-meta-item">
-                  <i class="fas fa-user"></i>
-                  <span>${task.assigneeName || "Unassigned"}</span>
-                </div>
-                ${
-                  task.comments && task.comments.length > 0
-                    ? `
-                  <span class="task-badge">${task.comments.length} ${task.comments.length === 1 ? "comment" : "comments"}</span>
-                `
-                    : ""
-                }
-                ${
-                  hasDependencyWarning
-                    ? `
-                  <span class="task-badge warning">Waiting for dependencies</span>
-                `
-                    : ""
-                }
-              </div>
-            `
-                : ""
-            }
-          </div>
-          <div class="task-actions">
-            ${hasDependencyWarning ? '<i class="fas fa-exclamation-triangle text-warning" title="This task has incomplete dependencies"></i>' : ""}
-            <button class="task-action-btn edit-task-btn" title="Edit Task" data-task-id="${task.id || task._id}">
-              <i class="fas fa-edit"></i>
-            </button>
-            <button class="task-action-btn delete-task-btn" title="Delete Task" data-task-id="${task.id || task._id}">
-              <i class="fas fa-trash"></i>
-            </button>
-            <button class="task-action-btn assign-task-btn" title="${isAssignedToCurrentUser ? "Unassign Task" : "Assign to me"}" data-task-id="${task.id || task._id}">
-              <i class="fas ${isAssignedToCurrentUser ? "fa-user-minus" : "fa-user-plus"}"></i>
-            </button>
-          </div>
-        </div>
-        
-        <div class="task-details ${isExpanded ? "expanded" : ""}">
-          <p class="task-description">${task.description || "No description available"}</p>
-          
+    <div class="task-header ${isCompleted ? "completed" : ""}">
+      <div class="task-checkbox ${isCompleted ? "checked" : ""} ${hasDependencyWarning && !isCompleted ? "disabled" : ""}" data-task-id="${task.id || task._id}">
+        ${isCompleted ? '<i class="fas fa-check"></i>' : ""}
+      </div>
+      <button class="task-expand" data-task-id="${task.id || task._id}">
+        <i class="fas fa-chevron-${isExpanded ? "down" : "right"}"></i>
+      </button>
+      <div class="task-content">
+        <div class="task-name ${isCompleted ? "completed" : ""}">${task.name}</div>
+        ${
+          !isExpanded
+            ? `
+  <div class="task-meta">
+    <div class="task-meta-item">
+      <i class="fas fa-clock"></i>
+      <span>${formatDueDate(task.dueDate) || "No due date"}</span>
+    </div>
+    <div class="task-meta-item">
+      <i class="fas fa-user"></i>
+      <span>${task.assignedAt || "Unassigned"}</span>
+    </div>
+    ${
+      task.comments && task.comments.length > 0
+        ? `
+      <span class="task-badge">${task.comments.length} ${task.comments.length === 1 ? "comment" : "comments"}</span>
+    `
+        : ""
+    }
+    ${
+      hasDependencyWarning
+        ? `
+      <span class="task-badge warning">Waiting for dependencies</span>
+    `
+        : ""
+    }
+  </div>
+`
+            : ""
+        }
+      </div>
+      <div class="task-actions">
+        ${hasDependencyWarning ? '<i class="fas fa-exclamation-triangle text-warning" title="This task has incomplete dependencies"></i>' : ""}
+        <button class="task-action-btn edit-task-btn" title="Edit Task" data-task-id="${task.id || task._id}">
+          <i class="fas fa-edit"></i>
+        </button>
+        <button class="task-action-btn delete-task-btn" title="Delete Task" data-task-id="${task.id || task._id}">
+          <i class="fas fa-trash"></i>
+        </button>
+        <button class="task-action-btn assign-task-btn" title="${isAssignedToCurrentUser ? "Unassign Task" : "Assign to me"}" data-task-id="${task.id || task._id}">
+          <i class="fas ${isAssignedToCurrentUser ? "fa-user-minus" : "fa-user-plus"}"></i>
+        </button>
+      </div>
+    </div>
+    
+    <div class="task-details ${isExpanded ? "expanded" : ""}">
+      <p class="task-description">${task.description || "No description available"}</p>
+      
+      ${
+        dependencyNames.length > 0
+          ? `
+        <div class="task-dependencies">
+          <h4>Dependencies:</h4>
+          <ul class="task-dependency-list">
+            ${dependencyNames
+              .map(
+                (name, index) => `
+              <li class="task-dependency-item">
+                <span class="dependency-status ${dependencyStatuses[index]}"></span>
+                ${name} <span class="dependency-status-text">(${dependencyStatuses[index] === "completed" ? "Completed" : "Pending"})</span>
+              </li>
+            `,
+              )
+              .join("")}
+          </ul>
           ${
-            dependencyNames.length > 0
+            hasDependencyWarning
               ? `
-            <div class="task-dependencies">
-              <h4>Dependencies:</h4>
-              <ul class="dependency-list">
-                ${dependencyNames.map((name) => `<li>${name}</li>`).join("")}
-              </ul>
+            <div class="task-dependency-warning">
+              <i class="fas fa-exclamation-triangle"></i>
+              <span>This task cannot be completed until all dependencies are completed.</span>
             </div>
           `
               : ""
           }
-          
-          <div class="task-footer">
-            <div class="task-footer-meta">
-              <div class="task-meta-item">
-                <i class="fas fa-clock"></i>
-                <span>Due: ${task.dueDate || "No due date"}</span>
-              </div>
-              <div class="task-meta-item">
-                <i class="fas fa-user"></i>
-                <span>Assigned to: ${task.assigneeName || "Unassigned"}</span>
-              </div>
-            </div>
-            
-            <div class="task-footer-actions">
-              <button class="btn btn-outline btn-sm add-comment-btn" data-task-id="${task.id || task._id}">
-                <i class="fas fa-comment"></i>
-                <span>Add Comment</span>
-              </button>
-            </div>
-          </div>
-          
-          ${renderTaskComments(task)}
         </div>
       `
+          : ""
+      }
+      
+      <div class="task-footer">
+        <div class="task-footer-meta">
+          <div class="task-meta-item">
+            <i class="fas fa-clock"></i>
+            <span>Due: ${formatDueDate(task.dueDate) || "No due date"}</span>
+          </div>
+          <div class="task-meta-item">
+            <i class="fas fa-user"></i>
+            <span>Assigned to: ${task.assignedAt || "Unassigned"}</span>
+          </div>
+        </div>
+        
+        <div class="task-footer-actions">
+          <button class="btn btn-outline btn-sm add-comment-btn" data-task-id="${task.id || task._id}">
+            <i class="fas fa-comment"></i>
+            <span>Add Comment</span>
+          </button>
+        </div>
+      </div>
+      
+      ${renderTaskComments(task)}
+    </div>
+  `
 
         taskList.appendChild(taskItem)
       })
@@ -635,37 +733,31 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     // Add event listeners for task interactions
     setupTaskInteractions()
+  }
 
-    // Add CSS for dependency warnings
-    const style = document.createElement("style")
-    style.textContent = `
-    .task-checkbox.disabled {
-      opacity: 0.5;
-      cursor: not-allowed;
+  // Helper function to format due date
+  function formatDueDate(dueDate) {
+    if (!dueDate) return ""
+
+    // If it's a relative date (like "Before recording"), return as is
+    if (
+      typeof dueDate === "string" &&
+      (dueDate.includes("before") || dueDate.includes("after") || dueDate.includes("Recording day"))
+    ) {
+      return dueDate
     }
-    .task-badge.warning {
-      background-color: #f0ad4e;
-      color: white;
+
+    // If it's a timestamp, format it
+    try {
+      const date = new Date(dueDate)
+      if (!isNaN(date.getTime())) {
+        return date.toLocaleString()
+      }
+    } catch (e) {
+      // If parsing fails, return the original string
     }
-    .text-warning {
-      color: #f0ad4e;
-    }
-    .dependency-list {
-      margin: 5px 0;
-      padding-left: 20px;
-    }
-    .task-dependencies {
-      margin: 10px 0;
-      padding: 5px;
-      background-color: #f8f9fa;
-      border-radius: 4px;
-    }
-    .task-dependencies h4 {
-      margin: 0 0 5px 0;
-      font-size: 0.9rem;
-    }
-  `
-    document.head.appendChild(style)
+
+    return dueDate
   }
 
   function renderTaskComments(task) {
@@ -733,6 +825,11 @@ document.addEventListener("DOMContentLoaded", async () => {
       completed: tasksToRender.filter((task) => task.status === "completed" || task.status === "published") || [],
     }
 
+    // Check task dependencies
+    const completedTaskIds = new Set(
+      tasksToRender.filter((task) => task.status === "completed").map((task) => task.id || task._id),
+    )
+
     // Create the board header with title only (no settings)
     const boardHeader = document.createElement("div")
     boardHeader.className = "board-header"
@@ -760,35 +857,42 @@ document.addEventListener("DOMContentLoaded", async () => {
             tasksByStatus[column.id].length === 0
               ? `<div class="kanban-empty">No tasks</div>`
               : tasksByStatus[column.id]
-                  .map(
-                    (task) => `
-              <div class="kanban-task" draggable="true" data-task-id="${task.id || task._id}">
-                <div class="kanban-task-header">
-                  <h3 class="kanban-task-title">${task.name}</h3>
-                </div>
-                <div class="kanban-task-meta">
-                  <div class="task-meta-item">
-                    <i class="fas fa-clock"></i>
-                    <span>${task.dueDate || "No due date"}</span>
-                  </div>
-                </div>
-                <div class="kanban-task-footer">
-                  <div class="kanban-task-assignee ${task.assignee ? "assigned" : ""}">
-                    ${task.assigneeName || "Unassigned"}
-                  </div>
-                  ${
-                    task.comments && task.comments.length > 0
-                      ? `
-                    <div class="kanban-task-comments">
-                      <i class="fas fa-comment"></i> ${task.comments.length}
-                    </div>
-                  `
-                      : ""
-                  }
-                </div>
-              </div>
-            `,
-                  )
+                  .map((task) => {
+                    // Check if this task has dependencies that aren't completed
+                    const hasDependencyWarning =
+                      task.dependencies &&
+                      task.dependencies.length > 0 &&
+                      !task.dependencies.every((depId) => completedTaskIds.has(depId))
+
+                    return `
+                        <div class="kanban-task ${hasDependencyWarning ? "has-dependency-warning" : ""}" draggable="true" data-task-id="${task.id || task._id}">
+                          <div class="kanban-task-header">
+                            <h3 class="kanban-task-title">${task.name}</h3>
+                            ${hasDependencyWarning ? '<i class="fas fa-exclamation-triangle text-warning" title="This task has incomplete dependencies"></i>' : ""}
+                          </div>
+                          <div class="kanban-task-meta">
+                            <div class="task-meta-item">
+                              <i class="fas fa-clock"></i>
+                              <span>${formatDueDate(task.dueDate) || "No due date"}</span>
+                            </div>
+                          </div>
+                          <div class="kanban-task-footer">
+                            <div class="kanban-task-assignee ${task.assignee ? "assigned" : ""}">
+                              ${task.assigneeName || "Unassigned"}
+                            </div>
+                            ${
+                              task.comments && task.comments.length > 0
+                                ? `
+                              <div class="kanban-task-comments">
+                                <i class="fas fa-comment"></i> ${task.comments.length}
+                              </div>
+                            `
+                                : ""
+                            }
+                          </div>
+                        </div>
+                      `
+                  })
                   .join("")
           }
         </div>
@@ -865,6 +969,17 @@ document.addEventListener("DOMContentLoaded", async () => {
       if (a === "Recording day") return b.includes("before") ? 1 : -1
       if (b === "Recording day") return a.includes("before") ? -1 : 1
 
+      // If both are actual dates, sort chronologically
+      try {
+        const dateA = new Date(a)
+        const dateB = new Date(b)
+        if (!isNaN(dateA) && !isNaN(dateB)) {
+          return dateA - dateB
+        }
+      } catch (e) {
+        // If date parsing fails, fall back to string comparison
+      }
+
       return 0
     })
 
@@ -878,12 +993,13 @@ document.addEventListener("DOMContentLoaded", async () => {
       timelineItem.className = "timeline-item"
 
       const isRecordingDay = date === "Recording day"
+      const formattedDate = formatDueDate(date)
 
       timelineItem.innerHTML = `
         <div class="timeline-node ${isRecordingDay ? "recording-day" : ""}">
           ${isRecordingDay ? '<i class="fas fa-circle"></i>' : ""}
         </div>
-        <div class="timeline-date">${date}</div>
+        <div class="timeline-date">${formattedDate}</div>
         <div class="timeline-tasks">
           ${tasksByDueDate[date]
             .map(
@@ -1036,6 +1152,16 @@ document.addEventListener("DOMContentLoaded", async () => {
         ? tasksData.filter((task) => task.episodeId === episode._id || task.episodeId === episode.id)
         : []
 
+      console.log(
+        "Tasks with assignment data:",
+        state.tasks.map((task) => ({
+          name: task.name,
+          assignee: task.assignee,
+          assigneeName: task.assigneeName,
+          assignedAt: task.assignedAt,
+        })),
+      )
+
       // Update UI
       populateEpisodesList()
       updateEpisodeDisplay()
@@ -1169,7 +1295,17 @@ document.addEventListener("DOMContentLoaded", async () => {
       const hasUncompletedDependencies = !task.dependencies.every((depId) => completedTaskIds.has(depId))
 
       if (hasUncompletedDependencies) {
-        alert("This task cannot be completed until its dependencies are completed.")
+        // Show a more detailed error message with the list of incomplete dependencies
+        const incompleteDependencies = task.dependencies
+          .filter((depId) => !completedTaskIds.has(depId))
+          .map((depId) => {
+            const depTask = state.tasks.find((t) => (t.id || t._id) === depId)
+            return depTask ? depTask.name : "Unknown Task"
+          })
+
+        alert(
+          `This task cannot be completed until its dependencies are completed:\n\n${incompleteDependencies.join("\n")}`,
+        )
         return
       }
     }
@@ -1207,21 +1343,66 @@ document.addEventListener("DOMContentLoaded", async () => {
     const task = state.tasks.find((t) => t.id === taskId || t._id === taskId)
     if (!task) return
 
-    // Toggle assignment
-    const isCurrentlyAssigned = task.assignee === state.currentUser.id
-    const newAssignee = isCurrentlyAssigned ? null : state.currentUser.id
-    const newAssigneeName = isCurrentlyAssigned ? null : state.currentUser.name
-
     try {
-      // Update task in the database
-      await updateTask(taskId, {
-        assignee: newAssignee,
-        assigneeName: newAssigneeName,
-      })
+      // Get the current assignment status
+      const isCurrentlyAssigned = task.assignee === state.currentUser.id
 
-      // Update local state
-      task.assignee = newAssignee
-      task.assigneeName = newAssigneeName
+      if (isCurrentlyAssigned) {
+        // If already assigned to current user, unassign
+        await updateTask(taskId, {
+          assignee: null,
+          assigneeName: null,
+          assignedAt: null,
+        })
+
+        // Update local state
+        task.assignee = null
+        task.assigneeName = null
+        task.assignedAt = null
+      } else {
+        // Show loading state on the button
+        const button = document.querySelector(`.assign-task-btn[data-task-id="${taskId}"]`)
+        if (button) {
+          const originalHTML = button.innerHTML
+          button.innerHTML = '<i class="fas fa-spinner fa-spin"></i>'
+          button.disabled = true
+        }
+
+        // Fetch the user's profile to get their full name
+        const profileData = await fetchProfile()
+        console.log("Fetched profile data:", profileData)
+
+        // Extract user information from profile data
+        const userId = profileData.user?._id || profileData._id || state.currentUser.id
+
+        // Get the full name from profile - handle both camelCase and snake_case formats
+        const fullName =
+          profileData.user?.fullName ||
+          profileData.user?.full_name ||
+          profileData.fullName ||
+          profileData.full_name ||
+          "Unknown User"
+
+        console.log(`Using name: ${fullName} for task assignment`)
+
+        // Update task in the database - use assignedAt as the source of truth
+        await updateTask(taskId, {
+          assignee: userId,
+          assigneeName: fullName, // Keep this for backward compatibility
+          assignedAt: fullName, // This is now the primary field for assignment
+        })
+
+        // Update local state
+        task.assignee = userId
+        task.assigneeName = fullName
+        task.assignedAt = fullName
+
+        // Reset button state
+        if (button) {
+          button.innerHTML = '<i class="fas fa-user-minus"></i>'
+          button.disabled = false
+        }
+      }
 
       // Update UI
       renderTaskList()
@@ -1229,6 +1410,13 @@ document.addEventListener("DOMContentLoaded", async () => {
     } catch (error) {
       console.error("Error updating task assignment:", error)
       alert("Failed to update task assignment. Please try again.")
+
+      // Reset button state in case of error
+      const button = document.querySelector(`.assign-task-btn[data-task-id="${taskId}"]`)
+      if (button) {
+        button.innerHTML = '<i class="fas fa-user-plus"></i>'
+        button.disabled = false
+      }
     }
   }
 
@@ -1329,6 +1517,12 @@ document.addEventListener("DOMContentLoaded", async () => {
         const saveBtn = document.getElementById("save-comment-btn")
         saveBtn.disabled = false
         saveBtn.innerHTML = originalText
+      } finally {
+        const saveBtn = document.getElementById("save-comment-btn")
+        if (saveBtn) {
+          saveBtn.disabled = false
+          saveBtn.innerHTML = "Add Comment"
+        }
       }
     })
   }
@@ -1379,6 +1573,24 @@ document.addEventListener("DOMContentLoaded", async () => {
         if (dragging) {
           const taskId = dragging.getAttribute("data-task-id")
           const columnId = zone.getAttribute("data-column-id")
+
+          // Check if this task has dependencies and is being moved to completed
+          if (columnId === "completed") {
+            const task = state.tasks.find((t) => (t.id || t._id) === taskId)
+            if (task && task.dependencies && task.dependencies.length > 0) {
+              const completedTaskIds = new Set(
+                state.tasks.filter((t) => t.status === "completed").map((t) => t.id || t._id),
+              )
+
+              const hasUncompletedDependencies = !task.dependencies.every((depId) => completedTaskIds.has(depId))
+
+              if (hasUncompletedDependencies) {
+                // Show error and prevent the drop
+                alert("This task cannot be completed until all its dependencies are completed.")
+                return
+              }
+            }
+          }
 
           // Update task status based on column
           updateTaskStatus(taskId, columnId)
@@ -1474,7 +1686,12 @@ document.addEventListener("DOMContentLoaded", async () => {
         </div>
         
         <div class="workflow-tasks-container">
-          <h4>Workflow Tasks</h4>
+          <div class="workflow-tasks-header">
+            <h4>Workflow Tasks</h4>
+            <button id="add-workflow-task-btn" class="btn btn-sm btn-primary" disabled>
+              <i class="fas fa-plus"></i> Add Task
+            </button>
+          </div>
           <div id="workflow-tasks" class="workflow-tasks">
             <p class="empty-state">Select a workflow to view and edit its tasks</p>
           </div>
@@ -1534,6 +1751,17 @@ document.addEventListener("DOMContentLoaded", async () => {
         const workflowId = workflowSelect.value
         if (workflowId) {
           confirmDeleteWorkflow(workflowId)
+        }
+      })
+    }
+
+    // Add event listener for add task button
+    const addWorkflowTaskBtn = document.getElementById("add-workflow-task-btn")
+    if (addWorkflowTaskBtn) {
+      addWorkflowTaskBtn.addEventListener("click", () => {
+        const workflowId = workflowSelect.value
+        if (workflowId) {
+          addTaskToWorkflow(workflowId)
         }
       })
     }
@@ -1604,6 +1832,24 @@ document.addEventListener("DOMContentLoaded", async () => {
       }
       .btn-danger:hover {
         background-color: #c82333;
+      }
+      .workflow-tasks-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 10px;
+      }
+      .btn-primary {
+        background-color: #007bff;
+        color: white;
+        border: none;
+      }
+      .btn-primary:hover {
+        background-color: #0069d9;
+      }
+      .btn-sm {
+        padding: 4px 8px;
+        font-size: 0.875rem;
       }
     `
     document.head.appendChild(style)
@@ -1698,7 +1944,7 @@ document.addEventListener("DOMContentLoaded", async () => {
             <div class="workflow-task-meta">
               <div class="task-meta-item">
                 <i class="fas fa-clock"></i>
-                <span>${task.dueDate || "No due date"}</span>
+                <span>${formatDueDate(task.dueDate) || "No due date"}</span>
               </div>
             </div>
             <div class="workflow-task-actions">
@@ -1732,6 +1978,12 @@ document.addEventListener("DOMContentLoaded", async () => {
         // Enable the save changes button
         if (saveChangesBtn) {
           saveChangesBtn.disabled = false
+        }
+
+        // Enable the add task button
+        const addWorkflowTaskBtn = document.getElementById("add-workflow-task-btn")
+        if (addWorkflowTaskBtn) {
+          addWorkflowTaskBtn.disabled = false
         }
       }
     } catch (error) {
@@ -1774,8 +2026,8 @@ document.addEventListener("DOMContentLoaded", async () => {
               
               <div class="form-group">
                 <label for="edit-workflow-task-due-date">Due Date</label>
-                <input type="text" id="edit-workflow-task-due-date" class="form-control" value="${task.dueDate || ""}">
-                <small class="help-text">Examples: "Before recording", "3 days before recording", "1 week after recording"</small>
+                <input type="text" id="edit-workflow-task-due-date" class="form-control date-picker" value="${task.dueDate || ""}">
+                <small class="help-text">Select a specific date and time or use relative terms like "Before recording", "3 days before recording"</small>
               </div>
               
               <div class="form-group">
@@ -1801,6 +2053,16 @@ document.addEventListener("DOMContentLoaded", async () => {
     // Add class to animate in
     setTimeout(() => {
       popup.querySelector(".popup-content").classList.add("show")
+
+      // Initialize date picker
+      if (typeof flatpickr !== "undefined") {
+        flatpickr("#edit-workflow-task-due-date", {
+          enableTime: true,
+          dateFormat: "Y-m-d H:i",
+          allowInput: true,
+          time_24hr: false,
+        })
+      }
     }, 10)
 
     // Close button event
@@ -1857,6 +2119,128 @@ document.addEventListener("DOMContentLoaded", async () => {
       // Reload the workflow editor
       loadWorkflowForEditing(workflowId)
     }
+  }
+
+  // Add a new task to the workflow
+  function addTaskToWorkflow(workflowId) {
+    // Find the workflow
+    const workflow = state.workflows.find((w) => w._id === workflowId)
+    if (!workflow) return
+
+    const modalHTML = `
+      <div id="add-workflow-task-modal" class="popup">
+        <div class="popup-content">
+          <div class="modal-header">
+            <h2>Add Task to Workflow</h2>
+            <button class="close-btn">&times;</button>
+          </div>
+          <div class="popup-body">
+            <form id="add-workflow-task-form">
+              <input type="hidden" id="add-workflow-id" value="${workflowId}">
+            
+              <div class="form-group">
+                <label for="add-workflow-task-name">Task Name</label>
+                <input type="text" id="add-workflow-task-name" class="form-control" placeholder="Enter task name" required>
+            </div>
+            
+            <div class="form-group">
+              <label for="add-workflow-task-description">Description</label>
+              <textarea id="add-workflow-task-description" class="form-control" placeholder="Describe this task..."></textarea>
+            </div>
+            
+            <div class="form-group">
+              <label for="add-workflow-task-due-date">Due Date</label>
+              <input type="text" id="add-workflow-task-due-date" class="form-control date-picker" placeholder="Select date and time">
+              <small class="help-text">Select a specific date and time or use relative terms like "Before recording", "3 days before recording"</small>
+            </div>
+            
+            <div class="form-group">
+              <label for="add-workflow-task-assigned">Assigned To</label>
+              <input type="text" id="add-workflow-task-assigned" class="form-control" placeholder="Name of person assigned">
+            </div>
+          </form>
+        </div>
+        <div class="modal-footer">
+          <button type="button" id="cancel-add-workflow-task-btn" class="btn cancel-btn">Cancel</button>
+          <button type="button" id="save-add-workflow-task-btn" class="btn save-btn">Add Task</button>
+        </div>
+      </div>
+    </div>
+  `
+
+    document.body.insertAdjacentHTML("beforeend", modalHTML)
+    const popup = document.getElementById("add-workflow-task-modal")
+
+    // Show the popup
+    popup.style.display = "flex"
+
+    // Add class to animate in
+    setTimeout(() => {
+      popup.querySelector(".popup-content").classList.add("show")
+
+      // Initialize date picker
+      if (typeof flatpickr !== "undefined") {
+        flatpickr("#add-workflow-task-due-date", {
+          enableTime: true,
+          dateFormat: "Y-m-d H:i",
+          allowInput: true,
+          time_24hr: false,
+        })
+      }
+    }, 10)
+
+    // Close button event
+    const closeBtn = popup.querySelector(".close-btn")
+    closeBtn.addEventListener("click", () => {
+      closePopup(popup)
+    })
+
+    // Cancel button event
+    const cancelBtn = document.getElementById("cancel-add-workflow-task-btn")
+    cancelBtn.addEventListener("click", () => {
+      closePopup(popup)
+    })
+
+    // Close when clicking outside
+    popup.addEventListener("click", (e) => {
+      if (e.target === popup) {
+        closePopup(popup)
+      }
+    })
+
+    // Save new task event
+    document.getElementById("save-add-workflow-task-btn").addEventListener("click", () => {
+      const name = document.getElementById("add-workflow-task-name").value
+      const description = document.getElementById("add-workflow-task-description").value
+      const dueDate = document.getElementById("add-workflow-task-due-date").value
+      const assigneeName = document.getElementById("add-workflow-task-assigned").value
+
+      if (!name) {
+        alert("Task name is required")
+        return
+      }
+
+      // Create a new task with a unique ID
+      const newTask = {
+        id: `task-${Date.now()}`,
+        name: name,
+        description: description,
+        dueDate: dueDate,
+        assigneeName: assigneeName,
+        status: "not-started",
+        dependencies: [],
+      }
+
+      // Add the task to the workflow
+      workflow.tasks = workflow.tasks || []
+      workflow.tasks.push(newTask)
+
+      // Reload the workflow editor
+      loadWorkflowForEditing(workflowId)
+
+      // Close the popup
+      closePopup(popup)
+    })
   }
 
   // Save changes to the workflow
@@ -2125,8 +2509,8 @@ document.addEventListener("DOMContentLoaded", async () => {
               </div>
               <div class="form-group">
                 <label for="edit-task-due-date">Due Date</label>
-                <input type="text" id="edit-task-due-date" class="form-control" value="${dueDate || ""}">
-                <small class="help-text">Examples: "Before recording", "3 days before recording", "1 week after recording"</small>
+                <input type="text" id="edit-task-due-date" class="form-control date-picker" value="${dueDate || ""}">
+                <small class="help-text">Select a specific date and time or use relative terms like "Before recording", "3 days before recording"</small>
               </div>
               <div class="form-group">
                 <label for="edit-task-assigned">Assigned To</label>
@@ -2162,6 +2546,16 @@ document.addEventListener("DOMContentLoaded", async () => {
       // Add class to animate in
       setTimeout(() => {
         popup.querySelector(".popup-content").classList.add("show")
+
+        // Initialize date picker
+        if (typeof flatpickr !== "undefined") {
+          flatpickr("#edit-task-due-date", {
+            enableTime: true,
+            dateFormat: "Y-m-d H:i",
+            allowInput: true,
+            time_24hr: false,
+          })
+        }
       }, 10)
 
       // Close button event
@@ -2268,8 +2662,8 @@ document.addEventListener("DOMContentLoaded", async () => {
               </div>
               <div class="form-group">
                 <label for="task-due-date">Due Date</label>
-                <input type="text" id="task-due-date" class="form-control" placeholder="e.g., Before recording, 3 days before recording">
-                <small class="help-text">Examples: "Before recording", "3 days before recording", "1 week after recording"</small>
+                <input type="text" id="task-due-date" class="form-control date-picker" placeholder="Select date and time">
+                <small class="help-text">Select a specific date and time or use relative terms like "Before recording", "3 days before recording"</small>
               </div>
               <div class="form-group">
                 <label for="task-assigned">Assigned To</label>
@@ -2311,6 +2705,16 @@ document.addEventListener("DOMContentLoaded", async () => {
     // Add class to animate in
     setTimeout(() => {
       popup.querySelector(".popup-content").classList.add("show")
+
+      // Initialize date picker
+      if (typeof flatpickr !== "undefined") {
+        flatpickr("#task-due-date", {
+          enableTime: true,
+          dateFormat: "Y-m-d H:i",
+          allowInput: true,
+          time_24hr: false,
+        })
+      }
     }, 10)
 
     // Close button event
@@ -2533,7 +2937,7 @@ document.addEventListener("DOMContentLoaded", async () => {
           console.error("Error importing default tasks:", error)
           // Reset button state
           importBtn.innerHTML = originalText
-          importBtn.disabled = false
+          importBtn.disabled = true
         }
       })
     } catch (error) {
@@ -2906,11 +3310,6 @@ document.addEventListener("DOMContentLoaded", async () => {
         }
       } catch (error) {
         console.error("Error saving workflow:", error)
-        alert("Failed to save workflow. Please try again.")
-
-        const saveBtn = document.getElementById("save-workflow-btn")
-        saveBtn.disabled = false
-        saveBtn.innerHTML = "Save Workflow"
       }
     })
   }
