@@ -38,6 +38,7 @@ from backend.routes.video_routes import video_bp
 from backend.routes.transcription import transcription_bp
 from colorama import Fore, Style, init  # Import colorama for styled logs
 from backend.routes.activity import activity_bp
+from backend.routes.stripe_config import stripe_config_bp  # Import the renamed config blueprint
 
 if os.getenv("SKIP_VENV_UPDATE", "false").lower() not in ("true", "1", "yes"):
     venvupdate.update_venv_and_requirements()
@@ -100,6 +101,7 @@ app.register_blueprint(
 app.register_blueprint(user_bp)
 app.register_blueprint(landingpage_bp)
 app.register_blueprint(activity_bp)
+app.register_blueprint(stripe_config_bp)  # Register the renamed config blueprint
 
 # Set the application environment (defaults to production)
 APP_ENV = os.getenv("APP_ENV", "production")

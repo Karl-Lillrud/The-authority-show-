@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+
+{% block title %}Account Settings{% endblock %}
+
+{% block content %}
+<h1>Account Settings</h1>
+
+<div class="profile-section">
+    <!-- Correct way to reference an image using url_for -->
+    <!-- Adjust the filename path based on your actual structure under /static/ -->
+    <img src="{{ url_for('static', filename='images/profilepic.png') }}" alt="Profile Picture" class="profile-pic">
+
+    <!-- OR if the image URL comes from backend data (e.g., user.profile_image_url) -->
+    <!-- <img src="{{ user.profile_image_url | default(url_for('static', filename='images/default-avatar.png')) }}" alt="Profile Picture" class="profile-pic"> -->
+
+    <!-- ... rest of account page content ... -->
+</div>
+
+<!-- ... other sections ... -->
+{% endblock %}

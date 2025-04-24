@@ -3,7 +3,8 @@ from backend.models.accounts import AccountSchema
 import logging
 from backend.repository.account_repository import AccountRepository
 from backend.database.mongo_connection import collection
-
+from backend.repository.auth_repository import AuthRepository
+from backend.services.activity_service import ActivityService
 
 # Define Blueprint
 account_bp = Blueprint("account_bp", __name__)
@@ -13,6 +14,10 @@ account_repo = AccountRepository()
 
 # Configure logger
 logger = logging.getLogger(__name__)
+
+# Instantiate AuthRepository and ActivityService
+auth_repo = AuthRepository()
+activity_service = ActivityService()
 
 
 # Middleware to populate g.email
@@ -89,3 +94,25 @@ def edit_account():
 def buy_credits():
     user_id = request.args.get("user_id")
     return render_template("billing/billing.html", user_id=user_id)
+
+
+@account_bp.route('/get_profile', methods=['GET'])
+def get_profile():
+    """Gets the profile details for the currently logged-in user."""
+    if not hasattr(g, 'user_id') or not g.user_id:
+        logger.warning("Unauthorized attempt to access /get_profile")
+        return jsonify({"error": "Unauthorized"}), 401
+
+    try:
+        logger.info(f"Fetching profile for user_id: {g.user_id}")
+        profile_data, status_code = auth_repo.get_user_profile(g.user_id)
+
+        if status_code == 200:
+            logger.info(f"Successfully fetched profile for user_id: {g.user_id}")
+            return jsonify(profile_data), status_code
+        else:
+            logger.error(f"Failed to fetch profile for user_id: {g.user_id}, Status: {status_code}, Data: {profile_data}")
+            return jsonify(profile_data), status_code
+    except Exception as e:
+        logger.exception(f"❌ ERROR fetching profile for user_id {g.user_id}: {e}")
+        return jsonify({"error": "Failed to fetch profile data"}), 500

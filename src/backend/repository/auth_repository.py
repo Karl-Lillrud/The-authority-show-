@@ -13,14 +13,33 @@ class AuthRepository:
         self.account_collection = collection.database.Accounts
 
     def find_user_by_email(self, email):
+        """Find a user by email."""
         try:
-            user = self.user_collection.find_one({"email": email})
-            return user
+            return self.user_collection.find_one({"email": email.lower().strip()})
         except Exception as e:
-            logger.error(
-                f"Error finding user by email {email}: {str(e)}", exc_info=True
-            )
+            logger.error(f"Error finding user by email {email}: {e}", exc_info=True)
             return None
+
+    def get_user_profile(self, user_id):
+        """Fetch user profile details by user ID, excluding sensitive fields."""
+        try:
+            user = self.user_collection.find_one(
+                {"_id": user_id},
+                # Projection to exclude sensitive fields
+                {"passwordHash": 0, "otp": 0, "otp_expires_at": 0}
+            )
+            if not user:
+                logger.warning(f"User profile not found for user_id: {user_id}")
+                return None, 404
+
+            # Ensure _id is a string if needed by frontend
+            user['_id'] = str(user['_id'])
+
+            logger.info(f"Successfully fetched profile for user_id: {user_id}")
+            return user, 200
+        except Exception as e:
+            logger.error(f"Error fetching profile for user_id {user_id}: {e}", exc_info=True)
+            return {"error": "Failed to fetch profile data"}, 500
 
     def create_user(self, user_data):
         try:
