@@ -18,6 +18,7 @@ from backend.services.audioService import AudioService
 from backend.services.videoService import VideoService
 from backend.repository.ai_models import fetch_file, save_file, get_file_by_id
 from backend.utils.transcription_utils import check_audio_duration
+from backend.utils.subscription_access import get_transcription_limit
 
 transcription_bp = Blueprint("transcription", __name__)
 logger = logging.getLogger(__name__)
@@ -62,34 +63,29 @@ def transcribe():
          #Get subscription plan
         user_id = session.get("user_id")
         subscription = subscription_service.get_user_subscription(user_id)
-        subscription_plan = subscription["plan"] if subscription else "free"
+        subscription_plan = subscription["plan"] if subscription else "FREE"
+        logger.info(f"👤 User {user_id} subscription plan: {subscription_plan}")
 
-        #Tier-based duration limits
-        tier_limits = {
-            "free": 5,            # 5 DEMO TESTING CHANGE TO 60*60 aka 1h
-            "pro": 60 * 60,       # 1h
-            "studio": 120 * 60,    # 2h
-            "enterprise": 240 * 60  # 4h 
-        }
-        max_duration = tier_limits.get(subscription_plan.lower(), 5 * 60)
-        logger.info(f"🛡️ Subscription plan: {subscription_plan}, Max transcription duration: {max_duration} seconds")
+        # 🛡️ Get max allowed duration from subscription utils
+        max_duration = get_transcription_limit(subscription_plan)
+        logger.info(f"🛡️ Max transcription duration allowed: {max_duration} seconds")
 
-        # 🛡️ Check audio duration
-        logger.info("🔍 Checking audio duration...")
+        # ⏱️ Check audio duration
+        logger.info("🔍 Checking uploaded audio duration...")
         check_audio_duration(audio_bytes, max_duration_seconds=max_duration)
-        logger.info("✅ Audio duration is within allowed limit.")
+        logger.info("✅ Audio duration is within the allowed limit.")
 
-        # 🧠 Transcribe
+        # 🧠 Transcription process
         logger.info(f"🧠 Starting transcription for file: {filename}")
         result = transcription_service.transcribe_audio(audio_bytes, filename)
         logger.info("✅ Transcription completed successfully.")
         return jsonify(result)
 
     except ValueError as e:
-        logger.warning(f"⚠️ {e}")
+        logger.warning(f"⚠️ Validation error: {e}")
         return jsonify({"error": str(e)}), 400
     except Exception as e:
-        logger.error(f"❌ Transcription failed: {e}", exc_info=True)
+        logger.error(f"❌ Unexpected error during transcription: {e}", exc_info=True)
         return jsonify({"error": "Transcription failed", "details": str(e)}), 500
 
 @transcription_bp.route("/clean", methods=["POST"])

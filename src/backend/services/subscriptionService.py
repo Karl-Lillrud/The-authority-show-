@@ -32,7 +32,7 @@ class SubscriptionService:
         status = account.get("subscriptionStatus", "inactive")
 
         subscription_data = {
-            "plan": plan,
+            "plan": account.get("subscriptionPlan", "FREE"),
             "status": status,
             "start_date": account.get("subscriptionStart", None),
             "end_date": account.get("subscriptionEnd", None),
@@ -93,7 +93,7 @@ class SubscriptionService:
             subscription_data = {
                 "_id": str(uuid.uuid4()),
                 "user_id": user_id,
-                "plan": plan_name,
+                "plan": account.get("subscriptionPlan", "FREE"),
                 "amount": amount_paid,
                 "start_date": start_date.isoformat(),
                 "end_date": end_date.isoformat() if end_date else None,
