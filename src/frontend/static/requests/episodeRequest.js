@@ -81,27 +81,18 @@ export async function registerEpisode(data) {
       console.error("Missing required fields: podcastId or title", data); // Added log
       throw new Error("Missing required fields: podcastId or title");
     }
-
-    const finalData = {
-      ...data,
-      isImported: data.isImported ?? false, // ✅ Default to false if not provided
-    };
-
-    console.log("Sending data to /add_episode:", finalData); // Added log
+    console.log("Sending data to /add_episode:", data); // Added log
     const response = await fetch("/add_episode", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(finalData),
+      body: JSON.stringify(data)
     });
-
     const responseData = await response.json();
     console.log("Received response from /add_episode:", responseData); // Added log
-
     if (!response.ok) {
       console.error("Error response from /add_episode:", responseData); // Added log
       throw new Error(responseData.error || "Failed to register episode");
     }
-
     return responseData;
   } catch (error) {
     console.error("Error registering episode:", error); // Added log
