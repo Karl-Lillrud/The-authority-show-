@@ -31,3 +31,4 @@ class EpisodeSchema(Schema):
     author = fields.Str(allow_none=True)
     isHidden = fields.Bool(allow_none=True)
     highlights = fields.List(fields.Str(), allow_none=True)  # New field for highlights
+    isImported = fields.Bool(allow_none=True)

@@ -3,6 +3,7 @@ from backend.database.mongo_connection import collection
 from backend.utils.subscription_access import PLAN_BENEFITS
 import logging
 import uuid
+from dateutil.parser import parse as parse_date
 from backend.services.activity_service import ActivityService  # Add this import
 from dateutil.parser import parse as parse_date  
 
@@ -14,33 +15,36 @@ class SubscriptionService:
         self.accounts_collection = collection.database.Accounts
         self.subscriptions_collection = collection.database.subscriptions_collection
         self.activity_service = ActivityService()  # Add this line
+        self.episodes_collection = collection.database.Episodes
+
+    def _get_account(self, user_id):
+        """Helper to retrieve account by either userId or ownerId."""
+        account = self.accounts_collection.find_one({"userId": user_id})
+        if not account:
+            account = self.accounts_collection.find_one({"ownerId": user_id})
+        return account
+        
 
     def get_user_subscription(self, user_id):
         """Get a user's current subscription details"""
-        # First try looking up by userId
-        account = self.accounts_collection.find_one({"userId": user_id})
-
-        # If not found, try looking up by ownerId (for backward compatibility)
+        account = self._get_account(user_id)
         if not account:
-            account = self.accounts_collection.find_one({"ownerId": user_id})
-
-        if not account:
-            logger.warning(
-                f"No account found for user {user_id} (tried both userId and ownerId)"
-            )
+            logger.warning(f"No account found for user {user_id}")
             return None
 
         status = account.get("subscriptionStatus", "inactive")
+        plan = account.get("subscriptionPlan", "free")
 
         subscription_data = {
-            "plan": account.get("subscriptionPlan", None),
+            "plan": account.get("subscriptionPlan", "FREE"),
             "status": status,
-            "start_date": account.get("subscriptionStart", None),
-            "end_date": account.get("subscriptionEnd", None),
+            "start_date": account.get("subscriptionStart"),
+            "end_date": account.get("subscriptionEnd"),
             "is_cancelled": status == "cancelled",
         }
 
         return subscription_data
+
 
     def update_user_subscription(self, user_id, plan_name, stripe_session):
         """
@@ -98,7 +102,7 @@ class SubscriptionService:
             subscription_data = {
                 "_id": str(uuid.uuid4()),
                 "user_id": user_id,
-                "plan": plan_name,
+                "plan": account.get("subscriptionPlan", "FREE"),
                 "amount": amount_paid,
                 "start_date": start_date.isoformat(),
                 "end_date": end_date.isoformat() if end_date else None,
@@ -152,22 +156,26 @@ class SubscriptionService:
             )
             raise Exception(f"Error updating subscription: {str(e)}")
 
-    def can_create_episode(self, user_id):
-
+    def can_create_episode(self, user_id, is_imported=False):
         try:
             account = self._get_account(user_id)
             if not account:
                 return False, "Account not found"
 
+            # ✅ Skip limit check entirely for imported episodes
+            if is_imported:
+                logger.info(f"🔁 Skipping episode slot check for imported episode by user {user_id}")
+                return True, "Imported episodes are allowed regardless of limits"
+
             sub = self.get_user_subscription(user_id)
             if not sub:
                 return False, "Subscription info not found"
 
-            benefits = sub["benefits"]
-            plan = sub["plan"]
+            plan = sub["plan"].upper()
+            benefits = PLAN_BENEFITS.get(plan, PLAN_BENEFITS["FREE"])
 
             episode_slots = benefits.get("episode_slots", 0)
-            extra_slots = account.get("extra_episode_slots", 0)  # Optional extra slots
+            extra_slots = account.get("extra_episode_slots", 0)
             total_allowed_slots = episode_slots + extra_slots
 
             if benefits.get("max_slots") == "Unlimited":
@@ -177,7 +185,6 @@ class SubscriptionService:
             start = parse_date(sub["start_date"]) if sub.get("start_date") else now - timedelta(days=30)
             end = parse_date(sub["end_date"]) if sub.get("end_date") else now
 
-            # Only count episodes that are NOT RSS-imported
             count = self.episodes_collection.count_documents({
                 "userid": str(user_id),
                 "created_at": {"$gte": start, "$lte": end},
@@ -187,16 +194,21 @@ class SubscriptionService:
                 ]
             })
 
+            logger.info(f"📊 Found {count} regular (non-imported) episodes for user {user_id}")
             if count < total_allowed_slots:
+                logger.info(f"✅ User {user_id} is within allowed limit: {count}/{total_allowed_slots}")
                 return True, f"{count} < allowed {total_allowed_slots}"
             else:
                 if extra_slots > 0:
-                    return False, f"You’ve used your {episode_slots} base slots and all {extra_slots} extra slot(s). Upgrade your plan to create more episodes."
+                    return False, f"You’ve used your {episode_slots} base slots and all {extra_slots} extra slot(s)."
                 else:
-                    return False, f"You’ve used your {episode_slots} free episode slots. Upgrade your plan to unlock more."
+                    return False, f"You’ve used your {episode_slots} free episode slots. Upgrade to unlock more."
 
         except Exception as e:
             logger.error(f"❌ Error checking create-episode permission for user {user_id}: {str(e)}")
             return False, "Internal server error"
+
+
+
 
 
