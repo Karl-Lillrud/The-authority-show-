@@ -84,34 +84,6 @@ def edit_account():
         if not data:
             return jsonify({"error": "Inga data angivna"}), 400
         response, status_code = account_repo.update_account(str(g.user_id), data)
-        return jsonify(response), status_code
-    except Exception as e:
-        logger.error(f"Fel vid uppdatering av konto: {e}", exc_info=True)
-        return jsonify({"error": f"Fel vid uppdatering av konto: {str(e)}"}), 500
-
-
-@account_bp.route("/billing", methods=["GET"])
-def buy_credits():
-    user_id = request.args.get("user_id")
-    return render_template("billing/billing.html", user_id=user_id)
-
-
-@account_bp.route('/update_profile', methods=['PUT'])
-def update_profile():
-    """Updates the profile details for the currently logged-in user."""
-    if not hasattr(g, 'user_id') or not g.user_id:
-        return jsonify({"error": "Unauthorized"}), 401
-
-    if not request.is_json:
-        return jsonify({"error": "Request must be JSON"}), 415
-
-    data = request.get_json()
-    if not data:
-        return jsonify({"error": "No data provided"}), 400
-
-    try:
-        logger.info(f"Updating account details for user_id: {g.user_id}")
-        response, status_code = account_repo.edit_account(g.user_id, data)
 
         if status_code == 200:
             try:
@@ -129,5 +101,11 @@ def update_profile():
 
         return jsonify(response), status_code
     except Exception as e:
-        logger.exception(f"❌ ERROR updating account details for user_id {g.user_id}: {e}")
-        return jsonify({"error": "Failed to update account details"}), 500
+        logger.error(f"Fel vid uppdatering av konto: {e}", exc_info=True)
+        return jsonify({"error": f"Fel vid uppdatering av konto: {str(e)}"}), 500
+
+
+@account_bp.route("/billing", methods=["GET"])
+def buy_credits():
+    user_id = request.args.get("user_id")
+    return render_template("billing/billing.html", user_id=user_id)
