@@ -11,6 +11,7 @@ from backend.database.mongo_connection import collection
 from backend.services.teamService import TeamService
 from backend.repository.auth_repository import AuthRepository
 from backend.repository.account_repository import AccountRepository
+from backend.repository.podcast_repository import PodcastRepository
 from backend.utils.email_utils import send_login_email
 from itsdangerous import URLSafeTimedSerializer, SignatureExpired, BadSignature
 
@@ -22,6 +23,7 @@ class AuthService:
         self.user_collection = collection.database.Users
         self.auth_repository = AuthRepository()
         self.account_repository = AccountRepository()
+        self.podcast_repository = PodcastRepository()
         self.team_service = TeamService()
 
     def signin(self, data):
@@ -179,8 +181,16 @@ class AuthService:
                 }, status_code
 
             logger.info(f"Användare {email} inloggad via token.")
+
+            podcast_data, status_code = self.podcast_repository.get_podcasts(user.get("_id"))
+            podcasts = podcast_data.get("podcast", [])
+            if podcasts:
+                redirect_url = "/podcastmanagement"
+            else:
+                redirect_url = "/podprofile"
+
             return {
-                "redirect_url": "/podprofile",
+                "redirect_url": redirect_url,
                 "accountId": account_result["accountId"],
             }, 200
 

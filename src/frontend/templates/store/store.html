@@ -208,8 +208,7 @@ endblock %} {% block content %}
               <div class="section-header">
                 <h2>Subscriptions</h2>
                 <span class="section-description"
-                  >Enhance your PodManager experience with premium team
-                  features</span
+                  >Enhance your PodManager experience!</span
                 >
               </div>
               <div class="cards-container">
@@ -238,7 +237,9 @@ endblock %} {% block content %}
                         carry-over)
                       </li>
                       <li>3 Episode Slots / Month (Max. 5 Total Slots)</li>
-                      <li>Free Podcast Landing Page</li>
+                      <li>
+                        Free Podcast Landing Page (Option to Host on Own Domain)
+                      </li>
                     </ul>
                   </div>
                   <button
@@ -322,141 +323,6 @@ endblock %} {% block content %}
                 </div>
               </div>
             </section>
-
-            <!-- Landing Page Styles Section -->
-            <section class="store-section landing-styles-section">
-              <div class="section-header">
-                <h2>Landing Page Styles</h2>
-                <span class="section-description"
-                  >Professional designs for your podcast landing pages</span
-                >
-              </div>
-              <div class="cards-container">
-                <div
-                  class="product-card"
-                  data-product-id="style-minimal"
-                  data-product-type="style"
-                  data-price="19.99"
-                >
-                  <div class="product-header">
-                    <div class="product-icon style-icon">
-                      <span class="svg-placeholder style-minimal-icon"></span>
-                    </div>
-                    <h3>Minimal Style</h3>
-                  </div>
-                  <div class="product-preview">
-                    <img
-                      src="{{ url_for('static', filename='images/store/minimal-style-preview.jpg') }}"
-                      alt="Minimal Style Preview"
-                      class="style-preview"
-                    />
-                  </div>
-                  <div class="product-price">
-                    <span class="price-amount">$19.99</span>
-                    <span class="price-period">one-time</span>
-                  </div>
-                  <div class="product-features">
-                    <ul>
-                      <li>Clean, modern design</li>
-                      <li>Mobile responsive</li>
-                      <li>Easy customization</li>
-                      <li>SEO optimized</li>
-                    </ul>
-                  </div>
-                  <button
-                    class="add-to-cart-btn"
-                    data-product-id="style-minimal"
-                  >
-                    Add to Cart
-                  </button>
-                </div>
-
-                <div
-                  class="product-card"
-                  data-product-id="style-premium"
-                  data-product-type="style"
-                  data-price="29.99"
-                >
-                  <div class="product-badge">Popular</div>
-                  <div class="product-header">
-                    <div class="product-icon style-icon">
-                      <span class="svg-placeholder style-premium-icon"></span>
-                    </div>
-                    <h3>Premium Style</h3>
-                  </div>
-                  <div class="product-preview">
-                    <img
-                      src="{{ url_for('static', filename='images/store/premium-style-preview.jpg') }}"
-                      alt="Premium Style Preview"
-                      class="style-preview"
-                    />
-                  </div>
-                  <div class="product-price">
-                    <span class="price-amount">$29.99</span>
-                    <span class="price-period">one-time</span>
-                  </div>
-                  <div class="product-features">
-                    <ul>
-                      <li>Professional design</li>
-                      <li>Mobile responsive</li>
-                      <li>Advanced customization</li>
-                      <li>SEO optimized</li>
-                      <li>Email capture form</li>
-                    </ul>
-                  </div>
-                  <button
-                    class="add-to-cart-btn"
-                    data-product-id="style-premium"
-                  >
-                    Add to Cart
-                  </button>
-                </div>
-
-                <div
-                  class="product-card"
-                  data-product-id="style-enterprise"
-                  data-product-type="style"
-                  data-price="49.99"
-                >
-                  <div class="product-header">
-                    <div class="product-icon style-icon">
-                      <span
-                        class="svg-placeholder style-enterprise-icon"
-                      ></span>
-                    </div>
-                    <h3>Enterprise Style</h3>
-                  </div>
-                  <div class="product-preview">
-                    <img
-                      src="{{ url_for('static', filename='images/store/enterprise-style-preview.jpg') }}"
-                      alt="Enterprise Style Preview"
-                      class="style-preview"
-                    />
-                  </div>
-                  <div class="product-price">
-                    <span class="price-amount">$49.99</span>
-                    <span class="price-period">one-time</span>
-                  </div>
-                  <div class="product-features">
-                    <ul>
-                      <li>Premium design</li>
-                      <li>Mobile responsive</li>
-                      <li>Full customization</li>
-                      <li>SEO optimized</li>
-                      <li>Email capture form</li>
-                      <li>Analytics integration</li>
-                      <li>Priority support</li>
-                    </ul>
-                  </div>
-                  <button
-                    class="add-to-cart-btn"
-                    data-product-id="style-enterprise"
-                  >
-                    Add to Cart
-                  </button>
-                </div>
-              </div>
-            </section>
           </div>
         </div>
       </main>
@@ -513,8 +379,12 @@ endblock %} {% block content %}
       // Automatically hide the message after 5 seconds
       setTimeout(() => {
         successMessage.remove();
-      }, 5000);
+      }, 3000);
+
+      // Remove the "status" query parameter from the URL
+      const newUrl = window.location.origin + window.location.pathname;
+      window.history.replaceState({}, document.title, newUrl);
     }
-  </script>
+</script>
 </body>
 {% endblock %}
