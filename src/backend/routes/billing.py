@@ -189,7 +189,7 @@ def cancel_subscription():
                 "willRenew": False
             }), 200
         
-        # Update subscription status to cancelled
+        # Update subscription status to cancelled and change plan to FREE
         update_query = {"userId": user_id}
         if "ownerId" in account and not account.get("userId"):
             # Use ownerId for update if that's what we found
@@ -197,10 +197,12 @@ def cancel_subscription():
             
         logger.debug(f"Update query: {update_query}")
         
+        # Update both subscription status and plan to FREE
         update_result = collection.database.Accounts.update_one(
             update_query,
             {"$set": {
                 "subscriptionStatus": "cancelled",
+                "subscriptionPlan": "FREE",  # Set plan to FREE when cancelling
                 "lastUpdated": datetime.utcnow().isoformat()
             }}
         )
@@ -219,13 +221,25 @@ def cancel_subscription():
             {"user_id": user_id, "status": "active"},
             {"$set": {
                 "status": "cancelled",
+                "plan": "FREE",  # Update plan in subscription collection too
                 "cancelled_at": datetime.utcnow().isoformat()
             }}
         )
         
         logger.info(f"Subscription collection update result: matched={subscription_result.matched_count if subscription_result else 'N/A'}, modified={subscription_result.modified_count if subscription_result else 'N/A'}")
         
-        logger.info(f"Cancelled subscription for user {user_id}. Account update: {update_result.modified_count}, Subscription update: {subscription_result.modified_count if subscription_result else 0}")
+        # Update user's credits to FREE plan credits
+        try:
+            from backend.utils.subscription_access import PLAN_BENEFITS
+            from backend.services.creditService import update_subscription_credits
+            
+            # Reset credits to FREE tier after cancellation
+            updated_credits = update_subscription_credits(user_id, "FREE")
+            logger.info(f"Updated user credits to FREE plan after cancellation: {updated_credits}")
+        except Exception as credit_err:
+            logger.error(f"Error updating credits after cancellation: {credit_err}", exc_info=True)
+        
+        logger.info(f"Cancelled subscription for user {user_id} and downgraded to FREE plan. Account update: {update_result.modified_count}, Subscription update: {subscription_result.modified_count if subscription_result else 0}")
         
         # Return the end date with the success message
         end_date_display = None
@@ -241,7 +255,7 @@ def cancel_subscription():
                 end_date_display = subscription_end
         
         return jsonify({
-            "message": "Subscription cancelled successfully", 
+            "message": "Subscription cancelled successfully. You have been downgraded to the Free plan.", 
             "endDate": end_date_display,
             "willRenew": False
         }), 200
