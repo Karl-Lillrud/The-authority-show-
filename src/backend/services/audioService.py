@@ -47,8 +47,14 @@ class AudioService:
             file_id="external",
             edit_type="enhanced",
             filename=f"enhanced_{filename}",
-            metadata={"source": filename, "enhanced": True, "blob_url": blob_url}
+            metadata={
+                "source": filename,
+                "enhanced": True,
+                "blob_url": blob_url,
+                "edit_type": "enhanced"
+            }
         )
+
 
         os.remove(temp_in_path)
         os.remove(temp_out_path)
@@ -136,7 +142,12 @@ class AudioService:
                 file_id="external",
                 edit_type="manual_clip",
                 filename=filename,
-                metadata={"blob_url": blob_url, "start": start_time, "end": end_time}
+                metadata={
+                    "blob_url": blob_url,
+                    "start": start_time,
+                    "end": end_time,
+                    "edit_type": "manual_clip"
+                }
             )
 
             return blob_url
@@ -305,8 +316,13 @@ class AudioService:
                 file_id="external",
                 edit_type="voice_isolated",
                 filename=isolated_filename,
-                metadata={"source": filename, "blob_url": blob_url}
+                metadata={
+                    "source": filename,
+                    "blob_url": blob_url,
+                    "edit_type": "voice_isolated"
+                }
             )
+
 
             logger.info(f"✅ Isolated voice uploaded to Azure: {blob_url}")
             return blob_url
@@ -375,8 +391,13 @@ class AudioService:
                 file_id="external",
                 edit_type="ai_cut_cleaned",
                 filename=filename,
-                metadata={"blob_url": blob_url, "segments_kept": len(merged)}
+                metadata={
+                    "blob_url": blob_url,
+                    "segments_kept": len(merged),
+                    "edit_type": "ai_cut_cleaned"
+                }
             )
+
 
             return blob_url
         finally:
@@ -479,8 +500,14 @@ class AudioService:
                 file_id="external",
                 edit_type="manual_clip",
                 filename=f"clipped_{filename}",
-                metadata={"blob_url": blob_url, "start": start_time, "end": end_time}
+                metadata={
+                    "blob_url": blob_url,
+                    "start": start_time,
+                    "end": end_time,
+                    "edit_type": "manual_clip"
+                }
             )
+
 
             return blob_url
         finally:
@@ -519,8 +546,12 @@ class AudioService:
                 file_id="external",
                 edit_type="ai_cut_cleaned",
                 filename=f"cleaned_{filename}",
-                metadata={"blob_url": blob_url}
+                metadata={
+                    "blob_url": blob_url,
+                    "edit_type": "ai_cut_cleaned"
+                }
             )
+
 
             return blob_url
         finally:
