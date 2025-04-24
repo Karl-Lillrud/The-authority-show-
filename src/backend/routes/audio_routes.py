@@ -2,6 +2,7 @@
 import logging
 import base64
 import requests
+import json
 from flask import Response
 from flask import Blueprint, request, jsonify, g
 from backend.services.audioService import AudioService
@@ -175,4 +176,55 @@ def get_clipped_audio():
         return Response(response.content, content_type=content_type)
     except Exception as e:
         logger.error(f"Error fetching clipped audio from blob: {str(e)}")
+        return jsonify({"error": str(e)}), 500
+    
+@audio_bp.route("/ai_cut_from_blob", methods=["POST"])
+def ai_cut_from_blob():
+    if "audio" not in request.files or "episode_id" not in request.form:
+        return jsonify({"error": "Audio file and episode_id are required"}), 400
+
+    try:
+        audio_file = request.files["audio"]
+        episode_id = request.form["episode_id"]
+        filename = audio_file.filename
+        audio_bytes = audio_file.read()
+
+        result = audio_service.ai_cut_audio(audio_bytes, filename, episode_id)
+        return jsonify(result)
+    except Exception as e:
+        logger.error(f"AI cut from blob failed: {str(e)}")
+        return jsonify({"error": str(e)}), 500
+
+@audio_bp.route("/apply_ai_cuts_from_blob", methods=["POST"])
+def apply_ai_cuts_from_blob():
+    if "audio" not in request.files or "episode_id" not in request.form or "cuts" not in request.form:
+        return jsonify({"error": "Missing audio, episode_id or cuts"}), 400
+
+    try:
+        audio_file = request.files["audio"]
+        episode_id = request.form["episode_id"]
+        cuts = json.loads(request.form["cuts"])
+        filename = audio_file.filename
+        audio_bytes = audio_file.read()
+
+        blob_url = audio_service.apply_cuts_on_blob(audio_bytes, filename, cuts, episode_id)
+        return jsonify({"cleaned_file_url": blob_url})
+    except Exception as e:
+        logger.error(f"❌ Error applying AI cuts from blob: {str(e)}")
+        return jsonify({"error": str(e)}), 500
+
+@audio_bp.route("/get_cleaned_audio", methods=["GET"])
+def get_cleaned_audio():
+    url = request.args.get("url")
+    if not url:
+        return jsonify({"error": "Missing URL"}), 400
+
+    try:
+        response = requests.get(url)
+        response.raise_for_status()
+
+        content_type = "audio/mpeg" if url.lower().endswith(".mp3") else "audio/wav"
+        return Response(response.content, content_type=content_type)
+    except Exception as e:
+        logger.error(f"Error fetching cleaned audio from blob: {str(e)}")
         return jsonify({"error": str(e)}), 500

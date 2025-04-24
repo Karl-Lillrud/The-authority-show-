@@ -6,6 +6,7 @@ import numpy as np
 import logging
 import tempfile
 from pydub import AudioSegment
+import difflib
 
 logger = logging.getLogger(__name__)
 
@@ -96,3 +97,31 @@ def convert_audio_to_wav(file_bytes: bytes, original_ext=".mp3") -> str:
         return output_path
     finally:
         os.remove(input_path)
+
+def get_sentence_timestamps_fuzzy(sentence: str, word_timings: list, threshold: float = 0.7) -> dict:
+    from_word_list = [w["word"].lower().strip(".,!?") for w in word_timings]
+    target_words = sentence.lower().strip().split()
+
+    best_score = 0
+    best_start = 0
+    best_end = 0
+
+    for i in range(len(from_word_list)):
+        for j in range(i + 1, min(i + len(target_words) + 5, len(from_word_list) + 1)):
+            window = from_word_list[i:j]
+            window_str = " ".join(window)
+            sentence_str = " ".join(target_words)
+
+            score = difflib.SequenceMatcher(None, sentence_str, window_str).ratio()
+            if score > best_score and score >= threshold:
+                best_score = score
+                best_start = i
+                best_end = j - 1
+
+    if best_score >= threshold:
+        start_time = word_timings[best_start]["start"]
+        end_time = word_timings[best_end]["end"]
+        return {"start": start_time, "end": end_time}
+
+    # fallback
+    return {"start": 0.0, "end": 0.5}
