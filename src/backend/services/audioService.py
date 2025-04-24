@@ -2,7 +2,7 @@ import os, logging, tempfile, requests, subprocess, base64
 from typing import Optional
 from pydub import AudioSegment, silence
 from backend.database.mongo_connection import get_fs
-from backend.utils.file_utils import enhance_audio_with_ffmpeg, detect_background_noise, convert_audio_to_wav
+from backend.utils.file_utils import enhance_audio_with_ffmpeg, detect_background_noise, convert_audio_to_wav,get_sentence_timestamps_fuzzy
 from backend.utils.ai_utils import (
     remove_filler_words, calculate_clarity_score, analyze_sentiment, analyze_emotions
 )
@@ -17,6 +17,7 @@ from elevenlabs.client import ElevenLabs
 from backend.utils.blob_storage import upload_file_to_blob
 from backend.repository.episode_repository import EpisodeRepository
 from flask import g
+
 
 logger = logging.getLogger(__name__)
 fs = get_fs()
@@ -144,7 +145,6 @@ class AudioService:
                 if os.path.exists(path):
                     os.remove(path)
 
-
     def ai_cut_audio(self, file_bytes: bytes, filename: str, episode_id: Optional[str] = None) -> dict:
         ext = os.path.splitext(filename)[1].lower()
         if ext not in [".mp3", ".wav"]:
@@ -198,7 +198,7 @@ class AudioService:
                 if entry["certainty"] <= 0:
                     continue
 
-                timestamps = get_sentence_timestamps(entry["sentence"], word_timings)
+                timestamps = get_sentence_timestamps_fuzzy(entry["sentence"], word_timings)
                 start_ms = int(timestamps["start"] * 1000)
                 end_ms = int(timestamps["end"] * 1000)
 
@@ -488,5 +488,42 @@ class AudioService:
                 if os.path.exists(path):
                     os.remove(path)
 
+    def apply_cuts_on_blob(self, audio_bytes: bytes, filename: str, cuts: list[dict], episode_id: str) -> str:
+        with tempfile.NamedTemporaryFile(delete=False, suffix=".wav") as tmp:
+            tmp.write(audio_bytes)
+            tmp_path = tmp.name
 
+        try:
+            audio = AudioSegment.from_wav(tmp_path)
+            cuts_ms = sorted([
+                (int(c["start"] * 1000), int(c["end"] * 1000))
+                for c in cuts if 0 <= c["start"] < c["end"]
+            ])
 
+            segments = [audio[start:end] for start, end in cuts_ms]
+            final_audio = sum(segments)
+
+            with tempfile.NamedTemporaryFile(suffix=".wav", delete=False) as out_tmp:
+                cleaned_path = out_tmp.name
+                final_audio.export(cleaned_path, format="wav")
+
+            with open(cleaned_path, "rb") as f:
+                cleaned_bytes = f.read()
+
+            podcast_id = episode_repo.get_podcast_id_by_episode(episode_id)
+            blob_path = f"users/{g.user_id}/podcasts/{podcast_id}/episodes/{episode_id}/audio/cleaned_{filename}"
+            blob_url = upload_file_to_blob("podmanagerfiles", blob_path, cleaned_bytes)
+
+            add_audio_edit_to_episode(
+                episode_id=episode_id,
+                file_id="external",
+                edit_type="ai_cut_cleaned",
+                filename=f"cleaned_{filename}",
+                metadata={"blob_url": blob_url}
+            )
+
+            return blob_url
+        finally:
+            for path in [tmp_path, cleaned_path]:
+                if os.path.exists(path):
+                    os.remove(path)
