@@ -96,23 +96,38 @@ def buy_credits():
     return render_template("billing/billing.html", user_id=user_id)
 
 
-@account_bp.route('/get_profile', methods=['GET'])
-def get_profile():
-    """Gets the profile details for the currently logged-in user."""
+@account_bp.route('/update_profile', methods=['PUT'])
+def update_profile():
+    """Updates the profile details for the currently logged-in user."""
     if not hasattr(g, 'user_id') or not g.user_id:
-        logger.warning("Unauthorized attempt to access /get_profile")
         return jsonify({"error": "Unauthorized"}), 401
 
+    if not request.is_json:
+        return jsonify({"error": "Request must be JSON"}), 415
+
+    data = request.get_json()
+    if not data:
+        return jsonify({"error": "No data provided"}), 400
+
     try:
-        logger.info(f"Fetching profile for user_id: {g.user_id}")
-        profile_data, status_code = auth_repo.get_user_profile(g.user_id)
+        logger.info(f"Updating account details for user_id: {g.user_id}")
+        response, status_code = account_repo.edit_account(g.user_id, data)
 
         if status_code == 200:
-            logger.info(f"Successfully fetched profile for user_id: {g.user_id}")
-            return jsonify(profile_data), status_code
+            try:
+                activity_service.log_activity(
+                    user_id=g.user_id,
+                    activity_type="account_updated",
+                    description="User account details updated.",
+                    details={"updated_fields": list(data.keys())}
+                )
+                logger.info(f"Successfully updated account details for user_id: {g.user_id}")
+            except Exception as act_err:
+                logger.error(f"Failed to log account_updated activity: {act_err}", exc_info=True)
         else:
-            logger.error(f"Failed to fetch profile for user_id: {g.user_id}, Status: {status_code}, Data: {profile_data}")
-            return jsonify(profile_data), status_code
+            logger.error(f"Failed to update account details for user_id: {g.user_id}, Status: {status_code}, Response: {response}")
+
+        return jsonify(response), status_code
     except Exception as e:
-        logger.exception(f"❌ ERROR fetching profile for user_id {g.user_id}: {e}")
-        return jsonify({"error": "Failed to fetch profile data"}), 500
+        logger.exception(f"❌ ERROR updating account details for user_id {g.user_id}: {e}")
+        return jsonify({"error": "Failed to update account details"}), 500
