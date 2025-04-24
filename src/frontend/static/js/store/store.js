@@ -280,11 +280,11 @@ function getCreditsForProduct(productId) {
 function getPlanForProduct(productId) {
   switch (productId) {
     case "sub-standard":
-      return "standard";
+      return "pro"; // Corrected: Matches "Pro Subscription" and backend logic
     case "sub-pro":
-      return "pro";
+      return "studio"; // Corrected: Matches "Studio Subscription" and backend logic
     case "sub-enterprise":
-      return "enterprise";
+      return "enterprise"; // This seems correct
     default:
       return null; // Invalid subscription product
   }
