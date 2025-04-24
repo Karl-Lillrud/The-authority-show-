@@ -108,7 +108,6 @@
   flex-wrap: nowrap;
 }
 
-
 .action-btn.edit-btn::after {
   content: "Edit";
   position: absolute;
@@ -937,6 +936,56 @@
 }
 
 /* Form Box */
+.form-box {
+  background-color: white;
+  border-radius: var(--radius-medium);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+  padding: var(--spacing-lg);
+  width: 90%;
+  max-width: 400px;
+  text-align: center;
+}
+
+.form-title {
+  font-size: 1.5rem;
+  margin-bottom: var(--spacing-md);
+}
+
+.form-actions {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--spacing-sm);
+  margin-top: var(--spacing-md);
+}
+
+.cancel-btn {
+  background-color: #f4f4f4;
+  color: #333;
+  border: none;
+  padding: 8px 16px;
+  border-radius: var(--radius-small);
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.cancel-btn:hover {
+  background-color: #e0e0e0;
+}
+
+.save-btn {
+  background-color: var(--highlight-color);
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: var(--radius-small);
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.save-btn:hover {
+  background-color: var(--highlight-hover);
+}
+
 .form-box {
   background-color: white;
   border-radius: var(--podcastmanagement-radius-large);
