@@ -161,7 +161,7 @@ async function transcribe() {
     }
 
     try {
-        await consumeUserCredits("transcription");
+        await consumeStoreCredits("transcription");
     } catch (err) {
         resultContainer.innerText = `❌ Not enough credits: ${err.message}`;
         return;
@@ -212,7 +212,7 @@ async function generateCleanTranscript() {
 
 async function generateAISuggestions() {
     try {
-        await consumeUserCredits("ai_suggestions");
+        await consumeStoreCredits("ai_suggestions");
 
         const res = await fetch('/transcription/ai_suggestions', {
             method: 'POST',
@@ -241,7 +241,7 @@ async function generateAISuggestions() {
 
 async function generateShowNotes() {
     try {
-        await consumeUserCredits("show_notes");
+        await consumeStoreCredits("show_notes");
 
         const res = await fetch('/transcription/show_notes', {
             method: 'POST',
@@ -259,7 +259,7 @@ async function generateShowNotes() {
 
 async function generateQuotes() {
     try {
-        await consumeUserCredits("ai_quotes");
+        await consumeStoreCredits("ai_quotes");
 
         const res = await fetch('/transcription/quotes', {
             method: 'POST',
@@ -280,7 +280,7 @@ async function generateQuoteImages() {
     if (!quotes) return alert("Generate quotes first.");
 
     try {
-        await consumeUserCredits("ai_qoute_images");
+        await consumeStoreCredits("ai_qoute_images");
 
         const res = await fetch('/transcription/quote_images', {
             method: 'POST',
@@ -328,7 +328,7 @@ async function enhanceAudio() {
     if (!episodeId) return alert("❌ No episode selected.");
 
     try {
-        await consumeUserCredits("audio_enhancment");
+        await consumeStoreCredits("audio_enhancment");
     } catch (err) {
         audioControls.innerHTML = `❌ Not enough credits: ${err.message}`;
         return;
@@ -387,7 +387,7 @@ async function runVoiceIsolation() {
     if (!episodeId) return alert("❌ No episode selected.");
 
     try {
-        await consumeUserCredits("voice_isolation");
+        await consumeStoreCredits("voice_isolation");
     } catch (err) {
         resultContainer.innerText = `❌ Not enough credits: ${err.message}`;
         return;
@@ -449,7 +449,7 @@ async function analyzeEnhancedAudio() {
         return;
     }
 
-    try { await consumeUserCredits("ai_audio_analysis"); }
+    try { await consumeStoreCredits("ai_audio_analysis"); }
     catch (err) {
         resultEl.innerText = `❌ Not enough credits: ${err.message}`;
         return;
@@ -541,7 +541,7 @@ async function cutAudio() {
     if (isNaN(start) || isNaN(end) || start >= end) return alert("⚠️ Invalid timestamps.");
 
     try {
-        await consumeUserCredits("audio_cutting");
+        await consumeStoreCredits("audio_cutting");
     } catch (err) {
         alert(`❌ Not enough credits: ${err.message}`);
         return;
@@ -595,7 +595,7 @@ async function aiCutAudio() {
     }
 
     try {
-        await consumeUserCredits("ai_audio_cutting");
+        await consumeStoreCredits("ai_audio_cutting");
     } catch (err) {
         alert(`❌ Not enough credits: ${err.message}`);
         return;
@@ -771,7 +771,7 @@ async function cutAudioFromBlob() {
     if (isNaN(start) || isNaN(end) || start >= end) return alert("⚠️ Invalid timestamps.");
 
     try {
-        await consumeUserCredits("audio_cutting");
+        await consumeStoreCredits("audio_cutting");
     } catch (err) {
         alert(`❌ Not enough credits: ${err.message}`);
         return;
@@ -817,7 +817,7 @@ async function enhanceVideo() {
     }
 
     try {
-        await consumeUserCredits("video_enhancement");
+        await consumeStoreCredits("video_enhancement");
     } catch (err) {
         return alert("❌ Not enough credits: " + err.message);
     }
@@ -899,12 +899,12 @@ function previewOriginalVideo() {
     container.style.display = 'block';
 }
 
-async function fetchUserCredits(userId) {
+async function fetchStoreCredits(userId) {
     try {
         const response = await fetch(`/api/credits/check?user_id=${userId}`);
         if (response.ok) {
             const data = await response.json();
-            document.getElementById("userCredits").innerText = `Available Credits: ${data.availableCredits}`;
+            document.getElementById("storeCredits").innerText = `Available Credits: ${data.availableCredits}`;
         } else {
             alert("Failed to fetch user credits.");
         }
@@ -913,7 +913,7 @@ async function fetchUserCredits(userId) {
     }
 }
 
-async function consumeUserCredits(featureKey) {
+async function consumeStoreCredits(featureKey) {
     if (!window.CURRENT_USER_ID) {
         throw new Error("User not logged in.");
     }
@@ -933,7 +933,7 @@ async function consumeUserCredits(featureKey) {
     }
 
     // ✅ Update the UI to reflect new credit balance
-    await fetchUserCredits(CURRENT_USER_ID);
+    await fetchStoreCredits(CURRENT_USER_ID);
 
     return result.data;
 }

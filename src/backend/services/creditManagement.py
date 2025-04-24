@@ -46,19 +46,19 @@ class CreditService:
              return None
 
         # Calculate available credits dynamically
-        credits_doc['availableCredits'] = credits_doc.get('pmCredits', 0) + credits_doc.get('userCredits', 0)
+        credits_doc['availableCredits'] = credits_doc.get('subCredits', 0) + credits_doc.get('storeCredits', 0)
 
         # Convert ObjectId to string for frontend compatibility if needed
         if '_id' in credits_doc:
             credits_doc['_id'] = str(credits_doc['_id'])
 
         # Remove internal tracking fields before returning if desired
-        credits_doc.pop('lastPmResetMonth', None)
-        credits_doc.pop('lastPmResetYear', None)
+        credits_doc.pop('lastSubResetMonth', None)
+        credits_doc.pop('lastSubResetYear', None)
 
         return credits_doc
 
-    def initialize_credits(self, user_id: str, initial_pm=0, initial_user=0, carry_over=True) -> bool:
+    def initialize_credits(self, user_id: str, initial_sub=0, initial_user=0, carry_over=True) -> bool:
         """Initializes credit document for a new user if it doesn't exist."""
         if self._get_raw_credits(user_id):
             logger.warning(f"Credits already exist for user {user_id}. Skipping initialization.")
@@ -67,13 +67,13 @@ class CreditService:
         now = datetime.now(timezone.utc)
         initial_data = {
             "user_id": user_id,
-            "pmCredits": initial_pm,
-            "userCredits": initial_user,
+            "subCredits": initial_sub,
+            "storeCredits": initial_user,
             "usedCredits": 0,
             "lastUpdated": now,
-            "carryOverUserCredits": carry_over,
-            "lastPmResetMonth": None, # Explicitly null on init
-            "lastPmResetYear": None,
+            "carryOverStoreCredits": carry_over,
+            "lastSubResetMonth": None, # Explicitly null on init
+            "lastSubResetYear": None,
             "creditsHistory": []
         }
 
@@ -84,17 +84,17 @@ class CreditService:
             logger.info(f"Successfully initialized credits for user {user_id} with ID {result.inserted_id}")
 
             # Log initial grants if any
-            if initial_pm > 0:
+            if initial_sub > 0:
                 self._log_transaction(user_id, {
-                    "type": "initial_pm", "amount": initial_pm,
-                    "description": "Initial PM Credits Grant",
-                    "balance_after": {"pmCredits": initial_pm, "userCredits": initial_user}
+                    "type": "initial_sub", "amount": initial_sub,
+                    "description": "Initial Subscription Credits Grant",
+                    "balance_after": {"subCredits": initial_sub, "storeCredits": initial_user}
                 })
             if initial_user > 0:
                  self._log_transaction(user_id, {
                     "type": "initial_user", "amount": initial_user,
                     "description": "Initial User Credits Grant",
-                    "balance_after": {"pmCredits": initial_pm, "userCredits": initial_user}
+                    "balance_after": {"subCredits": initial_sub, "storeCredits": initial_user}
                 })
             return True
         except Exception as e:
@@ -102,11 +102,11 @@ class CreditService:
             return False
 
     def add_credits(self, user_id: str, amount: int, credit_type: str, description: str) -> bool:
-        """Adds credits (either pmCredits or userCredits)."""
+        """Adds credits (either subCredits or storeCredits)."""
         if amount <= 0:
             logger.error(f"Amount must be positive to add credits for user {user_id}.")
             return False
-        if credit_type not in ["pmCredits", "userCredits"]:
+        if credit_type not in ["subCredits", "storeCredits"]:
             logger.error(f"Invalid credit_type '{credit_type}' for user {user_id}.")
             return False
 
@@ -131,20 +131,20 @@ class CreditService:
 
         # Fetch updated balances for logging
         updated_doc = self._get_raw_credits(user_id)
-        pm_bal = updated_doc.get('pmCredits', 0)
-        user_bal = updated_doc.get('userCredits', 0)
+        sub_bal = updated_doc.get('subCredits', 0)
+        user_bal = updated_doc.get('storeCredits', 0)
 
-        log_type = "monthly_pm_grant" if credit_type == "pmCredits" else "purchase" # Adjust as needed
+        log_type = "monthly_sub_grant" if credit_type == "subCredits" else "purchase" # Adjust as needed
         self._log_transaction(user_id, {
             "type": log_type,
             "amount": amount,
             "description": description,
-            "balance_after": {"pmCredits": pm_bal, "userCredits": user_bal}
+            "balance_after": {"subCredits": sub_bal, "storeCredits": user_bal}
         })
         return True
 
     def consume_credits(self, user_id: str, amount_to_consume: int, description: str) -> bool:
-        """Consumes credits, prioritizing pmCredits."""
+        """Consumes credits, prioritizing subCredits."""
         if amount_to_consume <= 0:
             logger.error(f"Amount to consume must be positive for user {user_id}.")
             return False
@@ -158,18 +158,18 @@ class CreditService:
             # if not credits_doc: return False
             return False
 
-        current_pm = credits_doc.get('pmCredits', 0)
-        current_user = credits_doc.get('userCredits', 0)
-        available = current_pm + current_user
+        current_sub = credits_doc.get('subCredits', 0)
+        current_user = credits_doc.get('storeCredits', 0)
+        available = current_sub + current_user
 
         if available < amount_to_consume:
             logger.warning(f"Insufficient credits for user {user_id}. Available: {available}, Required: {amount_to_consume}")
             return False
 
-        pm_consumed = min(current_pm, amount_to_consume)
-        user_consumed = amount_to_consume - pm_consumed # Consume from userCredits only if pmCredits weren't enough
+        sub_consumed = min(current_sub, amount_to_consume)
+        user_consumed = amount_to_consume - sub_consumed # Consume from storeCredits only if subCredits weren't enough
 
-        new_pm = current_pm - pm_consumed
+        new_sub = current_sub - sub_consumed
         new_user = current_user - user_consumed
         new_total_used = credits_doc.get('usedCredits', 0) + amount_to_consume
         now = datetime.now(timezone.utc)
@@ -178,8 +178,8 @@ class CreditService:
             {"user_id": user_id},
             {
                 "$set": {
-                    "pmCredits": new_pm,
-                    "userCredits": new_user,
+                    "subCredits": new_sub,
+                    "storeCredits": new_user,
                     "usedCredits": new_total_used,
                     "lastUpdated": now
                 }
@@ -190,17 +190,17 @@ class CreditService:
              logger.error(f"Failed to update credits after consumption calculation for user {user_id}.")
              return False # Indicates an issue during the update phase
 
-        logger.info(f"Consumed {amount_to_consume} credits ({pm_consumed} PM, {user_consumed} User) for user {user_id}. Description: {description}")
+        logger.info(f"Consumed {amount_to_consume} credits (sub_consumed} sub, {user_consumed} User) for user {user_id}. Description: {description}")
         self._log_transaction(user_id, {
             "type": "consumption",
             "amount": -amount_to_consume, # Log consumption as negative
             "description": description,
-            "balance_after": {"pmCredits": new_pm, "userCredits": new_user}
+            "balance_after": {"subCredits": new_sub, "storeCredits": new_user}
         })
         return True
 
-    def perform_monthly_reset(self, user_id: str, new_pm_allowance: int) -> bool:
-        """Resets pmCredits and optionally userCredits based on carryOver flag."""
+    def perform_monthly_reset(self, user_id: str, new_sub_allowance: int) -> bool:
+        """Resets subCredits and optionally storeCredits based on carryOver flag."""
         now = datetime.now(timezone.utc)
         current_month = now.month
         current_year = now.year
@@ -210,8 +210,8 @@ class CreditService:
             logger.error(f"Cannot reset credits: User {user_id} not found.")
             return False
 
-        last_reset_month = credits_doc.get('lastPmResetMonth')
-        last_reset_year = credits_doc.get('lastPmResetYear')
+        last_reset_month = credits_doc.get('lastSubResetMonth')
+        last_reset_year = credits_doc.get('lastSubResetYear')
 
         # Check if reset for this month/year already happened
         if last_reset_year == current_year and last_reset_month == current_month:
@@ -220,25 +220,25 @@ class CreditService:
 
         # --- Perform Reset ---
         updates = {
-            "pmCredits": new_pm_allowance, # Set to new allowance
+            "subCredits": new_sub_allowance, # Set to new allowance
             "lastUpdated": now,
-            "lastPmResetMonth": current_month,
-            "lastPmResetYear": current_year
+            "lastSubResetMonth": current_month,
+            "lastSubResetYear": current_year
         }
         log_entries = []
 
-        # Log the reset of old PM credits
-        old_pm = credits_doc.get('pmCredits', 0)
-        if old_pm > 0 :
+        # Log the reset of old subscription credits
+        old_sub = credits_doc.get('subCredits', 0)
+        if old_sub > 0 :
              log_entries.append(self.history_schema.load({
-                "type": "pm_reset", "amount": -old_pm,
-                "description": f"Reset previous month's PM credits ({current_month-1 if current_month > 1 else 12}/{current_year if current_month > 1 else current_year-1})",
+                "type": "sub_reset", "amount": -old_sub,
+                "description": f"Reset previous month's subscription credits ({current_month-1 if current_month > 1 else 12}/{current_year if current_month > 1 else current_year-1})",
              }))
 
-        # Handle userCredits carry-over
-        old_user = credits_doc.get('userCredits', 0)
-        if not credits_doc.get('carryOverUserCredits', True):
-            updates["userCredits"] = 0 # Reset user credits if carryOver is False
+        # Handle storeCredits carry-over
+        old_user = credits_doc.get('storeCredits', 0)
+        if not credits_doc.get('carryOverStoreCredits', True):
+            updates["storeCredits"] = 0 # Reset user credits if carryOver is False
             if old_user > 0:
                 log_entries.append(self.history_schema.load({
                     "type": "user_reset", "amount": -old_user,
@@ -248,12 +248,12 @@ class CreditService:
         else:
             new_user_bal = old_user # User credits remain unchanged
 
-        # Log the grant of new PM credits
-        if new_pm_allowance > 0:
+        # Log the grant of new subscription credits
+        if new_sub_allowance > 0:
             log_entries.append(self.history_schema.load({
-                "type": "monthly_pm_grant", "amount": new_pm_allowance,
-                "description": f"Monthly PM credit grant for {current_month}/{current_year}",
-                "balance_after": {"pmCredits": new_pm_allowance, "userCredits": new_user_bal}
+                "type": "monthly_sub_grant", "amount": new_sub_allowance,
+                "description": f"Monthly subscription credit grant for {current_month}/{current_year}",
+                "balance_after": {"subCredits": new_sub_allowance, "storeCredits": new_user_bal}
             }))
 
         update_result = self.credits_collection.update_one(
@@ -280,26 +280,26 @@ class CreditService:
                      {"user_id": user_id},
                      {"$set": {
                          "lastUpdated": now,
-                         "lastPmResetMonth": current_month,
-                         "lastPmResetYear": current_year
+                         "lastSubResetMonth": current_month,
+                         "lastSubResetYear": current_year
                      }}
                  )
              # Consider this a success if the state is now correct for the month
              return True
 
 
-        logger.info(f"Monthly reset completed for user {user_id} for {current_month}/{current_year}. New PM Credits: {new_pm_allowance}")
+        logger.info(f"Monthly reset completed for user {user_id} for {current_month}/{current_year}. New Subscription Credits: {new_sub_allowance}")
         return True
 
     def set_carry_over(self, user_id: str, carry_over: bool) -> bool:
-        """Sets the carryOverUserCredits flag for a user."""
+        """Sets the carryOverStoreCredits flag for a user."""
         now = datetime.now(timezone.utc)
         result = self.credits_collection.update_one(
             {"user_id": user_id},
-            {"$set": {"carryOverUserCredits": carry_over, "lastUpdated": now}}
+            {"$set": {"carryOverStoreCredits": carry_over, "lastUpdated": now}}
         )
         if result.matched_count == 0:
             logger.error(f"Cannot set carry over: User {user_id} not found.")
             return False
-        logger.info(f"Set carryOverUserCredits to {carry_over} for user {user_id}.")
+        logger.info(f"Set carryOverStoreCredits to {carry_over} for user {user_id}.")
         return True

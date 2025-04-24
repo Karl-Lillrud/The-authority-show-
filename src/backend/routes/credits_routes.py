@@ -43,27 +43,27 @@ def get_available_credits():
             # No credits found - return zeros
             return jsonify({
                 "availableCredits": 0,
-                "pmCredits": 0,
-                "userCredits": 0
+                "subCredits": 0,
+                "storeCredits": 0
             })
         
         # Handle both old and new credit formats
-        if "pmCredits" in credit_doc or "userCredits" in credit_doc:
+        if "subCredits" in credit_doc or "storeCredits" in credit_doc:
             # New credit format
-            pm_credits = credit_doc.get("pmCredits", 0)
-            user_credits = credit_doc.get("userCredits", 0)
-            available = pm_credits + user_credits
+            sub_credits = credit_doc.get("subCredits", 0)
+            store_credits = credit_doc.get("storeCredits", 0)
+            available = sub_credits + store_credits
         else:
             # Old credit format - use availableCredits directly
             available = credit_doc.get("availableCredits", 0)
-            pm_credits = available  # Assume all are subscription credits
+            sub_credits = available  # Assume all are subscription credits
             user_credits = 0
             
         # Return all values to ensure UI has complete data
         response_data = {
             "availableCredits": available,
-            "pmCredits": pm_credits,
-            "userCredits": user_credits
+            "subCredits": sub_credits,
+            "storeCredits": user_credits
         }
         print(f"DEBUG - Credits for user {user_id}: {response_data}")
         return jsonify(response_data)
