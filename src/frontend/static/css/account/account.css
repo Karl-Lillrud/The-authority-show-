@@ -629,7 +629,6 @@ input:focus {
   border-radius: var(--account-radius);
   padding: 1.5rem;
   transition: transform 0.2s ease, box-shadow 0.2s ease;
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
   display: flex; 
   flex-direction: column; 
   height: 100%; 
@@ -695,12 +694,27 @@ input:focus {
   margin-top: auto;
 }
 
+.plan-button.primary {
+  background-color: orange; /* Make upgrade buttons orange */
+  color: white;
+  border: none;
+}
+
+.plan-button.primary:hover {
+  background-color: darkorange; /* Darker orange on hover */
+  box-shadow: var(--button-shadow-hover);
+}
+
 .plan-button.current {
-  background-color: var(--account-input);
-  color: var(--account-muted-foreground);
+  background-color: var(--account-muted); /* Use a muted grey background */
+  color: var(--account-muted-foreground); /* Use muted text color */
   border: 1px solid var(--account-border);
   cursor: default;
-  padding: 0.75rem 1.5rem;
+}
+
+.plan-button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
 }
 
 /* Billing History */
