@@ -108,7 +108,7 @@ class CreditService:
         if amount <= 0:
             logger.error(f"Amount must be positive to add credits for user {user_id}.")
             return False
-        if credit_type not in ["subCredits", "storeCredits"]:
+        
         if credit_type not in ["subCredits", "storeCredits"]:
             logger.error(f"Invalid credit_type '{credit_type}' for user {user_id}.")
             return False
@@ -194,7 +194,7 @@ class CreditService:
              logger.error(f"Failed to update credits after consumption calculation for user {user_id}.")
              return False # Indicates an issue during the update phase
 
-        logger.info(f"Consumed {amount_to_consume} credits (sub_consumed} sub, {user_consumed} User) for user {user_id}. Description: {description}")
+        logger.info(f"Consumed {amount_to_consume} credits (sub_consumed) sub, {user_consumed} User) for user {user_id}. Description: {description}")
         self._log_transaction(user_id, {
             "type": "consumption",
             "amount": -amount_to_consume, # Log consumption as negative
