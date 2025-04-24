@@ -7,6 +7,41 @@
   overflow: hidden;
 }
 
+.help-knapp {
+  background-color: orange;
+  color: white;
+  padding: 15px 22px;
+  text-align: center;
+  text-decoration: none;
+  display: inline-block;
+  font-size: 16px;
+  cursor: pointer;
+  margin-top: 0rem;
+  margin-left: 92%;
+  border-radius: 18px;
+}
+
+.help-knapp:hover {
+  background-color: rgb(238, 146, 113);
+}
+.bild3, .bild4 {
+  position: absolute; /* Fixerar bilderna på en fast plats */
+  max-width: 60%;  /* Bilderna blir mindre när skärmen minskar */
+  height: auto;    /* Behåller bildens proportioner */
+  z-index: 9999;   /* Säkerställer att bilderna är ovanpå andra element */
+}
+
+.bild3 {
+  bottom: 35%;        /* Justera avståndet från toppen (placera bilden högre upp) */
+  right: 63%;       /* Placera bilden 10% från vänster */
+}
+
+.bild4 {
+  bottom: 30%;        /* Justera avståndet från toppen */
+  right: 48%;       /* Placera bilden 40% från vänster */
+}
+
+
 /* Main Content */
 .main-content {
   flex: 1;
@@ -835,7 +870,15 @@
   .team-card-header h2 {
     font-size: 1.4rem;
   }
-}
+
+  .help-knapp {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    z-index: 9999; 
+    margin-bottom: 3rem;
+   }
+
 
 @media (max-width: 768px) {
   .app-container {
@@ -938,6 +981,13 @@
     padding: 10px 20px;
     font-size: 0.9rem;
   }
+  .help-knapp {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    z-index: 9999; 
+    margin-bottom: 3rem;
+   }
 }
 
 @media (max-width: 576px) {
@@ -1157,6 +1207,13 @@
   width: 8px;
   height: 8px;
 }
+.help-knapp {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  z-index: 9999; 
+  margin-bottom: 3rem;
+ }
 
 /* Media query från 500px */
 @media (max-width: 500px) {
@@ -1317,6 +1374,13 @@
     width: 7px;
     height: 7px;
   }
+  .help-knapp {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    z-index: 9999; 
+    margin-bottom: 3rem;
+   }
 }
 
 /* Media query för 400px */
@@ -1426,6 +1490,13 @@
     width: 5px;
     height: 5px;
   }
+  .help-knapp {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    z-index: 9999; 
+    margin-bottom: 3rem;
+   }
 }
 
 /* Media query för 300px */
@@ -1545,6 +1616,13 @@
     width: 4px;
     height: 4px;
   }
+  .help-knapp {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    z-index: 9999; 
+    margin-bottom: 3rem;
+   }
 }
 
 /* Add these styles to your existing CSS file */
@@ -1605,6 +1683,13 @@
   gap: 4px;
   margin-top: 8px;
 }
+.help-knapp {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  z-index: 9999; 
+  margin-bottom: 3rem;
+ }
 
 /* Enhanced media queries for very small screens */
 @media (max-width: 400px) {
@@ -1632,6 +1717,13 @@
     font-size: 0.6rem;
     padding: 2px 4px;
   }
+  .help-knapp {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    z-index: 9999; 
+    margin-bottom: 3rem;
+   }
 }
 
 @media (max-width: 350px) {
@@ -1660,6 +1752,14 @@
     font-size: 0.55rem;
     padding: 1px 3px;
   }
+
+  .help-knapp {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    z-index: 9999; 
+    margin-bottom: 3rem;
+   }
 }
 
 @media (max-width: 300px) {
@@ -1705,4 +1805,12 @@
     font-size: 0.5rem;
     padding: 1px 2px;
   }
+  .help-knapp {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    z-index: 9999; 
+    margin-bottom: 3rem;
+   }
+}
 }

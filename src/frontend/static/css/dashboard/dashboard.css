@@ -11,6 +11,75 @@
   padding: 0 var(--spacing-lg);
 }
 
+.help-knapp {
+  background-color: orange;
+  color: white;
+  padding: 15px 22px;
+  text-align: center;
+  text-decoration: none;
+  display: inline-block;
+  font-size: 16px;
+  cursor: pointer;
+  margin-bottom: 1rem;
+  margin-left: 92%;
+  border-radius: 18px;
+  border: none;
+}
+
+.help-knapp:hover {
+  background-color: rgb(238, 146, 113);
+}
+
+.bild8, .bild9, .bild10, .bild11, .bild12, .bild13, .bild14 {
+  position: absolute; /* Fixerar bilderna på en fast plats */
+  max-width: 60%;  /* Bilderna blir mindre när skärmen minskar */
+  height: auto;    /* Behåller bildens proportioner */
+  z-index: 9999;   /* Säkerställer att bilderna är ovanpå andra element */
+}
+
+.bild8 {
+  bottom: 7%;        /* Justera avståndet från toppen (placera bilden högre upp) */
+  left: 56%;       /* Placera bilden 10% från vänster */
+}
+
+.bild9 {
+  bottom: 49%; 
+  right: 50%;        /* Placera bilden 40% från vänster */
+}
+
+.bild10 {
+  bottom: 49%; 
+  left: 39%;       /* Placera bilden 20% från vänster */
+}
+
+.bild11 {
+  bottom: 49%;        /* Justera avståndet från toppen */
+  left: 7%;       /* Placera bilden 20% från vänster */
+}
+.bild12 {
+  bottom: 49%;        /* Justera avståndet från toppen */
+  left: 24%;       /* Placera bilden 20% från vänster */
+}
+.bild13 {
+  top: 20%;        /* Justera avståndet från toppen */
+  right: 54%;       /* Placera bilden 20% från vänster */
+}
+.bild14 {
+  top:59%;        /* Justera avståndet från toppen */
+  right: 58%;       /* Placera bilden 20% från vänster */
+}
+
+
+
+
+
+
+
+
+
+
+
+
 /* Dashboard Header */
 .dashboard-header {
   display: flex;
@@ -805,6 +874,14 @@
   .dashboard {
     padding: 0 var(--spacing-md);
   }
+
+.help-knapp {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  z-index: 9999; 
+  margin-bottom: 3rem;
+ }
 }
 
 @media (max-width: 768px) {
@@ -834,6 +911,14 @@
   .decorative-header {
     height: 100px;
   }
+
+.help-knapp {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  z-index: 9999; 
+  margin-bottom: 3rem;
+ }
 }
 
 @media (max-width: 576px) {
@@ -857,4 +942,12 @@
     width: 16px;
     height: 16px;
   }
+
+.help-knapp {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  z-index: 9999; 
+  margin-bottom: 3rem;
+ }
 }

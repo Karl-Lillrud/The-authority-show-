@@ -7,6 +7,57 @@
   overflow: hidden;
 }
 
+
+.help-knapp {
+  background-color: orange;
+  color: white;
+  padding: 15px 32px;
+  text-align: center;
+  text-decoration: none;
+  display: inline-block;
+  font-size: 16px;
+  cursor: pointer;
+  margin-top:28rem;
+  margin-left: 92%;
+  border-radius: 18px;
+  border: none;
+}
+
+.help-knapp:hover {
+  background-color: rgb(238, 146, 113);
+}
+
+.bild15, .bild16, .bild17, .bild18, .bild19{
+  position: absolute; /* Fixerar bilderna på en fast plats */
+  max-width: 30%;  /* Bilderna blir mindre när skärmen minskar */
+  height: auto;    /* Behåller bildens proportioner */
+  z-index: 9999;   /* Säkerställer att bilderna är ovanpå andra element */
+}
+
+.bild15 {
+  bottom: 52%;        /* Justera avståndet från toppen (placera bilden högre upp) */
+  left: 40%;       /* Placera bilden 10% från vänster */
+}
+
+.bild16 {
+  bottom: 69%; 
+  right:  80%;        /* Placera bilden 40% från vänster */
+}
+
+.bild17{
+  bottom: 75%; 
+  left: 21%;       /* Placera bilden 20% från vänster */
+}
+
+.bild18 {
+  bottom: 75%;        /* Justera avståndet från toppen */
+  left:35%;       /* Placera bilden 20% från vänster */
+}
+.bild19 {
+  bottom: 75%;        /* Justera avståndet från toppen */
+  left: 48%;       /* Placera bilden 20% från vänster */
+}
+
 /* Back Arrow */
 .back-arrow {
   position: fixed;

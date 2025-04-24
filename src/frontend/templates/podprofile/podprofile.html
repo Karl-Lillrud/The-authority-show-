@@ -1,121 +1,104 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Pod Profile</title>
-    <!-- global stylesheets -->
-    <link
-    rel="stylesheet"
-    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
-    />
-    <link
-      rel="stylesheet"
-      href="{{ url_for('static', filename='css/components/variables.css') }}"
-    />
-    <link
-      rel="stylesheet"
-      href="{{ url_for('static', filename='css/components/general.css') }}"
-    />
-    <link
-    rel="stylesheet"
-    href="{{ url_for('static', filename='css/components/typography.css') }}"
-    />
-    <link
-      rel="stylesheet"
-      href="{{ url_for('static', filename='css/podprofile/podprofile.css') }}"
-    />
-    <link
-      rel="icon"
-      type="image/x-icon"
-      href="{{ url_for('static', filename='favicon/favicon.ico') }}"
-    />
-    <link rel="canonical" href="https://app.podmanager.ai" />
-    <link
-      rel="stylesheet"
-      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
-    />
-    <link
-      rel="stylesheet"
-      href="{{ url_for('static', filename='css/loading-bar/loading-bar.css') }}"
-    />
-  </head>
-  <body>
-    <header>
-      <div class="header-container">
-        <button
-          id="dark-mode-toggle"
-          class="dark-mode-button"
-          aria-label="Toggle Dark Mode"
-        >
-          🌙
-        </button>
-        <div class="credits-container hidden" id="creditsContainer">
-          <img
-            src="{{ url_for('static', filename='images/Coins.png') }}"
-            alt="Coins"
-            class="coins"
-          />
-          <span class="credits">3500</span>
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Pod Profile</title>
+  <!-- global stylesheets -->
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" />
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/components/variables.css') }}" />
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/components/general.css') }}" />
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/components/typography.css') }}" />
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/podprofile/podprofile.css') }}" />
+  <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='favicon/favicon.ico') }}" />
+  <link rel="canonical" href="https://app.podmanager.ai" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/loading-bar/loading-bar.css') }}" />
+</head>
+
+<body>
+  <header>
+    <div class="header-container">
+      <button id="dark-mode-toggle" class="dark-mode-button" aria-label="Toggle Dark Mode">
+        🌙
+      </button>
+      <div class="credits-container hidden" id="creditsContainer">
+        <img src="{{ url_for('static', filename='images/Coins.png') }}" alt="Coins" class="coins" />
+        <span class="credits">3500</span>
+      </div>
+    </div>
+  </header>
+  <input type="hidden" id="loggedInUserEmail" value="{{ user_email }}" />
+  <main>
+    <!-- Logo Container -->
+    <div class="logo-container">
+      <img src="{{ url_for('static', filename='images/PodManagerLogoBeta.png') }}" alt="PodManager Logo" />
+    </div>
+    <!-- Pod Name Section -->
+    <div class="container" id="pod-name-section">
+      <h1 class="fancy-heading">POD INFO</h1>
+
+      <!-- Connect Your Calendar Button -->
+      <div class="form-group">
+        <div class="label-group">
+          <button class="help-button calendar-help-button" title="Click to learn more">?</button>
+          <span class="help-text">
+            To connect your Google Calendar, click the button below and follow the
+            authorization steps. This will allow us to sync your podcast schedule
+            with your calendar.
+          </span>
         </div>
+        <button id="connectCalendar" class="button-primary">
+          Connect Google Calendar
+        </button>
       </div>
-    </header>
-    <input type="hidden" id="loggedInUserEmail" value="{{ user_email }}" />
-    <main>
-      <!-- Logo Container -->
-      <div class="logo-container">
-        <img
-          src="{{ url_for('static', filename='images/PodManagerLogoBeta.png') }}"
-          alt="PodManager Logo"
-        />
-      </div>
-      <!-- Pod Name Section -->
-      <div class="container" id="pod-name-section">
-        <h1 class="fancy-heading">POD INFO</h1>
-        
-        <!-- Connect Your Calendar Button -->
+      <form id="podNameForm">
         <div class="form-group">
           <div class="label-group">
-            <button class="help-button calendar-help-button" title="Click to learn more">?</button>
+            <label for="podRss" id="rssLabel">RSS</label>
+            <button class="help-button" id="rss-help-button">?</button>
             <span class="help-text">
-              To connect your Google Calendar, click the button below and follow the
-              authorization steps. This will allow us to sync your podcast schedule
-              with your calendar.
+              To find your podcast's RSS feed URL, log in to your podcast
+              hosting platform, navigate to your podcast settings or
+              distribution options, and look for the "RSS Feed" section and
+              paste that URL here.
             </span>
           </div>
-          <button id="connectCalendar" class="button-primary">
-            Connect Google Calendar
+          <input type="url" id="podRss" name="podRss" />
+        </div>
+        <div class="form-group">
+          <label for="podName">Podcast's Name</label>
+          <input type="text" id="podName" name="podName" required />
+        </div>
+        <div class="form-group">
+          <button type="button" class="button-primary" id="goToEmailSection">
+            Next
+          </button>
+          <button type="button" class="button-secondary" id="skipButton"
+            onclick="window.location.href='/podcastmanagement'">
+            Skip
           </button>
         </div>
+      </form>
+    </div>
 
-        <form id="podNameForm">
-          <div class="form-group">
-            <div class="label-group">
-              <label for="podRss" id="rssLabel">RSS</label>
-              <button class="help-button" id="rss-help-button">?</button>
-              <span class="help-text">
-                To find your podcast's RSS feed URL, log in to your podcast
-                hosting platform, navigate to your podcast settings or
-                distribution options, and look for the "RSS Feed" section and
-                paste that URL here.
-              </span>
-            </div>
-            <input type="url" id="podRss" name="podRss" />
-          </div>
-          <div class="form-group">
-            <label for="podName">Podcast's Name</label>
-            <input type="text" id="podName" name="podName" required />
-          </div>
-          <div class="form-group">
-            <button type="button" class="button-primary" id="goToEmailSection">
-              Next
-            </button>
-            <button type="button" class="button-secondary" id="skipButton" onclick="window.location.href='/podcastmanagement'">
-              Skip
-            </button>
-          </div>
-        </form>
-      </div>
+    <!-- Help Button for Images -->
+    <button class="nu-knapp" onclick="visaBilder()">Help</button>
+
+    <div id="bild-container" style="display: none;">
+      <img src="/static/images/koko.png" alt="Koko bild" class="bild">
+      <img src="/static/images/koko1.png" alt="Koko1 bild" class="bild1">
+      <img src="/static/images/koko2.png" alt="Koko2 bild" class="bild2">
+    </div>
+
+    <script>
+      function visaBilder() {
+        var container = document.getElementById("bild-container");
+        container.style.display = "block"; // Gör bildcontainer synlig
+      }
+    </script>
+
 
       <!-- Unified Podcast Container -->
       <div id="podcast-container" class="podcast-container hidden">
@@ -153,10 +136,7 @@
       type="module"
       src="{{ url_for('static', filename='js/podprofile/podprofile.js') }}"
     ></script>
-    <script
-      src="https://unpkg.com/lazysizes@5.3.2/lazysizes.min.js"
-      async
-    ></script>
+    <script src="https://unpkg.com/lazysizes@5.3.2/lazysizes.min.js" async></script>
     <script>
       // Extract googleToken from URL and save it as refreshToken
       const urlParams = new URLSearchParams(window.location.search);
@@ -180,5 +160,6 @@
           });
       }
     </script>
-  </body>
+</body>
+
 </html>

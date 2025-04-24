@@ -335,6 +335,22 @@ Dashboard{% endblock %} {% block content %}
   </div>
 </div>
 
+    <!-- Help Button for Images -->
+    <button class="help-knapp" onclick="visaBilder()">Help</button>
+
+    <div id="bild-container" style="display: none;">
+      <img src="/static/images/koko3.png" alt="Koko bild" class="bild3">
+      <img src="/static/images/koko4.png" alt="Koko1 bild" class="bild4">
+    </div>
+
+    <script>
+      function visaBilder() {
+        var container = document.getElementById("bild-container");
+        container.style.display = "block"; // Gör bildcontainer synlig
+      }
+    </script>
+
+
 <!-- Edit Member Modal for Team Cards -->
 <div
   class="modal popup"

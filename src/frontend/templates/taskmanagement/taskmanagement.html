@@ -191,6 +191,24 @@
       </div>
     </div>
   </div>
+   <!-- Help Button for Images -->
+   <button class="help-knapp" onclick="visaBilder()">Help</button>
+
+   <div id="bild-container" style="display: none;">
+     <img src="/static/images/koko15.png" alt="Koko bild" class="bild15">
+     <img src="/static/images/koko16.png" alt="Koko1 bild" class="bild16">
+     <img src="/static/images/koko17.png" alt="Koko1 bild" class="bild17">
+     <img src="/static/images/koko18.png" alt="Koko1 bild" class="bild18">
+     <img src="/static/images/koko19.png" alt="Koko1 bild" class="bild19">
+
+   </div>
+
+   <script>
+     function visaBilder() {
+       var container = document.getElementById("bild-container");
+       container.style.display = "block"; // Gör bildcontainer synlig
+     }
+   </script>
 
   <!-- Add this script tag to load SortableJS library -->
   <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>

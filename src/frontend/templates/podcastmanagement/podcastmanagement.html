@@ -396,6 +396,25 @@
     </main>
   </div>
   
+    <!-- Help Button for Images -->
+    <button class="help-knapp" onclick="visaBilder()">Help</button>
+
+    <div id="bild-container" style="display: none;">
+      <img src="/static/images/koko5.png" alt="Koko bild" class="bild5">
+      <img src="/static/images/koko6.png" alt="Koko1 bild" class="bild6">
+      <img src="/static/images/koko7.png" alt="Koko1 bild" class="bild7">
+
+    </div>
+
+    <script>
+      function visaBilder() {
+        var container = document.getElementById("bild-container");
+        container.style.display = "block"; // Gör bildcontainer synlig
+      }
+    </script>
+
+
+  
   <script
     type="module"
     src="{{ url_for('static', filename='js/components/sidebar.js') }}"

@@ -13,6 +13,49 @@ header {
   margin: 0 auto;
   position: relative;
 }
+.nu-knapp {
+  background-color: orange;
+  color: white;
+  padding: 15px 22px;
+  text-align: center;
+  text-decoration: none;
+  display: inline-block;
+  font-size: 16px;
+  margin: 4px 2px;
+  cursor: pointer;
+  margin-top: 16rem;
+  margin-right: 90%;
+  border-radius: 18px;
+  border: none;
+}
+
+.nu-knapp:hover {
+  background-color: rgb(238, 146, 113);
+}
+.bild, .bild1, .bild2 {
+  position: absolute; /* Fixerar bilderna på en fast plats */
+  max-width: 60%;  /* Bilderna blir mindre när skärmen minskar */
+  height: auto;    /* Behåller bildens proportioner */
+  z-index: 9999;   /* Säkerställer att bilderna är ovanpå andra element */
+}
+
+.bild {
+  bottom: 35%;        /* Justera avståndet från toppen (placera bilden högre upp) */
+  left: 10%;       /* Placera bilden 10% från vänster */
+}
+
+.bild1 {
+  bottom: 48%;        /* Justera avståndet från toppen */
+  left: 22%;       /* Placera bilden 40% från vänster */
+}
+
+.bild2 {
+  bottom: 29%;        /* Justera avståndet från toppen */
+  left: 34%;       /* Placera bilden 20% från vänster */
+}
+
+
+
 
 .logo-container {
   text-align: center;
@@ -238,6 +281,11 @@ body.dark-mode .help-button {
   background-color: var(--highlight-color);
   color: black;
 }
+
+
+
+
+
 
 /* Remove the small help button styles */
 .help-button.small {
@@ -1051,6 +1099,14 @@ body.dark-mode .error-container {
   .episodes-list {
     margin-top: 0; /* Remove unnecessary margin */
   }
+
+.help-knapp {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  z-index: 9999; 
+  margin-bottom: 3rem;
+ }
 }
 
 @media (max-width: 576px) {
@@ -1114,3 +1170,12 @@ body.dark-mode .error-container {
 #rss-help-button {
   margin-bottom: calc(var(--spacing-xs) * -1);
 }
+
+
+.help-knapp {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  z-index: 9999; 
+  margin-bottom: 3rem;
+ }
