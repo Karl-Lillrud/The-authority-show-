@@ -32,6 +32,10 @@ from backend.utils import venvupdate
 from backend.database.mongo_connection import collection
 from backend.routes.Mailing_list import Mailing_list_bp
 from backend.routes.user import user_bp
+#from backend.routes.highlight import highlights_bp
+from backend.routes.audio_routes import audio_bp
+from backend.routes.video_routes import video_bp
+from backend.routes.transcription import transcription_bp
 from colorama import Fore, Style, init  # Import colorama for styled logs
 from backend.routes.activity import activity_bp
 
