@@ -8,11 +8,14 @@ import subprocess
 import base64
 import requests
 import time
+import math
 from pathlib import Path
 from typing import List
 from transformers import pipeline
 from io import BytesIO
 import streamlit as st  # Needed for download_button_text
+from pydub import AudioSegment
+
 
 API_BASE_URL = os.getenv("API_BASE_URL")
 ELEVENLABS_API_KEY = os.getenv("ELEVENLABS_API_KEY")
@@ -249,58 +252,100 @@ def generate_quote_images(quotes: List[str]) -> List[str]:
             urls.append("")
     return urls
 
-def fetch_sfx_for_emotion(emotion: str, limit=1) -> List[str]:
-    try:
-        generation_url = "https://api.elevenlabs.io/v1/sound-generation"
-        headers = {
-            "xi-api-key": ELEVENLABS_API_KEY,
-            "Content-Type": "application/json"
-        }
 
-        payload = {
-            "text": f"{emotion} sound effect",
-            "duration_seconds": 4,
-            "prompt_influence": 0.6
-        }
+def fetch_sfx_for_emotion(
+    emotion: str,
+    category: str,
+    *,
+    loop_src_seconds: int = 3,
+    target_duration:  int = 30,
+    crossfade_ms:     int = 250
+) -> List[str]:
+    url = "https://api.elevenlabs.io/v1/sound-generation"
+    headers = {"xi-api-key": ELEVENLABS_API_KEY,
+               "Content-Type": "application/json"}
+    payload = {
+        "text":
+            f"Create a perfectly seamless {loop_src_seconds}-second loop of "
+            f"ambient background music for a {category} podcast with a "
+            f"{emotion} mood. The first and last 250 ms must share the same pad tone.",
+        "duration_seconds": loop_src_seconds,
+        "prompt_influence": 1
+    }
 
-        # 🔄 Send request
-        res = requests.post(generation_url, headers=headers, json=payload)
-        print("📡 SFX gen status:", res.status_code)
-        print("📥 SFX headers:", res.headers)
-
-        if "audio/mpeg" in res.headers.get("Content-Type", ""):
-            audio_data = res.content
-            buffer = BytesIO(audio_data)
-
-            # Encode audio data to base64 string for frontend embedding
-            b64_audio = base64.b64encode(buffer.read()).decode("utf-8")
-            return [f"data:audio/mpeg;base64,{b64_audio}"]
-
-        else:
-            print("⚠️ Unexpected content type:", res.headers.get("Content-Type"))
-            return []
-
-    except Exception as e:
-        print(f"⚠️ Failed to fetch SFX for '{emotion}': {e}")
+    res = requests.post(url, headers=headers, json=payload)
+    if "audio/mpeg" not in res.headers.get("Content-Type", ""):
+        logger.warning("ElevenLabs returnerade inte audio/mpeg – ingen SFX.")
         return []
 
-def suggest_sound_effects(emotion_data):
-    suggestions = []
+    seg = AudioSegment.from_file(BytesIO(res.content), format="mp3")
 
+    if crossfade_ms:
+        head = seg[:crossfade_ms].fade_out(crossfade_ms)
+        tail = seg[-crossfade_ms:].fade_in(crossfade_ms)
+        seg  = head.overlay(tail) + seg[crossfade_ms:-crossfade_ms]
+
+    need_ms  = target_duration * 1000
+    repeats  = math.ceil(need_ms / len(seg))
+    long_seg = (seg * repeats)[:need_ms]
+
+    buf = BytesIO()
+    long_seg.export(buf, format="mp3", bitrate="192k")
+    b64 = base64.b64encode(buf.getvalue()).decode("utf-8")
+    return [f"data:audio/mpeg;base64,{b64}"]
+
+
+def suggest_sound_effects(
+    emotion_data,
+    *,
+    category: str = "general",
+    target_duration: int = 30
+):
+    cache, suggestions = {}, []
     for entry in emotion_data:
         emotion = entry["emotions"][0]["label"]
-        text = entry["text"]
-
-        sfx_options = fetch_sfx_for_emotion(emotion)
-
+        if emotion not in cache:
+            cache[emotion] = fetch_sfx_for_emotion(
+                emotion, category, target_duration=target_duration
+            )
         suggestions.append({
-            "timestamp_text": text,
-            "emotion": emotion,
-            "sfx_options": sfx_options
+            "timestamp_text": entry["text"],
+            "emotion":       emotion,
+            "sfx_options":   cache[emotion]
         })
-
     return suggestions
 
+def mix_background(
+    original_wav_bytes: bytes,
+    bg_b64_url: str,
+    *,
+    bg_gain_db: float = -45.0   # dämpa bakgrunden
+) -> bytes:
+    """
+    • Avkoda original (WAV) + bakgrund (base64-MP3).
+    • Loopar bakgrunden tills den täcker hela originalet.
+    • Sänker bakgrunden `bg_gain_db` dB.
+    • Lägger den under originalet och returnerar nya WAV-bytes.
+    """
+    from io import BytesIO
+    original = AudioSegment.from_file(BytesIO(original_wav_bytes), format="wav")
 
+    bg_mp3   = base64.b64decode(bg_b64_url.split(",", 1)[1])
+    bg_seg   = AudioSegment.from_file(BytesIO(bg_mp3), format="mp3") + bg_gain_db
+
+    repeats  = math.ceil(len(original) / len(bg_seg))
+    bg_long  = (bg_seg * repeats)[:len(original)]
+
+    mixed    = original.overlay(bg_long)
+
+    out_buf  = BytesIO()
+    mixed.export(out_buf, format="wav")
+    return out_buf.getvalue()
+
+def pick_dominant_emotion(emotion_data: list) -> str:
+    """Returnerar det emotion-label som förekommer flest gånger."""
+    from collections import Counter
+    labels = [e["emotions"][0]["label"] for e in emotion_data]
+    return Counter(labels).most_common(1)[0][0] if labels else "neutral"
 
 

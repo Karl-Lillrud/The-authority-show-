@@ -93,12 +93,16 @@ def payment_success():
         # Check if this is a subscription purchase or credits purchase
         if plan:
             # Handle subscription purchase
-            subscription_service.update_user_subscription(user_id, plan, stripe_session)
+            result, updated_credits = subscription_service.update_user_subscription(user_id, plan, stripe_session)
+            
+            # Redirect to account page with subscription_updated parameter
+            return redirect("/account?subscription_updated=true#settings-purchases")
         else:
-            # Handle regular credits purchase
+           
             handle_successful_payment(stripe_session, user_id)
             
-        return redirect("/dashboard")
+            
+            return redirect("/dashboard")
     except Exception as e:
         logger.error(f"Payment processing error: {str(e)}")
         return jsonify({"error": str(e)}), 500
@@ -285,3 +289,4 @@ def get_purchase_history():
     except Exception as e:
         logger.error(f"Error fetching purchase history: {str(e)}")
         return jsonify({"error": str(e)}), 500
+

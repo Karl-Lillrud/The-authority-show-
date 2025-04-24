@@ -71,6 +71,7 @@ class EpisodeRepository:
                 "author": validated.get("author"),
                 "isHidden": validated.get("isHidden"),
                 "recordingAt": validated.get("recordingAt"),
+                "audioEdits": [],
                 "isImported": is_imported,
             }
 
@@ -267,6 +268,16 @@ class EpisodeRepository:
         except Exception as e:
             logger.error(f"Failed to fetch episode with podcast: {str(e)}")
             return None, None
+        
+    def get_podcast_id_by_episode(self, episode_id: str) -> str:
+        """
+        Fetch the podcast ID for a given episode.
+        Raises ValueError if not found.
+        """
+        doc = collection.database.Episodes.find_one({"_id": episode_id}, {"podcast_id": 1})
+        if doc and "podcast_id" in doc:
+            return doc["podcast_id"]
+        raise ValueError(f"Podcast ID not found for episode {episode_id}")
 
     def delete_episodes_by_podcast(self, podcast_id):
         """Delete all episodes associated with a specific podcast."""
