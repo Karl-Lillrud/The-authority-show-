@@ -1610,7 +1610,7 @@ select:invalid {
   font-size: 2rem;
   font-weight: 600;
   color: var(--text-color-dark, #333);
-  margin-bottom: 2rem;
+  margin-bottom: 0;
   padding: 0 1rem;
   width: 100%;
 }
