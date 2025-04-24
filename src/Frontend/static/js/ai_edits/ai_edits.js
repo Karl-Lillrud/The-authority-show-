@@ -449,10 +449,8 @@ async function analyzeEnhancedAudio() {
         return;
     }
 
-    try {
-        await consumeStoreCredits("ai_audio_analysis");
-    } catch (err) {
-
+    try { await consumeStoreCredits("ai_audio_analysis"); }
+    catch (err) {
         resultEl.innerText = `❌ Not enough credits: ${err.message}`;
         return;
     }
@@ -773,7 +771,7 @@ async function cutAudioFromBlob() {
     if (isNaN(start) || isNaN(end) || start >= end) return alert("⚠️ Invalid timestamps.");
 
     try {
-        await consumeUserCredits("audio_cutting");
+        await consumeStoreCredits("audio_cutting");
     } catch (err) {
         alert(`❌ Not enough credits: ${err.message}`);
         return;
