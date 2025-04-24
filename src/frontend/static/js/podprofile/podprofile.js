@@ -181,7 +181,7 @@ document.addEventListener("DOMContentLoaded", () => {
               author: episode.author || null,
               isHidden: episode.isHidden || null,
               status: 'published',
-              isImported: true // ✅ Explicitly mark as imported
+              isImported: true 
             })
             
             console.log("Episode registered successfully:", registerResponse) // Added log
