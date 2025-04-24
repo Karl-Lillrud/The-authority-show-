@@ -61,17 +61,17 @@ def handle_successful_payment(session, user_id):
     add_success = credit_service.add_credits(
         user_id=user_id,
         amount=credits_to_add,
-        credit_type="userCredits", # <-- Add to userCredits specifically
+        credit_type="storeCredits", # <-- Add to storeCredits specifically
         description=description
     )
 
     if not add_success:
-        logger.error(f"CreditService failed to add {credits_to_add} userCredits for user {user_id}.")
+        logger.error(f"CreditService failed to add {credits_to_add} storeCredits for user {user_id}.")
         # Log purchase attempt even if credits fail?
         purchase_status = "Paid - Credit Update Failed"
         purchase_notes = f"CreditService.add_credits returned false. Credits added: {credits_to_add}"
     else:
-        logger.info(f"Successfully added {credits_to_add} userCredits for user {user_id} via CreditService.")
+        logger.info(f"Successfully added {credits_to_add} storeCredits for user {user_id} via CreditService.")
         purchase_status = "Paid"
         purchase_notes = None
 

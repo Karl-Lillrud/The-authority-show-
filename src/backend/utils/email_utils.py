@@ -267,7 +267,8 @@ def send_team_invite_email(
     """
     Sends an invitation email for a team membership with an inline logo.
     """
-    base_url = "http://127.0.0.1:8000"
+    # Use API_BASE_URL from environment variables, fallback to localhost
+    base_url = os.getenv('API_BASE_URL', 'http://127.0.0.1:8000')
     registration_link = f"{base_url}/register_team_member?token={invite_token}"
     if team_name:
         registration_link += f"&teamName={urllib.parse.quote(team_name)}"
