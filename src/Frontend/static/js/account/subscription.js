@@ -390,5 +390,53 @@ document.addEventListener("DOMContentLoaded", function() {
   updateSubscriptionUI();
 });
 
+// Check if we just returned from a successful checkout
+document.addEventListener('DOMContentLoaded', function() {
+  const urlParams = new URLSearchParams(window.location.search);
+  if (urlParams.get('subscription_updated') === 'true') {
+    // Force refresh credits display
+    fetchUserCredits();
+    // Update the subscription UI
+    updateSubscriptionUI();
+    // Clear the URL parameter
+    window.history.replaceState({}, document.title, window.location.pathname);
+  }
+});
+
+/**
+ * Fetches the current user's available credits
+ */
+async function fetchUserCredits() {
+  try {
+    const creditsElement = document.getElementById("available-credits");
+    if (!creditsElement) return;
+    
+    const response = await fetch('/api/credits', {
+      credentials: 'same-origin'
+    });
+    
+    if (response.ok) {
+      const data = await response.json();
+      
+      // Update the main credit display
+      creditsElement.textContent = data.availableCredits;
+      
+      // Optionally, if you have elements for showing the breakdown:
+      const pmElement = document.getElementById("subscription-credits");
+      const userElement = document.getElementById("purchased-credits");
+      
+      if (pmElement) {
+        pmElement.textContent = data.pmCredits || 0;
+      }
+      
+      if (userElement) {
+        userElement.textContent = data.userCredits || 0;
+      }
+    }
+  } catch (err) {
+    console.error("Error fetching user credits:", err);
+  }
+}
+
 // Export functions for use in other files
 export { upgradeSubscription, getCurrentSubscription, updateSubscriptionUI, showCancellationConfirmation };
