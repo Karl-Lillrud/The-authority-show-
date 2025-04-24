@@ -285,3 +285,64 @@ def get_purchase_history():
     except Exception as e:
         logger.error(f"Error fetching purchase history: {str(e)}")
         return jsonify({"error": str(e)}), 500
+
+@billing_bp.route("/store/create-checkout-session", methods=["POST"])
+def create_store_checkout_session():
+    user_id = g.user_id
+    data = request.get_json()
+    cart_items = data.get("cartItems")  # Array of items in the cart
+    logger.info(f"Received cart items: {data.get('cartItems')}")    
+
+    if not user_id:
+        return jsonify({"error": "User not authenticated"}), 401
+
+    if not cart_items or len(cart_items) == 0:
+        return jsonify({"error": "Cart is empty"}), 400
+
+    try:
+        # Prepare line items for Stripe
+        line_items = []
+        for item in cart_items:
+            line_items.append({
+                'price_data': {
+                    'currency': 'usd',
+                    'product_data': {'name': item['name']},
+                    'unit_amount': int(float(item['price']) * 100),
+                },
+                'quantity': item['quantity'],
+            })
+
+        # Create Stripe checkout session
+        checkout_session = stripe.checkout.Session.create(
+            payment_method_types=['card'],
+            line_items=line_items,
+            mode='payment',
+            success_url=f"{os.getenv('API_BASE_URL')}/store?status=success",
+            cancel_url=f"{os.getenv('API_BASE_URL')}/store/cancel",
+            metadata={"user_id": user_id}
+        )
+
+        return jsonify({'sessionId': checkout_session.id})
+    except Exception as e:
+        logger.error(f"Stripe session creation error: {str(e)}")
+        return jsonify({'error': str(e)}), 500
+    
+@billing_bp.route("/store/success", methods=["GET"])
+def store_payment_success():
+    session_id = request.args.get("session_id")
+    user_id = g.user_id
+
+    if not user_id:
+        return jsonify({"error": "User not authenticated"}), 401
+
+    try:
+        stripe_session = stripe.checkout.Session.retrieve(session_id)
+        # Handle successful payment (e.g., update database, clear cart)
+        return redirect("/store?status=success")
+    except Exception as e:
+        logger.error(f"Error handling payment success: {str(e)}")
+        return jsonify({"error": str(e)}), 500
+
+@billing_bp.route("/store/cancel", methods=["GET"])
+def store_payment_cancel():
+    return redirect("/store?status=cancel")

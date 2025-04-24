@@ -489,7 +489,32 @@ endblock %} {% block content %}
     </div>
   </div>
 
+  <script src="https://js.stripe.com/v3/"></script>
   <script src="{{ url_for('static', filename='js/store/store.js') }}"></script>
   <script src="{{ url_for('static', filename='js/store/svgstore.js') }}"></script>
+  <script>
+    // Check the URL for the "status" query parameter
+    const urlParams = new URLSearchParams(window.location.search);
+    const status = urlParams.get("status");
+  
+    if (status === "success") {
+      // Clear the cart
+      localStorage.removeItem("podmanager_cart");
+      cart = [];
+      updateCartUI();
+      updateCartNotification();
+  
+      // Display a success message
+      const successMessage = document.createElement("div");
+      successMessage.className = "success-message";
+      successMessage.textContent = "🎉 Purchase successful! Thank you for your order.";
+      document.body.prepend(successMessage);
+  
+      // Automatically hide the message after 5 seconds
+      setTimeout(() => {
+        successMessage.remove();
+      }, 5000);
+    }
+  </script>
 </body>
 {% endblock %}

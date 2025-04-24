@@ -89,61 +89,111 @@ function setupCart() {
   const checkoutBtn = document.getElementById("checkoutBtn");
   const viewportWidth = window.innerWidth;
 
-  // Remove previous listeners to avoid duplicates on resize
-  cartButton.replaceWith(cartButton.cloneNode(true));
-  closeCartBtn.replaceWith(closeCartBtn.cloneNode(true));
-  document.removeEventListener("click", closeCartOnClickOutside);
-  shoppingCart.replaceWith(shoppingCart.cloneNode(true)); // Might reset cart items, consider alternatives if needed
-
-  // Re-fetch elements after cloning
-  const newCartButton = document.getElementById("cartButton");
-  const newCloseCartBtn = document.getElementById("closeCartBtn");
-  const newShoppingCart = document.getElementById("shoppingCart");
-  const newCheckoutBtn = document.getElementById("checkoutBtn"); // Re-fetch checkout button too
-
-  // Initialize cart from localStorage if available
-  loadCartFromStorage(); // Ensure this repopulates the newShoppingCart if cloned
+  // Initialize cart from localStorage
+  loadCartFromStorage();
 
   if (viewportWidth <= 992) {
     // Mobile: Modal behavior
-    newShoppingCart.classList.add("hidden"); // Start hidden on mobile
-    newShoppingCart.style.height = ""; // Ensure height is not fixed
+    shoppingCart.classList.add("hidden"); // Start hidden on mobile
 
-    newCartButton.addEventListener("click", (e) => {
-      e.stopPropagation();
-      newShoppingCart.classList.remove("hidden");
+    cartButton.addEventListener("click", () => {
+      shoppingCart.classList.remove("hidden");
     });
 
-    newCloseCartBtn.addEventListener("click", () => {
-      newShoppingCart.classList.add("hidden");
+    closeCartBtn.addEventListener("click", () => {
+      shoppingCart.classList.add("hidden");
     });
 
     document.addEventListener("click", closeCartOnClickOutside);
 
-    newShoppingCart.addEventListener("click", (e) => {
+    shoppingCart.addEventListener("click", (e) => {
       e.stopPropagation();
     });
   } else {
     // Desktop: Sidebar is always visible
-    newShoppingCart.classList.remove("hidden"); // Ensure visible
-    document.removeEventListener("click", closeCartOnClickOutside); // Remove outside click listener
-    // matchSidebarHeight(); // Ensure height is matched - DISABLED
+    shoppingCart.classList.remove("hidden");
+    document.removeEventListener("click", closeCartOnClickOutside);
   }
 
-  // Handle checkout (attach to the potentially new button)
-  newCheckoutBtn.addEventListener("click", function () {
-    if (this.disabled) return;
-    alert("Processing your order...");
-    setTimeout(() => {
-      alert("Thank you for your purchase!");
-      clearCart();
-      if (viewportWidth <= 992) {
-        // Only hide modal on mobile
-        newShoppingCart.classList.add("hidden");
-      }
-    }, 1500);
-  });
+  // Attach the checkout function to the checkout button
+  checkoutBtn.addEventListener("click", checkout);
 }
+
+async function checkout() {
+  try {
+    const checkoutBtn = document.getElementById("checkoutBtn");
+    checkoutBtn.textContent = "Processing...";
+    checkoutBtn.disabled = true;
+
+    // Prepare cart items for the backend
+    const cartItems = cart.map(item => ({
+      name: item.name,
+      price: item.price,
+      quantity: item.quantity,
+    }));
+
+    const res = await fetch("/store/create-checkout-session", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ cartItems }),
+      credentials: "same-origin",
+    });
+
+    const data = await res.json();
+    if (data.sessionId) {
+      const stripe = Stripe("pk_test_51R4IEVPSYBEkSARW1VDrIwirpgzraNlH1Ms4JDcrHBytkClnLwLIdaTV6zb9FrwYoBmpRqgtnJXGR5Q0VUKYfX7s00kmz7AEQk");
+      await stripe.redirectToCheckout({ sessionId: data.sessionId });
+    } else {
+      alert(data.error || "Failed to create checkout session");
+    }
+  } catch (err) {
+    console.error("Checkout error:", err);
+    alert("An error occurred during checkout.");
+  } finally {
+    const checkoutBtn = document.getElementById("checkoutBtn");
+    checkoutBtn.textContent = "Complete the Purchase";
+    checkoutBtn.disabled = false;
+  }
+}
+
+  // Handle checkout (attach to the potentially new button)
+  async function checkout() {
+    try {
+      const checkoutBtn = document.getElementById("checkoutBtn");
+      checkoutBtn.textContent = "Processing...";
+      checkoutBtn.disabled = true;
+  
+      // Prepare cart items for the backend
+      const cartItems = cart.map(item => ({
+        name: item.name,
+        price: item.price,
+        quantity: item.quantity,
+      }));
+  
+      const res = await fetch("/store/create-checkout-session", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ cartItems }),
+        credentials: "same-origin",
+      });
+  
+      const data = await res.json();
+      if (data.sessionId) {
+        const stripe = Stripe("pk_test_51R4IEVPSYBEkSARW1VDrIwirpgzraNlH1Ms4JDcrHBytkClnLwLIdaTV6zb9FrwYoBmpRqgtnJXGR5Q0VUKYfX7s00kmz7AEQk");
+        await stripe.redirectToCheckout({ sessionId: data.sessionId });
+      } else {
+        alert(data.error || "Failed to create checkout session");
+      }
+    } catch (err) {
+      console.error("Checkout error:", err);
+      alert("An error occurred during checkout.");
+    } finally {
+      const checkoutBtn = document.getElementById("checkoutBtn");
+      checkoutBtn.textContent = "Complete the Purchase";
+      checkoutBtn.disabled = false;
+    }
+  }
+    
 
 // Define the outside click handler separately
 function closeCartOnClickOutside(e) {
