@@ -71,7 +71,7 @@ class AuthRepository:
                     f"Account already exists for user {user_id}: {existing_account['_id']}"
                 )
                 return {
-                    "message": "Konto redan existerar",
+                    "message": "Account already exists",
                     "accountId": existing_account["_id"],
                 }, 200
 
@@ -114,7 +114,7 @@ class AuthRepository:
                         f"Failed to initialize credits for ownerId {user_id}: {str(credit_error)}"
                     )
                 return {
-                    "message": "Konto skapat",
+                    "message": "Account created successfully!",
                     "accountId": account_data["_id"],
                 }, 201
             else:
