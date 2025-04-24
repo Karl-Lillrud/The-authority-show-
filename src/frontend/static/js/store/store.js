@@ -1,3 +1,4 @@
+// store.js
 document.addEventListener("DOMContentLoaded", () => {
   // Initialize the store
   initializeStore();
@@ -5,14 +6,20 @@ document.addEventListener("DOMContentLoaded", () => {
   // Initialize SVG icons
   initializeSvgIcons();
 
-  // Match sidebar height on initial load - DISABLED
-  // matchSidebarHeight();
+  // Load Stripe.js
+  loadStripe();
 });
+
+function loadStripe() {
+  // Ensure Stripe.js is loaded
+  const stripeScript = document.createElement("script");
+  stripeScript.src = "https://js.stripe.com/v3/";
+  stripeScript.async = true;
+  document.head.appendChild(stripeScript);
+}
 
 // Add resize event listener
 window.addEventListener("resize", () => {
-  // Match sidebar height on resize - DISABLED
-  // matchSidebarHeight();
   // Re-evaluate cart setup on resize for responsive behavior
   setupCart();
 });
@@ -93,16 +100,16 @@ function setupCart() {
   cartButton.replaceWith(cartButton.cloneNode(true));
   closeCartBtn.replaceWith(closeCartBtn.cloneNode(true));
   document.removeEventListener("click", closeCartOnClickOutside);
-  shoppingCart.replaceWith(shoppingCart.cloneNode(true)); // Might reset cart items, consider alternatives if needed
+  shoppingCart.replaceWith(shoppingCart.cloneNode(true)); // Reset might clear cart items, so reload
 
   // Re-fetch elements after cloning
   const newCartButton = document.getElementById("cartButton");
   const newCloseCartBtn = document.getElementById("closeCartBtn");
   const newShoppingCart = document.getElementById("shoppingCart");
-  const newCheckoutBtn = document.getElementById("checkoutBtn"); // Re-fetch checkout button too
+  const newCheckoutBtn = document.getElementById("checkoutBtn");
 
   // Initialize cart from localStorage if available
-  loadCartFromStorage(); // Ensure this repopulates the newShoppingCart if cloned
+  loadCartFromStorage();
 
   if (viewportWidth <= 992) {
     // Mobile: Modal behavior
@@ -126,22 +133,117 @@ function setupCart() {
   } else {
     // Desktop: Sidebar is always visible
     newShoppingCart.classList.remove("hidden"); // Ensure visible
-    document.removeEventListener("click", closeCartOnClickOutside); // Remove outside click listener
-    // matchSidebarHeight(); // Ensure height is matched - DISABLED
+    document.removeEventListener("click", closeCartOnClickOutside);
   }
 
-  // Handle checkout (attach to the potentially new button)
-  newCheckoutBtn.addEventListener("click", function () {
+  // Handle checkout
+  newCheckoutBtn.addEventListener("click", async function () {
     if (this.disabled) return;
-    alert("Processing your order...");
-    setTimeout(() => {
-      alert("Thank you for your purchase!");
-      clearCart();
-      if (viewportWidth <= 992) {
-        // Only hide modal on mobile
-        newShoppingCart.classList.add("hidden");
+
+    try {
+      // Disable button to prevent multiple clicks
+      this.disabled = true;
+      this.textContent = "Processing...";
+
+      // Filter cart items
+      const creditItems = cart.filter((item) => item.type === "Credit Pack");
+      const subscriptionItems = cart.filter(
+        (item) => item.type === "Subscription"
+      );
+
+      // Validate cart: Only one type of purchase allowed
+      if (creditItems.length > 0 && subscriptionItems.length > 0) {
+        alert(
+          "Please purchase either credit packs or a subscription, not both."
+        );
+        this.disabled = false;
+        this.textContent = "Complete the Purchase";
+        return;
       }
-    }, 1500);
+
+      if (creditItems.length === 0 && subscriptionItems.length === 0) {
+        alert("Your cart is empty or contains unsupported items.");
+        this.disabled = false;
+        this.textContent = "Complete the Purchase";
+        return;
+      }
+
+      let payload = {};
+
+      if (creditItems.length > 0) {
+        // Handle credit pack purchase
+        let totalAmount = 0;
+        let totalCredits = 0;
+
+        creditItems.forEach((item) => {
+          totalAmount += item.price * item.quantity;
+          const credits = getCreditsForProduct(item.id);
+          totalCredits += credits * item.quantity;
+        });
+
+        payload = {
+          amount: totalAmount.toFixed(2),
+          credits: totalCredits
+        };
+      } else if (subscriptionItems.length > 0) {
+        // Handle subscription purchase (only one subscription allowed)
+        if (subscriptionItems.length > 1 || subscriptionItems[0].quantity > 1) {
+          alert("You can only purchase one subscription at a time.");
+          this.disabled = false;
+          this.textContent = "Complete the Purchase";
+          return;
+        }
+
+        const subscription = subscriptionItems[0];
+        const plan = getPlanForProduct(subscription.id);
+
+        payload = {
+          amount: subscription.price.toFixed(2),
+          plan: plan
+        };
+      }
+
+      // Make API call to create checkout session
+      const response = await fetch("/create-checkout-session", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+        credentials: "same-origin"
+      });
+
+      const contentType = response.headers.get("content-type");
+      if (contentType && contentType.includes("text/html")) {
+        alert("Session expired. Please log in again.");
+        setTimeout(() => {
+          window.location.href =
+            "/signin?redirect=" + encodeURIComponent(window.location.pathname);
+        }, 2000);
+        this.disabled = false;
+        this.textContent = "Complete the Purchase";
+        return;
+      }
+
+      const data = await response.json();
+
+      if (data.sessionId) {
+        // Initialize Stripe and redirect to checkout
+        const stripe = Stripe(
+          "pk_test_51R4IEVPSYBEkSARW1VDrIwirpgzraNlH1Ms4JDcrHBytkClnLwLIdaTV6zb9FrwYoBmpRqgtnJXGR5Q0VUKYfX7s00kmz7AEQk"
+        );
+        await stripe.redirectToCheckout({ sessionId: data.sessionId });
+        // Clear cart after successful redirection
+        clearCart();
+      } else {
+        alert("Failed to create checkout: " + (data.error || "Unknown error"));
+        this.disabled = false;
+        this.textContent = "Complete the Purchase";
+      }
+    } catch (err) {
+      console.error("Error during checkout:", err);
+      alert("Error: " + err.message);
+      this.disabled = false;
+      this.textContent = "Complete the Purchase";
+    }
   });
 }
 
@@ -157,6 +259,34 @@ function closeCartOnClickOutside(e) {
     !cartButton.contains(e.target)
   ) {
     shoppingCart.classList.add("hidden");
+  }
+}
+
+// Map product IDs to credit amounts based on credit_costs.py
+function getCreditsForProduct(productId) {
+  switch (productId) {
+    case "credit-basic":
+      return 2500; // Basic Pack
+    case "credit-pro":
+      return 5000; // Pro Pack
+    case "credit-premium":
+      return 12000; // Studio Pack
+    default:
+      return 0; // Non-credit products or unknown
+  }
+}
+
+// Map product IDs to subscription plans
+function getPlanForProduct(productId) {
+  switch (productId) {
+    case "sub-standard":
+      return "pro"; // Corrected: Matches "Pro Subscription" and backend logic
+    case "sub-pro":
+      return "studio"; // Corrected: Matches "Studio Subscription" and backend logic
+    case "sub-enterprise":
+      return "enterprise"; // This seems correct
+    default:
+      return null; // Invalid subscription product
   }
 }
 
@@ -357,6 +487,8 @@ function formatProductType(type) {
       return "Landing Page Style";
     case "subscription":
       return "Subscription";
+    case "episode":
+      return "Episode Pack";
     default:
       return type;
   }
@@ -379,40 +511,5 @@ function loadCartFromStorage() {
       console.error("Error loading cart from storage:", error);
       cart = [];
     }
-  }
-}
-
-// Function to match sidebar height to credit packs section height - DISABLED
-/*
-function matchSidebarHeight() {
-  const creditPacksSection = document.querySelector('.credit-packs-section');
-  const shoppingCart = document.getElementById('shoppingCart');
-  const viewportWidth = window.innerWidth;
-
-  if (creditPacksSection && shoppingCart) {
-    if (viewportWidth > 992) {
-      // Desktop: Match height and ensure it's visible
-      shoppingCart.classList.remove('hidden'); // Make sure it's not hidden
-      const creditPacksHeight = creditPacksSection.offsetHeight;
-      shoppingCart.style.height = `${creditPacksHeight}px`;
-    } else {
-      // Mobile: Reset height for modal behavior
-      shoppingCart.style.height = ''; // Reset height
-      // Hidden state is managed by setupCart based on clicks
-    }
-  }
-}
-*/
-// Add a placeholder function if needed, or just remove the calls
-function matchSidebarHeight() {
-  // Placeholder - height matching disabled for now
-  const shoppingCart = document.getElementById("shoppingCart");
-  const viewportWidth = window.innerWidth;
-  if (shoppingCart && viewportWidth <= 992) {
-    // Ensure height is reset on mobile if JS was setting it
-    shoppingCart.style.height = "";
-  } else if (shoppingCart && viewportWidth > 992) {
-    // Ensure height is reset on desktop too, as JS is disabled
-    shoppingCart.style.height = "";
   }
 }

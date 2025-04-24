@@ -1,29 +1,79 @@
 import { showNotification } from "../components/notifications.js";
 
+let apiBaseUrl = '';
+let stripePublicKey = '';
+let stripe = null;
+
+// Fetch configuration when the DOM is ready
+document.addEventListener('DOMContentLoaded', async () => {
+  try {
+    const response = await fetch('/config'); // Fetch from the backend endpoint
+    if (!response.ok) {
+       const errorData = await response.json();
+       throw new Error(errorData.error || `Failed to fetch config: ${response.statusText}`);
+    }
+    const config = await response.json();
+    apiBaseUrl = config.apiBaseUrl || ''; // Use fetched API base URL or default to relative paths
+    stripePublicKey = config.stripePublicKey;
+
+    if (!stripePublicKey) {
+      console.error("Stripe Public Key not found in config from server.");
+      showNotification("Error", "Configuration error: Payment key missing.", "error");
+      // Optionally disable payment/subscription buttons here
+      return;
+    }
+
+    // Initialize Stripe here after fetching the key
+    stripe = Stripe(stripePublicKey);
+
+    // Initialize UI elements that depend on config/Stripe being ready
+    initializeSubscriptionButtons();
+    updateSubscriptionUI();
+
+  } catch (error) {
+    console.error("Error fetching or processing configuration:", error);
+    showNotification("Error", "Error loading configuration: " + error.message, "error");
+    // Optionally disable payment/subscription buttons here
+  }
+});
+
 /**
  * Handles subscription plan upgrades via Stripe checkout
  */
 async function upgradeSubscription(planName, amount) {
+   const button = document.querySelector(`button[data-plan="${planName}"]`);
+   if (!stripe) {
+      console.error("Stripe is not initialized. Cannot proceed with checkout.");
+      showNotification("Error", "Payment system not ready.", "error");
+      if (button) { // Reset button if it exists
+          button.textContent = "Upgrade";
+          button.disabled = false;
+      }
+      return; // Stop if Stripe didn't initialize
+  }
+
   try {
     // Get UI elements
-    const button = document.querySelector(`button[data-plan="${planName}"]`);
     if (!button) {
       console.error(`Button not found for plan ${planName}`);
       return;
     }
-    
+
     // Show loading state
     const originalText = button.textContent;
     button.textContent = "Processing...";
     button.disabled = true;
 
+    // Construct the full URL using the fetched base URL or use relative path if empty
+    const checkoutUrl = apiBaseUrl ? `${apiBaseUrl}/create-checkout-session` : "/create-checkout-session";
+
     // Call the backend to create a checkout session
-    const res = await fetch("/create-checkout-session", {
+    const res = await fetch(checkoutUrl, { // Use constructed URL
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ 
-        amount, 
-        plan: planName 
+      body: JSON.stringify({
+        amount,
+        plan: planName
       }),
       credentials: "same-origin" // Important: include cookies for session
     });
@@ -34,35 +84,51 @@ async function upgradeSubscription(planName, amount) {
       showNotification("Error", "Your session may have expired. Please try logging in again.", "error");
       button.textContent = originalText;
       button.disabled = false;
-      
+
       // Redirect to login after a short delay
       setTimeout(() => {
-        window.location.href = "/signin?redirect=" + encodeURIComponent(window.location.pathname);
+         // Construct redirect URL carefully
+        const redirectPath = "/signin?redirect=" + encodeURIComponent(window.location.pathname);
+        // Use apiBaseUrl if available for the redirect, otherwise relative path
+        window.location.href = apiBaseUrl ? `${apiBaseUrl}${redirectPath}` : redirectPath;
       }, 2000);
       return;
     }
 
+     // Check for non-JSON error responses before trying to parse JSON
+     if (!res.ok) {
+        let errorMsg = `Failed to create checkout session: ${res.statusText}`;
+        try {
+            const errorData = await res.json();
+            errorMsg = errorData.error || errorMsg;
+        } catch (e) {
+            // Ignore if response is not JSON
+        }
+        throw new Error(errorMsg);
+    }
+
     const data = await res.json();
-    
+
     if (data.sessionId) {
-      // Initialize Stripe and redirect to checkout
-      const stripe = Stripe("pk_test_51R4IEVPSYBEkSARW1VDrIwirpgzraNlH1Ms4JDcrHBytkClnLwLIdaTV6zb9FrwYoBmpRqgtnJXGR5Q0VUKYfX7s00kmz7AEQk");
+      // Use the globally initialized stripe object to redirect
       await stripe.redirectToCheckout({ sessionId: data.sessionId });
+      // Note: redirectToCheckout doesn't return if successful, it navigates away.
+      // If it fails, it throws an error caught below.
     } else {
-      // Handle error
+      // This case might be less likely now with the !res.ok check above
       showNotification("Error", data.error || "Failed to create checkout session", "error");
       button.textContent = originalText;
       button.disabled = false;
     }
   } catch (err) {
     console.error("Subscription upgrade error:", err);
-    showNotification("Error", "An error occurred while processing your request.", "error");
-    
+    showNotification("Error", "An error occurred while processing your request: " + err.message, "error");
+
     // Reset button state
-    const button = document.querySelector(`button[data-plan="${planName}"]`);
     if (button) {
       button.disabled = false;
-      button.textContent = "Upgrade";
+      // Check if originalText was captured, otherwise default to "Upgrade"
+      button.textContent = button.textContent === "Processing..." ? "Upgrade" : button.textContent;
     }
   }
 }
@@ -72,10 +138,13 @@ async function upgradeSubscription(planName, amount) {
  */
 async function getCurrentSubscription() {
   try {
-    const response = await fetch('/api/subscription', {
+    // Construct the full URL using the fetched base URL or use relative path if empty
+    const subscriptionUrl = apiBaseUrl ? `${apiBaseUrl}/api/subscription` : '/api/subscription';
+
+    const response = await fetch(subscriptionUrl, { // Use constructed URL
       credentials: 'same-origin' // Include cookies for auth
     });
-    
+
     if (!response.ok) {
       if (response.status === 401) {
         console.warn("User not authenticated");
@@ -83,7 +152,7 @@ async function getCurrentSubscription() {
       }
       throw new Error(`Failed to fetch subscription: ${response.status}`);
     }
-    
+
     const data = await response.json();
     return data.subscription;
   } catch (err) {
@@ -286,8 +355,11 @@ function showCancellationConfirmation() {
       
       console.log("Sending cancel subscription request to server...");
       
+      // Construct the full URL using the fetched base URL or use relative path if empty
+      const cancelUrl = apiBaseUrl ? `${apiBaseUrl}/cancel-subscription` : '/cancel-subscription';
+
       // Make API call to cancel subscription
-      const response = await fetch('/cancel-subscription', {
+      const response = await fetch(cancelUrl, { // Use constructed URL
         method: 'POST',
         headers: { 
           'Content-Type': 'application/json' 
@@ -357,22 +429,24 @@ function showCancellationConfirmation() {
   });
 }
 
-// Initialize subscription buttons when document is loaded
-document.addEventListener("DOMContentLoaded", function() {
+// Wrap button initialization in a function called after config is loaded
+function initializeSubscriptionButtons() {
   // Add click handlers to the subscription buttons
   const proButton = document.querySelector('.plan-card:nth-child(2) .plan-button');
   const enterpriseButton = document.querySelector('.plan-card:nth-child(3) .plan-button');
-  
+
   if (proButton) {
     proButton.setAttribute('data-plan', 'Pro');
-    proButton.addEventListener('click', () => upgradeSubscription('Pro', 9.99));
+    // Ensure amount is in cents (e.g., 9.99 USD = 999 cents)
+    proButton.addEventListener('click', () => upgradeSubscription('Pro', 999));
   }
-  
+
   if (enterpriseButton) {
     enterpriseButton.setAttribute('data-plan', 'Enterprise');
-    enterpriseButton.addEventListener('click', () => upgradeSubscription('Enterprise', 29.99));
+     // Ensure amount is in cents (e.g., 29.99 USD = 2999 cents)
+    enterpriseButton.addEventListener('click', () => upgradeSubscription('Enterprise', 2999));
   }
-  
+
   // Add cancel subscription button handler
   const cancelSubscriptionBtn = document.getElementById('cancel-subscription-btn');
   if (cancelSubscriptionBtn) {
@@ -385,10 +459,7 @@ document.addEventListener("DOMContentLoaded", function() {
   } else {
     console.log("Cancel subscription button not found in subscription.js");
   }
-  
-  // Update UI with current subscription data
-  updateSubscriptionUI();
-});
+}
 
 // Check if we just returned from a successful checkout
 document.addEventListener('DOMContentLoaded', function() {

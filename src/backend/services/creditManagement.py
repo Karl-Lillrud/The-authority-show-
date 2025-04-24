@@ -47,6 +47,7 @@ class CreditService:
 
         # Calculate available credits dynamically
         credits_doc['availableCredits'] = credits_doc.get('subCredits', 0) + credits_doc.get('storeCredits', 0)
+        credits_doc['availableCredits'] = credits_doc.get('subCredits', 0) + credits_doc.get('storeCredits', 0)
 
         # Convert ObjectId to string for frontend compatibility if needed
         if '_id' in credits_doc:
@@ -103,9 +104,11 @@ class CreditService:
 
     def add_credits(self, user_id: str, amount: int, credit_type: str, description: str) -> bool:
         """Adds credits (either subCredits or storeCredits)."""
+        """Adds credits (either subCredits or storeCredits)."""
         if amount <= 0:
             logger.error(f"Amount must be positive to add credits for user {user_id}.")
             return False
+        if credit_type not in ["subCredits", "storeCredits"]:
         if credit_type not in ["subCredits", "storeCredits"]:
             logger.error(f"Invalid credit_type '{credit_type}' for user {user_id}.")
             return False
@@ -144,6 +147,7 @@ class CreditService:
         return True
 
     def consume_credits(self, user_id: str, amount_to_consume: int, description: str) -> bool:
+        """Consumes credits, prioritizing subCredits."""
         """Consumes credits, prioritizing subCredits."""
         if amount_to_consume <= 0:
             logger.error(f"Amount to consume must be positive for user {user_id}.")

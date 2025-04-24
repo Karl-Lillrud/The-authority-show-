@@ -38,6 +38,7 @@ from backend.routes.video_routes import video_bp
 from backend.routes.transcription import transcription_bp
 from colorama import Fore, Style, init  # Import colorama for styled logs
 from backend.routes.activity import activity_bp
+from backend.routes.stripe_config import stripe_config_bp  # Import the renamed config blueprint
 
 if os.getenv("SKIP_VENV_UPDATE", "false").lower() not in ("true", "1", "yes"):
     venvupdate.update_venv_and_requirements()
@@ -100,6 +101,7 @@ app.register_blueprint(
 app.register_blueprint(user_bp)
 app.register_blueprint(landingpage_bp)
 app.register_blueprint(activity_bp)
+app.register_blueprint(stripe_config_bp)  # Register the renamed config blueprint
 
 # Set the application environment (defaults to production)
 APP_ENV = os.getenv("APP_ENV", "production")
@@ -130,7 +132,13 @@ logger.info(f"{Fore.CYAN}🚀 Server is running!")
 logger.info(
     f"{Fore.MAGENTA}🌐 Local:  {os.getenv('LOCAL_BASE_URL', 'http://127.0.0.1:8000')}"
 )
-logger.info(f"{Fore.MAGENTA}🌐 Network: http://192.168.0.4:8000")
+# Append :8000 to the API_BASE_URL for the network log
+api_base_url_for_network = os.getenv('API_BASE_URL', 'Not Set')
+if api_base_url_for_network != 'Not Set':
+    # Simple check to avoid adding port if already present (optional, adjust as needed)
+    if ':' not in api_base_url_for_network.split('//')[-1]:
+         api_base_url_for_network += ':8000'
+logger.info(f"{Fore.MAGENTA}🌐 Network: {api_base_url_for_network}")
 logger.info(f"{Fore.GREEN}========================================")
 
 
