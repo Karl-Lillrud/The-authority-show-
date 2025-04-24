@@ -502,13 +502,12 @@ async function cancelSubscription() {
       
       showNotification('Success', successMessage, 'success');
       
-      // Update UI to reflect cancelled status
+      
       setTimeout(() => {
-        updateSubscriptionUI();
-        
-        // Also update credits since they may have changed
-        fetchStoreCredits();
-      }, 500);
+        window.location.reload();
+      }, 1500);
+      
+      
     } else {
       // Handle error
       try {
