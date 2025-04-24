@@ -7,7 +7,7 @@ PLAN_BENEFITS = {
         "extra_slot_cost": 5000,
         "max_slots": 3,
         "landing_page": "Free",
-        "transcription_limit": 5
+        "transcription_limit": 60 * 60 
     },
     "PRO": {
         "credits": 10000,
