@@ -438,13 +438,13 @@ function initializeSubscriptionButtons() {
   if (proButton) {
     proButton.setAttribute('data-plan', 'Pro');
     // Ensure amount is in cents (e.g., 9.99 USD = 999 cents)
-    proButton.addEventListener('click', () => upgradeSubscription('Pro', 999));
+    proButton.addEventListener('click', () => upgradeSubscription('Pro', 9.99));
   }
 
   if (enterpriseButton) {
     enterpriseButton.setAttribute('data-plan', 'Enterprise');
      // Ensure amount is in cents (e.g., 29.99 USD = 2999 cents)
-    enterpriseButton.addEventListener('click', () => upgradeSubscription('Enterprise', 2999));
+    enterpriseButton.addEventListener('click', () => upgradeSubscription('Enterprise', 29.99));
   }
 
   // Add cancel subscription button handler
