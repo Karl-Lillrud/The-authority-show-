@@ -542,7 +542,7 @@ async function displayBackgroundAndMix() {
   
     // Disable button & show spinner text
     mixBtn.disabled  = true;
-    mixBtn.innerText = "🔄 Generating background…";
+    mixBtn.innerText = "🔄 Generating…";
     preview.innerHTML = "";
   
     const fd = new FormData();
@@ -554,23 +554,14 @@ async function displayBackgroundAndMix() {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || res.statusText);
   
-      // Render loop
-      if (data.background_clip) {
-        preview.innerHTML += `
-          <h4>🔈 Background Loop (30s)</h4>
-          <audio controls src="${data.background_clip}" style="width:100%;"></audio>
-          <hr/>
-        `;
-      }
-  
-      // Render the mixed overlay
+      // ONLY render the mixed overlay:
       if (data.merged_audio) {
-        preview.innerHTML += `
+        preview.innerHTML = `
           <h4>🎶 Mixed Preview</h4>
           <audio controls src="${data.merged_audio}" style="width:100%;"></audio>
         `;
         // Update download link
-        dl.href        = data.merged_audio;
+        dl.href          = data.merged_audio;
         dl.style.display = "inline-block";
       }
     } catch (err) {
