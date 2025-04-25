@@ -114,8 +114,10 @@ def payment_success():
         return jsonify({"error": "Missing session ID"}), 400
 
     try:
-        # Retrieve the Stripe session
-        stripe_session = stripe.checkout.Session.retrieve(session_id)
+        # Retrieve the Stripe session with expanded line_items
+        stripe_session = stripe.checkout.Session.retrieve(
+            session_id, expand=["line_items"]
+        )
 
         # Check if this includes a subscription, credits, or both
         metadata = stripe_session.get("metadata", {})
@@ -357,7 +359,14 @@ def get_purchase_history():
         purchases = list(
             collection.database.Purchases.find(
                 {"user_id": user_id},
-                {"_id": 0, "date": 1, "amount": 1, "description": 1, "status": 1},
+                {
+                    "_id": 0,
+                    "date": 1,
+                    "amount": 1,
+                    "description": 1,
+                    "status": 1,
+                    "details": 1,
+                },
             ).sort("date", -1)
         )
 
@@ -374,6 +383,7 @@ def get_purchase_history():
                     "amount": 0.00,
                     "description": f"System credit grant ({available_credits} credits)",
                     "status": "Granted",
+                    "details": [],
                 }
             )
 
