@@ -55,35 +55,35 @@ function showTab(tabName) {
         `;
     }else if (tabName === 'audio') {
         content.innerHTML = `
-            <h2>🎵 AI Audio Enhancement</h2>
+            <h2>AI Audio Enhancement</h2>
             <input type="file" id="audioUploader" accept="audio/*" onchange="previewOriginalAudio()">
             <div id="originalAudioContainer" style="display: none; margin-bottom: 1rem;">
-                <p>🎧 <strong>Original Audio</strong></p>
+                <p><strong>Original Audio</strong></p>
                 <audio id="originalAudioPlayer" controls style="width: 100%"></audio>
             </div>
     
             <div style="margin-top: 1rem; padding: 1rem; border: 1px solid #ddd; border-radius: 12px;">
-                <h3>🔊 Choose Audio Processing Method</h3>
+                <h3>Choose Audio Processing Method</h3>
                 <p style="margin-bottom: 1rem;">Select one of the following enhancements:</p>
     
                 <div id="voiceIsolationSection" style="margin-bottom: 1.5rem;">
-                    <h4>🎤 <strong>Voice Isolation (Powered by ElevenLabs)</strong></h4>
+                    <h4><strong>Voice Isolation (Powered by ElevenLabs)</strong></h4>
                     <button class="btn ai-edit-button" onclick="runVoiceIsolation()">
-                        ${labelWithCredits("🎙️ Isolate Voice", "voice_isolation")}
+                        ${labelWithCredits("Isolate Voice", "voice_isolation")}
                     </button>
                     <div id="isolatedVoiceResult" style="margin-top: 1rem;"></div>
                     <a id="downloadIsolatedVoice"
                        class="inline-block mt-2 bg-orange-500 text-white px-4 py-2 rounded-2xl shadow hover:shadow-lg transition"
                        style="display: none;"
                        download="isolated_voice.wav">
-                       📥 Download Isolated Voice
+                       Download Isolated Voice
                     </a>
                 </div>
     
                 <div id="audioEnhancementSection">
-                    <h4>🎚️ <strong>Audio Enhancement (Noise Reduction & Normalization)</strong></h4>
+                    <h4><strong>Audio Enhancement (Noise Reduction & Normalization)</strong></h4>
                     <button class="btn ai-edit-button" onclick="enhanceAudio()">
-                      ${labelWithCredits("✨ Enhance Audio", "audio_enhancment")}
+                      ${labelWithCredits("Enhance Audio", "audio_enhancment")}
                     </button>
                     <div id="audioControls" style="margin-top: 1rem;"></div>
                 </div>
@@ -91,50 +91,49 @@ function showTab(tabName) {
     
             <div id="audioAnalysisSection" style="display: none;">
                 <hr/>
-                <h3>🤖 AI Analysis</h3>
+                <h3>AI Analysis</h3>
                 <button class="btn ai-edit-button" onclick="analyzeEnhancedAudio()">
-                  ${labelWithCredits("📊 Analyze", "ai_audio_analysis")}
+                  ${labelWithCredits("Analyze", "ai_audio_analysis")}
                 </button>
                 <pre id="analysisResults"></pre>
     
-                <!-- NEW: Button that appears AFTER analysis completes -->
                 <button id="mixBackgroundBtn"
                         class="btn ai-edit-button"
                         style="display: none; margin-top: 1rem;"
                         onclick="displayBackgroundAndMix()">
-                  🔉 Mix Background & Preview
+                  Mix Background & Preview
                 </button>
     
-                <!-- NEW: Container for background & mixed audio previews -->
                 <div id="backgroundPreview" style="margin-top: 1rem;"></div>
-    
-                <!-- Existing container for sound-effect suggestions -->
                 <div id="soundEffectTimeline" style="margin-top: 1rem;"></div>
     
                 <a id="downloadEnhanced"
                    class="btn ai-edit-button"
-                   download="processed_audio.wav">
-                   📥 Download Processed Audio
+                   download="processed_audio.wav"
+                   style="display: none;">
+                   Download Processed Audio
                 </a>
             </div>
     
             <div id="audioCuttingSection" style="display: none;">
                 <hr/>
-                <h3>✂ Audio Cutting</h3>
+                <h3>Audio Cutting</h3>
                 <label>Start: <input type="number" id="startTime" min="0" step="0.1"></label>
                 <label>End: <input type="number" id="endTime" min="0" step="0.1"></label>
                 <button class="btn ai-edit-button" onclick="cutAudio()">
-                  ${labelWithCredits("✂ Cut", "audio_cutting")}
+                  ${labelWithCredits("Cut", "audio_cutting")}
                 </button>
                 <div id="cutResult"></div>
-                <a id="downloadCut" class="btn ai-edit-button" download="cut_audio.wav">📥 Download Cut</a>
+                <a id="downloadCut" class="btn ai-edit-button" download="cut_audio.wav">
+                  Download Cut
+                </a>
             </div>
     
             <div id="aiCuttingSection" style="display: none;">
                 <hr/>
-                <h3>🧠 AI Cutting + Transcript</h3>
+                <h3>AI Cutting + Transcript</h3>
                 <button class="btn ai-edit-button" onclick="aiCutAudio()">
-                  ${labelWithCredits("🧠 Run AI Cut", "ai_audio_cutting")}
+                  ${labelWithCredits("Run AI Cut", "ai_audio_cutting")}
                 </button>
                 <div class="result-field">
                     <h4>Transcript</h4>
