@@ -873,7 +873,6 @@ function displayPurchaseHistory(purchases) {
   // Add each purchase to the table
   purchases.forEach((purchase) => {
     const date = new Date(purchase.date);
-    // Include both date and time in the formatted date
     const formattedDate =
       date.toLocaleDateString("en-US", {
         year: "numeric",
@@ -886,19 +885,8 @@ function displayPurchaseHistory(purchases) {
         minute: "2-digit"
       });
 
-    // Check if this is a subscription entry
-    const isSubscription =
-      purchase.type === "subscription" ||
-      (purchase.description &&
-        purchase.description.toLowerCase().includes("subscription"));
-
-    // Add subscription-row class for subscription entries
-    const rowClass = isSubscription
-      ? "billing-row subscription-row"
-      : "billing-row";
-
     const row = document.createElement("div");
-    row.className = rowClass;
+    row.className = "billing-row";
     row.innerHTML = `
       <div class="billing-cell">${formattedDate}</div>
       <div class="billing-cell">${
@@ -910,8 +898,59 @@ function displayPurchaseHistory(purchases) {
       purchase.status
     }</span>
       </div>
+      <div class="billing-cell">
+        <button class="details-btn" data-details='${JSON.stringify(
+          purchase.details || []
+        )}'>View Details</button>
+      </div>
     `;
 
     historyContainer.appendChild(row);
   });
+
+  // Add event listeners to "Details" buttons
+  document.querySelectorAll(".details-btn").forEach((button) => {
+    button.addEventListener("click", function () {
+      const details = JSON.parse(this.getAttribute("data-details"));
+      showPurchaseDetails(details);
+    });
+  });
 }
+
+function showPurchaseDetails(details) {
+  const modal = document.getElementById("details-modal");
+  const modalContent = document.getElementById("details-modal-content");
+
+  if (!modal || !modalContent) return;
+
+  // Clear previous details
+  modalContent.innerHTML = "";
+
+  if (details.length === 0) {
+    modalContent.innerHTML = "<p>No details available for this purchase.</p>";
+  } else {
+    const list = document.createElement("ul");
+    details.forEach((item) => {
+      const listItem = document.createElement("li");
+      listItem.textContent = `${item.product} - Quantity: ${
+        item.quantity
+      }, Price: $${item.price.toFixed(2)}`;
+      list.appendChild(listItem);
+    });
+    modalContent.appendChild(list);
+  }
+
+  // Show the modal
+  modal.style.display = "block";
+}
+
+// Close modal when clicking outside or on close button
+document.addEventListener("click", (event) => {
+  const modal = document.getElementById("details-modal");
+  if (
+    modal &&
+    (event.target === modal || event.target.classList.contains("close-modal"))
+  ) {
+    modal.style.display = "none";
+  }
+});
