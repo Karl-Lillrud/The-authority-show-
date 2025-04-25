@@ -519,7 +519,7 @@ async function cancelSubscription() {
       }, 1500);
       
       
-    } else {
+git     } else {
       // Handle error
       try {
         const errorData = await response.json();
