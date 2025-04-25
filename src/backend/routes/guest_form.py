@@ -9,7 +9,7 @@ import os
 from backend.repository.user_repository import UserRepository
 from google.auth.transport.requests import Request
 
-guest_form_bp = Blueprint("guest_form", __name__)
+guest_form_bp = Blueprint("guest_form_bp", __name__)  # Use a unique name for the blueprint
 logger = logging.getLogger(__name__)
 
 @guest_form_bp.route("/", methods=["GET", "POST"])

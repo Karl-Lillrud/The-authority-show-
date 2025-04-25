@@ -1,15 +1,4 @@
 /* Base Styles */
-h1,
-h2,
-h3,
-h4,
-h5,
-h6 {
-  font-weight: 600;
-  line-height: 1.25;
-  margin-bottom: 0.5rem;
-}
-
 a {
   color: var(--account-primary);
   text-decoration: none;
@@ -45,12 +34,6 @@ button {
   align-items: center;
   justify-content: space-between;
   position: relative;
-}
-
-.account-header h1 {
-  font-size: 1.75rem;
-  font-weight: 700;
-  color: var(--account-foreground);
 }
 
 .back-link {
@@ -227,15 +210,7 @@ button {
   margin-bottom: 2rem;
 }
 
-.section-header h2 {
-  font-size: 1.5rem;
-  font-weight: 600;
-  color: var(--account-card-foreground);
-  margin-bottom: 0.5rem;
-}
-
 .section-header p {
-  color: var(--account-muted-foreground);
   font-size: 0.875rem;
 }
 
@@ -594,6 +569,7 @@ input:focus {
   background-color: var(--account-primary-light);
   border-radius: var(--account-radius);
   margin-bottom: 1.5rem;
+  position: relative; /* Add position relative to contain absolute elements */
 }
 
 .info-card-icon {
@@ -608,10 +584,8 @@ input:focus {
   flex-shrink: 0;
 }
 
-.info-card-content h3 {
-  font-size: 1rem;
-  font-weight: 600;
-  margin-bottom: 0.5rem;
+.info-card-content {
+  flex: 1; /* Take remaining space */
 }
 
 .info-card-content p {
@@ -655,7 +629,6 @@ input:focus {
   border-radius: var(--account-radius);
   padding: 1.5rem;
   transition: transform 0.2s ease, box-shadow 0.2s ease;
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
   display: flex; 
   flex-direction: column; 
   height: 100%; 
@@ -673,8 +646,6 @@ input:focus {
 
 .plan-header h3 {
   font-size: 1.25rem;
-  font-weight: 600;
-  margin-bottom: 0.5rem;
 }
 
 .plan-price {
@@ -723,12 +694,27 @@ input:focus {
   margin-top: auto;
 }
 
+.plan-button.primary {
+  background-color: orange; /* Make upgrade buttons orange */
+  color: white;
+  border: none;
+}
+
+.plan-button.primary:hover {
+  background-color: darkorange; /* Darker orange on hover */
+  box-shadow: var(--button-shadow-hover);
+}
+
 .plan-button.current {
-  background-color: var(--account-input);
-  color: var(--account-muted-foreground);
+  background-color: var(--account-muted); /* Use a muted grey background */
+  color: var(--account-muted-foreground); /* Use muted text color */
   border: 1px solid var(--account-border);
   cursor: default;
-  padding: 0.75rem 1.5rem;
+}
+
+.plan-button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
 }
 
 /* Billing History */
@@ -737,8 +723,6 @@ input:focus {
 }
 
 .billing-history h3 {
-  font-size: 1rem;
-  font-weight: 600;
   margin-bottom: 1rem;
 }
 
@@ -772,12 +756,53 @@ input:focus {
   color: var(--account-success);
   border-radius: 9999px;
   font-size: 0.75rem;
-  font-weight: 500;
 }
 
 .invoice-link {
   color: var(--account-primary);
   font-weight: 500;
+}
+
+/* Update the billing history styling */
+.empty-history-message {
+  text-align: center;
+  padding: 1.5rem;
+  color: var(--account-muted-foreground);
+  font-style: italic;
+}
+
+.loading-row {
+  text-align: center;
+  color: var(--account-muted-foreground);
+  padding: 1rem 0;
+}
+
+/* Status classes for different purchase states */
+.status-paid {
+  display: inline-block;
+  padding: 0.25rem 0.5rem;
+  background-color: rgba(16, 185, 129, 0.1);
+  color: var(--account-success);
+  border-radius: 9999px;
+  font-size: 0.75rem;
+}
+
+.status-pending {
+  display: inline-block;
+  padding: 0.25rem 0.5rem;
+  background-color: rgba(245, 158, 11, 0.1);
+  color: #f59e0b;
+  border-radius: 9999px;
+  font-size: 0.75rem;
+}
+
+.status-failed {
+  display: inline-block;
+  padding: 0.25rem 0.5rem;
+  background-color: rgba(239, 68, 68, 0.1);
+  color: #ef4444;
+  border-radius: 9999px;
+  font-size: 0.75rem;
 }
 
 /* Payment Methods */
@@ -994,9 +1019,58 @@ input:focus:invalid {
   }
 }
 
+@media (max-width: 640px) {
+  .billing-header, .billing-row {
+    grid-template-columns: 1fr 2fr 1fr;
+  }
+  
+  .billing-header .billing-cell:nth-child(4),
+  .billing-row .billing-cell:nth-child(4) {
+    display: none;
+  }
+}
+
 #subscription-choose,
 #subscription-change {
   align-self: flex-start; /* Align these sections to the right */
   width: 100%; /* Adjust width as needed */
+}
+
+/* Subscription actions styling */
+.subscription-actions {
+  margin-top: 1.5rem;
+  display: flex;
+  justify-content: flex-end; /* Changed from flex-start to flex-end */
+}
+
+/* Initially hide the cancel button (for non-subscribers) */
+#cancel-subscription-btn {
+  display: none;
+}
+
+/* Show the button only when active (controlled by JavaScript) */
+#cancel-subscription-btn:not([disabled]) {
+  display: flex;
+}
+
+#cancel-subscription-btn:disabled {
+  display: none; /* Hide when disabled instead of showing grayed out */
+}
+
+/* Also remove the styling for the button */
+#cancel-subscription-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.6rem 1rem; /* Slightly smaller padding */
+  font-size: 0.85rem; /* Slightly smaller font size */
+  border-radius: var(--account-radius);
+  transition: all 0.2s ease;
+}
+
+#cancel-subscription-btn:hover {
+  background-color: var(--account-border);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
 }
 

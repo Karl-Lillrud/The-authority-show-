@@ -17,7 +17,9 @@ export async function fetchEpisodes(guestId) {
 
 export async function viewEpisodeTasks(episodeId) {
   try {
-    const response = await fetch(`/episodes/view_tasks_by_episode/${episodeId}`);
+    const response = await fetch(
+      `/episodes/view_tasks_by_episode/${episodeId}`
+    );
     const data = await response.json();
 
     if (response.ok) {
@@ -78,24 +80,36 @@ export async function fetchEpisodeCountByGuest(guestId) {
 export async function registerEpisode(data) {
   try {
     if (!data.podcastId || !data.title) {
-      console.error("Missing required fields: podcastId or title", data); // Added log
+      console.error("Missing required fields: podcastId or title", data);
       throw new Error("Missing required fields: podcastId or title");
     }
-    console.log("Sending data to /add_episode:", data); // Added log
+
+    const finalData = {
+      ...data,
+      isImported: data.isImported ?? false
+    };
+
+    console.log("Sending data to /add_episode:", finalData);
     const response = await fetch("/add_episode", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(data)
+      body: JSON.stringify(finalData)
     });
+
     const responseData = await response.json();
-    console.log("Received response from /add_episode:", responseData); // Added log
+    console.log("Received response from /add_episode:", responseData);
+
     if (!response.ok) {
-      console.error("Error response from /add_episode:", responseData); // Added log
+      console.error("Error response from /add_episode:", responseData);
+      if (responseData.error === "Episode limit reached") {
+        throw new Error("Episode limit reached");
+      }
       throw new Error(responseData.error || "Failed to register episode");
     }
+
     return responseData;
   } catch (error) {
-    console.error("Error registering episode:", error); // Added log
+    console.error("Error registering episode:", error);
     throw error;
   }
 }
@@ -194,4 +208,3 @@ export async function fetchAllEpisodes() {
     throw error;
   }
 }
-

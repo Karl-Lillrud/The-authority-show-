@@ -24,6 +24,7 @@ from backend.routes.guest_to_eposide import guesttoepisode_bp
 from backend.routes.guest_form import guest_form_bp  # Import the guest_form blueprint
 from backend.utils.email_utils import send_email
 from backend.utils.scheduler import start_scheduler
+from backend.utils.credit_scheduler import init_credit_scheduler  # Add this import
 from backend.routes.billing import billing_bp
 from backend.routes.landingpage import landingpage_bp
 from dotenv import load_dotenv
@@ -35,7 +36,10 @@ from backend.routes.highlight import highlights_bp
 from backend.routes.audio_routes import audio_bp
 from backend.routes.video_routes import video_bp
 from backend.routes.transcription import transcription_bp
+from backend.routes.comment import comment_bp  # Import the comment blueprint
 from colorama import Fore, Style, init  # Import colorama for styled logs
+from backend.routes.activity import activity_bp
+from backend.routes.stripe_config import stripe_config_bp  # Import the renamed config blueprint
 
 if os.getenv("SKIP_VENV_UPDATE", "false").lower() not in ("true", "1", "yes"):
     venvupdate.update_venv_and_requirements()
@@ -97,6 +101,7 @@ app.register_blueprint(
 )  # Register the guest_form blueprint with URL prefix
 app.register_blueprint(user_bp)
 app.register_blueprint(landingpage_bp)
+app.register_blueprint(comment_bp)
 
 
 # Set the application environment (defaults to production)
@@ -128,7 +133,13 @@ logger.info(f"{Fore.CYAN}🚀 Server is running!")
 logger.info(
     f"{Fore.MAGENTA}🌐 Local:  {os.getenv('LOCAL_BASE_URL', 'http://127.0.0.1:8000')}"
 )
-logger.info(f"{Fore.MAGENTA}🌐 Network: http://192.168.0.4:8000")
+# Append :8000 to the API_BASE_URL for the network log
+api_base_url_for_network = os.getenv('API_BASE_URL', 'Not Set')
+if api_base_url_for_network != 'Not Set':
+    # Simple check to avoid adding port if already present (optional, adjust as needed)
+    if ':' not in api_base_url_for_network.split('//')[-1]:
+         api_base_url_for_network += ':8000'
+logger.info(f"{Fore.MAGENTA}🌐 Network: {api_base_url_for_network}")
 logger.info(f"{Fore.GREEN}========================================")
 
 
@@ -140,6 +151,7 @@ def load_user():
 
 
 start_scheduler(app)
+init_credit_scheduler(app)  # Add this line after start_scheduler
 
 # Styled startup message
 if __name__ == "__main__":
