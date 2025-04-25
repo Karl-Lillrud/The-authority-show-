@@ -128,8 +128,19 @@
                   <div id="workspaceArea" class="workspace-area">
                     <div class="workspace-placeholder">
                       <i class="fas fa-laptop"></i>
-                      <h3>No task selected</h3>
-                      <p>Select a task from the task list to open it in the workspace. Tasks with the <i class="fas fa-laptop"></i> icon can be worked on directly in this workspace.</p>
+                    </div>
+
+                    <!-- AI Edits Section -->
+                    <div id="aiEditsSection" style="margin-top: 2rem;">
+                      <h3>AI Editing Tools</h3>
+                      <div id="content">
+                        <!-- AI editing tools will be dynamically loaded here -->
+                      </div>
+                      <div class="tabs-list">
+                        <button class="tab-btn" onclick="showTab('transcription')">Transcription</button>
+                        <button class="tab-btn" onclick="showTab('audio')">Audio</button>
+                        <button class="tab-btn" onclick="showTab('video')">Video</button>
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -212,6 +223,9 @@
   <script type="module" src="{{ url_for('static', filename='js/episode-to-do/sidebar-header.js') }}"></script>
   <script type="module" src="{{ url_for('static', filename='js/episode-to-do/comment-utils.js') }}"></script>
   <script type="module" src="{{ url_for('static', filename='js/episode-to-do/task-page-integrations.js') }}"></script>
+  
+  <!-- Add the ai_edits.js script -->
+  <script type="module" src="{{ url_for('static', filename='js/ai_edits/ai_edits.js') }}"></script>
   
   <!-- Load the main entry point last -->
   <script type="module" src="{{ url_for('static', filename='js/episode-to-do/main.js') }}"></script>

@@ -6,6 +6,32 @@ let isolatedAudioId = null;
 let activeAudioBlob = null;
 let activeAudioId = null;
 
+// Expose all functions to the global scope
+window.showTab = showTab;
+window.transcribe = transcribe;
+window.generateCleanTranscript = generateCleanTranscript;
+window.generateAISuggestions = generateAISuggestions;
+window.generateShowNotes = generateShowNotes;
+window.generateQuotes = generateQuotes;
+window.generateQuoteImages = generateQuoteImages;
+window.runOsintSearch = runOsintSearch;
+window.generatePodcastIntroOutro = generatePodcastIntroOutro;
+window.convertIntroOutroToSpeech = convertIntroOutroToSpeech;
+window.enhanceAudio = enhanceAudio;
+window.runVoiceIsolation = runVoiceIsolation;
+window.analyzeEnhancedAudio = analyzeEnhancedAudio;
+window.displayBackgroundAndMix = displayBackgroundAndMix;
+window.cutAudio = cutAudio;
+window.aiCutAudio = aiCutAudio;
+window.applySelectedCuts = applySelectedCuts;
+window.cutAudioFromBlob = cutAudioFromBlob;
+window.enhanceVideo = enhanceVideo;
+window.previewOriginalAudio = previewOriginalAudio;
+window.previewOriginalVideo = previewOriginalVideo;
+window.acceptSfx = acceptSfx;
+window.rejectSfx = rejectSfx;
+window.replaceSfx = replaceSfx;
+
 window.CURRENT_USER_ID = localStorage.getItem("user_id");
 const urlParams = new URLSearchParams(window.location.search);
 const episodeIdFromUrl = urlParams.get("episodeId");
@@ -233,6 +259,8 @@ function showTab(tabName) {
         `;
     }
 }
+
+window.showTab = showTab;
 
 let rawTranscript = "";
 let fullTranscript = "";
