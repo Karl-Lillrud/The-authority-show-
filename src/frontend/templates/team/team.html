@@ -62,6 +62,12 @@ Dashboard{% endblock %} {% block content %}
   <main class="main-content">
     <div class="main-header">
       <h1>Teams</h1>
+      <div class="search-container">
+        <input type="text" id="teamSearch" placeholder="Search teams..." class="search-input">
+        <button id="clearSearch" class="clear-search-btn">
+          <span class="clear-icon">×</span>
+        </button>
+      </div>
     </div>
 
     <!-- Flash messages -->
@@ -76,6 +82,12 @@ Dashboard{% endblock %} {% block content %}
     <!-- Team list -->
     <div class="card-container">
       <!-- Team cards will be inserted here dynamically -->
+    </div>
+    
+    <!-- Loading indicator -->
+    <div class="loading-indicator">
+      <div class="spinner"></div>
+      <p>Loading...</p>
     </div>
   </main>
 </div>
@@ -123,6 +135,7 @@ Dashboard{% endblock %} {% block content %}
         <input type="hidden" name="userId" value="{{ session.user_id }}" />
         <input type="hidden" name="email" value="{{ session.email }}" />
       </div>
+      <div class="form-validation-message" id="teamFormValidation"></div>
       <div class="form-actions">
         <button type="button" class="cancel-btn" id="modalCloseBtn2">
           Cancel
@@ -259,6 +272,7 @@ Dashboard{% endblock %} {% block content %}
           </select>
         </div>
       </div>
+      <div class="form-validation-message" id="memberFormValidation"></div>
       <div class="form-actions">
         <button type="button" id="cancelAddMember" class="cancel-btn">
           Cancel
@@ -308,6 +322,7 @@ Dashboard{% endblock %} {% block content %}
           </select>
         </div>
       </div>
+      <div class="form-validation-message" id="editMemberFormValidation"></div>
       <div class="form-actions">
         <button type="button" id="cancelEditMemberBtn" class="cancel-btn">
           Cancel
@@ -370,6 +385,7 @@ Dashboard{% endblock %} {% block content %}
           </select>
         </div>
       </div>
+      <div class="form-validation-message" id="teamCardEditMemberFormValidation"></div>
       <div class="form-actions">
         <!-- Flyttade delete-knappen längst till vänster -->
         <button

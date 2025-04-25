@@ -1,104 +1,562 @@
-/* Container for the Podcast Page */
+/* Base styles */
+:root {
+    --primary-color: #3498db;
+    --secondary-color: #1e88e5;
+    --highlight-color: #ff6f61;
+    --highlight-hover: #ff8a7f;
+    --text-color: rgba(0, 0, 0, 0.85);
+    --text-color-light: rgba(0, 0, 0, 0.6);
+    --background-color: #f8f9fa;
+    --card-background: #ffffff;
+    --border-color: rgba(0, 0, 0, 0.09);
+    --success-color: #4caf50;
+    --warning-color: #ff9800;
+    --danger-color: #f44336;
+    --transition-fast: 0.2s ease;
+    --transition-normal: 0.3s ease;
+    --radius-small: 4px;
+    --radius-medium: 8px;
+    --radius-large: 12px;
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Segoe UI', system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+}
+
+body {
+    background-color: var(--background-color);
+    color: var(--text-color);
+    line-height: 1.6;
+}
+
 .container {
-    margin-top: var(--spacing-lg);
-    padding: var(--spacing-md);
-    max-width: 1200px;
-    margin-left: auto;
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+/* Header Styles */
+.app-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px 0;
+    border-bottom: 1px solid var(--border-color);
+    margin-bottom: 30px;
+}
+
+.logo h1 {
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: var(--primary-color);
+}
+
+.main-nav ul {
+    display: flex;
+    list-style: none;
+    gap: 25px;
+}
+
+.main-nav a {
+    text-decoration: none;
+    color: var(--text-color-light);
+    font-weight: 500;
+    transition: color var(--transition-fast);
+    padding: 5px 0;
+}
+
+.main-nav a:hover, .main-nav a.active {
+    color: var(--highlight-color);
+    border-bottom: 2px solid var(--highlight-color);
+}
+
+.user-menu {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.user-info .user-name {
+    font-weight: 500;
+}
+
+.user-avatar img {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    object-fit: cover;
+}
+
+/* Main Content Styles */
+.main-content {
+    position: relative;
+}
+
+.main-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 25px;
+}
+
+.main-header h2 {
+    font-weight: 600;
+    color: var(--text-color);
+}
+
+.add-btn {
+    background-color: var(--highlight-color);
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: var(--radius-medium);
+    font-weight: 500;
+    cursor: pointer;
+    transition: all var(--transition-fast);
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.add-btn:hover {
+    background-color: var(--highlight-hover);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+}
+
+/* Teams Container */
+.teams-container {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+    gap: 25px;
+}
+
+.team-card {
+    background: var(--card-background);
+    border-radius: var(--radius-large);
+    padding: 25px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+    transition: all var(--transition-normal);
+}
+
+.team-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 10px;
+}
+
+.team-name {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: var(--text-color);
+}
+
+.team-description {
+    font-size: 0.95rem;
+    color: var(--text-color-light);
+    margin-bottom: 20px;
+}
+
+.team-members-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+}
+
+.team-members-header h4 {
+    font-size: 1rem;
+    font-weight: 500;
+}
+
+.add-member-btn {
+    background: transparent;
+    color: var(--highlight-color);
+    border: 1px solid var(--highlight-color);
+    padding: 6px 12px;
+    border-radius: var(--radius-small);
+    font-size: 0.85rem;
+    cursor: pointer;
+    transition: all var(--transition-fast);
+}
+
+.add-member-btn:hover {
+    background-color: var(--highlight-color);
+    color: white;
+}
+
+.members-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.member-card {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 15px;
+    background-color: rgba(0, 0, 0, 0.02);
+    border-radius: var(--radius-medium);
+    transition: all var(--transition-fast);
+}
+
+.member-card:hover {
+    background-color: rgba(0, 0, 0, 0.04);
+}
+
+.member-info {
+    display: flex;
+    flex-direction: column;
+}
+
+.member-name {
+    font-weight: 500;
+    font-size: 0.95rem;
+}
+
+.member-role {
+    font-size: 0.85rem;
+    color: var(--text-color-light);
+}
+
+.member-email {
+    font-size: 0.85rem;
+    color: var(--primary-color);
+}
+
+.edit-icon-btn {
+    background: transparent;
+    border: none;
+    color: var(--text-color-light);
+    cursor: pointer;
+    transition: color var(--transition-fast);
+}
+
+.edit-icon-btn:hover {
+    color: var(--highlight-color);
+}
+
+/* Modal Styles */
+.popup {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.6);
+    backdrop-filter: blur(2px);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+    visibility: hidden;
+    opacity: 0;
+    transition: all var(--transition-normal);
+}
+
+.popup.show {
+    visibility: visible;
+    opacity: 1;
+}
+
+.form-box {
+    background-color: var(--card-background);
+    width: 100%;
+    max-width: 500px;
+    border-radius: var(--radius-large);
+    padding: 30px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+}
+
+.form-box h3 {
+    font-size: 1.25rem;
+    font-weight: 600;
+    margin-bottom: 25px;
+    color: var(--text-color);
+}
+
+.field-group {
+    margin-bottom: 20px;
+}
+
+.field-group label {
+    display: block;
+    font-size: 0.95rem;
+    font-weight: 500;
+    margin-bottom: 8px;
+    color: var(--text-color);
+}
+
+.field-group input, .field-group textarea, .field-group select {
+    width: 100%;
+    padding: 12px 15px;
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-medium);
+    font-size: 0.95rem;
+    color: var(--text-color);
+    background-color: white;
+    transition: all var(--transition-fast);
+}
+
+.field-group input:focus, .field-group textarea:focus, .field-group select:focus {
+    border-color: var(--primary-color);
+    outline: none;
+    box-shadow: 0 0 0 2px rgba(52, 152, 219, 0.1);
+}
+
+.form-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 15px;
+    margin-top: 30px;
+}
+
+.save-btn, .cancel-btn, .delete-btn {
+    padding: 10px 20px;
+    border-radius: var(--radius-medium);
+    font-weight: 500;
+    cursor: pointer;
+    transition: all var(--transition-fast);
+}
+
+.save-btn {
+    background-color: var(--highlight-color);
+    color: white;
+    border: none;
+    box-shadow: 0 4px 6px rgba(255, 111, 97, 0.2);
+}
+
+.cancel-btn {
+    background-color: transparent;
+    color: var(--text-color);
+    border: 1px solid var(--border-color);
+}
+
+.delete-btn {
+    background-color: transparent;
+    color: var(--danger-color);
+    border: 1px solid var(--danger-color);
     margin-right: auto;
 }
 
-/* Title */
-h1 {
-    font-size: 2.5rem;
-    margin-bottom: var(--spacing-md);
-    color: var(--text-color-dark);
+/* Empty state */
+.empty-state {
     text-align: center;
+    padding: 50px 0;
+    color: var(--text-color-light);
 }
 
-/* Podcast Detail Section */
-#podcast-container {
-    background-color: #fff;
-    border-radius: var(--radius-medium);
-    padding: var(--spacing-md);
-    box-shadow: 0 4px 6px var(--dark-shadow-dark);
-    margin-bottom: var(--spacing-lg);
+.empty-state i {
+    font-size: 3rem;
+    margin-bottom: 15px;
+    opacity: 0.5;
 }
 
-#podcast-container h2 {
-    font-size: 1.8rem;
-    margin-bottom: var(--spacing-sm);
-    color: var(--text-color-dark);
+.empty-state h3 {
+    font-size: 1.25rem;
+    font-weight: 500;
+    margin-bottom: 10px;
 }
 
-#podcast-container p {
-    font-size: 1rem;
-    color: #555;
+.empty-state p {
+    font-size: 0.95rem;
+    max-width: 400px;
+    margin: 0 auto;
 }
 
-/* Section Headers */
-h2 {
-    font-size: 1.8rem;
-    margin-bottom: var(--spacing-sm);
-    color: var(--highlight-color);
-}
-
-/* Flexbox Layout for Sections (Guests, Episodes, Tasks, Teams) */
-.card-container {
+/* Loading indicator */
+.loading-indicator {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(255, 255, 255, 0.8);
     display: flex;
-    flex-wrap: wrap;
-    gap: var(--spacing-md);
-    justify-content: center;  /* Center the cards horizontally */
-    align-items: flex-start;  /* Align cards at the top (optional, you can adjust if you need vertical centering) */
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    z-index: 9999;
+    backdrop-filter: blur(3px);
 }
 
-.card-container .card {
-    background-color: #fff;
-    width: calc(33% - var(--spacing-md));
-    padding: var(--spacing-sm);
-    border-radius: var(--radius-medium);
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-    margin-bottom: var(--spacing-md); /* Add margin at the bottom for spacing */
+.spinner {
+    width: 50px;
+    height: 50px;
+    border: 5px solid rgba(255, 111, 97, 0.2);
+    border-radius: 50%;
+    border-top-color: var(--highlight-color);
+    animation: spin 1s ease-in-out infinite;
 }
 
-.card-container .card h4 {
-    font-size: 1.2rem;
-    color: var(--highlight-color);
-}
-
-.card-container .card p {
-    font-size: 1rem;
-    color: #555;
-}
-
-.card-container .card .btn {
-    background-color: var(--highlight-color);
-    color: white;
-    padding: 8px 16px;
-    border-radius: var(--radius-small);
-    text-align: center;
-    cursor: pointer;
-    font-size: 1rem;
-    transition: background-color 0.3s ease;
-}
-
-.card-container .card .btn:hover {
-    background-color: #e95e3f;
-}
-
-/* Ensure the sections look well-organized */
-#guests-container, #episodes-container, #tasks-container, #teams-container {
-    margin-bottom: var(--spacing-xl);
-}
-
-/* Responsive Design */
-@media (max-width: 1024px) {
-    .card-container .card {
-        width: calc(50% - var(--spacing-md));
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
     }
 }
 
+.loading-indicator p {
+    margin-top: 15px;
+    font-size: 1rem;
+    color: var(--text-color-light);
+    font-weight: 600;
+}
+
+/* Search container */
+.search-container {
+    position: relative;
+    max-width: 300px;
+    margin-left: auto;
+}
+
+.search-input {
+    width: 100%;
+    padding: 10px 35px 10px 15px;
+    border: 1px solid rgba(0, 0, 0, 0.08);
+    border-radius: var(--radius-medium);
+    background: #fff;
+    color: rgba(0, 0, 0, 0.85);
+    font-size: 0.95rem;
+    transition: all var(--transition-fast);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.03);
+}
+
+.search-input:focus {
+    border-color: var(--highlight-color);
+    box-shadow: 0 0 0 4px rgba(255, 111, 97, 0.15);
+    outline: none;
+}
+
+.clear-search-btn {
+    position: absolute;
+    right: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: var(--text-color-light);
+    font-size: 1.2rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 20px;
+    height: 20px;
+    opacity: 0.7;
+    transition: opacity 0.2s;
+}
+
+.clear-search-btn:hover {
+    opacity: 1;
+}
+
+/* Form validation message */
+.form-validation-message {
+    color: var(--danger-color);
+    font-size: 0.9rem;
+    margin-top: 10px;
+    padding: 8px 12px;
+    background-color: rgba(255, 59, 48, 0.1);
+    border-radius: var(--radius-small);
+    display: none;
+}
+
+.form-validation-message.show {
+    display: block;
+}
+
+/* Improve responsive design for main header */
 @media (max-width: 768px) {
-    .card-container .card {
+    .main-header {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .search-container {
+        max-width: 100%;
+        margin-top: 10px;
+        margin-left: 0;
+    }
+}
+
+/* Improve form actions on small screens */
+@media (max-width: 500px) {
+    .form-actions {
+        flex-direction: column-reverse;
+        gap: 10px;
+    }
+
+    .form-actions button {
         width: 100%;
     }
+}
+
+/* Improve accessibility for buttons */
+.save-btn:focus,
+.cancel-btn:focus,
+.delete-btn:focus,
+.edit-icon-btn:focus {
+    outline: 2px solid var(--highlight-color);
+    outline-offset: 2px;
+}
+
+/* Improve card hover states */
+.team-card:hover,
+.member-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 15px 30px -10px rgba(0, 0, 0, 0.15);
+}
+
+/* Improve form field focus states */
+.field-group input:focus,
+.field-group select:focus,
+.field-group textarea:focus {
+    border-color: var(--highlight-color);
+    box-shadow: 0 0 0 3px rgba(255, 111, 97, 0.2);
+    outline: none;
+}
+
+/* Add animation for modal appearance */
+.popup.show .form-box {
+    animation: modalAppear 0.3s ease forwards;
+}
+
+@keyframes modalAppear {
+    from {
+        opacity: 0;
+        transform: scale(0.9) translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1) translateY(0);
+    }
+}
+
+/* Improve button hover effects */
+.save-btn:hover,
+.edit-member-btn:hover {
+    background: linear-gradient(
+        135deg,
+        var(--highlight-hover),
+        var(--highlight-color)
+    );
+    transform: translateY(-2px);
+    box-shadow: 0 8px 15px rgba(255, 111, 97, 0.25);
+}
+
+.cancel-btn:hover {
+    background-color: #f5f5f5;
+    transform: translateY(-2px);
+}
+
+.delete-member-btn:hover {
+    background: linear-gradient(
+        135deg,
+        rgba(231, 76, 60, 0.25),
+        rgba(231, 76, 60, 0.15)
+    );
+    transform: translateY(-2px);
 }

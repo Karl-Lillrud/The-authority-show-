@@ -23,7 +23,7 @@ export function updateTeamsUI(teams) {
   <div class="team-card-header">
     <h2 class="text-truncate">${team.name}</h2>
     <p class="text-truncate"><strong>Team Email:</strong> ${team.email}</p>
-    <button class="edit-icon-btn">${edit}</button>
+    <button class="action-btn edit-icon-btn">${edit}</button>
   </div>
   <div class="team-card-body">
     <p><strong>Description:</strong> <span class="description-text">${
