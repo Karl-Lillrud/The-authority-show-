@@ -327,3 +327,58 @@ def analyze_sentiment_sfx():
     except Exception as e:
         logger.error(f"Error analyzing sentiment + SFX: {str(e)}")
         return jsonify({"error": str(e)}), 500
+
+@transcription_bp.route("/osint_lookup", methods=["POST"])
+def osint_lookup():
+    data = request.get_json()
+    guest_name = data.get("guest_name")
+    if not guest_name:
+        return jsonify({"error": "Missing guest name"}), 400
+
+    try:
+        from backend.utils.text_utils import get_osint_info
+        osint_info = get_osint_info(guest_name)
+        return jsonify({"osint_info": osint_info})
+    except Exception as e:
+        logger.error(f"❌ OSINT error: {str(e)}")
+        return jsonify({"error": str(e)}), 500
+    
+@transcription_bp.route("/generate_intro_outro", methods=["POST"])
+def generate_intro_outro():
+    data = request.get_json()
+    guest_name = data.get("guest_name")
+    transcript = data.get("transcript")
+
+    if not guest_name or not transcript:
+        return jsonify({"error": "Missing guest name or transcript"}), 400
+
+    try:
+        from backend.utils.text_utils import get_osint_info, create_podcast_scripts_paid
+
+        osint_info = get_osint_info(guest_name)
+        script = create_podcast_scripts_paid(osint_info, guest_name, transcript)  # ✅ Pass transcript here
+
+        return jsonify({"script": script})
+    except Exception as e:
+        logger.error(f"❌ Intro/Outro generation error: {str(e)}")
+        return jsonify({"error": str(e)}), 500
+
+@transcription_bp.route("/intro_outro_audio", methods=["POST"])
+def generate_intro_outro_audio():
+    data = request.get_json()
+    script = data.get("script")
+
+    if not script:
+        return jsonify({"error": "Missing script"}), 400
+
+    try:
+        from backend.utils.text_utils import text_to_speech_with_elevenlabs
+        audio_bytes = text_to_speech_with_elevenlabs(script)
+
+        import base64
+        b64_audio = base64.b64encode(audio_bytes).decode("utf-8")
+        return jsonify({"audio_base64": f"data:audio/mp3;base64,{b64_audio}"})
+    except Exception as e:
+        logger.error(f"❌ ElevenLabs TTS failed: {str(e)}")
+        return jsonify({"error": str(e)}), 500
+
