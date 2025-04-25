@@ -88,16 +88,7 @@ def render_email_content(trigger_name, guest, episode, social_network=None, gues
 def load_custom_triggers():
     """Load custom triggers for podcasts."""
     try:
-        # Use an absolute path for custom_triggers.json
-        custom_triggers_path = os.path.join(os.path.dirname(__file__), "custom_triggers.json")
-        
-        # Ensure the file exists
-        if not os.path.exists(custom_triggers_path):
-            with open(custom_triggers_path, "w") as file:
-                json.dump({}, file)  # Initialize with an empty JSON object
-
-        # Load the custom triggers
-        with open(custom_triggers_path, "r") as file:
+        with open("custom_triggers.json", "r") as file:
             return json.load(file)
     except Exception as e:
         logger.error(f"Error loading custom triggers file: {str(e)}")

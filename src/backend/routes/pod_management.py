@@ -77,7 +77,7 @@ def get_outbox():
                 for trigger_name, is_sent in email_data["triggers"].items():
                     if is_sent:
                         # Fetch the episode
-                        episode = episode_collection.find_one({"_id": ObjectId(episode_id)})
+                        episode = episode_collection.find_one({"_id": episode_id})  # No ObjectId conversion
                         if not episode:
                             continue
 
