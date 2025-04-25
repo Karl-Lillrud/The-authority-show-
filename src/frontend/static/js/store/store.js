@@ -1,21 +1,59 @@
 // store.js
-document.addEventListener("DOMContentLoaded", () => {
-  // Initialize the store
-  initializeStore();
+let apiBaseUrl = ''; // Added for consistency if needed elsewhere
+let stripePublicKey = ''; // Variable to hold the fetched key
+let stripe = null; // Variable to hold the Stripe instance
+
+document.addEventListener("DOMContentLoaded", async () => { // Make the listener async
+  // Initialize the store layout first
+  initializeStoreLayout(); // Renamed to avoid confusion with Stripe init
 
   // Initialize SVG icons
   initializeSvgIcons();
 
-  // Load Stripe.js
-  loadStripe();
+  // Load Stripe.js script tag (doesn't initialize Stripe object yet)
+  loadStripeScript();
+
+  // --- Fetch config and initialize Stripe ---
+  try {
+    const response = await fetch('/config'); // Fetch from the backend endpoint
+    if (!response.ok) {
+       const errorData = await response.json();
+       throw new Error(errorData.error || `Failed to fetch config: ${response.statusText}`);
+    }
+    const config = await response.json();
+    apiBaseUrl = config.apiBaseUrl || ''; // Store API base URL if needed
+    stripePublicKey = config.stripePublicKey; // Get the key from config
+
+    if (!stripePublicKey) {
+      console.error("Stripe Public Key not found in config from server.");
+      // Display error to user if needed
+      const statusElement = document.getElementById("checkoutStatus"); // Example error display
+      if (statusElement) statusElement.textContent = "Configuration error: Payment key missing.";
+      return; // Stop initialization if key is missing
+    }
+
+    // Initialize Stripe object with the fetched key
+    stripe = Stripe(stripePublicKey);
+    console.log("Stripe initialized successfully.");
+
+  } catch (error) {
+    console.error("Error fetching or processing configuration:", error);
+    // Display error to user if needed
+    const statusElement = document.getElementById("checkoutStatus"); // Example error display
+    if (statusElement) statusElement.textContent = "Error loading payment configuration: " + error.message;
+  }
+  // --- End config fetch and Stripe init ---
+
 });
 
-function loadStripe() {
-  // Ensure Stripe.js is loaded
-  const stripeScript = document.createElement("script");
-  stripeScript.src = "https://js.stripe.com/v3/";
-  stripeScript.async = true;
-  document.head.appendChild(stripeScript);
+function loadStripeScript() {
+  // Ensure Stripe.js script is added to the page
+  if (!document.querySelector('script[src="https://js.stripe.com/v3/"]')) {
+    const stripeScript = document.createElement("script");
+    stripeScript.src = "https://js.stripe.com/v3/";
+    stripeScript.async = true;
+    document.head.appendChild(stripeScript);
+  }
 }
 
 // Add resize event listener
@@ -24,7 +62,7 @@ window.addEventListener("resize", () => {
   setupCart();
 });
 
-function initializeStore() {
+function initializeStoreLayout() { // Renamed function
   // Set up cart functionality
   setupCart();
 
@@ -116,6 +154,17 @@ function setupCart() {
   newCheckoutBtn.addEventListener("click", async function () {
     if (this.disabled) return;
 
+    // --- Check if Stripe is initialized ---
+    if (!stripe) {
+        console.error("Stripe is not initialized. Cannot proceed.");
+        alert("Payment system is not ready. Please try again shortly.");
+        this.disabled = false; // Re-enable button
+        this.textContent = "Complete the Purchase";
+        return;
+    }
+    // --- End Stripe check ---
+
+
     try {
       // Disable button to prevent multiple clicks
       this.disabled = true;
@@ -169,7 +218,9 @@ function setupCart() {
       if (plan) payload.plan = plan;
 
       // Make API call to create checkout session
-      const response = await fetch("/create-checkout-session", {
+      // Construct the full URL using the fetched base URL or use relative path if empty
+      const checkoutUrl = apiBaseUrl ? `${apiBaseUrl}/create-checkout-session` : "/create-checkout-session";
+      const response = await fetch(checkoutUrl, { // Use constructed URL
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
@@ -191,12 +242,9 @@ function setupCart() {
       const data = await response.json();
 
       if (data.sessionId) {
-        // Initialize Stripe and redirect to checkout
-        const stripe = Stripe(
-          "pk_test_51R4IEVPSYBEkSARW1VDrIwirpgzraNlH1Ms4JDcrHBytkClnLwLIdaTV6zb9FrwYoBmpRqgtnJXGR5Q0VUKYfX7s00kmz7AEQk"
-        );
+        // Use the globally initialized Stripe object to redirect
         await stripe.redirectToCheckout({ sessionId: data.sessionId });
-        // Clear cart after successful redirection
+        // Clear cart after successful redirection attempt
         clearCart();
       } else {
         alert("Failed to create checkout: " + (data.error || "Unknown error"));
