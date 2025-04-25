@@ -57,13 +57,13 @@ def get_available_credits():
             # Old credit format - use availableCredits directly
             available = credit_doc.get("availableCredits", 0)
             sub_credits = available  # Assume all are subscription credits
-            user_credits = 0
+            store_credits = 0  # Fix: Initialize store_credits to 0 in this path
             
         # Return all values to ensure UI has complete data
         response_data = {
             "availableCredits": available,
             "subCredits": sub_credits,
-            "storeCredits": user_credits
+            "storeCredits": store_credits  # Now this will always be defined
         }
         print(f"DEBUG - Credits for user {user_id}: {response_data}")
         return jsonify(response_data)
