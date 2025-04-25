@@ -366,8 +366,9 @@ function showCancellationConfirmation() {
       
       console.log("Sending cancel subscription request to server...");
       
-      // Construct the full URL using the fetched base URL or use relative path if empty
-      const cancelUrl = apiBaseUrl ? `${apiBaseUrl}/cancel-subscription` : '/cancel-subscription';
+      // Try using the full path instead of just the endpoint
+      // Ensure you're using the correct route with prefix
+      const cancelUrl = '/api/cancel-subscription';
 
       // Make API call to cancel subscription
       const response = await fetch(cancelUrl, { // Use constructed URL
@@ -409,6 +410,9 @@ function showCancellationConfirmation() {
         // Update UI to reflect cancelled status
         setTimeout(() => {
           updateSubscriptionUI();
+          
+          // Also update credits since they may have changed
+          fetchStoreCredits();
         }, 500);
         
         // Close popup
@@ -440,6 +444,108 @@ function showCancellationConfirmation() {
   });
 }
 
+// Separate the handler function for better maintainability
+function handleCancelClick(e) {
+  e.preventDefault(); // Prevent any default action
+  console.log("Cancel subscription button clicked");
+  
+  // Cancel directly without confirmation
+  cancelSubscription();
+}
+
+/**
+ * Directly cancels the subscription without showing a confirmation popup
+ */
+async function cancelSubscription() {
+  // Get the cancel button
+  const cancelButton = document.getElementById('cancel-subscription-btn');
+  if (!cancelButton) return;
+  
+  try {
+    // Show loading state on button
+    const originalText = cancelButton.textContent;
+    cancelButton.innerHTML = `
+      <svg class="spinner" viewBox="0 0 50 50">
+        <circle class="path" cx="25" cy="25" r="20" fill="none" stroke-width="5"></circle>
+      </svg>
+      Processing...
+    `;
+    cancelButton.disabled = true;
+    
+    console.log("Sending cancel subscription request to server...");
+    
+    // Try using the full path instead of just the endpoint
+    // Ensure you're using the correct route with prefix
+    const cancelUrl = '/cancel-subscription';
+
+    // Make API call to cancel subscription
+    const response = await fetch(cancelUrl, {
+      method: 'POST',
+      headers: { 
+        'Content-Type': 'application/json' 
+      },
+      credentials: 'same-origin',
+      body: JSON.stringify({}) 
+    });
+    
+    console.log("Response received:", response.status, response.statusText);
+    
+    if (response.status === 404) {
+      console.error("Endpoint not found (404). The cancel-subscription route may not be properly registered.");
+      showNotification('Error', 'The subscription cancellation service is currently unavailable. Please contact support.', 'error');
+      
+      // Reset button state
+      cancelButton.innerHTML = originalText;
+      cancelButton.disabled = false;
+      return;
+    }
+    
+    if (response.ok) {
+      // Parse the response to get any additional data
+      const data = await response.json();
+      console.log("Cancellation successful with data:", data);
+      
+      // Show success notification with end date if available
+      let successMessage = 'Your subscription has been cancelled.';
+      if (data.endDate) {
+        successMessage = `Your subscription will not renew. You will have access until ${data.endDate}.`;
+      }
+      
+      showNotification('Success', successMessage, 'success');
+      
+      
+      setTimeout(() => {
+        window.location.reload();
+      }, 1500);
+      
+      
+    } else {
+      // Handle error
+      try {
+        const errorData = await response.json();
+        console.error("Cancellation error:", errorData);
+        showNotification('Error', errorData.error || 'Failed to cancel subscription', 'error');
+      } catch (jsonError) {
+        console.error("Error parsing error response:", jsonError);
+        showNotification('Error', `Server error (${response.status}): Failed to cancel subscription`, 'error');
+      }
+      
+      // Reset button state
+      cancelButton.innerHTML = originalText;
+      cancelButton.disabled = false;
+    }
+  } catch (err) {
+    console.error('Error cancelling subscription:', err);
+    showNotification('Error', 'An error occurred while processing your request: ' + err.message, 'error');
+    
+    // Reset button state
+    if (cancelButton) {
+      cancelButton.innerHTML = 'Cancel Subscription';
+      cancelButton.disabled = false;
+    }
+  }
+}
+
 // Wrap button initialization in a function called after config is loaded
 function initializeSubscriptionButtons() {
   // Add click handlers to the subscription buttons
@@ -459,14 +565,13 @@ function initializeSubscriptionButtons() {
   // Add cancel subscription button handler
   const cancelSubscriptionBtn = document.getElementById('cancel-subscription-btn');
   if (cancelSubscriptionBtn) {
-    console.log("Cancel subscription button found in subscription.js");
-    cancelSubscriptionBtn.addEventListener('click', function(e) {
-      console.log("Cancel button clicked in subscription.js");
-      e.preventDefault(); // Prevent any default form submission
-      showCancellationConfirmation();
-    });
+    // Remove any existing event listeners to avoid duplicates
+    cancelSubscriptionBtn.removeEventListener('click', handleCancelClick);
+    // Add the click event listener
+    cancelSubscriptionBtn.addEventListener('click', handleCancelClick);
+    console.log("Cancel subscription button initialized");
   } else {
-    console.log("Cancel subscription button not found in subscription.js");
+    console.log("Cancel subscription button not found in DOM");
   }
 }
 

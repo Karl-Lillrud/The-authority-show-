@@ -1043,7 +1043,21 @@ input:focus:invalid {
   justify-content: flex-end; /* Changed from flex-start to flex-end */
 }
 
-/* Style the cancel subscription button */
+/* Initially hide the cancel button (for non-subscribers) */
+#cancel-subscription-btn {
+  display: none;
+}
+
+/* Show the button only when active (controlled by JavaScript) */
+#cancel-subscription-btn:not([disabled]) {
+  display: flex;
+}
+
+#cancel-subscription-btn:disabled {
+  display: none; /* Hide when disabled instead of showing grayed out */
+}
+
+/* Also remove the styling for the button */
 #cancel-subscription-btn {
   display: flex;
   align-items: center;
@@ -1058,19 +1072,5 @@ input:focus:invalid {
   background-color: var(--account-border);
   transform: translateY(-2px);
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-}
-
-/* Initially hide the cancel button (for non-subscribers) */
-#cancel-subscription-btn {
-  display: none;
-}
-
-/* Show the button only when active (controlled by JavaScript) */
-#cancel-subscription-btn:not([disabled]) {
-  display: flex;
-}
-
-#cancel-subscription-btn:disabled {
-  display: none; /* Hide when disabled instead of showing grayed out */
 }
 
