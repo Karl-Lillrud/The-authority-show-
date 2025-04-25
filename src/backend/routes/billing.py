@@ -62,17 +62,19 @@ def create_checkout_session():
 
         # Add subscription line item if present
         if plan:
-            # You may want to map plan to price, but here we use the amount sent from frontend
+            # Map plan to price
+            plan_prices = {
+                "pro": 29.99,
+                "studio": 69.00,
+                # Add other plans as needed
+            }
+            plan_price = plan_prices.get(plan, float(amount))
             line_items.append(
                 {
                     "price_data": {
                         "currency": "usd",
                         "product_data": {"name": f"{plan.capitalize()} Subscription"},
-                        "unit_amount": (
-                            int(float(29.99) * 100)
-                            if plan == "pro"
-                            else int(float(amount) * 100)
-                        ),
+                        "unit_amount": int(plan_price * 100),
                         "recurring": {"interval": "month", "interval_count": 1},
                     },
                     "quantity": 1,
@@ -115,19 +117,27 @@ def payment_success():
         # Retrieve the Stripe session
         stripe_session = stripe.checkout.Session.retrieve(session_id)
 
-        # Check if this is a subscription purchase or credits purchase
-        if plan:
-            # Handle subscription purchase
+        # Check if this includes a subscription, credits, or both
+        metadata = stripe_session.get("metadata", {})
+        credits_to_add = int(metadata.get("credits", 0))
+        has_subscription = metadata.get("is_subscription", "false") == "true"
+
+        # Handle subscription if present
+        if plan and has_subscription:
             result, updated_credits = subscription_service.update_user_subscription(
                 user_id, plan, stripe_session
             )
+            logger.info(f"Subscription updated for user {user_id}: {plan}")
 
-            # Redirect to account page with subscription_updated parameter
+        # Handle credits if present
+        if credits_to_add > 0:
+            handle_successful_payment(stripe_session, user_id)
+            logger.info(f"Credits processed for user {user_id}: {credits_to_add}")
+
+        # Redirect based on purchase type
+        if plan and has_subscription:
             return redirect("/account?subscription_updated=true#settings-purchases")
         else:
-
-            handle_successful_payment(stripe_session, user_id)
-
             return redirect("/dashboard")
     except Exception as e:
         logger.error(f"Payment processing error: {str(e)}")
