@@ -398,4 +398,11 @@ class CreditService:
         credit_history = credits_doc.get("creditsHistory", [])
         # Sort history by timestamp (if available) in descending order
         credit_history.sort(key=lambda x: x.get("timestamp", 0), reverse=True)
+
+        # Map the results to include status if missing
+        for entry in credit_history:
+            entry["status"] = entry.get(
+                "status", "unknown"
+            )  # Default to "unknown" if not present
+
         return credit_history

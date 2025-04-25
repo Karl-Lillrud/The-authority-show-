@@ -400,11 +400,14 @@ def get_credit_history():
     user_id = g.user_id
 
     if not user_id:
-        return jsonify({"error": "User not authenticated"}), 401
+        return jsonify({"error": "Unauthorized"}), 401
 
     try:
+        # Fetch credit history using the CreditService
         credit_history = credit_service.get_credit_history(user_id)
-        return jsonify({"creditHistory": credit_history})
+
+        # Return the credit history as JSON
+        return jsonify({"creditHistory": credit_history}), 200
     except Exception as e:
-        logger.error(f"Error fetching credit history: {str(e)}")
+        logger.error(f"Error fetching credit history: {e}")
         return jsonify({"error": "Failed to fetch credit history"}), 500

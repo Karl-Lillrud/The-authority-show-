@@ -203,7 +203,7 @@ document.addEventListener("DOMContentLoaded", () => {
     if (!historyContainer || !noHistoryMessage) return;
 
     try {
-      const response = await fetch("/api/credits/history", {
+      const response = await fetch("/api/purchases/history", {
         credentials: "same-origin"
       });
 
@@ -231,6 +231,8 @@ document.addEventListener("DOMContentLoaded", () => {
           day: "numeric"
         });
 
+        const statusClass = entry.status?.toLowerCase() || "unknown";
+
         const row = document.createElement("div");
         row.className = "billing-row";
         row.innerHTML = `
@@ -238,7 +240,7 @@ document.addEventListener("DOMContentLoaded", () => {
           <div class="billing-cell">${entry.description || "N/A"}</div>
           <div class="billing-cell">${Math.round(entry.amount)}</div>
           <div class="billing-cell">
-            <span class="status-${entry.status?.toLowerCase() || "unknown"}">
+            <span class="status-${statusClass}">
               ${entry.status || "Unknown"}
             </span>
           </div>
@@ -258,6 +260,117 @@ document.addEventListener("DOMContentLoaded", () => {
       noHistoryMessage.style.display = "block";
     }
   }
+
+  function displayPurchaseHistory(purchases) {
+    const historyContainer = document.getElementById("billing-history-rows");
+    const noHistoryMessage = document.getElementById("no-purchases-message");
+
+    if (!historyContainer) return;
+
+    // Clear loading message
+    historyContainer.innerHTML = "";
+
+    if (!purchases || purchases.length === 0) {
+      // Show no history message
+      noHistoryMessage.style.display = "block";
+      return;
+    }
+
+    // Hide no history message if we have purchases
+    noHistoryMessage.style.display = "none";
+
+    // Sort purchases by date, newest first
+    purchases.sort((a, b) => new Date(b.date) - new Date(a.date));
+
+    // Add each purchase to the table
+    purchases.forEach((purchase) => {
+      const date = new Date(purchase.date);
+      const formattedDate =
+        date.toLocaleDateString("en-US", {
+          year: "numeric",
+          month: "short",
+          day: "numeric"
+        }) +
+        " " +
+        date.toLocaleTimeString("en-US", {
+          hour: "2-digit",
+          minute: "2-digit"
+        });
+
+      const row = document.createElement("div");
+      row.className = "billing-row";
+      row.innerHTML = `
+        <div class="billing-cell">${formattedDate}</div>
+        <div class="billing-cell">${purchase.description || "N/A"}</div>
+        <div class="billing-cell">$${parseFloat(purchase.amount).toFixed(
+          2
+        )}</div>
+        <div class="billing-cell">
+          <span class="status-${purchase.status.toLowerCase()}">${
+        purchase.status
+      }</span>
+        </div>
+        <div class="billing-cell">
+          ${
+            purchase.details
+              ? `<button class="details-btn" data-details='${JSON.stringify(
+                  purchase.details
+                )}'>View Details</button>`
+              : "N/A"
+          }
+        </div>
+      `;
+
+      historyContainer.appendChild(row);
+    });
+
+    // Add event listeners to "Details" buttons
+    document.querySelectorAll(".details-btn").forEach((button) => {
+      button.addEventListener("click", function () {
+        const details = JSON.parse(this.getAttribute("data-details"));
+        showPurchaseDetails(details);
+      });
+    });
+  }
+
+  // Function to show purchase details in a modal
+  function showPurchaseDetails(details) {
+    const modal = document.getElementById("details-modal");
+    const modalContent = document.getElementById("details-modal-content");
+
+    if (!modal || !modalContent) return;
+
+    // Clear previous details
+    modalContent.innerHTML = "";
+
+    if (details.length === 0) {
+      modalContent.innerHTML = "<p>No details available for this purchase.</p>";
+    } else {
+      const list = document.createElement("ul");
+      details.forEach((item) => {
+        const listItem = document.createElement("li");
+        listItem.textContent = `${item.product} - Quantity: ${
+          item.quantity
+        }, Price: $${item.price.toFixed(2)}`;
+        list.appendChild(listItem);
+      });
+      modalContent.appendChild(list);
+    }
+
+    // Show the modal
+    modal.style.display = "block";
+  }
+
+  // Close modal when clicking outside or on close button
+  document.addEventListener("click", (event) => {
+    const modal = document.getElementById("details-modal");
+    if (
+      modal &&
+      (event.target === modal || event.target.classList.contains("close-modal"))
+    ) {
+      modal.style.display = "none";
+    }
+  });
 
   // Initialize profile data
   loadAccountData();
