@@ -65,6 +65,28 @@ def audio_analysis():
     except Exception as e:
         logger.error(f"Error analyzing audio: {str(e)}")
         return jsonify({"error": str(e)}), 500
+    
+
+@audio_bp.route("/audio_background_mix", methods=["POST"])
+def audio_background_mix():
+    """
+    Endpoint to generate only the background SFX loop + mixed audio.
+    Expects:
+      - multipart form with 'audio' file
+      - form field 'emotion' (string label from analyze_audio)
+    """
+    if "audio" not in request.files or "emotion" not in request.form:
+        return jsonify({"error": "Missing audio file or emotion label"}), 400
+
+    audio_bytes = request.files["audio"].read()
+    emotion     = request.form["emotion"]
+
+    try:
+        data = audio_service.generate_background_and_mix(audio_bytes, emotion)
+        return jsonify(data)
+    except Exception as e:
+        logger.error(f"Error generating background & mix: {e}")
+        return jsonify({"error": str(e)}), 500
 
 @audio_bp.route("/clip_audio", methods=["POST"])
 def clip_audio():
