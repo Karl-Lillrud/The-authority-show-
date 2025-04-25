@@ -191,3 +191,71 @@ def get_workflows():
     except Exception as e:
         return jsonify({"error": f"Failed to fetch workflows: {str(e)}"}), 500
 
+
+@podtask_bp.route("/delete_workflow/<workflow_id>", methods=["DELETE"])
+def delete_workflow(workflow_id):
+    if not g.user_id:
+        return jsonify({"error": "Unauthorized"}), 401
+
+    try:
+        # Check if the workflow exists
+        workflow = collection.database.Workflows.find_one({"_id": workflow_id, "user_id": g.user_id})
+        if not workflow:
+            return jsonify({"error": "Workflow not found or you do not have permission to delete it"}), 404
+
+        # Delete the workflow
+        result = collection.database.Workflows.delete_one({"_id": workflow_id, "user_id": g.user_id})
+
+        if result.deleted_count > 0:
+            return jsonify({"message": "Workflow deleted successfully"}), 200
+        else:
+            return jsonify({"error": "Failed to delete workflow"}), 500
+
+    except Exception as e:
+        return jsonify({"error": f"Failed to delete workflow: {str(e)}"}), 500
+
+
+@podtask_bp.route("/update_workflow/<workflow_id>", methods=["PUT"])
+def update_workflow(workflow_id):
+    if not g.user_id:
+        return jsonify({"error": "Unauthorized"}), 401
+    
+    if request.content_type != "application/json":
+        return jsonify({"error": "Invalid Content-Type. Expected application/json"}), 415
+    
+    try:
+        data = request.get_json()
+        tasks = data.get("tasks")
+        name = data.get("name")
+        description = data.get("description")
+        
+        # Check if the workflow exists and belongs to the user
+        existing_workflow = collection.database.Workflows.find_one({"_id": workflow_id, "user_id": g.user_id})
+        if not existing_workflow:
+            return jsonify({"error": "Workflow not found or you do not have permission to update it"}), 404
+        
+        # Prepare update data
+        update_data = {}
+        if tasks is not None:
+            update_data["tasks"] = tasks
+        if name is not None:
+            update_data["name"] = name
+        if description is not None:
+            update_data["description"] = description
+        
+        # Add updated_at timestamp
+        update_data["updated_at"] = datetime.now(timezone.utc)
+        
+        # Update the workflow
+        result = collection.database.Workflows.update_one(
+            {"_id": workflow_id, "user_id": g.user_id},
+            {"$set": update_data}
+        )
+        
+        if result.modified_count > 0:
+            return jsonify({"message": "Workflow updated successfully"}), 200
+        else:
+            return jsonify({"error": "No changes were made to the workflow"}), 400
+            
+    except Exception as e:
+        return jsonify({"error": f"Failed to update workflow: {str(e)}"}), 500

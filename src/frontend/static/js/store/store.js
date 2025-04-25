@@ -161,11 +161,12 @@ function setupCart() {
       );
       const episodeItems = cart.filter((item) => item.type === "Episode Pack");
 
-      // Validate cart: Only one type of purchase allowed
-      if (creditItems.length > 0 && subscriptionItems.length > 0) {
-        alert(
-          "Please purchase either credit packs or a subscription, not both."
-        );
+      // Enforce only one subscription and quantity 1
+      if (
+        subscriptionItems.length > 1 ||
+        (subscriptionItems[0] && subscriptionItems[0].quantity > 1)
+      ) {
+        alert("You can only purchase one subscription at a time.");
         this.disabled = false;
         this.textContent = "Complete the Purchase";
         return;
@@ -178,51 +179,38 @@ function setupCart() {
         return;
       }
 
-      let payload = {};
+      let totalAmount = 0;
+      let totalCredits = 0;
+      let unlockedEpisodes = 0;
+      let plan = null;
 
       if (creditItems.length > 0) {
-        // Handle credit pack purchase
-        let totalAmount = 0;
-        let totalCredits = 0;
-
         creditItems.forEach((item) => {
           totalAmount += item.price * item.quantity;
           const credits = getCreditsForProduct(item.id);
           totalCredits += credits * item.quantity;
         });
+      }
 
-        payload = {
-          amount: totalAmount.toFixed(2),
-          credits: totalCredits
-        };
-      } else if (subscriptionItems.length > 0) {
-        // Handle subscription purchase (only one subscription allowed)
-        if (subscriptionItems.length > 1 || subscriptionItems[0].quantity > 1) {
-          alert("You can only purchase one subscription at a time.");
-          this.disabled = false;
-          this.textContent = "Complete the Purchase";
-          return;
-        }
-
-        const subscription = subscriptionItems[0];
-        const plan = getPlanForProduct(subscription.id);
-
-        payload = {
-          amount: subscription.price.toFixed(2),
-          plan: plan
-        };
-      } else if (episodeItems.length > 0) {
+      if (episodeItems.length > 0) {
         // Handle episode pack purchase
-        let totalAmount = 0;
         episodeItems.forEach((item) => {
           totalAmount += item.price * item.quantity;
+          unlockedEpisodes += 1;
         });
-
-        payload = {
-          amount: totalAmount.toFixed(2),
-          unlock: episodeItems[0]
-        };
       }
+
+      if (subscriptionItems.length === 1) {
+        const subscription = subscriptionItems[0];
+        plan = getPlanForProduct(subscription.id);
+        totalAmount += subscription.price;
+      }
+
+      // Build payload
+      let payload = { amount: totalAmount.toFixed(2) };
+      if (totalCredits > 0) payload.credits = totalCredits;
+      if (unlockedEpisodes > 0) payload.episodes = unlockedEpisodes;
+      if (plan) payload.plan = plan;
 
       // Make API call to create checkout session
       const response = await fetch("/create-checkout-session", {
