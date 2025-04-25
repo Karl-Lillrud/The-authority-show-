@@ -49,8 +49,48 @@ function showTab(tabName) {
             <div class="result-field">
                 <pre id="transcriptionResult"></pre>
             </div>
+
             <div id="enhancementTools" style="display:none;">
-                <!-- Ytterligare verktyg... -->
+                <hr/>
+                <h3>🔧 Enhancement Tools</h3>
+                <div class="result-group">
+                    <button class="btn ai-edit-button" onclick="generateCleanTranscript()">🧹 Clean Transcript</button>
+                    <div class="result-field">
+                        <pre id="cleanTranscriptResult"></pre>
+                    </div>
+                </div>
+                <div class="result-group">
+                    <button class="btn ai-edit-button" onclick="generateAISuggestions()">
+                      ${labelWithCredits("🤖 AI Suggestions", "ai_suggestions")}
+                    </button>
+                    <div class="result-field">
+                        <pre id="aiSuggestionsResult"></pre>
+                    </div>
+                </div>
+                <div class="result-group">
+                    <button class="btn ai-edit-button" onclick="generateShowNotes()">
+                      ${labelWithCredits("📝 Show Notes", "show_notes")}
+                    </button>
+                    <div class="result-field">
+                        <pre id="showNotesResult"></pre>
+                    </div>
+                </div>
+                <div class="result-group">
+                    <button class="btn ai-edit-button" onclick="generateQuotes()">
+                      ${labelWithCredits("💬 Generate Quotes", "ai_quotes")}
+                    </button>
+                    <div class="result-field">
+                        <pre id="quotesResult"></pre>
+                    </div>
+                </div>
+                <div class="result-group">
+                    <button class="btn ai-edit-button" onclick="generateQuoteImages()">
+                      ${labelWithCredits("🖼️ Generate Quote Images", "ai_qoute_images")}
+                    </button>
+                    <div class="result-field">
+                        <div id="quoteImagesResult"></div>
+                    </div>
+                </div>
             </div>
         `;
     }else if (tabName === 'audio') {
@@ -227,6 +267,8 @@ async function generateCleanTranscript() {
 }
 
 async function generateAISuggestions() {
+    const suggestionsEl = document.getElementById("aiSuggestionsResult");
+
     try {
         await consumeStoreCredits("ai_suggestions");
 
@@ -238,22 +280,18 @@ async function generateAISuggestions() {
 
         if (res.ok) {
             const data = await res.json();
-            // Assuming your API returns `primary_suggestions` and `additional_suggestions`
-            document.getElementById("aiSuggestionsPrimary").innerText =
-                data.primary_suggestions || "No primary suggestions.";
-            document.getElementById("aiSuggestionsAdditional").innerText =
-                (data.additional_suggestions || []).join("\n") || "No additional suggestions.";
+            const primary = data.primary_suggestions || "";
+            const additional = (data.additional_suggestions || []).join("\n");
+
+            suggestionsEl.innerText = [primary, additional].filter(Boolean).join("\n\n") || "No suggestions.";
         } else {
-            document.getElementById("aiSuggestionsPrimary").innerText =
-                `❌ Error: ${res.status} - ${res.statusText}`;
-            document.getElementById("aiSuggestionsAdditional").innerText = "";
+            suggestionsEl.innerText = `❌ Error: ${res.status} - ${res.statusText}`;
         }
     } catch (err) {
-        document.getElementById("aiSuggestionsPrimary").innerText =
-            "❌ Not enough credits: " + err.message;
-        document.getElementById("aiSuggestionsAdditional").innerText = "";
+        suggestionsEl.innerText = "❌ Not enough credits: " + err.message;
     }
 }
+
 
 async function generateShowNotes() {
     try {
