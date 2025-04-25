@@ -323,7 +323,8 @@ function displaySampleEpisodes() {
     });
   });
 
-  initTaskManagement();
+  // Initialize task management after creating cards
+  initEpisodeToDo();
 }
 
 async function displayEpisodes(episodes, container) {
@@ -343,7 +344,8 @@ async function displayEpisodes(episodes, container) {
     await populateGuestList(card, episode);
   }
 
-  initTaskManagement();
+  // Initialize task management after creating all cards
+  initEpisodeToDo();
 }
 
 function createEpisodeCard(episode) {
