@@ -61,33 +61,29 @@ class AudioService:
 
         return blob_url
 
-    def analyze_audio(self, audio_bytes: bytes):
+    def analyze_audio(self, audio_bytes: bytes) -> dict:
+        # Write the incoming bytes to a temp WAV file
         with tempfile.NamedTemporaryFile(delete=False, suffix=".wav") as tmp:
             tmp.write(audio_bytes)
             temp_path = tmp.name
 
         try:
-            # 1) Grunddata ---------------------------------------------------
-            transcript    = transcribe_with_whisper(temp_path)
-            cleaned       = remove_filler_words(transcript)
-            clarity_score = calculate_clarity_score(cleaned)
-            noise_result  = detect_background_noise(temp_path)
-            sentiment     = analyze_sentiment(transcript)
+            # 1) Basic transcript analysis
+            transcript     = transcribe_with_whisper(temp_path)
+            cleaned        = remove_filler_words(transcript)
+            clarity_score  = calculate_clarity_score(cleaned)
+            noise_result   = detect_background_noise(temp_path)
+            sentiment      = analyze_sentiment(transcript)
 
-            # 2) Emotion-analys ---------------------------------------------
-            translated    = translate_text(transcript, "English")
-            emotion_data  = analyze_emotions(translated)
+            # 2) Emotion detection
+            #    a) Translate to English (for more accurate emotion models)
+            translated     = translate_text(transcript, "English")
+            #    b) Run your emotion classifier
+            emotion_data   = analyze_emotions(translated)
+            #    c) Pick the most frequent emotion label
+            dominant_emotion = pick_dominant_emotion(emotion_data)
 
-            dominant      = pick_dominant_emotion(emotion_data)
-            bg_b64        = fetch_sfx_for_emotion(dominant, "general")[0]   # 30 s-klipp
-
-            # 3) Mixa bakgrunden under originalet ---------------------------
-            merged_wav    = mix_background(audio_bytes, bg_b64, bg_gain_db=-35)
-
-            #    👉 lägg till data-prefixet här!
-            merged_b64    = "data:audio/wav;base64," + base64.b64encode(merged_wav).decode("utf-8")
-
-            # 4) Returnera ---------------------------------------------------
+            # 3) Return only the core analysis results + dominant emotion
             return {
                 "transcript":         transcript,
                 "cleaned_transcript": cleaned,
@@ -95,12 +91,33 @@ class AudioService:
                 "background_noise":   noise_result,
                 "sentiment":          sentiment,
                 "emotions":           emotion_data,
-                "background_clip":    bg_b64,     # ett enda 30-sek-klipp
-                "merged_audio":       merged_b64  # nu med korrekt prefix
+                "dominant_emotion":   dominant_emotion
             }
 
         finally:
+            # Always clean up the temp file
             os.remove(temp_path)
+    
+    def generate_background_and_mix(self, audio_bytes: bytes, emotion: str) -> dict:
+        """
+        Given the raw audio bytes and the already-computed emotion label,
+        1) fetch a 30s SFX loop for that emotion
+        2) overlay it under the original audio
+        3) return both the loop and the mixed audio as data-URIs
+        """
+        # 1) Fetch a single 30s background clip for the emotion:
+        bg_b64 = fetch_sfx_for_emotion(emotion, "general")[0]
+
+        # 2) Mix that clip under the original audio
+        merged_wav = mix_background(audio_bytes, bg_b64, bg_gain_db=-35)
+
+        # 3) Prefix the merged WAV as a base64 data-URI
+        merged_prefixed = "data:audio/wav;base64," + base64.b64encode(merged_wav).decode()
+
+        return {
+            "background_clip": bg_b64,
+            "merged_audio":   merged_prefixed
+        }
 
     def cut_audio(self, file_id: str, start_time: float, end_time: float, episode_id: str) -> str:
         logger.info(f"📥 Request to clip audio file with ID: {file_id}")

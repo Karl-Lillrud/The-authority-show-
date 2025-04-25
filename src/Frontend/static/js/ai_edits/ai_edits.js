@@ -459,16 +459,14 @@ async function runVoiceIsolation() {
 async function analyzeEnhancedAudio() {
     const resultEl = document.getElementById("analysisResults");
     const timeline = document.getElementById("soundEffectTimeline");
-    const preview  = document.getElementById("backgroundPreview");
     const mixBtn   = document.getElementById("mixBackgroundBtn");
   
-    // Ensure an audio blob is loaded
+    // Ensure we have something to analyze
     if (!activeAudioBlob) {
-      alert("No audio loaded. Enhance or Isolate first.");
-      return;
+      return alert("No audio loaded. Enhance or Isolate first.");
     }
   
-    // Consume credits for analysis
+    // Spend credits
     try {
       await consumeStoreCredits("ai_audio_analysis");
     } catch (err) {
@@ -483,30 +481,30 @@ async function analyzeEnhancedAudio() {
     try {
       const res  = await fetch("/audio_analysis", { method: "POST", body: fd });
       const data = await res.json();
+      if (!res.ok) throw new Error(data.error || res.statusText);
   
-      // Display basic stats
+      // Show just the stats + dominant emotion
       resultEl.innerText = `
-  📊 Sentiment:        ${data.sentiment ?? "–"}
-  📊 Clarity Score:    ${data.clarity_score ?? "–"}
-  📊 Background Noise: ${data.background_noise ?? "–"}
-  📊 Top Emotions:     ${data.emotions.map(e => e.emotions[0].label)[0] || "–"}
+  📊 Sentiment:     ${data.sentiment ?? "–"}
+  📊 Clarity Score: ${data.clarity_score ?? "–"}
+  📊 Noise Level:   ${data.background_noise ?? "–"}
+  📊 Dominant Emo:  ${data.dominant_emotion}
       `;
   
-      // Clear previous views
-      timeline.innerHTML    = "";
-      preview.innerHTML     = "";
-      mixBtn.style.display  = "inline-block";  // Show the mix button
-  
-      // Store data for later rendering
-      window.analysisData = {
-        background_clip: data.background_clip,
-        merged_audio:    data.merged_audio
-      };
-  
       // Render any sound-effect suggestions
+      timeline.innerHTML = "";
       renderSoundSuggestions(data, timeline);
   
-    } catch (err) {
+      // Save for mix step
+      window.analysisData = {
+        emotion:   data.dominant_emotion,
+        audioBlob: activeAudioBlob
+      };
+  
+      // Reveal the Mix button
+      mixBtn.style.display = "inline-block";
+    }
+    catch (err) {
       resultEl.innerText = `❌ Analysis failed: ${err.message}`;
     }
   }
@@ -532,28 +530,55 @@ function renderSoundSuggestions(data, timeline) {
     });
 }
 
-function displayBackgroundAndMix() {
+async function displayBackgroundAndMix() {
     const preview = document.getElementById("backgroundPreview");
-    const data    = window.analysisData || {};
+    const mixBtn  = document.getElementById("mixBackgroundBtn");
+    const dl      = document.getElementById("downloadEnhanced");
+    const { emotion, audioBlob } = window.analysisData || {};
   
-    // Clear previous preview
-    preview.innerHTML = "";
-  
-    if (data.background_clip) {
-      preview.innerHTML += `
-        <h4>🔈 Background Loop (30s)</h4>
-        <audio controls src="${data.background_clip}" style="width:100%;"></audio>
-        <hr/>
-      `;
+    if (!emotion || !audioBlob) {
+      return alert("Run analysis first!");
     }
   
-    if (data.merged_audio) {
-      preview.innerHTML += `
-        <h4>🎶 Mixed Preview</h4>
-        <audio controls src="${data.merged_audio}"
-               style="width:100%;"
-               title="Mixed audio"></audio>
-      `;
+    // Disable button & show spinner text
+    mixBtn.disabled  = true;
+    mixBtn.innerText = "🔄 Generating background…";
+    preview.innerHTML = "";
+  
+    const fd = new FormData();
+    fd.append("audio",   audioBlob, "processed_audio.wav");
+    fd.append("emotion", emotion);
+  
+    try {
+      const res  = await fetch("/audio_background_mix", { method: "POST", body: fd });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || res.statusText);
+  
+      // Render loop
+      if (data.background_clip) {
+        preview.innerHTML += `
+          <h4>🔈 Background Loop (30s)</h4>
+          <audio controls src="${data.background_clip}" style="width:100%;"></audio>
+          <hr/>
+        `;
+      }
+  
+      // Render the mixed overlay
+      if (data.merged_audio) {
+        preview.innerHTML += `
+          <h4>🎶 Mixed Preview</h4>
+          <audio controls src="${data.merged_audio}" style="width:100%;"></audio>
+        `;
+        // Update download link
+        dl.href        = data.merged_audio;
+        dl.style.display = "inline-block";
+      }
+    } catch (err) {
+      preview.innerText = `❌ Error: ${err.message}`;
+    } finally {
+      // Restore button
+      mixBtn.disabled  = false;
+      mixBtn.innerText = "🔉 Mix Background & Preview";
     }
   }
 
