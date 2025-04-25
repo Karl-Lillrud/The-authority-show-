@@ -1,5 +1,15 @@
 {% extends "components/base.html" %} 
-{% block title %}Account Settings{% endblock %} 
+{% block title %}Team Leaderboard Dashboard{% endblock %} 
+
+{% block head_extra %}
+  <!-- Link to the main account CSS -->
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/account/account.css') }}">
+  <!-- Link to the subscription CSS -->
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/account/subscription.css') }}">
+  <!-- Remove any incorrect link to notification.css from here -->
+  <!-- <link rel="stylesheet" href="{{ url_for('static', filename='css/account/notification.css') }}"> --> 
+{% endblock %}
+
 {% block content %}
 <head>
   <script async src="https://www.googletagmanager.com/gtag/js?id=G-PTPQQ5WSQV"></script>
@@ -13,8 +23,6 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Account Settings</title> 
-<link rel="stylesheet" href="{{ url_for('static', filename='css/account/account.css') }}" />
-<link rel="stylesheet" href="{{ url_for('static', filename='css/account/notification.css') }}" />
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
 </head>
 <body>
@@ -104,15 +112,17 @@
             <div class="profile-content">
               <div class="profile-pic-container">
                 <div class="profile-pic-wrapper">
-                  <img id="profile-pic" src="{{ url_for('static', filename='images/profilepic.png') }}" alt="Profile Picture">
+                  <img id="profile-pic" src="{{ profile_pic_url or url_for('static', filename='images/profilepic.png') }}" alt="Profile Picture">
                   <div class="profile-pic-overlay">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="edit-icon">
-                      <path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"></path>
-                      <path d="M12 20h9"></path>
-                    </svg>
+                    <i class="fas fa-camera"></i>
+                    <span>Change Photo</span>
                   </div>
+                  <!-- Ensure this hidden file input exists -->
+                  <input type="file" id="profile-pic-input" accept="image/*" style="display: none;"> 
                 </div>
-                <button id="upload-pic" class="secondary-button">Change Photo</button>
+                <button id="upload-pic" class="btn btn-secondary upload-btn">
+                  <i class="fas fa-upload"></i> Change Photo
+                </button>
               </div>
             </div>
             
@@ -409,15 +419,7 @@
       </section>
     </div>
   </div>
-  <div id="details-modal" class="modal">
-    <div class="modal-content">
-      <span class="close-modal">&times;</span>
-      <h3>Purchase Details</h3>
-      <div id="details-modal-content"></div>
-    </div>
-  </div>
-  <script type="module" src="{{ url_for('frontend.static_files', filename='js/account/account.js') }}"></script>
-  <script type="module" src="{{ url_for('frontend.static_files', filename='js/account/subscription.js') }}"></script>
   <script src="https://js.stripe.com/v3/"></script>
-</body>
+  <script type="module" src="{{ url_for('static', filename='js/account/subscription.js') }}"></script>
+  <script type="module" src="{{ url_for('static', filename='js/account/account.js') }}"></script>
 {% endblock %}

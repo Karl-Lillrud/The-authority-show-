@@ -1,11 +1,15 @@
 import {
-  fetchProfile,
-  updateProfile,
-  updatePassword,
-  deleteUserAccount,
-  subscribeUser
+  fetchAccount,
+  updateAccount,
+  deleteAccount,
+  uploadProfilePicture
 } from "/static/requests/accountRequests.js";
 import { showNotification } from "../components/notifications.js";
+import { fetchPurchases } from "/static/js/billing/billing.js";
+import {
+  fetchStoreCredits,
+  updateSubscriptionUI
+} from "/static/js/account/subscription.js";
 
 document.addEventListener("DOMContentLoaded", () => {
   // Hides the edit buttons when in non-edit mode
@@ -33,39 +37,166 @@ document.addEventListener("DOMContentLoaded", () => {
     editProfileBtn.style.display = "none";
   }
 
-  // Initialize profile data
-  fetchProfile()
-    .then((data) => {
-      if (data) {
-        // Set profile picture
-        const profilePic = document.getElementById("profile-pic");
-        if (data.profile_picture_url) {
-          profilePic.src = data.profile_picture_url; // Use the URL from the server
+  const profilePic = document.getElementById("profile-pic");
+  const profilePicInput = document.getElementById("profile-pic-input"); // Verify this ID matches HTML
+  const profilePicOverlay = document.querySelector(".profile-pic-overlay"); // Verify this selector
+  const uploadButton = document.getElementById("upload-pic"); // Verify this ID matches HTML
+
+  // --- Define triggerFileUpload function ---
+  function triggerFileUpload() {
+    if (profilePicInput) {
+      console.log("Triggering file input click..."); // Add log
+      profilePicInput.click(); // Programmatically click the hidden file input
+    } else {
+      console.error("Profile picture input element not found!"); // Add error log
+    }
+  }
+  // --- End define triggerFileUpload function ---
+
+  // --- Define handleFileSelect function ---
+  function handleFileSelect(event) {
+    const file = event.target.files[0];
+    if (file && profilePic) {
+      console.log("File selected:", file.name); // Add log
+      const reader = new FileReader();
+      reader.onload = function (e) {
+        profilePic.src = e.target.result; // Preview the selected image
+        // --- Call the upload function ---
+        uploadProfilePicture(file)
+          .then((data) => {
+            if (data.profilePicUrl) {
+              // Optionally update the displayed image source again from the server URL
+              // profilePic.src = data.profilePicUrl;
+              showNotification(
+                "Success",
+                "Profile picture updated successfully!",
+                "success"
+              );
+            } else {
+              showNotification(
+                "Error",
+                data.error || "Failed to upload profile picture.",
+                "error"
+              );
+            }
+          })
+          .catch((error) => {
+            console.error("Error uploading profile picture:", error);
+            showNotification(
+              "Error",
+              `Upload failed: ${error.message}`,
+              "error"
+            );
+            // Optionally revert the preview if upload fails
+            // loadAccountData(); // Or store original URL and revert
+          });
+        // --- End upload function call ---
+      };
+      reader.readAsDataURL(file);
+    }
+  }
+  // --- End define handleFileSelect function ---
+
+  // Function to load account data
+  async function loadAccountData() {
+    try {
+      // Explicitly call fetchAccount
+      const wrapper = await fetchAccount();
+      const account = wrapper.account;
+
+      // Set profile picture
+      if (profilePic) {
+        if (account.profilePicUrl) {
+          profilePic.src = account.profilePicUrl;
         } else {
-          // Use a hardcoded path instead of Flask template variables
-          profilePic.src = "/static/images/profilepic.png"; // Fix the default path
+          profilePic.src = "/static/images/profilepic.png"; // Correct default path
         }
-
-        // Set other profile data
-        document.getElementById("full-name").value = data.full_name || "";
-        document.getElementById("email").value = data.email || "";
-        document.getElementById("phone").value = data.phone || "";
-
-        // Update the display values
-        document.getElementById("display-full-name").textContent =
-          data.full_name || "Not provided";
-        document.getElementById("display-email").textContent =
-          data.email || "Not provided";
-        document.getElementById("display-phone").textContent =
-          data.phone || "Not provided";
-      } else {
-        console.error("Error fetching profile data");
       }
-    })
-    .catch((error) => {
-      console.error("Error:", error);
-      showNotification("Error", "Failed to load profile data", "error");
-    });
+
+      // Set other profile data
+      document.getElementById("full-name").value = account.full_name || "";
+      document.getElementById("email").value = account.email || "";
+      document.getElementById("phone").value = account.phone || "";
+
+      // Update the display values
+      document.getElementById("display-full-name").textContent =
+        account.full_name || "Not provided";
+      document.getElementById("display-email").textContent =
+        account.email || "Not provided";
+      document.getElementById("display-phone").textContent =
+        account.phone || "Not provided";
+    } catch (error) {
+      console.error("Error loading account data:", error);
+      showNotification(
+        "Error",
+        `Failed to load account data: ${error.message}`,
+        "error"
+      );
+      // Set default profile picture on error as well
+      if (profilePic) {
+        profilePic.src = "/static/images/profilepic.png";
+      }
+    }
+  }
+
+  // Function to load purchase history
+  async function loadPurchaseHistory() {
+    const purchasesList = document.getElementById("purchases-list");
+    const noPurchasesMessage = document.getElementById("no-purchases-message");
+    if (!purchasesList || !noPurchasesMessage) return;
+
+    try {
+      // Call the imported fetchPurchases function
+      const purchases = await fetchPurchases();
+
+      purchasesList.innerHTML = ""; // Clear previous list
+
+      if (purchases && purchases.length > 0) {
+        noPurchasesMessage.style.display = "none"; // Hide 'no purchases' message
+        purchases.forEach((purchase) => {
+          const li = document.createElement("li");
+          li.className = "purchase-item";
+
+          const purchaseDate = new Date(
+            purchase.created * 1000
+          ).toLocaleDateString();
+          const amount = (purchase.amount_total / 100).toFixed(2); // Convert cents to dollars
+          const currency = purchase.currency.toUpperCase();
+          const status = purchase.payment_status;
+          const description =
+            purchase.line_items && purchase.line_items.length > 0
+              ? purchase.line_items[0].description
+              : "N/A"; // Get description from first line item
+
+          li.innerHTML = `
+            <div class="purchase-details">
+              <span class="purchase-date">${purchaseDate}</span>
+              <span class="purchase-description">${description}</span>
+            </div>
+            <div class="purchase-info">
+              <span class="purchase-amount">${amount} ${currency}</span>
+              <span class="purchase-status status-${status}">${status}</span>
+            </div>
+          `;
+          purchasesList.appendChild(li);
+        });
+      } else {
+        noPurchasesMessage.style.display = "block"; // Show 'no purchases' message
+      }
+    } catch (error) {
+      console.error("Error loading purchase history:", error);
+      showNotification(
+        "Error",
+        `Failed to load purchase history: ${error.message}`,
+        "error"
+      );
+      noPurchasesMessage.textContent = "Error loading purchase history.";
+      noPurchasesMessage.style.display = "block";
+    }
+  }
+
+  // Initialize profile data
+  loadAccountData();
 
   // Cancel edit button (switches back to view mode)
   const cancelEditBtn = document.getElementById("cancel-edit-btn");
@@ -497,6 +628,60 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
+  // Function to handle account deletion
+  async function handleDeleteAccount(event) {
+    event.preventDefault();
+    const email = deleteEmailInput ? deleteEmailInput.value : null; // Get email from input
+
+    if (!email) {
+      showNotification(
+        "Error",
+        "Please enter your email to confirm deletion.",
+        "error"
+      );
+      return;
+    }
+
+    // Show loading state on confirm button
+    if (confirmDeleteBtn) {
+      confirmDeleteBtn.disabled = true;
+      confirmDeleteBtn.innerHTML =
+        '<i class="fas fa-spinner fa-spin"></i> Deleting...';
+    }
+
+    try {
+      // Call the imported deleteAccount function
+      const response = await deleteAccount({ email: email });
+      showNotification(
+        "Success",
+        response.message || "Account deleted successfully.",
+        "success"
+      );
+
+      // Redirect to signin page after successful deletion
+      setTimeout(() => {
+        window.location.href = "/signin";
+      }, 2000);
+    } catch (error) {
+      console.error("Error deleting account:", error);
+      showNotification(
+        "Error",
+        `Error deleting account: ${error.message}`,
+        "error"
+      );
+      // Restore button state on error
+      if (confirmDeleteBtn) {
+        confirmDeleteBtn.disabled = false;
+        confirmDeleteBtn.innerHTML = "Confirm Deletion";
+      }
+    } finally {
+      // Ensure popup is hidden even if redirect fails or takes time
+      if (deleteConfirmationPopup)
+        deleteConfirmationPopup.style.display = "none";
+      if (deleteEmailInput) deleteEmailInput.value = ""; // Clear email input
+    }
+  }
+
   // Subscribe to newsletter
   const subscribeForm = document.querySelector(".subscription-form");
   if (subscribeForm) {
@@ -534,15 +719,28 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   // Profile picture upload
-  const profilePicOverlay = document.querySelector(".profile-pic-overlay");
-  const uploadButton = document.getElementById("upload-pic");
-
   if (profilePicOverlay) {
     profilePicOverlay.addEventListener("click", triggerFileUpload);
+    console.log("Overlay click listener added."); // Add log
+  } else {
+    console.warn("Profile picture overlay not found."); // Add warning
   }
 
   if (uploadButton) {
     uploadButton.addEventListener("click", triggerFileUpload);
+    console.log("Upload button click listener added."); // Add log
+  } else {
+    console.warn("Upload button not found."); // Add warning
+  }
+
+  // Add event listener for the file input change
+  if (profilePicInput) {
+    profilePicInput.addEventListener("change", handleFileSelect);
+    console.log("File input change listener added."); // Add log
+  } else {
+    console.error(
+      "Profile picture input element not found for change listener!"
+    ); // Add error log
   }
 
   // Initialize the first section as active
@@ -579,7 +777,7 @@ document.addEventListener("DOMContentLoaded", () => {
   );
   if (purchasesNavItem) {
     purchasesNavItem.addEventListener("click", () => {
-      fetchPurchaseHistory();
+      loadPurchaseHistory(); // Changed from fetchPurchaseHistory to loadPurchaseHistory
     });
   }
 
@@ -588,7 +786,7 @@ document.addEventListener("DOMContentLoaded", () => {
     document.getElementById("settings-purchases") &&
     document.getElementById("settings-purchases").classList.contains("active")
   ) {
-    fetchPurchaseHistory();
+    loadPurchaseHistory(); // Changed from fetchPurchaseHistory to loadPurchaseHistory
   }
 
   // Function to handle section activation
@@ -613,7 +811,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
       // Fetch purchase history if the "Purchases" section is activated
       if (sectionId === "settings-purchases") {
-        fetchPurchaseHistory();
+        loadPurchaseHistory(); // Changed from fetchPurchaseHistory to loadPurchaseHistory
       }
     }
   }
@@ -636,321 +834,7 @@ document.addEventListener("DOMContentLoaded", () => {
     });
 });
 
-// Function to fetch user credits
-async function fetchStoreCredits() {
-  try {
-    const creditsElement = document.getElementById("available-credits");
-    if (!creditsElement) return; // Skip if element doesn't exist
-
-    const response = await fetch("/api/credits", {
-      credentials: "same-origin" // Include cookies for auth
-    });
-
-    if (!response.ok) {
-      console.warn("Failed to fetch credits:", response.status);
-      return;
-    }
-
-    const data = await response.json();
-    creditsElement.textContent = data.availableCredits;
-  } catch (err) {
-    console.error("Error fetching user credits:", err);
-  }
-}
-
 // Function to toggle between view and edit modes
 function toggleProfileMode(isEditMode) {
   const profileInfoCard = document.querySelector(".profile-info-card");
-  const profileActions = document.querySelector(".profile-actions");
-  const profileForm = document.getElementById("profile-form");
-  const profilePicOverlay = document.querySelector(".profile-pic-overlay");
-  const uploadButton = document.getElementById("upload-pic");
-
-  if (isEditMode) {
-    // Switch to edit mode
-    profileInfoCard.style.display = "none";
-    profileActions.style.display = "none"; // Hide the Edit Profile button
-    profileForm.style.display = "block";
-
-    // Show photo editing elements
-    if (profilePicOverlay) profilePicOverlay.style.display = "flex";
-    if (uploadButton) uploadButton.style.display = "inline-block";
-  } else {
-    // Switch to view mode
-    profileInfoCard.style.display = "block";
-    profileActions.style.display = "none"; // Keep the Edit Profile button hidden
-    profileForm.style.display = "none";
-
-    // Hide photo editing elements
-    if (profilePicOverlay) profilePicOverlay.style.display = "none";
-    if (uploadButton) uploadButton.style.display = "none";
-  }
 }
-
-// Helper functions
-function updatePasswordStrength(password) {
-  let strength = 0;
-  const segments = document.querySelectorAll(".strength-segment");
-  const strengthText = document.querySelector(".strength-text");
-
-  if (password.length >= 8) strength++;
-  if (password.match(/[A-Z]/)) strength++;
-  if (password.match(/[0-9]/)) strength++;
-  if (password.match(/[^A-Za-z0-9]/)) strength++;
-
-  // Reset all segments
-  segments.forEach((segment) => {
-    segment.style.backgroundColor = "var(--border)";
-  });
-
-  // Update segments based on strength
-  for (let i = 0; i < strength; i++) {
-    if (segments[i]) {
-      if (strength === 1) {
-        segments[i].style.backgroundColor = "var(--destructive)";
-      } else if (strength === 2) {
-        segments[i].style.backgroundColor = "var(--warning)";
-      } else if (strength === 3) {
-        segments[i].style.backgroundColor = "var(--primary)";
-      } else if (strength === 4) {
-        segments[i].style.backgroundColor = "var(--success)";
-      }
-    }
-  }
-
-  // Update strength text
-  if (strengthText) {
-    if (strength === 0) {
-      strengthText.textContent = "Too weak";
-      strengthText.style.color = "var(--destructive)";
-    } else if (strength === 1) {
-      strengthText.textContent = "Weak";
-      strengthText.style.color = "var(--destructive)";
-    } else if (strength === 2) {
-      strengthText.textContent = "Fair";
-      strengthText.style.color = "var(--warning)";
-    } else if (strength === 3) {
-      strengthText.textContent = "Good";
-      strengthText.style.color = "var(--primary)";
-    } else {
-      strengthText.textContent = "Strong";
-      strengthText.style.color = "var(--success)";
-    }
-  }
-}
-
-function uploadProfilePicture(file) {
-  const formData = new FormData();
-  formData.append("profile_picture", file);
-
-  fetch("/user/upload_profile_picture", {
-    method: "POST",
-    body: formData
-  })
-    .then((response) => response.json())
-    .then((data) => {
-      if (data.url) {
-        // Update the profile picture on the page
-        const profilePic = document.getElementById("profile-pic");
-        profilePic.src = data.url;
-        showNotification(
-          "Success",
-          "Profile picture updated successfully!",
-          "success"
-        );
-      } else {
-        showNotification(
-          "Error",
-          data.error || "Failed to upload profile picture",
-          "error"
-        );
-      }
-    })
-    .catch((error) => {
-      console.error("Error uploading profile picture:", error);
-      showNotification(
-        "Error",
-        "An error occurred while uploading profile picture",
-        "error"
-      );
-    });
-}
-
-function triggerFileUpload() {
-  const fileInput = document.createElement("input");
-  fileInput.type = "file";
-  fileInput.accept = "image/*";
-  fileInput.style.display = "none";
-
-  fileInput.addEventListener("change", function () {
-    if (this.files && this.files[0]) {
-      uploadProfilePicture(this.files[0]);
-    }
-  });
-
-  document.body.appendChild(fileInput);
-  fileInput.click();
-  document.body.removeChild(fileInput);
-}
-
-// Attach event listeners to the upload button and overlay
-const profilePicOverlay = document.querySelector(".profile-pic-overlay");
-const uploadButton = document.getElementById("upload-pic");
-
-if (profilePicOverlay) {
-  profilePicOverlay.addEventListener("click", triggerFileUpload);
-}
-
-if (uploadButton) {
-  uploadButton.addEventListener("click", triggerFileUpload);
-}
-
-// Add this to your HTML, inside the profile-pic-container
-const profilePicContainer = document.querySelector(".profile-pic-container");
-if (profilePicContainer) {
-  profilePicContainer.innerHTML = `
-    <div class="profile-pic-wrapper">
-      <img id="profile-pic" src="{{ url_for('static', filename='images/profilepic.png') }}" alt="Profile Picture">
-      <div class="profile-pic-overlay">
-        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="edit-icon">
-          <path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"></path>
-          <path d="M12 20h9"></path>
-        </svg>
-      </div>
-    </div>
-    <button id="upload-pic" class="secondary-button">Change Photo</button>
-  `;
-}
-
-// Fetch and display purchase history
-async function fetchPurchaseHistory() {
-  try {
-    console.log("Fetching purchase history...");
-    const response = await fetch("/api/purchases/history", {
-      credentials: "same-origin" // Include cookies for auth
-    });
-
-    if (!response.ok) {
-      throw new Error(`Failed to fetch purchase history: ${response.status}`);
-    }
-
-    const data = await response.json();
-    console.log("Received purchase data:", data);
-    displayPurchaseHistory(data.purchases || []);
-
-    // Also update available credits if that data is included
-    if (data.availableCredits !== undefined) {
-      document.getElementById("available-credits").textContent =
-        data.availableCredits;
-    }
-  } catch (err) {
-    console.error("Error fetching purchase history:", err);
-    displayPurchaseHistory([]);
-  }
-}
-
-function displayPurchaseHistory(purchases) {
-  const historyContainer = document.getElementById("billing-history-rows");
-  const noHistoryMessage = document.getElementById("no-purchases-message");
-
-  if (!historyContainer) return;
-
-  // Clear loading message
-  historyContainer.innerHTML = "";
-
-  if (!purchases || purchases.length === 0) {
-    // Show no history message
-    noHistoryMessage.style.display = "block";
-    return;
-  }
-
-  // Hide no history message if we have purchases
-  noHistoryMessage.style.display = "none";
-
-  // Sort purchases by date, newest first
-  purchases.sort((a, b) => new Date(b.date) - new Date(a.date));
-
-  // Add each purchase to the table
-  purchases.forEach((purchase) => {
-    const date = new Date(purchase.date);
-    const formattedDate =
-      date.toLocaleDateString("en-US", {
-        year: "numeric",
-        month: "short",
-        day: "numeric"
-      }) +
-      " " +
-      date.toLocaleTimeString("en-US", {
-        hour: "2-digit",
-        minute: "2-digit"
-      });
-
-    const row = document.createElement("div");
-    row.className = "billing-row";
-    row.innerHTML = `
-      <div class="billing-cell">${formattedDate}</div>
-      <div class="billing-cell">${
-        purchase.description || "Credit purchase"
-      }</div>
-      <div class="billing-cell">$${parseFloat(purchase.amount).toFixed(2)}</div>
-      <div class="billing-cell">
-        <span class="status-${purchase.status.toLowerCase()}">${
-      purchase.status
-    }</span>
-      </div>
-      <div class="billing-cell">
-        <button class="details-btn" data-details='${JSON.stringify(
-          purchase.details || []
-        )}'>View Details</button>
-      </div>
-    `;
-
-    historyContainer.appendChild(row);
-  });
-
-  // Add event listeners to "Details" buttons
-  document.querySelectorAll(".details-btn").forEach((button) => {
-    button.addEventListener("click", function () {
-      const details = JSON.parse(this.getAttribute("data-details"));
-      showPurchaseDetails(details);
-    });
-  });
-}
-
-function showPurchaseDetails(details) {
-  const modal = document.getElementById("details-modal");
-  const modalContent = document.getElementById("details-modal-content");
-
-  if (!modal || !modalContent) return;
-
-  // Clear previous details
-  modalContent.innerHTML = "";
-
-  if (details.length === 0) {
-    modalContent.innerHTML = "<p>No details available for this purchase.</p>";
-  } else {
-    const list = document.createElement("ul");
-    details.forEach((item) => {
-      const listItem = document.createElement("li");
-      listItem.textContent = `${item.product} - Quantity: ${
-        item.quantity
-      }, Price: $${item.price.toFixed(2)}`;
-      list.appendChild(listItem);
-    });
-    modalContent.appendChild(list);
-  }
-
-  // Show the modal
-  modal.style.display = "block";
-}
-
-// Close modal when clicking outside or on close button
-document.addEventListener("click", (event) => {
-  const modal = document.getElementById("details-modal");
-  if (
-    modal &&
-    (event.target === modal || event.target.classList.contains("close-modal"))
-  ) {
-    modal.style.display = "none";
-  }
-});

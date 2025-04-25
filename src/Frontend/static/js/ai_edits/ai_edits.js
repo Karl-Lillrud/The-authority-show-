@@ -27,7 +27,10 @@ const CREDIT_COSTS = {
     translation: 500,
     video_cutting: 500,
     video_enhancement: 500,
-    voice_isolation: 500
+    voice_isolation: 500,
+    ai_osint: 800,
+    ai_intro_outro: 800,
+    ai_intro_outro_audio: 500,
 };
 
 function labelWithCredits(text, key) {
@@ -49,75 +52,158 @@ function showTab(tabName) {
             <div class="result-field">
                 <pre id="transcriptionResult"></pre>
             </div>
+    
             <div id="enhancementTools" style="display:none;">
-                <!-- Ytterligare verktyg... -->
+                <hr/>
+                <h3>🔧 Enhancement Tools</h3>
+    
+                <div class="result-group">
+                    <button class="btn ai-edit-button" onclick="generateCleanTranscript()">🧹 Clean Transcript</button>
+                    <div class="result-field">
+                        <pre id="cleanTranscriptResult"></pre>
+                    </div>
+                </div>
+    
+                <div class="result-group">
+                    <button class="btn ai-edit-button" onclick="generateAISuggestions()">
+                      ${labelWithCredits("🤖 AI Suggestions", "ai_suggestions")}
+                    </button>
+                    <div class="result-field">
+                        <pre id="aiSuggestionsResult"></pre>
+                    </div>
+                </div>
+    
+                <div class="result-group">
+                    <button class="btn ai-edit-button" onclick="generateShowNotes()">
+                      ${labelWithCredits("📝 Show Notes", "show_notes")}
+                    </button>
+                    <div class="result-field">
+                        <pre id="showNotesResult"></pre>
+                    </div>
+                </div>
+    
+                <div class="result-group">
+                    <button class="btn ai-edit-button" onclick="generateQuotes()">
+                      ${labelWithCredits("💬 Generate Quotes", "ai_quotes")}
+                    </button>
+                    <div class="result-field">
+                        <pre id="quotesResult"></pre>
+                    </div>
+                </div>
+    
+                <div class="result-group">
+                    <button class="btn ai-edit-button" onclick="generateQuoteImages()">
+                      ${labelWithCredits("🖼️ Generate Quote Images", "ai_qoute_images")}
+                    </button>
+                    <div class="result-field">
+                        <div id="quoteImagesResult"></div>
+                    </div>
+                </div>
+    
+                <div class="result-group">
+                    <input type="text" id="guestNameInput" placeholder="Enter guest name..." class="input-field">
+                    <button class="btn ai-edit-button" onclick="runOsintSearch()">
+                      ${labelWithCredits("🕵️ OSINT Search", "ai_osint")}
+                    </button>
+                    <div class="result-field">
+                        <pre id="osintResult"></pre>
+                    </div>
+                </div>
+    
+                <div class="result-group">
+                    <button class="btn ai-edit-button" onclick="generatePodcastIntroOutro()">
+                      ${labelWithCredits("🎙 Generate Intro/Outro", "ai_intro_outro")}
+                    </button>
+                    <div class="result-field">
+                        <pre id="introOutroResult"></pre>
+                    </div>
+                    <button class="btn ai-edit-button" onclick="convertIntroOutroToSpeech()">
+                      ${labelWithCredits("🔊 Convert to Speech", "ai_intro_outro_audio")}
+                    </button>
+                </div>
             </div>
         `;
-    } else if (tabName === 'audio') {
+    }else if (tabName === 'audio') {
         content.innerHTML = `
-            <h2>🎵 AI Audio Enhancement</h2>
+            <h2>AI Audio Enhancement</h2>
             <input type="file" id="audioUploader" accept="audio/*" onchange="previewOriginalAudio()">
             <div id="originalAudioContainer" style="display: none; margin-bottom: 1rem;">
-                <p>🎧 <strong>Original Audio</strong></p>
+                <p><strong>Original Audio</strong></p>
                 <audio id="originalAudioPlayer" controls style="width: 100%"></audio>
             </div>
-
+    
             <div style="margin-top: 1rem; padding: 1rem; border: 1px solid #ddd; border-radius: 12px;">
-                <h3>🔊 Choose Audio Processing Method</h3>
+                <h3>Choose Audio Processing Method</h3>
                 <p style="margin-bottom: 1rem;">Select one of the following enhancements:</p>
+    
                 <div id="voiceIsolationSection" style="margin-bottom: 1.5rem;">
-                    <h4>🎤 <strong>Voice Isolation (Powered by ElevenLabs)</strong></h4>
+                    <h4><strong>Voice Isolation (Powered by ElevenLabs)</strong></h4>
                     <button class="btn ai-edit-button" onclick="runVoiceIsolation()">
-                        ${labelWithCredits("🎙️ Isolate Voice", "voice_isolation")}
+                        ${labelWithCredits("Isolate Voice", "voice_isolation")}
                     </button>
                     <div id="isolatedVoiceResult" style="margin-top: 1rem;"></div>
                     <a id="downloadIsolatedVoice"
                        class="inline-block mt-2 bg-orange-500 text-white px-4 py-2 rounded-2xl shadow hover:shadow-lg transition"
                        style="display: none;"
                        download="isolated_voice.wav">
-                       📥 Download Isolated Voice
+                       Download Isolated Voice
                     </a>
                 </div>
+    
                 <div id="audioEnhancementSection">
-                    <h4>🎚️ <strong>Audio Enhancement (Noise Reduction & Normalization)</strong></h4>
+                    <h4><strong>Audio Enhancement (Noise Reduction & Normalization)</strong></h4>
                     <button class="btn ai-edit-button" onclick="enhanceAudio()">
-                      ${labelWithCredits("✨ Enhance Audio", "audio_enhancment")}
+                      ${labelWithCredits("Enhance Audio", "audio_enhancment")}
                     </button>
                     <div id="audioControls" style="margin-top: 1rem;"></div>
                 </div>
             </div>
-
+    
             <div id="audioAnalysisSection" style="display: none;">
                 <hr/>
-                <h3>🤖 AI Analysis</h3>
+                <h3>AI Analysis</h3>
                 <button class="btn ai-edit-button" onclick="analyzeEnhancedAudio()">
-                  ${labelWithCredits("📊 Analyze", "ai_audio_analysis")}
+                  ${labelWithCredits("Analyze", "ai_audio_analysis")}
                 </button>
                 <pre id="analysisResults"></pre>
-                <!-- Här injiceras knappen för sound suggestions dynamiskt -->
+    
+                <button id="mixBackgroundBtn"
+                        class="btn ai-edit-button"
+                        style="display: none; margin-top: 1rem;"
+                        onclick="displayBackgroundAndMix()">
+                  Mix Background & Preview
+                </button>
+    
+                <div id="backgroundPreview" style="margin-top: 1rem;"></div>
                 <div id="soundEffectTimeline" style="margin-top: 1rem;"></div>
-                <a id="downloadEnhanced" class="btn ai-edit-button" download="processed_audio.wav">
-                     📥 Download Processed Audio
+    
+                <a id="downloadEnhanced"
+                   class="btn ai-edit-button"
+                   download="processed_audio.wav"
+                   style="display: none;">
+                   Download Processed Audio
                 </a>
             </div>
-
+    
             <div id="audioCuttingSection" style="display: none;">
                 <hr/>
-                <h3>✂ Audio Cutting</h3>
+                <h3>Audio Cutting</h3>
                 <label>Start: <input type="number" id="startTime" min="0" step="0.1"></label>
                 <label>End: <input type="number" id="endTime" min="0" step="0.1"></label>
                 <button class="btn ai-edit-button" onclick="cutAudio()">
-                  ${labelWithCredits("✂ Cut", "audio_cutting")}
+                  ${labelWithCredits("Cut", "audio_cutting")}
                 </button>
                 <div id="cutResult"></div>
-                <a id="downloadCut" class="btn ai-edit-button" download="cut_audio.wav">📥 Download Cut</a>
+                <a id="downloadCut" class="btn ai-edit-button" download="cut_audio.wav">
+                  Download Cut
+                </a>
             </div>
-
+    
             <div id="aiCuttingSection" style="display: none;">
                 <hr/>
-                <h3>🧠 AI Cutting + Transcript</h3>
+                <h3>AI Cutting + Transcript</h3>
                 <button class="btn ai-edit-button" onclick="aiCutAudio()">
-                  ${labelWithCredits("🧠 Run AI Cut", "ai_audio_cutting")}
+                  ${labelWithCredits("Run AI Cut", "ai_audio_cutting")}
                 </button>
                 <div class="result-field">
                     <h4>Transcript</h4>
@@ -211,6 +297,8 @@ async function generateCleanTranscript() {
 }
 
 async function generateAISuggestions() {
+    const suggestionsEl = document.getElementById("aiSuggestionsResult");
+
     try {
         await consumeStoreCredits("ai_suggestions");
 
@@ -222,22 +310,18 @@ async function generateAISuggestions() {
 
         if (res.ok) {
             const data = await res.json();
-            // Assuming your API returns `primary_suggestions` and `additional_suggestions`
-            document.getElementById("aiSuggestionsPrimary").innerText =
-                data.primary_suggestions || "No primary suggestions.";
-            document.getElementById("aiSuggestionsAdditional").innerText =
-                (data.additional_suggestions || []).join("\n") || "No additional suggestions.";
+            const primary = data.primary_suggestions || "";
+            const additional = (data.additional_suggestions || []).join("\n");
+
+            suggestionsEl.innerText = [primary, additional].filter(Boolean).join("\n\n") || "No suggestions.";
         } else {
-            document.getElementById("aiSuggestionsPrimary").innerText =
-                `❌ Error: ${res.status} - ${res.statusText}`;
-            document.getElementById("aiSuggestionsAdditional").innerText = "";
+            suggestionsEl.innerText = `❌ Error: ${res.status} - ${res.statusText}`;
         }
     } catch (err) {
-        document.getElementById("aiSuggestionsPrimary").innerText =
-            "❌ Not enough credits: " + err.message;
-        document.getElementById("aiSuggestionsAdditional").innerText = "";
+        suggestionsEl.innerText = "❌ Not enough credits: " + err.message;
     }
 }
+
 
 async function generateShowNotes() {
     try {
@@ -318,6 +402,96 @@ async function fetchAudioFromBlobUrl(blobUrl) {
     }
 }
 
+async function runOsintSearch() {
+    const guestName = document.getElementById("guestNameInput").value;
+    const resultEl = document.getElementById("osintResult");
+
+    if (!guestName.trim()) {
+        alert("Please enter a guest name.");
+        return;
+    }
+
+    try {
+        await consumeStoreCredits("ai_osint");
+        resultEl.innerText = "🔍 Searching OSINT info...";
+
+        const response = await fetch("/transcription/osint_lookup", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ guest_name: guestName })
+        });
+
+        const data = await response.json();
+        resultEl.innerText = data.osint_info || "No info found.";
+    } catch (err) {
+        resultEl.innerText = `❌ Failed: ${err.message}`;
+    }
+}
+
+async function generatePodcastIntroOutro() {
+    const guestName = document.getElementById("guestNameInput").value;
+    const resultEl = document.getElementById("introOutroResult");
+
+    if (!guestName.trim()) return alert("Please enter a guest name.");
+    if (!rawTranscript) return alert("No transcript available yet.");
+
+    try {
+        await consumeStoreCredits("ai_intro_outro");
+        resultEl.innerText = "📝 Generating intro and outro...";
+
+        const res = await fetch("/transcription/generate_intro_outro", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                guest_name: guestName,
+                transcript: rawTranscript  // already stored when transcribed
+            })
+        });
+
+        const data = await res.json();
+        resultEl.innerText = data.script || "No result.";
+    } catch (err) {
+        resultEl.innerText = `❌ Failed: ${err.message}`;
+    }
+}
+
+async function convertIntroOutroToSpeech() {
+    const script = document.getElementById("introOutroResult").innerText;
+    if (!script.trim()) return alert("No script to convert.");
+
+    const resultEl = document.getElementById("introOutroResult");
+    resultEl.innerText += "\n\n🔊 Generating voice...";
+
+    try {
+        const res = await fetch("/transcription/intro_outro_audio", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ script })
+        });
+
+        const data = await res.json();
+        if (data.audio_base64) {
+            const audio = document.createElement("audio");
+            audio.controls = true;
+            audio.src = data.audio_base64;
+
+            const download = document.createElement("a");
+            download.href = data.audio_base64;
+            download.download = "intro_outro.mp3";
+            download.className = "btn ai-edit-button";
+            download.innerText = "📥 Download Intro/Outro Audio";
+
+            resultEl.appendChild(document.createElement("hr"));
+            resultEl.appendChild(audio);
+            resultEl.appendChild(download);
+        } else {
+            throw new Error(data.error || "Unknown error");
+        }
+    } catch (err) {
+        resultEl.innerText += `\n❌ Failed to convert to audio: ${err.message}`;
+    }
+}
+
 async function enhanceAudio() {
     const input = document.getElementById('audioUploader');
     const audioControls = document.getElementById('audioControls');
@@ -381,130 +555,125 @@ async function runVoiceIsolation() {
     const input = document.getElementById('audioUploader');
     const file = input.files[0];
     if (!file) return alert("Upload an audio file first.");
-
+  
     const resultContainer = document.getElementById("isolatedVoiceResult");
     const episodeId = sessionStorage.getItem("selected_episode_id");
     if (!episodeId) return alert("❌ No episode selected.");
-
+  
     try {
-        await consumeStoreCredits("voice_isolation");
+      await consumeStoreCredits("voice_isolation");
     } catch (err) {
-        resultContainer.innerText = `❌ Not enough credits: ${err.message}`;
-        return;
+      resultContainer.innerText = `❌ Not enough credits: ${err.message}`;
+      return;
     }
-
+  
     resultContainer.innerText = "🎙️ Isolating voice using ElevenLabs...";
-
+  
     const formData = new FormData();
     formData.append("audio", file);
     formData.append("episode_id", episodeId);
-
+  
     try {
-        const response = await fetch("/transcription/voice_isolate", {
-            method: "POST",
-            body: formData
-        });
-
-        const data = await response.json();
-        if (!response.ok) throw new Error(data.error || "Voice isolation failed.");
-
-        const blobUrl = data.isolated_blob_url;
-
-        // ✅ Use backend proxy to avoid CORS
-        const audioRes = await fetch(`/transcription/get_isolated_audio?url=${encodeURIComponent(blobUrl)}`);
-        const blob = await audioRes.blob();
-        const url = URL.createObjectURL(blob);
-
-        isolatedAudioBlob = blob;
-        activeAudioBlob = blob;
-        activeAudioId = "external";
-
-        resultContainer.innerHTML = `
-            <p>🎧 Isolated Audio</p>
-            <audio controls src="${url}" style="width: 100%;"></audio>
-        `;
-
-        document.getElementById("audioAnalysisSection").style.display = "block";
-        document.getElementById("audioCuttingSection").style.display = "block";
-        document.getElementById("aiCuttingSection").style.display = "block";
-
-        const dl = document.getElementById("downloadIsolatedVoice");
-        dl.href = url;
-        dl.style.display = "inline-block";
+      const response = await fetch("/transcription/voice_isolate", {
+        method: "POST",
+        body: formData
+      });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || "Voice isolation failed.");
+  
+      // Fetch the actual blob via proxy
+      const blobUrl = data.isolated_blob_url;
+      const audioRes = await fetch(`/transcription/get_isolated_audio?url=${encodeURIComponent(blobUrl)}`);
+      const blob = await audioRes.blob();
+      const url  = URL.createObjectURL(blob);
+  
+      // Set the isolated audio as active
+      isolatedAudioBlob = blob;
+      activeAudioBlob   = blob;
+      activeAudioId     = "external";
+  
+      // Show the isolated audio player
+      resultContainer.innerHTML = `
+        <p>🎧 Isolated Audio</p>
+        <audio controls src="${url}" style="width: 100%;"></audio>
+      `;
+  
+      // Reveal the analysis UI
+      document.getElementById("audioAnalysisSection").style.display = "block";
+      document.getElementById("audioCuttingSection").style.display  = "block";
+      document.getElementById("aiCuttingSection").style.display     = "block";
+  
+      // Hide the mix button until analysis completes
+      const mixBtn = document.getElementById("mixBackgroundBtn");
+      mixBtn.style.display = "none";
+  
+      // Wire up the download link for the isolated audio
+      const dl = document.getElementById("downloadIsolatedVoice");
+      dl.href           = url;
+      dl.style.display  = "inline-block";
+  
+      // Optionally: automatically start analysis on the isolated audio
+      // await analyzeEnhancedAudio();
     } catch (err) {
-        console.error("Voice isolation failed:", err);
-        resultContainer.innerText = `❌ Isolation failed: ${err.message}`;
+      console.error("Voice isolation failed:", err);
+      resultContainer.innerText = `❌ Isolation failed: ${err.message}`;
     }
-}
+  }
 
 
 
 async function analyzeEnhancedAudio() {
     const resultEl = document.getElementById("analysisResults");
     const timeline = document.getElementById("soundEffectTimeline");
-
-    /* --- grund-kontroller --------------------------------------- */
+    const mixBtn   = document.getElementById("mixBackgroundBtn");
+  
+    // Ensure we have something to analyze
     if (!activeAudioBlob) {
-        alert("No audio loaded. Enhance or Isolate first.");
-        return;
+      return alert("No audio loaded. Enhance or Isolate first.");
     }
-
-    try { await consumeStoreCredits("ai_audio_analysis"); }
-    catch (err) {
-        resultEl.innerText = `❌ Not enough credits: ${err.message}`;
-        return;
+  
+    // Spend credits
+    try {
+      await consumeStoreCredits("ai_audio_analysis");
+    } catch (err) {
+      resultEl.innerText = `❌ Not enough credits: ${err.message}`;
+      return;
     }
-
+  
     resultEl.innerText = "🔍 Analyzing...";
     const fd = new FormData();
     fd.append("audio", activeAudioBlob, "processed_audio.wav");
-
+  
     try {
-        const res  = await fetch("/audio_analysis", { method: "POST", body: fd });
-        const data = await res.json();
-        console.log("JSON from /audio_analysis", data);   // debug
-
-        /* --- 1. räkna topp-emotioner ----------------------------- */
-        const emoFreq = {};
-        (data.emotions || []).forEach(row => {
-        const lab = row.emotions[0].label;
-        emoFreq[lab] = (emoFreq[lab] || 0) + 1;
-        });
-
-        const topEmo = Object.entries(emoFreq)
-                            .sort((a, b) => b[1] - a[1])[0]?.[0] || "–";
-
-        /* --- 2. skriv resultat-text ------------------------------ */
-        resultEl.innerText = `
-📊 Sentiment:        ${data.sentiment        ?? "–"}
-📊 Clarity Score:    ${data.clarity_score    ?? "–"}
-📊 Background Noise: ${data.background_noise ?? "–"}
-📊 Top Emotions:     ${topEmo}
-        `;
-
-        /* --- 3. fyll tidslinjen ---------------------------------- */
-        timeline.innerHTML = "";
-
-        if (data.background_clip) {
-            timeline.innerHTML += `
-                <h4>🔈 Background Loop (30 s)</h4>
-                <audio controls src="${data.background_clip}" style="width:100%"></audio>
-                <hr/>
-            `;
-        }
-
-        if (data.merged_audio) {
-            timeline.innerHTML += `
-                <h4>🎶 Mixed Preview</h4>
-                <audio controls src="${data.merged_audio}"
-                       style="width:100%;" title="Mixed audio"></audio>
-            `;
-        }
-
-    } catch (err) {
-        resultEl.innerText = `❌ Analysis failed: ${err.message}`;
+      const res  = await fetch("/audio_analysis", { method: "POST", body: fd });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || res.statusText);
+  
+      // Show just the stats + dominant emotion
+      resultEl.innerText = `
+  📊 Sentiment:     ${data.sentiment ?? "–"}
+  📊 Clarity Score: ${data.clarity_score ?? "–"}
+  📊 Noise Level:   ${data.background_noise ?? "–"}
+  📊 Dominant Emo:  ${data.dominant_emotion}
+      `;
+  
+      // Render any sound-effect suggestions
+      timeline.innerHTML = "";
+      renderSoundSuggestions(data, timeline);
+  
+      // Save for mix step
+      window.analysisData = {
+        emotion:   data.dominant_emotion,
+        audioBlob: activeAudioBlob
+      };
+  
+      // Reveal the Mix button
+      mixBtn.style.display = "inline-block";
     }
-}
+    catch (err) {
+      resultEl.innerText = `❌ Analysis failed: ${err.message}`;
+    }
+  }
 
 /* Hjälper att rendera suggestion-listan */
 function renderSoundSuggestions(data, timeline) {
@@ -526,6 +695,49 @@ function renderSoundSuggestions(data, timeline) {
         }
     });
 }
+
+async function displayBackgroundAndMix() {
+    const preview = document.getElementById("backgroundPreview");
+    const mixBtn  = document.getElementById("mixBackgroundBtn");
+    const dl      = document.getElementById("downloadEnhanced");
+    const { emotion, audioBlob } = window.analysisData || {};
+  
+    if (!emotion || !audioBlob) {
+      return alert("Run analysis first!");
+    }
+  
+    // Disable button & show spinner text
+    mixBtn.disabled  = true;
+    mixBtn.innerText = "🔄 Generating…";
+    preview.innerHTML = "";
+  
+    const fd = new FormData();
+    fd.append("audio",   audioBlob, "processed_audio.wav");
+    fd.append("emotion", emotion);
+  
+    try {
+      const res  = await fetch("/audio_background_mix", { method: "POST", body: fd });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || res.statusText);
+  
+      // ONLY render the mixed overlay:
+      if (data.merged_audio) {
+        preview.innerHTML = `
+          <h4>🎶 Mixed Preview</h4>
+          <audio controls src="${data.merged_audio}" style="width:100%;"></audio>
+        `;
+        // Update download link
+        dl.href          = data.merged_audio;
+        dl.style.display = "inline-block";
+      }
+    } catch (err) {
+      preview.innerText = `❌ Error: ${err.message}`;
+    } finally {
+      // Restore button
+      mixBtn.disabled  = false;
+      mixBtn.innerText = "🔉 Mix Background & Preview";
+    }
+  }
 
 async function cutAudio() {
     const startInput = document.getElementById("startTime");

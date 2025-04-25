@@ -2,7 +2,7 @@
 
 import os
 import re
-import openai
+from openai import OpenAI
 import logging
 import subprocess
 import base64
@@ -16,19 +16,19 @@ from io import BytesIO
 import streamlit as st  # Needed for download_button_text
 from pydub import AudioSegment
 
+client = OpenAI()
 
 API_BASE_URL = os.getenv("API_BASE_URL")
 ELEVENLABS_API_KEY = os.getenv("ELEVENLABS_API_KEY")
 logger = logging.getLogger(__name__)
 
 def format_transcription(transcription):
-    """Convert list of dictionaries to a readable string."""
     if isinstance(transcription, list):
         return "\n".join([
             f"[{item['start']}-{item['end']}] {item['speaker']}: {item['text'].strip()}"
             for item in transcription
         ])
-    return transcription  # Already a string
+    return transcription
 
 def download_button_text(label, text, filename, key_prefix=""):
     if isinstance(text, list):
@@ -37,20 +37,19 @@ def download_button_text(label, text, filename, key_prefix=""):
     key = f"{key_prefix}_{filename}" if key_prefix else filename
     return st.download_button(label, text, filename, key=key)
 
-
 def translate_text(text: str, target_language: str) -> str:
     prompt = f"Translate the following transcript to {target_language}:\n\n{text}"
     retries = 3
     for attempt in range(retries):
         try:
-            response = openai.ChatCompletion.create(
+            response = client.chat.completions.create(
                 model="gpt-4",
                 messages=[
                     {"role": "system", "content": "You are a professional translator."},
                     {"role": "user", "content": prompt}
                 ]
             )
-            return response["choices"][0]["message"]["content"].strip()
+            return response.choices[0].message.content.strip()
         except Exception as e:
             logger.warning(f"Retry {attempt+1}/{retries} failed: {e}")
             time.sleep(1)
@@ -63,28 +62,31 @@ def generate_ai_suggestions(text):
     Focus on removing filler words, grammar/spelling corrections, rewriting awkward phrases:
     {text}
     """
-    response = openai.ChatCompletion.create(
+    response = client.chat.completions.create(
         model="gpt-4",
         messages=[{"role": "user", "content": prompt}]
     )
-    return response["choices"][0]["message"]["content"]
+    return response.choices[0].message.content
 
 def generate_show_notes(text):
     prompt = f"""
     Generate concise show notes for this transcript:
     {text}
     """
-    response = openai.ChatCompletion.create(
+    response = client.chat.completions.create(
         model="gpt-4",
         messages=[{"role": "user", "content": prompt}]
     )
-    return response["choices"][0]["message"]["content"]
+    return response.choices[0].message.content
 
 def transcribe_with_whisper(audio_path: str) -> str:
     try:
         with open(audio_path, "rb") as f:
-            response = openai.Audio.transcribe("whisper-1", file=f)
-        return response["text"]
+            response = client.audio.transcriptions.create(
+                model="whisper-1",
+                file=f
+            )
+        return response.text
     except Exception as e:
         logger.error(f"Error in Whisper transcription: {str(e)}")
         return ""
@@ -102,7 +104,7 @@ def detect_filler_words(transcription):
     sentences = transcription.split(". ")
     return [
         sentence for sentence in sentences
-        if any(re.search(rf"\b{word}\b", sentence, re.IGNORECASE) for word in filler_words)
+        if any(re.search(rf"\\b{word}\\b", sentence, re.IGNORECASE) for word in filler_words)
     ]
 
 def classify_sentence_relevance(transcription):
@@ -192,16 +194,15 @@ def generate_ai_show_notes(transcript):
     Transcript:
     {transcript}
     """
-
     try:
-        response = openai.ChatCompletion.create(
+        response = client.chat.completions.create(
             model="gpt-4",
             messages=[
                 {"role": "system", "content": "You are a professional podcast assistant."},
                 {"role": "user", "content": prompt}
             ]
         )
-        return response["choices"][0]["message"]["content"].strip()
+        return response.choices[0].message.content.strip()
     except Exception as e:
         logger.error(f"❌ Error generating show notes: {e}")
         return f"Error generating show notes: {str(e)}"
@@ -216,48 +217,44 @@ def generate_ai_quotes(transcript: str) -> str:
     Transcript:
     {transcript}
     """
-
     try:
-        response = openai.ChatCompletion.create(
+        response = client.chat.completions.create(
             model="gpt-4",
             messages=[
                 {"role": "system", "content": "You're an expert podcast editor and copywriter."},
                 {"role": "user", "content": prompt}
             ]
         )
-        quotes_raw = response["choices"][0]["message"]["content"].strip()
-        lines = [line.strip("•–—-• \n\"") for line in quotes_raw.split("\n") if line.strip()]
+        quotes_raw = response.choices[0].message.content.strip()
+        lines = [line.strip("\u2022\u2013\u2014-\u2022 \n\"") for line in quotes_raw.split("\n") if line.strip()]
         return "\n\n".join(lines[:3])
     except Exception as e:
         logger.error(f"❌ Error generating quotes: {e}")
         return f"Error generating quotes: {str(e)}"
 
 def generate_quote_images(quotes: List[str]) -> List[str]:
-    openai.api_key = os.getenv("OPENAI_API_KEY")
     urls = []
-
     for quote in quotes:
         prompt = f"Create a visually striking, artistic background that reflects this quote’s emotion: \"{quote}\". No text in the image."
         try:
-            response = openai.Image.create(
+            response = client.images.generate(
                 prompt=prompt,
                 model="dall-e-3",
                 n=1,
                 size="1024x1024"
             )
-            url = response["data"][0]["url"]
+            url = response.data[0].url
             urls.append(url)
         except Exception as e:
             logger.error(f"❌ Failed to generate image for quote: {quote} | Error: {e}")
             urls.append("")
     return urls
 
-
 def fetch_sfx_for_emotion(
     emotion: str,
     category: str,
     *,
-    loop_src_seconds: int = 3,
+    loop_src_seconds: int = 8,
     target_duration:  int = 30,
     crossfade_ms:     int = 250
 ) -> List[str]:
@@ -294,7 +291,6 @@ def fetch_sfx_for_emotion(
     b64 = base64.b64encode(buf.getvalue()).decode("utf-8")
     return [f"data:audio/mpeg;base64,{b64}"]
 
-
 def suggest_sound_effects(
     emotion_data,
     *,
@@ -319,15 +315,8 @@ def mix_background(
     original_wav_bytes: bytes,
     bg_b64_url: str,
     *,
-    bg_gain_db: float = -45.0   # dämpa bakgrunden
+    bg_gain_db: float = -45.0
 ) -> bytes:
-    """
-    • Avkoda original (WAV) + bakgrund (base64-MP3).
-    • Loopar bakgrunden tills den täcker hela originalet.
-    • Sänker bakgrunden `bg_gain_db` dB.
-    • Lägger den under originalet och returnerar nya WAV-bytes.
-    """
-    from io import BytesIO
     original = AudioSegment.from_file(BytesIO(original_wav_bytes), format="wav")
 
     bg_mp3   = base64.b64decode(bg_b64_url.split(",", 1)[1])
@@ -343,9 +332,82 @@ def mix_background(
     return out_buf.getvalue()
 
 def pick_dominant_emotion(emotion_data: list) -> str:
-    """Returnerar det emotion-label som förekommer flest gånger."""
     from collections import Counter
     labels = [e["emotions"][0]["label"] for e in emotion_data]
     return Counter(labels).most_common(1)[0][0] if labels else "neutral"
 
+def get_osint_info(guest_name: str) -> str:
+    """
+    Uses GPT-4 to retrieve OSINT-style background information about a guest.
+    """
+    from openai import OpenAI
+    client = OpenAI()
+
+    prompt = f"Find detailed and recent public information about {guest_name}. Focus on professional achievements, background, and any recent mentions in news or social media."
+
+    response = client.chat.completions.create(
+        model="gpt-4",
+        messages=[
+            {"role": "system", "content": "You are OSINT-GPT, an expert in gathering open-source intelligence."},
+            {"role": "user", "content": prompt}
+        ]
+    )
+
+    return response.choices[0].message.content.strip()
+
+def create_podcast_scripts_paid(osint_info: str, guest_name: str, transcript: str = "") -> str:
+    from openai import OpenAI
+    client = OpenAI()
+
+    prompt = f"""
+You are a professional podcast scriptwriter.
+
+Write a compelling **podcast intro and outro** based on the following episode transcript.
+
+Start with the **topics and tone** from the transcript, then enrich it with background details about the guest ({guest_name}).
+
+📌 Transcript:
+{transcript}
+
+📌 Guest background info:
+{osint_info}
+
+The intro should briefly tease the main topic(s) of the episode, using an engaging tone.
+The outro should reflect on the discussion and invite the listener to tune in again.
+"""
+
+    response = client.chat.completions.create(
+        model="gpt-4",
+        messages=[{"role": "user", "content": prompt}]
+    )
+
+    return response.choices[0].message.content.strip()
+
+def text_to_speech_with_elevenlabs(script: str, voice_id: str = "TX3LPaxmHKxFdv7VOQHJ") -> bytes:
+    import requests
+    import os
+    from io import BytesIO
+
+    api_key = os.getenv("ELEVENLABS_API_KEY")
+    url = f"https://api.elevenlabs.io/v1/text-to-speech/{voice_id}"
+
+    headers = {
+        "xi-api-key": api_key,
+        "Content-Type": "application/json"
+    }
+
+    payload = {
+        "text": script,
+        "voice_settings": {
+            "stability": 0.5,
+            "similarity_boost": 0.8
+        }
+    }
+
+    response = requests.post(url, headers=headers, json=payload)
+
+    if response.status_code == 200:
+        return response.content  # 🧠 Raw MP3 bytes
+    else:
+        raise RuntimeError(f"ElevenLabs error {response.status_code}: {response.text}")
 

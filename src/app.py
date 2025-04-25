@@ -7,7 +7,7 @@ from backend.routes.podcast import podcast_bp  # Import the podcast blueprint
 from backend.routes.dashboard import dashboard_bp
 from backend.routes.pod_management import pod_management_bp
 from backend.routes.podtask import podtask_bp
-from backend.routes.account import account_bp
+from backend.routes.account import account_bp  # Ensure this import is correct
 from backend.routes.credits_routes import credits_bp
 from backend.routes.team import team_bp
 from backend.routes.guest import (
@@ -32,10 +32,11 @@ from backend.utils import venvupdate
 from backend.database.mongo_connection import collection
 from backend.routes.Mailing_list import Mailing_list_bp
 from backend.routes.user import user_bp
-#from backend.routes.highlight import highlights_bp
+from backend.routes.highlight import highlights_bp
 from backend.routes.audio_routes import audio_bp
 from backend.routes.video_routes import video_bp
 from backend.routes.transcription import transcription_bp
+from backend.routes.comment import comment_bp  # Import the comment blueprint
 from colorama import Fore, Style, init  # Import colorama for styled logs
 from backend.routes.activity import activity_bp
 from backend.routes.stripe_config import stripe_config_bp  # Import the renamed config blueprint
@@ -82,7 +83,7 @@ app.register_blueprint(team_bp)
 app.register_blueprint(Mailing_list_bp)
 app.register_blueprint(guest_bp)  # Ensure the guest blueprint is correctly registered
 app.register_blueprint(guestpage_bp)
-app.register_blueprint(account_bp)
+app.register_blueprint(account_bp)  # Ensure this registration is correct
 app.register_blueprint(credits_bp)
 app.register_blueprint(usertoteam_bp)
 app.register_blueprint(invitation_bp)
@@ -100,8 +101,9 @@ app.register_blueprint(
 )  # Register the guest_form blueprint with URL prefix
 app.register_blueprint(user_bp)
 app.register_blueprint(landingpage_bp)
-app.register_blueprint(activity_bp)
-app.register_blueprint(stripe_config_bp)  # Register the renamed config blueprint
+app.register_blueprint(comment_bp)
+app.register_blueprint(activity_bp)  # Ensure this registration exists
+app.register_blueprint(stripe_config_bp)  # Ensure this registration exists
 
 # Set the application environment (defaults to production)
 APP_ENV = os.getenv("APP_ENV", "production")

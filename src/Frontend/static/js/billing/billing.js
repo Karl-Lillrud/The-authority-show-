@@ -93,3 +93,52 @@ async function buyCredits(credits, amount) {
     if (statusElement) statusElement.textContent = "Error: " + err.message;
   }
 }
+
+/**
+ * Fetches the user's purchase history from the backend.
+ */
+export async function fetchPurchases() {
+  try {
+    // Construct the full URL using the fetched base URL or use relative path if empty
+    const purchasesUrl = apiBaseUrl ? `${apiBaseUrl}/api/purchases` : "/api/purchases";
+
+    const response = await fetch(purchasesUrl, { // Use constructed URL
+      method: "GET",
+      headers: {
+        "Accept": "application/json",
+      },
+      credentials: "same-origin", // Include cookies for authentication
+    });
+
+    const contentType = response.headers.get("content-type");
+
+    if (!response.ok) {
+      let errorMsg = `Failed to fetch purchase history: ${response.statusText}`;
+      if (contentType && contentType.includes("application/json")) {
+        try {
+          const errorData = await response.json();
+          errorMsg = errorData.error || errorMsg;
+        } catch (e) {
+          // Ignore if error response is not JSON
+        }
+      } else if (response.status === 401) {
+         errorMsg = "Unauthorized: Please log in.";
+      }
+      throw new Error(errorMsg);
+    }
+
+    // Check content type before parsing JSON
+    if (contentType && contentType.includes("application/json")) {
+        const data = await response.json();
+        // Assuming the backend returns { purchases: [...] }
+        return data.purchases || []; 
+    } else {
+        throw new Error("Received non-JSON response from server for purchase history.");
+    }
+
+  } catch (error) {
+    console.error("Error fetching purchase history:", error);
+    // Re-throw the error so the calling function (e.g., in account.js) can handle it and show notifications
+    throw error; 
+  }
+}
