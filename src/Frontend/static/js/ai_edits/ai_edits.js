@@ -27,7 +27,8 @@ const CREDIT_COSTS = {
     translation: 500,
     video_cutting: 500,
     video_enhancement: 500,
-    voice_isolation: 500
+    voice_isolation: 500,
+    ai_osint: 800
 };
 
 function labelWithCredits(text, key) {
@@ -90,6 +91,14 @@ function showTab(tabName) {
                     <div class="result-field">
                         <div id="quoteImagesResult"></div>
                     </div>
+                </div>
+                <div class="result-group">
+                <input type="text" id="guestNameInput" placeholder="Enter guest name..." class="input-field">
+                <button class="btn ai-edit-button" onclick="runOsintSearch()">
+                  ${labelWithCredits("🕵️ OSINT Search", "ai_osint")}
+                </button>
+                <div class="result-field">
+                    <pre id="osintResult"></pre>
                 </div>
             </div>
         `;
@@ -369,6 +378,32 @@ async function fetchAudioFromBlobUrl(blobUrl) {
     } catch (err) {
         console.error("Error fetching audio from blob URL:", err);
         throw err;
+    }
+}
+
+async function runOsintSearch() {
+    const guestName = document.getElementById("guestNameInput").value;
+    const resultEl = document.getElementById("osintResult");
+
+    if (!guestName.trim()) {
+        alert("Please enter a guest name.");
+        return;
+    }
+
+    try {
+        await consumeStoreCredits("ai_osint");
+        resultEl.innerText = "🔍 Searching OSINT info...";
+
+        const response = await fetch("/transcription/osint_lookup", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ guest_name: guestName })
+        });
+
+        const data = await response.json();
+        resultEl.innerText = data.osint_info || "No info found.";
+    } catch (err) {
+        resultEl.innerText = `❌ Failed: ${err.message}`;
     }
 }
 

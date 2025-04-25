@@ -327,3 +327,19 @@ def analyze_sentiment_sfx():
     except Exception as e:
         logger.error(f"Error analyzing sentiment + SFX: {str(e)}")
         return jsonify({"error": str(e)}), 500
+
+@transcription_bp.route("/osint_lookup", methods=["POST"])
+def osint_lookup():
+    data = request.get_json()
+    guest_name = data.get("guest_name")
+    if not guest_name:
+        return jsonify({"error": "Missing guest name"}), 400
+
+    try:
+        from backend.utils.text_utils import get_osint_info
+        osint_info = get_osint_info(guest_name)
+        return jsonify({"osint_info": osint_info})
+    except Exception as e:
+        logger.error(f"❌ OSINT error: {str(e)}")
+        return jsonify({"error": str(e)}), 500
+

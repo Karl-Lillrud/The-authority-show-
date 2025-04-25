@@ -335,3 +335,22 @@ def pick_dominant_emotion(emotion_data: list) -> str:
     from collections import Counter
     labels = [e["emotions"][0]["label"] for e in emotion_data]
     return Counter(labels).most_common(1)[0][0] if labels else "neutral"
+
+def get_osint_info(guest_name: str) -> str:
+    """
+    Uses GPT-4 to retrieve OSINT-style background information about a guest.
+    """
+    from openai import OpenAI
+    client = OpenAI()
+
+    prompt = f"Find detailed and recent public information about {guest_name}. Focus on professional achievements, background, and any recent mentions in news or social media."
+
+    response = client.chat.completions.create(
+        model="gpt-4",
+        messages=[
+            {"role": "system", "content": "You are OSINT-GPT, an expert in gathering open-source intelligence."},
+            {"role": "user", "content": prompt}
+        ]
+    )
+
+    return response.choices[0].message.content.strip()
