@@ -67,27 +67,98 @@ def parse_publish_date(publish_date):
         logger.error(f"Invalid type for publishDate: {type(publish_date)}. Error: {str(e)}")
         return None
 
-def render_email_content(trigger_name, guest, episode):
-    """
-    Render the email content for a given trigger, guest, and episode.
-    """
+def render_email_content(trigger_name, guest, episode, social_network=None, guest_email=None, podName=None, link=None, audio_url=None):
     try:
         template_path = f"emails/{trigger_name}_email.html"
         email_body = render_template(
             template_path,
-            guest_name=guest["name"],
-            podName="The Authority Show",
-            episode_title=episode["title"]
+            guest_name=guest["name"],  # Dynamically inject guest name
+            guest_email=guest_email,  # Dynamically inject guest email
+            podName=podName,  # Dynamically inject podcast name
+            episode_title=episode["title"],  # Dynamically inject episode title
+            social_network=social_network,  # Dynamically inject missing social networks
+            link=link,  # Dynamically inject episode link
+            audio_url=audio_url  # Dynamically inject audio URL
         )
         return email_body
     except Exception as e:
         logger.error(f"Error rendering email template {template_path}: {str(e)}")
         return "Error loading email content."
 
+def load_custom_triggers():
+    """Load custom triggers for podcasts."""
+    try:
+        # Use an absolute path for custom_triggers.json
+        custom_triggers_path = os.path.join(os.path.dirname(__file__), "custom_triggers.json")
+        
+        # Ensure the file exists
+        if not os.path.exists(custom_triggers_path):
+            with open(custom_triggers_path, "w") as file:
+                json.dump({}, file)  # Initialize with an empty JSON object
+
+        # Load the custom triggers
+        with open(custom_triggers_path, "r") as file:
+            return json.load(file)
+    except Exception as e:
+        logger.error(f"Error loading custom triggers file: {str(e)}")
+        return {}
+
 def check_and_send_emails():
     today = datetime.now(timezone.utc)
     sent_emails = load_sent_emails()
+    custom_triggers = load_custom_triggers()
 
+    # Step 1: Process custom triggers
+    for podcast_id, podcast_triggers in custom_triggers.items():
+        logger.info(f"Processing custom triggers for podcast: {podcast_id}")
+
+        # Fetch all episodes for the podcast
+        episodes = list(episode_collection.find({"podcast_id": podcast_id}))
+        for episode in episodes:
+            episode_id = str(episode["_id"])
+
+            for trigger_name, trigger_details in podcast_triggers.items():
+                required_status = trigger_details["status"]
+                time_check = timedelta(hours=trigger_details["time_check"])
+
+                # Check if the episode matches the custom trigger
+                if episode["status"] == required_status and "publishDate" in episode:
+                    publish_date = parse_publish_date(episode["publishDate"])
+                    if publish_date and today - timedelta(days=1) <= publish_date <= today + time_check:
+                        # Skip if the email has already been sent
+                        if episode_id in sent_emails and sent_emails[episode_id]["triggers"].get(trigger_name):
+                            logger.info(f"Custom trigger '{trigger_name}' already processed for episode {episode['title']}.")
+                            continue
+
+                        # Send the email
+                        guest = guest_collection.find_one({"_id": episode["guid"]})
+                        if not guest:
+                            logger.warning(f"No valid guest found for episode {episode['title']} (Guest GUID: {episode['guid']}).")
+                            continue
+
+                        link = episode.get("link", "#")
+                        audio_url = episode.get("audioUrl", "#")
+                        subject = f"{trigger_name.replace('_', ' ').title()} Email"
+
+                        email_body = render_email_content(
+                            trigger_name,
+                            guest,
+                            episode,
+                            guest_email=guest["email"],
+                            podName="The Authority Show",
+                            link=link,
+                            audio_url=audio_url
+                        )
+                        send_email(guest["email"], subject, email_body)
+                        logger.info(f"Email sent to {guest['name']} ({guest['email']}) for custom trigger '{trigger_name}'.")
+
+                        # Mark the email as sent
+                        if episode_id not in sent_emails:
+                            sent_emails[episode_id] = {"podcastId": podcast_id, "triggers": {}}
+                        sent_emails[episode_id]["triggers"][trigger_name] = True
+                        save_sent_emails(sent_emails)
+
+    # Step 2: Process normal triggers
     triggers = {
         "booking": {"status": "Not Recorded", "time_check": None},
         "preparation": {"status": "Not Recorded", "time_check": timedelta(days=1)},
@@ -101,59 +172,61 @@ def check_and_send_emails():
     }
 
     for trigger_name, trigger_details in triggers.items():
-        logger.info(f"Processing trigger: {trigger_name}")
+        logger.info(f"Processing normal trigger: {trigger_name}")
 
         required_status = trigger_details["status"]
         time_check = trigger_details["time_check"]
 
         query = {"status": required_status}
         if time_check is not None:
-            if time_check > timedelta(0):
-                query["publishDate"] = {"$gte": today, "$lte": today + time_check}
-            else:
-                query["publishDate"] = {"$gte": today + time_check, "$lte": today}
-
-        if trigger_name == "missing_social_media":
-            query = {"status": "Published"}
+            query["publishDate"] = {
+                "$gte": today - timedelta(days=1),  # 24 hours before now
+                "$lte": today + time_check  # Up to the specified time_check
+            }
 
         try:
             episodes = list(episode_collection.find(query))
-            logger.info(f"Found {len(episodes)} episodes for trigger '{trigger_name}'.")
-
             for episode in episodes:
                 episode_id = str(episode["_id"])
-                podcast_id = str(episode.get("podcast_id"))  # Fetch the correct podcast_id
+                podcast_id = str(episode.get("podcast_id"))
 
-                # Skip if the email for this trigger has already been sent
+                # Skip if the email has already been sent
                 if episode_id in sent_emails and sent_emails[episode_id]["triggers"].get(trigger_name):
                     logger.info(f"Trigger '{trigger_name}' already processed for episode {episode['title']}.")
                     continue
 
-                guest_id = episode.get("guid")
-                if not guest_id:
-                    logger.warning(f"Episode {episode['title']} (ID: {episode_id}) does not have a valid 'guid'. Skipping...")
+                # Skip if a custom trigger exists for this podcast and trigger
+                if custom_triggers.get(podcast_id, {}).get(trigger_name):
+                    logger.info(f"Custom trigger exists for '{trigger_name}' on podcast {podcast_id}. Skipping normal trigger.")
                     continue
 
-                guest = guest_collection.find_one({"_id": guest_id})
+                # Send the email
+                guest = guest_collection.find_one({"_id": episode["guid"]})
                 if not guest:
-                    logger.warning(f"No valid guest found for episode {episode['title']} (Guest GUID: {guest_id}).")
+                    logger.warning(f"No valid guest found for episode {episode['title']} (Guest GUID: {episode['guid']}).")
                     continue
 
-                subject = f"{trigger_name.capitalize()} Email"
+                link = episode.get("link", "#")
+                audio_url = episode.get("audioUrl", "#")
+                subject = f"{trigger_name.replace('_', ' ').title()} Email"
 
-                try:
-                    email_body = render_email_content(trigger_name, guest, episode)
-                    send_email(guest["email"], subject, email_body)
-                    logger.info(f"Email sent to {guest['name']} ({guest['email']}) for trigger '{trigger_name}'.")
+                email_body = render_email_content(
+                    trigger_name,
+                    guest,
+                    episode,
+                    guest_email=guest["email"],
+                    podName="The Authority Show",
+                    link=link,
+                    audio_url=audio_url
+                )
+                send_email(guest["email"], subject, email_body)
+                logger.info(f"Email sent to {guest['name']} ({guest['email']}) for trigger '{trigger_name}'.")
 
-                    # Save the email as sent
-                    if episode_id not in sent_emails:
-                        sent_emails[episode_id] = {"podcastId": podcast_id, "triggers": {}}
-                    sent_emails[episode_id]["triggers"][trigger_name] = True
-                    save_sent_emails(sent_emails)
-
-                except Exception as e:
-                    logger.error(f"Failed to send email to {guest['name']} ({guest['email']}): {str(e)}")
+                # Mark the email as sent
+                if episode_id not in sent_emails:
+                    sent_emails[episode_id] = {"podcastId": podcast_id, "triggers": {}}
+                sent_emails[episode_id]["triggers"][trigger_name] = True
+                save_sent_emails(sent_emails)
 
         except Exception as e:
             logger.error(f"Error processing trigger '{trigger_name}': {str(e)}")

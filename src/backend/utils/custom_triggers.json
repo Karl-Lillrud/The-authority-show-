@@ -1,0 +1,16 @@
+{
+    "2ab5bbff-6de0-4239-af79-546331adc3ee": {
+        "thank_you": {
+            "status": "Published",
+            "time_check": "48"
+        },
+        "booking": {
+            "status": "Published",
+            "time_check": "24"
+        },
+        "missing_info": {
+            "status": "Published",
+            "time_check": "72"
+        }
+    }
+}

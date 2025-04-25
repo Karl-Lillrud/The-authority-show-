@@ -87,20 +87,95 @@ def get_outbox():
                             logging.warning(f"No guest found for episode {episode['title']} (GUID: {episode.get('guid')}).")
                         guest_email = guest["email"] if guest else "Unknown"
 
-                        # Render the email content using the reusable function
-                        email_content = render_email_content(trigger_name, guest, episode)
+                        # Render the email content dynamically
+                        template_path = f"emails/{trigger_name}_email.html"
+                        try:
+                            email_content = render_template(
+                                template_path,
+                                guest_name=guest["name"] if guest else "Guest",
+                                podName="The Authority Show",
+                                episode_title=episode["title"] if episode else "Episode"
+                            )
+                        except Exception as e:
+                            logging.error(f"Error rendering email template {template_path}: {str(e)}")
+                            email_content = "Error loading email content."
 
                         # Append email details
                         emails.append({
                             "episode_id": episode_id,
                             "trigger_name": trigger_name,
                             "guest_email": guest_email,
-                            "subject": f"{trigger_name.capitalize()} Email",
-                            "content": email_content,  # Use the rendered email content
+                            "subject": f"{trigger_name.replace('_', ' ').title()} Email",
+                            "content": email_content,  # Dynamically rendered content
                             "timestamp": datetime.now().isoformat()  # Replace with actual timestamp if available
                         })
 
         return jsonify({"success": True, "data": emails})
     except Exception as e:
         logging.error(f"Error fetching outbox: {str(e)}")
+        return jsonify({"success": False, "error": str(e)})
+
+
+@pod_management_bp.route("/save-trigger", methods=["POST"])
+def save_trigger():
+    """Save a custom trigger for a podcast."""
+    try:
+        data = request.get_json()
+        podcast_id = data.get("podcast_id")
+        trigger_name = data.get("trigger_name")
+        status = data.get("status", "Not Recorded")
+        time_check = data.get("time_check", 24)  # Default to 24 hours if not provided
+
+        # Load existing custom triggers
+        custom_triggers_path = os.path.join(os.path.dirname(__file__), "../utils/custom_triggers.json")
+
+        # Ensure the file exists
+        if not os.path.exists(custom_triggers_path):
+            with open(custom_triggers_path, "w") as file:
+                json.dump({}, file)  # Initialize with an empty JSON object
+
+        # Load the custom triggers
+        with open(custom_triggers_path, "r") as file:
+            custom_triggers = json.load(file)
+
+        # Update the custom triggers for the podcast
+        if podcast_id not in custom_triggers:
+            custom_triggers[podcast_id] = {}
+
+        custom_triggers[podcast_id][trigger_name] = {
+            "status": status,
+            "time_check": time_check
+        }
+
+        # Save the updated custom triggers
+        with open(custom_triggers_path, "w") as file:
+            json.dump(custom_triggers, file, indent=4)
+
+        return jsonify({"success": True, "message": "Trigger saved successfully."})
+    except Exception as e:
+        logging.error(f"Error saving custom trigger: {str(e)}")
+        return jsonify({"success": False, "error": str(e)})
+
+
+@pod_management_bp.route("/get-trigger-config", methods=["GET"])
+def get_trigger_config():
+    """Fetch the current trigger configuration for a podcast."""
+    try:
+        podcast_id = request.args.get("podcastId")
+        trigger_name = request.args.get("triggerName")
+
+        # Load existing custom triggers
+        custom_triggers_path = os.path.join(os.path.dirname(__file__), "../utils/custom_triggers.json")
+        if not os.path.exists(custom_triggers_path):
+            return jsonify({"success": True, "data": None})  # No custom triggers exist
+
+        with open(custom_triggers_path, "r") as file:
+            custom_triggers = json.load(file)
+
+        # Get the specific trigger configuration
+        trigger_config = custom_triggers.get(podcast_id, {}).get(trigger_name, None)
+
+        return jsonify({"success": True, "data": trigger_config})
+    except Exception as e:
+        logging.error(f"Error fetching trigger configuration: {str(e)}")
         return jsonify({"success": False, "error": str(e)})

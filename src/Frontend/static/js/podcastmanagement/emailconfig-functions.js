@@ -25,27 +25,55 @@ document
   .getElementById("close-email-config-btn")
   .addEventListener("click", closeEmailConfigPopup);
 
+document
+  .getElementById("save-trigger-btn")
+  .addEventListener("click", saveTriggerConfig);
+
 async function saveTriggerConfig() {
+  console.log("Save Trigger button clicked"); // Debug log
+
   const triggerSelect = document.getElementById("trigger-select");
   const triggerTime = document.getElementById("trigger-time");
+  const podcastId = document
+    .getElementById("email-config-popup")
+    .getAttribute("data-podcast-id");
+
+  // Validate that a trigger is selected
+  if (!triggerSelect.value) {
+    alert("Please select a trigger before saving.");
+    return;
+  }
+
+  // Validate that a valid time is entered
+  const timeValue = triggerTime.value;
+  if (!timeValue || isNaN(timeValue) || timeValue <= 0) {
+    alert("Please enter a valid time in hours (greater than 0).");
+    return;
+  }
 
   const triggerData = {
-    trigger: triggerSelect.value,
-    time: triggerTime.value,
+    podcast_id: podcastId,
+    trigger_name: triggerSelect.value,
+    status: "Published", // Default status
+    time_check: parseInt(timeValue, 10), // Save time_check as an integer
   };
+
+  console.log("Trigger Data:", triggerData); // Log the data being sent
 
   try {
     const response = await fetch("/save-trigger", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: {
+        "Content-Type": "application/json",
+      },
       body: JSON.stringify(triggerData),
     });
 
-    if (response.ok) {
+    const result = await response.json();
+    if (result.success) {
       alert("Trigger saved successfully!");
     } else {
-      const error = await response.json();
-      alert("Failed to save trigger: " + error.message);
+      alert(`Error saving trigger: ${result.error}`);
     }
   } catch (error) {
     console.error("Error saving trigger:", error);
@@ -54,42 +82,54 @@ async function saveTriggerConfig() {
 }
 
 async function fetchOutbox(podcastId) {
-  const outboxContainer = document.getElementById("outbox-container");
-  outboxContainer.innerHTML = ""; // Clear existing emails
+  const outboxList = document.getElementById("outbox-list");
+  outboxList.innerHTML = ""; // Clear existing emails
 
   try {
     const response = await fetch(`/outbox?podcastId=${podcastId}`);
     const data = await response.json();
 
     if (data.success) {
-      if (data.data.length > 0) {
-        data.data.forEach((email) => {
-          const emailCard = document.createElement("div");
-          emailCard.className = "email-card";
-
-          const emailTime = new Date(email.timestamp).toLocaleString();
-
-          emailCard.innerHTML = `
-            <div class="email-header">
-              <span class="email-recipient">To: ${email.guest_email}</span>
-              <span class="email-time">${emailTime}</span>
-            </div>
-            <div class="email-body">
-              <p class="email-subject"><strong>Subject:</strong> ${email.subject}</p>
-              <p class="email-content">${email.content || "No content available."}</p>
-            </div>
-          `;
-
-          outboxContainer.appendChild(emailCard);
-        });
+      if (data.data.length === 0) {
+        outboxList.innerHTML = "<p>No emails found in the outbox.</p>";
       } else {
-        outboxContainer.innerHTML = `<p class="no-emails-message">No emails found for this podcast.</p>`;
+        data.data.forEach((email) => {
+          const emailItem = document.createElement("div");
+          emailItem.className = "email-item";
+          emailItem.innerHTML = `
+            <div class="email-header">${email.subject}</div>
+            <div class="email-meta">
+              <strong>To:</strong> ${email.guest_email} 
+              <span style="margin-left: 1rem;"><strong>Sent:</strong> ${email.timestamp}</span>
+            </div>
+            <div class="email-content">${email.content}</div>
+          `;
+          outboxList.appendChild(emailItem);
+        });
       }
     } else {
-      console.error("Failed to fetch outbox:", data.error);
+      outboxList.innerHTML = `<p>Error: ${data.error}</p>`;
     }
   } catch (error) {
     console.error("Error fetching outbox:", error);
+    outboxList.innerHTML = "<p>Error loading outbox emails.</p>";
+  }
+}
+
+// Function to toggle email content visibility
+function toggleEmailContent(index) {
+  const preview = document.getElementById(`email-preview-${index}`);
+  const fullContent = document.getElementById(`email-full-content-${index}`);
+  const button = document.querySelector(`.show-email-btn[data-index="${index}"]`);
+
+  if (fullContent.classList.contains("hidden")) {
+    fullContent.classList.remove("hidden");
+    preview.classList.add("hidden");
+    button.textContent = "Hide Email";
+  } else {
+    fullContent.classList.add("hidden");
+    preview.classList.remove("hidden");
+    button.textContent = "Read Email";
   }
 }
 
@@ -105,3 +145,31 @@ export function initEmailConfigFunctions() {
 
 // Call this function after the DOM is fully loaded
 document.addEventListener("DOMContentLoaded", initEmailConfigFunctions);
+
+async function fetchTriggerConfig(podcastId, triggerName) {
+  const triggerInfoBox = document.getElementById("trigger-info-box");
+  triggerInfoBox.textContent = "Loading current configuration..."; // Show loading text
+
+  try {
+    const response = await fetch(`/get-trigger-config?podcastId=${podcastId}&triggerName=${triggerName}`);
+    const data = await response.json();
+
+    if (data.success && data.data) {
+      const timeCheck = data.data.time_check;
+      const status = data.data.status;
+      triggerInfoBox.textContent = `Current Time: ${timeCheck} hours, Status: ${status}`;
+    } else {
+      triggerInfoBox.textContent = "No custom configuration found. Using default settings.";
+    }
+  } catch (error) {
+    console.error("Error fetching trigger configuration:", error);
+    triggerInfoBox.textContent = "Error loading configuration.";
+  }
+}
+
+// Attach event listener to the trigger dropdown
+document.getElementById("trigger-select").addEventListener("change", (event) => {
+  const podcastId = document.getElementById("email-config-popup").getAttribute("data-podcast-id");
+  const triggerName = event.target.value;
+  fetchTriggerConfig(podcastId, triggerName);
+});
