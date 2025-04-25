@@ -354,3 +354,60 @@ def get_osint_info(guest_name: str) -> str:
     )
 
     return response.choices[0].message.content.strip()
+
+def create_podcast_scripts_paid(osint_info: str, guest_name: str, transcript: str = "") -> str:
+    from openai import OpenAI
+    client = OpenAI()
+
+    prompt = f"""
+You are a professional podcast scriptwriter.
+
+Write a compelling **podcast intro and outro** based on the following episode transcript.
+
+Start with the **topics and tone** from the transcript, then enrich it with background details about the guest ({guest_name}).
+
+📌 Transcript:
+{transcript}
+
+📌 Guest background info:
+{osint_info}
+
+The intro should briefly tease the main topic(s) of the episode, using an engaging tone.
+The outro should reflect on the discussion and invite the listener to tune in again.
+"""
+
+    response = client.chat.completions.create(
+        model="gpt-4",
+        messages=[{"role": "user", "content": prompt}]
+    )
+
+    return response.choices[0].message.content.strip()
+
+def text_to_speech_with_elevenlabs(script: str, voice_id: str = "TX3LPaxmHKxFdv7VOQHJ") -> bytes:
+    import requests
+    import os
+    from io import BytesIO
+
+    api_key = os.getenv("ELEVENLABS_API_KEY")
+    url = f"https://api.elevenlabs.io/v1/text-to-speech/{voice_id}"
+
+    headers = {
+        "xi-api-key": api_key,
+        "Content-Type": "application/json"
+    }
+
+    payload = {
+        "text": script,
+        "voice_settings": {
+            "stability": 0.5,
+            "similarity_boost": 0.8
+        }
+    }
+
+    response = requests.post(url, headers=headers, json=payload)
+
+    if response.status_code == 200:
+        return response.content  # 🧠 Raw MP3 bytes
+    else:
+        raise RuntimeError(f"ElevenLabs error {response.status_code}: {response.text}")
+
