@@ -87,6 +87,15 @@ function setupAddToCartButtons() {
       }, 2000);
     });
   });
+
+  // Route "Purchase History" button to Account page
+  const purchaseHistoryButton = document.querySelector(".view-history");
+  if (purchaseHistoryButton) {
+    purchaseHistoryButton.addEventListener("click", () => {
+      localStorage.setItem("activeAccountSection", "settings-purchases");
+      window.location.href = "/account";
+    });
+  }
 }
 
 function setupCart() {

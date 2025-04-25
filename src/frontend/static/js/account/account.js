@@ -3,36 +3,36 @@ import {
   updateProfile,
   updatePassword,
   deleteUserAccount,
-  subscribeUser,
-} from "/static/requests/accountRequests.js"
+  subscribeUser
+} from "/static/requests/accountRequests.js";
 import { showNotification } from "../components/notifications.js";
 
 document.addEventListener("DOMContentLoaded", () => {
-    // Hides the edit buttons when in non-edit mode
-    const formActions = document.querySelector(".form-actions");
-    if (formActions) {
-      formActions.style.display = 'none'; 
-    }
-    const uploadBtn = document.getElementById("upload-pic");
-    if (uploadBtn) {
-      uploadBtn.style.display = 'none'; 
-    }
-    const profilePictureOverlay = document.querySelector(".profile-pic-overlay");
-    if (profilePictureOverlay) {
-      profilePictureOverlay.style.display = 'none'; 
-    }
+  // Hides the edit buttons when in non-edit mode
+  const formActions = document.querySelector(".form-actions");
+  if (formActions) {
+    formActions.style.display = "none";
+  }
+  const uploadBtn = document.getElementById("upload-pic");
+  if (uploadBtn) {
+    uploadBtn.style.display = "none";
+  }
+  const profilePictureOverlay = document.querySelector(".profile-pic-overlay");
+  if (profilePictureOverlay) {
+    profilePictureOverlay.style.display = "none";
+  }
 
-    const requiredFields = document.querySelectorAll(".required-profile");
-    requiredFields.forEach(field => {
-      field.style.display = 'none';
-    });
-    
-    // Hide the edit profile button in view mode
-    const editProfileBtn = document.getElementById("edit-profile-btn");
-    if (editProfileBtn) {
-      editProfileBtn.style.display = 'none';
-    }
-    
+  const requiredFields = document.querySelectorAll(".required-profile");
+  requiredFields.forEach((field) => {
+    field.style.display = "none";
+  });
+
+  // Hide the edit profile button in view mode
+  const editProfileBtn = document.getElementById("edit-profile-btn");
+  if (editProfileBtn) {
+    editProfileBtn.style.display = "none";
+  }
+
   // Initialize profile data
   fetchProfile()
     .then((data) => {
@@ -52,9 +52,12 @@ document.addEventListener("DOMContentLoaded", () => {
         document.getElementById("phone").value = data.phone || "";
 
         // Update the display values
-        document.getElementById("display-full-name").textContent = data.full_name || "Not provided";
-        document.getElementById("display-email").textContent = data.email || "Not provided";
-        document.getElementById("display-phone").textContent = data.phone || "Not provided";
+        document.getElementById("display-full-name").textContent =
+          data.full_name || "Not provided";
+        document.getElementById("display-email").textContent =
+          data.email || "Not provided";
+        document.getElementById("display-phone").textContent =
+          data.phone || "Not provided";
       } else {
         console.error("Error fetching profile data");
       }
@@ -67,131 +70,135 @@ document.addEventListener("DOMContentLoaded", () => {
   // Cancel edit button (switches back to view mode)
   const cancelEditBtn = document.getElementById("cancel-edit-btn");
   if (cancelEditBtn) {
-    cancelEditBtn.addEventListener("click", function() {
+    cancelEditBtn.addEventListener("click", function () {
       toggleProfileMode(false);
     });
   }
 
   // Handle the "Edit Profile" button in the profile view
   if (editProfileBtn) {
-    editProfileBtn.addEventListener("click", function() {
+    editProfileBtn.addEventListener("click", function () {
       // Switch to edit mode
       toggleProfileEditMode(true);
     });
   }
 
   // Toggle submenu visibility
-  document.querySelectorAll('.sidebar-item').forEach((item) => {
+  document.querySelectorAll(".sidebar-item").forEach((item) => {
     item.addEventListener("click", function () {
-      const submenu = this.nextElementSibling
-      const allSubmenus = document.querySelectorAll(".submenu")
-      const allToggleItems = document.querySelectorAll('.sidebar-item[data-toggle="submenu"]')
-      document.querySelectorAll(".sidebar-item").forEach(sidebarItem => {
-        sidebarItem.classList.remove('active');
+      const submenu = this.nextElementSibling;
+      const allSubmenus = document.querySelectorAll(".submenu");
+      const allToggleItems = document.querySelectorAll(
+        '.sidebar-item[data-toggle="submenu"]'
+      );
+      document.querySelectorAll(".sidebar-item").forEach((sidebarItem) => {
+        sidebarItem.classList.remove("active");
       });
       // Toggle active state for the clicked item
-      this.classList.toggle("active")
+      this.classList.toggle("active");
 
       // If submenu is already visible, hide it
       if (submenu.style.display === "block") {
-        submenu.style.display = "none"
-        return
+        submenu.style.display = "none";
+        return;
       }
 
       // Hide all submenus
       allSubmenus.forEach((menu) => {
-        menu.style.display = "none"
-      })
+        menu.style.display = "none";
+      });
 
       // Remove active class from all toggle items
       allToggleItems.forEach((toggleItem) => {
         if (toggleItem !== this) {
-          toggleItem.classList.remove("active")
+          toggleItem.classList.remove("active");
         }
-      })
+      });
 
       // Show the clicked submenu
       if (submenu && submenu.classList.contains("submenu")) {
-        submenu.style.display = "block"
+        submenu.style.display = "block";
       }
-      
-    })
-  })
+    });
+  });
 
   // Handle sidebar item clicks
-  document.querySelectorAll('.sidebar-item:not([data-toggle="submenu"])').forEach((item) => {
-    item.addEventListener("click", function () {
-      // Remove active class from all sidebar items
-      document.querySelectorAll(".sidebar-item").forEach((sidebarItem) => {
-        sidebarItem.classList.remove("active")
-      })
+  document
+    .querySelectorAll('.sidebar-item:not([data-toggle="submenu"])')
+    .forEach((item) => {
+      item.addEventListener("click", function () {
+        // Remove active class from all sidebar items
+        document.querySelectorAll(".sidebar-item").forEach((sidebarItem) => {
+          sidebarItem.classList.remove("active");
+        });
 
-      // Add active class to clicked item
-      this.classList.add("active")
-      // Hide all sections
-      document.querySelectorAll(".settings-section").forEach((section) => {
-        section.classList.remove("active")
-      })
+        // Add active class to clicked item
+        this.classList.add("active");
+        // Hide all sections
+        document.querySelectorAll(".settings-section").forEach((section) => {
+          section.classList.remove("active");
+        });
 
-      // Show the selected section
-      const targetId = this.getAttribute("data-target")
-      const targetSection = document.getElementById(targetId)
-      if (targetSection) {
-        targetSection.classList.add("active")
-      }
-    })
-  })
+        // Show the selected section
+        const targetId = this.getAttribute("data-target");
+        const targetSection = document.getElementById(targetId);
+        if (targetSection) {
+          targetSection.classList.add("active");
+        }
+      });
+    });
 
   // Handle submenu item clicks
   document.querySelectorAll(".submenu-item").forEach((item) => {
     item.addEventListener("click", function () {
       // Remove active class from all submenu items
       document.querySelectorAll(".submenu-item").forEach((submenuItem) => {
-        submenuItem.classList.remove("active")
-      })
+        submenuItem.classList.remove("active");
+      });
 
       // Add active class to clicked item
-      this.classList.add("active")
+      this.classList.add("active");
 
       // Hide all sections
       document.querySelectorAll(".settings-section").forEach((section) => {
-        section.classList.remove("active")
-      })
+        section.classList.remove("active");
+      });
 
       // Show the selected section
-      const targetId = this.getAttribute("data-target")
-      const targetSection = document.getElementById(targetId)
+      const targetId = this.getAttribute("data-target");
+      const targetSection = document.getElementById(targetId);
       if (targetSection) {
-        targetSection.classList.add("active")
+        targetSection.classList.add("active");
       }
-    })
-  })
+    });
+  });
 
   // Toggle password visibility
   document.querySelectorAll(".toggle-password").forEach((button) => {
     button.addEventListener("click", function () {
-      const input = this.previousElementSibling
-      const type = input.getAttribute("type") === "password" ? "text" : "password"
-      input.setAttribute("type", type)
+      const input = this.previousElementSibling;
+      const type =
+        input.getAttribute("type") === "password" ? "text" : "password";
+      input.setAttribute("type", type);
 
       // Toggle icon (simplified for this example)
       this.innerHTML =
         type === "password"
           ? '<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"></path><circle cx="12" cy="12" r="3"></circle></svg>'
-          : '<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9.88 9.88a3 3 0 1 0 4.24 4.24"></path><path d="M10.73 5.08A10.43 10.43 0 0 1 12 5c7 0 10 7 10 7a13.16 13.16 0 0 1-1.67 2.68"></path><path d="M6.61 6.61A13.526 13.526 0 0 0 2 12s3 7 10 7a9.74 9.74 0 0 0 5.39-1.61"></path><line x1="2" x2="22" y1="2" y2="22"></line></svg>'
-    })
-  })
+          : '<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9.88 9.88a3 3 0 1 0 4.24 4.24"></path><path d="M10.73 5.08A10.43 10.43 0 0 1 12 5c7 0 10 7 10 7a13.16 13.16 0 0 1-1.67 2.68"></path><path d="M6.61 6.61A13.526 13.526 0 0 0 2 12s3 7 10 7a9.74 9.74 0 0 0 5.39-1.61"></path><line x1="2" x2="22" y1="2" y2="22"></line></svg>';
+    });
+  });
 
   // Password strength meter
-  const newPasswordInput = document.getElementById("new-password")
+  const newPasswordInput = document.getElementById("new-password");
   if (newPasswordInput) {
     newPasswordInput.addEventListener("input", function () {
-      updatePasswordStrength(this.value)
-    })
+      updatePasswordStrength(this.value);
+    });
   }
 
   // Profile form submission
-  const profileForm = document.getElementById("profile-form")
+  const profileForm = document.getElementById("profile-form");
   if (profileForm) {
     profileForm.addEventListener("submit", (event) => {
       event.preventDefault();
@@ -214,17 +221,24 @@ document.addEventListener("DOMContentLoaded", () => {
       const profileData = {
         full_name: fullName,
         email: email,
-        phone: phone || null, // Allow phone to be null if not provided
+        phone: phone || null // Allow phone to be null if not provided
       };
 
       updateProfile(profileData)
         .then((data) => {
           if (data.message) {
-            showNotification("Success", "Profile updated successfully!", "success");
+            showNotification(
+              "Success",
+              "Profile updated successfully!",
+              "success"
+            );
             // Update the display values in the read-only view
-            document.getElementById("display-full-name").textContent = fullName || "Not provided";
-            document.getElementById("display-email").textContent = email || "Not provided";
-            document.getElementById("display-phone").textContent = phone || "Not provided";
+            document.getElementById("display-full-name").textContent =
+              fullName || "Not provided";
+            document.getElementById("display-email").textContent =
+              email || "Not provided";
+            document.getElementById("display-phone").textContent =
+              phone || "Not provided";
             // Switch back to view mode
             toggleProfileMode(false);
           } else {
@@ -233,7 +247,11 @@ document.addEventListener("DOMContentLoaded", () => {
         })
         .catch((error) => {
           console.error("Error:", error);
-          showNotification("Error", "An error occurred while updating profile", "error");
+          showNotification(
+            "Error",
+            "An error occurred while updating profile",
+            "error"
+          );
         });
     });
   }
@@ -246,68 +264,75 @@ document.addEventListener("DOMContentLoaded", () => {
     const uploadButton = document.getElementById("upload-pic");
     const profilePicOverlay = document.querySelector(".profile-pic-overlay");
     const formFields = profileForm.querySelectorAll("input, textarea"); // Get form fields from the form itself
-    
+
     // Toggle between view and edit modes
     if (isEditMode) {
       // Switch to edit mode - show form and hide info card
-      profileForm.style.display = 'block';
-      profileInfoCard.style.display = 'none';
-      profileActions.style.display = 'none';
-      
+      profileForm.style.display = "block";
+      profileInfoCard.style.display = "none";
+      profileActions.style.display = "none";
+
       // IMPORTANT - Enable all form fields for editing (removing disabled attribute)
-      formFields.forEach(field => {
+      formFields.forEach((field) => {
         field.disabled = false; // Remove disabled attribute
       });
-      
+
       // Show upload button and profile pic overlay
-      if (uploadButton) uploadButton.style.display = 'inline-block';
-      if (profilePicOverlay) profilePicOverlay.style.display = 'flex';
+      if (uploadButton) uploadButton.style.display = "inline-block";
+      if (profilePicOverlay) profilePicOverlay.style.display = "flex";
     } else {
       // Switch back to view mode code remains the same
-      profileForm.style.display = 'none';
-      profileInfoCard.style.display = 'block';
-      profileActions.style.display = 'flex';
-      
+      profileForm.style.display = "none";
+      profileInfoCard.style.display = "block";
+      profileActions.style.display = "flex";
+
       // Update display values before switching back to view mode
       const fullNameInput = document.getElementById("full-name");
       const emailInput = document.getElementById("email");
       const phoneInput = document.getElementById("phone");
-      
+
       if (fullNameInput && document.getElementById("display-full-name")) {
-        document.getElementById("display-full-name").textContent = fullNameInput.value || "Not provided";
+        document.getElementById("display-full-name").textContent =
+          fullNameInput.value || "Not provided";
       }
-      
+
       if (emailInput && document.getElementById("display-email")) {
-        document.getElementById("display-email").textContent = emailInput.value || "Not provided";
+        document.getElementById("display-email").textContent =
+          emailInput.value || "Not provided";
       }
-      
+
       if (phoneInput && document.getElementById("display-phone")) {
-        document.getElementById("display-phone").textContent = phoneInput.value || "Not provided";
+        document.getElementById("display-phone").textContent =
+          phoneInput.value || "Not provided";
       }
-      
+
       // Hide upload button and profile pic overlay
-      if (uploadButton) uploadButton.style.display = 'none';
-      if (profilePicOverlay) profilePicOverlay.style.display = 'none';
+      if (uploadButton) uploadButton.style.display = "none";
+      if (profilePicOverlay) profilePicOverlay.style.display = "none";
     }
-    
+
     // Show or hide required indicators based on mode
     const requiredFields = profileSection.querySelectorAll(".required-profile");
-    requiredFields.forEach(field => {
-      field.style.display = isEditMode ? 'inline' : 'none';
+    requiredFields.forEach((field) => {
+      field.style.display = isEditMode ? "inline" : "none";
     });
-  }
-  
+  };
+
   // Handle "Profile" button (non-edit mode)
-  const profileButton = document.querySelector('.sidebar-item[data-target="profile-section"]');
+  const profileButton = document.querySelector(
+    '.sidebar-item[data-target="profile-section"]'
+  );
   if (profileButton) {
     profileButton.addEventListener("click", function () {
       // Switch to non-edit mode
       toggleProfileEditMode(false);
     });
   }
-  
+
   // Handle "Edit Profile" submenu item (editable mode)
-  const editProfileButton = document.querySelector('.submenu-item[data-target="profile-section"]');
+  const editProfileButton = document.querySelector(
+    '.submenu-item[data-target="profile-section"]'
+  );
   if (editProfileButton) {
     editProfileButton.addEventListener("click", function () {
       // Make sure the profile section is active
@@ -318,12 +343,12 @@ document.addEventListener("DOMContentLoaded", () => {
       if (profileSection) {
         profileSection.classList.add("active");
       }
-      
+
       // Switch to edit mode
       toggleProfileEditMode(true);
-      
+
       // Mark this submenu item as active
-      document.querySelectorAll(".submenu-item").forEach(item => {
+      document.querySelectorAll(".submenu-item").forEach((item) => {
         item.classList.remove("active");
       });
       this.classList.add("active");
@@ -331,194 +356,284 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   // Password form submission
-  const passwordForm = document.querySelector(".password-form")
+  const passwordForm = document.querySelector(".password-form");
   if (passwordForm) {
     passwordForm.addEventListener("submit", (event) => {
-      event.preventDefault()
+      event.preventDefault();
 
-      const currentPassword = document.getElementById("password").value
-      const newPassword = document.getElementById("new-password").value
-      const confirmPassword = document.getElementById("confirm-password").value
+      const currentPassword = document.getElementById("password").value;
+      const newPassword = document.getElementById("new-password").value;
+      const confirmPassword = document.getElementById("confirm-password").value;
 
       // Validate password fields
       if (!currentPassword) {
-        showNotification("Error", "Current password is required", "error")
-        return
+        showNotification("Error", "Current password is required", "error");
+        return;
       }
 
       if (!newPassword) {
-        showNotification("Error", "New password is required", "error")
-        return
+        showNotification("Error", "New password is required", "error");
+        return;
       }
 
       if (newPassword !== confirmPassword) {
-        showNotification("Error", "New passwords do not match", "error")
-        return
+        showNotification("Error", "New passwords do not match", "error");
+        return;
       }
 
       // Check password strength
-      const strength = calculatePasswordStrength(newPassword)
+      const strength = calculatePasswordStrength(newPassword);
       if (strength < 2) {
-        showNotification("Error", "Password is too weak. Please choose a stronger password.", "error")
-        return
+        showNotification(
+          "Error",
+          "Password is too weak. Please choose a stronger password.",
+          "error"
+        );
+        return;
       }
 
       const passwordData = {
         current_password: currentPassword,
-        new_password: newPassword,
-      }
+        new_password: newPassword
+      };
 
       updatePassword(passwordData)
         .then((data) => {
           if (data.message) {
-            showNotification("Success", "Password updated successfully!", "success")
-            passwordForm.reset()
+            showNotification(
+              "Success",
+              "Password updated successfully!",
+              "success"
+            );
+            passwordForm.reset();
           } else {
-            showNotification("Error", "Failed to update password", "error")
+            showNotification("Error", "Failed to update password", "error");
           }
         })
         .catch((error) => {
-          console.error("Error:", error)
-          showNotification("Error", "An error occurred while updating password", "error")
-        })
-    })
+          console.error("Error:", error);
+          showNotification(
+            "Error",
+            "An error occurred while updating password",
+            "error"
+          );
+        });
+    });
   }
 
   // Delete account form submission
-  const deleteForm = document.querySelector(".delete-form")
+  const deleteForm = document.querySelector(".delete-form");
   if (deleteForm) {
     deleteForm.addEventListener("submit", (event) => {
-      event.preventDefault()
+      event.preventDefault();
 
-      const confirmText = document.getElementById("delete-confirm").value
-      const password = document.getElementById("delete-password").value
-      const email = document.getElementById("delete-email").value
+      const confirmText = document.getElementById("delete-confirm").value;
+      const password = document.getElementById("delete-password").value;
+      const email = document.getElementById("delete-email").value;
 
       if (confirmText !== "DELETE") {
-        showNotification("Error", "Please type DELETE to confirm account deletion", "error")
-        return
+        showNotification(
+          "Error",
+          "Please type DELETE to confirm account deletion",
+          "error"
+        );
+        return;
       }
 
       if (!password) {
-        showNotification("Error", "Password is required to delete your account", "error")
-        return
+        showNotification(
+          "Error",
+          "Password is required to delete your account",
+          "error"
+        );
+        return;
       }
 
       if (!email) {
-        showNotification("Error", "Email is required to delete your account", "error")
-        return
+        showNotification(
+          "Error",
+          "Email is required to delete your account",
+          "error"
+        );
+        return;
       }
 
       const confirmData = {
         deleteEmail: email,
         deletePassword: password,
-        deleteConfirm: confirmText,
-      }
+        deleteConfirm: confirmText
+      };
 
       deleteUserAccount(confirmData)
         .then((data) => {
           if (data.message) {
-            showNotification("Success", "Account deleted successfully", "success")
+            showNotification(
+              "Success",
+              "Account deleted successfully",
+              "success"
+            );
             // Redirect to logout or home page after successful deletion
             if (data.redirect) {
               setTimeout(() => {
-                window.location.href = data.redirect
-              }, 2000)
+                window.location.href = data.redirect;
+              }, 2000);
             } else {
               setTimeout(() => {
-                window.location.href = "/logout"
-              }, 2000)
+                window.location.href = "/logout";
+              }, 2000);
             }
           } else {
-            showNotification("Error", "Failed to delete account", "error")
+            showNotification("Error", "Failed to delete account", "error");
           }
         })
         .catch((error) => {
-          console.error("Error:", error)
-          showNotification("Error", "An error occurred while deleting account", "error")
-        })
-    })
+          console.error("Error:", error);
+          showNotification(
+            "Error",
+            "An error occurred while deleting account",
+            "error"
+          );
+        });
+    });
   }
 
   // Subscribe to newsletter
-  const subscribeForm = document.querySelector(".subscription-form")
+  const subscribeForm = document.querySelector(".subscription-form");
   if (subscribeForm) {
     subscribeForm.addEventListener("submit", (event) => {
-      event.preventDefault()
+      event.preventDefault();
 
-      const email = document.getElementById("subscription-email").value
+      const email = document.getElementById("subscription-email").value;
 
       if (!email) {
-        showNotification("Error", "Email is required to subscribe", "error")
-        return
+        showNotification("Error", "Email is required to subscribe", "error");
+        return;
       }
 
       subscribeUser(email)
         .then((data) => {
           if (data.message) {
-            showNotification("Success", "Successfully subscribed to newsletter!", "success")
+            showNotification(
+              "Success",
+              "Successfully subscribed to newsletter!",
+              "success"
+            );
           } else {
-            showNotification("Error", "Failed to subscribe", "error")
+            showNotification("Error", "Failed to subscribe", "error");
           }
         })
         .catch((error) => {
-          console.error("Error:", error)
-          showNotification("Error", "An error occurred while subscribing", "error")
-        })
-    })
+          console.error("Error:", error);
+          showNotification(
+            "Error",
+            "An error occurred while subscribing",
+            "error"
+          );
+        });
+    });
   }
 
   // Profile picture upload
-  const profilePicOverlay = document.querySelector(".profile-pic-overlay")
-  const uploadButton = document.getElementById("upload-pic")
+  const profilePicOverlay = document.querySelector(".profile-pic-overlay");
+  const uploadButton = document.getElementById("upload-pic");
 
   if (profilePicOverlay) {
-    profilePicOverlay.addEventListener("click", triggerFileUpload)
+    profilePicOverlay.addEventListener("click", triggerFileUpload);
   }
 
   if (uploadButton) {
-    uploadButton.addEventListener("click", triggerFileUpload)
+    uploadButton.addEventListener("click", triggerFileUpload);
   }
 
   // Initialize the first section as active
-  const firstSection = document.querySelector(".settings-section")
+  const firstSection = document.querySelector(".settings-section");
   if (firstSection) {
-    firstSection.classList.add("active")
+    firstSection.classList.add("active");
   }
 
-  const firstSidebarItem = document.querySelector('.sidebar-item:not([data-toggle="submenu"])')
+  const firstSidebarItem = document.querySelector(
+    '.sidebar-item:not([data-toggle="submenu"])'
+  );
   if (firstSidebarItem) {
-    firstSidebarItem.classList.add("active")
+    firstSidebarItem.classList.add("active");
   }
 
   // Calculate password strength
   function calculatePasswordStrength(password) {
-    let strength = 0
+    let strength = 0;
 
-    if (password.length >= 8) strength++
-    if (password.match(/[A-Z]/)) strength++
-    if (password.match(/[0-9]/)) strength++
-    if (password.match(/[^A-Za-z0-9]/)) strength++
+    if (password.length >= 8) strength++;
+    if (password.match(/[A-Z]/)) strength++;
+    if (password.match(/[0-9]/)) strength++;
+    if (password.match(/[^A-Za-z0-9]/)) strength++;
 
-    return strength
+    return strength;
   }
 
   // Add this function to fetch and update credits
   fetchStoreCredits();
 
   // Load purchases when the purchases section is opened
-  const purchasesNavItem = document.querySelector('li[data-target="settings-purchases"]');
+  const purchasesNavItem = document.querySelector(
+    'li[data-target="settings-purchases"]'
+  );
   if (purchasesNavItem) {
-    purchasesNavItem.addEventListener('click', () => {
+    purchasesNavItem.addEventListener("click", () => {
       fetchPurchaseHistory();
     });
   }
-  
+
   // Also add this to check if we're already on the purchases page and need to load data
-  if (document.getElementById('settings-purchases') && 
-      document.getElementById('settings-purchases').classList.contains('active')) {
+  if (
+    document.getElementById("settings-purchases") &&
+    document.getElementById("settings-purchases").classList.contains("active")
+  ) {
     fetchPurchaseHistory();
   }
+
+  // Function to handle section activation
+  function activateSection(sectionId) {
+    // Hide all sections and remove active class from all sidebar items
+    document
+      .querySelectorAll(".settings-section")
+      .forEach((section) => section.classList.remove("active"));
+    document
+      .querySelectorAll(".sidebar-item")
+      .forEach((item) => item.classList.remove("active"));
+
+    // Show the target section and mark the corresponding sidebar item as active
+    const targetSection = document.getElementById(sectionId);
+    const targetSidebarItem = document.querySelector(
+      `.sidebar-item[data-target="${sectionId}"]`
+    );
+
+    if (targetSection && targetSidebarItem) {
+      targetSection.classList.add("active");
+      targetSidebarItem.classList.add("active");
+
+      // Fetch purchase history if the "Purchases" section is activated
+      if (sectionId === "settings-purchases") {
+        fetchPurchaseHistory();
+      }
+    }
+  }
+
+  // Automatically open the section specified in localStorage
+  const activeSection = localStorage.getItem("activeAccountSection");
+  if (activeSection) {
+    activateSection(activeSection);
+    localStorage.removeItem("activeAccountSection");
+  }
+
+  // Handle sidebar item clicks
+  document
+    .querySelectorAll('.sidebar-item:not([data-toggle="submenu"])')
+    .forEach((item) => {
+      item.addEventListener("click", function () {
+        const targetId = this.getAttribute("data-target");
+        activateSection(targetId);
+      });
+    });
 });
 
 // Function to fetch user credits
@@ -526,11 +641,11 @@ async function fetchStoreCredits() {
   try {
     const creditsElement = document.getElementById("available-credits");
     if (!creditsElement) return; // Skip if element doesn't exist
-    
-    const response = await fetch('/api/credits', {
-      credentials: 'same-origin' // Include cookies for auth
+
+    const response = await fetch("/api/credits", {
+      credentials: "same-origin" // Include cookies for auth
     });
-    
+
     if (!response.ok) {
       console.warn("Failed to fetch credits:", response.status);
       return;
@@ -550,13 +665,13 @@ function toggleProfileMode(isEditMode) {
   const profileForm = document.getElementById("profile-form");
   const profilePicOverlay = document.querySelector(".profile-pic-overlay");
   const uploadButton = document.getElementById("upload-pic");
-  
+
   if (isEditMode) {
     // Switch to edit mode
     profileInfoCard.style.display = "none";
     profileActions.style.display = "none"; // Hide the Edit Profile button
     profileForm.style.display = "block";
-    
+
     // Show photo editing elements
     if (profilePicOverlay) profilePicOverlay.style.display = "flex";
     if (uploadButton) uploadButton.style.display = "inline-block";
@@ -565,7 +680,7 @@ function toggleProfileMode(isEditMode) {
     profileInfoCard.style.display = "block";
     profileActions.style.display = "none"; // Keep the Edit Profile button hidden
     profileForm.style.display = "none";
-    
+
     // Hide photo editing elements
     if (profilePicOverlay) profilePicOverlay.style.display = "none";
     if (uploadButton) uploadButton.style.display = "none";
@@ -574,31 +689,31 @@ function toggleProfileMode(isEditMode) {
 
 // Helper functions
 function updatePasswordStrength(password) {
-  let strength = 0
-  const segments = document.querySelectorAll(".strength-segment")
-  const strengthText = document.querySelector(".strength-text")
+  let strength = 0;
+  const segments = document.querySelectorAll(".strength-segment");
+  const strengthText = document.querySelector(".strength-text");
 
-  if (password.length >= 8) strength++
-  if (password.match(/[A-Z]/)) strength++
-  if (password.match(/[0-9]/)) strength++
-  if (password.match(/[^A-Za-z0-9]/)) strength++
+  if (password.length >= 8) strength++;
+  if (password.match(/[A-Z]/)) strength++;
+  if (password.match(/[0-9]/)) strength++;
+  if (password.match(/[^A-Za-z0-9]/)) strength++;
 
   // Reset all segments
   segments.forEach((segment) => {
-    segment.style.backgroundColor = "var(--border)"
-  })
+    segment.style.backgroundColor = "var(--border)";
+  });
 
   // Update segments based on strength
   for (let i = 0; i < strength; i++) {
     if (segments[i]) {
       if (strength === 1) {
-        segments[i].style.backgroundColor = "var(--destructive)"
+        segments[i].style.backgroundColor = "var(--destructive)";
       } else if (strength === 2) {
-        segments[i].style.backgroundColor = "var(--warning)"
+        segments[i].style.backgroundColor = "var(--warning)";
       } else if (strength === 3) {
-        segments[i].style.backgroundColor = "var(--primary)"
+        segments[i].style.backgroundColor = "var(--primary)";
       } else if (strength === 4) {
-        segments[i].style.backgroundColor = "var(--success)"
+        segments[i].style.backgroundColor = "var(--success)";
       }
     }
   }
@@ -606,20 +721,20 @@ function updatePasswordStrength(password) {
   // Update strength text
   if (strengthText) {
     if (strength === 0) {
-      strengthText.textContent = "Too weak"
-      strengthText.style.color = "var(--destructive)"
+      strengthText.textContent = "Too weak";
+      strengthText.style.color = "var(--destructive)";
     } else if (strength === 1) {
-      strengthText.textContent = "Weak"
-      strengthText.style.color = "var(--destructive)"
+      strengthText.textContent = "Weak";
+      strengthText.style.color = "var(--destructive)";
     } else if (strength === 2) {
-      strengthText.textContent = "Fair"
-      strengthText.style.color = "var(--warning)"
+      strengthText.textContent = "Fair";
+      strengthText.style.color = "var(--warning)";
     } else if (strength === 3) {
-      strengthText.textContent = "Good"
-      strengthText.style.color = "var(--primary)"
+      strengthText.textContent = "Good";
+      strengthText.style.color = "var(--primary)";
     } else {
-      strengthText.textContent = "Strong"
-      strengthText.style.color = "var(--success)"
+      strengthText.textContent = "Strong";
+      strengthText.style.color = "var(--success)";
     }
   }
 }
@@ -630,7 +745,7 @@ function uploadProfilePicture(file) {
 
   fetch("/user/upload_profile_picture", {
     method: "POST",
-    body: formData,
+    body: formData
   })
     .then((response) => response.json())
     .then((data) => {
@@ -638,14 +753,26 @@ function uploadProfilePicture(file) {
         // Update the profile picture on the page
         const profilePic = document.getElementById("profile-pic");
         profilePic.src = data.url;
-        showNotification("Success", "Profile picture updated successfully!", "success");
+        showNotification(
+          "Success",
+          "Profile picture updated successfully!",
+          "success"
+        );
       } else {
-        showNotification("Error", data.error || "Failed to upload profile picture", "error");
+        showNotification(
+          "Error",
+          data.error || "Failed to upload profile picture",
+          "error"
+        );
       }
     })
     .catch((error) => {
       console.error("Error uploading profile picture:", error);
-      showNotification("Error", "An error occurred while uploading profile picture", "error");
+      showNotification(
+        "Error",
+        "An error occurred while uploading profile picture",
+        "error"
+      );
     });
 }
 
@@ -699,21 +826,22 @@ if (profilePicContainer) {
 async function fetchPurchaseHistory() {
   try {
     console.log("Fetching purchase history...");
-    const response = await fetch('/api/purchases/history', {
-      credentials: 'same-origin' // Include cookies for auth
+    const response = await fetch("/api/purchases/history", {
+      credentials: "same-origin" // Include cookies for auth
     });
-    
+
     if (!response.ok) {
       throw new Error(`Failed to fetch purchase history: ${response.status}`);
     }
-    
+
     const data = await response.json();
     console.log("Received purchase data:", data);
     displayPurchaseHistory(data.purchases || []);
-    
+
     // Also update available credits if that data is included
     if (data.availableCredits !== undefined) {
-      document.getElementById('available-credits').textContent = data.availableCredits;
+      document.getElementById("available-credits").textContent =
+        data.availableCredits;
     }
   } catch (err) {
     console.error("Error fetching purchase history:", err);
@@ -722,57 +850,68 @@ async function fetchPurchaseHistory() {
 }
 
 function displayPurchaseHistory(purchases) {
-  const historyContainer = document.getElementById('billing-history-rows');
-  const noHistoryMessage = document.getElementById('no-purchases-message');
-  
+  const historyContainer = document.getElementById("billing-history-rows");
+  const noHistoryMessage = document.getElementById("no-purchases-message");
+
   if (!historyContainer) return;
-  
+
   // Clear loading message
-  historyContainer.innerHTML = '';
-  
+  historyContainer.innerHTML = "";
+
   if (!purchases || purchases.length === 0) {
     // Show no history message
-    noHistoryMessage.style.display = 'block';
+    noHistoryMessage.style.display = "block";
     return;
   }
-  
+
   // Hide no history message if we have purchases
-  noHistoryMessage.style.display = 'none';
-  
+  noHistoryMessage.style.display = "none";
+
   // Sort purchases by date, newest first
   purchases.sort((a, b) => new Date(b.date) - new Date(a.date));
-  
+
   // Add each purchase to the table
-  purchases.forEach(purchase => {
+  purchases.forEach((purchase) => {
     const date = new Date(purchase.date);
     // Include both date and time in the formatted date
-    const formattedDate = date.toLocaleDateString('en-US', { 
-      year: 'numeric', 
-      month: 'short', 
-      day: 'numeric' 
-    }) + ' ' + date.toLocaleTimeString('en-US', {
-      hour: '2-digit',
-      minute: '2-digit'
-    });
-    
+    const formattedDate =
+      date.toLocaleDateString("en-US", {
+        year: "numeric",
+        month: "short",
+        day: "numeric"
+      }) +
+      " " +
+      date.toLocaleTimeString("en-US", {
+        hour: "2-digit",
+        minute: "2-digit"
+      });
+
     // Check if this is a subscription entry
-    const isSubscription = purchase.type === 'subscription' || 
-      (purchase.description && purchase.description.toLowerCase().includes('subscription'));
-    
+    const isSubscription =
+      purchase.type === "subscription" ||
+      (purchase.description &&
+        purchase.description.toLowerCase().includes("subscription"));
+
     // Add subscription-row class for subscription entries
-    const rowClass = isSubscription ? 'billing-row subscription-row' : 'billing-row';
-    
-    const row = document.createElement('div');
+    const rowClass = isSubscription
+      ? "billing-row subscription-row"
+      : "billing-row";
+
+    const row = document.createElement("div");
     row.className = rowClass;
     row.innerHTML = `
       <div class="billing-cell">${formattedDate}</div>
-      <div class="billing-cell">${purchase.description || 'Credit purchase'}</div>
+      <div class="billing-cell">${
+        purchase.description || "Credit purchase"
+      }</div>
       <div class="billing-cell">$${parseFloat(purchase.amount).toFixed(2)}</div>
       <div class="billing-cell">
-        <span class="status-${purchase.status.toLowerCase()}">${purchase.status}</span>
+        <span class="status-${purchase.status.toLowerCase()}">${
+      purchase.status
+    }</span>
       </div>
     `;
-    
+
     historyContainer.appendChild(row);
   });
 }
