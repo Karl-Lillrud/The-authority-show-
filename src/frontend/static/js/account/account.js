@@ -195,6 +195,70 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
 
+  // Function to load credit history
+  async function loadCreditHistory() {
+    const historyContainer = document.getElementById("billing-history-rows");
+    const noHistoryMessage = document.getElementById("no-purchases-message");
+
+    if (!historyContainer || !noHistoryMessage) return;
+
+    try {
+      const response = await fetch("/api/credits/history", {
+        credentials: "same-origin"
+      });
+
+      if (!response.ok) {
+        throw new Error(`Failed to fetch credit history: ${response.status}`);
+      }
+
+      const data = await response.json();
+      const creditHistory = data.creditHistory || [];
+
+      historyContainer.innerHTML = ""; // Clear existing rows
+
+      if (creditHistory.length === 0) {
+        noHistoryMessage.style.display = "block"; // Show 'no history' message
+        return;
+      }
+
+      noHistoryMessage.style.display = "none"; // Hide 'no history' message
+
+      // Populate the billing history table
+      creditHistory.forEach((entry) => {
+        const date = new Date(entry.timestamp).toLocaleDateString("en-US", {
+          year: "numeric",
+          month: "short",
+          day: "numeric"
+        });
+
+        const row = document.createElement("div");
+        row.className = "billing-row";
+        row.innerHTML = `
+          <div class="billing-cell">${date}</div>
+          <div class="billing-cell">${entry.description || "N/A"}</div>
+          <div class="billing-cell">${Math.round(entry.amount)}</div>
+          <div class="billing-cell">
+            <span class="status-${entry.status?.toLowerCase() || "unknown"}">
+              ${entry.status || "Unknown"}
+            </span>
+          </div>
+          <div class="billing-cell">
+            ${
+              entry.details
+                ? `<button class="details-btn">View</button>`
+                : "N/A"
+            }
+          </div>
+        `;
+        historyContainer.appendChild(row);
+      });
+    } catch (error) {
+      console.error("Error loading credit history:", error);
+      noHistoryMessage.textContent = "Error loading credit history.";
+      noHistoryMessage.style.display = "block";
+    }
+  }
+
   // Initialize profile data
   loadAccountData();
 
@@ -812,6 +876,7 @@ document.addEventListener("DOMContentLoaded", () => {
       // Fetch purchase history if the "Purchases" section is activated
       if (sectionId === "settings-purchases") {
         loadPurchaseHistory(); // Changed from fetchPurchaseHistory to loadPurchaseHistory
+        loadCreditHistory(); // Fetch and display credit history
       }
     }
   }

@@ -7,9 +7,11 @@ from backend.services.subscriptionService import SubscriptionService
 from backend.database.mongo_connection import collection
 import logging
 from datetime import datetime
+from backend.services.creditManagement import CreditService
 
 billing_bp = Blueprint("billing_bp", __name__)
 subscription_service = SubscriptionService()
+credit_service = CreditService()
 logger = logging.getLogger(__name__)
 
 stripe.api_key = os.getenv("STRIPE_SECRET_KEY")
@@ -391,3 +393,18 @@ def get_purchase_history():
     except Exception as e:
         logger.error(f"Error fetching purchase history: {str(e)}")
         return jsonify({"error": str(e)}), 500
+
+
+@billing_bp.route("/api/credits/history", methods=["GET"])
+def get_credit_history():
+    user_id = g.user_id
+
+    if not user_id:
+        return jsonify({"error": "User not authenticated"}), 401
+
+    try:
+        credit_history = credit_service.get_credit_history(user_id)
+        return jsonify({"creditHistory": credit_history})
+    except Exception as e:
+        logger.error(f"Error fetching credit history: {str(e)}")
+        return jsonify({"error": "Failed to fetch credit history"}), 500

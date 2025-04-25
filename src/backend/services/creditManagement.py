@@ -387,3 +387,15 @@ class CreditService:
             return False
         logger.info(f"Set carryOverStoreCredits to {carry_over} for user {user_id}.")
         return True
+
+    def get_credit_history(self, user_id: str) -> list:
+        """Fetches the credit history for a user."""
+        credits_doc = self._get_raw_credits(user_id)
+        if not credits_doc:
+            logger.error(f"Cannot fetch credit history: User {user_id} not found.")
+            return []
+
+        credit_history = credits_doc.get("creditsHistory", [])
+        # Sort history by timestamp (if available) in descending order
+        credit_history.sort(key=lambda x: x.get("timestamp", 0), reverse=True)
+        return credit_history
