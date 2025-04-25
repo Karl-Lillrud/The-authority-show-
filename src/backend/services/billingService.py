@@ -38,10 +38,10 @@ def handle_successful_payment(session, user_id):
     logger.info(f"Determined {credits_to_add} credits to add for user {user_id}")
 
     # --- Ensure Credit Document Exists using CreditService ---
-    # Check if user exists, initialize if not. get_user_credits handles this.
-    existing_credits = credit_service.get_user_credits(user_id)
+    # Check if user exists, initialize if not. get_store_credits handles this.
+    existing_credits = credit_service.get_store_credits(user_id)
     if not existing_credits:
-        # Initialization failed within get_user_credits, error already logged.
+        # Initialization failed within get_store_credits, error already logged.
         logger.error(f"Failed to get or initialize credits for user {user_id}. Aborting credit addition.")
         # Still log the purchase maybe?
         # Log purchase attempt even if credits fail?
