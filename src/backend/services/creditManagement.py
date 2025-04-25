@@ -30,7 +30,7 @@ class CreditService:
             logger.error(f"Failed to log credit transaction for user {user_id}: {e}", exc_info=True)
             return False
 
-    def get_user_credits(self, user_id: str) -> dict | None:
+    def get_store_credits(self, user_id: str) -> dict | None:
         """Gets user credits, initializes if not found, and calculates availableCredits."""
         credits_doc = self._get_raw_credits(user_id)
         if not credits_doc:
