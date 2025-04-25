@@ -52,6 +52,7 @@ async function upgradeSubscription(planName, amount) {
       return; // Stop if Stripe didn't initialize
   }
 
+  let originalText = "Upgrade"; // Default original text
   try {
     // Get UI elements
     if (!button) {
@@ -60,7 +61,7 @@ async function upgradeSubscription(planName, amount) {
     }
 
     // Show loading state
-    const originalText = button.textContent;
+    originalText = button.textContent; // Capture original text
     button.textContent = "Processing...";
     button.disabled = true;
 
@@ -110,10 +111,21 @@ async function upgradeSubscription(planName, amount) {
     const data = await res.json();
 
     if (data.sessionId) {
+      // --- Reset button state BEFORE redirecting ---
+      button.textContent = originalText;
+      button.disabled = false;
+      // --- End button reset ---
+
       // Use the globally initialized stripe object to redirect
-      await stripe.redirectToCheckout({ sessionId: data.sessionId });
-      // Note: redirectToCheckout doesn't return if successful, it navigates away.
-      // If it fails, it throws an error caught below.
+      const { error } = await stripe.redirectToCheckout({ sessionId: data.sessionId });
+      // If redirectToCheckout fails (e.g., network error, invalid session), it will throw an error caught below.
+      // If it succeeds, the user navigates away.
+      if (error) {
+        // This handles errors specifically from redirectToCheckout
+        console.error("Stripe redirect error:", error);
+        showNotification("Error", `Payment redirect failed: ${error.message}`, "error");
+        // Button is already reset above, no need to reset again here unless specifically needed
+      }
     } else {
       // This case might be less likely now with the !res.ok check above
       showNotification("Error", data.error || "Failed to create checkout session", "error");
@@ -124,11 +136,10 @@ async function upgradeSubscription(planName, amount) {
     console.error("Subscription upgrade error:", err);
     showNotification("Error", "An error occurred while processing your request: " + err.message, "error");
 
-    // Reset button state
+    // Reset button state in the catch block as a fallback
     if (button) {
       button.disabled = false;
-      // Check if originalText was captured, otherwise default to "Upgrade"
-      button.textContent = button.textContent === "Processing..." ? "Upgrade" : button.textContent;
+      button.textContent = originalText; // Use the captured original text
     }
   }
 }
@@ -539,18 +550,16 @@ async function cancelSubscription() {
 function initializeSubscriptionButtons() {
   // Add click handlers to the subscription buttons
   const proButton = document.querySelector('.plan-card:nth-child(2) .plan-button');
-  const enterpriseButton = document.querySelector('.plan-card:nth-child(3) .plan-button');
+  const studioButton = document.querySelector('.plan-card:nth-child(3) .plan-button');
 
   if (proButton) {
     proButton.setAttribute('data-plan', 'Pro');
-    // Ensure amount is in dollars (the server will convert to cents)
-    proButton.addEventListener('click', () => upgradeSubscription('Pro', 9.99));
+    proButton.addEventListener('click', () => upgradeSubscription('Pro', 29.99));
   }
 
-  if (enterpriseButton) {
-    enterpriseButton.setAttribute('data-plan', 'Enterprise');
-    // Ensure amount is in dollars (the server will convert to cents)
-    enterpriseButton.addEventListener('click', () => upgradeSubscription('Enterprise', 29.99));
+  if (studioButton) {
+    studioButton.setAttribute('data-plan', 'Studio');
+    studioButton.addEventListener('click', () => upgradeSubscription('Studio', 69.00));
   }
 
   // Add cancel subscription button handler
