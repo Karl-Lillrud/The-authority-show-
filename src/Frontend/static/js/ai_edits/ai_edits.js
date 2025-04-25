@@ -53,7 +53,7 @@ function showTab(tabName) {
                 <!-- Ytterligare verktyg... -->
             </div>
         `;
-    } else if (tabName === 'audio') {
+    }else if (tabName === 'audio') {
         content.innerHTML = `
             <h2>🎵 AI Audio Enhancement</h2>
             <input type="file" id="audioUploader" accept="audio/*" onchange="previewOriginalAudio()">
@@ -61,10 +61,11 @@ function showTab(tabName) {
                 <p>🎧 <strong>Original Audio</strong></p>
                 <audio id="originalAudioPlayer" controls style="width: 100%"></audio>
             </div>
-
+    
             <div style="margin-top: 1rem; padding: 1rem; border: 1px solid #ddd; border-radius: 12px;">
                 <h3>🔊 Choose Audio Processing Method</h3>
                 <p style="margin-bottom: 1rem;">Select one of the following enhancements:</p>
+    
                 <div id="voiceIsolationSection" style="margin-bottom: 1.5rem;">
                     <h4>🎤 <strong>Voice Isolation (Powered by ElevenLabs)</strong></h4>
                     <button class="btn ai-edit-button" onclick="runVoiceIsolation()">
@@ -78,6 +79,7 @@ function showTab(tabName) {
                        📥 Download Isolated Voice
                     </a>
                 </div>
+    
                 <div id="audioEnhancementSection">
                     <h4>🎚️ <strong>Audio Enhancement (Noise Reduction & Normalization)</strong></h4>
                     <button class="btn ai-edit-button" onclick="enhanceAudio()">
@@ -86,7 +88,7 @@ function showTab(tabName) {
                     <div id="audioControls" style="margin-top: 1rem;"></div>
                 </div>
             </div>
-
+    
             <div id="audioAnalysisSection" style="display: none;">
                 <hr/>
                 <h3>🤖 AI Analysis</h3>
@@ -94,13 +96,28 @@ function showTab(tabName) {
                   ${labelWithCredits("📊 Analyze", "ai_audio_analysis")}
                 </button>
                 <pre id="analysisResults"></pre>
-                <!-- Här injiceras knappen för sound suggestions dynamiskt -->
+    
+                <!-- NEW: Button that appears AFTER analysis completes -->
+                <button id="mixBackgroundBtn"
+                        class="btn ai-edit-button"
+                        style="display: none; margin-top: 1rem;"
+                        onclick="displayBackgroundAndMix()">
+                  🔉 Mix Background & Preview
+                </button>
+    
+                <!-- NEW: Container for background & mixed audio previews -->
+                <div id="backgroundPreview" style="margin-top: 1rem;"></div>
+    
+                <!-- Existing container for sound-effect suggestions -->
                 <div id="soundEffectTimeline" style="margin-top: 1rem;"></div>
-                <a id="downloadEnhanced" class="btn ai-edit-button" download="processed_audio.wav">
-                     📥 Download Processed Audio
+    
+                <a id="downloadEnhanced"
+                   class="btn ai-edit-button"
+                   download="processed_audio.wav">
+                   📥 Download Processed Audio
                 </a>
             </div>
-
+    
             <div id="audioCuttingSection" style="display: none;">
                 <hr/>
                 <h3>✂ Audio Cutting</h3>
@@ -112,7 +129,7 @@ function showTab(tabName) {
                 <div id="cutResult"></div>
                 <a id="downloadCut" class="btn ai-edit-button" download="cut_audio.wav">📥 Download Cut</a>
             </div>
-
+    
             <div id="aiCuttingSection" style="display: none;">
                 <hr/>
                 <h3>🧠 AI Cutting + Transcript</h3>
@@ -442,69 +459,57 @@ async function runVoiceIsolation() {
 async function analyzeEnhancedAudio() {
     const resultEl = document.getElementById("analysisResults");
     const timeline = document.getElementById("soundEffectTimeline");
-
-    /* --- grund-kontroller --------------------------------------- */
+    const preview  = document.getElementById("backgroundPreview");
+    const mixBtn   = document.getElementById("mixBackgroundBtn");
+  
+    // Ensure an audio blob is loaded
     if (!activeAudioBlob) {
-        alert("No audio loaded. Enhance or Isolate first.");
-        return;
+      alert("No audio loaded. Enhance or Isolate first.");
+      return;
     }
-
-    try { await consumeStoreCredits("ai_audio_analysis"); }
-    catch (err) {
-        resultEl.innerText = `❌ Not enough credits: ${err.message}`;
-        return;
+  
+    // Consume credits for analysis
+    try {
+      await consumeStoreCredits("ai_audio_analysis");
+    } catch (err) {
+      resultEl.innerText = `❌ Not enough credits: ${err.message}`;
+      return;
     }
-
+  
     resultEl.innerText = "🔍 Analyzing...";
     const fd = new FormData();
     fd.append("audio", activeAudioBlob, "processed_audio.wav");
-
+  
     try {
-        const res  = await fetch("/audio_analysis", { method: "POST", body: fd });
-        const data = await res.json();
-        console.log("JSON from /audio_analysis", data);   // debug
-
-        /* --- 1. räkna topp-emotioner ----------------------------- */
-        const emoFreq = {};
-        (data.emotions || []).forEach(row => {
-        const lab = row.emotions[0].label;
-        emoFreq[lab] = (emoFreq[lab] || 0) + 1;
-        });
-
-        const topEmo = Object.entries(emoFreq)
-                            .sort((a, b) => b[1] - a[1])[0]?.[0] || "–";
-
-        /* --- 2. skriv resultat-text ------------------------------ */
-        resultEl.innerText = `
-📊 Sentiment:        ${data.sentiment        ?? "–"}
-📊 Clarity Score:    ${data.clarity_score    ?? "–"}
-📊 Background Noise: ${data.background_noise ?? "–"}
-📊 Top Emotions:     ${topEmo}
-        `;
-
-        /* --- 3. fyll tidslinjen ---------------------------------- */
-        timeline.innerHTML = "";
-
-        if (data.background_clip) {
-            timeline.innerHTML += `
-                <h4>🔈 Background Loop (30 s)</h4>
-                <audio controls src="${data.background_clip}" style="width:100%"></audio>
-                <hr/>
-            `;
-        }
-
-        if (data.merged_audio) {
-            timeline.innerHTML += `
-                <h4>🎶 Mixed Preview</h4>
-                <audio controls src="${data.merged_audio}"
-                       style="width:100%;" title="Mixed audio"></audio>
-            `;
-        }
-
+      const res  = await fetch("/audio_analysis", { method: "POST", body: fd });
+      const data = await res.json();
+  
+      // Display basic stats
+      resultEl.innerText = `
+  📊 Sentiment:        ${data.sentiment ?? "–"}
+  📊 Clarity Score:    ${data.clarity_score ?? "–"}
+  📊 Background Noise: ${data.background_noise ?? "–"}
+  📊 Top Emotions:     ${data.emotions.map(e => e.emotions[0].label)[0] || "–"}
+      `;
+  
+      // Clear previous views
+      timeline.innerHTML    = "";
+      preview.innerHTML     = "";
+      mixBtn.style.display  = "inline-block";  // Show the mix button
+  
+      // Store data for later rendering
+      window.analysisData = {
+        background_clip: data.background_clip,
+        merged_audio:    data.merged_audio
+      };
+  
+      // Render any sound-effect suggestions
+      renderSoundSuggestions(data, timeline);
+  
     } catch (err) {
-        resultEl.innerText = `❌ Analysis failed: ${err.message}`;
+      resultEl.innerText = `❌ Analysis failed: ${err.message}`;
     }
-}
+  }
 
 /* Hjälper att rendera suggestion-listan */
 function renderSoundSuggestions(data, timeline) {
@@ -526,6 +531,31 @@ function renderSoundSuggestions(data, timeline) {
         }
     });
 }
+
+function displayBackgroundAndMix() {
+    const preview = document.getElementById("backgroundPreview");
+    const data    = window.analysisData || {};
+  
+    // Clear previous preview
+    preview.innerHTML = "";
+  
+    if (data.background_clip) {
+      preview.innerHTML += `
+        <h4>🔈 Background Loop (30s)</h4>
+        <audio controls src="${data.background_clip}" style="width:100%;"></audio>
+        <hr/>
+      `;
+    }
+  
+    if (data.merged_audio) {
+      preview.innerHTML += `
+        <h4>🎶 Mixed Preview</h4>
+        <audio controls src="${data.merged_audio}"
+               style="width:100%;"
+               title="Mixed audio"></audio>
+      `;
+    }
+  }
 
 async function cutAudio() {
     const startInput = document.getElementById("startTime");
