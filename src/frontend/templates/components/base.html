@@ -43,7 +43,13 @@
     rel="stylesheet"
     href="{{ url_for('static', filename='css/components/typography.css') }}"
     />
+    <!-- Correct the filename to notifications.css -->
+    <link 
+      rel="stylesheet" 
+      href="{{ url_for('static', filename='css/components/notifications.css') }}" 
+    />
     <!-- other head content -->
+    {% block head_extra %}{% endblock %} <!-- Add block for page-specific head elements -->
   </head>
   <body style="display: flex; flex-direction: column; min-height: 100vh">
     <iframe src="https://www.googletagmanager.com/ns.html?id=GTM-N7Q86CWB" height="0" width="0" style="display:none;visibility:hidden"></iframe>

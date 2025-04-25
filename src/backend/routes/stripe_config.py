@@ -1,6 +1,10 @@
 import os
 import logging
 from flask import Blueprint, jsonify
+from dotenv import load_dotenv
+
+# Load environment variables
+load_dotenv()
 
 # Configure logger
 logger = logging.getLogger(__name__)
@@ -10,24 +14,31 @@ stripe_config_bp = Blueprint("stripe_config_bp", __name__)
 
 @stripe_config_bp.route('/config', methods=['GET']) # Keep the route path as /config for frontend compatibility
 def get_config():
-    """Exposes necessary public configuration variables to the frontend."""
+    """
+    Provides necessary frontend configuration like Stripe keys and API URLs.
+    """
+    # Add log to check if the route is hit
+    logger.info("--- Request received for /config route ---") 
     try:
-        config_data = {
-            'apiBaseUrl': os.getenv('API_BASE_URL', ''), # Provide API_BASE_URL
-            # --- Corrected to use the PUBLIC key for the frontend ---
-            'stripePublicKey': os.getenv('STRIPE_PUBLIC_KEY', '') # Provide STRIPE_PUBLIC_KEY
-        }
-        # Ensure keys exist in .env
-        if not config_data['apiBaseUrl']:
-            logger.warning("API_BASE_URL not set in environment variables. Frontend might use relative paths.")
-            # Fallback to relative URLs if not set, but log a warning.
-        # --- Updated error check and message for the PUBLIC key ---
-        if not config_data['stripePublicKey']:
-            logger.error("STRIPE_PUBLIC_KEY not set in environment variables. Stripe functionality will fail.")
-            # Return an error or empty key if critical
-            return jsonify({"error": "Stripe public key not configured on server."}), 500
+        stripe_public_key = os.getenv('STRIPE_PUBLIC_KEY')
+        api_base_url = os.getenv('API_BASE_URL') # Ensure this is set in your .env
+        
+        # Add logs to check retrieved values
+        logger.info(f"Stripe Public Key: {'Found' if stripe_public_key else 'Not Found'}")
+        logger.info(f"API Base URL: {api_base_url or 'Not Set'}")
 
-        return jsonify(config_data), 200
+        if not stripe_public_key:
+            # Log this error server-side as well
+            logger.error("STRIPE_PUBLIC_KEY is not set in environment variables.")
+            return jsonify({"error": "Server configuration error: Missing Stripe key."}), 500
+
+        response_data = {
+            'stripePublicKey': stripe_public_key,
+            'apiBaseUrl': api_base_url or '' # Return empty string if not set, frontend handles it
+        }
+        logger.info(f"--- Responding to /config with: {response_data} ---")
+        return jsonify(response_data), 200
+
     except Exception as e:
         logger.error(f"Error fetching configuration: {e}", exc_info=True)
-        return jsonify({"error": "Failed to fetch server configuration"}), 500
+        return jsonify({"error": f"Internal server error fetching configuration: {str(e)}"}), 500
