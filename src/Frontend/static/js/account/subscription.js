@@ -1,29 +1,80 @@
 import { showNotification } from "../components/notifications.js";
 
+let apiBaseUrl = '';
+let stripePublicKey = '';
+let stripe = null;
+
+// Fetch configuration when the DOM is ready
+document.addEventListener('DOMContentLoaded', async () => {
+  try {
+    const response = await fetch('/config'); // Fetch from the backend endpoint
+    if (!response.ok) {
+       const errorData = await response.json();
+       throw new Error(errorData.error || `Failed to fetch config: ${response.statusText}`);
+    }
+    const config = await response.json();
+    apiBaseUrl = config.apiBaseUrl || ''; // Use fetched API base URL or default to relative paths
+    stripePublicKey = config.stripePublicKey;
+
+    if (!stripePublicKey) {
+      console.error("Stripe Public Key not found in config from server.");
+      showNotification("Error", "Configuration error: Payment key missing.", "error");
+      // Optionally disable payment/subscription buttons here
+      return;
+    }
+
+    // Initialize Stripe here after fetching the key
+    stripe = Stripe(stripePublicKey);
+
+    // Initialize UI elements that depend on config/Stripe being ready
+    initializeSubscriptionButtons();
+    updateSubscriptionUI();
+
+  } catch (error) {
+    console.error("Error fetching or processing configuration:", error);
+    showNotification("Error", "Error loading configuration: " + error.message, "error");
+    // Optionally disable payment/subscription buttons here
+  }
+});
+
 /**
  * Handles subscription plan upgrades via Stripe checkout
  */
 async function upgradeSubscription(planName, amount) {
+   const button = document.querySelector(`button[data-plan="${planName}"]`);
+   if (!stripe) {
+      console.error("Stripe is not initialized. Cannot proceed with checkout.");
+      showNotification("Error", "Payment system not ready.", "error");
+      if (button) { // Reset button if it exists
+          button.textContent = "Upgrade";
+          button.disabled = false;
+      }
+      return; // Stop if Stripe didn't initialize
+  }
+
+  let originalText = "Upgrade"; // Default original text
   try {
     // Get UI elements
-    const button = document.querySelector(`button[data-plan="${planName}"]`);
     if (!button) {
       console.error(`Button not found for plan ${planName}`);
       return;
     }
-    
+
     // Show loading state
-    const originalText = button.textContent;
+    originalText = button.textContent; // Capture original text
     button.textContent = "Processing...";
     button.disabled = true;
 
+    // Construct the full URL using the fetched base URL or use relative path if empty
+    const checkoutUrl = apiBaseUrl ? `${apiBaseUrl}/create-checkout-session` : "/create-checkout-session";
+
     // Call the backend to create a checkout session
-    const res = await fetch("/create-checkout-session", {
+    const res = await fetch(checkoutUrl, { // Use constructed URL
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ 
-        amount, 
-        plan: planName 
+      body: JSON.stringify({
+        amount,
+        plan: planName
       }),
       credentials: "same-origin" // Important: include cookies for session
     });
@@ -34,35 +85,61 @@ async function upgradeSubscription(planName, amount) {
       showNotification("Error", "Your session may have expired. Please try logging in again.", "error");
       button.textContent = originalText;
       button.disabled = false;
-      
+
       // Redirect to login after a short delay
       setTimeout(() => {
-        window.location.href = "/signin?redirect=" + encodeURIComponent(window.location.pathname);
+         // Construct redirect URL carefully
+        const redirectPath = "/signin?redirect=" + encodeURIComponent(window.location.pathname);
+        // Use apiBaseUrl if available for the redirect, otherwise relative path
+        window.location.href = apiBaseUrl ? `${apiBaseUrl}${redirectPath}` : redirectPath;
       }, 2000);
       return;
     }
 
+     // Check for non-JSON error responses before trying to parse JSON
+     if (!res.ok) {
+        let errorMsg = `Failed to create checkout session: ${res.statusText}`;
+        try {
+            const errorData = await res.json();
+            errorMsg = errorData.error || errorMsg;
+        } catch (e) {
+            // Ignore if response is not JSON
+        }
+        throw new Error(errorMsg);
+    }
+
     const data = await res.json();
-    
+
     if (data.sessionId) {
-      // Initialize Stripe and redirect to checkout
-      const stripe = Stripe("pk_test_51R4IEVPSYBEkSARW1VDrIwirpgzraNlH1Ms4JDcrHBytkClnLwLIdaTV6zb9FrwYoBmpRqgtnJXGR5Q0VUKYfX7s00kmz7AEQk");
-      await stripe.redirectToCheckout({ sessionId: data.sessionId });
+      // --- Reset button state BEFORE redirecting ---
+      button.textContent = originalText;
+      button.disabled = false;
+      // --- End button reset ---
+
+      // Use the globally initialized stripe object to redirect
+      const { error } = await stripe.redirectToCheckout({ sessionId: data.sessionId });
+      // If redirectToCheckout fails (e.g., network error, invalid session), it will throw an error caught below.
+      // If it succeeds, the user navigates away.
+      if (error) {
+        // This handles errors specifically from redirectToCheckout
+        console.error("Stripe redirect error:", error);
+        showNotification("Error", `Payment redirect failed: ${error.message}`, "error");
+        // Button is already reset above, no need to reset again here unless specifically needed
+      }
     } else {
-      // Handle error
+      // This case might be less likely now with the !res.ok check above
       showNotification("Error", data.error || "Failed to create checkout session", "error");
       button.textContent = originalText;
       button.disabled = false;
     }
   } catch (err) {
     console.error("Subscription upgrade error:", err);
-    showNotification("Error", "An error occurred while processing your request.", "error");
-    
-    // Reset button state
-    const button = document.querySelector(`button[data-plan="${planName}"]`);
+    showNotification("Error", "An error occurred while processing your request: " + err.message, "error");
+
+    // Reset button state in the catch block as a fallback
     if (button) {
       button.disabled = false;
-      button.textContent = "Upgrade";
+      button.textContent = originalText; // Use the captured original text
     }
   }
 }
@@ -72,10 +149,13 @@ async function upgradeSubscription(planName, amount) {
  */
 async function getCurrentSubscription() {
   try {
-    const response = await fetch('/api/subscription', {
+    // Construct the full URL using the fetched base URL or use relative path if empty
+    const subscriptionUrl = apiBaseUrl ? `${apiBaseUrl}/api/subscription` : '/api/subscription';
+
+    const response = await fetch(subscriptionUrl, { // Use constructed URL
       credentials: 'same-origin' // Include cookies for auth
     });
-    
+
     if (!response.ok) {
       if (response.status === 401) {
         console.warn("User not authenticated");
@@ -83,7 +163,7 @@ async function getCurrentSubscription() {
       }
       throw new Error(`Failed to fetch subscription: ${response.status}`);
     }
-    
+
     const data = await response.json();
     return data.subscription;
   } catch (err) {
@@ -109,6 +189,12 @@ async function updateSubscriptionUI() {
       return;
     }
     
+    // Make sure cancel button exists
+    if (cancelButton) {
+      // Default to hidden
+      cancelButton.style.display = 'none';
+    }
+    
     if (subscription) {
       currentPlanElement.textContent = subscription.plan || "Free";
       
@@ -132,13 +218,7 @@ async function updateSubscriptionUI() {
         // Disable cancel button if it exists
         if (cancelButton) {
           cancelButton.disabled = true;
-          cancelButton.textContent = "Subscription Cancelled";
-        }
-        
-        // Remove any existing renewal message element
-        const renewalMessageElement = document.querySelector(".renewal-message");
-        if (renewalMessageElement) {
-          renewalMessageElement.remove();
+          cancelButton.style.display = 'none'; // Hide it completely
         }
       } else {
         statusElement.textContent = subscription.status || "Inactive";
@@ -153,10 +233,14 @@ async function updateSubscriptionUI() {
           renewalTextElement.classList.remove("cancellation-notice");
         }
         
-        // Enable cancel button if subscription is active
+        // Enable and show cancel button if subscription is active and paid
         if (cancelButton && subscription.status === "active" && subscription.plan !== "Free") {
           cancelButton.disabled = false;
           cancelButton.textContent = "Cancel Subscription";
+          cancelButton.style.display = 'flex'; // Show it
+        } else if (cancelButton) {
+          // Hide button for free plan or inactive subscriptions
+          cancelButton.style.display = 'none';
         }
       }
       
@@ -280,18 +364,40 @@ function showCancellationConfirmation() {
       `;
       confirmBtn.disabled = true;
       
+      console.log("Sending cancel subscription request to server...");
+      
+      // Try using the full path instead of just the endpoint
+      // Ensure you're using the correct route with prefix
+      const cancelUrl = '/api/cancel-subscription';
+
       // Make API call to cancel subscription
-      const response = await fetch('/cancel-subscription', {
+      const response = await fetch(cancelUrl, { // Use constructed URL
         method: 'POST',
         headers: { 
           'Content-Type': 'application/json' 
         },
-        body: JSON.stringify({})
+        credentials: 'same-origin',
+        body: JSON.stringify({}) 
       });
+      
+      console.log("Response received:", response.status, response.statusText);
+      
+      if (response.status === 404) {
+        console.error("Endpoint not found (404). The cancel-subscription route may not be properly registered.");
+        showNotification('Error', 'The subscription cancellation service is currently unavailable. Please contact support.', 'error');
+        
+        // Reset button state
+        confirmBtn.innerHTML = 'Yes, Cancel';
+        confirmBtn.disabled = false;
+        
+        // Don't close popup immediately on error
+        return;
+      }
       
       if (response.ok) {
         // Parse the response to get any additional data
         const data = await response.json();
+        console.log("Cancellation successful with data:", data);
         
         // Show success notification with end date if available
         let successMessage = 'Your subscription has been cancelled.';
@@ -302,20 +408,34 @@ function showCancellationConfirmation() {
         showNotification('Success', successMessage, 'success');
         
         // Update UI to reflect cancelled status
-        updateSubscriptionUI();
+        setTimeout(() => {
+          updateSubscriptionUI();
+          
+          // Also update credits since they may have changed
+          fetchStoreCredits();
+        }, 500);
+        
+        // Close popup
+        popup.classList.remove('active');
+        setTimeout(() => popup.remove(), 300);
       } else {
         // Handle error
-        const data = await response.json();
-        showNotification('Error', data.error || 'Failed to cancel subscription', 'error');
+        try {
+          const errorData = await response.json();
+          console.error("Cancellation error:", errorData);
+          showNotification('Error', errorData.error || 'Failed to cancel subscription', 'error');
+        } catch (jsonError) {
+          console.error("Error parsing error response:", jsonError);
+          showNotification('Error', `Server error (${response.status}): Failed to cancel subscription`, 'error');
+        }
+        
+        // Reset button state
+        confirmBtn.innerHTML = 'Yes, Cancel';
+        confirmBtn.disabled = false;
       }
-      
-      // Close popup
-      popup.classList.remove('active');
-      setTimeout(() => popup.remove(), 300);
-      
     } catch (err) {
       console.error('Error cancelling subscription:', err);
-      showNotification('Error', 'An error occurred while processing your request.', 'error');
+      showNotification('Error', 'An error occurred while processing your request: ' + err.message, 'error');
       
       // Reset button state
       confirmBtn.innerHTML = 'Yes, Cancel';
@@ -324,31 +444,184 @@ function showCancellationConfirmation() {
   });
 }
 
-// Initialize subscription buttons when document is loaded
-document.addEventListener("DOMContentLoaded", function() {
+// Separate the handler function for better maintainability
+function handleCancelClick(e) {
+  e.preventDefault(); // Prevent any default action
+  console.log("Cancel subscription button clicked");
+  
+  // Cancel directly without confirmation
+  cancelSubscription();
+}
+
+/**
+ * Directly cancels the subscription without showing a confirmation popup
+ */
+async function cancelSubscription() {
+  // Get the cancel button
+  const cancelButton = document.getElementById('cancel-subscription-btn');
+  if (!cancelButton) return;
+  
+  try {
+    // Show loading state on button
+    const originalText = cancelButton.textContent;
+    cancelButton.innerHTML = `
+      <svg class="spinner" viewBox="0 0 50 50">
+        <circle class="path" cx="25" cy="25" r="20" fill="none" stroke-width="5"></circle>
+      </svg>
+      Processing...
+    `;
+    cancelButton.disabled = true;
+    
+    console.log("Sending cancel subscription request to server...");
+    
+    // Try using the full path instead of just the endpoint
+    // Ensure you're using the correct route with prefix
+    const cancelUrl = '/cancel-subscription';
+
+    // Make API call to cancel subscription
+    const response = await fetch(cancelUrl, {
+      method: 'POST',
+      headers: { 
+        'Content-Type': 'application/json' 
+      },
+      credentials: 'same-origin',
+      body: JSON.stringify({}) 
+    });
+    
+    console.log("Response received:", response.status, response.statusText);
+    
+    if (response.status === 404) {
+      console.error("Endpoint not found (404). The cancel-subscription route may not be properly registered.");
+      showNotification('Error', 'The subscription cancellation service is currently unavailable. Please contact support.', 'error');
+      
+      // Reset button state
+      cancelButton.innerHTML = originalText;
+      cancelButton.disabled = false;
+      return;
+    }
+    
+    if (response.ok) {
+      // Parse the response to get any additional data
+      const data = await response.json();
+      console.log("Cancellation successful with data:", data);
+      
+      // Show success notification with end date if available
+      let successMessage = 'Your subscription has been cancelled.';
+      if (data.endDate) {
+        successMessage = `Your subscription will not renew. You will have access until ${data.endDate}.`;
+      }
+      
+      showNotification('Success', successMessage, 'success');
+      
+      
+      setTimeout(() => {
+        window.location.reload();
+      }, 1500);
+      
+      
+    } else {
+      // Handle error
+      try {
+        const errorData = await response.json();
+        console.error("Cancellation error:", errorData);
+        showNotification('Error', errorData.error || 'Failed to cancel subscription', 'error');
+      } catch (jsonError) {
+        console.error("Error parsing error response:", jsonError);
+        showNotification('Error', `Server error (${response.status}): Failed to cancel subscription`, 'error');
+      }
+      
+      // Reset button state
+      cancelButton.innerHTML = originalText;
+      cancelButton.disabled = false;
+    }
+  } catch (err) {
+    console.error('Error cancelling subscription:', err);
+    showNotification('Error', 'An error occurred while processing your request: ' + err.message, 'error');
+    
+    // Reset button state
+    if (cancelButton) {
+      cancelButton.innerHTML = 'Cancel Subscription';
+      cancelButton.disabled = false;
+    }
+  }
+}
+
+// Wrap button initialization in a function called after config is loaded
+function initializeSubscriptionButtons() {
   // Add click handlers to the subscription buttons
   const proButton = document.querySelector('.plan-card:nth-child(2) .plan-button');
-  const enterpriseButton = document.querySelector('.plan-card:nth-child(3) .plan-button');
-  
+  const studioButton = document.querySelector('.plan-card:nth-child(3) .plan-button');
+
   if (proButton) {
     proButton.setAttribute('data-plan', 'Pro');
-    proButton.addEventListener('click', () => upgradeSubscription('Pro', 9.99));
+    proButton.addEventListener('click', () => upgradeSubscription('Pro', 29.99));
   }
-  
-  if (enterpriseButton) {
-    enterpriseButton.setAttribute('data-plan', 'Enterprise');
-    enterpriseButton.addEventListener('click', () => upgradeSubscription('Enterprise', 29.99));
+
+  if (studioButton) {
+    studioButton.setAttribute('data-plan', 'Studio');
+    studioButton.addEventListener('click', () => upgradeSubscription('Studio', 69.00));
   }
-  
+
   // Add cancel subscription button handler
   const cancelSubscriptionBtn = document.getElementById('cancel-subscription-btn');
   if (cancelSubscriptionBtn) {
-    cancelSubscriptionBtn.addEventListener('click', showCancellationConfirmation);
+    // Remove any existing event listeners to avoid duplicates
+    cancelSubscriptionBtn.removeEventListener('click', handleCancelClick);
+    // Add the click event listener
+    cancelSubscriptionBtn.addEventListener('click', handleCancelClick);
+    console.log("Cancel subscription button initialized");
+  } else {
+    console.log("Cancel subscription button not found in DOM");
   }
-  
-  // Update UI with current subscription data
-  updateSubscriptionUI();
+}
+
+// Check if we just returned from a successful checkout
+document.addEventListener('DOMContentLoaded', function() {
+  const urlParams = new URLSearchParams(window.location.search);
+  if (urlParams.get('subscription_updated') === 'true') {
+    // Force refresh credits display
+    fetchStoreCredits();
+    // Update the subscription UI
+    updateSubscriptionUI();
+    // Clear the URL parameter
+    window.history.replaceState({}, document.title, window.location.pathname);
+  }
 });
+
+/**
+ * Fetches the current user's available credits
+ */
+async function fetchStoreCredits() {
+  try {
+    const creditsElement = document.getElementById("available-credits");
+    if (!creditsElement) return;
+    
+    const response = await fetch('/api/credits', {
+      credentials: 'same-origin'
+    });
+    
+    if (response.ok) {
+      const data = await response.json();
+      
+      // Update the main credit display
+      creditsElement.textContent = data.availableCredits;
+      
+      // Optionally, if you have elements for showing the breakdown:
+      const subElement = document.getElementById("subscription-credits");
+      const userElement = document.getElementById("purchased-credits");
+      
+      if (subElement) {
+        subElement.textContent = data.subCredits || 0;
+      }
+      
+      if (userElement) {
+        userElement.textContent = data.storeCredits || 0;
+      }
+    }
+  } catch (err) {
+    console.error("Error fetching user credits:", err);
+  }
+}
 
 // Export functions for use in other files
 export { upgradeSubscription, getCurrentSubscription, updateSubscriptionUI, showCancellationConfirmation };

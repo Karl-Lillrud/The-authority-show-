@@ -7,12 +7,18 @@ import logging
 import subprocess
 import base64
 import requests
+import time
+import math
 from pathlib import Path
 from typing import List
 from transformers import pipeline
+from io import BytesIO
 import streamlit as st  # Needed for download_button_text
+from pydub import AudioSegment
+
 
 API_BASE_URL = os.getenv("API_BASE_URL")
+ELEVENLABS_API_KEY = os.getenv("ELEVENLABS_API_KEY")
 logger = logging.getLogger(__name__)
 
 def format_transcription(transcription):
@@ -33,26 +39,23 @@ def download_button_text(label, text, filename, key_prefix=""):
 
 
 def translate_text(text: str, target_language: str) -> str:
-    """
-    Translate the given text to the target language using GPT.
-    """
-    if not text.strip():
-        return ""
-
     prompt = f"Translate the following transcript to {target_language}:\n\n{text}"
-
-    try:
-        response = openai.ChatCompletion.create(
-            model="gpt-4",
-            messages=[
-                {"role": "system", "content": "You are a professional translator."},
-                {"role": "user", "content": prompt}
-            ]
-        )
-        return response["choices"][0]["message"]["content"].strip()
-    except Exception as e:
-        logger.error(f"❌ Translation failed: {str(e)}")
-        return f"Error during translation: {str(e)}"
+    retries = 3
+    for attempt in range(retries):
+        try:
+            response = openai.ChatCompletion.create(
+                model="gpt-4",
+                messages=[
+                    {"role": "system", "content": "You are a professional translator."},
+                    {"role": "user", "content": prompt}
+                ]
+            )
+            return response["choices"][0]["message"]["content"].strip()
+        except Exception as e:
+            logger.warning(f"Retry {attempt+1}/{retries} failed: {e}")
+            time.sleep(1)
+    logger.error("❌ Translation permanently failed after retries.")
+    return "⚠️ Failed to translate. Try again later."
 
 def generate_ai_suggestions(text):
     prompt = f"""
@@ -139,15 +142,25 @@ def analyze_certainty_levels(transcription):
         })
     return result_list
 
-def get_sentence_timestamps(sentence, word_timings, prev_end_time=0):
-    words = sentence.split()
+def get_sentence_timestamps(sentence, word_timings, prev_end_time=0.0):
+    def normalize(word):
+        return word.strip().lower().strip(",.?!():;\"'")
+
+    words = [normalize(w) for w in sentence.split()]
     if not words:
         return {"start": prev_end_time, "end": prev_end_time + 2.0}
 
-    first_word, last_word = words[0], words[-1]
+    first_word = words[0]
+    last_word = words[-1]
 
-    start = next((w["start"] for w in word_timings if w["word"] == first_word and w["start"] >= prev_end_time), prev_end_time)
-    end = next((w["end"] for w in word_timings if w["word"] == last_word and w["end"] >= start), start + 2.0)
+    start = next(
+        (w["start"] for w in word_timings if normalize(w["word"]) == first_word and w["start"] >= prev_end_time),
+        prev_end_time
+    )
+    end = next(
+        (w["end"] for w in word_timings if normalize(w["word"]) == last_word and w["end"] >= start),
+        start + 2.0
+    )
 
     if end - start < 0.5:
         end += 0.5
@@ -238,3 +251,101 @@ def generate_quote_images(quotes: List[str]) -> List[str]:
             logger.error(f"❌ Failed to generate image for quote: {quote} | Error: {e}")
             urls.append("")
     return urls
+
+
+def fetch_sfx_for_emotion(
+    emotion: str,
+    category: str,
+    *,
+    loop_src_seconds: int = 3,
+    target_duration:  int = 30,
+    crossfade_ms:     int = 250
+) -> List[str]:
+    url = "https://api.elevenlabs.io/v1/sound-generation"
+    headers = {"xi-api-key": ELEVENLABS_API_KEY,
+               "Content-Type": "application/json"}
+    payload = {
+        "text":
+            f"Create a perfectly seamless {loop_src_seconds}-second loop of "
+            f"ambient background music for a {category} podcast with a "
+            f"{emotion} mood. The first and last 250 ms must share the same pad tone.",
+        "duration_seconds": loop_src_seconds,
+        "prompt_influence": 1
+    }
+
+    res = requests.post(url, headers=headers, json=payload)
+    if "audio/mpeg" not in res.headers.get("Content-Type", ""):
+        logger.warning("ElevenLabs returnerade inte audio/mpeg – ingen SFX.")
+        return []
+
+    seg = AudioSegment.from_file(BytesIO(res.content), format="mp3")
+
+    if crossfade_ms:
+        head = seg[:crossfade_ms].fade_out(crossfade_ms)
+        tail = seg[-crossfade_ms:].fade_in(crossfade_ms)
+        seg  = head.overlay(tail) + seg[crossfade_ms:-crossfade_ms]
+
+    need_ms  = target_duration * 1000
+    repeats  = math.ceil(need_ms / len(seg))
+    long_seg = (seg * repeats)[:need_ms]
+
+    buf = BytesIO()
+    long_seg.export(buf, format="mp3", bitrate="192k")
+    b64 = base64.b64encode(buf.getvalue()).decode("utf-8")
+    return [f"data:audio/mpeg;base64,{b64}"]
+
+
+def suggest_sound_effects(
+    emotion_data,
+    *,
+    category: str = "general",
+    target_duration: int = 30
+):
+    cache, suggestions = {}, []
+    for entry in emotion_data:
+        emotion = entry["emotions"][0]["label"]
+        if emotion not in cache:
+            cache[emotion] = fetch_sfx_for_emotion(
+                emotion, category, target_duration=target_duration
+            )
+        suggestions.append({
+            "timestamp_text": entry["text"],
+            "emotion":       emotion,
+            "sfx_options":   cache[emotion]
+        })
+    return suggestions
+
+def mix_background(
+    original_wav_bytes: bytes,
+    bg_b64_url: str,
+    *,
+    bg_gain_db: float = -45.0   # dämpa bakgrunden
+) -> bytes:
+    """
+    • Avkoda original (WAV) + bakgrund (base64-MP3).
+    • Loopar bakgrunden tills den täcker hela originalet.
+    • Sänker bakgrunden `bg_gain_db` dB.
+    • Lägger den under originalet och returnerar nya WAV-bytes.
+    """
+    from io import BytesIO
+    original = AudioSegment.from_file(BytesIO(original_wav_bytes), format="wav")
+
+    bg_mp3   = base64.b64decode(bg_b64_url.split(",", 1)[1])
+    bg_seg   = AudioSegment.from_file(BytesIO(bg_mp3), format="mp3") + bg_gain_db
+
+    repeats  = math.ceil(len(original) / len(bg_seg))
+    bg_long  = (bg_seg * repeats)[:len(original)]
+
+    mixed    = original.overlay(bg_long)
+
+    out_buf  = BytesIO()
+    mixed.export(out_buf, format="wav")
+    return out_buf.getvalue()
+
+def pick_dominant_emotion(emotion_data: list) -> str:
+    """Returnerar det emotion-label som förekommer flest gånger."""
+    from collections import Counter
+    labels = [e["emotions"][0]["label"] for e in emotion_data]
+    return Counter(labels).most_common(1)[0][0] if labels else "neutral"
+
+

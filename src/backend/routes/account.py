@@ -3,7 +3,8 @@ from backend.models.accounts import AccountSchema
 import logging
 from backend.repository.account_repository import AccountRepository
 from backend.database.mongo_connection import collection
-
+from backend.repository.auth_repository import AuthRepository
+from backend.services.activity_service import ActivityService
 
 # Define Blueprint
 account_bp = Blueprint("account_bp", __name__)
@@ -13,6 +14,10 @@ account_repo = AccountRepository()
 
 # Configure logger
 logger = logging.getLogger(__name__)
+
+# Instantiate AuthRepository and ActivityService
+auth_repo = AuthRepository()
+activity_service = ActivityService()
 
 
 # Middleware to populate g.email
@@ -62,7 +67,7 @@ def get_account_route():
     if not hasattr(g, "user_id") or not g.user_id:
         return jsonify({"error": "Obehörig"}), 401
 
-    account = account_repo.get_user_account(str(g.user_id))
+    account = account_repo.get_account_by_user(str(g.user_id))
     if not account:
         return jsonify({"error": "Konto hittades inte"}), 404
 
@@ -79,6 +84,21 @@ def edit_account():
         if not data:
             return jsonify({"error": "Inga data angivna"}), 400
         response, status_code = account_repo.update_account(str(g.user_id), data)
+
+        if status_code == 200:
+            try:
+                activity_service.log_activity(
+                    user_id=g.user_id,
+                    activity_type="account_updated",
+                    description="User account details updated.",
+                    details={"updated_fields": list(data.keys())}
+                )
+                logger.info(f"Successfully updated account details for user_id: {g.user_id}")
+            except Exception as act_err:
+                logger.error(f"Failed to log account_updated activity: {act_err}", exc_info=True)
+        else:
+            logger.error(f"Failed to update account details for user_id: {g.user_id}, Status: {status_code}, Response: {response}")
+
         return jsonify(response), status_code
     except Exception as e:
         logger.error(f"Fel vid uppdatering av konto: {e}", exc_info=True)

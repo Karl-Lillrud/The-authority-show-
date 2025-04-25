@@ -13,13 +13,11 @@ class AuthRepository:
         self.account_collection = collection.database.Accounts
 
     def find_user_by_email(self, email):
+        """Find a user by email."""
         try:
-            user = self.user_collection.find_one({"email": email})
-            return user
+            return self.user_collection.find_one({"email": email.lower().strip()})
         except Exception as e:
-            logger.error(
-                f"Error finding user by email {email}: {str(e)}", exc_info=True
-            )
+            logger.error(f"Error finding user by email {email}: {e}", exc_info=True)
             return None
 
     def create_user(self, user_data):
@@ -73,7 +71,7 @@ class AuthRepository:
                     f"Account already exists for user {user_id}: {existing_account['_id']}"
                 )
                 return {
-                    "message": "Konto redan existerar",
+                    "message": "Account already exists",
                     "accountId": existing_account["_id"],
                 }, 200
 
@@ -96,6 +94,10 @@ class AuthRepository:
                 "subscriptionEnd": data.get("subscriptionEnd"),
                 "referralBonus": data.get("referralBonus", 0),
                 "isFirstLogin": data.get("isFirstLogin", True),
+                "lastUpdated": datetime.utcnow().isoformat(),
+                "subscriptionAmount": 0,  
+                "subscriptionPlan": "Free"                   
+                 
             }
             logger.debug(f"Attempting to create account with data: {account_data}")
             result = self.account_collection.insert_one(account_data)
@@ -112,7 +114,7 @@ class AuthRepository:
                         f"Failed to initialize credits for ownerId {user_id}: {str(credit_error)}"
                     )
                 return {
-                    "message": "Konto skapat",
+                    "message": "Account created successfully!",
                     "accountId": account_data["_id"],
                 }, 201
             else:
