@@ -208,15 +208,15 @@ document.addEventListener("DOMContentLoaded", () => {
       });
 
       if (!response.ok) {
-        throw new Error(`Failed to fetch credit history: ${response.status}`);
+        throw new Error(`Failed to fetch purchase history: ${response.status}`);
       }
 
       const data = await response.json();
-      const creditHistory = data.creditHistory || [];
+      const purchases = data.purchases || [];
 
       historyContainer.innerHTML = ""; // Clear existing rows
 
-      if (creditHistory.length === 0) {
+      if (purchases.length === 0) {
         noHistoryMessage.style.display = "block"; // Show 'no history' message
         return;
       }
@@ -224,42 +224,93 @@ document.addEventListener("DOMContentLoaded", () => {
       noHistoryMessage.style.display = "none"; // Hide 'no history' message
 
       // Populate the billing history table
-      creditHistory.forEach((entry) => {
-        const date = new Date(entry.timestamp).toLocaleDateString("en-US", {
+      purchases.forEach((purchase) => {
+        const date = new Date(purchase.date).toLocaleDateString("en-US", {
           year: "numeric",
           month: "short",
           day: "numeric"
         });
 
-        const statusClass = entry.status?.toLowerCase() || "unknown";
+        const statusClass = purchase.status?.toLowerCase() || "unknown";
 
         const row = document.createElement("div");
         row.className = "billing-row";
         row.innerHTML = `
           <div class="billing-cell">${date}</div>
-          <div class="billing-cell">${entry.description || "N/A"}</div>
-          <div class="billing-cell">${Math.round(entry.amount)}</div>
+          <div class="billing-cell">${purchase.description || "N/A"}</div>
+          <div class="billing-cell">$${parseFloat(purchase.amount).toFixed(
+            2
+          )}</div>
           <div class="billing-cell">
             <span class="status-${statusClass}">
-              ${entry.status || "Unknown"}
+              ${purchase.status || "Unknown"}
             </span>
           </div>
           <div class="billing-cell">
             ${
-              entry.details
-                ? `<button class="details-btn">View</button>`
+              purchase.details
+                ? `<button class="details-btn" data-details='${JSON.stringify(
+                    purchase.details
+                  )}'>View Details</button>`
                 : "N/A"
             }
           </div>
         `;
         historyContainer.appendChild(row);
       });
+
+      // Add event listeners to "Details" buttons
+      document.querySelectorAll(".details-btn").forEach((button) => {
+        button.addEventListener("click", function () {
+          const details = JSON.parse(this.getAttribute("data-details"));
+          showPurchaseDetails(details);
+        });
+      });
     } catch (error) {
-      console.error("Error loading credit history:", error);
-      noHistoryMessage.textContent = "Error loading credit history.";
+      console.error("Error loading purchase history:", error);
+      noHistoryMessage.textContent = "Error loading purchase history.";
       noHistoryMessage.style.display = "block";
     }
   }
+
+  // Function to show purchase details in a modal
+  function showPurchaseDetails(details) {
+    const modal = document.getElementById("details-modal");
+    const modalContent = document.getElementById("details-modal-content");
+
+    if (!modal || !modalContent) return;
+
+    // Clear previous details
+    modalContent.innerHTML = "";
+
+    if (details.length === 0) {
+      modalContent.innerHTML = "<p>No details available for this purchase.</p>";
+    } else {
+      const list = document.createElement("ul");
+      details.forEach((item) => {
+        const listItem = document.createElement("li");
+        listItem.textContent = `${item.product} - Quantity: ${
+          item.quantity
+        }, Price: $${item.price.toFixed(2)}`;
+        list.appendChild(listItem);
+      });
+      modalContent.appendChild(list);
+    }
+
+    // Show the modal
+    modal.style.display = "block";
+  }
+
+  // Close modal when clicking outside or on close button
+  document.addEventListener("click", (event) => {
+    const modal = document.getElementById("details-modal");
+    if (
+      modal &&
+      (event.target === modal || event.target.classList.contains("close-modal"))
+    ) {
+      modal.style.display = "none";
+    }
+  });
 
   function displayPurchaseHistory(purchases) {
     const historyContainer = document.getElementById("billing-history-rows");
