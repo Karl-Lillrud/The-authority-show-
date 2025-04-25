@@ -5,7 +5,7 @@ import { fetchAllEpisodes, fetchEpisodesByPodcast } from "/static/requests/episo
 import { fetchTasks, fetchLocalDefaultTasks } from "/static/requests/podtaskRequest.js"
 
 // Import components
-import { renderTaskList } from "/static/js/episode-to-do/task-page.js"
+import { initTaskPageWithComments, renderEnhancedTaskList } from "/static/js/episode-to-do/task-page-integrations.js"
 import { renderKanbanBoard } from "/static/js/episode-to-do/kanban-page.js"
 import { renderWorkflowEditor } from "/static/js/episode-to-do/workflow-page.js"
 import {
@@ -18,7 +18,12 @@ import {
   setupEpisodeDropdown,
   populatePodcastSelector,
 } from "/static/js/episode-to-do/workspace-page.js"
-import { setupTabs, addModalStyles, addFlatpickrStyles, setupModalButtons } from "/static/js/episode-to-do/sidebar-header.js"
+import {
+  setupTabs,
+  addModalStyles,
+  addFlatpickrStyles,
+  setupModalButtons,
+} from "/static/js/episode-to-do/sidebar-header.js"
 
 document.addEventListener("DOMContentLoaded", async () => {
   // State management
@@ -76,6 +81,21 @@ document.addEventListener("DOMContentLoaded", async () => {
                 (task) => task.episodeId === state.selectedEpisode._id || task.episodeId === state.selectedEpisode.id,
               )
             : []
+
+          // Load comments for each task
+          if (state.tasks.length > 0) {
+            console.log("Loading comments for tasks...")
+            for (const task of state.tasks) {
+              try {
+                // We'll load comments when tasks are expanded to avoid too many requests at once
+                if (!task.comments) {
+                  task.comments = []
+                }
+              } catch (commentError) {
+                console.error("Error initializing comments for task:", commentError)
+              }
+            }
+          }
         }
       } else {
         // If no podcasts, try to fetch all episodes
@@ -96,6 +116,21 @@ document.addEventListener("DOMContentLoaded", async () => {
                 (task) => task.episodeId === state.selectedEpisode._id || task.episodeId === state.selectedEpisode.id,
               )
             : []
+
+          // Load comments for each task
+          if (state.tasks.length > 0) {
+            console.log("Loading comments for tasks...")
+            for (const task of state.tasks) {
+              try {
+                // We'll load comments when tasks are expanded to avoid too many requests at once
+                if (!task.comments) {
+                  task.comments = []
+                }
+              } catch (commentError) {
+                console.error("Error initializing comments for task:", commentError)
+              }
+            }
+          }
         }
       }
 
@@ -188,7 +223,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       populateEpisodeDropdown(state, updateUI)
 
       // Populate task list
-      renderTaskList(state, updateUI)
+      renderEnhancedTaskList(state, updateUI)
 
       // Populate kanban board
       renderKanbanBoard(state, updateUI)
@@ -219,5 +254,8 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     // Initial UI update
     updateUI()
+
+    // Initialize the task page with comment functionality
+    initTaskPageWithComments(state, updateUI)
   }
 })

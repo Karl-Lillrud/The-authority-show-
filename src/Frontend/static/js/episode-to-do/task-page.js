@@ -397,9 +397,48 @@ export async function toggleTaskCompletion(taskId, state, updateUI) {
   updateUI()
 }
 
+// Modify the toggleTaskExpansion function to handle comment loading properly
 export function toggleTaskExpansion(taskId, state, updateUI) {
+  // First toggle the state
   state.expandedTasks[taskId] = !state.expandedTasks[taskId]
+
+  // Update UI immediately to show the expansion
   updateUI()
+
+  // If the task is now expanded, load comments after the UI has updated
+  if (state.expandedTasks[taskId]) {
+    const task = state.tasks.find((t) => t.id === taskId || t._id === taskId)
+    if (task) {
+      // Add a loading indicator to the comments section
+      const commentsSection = document.querySelector(`.task-item[data-task-id="${taskId}"] .task-comments`)
+      if (commentsSection) {
+        commentsSection.innerHTML = `
+          <h4 class="comments-title">Comments</h4>
+          <div class="comments-loading">
+            <i class="fas fa-spinner fa-spin"></i> Loading comments...
+          </div>
+        `
+      }
+
+      // Load comments asynchronously with a slight delay to ensure UI responsiveness
+      setTimeout(() => {
+        import("/static/js/episode-to-do/comment-utils.js")
+          .then((module) => {
+            module.loadTaskComments(taskId, state, updateUI)
+          })
+          .catch((error) => {
+            console.error("Error loading comment utils:", error)
+            // Update UI to show error state
+            if (commentsSection) {
+              commentsSection.innerHTML = `
+              <h4 class="comments-title">Comments</h4>
+              <p class="comments-error">Failed to load comments. Please try again.</p>
+            `
+            }
+          })
+      }, 300)
+    }
+  }
 }
 
 export async function toggleTaskAssignment(taskId, state, updateUI) {

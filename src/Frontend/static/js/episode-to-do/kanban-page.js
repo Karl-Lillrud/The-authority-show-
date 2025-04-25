@@ -42,7 +42,6 @@ export function renderKanbanBoard(state, updateUI) {
   // Create the board header with title only (no settings)
   const boardHeader = document.createElement("div")
   boardHeader.className = "board-header"
-  boardHeader.innerHTML = `<h2>Kanban Board</h2>`
   kanbanBoard.appendChild(boardHeader)
 
   // Create the columns container with fixed width for each column

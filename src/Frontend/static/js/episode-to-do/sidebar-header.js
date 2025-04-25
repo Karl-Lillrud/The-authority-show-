@@ -57,6 +57,19 @@ export function addModalStyles() {
       align-items: center;
       z-index: 1000;
     }
+
+    #add-comment-modal {
+      z-index: 2000; /* Ensure comment modal is above other elements */
+    }
+
+    #add-comment-modal .popup-content {
+      max-width: 500px;
+      width: 90%;
+    }
+
+    #comment-text {
+      min-height: 100px;
+    }
     
     .popup-content {
       background-color: white;

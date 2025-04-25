@@ -27,7 +27,25 @@ export function formatDueDate(dueDate) {
 
 // Helper function to close any popup with animation
 export function closePopup(popup) {
+  if (!popup) return
+
   const popupContent = popup.querySelector(".popup-content")
+  if (!popupContent) {
+    // If it's a modal with modal-content instead of popup-content
+    const modalContent = popup.querySelector(".modal-content")
+    if (modalContent) {
+      popup.classList.remove("show")
+
+      // Remove popup after animation completes
+      setTimeout(() => {
+        if (popup && popup.parentNode) {
+          popup.parentNode.removeChild(popup)
+        }
+      }, 300)
+      return
+    }
+  }
+
   popupContent.classList.remove("show")
   popupContent.classList.add("hide")
 
