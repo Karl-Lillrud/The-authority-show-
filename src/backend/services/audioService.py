@@ -82,7 +82,7 @@ class AudioService:
             bg_b64        = fetch_sfx_for_emotion(dominant, "general")[0]   # 30 s-klipp
 
             # 3) Mixa bakgrunden under originalet ---------------------------
-            merged_wav    = mix_background(audio_bytes, bg_b64, bg_gain_db=-50)
+            merged_wav    = mix_background(audio_bytes, bg_b64, bg_gain_db=-35)
 
             #    👉 lägg till data-prefixet här!
             merged_b64    = "data:audio/wav;base64," + base64.b64encode(merged_wav).decode("utf-8")
