@@ -411,7 +411,7 @@ input:focus {
   display: flex;
   gap: 1rem;
   margin-top: 1rem;
-} 
+}
 
 .primary-button {
   background-color: var(--account-primary);
@@ -629,9 +629,9 @@ input:focus {
   border-radius: var(--account-radius);
   padding: 1.5rem;
   transition: transform 0.2s ease, box-shadow 0.2s ease;
-  display: flex; 
-  flex-direction: column; 
-  height: 100%; 
+  display: flex;
+  flex-direction: column;
+  height: 100%;
 }
 
 .plan-card:hover {
@@ -1020,10 +1020,11 @@ input:focus:invalid {
 }
 
 @media (max-width: 640px) {
-  .billing-header, .billing-row {
+  .billing-header,
+  .billing-row {
     grid-template-columns: 1fr 2fr 1fr;
   }
-  
+
   .billing-header .billing-cell:nth-child(4),
   .billing-row .billing-cell:nth-child(4) {
     display: none;
@@ -1074,3 +1075,41 @@ input:focus:invalid {
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
 }
 
+/* Modal Styles */
+.modal {
+  display: none;
+  position: fixed;
+  z-index: 1000;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  overflow: auto;
+  background-color: rgba(0, 0, 0, 0.4);
+}
+
+.modal-content {
+  background-color: #fff;
+  margin: 10% auto;
+  padding: 20px;
+  border: 1px solid #888;
+  width: 80%;
+  max-width: 500px;
+  border-radius: 8px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+.close-modal {
+  color: #aaa;
+  float: right;
+  font-size: 28px;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+.close-modal:hover,
+.close-modal:focus {
+  color: black;
+  text-decoration: none;
+  cursor: pointer;
+}

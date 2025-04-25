@@ -13,7 +13,7 @@ logger = logging.getLogger(__name__)
 def handle_successful_payment(session, user_id):
     """
     Handles logic after a successful Stripe payment.
-    Updates user credits using the CreditService.
+    Updates user credits using the CreditService and logs purchase details.
     """
     logger.info(
         f"Handling successful payment for user_id: {user_id}, session_id: {session.id}"
@@ -24,12 +24,28 @@ def handle_successful_payment(session, user_id):
 
     amount_paid = session.get("amount_total", 0) / 100
 
+    # Extract product details from session line_items
+    details = []
+    line_items = session.get("line_items", {}).get(
+        "data", []
+    )  # Safely access line_items.data
+    if not line_items:
+        logger.warning(
+            f"No line_items found in session {session.id} for user {user_id}"
+        )
+
+    for item in line_items:
+        product_name = item.get("description", "Unknown Product")
+        quantity = item.get("quantity", 1)
+        price = item.get("amount_total", 0) / 100  # Convert cents to dollars
+        details.append({"product": product_name, "quantity": quantity, "price": price})
+
     # Determine credits to add
     metadata = session.get("metadata", {})
     plan = metadata.get("plan", "")
     credits_to_add = int(metadata.get("credits", 0))
 
-    # If no credits specified in metadata, check if it's a credits-only purchase
+    # If no credits specified in metadata and no plan, fallback to credit pack mapping
     if credits_to_add == 0 and not plan:
         # Map amount to credits based on credit pack pricing
         credit_pack_mapping = {
@@ -44,16 +60,22 @@ def handle_successful_payment(session, user_id):
                 f"Falling back to amount-based credit calculation for user {user_id}: ${amount_paid} -> {credits_to_add} credits"
             )
 
-    if credits_to_add <= 0:
+    if credits_to_add <= 0 and not plan:
         logger.error(
             f"No credits determined to add for user {user_id} from session {session.id}. Amount paid: ${amount_paid}"
         )
         return
 
-    logger.info(f"Determined {credits_to_add} credits to add for user {user_id}")
+    # Generate a descriptive description based on purchased items
+    description_parts = []
+    if plan:
+        description_parts.append(f"{plan.capitalize()} Subscription")
+    if credits_to_add > 0:
+        description_parts.append(f"Credit Pack ({credits_to_add} credits)")
+    description = f"Purchase: {', '.join(description_parts)} (${amount_paid:.2f})"
 
     # --- Ensure Credit Document Exists using CreditService ---
-    existing_credits = credit_service.get_user_credits(user_id)
+    existing_credits = credit_service.get_store_credits(user_id)  # Updated method name
     if not existing_credits:
         # Initialize credits if not found
         credit_service.initialize_credits(user_id, initial_user=credits_to_add)
@@ -61,25 +83,29 @@ def handle_successful_payment(session, user_id):
             f"Initialized credits for user {user_id} with {credits_to_add} storeCredits"
         )
     else:
-        # Add credits to storeCredits
-        description = f"Credit purchase (${amount_paid:.2f})"
-        add_success = credit_service.add_credits(
-            user_id=user_id,
-            amount=credits_to_add,
-            credit_type="storeCredits",  # Fixed typo from 'credit' to 'credit_type'
-            description=description,
-        )
+        # Add credits to storeCredits if applicable
+        if credits_to_add > 0:
+            credit_description = f"Credit purchase (${amount_paid:.2f})"
+            add_success = credit_service.add_credits(
+                user_id=user_id,
+                amount=credits_to_add,
+                credit_type="storeCredits",
+                description=credit_description,
+            )
 
-        if not add_success:
-            logger.error(
-                f"CreditService failed to add {credits_to_add} storeCredits for user {user_id}."
-            )
-            purchase_status = "Paid - Credit Update Failed"
-            purchase_notes = f"CreditService.add_credits returned false. Credits added: {credits_to_add}"
+            if not add_success:
+                logger.error(
+                    f"CreditService failed to add {credits_to_add} storeCredits for user {user_id}."
+                )
+                purchase_status = "Paid - Credit Update Failed"
+                purchase_notes = f"CreditService.add_credits returned false. Credits added: {credits_to_add}"
+            else:
+                logger.info(
+                    f"Successfully added {credits_to_add} storeCredits for user {user_id} via CreditService."
+                )
+                purchase_status = "Paid"
+                purchase_notes = None
         else:
-            logger.info(
-                f"Successfully added {credits_to_add} storeCredits for user {user_id} via CreditService."
-            )
             purchase_status = "Paid"
             purchase_notes = None
 
@@ -89,10 +115,11 @@ def handle_successful_payment(session, user_id):
         "user_id": user_id,
         "date": datetime.utcnow(),
         "amount": amount_paid,
-        "description": f"Credit purchase (${amount_paid:.2f})",
+        "description": description,
+        "details": details,
         "status": purchase_status if "purchase_status" in locals() else "Paid",
         "session_id": session.id,
-        "credits_added": credits_to_add,
+        "credits_added": credits_to_add if credits_to_add > 0 else 0,
         "notes": purchase_notes if "purchase_notes" in locals() else None,
     }
 

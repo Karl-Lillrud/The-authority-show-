@@ -99,51 +99,18 @@ function setupAddToCartButtons() {
 }
 
 function setupCart() {
-  const cartButton = document.getElementById("cartButton"); // Button to open modal
-  const closeCartBtn = document.getElementById("closeCartBtn"); // Button inside modal
   const shoppingCart = document.getElementById("shoppingCart"); // The sidebar/modal
   const checkoutBtn = document.getElementById("checkoutBtn");
-  const viewportWidth = window.innerWidth;
 
   // Remove previous listeners to avoid duplicates on resize
-  cartButton.replaceWith(cartButton.cloneNode(true));
-  closeCartBtn.replaceWith(closeCartBtn.cloneNode(true));
-  document.removeEventListener("click", closeCartOnClickOutside);
   shoppingCart.replaceWith(shoppingCart.cloneNode(true)); // Reset might clear cart items, so reload
 
   // Re-fetch elements after cloning
-  const newCartButton = document.getElementById("cartButton");
-  const newCloseCartBtn = document.getElementById("closeCartBtn");
   const newShoppingCart = document.getElementById("shoppingCart");
   const newCheckoutBtn = document.getElementById("checkoutBtn");
 
   // Initialize cart from localStorage if available
   loadCartFromStorage();
-
-  if (viewportWidth <= 992) {
-    // Mobile: Modal behavior
-    newShoppingCart.classList.add("hidden"); // Start hidden on mobile
-    newShoppingCart.style.height = ""; // Ensure height is not fixed
-
-    newCartButton.addEventListener("click", (e) => {
-      e.stopPropagation();
-      newShoppingCart.classList.remove("hidden");
-    });
-
-    newCloseCartBtn.addEventListener("click", () => {
-      newShoppingCart.classList.add("hidden");
-    });
-
-    document.addEventListener("click", closeCartOnClickOutside);
-
-    newShoppingCart.addEventListener("click", (e) => {
-      e.stopPropagation();
-    });
-  } else {
-    // Desktop: Sidebar is always visible
-    newShoppingCart.classList.remove("hidden"); // Ensure visible
-    document.removeEventListener("click", closeCartOnClickOutside);
-  }
 
   // Handle checkout
   newCheckoutBtn.addEventListener("click", async function () {
