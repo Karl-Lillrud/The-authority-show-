@@ -257,7 +257,7 @@ def fetch_sfx_for_emotion(
     emotion: str,
     category: str,
     *,
-    loop_src_seconds: int = 3,
+    loop_src_seconds: int = 8,
     target_duration:  int = 30,
     crossfade_ms:     int = 250
 ) -> List[str]:
