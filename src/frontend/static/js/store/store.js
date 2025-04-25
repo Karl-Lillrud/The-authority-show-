@@ -159,6 +159,7 @@ function setupCart() {
       const subscriptionItems = cart.filter(
         (item) => item.type === "Subscription"
       );
+      const episodeItems = cart.filter((item) => item.type === "Episode Pack");
 
       // Validate cart: Only one type of purchase allowed
       if (creditItems.length > 0 && subscriptionItems.length > 0) {
@@ -170,7 +171,7 @@ function setupCart() {
         return;
       }
 
-      if (creditItems.length === 0 && subscriptionItems.length === 0) {
+      if (creditItems.length === 0 && subscriptionItems.length === 0  && episodeItems.length === 0) {
         alert("Your cart is empty or contains unsupported items.");
         this.disabled = false;
         this.textContent = "Complete the Purchase";
@@ -210,6 +211,17 @@ function setupCart() {
           amount: subscription.price.toFixed(2),
           plan: plan
         };
+      } else if (episodeItems.length > 0) {
+        // Handle episode pack purchase
+        let totalAmount = 0;
+        episodeItems.forEach((item) => {
+          totalAmount += item.price * item.quantity;
+        });
+
+        payload = {
+          amount: totalAmount.toFixed(2),
+          unlock: episodeItems[0]
+        };
       }
 
       // Make API call to create checkout session
@@ -229,7 +241,7 @@ function setupCart() {
         }, 2000);
         this.disabled = false;
         this.textContent = "Complete the Purchase";
-        return;
+        return; 
       }
 
       const data = await response.json();
