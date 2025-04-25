@@ -1,6 +1,7 @@
 import os, logging, tempfile, requests, subprocess, base64
 from typing import Optional
 from pydub import AudioSegment, silence
+from io import BytesIO 
 from backend.database.mongo_connection import get_fs
 from backend.utils.file_utils import enhance_audio_with_ffmpeg, detect_background_noise, convert_audio_to_wav,get_sentence_timestamps_fuzzy
 from backend.utils.ai_utils import (
@@ -100,20 +101,26 @@ class AudioService:
     
     def generate_background_and_mix(self, audio_bytes: bytes, emotion: str) -> dict:
         """
-        Given the raw audio bytes and the already-computed emotion label,
-        1) fetch a 30s SFX loop for that emotion
-        2) overlay it under the original audio
-        3) return both the loop and the mixed audio as data-URIs
+        1) Convert any input format into a real WAV (using pydub).
+        2) Fetch a 30s SFX loop for 'emotion'.
+        3) Overlay it underneath the newly-created WAV.
+        4) Return both the loop and the mixed audio as data-URIs.
         """
-        # 1) Fetch a single 30s background clip for the emotion:
+        # --- STEP 1: Turn incoming bytes into a valid WAV ---
+        # pydub will inspect the bytes and decode MP3, WAV, etc.
+        audio_seg = AudioSegment.from_file(BytesIO(audio_bytes))
+        wav_io    = BytesIO()
+        audio_seg.export(wav_io, format="wav")
+        wav_bytes = wav_io.getvalue()
+
+        # --- STEP 2: Fetch the 30s background clip ---
         bg_b64 = fetch_sfx_for_emotion(emotion, "general")[0]
 
-        # 2) Mix that clip under the original audio
-        merged_wav = mix_background(audio_bytes, bg_b64, bg_gain_db=-35)
+        # --- STEP 3: Mix that clip under the real WAV bytes ---
+        merged_wav_bytes = mix_background(wav_bytes, bg_b64, bg_gain_db=-35)
 
-        # 3) Prefix the merged WAV as a base64 data-URI
-        merged_prefixed = "data:audio/wav;base64," + base64.b64encode(merged_wav).decode()
-
+        # --- STEP 4: Prefix as data-URI and return ---
+        merged_prefixed = "data:audio/wav;base64," + base64.b64encode(merged_wav_bytes).decode()
         return {
             "background_clip": bg_b64,
             "merged_audio":   merged_prefixed

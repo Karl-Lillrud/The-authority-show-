@@ -398,61 +398,70 @@ async function runVoiceIsolation() {
     const input = document.getElementById('audioUploader');
     const file = input.files[0];
     if (!file) return alert("Upload an audio file first.");
-
+  
     const resultContainer = document.getElementById("isolatedVoiceResult");
     const episodeId = sessionStorage.getItem("selected_episode_id");
     if (!episodeId) return alert("❌ No episode selected.");
-
+  
     try {
-        await consumeStoreCredits("voice_isolation");
+      await consumeStoreCredits("voice_isolation");
     } catch (err) {
-        resultContainer.innerText = `❌ Not enough credits: ${err.message}`;
-        return;
+      resultContainer.innerText = `❌ Not enough credits: ${err.message}`;
+      return;
     }
-
+  
     resultContainer.innerText = "🎙️ Isolating voice using ElevenLabs...";
-
+  
     const formData = new FormData();
     formData.append("audio", file);
     formData.append("episode_id", episodeId);
-
+  
     try {
-        const response = await fetch("/transcription/voice_isolate", {
-            method: "POST",
-            body: formData
-        });
-
-        const data = await response.json();
-        if (!response.ok) throw new Error(data.error || "Voice isolation failed.");
-
-        const blobUrl = data.isolated_blob_url;
-
-        // ✅ Use backend proxy to avoid CORS
-        const audioRes = await fetch(`/transcription/get_isolated_audio?url=${encodeURIComponent(blobUrl)}`);
-        const blob = await audioRes.blob();
-        const url = URL.createObjectURL(blob);
-
-        isolatedAudioBlob = blob;
-        activeAudioBlob = blob;
-        activeAudioId = "external";
-
-        resultContainer.innerHTML = `
-            <p>🎧 Isolated Audio</p>
-            <audio controls src="${url}" style="width: 100%;"></audio>
-        `;
-
-        document.getElementById("audioAnalysisSection").style.display = "block";
-        document.getElementById("audioCuttingSection").style.display = "block";
-        document.getElementById("aiCuttingSection").style.display = "block";
-
-        const dl = document.getElementById("downloadIsolatedVoice");
-        dl.href = url;
-        dl.style.display = "inline-block";
+      const response = await fetch("/transcription/voice_isolate", {
+        method: "POST",
+        body: formData
+      });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || "Voice isolation failed.");
+  
+      // Fetch the actual blob via proxy
+      const blobUrl = data.isolated_blob_url;
+      const audioRes = await fetch(`/transcription/get_isolated_audio?url=${encodeURIComponent(blobUrl)}`);
+      const blob = await audioRes.blob();
+      const url  = URL.createObjectURL(blob);
+  
+      // Set the isolated audio as active
+      isolatedAudioBlob = blob;
+      activeAudioBlob   = blob;
+      activeAudioId     = "external";
+  
+      // Show the isolated audio player
+      resultContainer.innerHTML = `
+        <p>🎧 Isolated Audio</p>
+        <audio controls src="${url}" style="width: 100%;"></audio>
+      `;
+  
+      // Reveal the analysis UI
+      document.getElementById("audioAnalysisSection").style.display = "block";
+      document.getElementById("audioCuttingSection").style.display  = "block";
+      document.getElementById("aiCuttingSection").style.display     = "block";
+  
+      // Hide the mix button until analysis completes
+      const mixBtn = document.getElementById("mixBackgroundBtn");
+      mixBtn.style.display = "none";
+  
+      // Wire up the download link for the isolated audio
+      const dl = document.getElementById("downloadIsolatedVoice");
+      dl.href           = url;
+      dl.style.display  = "inline-block";
+  
+      // Optionally: automatically start analysis on the isolated audio
+      // await analyzeEnhancedAudio();
     } catch (err) {
-        console.error("Voice isolation failed:", err);
-        resultContainer.innerText = `❌ Isolation failed: ${err.message}`;
+      console.error("Voice isolation failed:", err);
+      resultContainer.innerText = `❌ Isolation failed: ${err.message}`;
     }
-}
+  }
 
 
 
