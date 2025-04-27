@@ -4,7 +4,6 @@ import os
 from dotenv import load_dotenv
 import logging
 from gridfs import GridFS
-# from colorama import Fore, Style, init  # Import colorama for styled logs
 
 mongo_bp = Blueprint("mongo_bp", __name__)
 
