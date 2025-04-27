@@ -1,28 +1,8 @@
-/* Sidebar Component Styles */
-:root {
-  --sidebar-width: 260px;
-  --sidebar-collapsed-width: 80px;
-  --sidebar-bg: #ffffff;
-  --sidebar-border: rgba(0, 0, 0, 0.05);
-  --sidebar-item-hover: rgba(255, 127, 63, 0.1);
-  --sidebar-item-active: rgba(255, 127, 63, 0.15);
-  --highlight-color: #ff7f3f;
-  --highlight-hover: #e0662c;
-  --text-color-light: #6e7f8d;
-  --transition-normal: 0.3s ease;
-  --spacing-xs: 4px;
-  --spacing-sm: 8px;
-  --spacing-md: 16px;
-  --spacing-lg: 24px;
-  --spacing-xl: 32px;
-  --radius-medium: 12px;
-}
-
 /* Sidebar Styles */
 .sidebar {
   position: absolute;
   top: 0;
-  height: calc(100vh - var(--header-height, 80px));
+  min-height: 100%;
   width: var(--sidebar-width);
   background-color: var(--sidebar-bg);
   border-right: 1px solid var(--sidebar-border);
@@ -145,6 +125,7 @@
   cursor: pointer; /* Ensure cursor shows it's clickable */
   position: relative; /* For z-index stacking */
   z-index: 1; /* Ensure it's above any decorative elements */
+  font-weight: 300; /* Thin font weight by default */
 }
 
 /* Improve hover state */
@@ -157,6 +138,7 @@
 .sidebar-menu-item.active .sidebar-menu-link {
   background-color: var(--sidebar-item-active); /* Light orange background */
   color: var(--highlight-color); /* Orange text */
+  font-weight: 700; /* Bold font weight when active */
 }
 
 .sidebar-icon {
@@ -310,7 +292,6 @@
   padding: var(--spacing-lg);
   transition: margin-left var(--transition-normal);
   margin-left: 0; /* reduce or remove the sidebar offset */
-  min-height: calc(100vh - var(--header-height, 60px));
 }
 
 .sidebar.collapsed + .main-content {
@@ -318,6 +299,10 @@
 }
 
 @media (max-width: 768px) {
+  .main-content {
+    min-height: auto;
+  }
+  
   .sidebar {
     width: 100%;
     height: auto;
@@ -330,6 +315,7 @@
 
   .sidebar-header {
     padding: var(--spacing-md); /* Minska padding */
+    display: none;
   }
 
   .sidebar-menu-link {
@@ -354,6 +340,7 @@
 
   .sidebar-footer {
     padding: var(--spacing-sm); /* Minska padding */
+    display: none;
   }
 
   /* Se till att sidebar-content alltid är synlig */
@@ -405,6 +392,7 @@
     display: block; /* Ändra från grid till block */
     margin-top: var(--spacing-md);
     border-top: 1px solid var(--sidebar-border);
+    border-bottom: 0px;
   }
 
   .sidebar-action-button {

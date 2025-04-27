@@ -7,7 +7,7 @@
   <div class="logo-title-container">
     <a href="{{ url_for('dashboard_bp.dashboard') }}" class="logo-container">
       <img
-        src="{{ url_for('static', filename='images/PodManagerLogo.png') }}"
+        src="{{ url_for('static', filename='images/PodManagerLogoBeta.png') }}"
         alt="PodManager Logo"
       />
     </a>
@@ -21,18 +21,30 @@
         <!-- JS will insert options here -->
       </div>
     </div>
+    <!-- New Credits Display Field -->
+    <!-- Credits & Buy Button -->
+    <div class="credits-wrapper">
+      <span class="credit-text"><span id="user-credits">Loading...</span></span>
+      <button id="buy-credits-btn">💳 Buy Credits</button>
+    </div>
 
+    <!-- Hamburger menu -->
     <div class="menu-toggle" onclick="toggleMenu()">
       <span></span>
       <span></span>
       <span></span>
     </div>
+  </nav>
+
+  <script>
+    const currentUserID = "{{ session['user_id'] or '' }}";
+  </script>
     <div class="menu" id="menu">
       <a href="{{ url_for('dashboard_bp.account') }}">Account</a>
-      <a href="{{ url_for('dashboard_bp.taskmanagement') }}">Episode To-Do</a>
+      <a href="{{ url_for('dashboard_bp.episodetodo') }}">Episode To-Do</a>
       <a href="{{ url_for('dashboard_bp.team') }}">Team Management</a>
       <a href="{{ url_for('dashboard_bp.podcastmanagement') }}">Podcast Management</a>
-      <a href="#" id="ai-edit-link" target="_blank">AI Edit</a>
+    
       <a href="#" class="dropdown-trigger" onclick="toggleLandingPage()">Landing Pages<span id="triangle" class="triangle-down"></span></a>
       <!-- Dropdown content that will appear next to the "Landing Page" link -->
       <div class="dropdown-lp-content" id="dropdown-lp-content">
@@ -40,7 +52,8 @@
           <!-- Podcast options will be inserted here dynamically -->
         </div>
       </div>
-      <a href="{{ url_for('auth_bp.signin') }}" id="logout-link">Log out</a>
+      <a href="{{ url_for('dashboard_bp.store') }}">Store</a>
+      <a href="#" id="logout-link">Log out</a>
     </div>
   </nav>
 </header>
@@ -60,5 +73,6 @@
 <script
   type="module"
   src="{{ url_for('static', filename='js/components/header.js') }}"
+  
 ></script>
 

@@ -1,42 +1,3 @@
-:root {
-  --background-light: #eff2f9;
-  --background-dark: #1c1c1c;
-  --light-shadow-light: #ffffff;
-  --dark-shadow-light: rgba(22, 24, 29, 0.15);
-  --light-shadow-dark: rgba(255, 255, 255, 0.1);
-  --dark-shadow-dark: rgba(0, 0, 0, 0.8);
-  --text-color-light: #6e7f8d;
-  --text-color-dark: #b3b3b3;
-  --highlight-color: #ff7f3f;
-  --highlight-hover: #e0662c;
-  --error-color: #ff3b30;
-  --success-color: #4caf50;
-  --font-primary: "Inter", "Segoe UI", "Arial", sans-serif;
-  --font-secondary: "Avenir Next", sans-serif;
-  --spacing-xs: 4px;
-  --spacing-sm: 8px;
-  --spacing-md: 16px;
-  --spacing-lg: 24px;
-  --spacing-xl: 32px;
-  --radius-large: 20px;
-  --radius-medium: 12px;
-  --radius-small: 6px;
-  --transition-normal: 0.3s ease;
-  --card-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05),
-    0 8px 10px -6px rgba(0, 0, 0, 0.02);
-  --card-shadow-hover: 0 20px 35px -10px rgba(0, 0, 0, 0.1),
-    0 10px 15px -5px rgba(0, 0, 0, 0.05);
-  --button-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1),
-    0 2px 4px -1px rgba(0, 0, 0, 0.06);
-}
-
-/* Reset styles - only apply to dashboard elements to avoid conflicts */
-.dashboard * {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
-}
-
 /* Avoid styling the body directly to prevent conflicts with base.html */
 /* Instead, style the dashboard container */
 .dashboard {
@@ -59,13 +20,6 @@
   padding: var(--spacing-md) 0;
   flex-wrap: wrap;
   gap: var(--spacing-md);
-}
-
-.welcome-message h1 {
-  font-size: 1.8rem;
-  font-weight: 700;
-  color: rgba(0, 0, 0, 0.85);
-  margin-bottom: var(--spacing-xs);
 }
 
 .welcome-message p {
@@ -100,7 +54,7 @@
 
 .action-button:hover {
   transform: translateY(-2px);
-  box-shadow: var(--card-shadow-hover);
+  box-shadow: var(--card-shadow-hover2);
   color: var(--highlight-color);
 }
 
@@ -130,7 +84,7 @@
 
 .stat-card:hover {
   transform: translateY(-3px);
-  box-shadow: var(--card-shadow-hover);
+  box-shadow: var(--card-shadow-hover2);
 }
 
 .stat-icon {
@@ -141,6 +95,12 @@
   align-items: center;
   justify-content: center;
   color: white;
+}
+
+.svg-placeholder {
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .podcast-icon {
@@ -166,7 +126,6 @@
 .stat-value {
   font-size: 1.8rem;
   font-weight: 700;
-  color: rgba(0, 0, 0, 0.85);
   margin-bottom: 2px;
 }
 
@@ -220,9 +179,6 @@
 }
 
 .section-header h2 {
-  font-size: 1.5rem;
-  font-weight: 700;
-  color: rgba(0, 0, 0, 0.8);
   position: relative;
   padding-bottom: var(--spacing-xs);
 }
@@ -360,8 +316,8 @@
   border-radius: 50%;
   background: conic-gradient(
     var(--highlight-color) 0%,
-    var(--highlight-color) var(--progress),
-    rgba(0, 0, 0, 0.05) var(--progress),
+    var(--highlight-color) calc(var(--progress, 0) * 1%),
+    rgba(0, 0, 0, 0.05) calc(var(--progress, 0) * 1%),
     rgba(0, 0, 0, 0.05) 100%
   );
   position: relative;
@@ -440,15 +396,41 @@
   background-color: #ff9800;
 }
 
-.timeline-content {
-  flex: 1;
+.timeline-icon.podcast {
+  background-color: #4caf50; /* Same as podcastIcon */
 }
 
-.timeline-content h4 {
-  font-size: 0.95rem;
-  font-weight: 600;
-  color: rgba(0, 0, 0, 0.8);
-  margin-bottom: 2px;
+.timeline-icon.podcast-deleted {
+  background-color: #e74c3c; /* Red for deleted podcast */
+}
+
+.timeline-icon.episode-created {
+  background-color: #2196f3; /* Blue for created episode */
+}
+.timeline-icon.episode-updated {
+  background-color: #ff9800; /* Orange for updated episode */
+}
+.timeline-icon.episode-deleted {
+  background-color: #e74c3c; /* Red for deleted episode */
+}
+.timeline-icon.team-created {
+  background-color: #9c27b0; /* Purple for team created */
+}
+.timeline-icon.team-deleted {
+  background-color: #e74c3c; /* Red for team deleted */
+}
+.timeline-icon.tasks-added {
+  background-color: #ff9800; /* Orange for tasks added */
+}
+.timeline-icon.podcast-created {
+  background-color: #4caf50; /* Green for podcast created */
+}
+.timeline-icon.podcast-deleted {
+  background-color: #e74c3c; /* Red for podcast deleted */
+}
+
+.timeline-content {
+  flex: 1;
 }
 
 .timeline-content p {
@@ -460,6 +442,21 @@
 .timeline-time {
   font-size: 0.75rem;
   color: rgba(0, 0, 0, 0.5);
+}
+
+.activity-timeline-scroll {
+  max-height: 600px; /* Adjust height for ~5 items depending on your item height */
+  overflow-y: auto;
+  padding-right: 4px; /* For scrollbar space */
+}
+
+/* Optional: prettier scrollbar */
+.activity-timeline-scroll::-webkit-scrollbar {
+  width: 6px;
+}
+.activity-timeline-scroll::-webkit-scrollbar-thumb {
+  background: #e0e0e0;
+  border-radius: 3px;
 }
 
 /* Episodes Section */
@@ -491,7 +488,7 @@
 
 .episode-card:hover {
   transform: translateY(-5px);
-  box-shadow: var(--card-shadow-hover);
+  box-shadow: var(--card-shadow-hover2);
 }
 
 .card-header {
@@ -762,111 +759,6 @@
   left: 100%;
 }
 
-/* Popup - use the same styling as in podcastmanagement.css */
-.popup {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background-color: rgba(0, 0, 0, 0.5);
-  display: none;
-  justify-content: center;
-  align-items: center;
-  z-index: 1000; /* High z-index but below header */
-  backdrop-filter: blur(5px);
-  transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-  opacity: 0;
-  visibility: hidden;
-}
-
-.popup[style*="display: flex"] {
-  opacity: 1;
-  visibility: visible;
-}
-
-.popup-content {
-  background-color: white;
-  border-radius: var(--radius-large);
-  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
-  padding: var(--spacing-xl);
-  width: 90%;
-  max-width: 600px;
-  position: relative;
-  transform: scale(0.95);
-  transition: transform 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-  overflow-x: hidden;
-  max-height: 85vh;
-  overflow-y: auto;
-}
-
-.popup[style*="display: flex"] .popup-content {
-  transform: scale(1);
-}
-
-.close-btn {
-  position: absolute;
-  top: var(--spacing-md);
-  right: var(--spacing-md);
-  width: 40px;
-  height: 40px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 1.5rem;
-  color: var(--text-color-light);
-  background-color: white;
-  border-radius: 50%;
-  cursor: pointer;
-  transition: all var(--transition-normal);
-  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-  z-index: 10;
-}
-
-.close-btn:hover {
-  color: var(--highlight-color);
-  transform: rotate(90deg);
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
-}
-
-.popup-content h2 {
-  margin-bottom: var(--spacing-lg);
-  color: rgba(0, 0, 0, 0.8);
-  text-align: center;
-  font-size: 1.8rem;
-  font-weight: 700;
-  position: relative;
-  padding-bottom: 15px;
-}
-
-.popup-content h2::after {
-  content: "";
-  position: absolute;
-  bottom: 0;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 60px;
-  height: 3px;
-  background-color: var(--highlight-color);
-  border-radius: 3px;
-}
-
-.popup-body {
-  color: var(--text-color-light);
-}
-
-.popup-body p {
-  margin-bottom: var(--spacing-md);
-  line-height: 1.6;
-}
-
-.popup-body .btn {
-  margin-top: var(--spacing-lg);
-  display: block;
-  width: 100%;
-  padding: var(--spacing-md);
-}
-
 /* Error Message */
 .error-message {
   background-color: rgba(231, 76, 60, 0.1);
@@ -954,10 +846,6 @@
     flex-direction: column;
     align-items: flex-start;
     gap: var(--spacing-sm);
-  }
-
-  .popup-content {
-    padding: var(--spacing-lg);
   }
 
   .action-button {

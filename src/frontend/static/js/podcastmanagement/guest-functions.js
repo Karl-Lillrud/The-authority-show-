@@ -1,6 +1,7 @@
 import {
   fetchGuestsRequest,
-  addGuestRequest
+  addGuestRequest,
+  deleteGuestRequest
 } from "../../../static/requests/guestRequests.js";
 import {
   fetchEpisodesByPodcast,
@@ -8,11 +9,11 @@ import {
 } from "../../../static/requests/episodeRequest.js";
 import { fetchPodcasts } from "../../../static/requests/podcastRequests.js";
 import {
-  showNotification,
   updateEditButtons,
   shared
 } from "./podcastmanagement.js";
 import { renderEpisodeDetail } from "./episode-functions.js";
+import { showNotification } from "../components/notifications.js";
 
 /// New function to fetch and render guest options into a select element
 export async function renderGuestSelection(
@@ -338,7 +339,7 @@ export function renderGuestDetail(guest) {
 </div>
 
 <div class="detail-actions">
-  <button class="delete-btn" id="delete-guest-btn" data-id="${guest._id}">
+  <button class="delete-btn" id="delete-guest-btn" data-id="${guest.id}">
     ${shared.svgpodcastmanagement.delete} Delete Guest
   </button>
 </div>
@@ -399,10 +400,22 @@ export function renderGuestDetail(guest) {
   });
 
   // Delete button event listener
-  document.getElementById("delete-guest-btn").addEventListener("click", () => {
+  document.getElementById("delete-guest-btn").addEventListener("click", async () => {
     if (confirm("Are you sure you want to delete this guest?")) {
-      // Logic to delete the guest
-      console.log("Delete guest:", guest._id);
+      try {
+        const response = await deleteGuestRequest(guest.id);
+        if (response && response.message === "Guest deleted successfully") {
+          console.log("Guest deleted:", guest.id);
+          showNotification("Success", "Guest deleted successfully!", "success");
+          // Optionally, refresh the guest list or navigate away
+        } else {
+          console.error("Failed to delete guest:", response.error || "Unknown error");
+          showNotification("Error", response.error || "Failed to delete guest.", "error");
+        }
+      } catch (error) {
+        console.error("Error deleting guest:", error);
+        showNotification("Error", "An error occurred while deleting the guest.", "error");
+      }
     }
   });
 }
@@ -436,34 +449,19 @@ export function initGuestFunctions() {
       const guestDescription = document
         .getElementById("guest-description")
         .value.trim();
-      const guestTags = document
-        .getElementById("guest-tags")
-        .value.split(",")
-        .map((tag) => tag.trim())
-        .filter(Boolean);
       const guestAreas = document
         .getElementById("guest-areas")
         .value.split(",")
         .map((area) => area.trim())
         .filter(Boolean);
       const guestEmail = document.getElementById("guest-email").value.trim();
-      const guestLinkedIn = document
-        .getElementById("guest-linkedin")
-        .value.trim();
-      const guestTwitter = document
-        .getElementById("guest-twitter")
-        .value.trim();
-
       // Log the collected data
       console.log("Collected Guest Data:", {
         episodeId,
         guestName,
         guestDescription,
-        guestTags,
         guestAreas,
-        guestEmail,
-        guestLinkedIn,
-        guestTwitter
+        guestEmail
       });
 
       // Ensure required fields are filled in
@@ -474,11 +472,8 @@ export function initGuestFunctions() {
             episodeId,
             name: guestName,
             description: guestDescription,
-            tags: guestTags,
             areasOfInterest: guestAreas,
-            email: guestEmail,
-            linkedin: guestLinkedIn,
-            twitter: guestTwitter
+            email: guestEmail
           });
 
           // Fetch the episode details
@@ -489,11 +484,8 @@ export function initGuestFunctions() {
             episodeId, // Ensure episodeId is correctly set
             name: guestName,
             description: guestDescription,
-            tags: guestTags,
             areasOfInterest: guestAreas,
-            email: guestEmail,
-            linkedin: guestLinkedIn,
-            twitter: guestTwitter
+            email: guestEmail
           });
 
           // Log the response from the backend

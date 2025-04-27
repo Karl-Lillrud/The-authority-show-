@@ -4,6 +4,10 @@ import openai
 import logging
 from textblob import TextBlob
 from textstat import textstat
+from transformers import pipeline
+from typing import List
+
+emotion_classifier = pipeline("text-classification", model="bhadresh-savani/distilbert-base-uncased-emotion")
 
 logger = logging.getLogger(__name__)
 
@@ -58,3 +62,15 @@ def calculate_clarity_score(cleaned_transcript: str) -> str:
         f"Readability (Flesch-Kincaid Score): {readability_score}\n"
         f"Filler Word Penalty: {filler_penalty}\n"
     )
+
+def analyze_emotions(text: str) -> List[dict]:
+    sentences = text.split(". ")
+    results = []
+    for sentence in sentences:
+        if sentence.strip():
+            result = emotion_classifier(sentence)
+            results.append({
+                "text": sentence,
+                "emotions": result  # List of dicts with label + score
+            })
+    return results

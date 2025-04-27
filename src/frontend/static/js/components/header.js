@@ -1,16 +1,18 @@
 import { fetchPodcasts } from "/static/requests/podcastRequests.js";
 
 document.addEventListener("DOMContentLoaded", () => {
-  const aiEditLink = document.getElementById("ai-edit-link");
-  if (aiEditLink) {
-    const host = window.location.hostname;
-    const streamlitURL = `http://${host}:8501/`;
-    aiEditLink.href = streamlitURL;
-  }
-
   populateHeaderPodcastDropdown();
   populateLandingPageDropdown();
   setDynamicPageTitle();
+  populateStoreCredits();
+
+  const buyBtn = document.getElementById("buy-credits-btn");
+  if (buyBtn) {
+    buyBtn.addEventListener("click", () => {
+      // Remove localStorage dependency and navigate directly to billing
+      window.location.href = `/store`;
+    });
+  }
 });
 
 // 🔽 Landing Page Dropdown
@@ -57,7 +59,8 @@ async function populateLandingPageDropdown() {
 // 🔽 Header Dropdown for `/podcast/:id`
 async function populateHeaderPodcastDropdown() {
   const dropdownContainer = document.getElementById("headerPodcastDropdown");
-  const dropdownSelected = dropdownContainer.querySelector(".dropdown-selected");
+  const dropdownSelected =
+    dropdownContainer.querySelector(".dropdown-selected");
   const dropdownOptions = dropdownContainer.querySelector(".dropdown-options");
 
   try {
@@ -78,7 +81,7 @@ async function populateHeaderPodcastDropdown() {
       dropdownOptions.appendChild(option);
     });
 
-    dropdownSelected.addEventListener("click", () => {
+    dropdownContainer.addEventListener("click", () => {
       dropdownOptions.style.display =
         dropdownOptions.style.display === "block" ? "none" : "block";
     });
@@ -90,6 +93,32 @@ async function populateHeaderPodcastDropdown() {
     });
   } catch (err) {
     console.error("Error populating header podcast dropdown:", err);
+  }
+}
+
+// Function to fetch and display user credits
+async function populateStoreCredits() {
+  try {
+    const creditsElement = document.getElementById("user-credits");
+    if (!creditsElement) return; // Skip if element doesn't exist
+
+    const response = await fetch("/api/credits", {
+      credentials: "same-origin" // Include cookies for auth
+    });
+
+    // Handle non-JSON responses or errors
+    if (!response.ok) {
+      console.warn("Failed to fetch credits:", response.status);
+      creditsElement.textContent = "-";
+      return;
+    }
+
+    const data = await response.json();
+    creditsElement.textContent = data.availableCredits;
+  } catch (err) {
+    console.error("Error fetching user credits:", err);
+    const creditsElement = document.getElementById("user-credits");
+    if (creditsElement) creditsElement.textContent = "-";
   }
 }
 
@@ -142,9 +171,20 @@ if (cancelLogout) {
   });
 }
 if (confirmLogout) {
-  confirmLogout.addEventListener("click", () => {
-    document.cookie = "remember_me=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
-    window.location.href = logoutLink.href;
+  confirmLogout.addEventListener("click", async () => {
+    try {
+      const response = await fetch("/logout", { method: "GET" });
+      const result = await response.json();
+      if (response.ok) {
+        window.location.href = result.redirect_url || "/signin";
+      } else {
+        console.error("Logout failed:", result.message);
+        alert("Failed to log out. Please try again.");
+      }
+    } catch (error) {
+      console.error("Error during logout:", error);
+      alert("An error occurred. Please try again.");
+    }
   });
 }
 window.addEventListener("click", (e) => {
@@ -175,9 +215,9 @@ function setDynamicPageTitle() {
       "/account": "Account",
       "/podcastmanagement": "Podcast Management",
       "/dashboard": "Dashboard",
-      "/team": "Team Members",
+      "/team": "Team Management",
       "/guest": "Guest View",
-      "/taskmanagement": "Task Management",
+      "/episode-to-do": "Episode To-Do",
     };
 
     const currentPath = window.location.pathname;

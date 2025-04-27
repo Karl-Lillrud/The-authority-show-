@@ -1,5 +1,15 @@
 {% extends "components/base.html" %} 
 {% block title %}Team Leaderboard Dashboard{% endblock %} 
+
+{% block head_extra %}
+  <!-- Link to the main account CSS -->
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/account/account.css') }}">
+  <!-- Link to the subscription CSS -->
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/account/subscription.css') }}">
+  <!-- Remove any incorrect link to notification.css from here -->
+  <!-- <link rel="stylesheet" href="{{ url_for('static', filename='css/account/notification.css') }}"> --> 
+{% endblock %}
+
 {% block content %}
 <head>
   <script async src="https://www.googletagmanager.com/gtag/js?id=G-PTPQQ5WSQV"></script>
@@ -13,8 +23,6 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Account Settings</title> 
-<link rel="stylesheet" href="{{ url_for('static', filename='css/account/account.css') }}" />
-<link rel="stylesheet" href="{{ url_for('static', filename='css/account/notification.css') }}" />
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
 </head>
 <body>
@@ -28,8 +36,6 @@
       </a>
       <div class="header-content">
         <h1>Account Settings</h1>
-        <!-- Notification Container -->
-        <div id="header-notifications" class="notifications-container"></div>
       </div>
     </div>
 
@@ -45,20 +51,15 @@
               </svg>
               Profile
             </li>
-            <li class="sidebar-item" data-toggle="submenu" tabindex="0">
+            <li class="sidebar-item" data-target="settings-purchases" tabindex="0">
               <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon">
-                <rect width="18" height="11" x="3" y="11" rx="2" ry="2"></rect>
-                <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+                <rect x="2" y="5" width="20" height="14" rx="2"></rect>
+                <line x1="2" y1="10" x2="22" y2="10"></line>
+                <circle cx="7" cy="15" r="2"></circle>
+                <circle cx="16" cy="15" r="2"></circle>
               </svg>
-              Security
-              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="chevron">
-                <path d="m9 18 6-6-6-6"></path>
-              </svg>
+              Purchases
             </li>
-            <ul class="submenu">
-              <li class="submenu-item" data-target="security-2fa" tabindex="0">Two-Factor Authentication</li>
-              <li class="submenu-item" data-target="security-recovery" tabindex="0">Password Recovery</li>
-            </ul>
             <li class="sidebar-item" data-toggle="submenu" tabindex="0">
               <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon">
                 <path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z" />
@@ -71,7 +72,6 @@
             </li>
             <ul class="submenu">
               <li class="submenu-item" data-target="profile-section" tabindex="0">Edit Profile</li>
-              <li class="submenu-item" data-target="settings-password" tabindex="0">Change Password</li>
               <li class="submenu-item" data-target="settings-delete" tabindex="0">Delete Account</li>
             </ul>
             <li class="sidebar-item" data-toggle="submenu" tabindex="0">
@@ -87,420 +87,348 @@
             </li>
             <ul class="submenu">
               <li class="submenu-item" data-target="subscription-choose" tabindex="0">Choose Subscription</li>
-              <li class="submenu-item" data-target="subscription-change" tabindex="0">Change Subscription</li>
+              <li class="submenu-item" data-target="subscription-change" tabindex="0">Payment Method</li>
             </ul>
+            <button id="back-to-main-menu" class="back-button">
+              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon">
+                <path d="m15 18-6-6 6-6"></path>
+              </svg>
+              Back to Main Menu
+            </button>
           </ul>
-          <button id="back-to-main-menu" class="back-button">
-            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon">
-              <path d="m15 18-6-6 6-6"></path>
-            </svg>
-            Back to Main Menu
-          </button>
         </nav>
       </aside>
 
       <!-- Main Content Area -->
       <section class="main-content">
-        <!-- Profile Section -->
-        <div id="profile-section" class="settings-section active">
-          <div class="section-header">
-            <h2>Profile Information</h2>
-            <p>Manage your personal information and how it appears across services</p>
-          </div>
-          
-          <div class="profile-content">
-            <div class="profile-pic-container">
-              <div class="profile-pic-wrapper">
-                <img id="profile-pic" src="/placeholder.svg?height=120&width=120" alt="Profile Picture">
-                
-                <div class="profile-pic-overlay">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="edit-icon">
-                    <path d="M12 20h9"></path>
-                    <path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"></path>
-                  </svg>
+        <div class="settings-sections-container">
+          <!-- Profile Section -->
+          <div id="profile-section" class="settings-section active">
+            <div class="section-header">
+              <h2>Profile Information</h2>
+              <p>View your personal information</p>
+            </div>
+            
+            <div class="profile-content">
+              <div class="profile-pic-container">
+                <div class="profile-pic-wrapper">
+                  <img id="profile-pic" src="{{ profile_pic_url or url_for('static', filename='images/profilepic.png') }}" alt="Profile Picture">
+                  <div class="profile-pic-overlay">
+                    <i class="fas fa-camera"></i>
+                    <span>Change Photo</span>
+                  </div>
+                  <!-- Ensure this hidden file input exists -->
+                  <input type="file" id="profile-pic-input" accept="image/*" style="display: none;"> 
                 </div>
+                <button id="upload-pic" class="btn btn-secondary upload-btn">
+                  <i class="fas fa-upload"></i> Change Photo
+                </button>
               </div>
-              <button id="upload-pic" class="upload-button">Change Photo</button>
             </div>
             
             <!-- Notification Container -->
             <div id="profile-notifications" class="notifications-container"></div>
             
-            <form id="profile-form" class="profile-form">
+            <!-- Profile Information Card -->
+            <div class="profile-info-card">
+              <div class="profile-info-item">
+                <div class="info-label">Full Name</div>
+                <div class="info-value" id="display-full-name">Loading...</div>
+              </div>
+              
+              <div class="profile-info-item">
+                <div class="info-label">Email Address</div>
+                <div class="info-value" id="display-email">Loading...</div>
+              </div>
+              
+              <div class="profile-info-item">
+                <div class="info-label">Phone Number</div>
+                <div class="info-value" id="display-phone">Not provided</div>
+              </div>
+            </div>
+            
+            <!-- Edit Profile Button -->
+            <div class="profile-actions">
+              <button type="button" class="primary-button" id="edit-profile-btn">Edit Profile</button>
+            </div>
+            
+            <!-- Hidden form for editing mode -->
+            <form id="profile-form" class="profile-form" style="display: none;">
               <div class="form-group">
                 <label for="full-name">Full Name <span class="required required-profile">*</span></label>
-                <input type="text" id="full-name" name="full_name" disabled required>
+                <input type="text" id="full-name" name="full_name" required>
                 <div class="form-hint">This name will be displayed on your profile</div>
               </div>
               
               <div class="form-group">
                 <label for="email">Email Address <span class="required required-profile">*</span></label>
-                <input type="email" id="email" name="email" disabled required>
+                <input type="email" id="email" name="email" required>
               </div>
               
               <div class="form-group">
                 <label for="phone">Phone Number</label>
-                <input type="text" id="phone" name="phone" disabled>
+                <input type="text" id="phone" name="phone">
                 <div class="form-hint">Used for account recovery and important notifications</div>
               </div>
 
-              <div class="form-actions">
-                <button type="submit" class="primary-button">Save Changes</button>
-                <button type="reset" class="secondary-button">Cancel</button>
-              </div>
+              <button type="submit" class="primary-button save-profile-btn">Save Changes</button>
 
             </form>
           </div>
-        </div>
-
-        <!-- Security - 2FA Section -->
-        <div id="security-2fa" class="settings-section">
-          <div class="section-header">
-            <h2>Two-Factor Authentication</h2>
-            <p>Add an extra layer of security to your account</p>
-          </div>
           
-          <div class="security-content">
-            <div class="info-card">
-              <div class="info-card-icon">
-                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                  <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10"></path>
-                </svg>
-              </div>
-              <div class="info-card-content">
-                <h3>Protect your account</h3>
-                <p>Two-factor authentication adds an additional layer of security to your account by requiring more than just a password to sign in.</p>
-              </div>
+          <!-- Settings - Delete Account Section -->
+          <div id="settings-delete" class="settings-section">
+            <div class="section-header">
+              <h2>Delete Account</h2>
+              <p>Permanently delete your account and all associated data</p>
             </div>
             
-            <div class="toggle-container">
-              <label class="toggle">
-                <span class="toggle-label">Enable Two-Factor Authentication</span>
-                <input type="checkbox" id="enable-2fa">
-                <span class="toggle-switch"></span>
-              </label>
-            </div>
-            
-            <div class="form-actions">
-              <button type="button" class="primary-button">Set Up 2FA</button>
-            </div>
-          </div>
-        </div>
+            <div class="delete-content">
+              <div class="warning-card">
+                <div class="warning-icon">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"></path>
+                    <path d="M12 9v4"></path>
+                    <path d="M12 17h.01"></path>
+                  </svg>
+                </div>
+                <div class="warning-content">
+                  <h3>Warning: This action cannot be undone</h3>
+                  <p>Deleting your account will permanently remove all your data, including profile information, settings, and subscription details. This action cannot be reversed.</p>
+                </div>
+              </div>
+              
+              <form class="delete-form">
+                <div class="form-group"></div>
+                  <label for="delete-confirm">Type "DELETE" to confirm <span class="required">*</span></label>
+                  <input type="text" id="delete-confirm" name="delete_confirm" placeholder="DELETE" required>
+                </div>
 
-        <!-- Security - Password Recovery Section -->
-        <div id="security-recovery" class="settings-section">
-          <div class="section-header">
-            <h2>Password Recovery</h2>
-            <p>Set up recovery options for your account</p>
-          </div>
-          
-          <div class="security-content">
-            <div class="info-card">
-              <div class="info-card-icon">
-                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                  <path d="m12 8-9.04 9.06a2.82 2.82 0 1 0 3.98 3.98L16 12"></path>
-                  <circle cx="17" cy="7" r="5"></circle>
-                </svg>
-              </div>
-              <div class="info-card-content">
-                <h3>Recovery Options</h3>
-                <p>Set up recovery methods to regain access to your account if you forget your password.</p>
-              </div>
-            </div>
-            
-            <form class="recovery-form">
-              <div class="form-group">
-                <label for="recovery-email">Recovery Email</label>
-                <input type="email" id="recovery-email" name="recovery_email" placeholder="backup.email@example.com">
-              </div>
-              
-              <div class="form-group">
-                <label for="recovery-phone">Recovery Phone</label>
-                <input type="text" id="recovery-phone" name="recovery_phone" placeholder="+1 (555) 987-6543">
-              </div>
-              
-              <div class="form-actions">
-                <button type="submit" class="primary-button">Save Recovery Options</button>
-              </div>
-            </form>
-          </div>
-        </div>
-
-        <!-- Settings - Change Password Section -->
-        <div id="settings-password" class="settings-section">
-          <div class="section-header">
-            <h2>Change Password</h2>
-            <p>Update your password to keep your account secure</p>
-          </div>
-          
-          <div class="password-content">
-            <form class="password-form">
-              <div class="form-group">
-                <label for="password">Current Password <span class="required">*</span></label>
-                <div class="password-input-container">
-                  <input type="password" id="password" name="password" placeholder="Enter your current password" required>
-                  <button type="button" class="toggle-password">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                      <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"></path>
-                      <circle cx="12" cy="12" r="3"></circle>
-                    </svg>
-                  </button>
-                </div>
-              </div>
-              
-              <div class="form-group">
-                <label for="new-password">New Password <span class="required">*</span></label>
-                <div class="password-input-container">
-                  <input type="password" id="new-password" name="new_password" placeholder="Enter your new password" required>
-                  <button type="button" class="toggle-password">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                      <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"></path>
-                      <circle cx="12" cy="12" r="3"></circle>
-                    </svg>
-                  </button>
-                </div>
-              </div>
-              
-              <div class="form-group">
-                <label for="confirm-password">Confirm New Password <span class="required">*</span></label>
-                <div class="password-input-container">
-                  <input type="password" id="confirm-password" name="confirm_password" placeholder="Confirm your new password" required>
-                  <button type="button" class="toggle-password">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                      <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"></path>
-                      <circle cx="12" cy="12" r="3"></circle>
-                    </svg>
-                  </button>
-                </div>
-              </div>
-              
-              <div class="password-strength">
-                <div class="strength-label">Password Strength</div>
-                <div class="strength-meter">
-                  <div class="strength-segment"></div>
-                  <div class="strength-segment"></div>
-                  <div class="strength-segment"></div>
-                  <div class="strength-segment"></div>
-                </div>
-                <div class="strength-text">Weak</div>
-              </div>
-              
-              <div class="password-requirements">
-                <h4>Password Requirements:</h4>
-                <ul>
-                  <li>At least 8 characters long</li>
-                  <li>Include at least one uppercase letter</li>
-                  <li>Include at least one number</li>
-                  <li>Include at least one special character</li>
-                </ul>
-              </div>
-              
-              <div class="form-actions">
-                <button type="submit" class="primary-button">Update Password</button>
-                <button type="reset" class="secondary-button">Cancel</button>
-              </div>
-            </form>
-          </div>
-        </div>
-
-        <!-- Settings - Delete Account Section -->
-        <div id="settings-delete" class="settings-section">
-          <div class="section-header">
-            <h2>Delete Account</h2>
-            <p>Permanently delete your account and all associated data</p>
-          </div>
-          
-          <div class="delete-content">
-            <div class="warning-card">
-              <div class="warning-icon">
-                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                  <path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"></path>
-                  <path d="M12 9v4"></path>
-                  <path d="M12 17h.01"></path>
-                </svg>
-              </div>
-              <div class="warning-content">
-                <h3>Warning: This action cannot be undone</h3>
-                <p>Deleting your account will permanently remove all your data, including profile information, settings, and subscription details. This action cannot be reversed.</p>
-              </div>
-            </div>
-            
-            <form class="delete-form">
-              <div class="form-group"></div>
-                <label for="delete-confirm">Type "DELETE" to confirm <span class="required">*</span></label>
-                <input type="text" id="delete-confirm" name="delete_confirm" placeholder="DELETE" required>
-              </div>
-
-              <div class="form-group">
-                <label for="delete-email">Confirm your email <span class="required">*</span></label>
-                <input type="email" id="delete-email" name="delete_email" placeholder="Enter your email" required>
-                <div class="form-hint">Enter your email address to confirm deletion</div>
-              </div>
-              
-              <div class="form-group">
-                <label for="delete-password">Enter your password <span class="required">*</span></label>
-                <input type="password" id="delete-password" name="delete_password" placeholder="Enter your password" required>
-              </div>
-              
-              <div class="form-actions">
-                <button type="submit" class="danger-button">Permanently Delete Account</button>
-                <button type="button" class="secondary-button">Cancel</button>
-              </div>
-            </form>
-          </div>
-        </div>
-
-        <!-- Subscription - Choose Subscription Section -->
-        <div id="subscription-choose" class="settings-section">
-          <div class="section-header">
-            <h2>Choose Subscription</h2>
-            <p>Select a subscription plan that works for you</p>
-          </div>
-          
-          <div class="subscription-content">
-            <div class="subscription-plans">
-              <div class="plan-card">
-                <div class="plan-header">
-                  <h3>Free</h3>
-                  <div class="plan-price">$0<span>/month</span></div>
-                </div>
-                <div class="plan-features">
-                  <ul>
-                    <li>Basic features</li>
-                    <li>Limited storage</li>
-                    <li>Email support</li>
-                  </ul>
-                </div>
-                <button class="plan-button current">Current Plan</button>
-              </div>
-              
-              <div class="plan-card">
-                <div class="plan-header">
-                  <h3>Pro</h3>
-                  <div class="plan-price">$9.99<span>/month</span></div>
-                </div>
-                <div class="plan-features">
-                  <ul>
-                    <li>All Free features</li>
-                    <li>Advanced analytics</li>
-                    <li>Priority support</li>
-                    <li>Unlimited storage</li>
-                  </ul>
-                </div>
-                <button class="plan-button primary-button">Upgrade</button>
-              </div>
-              
-              <div class="plan-card">
-                <div class="plan-header">
-                  <h3>Enterprise</h3>
-                  <div class="plan-price">$29.99<span>/month</span></div>
-                </div>
-                <div class="plan-features">
-                  <ul>
-                    <li>All Pro features</li>
-                    <li>Dedicated support</li>
-                    <li>Custom integrations</li>
-                    <li>Team management</li>
-                  </ul>
-                </div>
-                <button class="plan-button primary-button">Upgrade</button>
-              </div>
-            </div>
-            
-            <div class="subscription-form-container">
-              <h3>Subscribe to our newsletter</h3>
-              <form class="subscription-form">
                 <div class="form-group">
-                  <label for="subscription-email">Email Address</label>
-                  <input type="email" id="subscription-email" name="email" placeholder="your.email@example.com">
+                  <label for="delete-email">Confirm your email <span class="required">*</span></label>
+                  <input type="email" id="delete-email" name="delete_email" placeholder="Enter your email" required>
+                  <div class="form-hint">Enter your email address to confirm deletion</div>
                 </div>
+                
+                <div class="form-group">
+                  <label for="delete-password">Enter your password <span class="required">*</span></label>
+                  <input type="password" id="delete-password" name="delete_password" placeholder="Enter your password" required>
+                </div>
+                
                 <div class="form-actions">
-                  <button type="submit" class="primary-button">Subscribe</button>
+                  <button type="submit" class="danger-button">Permanently Delete Account</button>
+                  <button type="button" class="secondary-button">Cancel</button>
                 </div>
               </form>
             </div>
           </div>
-        </div>
 
-        <!-- Subscription - Change Subscription Section -->
-        <div id="subscription-change" class="settings-section">
-          <div class="section-header">
-            <h2>Change Subscription</h2>
-            <p>Modify your current subscription plan</p>
-          </div>
-          
-          <div class="subscription-content">
-            <div class="current-plan-info">
+          <!-- Settings - Purchases Section -->
+          <div id="settings-purchases" class="settings-section">
+            <div class="section-header">
+              <h2>Purchases</h2>
+              <p>View your purchases and billing history</p>
+            </div>
+            
+            <div class="purchases-content">
               <div class="info-card">
                 <div class="info-card-icon">
                   <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <rect width="20" height="14" x="2" y="5" rx="2"></rect>
-                    <line x1="2" x2="22" y1="10" y2="10"></line>
+                    <path d="M20 10V7a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v3"></path>
+                    <path d="M20 14v3a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2v-3"></path>
+                    <path d="M12 12h.01"></path>
                   </svg>
                 </div>
                 <div class="info-card-content">
-                  <h3>Current Plan: Free</h3>
-                  <p>Your subscription renews on <strong>January 1, 2026</strong></p>
-                </div>
-              </div>
-            </div>
-            
-            <div class="billing-history">
-              <h3>Billing History</h3>
-              <div class="billing-table">
-                <div class="billing-header">
-                  <div class="billing-cell">Date</div>
-                  <div class="billing-cell">Amount</div>
-                  <div class="billing-cell">Status</div>
-                  <div class="billing-cell">Invoice</div>
-                </div>
-                <div class="billing-row">
-                  <div class="billing-cell">Dec 1, 2024</div>
-                  <div class="billing-cell">$0.00</div>
-                  <div class="billing-cell"><span class="status-paid">Paid</span></div>
-                  <div class="billing-cell"><a href="#" class="invoice-link">View</a></div>
-                </div>
-                <div class="billing-row">
-                  <div class="billing-cell">Nov 1, 2024</div>
-                  <div class="billing-cell">$0.00</div>
-                  <div class="billing-cell"><span class="status-paid">Paid</span></div>
-                  <div class="billing-cell"><a href="#" class="invoice-link">View</a></div>
-                </div>
-              </div>
-            </div>
-            
-            <div class="payment-methods">
-              <h3>Payment Methods</h3>
-              <div class="payment-card">
-                <div class="payment-card-icon">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <rect width="20" height="14" x="2" y="5" rx="2"></rect>
-                    <line x1="2" x2="22" y1="10" y2="10"></line>
-                  </svg>
-                </div>
-                <div class="payment-card-details">
-                  <div class="card-name">Visa ending in 4242</div>
-                  <div class="card-expiry">Expires 12/25</div>
-                </div>
-                <div class="payment-card-actions">
-                  <button class="text-button">Edit</button>
-                  <button class="text-button">Remove</button>
+                  <h3>Available Credits: <span id="available-credits">0</span></h3>
+                  <p>Your available credits for podcast transcription and other premium features</p>
                 </div>
               </div>
               
-              <button class="secondary-button add-payment-button">
-                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                  <path d="M5 12h14"></path>
-                  <path d="M12 5v14"></path>
-                </svg>
-                Add Payment Method
-              </button>
+              <div class="billing-history">
+                <h3>Billing History</h3>
+                <div class="billing-table">
+                  <div class="billing-header">
+                    <div class="billing-cell">Date</div>
+                    <div class="billing-cell">Description</div>
+                    <div class="billing-cell">Amount</div>
+                    <div class="billing-cell">Status</div>
+                    <div class="billing-cell">Details</div> <!-- New column for details -->
+                  </div>
+                  <div id="billing-history-rows">
+                    <!-- Purchases will be loaded here -->
+                    <div class="billing-row loading-row">
+                      <div class="billing-cell" colspan="4">Loading purchase history...</div>
+                    </div>
+                  </div>
+                </div>
+                <div id="no-purchases-message" style="display: none;" class="empty-history-message">
+                  No purchase history available.
+                </div>
+              </div>
+              <div class="subscription-actions">
+                <a href="/billing" class="primary-button">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M5 12h14"></path>
+                    <path d="M12 5v14"></path>
+                  </svg>
+                  Buy More Credits
+                </a>
+              </div>
+            </div>
+          </div>
+
+          <!-- Modal for purchase details -->
+          <div id="details-modal" class="modal">
+            <div class="modal-content">
+              <span class="close-modal">&times;</span>
+              <div id="details-modal-content"></div>
+            </div>
+          </div>
+
+          <!-- Subscription Sections -->
+          <div class="subscription-sections">
+            <div id="subscription-choose" class="settings-section">
+              <div class="section-header">
+                <h2>Choose Subscription</h2>
+                <p>Select a subscription plan that works for you</p>
+              </div>
+              <!-- Updated Subscription Content -->
+              <div class="subscription-content">
+                <div class="subscription-plans">
+                  <!-- Free Plan Card -->
+                  <div class="plan-card">
+                    <div class="plan-header">
+                      <h3>Free</h3>
+                      <div class="plan-price">$0<span>/month</span></div>
+                    </div>
+                    <div class="plan-features">
+                      <ul>
+                        <li>3000 credits (at month's start)</li>
+                        <li>2 episode slots / month</li>
+                        <li>1 extra episode slot - 5000 Credits (Max 3 total slots)</li>
+                        <li>1 hr maximum length / episode</li>
+                        <li>Free podcast Landing Page</li>
+                      </ul>
+                    </div>
+                    <button class="plan-button primary" data-plan="Free">Current Plan</button>
+                  </div>
+                  <!-- Pro Plan Card -->
+                  <div class="plan-card">
+                    <div class="plan-header">
+                      <h3>Pro</h3>
+                      <div class="plan-price">$29.99<span>/month</span></div>
+                    </div>
+                    <div class="plan-features">
+                      <ul>
+                        <li>10,000 credits (at month's start)</li>
+                        <li>3 episode slots / month</li>
+                        <li>1 extra episode slot – 5,000 credits (max 5 total slots)</li>
+                        <li>1 hr maximum length / episode</li>
+                        <li>Free podcast landing page</li>
+                      </ul>
+                    </div>
+                    <button class="plan-button primary" data-plan="Pro">Upgrade</button>
+                  </div>
+                  <!-- Studio Plan Card -->
+                  <div class="plan-card">
+                    <div class="plan-header">
+                      <h3>Studio</h3>
+                      <div class="plan-price">$69.00<span>/month</span></div>
+                    </div>
+                    <div class="plan-features">
+                      <ul>
+                        <li>20,000 credits (at month's start)</li>
+                        <li>4 episode slots / month</li>
+                        <li>1 extra episode slot – 5,000 credits (max 6 total slots)</li>
+                        <li>2 hr maximum length / episode</li>
+                        <li>Free podcast landing page (option to host on own domain)</li>
+                      </ul>
+                    </div>
+                    <button class="plan-button primary" data-plan="Studio">Upgrade</button>
+                  </div>
+                </div>
+                <!-- Optional: Keep newsletter form if desired -->
+                <div class="subscription-form-container">
+                  <h3>Subscribe to our newsletter</h3>
+                  <form class="subscription-form">
+                    <div class="form-group">
+                      <label for="subscription-email">Email Address</label>
+                      <input type="email" id="subscription-email" name="email" placeholder="your.email@example.com">
+                    </div>
+                    <div class="form-actions">
+                      <button type="submit" class="primary-button">Subscribe</button>
+                    </div>
+                  </form>
+                </div>
+              </div>
+              <!-- End Updated Subscription Content -->
+            </div>
+            <div id="subscription-change" class="settings-section">
+              <div class="section-header">
+                <h2>Payment Method</h2>
+                <p>Modify your current subscription plan and payment details</p>
+              </div>
+              <div class="subscription-content">
+                <div class="current-plan-info">
+                  <div class="info-card">
+                    <div class="info-card-icon">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <rect width="20" height="14" x="2" y="5" rx="2"></rect>
+                        <line x1="2" x2="22" y1="10" y2="10"></line>
+                      </svg>
+                    </div>
+                    <div class="info-card-content">
+                      <h3>Current Plan: <span id="current-plan">Free</span></h3>
+                      <p>Status: <span id="subscription-status">Inactive</span></p>
+                      <p id="renewal-text">Expiry date: <strong><span id="subscription-expiry">N/A</span></strong></p>
+                    </div>
+                  </div>
+                </div>
+                <div class="subscription-actions">
+                  <button id="cancel-subscription-btn" class="secondary-button">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M18 6 6 18"></path>
+                      <path d="m6 6 12 12"></path>
+                    </svg>
+                    Cancel Subscription
+                  </button>
+                </div>
+                <div class="payment-methods">
+                  <h3>Payment Methods</h3>
+                  <div class="payment-card">
+                    <div class="payment-card-icon">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <rect width="20" height="14" x="2" y="5" rx="2"></rect>
+                        <line x1="2" x2="22" y1="10" y2="10"></line>
+                      </svg>
+                    </div>
+                    <div class="payment-card-details">
+                      <div class="card-name">Visa ending in 4242</div>
+                      <div class="card-expiry">Expires 12/25</div>
+                      <div class="card-type">Used for recurring payments</div>
+                    </div>
+                    <div class="payment-card-actions">
+                      <button class="text-button">Edit</button>
+                      <button class="text-button">Remove</button>
+                    </div>
+                  </div>
+                  <button class="secondary-button add-payment-button">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M5 12h14"></path>
+                      <path d="M12 5v14"></path>
+                    </svg>
+                    Add Payment Method
+                  </button>
+                </div>
+              </div>
             </div>
           </div>
         </div>
       </section>
     </div>
   </div>
-  <script type="module" src="{{ url_for('frontend.static_files', filename='js/account/account.js') }}"></script>
+  <script src="https://js.stripe.com/v3/"></script>
+  <script type="module" src="{{ url_for('static', filename='js/account/subscription.js') }}"></script>
+  <script type="module" src="{{ url_for('static', filename='js/account/account.js') }}"></script>
 {% endblock %}
-

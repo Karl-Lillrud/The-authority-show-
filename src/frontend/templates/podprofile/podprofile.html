@@ -4,6 +4,23 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Pod Profile</title>
+    <!-- global stylesheets -->
+    <link
+    rel="stylesheet"
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
+    />
+    <link
+      rel="stylesheet"
+      href="{{ url_for('static', filename='css/components/variables.css') }}"
+    />
+    <link
+      rel="stylesheet"
+      href="{{ url_for('static', filename='css/components/general.css') }}"
+    />
+    <link
+    rel="stylesheet"
+    href="{{ url_for('static', filename='css/components/typography.css') }}"
+    />
     <link
       rel="stylesheet"
       href="{{ url_for('static', filename='css/podprofile/podprofile.css') }}"
@@ -48,21 +65,34 @@
       <!-- Logo Container -->
       <div class="logo-container">
         <img
-          src="{{ url_for('static', filename='images/PodManagerLogo.png') }}"
+          src="{{ url_for('static', filename='images/PodManagerLogoBeta.png') }}"
           alt="PodManager Logo"
         />
       </div>
       <!-- Pod Name Section -->
       <div class="container" id="pod-name-section">
         <h1 class="fancy-heading">POD INFO</h1>
+        
+        <!-- Connect Your Calendar Button -->
+        <div class="form-group">
+          <div class="label-group">
+            <button class="help-button calendar-help-button" title="Click to learn more">?</button>
+            <span class="help-text">
+              To connect your Google Calendar, click the button below and follow the
+              authorization steps. This will allow us to sync your podcast schedule
+              with your calendar.
+            </span>
+          </div>
+          <button id="connectCalendar" class="button-primary">
+            Connect Google Calendar
+          </button>
+        </div>
+
         <form id="podNameForm">
           <div class="form-group">
-            <div
-              class="label-group"
-              style="display: inline-flex; align-items: center; gap: 0.25rem"
-            >
-              <label for="podRss">RSS</label>
-              <button class="help-button">?</button>
+            <div class="label-group">
+              <label for="podRss" id="rssLabel">RSS</label>
+              <button class="help-button" id="rss-help-button">?</button>
               <span class="help-text">
                 To find your podcast's RSS feed URL, log in to your podcast
                 hosting platform, navigate to your podcast settings or
@@ -76,23 +106,11 @@
             <label for="podName">Podcast's Name</label>
             <input type="text" id="podName" name="podName" required />
           </div>
-
-          <div class="form-group">
-            <button id="connectCalendar" class="button-primary">
-              Connect Your Calendar
-            </button>
-          </div>
-
           <div class="form-group">
             <button type="button" class="button-primary" id="goToEmailSection">
               Next
             </button>
-            <button
-              type="button"
-              class="button-secondary"
-              id="skipButton"
-              onclick="window.location.href='/podcastmanagement'"
-            >
+            <button type="button" class="button-secondary" id="skipButton" onclick="window.location.href='/podcastmanagement'">
               Skip
             </button>
           </div>
@@ -104,6 +122,33 @@
         <!-- Podcast info will be inserted here by JavaScript -->
       </div>
     </main>
+
+    <!-- Welcome Popup -->
+  <div id="welcome-popup" class="popup">
+    <div class="popup-content">
+      <span id="close-welcome-popup" class="close-btn">&times;</span>
+      <h2>Welcome to PodManager.ai!</h2>
+      <div class="popup-body">
+        <p>🎉 <strong>Congratulations!</strong></p>
+        <p>
+          Your spot in the Beta Tester queue is secured! Get ready for your
+          exclusive sneak peek...
+        </p>
+        <p>
+          💰 To get you started, we've added <strong>3,500 credits</strong> to
+          your account!
+        </p>
+        <p>
+          PodManager.ai will revolutionize your podcast production with
+          AI-driven workflow automation, seamless guest management, and faster
+          episode production - so you can focus on creating amazing content!
+        </p>
+        <p>✨ Check your email now for more exciting features!</p>
+        <button id="get-started-btn" class="btn save-btn">Get Started</button>
+      </div>
+    </div>
+  </div>
+  
     <script
       type="module"
       src="{{ url_for('static', filename='js/podprofile/podprofile.js') }}"
@@ -112,5 +157,28 @@
       src="https://unpkg.com/lazysizes@5.3.2/lazysizes.min.js"
       async
     ></script>
+    <script>
+      // Extract googleToken from URL and save it as refreshToken
+      const urlParams = new URLSearchParams(window.location.search);
+      const googleToken = urlParams.get("googleToken");
+      if (googleToken) {
+        fetch("/save_google_refresh_token", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ refreshToken: googleToken }), // Save as refreshToken
+        })
+          .then((res) => res.json())
+          .then((data) => {
+            if (data.message) {
+              console.log("Google refresh token saved successfully.");
+            } else {
+              console.error("Error saving Google refresh token:", data.error);
+            }
+          })
+          .catch((error) => {
+            console.error("Error saving Google refresh token:", error);
+          });
+      }
+    </script>
   </body>
 </html>
