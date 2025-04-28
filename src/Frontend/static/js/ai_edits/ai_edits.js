@@ -47,7 +47,7 @@ function showTab(tabName) {
             <h2>🎙 AI-Powered Transcription</h2>
             <input type="file" id="fileUploader" accept="audio/*,video/*">
             <button class="btn ai-edit-button" onclick="transcribe()">
-              ${labelWithCredits("▶ Transcribe", "transcription")}
+              ${labelWithCredits("Transcribe", "transcription")}
             </button>
             <div class="result-field">
                 <pre id="transcriptionResult"></pre>
@@ -66,7 +66,7 @@ function showTab(tabName) {
     
                 <div class="result-group">
                     <button class="btn ai-edit-button" onclick="generateAISuggestions()">
-                      ${labelWithCredits("🤖 AI Suggestions", "ai_suggestions")}
+                      ${labelWithCredits("AI Suggestions", "ai_suggestions")}
                     </button>
                     <div class="result-field">
                         <pre id="aiSuggestionsResult"></pre>
@@ -75,7 +75,7 @@ function showTab(tabName) {
     
                 <div class="result-group">
                     <button class="btn ai-edit-button" onclick="generateShowNotes()">
-                      ${labelWithCredits("📝 Show Notes", "show_notes")}
+                      ${labelWithCredits("Show Notes", "show_notes")}
                     </button>
                     <div class="result-field">
                         <pre id="showNotesResult"></pre>
@@ -84,7 +84,7 @@ function showTab(tabName) {
     
                 <div class="result-group">
                     <button class="btn ai-edit-button" onclick="generateQuotes()">
-                      ${labelWithCredits("💬 Generate Quotes", "ai_quotes")}
+                      ${labelWithCredits("Generate Quotes", "ai_quotes")}
                     </button>
                     <div class="result-field">
                         <pre id="quotesResult"></pre>
@@ -93,7 +93,7 @@ function showTab(tabName) {
     
                 <div class="result-group">
                     <button class="btn ai-edit-button" onclick="generateQuoteImages()">
-                      ${labelWithCredits("🖼️ Generate Quote Images", "ai_qoute_images")}
+                      ${labelWithCredits("Generate Quote Images", "ai_qoute_images")}
                     </button>
                     <div class="result-field">
                         <div id="quoteImagesResult"></div>
@@ -103,7 +103,7 @@ function showTab(tabName) {
                 <div class="result-group">
                     <input type="text" id="guestNameInput" placeholder="Enter guest name..." class="input-field">
                     <button class="btn ai-edit-button" onclick="runOsintSearch()">
-                      ${labelWithCredits("🕵️ OSINT Search", "ai_osint")}
+                      ${labelWithCredits("OSINT Search", "ai_osint")}
                     </button>
                     <div class="result-field">
                         <pre id="osintResult"></pre>
@@ -112,13 +112,13 @@ function showTab(tabName) {
     
                 <div class="result-group">
                     <button class="btn ai-edit-button" onclick="generatePodcastIntroOutro()">
-                      ${labelWithCredits("🎙 Generate Intro/Outro", "ai_intro_outro")}
+                      ${labelWithCredits("Generate Intro/Outro", "ai_intro_outro")}
                     </button>
                     <div class="result-field">
                         <pre id="introOutroResult"></pre>
                     </div>
                     <button class="btn ai-edit-button" onclick="convertIntroOutroToSpeech()">
-                      ${labelWithCredits("🔊 Convert to Speech", "ai_intro_outro_audio")}
+                      ${labelWithCredits("Convert to Speech", "ai_intro_outro_audio")}
                     </button>
                 </div>
             </div>
@@ -217,18 +217,18 @@ function showTab(tabName) {
         `;
     } else if (tabName === 'video') {
         content.innerHTML = `
-            <h2>📹 AI Video Enhancement</h2>
+            <h2>AI Video Enhancement</h2>
             <input type="file" id="videoUploader" accept="video/*" onchange="previewOriginalVideo()">
             <div id="originalVideoContainer" style="display: none; margin-bottom: 1rem;">
-                <p>🎬 <strong>Original Video</strong></p>
+                <p><strong>Original Video</strong></p>
                 <video id="originalVideoPlayer" controls style="width: 100%"></video>
             </div>
             <button class="btn ai-edit-button" onclick="enhanceVideo()">
-            ${labelWithCredits("✨ Enhance Video", "video_enhancement")}
+            ${labelWithCredits("Enhance Video", "video_enhancement")}
             </button>
             <div id="videoResult"></div>
             <a id="downloadVideo" class="btn ai-edit-button" download="enhanced_video.mp4" style="display: none;">
-            📥 Download Enhanced Video
+            Download Enhanced Video
             </a>
         `;
     }
