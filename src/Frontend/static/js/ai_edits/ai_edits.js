@@ -33,12 +33,9 @@ window.rejectSfx = rejectSfx;
 window.replaceSfx = replaceSfx;
 
 window.CURRENT_USER_ID = localStorage.getItem("user_id");
-const urlParams = new URLSearchParams(window.location.search);
-const episodeIdFromUrl = urlParams.get("episodeId");
-if (episodeIdFromUrl) {
-    sessionStorage.setItem("selected_episode_id", episodeIdFromUrl);
-}
-console.log("✅ Using episode ID:", sessionStorage.getItem("selected_episode_id"));
+window.CURRENT_USER_ID = localStorage.getItem("selected_episode_id");
+
+
 
 const CREDIT_COSTS = {
     ai_audio_analysis: 800,
