@@ -33,7 +33,7 @@ def create_checkout_session():
         return jsonify({"error": "Missing amount"}), 400
 
     try:
-        
+        #Calculate the prices
         plan_price = 0.00
         if plan:
              # Map plan to price
@@ -42,7 +42,7 @@ def create_checkout_session():
             "studio": 69.00,
             # Add other plans as needed
             }
-            plan_price = plan_prices.get(plan, 0)
+            plan_price = plan_prices.get(plan, float(amount))
 
         unlock_price = 0.00
         if extra_episode_unlock:
@@ -95,12 +95,9 @@ def create_checkout_session():
                     "quantity": extra_episode_unlock,
                 }
             )
-        print(line_items)
 
         # Add subscription line item if present
         if plan:
-            
-            plan_price = plan_prices.get(plan, float(amount))
             line_items.append(
                 {
                     "price_data": {
