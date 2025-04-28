@@ -1,146 +1,119 @@
-from flask import Blueprint, request, jsonify, redirect, render_template, flash, url_for
-from backend.repository.auth_repository import AuthRepository
-from backend.services.TeamInviteService import TeamInviteService
+from flask import Blueprint, request, jsonify, redirect, render_template, session
 from backend.services.authService import AuthService
-import os
+from backend.utils.email_utils import send_login_email
+import logging
+from itsdangerous import URLSafeTimedSerializer, SignatureExpired, BadSignature
+from flask import current_app
 
-# Define Blueprint
 auth_bp = Blueprint("auth_bp", __name__)
-
-# Instantiate the Auth Repository
-auth_repo = AuthRepository()
-
 auth_service = AuthService()
+logger = logging.getLogger(__name__)
 
-# Instantiate AuthService
-@auth_bp.route("/send-verification-code", methods=["POST"])
-def send_verification_code():
-    """
-    Endpoint to send a verification code to the user's email
-    """
-    if request.content_type != "application/json":
-        return jsonify({"error": "Invalid Content-Type. Expected application/json"}), 415
 
+@auth_bp.route("/signin", methods=["GET"], endpoint="signin_page")
+@auth_bp.route("/", methods=["GET"], endpoint="root_signin_page")
+def signin_page():
+    if "user_id" in session and session.get("user_id"):
+        return redirect("/dashboard")
+    if request.cookies.get("remember_me") == "true":
+        return redirect("/podprofile")
+    return render_template("signin/signin.html")
+
+
+@auth_bp.route("/signin", methods=["POST"], endpoint="signin")
+def signin():
+    data = request.get_json()
+    response, status_code = auth_service.signin(data)
+    if status_code == 200:
+        response_obj = jsonify(response)
+        response_obj.set_cookie("remember_me", "true", max_age=30 * 24 * 60 * 60)
+        return response_obj, 200
+    return jsonify(response), status_code
+
+
+@auth_bp.route("/send-login-link", methods=["POST"], endpoint="send_login_link")
+def send_login_link():
     data = request.get_json()
     email = data.get("email")
-
     if not email:
-        return jsonify({"error": "Email is required"}), 400
+        logger.error("Email saknas i begäran")
+        return jsonify({"error": "Email krävs"}), 400
 
     try:
-        # Call the AuthService to send the verification code
-        result = auth_service.send_verification_code(email)
-        if result.get("error"):
-            return jsonify(result), 400
-        return jsonify({"message": "Verification code sent successfully"}), 200
+        # Kontrollera att SECRET_KEY är konfigurerad
+        if not current_app.config.get("SECRET_KEY"):
+            logger.error("SECRET_KEY är inte konfigurerad")
+            return jsonify({"error": "Serverkonfigurationsfel: SECRET_KEY saknas"}), 500
+
+        serializer = URLSafeTimedSerializer(current_app.config["SECRET_KEY"])
+        token = serializer.dumps(email, salt="login-link-salt")
+        login_link = f"{request.host_url}signin?token={token}"
+        result = send_login_email(email, login_link)
+        if result.get("success"):
+            return jsonify({"message": "Inloggningslänk skickad"}), 200
+        else:
+            logger.error(
+                f"Misslyckades att skicka inloggningslänk till {email}: {result.get('error')}"
+            )
+            return (
+                jsonify(
+                    {
+                        "error": f"Misslyckades att skicka inloggningslänk: {result.get('error')}"
+                    }
+                ),
+                500,
+            )
     except Exception as e:
-        return jsonify({"error": f"Failed to send verification code: {str(e)}"}), 500
-
-API_BASE_URL = os.getenv("API_BASE_URL", "http://127.0.0.1:8000")
-
-
-@auth_bp.route("/signin", methods=["GET"], endpoint="signin")
-@auth_bp.route("/", methods=["GET"])
-def signin_page():
-    if request.cookies.get("remember_me") == "true":
-        return redirect("/dashboard")
-    return render_template("signin/signin.html", API_BASE_URL=API_BASE_URL)
-
-
-@auth_bp.route("/signin", methods=["POST"])
-@auth_bp.route("/", methods=["POST"])
-def signin_submit():
-    if request.content_type != "application/json":
-        return (
-            jsonify({"error": "Invalid Content-Type. Expected application/json"}),
-            415,
+        logger.error(
+            f"Fel vid sändning av inloggningslänk för {email}: {str(e)}", exc_info=True
         )
+        return jsonify({"error": f"Internt serverfel: {str(e)}"}), 500
 
+
+@auth_bp.route("/verify-login-token", methods=["POST"], endpoint="verify_login_token")
+def verify_login_token():
     data = request.get_json()
-    response, status_code = auth_repo.signin(data)
-    return jsonify(response), status_code
+    token = data.get("token")
+    if not token:
+        logger.error("Token saknas i begäran")
+        return jsonify({"error": "Token krävs"}), 400
+
+    try:
+        response, status_code = auth_service.verify_login_token(token)
+        return jsonify(response), status_code
+    except SignatureExpired:
+        logger.error("Token har gått ut")
+        return jsonify({"error": "Token har gått ut"}), 400
+    except BadSignature:
+        logger.error("Ogiltig token")
+        return jsonify({"error": "Ogiltig token"}), 400
+    except Exception as e:
+        logger.error(f"Fel vid verifiering av token: {e}", exc_info=True)
+        return jsonify({"error": f"Internt serverfel: {str(e)}"}), 500
+
+
+@auth_bp.route("/verify-otp", methods=["POST"], endpoint="verify_otp")
+def verify_otp():
+    data = request.get_json()
+    email = data.get("email")
+    otp = data.get("otp")
+    if not email or not otp:
+        logger.error("Email eller OTP saknas i begäran")
+        return jsonify({"error": "Email och OTP krävs"}), 400
+
+    try:
+        response, status_code = auth_service.verify_otp_and_login(email, otp)
+        return jsonify(response), status_code
+    except Exception as e:
+        logger.error(f"Fel vid OTP-verifiering: {e}", exc_info=True)
+        return jsonify({"error": f"Internt serverfel: {str(e)}"}), 500
 
 
 @auth_bp.route("/logout", methods=["GET"])
 def logout_user():
-    response = auth_repo.logout()
-    # Ensure the response is JSON-serializable
-    if isinstance(response, dict):
-        return jsonify(response), 200
-    return jsonify({"message": "Logout successful"}), 200
-
-
-@auth_bp.route("/register", methods=["GET"])
-def register_page():
-    # Get the invite token from the URL parameters
-    invite_token = request.args.get("token")
-
-    if invite_token:
-        # Verify the invite token
-        invite_service = TeamInviteService()
-        response, status = invite_service.verify_invite(invite_token)
-
-        if status == 200:
-            # Render the team member registration form with the invite data
-            return render_template(
-                "team/register-team-member.html",
-                email=response.get("email"),
-                team_name=response.get("teamName", "the team"),
-                invite_token=invite_token,
-            )
-        else:
-            flash(response.get("error", "Invalid invitation link"), "error")
-            return redirect(url_for("auth_bp.signin"))
-
-    # Regular registration page if no token
-    return render_template("register/register.html")
-
-
-@auth_bp.route("/register", methods=["POST"])
-def register_submit():
-    if request.content_type != "application/json":
-        return (
-            jsonify({"error": "Invalid Content-Type. Expected application/json"}),
-            415,
-        )
-
-    data = request.get_json()
-    response, status_code = auth_repo.register(data)
-    # Convert possible Response object into a JSON dict
-    if hasattr(response, "get_json"):
-        response = response.get_json()
-    return jsonify(response), status_code
-
-
-@auth_bp.route("/register-team-member", methods=["GET"])
-def register_team_member_page():
-    return render_template("register/register_team_member.html")
-
-
-@auth_bp.route("/register-team-member", methods=["POST"])
-def register_team_member_submit():
-    if request.content_type != "application/json":
-        return (
-            jsonify({"error": "Invalid Content-Type. Expected application/json"}),
-            415,
-        )
-
-    data = request.get_json()
-    response, status_code = auth_repo.register_team_member(data)
-    # Convert possible Response object into a JSON dict
-    if hasattr(response, "get_json"):
-        response = response.get_json()
-
-    if status_code == 201:
-        invite_token = data.get("inviteToken")
-        if invite_token:
-            invite_service = TeamInviteService()
-            invite_response, invite_status = invite_service.process_registration(
-                user_id=response.get("userId"),
-                email=data.get("email"),
-                invite_token=invite_token,
-            )
-            if invite_status == 201:
-                response["teamId"] = invite_response.get("teamId")
-                response["teamMessage"] = invite_response.get("message")
-    return jsonify(response), status_code
+    session.clear()
+    response = jsonify(
+        {"message": "Utloggning framgångsrik", "redirect_url": "/signin"}
+    )
+    response.delete_cookie("remember_me")
+    return response, 200

@@ -3,9 +3,12 @@ from bson import ObjectId
 from flask import Response, jsonify
 import gridfs
 from gridfs.errors import NoFile
-from backend.database.mongo_connection import get_fs
+from backend.database.mongo_connection import get_fs, get_db  # ✅ Import get_db
+from backend.repository.episode_repository import EpisodeRepository
 
-fs = get_fs()
+episode_repo = EpisodeRepository()
+
+fs = get_fs()  # ✅ For file storage only
 
 def save_file(file_bytes: bytes, filename: str, metadata: dict = None) -> str:
     """
@@ -25,14 +28,12 @@ def fetch_file(file_id: str):
             return jsonify({"error": "File not found"}), 404
 
         file_data = file_obj.read()
-        # Check metadata for file type, default to audio if not provided
         file_type = file_obj.metadata.get("type", "audio")
         if file_type == "video":
             mimetype = "video/mp4"
         elif file_type == "audio":
             mimetype = "audio/wav"
         else:
-            # Fallback or add more types as needed
             mimetype = "application/octet-stream"
 
         return Response(
@@ -60,3 +61,24 @@ def get_file_by_id(file_id: str):
     except NoFile:
         raise FileNotFoundError("File not found in GridFS.")
 
+def add_audio_edit_to_episode(episode_id: str, file_id: str, edit_type: str, filename: str, metadata: dict = None):
+    metadata = metadata or {}
+
+    edit_entry = {
+        "fileId": str(file_id),
+        "editType": edit_type,
+        "filename": filename,
+        "createdAt": datetime.utcnow().isoformat(),
+        "metadata": metadata
+    }
+
+    db = get_db()  # ✅ Correctly get the DB client
+    result = db.Episodes.update_one(
+        {"_id": episode_id},
+        {"$push": {"audioEdits": edit_entry}}
+    )
+
+    if result.modified_count == 1:
+        print(f"✅ Added audio edit to episode {episode_id}")
+    else:
+        print(f"⚠️ Failed to push audio edit to episode {episode_id}")

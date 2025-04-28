@@ -6,13 +6,10 @@ import {
 } from "../../../static/requests/episodeRequest.js";
 import { fetchPodcasts } from "../../../static/requests/podcastRequests.js";
 import { fetchGuestsByEpisode } from "../../../static/requests/guestRequests.js";
-import {
-  showNotification,
-  updateEditButtons,
-  shared
-} from "./podcastmanagement.js";
+import { updateEditButtons, shared } from "./podcastmanagement.js";
 import { renderPodcastSelection, viewPodcast } from "./podcast-functions.js";
 import { renderGuestDetail } from "./guest-functions.js";
+import { showNotification } from "../components/notifications.js";
 
 // Add this function to create a play button with SVG icon
 export function createPlayButton(size = "medium") {
@@ -79,6 +76,7 @@ export function playAudio(audioUrl, episodeTitle) {
 
 // Function to render episode detail
 export function renderEpisodeDetail(episode) {
+  sessionStorage.setItem("selected_episode_id", episode._id);
   const episodeDetailElement = document.getElementById("podcast-detail");
   const publishDate = episode.publishDate
     ? new Date(episode.publishDate).toLocaleString()
@@ -147,20 +145,49 @@ export function renderEpisodeDetail(episode) {
       episode.description || "No description available."
     }</p>
     
-    <!-- Audio player -->
+<!-- Audio + Edits section side-by-side -->
+<div class="audio-section-wrapper" style="display: flex; gap: 2rem; align-items: flex-start; flex-wrap: wrap;">
+
+  <!-- Main Audio Player -->
+  <div class="main-audio-player" style="flex: 1; min-width: 300px;">
+    <h3>Main Episode Audio</h3>
     ${
       episode.audioUrl
-        ? `<div class="audio-player-container">
-            <audio controls>
-              <source src="${episode.audioUrl}" type="${
-            fileType || "audio/mpeg"
-          }">
-              Your browser does not support the audio element.
-            </audio>
-          </div>`
+        ? `<audio controls style="width: 100%;">
+             <source src="${episode.audioUrl}" type="${fileType || "audio/mpeg"}">
+             Your browser does not support the audio element.
+           </audio>`
         : "<p>No audio available for this episode.</p>"
     }
   </div>
+
+  <!-- Saved Audio Edits -->
+  ${
+    episode.audioEdits && episode.audioEdits.length > 0
+      ? `<div class="audio-edits" style="flex: 1; min-width: 300px;">
+          <h3>🎧 Saved Edits</h3>
+          ${episode.audioEdits.map(edit => {
+            const blobUrl = edit.metadata?.blob_url;
+            const label = edit.metadata?.edit_type || edit.edit_type || "Unknown Type";
+            return `
+              <div class="edit-entry" style="margin-bottom: 1rem;">
+                <p style="margin-bottom: 0.25rem;"><strong>${label}</strong> – ${edit.filename}</p>
+                ${
+                  blobUrl
+                    ? `<audio controls style="width: 100%;">
+                        <source src="${blobUrl}" type="audio/wav">
+                        Your browser does not support the audio element.
+                      </audio>`
+                    : `<p style="color: red;">❌ No audio URL available</p>`
+                }
+              </div>`;
+          }).join("")}
+        </div>`
+      : ""
+  }
+  </div>
+</div>
+
   
   <!-- Additional details section -->
   <div class="podcast-details-section">
@@ -548,7 +575,9 @@ export function initEpisodeFunctions() {
       const data = Object.fromEntries(formData.entries());
 
       // Ensure recordingAt is in the correct format
-      if (data.recordingAt) {
+      if (data.recordingAt === "") {
+        data.recordingAt = null; // Set to null if no date is provided
+      } else if (data.recordingAt) {
         const recordingAt = new Date(data.recordingAt);
         if (isNaN(recordingAt.getTime())) {
           showNotification(
@@ -612,4 +641,74 @@ export function initEpisodeFunctions() {
         showNotification("Error", "Failed to create episode.", "error");
       }
     });
+
+  document
+    .getElementById("create-episode-form")
+    .addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const formData = new FormData(e.target);
+      const data = Object.fromEntries(formData.entries());
+
+      if (!data.podcastId || !data.title || !data.publishDate) {
+        showNotification(
+          "Missing Fields",
+          "Please fill in all required fields.",
+          "error"
+        );
+        return;
+      }
+
+      try {
+        const result = await registerEpisode(data);
+        console.log("Result from registerEpisode:", result);
+        if (result.message) {
+          showNotification(
+            "Success",
+            "Episode created successfully!",
+            "success"
+          );
+          document.getElementById("episode-form-popup").style.display = "none";
+        }
+      } catch (error) {
+        if (error.message === "Episode limit reached") {
+          showEpisodeLimitPopup(); // Visa popup för episodgräns
+        } else {
+          showNotification("Error", "Failed to create episode.", "error");
+        }
+      }
+    });
+
+  // Funktion för att visa popup när episodgränsen nås
+  function showEpisodeLimitPopup() {
+    const popup = document.createElement("div");
+    popup.className = "popup";
+    popup.style.display = "flex";
+
+    popup.innerHTML = `
+      <div class="form-box">
+        <h2 class="form-title">Episode Limit Reached</h2>
+        <p>You have reached your episode limit. Buy more slots to create additional episodes.</p>
+        <div class="form-actions">
+          <button class="cancel-btn" id="close-limit-popup">Cancel</button>
+          <button class="save-btn" id="buy-credits-btn-popup">Buy Credits</button>
+        </div>
+      </div>
+    `;
+
+    document.body.appendChild(popup);
+
+    // Stäng popup
+    document
+      .getElementById("close-limit-popup")
+      .addEventListener("click", () => {
+        document.body.removeChild(popup);
+      });
+
+    // Navigera till store
+    document
+      .getElementById("buy-credits-btn-popup")
+      .addEventListener("click", () => {
+        window.location.href = "/store";
+      });
+  }
 }

@@ -11,6 +11,25 @@
       href="{{ url_for('static', filename='favicon/favicon.ico') }}"
     />
     <link rel="canonical" href="https://app.podmanager.ai" />
+    <!-- global stylesheets -->
+    <link
+    rel="stylesheet"
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
+    />
+    <link
+      rel="stylesheet"
+      href="{{ url_for('static', filename='css/components/variables.css') }}"
+    />
+    <link
+      rel="stylesheet"
+      href="{{ url_for('static', filename='css/components/general.css') }}"
+    />
+    <link
+    rel="stylesheet"
+    href="{{ url_for('static', filename='css/components/typography.css') }}"
+    />
+    <!-- Add Font Awesome for the icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
   </head>
   <body>
     <!-- Logo -->
@@ -30,11 +49,7 @@
 
     <div class="center-box">
       <h1 class="title">Sign In</h1>
-      <div
-        id="success-message"
-        class="success-message"
-        style="display: none"
-      ></div>
+      <div id="success-message" class="success-message" style="display: none"></div>
       <div id="error-message" class="error-message" style="display: none"></div>
 
       <form id="signin-form">
@@ -49,40 +64,17 @@
             required
           />
         </div>
-        <div class="input-group">
-          <label for="password" class="label"></label>
-          <input
-            type="password"
-            id="password"
-            name="password"
-            class="input"
-            placeholder="Password"
-            required
-          />
-        </div>
-
-        <div class="forgot-password-link">
-          <a href="/forgotpassword" class="link">Forgot Password?</a>
-        </div>
 
         <div class="form-actions">
-          <!-- Button to send verification code -->
           <button
             type="button"
-            id="send-code-button"
-            class="button button-secondary"
+            id="send-login-link-button"
+            class="button button-primary"
           >
-            Send Verification Code
+            Send Log-In Link
           </button>
-          <!-- Sign In button -->
-          <button type="submit" class="button button-primary">Sign In</button>
         </div>
 
-        <div class="register-link">
-          <a href="{{ url_for('auth_bp.register_page') }}" class="link">
-            Don't Have an Account? Register Here</a
-          >
-        </div>
         <div class="policy-links">
           <a href="{{ url_for('frontend.terms_of_service_page') }}" class="link"
             >Terms of Service</a
@@ -91,6 +83,17 @@
           <a href="{{ url_for('frontend.privacy_policy_page') }}" class="link"
             >Privacy Policy</a
           >
+        </div>
+        
+        <!-- Community Links Section -->
+        <div class="community-links">
+          <p>Follow our development and join our discord</p>
+          <div class="social-icons">
+            <a href="https://discord.gg/vwdhqFxhVm" target="_blank" title="Join our Discord">
+              <i class="fab fa-discord"></i>
+            </a>
+            <!-- You can add more social icons here as needed -->
+          </div>
         </div>
       </form>
     </div>

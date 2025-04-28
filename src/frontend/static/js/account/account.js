@@ -1,556 +1,1069 @@
 import {
-  fetchProfile,
-  updateProfile,
-  updatePassword,
-  deleteUserAccount,
-  subscribeUser,
-} from "/static/requests/accountRequests.js"
+  fetchAccount,
+  updateAccount,
+  deleteAccount,
+  uploadProfilePicture
+} from "/static/requests/accountRequests.js";
+import { showNotification } from "../components/notifications.js";
+import { fetchPurchases } from "/static/js/billing/billing.js";
+import {
+  fetchStoreCredits,
+  updateSubscriptionUI
+} from "/static/js/account/subscription.js";
 
 document.addEventListener("DOMContentLoaded", () => {
-    // Hides the edit buttons when in non-edit mode
-    const formActions = document.querySelector(".form-actions");
-    if (formActions) {
-      formActions.style.display = 'none'; 
-    }
-    const uploadBtn = document.getElementById("upload-pic");
-    if (uploadBtn) {
-      uploadBtn.style.display = 'none'; 
-    }
-    const profilePictureOverlay = document.querySelector(".profile-pic-overlay");
-    if (profilePictureOverlay) {
-      profilePictureOverlay.style.display = 'none'; 
-    }
+  // Hides the edit buttons when in non-edit mode
+  const formActions = document.querySelector(".form-actions");
+  if (formActions) {
+    formActions.style.display = "none";
+  }
+  const uploadBtn = document.getElementById("upload-pic");
+  if (uploadBtn) {
+    uploadBtn.style.display = "none";
+  }
+  const profilePictureOverlay = document.querySelector(".profile-pic-overlay");
+  if (profilePictureOverlay) {
+    profilePictureOverlay.style.display = "none";
+  }
 
-    const requiredFields = document.querySelectorAll(".required-profile");
-    requiredFields.forEach(field => {
-      field.style.display = 'none';
-    });
-    
-  // Initialize profile data
-  fetchProfile()
-    .then((data) => {
-      if (data) {
-        document.getElementById("full-name").value = data.full_name || ""
-        document.getElementById("email").value = data.email || ""
-        document.getElementById("phone").value = data.phone || ""
+  const requiredFields = document.querySelectorAll(".required-profile");
+  requiredFields.forEach((field) => {
+    field.style.display = "none";
+  });
 
-        // If name is missing, show a message
-        if (!data.full_name) {
-          showNotification("Please complete your profile by adding your full name", "warning")
+  // Hide the edit profile button in view mode
+  const editProfileBtn = document.getElementById("edit-profile-btn");
+  if (editProfileBtn) {
+    editProfileBtn.style.display = "none";
+  }
+
+  const profilePic = document.getElementById("profile-pic");
+  const profilePicInput = document.getElementById("profile-pic-input"); // Verify this ID matches HTML
+  const profilePicOverlay = document.querySelector(".profile-pic-overlay"); // Verify this selector
+  const uploadButton = document.getElementById("upload-pic"); // Verify this ID matches HTML
+
+  // --- Define triggerFileUpload function ---
+  function triggerFileUpload() {
+    if (profilePicInput) {
+      console.log("Triggering file input click..."); // Add log
+      profilePicInput.click(); // Programmatically click the hidden file input
+    } else {
+      console.error("Profile picture input element not found!"); // Add error log
+    }
+  }
+  // --- End define triggerFileUpload function ---
+
+  // --- Define handleFileSelect function ---
+  function handleFileSelect(event) {
+    const file = event.target.files[0];
+    if (file && profilePic) {
+      console.log("File selected:", file.name); // Add log
+      const reader = new FileReader();
+      reader.onload = function (e) {
+        profilePic.src = e.target.result; // Preview the selected image
+        // --- Call the upload function ---
+        uploadProfilePicture(file)
+          .then((data) => {
+            if (data.profilePicUrl) {
+              // Optionally update the displayed image source again from the server URL
+              // profilePic.src = data.profilePicUrl;
+              showNotification(
+                "Success",
+                "Profile picture updated successfully!",
+                "success"
+              );
+            } else {
+              showNotification(
+                "Error",
+                data.error || "Failed to upload profile picture.",
+                "error"
+              );
+            }
+          })
+          .catch((error) => {
+            console.error("Error uploading profile picture:", error);
+            showNotification(
+              "Error",
+              `Upload failed: ${error.message}`,
+              "error"
+            );
+            // Optionally revert the preview if upload fails
+            // loadAccountData(); // Or store original URL and revert
+          });
+        // --- End upload function call ---
+      };
+      reader.readAsDataURL(file);
+    }
+  }
+  // --- End define handleFileSelect function ---
+
+  // Function to load account data
+  async function loadAccountData() {
+    try {
+      // Explicitly call fetchAccount
+      const wrapper = await fetchAccount();
+      const account = wrapper.account;
+
+      // Set profile picture
+      if (profilePic) {
+        if (account.profilePicUrl) {
+          profilePic.src = account.profilePicUrl;
+        } else {
+          profilePic.src = "/static/images/profilepic.png"; // Correct default path
         }
-
-        // If phone is missing, show a message
-        if (!data.phone) {
-          showNotification("Please add your phone number to complete your profile", "warning")
-        }
-      } else {
-        console.error("Error fetching profile data")
       }
-    })
-    .catch((error) => {
-      console.error("Error:", error)
-      showNotification("Failed to load profile data", "error")
-    })
+
+      // Set other profile data
+      document.getElementById("full-name").value = account.full_name || "";
+      document.getElementById("email").value = account.email || "";
+      document.getElementById("phone").value = account.phone || "";
+
+      // Update the display values
+      document.getElementById("display-full-name").textContent =
+        account.full_name || "Not provided";
+      document.getElementById("display-email").textContent =
+        account.email || "Not provided";
+      document.getElementById("display-phone").textContent =
+        account.phone || "Not provided";
+    } catch (error) {
+      console.error("Error loading account data:", error);
+      showNotification(
+        "Error",
+        `Failed to load account data: ${error.message}`,
+        "error"
+      );
+      // Set default profile picture on error as well
+      if (profilePic) {
+        profilePic.src = "/static/images/profilepic.png";
+      }
+    }
+  }
+
+  // Function to load purchase history
+  async function loadPurchaseHistory() {
+    const purchasesList = document.getElementById("purchases-list");
+    const noPurchasesMessage = document.getElementById("no-purchases-message");
+    if (!purchasesList || !noPurchasesMessage) return;
+
+    try {
+      // Call the imported fetchPurchases function
+      const purchases = await fetchPurchases();
+
+      purchasesList.innerHTML = ""; // Clear previous list
+
+      if (purchases && purchases.length > 0) {
+        noPurchasesMessage.style.display = "none"; // Hide 'no purchases' message
+        purchases.forEach((purchase) => {
+          const li = document.createElement("li");
+          li.className = "purchase-item";
+
+          const purchaseDate = new Date(
+            purchase.created * 1000
+          ).toLocaleDateString();
+          const amount = (purchase.amount_total / 100).toFixed(2); // Convert cents to dollars
+          const currency = purchase.currency.toUpperCase();
+          const status = purchase.payment_status;
+          const description =
+            purchase.line_items && purchase.line_items.length > 0
+              ? purchase.line_items[0].description
+              : "N/A"; // Get description from first line item
+
+          li.innerHTML = `
+            <div class="purchase-details">
+              <span class="purchase-date">${purchaseDate}</span>
+              <span class="purchase-description">${description}</span>
+            </div>
+            <div class="purchase-info">
+              <span class="purchase-amount">${amount} ${currency}</span>
+              <span class="purchase-status status-${status}">${status}</span>
+            </div>
+          `;
+          purchasesList.appendChild(li);
+        });
+      } else {
+        noPurchasesMessage.style.display = "block"; // Show 'no purchases' message
+      }
+    } catch (error) {
+      console.error("Error loading purchase history:", error);
+      showNotification(
+        "Error",
+        `Failed to load purchase history: ${error.message}`,
+        "error"
+      );
+      noPurchasesMessage.textContent = "Error loading purchase history.";
+      noPurchasesMessage.style.display = "block";
+    }
+  }
+
+  // Function to load credit history
+  async function loadCreditHistory() {
+    const historyContainer = document.getElementById("billing-history-rows");
+    const noHistoryMessage = document.getElementById("no-purchases-message");
+
+    if (!historyContainer || !noHistoryMessage) return;
+
+    try {
+      const response = await fetch("/api/purchases/history", {
+        credentials: "same-origin"
+      });
+
+      if (!response.ok) {
+        throw new Error(`Failed to fetch purchase history: ${response.status}`);
+      }
+
+      const data = await response.json();
+      const purchases = data.purchases || [];
+
+      historyContainer.innerHTML = ""; // Clear existing rows
+
+      if (purchases.length === 0) {
+        noHistoryMessage.style.display = "block"; // Show 'no history' message
+        return;
+      }
+
+      noHistoryMessage.style.display = "none"; // Hide 'no history' message
+
+      // Populate the billing history table
+      purchases.forEach((purchase) => {
+        const date = new Date(purchase.date).toLocaleDateString("en-US", {
+          year: "numeric",
+          month: "short",
+          day: "numeric"
+        });
+
+        const statusClass = purchase.status?.toLowerCase() || "unknown";
+
+        const row = document.createElement("div");
+        row.className = "billing-row";
+        row.innerHTML = `
+          <div class="billing-cell">${date}</div>
+          <div class="billing-cell">${purchase.description || "N/A"}</div>
+          <div class="billing-cell">$${parseFloat(purchase.amount).toFixed(
+            2
+          )}</div>
+          <div class="billing-cell">
+            <span class="status-${statusClass}">
+              ${purchase.status || "Unknown"}
+            </span>
+          </div>
+          <div class="billing-cell">
+            ${
+              purchase.details
+                ? `<button class="details-btn" data-details='${JSON.stringify(
+                    purchase.details
+                  )}'>View Details</button>`
+                : "N/A"
+            }
+          </div>
+        `;
+        historyContainer.appendChild(row);
+      });
+
+      // Add event listeners to "Details" buttons
+      document.querySelectorAll(".details-btn").forEach((button) => {
+        button.addEventListener("click", function () {
+          const details = JSON.parse(this.getAttribute("data-details"));
+          showPurchaseDetails(details);
+        });
+      });
+    } catch (error) {
+      console.error("Error loading purchase history:", error);
+      noHistoryMessage.textContent = "Error loading purchase history.";
+      noHistoryMessage.style.display = "block";
+    }
+  }
+
+  // Function to show purchase details in a modal
+  function showPurchaseDetails(details) {
+    const modal = document.getElementById("details-modal");
+    const modalContent = document.getElementById("details-modal-content");
+
+    if (!modal || !modalContent) return;
+
+    // Clear previous details
+    modalContent.innerHTML = "";
+
+    if (details.length === 0) {
+      modalContent.innerHTML = "<p>No details available for this purchase.</p>";
+    } else {
+      const list = document.createElement("ul");
+      details.forEach((item) => {
+        const listItem = document.createElement("li");
+        listItem.textContent = `${item.product} - Quantity: ${
+          item.quantity
+        }, Price: $${item.price.toFixed(2)}`;
+        list.appendChild(listItem);
+      });
+      modalContent.appendChild(list);
+    }
+
+    // Show the modal
+    modal.style.display = "block";
+  }
+
+  // Close modal when clicking outside or on close button
+  document.addEventListener("click", (event) => {
+    const modal = document.getElementById("details-modal");
+    if (
+      modal &&
+      (event.target === modal || event.target.classList.contains("close-modal"))
+    ) {
+      modal.style.display = "none";
+    }
+  });
+
+  function displayPurchaseHistory(purchases) {
+    const historyContainer = document.getElementById("billing-history-rows");
+    const noHistoryMessage = document.getElementById("no-purchases-message");
+
+    if (!historyContainer) return;
+
+    // Clear loading message
+    historyContainer.innerHTML = "";
+
+    if (!purchases || purchases.length === 0) {
+      // Show no history message
+      noHistoryMessage.style.display = "block";
+      return;
+    }
+
+    // Hide no history message if we have purchases
+    noHistoryMessage.style.display = "none";
+
+    // Sort purchases by date, newest first
+    purchases.sort((a, b) => new Date(b.date) - new Date(a.date));
+
+    // Add each purchase to the table
+    purchases.forEach((purchase) => {
+      const date = new Date(purchase.date);
+      const formattedDate =
+        date.toLocaleDateString("en-US", {
+          year: "numeric",
+          month: "short",
+          day: "numeric"
+        }) +
+        " " +
+        date.toLocaleTimeString("en-US", {
+          hour: "2-digit",
+          minute: "2-digit"
+        });
+
+      const row = document.createElement("div");
+      row.className = "billing-row";
+      row.innerHTML = `
+        <div class="billing-cell">${formattedDate}</div>
+        <div class="billing-cell">${purchase.description || "N/A"}</div>
+        <div class="billing-cell">$${parseFloat(purchase.amount).toFixed(
+          2
+        )}</div>
+        <div class="billing-cell">
+          <span class="status-${purchase.status.toLowerCase()}">${
+        purchase.status
+      }</span>
+        </div>
+        <div class="billing-cell">
+          ${
+            purchase.details
+              ? `<button class="details-btn" data-details='${JSON.stringify(
+                  purchase.details
+                )}'>View Details</button>`
+              : "N/A"
+          }
+        </div>
+      `;
+
+      historyContainer.appendChild(row);
+    });
+
+    // Add event listeners to "Details" buttons
+    document.querySelectorAll(".details-btn").forEach((button) => {
+      button.addEventListener("click", function () {
+        const details = JSON.parse(this.getAttribute("data-details"));
+        showPurchaseDetails(details);
+      });
+    });
+  }
+
+  // Function to show purchase details in a modal
+  function showPurchaseDetails(details) {
+    const modal = document.getElementById("details-modal");
+    const modalContent = document.getElementById("details-modal-content");
+
+    if (!modal || !modalContent) return;
+
+    // Clear previous details
+    modalContent.innerHTML = "";
+
+    if (details.length === 0) {
+      modalContent.innerHTML = "<p>No details available for this purchase.</p>";
+    } else {
+      const list = document.createElement("ul");
+      details.forEach((item) => {
+        const listItem = document.createElement("li");
+        listItem.textContent = `${item.product} - Quantity: ${
+          item.quantity
+        }, Price: $${item.price.toFixed(2)}`;
+        list.appendChild(listItem);
+      });
+      modalContent.appendChild(list);
+    }
+
+    // Show the modal
+    modal.style.display = "block";
+  }
+
+  // Close modal when clicking outside or on close button
+  document.addEventListener("click", (event) => {
+    const modal = document.getElementById("details-modal");
+    if (
+      modal &&
+      (event.target === modal || event.target.classList.contains("close-modal"))
+    ) {
+      modal.style.display = "none";
+    }
+  });
+
+  // Initialize profile data
+  loadAccountData();
+
+  // Cancel edit button (switches back to view mode)
+  const cancelEditBtn = document.getElementById("cancel-edit-btn");
+  if (cancelEditBtn) {
+    cancelEditBtn.addEventListener("click", function () {
+      toggleProfileMode(false);
+    });
+  }
+
+  // Handle the "Edit Profile" button in the profile view
+  if (editProfileBtn) {
+    editProfileBtn.addEventListener("click", function () {
+      // Switch to edit mode
+      toggleProfileEditMode(true);
+    });
+  }
 
   // Toggle submenu visibility
-  document.querySelectorAll('.sidebar-item').forEach((item) => {
+  document.querySelectorAll(".sidebar-item").forEach((item) => {
     item.addEventListener("click", function () {
-      const submenu = this.nextElementSibling
-      const allSubmenus = document.querySelectorAll(".submenu")
-      const allToggleItems = document.querySelectorAll('.sidebar-item[data-toggle="submenu"]')
-      document.querySelectorAll(".sidebar-item").forEach(sidebarItem => {
-        sidebarItem.classList.remove('active');
+      const submenu = this.nextElementSibling;
+      const allSubmenus = document.querySelectorAll(".submenu");
+      const allToggleItems = document.querySelectorAll(
+        '.sidebar-item[data-toggle="submenu"]'
+      );
+      document.querySelectorAll(".sidebar-item").forEach((sidebarItem) => {
+        sidebarItem.classList.remove("active");
       });
       // Toggle active state for the clicked item
-      this.classList.toggle("active")
+      this.classList.toggle("active");
 
       // If submenu is already visible, hide it
       if (submenu.style.display === "block") {
-        submenu.style.display = "none"
-        document.getElementById("back-to-main-menu").style.display = "none"
-        return
+        submenu.style.display = "none";
+        return;
       }
 
       // Hide all submenus
       allSubmenus.forEach((menu) => {
-        menu.style.display = "none"
-      })
+        menu.style.display = "none";
+      });
 
       // Remove active class from all toggle items
       allToggleItems.forEach((toggleItem) => {
         if (toggleItem !== this) {
-          toggleItem.classList.remove("active")
+          toggleItem.classList.remove("active");
         }
-      })
+      });
 
       // Show the clicked submenu
       if (submenu && submenu.classList.contains("submenu")) {
-        submenu.style.display = "block"
-        document.getElementById("back-to-main-menu").style.display = "flex"
+        submenu.style.display = "block";
       }
-      
-    })
-  })
+    });
+  });
 
   // Handle sidebar item clicks
-  document.querySelectorAll('.sidebar-item:not([data-toggle="submenu"])').forEach((item) => {
-    item.addEventListener("click", function () {
-      // Remove active class from all sidebar items
-      document.querySelectorAll(".sidebar-item").forEach((sidebarItem) => {
-        sidebarItem.classList.remove("active")
-      })
+  document
+    .querySelectorAll('.sidebar-item:not([data-toggle="submenu"])')
+    .forEach((item) => {
+      item.addEventListener("click", function () {
+        // Remove active class from all sidebar items
+        document.querySelectorAll(".sidebar-item").forEach((sidebarItem) => {
+          sidebarItem.classList.remove("active");
+        });
 
-      // Add active class to clicked item
-      this.classList.add("active")
-      // Hide all sections
-      document.querySelectorAll(".settings-section").forEach((section) => {
-        section.classList.remove("active")
-      })
+        // Add active class to clicked item
+        this.classList.add("active");
+        // Hide all sections
+        document.querySelectorAll(".settings-section").forEach((section) => {
+          section.classList.remove("active");
+        });
 
-      // Show the selected section
-      const targetId = this.getAttribute("data-target")
-      const targetSection = document.getElementById(targetId)
-      if (targetSection) {
-        targetSection.classList.add("active")
-      }
-    })
-  })
+        // Show the selected section
+        const targetId = this.getAttribute("data-target");
+        const targetSection = document.getElementById(targetId);
+        if (targetSection) {
+          targetSection.classList.add("active");
+        }
+      });
+    });
 
   // Handle submenu item clicks
   document.querySelectorAll(".submenu-item").forEach((item) => {
     item.addEventListener("click", function () {
       // Remove active class from all submenu items
       document.querySelectorAll(".submenu-item").forEach((submenuItem) => {
-        submenuItem.classList.remove("active")
-      })
+        submenuItem.classList.remove("active");
+      });
 
       // Add active class to clicked item
-      this.classList.add("active")
+      this.classList.add("active");
 
       // Hide all sections
       document.querySelectorAll(".settings-section").forEach((section) => {
-        section.classList.remove("active")
-      })
+        section.classList.remove("active");
+      });
 
       // Show the selected section
-      const targetId = this.getAttribute("data-target")
-      const targetSection = document.getElementById(targetId)
+      const targetId = this.getAttribute("data-target");
+      const targetSection = document.getElementById(targetId);
       if (targetSection) {
-        targetSection.classList.add("active")
+        targetSection.classList.add("active");
       }
-    })
-  })
-
-  // Back to Main Menu button functionality
-  document.getElementById("back-to-main-menu").addEventListener("click", function () {
-    // Hide all submenus
-    document.querySelectorAll(".submenu").forEach((menu) => {
-      menu.style.display = "none"
-    })
-
-    // Remove active class from all toggle items
-    document.querySelectorAll('.sidebar-item[data-toggle="submenu"]').forEach((item) => {
-      item.classList.remove("active")
-    })
-
-    // Hide the back button
-    this.style.display = "none"
-  })
+    });
+  });
 
   // Toggle password visibility
   document.querySelectorAll(".toggle-password").forEach((button) => {
     button.addEventListener("click", function () {
-      const input = this.previousElementSibling
-      const type = input.getAttribute("type") === "password" ? "text" : "password"
-      input.setAttribute("type", type)
+      const input = this.previousElementSibling;
+      const type =
+        input.getAttribute("type") === "password" ? "text" : "password";
+      input.setAttribute("type", type);
 
       // Toggle icon (simplified for this example)
       this.innerHTML =
         type === "password"
           ? '<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"></path><circle cx="12" cy="12" r="3"></circle></svg>'
-          : '<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9.88 9.88a3 3 0 1 0 4.24 4.24"></path><path d="M10.73 5.08A10.43 10.43 0 0 1 12 5c7 0 10 7 10 7a13.16 13.16 0 0 1-1.67 2.68"></path><path d="M6.61 6.61A13.526 13.526 0 0 0 2 12s3 7 10 7a9.74 9.74 0 0 0 5.39-1.61"></path><line x1="2" x2="22" y1="2" y2="22"></line></svg>'
-    })
-  })
+          : '<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9.88 9.88a3 3 0 1 0 4.24 4.24"></path><path d="M10.73 5.08A10.43 10.43 0 0 1 12 5c7 0 10 7 10 7a13.16 13.16 0 0 1-1.67 2.68"></path><path d="M6.61 6.61A13.526 13.526 0 0 0 2 12s3 7 10 7a9.74 9.74 0 0 0 5.39-1.61"></path><line x1="2" x2="22" y1="2" y2="22"></line></svg>';
+    });
+  });
 
   // Password strength meter
-  const newPasswordInput = document.getElementById("new-password")
+  const newPasswordInput = document.getElementById("new-password");
   if (newPasswordInput) {
     newPasswordInput.addEventListener("input", function () {
-      updatePasswordStrength(this.value)
-    })
+      updatePasswordStrength(this.value);
+    });
   }
 
   // Profile form submission
-  const profileForm = document.getElementById("profile-form")
+  const profileForm = document.getElementById("profile-form");
   if (profileForm) {
     profileForm.addEventListener("submit", (event) => {
-      event.preventDefault()
+      event.preventDefault();
 
-      const fullName = document.getElementById("full-name").value
-      const email = document.getElementById("email").value
-      const phone = document.getElementById("phone").value
+      const fullName = document.getElementById("full-name").value;
+      const email = document.getElementById("email").value;
+      const phone = document.getElementById("phone").value; // Optional field
 
       // Validate required fields
       if (!fullName.trim()) {
-        showNotification("Full name is required", "error")
-        return
+        showNotification("Error", "Full name is required", "error");
+        return;
       }
 
       if (!email.trim()) {
-        showNotification("Email is required", "error")
-        return
+        showNotification("Error", "Email is required", "error");
+        return;
       }
 
       const profileData = {
         full_name: fullName,
         email: email,
-        phone: phone,
-      }
+        phone: phone || null // Allow phone to be null if not provided
+      };
 
       updateProfile(profileData)
         .then((data) => {
           if (data.message) {
-            // Changes back to non-edit mode
-            document.querySelector('.sidebar-item[data-target="profile-section"]').click();
-            const editProfileButton = document.querySelector('.submenu-item[data-target="profile-section"]');
-            if (editProfileButton) {
-              editProfileButton.classList.remove("active");
-            }
-            showNotification("Profile updated successfully!", "success")
+            showNotification(
+              "Success",
+              "Profile updated successfully!",
+              "success"
+            );
+            // Update the display values in the read-only view
+            document.getElementById("display-full-name").textContent =
+              fullName || "Not provided";
+            document.getElementById("display-email").textContent =
+              email || "Not provided";
+            document.getElementById("display-phone").textContent =
+              phone || "Not provided";
+            // Switch back to view mode
+            toggleProfileMode(false);
           } else {
-            showNotification("Failed to update profile", "error")
+            showNotification("Error", "Failed to update profile", "error");
           }
         })
         .catch((error) => {
-          console.error("Error:", error)
-          showNotification("An error occurred while updating profile", "error")
-        })
-    })
+          console.error("Error:", error);
+          showNotification(
+            "Error",
+            "An error occurred while updating profile",
+            "error"
+          );
+        });
+    });
   }
 
   const toggleProfileEditMode = (isEditMode) => {
     const profileSection = document.getElementById("profile-section");
-    const formFields = profileSection.querySelectorAll("input, textarea");
-    const formActions = profileSection.querySelector(".form-actions");
+    const profileForm = document.getElementById("profile-form");
+    const profileInfoCard = document.querySelector(".profile-info-card");
+    const profileActions = document.querySelector(".profile-actions");
     const uploadButton = document.getElementById("upload-pic");
     const profilePicOverlay = document.querySelector(".profile-pic-overlay");
-  
-    formFields.forEach(field => field.disabled = !isEditMode);
-    formActions.style.display = isEditMode ? 'flex' : 'none';
-    uploadButton.style.display = isEditMode ? 'inline-block' : 'none';
-    profilePicOverlay.style.display = isEditMode ? 'flex' : 'none';
-  
-    // Change the visibility of the required asterix depending on edit mode or not
-    const formGroups = profileSection.querySelectorAll(".form-group");
-    formGroups.forEach(group => {
-      const requiredSpan = group.querySelector(".required");
-      if (requiredSpan) {
-        requiredSpan.style.display = isEditMode && group.querySelector("input").value === "" ? 'inline' : 'none';
-      }
-    });
+    const formFields = profileForm.querySelectorAll("input, textarea"); // Get form fields from the form itself
 
-    formFields.forEach(field => {
-      field.addEventListener("input", () => {
-        formGroups.forEach(group => {
-          const requiredSpan = group.querySelector(".required");
-          const inputField = group.querySelector("input");
-          
-          // Check if the field is empty and update asterisk visibility
-          if (requiredSpan && inputField) {
-            requiredSpan.style.display = isEditMode && inputField.value === "" ? 'inline' : 'none';
-          }
-        });
+    // Toggle between view and edit modes
+    if (isEditMode) {
+      // Switch to edit mode - show form and hide info card
+      profileForm.style.display = "block";
+      profileInfoCard.style.display = "none";
+      profileActions.style.display = "none";
+
+      // IMPORTANT - Enable all form fields for editing (removing disabled attribute)
+      formFields.forEach((field) => {
+        field.disabled = false; // Remove disabled attribute
       });
+
+      // Show upload button and profile pic overlay
+      if (uploadButton) uploadButton.style.display = "inline-block";
+      if (profilePicOverlay) profilePicOverlay.style.display = "flex";
+    } else {
+      // Switch back to view mode code remains the same
+      profileForm.style.display = "none";
+      profileInfoCard.style.display = "block";
+      profileActions.style.display = "flex";
+
+      // Update display values before switching back to view mode
+      const fullNameInput = document.getElementById("full-name");
+      const emailInput = document.getElementById("email");
+      const phoneInput = document.getElementById("phone");
+
+      if (fullNameInput && document.getElementById("display-full-name")) {
+        document.getElementById("display-full-name").textContent =
+          fullNameInput.value || "Not provided";
+      }
+
+      if (emailInput && document.getElementById("display-email")) {
+        document.getElementById("display-email").textContent =
+          emailInput.value || "Not provided";
+      }
+
+      if (phoneInput && document.getElementById("display-phone")) {
+        document.getElementById("display-phone").textContent =
+          phoneInput.value || "Not provided";
+      }
+
+      // Hide upload button and profile pic overlay
+      if (uploadButton) uploadButton.style.display = "none";
+      if (profilePicOverlay) profilePicOverlay.style.display = "none";
+    }
+
+    // Show or hide required indicators based on mode
+    const requiredFields = profileSection.querySelectorAll(".required-profile");
+    requiredFields.forEach((field) => {
+      field.style.display = isEditMode ? "inline" : "none";
     });
-  }
-  
+  };
+
   // Handle "Profile" button (non-edit mode)
-  const profileButton = document.querySelector('.sidebar-item[data-target="profile-section"]');
+  const profileButton = document.querySelector(
+    '.sidebar-item[data-target="profile-section"]'
+  );
   if (profileButton) {
     profileButton.addEventListener("click", function () {
       // Switch to non-edit mode
       toggleProfileEditMode(false);
     });
   }
-  
+
   // Handle "Edit Profile" submenu item (editable mode)
-  const editProfileButton = document.querySelector('.submenu-item[data-target="profile-section"]');
+  const editProfileButton = document.querySelector(
+    '.submenu-item[data-target="profile-section"]'
+  );
   if (editProfileButton) {
     editProfileButton.addEventListener("click", function () {
+      // Make sure the profile section is active
+      document.querySelectorAll(".settings-section").forEach((section) => {
+        section.classList.remove("active");
+      });
+      const profileSection = document.getElementById("profile-section");
+      if (profileSection) {
+        profileSection.classList.add("active");
+      }
+
       // Switch to edit mode
       toggleProfileEditMode(true);
+
+      // Mark this submenu item as active
+      document.querySelectorAll(".submenu-item").forEach((item) => {
+        item.classList.remove("active");
+      });
+      this.classList.add("active");
     });
   }
 
   // Password form submission
-  const passwordForm = document.querySelector(".password-form")
+  const passwordForm = document.querySelector(".password-form");
   if (passwordForm) {
     passwordForm.addEventListener("submit", (event) => {
-      event.preventDefault()
+      event.preventDefault();
 
-      const currentPassword = document.getElementById("password").value
-      const newPassword = document.getElementById("new-password").value
-      const confirmPassword = document.getElementById("confirm-password").value
+      const currentPassword = document.getElementById("password").value;
+      const newPassword = document.getElementById("new-password").value;
+      const confirmPassword = document.getElementById("confirm-password").value;
 
       // Validate password fields
       if (!currentPassword) {
-        showNotification("Current password is required", "error")
-        return
+        showNotification("Error", "Current password is required", "error");
+        return;
       }
 
       if (!newPassword) {
-        showNotification("New password is required", "error")
-        return
+        showNotification("Error", "New password is required", "error");
+        return;
       }
 
       if (newPassword !== confirmPassword) {
-        showNotification("New passwords do not match", "error")
-        return
+        showNotification("Error", "New passwords do not match", "error");
+        return;
       }
 
       // Check password strength
-      const strength = calculatePasswordStrength(newPassword)
+      const strength = calculatePasswordStrength(newPassword);
       if (strength < 2) {
-        showNotification("Password is too weak. Please choose a stronger password.", "error")
-        return
+        showNotification(
+          "Error",
+          "Password is too weak. Please choose a stronger password.",
+          "error"
+        );
+        return;
       }
 
       const passwordData = {
         current_password: currentPassword,
-        new_password: newPassword,
-      }
+        new_password: newPassword
+      };
 
       updatePassword(passwordData)
         .then((data) => {
           if (data.message) {
-            showNotification("Password updated successfully!", "success")
-            passwordForm.reset()
+            showNotification(
+              "Success",
+              "Password updated successfully!",
+              "success"
+            );
+            passwordForm.reset();
           } else {
-            showNotification("Failed to update password", "error")
+            showNotification("Error", "Failed to update password", "error");
           }
         })
         .catch((error) => {
-          console.error("Error:", error)
-          showNotification("An error occurred while updating password", "error")
-        })
-    })
+          console.error("Error:", error);
+          showNotification(
+            "Error",
+            "An error occurred while updating password",
+            "error"
+          );
+        });
+    });
   }
 
   // Delete account form submission
-  const deleteForm = document.querySelector(".delete-form")
+  const deleteForm = document.querySelector(".delete-form");
   if (deleteForm) {
     deleteForm.addEventListener("submit", (event) => {
-      event.preventDefault()
+      event.preventDefault();
 
-      const confirmText = document.getElementById("delete-confirm").value
-      const password = document.getElementById("delete-password").value
-      const email = document.getElementById("email").value
+      const confirmText = document.getElementById("delete-confirm").value;
+      const password = document.getElementById("delete-password").value;
+      const email = document.getElementById("delete-email").value;
 
       if (confirmText !== "DELETE") {
-        showNotification("Please type DELETE to confirm account deletion", "error")
-        return
+        showNotification(
+          "Error",
+          "Please type DELETE to confirm account deletion",
+          "error"
+        );
+        return;
       }
 
       if (!password) {
-        showNotification("Password is required to delete your account", "error")
-        return
+        showNotification(
+          "Error",
+          "Password is required to delete your account",
+          "error"
+        );
+        return;
       }
 
       if (!email) {
-        showNotification("Email is required to delete your account", "error")
-        return
+        showNotification(
+          "Error",
+          "Email is required to delete your account",
+          "error"
+        );
+        return;
       }
 
       const confirmData = {
         deleteEmail: email,
         deletePassword: password,
-        deleteConfirm: confirmText,
-      }
+        deleteConfirm: confirmText
+      };
 
       deleteUserAccount(confirmData)
         .then((data) => {
           if (data.message) {
-            showNotification("Account deleted successfully", "success")
+            showNotification(
+              "Success",
+              "Account deleted successfully",
+              "success"
+            );
             // Redirect to logout or home page after successful deletion
             if (data.redirect) {
               setTimeout(() => {
-                window.location.href = data.redirect
-              }, 2000)
+                window.location.href = data.redirect;
+              }, 2000);
             } else {
               setTimeout(() => {
-                window.location.href = "/logout"
-              }, 2000)
+                window.location.href = "/logout";
+              }, 2000);
             }
           } else {
-            showNotification("Failed to delete account", "error")
+            showNotification("Error", "Failed to delete account", "error");
           }
         })
         .catch((error) => {
-          console.error("Error:", error)
-          showNotification("An error occurred while deleting account", "error")
-        })
-    })
+          console.error("Error:", error);
+          showNotification(
+            "Error",
+            "An error occurred while deleting account",
+            "error"
+          );
+        });
+    });
+  }
+
+  // Function to handle account deletion
+  async function handleDeleteAccount(event) {
+    event.preventDefault();
+    const email = deleteEmailInput ? deleteEmailInput.value : null; // Get email from input
+
+    if (!email) {
+      showNotification(
+        "Error",
+        "Please enter your email to confirm deletion.",
+        "error"
+      );
+      return;
+    }
+
+    // Show loading state on confirm button
+    if (confirmDeleteBtn) {
+      confirmDeleteBtn.disabled = true;
+      confirmDeleteBtn.innerHTML =
+        '<i class="fas fa-spinner fa-spin"></i> Deleting...';
+    }
+
+    try {
+      // Call the imported deleteAccount function
+      const response = await deleteAccount({ email: email });
+      showNotification(
+        "Success",
+        response.message || "Account deleted successfully.",
+        "success"
+      );
+
+      // Redirect to signin page after successful deletion
+      setTimeout(() => {
+        window.location.href = "/signin";
+      }, 2000);
+    } catch (error) {
+      console.error("Error deleting account:", error);
+      showNotification(
+        "Error",
+        `Error deleting account: ${error.message}`,
+        "error"
+      );
+      // Restore button state on error
+      if (confirmDeleteBtn) {
+        confirmDeleteBtn.disabled = false;
+        confirmDeleteBtn.innerHTML = "Confirm Deletion";
+      }
+    } finally {
+      // Ensure popup is hidden even if redirect fails or takes time
+      if (deleteConfirmationPopup)
+        deleteConfirmationPopup.style.display = "none";
+      if (deleteEmailInput) deleteEmailInput.value = ""; // Clear email input
+    }
   }
 
   // Subscribe to newsletter
-  const subscribeForm = document.querySelector(".subscription-form")
+  const subscribeForm = document.querySelector(".subscription-form");
   if (subscribeForm) {
     subscribeForm.addEventListener("submit", (event) => {
-      event.preventDefault()
+      event.preventDefault();
 
-      const email = document.getElementById("subscription-email").value
+      const email = document.getElementById("subscription-email").value;
 
       if (!email) {
-        showNotification("Email is required to subscribe", "error")
-        return
+        showNotification("Error", "Email is required to subscribe", "error");
+        return;
       }
 
       subscribeUser(email)
         .then((data) => {
           if (data.message) {
-            showNotification("Successfully subscribed to newsletter!", "success")
+            showNotification(
+              "Success",
+              "Successfully subscribed to newsletter!",
+              "success"
+            );
           } else {
-            showNotification("Failed to subscribe", "error")
+            showNotification("Error", "Failed to subscribe", "error");
           }
         })
         .catch((error) => {
-          console.error("Error:", error)
-          showNotification("An error occurred while subscribing", "error")
-        })
-    })
+          console.error("Error:", error);
+          showNotification(
+            "Error",
+            "An error occurred while subscribing",
+            "error"
+          );
+        });
+    });
   }
 
   // Profile picture upload
-  const profilePicOverlay = document.querySelector(".profile-pic-overlay")
-  const uploadButton = document.getElementById("upload-pic")
-
   if (profilePicOverlay) {
-    profilePicOverlay.addEventListener("click", triggerFileUpload)
+    profilePicOverlay.addEventListener("click", triggerFileUpload);
+    console.log("Overlay click listener added."); // Add log
+  } else {
+    console.warn("Profile picture overlay not found."); // Add warning
   }
 
   if (uploadButton) {
-    uploadButton.addEventListener("click", triggerFileUpload)
+    uploadButton.addEventListener("click", triggerFileUpload);
+    console.log("Upload button click listener added."); // Add log
+  } else {
+    console.warn("Upload button not found."); // Add warning
+  }
+
+  // Add event listener for the file input change
+  if (profilePicInput) {
+    profilePicInput.addEventListener("change", handleFileSelect);
+    console.log("File input change listener added."); // Add log
+  } else {
+    console.error(
+      "Profile picture input element not found for change listener!"
+    ); // Add error log
   }
 
   // Initialize the first section as active
-  const firstSection = document.querySelector(".settings-section")
+  const firstSection = document.querySelector(".settings-section");
   if (firstSection) {
-    firstSection.classList.add("active")
+    firstSection.classList.add("active");
   }
 
-  const firstSidebarItem = document.querySelector('.sidebar-item:not([data-toggle="submenu"])')
+  const firstSidebarItem = document.querySelector(
+    '.sidebar-item:not([data-toggle="submenu"])'
+  );
   if (firstSidebarItem) {
-    firstSidebarItem.classList.add("active")
+    firstSidebarItem.classList.add("active");
   }
 
   // Calculate password strength
   function calculatePasswordStrength(password) {
-    let strength = 0
+    let strength = 0;
 
-    if (password.length >= 8) strength++
-    if (password.match(/[A-Z]/)) strength++
-    if (password.match(/[0-9]/)) strength++
-    if (password.match(/[^A-Za-z0-9]/)) strength++
+    if (password.length >= 8) strength++;
+    if (password.match(/[A-Z]/)) strength++;
+    if (password.match(/[0-9]/)) strength++;
+    if (password.match(/[^A-Za-z0-9]/)) strength++;
 
-    return strength
+    return strength;
   }
-})
 
-// Helper functions
-function updatePasswordStrength(password) {
-  let strength = 0
-  const segments = document.querySelectorAll(".strength-segment")
-  const strengthText = document.querySelector(".strength-text")
+  // Add this function to fetch and update credits
+  fetchStoreCredits();
 
-  if (password.length >= 8) strength++
-  if (password.match(/[A-Z]/)) strength++
-  if (password.match(/[0-9]/)) strength++
-  if (password.match(/[^A-Za-z0-9]/)) strength++
+  // Load purchases when the purchases section is opened
+  const purchasesNavItem = document.querySelector(
+    'li[data-target="settings-purchases"]'
+  );
+  if (purchasesNavItem) {
+    purchasesNavItem.addEventListener("click", () => {
+      loadPurchaseHistory(); // Changed from fetchPurchaseHistory to loadPurchaseHistory
+    });
+  }
 
-  // Reset all segments
-  segments.forEach((segment) => {
-    segment.style.backgroundColor = "var(--border)"
-  })
+  // Also add this to check if we're already on the purchases page and need to load data
+  if (
+    document.getElementById("settings-purchases") &&
+    document.getElementById("settings-purchases").classList.contains("active")
+  ) {
+    loadPurchaseHistory(); // Changed from fetchPurchaseHistory to loadPurchaseHistory
+  }
 
-  // Update segments based on strength
-  for (let i = 0; i < strength; i++) {
-    if (segments[i]) {
-      if (strength === 1) {
-        segments[i].style.backgroundColor = "var(--destructive)"
-      } else if (strength === 2) {
-        segments[i].style.backgroundColor = "var(--warning)"
-      } else if (strength === 3) {
-        segments[i].style.backgroundColor = "var(--primary)"
-      } else if (strength === 4) {
-        segments[i].style.backgroundColor = "var(--success)"
+  // Function to handle section activation
+  function activateSection(sectionId) {
+    // Hide all sections and remove active class from all sidebar items
+    document
+      .querySelectorAll(".settings-section")
+      .forEach((section) => section.classList.remove("active"));
+    document
+      .querySelectorAll(".sidebar-item")
+      .forEach((item) => item.classList.remove("active"));
+
+    // Show the target section and mark the corresponding sidebar item as active
+    const targetSection = document.getElementById(sectionId);
+    const targetSidebarItem = document.querySelector(
+      `.sidebar-item[data-target="${sectionId}"]`
+    );
+
+    if (targetSection && targetSidebarItem) {
+      targetSection.classList.add("active");
+      targetSidebarItem.classList.add("active");
+
+      // Fetch purchase history if the "Purchases" section is activated
+      if (sectionId === "settings-purchases") {
+        loadPurchaseHistory(); // Changed from fetchPurchaseHistory to loadPurchaseHistory
+        loadCreditHistory(); // Fetch and display credit history
       }
     }
   }
 
-  // Update strength text
-  if (strengthText) {
-    if (strength === 0) {
-      strengthText.textContent = "Too weak"
-      strengthText.style.color = "var(--destructive)"
-    } else if (strength === 1) {
-      strengthText.textContent = "Weak"
-      strengthText.style.color = "var(--destructive)"
-    } else if (strength === 2) {
-      strengthText.textContent = "Fair"
-      strengthText.style.color = "var(--warning)"
-    } else if (strength === 3) {
-      strengthText.textContent = "Good"
-      strengthText.style.color = "var(--primary)"
-    } else {
-      strengthText.textContent = "Strong"
-      strengthText.style.color = "var(--success)"
-    }
+  // Automatically open the section specified in localStorage
+  const activeSection = localStorage.getItem("activeAccountSection");
+  if (activeSection) {
+    activateSection(activeSection);
+    localStorage.removeItem("activeAccountSection");
   }
-}
 
-function triggerFileUpload() {
-  const fileInput = document.createElement("input")
-  fileInput.type = "file"
-  fileInput.accept = "image/*"
-  fileInput.style.display = "none"
+  // Handle sidebar item clicks
+  document
+    .querySelectorAll('.sidebar-item:not([data-toggle="submenu"])')
+    .forEach((item) => {
+      item.addEventListener("click", function () {
+        const targetId = this.getAttribute("data-target");
+        activateSection(targetId);
+      });
+    });
+});
 
-  fileInput.addEventListener("change", function () {
-    if (this.files && this.files[0]) {
-      const reader = new FileReader()
-
-      reader.onload = (e) => {
-        document.getElementById("profile-pic").src = e.target.result
-
-        // Here you would typically upload the file to your server
-        // uploadProfilePicture(fileInput.files[0]);
-      }
-
-      reader.readAsDataURL(this.files[0])
-    }
-  })
-
-  document.body.appendChild(fileInput)
-  fileInput.click()
-  document.body.removeChild(fileInput)
-}
-
-function showNotification(message, type) {
-  const notificationContainer = document.getElementById("header-notifications");
-  if (!notificationContainer) return;
-
-  // Create notification element
-  const notification = document.createElement("div");
-  notification.className = `notification ${type}`;
-  notification.textContent = message;
-
-  // Add notification to the container
-  notificationContainer.appendChild(notification);
-
-  // Remove notification after 3 seconds
-  setTimeout(() => {
-    notification.classList.add("fade-out");
-    setTimeout(() => {
-      notificationContainer.removeChild(notification);
-    }, 300);
-  }, 3000);
+// Function to toggle between view and edit modes
+function toggleProfileMode(isEditMode) {
+  const profileInfoCard = document.querySelector(".profile-info-card");
 }

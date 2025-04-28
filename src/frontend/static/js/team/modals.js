@@ -1,4 +1,4 @@
-import { showNotification, showConfirmationPopup } from "./notifications.js";
+import { showNotification, showConfirmationPopup } from "../components/notifications.js";
 import { updateTeamsUI } from "./teamUI.js";
 import {
   getTeamsRequest,
@@ -15,7 +15,7 @@ export function closeModal(modal) {
 }
 
 // Helper to render assigned podcasts
-export function renderAssignedPodcasts(
+export async function renderAssignedPodcasts(
   teamId,
   originalAssignedPodcasts,
   pendingPodcastChanges
@@ -26,18 +26,23 @@ export function renderAssignedPodcasts(
   originalAssignedPodcasts.forEach((p) => {
     finalAssignments[p._id] = p;
   });
+
   for (const [podcastId, newTeam] of Object.entries(pendingPodcastChanges)) {
     if (newTeam === teamId) {
       if (!finalAssignments[podcastId]) {
+        const allPodcasts = await fetchPodcasts();
+        const podcast = allPodcasts.find((p) => p._id === podcastId);
+
         finalAssignments[podcastId] = {
           _id: podcastId,
-          podName: "Pending: " + podcastId
+          podName: podcast ? podcast.podName : "Unknown Podcast"
         };
       }
     } else if (newTeam === "REMOVE") {
       delete finalAssignments[podcastId];
     }
   }
+
   Object.values(finalAssignments).forEach((podcast) => {
     const chip = document.createElement("div");
     chip.className = "podcast-chip";
@@ -215,23 +220,18 @@ export function showTeamDetailModal(team) {
   // Save button finalizes pending podcast assignment changes and updates team details
   const saveBtn = document.getElementById("saveTeamBtn");
   saveBtn.onclick = async () => {
-    // First update all pending podcast assignments
+    let podcastChangesMade = false;
+    let teamChangesMade = false;
+  
+    // First update podcast assignments
     try {
-      for (const [podcastId, newTeam] of Object.entries(
-        pendingPodcastChanges
-      )) {
-        if (newTeam === team._id) {
-          // Podcast selected: update podcast with the teamId
+      for (const [podcastId, newTeam] of Object.entries(pendingPodcastChanges)) {
+        if (newTeam === team._id || newTeam === "REMOVE") {
           const updateResponse = await updatePodcastTeamRequest(podcastId, {
-            teamId: team._id
+            teamId: newTeam === "REMOVE" ? "" : team._id,
           });
           console.log("Update podcast response:", updateResponse);
-        } else if (newTeam === "REMOVE") {
-          // Podcast removal: set teamId to empty
-          const updateResponse = await updatePodcastTeamRequest(podcastId, {
-            teamId: ""
-          });
-          console.log("Update podcast response:", updateResponse);
+          podcastChangesMade = true;
         }
       }
     } catch (err) {
@@ -239,35 +239,49 @@ export function showTeamDetailModal(team) {
       showNotification("Error", "Error updating podcast assignments.", "error");
       return;
     }
-
+  
+    // Build team payload
+    const selectedPodcastId = Object.entries(pendingPodcastChanges).find(
+      ([, id]) => id === team._id
+    )?.[0];
+  
     const payload = {
       name: document.getElementById("detailName").value,
       email: document.getElementById("detailEmail").value,
       description: document.getElementById("detailDescription").value,
-      members: team.members // Preserve all members (including creator)
+      members: team.members,
     };
-
+  
+    if (selectedPodcastId) {
+      payload.podcastId = selectedPodcastId;
+    }
+  
     try {
       const result = await editTeamRequest(team._id, payload);
       console.log("Edit team response:", result);
-      showNotification(
-        "Success",
-        result.message || "Team updated successfully!",
-        "success"
-      );
-      closeModal(modal);
-      const teams = await getTeamsRequest();
-      updateTeamsUI(teams);
+  
+      // Set flag only if backend confirms update
+      if (result.message && result.message.includes("updated")) {
+        teamChangesMade = true;
+      }
     } catch (error) {
       console.error("Error editing team:", error);
-      showNotification(
-        "Error",
-        "An error occurred while updating the team.",
-        "error"
-      );
+      showNotification("Error", "An error occurred while updating the team.", "error");
+      return;
     }
+  
+    // ✅ Correct location for your conditional notification
+    if (podcastChangesMade || teamChangesMade) {
+      showNotification("Success", "Changes saved successfully!", "success");
+    } else {
+      showNotification("Info", "No changes were made.", "info");
+    }
+  
+    closeModal(modal);
+    const teams = await getTeamsRequest();
+    updateTeamsUI(teams);
   };
-
+  
   // Modal close handler
   document.getElementById("teamDetailCloseBtn").onclick = () =>
     closeModal(modal);

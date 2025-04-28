@@ -1,4 +1,4 @@
-import { showNotification, showConfirmationPopup } from "./notifications.js";
+import { showNotification, showConfirmationPopup } from "../components/notifications.js";
 import { edit } from "./teamSvg.js";
 import { closeModal } from "./modals.js";
 import { getTeamsRequest } from "/static/requests/teamRequests.js";
@@ -24,6 +24,10 @@ export async function renderMembersView() {
   try {
     const teams = await getTeamsRequest();
     const membersView = document.getElementById("members-view-container");
+    if (!teams || teams.length === 0) {
+      membersView.innerHTML = `<p>No members available.</p>`;
+      return;
+    }
     for (const team of teams) {
       if (team.members && Array.isArray(team.members)) {
         team.members.forEach((member) => {
@@ -32,7 +36,7 @@ export async function renderMembersView() {
           card.innerHTML = `
   <div class="member-card-header" style="position: relative;">
     <h3 class="text-truncate">${member.email}</h3>
-    <button class="edit-icon-btn" style="position: absolute; top: 8px; right: 8px;">${edit}</button>
+    <button class="action-btn edit-icon-btn" style="position: absolute; top: 8px; right: 8px;">${edit}</button>
   </div>
   <div class="member-card-body">
     ${
@@ -544,6 +548,7 @@ export async function handleAddMemberFormSubmission(e) {
   }
 
   try {
+    document.getElementById("addMemberModal").classList.remove("show");
     const inviteResult = await sendTeamInviteRequest(teamId, email, role);
     const addMemberResult = await addTeamMemberRequest(teamId, email, role);
 
@@ -553,7 +558,6 @@ export async function handleAddMemberFormSubmission(e) {
     }
 
     showNotification("Success", "Member added successfully!", "success");
-    document.getElementById("addMemberModal").classList.remove("show");
     const teams = await getTeamsRequest();
     updateTeamsUI(teams);
   } catch (error) {

@@ -4,6 +4,23 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Episode Title - Podcast</title>
+  <!-- global stylesheets -->
+  <link
+  rel="stylesheet"
+  href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
+  />
+  <link
+    rel="stylesheet"
+    href="{{ url_for('static', filename='css/components/variables.css') }}"
+  />
+  <link
+    rel="stylesheet"
+    href="{{ url_for('static', filename='css/components/general.css') }}"
+  />
+  <link
+    rel="stylesheet"
+    href="{{ url_for('static', filename='css/components/typography.css') }}"
+  />
   <link rel="stylesheet" href="../../static/css/episode/episode.css">
 </head>
 <body>
@@ -58,26 +75,25 @@
     </section>
     
       <!-- Guest About Section -->
-    <section class="guest-about-section section-dark" id="guest-about-section">
-      <h2>Meet the Guest{{ guests|length > 1 and 's' or '' }}</h2>
+<section class="guest-about-section section-dark" id="guest-about-section">
+  <h2>Meet the Guest{{ guests|length > 1 and 's' or '' }}</h2>
 
-      {% for guest in guests %}
-        <div class="guest-about-info">
-          <img class="guest-about-image" src="{{ guest.image or url_for('static', filename='images/default.png') }}" alt="Guest Image">
-          <div class="guest-about-details">
-            <h3>{{ guest.name }}</h3>
-            <p>{{ guest.bio or "No bio available." }}</p>
-            <div class="guest-about-social">
-              {% if guest.twitter %}<a href="{{ guest.twitter }}" target="_blank" class="twitter"><i class="fab fa-twitter"></i></a>{% endif %}
-              {% if guest.instagram %}<a href="{{ guest.instagram }}" target="_blank" class="instagram"><i class="fab fa-instagram"></i></a>{% endif %}
-              {% if guest.linkedin %}<a href="{{ guest.linkedin }}" target="_blank" class="linkedin"><i class="fab fa-linkedin"></i></a>{% endif %}
-              {% if guest.facebook %}<a href="{{ guest.facebook }}" target="_blank" class="facebook"><i class="fab fa-facebook-f"></i></a>{% endif %}
-              {% if guest.youtube %}<a href="{{ guest.youtube }}" target="_blank" class="youtube"><i class="fab fa-youtube"></i></a>{% endif %}
-            </div>
-          </div>
+  {% for guest in guests %}
+    <div class="guest-about-info">
+      <!-- Länk runt gästbilden -->
+      <a href="/guestpage/{{ guest.id }}" class="guest-link">
+        <img class="guest-about-image" src="{{ guest.image or url_for('static', filename='images/default.png') }}" alt="Guest Image">
+      </a>
+      <div class="guest-about-details">
+        <!-- Länk runt gästnamnet -->
+        <a href="/guestpage/{{ guest.id }}" class="guest-link">
+          <h3>{{ guest.name }}</h3>
+        </a>
+        <p>{{ guest.bio or "No bio available." }}</p>
         </div>
-      {% endfor %}
-    </section>
+    </div>
+  {% endfor %}
+</section>
 
 
 

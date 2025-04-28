@@ -4,6 +4,23 @@
   <meta charset="UTF-8">
   <title>{{ guest_name }} - Guest Profile</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <!-- global stylesheets -->
+  <link
+  rel="stylesheet"
+  href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
+  />
+  <link
+    rel="stylesheet"
+    href="{{ url_for('static', filename='css/components/variables.css') }}"
+  />
+  <link
+    rel="stylesheet"
+    href="{{ url_for('static', filename='css/components/general.css') }}"
+  />
+  <link
+    rel="stylesheet"
+    href="{{ url_for('static', filename='css/components/typography.css') }}"
+  />
   <link rel="stylesheet" href="{{ url_for('static', filename='css/guestpage/guestpage.css') }}">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 
@@ -13,87 +30,84 @@
     window.dataLayer = window.dataLayer || [];
     function gtag(){dataLayer.push(arguments);}
     gtag('js', new Date());
-
     gtag('config', 'G-PTPQQ5WSQV');
   </script>
 </head>
 <body>
   <!-- Navbar -->
   <header class="navbar">
-    <div class="container">
-      <div class="logo">PodManager</div>
-      <ul class="nav-links">
-        <li><a href="/">Home</a></li>
-        <li><a href="/episodes">Episodes</a></li>
-        <li><a href="/about">About</a></li>
-      </ul>
+    <div class="logo-container">
+      <a href="/podcastmanagement">
+        <img src="{{ url_for('static', filename='images/PodManagerLogo.png') }}" alt="PodManager Logo" class="logo-image">
+      </a>
     </div>
   </header>
 
-  <!-- Hero section -->
   <section class="guest-hero">
     <div class="overlay"></div>
-    <!-- Social Media Icons in Top-Right Corner -->
+    <!-- Social Media Icons (Top-Right) -->
+    <!-- Social Media and Email (Top-Right) -->
     <div id="guest-social">
-      {% for platform, link in social_media.items() %}
-        {% if link %}
-          <a href="{{ link }}" target="_blank" class="social-icon {{ platform }}">
-            <i class="fab fa-{{ platform }}"></i>
-          </a>
-        {% endif %}
-      {% endfor %}
+      <div class="icons">
+        {% for platform, link in social_media.items() %}
+          {% if link %}
+            <a href="{{ link }}" target="_blank" class="social-icon {{ platform }}">
+              <i class="fab fa-{{ platform }}"></i>
+            </a>
+          {% endif %}
+        {% endfor %}
+      </div>
+      {% if email %}
+        <div class="social-email">
+          <a href="mailto:{{ email }}">{{ email }}</a>
+        </div>
+      {% endif %}
     </div>
     <div class="hero-content container">
       <!-- Guest profile image -->
       <div class="guest-image">
         <img src="{{ guest_image }}" alt="{{ guest_name }}">
       </div>
-      <!-- Guest info -->
       <div class="guest-text">
         <h1>{{ guest_name }}</h1>
-        <p>{{ guest_bio }}</p>
+        {% if areas_of_interest %}
+          <p class="guest-interests">Areas of Interest: {{ areas_of_interest | join(', ') }}</p>
+        {% endif %}
+        <!-- Guest bio -->
+        <p class="guest-bio">{{ guest_bio }}</p>
       </div>
     </div>
   </section>
 
-  <!-- Guest Info Section -->
-  <section class="guest-info container section-orange" style="text-align: center;">
-    <h2>Guest Information</h2>
-    <p><strong>Email:</strong> 
-      {% if email %}
-        <a href="mailto:{{ email }}">{{ email }}</a>
-      {% else %}
-        None
-      {% endif %}
-    </p>
-    <p><strong>Areas of Interest:</strong>
-      {% if areas_of_interest %}
-        {{ areas_of_interest | join(', ') }}
-      {% else %}
-        None
-      {% endif %}
-    </p>
-  </section>
 
   <!-- Episodes Section -->
-  {% for episode in episodes %}
-  <li class="episode-card">
-    <div class="episode-banner">
-      <img src="{{ url_for('static', filename='images/default.png') }}" alt="{{ episode.title }} Thumbnail">
-    </div>
-    <div class="episode-content">
-      <div class="episode-header">
-        <span class="play-icon"><i class="fas fa-play"></i></span>
-        <h3>{{ episode.title }}</h3>
-      </div>
-      <p class="episode-description">{{ episode.description }}</p>
-      <div class="episode-links">
-        <a href="#" class="platform spotify"><i class="fab fa-spotify"></i> Spotify</a>
-        <a href="#" class="platform apple"><i class="fab fa-apple"></i> Apple</a>
-      </div>
-    </div>
-  </li>
-{% endfor %}
+  <section class="guest-episodes container">
+    <h2>Episodes Featuring {{ guest_name }}</h2>
+    <ul class="episode-list">
+      {% for episode in episodes %}
+        <li class="episode-card" onclick="window.location.href='/episode/{{ episode._id }}'">
+          <div class="episode-banner">
+            <img src="{{ url_for('static', filename='images/default.png') }}" alt="{{ episode.title }} Thumbnail">
+          </div>
+          <div class="episode-content">
+            <div class="episode-header">
+              <span class="play-icon"><i class="fas fa-play"></i></span>
+              <h3>{{ episode.title }}</h3>
+            </div>
+            <p class="episode-description">{{ episode.description }}</p>
+            <div class="episode-links">
+              <a href="https://open.spotify.com/" target="_blank" class="platform spotify" onclick="event.stopPropagation()">
+                <i class="fab fa-spotify"></i> Spotify
+              </a>
+              <a href="https://podcasts.apple.com/" target="_blank" class="platform apple" onclick="event.stopPropagation()">
+                <i class="fab fa-apple"></i> Apple
+              </a>
+            </div>
+          </div>
+        </li>
+      {% endfor %}
+    </ul>
+  </section>
 
   <!-- Footer -->
   <footer>

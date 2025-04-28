@@ -19,5 +19,11 @@ class PodtaskSchema(Schema):
     submissionReq = fields.Bool()
     status = fields.Str()
     assignedAt = fields.DateTime()
-    dueDate = fields.DateTime()
+    
+    # Added fields for due date, assigned and dependencies
+    dueDate = fields.Str(allow_none=True)      # Due date as string (e.g., "Before recording", "3 days after recording")
+    assignee = fields.Str(allow_none=True)     # ID of the assigned user
+    assigneeName = fields.Str(allow_none=True) # Name of the assigned user
+    dependencies = fields.List(fields.Str(), allow_none=True)  # List of task IDs that this task depends on
+    
     priority = fields.Str()

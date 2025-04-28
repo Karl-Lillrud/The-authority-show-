@@ -4,14 +4,15 @@ import os
 from dotenv import load_dotenv
 import logging
 from gridfs import GridFS
-from gridfs import GridFS
+from colorama import Fore, Style, init  # Import colorama for styled logs
 
 mongo_bp = Blueprint("mongo_bp", __name__)
 
 # Load environment variables
 load_dotenv()
 
-
+# Initialize colorama
+init(autoreset=True)
 
 # MongoDB Configuration
 MONGODB_URI = os.getenv("MONGODB_URI")
@@ -19,6 +20,7 @@ DATABASE_NAME = "Podmanager"
 COLLECTION_NAME = "Users"
 PODCAST_NAME = "Podcasts"
 EPISODE_NAME = "Episodes"
+CREDITS = "Credits"
 MAILING_LIST_COLLECTION_NAME = "MailingList"  # Add MailingList collection
 SUBSCRIPTIONS_LIST_COLLECTION = "subscriptions_collection"
 
@@ -36,24 +38,20 @@ try:
     collection = database[COLLECTION_NAME]
     podcasts = database[PODCAST_NAME]
     episodes = database[EPISODE_NAME]
-    mailing_list_collection = database[MAILING_LIST_COLLECTION_NAME]  # MailingList collection
+    credits = database[CREDITS]
+    mailing_list_collection = database[MAILING_LIST_COLLECTION_NAME]
     subscriptions_collection = database[SUBSCRIPTIONS_LIST_COLLECTION]
     fs = GridFS(database)  # Initialize GridFS
-    logger.info("MongoDB connection and GridFS initialized successfully.")
+    logger.info(f"{Fore.GREEN}✅ MongoDB connected successfully!")
 except Exception as e:
-    logger.error(f"Failed to connect to MongoDB or initialize GridFS: {e}")
-    logger.error(f"Failed to connect to MongoDB or initialize GridFS: {e}")
+    logger.error(f"{Fore.RED}❌ Failed to connect to MongoDB or initialize GridFS: {e}")
     raise
 
+
 # Functions to access MongoDB and GridFS
 def get_db():
     return database
 
-def get_fs():
-    return fs
-# Functions to access MongoDB and GridFS
-def get_db():
-    return database
 
 def get_fs():
     return fs

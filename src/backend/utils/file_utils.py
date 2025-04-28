@@ -6,6 +6,7 @@ import numpy as np
 import logging
 import tempfile
 from pydub import AudioSegment
+import difflib
 
 logger = logging.getLogger(__name__)
 
@@ -15,17 +16,31 @@ def enhance_audio_with_ffmpeg(input_path: str, output_path: str) -> bool:
             "ffmpeg",
             "-y",
             "-i", input_path,
+            "-ac", "1",                # Mono
+            "-ar", "16000",            # 16 kHz (standard for speech)
+            "-sample_fmt", "s16",      # 16-bit PCM
+            "-c:a", "pcm_s16le",       # WAV browser-compatible format
             "-af",
-            "afftdn=nf=-25,highpass=f=50,highpass=f=60,highpass=f=70,"
-            "equalizer=f=50:t=q:w=1:g=-40,equalizer=f=60:t=q:w=1:g=-40,"
+            "afftdn=nf=-25,"
+            "highpass=f=50,highpass=f=60,highpass=f=70,"
+            "equalizer=f=50:t=q:w=1:g=-40,"
+            "equalizer=f=60:t=q:w=1:g=-40,"
             "highpass=f=100,loudnorm",
             output_path
         ]
         subprocess.run(ffmpeg_cmd, check=True)
+
+        # Optional: Debug check
+        import soundfile as sf
+        info = sf.info(output_path)
+        logger.info(f"✅ Output WAV info: {info}")
+
         return os.path.exists(output_path)
     except Exception as e:
-        logger.error(f"Error during FFmpeg audio enhancement: {str(e)}")
+        logger.error(f"❌ FFmpeg enhancement error: {str(e)}")
         return False
+
+
 
 
 def detect_background_noise(audio_path: str, threshold=1000, max_freq=500) -> str:
@@ -82,3 +97,31 @@ def convert_audio_to_wav(file_bytes: bytes, original_ext=".mp3") -> str:
         return output_path
     finally:
         os.remove(input_path)
+
+def get_sentence_timestamps_fuzzy(sentence: str, word_timings: list, threshold: float = 0.7) -> dict:
+    from_word_list = [w["word"].lower().strip(".,!?") for w in word_timings]
+    target_words = sentence.lower().strip().split()
+
+    best_score = 0
+    best_start = 0
+    best_end = 0
+
+    for i in range(len(from_word_list)):
+        for j in range(i + 1, min(i + len(target_words) + 5, len(from_word_list) + 1)):
+            window = from_word_list[i:j]
+            window_str = " ".join(window)
+            sentence_str = " ".join(target_words)
+
+            score = difflib.SequenceMatcher(None, sentence_str, window_str).ratio()
+            if score > best_score and score >= threshold:
+                best_score = score
+                best_start = i
+                best_end = j - 1
+
+    if best_score >= threshold:
+        start_time = word_timings[best_start]["start"]
+        end_time = word_timings[best_end]["end"]
+        return {"start": start_time, "end": end_time}
+
+    # fallback
+    return {"start": 0.0, "end": 0.5}

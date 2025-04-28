@@ -1,9 +1,11 @@
 import logging
 import uuid
+import json
 from datetime import datetime, timezone
 from marshmallow import ValidationError
 from backend.database.mongo_connection import collection
 from backend.models.teams import TeamSchema
+from backend.services.activity_service import ActivityService  # Add this import
 
 logger = logging.getLogger(__name__)
 
@@ -15,6 +17,7 @@ class TeamRepository:
         self.podcasts_collection = collection.database.Podcasts
         # Added to check user status during team retrieval
         self.users_collection = collection.database.Users
+        self.activity_service = ActivityService()  # Add this line
 
     def add_team(self, user_id, user_email, data):
         try:
@@ -49,6 +52,20 @@ class TeamRepository:
             }
 
             self.user_to_teams_collection.insert_one(user_to_team_item)
+
+            # --- Log activity for team created ---
+            try:
+                self.activity_service.log_activity(
+                    user_id=str(user_id),
+                    activity_type="team_created",
+                    description=f"Created team '{team_item.get('name', '')}'",
+                    details={"teamId": team_id, "teamName": team_item.get("name", "")},
+                )
+            except Exception as act_err:
+                logger.error(
+                    f"Failed to log team_created activity: {act_err}", exc_info=True
+                )
+            # --- End activity log ---
 
             team_item["members"].append(
                 {"userId": str(user_id), "email": user_email, "role": "creator"}
@@ -141,6 +158,12 @@ class TeamRepository:
                 return {"error": "Team not found"}, 404
 
             team_name = team.get("name", "Unknown Team")
+            creator_id = None
+            # Find the creator's userId
+            for member in team.get("members", []):
+                if member.get("role") == "creator":
+                    creator_id = member.get("userId")
+                    break
 
             self.user_to_teams_collection.delete_many({"teamId": team_id})
             result = self.teams_collection.delete_one({"_id": team_id})
@@ -159,6 +182,21 @@ class TeamRepository:
                 ):
                     self.users_collection.delete_one({"_id": member["userId"]})
 
+            # --- Log activity for team deleted ---
+            if creator_id:
+                try:
+                    self.activity_service.log_activity(
+                        user_id=str(creator_id),
+                        activity_type="team_deleted",
+                        description=f"Deleted team '{team_name}'",
+                        details={"teamId": team_id, "teamName": team_name},
+                    )
+                except Exception as act_err:
+                    logger.error(
+                        f"Failed to log team_deleted activity: {act_err}", exc_info=True
+                    )
+            # --- End activity log ---
+
             return {
                 "message": f"Team '{team_name}' and all members deleted successfully!",
             }, 200
@@ -176,21 +214,31 @@ class TeamRepository:
             team_schema = TeamSchema()
             validated_data = team_schema.load(data, partial=True)
 
-            update_fields = {
-                k: v.strip() if isinstance(v, str) else v
-                for k, v in validated_data.items()
-            }
+            def are_values_different(old, new):
+                if isinstance(old, str) and isinstance(new, str):
+                    return old.strip() != new.strip()
+                return json.dumps(old, sort_keys=True) != json.dumps(
+                    new, sort_keys=True
+                )
+
+            update_fields = {}
+            for key, new_value in validated_data.items():
+                current_value = team.get(key)
+                if are_values_different(current_value, new_value):
+                    update_fields[key] = new_value
+                    logger.debug(
+                        f"[edit_team] Field '{key}' changed: OLD={current_value}, NEW={new_value}"
+                    )
+
+            logger.debug(f"[edit_team] Final update fields: {update_fields}")
 
             if update_fields:
                 result = self.teams_collection.update_one(
                     {"_id": team_id}, {"$set": update_fields}
                 )
-                if result.modified_count > 0:
-                    return {"message": "Team updated successfully!"}, 200
-                else:
-                    return {"message": "No changes made to the team."}, 200
+                return {"message": "Team updated successfully!"}, 200
             else:
-                return {"message": "No valid fields provided for update."}, 400
+                return {"message": "No changes made to the team."}, 200
 
         except ValidationError as err:
             return {"error": "Invalid data", "details": err.messages}, 400
