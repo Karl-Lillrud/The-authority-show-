@@ -8,6 +8,7 @@ from backend.utils.email_utils import send_email  # Import send_email from email
 from backend.database.mongo_connection import database  # Import the database from mongo_connection
 import time
 from flask import render_template
+from backend.utils.trigger_config import TRIGGERS  # Import the triggers configuration
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -16,8 +17,11 @@ episode_collection = database["Episodes"]
 guest_collection = database["Guests"]
 podcast_collection = database["Podcasts"]
 
-SENT_EMAILS_FILE = "sent_emails.json"  
-TEMPLATES_FILE = "email_templates.json" 
+# Define the new paths
+BASE_JSON_PATH = os.path.join(os.path.dirname(__file__), "../../Frontend/static/json")
+SENT_EMAILS_FILE = os.path.join(BASE_JSON_PATH, "sent_emails.json")
+TEMPLATES_FILE = os.path.join(BASE_JSON_PATH, "email_templates.json")
+CUSTOM_TRIGGERS_FILE = os.path.join(BASE_JSON_PATH, "custom_triggers.json")
 
 # Ensure the sent_emails.json file exists
 if not os.path.exists(SENT_EMAILS_FILE):
@@ -27,7 +31,7 @@ if not os.path.exists(SENT_EMAILS_FILE):
 def load_sent_emails():
     """Load the list of sent emails (episode IDs and trigger names)."""
     try:
-        with open(SENT_EMAILS_FILE, "r") as file:  # Fixed typo here
+        with open(SENT_EMAILS_FILE, "r") as file:
             return json.load(file)
     except Exception as e:
         logging.error(f"Error loading sent emails file: {str(e)}")
@@ -88,8 +92,16 @@ def render_email_content(trigger_name, guest, episode, social_network=None, gues
 def load_custom_triggers():
     """Load custom triggers for podcasts."""
     try:
-        with open("custom_triggers.json", "r") as file:
-            return json.load(file)
+        with open(CUSTOM_TRIGGERS_FILE, "r") as file:
+            custom_triggers = json.load(file)
+
+        # Convert time_check back to timedelta
+        for podcast_id, triggers in custom_triggers.items():
+            for trigger_name, trigger_details in triggers.items():
+                if trigger_details["time_check"] is not None:
+                    trigger_details["time_check"] = timedelta(seconds=trigger_details["time_check"])
+
+        return custom_triggers
     except Exception as e:
         logger.error(f"Error loading custom triggers file: {str(e)}")
         return {}
@@ -110,7 +122,7 @@ def check_and_send_emails():
 
             for trigger_name, trigger_details in podcast_triggers.items():
                 required_status = trigger_details["status"]
-                time_check = timedelta(hours=trigger_details["time_check"])
+                time_check = trigger_details["time_check"]  # Already a timedelta object
 
                 # Check if the episode matches the custom trigger
                 if episode["status"] == required_status and "publishDate" in episode:
@@ -150,19 +162,7 @@ def check_and_send_emails():
                         save_sent_emails(sent_emails)
 
     # Step 2: Process normal triggers
-    triggers = {
-        "booking": {"status": "Not Recorded", "time_check": None},
-        "preparation": {"status": "Not Recorded", "time_check": timedelta(days=1)},
-        "missing_info": {"status": "Not Recorded", "time_check": timedelta(days=20)},
-        "publishing_reminder": {"status": "Recorded", "time_check": timedelta(days=7)},
-        "join_link": {"status": "Not Recorded", "time_check": timedelta(hours=1)},
-        "thank_you": {"status": "Published", "time_check": timedelta(days=0)},
-        "recommendations": {"status": "Published", "time_check": timedelta(days=14)},
-        "suggestions": {"status": "Published", "time_check": timedelta(days=0)},
-        "missing_social_media": {"status": "Recorded", "time_check": None},
-    }
-
-    for trigger_name, trigger_details in triggers.items():
+    for trigger_name, trigger_details in TRIGGERS.items():  # Use imported TRIGGERS
         logger.info(f"Processing normal trigger: {trigger_name}")
 
         required_status = trigger_details["status"]

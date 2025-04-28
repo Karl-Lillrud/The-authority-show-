@@ -30,38 +30,37 @@ document
   .addEventListener("click", saveTriggerConfig);
 
 async function saveTriggerConfig() {
-  console.log("Save Trigger button clicked"); // Debug log
-
   const triggerSelect = document.getElementById("trigger-select");
   const triggerTime = document.getElementById("trigger-time");
   const podcastId = document
     .getElementById("email-config-popup")
     .getAttribute("data-podcast-id");
 
-  // Validate that a trigger is selected
   if (!triggerSelect.value) {
     alert("Please select a trigger before saving.");
     return;
   }
 
-  // Validate that a valid time is entered
   const timeValue = triggerTime.value;
   if (!timeValue || isNaN(timeValue) || timeValue <= 0) {
     alert("Please enter a valid time in hours (greater than 0).");
     return;
   }
 
+  // Fetch the correct status from the backend
+  const response = await fetch(`/get-trigger-config?podcastId=${podcastId}&triggerName=${triggerSelect.value}`);
+  const data = await response.json();
+  const status = data.success && data.data ? data.data.status : "Not Recorded"; // Default to "Not Recorded"
+
   const triggerData = {
     podcast_id: podcastId,
     trigger_name: triggerSelect.value,
-    status: "Published", // Default status
-    time_check: parseInt(timeValue, 10), // Save time_check as an integer
+    status: status, // Use the fetched status
+    time_check: parseInt(timeValue, 10),
   };
 
-  console.log("Trigger Data:", triggerData); // Log the data being sent
-
   try {
-    const response = await fetch("/save-trigger", {
+    const saveResponse = await fetch("/save-trigger", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -69,11 +68,11 @@ async function saveTriggerConfig() {
       body: JSON.stringify(triggerData),
     });
 
-    const result = await response.json();
-    if (result.success) {
+    const saveResult = await saveResponse.json();
+    if (saveResult.success) {
       alert("Trigger saved successfully!");
     } else {
-      alert(`Error saving trigger: ${result.error}`);
+      alert(`Error saving trigger: ${saveResult.error}`);
     }
   } catch (error) {
     console.error("Error saving trigger:", error);
