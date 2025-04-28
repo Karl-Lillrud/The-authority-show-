@@ -1,7 +1,9 @@
 from flask import Blueprint, request, jsonify, g # Import g
+from backend.repository.podtask_repository import PodtaskRepository
 import logging
 
 podtask_bp = Blueprint("podtask_bp", __name__)
+podtask_service = PodtaskRepository
 logger = logging.getLogger(__name__)
 
 
