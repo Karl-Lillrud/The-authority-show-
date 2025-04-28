@@ -30,18 +30,26 @@ if ! az acr show -n $REGISTRY_NAME -g $RESOURCE_GROUP --output none; then
     az acr create -g $RESOURCE_GROUP -n $REGISTRY_NAME --sku Basic --output none
 fi
 
-az acr login -n $REGISTRY_NAME
+# Login to ACR with credentials
+echo "Logging in to ACR '$REGISTRY_NAME' using credentials..."
+az acr login -n $REGISTRY_NAME --username "$ACR_USERNAME" --password "$ACR_PASSWORD"
 
-# clear local Docker cache
-echo "Clearing local Docker builder cache..."
-docker builder prune --all --force
+# More thorough Docker cleanup
+echo "Performing Docker cleanup..."
+# Remove dangling images (untagged)
+docker image prune -f
+# Remove stopped containers
+docker container prune -f
+# Remove unused build cache
+docker builder prune -f
 
 # delete existing ACR repo
 echo "Deleting existing ACR repository '$REPO_NAME' (if any)..."
 az acr repository delete --name $REGISTRY_NAME --repository $REPO_NAME --yes --output none
 
-# build and push
-docker build --no-cache -t $IMAGE_NAME .
+# Force clean build and push
+echo "Building Docker image with clean build..."
+docker build --no-cache --pull -t $IMAGE_NAME .
 docker tag     $IMAGE_NAME $REGISTRY_NAME.azurecr.io/$IMAGE_NAME
 docker push    $REGISTRY_NAME.azurecr.io/$IMAGE_NAME
 
@@ -56,10 +64,14 @@ if ! az webapp show -n $WEBAPP_NAME -g $RESOURCE_GROUP --output none; then
 fi
 
 az webapp config container set -n $WEBAPP_NAME -g $RESOURCE_GROUP \
-  --container-registry-url https://$REGISTRY_NAME.azurecr.io \
-  --container-image-name   $REGISTRY_NAME.azurecr.io/$IMAGE_NAME \
-  --container-registry-user "$ACR_USERNAME" \
-  --container-registry-password "$ACR_PASSWORD"
+  --docker-registry-server-url https://$REGISTRY_NAME.azurecr.io \
+  --docker-custom-image-name $REGISTRY_NAME.azurecr.io/$IMAGE_NAME \
+  --docker-registry-server-user "$ACR_USERNAME" \
+  --docker-registry-server-password "$ACR_PASSWORD"
+
+# Restart webapp to ensure new container is pulled
+echo "Restarting webapp to apply changes..."
+az webapp restart -n $WEBAPP_NAME -g $RESOURCE_GROUP
 
 echo "Deployment complete. Checking Web App status..."
 az webapp show -n $WEBAPP_NAME -g $RESOURCE_GROUP --output table
