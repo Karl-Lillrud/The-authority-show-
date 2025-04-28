@@ -59,7 +59,7 @@ az acr login --name $REGISTRY_NAME
 
 # Step 5: Build Docker Image
 echo "Building Docker image '$IMAGE_NAME'..."
-docker build -t --no-cache $IMAGE_NAME .
+docker build --no-cache -t $IMAGE_NAME .
 
 # Step 6: Tag Docker Image for ACR
 echo "Tagging Docker image '$IMAGE_NAME' with ACR tag..."
