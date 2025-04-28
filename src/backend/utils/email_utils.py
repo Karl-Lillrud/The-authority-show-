@@ -227,8 +227,8 @@ def send_login_email(email, login_link):
         """
         logger.info(f"📧 Preparing to send login email to {email}")
 
-        # Print the login link in pink color to the terminal
-        print(f"\033[95mLogin link for {email}: {login_link}\033[0m", flush=True)
+        # Remove color formatting from print statement
+        print(f"Login link for {email}: {login_link}", flush=True)
 
         result = send_email(email, subject, body)
         if result.get("success"):
