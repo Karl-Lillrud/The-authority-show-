@@ -16,8 +16,12 @@ from transformers import pipeline
 from io import BytesIO
 import streamlit as st  # Needed for download_button_text
 from pydub import AudioSegment
+from PIL import Image, ImageDraw, ImageFont
+from io import BytesIO
+import uuid
+import json
 
-client = OpenAI()
+client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
 API_BASE_URL = os.getenv("API_BASE_URL")
 ELEVENLABS_API_KEY = os.getenv("ELEVENLABS_API_KEY")
@@ -233,9 +237,160 @@ def generate_ai_quotes(transcript: str) -> str:
         logger.error(f"❌ Error generating quotes: {e}")
         return f"Error generating quotes: {str(e)}"
 
+def generate_background_image(prompt: str) -> Image.Image:
+    response = client.images.generate(
+        model="dall-e-3",
+        prompt=prompt,
+        size="1024x1024",
+        n=1
+    )
+    image_url = response.data[0].url
+    image_data = requests.get(image_url).content
+    return Image.open(BytesIO(image_data))
+
+def get_layout_from_vision_model(image: Image.Image, quote: str) -> dict:
+    buffered = BytesIO()
+    image.save(buffered, format="PNG")
+    image_base64 = base64.b64encode(buffered.getvalue()).decode()
+
+    response = client.chat.completions.create(
+        model="gpt-4-turbo",
+        messages=[
+            {"role": "system", "content": "You're a helpful AI graphic designer."},
+            {
+                "role": "user",
+                "content": [
+                    {
+                        "type": "text",
+                        "text": f"""Based on this image and the quote:
+\"{quote}\"
+
+Suggest text layout instructions in JSON format only:
+- position: [x, y]
+- font_size: int
+- text_color: hex
+- justification: 'left' | 'center' | 'right'
+- optional style_comment
+Respond only with a JSON object.
+"""
+                    },
+                    {
+                        "type": "image_url",
+                        "image_url": {
+                            "url": f"data:image/png;base64,{image_base64}"
+                        }
+                    },
+                ]
+            }
+        ],
+        max_tokens=500,
+    )
+
+    content = response.choices[0].message.content.strip()
+    match = re.search(r'{.*}', content, re.DOTALL)
+    if not match:
+        raise ValueError("No JSON found in GPT response.")
+    json_data = match.group(0)
+    return json.loads(json_data)
+
+def wrap_text(text, font, max_width, draw):
+    lines = []
+    for paragraph in text.split("\n"):
+        line = []
+        for word in paragraph.split():
+            test_line = " ".join(line + [word])
+            width = draw.textlength(test_line, font=font)
+            if width <= max_width:
+                line.append(word)
+            else:
+                lines.append(" ".join(line))
+                line = [word]
+        if line:
+            lines.append(" ".join(line))
+    return lines
+
+def draw_text_on_image(image: Image.Image, quote: str, layout: dict) -> Image.Image:
+    draw = ImageDraw.Draw(image)
+
+    # Font setup
+    font_size = layout.get("font_size", 48)
+    try:
+        font = ImageFont.truetype("arial.ttf", font_size)
+    except IOError:
+        font = ImageFont.load_default()
+
+    color = layout.get("text_color", "#FFFFFF")
+    justification = layout.get("justification", "center")
+
+    # Initial Y position with vertical clamp
+    _, y = layout.get("position", [0, image.height // 2])
+    y = max(100, min(image.height - 200, y))
+
+    # Tighter text box (e.g. 65% of image width)
+    max_width = int(image.width * 0.65)
+    lines = wrap_text(quote, font, max_width, draw)
+
+    # Line spacing
+    line_height = font.getbbox("Ay")[3] + 10
+    total_text_height = len(lines) * line_height
+
+    # Center vertically if needed
+    if justification in ["center", "middle"]:
+        y = (image.height - total_text_height) // 2
+
+    # Draw each line (with shadow)
+    for line in lines:
+        line_width = draw.textlength(line, font=font)
+
+        if justification == "left":
+            x = 50
+        elif justification == "right":
+            x = image.width - line_width - 50
+        else:  # center
+            x = (image.width - line_width) // 2
+
+        # Draw soft drop shadow for contrast
+        shadow_color = "#000000"
+        shadow_offset = 2
+        draw.text((x + shadow_offset, y + shadow_offset), line, font=font, fill=shadow_color)
+
+        # Draw main text
+        draw.text((x, y), line, font=font, fill=color)
+        y += line_height
+
+    return image
+
 def generate_quote_images(quotes: List[str]) -> List[str]:
     urls = []
+    for quote in quotes:
+        try:
+            # 🧼 Clean the quote string (remove numbering and wrapping quotes)
+            cleaned_quote = re.sub(r'^\d+\.\s*["“]?(.*?)["”]?\s*$', r'\1', quote.strip())
 
+            # Step 1: Generate a clean background
+            bg_prompt = (
+                "Design a clean, soft background suitable for an Instagram quote post. Leave empty space in the center. No text or objects."
+            )
+            image = generate_background_image(bg_prompt)
+
+            # Step 2: Get layout from GPT-4 Vision
+            layout = get_layout_from_vision_model(image, cleaned_quote)
+
+            # Step 3: Render the quote text onto the image
+            final_image = draw_text_on_image(image, cleaned_quote, layout)
+
+            # Step 4: Save the image and return a public URL
+            filename = f"quote_{uuid.uuid4().hex[:8]}.png"
+            save_dir = "generated_quotes"
+            os.makedirs(save_dir, exist_ok=True)
+            file_path = os.path.join(save_dir, filename)
+            final_image.save(file_path)
+
+            public_url = f"/transcription/generated_quotes/{filename}"
+            urls.append(public_url)
+
+        except Exception as e:
+            print(f"❌ Failed to generate image for quote: {quote}\n{e}")
     return urls
 
 def fetch_sfx_for_emotion(

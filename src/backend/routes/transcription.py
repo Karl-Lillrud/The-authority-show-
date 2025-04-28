@@ -3,7 +3,7 @@ import os
 import logging
 import subprocess
 from datetime import datetime
-from flask import Blueprint, request, jsonify, render_template, session,Response
+from flask import Blueprint, request, jsonify, render_template, session,Response,send_from_directory
 import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
@@ -136,6 +136,9 @@ def quote_images():
     image_urls = transcription_service.get_quote_images(quotes_list)
     return jsonify({"quote_images": image_urls})
 
+@transcription_bp.route("/generated_quotes/<filename>")
+def serve_generated_quote(filename):
+    return send_from_directory("generated_quotes", filename)
 
 @transcription_bp.route("/translate", methods=["POST"])
 def translate():
