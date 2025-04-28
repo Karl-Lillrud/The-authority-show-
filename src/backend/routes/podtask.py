@@ -1,5 +1,4 @@
 from flask import Blueprint, request, jsonify, g # Import g
-from backend.services.podtaskService import PodtaskService
 import logging
 
 podtask_bp = Blueprint("podtask_bp", __name__)
