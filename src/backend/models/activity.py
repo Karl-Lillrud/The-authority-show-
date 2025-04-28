@@ -9,4 +9,4 @@ class ActivitySchema(Schema):
     type = fields.Str(required=True)  # T.ex. "episode_created", "team_created"
     description = fields.Str(required=True)  # T.ex. "Created episode 'Episode Title'"
     details = fields.Dict(allow_none=True)  # Extra metadata, t.ex. episodeId
-    createdAt = fields.DateTime(default=datetime.now(timezone.utc))
+    createdAt = fields.DateTime(load_default=datetime.now(timezone.utc))
