@@ -44,10 +44,10 @@ def handle_successful_payment(session, user_id):
     metadata = session.get("metadata", {})
     plan = metadata.get("plan", "")
     credits_to_add = int(metadata.get("credits", 0))
-    unlock_episodes = int(metadata.get("unlock", 0))
+    extra_episodes_unlock = int(metadata.get("unlock", 0))
     
     # If no credits specified in metadata and no plan, fallback to credit pack mapping
-    if credits_to_add == 0 and not plan and unlock_episodes == 0:
+    if credits_to_add == 0 and not plan and extra_episodes_unlock == 0:
         # Map amount to credits based on credit pack pricing
         credit_pack_mapping = {
             7.99: 2500,  # Basic Pack
@@ -61,7 +61,7 @@ def handle_successful_payment(session, user_id):
                 f"Falling back to amount-based credit calculation for user {user_id}: ${amount_paid} -> {credits_to_add} credits"
             )
 
-    if credits_to_add <= 0 and not plan and unlock_episodes <= 0:
+    if credits_to_add <= 0 and not plan and extra_episodes_unlock <= 0:
         logger.error(
             f"No credits determined to add for user {user_id} from session {session.id}. Amount paid: ${amount_paid}"
         )
@@ -71,8 +71,8 @@ def handle_successful_payment(session, user_id):
     description_parts = []
     if plan:
         description_parts.append(f"{plan.capitalize()} Subscription")
-    if unlock_episodes > 0:
-        description_parts.append(f"Extra Episode Pack: ({unlock_episodes}) slots")
+    if extra_episodes_unlock > 0:
+        description_parts.append(f"Extra Episode Pack: ({extra_episodes_unlock}) slots")
     if credits_to_add > 0:
         description_parts.append(f"Credit Pack ({credits_to_add} credits)")
     description = f"Purchase: {', '.join(description_parts)} (${amount_paid:.2f})"
@@ -113,7 +113,7 @@ def handle_successful_payment(session, user_id):
                 purchase_status = "Paid"
                 purchase_notes = None
 
-    if unlock_episodes > 0:
+    if extra_episodes_unlock > 0:
         # --- Unlock Episodes Logic ---
         try:
            
@@ -124,9 +124,9 @@ def handle_successful_payment(session, user_id):
 
             update_query = {"ownerId": user_id}
             logger.debug(f"Update query: {update_query}")
-            
+
             old_extra_slots = account.get("unlockedExtraEpisodeSlots") or 0
-            extra_slots = old_extra_slots + unlock_episodes   
+            extra_slots = old_extra_slots + extra_episodes_unlock   
 
             update_result = collection.database.Accounts.update_one(
                 update_query,
@@ -143,9 +143,8 @@ def handle_successful_payment(session, user_id):
                 purchase_status = "Paid - Episode Unlock Failed"    
                 purchase_notes = "Failed to update unlockedExtraEpisodeSlots in database." 
             else:
-                logger.info(f"Successfully unlocked {unlock_episodes} episodes for user {user_id}.")
+                logger.info(f"Successfully unlocked {extra_episodes_unlock} episodes for user {user_id}.")
                 purchase_status = "Paid"
-                purchase_notes = None
         except Exception as e:
             logger.error(
                 f"Error unlocking episodes for user {user_id}: {e}", exc_info=True

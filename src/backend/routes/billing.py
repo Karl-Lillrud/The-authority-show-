@@ -24,8 +24,8 @@ def create_checkout_session():
     amount = data.get("amount")  # total amount (for validation)
     plan = data.get("plan")  # optional: "pro", "studio", etc.
     credits = data.get("credits")  # optional: how many credits to add
-    unlock = data.get("unlock")  # optional: amount of episode unlocks
-    
+    extra_episode_unlock = data.get("unlock")  # optional: amount of episode unlocks
+    print(data)
     if not user_id:
         return jsonify({"error": "User not authenticated"}), 401
 
@@ -33,6 +33,27 @@ def create_checkout_session():
         return jsonify({"error": "Missing amount"}), 400
 
     try:
+        
+        plan_price = 0.00
+        if plan:
+             # Map plan to price
+            plan_prices = {
+            "pro": 29.99,
+            "studio": 69.00,
+            # Add other plans as needed
+            }
+            plan_price = plan_prices.get(plan, 0)
+
+        unlock_price = 0.00
+        if extra_episode_unlock:
+            unlock_prices = 14.99
+    
+            unlock_price = unlock_prices * extra_episode_unlock
+
+        credit_price = 0.00
+        if credits:
+            credit_price = float(amount) - plan_price - unlock_price
+
         # Build line_items array
         line_items = []
         metadata = {
@@ -52,37 +73,33 @@ def create_checkout_session():
                         "product_data": {"name": f"Credit Pack ({credits} credits)"},
                         "unit_amount": (
                             int(
-                                (float(amount) - float(29.99 if plan == "pro" else 0))
+                                (float(credit_price) - float(29.99 if plan == "pro" else 0))
                                 * 100
                             )
                             if plan
-                            else int(float(amount) * 100)
+                            else int(float(credit_price) * 100)
                         ),
                     },
                     "quantity": 1,
                 }
             )
-        if unlock:
-            metadata["unlock"] = str(unlock)
+        if extra_episode_unlock:
+            metadata["unlock"] = str(extra_episode_unlock)
             line_items.append(
                 {
                     "price_data": {
                         "currency": "usd",
-                        "product_data": {"name": f"Episode Pack: {unlock}"},
-                        "unit_amount": int(float(amount) * 100),
+                        "product_data": {"name": f"Extra Episode Pack: {extra_episode_unlock} slots"},
+                        "unit_amount": int(float(unlock_price) / extra_episode_unlock * 100),
                     },
-                    "quantity": 1,
+                    "quantity": extra_episode_unlock,
                 }
             )
+        print(line_items)
 
         # Add subscription line item if present
         if plan:
-            # Map plan to price
-            plan_prices = {
-                "pro": 29.99,
-                "studio": 69.00,
-                # Add other plans as needed
-            }
+            
             plan_price = plan_prices.get(plan, float(amount))
             line_items.append(
                 {
