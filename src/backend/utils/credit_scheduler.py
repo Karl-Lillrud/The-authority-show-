@@ -31,9 +31,9 @@ def get_all_user_ids_with_credits() -> list[str]:
         logger.error(f"Error fetching user IDs for credit reset: {e}", exc_info=True)
     return user_ids
 
-def get_pm_allowance_for_user(user_id: str) -> int:
+def get_sub_allowance_for_user(user_id: str) -> int:
     """
-    Determines the monthly PM credit allowance for a given user.
+    Determines the monthly subscription credit allowance for a given user.
     *** This is a placeholder - Implement your actual logic here ***
     """
     # --- Placeholder Logic ---
@@ -54,7 +54,7 @@ def get_pm_allowance_for_user(user_id: str) -> int:
              # Default allowance for free tier or if no subscription found
         return 1000 # Example default allowance
     except Exception as e:
-        logger.error(f"Error determining PM allowance for user {user_id}: {e}", exc_info=True)
+        logger.error(f"Error determining subscription allowance for user {user_id}: {e}", exc_info=True)
         return 0 # Return 0 if allowance cannot be determined
 
 # --- The Scheduled Job ---
@@ -75,7 +75,7 @@ def monthly_credit_reset_job():
 
     for user_id in user_ids:
         try:
-            allowance = get_pm_allowance_for_user(user_id)
+            allowance = get_sub_allowance_for_user(user_id)
             logger.debug(f"Processing reset for user {user_id} with allowance {allowance}")
             success = credit_service.perform_monthly_reset(user_id, allowance)
             if success:
