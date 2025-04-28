@@ -73,7 +73,7 @@ class PodtaskRepository:
     
     def _get_default_podcast_id(self, user_id: str) -> Union[str, Tuple[Dict[str, Any], int]]:
         # Find user accounts
-        user_accounts = list(self.accounts_collection.find({"userId": str(user_id)}, {"_id": 1}))
+        user_accounts = list(self.accounts_collection.find({"ownerId": str(user_id)}, {"_id": 1}))
         if not user_accounts:
             logger.warning(f"No accounts found for user {user_id}")
             return {"error": "No accounts found for user"}, 403
@@ -110,6 +110,7 @@ class PodtaskRepository:
             "userid": data["userid"],
             "created_at": data["created_at"],
             "highlights": data.get("highlights", []),
+            "dependencies": data.get("dependencies", []),
         }
 
     def get_podtasks(self, user_id: str, filters: Optional[Dict[str, Any]] = None) -> Tuple[Dict[str, Any], int]:
@@ -226,7 +227,7 @@ class PodtaskRepository:
         fields = [
             "podcastId", "episodeId", "teamId", "members", "guestId", "name", "action",
             "dayCount", "description", "actionUrl", "urlDescribe", "submissionReq",
-            "status", "assignedAt", "dueDate", "priority", "highlights"
+            "status", "assignedAt", "dueDate", "priority", "highlights", "dependencies"
         ]
 
         update_fields = {
@@ -355,4 +356,3 @@ class PodtaskRepository:
                 return {"error": "No default tasks were added"}, 500
         except Exception as e:
             return {"error": str(e)}, 500
-

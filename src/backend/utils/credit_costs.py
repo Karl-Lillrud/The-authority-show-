@@ -13,6 +13,9 @@ CREDIT_COSTS = {
     "video_cutting": 800,
     "video_enhancement": 800,
     "voice_isolation": 500,
+    "ai_osint": 800,
+    "ai_intro_outro": 800,
+    "ai_intro_outro_audio": 500,
 
     # credits
     "basic_pack": 2500,

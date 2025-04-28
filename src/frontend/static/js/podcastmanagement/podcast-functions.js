@@ -124,9 +124,7 @@ export async function renderPodcastList() {
     const podcasts = response.podcast; // adjust if needed
 
     const podcastListElement = document.getElementById("podcast-list");
-    podcastListElement.innerHTML = `
-      <h1 class="page-title">Podcasts</h1>
-    `;
+    podcastListElement.innerHTML = ``;
 
     if (podcasts.length === 0) {
       podcastListElement.innerHTML += `

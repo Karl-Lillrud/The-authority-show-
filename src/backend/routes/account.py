@@ -1,19 +1,16 @@
 from flask import Blueprint, request, jsonify, g, render_template, session
-from backend.models.accounts import AccountSchema
+# Import AuthService instead of AccountService
+from backend.services.authService import AuthService
 import logging
-from backend.repository.account_repository import AccountRepository
-from backend.database.mongo_connection import collection
-
 
 # Define Blueprint
-account_bp = Blueprint("account_bp", __name__)
+account_bp = Blueprint("account_bp", __name__, url_prefix="/api/account")
 
-# Instantiate the Account Repository
-account_repo = AccountRepository()
+# Instantiate the Auth Service
+auth_service = AuthService()
 
 # Configure logger
 logger = logging.getLogger(__name__)
-
 
 # Middleware to populate g.email
 @account_bp.before_request
@@ -22,67 +19,87 @@ def populate_user_context():
         g.email = session.get("email")
 
 
-@account_bp.route("/create-account", methods=["POST"])
-def create_account():
-    data = request.get_json()
-    user_id = data.get("userId")
-    email = data.get("email")
-
-    if not user_id or not email:
-        logger.error("Missing userId or email in request")
-        return jsonify({"error": "User ID and email are required"}), 400
+@account_bp.route("", methods=["GET"])
+def get_account():
+    """Hämtar kontoinformation för den inloggade användaren."""
+    logger.info("--- GET /api/account route handler reached ---")
+    user_id = getattr(g, "user_id", None)
+    if not user_id:
+        logger.warning("Unauthorized attempt to get account info.")
+        return jsonify({"error": "Unauthorized"}), 401
 
     try:
-        account_data = {"ownerId": user_id, "email": email, "isFirstLogin": True}
-        account_result, status_code = account_repo.create_account(account_data)
-        if status_code in [200, 201]:
-            return (
-                jsonify(
-                    {
-                        "message": "Account created or already exists",
-                        "accountId": account_result["accountId"],
-                    }
-                ),
-                status_code,
-            )
-        else:
-            logger.error(
-                f"Failed to create account for user {user_id}: {account_result.get('error')}"
-            )
-            return jsonify({"error": account_result.get("error")}), status_code
+        response, status_code = auth_service.get_account_by_user(user_id)
+        logger.info(f"--- Responding to GET /api/account for user {user_id} with status {status_code} ---")
+        return jsonify(response), status_code
     except Exception as e:
-        logger.error(
-            f"Error creating account for user {user_id}: {str(e)}", exc_info=True
-        )
+        logger.error(f"Error fetching account for user {user_id}: {e}", exc_info=True)
         return jsonify({"error": f"Internal server error: {str(e)}"}), 500
 
 
-@account_bp.route("/get_account", methods=["GET"])
-def get_account_route():
-    if not hasattr(g, "user_id") or not g.user_id:
-        return jsonify({"error": "Obehörig"}), 401
-
-    account = account_repo.get_account_by_user(str(g.user_id))
-    if not account:
-        return jsonify({"error": "Konto hittades inte"}), 404
-
-    return jsonify({"account": account}), 200
-
-
-@account_bp.route("/edit_account", methods=["PUT"])
+@account_bp.route("", methods=["PUT"])
 def edit_account():
-    if not hasattr(g, "user_id") or not g.user_id:
-        return jsonify({"error": "Obehörig"}), 401
+    """Uppdaterar kontoinformation för den inloggade användaren."""
+    user_id = getattr(g, "user_id", None)
+    if not user_id:
+        logger.warning("Unauthorized attempt to edit account.")
+        return jsonify({"error": "Unauthorized"}), 401
+
+    if not request.is_json:
+        return jsonify({"error": "Invalid Content-Type. Expected application/json"}), 415
+
+    data = request.get_json()
+    if not data:
+        return jsonify({"error": "No data provided"}), 400
 
     try:
-        data = request.get_json()
-        if not data:
-            return jsonify({"error": "Inga data angivna"}), 400
-        response, status_code = account_repo.update_account(str(g.user_id), data)
+        response, status_code = auth_service.edit_account(user_id, data)
         return jsonify(response), status_code
     except Exception as e:
-        logger.error(f"Fel vid uppdatering av konto: {e}", exc_info=True)
-        return jsonify({"error": f"Fel vid uppdatering av konto: {str(e)}"}), 500
+        logger.error(f"Error updating account for user {user_id}: {e}", exc_info=True)
+        return jsonify({"error": f"Internal server error: {str(e)}"}), 500
+
+
+@account_bp.route("", methods=["DELETE"])
+def delete_account():
+    """Tar bort kontot för den inloggade användaren."""
+    user_id = getattr(g, "user_id", None)
+    if not user_id:
+        logger.warning("Unauthorized attempt to delete account.")
+        return jsonify({"error": "Unauthorized"}), 401
+
+    try:
+        response, status_code = auth_service.delete_account(user_id)
+        if status_code == 200:
+            session.clear()  # Clear session on successful deletion
+            response_obj = jsonify(response)
+            response_obj.delete_cookie("remember_me")  # Clear remember me cookie
+            return response_obj, status_code
+        return jsonify(response), status_code
+    except Exception as e:
+        logger.error(f"Error deleting account for user {user_id}: {e}", exc_info=True)
+        return jsonify({"error": f"Internal server error: {str(e)}"}), 500
+
+
+@account_bp.route("/profile-picture", methods=["POST"])
+def upload_profile_picture():
+    user_id = getattr(g, "user_id", None)
+    if not user_id:
+        return jsonify({"error": "Unauthorized"}), 401
+
+    if 'profilePic' not in request.files:
+        return jsonify({"error": "No profile picture file provided"}), 400
+
+    file = request.files['profilePic']
+    if file.filename == '':
+        return jsonify({"error": "No selected file"}), 400
+
+    try:
+        response, status_code = auth_service.upload_profile_picture(user_id, file)
+        return jsonify(response), status_code
+    except Exception as e:
+        logger.error(f"Error uploading profile picture for user {user_id}: {e}", exc_info=True)
+        return jsonify({"error": f"Internal server error during upload: {str(e)}"}), 500
 
 
 @account_bp.route("/billing", methods=["GET"])
