@@ -12,7 +12,7 @@ const episodeIdFromUrl = urlParams.get("episodeId");
 if (episodeIdFromUrl) {
     sessionStorage.setItem("selected_episode_id", episodeIdFromUrl);
 }
-console.log("✅ Using episode ID:", sessionStorage.getItem("selected_episode_id"));
+console.log("Using episode ID:", sessionStorage.getItem("selected_episode_id"));
 
 const CREDIT_COSTS = {
     ai_audio_analysis: 800,
@@ -55,10 +55,10 @@ function showTab(tabName) {
     
             <div id="enhancementTools" style="display:none;">
                 <hr/>
-                <h3>🔧 Enhancement Tools</h3>
+                <h3>Enhancement Tools</h3>
     
                 <div class="result-group">
-                    <button class="btn ai-edit-button" onclick="generateCleanTranscript()">🧹 Clean Transcript</button>
+                    <button class="btn ai-edit-button" onclick="generateCleanTranscript()">Clean Transcript</button>
                     <div class="result-field">
                         <pre id="cleanTranscriptResult"></pre>
                     </div>
@@ -249,11 +249,11 @@ async function transcribe() {
     try {
         await consumeStoreCredits("transcription");
     } catch (err) {
-        resultContainer.innerText = `❌ Not enough credits: ${err.message}`;
+        resultContainer.innerText = `Not enough credits: ${err.message}`;
         return;
     }
 
-    resultContainer.innerText = "🔄 Transcribing... Please wait.";
+    resultContainer.innerText = "Transcribing... Please wait.";
     const formData = new FormData();
     formData.append('file', file);
 
@@ -272,10 +272,10 @@ async function transcribe() {
             document.getElementById("enhancementTools").style.display = "block";
         } else {
             const errorData = await response.json();
-            resultContainer.innerText = `❌ Error: ${errorData.error || response.statusText}`;
+            resultContainer.innerText = `Error: ${errorData.error || response.statusText}`;
         }
     } catch (error) {
-        resultContainer.innerText = `❌ Transcription failed: ${error.message}`;
+        resultContainer.innerText = `Transcription failed: ${error.message}`;
     }
 }
 
@@ -292,7 +292,7 @@ async function generateCleanTranscript() {
             data.clean_transcript || "No clean result.";
     } catch (err) {
         document.getElementById("cleanTranscriptResult").innerText =
-            "❌ Failed to clean transcript. Server says: " + err.message;
+            "Failed to clean transcript. Server says: " + err.message;
     }
 }
 
@@ -315,10 +315,10 @@ async function generateAISuggestions() {
 
             suggestionsEl.innerText = [primary, additional].filter(Boolean).join("\n\n") || "No suggestions.";
         } else {
-            suggestionsEl.innerText = `❌ Error: ${res.status} - ${res.statusText}`;
+            suggestionsEl.innerText = `Error: ${res.status} - ${res.statusText}`;
         }
     } catch (err) {
-        suggestionsEl.innerText = "❌ Not enough credits: " + err.message;
+        suggestionsEl.innerText = "Not enough credits: " + err.message;
     }
 }
 
@@ -337,7 +337,7 @@ async function generateShowNotes() {
         document.getElementById("showNotesResult").innerText = data.show_notes || "No notes.";
     } catch (err) {
         document.getElementById("showNotesResult").innerText =
-            "❌ Not enough credits: " + err.message;
+            "Not enough credits: " + err.message;
     }
 }
 
@@ -355,7 +355,7 @@ async function generateQuotes() {
         document.getElementById("quotesResult").innerText = data.quotes || "No quotes.";
     } catch (err) {
         document.getElementById("quotesResult").innerText =
-            "❌ Not enough credits: " + err.message;
+            "Not enough credits: " + err.message;
     }
 }
 
@@ -385,7 +385,7 @@ async function generateQuoteImages() {
         });
     } catch (err) {
         document.getElementById("quoteImagesResult").innerText =
-            "❌ Not enough credits: " + err.message;
+            "Not enough credits: " + err.message;
     }
 }
 
@@ -413,7 +413,7 @@ async function runOsintSearch() {
 
     try {
         await consumeStoreCredits("ai_osint");
-        resultEl.innerText = "🔍 Searching OSINT info...";
+        resultEl.innerText = "Searching OSINT info...";
 
         const response = await fetch("/transcription/osint_lookup", {
             method: "POST",
@@ -424,7 +424,7 @@ async function runOsintSearch() {
         const data = await response.json();
         resultEl.innerText = data.osint_info || "No info found.";
     } catch (err) {
-        resultEl.innerText = `❌ Failed: ${err.message}`;
+        resultEl.innerText = `Failed: ${err.message}`;
     }
 }
 
@@ -437,7 +437,7 @@ async function generatePodcastIntroOutro() {
 
     try {
         await consumeStoreCredits("ai_intro_outro");
-        resultEl.innerText = "📝 Generating intro and outro...";
+        resultEl.innerText = "Generating intro and outro...";
 
         const res = await fetch("/transcription/generate_intro_outro", {
             method: "POST",
@@ -451,7 +451,7 @@ async function generatePodcastIntroOutro() {
         const data = await res.json();
         resultEl.innerText = data.script || "No result.";
     } catch (err) {
-        resultEl.innerText = `❌ Failed: ${err.message}`;
+        resultEl.innerText = `Failed: ${err.message}`;
     }
 }
 
@@ -460,7 +460,7 @@ async function convertIntroOutroToSpeech() {
     if (!script.trim()) return alert("No script to convert.");
 
     const resultEl = document.getElementById("introOutroResult");
-    resultEl.innerText += "\n\n🔊 Generating voice...";
+    resultEl.innerText += "\n\nGenerating voice...";
 
     try {
         const res = await fetch("/transcription/intro_outro_audio", {
@@ -479,7 +479,7 @@ async function convertIntroOutroToSpeech() {
             download.href = data.audio_base64;
             download.download = "intro_outro.mp3";
             download.className = "btn ai-edit-button";
-            download.innerText = "📥 Download Intro/Outro Audio";
+            download.innerText = "Download Intro/Outro Audio";
 
             resultEl.appendChild(document.createElement("hr"));
             resultEl.appendChild(audio);
@@ -488,7 +488,7 @@ async function convertIntroOutroToSpeech() {
             throw new Error(data.error || "Unknown error");
         }
     } catch (err) {
-        resultEl.innerText += `\n❌ Failed to convert to audio: ${err.message}`;
+        resultEl.innerText += `\nFailed to convert to audio: ${err.message}`;
     }
 }
 
@@ -499,12 +499,12 @@ async function enhanceAudio() {
     if (!file) return alert("Upload an audio file first.");
 
     const episodeId = sessionStorage.getItem("selected_episode_id");
-    if (!episodeId) return alert("❌ No episode selected.");
+    if (!episodeId) return alert("No episode selected.");
 
     try {
         await consumeStoreCredits("audio_enhancment");
     } catch (err) {
-        audioControls.innerHTML = `❌ Not enough credits: ${err.message}`;
+        audioControls.innerHTML = `Not enough credits: ${err.message}`;
         return;
     }
 
@@ -512,7 +512,7 @@ async function enhanceAudio() {
     formData.append("audio", file);
     formData.append("episode_id", episodeId);
 
-    audioControls.innerHTML = "🔄 Enhancing... Please wait.";
+    audioControls.innerHTML = "Enhancing... Please wait.";
 
     try {
         const response = await fetch("/audio/enhancement", {
@@ -523,7 +523,7 @@ async function enhanceAudio() {
         const result = await response.json();
         const blobUrl = result.enhanced_audio_url;
 
-        // ✅ Use backend proxy to avoid CORS
+        // Use backend proxy to avoid CORS
         const audioRes = await fetch(`/get_enhanced_audio?url=${encodeURIComponent(blobUrl)}`);
         const blob = await audioRes.blob();
         const url = URL.createObjectURL(blob);
@@ -545,7 +545,7 @@ async function enhanceAudio() {
         dl.href = url;
         dl.style.display = "inline-block";
     } catch (err) {
-        audioControls.innerHTML = `❌ Error: ${err.message}`;
+        audioControls.innerHTML = `Error: ${err.message}`;
     }
 }
 
@@ -558,16 +558,16 @@ async function runVoiceIsolation() {
   
     const resultContainer = document.getElementById("isolatedVoiceResult");
     const episodeId = sessionStorage.getItem("selected_episode_id");
-    if (!episodeId) return alert("❌ No episode selected.");
+    if (!episodeId) return alert("No episode selected.");
   
     try {
       await consumeStoreCredits("voice_isolation");
     } catch (err) {
-      resultContainer.innerText = `❌ Not enough credits: ${err.message}`;
+      resultContainer.innerText = `Not enough credits: ${err.message}`;
       return;
     }
   
-    resultContainer.innerText = "🎙️ Isolating voice using ElevenLabs...";
+    resultContainer.innerText = "Isolating voice using ElevenLabs...";
   
     const formData = new FormData();
     formData.append("audio", file);
@@ -594,7 +594,7 @@ async function runVoiceIsolation() {
   
       // Show the isolated audio player
       resultContainer.innerHTML = `
-        <p>🎧 Isolated Audio</p>
+        <p>Isolated Audio</p>
         <audio controls src="${url}" style="width: 100%;"></audio>
       `;
   
@@ -616,7 +616,7 @@ async function runVoiceIsolation() {
       // await analyzeEnhancedAudio();
     } catch (err) {
       console.error("Voice isolation failed:", err);
-      resultContainer.innerText = `❌ Isolation failed: ${err.message}`;
+      resultContainer.innerText = `Isolation failed: ${err.message}`;
     }
   }
 
@@ -636,11 +636,11 @@ async function analyzeEnhancedAudio() {
     try {
       await consumeStoreCredits("ai_audio_analysis");
     } catch (err) {
-      resultEl.innerText = `❌ Not enough credits: ${err.message}`;
+      resultEl.innerText = `Not enough credits: ${err.message}`;
       return;
     }
   
-    resultEl.innerText = "🔍 Analyzing...";
+    resultEl.innerText = "Analyzing...";
     const fd = new FormData();
     fd.append("audio", activeAudioBlob, "processed_audio.wav");
   
@@ -651,10 +651,10 @@ async function analyzeEnhancedAudio() {
   
       // Show just the stats + dominant emotion
       resultEl.innerText = `
-  📊 Sentiment:     ${data.sentiment ?? "–"}
-  📊 Clarity Score: ${data.clarity_score ?? "–"}
-  📊 Noise Level:   ${data.background_noise ?? "–"}
-  📊 Dominant Emo:  ${data.dominant_emotion}
+    Sentiment:     ${data.sentiment ?? "–"}
+    Clarity Score: ${data.clarity_score ?? "–"}
+    Noise Level:   ${data.background_noise ?? "–"}
+    Dominant Emo:  ${data.dominant_emotion}
       `;
   
       // Render any sound-effect suggestions
@@ -671,13 +671,13 @@ async function analyzeEnhancedAudio() {
       mixBtn.style.display = "inline-block";
     }
     catch (err) {
-      resultEl.innerText = `❌ Analysis failed: ${err.message}`;
+      resultEl.innerText = `Analysis failed: ${err.message}`;
     }
   }
 
 /* Hjälper att rendera suggestion-listan */
 function renderSoundSuggestions(data, timeline) {
-    timeline.innerHTML = "<h4>🎧 AI-Driven Sound Suggestions</h4>";
+    timeline.innerHTML = "<h4>AI-Driven Sound Suggestions</h4>";
     window.selectedSoundFX = {};
 
     (data.sound_effect_suggestions || []).forEach((entry, i) => {
@@ -685,8 +685,8 @@ function renderSoundSuggestions(data, timeline) {
         const container = document.createElement("div");
         container.className = "sound-suggestion";
         container.innerHTML = `
-            <p><strong>📍 Text:</strong> ${entry.timestamp_text}</p>
-            <p><strong>🎭 Emotion:</strong> ${entry.emotion}</p>
+            <p><strong>Text:</strong> ${entry.timestamp_text}</p>
+            <p><strong>Emotion:</strong> ${entry.emotion}</p>
             ${sfxList.length ? `<audio controls src="${sfxList[0]}" class="sfx-preview"></audio>` : "<em>No preview.</em>"}
         `;
         timeline.appendChild(container);
@@ -708,7 +708,7 @@ async function displayBackgroundAndMix() {
   
     // Disable button & show spinner text
     mixBtn.disabled  = true;
-    mixBtn.innerText = "🔄 Generating…";
+    mixBtn.innerText = "Generating…";
     preview.innerHTML = "";
   
     const fd = new FormData();
@@ -723,7 +723,7 @@ async function displayBackgroundAndMix() {
       // ONLY render the mixed overlay:
       if (data.merged_audio) {
         preview.innerHTML = `
-          <h4>🎶 Mixed Preview</h4>
+          <h4>Mixed Preview</h4>
           <audio controls src="${data.merged_audio}" style="width:100%;"></audio>
         `;
         // Update download link
@@ -731,11 +731,11 @@ async function displayBackgroundAndMix() {
         dl.style.display = "inline-block";
       }
     } catch (err) {
-      preview.innerText = `❌ Error: ${err.message}`;
+      preview.innerText = `Error: ${err.message}`;
     } finally {
       // Restore button
       mixBtn.disabled  = false;
-      mixBtn.innerText = "🔉 Mix Background & Preview";
+      mixBtn.innerText = "Mix Background & Preview";
     }
   }
 
@@ -749,13 +749,13 @@ async function cutAudio() {
     const end = parseFloat(endInput.value);
 
     const episodeId = sessionStorage.getItem("selected_episode_id");
-    if (!episodeId || !activeAudioBlob) return alert("⚠️ No audio or episode selected.");
-    if (isNaN(start) || isNaN(end) || start >= end) return alert("⚠️ Invalid timestamps.");
+    if (!episodeId || !activeAudioBlob) return alert("No audio or episode selected.");
+    if (isNaN(start) || isNaN(end) || start >= end) return alert("Invalid timestamps.");
 
     try {
         await consumeStoreCredits("audio_cutting");
     } catch (err) {
-        alert(`❌ Not enough credits: ${err.message}`);
+        alert(`Not enough credits: ${err.message}`);
         return;
     }
 
@@ -790,32 +790,32 @@ async function cutAudio() {
         activeAudioBlob = blob;
         activeAudioId = "external";
     } catch (err) {
-        alert(`❌ Cut failed: ${err.message}`);
+        alert(`Cut failed: ${err.message}`);
     }
 }
 
 async function aiCutAudio() {
     const episodeId = sessionStorage.getItem("selected_episode_id");
     if (!episodeId) {
-        alert("❌ No episode selected.");
+        alert("No episode selected.");
         return;
     }
 
     if (!activeAudioBlob && !activeAudioId) {
-        alert("⚠️ No audio loaded.");
+        alert("No audio loaded.");
         return;
     }
 
     try {
         await consumeStoreCredits("ai_audio_cutting");
     } catch (err) {
-        alert(`❌ Not enough credits: ${err.message}`);
+        alert(`Not enough credits: ${err.message}`);
         return;
     }
 
     const transcriptEl = document.getElementById("aiTranscript");
     const cutsContainer = document.getElementById("aiSuggestedCuts");
-    transcriptEl.innerText = "🔄 Processing AI Cut... Please wait.";
+    transcriptEl.innerText = "Processing AI Cut... Please wait.";
     cutsContainer.innerHTML = "";
 
     try {
@@ -846,7 +846,7 @@ async function aiCutAudio() {
         data = await response.json();
         if (!response.ok) throw new Error(data.error || "AI Cut failed");
 
-        // 🧠 Visa transcript och suggested cuts
+        // Visa transcript och suggested cuts
         transcriptEl.innerText = data.cleaned_transcript || "No transcript available.";
 
         const suggestedCuts = data.suggested_cuts || [];
@@ -873,7 +873,7 @@ async function aiCutAudio() {
             window.selectedAiCuts[index] = cut;
 
             const label = document.createElement("label");
-            label.innerText = `💬 "${cut.sentence}" (${cut.start}s - ${cut.end}s) | Confidence: ${cut.certainty_score.toFixed(2)}`;
+            label.innerText = ` "${cut.sentence}" (${cut.start}s - ${cut.end}s) | Confidence: ${cut.certainty_score.toFixed(2)}`;
 
             const div = document.createElement("div");
             div.appendChild(checkbox);
@@ -883,14 +883,14 @@ async function aiCutAudio() {
 
         const applyBtn = document.createElement("button");
         applyBtn.className = "btn ai-edit-button";
-        applyBtn.innerText = "✅ Apply AI Cuts";
+        applyBtn.innerText = "Apply AI Cuts";
         applyBtn.onclick = applySelectedCuts;
 
         cutsContainer.appendChild(applyBtn);
 
     } catch (err) {
-        alert(`❌ AI Cut failed: ${err.message}`);
-        transcriptEl.innerText = "❌ Failed to process audio.";
+        alert(`AI Cut failed: ${err.message}`);
+        transcriptEl.innerText = "Failed to process audio.";
     }
 }
 
@@ -937,14 +937,14 @@ async function applySelectedCuts() {
             blobUrl = result.cleaned_file_url;
         }
 
-        // 🛡 Använd backend-proxy för att undvika CORS
+        // Använd backend-proxy för att undvika CORS
         const proxyUrl = `/get_clipped_audio?url=${encodeURIComponent(blobUrl)}`;
         const audioRes = await fetch(proxyUrl);
         if (!audioRes.ok) throw new Error("Failed to fetch clipped audio.");
         const blob = await audioRes.blob();
         const url = URL.createObjectURL(blob);
 
-        // 🎧 Visa spelare och ladda ner-knapp
+        //  Visa spelare och ladda ner-knapp
         const section = document.getElementById("aiCuttingSection");
         section.appendChild(document.createElement("hr"));
 
@@ -957,14 +957,14 @@ async function applySelectedCuts() {
         dl.href = url;
         dl.download = "ai_cleaned_audio.wav";
         dl.className = "btn ai-edit-button";
-        dl.innerText = "📥 Download Cleaned Audio";
+        dl.innerText = "Download Cleaned Audio";
         section.appendChild(dl);
 
         // Uppdatera aktiv blob
         activeAudioBlob = blob;
         activeAudioId = "external";
     } catch (err) {
-        alert(`❌ Apply failed: ${err.message}`);
+        alert(`Apply failed: ${err.message}`);
     }
 }
 
@@ -979,13 +979,13 @@ async function cutAudioFromBlob() {
     const end = parseFloat(endInput.value);
 
     const episodeId = sessionStorage.getItem("selected_episode_id");
-    if (!episodeId || !activeAudioBlob) return alert("⚠️ No audio or episode selected.");
-    if (isNaN(start) || isNaN(end) || start >= end) return alert("⚠️ Invalid timestamps.");
+    if (!episodeId || !activeAudioBlob) return alert("No audio or episode selected.");
+    if (isNaN(start) || isNaN(end) || start >= end) return alert("Invalid timestamps.");
 
     try {
         await consumeStoreCredits("audio_cutting");
     } catch (err) {
-        alert(`❌ Not enough credits: ${err.message}`);
+        alert(`Not enough credits: ${err.message}`);
         return;
     }
 
@@ -1016,7 +1016,7 @@ async function cutAudioFromBlob() {
         activeAudioBlob = blob;
         activeAudioId = "external";
     } catch (err) {
-        alert(`❌ Cut failed: ${err.message}`);
+        alert(`Cut failed: ${err.message}`);
     }
 }
 
@@ -1031,11 +1031,11 @@ async function enhanceVideo() {
     try {
         await consumeStoreCredits("video_enhancement");
     } catch (err) {
-        return alert("❌ Not enough credits: " + err.message);
+        return alert("Not enough credits: " + err.message);
     }
 
     const videoResult = document.getElementById('videoResult');
-    videoResult.innerText = "🔄 Uploading video... Please wait.";
+    videoResult.innerText = "Uploading video... Please wait.";
 
     const formData = new FormData();
     formData.append('video', file);
@@ -1054,7 +1054,7 @@ async function enhanceVideo() {
         const video_id = uploadResult.video_id;
         if (!video_id) throw new Error('No video_id returned from upload.');
 
-        videoResult.innerText = "🔄 Enhancing video... Please wait.";
+        videoResult.innerText = "Enhancing video... Please wait.";
 
         const enhanceResponse = await fetch('/ai_videoenhance', {
             method: 'POST',
@@ -1079,7 +1079,7 @@ async function enhanceVideo() {
         dl.style.display = "inline-block";
 
     } catch (err) {
-        videoResult.innerText = `❌ ${err.message}`;
+        videoResult.innerText = ` ${err.message}`;
     }
 }
 
@@ -1144,7 +1144,7 @@ async function consumeStoreCredits(featureKey) {
         throw new Error(result.error || "Failed to consume credits");
     }
 
-    // ✅ Update the UI to reflect new credit balance
+    // Update the UI to reflect new credit balance
     await fetchStoreCredits(CURRENT_USER_ID);
 
     return result.data;
