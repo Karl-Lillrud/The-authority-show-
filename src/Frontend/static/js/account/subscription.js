@@ -591,12 +591,15 @@ document.addEventListener('DOMContentLoaded', function() {
 /**
  * Fetches the current user's available credits
  */
-async function fetchStoreCredits() {
+export async function fetchStoreCredits() {
   try {
     const creditsElement = document.getElementById("available-credits");
     if (!creditsElement) return;
     
-    const response = await fetch('/api/credits', {
+    // Construct the full URL using the fetched base URL or use relative path if empty
+    const creditsUrl = apiBaseUrl ? `${apiBaseUrl}/api/credits` : '/api/credits';
+
+    const response = await fetch(creditsUrl, { // Use constructed URL
       credentials: 'same-origin'
     });
     
@@ -617,11 +620,27 @@ async function fetchStoreCredits() {
       if (userElement) {
         userElement.textContent = data.storeCredits || 0;
       }
+    } else {
+        // Handle non-OK responses, e.g., 401 Unauthorized
+        console.warn(`Failed to fetch credits: ${response.status}`);
+        // Optionally clear or set default credit values
+        creditsElement.textContent = '0'; 
+        const subElement = document.getElementById("subscription-credits");
+        const userElement = document.getElementById("purchased-credits");
+        if (subElement) subElement.textContent = '0';
+        if (userElement) userElement.textContent = '0';
     }
   } catch (err) {
     console.error("Error fetching user credits:", err);
+    // Optionally clear or set default credit values on error
+    const creditsElement = document.getElementById("available-credits");
+    if (creditsElement) creditsElement.textContent = '0';
+    const subElement = document.getElementById("subscription-credits");
+    const userElement = document.getElementById("purchased-credits");
+    if (subElement) subElement.textContent = '0';
+    if (userElement) userElement.textContent = '0';
   }
 }
 
-// Export functions for use in other files
+// Export other functions if they are also needed elsewhere
 export { upgradeSubscription, getCurrentSubscription, updateSubscriptionUI, showCancellationConfirmation };

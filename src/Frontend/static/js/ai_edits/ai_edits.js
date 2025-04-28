@@ -27,7 +27,10 @@ const CREDIT_COSTS = {
     translation: 500,
     video_cutting: 500,
     video_enhancement: 500,
-    voice_isolation: 500
+    voice_isolation: 500,
+    ai_osint: 800,
+    ai_intro_outro: 800,
+    ai_intro_outro_audio: 500,
 };
 
 function labelWithCredits(text, key) {
@@ -49,16 +52,18 @@ function showTab(tabName) {
             <div class="result-field">
                 <pre id="transcriptionResult"></pre>
             </div>
-
+    
             <div id="enhancementTools" style="display:none;">
                 <hr/>
                 <h3>🔧 Enhancement Tools</h3>
+    
                 <div class="result-group">
                     <button class="btn ai-edit-button" onclick="generateCleanTranscript()">🧹 Clean Transcript</button>
                     <div class="result-field">
                         <pre id="cleanTranscriptResult"></pre>
                     </div>
                 </div>
+    
                 <div class="result-group">
                     <button class="btn ai-edit-button" onclick="generateAISuggestions()">
                       ${labelWithCredits("🤖 AI Suggestions", "ai_suggestions")}
@@ -67,6 +72,7 @@ function showTab(tabName) {
                         <pre id="aiSuggestionsResult"></pre>
                     </div>
                 </div>
+    
                 <div class="result-group">
                     <button class="btn ai-edit-button" onclick="generateShowNotes()">
                       ${labelWithCredits("📝 Show Notes", "show_notes")}
@@ -75,6 +81,7 @@ function showTab(tabName) {
                         <pre id="showNotesResult"></pre>
                     </div>
                 </div>
+    
                 <div class="result-group">
                     <button class="btn ai-edit-button" onclick="generateQuotes()">
                       ${labelWithCredits("💬 Generate Quotes", "ai_quotes")}
@@ -83,6 +90,7 @@ function showTab(tabName) {
                         <pre id="quotesResult"></pre>
                     </div>
                 </div>
+    
                 <div class="result-group">
                     <button class="btn ai-edit-button" onclick="generateQuoteImages()">
                       ${labelWithCredits("🖼️ Generate Quote Images", "ai_qoute_images")}
@@ -90,6 +98,28 @@ function showTab(tabName) {
                     <div class="result-field">
                         <div id="quoteImagesResult"></div>
                     </div>
+                </div>
+    
+                <div class="result-group">
+                    <input type="text" id="guestNameInput" placeholder="Enter guest name..." class="input-field">
+                    <button class="btn ai-edit-button" onclick="runOsintSearch()">
+                      ${labelWithCredits("🕵️ OSINT Search", "ai_osint")}
+                    </button>
+                    <div class="result-field">
+                        <pre id="osintResult"></pre>
+                    </div>
+                </div>
+    
+                <div class="result-group">
+                    <button class="btn ai-edit-button" onclick="generatePodcastIntroOutro()">
+                      ${labelWithCredits("🎙 Generate Intro/Outro", "ai_intro_outro")}
+                    </button>
+                    <div class="result-field">
+                        <pre id="introOutroResult"></pre>
+                    </div>
+                    <button class="btn ai-edit-button" onclick="convertIntroOutroToSpeech()">
+                      ${labelWithCredits("🔊 Convert to Speech", "ai_intro_outro_audio")}
+                    </button>
                 </div>
             </div>
         `;
@@ -369,6 +399,96 @@ async function fetchAudioFromBlobUrl(blobUrl) {
     } catch (err) {
         console.error("Error fetching audio from blob URL:", err);
         throw err;
+    }
+}
+
+async function runOsintSearch() {
+    const guestName = document.getElementById("guestNameInput").value;
+    const resultEl = document.getElementById("osintResult");
+
+    if (!guestName.trim()) {
+        alert("Please enter a guest name.");
+        return;
+    }
+
+    try {
+        await consumeStoreCredits("ai_osint");
+        resultEl.innerText = "🔍 Searching OSINT info...";
+
+        const response = await fetch("/transcription/osint_lookup", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ guest_name: guestName })
+        });
+
+        const data = await response.json();
+        resultEl.innerText = data.osint_info || "No info found.";
+    } catch (err) {
+        resultEl.innerText = `❌ Failed: ${err.message}`;
+    }
+}
+
+async function generatePodcastIntroOutro() {
+    const guestName = document.getElementById("guestNameInput").value;
+    const resultEl = document.getElementById("introOutroResult");
+
+    if (!guestName.trim()) return alert("Please enter a guest name.");
+    if (!rawTranscript) return alert("No transcript available yet.");
+
+    try {
+        await consumeStoreCredits("ai_intro_outro");
+        resultEl.innerText = "📝 Generating intro and outro...";
+
+        const res = await fetch("/transcription/generate_intro_outro", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                guest_name: guestName,
+                transcript: rawTranscript  // already stored when transcribed
+            })
+        });
+
+        const data = await res.json();
+        resultEl.innerText = data.script || "No result.";
+    } catch (err) {
+        resultEl.innerText = `❌ Failed: ${err.message}`;
+    }
+}
+
+async function convertIntroOutroToSpeech() {
+    const script = document.getElementById("introOutroResult").innerText;
+    if (!script.trim()) return alert("No script to convert.");
+
+    const resultEl = document.getElementById("introOutroResult");
+    resultEl.innerText += "\n\n🔊 Generating voice...";
+
+    try {
+        const res = await fetch("/transcription/intro_outro_audio", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ script })
+        });
+
+        const data = await res.json();
+        if (data.audio_base64) {
+            const audio = document.createElement("audio");
+            audio.controls = true;
+            audio.src = data.audio_base64;
+
+            const download = document.createElement("a");
+            download.href = data.audio_base64;
+            download.download = "intro_outro.mp3";
+            download.className = "btn ai-edit-button";
+            download.innerText = "📥 Download Intro/Outro Audio";
+
+            resultEl.appendChild(document.createElement("hr"));
+            resultEl.appendChild(audio);
+            resultEl.appendChild(download);
+        } else {
+            throw new Error(data.error || "Unknown error");
+        }
+    } catch (err) {
+        resultEl.innerText += `\n❌ Failed to convert to audio: ${err.message}`;
     }
 }
 

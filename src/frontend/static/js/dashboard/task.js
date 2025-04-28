@@ -10,7 +10,7 @@ import {
 } from "/static/requests/podtaskRequest.js";
 
 // Initialize task management for all episode cards
-export function initEpisodeToDo() {
+export function initTaskManagement() {
   const toggleButtons = document.querySelectorAll(".toggle-tasks");
   toggleButtons.forEach((button) => {
     button.addEventListener("click", handleToggleTasks);
