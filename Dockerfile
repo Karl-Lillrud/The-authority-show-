@@ -20,9 +20,5 @@ COPY src/ /app/src/
 # Expose the port Flask will run on
 EXPOSE 8000
 
-# Expose the port Streamlit will run on (if applicable, otherwise remove)
-# EXPOSE 8501 
-
 # Run Gunicorn to serve the Flask app, explicitly logging to stdout/stderr
-# Use '-' for --access-logfile and --error-logfile to direct logs to stdout/stderr
-CMD ["gunicorn", "--bind", "0.0.0.0:8000", "--access-logfile", "-", "--error-logfile", "-", "src.app:app"]
+CMD ["gunicorn", "--bind", "0.0.0.0:8000", "src.app:app"]
