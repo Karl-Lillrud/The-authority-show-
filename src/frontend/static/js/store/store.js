@@ -212,7 +212,7 @@ function setupCart() {
         // Handle episode pack purchase
         episodeItems.forEach((item) => {
           totalAmount += item.price * item.quantity;
-          unlockedEpisodes += 1;
+          unlockedEpisodes = item.quantity;
         });
       }
 
@@ -225,7 +225,7 @@ function setupCart() {
       // Build payload
       let payload = { amount: totalAmount.toFixed(2) };
       if (totalCredits > 0) payload.credits = totalCredits;
-      if (unlockedEpisodes > 0) payload.episodes = unlockedEpisodes;
+      if (unlockedEpisodes > 0) payload.unlock = unlockedEpisodes;
       if (plan) payload.plan = plan;
 
       // Make API call to create checkout session
