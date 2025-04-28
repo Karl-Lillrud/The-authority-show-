@@ -521,6 +521,13 @@ async function enhanceAudio() {
         });
 
         const result = await response.json();
+        
+        if (!response.ok) {
+            // Show the backend error message (like "Audio too long")
+            audioControls.innerHTML = `Error: ${result.error || response.statusText}`;
+            return;
+        }
+
         const blobUrl = result.enhanced_audio_url;
 
         // Use backend proxy to avoid CORS
