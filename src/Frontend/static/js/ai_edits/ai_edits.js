@@ -33,7 +33,7 @@ window.rejectSfx = rejectSfx;
 window.replaceSfx = replaceSfx;
 
 window.CURRENT_USER_ID = localStorage.getItem("user_id");
-window.CURRENT_USER_ID = localStorage.getItem("selected_episode_id");
+window.CURRENT_EPISODE_ID = localStorage.getItem("selected_episode_id"); 
 
 
 

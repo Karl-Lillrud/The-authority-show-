@@ -124,8 +124,10 @@ def podcastmanagement():
 @dashboard_bp.route("/episode-to-do", methods=["GET"])
 def episodetodo():
     if not g.user_id:
-        return redirect(url_for("auth_bp.signin"))  # Updated endpoint
-    return render_template("episode-to-do/episode-to-do.html")
+        return redirect(url_for("auth_bp.signin"))
+
+    episode_id = request.args.get("episode_id")
+    return render_template("episode-to-do/episode-to-do.html", user_id=g.user_id, episode_id=episode_id)
 
 
 @dashboard_bp.route("/podprofile", methods=["GET", "POST"])
