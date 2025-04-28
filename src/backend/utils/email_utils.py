@@ -15,6 +15,7 @@ from google_auth_oauthlib.flow import InstalledAppFlow
 from backend.utils.config_utils import get_client_secret
 from backend.services.activity_service import ActivityService  # Add this import
 from pymongo import MongoClient
+from backend.database.mongo_connection import collection
 
 # Load environment variables once
 load_dotenv(override=True)
