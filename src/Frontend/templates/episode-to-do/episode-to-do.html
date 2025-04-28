@@ -9,9 +9,15 @@
   href="{{ url_for('static', filename='css/episode-to-do/episode-to-do.css') }}"
 />
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="stylesheet" href="/static/css/ai_edits/ai_edits.css" />
+  <link rel="stylesheet" href="/static/css/dashboard/dashboard.css" />
+  <link rel="stylesheet" href="/static/css/components/variables.css" />
 </head>
+
 <body>
-  <div class="container">
+  <div id="app">
+    {% include "components/header.html" %}
+<div class="container">
     <header class="header">
       <div class="header-content">
         <div class="header-left">
@@ -127,7 +133,6 @@
                   <h2 class="section-title">Workspace</h2>
                   <div id="workspaceArea" class="workspace-area">
                     <div class="workspace-placeholder">
-                      <i class="fas fa-laptop"></i>
                     </div>
 
                     <!-- AI Edits Section -->
