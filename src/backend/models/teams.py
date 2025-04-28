@@ -11,5 +11,5 @@ class TeamSchema(Schema):
     joinedAt = fields.DateTime()  # Date and time when the team was created
     lastActive = fields.DateTime()  # Last time the team was active or interacted with
     members = fields.List(
-        fields.Dict(), missing=[]
+        fields.Dict(), default=[]
     )  # List of members (user data) for the team
