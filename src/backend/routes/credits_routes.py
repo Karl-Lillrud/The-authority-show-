@@ -8,7 +8,7 @@ credits_bp = Blueprint("credits_bp", __name__)
 @credits_bp.route("/credits/<user_id>", methods=["GET"])
 def get_credits(user_id):
     try:
-        credits = get_store_credits(user_id)
+        credits = get_store_credits(user_id)  # Updated method name
         if not credits:
             return jsonify({"error": "No credits found"}), 404
         return jsonify(credits)

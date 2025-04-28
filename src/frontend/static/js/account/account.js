@@ -1,7 +1,15 @@
-import { fetchAccount, updateAccount, deleteAccount, uploadProfilePicture } from "/static/requests/accountRequests.js";
+import {
+  fetchAccount,
+  updateAccount,
+  deleteAccount,
+  uploadProfilePicture
+} from "/static/requests/accountRequests.js";
 import { showNotification } from "../components/notifications.js";
-import { fetchPurchases } from "/static/js/billing/billing.js"; 
-import { fetchStoreCredits, updateSubscriptionUI } from "/static/js/account/subscription.js";
+import { fetchPurchases } from "/static/js/billing/billing.js";
+import {
+  fetchStoreCredits,
+  updateSubscriptionUI
+} from "/static/js/account/subscription.js";
 
 document.addEventListener("DOMContentLoaded", () => {
   // Hides the edit buttons when in non-edit mode
@@ -51,27 +59,39 @@ document.addEventListener("DOMContentLoaded", () => {
     if (file && profilePic) {
       console.log("File selected:", file.name); // Add log
       const reader = new FileReader();
-      reader.onload = function(e) {
+      reader.onload = function (e) {
         profilePic.src = e.target.result; // Preview the selected image
         // --- Call the upload function ---
         uploadProfilePicture(file)
-          .then(data => {
+          .then((data) => {
             if (data.profilePicUrl) {
               // Optionally update the displayed image source again from the server URL
-              // profilePic.src = data.profilePicUrl; 
-              showNotification("Success", "Profile picture updated successfully!", "success");
+              // profilePic.src = data.profilePicUrl;
+              showNotification(
+                "Success",
+                "Profile picture updated successfully!",
+                "success"
+              );
             } else {
-              showNotification("Error", data.error || "Failed to upload profile picture.", "error");
+              showNotification(
+                "Error",
+                data.error || "Failed to upload profile picture.",
+                "error"
+              );
             }
           })
-          .catch(error => {
+          .catch((error) => {
             console.error("Error uploading profile picture:", error);
-            showNotification("Error", `Upload failed: ${error.message}`, "error");
+            showNotification(
+              "Error",
+              `Upload failed: ${error.message}`,
+              "error"
+            );
             // Optionally revert the preview if upload fails
             // loadAccountData(); // Or store original URL and revert
           });
         // --- End upload function call ---
-      }
+      };
       reader.readAsDataURL(file);
     }
   }
@@ -107,7 +127,11 @@ document.addEventListener("DOMContentLoaded", () => {
         account.phone || "Not provided";
     } catch (error) {
       console.error("Error loading account data:", error);
-      showNotification("Error", `Failed to load account data: ${error.message}`, "error");
+      showNotification(
+        "Error",
+        `Failed to load account data: ${error.message}`,
+        "error"
+      );
       // Set default profile picture on error as well
       if (profilePic) {
         profilePic.src = "/static/images/profilepic.png";
@@ -123,7 +147,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     try {
       // Call the imported fetchPurchases function
-      const purchases = await fetchPurchases(); 
+      const purchases = await fetchPurchases();
 
       purchasesList.innerHTML = ""; // Clear previous list
 
@@ -132,14 +156,17 @@ document.addEventListener("DOMContentLoaded", () => {
         purchases.forEach((purchase) => {
           const li = document.createElement("li");
           li.className = "purchase-item";
-          
-          const purchaseDate = new Date(purchase.created * 1000).toLocaleDateString();
+
+          const purchaseDate = new Date(
+            purchase.created * 1000
+          ).toLocaleDateString();
           const amount = (purchase.amount_total / 100).toFixed(2); // Convert cents to dollars
           const currency = purchase.currency.toUpperCase();
           const status = purchase.payment_status;
-          const description = purchase.line_items && purchase.line_items.length > 0 
-                              ? purchase.line_items[0].description 
-                              : 'N/A'; // Get description from first line item
+          const description =
+            purchase.line_items && purchase.line_items.length > 0
+              ? purchase.line_items[0].description
+              : "N/A"; // Get description from first line item
 
           li.innerHTML = `
             <div class="purchase-details">
@@ -158,11 +185,243 @@ document.addEventListener("DOMContentLoaded", () => {
       }
     } catch (error) {
       console.error("Error loading purchase history:", error);
-      showNotification("Error", `Failed to load purchase history: ${error.message}`, "error");
+      showNotification(
+        "Error",
+        `Failed to load purchase history: ${error.message}`,
+        "error"
+      );
       noPurchasesMessage.textContent = "Error loading purchase history.";
       noPurchasesMessage.style.display = "block";
     }
   }
+
+  // Function to load credit history
+  async function loadCreditHistory() {
+    const historyContainer = document.getElementById("billing-history-rows");
+    const noHistoryMessage = document.getElementById("no-purchases-message");
+
+    if (!historyContainer || !noHistoryMessage) return;
+
+    try {
+      const response = await fetch("/api/purchases/history", {
+        credentials: "same-origin"
+      });
+
+      if (!response.ok) {
+        throw new Error(`Failed to fetch purchase history: ${response.status}`);
+      }
+
+      const data = await response.json();
+      const purchases = data.purchases || [];
+
+      historyContainer.innerHTML = ""; // Clear existing rows
+
+      if (purchases.length === 0) {
+        noHistoryMessage.style.display = "block"; // Show 'no history' message
+        return;
+      }
+
+      noHistoryMessage.style.display = "none"; // Hide 'no history' message
+
+      // Populate the billing history table
+      purchases.forEach((purchase) => {
+        const date = new Date(purchase.date).toLocaleDateString("en-US", {
+          year: "numeric",
+          month: "short",
+          day: "numeric"
+        });
+
+        const statusClass = purchase.status?.toLowerCase() || "unknown";
+
+        const row = document.createElement("div");
+        row.className = "billing-row";
+        row.innerHTML = `
+          <div class="billing-cell">${date}</div>
+          <div class="billing-cell">${purchase.description || "N/A"}</div>
+          <div class="billing-cell">$${parseFloat(purchase.amount).toFixed(
+            2
+          )}</div>
+          <div class="billing-cell">
+            <span class="status-${statusClass}">
+              ${purchase.status || "Unknown"}
+            </span>
+          </div>
+          <div class="billing-cell">
+            ${
+              purchase.details
+                ? `<button class="details-btn" data-details='${JSON.stringify(
+                    purchase.details
+                  )}'>View Details</button>`
+                : "N/A"
+            }
+          </div>
+        `;
+        historyContainer.appendChild(row);
+      });
+
+      // Add event listeners to "Details" buttons
+      document.querySelectorAll(".details-btn").forEach((button) => {
+        button.addEventListener("click", function () {
+          const details = JSON.parse(this.getAttribute("data-details"));
+          showPurchaseDetails(details);
+        });
+      });
+    } catch (error) {
+      console.error("Error loading purchase history:", error);
+      noHistoryMessage.textContent = "Error loading purchase history.";
+      noHistoryMessage.style.display = "block";
+    }
+  }
+
+  // Function to show purchase details in a modal
+  function showPurchaseDetails(details) {
+    const modal = document.getElementById("details-modal");
+    const modalContent = document.getElementById("details-modal-content");
+
+    if (!modal || !modalContent) return;
+
+    // Clear previous details
+    modalContent.innerHTML = "";
+
+    if (details.length === 0) {
+      modalContent.innerHTML = "<p>No details available for this purchase.</p>";
+    } else {
+      const list = document.createElement("ul");
+      details.forEach((item) => {
+        const listItem = document.createElement("li");
+        listItem.textContent = `${item.product} - Quantity: ${
+          item.quantity
+        }, Price: $${item.price.toFixed(2)}`;
+        list.appendChild(listItem);
+      });
+      modalContent.appendChild(list);
+    }
+
+    // Show the modal
+    modal.style.display = "block";
+  }
+
+  // Close modal when clicking outside or on close button
+  document.addEventListener("click", (event) => {
+    const modal = document.getElementById("details-modal");
+    if (
+      modal &&
+      (event.target === modal || event.target.classList.contains("close-modal"))
+    ) {
+      modal.style.display = "none";
+    }
+  });
+
+  function displayPurchaseHistory(purchases) {
+    const historyContainer = document.getElementById("billing-history-rows");
+    const noHistoryMessage = document.getElementById("no-purchases-message");
+
+    if (!historyContainer) return;
+
+    // Clear loading message
+    historyContainer.innerHTML = "";
+
+    if (!purchases || purchases.length === 0) {
+      // Show no history message
+      noHistoryMessage.style.display = "block";
+      return;
+    }
+
+    // Hide no history message if we have purchases
+    noHistoryMessage.style.display = "none";
+
+    // Sort purchases by date, newest first
+    purchases.sort((a, b) => new Date(b.date) - new Date(a.date));
+
+    // Add each purchase to the table
+    purchases.forEach((purchase) => {
+      const date = new Date(purchase.date);
+      const formattedDate =
+        date.toLocaleDateString("en-US", {
+          year: "numeric",
+          month: "short",
+          day: "numeric"
+        }) +
+        " " +
+        date.toLocaleTimeString("en-US", {
+          hour: "2-digit",
+          minute: "2-digit"
+        });
+
+      const row = document.createElement("div");
+      row.className = "billing-row";
+      row.innerHTML = `
+        <div class="billing-cell">${formattedDate}</div>
+        <div class="billing-cell">${purchase.description || "N/A"}</div>
+        <div class="billing-cell">$${parseFloat(purchase.amount).toFixed(
+          2
+        )}</div>
+        <div class="billing-cell">
+          <span class="status-${purchase.status.toLowerCase()}">${
+        purchase.status
+      }</span>
+        </div>
+        <div class="billing-cell">
+          ${
+            purchase.details
+              ? `<button class="details-btn" data-details='${JSON.stringify(
+                  purchase.details
+                )}'>View Details</button>`
+              : "N/A"
+          }
+        </div>
+      `;
+
+      historyContainer.appendChild(row);
+    });
+
+    // Add event listeners to "Details" buttons
+    document.querySelectorAll(".details-btn").forEach((button) => {
+      button.addEventListener("click", function () {
+        const details = JSON.parse(this.getAttribute("data-details"));
+        showPurchaseDetails(details);
+      });
+    });
+  }
+
+  // Function to show purchase details in a modal
+  function showPurchaseDetails(details) {
+    const modal = document.getElementById("details-modal");
+    const modalContent = document.getElementById("details-modal-content");
+
+    if (!modal || !modalContent) return;
+
+    // Clear previous details
+    modalContent.innerHTML = "";
+
+    if (details.length === 0) {
+      modalContent.innerHTML = "<p>No details available for this purchase.</p>";
+    } else {
+      const list = document.createElement("ul");
+      details.forEach((item) => {
+        const listItem = document.createElement("li");
+        listItem.textContent = `${item.product} - Quantity: ${
+          item.quantity
+        }, Price: $${item.price.toFixed(2)}`;
+        list.appendChild(listItem);
+      });
+      modalContent.appendChild(list);
+    }
+
+    // Show the modal
+    modal.style.display = "block";
+  }
+
+  // Close modal when clicking outside or on close button
+  document.addEventListener("click", (event) => {
+    const modal = document.getElementById("details-modal");
+    if (
+      modal &&
+      (event.target === modal || event.target.classList.contains("close-modal"))
+    ) {
+      modal.style.display = "none";
+    }
+  });
 
   // Initialize profile data
   loadAccountData();
@@ -603,38 +862,51 @@ document.addEventListener("DOMContentLoaded", () => {
     const email = deleteEmailInput ? deleteEmailInput.value : null; // Get email from input
 
     if (!email) {
-      showNotification("Error", "Please enter your email to confirm deletion.", "error");
+      showNotification(
+        "Error",
+        "Please enter your email to confirm deletion.",
+        "error"
+      );
       return;
     }
 
     // Show loading state on confirm button
     if (confirmDeleteBtn) {
-        confirmDeleteBtn.disabled = true;
-        confirmDeleteBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Deleting...';
+      confirmDeleteBtn.disabled = true;
+      confirmDeleteBtn.innerHTML =
+        '<i class="fas fa-spinner fa-spin"></i> Deleting...';
     }
 
     try {
       // Call the imported deleteAccount function
-      const response = await deleteAccount({ email: email }); 
-      showNotification("Success", response.message || "Account deleted successfully.", "success");
-      
+      const response = await deleteAccount({ email: email });
+      showNotification(
+        "Success",
+        response.message || "Account deleted successfully.",
+        "success"
+      );
+
       // Redirect to signin page after successful deletion
       setTimeout(() => {
-        window.location.href = "/signin"; 
-      }, 2000); 
-
+        window.location.href = "/signin";
+      }, 2000);
     } catch (error) {
       console.error("Error deleting account:", error);
-      showNotification("Error", `Error deleting account: ${error.message}`, "error");
+      showNotification(
+        "Error",
+        `Error deleting account: ${error.message}`,
+        "error"
+      );
       // Restore button state on error
       if (confirmDeleteBtn) {
-          confirmDeleteBtn.disabled = false;
-          confirmDeleteBtn.innerHTML = 'Confirm Deletion';
+        confirmDeleteBtn.disabled = false;
+        confirmDeleteBtn.innerHTML = "Confirm Deletion";
       }
     } finally {
-       // Ensure popup is hidden even if redirect fails or takes time
-       if (deleteConfirmationPopup) deleteConfirmationPopup.style.display = "none";
-       if (deleteEmailInput) deleteEmailInput.value = ""; // Clear email input
+      // Ensure popup is hidden even if redirect fails or takes time
+      if (deleteConfirmationPopup)
+        deleteConfirmationPopup.style.display = "none";
+      if (deleteEmailInput) deleteEmailInput.value = ""; // Clear email input
     }
   }
 
@@ -694,7 +966,9 @@ document.addEventListener("DOMContentLoaded", () => {
     profilePicInput.addEventListener("change", handleFileSelect);
     console.log("File input change listener added."); // Add log
   } else {
-    console.error("Profile picture input element not found for change listener!"); // Add error log
+    console.error(
+      "Profile picture input element not found for change listener!"
+    ); // Add error log
   }
 
   // Initialize the first section as active
@@ -766,6 +1040,7 @@ document.addEventListener("DOMContentLoaded", () => {
       // Fetch purchase history if the "Purchases" section is activated
       if (sectionId === "settings-purchases") {
         loadPurchaseHistory(); // Changed from fetchPurchaseHistory to loadPurchaseHistory
+        loadCreditHistory(); // Fetch and display credit history
       }
     }
   }

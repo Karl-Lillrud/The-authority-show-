@@ -253,6 +253,7 @@
                     <div class="billing-cell">Description</div>
                     <div class="billing-cell">Amount</div>
                     <div class="billing-cell">Status</div>
+                    <div class="billing-cell">Details</div> <!-- New column for details -->
                   </div>
                   <div id="billing-history-rows">
                     <!-- Purchases will be loaded here -->
@@ -265,7 +266,6 @@
                   No purchase history available.
                 </div>
               </div>
-              
               <div class="subscription-actions">
                 <a href="/billing" class="primary-button">
                   <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -278,6 +278,14 @@
             </div>
           </div>
 
+          <!-- Modal for purchase details -->
+          <div id="details-modal" class="modal">
+            <div class="modal-content">
+              <span class="close-modal">&times;</span>
+              <div id="details-modal-content"></div>
+            </div>
+          </div>
+
           <!-- Subscription Sections -->
           <div class="subscription-sections">
             <div id="subscription-choose" class="settings-section">
@@ -285,7 +293,6 @@
                 <h2>Choose Subscription</h2>
                 <p>Select a subscription plan that works for you</p>
               </div>
-              
               <!-- Updated Subscription Content -->
               <div class="subscription-content">
                 <div class="subscription-plans">
@@ -302,12 +309,10 @@
                         <li>1 extra episode slot - 5000 Credits (Max 3 total slots)</li>
                         <li>1 hr maximum length / episode</li>
                         <li>Free podcast Landing Page</li>
-                        
                       </ul>
                     </div>
                     <button class="plan-button primary" data-plan="Free">Current Plan</button>
                   </div>
-
                   <!-- Pro Plan Card -->
                   <div class="plan-card">
                     <div class="plan-header">
@@ -325,7 +330,6 @@
                     </div>
                     <button class="plan-button primary" data-plan="Pro">Upgrade</button>
                   </div>
-
                   <!-- Studio Plan Card -->
                   <div class="plan-card">
                     <div class="plan-header">
@@ -344,7 +348,6 @@
                     <button class="plan-button primary" data-plan="Studio">Upgrade</button>
                   </div>
                 </div>
-                
                 <!-- Optional: Keep newsletter form if desired -->
                 <div class="subscription-form-container">
                   <h3>Subscribe to our newsletter</h3>
@@ -361,13 +364,11 @@
               </div>
               <!-- End Updated Subscription Content -->
             </div>
-
             <div id="subscription-change" class="settings-section">
               <div class="section-header">
                 <h2>Payment Method</h2>
                 <p>Modify your current subscription plan and payment details</p>
               </div>
-              
               <div class="subscription-content">
                 <div class="current-plan-info">
                   <div class="info-card">
@@ -384,7 +385,6 @@
                     </div>
                   </div>
                 </div>
-                
                 <div class="subscription-actions">
                   <button id="cancel-subscription-btn" class="secondary-button">
                     <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -394,7 +394,6 @@
                     Cancel Subscription
                   </button>
                 </div>
-
                 <div class="payment-methods">
                   <h3>Payment Methods</h3>
                   <div class="payment-card">
@@ -414,7 +413,6 @@
                       <button class="text-button">Remove</button>
                     </div>
                   </div>
-                  
                   <button class="secondary-button add-payment-button">
                     <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                       <path d="M5 12h14"></path>

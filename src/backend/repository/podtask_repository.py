@@ -73,7 +73,7 @@ class PodtaskRepository:
     
     def _get_default_podcast_id(self, user_id: str) -> Union[str, Tuple[Dict[str, Any], int]]:
         # Find user accounts
-        user_accounts = list(self.accounts_collection.find({"userId": str(user_id)}, {"_id": 1}))
+        user_accounts = list(self.accounts_collection.find({"ownerId": str(user_id)}, {"_id": 1}))
         if not user_accounts:
             logger.warning(f"No accounts found for user {user_id}")
             return {"error": "No accounts found for user"}, 403
@@ -356,4 +356,3 @@ class PodtaskRepository:
                 return {"error": "No default tasks were added"}, 500
         except Exception as e:
             return {"error": str(e)}, 500
-
