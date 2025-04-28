@@ -1,6 +1,6 @@
 import os
 import logging
-from flask import Flask, request, session, g, jsonify, render_template
+from flask import Flask, request, session, g, jsonify, render_template, redirect
 from flask_cors import CORS
 from backend.routes.auth import auth_bp
 from backend.routes.podcast import podcast_bp  # Import the podcast blueprint
@@ -38,6 +38,7 @@ from backend.routes.video_routes import video_bp
 from backend.routes.transcription import transcription_bp
 from colorama import Fore, Style, init  # Import colorama for styled logs
 from backend.routes.activity import activity_bp
+from backend.services.authService import AuthService  # Add this import
 
 if os.getenv("SKIP_VENV_UPDATE", "false").lower() not in ("true", "1", "yes"):
     venvupdate.update_venv_and_requirements()
@@ -136,8 +137,26 @@ logger.info(f"{Fore.GREEN}========================================")
 
 # Log the request with user info
 @app.before_request
-def load_user():
-    g.user_id = session.get("user_id")
+def verify_user_session():
+    # Skip auth routes to prevent redirect loops
+    if request.blueprint == 'auth_bp' or request.path == '/static':
+        return
+
+    # Check if user is logged in
+    user_id = session.get('user_id')
+    if user_id:
+        # Verify user still exists
+        auth_service = AuthService()
+        user = auth_service.auth_repository.find_user_by_id(user_id)
+        if not user:
+            # Clear session and cookies if user no longer exists
+            session.clear()
+            response = redirect('/signin')
+            response.delete_cookie('remember_me')
+            return response
+
+    # Set user_id in g for other routes to use
+    g.user_id = user_id
     logger.info(f"{Fore.BLUE}Request to {request.path} by user {g.user_id}")
 
 

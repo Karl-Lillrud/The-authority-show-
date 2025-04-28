@@ -39,6 +39,14 @@ class AuthService:
                 return {"error": "Ogiltigt email eller lösenord"}, 401
 
             self._setup_session(user, remember)
+            
+            # Verify user still exists after session setup
+            user_check = self.auth_repository.find_user_by_id(user['_id'])
+            if not user_check:
+                logger.error(f"User {email} no longer exists after session setup")
+                session.clear()
+                return {"error": "User account no longer exists"}, 404
+                
             user_id = session["user_id"]
 
             account_data = {"ownerId": user_id, "email": email, "isFirstLogin": True}
@@ -107,6 +115,14 @@ class AuthService:
                 return {"error": "Ogiltig eller utgången OTP"}, 401
 
             self._setup_session(user, False)
+            
+            # Verify user still exists after session setup
+            user_check = self.auth_repository.find_user_by_id(user['_id'])
+            if not user_check:
+                logger.error(f"User {email} no longer exists after session setup")
+                session.clear()
+                return {"error": "User account no longer exists"}, 404
+                
             self.user_collection.update_one(
                 {"email": email}, {"$unset": {"otp": "", "otp_expires_at": ""}}
             )
@@ -146,6 +162,11 @@ class AuthService:
 
             user = self.auth_repository.find_user_by_email(email)
             if not user:
+                # Only create new user for magic link login, not for existing user verification
+                if token.startswith("verify_"):
+                    logger.error(f"User {email} not found during verification")
+                    return {"error": "User not found"}, 404
+                    
                 user_data = {
                     "_id": str(uuid.uuid4()),
                     "email": email,
@@ -163,6 +184,12 @@ class AuthService:
                 f"Användardata för tokenverifiering: user_id={user['_id']}, email={email}"
             )
             self._setup_session(user, False)
+
+            # Verify user still exists after session setup
+            user_check = self.auth_repository.find_user_by_id(user['_id'])
+            if not user_check:
+                logger.error(f"User {email} no longer exists after session setup")
+                return {"error": "User account no longer exists"}, 404
 
             account_data = {
                 "ownerId": user["_id"],

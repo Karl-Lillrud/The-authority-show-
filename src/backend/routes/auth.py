@@ -13,11 +13,36 @@ logger = logging.getLogger(__name__)
 @auth_bp.route("/signin", methods=["GET"], endpoint="signin_page")
 @auth_bp.route("/", methods=["GET"], endpoint="root_signin_page")
 def signin_page():
-    if "user_id" in session and session.get("user_id"):
-        return redirect("/dashboard")
-    if request.cookies.get("remember_me") == "true":
-        return redirect("/podprofile")
-    return render_template("signin/signin.html")
+    try:
+        if "user_id" in session and session.get("user_id"):
+            # Verify user still exists in database
+            user_id = session.get("user_id")
+            user = auth_service.auth_repository.find_user_by_id(user_id)
+            if not user:
+                session.clear()
+                response = render_template("signin/signin.html")
+                return response
+            return redirect("/dashboard")
+            
+        if request.cookies.get("remember_me") == "true":
+            # Only redirect if user still exists
+            user_id = session.get("user_id")
+            if user_id:
+                user = auth_service.auth_repository.find_user_by_id(user_id)
+                if user:
+                    return redirect("/podprofile")
+            # If user doesn't exist, clear cookie and show signin page
+            response = render_template("signin/signin.html")
+            response.delete_cookie("remember_me")
+            return response
+            
+        return render_template("signin/signin.html")
+    except Exception as e:
+        logger.error(f"Error checking user session: {str(e)}")
+        session.clear()
+        response = render_template("signin/signin.html")
+        response.delete_cookie("remember_me")
+        return response
 
 
 @auth_bp.route("/signin", methods=["POST"], endpoint="signin")

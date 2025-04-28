@@ -22,6 +22,20 @@ class AuthRepository:
             )
             return None
 
+    def find_user_by_id(self, user_id):
+        try:
+            # Try both string and ObjectId formats
+            user = self.user_collection.find_one({
+                "$or": [
+                    {"_id": user_id},
+                    {"_id": str(user_id)}
+                ]
+            })
+            return user
+        except Exception as e:
+            logger.error(f"Error finding user by id {user_id}: {str(e)}", exc_info=True)
+            return None
+
     def create_user(self, user_data):
         try:
             result = self.user_collection.insert_one(user_data)
