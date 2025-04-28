@@ -7,7 +7,7 @@ from backend.routes.podcast import podcast_bp  # Import the podcast blueprint
 from backend.routes.dashboard import dashboard_bp
 from backend.routes.pod_management import pod_management_bp
 from backend.routes.podtask import podtask_bp
-from backend.routes.account import account_bp
+from backend.routes.account import account_bp  # Ensure this import is correct
 from backend.routes.credits_routes import credits_bp
 from backend.routes.team import team_bp
 from backend.routes.guest import (
@@ -83,7 +83,7 @@ app.register_blueprint(team_bp)
 app.register_blueprint(Mailing_list_bp)
 app.register_blueprint(guest_bp)  # Ensure the guest blueprint is correctly registered
 app.register_blueprint(guestpage_bp)
-app.register_blueprint(account_bp)
+app.register_blueprint(account_bp)  # Ensure this registration is correct
 app.register_blueprint(credits_bp)
 app.register_blueprint(usertoteam_bp)
 app.register_blueprint(invitation_bp)
@@ -102,7 +102,8 @@ app.register_blueprint(
 app.register_blueprint(user_bp)
 app.register_blueprint(landingpage_bp)
 app.register_blueprint(comment_bp)
-
+app.register_blueprint(activity_bp)  # Ensure this registration exists
+app.register_blueprint(stripe_config_bp)  # Ensure this registration exists
 
 # Set the application environment (defaults to production)
 APP_ENV = os.getenv("APP_ENV", "production")

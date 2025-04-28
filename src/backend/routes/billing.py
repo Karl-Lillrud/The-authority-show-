@@ -7,9 +7,11 @@ from backend.services.subscriptionService import SubscriptionService
 from backend.database.mongo_connection import collection
 import logging
 from datetime import datetime
+from backend.services.creditManagement import CreditService
 
 billing_bp = Blueprint("billing_bp", __name__)
 subscription_service = SubscriptionService()
+credit_service = CreditService()
 logger = logging.getLogger(__name__)
 
 stripe.api_key = os.getenv("STRIPE_SECRET_KEY")
@@ -114,8 +116,10 @@ def payment_success():
         return jsonify({"error": "Missing session ID"}), 400
 
     try:
-        # Retrieve the Stripe session
-        stripe_session = stripe.checkout.Session.retrieve(session_id)
+        # Retrieve the Stripe session with expanded line_items
+        stripe_session = stripe.checkout.Session.retrieve(
+            session_id, expand=["line_items"]
+        )
 
         # Check if this includes a subscription, credits, or both
         metadata = stripe_session.get("metadata", {})
@@ -357,7 +361,14 @@ def get_purchase_history():
         purchases = list(
             collection.database.Purchases.find(
                 {"user_id": user_id},
-                {"_id": 0, "date": 1, "amount": 1, "description": 1, "status": 1},
+                {
+                    "_id": 0,
+                    "date": 1,
+                    "amount": 1,
+                    "description": 1,
+                    "status": 1,
+                    "details": 1,
+                },
             ).sort("date", -1)
         )
 
@@ -374,6 +385,7 @@ def get_purchase_history():
                     "amount": 0.00,
                     "description": f"System credit grant ({available_credits} credits)",
                     "status": "Granted",
+                    "details": [],
                 }
             )
 
@@ -381,3 +393,21 @@ def get_purchase_history():
     except Exception as e:
         logger.error(f"Error fetching purchase history: {str(e)}")
         return jsonify({"error": str(e)}), 500
+
+
+@billing_bp.route("/api/credits/history", methods=["GET"])
+def get_credit_history():
+    user_id = g.user_id
+
+    if not user_id:
+        return jsonify({"error": "Unauthorized"}), 401
+
+    try:
+        # Fetch credit history using the CreditService
+        credit_history = credit_service.get_credit_history(user_id)
+
+        # Return the credit history as JSON
+        return jsonify({"creditHistory": credit_history}), 200
+    except Exception as e:
+        logger.error(f"Error fetching credit history: {e}")
+        return jsonify({"error": "Failed to fetch credit history"}), 500
