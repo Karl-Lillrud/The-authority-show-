@@ -51,7 +51,7 @@ docker rmi $REGISTRY_NAME.azurecr.io/$IMAGE_NAME || true
 az acr repository delete --name $REGISTRY_NAME --image $IMAGE_NAME --yes
 
 # clear cache for docker
-docker builder prune --all
+docker builder prune --all --force
 
 # Step 4: Log in to Azure Container Registry (ACR) using Managed Identity
 echo "Logging in to ACR '$REGISTRY_NAME' using Managed Identity..."
@@ -59,7 +59,7 @@ az acr login --name $REGISTRY_NAME
 
 # Step 5: Build Docker Image
 echo "Building Docker image '$IMAGE_NAME'..."
-docker build -t $IMAGE_NAME .
+docker build -t --no-cache $IMAGE_NAME .
 
 # Step 6: Tag Docker Image for ACR
 echo "Tagging Docker image '$IMAGE_NAME' with ACR tag..."
