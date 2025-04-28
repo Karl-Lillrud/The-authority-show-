@@ -523,7 +523,8 @@ async function enhanceAudio() {
     const file = input.files[0];
     if (!file) return alert("Upload an audio file first.");
 
-    const episodeId = sessionStorage.getItem("selected_episode_id");
+    const episodeId = sessionStorage.getItem("selected_episode_id") || localStorage.getItem("selected_episode_id");
+
     if (!episodeId) return alert("❌ No episode selected.");
 
     try {
@@ -582,7 +583,8 @@ async function runVoiceIsolation() {
     if (!file) return alert("Upload an audio file first.");
   
     const resultContainer = document.getElementById("isolatedVoiceResult");
-    const episodeId = sessionStorage.getItem("selected_episode_id");
+    const episodeId = sessionStorage.getItem("selected_episode_id") || localStorage.getItem("selected_episode_id");
+
     if (!episodeId) return alert("❌ No episode selected.");
   
     try {
@@ -773,7 +775,8 @@ async function cutAudio() {
     const start = parseFloat(startInput.value);
     const end = parseFloat(endInput.value);
 
-    const episodeId = sessionStorage.getItem("selected_episode_id");
+    const episodeId = sessionStorage.getItem("selected_episode_id") || localStorage.getItem("selected_episode_id");
+
     if (!episodeId || !activeAudioBlob) return alert("⚠️ No audio or episode selected.");
     if (isNaN(start) || isNaN(end) || start >= end) return alert("⚠️ Invalid timestamps.");
 
@@ -820,7 +823,8 @@ async function cutAudio() {
 }
 
 async function aiCutAudio() {
-    const episodeId = sessionStorage.getItem("selected_episode_id");
+    const episodeId = sessionStorage.getItem("selected_episode_id") || localStorage.getItem("selected_episode_id");
+
     if (!episodeId) {
         alert("❌ No episode selected.");
         return;
@@ -926,7 +930,8 @@ async function applySelectedCuts() {
         return;
     }
 
-    const episodeId = sessionStorage.getItem("selected_episode_id");
+    const episodeId = sessionStorage.getItem("selected_episode_id") || localStorage.getItem("selected_episode_id");
+
 
     try {
         let blobUrl;
@@ -1003,7 +1008,8 @@ async function cutAudioFromBlob() {
     const start = parseFloat(startInput.value);
     const end = parseFloat(endInput.value);
 
-    const episodeId = sessionStorage.getItem("selected_episode_id");
+    const episodeId = sessionStorage.getItem("selected_episode_id") || localStorage.getItem("selected_episode_id");
+
     if (!episodeId || !activeAudioBlob) return alert("⚠️ No audio or episode selected.");
     if (isNaN(start) || isNaN(end) || start >= end) return alert("⚠️ Invalid timestamps.");
 

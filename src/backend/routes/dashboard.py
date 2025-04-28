@@ -1,5 +1,6 @@
-from flask import Blueprint, render_template, session, redirect, url_for, g # Import g
+from flask import Blueprint, render_template, session, redirect, url_for, g,request # Import g
 import logging
+from backend.database.mongo_connection import collection  # Ensure this import is correct       
 
 dashboard_bp = Blueprint("dashboard_bp", __name__)
 logger = logging.getLogger(__name__)
