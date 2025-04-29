@@ -19,7 +19,7 @@ from backend.services.audioService import AudioService
 from backend.services.videoService import VideoService
 from backend.repository.ai_models import fetch_file, save_file, get_file_by_id
 from backend.utils.transcription_utils import check_audio_duration
-from backend.utils.subscription_access import get_transcription_limit
+from backend.utils.subscription_access import get_max_duration_limit
 
 transcription_bp = Blueprint("transcription", __name__)
 logger = logging.getLogger(__name__)
@@ -68,7 +68,7 @@ def transcribe():
         logger.info(f"👤 User {user_id} subscription plan: {subscription_plan}")
 
         # 🛡️ Get max allowed duration from subscription utils
-        max_duration = get_transcription_limit(subscription_plan)
+        max_duration = get_max_duration_limit(subscription_plan)
         logger.info(f"🛡️ Max transcription duration allowed: {max_duration} seconds")
 
         # ⏱️ Check audio duration
