@@ -375,34 +375,41 @@ async function generateQuotes() {
 }
 
 async function generateQuoteImages() {
+    const containerId = "quoteImagesResult";
+    const container = document.getElementById(containerId);
+
     const quotes = document.getElementById("quotesResult").innerText;
-    if (!quotes) return alert("Generate quotes first.");
+    if (!quotes) {
+        alert("Generate quotes first.");
+        return;
+    }
+
+    showSpinner(containerId);
 
     try {
         await consumeStoreCredits("ai_qoute_images");
 
-        const res = await fetch('/transcription/quote_images', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+        const res = await fetch("/transcription/quote_images", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ quotes })
         });
 
         const data = await res.json();
-        const imageDiv = document.getElementById("quoteImagesResult");
-        imageDiv.innerHTML = "";
+        container.innerHTML = "";
 
         (data.quote_images || []).forEach(url => {
             const img = document.createElement("img");
             img.src = url;
             img.style.maxWidth = "100%";
             img.style.margin = "10px 0";
-            imageDiv.appendChild(img);
+            container.appendChild(img);
         });
     } catch (err) {
-        document.getElementById("quoteImagesResult").innerText =
-            "Not enough credits: " + err.message;
+        container.innerText = "Not enough credits: " + err.message;
     }
 }
+
 
 async function fetchAudioFromBlobUrl(blobUrl) {
     try {
@@ -418,17 +425,19 @@ async function fetchAudioFromBlobUrl(blobUrl) {
 }
 
 async function runOsintSearch() {
-    const guestName = document.getElementById("guestNameInput").value;
-    const resultEl = document.getElementById("osintResult");
+    const containerId = "osintResult";
+    const container = document.getElementById(containerId);
 
+    const guestName = document.getElementById("guestNameInput").value;
     if (!guestName.trim()) {
         alert("Please enter a guest name.");
         return;
     }
 
+    showSpinner(containerId);
+
     try {
         await consumeStoreCredits("ai_osint");
-        resultEl.innerText = "Searching OSINT info...";
 
         const response = await fetch("/transcription/osint_lookup", {
             method: "POST",
@@ -437,45 +446,49 @@ async function runOsintSearch() {
         });
 
         const data = await response.json();
-        resultEl.innerText = data.osint_info || "No info found.";
+        container.innerText = data.osint_info || "No info found.";
     } catch (err) {
-        resultEl.innerText = `Failed: ${err.message}`;
+        container.innerText = `Failed: ${err.message}`;
     }
 }
 
 async function generatePodcastIntroOutro() {
-    const guestName = document.getElementById("guestNameInput").value;
-    const resultEl = document.getElementById("introOutroResult");
+    const containerId = "introOutroResult";
+    const container = document.getElementById(containerId);
 
+    const guestName = document.getElementById("guestNameInput").value;
     if (!guestName.trim()) return alert("Please enter a guest name.");
     if (!rawTranscript) return alert("No transcript available yet.");
 
+    showSpinner(containerId);
+
     try {
         await consumeStoreCredits("ai_intro_outro");
-        resultEl.innerText = "Generating intro and outro...";
 
         const res = await fetch("/transcription/generate_intro_outro", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
                 guest_name: guestName,
-                transcript: rawTranscript  // already stored when transcribed
+                transcript: rawTranscript
             })
         });
 
         const data = await res.json();
-        resultEl.innerText = data.script || "No result.";
+        container.innerText = data.script || "No result.";
     } catch (err) {
-        resultEl.innerText = `Failed: ${err.message}`;
+        container.innerText = `Failed: ${err.message}`;
     }
 }
 
 async function convertIntroOutroToSpeech() {
-    const script = document.getElementById("introOutroResult").innerText;
+    const containerId = "introOutroResult";
+    const container = document.getElementById(containerId);
+
+    const script = container.innerText;
     if (!script.trim()) return alert("No script to convert.");
 
-    const resultEl = document.getElementById("introOutroResult");
-    resultEl.innerText += "\n\nGenerating voice...";
+    container.innerText += "\n\nGenerating voice...";
 
     try {
         const res = await fetch("/transcription/intro_outro_audio", {
@@ -496,14 +509,14 @@ async function convertIntroOutroToSpeech() {
             download.className = "btn ai-edit-button";
             download.innerText = "Download Intro/Outro Audio";
 
-            resultEl.appendChild(document.createElement("hr"));
-            resultEl.appendChild(audio);
-            resultEl.appendChild(download);
+            container.appendChild(document.createElement("hr"));
+            container.appendChild(audio);
+            container.appendChild(download);
         } else {
             throw new Error(data.error || "Unknown error");
         }
     } catch (err) {
-        resultEl.innerText += `\nFailed to convert to audio: ${err.message}`;
+        container.innerText += `\nFailed to convert to audio: ${err.message}`;
     }
 }
 
