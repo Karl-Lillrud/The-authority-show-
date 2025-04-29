@@ -812,23 +812,20 @@ async function aiCutAudio() {
         return;
     }
 
+    const containerIdTranscript = "aiTranscript";
+    const containerTranscript = document.getElementById(containerIdTranscript);
+    const containerIdCuts = "aiSuggestedCuts";
+    const containerCuts = document.getElementById(containerIdCuts);
+
+    showSpinner(containerIdTranscript);
+    containerCuts.innerHTML = "";
+
     try {
         await consumeStoreCredits("ai_audio_cutting");
-    } catch (err) {
-        alert(`Not enough credits: ${err.message}`);
-        return;
-    }
 
-    const transcriptEl = document.getElementById("aiTranscript");
-    const cutsContainer = document.getElementById("aiSuggestedCuts");
-    transcriptEl.innerText = "Processing AI Cut... Please wait.";
-    cutsContainer.innerHTML = "";
-
-    try {
         let response, data;
 
         if (activeAudioId === "external") {
-            // Använd blob och skicka till /ai_cut_from_blob
             const formData = new FormData();
             formData.append("audio", new File([activeAudioBlob], "ai_cut.wav", { type: "audio/wav" }));
             formData.append("episode_id", episodeId);
@@ -838,7 +835,6 @@ async function aiCutAudio() {
                 body: formData
             });
         } else {
-            // Använd file_id och skicka till /ai_cut_audio
             response = await fetch("/ai_cut_audio", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
@@ -852,16 +848,15 @@ async function aiCutAudio() {
         data = await response.json();
         if (!response.ok) throw new Error(data.error || "AI Cut failed");
 
-        // Visa transcript och suggested cuts
-        transcriptEl.innerText = data.cleaned_transcript || "No transcript available.";
+        containerTranscript.innerText = data.cleaned_transcript || "No transcript available.";
 
         const suggestedCuts = data.suggested_cuts || [];
         if (!suggestedCuts.length) {
-            cutsContainer.innerText = "No suggested cuts found.";
+            containerCuts.innerText = "No suggested cuts found.";
             return;
         }
 
-        cutsContainer.innerHTML = "";
+        containerCuts.innerHTML = "";
         window.selectedAiCuts = {};
 
         suggestedCuts.forEach((cut, index) => {
@@ -884,7 +879,7 @@ async function aiCutAudio() {
             const div = document.createElement("div");
             div.appendChild(checkbox);
             div.appendChild(label);
-            cutsContainer.appendChild(div);
+            containerCuts.appendChild(div);
         });
 
         const applyBtn = document.createElement("button");
@@ -892,11 +887,11 @@ async function aiCutAudio() {
         applyBtn.innerText = "Apply AI Cuts";
         applyBtn.onclick = applySelectedCuts;
 
-        cutsContainer.appendChild(applyBtn);
+        containerCuts.appendChild(applyBtn);
 
     } catch (err) {
+        containerTranscript.innerText = "Failed to process audio.";
         alert(`AI Cut failed: ${err.message}`);
-        transcriptEl.innerText = "Failed to process audio.";
     }
 }
 
