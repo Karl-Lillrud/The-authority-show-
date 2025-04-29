@@ -579,128 +579,107 @@ async function enhanceAudio() {
     }
 }
 
-
 async function runVoiceIsolation() {
+    const containerId = "isolatedVoiceResult";
+    const container = document.getElementById(containerId);
+
     const input = document.getElementById('audioUploader');
     const file = input.files[0];
     if (!file) return alert("Upload an audio file first.");
-  
-    const resultContainer = document.getElementById("isolatedVoiceResult");
+
     const episodeId = sessionStorage.getItem("selected_episode_id");
     if (!episodeId) return alert("No episode selected.");
-  
+
+    showSpinner(containerId);
+
     try {
-      await consumeStoreCredits("voice_isolation");
+        await consumeStoreCredits("voice_isolation");
+
+        const formData = new FormData();
+        formData.append("audio", file);
+        formData.append("episode_id", episodeId);
+
+        const response = await fetch("/transcription/voice_isolate", {
+            method: "POST",
+            body: formData
+        });
+
+        const data = await response.json();
+        if (!response.ok) throw new Error(data.error || "Voice isolation failed.");
+
+        const blobUrl = data.isolated_blob_url;
+        const audioRes = await fetch(`/transcription/get_isolated_audio?url=${encodeURIComponent(blobUrl)}`);
+        const blob = await audioRes.blob();
+        const url = URL.createObjectURL(blob);
+
+        isolatedAudioBlob = blob;
+        activeAudioBlob = blob;
+        activeAudioId = "external";
+
+        container.innerHTML = `
+            <p>Isolated Audio</p>
+            <audio controls src="${url}" style="width: 100%;"></audio>
+        `;
+
+        document.getElementById("audioAnalysisSection").style.display = "block";
+        document.getElementById("audioCuttingSection").style.display = "block";
+        document.getElementById("aiCuttingSection").style.display = "block";
+
+        const mixBtn = document.getElementById("mixBackgroundBtn");
+        mixBtn.style.display = "none";
+
+        const dl = document.getElementById("downloadIsolatedVoice");
+        dl.href = url;
+        dl.style.display = "inline-block";
     } catch (err) {
-      resultContainer.innerText = `Not enough credits: ${err.message}`;
-      return;
+        console.error("Voice isolation failed:", err);
+        container.innerText = `Isolation failed: ${err.message}`;
     }
-  
-    resultContainer.innerText = "Isolating voice using ElevenLabs...";
-  
-    const formData = new FormData();
-    formData.append("audio", file);
-    formData.append("episode_id", episodeId);
-  
-    try {
-      const response = await fetch("/transcription/voice_isolate", {
-        method: "POST",
-        body: formData
-      });
-      const data = await response.json();
-      if (!response.ok) throw new Error(data.error || "Voice isolation failed.");
-  
-      // Fetch the actual blob via proxy
-      const blobUrl = data.isolated_blob_url;
-      const audioRes = await fetch(`/transcription/get_isolated_audio?url=${encodeURIComponent(blobUrl)}`);
-      const blob = await audioRes.blob();
-      const url  = URL.createObjectURL(blob);
-  
-      // Set the isolated audio as active
-      isolatedAudioBlob = blob;
-      activeAudioBlob   = blob;
-      activeAudioId     = "external";
-  
-      // Show the isolated audio player
-      resultContainer.innerHTML = `
-        <p>Isolated Audio</p>
-        <audio controls src="${url}" style="width: 100%;"></audio>
-      `;
-  
-      // Reveal the analysis UI
-      document.getElementById("audioAnalysisSection").style.display = "block";
-      document.getElementById("audioCuttingSection").style.display  = "block";
-      document.getElementById("aiCuttingSection").style.display     = "block";
-  
-      // Hide the mix button until analysis completes
-      const mixBtn = document.getElementById("mixBackgroundBtn");
-      mixBtn.style.display = "none";
-  
-      // Wire up the download link for the isolated audio
-      const dl = document.getElementById("downloadIsolatedVoice");
-      dl.href           = url;
-      dl.style.display  = "inline-block";
-  
-      // Optionally: automatically start analysis on the isolated audio
-      // await analyzeEnhancedAudio();
-    } catch (err) {
-      console.error("Voice isolation failed:", err);
-      resultContainer.innerText = `Isolation failed: ${err.message}`;
-    }
-  }
+}
 
 async function analyzeEnhancedAudio() {
-    const resultEl = document.getElementById("analysisResults");
+    const containerId = "analysisResults";
+    const container = document.getElementById(containerId);
     const timeline = document.getElementById("soundEffectTimeline");
-    const mixBtn   = document.getElementById("mixBackgroundBtn");
-  
-    // Ensure we have something to analyze
+    const mixBtn = document.getElementById("mixBackgroundBtn");
+
     if (!activeAudioBlob) {
-      return alert("No audio loaded. Enhance or Isolate first.");
+        return alert("No audio loaded. Enhance or Isolate first.");
     }
-  
-    // Spend credits
+
+    showSpinner(containerId);
+
     try {
-      await consumeStoreCredits("ai_audio_analysis");
+        await consumeStoreCredits("ai_audio_analysis");
+
+        const fd = new FormData();
+        fd.append("audio", activeAudioBlob, "processed_audio.wav");
+
+        const res = await fetch("/audio_analysis", { method: "POST", body: fd });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || res.statusText);
+
+        container.innerText = `
+            Sentiment:     ${data.sentiment ?? "–"}
+            Clarity Score: ${data.clarity_score ?? "–"}
+            Noise Level:   ${data.background_noise ?? "–"}
+            Dominant Emo:  ${data.dominant_emotion}
+        `;
+
+        timeline.innerHTML = "";
+        renderSoundSuggestions(data, timeline);
+
+        window.analysisData = {
+            emotion: data.dominant_emotion,
+            audioBlob: activeAudioBlob
+        };
+
+        mixBtn.style.display = "inline-block";
     } catch (err) {
-      resultEl.innerText = `Not enough credits: ${err.message}`;
-      return;
+        container.innerText = `Analysis failed: ${err.message}`;
     }
-  
-    resultEl.innerText = "Analyzing...";
-    const fd = new FormData();
-    fd.append("audio", activeAudioBlob, "processed_audio.wav");
-  
-    try {
-      const res  = await fetch("/audio_analysis", { method: "POST", body: fd });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || res.statusText);
-  
-      // Show just the stats + dominant emotion
-      resultEl.innerText = `
-    Sentiment:     ${data.sentiment ?? "–"}
-    Clarity Score: ${data.clarity_score ?? "–"}
-    Noise Level:   ${data.background_noise ?? "–"}
-    Dominant Emo:  ${data.dominant_emotion}
-      `;
-  
-      // Render any sound-effect suggestions
-      timeline.innerHTML = "";
-      renderSoundSuggestions(data, timeline);
-  
-      // Save for mix step
-      window.analysisData = {
-        emotion:   data.dominant_emotion,
-        audioBlob: activeAudioBlob
-      };
-  
-      // Reveal the Mix button
-      mixBtn.style.display = "inline-block";
-    }
-    catch (err) {
-      resultEl.innerText = `Analysis failed: ${err.message}`;
-    }
-  }
+}
+
 
 /* Hjälper att rendera suggestion-listan */
 function renderSoundSuggestions(data, timeline) {
