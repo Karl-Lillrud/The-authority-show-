@@ -690,31 +690,17 @@ export function initEpisodeFunctions() {
 
   // Funktion för att visa popup när episodgränsen nås
   function showEpisodeLimitPopup() {
-    const popup = document.createElement("div");
-    popup.className = "popup";
+    const popup = document.getElementById("episode-limit-popup");
     popup.style.display = "flex";
 
-    popup.innerHTML = `
-      <div class="form-box">
-        <h2 class="form-title">Episode Limit Reached</h2>
-        <p>You have reached your episode limit. Buy more slots to create additional episodes.</p>
-        <div class="form-actions">
-          <button class="cancel-btn" id="close-limit-popup">Cancel</button>
-          <button class="save-btn" id="buy-credits-btn-popup">Buy Credits</button>
-        </div>
-      </div>
-    `;
-
-    document.body.appendChild(popup);
-
-    // Stäng popup
+    // Close popup
     document
       .getElementById("close-limit-popup")
       .addEventListener("click", () => {
-        document.body.removeChild(popup);
+        popup.style.display = "none";
       });
 
-    // Navigera till store
+    // Navigate to store
     document
       .getElementById("buy-credits-btn-popup")
       .addEventListener("click", () => {
