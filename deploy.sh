@@ -45,27 +45,31 @@ else
     echo "Azure Container Registry '$REGISTRY_NAME' already exists."
 fi
 
-# Step 3: Log in to Azure Container Registry (ACR) using Managed Identity
+# Step 3: Clean up old Docker image in ACR
+echo "Cleaning up old Docker images in ACR..."
+docker rmi $REGISTRY_NAME.azurecr.io/$IMAGE_NAME || true
+az acr repository delete --name $REGISTRY_NAME --image $IMAGE_NAME --yes
+
+# clear cache for docker
+docker builder prune --all --force
+
+# Step 4: Log in to Azure Container Registry (ACR) using Managed Identity
 echo "Logging in to ACR '$REGISTRY_NAME' using Managed Identity..."
 az acr login --name $REGISTRY_NAME
 
-# Step 3.5: Clean up dangling Docker images (safer than full prune)
-echo "Cleaning up dangling Docker images..."
-docker image prune -f
-
-# Step 4: Build Docker Image with pull flag to get latest base images
+# Step 5: Build Docker Image
 echo "Building Docker image '$IMAGE_NAME'..."
-docker build --pull -t $IMAGE_NAME .
+docker build --no-cache -t $IMAGE_NAME .
 
-# Step 5: Tag Docker Image for ACR
+# Step 6: Tag Docker Image for ACR
 echo "Tagging Docker image '$IMAGE_NAME' with ACR tag..."
 docker tag $IMAGE_NAME $REGISTRY_NAME.azurecr.io/$IMAGE_NAME
 
-# Step 6: Push Docker Image to ACR
+# Step 7: Push Docker Image to ACR
 echo "Pushing Docker image to ACR..."
 docker push $REGISTRY_NAME.azurecr.io/$IMAGE_NAME
 
-# Step 7: Check if App Service Plan exists
+# Step 8: Check if App Service Plan exists
 echo "Checking if App Service Plan '$APP_SERVICE_PLAN' exists..."
 if ! az appservice plan show --name $APP_SERVICE_PLAN --resource-group $RESOURCE_GROUP --output none; then
     echo "Creating App Service Plan '$APP_SERVICE_PLAN'..."
@@ -74,7 +78,7 @@ else
     echo "App Service Plan '$APP_SERVICE_PLAN' already exists."
 fi
 
-# Step 8: Check if Web App exists
+# Step 9: Check if Web App exists
 echo "Checking if Web App '$WEBAPP_NAME' exists..."
 if ! az webapp show --name $WEBAPP_NAME --resource-group $RESOURCE_GROUP --output none; then
     echo "Creating Web App '$WEBAPP_NAME' for container deployment..."
@@ -83,7 +87,7 @@ else
     echo "Web App '$WEBAPP_NAME' already exists."
 fi
 
-# Step 9: Configure Web App to use ACR with credentials
+# Step 10: Configure Web App to use ACR with credentials
 echo "Configuring Web App to use Docker image from ACR with credentials..."
 az webapp config container set --name $WEBAPP_NAME --resource-group $RESOURCE_GROUP \
   --container-registry-url https://$REGISTRY_NAME.azurecr.io \
@@ -91,10 +95,10 @@ az webapp config container set --name $WEBAPP_NAME --resource-group $RESOURCE_GR
   --container-registry-user "$ACR_USERNAME" \
   --container-registry-password "$ACR_PASSWORD"
 
-# Step 9.5: Restart the web app to apply changes
-echo "Restarting Web App to apply changes..."
+# Step 11: Restart Web App to use new image
+echo "Restarting Web App '$WEBAPP_NAME' to apply new image..."
 az webapp restart --name $WEBAPP_NAME --resource-group $RESOURCE_GROUP
 
-# Step 10: Check the status of the Web App
+# Step 12: Check the status of the Web App
 echo "Web App '$WEBAPP_NAME' is deployed successfully. Checking the status..."
 az webapp show --name $WEBAPP_NAME --resource-group $RESOURCE_GROUP --output table
