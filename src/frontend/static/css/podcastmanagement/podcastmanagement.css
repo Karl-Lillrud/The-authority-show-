@@ -979,11 +979,14 @@
   padding: 8px 16px;
   border-radius: var(--radius-small);
   cursor: pointer;
+  font-weight: 600;
+  font-size: 0.9rem;
   transition: all 0.3s ease;
 }
 
 .save-btn:hover {
   background-color: var(--highlight-hover);
+  transform: translateY(-2px);
 }
 
 .form-box {
