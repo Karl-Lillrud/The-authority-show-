@@ -29,27 +29,121 @@
 .help-knapp:hover {
   background-color: rgb(238, 146, 113);
 }
+
+
+
+
 .bild5, .bild6, .bild7 {
-  position: absolute; /* Fixerar bilderna på en fast plats */
-  max-width: 60%;  /* Bilderna blir mindre när skärmen minskar */
-  height: auto;    /* Behåller bildens proportioner */
-  z-index: 9999;   /* Säkerställer att bilderna är ovanpå andra element */
+  position: absolute;
+  width: 40%; /* Bubblorna är stora nog men kan ändras */
+  height: auto;
+  z-index: 9999;
+  transition: all 0.3s ease;
 }
 
 .bild5 {
-  bottom: 43%;        /* Justera avståndet från toppen (placera bilden högre upp) */
-  right: 64%;       /* Placera bilden 10% från vänster */
+  width: 44%; /* Gör bubblorna större på större tablets */
+  left: 8%; 
+  transform: translateX(-50%);
+  bottom: 52%; /* Justera så att de inte täcker för mycket */
+
 }
 
 .bild6 {
-  bottom: 37%;        /* Justera avståndet från toppen */
-  right: 48%;       /* Placera bilden 40% från vänster */
+  width: 44%; /* Gör bubblorna större på större tablets */
+  left: 17%; 
+  transform: translateX(-50%);
+  bottom: 45%; /* Justera så att de inte täcker för mycket */
+
 }
 
 .bild7 {
-  bottom: 1%;  
-  right: 50%;       /* Placera bilden 40% från vänster */
+  width: 44%; /* Gör bubblorna större på större tablets */
+  left: 20%; 
+  transform: translateX(-50%);
+  bottom: 30%; /* Justera så att de inte täcker för mycket */
+
 }
+
+@media (max-width: 1024px) {
+  .bild5 {
+    width: 80%; /* Gör bubblorna större på större tablets */
+    left: 14%; 
+    transform: translateX(-50%);
+    bottom: 53%; /* Justera så att de inte täcker för mycket */
+
+  }
+  .bild6{
+    width: 80%; /* Gör bubblorna större på större tablets */
+    left: 25%; 
+    transform: translateX(-50%);
+    bottom: 47%; /* Justera så att de inte täcker för mycket */
+
+  }
+  .bild7{
+    width: 80%; /* Gör bubblorna större på större tablets */
+    left: 28%; 
+    transform: translateX(-50%);
+    bottom: 34%; /* Justera så att de inte täcker för mycket */
+
+  }
+
+
+}
+
+@media (max-width: 768px) {
+  .bild5 {
+    max-width: 80%; /* Ökar storleken ännu mer på mindre skärmar */
+    left: 80%; /* Centrerar bubblorna horisontellt */
+    transform: translateX(-50%);
+    bottom: 56%; /* Justera så att de inte täcker för mycket */
+  }
+.bild6{
+  max-width: 80%; /* Ökar storleken ännu mer på mindre skärmar */
+  left: 65%; /* Centrerar bubblorna horisontellt */
+  transform: translateX(-50%);
+  bottom: 50%; /* Justera så att de inte täcker för mycket */
+}
+.bild7{
+  max-width: 80%; /* Ökar storleken ännu mer på mindre skärmar */
+  left: 45%; /* Centrerar bubblorna horisontellt */
+  transform: translateX(-50%);
+  bottom: 45%; /* Justera så att de inte täcker för mycket */
+}
+
+}
+
+@media (max-width: 500px) {
+  .bild5{
+    width: 90%; /* Gör bubblorna nästan full bredd på små telefoner */
+    left: 73%;
+    transform: translateX(-50%);
+    bottom: 64%;  /* Justera om bubblorna är för nära varandra */
+  }
+  .bild6{
+    width: 90%; /* Gör bubblorna nästan full bredd på små telefoner */
+    left: 56%;
+    transform: translateX(-50%);
+    bottom: 59%;  /* Justera om bubblorna är för nära varandra */
+  }
+  
+  .bild7 {
+    width: 90%; /* Gör bubblorna nästan full bredd på små telefoner */
+    left: 30%;
+    transform: translateX(-50%);
+    bottom: 55%;  /* Justera om bubblorna är för nära varandra */
+  }
+}
+
+
+
+
+
+
+
+
+
+
 
 
 /* Podcast List */

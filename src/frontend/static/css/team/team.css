@@ -25,23 +25,101 @@
   background-color: rgb(238, 146, 113);
 
 }
-.bild3, .bild4 {
-  position:absolute; /* Fixerar bilderna på en fast plats */
-  width: 50%;  /* Bilderna blir mindre när skärmen minskar */
-  z-index: 9999;   /* Säkerställer att bilderna är ovanpå andra element */
+
+.bild3, .bild4{
+  position: absolute;
+  width: 50%; /* Bubblorna är stora nog men kan ändras */
+  height: auto;
+  z-index: 9999;
+  transition: all 0.3s ease;
 }
 
 .bild3 {
-  position:fixed;
-  bottom: 40%;        /* Justera avståndet från toppen (placera bilden högre upp) */
-  right:67%;       /* Placera bilden 10% från vänster */
+  width: 50%; /* Gör bubblorna större på större tablets */
+  left: 16%; 
+  transform: translateX(-50%);
+  bottom: 45%; /* Justera så att de inte täcker för mycket */
 
 }
 
 .bild4 {
-  bottom: 25%;        /* Justera avståndet från toppen */
-  right: 52%;       /* Placera bilden 40% från vänster */
+  width: 50%; /* Gör bubblorna större på större tablets */
+  left: 27%; 
+  transform: translateX(-50%);
+  bottom: 35%; /* Justera så att de inte täcker för mycket */
+
 }
+
+
+@media (max-width: 1024px) {
+
+  .bild3{
+    width: 80%; /* Gör bubblorna större på större tablets */
+    left: 18%; 
+    transform: translateX(-50%);
+    bottom: 42%; /* Justera så att de inte täcker för mycket */
+
+  }
+  .bild4{
+    width: 80%; /* Gör bubblorna större på större tablets */
+    left: 32%; 
+    transform: translateX(-50%);
+    bottom: 34%; /* Justera så att de inte täcker för mycket */
+
+  }
+
+
+}
+
+@media (max-width: 768px) {
+ 
+.bild3{
+  max-width: 80%; /* Ökar storleken ännu mer på mindre skärmar */
+  left: 60%; /* Centrerar bubblorna horisontellt */
+  transform: translateX(-50%);
+  bottom: 50%; /* Justera så att de inte täcker för mycket */
+}
+.bild4{
+  max-width: 80%; /* Ökar storleken ännu mer på mindre skärmar */
+  left: 45%; /* Centrerar bubblorna horisontellt */
+  transform: translateX(-50%);
+  bottom: 45%; /* Justera så att de inte täcker för mycket */
+}
+
+}
+
+@media (max-width: 500px) {
+  .bild3{
+    width: 90%; /* Gör bubblorna nästan full bredd på små telefoner */
+    left: 73%;
+    transform: translateX(-50%);
+    bottom: 64%;  /* Justera om bubblorna är för nära varandra */
+  }
+  .bild4{
+    width: 90%; /* Gör bubblorna nästan full bredd på små telefoner */
+    left: 56%;
+    transform: translateX(-50%);
+    bottom: 59%;  /* Justera om bubblorna är för nära varandra */
+  }
+
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 /* Main Content */

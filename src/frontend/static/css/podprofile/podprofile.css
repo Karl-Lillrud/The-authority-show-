@@ -32,27 +32,126 @@ header {
 .nu-knapp:hover {
   background-color: rgb(238, 146, 113);
 }
+
+
 .bild, .bild1, .bild2 {
-  position: absolute; /* Fixerar bilderna på en fast plats */
-  max-width: 60%;  /* Bilderna blir mindre när skärmen minskar */
-  height: auto;    /* Behåller bildens proportioner */
-  z-index: 9999;   /* Säkerställer att bilderna är ovanpå andra element */
+  position: absolute; 
+  width: 60%; 
+  height: auto;   
+  z-index: 9999;  
 }
 
 .bild {
-  bottom: 35%;        /* Justera avståndet från toppen (placera bilden högre upp) */
-  left: 10%;       /* Placera bilden 10% från vänster */
+  bottom: 40%;        
+    width: 60%; /* Gör bubblorna större på större tablets */
+    left: 68%; 
+    transform: translateX(-50%);
+
 }
 
 .bild1 {
-  bottom: 48%;        /* Justera avståndet från toppen */
-  left: 22%;       /* Placera bilden 40% från vänster */
+  bottom: 50%;        
+  width: 60%; /* Gör bubblorna större på större tablets */
+  left: 38%; 
+  transform: translateX(-50%);      
 }
 
 .bild2 {
-  bottom: 29%;        /* Justera avståndet från toppen */
-  left: 34%;       /* Placera bilden 20% från vänster */
+  bottom: 31%;        
+  left: 24%;      
 }
+
+
+@media (max-width: 1024px) {
+  .bild{
+    width: 70%; /* Gör bubblorna större på större tablets */
+    left: 70%; 
+    transform: translateX(-50%);
+    bottom: 43%;        
+
+  }
+
+  .bild1{
+    width: 70%; /* Gör bubblorna större på större tablets */
+    left: 50%; 
+    transform: translateX(-50%);
+    bottom: 53%;        
+
+  }
+
+  .bild2{
+    width: 70%; /* Gör bubblorna större på större tablets */
+    left: 40%; 
+    bottom: 33%;        
+    transform: translateX(-50%);
+  }
+}
+
+@media (max-width: 768px) {
+  .bild {
+    max-width: 80%; /* Ökar storleken ännu mer på mindre skärmar */
+    left: 20%; /* Centrerar bubblorna horisontellt */
+    transform: translateX(-50%);
+    bottom: 47%; /* Justera så att de inte täcker för mycket */
+  }
+  .bild1{
+    max-width: 80%; /* Ökar storleken ännu mer på mindre skärmar */
+    left: 50%; /* Centrerar bubblorna horisontellt */
+    transform: translateX(-50%);
+    bottom: 58%; /* Justera så att de inte täcker för mycket */
+  }
+
+
+  .bild2 {
+    max-width: 80%; /* Ökar storleken ännu mer på mindre skärmar */
+    left: 70%; /* Centrerar bubblorna horisontellt */
+    transform: translateX(-50%);
+    bottom: 38%; /* Justera så att de inte täcker för mycket */
+  }
+
+
+}
+
+@media (max-width: 480px) {
+  .bild {
+    max-width: 80%; /* Ökar storleken ännu mer på mindre skärmar */
+    left: 20%; /* Centrerar bubblorna horisontellt */
+    transform: translateX(-50%);
+    bottom: 47%; /* Justera så att de inte täcker för mycket */
+  }
+  .bild1{
+    max-width: 80%; /* Ökar storleken ännu mer på mindre skärmar */
+    left: 50%; /* Centrerar bubblorna horisontellt */
+    transform: translateX(-50%);
+    bottom: 58%; /* Justera så att de inte täcker för mycket */
+  }
+
+
+  .bild2 {
+    max-width: 80%; /* Ökar storleken ännu mer på mindre skärmar */
+    left: 70%; /* Centrerar bubblorna horisontellt */
+    transform: translateX(-50%);
+    bottom: 38%; /* Justera så att de inte täcker för mycket */
+  }
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
