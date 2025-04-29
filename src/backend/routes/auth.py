@@ -70,26 +70,46 @@ def send_login_link():
         return jsonify({"error": f"Internt serverfel: {str(e)}"}), 500
 
 
-@auth_bp.route("/verify-login-token", methods=["POST"], endpoint="verify_login_token")
+@auth_bp.route("/verify-login-token", methods=["POST"])
 def verify_login_token():
-    data = request.get_json()
-    token = data.get("token")
-    if not token:
-        logger.error("Token saknas i begäran")
-        return jsonify({"error": "Token krävs"}), 400
-
     try:
-        response, status_code = auth_service.verify_login_token(token)
-        return jsonify(response), status_code
+        data = request.get_json()
+        token = data.get("token")
+        language = data.get("language")  # Get language preference from request
+
+        if not token:
+            return jsonify({"error": "Token is required"}), 400
+
+        serializer = URLSafeTimedSerializer(current_app.config["SECRET_KEY"])
+        email = serializer.loads(token, salt="login-link-salt", max_age=600)  # 10 minutes expiry
+
+        # Store language preference in session
+        if language:
+            session["preferred_language"] = language
+
+        # Rest of your existing login logic
+        user = auth_service.get_user_by_email(email)
+        if user:
+            session["user_id"] = str(user["_id"])
+            session["email"] = email
+            return jsonify({"redirect_url": "/podprofile"})
+        else:
+            # Create new user
+            user_id = auth_service.create_user(email)
+            if user_id:
+                session["user_id"] = str(user_id)
+                session["email"] = email
+                return jsonify({"redirect_url": "/podprofile"})
+            else:
+                return jsonify({"error": "Failed to create account"}), 500
+
     except SignatureExpired:
-        logger.error("Token har gått ut")
-        return jsonify({"error": "Token har gått ut"}), 400
+        return jsonify({"error": "Token has expired"}), 400
     except BadSignature:
-        logger.error("Ogiltig token")
-        return jsonify({"error": "Ogiltig token"}), 400
+        return jsonify({"error": "Invalid token"}), 400
     except Exception as e:
-        logger.error(f"Fel vid verifiering av token: {e}", exc_info=True)
-        return jsonify({"error": f"Internt serverfel: {str(e)}"}), 500
+        logger.error(f"Error verifying login token: {e}", exc_info=True)
+        return jsonify({"error": str(e)}), 500
 
 
 @auth_bp.route("/verify-otp", methods=["POST"], endpoint="verify_otp")
@@ -97,16 +117,22 @@ def verify_otp():
     data = request.get_json()
     email = data.get("email")
     otp = data.get("otp")
+    language = data.get("language")  # Get language preference from request
+
     if not email or not otp:
-        logger.error("Email eller OTP saknas i begäran")
-        return jsonify({"error": "Email och OTP krävs"}), 400
+        logger.error("Email or OTP missing in request")
+        return jsonify({"error": "Email and OTP are required"}), 400
 
     try:
+        # Store language preference in session if provided
+        if language:
+            session["preferred_language"] = language
+
         response, status_code = auth_service.verify_otp_and_login(email, otp)
         return jsonify(response), status_code
     except Exception as e:
-        logger.error(f"Fel vid OTP-verifiering: {e}", exc_info=True)
-        return jsonify({"error": f"Internt serverfel: {str(e)}"}), 500
+        logger.error(f"Error during OTP verification: {e}", exc_info=True)
+        return jsonify({"error": f"Internal server error: {str(e)}"}), 500
 
 
 @auth_bp.route("/logout", methods=["GET"])

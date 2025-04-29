@@ -22,6 +22,7 @@ from backend.routes.frontend import frontend_bp  # Import the frontend blueprint
 from backend.routes.guestpage import guestpage_bp
 from backend.routes.guest_to_eposide import guesttoepisode_bp
 from backend.routes.guest_form import guest_form_bp  # Import the guest_form blueprint
+from backend.routes.translation import translation_bp  # Import the translation blueprint
 from backend.utils.email_utils import send_email
 from backend.utils.scheduler import start_scheduler
 from backend.utils.credit_scheduler import init_credit_scheduler  # Add this import
@@ -89,9 +90,7 @@ app.register_blueprint(episode_bp)
 app.register_blueprint(podprofile_bp)  # Register the podprofile blueprint
 app.register_blueprint(frontend_bp)  # Register the frontend blueprint
 app.register_blueprint(guesttoepisode_bp)
-#app.register_blueprint(transcription_bp, url_prefix="/transcription")
-#app.register_blueprint(audio_bp)
-#app.register_blueprint(video_bp)
+app.register_blueprint(translation_bp)  # Register the translation blueprint
 app.register_blueprint(billing_bp)
 app.register_blueprint(
     guest_form_bp, url_prefix="/guest-form"

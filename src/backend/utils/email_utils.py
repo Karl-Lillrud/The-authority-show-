@@ -207,40 +207,67 @@ def send_email(to_email, subject, body, image_path=None):
         return {"error": f"Failed to send email: {str(e)}"}
 
 
-def send_login_email(email, login_link):
+def send_login_email(email, login_link, language="en"):
     """
-    Sends a login link email to the user and prints the link to the terminal.
+    Sends a login email with OTP to the user.
+    Supports multiple languages for email content.
     """
     try:
-        subject = "Din inloggningslänk för PodManager"
-        body = f"""
-        <html>
-            <body>
-                <p>Hej,</p>
-                <p>Klicka på länken nedan för att logga in på ditt PodManager-konto:</p>
-                <a href="{login_link}" style="color: #ff7f3f; text-decoration: none;">Logga in</a>
-                <p>Länken är giltig i 10 minuter. Om du inte begärde detta, ignorera detta email.</p>
-                <p>Best regards,<br>PodManager Team</p>
-            </body>
-        </html>
-        """
-        logger.info(f"📧 Preparing to send login email to {email}")
-        # Change logging level from debug to info to ensure it's printed
-        logger.info(f"Login link: {login_link}")
+        # Email templates for different languages
+        templates = {
+            "en": {
+                "subject": "Your PodManager Login Code",
+                "body": f"""
+                <html>
+                    <body>
+                        <h2>Your Login Code</h2>
+                        <p>Please use the following code to log in to your PodManager account:</p>
+                        <h1 style="font-size: 24px; color: #4a90e2; text-align: center; padding: 20px; background: #f5f5f5; border-radius: 5px;">{login_link}</h1>
+                        <p>This code will expire in 10 minutes.</p>
+                        <p>If you didn't request this code, please ignore this email.</p>
+                        <p>Best regards,<br>The PodManager Team</p>
+                    </body>
+                </html>
+                """
+            },
+            "ar": {
+                "subject": "رمز تسجيل الدخول الخاص بك",
+                "body": f"""
+                <html dir="rtl">
+                    <body>
+                        <h2>رمز تسجيل الدخول الخاص بك</h2>
+                        <p>يرجى استخدام الرمز التالي لتسجيل الدخول إلى حساب PodManager الخاص بك:</p>
+                        <h1 style="font-size: 24px; color: #4a90e2; text-align: center; padding: 20px; background: #f5f5f5; border-radius: 5px;">{login_link}</h1>
+                        <p>سينتهي هذا الرمز خلال 10 دقائق.</p>
+                        <p>إذا لم تطلب هذا الرمز، يرجى تجاهل هذا البريد الإلكتروني.</p>
+                        <p>مع تحياتنا،<br>فريق PodManager</p>
+                    </body>
+                </html>
+                """
+            }
+        }
 
-        result = send_email(email, subject, body)
-        if result.get("success"):
-            logger.info(f"✅ Login email sent successfully to {email}")
-        else:
-            logger.error(
-                f"❌ Failed to send login email to {email}: {result.get('error')}"
-            )
-        return result
-    except Exception as e:
-        logger.error(
-            f"❌ Error while sending login email to {email}: {e}", exc_info=True
+        # Get template for the specified language, default to English if not found
+        template = templates.get(language, templates["en"])
+        
+        # Send the email
+        result = send_email(
+            to_email=email,
+            subject=template["subject"],
+            body=template["body"],
+            image_path="static/images/PodManagerLogo.png"
         )
-        return {"error": f"Error while sending login email: {str(e)}"}
+        
+        if result:
+            logger.info(f"Login email sent successfully to {email}")
+            return {"success": True}
+        else:
+            logger.error(f"Failed to send login email to {email}")
+            return {"success": False, "error": "Failed to send email"}
+            
+    except Exception as e:
+        logger.error(f"Error sending login email to {email}: {str(e)}", exc_info=True)
+        return {"success": False, "error": str(e)}
 
 
 def send_team_invite_email(

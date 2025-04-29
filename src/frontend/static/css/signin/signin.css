@@ -119,6 +119,51 @@
   margin: 10px 0;
 }
 
+.language-selector {
+  margin-bottom: 20px;
+  width: 100%;
+  display: flex;
+  justify-content: center;
+}
+
+.language-input {
+  width: 50% !important;
+  padding: 12px !important;
+  margin: 0 !important;
+  background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23ff7f3f' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  background-size: 16px;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+  cursor: pointer;
+}
+
+.language-input:focus {
+  outline: none;
+  border-color: #ff7f3f;
+}
+
+/* RTL Support */
+[dir="rtl"] .center-box {
+  text-align: right;
+}
+
+[dir="rtl"] .input {
+  text-align: right;
+}
+
+[dir="rtl"] .language-input {
+  background-position: left 12px center;
+  padding-right: 12px !important;
+  padding-left: 30px !important;
+}
+
+[dir="rtl"] .policy-links {
+  direction: rtl;
+}
+
 /* Media Queries for Responsiveness */
 @media (max-width: 768px) {
   .center-box {

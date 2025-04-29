@@ -39,6 +39,14 @@
       rel="stylesheet"
       href="{{ url_for('static', filename='css/loading-bar/loading-bar.css') }}"
     />
+    <script>
+      // Initialize language from session or localStorage
+      document.addEventListener('DOMContentLoaded', function() {
+        const savedLanguage = localStorage.getItem('preferredLanguage') || 'en';
+        document.documentElement.lang = savedLanguage;
+        document.documentElement.dir = savedLanguage === 'ar' ? 'rtl' : 'ltr';
+      });
+    </script>
   </head>
   <body>
     <header>
