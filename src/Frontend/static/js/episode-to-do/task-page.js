@@ -725,8 +725,6 @@ export async function showEditTaskPopup(taskId, state, updateUI) {
                   <option value="transcription" ${aiTool === "transcription" ? "selected" : ""}>Transcription</option>
                   <option value="audio-editing" ${aiTool === "audio-editing" ? "selected" : ""}>Audio Editing</option>
                   <option value="video-editing" ${aiTool === "video-editing" ? "selected" : ""}>Video Editing</option>
-                  <option value="summary" ${aiTool === "summary" ? "selected" : ""}>Content Summary</option>
-                  <option value="seo" ${aiTool === "seo" ? "selected" : ""}>SEO Optimization</option>
                 </select>
                 <small class="help-text">Select an AI tool to assist with this task</small>
               </div>
