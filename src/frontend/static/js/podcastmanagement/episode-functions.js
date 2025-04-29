@@ -100,9 +100,16 @@ export function renderEpisodeDetail(episode) {
     Back to podcast
   </button>
   <div class="top-right-actions">
+    ${/* Conditionally render AI Edit button */ ""}
+    ${
+      !episode.isImported
+        ? `
     <button class="save-btn" id="ai-edit-episode-btn" data-id="${episode._id}">
       AI Edit
     </button>
+    `
+        : ""
+    }
     <button class="action-btn edit-btn" id="edit-episode-btn" data-id="${
       episode._id
     }">
@@ -242,7 +249,7 @@ export function renderEpisodeDetail(episode) {
 </div>
 `;
 
-  // Add event listener for the AI Edit button
+  // Add event listener for the AI Edit button only if it exists
   const aiEditButton = document.getElementById("ai-edit-episode-btn");
   if (aiEditButton) {
     aiEditButton.addEventListener("click", () => {
