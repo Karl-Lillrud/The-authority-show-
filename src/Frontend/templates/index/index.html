@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PodManager | Professional Podcast Management</title>
+    <script>
+      (function(w,d,s,l,i){
+        w[l]=w[l]||[];
+        w[l].push({'gtm.start': new Date().getTime(),event:'gtm.js'});
+        var f=d.getElementsByTagName(s)[0],
+            j=d.createElement(s),
+            dl=l!='dataLayer'?'&l='+l:'';
+        j.async=true;
+        j.src='https://www.googletagmanager.com/gtm.js?id='+i+dl;
+        f.parentNode.insertBefore(j,f);
+      })(window,document,'script','dataLayer','GTM-N7Q86CWB');
+    </script>
+    <!-- Updated favicon-16x16 -->
+    <link
+      rel="icon"
+      type="image/x-icon"
+      href="{{ url_for('static', filename='favicon/favicon.ico') }}"
+    />
+    <!-- Updated favicon.ico -->
+    <link
+      rel="manifest"
+      href="{{ url_for('static', filename='favicon/site.webmanifest') }}"
+    />
+    <title>PodManager</title>
+    <!-- global stylesheets -->
+    <link
+    rel="stylesheet"
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
+    />
+    <link
+      rel="stylesheet"
+      href="{{ url_for('static', filename='css/components/variables.css') }}"
+    />
+    <link
+      rel="stylesheet"
+      href="{{ url_for('static', filename='css/components/general.css') }}"
+    />
+    <link
+    rel="stylesheet"
+    href="{{ url_for('static', filename='css/components/typography.css') }}"
+    />
+    <!-- other head content -->
+    <script>src="{{ url_for('static', filename='js/index/index.js') }}"</script>
+    {% block head_extra %}{% endblock %} <!-- Add block for page-specific head elements -->
+  </head>
+  <body style="display: flex; flex-direction: column; min-height: 100vh">
+    <iframe src="https://www.googletagmanager.com/ns.html?id=GTM-N7Q86CWB" height="0" width="0" style="display:none;visibility:hidden"></iframe>
+    
+    <main style="flex: 1">
+      <h1>Test Heading</h1>
+      <p>Test Text</p>
+    </main>
+    {% include 'components/footer.html' %}
+  </body>
+</html>
