@@ -396,6 +396,39 @@
   background-color: #ff9800;
 }
 
+.timeline-icon.podcast {
+  background-color: #4caf50; /* Same as podcastIcon */
+}
+
+.timeline-icon.podcast-deleted {
+  background-color: #e74c3c; /* Red for deleted podcast */
+}
+
+.timeline-icon.episode-created {
+  background-color: #2196f3; /* Blue for created episode */
+}
+.timeline-icon.episode-updated {
+  background-color: #ff9800; /* Orange for updated episode */
+}
+.timeline-icon.episode-deleted {
+  background-color: #e74c3c; /* Red for deleted episode */
+}
+.timeline-icon.team-created {
+  background-color: #9c27b0; /* Purple for team created */
+}
+.timeline-icon.team-deleted {
+  background-color: #e74c3c; /* Red for team deleted */
+}
+.timeline-icon.tasks-added {
+  background-color: #ff9800; /* Orange for tasks added */
+}
+.timeline-icon.podcast-created {
+  background-color: #4caf50; /* Green for podcast created */
+}
+.timeline-icon.podcast-deleted {
+  background-color: #e74c3c; /* Red for podcast deleted */
+}
+
 .timeline-content {
   flex: 1;
 }
@@ -409,6 +442,21 @@
 .timeline-time {
   font-size: 0.75rem;
   color: rgba(0, 0, 0, 0.5);
+}
+
+.activity-timeline-scroll {
+  max-height: 600px; /* Adjust height for ~5 items depending on your item height */
+  overflow-y: auto;
+  padding-right: 4px; /* For scrollbar space */
+}
+
+/* Optional: prettier scrollbar */
+.activity-timeline-scroll::-webkit-scrollbar {
+  width: 6px;
+}
+.activity-timeline-scroll::-webkit-scrollbar-thumb {
+  background: #e0e0e0;
+  border-radius: 3px;
 }
 
 /* Episodes Section */
@@ -710,8 +758,6 @@
 .save-btn:hover::after {
   left: 100%;
 }
-
-
 
 /* Error Message */
 .error-message {

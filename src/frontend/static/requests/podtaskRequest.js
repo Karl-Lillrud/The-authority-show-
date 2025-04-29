@@ -254,3 +254,44 @@ export async function getWorkflows() {
     throw error;
   }
 }
+
+export async function deleteWorkflow(workflowId) {
+  try {
+    // Ensure workflowId is included in the URL
+    const response = await fetch(`/delete_workflow/${workflowId}`, {
+      method: "DELETE", // DELETE method
+      headers: {
+        "Content-Type": "application/json",
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error(`Failed to delete workflow: ${response.statusText}`);
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error("Error deleting workflow:", error);
+    throw error;
+  }
+}
+
+export async function updateWorkflow(workflowId, updateData) {
+  try {
+    const response = await fetch(`/update_workflow/${workflowId}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(updateData),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.error || `Failed to update workflow: ${response.statusText}`);
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error("Error updating workflow:", error);
+    throw error;
+  }
+}

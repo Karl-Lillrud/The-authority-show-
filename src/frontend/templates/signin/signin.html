@@ -28,6 +28,8 @@
     rel="stylesheet"
     href="{{ url_for('static', filename='css/components/typography.css') }}"
     />
+    <!-- Add Font Awesome for the icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
   </head>
   <body>
     <!-- Logo -->
@@ -99,6 +101,17 @@
           <a href="{{ url_for('frontend.privacy_policy_page') }}" class="link"
             >Privacy Policy</a
           >
+        </div>
+        
+        <!-- Community Links Section -->
+        <div class="community-links">
+          <p>Follow our development and join our discord</p>
+          <div class="social-icons">
+            <a href="https://discord.gg/vwdhqFxhVm" target="_blank" title="Join our Discord">
+              <i class="fab fa-discord"></i>
+            </a>
+            <!-- You can add more social icons here as needed -->
+          </div>
         </div>
       </form>
     </div>

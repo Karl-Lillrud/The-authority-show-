@@ -100,29 +100,31 @@ class RSSService:
                 )
 
                 episode = {
-                    "title": entry.get("title", ""),
-                    "description": entry.get("description", ""),
-                    "pubDate": entry.get("published", ""),
-                    "audio": {
-                        "url": entry.get("enclosures", [{}])[0].get("href", ""),
-                        "type": entry.get("enclosures", [{}])[0].get("type", ""),
-                        "length": entry.get("enclosures", [{}])[0].get("length", ""),
-                    },
-                    "guid": entry.get("guid", ""),
-                    "season": entry.get("itunes_season", None),
-                    "episode": entry.get("itunes_episode", None),
-                    "episodeType": entry.get("itunes_episodetype", None),
-                    "explicit": entry.get("itunes_explicit", None),
-                    "image": episode_image,
-                    "keywords": entry.get("itunes_keywords", None),
-                    "chapters": entry.get("chapters", None),
-                    "link": entry.get("link", ""),
-                    "subtitle": entry.get("itunes_subtitle", ""),
-                    "summary": entry.get("itunes_summary", ""),
-                    "author": entry.get("author", ""),
-                    "isHidden": entry.get("itunes_isHidden", None),
-                    "duration": duration_seconds,
-                }
+                   
+                        "title": entry.get("title", ""),
+                        "description": entry.get("description", ""),
+                        "pubDate": entry.get("published", ""),
+                        "audio": {
+                            "url": entry.get("enclosures", [{}])[0].get("href", ""),
+                            "type": entry.get("enclosures", [{}])[0].get("type", ""),
+                            "length": entry.get("enclosures", [{}])[0].get("length", ""),
+                        },
+                        "guid": entry.get("guid", ""),
+                        "season": entry.get("itunes_season", None),
+                        "episode": entry.get("itunes_episode", None),
+                        "episodeType": entry.get("itunes_episodetype", None),
+                        "explicit": entry.get("itunes_explicit", None),
+                        "image": episode_image,
+                        "keywords": entry.get("itunes_keywords", None),
+                        "chapters": entry.get("chapters", None),
+                        "link": entry.get("link", ""),
+                        "subtitle": entry.get("itunes_subtitle", ""),
+                        "summary": entry.get("itunes_summary", ""),
+                        "author": entry.get("author", ""),
+                        "isHidden": entry.get("itunes_isHidden", None),
+                        "duration": duration_seconds,
+                        "isImported": True, 
+                    }
                 episodes.append(episode)
 
             # Process imageUrl and logoUrl
@@ -146,7 +148,7 @@ class RSSService:
                 "itunesOwner": itunes_owner,
                 "email": itunes_owner.get("email", ""),
                 "categories": categories,
-                "episodes": episodes[:10],  # Limit to first 10 episodes
+                "episodes": episodes  
             }, 200
 
         except Exception as e:

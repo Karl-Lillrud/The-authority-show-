@@ -3,30 +3,35 @@ import os
 import logging
 import subprocess
 from datetime import datetime
-from flask import Blueprint, request, jsonify, render_template, session
+from flask import Blueprint, request, jsonify, render_template, session,Response
 import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 import numpy as np
 import soundfile as sf
 import tempfile
+import requests
 from elevenlabs.client import ElevenLabs
-from backend.database.mongo_connection import get_fs
+from backend.database.mongo_connection import get_fs, get_db
 from backend.services.transcriptionService import TranscriptionService
+from backend.services.subscriptionService import SubscriptionService
 from backend.services.audioService import AudioService
 from backend.services.videoService import VideoService
 from backend.repository.ai_models import fetch_file, save_file, get_file_by_id
-
+from backend.utils.transcription_utils import check_audio_duration
+from backend.utils.subscription_access import get_max_duration_limit
 
 transcription_bp = Blueprint("transcription", __name__)
 logger = logging.getLogger(__name__)
 fs = get_fs()
+db = get_db()
 
 # Services
 client = ElevenLabs(api_key=os.getenv("ELEVENLABS_API_KEY"))
 transcription_service = TranscriptionService()
 audio_service = AudioService()
 video_service = VideoService()
+subscription_service = SubscriptionService()
 
 @transcription_bp.route("/transcribe", methods=["POST"])
 def transcribe():
@@ -56,13 +61,32 @@ def transcribe():
         else:
             audio_bytes = file.read()
 
-        # 🧠 Transcribe using service
-        result = transcription_service.transcribe_audio(audio_bytes, filename)
+         #Get subscription plan
+        user_id = session.get("user_id")
+        subscription = subscription_service.get_user_subscription(user_id)
+        subscription_plan = subscription["plan"] if subscription else "FREE"
+        logger.info(f"👤 User {user_id} subscription plan: {subscription_plan}")
 
+        # 🛡️ Get max allowed duration from subscription utils
+        max_duration = get_max_duration_limit(subscription_plan)
+        logger.info(f"🛡️ Max transcription duration allowed: {max_duration} seconds")
+
+        # ⏱️ Check audio duration
+        logger.info("🔍 Checking uploaded audio duration...")
+        check_audio_duration(audio_bytes, max_duration_seconds=max_duration)
+        logger.info("✅ Audio duration is within the allowed limit.")
+
+        # 🧠 Transcription process
+        logger.info(f"🧠 Starting transcription for file: {filename}")
+        result = transcription_service.transcribe_audio(audio_bytes, filename)
+        logger.info("✅ Transcription completed successfully.")
         return jsonify(result)
 
+    except ValueError as e:
+        logger.warning(f"⚠️ Validation error: {e}")
+        return jsonify({"error": str(e)}), 400
     except Exception as e:
-        logger.error(f"Transcription failed: {e}", exc_info=True)
+        logger.error(f"❌ Unexpected error during transcription: {e}", exc_info=True)
         return jsonify({"error": "Transcription failed", "details": str(e)}), 500
 
 @transcription_bp.route("/clean", methods=["POST"])
@@ -250,18 +274,30 @@ def get_audio_info():
 
 @transcription_bp.route("/voice_isolate", methods=["POST"])
 def isolate_voice():
-    if "audio" not in request.files:
-        return jsonify({"error": "No audio provided"}), 400
+    if "audio" not in request.files or "episode_id" not in request.form:
+        return jsonify({"error": "Audio file and episode_id are required"}), 400
 
-    file = request.files["audio"]
-    filename = file.filename
-    audio_bytes = file.read()
+    audio_file = request.files["audio"]
+    episode_id = request.form["episode_id"]
+    filename = audio_file.filename
+    audio_bytes = audio_file.read()
 
     try:
-        file_id = audio_service.isolate_voice(audio_bytes, filename)
-        return jsonify({"isolated_file_id": file_id}), 200
+        blob_url = audio_service.isolate_voice(audio_bytes, filename, episode_id)
+        return jsonify({"isolated_blob_url": blob_url})  # ✅ return blob_url instead of file_id
     except Exception as e:
-        logger.error(f"Voice isolation error: {str(e)}")
+        logger.error(f"Error during voice isolation: {str(e)}")
+        return jsonify({"error": str(e)}), 500
+    
+@transcription_bp.route("/get_isolated_audio", methods=["GET"])
+def get_isolated_audio():
+    url = request.args.get("url")
+    if not url:
+        return jsonify({"error": "Missing URL"}), 400
+    try:
+        response = requests.get(url)
+        return Response(response.content, content_type="audio/wav")
+    except Exception as e:
         return jsonify({"error": str(e)}), 500
 
 @transcription_bp.route("/ai_edits", methods=["GET"])
@@ -291,3 +327,58 @@ def analyze_sentiment_sfx():
     except Exception as e:
         logger.error(f"Error analyzing sentiment + SFX: {str(e)}")
         return jsonify({"error": str(e)}), 500
+
+@transcription_bp.route("/osint_lookup", methods=["POST"])
+def osint_lookup():
+    data = request.get_json()
+    guest_name = data.get("guest_name")
+    if not guest_name:
+        return jsonify({"error": "Missing guest name"}), 400
+
+    try:
+        from backend.utils.text_utils import get_osint_info
+        osint_info = get_osint_info(guest_name)
+        return jsonify({"osint_info": osint_info})
+    except Exception as e:
+        logger.error(f"❌ OSINT error: {str(e)}")
+        return jsonify({"error": str(e)}), 500
+    
+@transcription_bp.route("/generate_intro_outro", methods=["POST"])
+def generate_intro_outro():
+    data = request.get_json()
+    guest_name = data.get("guest_name")
+    transcript = data.get("transcript")
+
+    if not guest_name or not transcript:
+        return jsonify({"error": "Missing guest name or transcript"}), 400
+
+    try:
+        from backend.utils.text_utils import get_osint_info, create_podcast_scripts_paid
+
+        osint_info = get_osint_info(guest_name)
+        script = create_podcast_scripts_paid(osint_info, guest_name, transcript)  # ✅ Pass transcript here
+
+        return jsonify({"script": script})
+    except Exception as e:
+        logger.error(f"❌ Intro/Outro generation error: {str(e)}")
+        return jsonify({"error": str(e)}), 500
+
+@transcription_bp.route("/intro_outro_audio", methods=["POST"])
+def generate_intro_outro_audio():
+    data = request.get_json()
+    script = data.get("script")
+
+    if not script:
+        return jsonify({"error": "Missing script"}), 400
+
+    try:
+        from backend.utils.text_utils import text_to_speech_with_elevenlabs
+        audio_bytes = text_to_speech_with_elevenlabs(script)
+
+        import base64
+        b64_audio = base64.b64encode(audio_bytes).decode("utf-8")
+        return jsonify({"audio_base64": f"data:audio/mp3;base64,{b64_audio}"})
+    except Exception as e:
+        logger.error(f"❌ ElevenLabs TTS failed: {str(e)}")
+        return jsonify({"error": str(e)}), 500
+

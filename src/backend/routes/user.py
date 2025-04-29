@@ -2,7 +2,6 @@ from flask import Blueprint, request, jsonify, g
 from backend.repository.user_repository import UserRepository
 from backend.utils.blob_storage import upload_file_to_blob
 
-# from backend.services.accountService import AccountService
 import logging
 
 user_bp = Blueprint("user_bp", __name__, url_prefix="/user")
@@ -12,11 +11,25 @@ logger = logging.getLogger(__name__)
 
 @user_bp.route("/get_profile", methods=["GET"])
 def get_profile():
-    if not hasattr(g, "user_id") or not g.user_id:
-        return jsonify({"error": "Obehörig"}), 401
+    """Gets the profile details for the currently logged-in user."""
+    if not hasattr(g, 'user_id') or not g.user_id:
+        logger.warning("Unauthorized attempt to access /get_profile")
+        return jsonify({"error": "Unauthorized"}), 401
 
-    response, status_code = user_repo.get_profile(str(g.user_id))
-    return jsonify(response), status_code
+    try:
+        logger.info(f"Fetching profile for user_id: {g.user_id}")
+        # Use UserRepository to get profile data
+        profile_data, status_code = user_repo.get_profile(g.user_id)
+
+        if status_code == 200:
+            logger.info(f"Successfully fetched profile for user_id: {g.user_id}")
+        else:
+            logger.error(f"Failed to fetch profile for user_id: {g.user_id}, Status: {status_code}, Data: {profile_data}")
+
+        return jsonify(profile_data), status_code
+    except Exception as e:
+        logger.exception(f"❌ ERROR fetching profile via user_bp for user_id {g.user_id}: {e}")
+        return jsonify({"error": "Failed to fetch profile data"}), 500
 
 
 @user_bp.route("/update_profile", methods=["PUT"])
@@ -55,7 +68,7 @@ def upload_profile_picture():
 
         # Define the container name and blob path
         container_name = "podmanagerfiles"
-        blob_path = f"user/{g.user_id}/profile/{file.filename}"
+        blob_path = f"users/{g.user_id}/profile/{file.filename}"
 
         # Upload the file to Azure Blob Storage
         blob_url = upload_file_to_blob(container_name, blob_path, file)

@@ -1,23 +1,68 @@
-document.addEventListener("DOMContentLoaded", () => {
-  // Initialize the store
-  initializeStore();
+// store.js
+let apiBaseUrl = ''; // Added for consistency if needed elsewhere
+let stripePublicKey = ''; // Variable to hold the fetched key
+let stripe = null; // Variable to hold the Stripe instance
+
+document.addEventListener("DOMContentLoaded", async () => { // Make the listener async
+  // Initialize the store layout first
+  initializeStoreLayout(); // Renamed to avoid confusion with Stripe init
 
   // Initialize SVG icons
   initializeSvgIcons();
 
-  // Match sidebar height on initial load - DISABLED
-  // matchSidebarHeight();
+  // Load Stripe.js script tag (doesn't initialize Stripe object yet)
+  loadStripeScript();
+
+  // --- Fetch config and initialize Stripe ---
+  try {
+    const response = await fetch('/config'); // Fetch from the backend endpoint
+    if (!response.ok) {
+       const errorData = await response.json();
+       throw new Error(errorData.error || `Failed to fetch config: ${response.statusText}`);
+    }
+    const config = await response.json();
+    apiBaseUrl = config.apiBaseUrl || ''; // Store API base URL if needed
+    stripePublicKey = config.stripePublicKey; // Get the key from config
+
+    if (!stripePublicKey) {
+      console.error("Stripe Public Key not found in config from server.");
+      // Display error to user if needed
+      const statusElement = document.getElementById("checkoutStatus"); // Example error display
+      if (statusElement) statusElement.textContent = "Configuration error: Payment key missing.";
+      return; // Stop initialization if key is missing
+    }
+
+    // Initialize Stripe object with the fetched key
+    stripe = Stripe(stripePublicKey);
+    console.log("Stripe initialized successfully.");
+
+  } catch (error) {
+    console.error("Error fetching or processing configuration:", error);
+    // Display error to user if needed
+    const statusElement = document.getElementById("checkoutStatus"); // Example error display
+    if (statusElement) statusElement.textContent = "Error loading payment configuration: " + error.message;
+  }
+  // --- End config fetch and Stripe init ---
+
 });
+
+function loadStripeScript() {
+  // Ensure Stripe.js script is added to the page
+  if (!document.querySelector('script[src="https://js.stripe.com/v3/"]')) {
+    const stripeScript = document.createElement("script");
+    stripeScript.src = "https://js.stripe.com/v3/";
+    stripeScript.async = true;
+    document.head.appendChild(stripeScript);
+  }
+}
 
 // Add resize event listener
 window.addEventListener("resize", () => {
-  // Match sidebar height on resize - DISABLED
-  // matchSidebarHeight();
   // Re-evaluate cart setup on resize for responsive behavior
   setupCart();
 });
 
-function initializeStore() {
+function initializeStoreLayout() { // Renamed function
   // Set up cart functionality
   setupCart();
 
@@ -80,68 +125,145 @@ function setupAddToCartButtons() {
       }, 2000);
     });
   });
+
+  // Route "Purchase History" button to Account page
+  const purchaseHistoryButton = document.querySelector(".view-history");
+  if (purchaseHistoryButton) {
+    purchaseHistoryButton.addEventListener("click", () => {
+      localStorage.setItem("activeAccountSection", "settings-purchases");
+      window.location.href = "/account";
+    });
+  }
 }
 
 function setupCart() {
-  const cartButton = document.getElementById("cartButton"); // Button to open modal
-  const closeCartBtn = document.getElementById("closeCartBtn"); // Button inside modal
   const shoppingCart = document.getElementById("shoppingCart"); // The sidebar/modal
   const checkoutBtn = document.getElementById("checkoutBtn");
-  const viewportWidth = window.innerWidth;
 
   // Remove previous listeners to avoid duplicates on resize
-  cartButton.replaceWith(cartButton.cloneNode(true));
-  closeCartBtn.replaceWith(closeCartBtn.cloneNode(true));
-  document.removeEventListener("click", closeCartOnClickOutside);
-  shoppingCart.replaceWith(shoppingCart.cloneNode(true)); // Might reset cart items, consider alternatives if needed
+  shoppingCart.replaceWith(shoppingCart.cloneNode(true)); // Reset might clear cart items, so reload
 
   // Re-fetch elements after cloning
-  const newCartButton = document.getElementById("cartButton");
-  const newCloseCartBtn = document.getElementById("closeCartBtn");
   const newShoppingCart = document.getElementById("shoppingCart");
-  const newCheckoutBtn = document.getElementById("checkoutBtn"); // Re-fetch checkout button too
+  const newCheckoutBtn = document.getElementById("checkoutBtn");
 
   // Initialize cart from localStorage if available
-  loadCartFromStorage(); // Ensure this repopulates the newShoppingCart if cloned
+  loadCartFromStorage();
 
-  if (viewportWidth <= 992) {
-    // Mobile: Modal behavior
-    newShoppingCart.classList.add("hidden"); // Start hidden on mobile
-    newShoppingCart.style.height = ""; // Ensure height is not fixed
-
-    newCartButton.addEventListener("click", (e) => {
-      e.stopPropagation();
-      newShoppingCart.classList.remove("hidden");
-    });
-
-    newCloseCartBtn.addEventListener("click", () => {
-      newShoppingCart.classList.add("hidden");
-    });
-
-    document.addEventListener("click", closeCartOnClickOutside);
-
-    newShoppingCart.addEventListener("click", (e) => {
-      e.stopPropagation();
-    });
-  } else {
-    // Desktop: Sidebar is always visible
-    newShoppingCart.classList.remove("hidden"); // Ensure visible
-    document.removeEventListener("click", closeCartOnClickOutside); // Remove outside click listener
-    // matchSidebarHeight(); // Ensure height is matched - DISABLED
-  }
-
-  // Handle checkout (attach to the potentially new button)
-  newCheckoutBtn.addEventListener("click", function () {
+  // Handle checkout
+  newCheckoutBtn.addEventListener("click", async function () {
     if (this.disabled) return;
-    alert("Processing your order...");
-    setTimeout(() => {
-      alert("Thank you for your purchase!");
-      clearCart();
-      if (viewportWidth <= 992) {
-        // Only hide modal on mobile
-        newShoppingCart.classList.add("hidden");
+
+    // --- Check if Stripe is initialized ---
+    if (!stripe) {
+        console.error("Stripe is not initialized. Cannot proceed.");
+        alert("Payment system is not ready. Please try again shortly.");
+        this.disabled = false; // Re-enable button
+        this.textContent = "Complete the Purchase";
+        return;
+    }
+    // --- End Stripe check ---
+
+
+    try {
+      // Disable button to prevent multiple clicks
+      this.disabled = true;
+      this.textContent = "Processing...";
+
+      // Filter cart items
+      const creditItems = cart.filter((item) => item.type === "Credit Pack");
+      const subscriptionItems = cart.filter(
+        (item) => item.type === "Subscription"
+      );
+
+      // Enforce only one subscription and quantity 1
+      if (
+        subscriptionItems.length > 1 ||
+        (subscriptionItems[0] && subscriptionItems[0].quantity > 1)
+      ) {
+        alert("You can only purchase one subscription at a time.");
+        this.disabled = false;
+        this.textContent = "Complete the Purchase";
+        return;
       }
-    }, 1500);
+
+      if (creditItems.length === 0 && subscriptionItems.length === 0) {
+        alert("Your cart is empty or contains unsupported items.");
+        this.disabled = false;
+        this.textContent = "Complete the Purchase";
+        return;
+      }
+
+      let totalAmount = 0;
+      let totalCredits = 0;
+      let plan = null;
+
+      if (creditItems.length > 0) {
+        creditItems.forEach((item) => {
+          totalAmount += item.price * item.quantity;
+          const credits = getCreditsForProduct(item.id);
+          totalCredits += credits * item.quantity;
+        });
+      }
+
+      if (subscriptionItems.length === 1) {
+        const subscription = subscriptionItems[0];
+        plan = getPlanForProduct(subscription.id);
+        totalAmount += subscription.price;
+      }
+
+      // Build payload
+      let payload = { amount: totalAmount.toFixed(2) };
+      if (totalCredits > 0) payload.credits = totalCredits;
+      if (plan) payload.plan = plan;
+
+      // Make API call to create checkout session
+      // Construct the full URL using the fetched base URL or use relative path if empty
+      const checkoutUrl = apiBaseUrl ? `${apiBaseUrl}/create-checkout-session` : "/create-checkout-session";
+      const response = await fetch(checkoutUrl, { // Use constructed URL
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+        credentials: "same-origin"
+      });
+
+      const contentType = response.headers.get("content-type");
+      if (contentType && contentType.includes("text/html")) {
+        alert("Session expired. Please log in again.");
+        setTimeout(() => {
+          window.location.href =
+            "/signin?redirect=" + encodeURIComponent(window.location.pathname);
+        }, 2000);
+        this.disabled = false;
+        this.textContent = "Complete the Purchase";
+        return;
+      }
+
+      const data = await response.json();
+
+      if (data.sessionId) {
+        // Use the globally initialized Stripe object to redirect
+        try {
+          await stripe.redirectToCheckout({ sessionId: data.sessionId });
+          // Clear cart after successful redirection attempt
+          clearCart();
+        } catch (redirectError) {
+          console.error("Error during Stripe redirection:", redirectError);
+          alert("Failed to redirect to payment. Please try again.");
+          this.disabled = false;
+          this.textContent = "Complete the Purchase";
+        }
+      } else {
+        alert("Failed to create checkout: " + (data.error || "Unknown error"));
+        this.disabled = false;
+        this.textContent = "Complete the Purchase";
+      }
+    } catch (err) {
+      console.error("Error during checkout:", err);
+      alert("Error: " + err.message);
+      this.disabled = false;
+      this.textContent = "Complete the Purchase";
+    }
   });
 }
 
@@ -157,6 +279,34 @@ function closeCartOnClickOutside(e) {
     !cartButton.contains(e.target)
   ) {
     shoppingCart.classList.add("hidden");
+  }
+}
+
+// Map product IDs to credit amounts based on credit_costs.py
+function getCreditsForProduct(productId) {
+  switch (productId) {
+    case "credit-basic":
+      return 2500; // Basic Pack
+    case "credit-pro":
+      return 5000; // Pro Pack
+    case "credit-premium":
+      return 12000; // Studio Pack
+    default:
+      return 0; // Non-credit products or unknown
+  }
+}
+
+// Map product IDs to subscription plans
+function getPlanForProduct(productId) {
+  switch (productId) {
+    case "sub-standard":
+      return "pro"; // Corrected: Matches "Pro Subscription" and backend logic
+    case "sub-pro":
+      return "studio"; // Corrected: Matches "Studio Subscription" and backend logic
+    case "sub-enterprise":
+      return "enterprise"; // This seems correct
+    default:
+      return null; // Invalid subscription product
   }
 }
 
@@ -357,6 +507,8 @@ function formatProductType(type) {
       return "Landing Page Style";
     case "subscription":
       return "Subscription";
+    case "episode":
+      return "Episode Pack";
     default:
       return type;
   }
@@ -379,40 +531,5 @@ function loadCartFromStorage() {
       console.error("Error loading cart from storage:", error);
       cart = [];
     }
-  }
-}
-
-// Function to match sidebar height to credit packs section height - DISABLED
-/*
-function matchSidebarHeight() {
-  const creditPacksSection = document.querySelector('.credit-packs-section');
-  const shoppingCart = document.getElementById('shoppingCart');
-  const viewportWidth = window.innerWidth;
-
-  if (creditPacksSection && shoppingCart) {
-    if (viewportWidth > 992) {
-      // Desktop: Match height and ensure it's visible
-      shoppingCart.classList.remove('hidden'); // Make sure it's not hidden
-      const creditPacksHeight = creditPacksSection.offsetHeight;
-      shoppingCart.style.height = `${creditPacksHeight}px`;
-    } else {
-      // Mobile: Reset height for modal behavior
-      shoppingCart.style.height = ''; // Reset height
-      // Hidden state is managed by setupCart based on clicks
-    }
-  }
-}
-*/
-// Add a placeholder function if needed, or just remove the calls
-function matchSidebarHeight() {
-  // Placeholder - height matching disabled for now
-  const shoppingCart = document.getElementById("shoppingCart");
-  const viewportWidth = window.innerWidth;
-  if (shoppingCart && viewportWidth <= 992) {
-    // Ensure height is reset on mobile if JS was setting it
-    shoppingCart.style.height = "";
-  } else if (shoppingCart && viewportWidth > 992) {
-    // Ensure height is reset on desktop too, as JS is disabled
-    shoppingCart.style.height = "";
   }
 }

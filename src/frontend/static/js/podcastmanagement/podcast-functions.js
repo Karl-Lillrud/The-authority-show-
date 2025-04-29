@@ -16,6 +16,7 @@ import {
 import { createPlayButton, playAudio } from "./episode-functions.js";
 import { renderEpisodeDetail } from "./episode-functions.js";
 import { showNotification } from "../components/notifications.js";
+import { openEmailConfigPopup } from "./emailconfig-functions.js";
 
 // Function to set image source with fallback
 function setImageSource(imgElement, customSrc, mockSrc) {
@@ -124,10 +125,10 @@ export async function renderPodcastList() {
     const podcasts = response.podcast; // adjust if needed
 
     const podcastListElement = document.getElementById("podcast-list");
-    podcastListElement.innerHTML = "";
+    podcastListElement.innerHTML = ``;
 
     if (podcasts.length === 0) {
-      podcastListElement.innerHTML = `
+      podcastListElement.innerHTML += `
       <div class="empty-state">
         <p>No podcasts found. Click "Add Podcast" to create your first podcast.</p>
       </div>
@@ -153,13 +154,13 @@ export async function renderPodcastList() {
           <div class="podcast-header">
             <div>
               <h2 class="podcast-title">${podcast.podName}</h2>
-              <p class="podcast-meta"><span>Category:</span> ${
+              <p class="podcast-meta"><h4 class="meta-label">Category:</h4> ${
                 podcast.category || "Uncategorized"
               }</p>
-              <p class="podcast-meta"><span>Host:</span> ${
+              <p class="podcast-meta"><h4 class="meta-label">Host:</h4> ${
                 podcast.author || "Not specified"
               }</p>
-              <p class="podcast-meta"><span>Language:</span> ${
+              <p class="podcast-meta"><h4 class="meta-label">Language:</h4> ${
                 podcast.language && podcast.language.toLowerCase() === "en"
                   ? "English"
                   : podcast.language || "Not specified"
@@ -178,7 +179,7 @@ export async function renderPodcastList() {
               </button>
             </div>
           </div>
-          <p class="podcast-description"><strong>Description: </strong>${
+          <p class="podcast-description"><h4 class="meta-label">Description: </h4>${
             podcast.description || "No description available."
           }</p>
           
@@ -186,7 +187,7 @@ export async function renderPodcastList() {
           <div class="podcast-episodes-preview" id="episodes-preview-${
             podcast._id
           }">
-            <h4 class="episodes-preview-title">Episodes</h4>
+            <h3 class="episodes-preview-title">Episodes</h3>
             <div class="episodes-loading">Loading episodes...</div>
           </div>
         </div>
@@ -199,6 +200,10 @@ export async function renderPodcastList() {
         <span class="footer-link view-details-link" data-id="${
           podcast._id
         }">View Details</span>
+        <span class="footer-separator">|</span>
+        <span class="footer-link email-config-link" data-id="${
+          podcast._id
+        }">Email Config</span>
       </div>`;
 
       podcastListElement.appendChild(podcastCard);
@@ -208,6 +213,13 @@ export async function renderPodcastList() {
       landingPageBtn.addEventListener("click", (e) => {
         const podcastId = e.target.dataset.id; // Get podcast ID
         window.location.href = `/landingpage/${podcastId}`;
+      });
+
+      // Add event listener for the "Email Config" button
+      const emailConfigBtn = podcastCard.querySelector(".email-config-link");
+      emailConfigBtn.addEventListener("click", (e) => {
+        const podcastId = e.target.dataset.id; // Get podcast ID
+        openEmailConfigPopup(podcastId); // Pass podcast ID to the popup
       });
 
       // Fetch episodes for this podcast and add them to the preview
@@ -239,7 +251,7 @@ export async function renderPodcastList() {
               const episodeContent = document.createElement("div");
               episodeContent.className = "podcast-episode-content";
               episodeContent.innerHTML = `
-              <div class="podcast-episode-title">${episode.title}</div>
+              <h4 class="podcast-episode-title">${episode.title}</h4>
               <div class="podcast-episode-description">${
                 episode.description || "No description available."
               }</div>
@@ -472,11 +484,11 @@ export function renderPodcastDetail(podcast) {
         <p class="detail-category">${podcast.category || "Uncategorized"}</p>
         <div class="podcast-meta-info">
           <div class="meta-item">
-            <span class="meta-label">Host:</span> <!-- Changed from "Author" to "Host" -->
+            <h4 class="meta-label">Host:</h4> <!-- Changed from "Author" to "Host" -->
             <span class="meta-value">${podcast.author || "Not specified"}</span>
           </div>
           <div class="meta-item">
-            <span class="meta-label">Language:</span>
+            <h4 class="meta-label">Language:</h4>
             <span class="meta-value">${
               podcast.language && podcast.language.toLowerCase() === "en"
                 ? "English"
@@ -484,7 +496,7 @@ export function renderPodcastDetail(podcast) {
             }</span>
           </div>
           <div class="meta-item">
-            <span class="meta-label">Email:</span>
+            <h4 class="meta-label">Email:</h4>
             <span class="meta-value">${podcast.email || "Not specified"}</span>
           </div>
         </div>
@@ -797,7 +809,7 @@ function handlePodcastFormSubmission() {
       bannerUrl: document.getElementById("banner")?.value.trim() || "",
       tagline: document.getElementById("tagline")?.value.trim() || "",
       hostBio: document.getElementById("hostBio")?.value.trim() || "",
-      hostImage: document.getElementById("hostImage")?.value.trim() || "",
+      hostImage: document.getElementById("host-image")?.value.trim() || "",
       // the logoUrl field will be replaced if a logo is uploaded
 
       category,
