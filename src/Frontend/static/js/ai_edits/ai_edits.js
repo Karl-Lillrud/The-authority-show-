@@ -253,7 +253,7 @@ async function transcribe() {
         return;
     }
 
-    resultContainer.innerText = "Transcribing... Please wait.";
+    showSpinner("transcriptionResult");
     const formData = new FormData();
     formData.append('file', file);
 
@@ -262,7 +262,7 @@ async function transcribe() {
             method: 'POST',
             body: formData,
         });
-
+        hideSpinner("transcriptionResult");
         if (response.ok) {
             const result = await response.json();
             rawTranscript = result.raw_transcription || "";
@@ -1168,5 +1168,19 @@ function rejectSfx(index) {
 function replaceSfx(index, url) {
     if (selectedSoundFX[index]) {
         selectedSoundFX[index].sfxUrl = url;
+    }
+}
+
+function showSpinner(containerId) {
+    const container = document.getElementById(containerId);
+    if (container) {
+        container.innerHTML = '<div class="spinner"></div>';
+    }
+}
+
+function hideSpinner(containerId) {
+    const container = document.getElementById(containerId);
+    if (container) {
+        container.innerHTML = '';
     }
 }
