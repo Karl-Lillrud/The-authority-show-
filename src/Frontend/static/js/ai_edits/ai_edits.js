@@ -330,24 +330,26 @@ async function generateAISuggestions() {
 }
 
 
-
 async function generateShowNotes() {
-    const resultEl = document.getElementById("showNotesResult");
-    showSpinner("showNotesResult");
+    const containerId = "showNotesResult";
+    const container = document.getElementById(containerId);
+
+    showSpinner(containerId);
 
     try {
         await consumeStoreCredits("show_notes");
 
-        const res = await fetch('/transcription/show_notes', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+        const res = await fetch("/transcription/show_notes", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ transcript: rawTranscript })
         });
+
         const data = await res.json();
-        resultEl.innerText = data.show_notes || "No notes.";
+        container.innerText = data.show_notes || "No notes.";
     } catch (err) {
-        resultEl.innerText = "Not enough credits: " + err.message;
-    } 
+        container.innerText = "Not enough credits: " + err.message;
+    }
 }
 
 
