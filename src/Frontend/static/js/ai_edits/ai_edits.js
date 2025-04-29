@@ -1022,28 +1022,30 @@ async function cutAudioFromBlob() {
 }
 
 async function enhanceVideo() {
-    const fileInput = document.getElementById('videoUploader');
+    const fileInput = document.getElementById("videoUploader");
     const file = fileInput.files[0];
     if (!file) {
-        alert('Please upload a video file.');
+        alert("Please upload a video file.");
         return;
     }
+
+    const containerId = "videoResult";
+    const container = document.getElementById(containerId);
+    showSpinner(containerId);
 
     try {
         await consumeStoreCredits("video_enhancement");
     } catch (err) {
-        return alert("Not enough credits: " + err.message);
+        container.innerText = `Not enough credits: ${err.message}`;
+        return;
     }
 
-    const videoResult = document.getElementById('videoResult');
-    videoResult.innerText = "Uploading video... Please wait.";
-
     const formData = new FormData();
-    formData.append('video', file);
+    formData.append("video", file);
 
     try {
-        const uploadResponse = await fetch('/ai_videoedit', {
-            method: 'POST',
+        const uploadResponse = await fetch("/ai_videoedit", {
+            method: "POST",
             body: formData,
         });
 
@@ -1053,14 +1055,12 @@ async function enhanceVideo() {
 
         const uploadResult = await uploadResponse.json();
         const video_id = uploadResult.video_id;
-        if (!video_id) throw new Error('No video_id returned from upload.');
+        if (!video_id) throw new Error("No video_id returned from upload.");
 
-        videoResult.innerText = "Enhancing video... Please wait.";
-
-        const enhanceResponse = await fetch('/ai_videoenhance', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ video_id })
+        const enhanceResponse = await fetch("/ai_videoenhance", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ video_id }),
         });
 
         if (!enhanceResponse.ok) {
@@ -1069,18 +1069,19 @@ async function enhanceVideo() {
 
         const enhanceResult = await enhanceResponse.json();
         const processed_id = enhanceResult.processed_video_id;
-        if (!processed_id) throw new Error('No processed_video_id returned from enhancement.');
+        if (!processed_id) throw new Error("No processed_video_id returned from enhancement.");
 
         const videoURL = `/get_video/${processed_id}`;
-        videoResult.innerHTML = `<video controls src="${videoURL}" style="width: 100%; margin-top: 1rem;"></video>`;
+        container.innerHTML = `
+            <video controls src="${videoURL}" style="width: 100%; margin-top: 1rem;"></video>
+        `;
 
-        // Update the download button for video
         const dl = document.getElementById("downloadVideo");
         dl.href = videoURL;
         dl.style.display = "inline-block";
 
     } catch (err) {
-        videoResult.innerText = ` ${err.message}`;
+        container.innerText = `Error: ${err.message}`;
     }
 }
 
