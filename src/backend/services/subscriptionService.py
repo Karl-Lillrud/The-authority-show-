@@ -222,6 +222,17 @@ class SubscriptionService:
             if update_result.modified_count == 0:
                 raise ValueError(f"Failed to update subscription for user {user_id}")
 
+            # Mark all other active subscriptions for this user as inactive BEFORE inserting the new one
+            try:
+                update_inactive_result = self.subscriptions_collection.update_many(
+                    {"user_id": user_id, "status": "active"},
+                    {"$set": {"status": "inactive", "updated_at": datetime.utcnow().isoformat()}}
+                )
+                logger.info(f"Marked {update_inactive_result.modified_count} previous active subscriptions as inactive for user {user_id}")
+            except Exception as inactive_err:
+                logger.error(f"Error marking previous subscriptions as inactive for user {user_id}: {inactive_err}", exc_info=True)
+                # Continue even if this fails, priority is the new subscription
+
             # Also record in the subscriptions collection
             subscription_data = {
                 "_id": str(uuid.uuid4()),
