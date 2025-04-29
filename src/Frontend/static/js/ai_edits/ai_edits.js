@@ -280,6 +280,9 @@ async function transcribe() {
 }
 
 async function generateCleanTranscript() {
+    const resultEl = document.getElementById("cleanTranscriptResult");
+    showSpinner("cleanTranscriptResult");
+
     try {
         const res = await fetch("/transcription/clean", {
             method: "POST",
@@ -288,11 +291,11 @@ async function generateCleanTranscript() {
         });
 
         const data = await res.json();
-        document.getElementById("cleanTranscriptResult").innerText =
-            data.clean_transcript || "No clean result.";
+        resultEl.innerText = data.clean_transcript || "No clean result.";
     } catch (err) {
-        document.getElementById("cleanTranscriptResult").innerText =
-            "Failed to clean transcript. Server says: " + err.message;
+        resultEl.innerText = "Failed to clean transcript. Server says: " + err.message;
+    } finally {
+        hideSpinner("cleanTranscriptResult");
     }
 }
 
