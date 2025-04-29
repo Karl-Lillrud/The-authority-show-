@@ -1,4 +1,11 @@
-from flask import request, jsonify, Blueprint, g, render_template
+from flask import (
+    request,
+    jsonify,
+    Blueprint,
+    g,
+    render_template,
+    send_from_directory,
+)  # Lägg till send_from_directory
 from backend.repository.episode_repository import EpisodeRepository
 from backend.repository.podcast_repository import PodcastRepository
 from backend.repository.guest_repository import GuestRepository
@@ -227,6 +234,24 @@ def update_episode(episode_id):
             )
 
     return jsonify(response), status
+
+
+# --- Ny route för att servera uppladdade ljudfiler (ENDAST FÖR UTVECKLING) ---
+@episode_bp.route("/uploads/episode_audio/<filename>")
+def uploaded_audio_file(filename):
+    """Serves files from the UPLOAD_FOLDER. Development only."""
+    logger.debug(f"Attempting to serve file: {filename} from {UPLOAD_FOLDER}")
+    try:
+        return send_from_directory(UPLOAD_FOLDER, filename)
+    except FileNotFoundError:
+        logger.error(f"File not found: {filename} in {UPLOAD_FOLDER}")
+        return jsonify({"error": "File not found"}), 404
+    except Exception as e:
+        logger.error(f"Error serving file {filename}: {e}", exc_info=True)
+        return jsonify({"error": "Error serving file"}), 500
+
+
+# --- Slut på ny route ---
 
 
 @episode_bp.route("/episode/<episode_id>", methods=["GET"])
