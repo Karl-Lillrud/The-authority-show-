@@ -416,7 +416,7 @@ async function showEpisodePopup(episode) {
   popupContent.innerHTML = `
   <span id="close-episode-popup" class="close-btn">&times;</span>
   <h2 class="form-title">Edit Episode</h2>
-  <form id="update-episode-form" enctype="multipart/form-data"> {/* Add enctype */}
+  <form id="update-episode-form" enctype="multipart/form-data"> 
     <div class="field-group full-width">
       <label for="upd-episode-title">Episode Title</label>
       <input type="text" id="upd-episode-title" name="title" value="${
@@ -438,9 +438,9 @@ async function showEpisodePopup(episode) {
       }" required />
     </div>
     <div class="field-group">
-      <label for="upd-duration">Duration (seconds)</label> {/* Changed label to seconds */}
-      <input type="number" id="upd-duration" name="duration" value="${
-        episode.duration || ""
+      <label for="upd-duration">Duration (minutes)</label> 
+      <input type="number" id="upd-duration" name="duration_minutes" value="${ // Changed name to duration_minutes
+        episode.duration ? Math.floor(episode.duration / 60) : "" // Display existing duration in minutes
       }" />
     </div>
     <div class="field-group">
@@ -449,7 +449,7 @@ async function showEpisodePopup(episode) {
         episode.status || ""
       }" />
     </div>
-    {/* Add file input for audio */}
+    
     <div class="field-group full-width">
         <label for="upd-episode-audio">Upload New Audio (Optional)</label>
         <input type="file" id="upd-episode-audio" name="audioFile" accept="audio/*">
@@ -486,17 +486,29 @@ async function showEpisodePopup(episode) {
       const form = e.target;
       const formData = new FormData(form); // Use FormData
 
-      // Convert duration from minutes back to seconds if needed, or ensure it's treated as seconds
-      // Assuming the input 'upd-duration' is now expected in seconds
-      const durationInput = document.getElementById("upd-duration");
-      if (durationInput.value && durationInput.value < 0) {
-        showNotification(
-          "Invalid duration",
-          "Please provide a non-negative integer for duration in seconds",
-          "error"
-        );
-        return;
+      // Get duration in minutes from the form
+      const durationMinutes = formData.get("duration_minutes");
+
+      // Convert minutes to seconds for the backend
+      if (durationMinutes) {
+        const durationSeconds = Math.round(parseFloat(durationMinutes) * 60);
+        if (durationSeconds < 0 || isNaN(durationSeconds)) {
+           showNotification(
+              "Invalid duration",
+              "Please provide a non-negative number for duration in minutes",
+              "error"
+            );
+            return;
+        }
+        // Set the 'duration' field in FormData (expected by backend)
+        formData.set("duration", durationSeconds.toString());
+      } else {
+        // If duration is empty, ensure it's sent as empty or handled appropriately
+         formData.set("duration", ""); // Or remove if backend handles absence
       }
+      // Remove the temporary minutes field from FormData
+      formData.delete("duration_minutes");
+
 
       // Optional: Add loading indicator
       const submitButton = form.querySelector("button[type='submit']");
@@ -515,7 +527,7 @@ async function showEpisodePopup(episode) {
           document.body.removeChild(popup);
           // Fetch the updated episode data to refresh the detail view
           const updatedEpisodeData = await fetchEpisode(episode._id);
-          renderEpisodeDetail(updatedEpisodeData);
+          renderEpisodeDetail(updatedEpisodeData); // Refresh detail view
         } else {
           showNotification("Error", result.error || "Update failed", "error");
         }
