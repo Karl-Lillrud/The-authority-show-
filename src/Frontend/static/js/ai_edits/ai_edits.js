@@ -352,26 +352,27 @@ async function generateShowNotes() {
     }
 }
 
-
 async function generateQuotes() {
-    const resultEl = document.getElementById("quotesResult");
-    showSpinner("quotesResult");
+    const containerId = "quotesResult";
+    const container = document.getElementById(containerId);
+
+    showSpinner(containerId);
 
     try {
         await consumeStoreCredits("ai_quotes");
 
-        const res = await fetch('/transcription/quotes', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+        const res = await fetch("/transcription/quotes", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ transcript: rawTranscript })
         });
-        const data = await res.json();
-        resultEl.innerText = data.quotes || "No quotes.";
-    } catch (err) {
-        resultEl.innerText = "Not enough credits: " + err.message;
-    } 
-}
 
+        const data = await res.json();
+        container.innerText = data.quotes || "No quotes.";
+    } catch (err) {
+        container.innerText = "Not enough credits: " + err.message;
+    }
+}
 
 async function generateQuoteImages() {
     const quotes = document.getElementById("quotesResult").innerText;
