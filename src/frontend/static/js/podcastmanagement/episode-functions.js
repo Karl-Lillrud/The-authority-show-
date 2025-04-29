@@ -416,7 +416,7 @@ async function showEpisodePopup(episode) {
   popupContent.innerHTML = `
   <span id="close-episode-popup" class="close-btn">&times;</span>
   <h2 class="form-title">Edit Episode</h2>
-  <form id="update-episode-form">
+  <form id="update-episode-form" enctype="multipart/form-data"> {/* Add enctype */}
     <div class="field-group full-width">
       <label for="upd-episode-title">Episode Title</label>
       <input type="text" id="upd-episode-title" name="title" value="${
@@ -438,7 +438,7 @@ async function showEpisodePopup(episode) {
       }" required />
     </div>
     <div class="field-group">
-      <label for="upd-duration">Duration (minutes)</label>
+      <label for="upd-duration">Duration (seconds)</label> {/* Changed label to seconds */}
       <input type="number" id="upd-duration" name="duration" value="${
         episode.duration || ""
       }" />
@@ -448,6 +448,16 @@ async function showEpisodePopup(episode) {
       <input type="text" id="upd-status" name="status" value="${
         episode.status || ""
       }" />
+    </div>
+    {/* Add file input for audio */}
+    <div class="field-group full-width">
+        <label for="upd-episode-audio">Upload New Audio (Optional)</label>
+        <input type="file" id="upd-episode-audio" name="audioFile" accept="audio/*">
+        ${
+          episode.audioUrl
+            ? `<p style="font-size: 0.8em; margin-top: 5px;">Current audio: <a href="${episode.audioUrl}" target="_blank">Listen</a></p>`
+            : '<p style="font-size: 0.8em; margin-top: 5px;">No current audio file.</p>'
+        }
     </div>
     <div class="form-actions">
       <button type="button" id="cancel-episode-update" class="cancel-btn">Cancel</button>
@@ -473,32 +483,29 @@ async function showEpisodePopup(episode) {
     .querySelector("#update-episode-form")
     .addEventListener("submit", async (e) => {
       e.preventDefault();
-      const updatedData = {
-        title: document.getElementById("upd-episode-title").value.trim(),
-        description: document
-          .getElementById("upd-episode-description")
-          .value.trim(),
-        publishDate: document.getElementById("upd-publish-date").value,
-        duration: document.getElementById("upd-duration").value,
-        status: document.getElementById("upd-status").value.trim()
-      };
-      Object.keys(updatedData).forEach((key) => {
-        if (!updatedData[key]) delete updatedData[key];
-      });
+      const form = e.target;
+      const formData = new FormData(form); // Use FormData
 
-      if (updatedData.duration) {
-        if (updatedData.duration < 0) {
-          showNotification(
-            "Invalid duration",
-            "Please provide a positive integer for duration",
-            "error"
-          );
-          return;
-        }
+      // Convert duration from minutes back to seconds if needed, or ensure it's treated as seconds
+      // Assuming the input 'upd-duration' is now expected in seconds
+      const durationInput = document.getElementById("upd-duration");
+      if (durationInput.value && durationInput.value < 0) {
+        showNotification(
+          "Invalid duration",
+          "Please provide a non-negative integer for duration in seconds",
+          "error"
+        );
+        return;
       }
 
+      // Optional: Add loading indicator
+      const submitButton = form.querySelector("button[type='submit']");
+      submitButton.disabled = true;
+      submitButton.textContent = "Updating...";
+
       try {
-        const result = await updateEpisode(episode._id, updatedData); // Use updateEpisode from episodeRequest.js
+        // Pass FormData directly to updateEpisode
+        const result = await updateEpisode(episode._id, formData);
         if (result.message) {
           showNotification(
             "Success",
@@ -506,13 +513,21 @@ async function showEpisodePopup(episode) {
             "success"
           );
           document.body.removeChild(popup);
-          // Update the episode details in the DOM
-          renderEpisodeDetail({ ...episode, ...updatedData });
+          // Fetch the updated episode data to refresh the detail view
+          const updatedEpisodeData = await fetchEpisode(episode._id);
+          renderEpisodeDetail(updatedEpisodeData);
         } else {
           showNotification("Error", result.error || "Update failed", "error");
         }
       } catch (error) {
-        showNotification("Error", "Failed to update episode.", "error");
+        showNotification(
+          "Error",
+          `Failed to update episode: ${error.message || error}`,
+          "error"
+        );
+      } finally {
+        submitButton.disabled = false; // Re-enable button
+        submitButton.textContent = "Update Episode";
       }
     });
 }
