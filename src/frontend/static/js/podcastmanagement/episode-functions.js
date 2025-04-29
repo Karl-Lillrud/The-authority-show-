@@ -411,6 +411,9 @@ async function showEpisodePopup(episode) {
   popup.className = "popup";
   popup.style.display = "flex";
 
+  // Determine if the file input should be disabled: Disable if episode IS imported
+  const isAudioUploadDisabled = episode.isImported === true;
+
   const popupContent = document.createElement("div");
   popupContent.className = "form-box";
   popupContent.innerHTML = `
@@ -439,8 +442,8 @@ async function showEpisodePopup(episode) {
     </div>
     <div class="field-group">
       <label for="upd-duration">Duration (minutes)</label> 
-      <input type="number" id="upd-duration" name="duration_minutes" value="${ // Changed name to duration_minutes
-        episode.duration ? Math.floor(episode.duration / 60) : "" // Display existing duration in minutes
+      <input type="number" id="upd-duration" name="duration_minutes" value="${
+        episode.duration ? Math.floor(episode.duration / 60) : ""
       }" />
     </div>
     <div class="field-group">
@@ -451,12 +454,25 @@ async function showEpisodePopup(episode) {
     </div>
     
     <div class="field-group full-width">
-        <label for="upd-episode-audio">Upload New Audio (Optional)</label>
-        <input type="file" id="upd-episode-audio" name="audioFile" accept="audio/*">
+        <label for="upd-episode-audio" ${
+          isAudioUploadDisabled ? 'style="color: #aaa;"' : ""
+        }>Upload New Audio (Optional)</label>
+        <input type="file" id="upd-episode-audio" name="audioFile" accept="audio/*" ${
+          isAudioUploadDisabled // Disable if true
+            ? 'disabled style="background-color: #eee;"'
+            : ""
+        }>
         ${
-          episode.audioUrl
+          isAudioUploadDisabled // Show message if disabled (i.e., isImported is true)
+            ? '<p style="font-size: 0.8em; color: #888; margin-top: 5px;">Audio upload disabled for imported episodes.</p>'
+            : ""
+        }
+        ${
+          episode.audioUrl && !isAudioUploadDisabled // Only show current audio link if upload is enabled
             ? `<p style="font-size: 0.8em; margin-top: 5px;">Current audio: <a href="${episode.audioUrl}" target="_blank">Listen</a></p>`
-            : '<p style="font-size: 0.8em; margin-top: 5px;">No current audio file.</p>'
+            : !isAudioUploadDisabled // Only show 'No current audio' if upload is enabled
+            ? '<p style="font-size: 0.8em; margin-top: 5px;">No current audio file.</p>'
+            : ""
         }
     </div>
     <div class="form-actions">
@@ -493,22 +509,23 @@ async function showEpisodePopup(episode) {
       if (durationMinutes) {
         const durationSeconds = Math.round(parseFloat(durationMinutes) * 60);
         if (durationSeconds < 0 || isNaN(durationSeconds)) {
-           showNotification(
-              "Invalid duration",
-              "Please provide a non-negative number for duration in minutes",
-              "error"
-            );
-            return;
+          showNotification(
+            "Invalid duration",
+            "Please provide a non-negative number for duration in minutes",
+            "error"
+          );
+          return;
         }
-        // Set the 'duration' field in FormData (expected by backend)
         formData.set("duration", durationSeconds.toString());
       } else {
-        // If duration is empty, ensure it's sent as empty or handled appropriately
-         formData.set("duration", ""); // Or remove if backend handles absence
+        formData.set("duration", ""); // Or remove if backend handles absence
       }
-      // Remove the temporary minutes field from FormData
       formData.delete("duration_minutes");
 
+      // If audio upload was disabled (because isImported was true), ensure no audioFile is sent
+      if (isAudioUploadDisabled) {
+        formData.delete("audioFile");
+      }
 
       // Optional: Add loading indicator
       const submitButton = form.querySelector("button[type='submit']");
@@ -516,7 +533,6 @@ async function showEpisodePopup(episode) {
       submitButton.textContent = "Updating...";
 
       try {
-        // Pass FormData directly to updateEpisode
         const result = await updateEpisode(episode._id, formData);
         if (result.message) {
           showNotification(
@@ -525,7 +541,6 @@ async function showEpisodePopup(episode) {
             "success"
           );
           document.body.removeChild(popup);
-          // Fetch the updated episode data to refresh the detail view
           const updatedEpisodeData = await fetchEpisode(episode._id);
           renderEpisodeDetail(updatedEpisodeData); // Refresh detail view
         } else {
