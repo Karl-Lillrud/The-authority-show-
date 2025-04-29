@@ -155,55 +155,54 @@ export function renderEpisodeDetail(episode) {
       episode.description || "No description available."
     }</p>
     
-<!-- Audio + Edits section side-by-side -->
-<div class="audio-section-wrapper" style="display: flex; gap: 2rem; align-items: flex-start; flex-wrap: wrap;">
+    <!-- Audio Section Wrapper - Only contains the main player now -->
+    <div class="audio-section-wrapper" style="margin-top: 1.5rem;"> <!-- Removed flex styles -->
+      <!-- Main Audio Player -->
+      <div class="main-audio-player"> <!-- Removed flex properties -->
+        <h3>Main Episode Audio</h3>
+        ${
+          episode.audioUrl
+            ? `<audio controls style="width: 100%;">
+                 <source src="${episode.audioUrl}" type="${
+                fileType || "audio/mpeg"
+              }">
+                 Your browser does not support the audio element.
+               </audio>`
+            : "<p>No audio available for this episode.</p>"
+        }
+      </div>
+    </div> <!-- End audio-section-wrapper -->
 
-  <!-- Main Audio Player -->
-  <div class="main-audio-player" style="flex: 1; min-width: 300px;">
-    <h3>Main Episode Audio</h3>
+    <!-- Saved Audio Edits - Moved outside and below the wrapper -->
     ${
-      episode.audioUrl
-        ? `<audio controls style="width: 100%;">
-             <source src="${episode.audioUrl}" type="${
-            fileType || "audio/mpeg"
-          }">
-             Your browser does not support the audio element.
-           </audio>`
-        : "<p>No audio available for this episode.</p>"
+      episode.audioEdits && episode.audioEdits.length > 0
+        ? `<div class="audio-edits" style="margin-top: 1.5rem;"> <!-- Added margin-top -->
+            <h3>🎧 Saved Edits</h3>
+            ${episode.audioEdits
+              .map((edit) => {
+                const blobUrl = edit.metadata?.blob_url;
+                const label =
+                  edit.metadata?.edit_type || edit.edit_type || "Unknown Type";
+                return `
+                <div class="edit-entry" style="margin-bottom: 1rem;">
+                  <p style="margin-bottom: 0.25rem;"><strong>${label}</strong> – ${
+                  edit.filename
+                }</p>
+                  ${
+                    blobUrl
+                      ? `<audio controls style="width: 100%;">
+                          <source src="${blobUrl}" type="audio/wav">
+                          Your browser does not support the audio element.
+                        </audio>`
+                      : `<p style="color: red;">❌ No audio URL available</p>`
+                  }
+                </div>`;
+              })
+              .join("")}
+          </div>`
+        : ""
     }
-  </div>
-
-  <!-- Saved Audio Edits -->
-  ${
-    episode.audioEdits && episode.audioEdits.length > 0
-      ? `<div class="audio-edits" style="flex: 1; min-width: 300px;">
-          <h3>🎧 Saved Edits</h3>
-          ${episode.audioEdits
-            .map((edit) => {
-              const blobUrl = edit.metadata?.blob_url;
-              const label =
-                edit.metadata?.edit_type || edit.edit_type || "Unknown Type";
-              return `
-              <div class="edit-entry" style="margin-bottom: 1rem;">
-                <p style="margin-bottom: 0.25rem;"><strong>${label}</strong> – ${
-                edit.filename
-              }</p>
-                ${
-                  blobUrl
-                    ? `<audio controls style="width: 100%;">
-                        <source src="${blobUrl}" type="audio/wav">
-                        Your browser does not support the audio element.
-                      </audio>`
-                    : `<p style="color: red;">❌ No audio URL available</p>`
-                }
-              </div>`;
-            })
-            .join("")}
-        </div>`
-      : ""
-  }
-  </div>
-</div>
+  </div> <!-- End podcast-about-section -->
 
   
   <!-- Additional details section -->
@@ -254,7 +253,15 @@ export function renderEpisodeDetail(episode) {
   if (aiEditButton) {
     aiEditButton.addEventListener("click", () => {
       const episodeId = aiEditButton.getAttribute("data-id");
-      const aiEditUrl = `/transcription/ai_edits?episodeId=${episodeId}`;
+      const episodeTitle = episode.title || "Untitled Episode"; // Get episode title
+      let aiEditUrl = `/transcription/ai_edits?episodeId=${episodeId}&episodeTitle=${encodeURIComponent(
+        episodeTitle
+      )}`; // Add episodeTitle
+      // Append audioUrl if it exists and the episode is not imported (meaning audio was manually uploaded)
+      if (episode.audioUrl && episode.isImported === false) {
+        // Ensure the URL is properly encoded
+        aiEditUrl += `&audioUrl=${encodeURIComponent(episode.audioUrl)}`;
+      }
       window.location.href = aiEditUrl;
     });
   }

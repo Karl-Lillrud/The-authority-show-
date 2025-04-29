@@ -133,14 +133,21 @@ class EpisodeRepository:
             if ep["userid"] != str(user_id):
                 return {"error": "Permission denied"}, 403
 
+            episode_title = ep.get(
+                "title", "Unknown Title"
+            )  # Get title before deleting
+
             result = self.collection.delete_one({"_id": episode_id})
             if result.deleted_count == 1:
                 try:
                     self.activity_service.log_activity(
                         user_id=str(user_id),
                         activity_type="episode_deleted",
-                        description=f"Deleted episode '{ep.get('title', '')}'",
-                        details={"episodeId": episode_id, "title": ep.get("title", "")},
+                        description=f"Deleted episode '{episode_title}'",  # Use fetched title
+                        details={
+                            "episodeId": episode_id,
+                            "title": episode_title,
+                        },  # Include title in details
                     )
                 except Exception as act_err:
                     logger.error(
@@ -294,15 +301,18 @@ class EpisodeRepository:
             if updated_ep and "_id" in updated_ep:
                 updated_ep["_id"] = str(updated_ep["_id"])
 
+            # Determine the title to use in the log (new title if updated, otherwise old title)
+            log_title = updated_ep.get("title", ep.get("title", "Unknown Title"))
+
             # Log activity
             try:
                 self.activity_service.log_activity(
                     user_id=str(user_id),
                     activity_type="episode_updated",
-                    description=f"Updated episode '{updated_ep.get('title', ep.get('title', ''))}'",
+                    description=f"Updated episode '{log_title}'",  # Use determined title
                     details={
                         "episodeId": episode_id,
-                        # Filter out 'updated_at' for cleaner logging
+                        "title": log_title,  # Include title in details
                         "updatedFields": [
                             k for k in update_fields.keys() if k != "updated_at"
                         ],
