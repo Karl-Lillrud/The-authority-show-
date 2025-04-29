@@ -177,7 +177,7 @@ export async function showAddCommentModal(taskId, state, updateUI) {
             const tempComment = {
               id: Date.now().toString(),
               text: commentText,
-              userId: state.currentUser.id,
+              ownerId: state.currentUser.id,
               userName: state.currentUser.name,
               createdAt: new Date().toISOString(),
             }
@@ -195,7 +195,7 @@ export async function showAddCommentModal(taskId, state, updateUI) {
           const tempComment = {
             id: Date.now().toString(),
             text: commentText,
-            userId: state.currentUser.id,
+            ownerId: state.currentUser.id,
             userName: state.currentUser.name,
             createdAt: new Date().toISOString(),
           }

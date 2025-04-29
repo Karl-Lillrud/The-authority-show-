@@ -1,11 +1,13 @@
 # ai_utils.py
 import re
-import openai
 import logging
 from textblob import TextBlob
 from textstat import textstat
 from transformers import pipeline
 from typing import List
+from openai import OpenAI
+
+client = OpenAI()
 
 emotion_classifier = pipeline("text-classification", model="bhadresh-savani/distilbert-base-uncased-emotion")
 
@@ -27,11 +29,11 @@ def remove_filler_words(text: str) -> str:
     # Ask GPT to remove filler words
     prompt = f"Remove unnecessary filler words (um, uh, ah, like, you know, etc.) from this text:\n{text}"
     try:
-        response = openai.ChatCompletion.create(
+        response = client.chat.completions.create(
             model="gpt-4",
             messages=[{"role": "user", "content": prompt}]
         )
-        return response["choices"][0]["message"]["content"].strip()
+        return response.choices[0].message.content.strip()
     except Exception as e:
         logger.error(f"Error removing filler words: {str(e)}")
         return text  # fallback

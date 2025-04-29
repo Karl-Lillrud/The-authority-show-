@@ -663,7 +663,9 @@
 
 /* No episodes message */
 .no-episodes-message {
-  font-size: 0.7rem;
+  text-align: center;
+  color: #888888;
+  font-size: 1rem;
   font-style: italic;
 }
 
@@ -979,11 +981,14 @@
   padding: 8px 16px;
   border-radius: var(--radius-small);
   cursor: pointer;
+  font-weight: 600;
+  font-size: 0.9rem;
   transition: all 0.3s ease;
 }
 
 .save-btn:hover {
   background-color: var(--highlight-hover);
+  transform: translateY(-2px);
 }
 
 .form-box {
@@ -1655,7 +1660,122 @@ select:invalid {
   }
 }
 
-.page-title {
+/* Outbox Styles */
+.outbox-container {
+  grid-column: 1 / -1; /* Make it span all columns in the grid */
+  display: flex;
+  flex-direction: column;
+  gap: 1rem; /* Add spacing between rows */
+  padding: 1rem;
+  background-color: #f9f9f9;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  width: 100%; /* Ensure it spans the full width of the popup */
+  box-sizing: border-box; /* Include padding in width calculation */
+  overflow-x: hidden; /* Prevent horizontal scrolling */
+}
+
+.email-row {
+  display: grid;
+  grid-template-columns: 1fr 3fr auto; /* Adjust column sizes */
+  align-items: start; /* Align content to the top */
+  padding: 1rem;
+  background-color: #ffffff;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  font-family: Arial, sans-serif;
+  gap: 1rem; /* Add spacing between columns */
+  width: 100%; /* Ensure the row spans the full width */
+  box-sizing: border-box; /* Include padding in width calculation */
+}
+
+.email-recipient {
+  font-weight: bold;
+  color: #333333;
+}
+
+.email-preview {
+  font-size: 0.9rem;
+  color: #555555;
+  line-height: 1.5; /* Improve readability */
+}
+
+.email-content-preview {
+  display: inline-block;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis; /* Truncate content with ellipsis */
+}
+
+.email-full-content {
+  font-size: 0.9rem;
+  color: #555555;
+  line-height: 1.5;
+  margin-top: 0.5rem;
+}
+
+.hidden {
+  display: none;
+}
+
+.show-email-btn {
+  background-color: #f0f0f0;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  padding: 0.5rem 1rem;
+  cursor: pointer;
+  font-size: 0.85rem;
+  color: #333;
+  justify-self: end; /* Align the button to the right */
+}
+
+.show-email-btn:hover {
+  background-color: #e0e0e0;
+}
+
+/* Outbox Section Styling */
+.outbox-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem; /* Add spacing between emails */
+}
+
+.email-item {
+  border: 1px solid #ccc; /* Add a border around each email */
+  border-radius: 8px; /* Rounded corners */
+  padding: 1rem; /* Add padding inside the email container */
+  background-color: #f9f9f9; /* Light background for better visibility */
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); /* Subtle shadow for depth */
+}
+
+.email-header {
+  font-weight: bold;
+  margin-bottom: 0.5rem;
+}
+
+.email-meta {
+  font-size: 0.9rem;
+  color: #555;
+  margin-bottom: 0.5rem;
+}
+
+.email-content {
+  font-size: 1rem;
+  color: #333;
+}
+
+/* Trigger Info Box Styling */
+.trigger-info-box {
+  margin-top: 0.5rem;
+  padding: 0.8rem;
+  background-color: #f9f9f9;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 0.9rem;
+  color: #555;
+}
+  .page-title {
   font-size: 2rem;
   font-weight: 600;
   color: var(--text-color-dark, #333);

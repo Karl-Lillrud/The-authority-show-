@@ -16,6 +16,7 @@ import {
 import { createPlayButton, playAudio } from "./episode-functions.js";
 import { renderEpisodeDetail } from "./episode-functions.js";
 import { showNotification } from "../components/notifications.js";
+import { openEmailConfigPopup } from "./emailconfig-functions.js";
 
 // Function to set image source with fallback
 function setImageSource(imgElement, customSrc, mockSrc) {
@@ -124,9 +125,7 @@ export async function renderPodcastList() {
     const podcasts = response.podcast; // adjust if needed
 
     const podcastListElement = document.getElementById("podcast-list");
-    podcastListElement.innerHTML = `
-      <h1 class="page-title">Podcasts</h1>
-    `;
+    podcastListElement.innerHTML = ``;
 
     if (podcasts.length === 0) {
       podcastListElement.innerHTML += `
@@ -201,6 +200,10 @@ export async function renderPodcastList() {
         <span class="footer-link view-details-link" data-id="${
           podcast._id
         }">View Details</span>
+        <span class="footer-separator">|</span>
+        <span class="footer-link email-config-link" data-id="${
+          podcast._id
+        }">Email Config</span>
       </div>`;
 
       podcastListElement.appendChild(podcastCard);
@@ -210,6 +213,13 @@ export async function renderPodcastList() {
       landingPageBtn.addEventListener("click", (e) => {
         const podcastId = e.target.dataset.id; // Get podcast ID
         window.location.href = `/landingpage/${podcastId}`;
+      });
+
+      // Add event listener for the "Email Config" button
+      const emailConfigBtn = podcastCard.querySelector(".email-config-link");
+      emailConfigBtn.addEventListener("click", (e) => {
+        const podcastId = e.target.dataset.id; // Get podcast ID
+        openEmailConfigPopup(podcastId); // Pass podcast ID to the popup
       });
 
       // Fetch episodes for this podcast and add them to the preview
