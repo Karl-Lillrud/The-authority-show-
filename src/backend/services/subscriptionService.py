@@ -15,7 +15,7 @@ logger = logging.getLogger(__name__)
 class SubscriptionService:
     def __init__(self):
         self.accounts_collection = collection.database.Accounts
-        self.subscriptions_collection = collection.database.subscriptions_collection
+        self.subscriptions_collection = collection.database.Subscriptions # Changed from subscriptions_collection
         self.activity_service = ActivityService()  # Add this line
         self.episodes_collection = collection.database.Episodes
 
