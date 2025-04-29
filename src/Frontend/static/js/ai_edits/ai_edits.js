@@ -302,15 +302,17 @@ async function generateCleanTranscript() {
 
 
 async function generateAISuggestions() {
-    const resultEl = document.getElementById("aiSuggestionsResult");
-    showSpinner("aiSuggestionsResult");
+    const containerId = "aiSuggestionsResult";
+    const container = document.getElementById(containerId);
+
+    showSpinner(containerId);
 
     try {
         await consumeStoreCredits("ai_suggestions");
 
-        const res = await fetch('/transcription/ai_suggestions', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+        const res = await fetch("/transcription/ai_suggestions", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ transcript: rawTranscript })
         });
 
@@ -318,14 +320,15 @@ async function generateAISuggestions() {
         if (res.ok) {
             const primary = data.primary_suggestions || "";
             const additional = (data.additional_suggestions || []).join("\n");
-            resultEl.innerText = [primary, additional].filter(Boolean).join("\n\n") || "No suggestions.";
+            container.innerText = [primary, additional].filter(Boolean).join("\n\n") || "No suggestions.";
         } else {
-            resultEl.innerText = `Error: ${res.status} - ${res.statusText}`;
+            container.innerText = `Error: ${res.status} - ${res.statusText}`;
         }
     } catch (err) {
-        resultEl.innerText = "Not enough credits: " + err.message;
-    } 
+        container.innerText = "Not enough credits: " + err.message;
+    }
 }
+
 
 
 async function generateShowNotes() {
