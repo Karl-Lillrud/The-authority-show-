@@ -111,6 +111,7 @@ class PodtaskRepository:
             "created_at": data["created_at"],
             "highlights": data.get("highlights", []),
             "dependencies": data.get("dependencies", []),
+            "aiTool": data.get("aiTool", ""),
         }
 
     def get_podtasks(self, user_id: str, filters: Optional[Dict[str, Any]] = None) -> Tuple[Dict[str, Any], int]:
@@ -227,7 +228,7 @@ class PodtaskRepository:
         fields = [
             "podcastId", "episodeId", "teamId", "members", "guestId", "name", "action",
             "dayCount", "description", "actionUrl", "urlDescribe", "submissionReq",
-            "status", "assignedAt", "dueDate", "priority", "highlights", "dependencies"
+            "status", "assignedAt", "dueDate", "priority", "highlights", "dependencies", "aiTool"
         ]
 
         update_fields = {
