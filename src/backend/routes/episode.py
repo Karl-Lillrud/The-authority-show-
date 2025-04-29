@@ -28,17 +28,7 @@ def add_episode():
         return jsonify({"error": "Missing required fields: podcastId or title"}), 400
 
     response, status = episode_repo.register_episode(data, g.user_id)
-    if status == 201:
-        # Logga aktivitet för att skapa episod
-        activity_service.log_activity(
-            user_id=g.user_id,
-            activity_type="episode_created",
-            description=f"Created episode '{data.get('title')}'",
-            details={
-                "episodeId": response.get("episode_id"),
-                "podcastId": data.get("podcastId"),
-            },
-        )
+
     return jsonify(response), status
 
 
@@ -86,9 +76,15 @@ def update_episode(episode_id):
     try:
         episode_data, status_code = episode_repo.get_episode(episode_id, g.user_id)
         if status_code != 200:
-            return jsonify(episode_data), status_code  # Return original error if not found or other issue
+            return (
+                jsonify(episode_data),
+                status_code,
+            )  # Return original error if not found or other issue
         if episode_data.get("status") == "published":
-            return jsonify({"error": "Published episodes cannot be modified"}), 403  # Forbidden
+            return (
+                jsonify({"error": "Published episodes cannot be modified"}),
+                403,
+            )  # Forbidden
     except Exception as e:
         logger.error(f"Error checking episode status before update: {e}")
         return jsonify({"error": "Failed to check episode status"}), 500
