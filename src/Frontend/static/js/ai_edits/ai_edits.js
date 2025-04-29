@@ -281,6 +281,8 @@ async function transcribe() {
 
 async function generateCleanTranscript() {
     const containerId = "cleanTranscriptResult";
+    const container = document.getElementById(containerId);
+
     showSpinner(containerId);
 
     try {
@@ -291,12 +293,10 @@ async function generateCleanTranscript() {
         });
 
         const data = await res.json();
-        document.getElementById("cleanTranscriptResult").innerText =
-            data.clean_transcript || "No clean result.";
+        container.innerText = data.clean_transcript || "No clean result.";
     } catch (err) {
-        document.getElementById("cleanTranscriptResult").innerText =
-            "Failed to clean transcript. Server says: " + err.message;
-    } 
+        container.innerText = "Failed to clean transcript. Server says: " + err.message;
+    }
 }
 
 
@@ -344,9 +344,7 @@ async function generateShowNotes() {
         resultEl.innerText = data.show_notes || "No notes.";
     } catch (err) {
         resultEl.innerText = "Not enough credits: " + err.message;
-    } finally {
-        hideSpinner("showNotesResult");
-    }
+    } 
 }
 
 
@@ -366,9 +364,7 @@ async function generateQuotes() {
         resultEl.innerText = data.quotes || "No quotes.";
     } catch (err) {
         resultEl.innerText = "Not enough credits: " + err.message;
-    } finally {
-        hideSpinner("quotesResult");
-    }
+    } 
 }
 
 
