@@ -373,14 +373,8 @@ async function generateQuotes() {
 
 
 async function generateQuoteImages() {
-    const container = document.getElementById("quoteImagesResult");
     const quotes = document.getElementById("quotesResult").innerText;
-    if (!quotes) {
-        alert("Generate quotes first.");
-        return;
-    }
-
-    showSpinner("quoteImagesResult");
+    if (!quotes) return alert("Generate quotes first.");
 
     try {
         await consumeStoreCredits("ai_qoute_images");
@@ -390,23 +384,23 @@ async function generateQuoteImages() {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ quotes })
         });
-        const data = await res.json();
 
-        container.innerHTML = "";
+        const data = await res.json();
+        const imageDiv = document.getElementById("quoteImagesResult");
+        imageDiv.innerHTML = "";
+
         (data.quote_images || []).forEach(url => {
             const img = document.createElement("img");
             img.src = url;
             img.style.maxWidth = "100%";
             img.style.margin = "10px 0";
-            container.appendChild(img);
+            imageDiv.appendChild(img);
         });
     } catch (err) {
-        container.innerText = "Not enough credits: " + err.message;
-    } finally {
-        hideSpinner("quoteImagesResult");
+        document.getElementById("quoteImagesResult").innerText =
+            "Not enough credits: " + err.message;
     }
 }
-
 
 async function fetchAudioFromBlobUrl(blobUrl) {
     try {
