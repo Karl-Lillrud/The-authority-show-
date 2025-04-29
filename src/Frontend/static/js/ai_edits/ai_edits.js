@@ -300,7 +300,8 @@ async function generateCleanTranscript() {
 }
 
 async function generateAISuggestions() {
-    const suggestionsEl = document.getElementById("aiSuggestionsResult");
+    const resultEl = document.getElementById("aiSuggestionsResult");
+    showSpinner("aiSuggestionsResult");
 
     try {
         await consumeStoreCredits("ai_suggestions");
@@ -311,22 +312,26 @@ async function generateAISuggestions() {
             body: JSON.stringify({ transcript: rawTranscript })
         });
 
+        const data = await res.json();
         if (res.ok) {
-            const data = await res.json();
             const primary = data.primary_suggestions || "";
             const additional = (data.additional_suggestions || []).join("\n");
-
-            suggestionsEl.innerText = [primary, additional].filter(Boolean).join("\n\n") || "No suggestions.";
+            resultEl.innerText = [primary, additional].filter(Boolean).join("\n\n") || "No suggestions.";
         } else {
-            suggestionsEl.innerText = `Error: ${res.status} - ${res.statusText}`;
+            resultEl.innerText = `Error: ${res.status} - ${res.statusText}`;
         }
     } catch (err) {
-        suggestionsEl.innerText = "Not enough credits: " + err.message;
+        resultEl.innerText = "Not enough credits: " + err.message;
+    } finally {
+        hideSpinner("aiSuggestionsResult");
     }
 }
 
 
 async function generateShowNotes() {
+    const resultEl = document.getElementById("showNotesResult");
+    showSpinner("showNotesResult");
+
     try {
         await consumeStoreCredits("show_notes");
 
@@ -335,14 +340,15 @@ async function generateShowNotes() {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ transcript: rawTranscript })
         });
-
         const data = await res.json();
-        document.getElementById("showNotesResult").innerText = data.show_notes || "No notes.";
+        resultEl.innerText = data.show_notes || "No notes.";
     } catch (err) {
-        document.getElementById("showNotesResult").innerText =
-            "Not enough credits: " + err.message;
+        resultEl.innerText = "Not enough credits: " + err.message;
+    } finally {
+        hideSpinner("showNotesResult");
     }
 }
+
 
 async function generateQuotes() {
     try {
