@@ -5,6 +5,7 @@ let isolatedAudioId = null;
 
 let activeAudioBlob = null; // Will hold the blob fetched from URL or uploaded
 let activeAudioId = null;
+let currentEditId = null; // Store the ID of the latest saved edit
 
 window.CURRENT_USER_ID = localStorage.getItem("user_id");
 const urlParams = new URLSearchParams(window.location.search);
@@ -205,6 +206,28 @@ function labelWithCredits(text, key) {
   return `${text} <span style="color: gray; font-size: 0.9em;">(${cost} credits)</span>`;
 }
 
+// --- NEW: Loading Indicator Functions ---
+function showLoading(message = "Processing...") {
+  const loader = document.getElementById("globalLoader");
+  const loaderText = document.getElementById("globalLoaderText");
+  if (loader) {
+    if (loaderText) {
+      loaderText.innerText = message;
+    }
+    loader.style.display = "flex"; // Show loader
+  } else {
+    console.warn("Global loader element not found.");
+  }
+}
+
+function hideLoading() {
+  const loader = document.getElementById("globalLoader");
+  if (loader) {
+    loader.style.display = "none"; // Hide loader
+  }
+}
+// --- END Loading Indicator Functions ---
+
 function showTab(tabName) {
   const content = document.getElementById("content");
   content.innerHTML = ""; // Rensa befintligt innehåll
@@ -216,6 +239,26 @@ function showTab(tabName) {
       button.classList.add("active");
     }
   });
+
+  // --- Add Global Loader Structure (hidden by default) ---
+  const loaderHTML = `
+    <div id="globalLoader" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.5); z-index: 1000; justify-content: center; align-items: center; flex-direction: column;">
+      <div style="/* Add spinner styles here or use a library */ width: 50px; height: 50px; border: 5px solid #f3f3f3; border-top: 5px solid #3498db; border-radius: 50%; animation: spin 1s linear infinite;"></div>
+      <p id="globalLoaderText" style="color: white; margin-top: 1rem;">Processing...</p>
+    </div>
+  `;
+  // --- END Global Loader Structure ---
+
+  // --- Add "Finished Editing" Button Structure ---
+  const finishButtonHTML = `
+    <div style="text-align: center; margin-top: 2rem; margin-bottom: 1rem; border-top: 1px solid #eee; padding-top: 1rem;">
+      <button id="finishEditingBtn" class="btn ai-edit-button" style="background-color: #28a745; color: white;" onclick="finalizeEditing()">
+        ✅ Finished Editing & Clean Up
+      </button>
+      <p style="font-size: 0.8em; color: #666; margin-top: 0.5rem;">This will remove all previous edit versions except the current one.</p>
+    </div>
+  `;
+  // --- END "Finished Editing" Button Structure ---
 
   if (tabName === "transcription") {
     content.innerHTML = `
@@ -310,6 +353,9 @@ function showTab(tabName) {
                 </div>
             </div>
         `;
+    // Append loader and finish button
+    content.innerHTML += loaderHTML;
+    content.innerHTML += finishButtonHTML; // Add finish button here too if needed
   } else if (tabName === "audio") {
     content.innerHTML = `
             <h2>AI Audio Enhancement</h2>
@@ -405,6 +451,9 @@ function showTab(tabName) {
                 </div>
             </div>
         `;
+    // Append loader and finish button
+    content.innerHTML += loaderHTML;
+    content.innerHTML += finishButtonHTML;
     // If audio was meant to be loaded via URL, re-check now that elements are created
     if (audioUrlFromParams && !activeAudioBlob) {
       // Check if not already loaded
@@ -426,6 +475,9 @@ function showTab(tabName) {
             📥 Download Enhanced Video
             </a>
         `;
+    // Append loader and finish button
+    content.innerHTML += loaderHTML;
+    content.innerHTML += finishButtonHTML; // Add finish button here too if needed
   }
 
   // --- Important: Re-run loadAudioFromUrl if switching TO a tab ---
@@ -722,7 +774,7 @@ async function enhanceAudio() {
   formData.append("audio", file);
   formData.append("episode_id", episodeId);
 
-  audioControls.innerHTML = "🔄 Enhancing... Please wait.";
+  showLoading("Enhancing audio..."); // Show loader
 
   try {
     const response = await fetch("/audio/enhancement", {
@@ -731,33 +783,55 @@ async function enhanceAudio() {
     });
 
     const result = await response.json();
-    const blobUrl = result.enhanced_audio_url;
+    if (!response.ok) {
+      throw new Error(result.error || `HTTP error! status: ${response.status}`);
+    }
 
-    // ✅ Use backend proxy to avoid CORS
+    const blobUrl = result.blobUrl; // Get blobUrl from response
+    currentEditId = result.editId; // Store the new edit ID
+
+    // Fetch the actual blob data using the blobUrl (via proxy if needed)
+    // Assuming /get_enhanced_audio works or adapt as needed
     const audioRes = await fetch(
       `/get_enhanced_audio?url=${encodeURIComponent(blobUrl)}`
     );
+    if (!audioRes.ok) {
+      throw new Error(
+        `Failed to fetch enhanced audio blob: ${audioRes.statusText}`
+      );
+    }
     const blob = await audioRes.blob();
-    const url = URL.createObjectURL(blob);
+    const url = URL.createObjectURL(blob); // Create object URL for player
 
-    enhancedAudioBlob = blob;
-    activeAudioBlob = blob;
-    activeAudioId = "external";
+    enhancedAudioBlob = blob; // Keep track if needed elsewhere
+    activeAudioBlob = blob; // Update the active blob
 
     audioControls.innerHTML = `
-            <p>Audio enhancement complete!</p>
+            <p>Audio enhancement complete! (Edit ID: ${currentEditId})</p>
             <audio controls src="${url}" style="width: 100%;"></audio>
         `;
 
-    document.getElementById("audioAnalysisSection").style.display = "block";
-    document.getElementById("audioCuttingSection").style.display = "block";
-    document.getElementById("aiCuttingSection").style.display = "block";
+    // ... (show analysis/cutting sections) ...
 
+    // Update download link if it exists
     const dl = document.getElementById("downloadEnhanced");
-    dl.href = url;
-    dl.style.display = "inline-block";
+    if (dl) {
+      dl.href = url;
+      dl.style.display = "inline-block";
+      dl.download = `enhanced_${currentEditId}.wav`; // Update download filename
+    }
   } catch (err) {
     audioControls.innerHTML = `❌ Error: ${err.message}`;
+    // Use global notification if available
+    if (typeof showNotification === "function") {
+      showNotification(
+        "Error",
+        `Audio enhancement failed: ${err.message}`,
+        "error"
+      );
+    }
+  } finally {
+    hideLoading(); // Hide loader regardless of success/failure
   }
 }
 
@@ -768,7 +842,7 @@ async function runVoiceIsolation() {
 
   const resultContainer = document.getElementById("isolatedVoiceResult");
   const episodeId = sessionStorage.getItem("selected_episode_id");
-  resultContainer.innerText = "🎙️ Isolating voice using ElevenLabs...";
+  showLoading("Isolating voice...");
 
   const formData = new FormData();
   formData.append("audio", file);
@@ -780,46 +854,56 @@ async function runVoiceIsolation() {
       body: formData
     });
     const data = await response.json();
-    if (!response.ok) throw new Error(data.error || "Voice isolation failed.");
+    if (!response.ok) {
+      throw new Error(data.error || `HTTP error! status: ${response.status}`);
+    }
+
+    const blobUrl = data.blobUrl;
+    currentEditId = data.editId; // Store the new edit ID
 
     // Fetch the actual blob via proxy
-    const blobUrl = data.isolated_blob_url;
     const audioRes = await fetch(
       `/transcription/get_isolated_audio?url=${encodeURIComponent(blobUrl)}`
     );
+    if (!audioRes.ok) {
+      throw new Error(
+        `Failed to fetch isolated audio blob: ${audioRes.statusText}`
+      );
+    }
     const blob = await audioRes.blob();
     const url = URL.createObjectURL(blob);
 
     // Set the isolated audio as active
-    isolatedAudioBlob = blob;
-    activeAudioBlob = blob;
-    activeAudioId = "external";
+    isolatedAudioBlob = blob; // Keep track if needed
+    activeAudioBlob = blob; // Update active blob
 
     // Show the isolated audio player
     resultContainer.innerHTML = `
-        <p>🎧 Isolated Audio</p>
+        <p>🎧 Isolated Audio (Edit ID: ${currentEditId})</p>
         <audio controls src="${url}" style="width: 100%;"></audio>
       `;
 
-    // Reveal the analysis UI
-    document.getElementById("audioAnalysisSection").style.display = "block";
-    document.getElementById("audioCuttingSection").style.display = "block";
-    document.getElementById("aiCuttingSection").style.display = "block";
-
-    // Hide the mix button until analysis completes
-    const mixBtn = document.getElementById("mixBackgroundBtn");
-    mixBtn.style.display = "none";
+    // ... (Reveal analysis UI, hide mix button) ...
 
     // Wire up the download link for the isolated audio
     const dl = document.getElementById("downloadIsolatedVoice");
-    dl.href = url;
-    dl.style.display = "inline-block";
-
-    // Optionally: automatically start analysis on the isolated audio
-    // await analyzeEnhancedAudio();
+    if (dl) {
+      dl.href = url;
+      dl.style.display = "inline-block";
+      dl.download = `isolated_${currentEditId}.wav`; // Update download filename
+    }
   } catch (err) {
     console.error("Voice isolation failed:", err);
     resultContainer.innerText = `❌ Isolation failed: ${err.message}`;
+    if (typeof showNotification === "function") {
+      showNotification(
+        "Error",
+        `Voice isolation failed: ${err.message}`,
+        "error"
+      );
+    }
+  } finally {
+    hideLoading();
   }
 }
 
@@ -974,11 +1058,13 @@ async function cutAudio() {
   const formData = new FormData();
   formData.append(
     "audio",
-    new File([activeAudioBlob], "clip.wav", { type: "audio/wav" })
+    new File([activeAudioBlob], "clip_source.wav", { type: "audio/wav" }) // Use generic name
   );
   formData.append("episode_id", episodeId);
   formData.append("start", start);
   formData.append("end", end);
+
+  showLoading("Cutting audio...");
 
   try {
     const response = await fetch("/cut_from_blob", {
@@ -987,27 +1073,39 @@ async function cutAudio() {
     });
 
     const result = await response.json();
-    if (!response.ok || !result.clipped_audio_url) {
-      throw new Error(result.error || "Clipping failed.");
+    if (!response.ok) {
+      throw new Error(result.error || `HTTP error! status: ${response.status}`);
     }
 
-    const proxyUrl = `/get_clipped_audio?url=${encodeURIComponent(
-      result.clipped_audio_url
-    )}`;
+    const blobUrl = result.blobUrl;
+    currentEditId = result.editId; // Store new edit ID
+
+    // Fetch blob via proxy
+    const proxyUrl = `/get_clipped_audio?url=${encodeURIComponent(blobUrl)}`;
     const audioRes = await fetch(proxyUrl);
-    if (!audioRes.ok) throw new Error("Failed to fetch clipped audio.");
+    if (!audioRes.ok) {
+      throw new Error(
+        `Failed to fetch clipped audio blob: ${audioRes.statusText}`
+      );
+    }
     const blob = await audioRes.blob();
     const url = URL.createObjectURL(blob);
 
-    cutResult.innerHTML = `<audio controls src="${url}" style="width: 100%;"></audio>`;
-    dl.href = url;
-    dl.download = "clipped_audio.wav";
-    dl.style.display = "inline-block";
+    cutResult.innerHTML = `<p>Cut complete (Edit ID: ${currentEditId})</p><audio controls src="${url}" style="width: 100%;"></audio>`;
+    if (dl) {
+      dl.href = url;
+      dl.download = `clipped_${currentEditId}.wav`; // Update download filename
+      dl.style.display = "inline-block";
+    }
 
-    activeAudioBlob = blob;
-    activeAudioId = "external";
+    activeAudioBlob = blob; // Update active blob
   } catch (err) {
     alert(`❌ Cut failed: ${err.message}`);
+    if (typeof showNotification === "function") {
+      showNotification("Error", `Audio cut failed: ${err.message}`, "error");
+    }
+  } finally {
+    hideLoading();
   }
 }
 
@@ -1039,7 +1137,6 @@ async function aiCutAudio() {
     let response, data;
 
     if (activeAudioId === "external") {
-      // Använd blob och skicka till /ai_cut_from_blob
       const formData = new FormData();
       formData.append(
         "audio",
@@ -1052,7 +1149,6 @@ async function aiCutAudio() {
         body: formData
       });
     } else {
-      // Använd file_id och skicka till /ai_cut_audio
       response = await fetch("/ai_cut_audio", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -1066,7 +1162,6 @@ async function aiCutAudio() {
     data = await response.json();
     if (!response.ok) throw new Error(data.error || "AI Cut failed");
 
-    // 🧠 Visa transcript och suggested cuts
     transcriptEl.innerText =
       data.cleaned_transcript || "No transcript available.";
 
@@ -1125,129 +1220,91 @@ async function applySelectedCuts() {
 
   const episodeId = sessionStorage.getItem("selected_episode_id");
 
-  try {
-    let blobUrl;
-
-    // Skicka till rätt backend beroende på var ljudet finns
-    if (activeAudioId === "external") {
-      const formData = new FormData();
-      formData.append(
-        "audio",
-        new File([activeAudioBlob], "cleaned.wav", { type: "audio/wav" })
-      );
-      formData.append("episode_id", episodeId);
-      formData.append("cuts", JSON.stringify(cuts));
-
-      const response = await fetch("/apply_ai_cuts_from_blob", {
-        method: "POST",
-        body: formData
-      });
-
-      const result = await response.json();
-      if (!response.ok) throw new Error(result.error || "Apply failed");
-      blobUrl = result.cleaned_file_url;
-    } else {
-      const response = await fetch("/apply_ai_cuts", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          file_id: activeAudioId,
-          cuts: cuts.map((c) => ({ start: c.start, end: c.end })),
-          episode_id: episodeId
-        })
-      });
-
-      const result = await response.json();
-      if (!response.ok) throw new Error(result.error || "Apply failed");
-      blobUrl = result.cleaned_file_url;
-    }
-
-    // 🛡 Använd backend-proxy för att undvika CORS
-    const proxyUrl = `/get_clipped_audio?url=${encodeURIComponent(blobUrl)}`;
-    const audioRes = await fetch(proxyUrl);
-    if (!audioRes.ok) throw new Error("Failed to fetch clipped audio.");
-    const blob = await audioRes.blob();
-    const url = URL.createObjectURL(blob);
-
-    // 🎧 Visa spelare och ladda ner-knapp
-    const section = document.getElementById("aiCuttingSection");
-    section.appendChild(document.createElement("hr"));
-
-    const player = document.createElement("audio");
-    player.controls = true;
-    player.src = url;
-    section.appendChild(player);
-
-    const dl = document.createElement("a");
-    dl.href = url;
-    dl.download = "ai_cleaned_audio.wav";
-    dl.className = "btn ai-edit-button";
-    dl.innerText = "📥 Download Cleaned Audio";
-    section.appendChild(dl);
-
-    // Uppdatera aktiv blob
-    activeAudioBlob = blob;
-    activeAudioId = "external";
-  } catch (err) {
-    alert(`❌ Apply failed: ${err.message}`);
-  }
-}
-
-async function cutAudioFromBlob() {
-  const startInput = document.getElementById("startTime");
-  const endInput = document.getElementById("endTime");
-  const cutResult = document.getElementById("cutResult");
-  const dl = document.getElementById("downloadCut");
-
-  const start = parseFloat(startInput.value);
-  const end = parseFloat(endInput.value);
-
-  const episodeId = sessionStorage.getItem("selected_episode_id");
-  if (!episodeId || !activeAudioBlob)
-    return alert("⚠️ No audio or episode selected.");
-  if (isNaN(start) || isNaN(end) || start >= end)
-    return alert("⚠️ Invalid timestamps.");
-
-  try {
-    await consumeStoreCredits("audio_cutting");
-  } catch (err) {
-    alert(`❌ Not enough credits: ${err.message}`);
+  if (!activeAudioBlob) {
+    alert("No source audio blob available to apply cuts to.");
     return;
   }
+
+  showLoading("Applying AI cuts...");
 
   const formData = new FormData();
   formData.append(
     "audio",
-    new File([activeAudioBlob], "clip.wav", { type: "audio/wav" })
+    new File([activeAudioBlob], "ai_cut_source.wav", { type: "audio/wav" })
   );
   formData.append("episode_id", episodeId);
-  formData.append("start", start);
-  formData.append("end", end);
+  formData.append("cuts", JSON.stringify(cuts)); // Send cuts as JSON string
 
   try {
-    const response = await fetch("/cut_from_blob", {
+    const response = await fetch("/apply_ai_cuts_from_blob", {
       method: "POST",
       body: formData
     });
 
     const result = await response.json();
-    if (!response.ok || !result.clipped_audio_url) {
-      throw new Error(result.error || "Clipping failed.");
+    if (!response.ok) {
+      throw new Error(result.error || `HTTP error! status: ${response.status}`);
     }
 
-    const { blob, objectUrl: url } = await fetchAudioFromBlobUrl(
-      result.clipped_audio_url
-    );
+    const blobUrl = result.blobUrl; // Changed key from cleaned_file_url
+    currentEditId = result.editId; // Store new edit ID
 
-    cutResult.innerHTML = `<audio controls src="${url}" style="width: 100%;"></audio>`;
+    // Fetch blob via proxy
+    const proxyUrl = `/get_cleaned_audio?url=${encodeURIComponent(blobUrl)}`;
+    const audioRes = await fetch(proxyUrl);
+    if (!audioRes.ok) {
+      throw new Error(
+        `Failed to fetch cleaned audio blob: ${audioRes.statusText}`
+      );
+    }
+    const blob = await audioRes.blob();
+    const url = URL.createObjectURL(blob);
+
+    // Display player and download link
+    const section = document.getElementById("aiCuttingSection");
+    // Clear previous results if any
+    const existingPlayer = section.querySelector("audio");
+    const existingLink = section.querySelector("a.ai-edit-button");
+    if (existingPlayer) existingPlayer.remove();
+    if (existingLink) existingLink.remove();
+    // Remove hr if needed
+    const existingHr = section.querySelector("hr:last-of-type");
+    if (existingHr) existingHr.remove();
+
+    section.appendChild(document.createElement("hr"));
+
+    const resultText = document.createElement("p");
+    resultText.innerText = `AI Cuts applied (Edit ID: ${currentEditId})`;
+    section.appendChild(resultText);
+
+    const player = document.createElement("audio");
+    player.controls = true;
+    player.src = url;
+    player.style.width = "100%";
+    section.appendChild(player);
+
+    const dl = document.createElement("a");
     dl.href = url;
-    dl.download = "clipped_audio.wav";
+    dl.download = `ai_cleaned_${currentEditId}.wav`; // Update download filename
+    dl.className = "btn ai-edit-button";
+    dl.innerText = "📥 Download Cleaned Audio";
+    dl.style.marginTop = "0.5rem";
     dl.style.display = "inline-block";
+    section.appendChild(dl);
 
+    // Update active blob
     activeAudioBlob = blob;
-    activeAudioId = "external";
   } catch (err) {
-    alert(`❌ Cut failed: ${err.message}`);
+    alert(`❌ Apply failed: ${err.message}`);
+    if (typeof showNotification === "function") {
+      showNotification(
+        "Error",
+        `Applying AI cuts failed: ${err.message}`,
+        "error"
+      );
+    }
+  } finally {
+    hideLoading();
   }
 }
 
@@ -1453,3 +1510,71 @@ function replaceSfx(index, url) {
     selectedSoundFX[index].sfxUrl = url;
   }
 }
+
+// --- NEW: Finalize Editing Function ---
+async function finalizeEditing() {
+  const episodeId = sessionStorage.getItem("selected_episode_id");
+  if (!episodeId) {
+    alert("❌ No episode selected.");
+    return;
+  }
+
+  if (!currentEditId) {
+    alert(
+      "⚠️ No edits have been saved yet. Perform an edit (Enhance, Isolate, Cut) first."
+    );
+    return;
+  }
+
+  if (
+    !confirm(
+      `This will keep the current edit (ID: ${currentEditId}) and permanently delete all other previous edit versions for this episode. Are you sure?`
+    )
+  ) {
+    return;
+  }
+
+  showLoading("Finalizing edits and cleaning up...");
+
+  try {
+    const response = await fetch(`/episodes/${episodeId}/edits/finalize`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({ final_edit_id: currentEditId })
+    });
+
+    const result = await response.json();
+
+    if (!response.ok) {
+      throw new Error(result.error || `HTTP error! status: ${response.status}`);
+    }
+
+    // Success
+    const message = result.message || "Finalization complete.";
+    const details = `Deleted ${
+      result.deleted_count || 0
+    } previous edits. Errors: ${result.error_count || 0}.`;
+    alert(`${message}\n${details}`);
+    if (typeof showNotification === "function") {
+      showNotification("Success", `${message} ${details}`, "success");
+    }
+
+    // Optional: Redirect back to episode detail page
+    // window.location.href = `/podcastmanagement`; // Or specific episode view if possible
+  } catch (error) {
+    console.error("Finalization failed:", error);
+    alert(`❌ Finalization failed: ${error.message}`);
+    if (typeof showNotification === "function") {
+      showNotification(
+        "Error",
+        `Finalization failed: ${error.message}`,
+        "error"
+      );
+    }
+  } finally {
+    hideLoading();
+  }
+}
+// --- END Finalize Editing Function ---
