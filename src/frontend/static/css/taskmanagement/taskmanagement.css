@@ -18,7 +18,8 @@
   font-size: 16px;
   cursor: pointer;
   margin-top:28rem;
-  margin-left: 92%;
+  margin-left: 90%;
+  position:absolute;
   border-radius: 18px;
   border: none;
 }
@@ -27,36 +28,143 @@
   background-color: rgb(238, 146, 113);
 }
 
-.bild15, .bild16, .bild17, .bild18, .bild19{
-  position: absolute; /* Fixerar bilderna på en fast plats */
-  max-width: 30%;  /* Bilderna blir mindre när skärmen minskar */
-  height: auto;    /* Behåller bildens proportioner */
-  z-index: 9999;   /* Säkerställer att bilderna är ovanpå andra element */
+
+
+.bild15, .bild16, .bild17, .bild18, .bild19 {
+  position: absolute;
+  width: auto;  /* Tillåt bredden att justeras för att passa innehållet */
+  height: auto;
+  max-width: 40%; /* Gör bubblorna lite större */
+  z-index: 9999;
+  transition: all 0.3s ease;
 }
 
 .bild15 {
-  bottom: 52%;        /* Justera avståndet från toppen (placera bilden högre upp) */
-  left: 40%;       /* Placera bilden 10% från vänster */
+  bottom: 43%;
+  left: 40%;
 }
 
 .bild16 {
-  bottom: 69%; 
-  right:  80%;        /* Placera bilden 40% från vänster */
+  bottom: 59%;
+  right: 70%;
 }
 
-.bild17{
-  bottom: 75%; 
-  left: 21%;       /* Placera bilden 20% från vänster */
+.bild17 {
+  bottom: 68%;
+  left: 15%;
 }
 
 .bild18 {
-  bottom: 75%;        /* Justera avståndet från toppen */
-  left:35%;       /* Placera bilden 20% från vänster */
+  bottom: 68%;
+  left: 29%;
 }
+
 .bild19 {
-  bottom: 75%;        /* Justera avståndet från toppen */
-  left: 48%;       /* Placera bilden 20% från vänster */
+  bottom: 68%;
+  left: 42%;
 }
+
+/* Gör så att bubblorna är på separata rader och blir mindre på skärmar */
+@media (max-width: 768px) {
+  .bild15{
+    max-width: 60%;  /* Större på tablets */
+    left: 80%; /* Centrerar bubblorna */
+    transform: translateX(-50%); /* Justera för centrerad position */
+    bottom: 50%;  /* Justera placeringen på mindre skärmar */
+  }
+
+  .bild16{
+    max-width: 60%;  /* Större på tablets */
+    left: 10%; /* Centrerar bubblorna */
+    transform: translateX(-50%); /* Justera för centrerad position */
+    bottom: 50%;  /* Justera placeringen på mindre skärmar */
+  }
+  .bild17{
+    max-width: 60%;  /* Större på tablets */
+    left: 20%; /* Centrerar bubblorna */
+    transform: translateX(-50%); /* Justera för centrerad position */
+    bottom: 76%;  /* Justera placeringen på mindre skärmar */
+  }
+  .bild18{
+    max-width: 60%;  /* Större på tablets */
+    left: 60%; /* Centrerar bubblorna */
+    transform: translateX(-50%); /* Justera för centrerad position */
+    bottom: 70%;  /* Justera placeringen på mindre skärmar */
+  }
+  .bild19{
+    max-width: 60%;  /* Större på tablets */
+    left: 20%; /* Centrerar bubblorna */
+    transform: translateX(-50%); /* Justera för centrerad position */
+    bottom: 64%;  /* Justera placeringen på mindre skärmar */
+  }
+
+
+
+}
+
+@media (max-width: 480px) {
+  .bild15 {
+    max-width: 75%;  /* Ännu större på telefoner */
+    left: 74%;
+    transform: translateX(-50%); 
+    bottom: 50%;  /* Justera för mindre skärmar */
+  }
+
+ .bild16{
+  max-width: 75%;  /* Ännu större på telefoner */
+  left: 11%;
+  transform: translateX(-50%); 
+  bottom: 50%;  /* Justera för mindre skärmar */
+}
+
+ .bild17{
+  max-width: 75%;  /* Ännu större på telefoner */
+  left: 20%;
+  transform: translateX(-50%); 
+  bottom: 78%;  /* Justera för mindre skärmar */
+}
+
+ .bild18{
+  max-width: 75%;  /* Ännu större på telefoner */
+  left: 50%;
+  transform: translateX(-50%); 
+  bottom: 72%;  /* Justera för mindre skärmar */
+}
+
+ .bild19{
+  max-width: 75%;  /* Ännu större på telefoner */
+  left: 20%;
+  transform: translateX(-50%); 
+  bottom: 66%;  /* Justera för mindre skärmar */
+}
+
+
+
+
+
+
+
+
+
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 /* Back Arrow */
 .back-arrow {
@@ -594,8 +702,25 @@
     padding: var(--spacing-md);
     width: 95%;
   }
+
+.help-knapp {
+  background-color: orange;
+  color: white;
+  padding: 15px 32px;
+  text-align: center;
+  text-decoration: none;
+  display: inline-block;
+  font-size: 16px;
+  cursor: pointer;
+  margin-top:22rem;
+  margin-left: 80%;
+  position:absolute;
+  border-radius: 18px;
+  border: none;
+
 }
 
 .hidden {
   display: none;
+}
 }

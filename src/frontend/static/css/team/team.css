@@ -23,22 +23,24 @@
 
 .help-knapp:hover {
   background-color: rgb(238, 146, 113);
+
 }
 .bild3, .bild4 {
-  position: absolute; /* Fixerar bilderna på en fast plats */
-  max-width: 60%;  /* Bilderna blir mindre när skärmen minskar */
-  height: auto;    /* Behåller bildens proportioner */
+  position:absolute; /* Fixerar bilderna på en fast plats */
+  width: 50%;  /* Bilderna blir mindre när skärmen minskar */
   z-index: 9999;   /* Säkerställer att bilderna är ovanpå andra element */
 }
 
 .bild3 {
-  bottom: 35%;        /* Justera avståndet från toppen (placera bilden högre upp) */
-  right: 63%;       /* Placera bilden 10% från vänster */
+  position:fixed;
+  bottom: 40%;        /* Justera avståndet från toppen (placera bilden högre upp) */
+  right:67%;       /* Placera bilden 10% från vänster */
+
 }
 
 .bild4 {
-  bottom: 30%;        /* Justera avståndet från toppen */
-  right: 48%;       /* Placera bilden 40% från vänster */
+  bottom: 25%;        /* Justera avståndet från toppen */
+  right: 52%;       /* Placera bilden 40% från vänster */
 }
 
 
