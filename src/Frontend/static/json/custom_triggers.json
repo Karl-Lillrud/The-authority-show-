@@ -1,16 +1,1 @@
-{
-    "13e89ef9-5d34-458f-af08-2e28c710a9a9": {
-        "booking": {
-            "status": "Not Recorded",
-            "time_check": 24
-        },
-        "preparation": {
-            "status": "Not Recorded",
-            "time_check": 48
-        },
-        "thank_you": {
-            "status": "Published",
-            "time_check": 48
-        }
-    }
-}
+{}

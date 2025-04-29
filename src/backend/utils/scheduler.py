@@ -228,14 +228,15 @@ def check_and_send_emails():
 def start_scheduler(app):
     """Start the scheduler."""
     scheduler = BackgroundScheduler()
-    # Run the check_and_send_emails function every 30 seconds
+    # Run the check_and_send_emails function every day at 17:00
     scheduler.add_job(
         lambda: app.app_context().push() or check_and_send_emails(),
-        "interval",
-        seconds=30
+        "cron",
+        hour=17,
+        minute=0
     )
     scheduler.start()
-    logger.info("Scheduler started. Running checks for emails every 30 seconds for testing.")
+    logger.info("Scheduler started. Running checks for emails every day at 17:00.")
 
 if __name__ == "__main__":
     from app import app 
