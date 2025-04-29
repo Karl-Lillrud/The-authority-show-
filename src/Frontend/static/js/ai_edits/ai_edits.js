@@ -521,44 +521,39 @@ async function convertIntroOutroToSpeech() {
 }
 
 async function enhanceAudio() {
+    const containerId = "audioControls";
+    const container = document.getElementById(containerId);
+
     const input = document.getElementById('audioUploader');
-    const audioControls = document.getElementById('audioControls');
     const file = input.files[0];
     if (!file) return alert("Upload an audio file first.");
 
     const episodeId = sessionStorage.getItem("selected_episode_id");
     if (!episodeId) return alert("No episode selected.");
 
+    showSpinner(containerId);
+
     try {
         await consumeStoreCredits("audio_enhancment");
-    } catch (err) {
-        audioControls.innerHTML = `Not enough credits: ${err.message}`;
-        return;
-    }
 
-    const formData = new FormData();
-    formData.append("audio", file);
-    formData.append("episode_id", episodeId);
+        const formData = new FormData();
+        formData.append("audio", file);
+        formData.append("episode_id", episodeId);
 
-    audioControls.innerHTML = "Enhancing... Please wait.";
-
-    try {
         const response = await fetch("/audio/enhancement", {
             method: "POST",
             body: formData
         });
 
         const result = await response.json();
-        
+
         if (!response.ok) {
-            // Show the backend error message (like "Audio too long")
-            audioControls.innerHTML = `Error: ${result.error || response.statusText}`;
+            container.innerHTML = `Error: ${result.error || response.statusText}`;
             return;
         }
 
         const blobUrl = result.enhanced_audio_url;
 
-        // Use backend proxy to avoid CORS
         const audioRes = await fetch(`/get_enhanced_audio?url=${encodeURIComponent(blobUrl)}`);
         const blob = await audioRes.blob();
         const url = URL.createObjectURL(blob);
@@ -567,7 +562,7 @@ async function enhanceAudio() {
         activeAudioBlob = blob;
         activeAudioId = "external";
 
-        audioControls.innerHTML = `
+        container.innerHTML = `
             <p>Audio enhancement complete!</p>
             <audio controls src="${url}" style="width: 100%;"></audio>
         `;
@@ -580,10 +575,9 @@ async function enhanceAudio() {
         dl.href = url;
         dl.style.display = "inline-block";
     } catch (err) {
-        audioControls.innerHTML = `Error: ${err.message}`;
+        container.innerHTML = `Error: ${err.message}`;
     }
 }
-
 
 
 async function runVoiceIsolation() {
@@ -654,8 +648,6 @@ async function runVoiceIsolation() {
       resultContainer.innerText = `Isolation failed: ${err.message}`;
     }
   }
-
-
 
 async function analyzeEnhancedAudio() {
     const resultEl = document.getElementById("analysisResults");
