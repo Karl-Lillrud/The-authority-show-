@@ -351,6 +351,9 @@ async function generateShowNotes() {
 
 
 async function generateQuotes() {
+    const resultEl = document.getElementById("quotesResult");
+    showSpinner("quotesResult");
+
     try {
         await consumeStoreCredits("ai_quotes");
 
@@ -359,14 +362,15 @@ async function generateQuotes() {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ transcript: rawTranscript })
         });
-
         const data = await res.json();
-        document.getElementById("quotesResult").innerText = data.quotes || "No quotes.";
+        resultEl.innerText = data.quotes || "No quotes.";
     } catch (err) {
-        document.getElementById("quotesResult").innerText =
-            "Not enough credits: " + err.message;
+        resultEl.innerText = "Not enough credits: " + err.message;
+    } finally {
+        hideSpinner("quotesResult");
     }
 }
+
 
 async function generateQuoteImages() {
     const quotes = document.getElementById("quotesResult").innerText;
