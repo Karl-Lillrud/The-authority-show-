@@ -5,6 +5,14 @@ body {
   background-color: var(--index-background-light);
 }
 
+h1 {
+  font-size: 46px;
+}
+
+h2 {
+  font-size: 42px;
+}
+
 /* * * * * * * * * * * * */
 /*  Index Header Styling */
 /* * * * * * * * * * * * */
@@ -81,9 +89,48 @@ main {
 }
 
 main section {
-  min-height: 80vh;
+  min-height: 90vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
 }
 
 main section:first-of-type {
   padding-top: 74px;
+}
+
+/* Banner Section */
+
+/* About Section */
+
+/* Features Section */
+
+/* Get Started Section */
+section#index-get-started {
+  background-color: white;
+  min-height: 50vh;
+  justify-content: center;
+}
+
+section#index-get-started h1 {
+  color: var(--index-highlight-color);
+  margin-bottom: 30px;
+}
+
+section#index-get-started p {
+  font-size: 21px;
+  color: black;
+  line-height: 1.7;
+}
+
+section#index-get-started button {
+  font-size: 21px;
+  color: white;
+  text-transform: uppercase;
+  background-color: var(--index-highlight-color);
+  font-size: 16px;
+  border: none;
+  border-radius: 12px;
+  padding: 15px 40px;
+  margin-top: 40px;
 }
