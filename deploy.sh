@@ -16,8 +16,7 @@ fi
 
 # Check if ACR credentials are set
 if [ -z "${ACR_USERNAME:-}" ] || [ -z "${ACR_PASSWORD:-}" ]; then
-    echo "❌ ERROR: ACR_USERNAME or ACR_PASSWORD is not set in the .env file."
-    exit 1
+    echo "❌ WARNING: ACR_USERNAME or ACR_PASSWORD are not set. Using Managed Identity for authentication."
 fi
 
 # Define variables
@@ -105,15 +104,26 @@ else
     echo "✅ Web App '$WEBAPP_NAME' already exists."
 fi
 
-# Step 11: Configure Web App with container credentials
-echo "⚙️ Configuring Web App to pull from ACR..."
+# Step 11: Enable Managed Identity for Web App
+echo "🔑 Enabling Managed Identity for Web App..."
+az webapp identity assign --name $WEBAPP_NAME --resource-group $RESOURCE_GROUP
+
+# Step 12: Assign AcrPull role to Managed Identity
+echo "🔒 Assigning AcrPull role to Web App's Managed Identity..."
+WEBAPP_ID=$(az webapp identity show --name $WEBAPP_NAME --resource-group $RESOURCE_GROUP --query principalId -o tsv)
+az role assignment create --assignee $WEBAPP_ID --role AcrPull --scope /subscriptions/$(az account show --query id -o tsv)/resourceGroups/$RESOURCE_GROUP/providers/Microsoft.ContainerRegistry/registries/$REGISTRY_NAME
+
+# Step 13: Configure Web App to pull from ACR with Managed Identity
+echo "⚙️ Configuring Web App to pull from ACR using Managed Identity..."
 az webapp config container set --name $WEBAPP_NAME --resource-group $RESOURCE_GROUP \
     --container-registry-url https://$REGISTRY_NAME.azurecr.io \
-    --container-image-name $REGISTRY_NAME.azurecr.io/$IMAGE_NAME \
-    --container-registry-user "$ACR_USERNAME" \
-    --container-registry-password "$ACR_PASSWORD"
+    --container-image-name $REGISTRY_NAME.azurecr.io/$IMAGE_NAME
 
-# Step 12: Final status check
+# Step 14: Restart Web App to trigger pull from ACR
+echo "🔄 Restarting Web App to trigger image pull from ACR..."
+az webapp restart --name $WEBAPP_NAME --resource-group $RESOURCE_GROUP
+
+# Step 15: Final status check
 echo "📡 Checking Web App status..."
 az webapp show --name $WEBAPP_NAME --resource-group $RESOURCE_GROUP --output table
 
