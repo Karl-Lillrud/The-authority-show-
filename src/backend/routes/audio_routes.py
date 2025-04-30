@@ -177,7 +177,7 @@ def apply_ai_cuts():
             user_id=g.user_id,
             edit_type="ai_cut_cleaned",
             clip_url=blob_url,
-            clipName=f"cleaned_{filename}",
+            clipName=f"cleaned_{cleaned_filename}",
             metadata={
                 "edit_type": "ai_cut_cleaned"
             }
