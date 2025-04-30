@@ -40,6 +40,7 @@ from backend.routes.comment import comment_bp  # Import the comment blueprint
 from colorama import Fore, Style, init  # Import colorama for styled logs
 from backend.routes.activity import activity_bp
 from backend.routes.stripe_config import stripe_config_bp  # Import the renamed config blueprint
+from backend.routes.edit_routes import edit_bp
 
 if os.getenv("SKIP_VENV_UPDATE", "false").lower() not in ("true", "1", "yes"):
     venvupdate.update_venv_and_requirements()
@@ -104,7 +105,7 @@ app.register_blueprint(landingpage_bp)
 app.register_blueprint(comment_bp)
 app.register_blueprint(activity_bp)  # Ensure this registration exists
 app.register_blueprint(stripe_config_bp)  # Ensure this registration exists
-
+app.register_blueprint(edit_bp)
 # Set the application environment (defaults to production)
 APP_ENV = os.getenv("APP_ENV", "production")
 
