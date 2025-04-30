@@ -39,20 +39,23 @@ def download_button_text(label, text, filename, key_prefix=""):
 
 def translate_text(text: str, target_language: str) -> str:
     prompt = (
-        f"Detect the original language of the following transcript, "
-        f"then translate it to {target_language}:\n\n{text}"
-        )
+        f"Translate the following transcript to {target_language}. "
+        f"**ONLY** output the translated text—no commentary, no explanations, "
+        f"nothing else:\n\n{text}"
+    )
     retries = 3
     for attempt in range(retries):
         try:
             response = client.chat.completions.create(
                 model="gpt-4",
                 messages=[
-                    {"role": "system", "content": "You are a professional translator."},
+                    {"role": "system", "content": "You are a professional translator. Only output the translated text."},
                     {"role": "user", "content": prompt}
                 ]
             )
-            return response.choices[0].message.content.strip()
+            # Hämta råa texten
+            result = response.choices[0].message.content.strip()
+            return result
         except Exception as e:
             logger.warning(f"Retry {attempt+1}/{retries} failed: {e}")
             time.sleep(1)
