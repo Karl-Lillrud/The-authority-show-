@@ -111,7 +111,9 @@ az webapp identity assign --name $WEBAPP_NAME --resource-group $RESOURCE_GROUP
 # Step 12: Assign AcrPull role to Managed Identity
 echo "🔒 Assigning AcrPull role to Web App's Managed Identity..."
 WEBAPP_ID=$(az webapp identity show --name $WEBAPP_NAME --resource-group $RESOURCE_GROUP --query principalId -o tsv)
-az role assignment create --assignee $WEBAPP_ID --role AcrPull --scope /subscriptions/$(az account show --query id -o tsv)/resourceGroups/$RESOURCE_GROUP/providers/Microsoft.ContainerRegistry/registries/$REGISTRY_NAME
+SUBSCRIPTION_ID=$(az account show --query id -o tsv)  # Fetch the current subscription ID
+
+az role assignment create --assignee $WEBAPP_ID --role AcrPull --scope /subscriptions/$SUBSCRIPTION_ID/resourceGroups/$RESOURCE_GROUP/providers/Microsoft.ContainerRegistry/registries/$REGISTRY_NAME
 
 # Step 13: Configure Web App to pull from ACR with Managed Identity
 echo "⚙️ Configuring Web App to pull from ACR using Managed Identity..."
