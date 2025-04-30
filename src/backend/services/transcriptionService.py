@@ -30,7 +30,7 @@ class TranscriptionService:
                 timestamps_granularity="word"
             )
         except Exception as e:
-            logger.error(f"❌ ElevenLabs transcription failed: {str(e)}")
+            logger.error(f"ElevenLabs transcription failed: {str(e)}")
             raise Exception("Transcription service failed. Please try again later.")
 
         if not transcription_result.text:
@@ -38,7 +38,7 @@ class TranscriptionService:
             raise Exception("Transcription returned no text.")
 
         transcription_text = transcription_result.text.strip()
-        logger.info(f"✅ Transcription successful. Preview:\n{transcription_text[:300]}")
+        logger.info(f"Transcription successful. Preview:\n{transcription_text[:300]}")
 
         # Step 2: Save only if transcription succeeded
         file_id = fs.put(
