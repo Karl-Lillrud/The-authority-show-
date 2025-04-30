@@ -40,6 +40,7 @@ def create_checkout_session():
         }
 
         total_credits = 0
+        total_episode_slots = 0  # Add counter for episode slots
         has_subscription = False
         subscription_plan = None
 
@@ -52,6 +53,9 @@ def create_checkout_session():
             quantity = int(item.get("quantity", 1))
             credits = int(item.get("credits", 0)) if item.get("credits") else 0
             plan = item.get("plan")
+            episode_slots = (
+                int(item.get("episodeSlots", 0)) if item.get("episodeSlots") else 0
+            )  # Get episode slots
 
             if item_type == "credit":
                 # Lägg till kreditpaket
@@ -112,12 +116,37 @@ def create_checkout_session():
                     }
                 )
 
+            elif item_type == "episode":
+                line_items.append(
+                    {
+                        "price_data": {
+                            "currency": "usd",
+                            "product_data": {"name": name},
+                            "unit_amount": int(price * 100),  # Price in cents
+                        },
+                        "quantity": quantity,
+                    }
+                )
+                total_episode_slots += episode_slots  # Use the value from frontend
+                metadata["items"].append(
+                    {
+                        "product_id": product_id,
+                        "name": name,
+                        "type": "episode",
+                        "episode_slots": episode_slots,  # Store slots per item if needed
+                        "quantity": quantity,
+                    }
+                )
+
         # Serialisera metadata["items"] till JSON-sträng
         metadata["items"] = json.dumps(metadata["items"])
 
         # Lägg till totala krediter och prenumerationsinfo i metadata
         if total_credits > 0:
             metadata["credits"] = str(total_credits)
+        # Add total episode slots to metadata
+        if total_episode_slots > 0:
+            metadata["episode_slots"] = str(total_episode_slots)
         if has_subscription:
             metadata["is_subscription"] = "true"
             metadata["plan"] = subscription_plan or ""
@@ -157,6 +186,8 @@ def payment_success():
         )
         metadata = stripe_session.get("metadata", {})
         credits_to_add = int(metadata.get("credits", 0))
+        # Get episode slots from metadata
+        episode_slots_to_add = int(metadata.get("episode_slots", 0))
         has_subscription = metadata.get("is_subscription", "false") == "true"
 
         # Deserialisera items om nödvändigt
@@ -171,6 +202,17 @@ def payment_success():
         if credits_to_add > 0:
             handle_successful_payment(stripe_session, user_id)
             logger.info(f"Credits processed for user {user_id}: {credits_to_add}")
+
+        # Add logic to handle successful episode pack purchase
+        if episode_slots_to_add > 0:
+            # TODO: Implement or call a service function to add episode slots
+            # Example: episode_service.add_episode_slots(user_id, episode_slots_to_add)
+            # For now, just log it
+            logger.info(
+                f"Episode slots to add for user {user_id}: {episode_slots_to_add}"
+            )
+            # You'll need to implement the actual logic to update the user's account
+            # with the purchased episode slots, likely involving database updates.
 
         if plan and has_subscription:
             return redirect("/account?subscription_updated=true#settings-purchases")

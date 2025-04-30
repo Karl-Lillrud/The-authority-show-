@@ -190,6 +190,8 @@ function setupCart() {
       const subscriptionItems = cart.filter(
         (item) => item.type === "Subscription"
       );
+      // Add filter for episode packs
+      const episodeItems = cart.filter((item) => item.type === "Episode Pack");
 
       if (
         subscriptionItems.length > 1 ||
@@ -205,7 +207,12 @@ function setupCart() {
         return;
       }
 
-      if (creditItems.length === 0 && subscriptionItems.length === 0) {
+      // Update condition to check all relevant item types
+      if (
+        creditItems.length === 0 &&
+        subscriptionItems.length === 0 &&
+        episodeItems.length === 0 // Add check for episode items
+      ) {
         showNotification(
           "Empty Cart",
           "Your cart is empty or contains unsupported items.",
@@ -242,6 +249,22 @@ function setupCart() {
           price: subscription.price.toFixed(2),
           quantity: 1,
           plan: plan
+        });
+      }
+
+      // Add processing for episode items
+      if (episodeItems.length > 0) {
+        episodeItems.forEach((item) => {
+          // Assuming each episode pack grants 1 slot, adjust if needed
+          const episodeSlots = 1;
+          items.push({
+            productId: item.id,
+            name: item.name,
+            type: "episode", // Use 'episode' type for backend
+            price: item.price.toFixed(2),
+            quantity: item.quantity,
+            episodeSlots: episodeSlots * item.quantity // Calculate total slots
+          });
         });
       }
 
