@@ -38,15 +38,15 @@ def render_email_content(trigger_name, guest, episode, social_network=None, gues
         return "Error loading email content."
 
 def check_and_send_reminders():
-    # ... existing reminder logic ...
-    # Make sure 'sent_emails' is loaded or accessible here
-    # Load sent_emails inside the function or pass it as an argument if needed
-    # For simplicity, let's load it here, assuming it's initialized in start_scheduler
+    """Checks guest bookings and sends reminder emails."""
+    # This function now runs inside the app context provided by the wrapper
+    logger.info("Scheduler: Checking for guest reminders...")
+    # Load sent_emails inside the function
     sent_emails = load_sent_emails()
     # ... rest of the reminder logic using sent_emails ...
     # Remember to save the updated set back to the file
     save_sent_emails(sent_emails)
-
+    logger.info("Scheduler: Finished checking reminders.")
 
 def load_sent_emails():
     """Loads the set of sent email identifiers from the JSON file."""
@@ -76,6 +76,11 @@ def save_sent_emails(sent_emails_set):
     except TypeError as e:
         logger.error(f"Error serializing sent_emails data: {e}")
 
+# Ensure the app context is available within the scheduled job if needed
+def check_and_send_reminders_with_context(app):
+     """Wrapper function to run the job within Flask app context."""
+     with app.app_context():
+         check_and_send_reminders() # Call the actual job logic
 
 def start_scheduler(app):
     """Initializes and starts the background scheduler."""
@@ -94,31 +99,17 @@ def start_scheduler(app):
     # --- End file initialization ---
 
     if not scheduler.running:
-        # Add the job to run every hour (adjust interval as needed)
+        # --- Modify the job definition to use the context wrapper ---
         scheduler.add_job(
-            check_and_send_reminders,
+            check_and_send_reminders_with_context, # Use the wrapper function
             trigger="interval",
             hours=1,
             id="reminder_job",
             replace_existing=True,
-            kwargs={'app': app} # Pass app context if needed inside the job
+            kwargs={'app': app} # Pass the app instance to the wrapper
         )
+        # --- End modification ---
         scheduler.start()
         logger.info("⏰ Reminder scheduler started.")
     else:
         logger.info("⏰ Reminder scheduler already running.")
-
-# Ensure the app context is available within the scheduled job if needed
-def check_and_send_reminders_with_context(app):
-     with app.app_context():
-         check_and_send_reminders()
-
-# Modify the job definition in start_scheduler to use the context wrapper
-# scheduler.add_job(
-#     check_and_send_reminders_with_context,
-#     trigger="interval",
-#     hours=1,
-#     id="reminder_job",
-#     replace_existing=True,
-#     kwargs={'app': app}
-# )

@@ -31,6 +31,7 @@ IMAGE_NAME="podmanagerlive:latest"
 WEBAPP_NAME="podmanager"
 APP_SERVICE_PLAN="podmanagersp"
 LOCATION="northeurope" # e.g., "eastus"
+SKU="P0v3"  # Correct App Service plan SKU
 
 # Step 1: Check if Resource Group exists (skip if it exists)
 echo "🔍 Checking if Resource Group '$RESOURCE_GROUP' exists..."
@@ -96,8 +97,8 @@ fi
 # Step 9: Check if App Service Plan exists (skip if it exists)
 echo "🔍 Checking if App Service Plan '$APP_SERVICE_PLAN' exists..."
 if ! az appservice plan show --name $APP_SERVICE_PLAN --resource-group $RESOURCE_GROUP --output none; then
-    echo "🛠️ Creating App Service Plan '$APP_SERVICE_PLAN'..."
-    az appservice plan create --name $APP_SERVICE_PLAN --resource-group $RESOURCE_GROUP --sku B1 --is-linux --output none
+    echo "🛠️ Creating App Service Plan '$APP_SERVICE_PLAN' with SKU $SKU..."
+    az appservice plan create --name $APP_SERVICE_PLAN --resource-group $RESOURCE_GROUP --sku $SKU --is-linux --output none
 else
     echo "✅ App Service Plan '$APP_SERVICE_PLAN' already exists."
 fi
