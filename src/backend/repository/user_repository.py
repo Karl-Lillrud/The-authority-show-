@@ -10,6 +10,8 @@ from backend.repository.podtask_repository import PodtaskRepository
 from backend.repository.usertoteam_repository import UserToTeamRepository
 from backend.repository.team_repository import TeamRepository
 from backend.repository.teaminviterepository import TeamInviteRepository
+from backend.repository.credits_repository import delete_by_user as delete_credits_by_user
+from backend.repository.activities_repository import ActivitiesRepository
 from datetime import datetime, timezone
 import bson
 
@@ -114,7 +116,6 @@ class UserRepository:
             episodes = EpisodeRepository().delete_by_user(user_id_str)
             guests = GuestRepository().delete_by_user(user_id_str)
             podcasts = PodcastRepository().delete_by_user(user_id_str)
-            podtasks = PodtaskRepository().delete_by_user(user_id_str)
 
             # Clean up teams: remove from members or delete if creator
             team_repo = TeamRepository()
@@ -147,6 +148,8 @@ class UserRepository:
             # Continue cleanup
             accounts = AccountRepository().delete_by_user(user_id_str)
             user_teams = UserToTeamRepository().delete_by_user(user_id_str)
+            user_credit = delete_credits_by_user(user_id_str)
+            user_activity = ActivitiesRepository().delete_by_user(user_id_str)
 
             return {
                 "episodes_deleted": episodes,
@@ -156,6 +159,8 @@ class UserRepository:
                 "accounts_deleted": accounts,
                 "user_team_links_deleted": user_teams,
                 "teams_processed": team_cleanup_results,
+                "user_credits_deleted": user_credit,
+                "user_activity_deleted": user_activity,
             }
 
         except Exception as e:
@@ -165,7 +170,6 @@ class UserRepository:
     def delete_user(self, data):
         try:
             input_email = data.get("deleteEmail")
-            input_password = data.get("deletePassword")
             delete_confirm = data.get("deleteConfirm", "").strip().upper()
 
             if delete_confirm != "DELETE":
@@ -173,18 +177,14 @@ class UserRepository:
                     "error": "Please type 'DELETE' exactly to confirm account deletion."
                 }, 400
 
-            if not input_email or not input_password:
-                return {"error": "Email and password are required."}, 400
+            if not input_email:
+                return {"error": "Email is required."}, 400
 
             user = self.user_collection.find_one(
-                {"email": {"$regex": f"^{input_email}$", "$options": "i"}}
+                {"email": input_email.lower().strip()}
             )
             if not user:
-                return {"error": "User does not exist in the database."}, 404
-
-            stored_hash = user.get("passwordHash")
-            if not stored_hash or not check_password_hash(stored_hash, input_password):
-                return {"error": "Incorrect password."}, 400
+                return {"error": "User doeexist in the database."}, 404
 
             user_id = user.get("_id")
 

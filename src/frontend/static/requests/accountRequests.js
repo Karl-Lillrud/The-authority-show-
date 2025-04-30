@@ -104,7 +104,7 @@ export function subscribeUser(email) {
 
 // Delete user account
 export function deleteUserAccount(payload) {
-  return fetch("/delete_user", {
+  return fetch("/user/delete_user", {
     method: "DELETE",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(payload),
