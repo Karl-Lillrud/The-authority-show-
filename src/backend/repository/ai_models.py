@@ -60,25 +60,3 @@ def get_file_by_id(file_id: str):
         return file_obj.read(), file_obj.filename
     except NoFile:
         raise FileNotFoundError("File not found in GridFS.")
-
-def add_audio_edit_to_episode(episode_id: str, file_id: str, edit_type: str, filename: str, metadata: dict = None):
-    metadata = metadata or {}
-
-    edit_entry = {
-        "fileId": str(file_id),
-        "editType": edit_type,
-        "filename": filename,
-        "createdAt": datetime.utcnow().isoformat(),
-        "metadata": metadata
-    }
-
-    db = get_db()  # ✅ Correctly get the DB client
-    result = db.Episodes.update_one(
-        {"_id": episode_id},
-        {"$push": {"audioEdits": edit_entry}}
-    )
-
-    if result.modified_count == 1:
-        print(f"✅ Added audio edit to episode {episode_id}")
-    else:
-        print(f"⚠️ Failed to push audio edit to episode {episode_id}")
