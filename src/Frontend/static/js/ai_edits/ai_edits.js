@@ -246,13 +246,6 @@ async function transcribe() {
         return;
     }
 
-    try {
-        await consumeStoreCredits("transcription");
-    } catch (err) {
-        resultContainer.innerText = `Not enough credits: ${err.message}`;
-        return;
-    }
-
     showSpinner("transcriptionResult");
     const formData = new FormData();
     formData.append('file', file);
@@ -270,6 +263,9 @@ async function transcribe() {
 
             resultContainer.innerText = rawTranscript;
             document.getElementById("enhancementTools").style.display = "block";
+
+            // ✅ Consume credits only after success
+            await consumeStoreCredits("transcription");
         } else {
             const errorData = await response.json();
             resultContainer.innerText = `Error: ${errorData.error || response.statusText}`;
@@ -299,8 +295,6 @@ async function generateCleanTranscript() {
     }
 }
 
-
-
 async function generateAISuggestions() {
     const containerId = "aiSuggestionsResult";
     const container = document.getElementById(containerId);
@@ -308,8 +302,6 @@ async function generateAISuggestions() {
     showSpinner(containerId);
 
     try {
-        await consumeStoreCredits("ai_suggestions");
-
         const res = await fetch("/transcription/ai_suggestions", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
@@ -321,14 +313,16 @@ async function generateAISuggestions() {
             const primary = data.primary_suggestions || "";
             const additional = (data.additional_suggestions || []).join("\n");
             container.innerText = [primary, additional].filter(Boolean).join("\n\n") || "No suggestions.";
+
+            // ✅ Consume credits only after success
+            await consumeStoreCredits("ai_suggestions");
         } else {
             container.innerText = `Error: ${res.status} - ${res.statusText}`;
         }
     } catch (err) {
-        container.innerText = "Not enough credits: " + err.message;
+        container.innerText = "Failed to generate suggestions: " + err.message;
     }
 }
-
 
 async function generateShowNotes() {
     const containerId = "showNotesResult";
@@ -337,8 +331,6 @@ async function generateShowNotes() {
     showSpinner(containerId);
 
     try {
-        await consumeStoreCredits("show_notes");
-
         const res = await fetch("/transcription/show_notes", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
@@ -346,9 +338,16 @@ async function generateShowNotes() {
         });
 
         const data = await res.json();
-        container.innerText = data.show_notes || "No notes.";
+        if (res.ok) {
+            container.innerText = data.show_notes || "No notes.";
+
+            // ✅ Consume credits only after success
+            await consumeStoreCredits("show_notes");
+        } else {
+            container.innerText = `Error: ${res.status} - ${res.statusText}`;
+        }
     } catch (err) {
-        container.innerText = "Not enough credits: " + err.message;
+        container.innerText = "Failed to generate show notes: " + err.message;
     }
 }
 
@@ -359,8 +358,6 @@ async function generateQuotes() {
     showSpinner(containerId);
 
     try {
-        await consumeStoreCredits("ai_quotes");
-
         const res = await fetch("/transcription/quotes", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
@@ -368,9 +365,16 @@ async function generateQuotes() {
         });
 
         const data = await res.json();
-        container.innerText = data.quotes || "No quotes.";
+        if (res.ok) {
+            container.innerText = data.quotes || "No quotes.";
+
+            // ✅ Consume credits only after success
+            await consumeStoreCredits("ai_quotes");
+        } else {
+            container.innerText = `Error: ${res.status} - ${res.statusText}`;
+        }
     } catch (err) {
-        container.innerText = "Not enough credits: " + err.message;
+        container.innerText = "Failed to generate quotes: " + err.message;
     }
 }
 
@@ -387,8 +391,6 @@ async function generateQuoteImages() {
     showSpinner(containerId);
 
     try {
-        await consumeStoreCredits("ai_qoute_images");
-
         const res = await fetch("/transcription/quote_images", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
@@ -396,20 +398,26 @@ async function generateQuoteImages() {
         });
 
         const data = await res.json();
-        container.innerHTML = "";
+        if (res.ok) {
+            container.innerHTML = "";
 
-        (data.quote_images || []).forEach(url => {
-            const img = document.createElement("img");
-            img.src = url;
-            img.style.maxWidth = "100%";
-            img.style.margin = "10px 0";
-            container.appendChild(img);
-        });
+            (data.quote_images || []).forEach(url => {
+                const img = document.createElement("img");
+                img.src = url;
+                img.style.maxWidth = "100%";
+                img.style.margin = "10px 0";
+                container.appendChild(img);
+            });
+
+            // ✅ Consume credits only after success
+            await consumeStoreCredits("ai_qoute_images");
+        } else {
+            container.innerText = `Error: ${res.status} - ${res.statusText}`;
+        }
     } catch (err) {
-        container.innerText = "Not enough credits: " + err.message;
+        container.innerText = "Failed to generate quote images: " + err.message;
     }
 }
-
 
 async function fetchAudioFromBlobUrl(blobUrl) {
     try {
@@ -437,8 +445,6 @@ async function runOsintSearch() {
     showSpinner(containerId);
 
     try {
-        await consumeStoreCredits("ai_osint");
-
         const response = await fetch("/transcription/osint_lookup", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
@@ -447,6 +453,9 @@ async function runOsintSearch() {
 
         const data = await response.json();
         container.innerText = data.osint_info || "No info found.";
+
+        // ✅ Consume credits only after success
+        await consumeStoreCredits("ai_osint");
     } catch (err) {
         container.innerText = `Failed: ${err.message}`;
     }
@@ -463,8 +472,6 @@ async function generatePodcastIntroOutro() {
     showSpinner(containerId);
 
     try {
-        await consumeStoreCredits("ai_intro_outro");
-
         const res = await fetch("/transcription/generate_intro_outro", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
@@ -476,6 +483,9 @@ async function generatePodcastIntroOutro() {
 
         const data = await res.json();
         container.innerText = data.script || "No result.";
+
+        // ✅ Consume credits only after success
+        await consumeStoreCredits("ai_intro_outro");
     } catch (err) {
         container.innerText = `Failed: ${err.message}`;
     }
@@ -512,6 +522,9 @@ async function convertIntroOutroToSpeech() {
             container.appendChild(document.createElement("hr"));
             container.appendChild(audio);
             container.appendChild(download);
+
+            // ✅ Consume credits only after success
+            await consumeStoreCredits("ai_intro_outro_audio");
         } else {
             throw new Error(data.error || "Unknown error");
         }
@@ -534,8 +547,6 @@ async function enhanceAudio() {
     showSpinner(containerId);
 
     try {
-        await consumeStoreCredits("audio_enhancment");
-
         const formData = new FormData();
         formData.append("audio", file);
         formData.append("episode_id", episodeId);
@@ -574,6 +585,9 @@ async function enhanceAudio() {
         const dl = document.getElementById("downloadEnhanced");
         dl.href = url;
         dl.style.display = "inline-block";
+
+        // ✅ Consume credits only after success
+        await consumeStoreCredits("audio_enhancment");
     } catch (err) {
         container.innerHTML = `Error: ${err.message}`;
     }
@@ -593,8 +607,6 @@ async function runVoiceIsolation() {
     showSpinner(containerId);
 
     try {
-        await consumeStoreCredits("voice_isolation");
-
         const formData = new FormData();
         formData.append("audio", file);
         formData.append("episode_id", episodeId);
@@ -606,6 +618,9 @@ async function runVoiceIsolation() {
 
         const data = await response.json();
         if (!response.ok) throw new Error(data.error || "Voice isolation failed.");
+
+        // ✅ Only now consume credits, since we know it worked
+        await consumeStoreCredits("voice_isolation");
 
         const blobUrl = data.isolated_blob_url;
         const audioRes = await fetch(`/transcription/get_isolated_audio?url=${encodeURIComponent(blobUrl)}`);
@@ -631,6 +646,7 @@ async function runVoiceIsolation() {
         const dl = document.getElementById("downloadIsolatedVoice");
         dl.href = url;
         dl.style.display = "inline-block";
+
     } catch (err) {
         console.error("Voice isolation failed:", err);
         container.innerText = `Isolation failed: ${err.message}`;
@@ -650,8 +666,6 @@ async function analyzeEnhancedAudio() {
     showSpinner(containerId);
 
     try {
-        await consumeStoreCredits("ai_audio_analysis");
-
         const fd = new FormData();
         fd.append("audio", activeAudioBlob, "processed_audio.wav");
 
@@ -675,11 +689,13 @@ async function analyzeEnhancedAudio() {
         };
 
         mixBtn.style.display = "inline-block";
+
+        // ✅ Consume credits only after success
+        await consumeStoreCredits("ai_audio_analysis");
     } catch (err) {
         container.innerText = `Analysis failed: ${err.message}`;
     }
 }
-
 
 /* Hjälper att rendera suggestion-listan */
 function renderSoundSuggestions(data, timeline) {
@@ -736,6 +752,9 @@ async function displayBackgroundAndMix() {
         dl.href          = data.merged_audio;
         dl.style.display = "inline-block";
       }
+
+      // ✅ Consume credits only after success
+      await consumeStoreCredits("ai_audio_analysis");
     } catch (err) {
       preview.innerText = `Error: ${err.message}`;
     } finally {
@@ -757,13 +776,6 @@ async function cutAudio() {
     const episodeId = sessionStorage.getItem("selected_episode_id");
     if (!episodeId || !activeAudioBlob) return alert("No audio or episode selected.");
     if (isNaN(start) || isNaN(end) || start >= end) return alert("Invalid timestamps.");
-
-    try {
-        await consumeStoreCredits("audio_cutting");
-    } catch (err) {
-        alert(`Not enough credits: ${err.message}`);
-        return;
-    }
 
     const formData = new FormData();
     formData.append("audio", new File([activeAudioBlob], "clip.wav", { type: "audio/wav" }));
@@ -795,6 +807,9 @@ async function cutAudio() {
 
         activeAudioBlob = blob;
         activeAudioId = "external";
+
+        // ✅ Consume credits only after success
+        await consumeStoreCredits("audio_cutting");
     } catch (err) {
         alert(`Cut failed: ${err.message}`);
     }
@@ -821,8 +836,6 @@ async function aiCutAudio() {
     containerCuts.innerHTML = "";
 
     try {
-        await consumeStoreCredits("ai_audio_cutting");
-
         let response, data;
 
         if (activeAudioId === "external") {
@@ -889,6 +902,8 @@ async function aiCutAudio() {
 
         containerCuts.appendChild(applyBtn);
 
+        // ✅ Consume credits only after success
+        await consumeStoreCredits("ai_audio_cutting");
     } catch (err) {
         containerTranscript.innerText = "Failed to process audio.";
         alert(`AI Cut failed: ${err.message}`);
@@ -969,7 +984,6 @@ async function applySelectedCuts() {
     }
 }
 
-
 async function cutAudioFromBlob() {
     const startInput = document.getElementById("startTime");
     const endInput = document.getElementById("endTime");
@@ -982,13 +996,6 @@ async function cutAudioFromBlob() {
     const episodeId = sessionStorage.getItem("selected_episode_id");
     if (!episodeId || !activeAudioBlob) return alert("No audio or episode selected.");
     if (isNaN(start) || isNaN(end) || start >= end) return alert("Invalid timestamps.");
-
-    try {
-        await consumeStoreCredits("audio_cutting");
-    } catch (err) {
-        alert(`Not enough credits: ${err.message}`);
-        return;
-    }
 
     const formData = new FormData();
     formData.append("audio", new File([activeAudioBlob], "clip.wav", { type: "audio/wav" }));
@@ -1016,6 +1023,9 @@ async function cutAudioFromBlob() {
 
         activeAudioBlob = blob;
         activeAudioId = "external";
+
+        // ✅ Consume credits only after success
+        await consumeStoreCredits("audio_cutting");
     } catch (err) {
         alert(`Cut failed: ${err.message}`);
     }
@@ -1070,16 +1080,9 @@ async function enhanceVideo() {
     showSpinner(containerId);
 
     try {
-        await consumeStoreCredits("video_enhancement");
-    } catch (err) {
-        container.innerText = `Not enough credits: ${err.message}`;
-        return;
-    }
+        const formData = new FormData();
+        formData.append("video", file);
 
-    const formData = new FormData();
-    formData.append("video", file);
-
-    try {
         const uploadResponse = await fetch("/ai_videoedit", {
             method: "POST",
             body: formData,
@@ -1116,6 +1119,8 @@ async function enhanceVideo() {
         dl.href = videoURL;
         dl.style.display = "inline-block";
 
+        // ✅ Consume credits only after success
+        await consumeStoreCredits("video_enhancement");
     } catch (err) {
         container.innerText = `Error: ${err.message}`;
     }
