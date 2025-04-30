@@ -51,9 +51,9 @@ else
     echo "✅ No image '$IMAGE_NAME' found in ACR."
 fi
 
-# Now, delete the repository (if it's empty)
+# Now, delete the repository
 echo "🧹 Cleaning up the repository (if empty)..."
-az acr repository delete --name $REGISTRY_NAME --repository podmanagerlive --yes --if-empty
+az acr repository delete --name $REGISTRY_NAME --repository podmanagerlive --yes
 
 # Step 4: Prune builder cache to avoid unused layers during build
 docker builder prune --all --force
