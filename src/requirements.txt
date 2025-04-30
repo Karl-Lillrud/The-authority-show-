@@ -31,4 +31,5 @@ timezonefinder
 torch
 torchvision
 transformers
-Werkzeug
+Werkzeug 
+mediapipe==0.10.9
