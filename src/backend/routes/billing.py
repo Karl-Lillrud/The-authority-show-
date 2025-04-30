@@ -378,6 +378,243 @@ def stripe_webhook():
         # Skicka notis till användaren
         pass
 
+    # --- Handle subscription updated events ---
+    elif event.type == "customer.subscription.updated":
+        subscription = event.data.object
+        logger.info(
+            f"Processing customer.subscription.updated for subscription ID: {subscription.id}"
+        )
+        
+        # Get user_id from Stripe metadata or lookup by customer
+        customer_id = subscription.customer
+        account = collection.database.Accounts.find_one({"stripeCustomerId": customer_id})
+        
+        if not account:
+            # Try finding by email through Stripe customer lookup
+            try:
+                customer = stripe.Customer.retrieve(customer_id)
+                account = collection.database.Accounts.find_one({"email": customer.email})
+            except Exception as e:
+                logger.error(f"Failed to find customer: {str(e)}")
+                return jsonify(success=False, error="Customer not found"), 404
+        
+        if account:
+            user_id = account.get("userId") or account.get("ownerId")
+            if not user_id:
+                logger.error(f"User ID not found in account for customer {customer_id}")
+                return jsonify(success=False, error="User ID not found"), 404
+                
+            # Check if this is an upgrade/downgrade based on price
+            # Extract plan from metadata or product info
+            items = subscription.items.data
+            if items:
+                # Get plan info from product metadata or use a pricing table mapping
+                try:
+                    product_id = items[0].price.product
+                    product = stripe.Product.retrieve(product_id)
+                    plan_name = product.metadata.get("plan") or product.name
+                    
+                    # Update subscription in database
+                    subscription_service.update_subscription_from_webhook(
+                        user_id, 
+                        plan_name, 
+                        subscription
+                    )
+                    logger.info(f"Updated subscription for user {user_id} to plan {plan_name}")
+                except Exception as e:
+                    logger.error(f"Failed to process subscription update: {str(e)}")
+                    return jsonify(success=False, error=str(e)), 500
+        else:
+            logger.error(f"Account not found for customer {customer_id}")
+            return jsonify(success=False, error="Account not found"), 404
+
+    # --- Handle subscription deleted events ---
+    elif event.type == "customer.subscription.deleted":
+        subscription = event.data.object
+        logger.info(
+            f"Processing customer.subscription.deleted for subscription ID: {subscription.id}"
+        )
+        
+        # Get user_id using the same customer lookup logic as above
+        customer_id = subscription.customer
+        account = collection.database.Accounts.find_one({"stripeCustomerId": customer_id})
+        
+        if not account:
+            try:
+                customer = stripe.Customer.retrieve(customer_id)
+                account = collection.database.Accounts.find_one({"email": customer.email})
+            except Exception as e:
+                logger.error(f"Failed to find customer: {str(e)}")
+                return jsonify(success=False, error="Customer not found"), 404
+        
+        if account:
+            user_id = account.get("userId") or account.get("ownerId")
+            if not user_id:
+                logger.error(f"User ID not found in account for customer {customer_id}")
+                return jsonify(success=False, error="User ID not found"), 404
+                
+            # Update user's subscription status to FREE/cancelled
+            try:
+                # Update account document
+                collection.database.Accounts.update_one(
+                    {"_id": account["_id"]},
+                    {
+                        "$set": {
+                            "subscriptionStatus": "cancelled",
+                            "subscriptionPlan": "FREE",
+                            "lastUpdated": datetime.utcnow().isoformat(),
+                        }
+                    },
+                )
+                
+                # Update subscription record
+                collection.database.Subscriptions.update_one(
+                    {"user_id": user_id, "status": "active"},
+                    {
+                        "$set": {
+                            "status": "cancelled",
+                            "cancelled_at": datetime.utcnow().isoformat(),
+                        }
+                    },
+                )
+                
+                # Reset credits to FREE plan
+                from backend.services.creditService import update_subscription_credits
+                update_subscription_credits(user_id, "FREE")
+                
+                logger.info(f"Successfully cancelled subscription for user {user_id}")
+            except Exception as e:
+                logger.error(f"Failed to cancel subscription: {str(e)}")
+                return jsonify(success=False, error=str(e)), 500
+        else:
+            logger.error(f"Account not found for customer {customer_id}")
+            return jsonify(success=False, error="Account not found"), 404
+
+    # --- Handle invoice payment succeeded events ---
+    elif event.type == "invoice.paid":
+        invoice = event.data.object
+        
+        if invoice.billing_reason == "subscription_cycle":
+            logger.info(
+                f"Processing invoice.paid for subscription cycle. Invoice ID: {invoice.id}, Subscription ID: {invoice.subscription}"
+            )
+            
+            subscription_id = invoice.subscription
+            
+            try:
+                # Get the subscription to find the customer
+                subscription = stripe.Subscription.retrieve(subscription_id)
+                customer_id = subscription.customer
+                
+                # Find user by customer ID
+                account = collection.database.Accounts.find_one({"stripeCustomerId": customer_id})
+                if not account:
+                    customer = stripe.Customer.retrieve(customer_id)
+                    account = collection.database.Accounts.find_one({"email": customer.email})
+                
+                if account:
+                    user_id = account.get("userId") or account.get("ownerId")
+                    
+                    # Extract subscription plan name using the same logic as above
+                    items = subscription.items.data
+                    if items:
+                        product_id = items[0].price.product
+                        product = stripe.Product.retrieve(product_id)
+                        plan_name = product.metadata.get("plan") or product.name
+                        
+                        # Extend subscription period by updating the end date
+                        # Calculate next billing date from the subscription
+                        next_billing_date = datetime.fromtimestamp(subscription.current_period_end, tz=timezone.utc)
+                        
+                        # Update the account and subscription records
+                        collection.database.Accounts.update_one(
+                            {"_id": account["_id"]},
+                            {
+                                "$set": {
+                                    "subscriptionEnd": next_billing_date.isoformat(),
+                                    "lastUpdated": datetime.utcnow().isoformat(),
+                                }
+                            },
+                        )
+                        
+                        # Also update in Subscriptions collection
+                        collection.database.Subscriptions.update_one(
+                            {"user_id": user_id, "status": "active"},
+                            {
+                                "$set": {
+                                    "end_date": next_billing_date.isoformat(),
+                                    "renewed_at": datetime.utcnow().isoformat(),
+                                }
+                            },
+                        )
+                        
+                        # Reset/renew monthly credits
+                        from backend.services.creditService import reset_monthly_credits
+                        reset_monthly_credits(user_id, plan_name)
+                        
+                        logger.info(f"Successfully renewed subscription for user {user_id} until {next_billing_date.isoformat()}")
+                else:
+                    logger.error(f"Account not found for customer {customer_id}")
+            except Exception as e:
+                logger.error(f"Failed to process invoice payment: {str(e)}")
+                return jsonify(success=False, error=str(e)), 500
+
+    # --- Handle failed invoice payments ---
+    elif event.type == "invoice.payment_failed":
+        invoice = event.data.object
+        logger.warning(
+            f"Processing invoice.payment_failed. Invoice ID: {invoice.id}, Subscription ID: {invoice.subscription}"
+        )
+        
+        subscription_id = invoice.subscription
+        
+        try:
+            # Get the subscription to find the customer
+            subscription = stripe.Subscription.retrieve(subscription_id)
+            customer_id = subscription.customer
+            
+            # Find user by customer ID
+            account = collection.database.Accounts.find_one({"stripeCustomerId": customer_id})
+            if not account:
+                customer = stripe.Customer.retrieve(customer_id)
+                account = collection.database.Accounts.find_one({"email": customer.email})
+            
+            if account:
+                user_id = account.get("userId") or account.get("ownerId")
+                
+                # Mark subscription as past_due in our database
+                collection.database.Accounts.update_one(
+                    {"_id": account["_id"]},
+                    {
+                        "$set": {
+                            "subscriptionStatus": "past_due",
+                            "lastUpdated": datetime.utcnow().isoformat(),
+                        }
+                    },
+                )
+                
+                # Also update in Subscriptions collection
+                collection.database.Subscriptions.update_one(
+                    {"user_id": user_id, "status": "active"},
+                    {
+                        "$set": {
+                            "status": "past_due",
+                            "updated_at": datetime.utcnow().isoformat(),
+                        }
+                    },
+                )
+                
+                # Optionally send an email notification about payment failure
+                # from backend.utils.email_utils import send_email
+                # send_payment_failure_email(account.get("email"))
+                
+                logger.info(f"Marked subscription as past_due for user {user_id}")
+            else:
+                logger.error(f"Account not found for customer {customer_id}")
+        except Exception as e:
+            logger.error(f"Failed to process failed invoice payment: {str(e)}")
+            return jsonify(success=False, error=str(e)), 500
+
     else:
         logger.info(f"Webhook received unhandled event type: {event.type}")
 
