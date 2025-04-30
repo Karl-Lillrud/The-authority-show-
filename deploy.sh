@@ -20,10 +20,6 @@ if [ -z "${AZ_SUB_ID:-}" ] || [ -z "${AZ_OBJ_ID:-}" ]; then
     exit 1
 fi
 
-# Set the correct Azure Subscription
-echo "🔑 Setting the Azure subscription to $AZ_SUB_ID..."
-az account set --subscription "$AZ_SUB_ID"
-
 # Define variables
 RESOURCE_GROUP="PodManager"
 REGISTRY_NAME="podmanageracr3container"
