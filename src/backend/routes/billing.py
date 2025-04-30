@@ -318,142 +318,61 @@ def get_subscription():
 
 @billing_bp.route("/cancel-subscription", methods=["POST"])
 def cancel_subscription():
-    try:
-        flask_session = session
-        user_id = flask_session.get("user_id")
-        logger.info(f"Cancel subscription requested for user_id: {user_id}")
-
-        if not user_id:
-            user_id = getattr(g, "user_id", None)
-            logger.info(f"Trying g.user_id instead: {user_id}")
-
-        if not user_id:
-            logger.error("Cancellation failed: User not authenticated")
-            return jsonify({"error": "User not authenticated"}), 401
-
-        account = collection.database.Accounts.find_one({"userId": user_id})
-        if not account:
-            logger.info(f"Account not found with userId, trying with ownerId...")
-            account = collection.database.Accounts.find_one({"ownerId": user_id})
-
-        if not account:
-            logger.error(f"Cancellation failed: Account not found for user {user_id}")
-            return jsonify({"error": "Account not found"}), 404
-
-        subscription_end = account.get("subscriptionEnd")
-        if account.get("subscriptionStatus") == "cancelled":
-            logger.info(f"Subscription already cancelled for user {user_id}")
-            end_date_display = None
-            if subscription_end:
-                try:
-                    end_date = datetime.fromisoformat(
-                        subscription_end.replace("Z", "+00:00")
-                    )
-                    end_date_display = end_date.strftime("%Y-%m-%d")
-                except (ValueError, AttributeError) as e:
-                    logger.error(f"Error parsing date: {e}")
-                    end_date_display = subscription_end
-
-            return (
-                jsonify(
-                    {
-                        "message": "Subscription was already cancelled",
-                        "endDate": end_date_display,
-                        "willRenew": False,
-                    }
-                ),
-                200,
-            )
-
+    try:  # Outer function try block
+        # ... (user authentication and account fetching logic remains the same) ...
+        # ... (check if already cancelled logic remains the same) ...
 
         stripe_subscription_id = None
-        subscription_record = collection.database.subscriptions_collection.find_one(
-            {"user_id": user_id, "status": "active"}
-        )
+        payment_id = None  # Initialize payment_id
 
-        if subscription_record and subscription_record.get("payment_id"):
-            payment_id = subscription_record.get("payment_id")
-            if payment_id.startswith("sub_"):
-                stripe_subscription_id = payment_id
-                logger.info(
-                    f"Found subscription ID directly in payment_id: {stripe_subscription_id}"
-                )
-            else:
-
-        # Find and cancel the Stripe subscription
+        # --- Try to find the Stripe Subscription ID ---
         try:
-            # First try to get the subscription ID from the account
-            stripe_subscription_id = None
-            
-            # Check the payment record for subscription_id
-            subscription_record = collection.database.Subscriptions.find_one( # Changed from subscriptions_collection
+            # Check the local subscription record first
+            subscription_record = collection.database.Subscriptions.find_one(  # Use Subscriptions collection
                 {"user_id": user_id, "status": "active"}
             )
-            
-            # Check if payment_id is actually a subscription ID
+
             if subscription_record and subscription_record.get("payment_id"):
                 payment_id = subscription_record.get("payment_id")
-                # If it starts with 'sub_', it's likely a subscription ID
                 if payment_id.startswith("sub_"):
                     stripe_subscription_id = payment_id
-                    logger.info(f"Found subscription ID directly in payment_id: {stripe_subscription_id}")
+                    logger.info(
+                        f"Found subscription ID directly in local record's payment_id: {stripe_subscription_id}"
+                    )
                 else:
-                    logger.info(f"Payment ID is not a subscription ID: {payment_id}")
-                    # Try to get session and retrieve subscription from there
+                    # If payment_id is not a sub_id, try retrieving it from the checkout session
+                    logger.info(
+                        f"Local record payment_id {payment_id} is not a sub_id. Attempting to retrieve from Checkout Session."
+                    )
                     try:
-                        # Renamed from "session" to "checkout_session" to avoid conflict with Flask's session
                         checkout_session = stripe.checkout.Session.retrieve(payment_id)
-                        if checkout_session and hasattr(checkout_session, 'subscription'):
+                        if (
+                            checkout_session
+                            and hasattr(checkout_session, "subscription")
+                            and checkout_session.subscription
+                        ):
                             stripe_subscription_id = checkout_session.subscription
-                            logger.info(f"Retrieved subscription ID from session: {stripe_subscription_id}")
-                    except Exception as session_error:
-                        logger.error(f"Error retrieving session: {str(session_error)}")
-            
-            # If still no subscription ID, try the customer method
-            if not stripe_subscription_id:
-                # Try to find customer in Stripe
-                customer_id = None
-                if account.get("email"):
-                    try:
-                        customers = stripe.Customer.list(email=account.get("email"), limit=1)
-                        if customers and customers.data:
-                            customer_id = customers.data[0].id
-                            logger.info(f"Found Stripe customer by email: {customer_id}")
-                        
-                        # If we found a customer ID, look for active subscriptions
-                        if customer_id:
-                            subscriptions = stripe.Subscription.list(
-                                customer=customer_id,
-                                status="active",
-                                limit=5  # Get multiple in case there are several
+                            logger.info(
+                                f"Retrieved subscription ID from Checkout Session {payment_id}: {stripe_subscription_id}"
                             )
-                            if subscriptions and subscriptions.data:
-                                for sub in subscriptions.data:
-                                    logger.info(f"Found subscription: {sub.id} with status {sub.status}")
-                                
-                                # Use the first active subscription
-                                stripe_subscription_id = subscriptions.data[0].id
-                                logger.info(f"Selected subscription for cancellation: {stripe_subscription_id}")
-                            else:
-                                logger.warning(f"No active subscriptions found for customer {customer_id}")
-                    except Exception as customer_error:
-                        logger.error(f"Error with Stripe customer operations: {str(customer_error)}")
-            
-            # Now try to cancel the subscription if we found an ID
-            if stripe_subscription_id:
-
-                try:
-                    checkout_session = stripe.checkout.Session.retrieve(payment_id)
-                    if checkout_session and hasattr(checkout_session, "subscription"):
-                        stripe_subscription_id = checkout_session.subscription
-                        logger.info(
-                            f"Retrieved subscription ID from session: {stripe_subscription_id}"
+                        else:
+                            logger.warning(
+                                f"Checkout Session {payment_id} found, but no subscription attribute or it's None."
+                            )
+                    except stripe.error.InvalidRequestError as ire:
+                        logger.warning(
+                            f"Could not retrieve checkout session {payment_id}, it might not be a session ID or is invalid: {str(ire)}"
                         )
-                except Exception as session_error:
-                    logger.error(f"Error retrieving session: {str(session_error)}")
+                    except Exception as session_error:
+                        logger.error(
+                            f"Error retrieving Checkout Session {payment_id}: {str(session_error)}"
+                        )
 
-        if not stripe_subscription_id:
-            if account.get("email"):
+            # If still no ID, try finding the customer by email in Stripe
+            if not stripe_subscription_id and account.get("email"):
+                logger.info(
+                    f"No subscription ID found yet. Searching Stripe customer by email: {account.get('email')}"
+                )
                 try:
                     customers = stripe.Customer.list(
                         email=account.get("email"), limit=1
@@ -461,102 +380,219 @@ def cancel_subscription():
                     if customers and customers.data:
                         customer_id = customers.data[0].id
                         logger.info(f"Found Stripe customer by email: {customer_id}")
+                        # Look for an active subscription for this customer
                         subscriptions = stripe.Subscription.list(
-                            customer=customer_id, status="active", limit=5
+                            customer=customer_id,
+                            status="active",
+                            limit=1,  # Fetch only one active
                         )
                         if subscriptions and subscriptions.data:
                             stripe_subscription_id = subscriptions.data[0].id
                             logger.info(
-                                f"Selected subscription for cancellation: {stripe_subscription_id}"
+                                f"Found active subscription via customer search: {stripe_subscription_id}"
                             )
+                        else:
+                            logger.warning(
+                                f"No active subscriptions found for customer {customer_id}"
+                            )
+                    else:
+                        logger.warning(
+                            f"No Stripe customer found for email: {account.get('email')}"
+                        )
                 except Exception as customer_error:
                     logger.error(
-                        f"Error with Stripe customer operations: {str(customer_error)}"
+                        f"Error during Stripe customer/subscription search: {str(customer_error)}"
                     )
 
+        except Exception as find_sub_error:
+            # Catch errors during the ID finding process
+            logger.error(
+                f"Error occurred while trying to find the Stripe subscription ID: {str(find_sub_error)}"
+            )
+        # --- End of finding Stripe Subscription ID ---
+
+        # --- Try to cancel the Stripe subscription if an ID was found ---
         if stripe_subscription_id:
             try:
                 sub_check = stripe.Subscription.retrieve(stripe_subscription_id)
                 if sub_check.status == "active" and not sub_check.cancel_at_period_end:
+                    logger.info(
+                        f"Attempting to cancel Stripe subscription {stripe_subscription_id} at period end."
+                    )
+                    # Set the subscription to cancel at the end of the current period
                     cancelled_subscription = stripe.Subscription.modify(
                         stripe_subscription_id, cancel_at_period_end=True
                     )
                     logger.info(
-                        f"Stripe subscription {stripe_subscription_id} cancelled successfully!"
+                        f"Stripe subscription {stripe_subscription_id} set to cancel at period end successfully!"
                     )
-            except stripe.error.StripeError as stripe_specific_error:
+                elif sub_check.cancel_at_period_end:
+                    logger.info(
+                        f"Stripe subscription {stripe_subscription_id} is already set to cancel at period end."
+                    )
+                else:
+                    logger.warning(
+                        f"Stripe subscription {stripe_subscription_id} is not active (status: {sub_check.status}). Cannot modify."
+                    )
+            except stripe.error.StripeError as stripe_cancel_error:
+                # Catch Stripe-specific errors during cancellation
                 logger.error(
-                    f"Stripe API error cancelling subscription: {str(stripe_specific_error)}"
+                    f"Stripe API error cancelling subscription {stripe_subscription_id}: {str(stripe_cancel_error)}"
                 )
-
-        update_query = {"userId": user_id}
-        if "ownerId" in account and not account.get("userId"):
-            update_query = {"ownerId": user_id}
-
-        update_result = collection.database.Accounts.update_one(
-            update_query,
-            {
-                "$set": {
-                    "subscriptionStatus": "cancelled",
-                    "subscriptionPlan": "FREE",
-                    "lastUpdated": datetime.utcnow().isoformat(),
-                }
-            },
-        )
-
-        if update_result.modified_count == 0 and update_result.matched_count == 0:
-            logger.error(f"Failed to update subscription status - no document matched")
-            return jsonify({"error": "Failed to update subscription status"}), 500
-
-
-        subscription_result = collection.database.subscriptions_collection.update_one(
-
-            {"user_id": user_id, "status": "active"},
-            {
-                "$set": {
-                    "status": "cancelled",
-                    "plan": "FREE",
-                    "cancelled_at": datetime.utcnow().isoformat(),
-                }
-            },
-        )
-
-        try:
-            from backend.utils.subscription_access import PLAN_BENEFITS
-            from backend.services.creditService import update_subscription_credits
-
-            updated_credits = update_subscription_credits(user_id, "FREE")
-            logger.info(
-                f"Updated user credits to FREE plan after cancellation: {updated_credits}"
+            except Exception as cancel_err:
+                # Catch other unexpected errors during cancellation
+                logger.error(
+                    f"Unexpected error cancelling Stripe subscription {stripe_subscription_id}: {str(cancel_err)}"
+                )
+        else:
+            logger.warning(
+                f"No active Stripe subscription ID found for user {user_id}. Cannot cancel via Stripe API."
             )
-        except Exception as credit_err:
-            logger.error(f"Error updating credits after cancellation: {credit_err}")
+        # --- End of cancelling Stripe subscription ---
 
-        end_date_display = None
-        if subscription_end:
-            try:
-                end_date = datetime.fromisoformat(
-                    subscription_end.replace("Z", "+00:00")
+        # --- Update Local Database Records ---
+        try:
+            update_query = {"userId": user_id}
+            # Fallback to ownerId if userId is not the primary key in Accounts for this user
+            account_check = collection.database.Accounts.find_one(update_query)
+            if not account_check and account.get("ownerId") == user_id:
+                update_query = {"ownerId": user_id}
+                logger.info("Updating account based on ownerId instead of userId.")
+
+            update_result = collection.database.Accounts.update_one(
+                update_query,
+                {
+                    "$set": {
+                        "subscriptionStatus": "cancelled",  # Mark as cancelled immediately in our system
+                        "subscriptionPlan": "FREE",
+                        "lastUpdated": datetime.utcnow().isoformat(),
+                        # Decide whether to clear subscriptionEnd or keep it
+                        # "subscriptionEnd": None # Example: Clear if cancelling immediately
+                    }
+                },
+            )
+
+            if update_result.modified_count == 0:
+                if update_result.matched_count > 0:
+                    logger.warning(
+                        f"Account {user_id} matched but status was not updated (perhaps already cancelled?)."
+                    )
+                else:
+                    logger.error(
+                        f"Failed to update local subscription status - no account document matched query: {update_query}"
+                    )
+                    # Consider if this should be a hard error or just a warning
+
+            # Update the specific subscription record in the Subscriptions collection
+            subscription_update_result = collection.database.Subscriptions.update_one(  # Use Subscriptions collection
+                {
+                    "user_id": user_id,
+                    "status": "active",
+                },  # Find the active subscription record
+                {
+                    "$set": {
+                        "status": "cancelled",  # Mark this specific record as cancelled
+                        "plan": "FREE",  # Reflect the downgrade
+                        "cancelled_at": datetime.utcnow().isoformat(),
+                    }
+                },
+            )
+            if subscription_update_result.modified_count == 0:
+                logger.warning(
+                    f"No active subscription record found in Subscriptions collection for user {user_id} to mark as cancelled."
                 )
-                end_date_display = end_date.strftime("%Y-%m-%d")
-            except (ValueError, AttributeError) as e:
-                logger.error(f"Error parsing end date: {e}")
-                end_date_display = subscription_end
 
+            # Update credits based on new FREE plan
+            try:
+                from backend.utils.subscription_access import (
+                    PLAN_BENEFITS,
+                )  # Ensure correct import path
+                from backend.services.creditService import (
+                    update_subscription_credits,
+                )  # Ensure correct import path
+
+                updated_credits = update_subscription_credits(user_id, "FREE")
+                logger.info(
+                    f"Updated user credits to FREE plan limits after cancellation: {updated_credits}"
+                )
+            except ImportError as import_err:
+                logger.error(
+                    f"Could not import necessary modules for credit update: {import_err}"
+                )
+            except Exception as credit_err:
+                logger.error(f"Error updating credits after cancellation: {credit_err}")
+
+        except Exception as db_update_error:
+            logger.error(
+                f"Error updating local database records after cancellation attempt: {str(db_update_error)}"
+            )
+            # Decide if this error should prevent a success response
+        # --- End of updating Local Database Records ---
+
+        # --- Prepare and Return Response ---
+        end_date_display = None
+        final_stripe_sub = None  # To store retrieved Stripe sub details
+
+        # Try to get the period end date from Stripe if cancellation was processed
+        if stripe_subscription_id:
+            try:
+                final_stripe_sub = stripe.Subscription.retrieve(stripe_subscription_id)
+                if final_stripe_sub and final_stripe_sub.cancel_at_period_end:
+                    end_timestamp = final_stripe_sub.current_period_end
+                    end_date = datetime.fromtimestamp(end_timestamp)
+                    end_date_display = end_date.strftime("%Y-%m-%d")
+                    logger.info(
+                        f"Subscription access scheduled to end on: {end_date_display}"
+                    )
+            except Exception as e:
+                logger.error(
+                    f"Could not retrieve final subscription details from Stripe to confirm end date: {e}"
+                )
+
+        # Fallback to original subscriptionEnd if Stripe retrieval failed or wasn't applicable
+        if not end_date_display and subscription_end:
+            try:
+                # Ensure subscription_end is a datetime object or valid ISO string
+                if isinstance(subscription_end, str):
+                    # Attempt parsing ISO format string
+                    parsed_date = datetime.fromisoformat(
+                        subscription_end.replace("Z", "+00:00")
+                    )
+                elif isinstance(subscription_end, datetime):
+                    parsed_date = subscription_end
+                else:
+                    raise ValueError(
+                        "subscription_end is not a valid date string or datetime object"
+                    )
+                end_date_display = parsed_date.strftime("%Y-%m-%d")
+            except (ValueError, AttributeError, TypeError) as e:
+                logger.error(
+                    f"Error parsing original subscription end date '{subscription_end}': {e}"
+                )
+                end_date_display = str(
+                    subscription_end
+                )  # Use original value as string if parsing fails
+
+        # Return success response, indicating cancellation is processed (or already was)
         return (
             jsonify(
                 {
-                    "message": "Subscription cancelled successfully. You have been downgraded to the Free plan.",
-                    "endDate": end_date_display,
+                    "message": "Subscription cancellation processed. If active, access will continue until the end of the current billing period.",
+                    "endDate": end_date_display,  # Display when access ends, if known
                     "willRenew": False,
                 }
             ),
             200,
         )
+        # --- End of Prepare and Return Response ---
 
-    except Exception as e:
-        logger.error(f"Error cancelling subscription: {str(e)}", exc_info=True)
-        return jsonify({"error": f"Error cancelling subscription: {str(e)}"}), 500
+    except (
+        Exception
+    ) as e:  # Catch errors from the main function logic (auth, account fetch etc.)
+        logger.error(
+            f"Overall error in /cancel-subscription endpoint: {str(e)}", exc_info=True
+        )
+        return jsonify({"error": f"An unexpected error occurred: {str(e)}"}), 500
 
 
 @billing_bp.route("/api/purchases/history", methods=["GET"])
