@@ -269,7 +269,7 @@ def get_audio_info():
         )
 
     except Exception as e:
-        logger.error(f"❌ ERROR: Failed to process audio - {str(e)}")
+        logger.error(f"ERROR: Failed to process audio - {str(e)}")
         return jsonify({"error": f"Failed to process audio: {str(e)}"}), 500
 
 @transcription_bp.route("/voice_isolate", methods=["POST"])
@@ -304,10 +304,10 @@ def get_isolated_audio():
 def render_ai_edits():
     episode_id = request.args.get("episodeId")
     if not episode_id or episode_id == "unknown":
-        logger.error(f"❌ Invalid or missing episode ID: {episode_id}")
+        logger.error(f"Invalid or missing episode ID: {episode_id}")
         return jsonify({"error": "Invalid or missing episode ID"}), 400
 
-    logger.info(f"✅ Rendering AI Edits page for episode ID: {episode_id}")
+    logger.info(f"Rendering AI Edits page for episode ID: {episode_id}")
     try:
         return render_template("ai_edits/ai_edits.html", episode_id=episode_id, user_id=session.get("user_id"))
     except Exception as e:
@@ -340,7 +340,7 @@ def osint_lookup():
         osint_info = get_osint_info(guest_name)
         return jsonify({"osint_info": osint_info})
     except Exception as e:
-        logger.error(f"❌ OSINT error: {str(e)}")
+        logger.error(f"OSINT error: {str(e)}")
         return jsonify({"error": str(e)}), 500
     
 @transcription_bp.route("/generate_intro_outro", methods=["POST"])
@@ -360,7 +360,7 @@ def generate_intro_outro():
 
         return jsonify({"script": script})
     except Exception as e:
-        logger.error(f"❌ Intro/Outro generation error: {str(e)}")
+        logger.error(f"Intro/Outro generation error: {str(e)}")
         return jsonify({"error": str(e)}), 500
 
 @transcription_bp.route("/intro_outro_audio", methods=["POST"])
@@ -379,6 +379,6 @@ def generate_intro_outro_audio():
         b64_audio = base64.b64encode(audio_bytes).decode("utf-8")
         return jsonify({"audio_base64": f"data:audio/mp3;base64,{b64_audio}"})
     except Exception as e:
-        logger.error(f"❌ ElevenLabs TTS failed: {str(e)}")
+        logger.error(f"ElevenLabs TTS failed: {str(e)}")
         return jsonify({"error": str(e)}), 500
 
