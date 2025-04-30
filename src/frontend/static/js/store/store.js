@@ -1,101 +1,121 @@
 // store.js
-let apiBaseUrl = ''; // Added for consistency if needed elsewhere
-let stripePublicKey = ''; // Variable to hold the fetched key
-let stripe = null; // Variable to hold the Stripe instance
+import { showNotification } from "/static/js/components/notifications.js";
 
-document.addEventListener("DOMContentLoaded", async () => { // Make the listener async
-  // Initialize the store layout first
-  initializeStoreLayout(); // Renamed to avoid confusion with Stripe init
+let apiBaseUrl = "";
+let stripePublicKey = "";
+let stripe = null;
 
-  // Initialize SVG icons
+document.addEventListener("DOMContentLoaded", async () => {
+  initializeStoreLayout();
   initializeSvgIcons();
+  await initializeStripe();
+  // Återställ checkout-knappen vid sidladdning
+  resetCheckoutButton();
+});
 
-  // Load Stripe.js script tag (doesn't initialize Stripe object yet)
-  loadStripeScript();
-
-  // --- Fetch config and initialize Stripe ---
+async function initializeStripe() {
   try {
-    const response = await fetch('/config'); // Fetch from the backend endpoint
+    await loadStripeScript();
+    const response = await fetch("/config");
     if (!response.ok) {
-       const errorData = await response.json();
-       throw new Error(errorData.error || `Failed to fetch config: ${response.statusText}`);
+      const errorData = await response.json();
+      throw new Error(
+        errorData.error || `Failed to fetch config: ${response.statusText}`
+      );
     }
     const config = await response.json();
-    apiBaseUrl = config.apiBaseUrl || ''; // Store API base URL if needed
-    stripePublicKey = config.stripePublicKey; // Get the key from config
+    apiBaseUrl = config.apiBaseUrl || "";
+    stripePublicKey = config.stripePublicKey;
 
     if (!stripePublicKey) {
       console.error("Stripe Public Key not found in config from server.");
-      // Display error to user if needed
-      const statusElement = document.getElementById("checkoutStatus"); // Example error display
-      if (statusElement) statusElement.textContent = "Configuration error: Payment key missing.";
-      return; // Stop initialization if key is missing
+      const statusElement = document.getElementById("checkoutStatus");
+      if (statusElement)
+        statusElement.textContent = "Configuration error: Payment key missing.";
+      showNotification(
+        "Configuration Error",
+        "Payment key missing.",
+        "error",
+        5000
+      );
+      return;
     }
 
-    // Initialize Stripe object with the fetched key
+    if (typeof Stripe === "undefined") {
+      throw new Error("Stripe.js failed to load.");
+    }
     stripe = Stripe(stripePublicKey);
     console.log("Stripe initialized successfully.");
-
   } catch (error) {
-    console.error("Error fetching or processing configuration:", error);
-    // Display error to user if needed
-    const statusElement = document.getElementById("checkoutStatus"); // Example error display
-    if (statusElement) statusElement.textContent = "Error loading payment configuration: " + error.message;
-  }
-  // --- End config fetch and Stripe init ---
-
-});
-
-function loadStripeScript() {
-  // Ensure Stripe.js script is added to the page
-  if (!document.querySelector('script[src="https://js.stripe.com/v3/"]')) {
-    const stripeScript = document.createElement("script");
-    stripeScript.src = "https://js.stripe.com/v3/";
-    stripeScript.async = true;
-    document.head.appendChild(stripeScript);
+    console.error("Error initializing Stripe:", error);
+    const statusElement = document.getElementById("checkoutStatus");
+    if (statusElement)
+      statusElement.textContent =
+        "Error loading payment configuration: " + error.message;
+    showNotification(
+      "Initialization Error",
+      "Failed to load payment system: " + error.message,
+      "error",
+      5000
+    );
   }
 }
 
-// Add resize event listener
+function loadStripeScript() {
+  return new Promise((resolve, reject) => {
+    if (document.querySelector('script[src="https://js.stripe.com/v3/"]')) {
+      resolve();
+      return;
+    }
+    const stripeScript = document.createElement("script");
+    stripeScript.src = "https://js.stripe.com/v3/";
+    stripeScript.async = true;
+    stripeScript.onload = () => resolve();
+    stripeScript.onerror = () => reject(new Error("Failed to load Stripe.js"));
+    document.head.appendChild(stripeScript);
+  });
+}
+
+// Återställ checkout-knappen
+function resetCheckoutButton() {
+  const checkoutBtn = document.getElementById("checkoutBtn");
+  if (checkoutBtn) {
+    checkoutBtn.disabled = cart.length === 0;
+    checkoutBtn.textContent = "Complete the Purchase";
+  }
+}
+
+// Lyssna på page show eller focus för att återställa knappen
+window.addEventListener("pageshow", resetCheckoutButton);
+window.addEventListener("focus", resetCheckoutButton);
+
 window.addEventListener("resize", () => {
-  // Re-evaluate cart setup on resize for responsive behavior
   setupCart();
 });
 
-function initializeStoreLayout() { // Renamed function
-  // Set up cart functionality
+function initializeStoreLayout() {
   setupCart();
-
-  // Set up add to cart buttons
   setupAddToCartButtons();
-
-  // Set up placeholder images for style previews
   setupPlaceholderImages();
 }
 
 function initializeSvgIcons() {
-  // This function will be implemented in svgstore.js
   if (typeof initSvgIcons === "function") {
     initSvgIcons();
   }
 }
 
 function setupPlaceholderImages() {
-  // Replace image placeholders with actual placeholder images
   const stylePreviews = document.querySelectorAll(".style-preview");
-
   stylePreviews.forEach((preview, index) => {
     const styles = ["minimal", "premium", "enterprise"];
     const style = styles[index % styles.length];
-
-    // Set placeholder image URL
     preview.src = `/placeholder.svg?height=150&width=300&text=${style}`;
   });
 }
 
 function setupAddToCartButtons() {
   const addToCartButtons = document.querySelectorAll(".add-to-cart-btn");
-
   addToCartButtons.forEach((button) => {
     button.addEventListener("click", function () {
       const productId = this.getAttribute("data-product-id");
@@ -111,14 +131,15 @@ function setupAddToCartButtons() {
         productCard.getAttribute("data-price")
       );
 
-      // Add product to cart
       addToCart(productId, productName, productType, productPrice);
-
-      // Update button state
       this.textContent = "Added to Cart";
       this.classList.add("in-cart");
-
-      // Reset button after 2 seconds
+      showNotification(
+        "Product Added",
+        `${productName} added to cart!`,
+        "success",
+        3000
+      );
       setTimeout(() => {
         this.textContent = "Add to Cart";
         this.classList.remove("in-cart");
@@ -126,7 +147,6 @@ function setupAddToCartButtons() {
     });
   });
 
-  // Route "Purchase History" button to Account page
   const purchaseHistoryButton = document.querySelector(".view-history");
   if (purchaseHistoryButton) {
     purchaseHistoryButton.addEventListener("click", () => {
@@ -137,74 +157,85 @@ function setupAddToCartButtons() {
 }
 
 function setupCart() {
-  const shoppingCart = document.getElementById("shoppingCart"); // The sidebar/modal
+  const shoppingCart = document.getElementById("shoppingCart");
   const checkoutBtn = document.getElementById("checkoutBtn");
 
-  // Remove previous listeners to avoid duplicates on resize
-  shoppingCart.replaceWith(shoppingCart.cloneNode(true)); // Reset might clear cart items, so reload
-
-  // Re-fetch elements after cloning
+  shoppingCart.replaceWith(shoppingCart.cloneNode(true));
   const newShoppingCart = document.getElementById("shoppingCart");
   const newCheckoutBtn = document.getElementById("checkoutBtn");
 
-  // Initialize cart from localStorage if available
   loadCartFromStorage();
 
-  // Handle checkout
   newCheckoutBtn.addEventListener("click", async function () {
     if (this.disabled) return;
 
-    // --- Check if Stripe is initialized ---
     if (!stripe) {
-        console.error("Stripe is not initialized. Cannot proceed.");
-        alert("Payment system is not ready. Please try again shortly.");
-        this.disabled = false; // Re-enable button
-        this.textContent = "Complete the Purchase";
-        return;
+      console.error("Stripe is not initialized. Cannot proceed.");
+      showNotification(
+        "Payment Error",
+        "Payment system is not ready. Please try again shortly.",
+        "error",
+        5000
+      );
+      resetCheckoutButton();
+      return;
     }
-    // --- End Stripe check ---
-
 
     try {
-      // Disable button to prevent multiple clicks
       this.disabled = true;
       this.textContent = "Processing...";
+      showNotification("Processing", "Initiating checkout...", "info", 3000);
 
-      // Filter cart items
       const creditItems = cart.filter((item) => item.type === "Credit Pack");
       const subscriptionItems = cart.filter(
         (item) => item.type === "Subscription"
       );
+      // Add filter for episode packs
       const episodeItems = cart.filter((item) => item.type === "Episode Pack");
 
-      // Enforce only one subscription and quantity 1
       if (
         subscriptionItems.length > 1 ||
         (subscriptionItems[0] && subscriptionItems[0].quantity > 1)
       ) {
-        alert("You can only purchase one subscription at a time.");
-        this.disabled = false;
-        this.textContent = "Complete the Purchase";
+        showNotification(
+          "Invalid Cart",
+          "You can only purchase one subscription at a time.",
+          "warning",
+          5000
+        );
+        resetCheckoutButton();
         return;
       }
 
-      if (creditItems.length === 0 && subscriptionItems.length === 0  && episodeItems.length === 0) {
-        alert("Your cart is empty or contains unsupported items.");
-        this.disabled = false;
-        this.textContent = "Complete the Purchase";
+      // Update condition to check all relevant item types
+      if (
+        creditItems.length === 0 &&
+        subscriptionItems.length === 0 &&
+        episodeItems.length === 0 // Add check for episode items
+      ) {
+        showNotification(
+          "Empty Cart",
+          "Your cart is empty or contains unsupported items.",
+          "warning",
+          5000
+        );
+        resetCheckoutButton();
         return;
       }
 
-      let totalAmount = 0;
-      let totalCredits = 0;
-      let unlockedEpisodes = 0;
-      let plan = null;
+      const items = [];
 
       if (creditItems.length > 0) {
         creditItems.forEach((item) => {
-          totalAmount += item.price * item.quantity;
           const credits = getCreditsForProduct(item.id);
-          totalCredits += credits * item.quantity;
+          items.push({
+            productId: item.id,
+            name: item.name,
+            type: "credit",
+            price: item.price.toFixed(2),
+            quantity: item.quantity,
+            credits: credits
+          });
         });
       }
 
@@ -218,20 +249,39 @@ function setupCart() {
 
       if (subscriptionItems.length === 1) {
         const subscription = subscriptionItems[0];
-        plan = getPlanForProduct(subscription.id);
-        totalAmount += subscription.price;
+        const plan = getPlanForProduct(subscription.id);
+        items.push({
+          productId: subscription.id,
+          name: subscription.name,
+          type: "subscription",
+          price: subscription.price.toFixed(2),
+          quantity: 1,
+          plan: plan
+        });
       }
 
-      // Build payload
-      let payload = { amount: totalAmount.toFixed(2) };
-      if (totalCredits > 0) payload.credits = totalCredits;
-      if (unlockedEpisodes > 0) payload.unlock = unlockedEpisodes;
-      if (plan) payload.plan = plan;
+      // Add processing for episode items
+      if (episodeItems.length > 0) {
+        episodeItems.forEach((item) => {
+          // Assuming each episode pack grants 1 slot, adjust if needed
+          const episodeSlots = 1;
+          items.push({
+            productId: item.id,
+            name: item.name,
+            type: "episode", // Use 'episode' type for backend
+            price: item.price.toFixed(2),
+            quantity: item.quantity,
+            episodeSlots: episodeSlots * item.quantity // Calculate total slots
+          });
+        });
+      }
 
-      // Make API call to create checkout session
-      // Construct the full URL using the fetched base URL or use relative path if empty
-      const checkoutUrl = apiBaseUrl ? `${apiBaseUrl}/create-checkout-session` : "/create-checkout-session";
-      const response = await fetch(checkoutUrl, { // Use constructed URL
+      const payload = { items };
+
+      const checkoutUrl = apiBaseUrl
+        ? `${apiBaseUrl}/create-checkout-session`
+        : "/create-checkout-session";
+      const response = await fetch(checkoutUrl, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
@@ -240,38 +290,45 @@ function setupCart() {
 
       const contentType = response.headers.get("content-type");
       if (contentType && contentType.includes("text/html")) {
-        alert("Session expired. Please log in again.");
+        showNotification(
+          "Session Expired",
+          "Your session has expired. Please log in again.",
+          "error",
+          5000
+        );
         setTimeout(() => {
           window.location.href =
             "/signin?redirect=" + encodeURIComponent(window.location.pathname);
         }, 2000);
-        this.disabled = false;
-        this.textContent = "Complete the Purchase";
-        return; 
+        resetCheckoutButton();
+        return;
+      }
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || "Failed to create checkout session");
       }
 
       const data = await response.json();
-
       if (data.sessionId) {
-        // Use the globally initialized Stripe object to redirect
         await stripe.redirectToCheckout({ sessionId: data.sessionId });
-        // Clear cart after successful redirection attempt
         clearCart();
       } else {
-        alert("Failed to create checkout: " + (data.error || "Unknown error"));
-        this.disabled = false;
-        this.textContent = "Complete the Purchase";
+        throw new Error(data.error || "Unknown error");
       }
     } catch (err) {
       console.error("Error during checkout:", err);
-      alert("Error: " + err.message);
-      this.disabled = false;
-      this.textContent = "Complete the Purchase";
+      showNotification(
+        "Checkout Failed",
+        "Unable to complete checkout. Please try again or contact support.",
+        "error",
+        5000
+      );
+      resetCheckoutButton();
     }
   });
 }
 
-// Define the outside click handler separately
 function closeCartOnClickOutside(e) {
   const shoppingCart = document.getElementById("shoppingCart");
   const cartButton = document.getElementById("cartButton");
@@ -286,40 +343,40 @@ function closeCartOnClickOutside(e) {
   }
 }
 
-// Map product IDs to credit amounts based on credit_costs.py
 function getCreditsForProduct(productId) {
   switch (productId) {
     case "credit-basic":
-      return 2500; // Basic Pack
+      return 2500;
     case "credit-pro":
-      return 5000; // Pro Pack
+      return 5000;
     case "credit-premium":
-      return 12000; // Studio Pack
+      return 12000;
+    case "credit-ultra":
+      return 17000;
     default:
-      return 0; // Non-credit products or unknown
+      return 0;
   }
 }
 
-// Map product IDs to subscription plans
 function getPlanForProduct(productId) {
   switch (productId) {
     case "sub-standard":
-      return "pro"; // Corrected: Matches "Pro Subscription" and backend logic
+      return "pro";
     case "sub-pro":
-      return "studio"; // Corrected: Matches "Studio Subscription" and backend logic
+      return "studio";
     case "sub-enterprise":
-      return "enterprise"; // This seems correct
+      return "enterprise";
     default:
-      return null; // Invalid subscription product
+      return null;
   }
 }
 
-// Cart functionality
 let cart = [];
 
 function addToCart(productId, productName, productType, productPrice) {
   // Check if product already exists in cart
   const existingItemIndex = cart.findIndex((item) => item.id === productId);
+  let itemAdded = false; // Flag to check if a new item was added or quantity increased
 
   if (existingItemIndex !== -1) {
     // Increment quantity if product already in cart
@@ -333,6 +390,7 @@ function addToCart(productId, productName, productType, productPrice) {
       price: productPrice,
       quantity: 1
     });
+    itemAdded = true; // A new item was added
   }
 
   // Update cart UI
@@ -343,9 +401,21 @@ function addToCart(productId, productName, productType, productPrice) {
 
   // Save cart to localStorage
   saveCartToStorage();
+
+  // --- Show notification ---
+  const message = itemAdded
+    ? `${productName} added to cart.`
+    : `${productName} quantity increased.`;
+  showNotification("Cart Updated", message, "success", 2000); // Show for 2 seconds
+  // --- End notification ---
 }
 
 function removeFromCart(productId) {
+  const itemIndex = cart.findIndex((item) => item.id === productId); // Find item before removing
+  if (itemIndex === -1) return; // Item not found
+
+  const removedItemName = cart[itemIndex].name; // Get name before removing
+
   cart = cart.filter((item) => item.id !== productId);
 
   // Update cart UI
@@ -356,18 +426,33 @@ function removeFromCart(productId) {
 
   // Save cart to localStorage
   saveCartToStorage();
+
+  // --- Show notification ---
+  showNotification(
+    "Cart Updated",
+    `${removedItemName} removed from cart.`,
+    "info",
+    2000
+  );
+  // --- End notification ---
 }
 
 function updateItemQuantity(productId, newQuantity) {
   const itemIndex = cart.findIndex((item) => item.id === productId);
 
   if (itemIndex !== -1) {
+    const itemName = cart[itemIndex].name; // Get name for notification
+    let notificationMessage = "";
+
     if (newQuantity <= 0) {
       // Remove item if quantity is 0 or less
-      removeFromCart(productId);
+      removeFromCart(productId); // This already shows a notification
+      return; // Exit early as removeFromCart handles UI/storage/notification
     } else {
       // Update quantity
+      const oldQuantity = cart[itemIndex].quantity;
       cart[itemIndex].quantity = newQuantity;
+      notificationMessage = `${itemName} quantity updated to ${newQuantity}.`;
 
       // Update cart UI
       updateCartUI();
@@ -377,11 +462,16 @@ function updateItemQuantity(productId, newQuantity) {
 
       // Save cart to localStorage
       saveCartToStorage();
+
+      // --- Show notification ---
+      showNotification("Cart Updated", notificationMessage, "info", 2000);
+      // --- End notification ---
     }
   }
 }
 
 function clearCart() {
+  const wasCartEmpty = cart.length === 0; // Check if cart was already empty
   cart = [];
 
   // Update cart UI
@@ -392,6 +482,17 @@ function clearCart() {
 
   // Save cart to localStorage
   saveCartToStorage();
+
+  // --- Show notification (only if cart wasn't already empty) ---
+  if (!wasCartEmpty) {
+    showNotification(
+      "Cart Cleared",
+      "Your shopping cart is now empty.",
+      "info",
+      2000
+    );
+  }
+  // --- End notification ---
 }
 
 function updateCartUI() {
@@ -400,22 +501,17 @@ function updateCartUI() {
   const totalAmount = document.querySelector(".total-amount");
   const checkoutBtn = document.getElementById("checkoutBtn");
 
-  // Clear current items
   cartItemsContainer.innerHTML = "";
-
   if (cart.length === 0) {
-    // Show empty cart message
     cartItemsContainer.innerHTML =
       '<div class="empty-cart-message">Your cart is empty</div>';
     cartItemCount.textContent = "0 items";
     totalAmount.textContent = "$0.00";
     checkoutBtn.disabled = true;
   } else {
-    // Add items to cart
     cart.forEach((item) => {
       const cartItem = document.createElement("div");
       cartItem.classList.add("cart-item");
-
       cartItem.innerHTML = `
         <div class="cart-item-info">
           <span class="cart-item-name">${item.name}</span>
@@ -439,11 +535,9 @@ function updateCartUI() {
           </button>
         </div>
       `;
-
       cartItemsContainer.appendChild(cartItem);
     });
 
-    // Add event listeners to quantity buttons
     const decreaseButtons = document.querySelectorAll(".decrease-btn");
     const increaseButtons = document.querySelectorAll(".increase-btn");
     const removeButtons = document.querySelectorAll(".remove-item-btn");
@@ -452,9 +546,7 @@ function updateCartUI() {
       button.addEventListener("click", function () {
         const productId = this.getAttribute("data-product-id");
         const item = cart.find((item) => item.id === productId);
-        if (item) {
-          updateItemQuantity(productId, item.quantity - 1);
-        }
+        if (item) updateItemQuantity(productId, item.quantity - 1);
       });
     });
 
@@ -462,9 +554,7 @@ function updateCartUI() {
       button.addEventListener("click", function () {
         const productId = this.getAttribute("data-product-id");
         const item = cart.find((item) => item.id === productId);
-        if (item) {
-          updateItemQuantity(productId, item.quantity + 1);
-        }
+        if (item) updateItemQuantity(productId, item.quantity + 1);
       });
     });
 
@@ -475,7 +565,6 @@ function updateCartUI() {
       });
     });
 
-    // Update cart count and total
     const itemCount = cart.reduce((total, item) => total + item.quantity, 0);
     const totalPrice = cart.reduce(
       (total, item) => total + item.price * item.quantity,
@@ -492,6 +581,15 @@ function updateCartUI() {
 
 function updateCartNotification() {
   const cartNotification = document.getElementById("cartNotification");
+  // --- Add null check ---
+  if (!cartNotification) {
+    console.warn(
+      "Cart notification element with ID 'cartNotification' not found."
+    );
+    return; // Exit if element doesn't exist
+  }
+  // --- End null check ---
+
   const itemCount = cart.reduce((total, item) => total + item.quantity, 0);
 
   if (itemCount > 0) {
@@ -518,14 +616,12 @@ function formatProductType(type) {
   }
 }
 
-// LocalStorage functions
 function saveCartToStorage() {
   localStorage.setItem("podmanager_cart", JSON.stringify(cart));
 }
 
 function loadCartFromStorage() {
   const savedCart = localStorage.getItem("podmanager_cart");
-
   if (savedCart) {
     try {
       cart = JSON.parse(savedCart);

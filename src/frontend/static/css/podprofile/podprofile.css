@@ -1114,3 +1114,16 @@ body.dark-mode .error-container {
 #rss-help-button {
   margin-bottom: calc(var(--spacing-xs) * -1);
 }
+
+#get-started-btn {
+  background-color: var(--highlight-color);
+  color: white;
+  width: 100%; /* Default full width for other buttons */
+  margin-top: var(--spacing-sm); /* Reduced margin above buttons */
+  border: 1px double orange;
+}
+
+#get-started-btn:hover {
+  box-shadow: 0 0 10px var(--highlight-color);
+  opacity: 0.9;
+}
