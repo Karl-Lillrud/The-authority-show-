@@ -79,34 +79,29 @@ def save_sent_emails(sent_emails_set):
 
 def start_scheduler(app):
     """Initializes and starts the background scheduler."""
-    # --- Add file initialization here ---
-    global sent_emails # If check_and_send_reminders uses a global
     if not os.path.exists(SENT_EMAILS_FILE):
         try:
             logger.info(f"Creating initial sent emails file: {SENT_EMAILS_FILE}")
             with open(SENT_EMAILS_FILE, "w") as file:
-                json.dump([], file) # Create an empty JSON list
+                json.dump([], file)
         except IOError as e:
             logger.error(f"Failed to create initial sent emails file {SENT_EMAILS_FILE}: {e}")
-            # Decide how to handle this - maybe the scheduler job shouldn't run?
-    # Load the initial state into the global variable if used, or ensure check_and_send_reminders loads it.
-    # sent_emails = load_sent_emails() # Example if using global
-    # --- End file initialization ---
+            return
 
     if not scheduler.running:
-        # Add the job to run every hour (adjust interval as needed)
         scheduler.add_job(
-            check_and_send_reminders,
+            func=check_and_send_reminders_with_context,  # ✅ Explicitly define func
             trigger="interval",
             hours=1,
             id="reminder_job",
             replace_existing=True,
-            kwargs={'app': app} # Pass app context if needed inside the job
+            args=[app]  # ✅ This works now
         )
         scheduler.start()
         logger.info("⏰ Reminder scheduler started.")
     else:
         logger.info("⏰ Reminder scheduler already running.")
+
 
 # Ensure the app context is available within the scheduled job if needed
 def check_and_send_reminders_with_context(app):
