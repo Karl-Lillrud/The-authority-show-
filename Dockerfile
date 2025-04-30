@@ -1,20 +1,24 @@
-# Use an official Python runtime as a parent image
-FROM python:3.9-slim
+FROM python:3.12-slim
 
-# Set the working directory in the container
 WORKDIR /app
 
-# Copy the requirements.txt into the container at /app
-COPY ./src/requirements.txt /app/
+# Set PYTHONPATH to include the src directory
+ENV PYTHONPATH=/app/src
+
+# Copy only requirements.txt first to leverage Docker caching
+COPY src/requirements.txt /app/src/requirements.txt
 
 # Install dependencies
-RUN pip install --no-cache-dir -r requirements.txt
+RUN pip install --no-cache-dir -r /app/src/requirements.txt
 
-# Copy the current directory contents into the container at /app
-COPY . /app/
+# Copy the .env file from the root directory to /app
+COPY .env /app/.env
 
-# Make sure the app listens on all interfaces
-CMD ["gunicorn", "--bind", "0.0.0.0:8000", "app:app"]
+# Copy the rest of the application
+COPY src/ /app/src/
 
-# Expose the port the app runs on
+# Expose the port Flask will run on
 EXPOSE 8000
+
+# Run Gunicorn to serve the Flask app
+CMD ["gunicorn", "--bind", "0.0.0.0:8000", "src.app:app"]
