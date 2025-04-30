@@ -2,7 +2,8 @@ import {
   fetchAccount,
   updateAccount,
   deleteAccount,
-  uploadProfilePicture
+  uploadProfilePicture,
+  deleteUserAccount
 } from "/static/requests/accountRequests.js";
 import { showNotification } from "../components/notifications.js";
 import { fetchPurchases } from "/static/js/billing/billing.js";
@@ -14,9 +15,6 @@ import {
 document.addEventListener("DOMContentLoaded", () => {
   // Hides the edit buttons when in non-edit mode
   const formActions = document.querySelector(".form-actions");
-  if (formActions) {
-    formActions.style.display = "none";
-  }
   const uploadBtn = document.getElementById("upload-pic");
   if (uploadBtn) {
     uploadBtn.style.display = "none";
@@ -779,6 +777,23 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     });
   }
+  
+  async function redirect_to_login()
+  {
+    try {
+      const response = await fetch("/logout", { method: "GET" });
+      const result = await response.json();
+      if (response.ok) {
+        window.location.href = result.redirect_url || "/signin";
+      } else {
+        console.error("Logout failed:", result.message);
+        alert("Failed to log out. Please try again.");
+      }
+    } catch (error) {
+      console.error("Error during logout:", error);
+      alert("An error occurred. Please try again.");
+    }
+  }
 
   // Delete account form submission
   const deleteForm = document.querySelector(".delete-form");
@@ -787,22 +802,12 @@ document.addEventListener("DOMContentLoaded", () => {
       event.preventDefault();
 
       const confirmText = document.getElementById("delete-confirm").value;
-      const password = document.getElementById("delete-password").value;
       const email = document.getElementById("delete-email").value;
 
       if (confirmText !== "DELETE") {
         showNotification(
           "Error",
           "Please type DELETE to confirm account deletion",
-          "error"
-        );
-        return;
-      }
-
-      if (!password) {
-        showNotification(
-          "Error",
-          "Password is required to delete your account",
           "error"
         );
         return;
@@ -818,10 +823,11 @@ document.addEventListener("DOMContentLoaded", () => {
       }
 
       const confirmData = {
+        deleteConfirm: confirmText,
         deleteEmail: email,
-        deletePassword: password,
-        deleteConfirm: confirmText
       };
+
+      console.log("Confirm data:", confirmData); // debugging log
 
       deleteUserAccount(confirmData)
         .then((data) => {
@@ -833,13 +839,7 @@ document.addEventListener("DOMContentLoaded", () => {
             );
             // Redirect to logout or home page after successful deletion
             if (data.redirect) {
-              setTimeout(() => {
-                window.location.href = data.redirect;
-              }, 2000);
-            } else {
-              setTimeout(() => {
-                window.location.href = "/logout";
-              }, 2000);
+              redirect_to_login();
             }
           } else {
             showNotification("Error", "Failed to delete account", "error");
