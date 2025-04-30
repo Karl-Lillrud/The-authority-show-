@@ -145,7 +145,7 @@ def ai_cut_audio():
     try:
         file_id = request.json.get("file_id")
         episode_id = request.json.get("episode_id")
-        logger.info(f"🔍 Received AI Cut request for file_id: {file_id}")
+        logger.info(f"Received AI Cut request for file_id: {file_id}")
 
         if not file_id:
             return jsonify({"error": "file_id is required"}), 400
@@ -184,7 +184,7 @@ def apply_ai_cuts():
 
         return jsonify({"cleaned_file_url": blob_url})
     except Exception as e:
-        logger.error(f"❌ Error applying AI cuts: {str(e)}")
+        logger.error(f"Error applying AI cuts: {str(e)}")
         return jsonify({"error": str(e)}), 500
 
 @audio_bp.route("/cut_from_blob", methods=["POST"])
@@ -254,7 +254,7 @@ def apply_ai_cuts_from_blob():
         blob_url = audio_service.apply_cuts_on_blob(audio_bytes, filename, cuts, episode_id)
         return jsonify({"cleaned_file_url": blob_url})
     except Exception as e:
-        logger.error(f"❌ Error applying AI cuts from blob: {str(e)}")
+        logger.error(f"Error applying AI cuts from blob: {str(e)}")
         return jsonify({"error": str(e)}), 500
 
 @audio_bp.route("/get_cleaned_audio", methods=["GET"])
