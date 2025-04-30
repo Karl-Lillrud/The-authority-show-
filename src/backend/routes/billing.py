@@ -16,6 +16,8 @@ credit_service = CreditService()
 logger = logging.getLogger(__name__)
 
 stripe.api_key = os.getenv("STRIPE_SECRET_KEY")
+# Hämta webhook secret från miljövariabler
+webhook_secret = os.getenv("STRIPE_WEBHOOK_SECRET")
 
 
 @billing_bp.route("/create-checkout-session", methods=["POST"])
@@ -170,62 +172,130 @@ def create_checkout_session():
 
 @billing_bp.route("/credits/success", methods=["GET"])
 def payment_success():
+    # Denna route används nu primärt för omdirigering efter lyckat köp.
+    # Logiken för att ge krediter/slots hanteras av webhooken.
     session_id = request.args.get("session_id")
-    plan = request.args.get("plan", "")
-    user_id = g.user_id
+    plan = request.args.get(
+        "plan", ""
+    )  # Kan fortfarande vara användbart för att visa rätt sida
+    user_id = g.user_id  # Kan användas för loggning eller anpassad sida
 
-    if not user_id:
-        return jsonify({"error": "User not authenticated"}), 401
+    logger.info(
+        f"User {user_id} successfully redirected after checkout session {session_id}."
+    )
 
-    if not session_id:
-        return jsonify({"error": "Missing session ID"}), 400
-
-    try:
-        stripe_session = stripe.checkout.Session.retrieve(
-            session_id, expand=["line_items"]
-        )
-        metadata = stripe_session.get("metadata", {})
-        credits_to_add = int(metadata.get("credits", 0))
-        # Get episode slots from metadata
-        episode_slots_to_add = int(metadata.get("episode_slots", 0))
-        has_subscription = metadata.get("is_subscription", "false") == "true"
-
-        # Deserialisera items om nödvändigt
-        items = json.loads(metadata.get("items", "[]")) if metadata.get("items") else []
-
-        if plan and has_subscription:
-            result, updated_credits = subscription_service.update_user_subscription(
-                user_id, plan, stripe_session
-            )
-            logger.info(f"Subscription updated for user {user_id}: {plan}")
-
-        if credits_to_add > 0:
-            handle_successful_payment(stripe_session, user_id)
-            logger.info(f"Credits processed for user {user_id}: {credits_to_add}")
-
-        # Add logic to handle successful episode pack purchase
-        if episode_slots_to_add > 0:
-            # TODO: Implement or call a service function to add episode slots
-            # Example: episode_service.add_episode_slots(user_id, episode_slots_to_add)
-            # For now, just log it
-            logger.info(
-                f"Episode slots to add for user {user_id}: {episode_slots_to_add}"
-            )
-            # You'll need to implement the actual logic to update the user's account
-            # with the purchased episode slots, likely involving database updates.
-
-        if plan and has_subscription:
-            return redirect("/account?subscription_updated=true#settings-purchases")
-        else:
-            return redirect("/dashboard")
-    except Exception as e:
-        logger.error(f"Payment processing error: {str(e)}")
-        return jsonify({"error": str(e)}), 500
+    # Omdirigera användaren till lämplig sida
+    if plan:  # Om det var en prenumeration inblandad
+        return redirect("/account?subscription_updated=true#settings-purchases")
+    else:  # Annars till dashboard eller butik/historik
+        return redirect("/dashboard?purchase_success=true")
 
 
 @billing_bp.route("/credits/cancel", methods=["GET"])
 def payment_cancel():
     return redirect("/account")
+
+
+# --- Ny Webhook Endpoint ---
+@billing_bp.route("/webhook/stripe", methods=["POST"])
+def stripe_webhook():
+    payload = request.data
+    sig_header = request.headers.get("Stripe-Signature")
+    event = None
+
+    try:
+        event = stripe.Webhook.construct_event(payload, sig_header, webhook_secret)
+        logger.info(f"Webhook received: Event ID={event.id}, Type={event.type}")
+    except ValueError as e:
+        # Invalid payload
+        logger.error(f"Webhook error: Invalid payload. {str(e)}")
+        return jsonify(success=False, error="Invalid payload"), 400
+    except stripe.error.SignatureVerificationError as e:
+        # Invalid signature
+        logger.error(f"Webhook error: Invalid signature. {str(e)}")
+        return jsonify(success=False, error="Invalid signature"), 400
+    except Exception as e:
+        logger.error(f"Webhook error: Generic exception. {str(e)}")
+        return jsonify(success=False, error=str(e)), 500
+
+    # Hantera eventet checkout.session.completed
+    if event.type == "checkout.session.completed":
+        session = event.data.object  # session är ett stripe.checkout.Session objekt
+        logger.info(
+            f"Processing checkout.session.completed for session ID: {session.id}"
+        )
+
+        # Hämta metadata
+        metadata = session.get("metadata", {})
+        user_id = metadata.get("user_id")
+        credits_to_add = int(metadata.get("credits", 0))
+        episode_slots_to_add = int(metadata.get("episode_slots", 0))
+        is_subscription = metadata.get("is_subscription", "false") == "true"
+        plan = metadata.get("plan")
+
+        if not user_id:
+            logger.error(
+                f"Webhook error: Missing user_id in metadata for session {session.id}"
+            )
+            # Returnera 200 ändå så Stripe inte försöker igen för detta specifika fel
+            return jsonify(success=True, message="Missing user_id, but acknowledged.")
+
+        try:
+            # TODO: Lägg till idempotency check här - har denna session.id redan bearbetats?
+            # Ex: if purchase_already_processed(session.id): return jsonify(success=True)
+
+            # Hantera prenumeration (om det finns)
+            if is_subscription and plan:
+                # Använd subscriptionService för att uppdatera/skapa prenumeration
+                # Notera: Stripe skickar separata events för prenumerationer (invoice.paid etc.)
+                # Det kan vara bättre att hantera prenumerationsaktivering där.
+                # Här kan vi dock logga eller sätta en initial flagga.
+                logger.info(
+                    f"Webhook: Subscription purchase detected for user {user_id}, plan {plan}. Session: {session.id}"
+                )
+                # subscription_service.handle_subscription_creation(user_id, plan, session) # Exempel
+
+            # Hantera kreditpaket
+            if credits_to_add > 0:
+                logger.info(
+                    f"Webhook: Adding {credits_to_add} credits for user {user_id}. Session: {session.id}"
+                )
+                # Använd billingService eller creditService för att lägga till krediter
+                handle_successful_payment(
+                    session, user_id
+                )  # Använder befintlig funktion
+
+            # Hantera episodpaket
+            if episode_slots_to_add > 0:
+                logger.info(
+                    f"Webhook: Adding {episode_slots_to_add} episode slots for user {user_id}. Session: {session.id}"
+                )
+                # TODO: Anropa funktionen för att lägga till episod-slots
+                # episode_service.add_episode_slots(user_id, episode_slots_to_add, session.id) # Exempel, skicka med session.id för idempotency/spårning
+
+            # TODO: Spara information om köpet (t.ex. i Purchases collection) om det inte görs i handle_successful_payment
+
+        except Exception as e:
+            logger.error(f"Webhook processing error for session {session.id}: {str(e)}")
+            # Returnera 500 så Stripe försöker skicka eventet igen
+            return jsonify(success=False, error=f"Processing error: {str(e)}"), 500
+
+    # Lägg till hantering för andra event-typer vid behov
+    # elif event.type == 'invoice.paid':
+    #    # Hantera återkommande prenumerationsbetalningar
+    #    pass
+    # elif event.type == 'invoice.payment_failed':
+    #    # Hantera misslyckade betalningar
+    #    pass
+
+    else:
+        logger.info(f"Webhook received unhandled event type: {event.type}")
+
+    # Bekräfta mottagandet till Stripe
+    return jsonify(success=True)
+
+
+# --- End Webhook Endpoint ---
 
 
 @billing_bp.route("/api/subscription", methods=["GET"])
