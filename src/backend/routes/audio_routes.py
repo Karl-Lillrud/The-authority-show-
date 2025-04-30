@@ -123,14 +123,18 @@ def clip_audio():
         blob_path = f"users/{g.user_id}/podcasts/{podcast_id}/episodes/{episode_id}/audio/{filename}"
         blob_url = upload_file_to_blob("podmanagerfiles", blob_path, clipped_bytes)
 
-        add_audio_edit_to_episode(
+        create_edit_entry(
             episode_id=episode_id,
-            file_id="external",
+            user_id=g.user_id,
             edit_type="manual_clip",
-            filename=filename,
-            metadata={"blob_url": blob_url, "start": start_time, "end": end_time}
+            clip_url=blob_url,
+            clipName=f"clipped_{filename}",
+            metadata={
+                "start": start_time,
+                "end": end_time,
+                "edit_type": "manual_clip"
+            }
         )
-
         return jsonify({"clipped_audio_url": blob_url})
     except Exception as e:
         logger.error(f"Error clipping audio: {str(e)}")
@@ -168,12 +172,15 @@ def apply_ai_cuts():
         blob_path = f"users/{g.user_id}/podcasts/{podcast_id}/episodes/{episode_id}/audio/{cleaned_filename}"
         blob_url = upload_file_to_blob("podmanagerfiles", blob_path, cleaned_bytes)
 
-        add_audio_edit_to_episode(
+        create_edit_entry(
             episode_id=episode_id,
-            file_id="external",
-            edit_type="ai_cut",
-            filename=cleaned_filename,
-            metadata={"blob_url": blob_url, "applied_ai_cuts": cuts}
+            user_id=g.user_id,
+            edit_type="ai_cut_cleaned",
+            clip_url=blob_url,
+            clipName=f"cleaned_{filename}",
+            metadata={
+                "edit_type": "ai_cut_cleaned"
+            }
         )
 
         return jsonify({"cleaned_file_url": blob_url})
