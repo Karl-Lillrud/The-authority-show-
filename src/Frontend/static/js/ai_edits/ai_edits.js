@@ -217,14 +217,14 @@ function showTab(tabName) {
         `;
     } else if (tabName === 'video') {
         content.innerHTML = `
-            <h2>📹 AI Video Enhancement</h2>
+            <h2>AI Video Enhancement</h2>
             <input type="file" id="videoUploader" accept="video/*" onchange="previewOriginalVideo()">
             <div id="originalVideoContainer" style="display: none; margin-bottom: 1rem;">
-                <p>🎬 <strong>Original Video</strong></p>
+                <p><strong>Original Video</strong></p>
                 <video id="originalVideoPlayer" controls style="width: 100%"></video>
             </div>
             <button class="btn ai-edit-button" onclick="enhanceVideo()">
-            ${labelWithCredits("✨ Enhance Video", "video_enhancement")}
+            ${labelWithCredits("Enhance Video", "video_enhancement")}
             </button>
             <div id="videoResult"></div>
             <a id="downloadVideo" class="btn ai-edit-button" download="enhanced_video.mp4" style="display: none;">
@@ -249,11 +249,11 @@ async function transcribe() {
     try {
         await consumeStoreCredits("transcription");
     } catch (err) {
-        resultContainer.innerText = `❌ Not enough credits: ${err.message}`;
+        resultContainer.innerText = `Not enough credits: ${err.message}`;
         return;
     }
 
-    resultContainer.innerText = "🔄 Transcribing... Please wait.";
+    resultContainer.innerText = "Transcribing... Please wait.";
     const formData = new FormData();
     formData.append('file', file);
 
@@ -272,10 +272,10 @@ async function transcribe() {
             document.getElementById("enhancementTools").style.display = "block";
         } else {
             const errorData = await response.json();
-            resultContainer.innerText = `❌ Error: ${errorData.error || response.statusText}`;
+            resultContainer.innerText = `Error: ${errorData.error || response.statusText}`;
         }
     } catch (error) {
-        resultContainer.innerText = `❌ Transcription failed: ${error.message}`;
+        resultContainer.innerText = `Transcription failed: ${error.message}`;
     }
 }
 
@@ -292,7 +292,7 @@ async function generateCleanTranscript() {
             data.clean_transcript || "No clean result.";
     } catch (err) {
         document.getElementById("cleanTranscriptResult").innerText =
-            "❌ Failed to clean transcript. Server says: " + err.message;
+            "Failed to clean transcript. Server says: " + err.message;
     }
 }
 
