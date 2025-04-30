@@ -10,6 +10,7 @@ import { updateEditButtons, shared } from "./podcastmanagement.js";
 import { renderPodcastSelection, viewPodcast } from "./podcast-functions.js";
 import { renderGuestDetail } from "./guest-functions.js";
 import { showNotification } from "../components/notifications.js";
+import { consumeStoreCredits, getCredits } from "../../../static/requests/creditRequests.js";
 
 // Add this function to create a play button with SVG icon
 export function createPlayButton(size = "medium") {
@@ -689,7 +690,7 @@ export function initEpisodeFunctions() {
     });
 
   // Funktion för att visa popup när episodgränsen nås
-  function showEpisodeLimitPopup() {
+  async function showEpisodeLimitPopup() {
     const popup = document.getElementById("episode-limit-popup");
     popup.style.display = "flex";
 
@@ -700,11 +701,30 @@ export function initEpisodeFunctions() {
         popup.style.display = "none";
       });
 
+    const credits_button = document.getElementById("buy-credits-btn-popup");
+
+    const credits = await getCredits();
+    const extra_episode_cost = 5000;
+    if (credits >= extra_episode_cost) {
+      credits_button.textContent = "Buy for 5000 credits";
+    } else {
+      credits_button.textContent = "Buy Credits"
+    }
+
     // Navigate to store
-    document
-      .getElementById("buy-credits-btn-popup")
-      .addEventListener("click", () => {
-        window.location.href = "/store";
+    credits_button
+      .addEventListener("click", async () => {
+        if (credits >= extra_episode_cost) {
+          try {
+            await consumeStoreCredits("episode_pack");
+           
+          } catch (error) {
+            console.log(error);
+          }
+        } else {
+          window.location.href = "/store";
+        }
       });
   }
 }
+

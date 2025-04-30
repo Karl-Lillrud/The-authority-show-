@@ -23,3 +23,22 @@ export async function consumeStoreCredits(featureKey) {
         throw error;
     }
 }
+
+export async function getCredits() {
+    try {
+      const response = await fetch("/api/credits", {
+        credentials: "same-origin",
+      });
+
+      if (!response.ok) {
+        console.warn("Failed to fetch credits:", response.status);
+        return;
+      }
+
+      const data = await response.json();
+      return data.availableCredits;
+    } catch (err) {
+      console.error("Error fetching user credits:", err);
+      return null;
+    }
+  }
