@@ -44,7 +44,7 @@ const CREDIT_COSTS = {
     ai_audio_analysis: 800,
     ai_audio_cutting: 800,
     ai_quotes: 800,
-    ai_qoute_images: 800,
+    ai_quote_images: 800,
     ai_suggestions: 800,
     audio_cutting: 500,
     audio_enhancment: 500,
@@ -131,7 +131,7 @@ function showTab(tabName) {
     
                 <div class="result-group">
                     <button class="btn ai-edit-button" onclick="generateQuoteImages()">
-                      ${labelWithCredits("Generate Quote Images", "ai_qoute_images")}
+                      ${labelWithCredits("Generate Quote Images", "ai_quote_images")}
                     </button>
                     <div class="result-field">
                         <div id="quoteImagesResult"></div>
@@ -477,7 +477,7 @@ async function generateQuoteImages() {
             });
 
             // ✅ Consume credits only after success
-            await consumeStoreCredits("ai_qoute_images");
+            await consumeStoreCredits("ai_quote_images");
         } else {
             container.innerText = `Error: ${res.status} - ${res.statusText}`;
         }
