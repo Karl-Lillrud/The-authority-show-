@@ -90,7 +90,31 @@ function showTab(tabName) {
                         <pre id="quotesResult"></pre>
                     </div>
                 </div>
-    
+
+                  <div class="result-group">
+                    <button class="btn ai-edit-button" onclick="translateTranscript()">
+                        ${labelWithCredits("🌐 Translate to English", "translation")}
+                    </button>
+                    <div class="result-field">
+                        <pre id="translationResult"></pre>
+                    </div>
+                </div>
+
+                <div class="result-group">
+                    <button class="btn ai-edit-button" onclick="generateTranslatedPodcast()">
+                        ${labelWithCredits("🎙 Generate Podcast Audio", "ai_intro_outro_audio")}
+                        </button>
+                        <div class="result-field">
+                            <audio id="translatedPodcastPlayer" controls style="width:100%; display:none;"></audio>
+                            <a id="downloadTranslatedPodcast"
+                            class="btn ai-edit-button"
+                            style="display:none;"
+                            download="translated_podcast.mp3">
+                            📥 Download Podcast Audio
+                            </a>
+                        </div>
+                    </div>
+                
                 <div class="result-group">
                     <button class="btn ai-edit-button" onclick="generateQuoteImages()">
                       ${labelWithCredits("🖼️ Generate Quote Images", "ai_qoute_images")}
@@ -489,6 +513,65 @@ async function convertIntroOutroToSpeech() {
         }
     } catch (err) {
         resultEl.innerText += `\n❌ Failed to convert to audio: ${err.message}`;
+    }
+}
+
+async function generateTranslatedPodcast() {
+    const player = document.getElementById("translatedPodcastPlayer");
+    const dl     = document.getElementById("downloadTranslatedPodcast");
+
+    // Hämta den översatta texten
+    const translated = document.getElementById("translationResult").innerText.trim();
+    if (!translated) {
+        alert("⚠️ Ingen översättning tillgänglig – gör först översättningen.");
+        return;
+    }
+
+    try {
+        await consumeStoreCredits("ai_intro_outro_audio");
+
+        // Dölj gamla kontroller
+        player.style.display = "none";
+        dl.style.display     = "none";
+        player.src           = "";
+        dl.href              = "";
+
+        // Hämta MP3 som Blob
+        const res = await fetch("/transcription/translate_audio", {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                transcript: translated,
+                language: 'English'
+            })
+        });
+
+        if (!res.ok) {
+            // försök läsa felmeddelande som JSON, annars text
+            let errMsg;
+            try {
+                const err = await res.json();
+                errMsg = err.error;
+            } catch {
+                errMsg = await res.text();
+            }
+            throw new Error(errMsg || res.statusText);
+        }
+
+        // Viktigt: använd blob(), INTE json()
+        const blob = await res.blob();
+        const url  = URL.createObjectURL(blob);
+
+        // Visa audio‐taggen
+        player.src           = url;
+        player.style.display = "block";
+
+        // Visa download‐länken
+        dl.href          = url;
+        dl.download      = "translated_podcast.mp3";
+        dl.style.display = "inline-block";
+    } catch (err) {
+        alert("❌ Kunde inte generera poddljud: " + err.message);
     }
 }
 
@@ -1161,5 +1244,41 @@ function rejectSfx(index) {
 function replaceSfx(index, url) {
     if (selectedSoundFX[index]) {
         selectedSoundFX[index].sfxUrl = url;
+    }
+}
+
+async function translateTranscript() {
+    const resultEl = document.getElementById("translationResult");
+    // Försök med fullTranscript, fallback till rawTranscript
+    const toTranslate = (fullTranscript && fullTranscript.trim())
+        ? fullTranscript.trim()
+        : (rawTranscript && rawTranscript.trim())
+            ? rawTranscript.trim()
+            : "";
+
+    if (!toTranslate) {
+        alert("⚠️ Ingen transkription hittad – kör först transkriberingen.");
+        return;
+    }
+
+    try {
+        await consumeStoreCredits("translation");
+        resultEl.innerText = "🔄 Translating…";
+
+        const res = await fetch('/transcription/translate', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                transcript: toTranslate,
+                language: 'English'
+            })
+        });
+
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || res.statusText);
+
+        resultEl.innerText = data.translated_text || "No translation.";
+    } catch (err) {
+        resultEl.innerText = `❌ Error: ${err.message}`;
     }
 }

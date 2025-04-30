@@ -1,6 +1,7 @@
 # src/backend/routes/transcript/transcription.py
 import os
 import logging
+import base64
 import subprocess
 from datetime import datetime
 from flask import Blueprint, request, jsonify, render_template, session,Response
@@ -20,6 +21,7 @@ from backend.services.videoService import VideoService
 from backend.repository.ai_models import fetch_file, save_file, get_file_by_id
 from backend.utils.transcription_utils import check_audio_duration
 from backend.utils.subscription_access import get_transcription_limit
+from backend.utils.text_utils import text_to_speech_with_elevenlabs
 
 transcription_bp = Blueprint("transcription", __name__)
 logger = logging.getLogger(__name__)
@@ -32,6 +34,7 @@ transcription_service = TranscriptionService()
 audio_service = AudioService()
 video_service = VideoService()
 subscription_service = SubscriptionService()
+service = TranscriptionService()
 
 @transcription_bp.route("/transcribe", methods=["POST"])
 def transcribe():
@@ -140,11 +143,13 @@ def quote_images():
 @transcription_bp.route("/translate", methods=["POST"])
 def translate():
     data = request.json
-    text = data.get("text", "")
+    transcript = data.get("transcript", "").strip()
     language = data.get("language", "English")
 
+    if not transcript:
+       return jsonify({"error": "No transcript provided."}), 400
     try:
-        translated = transcription_service.translate_text(text, language)
+        translated = transcription_service.translate_text(transcript, language)
         return jsonify({"translated_text": translated})
     except Exception as e:
         return jsonify({"error": str(e)}), 500
@@ -382,3 +387,28 @@ def generate_intro_outro_audio():
         logger.error(f"❌ ElevenLabs TTS failed: {str(e)}")
         return jsonify({"error": str(e)}), 500
 
+@transcription_bp.route("/translate_audio", methods=["POST"])
+def translate_and_tts():
+    data       = request.get_json() or {}
+    transcript = data.get("transcript", "").strip()
+    language   = data.get("language", "English")
+
+    if not transcript:
+        return jsonify({"error": "No transcript provided."}), 400
+
+    try:
+        # 1) Översätt transcriptet
+        translated = service.translate_text(transcript, language)
+
+        # 2) Generera speech på det översatta med default‐voice_id
+        audio_bytes = text_to_speech_with_elevenlabs(translated)
+
+        # 3) Returnera rå MP3‐ström
+        return Response(
+            audio_bytes,
+            mimetype="audio/mpeg",
+            headers={"Content-Disposition":"attachment; filename=podcast.mp3"}
+        )
+    except Exception as e:
+        logger.error(f"Error in translate_audio: {e}", exc_info=True)
+        return jsonify({"error": str(e)}), 500

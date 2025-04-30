@@ -38,7 +38,10 @@ def download_button_text(label, text, filename, key_prefix=""):
     return st.download_button(label, text, filename, key=key)
 
 def translate_text(text: str, target_language: str) -> str:
-    prompt = f"Translate the following transcript to {target_language}:\n\n{text}"
+    prompt = (
+        f"Detect the original language of the following transcript, "
+        f"then translate it to {target_language}:\n\n{text}"
+        )
     retries = 3
     for attempt in range(retries):
         try:
@@ -383,31 +386,25 @@ The outro should reflect on the discussion and invite the listener to tune in ag
 
     return response.choices[0].message.content.strip()
 
-def text_to_speech_with_elevenlabs(script: str, voice_id: str = "TX3LPaxmHKxFdv7VOQHJ") -> bytes:
-    import requests
-    import os
+def text_to_speech_with_elevenlabs(
+    script: str,
+    voice_id: str = "TX3LPaxmHKxFdv7VOQHJ",
+    translate_to: str = None
+) -> bytes:
+    import requests, os
     from io import BytesIO
+    # Om man anger ett språk, översätt först
+    if translate_to:
+        from backend.utils.text_utils import translate_text
+        script = translate_text(script, translate_to)
 
     api_key = os.getenv("ELEVENLABS_API_KEY")
-    url = f"https://api.elevenlabs.io/v1/text-to-speech/{voice_id}"
+    url     = f"https://api.elevenlabs.io/v1/text-to-speech/{voice_id}"
+    headers = {"xi-api-key": api_key, "Content-Type": "application/json"}
+    payload = {"text": script, "voice_settings":{"stability":0.5,"similarity_boost":0.8}}
 
-    headers = {
-        "xi-api-key": api_key,
-        "Content-Type": "application/json"
-    }
-
-    payload = {
-        "text": script,
-        "voice_settings": {
-            "stability": 0.5,
-            "similarity_boost": 0.8
-        }
-    }
-
-    response = requests.post(url, headers=headers, json=payload)
-
-    if response.status_code == 200:
-        return response.content  # 🧠 Raw MP3 bytes
-    else:
-        raise RuntimeError(f"ElevenLabs error {response.status_code}: {response.text}")
+    resp = requests.post(url, headers=headers, json=payload)
+    if resp.status_code == 200:
+        return resp.content
+    raise RuntimeError(f"ElevenLabs error {resp.status_code}: {resp.text}")
 
