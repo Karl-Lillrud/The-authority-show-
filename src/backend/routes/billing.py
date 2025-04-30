@@ -250,7 +250,7 @@ def cancel_subscription():
             stripe_subscription_id = None
             
             # Check the payment record for subscription_id
-            subscription_record = collection.database.subscriptions_collection.find_one(
+            subscription_record = collection.database.Subscriptions.find_one( # Changed from subscriptions_collection
                 {"user_id": user_id, "status": "active"}
             )
             
@@ -365,7 +365,7 @@ def cancel_subscription():
                 return jsonify({"error": "Failed to update subscription status"}), 500
 
         # Also update in subscriptions collection if it exists
-        subscription_result = collection.database.subscriptions_collection.update_one(
+        subscription_result = collection.database.Subscriptions.update_one( # Changed from subscriptions_collection
             {"user_id": user_id, "status": "active"},
             {
                 "$set": {

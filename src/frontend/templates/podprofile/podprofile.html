@@ -124,30 +124,32 @@
     </main>
 
     <!-- Welcome Popup -->
-  <div id="welcome-popup" class="popup">
-    <div class="popup-content">
-      <span id="close-welcome-popup" class="close-btn">&times;</span>
-      <h2>Welcome to PodManager.ai!</h2>
-      <div class="popup-body">
-        <p>🎉 <strong>Congratulations!</strong></p>
-        <p>
-          Your spot in the Beta Tester queue is secured! Get ready for your
-          exclusive sneak peek...
-        </p>
-        <p>
-          💰 To get you started, we've added <strong>3,500 credits</strong> to
-          your account!
-        </p>
-        <p>
-          PodManager.ai will revolutionize your podcast production with
-          AI-driven workflow automation, seamless guest management, and faster
-          episode production - so you can focus on creating amazing content!
-        </p>
-        <p>✨ Check your email now for more exciting features!</p>
-        <button id="get-started-btn" class="btn save-btn">Get Started</button>
+    <div id="welcome-popup" class="popup" role="dialog" aria-modal="true" aria-labelledby="welcome-title">
+      <div class="popup-content">
+        <button id="close-welcome-popup" class="close-btn" aria-label="Close welcome message">&times;</button>
+        <h2 id="welcome-title">Welcome to PodManagerAI!</h2>
+        <div class="popup-body">
+          <p>You’ve just secured your spot in our Beta Program—thank you for joining early.</p>
+          <p>💰 As a special welcome gift, we’ve credited your account with <strong>{{credits}} credits</strong>!</p>
+          <p>
+            PodManagerAI will supercharge your podcast workflow with:
+            <div class="feature">
+              🤖 AI-powered episode automation
+            </div>
+            <div class="feature">
+              🤝 Guest scheduling &amp; management
+            </div>
+            <div class="feature">
+              ⚡ Faster audio production &amp; publishing
+            </div>
+          </p>
+          <p>✨ Check your email for more exciting features!</p>          <div class="popup-actions">
+            <button id="get-started-btn" class="btn primary-btn">Let’s Get Started</button>
+          </div>
+        </div>
       </div>
     </div>
-  </div>
+    
   
     <script
       type="module"
