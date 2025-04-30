@@ -713,10 +713,6 @@ export async function showEditTaskPopup(taskId, state, updateUI) {
                 <input type="text" id="edit-task-due-date" class="form-control date-picker" value="${dueDate || ""}">
                 <small class="help-text">Select a specific date and time or use relative terms like "Before recording", "3 days before recording"</small>
               </div>
-              <div class="form-group">
-                <label for="edit-task-assigned">Assigned To</label>
-                <input type="text" id="edit-task-assigned" class="form-control" value="${assigneeName || ""}">
-              </div>
               
               <div class="form-group">
                 <label for="edit-task-ai-tools">AI Tools</label>
@@ -889,10 +885,6 @@ export function showAddTaskModal(state, updateUI) {
               <input type="text" id="task-due-date" class="form-control date-picker" placeholder="Select date and time">
               <small class="help-text">Select a specific date and time or use relative terms like "Before recording", "3 days before recording"</small>
             </div>
-            <div class="form-group">
-              <label for="task-assigned">Assigned To</label>
-              <input type="text" id="task-assigned" class="form-control" placeholder="Name of person assigned">
-            </div>
             
             <div class="form-group">
               <label for="task-ai-tools">AI Tools</label>
@@ -901,8 +893,6 @@ export function showAddTaskModal(state, updateUI) {
                 <option value="transcription">Transcription</option>
                 <option value="audio-editing">Audio Editing</option>
                 <option value="video-editing">Video Editing</option>
-                <option value="summary">Content Summary</option>
-                <option value="seo">SEO Optimization</option>
               </select>
               <small class="help-text">Select an AI tool to assist with this task</small>
             </div>

@@ -62,8 +62,20 @@ function labelWithCredits(text, key) {
 }
 
 function showTab(tabName) {
+    // Get all workspace tab buttons
+    const workspaceButtons = document.querySelectorAll('.workspace-tab-btn');
+    
+    // Remove active class from all buttons
+    workspaceButtons.forEach(btn => btn.classList.remove('active'));
+    
+    // Add active class to clicked button
+    const clickedButton = document.querySelector(`.workspace-tab-btn[data-workspace="${tabName}"]`);
+    if (clickedButton) {
+        clickedButton.classList.add('active');
+    }
+
     const content = document.getElementById('content');
-    content.innerHTML = ''; // Rensa befintligt innehåll
+    content.innerHTML = '';
 
     if (tabName === 'transcription') {
         content.innerHTML = `
@@ -257,7 +269,20 @@ function showTab(tabName) {
     }
 }
 
-window.showTab = showTab;
+// Add event listeners when the page loads
+document.addEventListener('DOMContentLoaded', function() {
+    const workspaceButtons = document.querySelectorAll('.workspace-tab-btn');
+    
+    workspaceButtons.forEach(button => {
+        button.addEventListener('click', function() {
+            const tabName = this.getAttribute('data-workspace');
+            showTab(tabName);
+        });
+    });
+
+    // Show transcription tab by default
+    showTab('transcription');
+});
 
 let rawTranscript = "";
 let fullTranscript = "";
