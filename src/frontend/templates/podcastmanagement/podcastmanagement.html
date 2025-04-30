@@ -78,7 +78,6 @@
           <button id="add-guest-btn" class="sidebar-action-button">
             <span id="add-icon-guest" class="sidebar-icon"></span>
             <span>Add Guest</span>
-          </button>
         </div>
       </div>
       <div class="sidebar-footer">
@@ -393,6 +392,52 @@
           </form>
         </div>
       </div>
+
+      <div id="email-config-popup" class="popup" style="display: none">
+        <div class="form-box">
+          <span id="close-email-config-popup" class="close-btn">&times;</span>
+          <h2 class="form-title">Email Configuration</h2>
+          <div class="form-grid">
+            <!-- Section for managing triggers -->
+            <h3 class="section-title">Manage Triggers</h3>
+            <div class="field-group full-width">
+              <label for="trigger-select">Select Trigger</label>
+              <select id="trigger-select" name="trigger">
+                <option value="" disabled selected>Select a trigger to configure</option> <!-- Placeholder option -->
+                <option value="booking">Booking</option>
+                <option value="preparation">Preparation</option>
+                <option value="missing_info">Missing Info</option>
+                <option value="publishing_reminder">Publishing Reminder</option>
+                <option value="join_link">Join Link</option>
+                <option value="thank_you">Thank You</option>
+                <option value="recommendations">Recommendations</option>
+                <option value="suggestions">Suggestions</option>
+                <option value="missing_social_media">Missing Social Media</option>
+              </select>
+            </div>
+            <div id="trigger-info-box" class="trigger-info-box">
+              <!-- Current configuration will be dynamically loaded here -->
+            </div>
+            <div class="field-group full-width">
+              <label for="trigger-time">Trigger Time</label>
+              <input type="number" id="trigger-time" name="triggerTime" placeholder="Enter time in hours" />
+            </div>
+            <button id="save-trigger-btn" class="save-btn">Save Trigger</button>
+          </div>
+  
+          <!-- Outbox Section -->
+          <div id="outbox-section" class="outbox-section">
+            <h3 class="section-title">Outbox</h3>
+            <div id="outbox-list" class="outbox-list">
+              <!-- Outbox emails will be dynamically populated here -->
+            </div>
+          </div>s
+  
+          <div class="form-actions">
+            <button id="close-email-config-btn" class="cancel-btn">Close</button>
+          </div>
+        </div>
+      </div>
     </main>
   </div>
   
@@ -403,5 +448,9 @@
   <script
     type="module"
     src="{{ url_for('static', filename='js/podcastmanagement/podcastmanagement.js') }}"
+  ></script>
+  <script 
+    type="module"
+    src="{{ url_for('static', filename='js/podcastmanagement/emailconfig-functions.js') }}"
   ></script>
 {% endblock %}

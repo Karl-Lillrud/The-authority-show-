@@ -19,7 +19,7 @@ from backend.services.audioService import AudioService
 from backend.services.videoService import VideoService
 from backend.repository.ai_models import fetch_file, save_file, get_file_by_id
 from backend.utils.transcription_utils import check_audio_duration
-from backend.utils.subscription_access import get_transcription_limit
+from backend.utils.subscription_access import get_max_duration_limit
 
 transcription_bp = Blueprint("transcription", __name__)
 logger = logging.getLogger(__name__)
@@ -44,7 +44,7 @@ def transcribe():
     is_video = file_ext in ["mp4", "mov", "avi", "mkv", "webm"]
 
     try:
-        # 🟢 Extract audio if needed
+        # Extract audio if needed
         if is_video:
             temp_video_path = f"/tmp/{filename}"
             temp_audio_path = temp_video_path.replace(file_ext, ".wav")
@@ -65,28 +65,28 @@ def transcribe():
         user_id = session.get("user_id")
         subscription = subscription_service.get_user_subscription(user_id)
         subscription_plan = subscription["plan"] if subscription else "FREE"
-        logger.info(f"👤 User {user_id} subscription plan: {subscription_plan}")
+        logger.info(f"User {user_id} subscription plan: {subscription_plan}")
 
         # 🛡️ Get max allowed duration from subscription utils
-        max_duration = get_transcription_limit(subscription_plan)
-        logger.info(f"🛡️ Max transcription duration allowed: {max_duration} seconds")
+        max_duration = get_max_duration_limit(subscription_plan)
+        logger.info(f"Max transcription duration allowed: {max_duration} seconds")
 
         # ⏱️ Check audio duration
-        logger.info("🔍 Checking uploaded audio duration...")
+        logger.info("Checking uploaded audio duration...")
         check_audio_duration(audio_bytes, max_duration_seconds=max_duration)
-        logger.info("✅ Audio duration is within the allowed limit.")
+        logger.info("Audio duration is within the allowed limit.")
 
         # 🧠 Transcription process
         logger.info(f"🧠 Starting transcription for file: {filename}")
         result = transcription_service.transcribe_audio(audio_bytes, filename)
-        logger.info("✅ Transcription completed successfully.")
+        logger.info("Transcription completed successfully.")
         return jsonify(result)
 
     except ValueError as e:
-        logger.warning(f"⚠️ Validation error: {e}")
+        logger.warning(f"Validation error: {e}")
         return jsonify({"error": str(e)}), 400
     except Exception as e:
-        logger.error(f"❌ Unexpected error during transcription: {e}", exc_info=True)
+        logger.error(f"Unexpected error during transcription: {e}", exc_info=True)
         return jsonify({"error": "Transcription failed", "details": str(e)}), 500
 
 @transcription_bp.route("/clean", methods=["POST"])
@@ -189,7 +189,7 @@ def get_audio_info():
     """Generate waveform and get duration of uploaded audio file, now using MongoDB GridFS."""
 
     if "audio" not in request.files:
-        logger.error("❌ ERROR: No audio file provided")
+        logger.error("ERROR: No audio file provided")
         return jsonify({"error": "No audio file provided"}), 400
 
     try:
@@ -209,24 +209,24 @@ def get_audio_info():
 
         # Retrieve the file from GridFS for processing
         file_data = fs.get(file_id).read()
-        logger.info(f"📥 Retrieved original file from GridFS with ID: {file_id}")
+        logger.info(f"Retrieved original file from GridFS with ID: {file_id}")
 
         # Save to a temporary file for analysis
         with tempfile.NamedTemporaryFile(delete=False, suffix=".wav") as temp_file:
             temp_file.write(file_data)
             temp_file_path = temp_file.name
-        logger.info(f"📂 Temporary file created at: {temp_file_path}")
+        logger.info(f"Temporary file created at: {temp_file_path}")
 
         # Load audio using SoundFile
         data, sample_rate = sf.read(temp_file_path)
 
         # Check if the audio is empty
         if data is None or len(data) == 0:
-            logger.error("❌ ERROR: Loaded audio is empty")
+            logger.error("ERROR: Loaded audio is empty")
             return jsonify({"error": "Loaded audio is empty"}), 500
 
         duration = len(data) / sample_rate
-        logger.info(f"🕒 Audio duration: {duration} seconds")
+        logger.info(f"Audio duration: {duration} seconds")
 
         # Generate waveform image
         waveform_filename = f"waveform_{filename}"
@@ -252,9 +252,9 @@ def get_audio_info():
                 },  # Add type
             )
 
-        logger.info(f"📤 Waveform saved to MongoDB GridFS with ID: {waveform_file_id}")
+        logger.info(f"Waveform saved to MongoDB GridFS with ID: {waveform_file_id}")
 
-        logger.info(f"📤 Waveform saved to MongoDB GridFS with ID: {waveform_file_id}")
+        logger.info(f"Waveform saved to MongoDB GridFS with ID: {waveform_file_id}")
 
         # Cleanup temp files
         os.remove(temp_file_path)
@@ -269,7 +269,7 @@ def get_audio_info():
         )
 
     except Exception as e:
-        logger.error(f"❌ ERROR: Failed to process audio - {str(e)}")
+        logger.error(f"ERROR: Failed to process audio - {str(e)}")
         return jsonify({"error": f"Failed to process audio: {str(e)}"}), 500
 
 @transcription_bp.route("/voice_isolate", methods=["POST"])
@@ -304,10 +304,10 @@ def get_isolated_audio():
 def render_ai_edits():
     episode_id = request.args.get("episodeId")
     if not episode_id or episode_id == "unknown":
-        logger.error(f"❌ Invalid or missing episode ID: {episode_id}")
+        logger.error(f"Invalid or missing episode ID: {episode_id}")
         return jsonify({"error": "Invalid or missing episode ID"}), 400
 
-    logger.info(f"✅ Rendering AI Edits page for episode ID: {episode_id}")
+    logger.info(f"Rendering AI Edits page for episode ID: {episode_id}")
     try:
         return render_template("ai_edits/ai_edits.html", episode_id=episode_id, user_id=session.get("user_id"))
     except Exception as e:
@@ -340,7 +340,7 @@ def osint_lookup():
         osint_info = get_osint_info(guest_name)
         return jsonify({"osint_info": osint_info})
     except Exception as e:
-        logger.error(f"❌ OSINT error: {str(e)}")
+        logger.error(f"OSINT error: {str(e)}")
         return jsonify({"error": str(e)}), 500
     
 @transcription_bp.route("/generate_intro_outro", methods=["POST"])
@@ -360,7 +360,7 @@ def generate_intro_outro():
 
         return jsonify({"script": script})
     except Exception as e:
-        logger.error(f"❌ Intro/Outro generation error: {str(e)}")
+        logger.error(f"Intro/Outro generation error: {str(e)}")
         return jsonify({"error": str(e)}), 500
 
 @transcription_bp.route("/intro_outro_audio", methods=["POST"])
@@ -379,6 +379,6 @@ def generate_intro_outro_audio():
         b64_audio = base64.b64encode(audio_bytes).decode("utf-8")
         return jsonify({"audio_base64": f"data:audio/mp3;base64,{b64_audio}"})
     except Exception as e:
-        logger.error(f"❌ ElevenLabs TTS failed: {str(e)}")
+        logger.error(f"ElevenLabs TTS failed: {str(e)}")
         return jsonify({"error": str(e)}), 500
 

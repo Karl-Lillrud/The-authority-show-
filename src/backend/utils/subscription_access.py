@@ -44,6 +44,6 @@ PLAN_BENEFITS = {
 def get_plan_benefits(plan: str) -> dict:
     return PLAN_BENEFITS.get(plan.upper(), PLAN_BENEFITS["FREE"])
 
-def get_transcription_limit(plan: str) -> int:
-    """Shortcut to get just the transcription limit."""
+def get_max_duration_limit(plan: str) -> int:
+    """Returns the transcription duration limit for the given plan. Defaults to 1 hour if not specified.r"""
     return get_plan_benefits(plan).get("transcription_limit", 60 * 60)

@@ -100,6 +100,16 @@ export function renderEpisodeDetail(episode) {
     Back to podcast
   </button>
   <div class="top-right-actions">
+    ${/* Conditionally render AI Edit button */ ""}
+    ${
+      !episode.isImported
+        ? `
+    <button class="save-btn" id="ai-edit-episode-btn" data-id="${episode._id}">
+      AI Edit
+    </button>
+    `
+        : ""
+    }
     <button class="action-btn edit-btn" id="edit-episode-btn" data-id="${
       episode._id
     }">
@@ -108,7 +118,7 @@ export function renderEpisodeDetail(episode) {
   </div>
 </div>
 
-<div class="podcast-detail-container">
+<div class="podcast-detail-container"></div>
   <!-- Header section with image and basic info -->
   <div class="podcast-header-section">
     <div class="podcast-image-container">
@@ -145,48 +155,54 @@ export function renderEpisodeDetail(episode) {
       episode.description || "No description available."
     }</p>
     
-<!-- Audio + Edits section side-by-side -->
-<div class="audio-section-wrapper" style="display: flex; gap: 2rem; align-items: flex-start; flex-wrap: wrap;">
+    <!-- Audio Section Wrapper - Only contains the main player now -->
+    <div class="audio-section-wrapper" style="margin-top: 1.5rem;"> <!-- Removed flex styles -->
+      <!-- Main Audio Player -->
+      <div class="main-audio-player"> <!-- Removed flex properties -->
+        <h3>Main Episode Audio</h3>
+        ${
+          episode.audioUrl
+            ? `<audio controls style="width: 100%;">
+                 <source src="${episode.audioUrl}" type="${
+                fileType || "audio/mpeg"
+              }">
+                 Your browser does not support the audio element.
+               </audio>`
+            : "<p>No audio available for this episode.</p>"
+        }
+      </div>
+    </div> <!-- End audio-section-wrapper -->
 
-  <!-- Main Audio Player -->
-  <div class="main-audio-player" style="flex: 1; min-width: 300px;">
-    <h3>Main Episode Audio</h3>
+    <!-- Saved Audio Edits - Moved outside and below the wrapper -->
     ${
-      episode.audioUrl
-        ? `<audio controls style="width: 100%;">
-             <source src="${episode.audioUrl}" type="${fileType || "audio/mpeg"}">
-             Your browser does not support the audio element.
-           </audio>`
-        : "<p>No audio available for this episode.</p>"
+      episode.audioEdits && episode.audioEdits.length > 0
+        ? `<div class="audio-edits" style="margin-top: 1.5rem;"> <!-- Added margin-top -->
+            <h3>🎧 Saved Edits</h3>
+            ${episode.audioEdits
+              .map((edit) => {
+                const blobUrl = edit.metadata?.blob_url;
+                const label =
+                  edit.metadata?.edit_type || edit.edit_type || "Unknown Type";
+                return `
+                <div class="edit-entry" style="margin-bottom: 1rem;">
+                  <p style="margin-bottom: 0.25rem;"><strong>${label}</strong> – ${
+                  edit.filename
+                }</p>
+                  ${
+                    blobUrl
+                      ? `<audio controls style="width: 100%;">
+                          <source src="${blobUrl}" type="audio/wav">
+                          Your browser does not support the audio element.
+                        </audio>`
+                      : `<p style="color: red;">❌ No audio URL available</p>`
+                  }
+                </div>`;
+              })
+              .join("")}
+          </div>`
+        : ""
     }
-  </div>
-
-  <!-- Saved Audio Edits -->
-  ${
-    episode.audioEdits && episode.audioEdits.length > 0
-      ? `<div class="audio-edits" style="flex: 1; min-width: 300px;">
-          <h3>🎧 Saved Edits</h3>
-          ${episode.audioEdits.map(edit => {
-            const blobUrl = edit.metadata?.blob_url;
-            const label = edit.metadata?.edit_type || edit.edit_type || "Unknown Type";
-            return `
-              <div class="edit-entry" style="margin-bottom: 1rem;">
-                <p style="margin-bottom: 0.25rem;"><strong>${label}</strong> – ${edit.filename}</p>
-                ${
-                  blobUrl
-                    ? `<audio controls style="width: 100%;">
-                        <source src="${blobUrl}" type="audio/wav">
-                        Your browser does not support the audio element.
-                      </audio>`
-                    : `<p style="color: red;">❌ No audio URL available</p>`
-                }
-              </div>`;
-          }).join("")}
-        </div>`
-      : ""
-  }
-  </div>
-</div>
+  </div> <!-- End podcast-about-section -->
 
   
   <!-- Additional details section -->
@@ -231,6 +247,24 @@ export function renderEpisodeDetail(episode) {
   </button>
 </div>
 `;
+
+  // Add event listener for the AI Edit button only if it exists
+  const aiEditButton = document.getElementById("ai-edit-episode-btn");
+  if (aiEditButton) {
+    aiEditButton.addEventListener("click", () => {
+      const episodeId = aiEditButton.getAttribute("data-id");
+      const episodeTitle = episode.title || "Untitled Episode"; // Get episode title
+      let aiEditUrl = `/transcription/ai_edits?episodeId=${episodeId}&episodeTitle=${encodeURIComponent(
+        episodeTitle
+      )}`; // Add episodeTitle
+      // Append audioUrl if it exists and the episode is not imported (meaning audio was manually uploaded)
+      if (episode.audioUrl && episode.isImported === false) {
+        // Ensure the URL is properly encoded
+        aiEditUrl += `&audioUrl=${encodeURIComponent(episode.audioUrl)}`;
+      }
+      window.location.href = aiEditUrl;
+    });
+  }
 
   // Define the episodeActions container
   const episodeActions = document.getElementById("episode-actions");
@@ -384,12 +418,15 @@ async function showEpisodePopup(episode) {
   popup.className = "popup";
   popup.style.display = "flex";
 
+  // Determine if the file input should be disabled: Disable if episode IS imported
+  const isAudioUploadDisabled = episode.isImported === true;
+
   const popupContent = document.createElement("div");
   popupContent.className = "form-box";
   popupContent.innerHTML = `
   <span id="close-episode-popup" class="close-btn">&times;</span>
   <h2 class="form-title">Edit Episode</h2>
-  <form id="update-episode-form">
+  <form id="update-episode-form" enctype="multipart/form-data"> 
     <div class="field-group full-width">
       <label for="upd-episode-title">Episode Title</label>
       <input type="text" id="upd-episode-title" name="title" value="${
@@ -411,9 +448,9 @@ async function showEpisodePopup(episode) {
       }" required />
     </div>
     <div class="field-group">
-      <label for="upd-duration">Duration (minutes)</label>
-      <input type="number" id="upd-duration" name="duration" value="${
-        episode.duration || ""
+      <label for="upd-duration">Duration (minutes)</label> 
+      <input type="number" id="upd-duration" name="duration_minutes" value="${
+        episode.duration ? Math.floor(episode.duration / 60) : ""
       }" />
     </div>
     <div class="field-group">
@@ -421,6 +458,29 @@ async function showEpisodePopup(episode) {
       <input type="text" id="upd-status" name="status" value="${
         episode.status || ""
       }" />
+    </div>
+    
+    <div class="field-group full-width">
+        <label for="upd-episode-audio" ${
+          isAudioUploadDisabled ? 'style="color: #aaa;"' : ""
+        }>Upload New Audio (Optional)</label>
+        <input type="file" id="upd-episode-audio" name="audioFile" accept="audio/*" ${
+          isAudioUploadDisabled // Disable if true
+            ? 'disabled style="background-color: #eee;"'
+            : ""
+        }>
+        ${
+          isAudioUploadDisabled // Show message if disabled (i.e., isImported is true)
+            ? '<p style="font-size: 0.8em; color: #888; margin-top: 5px;">Audio upload disabled for imported episodes.</p>'
+            : ""
+        }
+        ${
+          episode.audioUrl && !isAudioUploadDisabled // Only show current audio link if upload is enabled
+            ? `<p style="font-size: 0.8em; margin-top: 5px;">Current audio: <a href="${episode.audioUrl}" target="_blank">Listen</a></p>`
+            : !isAudioUploadDisabled // Only show 'No current audio' if upload is enabled
+            ? '<p style="font-size: 0.8em; margin-top: 5px;">No current audio file.</p>'
+            : ""
+        }
     </div>
     <div class="form-actions">
       <button type="button" id="cancel-episode-update" class="cancel-btn">Cancel</button>
@@ -446,32 +506,41 @@ async function showEpisodePopup(episode) {
     .querySelector("#update-episode-form")
     .addEventListener("submit", async (e) => {
       e.preventDefault();
-      const updatedData = {
-        title: document.getElementById("upd-episode-title").value.trim(),
-        description: document
-          .getElementById("upd-episode-description")
-          .value.trim(),
-        publishDate: document.getElementById("upd-publish-date").value,
-        duration: document.getElementById("upd-duration").value,
-        status: document.getElementById("upd-status").value.trim()
-      };
-      Object.keys(updatedData).forEach((key) => {
-        if (!updatedData[key]) delete updatedData[key];
-      });
+      const form = e.target;
+      const formData = new FormData(form); // Use FormData
 
-      if (updatedData.duration) {
-        if (updatedData.duration < 0) {
+      // Get duration in minutes from the form
+      const durationMinutes = formData.get("duration_minutes");
+
+      // Convert minutes to seconds for the backend
+      if (durationMinutes) {
+        const durationSeconds = Math.round(parseFloat(durationMinutes) * 60);
+        if (durationSeconds < 0 || isNaN(durationSeconds)) {
           showNotification(
             "Invalid duration",
-            "Please provide a positive integer for duration",
+            "Please provide a non-negative number for duration in minutes",
             "error"
           );
           return;
         }
+        formData.set("duration", durationSeconds.toString());
+      } else {
+        formData.set("duration", ""); // Or remove if backend handles absence
+      }
+      formData.delete("duration_minutes");
+
+      // If audio upload was disabled (because isImported was true), ensure no audioFile is sent
+      if (isAudioUploadDisabled) {
+        formData.delete("audioFile");
       }
 
+      // Optional: Add loading indicator
+      const submitButton = form.querySelector("button[type='submit']");
+      submitButton.disabled = true;
+      submitButton.textContent = "Updating...";
+
       try {
-        const result = await updateEpisode(episode._id, updatedData); // Use updateEpisode from episodeRequest.js
+        const result = await updateEpisode(episode._id, formData);
         if (result.message) {
           showNotification(
             "Success",
@@ -479,13 +548,20 @@ async function showEpisodePopup(episode) {
             "success"
           );
           document.body.removeChild(popup);
-          // Update the episode details in the DOM
-          renderEpisodeDetail({ ...episode, ...updatedData });
+          const updatedEpisodeData = await fetchEpisode(episode._id);
+          renderEpisodeDetail(updatedEpisodeData); // Refresh detail view
         } else {
           showNotification("Error", result.error || "Update failed", "error");
         }
       } catch (error) {
-        showNotification("Error", "Failed to update episode.", "error");
+        showNotification(
+          "Error",
+          `Failed to update episode: ${error.message || error}`,
+          "error"
+        );
+      } finally {
+        submitButton.disabled = false; // Re-enable button
+        submitButton.textContent = "Update Episode";
       }
     });
 }
@@ -566,61 +642,68 @@ export function initEpisodeFunctions() {
   };
   loadEpisodeDetails(episodeData);
 
-  // Episode form submission
+  // Episode form submission - DENNA ÄR KORREKT OCH HAR LOGIK FÖR ATT FÖRHINDRA DUBBELINLÄMNING
   document
     .getElementById("create-episode-form")
     .addEventListener("submit", async (e) => {
       e.preventDefault();
-      const formData = new FormData(e.target);
-      const data = Object.fromEntries(formData.entries());
 
-      // Ensure recordingAt is in the correct format
-      if (data.recordingAt === "") {
-        data.recordingAt = null; // Set to null if no date is provided
-      } else if (data.recordingAt) {
-        const recordingAt = new Date(data.recordingAt);
-        if (isNaN(recordingAt.getTime())) {
-          showNotification(
-            "Invalid Date",
-            "Please provide a valid recording date.",
-            "error"
-          );
-          return;
-        }
-      }
+      // Förhindra dubbelinlämning
+      const submitButton = e.target.querySelector("button[type='submit']");
+      if (submitButton.disabled) return; // Om knappen redan är inaktiverad, avbryt
 
-      // Check for missing required fields
-      if (!data.podcastId || !data.title || !data.publishDate) {
-        showNotification(
-          "Missing Fields",
-          "Please fill in all required fields.",
-          "error"
-        );
-        return;
-      }
-
-      // Ensure publishDate is in the correct format
-      const publishDate = new Date(data.publishDate);
-      if (isNaN(publishDate.getTime())) {
-        showNotification(
-          "Invalid Date",
-          "Please provide a valid publish date.",
-          "error"
-        );
-        return;
-      }
-      if (data.duration) {
-        if (data.duration < 0) {
-          showNotification(
-            "Invalid duration",
-            "Please provide a positive integer for duration",
-            "error"
-          );
-          return;
-        }
-      }
+      submitButton.disabled = true; // Inaktivera knappen för att förhindra dubbelinlämning
 
       try {
+        const formData = new FormData(e.target);
+        const data = Object.fromEntries(formData.entries());
+
+        // Ensure recordingAt is in the correct format
+        if (data.recordingAt === "") {
+          data.recordingAt = null; // Set to null if no date is provided
+        } else if (data.recordingAt) {
+          const recordingAt = new Date(data.recordingAt);
+          if (isNaN(recordingAt.getTime())) {
+            showNotification(
+              "Invalid Date",
+              "Please provide a valid recording date.",
+              "error"
+            );
+            return;
+          }
+        }
+
+        // Check for missing required fields
+        if (!data.podcastId || !data.title || !data.publishDate) {
+          showNotification(
+            "Missing Fields",
+            "Please fill in all required fields.",
+            "error"
+          );
+          return;
+        }
+
+        // Ensure publishDate is in the correct format
+        const publishDate = new Date(data.publishDate);
+        if (isNaN(publishDate.getTime())) {
+          showNotification(
+            "Invalid Date",
+            "Please provide a valid publish date.",
+            "error"
+          );
+          return;
+        }
+        if (data.duration) {
+          if (data.duration < 0) {
+            showNotification(
+              "Invalid duration",
+              "Please provide a positive integer for duration",
+              "error"
+            );
+            return;
+          }
+        }
+
         const result = await registerEpisode(data);
         console.log("Result from registerEpisode:", result);
         if (result.message) {
@@ -634,47 +717,23 @@ export function initEpisodeFunctions() {
           // Refresh the episode list without refreshing the page
           viewPodcast(data.podcastId);
         } else {
-          showNotification("Error", result.error, "error");
+          // Visa popup för episodgräns om det är felet
+          if (result.error === "Episode limit reached") {
+            showEpisodeLimitPopup();
+          } else {
+            showNotification("Error", result.error, "error");
+          }
         }
       } catch (error) {
         console.error("Error creating episode:", error);
-        showNotification("Error", "Failed to create episode.", "error");
-      }
-    });
-
-  document
-    .getElementById("create-episode-form")
-    .addEventListener("submit", async (e) => {
-      e.preventDefault();
-      const formData = new FormData(e.target);
-      const data = Object.fromEntries(formData.entries());
-
-      if (!data.podcastId || !data.title || !data.publishDate) {
-        showNotification(
-          "Missing Fields",
-          "Please fill in all required fields.",
-          "error"
-        );
-        return;
-      }
-
-      try {
-        const result = await registerEpisode(data);
-        console.log("Result from registerEpisode:", result);
-        if (result.message) {
-          showNotification(
-            "Success",
-            "Episode created successfully!",
-            "success"
-          );
-          document.getElementById("episode-form-popup").style.display = "none";
-        }
-      } catch (error) {
+        // Kontrollera om felet är specifikt för episodgränsen
         if (error.message === "Episode limit reached") {
-          showEpisodeLimitPopup(); // Visa popup för episodgräns
+          showEpisodeLimitPopup();
         } else {
           showNotification("Error", "Failed to create episode.", "error");
         }
+      } finally {
+        submitButton.disabled = false; // Återaktivera knappen efter att processen är klar
       }
     });
 

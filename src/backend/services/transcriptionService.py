@@ -16,7 +16,7 @@ client = ElevenLabs(api_key=os.getenv("ELEVENLABS_API_KEY"))
 class TranscriptionService:
     def transcribe_audio(self, file_data: bytes, filename: str) -> dict:
         
-        logger.info(f"Starting transcription for file: {filename}")
+        logger.info(f"Starting transcription")
 
         # 2. Transcribe with ElevenLabs
         audio_data = BytesIO(file_data)
@@ -32,12 +32,12 @@ class TranscriptionService:
             raise Exception("Transcription returned no text.")
 
         transcription_text = transcription_result.text.strip()
-        logger.info(f"🧠 Final transcription text:\n{transcription_text[:300]}")
+        logger.info(f"Final transcription text:\n{transcription_text[:300]}")
 
         file_id = fs.put(
             file_data,
             filename=filename,
-            metadata={"upload_timestamp": datetime.now(timezone.utc), "type": "transcription"},
+            metadata={"upload_timestamp": datetime.now(timezone.utc)}
         )
         logger.info(f"File saved to MongoDB with ID: {file_id}")
 
@@ -63,7 +63,7 @@ class TranscriptionService:
 
         # 4. Fallback if no word-level transcription is available
         if not raw_transcription:
-            logger.warning("⚠️ No word-level transcription found. Using fallback.")
+            logger.warning("No word-level transcription found. Using fallback.")
             fallback_sentences = transcription_text.split(".")
             raw_transcription = [
                 f"Speaker 1: {sentence.strip()}" for sentence in fallback_sentences if sentence.strip()
@@ -76,19 +76,19 @@ class TranscriptionService:
         }
 
     def get_clean_transcript(self, transcript_text: str) -> str:
-        logger.info("🧽 Running filler-word removal...")
+        logger.info("Running filler-word removal...")
         return remove_filler_words(transcript_text)
 
     def get_ai_suggestions(self, transcript_text: str) -> str:
-        logger.info("💡 Generating AI suggestions...")
+        logger.info("Generating AI suggestions...")
         return generate_ai_suggestions(transcript_text)
 
     def get_show_notes(self, transcript_text: str) -> str:
-        logger.info("📝 Generating show notes...")
+        logger.info("Generating show notes...")
         return generate_show_notes(transcript_text)
 
     def get_quotes(self, transcript_text: str) -> str:
-        logger.info("💬 Generating quotes...")
+        logger.info("Generating quotes...")
         quotes_text = generate_ai_quotes(transcript_text)
         # Ensure it's a string. If it's not, convert it.
         if not isinstance(quotes_text, str):
@@ -96,15 +96,15 @@ class TranscriptionService:
         return quotes_text
     
     def get_quote_images(self, quotes: List[str]) -> List[str]:
-        logger.info("🖼 Generating quote images...")
+        logger.info("Generating quote images...")
         return generate_quote_images(quotes)
 
     def translate_text(self, text: str, language: str) -> str:
-        logger.info(f"🌍 Translating transcript to {language}...")
+        logger.info(f"Translating transcript to {language}...")
         return translate_text(text, language)
 
     def get_sentiment_and_sfx(self, transcript_text: str):
-        logger.info("🔍 Running sentiment & sound suggestion analysis...")
+        logger.info("Running sentiment & sound suggestion analysis...")
         emotion_data = analyze_emotions(transcript_text)
         sfx_suggestions = suggest_sound_effects(emotion_data)
         return {"emotions": emotion_data, "sound_effects": sfx_suggestions}

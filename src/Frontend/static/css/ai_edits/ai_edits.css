@@ -146,3 +146,32 @@ body {
   word-break: break-word;     
 }
 
+/* Spinner style */
+.spinner {
+  display: inline-block;
+  width: 30px;
+  height: 30px;
+  border: 4px solid #ccc;
+  border-top-color: #333;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin: 10px auto;
+}
+
+@keyframes spin {
+  to {
+      transform: rotate(360deg);
+  }
+}
+
+.edit-history-container {
+  border-top: 1px solid #ccc;
+  padding-top: 1.5rem;
+}
+
+.edit-entry {
+  margin-bottom: 2rem;
+  padding: 1rem;
+  background: #f9f9f9;
+  border-radius: 8px;
+}
