@@ -171,9 +171,9 @@ section#index-about div.container div.benefits-container ul li {
   list-style: none;
   font-size: 15px;
   font-weight: bold;
-  line-height: 32px;
   display: flex;
   align-items: center;
+  padding: 5px 0px;
 }
 
 section#index-about div.container div.benefits-container ul li svg {
@@ -196,8 +196,8 @@ section#index-about #about-figure-2 {
   rotate: -2deg;
   background-color: var(--index-background-light);
   padding: 25px 25px 0px 20px;
-  top: 200px;
-  right: 70px;
+  top: 40%;
+  right: 60px;
 }
 
 /* Features Section */
@@ -208,6 +208,7 @@ section#index-get-started {
   min-height: 50vh;
   justify-content: center;
   flex-direction: column;
+  text-align: center;
 }
 
 section#index-get-started h1 {
