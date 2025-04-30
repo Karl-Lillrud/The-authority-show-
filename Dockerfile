@@ -1,23 +1,24 @@
-# Use a specific Python version for the base image
 FROM python:3.12-slim
 
-# Set the working directory inside the container
 WORKDIR /app
 
-# Copy only the requirements.txt first to leverage Docker caching
-COPY src/requirements.txt /app/src/
+# Set PYTHONPATH to include the src directory
+ENV PYTHONPATH=/app/src
+
+# Copy only requirements.txt first to leverage Docker caching
+COPY src/requirements.txt /app/src/requirements.txt
 
 # Install dependencies
-RUN pip install --no-cache-dir -r /app/src/requirements.txt  
+RUN pip install --no-cache-dir -r /app/src/requirements.txt
 
-# Copy the entire application code from the src folder into /app/src/
-COPY src /app/src/
+# Copy the .env file from the root directory to /app
+COPY .env /app/.env
 
-# Expose the port that the app will run on
+# Copy the rest of the application
+COPY src/ /app/src/
+
+# Expose the port Flask will run on
 EXPOSE 8000
 
-# Set the environment variable for Python to ensure non-buffered output (important for logs)
-ENV PYTHONUNBUFFERED=1
-
-# Use gunicorn to run the application with appropriate settings
+# Run Gunicorn to serve the Flask app
 CMD ["gunicorn", "--bind", "0.0.0.0:8000", "src.app:app"]
