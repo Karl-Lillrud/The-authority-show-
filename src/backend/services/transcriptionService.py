@@ -2,7 +2,7 @@
 import os
 import openai
 import logging
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import List
 from io import BytesIO
 from elevenlabs.client import ElevenLabs
@@ -15,13 +15,8 @@ client = ElevenLabs(api_key=os.getenv("ELEVENLABS_API_KEY"))
 
 class TranscriptionService:
     def transcribe_audio(self, file_data: bytes, filename: str) -> dict:
-        # 1. Save file to MongoDB
-        file_id = fs.put(
-            file_data,
-            filename=filename,
-            metadata={"upload_timestamp": datetime.utcnow(), "type": "transcription"},
-        )
-        logger.info(f"📥 File saved to MongoDB with ID: {file_id}")
+        
+        logger.info(f"Starting transcription")
 
         # 2. Transcribe with ElevenLabs
         audio_data = BytesIO(file_data)
@@ -39,6 +34,13 @@ class TranscriptionService:
         transcription_text = transcription_result.text.strip()
         logger.info(f"🧠 Final transcription text:\n{transcription_text[:300]}")
 
+        file_id = fs.put(
+            file_data,
+            filename=filename,
+            metadata={"upload_timestamp": datetime.now(timezone.utc)}
+        )
+        logger.info(f"✅ File saved to MongoDB with ID: {file_id}")
+        
         raw_transcription = []
         speaker_map = {}
         speaker_counter = 1
