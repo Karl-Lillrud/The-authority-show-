@@ -14,6 +14,16 @@ else
     exit 1
 fi
 
+# Check if AZ_SUB_ID and AZ_OBJ_ID are set in the .env file
+if [ -z "${AZ_SUB_ID:-}" ] || [ -z "${AZ_OBJ_ID:-}" ]; then
+    echo "❌ ERROR: AZ_SUB_ID or AZ_OBJ_ID not set in .env file."
+    exit 1
+fi
+
+# Set the correct Azure Subscription
+echo "🔑 Setting the Azure subscription to $AZ_SUB_ID..."
+az account set --subscription "$AZ_SUB_ID"
+
 # Define variables
 RESOURCE_GROUP="PodManager"
 REGISTRY_NAME="podmanageracr3container"
@@ -51,9 +61,9 @@ else
     echo "✅ No image '$IMAGE_NAME' found in ACR."
 fi
 
-# Now, delete the repository
+# Now, delete the repository (if empty)
 echo "🧹 Cleaning up the repository (if empty)..."
-az acr repository delete --name $REGISTRY_NAME --repository podmanagerlive --yes
+az acr repository delete --name $REGISTRY_NAME --repository podmanagerlive --yes --if-empty
 
 # Step 4: Prune builder cache to avoid unused layers during build
 docker builder prune --all --force
