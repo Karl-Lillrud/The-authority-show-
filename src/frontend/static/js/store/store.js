@@ -1,4 +1,6 @@
 // store.js
+import { showNotification } from "/static/js/components/notifications.js";
+
 let apiBaseUrl = "";
 let stripePublicKey = "";
 let stripe = null;
@@ -30,6 +32,12 @@ async function initializeStripe() {
       const statusElement = document.getElementById("checkoutStatus");
       if (statusElement)
         statusElement.textContent = "Configuration error: Payment key missing.";
+      showNotification(
+        "Configuration Error",
+        "Payment key missing.",
+        "error",
+        5000
+      );
       return;
     }
 
@@ -44,6 +52,12 @@ async function initializeStripe() {
     if (statusElement)
       statusElement.textContent =
         "Error loading payment configuration: " + error.message;
+    showNotification(
+      "Initialization Error",
+      "Failed to load payment system: " + error.message,
+      "error",
+      5000
+    );
   }
 }
 
@@ -62,16 +76,16 @@ function loadStripeScript() {
   });
 }
 
-// Ny funktion för att återställa checkout-knappen
+// Återställ checkout-knappen
 function resetCheckoutButton() {
   const checkoutBtn = document.getElementById("checkoutBtn");
   if (checkoutBtn) {
-    checkoutBtn.disabled = cart.length === 0; // Aktivera knappen om varukorgen inte är tom
+    checkoutBtn.disabled = cart.length === 0;
     checkoutBtn.textContent = "Complete the Purchase";
   }
 }
 
-// Lyssna på page show eller focus för att återställa knappen när användaren återvänder
+// Lyssna på page show eller focus för att återställa knappen
 window.addEventListener("pageshow", resetCheckoutButton);
 window.addEventListener("focus", resetCheckoutButton);
 
@@ -120,6 +134,12 @@ function setupAddToCartButtons() {
       addToCart(productId, productName, productType, productPrice);
       this.textContent = "Added to Cart";
       this.classList.add("in-cart");
+      showNotification(
+        "Product Added",
+        `${productName} added to cart!`,
+        "success",
+        3000
+      );
       setTimeout(() => {
         this.textContent = "Add to Cart";
         this.classList.remove("in-cart");
@@ -151,14 +171,20 @@ function setupCart() {
 
     if (!stripe) {
       console.error("Stripe is not initialized. Cannot proceed.");
-      alert("Payment system is not ready. Please try again shortly.");
-      resetCheckoutButton(); // Återställ knappen vid fel
+      showNotification(
+        "Payment Error",
+        "Payment system is not ready. Please try again shortly.",
+        "error",
+        5000
+      );
+      resetCheckoutButton();
       return;
     }
 
     try {
       this.disabled = true;
       this.textContent = "Processing...";
+      showNotification("Processing", "Initiating checkout...", "info", 3000);
 
       const creditItems = cart.filter((item) => item.type === "Credit Pack");
       const subscriptionItems = cart.filter(
@@ -169,13 +195,23 @@ function setupCart() {
         subscriptionItems.length > 1 ||
         (subscriptionItems[0] && subscriptionItems[0].quantity > 1)
       ) {
-        alert("You can only purchase one subscription at a time.");
+        showNotification(
+          "Invalid Cart",
+          "You can only purchase one subscription at a time.",
+          "warning",
+          5000
+        );
         resetCheckoutButton();
         return;
       }
 
       if (creditItems.length === 0 && subscriptionItems.length === 0) {
-        alert("Your cart is empty or contains unsupported items.");
+        showNotification(
+          "Empty Cart",
+          "Your cart is empty or contains unsupported items.",
+          "warning",
+          5000
+        );
         resetCheckoutButton();
         return;
       }
@@ -223,7 +259,12 @@ function setupCart() {
 
       const contentType = response.headers.get("content-type");
       if (contentType && contentType.includes("text/html")) {
-        alert("Session expired. Please log in again.");
+        showNotification(
+          "Session Expired",
+          "Your session has expired. Please log in again.",
+          "error",
+          5000
+        );
         setTimeout(() => {
           window.location.href =
             "/signin?redirect=" + encodeURIComponent(window.location.pathname);
@@ -246,7 +287,12 @@ function setupCart() {
       }
     } catch (err) {
       console.error("Error during checkout:", err);
-      alert("Checkout failed. Please try again or contact support.");
+      showNotification(
+        "Checkout Failed",
+        "Unable to complete checkout. Please try again or contact support.",
+        "error",
+        5000
+      );
       resetCheckoutButton();
     }
   });
@@ -297,10 +343,15 @@ function getPlanForProduct(productId) {
 let cart = [];
 
 function addToCart(productId, productName, productType, productPrice) {
+  // Check if product already exists in cart
   const existingItemIndex = cart.findIndex((item) => item.id === productId);
+  let itemAdded = false; // Flag to check if a new item was added or quantity increased
+
   if (existingItemIndex !== -1) {
+    // Increment quantity if product already in cart
     cart[existingItemIndex].quantity += 1;
   } else {
+    // Add new item to cart
     cart.push({
       id: productId,
       name: productName,
@@ -308,38 +359,109 @@ function addToCart(productId, productName, productType, productPrice) {
       price: productPrice,
       quantity: 1
     });
+    itemAdded = true; // A new item was added
   }
+
+  // Update cart UI
   updateCartUI();
+
+  // Update notification badge
   updateCartNotification();
+
+  // Save cart to localStorage
   saveCartToStorage();
+
+  // --- Show notification ---
+  const message = itemAdded
+    ? `${productName} added to cart.`
+    : `${productName} quantity increased.`;
+  showNotification("Cart Updated", message, "success", 2000); // Show for 2 seconds
+  // --- End notification ---
 }
 
 function removeFromCart(productId) {
+  const itemIndex = cart.findIndex((item) => item.id === productId); // Find item before removing
+  if (itemIndex === -1) return; // Item not found
+
+  const removedItemName = cart[itemIndex].name; // Get name before removing
+
   cart = cart.filter((item) => item.id !== productId);
+
+  // Update cart UI
   updateCartUI();
+
+  // Update notification badge
   updateCartNotification();
+
+  // Save cart to localStorage
   saveCartToStorage();
+
+  // --- Show notification ---
+  showNotification(
+    "Cart Updated",
+    `${removedItemName} removed from cart.`,
+    "info",
+    2000
+  );
+  // --- End notification ---
 }
 
 function updateItemQuantity(productId, newQuantity) {
   const itemIndex = cart.findIndex((item) => item.id === productId);
+
   if (itemIndex !== -1) {
+    const itemName = cart[itemIndex].name; // Get name for notification
+    let notificationMessage = "";
+
     if (newQuantity <= 0) {
-      removeFromCart(productId);
+      // Remove item if quantity is 0 or less
+      removeFromCart(productId); // This already shows a notification
+      return; // Exit early as removeFromCart handles UI/storage/notification
     } else {
+      // Update quantity
+      const oldQuantity = cart[itemIndex].quantity;
       cart[itemIndex].quantity = newQuantity;
+      notificationMessage = `${itemName} quantity updated to ${newQuantity}.`;
+
+      // Update cart UI
       updateCartUI();
+
+      // Update notification badge
       updateCartNotification();
+
+      // Save cart to localStorage
       saveCartToStorage();
+
+      // --- Show notification ---
+      showNotification("Cart Updated", notificationMessage, "info", 2000);
+      // --- End notification ---
     }
   }
 }
 
 function clearCart() {
+  const wasCartEmpty = cart.length === 0; // Check if cart was already empty
   cart = [];
+
+  // Update cart UI
   updateCartUI();
+
+  // Update notification badge
   updateCartNotification();
+
+  // Save cart to localStorage
   saveCartToStorage();
+
+  // --- Show notification (only if cart wasn't already empty) ---
+  if (!wasCartEmpty) {
+    showNotification(
+      "Cart Cleared",
+      "Your shopping cart is now empty.",
+      "info",
+      2000
+    );
+  }
+  // --- End notification ---
 }
 
 function updateCartUI() {
@@ -428,7 +550,17 @@ function updateCartUI() {
 
 function updateCartNotification() {
   const cartNotification = document.getElementById("cartNotification");
+  // --- Add null check ---
+  if (!cartNotification) {
+    console.warn(
+      "Cart notification element with ID 'cartNotification' not found."
+    );
+    return; // Exit if element doesn't exist
+  }
+  // --- End null check ---
+
   const itemCount = cart.reduce((total, item) => total + item.quantity, 0);
+
   if (itemCount > 0) {
     cartNotification.textContent = itemCount;
     cartNotification.classList.add("visible");
