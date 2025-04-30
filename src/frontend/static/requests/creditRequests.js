@@ -1,10 +1,11 @@
+import { fetchStoreCredits } from "../../static/js/account/subscription.js";
+
 export async function consumeStoreCredits(featureKey) {
     try {
         const res = await fetch('/credits/consume', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
-                user_id: window.CURRENT_USER_ID,
                 feature: featureKey
             })
         });
@@ -15,7 +16,7 @@ export async function consumeStoreCredits(featureKey) {
         }
     
         // ✅ Update the UI to reflect new credit balance
-        await fetchStoreCredits(CURRENT_USER_ID);
+        await fetchStoreCredits();
     
         return result.data;
     } catch (error) {

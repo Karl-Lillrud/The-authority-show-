@@ -69,6 +69,18 @@ export function updateAccount(accountData) {
       throw new Error('Failed to update profile');
     });
 }
+export async function incrementUpdateAccount(accountData) {
+  return await fetch('/api/account/edit_account/increment', {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(accountData)
+  })
+    .then(response => response.json())
+    .catch(error => {
+      console.error('Error updating account:', error);
+      throw new Error('Failed to update account');
+    });
+}
 
 // Update password
 export function updatePassword(passwordData) {

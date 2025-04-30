@@ -11,6 +11,7 @@ import { renderPodcastSelection, viewPodcast } from "./podcast-functions.js";
 import { renderGuestDetail } from "./guest-functions.js";
 import { showNotification } from "../components/notifications.js";
 import { consumeStoreCredits, getCredits } from "../../../static/requests/creditRequests.js";
+import { incrementUpdateAccount } from "../../../static/requests/accountRequests.js";
 
 // Add this function to create a play button with SVG icon
 export function createPlayButton(size = "medium") {
@@ -766,7 +767,18 @@ export function initEpisodeFunctions() {
         if (credits >= extra_episode_cost) {
           try {
             await consumeStoreCredits("episode_pack");
-           
+            const updateData = {
+              'unlockedExtraEpisodeSlots': 1 // Increment the extra episode slots by 1
+            };
+            incrementUpdateAccount(updateData);
+
+            showNotification(
+              "Success",
+              "Increased episode slots!",
+              "success"
+            );
+
+            popup.style.display = "none";
           } catch (error) {
             console.log(error);
           }
