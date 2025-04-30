@@ -1,4 +1,5 @@
 import logging
+import uuid
 from datetime import datetime
 from backend.database.mongo_connection import get_db
 
@@ -31,10 +32,11 @@ def create_edit_entry(episode_id, user_id, edit_type, clip_url, **kwargs):
 
 def save_transcription_edit(user_id, episode_id, transcript_text, raw_transcript, sentiment, emotion, filename):
     edit = {
-        "userId": user_id,
+        "_id": str(uuid.uuid4()),  # <--- custom string ID
         "episodeId": episode_id,
+        "userId": user_id,
         "editType": "transcription",
-        "clipUrl": "",  # ingen fil just nu
+        "clipUrl": "",
         "status": "done",
         "transcript": transcript_text,
         "metadata": {"filename": filename},
@@ -43,4 +45,5 @@ def save_transcription_edit(user_id, episode_id, transcript_text, raw_transcript
         "createdAt": datetime.utcnow(),
         "tags": ["transcript"]
     }
-    return db.Edits.insert_one(edit)
+
+    db.Edits.insert_one(edit)
