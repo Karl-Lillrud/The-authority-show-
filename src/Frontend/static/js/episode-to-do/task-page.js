@@ -314,11 +314,20 @@ export function setupTaskInteractions(state, updateUI) {
 
   // Edit task buttons
   document.querySelectorAll(".edit-task-btn").forEach((button) => {
-    button.addEventListener("click", () => {
-      const taskId = button.getAttribute("data-task-id")
-      showEditTaskPopup(taskId, state, updateUI)
-    })
-  })
+    if (!button.classList.contains("edit-task-listener")) {
+      button.classList.add("edit-task-listener");
+      button.addEventListener("click", (e) => {
+        e.stopPropagation(); // Prevent event bubbling
+        const taskId = button.getAttribute("data-task-id");
+        // Close the details modal if it's open
+        const existingModal = document.getElementById("task-details-modal");
+        if (existingModal) {
+          existingModal.remove();
+        }
+        showEditTaskPopup(taskId, state, updateUI);
+      });
+    }
+  });
 
   // Delete task buttons
   document.querySelectorAll(".delete-task-btn").forEach((button) => {
@@ -806,7 +815,6 @@ export async function showEditTaskPopup(taskId, state, updateUI) {
       const description = document.getElementById("edit-task-description").value
       const status = document.getElementById("edit-task-status").value
       const dueDate = document.getElementById("edit-task-due-date").value
-      const assigneeName = document.getElementById("edit-task-assigned").value
       const aiTool = document.getElementById("edit-task-ai-tools").value
 
       // Get selected dependencies
@@ -818,7 +826,6 @@ export async function showEditTaskPopup(taskId, state, updateUI) {
         description,
         status,
         dueDate,
-        assigneeName,
         dependencies: selectedDependencies,
         aiTool: aiTool,
       }
@@ -978,7 +985,6 @@ export function showAddTaskModal(state, updateUI) {
     const title = document.getElementById("task-title").value
     const description = document.getElementById("task-description").value
     const dueDate = document.getElementById("task-due-date").value
-    const assigneeName = document.getElementById("task-assigned").value
     const aiTool = document.getElementById("task-ai-tools").value
 
     // Get selected dependencies
@@ -996,7 +1002,6 @@ export function showAddTaskModal(state, updateUI) {
       description,
       episodeId: episodeId,
       dueDate,
-      assigneeName,
       dependencies: selectedDependencies,
       status: "not-started", // Default to not-started
       aiTool: aiTool, // Add the AI tool to the task data
@@ -1454,7 +1459,6 @@ export function showImportWorkflowModal(state, updateUI) {
               status: task.status || "pending",
               priority: task.priority || "medium",
               dueDate: task.dueDate || "",
-              assigneeName: task.assigneeName || "",
               dependencies: task.dependencies || [],
               aiTool: task.aiTool || "",
             }
@@ -1736,13 +1740,6 @@ export function showTaskDetailsModal(taskId, state, updateUI) {
   const closeDetailsBtn = document.getElementById("close-task-details-btn")
   closeDetailsBtn.addEventListener("click", () => {
     closePopup(popup)
-  })
-
-  // Edit button event
-  const editBtn = document.getElementById("edit-task-details-btn")
-  editBtn.addEventListener("click", () => {
-    closePopup(popup)
-    showEditTaskPopup(taskId, state, updateUI)
   })
 
   // Workspace button event
