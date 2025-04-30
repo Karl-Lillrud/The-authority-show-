@@ -74,7 +74,12 @@ az acr login --name $REGISTRY_NAME
 
 # Step 6: Build Docker Image (only if necessary)
 echo "🐳 Building Docker image '$IMAGE_NAME'..."
-docker build --no-cache -t $IMAGE_NAME .
+# Skip rebuild if image already exists
+if docker images -q $IMAGE_NAME; then
+    echo "✅ Docker image '$IMAGE_NAME' already exists, skipping build."
+else
+    docker build --no-cache -t $IMAGE_NAME .
+fi
 
 # Step 7: Tag Docker Image for ACR
 echo "🏷️ Tagging Docker image '$IMAGE_NAME' with ACR tag..."
@@ -106,11 +111,26 @@ else
     echo "✅ Web App '$WEBAPP_NAME' already exists."
 fi
 
-# Step 11: Restart Web App to apply new image (if any change)
+# Step 11: Assign `AcrPull` role to Web App's Managed Identity (if not already assigned)
+echo "🔒 Checking if `AcrPull` role is assigned to Web App's Managed Identity..."
+WEBAPP_ID=$(az webapp identity show --name $WEBAPP_NAME --resource-group $RESOURCE_GROUP --query principalId -o tsv)
+SUBSCRIPTION_ID=$(az account show --query id -o tsv)
+
+# Check if `AcrPull` role is already assigned
+ROLE_EXISTS=$(az role assignment list --assignee $WEBAPP_ID --role AcrPull --scope /subscriptions/$SUBSCRIPTION_ID/resourceGroups/$RESOURCE_GROUP/providers/Microsoft.ContainerRegistry/registries/$REGISTRY_NAME --query "[0]" -o tsv)
+
+if [ "$ROLE_EXISTS" == "" ]; then
+    echo "📜 Assigning `AcrPull` role to Web App's Managed Identity..."
+    az role assignment create --assignee $WEBAPP_ID --role AcrPull --scope /subscriptions/$SUBSCRIPTION_ID/resourceGroups/$RESOURCE_GROUP/providers/Microsoft.ContainerRegistry/registries/$REGISTRY_NAME
+else
+    echo "✅ `AcrPull` role already assigned to Web App's Managed Identity."
+fi
+
+# Step 12: Restart Web App to apply new image (if any change)
 echo "🔄 Restarting Web App '$WEBAPP_NAME' to apply new image..."
 az webapp restart --name $WEBAPP_NAME --resource-group $RESOURCE_GROUP
 
-# Step 12: Check the status of the Web App
+# Step 13: Check the status of the Web App
 echo "📡 Checking Web App status..."
 az webapp show --name $WEBAPP_NAME --resource-group $RESOURCE_GROUP --output table
 
