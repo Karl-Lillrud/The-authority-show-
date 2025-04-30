@@ -12,6 +12,7 @@ def create_edit_entry(episode_id, user_id, edit_type, clip_url, **kwargs):
         return None
 
     edit = {
+        "_id": str(uuid.uuid4()),
         "episodeId": episode_id,
         "userId": user_id,
         "editType": edit_type,
