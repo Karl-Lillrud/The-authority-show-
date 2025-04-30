@@ -19,6 +19,12 @@ if [ -z "$ACR_USERNAME" ] || [ -z "$ACR_PASSWORD" ]; then
     exit 1
 fi
 
+# Check if necessary environment variables are set
+if [ -z "$SECRET_KEY" ] || [ -z "$MONGODB_URI" ]; then
+    echo "❌ ERROR: SECRET_KEY or MONGODB_URI is not set in the .env file."
+    exit 1
+fi
+
 # Define variables
 RESOURCE_GROUP="PodManager"
 REGISTRY_NAME="podmanageracr3container"
