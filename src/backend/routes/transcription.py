@@ -80,6 +80,25 @@ def transcribe():
         logger.info(f"🧠 Starting transcription for file: {filename}")
         result = transcription_service.transcribe_audio(audio_bytes, filename)
         logger.info("Transcription completed successfully.")
+
+        # ⏺️ Save as transcription edit
+        user_id = session.get("user_id")
+        episode_id = request.form.get("episode_id") or request.args.get("episode_id")
+        transcription_text = result["full_transcript"]
+        sentiment_result = transcription_service.get_sentiment_and_sfx(transcription_text)
+
+        from backend.repository.edit_repository import save_transcription_edit  # skapa denna funktion om den inte finns
+
+        save_transcription_edit(
+            user_id=user_id,
+            episode_id=episode_id,
+            transcript_text=transcription_text,
+            raw_transcript=result["raw_transcription"],
+            sentiment=sentiment_result["emotions"],
+            emotion=sentiment_result["emotions"],
+            filename=filename
+        )
+
         return jsonify(result)
 
     except ValueError as e:

@@ -28,3 +28,19 @@ def create_edit_entry(episode_id, user_id, edit_type, clip_url, **kwargs):
     logger.info(f"✅ Inserting edit: {edit}")
     db.Edits.insert_one(edit)
     return edit
+
+def save_transcription_edit(user_id, episode_id, transcript_text, raw_transcript, sentiment, emotion, filename):
+    edit = {
+        "userId": user_id,
+        "episodeId": episode_id,
+        "editType": "transcription",
+        "clipUrl": "",  # ingen fil just nu
+        "status": "done",
+        "transcript": transcript_text,
+        "metadata": {"filename": filename},
+        "sentiment": sentiment,
+        "emotion": emotion,
+        "createdAt": datetime.utcnow(),
+        "tags": ["transcript"]
+    }
+    return db.Edits.insert_one(edit)

@@ -302,24 +302,25 @@ async function transcribe() {
         return;
     }
 
-    try {
-        await consumeStoreCredits("transcription");
-    } catch (err) {
-        resultContainer.innerText = `Not enough credits: ${err.message}`;
-        resultContainer.innerText = `Not enough credits: ${err.message}`;
+    const episodeId = sessionStorage.getItem("selected_episode_id");
+    if (!episodeId) {
+        alert("No episode selected.");
         return;
     }
 
     showSpinner("transcriptionResult");
     const formData = new FormData();
     formData.append('file', file);
+    formData.append('episode_id', episodeId);  // 🟢 Lägg till episode ID här!
 
     try {
         const response = await fetch('/transcription/transcribe', {
             method: 'POST',
             body: formData,
         });
+
         hideSpinner("transcriptionResult");
+
         if (response.ok) {
             const result = await response.json();
             rawTranscript = result.raw_transcription || "";
@@ -328,7 +329,6 @@ async function transcribe() {
             resultContainer.innerText = rawTranscript;
             document.getElementById("enhancementTools").style.display = "block";
 
-            // ✅ Consume credits only after success
             await consumeStoreCredits("transcription");
         } else {
             const errorData = await response.json();

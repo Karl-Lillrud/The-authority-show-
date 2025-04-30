@@ -19,22 +19,28 @@ class TranscriptionService:
         
         logger.info(f"Starting transcription for file: {filename}")
 
-        # 2. Transcribe with ElevenLabs
+        # Step 1: Attempt transcription with ElevenLabs
         audio_data = BytesIO(file_data)
-        transcription_result = client.speech_to_text.convert(
-            file=audio_data,
-            model_id="scribe_v1",
-            num_speakers=2,
-            diarize=True,
-            timestamps_granularity="word"
-        )
+        try:
+            transcription_result = client.speech_to_text.convert(
+                file=audio_data,
+                model_id="scribe_v1",
+                num_speakers=2,
+                diarize=True,
+                timestamps_granularity="word"
+            )
+        except Exception as e:
+            logger.error(f"❌ ElevenLabs transcription failed: {str(e)}")
+            raise Exception("Transcription service failed. Please try again later.")
 
         if not transcription_result.text:
+            logger.warning("Transcription returned no text.")
             raise Exception("Transcription returned no text.")
 
         transcription_text = transcription_result.text.strip()
-        logger.info(f"Final transcription text:\n{transcription_text[:300]}")
+        logger.info(f"✅ Transcription successful. Preview:\n{transcription_text[:300]}")
 
+        # Step 2: Save only if transcription succeeded
         file_id = fs.put(
             file_data,
             filename=filename,
@@ -46,7 +52,7 @@ class TranscriptionService:
         speaker_map = {}
         speaker_counter = 1
 
-        # 3. Build word-level transcription
+        # Step 3: Build word-level transcription
         logger.debug(f"Word-level entries found: {len(transcription_result.words)}")
         for word_info in transcription_result.words:
             word = word_info.text.strip()
@@ -62,7 +68,7 @@ class TranscriptionService:
             if word:
                 raw_transcription.append(f"[{start}-{end}] {speaker_label}: {word}")
 
-        # 4. Fallback if no word-level transcription is available
+        # Step 4: Fallback if word-level fails
         if not raw_transcription:
             logger.warning("No word-level transcription found. Using fallback.")
             fallback_sentences = transcription_text.split(".")
