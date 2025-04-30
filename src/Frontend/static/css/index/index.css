@@ -13,6 +13,27 @@ h2 {
   font-size: 42px;
 }
 
+p {
+  font-size: 15px;
+}
+
+figure {
+  border-radius: 20px;
+  position: absolute;
+  overflow: hidden;
+  z-index: 2;
+}
+
+figure img {
+  width: 100%;
+  height: 100%;
+  transition: var(--transition-normal);
+}
+
+figure:hover img {
+  transform: scale(1.05);
+}
+
 /* * * * * * * * * * * * */
 /*  Index Header Styling */
 /* * * * * * * * * * * * */
@@ -25,6 +46,7 @@ header.index-header {
   flex-direction: row;
   justify-content: space-between;
   background: linear-gradient(0deg,rgba(255, 255, 255, 0) 0%, rgba(0, 0, 0, 1) 100%);
+  z-index: 10;
 }
 
 header.index-header nav {
@@ -92,16 +114,91 @@ main section {
   min-height: 90vh;
   display: flex;
   flex-direction: column;
+  justify-content: center;
   align-items: center;
+  padding: 60px;
 }
 
 main section:first-of-type {
   padding-top: 74px;
 }
 
+main section article {
+  position: relative;
+  max-width: 1400px;
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: stretch;
+}
+
+main section div.container {
+  position: relative;
+  width: calc(50% - 20px);
+  min-width: 300px;
+}
+
 /* Banner Section */
+section#index-banner {
+  justify-content: center;
+  flex-direction: column;
+}
 
 /* About Section */
+section#index-about {
+  background-color: var(--index-highlight-color);
+  min-height: 50vh;
+}
+
+section#index-about h1 {
+  color: white;
+}
+
+section#index-about p {
+  color: white;
+  padding-bottom: 20px;
+}
+
+section#index-about div.container div.benefits-container {
+  background-color: white;
+  border-radius: 12px;
+  padding: 20px 35px;
+  margin: 0px 60px 0px 30px;
+}
+
+section#index-about div.container div.benefits-container ul li {
+  color: rgb(115, 115, 115);
+  list-style: none;
+  font-size: 15px;
+  font-weight: bold;
+  line-height: 32px;
+  display: flex;
+  align-items: center;
+}
+
+section#index-about div.container div.benefits-container ul li svg {
+  margin-right: 15px;
+}
+
+section#index-about #about-figure-1 {
+  min-width: 500px;
+  min-height: 300px;
+  max-width: 500px;
+  max-height: 300px;
+  rotate: 2deg;
+}
+
+section#index-about #about-figure-2 {
+  min-width: 250px;
+  min-height: 250px;
+  max-width: 250px;
+  max-height: 250px;
+  rotate: -2deg;
+  background-color: var(--index-background-light);
+  padding: 25px 25px 0px 20px;
+  top: 200px;
+  right: 70px;
+}
 
 /* Features Section */
 
@@ -110,6 +207,7 @@ section#index-get-started {
   background-color: white;
   min-height: 50vh;
   justify-content: center;
+  flex-direction: column;
 }
 
 section#index-get-started h1 {
