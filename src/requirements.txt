@@ -10,7 +10,7 @@ flask_cors
 flask_mail
 google_api_python_client
 google_auth_oauthlib
-marshmallow
+marshmallow==3.19.0
 matplotlib
 mediapipe
 numpy
