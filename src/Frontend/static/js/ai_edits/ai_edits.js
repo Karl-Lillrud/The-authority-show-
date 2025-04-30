@@ -1021,6 +1021,42 @@ async function cutAudioFromBlob() {
     }
 }
 
+async function loadAudioEditsForEpisode(episodeId) {
+    const container = document.getElementById("editHistory");
+    container.innerHTML = "<p>Loading audio edits...</p>";
+
+    try {
+        const response = await fetch(`/edits/${episodeId}`);
+        const edits = await response.json();
+
+        if (!Array.isArray(edits) || edits.length === 0) {
+            container.innerHTML = "<p>No edits found.</p>";
+            return;
+        }
+
+        container.innerHTML = "<h4>Audio Edit History</h4>";
+        edits.forEach(edit => {
+            const div = document.createElement("div");
+            div.classList.add("edit-entry");
+
+            const audioPlayer = edit.clipUrl
+                ? `<audio controls src="${edit.clipUrl}" style="width: 100%;"></audio>`
+                : "<em>No audio preview</em>";
+
+            div.innerHTML = `
+                <strong>${edit.editType}</strong> - ${edit.clipName ?? "Untitled"}<br/>
+                <small>Created: ${new Date(edit.createdAt).toLocaleString()}</small><br/>
+                ${audioPlayer}
+                ${edit.transcript ? `<p><strong>Transcript:</strong> ${edit.transcript}</p>` : ""}
+            `;
+
+            container.appendChild(div);
+        });
+    } catch (err) {
+        container.innerHTML = `<p>Error loading edits: ${err.message}</p>`;
+    }
+}
+
 async function enhanceVideo() {
     const fileInput = document.getElementById("videoUploader");
     const file = fileInput.files[0];

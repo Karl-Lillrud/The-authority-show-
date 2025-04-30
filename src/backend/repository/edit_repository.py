@@ -1,16 +1,22 @@
+import logging
 from datetime import datetime
 from backend.database.mongo_connection import get_db
 
+logger = logging.getLogger(__name__)
 db = get_db()
 
 def create_edit_entry(episode_id, user_id, edit_type, clip_url, **kwargs):
+    if not episode_id or not user_id or not clip_url:
+        logger.warning("Missing required edit entry fields")
+        return None
+
     edit = {
         "episodeId": episode_id,
         "userId": user_id,
         "editType": edit_type,
         "clipUrl": clip_url,
+        "clipName": kwargs.get("clipName", "Unnamed"),
         "createdAt": datetime.utcnow(),
-        "clipName": kwargs.get("clipName"),
         "duration": kwargs.get("duration"),
         "status": kwargs.get("status", "done"),
         "tags": kwargs.get("tags", []),
@@ -18,5 +24,7 @@ def create_edit_entry(episode_id, user_id, edit_type, clip_url, **kwargs):
         "sentiment": kwargs.get("sentiment"),
         "metadata": kwargs.get("metadata", {}),
     }
-    db.edits.insert_one(edit)
+
+    logger.info(f"✅ Inserting edit: {edit}")
+    db.Edits.insert_one(edit)
     return edit
