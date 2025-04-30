@@ -7,6 +7,20 @@
   <link rel="stylesheet" href="/static/css/components/variables.css" />
   <link rel="stylesheet" href="/static/css/ai_edits/ai_edits.css" />
   <link rel="stylesheet" href="/static/css/dashboard/dashboard.css" />
+
+  <style>
+    .edit-history-container {
+      border-top: 1px solid #ccc;
+      padding-top: 1.5rem;
+    }
+
+    .edit-entry {
+      margin-bottom: 2rem;
+      padding: 1rem;
+      background: #f9f9f9;
+      border-radius: 8px;
+    }
+  </style>
 </head>
 <body>
   <div id="app">
@@ -20,8 +34,11 @@
           <button onclick="showTab('video')" id="tab-video">📹 AI Video Enhancement</button>
         </div>
 
-        <!-- EMPTY: JS will inject content -->
+        <!-- Content injected by JS -->
         <div id="content"></div>
+
+        <!-- Audio edits history -->
+        <div id="editHistory" class="edit-history-container"></div>
       </main>
     </div>
   </div>
@@ -30,14 +47,15 @@
     const episodeId = "{{ episode_id }}";
     console.log("Loaded AI Edits page for episode ID:", episodeId);
 
-    // Load default tab on page load
     window.addEventListener("DOMContentLoaded", () => {
       showTab('transcription');
+      loadAudioEditsForEpisode(episodeId);  // 👈 Load edit history
     });
-  
-  window.CURRENT_USER_ID = "{{ user_id }}";
-  localStorage.setItem("user_id", "{{ user_id }}");
+
+    window.CURRENT_USER_ID = "{{ user_id }}";
+    localStorage.setItem("user_id", "{{ user_id }}");
   </script>
+
   <script src="/static/js/landingpage/audio-player.js"></script>
   <script src="/static/js/ai_edits/ai_edits.js"></script>
   <script>

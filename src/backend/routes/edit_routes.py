@@ -10,7 +10,7 @@ db = get_db()
 @edit_bp.route("/edits/<episode_id>", methods=["GET"])
 def get_edits_for_episode(episode_id):
     try:
-        edits = list(db.edits.find({"episodeId": episode_id}))
+        edits = list(db.Edits.find({"episodeId": episode_id}))
         
         for edit in edits:
             edit["_id"] = str(edit["_id"])
