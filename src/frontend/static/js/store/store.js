@@ -239,14 +239,6 @@ function setupCart() {
         });
       }
 
-      if (episodeItems.length > 0) {
-        // Handle episode pack purchase
-        episodeItems.forEach((item) => {
-          totalAmount += item.price * item.quantity;
-          unlockedEpisodes = item.quantity;
-        });
-      }
-
       if (subscriptionItems.length === 1) {
         const subscription = subscriptionItems[0];
         const plan = getPlanForProduct(subscription.id);

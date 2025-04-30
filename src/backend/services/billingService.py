@@ -44,7 +44,7 @@ def handle_successful_payment(session, user_id):
     metadata = session.get("metadata", {})
     plan = metadata.get("plan", "")
     credits_to_add = int(metadata.get("credits", 0))
-    extra_episodes_unlock = int(metadata.get("unlock", 0))
+    extra_episodes_unlock = int(metadata.get("episode_slots", 0))
     
     # If no credits specified in metadata and no plan, fallback to credit pack mapping
     if credits_to_add == 0 and not plan and extra_episodes_unlock == 0:
@@ -115,24 +115,15 @@ def handle_successful_payment(session, user_id):
 
     if extra_episodes_unlock > 0:
         # --- Unlock Episodes Logic ---
+        print("Unlocking episodes...")
         try:
-           
-            data, status_code = AccountRepository().get_account_by_user(user_id)
-            logger.debug(f"Account found: {bool(data)}")
-            
-            account = data.get("account")
-
             update_query = {"ownerId": user_id}
-            logger.debug(f"Update query: {update_query}")
-
-            old_extra_slots = account.get("unlockedExtraEpisodeSlots") or 0
-            extra_slots = old_extra_slots + extra_episodes_unlock   
-
+            
             update_result = collection.database.Accounts.update_one(
                 update_query,
                 {
-                    "$set": {
-                        "unlockedExtraEpisodeSlots": extra_slots,
+                    "$inc": {
+                        "unlockedExtraEpisodeSlots": extra_episodes_unlock,
                     }
                 },
             )
