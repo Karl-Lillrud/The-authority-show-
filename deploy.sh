@@ -101,6 +101,10 @@ az webapp config container set --name $WEBAPP_NAME --resource-group $RESOURCE_GR
   --container-registry-user "$ACR_USERNAME" \
   --container-registry-password "$ACR_PASSWORD"
 
-# Step 11: Check the status of the Web App
+# Step 11: Restart Web App to trigger image pull from ACR
+echo "Restarting Web App '$WEBAPP_NAME' to trigger image pull from ACR..."
+az webapp restart --name $WEBAPP_NAME --resource-group $RESOURCE_GROUP
+
+# Step 12: Check the status of the Web App
 echo "Web App '$WEBAPP_NAME' is deployed successfully. Checking the status..."
 az webapp show --name $WEBAPP_NAME --resource-group $RESOURCE_GROUP --output table
