@@ -7,7 +7,6 @@ import uuid
 import os
 from datetime import datetime, timedelta
 from flask import jsonify, session, request, current_app
-# Removed password hash import as we're using email confirmation only
 from werkzeug.utils import secure_filename
 from backend.database.mongo_connection import collection
 from backend.services.teamService import TeamService
@@ -41,7 +40,6 @@ class AuthService:
             email = data.get("email", "").strip().lower()
             remember = data.get("remember", False)
             
-            # Generate and send a login link instead of checking password
             serializer = URLSafeTimedSerializer(current_app.config["SECRET_KEY"])
             token = serializer.dumps(email, salt="login-link-salt")
             
@@ -201,8 +199,6 @@ class AuthService:
         except Exception as e:
             logger.error(f"MX lookup failed for domain '{domain}': {e}", exc_info=True)
             return {"error": f"Invalid email domain '{domain}'."}, 400
-
-    # Password validation method removed as we're now using email confirmation only
 
     def get_account_by_user(self, user_id):
         """Retrieve account information by user ID."""

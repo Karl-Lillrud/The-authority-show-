@@ -65,7 +65,6 @@ def account():
     email = user.get("email", "") if user else ""
     full_name = user.get("full_name", "") if user else ""
     phone_number = user.get("phone_number", "") if user else ""  # Fetch phone number
-    password = user.get("password", "") if user else ""  # Ensure password is hashed
 
     # Pass all required fields to the account template
     return render_template(
@@ -73,7 +72,6 @@ def account():
         email=email,
         full_name=full_name,
         phone_number=phone_number,
-        password=password,
     )
 
 
@@ -87,7 +85,6 @@ def settings():
     email = user.get("email", "") if user else ""
     full_name = user.get("full_name", "") if user else ""
     phone_number = user.get("phone_number", "") if user else ""  # Fetch phone number
-    password = user.get("password", "") if user else ""  # Ensure password is hashed
 
     # Pass all required fields to the settings template
     return render_template(
@@ -95,7 +92,6 @@ def settings():
         email=email,
         full_name=full_name,
         phone_number=phone_number,
-        password=password,
     )
 
 

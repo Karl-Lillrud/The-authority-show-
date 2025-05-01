@@ -1,14 +1,10 @@
-export async function signin(email, password, remember) {
+export async function signin(email, remember) {
   try {
     const response = await fetch(`/signin`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email, password, remember })
+      body: JSON.stringify({ email, remember })
     });
-
-    if (!response.ok) {
-      throw new Error("Invalid email or password.");
-    }
 
     const result = await response.json();
     return result.redirect_url || "/podprofile"; // Redirect to /podprofile
@@ -19,7 +15,6 @@ export async function signin(email, password, remember) {
 
 export async function registerTeamMember(
   email,
-  password,
   fullName,
   phone,
   inviteToken
@@ -28,7 +23,7 @@ export async function registerTeamMember(
     const response = await fetch(`/register-team-member`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email, password, fullName, phone, inviteToken }) // Include invite token
+      body: JSON.stringify({ email, fullName, phone, inviteToken }) // Include invite token
     });
 
     if (!response.ok) {

@@ -83,17 +83,6 @@
             required
           />
         </div>
-        <div class="input-group">
-          <label for="password" class="label"></label>
-          <input
-            type="password"
-            id="password"
-            name="password"
-            class="input"
-            placeholder="Password (min. 8 characters, letters and numbers)"
-            required
-          />
-        </div>
 
         <div class="extra-links">
           <a href="{{ url_for('auth_bp.signin_page') }}" class="link">
@@ -158,10 +147,9 @@
           event.preventDefault();
 
           const email = document.getElementById("email").value;
-          const password = document.getElementById("password").value;
 
           try {
-            const redirectUrl = await register(email, password);
+            const redirectUrl = await register(email);
             window.location.href = redirectUrl;
           } catch (error) {
             if (error.message === "User already exists") {
