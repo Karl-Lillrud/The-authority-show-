@@ -100,46 +100,4 @@ document.addEventListener("DOMContentLoaded", function () {
       });
   }
 
-  // Handle email/password login form (if used)
-  const form = document.getElementById("signin-form");
-  if (form) {
-    form.addEventListener("submit", async function (event) {
-      event.preventDefault();
-
-      const email = emailInput.value.trim();
-      const password = document.getElementById("password")?.value?.trim();
-
-      if (!email || (password !== undefined && !password)) {
-        errorMessage.textContent = "Please enter both email and password.";
-        errorMessage.style.display = "block";
-        successMessage.style.display = "none";
-        return;
-      }
-
-      try {
-        const response = await fetch("/signin", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ email, password })
-        });
-
-        const result = await response.json();
-        if (response.ok) {
-          window.location.href = result.redirect_url || "/podprofile";
-        } else {
-          errorMessage.textContent =
-            result.error || "Login failed. Please try again.";
-          errorMessage.style.display = "block";
-          successMessage.style.display = "none";
-        }
-      } catch (error) {
-        console.error("Error during login:", error);
-        errorMessage.textContent = "An error occurred. Please try again.";
-        errorMessage.style.display = "block";
-        successMessage.style.display = "none";
-      }
-    });
-  } else {
-    console.warn("Login form was not found in the DOM");
-  }
 });

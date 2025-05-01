@@ -371,8 +371,7 @@ label {
 }
 
 input[type="text"],
-input[type="email"],
-input[type="password"] {
+input[type="email"]{
   width: 100%;
   padding: 0.75rem 1rem;
   background-color: var(--account-input);
@@ -389,23 +388,6 @@ input:focus {
   box-shadow: 0 0 0 2px var(--account-ring);
 }
 
-.password-input-container {
-  position: relative;
-}
-
-.toggle-password {
-  position: absolute;
-  right: 1rem;
-  top: 50%;
-  transform: translateY(-50%);
-  background: transparent;
-  border: none;
-  color: var(--account-muted-foreground);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 0;
-}
 
 .form-actions {
   display: flex;
@@ -526,11 +508,6 @@ input:focus {
 
 .toggle input:checked + .toggle-switch::after {
   transform: translateX(20px);
-}
-
-/* Password Strength Meter */
-.password-strength {
-  margin-top: 1rem;
 }
 
 .strength-label {
@@ -872,28 +849,8 @@ input:focus {
   margin-top: 0.25rem;
 }
 
-.password-requirements {
-  margin-top: 1rem;
-  padding: 1rem;
-  background-color: var(--account-input);
-  border-radius: var(--account-radius);
-  font-size: 0.875rem;
-}
 
-.password-requirements h4 {
-  font-size: 0.875rem;
-  margin-bottom: 0.5rem;
-  color: var(--account-foreground);
-}
 
-.password-requirements ul {
-  padding-left: 1.5rem;
-  color: var(--account-muted-foreground);
-}
-
-.password-requirements li {
-  margin-bottom: 0.25rem;
-}
 
 /* Subscription Form */
 .subscription-form-container {

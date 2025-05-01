@@ -1,6 +1,5 @@
 import logging
 from flask import url_for
-from werkzeug.security import check_password_hash, generate_password_hash
 from backend.database.mongo_connection import collection
 from backend.repository.account_repository import AccountRepository
 from backend.repository.episode_repository import EpisodeRepository
@@ -78,33 +77,6 @@ class UserRepository:
             logger.error(f"Error updating profile: {e}", exc_info=True)
             return {"error": f"Error updating profile: {str(e)}"}, 500
 
-    def update_password(self, user_id, data):
-        try:
-            current_password = data.get("current_password")
-            new_password = data.get("new_password")
-
-            if not current_password or not new_password:
-                return {"error": "Both current and new passwords are required"}, 400
-
-            user = self.user_collection.find_one({"_id": user_id})
-
-            if not user:
-                return {"error": "User not found"}, 404
-
-            if not check_password_hash(user.get("passwordHash", ""), current_password):
-                return {"error": "Current password is incorrect"}, 400
-
-            hashed_new_password = generate_password_hash(new_password)
-
-            self.user_collection.update_one(
-                {"_id": user_id}, {"$set": {"passwordHash": hashed_new_password}}
-            )
-
-            return {"message": "Password updated successfully!"}, 200
-
-        except Exception as e:
-            logger.error(f"Error updating password: {e}", exc_info=True)
-            return {"error": f"Error updating password: {str(e)}"}, 500
 
     # Delete user and all associated data from related collections
     def cleanup_user_data(self, user_id, user_email):
