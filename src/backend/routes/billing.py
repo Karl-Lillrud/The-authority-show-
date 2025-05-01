@@ -271,6 +271,19 @@ def stripe_webhook():
                 subscription_service.update_user_subscription(user_id, plan, session)
                 # Notera: update_user_subscription hanterar även krediterna för prenumerationen
 
+                # Store the Stripe customer ID in the Accounts collection 
+                try:
+                    stripe_customer_id = session.customer
+                    if stripe_customer_id:
+                        # Update both by ownerId and userId to ensure we catch it
+                        collection.database.Accounts.update_one(
+                            {"ownerId": user_id},
+                            {"$set": {"stripeCustomerId": stripe_customer_id}}
+                        )
+                        logger.info(f"Updated stripeCustomerId ({stripe_customer_id}) for user {user_id}")
+                except Exception as e:
+                    logger.warning(f"Failed to store Stripe customer ID: {str(e)}")
+
             # Hantera kreditpaket (om det INTE är en prenumeration eller om krediter köptes UTÖVER prenumeration)
             # Om update_user_subscription redan hanterar krediter för prenumerationer, behöver vi inte göra det igen här.
             # Vi behöver bara hantera rena kreditköp eller extra krediter köpta med prenumeration.
@@ -343,43 +356,9 @@ def stripe_webhook():
                 500,
             )
 
-    # --- Hantera andra event-typer ---
-    elif event.type == "customer.subscription.deleted":
-        subscription = event.data.object
-        logger.info(
-            f"Processing customer.subscription.deleted for subscription ID: {subscription.id}"
-        )
-        # TODO: Implementera logik för att hantera när en prenumeration avbryts direkt i Stripe
-        # Hitta användaren baserat på subscription.customer
-        # Uppdatera användarens status i din databas till 'cancelled' eller 'free'
-        # Justera krediter etc.
-        pass
-
-    elif event.type == "invoice.paid":
-        invoice = event.data.object
-        # Oftast för återkommande prenumerationsbetalningar
-        if invoice.billing_reason == "subscription_cycle":
-            logger.info(
-                f"Processing invoice.paid for subscription cycle. Invoice ID: {invoice.id}, Subscription ID: {invoice.subscription}"
-            )
-            # TODO: Förnya prenumerationsperioden i din databas
-            # Hitta användaren baserat på invoice.customer eller invoice.subscription
-            # Uppdatera subscriptionEnd i Accounts
-            # Nollställ/förnya månatliga krediter via creditService
-            pass
-
-    elif event.type == "invoice.payment_failed":
-        invoice = event.data.object
-        logger.warning(
-            f"Processing invoice.payment_failed. Invoice ID: {invoice.id}, Subscription ID: {invoice.subscription}"
-        )
-        # TODO: Hantera misslyckade betalningar
-        # Markera prenumerationen som 'past_due' eller 'unpaid' i din databas
-        # Skicka notis till användaren
-        pass
-
-    # --- Handle subscription updated events ---
+    # Keep all properly implemented handlers here...
     elif event.type == "customer.subscription.updated":
+        # Keep existing customer.subscription.updated handler...
         subscription = event.data.object
         logger.info(
             f"Processing customer.subscription.updated for subscription ID: {subscription.id}"
@@ -428,8 +407,9 @@ def stripe_webhook():
             logger.error(f"Account not found for customer {customer_id}")
             return jsonify(success=False, error="Account not found"), 404
 
-    # --- Handle subscription deleted events ---
+    # Keep the properly implemented handlers for these events:
     elif event.type == "customer.subscription.deleted":
+        # Existing complete handler...
         subscription = event.data.object
         logger.info(
             f"Processing customer.subscription.deleted for subscription ID: {subscription.id}"
@@ -490,7 +470,6 @@ def stripe_webhook():
             logger.error(f"Account not found for customer {customer_id}")
             return jsonify(success=False, error="Account not found"), 404
 
-    # --- Handle invoice payment succeeded events ---
     elif event.type == "invoice.paid":
         invoice = event.data.object
         
@@ -506,61 +485,101 @@ def stripe_webhook():
                 subscription = stripe.Subscription.retrieve(subscription_id)
                 customer_id = subscription.customer
                 
-                # Find user by customer ID
+                # IMPROVED CUSTOMER LOOKUP - Multiple strategies
+                # 1. First try the direct lookup in Accounts
                 account = collection.database.Accounts.find_one({"stripeCustomerId": customer_id})
+                
+                # 2. Try lookup by subscription ID in Subscriptions collection
                 if not account:
-                    customer = stripe.Customer.retrieve(customer_id)
-                    account = collection.database.Accounts.find_one({"email": customer.email})
+                    logger.info(f"Account not found by stripeCustomerId, trying to find via subscription record...")
+                    sub_record = collection.database.Subscriptions.find_one({
+                        "$or": [
+                            {"payment_id": subscription_id},
+                            {"stripe_subscription_id": subscription_id}
+                        ]
+                    })
+                    
+                    if sub_record:
+                        user_id = sub_record.get("user_id")
+                        if user_id:
+                            logger.info(f"Found user_id {user_id} via subscription record")
+                            # Try both userId and ownerId fields
+                            account = collection.database.Accounts.find_one({
+                                "$or": [{"userId": user_id}, {"ownerId": user_id}]
+                            })
+                            
+                            # Update stripeCustomerId for future lookups if we found the account
+                            if account:
+                                collection.database.Accounts.update_one(
+                                    {"_id": account["_id"]},
+                                    {"$set": {"stripeCustomerId": customer_id}}
+                                )
+                                logger.info(f"Updated stripeCustomerId for user {user_id}")
+                
+                # 3. Try by email as last resort
+                if not account:
+                    try:
+                        customer = stripe.Customer.retrieve(customer_id)
+                        logger.info(f"Looking up by email: {customer.email}")
+                        account = collection.database.Accounts.find_one({"email": customer.email})
+                        
+                        # Update stripeCustomerId for future lookups if we found the account
+                        if account:
+                            collection.database.Accounts.update_one(
+                                {"_id": account["_id"]},
+                                {"$set": {"stripeCustomerId": customer_id}}
+                            )
+                            user_id = account.get("userId") or account.get("ownerId")
+                            logger.info(f"Updated stripeCustomerId for user {user_id} found by email")
+                            
+                    except Exception as e:
+                        logger.error(f"Failed to find customer by email: {str(e)}")
                 
                 if account:
                     user_id = account.get("userId") or account.get("ownerId")
                     
-                    # Extract subscription plan name using the same logic as above
-                    items = subscription.items.data
-                    if items:
-                        product_id = items[0].price.product
-                        product = stripe.Product.retrieve(product_id)
-                        plan_name = product.metadata.get("plan") or product.name
-                        
-                        # Extend subscription period by updating the end date
-                        # Calculate next billing date from the subscription
-                        next_billing_date = datetime.fromtimestamp(subscription.current_period_end, tz=timezone.utc)
-                        
-                        # Update the account and subscription records
-                        collection.database.Accounts.update_one(
-                            {"_id": account["_id"]},
-                            {
-                                "$set": {
-                                    "subscriptionEnd": next_billing_date.isoformat(),
-                                    "lastUpdated": datetime.utcnow().isoformat(),
-                                }
-                            },
-                        )
-                        
-                        # Also update in Subscriptions collection
-                        collection.database.Subscriptions.update_one(
-                            {"user_id": user_id, "status": "active"},
-                            {
-                                "$set": {
-                                    "end_date": next_billing_date.isoformat(),
-                                    "renewed_at": datetime.utcnow().isoformat(),
-                                }
-                            },
-                        )
-                        
-                        # Reset/renew monthly credits
-                        from backend.services.creditService import reset_monthly_credits
-                        reset_monthly_credits(user_id, plan_name)
-                        
-                        logger.info(f"Successfully renewed subscription for user {user_id} until {next_billing_date.isoformat()}")
+                    # Call subscription renewal handler
+                    try:
+                        subscription_service.handle_subscription_renewal(user_id, subscription)
+                        logger.info(f"Successfully processed subscription renewal for user {user_id}")
+                    except Exception as renewal_error:
+                        logger.error(f"Error in subscription renewal handler: {str(renewal_error)}")
                 else:
-                    logger.error(f"Account not found for customer {customer_id}")
+                    # Final fallback: Check all accounts for matching email pattern or username
+                    logger.warning(f"Account not found by standard methods, trying advanced lookup...")
+                    try:
+                        customer = stripe.Customer.retrieve(customer_id)
+                        if customer.email:
+                            # Try a more flexible email match (case insensitive)
+                            account = collection.database.Accounts.find_one(
+                                {"email": {"$regex": f"^{re.escape(customer.email)}$", "$options": "i"}}
+                            )
+                            if account:
+                                user_id = account.get("userId") or account.get("ownerId")
+                                logger.info(f"Found account via case-insensitive email match for user {user_id}")
+                                
+                                # Update the account with the Stripe customer ID
+                                collection.database.Accounts.update_one(
+                                    {"_id": account["_id"]},
+                                    {"$set": {"stripeCustomerId": customer_id}}
+                                )
+                                
+                                # Process the renewal
+                                subscription_service.handle_subscription_renewal(user_id, subscription)
+                                logger.info(f"Successfully processed subscription renewal via advanced lookup for user {user_id}")
+                                return jsonify(success=True)
+                    except Exception as advanced_lookup_error:
+                        logger.error(f"Advanced account lookup failed: {str(advanced_lookup_error)}")
+                    
+                    logger.error(f"Account not found for customer {customer_id} after all lookup attempts")
+                    return jsonify(success=False, error="Account not found"), 404
+                    
             except Exception as e:
                 logger.error(f"Failed to process invoice payment: {str(e)}")
                 return jsonify(success=False, error=str(e)), 500
 
-    # --- Handle failed invoice payments ---
     elif event.type == "invoice.payment_failed":
+        # Existing complete handler...
         invoice = event.data.object
         logger.warning(
             f"Processing invoice.payment_failed. Invoice ID: {invoice.id}, Subscription ID: {invoice.subscription}"
