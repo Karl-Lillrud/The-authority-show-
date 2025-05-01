@@ -665,8 +665,33 @@ def get_subscription():
 @billing_bp.route("/cancel-subscription", methods=["POST"])
 def cancel_subscription():
     try:  # Outer function try block
-        # ... (user authentication and account fetching logic remains the same) ...
-        # ... (check if already cancelled logic remains the same) ...
+        # Get user ID from the current session
+        user_id = g.user_id  # Get from Flask's g object
+        if not user_id:
+            logger.error("No user_id found in session for cancellation request")
+            return jsonify({"error": "User not authenticated"}), 401
+            
+        # Fetch the account document first
+        account = collection.database.Accounts.find_one({"userId": user_id})
+        if not account:
+            account = collection.database.Accounts.find_one({"ownerId": user_id})
+            
+        if not account:
+            logger.error(f"No account found for user {user_id}")
+            return jsonify({"error": "Account not found"}), 404
+            
+        # Get current subscription info
+        subscription_status = account.get("subscriptionStatus")
+        subscription_end = account.get("subscriptionEnd")
+        
+        # Check if already cancelled
+        if subscription_status == "cancelled":
+            logger.info(f"Subscription for user {user_id} is already cancelled")
+            return jsonify({
+                "message": "Subscription is already cancelled",
+                "endDate": subscription_end,
+                "willRenew": False
+            }), 200
 
         stripe_subscription_id = None
         payment_id = None  # Initialize payment_id
