@@ -320,7 +320,7 @@ class AudioService:
                 logger.error(f"❌ Voice isolation failed: {response.status_code} {response.text}")
                 raise RuntimeError(f"Voice isolation failed: {response.status_code} {response.text}")
 
-            # Spara det isolerade ljudet till temporär fil
+            # Save the isolated audio to a temporary file
             temp_output_path = temp_input_path.replace(".wav", "_isolated.wav")
             with open(temp_output_path, "wb") as out_file:
                 out_file.write(response.content)

@@ -261,7 +261,7 @@ def episode_detail(episode_id):
         if not episode:
             return render_template("404.html")
 
-        # Hämta gäster kopplade till avsnittet
+        # Get guests connected to episode
         guests_response, status = guest_repo.get_guests_by_episode(episode_id)
         guests = guests_response.get("guests", []) if status == 200 else []
 

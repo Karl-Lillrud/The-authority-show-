@@ -16,7 +16,7 @@ credit_service = CreditService()
 logger = logging.getLogger(__name__)
 
 stripe.api_key = os.getenv("STRIPE_SECRET_KEY")
-# Hämta webhook secret från miljövariabler
+# get webhook secrets from environment variables
 webhook_secret = os.getenv("STRIPE_WEBHOOK_SECRET")
 
 
@@ -35,18 +35,18 @@ def create_checkout_session():
     try:
         line_items = []
         metadata = {
-            "user_id": str(user_id),  # Säkerställ att user_id är sträng
+            "user_id": str(user_id),  
             "is_subscription": "false",
             "plan": "",
-            "items": [],  # Temporär lista för att samla items
+            "items": [],  
         }
 
         total_credits = 0
-        total_episode_slots = 0  # Add counter for episode slots
+        total_episode_slots = 0  
         has_subscription = False
         subscription_plan = None
 
-        # Bearbeta varje produkt i items
+        
         for item in items:
             product_id = item.get("productId")
             name = item.get("name")
@@ -60,7 +60,7 @@ def create_checkout_session():
             )  # Get episode slots
 
             if item_type == "credit":
-                # Lägg till kreditpaket
+                
                 line_items.append(
                     {
                         "price_data": {
@@ -83,7 +83,7 @@ def create_checkout_session():
                 )
 
             elif item_type == "subscription":
-                # Lägg till prenumeration
+                
                 if has_subscription:
                     return (
                         jsonify(
