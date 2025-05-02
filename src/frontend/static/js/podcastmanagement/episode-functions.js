@@ -115,6 +115,9 @@ export function renderEpisodeDetail(episode) {
     }">
       ${shared.svgpodcastmanagement.edit}
     </button>
+    <button class="action-btn delete-btn" id="delete-episode-btn" data-id="${episode._id}">
+      <span class="icon">${shared.svgpodcastmanagement.delete}</span>
+    </button>
   </div>
 </div>
 
@@ -241,11 +244,6 @@ export function renderEpisodeDetail(episode) {
   </div>
 </div>
 
-<div class="detail-actions">
-  <button class="delete-btn" id="delete-episode-btn" data-id="${episode._id}">
-    ${shared.svgpodcastmanagement.delete} Delete Episode
-  </button>
-</div>
 `;
 
   // Add event listener for the AI Edit button only if it exists
@@ -392,7 +390,7 @@ export function renderEpisodeDetail(episode) {
         } else {
           const noGuests = document.createElement("p");
           noGuests.className = "no-guests-message";
-          noGuests.textContent = "No guests available for this episode.";
+          noGuests.textContent = "No guests to display.";
           guestsListEl.appendChild(noGuests);
         }
       }
