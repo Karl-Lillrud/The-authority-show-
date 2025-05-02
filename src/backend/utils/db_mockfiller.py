@@ -83,7 +83,6 @@ def create_users(n=10):
         user = {
             "id": str(uuid.uuid4()),
             "email": fake.email(),
-            "passwordHash": fake.sha256(),
             "createdAt": fake.date_time_this_decade(),
             "referralCode": fake.lexify(text='????'),
             "referredBy": fake.lexify(text='????') if fake.boolean() else None

@@ -99,10 +99,11 @@ header {
 }
 
 .page-title {
-  font-size: 1rem; /* Reduced from 1.2rem */
+  font-size: 2rem; /* Reduced from 1.2rem */
   font-weight: 600;
-  color: var(--text-color-light);
+  color: var(--text-color-dark, #333);
   white-space: nowrap;
+  padding: 0px 1rem;
   max-width: 100px; /* Limit width to prevent overflow */
   white-space: nowrap;
   overflow: visible;
