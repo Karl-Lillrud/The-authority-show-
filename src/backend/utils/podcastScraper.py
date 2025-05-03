@@ -1,5 +1,6 @@
 import re
 import os
+import sys  # Add sys import
 import requests
 import spotipy
 from spotipy.oauth2 import SpotifyOAuth
@@ -24,14 +25,23 @@ SPOTIFY_CLIENT_SECRET = os.getenv("SPOTIFY_CLIENT_SECRET")
 SPOTIFY_REDIRECT_URI = os.getenv("SPOTIFY_REDIRECT_URI")
 
 # 🎵 Authenticate using Spotify OAuth
-sp = spotipy.Spotify(
-    auth_manager=SpotifyOAuth(
-        client_id=SPOTIFY_CLIENT_ID,
-        client_secret=SPOTIFY_CLIENT_SECRET,
-        redirect_uri=SPOTIFY_REDIRECT_URI,
-        scope="user-read-email",
+try:
+    sp = spotipy.Spotify(
+        auth_manager=SpotifyOAuth(
+            client_id=SPOTIFY_CLIENT_ID,
+            client_secret=SPOTIFY_CLIENT_SECRET,
+            redirect_uri=SPOTIFY_REDIRECT_URI,
+            scope="user-read-email",
+            open_browser=False  # Prevent browser opening if not needed/possible
+        )
     )
-)
+    # Attempt a simple API call to verify authentication
+    sp.current_user()
+    print("✅ Successfully authenticated with Spotify.")
+except Exception as e:  # Catch potential exceptions during auth
+    print(f"❌ Spotify Authentication Failed: {e}")
+    print("Please ensure you are logged in to Spotify and have valid credentials.")
+    sys.exit(1)  # Exit the script if authentication fails
 
 
 # 🔍 Function to Fetch Podcasts (Bypassing API Limit)
