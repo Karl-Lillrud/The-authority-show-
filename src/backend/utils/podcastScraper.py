@@ -1,23 +1,23 @@
 import re
 import os
-import sys  # Add sys import
+import sys
 import requests
 import spotipy
 from spotipy.oauth2 import SpotifyOAuth
 from bs4 import BeautifulSoup
 from pymongo import MongoClient
 from dotenv import load_dotenv
+import xml.etree.ElementTree as ET  # Add XML import
+from xml.dom import minidom  # For pretty printing XML
 
 load_dotenv()
 
 # MongoDB Configuration
 MONGODB_URI = os.getenv("MONGODB_URI")
 DATABASE_NAME = "Podmanager"
-Podcasts_Collection = "PodcastsScraped"
 
 client = MongoClient(MONGODB_URI)
 db = client[DATABASE_NAME]
-podcasts_collection = db[Podcasts_Collection]
 
 # 🔑 Spotify API Credentials
 SPOTIFY_CLIENT_ID = os.getenv("SPOTIFY_CLIENT_ID")
@@ -139,8 +139,9 @@ if __name__ == "__main__":
                 }
             )
 
-    # 📌 Print Extracted Emails
-    print("\nExtracted Podcast Emails:")
+    # 📌 Process Extracted Emails and Prepare for XML/DB
+    print("\nProcessing extracted podcast data...")
+    podcasts_for_xml = []  # List to store data for XML export
     # Spara alla med email
     for entry in emails_found:
         # Try to find matching Spotify podcast
@@ -151,26 +152,68 @@ if __name__ == "__main__":
 
         if matching_spotify:
             # Fetch Spotify data again to get full show details
-            show_result = sp.search(q=entry["Podcast"], type="show", limit=1)
-            if show_result["shows"]["items"]:
-                item = show_result["shows"]["items"][0]
-                artwork_url = (
-                    item["images"][0]["url"]
-                    if "images" in item and item["images"]
-                    else ""
-                )
+            try:  # Add try-except for robustness
+                show_result = sp.search(q=entry["Podcast"], type="show", limit=1)
+                if show_result and show_result.get("shows", {}).get("items"):
+                    item = show_result["shows"]["items"][0]
+                    artwork_url = (
+                        item["images"][0]["url"]
+                        if "images" in item and item["images"]
+                        else ""
+                    )
+            except Exception as search_err:
+                print(f"⚠️ Error searching Spotify for artwork for {entry['Podcast']}: {search_err}")
 
         doc = {
             "title": entry["Podcast"],
             "website": entry["Website"],
             "page_title": entry["Title"],
             "emails": entry["Emails"],
-            "rss_url": "",
-            "artwork_url": artwork_url,  # ✅ New line added
+            "rss_url": "",  # Keep placeholder or implement RSS finding if needed
+            "artwork_url": artwork_url,
         }
 
+        podcasts_for_xml.append(doc)  # Add doc to list for XML export
+
+        # Save to MongoDB (optional, based on existing logic)
         if not podcasts_collection.find_one({"website": doc["website"]}):
-            podcasts_collection.insert_one(doc)
-            print(f"✅ Saved: {doc['title']} with artwork")
+            try:
+                podcasts_collection.insert_one(doc)
+                print(f"✅ Saved to DB: {doc['title']} with artwork")
+            except Exception as db_err:
+                print(f"❌ Error saving {doc['title']} to DB: {db_err}")
         else:
-            print(f"🔁 Already exists: {doc['title']}")
+            print(f"🔁 Already exists in DB: {doc['title']}")
+
+    # Generate XML file
+    if podcasts_for_xml:
+        print("\nGenerating XML file...")
+        root = ET.Element("podcasts")
+
+        for podcast_data in podcasts_for_xml:
+            podcast_elem = ET.SubElement(root, "podcast")
+            ET.SubElement(podcast_elem, "title").text = podcast_data.get("title", "")
+            ET.SubElement(podcast_elem, "website").text = podcast_data.get("website", "")
+            ET.SubElement(podcast_elem, "page_title").text = podcast_data.get("page_title", "")
+
+            emails_elem = ET.SubElement(podcast_elem, "emails")
+            for email in podcast_data.get("emails", []):
+                ET.SubElement(emails_elem, "email").text = email
+
+            ET.SubElement(podcast_elem, "rss_url").text = podcast_data.get("rss_url", "")
+            ET.SubElement(podcast_elem, "artwork_url").text = podcast_data.get("artwork_url", "")
+
+        # Pretty print XML
+        xml_str = ET.tostring(root, encoding='unicode')
+        dom = minidom.parseString(xml_str)
+        pretty_xml_str = dom.toprettyxml(indent="  ")
+
+        output_filename = "scraped_podcasts.xml"
+        try:
+            with open(output_filename, "w", encoding="utf-8") as f:
+                f.write(pretty_xml_str)
+            print(f"\n✅ Podcast data successfully saved to {output_filename}")
+        except IOError as e:
+            print(f"\n❌ Error writing XML file: {e}")
+    else:
+        print("\nℹ️ No podcasts with emails found to save to XML.")
