@@ -1,0 +1,19 @@
+<?xml version="1.0" ?>
+<podcasts>
+  <podcast>
+    <title>P3 Krim</title>
+    <url>https://open.spotify.com/show/2481Hf9lva4YdOzPX8NTjM</url>
+    <publisher>Sveriges Radio</publisher>
+    <emails>
+      <email>p3krim@sverigesradio.seTipstelefon</email>
+    </emails>
+  </podcast>
+  <podcast>
+    <title>Svenska brott</title>
+    <url>https://open.spotify.com/show/7dPxDQeui1AlCcPX4vSvLz</url>
+    <publisher>Tall Tale | Acast</publisher>
+    <emails>
+      <email>svenskabrott@talltale.seK</email>
+    </emails>
+  </podcast>
+</podcasts>
