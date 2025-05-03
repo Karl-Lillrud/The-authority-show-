@@ -276,15 +276,15 @@
               </div>
           <div class="field-group">
             <label for="duration">Duration (minutes)</label>
-            <input type="number" id="duration" name="duration" required />
+            <input type="number" id="duration" name="duration" min="0" required />
           </div>
           <div class="field-group">
             <label for="status">Status</label>
             <select id="status" name="status">
+              <option value="Not Recorded" selected>Not Recorded</option>
               <option value="Published">Published</option>
               <option value="Recorded">Recorded</option>
               <option value="Edited">Edited</option>
-              <option value="Not Recorded">Not Recorded</option>
               <option value="Not Scheduled">Not Scheduled</option>
             </select>
           </div>
