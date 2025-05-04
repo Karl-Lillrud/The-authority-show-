@@ -13,6 +13,7 @@ import tempfile # Re-add
 import time
 import xml.etree.ElementTree as ET
 import spotipy
+from collections import Counter # Import Counter
 
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from typing import Dict, List, Optional, Set, Any # Added Any
@@ -26,8 +27,6 @@ from pymongo.errors import ConfigurationError, ConnectionFailure
 from spotipy.oauth2 import SpotifyOAuth
 # Use relative import for rss_Service
 from ..services.rss_Service import RSSService
-# Re-add blob_storage import
-from .blob_storage import download_blob_to_tempfile, get_blob_service_client
 
 load_dotenv()
 logging.basicConfig(
@@ -46,9 +45,12 @@ KEY_SOURCE_URL = "url"
 KEY_PUBLISHER = "publisher"
 KEY_EMAILS = "emails"
 
-# Re-add Azure constants
-AZURE_CONTAINER = "podmanagerfiles"
-AZURE_DB_BLOB = "scrapeDb/podcastindex_feeds.db"
+# Add local DB path constant
+LOCAL_DB_PATH = r"D:\Ploteye\scrapeDb\podcastindex_feeds.db" # Use raw string for Windows paths
+
+# Add delay constant for Spotify API calls
+SPOTIFY_API_DELAY_PER_REQUEST = 0.2 # Seconds to wait between API calls
+SPOTIFY_API_DELAY_PER_QUERY = 1.0   # Seconds to wait between different search queries
 
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 PROJECT_ROOT = os.path.abspath(os.path.join(SCRIPT_DIR, "..", "..", ".."))
@@ -64,7 +66,31 @@ PODCASTINDEX_KEY = os.getenv("PODCAST_INDEX_KEY")
 PODCASTINDEX_SECRET = os.getenv("PODCAST_INDEX_SECRET")
 SCRAPE_DB_URI = os.getenv("SCRAPE_DB_URI")
 
+# --- Session with Retries ---
+def requests_retry_session(
+    retries=5, # Slightly increase default retries
+    backoff_factor=1.0,  # Default backoff for non-429 errors (e.g., sleep 0s, 2s, 4s, 8s, 16s)
+    status_forcelist=(429, 500, 502, 503, 504), # Ensure 429 is included
+    session=None,
+):
+    session = session or requests.Session()
+    retry = Retry(
+        total=retries,
+        read=retries,
+        connect=retries,
+        backoff_factor=backoff_factor,
+        status_forcelist=status_forcelist,
+        respect_retry_after_header=True, # Add this to respect Retry-After header for 429s
+    )
+    adapter = HTTPAdapter(max_retries=retry)
+    session.mount('http://', adapter)
+    session.mount('https://', adapter)
+    return session
+
 # --- Spotify Auth ---
+# Create a session instance specifically for Spotify API calls
+spotify_session = requests_retry_session()
+
 try:
     sp = spotipy.Spotify(
         auth_manager=SpotifyOAuth(
@@ -73,7 +99,9 @@ try:
             redirect_uri=SPOTIFY_REDIRECT_URI,
             scope="user-read-email",
             open_browser=True # Keep True if manual auth is needed first time
-        )
+        ),
+        requests_session=spotify_session, # Pass the custom session
+        requests_timeout=15 # Set a default timeout for Spotify API calls
     )
     sp.current_user()
     logger.info("✅ Successfully authenticated with Spotify.")
@@ -100,32 +128,16 @@ def is_valid_url(url: str | None) -> bool:
     """Checks if a URL starts with http:// or https://."""
     return bool(url and url.lower().startswith(('http://', 'https://')))
 
-# --- Session with Retries ---
-def requests_retry_session(
-    retries=3,
-    backoff_factor=0.3,
-    status_forcelist=(500, 502, 503, 504), # Retry on these server errors
-    session=None,
-):
-    session = session or requests.Session()
-    retry = Retry(
-        total=retries,
-        read=retries,
-        connect=retries,
-        backoff_factor=backoff_factor,
-        status_forcelist=status_forcelist,
-    )
-    adapter = HTTPAdapter(max_retries=retry)
-    session.mount('http://', adapter)
-    session.mount('https://', adapter)
-    return session
-
 # --- Scraping Function ---
 def scrape_page(url: str, description: Optional[str] = None) -> Dict[str, Any]:
-    """Return emails + rss found on a Spotify show page or from its description, with retries."""
+    """
+    Return emails + rss found on a Spotify show page or from its description, with retries.
+    Returns a dictionary with keys KEY_EMAILS, KEY_RSS_URL, KEY_TITLE, or {'error': str, 'url': str} on failure.
+    """
     emails: List[str] = []
     rss: Optional[str] = None
     page_title = "No title found" # Default title
+    error_key = "Spotify: Page Request Error" # Default error type for request issues
 
     # 1. Check description first if provided
     if description:
@@ -148,55 +160,70 @@ def scrape_page(url: str, description: Optional[str] = None) -> Dict[str, Any]:
         headers = {"User-Agent": "Mozilla/5.0"}
         session = requests_retry_session()
         try:
-            resp = session.get(url, headers=headers, timeout=15)
+            resp = session.get(url, headers=headers, timeout=20) # Slightly increased timeout
             resp.raise_for_status()
+        except requests.exceptions.Timeout:
+            logger.error("Timeout retrieving %s after retries", url)
+            return {'error': "Spotify: Page Request Timeout", 'url': url}
         except requests.exceptions.RequestException as exc:
-            logger.error("Error retrieving %s after retries: %s", url, exc)
-            # Return whatever was found in description (if anything)
-            return {KEY_EMAILS: emails, KEY_RSS_URL: rss, KEY_TITLE: page_title}
+            status_code = exc.response.status_code if exc.response is not None else "N/A"
+            logger.error("Error retrieving %s after retries (Status: %s): %s", url, status_code, exc)
+            if isinstance(exc, requests.exceptions.ConnectionError):
+                error_key = "Spotify: Page Connection Error"
+            elif isinstance(exc, requests.exceptions.HTTPError):
+                 error_key = f"Spotify: Page HTTP Error {exc.response.status_code}"
+            # Return error dict
+            return {'error': error_key, 'url': url}
+        except Exception as exc: # Catch unexpected errors during request
+             logger.error("Unexpected error retrieving %s: %s", url, exc, exc_info=True)
+             return {'error': "Spotify: Page Unexpected Request Error", 'url': url}
 
-        soup = BeautifulSoup(resp.text, "html.parser")
-        page_title = soup.title.string.strip() if soup.title else "No title found" # Update title if page scraped
-        text = soup.get_text(" ")
+        try: # Add try/except around BeautifulSoup parsing and processing
+            soup = BeautifulSoup(resp.text, "html.parser")
+            page_title = soup.title.string.strip() if soup.title else "No title found" # Update title if page scraped
+            text = soup.get_text(" ")
 
-        # Find emails from page text if not already found
-        if not emails:
-            page_emails = clean_emails(EMAIL_EXTRACT_PATTERN.findall(text))
-            if page_emails:
-                emails.extend(page_emails) # Use extend to add, though it should be empty before
-                logger.info(f"URL: {url} - Found emails on page: {emails}")
-            else:
-                logger.debug(f"URL: {url} - No valid emails found on page.")
+            # Find emails from page text if not already found
+            if not emails:
+                page_emails = clean_emails(EMAIL_EXTRACT_PATTERN.findall(text))
+                if page_emails:
+                    emails.extend(page_emails) # Use extend to add, though it should be empty before
+                    logger.info(f"URL: {url} - Found emails on page: {emails}")
+                else:
+                    logger.debug(f"URL: {url} - No valid emails found on page.")
 
-        # Find RSS from page if not already found
-        if not rss:
-            link_tag = soup.find("link", {"type": "application/rss+xml", "href": True})
-            if link_tag and link_tag.get("href") and is_valid_url(link_tag["href"]):
-                href = link_tag["href"].strip()
-                if looks_like_potential_rss(href):
-                    rss = href
-                    logger.info(f"URL: {url} - Found RSS feed via <link> tag: {rss}")
-
+            # Find RSS from page if not already found
             if not rss:
-                match = RSS_FIND_PATTERN.search(text)
-                if match:
-                    potential_rss = match.group(0).strip()
-                    if is_valid_url(potential_rss):
-                        rss = potential_rss
-                        logger.info(f"URL: {url} - Found potential RSS feed via text search: {rss}")
+                link_tag = soup.find("link", {"type": "application/rss+xml", "href": True})
+                if link_tag and link_tag.get("href") and is_valid_url(link_tag["href"]):
+                    href = link_tag["href"].strip()
+                    if looks_like_potential_rss(href):
+                        rss = href
+                        logger.info(f"URL: {url} - Found RSS feed via <link> tag: {rss}")
 
-            # Final check if found RSS is a valid URL format
-            if rss and not is_valid_url(rss):
-                logger.warning("Ignoring invalid RSS URL format '%s' found on %s", rss, url)
-                rss = None
+                if not rss:
+                    match = RSS_FIND_PATTERN.search(text)
+                    if match:
+                        potential_rss = match.group(0).strip()
+                        if is_valid_url(potential_rss):
+                            rss = potential_rss
+                            logger.info(f"URL: {url} - Found potential RSS feed via text search: {rss}")
+
+                # Final check if found RSS is a valid URL format
+                if rss and not is_valid_url(rss):
+                    logger.warning("Ignoring invalid RSS URL format '%s' found on %s", rss, url)
+                    rss = None
+        except Exception as exc:
+             logger.error("Error processing page content for %s: %s", url, exc, exc_info=True)
+             return {'error': "Spotify: Page Processing Error", 'url': url}
+
     else:
          logger.info(f"URL: {url} - Skipping full page scrape as email and RSS found in description.")
-
 
     return {KEY_EMAILS: emails, KEY_RSS_URL: rss, KEY_TITLE: page_title}
 
 # --- Spotify Fetching ---
-def fetch_spotify_catalogue(limit_per_query: int = 50, max_offset: int = 1_000) -> List[Dict[str, Any]]:
+def fetch_spotify_catalogue(error_counter: Counter, limit_per_query: int = 50, max_offset: int = 1_000) -> List[Dict[str, Any]]:
     queries = [
         "podcast", "news podcast", "music podcast", "tech podcast", "sports podcast",
         "health podcast", "comedy podcast", "business podcast", "education podcast",
@@ -206,29 +233,42 @@ def fetch_spotify_catalogue(limit_per_query: int = 50, max_offset: int = 1_000) 
     ]
     seen_ids: Set[str] = set()
     shows: List[Dict[str, Any]] = []
-    api_call_delay = 0.5
 
-    for q in queries:
-        logger.info(f"Spotify: Searching for query '{q}'...")
+    for q_index, q in enumerate(queries):
+        logger.info(f"Spotify: Searching for query '{q}' ({q_index + 1}/{len(queries)})...")
+        # Add a delay between different search queries
+        if q_index > 0:
+            logger.debug(f"Waiting {SPOTIFY_API_DELAY_PER_QUERY}s before next query...")
+            time.sleep(SPOTIFY_API_DELAY_PER_QUERY)
+
         for offset in range(0, max_offset, limit_per_query):
             try:
+                # Add a proactive delay before each request within the offset loop
+                logger.debug(f"Waiting {SPOTIFY_API_DELAY_PER_REQUEST}s before API call (Query: '{q}', Offset: {offset})...")
+                time.sleep(SPOTIFY_API_DELAY_PER_REQUEST)
+
+                # The session passed to spotipy.Spotify will handle retries/backoff automatically
                 results = sp.search(q=q, type="show", limit=limit_per_query, offset=offset)
-                time.sleep(api_call_delay)
+
             except spotipy.SpotifyException as e:
-                logger.error(f"Spotify API error for query '{q}' offset {offset}: {e}")
-                sleep_time = api_call_delay
+                # Log the error and count it. The session handles the retry logic.
+                error_key = f"Spotify: API Error {e.http_status}"
+                logger.error(f"Spotify API error for query '{q}' offset {offset} after retries: {e}")
+                error_counter[error_key] += 1
                 if e.http_status == 429:
-                    sleep_time = 60
-                    logger.warning(f"Rate limited by Spotify API. Sleeping for {sleep_time} seconds...")
-                    time.sleep(sleep_time)
-                    continue
-                else:
-                    time.sleep(sleep_time)
-                    break
-            except Exception as e:
-                logger.error(f"Unexpected error during Spotify search for '{q}': {e}", exc_info=True)
-                time.sleep(api_call_delay)
+                    # Log rate limit specifically, but don't sleep manually here
+                    error_key = "Spotify: API Rate Limit (429)"
+                    error_counter[error_key] += 1
+                    logger.warning(f"Rate limited by Spotify API for query '{q}' offset {offset}. Retry handled by session.")
+                    # The session's Retry logic handles the backoff based on Retry-After or backoff_factor.
+                    # If 429 persists after retries, we break the inner loop.
+                # Break the inner loop for this query if a persistent error occurs after retries
                 break
+            except Exception as e:
+                error_key = "Spotify: API Unexpected Error"
+                logger.error(f"Unexpected error during Spotify search for '{q}': {e}", exc_info=True)
+                error_counter[error_key] += 1
+                break # Break inner loop for this query
 
             items = results.get("shows", {}).get("items", [])
             if not items:
@@ -255,29 +295,28 @@ def fetch_spotify_catalogue(limit_per_query: int = 50, max_offset: int = 1_000) 
     logger.info("Collected %d unique Spotify show URLs", len(shows))
     return shows
 
-# --- Azure DB Fetching (Restored) ---
-def fetch_data_from_azure_db(container_name, blob_path) -> List[Dict[str, Any]]:
-    logger.info(f"Attempting to process database from Azure Blob: {container_name}/{blob_path}")
+# --- Local DB Fetching ---
+def fetch_data_from_local_db(db_path: str, error_counter: Counter) -> List[Dict[str, Any]]:
+    """Reads podcast data with emails directly from a local SQLite database file."""
+    logger.info(f"Attempting to process database from local file: {db_path}")
     filtered_db_podcasts = []
-    temp_db_path = None
 
-    # Note: download_blob_to_tempfile now gets its own client
-    temp_db_path = download_blob_to_tempfile(container_name, blob_path)
-    if not temp_db_path:
-        logger.warning("Failed to download Azure DB blob. Skipping Azure DB step.")
-        return filtered_db_podcasts # Return empty list
+    if not os.path.exists(db_path):
+        logger.error(f"Local database file not found: {db_path}. Skipping local DB step.")
+        error_counter["LocalDB: File Not Found"] += 1
+        return filtered_db_podcasts
 
     conn = None
     try:
-        conn = sqlite3.connect(temp_db_path)
+        conn = sqlite3.connect(db_path)
         cursor = conn.cursor()
-        logger.info(f"Connected to temporary SQLite database: {temp_db_path}")
+        logger.info(f"Connected to local SQLite database: {db_path}")
 
         # Query for entries with non-empty ownerEmail
         query = "SELECT title, url, author, ownerEmail FROM feeds WHERE ownerEmail IS NOT NULL AND ownerEmail != ''"
         cursor.execute(query)
         rows = cursor.fetchall()
-        logger.info(f"Azure DB: Found {len(rows)} potential rows with email.")
+        logger.info(f"Local DB: Found {len(rows)} potential rows with email.")
 
         processed_count = 0
         skipped_count = 0
@@ -308,27 +347,27 @@ def fetch_data_from_azure_db(container_name, blob_path) -> List[Dict[str, Any]]:
                 logger.debug(f"Skipping DB entry '{title}' due to: {', '.join(reason)}. Email='{email_str}', Feed='{feed_url}'")
                 skipped_count += 1
 
-        logger.info(f"Azure DB: Processed {processed_count} valid entries, skipped {skipped_count}.")
+        logger.info(f"Local DB: Processed {processed_count} valid entries, skipped {skipped_count}.")
 
-    except sqlite3.Error as db_err:
-        logger.error(f"Database error processing {temp_db_path}: {db_err}", exc_info=True)
+    except sqlite3.DatabaseError as db_err: # Catch specific DB errors
+        logger.error(f"Database error processing {db_path}: {db_err}", exc_info=True)
+        error_counter["LocalDB: Database Error"] += 1
+    except sqlite3.Error as db_err: # Catch other sqlite errors
+        logger.error(f"SQLite error processing {db_path}: {db_err}", exc_info=True)
+        error_counter["LocalDB: SQLite Error"] += 1
     except Exception as e:
-        logger.error(f"An unexpected error occurred during DB processing: {e}", exc_info=True)
+        logger.error(f"An unexpected error occurred during local DB processing: {e}", exc_info=True)
+        error_counter["LocalDB: Unexpected Processing Error"] += 1
     finally:
         if conn:
             conn.close()
-        if temp_db_path and os.path.exists(temp_db_path):
-            try:
-                os.remove(temp_db_path)
-                logger.info(f"Removed temporary database file: {temp_db_path}")
-            except OSError as remove_err:
-                logger.error(f"Error removing temporary file {temp_db_path}: {remove_err}")
+            logger.info(f"Closed connection to local database: {db_path}")
 
-    logger.info(f"Returning {len(filtered_db_podcasts)} podcasts processed and filtered from the database.")
+    logger.info(f"Returning {len(filtered_db_podcasts)} podcasts processed and filtered from the local database.")
     return filtered_db_podcasts
 
 # --- Podcast Index Fetching ---
-def fetch_podcastindex_data(max_feeds=1000) -> List[Dict[str, Any]]:
+def fetch_podcastindex_data(error_counter: Counter, max_feeds=1000) -> List[Dict[str, Any]]:
     logger.info(f"Attempting to fetch up to {max_feeds} recent feeds from Podcast Index API...")
     podcastindex_podcasts = []
 
@@ -355,7 +394,9 @@ def fetch_podcastindex_data(max_feeds=1000) -> List[Dict[str, Any]]:
         data = response.json()
 
         if data.get('status') != 'true':
-            logger.error(f"Podcast Index API returned error status: {data.get('description', 'Unknown error')}")
+            error_desc = data.get('description', 'Unknown API error')
+            logger.error(f"Podcast Index API returned error status: {error_desc}")
+            error_counter[f"PodcastIndex: API Status Error - {error_desc[:50]}"] += 1 # Truncate long descriptions
             return podcastindex_podcasts
 
         feeds = data.get('feeds', [])
@@ -385,20 +426,26 @@ def fetch_podcastindex_data(max_feeds=1000) -> List[Dict[str, Any]]:
             if not cleaned_emails and is_feed_url_valid:
                 logger.info(f"Podcast Index: Email missing/invalid for '{title}'. Attempting to fetch RSS feed: {rss_url}")
                 rss_fetch_attempts += 1
-                # Use RSSService to fetch and parse the feed
-                feed_data, status_code = RSSService.fetch_rss_feed(rss_url)
-                if status_code == 200 and feed_data.get("email"):
-                    rss_email = feed_data.get("email")
-                    # Validate the email found via RSS fetch
-                    rss_cleaned_emails = clean_emails([rss_email])
-                    if rss_cleaned_emails:
-                        logger.info(f"Podcast Index: Found valid email '{rss_cleaned_emails[0]}' via RSS fetch for '{title}'.")
-                        cleaned_emails = rss_cleaned_emails # Update cleaned_emails with the one found from RSS
-                        rss_fetch_success_email += 1
-                    else:
-                        logger.info(f"Podcast Index: Email '{rss_email}' found via RSS fetch for '{title}' was invalid after cleaning.")
-                else:
-                     logger.info(f"Podcast Index: Failed to fetch or find email in RSS feed for '{title}' (Status: {status_code}).")
+                try: # Add try/except around RSSService call
+                    feed_data, status_code = RSSService.fetch_rss_feed(rss_url)
+                    if status_code == 200 and feed_data.get("email"):
+                        rss_email = feed_data.get("email")
+                        # Validate the email found via RSS fetch
+                        rss_cleaned_emails = clean_emails([rss_email])
+                        if rss_cleaned_emails:
+                            logger.info(f"Podcast Index: Found valid email '{rss_cleaned_emails[0]}' via RSS fetch for '{title}'.")
+                            cleaned_emails = rss_cleaned_emails # Update cleaned_emails with the one found from RSS
+                            rss_fetch_success_email += 1
+                        else:
+                            logger.info(f"Podcast Index: Email '{rss_email}' found via RSS fetch for '{title}' was invalid after cleaning.")
+                    elif status_code != 200:
+                         logger.info(f"Podcast Index: Failed to fetch RSS feed for '{title}' (Status: {status_code}).")
+                         error_counter[f"PodcastIndex: RSS Fallback HTTP Error {status_code}"] += 1
+                    else: # Status 200 but no email
+                         logger.info(f"Podcast Index: Fetched RSS feed for '{title}' but no email found.")
+                except Exception as rss_exc:
+                    logger.error(f"Podcast Index: Error during RSS fallback fetch for '{title}' ({rss_url}): {rss_exc}", exc_info=False) # Keep log concise
+                    error_counter["PodcastIndex: RSS Fallback Exception"] += 1
             # --- End Fallback ---
 
             # Final check: Do we have valid email(s) and a valid RSS URL?
@@ -425,16 +472,19 @@ def fetch_podcastindex_data(max_feeds=1000) -> List[Dict[str, Any]]:
                 if not cleaned_emails: skipped_email += 1
                 if not is_feed_url_valid: skipped_rss += 1
 
-        # Update logging to include fetch attempts/successes
         logger.info(f"Podcast Index: Processed {processed_count} valid entries.")
         logger.info(f"Podcast Index: Attempted {rss_fetch_attempts} RSS fetches for missing emails, found {rss_fetch_success_email} valid emails.")
         logger.info(f"Podcast Index: Skipped {skipped_email} final entries for email, {skipped_rss} for RSS URL.")
 
-
+    except requests.exceptions.Timeout:
+        logger.error(f"Timeout during Podcast Index API request: {api_url}", exc_info=True)
+        error_counter["PodcastIndex: API Request Timeout"] += 1
     except requests.exceptions.RequestException as e:
         logger.error(f"Error during Podcast Index API request: {e}", exc_info=True)
+        error_counter["PodcastIndex: API Request Error"] += 1
     except Exception as e:
         logger.error(f"Unexpected error processing Podcast Index data: {e}", exc_info=True) # Log full traceback
+        error_counter["PodcastIndex: Unexpected Processing Error"] += 1
 
     logger.info(f"Returning {len(podcastindex_podcasts)} podcasts processed and filtered from Podcast Index.")
     return podcastindex_podcasts
@@ -539,9 +589,56 @@ def clear_cache(cache_path):
         except OSError as e:
             logger.error(f"❌ Error deleting cache file {cache_path}: {e}")
 
+def log_final_summary(
+    counter: Counter,
+    candidate_count: int,
+    final_xml_count: int,
+    excluded_existing_user: int,
+    excluded_duplicate_email: int,
+    top_n_errors: int = 10
+):
+    """Logs a summary of the scraping process including counts and top errors."""
+    logger.info("--- Scraping Process Summary ---")
+    logger.info(f"Total unique podcasts considered (after source processing): {candidate_count}")
+    logger.info(f"Podcasts written to XML: {final_xml_count}")
+    logger.info("--- Exclusion Reasons ---")
+    logger.info(f"Excluded (already associated with user): {excluded_existing_user}")
+    logger.info(f"Excluded (duplicate email in final list): {excluded_duplicate_email}")
+    # Calculate implicitly skipped items (e.g., during source fetch/filter if not counted elsewhere)
+    # Note: This assumes candidate_count is the number *before* the final exclusion checks.
+    processed_or_excluded_explicitly = final_xml_count + excluded_existing_user + excluded_duplicate_email
+    skipped_implicitly = candidate_count - processed_or_excluded_explicitly
+    if skipped_implicitly > 0:
+         # This count might be less useful if detailed skip reasons are logged during source processing.
+         # It represents items that passed initial source filters but didn't make it to the final exclusion checks.
+         logger.info(f"Skipped/Filtered before final checks (e.g., during merge): {skipped_implicitly}")
+    logger.info("-----------------------------")
+
+
+    if not counter:
+        logger.info("--- No errors recorded during scraping. ---")
+        return
+
+    logger.info(f"--- Top {top_n_errors} Errors Encountered ---")
+    # Sort by count descending
+    sorted_errors = sorted(counter.items(), key=lambda item: item[1], reverse=True)
+
+    for i, (error_type, count) in enumerate(sorted_errors):
+        if i >= top_n_errors:
+            break
+        logger.warning(f"{i+1}. Count: {count} | Type: {error_type}")
+
+    if len(sorted_errors) > top_n_errors:
+        other_errors_count = sum(count for _, count in sorted_errors[top_n_errors:])
+        other_error_types = len(sorted_errors) - top_n_errors
+        logger.warning(f"... and {other_errors_count} other errors across {other_error_types} types.")
+    logger.info("------------------------------------")
+
+
 # --- Main Execution ---
 if __name__ == "__main__":
     logger.info("--- Starting Podcast Scraping ---")
+    error_summary_counter = Counter() # Initialize the counter
 
     # --- Load Cache ---
     cached_data = load_cache(CACHE_PATH)
@@ -549,22 +646,24 @@ if __name__ == "__main__":
     filtered_podcastindex_podcasts = cached_data["filtered_podcastindex_podcasts"]
     filtered_db_podcasts = cached_data["filtered_db_podcasts"] # Re-add
 
-    # --- 1. Azure DB ---
+    # --- 1. Local DB ---
     if not filtered_db_podcasts:
-        logger.info("Fetching and filtering data from Azure DB...")
-        filtered_db_podcasts = fetch_data_from_azure_db(AZURE_CONTAINER, AZURE_DB_BLOB)
+        logger.info("Fetching and filtering data from Local DB...")
+        # Pass the counter and the local path
+        filtered_db_podcasts = fetch_data_from_local_db(LOCAL_DB_PATH, error_summary_counter)
         save_cache(CACHE_PATH, {
             "filtered_spotify_podcasts": filtered_spotify_podcasts,
             "filtered_podcastindex_podcasts": filtered_podcastindex_podcasts,
             "filtered_db_podcasts": filtered_db_podcasts, # Save new
         })
     else:
-        logger.info("ℹ️ Skipping Azure DB fetching - data loaded from cache.")
+        logger.info("ℹ️ Skipping Local DB fetching - data loaded from cache.")
 
     # --- 2. Podcast Index ---
     if not filtered_podcastindex_podcasts:
         logger.info("Fetching and filtering data from Podcast Index API...")
-        filtered_podcastindex_podcasts = fetch_podcastindex_data(max_feeds=10000)
+        # Pass the counter
+        filtered_podcastindex_podcasts = fetch_podcastindex_data(error_summary_counter, max_feeds=10000)
         save_cache(CACHE_PATH, {
             "filtered_spotify_podcasts": filtered_spotify_podcasts,
             "filtered_podcastindex_podcasts": filtered_podcastindex_podcasts, # Save new
@@ -576,13 +675,13 @@ if __name__ == "__main__":
     # --- 3. Spotify Fetch & Scrape ---
     if not filtered_spotify_podcasts:
         logger.info("Fetching Spotify podcasts (Full Scrape)...")
-        spotify_podcasts_raw = fetch_spotify_catalogue()
+        # Pass the counter
+        spotify_podcasts_raw = fetch_spotify_catalogue(error_summary_counter)
         logger.info(f"Fetched {len(spotify_podcasts_raw)} raw podcasts from Spotify.")
 
         processed_spotify_list = []
         logger.info(f"Processing Spotify podcasts: Scraping {len(spotify_podcasts_raw)} pages for emails/RSS and filtering...")
         with ThreadPoolExecutor(max_workers=THREADS) as pool:
-            # Pass description to scrape_page
             future_to_show = {
                 pool.submit(scrape_page, s[KEY_SOURCE_URL], s.get('description')): s
                 for s in spotify_podcasts_raw
@@ -596,10 +695,16 @@ if __name__ == "__main__":
                     logger.info(f"Spotify Scrape Progress: {processed_count}/{len(spotify_podcasts_raw)} pages processed.")
                 try:
                     scraped_data = future.result()
+
+                    # Check if scrape_page returned an error
+                    if 'error' in scraped_data:
+                        error_type = scraped_data['error']
+                        error_url = scraped_data.get('url', url) # Use URL from result if available
+                        error_summary_counter[error_type] += 1
+                        continue # Skip further processing for this item
+
                     # Merge scraped data (emails, potentially RSS) into original show dict
-                    # Use scraped emails directly as scrape_page now handles description + page
                     show_original[KEY_EMAILS] = scraped_data.get(KEY_EMAILS, [])
-                    # Use scraped RSS directly
                     show_original[KEY_RSS_URL] = scraped_data.get(KEY_RSS_URL) # Overwrite None if found
 
                     # --- Filter scraped Spotify shows ---
@@ -618,7 +723,9 @@ if __name__ == "__main__":
                         logger.info(f"SKIPPING Spotify podcast: '{show_original.get(KEY_TITLE, 'N/A')}' ({', '.join(reason)})")
 
                 except Exception as exc:
-                    logger.error(f"Error processing result for {url}: {exc}", exc_info=True)
+                    # Catch errors during future.result() or subsequent processing
+                    logger.error(f"Error processing future result for {url}: {exc}", exc_info=True)
+                    error_summary_counter["Spotify: Scrape Future/Processing Error"] += 1
 
         filtered_spotify_podcasts = processed_spotify_list
         logger.info(f"Found {len(filtered_spotify_podcasts)} Spotify podcasts meeting criteria (valid email & RSS).")
@@ -640,9 +747,9 @@ if __name__ == "__main__":
     combined_data_by_rss: Dict[str, Dict[str, Any]] = {}
     duplicates_merged = 0
 
-    # Re-add Azure DB to sources
+    # Update source name
     all_sources = [
-        ("AzureDB", filtered_db_podcasts),
+        ("LocalDB", filtered_db_podcasts),
         ("PodcastIndex", filtered_podcastindex_podcasts),
         ("Spotify", filtered_spotify_podcasts),
     ]
@@ -662,9 +769,6 @@ if __name__ == "__main__":
                 KEY_TITLE: podcast.get(KEY_TITLE, ""),
                 KEY_RSS_URL: rss_url,
                 KEY_EMAILS: clean_emails(podcast.get(KEY_EMAILS, [])) # Clean emails here
-                # Keep other fields temporarily if needed for XML, like publisher/source_url
-                # KEY_PUBLISHER: podcast.get(KEY_PUBLISHER, ""),
-                # KEY_SOURCE_URL: podcast.get(KEY_SOURCE_URL, "")
             }
 
             # Skip if no valid emails after cleaning
@@ -685,7 +789,6 @@ if __name__ == "__main__":
                     logger.debug(f"Merging emails for duplicate RSS '{rss_url}' from {source_name}.")
                     existing[KEY_EMAILS] = merged_emails
                     duplicates_merged += 1
-                # Optionally merge/update title or other fields if desired
 
         logger.info(f"Processed {processed_count} unique items (by RSS) with valid emails from {source_name}.")
 
@@ -693,6 +796,8 @@ if __name__ == "__main__":
         logger.info(f"Merged email data for {duplicates_merged} duplicate podcasts found based on RSS URL.")
 
     logger.info(f"Total unique podcasts by RSS before exclusion: {len(combined_data_by_rss)}")
+    # Capture the count of candidates entering the final filtering stage
+    candidate_podcast_count = len(combined_data_by_rss)
 
 
     # --- 6. Exclude existing user feeds AND ensure email uniqueness ---
@@ -724,10 +829,11 @@ if __name__ == "__main__":
         podcasts_for_xml.append(podcast_data)
         seen_emails_in_final_list.update(current_podcast_emails)
 
-
     logger.info(f"Excluded {excluded_existing_user} podcasts already associated with users.")
     logger.info(f"Excluded {excluded_duplicate_email} podcasts due to duplicate emails.")
     logger.info(f"Total unique podcasts for XML after all exclusions: {len(podcasts_for_xml)}")
+    # Capture the final count for the XML
+    final_xml_podcast_count = len(podcasts_for_xml)
 
     # --- 7. Generate XML ---
     if podcasts_for_xml:
@@ -760,5 +866,15 @@ if __name__ == "__main__":
     else:
         logger.info("ℹ️ No podcasts meeting criteria found to save to XML.")
         clear_cache(CACHE_PATH)
+
+    # --- Log Final Summary ---
+    # Call the summary function with the collected counts
+    log_final_summary(
+        counter=error_summary_counter,
+        candidate_count=candidate_podcast_count,
+        final_xml_count=final_xml_podcast_count,
+        excluded_existing_user=excluded_existing_user,
+        excluded_duplicate_email=excluded_duplicate_email
+    )
 
     logger.info("--- Scraping Finished ---")
