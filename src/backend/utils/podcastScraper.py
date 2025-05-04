@@ -21,6 +21,14 @@ from requests.adapters import HTTPAdapter # For retries
 from urllib3.util.retry import Retry # For retries
 from bs4 import BeautifulSoup
 from dotenv import load_dotenv
+import xml.etree.ElementTree as ET
+from xml.dom import minidom
+import sqlite3
+import tempfile
+import logging
+import time
+import hashlib
+import json
 from pymongo import MongoClient
 from pymongo.errors import ConfigurationError, ConnectionFailure
 from spotipy.oauth2 import SpotifyOAuth
@@ -65,7 +73,10 @@ PODCASTINDEX_KEY = os.getenv("PODCAST_INDEX_KEY")
 PODCASTINDEX_SECRET = os.getenv("PODCAST_INDEX_SECRET")
 SCRAPE_DB_URI = os.getenv("SCRAPE_DB_URI")
 
-# --- Spotify Auth ---
+SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+PROJECT_ROOT = os.path.abspath(os.path.join(SCRIPT_DIR, "..", "..", ".."))
+CACHE_FILE_PATH = os.path.join(PROJECT_ROOT, "scrape_cache.json")
+
 try:
     sp = spotipy.Spotify(
         auth_manager=SpotifyOAuth(
@@ -272,15 +283,23 @@ def fetch_data_from_azure_db(container_name, blob_path) -> List[Dict[str, Any]]:
 
             for row in rows:
                 title, feed_url, publisher, email_str = row
+                final_email_to_add = None
+                is_feed_url_valid = False
 
-                # Validate URL
-                feed_url = feed_url.strip() if feed_url else None
-                is_feed_url_valid = is_valid_url(feed_url)
+                if feed_url:
+                    feed_url = feed_url.strip()
+                    if is_valid_url(feed_url):
+                        is_feed_url_valid = True
 
-                # Validate Email
-                cleaned_emails = clean_emails([email_str] if email_str else [])
+                if email_str:
+                    cleaned_email_str = email_str.strip()
+                    match = EMAIL_EXTRACT_PATTERN.match(cleaned_email_str)
+                    if match:
+                        extracted_email = match.group(0)
+                        if EMAIL_VALIDATE_PATTERN.match(extracted_email):
+                            final_email_to_add = extracted_email
 
-                if cleaned_emails and is_feed_url_valid:
+                if final_email_to_add and is_feed_url_valid:
                     filtered_db_podcasts.append({
                         KEY_TITLE: title.strip() if title else "",
                         KEY_RSS_URL: feed_url,
@@ -288,11 +307,6 @@ def fetch_data_from_azure_db(container_name, blob_path) -> List[Dict[str, Any]]:
                         KEY_PUBLISHER: publisher.strip() if publisher else "",
                         KEY_EMAILS: cleaned_emails # Use the cleaned list
                     })
-                else:
-                    reason = []
-                    if not cleaned_emails: reason.append("invalid/missing email")
-                    if not is_feed_url_valid: reason.append("invalid/missing feed URL")
-                    logger.warning(f"Skipping DB entry '{title}' due to: {', '.join(reason)}. Email='{email_str}', Feed='{feed_url}'")
 
         except sqlite3.Error as db_err:
             logger.error(f"Database error processing {temp_db_path}: {db_err}", exc_info=True)
@@ -364,31 +378,20 @@ def fetch_podcastindex_data(max_feeds=1000) -> List[Dict[str, Any]]:
             rss_url = rss_url.strip() if rss_url else None
             is_feed_url_valid = is_valid_url(rss_url)
 
-            # Validate Email from API data
-            cleaned_emails = clean_emails([email_str] if email_str else [])
+            if rss_url:
+                rss_url = rss_url.strip()
+                if is_valid_url(rss_url):
+                    is_feed_url_valid = True
 
-            # --- Fallback: Fetch RSS if email missing/invalid and URL is valid ---
-            if not cleaned_emails and is_feed_url_valid:
-                logger.info(f"Podcast Index: Email missing/invalid for '{title}'. Attempting to fetch RSS feed: {rss_url}")
-                rss_fetch_attempts += 1
-                # Use RSSService to fetch and parse the feed
-                # Note: This adds significant overhead
-                feed_data, status_code = RSSService.fetch_rss_feed(rss_url)
-                if status_code == 200 and feed_data.get("email"):
-                    rss_email = feed_data.get("email")
-                    rss_cleaned_emails = clean_emails([rss_email])
-                    if rss_cleaned_emails:
-                        logger.info(f"Podcast Index: Found valid email '{rss_cleaned_emails[0]}' via RSS fetch for '{title}'.")
-                        cleaned_emails = rss_cleaned_emails # Use email found from RSS
-                        rss_fetch_success_email += 1
-                    else:
-                        logger.info(f"Podcast Index: Email '{rss_email}' found via RSS fetch for '{title}' was invalid after cleaning.")
-                else:
-                     logger.info(f"Podcast Index: Failed to fetch or find email in RSS feed for '{title}' (Status: {status_code}).")
-            # --- End Fallback ---
+            if email_str:
+                cleaned_email_str = email_str.strip()
+                match = EMAIL_EXTRACT_PATTERN.match(cleaned_email_str)
+                if match:
+                    extracted_email = match.group(0)
+                    if EMAIL_VALIDATE_PATTERN.match(extracted_email):
+                        final_email_to_add = extracted_email
 
-
-            if cleaned_emails and is_feed_url_valid:
+            if final_email_to_add and is_feed_url_valid:
                 podcastindex_podcasts.append({
                     KEY_TITLE: title.strip() if title else "",
                     KEY_RSS_URL: rss_url,
@@ -396,25 +399,6 @@ def fetch_podcastindex_data(max_feeds=1000) -> List[Dict[str, Any]]:
                     KEY_PUBLISHER: publisher.strip() if publisher else "",
                     KEY_EMAILS: cleaned_emails
                 })
-                processed_count += 1
-            else:
-                reason = []
-                # Check original email_str for logging context if fallback failed
-                original_email_invalid = not clean_emails([email_str] if email_str else [])
-                if original_email_invalid and not cleaned_emails: reason.append("invalid/missing email (API & RSS fetch)")
-                elif not cleaned_emails: reason.append("invalid/missing email (API)") # Should not happen if fallback works, but good to cover
-                if not is_feed_url_valid: reason.append("invalid/missing feed URL")
-
-                logger.info(f"Skipping Podcast Index entry '{title}' due to: {', '.join(reason)}. API Email='{email_str}', Feed='{rss_url}'")
-                # Count skips based on final state
-                if not cleaned_emails: skipped_email += 1
-                if not is_feed_url_valid: skipped_rss += 1
-
-
-        logger.info(f"Podcast Index: Processed {processed_count} valid entries.")
-        logger.info(f"Podcast Index: Attempted {rss_fetch_attempts} RSS fetches for missing emails, found {rss_fetch_success_email} valid emails.")
-        logger.info(f"Podcast Index: Skipped {skipped_email} final entries for email, {skipped_rss} for RSS URL.")
-
 
     except requests.exceptions.RequestException as e:
         logger.error(f"Error during Podcast Index API request: {e}", exc_info=True)
@@ -469,7 +453,6 @@ def get_existing_user_podcast_rss_urls() -> Set[str]:
 
     return existing_rss_urls
 
-# --- Caching Functions ---
 def load_cache(cache_path):
     default_data = {
         "filtered_spotify_podcasts": [],
@@ -480,7 +463,6 @@ def load_cache(cache_path):
         try:
             with open(cache_path, 'r', encoding='utf-8') as f:
                 data = json.load(f)
-                # Ensure all keys exist, even if cache is partial/old
                 for key in default_data:
                     if key not in data:
                         data[key] = default_data[key]
@@ -514,97 +496,73 @@ def clear_cache(cache_path):
         except OSError as e:
             logger.error(f"❌ Error deleting cache file {cache_path}: {e}")
 
-# --- Main Execution ---
 if __name__ == "__main__":
     logger.info("--- Starting Podcast Scraping ---")
 
-    # --- Load Cache ---
-    cached_data = load_cache(CACHE_PATH)
+    cached_data = load_cache(CACHE_FILE_PATH)
     filtered_spotify_podcasts = cached_data["filtered_spotify_podcasts"]
-    filtered_db_podcasts = cached_data["filtered_db_podcasts"] # Keep variable even if unused
+    filtered_db_podcasts = cached_data["filtered_db_podcasts"]
     filtered_podcastindex_podcasts = cached_data["filtered_podcastindex_podcasts"]
 
-    # --- 1. Azure DB (Commented out as requested) ---
-    # if not filtered_db_podcasts:
-    #     logger.info("Fetching and filtering data from Azure DB...")
-    #     filtered_db_podcasts = fetch_data_from_azure_db(AZURE_CONTAINER, AZURE_DB_BLOB)
-    #     save_cache(CACHE_PATH, { # Save progress
-    #         "filtered_spotify_podcasts": filtered_spotify_podcasts,
-    #         "filtered_db_podcasts": filtered_db_podcasts,
-    #         "filtered_podcastindex_podcasts": filtered_podcastindex_podcasts,
-    #     })
-    # else:
-    #     logger.info("ℹ️ Skipping Azure DB fetching - data loaded from cache.")
-    logger.info("ℹ️ Skipping Azure DB fetching (step disabled).") # Add info message
+    if not filtered_spotify_podcasts:
+        logger.info("Fetching Spotify podcasts (Full Scrape)...")
+        spotify_podcasts_raw = fetch_spotify_podcasts(target_count=None)
+        logger.info(f"Fetched {len(spotify_podcasts_raw)} raw podcasts from Spotify.")
 
-    # --- 2. Podcast Index ---
+        processed_spotify_list = []
+        logger.info("Processing Spotify podcasts: Scraping pages for emails/RSS and filtering...")
+        for podcast_data in spotify_podcasts_raw:
+            source_url = podcast_data[KEY_SOURCE_URL]
+            logger.debug(f"Processing Spotify item: {podcast_data[KEY_TITLE]} ({source_url})")
+
+            scraped_info = extract_info_from_url(source_url)
+            podcast_data[KEY_EMAILS] = scraped_info[KEY_EMAILS]
+
+            if not podcast_data.get(KEY_RSS_URL) and scraped_info.get(KEY_RSS_URL):
+                logger.info(f"Found RSS feed '{scraped_info[KEY_RSS_URL]}' via scraping for '{podcast_data[KEY_TITLE]}'")
+                podcast_data[KEY_RSS_URL] = scraped_info[KEY_RSS_URL]
+
+            has_valid_email = bool(podcast_data.get(KEY_EMAILS))
+            has_valid_rss = is_valid_url(podcast_data.get(KEY_RSS_URL))
+
+            if has_valid_email and has_valid_rss:
+                podcast_data.pop('description', None)
+                processed_spotify_list.append(podcast_data)
+                logger.debug(f"KEEPING Spotify podcast: '{podcast_data[KEY_TITLE]}' (Email: Yes, RSS: Yes)")
+
+        filtered_spotify_podcasts = processed_spotify_list
+        logger.info(f"Found {len(filtered_spotify_podcasts)} Spotify podcasts meeting criteria (valid email & RSS).")
+
+        save_cache(CACHE_FILE_PATH, {
+            "filtered_spotify_podcasts": filtered_spotify_podcasts,
+            "filtered_db_podcasts": filtered_db_podcasts,
+            "filtered_podcastindex_podcasts": filtered_podcastindex_podcasts,
+        })
+    else:
+        logger.info("ℹ️ Skipping Spotify fetching/processing - data loaded from cache.")
+
+    if not filtered_db_podcasts:
+        logger.info("Fetching and filtering data from Azure DB...")
+        filtered_db_podcasts = fetch_data_from_azure_db(AZURE_DB_CONTAINER, AZURE_DB_BLOB_PATH)
+        save_cache(CACHE_FILE_PATH, {
+            "filtered_spotify_podcasts": filtered_spotify_podcasts,
+            "filtered_db_podcasts": filtered_db_podcasts,
+            "filtered_podcastindex_podcasts": filtered_podcastindex_podcasts,
+        })
+    else:
+        logger.info("ℹ️ Skipping Azure DB fetching - data loaded from cache.")
+
     if not filtered_podcastindex_podcasts:
         logger.info("Fetching and filtering data from Podcast Index API...")
-        # Fetch more feeds if possible, API limit might be higher
-        filtered_podcastindex_podcasts = fetch_podcastindex_data(max_feeds=10000) # Increased max_feeds
-        save_cache(CACHE_PATH, { # Save progress
+        filtered_podcastindex_podcasts = fetch_podcastindex_data(max_feeds=5000)
+        save_cache(CACHE_FILE_PATH, {
             "filtered_spotify_podcasts": filtered_spotify_podcasts,
-            "filtered_db_podcasts": filtered_db_podcasts, # Save empty list if skipped
+            "filtered_db_podcasts": filtered_db_podcasts,
             "filtered_podcastindex_podcasts": filtered_podcastindex_podcasts,
         })
     else:
         logger.info("ℹ️ Skipping Podcast Index fetching - data loaded from cache.")
 
-    # --- 3. Spotify Fetch & Scrape ---
-    if not filtered_spotify_podcasts:
-        spotify_podcasts_raw = fetch_spotify_catalogue() # Renamed variable
-        processed_spotify_list = []
-        logger.info(f"Scraping {len(spotify_podcasts_raw)} Spotify pages concurrently (Threads: {THREADS})...")
-        with ThreadPoolExecutor(max_workers=THREADS) as pool:
-            # Map URLs to future objects, store original show dict as value
-            future_to_show = {pool.submit(scrape_page, s[KEY_SOURCE_URL]): s for s in spotify_podcasts_raw}
-            processed_count = 0
-            for future in as_completed(future_to_show):
-                show_original = future_to_show[future]
-                url = show_original[KEY_SOURCE_URL]
-                processed_count += 1
-                if processed_count % 100 == 0: # Log progress periodically
-                    logger.info(f"Spotify Scrape Progress: {processed_count}/{len(spotify_podcasts_raw)} pages processed.")
-                try:
-                    scraped_data = future.result()
-                    # Merge scraped data (emails, potentially RSS) into original show dict
-                    show_original[KEY_EMAILS] = scraped_data.get(KEY_EMAILS, [])
-                    # Only update RSS if it wasn't found via description AND was found via scraping
-                    # (RSS from description removed, so just check if scrape found one)
-                    if scraped_data.get(KEY_RSS_URL):
-                        show_original[KEY_RSS_URL] = scraped_data.get(KEY_RSS_URL)
-
-                    # --- Filter scraped Spotify shows ---
-                    has_valid_email = bool(show_original[KEY_EMAILS])
-                    has_valid_rss = is_valid_url(show_original.get(KEY_RSS_URL))
-
-                    if has_valid_email and has_valid_rss:
-                        show_original.pop('description', None) # Remove description before adding
-                        processed_spotify_list.append(show_original)
-                        logger.debug(f"KEEPING Spotify podcast: '{show_original[KEY_TITLE]}' (Email: Yes, RSS: Yes)")
-                    else:
-                        # Log skips for Spotify items
-                        reason = []
-                        if not has_valid_email: reason.append("no valid email found")
-                        if not has_valid_rss: reason.append("no valid RSS feed found")
-                        logger.info(f"SKIPPING Spotify podcast: '{show_original.get(KEY_TITLE, 'N/A')}' ({', '.join(reason)})")
-
-
-                except Exception as exc:
-                    logger.error(f"Error processing result for {url}: {exc}", exc_info=True)
-
-        filtered_spotify_podcasts = processed_spotify_list
-        logger.info(f"Found {len(filtered_spotify_podcasts)} Spotify podcasts meeting criteria (valid email & RSS).")
-        # Save progress after completing Spotify processing
-        save_cache(CACHE_PATH, {
-            "filtered_spotify_podcasts": filtered_spotify_podcasts,
-            "filtered_db_podcasts": filtered_db_podcasts, # Save current state (likely empty)
-            "filtered_podcastindex_podcasts": filtered_podcastindex_podcasts, # Save current state (likely empty)
-        })
-    else:
-        logger.info("ℹ️ Skipping Spotify fetching/processing - data loaded from cache.")
-
-    # --- 4. MongoDB Exclusion Check ---
     logger.info("Fetching existing user podcast associations from Live MongoDB...")
     existing_user_rss = get_existing_user_podcast_rss_urls() # Renamed variable
 
@@ -682,20 +640,18 @@ if __name__ == "__main__":
         dom = minidom.parseString(xml_str)
         pretty_xml_str = dom.toprettyxml(indent="  ")
 
-        # Use PROJECT_ROOT for output path
         output_filename = os.path.join(PROJECT_ROOT, "scraped.xml")
 
         try:
             with open(output_filename, "w", encoding="utf-8") as f:
                 f.write(pretty_xml_str)
             logger.info(f"✅ Podcast data successfully saved to {output_filename}")
-            clear_cache(CACHE_PATH) # Clear cache on success
+            clear_cache(CACHE_FILE_PATH)
         except IOError as e:
             logger.error(f"❌ Error writing XML file: {e}", exc_info=True)
-            # Keep cache if write fails
     else:
-        logger.info("ℹ️ No podcasts meeting criteria found to save to XML.")
-        clear_cache(CACHE_PATH) # Clear cache even if no results
+        logger.info("ℹ️ No podcasts meeting criteria (valid email & RSS, not existing user) found to save to XML.")
+        clear_cache(CACHE_FILE_PATH)
 
     logger.info("--- Scraping Finished ---")
 
