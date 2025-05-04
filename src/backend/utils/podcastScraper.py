@@ -7,7 +7,9 @@ import json # For caching
 import logging
 import os
 import re
+import sqlite3 # Re-add
 import sys
+import tempfile # Re-add
 import time
 import xml.etree.ElementTree as ET
 import spotipy
@@ -24,6 +26,8 @@ from pymongo.errors import ConfigurationError, ConnectionFailure
 from spotipy.oauth2 import SpotifyOAuth
 # Use relative import for rss_Service
 from ..services.rss_Service import RSSService
+# Re-add blob_storage import
+from .blob_storage import download_blob_to_tempfile, get_blob_service_client
 
 load_dotenv()
 logging.basicConfig(
@@ -41,6 +45,10 @@ KEY_RSS_URL = "rss"
 KEY_SOURCE_URL = "url"
 KEY_PUBLISHER = "publisher"
 KEY_EMAILS = "emails"
+
+# Re-add Azure constants
+AZURE_CONTAINER = "podmanagerfiles"
+AZURE_DB_BLOB = "scrapeDb/podcastindex_feeds.db"
 
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 PROJECT_ROOT = os.path.abspath(os.path.join(SCRIPT_DIR, "..", "..", ".."))
@@ -113,47 +121,77 @@ def requests_retry_session(
     return session
 
 # --- Scraping Function ---
-def scrape_page(url: str) -> Dict[str, Any]:
-    """Return emails + rss found on a Spotify show page, with retries."""
-    headers = {"User-Agent": "Mozilla/5.0"}
-    session = requests_retry_session()
-    page_title = "No title found"
-    try:
-        resp = session.get(url, headers=headers, timeout=15)
-        resp.raise_for_status()
-    except requests.exceptions.RequestException as exc:
-        logger.error("Error retrieving %s after retries: %s", url, exc)
-        return {KEY_EMAILS: [], KEY_RSS_URL: None, KEY_TITLE: page_title}
-
-    soup = BeautifulSoup(resp.text, "html.parser")
-    page_title = soup.title.string.strip() if soup.title else "No title found"
-    text = soup.get_text(" ")
-
-    emails = clean_emails(EMAIL_EXTRACT_PATTERN.findall(text))
-    if emails:
-        logger.info(f"URL: {url} - Found emails: {emails}")
-    else:
-        logger.debug(f"URL: {url} - No valid emails found.")
-
+def scrape_page(url: str, description: Optional[str] = None) -> Dict[str, Any]:
+    """Return emails + rss found on a Spotify show page or from its description, with retries."""
+    emails: List[str] = []
     rss: Optional[str] = None
-    link_tag = soup.find("link", {"type": "application/rss+xml", "href": True})
-    if link_tag and link_tag.get("href") and is_valid_url(link_tag["href"]):
-        href = link_tag["href"].strip()
-        if looks_like_potential_rss(href):
-            rss = href
-            logger.info(f"URL: {url} - Found RSS feed via <link> tag: {rss}")
+    page_title = "No title found" # Default title
 
-    if not rss:
-        match = RSS_FIND_PATTERN.search(text)
+    # 1. Check description first if provided
+    if description:
+        logger.debug(f"Checking description for {url}...")
+        desc_emails = clean_emails(EMAIL_EXTRACT_PATTERN.findall(description))
+        if desc_emails:
+            emails.extend(desc_emails)
+            logger.info(f"URL: {url} - Found emails in description: {emails}")
+
+        match = RSS_FIND_PATTERN.search(description)
         if match:
             potential_rss = match.group(0).strip()
             if is_valid_url(potential_rss):
                 rss = potential_rss
-                logger.info(f"URL: {url} - Found potential RSS feed via text search: {rss}")
+                logger.info(f"URL: {url} - Found potential RSS feed in description: {rss}")
 
-    if rss and not is_valid_url(rss):
-        logger.warning("Ignoring invalid RSS URL format '%s' found on %s", rss, url)
-        rss = None
+    # 2. If email or RSS still missing, scrape the page
+    if not emails or not rss:
+        logger.debug(f"Scraping full page for {url} (Email found: {bool(emails)}, RSS found: {bool(rss)})...")
+        headers = {"User-Agent": "Mozilla/5.0"}
+        session = requests_retry_session()
+        try:
+            resp = session.get(url, headers=headers, timeout=15)
+            resp.raise_for_status()
+        except requests.exceptions.RequestException as exc:
+            logger.error("Error retrieving %s after retries: %s", url, exc)
+            # Return whatever was found in description (if anything)
+            return {KEY_EMAILS: emails, KEY_RSS_URL: rss, KEY_TITLE: page_title}
+
+        soup = BeautifulSoup(resp.text, "html.parser")
+        page_title = soup.title.string.strip() if soup.title else "No title found" # Update title if page scraped
+        text = soup.get_text(" ")
+
+        # Find emails from page text if not already found
+        if not emails:
+            page_emails = clean_emails(EMAIL_EXTRACT_PATTERN.findall(text))
+            if page_emails:
+                emails.extend(page_emails) # Use extend to add, though it should be empty before
+                logger.info(f"URL: {url} - Found emails on page: {emails}")
+            else:
+                logger.debug(f"URL: {url} - No valid emails found on page.")
+
+        # Find RSS from page if not already found
+        if not rss:
+            link_tag = soup.find("link", {"type": "application/rss+xml", "href": True})
+            if link_tag and link_tag.get("href") and is_valid_url(link_tag["href"]):
+                href = link_tag["href"].strip()
+                if looks_like_potential_rss(href):
+                    rss = href
+                    logger.info(f"URL: {url} - Found RSS feed via <link> tag: {rss}")
+
+            if not rss:
+                match = RSS_FIND_PATTERN.search(text)
+                if match:
+                    potential_rss = match.group(0).strip()
+                    if is_valid_url(potential_rss):
+                        rss = potential_rss
+                        logger.info(f"URL: {url} - Found potential RSS feed via text search: {rss}")
+
+            # Final check if found RSS is a valid URL format
+            if rss and not is_valid_url(rss):
+                logger.warning("Ignoring invalid RSS URL format '%s' found on %s", rss, url)
+                rss = None
+    else:
+         logger.info(f"URL: {url} - Skipping full page scrape as email and RSS found in description.")
+
 
     return {KEY_EMAILS: emails, KEY_RSS_URL: rss, KEY_TITLE: page_title}
 
@@ -216,6 +254,78 @@ def fetch_spotify_catalogue(limit_per_query: int = 50, max_offset: int = 1_000) 
 
     logger.info("Collected %d unique Spotify show URLs", len(shows))
     return shows
+
+# --- Azure DB Fetching (Restored) ---
+def fetch_data_from_azure_db(container_name, blob_path) -> List[Dict[str, Any]]:
+    logger.info(f"Attempting to process database from Azure Blob: {container_name}/{blob_path}")
+    filtered_db_podcasts = []
+    temp_db_path = None
+
+    # Note: download_blob_to_tempfile now gets its own client
+    temp_db_path = download_blob_to_tempfile(container_name, blob_path)
+    if not temp_db_path:
+        logger.warning("Failed to download Azure DB blob. Skipping Azure DB step.")
+        return filtered_db_podcasts # Return empty list
+
+    conn = None
+    try:
+        conn = sqlite3.connect(temp_db_path)
+        cursor = conn.cursor()
+        logger.info(f"Connected to temporary SQLite database: {temp_db_path}")
+
+        # Query for entries with non-empty ownerEmail
+        query = "SELECT title, url, author, ownerEmail FROM feeds WHERE ownerEmail IS NOT NULL AND ownerEmail != ''"
+        cursor.execute(query)
+        rows = cursor.fetchall()
+        logger.info(f"Azure DB: Found {len(rows)} potential rows with email.")
+
+        processed_count = 0
+        skipped_count = 0
+
+        for row in rows:
+            title, feed_url, publisher, email_str = row
+
+            # Validate URL
+            feed_url = feed_url.strip() if feed_url else None
+            is_feed_url_valid = is_valid_url(feed_url)
+
+            # Validate Email using clean_emails
+            cleaned_emails = clean_emails([email_str] if email_str else [])
+
+            if cleaned_emails and is_feed_url_valid:
+                filtered_db_podcasts.append({
+                    KEY_TITLE: title.strip() if title else "",
+                    KEY_RSS_URL: feed_url,
+                    KEY_SOURCE_URL: feed_url, # Use RSS as source URL for DB entries
+                    KEY_PUBLISHER: publisher.strip() if publisher else "",
+                    KEY_EMAILS: cleaned_emails # Use the cleaned list
+                })
+                processed_count += 1
+            else:
+                reason = []
+                if not cleaned_emails: reason.append("invalid/missing email")
+                if not is_feed_url_valid: reason.append("invalid/missing feed URL")
+                logger.debug(f"Skipping DB entry '{title}' due to: {', '.join(reason)}. Email='{email_str}', Feed='{feed_url}'")
+                skipped_count += 1
+
+        logger.info(f"Azure DB: Processed {processed_count} valid entries, skipped {skipped_count}.")
+
+    except sqlite3.Error as db_err:
+        logger.error(f"Database error processing {temp_db_path}: {db_err}", exc_info=True)
+    except Exception as e:
+        logger.error(f"An unexpected error occurred during DB processing: {e}", exc_info=True)
+    finally:
+        if conn:
+            conn.close()
+        if temp_db_path and os.path.exists(temp_db_path):
+            try:
+                os.remove(temp_db_path)
+                logger.info(f"Removed temporary database file: {temp_db_path}")
+            except OSError as remove_err:
+                logger.error(f"Error removing temporary file {temp_db_path}: {remove_err}")
+
+    logger.info(f"Returning {len(filtered_db_podcasts)} podcasts processed and filtered from the database.")
+    return filtered_db_podcasts
 
 # --- Podcast Index Fetching ---
 def fetch_podcastindex_data(max_feeds=1000) -> List[Dict[str, Any]]:
@@ -373,19 +483,27 @@ def get_existing_user_podcast_rss_urls() -> Set[str]:
 
 # --- Caching Functions ---
 def load_cache(cache_path):
+    # Restore db_podcasts key
     default_data = {
         "filtered_spotify_podcasts": [],
         "filtered_podcastindex_podcasts": [],
+        "filtered_db_podcasts": [], # Re-add
     }
     if os.path.exists(cache_path):
         try:
             with open(cache_path, 'r', encoding='utf-8') as f:
                 data = json.load(f)
+                # Ensure all expected keys exist, provide defaults if missing
+                final_data = {}
                 for key in default_data:
-                    if key not in data:
-                        data[key] = default_data[key]
+                    final_data[key] = data.get(key, default_data[key])
+                # Remove unexpected keys (optional, good practice)
+                keys_to_remove = [k for k in data if k not in default_data]
+                for k in keys_to_remove:
+                    if k in final_data: # Check if it exists before deleting
+                        del final_data[k]
                 logger.info(f"✅ Successfully loaded cache from {cache_path}")
-                return data
+                return final_data
         except json.JSONDecodeError:
             logger.warning(f"⚠️ Cache file {cache_path} is corrupted. Starting fresh.")
             return default_data
@@ -397,9 +515,16 @@ def load_cache(cache_path):
         return default_data
 
 def save_cache(cache_path, data):
+    # Restore db_podcasts key
+    expected_keys = {
+        "filtered_spotify_podcasts",
+        "filtered_podcastindex_podcasts",
+        "filtered_db_podcasts", # Re-add
+    }
+    data_to_save = {k: v for k, v in data.items() if k in expected_keys}
     try:
         with open(cache_path, 'w', encoding='utf-8') as f:
-            json.dump(data, f, indent=2)
+            json.dump(data_to_save, f, indent=2)
         logger.info(f"✅ Progress saved to cache file: {cache_path}")
     except IOError as e:
         logger.error(f"❌ Error writing cache file {cache_path}: {e}")
@@ -422,19 +547,33 @@ if __name__ == "__main__":
     cached_data = load_cache(CACHE_PATH)
     filtered_spotify_podcasts = cached_data["filtered_spotify_podcasts"]
     filtered_podcastindex_podcasts = cached_data["filtered_podcastindex_podcasts"]
+    filtered_db_podcasts = cached_data["filtered_db_podcasts"] # Re-add
 
-    # --- 1. Podcast Index ---
+    # --- 1. Azure DB ---
+    if not filtered_db_podcasts:
+        logger.info("Fetching and filtering data from Azure DB...")
+        filtered_db_podcasts = fetch_data_from_azure_db(AZURE_CONTAINER, AZURE_DB_BLOB)
+        save_cache(CACHE_PATH, {
+            "filtered_spotify_podcasts": filtered_spotify_podcasts,
+            "filtered_podcastindex_podcasts": filtered_podcastindex_podcasts,
+            "filtered_db_podcasts": filtered_db_podcasts, # Save new
+        })
+    else:
+        logger.info("ℹ️ Skipping Azure DB fetching - data loaded from cache.")
+
+    # --- 2. Podcast Index ---
     if not filtered_podcastindex_podcasts:
         logger.info("Fetching and filtering data from Podcast Index API...")
         filtered_podcastindex_podcasts = fetch_podcastindex_data(max_feeds=10000)
         save_cache(CACHE_PATH, {
             "filtered_spotify_podcasts": filtered_spotify_podcasts,
-            "filtered_podcastindex_podcasts": filtered_podcastindex_podcasts,
+            "filtered_podcastindex_podcasts": filtered_podcastindex_podcasts, # Save new
+            "filtered_db_podcasts": filtered_db_podcasts, # Keep existing
         })
     else:
         logger.info("ℹ️ Skipping Podcast Index fetching - data loaded from cache.")
 
-    # --- 2. Spotify Fetch & Scrape ---
+    # --- 3. Spotify Fetch & Scrape ---
     if not filtered_spotify_podcasts:
         logger.info("Fetching Spotify podcasts (Full Scrape)...")
         spotify_podcasts_raw = fetch_spotify_catalogue()
@@ -443,7 +582,11 @@ if __name__ == "__main__":
         processed_spotify_list = []
         logger.info(f"Processing Spotify podcasts: Scraping {len(spotify_podcasts_raw)} pages for emails/RSS and filtering...")
         with ThreadPoolExecutor(max_workers=THREADS) as pool:
-            future_to_show = {pool.submit(scrape_page, s[KEY_SOURCE_URL]): s for s in spotify_podcasts_raw}
+            # Pass description to scrape_page
+            future_to_show = {
+                pool.submit(scrape_page, s[KEY_SOURCE_URL], s.get('description')): s
+                for s in spotify_podcasts_raw
+            }
             processed_count = 0
             for future in as_completed(future_to_show):
                 show_original = future_to_show[future]
@@ -453,22 +596,27 @@ if __name__ == "__main__":
                     logger.info(f"Spotify Scrape Progress: {processed_count}/{len(spotify_podcasts_raw)} pages processed.")
                 try:
                     scraped_data = future.result()
+                    # Merge scraped data (emails, potentially RSS) into original show dict
+                    # Use scraped emails directly as scrape_page now handles description + page
                     show_original[KEY_EMAILS] = scraped_data.get(KEY_EMAILS, [])
-                    if scraped_data.get(KEY_RSS_URL):
-                        show_original[KEY_RSS_URL] = scraped_data.get(KEY_RSS_URL)
+                    # Use scraped RSS directly
+                    show_original[KEY_RSS_URL] = scraped_data.get(KEY_RSS_URL) # Overwrite None if found
 
+                    # --- Filter scraped Spotify shows ---
                     has_valid_email = bool(show_original[KEY_EMAILS])
                     has_valid_rss = is_valid_url(show_original.get(KEY_RSS_URL))
 
                     if has_valid_email and has_valid_rss:
-                        show_original.pop('description', None)
+                        show_original.pop('description', None) # Remove description before adding
                         processed_spotify_list.append(show_original)
                         logger.debug(f"KEEPING Spotify podcast: '{show_original[KEY_TITLE]}' (Email: Yes, RSS: Yes)")
                     else:
+                        # Log skips for Spotify items
                         reason = []
                         if not has_valid_email: reason.append("no valid email found")
                         if not has_valid_rss: reason.append("no valid RSS feed found")
                         logger.info(f"SKIPPING Spotify podcast: '{show_original.get(KEY_TITLE, 'N/A')}' ({', '.join(reason)})")
+
                 except Exception as exc:
                     logger.error(f"Error processing result for {url}: {exc}", exc_info=True)
 
@@ -476,65 +624,129 @@ if __name__ == "__main__":
         logger.info(f"Found {len(filtered_spotify_podcasts)} Spotify podcasts meeting criteria (valid email & RSS).")
 
         save_cache(CACHE_PATH, {
-            "filtered_spotify_podcasts": filtered_spotify_podcasts,
-            "filtered_podcastindex_podcasts": filtered_podcastindex_podcasts,
+            "filtered_spotify_podcasts": filtered_spotify_podcasts, # Save new
+            "filtered_podcastindex_podcasts": filtered_podcastindex_podcasts, # Keep existing
+            "filtered_db_podcasts": filtered_db_podcasts, # Keep existing
         })
     else:
         logger.info("ℹ️ Skipping Spotify fetching/processing - data loaded from cache.")
 
-    # --- 3. MongoDB Exclusion Check ---
+    # --- 4. MongoDB Exclusion Check ---
     logger.info("Fetching existing user podcast associations from Live MongoDB...")
     existing_user_rss = get_existing_user_podcast_rss_urls()
 
-    # --- 4. Combine, De-duplicate, and Final Filter ---
-    logger.info("Combining and de-duplicating podcast data...")
-    combined_data: Dict[str, Dict[str, Any]] = {}
+    # --- 5. Combine, De-duplicate by RSS, and Clean ---
+    logger.info("Combining and de-duplicating podcast data by RSS URL...")
+    combined_data_by_rss: Dict[str, Dict[str, Any]] = {}
     duplicates_merged = 0
 
+    # Re-add Azure DB to sources
     all_sources = [
+        ("AzureDB", filtered_db_podcasts),
         ("PodcastIndex", filtered_podcastindex_podcasts),
         ("Spotify", filtered_spotify_podcasts),
     ]
 
     for source_name, source_data in all_sources:
+        processed_count = 0
         for podcast in source_data:
-            rss_url = podcast[KEY_RSS_URL]
-            if rss_url in combined_data:
-                duplicates_merged += 1
-                combined_data[rss_url][KEY_EMAILS].extend(podcast[KEY_EMAILS])
-                combined_data[rss_url][KEY_EMAILS] = clean_emails(combined_data[rss_url][KEY_EMAILS])
+            rss_url = podcast.get(KEY_RSS_URL)
+            # Basic validation before using as key
+            if not rss_url or not isinstance(rss_url, str) or not is_valid_url(rss_url):
+                logger.warning(f"Skipping item from {source_name} with invalid/missing RSS URL: {podcast.get(KEY_TITLE)} - {rss_url}")
+                continue
+
+            # Ensure required fields exist, default to empty if not
+            # Clean emails during this initial combination
+            podcast_entry = {
+                KEY_TITLE: podcast.get(KEY_TITLE, ""),
+                KEY_RSS_URL: rss_url,
+                KEY_EMAILS: clean_emails(podcast.get(KEY_EMAILS, [])) # Clean emails here
+                # Keep other fields temporarily if needed for XML, like publisher/source_url
+                # KEY_PUBLISHER: podcast.get(KEY_PUBLISHER, ""),
+                # KEY_SOURCE_URL: podcast.get(KEY_SOURCE_URL, "")
+            }
+
+            # Skip if no valid emails after cleaning
+            if not podcast_entry[KEY_EMAILS]:
+                logger.debug(f"Skipping item from {source_name} with no valid emails after cleaning: {podcast.get(KEY_TITLE)}")
+                continue
+
+            existing = combined_data_by_rss.get(rss_url)
+            if not existing:
+                combined_data_by_rss[rss_url] = podcast_entry
+                processed_count += 1
             else:
-                combined_data[rss_url] = podcast
+                # Merge emails (already cleaned)
+                new_emails = set(podcast_entry[KEY_EMAILS])
+                existing_emails = set(existing[KEY_EMAILS])
+                merged_emails = list(existing_emails.union(new_emails))
+                if len(merged_emails) > len(existing_emails):
+                    logger.debug(f"Merging emails for duplicate RSS '{rss_url}' from {source_name}.")
+                    existing[KEY_EMAILS] = merged_emails
+                    duplicates_merged += 1
+                # Optionally merge/update title or other fields if desired
 
-    logger.info(f"Combined data contains {len(combined_data)} unique podcasts after merging {duplicates_merged} duplicates.")
+        logger.info(f"Processed {processed_count} unique items (by RSS) with valid emails from {source_name}.")
 
-    # --- 5. Exclude existing user feeds ---
+    if duplicates_merged > 0:
+        logger.info(f"Merged email data for {duplicates_merged} duplicate podcasts found based on RSS URL.")
+
+    logger.info(f"Total unique podcasts by RSS before exclusion: {len(combined_data_by_rss)}")
+
+
+    # --- 6. Exclude existing user feeds AND ensure email uniqueness ---
+    logger.info("Filtering combined data against existing users and ensuring email uniqueness...")
     podcasts_for_xml = []
-    for rss_url, podcast in combined_data.items():
-        if rss_url not in existing_user_rss:
-            podcasts_for_xml.append(podcast)
-        else:
-            logger.info(f"Excluding podcast '{podcast[KEY_TITLE]}' with RSS URL '{rss_url}' as it is already associated with a user.")
+    seen_emails_in_final_list: Set[str] = set() # Track emails added to the final list
+    excluded_existing_user = 0
+    excluded_duplicate_email = 0
 
-    logger.info(f"{len(podcasts_for_xml)} podcasts remain after excluding existing user feeds.")
+    # Iterate through the combined data (keyed by RSS)
+    for rss_url, podcast_data in combined_data_by_rss.items():
+        # Check 1: Is it linked to an existing user?
+        if rss_url in existing_user_rss:
+            logger.debug(f"Excluding podcast '{podcast_data.get(KEY_TITLE)}' (RSS: {rss_url}) as it's linked to an existing user.")
+            excluded_existing_user += 1
+            continue
 
-    # --- 6. Generate XML ---
+        # Check 2: Does it contain any email already added to the final list?
+        current_podcast_emails = set(podcast_data.get(KEY_EMAILS, []))
+        # Find intersection: emails in this podcast that are ALSO in seen_emails_in_final_list
+        common_emails = current_podcast_emails.intersection(seen_emails_in_final_list)
+
+        if common_emails:
+            logger.info(f"Excluding podcast '{podcast_data.get(KEY_TITLE)}' (RSS: {rss_url}) due to duplicate email(s) already added: {common_emails}")
+            excluded_duplicate_email += 1
+            continue
+
+        # If checks pass, add to final list and update seen emails
+        podcasts_for_xml.append(podcast_data)
+        seen_emails_in_final_list.update(current_podcast_emails)
+
+
+    logger.info(f"Excluded {excluded_existing_user} podcasts already associated with users.")
+    logger.info(f"Excluded {excluded_duplicate_email} podcasts due to duplicate emails.")
+    logger.info(f"Total unique podcasts for XML after all exclusions: {len(podcasts_for_xml)}")
+
+    # --- 7. Generate XML ---
     if podcasts_for_xml:
+        logger.info("Generating XML file...")
         root = ET.Element("podcasts")
+
         for podcast in podcasts_for_xml:
             podcast_elem = ET.SubElement(root, "podcast")
-            for key, value in podcast.items():
-                if isinstance(value, list):
-                    list_elem = ET.SubElement(podcast_elem, key)
-                    for item in value:
-                        item_elem = ET.SubElement(list_elem, "item")
-                        item_elem.text = item
-                else:
-                    child = ET.SubElement(podcast_elem, key)
-                    child.text = value
+            # Add only the required fields: title, rss, emails
+            ET.SubElement(podcast_elem, KEY_TITLE).text = str(podcast.get(KEY_TITLE, ""))
+            ET.SubElement(podcast_elem, KEY_RSS_URL).text = str(podcast.get(KEY_RSS_URL, ""))
+            emails_elem = ET.SubElement(podcast_elem, KEY_EMAILS)
+            for email in podcast.get(KEY_EMAILS, []): # Assumes emails are already cleaned and non-empty
+                ET.SubElement(emails_elem, "email").text = str(email)
 
-        xml_str = ET.tostring(root, encoding="utf-8")
-        pretty_xml_str = minidom.parseString(xml_str).toprettyxml(indent="  ")
+        # Pretty print XML
+        xml_str = ET.tostring(root, encoding='unicode')
+        dom = minidom.parseString(xml_str)
+        pretty_xml_str = dom.toprettyxml(indent="  ")
 
         output_filename = os.path.join(PROJECT_ROOT, "scraped.xml")
 

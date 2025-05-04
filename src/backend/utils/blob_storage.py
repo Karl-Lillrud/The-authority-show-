@@ -30,9 +30,6 @@ def get_blob_service_client():
         logger.error(f"Unexpected error during BlobServiceClient initialization: {e}", exc_info=True)
         return None
 
-# Initialize client using the function
-blob_service_client = get_blob_service_client()
-
 def upload_file_to_blob(container_name, blob_path, file):
     """
     Uploads a file to Azure Blob Storage.
@@ -43,6 +40,7 @@ def upload_file_to_blob(container_name, blob_path, file):
     Returns:
         str: The URL of the uploaded file or None on failure.
     """
+    blob_service_client = get_blob_service_client() # Get client instance
     if not blob_service_client:
         logger.error("BlobServiceClient not initialized. Cannot upload file.")
         return None
@@ -87,6 +85,7 @@ def download_blob_to_tempfile(container_name, blob_path):
     Returns:
         str: The path to the temporary file containing the blob content, or None if error.
     """
+    blob_service_client = get_blob_service_client() # Get client instance
     if not blob_service_client:
         logger.error("BlobServiceClient not initialized. Cannot download blob.")
         return None
@@ -95,21 +94,14 @@ def download_blob_to_tempfile(container_name, blob_path):
     try:
         blob_client: BlobClient = blob_service_client.get_blob_client(container=container_name, blob=blob_path)
 
-        # Best Practice: Check if blob exists before attempting download (optional, adds a request)
-        # if not blob_client.exists():
-        #     logger.error(f"Blob '{blob_path}' not found in container '{container_name}'.")
-        #     return None
-
         # Create a temporary file securely
-        # delete=False is necessary as the file path is returned for use elsewhere
         temp_db_file = tempfile.NamedTemporaryFile(delete=False, suffix=".db", prefix="blobdownload_")
 
         logger.info(f"Attempting to download blob '{blob_path}' from container '{container_name}' to {temp_db_file.name}")
 
-        # Best Practice: Download in chunks for large files (using stream downloader)
+        # Download in chunks
         with open(temp_db_file.name, "wb") as download_file:
             stream = blob_client.download_blob()
-            # Read in chunks (e.g., 4MB)
             chunk_size = 4 * 1024 * 1024
             total_bytes = 0
             while True:
@@ -125,7 +117,6 @@ def download_blob_to_tempfile(container_name, blob_path):
 
     except ResourceNotFoundError:
         logger.error(f"Blob '{blob_path}' not found in container '{container_name}'.", exc_info=True)
-        # Clean up temp file if created before error
         if temp_db_file and os.path.exists(temp_db_file.name):
              os.remove(temp_db_file.name)
         return None
@@ -139,3 +130,4 @@ def download_blob_to_tempfile(container_name, blob_path):
         if temp_db_file and os.path.exists(temp_db_file.name):
              os.remove(temp_db_file.name)
         return None
+
