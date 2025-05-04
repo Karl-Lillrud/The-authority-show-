@@ -1,29 +1,11 @@
-<?xml version="1.0" ?>
-<podcasts>
-  
-  
-  <podcast>
-    
-    
-    <title>My Test Podcast</title>
-    
-    
-    <rssUrl>https://anchor.fm/s/fd781dd0/podcast/rss</rssUrl>
-    
-    
-    <emails>
-      
-      
-      <email>arin.sz2@hotmail.com</email>
-      
-    
-    </emails>
-    
-    
-    <sent>false</sent>
-    
-  
-  </podcast>
-  
-
+<?xml version="1.0" ?>
+<podcasts>
+  <podcast>
+    <title>My Test Podcast</title>
+    <rssUrl>https://anchor.fm/s/fd781dd0/podcast/rss</rssUrl>
+    <emails>
+      <email>arin.sz2@hotmail.com</email>
+    </emails>
+    <sent>true</sent>
+  </podcast>
 </podcasts>
