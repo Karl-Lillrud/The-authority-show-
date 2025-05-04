@@ -18,7 +18,9 @@ from backend.repository.episode_repository import EpisodeRepository
 from backend.services.activity_service import ActivityService
 from backend.utils.blob_storage import upload_file_to_blob
 from backend.utils.email_utils import send_login_email
+from backend.services.rss_Service import RSSService  # Import RSSService
 from itsdangerous import URLSafeTimedSerializer, SignatureExpired, BadSignature
+import time  # Import time for expiration calculation
 
 logger = logging.getLogger(__name__)
 
@@ -28,25 +30,26 @@ class AuthService:
         self.user_collection = collection.database.Users
         self.auth_repository = AuthRepository()
         self.account_repository = AccountRepository()
-        self.podcast_repository = PodcastRepository()
+        self.podcast_repository = PodcastRepository()  # Ensure this is initialized
         self.team_service = TeamService()
         self.user_repo = UserRepository()
         self.episode_repo = EpisodeRepository()
         self.activity_service = ActivityService()
+        self.rss_service = RSSService()  # Initialize RSSService
 
     def signin(self, data):
         """Handle login with email."""
         try:
             email = data.get("email", "").strip().lower()
             remember = data.get("remember", False)
-            
+
             serializer = URLSafeTimedSerializer(current_app.config["SECRET_KEY"])
             token = serializer.dumps(email, salt="login-link-salt")
-            
+
             # Assuming send_login_email is implemented in email_utils
             login_link = f"{request.host_url.rstrip('/')}/auth/verify-token/{token}"
             send_login_email(email, login_link)
-            
+
             logger.info(f"Login link sent to {email}")
             return {"message": "Login link sent to your email"}, 200
 
@@ -81,12 +84,17 @@ class AuthService:
                 return {"error": "Email not found"}, 404
 
             hashed_otp = hashlib.sha256(otp.encode()).hexdigest()
-            if user.get("otp") != hashed_otp or user.get("otp_expires_at") < datetime.utcnow():
+            if (
+                user.get("otp") != hashed_otp
+                or user.get("otp_expires_at") < datetime.utcnow()
+            ):
                 logger.warning(f"Invalid or expired OTP for email {email}.")
                 return {"error": "Invalid or expired OTP"}, 401
 
             self._setup_session(user, False)
-            self.user_collection.update_one({"email": email}, {"$unset": {"otp": "", "otp_expires_at": ""}})
+            self.user_collection.update_one(
+                {"email": email}, {"$unset": {"otp": "", "otp_expires_at": ""}}
+            )
             logger.info(f"User {email} authenticated via OTP.")
 
             account_data = {
@@ -94,9 +102,13 @@ class AuthService:
                 "email": email,
                 "isFirstLogin": True,
             }
-            account_result, status_code = self.account_repository.create_account(account_data)
+            account_result, status_code = self.account_repository.create_account(
+                account_data
+            )
             if status_code not in [200, 201]:
-                logger.error(f"Failed to create/retrieve account for {email}: {account_result.get('error')}")
+                logger.error(
+                    f"Failed to create/retrieve account for {email}: {account_result.get('error')}"
+                )
                 return {"error": account_result.get("error")}, status_code
 
             return {
@@ -120,7 +132,9 @@ class AuthService:
             if not user:
                 return {"error": "Failed to authenticate user"}, 500
 
-            logger.debug(f"User data for token verification: user_id={user['_id']}, email={email}")
+            logger.debug(
+                f"User data for token verification: user_id={user['_id']}, email={email}"
+            )
             self._setup_session(user, True)  # Set remember=True for email login
 
             account_data = {
@@ -128,16 +142,22 @@ class AuthService:
                 "email": email,
                 "isFirstLogin": True,
             }
-            account_result, status_code = self.account_repository.create_account(account_data)
+            account_result, status_code = self.account_repository.create_account(
+                account_data
+            )
             if status_code not in [200, 201]:
-                logger.error(f"Failed to create/retrieve account for {email}: {account_result.get('error')}")
+                logger.error(
+                    f"Failed to create/retrieve account for {email}: {account_result.get('error')}"
+                )
                 return {
                     "error": f"Failed to create account: {account_result.get('error')}"
                 }, status_code
 
             logger.info(f"User {email} logged in via token.")
 
-            podcast_data, status_code = self.podcast_repository.get_podcasts(user.get("_id"))
+            podcast_data, status_code = self.podcast_repository.get_podcasts(
+                user.get("_id")
+            )
             podcasts = podcast_data.get("podcast", [])
             redirect_url = "/podcastmanagement" if podcasts else "/podprofile"
 
@@ -154,7 +174,9 @@ class AuthService:
             return {"error": "Invalid token"}, 400
         except Exception as e:
             logger.error(f"Token verification error: {str(e)}", exc_info=True)
-            return {"error": f"Internal server error during token verification: {str(e)}"}, 500
+            return {
+                "error": f"Internal server error during token verification: {str(e)}"
+            }, 500
 
     def _find_or_create_user(self, email):
         """Find user by email or create if not exists."""
@@ -183,7 +205,9 @@ class AuthService:
             session["email"] = user["email"]
             session.permanent = remember
         except Exception as e:
-            logger.error(f"Error setting up session for {user['email']}: {e}", exc_info=True)
+            logger.error(
+                f"Error setting up session for {user['email']}: {e}", exc_info=True
+            )
             raise
 
     def validate_email(self, email):
@@ -195,7 +219,11 @@ class AuthService:
 
             domain = email.split("@")[1]
             answers = dns.resolver.resolve(domain, "MX")
-            return None if answers else ({"error": f"Invalid email domain '{domain}'."}, 400)
+            return (
+                None
+                if answers
+                else ({"error": f"Invalid email domain '{domain}'."}, 400)
+            )
         except Exception as e:
             logger.error(f"MX lookup failed for domain '{domain}': {e}", exc_info=True)
             return {"error": f"Invalid email domain '{domain}'."}, 400
@@ -209,11 +237,13 @@ class AuthService:
                     user_id=user_id,
                     activity_type="account_viewed",
                     description="Viewed account details",
-                    details={"accountId": response.get("account", {}).get("_id")}
+                    details={"accountId": response.get("account", {}).get("_id")},
                 )
             return response, status_code
         except Exception as e:
-            logger.error(f"Error retrieving account for user {user_id}: {e}", exc_info=True)
+            logger.error(
+                f"Error retrieving account for user {user_id}: {e}", exc_info=True
+            )
             return {"error": f"Internal server error: {str(e)}"}, 500
 
     def edit_account(self, user_id, data):
@@ -225,44 +255,60 @@ class AuthService:
                     user_id=user_id,
                     activity_type="account_updated",
                     description="Updated account details",
-                    details={"updatedFields": list(data.keys())}
+                    details={"updatedFields": list(data.keys())},
                 )
             return response, status_code
         except Exception as e:
-            logger.error(f"Error updating account for user {user_id}: {e}", exc_info=True)
+            logger.error(
+                f"Error updating account for user {user_id}: {e}", exc_info=True
+            )
             return {"error": f"Internal server error: {str(e)}"}, 500
 
     def delete_account(self, user_id):
         """Delete an account and associated data."""
         try:
-            podcasts_response, podcasts_status = self.podcast_repository.get_podcasts(user_id)
+            podcasts_response, podcasts_status = self.podcast_repository.get_podcasts(
+                user_id
+            )
             if podcasts_status == 200:
                 for podcast in podcasts_response.get("podcasts", []):
-                    delete_podcast_response, delete_podcast_status = self.podcast_repository.delete_podcast(user_id, podcast['_id'])
+                    delete_podcast_response, delete_podcast_status = (
+                        self.podcast_repository.delete_podcast(user_id, podcast["_id"])
+                    )
                     if delete_podcast_status != 200:
-                        logger.warning(f"Could not delete podcast {podcast['_id']} during account deletion for user {user_id}")
+                        logger.warning(
+                            f"Could not delete podcast {podcast['_id']} during account deletion for user {user_id}"
+                        )
 
             deleted_account_count = self.account_repository.delete_by_user(user_id)
             if deleted_account_count == 0:
-                logger.warning(f"No account document found to delete for user {user_id}")
+                logger.warning(
+                    f"No account document found to delete for user {user_id}"
+                )
 
             user_response, user_status = self.user_repo.delete_user(user_id)
             if user_status != 200:
-                logger.error(f"Failed to delete user document for user {user_id}: {user_response.get('error')}")
+                logger.error(
+                    f"Failed to delete user document for user {user_id}: {user_response.get('error')}"
+                )
                 return {"error": "Failed to fully delete user data"}, 500
 
             self.activity_service.log_activity(
                 user_id=user_id,
                 activity_type="account_deleted",
                 description="User account deleted",
-                details={}
+                details={},
             )
 
             return {"message": "Account and associated data deleted successfully"}, 200
 
         except Exception as e:
-            logger.error(f"Error deleting account for user {user_id}: {e}", exc_info=True)
-            return {"error": f"Internal server error during account deletion: {str(e)}"}, 500
+            logger.error(
+                f"Error deleting account for user {user_id}: {e}", exc_info=True
+            )
+            return {
+                "error": f"Internal server error during account deletion: {str(e)}"
+            }, 500
 
     def upload_profile_picture(self, user_id, file):
         """Upload a profile picture to Azure Blob Storage and update the account."""
@@ -285,12 +331,149 @@ class AuthService:
             if status_code == 200:
                 return {
                     "message": "Profile picture updated successfully",
-                    "profilePicUrl": file_url
+                    "profilePicUrl": file_url,
                 }, 200
             else:
-                logger.error(f"DB update failed after uploading profile picture for user {user_id}. Blob URL: {file_url}")
+                logger.error(
+                    f"DB update failed after uploading profile picture for user {user_id}. Blob URL: {file_url}"
+                )
                 return response, status_code
 
         except Exception as e:
-            logger.error(f"Error uploading profile picture for user {user_id}: {e}", exc_info=True)
+            logger.error(
+                f"Error uploading profile picture for user {user_id}: {e}",
+                exc_info=True,
+            )
             return {"error": f"Internal server error during upload: {str(e)}"}, 500
+
+    def activate_user_via_token(self, token):
+        """
+        Activates a user account via a special token, logs them in,
+        parses their RSS feed, and creates their podcast profile.
+        """
+        try:
+            serializer = URLSafeTimedSerializer(current_app.config["SECRET_KEY"])
+            # Set max_age to 30 days (in seconds)
+            max_age_seconds = 30 * 24 * 60 * 60
+            # Expecting {'email': '...', 'rss_url': '...'}
+            token_data = serializer.loads(
+                token, salt="podcaster-activation-salt", max_age=max_age_seconds
+            )
+            email = token_data.get("email")
+            rss_url = token_data.get("rss_url")
+
+            if not email or not rss_url:
+                logger.error("Invalid token data: Missing email or rss_url")
+                return {"error": "Invalid activation token data"}, 400
+
+            logger.info(f"Attempting activation for email: {email}, RSS: {rss_url}")
+
+            # 1. Find or Create User
+            user = self._find_or_create_user(email)
+            if not user:
+                logger.error(
+                    f"Failed to find or create user during activation for {email}"
+                )
+                return {"error": "Failed to authenticate user"}, 500
+            user_id = user["_id"]
+
+            # 2. Log the user in (Setup Session)
+            self._setup_session(user, True)  # Remember the user
+
+            # 3. Ensure Account Exists
+            account_data = {
+                "ownerId": user_id,
+                "email": email,
+                "isFirstLogin": False,
+            }  # Mark as not first login after activation
+            account_result, status_code = self.account_repository.create_account(
+                account_data
+            )
+            if status_code not in [200, 201]:
+                logger.error(
+                    f"Failed to create/retrieve account for {email} during activation: {account_result.get('error')}"
+                )
+                # Don't necessarily fail the whole activation, but log it. The user is logged in.
+                # Maybe return a specific error or flag?
+
+            # 4. Fetch and Parse RSS Feed
+            logger.info(f"Fetching RSS feed for activation: {rss_url}")
+            rss_data, rss_status_code = self.rss_service.fetch_rss_feed(rss_url)
+            if rss_status_code != 200:
+                logger.error(
+                    f"Failed to fetch or parse RSS feed {rss_url} during activation: {rss_data.get('error')}"
+                )
+                # User is logged in, but podcast creation failed. Redirect to profile page?
+                return {
+                    "error": f"Could not fetch podcast data: {rss_data.get('error')}",
+                    "redirect_url": "/podprofile",
+                }, 500  # Or maybe 200 with error message?
+
+            # 5. Create Podcast Profile
+            logger.info(
+                f"Creating podcast profile for user {user_id} from RSS: {rss_url}"
+            )
+            # Prepare data for podcast creation (adapt based on podcast_repository.create_podcast needs)
+            podcast_creation_data = {
+                "userId": user_id,
+                "title": rss_data.get("title"),
+                "description": rss_data.get("description"),
+                "rssUrl": rss_url,  # Store the original RSS URL
+                "websiteUrl": rss_data.get("link"),
+                "artworkUrl": rss_data.get("imageUrl"),
+                "language": rss_data.get("language"),
+                "author": rss_data.get("author"),
+                "ownerName": rss_data.get("itunesOwner", {}).get("name"),
+                "ownerEmail": rss_data.get("itunesOwner", {}).get("email"),
+                "categories": [
+                    cat.get("main") for cat in rss_data.get("categories", [])
+                ],  # Simplified categories
+                "isImported": True,
+                "episodes": rss_data.get(
+                    "episodes", []
+                ),  # Pass episodes if create_podcast handles them
+            }
+
+            create_podcast_result, create_status_code = (
+                self.podcast_repository.create_podcast(podcast_creation_data)
+            )
+
+            if create_status_code not in [200, 201]:
+                logger.error(
+                    f"Failed to create podcast profile for user {user_id}, RSS {rss_url}: {create_podcast_result.get('error')}"
+                )
+                # User logged in, account exists, but podcast creation failed. Redirect to profile?
+                return {
+                    "error": f"Failed to create podcast profile: {create_podcast_result.get('error')}",
+                    "redirect_url": "/podprofile",
+                }, 500  # Or 200?
+
+            podcast_id = create_podcast_result.get("podcast", {}).get("_id")
+            logger.info(
+                f"✅ Successfully activated user {email} and created podcast {podcast_id}"
+            )
+
+            # 6. Log Activation Activity
+            self.activity_service.log_activity(
+                user_id=user_id,
+                activity_type="user_activated_via_link",
+                description=f"User account activated via email link for podcast: {rss_data.get('title')}",
+                details={"email": email, "rss_url": rss_url, "podcast_id": podcast_id},
+                ip_address=request.remote_addr if request else None,
+            )
+
+            # 7. Return success and redirect URL
+            return {
+                "message": "Activation successful!",
+                "redirect_url": "/podcastmanagement",
+            }, 200
+
+        except SignatureExpired:
+            logger.error("Activation token has expired")
+            return {"error": "Activation link has expired"}, 400
+        except BadSignature:
+            logger.error("Invalid activation token")
+            return {"error": "Invalid activation link"}, 400
+        except Exception as e:
+            logger.error(f"Activation token processing error: {str(e)}", exc_info=True)
+            return {"error": f"Internal server error during activation: {str(e)}"}, 500

@@ -7,6 +7,10 @@ import urllib.request
 import feedparser
 from backend.services.rss_Service import RSSService  # Import RSSService
 from backend.services.activity_service import ActivityService  # Add this import
+from bson import ObjectId
+from backend.repository.episode_repository import (
+    EpisodeRepository,
+)  # Assuming EpisodeRepository exists
 
 
 logger = logging.getLogger(__name__)
@@ -16,6 +20,7 @@ class PodcastRepository:
     def __init__(self):
         self.collection = collection.database.Podcasts
         self.activity_service = ActivityService()  # Add this line
+        self.episode_repo = EpisodeRepository()  # Initialize EpisodeRepository
 
     def add_podcast(self, user_id, data):  # user_id here is the owner's ID
         try:
@@ -338,3 +343,96 @@ class PodcastRepository:
         except Exception as e:
             logger.error("Error in addPodcastWithRss: %s", e, exc_info=True)
             return {"error": "Failed to add podcast with RSS", "details": str(e)}, 500
+
+    def create_podcast(self, data):
+        """
+        Creates a new podcast document in the database.
+        Handles data potentially coming from RSS feed parsing during activation.
+        """
+        try:
+            user_id = data.get("userId")
+            if not user_id:
+                return {"error": "Missing userId"}, 400
+
+            # Check for existing podcast with the same RSS URL for this user? Optional.
+            # existing = self.podcast_collection.find_one({"userId": user_id, "rssUrl": data.get("rssUrl")})
+            # if existing:
+            #     return {"message": "Podcast already exists for this user", "podcast": existing}, 200
+
+            podcast_doc = {
+                "_id": str(ObjectId()),
+                "userId": user_id,
+                "title": data.get("title", "Untitled Podcast"),
+                "description": data.get("description", ""),
+                "rssUrl": data.get("rssUrl"),
+                "websiteUrl": data.get("websiteUrl"),
+                "artworkUrl": data.get("artworkUrl"),
+                "language": data.get("language"),
+                "author": data.get("author"),
+                "ownerName": data.get("ownerName"),
+                "ownerEmail": data.get("ownerEmail"),
+                "categories": data.get("categories", []),
+                "isImported": data.get(
+                    "isImported", False
+                ),  # Mark if imported via activation/RSS
+                "createdAt": datetime.utcnow().isoformat(),
+                "updatedAt": datetime.utcnow().isoformat(),
+                "isActive": True,
+                # Add other relevant fields from your schema
+            }
+
+            result = self.podcast_collection.insert_one(podcast_doc)
+            if not result.inserted_id:
+                logger.error(
+                    f"Failed to insert podcast for user {user_id}, RSS: {data.get('rssUrl')}"
+                )
+                return {"error": "Database error creating podcast"}, 500
+
+            logger.info(f"Podcast created: {podcast_doc['_id']} for user {user_id}")
+
+            # --- Import Episodes if provided ---
+            episodes_to_import = data.get("episodes", [])
+            if episodes_to_import and isinstance(episodes_to_import, list):
+                logger.info(
+                    f"Importing {len(episodes_to_import)} episodes for podcast {podcast_doc['_id']}"
+                )
+                # Adapt episode data structure if needed for episode_repo.create_episode
+                imported_count = 0
+                failed_count = 0
+                for episode_data in episodes_to_import:
+                    # Add podcastId and userId to episode data
+                    episode_data["podcastId"] = podcast_doc["_id"]
+                    episode_data["userId"] = user_id
+                    episode_data["isImported"] = True  # Mark episode as imported
+
+                    # Call episode repository to create/import the episode
+                    # Assuming create_episode handles potential duplicates based on GUID?
+                    ep_result, ep_status = self.episode_repo.create_episode(
+                        episode_data
+                    )
+                    if ep_status in [200, 201]:
+                        imported_count += 1
+                    else:
+                        failed_count += 1
+                        logger.warning(
+                            f"Failed to import episode '{episode_data.get('title')}' for podcast {podcast_doc['_id']} : {ep_result.get('error')}"
+                        )
+
+                logger.info(
+                    f"Episode import for podcast {podcast_doc['_id']}: {imported_count} succeeded, {failed_count} failed."
+                )
+            # --- End Episode Import ---
+
+            # Return the created podcast document (or just relevant info)
+            # Fetch the inserted doc to ensure all defaults/DB operations are reflected
+            created_podcast = self.podcast_collection.find_one(
+                {"_id": podcast_doc["_id"]}
+            )
+            return {
+                "message": "Podcast created successfully",
+                "podcast": created_podcast,
+            }, 201
+
+        except Exception as e:
+            logger.error(f"Error creating podcast: {e}", exc_info=True)
+            return {"error": f"Internal server error: {str(e)}"}, 500
