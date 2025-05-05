@@ -1,4 +1,4 @@
-from flask import Blueprint, request, jsonify, g
+from flask import Blueprint, request, jsonify, g, redirect, url_for
 from backend.services.creditService import get_store_credits, consume_credits
 from backend.database.mongo_connection import credits
 
@@ -18,8 +18,10 @@ def get_credits(user_id):
 
 @credits_bp.route("/credits/consume", methods=["POST"])
 def consume():
+    if not g.user_id:
+        return redirect(url_for("auth_bp.signin"))
     data = request.get_json()
-    user_id = data.get("user_id")
+    user_id = g.user_id
     feature = data.get("feature")
     try:
         result = consume_credits(user_id, feature)

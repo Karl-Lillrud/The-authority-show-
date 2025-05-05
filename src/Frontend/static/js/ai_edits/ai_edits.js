@@ -6,6 +6,32 @@ let isolatedAudioId = null;
 let activeAudioBlob = null;
 let activeAudioId = null;
 
+// Expose all functions to the global scope
+window.showTab = showTab;
+window.transcribe = transcribe;
+window.generateCleanTranscript = generateCleanTranscript;
+window.generateAISuggestions = generateAISuggestions;
+window.generateShowNotes = generateShowNotes;
+window.generateQuotes = generateQuotes;
+window.generateQuoteImages = generateQuoteImages;
+window.runOsintSearch = runOsintSearch;
+window.generatePodcastIntroOutro = generatePodcastIntroOutro;
+window.convertIntroOutroToSpeech = convertIntroOutroToSpeech;
+window.enhanceAudio = enhanceAudio;
+window.runVoiceIsolation = runVoiceIsolation;
+window.analyzeEnhancedAudio = analyzeEnhancedAudio;
+window.displayBackgroundAndMix = displayBackgroundAndMix;
+window.cutAudio = cutAudio;
+window.aiCutAudio = aiCutAudio;
+window.applySelectedCuts = applySelectedCuts;
+window.cutAudioFromBlob = cutAudioFromBlob;
+window.enhanceVideo = enhanceVideo;
+window.previewOriginalAudio = previewOriginalAudio;
+window.previewOriginalVideo = previewOriginalVideo;
+window.acceptSfx = acceptSfx;
+window.rejectSfx = rejectSfx;
+window.replaceSfx = replaceSfx;
+
 window.CURRENT_USER_ID = localStorage.getItem("user_id");
 const urlParams = new URLSearchParams(window.location.search);
 const episodeIdFromUrl = urlParams.get("episodeId");
@@ -39,8 +65,20 @@ function labelWithCredits(text, key) {
 }
 
 function showTab(tabName) {
+    // Get all workspace tab buttons
+    const workspaceButtons = document.querySelectorAll('.workspace-tab-btn');
+    
+    // Remove active class from all buttons
+    workspaceButtons.forEach(btn => btn.classList.remove('active'));
+    
+    // Add active class to clicked button
+    const clickedButton = document.querySelector(`.workspace-tab-btn[data-workspace="${tabName}"]`);
+    if (clickedButton) {
+        clickedButton.classList.add('active');
+    }
+
     const content = document.getElementById('content');
-    content.innerHTML = ''; // Rensa befintligt innehåll
+    content.innerHTML = '';
 
     if (tabName === 'transcription') {
         content.innerHTML = `
@@ -233,6 +271,21 @@ function showTab(tabName) {
         `;
     }
 }
+
+// Add event listeners when the page loads
+document.addEventListener('DOMContentLoaded', function() {
+    const workspaceButtons = document.querySelectorAll('.workspace-tab-btn');
+    
+    workspaceButtons.forEach(button => {
+        button.addEventListener('click', function() {
+            const tabName = this.getAttribute('data-workspace');
+            showTab(tabName);
+        });
+    });
+
+    // Show transcription tab by default
+    showTab('transcription');
+});
 
 let rawTranscript = "";
 let fullTranscript = "";
@@ -801,7 +854,8 @@ async function cutAudio() {
 }
 
 async function aiCutAudio() {
-    const episodeId = sessionStorage.getItem("selected_episode_id");
+    const episodeId = sessionStorage.getItem("selected_episode_id") || localStorage.getItem("selected_episode_id");
+
     if (!episodeId) {
         alert("No episode selected.");
         return;
@@ -902,7 +956,8 @@ async function applySelectedCuts() {
         return;
     }
 
-    const episodeId = sessionStorage.getItem("selected_episode_id");
+    const episodeId = sessionStorage.getItem("selected_episode_id") || localStorage.getItem("selected_episode_id");
+
 
     try {
         let blobUrl;

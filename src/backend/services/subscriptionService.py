@@ -403,7 +403,7 @@ class SubscriptionService:
             benefits = PLAN_BENEFITS.get(plan, PLAN_BENEFITS["FREE"])
 
             episode_slots = benefits.get("episode_slots", 0)
-            extra_slots = account.get("extra_episode_slots", 0)
+            extra_slots = account.get("unlockedExtraEpisodeSlots", 0)
             total_allowed_slots = episode_slots + extra_slots
 
             if benefits.get("max_slots") == "Unlimited":
