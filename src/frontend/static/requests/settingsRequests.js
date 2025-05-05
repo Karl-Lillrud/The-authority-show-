@@ -238,25 +238,11 @@ if (!deleteForm || !deleteModal || !deleteModalMessage) {
     event.preventDefault();
 
     const email = document.getElementById("delete-email").value.trim();
-    const password = document.getElementById("delete-password").value;
-    const confirmPassword = document.getElementById("confirm-delete-password").value;
     const deleteConfirm = document.getElementById("delete-confirm").value.trim();
 
     // Basic client-side validation
     if (!email) {
       showDeleteModal("Email is required.", false);
-      return;
-    }
-    if (!password) {
-      showDeleteModal("Password is required.", false);
-      return;
-    }
-    if (!confirmPassword) {
-      showDeleteModal("Confirm password is required.", false);
-      return;
-    }
-    if (password !== confirmPassword) {
-      showDeleteModal("Confirm Passwords do not match.", false);
       return;
     }
     if (deleteConfirm !== "DELETE") {
@@ -267,7 +253,6 @@ if (!deleteForm || !deleteModal || !deleteModalMessage) {
     // Payload for API request
     const payload = {
       deleteEmail: email,
-      deletePassword: password,
       deleteConfirm: deleteConfirm
     };
 
@@ -293,9 +278,7 @@ if (!deleteForm || !deleteModal || !deleteModalMessage) {
           showDeleteModal("Account deleted successfully!", true, true, "/logout");
         } else if (result.data.error === "User not found") {
           showDeleteModal("User not found. Please check your email.", false);
-        } else if (result.data.error === "Incorrect password") {
-          showDeleteModal("Incorrect password. Please try again.", false);
-        } else {
+        }  else {
           showDeleteModal(result.data.error || "Failed to delete account.", false);
         }
       })

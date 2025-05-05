@@ -70,22 +70,6 @@ export function updateAccount(accountData) {
     });
 }
 
-// Update password
-export function updatePassword(passwordData) {
-  return fetch('/update_password', {
-    method: 'PUT',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify(passwordData),
-  })
-    .then(response => response.json())
-    .catch(error => {
-      console.error('Error updating password:', error);
-      throw new Error('Failed to update password');
-    });
-}
-
 // Subscribe user to mailing list
 export function subscribeUser(email) {
   return fetch('/subscribe', {
@@ -104,7 +88,7 @@ export function subscribeUser(email) {
 
 // Delete user account
 export function deleteUserAccount(payload) {
-  return fetch("/delete_user", {
+  return fetch("/user/delete_user", {
     method: "DELETE",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(payload),

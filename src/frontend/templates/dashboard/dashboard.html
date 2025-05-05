@@ -16,7 +16,6 @@ endblock %} {% block content %}
   </script>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>PodManager.ai Dashboard</title>
   <link
     rel="stylesheet"
     href="{{ url_for('static', filename='css/dashboard/dashboard.css') }}"
@@ -30,18 +29,11 @@ endblock %} {% block content %}
   <div class="dashboard">
     <!-- Dashboard Header -->
     <div class="dashboard-header">
-      <div class="welcome-message">
-        <h1>Welcome to your Podcast Dashboard</h1>
-        <p>Here is an overview of your podcasts and activities</p>
-      </div>
+ 
       <div class="dashboard-actions">
         <button class="action-button create-podcast">
           <span class="svg-placeholder create-podcast-icon"></span>
           Create New Podcast
-        </button>
-        <button class="action-button schedule-episode">
-          <span class="svg-placeholder schedule-episode-icon"></span>
-          Schedule Episode
         </button>
       </div>
     </div>
@@ -110,76 +102,7 @@ endblock %} {% block content %}
                 </thead>
                 <tbody class="leaderboard-body">
                   <tr>
-                    <td>
-                      <div class="member-info">
-                        <div class="member-avatar">JD</div>
-                        <span>John Doe</span>
-                      </div>
-                    </td>
-                    <td>42</td>
-                    <td>
-                      <div class="points">
-                        <span>1,250</span>
-                        <div class="progress-bar">
-                          <div class="progress" style="width: 85%"></div>
-                        </div>
-                      </div>
-                    </td>
-                    <td>3</td>
-                    <td>
-                      <div class="goal-progress">
-                        <span>85%</span>
-                        <div class="progress-circle" data-progress="85"></div>
-                      </div>
-                    </td>
-                  </tr>
-                  <tr>
-                    <td>
-                      <div class="member-info">
-                        <div class="member-avatar">AS</div>
-                        <span>Anna Smith</span>
-                      </div>
-                    </td>
-                    <td>38</td>
-                    <td>
-                      <div class="points">
-                        <span>1,120</span>
-                        <div class="progress-bar">
-                          <div class="progress" style="width: 76%"></div>
-                        </div>
-                      </div>
-                    </td>
-                    <td>2</td>
-                    <td>
-                      <div class="goal-progress">
-                        <span>76%</span>
-                        <div class="progress-circle" data-progress="76"></div>
-                      </div>
-                    </td>
-                  </tr>
-                  <tr>
-                    <td>
-                      <div class="member-info">
-                        <div class="member-avatar">RJ</div>
-                        <span>Robert Johnson</span>
-                      </div>
-                    </td>
-                    <td>35</td>
-                    <td>
-                      <div class="points">
-                        <span>980</span>
-                        <div class="progress-bar">
-                          <div class="progress" style="width: 68%"></div>
-                        </div>
-                      </div>
-                    </td>
-                    <td>1</td>
-                    <td>
-                      <div class="goal-progress">
-                        <span>68%</span>
-                        <div class="progress-circle" data-progress="68"></div>
-                      </div>
-                    </td>
+                    <td colspan="5">No leaderboard data available.</td>
                   </tr>
                 </tbody>
               </table>
@@ -193,46 +116,7 @@ endblock %} {% block content %}
               <a href="#" class="view-all">View All</a>
             </div>
             <div class="activity-timeline activity-timeline-scroll">
-              <div class="timeline-item">
-                <div class="timeline-icon completed">
-                  <span class="svg-placeholder completed-icon"></span>
-                </div>
-                <div class="timeline-content">
-                  <h4>Episode Recorded</h4>
-                  <p>Marketing Insights with Sarah Johnson</p>
-                  <span class="timeline-time">Today, 10:30</span>
-                </div>
-              </div>
-              <div class="timeline-item">
-                <div class="timeline-icon scheduled">
-                  <span class="svg-placeholder scheduled-icon"></span>
-                </div>
-                <div class="timeline-content">
-                  <h4>Guest Confirmed</h4>
-                  <p>Tech Trends with Michael Chen</p>
-                  <span class="timeline-time">Yesterday, 15:45</span>
-                </div>
-              </div>
-              <div class="timeline-item">
-                <div class="timeline-icon published">
-                  <span class="svg-placeholder published-icon"></span>
-                </div>
-                <div class="timeline-content">
-                  <h4>Episode Published</h4>
-                  <p>The Future of AI with Dr. Emily Roberts</p>
-                  <span class="timeline-time">Oct 15, 2023</span>
-                </div>
-              </div>
-              <div class="timeline-item">
-                <div class="timeline-icon pending">
-                  <span class="svg-placeholder pending-icon"></span>
-                </div>
-                <div class="timeline-content">
-                  <h4>Editing in Progress</h4>
-                  <p>Startup Success Stories with Alex Turner</p>
-                  <span class="timeline-time">Oct 12, 2023</span>
-                </div>
-              </div>
+              <!-- Dynamic content will be loaded here -->
             </div>
           </section>
 
@@ -243,7 +127,7 @@ endblock %} {% block content %}
               <a href="#" class="view-all">View All</a>
             </div>
             <div class="cards-container">
-              <!-- Episodes will be loaded here via JavaScript -->
+              <!-- Episodes will be loaded here dynamically -->
             </div>
           </section>
         </div>
