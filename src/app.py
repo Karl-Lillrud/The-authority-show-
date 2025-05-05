@@ -1,8 +1,6 @@
 import os
-import logging
-import subprocess
-import requests
-from flask import Flask, request, session, g, jsonify, render_template, Response
+import logging  # Ensure logging is imported
+from flask import Flask, request, session, g, jsonify, render_template
 from flask_cors import CORS
 from backend.routes.auth import auth_bp
 from backend.routes.podcast import podcast_bp  # Import the podcast blueprint
@@ -112,7 +110,10 @@ APP_ENV = os.getenv("APP_ENV", "production")
 # Set the API base URL depending on the environment
 API_BASE_URL = os.getenv("API_BASE_URL")
 
-# Configure logging
+# Initialize colorama
+init(autoreset=True)
+
+# Configure logging (ensure this is done before first use)
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
@@ -145,8 +146,13 @@ logger.info("========================================")
 # Log the request with user info
 @app.before_request
 def load_user():
+    # --- Add Log ---
+    # Log the raw session object to see its contents
+    logger.info(f"Session object before loading user: {dict(session)}")
+    # --- End Log ---
     g.user_id = session.get("user_id")
-    logger.info(f"Request to {request.path} by user {g.user_id}")
+    # Log the result after trying to get user_id
+    logger.info(f"Request to {request.path} by user {g.user_id if g.user_id else 'None'}")
 
 
 start_scheduler(app)

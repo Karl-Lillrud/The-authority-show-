@@ -184,11 +184,43 @@ def payment_success():
         f"User {user_id} successfully redirected after checkout session {session_id}."
     )
 
-    # Omdirigera användaren till lämplig sida
-    if plan:  # Om det var en prenumeration inblandad
-        return redirect("/account?subscription_updated=true#settings-purchases")
-    else:  # Annars till dashboard eller butik/historik
-        return redirect("/dashboard?purchase_success=true")
+    if not session_id:
+        return jsonify({"error": "Missing session ID"}), 400
+
+    try:
+        stripe_session = stripe.checkout.Session.retrieve(
+            session_id, expand=["line_items"]
+        )
+        metadata = stripe_session.get("metadata", {})
+        credits_to_add = int(metadata.get("credits", 0))
+        # Get episode slots from metadata
+        episode_slots_to_add = int(metadata.get("episode_slots", 0))
+        has_subscription = metadata.get("is_subscription", "false") == "true"
+
+        # Deserialisera items om nödvändigt
+        items = json.loads(metadata.get("items", "[]")) if metadata.get("items") else []
+
+        if plan and has_subscription:
+            result, updated_credits = subscription_service.update_user_subscription(
+                user_id, plan, stripe_session
+            )
+            logger.info(f"Subscription updated for user {user_id}: {plan}")
+
+        if credits_to_add > 0 or episode_slots_to_add > 0:
+            handle_successful_payment(stripe_session, user_id)
+            if credits_to_add > 0: 
+                logger.info(f"Credits processed for user {user_id}: {credits_to_add}")
+            elif episode_slots_to_add > 0:
+                logger.info(f"Unlocking {episode_slots_to_add} episode slots for {user_id}")
+
+        # Omdirigera användaren till lämplig sida
+        if plan:  # Om det var en prenumeration inblandad
+            return redirect("/account?subscription_updated=true#settings-purchases")
+        else:  # Annars till dashboard eller butik/historik
+            return redirect("/dashboard?purchase_success=true")
+    except Exception as e:
+        logger.error(f"Payment processing error: {str(e)}")
+        return jsonify({"error": str(e)}), 500
 
 
 @billing_bp.route("/credits/cancel", methods=["GET"])
@@ -696,7 +728,15 @@ def cancel_subscription():
         stripe_subscription_id = None
         payment_id = None  # Initialize payment_id
 
-        # --- Try to find the Stripe Subscription ID ---
+        if subscription_record and subscription_record.get("payment_id"):
+            payment_id = subscription_record.get("payment_id")
+            if payment_id.startswith("sub_"):
+                stripe_subscription_id = payment_id
+                logger.info(
+                    f"Found subscription ID directly in payment_id: {stripe_subscription_id}"
+                )
+
+        # Find and cancel the Stripe subscription
         try:
             # Check the local subscription record first
             subscription_record = collection.database.Subscriptions.find_one(  # Use Subscriptions collection
@@ -726,18 +766,32 @@ def cancel_subscription():
                             logger.info(
                                 f"Retrieved subscription ID from Checkout Session {payment_id}: {stripe_subscription_id}"
                             )
-                        else:
-                            logger.warning(
-                                f"Checkout Session {payment_id} found, but no subscription attribute or it's None."
-                            )
-                    except stripe.error.InvalidRequestError as ire:
-                        logger.warning(
-                            f"Could not retrieve checkout session {payment_id}, it might not be a session ID or is invalid: {str(ire)}"
+                            if subscriptions and subscriptions.data:
+                                for sub in subscriptions.data:
+                                    logger.info(f"Found subscription: {sub.id} with status {sub.status}")
+                                
+                                # Use the first active subscription
+                                stripe_subscription_id = subscriptions.data[0].id
+                                logger.info(f"Selected subscription for cancellation: {stripe_subscription_id}")
+                            else:
+                                logger.warning(f"No active subscriptions found for customer {customer_id}")
+                    except Exception as customer_error:
+                        logger.error(f"Error with Stripe customer operations: {str(customer_error)}")
+
+            # Now try to cancel the subscription if we found an ID
+            if stripe_subscription_id:
+
+                try:
+                    checkout_session = stripe.checkout.Session.retrieve(payment_id)
+                    if checkout_session and hasattr(checkout_session, "subscription"):
+                        stripe_subscription_id = checkout_session.subscription
+                        logger.info(
+                            f"Retrieved subscription ID from session: {stripe_subscription_id}"
                         )
-                    except Exception as session_error:
-                        logger.error(
-                            f"Error retrieving Checkout Session {payment_id}: {str(session_error)}"
-                        )
+                except Exception as session_error:
+                    logger.error(f"Error retrieving session: {str(session_error)}")
+        except Exception as subscription_error:
+            logger.error(f"Error retrieving subscription: {str(subscription_error)}")   
 
             # If still no ID, try finding the customer by email in Stripe
             if not stripe_subscription_id and account.get("email"):

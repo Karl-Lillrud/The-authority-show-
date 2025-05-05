@@ -9,9 +9,15 @@
   href="{{ url_for('static', filename='css/episode-to-do/episode-to-do.css') }}"
 />
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="stylesheet" href="/static/css/ai_edits/ai_edits.css" />
+  <link rel="stylesheet" href="/static/css/dashboard/dashboard.css" />
+  <link rel="stylesheet" href="/static/css/components/variables.css" />
 </head>
+
 <body>
-  <div class="container">
+  <div id="app">
+    {% include "components/header.html" %}
+<div class="container">
     <header class="header">
       <div class="header-content">
         <div class="header-left">
@@ -19,9 +25,6 @@
           <div class="episode-meta">
             <i class="fas fa-calendar"></i>
             <span id="recordingDate">Recording Date: 2025-05-01</span>
-            <button class="btn-icon">
-              <i class="fas fa-edit"></i>
-            </button>
           </div>
         </div>
       </div>
@@ -75,7 +78,7 @@
             </button>
             <button class="tab-btn" data-tab="workspace">
               <i class="fas fa-laptop"></i>
-              <span>Workspace</span>
+              <span>AI Workspace</span>
             </button>
           </div>
 
@@ -120,24 +123,27 @@
               </div>
             </div>
 
-            <!-- Workspace Tab -->
-            <div id="workspace-tab" class="tab-pane">
-              <div class="card">
-                <div class="card-content">
-                  <h2 class="section-title">Workspace</h2>
-                  <div id="workspaceArea" class="workspace-area">
-                    <div class="workspace-placeholder">
-                      <i class="fas fa-laptop"></i>
-                      <h3>No task selected</h3>
-                      <p>Select a task from the task list to open it in the workspace. Tasks with the <i class="fas fa-laptop"></i> icon can be worked on directly in this workspace.</p>
-                    </div>
-                  </div>
-                </div>
-              </div>
+    <!-- Workspace Tab -->
+    <div id="workspace-tab" class="tab-pane">
+      <div class="card">
+        <div class="card-content">
+          <h2 class="section-title">AI Editing Tools</h2>
+          <div id="workspaceArea" class="workspace-area">
+            <div class="tabs-list workspace-tabs">
+              <button class="workspace-tab-btn active" data-workspace="transcription">Transcription</button>
+              <button class="workspace-tab-btn" data-workspace="audio">Audio</button>
+              <button class="workspace-tab-btn" data-workspace="video">Video</button>
+            </div>
+            <div id="content">
+              <!-- AI editing tools will be dynamically loaded here -->
             </div>
           </div>
         </div>
       </div>
+    </div>
+          </div>
+        </div>
+      </div>  
 
       <!-- Right Sidebar (Timeline) -->
       <div id="timelineSidebar" class="sidebar right-sidebar">
@@ -208,12 +214,24 @@
   <script type="module" src="{{ url_for('static', filename='js/episode-to-do/task-page.js') }}"></script>
   <script type="module" src="{{ url_for('static', filename='js/episode-to-do/kanban-page.js') }}"></script>
   <script type="module" src="{{ url_for('static', filename='js/episode-to-do/workflow-page.js') }}"></script>
-  <script type="module" src="{{ url_for('static', filename='js/episode-to-do/workspace-page.js') }}"></script>
+  <script type="module" src="{{ url_for('static', filename='js/episode-to-do/gustavvasa.js') }}"></script>
   <script type="module" src="{{ url_for('static', filename='js/episode-to-do/sidebar-header.js') }}"></script>
   <script type="module" src="{{ url_for('static', filename='js/episode-to-do/comment-utils.js') }}"></script>
   <script type="module" src="{{ url_for('static', filename='js/episode-to-do/task-page-integrations.js') }}"></script>
   
+  <!-- Add the ai_edits.js script -->
+  <script type="module" src="{{ url_for('static', filename='js/ai_edits/ai_edits.js') }}"></script>
+  
   <!-- Load the main entry point last -->
   <script type="module" src="{{ url_for('static', filename='js/episode-to-do/main.js') }}"></script>
+
+  <script>
+     window.CURRENT_USER_ID = "{{ user_id }}";
+  localStorage.setItem("user_id", "{{ user_id }}");
+  </script>
+  <script src="/static/js/landingpage/audio-player.js"></script>
+  <script src="/static/js/ai_edits/ai_edits.js"></script>
+  </script>
+  
 </body>
 </html>

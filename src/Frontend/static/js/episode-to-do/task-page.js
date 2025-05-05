@@ -3,6 +3,8 @@
 import { fetchTasks, fetchTask, saveTask, updateTask, deleteTask } from "/static/requests/podtaskRequest.js"
 // Import the getDependencyInfo utility
 import { formatDueDate, closePopup, getDependencyInfo } from "/static/js/episode-to-do/utils.js"
+import { renderTaskComments, showAddCommentModal } from "/static/js/episode-to-do/comment-utils.js"
+import { showImportWorkflowModal, saveWorkflow } from "/static/js/episode-to-do/workflow-page.js"
 
 // Task page functionality
 export function renderTaskList(state, updateUI) {
@@ -146,6 +148,7 @@ export function renderTaskList(state, updateUI) {
           </div>
           <div class="task-actions">
             ${hasDependencyWarning ? '<i class="fas fa-exclamation-triangle text-warning" title="This task has incomplete dependencies"></i>' : ""}
+            ${task.aiTool ? `<button class="task-action-btn workspace-redirect-btn" title="Open in ${task.aiTool} workspace" data-task-id="${task.id || task._id}" data-ai-tool="${task.aiTool}"><i class="fas fa-external-link-alt"></i></button>` : ""}
             <button class="task-action-btn edit-task-btn" title="Edit Task" data-task-id="${task.id || task._id}">
               <i class="fas fa-edit"></i>
             </button>
@@ -249,40 +252,6 @@ export function renderTaskList(state, updateUI) {
   setupTaskInteractions(state, updateUI)
 }
 
-function renderTaskComments(task) {
-  if (!task.comments || task.comments.length === 0) {
-    return `
-      <div class="task-comments">
-        <h4 class="comments-title">Comments</h4>
-        <p class="no-comments">No comments yet</p>
-      </div>
-    `
-  }
-
-  const commentsHTML = task.comments
-    .map(
-      (comment) => `
-    <div class="comment-item">
-      <div class="comment-header">
-        <span class="comment-author">${comment.userName || "Anonymous"}</span>
-        <span class="comment-date">${new Date(comment.createdAt).toLocaleString()}</span>
-      </div>
-      <div class="comment-text">${comment.text}</div>
-    </div>
-  `,
-    )
-    .join("")
-
-  return `
-    <div class="task-comments">
-      <h4 class="comments-title">Comments (${task.comments.length})</h4>
-      <div class="comments-list">
-        ${commentsHTML}
-      </div>
-    </div>
-  `
-}
-
 export function setupTaskInteractions(state, updateUI) {
   // Task checkbox toggle
   document.querySelectorAll(".task-checkbox").forEach((checkbox) => {
@@ -313,10 +282,19 @@ export function setupTaskInteractions(state, updateUI) {
 
   // Edit task buttons
   document.querySelectorAll(".edit-task-btn").forEach((button) => {
-    button.addEventListener("click", () => {
-      const taskId = button.getAttribute("data-task-id")
-      showEditTaskPopup(taskId, state, updateUI)
-    })
+    if (!button.classList.contains("edit-task-listener")) {
+      button.classList.add("edit-task-listener")
+      button.addEventListener("click", (e) => {
+        e.stopPropagation() // Prevent event bubbling
+        const taskId = button.getAttribute("data-task-id")
+        // Close the details modal if it's open
+        const existingModal = document.getElementById("task-details-modal")
+        if (existingModal) {
+          existingModal.remove()
+        }
+        showEditTaskPopup(taskId, state, updateUI)
+      })
+    }
   })
 
   // Delete task buttons
@@ -340,6 +318,16 @@ export function setupTaskInteractions(state, updateUI) {
     button.addEventListener("click", () => {
       const taskId = button.getAttribute("data-task-id")
       showAddCommentModal(taskId, state, updateUI)
+    })
+  })
+
+  // Workspace redirect buttons
+  document.querySelectorAll(".workspace-redirect-btn").forEach((button) => {
+    button.addEventListener("click", (e) => {
+      e.stopPropagation() // Prevent task details from opening
+      const taskId = button.getAttribute("data-task-id")
+      const aiTool = button.getAttribute("data-ai-tool")
+      redirectToWorkspace(taskId, aiTool, state, updateUI)
     })
   })
 }
@@ -471,35 +459,59 @@ export async function toggleTaskAssignment(taskId, state, updateUI) {
         button.disabled = true
       }
 
-      // Fetch the user's profile to get their full name
-      const { fetchProfile } = await import("/static/requests/accountRequests.js")
-      const profileData = await fetchProfile()
-      console.log("Fetched profile data:", profileData)
+      // Try to get user profile data, with fallbacks
+      let userId = state.currentUser.id
+      let fullName = ""
+      let email = state.currentUser.email || ""
 
-      // Extract user information from profile data
-      const userId = profileData.user?._id || profileData._id || state.currentUser.id
+      try {
+        // Try to import and use the account requests module
+        const accountRequests = await import("/static/requests/accountRequests.js")
 
-      // Get the full name from profile - handle both camelCase and snake_case formats
-      const fullName =
-        profileData.user?.fullName ||
-        profileData.user?.full_name ||
-        profileData.fullName ||
-        profileData.full_name ||
-        "Unknown User"
+        // Check if fetchAccount exists and is a function
+        if (accountRequests.fetchAccount && typeof accountRequests.fetchAccount === "function") {
+          const accountData = await accountRequests.fetchAccount()
+          console.log("Fetched account data:", accountData)
 
-      console.log(`Using name: ${fullName} for task assignment`)
+          // Extract user information from account data
+          // The structure might be { account: { ... } } or directly the account object
+          const userData = accountData.account || accountData
+
+          userId = userData._id || userData.id || state.currentUser.id
+
+          // Get the full name from account data - handle different possible structures
+          fullName =
+            userData.fullName ||
+            userData.full_name ||
+            userData.name ||
+            userData.displayName ||
+            userData.display_name ||
+            ""
+
+          // Get email if fullName is not available
+          email = userData.email || state.currentUser.email || ""
+        } else {
+          console.log("fetchAccount function not found in accountRequests module, using fallback data")
+        }
+      } catch (error) {
+        console.warn("Error fetching account data, using fallback data:", error)
+      }
+
+      // Use fullName if available, otherwise use email, or fallback to "Unknown User"
+      const displayName = fullName || email || "Unknown User"
+      console.log(`Using name: ${displayName} for task assignment`)
 
       // Update task in the database - use assignedAt as the source of truth
       await updateTask(taskId, {
         assignee: userId,
-        assigneeName: fullName, // Keep this for backward compatibility
-        assignedAt: fullName, // This is now the primary field for assignment
+        assigneeName: displayName, // Keep this for backward compatibility
+        assignedAt: displayName, // This is now the primary field for assignment
       })
 
       // Update local state
       task.assignee = userId
-      task.assigneeName = fullName
-      task.assignedAt = fullName
+      task.assigneeName = displayName
+      task.assignedAt = displayName
 
       // Reset button state
       if (button) {
@@ -521,111 +533,6 @@ export async function toggleTaskAssignment(taskId, state, updateUI) {
       button.disabled = false
     }
   }
-}
-
-export function showAddCommentModal(taskId, state, updateUI) {
-  // Find the task
-  const task = state.tasks.find((t) => t.id === taskId || t._id === taskId)
-  if (!task) return
-
-  const modalHTML = `
-    <div id="add-comment-modal" class="popup">
-      <div class="popup-content">
-        <div class="modal-header">
-          <h2>Add Comment</h2>
-          <button class="close-btn">&times;</button>
-        </div>
-        <div class="popup-body">
-          <form id="add-comment-form">
-            <input type="hidden" id="comment-task-id" value="${taskId}">
-            <div class="form-group">
-              <label for="comment-text">Comment</label>
-              <textarea id="comment-text" class="form-control" placeholder="Write your comment here..." required></textarea>
-            </div>
-          </form>
-        </div>
-        <div class="modal-footer">
-          <button type="button" id="cancel-comment-btn" class="btn cancel-btn">Cancel</button>
-          <button type="button" id="save-comment-btn" class="btn save-btn">Add Comment</button>
-        </div>
-      </div>
-    </div>
-  `
-
-  document.body.insertAdjacentHTML("beforeend", modalHTML)
-  const popup = document.getElementById("add-comment-modal")
-
-  // Show the popup
-  popup.style.display = "flex"
-
-  // Add class to animate in
-  setTimeout(() => {
-    popup.querySelector(".popup-content").classList.add("show")
-  }, 10)
-
-  // Close button event
-  const closeBtn = popup.querySelector(".close-btn")
-  closeBtn.addEventListener("click", () => {
-    closePopup(popup)
-  })
-
-  // Cancel button event
-  const cancelBtn = document.getElementById("cancel-comment-btn")
-  cancelBtn.addEventListener("click", () => {
-    closePopup(popup)
-  })
-
-  // Close when clicking outside
-  popup.addEventListener("click", (e) => {
-    if (e.target === popup) {
-      closePopup(popup)
-    }
-  })
-
-  // Save comment event
-  document.getElementById("save-comment-btn").addEventListener("click", async () => {
-    const commentText = document.getElementById("comment-text").value.trim()
-    if (!commentText) return
-
-    try {
-      const saveBtn = document.getElementById("save-comment-btn")
-      const originalText = saveBtn.innerHTML
-      saveBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...'
-      saveBtn.disabled = true
-
-      // Create new comment object
-      const newComment = {
-        id: Date.now().toString(),
-        text: commentText,
-        userId: state.currentUser.id,
-        userName: state.currentUser.name,
-        createdAt: new Date().toISOString(),
-      }
-
-      // Add comment to task
-      task.comments = task.comments || []
-      task.comments.push(newComment)
-
-      // Update task in database
-      await updateTask(taskId, { comments: task.comments })
-
-      closePopup(popup)
-      updateUI()
-    } catch (error) {
-      console.error("Error adding comment:", error)
-      alert("Failed to add comment. Please try again.")
-
-      const saveBtn = document.getElementById("save-comment-btn")
-      saveBtn.disabled = false
-      saveBtn.innerHTML = originalText
-    } finally {
-      const saveBtn = document.getElementById("save-comment-btn")
-      if (saveBtn) {
-        saveBtn.disabled = false
-        saveBtn.innerHTML = "Add Comment"
-      }
-    }
-  })
 }
 
 export async function confirmDeleteTask(taskId, state, updateUI) {
@@ -657,7 +564,16 @@ export async function showEditTaskPopup(taskId, state, updateUI) {
     const task = response[0].podtask
     console.log("Fetched task data:", task)
 
-    const { name, description, status, dependencies = [], dueDate = "", assignee = null, assigneeName = "" } = task
+    const {
+      name,
+      description,
+      status,
+      dependencies = [],
+      dueDate = "",
+      assignee = null,
+      assigneeName = "",
+      aiTool = "",
+    } = task
 
     // Get all tasks for dependency selection
     const allTasks = state.tasks.filter((t) => t.id !== taskId && t._id !== taskId)
@@ -693,9 +609,16 @@ export async function showEditTaskPopup(taskId, state, updateUI) {
                 <input type="text" id="edit-task-due-date" class="form-control date-picker" value="${dueDate || ""}">
                 <small class="help-text">Select a specific date and time or use relative terms like "Before recording", "3 days before recording"</small>
               </div>
+              
               <div class="form-group">
-                <label for="edit-task-assigned">Assigned To</label>
-                <input type="text" id="edit-task-assigned" class="form-control" value="${assigneeName || ""}">
+                <label for="edit-task-ai-tools">AI Tools</label>
+                <select id="edit-task-ai-tools" class="form-control">
+                  <option value="" ${!aiTool ? "selected" : ""}>None</option>
+                  <option value="transcription" ${aiTool === "transcription" ? "selected" : ""}>Transcription</option>
+                  <option value="audio-editing" ${aiTool === "audio-editing" ? "selected" : ""}>Audio Editing</option>
+                  <option value="video-editing" ${aiTool === "video-editing" ? "selected" : ""}>Video Editing</option>
+                </select>
+                <small class="help-text">Select an AI tool to assist with this task</small>
               </div>
               <div class="form-group">
                 <label for="edit-task-dependencies">Dependencies</label>
@@ -779,7 +702,7 @@ export async function showEditTaskPopup(taskId, state, updateUI) {
       const description = document.getElementById("edit-task-description").value
       const status = document.getElementById("edit-task-status").value
       const dueDate = document.getElementById("edit-task-due-date").value
-      const assigneeName = document.getElementById("edit-task-assigned").value
+      const aiTool = document.getElementById("edit-task-ai-tools").value
 
       // Get selected dependencies
       const dependenciesSelect = document.getElementById("edit-task-dependencies")
@@ -790,8 +713,8 @@ export async function showEditTaskPopup(taskId, state, updateUI) {
         description,
         status,
         dueDate,
-        assigneeName,
         dependencies: selectedDependencies,
+        aiTool: aiTool,
       }
 
       try {
@@ -856,9 +779,16 @@ export function showAddTaskModal(state, updateUI) {
               <input type="text" id="task-due-date" class="form-control date-picker" placeholder="Select date and time">
               <small class="help-text">Select a specific date and time or use relative terms like "Before recording", "3 days before recording"</small>
             </div>
+            
             <div class="form-group">
-              <label for="task-assigned">Assigned To</label>
-              <input type="text" id="task-assigned" class="form-control" placeholder="Name of person assigned">
+              <label for="task-ai-tools">AI Tools</label>
+              <select id="task-ai-tools" class="form-control">
+                <option value="">None</option>
+                <option value="transcription">Transcription</option>
+                <option value="audio-editing">Audio Editing</option>
+                <option value="video-editing">Video Editing</option>
+              </select>
+              <small class="help-text">Select an AI tool to assist with this task</small>
             </div>
             <div class="form-group">
               <label for="task-dependencies">Dependencies</label>
@@ -942,7 +872,7 @@ export function showAddTaskModal(state, updateUI) {
     const title = document.getElementById("task-title").value
     const description = document.getElementById("task-description").value
     const dueDate = document.getElementById("task-due-date").value
-    const assigneeName = document.getElementById("task-assigned").value
+    const aiTool = document.getElementById("task-ai-tools").value
 
     // Get selected dependencies
     const dependenciesSelect = document.getElementById("task-dependencies")
@@ -959,9 +889,9 @@ export function showAddTaskModal(state, updateUI) {
       description,
       episodeId: episodeId,
       dueDate,
-      assigneeName,
       dependencies: selectedDependencies,
       status: "not-started", // Default to not-started
+      aiTool: aiTool, // Add the AI tool to the task data
     }
 
     try {
@@ -1143,370 +1073,6 @@ export async function showImportTasksModal(state, updateUI) {
   }
 }
 
-export function saveWorkflow(state, updateUI) {
-  if (!state.selectedEpisode) {
-    alert("Please select an episode first")
-    return
-  }
-
-  const episodeId = state.selectedEpisode._id || state.selectedEpisode.id
-
-  const modalHTML = `
-    <div id="save-workflow-modal" class="popup">
-      <div class="popup-content">
-        <div class="modal-header">
-          <h2>Save Workflow</h2>
-          <button class="close-btn">&times;</button>
-        </div>
-        <div class="popup-body">
-          <div class="form-group">
-            <label for="workflow-name">Workflow Name</label>
-            <input type="text" id="workflow-name" class="form-control" value="Workflow for ${state.selectedEpisode.title || "Episode"}" required>
-          </div>
-          <div class="form-group">
-            <label for="workflow-description">Description</label>
-            <textarea id="workflow-description" class="form-control" placeholder="Describe this workflow..."></textarea>
-          </div>
-          <div class="form-group">
-            <label>
-              <input type="checkbox" id="save-as-template" checked>
-              Save as reusable template
-            </label>
-          </div>
-        </div>
-        <div class="modal-footer">
-          <button type="button" id="cancel-save-btn" class="btn cancel-btn">Cancel</button>
-          <button type="button" id="save-workflow-btn" class="btn save-btn">Save Workflow</button>
-        </div>
-      </div>
-    </div>
-  `
-
-  document.body.insertAdjacentHTML("beforeend", modalHTML)
-  const popup = document.getElementById("save-workflow-modal")
-
-  // Show the popup
-  popup.style.display = "flex"
-
-  // Add class to animate in
-  setTimeout(() => {
-    popup.querySelector(".popup-content").classList.add("show")
-  }, 10)
-
-  // Close button event
-  const closeBtn = popup.querySelector(".close-btn")
-  closeBtn.addEventListener("click", () => {
-    closePopup(popup)
-  })
-
-  // Cancel button event
-  const cancelBtn = document.getElementById("cancel-save-btn")
-  cancelBtn.addEventListener("click", () => {
-    closePopup(popup)
-  })
-
-  // Close when clicking outside
-  popup.addEventListener("click", (e) => {
-    if (e.target === popup) {
-      closePopup(popup)
-    }
-  })
-
-  // Save workflow event
-  document.getElementById("save-workflow-btn").addEventListener("click", async () => {
-    const name = document.getElementById("workflow-name").value
-    const description = document.getElementById("workflow-description").value
-    const saveAsTemplate = document.getElementById("save-as-template").checked
-
-    if (!name) {
-      alert("Workflow name is required")
-      return
-    }
-
-    try {
-      const saveBtn = document.getElementById("save-workflow-btn")
-      const originalText = saveBtn.innerHTML
-      saveBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...'
-      saveBtn.disabled = true
-
-      // Get tasks for this episode
-      const episodeTasks = state.tasks.filter((task) => task.episodeId === episodeId)
-
-      if (episodeTasks.length === 0) {
-        alert("No tasks found for this episode. Please add tasks before saving a workflow.")
-        saveBtn.disabled = false
-        saveBtn.innerHTML = originalText
-        return
-      }
-
-      // Call the server to save the workflow
-      const response = await fetch("/save_workflow", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          name: name,
-          description: description,
-          isTemplate: saveAsTemplate,
-          tasks: episodeTasks,
-          episodeId: episodeId,
-        }),
-      })
-
-      const result = await response.json()
-
-      if (response.ok) {
-        closePopup(popup)
-        alert("Workflow saved successfully!")
-
-        // Add the new workflow to the state
-        if (result.workflowId) {
-          const newWorkflow = {
-            _id: result.workflowId,
-            name: name,
-            description: description,
-            tasks: episodeTasks,
-            isTemplate: saveAsTemplate,
-          }
-          state.workflows.push(newWorkflow)
-
-          // Update the workflow selector if we're on the workflow tab
-          if (state.activeTab === "dependencies") {
-            const workflowSelect = document.getElementById("workflow-select")
-            if (workflowSelect) {
-              const option = document.createElement("option")
-              option.value = result.workflowId
-              option.textContent = name
-              workflowSelect.appendChild(option)
-            }
-          }
-        }
-      } else {
-        throw new Error(result.error || "Failed to save workflow")
-      }
-    } catch (error) {
-      console.error("Error saving workflow:", error)
-    }
-  })
-}
-
-export function showImportWorkflowModal(state, updateUI) {
-  if (!state.selectedEpisode) {
-    alert("Please select an episode first")
-    return
-  }
-
-  const episodeId = state.selectedEpisode._id || state.selectedEpisode.id
-
-  // First, fetch available workflows from the server
-  fetch("/get_workflows", {
-    method: "GET",
-    headers: { "Content-Type": "application/json" },
-  })
-    .then((response) => response.json())
-    .then((data) => {
-      const workflows = data.workflows || []
-
-      const modalHTML = `
-        <div id="import-workflow-modal" class="popup">
-          <div class="popup-content">
-            <div class="modal-header">
-              <h2>Select a Workflow to Import</h2>
-              <button class="close-btn">&times;</button>
-            </div>
-            <div class="popup-body">
-              <label for="workflow-select">Choose a workflow:</label>
-              <select id="workflow-select" class="form-control">
-                <option value="">--Select a Workflow--</option>
-                ${workflows
-                  .map((workflow) => `<option value="${workflow._id}">${workflow.name || "Unnamed Workflow"}</option>`)
-                  .join("")}
-              </select>
-            </div>
-            <div class="modal-footer">
-              <button type="button" id="cancel-import-btn" class="btn cancel-btn">Cancel</button>
-              <button type="button" id="import-selected-btn" class="btn save-btn" disabled>Import Workflow</button>
-            </div>
-          </div>
-        </div>
-      `
-
-      document.body.insertAdjacentHTML("beforeend", modalHTML)
-      const popup = document.getElementById("import-workflow-modal")
-
-      // Show the popup
-      popup.style.display = "flex"
-
-      // Add class to animate in
-      setTimeout(() => {
-        popup.querySelector(".popup-content").classList.add("show")
-      }, 10)
-
-      const importBtn = document.getElementById("import-selected-btn")
-      const workflowSelect = document.getElementById("workflow-select")
-
-      workflowSelect.addEventListener("change", () => {
-        importBtn.disabled = !workflowSelect.value
-      })
-
-      const closeBtn = popup.querySelector(".close-btn")
-      closeBtn.addEventListener("click", () => closePopup(popup))
-
-      const cancelBtn = document.getElementById("cancel-import-btn")
-      cancelBtn.addEventListener("click", () => closePopup(popup))
-
-      // Close when clicking outside
-      popup.addEventListener("click", (e) => {
-        if (e.target === popup) {
-          closePopup(popup)
-        }
-      })
-
-      importBtn.addEventListener("click", async () => {
-        const workflowId = workflowSelect.value
-        if (!workflowId) return
-
-        try {
-          const originalText = importBtn.innerHTML
-          importBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Importing...'
-          importBtn.disabled = true
-
-          // First, get the specific workflow by ID
-          const workflowResponse = await fetch(`/get_workflows`, {
-            method: "GET",
-            headers: { "Content-Type": "application/json" },
-          })
-
-          const workflowData = await workflowResponse.json()
-
-          if (!workflowResponse.ok) {
-            alert("Failed to fetch workflows: " + workflowData.error)
-            return
-          }
-
-          // Find the selected workflow in the response
-          const selectedWorkflow = workflowData.workflows.find((w) => w._id === workflowId)
-
-          if (!selectedWorkflow) {
-            alert("Selected workflow not found")
-            return
-          }
-
-          // Extract tasks from the selected workflow
-          const tasks = selectedWorkflow.tasks
-
-          if (!tasks || tasks.length === 0) {
-            alert("No tasks found in this workflow")
-            return
-          }
-
-          // Debug: Log the tasks to see their structure
-          console.log("Tasks to import:", tasks)
-
-          // Add tasks one by one using saveTask
-          let addedCount = 0
-          for (const task of tasks) {
-            // Create a new task object with the required fields
-            const taskData = {
-              name: task.name || "Imported Task",
-              description: task.description || "",
-              episodeId: episodeId,
-              // Use a default guest ID if none is provided
-              guestId: task.guestId,
-              // Copy other relevant fields
-              status: task.status || "pending",
-              priority: task.priority || "medium",
-              dueDate: task.dueDate || "",
-              assigneeName: task.assigneeName || "",
-              dependencies: task.dependencies || [],
-            }
-
-            // Save the task
-            await saveTask(taskData)
-            addedCount++
-          }
-
-          if (addedCount > 0) {
-            // Refresh tasks
-            const tasksData = await fetchTasks()
-            state.tasks = tasksData ? tasksData.filter((task) => task.episodeId === episodeId) : []
-
-            updateUI()
-
-            alert(`Successfully imported ${addedCount} tasks from the workflow!`)
-            closePopup(popup)
-          } else {
-            alert("No tasks were imported")
-            importBtn.innerHTML = originalText
-            importBtn.disabled = false
-          }
-        } catch (error) {
-          console.error("Error importing workflow:", error)
-          alert("Failed to import workflow: " + error.message)
-          importBtn.innerHTML = '<i class="fas fa-file-import"></i> Import Workflow'
-          importBtn.disabled = false
-        }
-      })
-    })
-    .catch((error) => {
-      console.error("Error fetching workflows:", error)
-
-      // Create a container for the popup if it doesn't exist
-      let popupContainer = document.getElementById("popup-container")
-      if (!popupContainer) {
-        popupContainer = document.createElement("div")
-        popupContainer.id = "popup-container"
-        document.body.appendChild(popupContainer)
-      }
-
-      // Show error modal
-      const modalHTML = `
-        <div id="import-workflow-modal" class="popup">
-          <div class="popup-content">
-            <div class="modal-header">
-              <h2>Import Workflow</h2>
-              <button class="close-btn">&times;</button>
-            </div>
-            <div class="popup-body">
-              <p class="error-message">Failed to fetch workflows. Please try again later.</p>
-            </div>
-            <div class="modal-footer">
-              <button class="btn cancel-btn" id="close-error-btn">Close</button>
-            </div>
-          </div>
-        </div>
-      `
-
-      // Add the popup HTML to the container
-      popupContainer.innerHTML = modalHTML
-
-      // Get the popup element
-      const popup = document.getElementById("import-workflow-modal")
-
-      // Show the popup
-      popup.style.display = "flex"
-
-      // Add class to animate in
-      setTimeout(() => {
-        popup.querySelector(".popup-content").classList.add("show")
-      }, 10)
-
-      // Close button event
-      const closeBtn = popup.querySelector(".close-btn")
-      closeBtn.addEventListener("click", () => closePopup(popup))
-
-      // Close button in footer
-      const closeErrorBtn = document.getElementById("close-error-btn")
-      closeErrorBtn.addEventListener("click", () => closePopup(popup))
-
-      // Close when clicking outside
-      popup.addEventListener("click", (e) => {
-        if (e.target === popup) {
-          closePopup(popup)
-        }
-      })
-    })
-}
-
 function updateDependencyPreview(selectElement, previewElement, tasks) {
   if (!selectElement || !previewElement) return
 
@@ -1571,6 +1137,16 @@ export function showTaskDetailsModal(taskId, state, updateUI) {
                 <i class="fas fa-tasks"></i>
                 <span>Status: ${task.status || "Not started"}</span>
               </div>
+              ${
+                task.aiTool
+                  ? `
+              <div class="task-meta-item">
+                <i class="fas fa-robot"></i>
+                <span>AI Tool: ${task.aiTool.replace("-", " ").replace(/\b\w/g, (l) => l.toUpperCase())}</span>
+              </div>
+              `
+                  : ""
+              }
             </div>
             
             ${
@@ -1651,6 +1227,15 @@ export function showTaskDetailsModal(taskId, state, updateUI) {
           <button type="button" id="edit-task-details-btn" class="btn btn-primary" data-task-id="${taskId}">
             <i class="fas fa-edit"></i> Edit Task
           </button>
+          ${
+            task.aiTool
+              ? `
+          <button type="button" id="open-workspace-btn" class="btn btn-primary" data-task-id="${taskId}" data-ai-tool="${task.aiTool}">
+            <i class="fas fa-laptop"></i> Open in Workspace
+          </button>
+          `
+              : ""
+          }
           <button type="button" id="close-task-details-btn" class="btn cancel-btn">Close</button>
         </div>
       </div>
@@ -1680,85 +1265,20 @@ export function showTaskDetailsModal(taskId, state, updateUI) {
     closePopup(popup)
   })
 
-  // Edit button event
-  const editBtn = document.getElementById("edit-task-details-btn")
-  editBtn.addEventListener("click", () => {
-    closePopup(popup)
-    showEditTaskPopup(taskId, state, updateUI)
-  })
+  // Workspace button event
+  if (task.aiTool) {
+    const workspaceBtn = document.getElementById("open-workspace-btn")
+    workspaceBtn.addEventListener("click", () => {
+      closePopup(popup)
+      redirectToWorkspace(taskId, task.aiTool, state, updateUI)
+    })
+  }
 
   // Close when clicking outside
   popup.addEventListener("click", (e) => {
     if (e.target === popup) {
       closePopup(popup)
     }
-  })
-}
-
-export function setupKanbanDragDrop(state, updateUI) {
-  const draggables = document.querySelectorAll(".kanban-task")
-  const dropZones = document.querySelectorAll(".kanban-column-content")
-
-  draggables.forEach((draggable) => {
-    draggable.addEventListener("dragstart", () => {
-      draggable.classList.add("dragging")
-    })
-
-    draggable.addEventListener("dragend", () => {
-      draggable.classList.remove("dragging")
-    })
-
-    // Add click handler to show task details
-    draggable.addEventListener("click", (e) => {
-      // Only trigger if not starting a drag operation
-      if (!e.target.closest(".kanban-task-actions")) {
-        const taskId = draggable.getAttribute("data-task-id")
-        showTaskDetailsModal(taskId, state, updateUI)
-      }
-    })
-  })
-
-  dropZones.forEach((zone) => {
-    zone.addEventListener("dragover", (e) => {
-      e.preventDefault()
-      zone.classList.add("drag-over")
-    })
-
-    zone.addEventListener("dragleave", () => {
-      zone.classList.remove("drag-over")
-    })
-
-    zone.addEventListener("drop", (e) => {
-      e.preventDefault()
-      zone.classList.remove("drag-over")
-
-      const dragging = document.querySelector(".dragging")
-      if (dragging) {
-        const taskId = dragging.getAttribute("data-task-id")
-        const columnId = zone.getAttribute("data-column-id")
-
-        // Check if this task has dependencies and is being moved to completed
-        if (columnId === "completed") {
-          const task = state.tasks.find((t) => (t.id || t._id) === taskId)
-          if (task && task.dependencies && task.dependencies.length > 0) {
-            const completedTaskIds = new Set(
-              state.tasks.filter((t) => t.status === "completed").map((t) => t.id || t._id),
-            )
-
-            const hasUncompletedDependencies = !task.dependencies.every((depId) => completedTaskIds.has(depId))
-
-            if (hasUncompletedDependencies) {
-              // Show error and prevent the drop
-              alert("This task cannot be completed until all its dependencies are completed.")
-              return
-            }
-          }
-        }
-
-        // Update task status based on column
-        updateTaskStatus(taskId, columnId, state, updateUI)
-      }
-    })
   })
 }
 
@@ -1817,4 +1337,44 @@ export async function updateTaskStatus(taskId, columnId, state, updateUI) {
 
   // Update UI
   updateUI()
+}
+
+export function redirectToWorkspace(taskId, aiTool, state, updateUI) {
+  // First, switch to the workspace tab
+  const workspaceTab = document.querySelector('.tab-btn[data-tab="workspace"]')
+  if (workspaceTab) {
+    workspaceTab.click()
+  }
+
+  // Then, select the appropriate AI tool tab based on the aiTool value
+  setTimeout(() => {
+    let tabName = "transcription" // default
+
+    if (aiTool === "audio-editing") {
+      tabName = "audio"
+    } else if (aiTool === "video-editing") {
+      tabName = "video"
+    } else if (aiTool === "transcription") {
+      tabName = "transcription"
+    } else if (aiTool === "summary" || aiTool === "seo") {
+      tabName = "transcription" // These likely work with the transcript
+    }
+
+    // Call the showTab function from gustavvasa.js
+    if (window.showTab) {
+      window.showTab(tabName)
+    } else {
+      // Fallback if the function isn't globally available
+      const tabButton = document.querySelector(`.tab-btn[onclick="showTab('${tabName}')"]`)
+      if (tabButton) {
+        tabButton.click()
+      }
+    }
+
+    // Optionally, you could also pass the task context to the workspace
+    // This would require additional implementation in the workspace code
+    if (window.setCurrentTask) {
+      window.setCurrentTask(taskId)
+    }
+  }, 100) // Small delay to ensure the tab switch happens first
 }
