@@ -166,3 +166,55 @@ def update_subscription_credits(user_id, plan_name):
     
     logger.info(f"Updated subscription subCredits for user {user_id}: replaced {old_sub} with {sub_credits} from {plan_name} plan")
     return credit_service.get_store_credits(user_id)
+
+def reset_monthly_credits(user_id, plan_name):
+    """
+    Reset a user's monthly credits based on their subscription plan.
+    Called when a subscription renews.
+    """
+    try:
+        from backend.utils.subscription_access import PLAN_BENEFITS
+        
+        # Get the credits amount for this plan
+        plan_benefits = PLAN_BENEFITS.get(plan_name.upper(), PLAN_BENEFITS["FREE"])
+        credits_amount = plan_benefits.get("credits", 0)
+        
+        if credits_amount <= 0:
+            logger.info(f"No monthly credits to reset for plan {plan_name}")
+            return False
+        
+        # Find the user's account
+        account = collection.database.Accounts.find_one(
+            {"$or": [{"userId": user_id}, {"ownerId": user_id}]}
+        )
+        
+        if not account:
+            logger.error(f"Account not found for user {user_id}")
+            return False
+        
+        # Update the subCredits field to reset monthly credits
+        result = collection.database.Accounts.update_one(
+            {"_id": account["_id"]},
+            {"$set": {"subCredits": credits_amount}}
+        )
+        
+        if result.modified_count > 0:
+            logger.info(f"Reset monthly credits to {credits_amount} for user {user_id}")
+            
+            # Log the credit reset
+            activity_service = ActivityService()
+            activity_service.log_activity(
+                user_id=user_id,
+                activity_type="credits_reset",
+                description=f"Monthly subscription credits reset to {credits_amount}",
+                details={"plan": plan_name, "credits": credits_amount}
+            )
+            
+            return True
+        else:
+            logger.warning(f"No changes made to credits for user {user_id}")
+            return False
+    
+    except Exception as e:
+        logger.error(f"Error resetting monthly credits: {str(e)}")
+        return False

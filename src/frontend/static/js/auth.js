@@ -32,17 +32,16 @@ document.addEventListener("DOMContentLoaded", () => {
       event.preventDefault();
   
       const email = document.getElementById("email").value;
-      const password = document.getElementById("password").value;
   
       try {
         const response = await fetch(`${API_BASE_URL}/signin`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ email, password })
+          body: JSON.stringify({ email })
         });
   
         if (!response.ok) {
-          throw new Error("Invalid email or password.");
+          throw new Error("Invalid email");
         }
   
         const result = await response.json();

@@ -3,7 +3,6 @@ import random
 from datetime import datetime
 from faker import Faker
 from pymongo import MongoClient
-from werkzeug.security import generate_password_hash
 
 # === Setup ===
 fake = Faker()
@@ -12,8 +11,6 @@ db = client["Podmanager"]
 
 # === Credentials ===
 email = "testuser@gmail.com"
-password = "Test@user#135"
-hashed_password = generate_password_hash(password)
 
 # === UUIDs (all string-based for compatibility with session logic) ===
 user_id = str(uuid.uuid4())
@@ -32,7 +29,6 @@ invite_id = str(uuid.uuid4())
 db.Users.insert_one({
     "_id": user_id,
     "email": email,
-    "passwordHash": hashed_password,
     "createdAt": fake.date_time_this_year().isoformat()
 })
 
@@ -165,7 +161,6 @@ db.UsersToTeams.insert_one({
 # === Final Output ===
 print("\n✅ Test user and all connected data created!\n")
 print(f"🔑 Login Email: {email}")
-print(f"🔐 Password:   {password}")
 print(f"🆔 User ID:    {user_id}")
 print(f"🏢 Account ID: {account_id}")
 print("\n📦 Collections populated:")

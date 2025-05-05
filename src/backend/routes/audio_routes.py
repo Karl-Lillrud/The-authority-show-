@@ -6,9 +6,12 @@ import json
 from flask import Response
 from flask import Blueprint, request, jsonify, g
 from backend.services.audioService import AudioService
+from backend.services.subscriptionService import SubscriptionService
 from backend.repository.ai_models import get_file_by_id, add_audio_edit_to_episode
 from backend.utils.blob_storage import upload_file_to_blob  
 from backend.repository.episode_repository import EpisodeRepository
+from backend.utils.subscription_access import get_max_duration_limit
+from backend.utils.transcription_utils import check_audio_duration
 
 episode_repo = EpisodeRepository()
 logger = logging.getLogger(__name__)
@@ -26,9 +29,21 @@ def audio_enhancement():
     audio_bytes = audio_file.read()
 
     try:
-        # Kör förbättring och få tillbaka blob_url till enhanced audio
+        user_id = g.user_id  
+        subscription_service = SubscriptionService()
+        subscription = subscription_service.get_user_subscription(user_id)
+        plan = subscription.get("plan", "FREE")
+        max_duration = get_max_duration_limit(plan)
+
+        check_audio_duration(audio_bytes, max_duration_seconds=max_duration)
+        logger.info("Audio duration validated for enhancement")
+
         blob_url = audio_service.enhance_audio(audio_bytes, filename, episode_id)
         return jsonify({"enhanced_audio_url": blob_url})
+    
+    except ValueError as e:
+        logger.warning(f"Duration validation error: {e}")
+        return jsonify({"error": str(e)}), 400
     except Exception as e:
         logger.error(f"Error enhancing audio: {str(e)}")
         return jsonify({"error": str(e)}), 500
@@ -43,7 +58,6 @@ def get_enhanced_audio():
         response = requests.get(url)
         response.raise_for_status()
 
-        # Smart MIME-guess från filändelsen (eller default till audio/wav)
         content_type = "audio/mpeg" if url.lower().endswith(".mp3") else "audio/wav"
 
         return Response(response.content, content_type=content_type)

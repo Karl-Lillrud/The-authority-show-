@@ -1,31 +1,28 @@
+// Import SVGs
+import { successSvg, errorSvg, infoSvg, closeSvg } from "./notificationsSvg.js";
+
 let notificationContainer = null;
 let confirmationPopupTemplate = null;
 
-// Function to load CSS dynamically (Keep this function, but remove the call related to fetched HTML)
-function loadCssLink(cssPath) {
-  const link = document.createElement("link");
-  link.rel = "stylesheet";
-  link.href = cssPath;
-  return link;
-}
-
 // --- Simplified DOMContentLoaded ---
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener("DOMContentLoaded", () => {
   // Create notification container if it doesn't exist
-  if (!document.getElementById('notification-container')) {
-    notificationContainer = document.createElement('div');
-    notificationContainer.id = 'notification-container';
+  if (!document.getElementById("notification-container")) {
+    notificationContainer = document.createElement("div");
+    notificationContainer.id = "notification-container";
     document.body.appendChild(notificationContainer);
   } else {
-    notificationContainer = document.getElementById('notification-container');
+    notificationContainer = document.getElementById("notification-container");
   }
 
   // Find the confirmation popup template directly in the DOM
-  const popupTemplateElement = document.getElementById('confirmation-popup-template');
+  const popupTemplateElement = document.getElementById(
+    "confirmation-popup-template"
+  );
   if (popupTemplateElement) {
     confirmationPopupTemplate = popupTemplateElement.outerHTML;
   } else {
-    console.warn('Confirmation popup template not found in the DOM.');
+    console.warn("Confirmation popup template not found in the DOM.");
   }
 });
 // --- End Simplified DOMContentLoaded ---
@@ -37,33 +34,56 @@ document.addEventListener('DOMContentLoaded', () => {
  * @param {string} type - The type of notification ('success', 'error', 'info', 'warning').
  * @param {number} duration - Duration in milliseconds before auto-closing (0 for no auto-close).
  */
-export function showNotification(title, message, type = 'info', duration = 5000) {
+export function showNotification(
+  title,
+  message,
+  type = "info",
+  duration = 5000
+) {
   // Ensure container exists (might run before DOMContentLoaded in some scenarios)
   if (!notificationContainer) {
-     if (!document.getElementById('notification-container')) {
-        notificationContainer = document.createElement('div');
-        notificationContainer.id = 'notification-container';
-        document.body.appendChild(notificationContainer);
-     } else {
-        notificationContainer = document.getElementById('notification-container');
-     }
+    if (!document.getElementById("notification-container")) {
+      notificationContainer = document.createElement("div");
+      notificationContainer.id = "notification-container";
+      document.body.appendChild(notificationContainer);
+    } else {
+      notificationContainer = document.getElementById("notification-container");
+    }
   }
 
   // Find the template directly in the DOM
-  const template = document.getElementById('notification-template');
+  const template = document.getElementById("notification-template");
   if (!template) {
-    console.error('Notification template not found in the DOM!');
+    console.error("Notification template not found in the DOM!");
     return;
   }
 
   const notification = template.cloneNode(true);
-  notification.removeAttribute('id'); // Remove ID from clone
-  notification.classList.add(`notification-${type}`, 'show');
+  notification.removeAttribute("id"); // Remove ID from clone
+  // Use specific class for type, remove generic 'notification-type'
+  notification.classList.add(type, "show"); // Add type class directly (e.g., 'success', 'error')
 
   notification.querySelector(".notification-title").textContent = title;
   notification.querySelector(".notification-message").textContent = message;
 
+  // Set SVG icon based on type
+  const iconContainer = notification.querySelector(".notification-icon");
+  switch (type) {
+    case "success":
+      iconContainer.innerHTML = successSvg;
+      break;
+    case "error":
+      iconContainer.innerHTML = errorSvg;
+      break;
+    case "info":
+    default:
+      iconContainer.innerHTML = infoSvg;
+      break;
+  }
+
   const closeButton = notification.querySelector(".notification-close");
+  // Set SVG for close button
+  closeButton.innerHTML = closeSvg;
   closeButton.addEventListener("click", () => {
     notification.classList.remove("show");
     setTimeout(() => {
@@ -97,7 +117,7 @@ export function showConfirmationPopup(title, message, onConfirm, onCancel) {
   }
 
   if (!confirmationPopupTemplate) {
-    console.error('Confirmation popup template not found in the DOM!');
+    console.error("Confirmation popup template not found in the DOM!");
     return;
   }
 
@@ -107,8 +127,8 @@ export function showConfirmationPopup(title, message, onConfirm, onCancel) {
   const popup = tempDiv.firstElementChild;
   popup.className = "confirmation-popup show";
 
-  popup.querySelector('.confirm-form-title').textContent = title;
-  popup.querySelector('.confirm-form-message').textContent = message;
+  popup.querySelector(".confirm-form-title").textContent = title;
+  popup.querySelector(".confirm-form-message").textContent = message;
 
   document.body.appendChild(popup);
 

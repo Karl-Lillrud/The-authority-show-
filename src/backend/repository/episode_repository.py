@@ -133,14 +133,21 @@ class EpisodeRepository:
             if ep["userid"] != str(user_id):
                 return {"error": "Permission denied"}, 403
 
+            episode_title = ep.get(
+                "title", "Unknown Title"
+            )  # Get title before deleting
+
             result = self.collection.delete_one({"_id": episode_id})
             if result.deleted_count == 1:
                 try:
                     self.activity_service.log_activity(
                         user_id=str(user_id),
                         activity_type="episode_deleted",
-                        description=f"Deleted episode '{ep.get('title', '')}'",
-                        details={"episodeId": episode_id, "title": ep.get("title", "")},
+                        description=f"Deleted episode '{episode_title}'",  # Use fetched title
+                        details={
+                            "episodeId": episode_id,
+                            "title": episode_title,
+                        },  # Include title in details
                     )
                 except Exception as act_err:
                     logger.error(
@@ -161,22 +168,49 @@ class EpisodeRepository:
             if ep["userid"] != str(user_id):
                 return {"error": "Permission denied"}, 403
 
+            # Use partial schema validation for updates
             schema = EpisodeSchema(partial=True)
-            errors = schema.validate(data)
+
+            # Prepare data for validation: Copy original data
+            validation_data = data.copy()
+
+            # Temporarily remove fields related to file upload before validation
+            # because the placeholder audioUrl might not pass fields.Url validation.
+            # We'll add these fields back directly to update_fields later.
+            file_related_fields = ["audioUrl", "fileSize", "fileType"]
+            for field in file_related_fields:
+                if field in validation_data:
+                    del validation_data[field]
+
+            if (
+                "duration" in validation_data
+                and validation_data["duration"] is not None
+            ):
+                try:
+                    validation_data["duration"] = int(validation_data["duration"])
+                except (ValueError, TypeError):
+                    logger.warning(
+                        f"Could not convert duration '{validation_data['duration']}' to int for validation."
+                    )
+                    del validation_data["duration"]
+
+            # Validate the remaining data
+            errors = schema.validate(validation_data)
             if errors:
-                logger.error("Schema validation errors: %s", errors)
-                return {"error": "Invalid data", "details": errors}, 400
+                logger.error(
+                    "Schema validation errors during update (excluding file fields): %s",
+                    errors,
+                )
+                return {
+                    "error": "Invalid data provided for update",
+                    "details": errors,
+                }, 400
 
-            update_fields = {
-                "title": data.get("title", ep["title"]),
-                "description": data.get("description", ep["description"]),
-                "publishDate": data.get("publishDate", ep.get("publishDate")),
-                "duration": data.get("duration", ep["duration"]),
-                "status": data.get("status", ep["status"]),
-                "updated_at": datetime.now(timezone.utc),
-            }
+            # Start building the fields to update in MongoDB
+            update_fields = {"updated_at": datetime.now(timezone.utc)}
 
-            fields_to_update = [
+            # Define all possible fields that can be updated (including file fields)
+            allowed_fields = [
                 "title",
                 "description",
                 "publishDate",
@@ -184,7 +218,7 @@ class EpisodeRepository:
                 "status",
                 "audioUrl",
                 "fileSize",
-                "fileType",
+                "fileType",  # File fields included here
                 "guid",
                 "season",
                 "episode",
@@ -201,30 +235,100 @@ class EpisodeRepository:
                 "recordingAt",
             ]
 
-            for field in fields_to_update:
-                if field in data and data[field] is not None:
-                    if isinstance(data[field], str):
-                        update_fields[field] = data[field].strip()
+            # Populate update_fields from the original 'data' dictionary
+            for field in allowed_fields:
+                if (
+                    field in data
+                ):  # Check against the original 'data' containing file info
+                    value = data[field]
+                    if isinstance(value, str):
+                        update_fields[field] = value.strip()
+                    elif value == "":
+                        update_fields[field] = None
                     else:
-                        update_fields[field] = data[field]
+                        update_fields[field] = value
 
-            self.collection.update_one({"_id": episode_id}, {"$set": update_fields})
+            # Ensure duration is correctly typed (already handled partially, but double-check)
+            if "duration" in update_fields and update_fields["duration"] is not None:
+                try:
+                    update_fields["duration"] = int(update_fields["duration"])
+                except (ValueError, TypeError):
+                    logger.error(
+                        f"Invalid duration value '{update_fields['duration']}' during final update prep. Removing from update."
+                    )
+                    if (
+                        "duration" in update_fields
+                    ):  # Check if still exists before deleting
+                        del update_fields["duration"]
+            elif "duration" in update_fields and update_fields["duration"] is None:
+                # Ensure it's explicitly None if it was an empty string or invalid
+                update_fields["duration"] = None
 
+            # Check if there's anything to update besides 'updated_at'
+            if len(update_fields) <= 1:
+                logger.info(
+                    f"No valid fields to update for episode {episode_id} besides timestamp."
+                )
+                # Decide if this is an error or just means no changes were made
+                # If only file fields were sent, this might be expected.
+                # Let's proceed if file fields were the only change.
+                has_non_timestamp_update = any(k != "updated_at" for k in update_fields)
+                if not has_non_timestamp_update:
+                    return {"message": "No valid changes detected"}, 200
+
+            # Perform the MongoDB update
+            logger.debug(
+                f"Performing MongoDB update for {episode_id} with fields: {update_fields}"
+            )
+            result = self.collection.update_one(
+                {"_id": episode_id}, {"$set": update_fields}
+            )
+
+            if result.matched_count == 0:
+                # Should not happen due to earlier check, but good safeguard
+                logger.error(
+                    f"Failed to find episode {episode_id} during MongoDB update operation."
+                )
+                return {"error": "Failed to update episode, document not found."}, 404
+            if result.modified_count == 0 and result.matched_count == 1:
+                logger.info(
+                    f"Episode {episode_id} found but no fields were modified by the update operation."
+                )
+                # This might happen if the data sent was identical to existing data. Return success.
+
+            # Fetch the updated document to return or confirm changes
+            updated_ep = self.collection.find_one({"_id": episode_id})
+            if updated_ep and "_id" in updated_ep:
+                updated_ep["_id"] = str(updated_ep["_id"])
+
+            # Determine the title to use in the log (new title if updated, otherwise old title)
+            log_title = updated_ep.get("title", ep.get("title", "Unknown Title"))
+
+            # Log activity
             try:
                 self.activity_service.log_activity(
                     user_id=str(user_id),
                     activity_type="episode_updated",
-                    description=f"Updated episode '{ep.get('title', '')}'",
-                    details={"episodeId": episode_id, "title": ep.get("title", "")},
+                    description=f"Updated episode '{log_title}'",  # Use determined title
+                    details={
+                        "episodeId": episode_id,
+                        "title": log_title,  # Include title in details
+                        "updatedFields": [
+                            k for k in update_fields.keys() if k != "updated_at"
+                        ],
+                    },
                 )
             except Exception as act_err:
                 logger.error(
                     f"Failed to log episode_updated activity: {act_err}", exc_info=True
                 )
 
-            return {"message": "Episode updated"}, 200
+            return {"message": "Episode updated successfully"}, 200
 
         except Exception as e:
+            logger.error(
+                f"Failed to update episode {episode_id}: {str(e)}", exc_info=True
+            )
             return {"error": f"Failed to update episode: {str(e)}"}, 500
 
     def get_episodes_by_podcast(self, podcast_id, user_id):
@@ -268,13 +372,15 @@ class EpisodeRepository:
         except Exception as e:
             logger.error(f"Failed to fetch episode with podcast: {str(e)}")
             return None, None
-        
+
     def get_podcast_id_by_episode(self, episode_id: str) -> str:
         """
         Fetch the podcast ID for a given episode.
         Raises ValueError if not found.
         """
-        doc = collection.database.Episodes.find_one({"_id": episode_id}, {"podcast_id": 1})
+        doc = collection.database.Episodes.find_one(
+            {"_id": episode_id}, {"podcast_id": 1}
+        )
         if doc and "podcast_id" in doc:
             return doc["podcast_id"]
         raise ValueError(f"Podcast ID not found for episode {episode_id}")

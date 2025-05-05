@@ -22,11 +22,6 @@
   gap: var(--spacing-md);
 }
 
-.welcome-message p {
-  color: var(--text-color-light);
-  font-size: 1rem;
-}
-
 .dashboard-actions {
   display: flex;
   gap: var(--spacing-md);

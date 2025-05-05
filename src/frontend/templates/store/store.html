@@ -20,18 +20,20 @@ endblock %} {% block content %}
     rel="stylesheet"
     href="{{ url_for('static', filename='css/store/store.css') }}"
   />
+  <!-- Add link to notifications CSS -->
+  <link
+    rel="stylesheet"
+    href="{{ url_for('static', filename='css/components/notifications.css') }}"
+  />
 </head>
 <body>
+  <!-- Include Notification Templates -->
+  {% include "/components/notifications.html" %}
+
   <div class="store-container">
     <div class="store">
       <!-- Store Header -->
       <div class="store-header">
-        <div class="welcome-message">
-          <h1>PodManager Store</h1>
-          <p>
-            Enhance your podcast experience with premium features and credits
-          </p>
-        </div>
         <div class="store-actions">
           <button class="action-button view-history">
             <span class="svg-placeholder history-icon"></span>
@@ -346,7 +348,14 @@ endblock %} {% block content %}
     </div>
   </div>
 
-  <script src="{{ url_for('static', filename='js/store/store.js') }}"></script>
+  <script
+    type="module"
+    src="{{ url_for('static', filename='js/components/notifications.js') }}"
+  ></script>
+  <script
+    type="module"
+    src="{{ url_for('static', filename='js/store/store.js') }}"
+  ></script>
   <script src="{{ url_for('static', filename='js/store/svgstore.js') }}"></script>
 </body>
 {% endblock %}

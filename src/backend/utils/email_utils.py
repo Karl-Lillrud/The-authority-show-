@@ -14,9 +14,16 @@ from google.oauth2.credentials import Credentials
 from google_auth_oauthlib.flow import InstalledAppFlow
 from backend.utils.config_utils import get_client_secret
 from backend.services.activity_service import ActivityService  # Add this import
+from pymongo import MongoClient
+from backend.database.mongo_connection import collection
 
 # Load environment variables once
 load_dotenv(override=True)
+
+client = MongoClient(os.getenv("MONGODB_URI"))
+db = client["Podmanager"]
+podcasts = db["Podcasts"]
+
 
 EMAIL_USER = os.getenv("EMAIL_USER")
 EMAIL_PASSWORD = os.getenv("EMAIL_PASSWORD")
@@ -213,14 +220,14 @@ def send_login_email(email, login_link):
     Sends a login link email to the user and prints the link to the terminal.
     """
     try:
-        subject = "Din inloggningslänk för PodManager"
+        subject = "Your login link for PodManager"
         body = f"""
         <html>
             <body>
-                <p>Hej,</p>
-                <p>Klicka på länken nedan för att logga in på ditt PodManager-konto:</p>
-                <a href="{login_link}" style="color: #ff7f3f; text-decoration: none;">Logga in</a>
-                <p>Länken är giltig i 10 minuter. Om du inte begärde detta, ignorera detta email.</p>
+                <p>Hello,</p>
+                <p>Click the link below to log in to your PodManager account:</p>
+                <a href="{login_link}" style="color: #ff7f3f; text-decoration: none;">Log in</a>
+                <p>This link is valid for 10 minutes. If you did not request this, please ignore this email.</p>
                 <p>Best regards,<br>PodManager Team</p>
             </body>
         </html>
@@ -260,6 +267,7 @@ def send_login_email(email, login_link):
             f"❌ Error while sending login email to {email}: {e}", exc_info=True
         )
         return {"error": f"Error while sending login email: {str(e)}"}
+
 
 
 def send_team_invite_email(
@@ -374,3 +382,68 @@ def send_guest_invitation_email(guest_name, guest_email, guest_form_url, podcast
             f"Guest invitation email could not be sent to {guest_email}. Content:\nSubject: {subject}\nBody: {body}"
         )
         return {"error": f"Failed to send guest invitation email: {str(e)}"}
+
+
+def send_activation_email(email, activation_link, podcast_name, artwork_url=None):
+    """
+    Sends an activation email to the user with a link to activate their account.
+    """
+    html = f"""
+    <html>
+        <body>
+            <p>Hi,</p>
+            <p>We're thrilled to offer you exclusive early access to <strong>PodManager</strong>, 
+            the ultimate tool built to simplify podcasting for creators like you!</p>
+            <p>We’ve already prepared your account. Just activate it to start unlocking the full potential of PodManager:</p>
+            <p><a href="{activation_link}" style="color: #ff7f3f; text-decoration: none;">Activate Your Account Now</a></p>
+        </body>
+    </html>
+    """
+
+    msg = MIMEText(html, "html")
+    msg["Subject"] = "Exclusive Access to PodManager—Activate Your Account Today! 🚀"
+    msg["From"] = os.getenv("ACTIVATION_EMAIL")
+    msg["To"] = email
+
+    try:
+        with smtplib.SMTP(
+            os.getenv("SMTP_SERVER"), int(os.getenv("SMTP_PORT"))
+        ) as server:
+            server.ehlo()
+            server.starttls()
+            server.ehlo()
+            server.login(
+                os.getenv("ACTIVATION_EMAIL"), os.getenv("ACTIVATION_PASSWORD")
+            )
+            server.send_message(msg)
+        logger.info(f"✅ Activation email sent to {email}")
+    except Exception as e:
+        logger.error(
+            f"❌ Failed to send activation email to {email}: {e}", exc_info=True
+        )
+
+
+@google_calendar_bp.route("/activation/invite", methods=["GET"])
+def invite_user():
+    """
+    Sends an activation email to a user for their podcast account.
+    """
+    try:
+        email = request.args.get("email")
+        if not email:
+            return jsonify({"error": "Missing email parameter"}), 400
+
+        podcast = collection.database.Podcasts.find_one({"emails": email})
+        if not podcast:
+            return jsonify({"error": "No podcast found for the given email"}), 404
+
+        base_url = os.getenv("API_BASE_URL", "http://127.0.0.1:8000")
+        activation_link = f"{base_url}/signin?email={email}"
+        send_activation_email(
+            email, activation_link, podcast["title"], podcast.get("artwork_url", "")
+        )
+
+        return jsonify({"message": f"Activation email sent to {email}"}), 200
+    except Exception as e:
+        logger.error(f"❌ Failed to send activation email: {e}", exc_info=True)
+        return jsonify({"error": f"Internal server error: {str(e)}"}), 500

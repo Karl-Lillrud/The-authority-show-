@@ -21,8 +21,7 @@ def populate_user_context():
 
 @account_bp.route("", methods=["GET"])
 def get_account():
-    """Hämtar kontoinformation för den inloggade användaren."""
-    logger.info("--- GET /api/account route handler reached ---")
+ 
     user_id = getattr(g, "user_id", None)
     if not user_id:
         logger.warning("Unauthorized attempt to get account info.")
@@ -39,7 +38,7 @@ def get_account():
 
 @account_bp.route("", methods=["PUT"])
 def edit_account():
-    """Uppdaterar kontoinformation för den inloggade användaren."""
+
     user_id = getattr(g, "user_id", None)
     if not user_id:
         logger.warning("Unauthorized attempt to edit account.")
@@ -59,10 +58,31 @@ def edit_account():
         logger.error(f"Error updating account for user {user_id}: {e}", exc_info=True)
         return jsonify({"error": f"Internal server error: {str(e)}"}), 500
 
+@account_bp.route("/edit_account/increment", methods=["PUT"])
+def edit_increment_account():
+    # Update the account with incremented values
+    user_id = getattr(g, "user_id", None)
+    if not user_id:
+        logger.warning("Unauthorized attempt to edit account.")
+        return jsonify({"error": "Unauthorized"}), 401
+
+    if not request.is_json:
+        return jsonify({"error": "Invalid Content-Type. Expected application/json"}), 415
+    
+    data = request.get_json()
+    if not data:
+        return jsonify({"error": "No data provided"}), 400
+
+    try:
+        response, status_code = auth_service.edit_increment_account(user_id, data)
+        return jsonify(response), status_code
+    except Exception as e:
+        logger.error(f"Error updating account for user {user_id}: {e}", exc_info=True)
+        return jsonify({"error": f"Error updating account: {str(e)}"}), 500
 
 @account_bp.route("", methods=["DELETE"])
 def delete_account():
-    """Tar bort kontot för den inloggade användaren."""
+
     user_id = getattr(g, "user_id", None)
     if not user_id:
         logger.warning("Unauthorized attempt to delete account.")
