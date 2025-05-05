@@ -158,7 +158,7 @@ def update_subscription_credits(user_id, plan_name):
     
     # Log the transaction with proper description
     credit_service._log_transaction(user_id, {
-        "type": "subscription_change",
+        "type": "adjustment",  # Changed from "subscription_change" to "adjustment"
         "amount": sub_credits - old_sub,  # Net change (can be negative or positive)
         "description": f"Reset subCredits from {old_sub} to {sub_credits} for {plan_name} plan",
         "balance_after": {"subCredits": sub_credits, "storeCredits": store_credits}
