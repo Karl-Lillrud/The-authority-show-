@@ -99,7 +99,7 @@ app.register_blueprint(billing_bp)
 app.register_blueprint(
     guest_form_bp, url_prefix="/guest-form"
 )  # Register the guest_form blueprint with URL prefix
-app.register_blueprint(user_bp)
+app.register_blueprint(user_bp, url_prefix="/user")
 app.register_blueprint(landingpage_bp)
 app.register_blueprint(comment_bp)
 app.register_blueprint(activity_bp)  # Ensure this registration exists

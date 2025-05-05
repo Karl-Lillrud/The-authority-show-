@@ -58,7 +58,6 @@ def get_enhanced_audio():
         response = requests.get(url)
         response.raise_for_status()
 
-        # Smart MIME-guess från filändelsen (eller default till audio/wav)
         content_type = "audio/mpeg" if url.lower().endswith(".mp3") else "audio/wav"
 
         return Response(response.content, content_type=content_type)

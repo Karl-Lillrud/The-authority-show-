@@ -21,7 +21,7 @@ def populate_user_context():
 
 @account_bp.route("", methods=["GET"])
 def get_account():
-    """Hämtar kontoinformation för den inloggade användaren."""
+ 
     user_id = getattr(g, "user_id", None)
     if not user_id:
         logger.warning("Unauthorized attempt to get account info.")
@@ -38,7 +38,7 @@ def get_account():
 
 @account_bp.route("", methods=["PUT"])
 def edit_account():
-    """Uppdaterar kontoinformation för den inloggade användaren."""
+
     user_id = getattr(g, "user_id", None)
     if not user_id:
         logger.warning("Unauthorized attempt to edit account.")
@@ -82,7 +82,7 @@ def edit_increment_account():
 
 @account_bp.route("", methods=["DELETE"])
 def delete_account():
-    """Tar bort kontot för den inloggade användaren."""
+
     user_id = getattr(g, "user_id", None)
     if not user_id:
         logger.warning("Unauthorized attempt to delete account.")

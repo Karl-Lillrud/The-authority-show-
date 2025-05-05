@@ -227,7 +227,6 @@ class UserToTeamRepository:
                 f"Editing team member: team_id={team_id}, user_id={user_id}, new_role={new_role}, full_name={full_name}, phone={phone}"
             )
 
-            # Uppdatera roll och extra fält i Teams array
             update_fields_teams = {"members.$.role": new_role}
             if full_name:
                 update_fields_teams["members.$.fullName"] = full_name

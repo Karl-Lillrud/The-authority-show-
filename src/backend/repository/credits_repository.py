@@ -24,3 +24,6 @@ def log_credit_transaction(user_id, entry):
         {"user_id": user_id},
         {"$push": {"creditsHistory": entry}}
     )
+
+def delete_by_user(user_id):
+    return collection.database.Credits.delete_one({"user_id": user_id})
