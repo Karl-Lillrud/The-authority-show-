@@ -577,32 +577,6 @@ def stripe_webhook():
                     except Exception as renewal_error:
                         logger.error(f"Error in subscription renewal handler: {str(renewal_error)}")
                 else:
-                    # Final fallback: Check all accounts for matching email pattern or username
-                    logger.warning(f"Account not found by standard methods, trying advanced lookup...")
-                    try:
-                        customer = stripe.Customer.retrieve(customer_id)
-                        if customer.email:
-                            # Try a more flexible email match (case insensitive)
-                            account = collection.database.Accounts.find_one(
-                                {"email": {"$regex": f"^{re.escape(customer.email)}$", "$options": "i"}}
-                            )
-                            if account:
-                                user_id = account.get("userId") or account.get("ownerId")
-                                logger.info(f"Found account via case-insensitive email match for user {user_id}")
-                                
-                                # Update the account with the Stripe customer ID
-                                collection.database.Accounts.update_one(
-                                    {"_id": account["_id"]},
-                                    {"$set": {"stripeCustomerId": customer_id}}
-                                )
-                                
-                                # Process the renewal
-                                subscription_service.handle_subscription_renewal(user_id, subscription)
-                                logger.info(f"Successfully processed subscription renewal via advanced lookup for user {user_id}")
-                                return jsonify(success=True)
-                    except Exception as advanced_lookup_error:
-                        logger.error(f"Advanced account lookup failed: {str(advanced_lookup_error)}")
-                    
                     logger.error(f"Account not found for customer {customer_id} after all lookup attempts")
                     return jsonify(success=False, error="Account not found"), 404
                     
