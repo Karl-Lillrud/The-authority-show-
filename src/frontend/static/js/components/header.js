@@ -177,6 +177,7 @@ if (confirmLogout) {
       const result = await response.json();
       if (response.ok) {
         window.location.href = result.redirect_url || "/signin";
+        localStorage.removeItem("podmanager_cart");
       } else {
         console.error("Logout failed:", result.message);
         alert("Failed to log out. Please try again.");
