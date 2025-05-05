@@ -283,19 +283,19 @@ export function setupTaskInteractions(state, updateUI) {
   // Edit task buttons
   document.querySelectorAll(".edit-task-btn").forEach((button) => {
     if (!button.classList.contains("edit-task-listener")) {
-      button.classList.add("edit-task-listener");
+      button.classList.add("edit-task-listener")
       button.addEventListener("click", (e) => {
-        e.stopPropagation(); // Prevent event bubbling
-        const taskId = button.getAttribute("data-task-id");
+        e.stopPropagation() // Prevent event bubbling
+        const taskId = button.getAttribute("data-task-id")
         // Close the details modal if it's open
-        const existingModal = document.getElementById("task-details-modal");
+        const existingModal = document.getElementById("task-details-modal")
         if (existingModal) {
-          existingModal.remove();
+          existingModal.remove()
         }
-        showEditTaskPopup(taskId, state, updateUI);
-      });
+        showEditTaskPopup(taskId, state, updateUI)
+      })
     }
-  });
+  })
 
   // Delete task buttons
   document.querySelectorAll(".delete-task-btn").forEach((button) => {
@@ -459,35 +459,59 @@ export async function toggleTaskAssignment(taskId, state, updateUI) {
         button.disabled = true
       }
 
-      // Fetch the user's profile to get their full name
-      const { fetchProfile } = await import("/static/requests/accountRequests.js")
-      const profileData = await fetchProfile()
-      console.log("Fetched profile data:", profileData)
+      // Try to get user profile data, with fallbacks
+      let userId = state.currentUser.id
+      let fullName = ""
+      let email = state.currentUser.email || ""
 
-      // Extract user information from profile data
-      const userId = profileData.user?._id || profileData._id || state.currentUser.id
+      try {
+        // Try to import and use the account requests module
+        const accountRequests = await import("/static/requests/accountRequests.js")
 
-      // Get the full name from profile - handle both camelCase and snake_case formats
-      const fullName =
-        profileData.user?.fullName ||
-        profileData.user?.full_name ||
-        profileData.fullName ||
-        profileData.full_name ||
-        "Unknown User"
+        // Check if fetchAccount exists and is a function
+        if (accountRequests.fetchAccount && typeof accountRequests.fetchAccount === "function") {
+          const accountData = await accountRequests.fetchAccount()
+          console.log("Fetched account data:", accountData)
 
-      console.log(`Using name: ${fullName} for task assignment`)
+          // Extract user information from account data
+          // The structure might be { account: { ... } } or directly the account object
+          const userData = accountData.account || accountData
+
+          userId = userData._id || userData.id || state.currentUser.id
+
+          // Get the full name from account data - handle different possible structures
+          fullName =
+            userData.fullName ||
+            userData.full_name ||
+            userData.name ||
+            userData.displayName ||
+            userData.display_name ||
+            ""
+
+          // Get email if fullName is not available
+          email = userData.email || state.currentUser.email || ""
+        } else {
+          console.log("fetchAccount function not found in accountRequests module, using fallback data")
+        }
+      } catch (error) {
+        console.warn("Error fetching account data, using fallback data:", error)
+      }
+
+      // Use fullName if available, otherwise use email, or fallback to "Unknown User"
+      const displayName = fullName || email || "Unknown User"
+      console.log(`Using name: ${displayName} for task assignment`)
 
       // Update task in the database - use assignedAt as the source of truth
       await updateTask(taskId, {
         assignee: userId,
-        assigneeName: fullName, // Keep this for backward compatibility
-        assignedAt: fullName, // This is now the primary field for assignment
+        assigneeName: displayName, // Keep this for backward compatibility
+        assignedAt: displayName, // This is now the primary field for assignment
       })
 
       // Update local state
       task.assignee = userId
-      task.assigneeName = fullName
-      task.assignedAt = fullName
+      task.assigneeName = displayName
+      task.assignedAt = displayName
 
       // Reset button state
       if (button) {
