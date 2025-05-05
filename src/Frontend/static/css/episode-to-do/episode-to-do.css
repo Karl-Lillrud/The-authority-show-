@@ -31,6 +31,46 @@
   --radius-sm: 0.25rem;
   --radius-lg: 0.5rem;
   --radius-full: 9999px;
+
+  /* Matching variables from other CSS files */
+
+  /* From variables.css */
+  --background-light: #f9fafb; /* Matching --bg */
+  --background-dark: #1f2937; /* Matching --dark */
+  --card-bg-light: #ffffff; /* Matching --card-bg */
+  --card-bg-dark: #2a2a2a;
+  --text-color-light: #9ca3af; /* Matching --muted */
+  --text-color-dark: #b3b3b3;
+  --highlight-color: #ff7f3f; /* New accent color */
+  --highlight-hover: #e0662c;
+  --error-color: #ef4444; /* Matching --danger */
+  --danger-color: #ef4444; /* Matching --danger */
+  --success-color: #10b981; /* Matching --success */
+
+  /* Typography */
+  --font-primary: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Open Sans",
+    "Helvetica Neue", sans-serif;
+
+  /* Spacing */
+  --spacing-xs: 4px;
+  --spacing-sm: 8px;
+  --spacing-sm2: 12px;
+  --spacing-md: 16px;
+  --spacing-md2: 20px;
+  --spacing-lg: 24px;
+  --spacing-xl: 32px;
+
+  /* Border Radiuses */
+  --radius-small: 0.25rem; /* Matching --radius-sm */
+  --radius-medium: 0.375rem; /* Matching --radius */
+  --radius-large: 0.5rem; /* Matching --radius-lg */
+
+  /* Box Shadows */
+  --card-shadow: var(--shadow);
+  --card-shadow2: var(--shadow-md);
+  --card-shadow-hover: var(--shadow-lg);
+  --card-shadow-hover2: 0 20px 35px -10px rgba(0, 0, 0, 0.1), 0 10px 15px -5px rgba(0, 0, 0, 0.05);
+  --button-shadow: var(--shadow);
 }
 
 * {
@@ -40,8 +80,7 @@
 }
 
 body {
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Open Sans",
-    "Helvetica Neue", sans-serif;
+  font-family: var(--font-primary);
   background-color: var(--bg);
   color: var(--dark);
   line-height: 1.5;
@@ -146,7 +185,7 @@ body {
 
 .progress-bar {
   height: 100%;
-  background-color: var(--primary);
+  background-color: var(--highlight-color); /* Updated to use highlight-color */
   border-radius: var(--radius-full);
   transition: width 0.3s ease;
 }
@@ -236,12 +275,12 @@ body {
 }
 
 .btn-primary {
-  background-color: var(--primary);
+  background-color: var(--highlight-color); /* Updated to use highlight-color */
   color: white;
 }
 
 .btn-primary:hover {
-  background-color: #0060df;
+  background-color: var(--highlight-hover);
 }
 
 .btn-outline {
@@ -305,8 +344,8 @@ body {
 
 .tab-btn.active {
   background-color: white;
-  border-color: var(--primary);
-  color: var(--primary);
+  border-color: var(--highlight-color); /* Updated to use highlight-color */
+  color: var(--highlight-color); /* Updated to use highlight-color */
 }
 
 .tab-btn i {
@@ -373,12 +412,12 @@ body {
 }
 
 .podcast-item:hover {
-  border-color: var(--primary);
+  border-color: var(--highlight-color); /* Updated to use highlight-color */
 }
 
 .podcast-item.active {
-  border-color: var(--primary);
-  background-color: var(--primary-light);
+  border-color: var(--highlight-color); /* Updated to use highlight-color */
+  background-color: rgba(255, 127, 63, 0.1); /* Using highlight-color with opacity */
 }
 
 .podcast-header {
@@ -421,8 +460,8 @@ body {
 }
 
 .episode-item.active {
-  background-color: var(--primary-light);
-  color: var(--primary);
+  background-color: rgba(255, 127, 63, 0.1); /* Using highlight-color with opacity */
+  color: var(--highlight-color); /* Updated to use highlight-color */
 }
 
 .episode-number {
@@ -512,8 +551,8 @@ body {
 }
 
 .task-checkbox.checked {
-  background-color: var(--primary);
-  border-color: var(--primary);
+  background-color: var(--highlight-color); /* Updated to use highlight-color */
+  border-color: var(--highlight-color); /* Updated to use highlight-color */
   color: white;
 }
 
@@ -771,14 +810,14 @@ body {
   height: 1rem;
   border-radius: var(--radius-full);
   background-color: var(--card-bg);
-  border: 2px solid var(--primary);
+  border: 2px solid var(--highlight-color); /* Updated to use highlight-color */
   display: flex;
   align-items: center;
   justify-content: center;
 }
 
 .timeline-node.recording-day {
-  background-color: var(--primary);
+  background-color: var(--highlight-color); /* Updated to use highlight-color */
 }
 
 .timeline-date {
@@ -851,7 +890,7 @@ body {
 }
 
 .about-section i {
-  color: var(--primary);
+  color: var(--highlight-color); /* Updated to use highlight-color */
   font-size: 1.25rem;
   margin-top: 0.125rem;
   flex-shrink: 0;
@@ -975,8 +1014,8 @@ body {
 
 /* Drag and Drop */
 .drag-over {
-  background-color: var(--primary-light);
-  border: 2px dashed var(--primary);
+  background-color: rgba(255, 127, 63, 0.1); /* Using highlight-color with opacity */
+  border: 2px dashed var(--highlight-color); /* Updated to use highlight-color */
 }
 
 /* Additional CSS for workspace components */
@@ -1098,8 +1137,8 @@ body {
 
 .workspace-tab.active {
   background-color: white;
-  border-color: var(--primary);
-  color: var(--primary);
+  border-color: var(--highlight-color); /* Updated to use highlight-color */
+  color: var(--highlight-color); /* Updated to use highlight-color */
 }
 
 .workspace-tab-content {
@@ -1210,7 +1249,7 @@ body {
 
 .mini-player-bar {
   height: 100%;
-  background-color: var(--primary);
+  background-color: var(--highlight-color); /* Updated to use highlight-color */
   border-radius: var(--radius-full);
 }
 
@@ -1274,8 +1313,8 @@ body {
   width: 3rem;
   height: 3rem;
   border-radius: var(--radius-full);
-  background-color: var(--primary-light);
-  color: var(--primary);
+  background-color: rgba(255, 127, 63, 0.1); /* Using highlight-color with opacity */
+  color: var(--highlight-color); /* Updated to use highlight-color */
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1312,7 +1351,6 @@ body {
     transform: rotate(360deg);
   }
 }
-
 
 /* Modal Styles */
 .modal {
@@ -1450,4 +1488,59 @@ textarea.form-control {
 .workflow-template-item input[type="radio"] {
   float: left;
   margin-top: 0.25rem;
+}
+
+/* AI Edit Buttons - from ai_edits.css */
+.btn.ai-edit-button {
+  background-color: var(--highlight-color);
+  color: white;
+  padding: var(--spacing-md) var(--spacing-lg);
+  font-size: 1rem;
+  font-weight: 600;
+  border: none;
+  border-radius: var(--radius-medium);
+  cursor: pointer;
+  transition: background-color 0.3s ease, transform 0.2s ease, box-shadow 0.2s ease;
+  box-shadow: var(--button-shadow);
+  margin: var(--spacing-sm);
+  display: inline-block;
+}
+
+.btn.ai-edit-button:hover {
+  background-color: var(--highlight-hover);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+}
+
+.btn.ai-sound-sug-button {
+  background-color: var(--highlight-color);
+  color: white;
+  padding: calc(var(--spacing-xs) / 2) var(--spacing-sm);
+  font-size: 0.75rem;
+  font-weight: 600;
+  border: none;
+  border-radius: var(--radius-medium);
+  cursor: pointer;
+  transition: background-color 0.3s ease, transform 0.2s ease, box-shadow 0.2s ease;
+  box-shadow: var(--button-shadow);
+  margin: calc(var(--spacing-xs) / 2);
+  display: inline-block;
+}
+
+.btn.ai-sound-sug-button:hover {
+  background-color: var(--highlight-hover);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+}
+
+.result-field pre {
+  max-height: 300px;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 8px;
+  background-color: #f9f9f9;
+  border: 1px solid #ddd;
+  border-radius: 0.75rem;
+  white-space: pre-wrap;
+  word-break: break-word;
 }
