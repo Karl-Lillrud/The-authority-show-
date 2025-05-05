@@ -213,10 +213,11 @@ def payment_success():
             elif episode_slots_to_add > 0:
                 logger.info(f"Unlocking {episode_slots_to_add} episode slots for {user_id}")
 
-        if plan and has_subscription:
+        # Omdirigera användaren till lämplig sida
+        if plan:  # Om det var en prenumeration inblandad
             return redirect("/account?subscription_updated=true#settings-purchases")
-        else:
-            return redirect("/dashboard")
+        else:  # Annars till dashboard eller butik/historik
+            return redirect("/dashboard?purchase_success=true")
     except Exception as e:
         logger.error(f"Payment processing error: {str(e)}")
         return jsonify({"error": str(e)}), 500
