@@ -135,6 +135,16 @@ main section article {
   align-items: stretch;
 }
 
+main section article {
+  position: relative;
+  max-width: 1300px;
+  min-height: 375px;
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: stretch;
+}
+
 main section div.container {
   position: relative;
   width: calc(50% - 20px);
@@ -208,6 +218,12 @@ section#index-about #about-figure-2 img {
 }
 
 /* Features Section */
+section#index-features article:last-of-type {
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
 section#index-features div.container {
   display: flex;
   flex-direction: column;
@@ -236,6 +252,55 @@ section#index-features figure {
 section#index-features figure#feature-figure-5 {
   display:flex;
   align-items: center;
+}
+
+section#index-features p.future-features-description {
+  font-size: 15px;
+  margin-bottom: 40px;
+}
+
+section#index-features div.future-features-container {
+  display: flex;
+  flex-direction: row;
+}
+
+section#index-features div.future-features-container .future-feature-item {
+  max-width: 300px;
+  margin-left: 20px;
+  margin-right: 20px;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+section#index-features div.future-features-container .future-feature-item .future-item-icon {
+  background-color: var(--index-highlight-color);
+  width: 54px;
+  height: 54px;
+  margin-bottom: 5px;
+  border-radius: 50%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+section#index-features div.future-features-container .future-feature-item .future-item-icon svg {
+  width: 30px;
+  height: 30px;
+  margin-left: 1px;
+}
+
+section#index-features div.future-features-container .future-feature-item h3 {
+  font-size: 17px;
+  font-weight: bold;
+  line-height: 28px;
+  color: rgb(84, 84, 84);
+  text-decoration: underline;
+  text-decoration-color: var(--index-highlight-color);
+  text-decoration-thickness: 2px;
+  text-underline-offset: 6px;
+  margin-bottom: 10px;
 }
 
 /* Get Started Section */
@@ -360,11 +425,11 @@ section#index-get-started button {
     text-align: center !important;
   }
 
-  section#index-features article div:first-of-type {
+  section#index-features article div.container:first-of-type {
     margin-bottom: 40px;
   }
 
-  section#index-features article:nth-of-type(2n+2) div:nth-of-type(1) {
+  section#index-features article:nth-of-type(2n+2) div.container:nth-of-type(1) {
     order: 2;
     margin-bottom: 0px;
     margin-top: 40px;
@@ -373,6 +438,18 @@ section#index-get-started button {
   section#index-features figure {
     min-width: 300px !important;
     position: relative;
+  }
+  section#index-features div.future-features-container {
+    flex-direction: column;
+    margin-bottom: 0px;
+  }
+
+  section#index-features div.future-features-container .future-feature-item {
+    margin-bottom: 40px;
+  }
+
+  section#index-features div.future-features-container .future-feature-item:last-of-type {
+    margin-bottom: 0px;
   }
 
 }
