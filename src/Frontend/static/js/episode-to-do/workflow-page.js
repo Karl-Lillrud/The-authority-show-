@@ -719,3 +719,367 @@ export function showCreateWorkflowModal(state, updateUI) {
     }
   })
 }
+
+export function showImportWorkflowModal(state, updateUI) {
+  if (!state.selectedEpisode) {
+    alert("Please select an episode first")
+    return
+  }
+
+  const episodeId = state.selectedEpisode._id || state.selectedEpisode.id
+
+  // First, fetch available workflows from the server
+  fetch("/get_workflows", {
+    method: "GET",
+    headers: { "Content-Type": "application/json" },
+  })
+    .then((response) => response.json())
+    .then((data) => {
+      const workflows = data.workflows || []
+
+      const modalHTML = `
+        <div id="import-workflow-modal" class="popup">
+          <div class="popup-content">
+            <div class="modal-header">
+              <h2>Select a Workflow to Import</h2>
+              <button class="close-btn">&times;</button>
+            </div>
+            <div class="popup-body">
+              <label for="workflow-select">Choose a workflow:</label>
+              <select id="workflow-select" class="form-control">
+                <option value="">--Select a Workflow--</option>
+                ${workflows
+                  .map((workflow) => `<option value="${workflow._id}">${workflow.name || "Unnamed Workflow"}</option>`)
+                  .join("")}
+              </select>
+            </div>
+            <div class="modal-footer">
+              <button type="button" id="cancel-import-btn" class="btn cancel-btn">Cancel</button>
+              <button type="button" id="import-selected-btn" class="btn save-btn" disabled>Import Workflow</button>
+            </div>
+          </div>
+        </div>
+      `
+
+      document.body.insertAdjacentHTML("beforeend", modalHTML)
+      const popup = document.getElementById("import-workflow-modal")
+
+      // Show the popup
+      popup.style.display = "flex"
+
+      // Add class to animate in
+      setTimeout(() => {
+        popup.querySelector(".popup-content").classList.add("show")
+      }, 10)
+
+      const importBtn = document.getElementById("import-selected-btn")
+      const workflowSelect = document.getElementById("workflow-select")
+
+      workflowSelect.addEventListener("change", () => {
+        importBtn.disabled = !workflowSelect.value
+      })
+
+      const closeBtn = popup.querySelector(".close-btn")
+      closeBtn.addEventListener("click", () => closePopup(popup))
+
+      const cancelBtn = document.getElementById("cancel-import-btn")
+      cancelBtn.addEventListener("click", () => closePopup(popup))
+
+      // Close when clicking outside
+      popup.addEventListener("click", (e) => {
+        if (e.target === popup) {
+          closePopup(popup)
+        }
+      })
+
+      importBtn.addEventListener("click", async () => {
+        const workflowId = workflowSelect.value
+        if (!workflowId) return
+
+        try {
+          const originalText = importBtn.innerHTML
+          importBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Importing...'
+          importBtn.disabled = true
+
+          // First, get the specific workflow by ID
+          const workflowResponse = await fetch(`/get_workflows`, {
+            method: "GET",
+            headers: { "Content-Type": "application/json" },
+          })
+
+          const workflowData = await workflowResponse.json()
+
+          if (!workflowResponse.ok) {
+            alert("Failed to fetch workflows: " + workflowData.error)
+            return
+          }
+
+          // Find the selected workflow in the response
+          const selectedWorkflow = workflowData.workflows.find((w) => w._id === workflowId)
+
+          if (!selectedWorkflow) {
+            alert("Selected workflow not found")
+            return
+          }
+
+          // Extract tasks from the selected workflow
+          const tasks = selectedWorkflow.tasks
+
+          if (!tasks || tasks.length === 0) {
+            alert("No tasks found in this workflow")
+            return
+          }
+
+          // Debug: Log the tasks to see their structure
+          console.log("Tasks to import:", tasks)
+
+          // Add tasks one by one using saveTask
+          let addedCount = 0
+          for (const task of tasks) {
+            // Create a new task object with the required fields
+            const taskData = {
+              name: task.name || "Imported Task",
+              description: task.description || "",
+              episodeId: episodeId,
+              // Use a default guest ID if none is provided
+              guestId: task.guestId,
+              // Copy other relevant fields
+              status: task.status || "pending",
+              priority: task.priority || "medium",
+              dueDate: task.dueDate || "",
+              dependencies: task.dependencies || [],
+              aiTool: task.aiTool || "",
+            }
+
+            // Save the task
+            await saveTask(taskData)
+            addedCount++
+          }
+
+          if (addedCount > 0) {
+            // Refresh tasks
+            const tasksData = await fetchTasks()
+            state.tasks = tasksData ? tasksData.filter((task) => task.episodeId === episodeId) : []
+
+            updateUI()
+
+            alert(`Successfully imported ${addedCount} tasks from the workflow!`)
+            closePopup(popup)
+          } else {
+            alert("No tasks were imported")
+            importBtn.innerHTML = originalText
+            importBtn.disabled = false
+          }
+        } catch (error) {
+          console.error("Error importing workflow:", error)
+          alert("Failed to import workflow: " + error.message)
+          importBtn.innerHTML = '<i class="fas fa-file-import"></i> Import Workflow'
+          importBtn.disabled = false
+        }
+      })
+    })
+    .catch((error) => {
+      console.error("Error fetching workflows:", error)
+
+      // Create a container for the popup if it doesn't exist
+      let popupContainer = document.getElementById("popup-container")
+      if (!popupContainer) {
+        popupContainer = document.createElement("div")
+        popupContainer.id = "popup-container"
+        document.body.appendChild(popupContainer)
+      }
+
+      // Show error modal
+      const modalHTML = `
+        <div id="import-workflow-modal" class="popup">
+          <div class="popup-content">
+            <div class="modal-header">
+              <h2>Import Workflow</h2>
+              <button class="close-btn">&times;</button>
+            </div>
+            <div class="popup-body">
+              <p class="error-message">Failed to fetch workflows. Please try again later.</p>
+            </div>
+            <div class="modal-footer">
+              <button class="btn cancel-btn" id="close-error-btn">Close</button>
+            </div>
+          </div>
+        </div>
+      `
+
+      // Add the popup HTML to the container
+      popupContainer.innerHTML = modalHTML
+
+      // Get the popup element
+      const popup = document.getElementById("import-workflow-modal")
+
+      // Show the popup
+      popup.style.display = "flex"
+
+      // Add class to animate in
+      setTimeout(() => {
+        popup.querySelector(".popup-content").classList.add("show")
+      }, 10)
+
+      // Close button event
+      const closeBtn = popup.querySelector(".close-btn")
+      closeBtn.addEventListener("click", () => closePopup(popup))
+
+      // Close button in footer
+      const closeErrorBtn = document.getElementById("close-error-btn")
+      closeErrorBtn.addEventListener("click", () => closePopup(popup))
+
+      // Close when clicking outside
+      popup.addEventListener("click", (e) => {
+        if (e.target === popup) {
+          closePopup(popup)
+        }
+      })
+    })
+}
+
+export function saveWorkflow(state, updateUI) {
+  if (!state.selectedEpisode) {
+    alert("Please select an episode first")
+    return
+  }
+
+  const episodeId = state.selectedEpisode._id || state.selectedEpisode.id
+
+  const modalHTML = `
+    <div id="save-workflow-modal" class="popup">
+      <div class="popup-content">
+        <div class="modal-header">
+          <h2>Save Workflow</h2>
+          <button class="close-btn">&times;</button>
+        </div>
+        <div class="popup-body">
+          <div class="form-group">
+            <label for="workflow-name">Workflow Name</label>
+            <input type="text" id="workflow-name" class="form-control" value="Workflow for ${state.selectedEpisode.title || "Episode"}" required>
+          </div>
+          <div class="form-group">
+            <label for="workflow-description">Description</label>
+            <textarea id="workflow-description" class="form-control" placeholder="Describe this workflow..."></textarea>
+          </div>
+          <div class="form-group">
+            <label>
+              <input type="checkbox" id="save-as-template" checked>
+              Save as reusable template
+            </label>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" id="cancel-save-btn" class="btn cancel-btn">Cancel</button>
+          <button type="button" id="save-workflow-btn" class="btn save-btn">Save Workflow</button>
+        </div>
+      </div>
+    </div>
+  `
+
+  document.body.insertAdjacentHTML("beforeend", modalHTML)
+  const popup = document.getElementById("save-workflow-modal")
+
+  // Show the popup
+  popup.style.display = "flex"
+
+  // Add class to animate in
+  setTimeout(() => {
+    popup.querySelector(".popup-content").classList.add("show")
+  }, 10)
+
+  // Close button event
+  const closeBtn = popup.querySelector(".close-btn")
+  closeBtn.addEventListener("click", () => {
+    closePopup(popup)
+  })
+
+  // Cancel button event
+  const cancelBtn = document.getElementById("cancel-save-btn")
+  cancelBtn.addEventListener("click", () => {
+    closePopup(popup)
+  })
+
+  // Close when clicking outside
+  popup.addEventListener("click", (e) => {
+    if (e.target === popup) {
+      closePopup(popup)
+    }
+  })
+
+  // Save workflow event
+  document.getElementById("save-workflow-btn").addEventListener("click", async () => {
+    const name = document.getElementById("workflow-name").value
+    const description = document.getElementById("workflow-description").value
+    const saveAsTemplate = document.getElementById("save-as-template").checked
+
+    if (!name) {
+      alert("Workflow name is required")
+      return
+    }
+
+    try {
+      const saveBtn = document.getElementById("save-workflow-btn")
+      const originalText = saveBtn.innerHTML
+      saveBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...'
+      saveBtn.disabled = true
+
+      // Get tasks for this episode
+      const episodeTasks = state.tasks.filter((task) => task.episodeId === episodeId)
+
+      if (episodeTasks.length === 0) {
+        alert("No tasks found for this episode. Please add tasks before saving a workflow.")
+        saveBtn.disabled = false
+        saveBtn.innerHTML = originalText
+        return
+      }
+
+      // Call the server to save the workflow
+      const response = await fetch("/save_workflow", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: name,
+          description: description,
+          isTemplate: saveAsTemplate,
+          tasks: episodeTasks,
+          episodeId: episodeId,
+        }),
+      })
+
+      const result = await response.json()
+
+      if (response.ok) {
+        closePopup(popup)
+        alert("Workflow saved successfully!")
+
+        // Add the new workflow to the state
+        if (result.workflowId) {
+          const newWorkflow = {
+            _id: result.workflowId,
+            name: name,
+            description: description,
+            tasks: episodeTasks,
+            isTemplate: saveAsTemplate,
+          }
+          state.workflows.push(newWorkflow)
+
+          // Update the workflow selector if we're on the workflow tab
+          if (state.activeTab === "dependencies") {
+            const workflowSelect = document.getElementById("workflow-select")
+            if (workflowSelect) {
+              const option = document.createElement("option")
+              option.value = result.workflowId
+              option.textContent = name
+              workflowSelect.appendChild(option)
+            }
+          }
+        }
+      } else {
+        throw new Error(result.error || "Failed to save workflow")
+      }
+    } catch (error) {
+      console.error("Error saving workflow:", error)
+    }
+  })
+}
