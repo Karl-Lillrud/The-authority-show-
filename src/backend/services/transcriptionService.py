@@ -1,5 +1,6 @@
 #src/backend/services/transcriptionService.py
 import os
+import re
 import openai
 import logging
 from datetime import datetime
@@ -15,7 +16,7 @@ client = ElevenLabs(api_key=os.getenv("ELEVENLABS_API_KEY"))
 
 class TranscriptionService:
     def transcribe_audio(self, file_data: bytes, filename: str) -> dict:
-        # 1. Save file to MongoDB
+        # 1. Spara fil till MongoDB
         file_id = fs.put(
             file_data,
             filename=filename,
@@ -23,13 +24,13 @@ class TranscriptionService:
         )
         logger.info(f"📥 File saved to MongoDB with ID: {file_id}")
 
-        # 2. Transcribe with ElevenLabs
+        # 2. Transkribera med ord-granularitet och exakt 2 talare
         audio_data = BytesIO(file_data)
         transcription_result = client.speech_to_text.convert(
             file=audio_data,
             model_id="scribe_v1",
-            num_speakers=2,
             diarize=True,
+            num_speakers=2,
             timestamps_granularity="word"
         )
 
@@ -37,42 +38,64 @@ class TranscriptionService:
             raise Exception("Transcription returned no text.")
 
         transcription_text = transcription_result.text.strip()
-        logger.info(f"🧠 Final transcription text:\n{transcription_text[:300]}")
+        logger.info(f"🧠 Full transcript (first 300 chars):\n{transcription_text[:300]}")
 
+        # 3. Manuellt gruppera ord till meningar med tidsstämplar per mening
         raw_transcription = []
         speaker_map = {}
         speaker_counter = 1
+        buffer = []
+        buffer_speaker = None
 
-        # 3. Build word-level transcription
-        logger.debug(f"Word-level entries found: {len(transcription_result.words)}")
-        for word_info in transcription_result.words:
-            word = word_info.text.strip()
-            start = round(word_info.start, 2)
-            end = round(word_info.end, 2)
-            speaker_id = word_info.speaker_id
-
-            if speaker_id not in speaker_map:
-                speaker_map[speaker_id] = f"Speaker {speaker_counter}"
+        for w in transcription_result.words:
+            sid = w.speaker_id
+            # Mappa nya talare
+            if sid not in speaker_map:
+                speaker_map[sid] = f"Speaker {speaker_counter}"
                 speaker_counter += 1
 
-            speaker_label = speaker_map[speaker_id]
-            if word:
-                raw_transcription.append(f"[{start}-{end}] {speaker_label}: {word}")
+            # Om talare byts, flusha befintlig buffer
+            if buffer and sid != buffer_speaker:
+                start = round(buffer[0].start, 2)
+                end   = round(buffer[-1].end,   2)
+                text  = " ".join(word.text.strip() for word in buffer).strip()
+                label = speaker_map[buffer_speaker]
+                raw_transcription.append(f"[{start}-{end}] {label}: {text}")
+                buffer = []
 
-        # 4. Fallback if no word-level transcription is available
+            buffer_speaker = sid
+            buffer.append(w)
+
+            # Om ordet avslutar en mening, flusha
+            if re.search(r"[\.!\?]$", w.text.strip()):
+                start = round(buffer[0].start, 2)
+                end   = round(buffer[-1].end,   2)
+                text  = " ".join(word.text.strip() for word in buffer).strip()
+                label = speaker_map[buffer_speaker]
+                raw_transcription.append(f"[{start}-{end}] {label}: {text}")
+                buffer = []
+
+        # Flusha eventuell kvarvarande buffer
+        if buffer:
+            start = round(buffer[0].start, 2)
+            end   = round(buffer[-1].end,   2)
+            text  = " ".join(word.text.strip() for word in buffer).strip()
+            label = speaker_map[buffer_speaker]
+            raw_transcription.append(f"[{start}-{end}] {label}: {text}")
+
+        # 4. Fallback om inga meningar bildades
         if not raw_transcription:
-            logger.warning("⚠️ No word-level transcription found. Using fallback.")
-            fallback_sentences = transcription_text.split(".")
-            raw_transcription = [
-                f"Speaker 1: {sentence.strip()}" for sentence in fallback_sentences if sentence.strip()
-            ]
+            logger.warning("⚠️ Ingen mening kunde grupperas – fallback till heltext utan tidsstämplar.")
+            for sent in transcription_text.split("."):
+                sent = sent.strip()
+                if sent:
+                    raw_transcription.append(f"Speaker 1: {sent}")
 
         return {
             "file_id": str(file_id),
-            "raw_transcription": " ".join(raw_transcription),
+            "raw_transcription": "\n".join(raw_transcription),
             "full_transcript": transcription_text
         }
-
     def get_clean_transcript(self, transcript_text: str) -> str:
         logger.info("🧽 Running filler-word removal...")
         return remove_filler_words(transcript_text)
