@@ -5,6 +5,9 @@ WORKDIR /app
 # Set PYTHONPATH to include the src directory
 ENV PYTHONPATH=/app/src
 
+# Install system dependencies including ffmpeg
+RUN apt-get update && apt-get install -y --no-install-recommends ffmpeg && rm -rf /var/lib/apt/lists/*
+
 # Copy only requirements.txt first to leverage Docker caching
 COPY src/requirements.txt /app/src/requirements.txt
 

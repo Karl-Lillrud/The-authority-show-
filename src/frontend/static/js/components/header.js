@@ -17,8 +17,7 @@ document.addEventListener("DOMContentLoaded", () => {
   document.querySelectorAll("a").forEach((link) => {
     const text = link.textContent.trim().toLowerCase();
     if (
-      text.includes("team management") ||
-      text.includes("episode to-do")
+      text.includes("team management")
     ) {
       link.style.display = "none";
       link.style.pointerEvents = "none";

@@ -1,5 +1,6 @@
 import os
 import logging  # Ensure logging is imported
+from colorama import init # Add this line
 from flask import Flask, request, session, g, jsonify, render_template
 from flask_cors import CORS
 from backend.routes.auth import auth_bp
