@@ -146,6 +146,7 @@ export function renderTaskList(state, updateUI) {
           </div>
           <div class="task-actions">
             ${hasDependencyWarning ? '<i class="fas fa-exclamation-triangle text-warning" title="This task has incomplete dependencies"></i>' : ""}
+            ${task.aiTool ? `<button class="task-action-btn workspace-redirect-btn" title="Open in ${task.aiTool} workspace" data-task-id="${task.id || task._id}" data-ai-tool="${task.aiTool}"><i class="fas fa-external-link-alt"></i></button>` : ""}
             <button class="task-action-btn edit-task-btn" title="Edit Task" data-task-id="${task.id || task._id}">
               <i class="fas fa-edit"></i>
             </button>
@@ -313,11 +314,20 @@ export function setupTaskInteractions(state, updateUI) {
 
   // Edit task buttons
   document.querySelectorAll(".edit-task-btn").forEach((button) => {
-    button.addEventListener("click", () => {
-      const taskId = button.getAttribute("data-task-id")
-      showEditTaskPopup(taskId, state, updateUI)
-    })
-  })
+    if (!button.classList.contains("edit-task-listener")) {
+      button.classList.add("edit-task-listener");
+      button.addEventListener("click", (e) => {
+        e.stopPropagation(); // Prevent event bubbling
+        const taskId = button.getAttribute("data-task-id");
+        // Close the details modal if it's open
+        const existingModal = document.getElementById("task-details-modal");
+        if (existingModal) {
+          existingModal.remove();
+        }
+        showEditTaskPopup(taskId, state, updateUI);
+      });
+    }
+  });
 
   // Delete task buttons
   document.querySelectorAll(".delete-task-btn").forEach((button) => {
@@ -340,6 +350,16 @@ export function setupTaskInteractions(state, updateUI) {
     button.addEventListener("click", () => {
       const taskId = button.getAttribute("data-task-id")
       showAddCommentModal(taskId, state, updateUI)
+    })
+  })
+
+  // Workspace redirect buttons
+  document.querySelectorAll(".workspace-redirect-btn").forEach((button) => {
+    button.addEventListener("click", (e) => {
+      e.stopPropagation() // Prevent task details from opening
+      const taskId = button.getAttribute("data-task-id")
+      const aiTool = button.getAttribute("data-ai-tool")
+      redirectToWorkspace(taskId, aiTool, state, updateUI)
     })
   })
 }
@@ -657,7 +677,16 @@ export async function showEditTaskPopup(taskId, state, updateUI) {
     const task = response[0].podtask
     console.log("Fetched task data:", task)
 
-    const { name, description, status, dependencies = [], dueDate = "", assignee = null, assigneeName = "" } = task
+    const {
+      name,
+      description,
+      status,
+      dependencies = [],
+      dueDate = "",
+      assignee = null,
+      assigneeName = "",
+      aiTool = "",
+    } = task
 
     // Get all tasks for dependency selection
     const allTasks = state.tasks.filter((t) => t.id !== taskId && t._id !== taskId)
@@ -693,9 +722,16 @@ export async function showEditTaskPopup(taskId, state, updateUI) {
                 <input type="text" id="edit-task-due-date" class="form-control date-picker" value="${dueDate || ""}">
                 <small class="help-text">Select a specific date and time or use relative terms like "Before recording", "3 days before recording"</small>
               </div>
+              
               <div class="form-group">
-                <label for="edit-task-assigned">Assigned To</label>
-                <input type="text" id="edit-task-assigned" class="form-control" value="${assigneeName || ""}">
+                <label for="edit-task-ai-tools">AI Tools</label>
+                <select id="edit-task-ai-tools" class="form-control">
+                  <option value="" ${!aiTool ? "selected" : ""}>None</option>
+                  <option value="transcription" ${aiTool === "transcription" ? "selected" : ""}>Transcription</option>
+                  <option value="audio-editing" ${aiTool === "audio-editing" ? "selected" : ""}>Audio Editing</option>
+                  <option value="video-editing" ${aiTool === "video-editing" ? "selected" : ""}>Video Editing</option>
+                </select>
+                <small class="help-text">Select an AI tool to assist with this task</small>
               </div>
               <div class="form-group">
                 <label for="edit-task-dependencies">Dependencies</label>
@@ -779,7 +815,7 @@ export async function showEditTaskPopup(taskId, state, updateUI) {
       const description = document.getElementById("edit-task-description").value
       const status = document.getElementById("edit-task-status").value
       const dueDate = document.getElementById("edit-task-due-date").value
-      const assigneeName = document.getElementById("edit-task-assigned").value
+      const aiTool = document.getElementById("edit-task-ai-tools").value
 
       // Get selected dependencies
       const dependenciesSelect = document.getElementById("edit-task-dependencies")
@@ -790,8 +826,8 @@ export async function showEditTaskPopup(taskId, state, updateUI) {
         description,
         status,
         dueDate,
-        assigneeName,
         dependencies: selectedDependencies,
+        aiTool: aiTool,
       }
 
       try {
@@ -856,9 +892,16 @@ export function showAddTaskModal(state, updateUI) {
               <input type="text" id="task-due-date" class="form-control date-picker" placeholder="Select date and time">
               <small class="help-text">Select a specific date and time or use relative terms like "Before recording", "3 days before recording"</small>
             </div>
+            
             <div class="form-group">
-              <label for="task-assigned">Assigned To</label>
-              <input type="text" id="task-assigned" class="form-control" placeholder="Name of person assigned">
+              <label for="task-ai-tools">AI Tools</label>
+              <select id="task-ai-tools" class="form-control">
+                <option value="">None</option>
+                <option value="transcription">Transcription</option>
+                <option value="audio-editing">Audio Editing</option>
+                <option value="video-editing">Video Editing</option>
+              </select>
+              <small class="help-text">Select an AI tool to assist with this task</small>
             </div>
             <div class="form-group">
               <label for="task-dependencies">Dependencies</label>
@@ -942,7 +985,7 @@ export function showAddTaskModal(state, updateUI) {
     const title = document.getElementById("task-title").value
     const description = document.getElementById("task-description").value
     const dueDate = document.getElementById("task-due-date").value
-    const assigneeName = document.getElementById("task-assigned").value
+    const aiTool = document.getElementById("task-ai-tools").value
 
     // Get selected dependencies
     const dependenciesSelect = document.getElementById("task-dependencies")
@@ -959,9 +1002,9 @@ export function showAddTaskModal(state, updateUI) {
       description,
       episodeId: episodeId,
       dueDate,
-      assigneeName,
       dependencies: selectedDependencies,
       status: "not-started", // Default to not-started
+      aiTool: aiTool, // Add the AI tool to the task data
     }
 
     try {
@@ -1416,8 +1459,8 @@ export function showImportWorkflowModal(state, updateUI) {
               status: task.status || "pending",
               priority: task.priority || "medium",
               dueDate: task.dueDate || "",
-              assigneeName: task.assigneeName || "",
               dependencies: task.dependencies || [],
+              aiTool: task.aiTool || "",
             }
 
             // Save the task
@@ -1571,6 +1614,16 @@ export function showTaskDetailsModal(taskId, state, updateUI) {
                 <i class="fas fa-tasks"></i>
                 <span>Status: ${task.status || "Not started"}</span>
               </div>
+              ${
+                task.aiTool
+                  ? `
+              <div class="task-meta-item">
+                <i class="fas fa-robot"></i>
+                <span>AI Tool: ${task.aiTool.replace("-", " ").replace(/\b\w/g, (l) => l.toUpperCase())}</span>
+              </div>
+              `
+                  : ""
+              }
             </div>
             
             ${
@@ -1651,6 +1704,15 @@ export function showTaskDetailsModal(taskId, state, updateUI) {
           <button type="button" id="edit-task-details-btn" class="btn btn-primary" data-task-id="${taskId}">
             <i class="fas fa-edit"></i> Edit Task
           </button>
+          ${
+            task.aiTool
+              ? `
+          <button type="button" id="open-workspace-btn" class="btn btn-primary" data-task-id="${taskId}" data-ai-tool="${task.aiTool}">
+            <i class="fas fa-laptop"></i> Open in Workspace
+          </button>
+          `
+              : ""
+          }
           <button type="button" id="close-task-details-btn" class="btn cancel-btn">Close</button>
         </div>
       </div>
@@ -1680,12 +1742,14 @@ export function showTaskDetailsModal(taskId, state, updateUI) {
     closePopup(popup)
   })
 
-  // Edit button event
-  const editBtn = document.getElementById("edit-task-details-btn")
-  editBtn.addEventListener("click", () => {
-    closePopup(popup)
-    showEditTaskPopup(taskId, state, updateUI)
-  })
+  // Workspace button event
+  if (task.aiTool) {
+    const workspaceBtn = document.getElementById("open-workspace-btn")
+    workspaceBtn.addEventListener("click", () => {
+      closePopup(popup)
+      redirectToWorkspace(taskId, task.aiTool, state, updateUI)
+    })
+  }
 
   // Close when clicking outside
   popup.addEventListener("click", (e) => {
@@ -1817,4 +1881,44 @@ export async function updateTaskStatus(taskId, columnId, state, updateUI) {
 
   // Update UI
   updateUI()
+}
+
+export function redirectToWorkspace(taskId, aiTool, state, updateUI) {
+  // First, switch to the workspace tab
+  const workspaceTab = document.querySelector('.tab-btn[data-tab="workspace"]')
+  if (workspaceTab) {
+    workspaceTab.click()
+  }
+
+  // Then, select the appropriate AI tool tab based on the aiTool value
+  setTimeout(() => {
+    let tabName = "transcription" // default
+
+    if (aiTool === "audio-editing") {
+      tabName = "audio"
+    } else if (aiTool === "video-editing") {
+      tabName = "video"
+    } else if (aiTool === "transcription") {
+      tabName = "transcription"
+    } else if (aiTool === "summary" || aiTool === "seo") {
+      tabName = "transcription" // These likely work with the transcript
+    }
+
+    // Call the showTab function from workspace-page.js
+    if (window.showTab) {
+      window.showTab(tabName)
+    } else {
+      // Fallback if the function isn't globally available
+      const tabButton = document.querySelector(`.tab-btn[onclick="showTab('${tabName}')"]`)
+      if (tabButton) {
+        tabButton.click()
+      }
+    }
+
+    // Optionally, you could also pass the task context to the workspace
+    // This would require additional implementation in the workspace code
+    if (window.setCurrentTask) {
+      window.setCurrentTask(taskId)
+    }
+  }, 100) // Small delay to ensure the tab switch happens first
 }

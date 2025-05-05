@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from backend.database.mongo_connection import collection
 from backend.utils.subscription_access import PLAN_BENEFITS
 import logging
@@ -230,7 +230,7 @@ class SubscriptionService:
                 )
                 logger.info(f"Marked {update_inactive_result.modified_count} previous active subscriptions as inactive for user {user_id}")
             except Exception as inactive_err:
-                logger.error(f"Error marking previous subscriptions as inactive for user {user_id}: {inactive_err}", exc_info=True)
+                logger.error(f"Error marking previous subscriptions as inactive for user {inactive_err}", exc_info=True)
                 # Continue even if this fails, priority is the new subscription
 
             # Also record in the subscriptions collection
@@ -291,6 +291,99 @@ class SubscriptionService:
             )
             raise Exception(f"Error updating subscription: {str(e)}")
 
+    def update_subscription_from_webhook(self, user_id, plan_name, stripe_subscription):
+        """
+        Update a user's subscription from a webhook event.
+        This is similar to update_user_subscription but optimized for webhook events.
+        """
+        try:
+            start_date = datetime.fromtimestamp(stripe_subscription.current_period_start, tz=timezone.utc)
+            end_date = datetime.fromtimestamp(stripe_subscription.current_period_end, tz=timezone.utc)
+            
+            # Get the amount from the subscription items
+            amount_paid = 0
+            for item in stripe_subscription.items.data:
+                amount_paid += item.price.unit_amount / 100  # Convert cents to dollars
+            
+            # Get the plan benefits
+            plan_benefits = PLAN_BENEFITS.get(plan_name.upper(), PLAN_BENEFITS["FREE"])
+            
+            # Find account to update
+            filter_query = {"userId": user_id}
+            account = self.accounts_collection.find_one(filter_query)
+            if not account:
+                filter_query = {"ownerId": user_id}
+                account = self.accounts_collection.find_one(filter_query)
+            
+            if not account:
+                raise ValueError(f"No account found for user {user_id}")
+            
+            # Update account record
+            update_result = self.accounts_collection.update_one(
+                filter_query,
+                {
+                    "$set": {
+                        "subscriptionStatus": "active",
+                        "subscriptionPlan": plan_name,
+                        "subscriptionAmount": amount_paid,
+                        "subscriptionStart": start_date.isoformat(),
+                        "subscriptionEnd": end_date.isoformat(),
+                        "lastUpdated": datetime.utcnow().isoformat(),
+                        "benefits": plan_benefits,
+                        "stripeCustomerId": stripe_subscription.customer,
+                    }
+                },
+            )
+            
+            if update_result.modified_count == 0:
+                logger.warning(f"No changes made to account for user {user_id}")
+            
+            # Update any existing active subscription to inactive
+            self.subscriptions_collection.update_many(
+                {"user_id": user_id, "status": "active"},
+                {"$set": {"status": "inactive", "updated_at": datetime.utcnow().isoformat()}}
+            )
+            
+            # Create a new subscription record
+            subscription_data = {
+                "_id": str(uuid.uuid4()),
+                "user_id": user_id,
+                "plan": plan_name,
+                "amount": amount_paid,
+                "start_date": start_date.isoformat(),
+                "end_date": end_date.isoformat(),
+                "status": "active",
+                "payment_id": stripe_subscription.id,
+                "stripe_subscription_id": stripe_subscription.id, 
+                "created_at": datetime.utcnow().isoformat(),
+                "benefits": plan_benefits,
+            }
+            
+            self.subscriptions_collection.insert_one(subscription_data)
+            
+            # Update user's credits based on the subscription plan
+            from backend.services.creditService import update_subscription_credits
+            updated_credits = update_subscription_credits(user_id, plan_name)
+            
+            # Log the subscription update activity
+            self.activity_service.log_activity(
+                user_id=user_id,
+                activity_type="subscription_updated",
+                description=f"Subscription updated to '{plan_name}' plan via webhook.",
+                details={
+                    "plan": plan_name,
+                    "amount": amount_paid,
+                    "end_date": end_date.isoformat(),
+                    "credits": plan_benefits.get("credits", 0),
+                },
+            )
+            
+            return True
+        
+        except Exception as e:
+            logger.error(f"Error updating subscription from webhook for user {user_id}: {str(e)}")
+            raise Exception(f"Error updating subscription: {str(e)}")
+
     def can_create_episode(self, user_id, is_imported=False):
         try:
             account = self._get_account(user_id)
@@ -310,7 +403,7 @@ class SubscriptionService:
             benefits = PLAN_BENEFITS.get(plan, PLAN_BENEFITS["FREE"])
 
             episode_slots = benefits.get("episode_slots", 0)
-            extra_slots = account.get("extra_episode_slots", 0)
+            extra_slots = account.get("unlockedExtraEpisodeSlots", 0)
             total_allowed_slots = episode_slots + extra_slots
 
             if benefits.get("max_slots") == "Unlimited":

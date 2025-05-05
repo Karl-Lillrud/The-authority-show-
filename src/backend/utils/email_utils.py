@@ -220,14 +220,14 @@ def send_login_email(email, login_link):
     Sends a login link email to the user and prints the link to the terminal.
     """
     try:
-        subject = "Din inloggningslänk för PodManager"
+        subject = "Your login link for PodManager"
         body = f"""
         <html>
             <body>
-                <p>Hej,</p>
-                <p>Klicka på länken nedan för att logga in på ditt PodManager-konto:</p>
-                <a href="{login_link}" style="color: #ff7f3f; text-decoration: none;">Logga in</a>
-                <p>Länken är giltig i 10 minuter. Om du inte begärde detta, ignorera detta email.</p>
+                <p>Hello,</p>
+                <p>Click the link below to log in to your PodManager account:</p>
+                <a href="{login_link}" style="color: #ff7f3f; text-decoration: none;">Log in</a>
+                <p>This link is valid for 10 minutes. If you did not request this, please ignore this email.</p>
                 <p>Best regards,<br>PodManager Team</p>
             </body>
         </html>
@@ -267,6 +267,7 @@ def send_login_email(email, login_link):
             f"❌ Error while sending login email to {email}: {e}", exc_info=True
         )
         return {"error": f"Error while sending login email: {str(e)}"}
+
 
 
 def send_team_invite_email(
