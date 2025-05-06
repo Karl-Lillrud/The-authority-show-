@@ -40,6 +40,7 @@ from backend.routes.comment import comment_bp  # Import the comment blueprint
 from colorama import Fore, Style, init  # Import colorama for styled logs
 from backend.routes.activity import activity_bp
 from backend.routes.stripe_config import stripe_config_bp  # Import the renamed config blueprint
+from backend.routes.edit_routes import edit_bp
 from backend.routes.enterprise import enterprise_bp  # Import the enterprise blueprint
 from backend.routes.lia import lia_bp  # Corrected: Import lia_bp from backend.routes.lia
 
@@ -106,6 +107,7 @@ app.register_blueprint(landingpage_bp)
 app.register_blueprint(comment_bp)
 app.register_blueprint(activity_bp)  # Ensure this registration exists
 app.register_blueprint(stripe_config_bp)  # Ensure this registration exists
+app.register_blueprint(edit_bp)
 app.register_blueprint(enterprise_bp, url_prefix="/enterprise")  # Register the enterprise blueprint
 app.register_blueprint(lia_bp, url_prefix="/lia")  # Ensure this line uses the correct lia_bp
 
