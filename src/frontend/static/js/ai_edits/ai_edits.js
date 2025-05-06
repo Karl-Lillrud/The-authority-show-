@@ -1256,12 +1256,14 @@ async function consumeStoreCredits(featureKey) {
         throw new Error(result.error || "Failed to consume credits");
     }
 
-    // Update the UI to reflect new credit balance
-    await fetchStoreCredits(CURRENT_USER_ID);
-    await populateStoreCredits();
+    // ✅ Update header credits
+    if (window.populateStoreCredits) {
+        await window.populateStoreCredits();
+    }
 
     return result.data;
 }
+
 
 function acceptSfx(index, emotion, url) {
     selectedSoundFX[index] = { emotion, sfxUrl: url };

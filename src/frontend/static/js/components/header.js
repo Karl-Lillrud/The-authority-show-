@@ -226,3 +226,5 @@ function setDynamicPageTitle() {
     pageTitleElement.textContent = pageTitle;
   }
 }
+
+window.populateStoreCredits = populateStoreCredits;
