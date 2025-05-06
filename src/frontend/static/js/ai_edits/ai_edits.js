@@ -1258,6 +1258,7 @@ async function consumeStoreCredits(featureKey) {
 
     // Update the UI to reflect new credit balance
     await fetchStoreCredits(CURRENT_USER_ID);
+    await populateStoreCredits();
 
     return result.data;
 }
