@@ -17,7 +17,7 @@ fs = get_fs()
 
 class VideoService:
     def upload_video(self, video_bytes: bytes, filename: str) -> str:
-        logger.info(f"📤 Uploading video: {filename}")
+        logger.info(f"Uploading video: {filename}")
         return save_file(
             video_bytes,
             filename=filename,
@@ -25,7 +25,7 @@ class VideoService:
         )
 
     def enhance_video(self, file_id: str) -> str:
-        logger.info(f"🎬 Enhancing video with ID: {file_id}")
+        logger.info(f"Enhancing video with ID: {file_id}")
         video_bytes = get_file_data(file_id)
 
         with tempfile.NamedTemporaryFile(delete=False, suffix=".mp4") as tmp_in:
@@ -35,7 +35,7 @@ class VideoService:
         output_path = input_path.replace(".mp4", "_enhanced.mp4")
         ffmpeg_cmd = f'ffmpeg -y -i "{input_path}" -vf "eq=contrast=1.05:brightness=0.05" -af "loudnorm" "{output_path}"'
 
-        logger.info(f"🔧 Running FFmpeg command: {ffmpeg_cmd}")
+        logger.info(f"Running FFmpeg command: {ffmpeg_cmd}")
         result = subprocess.run(ffmpeg_cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 
         logger.debug(result.stdout.decode())
@@ -59,7 +59,7 @@ class VideoService:
         return enhanced_id
 
     def analyze_video(self, file_id: str) -> dict:
-        logger.info(f"📊 Analyzing video with ID: {file_id}")
+        logger.info(f"Analyzing video with ID: {file_id}")
         video_bytes = get_file_data(file_id)
 
         # Save video to a temporary file
@@ -130,7 +130,7 @@ class VideoService:
         output_path = input_path.replace(".mp4", "_clipped.mp4")
 
         ffmpeg_cmd = f'ffmpeg -y -i "{input_path}" -ss {start_time} -to {end_time} -c copy "{output_path}"'
-        logger.info(f"🔧 Running FFmpeg command: {ffmpeg_cmd}")
+        logger.info(f"Running FFmpeg command: {ffmpeg_cmd}")
         result = subprocess.run(ffmpeg_cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 
         logger.debug(result.stdout.decode())
