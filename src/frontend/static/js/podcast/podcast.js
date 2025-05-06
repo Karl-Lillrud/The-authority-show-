@@ -27,12 +27,12 @@ document.addEventListener("DOMContentLoaded", async () => {
     // Display podcast details
     const podcastContainer = document.getElementById("podcast-container");
     podcastContainer.innerHTML = `
-      <div class="card">
-        <h2>${podcast.podName}</h2>
-        <p><strong>Category:</strong> ${podcast.category || 'No category available'}</p>
-        <p><strong>Owner:</strong> ${podcast.ownerName || 'No owner available'}</p>
-        <p><strong>Host:</strong> ${podcast.hostName || 'No host available'}</p>
-        <p><strong>Description:</strong> ${podcast.description || 'No description available'}</p>
+      <img src="${podcast.logoUrl || '/static/images/default-podcast.jpg'}" alt="${podcast.podName}" class="podcast-logo">
+      <div class="podcast-info">
+        <h1>${podcast.podName}</h1>
+        <p class="podcast-category">${podcast.category || 'No category available'}</p>
+        <p class="podcast-host">Hosted by ${podcast.hostName || 'No host available'}</p>
+        <p class="podcast-description">${podcast.description || 'No description available'}</p>
       </div>
     `;
 
@@ -42,25 +42,70 @@ document.addEventListener("DOMContentLoaded", async () => {
       return [];
     });
     const episodesDiv = document.getElementById("episodes-container");
-    if (episodesData && episodesData.length > 0) {
-      episodesDiv.innerHTML = episodesData.map(
-        episode => {
-          const episodeId = episode.id || episode._id || "unknown";
-          return `
-            <div class="card">
-              <h4>${episode.title}</h4>
-              <p><strong>Duration:</strong> ${episode.duration || 'N/A'}</p>
-              <p><strong>Release Date:</strong> ${episode.publishDate || 'N/A'}</p>
-              <button class="btn ai-edit-btn" data-episode-id="${episodeId}">
-                AI Edit
-              </button>
+
+    // Update episode template
+    const episodeTemplate = episode => {
+      const episodeId = episode.id || episode._id || "unknown";
+      const audioUrl = episode.audioUrl || '';
+      
+      return `
+        <div class="episode-card">
+          <div class="episode-content">
+            <h3 class="episode-title">${episode.title}</h3>
+            <div class="episode-meta">
+              <span class="duration-badge">${episode.duration || 'N/A'}</span>
+              <span class="release-date">${formatDate(episode.publishDate)}</span>
             </div>
-          `;
-        }
-      ).join("");
+            <div class="episode-actions">
+              ${audioUrl ? `
+                <audio controls class="episode-audio">
+                  <source src="${audioUrl}" type="audio/mpeg">
+                  Your browser does not support the audio element.
+                </audio>
+              ` : ''}
+              <button class="ai-edit-btn" data-episode-id="${episodeId}">Edit</button>
+            </div>
+          </div>
+        </div>
+      `;
+    };
+
+    // Add date formatter helper
+    function formatDate(dateString) {
+      if (!dateString) return 'No date';
+      return new Date(dateString).toLocaleDateString('en-US', {
+        month: 'short',
+        day: 'numeric',
+        year: 'numeric'
+      });
+    }
+
+    // Update where episodes are rendered - show all episodes
+    if (episodesData && episodesData.length > 0) {
+      episodesDiv.innerHTML = episodesData
+        .map(episode => episodeTemplate(episode))
+        .join("");
     } else {
       episodesDiv.innerHTML = "<p>No episodes found for this podcast.</p>";
     }
+
+    // Add button click handlers
+    document.querySelectorAll('.add-btn').forEach(button => {
+      button.addEventListener('click', () => {
+        const action = button.textContent.trim();
+        let targetUrl = '/podcastmanagement'; // Default URL
+
+        if (action === 'Add Guest') {
+          targetUrl = '/podcastmanagement#add-guest';
+        } else if (action === 'Add Task') {
+          targetUrl = '/podcastmanagement#add-task';
+        } else if (action === 'Add Member') {
+          targetUrl = '/podcastmanagement#add-member';
+        }
+
+        window.location.href = targetUrl;
+      });
+    });
 
     // Right after rendering episode cards
     document.querySelectorAll('.ai-edit-btn').forEach(button => {
