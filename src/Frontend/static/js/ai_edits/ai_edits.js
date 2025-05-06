@@ -110,10 +110,16 @@ function showTab(tabName) {
                     </div>
                     </div>
 
-                    <div class="result-group">
-                    <button class="btn ai-edit-button" onclick="generateTranslatedPodcast()">
+                    <div 
+                        <button
+                        id="generateAudioBtn"
+                        class="btn ai-edit-button"
+                        style="display: none;"
+                        onclick="generateTranslatedPodcast()"
+                        >
                         🎙 Generate Podcast Audio
-                    </button>
+                        </button>
+                    <div
                     <div class="result-field">
                         <audio id="translatedPodcastPlayer" controls style="width:100%; display:none;"></audio>
                         <a id="downloadTranslatedPodcast"
@@ -272,46 +278,31 @@ let rawTranscript = "";
 let fullTranscript = "";
 
 async function transcribe() {
-    const fileInput = document.getElementById('fileUploader');
+    const file = document.getElementById('fileUploader').files[0];
     const resultContainer = document.getElementById('transcriptionResult');
-    const file = fileInput.files[0];
-    if (!file) {
-        alert('Please upload a file.');
-        return;
+    if (!file) return alert('Please upload a file.');
+  
+    try { await consumeStoreCredits('transcription'); }
+    catch(err) { return resultContainer.innerText = `❌ Not enough credits: ${err.message}`; }
+  
+    resultContainer.innerText = "🔄 Transcribing...";
+    const formData = new FormData(); formData.append('file', file);
+  
+    const res = await fetch('/transcription/transcribe', { method:'POST', body: formData });
+    if (!res.ok) {
+      const e = await res.json();
+      return resultContainer.innerText = `❌ ${e.error || res.statusText}`;
     }
-
-    try {
-        await consumeStoreCredits("transcription");
-    } catch (err) {
-        resultContainer.innerText = `❌ Not enough credits: ${err.message}`;
-        return;
-    }
-
-    resultContainer.innerText = "🔄 Transcribing... Please wait.";
-    const formData = new FormData();
-    formData.append('file', file);
-
-    try {
-        const response = await fetch('/transcription/transcribe', {
-            method: 'POST',
-            body: formData,
-        });
-
-        if (response.ok) {
-            const result = await response.json();
-            rawTranscript = result.raw_transcription || "";
-            fullTranscript = result.full_transcript || "";
-
-            resultContainer.innerText = rawTranscript;
-            document.getElementById("enhancementTools").style.display = "block";
-        } else {
-            const errorData = await response.json();
-            resultContainer.innerText = `❌ Error: ${errorData.error || response.statusText}`;
-        }
-    } catch (error) {
-        resultContainer.innerText = `❌ Transcription failed: ${error.message}`;
-    }
-}
+    const { segments } = await res.json();
+    window.transcribedSegments = segments;
+  
+    // Visa transcript i UI
+    resultContainer.innerText = segments
+      .map(s => `[${s.start}-${s.end}] ${s.speaker}: ${s.text}`)
+      .join('\n');
+  
+    document.getElementById("enhancementTools").style.display = "block";
+  }
 
 async function generateCleanTranscript() {
     try {
@@ -527,46 +518,30 @@ async function convertIntroOutroToSpeech() {
 }
 
 async function generateTranslatedPodcast() {
-    const player = document.getElementById("translatedPodcastPlayer");
-    const dl     = document.getElementById("downloadTranslatedPodcast");
-    const translated = document.getElementById("translationResult").innerText.trim();
-    if (!translated) {
-        alert("⚠️ Ingen översättning tillgänglig – gör först översättningen.");
-        return;
-    }
-
-    // Läs av valt språk
-    const language = document.getElementById("languageSelect").value;
-
+    const audioEl = document.getElementById("translatedPodcastPlayer");
+    const dl      = document.getElementById("downloadTranslatedPodcast");
+    const segments = window.translatedSegments;
+    if (!segments || !segments.length) return alert("⚠️ Kör först översättningen.");
+  
     try {
-        await consumeStoreCredits("ai_intro_outro_audio");
-
-        const res = await fetch("/transcription/translate_audio", {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ transcript: translated, language })
-        });
-
-        if (!res.ok) {
-            let errMsg;
-            try { errMsg = (await res.json()).error; }
-            catch { errMsg = await res.text(); }
-            throw new Error(errMsg || res.statusText);
-        }
-
-        const blob = await res.blob();
-        const url  = URL.createObjectURL(blob);
-
-        player.src           = url;
-        player.style.display = "block";
-
-        dl.href          = url;
-        dl.download      = `podcast_${language}.mp3`;
-        dl.style.display = "inline-block";
-    } catch (err) {
-        alert("❌ Kunde inte generera poddljud: " + err.message);
+      await consumeStoreCredits("ai_intro_outro_audio");
+      const res = await fetch("/transcription/generate_audio", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ segments, language: document.getElementById("languageSelect").value })
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || res.statusText);
+  
+      audioEl.src           = data.audio_base64;
+      audioEl.style.display = "block";
+      dl.href          = data.audio_base64;
+      dl.download      = `podcast_${document.getElementById("languageSelect").value}.mp3`;
+      dl.style.display = "inline-block";
+    } catch(err) {
+      alert("❌ Kunde inte generera ljud: " + err.message);
     }
-}
+  }
 
 async function enhanceAudio() {
     const input = document.getElementById('audioUploader');
@@ -1242,30 +1217,31 @@ function replaceSfx(index, url) {
 
 async function translateTranscript() {
     const resultEl = document.getElementById("translationResult");
-    const transcript = fullTranscript.trim() || rawTranscript.trim();
-    if (!transcript) {
-        alert("⚠️ Ingen transkription hittad – kör först transkriberingen.");
-        return;
-    }
-
-    // Läs av valt språk
+    const segments = window.transcribedSegments;
+    if (!segments || !segments.length) return alert("⚠️ Kör först transkriberingen.");
+  
     const language = document.getElementById("languageSelect").value;
-
+    resultEl.innerText = "🔄 Översätter…";
+  
     try {
-        await consumeStoreCredits("translation");
-        resultEl.innerText = "🔄 Translating…";
-
-        const res = await fetch('/transcription/translate', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ transcript, language })
-        });
-        const data = await res.json();
-        if (!res.ok) throw new Error(data.error || res.statusText);
-
-        // Visa översättning
-        resultEl.innerText = data.translated_text;
-    } catch (err) {
-        resultEl.innerText = `❌ Error: ${err.message}`;
+      await consumeStoreCredits("translation");
+      const res = await fetch("/transcription/translate_segments", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ segments, language })
+      });
+      if (!res.ok) throw new Error((await res.json()).error || res.statusText);
+  
+      const { segments: translated } = await res.json();
+      window.translatedSegments = translated;
+  
+      resultEl.innerText = translated
+        .map(s => `[${s.start}-${s.end}] ${s.speaker}: ${s.text}`)
+        .join('\n');
+  
+      // Visa knappen för att generera ljud
+      document.getElementById("generateAudioBtn").style.display = "inline-block";
+    } catch(err) {
+      resultEl.innerText = `❌ ${err.message}`;
     }
-}
+  }

@@ -412,3 +412,23 @@ def translate_and_tts():
     except Exception as e:
         logger.error(f"Error in translate_audio: {e}", exc_info=True)
         return jsonify({"error": str(e)}), 500
+
+@transcription_bp.route("/generate_audio", methods=["POST"])
+def generate_audio():
+    data = request.json or {}
+    segments = data.get("segments", [])
+    language = data.get("language", "English")
+    try:
+        audio_bytes = transcription_service.generate_audio_from_segments(segments, language)
+        b64 = base64.b64encode(audio_bytes).decode("utf-8")
+        return jsonify({"audio_base64": f"data:audio/mp3;base64,{b64}"})
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+    
+@transcription_bp.route("/translate_segments", methods=["POST"])
+def translate_segments_route():
+    data      = request.json or {}
+    segments  = data.get("segments", [])
+    language  = data.get("language", "English")
+    translated = transcription_service.translate_segments(segments, language)
+    return jsonify({"segments": translated})
