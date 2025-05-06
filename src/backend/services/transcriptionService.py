@@ -3,7 +3,7 @@ import os
 import openai
 import logging
 from datetime import datetime, timezone
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timezone
 from typing import List
 from io import BytesIO
 from elevenlabs.client import ElevenLabs
@@ -16,24 +16,28 @@ client = ElevenLabs(api_key=os.getenv("ELEVENLABS_API_KEY"))
 
 class TranscriptionService:
     def transcribe_audio(self, file_data: bytes, filename: str) -> dict:
-        
-        logger.info(f"Starting transcription for file: {filename}")
+        logger.info(f"Starting transcription")
 
         # Step 1: Attempt transcription with ElevenLabs
         audio_data = BytesIO(file_data)
         try:
+            try:
             transcription_result = client.speech_to_text.convert(
-                file=audio_data,
-                model_id="scribe_v1",
-                num_speakers=2,
-                diarize=True,
-                timestamps_granularity="word"
-            )
+                    file=audio_data,
+                    model_id="scribe_v1",
+                    num_speakers=2,
+                    diarize=True,
+                    timestamps_granularity="word"
+                )
+        except Exception as e:
+            logger.error(f"ElevenLabs transcription failed: {str(e)}")
+            raise Exception("Transcription service failed. Please try again later.")
         except Exception as e:
             logger.error(f"ElevenLabs transcription failed: {str(e)}")
             raise Exception("Transcription service failed. Please try again later.")
 
         if not transcription_result.text:
+            logger.warning("Transcription returned no text.")
             logger.warning("Transcription returned no text.")
             raise Exception("Transcription returned no text.")
 
