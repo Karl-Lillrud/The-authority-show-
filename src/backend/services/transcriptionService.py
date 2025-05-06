@@ -21,7 +21,6 @@ class TranscriptionService:
         # Step 1: Attempt transcription with ElevenLabs
         audio_data = BytesIO(file_data)
         try:
-            try:
             transcription_result = client.speech_to_text.convert(
                     file=audio_data,
                     model_id="scribe_v1",
