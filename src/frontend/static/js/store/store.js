@@ -569,6 +569,7 @@ function updateCartUI() {
     totalAmount.textContent = `$${totalPrice.toFixed(2)}`;
     checkoutBtn.disabled = false;
   }
+  initializeSvgIcons();
 }
 
 function updateCartNotification() {
