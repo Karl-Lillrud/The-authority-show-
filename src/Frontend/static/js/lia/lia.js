@@ -16,7 +16,7 @@ const questions = [
         ]
     },
     {
-        text: "Do you enjoy working remotely and have experience with remote work?",
+        text: "Are you OK with working remotely?",
         dealbreaker: false,
         options: [
             { text: "Yes, I enjoy remote work and have experience.", value: true },
