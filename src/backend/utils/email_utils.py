@@ -447,3 +447,38 @@ def invite_user():
     except Exception as e:
         logger.error(f"❌ Failed to send activation email: {e}", exc_info=True)
         return jsonify({"error": f"Internal server error: {str(e)}"}), 500
+
+
+def send_enterprise_inquiry_email(name, email, phone):
+    """
+    Sends an enterprise inquiry email to contact@podmanager.ai.
+    """
+    try:
+        to_email = "contact@podmanager.ai"
+        subject = "Enterprise Inquiry"
+        body = f"""
+        <html>
+            <body>
+                <h2>New Enterprise Inquiry</h2>
+                <p><strong>Name:</strong> {name}</p>
+                <p><strong>Email:</strong> {email}</p>
+                <p><strong>Phone:</strong> {phone}</p>
+                <br>
+                <p>This inquiry was submitted through the /enterprise page form.</p>
+            </body>
+        </html>
+        """
+        logger.info(f"📧 Preparing to send enterprise inquiry email from {email}")
+        result = send_email(to_email, subject, body)
+        if result.get("success"):
+            logger.info(f"✅ Enterprise inquiry email sent successfully from {email} to {to_email}")
+        else:
+            logger.error(
+                f"❌ Failed to send enterprise inquiry email from {email} to {to_email}: {result.get('error')}"
+            )
+        return result
+    except Exception as e:
+        logger.error(
+            f"❌ Error while sending enterprise inquiry email: {e}", exc_info=True
+        )
+        return {"error": f"Error while sending enterprise inquiry email: {str(e)}"}

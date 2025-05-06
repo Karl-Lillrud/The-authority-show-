@@ -1,0 +1,53 @@
+{% extends "/components/base.html" %}
+
+{% block title %}Enterprise Solutions - PodManager.ai{% endblock %}
+
+{% block head_extra %}
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/enterprise/enterprise.css') }}">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+{% endblock %}
+
+{% block content %}
+    <main>
+        <div class="container">
+            <div class="enterprise-card">
+                <div class="card-content">
+                    <h1>Unlock Your Exclusive Enterprise Solutions</h1>
+                    
+                    <p>Want a custom offer for your business? Fill in your details, and we'll take care of everything to get you started with PodManager Enterprise Solutions as soon as possible.</p>
+                    
+                    <form id="enterpriseForm">
+                        <div class="form-group">
+                            <label for="name">Name</label>
+                            <input type="text" id="name" name="name" required>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="email">Email</label>
+                            <input type="email" id="email" name="email" required>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="phone">Phone Number</label>
+                            <input type="tel" id="phone" name="phone" required>
+                        </div>
+                        
+                        <p class="form-footer">Let us help you scale your podcasting efforts with PodManager.ai.</p>
+                        
+                        <button type="submit" class="submit-btn">Get Contacted</button>
+                    </form>
+                    
+                    <div id="successMessage" class="success-message hidden">
+                        <div class="success-icon">✓</div>
+                        <h3>Thank you for your interest!</h3>
+                        <p>We've received your information and a team member will contact you shortly.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script src="{{ url_for('static', filename='js/enterprise/enterprise.js') }}"></script>
+{% endblock %}

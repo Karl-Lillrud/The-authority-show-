@@ -219,6 +219,7 @@ function setDynamicPageTitle() {
       "/team": "Team Management",
       "/guest": "Guest View",
       "/episode-to-do": "Episode To-Do",
+      "/enterprise": "Enterprise",
     };
 
     const currentPath = window.location.pathname;
