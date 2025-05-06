@@ -17,3 +17,4 @@ class AccountSchema(Schema):
     isActive = fields.Bool(required=True)
     created_at = fields.DateTime(required=True)
     isFirstLogin = fields.Bool()
+    unlockedExtraEpisodeSlots = fields.Int()

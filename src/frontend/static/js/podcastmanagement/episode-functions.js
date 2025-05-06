@@ -10,6 +10,8 @@ import { updateEditButtons, shared } from "./podcastmanagement.js";
 import { renderPodcastSelection, viewPodcast } from "./podcast-functions.js";
 import { renderGuestDetail } from "./guest-functions.js";
 import { showNotification } from "../components/notifications.js";
+import { consumeStoreCredits, getCredits } from "../../../static/requests/creditRequests.js";
+import { incrementUpdateAccount } from "../../../static/requests/accountRequests.js";
 
 // Add this function to create a play button with SVG icon
 export function createPlayButton(size = "medium") {
@@ -155,55 +157,54 @@ export function renderEpisodeDetail(episode) {
       episode.description || "No description available."
     }</p>
     
-<!-- Audio + Edits section side-by-side -->
-<div class="audio-section-wrapper" style="display: flex; gap: 2rem; align-items: flex-start; flex-wrap: wrap;">
+    <!-- Audio Section Wrapper - Only contains the main player now -->
+    <div class="audio-section-wrapper" style="margin-top: 1.5rem;"> <!-- Removed flex styles -->
+      <!-- Main Audio Player -->
+      <div class="main-audio-player"> <!-- Removed flex properties -->
+        <h3>Main Episode Audio</h3>
+        ${
+          episode.audioUrl
+            ? `<audio controls style="width: 100%;">
+                 <source src="${episode.audioUrl}" type="${
+                fileType || "audio/mpeg"
+              }">
+                 Your browser does not support the audio element.
+               </audio>`
+            : "<p>No audio available for this episode.</p>"
+        }
+      </div>
+    </div> <!-- End audio-section-wrapper -->
 
-  <!-- Main Audio Player -->
-  <div class="main-audio-player" style="flex: 1; min-width: 300px;">
-    <h3>Main Episode Audio</h3>
+    <!-- Saved Audio Edits - Moved outside and below the wrapper -->
     ${
-      episode.audioUrl
-        ? `<audio controls style="width: 100%;">
-             <source src="${episode.audioUrl}" type="${
-            fileType || "audio/mpeg"
-          }">
-             Your browser does not support the audio element.
-           </audio>`
-        : "<p>No audio available for this episode.</p>"
+      episode.audioEdits && episode.audioEdits.length > 0
+        ? `<div class="audio-edits" style="margin-top: 1.5rem;"> <!-- Added margin-top -->
+            <h3>🎧 Saved Edits</h3>
+            ${episode.audioEdits
+              .map((edit) => {
+                const blobUrl = edit.metadata?.blob_url;
+                const label =
+                  edit.metadata?.edit_type || edit.edit_type || "Unknown Type";
+                return `
+                <div class="edit-entry" style="margin-bottom: 1rem;">
+                  <p style="margin-bottom: 0.25rem;"><strong>${label}</strong> – ${
+                  edit.filename
+                }</p>
+                  ${
+                    blobUrl
+                      ? `<audio controls style="width: 100%;">
+                          <source src="${blobUrl}" type="audio/wav">
+                          Your browser does not support the audio element.
+                        </audio>`
+                      : `<p style="color: red;">❌ No audio URL available</p>`
+                  }
+                </div>`;
+              })
+              .join("")}
+          </div>`
+        : ""
     }
-  </div>
-
-  <!-- Saved Audio Edits -->
-  ${
-    episode.audioEdits && episode.audioEdits.length > 0
-      ? `<div class="audio-edits" style="flex: 1; min-width: 300px;">
-          <h3>🎧 Saved Edits</h3>
-          ${episode.audioEdits
-            .map((edit) => {
-              const blobUrl = edit.metadata?.blob_url;
-              const label =
-                edit.metadata?.edit_type || edit.edit_type || "Unknown Type";
-              return `
-              <div class="edit-entry" style="margin-bottom: 1rem;">
-                <p style="margin-bottom: 0.25rem;"><strong>${label}</strong> – ${
-                edit.filename
-              }</p>
-                ${
-                  blobUrl
-                    ? `<audio controls style="width: 100%;">
-                        <source src="${blobUrl}" type="audio/wav">
-                        Your browser does not support the audio element.
-                      </audio>`
-                    : `<p style="color: red;">❌ No audio URL available</p>`
-                }
-              </div>`;
-            })
-            .join("")}
-        </div>`
-      : ""
-  }
-  </div>
-</div>
+  </div> <!-- End podcast-about-section -->
 
   
   <!-- Additional details section -->
@@ -254,7 +255,15 @@ export function renderEpisodeDetail(episode) {
   if (aiEditButton) {
     aiEditButton.addEventListener("click", () => {
       const episodeId = aiEditButton.getAttribute("data-id");
-      const aiEditUrl = `/transcription/ai_edits?episodeId=${episodeId}`;
+      const episodeTitle = episode.title || "Untitled Episode"; // Get episode title
+      let aiEditUrl = `/transcription/ai_edits?episodeId=${episodeId}&episodeTitle=${encodeURIComponent(
+        episodeTitle
+      )}`; // Add episodeTitle
+      // Append audioUrl if it exists and the episode is not imported (meaning audio was manually uploaded)
+      if (episode.audioUrl && episode.isImported === false) {
+        // Ensure the URL is properly encoded
+        aiEditUrl += `&audioUrl=${encodeURIComponent(episode.audioUrl)}`;
+      }
       window.location.href = aiEditUrl;
     });
   }
@@ -411,12 +420,15 @@ async function showEpisodePopup(episode) {
   popup.className = "popup";
   popup.style.display = "flex";
 
+  // Determine if the file input should be disabled: Disable if episode IS imported
+  const isAudioUploadDisabled = episode.isImported === true;
+
   const popupContent = document.createElement("div");
   popupContent.className = "form-box";
   popupContent.innerHTML = `
   <span id="close-episode-popup" class="close-btn">&times;</span>
   <h2 class="form-title">Edit Episode</h2>
-  <form id="update-episode-form">
+  <form id="update-episode-form" enctype="multipart/form-data"> 
     <div class="field-group full-width">
       <label for="upd-episode-title">Episode Title</label>
       <input type="text" id="upd-episode-title" name="title" value="${
@@ -438,9 +450,9 @@ async function showEpisodePopup(episode) {
       }" required />
     </div>
     <div class="field-group">
-      <label for="upd-duration">Duration (minutes)</label>
-      <input type="number" id="upd-duration" name="duration" value="${
-        episode.duration || ""
+      <label for="upd-duration">Duration (minutes)</label> 
+      <input type="number" id="upd-duration" name="duration_minutes" value="${
+        episode.duration ? Math.floor(episode.duration / 60) : ""
       }" />
     </div>
     <div class="field-group">
@@ -448,6 +460,29 @@ async function showEpisodePopup(episode) {
       <input type="text" id="upd-status" name="status" value="${
         episode.status || ""
       }" />
+    </div>
+    
+    <div class="field-group full-width">
+        <label for="upd-episode-audio" ${
+          isAudioUploadDisabled ? 'style="color: #aaa;"' : ""
+        }>Upload New Audio (Optional)</label>
+        <input type="file" id="upd-episode-audio" name="audioFile" accept="audio/*" ${
+          isAudioUploadDisabled // Disable if true
+            ? 'disabled style="background-color: #eee;"'
+            : ""
+        }>
+        ${
+          isAudioUploadDisabled // Show message if disabled (i.e., isImported is true)
+            ? '<p style="font-size: 0.8em; color: #888; margin-top: 5px;">Audio upload disabled for imported episodes.</p>'
+            : ""
+        }
+        ${
+          episode.audioUrl && !isAudioUploadDisabled // Only show current audio link if upload is enabled
+            ? `<p style="font-size: 0.8em; margin-top: 5px;">Current audio: <a href="${episode.audioUrl}" target="_blank">Listen</a></p>`
+            : !isAudioUploadDisabled // Only show 'No current audio' if upload is enabled
+            ? '<p style="font-size: 0.8em; margin-top: 5px;">No current audio file.</p>'
+            : ""
+        }
     </div>
     <div class="form-actions">
       <button type="button" id="cancel-episode-update" class="cancel-btn">Cancel</button>
@@ -473,32 +508,41 @@ async function showEpisodePopup(episode) {
     .querySelector("#update-episode-form")
     .addEventListener("submit", async (e) => {
       e.preventDefault();
-      const updatedData = {
-        title: document.getElementById("upd-episode-title").value.trim(),
-        description: document
-          .getElementById("upd-episode-description")
-          .value.trim(),
-        publishDate: document.getElementById("upd-publish-date").value,
-        duration: document.getElementById("upd-duration").value,
-        status: document.getElementById("upd-status").value.trim()
-      };
-      Object.keys(updatedData).forEach((key) => {
-        if (!updatedData[key]) delete updatedData[key];
-      });
+      const form = e.target;
+      const formData = new FormData(form); // Use FormData
 
-      if (updatedData.duration) {
-        if (updatedData.duration < 0) {
+      // Get duration in minutes from the form
+      const durationMinutes = formData.get("duration_minutes");
+
+      // Convert minutes to seconds for the backend
+      if (durationMinutes) {
+        const durationSeconds = Math.round(parseFloat(durationMinutes) * 60);
+        if (durationSeconds < 0 || isNaN(durationSeconds)) {
           showNotification(
             "Invalid duration",
-            "Please provide a positive integer for duration",
+            "Please provide a non-negative number for duration in minutes",
             "error"
           );
           return;
         }
+        formData.set("duration", durationSeconds.toString());
+      } else {
+        formData.set("duration", ""); // Or remove if backend handles absence
+      }
+      formData.delete("duration_minutes");
+
+      // If audio upload was disabled (because isImported was true), ensure no audioFile is sent
+      if (isAudioUploadDisabled) {
+        formData.delete("audioFile");
       }
 
+      // Optional: Add loading indicator
+      const submitButton = form.querySelector("button[type='submit']");
+      submitButton.disabled = true;
+      submitButton.textContent = "Updating...";
+
       try {
-        const result = await updateEpisode(episode._id, updatedData); // Use updateEpisode from episodeRequest.js
+        const result = await updateEpisode(episode._id, formData);
         if (result.message) {
           showNotification(
             "Success",
@@ -506,13 +550,20 @@ async function showEpisodePopup(episode) {
             "success"
           );
           document.body.removeChild(popup);
-          // Update the episode details in the DOM
-          renderEpisodeDetail({ ...episode, ...updatedData });
+          const updatedEpisodeData = await fetchEpisode(episode._id);
+          renderEpisodeDetail(updatedEpisodeData); // Refresh detail view
         } else {
           showNotification("Error", result.error || "Update failed", "error");
         }
       } catch (error) {
-        showNotification("Error", "Failed to update episode.", "error");
+        showNotification(
+          "Error",
+          `Failed to update episode: ${error.message || error}`,
+          "error"
+        );
+      } finally {
+        submitButton.disabled = false; // Re-enable button
+        submitButton.textContent = "Update Episode";
       }
     });
 }
@@ -689,36 +740,52 @@ export function initEpisodeFunctions() {
     });
 
   // Funktion för att visa popup när episodgränsen nås
-  function showEpisodeLimitPopup() {
-    const popup = document.createElement("div");
-    popup.className = "popup";
+  async function showEpisodeLimitPopup() {
+    const popup = document.getElementById("episode-limit-popup");
     popup.style.display = "flex";
 
-    popup.innerHTML = `
-      <div class="form-box">
-        <h2 class="form-title">Episode Limit Reached</h2>
-        <p>You have reached your episode limit. Buy more slots to create additional episodes.</p>
-        <div class="form-actions">
-          <button class="cancel-btn" id="close-limit-popup">Cancel</button>
-          <button class="save-btn" id="buy-credits-btn-popup">Buy Credits</button>
-        </div>
-      </div>
-    `;
-
-    document.body.appendChild(popup);
-
-    // Stäng popup
+    // Close popup
     document
       .getElementById("close-limit-popup")
       .addEventListener("click", () => {
-        document.body.removeChild(popup);
+        popup.style.display = "none";
       });
 
-    // Navigera till store
-    document
-      .getElementById("buy-credits-btn-popup")
-      .addEventListener("click", () => {
-        window.location.href = "/store";
+    const credits_button = document.getElementById("buy-credits-btn-popup");
+
+    const credits = await getCredits();
+    const extra_episode_cost = 5000;
+    if (credits >= extra_episode_cost) {
+      credits_button.textContent = "Buy for 5000 credits";
+    } else {
+      credits_button.textContent = "Buy Credits"
+    }
+
+    // Navigate to store
+    credits_button
+      .addEventListener("click", async () => {
+        if (credits >= extra_episode_cost) {
+          try {
+            await consumeStoreCredits("episode_pack");
+            const updateData = {
+              'unlockedExtraEpisodeSlots': 1 // Increment the extra episode slots by 1
+            };
+            incrementUpdateAccount(updateData);
+
+            showNotification(
+              "Success",
+              "Increased episode slots!",
+              "success"
+            );
+
+            popup.style.display = "none";
+          } catch (error) {
+            console.log(error);
+          }
+        } else {
+          window.location.href = "/store";
+        }
       });
   }
 }
+

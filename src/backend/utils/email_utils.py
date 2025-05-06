@@ -4,6 +4,7 @@ import os
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from email.mime.image import MIMEImage
+from email.utils import formataddr  # Import formataddr
 from dotenv import load_dotenv
 from flask import render_template, Blueprint, request, jsonify, url_for, redirect
 import urllib.parse
@@ -183,7 +184,8 @@ def send_email(to_email, subject, body, image_path=None):
     try:
         # Create the email message
         msg = MIMEMultipart("alternative")
-        msg["From"] = EMAIL_USER
+        # Set the From header with display name and email address
+        msg["From"] = formataddr(("PodManager.ai", EMAIL_USER))
         msg["To"] = to_email
         msg["Subject"] = subject
         msg.attach(MIMEText(body, "html"))
@@ -221,62 +223,14 @@ def send_login_email(email, login_link, language="en"):
     Supports multiple languages for email content.
     """
     try:
-        # Email templates for different languages
-        templates = {
-            "en": {
-                "subject": "Your PodManager Login Code",
-                "body": f"""
-                <html>
-                    <body>
-                        <h2>Your Login Code</h2>
-                        <p>Please use the following code to log in to your PodManager account:</p>
-                        <h1 style="font-size: 24px; color: #4a90e2; text-align: center; padding: 20px; background: #f5f5f5; border-radius: 5px;">{login_link}</h1>
-                        <p>This code will expire in 10 minutes.</p>
-                        <p>If you didn't request this code, please ignore this email.</p>
-                        <p>Best regards,<br>The PodManager Team</p>
-                    </body>
-                </html>
-                """
-            },
-            "ar": {
-                "subject": "رمز تسجيل الدخول الخاص بك",
-                "body": f"""
-                <html dir="rtl">
-                    <body>
-                        <h2>رمز تسجيل الدخول الخاص بك</h2>
-                        <p>يرجى استخدام الرمز التالي لتسجيل الدخول إلى حساب PodManager الخاص بك:</p>
-                        <h1 style="font-size: 24px; color: #4a90e2; text-align: center; padding: 20px; background: #f5f5f5; border-radius: 5px;">{login_link}</h1>
-                        <p>سينتهي هذا الرمز خلال 10 دقائق.</p>
-                        <p>إذا لم تطلب هذا الرمز، يرجى تجاهل هذا البريد الإلكتروني.</p>
-                        <p>مع تحياتنا،<br>فريق PodManager</p>
-                    </body>
-                </html>
-                """
-            }
-        }
-
-        # Get template for the specified language, default to English if not found
-        template = templates.get(language, templates["en"])
-        
-        # Send the email
-        result = send_email(
-            to_email=email,
-            subject=template["subject"],
-            body=template["body"],
-            image_path="static/images/PodManagerLogo.png"
-        )
-        
-        if result:
-            logger.info(f"Login email sent successfully to {email}")
-            return {"success": True}
-        subject = "Din inloggningslänk för PodManager"
+        subject = "Your login link for PodManager"
         body = f"""
         <html>
             <body>
-                <p>Hej,</p>
-                <p>Klicka på länken nedan för att logga in på ditt PodManager-konto:</p>
-                <a href="{login_link}" style="color: #ff7f3f; text-decoration: none;">Logga in</a>
-                <p>Länken är giltig i 10 minuter. Om du inte begärde detta, ignorera detta email.</p>
+                <p>Hello,</p>
+                <p>Click the link below to log in to your PodManager account:</p>
+                <a href="{login_link}" style="color: #ff7f3f; text-decoration: none;">Log in</a>
+                <p>This link is valid for 10 minutes. If you did not request this, please ignore this email.</p>
                 <p>Best regards,<br>PodManager Team</p>
             </body>
         </html>
@@ -311,8 +265,11 @@ def send_login_email(email, login_link, language="en"):
             return {"success": False, "error": "Failed to send email"}
             
     except Exception as e:
-        logger.error(f"Error sending login email to {email}: {str(e)}", exc_info=True)
-        return {"success": False, "error": str(e)}
+        logger.error(
+            f"❌ Error while sending login email to {email}: {e}", exc_info=True
+        )
+        return {"error": f"Error while sending login email: {str(e)}"}
+
 
 
 def send_team_invite_email(
@@ -492,3 +449,74 @@ def invite_user():
     except Exception as e:
         logger.error(f"❌ Failed to send activation email: {e}", exc_info=True)
         return jsonify({"error": f"Internal server error: {str(e)}"}), 500
+
+
+def send_enterprise_inquiry_email(name, email, phone):
+    """
+    Sends an enterprise inquiry email to contact@podmanager.ai.
+    """
+    try:
+        to_email = "contact@podmanager.ai"
+        subject = "Enterprise Inquiry"
+        body = f"""
+        <html>
+            <body>
+                <h2>New Enterprise Inquiry</h2>
+                <p><strong>Name:</strong> {name}</p>
+                <p><strong>Email:</strong> {email}</p>
+                <p><strong>Phone:</strong> {phone}</p>
+                <br>
+                <p>This inquiry was submitted through the /enterprise page form.</p>
+            </body>
+        </html>
+        """
+        logger.info(f"📧 Preparing to send enterprise inquiry email from {email}")
+        result = send_email(to_email, subject, body)
+        if result.get("success"):
+            logger.info(f"✅ Enterprise inquiry email sent successfully from {email} to {to_email}")
+        else:
+            logger.error(
+                f"❌ Failed to send enterprise inquiry email from {email} to {to_email}: {result.get('error')}"
+            )
+        return result
+    except Exception as e:
+        logger.error(
+            f"❌ Error while sending enterprise inquiry email: {e}", exc_info=True
+        )
+        return {"error": f"Error while sending enterprise inquiry email: {str(e)}"}
+
+
+def send_lia_inquiry_email(name, email, phone, school_and_study):
+    """
+    Sends an LIA inquiry email to me@karllillrud.com.
+    """
+    try:
+        to_email = "me@karllillrud.com"
+        subject = "New LIA Coming In"
+        body = f"""
+        <html>
+            <body>
+                <h2>New LIA on the way in!</h2>
+                <p><strong>Name:</strong> {name}</p>
+                <p><strong>Email:</strong> {email}</p>
+                <p><strong>Phone:</strong> {phone}</p>
+                <p><strong>School and Field of Study:</strong> {school_and_study}</p>
+                <br>
+                <p>This inquiry was submitted through the /lia page questionnaire.</p>
+            </body>
+        </html>
+        """
+        logger.info(f"📧 Preparing to send LIA inquiry email from {email}")
+        result = send_email(to_email, subject, body)
+        if result.get("success"):
+            logger.info(f"✅ LIA inquiry email sent successfully from {email} to {to_email}")
+        else:
+            logger.error(
+                f"❌ Failed to send LIA inquiry email from {email} to {to_email}: {result.get('error')}"
+            )
+        return result
+    except Exception as e:
+        logger.error(
+            f"❌ Error while sending LIA inquiry email: {e}", exc_info=True
+        )
+        return {"error": f"Error while sending LIA inquiry email: {str(e)}"}
