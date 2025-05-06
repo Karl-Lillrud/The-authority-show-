@@ -153,14 +153,111 @@ main section div.container {
 
 /* Banner Section */
 section#index-banner {
+  background-image: url("/static/images/index/cover-image-microphone.jpg");
+  background-position: center -50px;
   justify-content: center;
   flex-direction: column;
 }
+
+section#index-banner #logo img {
+  height: 15vw;
+  width: auto;
+  min-height: 250px;
+  max-height: 300px;
+  margin-top: 200px;
+}
+
+section#index-banner div.product-review {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: stretch;
+  position: absolute;
+  max-width: 390px;
+  padding: 40px;
+  z-index: 2;
+}
+
+section#index-banner div#product-review-1 {
+  right: calc(50% + 200px );
+  bottom: calc(50% + 150px );
+}
+
+section#index-banner div#product-review-2 {
+  left: calc(50% + 275px );
+  bottom: calc(50% + 25px );
+}
+
+section#index-banner div#product-review-3 {
+  max-width: 350px;
+  right: calc(50% + 215px );
+  bottom: calc(50% - 310px );
+}
+
+section#index-banner div.product-review .product-rating {
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  margin-bottom: 5px;
+}
+
+section#index-banner div.product-review .product-quote {
+  font-size: 20px;
+  font-weight: 500;
+  font-kerning: normal;
+  color: black;
+  text-transform: uppercase;
+  text-shadow: 0px 0px 3px #000000cc;
+}
+
+section#index-banner div.product-review .product-quote {
+  font-size: 20px;
+  font-weight: 500;
+  font-kerning: normal;
+  color: black;
+  text-transform: uppercase;
+  text-shadow: 0px 0px 3px #000000cc;
+}
+
+section#index-banner div.product-review .product-quote::before {
+  content: "❝";
+  position: absolute;
+  color: var(--index-highlight-color);
+  font-size: 192px;
+  top: -30px;
+  left: -25px;
+  text-shadow: none;
+  z-index: -1;
+}
+
+section#index-banner div.product-review .product-review-author {
+  font-size: 12px;
+  font-weight: 500;
+  font-style: italic;
+  font-kerning: normal;
+  color: black;
+  text-transform: uppercase;
+  text-shadow: 0px 0px 3px #000000cc;
+  margin-top: 20px;
+}
+
 
 /* About Section */
 section#index-about {
   background-color: var(--index-highlight-color);
   min-height: 50vh;
+  position: relative;
+}
+
+section#index-about::before {
+  content: "";
+  background-color: var(--index-highlight-color);
+  position: absolute;
+  width: 100vw;
+  height: 180px;
+  top: -180px;
+  z-index: 2;
+  clip-path: polygon(0 100%, 0 100%, 100% 100%, 100% 0);
 }
 
 section#index-about h1 {
@@ -323,7 +420,7 @@ section#index-get-started p {
   line-height: 1.7;
 }
 
-section#index-get-started button {
+section#index-get-started button, section#index-get-started a.button {
   font-size: 21px;
   color: white;
   text-transform: uppercase;
@@ -334,20 +431,65 @@ section#index-get-started button {
   padding: 15px 40px;
   margin-top: 40px;
   transition: var(--transition-normal);
+  backface-visibility: hidden;
 }
 
-section#index-get-started button:hover {
+section#index-get-started button:hover, section#index-get-started a.button:hover {
   opacity: 0.95;
-  transform: scale(1.05);
+  transform: scale(1.05) rotate(0.02deg);
   box-shadow: 0px 0px 10px var(--index-highlight-color);
+  text-decoration: none;
 }
 
 
 /* * * * * * * * * * * */
 /*  Responsive Design  */
 /* * * * * * * * * * * */
+@media (max-width: 1304px) {
+
+  /* Banner Section */
+  section#index-banner div#product-review-1 {
+    right: calc(50% + 175px );
+    bottom: calc(50% + 150px );
+  }
+
+  section#index-banner div#product-review-2 {
+    bottom: calc(50% - 25px );
+  }
+
+  section#index-banner div#product-review-3 {
+    right: calc(50% + 205px );
+    bottom: calc(50% - 310px );
+  }
+}
+
+@media (max-width: 1144px) {
+
+  /* Banner Section */
+  section#index-banner div#product-review-1 {
+    max-width: 290px;
+    right: calc(50% + 150px );
+    bottom: calc(50% + 150px );
+  }
+
+  section#index-banner div#product-review-2 {
+    bottom: calc(50% - 95px );
+  }
+
+  section#index-banner div#product-review-3 {
+    max-width: 290px;
+    right: calc(50% + 190px );
+    bottom: calc(50% - 310px );
+  }
+}
 
 @media (max-width: 1200px) {
+
+  /* About Section */
+  section#index-about::before {
+    height: 130px;
+    top: -130px;
+  }
 
   /* Features Section */
   section#index-features figure {
@@ -371,6 +513,30 @@ section#index-get-started button:hover {
 
   h2 {
     font-size: 24px;
+  }
+
+  /* Banner Section */
+  section#index-banner {
+    background-image: none;
+  }
+
+  section#index-banner figure {
+    position: relative;
+  }
+
+  section#index-banner figure img {
+    margin-top: 0 !important;
+    min-height: 200px !important;
+    max-height: 200px !important;
+  }
+
+  section#index-banner div.product-review {
+    position: relative;
+    right: initial !important;
+    bottom: initial !important;
+    left: initial !important;
+    max-width: 600px !important;
+    padding-bottom: 20px;
   }
 
   /* About Section */
@@ -471,6 +637,11 @@ section#index-get-started button:hover {
   }
 
   /* About Section */
+  section#index-about::before {
+    height: 80px;
+    top: -80px;
+  }
+
   section#index-about article div.container figure#about-figure-1 {
     min-height: 200px;
   }
