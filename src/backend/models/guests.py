@@ -17,23 +17,23 @@ class RecommendedGuestSchema(Schema):
     reason = fields.Str(required=False)
 
 class GuestSchema(Schema):
-    id = fields.Str()
+    id = fields.Str(required=True)  # Required: Unique identifier
     episodeId = fields.Str(required=False)
     name = fields.Str(required=True)
-    image = fields.Str()
-    description = fields.Str()
-    bio = fields.Str()
-    email = fields.Email()
-    company = fields.Str()
-    phone = fields.Str()  # Changed from Int to Str to handle phone formats
-    areasOfInterest = fields.List(fields.Str())
-    status = fields.Str()
-    scheduled = fields.Int()
-    completed = fields.Int()
-    created_at = fields.DateTime()
-    user_id = fields.Str()
-    calendarEventId = fields.Str()
-    futureOpportunities = fields.Bool()
-    notes = fields.Str()
-    recommendedGuests = fields.List(fields.Nested(RecommendedGuestSchema))
-    socialmedia = fields.Nested(SocialMediaSchema)
+    image = fields.Str(required=False)  # Optional: Image of the guest
+    description = fields.Str(required=False)  # Optional: Description of the guest
+    bio = fields.Str(required=False)  # Optional: Biography of the guest
+    email = fields.Email(required=True)  # Required: Email of the guest
+    company = fields.Str(required=False)  # Optional: Company of the guest
+    phone = fields.Str(required=False)  # Optional: Phone number
+    areasOfInterest = fields.List(fields.Str(), required=False)  # Optional: Areas of interest
+    status = fields.Str(required=False)  # Optional: Status (e.g., active, inactive)
+    scheduled = fields.Int(required=False)  # Optional: Scheduled date/time
+    completed = fields.Int(required=False)  # Optional: Completion status
+    created_at = fields.DateTime(required=True)  # Required: Timestamp of creation
+    user_id = fields.Str(required=True)  # Required: Associated user
+    calendarEventId = fields.Str(required=False)  # Optional: Associated calendar event ID
+    futureOpportunities = fields.Bool(required=False)  # Optional: Future opportunities
+    notes = fields.Str(required=False)  # Optional: Additional notes
+    recommendedGuests = fields.List(fields.Nested(RecommendedGuestSchema), required=False)  # Optional: List of recommended guests
+    socialmedia = fields.Nested(SocialMediaSchema, required=False)  # Optional: Social media links
