@@ -159,6 +159,7 @@ section#index-banner {
   justify-content: center;
   flex-direction: column;
   min-height: 1150px;
+  position: relative;
 }
 
 section#index-banner #logo img {
@@ -182,7 +183,7 @@ section#index-banner div.product-review {
 
 section#index-banner div#product-review-1 {
   right: calc(50% + 200px );
-  bottom: calc(50% + 150px );
+  bottom: calc(50% + 75px );
   animation: ease-in-out animate-from-left 0.5s;
 }
 section#index-banner div#product-review-1 .product-quote::before {
@@ -223,7 +224,7 @@ section#index-banner div#product-review-1 .product-review-author {
 
 section#index-banner div#product-review-2 {
   left: calc(50% + 275px );
-  bottom: calc(50% + 25px );
+  bottom: calc(50% - 50px );
   animation: ease-in-out animate-from-right 0.8s;
 }
 section#index-banner div#product-review-2 .product-quote::before {
@@ -265,7 +266,7 @@ section#index-banner div#product-review-2 .product-review-author {
 section#index-banner div#product-review-3 {
   max-width: 350px;
   right: calc(50% + 215px );
-  bottom: calc(50% - 310px );
+  bottom: calc(50% - 275px );
   animation: ease-in-out animate-from-bottom 1s;
 }
 section#index-banner div#product-review-3 .product-quote::before {
@@ -617,16 +618,16 @@ section#index-get-started button:hover, section#index-get-started a.button:hover
   /* Banner Section */
   section#index-banner div#product-review-1 {
     right: calc(50% + 175px );
-    bottom: calc(50% + 150px );
+    bottom: calc(50% + 100px );
   }
 
   section#index-banner div#product-review-2 {
-    bottom: calc(50% - 25px );
+    bottom: calc(50% - 100px );
   }
 
   section#index-banner div#product-review-3 {
     right: calc(50% + 205px );
-    bottom: calc(50% - 310px );
+    bottom: calc(50% - 275px );
   }
 }
 
@@ -636,17 +637,17 @@ section#index-get-started button:hover, section#index-get-started a.button:hover
   section#index-banner div#product-review-1 {
     max-width: 290px;
     right: calc(50% + 150px );
-    bottom: calc(50% + 150px );
+    bottom: calc(50% + 125px );
   }
 
   section#index-banner div#product-review-2 {
-    bottom: calc(50% - 95px );
+    bottom: calc(50% - 110px );
   }
 
   section#index-banner div#product-review-3 {
     max-width: 290px;
     right: calc(50% + 190px );
-    bottom: calc(50% - 310px );
+    bottom: calc(50% - 350px );
   }
 }
 
