@@ -45,8 +45,21 @@ def transcribe():
     filename = file.filename
     file_ext = os.path.splitext(filename)[-1].lower()
     is_video = file_ext in ["mp4", "mov", "avi", "mkv", "webm"]
-
+    
     try:
+        user_id = session.get("user_id")
+
+        # Check and enforce credit limit BEFORE doing any processing
+        try:
+            consume_credits(user_id, "transcription")
+        except ValueError as e:
+            logger.warning(f"User {user_id} has insufficient credits for transcription.")
+            return jsonify({
+                "error": str(e),
+                "redirect": "/store"
+            }), 403
+
+   
         # Extract audio if needed
         if is_video:
             temp_video_path = f"/tmp/{filename}"
@@ -64,15 +77,6 @@ def transcribe():
         else:
             audio_bytes = file.read()
 
-        
-        # Check credits before working on transcript
-        user_id = session.get("user_id")
-        try:
-            consume_credits(user_id, "transcription")
-        except ValueError as e:
-            logger.warning(f"Credit check failed for user {user_id}: {str(e)}")
-            return jsonify({"error": str(e)}), 403
-        
         # Subscribe plan and duration validation
         subscription = subscription_service.get_user_subscription(user_id)
         subscription_plan = subscription["plan"] if subscription else "FREE"

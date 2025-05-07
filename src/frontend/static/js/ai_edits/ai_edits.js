@@ -311,7 +311,7 @@ async function transcribe() {
     showSpinner("transcriptionResult");
     const formData = new FormData();
     formData.append('file', file);
-    formData.append('episode_id', episodeId);  // 🟢 Lägg till episode ID här!
+    formData.append('episode_id', episodeId);  // Include episode ID
 
     try {
         const response = await fetch('/transcription/transcribe', {
@@ -321,25 +321,34 @@ async function transcribe() {
 
         hideSpinner("transcriptionResult");
 
+        if (response.status === 403) {
+            const errorData = await response.json();
+            resultContainer.innerHTML = `
+                <p style="color: red;">${errorData.error || "You don't have enough credits."}</p>
+                ${errorData.redirect ? `<a href="${errorData.redirect}" class="btn ai-edit-button">Go to Store</a>` : ""}
+            `;
+            return;
+        }
+
         if (response.ok) {
             const result = await response.json();
             rawTranscript = result.raw_transcription || "";
             fullTranscript = result.full_transcript || "";
-
+        
             resultContainer.innerText = rawTranscript;
             document.getElementById("enhancementTools").style.display = "block";
-
-            await consumeStoreCredits("transcription");
-        } else {
-            const errorData = await response.json();
-            resultContainer.innerText = `Error: ${errorData.error || response.statusText}`;
-            resultContainer.innerText = `Error: ${errorData.error || response.statusText}`;
+        
+            if (result.credit_warning) {
+                alert("Transcription completed, but your credits are too low. Please visit the store.");
+            }
+        
         }
     } catch (error) {
-        resultContainer.innerText = `Transcription failed: ${error.message}`;
+        hideSpinner("transcriptionResult");
         resultContainer.innerText = `Transcription failed: ${error.message}`;
     }
 }
+
 
 async function generateCleanTranscript() {
     const containerId = "cleanTranscriptResult";
