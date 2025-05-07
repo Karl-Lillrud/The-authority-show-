@@ -281,28 +281,37 @@ async function transcribe() {
     const file = document.getElementById('fileUploader').files[0];
     const resultContainer = document.getElementById('transcriptionResult');
     if (!file) return alert('Please upload a file.');
-  
+
     try { await consumeStoreCredits('transcription'); }
-    catch(err) { return resultContainer.innerText = `❌ Not enough credits: ${err.message}`; }
-  
+    catch(err) { 
+      return resultContainer.innerText = `❌ Not enough credits: ${err.message}`;
+    }
+
     resultContainer.innerText = "🔄 Transcribing...";
-    const formData = new FormData(); formData.append('file', file);
-  
+    const formData = new FormData();
+    formData.append('file', file);
+
     const res = await fetch('/transcription/transcribe', { method:'POST', body: formData });
     if (!res.ok) {
       const e = await res.json();
       return resultContainer.innerText = `❌ ${e.error || res.statusText}`;
     }
-    const { segments } = await res.json();
+
+    // Här fångar vi in allt som backend returnerar:
+    const { segments, raw_transcription, full_transcript } = await res.json();
+
+    // Spara i globala variabler så övriga funktioner kan använda dem
     window.transcribedSegments = segments;
-  
-    // Visa transcript i UI
+    rawTranscript  = raw_transcription;
+    fullTranscript = full_transcript;
+
+    // Visa segmenten
     resultContainer.innerText = segments
       .map(s => `[${s.start}-${s.end}] ${s.speaker}: ${s.text}`)
       .join('\n');
-  
+
     document.getElementById("enhancementTools").style.display = "block";
-  }
+}
 
 async function generateCleanTranscript() {
     try {

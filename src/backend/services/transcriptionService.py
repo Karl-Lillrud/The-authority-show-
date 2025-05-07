@@ -30,6 +30,18 @@ VOICE_MAP = {
 }
 
 class TranscriptionService:
+    def __init__(self):
+        self.speaker_genders = {}
+
+    def detect_speaker_gender(self, file_data: bytes, segments: List[dict]) -> dict:
+        # Stub: replace with real gender detection using audio model
+        genders = {}
+        for idx, seg in enumerate(segments):
+            label = seg['speaker']
+            if label not in genders:
+                genders[label] = 'male' if idx % 2 == 0 else 'female'
+        return genders
+
     def transcribe_audio(self, file_data: bytes, filename: str) -> dict:
         file_id = fs.put(
             file_data,
@@ -38,16 +50,18 @@ class TranscriptionService:
         )
         logger.info(f"📥 File saved to MongoDB with ID: {file_id}")
 
-        transcription_result = client.speech_to_text.convert(
+        result = client.speech_to_text.convert(
             file=BytesIO(file_data),
             model_id="scribe_v1",
             diarize=True,
             num_speakers=2,
             timestamps_granularity="word"
         )
-        if not transcription_result.text:
+        if not result.text:
             raise Exception("Transcription returned no text.")
 
+        transcript_text = result.text.strip()
+        # Build segments
         segments = []
         speaker_map = {}
         speaker_counter = 1
@@ -65,16 +79,11 @@ class TranscriptionService:
             if sid not in speaker_map:
                 speaker_map[sid] = f"Speaker {speaker_counter}"
                 speaker_counter += 1
-            speaker_label = speaker_map[sid]
-            segments.append({
-                'start': start,
-                'end': end,
-                'speaker': speaker_label,
-                'text': text
-            })
+            label = speaker_map[sid]
+            segments.append({ 'start': start, 'end': end, 'speaker': label, 'text': text })
             buffer = []
 
-        for w in transcription_result.words:
+        for w in result.words:
             sid = w.speaker_id
             if buffer and sid != buffer_speaker:
                 flush_buffer()
@@ -84,55 +93,70 @@ class TranscriptionService:
                 flush_buffer()
         flush_buffer()
 
-        return {"file_id": str(file_id), "segments": segments}
+        # Detect speaker genders
+        self.speaker_genders = self.detect_speaker_gender(file_data, segments)
 
-    def translate_segments(self, segments: list, target_language: str) -> list:
+        # Build raw_transcription text with timestamps
+        raw_lines = [f"[{seg['start']}-{seg['end']}] {seg['speaker']}: {seg['text']}" for seg in segments]
+        raw_transcription = "\n".join(raw_lines)
+
+        return {
+            "file_id": str(file_id),
+            "segments": segments,
+            "raw_transcription": raw_transcription,
+            "full_transcript": transcript_text
+        }
+
+    def translate_segments(self, segments: List[dict], target_language: str) -> List[dict]:
         translated = []
         for seg in segments:
-            tr_text = translate_text(seg['text'], target_language)
-            translated.append({**seg, 'text': tr_text})
+            tr = translate_text(seg['text'], target_language)
+            translated.append({**seg, 'text': tr})
         return translated
 
-    def generate_audio_from_segments(self, segments: list, language: str) -> bytes:
-        voices = VOICE_MAP.get(language)
-        if not voices:
+    def generate_audio_from_segments(self, segments: List[dict], language: str) -> bytes:
+        voices_cfg = VOICE_MAP.get(language)
+        if not voices_cfg:
             raise ValueError(f"No voices configured for {language}")
 
         final_audio = AudioSegment.silent(duration=0)
         current_time = 0
+        gender_counters = {'male': 0, 'female': 0}
 
         for seg in segments:
-            seg_start_ms = int(seg['start'] * 1000)
-            seg_end_ms = int(seg['end'] * 1000)
-            target_duration = seg_end_ms - seg_start_ms
-
-            gap = seg_start_ms - current_time
+            start_ms = int(seg['start'] * 1000)
+            end_ms = int(seg['end'] * 1000)
+            target_dur = end_ms - start_ms
+            gap = start_ms - current_time
             if gap > 0:
                 final_audio += AudioSegment.silent(duration=gap)
                 current_time += gap
 
             speaker = seg['speaker']
-            voice_id = voices.get(speaker) or list(voices.values())[0]
-            if not voice_id:
-                raise ValueError(f"No voice_id configured for speaker {speaker} in language {language}")
+            gender = self.speaker_genders.get(speaker, 'female')
+            voice_list = voices_cfg.get(gender, [])
+            if not voice_list:
+                raise ValueError(f"No voice IDs for gender {gender} in {language}")
+            idx = gender_counters[gender] % len(voice_list)
+            voice_id = voice_list[idx]
+            gender_counters[gender] += 1
 
+            # TTS convert stream to bytes
             tts_stream = client.text_to_speech.convert(
                 text=seg['text'],
                 voice_id=voice_id,
                 model_id="eleven_multilingual_v2",
                 output_format="mp3_44100_128"
             )
-            # If convert() returns generator, join into bytes
             tts_bytes = b"".join(tts_stream)
             tts_audio = AudioSegment.from_file(BytesIO(tts_bytes), format="mp3")
 
             actual_dur = len(tts_audio)
-            if actual_dur > target_duration:
-                speed = actual_dur / target_duration
+            if actual_dur > target_dur:
+                speed = actual_dur / target_dur
                 tts_audio = effects.speedup(tts_audio, playback_speed=speed)
-            elif actual_dur < target_duration:
-                pad = target_duration - actual_dur
-                tts_audio += AudioSegment.silent(duration=pad)
+            elif actual_dur < target_dur:
+                tts_audio += AudioSegment.silent(duration=(target_dur - actual_dur))
 
             final_audio += tts_audio
             current_time += len(tts_audio)
@@ -142,34 +166,25 @@ class TranscriptionService:
         return buf.getvalue()
 
     def get_clean_transcript(self, transcript_text: str) -> str:
-        logger.info("🧽 Running filler-word removal...")
         return remove_filler_words(transcript_text)
 
     def get_ai_suggestions(self, transcript_text: str) -> str:
-        logger.info("💡 Generating AI suggestions...")
         return generate_ai_suggestions(transcript_text)
 
     def get_show_notes(self, transcript_text: str) -> str:
-        logger.info("📝 Generating show notes...")
         return generate_show_notes(transcript_text)
 
     def get_quotes(self, transcript_text: str) -> str:
-        logger.info("💬 Generating quotes...")
-        quotes_text = generate_ai_quotes(transcript_text)
-        if not isinstance(quotes_text, str):
-            quotes_text = str(quotes_text)
-        return quotes_text
+        qt = generate_ai_quotes(transcript_text)
+        return qt if isinstance(qt, str) else str(qt)
 
     def get_quote_images(self, quotes: List[str]) -> List[str]:
-        logger.info("🖼 Generating quote images...")
         return generate_quote_images(quotes)
 
     def translate_text(self, text: str, language: str) -> str:
-        logger.info(f"🌍 Translating transcript to {language}...")
         return translate_text(text, language)
 
     def get_sentiment_and_sfx(self, transcript_text: str):
-        logger.info("🔍 Running sentiment & sound suggestion analysis...")
-        emotion_data = analyze_emotions(transcript_text)
-        sfx_suggestions = suggest_sound_effects(emotion_data)
-        return {"emotions": emotion_data, "sound_effects": sfx_suggestions}
+        em = analyze_emotions(transcript_text)
+        return {"emotions": em, "sound_effects": suggest_sound_effects(em)}
+
