@@ -4,6 +4,7 @@ import os
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from email.mime.image import MIMEImage
+from email.utils import formataddr  # Import formataddr
 from dotenv import load_dotenv
 from flask import render_template, Blueprint, request, jsonify, url_for, redirect
 import urllib.parse
@@ -183,7 +184,8 @@ def send_email(to_email, subject, body, image_path=None):
     try:
         # Create the email message
         msg = MIMEMultipart("alternative")
-        msg["From"] = EMAIL_USER
+        # Set the From header with display name and email address
+        msg["From"] = formataddr(("PodManager.ai", EMAIL_USER))
         msg["To"] = to_email
         msg["Subject"] = subject
         msg.attach(MIMEText(body, "html"))
@@ -482,3 +484,39 @@ def send_enterprise_inquiry_email(name, email, phone):
             f"❌ Error while sending enterprise inquiry email: {e}", exc_info=True
         )
         return {"error": f"Error while sending enterprise inquiry email: {str(e)}"}
+
+
+def send_lia_inquiry_email(name, email, phone, school_and_study):
+    """
+    Sends an LIA inquiry email to me@karllillrud.com.
+    """
+    try:
+        to_email = "me@karllillrud.com"
+        subject = "New LIA Coming In"
+        body = f"""
+        <html>
+            <body>
+                <h2>New LIA on the way in!</h2>
+                <p><strong>Name:</strong> {name}</p>
+                <p><strong>Email:</strong> {email}</p>
+                <p><strong>Phone:</strong> {phone}</p>
+                <p><strong>School and Field of Study:</strong> {school_and_study}</p>
+                <br>
+                <p>This inquiry was submitted through the /lia page questionnaire.</p>
+            </body>
+        </html>
+        """
+        logger.info(f"📧 Preparing to send LIA inquiry email from {email}")
+        result = send_email(to_email, subject, body)
+        if result.get("success"):
+            logger.info(f"✅ LIA inquiry email sent successfully from {email} to {to_email}")
+        else:
+            logger.error(
+                f"❌ Failed to send LIA inquiry email from {email} to {to_email}: {result.get('error')}"
+            )
+        return result
+    except Exception as e:
+        logger.error(
+            f"❌ Error while sending LIA inquiry email: {e}", exc_info=True
+        )
+        return {"error": f"Error while sending LIA inquiry email: {str(e)}"}

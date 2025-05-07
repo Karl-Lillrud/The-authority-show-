@@ -1360,7 +1360,7 @@ export function redirectToWorkspace(taskId, aiTool, state, updateUI) {
       tabName = "transcription" // These likely work with the transcript
     }
 
-    // Call the showTab function from gustavvasa.js
+    // Call the showTab function from layout.js
     if (window.showTab) {
       window.showTab(tabName)
     } else {

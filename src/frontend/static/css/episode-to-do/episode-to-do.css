@@ -106,6 +106,7 @@ body {
 /* Header */
 .header {
   margin-bottom: 1.5rem;
+  z-index: 1;
 }
 
 .header-content {
@@ -683,9 +684,10 @@ body {
 
 /* Kanban Board */
 .kanban-board {
-  display: grid;
-  grid-template-columns: repeat(1, 1fr);
-  gap: 1rem;
+  display: flex; /* Use flexbox for better control over column widths */
+  gap: 2rem; /* Add spacing between columns */
+  padding: 1rem; /* Add padding around the board */
+  overflow-x: auto; /* Allow horizontal scrolling if needed */
 }
 
 @media (min-width: 768px) {
@@ -701,30 +703,30 @@ body {
 }
 
 .kanban-column {
+  flex: 0 0 300px; /* Set a fixed width for each column */
   display: flex;
   flex-direction: column;
-  height: 100%;
+  background-color: var(--card-bg); /* Add background color for better readability */
+  border-radius: var(--radius); /* Add rounded corners */
+  box-shadow: var(--shadow); /* Add shadow for better separation */
+  overflow: hidden;
 }
 
 .kanban-column-header {
-  padding: 0.75rem;
-  border-radius: var(--radius) var(--radius) 0 0;
-  border: 1px solid var(--border);
-  border-bottom: none;
-  font-weight: 500;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
+  padding: 1rem; /* Increase padding for better spacing */
+  font-size: 1rem; /* Increase font size for readability */
+  font-weight: 600; /* Make the header text bold */
+  background-color: var(--light); /* Use a light background for the header */
+  border-bottom: 1px solid var(--border); /* Add a border for separation */
+  text-align: center; /* Center-align the header text */
 }
 
 .kanban-column-content {
   flex-grow: 1;
-  background-color: var(--light);
-  border: 1px solid var(--border);
-  border-top: none;
-  border-radius: 0 0 var(--radius) var(--radius);
-  padding: 0.5rem;
-  min-height: 400px;
+  padding: 1rem; /* Add padding inside the column */
+  background-color: var(--bg); /* Use a subtle background color */
+  overflow-y: auto; /* Allow vertical scrolling if content overflows */
+  min-height: 400px; /* Ensure columns have a minimum height */
 }
 
 .kanban-column-todo .kanban-column-header {
@@ -744,12 +746,12 @@ body {
 }
 
 .kanban-task {
-  background-color: white;
+  background-color: var(--card-bg);
   border-radius: var(--radius);
-  padding: 0.75rem;
-  margin-bottom: 0.5rem;
+  padding: 1rem; /* Increase padding for better spacing */
+  margin-bottom: 1rem; /* Add spacing between tasks */
   border: 1px solid var(--border);
-  box-shadow: var(--shadow-sm);
+  box-shadow: var(--shadow-sm); /* Add a subtle shadow */
   cursor: move;
 }
 
@@ -760,17 +762,16 @@ body {
 }
 
 .kanban-task-title {
+  font-size: 1rem; /* Increase font size for readability */
   font-weight: 500;
-  font-size: 0.875rem;
+  margin-bottom: 0.5rem; /* Add spacing below the title */
 }
 
 .kanban-task-meta {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  margin-top: 0.5rem;
-  font-size: 0.75rem;
+  font-size: 0.875rem; /* Adjust font size for metadata */
   color: var(--muted);
+  display: flex;
+  gap: 0.5rem;
 }
 
 .kanban-task-footer {
@@ -781,6 +782,7 @@ body {
 }
 
 .kanban-task-assignee {
+  padding-left: 25px;
   width: 1.25rem;
   height: 1.25rem;
   border-radius: var(--radius-full);
