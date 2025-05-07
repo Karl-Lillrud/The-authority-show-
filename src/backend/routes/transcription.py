@@ -3,7 +3,7 @@ import os
 import logging
 import subprocess
 from datetime import datetime
-from flask import Blueprint, request, jsonify, render_template, session,Response
+from flask import Blueprint, request, jsonify, render_template, session,Response, g
 import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
@@ -121,10 +121,26 @@ def transcribe():
 
 @transcription_bp.route("/clean", methods=["POST"])
 def clean_transcript():
+    user_id = g.get("user_id")
+    if not user_id:
+        return jsonify({"error": "Authentication required"}), 401
+
     data = request.json
     transcript = data.get("transcript", "")
     if not transcript:
         return jsonify({"error": "No transcript provided"}), 400
+
+    try:
+        # Consume credits for this feature
+        consume_credits(user_id, "clean_transcript")
+    except ValueError as e:
+        logger.warning(f"User {user_id} has insufficient credits for cleaning.")
+        return jsonify({
+            "error": str(e),
+            "redirect": "/store"
+        }), 403
+
+    # Run cleaning
     clean = transcription_service.get_clean_transcript(transcript)
     return jsonify({"clean_transcript": clean})
 

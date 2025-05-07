@@ -98,7 +98,7 @@ function showTab(tabName) {
     
                 <div class="result-group">
                     <button class="btn ai-edit-button" onclick="generateCleanTranscript()">
-                        ${labelWithCredits("Clean Transcript", "transcription")}
+                        ${labelWithCredits("Clean Transcript", "clean_transcript")}
                     </button>
                     <div class="result-field">
                         <pre id="cleanTranscriptResult"></pre>
