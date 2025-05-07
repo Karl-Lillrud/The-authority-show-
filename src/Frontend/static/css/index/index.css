@@ -183,17 +183,20 @@ section#index-banner div.product-review {
 section#index-banner div#product-review-1 {
   right: calc(50% + 200px );
   bottom: calc(50% + 150px );
+  animation: ease-in-out animate-from-left 0.5s;
 }
 
 section#index-banner div#product-review-2 {
   left: calc(50% + 275px );
   bottom: calc(50% + 25px );
+  animation: ease-in-out animate-from-right 0.8s;
 }
 
 section#index-banner div#product-review-3 {
   max-width: 350px;
   right: calc(50% + 215px );
   bottom: calc(50% - 310px );
+  animation: ease-in-out animate-from-bottom 1s;
 }
 
 section#index-banner div.product-review .product-rating {
@@ -443,6 +446,42 @@ section#index-get-started button:hover, section#index-get-started a.button:hover
   text-decoration: none;
 }
 
+
+/* * * * * * * * */
+/*  Animations   */
+/* * * * * * * * */
+@keyframes animate-from-left {
+  0% {
+    transform: translateX(-50%);
+    opacity: 0;
+  }
+  100% {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+@keyframes animate-from-right {
+  0% {
+    transform: translateX(50%);
+    opacity: 0;
+  }
+  100% {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+@keyframes animate-from-bottom {
+  0% {
+    transform: translateY(50%);
+    opacity: 0;
+  }
+  100% {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
 
 /* * * * * * * * * * * */
 /*  Responsive Design  */
