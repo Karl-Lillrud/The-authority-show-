@@ -49,7 +49,8 @@ const CREDIT_COSTS = {
     audio_cutting: 500,
     audio_enhancment: 500,
     show_notes: 500,
-    transcription: 500,
+    transcription: 600,
+    clean_transcript: 500,
     translation: 500,
     video_cutting: 500,
     video_enhancement: 500,
@@ -91,12 +92,14 @@ function showTab(tabName) {
                 <pre id="transcriptionResult"></pre>
             </div>
     
-            <div id="enhancementTools" style="display:none;">
+            <div id="enhancementTools";">
                 <hr/>
                 <h3>Enhancement Tools</h3>
     
                 <div class="result-group">
-                    <button class="btn ai-edit-button" onclick="generateCleanTranscript()">Clean Transcript</button>
+                    <button class="btn ai-edit-button" onclick="generateCleanTranscript()">
+                        ${labelWithCredits("Clean Transcript", "transcription")}
+                    </button>
                     <div class="result-field">
                         <pre id="cleanTranscriptResult"></pre>
                     </div>
@@ -349,7 +352,6 @@ async function transcribe() {
     }
 }
 
-
 async function generateCleanTranscript() {
     const containerId = "cleanTranscriptResult";
     const container = document.getElementById(containerId);
@@ -363,14 +365,21 @@ async function generateCleanTranscript() {
             body: JSON.stringify({ transcript: fullTranscript })
         });
 
+        if (res.status === 403) {
+            const errorData = await res.json();
+            container.innerHTML = `
+                <p style="color: red;">${errorData.error || "You don't have enough credits."}</p>
+                ${errorData.redirect ? `<a href="${errorData.redirect}" class="btn ai-edit-button">Go to Store</a>` : ""}
+            `;
+            return;
+        }
+
         const data = await res.json();
         container.innerText = data.clean_transcript || "No clean result.";
     } catch (err) {
-        document.getElementById("cleanTranscriptResult").innerText =
-            "Failed to clean transcript. Server says: " + err.message;
+        container.innerText = "Failed to clean transcript. Server says: " + err.message;
     }
 }
-
 async function generateAISuggestions() {
     const containerId = "aiSuggestionsResult";
     const container = document.getElementById(containerId);

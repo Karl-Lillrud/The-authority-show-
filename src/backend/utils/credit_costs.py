@@ -9,6 +9,7 @@ CREDIT_COSTS = {
     "audio_enhancment": 500,
     "show_notes": 250,
     "transcription": 600,
+    "clean_transcript": 500,
     "translation": 150,
     "video_cutting": 800,
     "video_enhancement": 800,
