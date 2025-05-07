@@ -726,4 +726,11 @@ section#index-get-started button:hover, section#index-get-started a.button:hover
     width: 300px;
   }
 
+  /* Features Section */
+  section#index-features figure img {
+    min-width: 500px;
+    position: absolute;
+    left: -25%;
+  }
+
 }
