@@ -43,7 +43,7 @@ console.log("Using episode ID:", sessionStorage.getItem("selected_episode_id"));
 const CREDIT_COSTS = {
     ai_audio_analysis: 800,
     ai_audio_cutting: 800,
-    ai_quotes: 800,
+    ai_quotes: 200,
     ai_quote_images: 800,
     ai_suggestions: 800,
     audio_cutting: 500,
@@ -454,19 +454,22 @@ async function generateQuotes() {
             body: JSON.stringify({ transcript: rawTranscript })
         });
 
-        const data = await res.json();
-        if (res.ok) {
-            container.innerText = data.quotes || "No quotes.";
-
-            // ✅ Consume credits only after success
-            await consumeStoreCredits("ai_quotes");
-        } else {
-            container.innerText = `Error: ${res.status} - ${res.statusText}`;
+        if (res.status === 403) {
+            const data = await res.json();
+            container.innerHTML = `
+                <p style="color: red;">${data.error || "You don't have enough credits."}</p>
+                ${data.redirect ? `<a href="${data.redirect}" class="btn ai-edit-button">Go to Store</a>` : ""}
+            `;
+            return;
         }
+
+        const data = await res.json();
+        container.innerText = data.quotes || "No quotes.";
     } catch (err) {
         container.innerText = "Failed to generate quotes: " + err.message;
     }
 }
+
 
 async function generateQuoteImages() {
     const containerId = "quoteImagesResult";

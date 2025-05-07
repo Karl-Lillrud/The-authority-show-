@@ -189,10 +189,23 @@ def show_notes():
 
 @transcription_bp.route("/quotes", methods=["POST"])
 def quotes():
+    user_id = g.get("user_id")
+    if not user_id:
+        return jsonify({"error": "Authentication required"}), 401
+
     data = request.json
     transcript = data.get("transcript", "")
     if not transcript:
         return jsonify({"error": "No transcript provided"}), 400
+
+    try:
+        consume_credits(user_id, "ai_quotes")
+    except ValueError as e:
+        return jsonify({
+            "error": str(e),
+            "redirect": "/store"
+        }), 403
+
     quotes_text = transcription_service.get_quotes(transcript)
     return jsonify({"quotes": quotes_text})
 
