@@ -10,6 +10,9 @@ import { updateEditButtons, shared } from "./podcastmanagement.js";
 import { renderPodcastSelection, viewPodcast } from "./podcast-functions.js";
 import { renderGuestDetail } from "./guest-functions.js";
 import { showNotification, showConfirmationPopup } from "../components/notifications.js";
+import { showNotification } from "../components/notifications.js";
+import { consumeStoreCredits, getCredits } from "../../../static/requests/creditRequests.js";
+import { incrementUpdateAccount } from "../../../static/requests/accountRequests.js";
 
 // Add this function to create a play button with SVG icon
 export function createPlayButton(size = "medium") {
@@ -739,36 +742,52 @@ export function initEpisodeFunctions() {
     });
 
   // Funktion för att visa popup när episodgränsen nås
-  function showEpisodeLimitPopup() {
-    const popup = document.createElement("div");
-    popup.className = "popup";
+  async function showEpisodeLimitPopup() {
+    const popup = document.getElementById("episode-limit-popup");
     popup.style.display = "flex";
 
-    popup.innerHTML = `
-      <div class="form-box">
-        <h2 class="form-title">Episode Limit Reached</h2>
-        <p>You have reached your episode limit. Buy more slots to create additional episodes.</p>
-        <div class="form-actions">
-          <button class="cancel-btn" id="close-limit-popup">Cancel</button>
-          <button class="save-btn" id="buy-credits-btn-popup">Buy Credits</button>
-        </div>
-      </div>
-    `;
-
-    document.body.appendChild(popup);
-
-    // Stäng popup
+    // Close popup
     document
       .getElementById("close-limit-popup")
       .addEventListener("click", () => {
-        document.body.removeChild(popup);
+        popup.style.display = "none";
       });
 
-    // Navigera till store
-    document
-      .getElementById("buy-credits-btn-popup")
-      .addEventListener("click", () => {
-        window.location.href = "/store";
+    const credits_button = document.getElementById("buy-credits-btn-popup");
+
+    const credits = await getCredits();
+    const extra_episode_cost = 5000;
+    if (credits >= extra_episode_cost) {
+      credits_button.textContent = "Buy for 5000 credits";
+    } else {
+      credits_button.textContent = "Buy Credits"
+    }
+
+    // Navigate to store
+    credits_button
+      .addEventListener("click", async () => {
+        if (credits >= extra_episode_cost) {
+          try {
+            await consumeStoreCredits("episode_pack");
+            const updateData = {
+              'unlockedExtraEpisodeSlots': 1 // Increment the extra episode slots by 1
+            };
+            incrementUpdateAccount(updateData);
+
+            showNotification(
+              "Success",
+              "Increased episode slots!",
+              "success"
+            );
+
+            popup.style.display = "none";
+          } catch (error) {
+            console.log(error);
+          }
+        } else {
+          window.location.href = "/store";
+        }
       });
   }
 }
+

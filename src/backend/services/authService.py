@@ -229,8 +229,24 @@ class AuthService:
                 )
             return response, status_code
         except Exception as e:
-            logger.error(f"Error updating account for user {user_id}: {e}", exc_info=True)
-            return {"error": f"Internal server error: {str(e)}"}, 500
+            logger.error(f"Fel vid uppdatering av konto för användare {user_id}: {e}", exc_info=True)
+            return {"error": f"Internt serverfel: {str(e)}"}, 500
+    
+    def edit_increment_account(self, user_id, data):
+        # Updating account information by increment.
+        try:
+            response, status_code = self.account_repository.edit_increment_account(user_id, data)
+            if status_code == 200:
+                self.activity_service.log_activity(
+                    user_id=user_id,
+                    activity_type="account_updated",
+                    description="Updated account details",
+                    details={"updatedFields": list(data.keys())}
+                )
+            return response, status_code
+        except Exception as e:
+            logger.error(f"Error updating account by user {user_id}: {e}", exc_info=True)
+            return {"error": f"Error updating account: {str(e)}"}, 500
 
     def delete_account(self, user_id):
         """Delete an account and associated data."""

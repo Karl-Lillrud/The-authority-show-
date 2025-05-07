@@ -163,3 +163,15 @@ body {
       transform: rotate(360deg);
   }
 }
+
+.edit-history-container {
+  border-top: 1px solid #ccc;
+  padding-top: 1.5rem;
+}
+
+.edit-entry {
+  margin-bottom: 2rem;
+  padding: 1rem;
+  background: #f9f9f9;
+  border-radius: 8px;
+}
