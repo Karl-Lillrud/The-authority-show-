@@ -11,7 +11,7 @@ function toggleHamburger(x) {
   menuItem.forEach((item) => {
     item.classList.toggle("change"); // Toggle the visibility of the navigation items
   });
-}
+};
 
 window.onscroll = () => { // Change the active class of the navigation items based on scroll position
   const sections = document.querySelectorAll("section");
