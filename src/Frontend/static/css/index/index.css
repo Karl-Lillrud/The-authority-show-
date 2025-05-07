@@ -56,6 +56,7 @@ header.index-header nav {
   display: flex;
   flex-direction: row;
   justify-content: space-between;
+  align-items: flex-start;
   font-size: 16px;
   text-transform: uppercase;
   margin: 0px 20px;
@@ -157,6 +158,7 @@ section#index-banner {
   background-position: center -50px;
   justify-content: center;
   flex-direction: column;
+  min-height: 1150px;
 }
 
 section#index-banner #logo img {
@@ -505,7 +507,7 @@ section#index-get-started button:hover, section#index-get-started a.button:hover
 
 }
 
-@media (max-width: 1000px) {
+@media (max-width: 1024px) {
   /* General Styling */
   h1 {
     font-size: 32px;
@@ -513,6 +515,63 @@ section#index-get-started button:hover, section#index-get-started a.button:hover
 
   h2 {
     font-size: 24px;
+  }
+
+  /* General Styling */
+  main section div.container {
+    width: auto;
+  }
+
+  /* Heading Styling */
+  header.index-header nav ul.nav-links {
+    min-width: 160px;
+    flex-direction: column;
+    align-items: center;
+    border-bottom-left-radius: 12px;
+    border-bottom-right-radius: 12px;
+    transition: var(--transition-normal)
+  }
+
+  header.index-header nav ul.nav-links.change {
+    background-color: rgba(0,0,0,0.9);
+  }
+
+  header.index-header nav ul.nav-links li {
+    min-width: 160px;
+    display: flex;
+    justify-content: center;
+    display: none;
+  }
+
+  header.index-header nav ul.nav-links li.change {
+    display: flex;
+  }
+
+
+  header.index-header .hamburger-menu {
+    display: inline-block;
+    cursor: pointer;
+    padding: 21px 25px;
+  }
+  
+  header.index-header .bar1, header.index-header .bar2, header.index-header .bar3 {
+    width: 30px;
+    height: 3px;
+    background-color: #fff;
+    margin: 6px 0;
+    transition: 0.4s;
+  }
+  
+  header.index-header .change .bar1 {
+    transform: translate(0, 9px) rotate(-45deg);
+  }
+  
+  header.index-header .change .bar2 {
+    opacity: 0;
+  }
+  
+  header.index-header .change .bar3 {
+    transform: translate(0, -9px) rotate(45deg);
   }
 
   /* Banner Section */
@@ -592,6 +651,7 @@ section#index-get-started button:hover, section#index-get-started a.button:hover
   
   section#index-features article:last-of-type {
     margin-bottom: 0;
+    width: 100%;
   }
 
   section#index-features article div {
@@ -613,8 +673,10 @@ section#index-get-started button:hover, section#index-get-started a.button:hover
     position: relative;
   }
   section#index-features div.future-features-container {
-    flex-direction: column;
+    flex-wrap: wrap;
+    justify-content: center;
     margin-bottom: 0px;
+    width: 100%;
   }
 
   section#index-features div.future-features-container .future-feature-item {
@@ -636,6 +698,11 @@ section#index-get-started button:hover, section#index-get-started a.button:hover
     padding: 0px 20px;
   }
 
+  /* Header Styling */
+  header.index-header nav {
+    margin: 0px;
+  }
+
   /* About Section */
   section#index-about::before {
     height: 80px;
@@ -648,6 +715,15 @@ section#index-get-started button:hover, section#index-get-started a.button:hover
 
   section#index-about article div.container figure#about-figure-1 img {
     min-height: 200px;
+  }
+
+}
+
+@media (max-width: 500px) {
+
+  /* General Styling */
+  main section div.container {
+    width: 300px;
   }
 
 }

@@ -29,6 +29,7 @@
     />
     <title>PodManager</title>
     <!-- global stylesheets -->
+    {% block head_extra %}
     <link
     rel="stylesheet"
     href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
@@ -50,8 +51,8 @@
       href="{{ url_for('static', filename='css/index/index.css') }}"
     />
     <!-- other head content -->
-    <script>src="{{ url_for('static', filename='js/index/index.js') }}"</script>
-    {% block head_extra %}{% endblock %} <!-- Add block for page-specific head elements -->
+    <script src="{{ url_for('static', filename='js/index/index.js') }}"></script>
+    {% endblock %} <!-- Add block for page-specific head elements -->
   </head>
   <body style="display: flex; flex-direction: column; min-height: 100vh">
     <iframe src="https://www.googletagmanager.com/ns.html?id=GTM-N7Q86CWB" height="0" width="0" style="display:none;visibility:hidden"></iframe>
@@ -63,11 +64,17 @@
             To App</a>
           </li>
         </ul>
+      
         <ul class="nav-links">
-          <li class="active"><a href="#">Home</a></li>
-          <li><a href="#index-about">About</a></li>
-          <li><a href="#index-features">Features</a></li>
-          <li><a href="#index-get-started">Get Started</a></li>
+          <div class="hamburger-menu" onclick="toggleHamburger(this)">
+            <div class="bar1"></div>
+            <div class="bar2"></div>
+            <div class="bar3"></div>
+          </div>
+          <li class="active nav-item"><a href="#">Home</a></li>
+          <li class="nav-item"><a href="#index-about">About</a></li>
+          <li class="nav-item"><a href="#index-features">Features</a></li>
+          <li class="nav-item"><a href="#index-get-started">Get Started</a></li>
         </ul>
       </nav>
     </header>
