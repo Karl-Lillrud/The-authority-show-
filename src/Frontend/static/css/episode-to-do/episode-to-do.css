@@ -276,11 +276,14 @@ body {
 
 .btn-primary {
   background-color: var(--highlight-color); /* Updated to use highlight-color */
-  color: white;
+  
+  transition: all 0.2s ease;
 }
 
 .btn-primary:hover {
   background-color: var(--highlight-hover);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
 }
 
 .btn-outline {
@@ -312,6 +315,18 @@ body {
 
 .btn-full {
   width: 100%;
+}
+
+.btn-load {
+  background-color: #4CAF50; /* Green color */
+  color: white;
+  transition: all 0.2s ease;
+}
+
+.btn-load:hover {
+  background-color: #45a049; /* Darker green on hover */
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
 }
 
 .mt-4 {
@@ -786,7 +801,7 @@ body {
 .badge {
   font-size: 0.75rem;
   padding: 0.25rem 0.5rem;
-  border-radius: var(--radius);
+  border-radius: var (--radius);
   background-color: var(--light);
   border: 1px solid var(--border);
 }
@@ -1543,4 +1558,503 @@ textarea.form-control {
   border-radius: 0.75rem;
   white-space: pre-wrap;
   word-break: break-word;
+}
+
+/* Workflow Container Styles */
+.workflow-container {
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  padding: 2rem;
+  margin: 1rem 0;
+}
+
+.workflow-header {
+  text-align: center;
+  margin-bottom: 2rem;
+}
+
+.workflow-header h2 {
+  font-size: 1.75rem;
+  font-weight: 600;
+  color: var(--highlight-color);
+  margin-bottom: 0.5rem;
+}
+
+.workflow-header p {
+  color: #718096;
+}
+
+.workflow-controls {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 2rem;
+  gap: 1rem;
+}
+
+.workflow-select-group {
+  display: flex;
+  gap: 1rem;
+  flex: 1;
+}
+
+.workflow-select {
+  flex: 1;
+  padding: 0.75rem;
+  border: 2px solid #e2e8f0;
+  border-radius: 8px;
+  background: white;
+  font-size: 1rem;
+  color: #4a5568;
+  transition: all 0.2s ease;
+}
+
+.workflow-select:hover {
+  border-color: var(--highlight-color);
+}
+
+.workflow-select:focus {
+  border-color: var(--highlight-color);
+  box-shadow: 0 0 0 3px rgba(255, 127, 63, 0.1);
+  outline: none;
+}
+
+.workflow-tasks {
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  margin: 1rem 0;
+  max-height: 500px;
+  overflow-y: auto;
+}
+
+.workflow-task {
+  display: flex;
+  align-items: center;
+  padding: 1rem;
+  border-bottom: 1px solid #e2e8f0;
+  transition: background-color 0.2s ease;
+}
+
+.workflow-task:last-child {
+  border-bottom: none;
+}
+
+.workflow-task:hover {
+  background-color: #f7fafc;
+}
+
+.task-content {
+  flex: 1;
+}
+
+.task-title {
+  font-weight: 500;
+  color: #2d3748;
+  margin-bottom: 0.25rem;
+}
+
+.task-meta {
+  display: flex;
+  gap: 1rem;
+  font-size: 0.875rem;
+  color: #718096;
+}
+
+.task-actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+/* Button Styles */
+.btn-primary, .btn-success, .btn-danger {
+  padding: 0.75rem 1.5rem;
+  border: none;
+  border-radius: 8px;
+  font-weight: 500;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  transition: all 0.2s ease;
+}
+
+.btn-primary {
+  background: var(--highlight-color);
+  color: white;
+}
+
+.btn-primary:hover {
+  background: #ff6b3d;
+  transform: translateY(-1px);
+}
+
+.btn-success {
+  background: #38a169;
+  color: white;
+}
+
+.btn-success:hover {
+  background: #2f855a;
+  transform: translateY(-1px);
+}
+
+.btn-danger {
+  background: white;
+  color: #e53e3e;
+  border: 1px solid #e53e3e;
+}
+
+.btn-danger:hover {
+  background: #fff5f5;
+  transform: translateY(-1px);
+}
+
+.btn-icon {
+  padding: 0.5rem;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  background: white;
+  color: #718096;
+  transition: all 0.2s ease;
+}
+
+.btn-icon:hover {
+  border-color: var(--highlight-color);
+  color: var(--highlight-color);
+}
+
+.workflow-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 1rem;
+  margin-top: 2rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid #e2e8f0;
+}
+
+/* Status Badges */
+.status-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.25rem 0.75rem;
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  font-weight: 500;
+}
+
+.status-badge.pending {
+  background: #edf2f7;
+  color: #4a5568;
+}
+
+.status-badge.in-progress {
+  background: rgba(255, 127, 63, 0.1);
+  color: var(--highlight-color);
+}
+
+.status-badge.completed {
+  background: #f0fff4;
+  color: #2f855a;
+}
+
+/* Workflow Editor Styles */
+.workflow-editor {
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  padding: 1.5rem;
+}
+
+.workflow-header {
+  text-align: center;
+  margin-bottom: 2rem;
+}
+
+.workflow-header h3 {
+  font-size: 1.5rem;
+  color: var(--highlight-color);
+  margin-bottom: 0.5rem;
+}
+
+.workflow-header p {
+  color: #666;
+  font-size: 0.9rem;
+}
+
+.workflow-selector {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 2rem;
+}
+
+.workflow-select {
+  flex: 1;
+  padding: 0.5rem;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 0.9rem;
+}
+
+.workflow-task {
+  display: flex;
+  align-items: center;
+  padding: 1rem;
+  border: 1px solid #eee;
+  border-radius: 4px;
+  margin-bottom: 0.5rem;
+  transition: all 0.2s ease;
+  background: white;
+}
+
+.workflow-task:hover {
+  border-color: var(--highlight-color);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.task-content {
+  flex: 1;
+}
+
+.task-title {
+  font-weight: 500;
+  margin-bottom: 0.25rem;
+}
+
+.task-meta {
+  display: flex;
+  gap: 1rem;
+  font-size: 0.8rem;
+  color: #666;
+}
+
+.task-due-date, .task-status {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.task-status {
+  padding: 0.25rem 0.5rem;
+  border-radius: 12px;
+  font-size: 0.75rem;
+}
+
+.task-status.not-started {
+  background: #f7f7f7;
+  color: #666;
+}
+
+.task-status.in-progress {
+  background: #fff3e6;
+  color: var(--highlight-color);
+}
+
+.task-status.completed {
+  background: #e6ffe6;
+  color: #28a745;
+}
+
+.task-actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.btn-icon {
+  padding: 0.5rem;
+  border: none;
+  background: none;
+  cursor: pointer;
+  color: #666;
+  border-radius: 4px;
+  transition: all 0.2s ease;
+}
+
+.btn-icon:hover {
+  background: #f5f5f5;
+  color: var(--highlight-color);
+}
+
+.workflow-empty {
+  text-align: center;
+  padding: 2rem;
+  color: #666;
+}
+
+.workflow-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 1rem;
+  margin-top: 2rem;
+  padding-top: 1rem;
+  border-top: 1px solid #eee;
+}
+
+/* Modal Styles */
+.modal {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 1000;
+  align-items: center;
+  justify-content: center;
+}
+
+.modal.show {
+  display: flex;
+}
+
+.modal-content {
+  background: white;
+  border-radius: 8px;
+  width: 90%;
+  max-width: 500px;
+  max-height: 90vh;
+  overflow-y: auto;
+}
+
+.modal-header {
+  padding: 1rem 1.5rem;
+  border-bottom: 1px solid #eee;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.modal-header h2 {
+  margin: 0;
+  font-size: 1.25rem;
+  color: var(--highlight-color);
+}
+
+.modal-body {
+  padding: 1.5rem;
+}
+
+.modal-footer {
+  padding: 1rem 1.5rem;
+  border-top: 1px solid #eee;
+  display: flex;
+  justify-content: flex-end;
+  gap: 1rem;
+}
+
+.form-group {
+  margin-bottom: 1rem;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 0.5rem;
+  color: #444;
+  font-weight: 500;
+}
+
+.form-group input,
+.form-group select,
+.form-group textarea {
+  width: 100%;
+  padding: 0.5rem;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 0.9rem;
+}
+
+.form-group input:focus,
+.form-group select:focus,
+.form-group textarea:focus {
+  border-color: var(--highlight-color);
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(255, 127, 63, 0.1);
+}
+
+/* Button Styles */
+.btn-primary {
+  background: var(--highlight-color);
+  color: white;
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.btn-primary:hover {
+  background: #ff6b3d;
+}
+
+.btn-danger {
+  background: white;
+  color: #dc3545;
+  border: 1px solid #dc3545;
+  padding: 0.5rem 1rem;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.btn-danger:hover {
+  background: #fff5f5;
+}
+
+.btn-success {
+  background: #28a745;
+  color: white;
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.btn-success:hover {
+  background: #218838;
+}
+
+/* Disabled button states */
+.btn-primary:disabled,
+.btn-success:disabled,
+.btn-danger:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* Loading states */
+.btn-loading {
+  position: relative;
+  color: transparent !important;
+}
+
+.btn-loading::after {
+  content: "";
+  position: absolute;
+  width: 16px;
+  height: 16px;
+  top: 50%;
+  left: 50%;
+  margin-top: -8px;
+  margin-left: -8px;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-radius: 50%;
+  border-top-color: white;
+  animation: spin 1s infinite linear;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
 }

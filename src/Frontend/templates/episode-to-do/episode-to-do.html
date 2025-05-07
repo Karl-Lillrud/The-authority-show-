@@ -113,11 +113,43 @@
 
             <!-- Dependencies Tab -->
             <div id="dependencies-tab" class="tab-pane">
-              <div class="card">
-                <div class="card-content">
-                  <h2 class="section-title">Workflow Management</h2>
-                  <div id="dependencyView" class="dependency-view">
-                    <!-- Dependencies will be populated by JavaScript -->
+              <div class="workflow-container">
+                <div class="workflow-header">
+                  <h2>Workflow Management</h2>
+                  <p>Create and manage episode workflows efficiently</p>
+                </div>
+                
+                <div class="workflow-controls">
+                  <div class="workflow-select-group">
+                    <select id="workflow-select" class="workflow-select">
+                      <option value="">Select a workflow</option>
+                    </select>
+                    <button id="load-workflow-btn" class="btn-primary" disabled>
+                      <i class="fas fa-download"></i> Load
+                    </button>
+                  </div>
+                  <button id="create-workflow-btn" class="btn-success">
+                    <i class="fas fa-plus"></i> Create Workflow
+                  </button>
+                </div>
+            
+                <div id="workflow-tasks" class="workflow-tasks">
+                  <div class="workflow-empty">
+                    <p>Select a workflow to view and manage tasks</p>
+                  </div>
+                </div>
+            
+                <div class="workflow-actions">
+                  <button id="add-task-btn" class="btn-success" disabled>
+                    <i class="fas fa-plus"></i> Add Task
+                  </button>
+                  <div>
+                    <button id="save-workflow-btn" class="btn-primary" disabled>
+                      <i class="fas fa-save"></i> Save Changes
+                    </button>
+                    <button id="delete-workflow-btn" class="btn-danger" disabled>
+                      <i class="fas fa-trash"></i> Delete Workflow
+                    </button>
                   </div>
                 </div>
               </div>
