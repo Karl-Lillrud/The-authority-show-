@@ -9,7 +9,8 @@ import { fetchGuestsByEpisode } from "../../../static/requests/guestRequests.js"
 import { updateEditButtons, shared } from "./podcastmanagement.js";
 import { renderPodcastSelection, viewPodcast } from "./podcast-functions.js";
 import { renderGuestDetail } from "./guest-functions.js";
-import { showNotification } from "../components/notifications.js";
+import { showNotification, showConfirmationPopup } from "../components/notifications.js";
+
 import { consumeStoreCredits, getCredits } from "../../../static/requests/creditRequests.js";
 import { incrementUpdateAccount } from "../../../static/requests/accountRequests.js";
 
@@ -117,6 +118,9 @@ export function renderEpisodeDetail(episode) {
     }">
       ${shared.svgpodcastmanagement.edit}
     </button>
+    <button class="action-btn delete-btn" id="delete-episode-btn" data-id="${episode._id}">
+      <span class="icon">${shared.svgpodcastmanagement.delete}</span>
+    </button>
   </div>
 </div>
 
@@ -125,7 +129,7 @@ export function renderEpisodeDetail(episode) {
   <div class="podcast-header-section">
     <div class="podcast-image-container">
       <div class="detail-image" style="background-image: url('${
-        episode.image || episode.imageUrl || "default-image.png"
+        episode.image || episode.imageUrl || "/static/images/default-image.png"
       }')"></div>
     </div>
     <div class="podcast-basic-info">
@@ -243,11 +247,6 @@ export function renderEpisodeDetail(episode) {
   </div>
 </div>
 
-<div class="detail-actions">
-  <button class="delete-btn" id="delete-episode-btn" data-id="${episode._id}">
-    ${shared.svgpodcastmanagement.delete} Delete Episode
-  </button>
-</div>
 `;
 
   // Add event listener for the AI Edit button only if it exists
@@ -310,20 +309,23 @@ export function renderEpisodeDetail(episode) {
   // Delete button event listener
   const deleteButton = document.getElementById("delete-episode-btn");
   if (deleteButton) {
-    deleteButton.addEventListener("click", async () => {
-      if (confirm("Are you sure you want to delete this episode?")) {
-        try {
-          await deleteEpisode(episode._id);
-          showNotification(
-            "Success",
-            "Episode deleted successfully!",
-            "success"
-          );
-          viewPodcast(episode.podcast_id);
-        } catch (error) {
-          showNotification("Error", "Failed to delete episode.", "error");
+    deleteButton.addEventListener("click", () => {
+      showConfirmationPopup(
+        "Delete Episode",
+        "Are you sure you want to delete this episode? This action cannot be undone.",
+        async () => {
+          try {
+            await deleteEpisode(episode._id);
+            showNotification("Success", "Episode deleted successfully!", "success");
+            viewPodcast(episode.podcast_id);
+          } catch (error) {
+            showNotification("Error", "Failed to delete episode.", "error");
+          }
+        },
+        () => {
+          showNotification("Info", "Episode deletion canceled.", "info");
         }
-      }
+      );
     });
   }
 
@@ -394,7 +396,7 @@ export function renderEpisodeDetail(episode) {
         } else {
           const noGuests = document.createElement("p");
           noGuests.className = "no-guests-message";
-          noGuests.textContent = "No guests available for this episode.";
+          noGuests.textContent = "No guests to display.";
           guestsListEl.appendChild(noGuests);
         }
       }
@@ -405,7 +407,7 @@ export function renderEpisodeDetail(episode) {
       if (guestsListEl) {
         const errorMsg = document.createElement("p");
         errorMsg.className = "error-message";
-        errorMsg.textContent = "This episode has no guests.";
+        errorMsg.textContent = "No guests to display.";
         guestsListEl.appendChild(errorMsg);
       }
     });
