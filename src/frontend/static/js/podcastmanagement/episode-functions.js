@@ -10,7 +10,7 @@ import { updateEditButtons, shared } from "./podcastmanagement.js";
 import { renderPodcastSelection, viewPodcast } from "./podcast-functions.js";
 import { renderGuestDetail } from "./guest-functions.js";
 import { showNotification, showConfirmationPopup } from "../components/notifications.js";
-import { showNotification } from "../components/notifications.js";
+
 import { consumeStoreCredits, getCredits } from "../../../static/requests/creditRequests.js";
 import { incrementUpdateAccount } from "../../../static/requests/accountRequests.js";
 
