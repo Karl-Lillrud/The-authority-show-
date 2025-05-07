@@ -27,15 +27,6 @@ document.addEventListener("DOMContentLoaded", async () => {
     initDashboardActions();
     updateStatCounts();
     
-    // Removes Cart Data stored in localstorage after successful purchase
-    const urlParams = new URLSearchParams(window.location.search);
-    const purchaseSuccess = urlParams.get("purchase_success");
-
-    if (purchaseSuccess === "true") {
-      localStorage.removeItem("podmanager_cart");
-      const newUrl = window.location.pathname;
-      window.history.replaceState({}, document.title, newUrl);
-    }
   } catch (error) {
     console.error("Error initializing dashboard:", error);
   }

@@ -11,6 +11,28 @@ document.addEventListener("DOMContentLoaded", async () => {
   await initializeStripe();
   // Återställ checkout-knappen vid sidladdning
   resetCheckoutButton();
+
+  // Removes Cart Data stored in localstorage after successful purchase
+  const urlParams = new URLSearchParams(window.location.search);
+  const purchaseSuccess = urlParams.get("purchase_success");
+  if (urlParams.get('subscription_updated') === 'true') {
+     // Remove the purchaseSuccess parameter from the URL
+     localStorage.removeItem("podmanager_cart");
+     const url = new URL(window.location.href);
+     url.searchParams.delete("subscription_updated");
+     window.history.replaceState({}, document.title, url.href);
+     window.location.reload();
+    }
+
+
+  else if (purchaseSuccess === "true") {
+    localStorage.removeItem("podmanager_cart");
+    // Remove the purchaseSuccess parameter from the URL
+    const url = new URL(window.location.href);
+    url.searchParams.delete("purchase_success");
+    window.history.replaceState({}, document.title, url.href);
+    window.location.reload();
+  }
 });
 
 async function initializeStripe() {
