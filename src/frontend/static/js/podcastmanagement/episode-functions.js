@@ -9,7 +9,7 @@ import { fetchGuestsByEpisode } from "../../../static/requests/guestRequests.js"
 import { updateEditButtons, shared } from "./podcastmanagement.js";
 import { renderPodcastSelection, viewPodcast } from "./podcast-functions.js";
 import { renderGuestDetail } from "./guest-functions.js";
-import { showNotification } from "../components/notifications.js";
+import { showNotification, showConfirmationPopup } from "../components/notifications.js";
 
 // Add this function to create a play button with SVG icon
 export function createPlayButton(size = "medium") {
@@ -306,20 +306,23 @@ export function renderEpisodeDetail(episode) {
   // Delete button event listener
   const deleteButton = document.getElementById("delete-episode-btn");
   if (deleteButton) {
-    deleteButton.addEventListener("click", async () => {
-      if (confirm("Are you sure you want to delete this episode?")) {
-        try {
-          await deleteEpisode(episode._id);
-          showNotification(
-            "Success",
-            "Episode deleted successfully!",
-            "success"
-          );
-          viewPodcast(episode.podcast_id);
-        } catch (error) {
-          showNotification("Error", "Failed to delete episode.", "error");
+    deleteButton.addEventListener("click", () => {
+      showConfirmationPopup(
+        "Delete Episode",
+        "Are you sure you want to delete this episode? This action cannot be undone.",
+        async () => {
+          try {
+            await deleteEpisode(episode._id);
+            showNotification("Success", "Episode deleted successfully!", "success");
+            viewPodcast(episode.podcast_id);
+          } catch (error) {
+            showNotification("Error", "Failed to delete episode.", "error");
+          }
+        },
+        () => {
+          showNotification("Info", "Episode deletion canceled.", "info");
         }
-      }
+      );
     });
   }
 
