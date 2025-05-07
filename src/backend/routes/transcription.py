@@ -146,12 +146,26 @@ def clean_transcript():
 
 @transcription_bp.route("/ai_suggestions", methods=["POST"])
 def ai_suggestions():
+    user_id = g.get("user_id")
+    if not user_id:
+        return jsonify({"error": "Authentication required"}), 401
+
     data = request.json
     transcript = data.get("transcript", "")
     if not transcript:
         return jsonify({"error": "No transcript provided"}), 400
+
+    try:
+        consume_credits(user_id, "ai_suggestions")
+    except ValueError as e:
+        # Optional: redirect link
+        return jsonify({
+            "error": str(e),
+            "redirect": "/store"
+        }), 403
+
     suggestions = transcription_service.get_ai_suggestions(transcript)
-    return jsonify({"ai_suggestions": suggestions})
+    return jsonify(suggestions)
 
 @transcription_bp.route("/show_notes", methods=["POST"])
 def show_notes():

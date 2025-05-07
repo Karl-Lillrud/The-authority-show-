@@ -1,10 +1,11 @@
+# When changing prices in here. Change the display price in ai_edits.js to match
 CREDIT_COSTS = {
     #ai services
     "ai_audio_analysis": 300,
     "ai_audio_cutting": 500,
     "ai_quotes": 200,
     "ai_qoute_images": 1000,
-    "ai_suggestions": 300,
+    "ai_suggestions": 800,
     "audio_cutting": 500,
     "audio_enhancment": 500,
     "show_notes": 250,

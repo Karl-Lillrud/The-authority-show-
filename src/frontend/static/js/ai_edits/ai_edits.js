@@ -393,21 +393,24 @@ async function generateAISuggestions() {
             body: JSON.stringify({ transcript: rawTranscript })
         });
 
-        const data = await res.json();
-        if (res.ok) {
-            const primary = data.primary_suggestions || "";
-            const additional = (data.additional_suggestions || []).join("\n");
-            container.innerText = [primary, additional].filter(Boolean).join("\n\n") || "No suggestions.";
-
-            // ✅ Consume credits only after success
-            await consumeStoreCredits("ai_suggestions");
-        } else {
-            container.innerText = `Error: ${res.status} - ${res.statusText}`;
+        if (res.status === 403) {
+            const data = await res.json();
+            container.innerHTML = `
+                <p style="color: red;">${data.error || "You don't have enough credits."}</p>
+                ${data.redirect ? `<a href="${data.redirect}" class="btn ai-edit-button">Go to Store</a>` : ""}
+            `;
+            return;
         }
+
+        const data = await res.json();
+        const primary = data.primary_suggestions || "";
+        const additional = (data.additional_suggestions || []).join("\n");
+        container.innerText = [primary, additional].filter(Boolean).join("\n\n") || "No suggestions.";
     } catch (err) {
         container.innerText = "Failed to generate suggestions: " + err.message;
     }
 }
+
 
 async function generateShowNotes() {
     const containerId = "showNotesResult";
