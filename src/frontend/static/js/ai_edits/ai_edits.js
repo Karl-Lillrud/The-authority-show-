@@ -462,7 +462,6 @@ async function generateQuotes() {
             `;
             return;
         }
-
         const data = await res.json();
         container.innerText = data.quotes || "No quotes.";
     } catch (err) {

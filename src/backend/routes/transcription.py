@@ -266,12 +266,10 @@ def ai_cut_audio():
         logger.error(f"AI cut failed: {e}")
         return jsonify({"error": str(e)}), 500
     
-    
 # Function to check if a file already exists in MongoDB GridFS
 def file_exists(filename):
     existing_file = fs.find_one({"filename": filename})
     return existing_file if existing_file else None
-
 
 # get audio info
 @transcription_bp.route("/get_audio_info", methods=["POST"])
@@ -341,11 +339,7 @@ def get_audio_info():
                     "type": "transcription",
                 },  # Add type
             )
-
         logger.info(f"Waveform saved to MongoDB GridFS with ID: {waveform_file_id}")
-
-        logger.info(f"Waveform saved to MongoDB GridFS with ID: {waveform_file_id}")
-
         # Cleanup temp files
         os.remove(temp_file_path)
         os.remove(waveform_path)
