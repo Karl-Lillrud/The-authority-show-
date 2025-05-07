@@ -185,11 +185,81 @@ section#index-banner div#product-review-1 {
   bottom: calc(50% + 150px );
   animation: ease-in-out animate-from-left 0.5s;
 }
+section#index-banner div#product-review-1 .product-quote::before {
+  animation: ease-in-out animate-pop-in 0.5s;
+  animation-delay: 0.5s;
+  animation-fill-mode: forwards;
+}
+section#index-banner div#product-review-1 .product-rating svg:nth-of-type(1) {
+  animation: ease-in-out animate-pop-in 0.5s;
+  animation-delay: 0.9s;
+  animation-fill-mode: forwards;
+}
+section#index-banner div#product-review-1 .product-rating svg:nth-of-type(2) {
+  animation: ease-in-out animate-pop-in 0.5s;
+  animation-delay: 1.1s;
+  animation-fill-mode: forwards;
+}
+section#index-banner div#product-review-1 .product-rating svg:nth-of-type(3) {
+  animation: ease-in-out animate-pop-in 0.5s;
+  animation-delay: 1.3s;
+  animation-fill-mode: forwards;
+}
+section#index-banner div#product-review-1 .product-rating svg:nth-of-type(4) {
+  animation: ease-in-out animate-pop-in 0.5s;
+  animation-delay: 1.5s;
+  animation-fill-mode: forwards;
+}
+section#index-banner div#product-review-1 .product-rating svg:nth-of-type(5) {
+  animation: ease-in-out animate-pop-in 0.5s;
+  animation-delay: 1.7s;
+  animation-fill-mode: forwards;
+}
+section#index-banner div#product-review-1 .product-review-author {
+  animation: ease-in-out animate-from-right 0.5s;
+  animation-delay: 0.5s;
+  animation-fill-mode: forwards;
+}
 
 section#index-banner div#product-review-2 {
   left: calc(50% + 275px );
   bottom: calc(50% + 25px );
   animation: ease-in-out animate-from-right 0.8s;
+}
+section#index-banner div#product-review-2 .product-quote::before {
+  animation: ease-in-out animate-pop-in 0.5s;
+  animation-delay: 0.8s;
+  animation-fill-mode: forwards;
+}
+section#index-banner div#product-review-2 .product-rating svg:nth-of-type(1) {
+  animation: ease-in-out animate-pop-in 0.5s;
+  animation-delay: 1.2s;
+  animation-fill-mode: forwards;
+}
+section#index-banner div#product-review-2 .product-rating svg:nth-of-type(2) {
+  animation: ease-in-out animate-pop-in 0.5s;
+  animation-delay: 1.4s;
+  animation-fill-mode: forwards;
+}
+section#index-banner div#product-review-2 .product-rating svg:nth-of-type(3) {
+  animation: ease-in-out animate-pop-in 0.5s;
+  animation-delay: 1.6s;
+  animation-fill-mode: forwards;
+}
+section#index-banner div#product-review-2 .product-rating svg:nth-of-type(4) {
+  animation: ease-in-out animate-pop-in 0.5s;
+  animation-delay: 1.8s;
+  animation-fill-mode: forwards;
+}
+section#index-banner div#product-review-2 .product-rating svg:nth-of-type(5) {
+  animation: ease-in-out animate-pop-in 0.5s;
+  animation-delay: 2.0s;
+  animation-fill-mode: forwards;
+}
+section#index-banner div#product-review-2 .product-review-author {
+  animation: ease-in-out animate-from-right 0.5s;
+  animation-delay: 0.8s;
+  animation-fill-mode: forwards;
 }
 
 section#index-banner div#product-review-3 {
@@ -198,12 +268,51 @@ section#index-banner div#product-review-3 {
   bottom: calc(50% - 310px );
   animation: ease-in-out animate-from-bottom 1s;
 }
+section#index-banner div#product-review-3 .product-quote::before {
+  animation: ease-in-out animate-pop-in 0.5s;
+  animation-delay: 1s;
+  animation-fill-mode: forwards;
+}
+section#index-banner div#product-review-3 .product-rating svg:nth-of-type(1) {
+  animation: ease-in-out animate-pop-in 0.5s;
+  animation-delay: 1.4s;
+  animation-fill-mode: forwards;
+}
+section#index-banner div#product-review-3 .product-rating svg:nth-of-type(2) {
+  animation: ease-in-out animate-pop-in 0.5s;
+  animation-delay: 1.6s;
+  animation-fill-mode: forwards;
+}
+section#index-banner div#product-review-3 .product-rating svg:nth-of-type(3) {
+  animation: ease-in-out animate-pop-in 0.5s;
+  animation-delay: 1.8s;
+  animation-fill-mode: forwards;
+}
+section#index-banner div#product-review-3 .product-rating svg:nth-of-type(4) {
+  animation: ease-in-out animate-pop-in 0.5s;
+  animation-delay: 2.0s;
+  animation-fill-mode: forwards;
+}
+section#index-banner div#product-review-3 .product-rating svg:nth-of-type(5) {
+  animation: ease-in-out animate-pop-in 0.5s;
+  animation-delay: 2.2s;
+  animation-fill-mode: forwards;
+}
+section#index-banner div#product-review-3 .product-review-author {
+  animation: ease-in-out animate-from-right 0.5s;
+  animation-delay: 1s;
+  animation-fill-mode: forwards;
+}
 
 section#index-banner div.product-review .product-rating {
   display: flex;
   flex-direction: row;
   justify-content: center;
   margin-bottom: 5px;
+}
+
+section#index-banner div.product-review .product-rating svg {
+  opacity: 0;
 }
 
 section#index-banner div.product-review .product-quote {
@@ -233,6 +342,7 @@ section#index-banner div.product-review .product-quote::before {
   left: -25px;
   text-shadow: none;
   z-index: -1;
+  opacity: 0;
 }
 
 section#index-banner div.product-review .product-review-author {
@@ -244,6 +354,7 @@ section#index-banner div.product-review .product-review-author {
   text-transform: uppercase;
   text-shadow: 0px 0px 3px #000000cc;
   margin-top: 20px;
+  opacity: 0;
 }
 
 
@@ -479,6 +590,21 @@ section#index-get-started button:hover, section#index-get-started a.button:hover
   }
   100% {
     transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+@keyframes animate-pop-in {
+  0% {
+    transform: scale(0.5);
+    opacity: 0;
+  }
+  80% {
+    transform: scale(1.3);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1);
     opacity: 1;
   }
 }
