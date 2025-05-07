@@ -68,6 +68,25 @@ class AccountRepository:
             logger.error(f"Error while updating account: {e}", exc_info=True)
             return {"error": f"Error while updating account: {str(e)}"}, 500
 
+    def edit_increment_account(self, user_id, data):
+        try:
+            # Filter out None values and ensure the values are numeric
+            increment_updates = {
+                k: v for k, v in data.items() if v is not None and isinstance(v, (int, float))}
+
+            if not increment_updates:
+                return {"error": "No valid fields specified for update"}, 400
+
+            # Perform the update with the $inc operator
+            result = self.collection.update_one({"ownerId": user_id}, {"$inc": increment_updates})
+            if result.matched_count == 0:
+                return {"error": "No account found"}, 404
+
+            return {"message": "Account succesfully updated"}, 200
+        except Exception as e:
+            logger.error(f"Error updating account: {e}", exc_info=True)
+            return {"error": f"Error updating account: {str(e)}"}, 500
+
     def delete_by_user(self, user_id):
         try:
             result = self.collection.delete_many({"ownerId": user_id})

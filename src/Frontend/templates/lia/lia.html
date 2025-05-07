@@ -1,0 +1,55 @@
+{% extends "/components/base.html" %}
+
+{% block title %}PodManager LIA{% endblock %}
+
+{% block head_extra %}
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/lia/lia.css') }}">
+{% endblock %}
+
+{% block content %}
+    <div class="container"> <!-- This class is from the snippet, styles will be in lia.css -->
+        <div class="progress-bar-container">
+            <div id="progress-bar" class="progress-bar"></div>
+        </div>
+
+        <div id="question-container">
+            <div class="question" id="question-text">Do you enjoy working collaboratively as part of a team?</div>
+            <div class="options">
+                <!-- Buttons will be populated by JavaScript -->
+                <button id="option-button-1"></button>
+                <button id="option-button-2"></button>
+            </div>
+        </div>
+
+        <div id="result-container" class="result-message"></div>
+
+        <!-- New section for LIA contact details, initially hidden -->
+        <div id="lia-details-section" style="display: none; margin-top: 20px;">
+            <h2>Please provide your details:</h2>
+            <form id="lia-contact-form">
+                <div class="form-group">
+                    <label for="lia-name">Name</label>
+                    <input type="text" id="lia-name" name="lia-name" required>
+                </div>
+                <div class="form-group">
+                    <label for="lia-email">Email</label>
+                    <input type="email" id="lia-email" name="lia-email" required>
+                </div>
+                <div class="form-group">
+                    <label for="lia-phone">Phone Number</label>
+                    <input type="tel" id="lia-phone" name="lia-phone" required>
+                </div>
+                <div class="form-group">
+                    <label for="lia-school-study">School and Field of Study</label>
+                    <input type="text" id="lia-school-study" name="lia-school-study" required>
+                </div>
+                <button type="submit" class="submit-btn">Ask For Access</button>
+            </form>
+            <div id="lia-submission-success" class="result-message" style="display: none; color: green;">
+                Thank you! Your details have been submitted. We will be in touch.
+            </div>
+        </div>
+    </div>
+
+    <script src="{{ url_for('static', filename='js/lia/lia.js') }}"></script>
+{% endblock %}

@@ -17,7 +17,7 @@ import {
   populateEpisodeDropdown,
   setupEpisodeDropdown,
   populatePodcastSelector,
-} from "/static/js/episode-to-do/workspace-page.js"
+} from "/static/js/episode-to-do/layout.js"
 import {
   setupTabs,
   addModalStyles,

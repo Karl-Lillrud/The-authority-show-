@@ -184,11 +184,43 @@ def payment_success():
         f"User {user_id} successfully redirected after checkout session {session_id}."
     )
 
-    # Omdirigera användaren till lämplig sida
-    if plan:  # Om det var en prenumeration inblandad
-        return redirect("/account?subscription_updated=true#settings-purchases")
-    else:  # Annars till dashboard eller butik/historik
-        return redirect("/dashboard?purchase_success=true")
+    if not session_id:
+        return jsonify({"error": "Missing session ID"}), 400
+
+    try:
+        stripe_session = stripe.checkout.Session.retrieve(
+            session_id, expand=["line_items"]
+        )
+        metadata = stripe_session.get("metadata", {})
+        credits_to_add = int(metadata.get("credits", 0))
+        # Get episode slots from metadata
+        episode_slots_to_add = int(metadata.get("episode_slots", 0))
+        has_subscription = metadata.get("is_subscription", "false") == "true"
+
+        # Deserialisera items om nödvändigt
+        items = json.loads(metadata.get("items", "[]")) if metadata.get("items") else []
+
+        if plan and has_subscription:
+            result, updated_credits = subscription_service.update_user_subscription(
+                user_id, plan, stripe_session
+            )
+            logger.info(f"Subscription updated for user {user_id}: {plan}")
+
+        if credits_to_add > 0 or episode_slots_to_add > 0:
+            handle_successful_payment(stripe_session, user_id)
+            if credits_to_add > 0: 
+                logger.info(f"Credits processed for user {user_id}: {credits_to_add}")
+            elif episode_slots_to_add > 0:
+                logger.info(f"Unlocking {episode_slots_to_add} episode slots for {user_id}")
+
+        # Omdirigera användaren till lämplig sida
+        if plan:  # Om det var en prenumeration inblandad
+            return redirect("/account?subscription_updated=true#settings-purchases")
+        else:  # Annars till dashboard eller butik/historik
+            return redirect("/dashboard?purchase_success=true")
+    except Exception as e:
+        logger.error(f"Payment processing error: {str(e)}")
+        return jsonify({"error": str(e)}), 500
 
 
 @billing_bp.route("/credits/cancel", methods=["GET"])
@@ -545,32 +577,6 @@ def stripe_webhook():
                     except Exception as renewal_error:
                         logger.error(f"Error in subscription renewal handler: {str(renewal_error)}")
                 else:
-                    # Final fallback: Check all accounts for matching email pattern or username
-                    logger.warning(f"Account not found by standard methods, trying advanced lookup...")
-                    try:
-                        customer = stripe.Customer.retrieve(customer_id)
-                        if customer.email:
-                            # Try a more flexible email match (case insensitive)
-                            account = collection.database.Accounts.find_one(
-                                {"email": {"$regex": f"^{re.escape(customer.email)}$", "$options": "i"}}
-                            )
-                            if account:
-                                user_id = account.get("userId") or account.get("ownerId")
-                                logger.info(f"Found account via case-insensitive email match for user {user_id}")
-                                
-                                # Update the account with the Stripe customer ID
-                                collection.database.Accounts.update_one(
-                                    {"_id": account["_id"]},
-                                    {"$set": {"stripeCustomerId": customer_id}}
-                                )
-                                
-                                # Process the renewal
-                                subscription_service.handle_subscription_renewal(user_id, subscription)
-                                logger.info(f"Successfully processed subscription renewal via advanced lookup for user {user_id}")
-                                return jsonify(success=True)
-                    except Exception as advanced_lookup_error:
-                        logger.error(f"Advanced account lookup failed: {str(advanced_lookup_error)}")
-                    
                     logger.error(f"Account not found for customer {customer_id} after all lookup attempts")
                     return jsonify(success=False, error="Account not found"), 404
                     
@@ -696,7 +702,8 @@ def cancel_subscription():
         stripe_subscription_id = None
         payment_id = None  # Initialize payment_id
 
-        # --- Try to find the Stripe Subscription ID ---
+
+        # Find and cancel the Stripe subscription
         try:
             # Check the local subscription record first
             subscription_record = collection.database.Subscriptions.find_one(  # Use Subscriptions collection
@@ -726,19 +733,9 @@ def cancel_subscription():
                             logger.info(
                                 f"Retrieved subscription ID from Checkout Session {payment_id}: {stripe_subscription_id}"
                             )
-                        else:
-                            logger.warning(
-                                f"Checkout Session {payment_id} found, but no subscription attribute or it's None."
-                            )
-                    except stripe.error.InvalidRequestError as ire:
-                        logger.warning(
-                            f"Could not retrieve checkout session {payment_id}, it might not be a session ID or is invalid: {str(ire)}"
-                        )
                     except Exception as session_error:
-                        logger.error(
-                            f"Error retrieving Checkout Session {payment_id}: {str(session_error)}"
-                        )
-
+                        logger.error(f"Error retrieving session: {str(session_error)}")
+            
             # If still no ID, try finding the customer by email in Stripe
             if not stripe_subscription_id and account.get("email"):
                 logger.info(
@@ -752,13 +749,13 @@ def cancel_subscription():
                         customer_id = customers.data[0].id
                         logger.info(f"Found Stripe customer by email: {customer_id}")
                         # Look for an active subscription for this customer
-                        subscriptions = stripe.Subscription.list(
+                        subscriptions_stripe = stripe.Subscription.list(
                             customer=customer_id,
                             status="active",
                             limit=1,  # Fetch only one active
                         )
-                        if subscriptions and subscriptions.data:
-                            stripe_subscription_id = subscriptions.data[0].id
+                        if subscriptions_stripe and subscriptions_stripe.data:
+                            stripe_subscription_id = subscriptions_stripe.data[0].id
                             logger.info(
                                 f"Found active subscription via customer search: {stripe_subscription_id}"
                             )

@@ -20,8 +20,11 @@
           <button onclick="showTab('video')" id="tab-video">📹 AI Video Enhancement</button>
         </div>
 
-        <!-- EMPTY: JS will inject content -->
+        <!-- Content injected by JS -->
         <div id="content"></div>
+
+        <!-- Audio edits history -->
+        <div id="editHistory" class="edit-history-container"></div>
       </main>
     </div>
   </div>
@@ -30,17 +33,22 @@
     const episodeId = "{{ episode_id }}";
     console.log("Loaded AI Edits page for episode ID:", episodeId);
 
-    // Load default tab on page load
     window.addEventListener("DOMContentLoaded", () => {
       showTab('transcription');
+      loadAudioEditsForEpisode(episodeId);  // 👈 Load edit history
     });
-  
-  window.CURRENT_USER_ID = "{{ user_id }}";
-  localStorage.setItem("user_id", "{{ user_id }}");
+
+    window.CURRENT_USER_ID = "{{ user_id }}";
+    localStorage.setItem("user_id", "{{ user_id }}");
   </script>
+
   <script src="/static/js/landingpage/audio-player.js"></script>
   <script src="/static/js/ai_edits/ai_edits.js"></script>
-
+  <script>
+    window.CURRENT_EPISODE_ID = "{{ episode_id or '' }}";
+    if ("{{ episode_id }}") sessionStorage.setItem("selected_episode_id", "{{ episode_id }}");
+  </script>
+  
     <!-- Footer -->
   <footer style="text-align: center;">
     <div class="container">

@@ -25,5 +25,5 @@ class PodtaskSchema(Schema):
     assignee = fields.Str(allow_none=True)     # ID of the assigned user
     assigneeName = fields.Str(allow_none=True) # Name of the assigned user
     dependencies = fields.List(fields.Str(), allow_none=True)  # List of task IDs that this task depends on
-    
+    aiTool = fields.Str(allow_none=True)
     priority = fields.Str()
