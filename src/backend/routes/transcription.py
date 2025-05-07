@@ -67,21 +67,21 @@ def transcribe():
         subscription_plan = subscription["plan"] if subscription else "FREE"
         logger.info(f"User {user_id} subscription plan: {subscription_plan}")
 
-        # 🛡️ Get max allowed duration from subscription utils
+        # Get max allowed duration from subscription utils
         max_duration = get_max_duration_limit(subscription_plan)
         logger.info(f"Max transcription duration allowed: {max_duration} seconds")
 
-        # ⏱️ Check audio duration
+        # Check audio duration
         logger.info("Checking uploaded audio duration...")
         check_audio_duration(audio_bytes, max_duration_seconds=max_duration)
         logger.info("Audio duration is within the allowed limit.")
 
-        # 🧠 Transcription process
-        logger.info(f"🧠 Starting transcription for file: {filename}")
+        # Transcription process
+        logger.info(f"Starting transcription for file: {filename}")
         result = transcription_service.transcribe_audio(audio_bytes, filename)
         logger.info("Transcription completed successfully.")
 
-        # ⏺️ Save as transcription edit
+        # ⏺Save as transcription edit
         user_id = session.get("user_id")
         episode_id = request.form.get("episode_id") or request.args.get("episode_id")
         transcription_text = result["full_transcript"]
