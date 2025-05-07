@@ -129,7 +129,7 @@ export function renderEpisodeDetail(episode) {
   <div class="podcast-header-section">
     <div class="podcast-image-container">
       <div class="detail-image" style="background-image: url('${
-        episode.image || episode.imageUrl || "default-image.png"
+        episode.image || episode.imageUrl || "/static/images/default-image.png"
       }')"></div>
     </div>
     <div class="podcast-basic-info">
