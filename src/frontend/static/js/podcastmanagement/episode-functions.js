@@ -407,7 +407,7 @@ export function renderEpisodeDetail(episode) {
       if (guestsListEl) {
         const errorMsg = document.createElement("p");
         errorMsg.className = "error-message";
-        errorMsg.textContent = "This episode has no guests.";
+        errorMsg.textContent = "No guests to display.";
         guestsListEl.appendChild(errorMsg);
       }
     });
