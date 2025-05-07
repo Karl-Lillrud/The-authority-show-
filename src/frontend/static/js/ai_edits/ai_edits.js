@@ -1271,7 +1271,6 @@ async function consumeStoreCredits(featureKey) {
         throw new Error(result.error || "Failed to consume credits");
     }
 
-    // ✅ Update header credits
     if (window.populateStoreCredits) {
         await window.populateStoreCredits();
     }
