@@ -44,10 +44,10 @@ const CREDIT_COSTS = {
     ai_audio_analysis: 800,
     ai_audio_cutting: 800,
     ai_quotes: 200,
-    ai_quote_images: 800,
+    ai_quote_images: 1000,
     ai_suggestions: 800,
     audio_cutting: 500,
-    audio_enhancment: 500,
+    audio_enhancement: 500,
     show_notes: 500,
     transcription: 600,
     clean_transcript: 500,
@@ -380,6 +380,7 @@ async function generateCleanTranscript() {
         container.innerText = "Failed to clean transcript. Server says: " + err.message;
     }
 }
+
 async function generateAISuggestions() {
     const containerId = "aiSuggestionsResult";
     const container = document.getElementById(containerId);
@@ -410,7 +411,6 @@ async function generateAISuggestions() {
         container.innerText = "Failed to generate suggestions: " + err.message;
     }
 }
-
 
 async function generateShowNotes() {
     const containerId = "showNotesResult";
@@ -470,12 +470,11 @@ async function generateQuotes() {
     }
 }
 
-
 async function generateQuoteImages() {
     const containerId = "quoteImagesResult";
     const container = document.getElementById(containerId);
 
-    const quotes = document.getElementById("quotesResult").innerText;
+    const quotes = document.getElementById("quotesResult").innerText.trim();
     if (!quotes) {
         alert("Generate quotes first.");
         return;
@@ -490,23 +489,25 @@ async function generateQuoteImages() {
             body: JSON.stringify({ quotes })
         });
 
-        const data = await res.json();
-        if (res.ok) {
-            container.innerHTML = "";
-
-            (data.quote_images || []).forEach(url => {
-                const img = document.createElement("img");
-                img.src = url;
-                img.style.maxWidth = "100%";
-                img.style.margin = "10px 0";
-                container.appendChild(img);
-            });
-
-            // ✅ Consume credits only after success
-            await consumeStoreCredits("ai_quote_images");
-        } else {
-            container.innerText = `Error: ${res.status} - ${res.statusText}`;
+        if (res.status === 403) {
+            const data = await res.json();
+            container.innerHTML = `
+                <p style="color: red;">${data.error || "You don't have enough credits."}</p>
+                ${data.redirect ? `<a href="${data.redirect}" class="btn ai-edit-button">Go to Store</a>` : ""}
+            `;
+            return;
         }
+
+        const data = await res.json();
+        container.innerHTML = "";
+
+        (data.quote_images || []).forEach(url => {
+            const img = document.createElement("img");
+            img.src = url;
+            img.style.maxWidth = "100%";
+            img.style.margin = "10px 0";
+            container.appendChild(img);
+        });
     } catch (err) {
         container.innerText = "Failed to generate quote images: " + err.message;
     }
@@ -547,7 +548,6 @@ async function runOsintSearch() {
         const data = await response.json();
         container.innerText = data.osint_info || "No info found.";
 
-        // ✅ Consume credits only after success
         await consumeStoreCredits("ai_osint");
     } catch (err) {
         container.innerText = `Failed: ${err.message}`;
@@ -577,7 +577,6 @@ async function generatePodcastIntroOutro() {
         const data = await res.json();
         container.innerText = data.script || "No result.";
 
-        // ✅ Consume credits only after success
         await consumeStoreCredits("ai_intro_outro");
     } catch (err) {
         container.innerText = `Failed: ${err.message}`;
@@ -616,7 +615,6 @@ async function convertIntroOutroToSpeech() {
             container.appendChild(audio);
             container.appendChild(download);
 
-            // ✅ Consume credits only after success
             await consumeStoreCredits("ai_intro_outro_audio");
         } else {
             throw new Error(data.error || "Unknown error");
@@ -679,8 +677,7 @@ async function enhanceAudio() {
         dl.href = url;
         dl.style.display = "inline-block";
 
-        // ✅ Consume credits only after success
-        await consumeStoreCredits("audio_enhancment");
+        await consumeStoreCredits("audio_enhancement");
     } catch (err) {
         container.innerHTML = `Error: ${err.message}`;
     }
@@ -712,7 +709,6 @@ async function runVoiceIsolation() {
         const data = await response.json();
         if (!response.ok) throw new Error(data.error || "Voice isolation failed.");
 
-        // ✅ Only now consume credits, since we know it worked
         await consumeStoreCredits("voice_isolation");
 
         const blobUrl = data.isolated_blob_url;
@@ -783,7 +779,6 @@ async function analyzeEnhancedAudio() {
 
         mixBtn.style.display = "inline-block";
 
-        // ✅ Consume credits only after success
         await consumeStoreCredits("ai_audio_analysis");
     } catch (err) {
         container.innerText = `Analysis failed: ${err.message}`;
@@ -846,7 +841,6 @@ async function displayBackgroundAndMix() {
         dl.style.display = "inline-block";
       }
 
-      // ✅ Consume credits only after success
       await consumeStoreCredits("ai_audio_analysis");
     } catch (err) {
       preview.innerText = `Error: ${err.message}`;
@@ -901,7 +895,6 @@ async function cutAudio() {
         activeAudioBlob = blob;
         activeAudioId = "external";
 
-        // ✅ Consume credits only after success
         await consumeStoreCredits("audio_cutting");
     } catch (err) {
         alert(`Cut failed: ${err.message}`);
@@ -996,7 +989,6 @@ async function aiCutAudio() {
 
         containerCuts.appendChild(applyBtn);
 
-        // ✅ Consume credits only after success
         await consumeStoreCredits("ai_audio_cutting");
     } catch (err) {
         containerTranscript.innerText = "Failed to process audio.";
@@ -1119,7 +1111,6 @@ async function cutAudioFromBlob() {
         activeAudioBlob = blob;
         activeAudioId = "external";
 
-        // ✅ Consume credits only after success
         await consumeStoreCredits("audio_cutting");
     } catch (err) {
         alert(`Cut failed: ${err.message}`);
@@ -1214,7 +1205,6 @@ async function enhanceVideo() {
         dl.href = videoURL;
         dl.style.display = "inline-block";
 
-        // ✅ Consume credits only after success
         await consumeStoreCredits("video_enhancement");
     } catch (err) {
         container.innerText = `Error: ${err.message}`;

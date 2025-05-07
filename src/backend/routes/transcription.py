@@ -211,14 +211,27 @@ def quotes():
 
 @transcription_bp.route("/quote_images", methods=["POST"])
 def quote_images():
+    user_id = g.get("user_id")
+    if not user_id:
+        return jsonify({"error": "Authentication required"}), 401
+
     data = request.json
     quotes_text = data.get("quotes", "")
-    if not quotes_text:
+    if not quotes_text.strip():
         return jsonify({"error": "No quotes provided"}), 400
-    # Split the quotes text into a list; adjust the delimiter as needed.
-    quotes_list = quotes_text.split("\n\n")
+
+    try:
+        consume_credits(user_id, "ai_quote_images")
+    except ValueError as e:
+        return jsonify({
+            "error": str(e),
+            "redirect": "/store"
+        }), 403
+
+    quotes_list = [q.strip() for q in quotes_text.split("\n\n") if q.strip()]
     image_urls = transcription_service.get_quote_images(quotes_list)
     return jsonify({"quote_images": image_urls})
+
 
 
 @transcription_bp.route("/translate", methods=["POST"])
