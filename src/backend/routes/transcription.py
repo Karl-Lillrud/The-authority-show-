@@ -59,7 +59,6 @@ def transcribe():
                 "redirect": "/store"
             }), 403
 
-   
         # Extract audio if needed
         if is_video:
             temp_video_path = f"/tmp/{filename}"
@@ -95,7 +94,7 @@ def transcribe():
         result = transcription_service.transcribe_audio(audio_bytes, filename)
         logger.info("Transcription completed successfully.")
 
-        # ⏺Save as transcription edit
+        # Save as transcription edit
         episode_id = request.form.get("episode_id") or request.args.get("episode_id")
         transcription_text = result["full_transcript"]
         sentiment_result = transcription_service.get_sentiment_and_sfx(transcription_text)
@@ -109,7 +108,6 @@ def transcribe():
             emotion=sentiment_result["emotions"],
             filename=filename
         )
-
         return jsonify(result)
 
     except ValueError as e:
@@ -129,7 +127,6 @@ def clean_transcript():
     transcript = data.get("transcript", "")
     if not transcript:
         return jsonify({"error": "No transcript provided"}), 400
-
     try:
         consume_credits(user_id, "clean_transcript")
     except ValueError as e:
@@ -139,7 +136,6 @@ def clean_transcript():
             "redirect": "/store"
         }), 403
 
-    # Run cleaning
     clean = transcription_service.get_clean_transcript(transcript)
     return jsonify({"clean_transcript": clean})
 
@@ -232,8 +228,6 @@ def quote_images():
     image_urls = transcription_service.get_quote_images(quotes_list)
     return jsonify({"quote_images": image_urls})
 
-
-
 @transcription_bp.route("/translate", methods=["POST"])
 def translate():
     data = request.json
@@ -249,7 +243,6 @@ def translate():
 @transcription_bp.route("/get_file/<file_id>", methods=["GET"])
 def get_file(file_id):
     return fetch_file(file_id)
-
 
 @transcription_bp.route("/ai_cut_audio", methods=["POST"])
 def ai_cut_audio():
@@ -381,7 +374,7 @@ def isolate_voice():
 
     try:
         blob_url = audio_service.isolate_voice(audio_bytes, filename, episode_id)
-        return jsonify({"isolated_blob_url": blob_url})  # ✅ return blob_url instead of file_id
+        return jsonify({"isolated_blob_url": blob_url})  
     except Exception as e:
         logger.error(f"Error during voice isolation: {str(e)}")
         return jsonify({"error": str(e)}), 500
@@ -406,7 +399,9 @@ def render_ai_edits():
 
     logger.info(f"Rendering AI Edits page for episode ID: {episode_id}")
     try:
-        return render_template("ai_edits/ai_edits.html", episode_id=episode_id, user_id=session.get("user_id"))
+        return render_template("ai_edits/ai_edits.html", 
+                               episode_id=episode_id, 
+                               user_id=session.get("user_id"))
     except Exception as e:
         logger.error(f"Error rendering ai_edits.html: {e}")
         return jsonify({"error": "Failed to render AI Edits page"}), 500
@@ -451,7 +446,7 @@ def generate_intro_outro():
     try:
 
         osint_info = get_osint_info(guest_name)
-        script = create_podcast_scripts_paid(osint_info, guest_name, transcript)  # ✅ Pass transcript here
+        script = create_podcast_scripts_paid(osint_info, guest_name, transcript)  # Pass transcript here
 
         return jsonify({"script": script})
     except Exception as e:
