@@ -8,7 +8,7 @@ CREDIT_COSTS = {
     "ai_suggestions": 800,
     "audio_cutting": 500,
     "audio_enhancment": 500,
-    "show_notes": 250,
+    "show_notes": 500,
     "transcription": 600,
     "clean_transcript": 500,
     "translation": 150,

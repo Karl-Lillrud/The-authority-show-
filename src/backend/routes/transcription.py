@@ -131,7 +131,6 @@ def clean_transcript():
         return jsonify({"error": "No transcript provided"}), 400
 
     try:
-        # Consume credits for this feature
         consume_credits(user_id, "clean_transcript")
     except ValueError as e:
         logger.warning(f"User {user_id} has insufficient credits for cleaning.")
@@ -158,7 +157,6 @@ def ai_suggestions():
     try:
         consume_credits(user_id, "ai_suggestions")
     except ValueError as e:
-        # Optional: redirect link
         return jsonify({
             "error": str(e),
             "redirect": "/store"
@@ -169,10 +167,23 @@ def ai_suggestions():
 
 @transcription_bp.route("/show_notes", methods=["POST"])
 def show_notes():
+    user_id = g.get("user_id")
+    if not user_id:
+        return jsonify({"error": "Authentication required"}), 401
+
     data = request.json
     transcript = data.get("transcript", "")
     if not transcript:
         return jsonify({"error": "No transcript provided"}), 400
+
+    try:
+        consume_credits(user_id, "show_notes")
+    except ValueError as e:
+        return jsonify({
+            "error": str(e),
+            "redirect": "/store"
+        }), 403
+
     notes = transcription_service.get_show_notes(transcript)
     return jsonify({"show_notes": notes})
 

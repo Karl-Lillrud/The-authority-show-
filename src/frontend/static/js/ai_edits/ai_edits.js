@@ -425,15 +425,17 @@ async function generateShowNotes() {
             body: JSON.stringify({ transcript: rawTranscript })
         });
 
-        const data = await res.json();
-        if (res.ok) {
-            container.innerText = data.show_notes || "No notes.";
-
-            // ✅ Consume credits only after success
-            await consumeStoreCredits("show_notes");
-        } else {
-            container.innerText = `Error: ${res.status} - ${res.statusText}`;
+        if (res.status === 403) {
+            const data = await res.json();
+            container.innerHTML = `
+                <p style="color: red;">${data.error || "You don't have enough credits."}</p>
+                ${data.redirect ? `<a href="${data.redirect}" class="btn ai-edit-button">Go to Store</a>` : ""}
+            `;
+            return;
         }
+
+        const data = await res.json();
+        container.innerText = data.show_notes || "No notes.";
     } catch (err) {
         container.innerText = "Failed to generate show notes: " + err.message;
     }
