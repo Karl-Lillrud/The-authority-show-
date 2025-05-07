@@ -56,5 +56,7 @@
     {% include 'components/header.html' %}
     <main style="flex: 1">{% block content %}{% endblock %}</main>
     {% include 'components/footer.html' %}
+    <!-- Include Notification Templates -->
+    {% include "/components/notifications.html" %}
   </body>
 </html>
