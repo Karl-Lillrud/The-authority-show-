@@ -17,9 +17,12 @@ from backend.services.transcriptionService import TranscriptionService
 from backend.services.subscriptionService import SubscriptionService
 from backend.services.audioService import AudioService
 from backend.services.videoService import VideoService
+from backend.services.creditService import consume_credits
+from backend.repository.edit_repository import save_transcription_edit
 from backend.repository.ai_models import fetch_file, save_file, get_file_by_id
 from backend.utils.transcription_utils import check_audio_duration
 from backend.utils.subscription_access import get_max_duration_limit
+from backend.utils.text_utils import get_osint_info, create_podcast_scripts_paid
 
 transcription_bp = Blueprint("transcription", __name__)
 logger = logging.getLogger(__name__)
@@ -61,13 +64,20 @@ def transcribe():
         else:
             audio_bytes = file.read()
 
-         #Get subscription plan
+        
+        # Check credits before working on transcript
         user_id = session.get("user_id")
+        try:
+            consume_credits(user_id, "transcription")
+        except ValueError as e:
+            logger.warning(f"Credit check failed for user {user_id}: {str(e)}")
+            return jsonify({"error": str(e)}), 403
+        
+        # Subscribe plan and duration validation
         subscription = subscription_service.get_user_subscription(user_id)
         subscription_plan = subscription["plan"] if subscription else "FREE"
         logger.info(f"User {user_id} subscription plan: {subscription_plan}")
 
-        # Get max allowed duration from subscription utils
         max_duration = get_max_duration_limit(subscription_plan)
         logger.info(f"Max transcription duration allowed: {max_duration} seconds")
 
@@ -82,12 +92,9 @@ def transcribe():
         logger.info("Transcription completed successfully.")
 
         # ⏺Save as transcription edit
-        user_id = session.get("user_id")
         episode_id = request.form.get("episode_id") or request.args.get("episode_id")
         transcription_text = result["full_transcript"]
         sentiment_result = transcription_service.get_sentiment_and_sfx(transcription_text)
-
-        from backend.repository.edit_repository import save_transcription_edit  # skapa denna funktion om den inte finns
 
         save_transcription_edit(
             user_id=user_id,
@@ -355,7 +362,6 @@ def osint_lookup():
         return jsonify({"error": "Missing guest name"}), 400
 
     try:
-        from backend.utils.text_utils import get_osint_info
         osint_info = get_osint_info(guest_name)
         return jsonify({"osint_info": osint_info})
     except Exception as e:
@@ -372,7 +378,6 @@ def generate_intro_outro():
         return jsonify({"error": "Missing guest name or transcript"}), 400
 
     try:
-        from backend.utils.text_utils import get_osint_info, create_podcast_scripts_paid
 
         osint_info = get_osint_info(guest_name)
         script = create_podcast_scripts_paid(osint_info, guest_name, transcript)  # ✅ Pass transcript here
