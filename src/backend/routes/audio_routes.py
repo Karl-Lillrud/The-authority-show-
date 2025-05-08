@@ -179,12 +179,22 @@ def ai_cut_audio():
         if not file_id:
             return jsonify({"error": "file_id is required"}), 400
 
+        try:
+            consume_credits(g.user_id, "ai_audio_cutting")
+        except ValueError as e:
+            logger.warning(f"User {g.user_id} has insufficient credits for ai_audio_cutting.")
+            return jsonify({
+                "error": str(e),
+                "redirect": "/store"
+            }), 403
+
         result = audio_service.ai_cut_audio_from_id(file_id, episode_id=episode_id)
         return jsonify(result)
 
     except Exception as e:
         logger.error(f"AI cut failed: {str(e)}")
         return jsonify({"error": str(e)}), 500
+
 
 @audio_bp.route("/apply_ai_cuts", methods=["POST"])
 def apply_ai_cuts():
@@ -266,6 +276,15 @@ def ai_cut_from_blob():
         return jsonify({"error": "Audio file and episode_id are required"}), 400
 
     try:
+        try:
+            consume_credits(g.user_id, "ai_audio_cutting")
+        except ValueError as e:
+            logger.warning(f"User {g.user_id} has insufficient credits for ai_audio_cutting.")
+            return jsonify({
+                "error": str(e),
+                "redirect": "/store"
+            }), 403
+
         audio_file = request.files["audio"]
         episode_id = request.form["episode_id"]
         filename = audio_file.filename
@@ -276,6 +295,7 @@ def ai_cut_from_blob():
     except Exception as e:
         logger.error(f"AI cut from blob failed: {str(e)}")
         return jsonify({"error": str(e)}), 500
+
 
 @audio_bp.route("/apply_ai_cuts_from_blob", methods=["POST"])
 def apply_ai_cuts_from_blob():

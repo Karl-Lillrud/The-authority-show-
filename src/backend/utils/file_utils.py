@@ -7,6 +7,7 @@ import logging
 import tempfile
 from pydub import AudioSegment
 import difflib
+import soundfile as sf
 
 logger = logging.getLogger(__name__)
 
@@ -31,7 +32,7 @@ def enhance_audio_with_ffmpeg(input_path: str, output_path: str) -> bool:
         subprocess.run(ffmpeg_cmd, check=True)
 
         # Optional: Debug check
-        import soundfile as sf
+        
         info = sf.info(output_path)
         logger.info(f"✅ Output WAV info: {info}")
 
@@ -125,3 +126,29 @@ def get_sentence_timestamps_fuzzy(sentence: str, word_timings: list, threshold: 
 
     # fallback
     return {"start": 0.0, "end": 0.5}
+
+def convert_to_pcm_wav(input_bytes: bytes) -> bytes:
+        with tempfile.NamedTemporaryFile(delete=False, suffix=".input") as input_tmp:
+            input_tmp.write(input_bytes)
+            input_tmp.flush()
+
+        output_path = input_tmp.name.replace(".input", ".wav")
+
+        cmd = [
+            "ffmpeg", "-y",
+            "-i", input_tmp.name,
+            "-acodec", "pcm_s16le",
+            "-ar", "16000",  
+            output_path
+        ]
+        proc = subprocess.run(cmd, capture_output=True)
+
+        if proc.returncode != 0:
+            raise RuntimeError(f"FFmpeg conversion failed:\n{proc.stderr.decode()}")
+
+        with open(output_path, "rb") as f:
+            converted_bytes = f.read()
+
+        os.remove(input_tmp.name)
+        os.remove(output_path)
+        return converted_bytes

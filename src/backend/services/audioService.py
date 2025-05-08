@@ -3,7 +3,7 @@ from typing import Optional
 from pydub import AudioSegment, silence
 from io import BytesIO 
 from backend.database.mongo_connection import get_fs
-from backend.utils.file_utils import enhance_audio_with_ffmpeg, detect_background_noise, convert_audio_to_wav,get_sentence_timestamps_fuzzy
+from backend.utils.file_utils import enhance_audio_with_ffmpeg, detect_background_noise, convert_audio_to_wav,get_sentence_timestamps_fuzzy, convert_to_pcm_wav
 from backend.utils.ai_utils import (
     remove_filler_words, calculate_clarity_score, analyze_sentiment, analyze_emotions
 )
@@ -182,21 +182,22 @@ class AudioService:
                     os.remove(path)
 
     def ai_cut_audio(self, file_bytes: bytes, filename: str, episode_id: Optional[str] = None) -> dict:
-        ext = os.path.splitext(filename)[1].lower()
-        if ext not in [".mp3", ".wav"]:
-            raise ValueError("Unsupported audio format")
+        logger.info(f"Starting AI cut for file: {filename}")
+        
+        # Convert audio to PCM WAV format using FFmpeg
+        try:
+            converted_bytes = convert_to_pcm_wav(file_bytes)
+        except Exception as e:
+            logger.error(f"Audio conversion failed: {str(e)}")
+            raise RuntimeError("Audio format is unsupported or corrupted")
 
-        temp_path = (
-            convert_audio_to_wav(file_bytes, original_ext=ext)
-            if ext == ".mp3"
-            else tempfile.NamedTemporaryFile(delete=False, suffix=".wav").name
-        )
+        # Write to temporary WAV file for downstream processing
+        with tempfile.NamedTemporaryFile(delete=False, suffix=".wav") as tmp:
+            tmp.write(converted_bytes)
+            tmp.flush()
+            temp_path = tmp.name
 
-        if ext == ".wav":
-            with open(temp_path, "wb") as f:
-                f.write(file_bytes)
-
-        logger.info(f"AI Cut: Temp file at {temp_path}")
+        logger.info(f"AI Cut working with converted WAV file at: {temp_path}")
 
         try:
             client = ElevenLabs()
@@ -223,14 +224,13 @@ class AudioService:
             filler_sentences = detect_filler_words(transcript)
             sentence_certainty = analyze_certainty_levels(transcript)
 
-            logger.info(f"Certainty results: {sentence_certainty}")
+            logger.info(f"Certainty results computed")
 
             sentence_timestamps = []
             audio = AudioSegment.from_wav(temp_path)
             cut_file_ids = []
 
             for idx, entry in enumerate(sentence_certainty):
-                logger.info(f"Sentence {idx}: {entry['sentence']} | Certainty: {entry.get('certainty')}")
                 if entry["certainty"] <= 0:
                     continue
 
@@ -252,19 +252,19 @@ class AudioService:
                 })
 
                 cut = audio[start_ms:end_ms]
-                with tempfile.NamedTemporaryFile(suffix=".wav", delete=False) as tmp:
-                    cut.export(tmp.name, format="wav")
-                    tmp_path = tmp.name
+                with tempfile.NamedTemporaryFile(suffix=".wav", delete=False) as tmp_cut:
+                    cut.export(tmp_cut.name, format="wav")
+                    tmp_cut.flush()
 
-                with open(tmp_path, "rb") as f:
-                    file_id = save_file(
-                        f.read(),
-                        filename=f"cut_{idx}.wav",
-                        metadata={"type": "ai_cut", "source": filename}
-                    )
-                    cut_file_ids.append(file_id)
+                    with open(tmp_cut.name, "rb") as f:
+                        file_id = save_file(
+                            f.read(),
+                            filename=f"cut_{idx}.wav",
+                            metadata={"type": "ai_cut", "source": filename}
+                        )
+                        cut_file_ids.append(file_id)
 
-                os.remove(tmp_path)
+                    os.remove(tmp_cut.name)
 
             sentiment = analyze_sentiment(transcript)
             show_notes = generate_ai_show_notes(transcript)
@@ -583,3 +583,4 @@ class AudioService:
             for path in [tmp_path, cleaned_path]:
                 if os.path.exists(path):
                     os.remove(path)
+        

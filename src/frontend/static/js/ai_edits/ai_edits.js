@@ -271,9 +271,18 @@ function showTab(tabName) {
             <div id="aiCuttingSection">
                 <hr/>
                 <h3>AI Cutting + Transcript</h3>
+
+                <label for="audioSourceSelectAICut"><strong>Audio Source:</strong></label>
+                <select id="audioSourceSelectAICut" class="input-field" style="margin-bottom: 1rem;">
+                    <option value="enhanced">Enhanced</option>
+                    <option value="isolated">Isolated</option>
+                    <option value="original">Original</option>
+                </select>
+
                 <button class="btn ai-edit-button" onclick="aiCutAudio()">
-                  ${labelWithCredits("Run AI Cut", "ai_audio_cutting")}
+                    ${labelWithCredits("Run AI Cut", "ai_audio_cutting")}
                 </button>
+
                 <div class="result-field">
                     <h4>Transcript</h4>
                     <pre id="aiTranscript"></pre>
@@ -283,6 +292,7 @@ function showTab(tabName) {
                     <pre id="aiSuggestedCuts"></pre>
                 </div>
             </div>
+
         `;
     } else if (tabName === 'video') {
         content.innerHTML = `
@@ -999,10 +1009,26 @@ async function aiCutAudio() {
         return;
     }
 
-    if (!activeAudioBlob && !activeAudioId) {
-        alert("No audio loaded.");
+    const selectedSource = document.getElementById("audioSourceSelectAICut").value;
+
+    let blobToUse;
+    if (selectedSource === "enhanced") {
+        blobToUse = enhancedAudioBlob;
+        activeAudioId = "external";
+    } else if (selectedSource === "isolated") {
+        blobToUse = isolatedAudioBlob;
+        activeAudioId = "external";
+    } else if (selectedSource === "original") {
+        blobToUse = rawAudioBlob;
+        activeAudioId = "external";
+    }
+
+    if (!blobToUse) {
+        alert("No audio selected or loaded.");
         return;
     }
+
+    activeAudioBlob = blobToUse;
 
     const containerIdTranscript = "aiTranscript";
     const containerTranscript = document.getElementById(containerIdTranscript);
@@ -1013,11 +1039,10 @@ async function aiCutAudio() {
     containerCuts.innerHTML = "";
 
     try {
-        let response, data;
-
-        if (activeAudioId === "external") {
+        let response;
+        if (!activeAudioId || activeAudioId === "external") {
             const formData = new FormData();
-            formData.append("audio", new File([activeAudioBlob], "ai_cut.wav", { type: "audio/wav" }));
+            formData.append("audio", new File([blobToUse], "ai_cut.wav", { type: "audio/wav" }));
             formData.append("episode_id", episodeId);
 
             response = await fetch("/ai_cut_from_blob", {
@@ -1035,8 +1060,19 @@ async function aiCutAudio() {
             });
         }
 
-        data = await response.json();
-        if (!response.ok) throw new Error(data.error || "AI Cut failed");
+        const data = await response.json();
+
+        if (response.status === 403) {
+            containerTranscript.innerHTML = `
+                <p style="color: red;">${data.error || "You don't have enough credits."}</p>
+                ${data.redirect ? `<a href="${data.redirect}" class="btn ai-edit-button">Go to Store</a>` : ""}
+            `;
+            return;
+        }
+
+        if (!response.ok) {
+            throw new Error(data.error || "AI Cut failed");
+        }
 
         containerTranscript.innerText = data.cleaned_transcript || "No transcript available.";
 
@@ -1076,10 +1112,7 @@ async function aiCutAudio() {
         applyBtn.className = "btn ai-edit-button";
         applyBtn.innerText = "Apply AI Cuts";
         applyBtn.onclick = applySelectedCuts;
-
         containerCuts.appendChild(applyBtn);
-
-        await consumeStoreCredits("ai_audio_cutting");
     } catch (err) {
         containerTranscript.innerText = "Failed to process audio.";
         alert(`AI Cut failed: ${err.message}`);
