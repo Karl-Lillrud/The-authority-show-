@@ -1,6 +1,7 @@
 # src/backend/routes/transcript/transcription.py
 import os
 import logging
+import base64
 import subprocess
 from datetime import datetime
 from flask import Blueprint, request, jsonify, render_template, session,Response, g
@@ -22,7 +23,8 @@ from backend.repository.edit_repository import save_transcription_edit
 from backend.repository.ai_models import fetch_file, save_file, get_file_by_id
 from backend.utils.transcription_utils import check_audio_duration
 from backend.utils.subscription_access import get_max_duration_limit
-from backend.utils.text_utils import get_osint_info, create_podcast_scripts_paid
+from backend.utils.text_utils import get_osint_info, create_podcast_scripts_paid, text_to_speech_with_elevenlabs
+
 
 transcription_bp = Blueprint("transcription", __name__)
 logger = logging.getLogger(__name__)
@@ -473,12 +475,21 @@ def generate_intro_outro_audio():
         return jsonify({"error": "Missing script"}), 400
 
     try:
-        from backend.utils.text_utils import text_to_speech_with_elevenlabs
-        audio_bytes = text_to_speech_with_elevenlabs(script)
+        user_id = session.get("user_id")
 
-        import base64
+        try:
+            consume_credits(user_id, "ai_intro_outro_audio")
+        
+        except ValueError as e:
+            return jsonify({
+                "error": str(e),
+                "redirect": "/store"
+            }), 403
+
+        audio_bytes = text_to_speech_with_elevenlabs(script)
         b64_audio = base64.b64encode(audio_bytes).decode("utf-8")
         return jsonify({"audio_base64": f"data:audio/mp3;base64,{b64_audio}"})
+    
     except Exception as e:
         logger.error(f"ElevenLabs TTS failed: {str(e)}")
         return jsonify({"error": str(e)}), 500

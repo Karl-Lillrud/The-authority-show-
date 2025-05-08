@@ -609,6 +609,15 @@ async function convertIntroOutroToSpeech() {
             body: JSON.stringify({ script })
         });
 
+        if (res.status === 403) {
+            const data = await res.json();
+            container.innerHTML = `
+                <p style="color: red;">${data.error || "You don't have enough credits."}</p>
+                ${data.redirect ? `<a href="${data.redirect}" class="btn ai-edit-button">Go to Store</a>` : ""}
+            `;
+            return;
+        }
+
         const data = await res.json();
         if (data.audio_base64) {
             const audio = document.createElement("audio");
@@ -624,7 +633,6 @@ async function convertIntroOutroToSpeech() {
             container.appendChild(document.createElement("hr"));
             container.appendChild(audio);
             container.appendChild(download);
-
         } else {
             throw new Error(data.error || "Unknown error");
         }
