@@ -547,6 +547,12 @@ section#index-features div.future-features-container .future-feature-item .futur
   animation: ease-in-out animate-pop-in 0.5s;
   animation-fill-mode: forwards;
 } 
+section#index-features div.future-features-container .future-feature-item:nth-of-type(2) .future-item-icon svg {
+  animation-delay: 0.7s !important;
+}
+section#index-features div.future-features-container .future-feature-item:nth-of-type(3) .future-item-icon svg {
+  animation-delay: 0.9s !important;
+}
 
 section#index-features div.future-features-container .future-feature-item h3 {
   font-size: 17px;
@@ -727,26 +733,6 @@ section#index-get-started .get-started-lottie svg g {
   }
 }
 
-@media (max-width: 1144px) {
-
-  /* Banner Section */
-  section#index-banner div#product-review-1 {
-    max-width: 290px;
-    right: calc(50% + 150px );
-    bottom: calc(50% + 125px );
-  }
-
-  section#index-banner div#product-review-2 {
-    bottom: calc(50% - 110px );
-  }
-
-  section#index-banner div#product-review-3 {
-    max-width: 290px;
-    right: calc(50% + 190px );
-    bottom: calc(50% - 350px );
-  }
-}
-
 @media (max-width: 1200px) {
 
   /* About Section */
@@ -765,6 +751,27 @@ section#index-get-started .get-started-lottie svg g {
     min-width: 400px;
     min-height: 300px;
     max-width: 500px;
+  }
+
+}
+
+@media (max-width: 1144px) {
+
+  /* Banner Section */
+  section#index-banner div#product-review-1 {
+    max-width: 290px;
+    right: calc(50% + 150px );
+    bottom: calc(50% + 125px );
+  }
+
+  section#index-banner div#product-review-2 {
+    bottom: calc(50% - 110px );
+  }
+
+  section#index-banner div#product-review-3 {
+    max-width: 290px;
+    right: calc(50% + 190px );
+    bottom: calc(50% - 350px );
   }
 
 }
