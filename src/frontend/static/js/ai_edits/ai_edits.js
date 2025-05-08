@@ -41,7 +41,7 @@ if (episodeIdFromUrl) {
 console.log("Using episode ID:", sessionStorage.getItem("selected_episode_id"));
 
 const CREDIT_COSTS = {
-    ai_audio_analysis: 800,
+    ai_audio_analysis: 300,
     ai_audio_cutting: 800,
     ai_quotes: 200,
     ai_quote_images: 1000,
@@ -801,6 +801,16 @@ async function analyzeEnhancedAudio() {
         fd.append("audio", new File([blobToUse], "analyze.wav", { type: "audio/wav" }));
 
         const res = await fetch("/audio_analysis", { method: "POST", body: fd });
+
+        if (res.status === 403) {
+            const errorData = await res.json();
+            container.innerHTML = `
+                <p style="color: red;">${errorData.error || "You don't have enough credits."}</p>
+                ${errorData.redirect ? `<a href="${errorData.redirect}" class="btn ai-edit-button">Go to Store</a>` : ""}
+            `;
+            return;
+        }
+
         const data = await res.json();
         if (!res.ok) throw new Error(data.error || res.statusText);
 
@@ -821,11 +831,11 @@ async function analyzeEnhancedAudio() {
 
         mixBtn.style.display = "inline-block";
 
-        await consumeStoreCredits("ai_audio_analysis");
     } catch (err) {
         container.innerText = `Analysis failed: ${err.message}`;
     }
 }
+
 
 /* Hjälper att rendera suggestion-listan */
 function renderSoundSuggestions(data, timeline) {

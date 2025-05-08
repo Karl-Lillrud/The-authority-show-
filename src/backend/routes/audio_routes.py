@@ -3,17 +3,18 @@ import logging
 import base64
 import requests
 import json
-from flask import Response
-from flask import Blueprint, request, jsonify, g
+from flask import Blueprint, request, jsonify, g, Response
 from backend.services.audioService import AudioService
 from backend.services.subscriptionService import SubscriptionService
-from backend.repository.ai_models import get_file_by_id
+from backend.services.creditService import consume_credits
 from backend.utils.blob_storage import upload_file_to_blob  
-from backend.repository.episode_repository import EpisodeRepository
 from backend.utils.subscription_access import get_max_duration_limit
 from backend.utils.transcription_utils import check_audio_duration
 from backend.repository.edit_repository import create_edit_entry
-from backend.services.creditService import consume_credits
+from backend.repository.episode_repository import EpisodeRepository
+from backend.repository.ai_models import get_file_by_id
+
+
 
 episode_repo = EpisodeRepository()
 logger = logging.getLogger(__name__)
@@ -85,8 +86,18 @@ def audio_analysis():
     audio_bytes = audio_file.read()
 
     try:
+        user_id = g.user_id  
+        consume_credits(user_id, "ai_audio_analysis") 
+
         analysis_result = audio_service.analyze_audio(audio_bytes)
         return jsonify(analysis_result)
+
+    except ValueError as e:
+        return jsonify({
+            "error": str(e),
+            "redirect": "/store"
+        }), 403
+
     except Exception as e:
         logger.error(f"Error analyzing audio: {str(e)}")
         return jsonify({"error": str(e)}), 500
