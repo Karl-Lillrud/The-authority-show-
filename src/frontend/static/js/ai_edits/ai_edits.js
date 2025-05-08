@@ -582,7 +582,6 @@ async function generatePodcastIntroOutro() {
         const data = await res.json();
         container.innerText = data.script || "No result.";
 
-        await consumeStoreCredits("ai_intro_outro");
     } catch (err) {
         container.innerText = `Failed: ${err.message}`;
     }
@@ -620,7 +619,6 @@ async function convertIntroOutroToSpeech() {
             container.appendChild(audio);
             container.appendChild(download);
 
-            await consumeStoreCredits("ai_intro_outro_audio");
         } else {
             throw new Error(data.error || "Unknown error");
         }
