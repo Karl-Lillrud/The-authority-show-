@@ -266,10 +266,10 @@ def ai_cut_audio():
         logger.error(f"AI cut failed: {e}")
         return jsonify({"error": str(e)}), 500
     
-# Function to check if a file already exists in MongoDB GridFS
-def file_exists(filename):
-    existing_file = fs.find_one({"filename": filename})
-    return existing_file if existing_file else None
+# # Function to check if a file already exists in MongoDB GridFS
+# def file_exists(filename):
+#     existing_file = fs.find_one({"filename": filename})
+#     return existing_file if existing_file else None
 
 # get audio info
 @transcription_bp.route("/get_audio_info", methods=["POST"])
