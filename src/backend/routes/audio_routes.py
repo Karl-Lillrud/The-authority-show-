@@ -13,6 +13,7 @@ from backend.repository.episode_repository import EpisodeRepository
 from backend.utils.subscription_access import get_max_duration_limit
 from backend.utils.transcription_utils import check_audio_duration
 from backend.repository.edit_repository import create_edit_entry
+from backend.services.creditService import consume_credits
 
 episode_repo = EpisodeRepository()
 logger = logging.getLogger(__name__)
@@ -30,7 +31,16 @@ def audio_enhancement():
     audio_bytes = audio_file.read()
 
     try:
-        user_id = g.user_id  
+        user_id = g.user_id
+        try:
+            consume_credits(user_id, "audio_enhancement")
+        except ValueError as e:
+            logger.warning(f"Insufficient credits for user {user_id}: {e}")
+            return jsonify({
+                "error": str(e),
+                "redirect": "/store"
+            }), 403
+
         subscription_service = SubscriptionService()
         subscription = subscription_service.get_user_subscription(user_id)
         plan = subscription.get("plan", "FREE")

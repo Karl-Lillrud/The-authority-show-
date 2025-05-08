@@ -662,6 +662,13 @@ async function enhanceAudio() {
 
         const result = await response.json();
 
+        if (response.status === 403) {
+            container.innerHTML = `
+                <p style="color: red;">${result.error || "You don't have enough credits."}</p>
+                ${result.redirect ? `<a href="${result.redirect}" class="btn ai-edit-button">Go to Store</a>` : ""}
+            `;
+            return;
+        }
         if (!response.ok) {
             container.innerHTML = `Error: ${result.error || response.statusText}`;
             return;
@@ -690,7 +697,6 @@ async function enhanceAudio() {
         dl.href = url;
         dl.style.display = "inline-block";
 
-        await consumeStoreCredits("audio_enhancement");
     } catch (err) {
         container.innerHTML = `Error: ${err.message}`;
     }
