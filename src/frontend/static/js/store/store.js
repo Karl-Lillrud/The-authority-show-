@@ -148,6 +148,13 @@ function setupAddToCartButtons() {
   addToCartButtons.forEach((button) => {
     button.addEventListener("click", function () {
       const productId = this.getAttribute("data-product-id");
+
+      // Handle Enterprise Subscription button separately
+      if (productId === "sub-enterprise") {
+        window.location.href = "/enterprise";
+        return; // Stop further processing for this button
+      }
+
       const productCard = document.querySelector(
         `.product-card[data-product-id="${productId}"]`
       );

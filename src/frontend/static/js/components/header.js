@@ -219,6 +219,8 @@ function setDynamicPageTitle() {
       "/team": "Team Management",
       "/guest": "Guest View",
       "/episode-to-do": "Episode To-Do",
+      "/enterprise": "Enterprise",
+      "/lia": "LIA", // Add this line
     };
 
     const currentPath = window.location.pathname;
@@ -226,3 +228,5 @@ function setDynamicPageTitle() {
     pageTitleElement.textContent = pageTitle;
   }
 }
+
+window.populateStoreCredits = populateStoreCredits;
