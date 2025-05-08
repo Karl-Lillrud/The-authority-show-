@@ -41,7 +41,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         const data = await response.json();
         initialRssUrl = data.initial_rss_url;
         initialPodcastId = data.initial_podcast_id;
-        initialPodcastTitle = data.initial_podcast_title; // Store the podcast title
+        initialPodcastTitle = data.initial_podcast_title; // Fetches podcast title
         initialDataFetched = true;
         if (initialRssUrl) {
           console.log("Initial RSS data loaded:", initialRssUrl, "Podcast ID:", initialPodcastId, "Podcast Title:", initialPodcastTitle);
@@ -59,7 +59,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   await fetchInitialPodProfileData();
 
   if (getStartedButton && podRssInput && nextButton) { // getStartedButton is id="get-started-btn" from the welcome popup
-    getStartedButton.addEventListener("click", () => { // Removed async as it's not strictly needed for this handler's direct operations
+    getStartedButton.addEventListener("click", () => { 
       console.log("[Get Started Clicked] Handler triggered.");
       console.log("[Get Started Clicked] State check: initialDataFetched =", initialDataFetched, ", initialRssUrl =", initialRssUrl, ", initialPodcastTitle =", initialPodcastTitle);
 
@@ -73,10 +73,10 @@ document.addEventListener("DOMContentLoaded", async () => {
         console.log("[Get Started Clicked] RSS field prefilled with:", initialRssUrl);
 
         if (typeof initialPodcastTitle === "string" && initialPodcastTitle && podNameInput) {
-          podNameInput.value = initialPodcastTitle;
+          podNameInput.value = initialPodcastTitle; // Prefills Podcast Name input
           console.log("[Get Started Clicked] Podcast Name field prefilled with:", initialPodcastTitle);
         } else if (podNameInput) {
-          podNameInput.value = ""; // Clear if not available
+          podNameInput.value = ""; 
           console.log("[Get Started Clicked] initialPodcastTitle not available or not a string, clearing Podcast Name field.");
         }
 
@@ -90,8 +90,8 @@ document.addEventListener("DOMContentLoaded", async () => {
           console.log("[Get Started Clicked] Setting timeout to auto-click 'Next' button.");
           setTimeout(() => {
             console.log("[Get Started Clicked] Auto-clicking 'Next' button now.");
-            nextButton.click();
-          }, 1000);
+            nextButton.click(); // Auto-clicks the "Next" button
+          }, 1000); // 1-second delay
         }
       } else {
         console.warn("[Get Started Clicked] Conditions for autofill NOT met. Skipping autofill and auto-click.");
@@ -180,7 +180,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     );
   }
 
-  if (goToEmailSection) {
+  if (goToEmailSection) { // This is the "Next" button
     goToEmailSection.addEventListener("click", async () => {
       goToEmailSection.disabled = true;
       goToEmailSection.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processing...';
@@ -206,6 +206,15 @@ document.addEventListener("DOMContentLoaded", async () => {
             currentRssData = rssDataToUse;
         }
         
+        // --- Debug: Log the fetched RSS data ---
+        console.log("RSS Data to use for submission:", JSON.stringify(rssDataToUse, null, 2));
+        if (!rssDataToUse || !rssDataToUse.episodes) {
+          console.error("CRITICAL: rssDataToUse.episodes is missing or undefined after fetching RSS data!");
+        } else {
+          console.log(`Found ${rssDataToUse.episodes.length} episodes in RSS data.`);
+        }
+        // --- End Debug ---
+
         if (podNameInput && rssDataToUse.title) {
             podNameInput.value = rssDataToUse.title;
         }
@@ -263,19 +272,26 @@ document.addEventListener("DOMContentLoaded", async () => {
         
         loadingBar.processStep(2);
 
+        // --- Debug: Log podcastId and episodes array before looping ---
+        console.log(`Using podcastId: ${podcastId} for registering episodes.`);
         const episodes = rssDataToUse.episodes || [];
+        console.log(`Episodes to register (${episodes.length}):`, JSON.stringify(episodes, null, 2));
+        // --- End Debug ---
+
         for (const episode of episodes) {
-          console.log("Registering episode:", episode.title);
+          console.log("Registering episode:", episode.title, "for podcastId:", podcastId);
           try {
-            const registerResponse = await registerEpisode({
-              podcastId,
-              title: episode.title,
+            // Prepare episode data safely, especially audio details
+            const episodeDataForRegistration = {
+              podcast_id: podcastId, // Changed from podcastId to podcast_id
+              title: episode.title || "Untitled Episode", // Fallback for title
               description: episode.description,
-              publishDate: episode.pubDate,
+              publishDate: episode.pubDate || new Date().toISOString(), // Provide default if episode.pubDate is null/undefined
               duration: episode.duration,
-              audioUrl: episode.audio.url,
-              fileSize: episode.audio.length,
-              fileType: episode.audio.type,
+              // Safely access audio properties
+              audioUrl: episode.audio ? episode.audio.url : null,
+              fileSize: episode.audio ? episode.audio.length : null,
+              fileType: episode.audio ? episode.audio.type : null,
               guid: episode.guid,
               season: episode.season || null,
               episode: episode.episode || null,
@@ -291,10 +307,12 @@ document.addEventListener("DOMContentLoaded", async () => {
               isHidden: episode.isHidden || null,
               status: "published",
               isImported: true,
-            });
+            };
+
+            const registerResponse = await registerEpisode(episodeDataForRegistration);
             console.log("Episode registered successfully:", registerResponse);
           } catch (error) {
-            console.error("Error registering episode:", error);
+            console.error("Error registering episode:", episode.title, error);
           }
         }
 

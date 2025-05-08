@@ -48,7 +48,7 @@ class AuthService:
             token = serializer.dumps(email, salt="login-link-salt")
 
             # Assuming send_login_email is implemented in email_utils
-            login_link = f"{request.host_url.rstrip('/')}/auth/verify-token/{token}"
+            login_link = f"{request.host_url.rstrip('/')}/verify-token/{token}"
             send_login_email(email, login_link)
 
             logger.info(f"Login link sent to {email}")
@@ -390,7 +390,8 @@ class AuthService:
     def process_activation_token(self, token):
         """
         Activates a user account via a JWT activation token, logs them in,
-        parses their RSS feed, and creates their podcast profile.
+        and creates a MINIMAL podcast profile stub with RSS feed and title from token.
+        Full podcast details and episodes are imported later via the /podprofile frontend flow.
         """
         try:
             # Clear any existing session to ensure a fresh start for activation
@@ -405,7 +406,7 @@ class AuthService:
             rss_url = token_data.get("rss_url")
             podcast_title_from_token = token_data.get("podcast_title")
 
-            if not email or not rss_url:
+            if not email or not rss_url: # podcast_title_from_token can be optional if RSS has a good title
                 logger.error("Invalid JWT token data: Missing email or rss_url")
                 return {"error": "Invalid activation token data"}, 400
 
@@ -416,58 +417,41 @@ class AuthService:
             if not user:
                 logger.error(f"Failed to find or create user during activation for {email}")
                 return {"error": "Failed to authenticate user"}, 500
-            user_id = user["_id"]  # This is Users._id
+            user_id = user["_id"]
 
             # 2. Log the user in (Setup Session)
             self._setup_session(user, True)
 
             # 3. Ensure Account Exists
             account_data_for_creation = {
-                "ownerId": user_id,  # user_id from Users collection
+                "ownerId": user_id,
                 "email": email,
-                "isFirstLogin": False,  # Activation implies they are now set up
+                "isFirstLogin": False, 
             }
             account_result, status_code = self.account_repository.create_account(account_data_for_creation)
             if status_code not in [200, 201]:
                 logger.error(f"Failed to create/retrieve account for {email} during activation: {account_result.get('error')}")
                 return {"error": f"Account setup failed: {account_result.get('error')}"}, status_code
 
-            actual_account_id = account_result.get("accountId")  # This is Accounts._id
+            actual_account_id = account_result.get("accountId")
             if not actual_account_id:
                 logger.error(f"accountId not found in account_result for {email} during activation.")
                 return {"error": "Failed to retrieve account ID during activation"}, 500
             
             logger.info(f"Account {actual_account_id} ensured for user {user_id} ({email}).")
 
-            # 4. Fetch and Parse RSS Feed
-            logger.info(f"Fetching RSS feed for activation: {rss_url}")
-            rss_data, rss_status_code = self.rss_service.fetch_rss_feed(rss_url)
-            if rss_status_code != 200:
-                logger.error(f"Failed to fetch or parse RSS feed {rss_url} during activation: {rss_data.get('error')}")
-                return {
-                    "message": f"Logged in, but could not fetch podcast data: {rss_data.get('error')}",
-                    "redirect_url": "/podprofile",
-                }, 200
+            # 4. DO NOT Fetch and Parse RSS Feed here. This will be done by the frontend.
 
-            # 5. Create Podcast Profile
-            logger.info(f"Creating podcast profile for user {user_id}, account {actual_account_id} from RSS: {rss_url}")
-            podcast_title = rss_data.get("title", podcast_title_from_token or "Untitled Podcast")
+            # 5. Create MINIMAL Podcast Profile Stub
+            logger.info(f"Creating MINIMAL podcast profile stub for user {user_id}, account {actual_account_id} from token data: RSS={rss_url}, Title={podcast_title_from_token}")
+            
             podcast_creation_data = {
-                "accountId": actual_account_id,  # Pass the Accounts._id
-                "title": podcast_title,  # This will be used for podName too
-                "description": rss_data.get("description"),
-                "rssFeed": rss_url,  # Use rssFeed to be consistent with PodcastSchema
-                "websiteUrl": rss_data.get("link"),
-                "artworkUrl": rss_data.get("imageUrl"),  # This can be mapped to logoUrl
-                "language": rss_data.get("language"),
-                "author": rss_data.get("author"),
-                "ownerName": rss_data.get("itunesOwner", {}).get("name"),
-                "ownerEmail": rss_data.get("itunesOwner", {}).get("email"),
-                "categories": [
-                    cat.get("main") for cat in rss_data.get("categories", []) if cat.get("main")
-                ],
-                "isImported": True,
-                "episodes": rss_data.get("episodes", []),
+                "accountId": actual_account_id,
+                "rssFeed": rss_url,  # Save RSS URL from token
+                "title": podcast_title_from_token or "Untitled Podcast", # Save title from token for prefill
+                "isImported": True, # Mark as imported for /podprofile/initial to pick up
+                # NO other details like description, episodes, artworkUrl etc. at this stage.
+                # These will be populated by the frontend flow on /podprofile.
             }
 
             create_podcast_result, create_status_code = (
@@ -476,31 +460,42 @@ class AuthService:
 
             if create_status_code not in [200, 201]:
                 logger.error(
-                    f"Failed to create podcast profile for user {user_id}, RSS {rss_url}. Result: {create_podcast_result}"  # Modified to log full result
+                    f"Failed to create MINIMAL podcast profile for user {user_id}, RSS {rss_url}. Result: {create_podcast_result}"
                 )
+                # If podcast stub creation fails, still log in and redirect to podprofile, 
+                # user can manually enter RSS.
                 return {
-                    "message": f"Logged in, but failed to create podcast profile: {create_podcast_result.get('error')}",
-                    "redirect_url": "/podprofile",
-                }, 200
+                    "message": f"Logged in, but failed to create initial podcast profile stub: {create_podcast_result.get('error')}",
+                    "redirect_url": "/podprofile", # Redirect to podprofile anyway
+                }, 200 # Return 200 to allow redirect
 
             podcast_id = create_podcast_result.get("podcast", {}).get("_id")
-            logger.info(f"✅ Successfully activated user {email} and created podcast {podcast_id}")
+            logger.info(f"✅ Successfully activated user {email} and created MINIMAL podcast stub {podcast_id}")
 
             # 6. Log Activation Activity
             self.activity_service.log_activity(
                 user_id=user_id,
-                activity_type="user_activated_via_link",
-                description=f"User account activated via email link for podcast: {podcast_title}",
+                activity_type="user_activated_via_link_minimal", # New activity type
+                description=f"User account activated, minimal podcast stub created for: {podcast_title_from_token}",
                 details={"email": email, "rss_url": rss_url, "podcast_id": str(podcast_id)},
                 ip_address=request.remote_addr if request else None,
             )
 
-            # 7. Return success and redirect URL
+            # 7. Always redirect to podprofile after activation
+            # The frontend will use /podprofile/initial to get the rss_url and title for prefill
             return {
-                "message": "Activation successful! Your podcast has been imported.",
-                "redirect_url": "/podcastmanagement",
+                "message": "Activation successful! Please complete your podcast setup.",
+                "redirect_url": "/podprofile",
             }, 200
 
         except Exception as e:
             logger.error(f"Activation token processing error: {str(e)}", exc_info=True)
+            # Attempt to log in the user even if other parts fail, then redirect to podprofile
+            if 'email' in locals() and email: # Check if email variable exists
+                user = self._find_or_create_user(email)
+                if user:
+                    self._setup_session(user, True)
+                    logger.info(f"Logged in user {email} despite error in activation, redirecting to /podprofile.")
+                    return {"error": f"Partial activation error, redirecting: {str(e)}", "redirect_url": "/podprofile"}, 200 # Return 200 to allow redirect
+            
             return {"error": f"Internal server error during activation: {str(e)}"}, 500

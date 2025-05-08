@@ -176,6 +176,6 @@ def verify_otp():
 @auth_bp.route("/logout", methods=["GET"])
 def logout_user():
     session.clear()
-    response = jsonify({"message": "Logout successful", "redirect_url": "/auth/signin"})  # Corrected redirect URL
+    response = jsonify({"message": "Logout successful", "redirect_url": "/signin"})
     response.delete_cookie("remember_me")
     return response, 200

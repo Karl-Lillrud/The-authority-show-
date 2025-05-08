@@ -112,7 +112,7 @@ def invite_user_via_api():
 
         token = auth_service.generate_activation_token(email, rss_url, podcast_title, current_app.config["SECRET_KEY"])
         base_url = request.host_url.rstrip('/')
-        activation_link = f"{base_url}/auth/activate?token={token}" 
+        activation_link = f"{base_url}/activate?token={token}" 
         
         logger.info(f"Generated activation link for {email} via API: {activation_link}") 
         send_activation_email(email, activation_link, podcast_title, rss_url)
@@ -140,7 +140,7 @@ def invite_user_manual_test():
             
         token = auth_service.generate_activation_token(email_param, rss_param, title_param, current_app.config["SECRET_KEY"])
         base_url = request.host_url.rstrip('/')
-        activation_link = f"{base_url}/auth/activate?token={token}"
+        activation_link = f"{base_url}/activate?token={token}"
         
         logger.info(f"Generated manual activation link for {email_param}: {activation_link}") 
         send_activation_email(email_param, activation_link, title_param, rss_param)

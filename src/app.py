@@ -78,7 +78,7 @@ app.secret_key = os.getenv("SECRET_KEY")
 app.config["PREFERRED URL SCHEME"] = "https"
 
 # Register blueprints for different routes
-app.register_blueprint(auth_bp, url_prefix="/auth")  # Modified line
+app.register_blueprint(auth_bp)  # Removed url_prefix="/auth"
 app.register_blueprint(podcast_bp)  # Register the podcast blueprint
 app.register_blueprint(dashboard_bp)
 app.register_blueprint(pod_management_bp)

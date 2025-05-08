@@ -46,7 +46,7 @@ async function activateUserWithToken(token) {
     token ? token.substring(0, 10) + "..." : "null"
   );
   try {
-    const response = await fetch("/auth/activate-user", {
+    const response = await fetch("/activate-user", {
       // Ensure this matches your backend route
       method: "POST",
       headers: {
