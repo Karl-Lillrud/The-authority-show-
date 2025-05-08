@@ -195,7 +195,7 @@ function showTab(tabName) {
                 <div id="audioEnhancementSection">
                     <h4><strong>Audio Enhancement (Noise Reduction & Normalization)</strong></h4>
                     <button class="btn ai-edit-button" onclick="enhanceAudio()">
-                      ${labelWithCredits("Enhance Audio", "audio_enhancment")}
+                      ${labelWithCredits("Enhance Audio", "audio_enhancement")}
                     </button>
                     <div id="audioControls" style="margin-top: 1rem;"></div>
                 </div>
