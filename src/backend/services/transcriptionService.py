@@ -55,11 +55,9 @@ class TranscriptionService:
         )
         logger.info(f"File saved to MongoDB with ID: {file_id}")
 
-        # Prepare speaker mapping
+        # Prepare speaker mapping and word timings
         speaker_map = {}
         speaker_counter = 1
-
-        # Build word timings list
         word_timings = []
         for w in transcription_result.words:
             text = w.text.strip()
@@ -77,29 +75,27 @@ class TranscriptionService:
 
         # Step 3: Build sentence-level transcription
         sentences = re.split(r'(?<=[\.\?\!])\s+', transcription_text)
-        raw_transcription_sentences = []
+        raw_sentences = []
         for sentence in sentences:
             sentence = sentence.strip()
             if not sentence:
                 continue
-            # Compute timestamps
             ts = get_sentence_timestamps(sentence, word_timings)
-            # Find speaker for the first word in this sentence
-            first_word_start = ts["start"]
-            first_entry = next((wt for wt in word_timings if wt["start"] == first_word_start), None)
-            speaker_label = speaker_map.get(first_entry["speaker_id"], "Speaker 1") if first_entry else "Speaker 1"
-            raw_transcription_sentences.append(f"[{ts['start']}-{ts['end']}] {speaker_label}: {sentence}")
+            # Find corresponding speaker for sentence start
+            first = next((wt for wt in word_timings if wt["start"] == ts["start"]), None)
+            speaker_label = speaker_map.get(first["speaker_id"], "Speaker 1") if first else "Speaker 1"
+            raw_sentences.append(f"[{ts['start']}-{ts['end']}] {speaker_label}: {sentence}")
 
-        # Fallback to word-level if sentence-level is empty
-        if not raw_transcription_sentences:
-            logger.warning("No sentence-level transcription produced; falling back to word-level.")
+        # Fallback if none
+        if not raw_sentences:
+            logger.warning("No sentence-level transcription; falling back to word-level.")
             for wt in word_timings:
                 speaker_label = speaker_map[wt['speaker_id']]
-                raw_transcription_sentences.append(f"[{wt['start']}-{wt['end']}] {speaker_label}: {wt['word']}")
+                raw_sentences.append(f"[{wt['start']}-{wt['end']}] {speaker_label}: {wt['word']}")
 
         return {
             "file_id": str(file_id),
-            "raw_transcription": "\n".join(raw_transcription_sentences),
+            "raw_transcription": "\n".join(raw_sentences),
             "full_transcript": transcription_text
         }
 
@@ -117,18 +113,38 @@ class TranscriptionService:
 
     def get_quotes(self, transcript_text: str) -> str:
         logger.info("Generating quotes...")
-        quotes_text = generate_ai_quotes(transcript_text)
-        if not isinstance(quotes_text, str):
-            quotes_text = str(quotes_text)
-        return quotes_text
-    
+        q = generate_ai_quotes(transcript_text)
+        return str(q)
+
     def get_quote_images(self, quotes: List[str]) -> List[str]:
         logger.info("Generating quote images...")
         return generate_quote_images(quotes)
 
-    def translate_text(self, text: str, language: str) -> str:
-        logger.info(f"Translating transcript to {language}...")
-        return translate_text(text, language)
+    def translate_transcript(self, raw_transcription: str, target_language: str) -> str:
+        """
+        Translate each sentence in raw_transcription preserving timestamps and speaker labels.
+        """
+        logger.info(f"Translating transcript to {target_language} with timestamps and speakers...")
+        lines = raw_transcription.split("\n")
+        translated = []
+        for line in lines:
+            m = re.match(r"^(\[.*?\]\s*Speaker\s*\d+:)\s*(.*)$", line)
+            if m:
+                prefix, text = m.groups()
+                try:
+                    trans = translate_text(text, target_language)
+                except Exception as e:
+                    logger.warning(f"Translation failed for line '{text}': {e}")
+                    trans = text
+                translated.append(f"{prefix} {trans}")
+            else:
+                # if line doesn't match expected format, translate whole
+                try:
+                    trans = translate_text(line, target_language)
+                except:
+                    trans = line
+                translated.append(trans)
+        return "\n".join(translated)
 
     def get_sentiment_and_sfx(self, transcript_text: str):
         logger.info("Running sentiment & sound suggestion analysis...")

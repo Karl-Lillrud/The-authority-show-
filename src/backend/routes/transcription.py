@@ -159,13 +159,17 @@ def quote_images():
 @transcription_bp.route("/translate", methods=["POST"])
 def translate():
     data = request.json
-    text = data.get("text", "")
+    raw = data.get("raw_transcription", "")
     language = data.get("language", "English")
 
+    if not raw:
+        return jsonify({"error": "No transcription provided"}), 400
+
     try:
-        translated = transcription_service.translate_text(text, language)
-        return jsonify({"translated_text": translated})
+        translated = transcription_service.translate_transcript(raw, language)
+        return jsonify({"translated_transcription": translated})
     except Exception as e:
+        logger.error(f"Translation error: {e}")
         return jsonify({"error": str(e)}), 500
 
 @transcription_bp.route("/get_file/<file_id>", methods=["GET"])
@@ -400,4 +404,5 @@ def generate_intro_outro_audio():
     except Exception as e:
         logger.error(f"ElevenLabs TTS failed: {str(e)}")
         return jsonify({"error": str(e)}), 500
+
 
