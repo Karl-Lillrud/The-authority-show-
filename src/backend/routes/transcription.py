@@ -446,9 +446,18 @@ def generate_intro_outro():
         return jsonify({"error": "Missing guest name or transcript"}), 400
 
     try:
+        user_id = session.get("user_id")
+
+        try:
+            consume_credits(user_id, "ai_intro_outro")
+        except ValueError as e:
+            return jsonify({
+                "error": str(e),
+                "redirect": "/store"
+            }), 403
 
         osint_info = get_osint_info(guest_name)
-        script = create_podcast_scripts_paid(osint_info, guest_name, transcript)  # Pass transcript here
+        script = create_podcast_scripts_paid(osint_info, guest_name, transcript)
 
         return jsonify({"script": script})
     except Exception as e:

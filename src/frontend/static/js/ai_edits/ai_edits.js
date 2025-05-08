@@ -578,10 +578,16 @@ async function generatePodcastIntroOutro() {
                 transcript: rawTranscript
             })
         });
-
+        if (res.status === 403) {
+            const data = await res.json();
+            container.innerHTML = `
+                <p style="color: red;">${data.error || "You don't have enough credits."}</p>
+                ${data.redirect ? `<a href="${data.redirect}" class="btn ai-edit-button">Go to Store</a>` : ""}
+            `;
+            return;
+        }
         const data = await res.json();
         container.innerText = data.script || "No result.";
-
     } catch (err) {
         container.innerText = `Failed: ${err.message}`;
     }
