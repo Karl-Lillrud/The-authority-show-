@@ -11,27 +11,34 @@ document.addEventListener("DOMContentLoaded", async () => {
   await initializeStripe();
   // Återställ checkout-knappen vid sidladdning
   resetCheckoutButton();
+  
+  const continueShoppingBtn = document.getElementById('continueShoppingBtn');
+  const successPopup = document.getElementById('success-popup');
 
   // Removes Cart Data stored in localstorage after successful purchase
   const urlParams = new URLSearchParams(window.location.search);
-  const purchaseSuccess = urlParams.get("purchase_success");
-  if (urlParams.get('subscription_updated') === 'true') {
-     // Remove the purchaseSuccess parameter from the URL
-     localStorage.removeItem("podmanager_cart");
-     const url = new URL(window.location.href);
-     url.searchParams.delete("subscription_updated");
-     window.history.replaceState({}, document.title, url.href);
-     window.location.reload();
-    }
+  const purchaseSuccess = urlParams.get("purchase_success") === "true";
+  const subscriptionUpdated = urlParams.get("subscription_updated") === "true";
 
-
-  else if (purchaseSuccess === "true") {
+  if (purchaseSuccess || subscriptionUpdated) {
     localStorage.removeItem("podmanager_cart");
-    // Remove the purchaseSuccess parameter from the URL
+
+    // Remove the parameters from the URL
     const url = new URL(window.location.href);
-    url.searchParams.delete("purchase_success");
+    if (purchaseSuccess) url.searchParams.delete("purchase_success");
+    if (subscriptionUpdated) url.searchParams.delete("subscription_updated");
     window.history.replaceState({}, document.title, url.href);
-    window.location.reload();
+
+    successPopup.style.display = 'flex';
+
+    // If reload is absolutely necessary, delay it (but try to avoid it)
+    // setTimeout(() => { window.location.reload(); }, 500); // Reload after 0.5 seconds
+  }
+  if (continueShoppingBtn) {
+    continueShoppingBtn.addEventListener('click', () => {
+        window.location.reload();
+        successPopup.style.display = 'none';
+      });
   }
 });
 
