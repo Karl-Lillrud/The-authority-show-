@@ -600,7 +600,7 @@ async function convertIntroOutroToSpeech() {
 
     const scriptContainer = document.getElementById("introOutroScriptResult");
     const script = scriptContainer ? scriptContainer.innerText.trim() : "";
-    if (!script.trim()) return alert("No script to convert.");
+    if (!script) return alert("No script to convert.");
 
     showSpinner(containerId);
 
@@ -611,8 +611,9 @@ async function convertIntroOutroToSpeech() {
             body: JSON.stringify({ script })
         });
 
+        const data = await res.json();
+
         if (res.status === 403) {
-            const data = await res.json();
             container.innerHTML = `
                 <p style="color: red;">${data.error || "You don't have enough credits."}</p>
                 ${data.redirect ? `<a href="${data.redirect}" class="btn ai-edit-button">Go to Store</a>` : ""}
@@ -620,26 +621,19 @@ async function convertIntroOutroToSpeech() {
             return;
         }
 
-        const data = await res.json();
         if (data.audio_base64) {
-            const audio = document.createElement("audio");
-            audio.controls = true;
-            audio.src = data.audio_base64;
-
-            const download = document.createElement("a");
-            download.href = data.audio_base64;
-            download.download = "intro_outro.mp3";
-            download.className = "btn ai-edit-button";
-            download.innerText = "Download Intro/Outro Audio";
-
-            container.appendChild(document.createElement("hr"));
-            container.appendChild(audio);
-            container.appendChild(download);
+            container.innerHTML = `
+                <hr/>
+                <audio controls src="${data.audio_base64}"></audio>
+                <a href="${data.audio_base64}" download="intro_outro.mp3" class="btn ai-edit-button">
+                    Download Intro/Outro Audio
+                </a>
+            `;
         } else {
-            throw new Error(data.error || "Unknown error");
+            container.innerText = data.error || "Unknown error occurred.";
         }
     } catch (err) {
-        container.innerText += `\nFailed to convert to audio: ${err.message}`;
+        container.innerText = `Failed to convert to audio: ${err.message}`;
     }
 }
 
