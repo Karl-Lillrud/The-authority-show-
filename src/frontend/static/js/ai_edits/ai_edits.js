@@ -602,7 +602,7 @@ async function convertIntroOutroToSpeech() {
     const script = scriptContainer ? scriptContainer.innerText.trim() : "";
     if (!script.trim()) return alert("No script to convert.");
 
-    container.innerText += "\n\nGenerating voice...";
+    showSpinner(containerId);
 
     try {
         const res = await fetch("/transcription/intro_outro_audio", {
