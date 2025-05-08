@@ -16,6 +16,7 @@ import {
 import { createPlayButton, playAudio } from "./episode-functions.js";
 import { renderEpisodeDetail } from "./episode-functions.js";
 import { showNotification } from "../components/notifications.js";
+import { openEmailConfigPopup } from "./emailconfig-functions.js";
 
 // Function to set image source with fallback
 function setImageSource(imgElement, customSrc, mockSrc) {
@@ -141,7 +142,7 @@ export async function renderPodcastList() {
 
       // Use imageUrl if available, otherwise allow user to upload an image
       const imageUrl =
-        podcast.logoUrl || podcast.imageUrl || "default-image.png";
+        podcast.logoUrl || podcast.imageUrl || "/static/images/default-image.png";
 
       // Create the basic podcast card structure
       podcastCard.innerHTML = `
@@ -199,6 +200,10 @@ export async function renderPodcastList() {
         <span class="footer-link view-details-link" data-id="${
           podcast._id
         }">View Details</span>
+        <span class="footer-separator">|</span>
+        <span class="footer-link email-config-link" data-id="${
+          podcast._id
+        }">Email Config</span>
       </div>`;
 
       podcastListElement.appendChild(podcastCard);
@@ -208,6 +213,13 @@ export async function renderPodcastList() {
       landingPageBtn.addEventListener("click", (e) => {
         const podcastId = e.target.dataset.id; // Get podcast ID
         window.location.href = `/landingpage/${podcastId}`;
+      });
+
+      // Add event listener for the "Email Config" button
+      const emailConfigBtn = podcastCard.querySelector(".email-config-link");
+      emailConfigBtn.addEventListener("click", (e) => {
+        const podcastId = e.target.dataset.id; // Get podcast ID
+        openEmailConfigPopup(podcastId); // Pass podcast ID to the popup
       });
 
       // Fetch episodes for this podcast and add them to the preview
@@ -444,7 +456,7 @@ export async function renderPodcastList() {
 // Function to render podcast detail
 export function renderPodcastDetail(podcast) {
   const podcastDetailElement = document.getElementById("podcast-detail");
-  const imageUrl = podcast.logoUrl || podcast.imageUrl || "default-image.png";
+  const imageUrl = podcast.logoUrl || podcast.imageUrl || "/static/images/default-image.png";
 
   podcastDetailElement.innerHTML = `
   <div class="detail-header">

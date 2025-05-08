@@ -177,6 +177,7 @@ if (confirmLogout) {
       const result = await response.json();
       if (response.ok) {
         window.location.href = result.redirect_url || "/signin";
+        localStorage.removeItem("podmanager_cart");
       } else {
         console.error("Logout failed:", result.message);
         alert("Failed to log out. Please try again.");
@@ -218,10 +219,14 @@ function setDynamicPageTitle() {
       "/team": "Team Management",
       "/guest": "Guest View",
       "/episode-to-do": "Episode To-Do",
+      "/enterprise": "Enterprise",
+      "/lia": "LIA", // Add this line
     };
 
     const currentPath = window.location.pathname;
-    const pageTitle = pageTitles[currentPath] || "PodManager";
+    const pageTitle = pageTitles[currentPath] || "Store";
     pageTitleElement.textContent = pageTitle;
   }
 }
+
+window.populateStoreCredits = populateStoreCredits;

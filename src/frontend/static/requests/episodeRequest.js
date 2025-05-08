@@ -147,23 +147,62 @@ export async function fetchEpisode(episodeId) {
   }
 }
 
-export async function updateEpisode(episodeId, updatedData) {
+export async function updateEpisode(episodeId, data) {
+  const isFormData = data instanceof FormData; // Check if data is FormData
+
   try {
     const response = await fetch(`/update_episodes/${episodeId}`, {
       method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(updatedData)
+      headers: {
+        // Remove any manual 'Content-Type' setting here if 'isFormData' is true
+        // Fetch will automatically set it correctly for FormData
+        // Example: DO NOT include the line below if isFormData is true
+        // 'Content-Type': isFormData ? undefined : 'application/json', // Let browser set for FormData
+        Authorization: `Bearer ${localStorage.getItem("access_token")}`,
+        // Add other necessary headers like Accept if needed
+        Accept: "application/json" // It's good practice to specify what you accept back
+      },
+      // Send FormData directly, or stringify if it's a plain object
+      body: isFormData ? data : JSON.stringify(data)
     });
-    const result = await response.json();
-    if (response.ok) {
-      return result;
-    } else {
-      console.error("Failed to update episode:", result.error);
-      alert("Failed to update episode: " + result.error);
+
+    // Log request details for debugging
+    console.log(`Updating episode ${episodeId}. Is FormData: ${isFormData}`);
+
+    if (!response.ok) {
+      let errorData;
+      try {
+        errorData = await response.json(); // Try to parse error response
+        console.error("Update Episode Error Response:", errorData);
+      } catch (e) {
+        // If response is not JSON (e.g., plain text or HTML error page)
+        errorData = { error: await response.text() };
+        console.error(
+          "Update Episode Non-JSON Error Response:",
+          errorData.error
+        );
+      }
+      // Throw a more informative error
+      throw new Error(
+        errorData?.error ||
+          errorData?.message ||
+          `HTTP error! status: ${response.status}`
+      );
     }
+
+    // If response is OK, try to parse JSON, handle potential empty response for 200/204
+    if (response.status === 204) {
+      // No Content
+      return { message: "Episode updated successfully (No Content)" };
+    }
+
+    const result = await response.json();
+    console.log("Update Episode Success Response:", result);
+    return result; // Contains { message: "..." } or potentially updated episode data
   } catch (error) {
-    console.error("Error updating episode:", error);
-    alert("Failed to update episode.");
+    console.error("Failed to update episode:", error.message || error);
+    // Return an object with an error key for consistent handling in the calling function
+    return { error: `Failed to update episode: ${error.message || error}` };
   }
 }
 

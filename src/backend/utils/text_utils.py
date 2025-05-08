@@ -53,8 +53,8 @@ def translate_text(text: str, target_language: str) -> str:
         except Exception as e:
             logger.warning(f"Retry {attempt+1}/{retries} failed: {e}")
             time.sleep(1)
-    logger.error("❌ Translation permanently failed after retries.")
-    return "⚠️ Failed to translate. Try again later."
+    logger.error("Translation permanently failed after retries.")
+    return "Failed to translate. Try again later."
 
 def generate_ai_suggestions(text):
     prompt = f"""
@@ -204,7 +204,7 @@ def generate_ai_show_notes(transcript):
         )
         return response.choices[0].message.content.strip()
     except Exception as e:
-        logger.error(f"❌ Error generating show notes: {e}")
+        logger.error(f"Error generating show notes: {e}")
         return f"Error generating show notes: {str(e)}"
 
 def generate_ai_quotes(transcript: str) -> str:
@@ -229,7 +229,7 @@ def generate_ai_quotes(transcript: str) -> str:
         lines = [line.strip("\u2022\u2013\u2014-\u2022 \n\"") for line in quotes_raw.split("\n") if line.strip()]
         return "\n\n".join(lines[:3])
     except Exception as e:
-        logger.error(f"❌ Error generating quotes: {e}")
+        logger.error(f"Error generating quotes: {e}")
         return f"Error generating quotes: {str(e)}"
 
 def generate_quote_images(quotes: List[str]) -> List[str]:
@@ -246,7 +246,7 @@ def generate_quote_images(quotes: List[str]) -> List[str]:
             url = response.data[0].url
             urls.append(url)
         except Exception as e:
-            logger.error(f"❌ Failed to generate image for quote: {quote} | Error: {e}")
+            logger.error(f"Failed to generate image for quote: {quote} | Error: {e}")
             urls.append("")
     return urls
 
@@ -366,10 +366,10 @@ Write a compelling **podcast intro and outro** based on the following episode tr
 
 Start with the **topics and tone** from the transcript, then enrich it with background details about the guest ({guest_name}).
 
-📌 Transcript:
+Transcript:
 {transcript}
 
-📌 Guest background info:
+Guest background info:
 {osint_info}
 
 The intro should briefly tease the main topic(s) of the episode, using an engaging tone.
@@ -407,7 +407,7 @@ def text_to_speech_with_elevenlabs(script: str, voice_id: str = "TX3LPaxmHKxFdv7
     response = requests.post(url, headers=headers, json=payload)
 
     if response.status_code == 200:
-        return response.content  # 🧠 Raw MP3 bytes
+        return response.content 
     else:
         raise RuntimeError(f"ElevenLabs error {response.status_code}: {response.text}")
 

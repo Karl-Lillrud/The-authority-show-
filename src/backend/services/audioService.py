@@ -13,10 +13,11 @@ from backend.utils.text_utils import (
     generate_ai_show_notes, suggest_sound_effects, translate_text, mix_background,
     pick_dominant_emotion, fetch_sfx_for_emotion
 )
-from backend.repository.ai_models import save_file, get_file_data, get_file_by_id, add_audio_edit_to_episode
+from backend.repository.ai_models import save_file, get_file_data, get_file_by_id
 from elevenlabs.client import ElevenLabs
 from backend.utils.blob_storage import upload_file_to_blob
 from backend.repository.episode_repository import EpisodeRepository
+from backend.repository.edit_repository import create_edit_entry
 from flask import g
 
 
@@ -43,15 +44,15 @@ class AudioService:
         blob_path = f"users/{g.user_id}/podcasts/{podcast_id}/episodes/{episode_id}/audio/enhanced_{filename}"
         blob_url = upload_file_to_blob("podmanagerfiles", blob_path, enhanced_data)
 
-        add_audio_edit_to_episode(
+        create_edit_entry(
             episode_id=episode_id,
-            file_id="external",
+            user_id=g.user_id,
             edit_type="enhanced",
-            filename=f"enhanced_{filename}",
+            clip_url=blob_url,
+            clipName=f"enhanced_{filename}",
             metadata={
                 "source": filename,
                 "enhanced": True,
-                "blob_url": blob_url,
                 "edit_type": "enhanced"
             }
         )
@@ -161,13 +162,13 @@ class AudioService:
             blob_path = f"users/{user_id}/podcasts/{podcast_id}/episodes/{episode_id}/audio/{filename}"
             blob_url = upload_file_to_blob("podmanagerfiles", blob_path, clipped_data)
 
-            add_audio_edit_to_episode(
+            create_edit_entry(
                 episode_id=episode_id,
-                file_id="external",
+                user_id=g.user_id,
                 edit_type="manual_clip",
-                filename=filename,
+                clip_url=blob_url,
+                clipName=filename,
                 metadata={
-                    "blob_url": blob_url,
                     "start": start_time,
                     "end": end_time,
                     "edit_type": "manual_clip"
@@ -320,7 +321,7 @@ class AudioService:
                 logger.error(f"❌ Voice isolation failed: {response.status_code} {response.text}")
                 raise RuntimeError(f"Voice isolation failed: {response.status_code} {response.text}")
 
-            # Spara det isolerade ljudet till temporär fil
+            # Save the isolated audio to a temporary file
             temp_output_path = temp_input_path.replace(".wav", "_isolated.wav")
             with open(temp_output_path, "wb") as out_file:
                 out_file.write(response.content)
@@ -335,14 +336,14 @@ class AudioService:
             blob_path = f"users/{g.user_id}/podcasts/{podcast_id}/episodes/{episode_id}/audio/{isolated_filename}"
             blob_url = upload_file_to_blob("podmanagerfiles", blob_path, isolated_data)
 
-            add_audio_edit_to_episode(
+            create_edit_entry(
                 episode_id=episode_id,
-                file_id="external",
+                user_id=g.user_id,
                 edit_type="voice_isolated",
-                filename=isolated_filename,
+                clip_url=blob_url,
+                clipName=isolated_filename,
                 metadata={
                     "source": filename,
-                    "blob_url": blob_url,
                     "edit_type": "voice_isolated"
                 }
             )
@@ -410,13 +411,13 @@ class AudioService:
             base64_audio = base64.b64encode(cleaned_bytes).decode("utf-8")
             blob_url = upload_file_to_blob("podmanagerfiles", blob_path, base64_audio)
 
-            add_audio_edit_to_episode(
+            create_edit_entry(
                 episode_id=episode_id,
-                file_id="external",
+                user_id=g.user_id,
                 edit_type="ai_cut_cleaned",
-                filename=filename,
+                clip_url=blob_url,
+                clipName=filename,
                 metadata={
-                    "blob_url": blob_url,
                     "segments_kept": len(merged),
                     "edit_type": "ai_cut_cleaned"
                 }
@@ -519,13 +520,13 @@ class AudioService:
             blob_path = f"users/{g.user_id}/podcasts/{podcast_id}/episodes/{episode_id}/audio/clipped_{filename}"
             blob_url = upload_file_to_blob("podmanagerfiles", blob_path, clipped_data)
 
-            add_audio_edit_to_episode(
+            create_edit_entry(
                 episode_id=episode_id,
-                file_id="external",
+                user_id=g.user_id,
                 edit_type="manual_clip",
-                filename=f"clipped_{filename}",
+                clip_url=blob_url,
+                clipName=f"clipped_{filename}",
                 metadata={
-                    "blob_url": blob_url,
                     "start": start_time,
                     "end": end_time,
                     "edit_type": "manual_clip"
@@ -565,13 +566,13 @@ class AudioService:
             blob_path = f"users/{g.user_id}/podcasts/{podcast_id}/episodes/{episode_id}/audio/cleaned_{filename}"
             blob_url = upload_file_to_blob("podmanagerfiles", blob_path, cleaned_bytes)
 
-            add_audio_edit_to_episode(
+            create_edit_entry(
                 episode_id=episode_id,
-                file_id="external",
+                user_id=g.user_id,
                 edit_type="ai_cut_cleaned",
-                filename=f"cleaned_{filename}",
+                clip_url=blob_url,
+                clipName=f"cleaned_{filename}",
                 metadata={
-                    "blob_url": blob_url,
                     "edit_type": "ai_cut_cleaned"
                 }
             )

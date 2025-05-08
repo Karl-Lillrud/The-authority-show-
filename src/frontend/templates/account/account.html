@@ -70,20 +70,6 @@
             <ul class="submenu">
               <li class="submenu-item" data-target="profile-section" tabindex="0">Edit Profile</li>
               <li class="submenu-item" data-target="settings-delete" tabindex="0">Delete Account</li>
-            </ul>
-            <li class="sidebar-item" data-toggle="submenu" tabindex="0">
-              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon">
-                <path d="M4 10V4a2 2 0 0 1 2-2h8.5L20 7.5V20a2 2 0 0 1-2 2H4"></path>
-                <polyline points="14 2 14 8 20 8"></polyline>
-                <path d="M10.42 12.61a2.1 2.1 0 1 1 2.97 2.97L7.95 21 4 22l.99-3.95 5.43-5.44Z"></path>
-              </svg>
-              Subscription
-              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="chevron">
-                <path d="m9 18 6-6-6-6"></path>
-              </svg>
-            </li>
-            <ul class="submenu">
-              <li class="submenu-item" data-target="subscription-choose" tabindex="0">Choose Subscription</li>
               <li class="submenu-item" data-target="subscription-change" tabindex="0">Payment Method</li>
             </ul>
             <button id="back-to-main-menu" class="back-button">
@@ -169,8 +155,21 @@
               </div>
 
               <button type="submit" class="primary-button save-profile-btn">Save Changes</button>
-
             </form>
+
+            <!-- Newsletter Subscription Form -->
+            <div class="subscription-form-container">
+              <h3>Subscribe to our newsletter</h3>
+              <form class="subscription-form">
+                <div class="form-group">
+                  <label for="subscription-email">Email Address</label>
+                  <input type="email" id="subscription-email" name="email" placeholder="your.email@example.com">
+                </div>
+                <div class="form-actions">
+                  <button type="submit" class="primary-button">Subscribe</button>
+                </div>
+              </form>
+            </div>
           </div>
           
           <!-- Settings - Delete Account Section -->
@@ -196,7 +195,7 @@
               </div>
               
               <form class="delete-form">
-                <div class="form-group"></div>
+                <div class="form-group">
                   <label for="delete-confirm">Type "DELETE" to confirm <span class="required">*</span></label>
                   <input type="text" id="delete-confirm" name="delete_confirm" placeholder="DELETE" required>
                 </div>
@@ -205,11 +204,6 @@
                   <label for="delete-email">Confirm your email <span class="required">*</span></label>
                   <input type="email" id="delete-email" name="delete_email" placeholder="Enter your email" required>
                   <div class="form-hint">Enter your email address to confirm deletion</div>
-                </div>
-                
-                <div class="form-group">
-                  <label for="delete-password">Enter your password <span class="required">*</span></label>
-                  <input type="password" id="delete-password" name="delete_password" placeholder="Enter your password" required>
                 </div>
                 
                 <div class="form-actions">
@@ -250,7 +244,7 @@
                     <div class="billing-cell">Description</div>
                     <div class="billing-cell">Amount</div>
                     <div class="billing-cell">Status</div>
-                    <div class="billing-cell">Details</div> <!-- New column for details -->
+                    <div class="billing-cell">Details</div>
                   </div>
                   <div id="billing-history-rows">
                     <!-- Purchases will be loaded here -->
@@ -264,12 +258,12 @@
                 </div>
               </div>
               <div class="subscription-actions">
-                <a href="/billing" class="primary-button">
+                <a href="/store" class="primary-button">
                   <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                     <path d="M5 12h14"></path>
                     <path d="M12 5v14"></path>
                   </svg>
-                  Buy More Credits
+                  Store
                 </a>
               </div>
             </div>
@@ -283,141 +277,63 @@
             </div>
           </div>
 
-          <!-- Subscription Sections -->
-          <div class="subscription-sections">
-            <div id="subscription-choose" class="settings-section">
-              <div class="section-header">
-                <h2>Choose Subscription</h2>
-                <p>Select a subscription plan that works for you</p>
-              </div>
-              <!-- Updated Subscription Content -->
-              <div class="subscription-content">
-                <div class="subscription-plans">
-                  <!-- Free Plan Card -->
-                  <div class="plan-card">
-                    <div class="plan-header">
-                      <h3>Free</h3>
-                      <div class="plan-price">$0<span>/month</span></div>
-                    </div>
-                    <div class="plan-features">
-                      <ul>
-                        <li>3000 credits (at month's start)</li>
-                        <li>2 episode slots / month</li>
-                        <li>1 extra episode slot - 5000 Credits (Max 3 total slots)</li>
-                        <li>1 hr maximum length / episode</li>
-                        <li>Free podcast Landing Page</li>
-                      </ul>
-                    </div>
-                    <button class="plan-button primary" data-plan="Free">Current Plan</button>
-                  </div>
-                  <!-- Pro Plan Card -->
-                  <div class="plan-card">
-                    <div class="plan-header">
-                      <h3>Pro</h3>
-                      <div class="plan-price">$29.99<span>/month</span></div>
-                    </div>
-                    <div class="plan-features">
-                      <ul>
-                        <li>10,000 credits (at month's start)</li>
-                        <li>3 episode slots / month</li>
-                        <li>1 extra episode slot – 5,000 credits (max 5 total slots)</li>
-                        <li>1 hr maximum length / episode</li>
-                        <li>Free podcast landing page</li>
-                      </ul>
-                    </div>
-                    <button class="plan-button primary" data-plan="Pro">Upgrade</button>
-                  </div>
-                  <!-- Studio Plan Card -->
-                  <div class="plan-card">
-                    <div class="plan-header">
-                      <h3>Studio</h3>
-                      <div class="plan-price">$69.00<span>/month</span></div>
-                    </div>
-                    <div class="plan-features">
-                      <ul>
-                        <li>20,000 credits (at month's start)</li>
-                        <li>4 episode slots / month</li>
-                        <li>1 extra episode slot – 5,000 credits (max 6 total slots)</li>
-                        <li>2 hr maximum length / episode</li>
-                        <li>Free podcast landing page (option to host on own domain)</li>
-                      </ul>
-                    </div>
-                    <button class="plan-button primary" data-plan="Studio">Upgrade</button>
-                  </div>
-                </div>
-                <!-- Optional: Keep newsletter form if desired -->
-                <div class="subscription-form-container">
-                  <h3>Subscribe to our newsletter</h3>
-                  <form class="subscription-form">
-                    <div class="form-group">
-                      <label for="subscription-email">Email Address</label>
-                      <input type="email" id="subscription-email" name="email" placeholder="your.email@example.com">
-                    </div>
-                    <div class="form-actions">
-                      <button type="submit" class="primary-button">Subscribe</button>
-                    </div>
-                  </form>
-                </div>
-              </div>
-              <!-- End Updated Subscription Content -->
+          <!-- Payment Method Section -->
+          <div id="subscription-change" class="settings-section">
+            <div class="section-header">
+              <h2>Payment Method</h2>
+              <p>Manage your payment methods and billing details</p>
             </div>
-            <div id="subscription-change" class="settings-section">
-              <div class="section-header">
-                <h2>Payment Method</h2>
-                <p>Modify your current subscription plan and payment details</p>
+            <div class="subscription-content">
+              <div class="current-plan-info">
+                <div class="info-card">
+                  <div class="info-card-icon">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <rect width="20" height="14" x="2" y="5" rx="2"></rect>
+                      <line x1="2" x2="22" y1="10" y2="10"></line>
+                    </svg>
+                  </div>
+                  <div class="info-card-content">
+                    <h3>Current Plan: <span id="current-plan">Free</span></h3>
+                    <p>Status: <span id="subscription-status">Inactive</span></p>
+                    <p id="renewal-text">Expiry date: <strong><span id="subscription-expiry">N/A</span></strong></p>
+                  </div>
+                </div>
               </div>
-              <div class="subscription-content">
-                <div class="current-plan-info">
-                  <div class="info-card">
-                    <div class="info-card-icon">
-                      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <rect width="20" height="14" x="2" y="5" rx="2"></rect>
-                        <line x1="2" x2="22" y1="10" y2="10"></line>
-                      </svg>
-                    </div>
-                    <div class="info-card-content">
-                      <h3>Current Plan: <span id="current-plan">Free</span></h3>
-                      <p>Status: <span id="subscription-status">Inactive</span></p>
-                      <p id="renewal-text">Expiry date: <strong><span id="subscription-expiry">N/A</span></strong></p>
-                    </div>
+              <div class="subscription-actions">
+                <button id="cancel-subscription-btn" class="secondary-button">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M18 6 6 18"></path>
+                    <path d="m6 6 12 12"></path>
+                  </svg>
+                  Cancel Subscription
+                </button>
+              </div>
+              <div class="payment-methods">
+                <h3>Payment Methods</h3>
+                <div class="payment-card">
+                  <div class="payment-card-icon">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <rect width="20" height="14" x="2" y="5" rx="2"></rect>
+                      <line x1="2" x2="22" y1="10" y2="10"></line>
+                    </svg>
+                  </div>
+                  <div class="payment-card-details">
+                    <div class="card-name"></div>
+                    <div class="card-expiry"></div>
+                    <div class="card-type"></div>
+                  </div>
+                  <div class="payment-card-actions">
+                    <button class="text-button">Edit</button>
+                    <button class="text-button">Remove</button>
                   </div>
                 </div>
-                <div class="subscription-actions">
-                  <button id="cancel-subscription-btn" class="secondary-button">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                      <path d="M18 6 6 18"></path>
-                      <path d="m6 6 12 12"></path>
-                    </svg>
-                    Cancel Subscription
-                  </button>
-                </div>
-                <div class="payment-methods">
-                  <h3>Payment Methods</h3>
-                  <div class="payment-card">
-                    <div class="payment-card-icon">
-                      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <rect width="20" height="14" x="2" y="5" rx="2"></rect>
-                        <line x1="2" x2="22" y1="10" y2="10"></line>
-                      </svg>
-                    </div>
-                    <div class="payment-card-details">
-                      <div class="card-name">Visa ending in 4242</div>
-                      <div class="card-expiry">Expires 12/25</div>
-                      <div class="card-type">Used for recurring payments</div>
-                    </div>
-                    <div class="payment-card-actions">
-                      <button class="text-button">Edit</button>
-                      <button class="text-button">Remove</button>
-                    </div>
-                  </div>
-                  <button class="secondary-button add-payment-button">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                      <path d="M5 12h14"></path>
-                      <path d="M12 5v14"></path>
-                    </svg>
-                    Add Payment Method
-                  </button>
-                </div>
+                <button class="secondary-button add-payment-button">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M5 12h14"></path>
+                    <path d="M12 5v14"></path>
+                  </svg>
+                  Add Payment Method
+                </button>
               </div>
             </div>
           </div>

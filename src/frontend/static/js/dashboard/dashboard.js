@@ -26,9 +26,11 @@ document.addEventListener("DOMContentLoaded", async () => {
     initProgressCircles();
     initDashboardActions();
     updateStatCounts();
+    
   } catch (error) {
     console.error("Error initializing dashboard:", error);
   }
+
 });
 
 function initProgressCircles() {
@@ -42,26 +44,24 @@ function initProgressCircles() {
 }
 
 function initDashboardActions() {
-  const createPodcastBtn = document.querySelector(".create-podcast");
   const scheduleEpisodeBtn = document.querySelector(".schedule-episode");
-
-  if (createPodcastBtn) {
-    createPodcastBtn.addEventListener("click", () => {
-      sessionStorage.setItem("Addpodcast", "true");
-      window.location.href = "/podcastmanagement";
-    });
-  }
+  const createEpisodeBtn = document.querySelector(".create-episode");
 
   if (scheduleEpisodeBtn) {
     scheduleEpisodeBtn.addEventListener("click", () => {
       window.location.href = "/episode/new";
     });
   }
+
+  if (createEpisodeBtn) {
+    createEpisodeBtn.addEventListener("click", () => {
+      window.location.href = "/podcastmanagement?openCreateEpisode=true"; // Redirect with query parameter
+    });
+  }
 }
 
 function initializeSvgIcons() {
   const iconSelectors = [
-    { selector: ".create-podcast-icon", svg: svgdashboard.createPodcast },
     { selector: ".schedule-episode-icon", svg: svgdashboard.scheduleEpisode },
     { selector: ".podcast-icon", svg: svgdashboard.podcastIcon },
     { selector: ".episode-icon", svg: svgdashboard.episodeIcon },

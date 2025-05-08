@@ -1,6 +1,7 @@
 APScheduler
-azure-storage-blob
+azure_storage
 beautifulsoup4
+colorama
 dnspython
 elevenlabs
 Faker
@@ -10,6 +11,7 @@ flask_cors
 flask_mail
 google_api_python_client
 google_auth_oauthlib
+itsdangerous
 marshmallow
 matplotlib
 mediapipe
@@ -20,14 +22,13 @@ protobuf
 pydub
 pymongo
 python-dotenv
-pytz
+python_dateutil
 soundfile
 spotipy
 streamlit
 stripe
 textblob
 textstat
-timezonefinder
 torch
 torchvision
 transformers

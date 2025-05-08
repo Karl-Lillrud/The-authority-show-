@@ -1,5 +1,5 @@
 import os
-import logging
+import logging  # Ensure logging is imported
 from flask import Flask, request, session, g, jsonify, render_template
 from flask_cors import CORS
 from backend.routes.auth import auth_bp
@@ -40,6 +40,9 @@ from backend.routes.comment import comment_bp  # Import the comment blueprint
 from colorama import Fore, Style, init  # Import colorama for styled logs
 from backend.routes.activity import activity_bp
 from backend.routes.stripe_config import stripe_config_bp  # Import the renamed config blueprint
+from backend.routes.edit_routes import edit_bp
+from backend.routes.enterprise import enterprise_bp  # Import the enterprise blueprint
+from backend.routes.lia import lia_bp  # Corrected: Import lia_bp from backend.routes.lia
 
 if os.getenv("SKIP_VENV_UPDATE", "false").lower() not in ("true", "1", "yes"):
     venvupdate.update_venv_and_requirements()
@@ -99,11 +102,14 @@ app.register_blueprint(billing_bp)
 app.register_blueprint(
     guest_form_bp, url_prefix="/guest-form"
 )  # Register the guest_form blueprint with URL prefix
-app.register_blueprint(user_bp)
+app.register_blueprint(user_bp, url_prefix="/user")
 app.register_blueprint(landingpage_bp)
 app.register_blueprint(comment_bp)
 app.register_blueprint(activity_bp)  # Ensure this registration exists
 app.register_blueprint(stripe_config_bp)  # Ensure this registration exists
+app.register_blueprint(edit_bp)
+app.register_blueprint(enterprise_bp, url_prefix="/enterprise")  # Register the enterprise blueprint
+app.register_blueprint(lia_bp, url_prefix="/lia")  # Ensure this line uses the correct lia_bp
 
 # Set the application environment (defaults to production)
 APP_ENV = os.getenv("APP_ENV", "production")
@@ -114,7 +120,7 @@ API_BASE_URL = os.getenv("API_BASE_URL")
 # Initialize colorama
 init(autoreset=True)
 
-# Configure logging
+# Configure logging (ensure this is done before first use)
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
@@ -147,8 +153,13 @@ logger.info(f"{Fore.GREEN}========================================")
 # Log the request with user info
 @app.before_request
 def load_user():
+    # --- Add Log ---
+    # Log the raw session object to see its contents
+    logger.info(f"Session object before loading user: {dict(session)}")
+    # --- End Log ---
     g.user_id = session.get("user_id")
-    logger.info(f"{Fore.BLUE}Request to {request.path} by user {g.user_id}")
+    # Log the result after trying to get user_id
+    logger.info(f"Request to {request.path} by user {g.user_id if g.user_id else 'None'}")
 
 
 start_scheduler(app)

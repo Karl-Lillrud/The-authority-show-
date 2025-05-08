@@ -2,7 +2,9 @@ import {
   fetchAccount,
   updateAccount,
   deleteAccount,
-  uploadProfilePicture
+  uploadProfilePicture,
+  deleteUserAccount,
+  updateProfile
 } from "/static/requests/accountRequests.js";
 import { showNotification } from "../components/notifications.js";
 import { fetchPurchases } from "/static/js/billing/billing.js";
@@ -14,9 +16,6 @@ import {
 document.addEventListener("DOMContentLoaded", () => {
   // Hides the edit buttons when in non-edit mode
   const formActions = document.querySelector(".form-actions");
-  if (formActions) {
-    formActions.style.display = "none";
-  }
   const uploadBtn = document.getElementById("upload-pic");
   if (uploadBtn) {
     uploadBtn.style.display = "none";
@@ -532,30 +531,6 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   });
 
-  // Toggle password visibility
-  document.querySelectorAll(".toggle-password").forEach((button) => {
-    button.addEventListener("click", function () {
-      const input = this.previousElementSibling;
-      const type =
-        input.getAttribute("type") === "password" ? "text" : "password";
-      input.setAttribute("type", type);
-
-      // Toggle icon (simplified for this example)
-      this.innerHTML =
-        type === "password"
-          ? '<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"></path><circle cx="12" cy="12" r="3"></circle></svg>'
-          : '<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9.88 9.88a3 3 0 1 0 4.24 4.24"></path><path d="M10.73 5.08A10.43 10.43 0 0 1 12 5c7 0 10 7 10 7a13.16 13.16 0 0 1-1.67 2.68"></path><path d="M6.61 6.61A13.526 13.526 0 0 0 2 12s3 7 10 7a9.74 9.74 0 0 0 5.39-1.61"></path><line x1="2" x2="22" y1="2" y2="22"></line></svg>';
-    });
-  });
-
-  // Password strength meter
-  const newPasswordInput = document.getElementById("new-password");
-  if (newPasswordInput) {
-    newPasswordInput.addEventListener("input", function () {
-      updatePasswordStrength(this.value);
-    });
-  }
-
   // Profile form submission
   const profileForm = document.getElementById("profile-form");
   if (profileForm) {
@@ -591,6 +566,7 @@ document.addEventListener("DOMContentLoaded", () => {
               "Profile updated successfully!",
               "success"
             );
+            
             // Update the display values in the read-only view
             document.getElementById("display-full-name").textContent =
               fullName || "Not provided";
@@ -598,8 +574,49 @@ document.addEventListener("DOMContentLoaded", () => {
               email || "Not provided";
             document.getElementById("display-phone").textContent =
               phone || "Not provided";
+            
             // Switch back to view mode
-            toggleProfileMode(false);
+            toggleProfileEditMode(false);
+            
+            // Ensure profile section is active and visible
+            document.querySelectorAll(".settings-section").forEach((section) => {
+              section.classList.remove("active");
+            });
+            const profileSection = document.getElementById("profile-section");
+            if (profileSection) {
+              profileSection.classList.add("active");
+              profileSection.style.display = "block";
+            }
+            
+            // Update sidebar active state
+            document.querySelectorAll(".sidebar-item").forEach((item) => {
+              item.classList.remove("active");
+            });
+            const profileButton = document.querySelector('.sidebar-item[data-target="profile-section"]');
+            if (profileButton) {
+              profileButton.classList.add("active");
+            }
+            
+            // Hide form and show profile info
+            const profileForm = document.getElementById("profile-form");
+            const profileInfoCard = document.querySelector(".profile-info-card");
+            const profileActions = document.querySelector(".profile-actions");
+            
+            if (profileForm) profileForm.style.display = "none";
+            if (profileInfoCard) profileInfoCard.style.display = "block";
+            if (profileActions) profileActions.style.display = "flex";
+            
+            // Hide upload button and profile pic overlay
+            const uploadButton = document.getElementById("upload-pic");
+            const profilePicOverlay = document.querySelector(".profile-pic-overlay");
+            if (uploadButton) uploadButton.style.display = "none";
+            if (profilePicOverlay) profilePicOverlay.style.display = "none";
+            
+            // Hide required field indicators
+            const requiredFields = document.querySelectorAll(".required-profile");
+            requiredFields.forEach((field) => {
+              field.style.display = "none";
+            });
           } else {
             showNotification("Error", "Failed to update profile", "error");
           }
@@ -713,71 +730,22 @@ document.addEventListener("DOMContentLoaded", () => {
       this.classList.add("active");
     });
   }
-
-  // Password form submission
-  const passwordForm = document.querySelector(".password-form");
-  if (passwordForm) {
-    passwordForm.addEventListener("submit", (event) => {
-      event.preventDefault();
-
-      const currentPassword = document.getElementById("password").value;
-      const newPassword = document.getElementById("new-password").value;
-      const confirmPassword = document.getElementById("confirm-password").value;
-
-      // Validate password fields
-      if (!currentPassword) {
-        showNotification("Error", "Current password is required", "error");
-        return;
+  
+  async function redirect_to_login()
+  {
+    try {
+      const response = await fetch("/logout", { method: "GET" });
+      const result = await response.json();
+      if (response.ok) {
+        window.location.href = result.redirect_url || "/signin";
+      } else {
+        console.error("Logout failed:", result.message);
+        alert("Failed to log out. Please try again.");
       }
-
-      if (!newPassword) {
-        showNotification("Error", "New password is required", "error");
-        return;
-      }
-
-      if (newPassword !== confirmPassword) {
-        showNotification("Error", "New passwords do not match", "error");
-        return;
-      }
-
-      // Check password strength
-      const strength = calculatePasswordStrength(newPassword);
-      if (strength < 2) {
-        showNotification(
-          "Error",
-          "Password is too weak. Please choose a stronger password.",
-          "error"
-        );
-        return;
-      }
-
-      const passwordData = {
-        current_password: currentPassword,
-        new_password: newPassword
-      };
-
-      updatePassword(passwordData)
-        .then((data) => {
-          if (data.message) {
-            showNotification(
-              "Success",
-              "Password updated successfully!",
-              "success"
-            );
-            passwordForm.reset();
-          } else {
-            showNotification("Error", "Failed to update password", "error");
-          }
-        })
-        .catch((error) => {
-          console.error("Error:", error);
-          showNotification(
-            "Error",
-            "An error occurred while updating password",
-            "error"
-          );
-        });
-    });
+    } catch (error) {
+      console.error("Error during logout:", error);
+      alert("An error occurred. Please try again.");
+    }
   }
 
   // Delete account form submission
@@ -787,22 +755,12 @@ document.addEventListener("DOMContentLoaded", () => {
       event.preventDefault();
 
       const confirmText = document.getElementById("delete-confirm").value;
-      const password = document.getElementById("delete-password").value;
       const email = document.getElementById("delete-email").value;
 
       if (confirmText !== "DELETE") {
         showNotification(
           "Error",
           "Please type DELETE to confirm account deletion",
-          "error"
-        );
-        return;
-      }
-
-      if (!password) {
-        showNotification(
-          "Error",
-          "Password is required to delete your account",
           "error"
         );
         return;
@@ -818,10 +776,11 @@ document.addEventListener("DOMContentLoaded", () => {
       }
 
       const confirmData = {
+        deleteConfirm: confirmText,
         deleteEmail: email,
-        deletePassword: password,
-        deleteConfirm: confirmText
       };
+
+      console.log("Confirm data:", confirmData); // debugging log
 
       deleteUserAccount(confirmData)
         .then((data) => {
@@ -833,13 +792,7 @@ document.addEventListener("DOMContentLoaded", () => {
             );
             // Redirect to logout or home page after successful deletion
             if (data.redirect) {
-              setTimeout(() => {
-                window.location.href = data.redirect;
-              }, 2000);
-            } else {
-              setTimeout(() => {
-                window.location.href = "/logout";
-              }, 2000);
+              redirect_to_login();
             }
           } else {
             showNotification("Error", "Failed to delete account", "error");
@@ -982,18 +935,6 @@ document.addEventListener("DOMContentLoaded", () => {
   );
   if (firstSidebarItem) {
     firstSidebarItem.classList.add("active");
-  }
-
-  // Calculate password strength
-  function calculatePasswordStrength(password) {
-    let strength = 0;
-
-    if (password.length >= 8) strength++;
-    if (password.match(/[A-Z]/)) strength++;
-    if (password.match(/[0-9]/)) strength++;
-    if (password.match(/[^A-Za-z0-9]/)) strength++;
-
-    return strength;
   }
 
   // Add this function to fetch and update credits
