@@ -153,14 +153,15 @@ function showTab(tabName) {
     
                 <div class="result-group">
                     <button class="btn ai-edit-button" onclick="generatePodcastIntroOutro()">
-                      ${labelWithCredits("Generate Intro/Outro", "ai_intro_outro")}
+                    ${labelWithCredits("Generate Intro/Outro", "ai_intro_outro")}
                     </button>
                     <div class="result-field">
-                        <pre id="introOutroResult"></pre>
+                        <pre id="introOutroScriptResult"></pre> 
                     </div>
                     <button class="btn ai-edit-button" onclick="convertIntroOutroToSpeech()">
-                      ${labelWithCredits("Convert to Speech", "ai_intro_outro_audio")}
+                    ${labelWithCredits("Convert to Speech", "ai_intro_outro_audio")}
                     </button>
+                    <div class="result-field" id="introOutroAudioResult" style="margin-top: 1rem;"></div>
                 </div>
             </div>
         `;
@@ -560,7 +561,7 @@ async function runOsintSearch() {
 }
 
 async function generatePodcastIntroOutro() {
-    const containerId = "introOutroResult";
+    const containerId = "introOutroScriptResult";
     const container = document.getElementById(containerId);
 
     const guestName = document.getElementById("guestNameInput").value;
@@ -594,10 +595,11 @@ async function generatePodcastIntroOutro() {
 }
 
 async function convertIntroOutroToSpeech() {
-    const containerId = "introOutroResult";
+    const containerId = "introOutroAudioResult";
     const container = document.getElementById(containerId);
 
-    const script = container.innerText;
+    const scriptContainer = document.getElementById("introOutroScriptResult");
+    const script = scriptContainer ? scriptContainer.innerText.trim() : "";
     if (!script.trim()) return alert("No script to convert.");
 
     container.innerText += "\n\nGenerating voice...";
