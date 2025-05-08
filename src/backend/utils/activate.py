@@ -13,7 +13,7 @@ load_dotenv()
 
 # Constants
 API_BASE_URL = os.getenv("API_BASE_URL", "http://127.0.0.1:8000").rstrip('/')
-XML_FILE_PATH = os.getenv("ACTIVATION_XML_FILE_PATH", "../test.xml")
+XML_FILE_PATH = os.getenv("ACTIVATION_XML_FILE_PATH", "../scraped.xml")
 
 def load_podcasts_from_xml(file_path):
     """Load podcasts from an XML file."""
@@ -48,6 +48,7 @@ def main():
 
     emails_sent_successfully = 0
     total_processed = 0
+    processed_emails_in_current_run = set() # Keep track of processed emails in this run
 
     for podcast_data in podcasts_to_process:
         total_processed += 1
@@ -57,6 +58,10 @@ def main():
 
         if not email or not rss_url or not podcast_title:
             logger.warning(f"Skipping entry due to incomplete data: {podcast_data}")
+            continue
+
+        if email in processed_emails_in_current_run:
+            logger.info(f"Skipping duplicate email in current run: {email} for podcast: {podcast_title}")
             continue
 
         try:
@@ -80,13 +85,19 @@ def main():
                 
                 logger.info(f"Successfully triggered activation for {email}. API Message: {response_data.get('message')}")
                 emails_sent_successfully += 1
+                processed_emails_in_current_run.add(email) # Add email to processed set
             else:
                 logger.error(f"Failed to trigger activation for {email}: {response.status_code} - {response.text}")
+                # Optionally, still add to processed_emails_in_current_run to avoid retrying a failing email within the same run
+                # processed_emails_in_current_run.add(email)
+
 
         except requests.exceptions.RequestException as req_err:
             logger.error(f"API request failed for {email}: {req_err}", exc_info=True)
+            # processed_emails_in_current_run.add(email) # Optionally add here too
         except Exception as e:
             logger.error(f"Failed to process activation for {email}: {e}", exc_info=True)
+            # processed_emails_in_current_run.add(email) # Optionally add here too
 
     logger.info(f"Activation script finished. Processed {total_processed} entries. Successfully triggered {emails_sent_successfully} activations.")
 

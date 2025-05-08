@@ -6,6 +6,7 @@ from backend.services.TeamInviteService import TeamInviteService
 from datetime import datetime, timezone
 import uuid
 import logging
+import os  # Ensure os is imported to use getenv
 
 # Configure logging
 logger = logging.getLogger(__name__)
@@ -16,6 +17,9 @@ invitation_bp = Blueprint("invitation_bp", __name__)
 
 # Initialize the service once
 invite_service = TeamInviteService()
+
+# Define API_BASE_URL at the module level for clarity, similar to other files
+API_BASE_URL = os.getenv("API_BASE_URL", "http://127.0.0.1:8000").rstrip('/')
 
 
 @invitation_bp.route("/send_invitation", methods=["POST"])
@@ -112,7 +116,7 @@ def send_team_invite():
 
         # Ensure the correct role is included in the registration URL
         registration_url = (
-            f"http://127.0.0.1:8000/register_team_member?token={invite_token}"
+            f"{API_BASE_URL}/register_team_member?token={invite_token}"
             f"&teamName={team_name}&role={role}&email={email}"
         )
         logger.info("Generated registration URL: %s", registration_url)  # Debug log
