@@ -5,36 +5,38 @@
 <script type="module" src="{{ url_for('static', filename='js/podcast/podcast.js') }}"></script>
 
 <div class="container">
-  <h1>Podcast Overview</h1>
-  <!-- Flash messages -->
-  {% with messages = get_flashed_messages() %}
-    {% if messages %}
-      <div class="alert">
-        {% for message in messages %}
-          <div>{{ message }}</div>
-        {% endfor %}
-      </div>
-    {% endif %}
-  {% endwith %}
+  <div class="podcast-header">
+    <div id="podcast-container" class="podcast-main"></div>
+  </div>
 
-  <!-- Podcast details -->
-  <div id="podcast-container" class="card-container"></div>
+  <div class="content-grid">
+    <section class="episodes-section">
+      <h2 class="section-title">Latest Episodes</h2>
+      <div id="episodes-container" class="episodes-grid single-row"></div>
+    </section>
 
-  <!-- Guests Section -->
-  <h2>Guests</h2>
-  <div id="guests-container" class="card-container"></div>
+    <div class="side-content">
+      <section class="content-section">
+        <h2 class="section-title">Guests
+          <button class="add-btn">Add Guest</button>
+        </h2>
+        <div id="guests-container"></div>
+      </section>
 
-  <!-- Episodes Section -->
-  <h2>Episodes</h2>
-  <div id="episodes-container" class="card-container"></div>
+      <section class="content-section">
+        <h2 class="section-title">Tasks
+          <button class="add-btn">Add Task</button>
+        </h2>
+        <div id="tasks-container"></div>
+      </section>
 
-  <!-- Tasks Section -->
-  <h2>Podcast Tasks</h2>
-  <div id="tasks-container" class="card-container"></div>
-
-  <!-- Teams Section -->
-  <h2>Teams</h2>
-  <div id="teams-container" class="card-container"></div>
-
+      <section class="content-section">
+        <h2 class="section-title">Team
+          <button class="add-btn">Add Member</button>
+        </h2>
+        <div id="teams-container"></div>
+      </section>
+    </div>
+  </div>
 </div>
 {% endblock %}

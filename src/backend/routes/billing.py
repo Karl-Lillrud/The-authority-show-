@@ -215,9 +215,9 @@ def payment_success():
 
         # Omdirigera användaren till lämplig sida
         if plan:  # Om det var en prenumeration inblandad
-            return redirect("/account?subscription_updated=true#settings-purchases")
+            return redirect("/store?subscription_updated=true#settings-purchases")
         else:  # Annars till dashboard eller butik/historik
-            return redirect("/dashboard?purchase_success=true")
+            return redirect("/store?purchase_success=true")
     except Exception as e:
         logger.error(f"Payment processing error: {str(e)}")
         return jsonify({"error": str(e)}), 500
@@ -702,13 +702,6 @@ def cancel_subscription():
         stripe_subscription_id = None
         payment_id = None  # Initialize payment_id
 
-        if subscription_record and subscription_record.get("payment_id"):
-            payment_id = subscription_record.get("payment_id")
-            if payment_id.startswith("sub_"):
-                stripe_subscription_id = payment_id
-                logger.info(
-                    f"Found subscription ID directly in payment_id: {stripe_subscription_id}"
-                )
 
         # Find and cancel the Stripe subscription
         try:
@@ -740,33 +733,9 @@ def cancel_subscription():
                             logger.info(
                                 f"Retrieved subscription ID from Checkout Session {payment_id}: {stripe_subscription_id}"
                             )
-                            if subscriptions and subscriptions.data:
-                                for sub in subscriptions.data:
-                                    logger.info(f"Found subscription: {sub.id} with status {sub.status}")
-                                
-                                # Use the first active subscription
-                                stripe_subscription_id = subscriptions.data[0].id
-                                logger.info(f"Selected subscription for cancellation: {stripe_subscription_id}")
-                            else:
-                                logger.warning(f"No active subscriptions found for customer {customer_id}")
-                    except Exception as customer_error:
-                        logger.error(f"Error with Stripe customer operations: {str(customer_error)}")
-
-            # Now try to cancel the subscription if we found an ID
-            if stripe_subscription_id:
-
-                try:
-                    checkout_session = stripe.checkout.Session.retrieve(payment_id)
-                    if checkout_session and hasattr(checkout_session, "subscription"):
-                        stripe_subscription_id = checkout_session.subscription
-                        logger.info(
-                            f"Retrieved subscription ID from session: {stripe_subscription_id}"
-                        )
-                except Exception as session_error:
-                    logger.error(f"Error retrieving session: {str(session_error)}")
-        except Exception as subscription_error:
-            logger.error(f"Error retrieving subscription: {str(subscription_error)}")   
-
+                    except Exception as session_error:
+                        logger.error(f"Error retrieving session: {str(session_error)}")
+            
             # If still no ID, try finding the customer by email in Stripe
             if not stripe_subscription_id and account.get("email"):
                 logger.info(
@@ -780,13 +749,13 @@ def cancel_subscription():
                         customer_id = customers.data[0].id
                         logger.info(f"Found Stripe customer by email: {customer_id}")
                         # Look for an active subscription for this customer
-                        subscriptions = stripe.Subscription.list(
+                        subscriptions_stripe = stripe.Subscription.list(
                             customer=customer_id,
                             status="active",
                             limit=1,  # Fetch only one active
                         )
-                        if subscriptions and subscriptions.data:
-                            stripe_subscription_id = subscriptions.data[0].id
+                        if subscriptions_stripe and subscriptions_stripe.data:
+                            stripe_subscription_id = subscriptions_stripe.data[0].id
                             logger.info(
                                 f"Found active subscription via customer search: {stripe_subscription_id}"
                             )

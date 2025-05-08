@@ -623,7 +623,8 @@
 .task-actions {
   display: flex;
   gap: var(--spacing-sm);
-  margin-bottom: var(--spacing-md);
+  flex-wrap: nowrap;
+  align-items: center;
 }
 
 .task-action-btn {
@@ -639,7 +640,7 @@
 }
 
 .task-action-btn:hover {
-  background-color: rgba(0, 0, 0, 0.05);
+  background-color: #FF7300;
   color: rgba(0, 0, 0, 0.8);
 }
 
@@ -677,11 +678,12 @@
 }
 
 .task-item {
-  display: flex;
-  align-items: center;
-  gap: var(--spacing-sm);
+  display: grid;
+  grid-template-columns: 1fr auto;   /* title = 1fr, buttons = auto */
+  grid-gap: var(--spacing-md);
+  align-items: center;               /* vertical centering */
   padding: var(--spacing-xs) 0;
-  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+  border-bottom: 1px solid rgba(0,0,0,0.05);
 }
 
 .task-item:last-child {
