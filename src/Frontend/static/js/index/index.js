@@ -56,9 +56,10 @@ function scrollAnimation() { // Trigger animations based on scroll position
 
   animateElements.forEach((element) => { // Loop through each element to check if it is in view
     element.forEach((el) => {
-      const elTop = el.getBoundingClientRect().y - 1200; // Get the top position of the element relative to the viewport
+      const elTop = el.getBoundingClientRect().y - 1150; // Get the top position of the element relative to the viewport
       if (elTop <= 0) { // Check if the element is in view
         el.classList.add("animate"); // Add the animate class to trigger animations
+        el.style.animationDelay = "0.5s";
       }
     });
   });
