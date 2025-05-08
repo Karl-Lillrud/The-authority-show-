@@ -1,0 +1,10 @@
+<?xml version="1.0" ?>
+<podcasts>
+  <podcast>
+    <title>Marcus Podcast</title>
+    <rss>https://anchor.fm/s/fd781dd0/podcast/rss</rss>
+    <emails>
+      <email>marcuzg@gmail.com</email>
+    </emails>
+  </podcast>
+</podcasts>

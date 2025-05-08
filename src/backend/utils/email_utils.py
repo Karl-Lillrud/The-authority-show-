@@ -17,6 +17,8 @@ from backend.utils.config_utils import get_client_secret
 from backend.services.activity_service import ActivityService  # Add this import
 from pymongo import MongoClient
 from backend.database.mongo_connection import collection
+import dns.resolver
+import re
 
 # Load environment variables once
 load_dotenv(override=True)
@@ -217,6 +219,22 @@ def send_email(to_email, subject, body, image_path=None):
         return {"error": f"Failed to send email: {str(e)}"}
 
 
+def validate_email(email):
+    """Validate email format and MX record."""
+    email_regex = r"^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$"
+    if not re.match(email_regex, email):
+        return False
+
+    domain = email.split("@")[1]
+    try:
+        dns.resolver.resolve(domain, "MX")
+        return True
+    except dns.resolver.NXDOMAIN:
+        return False
+    except Exception:
+        return False
+
+
 def send_login_email(email, login_link):
     """
     Sends a login link email to the user and prints the link to the terminal.
@@ -230,7 +248,7 @@ def send_login_email(email, login_link):
                 <p>Click the link below to log in to your PodManager account:</p>
                 <a href="{login_link}" style="color: #ff7f3f; text-decoration: none;">Log in</a>
                 <p>This link is valid for 10 minutes. If you did not request this, please ignore this email.</p>
-                <p>Best regards,<br>PodManager Team</p>
+                <p>Best regards,<br>The PodManager.ai Team</p>
             </body>
         </html>
         """
@@ -453,6 +471,31 @@ def send_podcaster_activation_email(email, activation_link):
         logger.error(
             f"❌ Failed to send activation email to {email}: {e}", exc_info=True
         )
+
+
+def send_activation_email(email, activation_link, podcast_name, artwork_url):
+    """
+    Sends an activation email with a link and optional artwork.
+    """
+    try:
+        subject = f"Activate Your Podcast Account: {podcast_name}"
+        # Render the email body using the activate_email.html template
+        body = render_template(
+            "emails/activate_email.html",
+            activation_link=activation_link,
+            podcast_name=podcast_name,
+            artwork_url=artwork_url,
+        )
+        logger.info(f"📧 Preparing to send activation email to {email}")
+        result = send_email(email, subject, body)
+        if result.get("success"):
+            logger.info(f"✅ Activation email sent successfully to {email}")
+        else:
+            logger.error(f"❌ Failed to send activation email to {email}: {result.get('error')}")
+        return result
+    except Exception as e:
+        logger.error(f"❌ Error while sending activation email to {email}: {e}", exc_info=True)
+        return {"error": f"Error while sending activation email: {str(e)}"}
 
 
 @google_calendar_bp.route("/activation/invite", methods=["GET"])

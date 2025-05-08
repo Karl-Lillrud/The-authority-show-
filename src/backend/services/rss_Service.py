@@ -137,7 +137,7 @@ class RSSService:
                 "title": title,
                 "description": description,
                 "link": link,
-                "imageUrl": image_url,
+                "imageUrl": image_url,  # Ensure artwork URL is included
                 "logoUrl": logo_url,  # Add processed logoUrl
                 "language": language,
                 "author": author,

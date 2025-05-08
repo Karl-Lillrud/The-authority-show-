@@ -52,4 +52,15 @@ def activate_user_route():
     return jsonify(result), status_code
 
 
+@auth_bp.route("/activate", methods=["GET"])
+def activate_user():
+    """Activate user via token."""
+    token = request.args.get("token")
+    if not token:
+        return jsonify({"error": "Missing activation token"}), 400
+
+    result, status_code = auth_service.activate_user_via_token(token)
+    return jsonify(result), status_code
+
+
 # ... rest of the routes ...

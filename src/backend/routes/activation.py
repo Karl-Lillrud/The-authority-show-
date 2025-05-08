@@ -30,11 +30,11 @@ def send_activation_email(email, activation_link, podcast_name, artwork_url):
     msg["To"] = email
 
     try:
-        with smtplib.SMTP("smtp.office365.com", 587) as server:
+        with smtplib.SMTP(os.getenv("SMTP_SERVER"), 587) as server:
             server.ehlo()
             server.starttls()  # ✅ Use STARTTLS instead of SSL
             server.ehlo()
-            server.login("contact@podmanager.ai", "!Pat9INfeKKpH4Rack8942&")
+            server.login(os.getenv("EMAIL_USER"), os.getenv("EMAIL_PASSWORD"))  # Use environment variables
             server.send_message(msg)
         print(f"✅ Sent to {email}")
     except Exception as e:

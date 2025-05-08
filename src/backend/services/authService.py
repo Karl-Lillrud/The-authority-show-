@@ -360,6 +360,11 @@ class AuthService:
             )
             return {"error": f"Internal server error during upload: {str(e)}"}, 500
 
+    def generate_activation_token(self, email, rss_url, secret_key):
+        """Generate an activation token for a user."""
+        serializer = URLSafeTimedSerializer(secret_key)
+        return serializer.dumps({"email": email, "rss_url": rss_url}, salt="activation-salt")
+
     def activate_user_via_token(self, token):
         """
         Activates a user account via a special token, logs them in,
