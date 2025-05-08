@@ -605,6 +605,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // Update the subscription UI
     updateSubscriptionUI();
     // Clear the URL parameter
+    localStorage.removeItem("podmanager_cart");
     window.history.replaceState({}, document.title, window.location.pathname);
   }
 });

@@ -644,6 +644,130 @@
   display: none;
 }
 
+
+/* Popup Styles */
+.popup {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1001;
+  backdrop-filter: blur(5px);
+  transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  opacity: 0;
+  visibility: hidden;
+}
+
+.popup[style*="display: flex"] {
+  opacity: 1;
+  visibility: visible;
+}
+
+.popup[style*="display: flex"] #success-popup {
+  transform: scale(1);
+}
+
+/* Style for the Success Popup */
+.popup-content {
+  position: fixed; /* Stay in place */
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%); /* Center the popup */
+  background-color: white;
+  padding: 20px;
+  border-radius: 10px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2); /* Add a subtle shadow */
+  z-index: 1000; /* Ensure it's on top of everything */
+  text-align: center;
+  width: 80%; /* Adjust width as needed */
+  max-width: 500px; /* Maximum width */
+  min-width: 300px; /* Ensure it's not too narrow */
+  min-height: 300px; /* Ensure it has some height */
+  max-height: 700px; /* Maximum height */
+}
+
+.popup-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+/* Style for the checkmark SVG */
+.checkmark {
+  width: 100px; /* Adjust size as needed - Increased size */
+  height: 100px; /* Adjust size as needed - Increased size */
+  margin-bottom: 20px;
+}
+
+.checkmark__circle {
+  stroke-width: 2;
+  stroke: #4CAF50; /* Green color */
+  fill: none;
+  animation: stroke 0.6s cubic-bezier(0.65, 0, 0.45, 1) forwards;
+}
+
+.checkmark__check {
+  transform-origin: 50% 50%;
+  stroke-width: 2;
+  stroke: #fff;
+  fill: none;
+  animation: stroke 0.3s cubic-bezier(0.65, 0, 0.45, 1) 0.8s forwards;
+}
+
+@keyframes stroke {
+  100% {
+    stroke-dashoffset: 0;
+  }
+}
+
+/* Style for the heading */
+#success-popup h2 {
+  color: #333;
+  margin-bottom: 10px;
+}
+
+/* Style for the paragraph */
+#success-popup p {
+  color: #666;
+  font-size: 16px;
+  margin-bottom: 20px;
+}
+
+/* Style for the Awesome button */
+.Awsome-btn {
+  background-color: #4CAF50; /* Green color */
+  color: white;
+  padding: 12px 24px;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 16px;
+  font-weight: 600; /* Make the text bolder */
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2); /* Add a subtle shadow */
+  transition:
+    background-color 0.3s ease,
+    transform 0.2s ease,
+    box-shadow 0.2s ease; /* Smooth transition for hover effect */
+}
+
+.Awsome-btn:hover {
+  background-color: #388E3C; /* Darker green on hover */
+  transform: translateY(-2px); /* Slight lift on hover */
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3); /* More pronounced shadow */
+}
+
+.Awsome-btn:active {
+  background-color: #2E7D32; /* Even darker green when pressed */
+  transform: translateY(0); /* Remove lift when pressed */
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3); /* Reduce shadow when pressed */
+}
+
+
 /* Responsive */
 @media (max-width: 1200px) {
   .cards-container {
