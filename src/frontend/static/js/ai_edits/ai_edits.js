@@ -719,12 +719,18 @@ async function runVoiceIsolation() {
             body: formData
         });
 
+        if (response.status === 403) {
+            const data = await response.json();
+            container.innerHTML = `
+                <p style="color: red;">${data.error || "You don't have enough credits."}</p>
+                ${data.redirect ? `<a href="${data.redirect}" class="btn ai-edit-button">Go to Store</a>` : ""}
+            `;
+            return;
+        }
+
         const data = await response.json();
-        if (!response.ok) throw new Error(data.error || "Voice isolation failed.");
-
-        await consumeStoreCredits("voice_isolation");
-
         const blobUrl = data.isolated_blob_url;
+
         const audioRes = await fetch(`/transcription/get_isolated_audio?url=${encodeURIComponent(blobUrl)}`);
         const blob = await audioRes.blob();
         const url = URL.createObjectURL(blob);

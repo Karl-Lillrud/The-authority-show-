@@ -54,7 +54,7 @@ def transcribe():
         # Check and enforce credit limit BEFORE doing any processing
         try:
             consume_credits(user_id, "transcription")
-            
+
         except ValueError as e:
             logger.warning(f"User {user_id} has insufficient credits for transcription.")
             return jsonify({
@@ -363,6 +363,20 @@ def isolate_voice():
     if "audio" not in request.files or "episode_id" not in request.form:
         return jsonify({"error": "Audio file and episode_id are required"}), 400
 
+    user_id = session.get("user_id")
+    if not user_id:
+        return jsonify({"error": "Authentication required"}), 401
+
+    # Consume credits BEFORE processing
+    try:
+        consume_credits(user_id, "voice_isolation")
+    except ValueError as e:
+        logger.warning(f"User {user_id} has insufficient credits for voice isolation.")
+        return jsonify({
+            "error": str(e),
+            "redirect": "/store"
+        }), 403
+
     audio_file = request.files["audio"]
     episode_id = request.form["episode_id"]
     filename = audio_file.filename
@@ -371,10 +385,10 @@ def isolate_voice():
     try:
         blob_url = audio_service.isolate_voice(audio_bytes, filename, episode_id)
         return jsonify({"isolated_blob_url": blob_url})  
-    
     except Exception as e:
         logger.error(f"Error during voice isolation: {str(e)}")
         return jsonify({"error": str(e)}), 500
+
     
 @transcription_bp.route("/get_isolated_audio", methods=["GET"])
 def get_isolated_audio():
