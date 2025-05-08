@@ -15,7 +15,7 @@ from backend.utils.transcription_utils import check_audio_duration
 from backend.repository.edit_repository import create_edit_entry
 
 episode_repo = EpisodeRepository()
-logger = logging.getLogger(__name__)
+logger = logging.getLogger()
 audio_bp = Blueprint("audio_bp", __name__)
 audio_service = AudioService()
 
@@ -271,4 +271,28 @@ def get_cleaned_audio():
         return Response(response.content, content_type=content_type)
     except Exception as e:
         logger.error(f"Error fetching cleaned audio from blob: {str(e)}")
+        return jsonify({"error": str(e)}), 500
+
+@audio_bp.route("/plan_and_mix_sfx", methods=["POST"])
+def plan_and_mix_sfx():
+    """
+    Endpoint to generate SFX plan using GPT and mix with original audio.
+    Expects:
+      - multipart form with 'audio' file
+    
+    Returns:
+      - sfx_plan: List of sound effect plans with description, start, end
+      - sfx_clips: List of generated sound effects with description, start, end, and sfxUrl
+      - merged_audio: Base64-encoded mixed audio
+    """
+    if "audio" not in request.files:
+        return jsonify({"error": "Missing audio file"}), 400
+
+    audio_bytes = request.files["audio"].read()
+
+    try:
+        data = audio_service.plan_and_mix_sfx(audio_bytes)
+        return jsonify(data)
+    except Exception as e:
+        logger.error(f"Error generating SFX plan & mix: {e}")
         return jsonify({"error": str(e)}), 500

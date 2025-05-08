@@ -378,7 +378,11 @@ The outro should reflect on the discussion and invite the listener to tune in ag
 
     response = client.chat.completions.create(
         model="gpt-4",
-        messages=[{"role": "user", "content": prompt}]
+        messages=[
+            {"role": "system", "content": "You are a professional sound designer."},
+            {"role": "user", "content": prompt}
+        ],
+        temperature=0.8
     )
 
     return response.choices[0].message.content.strip()

@@ -1,4 +1,4 @@
-import os, logging, tempfile, requests, subprocess, base64
+import os, logging, tempfile, requests, subprocess, base64, json
 from typing import Optional
 from pydub import AudioSegment, silence
 from io import BytesIO 
@@ -583,3 +583,372 @@ class AudioService:
             for path in [tmp_path, cleaned_path]:
                 if os.path.exists(path):
                     os.remove(path)
+
+    def plan_and_mix_sfx(self, audio_bytes: bytes) -> dict:
+        """
+        New GPT-based SFX planning and mixing flow:
+        1. Transcribe audio with timestamps
+        2. Generate SFX plan using GPT
+        3. Create SFX clips based on plan
+        4. Mix SFX with original audio
+        """
+        logger.info("Starting plan_and_mix_sfx process")
+        
+        # Step 1: Transcribe audio with timestamps
+        with tempfile.NamedTemporaryFile(delete=False, suffix=".wav") as tmp:
+            tmp.write(audio_bytes)
+            temp_path = tmp.name
+            logger.info(f"Saved input audio to temporary file: {temp_path}")
+        
+        try:
+            # Get transcript with timestamps
+            logger.info("Transcribing audio with ElevenLabs API")
+            client = ElevenLabs()
+            with open(temp_path, "rb") as f:
+                audio_bytes_for_api = f.read()
+                logger.info(f"Read {len(audio_bytes_for_api)} bytes from temp file")
+        
+            result = client.speech_to_text.convert(
+                file=audio_bytes_for_api,
+                model_id="scribe_v1",
+                timestamps_granularity="word"
+            )
+            
+            logger.info(f"Transcription complete. Got {len(result.words) if hasattr(result, 'words') else 0} words with timestamps")
+        
+            # Group words into sentences and calculate sentence timestamps
+            transcript_segments = []
+            current_sentence = []
+            sentence_start = None
+            sentence_end = None
+
+            for word in result.words:
+                if hasattr(word, "start") and hasattr(word, "end"):
+                    if sentence_start is None:
+                        sentence_start = word.start
+                    sentence_end = word.end
+                    current_sentence.append(word.text)
+                
+                    # Simple sentence boundary detection (period followed by space or end)
+                    if word.text.endswith('.') or word.text.endswith('?') or word.text.endswith('!'):
+                        if current_sentence:
+                            transcript_segments.append({
+                                "start": sentence_start,
+                                "end": sentence_end,
+                                "text": " ".join(current_sentence)
+                            })
+                            current_sentence = []
+                            sentence_start = None
+                            sentence_end = None
+
+            # Add any remaining words as a segment
+            if current_sentence:
+                transcript_segments.append({
+                    "start": sentence_start,
+                    "end": sentence_end,
+                    "text": " ".join(current_sentence)
+                })
+            
+            logger.info(f"Created {len(transcript_segments)} sentence segments from transcript")
+            for i, segment in enumerate(transcript_segments[:3]):  # Log first 3 segments
+                logger.info(f"Segment {i}: [{segment['start']:.2f}s - {segment['end']:.2f}s] {segment['text'][:50]}...")
+            
+            # Step 2: Generate SFX plan using GPT
+            logger.info("Generating SFX plan using GPT")
+            sfx_plan = self.generate_sfx_plan_from_analysis(transcript_segments)
+            logger.info(f"Generated SFX plan with {len(sfx_plan)} sound effects")
+            
+            for i, effect in enumerate(sfx_plan):
+                logger.info(f"SFX {i}: {effect['description']} [{effect['start']:.2f}s - {effect['end']:.2f}s]")
+            
+            if not sfx_plan:
+                logger.warning("No sound effects were planned by GPT! Returning original audio.")
+        
+            # Step 3: Create SFX clips based on plan
+            logger.info("Generating SFX clips based on plan")
+            sfx_clips = self.generate_sfx_clips_from_plan(sfx_plan)
+            logger.info(f"Generated {len(sfx_clips)} SFX clips")
+            for i, clip in enumerate(sfx_clips):
+                logger.info(f"Clip {i}: {clip['description']} [{clip['start']:.2f}s - {clip['end']:.2f}s] Has audio: {bool(clip.get('audio_bytes'))}")
+                if not clip.get('audio_bytes'):
+                    logger.warning(f"Clip has no audio bytes - ElevenLabs may have failed to generate audio")
+            
+            if not sfx_clips:
+                logger.warning("No SFX clips were generated! Returning original audio.")
+        
+            # Step 4: Mix SFX with original audio
+            logger.info("Mixing SFX with original audio")
+            mixed_audio_bytes = self.mix_sfx_audio_bytes(audio_bytes, sfx_clips)
+            logger.info(f"Mixed audio generated: {len(mixed_audio_bytes)} bytes")
+        
+            # Convert to base64 for frontend
+            mixed_audio_b64 = "data:audio/wav;base64," + base64.b64encode(mixed_audio_bytes).decode()
+        
+            # Prepare the sfx_clips for the response (remove audio_bytes which is not needed in the response)
+            sfx_clips_response = []
+            for clip in sfx_clips:
+                sfx_clips_response.append({
+                    "description": clip["description"],
+                    "start": clip["start"],
+                    "end": clip["end"],
+                    "sfxUrl": clip["sfxUrl"]
+                })
+            
+            if mixed_audio_bytes == audio_bytes:
+                logger.error("ERROR: Mixed audio is identical to original! No SFX were mixed in.")
+            else:
+                logger.info("SUCCESS: Mixed audio is different from original.")
+            
+            logger.info("SFX mixing process complete, returning results")
+            return {
+                "sfx_plan": sfx_plan,
+                "sfx_clips": sfx_clips_response,
+                "merged_audio": mixed_audio_b64
+            }
+
+        except Exception as e:
+            logger.error(f"Error in plan_and_mix_sfx: {e}", exc_info=True)
+            raise
+        finally:
+            if os.path.exists(temp_path):
+                os.remove(temp_path)
+                logger.info(f"Cleaned up temporary file: {temp_path}")
+
+    def generate_sfx_plan_from_analysis(self, transcript_segments: list) -> list:
+        """
+        Use GPT to generate a creative SFX plan based on transcript segments.
+        Each segment has: {start, end, text}
+        Returns a list of: {description, start, end}
+        """
+        logger.info(f"Generating SFX plan from {len(transcript_segments)} transcript segments")
+        
+        # Prepare the prompt for GPT
+        segments_text = "\n".join([
+            f"[{s['start']:.2f}s - {s['end']:.2f}s]: {s['text']}"
+            for s in transcript_segments
+        ])
+        
+        prompt = f"""
+        You are an expert sound designer for podcasts and audio content.
+        
+        Below is a transcript with timestamps. Create a sound effects (SFX) plan that enhances the content.
+        
+        For each sound effect, provide:
+        1. A brief description of the sound
+        2. The exact start time (in seconds)
+        3. The exact end time (in seconds)
+        
+        Choose sound effects that:
+        - Enhance the emotional impact
+        - Illustrate concepts mentioned
+        - Create appropriate atmosphere
+        - Emphasize key moments
+        
+        TRANSCRIPT WITH TIMESTAMPS:
+        {segments_text}
+        
+        FORMAT YOUR RESPONSE AS A JSON ARRAY:
+        [
+          {{"description": "brief description", "start": start_time_in_seconds, "end": end_time_in_seconds}},
+          ...
+        ]
+        
+        Limit to 3-5 sound effects total. Be creative but appropriate for the content.
+        """
+        
+        logger.info("Sending prompt to OpenAI GPT")
+        logger.info(f"Prompt length: {len(prompt)} characters")
+        
+        try:
+            # Import OpenAI client
+            from openai import OpenAI
+            
+            # Create OpenAI client
+            openai_client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+            
+            # Call GPT with the prompt - FIXED: removed response_format parameter
+            response = openai_client.chat.completions.create(
+                model="gpt-4",
+                messages=[
+                    {"role": "system", "content": "You are a professional sound designer."},
+                    {"role": "user", "content": prompt}
+                ],
+                temperature=0.8
+            )
+            
+            # Parse the JSON response
+            content = response.choices[0].message.content.strip()
+            logger.info(f"Received response from GPT: {content[:200]}...")  # Log first 200 chars
+            
+            try:
+                result = json.loads(content)
+                logger.info(f"Successfully parsed JSON response: {type(result)}")
+                
+                # Ensure we have the expected format
+                if isinstance(result, list):
+                    sfx_plan = result
+                else:
+                    sfx_plan = result.get("sfx_plan", [])
+                    logger.info("Using direct list from response as sfx_plan")
+                
+                logger.info(f"Raw SFX plan: {sfx_plan}")
+                
+                # Validate each entry
+                validated_plan = []
+                for entry in sfx_plan:
+                    if isinstance(entry, dict) and "description" in entry and "start" in entry and "end" in entry:
+                        validated_plan.append({
+                            "description": entry["description"],
+                            "start": float(entry["start"]),
+                            "end": float(entry["end"])
+                        })
+                    else:
+                        logger.warning(f"Invalid SFX plan entry: {entry}")
+                
+                logger.info(f"Validated {len(validated_plan)} SFX plan entries")
+                return validated_plan
+                
+            except json.JSONDecodeError as e:
+                logger.error(f"Failed to parse GPT response as JSON: {e}")
+                logger.error(f"Raw response: {content}")
+                return []
+        
+        except Exception as e:
+            logger.error(f"Error generating SFX plan: {e}", exc_info=True)
+            return []
+
+    def generate_sfx_clips_from_plan(self, sfx_plan: list) -> list:
+        """
+        Generate actual SFX clips based on the plan.
+        Returns a list of: {description, start, end, sfxUrl, audio_bytes}
+        """
+        logger.info(f"Generating SFX clips from plan with {len(sfx_plan)} entries")
+        result = []
+        
+        for i, entry in enumerate(sfx_plan):
+            description = entry["description"]
+            logger.info(f"Generating SFX clip {i+1}/{len(sfx_plan)}: '{description}'")
+            
+            # Generate SFX using ElevenLabs sound generation
+            url = "https://api.elevenlabs.io/v1/sound-generation"
+            headers = {
+                "xi-api-key": os.getenv("ELEVENLABS_API_KEY"),
+                "Content-Type": "application/json"
+            }
+            
+            # Calculate duration
+            duration = entry["end"] - entry["start"]
+            duration = max(2, min(duration, 10))  # Limit between 2-10 seconds
+            logger.info(f"Calculated duration: {duration}s")
+            
+            payload = {
+                "text": f"Create a {duration}-second sound effect for: {description}. The sound should be perfect for a podcast.",
+                "duration_seconds": duration,
+                "prompt_influence": 1
+            }
+            
+            try:
+                logger.info(f"Sending request to ElevenLabs sound generation API")
+                res = requests.post(url, headers=headers, json=payload)
+                logger.info(f"Response status: {res.status_code}")
+                logger.info(f"Response content type: {res.headers.get('Content-Type', 'unknown')}")
+            
+                if "audio/mpeg" not in res.headers.get("Content-Type", ""):
+                    logger.warning(f"Failed to generate SFX for: {description}")
+                    logger.warning(f"Response: {res.text[:200]}...")  # Log first 200 chars
+                    continue
+            
+                logger.info(f"Successfully generated SFX audio, size: {len(res.content)} bytes")
+            
+                # Convert MP3 to WAV for consistent processing
+                audio_seg = AudioSegment.from_file(BytesIO(res.content), format="mp3")
+                wav_io = BytesIO()
+                audio_seg.export(wav_io, format="wav")
+                audio_bytes = wav_io.getvalue()
+                logger.info(f"Converted to WAV, size: {len(audio_bytes)} bytes")
+        
+                # Create base64 URL for frontend
+                b64 = base64.b64encode(res.content).decode("utf-8")
+                sfx_url = f"data:audio/mpeg;base64,{b64}"
+        
+                result.append({
+                    **entry,
+                    "sfxUrl": sfx_url,
+                    "audio_bytes": audio_bytes
+                })
+                logger.info(f"Added SFX clip to result list")
+        
+            except Exception as e:
+                logger.error(f"Error generating SFX clip for '{description}': {e}", exc_info=True)
+
+        logger.info(f"Generated {len(result)} SFX clips successfully")
+        return result
+
+    def mix_sfx_audio_bytes(self, original_audio_bytes: bytes, sfx_clips: list) -> bytes:
+        """
+        Mix SFX clips with original audio.
+        Returns the mixed audio as bytes.
+        """
+        logger.info(f"Mixing {len(sfx_clips)} SFX clips with original audio ({len(original_audio_bytes)} bytes)")
+        
+        # Load original audio
+        try:
+            original = AudioSegment.from_file(BytesIO(original_audio_bytes), format="wav")
+            logger.info(f"Original audio length (ms): {len(original)}")
+            logger.info(f"Loaded original audio: {len(original)}ms duration, {original.channels} channels, {original.frame_rate}Hz")
+        
+            # Create a copy to mix into
+            mixed = original.overlay(AudioSegment.silent(duration=0))
+            logger.info("Created base mixed audio track")
+        
+            # Mix in each SFX clip at the specified position
+            for i, clip in enumerate(sfx_clips):
+                try:
+                    start_ms = int(clip["start"] * 1000)
+                    if start_ms >= len(original):
+                        logger.warning(f"SFX start time ({start_ms}ms) is after the end of the audio ({len(original)}ms)!")
+                        continue
+                    logger.info(f"Processing clip {i+1}/{len(sfx_clips)}: '{clip['description']}' at {start_ms}ms")
+                    
+                    if not clip.get("audio_bytes"):
+                        logger.warning(f"Clip {i+1} has no audio_bytes, skipping")
+                        continue
+                    
+                    sfx = AudioSegment.from_file(BytesIO(clip["audio_bytes"]), format="wav")
+                    logger.info(f"Loaded SFX audio: {len(sfx)}ms duration")
+                
+                    # Apply a slight fade in/out
+                    sfx = sfx.fade_in(300).fade_out(300)
+                    logger.info("Applied fade in/out")
+                
+                    # Adjust volume (make SFX quieter than speech)
+                    sfx = sfx - 3  # Reduce by only 3 dB for testing (was -10)
+                    logger.info(f"Adjusted volume (-3dB instead of -10dB for testing)")
+                
+                    # Overlay at the correct position
+                    mixed = mixed.overlay(sfx, position=start_ms)
+                    logger.info(f"Overlaid SFX at position {start_ms}ms")
+                
+                except Exception as e:
+                    logger.error(f"Error mixing SFX '{clip['description']}': {e}", exc_info=True)
+        
+            # Export the final mix
+            logger.info("Exporting final mixed audio")
+            output = BytesIO()
+            mixed.export(output, format="wav")
+            result_bytes = output.getvalue()
+            logger.info(f"Exported mixed audio: {len(result_bytes)} bytes")
+            
+            # Check if the mixed audio is different from the original
+            if len(result_bytes) == len(original_audio_bytes):
+                logger.warning("WARNING: Mixed audio has same size as original, they might be identical")
+                if result_bytes == original_audio_bytes:
+                    logger.error("ERROR: Mixed audio is identical to original! No SFX were mixed in.")
+            
+            return result_bytes
+            
+        except Exception as e:
+            logger.error(f"Error in mix_sfx_audio_bytes: {e}", exc_info=True)
+            # Return original audio as fallback
+            logger.warning("Returning original audio due to mixing error")
+            return original_audio_bytes
