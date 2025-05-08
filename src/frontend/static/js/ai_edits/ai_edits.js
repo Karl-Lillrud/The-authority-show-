@@ -201,33 +201,42 @@ function showTab(tabName) {
                 </div>
             </div>
     
-            <div id="audioAnalysisSection" style="display: none;">
+            <div id="audioAnalysisSection">
                 <hr/>
                 <h3>AI Analysis</h3>
+
+                <label for="audioSourceSelect" style="font-weight: bold; margin-right: 10px;">Audio Source:</label>
+                <select id="audioSourceSelect" class="input-field" style="margin-bottom: 1rem;">
+                    <option value="enhanced">Enhanced</option>
+                    <option value="isolated">Isolated</option>
+                    <option value="original">Original</option>
+                </select>
+
                 <button class="btn ai-edit-button" onclick="analyzeEnhancedAudio()">
-                  ${labelWithCredits("Analyze", "ai_audio_analysis")}
+                    ${labelWithCredits("Analyze", "ai_audio_analysis")}
                 </button>
+
                 <pre id="analysisResults"></pre>
-    
+
                 <button id="mixBackgroundBtn"
                         class="btn ai-edit-button"
                         style="display: none; margin-top: 1rem;"
                         onclick="displayBackgroundAndMix()">
-                  Mix Background & Preview
+                    Mix Background & Preview
                 </button>
-    
+
                 <div id="backgroundPreview" style="margin-top: 1rem;"></div>
                 <div id="soundEffectTimeline" style="margin-top: 1rem;"></div>
-    
+
                 <a id="downloadEnhanced"
-                   class="btn ai-edit-button"
-                   download="processed_audio.wav"
-                   style="display: none;">
-                   Download Processed Audio
+                class="btn ai-edit-button"
+                download="processed_audio.wav"
+                style="display: none;">
+                Download Processed Audio
                 </a>
             </div>
     
-            <div id="audioCuttingSection" style="display: none;">
+            <div id="audioCuttingSection">
                 <hr/>
                 <h3>Audio Cutting</h3>
                 <label>Start: <input type="number" id="startTime" min="0" step="0.1"></label>
@@ -241,7 +250,7 @@ function showTab(tabName) {
                 </a>
             </div>
     
-            <div id="aiCuttingSection" style="display: none;">
+            <div id="aiCuttingSection">
                 <hr/>
                 <h3>AI Cutting + Transcript</h3>
                 <button class="btn ai-edit-button" onclick="aiCutAudio()">
@@ -770,15 +779,26 @@ async function analyzeEnhancedAudio() {
     const timeline = document.getElementById("soundEffectTimeline");
     const mixBtn = document.getElementById("mixBackgroundBtn");
 
-    if (!activeAudioBlob) {
-        return alert("No audio loaded. Enhance or Isolate first.");
+    const selectedSource = document.getElementById("audioSourceSelect").value;
+
+    let blobToUse;
+    if (selectedSource === "enhanced") {
+        blobToUse = enhancedAudioBlob;
+    } else if (selectedSource === "isolated") {
+        blobToUse = isolatedAudioBlob;
+    } else if (selectedSource === "original") {
+        blobToUse = rawAudioBlob;
+    }
+
+    if (!blobToUse) {
+        return alert("No audio available for selected source.");
     }
 
     showSpinner(containerId);
 
     try {
         const fd = new FormData();
-        fd.append("audio", activeAudioBlob, "processed_audio.wav");
+        fd.append("audio", new File([blobToUse], "analyze.wav", { type: "audio/wav" }));
 
         const res = await fetch("/audio_analysis", { method: "POST", body: fd });
         const data = await res.json();
@@ -796,7 +816,7 @@ async function analyzeEnhancedAudio() {
 
         window.analysisData = {
             emotion: data.dominant_emotion,
-            audioBlob: activeAudioBlob
+            audioBlob: blobToUse
         };
 
         mixBtn.style.display = "inline-block";
@@ -1233,21 +1253,24 @@ async function enhanceVideo() {
     }
 }
 
+let rawAudioBlob = null;
+
 function previewOriginalAudio() {
     const fileInput = document.getElementById('audioUploader');
     const file = fileInput.files[0];
     if (!file) return;
+
     const audioURL = URL.createObjectURL(file);
-    
-    // Use the correct ID from your audio tab markup
     const audioPlayer = document.getElementById("originalAudioPlayer");
+
     if (audioPlayer) {
         audioPlayer.src = audioURL;
         audioPlayer.load();
         document.getElementById("originalAudioContainer").style.display = "block";
-    } else {
-        console.error("Audio player element not found");
     }
+
+    // Store raw audio
+    rawAudioBlob = file;
 }
 
 function previewOriginalVideo() {
