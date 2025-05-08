@@ -774,7 +774,7 @@ export function renderPodcastDetail(podcast) {
 }
 
 // Function to handle podcast form submission
-function handlePodcastFormSubmission() {
+export function handlePodcastFormSubmission() {
   const form = document.getElementById("register-podcast-form");
 
   form.addEventListener("submit", async (e) => {

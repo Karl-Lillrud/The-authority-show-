@@ -39,8 +39,13 @@
       rel="stylesheet"
       href="{{ url_for('static', filename='css/loading-bar/loading-bar.css') }}"
     />
+    <link
+      rel="stylesheet"
+      href="{{ url_for('static', filename='css/podcastmanagement/podcastmanagement.css') }}"
+    />
   </head>
   <body>
+    {% include "podcastmanagement/form_popup.html" %}
     <header>
       <div class="header-container">
         <button

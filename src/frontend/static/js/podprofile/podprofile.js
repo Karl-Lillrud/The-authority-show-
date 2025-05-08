@@ -671,6 +671,11 @@ function connectGoogleCalendar() {
     });
 }
 
+function resetForm() {
+    const form = document.getElementById("register-podcast-form");
+    form.reset();
+}
+
 document.addEventListener("DOMContentLoaded", () => {
   const connectCalendarButton = document.getElementById("connectCalendar");
   if (connectCalendarButton) {
@@ -686,4 +691,26 @@ document.addEventListener("DOMContentLoaded", () => {
   if (googleToken) {
     console.log("Google Calendar connected successfully!");
   }
+});
+
+document.addEventListener("DOMContentLoaded", () => {
+  const createPodcastButton = document.getElementById("createPodcast");
+  const formPopup = document.getElementById("form-popup");
+
+  if (createPodcastButton && formPopup) {
+    createPodcastButton.addEventListener("click", () => {
+      resetForm();
+      formPopup.style.display = "flex";
+      document.querySelector(".form-title").textContent = "Add New Podcast";
+      document.querySelector(".save-btn").textContent = "Save Podcast";
+    });
+  }
+
+  document.getElementById("close-form-popup").addEventListener("click", () => {
+    document.getElementById("form-popup").style.display = "none";
+  });
+
+  document.getElementById("cancel-form-btn").addEventListener("click", () => {
+    document.getElementById("form-popup").style.display = "none";
+  });
 });

@@ -1,0 +1,142 @@
+<div id="form-popup" class="popup" style="display: none">
+  <div class="form-box">
+    <span id="close-form-popup" class="close-btn">&times;</span>
+    <h2 class="form-title">Add New Podcast</h2>
+    <form id="register-podcast-form">
+      <div class="form-grid">
+        <div class="field-group">
+          <label for="pod-name">Podcast Name</label>
+          <input
+            type="text"
+            id="pod-name"
+            name="podName"
+            autocomplete="off"
+            required
+          />
+        </div>
+        <div class="field-group">
+          <label for="pod-author">Host</label>
+          <input type="text" id="pod-author" name="author" />
+        </div>
+        <div class="field-group">
+          <label for="pod-language">Language</label>
+          <input type="text" id="pod-language" name="language" />
+        </div>
+        <div class="field-group">
+          <label for="pod-rss">RSS Feed</label>
+          <input type="url" id="pod-rss" name="rssFeed" />
+        </div>
+        <div class="field-group">
+          <label for="logo">Album Art</label>
+          <input type="file" id="logo" name="logo" accept="image/*" />
+        </div>
+        <div class="field-group">
+          <label for="banner">Banner</label>
+          <input type="file" id="banner" name="banner" accept="image/*" />
+        </div>
+        <div class="field-group">
+          <label for="google-cal">Google Calendar URL</label>
+          <input type="url" id="google-cal" name="googleCal" />
+        </div>
+        <div class="field-group">
+          <label for="guest-form-url">Guest Form URL</label>
+          <input type="url" id="guest-form-url" name="guestUrl" />
+        </div>
+        <div class="field-group">
+          <label for="email">Email Address</label>
+          <input type="email" id="email" name="email" />
+        </div>
+        <div class="field-group full-width">
+          <label for="description">Podcast Description</label>
+          <textarea id="description" name="description" rows="3"></textarea>
+        </div>
+        <div class="field-group">
+          <label for="category">Category (Required)</label>
+          <select id="category" name="category" required>
+            <option value="">Select a category</option>
+            <option value="Comedy">Comedy</option>
+            <option value="True Crime">True Crime</option>
+            <option value="News">News</option>
+            <option value="Sports">Sports</option>
+            <option value="History">History</option>
+            <option value="Society & Culture">Society & Culture</option>
+            <option value="Education">Education</option>
+            <option value="Business">Business</option>
+            <option value="Technology">Technology</option>
+            <option value="Health & Fitness">Health & Fitness</option>
+            <option value="Arts">Arts</option>
+            <option value="Music">Music</option>
+            <option value="Science">Science</option>
+            <option value="Fiction">Fiction</option>
+            <option value="Kids & Family">Kids & Family</option>
+            <option value="Lifestyle & Leisure">Lifestyle & Leisure</option>
+            <option value="Government & Politics">
+              Government & Politics
+            </option>
+            <option value="Spirituality & Religion">
+              Spirituality & Religion
+            </option>
+            <option value="TV & Film">TV & Film</option>
+            <option value="Gaming">Gaming</option>
+          </select>
+        </div>
+        <div class="field-group">
+          <label for="tagline">Tagline</label>
+          <input type="text" id="tagline" name="tagline" />
+        </div>
+        <div class="field-group">
+          <label for="hostBio">Host bio</label>
+          <input type="text" id="hostBio" name="hostBio" />
+        </div>
+        <div class="field-group">
+          <label for="host-image">Host Image</label>
+          <input
+            type="file"
+            id="host-image"
+            name="hostImage"
+            accept="image/*"
+          />
+        </div>
+      </div>
+
+      <h3 class="section-title">Social Media Links</h3>
+      <div class="form-grid">
+        <div class="field-group">
+          <label for="facebook">Facebook</label>
+          <input type="url" id="facebook" name="socialMedia[]" />
+        </div>
+        <div class="field-group">
+          <label for="instagram">Instagram</label>
+          <input type="url" id="instagram" name="socialMedia[]" />
+        </div>
+        <div class="field-group">
+          <label for="linkedin">LinkedIn</label>
+          <input type="url" id="linkedin" name="socialMedia[]" />
+        </div>
+        <div class="field-group">
+          <label for="twitter">Twitter</label>
+          <input type="url" id="twitter" name="socialMedia[]" />
+        </div>
+        <div class="field-group">
+          <label for="tiktok">TikTok</label>
+          <input type="url" id="tiktok" name="socialMedia[]" />
+        </div>
+        <div class="field-group">
+          <label for="pinterest">Pinterest</label>
+          <input type="url" id="pinterest" name="socialMedia[]" />
+        </div>
+        <div class="field-group">
+          <label for="youtube">Youtube</label>
+          <input type="url" id="youtube" name="socialMedia[]" />
+        </div>
+      </div>
+
+      <div class="form-actions">
+        <button type="button" id="cancel-form-btn" class="cancel-btn">
+          Cancel
+        </button>
+        <button type="submit" class="save-btn">Save Podcast</button>
+      </div>
+    </form>
+  </div>
+</div>
