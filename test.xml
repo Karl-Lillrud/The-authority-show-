@@ -1,0 +1,10 @@
+<?xml version="1.0" ?>
+<podcasts>
+  <podcast>
+    <title>RedShadow</title>
+    <rss>https://anchor.fm/s/fd781dd0/podcast/rss</rss>
+    <emails>
+      <email>redshadowsweden@gmail.com</email>
+    </emails>
+  </podcast>
+</podcasts>

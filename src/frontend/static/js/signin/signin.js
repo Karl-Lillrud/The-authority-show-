@@ -25,7 +25,8 @@ document.addEventListener("DOMContentLoaded", function () {
 
         const result = await response.json();
         if (response.ok) {
-          successMessage.textContent = "A login link has been sent to your email!";
+          successMessage.textContent =
+            "A login link has been sent to your email!";
           successMessage.style.display = "block";
           errorMessage.style.display = "none";
         } else {
@@ -51,7 +52,11 @@ document.addEventListener("DOMContentLoaded", function () {
   const urlParams = new URLSearchParams(window.location.search);
   const token = urlParams.get("token");
 
+  // --- Log the extracted token ---
   if (token) {
+    console.log("SIGNIN.JS: Token found in URL:", token); // Log the token
+    // -----------------------------
+
     // Automatically log in the user using the token
     fetch("/verify-login-token", {
       method: "POST",
@@ -59,6 +64,10 @@ document.addEventListener("DOMContentLoaded", function () {
       body: JSON.stringify({ token })
     })
       .then(async (response) => {
+        console.log(
+          "SIGNIN.JS: Received response from /verify-login-token:",
+          response.status
+        ); // Log status
         if (!response.ok) {
           const result = await response.json();
           throw new Error(
@@ -70,6 +79,7 @@ document.addEventListener("DOMContentLoaded", function () {
         return response.json();
       })
       .then((data) => {
+        console.log("SIGNIN.JS: Parsed response data:", data); // Log parsed data
         if (data.redirect_url) {
           window.location.href = data.redirect_url;
         } else {
@@ -80,7 +90,10 @@ document.addEventListener("DOMContentLoaded", function () {
         }
       })
       .catch((error) => {
-        console.error("Error verifying token:", error);
+        console.error(
+          "SIGNIN.JS: Error during token verification fetch:",
+          error
+        ); // Log fetch error
         const errorMsg = error.message.toLowerCase();
         if (errorMsg.includes("failed to create account")) {
           errorMessage.textContent =
@@ -98,6 +111,7 @@ document.addEventListener("DOMContentLoaded", function () {
         errorMessage.style.display = "block";
         successMessage.style.display = "none";
       });
+  } else {
+    console.log("SIGNIN.JS: No token found in URL parameters."); // Log if no token
   }
-
 });

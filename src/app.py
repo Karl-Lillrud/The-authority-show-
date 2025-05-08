@@ -18,6 +18,7 @@ from backend.routes.invitation import invitation_bp
 from backend.routes.google_calendar import google_calendar_bp
 from backend.routes.episode import episode_bp
 from backend.routes.podprofile import podprofile_bp  # Import the podprofile blueprint
+from backend.routes.activation import activation_bp, podprofile_initial_bp  # Modified import
 from backend.routes.frontend import frontend_bp  # Import the frontend blueprint
 from backend.routes.guestpage import guestpage_bp
 from backend.routes.guest_to_eposide import guesttoepisode_bp
@@ -77,7 +78,7 @@ app.secret_key = os.getenv("SECRET_KEY")
 app.config["PREFERRED URL SCHEME"] = "https"
 
 # Register blueprints for different routes
-app.register_blueprint(auth_bp)
+app.register_blueprint(auth_bp)  # Removed url_prefix="/auth"
 app.register_blueprint(podcast_bp)  # Register the podcast blueprint
 app.register_blueprint(dashboard_bp)
 app.register_blueprint(pod_management_bp)
@@ -93,6 +94,8 @@ app.register_blueprint(invitation_bp)
 app.register_blueprint(google_calendar_bp)  # Register the google_calendar blueprint
 app.register_blueprint(episode_bp)
 app.register_blueprint(podprofile_bp)  # Register the podprofile blueprint
+app.register_blueprint(activation_bp, url_prefix='/activation')  # Register activation_bp
+app.register_blueprint(podprofile_initial_bp, url_prefix='/podprofile')  # <-- This line ensures /podprofile/initial works
 app.register_blueprint(frontend_bp)  # Register the frontend blueprint
 app.register_blueprint(guesttoepisode_bp)
 app.register_blueprint(transcription_bp, url_prefix="/transcription")

@@ -77,39 +77,50 @@ export async function fetchEpisodeCountByGuest(guestId) {
   }
 }
 
-export async function registerEpisode(data) {
+export async function registerEpisode(episodeData) {
+  console.log("[episodeRequest.js] Received episodeData for registration:", JSON.stringify(episodeData, null, 2));
+  console.log("[episodeRequest.js] Checking episodeData.podcast_id:", episodeData.podcast_id);
+  console.log("[episodeRequest.js] Checking episodeData.title:", episodeData.title);
+
+  // Frontend validation: Ensure podcast_id (snake_case) is checked
+  if (!episodeData.podcast_id || !episodeData.title) {
+    console.error(
+      "[episodeRequest.js] Validation Error: Missing required fields. podcast_id:", episodeData.podcast_id, "title:", episodeData.title, "Full data:",
+      episodeData,
+    );
+    // Ensure the error message thrown also reflects 'podcast_id'
+    throw new Error("Missing required fields: podcast_id or title"); 
+  }
+
   try {
-    if (!data.podcastId || !data.title) {
-      console.error("Missing required fields: podcastId or title", data);
-      throw new Error("Missing required fields: podcastId or title");
-    }
-
-    const finalData = {
-      ...data,
-      isImported: data.isImported ?? false
-    };
-
-    console.log("Sending data to /add_episode:", finalData);
     const response = await fetch("/add_episode", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(finalData)
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(episodeData),
     });
 
-    const responseData = await response.json();
-    console.log("Received response from /add_episode:", responseData);
-
     if (!response.ok) {
-      console.error("Error response from /add_episode:", responseData);
-      if (responseData.error === "Episode limit reached") {
-        throw new Error("Episode limit reached");
-      }
-      throw new Error(responseData.error || "Failed to register episode");
+      const errorData = await response.json().catch(() => ({
+        error: "Failed to register episode and parse error response.",
+      }));
+      console.error(
+        "[episodeRequest.js] Error registering episode - Server responded with an error:",
+        response.status,
+        errorData,
+      );
+      throw new Error(
+        errorData.error || `HTTP error! status: ${response.status}`,
+      );
     }
 
-    return responseData;
+    const data = await response.json();
+    console.log("[episodeRequest.js] Episode registered successfully via API:", data);
+    return data;
   } catch (error) {
-    console.error("Error registering episode:", error);
+    console.error("[episodeRequest.js] Error in registerEpisode function:", error.message, "Data sent:", episodeData);
+    // Re-throw the error so it can be caught by the caller in podprofile.js
     throw error;
   }
 }
