@@ -205,8 +205,8 @@ function showTab(tabName) {
                 <hr/>
                 <h3>AI Analysis</h3>
 
-                <label for="audioSourceSelect" style="font-weight: bold; margin-right: 10px;">Audio Source:</label>
-                <select id="audioSourceSelect" class="input-field" style="margin-bottom: 1rem;">
+                <label for="audioSourceSelectAnalysis"><strong>Audio Source:</strong></label>
+                <select id="audioSourceSelectAnalysis" class="input-field" style="margin-bottom: 1rem;">
                     <option value="enhanced">Enhanced</option>
                     <option value="isolated">Isolated</option>
                     <option value="original">Original</option>
@@ -239,17 +239,35 @@ function showTab(tabName) {
             <div id="audioCuttingSection">
                 <hr/>
                 <h3>Audio Cutting</h3>
-                <label>Start: <input type="number" id="startTime" min="0" step="0.1"></label>
-                <label>End: <input type="number" id="endTime" min="0" step="0.1"></label>
+                <label for="audioSourceSelectCutting"><strong>Audio Source:</strong></label>
+                <select id="audioSourceSelectCutting" class="input-field" style="margin-bottom: 1rem;">
+                    <option value="enhanced">Enhanced</option>
+                    <option value="isolated">Isolated</option>
+                    <option value="original">Original</option>
+                </select>
+                <br/>
+
+                <label>Start:
+                    <input type="number" id="startTime" min="0" step="0.1" class="input-field">
+                </label>
+
+                <label>End:
+                    <input type="number" id="endTime" min="0" step="0.1" class="input-field">
+                </label>
+
                 <button class="btn ai-edit-button" onclick="cutAudio()">
-                  ${labelWithCredits("Cut", "audio_cutting")}
+                    ${labelWithCredits("Cut", "audio_cutting")}
                 </button>
-                <div id="cutResult"></div>
-                <a id="downloadCut" class="btn ai-edit-button" download="cut_audio.wav">
-                  Download Cut
+
+                <div id="cutResult" style="margin-top: 1rem;"></div>
+
+                <a id="downloadCut"
+                class="btn ai-edit-button"
+                download="cut_audio.wav"
+                style="display: none; margin-top: 1rem;">
+                    Download Cut
                 </a>
             </div>
-    
             <div id="aiCuttingSection">
                 <hr/>
                 <h3>AI Cutting + Transcript</h3>
@@ -779,7 +797,7 @@ async function analyzeEnhancedAudio() {
     const timeline = document.getElementById("soundEffectTimeline");
     const mixBtn = document.getElementById("mixBackgroundBtn");
 
-    const selectedSource = document.getElementById("audioSourceSelect").value;
+    const selectedSource = document.getElementById("audioSourceSelectAnalysis").value;
 
     let blobToUse;
     if (selectedSource === "enhanced") {
@@ -903,7 +921,7 @@ async function displayBackgroundAndMix() {
     }
   }
 
-async function cutAudio() {
+  async function cutAudio() {
     const startInput = document.getElementById("startTime");
     const endInput = document.getElementById("endTime");
     const cutResult = document.getElementById("cutResult");
@@ -913,11 +931,24 @@ async function cutAudio() {
     const end = parseFloat(endInput.value);
 
     const episodeId = sessionStorage.getItem("selected_episode_id");
-    if (!episodeId || !activeAudioBlob) return alert("No audio or episode selected.");
+    if (!episodeId) return alert("No episode selected.");
+
+    const selectedSource = document.getElementById("audioSourceSelectCutting").value;
+
+    let blobToUse;
+    if (selectedSource === "enhanced") {
+        blobToUse = enhancedAudioBlob;
+    } else if (selectedSource === "isolated") {
+        blobToUse = isolatedAudioBlob;
+    } else if (selectedSource === "original") {
+        blobToUse = rawAudioBlob;
+    }
+
+    if (!blobToUse) return alert("No audio selected or loaded.");
     if (isNaN(start) || isNaN(end) || start >= end) return alert("Invalid timestamps.");
 
     const formData = new FormData();
-    formData.append("audio", new File([activeAudioBlob], "clip.wav", { type: "audio/wav" }));
+    formData.append("audio", new File([blobToUse], "clip.wav", { type: "audio/wav" }));
     formData.append("episode_id", episodeId);
     formData.append("start", start);
     formData.append("end", end);
@@ -929,6 +960,15 @@ async function cutAudio() {
         });
 
         const result = await response.json();
+
+        if (response.status === 403) {
+            cutResult.innerHTML = `
+                <p style="color: red;">${result.error || "You don't have enough credits."}</p>
+                ${result.redirect ? `<a href="${result.redirect}" class="btn ai-edit-button">Go to Store</a>` : ""}
+            `;
+            return;
+        }
+
         if (!response.ok || !result.clipped_audio_url) {
             throw new Error(result.error || "Clipping failed.");
         }
@@ -946,8 +986,6 @@ async function cutAudio() {
 
         activeAudioBlob = blob;
         activeAudioId = "external";
-
-        await consumeStoreCredits("audio_cutting");
     } catch (err) {
         alert(`Cut failed: ${err.message}`);
     }

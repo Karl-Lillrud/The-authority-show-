@@ -135,6 +135,15 @@ def clip_audio():
         return jsonify({"error": "Invalid request data"}), 400
 
     try:
+        try:
+            consume_credits(g.user_id, "audio_cutting")
+        except ValueError as e:
+            logger.warning(f"User {g.user_id} has insufficient credits for audio_cutting.")
+            return jsonify({
+                "error": str(e),
+                "redirect": "/store"
+            }), 403
+
         start_time = clips[0]["start"]
         end_time = clips[0]["end"]
         clipped_bytes, filename = audio_service.cut_audio_to_bytes(file_id, start_time, end_time)
@@ -159,7 +168,6 @@ def clip_audio():
     except Exception as e:
         logger.error(f"Error clipping audio: {str(e)}")
         return jsonify({"error": str(e)}), 500
-
 
 @audio_bp.route("/ai_cut_audio", methods=["POST"])
 def ai_cut_audio():
@@ -214,6 +222,15 @@ def cut_audio_from_blob():
         return jsonify({"error": "Audio file and episode_id are required"}), 400
 
     try:
+        try:
+            consume_credits(g.user_id, "audio_cutting")
+        except ValueError as e:
+            logger.warning(f"User {g.user_id} has insufficient credits for audio_cutting.")
+            return jsonify({
+                "error": str(e),
+                "redirect": "/store"
+            }), 403
+
         audio_file = request.files["audio"]
         episode_id = request.form["episode_id"]
         start = float(request.form["start"])
