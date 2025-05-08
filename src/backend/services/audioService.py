@@ -128,8 +128,8 @@ class AudioService:
         }
 
     def cut_audio(self, file_id: str, start_time: float, end_time: float, episode_id: str) -> str:
-        logger.info(f"📥 Request to clip audio file with ID: {file_id}")
-        logger.info(f"🕒 Timestamps to clip: start={start_time}, end={end_time}")
+        logger.info(f"Request to clip audio file with ID: {file_id}")
+        logger.info(f"Timestamps to clip: start={start_time}, end={end_time}")
 
         if start_time is None or end_time is None or start_time >= end_time:
             raise ValueError("Invalid timestamps.")
@@ -196,7 +196,7 @@ class AudioService:
             with open(temp_path, "wb") as f:
                 f.write(file_bytes)
 
-        logger.info(f"📥 AI Cut: Temp file at {temp_path}")
+        logger.info(f"AI Cut: Temp file at {temp_path}")
 
         try:
             client = ElevenLabs()
@@ -223,14 +223,14 @@ class AudioService:
             filler_sentences = detect_filler_words(transcript)
             sentence_certainty = analyze_certainty_levels(transcript)
 
-            logger.info(f"📊 Certainty results: {sentence_certainty}")
+            logger.info(f"Certainty results: {sentence_certainty}")
 
             sentence_timestamps = []
             audio = AudioSegment.from_wav(temp_path)
             cut_file_ids = []
 
             for idx, entry in enumerate(sentence_certainty):
-                logger.info(f"🔍 Sentence {idx}: {entry['sentence']} | Certainty: {entry.get('certainty')}")
+                logger.info(f"Sentence {idx}: {entry['sentence']} | Certainty: {entry.get('certainty')}")
                 if entry["certainty"] <= 0:
                     continue
 
@@ -270,7 +270,7 @@ class AudioService:
             show_notes = generate_ai_show_notes(transcript)
 
             return {
-                "message": "✅ AI Audio processing completed with clips",
+                "message": "AI Audio processing completed with clips",
                 "cleaned_transcript": cleaned_transcript,
                 "background_noise": noise_result,
                 "filler_sentences": filler_sentences,
@@ -294,21 +294,21 @@ class AudioService:
         finally:
             if os.path.exists(temp_path):
                 os.remove(temp_path)
-            logger.info(f"🗑️ Temp file cleaned up: {temp_path}")
+            logger.info(f"Temp file cleaned up: {temp_path}")
 
     def ai_cut_audio_from_id(self, file_id: str, episode_id: Optional[str] = None) -> dict:
         audio_bytes, filename = get_file_by_id(file_id)
         return self.ai_cut_audio(audio_bytes, filename, episode_id=episode_id)
     
     def isolate_voice(self, audio_bytes: bytes, filename: str, episode_id: str) -> str:
-        logger.info(f"🎙️ Starting voice isolation for file: {filename}")
+        logger.info(f"Starting voice isolation for file: {filename}")
 
         with tempfile.NamedTemporaryFile(delete=False, suffix=".wav") as tmp:
             tmp.write(audio_bytes)
             temp_input_path = tmp.name
 
         try:
-            logger.info("🔄 Sending audio to ElevenLabs voice isolation endpoint...")
+            logger.info("Sending audio to ElevenLabs voice isolation endpoint...")
 
             with open(temp_input_path, "rb") as f:
                 response = requests.post(
@@ -318,7 +318,7 @@ class AudioService:
                 )
 
             if response.status_code != 200:
-                logger.error(f"❌ Voice isolation failed: {response.status_code} {response.text}")
+                logger.error(f"Voice isolation failed: {response.status_code} {response.text}")
                 raise RuntimeError(f"Voice isolation failed: {response.status_code} {response.text}")
 
             # Save the isolated audio to a temporary file
@@ -349,7 +349,7 @@ class AudioService:
             )
 
 
-            logger.info(f"✅ Isolated voice uploaded to Azure: {blob_url}")
+            logger.info(f"Isolated voice uploaded to Azure: {blob_url}")
             return blob_url
 
         finally:
@@ -369,7 +369,7 @@ class AudioService:
         return chunks
 
     def apply_cuts_and_return_new_file(self, file_id: str, cuts: list[dict], episode_id: str) -> str:
-        logger.info(f"✂️ Applying cuts to file ID: {file_id}")
+        logger.info(f"Applying cuts to file ID: {file_id}")
         audio_data = get_file_data(file_id)
 
         with tempfile.NamedTemporaryFile(delete=False, suffix=".wav") as tmp:
@@ -469,7 +469,7 @@ class AudioService:
                     os.remove(path)
 
     def cut_audio_to_bytes(self, file_id: str, start_time: float, end_time: float) -> tuple[bytes, str]:
-        logger.info(f"📥 Cutting audio ID: {file_id} from {start_time}s to {end_time}s")
+        logger.info(f"Cutting audio ID: {file_id} from {start_time}s to {end_time}s")
 
         if start_time is None or end_time is None or start_time >= end_time:
             raise ValueError("Invalid timestamps.")
