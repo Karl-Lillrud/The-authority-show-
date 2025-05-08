@@ -447,28 +447,37 @@ class PodcastRepository:
                 logger.info(
                     f"Importing {len(episodes_to_import)} episodes for podcast {podcast_doc['_id']}"
                 )
-                # Adapt episode data structure if needed for episode_repo.create_episode
                 imported_count = 0
                 failed_count = 0
-                for episode_data in episodes_to_import:
-                    # Add podcastId and userId to episode data
-                    episode_data["podcastId"] = podcast_doc["_id"]
-                    episode_data["userId"] = account_id
-                    episode_data["isImported"] = True  # Mark episode as imported
 
-                    # Call episode repository to create/import the episode
-                    # Assuming create_episode handles potential duplicates based on GUID?
-                    ep_result, ep_status = self.episode_repo.create_episode(
-                        episode_data
+                # Fetch the ownerId (Users._id) for the given accountId (Accounts._id)
+                # This ownerId is the 'user_id' expected by EpisodeRepository.register_episode
+                account_details = collection.database.Accounts.find_one({"_id": account_id}, {"ownerId": 1})
+                owner_id_for_episode_registration = account_details.get("ownerId") if account_details else None
+
+                if not owner_id_for_episode_registration:
+                    logger.error(f"Critical: Could not find ownerId for account {account_id}. Cannot import episodes for podcast {podcast_doc['_id']}.")
+                
+                for episode_data in episodes_to_import:
+                    if not owner_id_for_episode_registration:
+                        failed_count += 1
+                        logger.warning(f"Skipping episode '{episode_data.get('title')}' due to missing ownerId for account {account_id}.")
+                        continue
+
+                    episode_data["podcastId"] = podcast_doc["_id"]
+                    episode_data["accountId"] = account_id 
+                    episode_data["isImported"] = True
+
+                    ep_result, ep_status = self.episode_repo.register_episode(
+                        episode_data, owner_id_for_episode_registration
                     )
                     if ep_status in [200, 201]:
                         imported_count += 1
                     else:
                         failed_count += 1
                         logger.warning(
-                            f"Failed to import episode '{episode_data.get('title')}' for podcast {podcast_doc['_id']} : {ep_result.get('error')}"
+                            f"Failed to import episode '{episode_data.get('title')}' for podcast {podcast_doc['_id']} : {ep_result.get('error', ep_result)}"
                         )
-
                 logger.info(
                     f"Episode import for podcast {podcast_doc['_id']}: {imported_count} succeeded, {failed_count} failed."
                 )

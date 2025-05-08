@@ -367,7 +367,8 @@ class AuthService:
             "email": email,
             "rss_url": rss_url,
             "podcast_title": podcast_title,
-            "exp": datetime.utcnow() + timedelta(hours=24),  # Token expires in 24 hours
+            "exp": datetime.utcnow() + timedelta(minutes=10),  # Token expires in 10 minutes
+            "jti": str(uuid.uuid4())  # Add a unique JWT ID
         }
         return jwt.encode(payload, secret_key, algorithm="HS256")
 
@@ -392,6 +393,10 @@ class AuthService:
         parses their RSS feed, and creates their podcast profile.
         """
         try:
+            # Clear any existing session to ensure a fresh start for activation
+            session.clear()
+            logger.info("Session cleared at the start of activation token processing.")
+
             token_data = self.verify_activation_token(token)
             if not token_data:
                 return {"error": "Invalid or expired activation link"}, 400
