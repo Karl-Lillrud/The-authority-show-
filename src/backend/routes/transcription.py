@@ -54,6 +54,7 @@ def transcribe():
         # Check and enforce credit limit BEFORE doing any processing
         try:
             consume_credits(user_id, "transcription")
+            
         except ValueError as e:
             logger.warning(f"User {user_id} has insufficient credits for transcription.")
             return jsonify({
@@ -131,6 +132,7 @@ def clean_transcript():
         return jsonify({"error": "No transcript provided"}), 400
     try:
         consume_credits(user_id, "clean_transcript")
+
     except ValueError as e:
         logger.warning(f"User {user_id} has insufficient credits for cleaning.")
         return jsonify({
@@ -154,6 +156,7 @@ def ai_suggestions():
 
     try:
         consume_credits(user_id, "ai_suggestions")
+
     except ValueError as e:
         return jsonify({
             "error": str(e),
@@ -176,6 +179,7 @@ def show_notes():
 
     try:
         consume_credits(user_id, "show_notes")
+
     except ValueError as e:
         return jsonify({
             "error": str(e),
@@ -198,6 +202,7 @@ def quotes():
 
     try:
         consume_credits(user_id, "ai_quotes")
+
     except ValueError as e:
         return jsonify({
             "error": str(e),
@@ -239,6 +244,7 @@ def translate():
     try:
         translated = transcription_service.translate_text(text, language)
         return jsonify({"translated_text": translated})
+    
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
@@ -267,11 +273,6 @@ def ai_cut_audio():
     except Exception as e:
         logger.error(f"AI cut failed: {e}")
         return jsonify({"error": str(e)}), 500
-    
-# # Function to check if a file already exists in MongoDB GridFS
-# def file_exists(filename):
-#     existing_file = fs.find_one({"filename": filename})
-#     return existing_file if existing_file else None
 
 # get audio info
 @transcription_bp.route("/get_audio_info", methods=["POST"])
@@ -353,7 +354,6 @@ def get_audio_info():
                 "waveform": str(waveform_file_id),  # Send waveform file ID
             }
         )
-
     except Exception as e:
         logger.error(f"ERROR: Failed to process audio - {str(e)}")
         return jsonify({"error": f"Failed to process audio: {str(e)}"}), 500
@@ -371,6 +371,7 @@ def isolate_voice():
     try:
         blob_url = audio_service.isolate_voice(audio_bytes, filename, episode_id)
         return jsonify({"isolated_blob_url": blob_url})  
+    
     except Exception as e:
         logger.error(f"Error during voice isolation: {str(e)}")
         return jsonify({"error": str(e)}), 500
@@ -380,9 +381,11 @@ def get_isolated_audio():
     url = request.args.get("url")
     if not url:
         return jsonify({"error": "Missing URL"}), 400
+    
     try:
         response = requests.get(url)
         return Response(response.content, content_type="audio/wav")
+    
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
