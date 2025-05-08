@@ -16,6 +16,11 @@ class EpisodeRepository:
         self.subscription_service = SubscriptionService()
         self.activity_service = ActivityService()
 
+    @staticmethod
+    def get_episodes_by_user_id(user_id):
+        """Fetch episodes for a specific user."""
+        return list(collection.Episodes.find({"ownerId": user_id}))
+
     def register_episode(self, data, user_id):
         """Register a new episode for the given user."""
         try:

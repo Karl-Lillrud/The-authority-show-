@@ -6,12 +6,12 @@ from flask import (
     render_template,
     session,
     url_for,
+    current_app,  # Ensure current_app is imported
 )
 from backend.services.authService import AuthService
 from backend.utils.email_utils import send_login_email
 import logging
 from itsdangerous import URLSafeTimedSerializer, SignatureExpired, BadSignature
-from flask import current_app
 
 auth_bp = Blueprint("auth_bp", __name__)
 auth_service = AuthService()
@@ -131,6 +131,29 @@ def verify_login_token():
     except Exception as e:
         logger.error(f"Error verifying token: {e}", exc_info=True)
         return jsonify({"error": f"Internal server error: {str(e)}"}), 500
+
+
+@auth_bp.route("/activate", methods=["GET"])
+def activate_account_route():
+    token = request.args.get("token")
+    logger.info(f"Received activation request for token: {token}")
+    if not token:
+        logger.warn("Activation attempt with no token.")
+        return jsonify({"error": "Activation token is missing."}), 400
+
+    try:
+        response_data, status_code = auth_service.process_activation_token(token)
+
+        if status_code == 200:
+            redirect_url = response_data.get("redirect_url", url_for("podprofile_bp.podprofile"))
+            logger.info(f"Account activation processed. User ID: {session.get('user_id')}. Redirecting to {redirect_url}")
+            return redirect(redirect_url)
+        else:
+            logger.error(f"Activation failed. Status: {status_code}, Response: {response_data}")
+            return jsonify(response_data), status_code
+    except Exception as e:
+        logger.error(f"Exception during account activation: {str(e)}", exc_info=True)
+        return jsonify({"error": "An unexpected error occurred during activation."}), 500
 
 
 @auth_bp.route("/verify-otp", methods=["POST"], endpoint="verify_otp")

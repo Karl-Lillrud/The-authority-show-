@@ -15,7 +15,7 @@ logger = logging.getLogger(__name__)
 # EXTRA FUNCTIONALITY BESIDES CRUD OPERATIONS SHOULD BE IN SERVICES
 
 
-@podcast_bp.route("/add_podcasts", methods=["POST"])
+@podcast_bp.route("/api/podcasts", methods=["POST"])  # Changed from /add_podcasts
 def add_podcast():
     """Adds a podcast to the system."""
     if not hasattr(g, "user_id") or not g.user_id:
@@ -67,7 +67,7 @@ def get_podcast_by_id(podcast_id):
         return jsonify({"error": f"Failed to fetch podcast by ID: {str(e)}"}), 500
 
 
-@podcast_bp.route("/edit_podcasts/<podcast_id>", methods=["PUT"])
+@podcast_bp.route("/api/podcasts/<podcast_id>", methods=["PUT"])  # Changed from /edit_podcasts/<podcast_id>
 def edit_podcast(podcast_id):
     """Updates a podcast's information."""
     if not hasattr(g, "user_id") or not g.user_id:

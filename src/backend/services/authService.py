@@ -21,6 +21,7 @@ from backend.utils.email_utils import send_login_email
 from backend.services.rss_Service import RSSService  # Import RSSService
 from itsdangerous import URLSafeTimedSerializer, SignatureExpired, BadSignature
 import time  # Import time for expiration calculation
+import jwt  # Import jwt for token generation and verification
 
 logger = logging.getLogger(__name__)
 
@@ -360,97 +361,108 @@ class AuthService:
             )
             return {"error": f"Internal server error during upload: {str(e)}"}, 500
 
-    def generate_activation_token(self, email, rss_url, secret_key):
-        """Generate an activation token for a user."""
-        serializer = URLSafeTimedSerializer(secret_key)
-        return serializer.dumps({"email": email, "rss_url": rss_url}, salt="activation-salt")
+    def generate_activation_token(self, email, rss_url, podcast_title, secret_key):
+        """Generate an activation token."""
+        payload = {
+            "email": email,
+            "rss_url": rss_url,
+            "podcast_title": podcast_title,
+            "exp": datetime.utcnow() + timedelta(hours=24),  # Token expires in 24 hours
+        }
+        return jwt.encode(payload, secret_key, algorithm="HS256")
 
-    def activate_user_via_token(self, token):
+    def verify_activation_token(self, token):
+        """Verify the activation token."""
+        try:
+            secret_key = current_app.config.get("SECRET_KEY")
+            if not secret_key:
+                logger.error("SECRET_KEY is not configured in the application for JWT decoding.")
+                return None
+            return jwt.decode(token, secret_key, algorithms=["HS256"])
+        except jwt.ExpiredSignatureError:
+            logger.error("Activation JWT has expired.")
+            return None
+        except jwt.InvalidTokenError as e:
+            logger.error(f"Invalid activation JWT: {e}")
+            return None
+
+    def process_activation_token(self, token):
         """
-        Activates a user account via a special token, logs them in,
+        Activates a user account via a JWT activation token, logs them in,
         parses their RSS feed, and creates their podcast profile.
         """
         try:
-            serializer = URLSafeTimedSerializer(current_app.config["SECRET_KEY"])
-            # Set max_age to 30 days (in seconds)
-            max_age_seconds = 30 * 24 * 60 * 60
-            # Expecting {'email': '...', 'rss_url': '...'}
-            token_data = serializer.loads(
-                token, salt="podcaster-activation-salt", max_age=max_age_seconds
-            )
+            token_data = self.verify_activation_token(token)
+            if not token_data:
+                return {"error": "Invalid or expired activation link"}, 400
+
             email = token_data.get("email")
             rss_url = token_data.get("rss_url")
+            podcast_title_from_token = token_data.get("podcast_title")
 
             if not email or not rss_url:
-                logger.error("Invalid token data: Missing email or rss_url")
+                logger.error("Invalid JWT token data: Missing email or rss_url")
                 return {"error": "Invalid activation token data"}, 400
 
-            logger.info(f"Attempting activation for email: {email}, RSS: {rss_url}")
+            logger.info(f"Attempting activation for email: {email}, RSS: {rss_url} using JWT.")
 
             # 1. Find or Create User
             user = self._find_or_create_user(email)
             if not user:
-                logger.error(
-                    f"Failed to find or create user during activation for {email}"
-                )
+                logger.error(f"Failed to find or create user during activation for {email}")
                 return {"error": "Failed to authenticate user"}, 500
-            user_id = user["_id"]
+            user_id = user["_id"]  # This is Users._id
 
             # 2. Log the user in (Setup Session)
-            self._setup_session(user, True)  # Remember the user
+            self._setup_session(user, True)
 
             # 3. Ensure Account Exists
-            account_data = {
-                "ownerId": user_id,
+            account_data_for_creation = {
+                "ownerId": user_id,  # user_id from Users collection
                 "email": email,
-                "isFirstLogin": False,
-            }  # Mark as not first login after activation
-            account_result, status_code = self.account_repository.create_account(
-                account_data
-            )
+                "isFirstLogin": False,  # Activation implies they are now set up
+            }
+            account_result, status_code = self.account_repository.create_account(account_data_for_creation)
             if status_code not in [200, 201]:
-                logger.error(
-                    f"Failed to create/retrieve account for {email} during activation: {account_result.get('error')}"
-                )
-                # Don't necessarily fail the whole activation, but log it. The user is logged in.
-                # Maybe return a specific error or flag?
+                logger.error(f"Failed to create/retrieve account for {email} during activation: {account_result.get('error')}")
+                return {"error": f"Account setup failed: {account_result.get('error')}"}, status_code
+
+            actual_account_id = account_result.get("accountId")  # This is Accounts._id
+            if not actual_account_id:
+                logger.error(f"accountId not found in account_result for {email} during activation.")
+                return {"error": "Failed to retrieve account ID during activation"}, 500
+            
+            logger.info(f"Account {actual_account_id} ensured for user {user_id} ({email}).")
 
             # 4. Fetch and Parse RSS Feed
             logger.info(f"Fetching RSS feed for activation: {rss_url}")
             rss_data, rss_status_code = self.rss_service.fetch_rss_feed(rss_url)
             if rss_status_code != 200:
-                logger.error(
-                    f"Failed to fetch or parse RSS feed {rss_url} during activation: {rss_data.get('error')}"
-                )
-                # User is logged in, but podcast creation failed. Redirect to profile page?
+                logger.error(f"Failed to fetch or parse RSS feed {rss_url} during activation: {rss_data.get('error')}")
                 return {
-                    "error": f"Could not fetch podcast data: {rss_data.get('error')}",
+                    "message": f"Logged in, but could not fetch podcast data: {rss_data.get('error')}",
                     "redirect_url": "/podprofile",
-                }, 500  # Or maybe 200 with error message?
+                }, 200
 
             # 5. Create Podcast Profile
-            logger.info(
-                f"Creating podcast profile for user {user_id} from RSS: {rss_url}"
-            )
-            # Prepare data for podcast creation (adapt based on podcast_repository.create_podcast needs)
+            logger.info(f"Creating podcast profile for user {user_id}, account {actual_account_id} from RSS: {rss_url}")
+            podcast_title = rss_data.get("title", podcast_title_from_token or "Untitled Podcast")
             podcast_creation_data = {
-                "userId": user_id,
-                "title": rss_data.get("title"),
+                "accountId": actual_account_id,  # Pass the Accounts._id
+                "title": podcast_title,  # This will be used for podName too
                 "description": rss_data.get("description"),
-                "rssUrl": rss_url,  # Store the original RSS URL
+                "rssFeed": rss_url,  # Use rssFeed to be consistent with PodcastSchema
                 "websiteUrl": rss_data.get("link"),
-                "artworkUrl": rss_data.get("imageUrl"),
+                "artworkUrl": rss_data.get("imageUrl"),  # This can be mapped to logoUrl
                 "language": rss_data.get("language"),
                 "author": rss_data.get("author"),
                 "ownerName": rss_data.get("itunesOwner", {}).get("name"),
                 "ownerEmail": rss_data.get("itunesOwner", {}).get("email"),
                 "categories": [
-                    cat.get("main") for cat in rss_data.get("categories", [])
-                ],  # Simplified categories
+                    cat.get("main") for cat in rss_data.get("categories", []) if cat.get("main")
+                ],
                 "isImported": True,
-                "episodes": rss_data.get(
-                    "episodes", []
-                ),  # Pass episodes if create_podcast handles them
+                "episodes": rss_data.get("episodes", []),
             }
 
             create_podcast_result, create_status_code = (
@@ -459,40 +471,31 @@ class AuthService:
 
             if create_status_code not in [200, 201]:
                 logger.error(
-                    f"Failed to create podcast profile for user {user_id}, RSS {rss_url}: {create_podcast_result.get('error')}"
+                    f"Failed to create podcast profile for user {user_id}, RSS {rss_url}. Result: {create_podcast_result}"  # Modified to log full result
                 )
-                # User logged in, account exists, but podcast creation failed. Redirect to profile?
                 return {
-                    "error": f"Failed to create podcast profile: {create_podcast_result.get('error')}",
+                    "message": f"Logged in, but failed to create podcast profile: {create_podcast_result.get('error')}",
                     "redirect_url": "/podprofile",
-                }, 500  # Or 200?
+                }, 200
 
             podcast_id = create_podcast_result.get("podcast", {}).get("_id")
-            logger.info(
-                f"✅ Successfully activated user {email} and created podcast {podcast_id}"
-            )
+            logger.info(f"✅ Successfully activated user {email} and created podcast {podcast_id}")
 
             # 6. Log Activation Activity
             self.activity_service.log_activity(
                 user_id=user_id,
                 activity_type="user_activated_via_link",
-                description=f"User account activated via email link for podcast: {rss_data.get('title')}",
-                details={"email": email, "rss_url": rss_url, "podcast_id": podcast_id},
+                description=f"User account activated via email link for podcast: {podcast_title}",
+                details={"email": email, "rss_url": rss_url, "podcast_id": str(podcast_id)},
                 ip_address=request.remote_addr if request else None,
             )
 
             # 7. Return success and redirect URL
             return {
-                "message": "Activation successful!",
+                "message": "Activation successful! Your podcast has been imported.",
                 "redirect_url": "/podcastmanagement",
             }, 200
 
-        except SignatureExpired:
-            logger.error("Activation token has expired")
-            return {"error": "Activation link has expired"}, 400
-        except BadSignature:
-            logger.error("Invalid activation token")
-            return {"error": "Invalid activation link"}, 400
         except Exception as e:
             logger.error(f"Activation token processing error: {str(e)}", exc_info=True)
             return {"error": f"Internal server error during activation: {str(e)}"}, 500

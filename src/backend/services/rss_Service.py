@@ -1,158 +1,96 @@
-import urllib.request
-import feedparser
-import re
+import requests
+import xml.etree.ElementTree as ET
 import logging
 
-logger = logging.getLogger(__name__)  # Configure logger
+logger = logging.getLogger(__name__)
 
+# Define ITMS_NS for iTunes specific tags
+ITMS_NS = "http://www.itunes.com/dtds/podcast-1.0.dtd"
 
 class RSSService:
-    @staticmethod
-    def fetch_rss_feed(rss_url):
-        """
-        Fetches and parses an RSS feed, extracting podcast metadata and episodes.
-        """
+    def fetch_rss_feed(self, rss_url):
+        """Fetch and parse the RSS feed."""
+        response = None # Initialize response to None
         try:
-            logger.info(f"🌐 Fetching RSS feed from URL: {rss_url}")  # Log start
-            # Fetch the RSS feed
-            req = urllib.request.Request(
-                rss_url,
-                headers={"User-Agent": "Mozilla/5.0 (PodManager.ai RSS Parser)"},
-            )
-            with urllib.request.urlopen(req) as response:
-                rss_content = response.read()
-            logger.info("✅ Successfully fetched RSS content")  # Log success
+            logger.info(f"🌐 Fetching RSS feed from URL: {rss_url}")
+            headers = {'User-Agent': 'PodManager/1.0'}
+            logger.debug(f"Attempting requests.get for {rss_url} with headers: {headers} and timeout: 10s")
+            response = requests.get(rss_url, timeout=10, headers=headers)
+            logger.debug(f"Received response with status code: {response.status_code} for {rss_url}")
 
-            # Parse the RSS feed using feedparser
-            feed = feedparser.parse(rss_content)
-            logger.info("✅ Successfully parsed RSS feed")  # Log parsing success
+            if not response.ok:
+                logger.error(f"Response not OK for {rss_url}. Status: {response.status_code}. Response text (first 500 chars): {response.text[:500] if response.text else 'No response text'}")
+            response.raise_for_status()
 
-            # Extract basic podcast info
-            title = feed.feed.get("title", "")
-            description = feed.feed.get("description", "")
-            link = feed.feed.get("link", "")
-            image_url = feed.feed.get("image", {}).get("href", "")
-            language = feed.feed.get("language", "")
-            author = feed.feed.get("author", "")
-            copyright_info = feed.feed.get("copyright", "")
-            generator = feed.feed.get("generator", "")
-            last_build_date = feed.feed.get("lastBuildDate", "")
-            itunes_type = feed.feed.get("itunes_type", "")
-            itunes_owner_dict = feed.feed.get("itunes_owner", {})
-            itunes_owner = {
-                "name": itunes_owner_dict.get("itunes_name", "")
-                or feed.feed.get("itunes_owner_name", "")
-                or "",
-                "email": itunes_owner_dict.get("itunes_email", "")
-                or feed.feed.get("itunes_owner_email", "")
-                or feed.feed.get("owner", {}).get("email", "")
-                or feed.feed.get("owner_email", ""),
-            }
-            if not itunes_owner.get("email"):
-                rss_text = rss_content.decode("utf-8", errors="ignore")
-                match = re.search(
-                    r"<itunes:email>(.*?)<\/itunes:email>", rss_text, re.IGNORECASE
-                )
-                if match:
-                    itunes_owner["email"] = match.group(1).strip()
+            ET.register_namespace("itunes", ITMS_NS)
+            root = ET.fromstring(response.content)
+            
+            channel = root.find("channel")
+            if channel is None:
+                logger.error(f"No <channel> element found in RSS feed: {rss_url}")
+                return {"error": "Invalid RSS feed structure: missing channel"}, 400
 
-            # Handle categories and subcategories
-            categories = []
-            for cat in feed.feed.get("itunes_categories", []):
-                main_cat = cat.get("text", "")
-                sub_cats = [sub.get("text", "") for sub in cat.get("subcategories", [])]
-                categories.append({"main": main_cat, "subcategories": sub_cats})
-            if not categories and feed.feed.get("itunes_category"):
-                categories.append(
-                    {
-                        "main": feed.feed.get("itunes_category", {}).get("text", ""),
-                        "subcategories": [],
-                    }
-                )
-            if not categories:
-                rss_text = rss_content.decode("utf-8", errors="ignore")
-                cat_matches = re.findall(
-                    r'<itunes:category text="([^"]+)"', rss_text, re.IGNORECASE
-                )
-                if cat_matches:
-                    categories = [{"main": m, "subcategories": []} for m in cat_matches]
+            title_element = channel.find("title")
+            title = title_element.text if title_element is not None else "Untitled Podcast"
 
-            # Extract episodes
+            # Try to find image URL in various common places
+            image_url = None
+            # Standard RSS image
+            image_tag = channel.find("image/url")
+            if image_tag is not None and image_tag.text:
+                image_url = image_tag.text
+            
+            # iTunes specific image
+            if not image_url:
+                itunes_image_tag = channel.find("{%s}image" % ITMS_NS)
+                if itunes_image_tag is not None and itunes_image_tag.get("href"):
+                    image_url = itunes_image_tag.get("href")
+            
+            # Fallback: look for image in feed-level content:encoded or description (less common for main image)
+            if not image_url:
+                logger.warning(f"Could not find standard or iTunes image for {rss_url}. Check feed structure.")
+
             episodes = []
-            for entry in feed.entries:
-                duration = entry.get("itunes_duration", "")
-                duration_seconds = None
-                if duration and ":" in duration:
-                    time_parts = duration.split(":")
-                    if len(time_parts) == 3:  # HH:MM:SS
-                        duration_seconds = (
-                            int(time_parts[0]) * 3600
-                            + int(time_parts[1]) * 60
-                            + int(time_parts[2])
-                        )
-                    elif len(time_parts) == 2:  # MM:SS
-                        duration_seconds = int(time_parts[0]) * 60 + int(time_parts[1])
+            for item in channel.findall("item"):
+                episode_title_element = item.find("title")
+                episode_title = episode_title_element.text if episode_title_element is not None else "Untitled Episode"
+                
+                description_element = item.find("description")
+                description = description_element.text if description_element is not None else ""
+                
+                pub_date_element = item.find("pubDate")
+                pub_date = pub_date_element.text if pub_date_element is not None else None
+                
+                duration_element = item.find("{%s}duration" % ITMS_NS) # iTunes duration
+                duration = duration_element.text if duration_element is not None else None
+                
+                enclosure_element = item.find("enclosure")
+                audio_url = enclosure_element.attrib.get("url") if enclosure_element is not None and enclosure_element.attrib.get("url") else None
+                
+                episodes.append({
+                    "title": episode_title,
+                    "description": description,
+                    "publishDate": pub_date,
+                    "duration": duration,
+                    "audioUrl": audio_url,
+                })
 
-                episode_image = (
-                    entry.get("itunes_image", {}).get("href", "")
-                    or entry.get("image", {}).get("href", "")
-                    or entry.get("media_thumbnail", [{}])[0].get("url", "")
-                )
-
-                episode = {
-                   
-                        "title": entry.get("title", ""),
-                        "description": entry.get("description", ""),
-                        "pubDate": entry.get("published", ""),
-                        "audio": {
-                            "url": entry.get("enclosures", [{}])[0].get("href", ""),
-                            "type": entry.get("enclosures", [{}])[0].get("type", ""),
-                            "length": entry.get("enclosures", [{}])[0].get("length", ""),
-                        },
-                        "guid": entry.get("guid", ""),
-                        "season": entry.get("itunes_season", None),
-                        "episode": entry.get("itunes_episode", None),
-                        "episodeType": entry.get("itunes_episodetype", None),
-                        "explicit": entry.get("itunes_explicit", None),
-                        "image": episode_image,
-                        "keywords": entry.get("itunes_keywords", None),
-                        "chapters": entry.get("chapters", None),
-                        "link": entry.get("link", ""),
-                        "subtitle": entry.get("itunes_subtitle", ""),
-                        "summary": entry.get("itunes_summary", ""),
-                        "author": entry.get("author", ""),
-                        "isHidden": entry.get("itunes_isHidden", None),
-                        "duration": duration_seconds,
-                        "isImported": True, 
-                    }
-                episodes.append(episode)
-
-            # Process imageUrl and logoUrl
-            logo_url = image_url if image_url else None
-
-            logger.info(
-                "✅ Successfully processed RSS feed data"
-            )  # Log processing success
-            return {
-                "title": title,
-                "description": description,
-                "link": link,
-                "imageUrl": image_url,  # Ensure artwork URL is included
-                "logoUrl": logo_url,  # Add processed logoUrl
-                "language": language,
-                "author": author,
-                "copyright_info": copyright_info,
-                "generator": generator,
-                "lastBuildDate": last_build_date,
-                "itunesType": itunes_type,
-                "itunesOwner": itunes_owner,
-                "email": itunes_owner.get("email", ""),
-                "categories": categories,
-                "episodes": episodes  
-            }, 200
-
+            logger.info(f"✅ Successfully fetched and parsed RSS feed: {rss_url}")
+            return {"title": title, "imageUrl": image_url, "episodes": episodes}, 200
+        except requests.exceptions.RequestException as e:
+            logger.error(f"HTTP request failed for RSS feed {rss_url}. Type: {type(e).__name__}, Error: {e}", exc_info=True)
+            return {"error": f"Failed to fetch RSS feed: {type(e).__name__} - {str(e)}"}, 500
+        except ET.ParseError as e:
+            logger.error(f"XML parsing failed for RSS feed {rss_url}: {e}", exc_info=True)
+            if response is not None:
+                try:
+                    problematic_content = response.content.decode(errors='ignore')[:500]
+                    logger.error(f"Content that failed XML parsing (first 500 chars): {problematic_content}")
+                except Exception as log_err:
+                    logger.error(f"Error logging problematic content for XML ParseError: {log_err}")
+            else:
+                logger.error("Could not log content for XML ParseError as 'response' object is not available (request might have failed earlier).")
+            return {"error": f"Invalid XML in RSS feed: {str(e)}"}, 400
         except Exception as e:
-            logger.error(
-                "❌ ERROR fetching RSS feed: %s", e, exc_info=True
-            )  # Log error
-            return {"error": f"Error fetching RSS feed: {str(e)}"}, 500
+            logger.error(f"An unexpected error occurred while fetching RSS feed {rss_url}. Type: {type(e).__name__}, Error: {e}", exc_info=True)
+            return {"error": f"Failed to process RSS feed: {type(e).__name__} - {str(e)}"}, 500

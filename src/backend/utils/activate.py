@@ -1,120 +1,94 @@
-import sys
 import os
-import time  # Import time for delays between batches
-from flask import Flask  # Import Flask for application context
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "../../..")))
-
 import xml.etree.ElementTree as ET
-from datetime import datetime, timedelta
-from backend.utils.email_utils import send_activation_email, validate_email
-from backend.services.rss_Service import RSSService
-from backend.services.authService import AuthService
-from backend.database.mongo_connection import collection
+import logging
+import requests
+from dotenv import load_dotenv
 
-# Constants
-ROOT_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../../"))
-XML_FILE_PATH = os.path.join(ROOT_DIR, "test.xml")  # Path to the XML file
-INITIAL_EMAIL_COUNT = 30  # Start with 30 emails on the first day
-INCREMENT_RATE = 0.25  # 25% daily increment
-LAST_RUN_FILE = "last_run.txt"
-BATCH_SIZE = 10  # Number of emails to send per batch
-BATCH_DELAY = 60  # Delay between batches in seconds
+# Configure logging
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(name)s - %(message)s')
+logger = logging.getLogger(__name__)
 
 # Load environment variables
-API_BASE_URL = os.getenv("API_BASE_URL", "http://127.0.0.1:8000")  # Default to localhost if not set
-SECRET_KEY = os.getenv("SECRET_KEY", "default-secret-key")  # Load SECRET_KEY from .env or use a default
+load_dotenv()
 
-# Create a Flask app instance and configure the template folder
-app = Flask(__name__, template_folder="../../frontend/templates")
+# Constants
+API_BASE_URL = os.getenv("API_BASE_URL", "http://127.0.0.1:8000").rstrip('/')
+XML_FILE_PATH = os.getenv("ACTIVATION_XML_FILE_PATH", "../test.xml")
 
-def get_posts_from_xml(file_path):
-    """Parse the XML file and extract posts."""
-    tree = ET.parse(file_path)
-    root = tree.getroot()
-    posts = []
-    for podcast in root.findall("podcast"):
-        title = podcast.find("title").text
-        rss_feed = podcast.find("rss").text
-        emails = [email.text for email in podcast.find("emails").findall("email")]
-        for email in emails:
-            posts.append({"title": title, "email": email, "rss_feed": rss_feed})
-    print(f"Loaded posts: {posts}")  # Debug log
-    return posts
-
-def has_email_been_sent(email):
-    """Check if the email has already been sent."""
-    # Temporarily disable the check for testing purposes
-    return False
-
-def mark_email_as_sent(email):
-    """Mark the email as sent in the database."""
-    collection.database.SentEmails.insert_one({"email": email, "sent_at": datetime.utcnow()})
-
-def validate_and_send_email(post, activation_link):
-    """Validate email and send activation email."""
-    email = post["email"]
-    if has_email_been_sent(email):
-        print(f"Email already sent to {email}. Skipping.")
-        return False
-    if not validate_email(email):
-        print(f"Invalid email: {email}")
-        return False
-    # Fetch artwork from RSS feed
-    rss_data, status_code = RSSService().fetch_rss_feed(post["rss_feed"])
-    if status_code != 200:
-        print(f"Failed to fetch RSS feed for {email}")
-        return False
-    artwork_url = rss_data.get("imageUrl", "")
-    send_activation_email(email, activation_link, post["title"], artwork_url)
-    mark_email_as_sent(email)
-    print(f"Activation email sent to {email}")
-    return True
-
-def calculate_emails_to_send():
-    """Calculate the number of emails to send based on the last run."""
-    # Override logic for testing purposes
-    print("Overriding email count for testing purposes.")  # Debug log
-    return 1  # Always send at least 1 email for testing
-
-def update_last_run(email_count):
-    """Update the last run file with the current date and email count."""
-    with open(LAST_RUN_FILE, "w") as file:
-        file.write(f"{datetime.now().strftime('%Y-%m-%d')},{email_count}")
+def load_podcasts_from_xml(file_path):
+    """Load podcasts from an XML file."""
+    podcasts = []
+    try:
+        tree = ET.parse(file_path)
+        root = tree.getroot()
+        for podcast_elem in root.findall("podcast"):
+            title = podcast_elem.findtext("title")
+            email_element = podcast_elem.find("emails/email")
+            email = email_element.text if email_element is not None else None
+            rss_feed = podcast_elem.findtext("rss")
+            if title and email and rss_feed:
+                podcasts.append({"title": title, "email": email, "rss_feed": rss_feed})
+            else:
+                logger.warning(f"Skipping podcast entry due to missing data: Title={title}, Email={email}, RSS={rss_feed}")
+        logger.info(f"Loaded {len(podcasts)} podcasts from {file_path}")
+    except FileNotFoundError:
+        logger.error(f"XML file not found at {file_path}")
+    except ET.ParseError:
+        logger.error(f"Error parsing XML file at {file_path}")
+    except Exception as e:
+        logger.error(f"An unexpected error occurred while loading XML: {e}", exc_info=True)
+    return podcasts
 
 def main():
-    posts = get_posts_from_xml(XML_FILE_PATH)
-    print(f"Posts loaded: {posts}")  # Debug log
-    emails_to_send = calculate_emails_to_send()
-    print(f"Emails to send: {emails_to_send}")  # Debug log
-    sent_count = 0
+    logger.info("Starting activation script (API mode)...")
+    podcasts_to_process = load_podcasts_from_xml(XML_FILE_PATH)
+    if not podcasts_to_process:
+        logger.info("No podcasts to process. Exiting.")
+        return
 
-    for i in range(0, len(posts), BATCH_SIZE):
-        if sent_count >= emails_to_send:
-            break
+    emails_sent_successfully = 0
+    total_processed = 0
 
-        batch = posts[i:i + BATCH_SIZE]
-        print(f"Processing batch: {batch}")  # Debug log
-        for post in batch:
-            if sent_count >= emails_to_send:
-                break
+    for podcast_data in podcasts_to_process:
+        total_processed += 1
+        email = podcast_data.get("email")
+        rss_url = podcast_data.get("rss_feed")
+        podcast_title = podcast_data.get("title")
 
-            # Generate activation link
-            auth_service = AuthService()
-            token = auth_service.generate_activation_token(post["email"], post["rss_feed"], SECRET_KEY)
-            activation_link = f"{API_BASE_URL}/activate?token={token}"
+        if not email or not rss_url or not podcast_title:
+            logger.warning(f"Skipping entry due to incomplete data: {podcast_data}")
+            continue
 
-            # Use Flask application context for sending emails
-            with app.app_context():
-                if validate_and_send_email(post, activation_link):
-                    sent_count += 1
+        try:
+            logger.info(f"Processing activation for: {email}, Podcast: {podcast_title}, RSS: {rss_url}")
 
-        # Delay between batches
-        if i + BATCH_SIZE < len(posts):
-            print(f"Batch sent. Waiting {BATCH_DELAY} seconds before sending the next batch...")
-            time.sleep(BATCH_DELAY)
+            invite_url = f"{API_BASE_URL}/activation/invite"
+            payload = {
+                "email": email,
+                "rss_url": rss_url,
+                "podcast_title": podcast_title
+            }
+            response = requests.post(invite_url, json=payload)
+            
+            if response.ok:
+                response_data = response.json()
+                activation_link = response_data.get("activation_link")
+                if activation_link:
+                    logger.info(f"Constructed activation link for {email}: {activation_link}")
+                else:
+                    logger.warning(f"Activation link not found in API response for {email}")
+                
+                logger.info(f"Successfully triggered activation for {email}. API Message: {response_data.get('message')}")
+                emails_sent_successfully += 1
+            else:
+                logger.error(f"Failed to trigger activation for {email}: {response.status_code} - {response.text}")
 
-    update_last_run(sent_count)
-    print(f"Sent {sent_count} emails today.")
+        except requests.exceptions.RequestException as req_err:
+            logger.error(f"API request failed for {email}: {req_err}", exc_info=True)
+        except Exception as e:
+            logger.error(f"Failed to process activation for {email}: {e}", exc_info=True)
+
+    logger.info(f"Activation script finished. Processed {total_processed} entries. Successfully triggered {emails_sent_successfully} activations.")
 
 if __name__ == "__main__":
     main()

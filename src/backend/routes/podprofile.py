@@ -22,21 +22,22 @@ def podprofile():
     if not hasattr(g, "user_id") or not g.user_id:
         return redirect(url_for("signin"))
 
-    # Fetch the user's email using the /get_email endpoint
     try:
-        response = requests.get(
-            url_for("register_bp.get_email", _external=True), cookies=request.cookies
-        )
-        response.raise_for_status()
-        user_email = response.json().get("email")
+        # Fetch the user's email
+        user_email = session.get("email")
         if not user_email:
             return redirect(url_for("signin"))
-    except requests.RequestException as e:
-        current_app.logger.error(f"Error fetching email: {e}")
-        return redirect(url_for("signin"))
 
-    session["user_email"] = user_email  # Store the email in the session
-    return render_template("podprofile/podprofile.html", user_email=user_email)
+        # Fetch the user's podcast data
+        podcast = collection["Podcasts"].find_one({"userId": g.user_id})
+        pod_rss = podcast.get("podRss") if podcast else ""
+
+        session["user_email"] = user_email  # Store the email in the session
+        return render_template("podprofile/podprofile.html", user_email=user_email, pod_rss=pod_rss)
+
+    except Exception as e:
+        current_app.logger.error(f"Error fetching podcast data: {e}")
+        return redirect(url_for("signin"))
 
 
 @podprofile_bp.route("/save_podprofile", methods=["POST"])

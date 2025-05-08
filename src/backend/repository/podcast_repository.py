@@ -21,6 +21,12 @@ class PodcastRepository:
         self.collection = collection.database.Podcasts
         self.activity_service = ActivityService()  # Add this line
         self.episode_repo = EpisodeRepository()  # Initialize EpisodeRepository
+        self.rss_service = RSSService()  # Initialize RSSService instance
+
+    @staticmethod
+    def get_podcasts_by_user_id(user_id):
+        """Fetch podcasts for a specific user."""
+        return list(collection.Podcasts.find({"ownerId": user_id}))
 
     def add_podcast(self, user_id, data):  # user_id here is the owner's ID
         try:
@@ -305,11 +311,11 @@ class PodcastRepository:
 
     def fetch_rss_feed(self, rss_url):
         try:
-            # Delegate RSS fetching to RSSService
-            return RSSService.fetch_rss_feed(rss_url)
+            # Delegate RSS fetching to RSSService instance
+            return self.rss_service.fetch_rss_feed(rss_url)
         except Exception as e:
             logger.error(
-                "❌ ERROR fetching RSS feed: %s", e, exc_info=True
+                "❌ ERROR fetching RSS feed via PodcastRepository: %s", e, exc_info=True
             )  # Added error log
             return {"error": f"Error fetching RSS feed: {str(e)}"}, 500
 
@@ -332,13 +338,25 @@ class PodcastRepository:
         Fetch RSS data using RSSService and add a podcast to the repository.
         """
         try:
-            # Fetch RSS data
-            rss_data, status_code = RSSService.fetch_rss_feed(rss_url)
+            # Fetch RSS data using the instance
+            rss_data, status_code = self.rss_service.fetch_rss_feed(rss_url)
             if status_code != 200:
                 return {"error": "Failed to fetch RSS feed", "details": rss_data}, 400
 
+            # Prepare data for add_podcast based on rss_data
+            # This part needs to be adapted based on what add_podcast expects
+            # and what rss_data provides. For example:
+            podcast_data_for_add = {
+                "podName": rss_data.get("title", "Untitled Podcast from RSS"),
+                "rssFeed": rss_url,
+                "description": rss_data.get("description"),
+                "logoUrl": rss_data.get("imageUrl"),
+                # Add other necessary fields extracted from rss_data
+                # or default values as required by PodcastSchema
+            }
+            
             # Call existing add_podcast method
-            return self.add_podcast(user_id)
+            return self.add_podcast(user_id, podcast_data_for_add)
 
         except Exception as e:
             logger.error("Error in addPodcastWithRss: %s", e, exc_info=True)
@@ -350,45 +368,78 @@ class PodcastRepository:
         Handles data potentially coming from RSS feed parsing during activation.
         """
         try:
-            user_id = data.get("userId")
-            if not user_id:
-                return {"error": "Missing userId"}, 400
+            account_id = data.get("accountId")
+            if not account_id:
+                logger.error(f"Missing accountId for podcast creation. Data: {data}")
+                return {"error": "Missing accountId for podcast creation"}, 400
 
-            # Check for existing podcast with the same RSS URL for this user? Optional.
-            # existing = self.podcast_collection.find_one({"userId": user_id, "rssUrl": data.get("rssUrl")})
-            # if existing:
-            #     return {"message": "Podcast already exists for this user", "podcast": existing}, 200
+            # Ensure podName is present, use title if available
+            pod_name = data.get("podName") or data.get("title")
+            if not pod_name:
+                logger.error(f"Missing podName/title for podcast creation. Data: {data}")
+                return {"error": "Missing podName or title for podcast creation"}, 400
+
+            # Explicitly get isImported from input data, default to False if not present
+            is_imported_flag = data.get("isImported", False)
+            logger.info(f"Podcast creation: isImported flag set to: {is_imported_flag} based on input data.")
 
             podcast_doc = {
-                "_id": str(ObjectId()),
-                "userId": user_id,
-                "title": data.get("title", "Untitled Podcast"),
+                "_id": str(ObjectId()),  # Generate new ObjectId for the podcast
+                "accountId": account_id,
+                "podName": pod_name, # Use podName (from title if necessary)
+                "title": data.get("title", pod_name), # Can be same as podName or more specific
                 "description": data.get("description", ""),
-                "rssUrl": data.get("rssUrl"),
-                "websiteUrl": data.get("websiteUrl"),
-                "artworkUrl": data.get("artworkUrl"),
+                "rssFeed": data.get("rssFeed"), # Expecting rssFeed
+                "websiteUrl": data.get("websiteUrl"), # Schema might call this 'link' or 'podUrl'
+                "logoUrl": data.get("artworkUrl") or data.get("logoUrl"), # Map from artworkUrl or use logoUrl
                 "language": data.get("language"),
                 "author": data.get("author"),
                 "ownerName": data.get("ownerName"),
                 "ownerEmail": data.get("ownerEmail"),
-                "categories": data.get("categories", []),
-                "isImported": data.get(
-                    "isImported", False
-                ),  # Mark if imported via activation/RSS
+                "category": data.get("categories")[0] if data.get("categories") else None, # Simplified category
+                "socialMedia": data.get("socialMedia", []),
+                "isImported": is_imported_flag, # Use the determined flag
                 "createdAt": datetime.utcnow().isoformat(),
                 "updatedAt": datetime.utcnow().isoformat(),
                 "isActive": True,
-                # Add other relevant fields from your schema
+                # Other fields from PodcastSchema as needed
+                "imageUrl": data.get("artworkUrl") or data.get("imageUrl"), # Consistent with schema
             }
+            
+            # Validate with schema before insertion
+            schema = PodcastSchema()
+            try:
+                # Marshmallow loads and validates. Pass only relevant fields.
+                schema_input = {k: v for k, v in podcast_doc.items() if k in schema.fields}
+                schema_input['accountId'] = account_id # Ensure required fields are present for validation
+                schema_input['podName'] = pod_name
+                # Ensure isImported is part of schema_input if it's in PodcastSchema
+                # (Assuming isImported is a field in PodcastSchema, if not, it should be added or handled)
+                if "isImported" in schema.fields:
+                    schema_input['isImported'] = is_imported_flag
+                else:
+                    # If not in schema, it will be saved directly via podcast_doc
+                    logger.info("'isImported' field not in PodcastSchema, will be saved directly.")
 
-            result = self.podcast_collection.insert_one(podcast_doc)
+
+                validated_data = schema.load(schema_input) 
+                # Update podcast_doc with validated_data to ensure types are correct, etc.
+                # This step is crucial if schema does transformations or has defaults not in podcast_doc
+                podcast_doc.update(validated_data)
+
+            except Exception as schema_error: # Catch marshmallow.exceptions.ValidationError
+                logger.error(f"PodcastSchema validation failed for create_podcast: {schema_error}. Data: {schema_input}")
+                return {"error": "Podcast data validation failed", "details": str(schema_error)}, 400
+
+
+            result = self.collection.insert_one(podcast_doc)
             if not result.inserted_id:
                 logger.error(
-                    f"Failed to insert podcast for user {user_id}, RSS: {data.get('rssUrl')}"
+                    f"Failed to insert podcast for account {account_id}, RSS: {data.get('rssFeed')}"
                 )
                 return {"error": "Database error creating podcast"}, 500
 
-            logger.info(f"Podcast created: {podcast_doc['_id']} for user {user_id}")
+            logger.info(f"Podcast created: {podcast_doc['_id']} for account {account_id}")
 
             # --- Import Episodes if provided ---
             episodes_to_import = data.get("episodes", [])
@@ -402,7 +453,7 @@ class PodcastRepository:
                 for episode_data in episodes_to_import:
                     # Add podcastId and userId to episode data
                     episode_data["podcastId"] = podcast_doc["_id"]
-                    episode_data["userId"] = user_id
+                    episode_data["userId"] = account_id
                     episode_data["isImported"] = True  # Mark episode as imported
 
                     # Call episode repository to create/import the episode
@@ -425,7 +476,7 @@ class PodcastRepository:
 
             # Return the created podcast document (or just relevant info)
             # Fetch the inserted doc to ensure all defaults/DB operations are reflected
-            created_podcast = self.podcast_collection.find_one(
+            created_podcast = self.collection.find_one( # Changed self.podcast_collection to self.collection
                 {"_id": podcast_doc["_id"]}
             )
             return {
