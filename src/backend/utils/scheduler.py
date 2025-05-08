@@ -3,6 +3,8 @@ import logging
 import json
 from datetime import datetime, timedelta
 from apscheduler.schedulers.background import BackgroundScheduler
+from apscheduler.triggers.cron import CronTrigger
+from apscheduler.triggers.interval import IntervalTrigger
 from flask import render_template, current_app
 from backend.database.mongo_connection import collection
 from backend.utils.email_utils import send_email
@@ -376,74 +378,81 @@ def trigger_scheduled_activation_invites_with_context(app):
         trigger_scheduled_activation_invites()
 
 
-def start_scheduler(app):
-    if not os.path.exists(ACTIVATION_PROGRESS_FILE):
-        logger.info(f"Creating initial activation progress file: {ACTIVATION_PROGRESS_FILE}")
-        load_activation_progress()
+def send_daily_summary_email_job():
+    """Job to send the daily summary email."""
+    with app.app_context():
+        logger.info("Scheduler: Running send_daily_summary_email_job")
+        try:
+            today_str = datetime.now().strftime("%Y-%m-%d")
+            activations_sent_count = "N/A (tracking not implemented)"  # Replace with actual logic
+            subject = f"Daily PodManager Activation Summary - {today_str}"
+            body = f"""
+            <html>
+            <body>
+                <h2>PodManager Daily Activation Summary</h2>
+                <p><strong>Date:</strong> {today_str}</p>
+                <p><strong>Total Activation Emails Sent Today:</strong> {activations_sent_count}</p>
+                <p>This is an automated daily summary.</p>
+            </body>
+            </html>
+            """
+            recipients = ["karl.lillrud@gmail.com", "karl.lillrud@lillrud.com"]
+            for recipient_email in recipients:
+                send_email(recipient_email, subject, body, is_html=True)
+            logger.info(f"Daily summary email sent to: {', '.join(recipients)}")
+        except Exception as e:
+            logger.error(f"Scheduler: Error in send_daily_summary_email_job: {e}", exc_info=True)
 
-    if not os.path.exists(SENT_EMAILS_FILE):
-        logger.info(f"Creating initial sent emails file: {SENT_EMAILS_FILE}")
-        save_sent_emails(set())
 
-    if not scheduler.running:
-        scheduler.add_job(
-            func=check_and_send_reminders_with_context,
-            trigger="interval",
-            hours=1,
-            id="reminder_job",
-            replace_existing=True,
-            kwargs={"app": app},
-        )
+def start_scheduler(flask_app):
+    global app
+    app = flask_app
+    scheduler = BackgroundScheduler(daemon=True)
+    
+    scheduler.add_job(
+        func=check_and_send_reminders_with_context,
+        trigger="interval",
+        hours=1,
+        id="reminder_job",
+        replace_existing=True,
+        kwargs={"app": app},
+    )
 
-        scheduler.add_job(
-            func=trigger_scheduled_activation_invites_with_context,
-            trigger="cron",
-            hour=15,
-            minute=0,
-            id="activation_invite_job",
-            replace_existing=True,
-            kwargs={"app": app}
-        )
+    scheduler.add_job(
+        func=trigger_scheduled_activation_invites_with_context,
+        trigger="cron",
+        hour=15,
+        minute=0,
+        id="activation_invite_job",
+        replace_existing=True,
+        kwargs={"app": app}
+    )
 
-        scheduler.add_job(
-            func=send_daily_activation_summary_with_context,
-            trigger="cron",
-            hour=15,
-            minute=3,
-            id="daily_activation_summary_job",
-            replace_existing=True,
-            kwargs={"app": app}
-        )
+    scheduler.add_job(
+        func=send_daily_activation_summary_with_context,
+        trigger="cron",
+        hour=15,
+        minute=3,
+        id="daily_activation_summary_job",
+        replace_existing=True,
+        kwargs={"app": app}
+    )
 
+    scheduler.add_job(
+        send_daily_summary_email_job,
+        trigger=CronTrigger(hour=16, minute=0),
+        id="send_daily_summary_email_job",
+        name="Send daily summary email at 4 PM",
+        replace_existing=True,
+    )
+
+    try:
         scheduler.start()
-        logger.info("⏰ Reminder scheduler started.")
-        logger.info("📧 Activation invite scheduler job added.")
-        logger.info("📊 Daily activation summary job added.")
-    else:
-        logger.info("⏰ Reminder scheduler already running.")
-        if not scheduler.get_job("activation_invite_job"):
-            scheduler.add_job(
-                func=trigger_scheduled_activation_invites_with_context,
-                trigger="cron",
-                hour=15,
-                minute=0,
-                id="activation_invite_job",
-                replace_existing=True,
-                kwargs={"app": app}
-            )
-            logger.info("📧 Activation invite scheduler job added to already running scheduler.")
-        
-        if not scheduler.get_job("daily_activation_summary_job"):
-            scheduler.add_job(
-                func=send_daily_activation_summary_with_context,
-                trigger="cron",
-                hour=15,
-                minute=3,
-                id="daily_activation_summary_job",
-                replace_existing=True,
-                kwargs={"app": app}
-            )
-            logger.info("📊 Daily activation summary job added to already running scheduler.")
+        logger.info("Scheduler started successfully with email jobs.")
+    except Exception as e:
+        logger.error(f"Failed to start scheduler: {e}", exc_info=True)
+
+    flask_app.scheduler = scheduler
 
 
 def shutdown_scheduler():
