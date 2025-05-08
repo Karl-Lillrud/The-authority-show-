@@ -56,6 +56,127 @@ endblock %} {% block content %}
         <!-- Store Content -->
         <div class="store-content">
           <div class="store-grid">
+            <!-- Subscription Upgrades Section -->
+            <section class="store-section subscription-section">
+              <div class="section-header">
+                <h2>Subscriptions</h2>
+                <span class="section-description"
+                  >Enhance your PodManager experience!</span
+                >
+              </div>
+              <div class="cards-container">
+                <div
+                  class="product-card subscription-card"
+                  data-product-id="sub-standard"
+                  data-product-type="subscription"
+                  data-price="29.99"
+                >
+                  <div class="product-header">
+                    <div class="product-icon subscription-icon">
+                      <span
+                        class="svg-placeholder subscription-pro-icon"
+                      ></span>
+                    </div>
+                    <h3>Pro Subscription</h3>
+                  </div>
+                  <div class="product-price">
+                    <span class="price-amount">$29.99</span>
+                    <span class="price-period">/month</span>
+                  </div>
+                  <div class="product-features">
+                    <ul>
+                      <li>
+                        10,000 Credits at Month's Start<br />(resets monthly, no
+                        carry-over)
+                      </li>
+                      <li>3 Episode Slots / Month (Max. 5 Total Slots)</li>
+                      <li>
+                        Free Podcast Landing Page (Option to Host on Own Domain)
+                      </li>
+                    </ul>
+                  </div>
+                  <button
+                    class="add-to-cart-btn"
+                    data-product-id="sub-standard"
+                  >
+                    Add to Cart
+                  </button>
+                </div>
+
+                <div
+                  class="product-card subscription-card"
+                  data-product-id="sub-pro"
+                  data-product-type="subscription"
+                  data-price="69.00"
+                >
+                  <div class="product-badge">Best Value</div>
+                  <div class="product-header">
+                    <div class="product-icon subscription-icon">
+                      <span
+                        class="svg-placeholder subscription-team-icon"
+                      ></span>
+                    </div>
+                    <h3>Studio Subscription</h3>
+                  </div>
+                  <div class="product-price">
+                    <span class="price-amount">$69.00</span>
+                    <span class="price-period">/month</span>
+                  </div>
+                  <div class="product-features">
+                    <ul>
+                      <li>
+                        20,000 Credits at Month's Start <br />(resets monthly,
+                        no carry-over)
+                      </li>
+                      <li>4 Episode Slots / Month (Max. 6 Total Slots)</li>
+                      <li>
+                        Free Podcast Landing Page (Option to Host on Own Domain)
+                      </li>
+                    </ul>
+                  </div>
+                  <button class="add-to-cart-btn" data-product-id="sub-pro">
+                    Add to Cart
+                  </button>
+                </div>
+
+                <div
+                  class="product-card subscription-card"
+                  data-product-id="sub-enterprise"
+                  data-product-type="subscription"
+                  data-price="0.00"
+                >
+                  <div class="product-header">
+                    <div class="product-icon subscription-icon">
+                      <span
+                        class="svg-placeholder subscription-enterprise-icon"
+                      ></span>
+                    </div>
+                    <h3>Enterprise Subscription</h3>
+                  </div>
+                  <div class="product-price">
+                    <span class="price-amount">Contact Us</span>
+                    <span class="price-period">for pricing</span>
+                  </div>
+                  <div class="product-features">
+                    <ul>
+                      <li>Pricing Based on Annual Episodes</li>
+                      <li>Total Unlock of Pricings</li>
+                      <li>All The Episode Slots You Need</li>
+                      <li>Team Collaboration</li>
+                      <li>Yearly Re-Contracting</li>
+                      <li>Landing Page On Your Own Domain</li>
+                    </ul>
+                  </div>
+                  <button
+                    class="add-to-cart-btn"
+                    data-product-id="sub-enterprise"
+                  >
+                    Contact Us
+                  </button>
+                </div>
+              </div>
+            </section>
+
             <!-- Credit Packs Section -->
             <section class="store-section credit-packs-section">
               <div class="section-header">
@@ -200,127 +321,6 @@ endblock %} {% block content %}
                     data-product-id="episode-extra"
                   >
                     Add to Cart
-                  </button>
-                </div>
-              </div>
-            </section>
-
-            <!-- Subscription Upgrades Section -->
-            <section class="store-section subscription-section">
-              <div class="section-header">
-                <h2>Subscriptions</h2>
-                <span class="section-description"
-                  >Enhance your PodManager experience!</span
-                >
-              </div>
-              <div class="cards-container">
-                <div
-                  class="product-card subscription-card"
-                  data-product-id="sub-standard"
-                  data-product-type="subscription"
-                  data-price="29.99"
-                >
-                  <div class="product-header">
-                    <div class="product-icon subscription-icon">
-                      <span
-                        class="svg-placeholder subscription-pro-icon"
-                      ></span>
-                    </div>
-                    <h3>Pro Subscription</h3>
-                  </div>
-                  <div class="product-price">
-                    <span class="price-amount">$29.99</span>
-                    <span class="price-period">/month</span>
-                  </div>
-                  <div class="product-features">
-                    <ul>
-                      <li>
-                        10,000 Credits at Month's Start<br />(resets monthly, no
-                        carry-over)
-                      </li>
-                      <li>3 Episode Slots / Month (Max. 5 Total Slots)</li>
-                      <li>
-                        Free Podcast Landing Page (Option to Host on Own Domain)
-                      </li>
-                    </ul>
-                  </div>
-                  <button
-                    class="add-to-cart-btn"
-                    data-product-id="sub-standard"
-                  >
-                    Add to Cart
-                  </button>
-                </div>
-
-                <div
-                  class="product-card subscription-card"
-                  data-product-id="sub-pro"
-                  data-product-type="subscription"
-                  data-price="69.00"
-                >
-                  <div class="product-badge">Best Value</div>
-                  <div class="product-header">
-                    <div class="product-icon subscription-icon">
-                      <span
-                        class="svg-placeholder subscription-team-icon"
-                      ></span>
-                    </div>
-                    <h3>Studio Subscription</h3>
-                  </div>
-                  <div class="product-price">
-                    <span class="price-amount">$69.00</span>
-                    <span class="price-period">/month</span>
-                  </div>
-                  <div class="product-features">
-                    <ul>
-                      <li>
-                        20,000 Credits at Month's Start <br />(resets monthly,
-                        no carry-over)
-                      </li>
-                      <li>4 Episode Slots / Month (Max. 6 Total Slots)</li>
-                      <li>
-                        Free Podcast Landing Page (Option to Host on Own Domain)
-                      </li>
-                    </ul>
-                  </div>
-                  <button class="add-to-cart-btn" data-product-id="sub-pro">
-                    Add to Cart
-                  </button>
-                </div>
-
-                <div
-                  class="product-card subscription-card"
-                  data-product-id="sub-enterprise"
-                  data-product-type="subscription"
-                  data-price="0.00"
-                >
-                  <div class="product-header">
-                    <div class="product-icon subscription-icon">
-                      <span
-                        class="svg-placeholder subscription-enterprise-icon"
-                      ></span>
-                    </div>
-                    <h3>Enterprise Subscription</h3>
-                  </div>
-                  <div class="product-price">
-                    <span class="price-amount">Contact Us</span>
-                    <span class="price-period">for pricing</span>
-                  </div>
-                  <div class="product-features">
-                    <ul>
-                      <li>Pricing Based on Annual Episodes</li>
-                      <li>Total Unlock of Pricings</li>
-                      <li>All The Episode Slots You Need</li>
-                      <li>Team Collaboration</li>
-                      <li>Yearly Re-Contracting</li>
-                      <li>Landing Page On Your Own Domain</li>
-                    </ul>
-                  </div>
-                  <button
-                    class="add-to-cart-btn"
-                    data-product-id="sub-enterprise"
-                  >
-                    Contact Us
                   </button>
                 </div>
               </div>
