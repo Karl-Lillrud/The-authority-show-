@@ -379,6 +379,11 @@ section#index-about::before {
 
 section#index-about h1 {
   color: white;
+  opacity: 0;
+}
+section#index-about h1.animate {
+  animation: ease-in-out animate-from-left 1s;
+  animation-fill-mode: forwards;
 }
 
 section#index-about p {
@@ -401,6 +406,11 @@ section#index-about div.container div.benefits-container ul li {
   display: flex;
   align-items: center;
   padding: 5px 0px;
+  opacity: 0;
+}
+section#index-about div.container div.benefits-container ul li.animate {
+  animation: ease-in-out animate-from-left 1.5s;
+  animation-fill-mode: forwards;
 }
 
 section#index-about div.container div.benefits-container ul li svg {
@@ -413,6 +423,11 @@ section#index-about #about-figure-1 {
   max-width: 500px;
   max-height: 300px;
   rotate: 2deg;
+  opacity: 0;
+}
+section#index-about #about-figure-1.animate {
+  animation: ease-in-out animate-from-right 1s;
+  animation-fill-mode: forwards;
 }
 
 section#index-about #about-figure-2 {
@@ -425,6 +440,11 @@ section#index-about #about-figure-2 {
   padding: 25px 25px 0px 20px;
   top: 40%;
   right: 60px;
+  opacity: 0;
+}
+section#index-about #about-figure-2.animate {
+  animation: ease-in-out animate-from-bottom 0.5s;
+  animation-fill-mode: forwards;
 }
 
 section#index-about #about-figure-2 img {
@@ -454,6 +474,19 @@ section#index-features div.container:nth-of-type(2) {
 
 section#index-features h2 {
   color: var(--index-highlight-color);
+  opacity: 0;
+}
+section#index-features div.container:nth-of-type(1) h2.animate {
+  animation: ease-in-out animate-from-left 1.5s;
+  animation-fill-mode: forwards;
+}
+section#index-features div.container:nth-of-type(2) h2.animate {
+  animation: ease-in-out animate-from-right 1.5s;
+  animation-fill-mode: forwards;
+}
+section#index-features article:last-of-type h2.animate {
+  animation: ease-in-out animate-from-bottom 0.5s;
+  animation-fill-mode: forwards;
 }
 
 section#index-features figure {
@@ -461,6 +494,11 @@ section#index-features figure {
   min-height: 300px;
   max-width: 100%;
   max-height: 300px;
+  opacity: 0;
+}
+section#index-features figure.animate {
+  animation: ease-in-out animate-from-bottom 1s;
+  animation-fill-mode: forwards;
 }
 
 section#index-features figure#feature-figure-5 {
@@ -503,7 +541,12 @@ section#index-features div.future-features-container .future-feature-item .futur
   width: 30px;
   height: 30px;
   margin-left: 1px;
+  opacity: 0;
 }
+section#index-features div.future-features-container .future-feature-item .future-item-icon svg.animate {
+  animation: ease-in-out animate-pop-in 0.5s;
+  animation-fill-mode: forwards;
+} 
 
 section#index-features div.future-features-container .future-feature-item h3 {
   font-size: 17px;
@@ -529,6 +572,11 @@ section#index-get-started {
 section#index-get-started h1 {
   color: var(--index-highlight-color);
   margin-bottom: 30px;
+  opacity: 0;
+}
+section#index-get-started h1.animate {
+  animation: ease-in-out animate-from-bottom 0.5s;
+  animation-fill-mode: forwards;
 }
 
 section#index-get-started p {
@@ -549,13 +597,20 @@ section#index-get-started button, section#index-get-started a.button {
   margin-top: 40px;
   transition: var(--transition-normal);
   backface-visibility: hidden;
+  opacity: 0;
 }
+section#index-get-started a.button.animate {
+  animation: ease-in-out animate-pop-in 0.5s, ease-in-out animate-button-glow 2s infinite;
+  animation-fill-mode: forwards;
+}
+ 
 
 section#index-get-started button:hover, section#index-get-started a.button:hover {
   opacity: 0.95;
-  transform: scale(1.05) rotate(0.02deg);
+  transform: scale(1.15) rotate(0.02deg);
   box-shadow: 0px 0px 10px var(--index-highlight-color);
   text-decoration: none;
+  animation: none;
 }
 
 
@@ -607,6 +662,18 @@ section#index-get-started button:hover, section#index-get-started a.button:hover
   100% {
     transform: scale(1);
     opacity: 1;
+  }
+}
+
+@keyframes animate-button-glow {
+  0% {
+    box-shadow: 0px 0px 0px var(--index-highlight-color);
+  }
+  50% {
+    box-shadow: 0px 0px 20px var(--index-highlight-color);
+  }
+  100% {
+    box-shadow: 0px 0px 0px var(--index-highlight-color);
   }
 }
 
