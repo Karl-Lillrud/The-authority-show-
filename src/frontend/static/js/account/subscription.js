@@ -4,9 +4,27 @@ let apiBaseUrl = '';
 let stripePublicKey = '';
 let stripe = null;
 
+// Function to load Stripe.js script
+function loadStripeScript() {
+  return new Promise((resolve, reject) => {
+    if (document.querySelector('script[src="https://js.stripe.com/v3/"]')) {
+      resolve();
+      return;
+    }
+    const stripeScript = document.createElement("script");
+    stripeScript.src = "https://js.stripe.com/v3/";
+    stripeScript.async = true;
+    stripeScript.onload = () => resolve();
+    stripeScript.onerror = () => reject(new Error("Failed to load Stripe.js"));
+    document.head.appendChild(stripeScript);
+  });
+}
+
 // Fetch configuration when the DOM is ready
 document.addEventListener('DOMContentLoaded', async () => {
   try {
+    await loadStripeScript(); // Wait for Stripe.js to load
+
     const response = await fetch('/config'); // Fetch from the backend endpoint
     if (!response.ok) {
        const errorData = await response.json();
@@ -24,6 +42,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     // Initialize Stripe here after fetching the key
+    if (typeof Stripe === "undefined") {
+      throw new Error("Stripe.js not loaded correctly.");
+    }
     stripe = Stripe(stripePublicKey);
 
     // Initialize UI elements that depend on config/Stripe being ready
@@ -584,6 +605,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // Update the subscription UI
     updateSubscriptionUI();
     // Clear the URL parameter
+    localStorage.removeItem("podmanager_cart");
     window.history.replaceState({}, document.title, window.location.pathname);
   }
 });

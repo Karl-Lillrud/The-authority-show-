@@ -1,23 +1,21 @@
 // Remove: import feedparser from "feedparser-promised";
 
 // Function to add a new podcast
-export async function addPodcast(data) {
+export async function addPodcast(podcastData) {
   try {
-    console.log("Sending podcast data to /add_podcasts:", data); // Added log
-    const response = await fetch("/add_podcasts", {
+    const response = await fetch("/api/podcasts", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(data) // Correctly pass the entire data object
+      body: JSON.stringify(podcastData),
     });
-    const responseData = await response.json();
     if (!response.ok) {
-      console.error("Error response from /add_podcasts:", responseData); // Added log
-      throw new Error(responseData.error || "Failed to add podcast");
+      const errorData = await response.json().catch(() => ({ error: "Failed to add podcast and parse error response" }));
+      console.error("Server error from addPodcast:", errorData);
+      throw new Error(errorData.error || `HTTP error! status: ${response.status}`);
     }
-    console.log("Received response from /add_podcasts:", responseData); // Added log
-    return responseData;
+    return await response.json();
   } catch (error) {
-    console.error("Error adding podcast:", error); // Added log
+    console.error("Error in addPodcast:", error);
     throw error;
   }
 }
@@ -53,14 +51,19 @@ export async function fetchPodcast(podcastId) {
 // Function to update a podcast
 export async function updatePodcast(podcastId, podcastData) {
   try {
-    const response = await fetch(`/edit_podcasts/${podcastId}`, {
+    const response = await fetch(`/api/podcasts/${podcastId}`, {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(podcastData)
+      body: JSON.stringify(podcastData),
     });
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({ error: "Failed to update podcast and parse error response" }));
+      console.error("Server error from updatePodcast:", errorData);
+      throw new Error(errorData.error || `HTTP error! status: ${response.status}`);
+    }
     return await response.json();
   } catch (error) {
-    console.error("Error updating podcast:", error);
+    console.error("Error in updatePodcast:", error);
     throw error;
   }
 }

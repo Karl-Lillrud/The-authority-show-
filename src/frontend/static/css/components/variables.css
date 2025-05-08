@@ -166,4 +166,8 @@
   --team-radius-small: 8px;
   --team-radius-medium: 14px;
   --team-radius-large: 24px;
+
+  /* Index related variables */
+  --index-highlight-color: rgb(241, 141, 29);
+  --index-background-light: rgb(226, 226, 226);
 }

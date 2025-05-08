@@ -16,6 +16,11 @@ class EpisodeRepository:
         self.subscription_service = SubscriptionService()
         self.activity_service = ActivityService()
 
+    @staticmethod
+    def get_episodes_by_user_id(user_id):
+        """Fetch episodes for a specific user."""
+        return list(collection.Episodes.find({"ownerId": user_id}))
+
     def register_episode(self, data, user_id):
         """Register a new episode for the given user."""
         try:
@@ -33,6 +38,17 @@ class EpisodeRepository:
                     return {"error": "Episode limit reached", "reason": reason}, 403
 
             account_id = user_account.get("id", str(user_account["_id"]))
+            
+            # Ensure accountId is in data for schema validation if EpisodeSchema expects it
+            if 'accountId' not in data and 'accountId' in EpisodeSchema().fields:
+                data['accountId'] = account_id
+
+            # Handle potential None for duration before validation if schema is strict
+            if "duration" in data and data["duration"] is None:
+                # If schema expects an int and cannot be None, you might remove it or set a default
+                # However, EpisodeSchema is now fields.Int(allow_none=True)
+                pass # allow_none=True in schema should handle this
+
             schema = EpisodeSchema()
             errors = schema.validate(data)
             if errors:
