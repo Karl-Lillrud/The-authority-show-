@@ -1783,3 +1783,59 @@ select:invalid {
   padding: 0 1rem;
   width: 100%;
 }
+
+/* Delete Button */
+.delete-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 8px;
+  border-radius: 50%; /* Circular container */
+  transition: all 0.2s ease;
+  position: relative; /* For tooltip positioning */
+  width: 40px; /* Ensure consistent width */
+  height: 40px; /* Ensure consistent height */
+}
+
+.delete-btn:hover {
+  transform: translateY(-2px); /* Slight lift on hover */
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* Add shadow on hover */
+  background-color: #f5f5f5; /* Light gray background on hover */
+}
+
+.delete-btn svg {
+  width: 18px;
+  height: 18px;
+  stroke: #ff4d4f; /* Red color for the trashcan icon */
+  fill: none;
+}
+
+.delete-btn:hover svg {
+  stroke: #d32f2f; /* Darker red on hover */
+}
+
+/* Tooltip for the Delete Button */
+.delete-btn::after {
+  content: "Delete";
+  position: absolute;
+  bottom: -25px;
+  left: 50%;
+  transform: translateX(-50%);
+  background-color: rgba(0, 0, 0, 0.7);
+  color: white;
+  padding: 3px 6px;
+  border-radius: 3px;
+  font-size: 10px;
+  opacity: 0;
+  visibility: hidden;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.delete-btn:hover::after {
+  opacity: 1;
+  visibility: visible;
+}

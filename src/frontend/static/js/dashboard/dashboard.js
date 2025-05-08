@@ -26,9 +26,11 @@ document.addEventListener("DOMContentLoaded", async () => {
     initProgressCircles();
     initDashboardActions();
     updateStatCounts();
+    
   } catch (error) {
     console.error("Error initializing dashboard:", error);
   }
+
 });
 
 function initProgressCircles() {

@@ -17,9 +17,9 @@ def check_audio_duration(audio_bytes: bytes, max_duration_seconds: int = 36) -> 
     try:
         data, samplerate = sf.read(temp_audio_path)
         duration = len(data) / samplerate
-        logger.info(f"🎧 Audio duration: {round(duration, 2)} seconds")
+        logger.info(f"Audio duration: {round(duration, 2)} seconds")
     except Exception as e:
-        logger.error(f"❌ Failed to read audio file: {e}")
+        logger.error(f"Failed to read audio file: {e}")
         raise ValueError("Invalid audio file format.")
     finally:
         os.remove(temp_audio_path)

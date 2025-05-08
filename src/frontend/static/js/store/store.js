@@ -11,7 +11,50 @@ document.addEventListener("DOMContentLoaded", async () => {
   await initializeStripe();
   // Återställ checkout-knappen vid sidladdning
   resetCheckoutButton();
+  
+  await handlePurchaseSuccess();
+  setupContinueShoppingButton();
 });
+
+async function handlePurchaseSuccess() {
+  const urlParams = new URLSearchParams(window.location.search);
+  const purchaseSuccess = urlParams.get("purchase_success") === "true";
+  const subscriptionUpdated = urlParams.get("subscription_updated") === "true";
+
+  if (purchaseSuccess || subscriptionUpdated) {
+    localStorage.removeItem("podmanager_cart");
+    removePurchaseParamsFromURL(urlParams, purchaseSuccess, subscriptionUpdated);
+    displaySuccessPopup();
+  }
+}
+
+function removePurchaseParamsFromURL(urlParams, purchaseSuccess, subscriptionUpdated) {
+  const url = new URL(window.location.href);
+  if (purchaseSuccess) url.searchParams.delete("purchase_success");
+  if (subscriptionUpdated) url.searchParams.delete("subscription_updated");
+  window.history.replaceState({}, document.title, url.href);
+}
+
+function displaySuccessPopup() {
+  const successPopup = document.getElementById('success-popup');
+  if (successPopup) {
+    successPopup.style.display = 'flex';
+  }
+}
+
+function setupContinueShoppingButton() {
+  const continueShoppingBtn = document.getElementById('continueShoppingBtn');
+  const successPopup = document.getElementById('success-popup');
+
+  if (continueShoppingBtn) {
+    continueShoppingBtn.addEventListener('click', () => {
+      window.location.reload();
+      if (successPopup) {
+        successPopup.style.display = 'none';
+      }
+    });
+  }
+}
 
 async function initializeStripe() {
   try {
@@ -119,6 +162,13 @@ function setupAddToCartButtons() {
   addToCartButtons.forEach((button) => {
     button.addEventListener("click", function () {
       const productId = this.getAttribute("data-product-id");
+
+      // Handle Enterprise Subscription button separately
+      if (productId === "sub-enterprise") {
+        window.location.href = "/enterprise";
+        return; // Stop further processing for this button
+      }
+
       const productCard = document.querySelector(
         `.product-card[data-product-id="${productId}"]`
       );
@@ -569,6 +619,7 @@ function updateCartUI() {
     totalAmount.textContent = `$${totalPrice.toFixed(2)}`;
     checkoutBtn.disabled = false;
   }
+  initializeSvgIcons();
 }
 
 function updateCartNotification() {
