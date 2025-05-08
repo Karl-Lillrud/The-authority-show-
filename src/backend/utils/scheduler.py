@@ -3,26 +3,27 @@ import logging
 import json
 from datetime import datetime, timedelta
 from apscheduler.schedulers.background import BackgroundScheduler
-from flask import render_template
+from flask import render_template, current_app
 from backend.database.mongo_connection import collection
 from backend.utils.email_utils import send_email
 from backend.repository.guest_repository import GuestRepository
 from backend.repository.episode_repository import EpisodeRepository
 
-# Added imports for new scheduled job
 import requests
 import xml.etree.ElementTree as ET
 from dotenv import load_dotenv
 
 logger = logging.getLogger(__name__)
 
-# Load environment variables for the new job
-load_dotenv(os.path.join(os.path.dirname(__file__), '..', '..', '.env'))  # Ensure .env is loaded
+load_dotenv(os.path.join(os.path.dirname(__file__), '..', '..', '.env'))
 
-# Define the path for the sent emails file
 SENT_EMAILS_FILE = os.path.join(os.path.dirname(__file__), "sent_emails.json")
-XML_FILE_PATH_FOR_ACTIVATION = os.getenv("ACTIVATION_XML_FILE_PATH", "../scraped.xml")  # From activate.py
-API_BASE_URL_FOR_ACTIVATION = os.getenv("API_BASE_URL", "http://127.0.0.1:8000").rstrip('/')  # From activate.py
+XML_FILE_PATH_FOR_ACTIVATION = os.getenv("ACTIVATION_XML_FILE_PATH", "../scraped.xml")
+API_BASE_URL_FOR_ACTIVATION = os.getenv("API_BASE_URL", "http://127.0.0.1:8000").rstrip('/')
+
+ACTIVATION_PROGRESS_FILE = os.path.join(os.path.dirname(__file__), "activation_progress.json")
+INITIAL_BATCH_SIZE = int(os.getenv("ACTIVATION_INITIAL_BATCH_SIZE", 30))
+INCREMENT_PERCENTAGE = float(os.getenv("ACTIVATION_INCREMENT_PERCENTAGE", 0.25))
 
 scheduler = BackgroundScheduler(daemon=True)
 guest_repo = GuestRepository()
@@ -58,25 +59,12 @@ def render_email_content(
 
 
 def check_and_send_reminders():
-    """Placeholder for reminder logic."""
-    # Load sent emails
     sent_emails = load_sent_emails()
-    # Add your reminder logic here, e.g., querying episodes/guests and sending emails
-    # Example:
-    # for episode in episode_repo.get_upcoming_episodes():
-    #     guest = guest_repo.get_guest(episode['guest_id'])
-    #     email_id = (guest['email'], episode['_id'])
-    #     if email_id not in sent_emails:
-    #         email_body = render_email_content('reminder', guest, episode, guest_email=guest['email'])
-    #         send_email(guest['email'], "Episode Reminder", email_body)
-    #         sent_emails.add(email_id)
-    # Save updated sent emails
     save_sent_emails(sent_emails)
     logger.info("Checked and sent reminders.")
 
 
 def load_sent_emails():
-    """Loads the set of sent email identifiers from the JSON file."""
     try:
         if os.path.exists(SENT_EMAILS_FILE):
             with open(SENT_EMAILS_FILE, "r") as file:
@@ -95,7 +83,6 @@ def load_sent_emails():
 
 
 def save_sent_emails(sent_emails_set):
-    """Saves the set of sent email identifiers to the JSON file."""
     try:
         sent_emails_list = [list(item) for item in sent_emails_set]
         with open(SENT_EMAILS_FILE, "w") as file:
@@ -107,15 +94,11 @@ def save_sent_emails(sent_emails_set):
 
 
 def check_and_send_reminders_with_context(app):
-    """Wrapper to ensure Flask app context for the reminder job."""
     with app.app_context():
         check_and_send_reminders()
 
 
-# --- New functions for scheduled activation invites ---
-
 def _load_podcasts_from_xml_for_scheduler(file_path):
-    """Load podcasts from an XML file for the scheduler job."""
     podcasts = []
     try:
         actual_file_path = os.path.join(os.path.dirname(__file__), '..', '..', file_path) if not os.path.isabs(file_path) else file_path
@@ -144,31 +127,127 @@ def _load_podcasts_from_xml_for_scheduler(file_path):
         logger.error(f"Scheduler: An unexpected error occurred while loading XML for activation: {e}", exc_info=True)
     return podcasts
 
+
+def load_activation_progress():
+    default_progress = {
+        "current_day_batch_size": INITIAL_BATCH_SIZE,
+        "processed_emails_globally": [],
+        "daily_reports": []
+    }
+    try:
+        if os.path.exists(ACTIVATION_PROGRESS_FILE):
+            with open(ACTIVATION_PROGRESS_FILE, "r") as file:
+                progress_data = json.load(file)
+                progress_data.setdefault("current_day_batch_size", INITIAL_BATCH_SIZE)
+                progress_data.setdefault("processed_emails_globally", [])
+                progress_data.setdefault("daily_reports", [])
+                if progress_data["current_day_batch_size"] < INITIAL_BATCH_SIZE and not progress_data["processed_emails_globally"]:
+                    progress_data["current_day_batch_size"] = INITIAL_BATCH_SIZE
+                return progress_data
+        else:
+            logger.info(
+                f"{ACTIVATION_PROGRESS_FILE} not found. Initializing with default activation progress."
+            )
+            with open(ACTIVATION_PROGRESS_FILE, "w") as file:
+                json.dump(default_progress, file, indent=4)
+            return default_progress
+    except (FileNotFoundError, json.JSONDecodeError, TypeError) as e:
+        logger.error(f"Error loading {ACTIVATION_PROGRESS_FILE}: {e}. Returning default progress.")
+        try:
+            with open(ACTIVATION_PROGRESS_FILE, "w") as file:
+                json.dump(default_progress, file, indent=4)
+        except Exception as ex_save:
+            logger.error(f"Failed to recreate default {ACTIVATION_PROGRESS_FILE}: {ex_save}")
+        return default_progress
+
+
+def save_activation_progress(progress_data):
+    try:
+        with open(ACTIVATION_PROGRESS_FILE, "w") as file:
+            json.dump(progress_data, file, indent=4)
+    except IOError as e:
+        logger.error(f"Error saving activation progress to {ACTIVATION_PROGRESS_FILE}: {e}")
+    except TypeError as e:
+        logger.error(f"Error serializing activation progress data: {e}")
+
+
 def trigger_scheduled_activation_invites():
-    """
-    Job function to load podcasts from XML and trigger activation invites via API.
-    """
-    logger.info("Scheduler: Starting job to trigger activation invites.")
-    podcasts_to_process = _load_podcasts_from_xml_for_scheduler(XML_FILE_PATH_FOR_ACTIVATION)
+    logger.info("Scheduler: Starting job to trigger activation invites with progressive rollout.")
     
-    if not podcasts_to_process:
+    activation_progress = load_activation_progress()
+    current_day_limit = activation_progress.get("current_day_batch_size", INITIAL_BATCH_SIZE)
+    processed_emails_globally_set = set(activation_progress.get("processed_emails_globally", []))
+
+    all_podcasts_from_xml = _load_podcasts_from_xml_for_scheduler(XML_FILE_PATH_FOR_ACTIVATION)
+    
+    successful_triggers_in_run = 0
+    failed_triggers_in_run = 0
+    podcasts_actually_attempted_count = 0
+
+    if not all_podcasts_from_xml:
         logger.info("Scheduler: No podcasts found in XML to process for activation invites.")
+        next_day_batch_size = int(current_day_limit * (1 + INCREMENT_PERCENTAGE))
+        if next_day_batch_size == current_day_limit: 
+            next_day_batch_size +=1
+        activation_progress["current_day_batch_size"] = next_day_batch_size
+        
+        today_str = datetime.now().strftime("%Y-%m-%d")
+        daily_report_entry = {
+            "date": today_str,
+            "sent_successfully": 0,
+            "failed_to_send": 0,
+            "total_attempted_for_day": 0
+        }
+        reports = activation_progress.get("daily_reports", [])
+        reports = [r for r in reports if r.get("date") != today_str]
+        reports.append(daily_report_entry)
+        activation_progress["daily_reports"] = reports
+        
+        save_activation_progress(activation_progress)
         return
 
-    successful_triggers = 0
-    processed_emails_in_current_run = set()  # Keep track of processed emails in this run
+    unique_pending_podcasts_map = {}
+    for p in all_podcasts_from_xml:
+        email = p.get("email")
+        if email and email not in processed_emails_globally_set:
+            if email not in unique_pending_podcasts_map:
+                 unique_pending_podcasts_map[email] = p
+    
+    pending_podcasts_list = list(unique_pending_podcasts_map.values())
 
-    for podcast_data in podcasts_to_process:
+    if not pending_podcasts_list:
+        logger.info("Scheduler: All podcasts from XML have already been processed for activation invites.")
+        next_day_batch_size = int(current_day_limit * (1 + INCREMENT_PERCENTAGE))
+        if next_day_batch_size == current_day_limit:
+             next_day_batch_size +=1
+        activation_progress["current_day_batch_size"] = next_day_batch_size
+        
+        today_str = datetime.now().strftime("%Y-%m-%d")
+        daily_report_entry = {
+            "date": today_str,
+            "sent_successfully": 0,
+            "failed_to_send": 0,
+            "total_attempted_for_day": 0
+        }
+        reports = activation_progress.get("daily_reports", [])
+        reports = [r for r in reports if r.get("date") != today_str]
+        reports.append(daily_report_entry)
+        activation_progress["daily_reports"] = reports
+
+        save_activation_progress(activation_progress)
+        return
+
+    podcasts_for_current_run = pending_podcasts_list[:current_day_limit]
+    podcasts_actually_attempted_count = len(podcasts_for_current_run)
+    emails_processed_in_this_run = set()
+
+    for podcast_data in podcasts_for_current_run:
         email = podcast_data.get("email")
         rss_url = podcast_data.get("rss_feed")
         podcast_title = podcast_data.get("title")
 
-        if not email or not rss_url or not podcast_title:
-            logger.warning(f"Scheduler: Skipping entry for activation invite due to incomplete data: {podcast_data}")
-            continue
-
-        if email in processed_emails_in_current_run:
-            logger.info(f"Scheduler: Skipping duplicate email in current run: {email} for podcast: {podcast_title}")
+        if email in emails_processed_in_this_run:
+            logger.info(f"Scheduler: Skipping duplicate email in current batch processing: {email} for podcast: {podcast_title}")
             continue
 
         try:
@@ -179,59 +258,159 @@ def trigger_scheduled_activation_invites():
                 "rss_url": rss_url,
                 "podcast_title": podcast_title
             }
-            response = requests.post(invite_url, json=payload, timeout=30)
+            response = requests.post(invite_url, json=payload, timeout=30) 
             
             if response.ok:
                 logger.info(f"Scheduler: Successfully triggered activation for {email}. API Response: {response.json().get('message')}")
-                successful_triggers += 1
-                processed_emails_in_current_run.add(email)  # Add email to processed set
+                successful_triggers_in_run += 1
+                processed_emails_globally_set.add(email) 
+                emails_processed_in_this_run.add(email)   
             else:
                 logger.error(f"Scheduler: Failed to trigger activation for {email} via API: {response.status_code} - {response.text}")
+                failed_triggers_in_run += 1
         except requests.exceptions.RequestException as req_err:
             logger.error(f"Scheduler: API request failed for activation invite to {email}: {req_err}", exc_info=True)
+            failed_triggers_in_run += 1
         except Exception as e:
             logger.error(f"Scheduler: Failed to process activation invite for {email}: {e}", exc_info=True)
+            failed_triggers_in_run += 1
     
-    logger.info(f"Scheduler: Activation invite job finished. Successfully triggered {successful_triggers}/{len(podcasts_to_process)} invites.")
+    next_day_batch_size = int(current_day_limit * (1 + INCREMENT_PERCENTAGE))
+    if next_day_batch_size == current_day_limit and pending_podcasts_list[current_day_limit:]: 
+        next_day_batch_size += 1
+    
+    activation_progress["current_day_batch_size"] = next_day_batch_size
+    activation_progress["processed_emails_globally"] = sorted(list(processed_emails_globally_set)) 
+
+    today_str = datetime.now().strftime("%Y-%m-%d")
+    daily_report_entry = {
+        "date": today_str,
+        "sent_successfully": successful_triggers_in_run,
+        "failed_to_send": failed_triggers_in_run,
+        "total_attempted_for_day": podcasts_actually_attempted_count
+    }
+    reports = activation_progress.get("daily_reports", [])
+    reports = [r for r in reports if r.get("date") != today_str]
+    reports.append(daily_report_entry)
+    activation_progress["daily_reports"] = reports
+    
+    save_activation_progress(activation_progress)
+    
+    logger.info(f"Scheduler: Activation invite job finished. Processed {podcasts_actually_attempted_count} podcasts in this run. Successfully triggered {successful_triggers_in_run} invites, Failed: {failed_triggers_in_run}.")
+    logger.info(f"Scheduler: Next day's batch size set to {next_day_batch_size}. Total unique emails processed globally: {len(processed_emails_globally_set)}.")
+
+
+def send_daily_activation_summary():
+    logger.info("Scheduler: Preparing to send daily activation summary.")
+    try:
+        activation_progress = load_activation_progress()
+        today_str = datetime.now().strftime("%Y-%m-%d")
+        
+        todays_report = None
+        for report in reversed(activation_progress.get("daily_reports", [])):
+            if report.get("date") == today_str:
+                todays_report = report
+                break
+        
+        if todays_report:
+            subject = f"PodManager.ai - Daily Activation Email Summary ({today_str})"
+            body_html = f"""
+            <html>
+                <head>
+                    <style>
+                        body {{ font-family: Arial, sans-serif; margin: 20px; }}
+                        h2 {{ color: #333; }}
+                        table {{ border-collapse: collapse; width: 100%; max-width: 500px; margin-top: 15px; }}
+                        th, td {{ border: 1px solid #ddd; padding: 8px; text-align: left; }}
+                        th {{ background-color: #f2f2f2; }}
+                    </style>
+                </head>
+                <body>
+                    <h2>PodManager.ai - Activation Email Log</h2>
+                    <p><strong>Date:</strong> {today_str}</p>
+                    <table>
+                        <tr>
+                            <th>Metric</th>
+                            <th>Count</th>
+                        </tr>
+                        <tr>
+                            <td>Total Podcasts Processed for Activation Today</td>
+                            <td>{todays_report.get('total_attempted_for_day', 'N/A')}</td>
+                        </tr>
+                        <tr>
+                            <td>Activation Emails Successfully Triggered</td>
+                            <td>{todays_report.get('sent_successfully', 'N/A')}</td>
+                        </tr>
+                        <tr>
+                            <td>Activation Emails Failed to Trigger (API/Network errors)</td>
+                            <td>{todays_report.get('failed_to_send', 'N/A')}</td>
+                        </tr>
+                    </table>
+                    <p><em>This is an automated daily summary from the PodManager.ai scheduler.</em></p>
+                </body>
+            </html>
+            """
+            recipients = ["marcuzg@gmail.com", "me@karllillrud.com"]
+            for recipient_email in recipients:
+                logger.info(f"Sending daily activation summary to {recipient_email}")
+                send_email(recipient_email, subject, body_html) 
+            logger.info("Daily activation summary email(s) sent.")
+        else:
+            logger.warning(f"No activation report found for today ({today_str}) to send summary.")
+            subject = f"PodManager.ai - No Activation Report for {today_str}"
+            body_html = f"<p>No activation email processing report was found for {today_str}.</p>"
+            recipients = ["marcuzg@gmail.com", "me@karllillrud.com"]
+            for recipient_email in recipients:
+                 send_email(recipient_email, subject, body_html)
+    except Exception as e:
+        logger.error(f"Scheduler: Failed to send daily activation summary: {e}", exc_info=True)
+
+
+def send_daily_activation_summary_with_context(app):
+    with app.app_context():
+        send_daily_activation_summary()
+
 
 def trigger_scheduled_activation_invites_with_context(app):
-    """Wrapper to ensure Flask app context for the activation invite job."""
     with app.app_context():
         trigger_scheduled_activation_invites()
 
-# --- End new functions ---
 
 def start_scheduler(app):
-    """Initializes and starts the background scheduler."""
-    # Initialize sent emails file if it doesn't exist
+    if not os.path.exists(ACTIVATION_PROGRESS_FILE):
+        logger.info(f"Creating initial activation progress file: {ACTIVATION_PROGRESS_FILE}")
+        load_activation_progress()
+
     if not os.path.exists(SENT_EMAILS_FILE):
-        try:
-            logger.info(f"Creating initial sent emails file: {SENT_EMAILS_FILE}")
-            with open(SENT_EMAILS_FILE, "w") as file:
-                json.dump([], file)
-        except IOError as e:
-            logger.error(
-                f"Failed to create initial sent emails file {SENT_EMAILS_FILE}: {e}"
-            )
+        logger.info(f"Creating initial sent emails file: {SENT_EMAILS_FILE}")
+        save_sent_emails(set())
 
     if not scheduler.running:
-        # Add the job to run every hour, using the context wrapper
         scheduler.add_job(
             func=check_and_send_reminders_with_context,
             trigger="interval",
             hours=1,
             id="reminder_job",
             replace_existing=True,
-            kwargs={"app": app},  # Pass app to the wrapper, which expects it
+            kwargs={"app": app},
         )
 
-        # Add the new job for sending activation invites (e.g., daily at 3 AM)
         scheduler.add_job(
             func=trigger_scheduled_activation_invites_with_context,
             trigger="cron",
-            hour=3,
+            hour=15,
             minute=0,
             id="activation_invite_job",
+            replace_existing=True,
+            kwargs={"app": app}
+        )
+
+        scheduler.add_job(
+            func=send_daily_activation_summary_with_context,
+            trigger="cron",
+            hour=15,
+            minute=3,
+            id="daily_activation_summary_job",
             replace_existing=True,
             kwargs={"app": app}
         )
@@ -239,23 +418,35 @@ def start_scheduler(app):
         scheduler.start()
         logger.info("⏰ Reminder scheduler started.")
         logger.info("📧 Activation invite scheduler job added.")
+        logger.info("📊 Daily activation summary job added.")
     else:
         logger.info("⏰ Reminder scheduler already running.")
         if not scheduler.get_job("activation_invite_job"):
             scheduler.add_job(
                 func=trigger_scheduled_activation_invites_with_context,
                 trigger="cron",
-                hour=3,
+                hour=15,
                 minute=0,
                 id="activation_invite_job",
                 replace_existing=True,
                 kwargs={"app": app}
             )
             logger.info("📧 Activation invite scheduler job added to already running scheduler.")
+        
+        if not scheduler.get_job("daily_activation_summary_job"):
+            scheduler.add_job(
+                func=send_daily_activation_summary_with_context,
+                trigger="cron",
+                hour=15,
+                minute=3,
+                id="daily_activation_summary_job",
+                replace_existing=True,
+                kwargs={"app": app}
+            )
+            logger.info("📊 Daily activation summary job added to already running scheduler.")
 
 
 def shutdown_scheduler():
-    """Shuts down the scheduler gracefully."""
     if scheduler.running:
         logger.info("Shutting down reminder scheduler...")
         scheduler.shutdown()
@@ -265,7 +456,6 @@ def shutdown_scheduler():
 
 
 if __name__ == "__main__":
-    # For testing purposes
     from flask import Flask
 
     app = Flask(__name__)
