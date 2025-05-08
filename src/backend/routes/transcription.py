@@ -420,6 +420,14 @@ def osint_lookup():
     guest_name = data.get("guest_name")
     if not guest_name:
         return jsonify({"error": "Missing guest name"}), 400
+    user_id = session.get("user_id")
+    if not user_id:
+        return jsonify({"error": "Authentication required"}), 401
+
+    try:
+        consume_credits(user_id, "ai_osint")
+    except ValueError as e:
+        return jsonify({"error": str(e), "redirect": "/store"}), 403
 
     try:
         osint_info = get_osint_info(guest_name)
