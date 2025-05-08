@@ -567,6 +567,7 @@ section#index-get-started {
   justify-content: center;
   flex-direction: column;
   text-align: center;
+  position: relative;
 }
 
 section#index-get-started h1 {
@@ -603,7 +604,6 @@ section#index-get-started a.button.animate {
   animation: ease-in-out animate-pop-in 0.5s, ease-in-out animate-button-glow 2s infinite;
   animation-fill-mode: forwards;
 }
- 
 
 section#index-get-started button:hover, section#index-get-started a.button:hover {
   opacity: 0.95;
@@ -612,6 +612,26 @@ section#index-get-started button:hover, section#index-get-started a.button:hover
   text-decoration: none;
   animation: none;
 }
+
+section#index-get-started .get-started-lottie {
+  width: 470px;
+  height: 470px;
+  position: absolute;
+  display: block;
+}
+section#index-get-started .get-started-lottie#get-started-animated-lottie-1 {
+  top: 0;
+  right: 0;
+}
+section#index-get-started .get-started-lottie#get-started-animated-lottie-2 {
+  bottom: 0;
+  left: 0;
+  rotate: 180deg;
+}
+section#index-get-started .get-started-lottie svg g {
+  animation: linear animate-lottie 8s infinite;
+}
+
 
 
 /* * * * * * * * */
@@ -674,6 +694,15 @@ section#index-get-started button:hover, section#index-get-started a.button:hover
   }
   100% {
     box-shadow: 0px 0px 0px var(--index-highlight-color);
+  }
+}
+
+@keyframes animate-lottie {
+  0% {
+    transform: matrix(0,1,-1,0,306,235);
+  }
+  100% {
+    transform: matrix(0,1,-1,0,778,707)
   }
 }
 
@@ -920,6 +949,13 @@ section#index-get-started button:hover, section#index-get-started a.button:hover
     margin-bottom: 0px;
   }
 
+}
+
+@media (max-width: 800px) {
+  /* Get Starterd Section */
+  section#index-get-started .get-started-lottie {
+    display: none;
+  }
 }
 
 @media (max-width: 600px) {
