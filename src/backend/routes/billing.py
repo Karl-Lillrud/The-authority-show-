@@ -215,9 +215,9 @@ def payment_success():
 
         # Omdirigera användaren till lämplig sida
         if plan:  # Om det var en prenumeration inblandad
-            return redirect("/account?subscription_updated=true#settings-purchases")
+            return redirect("/store?subscription_updated=true#settings-purchases")
         else:  # Annars till dashboard eller butik/historik
-            return redirect("/dashboard?purchase_success=true")
+            return redirect("/store?purchase_success=true")
     except Exception as e:
         logger.error(f"Payment processing error: {str(e)}")
         return jsonify({"error": str(e)}), 500
