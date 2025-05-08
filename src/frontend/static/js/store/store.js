@@ -12,35 +12,49 @@ document.addEventListener("DOMContentLoaded", async () => {
   // Återställ checkout-knappen vid sidladdning
   resetCheckoutButton();
   
-  const continueShoppingBtn = document.getElementById('continueShoppingBtn');
-  const successPopup = document.getElementById('success-popup');
+  await handlePurchaseSuccess();
+  setupContinueShoppingButton();
+});
 
-  // Removes Cart Data stored in localstorage after successful purchase
+async function handlePurchaseSuccess() {
   const urlParams = new URLSearchParams(window.location.search);
   const purchaseSuccess = urlParams.get("purchase_success") === "true";
   const subscriptionUpdated = urlParams.get("subscription_updated") === "true";
 
   if (purchaseSuccess || subscriptionUpdated) {
     localStorage.removeItem("podmanager_cart");
-
-    // Remove the parameters from the URL
-    const url = new URL(window.location.href);
-    if (purchaseSuccess) url.searchParams.delete("purchase_success");
-    if (subscriptionUpdated) url.searchParams.delete("subscription_updated");
-    window.history.replaceState({}, document.title, url.href);
-
-    successPopup.style.display = 'flex';
-
-    // If reload is absolutely necessary, delay it (but try to avoid it)
-    // setTimeout(() => { window.location.reload(); }, 500); // Reload after 0.5 seconds
+    removePurchaseParamsFromURL(urlParams, purchaseSuccess, subscriptionUpdated);
+    displaySuccessPopup();
   }
+}
+
+function removePurchaseParamsFromURL(urlParams, purchaseSuccess, subscriptionUpdated) {
+  const url = new URL(window.location.href);
+  if (purchaseSuccess) url.searchParams.delete("purchase_success");
+  if (subscriptionUpdated) url.searchParams.delete("subscription_updated");
+  window.history.replaceState({}, document.title, url.href);
+}
+
+function displaySuccessPopup() {
+  const successPopup = document.getElementById('success-popup');
+  if (successPopup) {
+    successPopup.style.display = 'flex';
+  }
+}
+
+function setupContinueShoppingButton() {
+  const continueShoppingBtn = document.getElementById('continueShoppingBtn');
+  const successPopup = document.getElementById('success-popup');
+
   if (continueShoppingBtn) {
     continueShoppingBtn.addEventListener('click', () => {
-        window.location.reload();
+      window.location.reload();
+      if (successPopup) {
         successPopup.style.display = 'none';
-      });
+      }
+    });
   }
-});
+}
 
 async function initializeStripe() {
   try {
