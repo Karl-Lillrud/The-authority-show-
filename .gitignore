@@ -1,6 +1,8 @@
 src/venv/
 readme.md
 venv/
+.venv/
+venv./
 
 # Ignore Python bytecode files
 *.pyc
