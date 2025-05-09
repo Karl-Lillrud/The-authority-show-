@@ -302,12 +302,17 @@ function showTab(tabName) {
                 <p><strong>Original Video</strong></p>
                 <video id="originalVideoPlayer" controls style="width: 100%"></video>
             </div>
-            <button class="btn ai-edit-button" onclick="enhanceVideo()">
-            ${labelWithCredits("Enhance Video", "video_enhancement")}
-            </button>
+            <div class="button-group" style="margin-bottom: 1rem;">
+                <button class="btn ai-edit-button" id="enhanceVideoBtn" onclick="enhanceVideo()">
+                    ${labelWithCredits("Enhance Video", "video_enhancement")}
+                </button>
+                <button class="btn ai-edit-button" id="resetVideoBtn" onclick="resetVideo()" style="display: none;">
+                    Reset
+                </button>
+            </div>
             <div id="videoResult"></div>
             <a id="downloadVideo" class="btn ai-edit-button" download="enhanced_video.mp4" style="display: none;">
-            Download Enhanced Video
+                Download Enhanced Video
             </a>
         `;
     }
