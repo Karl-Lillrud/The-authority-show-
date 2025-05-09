@@ -4,10 +4,11 @@ document.addEventListener("DOMContentLoaded", function () {
   const sendLoginLinkButton = document.getElementById("send-login-link-button");
   const emailInput = document.getElementById("email");
 
-  // Handle "Send Log-In Link" button click
+  // Handle "Get Log-In Link" button click
   if (sendLoginLinkButton) {
     sendLoginLinkButton.addEventListener("click", async function () {
       const email = emailInput.value.trim();
+      const originalButtonText = sendLoginLinkButton.textContent;
 
       if (!email) {
         errorMessage.textContent = "Please enter your email address.";
@@ -17,6 +18,10 @@ document.addEventListener("DOMContentLoaded", function () {
       }
 
       try {
+        // Change button text to "Sending..."
+        sendLoginLinkButton.textContent = "Sending...";
+        sendLoginLinkButton.disabled = true;
+
         const response = await fetch("/send-login-link", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -42,6 +47,10 @@ document.addEventListener("DOMContentLoaded", function () {
           "An unexpected error occurred while sending the login link. Please try again later.";
         errorMessage.style.display = "block";
         successMessage.style.display = "none";
+      } finally {
+        // Restore button text and enable it
+        sendLoginLinkButton.textContent = originalButtonText;
+        sendLoginLinkButton.disabled = false;
       }
     });
   } else {
