@@ -1169,3 +1169,18 @@ body.dark-mode .owner-name,
 body.dark-mode .owner-email {
   color: var(--text-color-dark);
 }
+
+
+.form-group-buttons {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+#createPodcast {
+  width: auto;
+}
+
+#createPodcast, #goToEmailSection {
+  min-height: 34px; 
+}
