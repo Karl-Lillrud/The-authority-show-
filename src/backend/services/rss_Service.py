@@ -60,9 +60,26 @@ class RSSService:
 
     def parse_rss_data(self, feed_content, feed_url):
         try:
+            # First try to parse with feedparser
             feed = feedparser.parse(feed_content)
             logger.info(f"Feedparser parsed feed for URL: {feed_url}. Feed title: {feed.feed.get('title', 'N/A')}")
             logger.info(f"Number of entries found by feedparser: {len(feed.entries)}")
+
+            # Parse XML directly for iTunes namespace
+            root = ET.fromstring(feed_content)
+            itunes_ns = {'itunes': 'http://www.itunes.com/dtds/podcast-1.0.dtd'}
+            
+            # Get iTunes owner information
+            itunes_owner = root.find('.//itunes:owner', itunes_ns)
+            owner_name = None
+            owner_email = None
+            
+            if itunes_owner is not None:
+                owner_name = itunes_owner.find('itunes:name', itunes_ns)
+                owner_email = itunes_owner.find('itunes:email', itunes_ns)
+                owner_name = owner_name.text if owner_name is not None else None
+                owner_email = owner_email.text if owner_email is not None else None
+                logger.info(f"Found iTunes owner info - Name: {owner_name}, Email: {owner_email}")
 
             if feed.bozo:
                 bozo_exception_type = type(feed.bozo_exception).__name__
@@ -84,9 +101,9 @@ class RSSService:
                 "generator": feed.feed.get("generator"),
                 "author": feed.feed.get("author_detail", {}).get("name") if feed.feed.get("author_detail") else feed.feed.get("author"),
                 "itunesOwner": {
-                    "name": feed.feed.get("itunes_owner", {}).get("name"),
-                    "email": feed.feed.get("itunes_owner", {}).get("email"),
-                } if feed.feed.get("itunes_owner") else None,
+                    "name": owner_name or feed.feed.get("itunes_author"),
+                    "email": owner_email or feed.feed.get("itunes_email"),
+                } if (owner_name or owner_email or feed.feed.get("itunes_author") or feed.feed.get("itunes_email")) else None,
                 "itunesType": feed.feed.get("itunes_type"),
                 "categories": [],
                 "socialMedia": [],
