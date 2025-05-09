@@ -8,48 +8,47 @@ export function renderWorkflowEditor(state, updateUI) {
   const dependencyView = document.getElementById("dependencyView")
   if (!dependencyView) return
 
-  dependencyView.innerHTML = ""
-
   // Create the workflow editor UI
   const workflowEditorHTML = `
     <div class="workflow-editor">
       <div class="workflow-header">
         <h3>Edit Workflow</h3>
-        <p>Select a workflow to edit or create a new one from the current tasks.</p>
+        <p>Select a workflow to edit or create a new one.</p>
       </div>
       
       <div class="workflow-selector">
-        <label for="workflow-select">Select Workflow:</label>
-        <select id="workflow-select" class="form-control">
+        <select id="workflow-select" class="workflow-select">
           <option value="">-- Select a workflow --</option>
-          ${state.workflows
-            .map((workflow) => `<option value="${workflow._id}">${workflow.name || "Unnamed Workflow"}</option>`)
-            .join("")}
+          ${state.workflows.map(workflow => 
+            `<option value="${workflow._id}">${workflow.name || 'Unnamed Workflow'}</option>`
+          ).join('')}
         </select>
-        <button id="load-workflow-btn" class="btn btn-primary" disabled>
-          <i class="fas fa-download"></i> Load Workflow
+        <button id="load-workflow-btn" class="btn-primary" disabled>
+          <i class="fas fa-download"></i> Load
+        </button>
+        <button id="create-workflow-btn" class="btn-success">
+          <i class="fas fa-plus"></i> Create New
         </button>
       </div>
-      
-      <div class="workflow-tasks-container">
-        <div class="workflow-tasks-header">
-          <h4>Workflow Tasks</h4>
-          <button id="add-workflow-task-btn" class="btn btn-sm btn-primary" disabled>
-            <i class="fas fa-plus"></i> Add Task
+
+      <div id="workflow-tasks" class="workflow-tasks">
+        <div class="workflow-empty">
+          <p>Select a workflow to view and manage tasks</p>
+        </div>
+      </div>
+
+      <div class="workflow-actions">
+        <button id="add-task-btn" class="btn-success" disabled>
+          <i class="fas fa-plus"></i> Add Task
+        </button>
+        <div>
+          <button id="save-workflow-btn" class="btn-primary" disabled>
+            <i class="fas fa-save"></i> Save Changes
+          </button>
+          <button id="delete-workflow-btn" class="btn-danger" disabled>
+            <i class="fas fa-trash"></i> Delete Workflow
           </button>
         </div>
-        <div id="workflow-tasks" class="workflow-tasks">
-          <p class="empty-state">Select a workflow to view and edit its tasks</p>
-        </div>
-      </div>
-      
-      <div class="workflow-actions">
-        <button id="save-workflow-changes-btn" class="btn btn-success" disabled>
-          <i class="fas fa-save"></i> Save Changes
-        </button>
-        <button id="delete-workflow-btn" class="btn btn-danger" disabled>
-          <i class="fas fa-trash"></i> Delete Workflow
-        </button>
       </div>
     </div>
   `
@@ -60,16 +59,22 @@ export function renderWorkflowEditor(state, updateUI) {
   const workflowSelect = document.getElementById("workflow-select")
   const loadWorkflowBtn = document.getElementById("load-workflow-btn")
   const createWorkflowBtn = document.getElementById("create-workflow-btn")
-  const saveChangesBtn = document.getElementById("save-workflow-changes-btn")
+  const saveWorkflowBtn = document.getElementById("save-workflow-btn")
   const deleteWorkflowBtn = document.getElementById("delete-workflow-btn")
+  const addTaskBtn = document.getElementById("add-task-btn")
 
+  // Enable/disable buttons based on selection
   if (workflowSelect) {
     workflowSelect.addEventListener("change", () => {
-      loadWorkflowBtn.disabled = !workflowSelect.value
-      deleteWorkflowBtn.disabled = !workflowSelect.value
+      const hasSelection = !!workflowSelect.value
+      loadWorkflowBtn.disabled = !hasSelection
+      saveWorkflowBtn.disabled = !hasSelection
+      deleteWorkflowBtn.disabled = !hasSelection
+      addTaskBtn.disabled = !hasSelection
     })
   }
 
+  // Load workflow button
   if (loadWorkflowBtn) {
     loadWorkflowBtn.addEventListener("click", () => {
       const workflowId = workflowSelect.value
@@ -79,19 +84,24 @@ export function renderWorkflowEditor(state, updateUI) {
     })
   }
 
+  // Create workflow button
   if (createWorkflowBtn) {
     createWorkflowBtn.addEventListener("click", () => {
       showCreateWorkflowModal(state, updateUI)
     })
   }
 
-  if (saveChangesBtn) {
-    saveChangesBtn.addEventListener("click", () => {
-      saveWorkflowChanges(state, updateUI)
+  // Save changes button
+  if (saveWorkflowBtn) {
+    saveWorkflowBtn.addEventListener("click", () => {
+      const workflowId = workflowSelect.value
+      if (workflowId) {
+        saveWorkflowChanges(state, updateUI)
+      }
     })
   }
 
-  // Add event listener for delete workflow button
+  // Delete workflow button
   if (deleteWorkflowBtn) {
     deleteWorkflowBtn.addEventListener("click", () => {
       const workflowId = workflowSelect.value
@@ -101,10 +111,9 @@ export function renderWorkflowEditor(state, updateUI) {
     })
   }
 
-  // Add event listener for add task button
-  const addWorkflowTaskBtn = document.getElementById("add-workflow-task-btn")
-  if (addWorkflowTaskBtn) {
-    addWorkflowTaskBtn.addEventListener("click", () => {
+  // Add task button
+  if (addTaskBtn) {
+    addTaskBtn.addEventListener("click", () => {
       const workflowId = workflowSelect.value
       if (workflowId) {
         addTaskToWorkflow(workflowId, state, updateUI)
@@ -715,7 +724,7 @@ export function showCreateWorkflowModal(state, updateUI) {
 
       const createBtn = document.getElementById("create-new-workflow-btn")
       createBtn.disabled = false
-      createBtn.innerHTML = "Create Workflow"
+      createBtn.innerHTML = originalText
     }
   })
 }
