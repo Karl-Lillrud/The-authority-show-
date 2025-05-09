@@ -536,8 +536,8 @@ document.addEventListener("DOMContentLoaded", async () => {
           ${
             rssData.itunesOwner?.name || rssData.itunesOwner?.email
               ? `
-              <h3 class="podcast-section-title">Owner</h3>
               <div class="podcast-owner">
+                <h3 class="podcast-section-title">Owner</h3>
                 ${rssData.itunesOwner.name ? `<p><i class="fas fa-user"></i> ${rssData.itunesOwner.name}</p>` : ""}
                 ${
                   rssData.itunesOwner.email
