@@ -11,8 +11,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends ffmpeg && rm -r
 # Copy only requirements.txt first to leverage Docker caching
 COPY src/requirements.txt /app/src/requirements.txt
 
-# Install dependencies
-RUN pip install --no-cache-dir -r /app/src/requirements.txt
+# Install dependencies with verbose logging
+RUN pip install --no-cache-dir -vvv -r /app/src/requirements.txt
 
 # Copy the .env file from the root directory to /app
 COPY .env /app/.env
