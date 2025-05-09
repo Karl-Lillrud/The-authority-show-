@@ -18,7 +18,7 @@
   width: 25%;
   position: fixed;
   top: 48%;
-  left: 2%;
+  right: 2%;
   transform: translateY(-50%);
   padding: 20px;
   border-radius: 40px;
@@ -125,8 +125,8 @@
     width: 90%;
     height: auto;
     padding: 20px;
-    left: 50%; /* center horizontally */
-    transform: translate(-50%, -50%); /* adjust to center vertically & horizontally */
+    right: 50%;
+    transform: translate(50%, -50%);
   }
 
   .button {
@@ -158,12 +158,14 @@
 @media screen and (max-width: 1200px) {
   .center-box {
     width: 35%;
+    right: 2%;
   }
 }
 
 @media screen and (max-width: 992px) {
   .center-box {
     width: 45%;
+    right: 2%;
   }
 }
 
@@ -172,6 +174,7 @@
     width: 60%;
     border-radius: 30px;
     padding: 20px 10px;
+    right: 2%;
   }
 
   .logo-container {
