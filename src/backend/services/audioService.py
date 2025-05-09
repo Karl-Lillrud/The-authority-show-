@@ -729,31 +729,39 @@ class AudioService:
         ])
         
         prompt = f"""
-        You are an expert sound designer for podcasts and audio content.
-        
-        Below is a transcript with timestamps. Create a sound effects (SFX) plan that enhances the content.
-        
-        For each sound effect, provide:
-        1. A brief description of the sound
-        2. The exact start time (in seconds)
-        3. The exact end time (in seconds)
-        
-        Choose sound effects that:
-        - Enhance the emotional impact
-        - Illustrate concepts mentioned
-        - Create appropriate atmosphere
-        - Emphasize key moments
-        
-        TRANSCRIPT WITH TIMESTAMPS:
+        You are a professional podcast sound designer.
+
+        Your task is to plan highly creative and immersive sound effects (SFX) that align with the emotions, actions, or environments described in the transcript below. Use the timestamps to precisely place the sounds.
+
+        For each sound effect, return:
+        - A brief but vivid description of the sound
+        - The start time in seconds
+        - The end time in seconds
+
+        Be cinematic and imaginative, but ensure the effects:
+        - Enhance storytelling or emotional tone
+        - Reflect the literal or implied context
+        - Are suitable for a podcast (not too loud or distracting)
+
+        EXAMPLES:
+        If someone says "It was thundering outside", suggest "Distant thunder rumbling".
+        If a person whispers nervously, suggest "Tense ambient drone".
+        If someone opens a door, suggest "Old wooden door creaking open".
+
+        TRANSCRIPT SEGMENTS:
         {segments_text}
-        
-        FORMAT YOUR RESPONSE AS A JSON ARRAY:
+
+        FORMAT:
         [
-          {{"description": "brief description", "start": start_time_in_seconds, "end": end_time_in_seconds}},
-          ...
+        {{
+            "description": "sound description",
+            "start": start_time,
+            "end": end_time
+        }},
+        ...
         ]
-        
-        Limit to 3-5 sound effects total. Be creative but appropriate for the content.
+
+        You can include up to 5 SFX. Skip segments if no effect is needed. Only return the JSON array — no explanation.
         """
         
         logger.info("Sending prompt to OpenAI GPT")
