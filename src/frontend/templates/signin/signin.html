@@ -47,6 +47,30 @@
       />
     </div>
 
+    <div class="overlay"></div>
+
+    <div class="sliding-container">
+      <button class="close-button" aria-label="Close">
+        <i class="fas fa-times"></i>
+      </button>
+      <h2>Podcasting, Reimagined</h2>
+      <p class="subtitle">Grow faster, improve quality, Earn more</p>
+      <p class="no-credit"><i class="fas fa-credit-card"></i> no credit card required</p>
+      
+      <ul class="feature-list">
+        <li><i class="fas fa-robot"></i> Al-powered repetitive tasks</li>
+        <li><i class="fas fa-users"></i> Manage guests & teams</li>
+        <li><i class="fas fa-tasks"></i> Episode checklists</li>
+        <li><i class="fas fa-share-alt"></i> Share-ready content in clicks</li>
+        <li><i class="fas fa-th-large"></i> Everything in one dashboard</li>
+      </ul>
+
+      <a href="{{ url_for('frontend.about_page') }}" class="learn-more-link">
+        Find out more about all our features
+        <i class="fas fa-arrow-right"></i>
+      </a>
+    </div>
+
     <div class="center-box">
       <h1 class="title">Continue to PodManager</h1>
       <div id="success-message" class="success-message" style="display: none"></div>

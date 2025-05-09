@@ -3,6 +3,39 @@ document.addEventListener("DOMContentLoaded", function () {
   const errorMessage = document.getElementById("error-message");
   const sendLoginLinkButton = document.getElementById("send-login-link-button");
   const emailInput = document.getElementById("email");
+  const slidingContainer = document.querySelector(".sliding-container");
+  const overlay = document.querySelector(".overlay");
+  const closeButton = document.querySelector(".close-button");
+
+  // Function to toggle sliding container
+  function toggleSlidingContainer() {
+    slidingContainer.classList.toggle("active");
+    overlay.classList.toggle("active");
+  }
+
+  // Add click event listener only to the About PodManager link
+  const aboutLink = document.querySelector('.policy-links a[href*="about"]');
+  if (aboutLink) {
+    aboutLink.addEventListener('click', (e) => {
+      e.preventDefault();
+      toggleSlidingContainer();
+    });
+  }
+
+  // Add click event listener to the close button
+  if (closeButton) {
+    closeButton.addEventListener('click', (e) => {
+      e.stopPropagation(); // Prevent event from bubbling to container
+      toggleSlidingContainer();
+    });
+  }
+
+  // Add click event listener to the overlay to close the container
+  if (overlay) {
+    overlay.addEventListener('click', () => {
+      toggleSlidingContainer();
+    });
+  }
 
   // Handle "Get Log-In Link" button click
   if (sendLoginLinkButton) {
