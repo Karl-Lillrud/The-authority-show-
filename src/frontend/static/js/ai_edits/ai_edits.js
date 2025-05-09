@@ -1311,14 +1311,21 @@ async function enhanceVideo() {
             body: JSON.stringify({ video_id }),
         });
 
-        if (!enhanceResponse.ok) {
-            throw new Error(`Enhancement failed: ${enhanceResponse.statusText}`);
+        const enhanceResult = await enhanceResponse.json();
+
+        if (enhanceResponse.status === 403) {
+            container.innerHTML = `
+                <p style="color: red;">${enhanceResult.error || "You don't have enough credits."}</p>
+                ${enhanceResult.redirect ? `<a href="${enhanceResult.redirect}" class="btn ai-edit-button">Go to Store</a>` : ""}
+            `;
+            return;
         }
 
-        const enhanceResult = await enhanceResponse.json();
-        const processed_id = enhanceResult.processed_video_id;
-        if (!processed_id) throw new Error("No processed_video_id returned from enhancement.");
+        if (!enhanceResponse.ok || !enhanceResult.processed_video_id) {
+            throw new Error(enhanceResult.error || "Enhancement failed.");
+        }
 
+        const processed_id = enhanceResult.processed_video_id;
         const videoURL = `/get_video/${processed_id}`;
         container.innerHTML = `
             <video controls src="${videoURL}" style="width: 100%; margin-top: 1rem;"></video>
