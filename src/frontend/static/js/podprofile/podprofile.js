@@ -7,6 +7,7 @@ import { fetchAccount, updateAccount } from "/static/requests/accountRequests.js
 document.addEventListener("DOMContentLoaded", async () => {
   // DOM Elements
   initWelcomePopup();
+  initCreatepodcastButton();
   const darkModeToggle = document.getElementById("dark-mode-toggle");
   const goToEmailSection = document.getElementById("goToEmailSection");
   const podNameSection = document.getElementById("pod-name-section");
@@ -746,7 +747,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       }
     }
   }
-
+    
   function getPlatformIcon(platform) {
     const icons = {
       twitter: "fab fa-twitter",
@@ -773,6 +774,15 @@ document.addEventListener("DOMContentLoaded", async () => {
     };
   }
 });
+
+function initCreatepodcastButton() {
+  const createPodcastButton = document.getElementById("createPodcast");
+  if (createPodcastButton) {  
+      createPodcastButton.addEventListener("click", () => {
+      sessionStorage.setItem("Addpodcast", "true");
+      window.location.href = "/podcastmanagement";
+    });
+  }}
 
 function connectGoogleCalendar() {
   const connectCalendarButton = document.getElementById("connectCalendar");

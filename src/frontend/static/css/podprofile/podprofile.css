@@ -1127,3 +1127,17 @@ body.dark-mode .error-container {
   box-shadow: 0 0 10px var(--highlight-color);
   opacity: 0.9;
 }
+
+.form-group-buttons {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+#createPodcast {
+  width: auto;
+}
+
+#createPodcast, #goToEmailSection {
+  min-height: 34px; 
+}
