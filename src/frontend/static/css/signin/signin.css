@@ -119,6 +119,12 @@
   margin: 10px 0;
 }
 
+.title {
+  font-size: 24px;
+  margin-bottom: 15px;
+  
+}
+
 /* Media Queries for Responsiveness */
 @media (max-width: 768px) {
   .center-box {
@@ -183,7 +189,7 @@
   }
 
   .title {
-    font-size: 24px;
+    font-size: 20px;
     margin-bottom: 15px;
   }
 }
