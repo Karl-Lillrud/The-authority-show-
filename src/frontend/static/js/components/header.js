@@ -270,7 +270,7 @@ function setDynamicPageTitle() {
     };
 
     const currentPath = window.location.pathname;
-    const pageTitle = pageTitles[currentPath] || "Store";
+    const pageTitle = pageTitles[currentPath]
     pageTitleElement.textContent = pageTitle;
   }
 }
