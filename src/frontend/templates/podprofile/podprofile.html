@@ -100,7 +100,13 @@
                 paste that URL here.
               </span>
             </div>
-            <input type="url" id="podRss" name="podRss" />
+            <input
+              type="text"
+              id="podRss"
+              name="podRss"
+              data-prefill="{{ pod_rss }}"
+              placeholder="Enter your RSS feed URL"
+            />
           </div>
           <div class="form-group">
             <label for="podName">Podcast's Name</label>

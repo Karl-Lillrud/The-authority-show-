@@ -6,6 +6,7 @@ from backend.services.TeamInviteService import TeamInviteService
 from datetime import datetime, timezone
 import uuid
 import logging
+import os  # Ensure os is imported to use getenv
 
 # Configure logging
 logger = logging.getLogger(__name__)
@@ -17,6 +18,9 @@ invitation_bp = Blueprint("invitation_bp", __name__)
 # Initialize the service once
 invite_service = TeamInviteService()
 
+# Define API_BASE_URL at the module level for clarity, similar to other files
+API_BASE_URL = os.getenv("API_BASE_URL", "http://127.0.0.1:8000").rstrip('/')
+
 
 @invitation_bp.route("/send_invitation", methods=["POST"])
 def send_invitation():
@@ -24,41 +28,42 @@ def send_invitation():
     try:
         logger.info("Received send_invitation request")
         if not hasattr(g, "user_id") or not g.user_id:
-            return jsonify({"error": "Unauthorized"}), 401
+            logger.warning("User ID not found in g context for send_invitation.")
+            return jsonify({"error": "User not authenticated"}), 401
 
         # Fetch the account document from MongoDB for the logged-in user
-        user_account = collection.database.Accounts.find_one({"userId": g.user_id})
+        # Query Accounts collection using ownerId which corresponds to Users._id
+        user_account = collection.database.Accounts.find_one({"ownerId": g.user_id})
+
         if not user_account:
-            logger.error("No account associated with this user")
+            logger.error(f"No account associated with this user ID (ownerId): {g.user_id}")
             return jsonify({"error": "No account associated with this user"}), 403
 
-        # Fetch the account ID that the user already has (do not override with a new one)
-        if "id" in user_account:
-            account_id = user_account["id"]
-        else:
-            account_id = str(user_account["_id"])
-        logger.info(f"Found account {account_id} for user {g.user_id}")
+        user_email = user_account.get("email")
+        if not user_email:
+            logger.error(f"User account {user_account.get('_id')} found but has no email address.")
+            return jsonify({"error": "User account has no email address"}), 400
+        
+        # Assuming send_email is a generic email sending utility
+        # You might want a more specific template or subject for this beta invitation
+        subject = "Your PodManager Beta Access"
+        # Render an HTML template for the email body
+        # Example: html_body = render_template('emails/beta_invitation_email.html', user_name=user_account.get('name'))
+        # For now, using a simple text body
+        body = "Thank you for your interest! Here's your access to the PodManager beta." # Replace with actual content or template
 
-        # Send the invitation email
-        body = render_template("beta-email/podmanager-beta-invite.html")
-        send_email(user_account["email"], "Invitation to PodManager Beta", body)
-        logger.info("Invitation email sent successfully")
-        return (
-            jsonify({"success": True, "message": "Invitation email sent successfully"}),
-            201,
-        )
+        email_sent = send_email(user_email, subject, body) # Assuming send_email returns a boolean or throws an exception
+
+        if email_sent: # Adjust based on what send_email returns
+            logger.info(f"Beta invitation email successfully sent to {user_email}")
+            return jsonify({"message": "Invitation email sent successfully!"}), 200
+        else:
+            logger.error(f"Failed to send beta invitation email to {user_email}")
+            return jsonify({"error": "Failed to send invitation email"}), 500
 
     except Exception as e:
-        logger.error(f"Failed to send invitation email: {e}")
-        return (
-            jsonify(
-                {
-                    "success": False,
-                    "error": f"Failed to send invitation email: {str(e)}",
-                }
-            ),
-            500,
-        )
+        logger.error(f"Error sending invitation: {e}", exc_info=True)
+        return jsonify({"error": "An unexpected error occurred"}), 500
 
 
 @invitation_bp.route("/invite_email_body", methods=["GET"])
@@ -112,7 +117,7 @@ def send_team_invite():
 
         # Ensure the correct role is included in the registration URL
         registration_url = (
-            f"http://127.0.0.1:8000/register_team_member?token={invite_token}"
+            f"{API_BASE_URL}/register_team_member?token={invite_token}"
             f"&teamName={team_name}&role={role}&email={email}"
         )
         logger.info("Generated registration URL: %s", registration_url)  # Debug log
