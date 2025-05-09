@@ -418,34 +418,34 @@ def start_scheduler(flask_app):
         kwargs={"app": app},
     )
 
-    # Activation invites at 13:45
+    # Activation invites at 14:30
     scheduler.add_job(
         func=trigger_scheduled_activation_invites_with_context,
         trigger="cron",
-        hour=13,
-        minute=45,
+        hour=14,
+        minute=30,
         id="activation_invite_job",
         replace_existing=True,
         kwargs={"app": app}
     )
 
-    # Daily activation summary at 14:45
+    # Daily activation summary at 15:30
     scheduler.add_job(
         func=send_daily_activation_summary_with_context,
         trigger="cron",
-        hour=14,
-        minute=45,
+        hour=15,
+        minute=30,
         id="daily_activation_summary_job",
         replace_existing=True,
         kwargs={"app": app}
     )
 
-    # Daily summary email at 14:45
+    # Daily summary email at 15:30
     scheduler.add_job(
         send_daily_summary_email_job,
-        trigger=CronTrigger(hour=14, minute=45),
+        trigger=CronTrigger(hour=15, minute=30),
         id="send_daily_summary_email_job",
-        name="Send daily summary email at 14:45",
+        name="Send daily summary email at 15:30",
         replace_existing=True,
     )
 
