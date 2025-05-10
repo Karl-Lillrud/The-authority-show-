@@ -429,22 +429,22 @@ def start_scheduler(flask_app):
             kwargs={"app": app},
         )
 
-        # Activation invites at 14:00
+        # Activation invites at 06:00
         scheduler.add_job(
             func=trigger_scheduled_activation_invites_with_context,
             trigger="cron",
-            hour=14,
+            hour=6,
             minute=0,
             id="activation_invite_job",
             replace_existing=True,
             kwargs={"app": app}
         )
 
-        # Daily activation summary at 15:00
+        # Daily activation summary at 07:00
         scheduler.add_job(
             func=send_daily_activation_summary_with_context,
             trigger="cron",
-            hour=15,
+            hour=7,
             minute=0,
             id="daily_activation_summary_job",
             replace_existing=True,
