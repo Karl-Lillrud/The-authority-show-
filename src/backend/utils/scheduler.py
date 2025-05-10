@@ -30,7 +30,7 @@ INITIAL_BATCH_SIZE = int(os.getenv("ACTIVATION_INITIAL_BATCH_SIZE", 30))
 INCREMENT_PERCENTAGE = float(os.getenv("ACTIVATION_INCREMENT_PERCENTAGE", 0.25))
 
 scheduler = BackgroundScheduler(daemon=True)
-_scheduler_initialized_jobs = False  # Flag to track if jobs have been added
+_scheduler_initialized_jobs = False  # Flag to track if jobs have been added for the current scheduler instance
 
 guest_repo = GuestRepository()
 episode_repo = EpisodeRepository()
@@ -395,7 +395,30 @@ def start_scheduler(flask_app):
     global app, _scheduler_initialized_jobs
     app = flask_app
 
-    if not _scheduler_initialized_jobs:
+    # Determine if this process should initialize and start the scheduler
+    should_run_scheduler_in_this_process = False
+    if flask_app.debug: # Werkzeug reloader is active
+        if os.environ.get('WERKZEUG_RUN_MAIN') == 'true':
+            logger.info("=== [SCHEDULER] Context: Werkzeug child process (debug mode). Scheduler will be initialized here. ===")
+            should_run_scheduler_in_this_process = True
+        else:
+            logger.info("=== [SCHEDULER] Context: Werkzeug parent/monitor process (debug mode). Scheduler will NOT be initialized here. ===")
+            # Assign the scheduler object to the app for potential access, but don't start it.
+            flask_app.scheduler = scheduler
+            return # Explicitly return for Werkzeug parent process
+    else: # Not in debug mode (e.g., production with Gunicorn, or Flask run with debug=False)
+        logger.info("=== [SCHEDULER] Context: Non-debug mode (e.g., production). Scheduler will be initialized here. ===")
+        should_run_scheduler_in_this_process = True
+
+    if not should_run_scheduler_in_this_process:
+        # This case should ideally not be reached if the logic above is correct,
+        # but as a safeguard:
+        logger.info("=== [SCHEDULER] Context: Undetermined or non-primary process. Scheduler will NOT be initialized here. ===")
+        flask_app.scheduler = scheduler
+        return
+
+    # --- Proceed to add jobs and start scheduler only if in the correct process ---
+    if not _scheduler_initialized_jobs:  # Add jobs if not already added for this scheduler instance
         logger.info("=== [SCHEDULER] Initializing and adding jobs... ===")
         scheduler.add_job(
             func=check_and_send_reminders_with_context,
@@ -406,23 +429,23 @@ def start_scheduler(flask_app):
             kwargs={"app": app},
         )
 
-        # Activation invites at 13:06
+        # Activation invites at 13:26
         scheduler.add_job(
             func=trigger_scheduled_activation_invites_with_context,
             trigger="cron",
             hour=13,
-            minute=6,
+            minute=26,
             id="activation_invite_job",
             replace_existing=True,
             kwargs={"app": app}
         )
 
-        # Daily activation summary at 13:08
+        # Daily activation summary at 13:28
         scheduler.add_job(
             func=send_daily_activation_summary_with_context,
             trigger="cron",
             hour=13,
-            minute=8,
+            minute=28,
             id="daily_activation_summary_job",
             replace_existing=True,
             kwargs={"app": app}
@@ -431,43 +454,24 @@ def start_scheduler(flask_app):
         _scheduler_initialized_jobs = True
         logger.info("=== [SCHEDULER] Jobs added. ===")
     else:
-        logger.info("=== [SCHEDULER] Jobs already initialized. Skipping add_job calls. ===")
+        logger.info("=== [SCHEDULER] Jobs already initialized for this scheduler instance. Skipping add_job calls. ===")
 
-    # Determine if the scheduler should be started in this specific process.
-    # WERKZEUG_RUN_MAIN is set to 'true' in the child process spawned by Werkzeug's reloader.
-    # WERKZEUG_PID is set in the parent Werkzeug process that monitors for changes.
-    # In a production environment (e.g., Gunicorn), neither of these Werkzeug-specific env vars will be set.
-    
-    process_is_werkzeug_child = os.environ.get("WERKZEUG_RUN_MAIN") == "true"
-    process_is_werkzeug_reloader_parent = os.environ.get("WERKZEUG_PID") is not None
-
-    should_start_scheduler_in_this_process = False
-
-    if process_is_werkzeug_child:
-        # This is the actual worker process when using Flask's reloader.
-        should_start_scheduler_in_this_process = True
-        logger.info("=== [SCHEDULER] Context: Werkzeug child process. Scheduler will attempt to start. ===")
-    elif not process_is_werkzeug_reloader_parent:
-        # This is not the Werkzeug reloader's parent process.
-        # It could be a production environment (e.g., Gunicorn, uWSGI) or Flask run without reloader.
-        should_start_scheduler_in_this_process = True
-        logger.info("=== [SCHEDULER] Context: Non-Werkzeug reloader environment (e.g., production or no reloader). Scheduler will attempt to start. ===")
+    if not scheduler.running:
+        try:
+            scheduler.start()
+            logger.info("=== [SCHEDULER] Scheduler started successfully by this process. ===")
+        except Exception as e: 
+            if "SchedulerAlreadyRunningError" in str(type(e)) or "scheduler has already been started" in str(e).lower():
+                 logger.info("=== [SCHEDULER] Scheduler was already running when start() was called by this process. ===")
+            else:
+                 logger.error(f"=== [SCHEDULER] Failed to start scheduler: {e}", exc_info=True)
     else:
-        # This is the Werkzeug reloader's parent/monitor process. Do not start scheduler here.
-        logger.info("=== [SCHEDULER] Context: Werkzeug parent/monitor process. Scheduler will NOT start. ===")
-
-    if should_start_scheduler_in_this_process:
-        if not scheduler.running:
-            try:
-                scheduler.start()
-                logger.info("=== [SCHEDULER] Scheduler started successfully. ===")
-            except Exception as e:
-                logger.error(f"=== [SCHEDULER] Failed to start scheduler: {e}", exc_info=True)
-        else:
-            logger.info("=== [SCHEDULER] Scheduler is already running in this process. ===")
-    else:
-        # Log if not starting, and why, was already done above.
-        pass
+        logger.info("=== [SCHEDULER] Scheduler is already running in this process. ===")
+        # If scheduler is running, ensure jobs are marked as initialized for this instance
+        # This might be redundant if the above logic is perfect but acts as a safeguard.
+        if not _scheduler_initialized_jobs:
+            logger.warning("=== [SCHEDULER] Scheduler running but jobs flag was false. This state is unexpected. Marking jobs as initialized. ===")
+            _scheduler_initialized_jobs = True
 
     flask_app.scheduler = scheduler
 
