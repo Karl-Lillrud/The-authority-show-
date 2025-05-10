@@ -17,10 +17,12 @@ from dotenv import load_dotenv
 
 logger = logging.getLogger(__name__)
 
-load_dotenv(os.path.join(os.path.dirname(__file__), '..', '..', '.env'))
+# Correct path to .env file (three levels up from src/backend/utils to project root)
+load_dotenv(os.path.join(os.path.dirname(__file__), '..', '..', '..', '.env'))
 
 SENT_EMAILS_FILE = os.path.join(os.path.dirname(__file__), "sent_emails.json")
-XML_FILE_PATH_FOR_ACTIVATION = os.getenv("ACTIVATION_XML_FILE_PATH", "../scraped.xml")
+# XML_FILE_PATH_FOR_ACTIVATION will be loaded from .env; default is fallback
+XML_FILE_PATH_FOR_ACTIVATION = os.getenv("ACTIVATION_XML_FILE_PATH", "src/frontend/static/scraped.xml")  # Default changed to be more sensible if .env fails
 API_BASE_URL_FOR_ACTIVATION = os.getenv("API_BASE_URL", "http://127.0.0.1:8000").rstrip('/')
 
 ACTIVATION_PROGRESS_FILE = os.path.join(os.path.dirname(__file__), "activation_progress.json")
@@ -28,6 +30,8 @@ INITIAL_BATCH_SIZE = int(os.getenv("ACTIVATION_INITIAL_BATCH_SIZE", 30))
 INCREMENT_PERCENTAGE = float(os.getenv("ACTIVATION_INCREMENT_PERCENTAGE", 0.25))
 
 scheduler = BackgroundScheduler(daemon=True)
+_scheduler_initialized_jobs = False  # Flag to track if jobs have been added
+
 guest_repo = GuestRepository()
 episode_repo = EpisodeRepository()
 
@@ -103,8 +107,11 @@ def check_and_send_reminders_with_context(app):
 def _load_podcasts_from_xml_for_scheduler(file_path):
     podcasts = []
     try:
-        actual_file_path = os.path.join(os.path.dirname(__file__), '..', '..', file_path) if not os.path.isabs(file_path) else file_path
-        logger.info(f"Resolved XML file path for activation: {actual_file_path}")  # <--- Add this line
+        # Resolve file_path relative to the project root
+        project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..', '..'))
+        actual_file_path = os.path.join(project_root, file_path) if not os.path.isabs(file_path) else file_path
+        
+        logger.info(f"Resolved XML file path for activation: {actual_file_path}")
 
         if not os.path.exists(actual_file_path):
             logger.error(f"XML file for activation not found at resolved path: {actual_file_path} (original: {file_path})")
@@ -384,82 +391,83 @@ def trigger_scheduled_activation_invites_with_context(app):
         trigger_scheduled_activation_invites()
 
 
-def send_daily_summary_email_job():
-    logger.info("=== [SCHEDULER] Daily summary email job STARTED ===")
-    with app.app_context():
-        logger.info("Scheduler: Running send_daily_summary_email_job")
-        try:
-            today_str = datetime.now().strftime("%Y-%m-%d")
-            activations_sent_count = "N/A (tracking not implemented)"  # Replace with actual logic
-            subject = f"Daily PodManager Activation Summary - {today_str}"
-            body = f"""
-            <html>
-            <body>
-                <h2>PodManager Daily Activation Summary</h2>
-                <p><strong>Date:</strong> {today_str}</p>
-                <p><strong>Total Activation Emails Sent Today:</strong> {activations_sent_count}</p>
-                <p>This is an automated daily summary.</p>
-            </body>
-            </html>
-            """
-            recipients = ["karl.lillrud@gmail.com", "karl.lillrud@lillrud.com"]
-            for recipient_email in recipients:
-                send_email(recipient_email, subject, body, is_html=True)
-            logger.info(f"Daily summary email sent to: {', '.join(recipients)}")
-        except Exception as e:
-            logger.error(f"=== [SCHEDULER] ERROR in daily summary email job: {e}", exc_info=True)
-
-
 def start_scheduler(flask_app):
-    global app
+    global app, _scheduler_initialized_jobs
     app = flask_app
-    scheduler = BackgroundScheduler(daemon=True)
+
+    if not _scheduler_initialized_jobs:
+        logger.info("=== [SCHEDULER] Initializing and adding jobs... ===")
+        scheduler.add_job(
+            func=check_and_send_reminders_with_context,
+            trigger="interval",
+            hours=1,
+            id="reminder_job",
+            replace_existing=True,
+            kwargs={"app": app},
+        )
+
+        # Activation invites at 13:06
+        scheduler.add_job(
+            func=trigger_scheduled_activation_invites_with_context,
+            trigger="cron",
+            hour=13,
+            minute=6,
+            id="activation_invite_job",
+            replace_existing=True,
+            kwargs={"app": app}
+        )
+
+        # Daily activation summary at 13:08
+        scheduler.add_job(
+            func=send_daily_activation_summary_with_context,
+            trigger="cron",
+            hour=13,
+            minute=8,
+            id="daily_activation_summary_job",
+            replace_existing=True,
+            kwargs={"app": app}
+        )
+
+        _scheduler_initialized_jobs = True
+        logger.info("=== [SCHEDULER] Jobs added. ===")
+    else:
+        logger.info("=== [SCHEDULER] Jobs already initialized. Skipping add_job calls. ===")
+
+    # Determine if the scheduler should be started in this specific process.
+    # WERKZEUG_RUN_MAIN is set to 'true' in the child process spawned by Werkzeug's reloader.
+    # WERKZEUG_PID is set in the parent Werkzeug process that monitors for changes.
+    # In a production environment (e.g., Gunicorn), neither of these Werkzeug-specific env vars will be set.
     
-    scheduler.add_job(
-        func=check_and_send_reminders_with_context,
-        trigger="interval",
-        hours=1,
-        id="reminder_job",
-        replace_existing=True,
-        kwargs={"app": app},
-    )
+    process_is_werkzeug_child = os.environ.get("WERKZEUG_RUN_MAIN") == "true"
+    process_is_werkzeug_reloader_parent = os.environ.get("WERKZEUG_PID") is not None
 
-    # Activation invites at 15:30
-    scheduler.add_job(
-        func=trigger_scheduled_activation_invites_with_context,
-        trigger="cron",
-        hour=15,
-        minute=30,
-        id="activation_invite_job",
-        replace_existing=True,
-        kwargs={"app": app}
-    )
+    should_start_scheduler_in_this_process = False
 
-    # Daily activation summary at 16:30
-    scheduler.add_job(
-        func=send_daily_activation_summary_with_context,
-        trigger="cron",
-        hour=16,
-        minute=30,
-        id="daily_activation_summary_job",
-        replace_existing=True,
-        kwargs={"app": app}
-    )
+    if process_is_werkzeug_child:
+        # This is the actual worker process when using Flask's reloader.
+        should_start_scheduler_in_this_process = True
+        logger.info("=== [SCHEDULER] Context: Werkzeug child process. Scheduler will attempt to start. ===")
+    elif not process_is_werkzeug_reloader_parent:
+        # This is not the Werkzeug reloader's parent process.
+        # It could be a production environment (e.g., Gunicorn, uWSGI) or Flask run without reloader.
+        should_start_scheduler_in_this_process = True
+        logger.info("=== [SCHEDULER] Context: Non-Werkzeug reloader environment (e.g., production or no reloader). Scheduler will attempt to start. ===")
+    else:
+        # This is the Werkzeug reloader's parent/monitor process. Do not start scheduler here.
+        logger.info("=== [SCHEDULER] Context: Werkzeug parent/monitor process. Scheduler will NOT start. ===")
 
-    # Daily summary email at 16:30
-    scheduler.add_job(
-        send_daily_summary_email_job,
-        trigger=CronTrigger(hour=16, minute=30),
-        id="send_daily_summary_email_job",
-        name="Send daily summary email at 16:30",
-        replace_existing=True,
-    )
-
-    try:
-        scheduler.start()
-        logger.info("=== [SCHEDULER] Scheduler started successfully with email jobs. ===")
-    except Exception as e:
-        logger.error(f"=== [SCHEDULER] Failed to start scheduler: {e}", exc_info=True)
+    if should_start_scheduler_in_this_process:
+        if not scheduler.running:
+            try:
+                scheduler.start()
+                logger.info("=== [SCHEDULER] Scheduler started successfully. ===")
+            except Exception as e:
+                logger.error(f"=== [SCHEDULER] Failed to start scheduler: {e}", exc_info=True)
+        else:
+            logger.info("=== [SCHEDULER] Scheduler is already running in this process. ===")
+    else:
+        # Log if not starting, and why, was already done above.
+        pass
 
     flask_app.scheduler = scheduler
 
