@@ -433,7 +433,7 @@ def start_scheduler(flask_app):
         scheduler.add_job(
             func=trigger_scheduled_activation_invites_with_context,
             trigger="cron",
-            hour=11,
+            hour=12,
             minute=30,
             id="activation_invite_job",
             replace_existing=True,
@@ -444,7 +444,7 @@ def start_scheduler(flask_app):
         scheduler.add_job(
             func=send_daily_activation_summary_with_context,
             trigger="cron",
-            hour=12,
+            hour=13,
             minute=30,
             id="daily_activation_summary_job",
             replace_existing=True,
