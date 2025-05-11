@@ -9,11 +9,29 @@ document.addEventListener("DOMContentLoaded", () => {
   const buyBtn = document.getElementById("buy-credits-btn");
   if (buyBtn) {
     buyBtn.addEventListener("click", () => {
-      // Remove localStorage dependency and navigate directly to billing
       window.location.href = `/store`;
     });
   }
+
+  // 🔒 Hide unfinished menu links by text content
+  document.querySelectorAll("a").forEach((link) => {
+    const text = link.textContent.trim().toLowerCase();
+    if (
+      text.includes("team management")
+    ) {
+      link.style.display = "none";
+      link.style.pointerEvents = "none";
+    }
+  });
+
+  // Optional: hide dropdowns too
+  const dropdownIds = ["dropdown-lp-content", "headerPodcastDropdown"];
+  dropdownIds.forEach((id) => {
+    const el = document.getElementById(id);
+    if (el) el.style.display = "none";
+  });
 });
+
 
 // 🔽 Landing Page Dropdown
 function toggleLandingPage() {
@@ -252,7 +270,7 @@ function setDynamicPageTitle() {
     };
 
     const currentPath = window.location.pathname;
-    const pageTitle = pageTitles[currentPath] || "Store";
+    const pageTitle = pageTitles[currentPath]
     pageTitleElement.textContent = pageTitle;
   }
 }

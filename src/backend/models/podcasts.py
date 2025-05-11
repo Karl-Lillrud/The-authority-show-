@@ -33,4 +33,4 @@ class PodcastSchema(Schema):
     tagline = fields.Str(allow_none=True)  # Added field
     hostBio = fields.Str(allow_none=True)  # Added field
     hostImage = fields.Str(allow_none=True)  # Added field
-    isImported = fields.Bool(allow_none=True, missing=False)  # Added field, default to False
+    isImported = fields.Bool(allow_none=True, load_default=False)  # Added field, default to False

@@ -254,8 +254,8 @@ def send_login_email(email, login_link):
         """
         logger.info(f"📧 Preparing to send login email to {email}")
 
-        # Print the login link in pink color to the terminal
-        print(f"\033[95mLogin link for {email}: {login_link}\033[0m", flush=True)
+        # Remove color formatting from print statement
+        print(f"Login link for {email}: {login_link}", flush=True)
 
         result = send_email(email, subject, body)
         if result.get("success"):
@@ -496,6 +496,26 @@ def send_activation_email(email, activation_link, podcast_name, artwork_url):
     except Exception as e:
         logger.error(f"❌ Error while sending activation email to {email}: {e}", exc_info=True)
         return {"error": f"Error while sending activation email: {str(e)}"}
+
+
+def send_beta_invite_email(email, user_name=None):
+    """
+    Sends the PodManager beta invite email using the correct HTML template.
+    """
+    subject = "🎉 Welcome to PodManager.ai Beta – New Features Unlocked!"
+    # Render the correct template for the beta invite
+    body = render_template(
+        "beta-email/podmanager-beta-invite.html",
+        user_name=user_name or "Podcaster"
+    )
+    logger.info(f"📧 Preparing to send beta invite email to {email}")
+    image_path = "src/frontend/static/images/PodManagerLogo.png"  # Optional: Add logo if needed
+    result = send_email(email, subject, body, image_path=image_path)
+    if result.get("success"):
+        logger.info(f"✅ Beta invite email sent successfully to {email}")
+    else:
+        logger.error(f"❌ Failed to send beta invite email to {email}: {result.get('error')}")
+    return result
 
 
 @google_calendar_bp.route("/activation/invite", methods=["GET"])

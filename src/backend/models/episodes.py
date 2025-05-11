@@ -28,9 +28,9 @@ class EpisodeSchema(Schema):
     keywords = fields.List(fields.Str(), allow_none=True)
     chapters = fields.List(fields.Dict(), allow_none=True)  # Assuming chapters are dicts
     status = fields.Str(allow_none=True)
-    isHidden = fields.Boolean(missing=False, allow_none=True)
+    isHidden = fields.Boolean(load_default=False, allow_none=True)
     recordingAt = fields.DateTime(allow_none=True)
-    isImported = fields.Boolean(missing=False, allow_none=True)
+    isImported = fields.Boolean(load_default=False, allow_none=True)
     createdAt = fields.DateTime(dump_only=True, data_key="created_at")
     updatedAt = fields.DateTime(dump_only=True, data_key="updated_at")
     highlights = fields.List(fields.Str(), allow_none=True)  # New field for highlights
