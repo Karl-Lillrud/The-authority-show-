@@ -12,6 +12,9 @@
   <link rel="stylesheet" href="/static/css/ai_edits/ai_edits.css" />
   <link rel="stylesheet" href="/static/css/dashboard/dashboard.css" />
   <link rel="stylesheet" href="/static/css/components/variables.css" />
+  <link rel="stylesheet" href="/static/css/dashboard/task.css" />
+
+  
 </head>
 
 <body>
@@ -205,6 +208,18 @@
       </div>
     </div>
   </div>
+
+  <div class="audio-player-wrapper">
+    <audio id="audio"></audio>
+    <button id="play-btn" class="play-btn">▶️</button>
+    <input id="seek-bar" class="seek-bar" type="range" min="0" max="100" value="0">
+    <span id="current-time" class="time-display">0:00</span>
+    <span id="duration">0:00</span>
+    <button id="rewind-btn">⏪</button>
+    <button id="forward-btn">⏩</button>
+    <button id="speed-btn">1x</button>
+</div>
+
 
   <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
   <!-- Load utility functions first -->
