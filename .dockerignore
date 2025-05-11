@@ -1,6 +1,3 @@
-# Exclude sensitive environment file
-.env
-
 # Node or Python dependencies
 node_modules/
 venv/

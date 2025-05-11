@@ -1,6 +1,6 @@
 FROM python:3.12-slim
 
-WORKDIR /app
+WORKDIR /app/
 
 # Set PYTHONPATH to include the src directory
 ENV PYTHONPATH=/app/src
@@ -14,8 +14,9 @@ COPY src/requirements.txt /app/src/requirements.txt
 # Install dependencies
 RUN pip install --no-cache-dir -r /app/src/requirements.txt
 
-# Copy the .env file from the root directory to /app
-COPY .env /app/.env
+# Ensure .env file is in the build context (project root) and not listed in .dockerignore
+# Copy the .env file from the root directory of the build context to /app/.env in the image
+COPY ./.env /app/.env
 
 # Copy the rest of the application
 COPY src/ /app/src/
