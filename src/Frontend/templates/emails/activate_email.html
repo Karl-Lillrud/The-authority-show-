@@ -173,9 +173,9 @@
         <div class="footer">
             <p>© 2025 PodManager&zwnj;.ai. All rights reserved.</p>
             <p>
-                <a href="#" style="color: #999999; text-decoration: underline;">Privacy Policy</a> | 
-                <a href="#" style="color: #999999; text-decoration: underline;">Terms of Service</a> | 
-                <a href="#" style="color: #999999; text-decoration: underline;">Unsubscribe</a>
+                <a href="{{ url_for('frontend.privacy_policy_page', _external=True) }}" style="color: #999999; text-decoration: underline;">Privacy Policy</a> | 
+                <a href="{{ url_for('frontend.terms_of_service_page', _external=True) }}" style="color: #999999; text-decoration: underline;">Terms of Service</a> | 
+                <a href="{{ url_for('Mailing_list_bp.unsubscribe', _external=True) }}" style="color: #999999; text-decoration: underline;">Unsubscribe</a>
             </p>
         </div>
     </div>

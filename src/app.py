@@ -44,6 +44,7 @@ from backend.routes.stripe_config import stripe_config_bp  # Import the renamed 
 from backend.routes.edit_routes import edit_bp
 from backend.routes.enterprise import enterprise_bp  # Import the enterprise blueprint
 from backend.routes.lia import lia_bp  # Corrected: Import lia_bp from backend.routes.lia
+from backend.routes.index import index_bp # This import is correct
 
 if os.getenv("SKIP_VENV_UPDATE", "false").lower() not in ("true", "1", "yes"):
     venvupdate.update_venv_and_requirements()
@@ -84,7 +85,7 @@ app.register_blueprint(dashboard_bp)
 app.register_blueprint(pod_management_bp)
 app.register_blueprint(podtask_bp)
 app.register_blueprint(team_bp)
-app.register_blueprint(Mailing_list_bp)
+app.register_blueprint(Mailing_list_bp)  # <--- Here is the registration
 app.register_blueprint(guest_bp)  # Ensure the guest blueprint is correctly registered
 app.register_blueprint(guestpage_bp)
 app.register_blueprint(account_bp)  # Ensure this registration is correct
@@ -113,6 +114,9 @@ app.register_blueprint(stripe_config_bp)  # Ensure this registration exists
 app.register_blueprint(edit_bp)
 app.register_blueprint(enterprise_bp, url_prefix="/enterprise")  # Register the enterprise blueprint
 app.register_blueprint(lia_bp, url_prefix="/lia")  # Ensure this line uses the correct lia_bp
+
+# Register the new index blueprint
+app.register_blueprint(index_bp) # This registration is correct
 
 # Set the application environment (defaults to production)
 APP_ENV = os.getenv("APP_ENV", "production")
