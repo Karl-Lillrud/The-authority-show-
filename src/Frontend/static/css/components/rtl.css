@@ -153,6 +153,8 @@
 /* Hamburger menu and credits to the left in RTL */
 [dir="rtl"] .header-nav {
     flex-direction: row-reverse !important;
+    margin-left: 0 !important;
+    margin-right: auto !important;
 }
 
 [dir="rtl"] .menu-toggle {
