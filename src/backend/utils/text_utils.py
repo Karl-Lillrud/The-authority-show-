@@ -13,8 +13,9 @@ from pathlib import Path
 from typing import List
 from transformers import pipeline
 from io import BytesIO
-import streamlit as st  # Needed for download_button_text
+import streamlit as st  
 from pydub import AudioSegment
+from collections import Counter
 
 client = OpenAI()
 
@@ -334,7 +335,6 @@ def mix_background(
     return out_buf.getvalue()
 
 def pick_dominant_emotion(emotion_data: list) -> str:
-    from collections import Counter
     labels = [e["emotions"][0]["label"] for e in emotion_data]
     return Counter(labels).most_common(1)[0][0] if labels else "neutral"
 
@@ -342,7 +342,6 @@ def get_osint_info(guest_name: str) -> str:
     """
     Uses GPT-4 to retrieve OSINT-style background information about a guest.
     """
-    from openai import OpenAI
     client = OpenAI()
 
     prompt = f"Find detailed and recent public information about {guest_name}. Focus on professional achievements, background, and any recent mentions in news or social media."
@@ -358,7 +357,6 @@ def get_osint_info(guest_name: str) -> str:
     return response.choices[0].message.content.strip()
 
 def create_podcast_scripts_paid(osint_info: str, guest_name: str, transcript: str = "") -> str:
-    from openai import OpenAI
     client = OpenAI()
 
     prompt = f"""
@@ -386,9 +384,6 @@ The outro should reflect on the discussion and invite the listener to tune in ag
     return response.choices[0].message.content.strip()
 
 def text_to_speech_with_elevenlabs(script: str, voice_id: str = "TX3LPaxmHKxFdv7VOQHJ") -> bytes:
-    import requests
-    import os
-    from io import BytesIO
 
     api_key = os.getenv("ELEVENLABS_API_KEY")
     url = f"https://api.elevenlabs.io/v1/text-to-speech/{voice_id}"

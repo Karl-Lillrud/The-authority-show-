@@ -175,3 +175,9 @@ body {
   background: #f9f9f9;
   border-radius: 8px;
 }
+
+button.ai-edit-button.disabled {
+    opacity: 0.6;
+    pointer-events: none;
+    cursor: not-allowed;
+}
