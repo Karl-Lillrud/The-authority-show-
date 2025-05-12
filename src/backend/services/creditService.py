@@ -10,6 +10,9 @@ import logging
 from backend.repository.credits_repository import (
     get_credits_by_user_id, update_credits, log_credit_transaction
 )
+import logging
+
+logger = logging.getLogger(__name__)
 
 from bson import ObjectId  
 
@@ -30,7 +33,9 @@ def consume_credits(user_id, feature_name):
 
     available = credits.get("availableCredits", 0)
     if available < cost:
+        logger.warning(f"User {user_id} has {available} credits, but {cost} required for {feature_name}")
         raise ValueError("Insufficient credits.")
+
 
     new_available = available - cost
     new_used = credits.get("usedCredits", 0) + cost

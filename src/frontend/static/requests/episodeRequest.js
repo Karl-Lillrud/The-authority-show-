@@ -79,17 +79,13 @@ export async function fetchEpisodeCountByGuest(guestId) {
 
 export async function registerEpisode(episodeData) {
   console.log("[episodeRequest.js] Received episodeData for registration:", JSON.stringify(episodeData, null, 2));
-  console.log("[episodeRequest.js] Checking episodeData.podcast_id:", episodeData.podcast_id);
-  console.log("[episodeRequest.js] Checking episodeData.title:", episodeData.title);
-
-  // Frontend validation: Ensure podcast_id (snake_case) is checked
-  if (!episodeData.podcast_id || !episodeData.title) {
+  
+  if (!episodeData.podcastId || !episodeData.title) {
     console.error(
-      "[episodeRequest.js] Validation Error: Missing required fields. podcast_id:", episodeData.podcast_id, "title:", episodeData.title, "Full data:",
-      episodeData,
+      "[episodeRequest.js] Validation Error: Missing required fields. podcastId:", 
+      episodeData.podcastId, "title:", episodeData.title
     );
-    // Ensure the error message thrown also reflects 'podcast_id'
-    throw new Error("Missing required fields: podcast_id or title"); 
+    throw new Error("Missing required fields: podcastId or title"); 
   }
 
   try {
@@ -119,8 +115,7 @@ export async function registerEpisode(episodeData) {
     console.log("[episodeRequest.js] Episode registered successfully via API:", data);
     return data;
   } catch (error) {
-    console.error("[episodeRequest.js] Error in registerEpisode function:", error.message, "Data sent:", episodeData);
-    // Re-throw the error so it can be caught by the caller in podprofile.js
+    console.error("[episodeRequest.js] Error in registerEpisode function:", error.message);
     throw error;
   }
 }

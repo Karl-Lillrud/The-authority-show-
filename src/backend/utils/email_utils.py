@@ -252,41 +252,18 @@ def send_login_email(email, login_link):
             </body>
         </html>
         """
-        logger.info(f"📧 Preparing to send login email to {email}")
 
-        # Remove color formatting from print statement
         print(f"Login link for {email}: {login_link}", flush=True)
 
         result = send_email(email, subject, body)
-        if result.get("success"):
-            logger.info(f"✅ Login email sent successfully to {email}")
-            # --- Log activity for login email sent ---
-            try:
-                user = collection.database.Users.find_one(
-                    {"email": email.lower().strip()}
-                )
-                if user:
-                    ActivityService().log_activity(
-                        user_id=str(user["_id"]),
-                        activity_type="login_email_sent",
-                        description=f"Login email sent to {email}",
-                        details={"email": email},
-                    )
-            except Exception as act_err:
-                logger.error(
-                    f"Failed to log login_email_sent activity: {act_err}", exc_info=True
-                )
-            # --- End activity log ---
-        else:
-            logger.error(
-                f"❌ Failed to send login email to {email}: {result.get('error')}"
-            )
+
         return result
     except Exception as e:
         logger.error(
             f"❌ Error while sending login email to {email}: {e}", exc_info=True
         )
         return {"error": f"Error while sending login email: {str(e)}"}
+
 
 
 def send_team_invite_email(

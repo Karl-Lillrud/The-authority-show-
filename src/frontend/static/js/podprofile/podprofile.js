@@ -285,7 +285,7 @@ document.addEventListener("DOMContentLoaded", async () => {
           try {
             // Prepare episode data safely, especially audio details
             const episodeDataForRegistration = {
-              podcast_id: podcastId, // Changed from podcastId to podcast_id
+              podcastId: podcastId, // Changed from podcastId to podcast_id
               title: episode.title || "Untitled Episode", // Fallback for title
               description: episode.description,
               publishDate: episode.pubDate || new Date().toISOString(), // Provide default if episode.pubDate is null/undefined

@@ -1,6 +1,6 @@
 FROM python:3.12-slim
 
-WORKDIR /app/
+WORKDIR /app
 
 # Set PYTHONPATH to include the src directory
 ENV PYTHONPATH=/app/src
