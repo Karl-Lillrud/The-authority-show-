@@ -4,8 +4,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}PodManager{% endblock %}</title>
-    <!-- ... other head elements ... -->
-    <!-- Link Notification CSS -->
+    <!-- Global stylesheets -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/components/variables.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/components/general.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/components/typography.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/components/notifications.css') }}">
     {% block head_extra %}{% endblock %}
 </head>
@@ -23,28 +25,29 @@
         <div id="notification-template" class="notification">
             <div class="notification-icon"></div>
             <div class="notification-content">
-                <div class="notification-title"></div>
-                <div class="notification-message"></div>
+                <div class="notification-title" data-i18n="notificationTitle"></div>
+                <div class="notification-message" data-i18n="notificationMessage"></div>
             </div>
-            <div class="notification-close"></div>
+            <div class="notification-close" data-i18n-aria-label="closeNotification"></div>
         </div>
             
         <!-- Confirmation Popup Component Template -->
         <div id="confirmation-popup-template" class="confirmation-popup">
             <div class="confirm-form-box">
-                <h2 class="confirm-form-title"></h2>
-                <p class="confirm-form-message"></p>
+                <h2 class="confirm-form-title" data-i18n="confirmationTitle"></h2>
+                <p class="confirm-form-message" data-i18n="confirmationMessage"></p>
                 <div class="confirm-form-actions">
-                    <button class="confirm-cancel-btn" id="cancelPopupBtn">Cancel</button>
-                    <button class="confirm-save-btn" id="confirmPopupBtn">Confirm</button>
+                    <button class="confirm-cancel-btn" id="cancelPopupBtn" data-i18n="cancel">Cancel</button>
+                    <button class="confirm-save-btn" id="confirmPopupBtn" data-i18n="confirm">Confirm</button>
                 </div>
             </div>
         </div>
     </div>
     <!-- End Notification HTML Templates -->
 
-
-    <!-- ... other scripts ... -->
+    <!-- Internationalization -->
+    <script type="module" src="{{ url_for('static', filename='js/i18n/translations.js') }}"></script>
+    <script type="module" src="{{ url_for('static', filename='js/i18n/languageManager.js') }}"></script>
     <script type="module" src="{{ url_for('static', filename='js/components/notifications.js') }}"></script>
     {% block scripts %}{% endblock %}
 </body>

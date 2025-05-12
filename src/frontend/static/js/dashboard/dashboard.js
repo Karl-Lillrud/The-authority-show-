@@ -8,6 +8,10 @@ import { initTaskManagement } from "/static/js/dashboard/task.js";
 import { svgdashboard } from "./svgdashboard.js";
 import { getTeamsRequest } from "/static/requests/teamRequests.js";
 import { getActivitiesRequest } from "/static/requests/activityRequests.js";
+import languageManager from '/static/js/i18n/languageManager.js';
+
+window.languageManager = languageManager;
+languageManager.updatePageContent();
 
 document.addEventListener("DOMContentLoaded", async () => {
   try {

@@ -54,6 +54,10 @@
       </div>
       <a href="{{ url_for('dashboard_bp.store') }}">Store</a>
       <a href="#" id="logout-link">Log out</a>
+      <div class="language-switcher" role="group" aria-label="Language Selection" style="margin-top: 1rem; display: flex; flex-direction: column; gap: 0.5rem; align-items: flex-start;">
+        <button onclick="window.languageManager.setLanguage('en')" class="lang-btn" data-i18n-title="switchToEnglish">English</button>
+        <button onclick="window.languageManager.setLanguage('ar')" class="lang-btn" data-i18n-title="switchToArabic">العربية</button>
+      </div>
     </div>
   </nav>
 </header>

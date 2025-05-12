@@ -1,3 +1,9 @@
+import { languageManager } from '../i18n/languageManager.js';
+
+// Initialize language manager
+window.languageManager = languageManager;
+languageManager.updatePageContent();
+
 document.addEventListener("DOMContentLoaded", function () {
   const successMessage = document.getElementById("success-message");
   const errorMessage = document.getElementById("error-message");

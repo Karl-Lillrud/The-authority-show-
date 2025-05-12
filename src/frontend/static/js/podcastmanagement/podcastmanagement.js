@@ -4,6 +4,7 @@ import { initGuestFunctions } from "./guest-functions.js";
 import { svgpodcastmanagement } from "./svgpodcastmanagement.js";
 import { showNotification } from "../components/notifications.js";
 import { initEmailConfigFunctions } from "./emailconfig-functions.js";
+import languageManager from '/static/js/i18n/languageManager.js';
 
 console.log("podcastmanagement.js loaded");
 
@@ -253,6 +254,9 @@ document.addEventListener("DOMContentLoaded", () => {
   decorativeHeader.className = "decorative-header";
   document.body.prepend(decorativeHeader);
 
+  // Initialize language manager
+  window.languageManager = languageManager;
+  languageManager.updatePageContent();
 });
 
 // Export shared utilities and variables

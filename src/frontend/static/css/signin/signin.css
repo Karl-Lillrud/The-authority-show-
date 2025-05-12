@@ -565,3 +565,131 @@
   opacity: 1;
   visibility: visible;
 }
+
+/* Language Switcher Styles */
+.language-switcher {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 1000;
+    display: flex;
+    gap: 10px;
+}
+
+.lang-btn {
+    padding: 8px 16px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    background: white;
+    cursor: pointer;
+    font-size: 14px;
+    transition: all 0.3s ease;
+}
+
+.lang-btn:hover {
+    background: #f0f0f0;
+    border-color: #999;
+}
+
+/* Enhanced RTL Support */
+[dir="rtl"] {
+    text-align: right;
+}
+
+[dir="rtl"] .center-box {
+    left: auto;
+    right: 2%;
+}
+
+[dir="rtl"] .sliding-container {
+    left: auto;
+    right: 30%;
+    transform: translate(100%, -50%);
+}
+
+[dir="rtl"] .sliding-container.active {
+    right: 30%;
+    transform: translate(0, -50%);
+}
+
+[dir="rtl"] .feature-list {
+    text-align: right;
+}
+
+[dir="rtl"] .feature-list li {
+    flex-direction: row-reverse;
+}
+
+[dir="rtl"] .feature-list i {
+    margin-left: 10px;
+    margin-right: 0;
+}
+
+[dir="rtl"] .policy-links {
+    direction: rtl;
+}
+
+[dir="rtl"] .input {
+    text-align: right;
+}
+
+[dir="rtl"] .close-button {
+    left: 15px;
+    right: auto;
+}
+
+[dir="rtl"] .learn-more-link {
+    flex-direction: row-reverse;
+}
+
+[dir="rtl"] .learn-more-link i {
+    transform: rotate(180deg);
+}
+
+[dir="rtl"] .learn-more-link:hover i {
+    transform: rotate(180deg) translateX(4px);
+}
+
+/* RTL Media Queries */
+@media (max-width: 1200px) {
+    [dir="rtl"] .center-box {
+        right: 2%;
+        left: auto;
+    }
+
+    [dir="rtl"] .sliding-container {
+        right: 40%;
+        left: auto;
+    }
+}
+
+@media (max-width: 992px) {
+    [dir="rtl"] .center-box {
+        right: 2%;
+        left: auto;
+    }
+
+    [dir="rtl"] .sliding-container {
+        right: 50%;
+        left: auto;
+    }
+}
+
+@media (max-width: 768px) {
+    [dir="rtl"] .center-box {
+        right: 50%;
+        left: auto;
+        transform: translate(50%, -50%);
+    }
+
+    [dir="rtl"] .sliding-container {
+        right: 50%;
+        left: auto;
+    }
+
+    [dir="rtl"] .sliding-container.active {
+        right: 50%;
+        left: auto;
+        transform: translate(50%, -50%);
+    }
+}

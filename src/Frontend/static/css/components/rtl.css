@@ -1,0 +1,181 @@
+/* Global RTL Support */
+[dir="rtl"] {
+    text-align: right;
+}
+
+/* Form Elements */
+[dir="rtl"] input,
+[dir="rtl"] textarea,
+[dir="rtl"] select {
+    text-align: right;
+}
+
+[dir="rtl"] .input-group {
+    direction: rtl;
+}
+
+/* Navigation */
+[dir="rtl"] .nav-item {
+    margin-left: 0;
+    margin-right: 1rem;
+}
+
+[dir="rtl"] .dropdown-menu {
+    text-align: right;
+}
+
+/* Lists */
+[dir="rtl"] ul,
+[dir="rtl"] ol {
+    padding-right: 1.5rem;
+    padding-left: 0;
+}
+
+/* Icons and Buttons */
+[dir="rtl"] .icon-left {
+    margin-right: 0;
+    margin-left: 0.5rem;
+}
+
+[dir="rtl"] .icon-right {
+    margin-left: 0;
+    margin-right: 0.5rem;
+}
+
+[dir="rtl"] .btn-icon {
+    flex-direction: row-reverse;
+}
+
+/* Tables */
+[dir="rtl"] th,
+[dir="rtl"] td {
+    text-align: right;
+}
+
+/* Modals and Popups */
+[dir="rtl"] .modal-header .close {
+    margin: -1rem auto -1rem -1rem;
+}
+
+[dir="rtl"] .modal-footer {
+    justify-content: flex-start;
+}
+
+/* Cards and Panels */
+[dir="rtl"] .card-header,
+[dir="rtl"] .panel-header {
+    padding-right: 1.25rem;
+    padding-left: 1.25rem;
+}
+
+/* Alerts and Notifications */
+[dir="rtl"] .alert {
+    padding-right: 1rem;
+    padding-left: 3rem;
+}
+
+[dir="rtl"] .alert-icon {
+    right: 1rem;
+    left: auto;
+}
+
+/* Breadcrumbs */
+[dir="rtl"] .breadcrumb-item + .breadcrumb-item::before {
+    padding-left: 0.5rem;
+    padding-right: 0;
+}
+
+/* Pagination */
+[dir="rtl"] .pagination {
+    padding-right: 0;
+}
+
+[dir="rtl"] .page-item:not(:first-child) .page-link {
+    margin-right: -1px;
+    margin-left: 0;
+}
+
+/* Tooltips and Popovers */
+[dir="rtl"] .tooltip {
+    text-align: right;
+}
+
+[dir="rtl"] .popover {
+    text-align: right;
+}
+
+/* Flexbox Utilities */
+[dir="rtl"] .flex-row {
+    flex-direction: row-reverse;
+}
+
+[dir="rtl"] .flex-row-reverse {
+    flex-direction: row;
+}
+
+/* Margins and Paddings */
+[dir="rtl"] .ml-auto {
+    margin-left: 0 !important;
+    margin-right: auto !important;
+}
+
+[dir="rtl"] .mr-auto {
+    margin-right: 0 !important;
+    margin-left: auto !important;
+}
+
+/* Custom Components */
+[dir="rtl"] .language-switcher {
+    left: 20px;
+    right: auto;
+}
+
+[dir="rtl"] .notification {
+    text-align: right;
+}
+
+[dir="rtl"] .confirmation-popup {
+    text-align: right;
+}
+
+/* Media Queries */
+@media (max-width: 768px) {
+    [dir="rtl"] .mobile-menu {
+        right: 0;
+        left: auto;
+    }
+    
+    [dir="rtl"] .mobile-menu.active {
+        transform: translateX(0);
+    }
+}
+
+/* Hamburger menu and credits to the left in RTL */
+[dir="rtl"] .header-nav {
+    flex-direction: row-reverse !important;
+}
+
+[dir="rtl"] .menu-toggle {
+    right: auto !important;
+    left: 0 !important;
+}
+
+[dir="rtl"] .menu {
+    right: auto !important;
+    left: 0 !important;
+    text-align: right !important;
+}
+
+[dir="rtl"] .credits-wrapper {
+    flex-direction: row-reverse !important;
+    justify-content: flex-start !important;
+    left: 0 !important;
+    right: auto !important;
+    text-align: right !important;
+}
+
+/* Optional: flip logo-title-container if needed */
+[dir="rtl"] .logo-title-container {
+    flex-direction: row-reverse !important;
+    text-align: right !important;
+} 

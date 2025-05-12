@@ -3,6 +3,7 @@
 import { fetchPodcasts } from "/static/requests/podcastRequests.js"
 import { fetchAllEpisodes, fetchEpisodesByPodcast } from "/static/requests/episodeRequest.js"
 import { fetchTasks, fetchLocalDefaultTasks } from "/static/requests/podtaskRequest.js"
+import languageManager from '/static/js/i18n/languageManager.js'
 
 // Import components
 import { initTaskPageWithComments, renderEnhancedTaskList } from "/static/js/episode-to-do/task-page-integrations.js"
@@ -24,6 +25,9 @@ import {
   addFlatpickrStyles,
   setupModalButtons,
 } from "/static/js/episode-to-do/sidebar-header.js"
+
+window.languageManager = languageManager;
+languageManager.updatePageContent();
 
 document.addEventListener("DOMContentLoaded", async () => {
   // State management
