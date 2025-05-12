@@ -243,6 +243,41 @@ document.addEventListener("DOMContentLoaded", () => {
 
 });
 
+  document.getElementById('upload-episode-btn').addEventListener('click', function() {
+    document.getElementById('episode-file').click();
+  });
+
+  document.getElementById('episode-file').addEventListener('change', function() {
+    const fileName = this.files[0] ? this.files[0].name : 'No file chosen';
+    document.getElementById('file-name-display').textContent = fileName;
+  });
+
+  document.getElementById('clear-file-btn').addEventListener('click', function() {
+    const fileInput = document.getElementById('episode-file');
+    fileInput.value = ""; 
+    document.getElementById('file-name-display').textContent = ""; 
+  });
+
+    const fileInput = document.getElementById('episode-file');
+    const fileNameDisplay = document.getElementById('file-name-display');
+    const clearFileBtn = document.getElementById('clear-file-btn');
+  
+    document.getElementById('upload-episode-btn').addEventListener('click', function() {
+      fileInput.click();
+    });
+  
+    fileInput.addEventListener('change', function() {
+      const fileName = this.files[0] ? this.files[0].name : '';
+      fileNameDisplay.textContent = fileName;
+      clearFileBtn.style.display = fileName ? 'block' : 'none'; 
+    });
+  
+    clearFileBtn.addEventListener('click', function() {
+      fileInput.value = ""; 
+      fileNameDisplay.textContent = ""; 
+      clearFileBtn.style.display = 'none'; 
+    });
+
 // Export shared utilities and variables
 export const shared = {
   selectedPodcastId: null,

@@ -253,9 +253,26 @@
                 <label for="podcast-select">Select Podcast</label>
                 <select id="podcast-select" name="podcastId" required></select>
               </div>
-              <div class="field-group full-width">
+              <div class="field-group">
                 <label for="episode-title">Episode Title</label>
                 <input type="text" id="episode-title" name="title" required />
+              </div>
+              <div class="field-group">
+                <label for="episode-file">Upload Episode</label>
+                <input
+                  type="file"
+                  id="episode-file"
+                  name="episodeFile"
+                  accept=".mp3, .wav, .m4a, .mkv, .flac"
+                  style="display: none;"
+                />
+                <div class="file-button-container">
+                  <button type="button" class="save-btn" id="upload-episode-btn">Choose File</button>
+                  <div class="file-remove-container">
+                    <span id="file-name-display" style="margin-left: 10px; font-style: italic;"></span>
+                  </div>
+                  <button type="button" id="clear-file-btn">&times;</button>
+                </div>
               </div>
               <div class="field-group full-width">
                 <label for="episode-description">Description</label>
