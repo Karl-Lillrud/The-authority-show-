@@ -233,19 +233,13 @@ class AuthService:
         """Retrieve account information by user ID."""
         try:
             response, status_code = self.account_repository.get_account_by_user(user_id)
-            if status_code == 200:
-                self.activity_service.log_activity(
-                    user_id=user_id,
-                    activity_type="account_viewed",
-                    description="Viewed account details",
-                    details={"accountId": response.get("account", {}).get("_id")},
-                )
             return response, status_code
         except Exception as e:
             logger.error(
                 f"Error retrieving account for user {user_id}: {e}", exc_info=True
             )
             return {"error": f"Internal server error: {str(e)}"}, 500
+
 
     def edit_account(self, user_id, data):
         """Update account information."""
