@@ -11,7 +11,56 @@ document.addEventListener("DOMContentLoaded", async () => {
   await initializeStripe();
   // Återställ checkout-knappen vid sidladdning
   resetCheckoutButton();
+  
+  await handlePurchaseSuccess();
+  setupContinueShoppingButton();
+
+  const pageTitle = document.getElementById("page-title");
+  if (pageTitle) {
+    pageTitle.textContent = "Store"; // Set the page title
+  }
+
 });
+
+async function handlePurchaseSuccess() {
+  const urlParams = new URLSearchParams(window.location.search);
+  const purchaseSuccess = urlParams.get("purchase_success") === "true";
+  const subscriptionUpdated = urlParams.get("subscription_updated") === "true";
+
+  if (purchaseSuccess || subscriptionUpdated) {
+    localStorage.removeItem("podmanager_cart");
+    removePurchaseParamsFromURL(urlParams, purchaseSuccess, subscriptionUpdated);
+    displaySuccessPopup();
+  }
+}
+
+function removePurchaseParamsFromURL(urlParams, purchaseSuccess, subscriptionUpdated) {
+  const url = new URL(window.location.href);
+  if (purchaseSuccess) url.searchParams.delete("purchase_success");
+  if (subscriptionUpdated) url.searchParams.delete("subscription_updated");
+  window.history.replaceState({}, document.title, url.href);
+}
+
+function displaySuccessPopup() {
+  const successPopup = document.getElementById('success-popup');
+  if (successPopup) {
+    successPopup.style.display = 'flex';
+  }
+}
+
+function setupContinueShoppingButton() {
+  const continueShoppingBtn = document.getElementById('continueShoppingBtn');
+  const successPopup = document.getElementById('success-popup');
+
+  if (continueShoppingBtn) {
+    continueShoppingBtn.addEventListener('click', () => {
+      window.location.reload();
+      if (successPopup) {
+        successPopup.style.display = 'none';
+      }
+    });
+  }
+}
 
 async function initializeStripe() {
   try {

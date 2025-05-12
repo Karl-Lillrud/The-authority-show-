@@ -32,3 +32,7 @@ def privacy_policy_page():
 @frontend_bp.route("/about")
 def about_page():
     return render_template("about/about.html")
+
+@frontend_bp.route("/index")
+def index_page():
+    return render_template("index/index.html")

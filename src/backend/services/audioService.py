@@ -20,12 +20,45 @@ from backend.repository.episode_repository import EpisodeRepository
 from backend.repository.edit_repository import create_edit_entry
 from flask import g
 
-
 logger = logging.getLogger(__name__)
+
+TEXTSTAT_AVAILABLE = False
+try:
+    import backend.utils.ai_utils as ai_utils_module
+    TEXTSTAT_AVAILABLE = True
+except ModuleNotFoundError as e:
+    if 'textstat.backend' in str(e) or 'textstat' in str(e):
+        logger.warning(
+            "Failed to load 'backend.utils.ai_utils' or its dependency 'textstat' due to: %s. "
+            "Functionality dependent on textstat will be unavailable.", e
+        )
+        TEXTSTAT_AVAILABLE = False
+    else:
+        logger.error(f"An unexpected ModuleNotFoundError occurred while importing ai_utils: {e}", exc_info=True)
+        raise
+except ImportError as e:
+    logger.warning(
+        "An ImportError occurred while trying to load 'backend.utils.ai_utils', possibly related to textstat: %s. "
+        "Textstat-dependent functionality may be unavailable.", e
+    )
+    TEXTSTAT_AVAILABLE = False
+
 fs = get_fs()
 episode_repo = EpisodeRepository()
 
 class AudioService:
+    def __init__(self):
+        self.logger = logging.getLogger(__name__)
+        if not TEXTSTAT_AVAILABLE:
+            self.logger.warning(
+                "AudioService initialized, but textstat-dependent features are UNAVAILABLE "
+                "due to import errors concerning 'textstat' or 'ai_utils'."
+            )
+        else:
+            self.logger.info(
+                "AudioService initialized. Textstat-dependent features are expected to be available via ai_utils."
+            )
+
     def enhance_audio(self, audio_bytes: bytes, filename: str, episode_id: str) -> str:
         with tempfile.NamedTemporaryFile(delete=False, suffix=".wav") as tmp:
             tmp.write(audio_bytes)
@@ -72,18 +105,18 @@ class AudioService:
         try:
             # 1) Basic transcript analysis
             transcript     = transcribe_with_whisper(temp_path)
-            cleaned        = remove_filler_words(transcript)
-            clarity_score  = calculate_clarity_score(cleaned)
+            cleaned        = ai_utils_module.remove_filler_words(transcript) if TEXTSTAT_AVAILABLE else transcript
+            clarity_score  = ai_utils_module.calculate_clarity_score(cleaned) if TEXTSTAT_AVAILABLE else None
             noise_result   = detect_background_noise(temp_path)
-            sentiment      = analyze_sentiment(transcript)
+            sentiment      = ai_utils_module.analyze_sentiment(transcript) if TEXTSTAT_AVAILABLE else None
 
             # 2) Emotion detection
             #    a) Translate to English (for more accurate emotion models)
             translated     = translate_text(transcript, "English")
             #    b) Run your emotion classifier
-            emotion_data   = analyze_emotions(translated)
+            emotion_data   = ai_utils_module.analyze_emotions(translated) if TEXTSTAT_AVAILABLE else None
             #    c) Pick the most frequent emotion label
-            dominant_emotion = pick_dominant_emotion(emotion_data)
+            dominant_emotion = pick_dominant_emotion(emotion_data) if TEXTSTAT_AVAILABLE else None
 
             # 3) Return only the core analysis results + dominant emotion
             return {
@@ -219,10 +252,10 @@ class AudioService:
                 if hasattr(w, "start") and hasattr(w, "end")
             ]
 
-            cleaned_transcript = remove_filler_words(transcript)
+            cleaned_transcript = ai_utils_module.remove_filler_words(transcript) if TEXTSTAT_AVAILABLE else transcript
             noise_result = detect_background_noise(temp_path)
-            filler_sentences = detect_filler_words(transcript)
-            sentence_certainty = analyze_certainty_levels(transcript)
+            filler_sentences = ai_utils_module.detect_filler_words(transcript) if TEXTSTAT_AVAILABLE else []
+            sentence_certainty = ai_utils_module.analyze_certainty_levels(transcript) if TEXTSTAT_AVAILABLE else []
 
             logger.info(f"Certainty results computed")
 
@@ -266,7 +299,7 @@ class AudioService:
 
                     os.remove(tmp_cut.name)
 
-            sentiment = analyze_sentiment(transcript)
+            sentiment = ai_utils_module.analyze_sentiment(transcript) if TEXTSTAT_AVAILABLE else None
             show_notes = generate_ai_show_notes(transcript)
 
             return {

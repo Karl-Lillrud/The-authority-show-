@@ -1,15 +1,21 @@
 from marshmallow import Schema, fields
 
 
+class MemberSchema(Schema):
+    id = fields.Str(dump_only=True)
+    name = fields.Str(required=True)
+    email = fields.Email(required=True)
+
+
 class TeamSchema(Schema):
-    id = fields.Str()  # Team ID
-    podcastId = fields.Str()  # Podcast ID associated with the team
-    name = fields.Str(required=True)  # Team Name
-    email = fields.Email()  # Contact email for the team
-    description = fields.Str()  # Description of the team
-    isActive = fields.Bool()  # Whether the team is active or not
-    joinedAt = fields.DateTime()  # Date and time when the team was created
-    lastActive = fields.DateTime()  # Last time the team was active or interacted with
+    id = fields.Str(dump_only=True)
+    name = fields.Str(required=True)
+    description = fields.Str(allow_none=True)
+    ownerId = fields.Str(required=True)
+    ownerEmail = fields.Email(required=True)
     members = fields.List(
-        fields.Dict(), missing=[]
-    )  # List of members (user data) for the team
+        fields.Nested(MemberSchema), 
+        load_default=[] # Use load_default if you need an empty list when the field is missing during loading
+    ) 
+    createdAt = fields.DateTime(dump_only=True)
+    updatedAt = fields.DateTime(dump_only=True)

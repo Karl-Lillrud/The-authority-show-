@@ -16,6 +16,7 @@ logger = logging.getLogger(__name__)
 video_bp = Blueprint("video_bp", __name__)
 video_service = VideoService()
 
+
 @video_bp.route("/ai_videoedit", methods=["POST"])
 def ai_videoedit():
     if "video" not in request.files:
@@ -102,9 +103,11 @@ def get_video(file_id: str):
         return Response(
             file_data,
             mimetype="video/mp4",
-            headers={"Content-Disposition": f"attachment; filename={file_obj.filename}"}
+            headers={
+                "Content-Disposition": f"attachment; filename={file_obj.filename}"
+            },
         )
     except gridfs.errors.NoFile:
         return jsonify({"error": "File not found."}), 404
     except Exception as e:
-        return jsonify({"error": str(e)}), 500
+        return jsonify({"errsor": str(e)}), 500
