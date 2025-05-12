@@ -3,10 +3,12 @@ from backend.models.podtasks import PodtaskSchema
 from datetime import datetime
 import re
 
+#FOR pocastId there is to many inconsistent data types between camel case and snake case
+#podcastId is most commonly for frontend and podcast_id is most commonly for backend 
 
 class EpisodeSchema(Schema):
     id = fields.Str(dump_only=True)
-    podcastId = fields.Str(required=True, data_key="podcast_id")
+    podcastId = fields.Str(data_key="podcastId")  # Marshmallow handles the mapping
     accountId = fields.Str(required=False, allow_none=True)  # Add accountId, make it optional for now
     title = fields.Str(required=True)
     description = fields.Str(allow_none=True)
