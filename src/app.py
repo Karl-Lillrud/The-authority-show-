@@ -1,5 +1,6 @@
 import os
 import logging  # Ensure logging is imported
+from colorama import init # Add this line
 from flask import Flask, request, session, g, jsonify, render_template
 from flask_cors import CORS
 from backend.routes.auth import auth_bp
@@ -38,7 +39,6 @@ from backend.routes.audio_routes import audio_bp
 from backend.routes.video_routes import video_bp
 from backend.routes.transcription import transcription_bp
 from backend.routes.comment import comment_bp  # Import the comment blueprint
-from colorama import Fore, Style, init  # Import colorama for styled logs
 from backend.routes.activity import activity_bp
 from backend.routes.stripe_config import stripe_config_bp  # Import the renamed config blueprint
 from backend.routes.edit_routes import edit_bp
@@ -127,21 +127,21 @@ init(autoreset=True)
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-# Styled log messages
-logger.info(f"{Fore.GREEN}========================================")
-logger.info(f"{Fore.CYAN}✓ Starting server...")
-logger.info(f"{Fore.YELLOW}API Base URL: {os.getenv('API_BASE_URL')}")
-logger.info(f"{Fore.YELLOW}MongoDB URI:  {os.getenv('MONGODB_URI')}")
-logger.info(f"{Fore.GREEN}========================================")
-logger.info(f"{Fore.CYAN}📧 Email Configuration:")
-logger.info(f"{Fore.BLUE}EMAIL_USER: {os.getenv('EMAIL_USER', 'Not Set')}")
+# Log messages
+logger.info("========================================")
+logger.info("✓ Starting server...")
+logger.info(f"API Base URL: {os.getenv('API_BASE_URL')}")
+logger.info(f"MongoDB URI:  {os.getenv('MONGODB_URI')}")
+logger.info("========================================")
+logger.info("📧 Email Configuration:")
+logger.info(f"EMAIL_USER: {os.getenv('EMAIL_USER', 'Not Set')}")
 logger.info(
-    f"{Fore.BLUE}EMAIL_PASS: {'**** **** **** ****' if os.getenv('EMAIL_PASS') else 'Not Set'}"
+    f"EMAIL_PASS: {'**** **** **** ****' if os.getenv('EMAIL_PASS') else 'Not Set'}"
 )
-logger.info(f"{Fore.GREEN}========================================")
-logger.info(f"{Fore.CYAN}🚀 Server is running!")
+logger.info("========================================")
+logger.info("🚀 Server is running!")
 logger.info(
-    f"{Fore.MAGENTA}🌐 Local:  {os.getenv('LOCAL_BASE_URL', 'http://127.0.0.1:8000')}"
+    f"🌐 Local:  {os.getenv('LOCAL_BASE_URL', 'http://127.0.0.1:8000')}"
 )
 # Append :8000 to the API_BASE_URL for the network log
 api_base_url_for_network = os.getenv('API_BASE_URL', 'Not Set')
@@ -149,8 +149,8 @@ if api_base_url_for_network != 'Not Set':
     # Simple check to avoid adding port if already present (optional, adjust as needed)
     if ':' not in api_base_url_for_network.split('//')[-1]:
          api_base_url_for_network += ':8000'
-logger.info(f"{Fore.MAGENTA}🌐 Network: {api_base_url_for_network}")
-logger.info(f"{Fore.GREEN}========================================")
+logger.info(f"🌐 Network: {api_base_url_for_network}")
+logger.info("========================================")
 
 
 # Log the request with user info
