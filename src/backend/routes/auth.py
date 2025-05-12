@@ -19,13 +19,13 @@ logger = logging.getLogger(__name__)
 
 
 @auth_bp.route("/signin", methods=["GET"], endpoint="signin_page")
-@auth_bp.route("/", methods=["GET"], endpoint="root_signin_page")
 def signin_page():
     if "user_id" in session and session.get("user_id"):
         return redirect("/dashboard")
     if request.cookies.get("remember_me") == "true":
         return redirect("/podprofile")
     return render_template("signin/signin.html")
+
 
 
 @auth_bp.route("/signin", methods=["POST"], endpoint="signin")

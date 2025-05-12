@@ -1,4 +1,4 @@
-from flask import Blueprint, render_template, send_from_directory
+from flask import Blueprint, redirect, render_template, send_from_directory
 import os
 
 frontend_bp = Blueprint(
@@ -33,6 +33,14 @@ def privacy_policy_page():
 def about_page():
     return render_template("about/about.html")
 
-@frontend_bp.route("/index")
-def index_page():
+@frontend_bp.route("/")
+def redirect_to_start():
+    return redirect("/start")
+
+@frontend_bp.route("/start")
+def start_page():
     return render_template("index/index.html")
+
+
+
+
