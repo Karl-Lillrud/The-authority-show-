@@ -38,27 +38,6 @@
   transition: all 0.4s ease;
 }
 
-.sidebar::after {
-  content: "";
-  position: absolute;
-  bottom: 0;
-  right: 0;
-  left: auto;
-  width: 120px;
-  height: 120px;
-  background: none;
-  border-bottom-right-radius: 8px;
-  background-image: linear-gradient(
-      to left,
-      var(--highlight-color) 3px,
-      transparent 90%
-    ),
-    linear-gradient(to top, var(--highlight-color) 3px, transparent 90%);
-  background-position: bottom right, bottom right;
-  background-size: 120px 3px, 3px 120px;
-  background-repeat: no-repeat;
-  transition: all 0.4s ease;
-}
 
 .sidebar-header {
   padding: var(--spacing-lg);
@@ -157,15 +136,6 @@
 
 .sidebar.collapsed .sidebar-menu-link span:not(.sidebar-icon) {
   display: none;
-}
-
-.sidebar-footer {
-  padding: var(--spacing-md);
-}
-
-.sidebar-actions {
-  display: flex;
-  justify-content: flex-end;
 }
 
 /* Improve toggle button hover state */
@@ -336,11 +306,6 @@
 
   .sidebar-toggle {
     padding: 6px; /* Minska storleken på toggle-knappen */
-  }
-
-  .sidebar-footer {
-    padding: var(--spacing-sm); /* Minska padding */
-    display: none;
   }
 
   /* Se till att sidebar-content alltid är synlig */
