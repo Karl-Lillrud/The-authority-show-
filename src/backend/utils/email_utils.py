@@ -17,6 +17,8 @@ from backend.utils.config_utils import get_client_secret
 from backend.services.activity_service import ActivityService  # Add this import
 from pymongo import MongoClient
 from backend.database.mongo_connection import collection
+import dns.resolver
+import re
 
 # Load environment variables once
 load_dotenv(override=True)
@@ -76,7 +78,7 @@ def connect_google_calendar():
     try:
         client_id = os.getenv("GOOGLE_CLIENT_ID")
         redirect_uri = os.getenv("GOOGLE_REDIRECT_URI")
-        scope = "https://www.googleapis.com/auth/calendar"
+        scope = "https://www.googleapis.com/calendar"
         response_type = "code"
         access_type = "offline"
         include_granted_scopes = "true"
@@ -217,6 +219,22 @@ def send_email(to_email, subject, body, image_path=None):
         return {"error": f"Failed to send email: {str(e)}"}
 
 
+def validate_email(email):
+    """Validate email format and MX record."""
+    email_regex = r"^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$"
+    if not re.match(email_regex, email):
+        return False
+
+    domain = email.split("@")[1]
+    try:
+        dns.resolver.resolve(domain, "MX")
+        return True
+    except dns.resolver.NXDOMAIN:
+        return False
+    except Exception:
+        return False
+
+
 def send_login_email(email, login_link):
     """
     Sends a login link email to the user and prints the link to the terminal.
@@ -230,14 +248,14 @@ def send_login_email(email, login_link):
                 <p>Click the link below to log in to your PodManager account:</p>
                 <a href="{login_link}" style="color: #ff7f3f; text-decoration: none;">Log in</a>
                 <p>This link is valid for 10 minutes. If you did not request this, please ignore this email.</p>
-                <p>Best regards,<br>PodManager Team</p>
+                <p>Best regards,<br>The PodManager.ai Team</p>
             </body>
         </html>
         """
         logger.info(f"📧 Preparing to send login email to {email}")
 
-        # Print the login link in pink color to the terminal
-        print(f"\033[95mLogin link for {email}: {login_link}\033[0m", flush=True)
+        # Remove color formatting from print statement
+        print(f"Login link for {email}: {login_link}", flush=True)
 
         result = send_email(email, subject, body)
         if result.get("success"):
@@ -269,7 +287,6 @@ def send_login_email(email, login_link):
             f"❌ Error while sending login email to {email}: {e}", exc_info=True
         )
         return {"error": f"Error while sending login email: {str(e)}"}
-
 
 
 def send_team_invite_email(
@@ -386,43 +403,119 @@ def send_guest_invitation_email(guest_name, guest_email, guest_form_url, podcast
         return {"error": f"Failed to send guest invitation email: {str(e)}"}
 
 
-def send_activation_email(email, activation_link, podcast_name, artwork_url=None):
+def send_podcaster_activation_email(email, activation_link):
     """
-    Sends an activation email to the user with a link to activate their account.
+    Sends an activation email specifically for podcasters found by the scraper.
     """
-    html = f"""
-    <html>
-        <body>
-            <p>Hi,</p>
-            <p>We're thrilled to offer you exclusive early access to <strong>PodManager</strong>, 
-            the ultimate tool built to simplify podcasting for creators like you!</p>
-            <p>We’ve already prepared your account. Just activate it to start unlocking the full potential of PodManager:</p>
-            <p><a href="{activation_link}" style="color: #ff7f3f; text-decoration: none;">Activate Your Account Now</a></p>
-        </body>
-    </html>
-    """
-
-    msg = MIMEText(html, "html")
-    msg["Subject"] = "Exclusive Access to PodManager—Activate Your Account Today! 🚀"
-    msg["From"] = os.getenv("ACTIVATION_EMAIL")
-    msg["To"] = email
-
     try:
-        with smtplib.SMTP(
-            os.getenv("SMTP_SERVER"), int(os.getenv("SMTP_PORT"))
-        ) as server:
-            server.ehlo()
-            server.starttls()
-            server.ehlo()
-            server.login(
-                os.getenv("ACTIVATION_EMAIL"), os.getenv("ACTIVATION_PASSWORD")
+        subject = "🚀 Activate Your Free PodManager.ai Account!"
+        # Email body using the requested text
+        body = f"""
+        <html>
+            <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
+                <p>Hello,</p>
+                <p>Have you heard about <strong>PodManager.ai</strong>? The best platform on the planet for Podcasters. The platform where you can do everything in one place.</p>
+                <p>We got you! We've found your podcast and prepared an account for you.</p>
+                <p>Just press the link below and you are automatically registered to the PodManager platform! It’s completely free, and if you choose to stay with us, you will be rewarded!</p>
+                <p style="margin: 20px 0;">
+                    <a href="{activation_link}" style="background-color: #FF8C00; color: white; padding: 12px 24px; text-decoration: none; border-radius: 5px; font-weight: bold; display: inline-block;">
+                        Activate Your PodManager Account
+                    </a>
+                </p>
+                <p>This link is unique to you and will handle the activation.</p>
+                <p>Best regards,<br>The PodManager.ai Team</p>
+            </body>
+        </html>
+        """
+        logger.info(f"📧 Preparing to send podcaster activation email to {email}")
+
+        # Use the generic send_email function
+        # Consider adding the logo image_path if desired
+        image_path = (
+            "src/frontend/static/images/PodManagerLogo.png"  # Optional: Add logo
+        )
+        result = send_email(email, subject, body, image_path=image_path)
+
+        if result.get("success"):
+            logger.info(f"✅ Podcaster activation email sent successfully to {email}")
+            # --- Log activity ---
+            try:
+                # Find user by email to get ID for logging, might not exist yet
+                user = collection.database.Users.find_one(
+                    {"email": email.lower().strip()}
+                )
+                user_id_for_log = (
+                    str(user["_id"]) if user else None
+                )  # Log even if user doesn't exist yet
+                ActivityService().log_activity(
+                    user_id=user_id_for_log,  # Can be None if user is new
+                    activity_type="podcaster_activation_email_sent",
+                    description=f"Podcaster activation email sent to {email}",
+                    details={"email": email, "activation_link_sent": True},
+                    ip_address=(
+                        request.remote_addr if request else None
+                    ),  # Get IP if in request context
+                )
+            except Exception as act_err:
+                logger.error(
+                    f"Failed to log podcaster_activation_email_sent activity: {act_err}",
+                    exc_info=True,
+                )
+            # --- End activity log ---
+        else:
+            logger.error(
+                f"❌ Failed to send podcaster activation email to {email}: {result.get('error')}"
             )
-            server.send_message(msg)
-        logger.info(f"✅ Activation email sent to {email}")
+        return result
     except Exception as e:
         logger.error(
             f"❌ Failed to send activation email to {email}: {e}", exc_info=True
         )
+
+
+def send_activation_email(email, activation_link, podcast_name, artwork_url):
+    """
+    Sends an activation email with a link and optional artwork.
+    """
+    try:
+        subject = f"Activate Your Podcast Account: {podcast_name}"
+        # Render the email body using the activate_email.html template
+        body = render_template(
+            "emails/activate_email.html",
+            activation_link=activation_link,
+            podcast_name=podcast_name,
+            artwork_url=artwork_url,
+        )
+        logger.info(f"📧 Preparing to send activation email to {email}")
+        result = send_email(email, subject, body)
+        if result.get("success"):
+            logger.info(f"✅ Activation email sent successfully to {email}")
+        else:
+            logger.error(f"❌ Failed to send activation email to {email}: {result.get('error')}")
+        return result
+    except Exception as e:
+        logger.error(f"❌ Error while sending activation email to {email}: {e}", exc_info=True)
+        return {"error": f"Error while sending activation email: {str(e)}"}
+
+
+def send_beta_invite_email(email, user_name=None):
+    """
+    Sends the PodManager beta invite email using the correct HTML template.
+    """
+    subject = "🎉 Welcome to PodManager.ai Beta – New Features Unlocked!"
+    # Render the correct template for the beta invite
+    body = render_template(
+        "beta-email/podmanager-beta-invite.html",
+        user_name=user_name or "Podcaster"
+    )
+    logger.info(f"📧 Preparing to send beta invite email to {email}")
+    image_path = "src/frontend/static/images/PodManagerLogo.png"  # Optional: Add logo if needed
+    result = send_email(email, subject, body, image_path=image_path)
+    if result.get("success"):
+        logger.info(f"✅ Beta invite email sent successfully to {email}")
+    else:
+        logger.error(f"❌ Failed to send beta invite email to {email}: {result.get('error')}")
+    return result
 
 
 @google_calendar_bp.route("/activation/invite", methods=["GET"])

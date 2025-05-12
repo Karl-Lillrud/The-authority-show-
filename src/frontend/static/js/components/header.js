@@ -9,11 +9,29 @@ document.addEventListener("DOMContentLoaded", () => {
   const buyBtn = document.getElementById("buy-credits-btn");
   if (buyBtn) {
     buyBtn.addEventListener("click", () => {
-      // Remove localStorage dependency and navigate directly to billing
       window.location.href = `/store`;
     });
   }
+
+  // 🔒 Hide unfinished menu links by text content
+  document.querySelectorAll("a").forEach((link) => {
+    const text = link.textContent.trim().toLowerCase();
+    if (
+      text.includes("team management")
+    ) {
+      link.style.display = "none";
+      link.style.pointerEvents = "none";
+    }
+  });
+
+  // Optional: hide dropdowns too
+  const dropdownIds = ["dropdown-lp-content", "headerPodcastDropdown"];
+  dropdownIds.forEach((id) => {
+    const el = document.getElementById(id);
+    if (el) el.style.display = "none";
+  });
 });
+
 
 // 🔽 Landing Page Dropdown
 function toggleLandingPage() {
@@ -173,18 +191,46 @@ if (cancelLogout) {
 if (confirmLogout) {
   confirmLogout.addEventListener("click", async () => {
     try {
-      const response = await fetch("/logout", { method: "GET" });
-      const result = await response.json();
-      if (response.ok) {
-        window.location.href = result.redirect_url || "/signin";
-        localStorage.removeItem("podmanager_cart");
+      const response = await fetch("/logout", { // Ensure this is /logout
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          Accept: "application/json",
+        },
+      });
+
+      if (!response.ok) {
+        // Attempt to parse error if JSON, otherwise use status text
+        let errorData;
+        try {
+          errorData = await response.json();
+        } catch (e) {
+          // If not JSON, use status text or a generic message
+          throw new Error(
+            `Logout failed with status: ${response.status} ${response.statusText}`,
+          );
+        }
+        console.error("Logout failed:", errorData);
+        throw new Error(errorData.error || "Logout failed");
+      }
+
+      const data = await response.json();
+      console.log("Logout successful:", data);
+
+      // Clear any client-side session storage or state related to the user
+      sessionStorage.clear(); // Example: clear all session storage
+      localStorage.clear(); // Example: clear all local storage (use with caution)
+
+      // Redirect to the signin page or the URL provided in the response
+      if (data.redirect_url) {
+        window.location.href = data.redirect_url;
       } else {
-        console.error("Logout failed:", result.message);
-        alert("Failed to log out. Please try again.");
+        window.location.href = "/signin"; // Default fallback
       }
     } catch (error) {
       console.error("Error during logout:", error);
-      alert("An error occurred. Please try again.");
+      // Display a user-friendly message if needed
+      // alert(`Logout error: ${error.message}`);
     }
   });
 }
@@ -224,7 +270,7 @@ function setDynamicPageTitle() {
     };
 
     const currentPath = window.location.pathname;
-    const pageTitle = pageTitles[currentPath] || "Store";
+    const pageTitle = pageTitles[currentPath]
     pageTitleElement.textContent = pageTitle;
   }
 }

@@ -23,7 +23,7 @@ class PodcastSchema(Schema):
     author = fields.Str(allow_none=True)  # Added field
     copyright_info = fields.Str(allow_none=True)  # Added field
     imageUrl = fields.Str(allow_none=True)  # Added field
-    podRss = fields.Str(allow_none=True)  # Added field
+    podRss = fields.Str(allow_none=True)  # Ensure this field is included
     generator = fields.Str(allow_none=True)  # Added field
     lastBuildDate = fields.Str(allow_none=True)  # Added field
     itunesType = fields.Str(allow_none=True)  # Added field
@@ -33,3 +33,4 @@ class PodcastSchema(Schema):
     tagline = fields.Str(allow_none=True)  # Added field
     hostBio = fields.Str(allow_none=True)  # Added field
     hostImage = fields.Str(allow_none=True)  # Added field
+    isImported = fields.Bool(allow_none=True, load_default=False)  # Added field, default to False

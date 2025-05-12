@@ -1,12 +1,13 @@
-import { fetchRSSData, addPodcast } from "../../requests/podcastRequests.js";
+import { fetchRSSData, addPodcast, updatePodcast } from "../../requests/podcastRequests.js";
 import { sendInvitationEmail } from "../../requests/invitationRequests.js";
 import { registerEpisode } from "../../requests/episodeRequest.js";
 import { createLoadingBar } from "../../js/components/loading-bar.js";
 import { fetchAccount, updateAccount } from "/static/requests/accountRequests.js";
 
-document.addEventListener("DOMContentLoaded", () => {
+document.addEventListener("DOMContentLoaded", async () => {
   // DOM Elements
   initWelcomePopup();
+  initCreatepodcastButton();
   const darkModeToggle = document.getElementById("dark-mode-toggle");
   const goToEmailSection = document.getElementById("goToEmailSection");
   const podNameSection = document.getElementById("pod-name-section");
@@ -15,6 +16,10 @@ document.addEventListener("DOMContentLoaded", () => {
   const podNameInput = document.getElementById("podName");
   const creditsContainer = document.getElementById("creditsContainer");
   const podcastContainer = document.getElementById("podcast-container");
+  const getStartedButton = document.getElementById("get-started-btn");
+  const nextButton = document.getElementById("goToEmailSection"); // This is the actual "Next" button
+  const welcomePopup = document.getElementById("welcome-popup");
+  const rssStepSection = document.getElementById("rss-step-section");
 
   let currentRssData = null;
   let currentlyPlayingAudio = null;
@@ -24,7 +29,85 @@ document.addEventListener("DOMContentLoaded", () => {
   // Initialize loading bar
   loadingBar = createLoadingBar();
 
-  // Dark Mode Toggle
+  // Fetch initial RSS data for the logged-in user
+  let initialRssUrl = null;
+  let initialPodcastId = null;
+  let initialPodcastTitle = null; // Store the podcast title
+  let initialDataFetched = false;
+
+  async function fetchInitialPodProfileData() {
+    try {
+      const response = await fetch("/podprofile/initial");
+      if (response.ok) {
+        const data = await response.json();
+        initialRssUrl = data.initial_rss_url;
+        initialPodcastId = data.initial_podcast_id;
+        initialPodcastTitle = data.initial_podcast_title; // Fetches podcast title
+        initialDataFetched = true;
+        if (initialRssUrl) {
+          console.log("Initial RSS data loaded:", initialRssUrl, "Podcast ID:", initialPodcastId, "Podcast Title:", initialPodcastTitle);
+        } else {
+          console.log("No initial RSS URL from backend for prefill.");
+        }
+      } else {
+        console.error("Failed to fetch initial podprofile data:", response.status, await response.text());
+      }
+    } catch (error) {
+      console.error("Error fetching initial podprofile data:", error);
+    }
+  }
+
+  await fetchInitialPodProfileData();
+
+  if (getStartedButton && podRssInput && nextButton) { // getStartedButton is id="get-started-btn" from the welcome popup
+    getStartedButton.addEventListener("click", () => { 
+      console.log("[Get Started Clicked] Handler triggered.");
+      console.log("[Get Started Clicked] State check: initialDataFetched =", initialDataFetched, ", initialRssUrl =", initialRssUrl, ", initialPodcastTitle =", initialPodcastTitle);
+
+      if (rssStepSection) {
+        rssStepSection.style.display = "block";
+      }
+
+      if (initialDataFetched && initialRssUrl && podRssInput) {
+        console.log("[Get Started Clicked] Conditions met for autofill. Prefilling fields.");
+        podRssInput.value = initialRssUrl;
+        console.log("[Get Started Clicked] RSS field prefilled with:", initialRssUrl);
+
+        if (typeof initialPodcastTitle === "string" && initialPodcastTitle && podNameInput) {
+          podNameInput.value = initialPodcastTitle; // Prefills Podcast Name input
+          console.log("[Get Started Clicked] Podcast Name field prefilled with:", initialPodcastTitle);
+        } else if (podNameInput) {
+          podNameInput.value = ""; 
+          console.log("[Get Started Clicked] initialPodcastTitle not available or not a string, clearing Podcast Name field.");
+        }
+
+        podRssInput.dataset.isPrefilled = "true";
+        if (initialPodcastId) {
+          podRssInput.dataset.initialPodcastId = initialPodcastId;
+        }
+
+        // Wait 1 second before auto-clicking Next
+        if (nextButton) {
+          console.log("[Get Started Clicked] Setting timeout to auto-click 'Next' button.");
+          setTimeout(() => {
+            console.log("[Get Started Clicked] Auto-clicking 'Next' button now.");
+            nextButton.click(); // Auto-clicks the "Next" button
+          }, 1000); // 1-second delay
+        }
+      } else {
+        console.warn("[Get Started Clicked] Conditions for autofill NOT met. Skipping autofill and auto-click.");
+        if (!initialDataFetched) {
+          console.warn("[Get Started Clicked] Reason: initialDataFetched is false.");
+        } else if (!initialRssUrl) {
+          console.warn("[Get Started Clicked] Reason: initialRssUrl is null, undefined, or empty.");
+        } else if (!podRssInput) {
+          console.warn("[Get Started Clicked] Reason: podRssInput element not found (should not happen if this far).");
+        }
+        if (podRssInput) podRssInput.focus();
+      }
+    });
+  }
+
   if (darkModeToggle) {
     darkModeToggle.addEventListener("click", () => {
       document.body.classList.toggle("dark-mode");
@@ -36,7 +119,22 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
-  // RSS Feed Input Handler
+  if (podRssInput && podRssInput.dataset.prefill) {
+    podRssInput.value = podRssInput.dataset.prefill;
+
+    if (nextButton) {
+      nextButton.click();
+
+      document.addEventListener("rss-fetch-success", function autoProceedHandler(e) {
+        const goToEmailSection = document.getElementById("goToEmailSection");
+        if (goToEmailSection) {
+          goToEmailSection.click();
+        }
+        document.removeEventListener("rss-fetch-success", autoProceedHandler);
+      });
+    }
+  }
+
   if (podRssInput) {
     podRssInput.addEventListener(
       "input",
@@ -56,6 +154,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
             const rssData = await fetchRSSData(rssUrl);
             console.log("Fetched RSS data:", rssData);
+            console.log("Owner data:", rssData.itunesOwner);
             currentRssData = rssData;
 
             if (podNameInput) {
@@ -65,6 +164,9 @@ document.addEventListener("DOMContentLoaded", () => {
             if (podcastContainer) {
               displayPodcastPreview(rssData);
             }
+
+            const event = new CustomEvent("rss-fetch-success", { detail: rssData });
+            document.dispatchEvent(event);
           } catch (error) {
             console.error("Error processing RSS feed:", error);
             if (podcastContainer) {
@@ -80,8 +182,7 @@ document.addEventListener("DOMContentLoaded", () => {
     );
   }
 
-  // Go to Email Section Button
-  if (goToEmailSection) {
+  if (goToEmailSection) { // This is the "Next" button
     goToEmailSection.addEventListener("click", async () => {
       goToEmailSection.disabled = true;
       goToEmailSection.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processing...';
@@ -98,58 +199,101 @@ document.addEventListener("DOMContentLoaded", () => {
 
       try {
         loadingBar.showLoadingPopup();
-        console.log("Fetching RSS data");
-        const rssData = await fetchRSSData(podRss);
-        podNameInput.value = rssData.title;
-        const imageUrl = rssData.imageUrl;
+        console.log("Fetching RSS data for submission process");
+        
+        let rssDataToUse = currentRssData;
+        if (!rssDataToUse || podRss !== (currentRssData ? currentRssData.feedUrl : '')) {
+            console.log("RSS data potentially stale or not fetched for current input, re-fetching for submission.");
+            rssDataToUse = await fetchRSSData(podRss);
+            currentRssData = rssDataToUse;
+        }
+        
+        // --- Debug: Log the fetched RSS data ---
+        console.log("RSS Data to use for submission:", JSON.stringify(rssDataToUse, null, 2));
+        if (!rssDataToUse || !rssDataToUse.episodes) {
+          console.error("CRITICAL: rssDataToUse.episodes is missing or undefined after fetching RSS data!");
+        } else {
+          console.log(`Found ${rssDataToUse.episodes.length} episodes in RSS data.`);
+        }
+        // --- End Debug ---
+
+        if (podNameInput && rssDataToUse.title) {
+            podNameInput.value = rssDataToUse.title;
+        }
+        const imageUrl = rssDataToUse.imageUrl;
 
         const podcastData = {
-          podName,
+          podName: podNameInput.value.trim(),
           rssFeed: podRss,
           imageUrl,
-          description: rssData.description,
-          socialMedia: rssData.socialMedia,
-          category: rssData.categories?.[0]?.main || "",
-          author: rssData.author,
-          title: rssData.title,
-          language: rssData.language,
-          copyright_info: rssData.copyright_info,
-          link: rssData.link,
-          generator: rssData.generator,
-          lastBuildDate: rssData.lastBuildDate,
-          itunesType: rssData.itunesType,
-          itunesOwner: rssData.itunesOwner,
-          ownerName: rssData.itunesOwner?.name || null,
-          hostName: rssData.hostName || null,
-          googleCal: rssData.googleCal || null,
-          podUrl: rssData.podUrl || null,
-          guestUrl: rssData.guestUrl || null,
-          email: rssData.itunesOwner?.email || null,
-          logoUrl: rssData.logoUrl || null,
+          description: rssDataToUse.description,
+          socialMedia: rssDataToUse.socialMedia,
+          category: rssDataToUse.categories?.[0]?.main || "",
+          author: rssDataToUse.author,
+          title: rssDataToUse.title,
+          language: rssDataToUse.language,
+          copyright_info: rssDataToUse.copyright_info,
+          link: rssDataToUse.link,
+          generator: rssDataToUse.generator,
+          lastBuildDate: rssDataToUse.lastBuildDate,
+          itunesType: rssDataToUse.itunesType,
+          itunesOwner: rssDataToUse.itunesOwner,
+          ownerName: rssDataToUse.itunesOwner?.name || null,
+          hostName: rssDataToUse.hostName || null,
+          googleCal: rssDataToUse.googleCal || null,
+          podUrl: rssDataToUse.podUrl || null,
+          guestUrl: rssDataToUse.guestUrl || null,
+          email: rssDataToUse.itunesOwner?.email || null,
+          logoUrl: rssDataToUse.logoUrl || null,
         };
 
         loadingBar.processStep(0);
-        console.log("Sending podcast data:", podcastData);
+        console.log("Prepared podcast data for submission:", podcastData);
         loadingBar.processStep(1);
 
-        const response = await addPodcast(podcastData);
-        console.log("Received response from addPodcast:", response);
+        let podcastId;
+        let operationResponse;
+
+        if (initialPodcastId) {
+          console.log(`Updating existing podcast with ID: ${initialPodcastId}`);
+          operationResponse = await updatePodcast(initialPodcastId, podcastData);
+          if (!operationResponse || !operationResponse.message || !operationResponse.message.toLowerCase().includes("success")) {
+            throw new Error(operationResponse.error || "Failed to update podcast.");
+          }
+          podcastId = initialPodcastId;
+          console.log("Received response from updatePodcast:", operationResponse);
+        } else {
+          console.log("Adding new podcast.");
+          operationResponse = await addPodcast(podcastData);
+          if (!operationResponse || !operationResponse.podcast_id) {
+            throw new Error(operationResponse.error || "Failed to add podcast.");
+          }
+          podcastId = operationResponse.podcast_id;
+          console.log("Received response from addPodcast:", operationResponse);
+        }
+        
         loadingBar.processStep(2);
 
-        const podcastId = response.podcast_id;
-        const episodes = rssData.episodes || [];
+        // --- Debug: Log podcastId and episodes array before looping ---
+        console.log(`Using podcastId: ${podcastId} for registering episodes.`);
+        const episodes = rssDataToUse.episodes || [];
+        console.log(`Episodes to register (${episodes.length}):`, JSON.stringify(episodes, null, 2));
+        // --- End Debug ---
+
         for (const episode of episodes) {
-          console.log("Registering episode:", episode);
+          console.log("Registering episode:", episode.title, "for podcastId:", podcastId);
           try {
-            const registerResponse = await registerEpisode({
-              podcastId,
-              title: episode.title,
+            // Prepare episode data safely, especially audio details
+            const episodeDataForRegistration = {
+              podcast_id: podcastId, // Changed from podcastId to podcast_id
+              title: episode.title || "Untitled Episode", // Fallback for title
               description: episode.description,
-              publishDate: episode.pubDate,
+              publishDate: episode.pubDate || new Date().toISOString(), // Provide default if episode.pubDate is null/undefined
               duration: episode.duration,
-              audioUrl: episode.audio.url,
-              fileSize: episode.audio.length,
-              fileType: episode.audio.type,
+              // Safely access audio properties
+              audioUrl: episode.audio ? episode.audio.url : null,
+              fileSize: episode.audio ? episode.audio.length : null,
+              fileType: episode.audio ? episode.audio.type : null,
               guid: episode.guid,
               season: episode.season || null,
               episode: episode.episode || null,
@@ -165,10 +309,12 @@ document.addEventListener("DOMContentLoaded", () => {
               isHidden: episode.isHidden || null,
               status: "published",
               isImported: true,
-            });
+            };
+
+            const registerResponse = await registerEpisode(episodeDataForRegistration);
             console.log("Episode registered successfully:", registerResponse);
           } catch (error) {
-            console.error("Error registering episode:", error);
+            console.error("Error registering episode:", episode.title, error);
           }
         }
 
@@ -197,7 +343,6 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
-  // Calendar Connection Button
   const connectCalendarButton = document.getElementById("connectCalendar");
   if (connectCalendarButton) {
     connectCalendarButton.addEventListener("click", (event) => {
@@ -211,7 +356,6 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
-  // Save Google refresh token after OAuth flow
   const urlParams = new URLSearchParams(window.location.search);
   const googleToken = urlParams.get("googleToken");
   if (googleToken) {
@@ -234,7 +378,6 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
 
-  // Function to display podcast preview with enhanced UI
   function displayPodcastPreview(rssData) {
     if (!podcastContainer) return;
 
@@ -391,35 +534,26 @@ document.addEventListener("DOMContentLoaded", () => {
       <div class="podcast-content">
         <div class="podcast-details">
           ${rssData.description ? `<div class="podcast-description">${rssData.description}</div>` : ""}
-          ${rssData.copyright_info ? `<p class="podcast-copyright">© ${rssData.copyright_info}</p>` : ""}
+          
           ${
             rssData.itunesOwner?.name || rssData.itunesOwner?.email
               ? `
-              <h3 class="podcast-section-title">Owner</h3>
-              <div class="podcast-owner">
-                ${rssData.itunesOwner.name ? `<p><i class="fas fa-user"></i> ${rssData.itunesOwner.name}</p>` : ""}
-                ${
-                  rssData.itunesOwner.email
-                    ? `<p><i class="fas fa-envelope"></i> <a href="mailto:${rssData.itunesOwner.email}">${rssData.itunesOwner.email}</a></p>`
-                    : ""
-                }
-              </div>
-            `
-              : ""
-          }
-          ${
-            rssData.generator || rssData.lastBuildDate
-              ? `
-              <h3 class="podcast-section-title">Details</h3>
-              <div class="podcast-details">
-                ${rssData.generator ? `<p><i class="fas fa-cogs"></i> Generated by: ${rssData.generator}</p>` : ""}
-                ${
-                  rssData.lastBuildDate
-                    ? `<p><i class="fas fa-clock"></i> Last Updated: ${new Date(
-                        rssData.lastBuildDate,
-                      ).toLocaleString()}</p>`
-                    : ""
-                }
+               <div class="podcast-owner">
+                <h3 class="podcast-section-title">Owner</h3>
+                <div class="owner-details">
+                  ${rssData.itunesOwner.name ? `
+                    <div class="owner-info">
+                      <h4>Name</h4>
+                      <p class="owner-name"><i class="fas fa-user"></i> ${rssData.itunesOwner.name}</p>
+                    </div>
+                  ` : ""}
+                  ${rssData.itunesOwner.email ? `
+                    <div class="owner-info">
+                      <h4>Email</h4>
+                      <p class="owner-email"><i class="fas fa-envelope"></i> ${rssData.itunesOwner.email}</p>
+                    </div>
+                  ` : ""}
+                </div>
               </div>
             `
               : ""
@@ -449,7 +583,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
   async function initWelcomePopup() {
     try {
-      // Skip if popup was already shown in this session
       if (sessionStorage.getItem("popupShown") === "true") {
         console.log("Popup already shown in this session, skipping.");
         return;
@@ -459,7 +592,6 @@ document.addEventListener("DOMContentLoaded", () => {
       const user = wrapper.account;
       const showWelcomePopup = sessionStorage.getItem("showWelcomePopup") === "true";
 
-      // Show popup only if isFirstLogin is true or showWelcomePopup flag is set
       if (user.isFirstLogin || showWelcomePopup) {
         const welcomePopup = document.getElementById("welcome-popup");
         const closeWelcomePopup = document.getElementById("close-welcome-popup");
@@ -470,25 +602,18 @@ document.addEventListener("DOMContentLoaded", () => {
           return;
         }
 
-        // Mark popup as shown and clear showWelcomePopup flag
         sessionStorage.setItem("popupShown", "true");
         sessionStorage.removeItem("showWelcomePopup");
 
         welcomePopup.style.display = "flex";
 
-        // Helper function to close popup and update state
         const closePopup = async () => {
           welcomePopup.style.display = "none";
           await disableWelcomePopup();
         };
 
-        // Close button
         closeWelcomePopup.addEventListener("click", closePopup);
-
-        // Get Started button
         getStartedBtn.addEventListener("click", closePopup);
-
-        // Click outside popup
         welcomePopup.addEventListener("click", async (e) => {
           if (e.target === welcomePopup) {
             await closePopup();
@@ -507,7 +632,6 @@ document.addEventListener("DOMContentLoaded", () => {
       console.log("isFirstLogin set to false");
     } catch (error) {
       console.error("Error disabling welcome popup:", error);
-      // Fallback to prevent popup on reload
       sessionStorage.setItem("popupShown", "true");
     }
   }
@@ -615,7 +739,7 @@ document.addEventListener("DOMContentLoaded", () => {
       }
     }
   }
-
+    
   function getPlatformIcon(platform) {
     const icons = {
       twitter: "fab fa-twitter",
@@ -642,6 +766,15 @@ document.addEventListener("DOMContentLoaded", () => {
     };
   }
 });
+
+function initCreatepodcastButton() {
+  const createPodcastButton = document.getElementById("createPodcast");
+  if (createPodcastButton) {  
+      createPodcastButton.addEventListener("click", () => {
+      sessionStorage.setItem("Addpodcast", "true");
+      window.location.href = "/podcastmanagement";
+    });
+  }}
 
 function connectGoogleCalendar() {
   const connectCalendarButton = document.getElementById("connectCalendar");
