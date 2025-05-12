@@ -64,6 +64,7 @@ header {
   width: 100%; /* Ensure header takes full width */
   box-sizing: border-box; /* Include padding in width calculation */
   min-height: 116px;
+  direction: ltr !important;
 }
 
 /* Logo – Reduced size */
@@ -118,6 +119,7 @@ header {
   gap: var(--spacing-lg);
   margin-left: auto; /* Push to the right */
   flex-shrink: 0; /* Prevent nav from shrinking */
+  direction: ltr !important;
 }
 
 .header-nav select {

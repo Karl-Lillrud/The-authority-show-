@@ -150,22 +150,11 @@
     }
 }
 
-/* Hamburger menu and credits to the left in RTL */
-[dir="rtl"] .header-nav {
+/* Remove RTL flipping for header/nav/hamburger/credits to keep header LTR in Arabic */
+/* [dir="rtl"] .header-nav {
     flex-direction: row-reverse !important;
     margin-left: 0 !important;
     margin-right: auto !important;
-}
-
-[dir="rtl"] .menu-toggle {
-    right: auto !important;
-    left: 0 !important;
-}
-
-[dir="rtl"] .menu {
-    right: auto !important;
-    left: 0 !important;
-    text-align: right !important;
 }
 
 [dir="rtl"] .credits-wrapper {
@@ -176,8 +165,23 @@
     text-align: right !important;
 }
 
-/* Optional: flip logo-title-container if needed */
+[dir="rtl"] .menu-toggle {
+    right: auto !important;
+    left: 0 !important;
+    order: 1 !important;
+    margin-left: 0 !important;
+    margin-right: 1.5rem !important;
+}
+
+[dir="rtl"] .menu {
+    right: auto !important;
+    left: 0 !important;
+    text-align: right !important;
+}
+
 [dir="rtl"] .logo-title-container {
     flex-direction: row-reverse !important;
     text-align: right !important;
-} 
+} */
+
+/* Keep only RTL rules for content, not header layout */ 
