@@ -1,4 +1,4 @@
-from flask import Blueprint, redirect, render_template, send_from_directory
+from flask import Blueprint, redirect, render_template, send_from_directory, request, session
 import os
 
 frontend_bp = Blueprint(
@@ -39,8 +39,11 @@ def redirect_to_start():
 
 @frontend_bp.route("/start")
 def start_page():
+    if "user_id" in session and session.get("user_id"):
+        return redirect("/dashboard")
+    if request.cookies.get("remember_me") == "true":
+        return redirect("/dashboard")
     return render_template("index/index.html")
-
 
 
 
