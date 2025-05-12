@@ -1445,3 +1445,20 @@ function hideSpinner(containerId) {
         container.innerHTML = '';
     }
 }
+
+// prevent doubleclikc/spamclicking on the functions to loose credits
+document.addEventListener("DOMContentLoaded", () => {
+    document.body.addEventListener("click", function (event) {
+        const button = event.target.closest("button.ai-edit-button");
+        if (!button || button.disabled) return;
+
+        button.disabled = true;
+        button.classList.add("disabled");
+
+        // Re-enable after 3k milliseconds (3seconds)
+        setTimeout(() => {
+            button.disabled = false;
+            button.classList.remove("disabled");
+        }, 3000);
+    }, true);  
+});
