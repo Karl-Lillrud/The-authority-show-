@@ -3,11 +3,45 @@ document.addEventListener("DOMContentLoaded", function () {
   const errorMessage = document.getElementById("error-message");
   const sendLoginLinkButton = document.getElementById("send-login-link-button");
   const emailInput = document.getElementById("email");
+  const slidingContainer = document.querySelector(".sliding-container");
+  const overlay = document.querySelector(".overlay");
+  const closeButton = document.querySelector(".close-button");
 
-  // Handle "Send Log-In Link" button click
+  // Function to toggle sliding container
+  function toggleSlidingContainer() {
+    slidingContainer.classList.toggle("active");
+    overlay.classList.toggle("active");
+  }
+
+  // Add click event listener only to the About PodManager link
+  const aboutLink = document.querySelector('.policy-links a[href*="about"]');
+  if (aboutLink) {
+    aboutLink.addEventListener('click', (e) => {
+      e.preventDefault();
+      toggleSlidingContainer();
+    });
+  }
+
+  // Add click event listener to the close button
+  if (closeButton) {
+    closeButton.addEventListener('click', (e) => {
+      e.stopPropagation(); // Prevent event from bubbling to container
+      toggleSlidingContainer();
+    });
+  }
+
+  // Add click event listener to the overlay to close the container
+  if (overlay) {
+    overlay.addEventListener('click', () => {
+      toggleSlidingContainer();
+    });
+  }
+
+  // Handle "Get Log-In Link" button click
   if (sendLoginLinkButton) {
     sendLoginLinkButton.addEventListener("click", async function () {
       const email = emailInput.value.trim();
+      const originalButtonText = sendLoginLinkButton.textContent;
 
       if (!email) {
         errorMessage.textContent = "Please enter your email address.";
@@ -17,6 +51,10 @@ document.addEventListener("DOMContentLoaded", function () {
       }
 
       try {
+        // Change button text to "Sending..."
+        sendLoginLinkButton.textContent = "Sending...";
+        sendLoginLinkButton.disabled = true;
+
         const response = await fetch("/send-login-link", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -42,6 +80,10 @@ document.addEventListener("DOMContentLoaded", function () {
           "An unexpected error occurred while sending the login link. Please try again later.";
         errorMessage.style.display = "block";
         successMessage.style.display = "none";
+      } finally {
+        // Restore button text and enable it
+        sendLoginLinkButton.textContent = originalButtonText;
+        sendLoginLinkButton.disabled = false;
       }
     });
   } else {
