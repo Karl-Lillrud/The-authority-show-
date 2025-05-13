@@ -47,19 +47,19 @@ class AccountRepository:
                 }, 200
 
             # Create a new account
-            new_account_id = str(uuid.uuid4())  # Define new_account_id
-            new_subscription_id = data.get("subscriptionId") or str(uuid.uuid4())
-            new_credit_id = data.get("creditId") or str(uuid.uuid4())
+            account_id = str(uuid.uuid4())  # Define account_id
+            subscription_id = data.get("subscriptionId") or str(uuid.uuid4())
+            credit_id = data.get("creditId") or str(uuid.uuid4())
 
             account_data = {
-                "_id": new_account_id,  # Use the defined new_account_id
+                "_id": account_id,
                 "ownerId": user_id,
                 "email": email.lower().strip(),
                 "createdAt": datetime.utcnow().isoformat(),
                 "updatedAt": datetime.utcnow().isoformat(),
                 "isActive": data.get("isActive", True),
-                "subscriptionId": new_subscription_id,
-                "creditId": new_credit_id,
+                "subscriptionId": subscription_id,
+                "creditId": credit_id,
                 "isCompany": data.get("isCompany", False),
                 "companyName": data.get("companyName", ""),
                 "subscriptionStatus": data.get("subscriptionStatus", "active"),
@@ -76,7 +76,7 @@ class AccountRepository:
             result = self.collection.insert_one(account_data)
             if result.inserted_id:
                 logger.info(
-                    f"New account created for user {user_id}: {new_account_id}"
+                    f"New account created for user {user_id}: {account_id}"
                 )
                 # Initialize credits for the new user
                 try:
@@ -87,7 +87,7 @@ class AccountRepository:
                     )
                 return {
                     "message": "Account created successfully!",
-                    "accountId": new_account_id,
+                    "accountId": account_id,
                 }, 201
             else:
                 logger.error(

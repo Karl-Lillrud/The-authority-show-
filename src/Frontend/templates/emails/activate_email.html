@@ -116,6 +116,10 @@
 <body style="background-color: #f5f5f5; margin: 0; padding: 0;">
     <div class="container">
         <div class="header">
+            {% set fallback_artwork_url = "https://podmanager.app/static/images/default.png" %}
+            {% if not artwork_url or not artwork_url.startswith("http") %}
+                {% set artwork_url = fallback_artwork_url %}
+            {% endif %}
             <img src="{{ artwork_url }}" alt="Podcast Artwork" class="logo">
         </div>
         

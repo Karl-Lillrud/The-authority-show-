@@ -42,7 +42,7 @@ def send_activation_email(email, activation_link, podcast_name, rss_url):
     if status_code == 200 and rss_data:
         artwork_url = rss_data.get("imageUrl")
     if not artwork_url or not artwork_url.startswith("http"):
-        artwork_url = "https://podmanager.app/static/images/default-artwork.png"
+        artwork_url = "https://podmanager.app/static/images/default.png"
 
     try:
         html_body = render_template(
