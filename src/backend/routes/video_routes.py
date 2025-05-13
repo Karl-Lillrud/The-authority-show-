@@ -92,7 +92,7 @@ def clip_video():
 @video_bp.route("/get_video/<file_id>", methods=["GET"])
 def get_video(file_id: str):
     try:
-        file_obj = fs.get(file_id)  # No ObjectId()
+        file_obj = fs.get(file_id)
         if not file_obj:
             return jsonify({"error": "File not found"}), 404
 
