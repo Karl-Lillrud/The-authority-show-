@@ -5,7 +5,6 @@ class AccountSchema(Schema):
     ownerId = fields.Str()
     subscriptionId = fields.Str()
     creditId = fields.Str()
-    email = fields.Email(required=True)
     isCompany = fields.Bool()
     companyName = fields.Str()
     paymentInfo = fields.Str()

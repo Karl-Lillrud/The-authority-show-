@@ -49,7 +49,6 @@ class AuthRepository:
                 # Create account using internal create_account method
                 account_data = {
                     "ownerId": user_data["_id"],
-                    "email": user_data["email"],
                     "isFirstLogin": True,
                 }
                 account_result, status_code = self.create_account(account_data)
@@ -72,19 +71,15 @@ class AuthRepository:
         """
         Creates a new account for the user if one does not exist, or returns the existing account.
         Args:
-            data (dict): Contains ownerId, email, and optional fields (e.g., subscriptionId, isFirstLogin).
+            data (dict): Contains ownerId and optional fields (e.g., subscriptionId, isFirstLogin).
         Returns: (dict, status_code)
         """
         try:
             # Validate inputs
             user_id = data.get("ownerId")
-            email = data.get("email")
             if not user_id or not isinstance(user_id, str):
                 logger.error(f"Invalid user_id: {user_id}")
                 return {"error": "Invalid or missing user_id"}, 400
-            if not email or not isinstance(email, str):
-                logger.error(f"Invalid email: {email}")
-                return {"error": "Invalid or missing email"}, 400
 
             # Check if an account already exists for the user
             logger.debug(f"Checking for existing account with ownerId: {user_id}")
@@ -102,7 +97,6 @@ class AuthRepository:
             account_data = {
                 "_id": str(ObjectId()),
                 "ownerId": user_id,
-                "email": email,
                 "createdAt": datetime.utcnow().isoformat(),
                 "updatedAt": datetime.utcnow().isoformat(),
                 "isActive": data.get("isActive", True),

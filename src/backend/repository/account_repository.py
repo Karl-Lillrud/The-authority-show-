@@ -13,8 +13,8 @@ class AccountRepository:
 
     def create_account(self, data):
         try:
-            if not data or "ownerId" not in data or "email" not in data:
-                return {"error": "ownerId and email are required"}, 400
+            if not data or "ownerId" not in data:
+                return {"error": "ownerId are required"}, 400
 
             # Use AuthRepository to create or retrieve account
             account_result, status_code = self.auth_repository.create_account(data)
