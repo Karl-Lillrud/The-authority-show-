@@ -1,4 +1,4 @@
-from flask import Blueprint, render_template, send_from_directory
+from flask import Blueprint, redirect, render_template, send_from_directory, request, session
 import os
 
 frontend_bp = Blueprint(
@@ -32,3 +32,18 @@ def privacy_policy_page():
 @frontend_bp.route("/about")
 def about_page():
     return render_template("about/about.html")
+
+@frontend_bp.route("/")
+def redirect_to_start():
+    return redirect("/start")
+
+@frontend_bp.route("/start")
+def start_page():
+    if "user_id" in session and session.get("user_id"):
+        return redirect("/dashboard")
+    if request.cookies.get("remember_me") == "true":
+        return redirect("/dashboard")
+    return render_template("index/index.html")
+
+
+

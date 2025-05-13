@@ -14,6 +14,12 @@ document.addEventListener("DOMContentLoaded", async () => {
   
   await handlePurchaseSuccess();
   setupContinueShoppingButton();
+
+  const pageTitle = document.getElementById("page-title");
+  if (pageTitle) {
+    pageTitle.textContent = "Store"; // Set the page title
+  }
+
 });
 
 async function handlePurchaseSuccess() {

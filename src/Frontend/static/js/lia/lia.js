@@ -16,7 +16,7 @@ const questions = [
         ]
     },
     {
-        text: "Do you enjoy working remotely and have experience with remote work?",
+        text: "Are you OK with working remotely?",
         dealbreaker: false,
         options: [
             { text: "Yes, I enjoy remote work and have experience.", value: true },
@@ -202,7 +202,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     const result = await response.json();
                     if (result.success) {
                         // Redirect to Google Drive on successful backend processing
-                        window.location.href = "https://drive.google.com/drive/folders/1qQeAYxkNDU0uCaBkJuaTzx7im5sRP62F";
+                        window.location.href = "https://drive.google.com/drive/u/0/folders/1nE6azjCg5GVneupyXEFYFHZP2V7TT4bZ";
                     } else {
                         alert(result.error || 'Failed to submit inquiry. Please try again.');
                         submitButton.disabled = false;

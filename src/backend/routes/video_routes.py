@@ -1,6 +1,6 @@
 # video_routes.py
 import logging
-from flask import Blueprint, request, jsonify, Response
+from flask import Blueprint, request, jsonify, Response, g
 
 from bson import ObjectId
 import gridfs
@@ -8,11 +8,14 @@ import gridfs
 from backend.services.videoService import VideoService
 from backend.repository.ai_models import get_file_data  # if you use it elsewhere
 from backend.database.mongo_connection import get_fs
+from backend.services.creditService import consume_credits
+
 
 fs = get_fs()
 logger = logging.getLogger(__name__)
 video_bp = Blueprint("video_bp", __name__)
 video_service = VideoService()
+
 
 @video_bp.route("/ai_videoedit", methods=["POST"])
 def ai_videoedit():
@@ -39,6 +42,15 @@ def ai_videoenhance():
         return jsonify({"error": "No video_id provided"}), 400
 
     try:
+        try:
+            consume_credits(g.user_id, "video_enhancement")
+        except ValueError as e:
+            logger.warning(f"User {g.user_id} has insufficient credits for video_enhancement: {e}")
+            return jsonify({
+                "error": str(e),
+                "redirect": "/store"
+            }), 403
+
         processed_id = video_service.enhance_video(video_id)
         return jsonify({"processed_video_id": processed_id})
     except Exception as e:
@@ -91,9 +103,11 @@ def get_video(file_id: str):
         return Response(
             file_data,
             mimetype="video/mp4",
-            headers={"Content-Disposition": f"attachment; filename={file_obj.filename}"}
+            headers={
+                "Content-Disposition": f"attachment; filename={file_obj.filename}"
+            },
         )
     except gridfs.errors.NoFile:
         return jsonify({"error": "File not found."}), 404
     except Exception as e:
-        return jsonify({"error": str(e)}), 500
+        return jsonify({"errsor": str(e)}), 500

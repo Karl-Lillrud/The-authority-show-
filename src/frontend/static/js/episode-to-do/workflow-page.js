@@ -13,10 +13,6 @@ export function renderWorkflowEditor(state, updateUI) {
   // Create the workflow editor UI
   const workflowEditorHTML = `
     <div class="workflow-editor">
-      <div class="workflow-header">
-        <h3>Edit Workflow</h3>
-        <p>Select a workflow to edit or create a new one from the current tasks.</p>
-      </div>
       
       <div class="workflow-selector">
         <label for="workflow-select">Select Workflow:</label>

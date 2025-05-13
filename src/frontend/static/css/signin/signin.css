@@ -9,7 +9,8 @@
   width: 100%;
   height: 100%;
   object-fit: cover;
-  object-position: center;
+  object-position: center; /* Or 'right center' if you still want that alignment */
+  transform: scaleX(-1); /* Flips the image horizontally */
 }
 
 .center-box {
@@ -18,7 +19,7 @@
   width: 25%;
   position: fixed;
   top: 48%;
-  left: 2%;
+  left: 2%; /* Changed from right: 2% */
   transform: translateY(-50%);
   padding: 20px;
   border-radius: 40px;
@@ -27,6 +28,109 @@
   margin: 0;
   display: flex;
   flex-direction: column;
+  transition: transform 0.5s ease;
+}
+
+.sliding-container {
+  position: fixed;
+  top: 48%;
+  left: 30%; /* Changed from right: 2% and adjusted position */
+  width: 25%;
+  height: 65vh;
+  background-color: var(--background-light);
+  border-radius: 40px;
+  padding: 20px;
+  transform: translate(-100%, -50%); /* Changed from translate(100%, -50%) */
+  transition: all 0.5s ease;
+  z-index: 1000;
+  opacity: 0;
+  visibility: hidden;
+  box-shadow: -5px -5px 45px #ff7f3f, 35px 5px 15px var(--shadow-light);
+}
+
+.sliding-container.active {
+  left: 30%; /* Changed from right: 30% */
+  transform: translate(0, -50%);
+  opacity: 1;
+  visibility: visible;
+}
+
+.sliding-container.active::before {
+  opacity: 1;
+}
+
+.sliding-container.active::after {
+  opacity: 1;
+}
+
+.sliding-container h2 {
+  font-size: 24px;
+  color: var(--highlight-color);
+  margin-bottom: 15px;
+}
+
+.sliding-container .subtitle {
+  font-size: 18px;
+  color: var(--text-color);
+  margin-bottom: 10px;
+}
+
+.sliding-container .no-credit {
+  font-size: 14px;
+  color: var(--text-color-light);
+  margin-bottom: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.sliding-container .no-credit i {
+  color: var(--highlight-color);
+  font-size: 16px;
+}
+
+.feature-list {
+  list-style: none;
+  padding: 0;
+  margin: 20px 0;
+  text-align: left;
+}
+
+.feature-list li {
+  margin: 15px 0;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--text-color);
+}
+
+.feature-list i {
+  color: var(--highlight-color);
+  width: 20px;
+}
+
+.learn-more-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--highlight-color);
+  text-decoration: none;
+  margin-top: 20px;
+  font-weight: 500;
+  transition: gap 0.3s ease;
+}
+
+.learn-more-link:hover {
+  gap: 12px;
+}
+
+.learn-more-link i {
+  transition: transform 0.3s ease;
+}
+
+.learn-more-link:hover i {
+  transform: translateX(4px);
 }
 
 .logo-container {
@@ -96,16 +200,16 @@
 }
 
 .error-message {
-  font-size: 18px;
+  font-size: 16px;
   color: var(--highlight-color);
-  margin-bottom: 15px;
+  margin-top: 35px;
   text-align: center;
 }
 
 .success-message {
-  font-size: 18px;
+  font-size: 16px;
   color: var(--highlight-color);
-  margin-bottom: 15px;
+  margin-top: 35px;
   text-align: center;
 }
 
@@ -113,41 +217,149 @@
   display: flex;
   flex-direction: column;
   flex-grow: 1;
+  margin-top: 65px;
 }
 
 .form-actions {
   margin: 10px 0;
 }
 
+.title {
+  font-size: 24px;
+  margin-bottom: 15px;
+  
+}
+
 /* Media Queries for Responsiveness */
+@media (max-width: 1200px) {
+  .center-box {
+    width: 35%;
+    left: 2%;
+  }
+
+  .sliding-container {
+    width: 35%;
+    left: 40%;
+  }
+}
+
+@media (max-width: 992px) {
+  .center-box {
+    width: 45%;
+    left: 2%;
+  }
+
+  .sliding-container {
+    width: 45%;
+    left: 50%;
+  }
+
+  .input {
+    width: 85%;
+  }
+}
+
 @media (max-width: 768px) {
   .center-box {
     width: 90%;
     height: auto;
+    min-height: 65vh;
     padding: 20px;
-    left: 50%; /* center horizontally */
-    transform: translate(-50%, -50%); /* adjust to center vertically & horizontally */
+    left: 50%;
+    transform: translate(-50%, -50%);
   }
 
-  .button {
-    width: 100%;
-    margin-top: 10px;
+  .sliding-container {
+    width: 90%;
+    left: 50%;
+  }
+
+  .sliding-container.active {
+    left: 50%;
+    transform: translate(-50%, -50%);
+  }
+
+  .button.button-primary {
+    width: 90%;
+    height: auto;
+    min-height: 45px;
+  }
+
+  .input {
+    width: 90%;
+    padding: 15px;
+    margin: 10px auto;
   }
 
   .logo-container {
     width: 80px;
   }
+
+  .title {
+    font-size: 22px;
+  }
 }
 
-@media (max-width: 480px) {
+@media (max-width: 576px) {
   .center-box {
-    width: 100%;
-    height: auto;
+    width: 95%;
+    border-radius: 25px;
     padding: 15px;
+    left: 50%;
+  }
+
+  .sliding-container {
+    width: 95%;
+    left: 50%;
+  }
+
+  .logo-container {
+    width: 80px;
+    top: 10px;
+  }
+
+  .title {
+    font-size: 20px;
+    margin-bottom: 10px;
+  }
+
+  .input {
+    padding: 12px;
+    margin: 8px auto;
+  }
+
+  .button.button-primary {
+    width: 95%;
+    height: auto;
+    min-height: 40px;
+    margin: 8px auto;
+  }
+
+  .feature-list li {
+    font-size: 14px;
+  }
+}
+
+@media (max-width: 375px) {
+  .center-box {
+    width: 98%;
+    padding: 12px;
   }
 
   .input {
     padding: 10px;
+    margin: 6px auto;
+    font-size: 14px;
+  }
+
+  .button.button-primary {
+    height: auto;
+    min-height: 35px;
+    font-size: 14px;
+  }
+
+  .title {
+    font-size: 18px;
   }
 
   .logo-container {
@@ -155,61 +367,23 @@
   }
 }
 
-@media screen and (max-width: 1200px) {
-  .center-box {
-    width: 35%;
-  }
-}
-
-@media screen and (max-width: 992px) {
-  .center-box {
-    width: 45%;
-  }
-}
-
-@media screen and (max-width: 576px) {
-  .center-box {
-    width: 60%;
-    border-radius: 30px;
-    padding: 20px 10px;
-  }
-
-  .logo-container {
-    width: 100px;
-    top: 0px;
-  }
-
-  .title {
-    font-size: 24px;
-    margin-bottom: 15px;
-  }
-}
-
-@media screen and (max-width: 375px) {
-  .center-box {
-    width: 80%;
-    padding: 15px 8px;
-  }
-
-  .input {
-    padding: 10px;
-    margin: 6px;
-  }
-
-  .button.button-primary {
-    height: 5vh;
-  }
-}
-
 @media screen and (max-height: 700px) {
   .center-box {
     height: auto;
     min-height: 65vh;
+    overflow-y: auto;
+    padding: 15px;
   }
 
   .button.button-primary {
     height: auto;
-    padding: 10px;
+    min-height: 40px;
+    padding: 8px;
+  }
+
+  .input {
+    padding: 12px;
+    margin: 8px auto;
   }
 }
 
@@ -218,17 +392,50 @@
     height: auto;
     min-height: 80vh;
     overflow-y: auto;
+    padding: 10px;
   }
 
   .title {
-    margin-bottom: 10px;
+    margin-bottom: 8px;
+    font-size: 18px;
+  }
+
+  .input {
+    padding: 8px;
+    margin: 6px auto;
+  }
+
+  .button.button-primary {
+    min-height: 35px;
+    padding: 6px;
   }
 }
 
 @media screen and (max-width: 320px) {
   .center-box {
-    width: 94%;
-    padding: 10px 5px;
+    width: 98%;
+    padding: 8px;
+  }
+
+  .input {
+    width: 95%;
+    padding: 8px;
+    margin: 5px auto;
+    font-size: 13px;
+  }
+
+  .button.button-primary {
+    width: 95%;
+    min-height: 32px;
+    font-size: 13px;
+  }
+
+  .title {
+    font-size: 16px;
+  }
+
+  .logo-container {
+    width: 50px;
   }
 }
 
@@ -261,4 +468,41 @@
 }
 .social-icons a:hover {
   transform: scale(1.2);
+}
+
+/* Add a close button */
+.close-button {
+  position: absolute;
+  top: 15px;
+  right: 15px;
+  background: none;
+  border: none;
+  color: var(--text-color);
+  font-size: 20px;
+  cursor: pointer;
+  padding: 5px;
+  z-index: 2;
+}
+
+.close-button:hover {
+  color: var(--highlight-color);
+}
+
+/* Add overlay when sliding container is active */
+.overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5);
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.5s ease, visibility 0.5s;
+  z-index: 999;
+}
+
+.overlay.active {
+  opacity: 1;
+  visibility: visible;
 }

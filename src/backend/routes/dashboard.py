@@ -1,25 +1,28 @@
-from flask import Blueprint, render_template, session, redirect, url_for, g,request # Import g
+from flask import Blueprint, render_template, session, redirect, url_for, g, request, jsonify
 import logging
-from backend.database.mongo_connection import collection  # Ensure this import is correct       
+from backend.database.mongo_connection import collection  # Ensure this import is correct
+from backend.repository.podcast_repository import PodcastRepository
+from backend.repository.episode_repository import EpisodeRepository
 
 dashboard_bp = Blueprint("dashboard_bp", __name__)
 logger = logging.getLogger(__name__)
 
-@dashboard_bp.route("/dashboard")
+@dashboard_bp.route("/dashboard", methods=["GET"])
 def dashboard():
-    # Access g.user_id which was set by the load_user function in app.py
-    user_id = getattr(g, 'user_id', None) 
-    
+    user_id = session.get("user_id")
     if not user_id:
-        logger.warning("Unauthorized access attempt to dashboard.")
-        return redirect(url_for("auth_bp.signin_page")) # Redirect to login if no user_id
+        return jsonify({"error": "User not logged in"}), 401
 
-    logger.info(f"Rendering dashboard for user_id: {user_id}")
-    
-    # You can now use user_id to fetch user-specific dashboard data
-    # Example: dashboard_data = fetch_dashboard_data(user_id)
-    
-    return render_template("dashboard/dashboard.html", user_id=user_id) # Pass user_id to template if needed
+    # Fetch data for the dashboard
+    podcasts = PodcastRepository.get_podcasts_by_user_id(user_id)
+    episodes = EpisodeRepository.get_episodes_by_user_id(user_id)
+
+    # Pass data to the frontend
+    return render_template(
+        "dashboard/dashboard.html",
+        podcasts=podcasts or [],
+        episodes=episodes or [],
+    )
 
 # ✅ Serves the homepage page
 @dashboard_bp.route("/homepage", methods=["GET"])

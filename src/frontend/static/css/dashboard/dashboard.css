@@ -767,6 +767,48 @@
   grid-column: 1 / -1;
 }
 
+/* Ensure proper alignment of the icon and text */
+.create-episode {
+  display: flex;
+  align-items: center;
+  gap: 8px; /* Space between the icon and text */
+  padding: 10px 16px;
+  font-size: 16px;
+  font-weight: 600;
+  background-color: white;
+  border: 1px solid rgba(0, 0, 0, 0.05);
+  border-radius: var(--radius-medium);
+  cursor: pointer;
+  transition: all var(--transition-normal);
+  box-shadow: var(--card-shadow);
+}
+
+.create-episode:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--card-shadow-hover2);
+}
+
+/* Smaller icon for the "Create New Episode" button */
+.create-episode .stat-icon {
+  width: 24px; /* Smaller width */
+  height: 24px; /* Smaller height */
+  background-color: #2196f3; /* Blue background for episode icon */
+  border-radius: 50%; /* Ensure it's circular */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white; /* Icon color */
+  box-shadow: none; /* Remove any shadow */
+  border: none; /* Remove any border */
+}
+
+.create-episode .stat-icon svg {
+  width: 16px; /* Adjust SVG size */
+  height: 16px;
+  fill: none; /* Ensure no fill color */
+  stroke: white; /* Match the stroke color */
+}
+
 /* Responsive */
 @media (max-width: 992px) {
   .stats-overview {
