@@ -12,9 +12,7 @@ from backend.repository.credits_repository import (
 )
 import logging
 
-logger = logging.getLogger(__name__)
-
-from bson import ObjectId  
+logger = logging.getLogger(__name__) 
 
 def get_store_credits(user_id):
     credits = get_credits_by_user_id(user_id)

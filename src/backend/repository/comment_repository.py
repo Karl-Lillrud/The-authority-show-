@@ -4,7 +4,6 @@ from datetime import datetime, timezone
 from typing import Dict, List, Tuple, Any, Optional
 
 from marshmallow import ValidationError
-from bson import ObjectId
 
 from backend.database.mongo_connection import collection
 from backend.models.comments import CommentSchema
