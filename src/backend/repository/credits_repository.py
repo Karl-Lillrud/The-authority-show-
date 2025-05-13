@@ -12,7 +12,7 @@ def increment_credits(user_id, field, amount):
     return collection.database.Credits.update_one({"user_id": user_id}, {"$inc": {field: amount}})
 
 def log_credit_transaction(user_id, entry):
-    # Ensure entry has a string _id rather than letting MongoDB create an ObjectId
+  
     if "_id" not in entry:
         entry["_id"] = str(uuid.uuid4())
     

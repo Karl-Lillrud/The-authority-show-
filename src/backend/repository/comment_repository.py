@@ -93,7 +93,6 @@ class CommentRepository:
             # Find all comments for this podtask
             comments = list(self.comments_collection.find({"podtaskId": podtask_id}).sort("createdAt", 1))
             
-            # Convert ObjectId to string for JSON serialization
             for comment in comments:
                 comment["_id"] = str(comment["_id"])
                 # Format dates for frontend

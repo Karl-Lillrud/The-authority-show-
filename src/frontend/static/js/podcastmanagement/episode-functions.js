@@ -678,34 +678,13 @@ export function initEpisodeFunctions() {
         }
 
         // Check for missing required fields
-        if (!data.podcastId || !data.title || !data.publishDate) {
+        if (!data.podcastId || !data.title ) {
           showNotification(
             "Missing Fields",
             "Please fill in all required fields.",
             "error"
           );
           return;
-        }
-
-        // Ensure publishDate is in the correct format
-        const publishDate = new Date(data.publishDate);
-        if (isNaN(publishDate.getTime())) {
-          showNotification(
-            "Invalid Date",
-            "Please provide a valid publish date.",
-            "error"
-          );
-          return;
-        }
-        if (data.duration) {
-          if (data.duration < 0) {
-            showNotification(
-              "Invalid duration",
-              "Please provide a positive integer for duration",
-              "error"
-            );
-            return;
-          }
         }
 
         const result = await registerEpisode(data);

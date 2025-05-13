@@ -4,7 +4,6 @@ from datetime import datetime, timezone
 from typing import Dict, List, Tuple, Any, Optional, Union
 
 from marshmallow import ValidationError
-from bson import ObjectId
 
 from backend.database.mongo_connection import collection
 from backend.models.podtasks import PodtaskSchema
@@ -21,7 +20,6 @@ class PodtaskRepository:
         self.accounts_collection = collection.database.Accounts
         self.podcasts_collection = collection.database.Podcasts
         self.users_collection = collection.database.Users
-        # Assuming episodes are stored in a collection named "Episodes"
         self.episodes_collection = collection.database.Episodes
     
     def register_podtask(self, user_id: str, data: Dict[str, Any]) -> Tuple[Dict[str, Any], int]:
@@ -72,20 +70,17 @@ class PodtaskRepository:
             return {"error": f"Failed to register podtask: {str(e)}"}, 500
     
     def _get_default_podcast_id(self, user_id: str) -> Union[str, Tuple[Dict[str, Any], int]]:
-        # Find user accounts
         user_accounts = list(self.accounts_collection.find({"ownerId": str(user_id)}, {"_id": 1}))
         if not user_accounts:
             logger.warning(f"No accounts found for user {user_id}")
             return {"error": "No accounts found for user"}, 403
 
-        # Get account IDs and find associated podcasts
         user_account_ids = [str(account["_id"]) for account in user_accounts]
         podcasts = list(self.podcasts_collection.find({"accountId": {"$in": user_account_ids}}))
         if not podcasts:
             logger.warning(f"No podcasts found for user accounts: {user_account_ids}")
             return {"error": "No podcasts found for user"}, 404
 
-        # Return first podcast ID
         return str(podcasts[0]["_id"])
     
     def _create_podtask_document(self, podtask_id: str, data: Dict[str, Any]) -> Dict[str, Any]:
@@ -128,14 +123,6 @@ class PodtaskRepository:
             # Execute query
             podtasks = list(self.podtasks_collection.find(query))
 
-            # Convert ObjectId to string for JSON serialization
-            for task in podtasks:
-                task["_id"] = str(task["_id"])
-                # Handle other potential ObjectId fields
-                for field in ["podcastId", "episodeId", "teamId", "guestId"]:
-                    if field in task and isinstance(task[field], ObjectId):
-                        task[field] = str(task[field])
-
             logger.info(f"Retrieved {len(podtasks)} podtasks for user {user_id}")
             return {"podtasks": podtasks}, 200
 
@@ -156,18 +143,12 @@ class PodtaskRepository:
                 logger.warning(f"Permission denied for user {user_id} to access task {task_id}")
                 return {"error": "Permission denied"}, 403
 
-            # Convert ObjectId to string
-            task["_id"] = str(task["_id"])
-            # Handle other potential ObjectId fields
-            for field in ["podcastId", "episodeId", "teamId", "guestId"]:
-                if field in task and isinstance(task[field], ObjectId):
-                    task[field] = str(task[field])
-
             return {"podtask": task}, 200
 
         except Exception as e:
             logger.error(f"Error fetching podtask {task_id}: {e}", exc_info=True)
             return {"error": f"Failed to fetch task: {str(e)}"}, 500
+
 
     def delete_podtask(self, user_id: str, task_id: str) -> Tuple[Dict[str, Any], int]:
         try:
