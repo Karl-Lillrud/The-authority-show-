@@ -168,7 +168,7 @@ export function renderEpisodeDetail(episode) {
         <h3>Main Episode Audio</h3>
         ${
           episode.audioUrl
-            ? `<audio controls style="width: 100%;">
+            ? `<audio controls style="width: 20%;">
                  <source src="${episode.audioUrl}" type="${
                 fileType || "audio/mpeg"
               }">
