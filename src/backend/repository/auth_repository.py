@@ -1,7 +1,7 @@
 import logging
 import uuid
 from datetime import datetime
-from bson import ObjectId
+
 from backend.database.mongo_connection import collection
 from backend.repository.account_repository import AccountRepository
 

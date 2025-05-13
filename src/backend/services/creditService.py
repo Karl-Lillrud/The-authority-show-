@@ -14,12 +14,11 @@ import logging
 
 logger = logging.getLogger(__name__)
 
-from bson import ObjectId  
 
 def get_store_credits(user_id):
     credits = get_credits_by_user_id(user_id)
     if credits:
-        credits["_id"] = str(credits["_id"])  # Convert ObjectId to string
+        credits["_id"] = str(credits["_id"])  
     return credits
 
 def consume_credits(user_id, feature_name):
@@ -58,9 +57,9 @@ def initialize_credits(user_id: str, initial_amount=3000):
     """Initialize credits for a new user."""
     existing = get_credits_by_user_id(user_id)
     if not existing:
-        # Add a prefix to prevent MongoDB from interpreting as ObjectId
+       
         credit_doc = {
-            "_id": str(uuid.uuid4()),  # UUID format is different from ObjectId, so it stays as string
+            "_id": str(uuid.uuid4()), 
             "user_id": user_id,
             "availableCredits": initial_amount,
             "usedCredits": 0,

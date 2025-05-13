@@ -2,7 +2,6 @@ from venv import logger
 from flask import request, jsonify, Blueprint, g
 from backend.database.mongo_connection import collection
 from datetime import datetime, timezone
-from backend.models.podtasks import PodtaskSchema
 from backend.models.workflows import WorkflowSchema  # Import the schema
 import uuid
 import json
@@ -182,7 +181,6 @@ def get_workflows():
         # Fetch workflows from the database
         workflows = list(collection.database.Workflows.find({"user_id": g.user_id}))
 
-        # Serialize the workflows to convert ObjectId to string
         schema = WorkflowSchema(many=True)
         workflows_data = schema.dump(workflows)
 

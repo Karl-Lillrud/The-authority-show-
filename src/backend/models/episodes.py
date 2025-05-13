@@ -1,5 +1,5 @@
 from marshmallow import Schema, fields, validates, ValidationError
-from marshmallow.validate import Length, Range, OneOf
+from marshmallow.validate import Length, Range
 from datetime import datetime
 
 class EpisodeSchema(Schema):
@@ -25,10 +25,10 @@ class EpisodeSchema(Schema):
     author = fields.Str(allow_none=True)
     keywords = fields.List(fields.Str(), allow_none=True)
     chapters = fields.List(fields.Dict(), allow_none=True)
-    status = fields.Str(
-        validate=OneOf(["draft", "published", "scheduled", "archived"]),
-        allow_none=True,
-    )
+
+    # ✅ Updated: allow any string for status
+    status = fields.Str(allow_none=True)
+
     isHidden = fields.Bool(allow_none=True, data_key="isHidden")
     recordingAt = fields.DateTime(allow_none=True, data_key="recordingAt")
     isImported = fields.Bool(allow_none=True, data_key="isImported")
