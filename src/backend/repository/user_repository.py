@@ -1,6 +1,5 @@
 import logging
 from flask import url_for
-from werkzeug.security import check_password_hash, generate_password_hash
 from backend.database.mongo_connection import collection
 from backend.repository.account_repository import AccountRepository
 from backend.repository.episode_repository import EpisodeRepository
@@ -10,6 +9,8 @@ from backend.repository.podtask_repository import PodtaskRepository
 from backend.repository.usertoteam_repository import UserToTeamRepository
 from backend.repository.team_repository import TeamRepository
 from backend.repository.teaminviterepository import TeamInviteRepository
+from backend.repository.credits_repository import delete_by_user as delete_credits_by_user
+from backend.repository.activities_repository import ActivitiesRepository
 from datetime import datetime, timezone
 import bson
 
@@ -76,33 +77,6 @@ class UserRepository:
             logger.error(f"Error updating profile: {e}", exc_info=True)
             return {"error": f"Error updating profile: {str(e)}"}, 500
 
-    def update_password(self, user_id, data):
-        try:
-            current_password = data.get("current_password")
-            new_password = data.get("new_password")
-
-            if not current_password or not new_password:
-                return {"error": "Both current and new passwords are required"}, 400
-
-            user = self.user_collection.find_one({"_id": user_id})
-
-            if not user:
-                return {"error": "User not found"}, 404
-
-            if not check_password_hash(user.get("passwordHash", ""), current_password):
-                return {"error": "Current password is incorrect"}, 400
-
-            hashed_new_password = generate_password_hash(new_password)
-
-            self.user_collection.update_one(
-                {"_id": user_id}, {"$set": {"passwordHash": hashed_new_password}}
-            )
-
-            return {"message": "Password updated successfully!"}, 200
-
-        except Exception as e:
-            logger.error(f"Error updating password: {e}", exc_info=True)
-            return {"error": f"Error updating password: {str(e)}"}, 500
 
     # Delete user and all associated data from related collections
     def cleanup_user_data(self, user_id, user_email):
@@ -114,7 +88,6 @@ class UserRepository:
             episodes = EpisodeRepository().delete_by_user(user_id_str)
             guests = GuestRepository().delete_by_user(user_id_str)
             podcasts = PodcastRepository().delete_by_user(user_id_str)
-            podtasks = PodtaskRepository().delete_by_user(user_id_str)
 
             # Clean up teams: remove from members or delete if creator
             team_repo = TeamRepository()
@@ -147,6 +120,8 @@ class UserRepository:
             # Continue cleanup
             accounts = AccountRepository().delete_by_user(user_id_str)
             user_teams = UserToTeamRepository().delete_by_user(user_id_str)
+            user_credit = delete_credits_by_user(user_id_str)
+            user_activity = ActivitiesRepository().delete_by_user(user_id_str)
 
             return {
                 "episodes_deleted": episodes,
@@ -156,6 +131,8 @@ class UserRepository:
                 "accounts_deleted": accounts,
                 "user_team_links_deleted": user_teams,
                 "teams_processed": team_cleanup_results,
+                "user_credits_deleted": user_credit,
+                "user_activity_deleted": user_activity,
             }
 
         except Exception as e:
@@ -165,7 +142,6 @@ class UserRepository:
     def delete_user(self, data):
         try:
             input_email = data.get("deleteEmail")
-            input_password = data.get("deletePassword")
             delete_confirm = data.get("deleteConfirm", "").strip().upper()
 
             if delete_confirm != "DELETE":
@@ -173,18 +149,14 @@ class UserRepository:
                     "error": "Please type 'DELETE' exactly to confirm account deletion."
                 }, 400
 
-            if not input_email or not input_password:
-                return {"error": "Email and password are required."}, 400
+            if not input_email:
+                return {"error": "Email is required."}, 400
 
             user = self.user_collection.find_one(
-                {"email": {"$regex": f"^{input_email}$", "$options": "i"}}
+                {"email": input_email.lower().strip()}
             )
             if not user:
-                return {"error": "User does not exist in the database."}, 404
-
-            stored_hash = user.get("passwordHash")
-            if not stored_hash or not check_password_hash(stored_hash, input_password):
-                return {"error": "Incorrect password."}, 400
+                return {"error": "User doeexist in the database."}, 404
 
             user_id = user.get("_id")
 

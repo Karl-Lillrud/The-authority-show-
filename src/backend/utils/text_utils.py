@@ -13,8 +13,9 @@ from pathlib import Path
 from typing import List
 from transformers import pipeline
 from io import BytesIO
-import streamlit as st  # Needed for download_button_text
+import streamlit as st  
 from pydub import AudioSegment
+from collections import Counter
 
 client = OpenAI()
 
@@ -53,8 +54,8 @@ def translate_text(text: str, target_language: str) -> str:
         except Exception as e:
             logger.warning(f"Retry {attempt+1}/{retries} failed: {e}")
             time.sleep(1)
-    logger.error("❌ Translation permanently failed after retries.")
-    return "⚠️ Failed to translate. Try again later."
+    logger.error("Translation permanently failed after retries.")
+    return "Failed to translate. Try again later."
 
 def generate_ai_suggestions(text):
     prompt = f"""
@@ -206,7 +207,7 @@ def generate_ai_show_notes(transcript):
         )
         return response.choices[0].message.content.strip()
     except Exception as e:
-        logger.error(f"❌ Error generating show notes: {e}")
+        logger.error(f"Error generating show notes: {e}")
         return f"Error generating show notes: {str(e)}"
 
 def generate_ai_quotes(transcript: str) -> str:
@@ -231,7 +232,7 @@ def generate_ai_quotes(transcript: str) -> str:
         lines = [line.strip("\u2022\u2013\u2014-\u2022 \n\"") for line in quotes_raw.split("\n") if line.strip()]
         return "\n\n".join(lines[:3])
     except Exception as e:
-        logger.error(f"❌ Error generating quotes: {e}")
+        logger.error(f"Error generating quotes: {e}")
         return f"Error generating quotes: {str(e)}"
 
 def generate_quote_images(quotes: List[str]) -> List[str]:
@@ -248,7 +249,7 @@ def generate_quote_images(quotes: List[str]) -> List[str]:
             url = response.data[0].url
             urls.append(url)
         except Exception as e:
-            logger.error(f"❌ Failed to generate image for quote: {quote} | Error: {e}")
+            logger.error(f"Failed to generate image for quote: {quote} | Error: {e}")
             urls.append("")
     return urls
 
@@ -334,7 +335,6 @@ def mix_background(
     return out_buf.getvalue()
 
 def pick_dominant_emotion(emotion_data: list) -> str:
-    from collections import Counter
     labels = [e["emotions"][0]["label"] for e in emotion_data]
     return Counter(labels).most_common(1)[0][0] if labels else "neutral"
 
@@ -342,7 +342,6 @@ def get_osint_info(guest_name: str) -> str:
     """
     Uses GPT-4 to retrieve OSINT-style background information about a guest.
     """
-    from openai import OpenAI
     client = OpenAI()
 
     prompt = f"Find detailed and recent public information about {guest_name}. Focus on professional achievements, background, and any recent mentions in news or social media."
@@ -358,7 +357,6 @@ def get_osint_info(guest_name: str) -> str:
     return response.choices[0].message.content.strip()
 
 def create_podcast_scripts_paid(osint_info: str, guest_name: str, transcript: str = "") -> str:
-    from openai import OpenAI
     client = OpenAI()
 
     prompt = f"""
@@ -368,10 +366,10 @@ Write a compelling **podcast intro and outro** based on the following episode tr
 
 Start with the **topics and tone** from the transcript, then enrich it with background details about the guest ({guest_name}).
 
-📌 Transcript:
+Transcript:
 {transcript}
 
-📌 Guest background info:
+Guest background info:
 {osint_info}
 
 The intro should briefly tease the main topic(s) of the episode, using an engaging tone.
@@ -386,9 +384,6 @@ The outro should reflect on the discussion and invite the listener to tune in ag
     return response.choices[0].message.content.strip()
 
 def text_to_speech_with_elevenlabs(script: str, voice_id: str = "TX3LPaxmHKxFdv7VOQHJ") -> bytes:
-    import requests
-    import os
-    from io import BytesIO
 
     api_key = os.getenv("ELEVENLABS_API_KEY")
     url = f"https://api.elevenlabs.io/v1/text-to-speech/{voice_id}"
@@ -409,7 +404,7 @@ def text_to_speech_with_elevenlabs(script: str, voice_id: str = "TX3LPaxmHKxFdv7
     response = requests.post(url, headers=headers, json=payload)
 
     if response.status_code == 200:
-        return response.content  # 🧠 Raw MP3 bytes
+        return response.content 
     else:
         raise RuntimeError(f"ElevenLabs error {response.status_code}: {response.text}")
 

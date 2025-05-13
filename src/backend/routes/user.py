@@ -52,8 +52,8 @@ def delete_user():
         response, status_code = user_repo.delete_user(data)
         return jsonify(response), status_code
     except Exception as e:
-        logger.error(f"Fel vid radering av användare: {e}", exc_info=True)
-        return jsonify({"error": f"Fel vid radering: {str(e)}"}), 500
+        logger.error(f"Error while deleting user: {e}", exc_info=True)
+        return jsonify({"error": f"Error during deletion: {str(e)}"}), 500
 
 
 @user_bp.route("/upload_profile_picture", methods=["POST"])

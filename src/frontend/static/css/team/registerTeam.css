@@ -72,25 +72,7 @@
     margin-top: 5px;
   }
   
-  .password-container {
-    position: relative;
-  }
   
-  .toggle-password {
-    position: absolute;
-    right: 15px;
-    top: 42px;
-    cursor: pointer;
-    font-size: 0.85rem;
-    color: var(--highlight-color);
-    background: transparent;
-    border: none;
-    transition: all 0.3s ease;
-  }
-  
-  .toggle-password:hover {
-    color: var(--highlight-hover);
-  }
   
   .error-message {
     color: var(--danger-color);

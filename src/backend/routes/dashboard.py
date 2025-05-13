@@ -1,44 +1,28 @@
+from flask import Blueprint, render_template, session, redirect, url_for, g, request, jsonify
 import logging
-from flask import (
-    g,
-    redirect,
-    render_template,
-    url_for,
-    Blueprint,
-    request,
-    session,
-    jsonify,
-)
-from backend.database.mongo_connection import collection
-from backend.services.authService import AuthService  # Ensure authService is imported
-
-# Configure logger
-logger = logging.getLogger(__name__)
-logging.basicConfig(level=logging.INFO)
-
-# Initialize AuthService
-authService = AuthService()
+from backend.database.mongo_connection import collection  # Ensure this import is correct
+from backend.repository.podcast_repository import PodcastRepository
+from backend.repository.episode_repository import EpisodeRepository
 
 dashboard_bp = Blueprint("dashboard_bp", __name__)
+logger = logging.getLogger(__name__)
 
-
-# 📌 Dashboard
 @dashboard_bp.route("/dashboard", methods=["GET"])
 def dashboard():
-    """
-    Serves the dashboard page if the user is logged in.
-    """
-    if "user_id" not in session or not session.get("user_id"):
-        logger.warning("User is not logged in. Redirecting to sign-in page.")
-        return redirect(
-            url_for(
-                "auth_bp.signin", error="You must be logged in to access the dashboard."
-            )
-        )
+    user_id = session.get("user_id")
+    if not user_id:
+        return jsonify({"error": "User not logged in"}), 401
 
-    logger.info(f"User {session.get('email', 'Unknown')} accessed the dashboard.")
-    return render_template("dashboard/dashboard.html")
+    # Fetch data for the dashboard
+    podcasts = PodcastRepository.get_podcasts_by_user_id(user_id)
+    episodes = EpisodeRepository.get_episodes_by_user_id(user_id)
 
+    # Pass data to the frontend
+    return render_template(
+        "dashboard/dashboard.html",
+        podcasts=podcasts or [],
+        episodes=episodes or [],
+    )
 
 # ✅ Serves the homepage page
 @dashboard_bp.route("/homepage", methods=["GET"])
@@ -65,7 +49,6 @@ def account():
     email = user.get("email", "") if user else ""
     full_name = user.get("full_name", "") if user else ""
     phone_number = user.get("phone_number", "") if user else ""  # Fetch phone number
-    password = user.get("password", "") if user else ""  # Ensure password is hashed
 
     # Pass all required fields to the account template
     return render_template(
@@ -73,7 +56,6 @@ def account():
         email=email,
         full_name=full_name,
         phone_number=phone_number,
-        password=password,
     )
 
 
@@ -87,7 +69,6 @@ def settings():
     email = user.get("email", "") if user else ""
     full_name = user.get("full_name", "") if user else ""
     phone_number = user.get("phone_number", "") if user else ""  # Fetch phone number
-    password = user.get("password", "") if user else ""  # Ensure password is hashed
 
     # Pass all required fields to the settings template
     return render_template(
@@ -95,7 +76,6 @@ def settings():
         email=email,
         full_name=full_name,
         phone_number=phone_number,
-        password=password,
     )
 
 
@@ -124,8 +104,10 @@ def podcastmanagement():
 @dashboard_bp.route("/episode-to-do", methods=["GET"])
 def episodetodo():
     if not g.user_id:
-        return redirect(url_for("auth_bp.signin"))  # Updated endpoint
-    return render_template("episode-to-do/episode-to-do.html")
+        return redirect(url_for("auth_bp.signin"))
+
+    episode_id = request.args.get("episode_id")
+    return render_template("episode-to-do/episode-to-do.html", user_id=g.user_id, episode_id=episode_id)
 
 
 @dashboard_bp.route("/podprofile", methods=["GET", "POST"])
@@ -190,27 +172,3 @@ def store():
 
     logger.info(f"User {session.get('email', 'Unknown')} accessed the store page.")
     return render_template("store/store.html")
-
-
-# Kommenterat ut nedanstående, pga guests kan ej fetchas då vi har 2st get med samma namn här och i guest.py
-
-# @dashboard_bp.route("/get_guests_by_episode/<episode_id>", methods=["GET"])
-# def get_guests_by_episode(episode_id):
-#     """
-#     Fetches guests associated with a specific episode.
-#     """
-#     if "user_id" not in session or not session.get("user_id"):
-#         logger.warning("User is not logged in. Redirecting to sign-in page.")
-#         return redirect(url_for("auth_bp.signin", error="You must be logged in to access this resource."))
-
-#     try:
-#         # Query the database for guests linked to the given episode ID
-#         guests = list(collection.database.Guests.find({"episode_id": episode_id}))
-#         for guest in guests:
-#             guest["_id"] = str(guest["_id"])  # Convert ObjectId to string for JSON serialization
-
-#         logger.info(f"Fetched {len(guests)} guests for episode {episode_id}.")
-#         return jsonify({"guests": guests}), 200
-#     except Exception as e:
-#         logger.error(f"Error fetching guests for episode {episode_id}: {e}", exc_info=True)
-#         return jsonify({"error": "Failed to fetch guests. Please try again later."}), 500

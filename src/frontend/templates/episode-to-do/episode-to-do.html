@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Episode ToDo</title>
+  <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='favicon/favicon.ico') }}">
+  <link
+  rel="stylesheet"
+  href="{{ url_for('static', filename='css/episode-to-do/episode-to-do.css') }}"
+/>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="stylesheet" href="/static/css/ai_edits/ai_edits.css" />
+  <link rel="stylesheet" href="/static/css/dashboard/dashboard.css" />
+  <link rel="stylesheet" href="/static/css/components/variables.css" />
+</head>
+
+<body>
+  <div id="app">
+    {% include "components/header.html" %}
+<div class="container">
+    <header class="header">
+      <div class="header-content">
+        <div class="header-left">
+          <h1 id="episodeTitle" class="episode-title">The Future of Podcasting</h1>
+          <div class="episode-meta">
+            <i class="fas fa-calendar"></i>
+            <span id="recordingDate">Recording Date: 2025-05-01</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="progress-tracker">
+        <div class="progress-header">
+          <span class="progress-label">Episode Progress</span>
+          <span id="progressText" class="progress-text">8 of 15 tasks completed (53%)</span>
+        </div>
+        <div class="progress-bar-bg">
+          <div id="progressBar" class="progress-bar" style="width: 53%"></div>
+        </div>
+      </div>
+    </header>
+
+    <div class="main-content">
+      <!-- Left Sidebar -->
+      <div class="sidebar left-sidebar">
+        <div class="card">
+          <div class="card-content">
+            <h2 class="section-title">Podcasts</h2>
+            <div id="podcastSelector" class="podcast-selector">
+              <!-- Podcasts will be populated by JavaScript -->
+            </div>
+
+            <div class="episodes-section">
+              <h3 class="subsection-title">Episodes</h3>
+              <div id="episodesList" class="episodes-list">
+                <!-- Episodes will be populated by JavaScript -->
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Main Content Area -->
+      <div class="content-area">
+        <div class="tabs">
+          <div class="tabs-list">
+            <button class="tab-btn active" data-tab="tasks">
+              <i class="fas fa-check-circle"></i>
+              <span>Tasks</span>
+            </button>
+            <button class="tab-btn" data-tab="kanban">
+              <i class="fas fa-columns"></i>
+              <span>Progress Board</span>
+            </button>
+            <button class="tab-btn" data-tab="dependencies">
+              <i class="fas fa-file-alt"></i>
+              <span>Workflows</span>
+            </button>
+            <button class="tab-btn" data-tab="workspace">
+              <i class="fas fa-laptop"></i>
+              <span>AI Workspace</span>
+            </button>
+          </div>
+
+          <div class="tab-content">
+            <!-- Tasks Tab -->
+            <div id="tasks-tab" class="tab-pane active">
+              <div class="card">
+                <div class="card-content">
+                
+                  <div id="taskList" class="task-list">
+                    <!-- Tasks will be populated by JavaScript -->
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Kanban Tab -->
+            <div id="kanban-tab" class="tab-pane">
+              <div class="card">
+                <div class="card-content">
+                 
+                  <div id="kanbanBoard" class="kanban-board">
+                    <!-- Kanban columns will be populated by JavaScript -->
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Dependencies Tab -->
+            <div id="dependencies-tab" class="tab-pane">
+              <div class="card">
+                <div class="card-content">
+                  <div id="dependencyView" class="dependency-view">
+                    <!-- Dependencies will be populated by JavaScript -->
+                  </div>
+                </div>
+              </div>
+            </div>
+
+    <!-- Workspace Tab -->
+    <div id="workspace-tab" class="tab-pane">
+      <div class="card">
+        <div class="card-content">
+          <h2 class="section-title">AI Editing Tools</h2>
+          <div id="workspaceArea" class="workspace-area">
+            <div class="tabs-list workspace-tabs">
+              <button class="workspace-tab-btn active" data-workspace="transcription">Transcription</button>
+              <button class="workspace-tab-btn" data-workspace="audio">Audio</button>
+              <button class="workspace-tab-btn" data-workspace="video">Video</button>
+            </div>
+            <div id="content">
+              <!-- AI editing tools will be dynamically loaded here -->
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+          </div>
+        </div>
+      </div>  
+
+      <!-- Right Sidebar (Timeline) -->
+      <div id="timelineSidebar" class="sidebar right-sidebar">
+        <div class="card">
+          <div class="card-content">
+            <div class="tab-header">
+              <h2 class="section-title">
+                <i class="fas fa-clock"></i>
+                Timeline
+              </h2>
+            </div>
+            <div class="timeline-badges">
+              <span class="badge">Recording: <span id="timelineRecordingDate">2025-05-01</span></span>
+              <span class="badge">Release: <span id="timelineReleaseDate">2025-05-08</span></span>
+            </div>
+            <div id="timeline" class="timeline">
+              <!-- Timeline will be populated by JavaScript -->
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  <!-- Task Detail Modal -->
+  <div id="taskModal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2 id="modalTaskTitle">Task Title</h2>
+        <button id="closeModal" class="close-btn">&times;</button>
+      </div>
+      <div class="modal-body">
+        <p id="modalTaskDescription">Task description will appear here.</p>
+        <div class="modal-section">
+          <h4>Dependencies:</h4>
+          <ul id="modalTaskDependencies" class="modal-list">
+            <!-- Dependencies will be populated by JavaScript -->
+          </ul>
+        </div>
+        <div class="modal-meta">
+          <div class="meta-item">
+            <i class="fas fa-clock"></i>
+            <span>Due: <span id="modalTaskDueDate">Date</span></span>
+          </div>
+          <div class="meta-item">
+            <i class="fas fa-user"></i>
+            <span>Assigned to: <span id="modalTaskAssignee">Person</span></span>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-outline">
+          <i class="fas fa-comment"></i>
+          <span>Comments (2)</span>
+        </button>
+        <button id="openWorkspaceBtn" class="btn btn-primary">
+          <i class="fas fa-laptop"></i>
+          <span>Open in Workspace</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+  <!-- Load utility functions first -->
+  <script type="module" src="{{ url_for('static', filename='js/episode-to-do/utils.js') }}"></script>
+  
+  <!-- Load individual module files -->
+  <script type="module" src="{{ url_for('static', filename='js/episode-to-do/task-page.js') }}"></script>
+  <script type="module" src="{{ url_for('static', filename='js/episode-to-do/kanban-page.js') }}"></script>
+  <script type="module" src="{{ url_for('static', filename='js/episode-to-do/workflow-page.js') }}"></script>
+  <script type="module" src="{{ url_for('static', filename='js/episode-to-do/layout.js') }}"></script>
+  <script type="module" src="{{ url_for('static', filename='js/episode-to-do/sidebar-header.js') }}"></script>
+  <script type="module" src="{{ url_for('static', filename='js/episode-to-do/comment-utils.js') }}"></script>
+  <script type="module" src="{{ url_for('static', filename='js/episode-to-do/task-page-integrations.js') }}"></script>
+  
+  <!-- Add the ai_edits.js script -->
+  <script type="module" src="{{ url_for('static', filename='js/ai_edits/ai_edits.js') }}"></script>
+  
+  <!-- Load the main entry point last -->
+  <script type="module" src="{{ url_for('static', filename='js/episode-to-do/main.js') }}"></script>
+
+  <script>
+     window.CURRENT_USER_ID = "{{ user_id }}";
+  localStorage.setItem("user_id", "{{ user_id }}");
+  </script>
+  <script src="/static/js/landingpage/audio-player.js"></script>
+  <script src="/static/js/ai_edits/ai_edits.js"></script>
+  </script>
+  
+</body>
+</html>

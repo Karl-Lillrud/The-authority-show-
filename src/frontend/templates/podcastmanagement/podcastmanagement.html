@@ -120,7 +120,7 @@
                 <input type="text" id="pod-author" name="author" />
               </div>
               <div class="field-group">
-                <label for="pod-language">Language</label>
+                <label for="pod-language">Podcast Spoken Language</label>
                 <input type="text" id="pod-language" name="language" />
               </div>
               <div class="field-group">
@@ -132,19 +132,21 @@
                 <input type="file" id="logo" name="logo" accept="image/*" />
               </div>
               <div class="field-group">
-                <label for="banner">Banner</label>
+                <label for="banner">Podcast Banner</label>
                 <input type="file" id="banner" name="banner" accept="image/*" />
               </div>
               <div class="field-group">
                 <label for="google-cal">Google Calendar URL</label>
                 <input type="url" id="google-cal" name="googleCal" />
               </div>
+              <!--
               <div class="field-group">
                 <label for="guest-form-url">Guest Form URL</label>
                 <input type="url" id="guest-form-url" name="guestUrl" />
               </div>
+              -->
               <div class="field-group">
-                <label for="email">Email Address</label>
+                <label for="email">Podcast's Email Address</label>
                 <input type="email" id="email" name="email" />
               </div>
               <div class="field-group full-width">
@@ -276,15 +278,15 @@
               </div>
           <div class="field-group">
             <label for="duration">Duration (minutes)</label>
-            <input type="number" id="duration" name="duration" required />
+            <input type="number" id="duration" name="duration" min="0" required />
           </div>
           <div class="field-group">
             <label for="status">Status</label>
             <select id="status" name="status">
+              <option value="Not Recorded" selected>Not Recorded</option>
               <option value="Published">Published</option>
               <option value="Recorded">Recorded</option>
               <option value="Edited">Edited</option>
-              <option value="Not Recorded">Not Recorded</option>
               <option value="Not Scheduled">Not Scheduled</option>
             </select>
           </div>
@@ -301,7 +303,7 @@
         </form>
       </div>
     </div>
-  
+ 
       <!-- Highlight Editing Form -->
       <div id="highlight-form-popup" class="popup" style="display: none">
         <div class="form-box">
@@ -438,6 +440,17 @@
           </div>
         </div>
       </div>
+
+    <div id="episode-limit-popup" class="popup" style="display: none;">
+      <div class="form-box">
+        <h2 class="form-title">Episode Limit Reached</h2>
+        <p>You have reached your episode limit. Buy more slots to create additional episodes.</p>
+        <div class="form-actions">
+          <button class="cancel-btn" id="close-limit-popup">Cancel</button>
+          <button class="save-btn" id="buy-credits-btn-popup">Buy Credits</button>
+        </div>
+      </div>
+    </div>
     </main>
   </div>
   

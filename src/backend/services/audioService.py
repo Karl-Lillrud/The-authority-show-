@@ -3,7 +3,7 @@ from typing import Optional
 from pydub import AudioSegment, silence
 from io import BytesIO 
 from backend.database.mongo_connection import get_fs
-from backend.utils.file_utils import enhance_audio_with_ffmpeg, detect_background_noise, convert_audio_to_wav,get_sentence_timestamps_fuzzy
+from backend.utils.file_utils import enhance_audio_with_ffmpeg, detect_background_noise, convert_audio_to_wav,get_sentence_timestamps_fuzzy, convert_to_pcm_wav
 from backend.utils.ai_utils import (
     remove_filler_words, calculate_clarity_score, analyze_sentiment, analyze_emotions
 )
@@ -13,18 +13,52 @@ from backend.utils.text_utils import (
     generate_ai_show_notes, suggest_sound_effects, translate_text, mix_background,
     pick_dominant_emotion, fetch_sfx_for_emotion
 )
-from backend.repository.ai_models import save_file, get_file_data, get_file_by_id, add_audio_edit_to_episode
+from backend.repository.ai_models import save_file, get_file_data, get_file_by_id
 from elevenlabs.client import ElevenLabs
 from backend.utils.blob_storage import upload_file_to_blob
 from backend.repository.episode_repository import EpisodeRepository
+from backend.repository.edit_repository import create_edit_entry
 from flask import g
 
-
 logger = logging.getLogger(__name__)
+
+TEXTSTAT_AVAILABLE = False
+try:
+    import backend.utils.ai_utils as ai_utils_module
+    TEXTSTAT_AVAILABLE = True
+except ModuleNotFoundError as e:
+    if 'textstat.backend' in str(e) or 'textstat' in str(e):
+        logger.warning(
+            "Failed to load 'backend.utils.ai_utils' or its dependency 'textstat' due to: %s. "
+            "Functionality dependent on textstat will be unavailable.", e
+        )
+        TEXTSTAT_AVAILABLE = False
+    else:
+        logger.error(f"An unexpected ModuleNotFoundError occurred while importing ai_utils: {e}", exc_info=True)
+        raise
+except ImportError as e:
+    logger.warning(
+        "An ImportError occurred while trying to load 'backend.utils.ai_utils', possibly related to textstat: %s. "
+        "Textstat-dependent functionality may be unavailable.", e
+    )
+    TEXTSTAT_AVAILABLE = False
+
 fs = get_fs()
 episode_repo = EpisodeRepository()
 
 class AudioService:
+    def __init__(self):
+        self.logger = logging.getLogger(__name__)
+        if not TEXTSTAT_AVAILABLE:
+            self.logger.warning(
+                "AudioService initialized, but textstat-dependent features are UNAVAILABLE "
+                "due to import errors concerning 'textstat' or 'ai_utils'."
+            )
+        else:
+            self.logger.info(
+                "AudioService initialized. Textstat-dependent features are expected to be available via ai_utils."
+            )
+
     def enhance_audio(self, audio_bytes: bytes, filename: str, episode_id: str) -> str:
         with tempfile.NamedTemporaryFile(delete=False, suffix=".wav") as tmp:
             tmp.write(audio_bytes)
@@ -43,15 +77,15 @@ class AudioService:
         blob_path = f"users/{g.user_id}/podcasts/{podcast_id}/episodes/{episode_id}/audio/enhanced_{filename}"
         blob_url = upload_file_to_blob("podmanagerfiles", blob_path, enhanced_data)
 
-        add_audio_edit_to_episode(
+        create_edit_entry(
             episode_id=episode_id,
-            file_id="external",
+            user_id=g.user_id,
             edit_type="enhanced",
-            filename=f"enhanced_{filename}",
+            clip_url=blob_url,
+            clipName=f"enhanced_{filename}",
             metadata={
                 "source": filename,
                 "enhanced": True,
-                "blob_url": blob_url,
                 "edit_type": "enhanced"
             }
         )
@@ -71,18 +105,18 @@ class AudioService:
         try:
             # 1) Basic transcript analysis
             transcript     = transcribe_with_whisper(temp_path)
-            cleaned        = remove_filler_words(transcript)
-            clarity_score  = calculate_clarity_score(cleaned)
+            cleaned        = ai_utils_module.remove_filler_words(transcript) if TEXTSTAT_AVAILABLE else transcript
+            clarity_score  = ai_utils_module.calculate_clarity_score(cleaned) if TEXTSTAT_AVAILABLE else None
             noise_result   = detect_background_noise(temp_path)
-            sentiment      = analyze_sentiment(transcript)
+            sentiment      = ai_utils_module.analyze_sentiment(transcript) if TEXTSTAT_AVAILABLE else None
 
             # 2) Emotion detection
             #    a) Translate to English (for more accurate emotion models)
             translated     = translate_text(transcript, "English")
             #    b) Run your emotion classifier
-            emotion_data   = analyze_emotions(translated)
+            emotion_data   = ai_utils_module.analyze_emotions(translated) if TEXTSTAT_AVAILABLE else None
             #    c) Pick the most frequent emotion label
-            dominant_emotion = pick_dominant_emotion(emotion_data)
+            dominant_emotion = pick_dominant_emotion(emotion_data) if TEXTSTAT_AVAILABLE else None
 
             # 3) Return only the core analysis results + dominant emotion
             return {
@@ -127,8 +161,8 @@ class AudioService:
         }
 
     def cut_audio(self, file_id: str, start_time: float, end_time: float, episode_id: str) -> str:
-        logger.info(f"📥 Request to clip audio file with ID: {file_id}")
-        logger.info(f"🕒 Timestamps to clip: start={start_time}, end={end_time}")
+        logger.info(f"Request to clip audio file with ID: {file_id}")
+        logger.info(f"Timestamps to clip: start={start_time}, end={end_time}")
 
         if start_time is None or end_time is None or start_time >= end_time:
             raise ValueError("Invalid timestamps.")
@@ -161,13 +195,13 @@ class AudioService:
             blob_path = f"users/{user_id}/podcasts/{podcast_id}/episodes/{episode_id}/audio/{filename}"
             blob_url = upload_file_to_blob("podmanagerfiles", blob_path, clipped_data)
 
-            add_audio_edit_to_episode(
+            create_edit_entry(
                 episode_id=episode_id,
-                file_id="external",
+                user_id=g.user_id,
                 edit_type="manual_clip",
-                filename=filename,
+                clip_url=blob_url,
+                clipName=filename,
                 metadata={
-                    "blob_url": blob_url,
                     "start": start_time,
                     "end": end_time,
                     "edit_type": "manual_clip"
@@ -181,21 +215,22 @@ class AudioService:
                     os.remove(path)
 
     def ai_cut_audio(self, file_bytes: bytes, filename: str, episode_id: Optional[str] = None) -> dict:
-        ext = os.path.splitext(filename)[1].lower()
-        if ext not in [".mp3", ".wav"]:
-            raise ValueError("Unsupported audio format")
+        logger.info(f"Starting AI cut for file: {filename}")
+        
+        # Convert audio to PCM WAV format using FFmpeg
+        try:
+            converted_bytes = convert_to_pcm_wav(file_bytes)
+        except Exception as e:
+            logger.error(f"Audio conversion failed: {str(e)}")
+            raise RuntimeError("Audio format is unsupported or corrupted")
 
-        temp_path = (
-            convert_audio_to_wav(file_bytes, original_ext=ext)
-            if ext == ".mp3"
-            else tempfile.NamedTemporaryFile(delete=False, suffix=".wav").name
-        )
+        # Write to temporary WAV file for downstream processing
+        with tempfile.NamedTemporaryFile(delete=False, suffix=".wav") as tmp:
+            tmp.write(converted_bytes)
+            tmp.flush()
+            temp_path = tmp.name
 
-        if ext == ".wav":
-            with open(temp_path, "wb") as f:
-                f.write(file_bytes)
-
-        logger.info(f"📥 AI Cut: Temp file at {temp_path}")
+        logger.info(f"AI Cut working with converted WAV file at: {temp_path}")
 
         try:
             client = ElevenLabs()
@@ -217,19 +252,18 @@ class AudioService:
                 if hasattr(w, "start") and hasattr(w, "end")
             ]
 
-            cleaned_transcript = remove_filler_words(transcript)
+            cleaned_transcript = ai_utils_module.remove_filler_words(transcript) if TEXTSTAT_AVAILABLE else transcript
             noise_result = detect_background_noise(temp_path)
-            filler_sentences = detect_filler_words(transcript)
-            sentence_certainty = analyze_certainty_levels(transcript)
+            filler_sentences = ai_utils_module.detect_filler_words(transcript) if TEXTSTAT_AVAILABLE else []
+            sentence_certainty = ai_utils_module.analyze_certainty_levels(transcript) if TEXTSTAT_AVAILABLE else []
 
-            logger.info(f"📊 Certainty results: {sentence_certainty}")
+            logger.info(f"Certainty results computed")
 
             sentence_timestamps = []
             audio = AudioSegment.from_wav(temp_path)
             cut_file_ids = []
 
             for idx, entry in enumerate(sentence_certainty):
-                logger.info(f"🔍 Sentence {idx}: {entry['sentence']} | Certainty: {entry.get('certainty')}")
                 if entry["certainty"] <= 0:
                     continue
 
@@ -251,25 +285,25 @@ class AudioService:
                 })
 
                 cut = audio[start_ms:end_ms]
-                with tempfile.NamedTemporaryFile(suffix=".wav", delete=False) as tmp:
-                    cut.export(tmp.name, format="wav")
-                    tmp_path = tmp.name
+                with tempfile.NamedTemporaryFile(suffix=".wav", delete=False) as tmp_cut:
+                    cut.export(tmp_cut.name, format="wav")
+                    tmp_cut.flush()
 
-                with open(tmp_path, "rb") as f:
-                    file_id = save_file(
-                        f.read(),
-                        filename=f"cut_{idx}.wav",
-                        metadata={"type": "ai_cut", "source": filename}
-                    )
-                    cut_file_ids.append(file_id)
+                    with open(tmp_cut.name, "rb") as f:
+                        file_id = save_file(
+                            f.read(),
+                            filename=f"cut_{idx}.wav",
+                            metadata={"type": "ai_cut", "source": filename}
+                        )
+                        cut_file_ids.append(file_id)
 
-                os.remove(tmp_path)
+                    os.remove(tmp_cut.name)
 
-            sentiment = analyze_sentiment(transcript)
+            sentiment = ai_utils_module.analyze_sentiment(transcript) if TEXTSTAT_AVAILABLE else None
             show_notes = generate_ai_show_notes(transcript)
 
             return {
-                "message": "✅ AI Audio processing completed with clips",
+                "message": "AI Audio processing completed with clips",
                 "cleaned_transcript": cleaned_transcript,
                 "background_noise": noise_result,
                 "filler_sentences": filler_sentences,
@@ -293,21 +327,21 @@ class AudioService:
         finally:
             if os.path.exists(temp_path):
                 os.remove(temp_path)
-            logger.info(f"🗑️ Temp file cleaned up: {temp_path}")
+            logger.info(f"Temp file cleaned up: {temp_path}")
 
     def ai_cut_audio_from_id(self, file_id: str, episode_id: Optional[str] = None) -> dict:
         audio_bytes, filename = get_file_by_id(file_id)
         return self.ai_cut_audio(audio_bytes, filename, episode_id=episode_id)
     
     def isolate_voice(self, audio_bytes: bytes, filename: str, episode_id: str) -> str:
-        logger.info(f"🎙️ Starting voice isolation for file: {filename}")
+        logger.info(f"Starting voice isolation for file: {filename}")
 
         with tempfile.NamedTemporaryFile(delete=False, suffix=".wav") as tmp:
             tmp.write(audio_bytes)
             temp_input_path = tmp.name
 
         try:
-            logger.info("🔄 Sending audio to ElevenLabs voice isolation endpoint...")
+            logger.info("Sending audio to ElevenLabs voice isolation endpoint...")
 
             with open(temp_input_path, "rb") as f:
                 response = requests.post(
@@ -317,10 +351,10 @@ class AudioService:
                 )
 
             if response.status_code != 200:
-                logger.error(f"❌ Voice isolation failed: {response.status_code} {response.text}")
+                logger.error(f"Voice isolation failed: {response.status_code} {response.text}")
                 raise RuntimeError(f"Voice isolation failed: {response.status_code} {response.text}")
 
-            # Spara det isolerade ljudet till temporär fil
+            # Save the isolated audio to a temporary file
             temp_output_path = temp_input_path.replace(".wav", "_isolated.wav")
             with open(temp_output_path, "wb") as out_file:
                 out_file.write(response.content)
@@ -335,20 +369,20 @@ class AudioService:
             blob_path = f"users/{g.user_id}/podcasts/{podcast_id}/episodes/{episode_id}/audio/{isolated_filename}"
             blob_url = upload_file_to_blob("podmanagerfiles", blob_path, isolated_data)
 
-            add_audio_edit_to_episode(
+            create_edit_entry(
                 episode_id=episode_id,
-                file_id="external",
+                user_id=g.user_id,
                 edit_type="voice_isolated",
-                filename=isolated_filename,
+                clip_url=blob_url,
+                clipName=isolated_filename,
                 metadata={
                     "source": filename,
-                    "blob_url": blob_url,
                     "edit_type": "voice_isolated"
                 }
             )
 
 
-            logger.info(f"✅ Isolated voice uploaded to Azure: {blob_url}")
+            logger.info(f"Isolated voice uploaded to Azure: {blob_url}")
             return blob_url
 
         finally:
@@ -368,7 +402,7 @@ class AudioService:
         return chunks
 
     def apply_cuts_and_return_new_file(self, file_id: str, cuts: list[dict], episode_id: str) -> str:
-        logger.info(f"✂️ Applying cuts to file ID: {file_id}")
+        logger.info(f"Applying cuts to file ID: {file_id}")
         audio_data = get_file_data(file_id)
 
         with tempfile.NamedTemporaryFile(delete=False, suffix=".wav") as tmp:
@@ -410,13 +444,13 @@ class AudioService:
             base64_audio = base64.b64encode(cleaned_bytes).decode("utf-8")
             blob_url = upload_file_to_blob("podmanagerfiles", blob_path, base64_audio)
 
-            add_audio_edit_to_episode(
+            create_edit_entry(
                 episode_id=episode_id,
-                file_id="external",
+                user_id=g.user_id,
                 edit_type="ai_cut_cleaned",
-                filename=filename,
+                clip_url=blob_url,
+                clipName=filename,
                 metadata={
-                    "blob_url": blob_url,
                     "segments_kept": len(merged),
                     "edit_type": "ai_cut_cleaned"
                 }
@@ -468,7 +502,7 @@ class AudioService:
                     os.remove(path)
 
     def cut_audio_to_bytes(self, file_id: str, start_time: float, end_time: float) -> tuple[bytes, str]:
-        logger.info(f"📥 Cutting audio ID: {file_id} from {start_time}s to {end_time}s")
+        logger.info(f"Cutting audio ID: {file_id} from {start_time}s to {end_time}s")
 
         if start_time is None or end_time is None or start_time >= end_time:
             raise ValueError("Invalid timestamps.")
@@ -519,13 +553,13 @@ class AudioService:
             blob_path = f"users/{g.user_id}/podcasts/{podcast_id}/episodes/{episode_id}/audio/clipped_{filename}"
             blob_url = upload_file_to_blob("podmanagerfiles", blob_path, clipped_data)
 
-            add_audio_edit_to_episode(
+            create_edit_entry(
                 episode_id=episode_id,
-                file_id="external",
+                user_id=g.user_id,
                 edit_type="manual_clip",
-                filename=f"clipped_{filename}",
+                clip_url=blob_url,
+                clipName=f"clipped_{filename}",
                 metadata={
-                    "blob_url": blob_url,
                     "start": start_time,
                     "end": end_time,
                     "edit_type": "manual_clip"
@@ -565,13 +599,13 @@ class AudioService:
             blob_path = f"users/{g.user_id}/podcasts/{podcast_id}/episodes/{episode_id}/audio/cleaned_{filename}"
             blob_url = upload_file_to_blob("podmanagerfiles", blob_path, cleaned_bytes)
 
-            add_audio_edit_to_episode(
+            create_edit_entry(
                 episode_id=episode_id,
-                file_id="external",
+                user_id=g.user_id,
                 edit_type="ai_cut_cleaned",
-                filename=f"cleaned_{filename}",
+                clip_url=blob_url,
+                clipName=f"cleaned_{filename}",
                 metadata={
-                    "blob_url": blob_url,
                     "edit_type": "ai_cut_cleaned"
                 }
             )
@@ -582,3 +616,4 @@ class AudioService:
             for path in [tmp_path, cleaned_path]:
                 if os.path.exists(path):
                     os.remove(path)
+        

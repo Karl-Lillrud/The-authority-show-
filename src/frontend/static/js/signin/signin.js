@@ -3,20 +3,58 @@ document.addEventListener("DOMContentLoaded", function () {
   const errorMessage = document.getElementById("error-message");
   const sendLoginLinkButton = document.getElementById("send-login-link-button");
   const emailInput = document.getElementById("email");
+  const slidingContainer = document.querySelector(".sliding-container");
+  const overlay = document.querySelector(".overlay");
+  const closeButton = document.querySelector(".close-button");
 
-  // Handle "Send Log-In Link" button click
+  // Function to toggle sliding container
+  function toggleSlidingContainer() {
+    slidingContainer.classList.toggle("active");
+    overlay.classList.toggle("active");
+  }
+
+  // Add click event listener only to the About PodManager link
+  const aboutLink = document.querySelector('.policy-links a[href*="about"]');
+  if (aboutLink) {
+    aboutLink.addEventListener('click', (e) => {
+      e.preventDefault();
+      toggleSlidingContainer();
+    });
+  }
+
+  // Add click event listener to the close button
+  if (closeButton) {
+    closeButton.addEventListener('click', (e) => {
+      e.stopPropagation(); // Prevent event from bubbling to container
+      toggleSlidingContainer();
+    });
+  }
+
+  // Add click event listener to the overlay to close the container
+  if (overlay) {
+    overlay.addEventListener('click', () => {
+      toggleSlidingContainer();
+    });
+  }
+
+  // Handle "Get Log-In Link" button click
   if (sendLoginLinkButton) {
     sendLoginLinkButton.addEventListener("click", async function () {
       const email = emailInput.value.trim();
+      const originalButtonText = sendLoginLinkButton.textContent;
 
       if (!email) {
-        errorMessage.textContent = "Vänligen ange din e-postadress.";
+        errorMessage.textContent = "Please enter your email address.";
         errorMessage.style.display = "block";
         successMessage.style.display = "none";
         return;
       }
 
       try {
+        // Change button text to "Sending..."
+        sendLoginLinkButton.textContent = "Sending... Check your inbox!";
+        sendLoginLinkButton.disabled = true;
+
         const response = await fetch("/send-login-link", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -26,33 +64,41 @@ document.addEventListener("DOMContentLoaded", function () {
         const result = await response.json();
         if (response.ok) {
           successMessage.textContent =
-            "Inloggningslänk har skickats till din e-post!";
+            "A login link has been sent to your email!";
           successMessage.style.display = "block";
           errorMessage.style.display = "none";
         } else {
           errorMessage.textContent =
             result.error ||
-            "Misslyckades att skicka inloggningslänk. Försök igen senare.";
+            "Failed to send login link. Please try again later.";
           errorMessage.style.display = "block";
           successMessage.style.display = "none";
         }
       } catch (error) {
-        console.error("Fel vid sändning av inloggningslänk:", error);
+        console.error("Error sending login link:", error);
         errorMessage.textContent =
-          "Ett oväntat fel uppstod vid sändning av inloggningslänk. Försök igen senare.";
+          "An unexpected error occurred while sending the login link. Please try again later.";
         errorMessage.style.display = "block";
         successMessage.style.display = "none";
+      } finally {
+        // Restore button text and enable it
+        sendLoginLinkButton.textContent = originalButtonText;
+        sendLoginLinkButton.disabled = false;
       }
     });
   } else {
-    console.warn("Knappen för att skicka inloggningslänk hittades inte i DOM");
+    console.warn("Login link button was not found in the DOM");
   }
 
   // Handle token-based login from URL
   const urlParams = new URLSearchParams(window.location.search);
   const token = urlParams.get("token");
 
+  // --- Log the extracted token ---
   if (token) {
+    console.log("SIGNIN.JS: Token found in URL:", token); // Log the token
+    // -----------------------------
+
     // Automatically log in the user using the token
     fetch("/verify-login-token", {
       method: "POST",
@@ -60,87 +106,54 @@ document.addEventListener("DOMContentLoaded", function () {
       body: JSON.stringify({ token })
     })
       .then(async (response) => {
+        console.log(
+          "SIGNIN.JS: Received response from /verify-login-token:",
+          response.status
+        ); // Log status
         if (!response.ok) {
           const result = await response.json();
           throw new Error(
-            `HTTP-fel! Status: ${response.status}, Meddelande: ${
-              result.error || "Okänt fel"
+            `HTTP error! Status: ${response.status}, Message: ${
+              result.error || "Unknown error"
             }`
           );
         }
         return response.json();
       })
       .then((data) => {
+        console.log("SIGNIN.JS: Parsed response data:", data); // Log parsed data
         if (data.redirect_url) {
           window.location.href = data.redirect_url;
         } else {
           errorMessage.textContent =
-            data.error || "Misslyckades att logga in med den angivna länken.";
+            data.error || "Failed to log in using the provided link.";
           errorMessage.style.display = "block";
           successMessage.style.display = "none";
         }
       })
       .catch((error) => {
-        console.error("Fel vid verifiering av token:", error);
+        console.error(
+          "SIGNIN.JS: Error during token verification fetch:",
+          error
+        ); // Log fetch error
         const errorMsg = error.message.toLowerCase();
-        if (errorMsg.includes("misslyckades att skapa konto")) {
+        if (errorMsg.includes("failed to create account")) {
           errorMessage.textContent =
-            "Misslyckades att skapa konto. Kontrollera att din e-post är korrekt eller kontakta support.";
-        } else if (errorMsg.includes("token har gått ut")) {
+            "Failed to create account. Please verify your email or contact support.";
+        } else if (errorMsg.includes("token has expired")) {
           errorMessage.textContent =
-            "Inloggningslänken har gått ut. Skicka en ny länk.";
-        } else if (errorMsg.includes("ogiltig token")) {
+            "The login link has expired. Please request a new one.";
+        } else if (errorMsg.includes("invalid token")) {
           errorMessage.textContent =
-            "Inloggningslänken är ogiltig. Försök med en ny länk.";
+            "The login link is invalid. Try a new link.";
         } else {
           errorMessage.textContent =
-            "Ett fel uppstod under inloggningen. Försök igen eller kontakta support.";
+            "An error occurred during login. Please try again or contact support.";
         }
         errorMessage.style.display = "block";
         successMessage.style.display = "none";
       });
-  }
-
-  // Handle email/password login form (if used)
-  const form = document.getElementById("signin-form");
-  if (form) {
-    form.addEventListener("submit", async function (event) {
-      event.preventDefault();
-
-      const email = emailInput.value.trim();
-      const password = document.getElementById("password")?.value?.trim();
-
-      if (!email || (password !== undefined && !password)) {
-        errorMessage.textContent = "Vänligen ange både e-post och lösenord.";
-        errorMessage.style.display = "block";
-        successMessage.style.display = "none";
-        return;
-      }
-
-      try {
-        const response = await fetch("/signin", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ email, password })
-        });
-
-        const result = await response.json();
-        if (response.ok) {
-          window.location.href = result.redirect_url || "/podprofile";
-        } else {
-          errorMessage.textContent =
-            result.error || "Misslyckades att logga in. Försök igen.";
-          errorMessage.style.display = "block";
-          successMessage.style.display = "none";
-        }
-      } catch (error) {
-        console.error("Fel under inloggning:", error);
-        errorMessage.textContent = "Ett fel uppstod. Försök igen.";
-        errorMessage.style.display = "block";
-        successMessage.style.display = "none";
-      }
-    });
   } else {
-    console.warn("Inloggningsformulär hittades inte i DOM");
+    console.log("SIGNIN.JS: No token found in URL parameters."); // Log if no token
   }
 });

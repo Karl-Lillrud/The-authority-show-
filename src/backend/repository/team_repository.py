@@ -257,12 +257,11 @@ class TeamRepository:
                 {"_id": team_id, "members.email": new_member["email"]}
             )
             if existing_member:
-                # Kontrollera om e-postadressen redan finns i members-arrayen
+        
                 for member in existing_member.get("members", []):
                     if member["email"] == new_member["email"]:
                         return {"error": "Member already exists in the team"}, 400
 
-            # Lägg till medlemmen om den inte redan finns
             result = self.teams_collection.update_one(
                 {"_id": team_id}, {"$push": {"members": new_member}}
             )

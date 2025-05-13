@@ -9,7 +9,10 @@ import { fetchGuestsByEpisode } from "../../../static/requests/guestRequests.js"
 import { updateEditButtons, shared } from "./podcastmanagement.js";
 import { renderPodcastSelection, viewPodcast } from "./podcast-functions.js";
 import { renderGuestDetail } from "./guest-functions.js";
-import { showNotification } from "../components/notifications.js";
+import { showNotification, showConfirmationPopup } from "../components/notifications.js";
+
+import { consumeStoreCredits, getCredits } from "../../../static/requests/creditRequests.js";
+import { incrementUpdateAccount } from "../../../static/requests/accountRequests.js";
 
 // Add this function to create a play button with SVG icon
 export function createPlayButton(size = "medium") {
@@ -115,6 +118,9 @@ export function renderEpisodeDetail(episode) {
     }">
       ${shared.svgpodcastmanagement.edit}
     </button>
+    <button class="action-btn delete-btn" id="delete-episode-btn" data-id="${episode._id}">
+      <span class="icon">${shared.svgpodcastmanagement.delete}</span>
+    </button>
   </div>
 </div>
 
@@ -123,7 +129,7 @@ export function renderEpisodeDetail(episode) {
   <div class="podcast-header-section">
     <div class="podcast-image-container">
       <div class="detail-image" style="background-image: url('${
-        episode.image || episode.imageUrl || "default-image.png"
+        episode.image || episode.imageUrl || "/static/images/default-image.png"
       }')"></div>
     </div>
     <div class="podcast-basic-info">
@@ -241,11 +247,6 @@ export function renderEpisodeDetail(episode) {
   </div>
 </div>
 
-<div class="detail-actions">
-  <button class="delete-btn" id="delete-episode-btn" data-id="${episode._id}">
-    ${shared.svgpodcastmanagement.delete} Delete Episode
-  </button>
-</div>
 `;
 
   // Add event listener for the AI Edit button only if it exists
@@ -308,20 +309,23 @@ export function renderEpisodeDetail(episode) {
   // Delete button event listener
   const deleteButton = document.getElementById("delete-episode-btn");
   if (deleteButton) {
-    deleteButton.addEventListener("click", async () => {
-      if (confirm("Are you sure you want to delete this episode?")) {
-        try {
-          await deleteEpisode(episode._id);
-          showNotification(
-            "Success",
-            "Episode deleted successfully!",
-            "success"
-          );
-          viewPodcast(episode.podcast_id);
-        } catch (error) {
-          showNotification("Error", "Failed to delete episode.", "error");
+    deleteButton.addEventListener("click", () => {
+      showConfirmationPopup(
+        "Delete Episode",
+        "Are you sure you want to delete this episode? This action cannot be undone.",
+        async () => {
+          try {
+            await deleteEpisode(episode._id);
+            showNotification("Success", "Episode deleted successfully!", "success");
+            viewPodcast(episode.podcast_id);
+          } catch (error) {
+            showNotification("Error", "Failed to delete episode.", "error");
+          }
+        },
+        () => {
+          showNotification("Info", "Episode deletion canceled.", "info");
         }
-      }
+      );
     });
   }
 
@@ -392,7 +396,7 @@ export function renderEpisodeDetail(episode) {
         } else {
           const noGuests = document.createElement("p");
           noGuests.className = "no-guests-message";
-          noGuests.textContent = "No guests available for this episode.";
+          noGuests.textContent = "No guests to display.";
           guestsListEl.appendChild(noGuests);
         }
       }
@@ -403,7 +407,7 @@ export function renderEpisodeDetail(episode) {
       if (guestsListEl) {
         const errorMsg = document.createElement("p");
         errorMsg.className = "error-message";
-        errorMsg.textContent = "This episode has no guests.";
+        errorMsg.textContent = "No guests to display.";
         guestsListEl.appendChild(errorMsg);
       }
     });
@@ -738,36 +742,52 @@ export function initEpisodeFunctions() {
     });
 
   // Funktion för att visa popup när episodgränsen nås
-  function showEpisodeLimitPopup() {
-    const popup = document.createElement("div");
-    popup.className = "popup";
+  async function showEpisodeLimitPopup() {
+    const popup = document.getElementById("episode-limit-popup");
     popup.style.display = "flex";
 
-    popup.innerHTML = `
-      <div class="form-box">
-        <h2 class="form-title">Episode Limit Reached</h2>
-        <p>You have reached your episode limit. Buy more slots to create additional episodes.</p>
-        <div class="form-actions">
-          <button class="cancel-btn" id="close-limit-popup">Cancel</button>
-          <button class="save-btn" id="buy-credits-btn-popup">Buy Credits</button>
-        </div>
-      </div>
-    `;
-
-    document.body.appendChild(popup);
-
-    // Stäng popup
+    // Close popup
     document
       .getElementById("close-limit-popup")
       .addEventListener("click", () => {
-        document.body.removeChild(popup);
+        popup.style.display = "none";
       });
 
-    // Navigera till store
-    document
-      .getElementById("buy-credits-btn-popup")
-      .addEventListener("click", () => {
-        window.location.href = "/store";
+    const credits_button = document.getElementById("buy-credits-btn-popup");
+
+    const credits = await getCredits();
+    const extra_episode_cost = 5000;
+    if (credits >= extra_episode_cost) {
+      credits_button.textContent = "Buy for 5000 credits";
+    } else {
+      credits_button.textContent = "Buy Credits"
+    }
+
+    // Navigate to store
+    credits_button
+      .addEventListener("click", async () => {
+        if (credits >= extra_episode_cost) {
+          try {
+            await consumeStoreCredits("episode_pack");
+            const updateData = {
+              'unlockedExtraEpisodeSlots': 1 // Increment the extra episode slots by 1
+            };
+            incrementUpdateAccount(updateData);
+
+            showNotification(
+              "Success",
+              "Increased episode slots!",
+              "success"
+            );
+
+            popup.style.display = "none";
+          } catch (error) {
+            console.log(error);
+          }
+        } else {
+          window.location.href = "/store";
+        }
       });
   }
 }
+

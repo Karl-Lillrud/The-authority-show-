@@ -130,6 +130,18 @@ document.addEventListener("DOMContentLoaded", () => {
   // Enable closing popups by clicking outside
   enablePopupCloseOnOutsideClick();
 
+  // Check for 'openCreateEpisode' query parameter
+  const urlParams = new URLSearchParams(window.location.search);
+  const openCreateEpisode = urlParams.get("openCreateEpisode");
+
+  if (openCreateEpisode === "true") {
+    // Trigger the "Create Episode" popup
+    const createEpisodeButton = document.getElementById("create-episode-btn");
+    if (createEpisodeButton) {
+      createEpisodeButton.click(); // Simulate a click to open the popup
+    }
+  }
+
   // Highlight editing logic
   function showHighlightPopup(highlight) {
     const popup = document.getElementById("highlight-form-popup");

@@ -1,8 +1,7 @@
 import os
-import logging
-import subprocess
-import requests
-from flask import Flask, request, session, g, jsonify, render_template, Response
+import logging  # Ensure logging is imported
+from colorama import init # Add this line
+from flask import Flask, request, session, g, jsonify, render_template
 from flask_cors import CORS
 from backend.routes.auth import auth_bp
 from backend.routes.podcast import podcast_bp  # Import the podcast blueprint
@@ -20,6 +19,7 @@ from backend.routes.invitation import invitation_bp
 from backend.routes.google_calendar import google_calendar_bp
 from backend.routes.episode import episode_bp
 from backend.routes.podprofile import podprofile_bp  # Import the podprofile blueprint
+from backend.routes.activation import activation_bp, podprofile_initial_bp  # Modified import
 from backend.routes.frontend import frontend_bp  # Import the frontend blueprint
 from backend.routes.guestpage import guestpage_bp
 from backend.routes.guest_to_eposide import guesttoepisode_bp
@@ -41,6 +41,9 @@ from backend.routes.transcription import transcription_bp
 from backend.routes.comment import comment_bp  # Import the comment blueprint
 from backend.routes.activity import activity_bp
 from backend.routes.stripe_config import stripe_config_bp  # Import the renamed config blueprint
+from backend.routes.edit_routes import edit_bp
+from backend.routes.enterprise import enterprise_bp  # Import the enterprise blueprint
+from backend.routes.lia import lia_bp  # Corrected: Import lia_bp from backend.routes.lia
 
 if os.getenv("SKIP_VENV_UPDATE", "false").lower() not in ("true", "1", "yes"):
     venvupdate.update_venv_and_requirements()
@@ -75,7 +78,7 @@ app.secret_key = os.getenv("SECRET_KEY")
 app.config["PREFERRED URL SCHEME"] = "https"
 
 # Register blueprints for different routes
-app.register_blueprint(auth_bp)
+app.register_blueprint(auth_bp)  # Removed url_prefix="/auth"
 app.register_blueprint(podcast_bp)  # Register the podcast blueprint
 app.register_blueprint(dashboard_bp)
 app.register_blueprint(pod_management_bp)
@@ -91,6 +94,8 @@ app.register_blueprint(invitation_bp)
 app.register_blueprint(google_calendar_bp)  # Register the google_calendar blueprint
 app.register_blueprint(episode_bp)
 app.register_blueprint(podprofile_bp)  # Register the podprofile blueprint
+app.register_blueprint(activation_bp, url_prefix='/activation')  # Register activation_bp
+app.register_blueprint(podprofile_initial_bp, url_prefix='/podprofile')  # <-- This line ensures /podprofile/initial works
 app.register_blueprint(frontend_bp)  # Register the frontend blueprint
 app.register_blueprint(guesttoepisode_bp)
 app.register_blueprint(transcription_bp, url_prefix="/transcription")
@@ -100,11 +105,14 @@ app.register_blueprint(billing_bp)
 app.register_blueprint(
     guest_form_bp, url_prefix="/guest-form"
 )  # Register the guest_form blueprint with URL prefix
-app.register_blueprint(user_bp)
+app.register_blueprint(user_bp, url_prefix="/user")
 app.register_blueprint(landingpage_bp)
 app.register_blueprint(comment_bp)
 app.register_blueprint(activity_bp)  # Ensure this registration exists
 app.register_blueprint(stripe_config_bp)  # Ensure this registration exists
+app.register_blueprint(edit_bp)
+app.register_blueprint(enterprise_bp, url_prefix="/enterprise")  # Register the enterprise blueprint
+app.register_blueprint(lia_bp, url_prefix="/lia")  # Ensure this line uses the correct lia_bp
 
 # Set the application environment (defaults to production)
 APP_ENV = os.getenv("APP_ENV", "production")
@@ -112,7 +120,10 @@ APP_ENV = os.getenv("APP_ENV", "production")
 # Set the API base URL depending on the environment
 API_BASE_URL = os.getenv("API_BASE_URL")
 
-# Configure logging
+# Initialize colorama
+init(autoreset=True)
+
+# Configure logging (ensure this is done before first use)
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
@@ -145,8 +156,13 @@ logger.info("========================================")
 # Log the request with user info
 @app.before_request
 def load_user():
+    # --- Add Log ---
+    # Log the raw session object to see its contents
+    logger.info(f"Session object before loading user: {dict(session)}")
+    # --- End Log ---
     g.user_id = session.get("user_id")
-    logger.info(f"Request to {request.path} by user {g.user_id}")
+    # Log the result after trying to get user_id
+    logger.info(f"Request to {request.path} by user {g.user_id if g.user_id else 'None'}")
 
 
 start_scheduler(app)

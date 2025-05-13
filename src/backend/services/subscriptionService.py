@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from backend.database.mongo_connection import collection
 from backend.utils.subscription_access import PLAN_BENEFITS
 import logging
@@ -230,7 +230,7 @@ class SubscriptionService:
                 )
                 logger.info(f"Marked {update_inactive_result.modified_count} previous active subscriptions as inactive for user {user_id}")
             except Exception as inactive_err:
-                logger.error(f"Error marking previous subscriptions as inactive for user {user_id}: {inactive_err}", exc_info=True)
+                logger.error(f"Error marking previous subscriptions as inactive for user {inactive_err}", exc_info=True)
                 # Continue even if this fails, priority is the new subscription
 
             # Also record in the subscriptions collection
@@ -291,6 +291,297 @@ class SubscriptionService:
             )
             raise Exception(f"Error updating subscription: {str(e)}")
 
+    def update_subscription_from_webhook(self, user_id, plan_name, stripe_subscription):
+        """
+        Update a user's subscription from a webhook event.
+        This is similar to update_user_subscription but optimized for webhook events.
+        """
+        try:
+            start_date = datetime.fromtimestamp(stripe_subscription.current_period_start, tz=timezone.utc)
+            end_date = datetime.fromtimestamp(stripe_subscription.current_period_end, tz=timezone.utc)
+            
+            # Get the amount from the subscription items
+            amount_paid = 0
+            for item in stripe_subscription.items.data:
+                amount_paid += item.price.unit_amount / 100  # Convert cents to dollars
+            
+            # Get the plan benefits
+            plan_benefits = PLAN_BENEFITS.get(plan_name.upper(), PLAN_BENEFITS["FREE"])
+            
+            # Find account to update
+            filter_query = {"userId": user_id}
+            account = self.accounts_collection.find_one(filter_query)
+            if not account:
+                filter_query = {"ownerId": user_id}
+                account = self.accounts_collection.find_one(filter_query)
+            
+            if not account:
+                raise ValueError(f"No account found for user {user_id}")
+            
+            # Update account record
+            update_result = self.accounts_collection.update_one(
+                filter_query,
+                {
+                    "$set": {
+                        "subscriptionStatus": "active",
+                        "subscriptionPlan": plan_name,
+                        "subscriptionAmount": amount_paid,
+                        "subscriptionStart": start_date.isoformat(),
+                        "subscriptionEnd": end_date.isoformat(),
+                        "lastUpdated": datetime.utcnow().isoformat(),
+                        "benefits": plan_benefits,
+                        "stripeCustomerId": stripe_subscription.customer,
+                    }
+                },
+            )
+            
+            if update_result.modified_count == 0:
+                logger.warning(f"No changes made to account for user {user_id}")
+            
+            # Update any existing active subscription to inactive
+            self.subscriptions_collection.update_many(
+                {"user_id": user_id, "status": "active"},
+                {"$set": {"status": "inactive", "updated_at": datetime.utcnow().isoformat()}}
+            )
+            
+            # Create a new subscription record
+            subscription_data = {
+                "_id": str(uuid.uuid4()),
+                "user_id": user_id,
+                "plan": plan_name,
+                "amount": amount_paid,
+                "start_date": start_date.isoformat(),
+                "end_date": end_date.isoformat(),
+                "status": "active",
+                "payment_id": stripe_subscription.id,
+                "stripe_subscription_id": stripe_subscription.id, 
+                "created_at": datetime.utcnow().isoformat(),
+                "benefits": plan_benefits,
+            }
+            
+            self.subscriptions_collection.insert_one(subscription_data)
+            
+            # Update user's credits based on the subscription plan
+            from backend.services.creditService import update_subscription_credits
+            updated_credits = update_subscription_credits(user_id, plan_name)
+            
+            # Log the subscription update activity
+            self.activity_service.log_activity(
+                user_id=user_id,
+                activity_type="subscription_updated",
+                description=f"Subscription updated to '{plan_name}' plan via webhook.",
+                details={
+                    "plan": plan_name,
+                    "amount": amount_paid,
+                    "end_date": end_date.isoformat(),
+                    "credits": plan_benefits.get("credits", 0),
+                },
+            )
+            
+            return True
+        
+        except Exception as e:
+            logger.error(f"Error updating subscription from webhook for user {user_id}: {str(e)}")
+            raise Exception(f"Error updating subscription: {str(e)}")
+
+    def handle_subscription_renewal(self, user_id, stripe_subscription):
+        """
+        Handle subscription renewal from Stripe webhook events.
+        Updates subscription dates and resets monthly credits.
+        
+        Args:
+            user_id: The user's ID
+            stripe_subscription: The Stripe subscription object
+            
+        Returns:
+            bool: Success status
+        """
+        try:
+            # Get current account with subscription data
+            account = self._get_account(user_id)
+            if not account:
+                raise ValueError(f"No account found for user {user_id}")
+            
+            # IMPORTANT: Store the current plan first to use as fallback
+            current_plan = account.get("subscriptionPlan", "FREE")
+            logger.info(f"Current plan before renewal: {current_plan}")
+                
+            # Calculate proper renewal dates
+            # If the account has an existing subscription end date, use that as the base
+            if account.get("subscriptionEnd"):
+                try:
+                    # Parse the current end date
+                    current_end_date = datetime.fromisoformat(account["subscriptionEnd"].replace("Z", "+00:00"))
+                    
+                    # Calculate new dates - add one month to the current end date
+                    new_start_date = current_end_date
+                    new_end_date = current_end_date + timedelta(days=30)  # Add 30 days for the next cycle
+                    
+                    logger.info(f"Renewing subscription from {current_end_date.isoformat()} to {new_end_date.isoformat()}")
+                except (ValueError, AttributeError) as e:
+                    logger.error(f"Error parsing current subscription end date: {str(e)}")
+                    # Fall back to Stripe dates if there's an error
+                    new_start_date = datetime.fromtimestamp(stripe_subscription.current_period_start, tz=timezone.utc)
+                    new_end_date = datetime.fromtimestamp(stripe_subscription.current_period_end, tz=timezone.utc)
+            else:
+                # No existing end date, use Stripe dates
+                new_start_date = datetime.fromtimestamp(stripe_subscription.current_period_start, tz=timezone.utc)
+                new_end_date = datetime.fromtimestamp(stripe_subscription.current_period_end, tz=timezone.utc)
+            
+            # Default plan to current plan - critical change to preserve plan if extraction fails
+            plan_name = current_plan.upper() if isinstance(current_plan, str) else "FREE"
+            amount_paid = 0
+            
+            # Try to extract plan information from Stripe only if needed
+            try:
+                if hasattr(stripe_subscription, 'items') and hasattr(stripe_subscription.items, 'data'):
+                    for item in stripe_subscription.items.data:
+                        if hasattr(item, 'price') and hasattr(item.price, 'unit_amount'):
+                            amount_paid += item.price.unit_amount / 100  # Convert cents to dollars
+                            
+                            # Get product information to determine the plan
+                            try:
+                                if hasattr(item.price, 'product'):
+                                    product_id = item.price.product
+                                    product = stripe.Product.retrieve(product_id)
+                                    extracted_plan = product.metadata.get("plan") or product.name
+                                    if extracted_plan:
+                                        logger.info(f"Extracted plan from Stripe product: {extracted_plan}")
+                                        # Only override current plan if we successfully extracted one
+                                        if extracted_plan.upper() in PLAN_BENEFITS:
+                                            plan_name = extracted_plan.upper()
+                                        elif "PRO" in extracted_plan.upper():
+                                            plan_name = "PRO"
+                                        elif "STUDIO" in extracted_plan.upper():
+                                            plan_name = "STUDIO"
+                                        elif "ENTERPRISE" in extracted_plan.upper():
+                                            plan_name = "ENTERPRISE"
+                            except Exception as e:
+                                logger.error(f"Error retrieving plan name from product: {str(e)}")
+                                # Continue with current plan if extraction fails
+                else:
+                    # Try alternative method to get subscription data
+                    logger.info("Items data not available on subscription object, trying direct lookup")
+                    # If stripe_subscription.id is available, we can retrieve the full subscription
+                    if hasattr(stripe_subscription, 'id'):
+                        try:
+                            full_subscription = stripe.Subscription.retrieve(
+                                stripe_subscription.id,
+                                expand=['items.data.price.product']
+                            )
+                            
+                            # Process the full subscription data
+                            if hasattr(full_subscription, 'items') and hasattr(full_subscription.items, 'data'):
+                                for item in full_subscription.items.data:
+                                    if hasattr(item, 'price'):
+                                        amount_paid += item.price.unit_amount / 100
+                                        if hasattr(item.price, 'product') and item.price.product:
+                                            extracted_plan = item.price.product.metadata.get("plan") or item.price.product.name
+                                            if extracted_plan:
+                                                logger.info(f"Extracted plan from full subscription: {extracted_plan}")
+                                                # Only override current plan if we successfully extracted one
+                                                if extracted_plan.upper() in PLAN_BENEFITS:
+                                                    plan_name = extracted_plan.upper()
+                                                elif "PRO" in extracted_plan.upper():
+                                                    plan_name = "PRO"
+                                                elif "STUDIO" in extracted_plan.upper():
+                                                    plan_name = "STUDIO"
+                                                elif "ENTERPRISE" in extracted_plan.upper():
+                                                    plan_name = "ENTERPRISE"
+                        except Exception as e:
+                            logger.error(f"Error retrieving full subscription: {str(e)}")
+                            # Continue with current plan if extraction fails
+            except Exception as e:
+                logger.error(f"Error processing subscription items: {str(e)}")
+                # Continue with current plan if extraction fails
+            
+            # If after all attempts we still don't have a valid plan in PLAN_BENEFITS, use current plan
+            if plan_name not in PLAN_BENEFITS:
+                logger.warning(f"Plan name '{plan_name}' not found in PLAN_BENEFITS, using current plan '{current_plan}'")
+                plan_name = current_plan.upper() if isinstance(current_plan, str) else "FREE"
+            
+            logger.info(f"Final plan name for renewal: {plan_name}")
+                
+            # Get the plan benefits
+            plan_benefits = PLAN_BENEFITS.get(plan_name, PLAN_BENEFITS["FREE"])
+            
+            # For pricing, use standard prices based on plan if not determined from Stripe
+            if amount_paid == 0:
+                plan_prices = {"PRO": 29.99, "STUDIO": 69.00, "ENTERPRISE": 199.00, "FREE": 0}
+                amount_paid = plan_prices.get(plan_name, 0)
+            
+            # Determine which field we should use to query the account
+            filter_query = {"userId": user_id} if "userId" in account else {"ownerId": user_id}
+            
+            # Update account record with new dates
+            update_result = self.accounts_collection.update_one(
+                filter_query,
+                {
+                    "$set": {
+                        "subscriptionStatus": "active",
+                        "subscriptionPlan": plan_name,  # Make sure it's the correct case
+                        "subscriptionAmount": amount_paid,
+                        "subscriptionStart": new_start_date.isoformat(),
+                        "subscriptionEnd": new_end_date.isoformat(),
+                        "lastUpdated": datetime.utcnow().isoformat(),
+                        "benefits": plan_benefits,
+                        "stripeCustomerId": stripe_subscription.customer if hasattr(stripe_subscription, 'customer') else None,
+                    }
+                },
+            )
+            
+            if update_result.modified_count == 0:
+                logger.warning(f"No changes made to account for user {user_id} during renewal")
+            
+            # Update any existing active subscription to inactive
+            self.subscriptions_collection.update_many(
+                {"user_id": user_id, "status": "active"},
+                {"$set": {"status": "inactive", "updated_at": datetime.utcnow().isoformat()}}
+            )
+            
+            # Create a new subscription record
+            subscription_data = {
+                "_id": str(uuid.uuid4()),
+                "user_id": user_id,
+                "plan": plan_name,  # Make sure it's the correct case
+                "amount": amount_paid,
+                "start_date": new_start_date.isoformat(),
+                "end_date": new_end_date.isoformat(),
+                "status": "active",
+                "payment_id": stripe_subscription.id if hasattr(stripe_subscription, 'id') else None,
+                "stripe_subscription_id": stripe_subscription.id if hasattr(stripe_subscription, 'id') else None, 
+                "created_at": datetime.utcnow().isoformat(),
+                "benefits": plan_benefits,
+                "is_renewal": True  # Mark this as a renewal
+            }
+            
+            self.subscriptions_collection.insert_one(subscription_data)
+            
+            # Update user's credits based on the subscription plan
+            from backend.services.creditService import update_subscription_credits
+            updated_credits = update_subscription_credits(user_id, plan_name)
+            
+            # Log the renewal activity
+            self.activity_service.log_activity(
+                user_id=user_id,
+                activity_type="subscription_renewed",
+                description=f"Subscription renewed for '{plan_name}' plan.",
+                details={
+                    "plan": plan_name,
+                    "amount": amount_paid,
+                    "start_date": new_start_date.isoformat(),
+                    "end_date": new_end_date.isoformat(),
+                    "credits": plan_benefits.get("credits", 0),
+                },
+            )
+            
+            logger.info(f"Successfully processed subscription renewal for user {user_id}")
+            return True
+            
+        except Exception as e:
+            logger.error(f"Error handling subscription renewal for user {user_id}: {str(e)}", exc_info=True)
+            raise Exception(f"Error handling subscription renewal: {str(e)}")
+
     def can_create_episode(self, user_id, is_imported=False):
         try:
             account = self._get_account(user_id)
@@ -310,7 +601,7 @@ class SubscriptionService:
             benefits = PLAN_BENEFITS.get(plan, PLAN_BENEFITS["FREE"])
 
             episode_slots = benefits.get("episode_slots", 0)
-            extra_slots = account.get("extra_episode_slots", 0)
+            extra_slots = account.get("unlockedExtraEpisodeSlots", 0)
             total_allowed_slots = episode_slots + extra_slots
 
             if benefits.get("max_slots") == "Unlimited":

@@ -1,4 +1,5 @@
 import logging
+import uuid
 from datetime import datetime
 from bson import ObjectId
 from backend.database.mongo_connection import collection
@@ -13,18 +14,38 @@ class AuthRepository:
         self.account_collection = collection.database.Accounts
 
     def find_user_by_email(self, email):
-        """Find a user by email."""
+        """Finds a user by email."""
         try:
-            return self.user_collection.find_one({"email": email.lower().strip()})
+            logger.debug(f"Searching for user with email: {email}")
+            user = self.user_collection.find_one({"email": email.lower().strip()})
+            if user:
+                logger.debug(f"User found: {user['_id']}")
+            else:
+                logger.debug("User not found.")
+            return user
         except Exception as e:
             logger.error(f"Error finding user by email {email}: {e}", exc_info=True)
             return None
 
     def create_user(self, user_data):
+        """Creates a new user document."""
         try:
+            # Ensure required fields are present, add defaults if needed
+            if "_id" not in user_data:
+                user_data["_id"] = str(uuid.uuid4())
+            if "email" not in user_data:
+                logger.error("Cannot create user without email.")
+                return None
+            user_data["email"] = user_data["email"].lower().strip()
+            user_data.setdefault("createdAt", datetime.utcnow().isoformat())
+            user_data.setdefault("updatedAt", datetime.utcnow().isoformat())
+            # Add other default fields as per your User schema
+
+            logger.info(
+                f"Creating new user with ID: {user_data['_id']} for email: {user_data['email']}"
+            )
             result = self.user_collection.insert_one(user_data)
             if result.inserted_id:
-                logger.info(f"User created: {user_data['email']}")
                 # Create account using internal create_account method
                 account_data = {
                     "ownerId": user_data["_id"],
@@ -37,11 +58,13 @@ class AuthRepository:
                         f"Failed to create account for user {user_data['_id']}: {account_result.get('error')}"
                     )
                     return None
-                return user_data
-            return None
+                return self.user_collection.find_one({"_id": result.inserted_id})
+            else:
+                logger.error("User creation failed (insert operation).")
+                return None
         except Exception as e:
             logger.error(
-                f"Error creating user {user_data['email']}: {str(e)}", exc_info=True
+                f"Error creating user {user_data.get('email')}: {e}", exc_info=True
             )
             return None
 
@@ -95,9 +118,8 @@ class AuthRepository:
                 "referralBonus": data.get("referralBonus", 0),
                 "isFirstLogin": data.get("isFirstLogin", True),
                 "lastUpdated": datetime.utcnow().isoformat(),
-                "subscriptionAmount": 0,  
-                "subscriptionPlan": "Free"                   
-                 
+                "subscriptionAmount": 0,
+                "subscriptionPlan": "Free",
             }
             logger.debug(f"Attempting to create account with data: {account_data}")
             result = self.account_collection.insert_one(account_data)

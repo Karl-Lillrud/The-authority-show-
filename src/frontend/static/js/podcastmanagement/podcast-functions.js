@@ -142,7 +142,7 @@ export async function renderPodcastList() {
 
       // Use imageUrl if available, otherwise allow user to upload an image
       const imageUrl =
-        podcast.logoUrl || podcast.imageUrl || "default-image.png";
+        podcast.logoUrl || podcast.imageUrl || "/static/images/default-image.png";
 
       // Create the basic podcast card structure
       podcastCard.innerHTML = `
@@ -290,7 +290,7 @@ export async function renderPodcastList() {
                     if (response) {
                       renderEpisodeDetail({
                         ...response,
-                        podcast_id: podcast._id // Pass podcast ID
+                        podcastId: podcast._id // Pass podcast ID
                       });
                       document.getElementById("podcast-list").style.display =
                         "none";
@@ -456,7 +456,7 @@ export async function renderPodcastList() {
 // Function to render podcast detail
 export function renderPodcastDetail(podcast) {
   const podcastDetailElement = document.getElementById("podcast-detail");
-  const imageUrl = podcast.logoUrl || podcast.imageUrl || "default-image.png";
+  const imageUrl = podcast.logoUrl || podcast.imageUrl || "/static/images/default-image.png";
 
   podcastDetailElement.innerHTML = `
   <div class="detail-header">
