@@ -117,6 +117,13 @@ function showTab(tabName) {
                         <pre id="translateResult"></pre>
                     </div>
                 </div>
+
+                <div class="result-group">
+                    <button class="btn ai-edit-button" onclick="generateAudioClip()">
+                        Generate Audio Clip
+                    </button>
+                    <div class="result-field" id="audioClipResult"></div>
+                </div>
     
                 <div class="result-group">
                     <button class="btn ai-edit-button" onclick="generateAISuggestions()">
@@ -379,6 +386,15 @@ async function translateTranscript() {
   
       resultContainer.innerText = data.translated_transcription;
       await consumeStoreCredits("translation");
+
+      if (!document.getElementById("generateAudioBtn")) {
+            const btn = document.createElement("button");
+            btn.id = "generateAudioBtn";
+            btn.className = "btn ai-edit-button";
+            btn.innerText = "Generate Audio Clip";
+            btn.onclick = generateAudioClip;
+            resultContainer.parentNode.insertBefore(btn, resultContainer.nextSibling);
+       }
     } catch (err) {
       hideSpinner("translateResult");
       resultContainer.innerText = `Error: ${err.message}`;
@@ -1335,4 +1351,31 @@ function hideSpinner(containerId) {
     if (container) {
         container.innerHTML = '';
     }
+}
+
+async function generateAudioClip() {
+  const container = document.getElementById("audioClipResult");
+  const translated = document.getElementById("translateResult").innerText;
+  if (!translated.trim()) return alert("Inget översatt transcript att göra ljudklipp av.");
+
+  showSpinner("audioClipResult");
+  try {
+    const res = await fetch("/transcription/audio_clip", {
+      method: "POST",
+      headers: {"Content-Type":"application/json"},
+      body: JSON.stringify({ translated_transcription: translated })
+    });
+    hideSpinner("audioClipResult");
+
+    if (!res.ok) throw new Error(`Server svarade ${res.status}`);
+    const data = await res.json();
+    const audio = document.createElement("audio");
+    audio.controls = true;
+    audio.src = data.audio_base64;
+    container.innerHTML = "";
+    container.appendChild(audio);
+  } catch (err) {
+    hideSpinner("audioClipResult");
+    container.innerText = `Failed to generate audio clip: ${err.message}`;
+  }
 }

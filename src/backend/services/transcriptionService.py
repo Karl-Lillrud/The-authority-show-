@@ -3,6 +3,7 @@ import os
 import openai
 import logging
 import re
+from pydub import AudioSegment, effects
 from datetime import datetime, timezone
 from typing import List
 from io import BytesIO
@@ -21,6 +22,18 @@ from backend.utils.text_utils import (
 
 logger = logging.getLogger(__name__)
 client = ElevenLabs(api_key=os.getenv("ELEVENLABS_API_KEY"))
+
+VOICE_MAPS = {
+    "English": {
+        "Speaker 1": os.getenv("VOICE_ID_EN_1"),
+        "Speaker 2": os.getenv("VOICE_ID_EN_2"),
+    },
+    "Spanish": {
+        "Speaker 1": os.getenv("VOICE_ID_ES_1"),
+        "Speaker 2": os.getenv("VOICE_ID_ES_2"),
+    },
+}
+
 
 class TranscriptionService:
     def transcribe_audio(self, file_data: bytes, filename: str) -> dict:
@@ -151,3 +164,78 @@ class TranscriptionService:
         emotion_data = analyze_emotions(transcript_text)
         sfx_suggestions = suggest_sound_effects(emotion_data)
         return {"emotions": emotion_data, "sound_effects": sfx_suggestions}
+    
+    def generate_audio_from_translated(self, raw_transcription: str, language: str) -> bytes:
+        # 1) Bygg och sortera segment
+        segments = self.build_segments_from_raw(raw_transcription)
+        segments.sort(key=lambda s: s["start"])
+
+        # 2) Beräkna total längd (i ms)
+        total_ms = int(max(s["end"] for s in segments) * 1000)
+
+        # 3) Starta en “tyst” AudioSegment av total längd
+        final = AudioSegment.silent(duration=total_ms)
+
+        voice_map = VOICE_MAPS.get(language)
+        if not voice_map:
+            raise ValueError(f"Inget voice_map för språk '{language}'")
+
+        # 4) Generera varje TTS och lägg ovanpå på rätt tidpunkt
+        for seg in segments:
+            start_ms = int(seg["start"] * 1000)
+            end_ms   = int(seg["end"]   * 1000)
+            text     = seg["text"]
+            speaker  = seg["speaker"]
+            voice_id = voice_map.get(speaker)
+            if not voice_id:
+                raise ValueError(f"Ingen voice_id för {speaker} i {language}")
+
+            # TTS
+            tts_stream = client.text_to_speech.convert(
+                text=text,
+                voice_id=voice_id,
+                model_id="eleven_multilingual_v2",
+                output_format="mp3_44100_128"
+            )
+            tts_bytes = b"".join(tts_stream)
+            tts_audio = AudioSegment.from_file(BytesIO(tts_bytes), format="mp3")
+
+            # Anpassa längd
+            target_dur = end_ms - start_ms
+            actual     = len(tts_audio)
+            if actual > target_dur:
+                speed = actual / target_dur
+                tts_audio = effects.speedup(tts_audio, playback_speed=speed)
+            else:
+                tts_audio += AudioSegment.silent(duration=(target_dur - actual))
+
+            # Overlay på exakt start_ms
+            final = final.overlay(tts_audio, position=start_ms)
+
+        # 5) Exportera som MP3
+        buf = BytesIO()
+        final.export(buf, format="mp3")
+        return buf.getvalue()
+    
+    def build_segments_from_raw(self, raw_transcription: str) -> List[dict]:
+        segments = []
+        pattern = re.compile(
+            r"\[(?P<start>\d+(\.\d+)?)\-(?P<end>\d+(\.\d+)?)\]\s*"
+            r"(?P<speaker>Speaker \d+):\s*(?P<text>.+)"
+        )
+        for line in raw_transcription.splitlines():
+            m = pattern.match(line)
+            if not m:
+                continue
+            segments.append({
+                "start":   float(m.group("start")),
+                "end":     float(m.group("end")),
+                "speaker": m.group("speaker"),
+                "text":    m.group("text").strip()
+            })
+        if not segments:
+            raise ValueError("Ingen giltig segmentrad hittades i transcriptet.")
+        return segments
+
+    
+    
