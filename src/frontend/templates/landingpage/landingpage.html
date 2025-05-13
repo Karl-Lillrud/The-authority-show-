@@ -201,93 +201,91 @@
 
     <!-- GUEST APPEARANCES CONTENT -->
     <div class="guest-content active" id="guests">
-      <h3>Become a Guest Speaker</h3>
+      <h3 data-i18n="becomeGuestSpeaker">Become a Guest Speaker</h3>
       <div class="guest-features">
         <div class="guest-feature">
           <i class="fas fa-robot"></i>
-          <span>AI &amp; Tech Experts</span>
+          <span data-i18n="aiTechExperts">AI &amp; Tech Experts</span>
         </div>
         <div class="guest-feature">
           <i class="fas fa-calendar-check"></i>
-          <span>Flexible Scheduling</span>
+          <span data-i18n="flexibleScheduling">Flexible Scheduling</span>
         </div>
         <div class="guest-feature">
           <i class="fas fa-headset"></i>
-          <span>Remote Interviews</span>
+          <span data-i18n="remoteInterviews">Remote Interviews</span>
         </div>
         <div class="guest-feature">
           <i class="fas fa-users"></i>
-          <span>Engaged Audience</span>
+          <span data-i18n="engagedAudience">Engaged Audience</span>
         </div>
       </div>
       <!-- Guest Signup -->
       <div class="guest-signup">
-        <h3>Apply to be a Guest</h3>
+        <h3 data-i18n="applyToBeGuest">Apply to be a Guest</h3>
         <form id="guest-signup-form" action="#" method="post">
-          <input type="email" id="guest-email" placeholder="Enter your email" required>
-          <button type="submit">Apply</button>
+          <input type="email" id="guest-email" placeholder="Enter your email" required data-i18n-placeholder="enterYourEmail">
+          <button type="submit" data-i18n="apply">Apply</button>
         </form>
       </div>
     </div>
 
     <!-- SPONSORSHIP CONTENT -->
     <div class="sponsor-content" id="sponsorships">
-      <h3>Partner with Us</h3>
+      <h3 data-i18n="partnerWithUs">Partner with Us</h3>
       <div class="sponsor-features">
         <div class="sponsor-feature">
           <img src="sponsor1.png" alt="Sponsor Logo" />
-          <span>Brand Integration</span>
+          <span data-i18n="brandIntegration">Brand Integration</span>
         </div>
         <div class="sponsor-feature">
           <img src="sponsor2.png" alt="Sponsor Logo" />
-          <span>Episode Shoutouts</span>
+          <span data-i18n="episodeShoutouts">Episode Shoutouts</span>
         </div>
         <div class="sponsor-feature">
           <img src="sponsor3.png" alt="Sponsor Logo" />
-          <span>Ad Spots</span>
+          <span data-i18n="adSpots">Ad Spots</span>
         </div>
         <div class="sponsor-feature">
           <img src="sponsor4.png" alt="Sponsor Logo" />
-          <span>Special Collaborations</span>
+          <span data-i18n="specialCollaborations">Special Collaborations</span>
         </div>
       </div>
-      <button class="sponsor-btn" onclick="window.location.href='sponsor.html'">
-        Sponsor Us
-      </button>
+      <button class="sponsor-btn" onclick="window.location.href='sponsor.html'" data-i18n="sponsorUs">Sponsor Us</button>
     </div>
   </div>
 </section>
 
     <!-- Extra Section -->
     <section class="extra-section section-dark" id="extra-section">
-      <h2>Stay Connected</h2>
+      <h2 data-i18n="stayConnected">Stay Connected</h2>
       <!-- Newsletter Signup -->
       <div class="newsletter-signup">
-        <h3>Newsletter Signup</h3>
+        <h3 data-i18n="newsletterSignup">Newsletter Signup</h3>
         <form id="newsletter-form" action="#" method="post">
-          <input type="email" id="newsletter-email" placeholder="Enter your email" required>
-          <button type="submit">Subscribe</button>
+          <input type="email" id="newsletter-email" placeholder="Enter your email" required data-i18n-placeholder="enterYourEmail">
+          <button type="submit" data-i18n="subscribe">Subscribe</button>
         </form>
       </div>
 
 
       <!-- Merch / Patreon Links -->
       <div class="merch-patreon">
-        <h3>Merch & Patreon</h3>
-        <a href="#" target="_blank">Visit our Merch Store</a>
-        <a href="#" target="_blank">Support us on Patreon</a>
+        <h3 data-i18n="merchPatreon">Merch & Patreon</h3>
+        <a href="#" target="_blank" data-i18n="visitMerchStore">Visit our Merch Store</a>
+        <a href="#" target="_blank" data-i18n="supportOnPatreon">Support us on Patreon</a>
       </div>
       <!-- Press Kit -->
       <div class="press-kit">
-        <h3>Press Kit</h3>
-        <a href="press-kit.zip" download>Download Media Assets</a>
+        <h3 data-i18n="pressKit">Press Kit</h3>
+        <a href="press-kit.zip" download data-i18n="downloadMediaAssets">Download Media Assets</a>
       </div>
     </section>
   
   <footer class="section-darkgrey">
-    <p>&copy; <span id="current-year">2025</span> Podcast Website. All rights reserved.</p>
-    <p id="powered-by">Powered by PodManager.AI</p>
-    <p id="custom-domain">Custom Domain: podcastname.com</p>
+    <p>&copy; <span id="current-year">2025</span> <span data-i18n="podcastWebsite">Podcast Website.</span> <span data-i18n="allRightsReserved">All rights reserved</span></p>
+    <p id="powered-by" data-i18n="poweredBy">Powered by PodManager.AI</p>
+    <p id="custom-domain" data-i18n="customDomain">Custom Domain: podcastname.com</p>
   </footer>
 
   <!-- Audio Player -->
