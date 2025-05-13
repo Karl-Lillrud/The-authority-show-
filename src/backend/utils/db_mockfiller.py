@@ -50,15 +50,14 @@ except Exception as e:
     logger.error(f"Failed to connect to MongoDB: {e}")
     raise
 
-def create_accounts(n=10):
+def create_accounts(user_ids):
     accounts = []
-    for _ in range(n):
+    for user_id in user_ids:
         account = {
             "id": str(uuid.uuid4()),
-            "ownerId": str(uuid.uuid4()),
+            "ownerId": user_id,
             "subscriptionId": str(uuid.uuid4()),
             "creditId": str(uuid.uuid4()),
-            "email": fake.email(),
             "isCompany": fake.boolean(),
             "companyName": fake.company() if fake.boolean() else None,
             "paymentInfo": fake.credit_card_full(),
@@ -67,6 +66,7 @@ def create_accounts(n=10):
             "referralBonus": random.randint(0, 100),
             "subscriptionStart": fake.date_time_this_year(),
             "subscriptionEnd": fake.date_time_this_year(),
+            "isFirstLogin" : False,
             "isActive": fake.boolean()
         }
         accounts.append(account)
@@ -337,11 +337,13 @@ def create_subscriptions(n=10):
 
 def main():
     try:
-        # Create mock Accounts
-        create_accounts(10)
-        
-        # Create mock Users and Teams, then link them
+        # Create mock Users
         user_ids = create_users(10)
+
+        # Create mock Accounts for the new mock Users
+        create_accounts(user_ids)
+
+        # Create mock Teams then link them to Users
         team_ids = create_teams(5)
         create_users_to_teams(user_ids, team_ids)
         
