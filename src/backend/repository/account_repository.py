@@ -1,6 +1,6 @@
 import logging
 import uuid
-from datetime import datetimeimport 
+from datetime import datetime
 from bson import ObjectId
 from backend.database.mongo_connection import collection
 from backend.services.creditService import initialize_credits
@@ -47,16 +47,19 @@ class AccountRepository:
                 }, 200
 
             # Create a new account
-            new_account_id = str(uuid.uuid4())
+            new_account_id = str(uuid.uuid4())  # Define new_account_id
+            new_subscription_id = data.get("subscriptionId") or str(uuid.uuid4())
+            new_credit_id = data.get("creditId") or str(uuid.uuid4())
+
             account_data = {
-                "_id": new_account_id,
+                "_id": new_account_id,  # Use the defined new_account_id
                 "ownerId": user_id,
                 "email": email.lower().strip(),
                 "createdAt": datetime.utcnow().isoformat(),
                 "updatedAt": datetime.utcnow().isoformat(),
                 "isActive": data.get("isActive", True),
-                "subscriptionId": data.get("subscriptionId", str(ObjectId())),
-                "creditId": data.get("creditId", str(ObjectId())),
+                "subscriptionId": new_subscription_id,
+                "creditId": new_credit_id,
                 "isCompany": data.get("isCompany", False),
                 "companyName": data.get("companyName", ""),
                 "subscriptionStatus": data.get("subscriptionStatus", "active"),
