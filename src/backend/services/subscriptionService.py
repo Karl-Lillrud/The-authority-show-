@@ -1,12 +1,11 @@
 from datetime import datetime, timedelta, timezone
 from backend.database.mongo_connection import collection
 from backend.utils.subscription_access import PLAN_BENEFITS
-import logging
-import uuid
+from backend.services.activity_service import ActivityService
 from dateutil.parser import parse as parse_date
-from backend.services.activity_service import ActivityService  # Add this import
-from dateutil.parser import parse as parse_date  
+import logging
 import stripe
+import uuid
 from flask import current_app
 
 logger = logging.getLogger(__name__)
@@ -58,6 +57,10 @@ class SubscriptionService:
                 stripe_session["amount_total"] / 100
             )  # Convert cents to dollars
 
+            # Get subscription details including interval
+            subscription_metadata = stripe_session.get("metadata", {})
+            interval = "year" if "_YEARLY" in plan_name else "month"
+
             # First try to find account by userId
             account = self.accounts_collection.find_one({"userId": user_id})
 
@@ -72,134 +75,34 @@ class SubscriptionService:
 
             # Store current checkout session ID to avoid canceling our new subscription
             current_session_id = stripe_session.id
-            logger.info(f"Current checkout session ID: {current_session_id}")
 
-            # Check for and cancel any existing active subscriptions in Stripe
+            # Handle cancellation of existing subscriptions
             try:
-                
-                
-                # Initialize a list to track all subscriptions we find
                 found_subscriptions = []
                 
-                # Look for ALL active subscriptions for this user, not just one
+                # Look for ALL active subscriptions for this user
                 existing_subscriptions = list(self.subscriptions_collection.find(
                     {"user_id": user_id, "status": "active"}
                 ))
                 
-                logger.info(f"Found {len(existing_subscriptions)} active subscriptions in database for user {user_id}")
+                logger.info(f"Found {len(existing_subscriptions)} active subscriptions")
                 
-                # Process each subscription from our database
                 for existing_sub in existing_subscriptions:
                     if existing_sub.get("payment_id") and existing_sub.get("payment_id") != current_session_id:
-                        payment_id = existing_sub.get("payment_id")
-                        
-                        # If payment_id is a subscription ID (starts with "sub_")
-                        if payment_id.startswith("sub_"):
-                            logger.info(f"Found existing Stripe subscription ID: {payment_id} for user {user_id}")
-                            found_subscriptions.append(payment_id)
-                            
-                        # If payment_id is a checkout session, try to get subscription from it
-                        else:
-                            try:
-                                checkout_session = stripe.checkout.Session.retrieve(payment_id)
-                                if checkout_session and hasattr(checkout_session, 'subscription'):
-                                    stripe_subscription_id = checkout_session.subscription
-                                    if stripe_subscription_id:
-                                        logger.info(f"Retrieved subscription ID {stripe_subscription_id} from session {payment_id}")
-                                        found_subscriptions.append(stripe_subscription_id)
-                            except Exception as session_err:
-                                logger.error(f"Error retrieving subscription from session {payment_id}: {session_err}")
-                
-                if account.get("email"):
-                    try:
-                        # Look up customer by email
-                        customers = stripe.Customer.list(email=account.get("email"), limit=5)
-                        if customers and customers.data:
-                            for customer in customers.data:
-                                logger.info(f"Found Stripe customer by email: {customer.id}")
-                                
-                                # Find active subscriptions for this customer
-                                customer_subs = stripe.Subscription.list(
-                                    customer=customer.id,
-                                    status="active",
-                                    limit=10
-                                )
-                                
-                                if customer_subs and customer_subs.data:
-                                    for sub in customer_subs.data:
-                                        # Check if this subscription is just being created in this session
-                                        if hasattr(stripe_session, 'subscription') and stripe_session.subscription == sub.id:
-                                            logger.info(f"Skipping current subscription {sub.id} that's being created")
-                                            continue
-                                            
-                                        logger.info(f"Found active subscription {sub.id} for customer {customer.id}")
-                                        found_subscriptions.append(sub.id)
-                    except Exception as customer_err:
-                        logger.error(f"Error finding subscriptions by customer email: {customer_err}")
-                
-                if account.get("stripeCustomerId"):
-                    try:
-                        customer_id = account.get("stripeCustomerId")
-                        customer_subs = stripe.Subscription.list(
-                            customer=customer_id,
-                            status="active",
-                            limit=10
-                        )
-                        
-                        if customer_subs and customer_subs.data:
-                            for sub in customer_subs.data:
-                                # Check if this subscription is just being created in this session
-                                if hasattr(stripe_session, 'subscription') and stripe_session.subscription == sub.id:
-                                    logger.info(f"Skipping current subscription {sub.id} that's being created")
-                                    continue
-                                    
-                                logger.info(f"Found active subscription {sub.id} for customer ID {customer_id}")
-                                found_subscriptions.append(sub.id)
-                    except Exception as direct_customer_err:
-                        logger.error(f"Error finding subscriptions by direct customer ID: {direct_customer_err}")
-                
-                # Now cancel all found subscriptions
-                # Remove duplicates
-                found_subscriptions = list(set(found_subscriptions))
-                logger.info(f"Attempting to cancel {len(found_subscriptions)} subscriptions: {found_subscriptions}")
-                
-                for subscription_id in found_subscriptions:
-                    try:
-                        # First verify the subscription exists and is active
-                        sub_check = stripe.Subscription.retrieve(subscription_id)
-                        logger.info(f"Subscription {subscription_id} status: {sub_check.status}, cancel_at_period_end: {sub_check.cancel_at_period_end}")
-                        
-                        if sub_check.status == "active" and not sub_check.cancel_at_period_end:
-                            # Cancel at period end keeps access until end of current period
-                            cancelled_subscription = stripe.Subscription.modify(
-                                subscription_id,
-                                cancel_at_period_end=True
-                            )
-                            logger.info(f"Successfully canceled subscription {subscription_id} at period end")
-                            
-                            # Update our database record - find all records with this payment_id
-                            self.subscriptions_collection.update_many(
-                                {"$or": [
-                                    {"payment_id": subscription_id},
-                                    {"stripe_subscription_id": subscription_id}
-                                ]},
-                                {"$set": {"status": "cancelled", "cancelled_at": datetime.utcnow().isoformat()}}
-                            )
-                    except Exception as cancel_err:
-                        logger.error(f"Error canceling subscription {subscription_id}: {cancel_err}")
-            
+                        self._handle_existing_subscription_cancellation(existing_sub)
+
             except Exception as cancel_process_err:
-                logger.error(f"Error during subscription cancellation process: {cancel_process_err}")
+                logger.error(f"Error during subscription cancellation: {cancel_process_err}")
                 # Continue with creating the new subscription even if cancellation fails
 
-            # Rest of your existing code for creating the new subscription
+            # Calculate subscription dates based on interval
             start_date = datetime.utcnow()
-            end_date = start_date + timedelta(days=30)
+            end_date = start_date + timedelta(days=365 if interval == "year" else 30)
 
-            # Get the plan benefits from subscription_access.py
+            # Get the plan benefits
             plan_benefits = PLAN_BENEFITS.get(plan_name.upper(), PLAN_BENEFITS["FREE"])
 
-            # Update the user's subscription details - use the field that was found
+            # Update the user's subscription details
             filter_query = (
                 {"userId": user_id} if "userId" in account else {"ownerId": user_id}
             )
@@ -214,7 +117,8 @@ class SubscriptionService:
                         "subscriptionStart": start_date.isoformat(),
                         "subscriptionEnd": end_date.isoformat(),
                         "lastUpdated": datetime.utcnow().isoformat(),
-                        "benefits": plan_benefits,  # Add the plan benefits
+                        "benefits": plan_benefits,
+                        "billingInterval": interval
                     }
                 },
             )
@@ -222,29 +126,29 @@ class SubscriptionService:
             if update_result.modified_count == 0:
                 raise ValueError(f"Failed to update subscription for user {user_id}")
 
-            # Mark all other active subscriptions for this user as inactive BEFORE inserting the new one
+            # Mark all other active subscriptions as inactive
             try:
                 update_inactive_result = self.subscriptions_collection.update_many(
                     {"user_id": user_id, "status": "active"},
                     {"$set": {"status": "inactive", "updated_at": datetime.utcnow().isoformat()}}
                 )
-                logger.info(f"Marked {update_inactive_result.modified_count} previous active subscriptions as inactive for user {user_id}")
+                logger.info(f"Marked {update_inactive_result.modified_count} previous subscriptions as inactive")
             except Exception as inactive_err:
-                logger.error(f"Error marking previous subscriptions as inactive for user {inactive_err}", exc_info=True)
-                # Continue even if this fails, priority is the new subscription
+                logger.error(f"Error marking previous subscriptions as inactive: {inactive_err}", exc_info=True)
 
-            # Also record in the subscriptions collection
+            # Record in the subscriptions collection
             subscription_data = {
                 "_id": str(uuid.uuid4()),
                 "user_id": user_id,
-                "plan": account.get("subscriptionPlan", "FREE"),
+                "plan": plan_name,
                 "amount": amount_paid,
                 "start_date": start_date.isoformat(),
-                "end_date": end_date.isoformat() if end_date else None,
+                "end_date": end_date.isoformat(),
                 "status": "active",
                 "payment_id": stripe_session.id,
                 "created_at": datetime.utcnow().isoformat(),
-                "benefits": plan_benefits,  # Add the plan benefits
+                "benefits": plan_benefits,
+                "billingInterval": interval
             }
 
             self.subscriptions_collection.insert_one(subscription_data)
@@ -252,28 +156,26 @@ class SubscriptionService:
             # Update the user's credits based on the subscription plan
             try:
                 from backend.services.creditService import update_subscription_credits
-                
-                # This will update the subCredits to match the plan's credit allocation
                 updated_credits = update_subscription_credits(user_id, plan_name)
-                logger.info(f"Updated credits for user {user_id} to {plan_benefits.get('credits', 0)} credits based on {plan_name} plan")
-                
-                # Include the updated credit information in the return value
+                logger.info(f"Updated credits for user {user_id} with plan {plan_name}")
                 return True, updated_credits
+
             except Exception as credit_err:
                 logger.error(f"Failed to update subscription credits: {credit_err}", exc_info=True)
                 return True, None
 
-            # --- Log subscription activity ---
+            # Log subscription activity
             try:
                 self.activity_service.log_activity(
                     user_id=user_id,
                     activity_type="subscription_updated",
-                    description=f"Subscription updated to '{plan_name}' plan.",
+                    description=f"Subscription updated to '{plan_name}' plan ({interval}ly).",
                     details={
                         "plan": plan_name,
                         "amount": amount_paid,
                         "end_date": end_date.isoformat(),
-                        "credits": plan_benefits.get("credits", 0),  # Add credits to the activity log
+                        "credits": plan_benefits.get("credits", 0),
+                        "interval": interval
                     },
                 )
             except Exception as act_err:
@@ -281,15 +183,50 @@ class SubscriptionService:
                     f"Failed to log subscription_updated activity: {act_err}",
                     exc_info=True,
                 )
-            # --- End activity log ---
-
-            return True
 
         except Exception as e:
             logger.error(
                 f"Error updating subscription for user {user_id} with plan {plan_name}: {str(e)}"
             )
             raise Exception(f"Error updating subscription: {str(e)}")
+
+    def _handle_existing_subscription_cancellation(self, existing_sub):
+        """Helper method to handle cancellation of an existing subscription"""
+        payment_id = existing_sub.get("payment_id")
+        
+        # If payment_id is a subscription ID (starts with "sub_")
+        if payment_id.startswith("sub_"):
+            try:
+                # Verify the subscription exists and is active
+                sub_check = stripe.Subscription.retrieve(payment_id)
+                if sub_check.status == "active" and not sub_check.cancel_at_period_end:
+                    # Cancel at period end
+                    stripe.Subscription.modify(
+                        payment_id,
+                        cancel_at_period_end=True
+                    )
+                    logger.info(f"Canceled subscription {payment_id} at period end")
+                    
+                    # Update database records
+                    self.subscriptions_collection.update_many(
+                        {"$or": [
+                            {"payment_id": payment_id},
+                            {"stripe_subscription_id": payment_id}
+                        ]},
+                        {"$set": {"status": "cancelled", "cancelled_at": datetime.utcnow().isoformat()}}
+                    )
+            except Exception as stripe_err:
+                logger.error(f"Error canceling subscription {payment_id}: {stripe_err}")            # Handle checkout session case
+            else:
+                try:
+                    checkout_session = stripe.checkout.Session.retrieve(payment_id)
+                    if hasattr(checkout_session, 'subscription'):
+                        stripe_subscription_id = checkout_session.subscription
+                        self._handle_existing_subscription_cancellation({
+                            "payment_id": stripe_subscription_id
+                        })
+                except Exception as session_err:
+                    logger.error(f"Error retrieving checkout session {payment_id}: {session_err}")
 
     def update_subscription_from_webhook(self, user_id, plan_name, stripe_subscription):
         """
@@ -360,25 +297,29 @@ class SubscriptionService:
             }
             
             self.subscriptions_collection.insert_one(subscription_data)
-            
-            # Update user's credits based on the subscription plan
-            from backend.services.creditService import update_subscription_credits
-            updated_credits = update_subscription_credits(user_id, plan_name)
-            
-            # Log the subscription update activity
-            self.activity_service.log_activity(
-                user_id=user_id,
-                activity_type="subscription_updated",
-                description=f"Subscription updated to '{plan_name}' plan via webhook.",
-                details={
-                    "plan": plan_name,
-                    "amount": amount_paid,
-                    "end_date": end_date.isoformat(),
-                    "credits": plan_benefits.get("credits", 0),
-                },
-            )
-            
-            return True
+              # Update user's credits based on the subscription plan
+            try:
+                from backend.services.creditService import update_subscription_credits
+                updated_credits = update_subscription_credits(user_id, plan_name)
+                
+                # Log the subscription update activity
+                self.activity_service.log_activity(
+                    user_id=user_id,
+                    activity_type="subscription_updated",
+                    description=f"Subscription updated to '{plan_name}' plan via webhook.",
+                    details={
+                        "plan": plan_name,
+                        "amount": amount_paid,
+                        "end_date": end_date.isoformat(),
+                        "credits": plan_benefits.get("credits", 0),
+                    },
+                )
+                
+                return True
+            except Exception as credit_err:
+                logger.error(f"Error updating credits for user {user_id}: {str(credit_err)}")
+                # Continue even if credit update fails
+                return True
         
         except Exception as e:
             logger.error(f"Error updating subscription from webhook for user {user_id}: {str(e)}")

@@ -1,0 +1,148 @@
+/* Animations and Transitions */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes scaleIn {
+  from { transform: scale(0.95); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
+}
+
+@keyframes slideIn {
+  from { transform: translateX(-20px); opacity: 0; }
+  to { transform: translateX(0); opacity: 1; }
+}
+
+@keyframes pulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.05); }
+  100% { transform: scale(1); }
+}
+
+@keyframes shimmer {
+  0% { background-position: -1000px 0; }
+  100% { background-position: 1000px 0; }
+}
+
+.animate-in {
+  animation: fadeIn 0.6s ease-out forwards;
+}
+
+.scale-in {
+  animation: scaleIn 0.4s ease-out forwards;
+}
+
+.slide-in {
+  animation: slideIn 0.5s ease-out forwards;
+}
+
+.pulse {
+  animation: pulse 2s infinite;
+}
+
+/* Loading States */
+.loading-shimmer {
+  background: linear-gradient(
+    90deg,
+    var(--neutral-100) 0%,
+    var(--neutral-200) 50%,
+    var(--neutral-100) 100%
+  );
+  background-size: 1000px 100%;
+  animation: shimmer 2s infinite linear;
+}
+
+/* Interactive States */
+.hover-lift {
+  transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.hover-lift:hover {
+  transform: translateY(-4px);
+}
+
+.hover-scale {
+  transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.hover-scale:hover {
+  transform: scale(1.02);
+}
+
+/* Smooth Page Transitions */
+.page-transition {
+  opacity: 0;
+  transform: translateY(20px);
+  animation: fadeIn 0.8s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+
+/* Interactive Button States */
+.btn-interaction {
+  position: relative;
+  overflow: hidden;
+  transition: all 0.3s ease;
+}
+
+.btn-interaction::after {
+  content: '';
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  top: 0;
+  left: 0;
+  background: white;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.btn-interaction:active::after {
+  opacity: 0.2;
+}
+
+/* Focus States */
+.focus-ring {
+  transition: box-shadow 0.2s ease;
+}
+
+.focus-ring:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px var(--primary-200);
+}
+
+/* Status Indicators */
+.status-pulse {
+  position: relative;
+}
+
+.status-pulse::before {
+  content: '';
+  position: absolute;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: currentColor;
+  animation: pulse 2s infinite;
+}
+
+/* Card Hover Effects */
+.card-hover {
+  transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.card-hover:hover {
+  transform: translateY(-8px) scale(1.01);
+  box-shadow: var(--shadow-xl);
+}
+
+/* List Item Animations */
+.list-item-enter {
+  opacity: 0;
+  transform: translateX(-20px);
+}
+
+.list-item-enter-active {
+  opacity: 1;
+  transform: translateX(0);
+  transition: all 0.3s ease;
+}

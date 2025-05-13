@@ -104,18 +104,17 @@ async function initializeStripe() {
   }
 }
 
-function loadStripeScript() {
+async function loadStripeScript() {
   return new Promise((resolve, reject) => {
     if (document.querySelector('script[src="https://js.stripe.com/v3/"]')) {
       resolve();
       return;
     }
-    const stripeScript = document.createElement("script");
-    stripeScript.src = "https://js.stripe.com/v3/";
-    stripeScript.async = true;
-    stripeScript.onload = () => resolve();
-    stripeScript.onerror = () => reject(new Error("Failed to load Stripe.js"));
-    document.head.appendChild(stripeScript);
+    const script = document.createElement("script");
+    script.src = "https://js.stripe.com/v3/";
+    script.onload = () => resolve();
+    script.onerror = () => reject(new Error("Failed to load Stripe.js"));
+    document.head.appendChild(script);
   });
 }
 
@@ -123,7 +122,7 @@ function loadStripeScript() {
 function resetCheckoutButton() {
   const checkoutBtn = document.getElementById("checkoutBtn");
   if (checkoutBtn) {
-    checkoutBtn.disabled = cart.length === 0;
+    checkoutBtn.disabled = false;
     checkoutBtn.textContent = "Complete the Purchase";
   }
 }
@@ -240,7 +239,6 @@ function setupCart() {
       const subscriptionItems = cart.filter(
         (item) => item.type === "Subscription"
       );
-      // Add filter for episode packs
       const episodeItems = cart.filter((item) => item.type === "Episode Pack");
 
       if (
@@ -257,11 +255,10 @@ function setupCart() {
         return;
       }
 
-      // Update condition to check all relevant item types
       if (
         creditItems.length === 0 &&
         subscriptionItems.length === 0 &&
-        episodeItems.length === 0 // Add check for episode items
+        episodeItems.length === 0
       ) {
         showNotification(
           "Empty Cart",
@@ -292,28 +289,29 @@ function setupCart() {
       if (subscriptionItems.length === 1) {
         const subscription = subscriptionItems[0];
         const plan = getPlanForProduct(subscription.id);
+        const isYearly = subscription.interval === "year" || subscription.id.includes("-yearly");
         items.push({
           productId: subscription.id,
           name: subscription.name,
           type: "subscription",
           price: subscription.price.toFixed(2),
           quantity: 1,
-          plan: plan
+          plan: plan,
+          interval: isYearly ? "year" : "month",
+          interval_count: 1 // Explicitly set to 1 to avoid Stripe's interval_count limit
         });
       }
 
-      // Add processing for episode items
       if (episodeItems.length > 0) {
         episodeItems.forEach((item) => {
-          // Assuming each episode pack grants 1 slot, adjust if needed
           const episodeSlots = 1;
           items.push({
             productId: item.id,
             name: item.name,
-            type: "episode", // Use 'episode' type for backend
+            type: "episode",
             price: item.price.toFixed(2),
             quantity: item.quantity,
-            episodeSlots: episodeSlots * item.quantity // Calculate total slots
+            episodeSlots: episodeSlots * item.quantity
           });
         });
       }
@@ -403,8 +401,10 @@ function getCreditsForProduct(productId) {
 function getPlanForProduct(productId) {
   switch (productId) {
     case "sub-standard":
+    case "sub-standard-yearly":
       return "pro";
     case "sub-pro":
+    case "sub-pro-yearly":
       return "studio";
     case "sub-enterprise":
       return "enterprise";
@@ -420,6 +420,12 @@ function addToCart(productId, productName, productType, productPrice) {
   const existingItemIndex = cart.findIndex((item) => item.id === productId);
   let itemAdded = false; // Flag to check if a new item was added or quantity increased
 
+  // Get the product card to access additional attributes
+  const productCard = document.querySelector(
+    `.product-card[data-product-id="${productId}"]`
+  );
+  const interval = productCard ? productCard.getAttribute("data-interval") : null;
+
   if (existingItemIndex !== -1) {
     // Increment quantity if product already in cart
     cart[existingItemIndex].quantity += 1;
@@ -430,7 +436,8 @@ function addToCart(productId, productName, productType, productPrice) {
       name: productName,
       type: formatProductType(productType),
       price: productPrice,
-      quantity: 1
+      quantity: 1,
+      interval: interval // Add the interval attribute
     });
     itemAdded = true; // A new item was added
   }

@@ -83,7 +83,6 @@ def create_checkout_session():
                 )
 
             elif item_type == "subscription":
-                
                 if has_subscription:
                     return (
                         jsonify(
@@ -93,17 +92,28 @@ def create_checkout_session():
                     )
                 has_subscription = True
                 subscription_plan = plan
-                plan_prices = {"pro": 29.99, "studio": 69.00, "enterprise": 199.00}
-                plan_price = plan_prices.get(plan, price)
+                interval = item.get("interval", "month")  # Get billing interval
+                
+                # Define base prices and calculate yearly prices with discount
+                plan_prices = {
+                    "pro": {"month": 29.99, "year": 297.00},  # $297/year (10% off + 1 month free)
+                    "studio": {"month": 69.00, "year": 608.00},  # $608/year (20% off + 1 month free)
+                    "enterprise": {"month": 199.00, "year": 1990.00}
+                }
+                
+                plan_price = plan_prices.get(plan, {}).get(interval, price)
+                
                 line_items.append(
                     {
                         "price_data": {
                             "currency": "usd",
                             "product_data": {
-                                "name": f"{plan.capitalize()} Subscription"
+                                "name": f"{plan.capitalize()} Subscription ({interval}ly)"
                             },
-                            "unit_amount": int(plan_price * 100),
-                            "recurring": {"interval": "month", "interval_count": 1},
+                            "unit_amount": int(plan_price * 100),                            "recurring": {
+                                "interval": interval,
+                                "interval_count": 1
+                            },
                         },
                         "quantity": 1,
                     }
@@ -113,10 +123,13 @@ def create_checkout_session():
                         "product_id": product_id,
                         "name": name,
                         "type": "subscription",
-                        "plan": plan,
+                        "plan": f"{plan}_YEARLY" if interval == "year" else plan.upper(),
+                        "interval": interval,
                         "quantity": 1,
                     }
                 )
+                metadata["is_subscription"] = "true"
+                metadata["plan"] = f"{plan}_YEARLY" if interval == "year" else plan.upper()
 
             elif item_type == "episode":
                 line_items.append(

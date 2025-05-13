@@ -17,7 +17,17 @@ PLAN_BENEFITS = {
         "max_slots": 5,
         "landing_page": "Free",
         "transcription_limit": 60 * 60
-
+    },
+    "PRO_YEARLY": {
+        "credits": 10000,
+        "credit_cost": 0.0030,
+        "episode_slots": 3,
+        "extra_slot_cost": 5000,
+        "max_slots": 5,
+        "landing_page": "Free",
+        "transcription_limit": 60 * 60,
+        "discount": 0.10,  # 10% discount
+        "free_months": 1  # 1 month free
     },
     "STUDIO": {
         "credits": 20000,
@@ -27,7 +37,17 @@ PLAN_BENEFITS = {
         "max_slots": 6,
         "landing_page": "Free or custom domain",
         "transcription_limit": 120 * 60
-
+    },
+    "STUDIO_YEARLY": {
+        "credits": 20000,
+        "credit_cost": 0.0035,
+        "episode_slots": 4,
+        "extra_slot_cost": 5000,
+        "max_slots": 6,
+        "landing_page": "Free or custom domain",
+        "transcription_limit": 120 * 60,
+        "discount": 0.20,  # 20% discount
+        "free_months": 1  # 1 month free
     },
     "ENTERPRISE": {
         "credits": 30000,
@@ -37,7 +57,6 @@ PLAN_BENEFITS = {
         "landing_page": "Custom domain",
         "team_collaboration": True,
         "transcription_limit": 240 * 60
-
     }
 }
 

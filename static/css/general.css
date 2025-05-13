@@ -1,0 +1,184 @@
+:root {
+    --primary-color: #FF6B35; /* Vibrant orange */
+    --secondary-color: #FF8B5E; /* Lighter orange */
+    --accent-color: #2A2A2A; /* Dark gray for contrast */
+    --text-color: #333333;
+    --text-light: #666666;
+    --background-light: #FFF5F0; /* Light orange tint */
+    --white: #FFFFFF;
+    --spacing-xs: 0.5rem;
+    --spacing-sm: 1rem;
+    --spacing-md: 2rem;
+    --spacing-lg: 4rem;
+    --border-radius: 8px;
+    --container-width: 1200px;
+    --shadow-sm: 0 2px 4px rgba(0,0,0,0.1);
+    --shadow-md: 0 4px 6px rgba(0,0,0,0.1);
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Montserrat', sans-serif;
+    line-height: 1.6;
+    color: var(--text-color);
+    background-color: var(--white);
+}
+
+.container {
+    width: 100%;
+    max-width: var(--container-width);
+    margin: 0 auto;
+    padding: 0 var(--spacing-sm);
+}
+
+/* Grid System */
+.grid {
+    display: grid;
+    gap: var(--spacing-md);
+    grid-template-columns: repeat(12, 1fr);
+}
+
+.col-4 { grid-column: span 4; }
+.col-6 { grid-column: span 6; }
+.col-8 { grid-column: span 8; }
+.col-12 { grid-column: span 12; }
+
+/* Responsive adjustments */
+@media (max-width: 992px) {
+    .col-4, .col-6, .col-8 { grid-column: span 6; }
+}
+
+@media (max-width: 768px) {
+    .col-4, .col-6, .col-8 { grid-column: span 12; }
+    :root {
+        --spacing-md: 1.5rem;
+        --spacing-lg: 3rem;
+    }
+}
+
+/* Cards and sections */
+.section {
+    padding: var(--spacing-lg) 0;
+    background-color: var(--white);
+}
+
+.section-alt {
+    background-color: var(--background-light);
+}
+
+.card {
+    background: var(--white);
+    border-radius: var(--border-radius);
+    box-shadow: var(--shadow-sm);
+    padding: var(--spacing-md);
+    transition: transform 0.3s ease;
+}
+
+.card:hover {
+    transform: translateY(-4px);
+    box-shadow: var(--shadow-md);
+}
+
+/* Buttons */
+.btn {
+    display: inline-block;
+    padding: 0.8em 1.8em;
+    border-radius: var(--border-radius);
+    font-weight: 600;
+    text-decoration: none;
+    transition: all 0.3s ease;
+}
+
+.btn.primary {
+    background: var(--primary-color);
+    color: var(--white);
+}
+
+.btn.primary:hover {
+    background: var(--secondary-color);
+    transform: translateY(-2px);
+}
+
+.btn.secondary {
+    background: transparent;
+    border: 2px solid var(--primary-color);
+    color: var(--primary-color);
+}
+
+.btn.secondary:hover {
+    background: var(--primary-color);
+    color: var(--white);
+}
+
+.episode-card {
+    background: var(--white);
+    border-radius: var(--border-radius);
+    box-shadow: var(--shadow-sm);
+    transition: transform 0.3s ease;
+}
+
+.episode-card:hover {
+    transform: translateY(-4px);
+    box-shadow: var(--shadow-md);
+}
+
+.episode-list {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-md);
+    padding: var(--spacing-md) 0;
+}
+
+.episode-card {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    align-items: center;
+    padding: var(--spacing-md);
+    background: var(--white);
+    border-radius: var(--border-radius);
+    border: 1px solid #eee;
+}
+
+.episode-title {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: var(--text-color);
+    margin-bottom: var(--spacing-xs);
+}
+
+.episode-meta {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    color: var(--text-light);
+    font-size: 0.9rem;
+}
+
+.duration-badge {
+    background: var(--primary-color);
+    color: var(--white);
+    padding: 0.2rem 0.8rem;
+    border-radius: 20px;
+    font-size: 0.8rem;
+}
+
+.release-date {
+    color: var(--text-light);
+    font-size: 0.9rem;
+}
+
+@media (max-width: 768px) {
+    .episode-card {
+        grid-template-columns: 1fr;
+        gap: var(--spacing-sm);
+    }
+    
+    .episode-meta {
+        flex-wrap: wrap;
+    }
+}
