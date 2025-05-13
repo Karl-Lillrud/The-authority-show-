@@ -327,6 +327,7 @@ const translations = {
         allRightsReserved: "All rights reserved",
         poweredBy: "Powered by PodManager.AI",
         customDomain: "Custom Domain: podcastname.com",
+        podcastDescriptionLong: "The Authority Show is your go-to podcast for powerful insights from top leaders, innovators, and visionaries across industries. Hosted by Karl Lillrud, a globally recognized AI and innovation expert, each episode uncovers valuable lessons and fresh perspectives on digital transformation, business growth, leadership, and the future of technology. Dive into engaging conversations that blend real-world experiences with practical advice, designed to inspire and empower entrepreneurs, professionals, and anyone passionate about personal and professional growth.",
     },
     ar: {
         // Common UI Elements
@@ -674,6 +675,7 @@ const translations = {
         allRightsReserved: "جميع الحقوق محفوظة",
         poweredBy: "مشغل بواسطة PodManager.AI",
         customDomain: "النطاق المخصص: podcastname.com",
+        podcastDescriptionLong: "بودكاست السلطة هو وجهتك للحصول على رؤى قوية من كبار القادة والمبتكرين والرؤى في مختلف الصناعات. يستضيفه كارل ليلرود، خبير عالمي في الذكاء الاصطناعي والابتكار، حيث تكشف كل حلقة عن دروس قيمة ومنظورات جديدة حول التحول الرقمي ونمو الأعمال والقيادة ومستقبل التكنولوجيا. انغمس في محادثات ملهمة تمزج بين الخبرات الواقعية والنصائح العملية، مصممة لإلهام وتمكين رواد الأعمال والمحترفين وكل من لديه شغف بالنمو الشخصي والمهني.",
     }
 };
 
