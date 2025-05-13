@@ -435,60 +435,75 @@ document.addEventListener("DOMContentLoaded", async () => {
             const episodeId = `episode-${index}-${Date.now()}`;
 
             return `
-              <div class="episode-card" data-episode-id="${episodeId}">
-                <div class="episode-image-container">
-                  <img src="${
-                    episode.image || "/placeholder.svg?height=300&width=300"
-                  }" alt="${episode.title}" class="episode-image">
-                  <div class="episode-play-overlay">
-                    <button class="episode-play-btn" data-audio-url="${
-                      episode.audio?.url
-                    }" data-episode-id="${episodeId}">
-                      <i class="fas fa-play"></i>
-                    </button>
-                  </div>
-                  <div class="now-playing" id="now-playing-${episodeId}">
-                    <span class="pulse"></span>Now Playing
-                  </div>
-                </div>
-                <div class="episode-content">
-                  <h3 class="episode-title">${episode.title}</h3>
-                  <div class="episode-meta">
-                    <span><i class="fas fa-calendar"></i> ${formattedDate}</span>
-                    ${formattedDuration ? `<span><i class="fas fa-clock"></i> ${formattedDuration}</span>` : ""}
-                    ${
-                      episode.season && episode.episode
-                        ? `<span><i class="fas fa-list-ol"></i> S${episode.season} E${episode.episode}</span>`
-                        : ""
-                    }
-                    ${
-                      episode.explicit === "Yes"
-                        ? `<span class="explicit-tag"><i class="fas fa-exclamation-circle"></i> Explicit</span>`
-                        : ""
-                    }
-                  </div>
-                  <div class="episode-description" id="desc-${episodeId}">
-                    ${episode.summary || episode.description || "No description available."}
-                  </div>
-                  <div class="episode-actions">
-                    <button class="episode-btn primary" data-audio-url="${
-                      episode.audio?.url
-                    }" data-episode-id="${episodeId}">
-                      <i class="fas fa-play"></i> Play
-                    </button>
-                    <button class="episode-btn secondary toggle-description" data-desc-id="desc-${episodeId}">
-                      <i class="fas fa-ellipsis-h"></i> More
-                    </button>
-                  </div>
-                  <div class="audio-player" id="player-${episodeId}">
-                    <audio controls>
-                      <source src="${episode.audio?.url}" type="${episode.audio?.type || "audio/mpeg"}">
-                      Your browser does not support the audio element.
-                    </audio>
-                  </div>
+            <div class="episode-card" data-episode-id="${episodeId}">
+              <div class="episode-image-container">
+                <img src="${
+                  episode.image || "/placeholder.svg?height=300&width=300"
+                }" alt="${episode.title}" class="episode-image">
+                
+                ${
+                  episode.audio?.url
+                    ? `<div class="episode-play-overlay">
+                        <button class="episode-play-btn" data-audio-url="${episode.audio.url}" data-episode-id="${episodeId}">
+                          <i class="fas fa-play"></i>
+                        </button>
+                      </div>`
+                    : ""
+                }
+
+                <div class="now-playing" id="now-playing-${episodeId}">
+                  <span class="pulse"></span>Now Playing
                 </div>
               </div>
-            `;
+              <div class="episode-content">
+                <h3 class="episode-title">${episode.title}</h3>
+                <div class="episode-meta">
+                  <span><i class="fas fa-calendar"></i> ${formattedDate}</span>
+                  ${
+                    formattedDuration
+                      ? `<span><i class="fas fa-clock"></i> ${formattedDuration}</span>`
+                      : ""
+                  }
+                  ${
+                    episode.season && episode.episode
+                      ? `<span><i class="fas fa-list-ol"></i> S${episode.season} E${episode.episode}</span>`
+                      : ""
+                  }
+                  ${
+                    episode.explicit === "Yes"
+                      ? `<span class="explicit-tag"><i class="fas fa-exclamation-circle"></i> Explicit</span>`
+                      : ""
+                  }
+                </div>
+                <div class="episode-description" id="desc-${episodeId}">
+                  ${episode.summary || episode.description || "No description available."}
+                </div>
+                <div class="episode-actions">
+                  ${
+                    episode.audio?.url
+                      ? `<button class="episode-btn primary" data-audio-url="${episode.audio.url}" data-episode-id="${episodeId}">
+                          <i class="fas fa-play"></i> Play
+                        </button>`
+                      : ""
+                  }
+                  <button class="episode-btn secondary toggle-description" data-desc-id="desc-${episodeId}">
+                    <i class="fas fa-ellipsis-h"></i> More
+                  </button>
+                </div>
+                ${
+                  episode.audio?.url
+                    ? `<div class="audio-player" id="player-${episodeId}">
+                        <audio controls>
+                          <source src="${episode.audio.url}" type="${episode.audio.type || "audio/mpeg"}">
+                          Your browser does not support the audio element.
+                        </audio>
+                      </div>`
+                    : ""
+                }
+              </div>
+            </div>
+          `;
+
           })
           .join("")
       : "";
