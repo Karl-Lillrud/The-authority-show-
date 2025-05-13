@@ -1,34 +1,26 @@
 {% extends "components/base.html" %} {% block title %}Podcast Management{%
-  endblock %} {% block content %}
-  <head>
-    <link
-      rel="stylesheet"
-      href="{{ url_for('static', filename='css/components/sidebar.css') }}"
-    />
-    <link
-      rel="stylesheet"
-      href="{{ url_for('static', filename='css/podcastmanagement/podcastmanagement.css') }}"
-    />
-  
-    <!-- Google Analytics -->
-    <script
-      async
-      src="https://www.googletagmanager.com/gtag/js?id=G-PTPQQ5WSQV"
-    ></script>
-    <script>
-      window.dataLayer = window.dataLayer || [];
-      function gtag() {
-        dataLayer.push(arguments);
-      }
-      gtag("js", new Date());
-  
-      gtag("config", "G-PTPQQ5WSQV");
-    </script>
-  </head>
-  
-  <div class="app-container">
-    <!-- Sidebar -->
-    <div id="sidebar-container">
+endblock %} {% block content %}
+
+<head>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/components/sidebar.css') }}" />
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/podcastmanagement/podcastmanagement.css') }}" />
+
+  <!-- Google Analytics -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-PTPQQ5WSQV"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag() {
+      dataLayer.push(arguments);
+    }
+    gtag("js", new Date());
+
+    gtag("config", "G-PTPQQ5WSQV");
+  </script>
+</head>
+
+<div class="app-container">
+  <!-- Sidebar -->
+  <div id="sidebar-container">
     <aside class="sidebar">
       <div class="sidebar-header">
         <!-- Intentionally left empty as in teams -->
@@ -43,12 +35,12 @@
               </a>
             </li>
             <li class="sidebar-menu-item active">
-              <a href="/podcastmanagement"  class="sidebar-menu-link">
+              <a href="/podcastmanagement" class="sidebar-menu-link">
                 <span id="podcasts-icon" class="sidebar-icon"></span>
                 <span data-i18n="podcasts">Podcasts</span>
               </a>
             </li>
-  
+
             <li class="sidebar-menu-item hide-sidebar-menu-item">
               <a href="#" class="sidebar-menu-link">
                 <span id="episodes-icon" class="sidebar-icon"></span>
@@ -63,7 +55,7 @@
             </li>
           </ul>
         </nav>
-  
+
         <!-- Add action buttons section to sidebar -->
         <div class="sidebar-action-buttons">
           <h3 data-i18n="actions">Actions</h3>
@@ -88,58 +80,52 @@
         </div>
       </div>
     </aside>
-    </div>
-  
-    <!-- Main Content -->
-    <main class="main-content">
-      <!-- Podcast List -->
-      <div id="podcast-list" class="podcast-list"></div>
-  
-      <!-- Podcast Detail -->
-      <div id="podcast-detail" class="podcast-detail" style="display: none"></div>
-  
-      <!-- Form popup container for adding/updating a podcast -->
-      <div id="form-popup" class="popup" style="display: none">
-        <div class="form-box">
-          <span id="close-form-popup" class="close-btn" data-i18n-aria-label="closeForm">&times;</span>
-          <h2 class="form-title" data-i18n="addNewPodcast">Add New Podcast</h2>
-          <form id="register-podcast-form">
-            <div class="form-grid">
-              <div class="field-group">
-                <label for="pod-name" data-i18n="podcastName">Podcast Name</label>
-                <input
-                  type="text"
-                  id="pod-name"
-                  name="podName"
-                  autocomplete="off"
-                  required
-                />
-              </div>
-              <div class="field-group">
-                <label for="pod-author" data-i18n="host">Host</label>
-                <input type="text" id="pod-author" name="author" />
-              </div>
-              <div class="field-group">
-                <label for="pod-language" data-i18n="podcastLanguage">Podcast Spoken Language</label>
-                <input type="text" id="pod-language" name="language" />
-              </div>
-              <div class="field-group">
-                <label for="pod-rss" data-i18n="rssFeed">RSS Feed</label>
-                <input type="url" id="pod-rss" name="rssFeed" />
-              </div>
-              <div class="field-group">
-                <label for="logo" data-i18n="albumArt">Album Art</label>
-                <input type="file" id="logo" name="logo" accept="image/*" />
-              </div>
-              <div class="field-group">
-                <label for="banner" data-i18n="podcastBanner">Podcast Banner</label>
-                <input type="file" id="banner" name="banner" accept="image/*" />
-              </div>
-              <div class="field-group">
-                <label for="google-cal" data-i18n="googleCalendarUrl">Google Calendar URL</label>
-                <input type="url" id="google-cal" name="googleCal" />
-              </div>
-              <!--
+  </div>
+
+  <!-- Main Content -->
+  <main class="main-content">
+    <!-- Podcast List -->
+    <div id="podcast-list" class="podcast-list"></div>
+
+    <!-- Podcast Detail -->
+    <div id="podcast-detail" class="podcast-detail" style="display: none"></div>
+
+    <!-- Form popup container for adding/updating a podcast -->
+    <div id="form-popup" class="popup" style="display: none">
+      <div class="form-box">
+        <span id="close-form-popup" class="close-btn" data-i18n-aria-label="closeForm">&times;</span>
+        <h2 class="form-title" data-i18n="addNewPodcast">Add New Podcast</h2>
+        <form id="register-podcast-form">
+          <div class="form-grid">
+            <div class="field-group">
+              <label for="pod-name" data-i18n="podcastName">Podcast Name</label>
+              <input type="text" id="pod-name" name="podName" autocomplete="off" required />
+            </div>
+            <div class="field-group">
+              <label for="pod-author" data-i18n="host">Host</label>
+              <input type="text" id="pod-author" name="author" />
+            </div>
+            <div class="field-group">
+              <label for="pod-language" data-i18n="podcastLanguage">Podcast Spoken Language</label>
+              <input type="text" id="pod-language" name="language" />
+            </div>
+            <div class="field-group">
+              <label for="pod-rss" data-i18n="rssFeed">RSS Feed</label>
+              <input type="url" id="pod-rss" name="rssFeed" />
+            </div>
+            <div class="field-group">
+              <label for="logo" data-i18n="albumArt">Album Art</label>
+              <input type="file" id="logo" name="logo" accept="image/*" />
+            </div>
+            <div class="field-group">
+              <label for="banner" data-i18n="podcastBanner">Podcast Banner</label>
+              <input type="file" id="banner" name="banner" accept="image/*" />
+            </div>
+            <div class="field-group">
+              <label for="google-cal" data-i18n="googleCalendarUrl">Google Calendar URL</label>
+              <input type="url" id="google-cal" name="googleCal" />
+            </div>
+            <!--
               <div class="field-group">
                 <label for="guest-form-url">Guest Form URL</label>
                 <input type="url" id="guest-form-url" name="guestUrl" />
@@ -410,8 +396,9 @@
                 <option value="missing_social_media" data-i18n="triggerMissingSocialMedia">Missing Social Media</option>
               </select>
             </div>
-            <div id="trigger-info-box" class="trigger-info-box">
-              <!-- Current configuration will be dynamically loaded here -->
+            <div class="form-actions" style="text-align: right;">
+              <button type="button" id="cancel-episode-form-btn" class="cancel-btn">Cancel</button>
+              <button type="submit" class="save-btn">Create Episode</button>
             </div>
             <div class="field-group full-width">
               <label for="trigger-time" data-i18n="triggerTime">Trigger Time</label>
@@ -431,8 +418,95 @@
           <div class="form-actions">
             <button id="close-email-config-btn" class="cancel-btn" data-i18n="close">Close</button>
           </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- New popup container for adding a guest -->
+    <div id="guest-popup" class="popup" style="display: none">
+      <div class="form-box">
+        <span id="close-guest-popup" class="close-btn">&times;</span>
+        <h2 class="form-title">Add Guest</h2>
+        <form id="add-guest-form">
+          <div class="field-group full-width">
+            <label for="podcast-select-guest">Select Podcast</label>
+            <select id="podcast-select-guest" name="podcastId" required></select>
+          </div>
+          <div class="field-group full-width">
+            <label for="episode-id">Episode ID</label>
+            <select id="episode-id" name="episodeId" required></select>
+          </div>
+          <div class="field-group full-width">
+            <label for="guest-name">Guest Name</label>
+            <input type="text" id="guest-name" name="guestName" required />
+          </div>
+          <div class="field-group full-width">
+            <label for="guest-description">Guest Description</label>
+            <input type="text" id="guest-description" name="guestDescription" required />
+          </div>
+          <div class="field-group full-width">
+            <label for="guest-areas">Areas of Interest (comma separated)</label>
+            <input type="text" id="guest-areas" name="guestAreas" />
+          </div>
+          <div class="field-group full-width">
+            <label for="guest-email">Email</label>
+            <input type="email" id="guest-email" name="guestEmail" required />
+          </div>
+          <div class="form-actions">
+            <button type="button" id="cancel-guest-btn" class="cancel-btn">
+              Cancel
+            </button>
+            <button type="submit" class="save-btn">Add Guest</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <div id="email-config-popup" class="popup" style="display: none">
+      <div class="form-box">
+        <span id="close-email-config-popup" class="close-btn">&times;</span>
+        <h2 class="form-title">Email Configuration</h2>
+        <div class="form-grid">
+          <!-- Section for managing triggers -->
+          <h3 class="section-title">Manage Triggers</h3>
+          <div class="field-group full-width">
+            <label for="trigger-select">Select Trigger</label>
+            <select id="trigger-select" name="trigger">
+              <option value="" disabled selected>Select a trigger to configure</option> <!-- Placeholder option -->
+              <option value="booking">Booking</option>
+              <option value="preparation">Preparation</option>
+              <option value="missing_info">Missing Info</option>
+              <option value="publishing_reminder">Publishing Reminder</option>
+              <option value="join_link">Join Link</option>
+              <option value="thank_you">Thank You</option>
+              <option value="recommendations">Recommendations</option>
+              <option value="suggestions">Suggestions</option>
+              <option value="missing_social_media">Missing Social Media</option>
+            </select>
+          </div>
+          <div id="trigger-info-box" class="trigger-info-box">
+            <!-- Current configuration will be dynamically loaded here -->
+          </div>
+          <div class="field-group full-width">
+            <label for="trigger-time">Trigger Time</label>
+            <input type="number" id="trigger-time" name="triggerTime" placeholder="Enter time in hours" />
+          </div>
+          <button id="save-trigger-btn" class="save-btn">Save Trigger</button>
+        </div>
+
+        <!-- Outbox Section -->
+        <div id="outbox-section" class="outbox-section">
+          <h3 class="section-title">Outbox</h3>
+          <div id="outbox-list" class="outbox-list">
+            <!-- Outbox emails will be dynamically populated here -->
+          </div>
+        </div>s
+
+        <div class="form-actions">
+          <button id="close-email-config-btn" class="cancel-btn">Close</button>
         </div>
       </div>
+    </div>
 
     <div id="episode-limit-popup" class="popup" style="display: none;">
       <div class="form-box">
@@ -444,19 +518,10 @@
         </div>
       </div>
     </div>
-    </main>
-  </div>
-  
-  <script
-    type="module"
-    src="{{ url_for('static', filename='js/components/sidebar.js') }}"
-  ></script>
-  <script
-    type="module"
-    src="{{ url_for('static', filename='js/podcastmanagement/podcastmanagement.js') }}"
-  ></script>
-  <script 
-    type="module"
-    src="{{ url_for('static', filename='js/podcastmanagement/emailconfig-functions.js') }}"
-  ></script>
+  </main>
+</div>
+
+<script type="module" src="{{ url_for('static', filename='js/components/sidebar.js') }}"></script>
+<script type="module" src="{{ url_for('static', filename='js/podcastmanagement/podcastmanagement.js') }}"></script>
+<script type="module" src="{{ url_for('static', filename='js/podcastmanagement/emailconfig-functions.js') }}"></script>
 {% endblock %}

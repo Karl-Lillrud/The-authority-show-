@@ -1,15 +1,5 @@
-from flask import (
-    render_template,
-    jsonify,
-    Blueprint,
-    g,
-    request,
-    redirect,
-    url_for,
-    flash,
-)
+from flask import (render_template, jsonify, Blueprint, g, request, redirect, url_for, flash)
 from backend.database.mongo_connection import database, collection, collection as team_collection
-from bson import ObjectId
 from datetime import datetime
 import logging
 import json

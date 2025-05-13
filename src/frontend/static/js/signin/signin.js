@@ -58,7 +58,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
       try {
         // Change button text to "Sending..."
-        sendLoginLinkButton.textContent = "Sending...";
+        sendLoginLinkButton.textContent = "Sending... Check your inbox!";
         sendLoginLinkButton.disabled = true;
 
         const response = await fetch("/send-login-link", {

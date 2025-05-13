@@ -38,10 +38,10 @@ def add_episode():
         return jsonify({"error": "Invalid content type, expected application/json"}), 415
 
     data = request.get_json() or {}
-    # Validate based on 'podcast_id' (snake_case)
-    if not data.get("podcast_id") or not data.get("title"):
-        logger.warning(f"Missing podcast_id or title in add_episode request. Data: {data}")
-        return jsonify({"error": "Missing podcast_id or title"}), 400
+
+    if not data.get("podcastId") or not data.get("title"):
+        logger.warning(f"Missing podcastId or title in add_episode request. Data: {data}")
+        return jsonify({"error": "Missing podcastId or title"}), 400
 
     response, status = episode_repo.register_episode(data, g.user_id)
 

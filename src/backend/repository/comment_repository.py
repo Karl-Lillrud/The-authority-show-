@@ -4,7 +4,6 @@ from datetime import datetime, timezone
 from typing import Dict, List, Tuple, Any, Optional
 
 from marshmallow import ValidationError
-from bson import ObjectId
 
 from backend.database.mongo_connection import collection
 from backend.models.comments import CommentSchema
@@ -94,7 +93,6 @@ class CommentRepository:
             # Find all comments for this podtask
             comments = list(self.comments_collection.find({"podtaskId": podtask_id}).sort("createdAt", 1))
             
-            # Convert ObjectId to string for JSON serialization
             for comment in comments:
                 comment["_id"] = str(comment["_id"])
                 # Format dates for frontend
