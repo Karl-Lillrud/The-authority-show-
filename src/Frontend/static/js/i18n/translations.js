@@ -296,6 +296,12 @@ const translations = {
         guestSponsorText: "Join us as a guest or become a sponsor to reach our growing audience. Share your expertise or brand with our community.",
         guestAppearances: "Guest Appearances",
         sponsorships: "Sponsorships",
+        account: "Account",
+        episodeToDo: "Episode To-Do",
+        teamManagement: "Team Management",
+        landingPages: "Landing Pages",
+        logout: "Log out",
+        logoutConfirm: "Are you sure you want to log out?",
     },
     ar: {
         // Common UI Elements
@@ -612,6 +618,12 @@ const translations = {
         guestSponsorText: "انضم إلينا كضيف أو كن راعيًا للوصول إلى جمهورنا المتنامي. شارك خبرتك أو علامتك التجارية مع مجتمعنا.",
         guestAppearances: "ظهور الضيوف",
         sponsorships: "الرعايات",
+        account: "الحساب",
+        episodeToDo: "مهام الحلقة",
+        teamManagement: "إدارة الفريق",
+        landingPages: "صفحات الهبوط",
+        logout: "تسجيل الخروج",
+        logoutConfirm: "هل أنت متأكد أنك تريد تسجيل الخروج؟",
     }
 };
 

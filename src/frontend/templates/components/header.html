@@ -40,20 +40,20 @@
     const currentUserID = "{{ session['user_id'] or '' }}";
   </script>
     <div class="menu" id="menu">
-      <a href="{{ url_for('dashboard_bp.account') }}">Account</a>
-      <a href="{{ url_for('dashboard_bp.episodetodo') }}">Episode To-Do</a>
-      <a href="{{ url_for('dashboard_bp.team') }}">Team Management</a>
-      <a href="{{ url_for('dashboard_bp.podcastmanagement') }}">Podcast Management</a>
+      <a href="{{ url_for('dashboard_bp.account') }}" data-i18n="account">Account</a>
+      <a href="{{ url_for('dashboard_bp.episodetodo') }}" data-i18n="episodeToDo">Episode To-Do</a>
+      <a href="{{ url_for('dashboard_bp.team') }}" data-i18n="teamManagement">Team Management</a>
+      <a href="{{ url_for('dashboard_bp.podcastmanagement') }}" data-i18n="podcastManagement">Podcast Management</a>
     
-      <a href="#" class="dropdown-trigger" onclick="toggleLandingPage()">Landing Pages<span id="triangle" class="triangle-down"></span></a>
+      <a href="#" class="dropdown-trigger" onclick="toggleLandingPage()" data-i18n="landingPages">Landing Pages<span id="triangle" class="triangle-down"></span></a>
       <!-- Dropdown content that will appear next to the "Landing Page" link -->
       <div class="dropdown-lp-content" id="dropdown-lp-content">
         <div class="dropdown-lp-options">
           <!-- Podcast options will be inserted here dynamically -->
         </div>
       </div>
-      <a href="{{ url_for('dashboard_bp.store') }}">Store</a>
-      <a href="#" id="logout-link">Log out</a>
+      <a href="{{ url_for('dashboard_bp.store') }}" data-i18n="store">Store</a>
+      <a href="#" id="logout-link" data-i18n="logout">Log out</a>
       <div class="language-switcher" role="group" aria-label="Language Selection" style="margin-top: 1rem; display: flex; flex-direction: column; gap: 0.5rem; align-items: flex-start;">
         <button onclick="window.languageManager.setLanguage('en')" class="lang-btn" data-i18n-title="switchToEnglish">English</button>
         <button onclick="window.languageManager.setLanguage('ar')" class="lang-btn" data-i18n-title="switchToArabic">العربية</button>
@@ -65,10 +65,10 @@
 <!-- Custom Logout Modal (TikTok-style) -->
 <div id="logout-modal" class="modal">
   <div class="modal-cnt">
-    <p>Are you sure you want to log out?</p>
+    <p data-i18n="logoutConfirm">Are you sure you want to log out?</p>
     <div class="modal-btns">
-      <button id="cancel-logout">Cancel</button>
-      <button id="confirm-logout">Log out</button>
+      <button id="cancel-logout" data-i18n="cancel">Cancel</button>
+      <button id="confirm-logout" data-i18n="logout">Log out</button>
     </div>
   </div>
 </div>
