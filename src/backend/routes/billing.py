@@ -9,6 +9,7 @@ from backend.database.mongo_connection import collection
 import logging
 from datetime import datetime
 from backend.services.creditManagement import CreditService
+from backend.repository.user_repository import UserRepository
 
 billing_bp = Blueprint("billing_bp", __name__)
 subscription_service = SubscriptionService()
@@ -19,6 +20,22 @@ stripe.api_key = os.getenv("STRIPE_SECRET_KEY")
 # get webhook secrets from environment variables
 webhook_secret = os.getenv("STRIPE_WEBHOOK_SECRET")
 
+def get_account_by_email(email):
+    user_repo = UserRepository()
+    existing_user = user_repo.get_user_by_email(email)
+    if existing_user:
+        existing_user_id = existing_user["_id"]
+        return collection.database.Accounts.find_one({
+                                "$or": [{"userId": existing_user_id}, {"ownerId": existing_user_id}]
+                            })
+    return None
+
+def get_email_by_user(user_id):
+    user_repo = UserRepository()
+    existing_user = user_repo.get_user_by_id(user_id)
+    if existing_user:
+        return existing_user["email"]
+    return None
 
 @billing_bp.route("/create-checkout-session", methods=["POST"])
 def create_checkout_session():
@@ -404,7 +421,7 @@ def stripe_webhook():
             # Try finding by email through Stripe customer lookup
             try:
                 customer = stripe.Customer.retrieve(customer_id)
-                account = collection.database.Accounts.find_one({"email": customer.email})
+                account = get_account_by_email(customer.email)
             except Exception as e:
                 logger.error(f"Failed to find customer: {str(e)}")
                 return jsonify(success=False, error="Customer not found"), 404
@@ -454,7 +471,7 @@ def stripe_webhook():
         if not account:
             try:
                 customer = stripe.Customer.retrieve(customer_id)
-                account = collection.database.Accounts.find_one({"email": customer.email})
+                account = get_account_by_email(customer.email)
             except Exception as e:
                 logger.error(f"Failed to find customer: {str(e)}")
                 return jsonify(success=False, error="Customer not found"), 404
@@ -553,7 +570,7 @@ def stripe_webhook():
                     try:
                         customer = stripe.Customer.retrieve(customer_id)
                         logger.info(f"Looking up by email: {customer.email}")
-                        account = collection.database.Accounts.find_one({"email": customer.email})
+                        account = get_account_by_email(customer.email)
                         
                         # Update stripeCustomerId for future lookups if we found the account
                         if account:
@@ -602,7 +619,7 @@ def stripe_webhook():
             account = collection.database.Accounts.find_one({"stripeCustomerId": customer_id})
             if not account:
                 customer = stripe.Customer.retrieve(customer_id)
-                account = collection.database.Accounts.find_one({"email": customer.email})
+                account = get_account_by_email(customer.email)
             
             if account:
                 user_id = account.get("userId") or account.get("ownerId")
@@ -631,7 +648,7 @@ def stripe_webhook():
                 
                 # Optionally send an email notification about payment failure
                 # from backend.utils.email_utils import send_email
-                # send_payment_failure_email(account.get("email"))
+                # send_payment_failure_email(get_email_by_user(user_id))
                 
                 logger.info(f"Marked subscription as past_due for user {user_id}")
             else:
@@ -685,7 +702,7 @@ def cancel_subscription():
         if not account:
             logger.error(f"No account found for user {user_id}")
             return jsonify({"error": "Account not found"}), 404
-            
+
         # Get current subscription info
         subscription_status = account.get("subscriptionStatus")
         subscription_end = account.get("subscriptionEnd")
@@ -737,13 +754,13 @@ def cancel_subscription():
                         logger.error(f"Error retrieving session: {str(session_error)}")
             
             # If still no ID, try finding the customer by email in Stripe
-            if not stripe_subscription_id and account.get("email"):
+            if not stripe_subscription_id and (user_email := get_email_by_user(user_id)):
                 logger.info(
                     f"No subscription ID found yet. Searching Stripe customer by email: {account.get('email')}"
                 )
                 try:
                     customers = stripe.Customer.list(
-                        email=account.get("email"), limit=1
+                        email=user_email, limit=1
                     )
                     if customers and customers.data:
                         customer_id = customers.data[0].id
@@ -765,7 +782,7 @@ def cancel_subscription():
                             )
                     else:
                         logger.warning(
-                            f"No Stripe customer found for email: {account.get('email')}"
+                            f"No Stripe customer found for email: {user_email}"
                         )
                 except Exception as customer_error:
                     logger.error(
