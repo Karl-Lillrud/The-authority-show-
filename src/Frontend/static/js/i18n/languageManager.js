@@ -36,6 +36,19 @@ class LanguageManager {
     }
 
     getTranslation(key) {
+        // Support array keys like "proSubscriptionFeatures.0"
+        if (key.includes('.')) {
+            const [arrKey, idx] = key.split('.');
+            const arr = this.translations[this.currentLanguage][arrKey];
+            if (Array.isArray(arr) && arr[idx]) {
+                return arr[idx];
+            }
+            // fallback to English
+            const arrEn = this.translations['en'][arrKey];
+            if (Array.isArray(arrEn) && arrEn[idx]) {
+                return arrEn[idx];
+            }
+        }
         return this.translations[this.currentLanguage][key] || this.translations['en'][key] || key;
     }
 

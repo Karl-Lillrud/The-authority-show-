@@ -228,7 +228,47 @@ const translations = {
         items: "items",
         yourCartIsEmpty: "Your cart is empty",
         total: "Total:",
-        completePurchase: "Complete the Purchase"
+        completePurchase: "Complete the Purchase",
+        
+        // Store Product Features
+        proSubscriptionFeatures: [
+            "10,000 Credits at Month's Start (resets monthly, no carry-over)",
+            "3 Episode Slots / Month (Max. 5 Total Slots)",
+            "Free Podcast Landing Page (Option to Host on Own Domain)"
+        ],
+        studioSubscriptionFeatures: [
+            "20,000 Credits at Month's Start (resets monthly, no carry-over)",
+            "4 Episode Slots / Month (Max. 6 Total Slots)",
+            "Free Podcast Landing Page (Option to Host on Own Domain)"
+        ],
+        enterpriseSubscriptionFeatures: [
+            "Pricing Based on Annual Episodes",
+            "Total Unlock of Pricings",
+            "All The Episode Slots You Need",
+            "Team Collaboration",
+            "Yearly Re-Contracting",
+            "Landing Page On Your Own Domain"
+        ],
+        basicPackFeatures: [
+            "2,500 credits",
+            "Credits never expire and carry over each month until used"
+        ],
+        proPackFeatures: [
+            "5,000 credits",
+            "Credits never expire and carry over each month until used"
+        ],
+        studioPackFeatures: [
+            "12,000 credits",
+            "Credits never expire and carry over each month until used"
+        ],
+        extraEpisodePackFeatures: [
+            "Opens 1 additional episode slot"
+        ],
+        purchaseSuccessful: "Purchase Successful!",
+        purchaseCompleted: "Your purchase has been completed successfully.",
+        awesome: "Awesome!",
+        oneTime: "one-time",
+        perMonth: "/month",
     },
     ar: {
         // Common UI Elements
@@ -459,7 +499,47 @@ const translations = {
         items: "عنصر",
         yourCartIsEmpty: "سلتك فارغة",
         total: "الإجمالي:",
-        completePurchase: "إكمال الشراء"
+        completePurchase: "إكمال الشراء",
+        
+        // Store Product Features
+        proSubscriptionFeatures: [
+            "10,000 رصيد في بداية الشهر (إعادة تعيين شهريًا، لا تراكم)",
+            "3 فتحات حلقات / شهر (الحد الأقصى 5 فتحات إجمالية)",
+            "صفحة بودكاست مجانية (خيار الاستضافة على نطاقك الخاص)"
+        ],
+        studioSubscriptionFeatures: [
+            "20,000 رصيد في بداية الشهر (إعادة تعيين شهريًا، لا تراكم)",
+            "4 فتحات حلقات / شهر (الحد الأقصى 6 فتحات إجمالية)",
+            "صفحة بودكاست مجانية (خيار الاستضافة على نطاقك الخاص)"
+        ],
+        enterpriseSubscriptionFeatures: [
+            "التسعير بناءً على الحلقات السنوية",
+            "فتح كامل للأسعار",
+            "جميع فتحات الحلقات التي تحتاجها",
+            "تعاون الفريق",
+            "تجديد سنوي",
+            "صفحة على نطاقك الخاص"
+        ],
+        basicPackFeatures: [
+            "2,500 رصيد",
+            "الرصيد لا ينتهي ويراكم كل شهر حتى يتم استخدامه"
+        ],
+        proPackFeatures: [
+            "5,000 رصيد",
+            "الرصيد لا ينتهي ويراكم كل شهر حتى يتم استخدامه"
+        ],
+        studioPackFeatures: [
+            "12,000 رصيد",
+            "الرصيد لا ينتهي ويراكم كل شهر حتى يتم استخدامه"
+        ],
+        extraEpisodePackFeatures: [
+            "يفتح فتحة حلقة إضافية واحدة"
+        ],
+        purchaseSuccessful: "تم الشراء بنجاح!",
+        purchaseCompleted: "تم إكمال عملية الشراء بنجاح.",
+        awesome: "رائع!",
+        oneTime: "مرة واحدة",
+        perMonth: "/شهريًا",
     }
 };
 
