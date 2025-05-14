@@ -446,7 +446,8 @@ class AudioService:
 
             blob_path = f"users/{user_id}/podcasts/{podcast_id}/episodes/{episode_id}/audio/{filename}"
             base64_audio = base64.b64encode(cleaned_bytes).decode("utf-8")
-            blob_url = upload_file_to_blob("podmanagerfiles", blob_path, base64_audio)
+            cleaned_stream = BytesIO(cleaned_bytes)
+            blob_url = upload_file_to_blob("podmanagerfiles", blob_path, cleaned_stream)
 
             create_edit_entry(
                 episode_id=episode_id,
