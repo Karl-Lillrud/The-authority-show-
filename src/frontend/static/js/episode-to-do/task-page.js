@@ -44,6 +44,7 @@ export function renderTaskList(state, updateUI) {
     </div>
   `
   taskList.appendChild(taskActions)
+  languageManager.updatePageContent();
 
   // Add event listeners for the buttons
   const addTaskBtn = document.getElementById("add-new-task")

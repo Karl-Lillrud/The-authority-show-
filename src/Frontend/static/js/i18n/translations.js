@@ -346,6 +346,17 @@ const translations = {
         import: "Import",
         addTask: "Add Task",
         noTasksAvailable: "No tasks available",
+        loginEmailSent: "Login Email Sent",
+        podcastCreated: "Podcast Created",
+        episodeCreated: "Episode Created",
+        episodeUpdated: "Episode Updated",
+        episodeDeleted: "Episode Deleted",
+        teamCreated: "Team Created",
+        teamDeleted: "Team Deleted",
+        tasksAdded: "Tasks Added",
+        podcastDeleted: "Podcast Deleted",
+        subscriptionRenewed: "Subscription Renewed",
+        creditsReset: "Credits Reset",
     },
     ar: {
         // Common UI Elements
@@ -712,6 +723,17 @@ const translations = {
         import: "Import",
         addTask: "Add Task",
         noTasksAvailable: "No tasks available",
+        loginEmailSent: "تم إرسال بريد تسجيل الدخول",
+        podcastCreated: "تم إنشاء بودكاست",
+        episodeCreated: "تم إنشاء حلقة",
+        episodeUpdated: "تم تحديث حلقة",
+        episodeDeleted: "تم حذف حلقة",
+        teamCreated: "تم إنشاء فريق",
+        teamDeleted: "تم حذف فريق",
+        tasksAdded: "تمت إضافة مهام",
+        podcastDeleted: "تم حذف بودكاست",
+        subscriptionRenewed: "تم تجديد الاشتراك",
+        creditsReset: "تم إعادة تعيين الرصيد",
     }
 };
 
