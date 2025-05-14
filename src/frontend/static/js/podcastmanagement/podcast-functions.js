@@ -653,25 +653,27 @@ export function renderPodcastDetail(podcast) {
   // Delete button event listener
   document
     .getElementById("delete-podcast-btn")
-    .addEventListener("click", async () => {
-      if (confirm("Are you sure you want to delete this podcast?")) {
-        try {
+    .addEventListener("click", () => {
+      showDeleteConfirmationModal(
+        "Are you sure you want to delete this podcast?",
+        // onConfirm
+        async () => {
           const podcastId = document
             .getElementById("delete-podcast-btn")
             .getAttribute("data-id");
-          await deletePodcast(podcastId);
-          showNotification(
-            "Success",
-            "Podcast deleted successfully!",
-            "success"
-          );
-          document.getElementById("podcast-detail").style.display = "none";
-          renderPodcastList();
-          document.getElementById("podcast-list").style.display = "flex";
-        } catch (error) {
-          showNotification("Error", "Failed to delete podcast.", "error");
+          try {
+            await deletePodcast(podcastId);
+            showNotification("Success", "Podcast deleted successfully!", "success");
+            // hide detail and refresh list
+            document.getElementById("podcast-detail").style.display = "none";
+            renderPodcastList();
+            document.getElementById("podcast-list").style.display = "flex";
+          } catch (err) {
+            showNotification("Error", "Failed to delete podcast.", "error");
+          }
         }
-      }
+        // (you can pass a third argument here for an onCancel callback if you need it)
+      );
     });
 
   // Render episodes in a vertical list
