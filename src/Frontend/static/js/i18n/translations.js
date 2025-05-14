@@ -112,6 +112,8 @@ const translations = {
         assignedTo: "Assigned to: {name}",
         comments: "Comments ({count})",
         openInWorkspace: "Open in Workspace",
+        importWorkflow: "Import Workflow",
+        saveWorkflow: "Save Workflow",
         
         // Podcast Management
         backToDashboard: "Back to Dashboard",
@@ -458,6 +460,8 @@ const translations = {
         assignedTo: "تعيين إلى: {name}",
         comments: "التعليقات ({count})",
         openInWorkspace: "فتح في مساحة العمل",
+        importWorkflow: "استيراد سير العمل",
+        saveWorkflow: "حفظ سير العمل",
         
         // Podcast Management
         backToDashboard: "العودة إلى لوحة التحكم",

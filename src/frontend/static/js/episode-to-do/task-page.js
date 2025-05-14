@@ -230,10 +230,10 @@ export function renderTaskList(state, updateUI) {
   workflowActions.className = "workflow-actions"
   workflowActions.innerHTML = `
     <button class="btn save-workflow-btn" id="save-workflow">
-      <i class="fas fa-save"></i> Save Workflow
+      <i class="fas fa-save"></i> <span data-i18n="saveWorkflow">${languageManager.getTranslation("saveWorkflow")}</span>
     </button>
     <button class="btn import-workflow-btn" id="import-workflow">
-      <i class="fas fa-download"></i> Import Workflow
+      <i class="fas fa-download"></i> <span data-i18n="importWorkflow">${languageManager.getTranslation("importWorkflow")}</span>
     </button>
   `
   taskList.appendChild(workflowActions)
