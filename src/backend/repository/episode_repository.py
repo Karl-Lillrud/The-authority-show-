@@ -37,7 +37,12 @@ class EpisodeRepository:
             if 'accountId' not in data:
                 data['accountId'] = account_id
 
-            validated = data  
+            validated = data
+
+            # Default publishDate to now if not provided
+            publish_date = validated.get("publishDate")
+            if publish_date is None:
+                publish_date = datetime.now(timezone.utc)
 
             episode_id = str(uuid.uuid4())
             episode_doc = {
@@ -45,7 +50,7 @@ class EpisodeRepository:
                 "podcast_id": validated.get("podcastId"),
                 "title": validated.get("title"),
                 "description": validated.get("description"),
-                "publishDate": validated.get("publishDate"),
+                "publishDate": publish_date,  # Use the potentially defaulted publish_date
                 "duration": validated.get("duration"),
                 "status": validated.get("status"),
                 "userid": str(user_id),
@@ -110,7 +115,7 @@ class EpisodeRepository:
     def get_episodes(self, user_id):
         """Get all episodes created by the user."""
         try:
-            results = list(self.collection.find({"userid": str(user_id)}).sort("created_at", -1))
+            results = list(self.collection.find({"userid": str(user_id)}).sort([("publishDate", -1), ("created_at", -1)]))
             for ep in results:
                 ep["_id"] = str(ep["_id"])
             return {"episodes": results}, 200
@@ -324,7 +329,7 @@ class EpisodeRepository:
         """Get all episodes under a specific podcast owned by the user."""
         try:
             episodes = list(
-                self.collection.find({"podcast_id": podcast_id, "userid": str(user_id)})
+                self.collection.find({"podcast_id": podcast_id, "userid": str(user_id)}).sort([("publishDate", -1), ("created_at", -1)])
             )
             for ep in episodes:
                 ep["_id"] = str(ep["_id"])
