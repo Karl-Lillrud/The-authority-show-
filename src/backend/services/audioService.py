@@ -194,7 +194,9 @@ class AudioService:
             filename = f"clipped_{file_id}.wav"
 
             blob_path = f"users/{user_id}/podcasts/{podcast_id}/episodes/{episode_id}/audio/{filename}"
-            blob_url = upload_file_to_blob("podmanagerfiles", blob_path, clipped_data)
+            clipped_stream = BytesIO(clipped_data)
+            blob_url = upload_file_to_blob("podmanagerfiles", blob_path, clipped_stream)
+
 
             create_edit_entry(
                 episode_id=episode_id,
