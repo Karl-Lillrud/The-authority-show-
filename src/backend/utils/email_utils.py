@@ -78,7 +78,9 @@ def connect_google_calendar():
     try:
         client_id = os.getenv("GOOGLE_CLIENT_ID")
         redirect_uri = os.getenv("GOOGLE_REDIRECT_URI")
-        scope = "https://www.googleapis.com/auth/calendar"
+        scope = "https://www.googleapis.com/auth/calendar.events"
+        #https://www.googleapis.com/auth/calendar Main scope for Google Calendar API
+        #Can take multiple weeks for access to be granted
         response_type = "code"
         access_type = "offline"
         include_granted_scopes = "true"

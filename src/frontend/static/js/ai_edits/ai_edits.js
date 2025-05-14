@@ -104,6 +104,29 @@ function showTab(tabName) {
                         <pre id="cleanTranscriptResult"></pre>
                     </div>
                 </div>
+
+                <div class="result-group">
+                    <label for="languageSelect">Language:</label>
+                    <select id="languageSelect" class="input-field">
+                        <option value="English">English</option>
+                        <option value="Swedish">Swedish</option>
+                        <option value="Spanish">Spanish</option>
+                        <!-- lägg till fler språk här -->
+                    </select>
+                    <button class="btn ai-edit-button" onclick="translateTranscript()">
+                        Translate
+                    </button>
+                    <div class="result-field">
+                        <pre id="translateResult"></pre>
+                    </div>
+                </div>
+
+                <div class="result-group">
+                    <button class="btn ai-edit-button" onclick="generateAudioClip()">
+                        Generate Audio Clip
+                    </button>
+                    <div class="result-field" id="audioClipResult"></div>
+                </div>
     
                 <div class="result-group">
                     <button class="btn ai-edit-button" onclick="generateAISuggestions()">
@@ -345,7 +368,7 @@ async function transcribe() {
         return;
     }
 
-    const episodeId = sessionStorage.getItem("selected_episode_id");
+    const episodeId = getSelectedEpisodeId();
     if (!episodeId) {
         alert("No episode selected.");
         return;
@@ -391,6 +414,43 @@ async function transcribe() {
         resultContainer.innerText = `Transcription failed: ${error.message}`;
     }
 }
+
+async function translateTranscript() {
+    const resultContainer = document.getElementById("translateResult");
+    const lang = document.getElementById("languageSelect").value;
+    if (!rawTranscript) return alert("Ingen transkription tillgänglig ännu.");
+  
+    showSpinner("translateResult");
+    try {
+      const res = await fetch("/transcription/translate", {
+        method: "POST",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify({
+          raw_transcription: rawTranscript,
+          language: lang
+        })
+      });
+      hideSpinner("translateResult");
+  
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || res.statusText);
+  
+      resultContainer.innerText = data.translated_transcription;
+      await consumeStoreCredits("translation");
+
+      if (!document.getElementById("generateAudioBtn")) {
+            const btn = document.createElement("button");
+            btn.id = "generateAudioBtn";
+            btn.className = "btn ai-edit-button";
+            btn.innerText = "Generate Audio Clip";
+            btn.onclick = generateAudioClip;
+            resultContainer.parentNode.insertBefore(btn, resultContainer.nextSibling);
+       }
+    } catch (err) {
+      hideSpinner("translateResult");
+      resultContainer.innerText = `Error: ${err.message}`;
+    }
+  }
 
 async function generateCleanTranscript() {
     const containerId = "cleanTranscriptResult";
@@ -684,7 +744,7 @@ async function enhanceAudio() {
     const file = input.files[0];
     if (!file) return alert("Upload an audio file first.");
 
-    const episodeId = sessionStorage.getItem("selected_episode_id");
+    const episodeId = getSelectedEpisodeId(); // Use the utility function
     if (!episodeId) return alert("No episode selected.");
 
     showSpinner(containerId);
@@ -692,7 +752,7 @@ async function enhanceAudio() {
     try {
         const formData = new FormData();
         formData.append("audio", file);
-        formData.append("episode_id", episodeId);
+        formData.append("episode_id", episodeId); // Pass the episode ID
 
         const response = await fetch("/audio/enhancement", {
             method: "POST",
@@ -713,7 +773,8 @@ async function enhanceAudio() {
             return;
         }
 
-        const blobUrl = result.enhanced_audio_url;
+        const blobUrl = result.enhanced_audio_url; // Ensure this is returned by the backend
+        if (!blobUrl) throw new Error("No enhanced audio URL returned.");
 
         const audioRes = await fetch(`/get_enhanced_audio?url=${encodeURIComponent(blobUrl)}`);
         const blob = await audioRes.blob();
@@ -749,7 +810,7 @@ async function runVoiceIsolation() {
     const file = input.files[0];
     if (!file) return alert("Upload an audio file first.");
 
-    const episodeId = sessionStorage.getItem("selected_episode_id");
+    const episodeId = getSelectedEpisodeId();
     if (!episodeId) return alert("No episode selected.");
 
     showSpinner(containerId);
@@ -945,7 +1006,7 @@ async function displayBackgroundAndMix() {
     const start = parseFloat(startInput.value);
     const end = parseFloat(endInput.value);
 
-    const episodeId = sessionStorage.getItem("selected_episode_id");
+    const episodeId = getSelectedEpisodeId();
     if (!episodeId) return alert("No episode selected.");
 
     const selectedSource = document.getElementById("audioSourceSelectCutting").value;
@@ -1208,7 +1269,7 @@ async function cutAudioFromBlob() {
     const start = parseFloat(startInput.value);
     const end = parseFloat(endInput.value);
 
-    const episodeId = sessionStorage.getItem("selected_episode_id");
+    const episodeId = getSelectedEpisodeId();
     if (!episodeId || !activeAudioBlob) return alert("No audio or episode selected.");
     if (isNaN(start) || isNaN(end) || start >= end) return alert("Invalid timestamps.");
 
@@ -1446,6 +1507,10 @@ function hideSpinner(containerId) {
     }
 }
 
+function getSelectedEpisodeId() {
+    return sessionStorage.getItem("selected_episode_id") || localStorage.getItem("selected_episode_id");
+}
+
 // prevent doubleclikc/spamclicking on the functions to loose credits
 document.addEventListener("DOMContentLoaded", () => {
     document.body.addEventListener("click", function (event) {
@@ -1462,3 +1527,30 @@ document.addEventListener("DOMContentLoaded", () => {
         }, 3000);
     }, true);  
 });
+
+async function generateAudioClip() {
+  const container = document.getElementById("audioClipResult");
+  const translated = document.getElementById("translateResult").innerText;
+  if (!translated.trim()) return alert("Inget översatt transcript att göra ljudklipp av.");
+
+  showSpinner("audioClipResult");
+  try {
+    const res = await fetch("/transcription/audio_clip", {
+      method: "POST",
+      headers: {"Content-Type":"application/json"},
+      body: JSON.stringify({ translated_transcription: translated })
+    });
+    hideSpinner("audioClipResult");
+
+    if (!res.ok) throw new Error(`Server svarade ${res.status}`);
+    const data = await res.json();
+    const audio = document.createElement("audio");
+    audio.controls = true;
+    audio.src = data.audio_base64;
+    container.innerHTML = "";
+    container.appendChild(audio);
+  } catch (err) {
+    hideSpinner("audioClipResult");
+    container.innerText = `Failed to generate audio clip: ${err.message}`;
+  }
+}
