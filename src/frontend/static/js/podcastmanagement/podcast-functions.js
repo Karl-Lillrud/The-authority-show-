@@ -607,7 +607,6 @@ export function renderPodcastDetail(podcast) {
   
   <div class="detail-actions">
     <button class="delete-btn" id="delete-podcast-btn" data-id="${podcast._id}">
-      <span class="icon">${shared.svgpodcastmanagement.delete}</span>
       Delete Podcast
     </button>
   </div>
