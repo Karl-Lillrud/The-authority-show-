@@ -14,6 +14,7 @@ from backend.services.activity_service import ActivityService
 import logging
 import os
 from werkzeug.utils import secure_filename
+from datetime import datetime, timezone  # Ensure datetime and timezone are imported
 
 guest_repo = GuestRepository()
 episode_bp = Blueprint("episode_bp", __name__)
@@ -61,7 +62,33 @@ def get_episodes():
     if not hasattr(g, "user_id") or not g.user_id:
         logger.warning("Unauthorized attempt to get episodes: No user_id in g")
         return jsonify({"error": "User not authenticated"}), 401
-    return episode_repo.get_episodes(g.user_id)
+
+    response_data, status_code = episode_repo.get_episodes(g.user_id)
+
+    if status_code == 200 and "episodes" in response_data:
+        # Sort episodes by publishDate in descending order (newest first)
+        # Episodes with no publishDate (None) will be treated as the oldest
+        def sort_key(episode):
+            # Ensure publishDate is a datetime object for comparison
+            pd = episode.get("publishDate")
+            if isinstance(pd, str):
+                try:
+                    # Attempt to parse if it's a string (should ideally be datetime from repo)
+                    dt_obj = datetime.fromisoformat(pd.replace('Z', '+00:00'))
+                    if dt_obj.tzinfo is None:
+                        return dt_obj.replace(tzinfo=timezone.utc)
+                    return dt_obj
+                except ValueError:
+                    return datetime.min.replace(tzinfo=timezone.utc)  # Treat parse error as oldest
+            elif isinstance(pd, datetime):
+                if pd.tzinfo is None:  # Ensure timezone aware
+                    return pd.replace(tzinfo=timezone.utc)
+                return pd
+            return datetime.min.replace(tzinfo=timezone.utc)  # Treat None or other types as oldest
+
+        response_data["episodes"].sort(key=sort_key, reverse=True)
+
+    return jsonify(response_data), status_code
 
 
 @episode_bp.route("/delete_episodes/<episode_id>", methods=["DELETE"])
@@ -193,7 +220,31 @@ def get_episodes_by_podcast(podcast_id):
     if not hasattr(g, "user_id") or not g.user_id:
         logger.warning(f"Unauthorized attempt to get episodes for podcast {podcast_id}: No user_id in g")
         return jsonify({"error": "User not authenticated"}), 401
-    return episode_repo.get_episodes_by_podcast(podcast_id, g.user_id)
+
+    response_data, status_code = episode_repo.get_episodes_by_podcast(podcast_id, g.user_id)
+
+    if status_code == 200 and "episodes" in response_data:
+        # Sort episodes by publishDate in descending order (newest first)
+        # Episodes with no publishDate (None) will be treated as the oldest
+        def sort_key(episode):
+            pd = episode.get("publishDate")
+            if isinstance(pd, str):
+                try:
+                    dt_obj = datetime.fromisoformat(pd.replace('Z', '+00:00'))
+                    if dt_obj.tzinfo is None:
+                        return dt_obj.replace(tzinfo=timezone.utc)
+                    return dt_obj
+                except ValueError:
+                    return datetime.min.replace(tzinfo=timezone.utc)
+            elif isinstance(pd, datetime):
+                if pd.tzinfo is None:
+                    return pd.replace(tzinfo=timezone.utc)
+                return pd
+            return datetime.min.replace(tzinfo=timezone.utc)
+
+        response_data["episodes"].sort(key=sort_key, reverse=True)
+
+    return jsonify(response_data), status_code
 
 
 @episode_bp.route("/episode/new", methods=["GET"])
