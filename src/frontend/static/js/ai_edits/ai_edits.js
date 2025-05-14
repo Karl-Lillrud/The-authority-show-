@@ -104,6 +104,29 @@ function showTab(tabName) {
                         <pre id="cleanTranscriptResult"></pre>
                     </div>
                 </div>
+
+                <div class="result-group">
+                    <label for="languageSelect">Language:</label>
+                    <select id="languageSelect" class="input-field">
+                        <option value="English">English</option>
+                        <option value="Swedish">Swedish</option>
+                        <option value="Spanish">Spanish</option>
+                        <!-- lägg till fler språk här -->
+                    </select>
+                    <button class="btn ai-edit-button" onclick="translateTranscript()">
+                        Translate
+                    </button>
+                    <div class="result-field">
+                        <pre id="translateResult"></pre>
+                    </div>
+                </div>
+
+                <div class="result-group">
+                    <button class="btn ai-edit-button" onclick="generateAudioClip()">
+                        Generate Audio Clip
+                    </button>
+                    <div class="result-field" id="audioClipResult"></div>
+                </div>
     
                 <div class="result-group">
                     <button class="btn ai-edit-button" onclick="generateAISuggestions()">
@@ -391,6 +414,43 @@ async function transcribe() {
         resultContainer.innerText = `Transcription failed: ${error.message}`;
     }
 }
+
+async function translateTranscript() {
+    const resultContainer = document.getElementById("translateResult");
+    const lang = document.getElementById("languageSelect").value;
+    if (!rawTranscript) return alert("Ingen transkription tillgänglig ännu.");
+  
+    showSpinner("translateResult");
+    try {
+      const res = await fetch("/transcription/translate", {
+        method: "POST",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify({
+          raw_transcription: rawTranscript,
+          language: lang
+        })
+      });
+      hideSpinner("translateResult");
+  
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || res.statusText);
+  
+      resultContainer.innerText = data.translated_transcription;
+      await consumeStoreCredits("translation");
+
+      if (!document.getElementById("generateAudioBtn")) {
+            const btn = document.createElement("button");
+            btn.id = "generateAudioBtn";
+            btn.className = "btn ai-edit-button";
+            btn.innerText = "Generate Audio Clip";
+            btn.onclick = generateAudioClip;
+            resultContainer.parentNode.insertBefore(btn, resultContainer.nextSibling);
+       }
+    } catch (err) {
+      hideSpinner("translateResult");
+      resultContainer.innerText = `Error: ${err.message}`;
+    }
+  }
 
 async function generateCleanTranscript() {
     const containerId = "cleanTranscriptResult";
@@ -1462,3 +1522,30 @@ document.addEventListener("DOMContentLoaded", () => {
         }, 3000);
     }, true);  
 });
+
+async function generateAudioClip() {
+  const container = document.getElementById("audioClipResult");
+  const translated = document.getElementById("translateResult").innerText;
+  if (!translated.trim()) return alert("Inget översatt transcript att göra ljudklipp av.");
+
+  showSpinner("audioClipResult");
+  try {
+    const res = await fetch("/transcription/audio_clip", {
+      method: "POST",
+      headers: {"Content-Type":"application/json"},
+      body: JSON.stringify({ translated_transcription: translated })
+    });
+    hideSpinner("audioClipResult");
+
+    if (!res.ok) throw new Error(`Server svarade ${res.status}`);
+    const data = await res.json();
+    const audio = document.createElement("audio");
+    audio.controls = true;
+    audio.src = data.audio_base64;
+    container.innerHTML = "";
+    container.appendChild(audio);
+  } catch (err) {
+    hideSpinner("audioClipResult");
+    container.innerText = `Failed to generate audio clip: ${err.message}`;
+  }
+}
