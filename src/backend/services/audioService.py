@@ -556,7 +556,8 @@ class AudioService:
 
             podcast_id = episode_repo.get_podcast_id_by_episode(episode_id)
             blob_path = f"users/{g.user_id}/podcasts/{podcast_id}/episodes/{episode_id}/audio/clipped_{filename}"
-            blob_url = upload_file_to_blob("podmanagerfiles", blob_path, clipped_data)
+            clipped_stream = BytesIO(clipped_data)
+            blob_url = upload_file_to_blob("podmanagerfiles", blob_path, clipped_stream)
 
             create_edit_entry(
                 episode_id=episode_id,
