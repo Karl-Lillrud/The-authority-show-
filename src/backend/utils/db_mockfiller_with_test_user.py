@@ -37,7 +37,6 @@ db.Accounts.insert_one({
     "_id": account_id,
     "userId": user_id,
     "subscriptionId": str(uuid.uuid4()),
-    "email": email,
     "isCompany": False,
     "companyName": "FakeCo",
     "paymentInfo": "",

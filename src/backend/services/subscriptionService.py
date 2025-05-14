@@ -15,6 +15,7 @@ logger = logging.getLogger(__name__)
 class SubscriptionService:
     def __init__(self):
         self.accounts_collection = collection.database.Accounts
+        self.user_collection = collection.database.Users
         self.subscriptions_collection = collection.database.Subscriptions # Changed from subscriptions_collection
         self.activity_service = ActivityService()  # Add this line
         self.episodes_collection = collection.database.Episodes
@@ -47,6 +48,11 @@ class SubscriptionService:
 
         return subscription_data
 
+    def get_email_by_user(self, user_id):
+        existing_user = self.user_collection.find_one({"_id": user_id})
+        if existing_user:
+            return existing_user["email"]
+        return None
 
     def update_user_subscription(self, user_id, plan_name, stripe_session):
         """
@@ -58,12 +64,7 @@ class SubscriptionService:
                 stripe_session["amount_total"] / 100
             )  # Convert cents to dollars
 
-            # First try to find account by userId
-            account = self.accounts_collection.find_one({"userId": user_id})
-
-            # If not found, try looking up by ownerId
-            if not account:
-                account = self.accounts_collection.find_one({"ownerId": user_id})
+            account = self._get_account(user_id)
 
             if not account:
                 raise ValueError(
@@ -110,10 +111,10 @@ class SubscriptionService:
                             except Exception as session_err:
                                 logger.error(f"Error retrieving subscription from session {payment_id}: {session_err}")
                 
-                if account.get("email"):
+                if (user_email := self.get_email_by_user(user_id)):
                     try:
                         # Look up customer by email
-                        customers = stripe.Customer.list(email=account.get("email"), limit=5)
+                        customers = stripe.Customer.list(email=user_email, limit=5)
                         if customers and customers.data:
                             for customer in customers.data:
                                 logger.info(f"Found Stripe customer by email: {customer.id}")
