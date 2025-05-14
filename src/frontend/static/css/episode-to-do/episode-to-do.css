@@ -199,12 +199,16 @@ a,
   background-color: var(--light);
   border-radius: var(--radius-full);
   overflow: hidden;
+  position: relative;
 }
 
 .progress-bar {
+  position: absolute;
+  top: 0;
+  left: 0;
   height: 100%;
+  width: 0;
   background-color: var(--highlight-color);
-  border-radius: var(--radius-full);
   transition: width 0.5s ease;
   background-image: linear-gradient(
     45deg,

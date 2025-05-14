@@ -148,6 +148,7 @@ export function updateProgressBar(state) {
 
   if (progressBar) {
     progressBar.style.width = `${percentage}%`
+    progressBar.style.height = "100%"
   }
 }
 
@@ -194,24 +195,24 @@ export function updateEpisodeDisplay(state) {
 }
 
 export async function selectEpisode(episode, state, updateUI) {
-  state.selectedEpisode = episode;
+  state.selectedEpisode = episode
 
   // Store the selected episode ID in local storage
   if (episode._id || episode.id) {
-    const episodeId = episode._id || episode.id;
-    localStorage.setItem("selected_episode_id", episodeId);
-    console.log("✅ Selected episode ID stored in local storage:", episodeId);
+    const episodeId = episode._id || episode.id
+    localStorage.setItem("selected_episode_id", episodeId)
+    console.log("✅ Selected episode ID stored in local storage:", episodeId)
   }
 
   try {
     // Fetch tasks for the selected episode
-    const tasksData = await fetchTasks();
-    console.log("Tasks data for selected episode:", tasksData);
+    const tasksData = await fetchTasks()
+    console.log("Tasks data for selected episode:", tasksData)
 
     // Filter tasks for the selected episode
     state.tasks = tasksData
       ? tasksData.filter((task) => task.episodeId === episode._id || task.episodeId === episode.id)
-      : [];
+      : []
 
     console.log(
       "Tasks with assignment data:",
@@ -220,13 +221,13 @@ export async function selectEpisode(episode, state, updateUI) {
         assignee: task.assignee,
         assigneeName: task.assigneeName,
         assignedAt: task.assignedAt,
-      }))
-    );
+      })),
+    )
 
     // Update UI
-    updateUI();
+    updateUI()
   } catch (error) {
-    console.error("Error fetching tasks for episode:", error);
+    console.error("Error fetching tasks for episode:", error)
   }
 }
 
