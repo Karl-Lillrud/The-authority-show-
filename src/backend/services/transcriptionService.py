@@ -5,7 +5,7 @@ import logging
 import re
 from pydub import AudioSegment, effects
 from datetime import datetime, timezone
-from typing import List
+from typing import List, Tuple
 from io import BytesIO
 from elevenlabs.client import ElevenLabs
 from backend.database.mongo_connection import fs
@@ -37,78 +37,87 @@ VOICE_MAPS = {
 
 class TranscriptionService:
     def transcribe_audio(self, file_data: bytes, filename: str) -> dict:
-        logger.info(f"Starting transcription")
+        from io import BytesIO
+        from datetime import datetime, timezone
+        import re
+        
+        logger.info("Starting transcription")
 
-        # Step 1: Attempt transcription with ElevenLabs
+        # === steg 1: ElevenLabs-transkription ===
         audio_data = BytesIO(file_data)
-        try:
-            transcription_result = client.speech_to_text.convert(
-                file=audio_data,
-                model_id="scribe_v1",
-                num_speakers=2,
-                diarize=True,
-                timestamps_granularity="word"
-            )
-        except Exception as e:
-            logger.error(f"ElevenLabs transcription failed: {str(e)}")
-            raise Exception("Transcription service failed. Please try again later.")
-
+        transcription_result = client.speech_to_text.convert(
+            file=audio_data,
+            model_id="scribe_v1",
+            num_speakers=2,
+            diarize=True,
+            timestamps_granularity="word"
+        )
         if not transcription_result.text:
-            logger.warning("Transcription returned no text.")
             raise Exception("Transcription returned no text.")
-
         transcription_text = transcription_result.text.strip()
-        logger.info(f"Transcription successful. Preview:\n{transcription_text[:300]}")
 
-        # Step 2: Save only if transcription succeeded
+        # === steg 2: spara fil i GridFS ===
         file_id = fs.put(
             file_data,
             filename=filename,
-            metadata={"upload_timestamp": datetime.now(timezone.utc), "type": "transcription"},
+            metadata={"upload_timestamp": datetime.now(timezone.utc), "type": "transcription"}
         )
-        logger.info(f"File saved to MongoDB with ID: {file_id}")
 
-        # Prepare speaker mapping and word timings
+        # === steg 3: bygg word_timings + speaker_map ===
         speaker_map = {}
         speaker_counter = 1
         word_timings = []
         for w in transcription_result.words:
-            text = w.text.strip()
-            if not text:
+            txt = w.text.strip()
+            if not txt:
                 continue
+            start = round(w.start, 2)
+            end   = round(w.end,   2)
             word_timings.append({
-                "word": text,
-                "start": round(w.start, 2),
-                "end": round(w.end, 2),
+                "word": txt,
+                "start": start,
+                "end": end,
                 "speaker_id": w.speaker_id
             })
             if w.speaker_id not in speaker_map:
                 speaker_map[w.speaker_id] = f"Speaker {speaker_counter}"
                 speaker_counter += 1
 
-        # Step 3: Build sentence-level transcription
-        sentences = re.split(r'(?<=[\.\?\!])\s+', transcription_text)
-        raw_sentences = []
+        # === steg 4: dela upp i meningar och behåll kronologisk ordning ===
+        sentences = re.split(r'(?<=[\.!?])\s+', transcription_text)
+        raw_entries = []  # list of (start_time, line)
+        prev_end_time = 0.0
         for sentence in sentences:
-            sentence = sentence.strip()
-            if not sentence:
+            sent = sentence.strip()
+            if not sent:
                 continue
-            ts = get_sentence_timestamps(sentence, word_timings)
-            # Find corresponding speaker for sentence start
-            first = next((wt for wt in word_timings if wt["start"] == ts["start"]), None)
-            speaker_label = speaker_map.get(first["speaker_id"], "Speaker 1") if first else "Speaker 1"
-            raw_sentences.append(f"[{ts['start']}-{ts['end']}] {speaker_label}: {sentence}")
+            # hämta tidsintervall för meningen från ord-timings, baserat på föregående slut-tid
+            ts = get_sentence_timestamps(sent, word_timings, prev_end_time)
+            start, end = ts["start"], ts["end"]
+            prev_end_time = end
+            # hitta talare för första ordet i segmentet
+            first = next((wt for wt in word_timings if wt["start"] == start), None)
+            speaker = speaker_map.get(first["speaker_id"], "Speaker 1") if first else "Speaker 1"
+            line = f"[{start:.2f}-{end:.2f}] {speaker}: {sent}"
+            raw_entries.append((start, line))
 
-        # Fallback if none
-        if not raw_sentences:
-            logger.warning("No sentence-level transcription; falling back to word-level.")
+        # === steg 5: fallback om ingen mening fångades ===
+        if not raw_entries:
             for wt in word_timings:
-                speaker_label = speaker_map[wt['speaker_id']]
-                raw_sentences.append(f"[{wt['start']}-{wt['end']}] {speaker_label}: {wt['word']}")
+                line = (
+                    f"[{wt['start']:.2f}-{wt['end']:.2f}] "
+                    f"{speaker_map[wt['speaker_id']]}: {wt['word']}"
+                )
+                raw_entries.append((wt["start"], line))
+
+        # === steg 6: sortera per start-tid och slå ihop ===
+        raw_entries.sort(key=lambda x: x[0])
+        raw_lines = [line for _, line in raw_entries]
+        raw_transcription = "\n".join(raw_lines)
 
         return {
             "file_id": str(file_id),
-            "raw_transcription": "\n".join(raw_sentences),
+            "raw_transcription": raw_transcription,
             "full_transcript": transcription_text
         }
 
