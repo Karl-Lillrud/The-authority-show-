@@ -147,8 +147,17 @@ export function updateProgressBar(state) {
   }
 
   if (progressBar) {
+    // Ensure the progress bar is orange by setting the background color directly
+    progressBar.style.backgroundColor = percentage === 100 ? "#ff6b1a" : "#ff7f3f"
     progressBar.style.width = `${percentage}%`
     progressBar.style.height = "100%"
+
+    // Add special styling for completed progress bar
+    if (percentage === 100) {
+      progressBar.classList.add("completed")
+    } else {
+      progressBar.classList.remove("completed")
+    }
   }
 }
 

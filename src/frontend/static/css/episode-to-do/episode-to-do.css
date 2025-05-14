@@ -202,13 +202,15 @@ a,
   position: relative;
 }
 
-.progress-bar {
+/* Target both the class and ID for maximum compatibility */
+.progress-bar,
+#progressBar {
   position: absolute;
   top: 0;
   left: 0;
   height: 100%;
   width: 0;
-  background-color: var(--highlight-color);
+  background-color: #ff7f3f; /* Explicitly set orange color */
   transition: width 0.5s ease;
   background-image: linear-gradient(
     45deg,
@@ -224,12 +226,40 @@ a,
   animation: progress-animation 1s linear infinite;
 }
 
+/* Special styling for completed progress bar */
+.progress-bar.completed,
+#progressBar.completed {
+  background-color: #ff6b1a; /* Slightly darker orange */
+  background-image: linear-gradient(
+    135deg,
+    rgba(255, 255, 255, 0.25) 25%,
+    transparent 25%,
+    transparent 50%,
+    rgba(255, 255, 255, 0.25) 50%,
+    rgba(255, 255, 255, 0.25) 75%,
+    transparent 75%,
+    transparent
+  );
+  background-size: 2rem 2rem;
+  animation: progress-animation-completed 1.5s linear infinite;
+  box-shadow: 0 0 10px rgba(255, 107, 26, 0.5);
+}
+
 @keyframes progress-animation {
   0% {
     background-position: 0 0;
   }
   100% {
     background-position: 1rem 0;
+  }
+}
+
+@keyframes progress-animation-completed {
+  0% {
+    background-position: 0 0;
+  }
+  100% {
+    background-position: 2rem 0;
   }
 }
 
