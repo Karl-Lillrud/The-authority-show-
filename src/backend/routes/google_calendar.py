@@ -32,7 +32,7 @@ flow = Flow.from_client_config(
             "token_uri": GOOGLE_TOKEN_URL,
         }
     },
-    scopes=["https://www.googleapis.com/calendar"],
+    scopes=["https://www.googleapis.com/auth/calendar"],
     redirect_uri=GOOGLE_REDIRECT_URI,
 )
 

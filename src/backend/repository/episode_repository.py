@@ -162,15 +162,11 @@ class EpisodeRepository:
             if ep["userid"] != str(user_id):
                 return {"error": "Permission denied"}, 403
 
-            # Use partial schema validation for updates
+
             schema = EpisodeSchema(partial=True)
 
-            # Prepare data for validation: Copy original data
             validation_data = data.copy()
 
-            # Temporarily remove fields related to file upload before validation
-            # because the placeholder audioUrl might not pass fields.Url validation.
-            # We'll add these fields back directly to update_fields later.
             file_related_fields = ["audioUrl", "fileSize", "fileType"]
             for field in file_related_fields:
                 if field in validation_data:

@@ -78,7 +78,7 @@ def connect_google_calendar():
     try:
         client_id = os.getenv("GOOGLE_CLIENT_ID")
         redirect_uri = os.getenv("GOOGLE_REDIRECT_URI")
-        scope = "https://www.googleapis.com/calendar"
+        scope = "https://www.googleapis.com/auth/calendar"
         response_type = "code"
         access_type = "offline"
         include_granted_scopes = "true"
