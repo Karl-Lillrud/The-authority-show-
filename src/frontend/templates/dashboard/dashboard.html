@@ -24,6 +24,10 @@ endblock %} {% block content %}
     rel="stylesheet"
     href="{{ url_for('static', filename='css/dashboard/task.css') }}"
   />
+  <link
+
+/>
+
 </head>
 <body>
   <div class="dashboard">
@@ -33,16 +37,20 @@ endblock %} {% block content %}
         <h1>Welcome to your Podcast Dashboard</h1>
         <p>Here is an overview of your podcasts and activities</p>
       </div>
-      <div class="dashboard-actions">
-        <button class="action-button create-podcast">
-          <span class="svg-placeholder create-podcast-icon"></span>
-          Create New Podcast
-        </button>
-        <button class="action-button schedule-episode">
-          <span class="svg-placeholder schedule-episode-icon"></span>
-          Schedule Episode
-        </button>
-      </div>
+      
+  <div class="dashboard-actions">
+  <a href="{{ url_for('dashboard_bp.podcast_management') }}" class="action-button">
+<span class="svg-placeholder create-podcast-icon"></span>
+      Create New Podcast
+  </a>
+  <a href="{{ url_for('dashboard_bp.podcast_management') }}" class="action-button schedule-episode">
+    Create Episode
+  </a>
+</div>
+</div>
+</div>
+
+ </div>
     </div>
 
     <!-- Stats Overview -->

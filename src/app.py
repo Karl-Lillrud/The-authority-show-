@@ -1,6 +1,8 @@
 import os
 import logging
-from flask import Flask, request, session, g, jsonify, render_template
+import sys
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), ".")))
+from flask import Blueprint, Flask, request, session, g, jsonify, render_template
 from flask_cors import CORS
 from backend.routes.auth import auth_bp
 from backend.routes.podcast import podcast_bp  # Import the podcast blueprint
@@ -104,6 +106,7 @@ app.register_blueprint(landingpage_bp)
 app.register_blueprint(comment_bp)
 app.register_blueprint(activity_bp)  # Ensure this registration exists
 app.register_blueprint(stripe_config_bp)  # Ensure this registration exists
+
 
 # Set the application environment (defaults to production)
 APP_ENV = os.getenv("APP_ENV", "production")

@@ -304,3 +304,4 @@ def new_episode():
     except Exception as e:
         logger.error("❌ ERROR in new_episode: %s", str(e))
         return jsonify({"error": "Failed to process the request"}), 500
+

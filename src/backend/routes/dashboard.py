@@ -192,6 +192,20 @@ def store():
     return render_template("store/store.html")
 
 
+episode_bp = Blueprint("episode_bp", __name__, url_prefix="/episode")
+
+@episode_bp.route("/episode-management", methods=["GET"])
+def episode_management():
+    if not g.user_id:
+        return redirect(url_for("auth_bp.signin"))
+    return render_template("episode/episodemanagment.html")
+
+@dashboard_bp.route("/podcastmanagement", methods=["GET"])
+def podcast_management():
+    if not g.user_id:
+        return redirect(url_for("auth_bp.signin"))
+    return render_template("podcastmanagement/podcastmanagement.html")
+
 # Kommenterat ut nedanstående, pga guests kan ej fetchas då vi har 2st get med samma namn här och i guest.py
 
 # @dashboard_bp.route("/get_guests_by_episode/<episode_id>", methods=["GET"])
