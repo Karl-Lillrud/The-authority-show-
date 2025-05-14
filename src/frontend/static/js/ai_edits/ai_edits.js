@@ -368,7 +368,7 @@ async function transcribe() {
         return;
     }
 
-    const episodeId = sessionStorage.getItem("selected_episode_id");
+    const episodeId = getSelectedEpisodeId();
     if (!episodeId) {
         alert("No episode selected.");
         return;
@@ -744,7 +744,7 @@ async function enhanceAudio() {
     const file = input.files[0];
     if (!file) return alert("Upload an audio file first.");
 
-    const episodeId = sessionStorage.getItem("selected_episode_id");
+    const episodeId = getSelectedEpisodeId(); // Use the utility function
     if (!episodeId) return alert("No episode selected.");
 
     showSpinner(containerId);
@@ -752,7 +752,7 @@ async function enhanceAudio() {
     try {
         const formData = new FormData();
         formData.append("audio", file);
-        formData.append("episode_id", episodeId);
+        formData.append("episode_id", episodeId); // Pass the episode ID
 
         const response = await fetch("/audio/enhancement", {
             method: "POST",
@@ -773,7 +773,8 @@ async function enhanceAudio() {
             return;
         }
 
-        const blobUrl = result.enhanced_audio_url;
+        const blobUrl = result.enhanced_audio_url; // Ensure this is returned by the backend
+        if (!blobUrl) throw new Error("No enhanced audio URL returned.");
 
         const audioRes = await fetch(`/get_enhanced_audio?url=${encodeURIComponent(blobUrl)}`);
         const blob = await audioRes.blob();
@@ -809,7 +810,7 @@ async function runVoiceIsolation() {
     const file = input.files[0];
     if (!file) return alert("Upload an audio file first.");
 
-    const episodeId = sessionStorage.getItem("selected_episode_id");
+    const episodeId = getSelectedEpisodeId();
     if (!episodeId) return alert("No episode selected.");
 
     showSpinner(containerId);
@@ -1005,7 +1006,7 @@ async function displayBackgroundAndMix() {
     const start = parseFloat(startInput.value);
     const end = parseFloat(endInput.value);
 
-    const episodeId = sessionStorage.getItem("selected_episode_id");
+    const episodeId = getSelectedEpisodeId();
     if (!episodeId) return alert("No episode selected.");
 
     const selectedSource = document.getElementById("audioSourceSelectCutting").value;
@@ -1268,7 +1269,7 @@ async function cutAudioFromBlob() {
     const start = parseFloat(startInput.value);
     const end = parseFloat(endInput.value);
 
-    const episodeId = sessionStorage.getItem("selected_episode_id");
+    const episodeId = getSelectedEpisodeId();
     if (!episodeId || !activeAudioBlob) return alert("No audio or episode selected.");
     if (isNaN(start) || isNaN(end) || start >= end) return alert("Invalid timestamps.");
 
@@ -1504,6 +1505,10 @@ function hideSpinner(containerId) {
     if (container) {
         container.innerHTML = '';
     }
+}
+
+function getSelectedEpisodeId() {
+    return sessionStorage.getItem("selected_episode_id") || localStorage.getItem("selected_episode_id");
 }
 
 // prevent doubleclikc/spamclicking on the functions to loose credits
