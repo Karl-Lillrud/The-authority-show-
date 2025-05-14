@@ -5,6 +5,7 @@ import { fetchTasks, fetchTask, saveTask, updateTask, deleteTask } from "/static
 import { formatDueDate, closePopup, getDependencyInfo } from "/static/js/episode-to-do/utils.js"
 import { renderTaskComments, showAddCommentModal } from "/static/js/episode-to-do/comment-utils.js"
 import { showImportWorkflowModal, saveWorkflow } from "/static/js/episode-to-do/workflow-page.js"
+import languageManager from '/static/js/i18n/languageManager.js'
 
 // Task page functionality
 export function renderTaskList(state, updateUI) {
@@ -31,13 +32,13 @@ export function renderTaskList(state, updateUI) {
   taskActions.className = "task-management-actions"
   taskActions.innerHTML = `
     <div class="task-header">
-      <h3>Tasks</h3>
+      <h3 data-i18n="tasks">${languageManager.getTranslation("tasks")}</h3>
       <div class="task-header-actions">
         <button class="btn import-tasks-btn" id="import-default-tasks">
-          <i class="fas fa-download"></i> Import
+          <i class="fas fa-download"></i> <span data-i18n="import">${languageManager.getTranslation("import")}</span>
         </button>
         <button class="btn add-task-btn" id="add-new-task">
-          <i class="fas fa-plus"></i> Add Task
+          <i class="fas fa-plus"></i> <span data-i18n="addTask">${languageManager.getTranslation("addTask")}</span>
         </button>
       </div>
     </div>
@@ -59,7 +60,7 @@ export function renderTaskList(state, updateUI) {
   if (tasksToRender.length === 0) {
     const emptyState = document.createElement("div")
     emptyState.className = "empty-task-list"
-    emptyState.innerHTML = `<p>No tasks available</p>`
+    emptyState.innerHTML = `<p data-i18n="noTasksAvailable">${languageManager.getTranslation("noTasksAvailable")}</p>`
     taskList.appendChild(emptyState)
   } else {
     // Render each task

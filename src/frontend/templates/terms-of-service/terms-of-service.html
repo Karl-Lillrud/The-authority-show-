@@ -172,12 +172,12 @@
     </div>
 
     <footer>
-      <p>&copy; 2025 PodManager.ai. All rights reserved.</p>
-      <p>
-        <a href="{{ url_for('frontend.privacy_policy_page') }}">Privacy Policy</a> | 
-        <a href="{{ url_for('frontend.terms_of_service_page') }}">Terms of Service</a> |
-        <a href="mailto:contact@podmanager.ai">Contact Us</a>
-      </p>
+      <p>&copy; 2025 PodManager.ai. <span data-i18n="allRightsReserved">All rights reserved.</span></p>
+      <span>
+        <a href="{{ url_for('frontend.privacy_policy_page') }}" data-i18n="privacyPolicy">Privacy Policy</a> | 
+        <a href="{{ url_for('frontend.terms_of_service_page') }}" data-i18n="termsOfService">Terms of Service</a> |
+        <a href="mailto:contact@podmanager.ai" data-i18n="contactUs">Contact Us</a>
+      </span>
     </footer>
   </body>
 </html>

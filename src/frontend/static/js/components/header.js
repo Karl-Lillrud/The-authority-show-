@@ -259,19 +259,22 @@ function setDynamicPageTitle() {
   const pageTitleElement = document.getElementById("page-title");
   if (pageTitleElement) {
     const pageTitles = {
-      "/account": "Account",
-      "/podcastmanagement": "Podcast Management",
-      "/dashboard": "Dashboard",
-      "/team": "Team Management",
-      "/guest": "Guest View",
-      "/episode-to-do": "Episode To-Do",
-      "/enterprise": "Enterprise",
-      "/lia": "LIA", // Add this line
+      "/account": "account",
+      "/podcastmanagement": "podcastManagement",
+      "/dashboard": "dashboard",
+      "/team": "teamManagement",
+      "/guest": "guestView",
+      "/episode-to-do": "episodeToDo",
+      "/enterprise": "enterprise",
+      "/lia": "lia",
+      "/store": "store"
     };
-
     const currentPath = window.location.pathname;
-    const pageTitle = pageTitles[currentPath]
-    pageTitleElement.textContent = pageTitle;
+    const i18nKey = pageTitles[currentPath];
+    if (i18nKey) {
+      pageTitleElement.setAttribute('data-i18n', i18nKey);
+      pageTitleElement.textContent = window.languageManager.getTranslation(i18nKey);
+    }
   }
 }
 
