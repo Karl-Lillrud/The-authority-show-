@@ -58,17 +58,51 @@ export function updateProfile(profileData) {
 
 // Update account data
 export function updateAccount(accountData) {
-  return fetch('/edit_account', {
+  return fetch('/api/account', { // Corrected endpoint
     method: 'PUT',
-    headers: { 'Content-Type': 'application/json' },
+    headers: { 
+      'Content-Type': 'application/json',
+      // Add any necessary auth headers like CSRF tokens if your app uses them
+    },
     body: JSON.stringify(accountData),
   })
-    .then(response => response.json())
-    .catch(error => {
-      console.error('Error updating profile:', error);
-      throw new Error('Failed to update profile');
-    });
+  .then(async response => {
+    if (!response.ok) {
+      // Attempt to get more detailed error message from response body
+      let errorMsg = `HTTP error! status: ${response.status}`;
+      try {
+        // Try to parse as JSON first, as backend might send structured errors
+        const errorData = await response.json();
+        errorMsg = errorData.error || errorData.message || errorMsg;
+      } catch (e) {
+        // If not JSON, try to read as text (e.g., for HTML error pages)
+        try {
+          const textError = await response.text();
+          // Avoid setting a very long HTML page as the error message
+          errorMsg = textError.length < 200 ? textError : errorMsg; 
+        } catch (textE) {
+          // Fallback if reading text also fails
+        }
+      }
+      console.error('Error updating profile (response not ok):', errorMsg);
+      throw new Error(errorMsg); // Throw an error with a more descriptive message
+    }
+    // If response is OK, then parse JSON
+    return response.json();
+  })
+  .catch(error => {
+    // This catch block handles network errors or errors thrown from the .then block
+    console.error('Error updating profile (network or parsing error):', error);
+    // Re-throw the error so the calling function can also catch it
+    // Ensure the error is an Error object
+    if (error instanceof Error) {
+        throw error;
+    } else {
+        throw new Error(String(error));
+    }
+  });
 }
+
 export async function incrementUpdateAccount(accountData) {
   return await fetch('/api/account/edit_account/increment', {
     method: "PUT",

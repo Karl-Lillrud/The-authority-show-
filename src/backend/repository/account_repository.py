@@ -1,37 +1,104 @@
 import logging
+import uuid
 from datetime import datetime
 from backend.database.mongo_connection import collection
-from backend.repository.auth_repository import AuthRepository
+from backend.services.creditService import initialize_credits
 
 logger = logging.getLogger(__name__)
-
 
 class AccountRepository:
     def __init__(self):
         self.collection = collection.database.Accounts
-        self.auth_repository = AuthRepository()
 
     def create_account(self, data):
+        """
+        Creates a new account for the user if one does not exist, or returns the existing account.
+        Args:
+            data (dict): Contains ownerId, email, and optional fields (e.g., isFirstLogin).
+        Returns: (dict, status_code)
+        """
         try:
-            if not data or "ownerId" not in data or "email" not in data:
-                return {"error": "ownerId and email are required"}, 400
+            user_id = data.get("ownerId")
+            email = data.get("email")
+            if not user_id or not isinstance(user_id, str):
+                logger.error(f"Invalid user_id: {user_id}")
+                return {"error": "Invalid or missing ownerId"}, 400
+            if not email or not isinstance(email, str):
+                logger.error(f"Invalid email: {email}")
+                return {"error": "Invalid or missing email"}, 400
 
-            # Use AuthRepository to create or retrieve account
-            account_result, status_code = self.auth_repository.create_account(data)
-            if status_code in [200, 201]:
+            # Check if an account already exists for the user
+            logger.debug(f"Checking for existing account with ownerId: {user_id}")
+            existing_account = self.collection.find_one({"ownerId": user_id})
+            if existing_account:
                 logger.info(
-                    f"Account {'created' if status_code == 201 else 'found'} for ownerId {data['ownerId']}: {account_result['accountId']}"
+                    f"Account already exists for user {user_id}: {existing_account['_id']}"
                 )
-                return account_result, status_code
+                # Optionally update isFirstLogin if provided and changed
+                if "isFirstLogin" in data and existing_account.get("isFirstLogin") != data["isFirstLogin"]:
+                    self.collection.update_one(
+                        {"_id": existing_account["_id"]},
+                        {"$set": {"isFirstLogin": data["isFirstLogin"], "updatedAt": datetime.utcnow().isoformat()}}
+                    )
+                return {
+                    "message": "Account already exists",
+                    "accountId": existing_account["_id"],
+                }, 200
+
+            # Create a new account
+            account_id = str(uuid.uuid4())  # Define account_id
+            subscription_id = data.get("subscriptionId") or str(uuid.uuid4())
+            credit_id = data.get("creditId") or str(uuid.uuid4())
+
+            account_data = {
+                "_id": account_id,
+                "ownerId": user_id,
+                "email": email.lower().strip(),
+                "createdAt": datetime.utcnow().isoformat(),
+                "updatedAt": datetime.utcnow().isoformat(),
+                "isActive": data.get("isActive", True),
+                "subscriptionId": subscription_id,
+                "creditId": credit_id,
+                "isCompany": data.get("isCompany", False),
+                "companyName": data.get("companyName", ""),
+                "subscriptionStatus": data.get("subscriptionStatus", "active"),
+                "subscriptionStart": data.get("subscriptionStart", datetime.utcnow().isoformat()),
+                "subscriptionEnd": data.get("subscriptionEnd"),
+                "referralBonus": data.get("referralBonus", 0),
+                "isFirstLogin": data.get("isFirstLogin", True),
+                "lastUpdated": datetime.utcnow().isoformat(),
+                "subscriptionAmount": data.get("subscriptionAmount", 0),
+                "subscriptionPlan": data.get("subscriptionPlan", "Free"),
+                "unlockedExtraEpisodeSlots": data.get("unlockedExtraEpisodeSlots", 0)
+            }
+            logger.debug(f"Attempting to create account with data: {account_data}")
+            result = self.collection.insert_one(account_data)
+            if result.inserted_id:
+                logger.info(
+                    f"New account created for user {user_id}: {account_id}"
+                )
+                # Initialize credits for the new user
+                try:
+                    initialize_credits(user_id)
+                except Exception as credit_error:
+                    logger.error(
+                        f"Failed to initialize credits for ownerId {user_id}: {str(credit_error)}"
+                    )
+                return {
+                    "message": "Account created successfully!",
+                    "accountId": account_id,
+                }, 201
             else:
                 logger.error(
-                    f"Failed to create/retrieve account for ownerId {data['ownerId']}: {account_result.get('error')}"
+                    f"Failed to insert account for user {user_id}: No inserted_id returned"
                 )
-                return account_result, status_code
+                return {"error": "Failed to create account due to database error"}, 500
 
         except Exception as e:
-            logger.error(f"Error while creating account: {e}", exc_info=True)
-            return {"error": f"Error while creating account: {str(e)}"}, 500
+            logger.error(
+                f"Error creating/retrieving account for user {data.get('ownerId')}: {str(e)}", exc_info=True
+            )
+            return {"error": f"Internal server error: {str(e)}"}, 500
 
     def get_account(self, account_id):
         try:

@@ -7,6 +7,9 @@ import urllib.request
 import feedparser
 from backend.services.rss_Service import RSSService  # Import RSSService
 from backend.services.activity_service import ActivityService  # Add this import
+from backend.repository.episode_repository import (
+    EpisodeRepository,
+)  # Assuming EpisodeRepository exists
 
 
 logger = logging.getLogger(__name__)
@@ -16,6 +19,13 @@ class PodcastRepository:
     def __init__(self):
         self.collection = collection.database.Podcasts
         self.activity_service = ActivityService()  # Add this line
+        self.episode_repo = EpisodeRepository()  # Initialize EpisodeRepository
+        self.rss_service = RSSService()  # Initialize RSSService instance
+
+    @staticmethod
+    def get_podcasts_by_user_id(user_id):
+        """Fetch podcasts for a specific user."""
+        return list(collection.Podcasts.find({"ownerId": user_id}))
 
     def add_podcast(self, user_id, data):  # user_id here is the owner's ID
         try:
@@ -300,11 +310,11 @@ class PodcastRepository:
 
     def fetch_rss_feed(self, rss_url):
         try:
-            # Delegate RSS fetching to RSSService
-            return RSSService.fetch_rss_feed(rss_url)
+            # Delegate RSS fetching to RSSService instance
+            return self.rss_service.fetch_rss_feed(rss_url)
         except Exception as e:
             logger.error(
-                "❌ ERROR fetching RSS feed: %s", e, exc_info=True
+                "❌ ERROR fetching RSS feed via PodcastRepository: %s", e, exc_info=True
             )  # Added error log
             return {"error": f"Error fetching RSS feed: {str(e)}"}, 500
 
@@ -327,14 +337,27 @@ class PodcastRepository:
         Fetch RSS data using RSSService and add a podcast to the repository.
         """
         try:
-            # Fetch RSS data
-            rss_data, status_code = RSSService.fetch_rss_feed(rss_url)
+            # Fetch RSS data using the instance
+            rss_data, status_code = self.rss_service.fetch_rss_feed(rss_url)
             if status_code != 200:
                 return {"error": "Failed to fetch RSS feed", "details": rss_data}, 400
 
+            # Prepare data for add_podcast based on rss_data
+            # This part needs to be adapted based on what add_podcast expects
+            # and what rss_data provides. For example:
+            podcast_data_for_add = {
+                "podName": rss_data.get("title", "Untitled Podcast from RSS"),
+                "rssFeed": rss_url,
+                "description": rss_data.get("description"),
+                "logoUrl": rss_data.get("imageUrl"),
+                # Add other necessary fields extracted from rss_data
+                # or default values as required by PodcastSchema
+            }
+            
             # Call existing add_podcast method
-            return self.add_podcast(user_id)
+            return self.add_podcast(user_id, podcast_data_for_add)
 
         except Exception as e:
             logger.error("Error in addPodcastWithRss: %s", e, exc_info=True)
             return {"error": "Failed to add podcast with RSS", "details": str(e)}, 500
+

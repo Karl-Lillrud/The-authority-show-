@@ -1,5 +1,4 @@
 from flask import Blueprint, jsonify
-from bson.objectid import ObjectId
 from backend.database.mongo_connection import get_db
 import logging
 

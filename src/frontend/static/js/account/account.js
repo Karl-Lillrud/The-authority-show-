@@ -3,7 +3,8 @@ import {
   updateAccount,
   deleteAccount,
   uploadProfilePicture,
-  deleteUserAccount
+  deleteUserAccount,
+  updateProfile
 } from "/static/requests/accountRequests.js";
 import { showNotification } from "../components/notifications.js";
 import { fetchPurchases } from "/static/js/billing/billing.js";
@@ -249,7 +250,7 @@ document.addEventListener("DOMContentLoaded", () => {
               purchase.details
                 ? `<button class="details-btn" data-details='${JSON.stringify(
                     purchase.details
-                  )}'>View Details</button>`
+                  )}'>Details</button>`
                 : "N/A"
             }
           </div>
@@ -565,6 +566,7 @@ document.addEventListener("DOMContentLoaded", () => {
               "Profile updated successfully!",
               "success"
             );
+            
             // Update the display values in the read-only view
             document.getElementById("display-full-name").textContent =
               fullName || "Not provided";
@@ -572,8 +574,49 @@ document.addEventListener("DOMContentLoaded", () => {
               email || "Not provided";
             document.getElementById("display-phone").textContent =
               phone || "Not provided";
+            
             // Switch back to view mode
-            toggleProfileMode(false);
+            toggleProfileEditMode(false);
+            
+            // Ensure profile section is active and visible
+            document.querySelectorAll(".settings-section").forEach((section) => {
+              section.classList.remove("active");
+            });
+            const profileSection = document.getElementById("profile-section");
+            if (profileSection) {
+              profileSection.classList.add("active");
+              profileSection.style.display = "block";
+            }
+            
+            // Update sidebar active state
+            document.querySelectorAll(".sidebar-item").forEach((item) => {
+              item.classList.remove("active");
+            });
+            const profileButton = document.querySelector('.sidebar-item[data-target="profile-section"]');
+            if (profileButton) {
+              profileButton.classList.add("active");
+            }
+            
+            // Hide form and show profile info
+            const profileForm = document.getElementById("profile-form");
+            const profileInfoCard = document.querySelector(".profile-info-card");
+            const profileActions = document.querySelector(".profile-actions");
+            
+            if (profileForm) profileForm.style.display = "none";
+            if (profileInfoCard) profileInfoCard.style.display = "block";
+            if (profileActions) profileActions.style.display = "flex";
+            
+            // Hide upload button and profile pic overlay
+            const uploadButton = document.getElementById("upload-pic");
+            const profilePicOverlay = document.querySelector(".profile-pic-overlay");
+            if (uploadButton) uploadButton.style.display = "none";
+            if (profilePicOverlay) profilePicOverlay.style.display = "none";
+            
+            // Hide required field indicators
+            const requiredFields = document.querySelectorAll(".required-profile");
+            requiredFields.forEach((field) => {
+              field.style.display = "none";
+            });
           } else {
             showNotification("Error", "Failed to update profile", "error");
           }

@@ -290,7 +290,7 @@ export async function renderPodcastList() {
                     if (response) {
                       renderEpisodeDetail({
                         ...response,
-                        podcast_id: podcast._id // Pass podcast ID
+                        podcastId: podcast._id // Pass podcast ID
                       });
                       document.getElementById("podcast-list").style.display =
                         "none";

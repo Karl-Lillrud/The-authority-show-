@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PodManager | Professional Podcast Management</title>
+    <script>
+      (function(w,d,s,l,i){
+        w[l]=w[l]||[];
+        w[l].push({'gtm.start': new Date().getTime(),event:'gtm.js'});
+        var f=d.getElementsByTagName(s)[0],
+            j=d.createElement(s),
+            dl=l!='dataLayer'?'&l='+l:'';
+        j.async=true;
+        j.src='https://www.googletagmanager.com/gtm.js?id='+i+dl;
+        f.parentNode.insertBefore(j,f);
+      })(window,document,'script','dataLayer','GTM-N7Q86CWB');
+    </script>
+    <!-- Updated favicon-16x16 -->
+    <link
+      rel="icon"
+      type="image/x-icon"
+      href="{{ url_for('static', filename='favicon/favicon.ico') }}"
+    />
+    <!-- Updated favicon.ico -->
+    <link
+      rel="manifest"
+      href="{{ url_for('static', filename='favicon/site.webmanifest') }}"
+    />
+    <title>PodManager</title>
+    <!-- global stylesheets -->
+    {% block head_extra %}
+    <link
+    rel="stylesheet"
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
+    />
+    <link
+      rel="stylesheet"
+      href="{{ url_for('static', filename='css/components/variables.css') }}"
+    />
+    <link
+      rel="stylesheet"
+      href="{{ url_for('static', filename='css/components/general.css') }}"
+    />
+    <link
+    rel="stylesheet"
+    href="{{ url_for('static', filename='css/components/typography.css') }}"
+    />
+    <link
+      rel="stylesheet"
+      href="{{ url_for('static', filename='css/index/index.css') }}"
+    />
+    <!-- other head content -->
+    <script src="{{ url_for('static', filename='js/index/index.js') }}"></script>
+    {% endblock %} <!-- Add block for page-specific head elements -->
+  </head>
+  <body style="display: flex; flex-direction: column; min-height: 100vh">
+    <iframe src="https://www.googletagmanager.com/ns.html?id=GTM-N7Q86CWB" height="0" width="0" style="display:none;visibility:hidden"></iframe>
+    <header class="index-header">
+      <nav>
+        <ul class="to-app">
+          <li><a href="/signin">
+            <svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" preserveAspectRatio="xMidYMid meet" version="1.0" viewBox="0.5 0.5 31.0 31.0" zoomAndPan="magnify" style="fill: rgb(241, 141, 29); width: 22px;" original_string_length="1010"><g id="__id0_sdux9gaiqh"><path d="M2,14.34998h10.84998c0.83002,0,1.5-0.66998,1.5-1.5V2c0-0.83002-0.66998-1.5-1.5-1.5H2C1.16998,0.5,0.5,1.16998,0.5,2 v10.84998C0.5,13.67999,1.16998,14.34998,2,14.34998z" style="fill: inherit;"/><path d="M31.5,2c0-0.83002-0.66998-1.5-1.5-1.5H19.15002c-0.83002,0-1.5,0.66998-1.5,1.5v10.84998c0,0.83002,0.66998,1.5,1.5,1.5 H30c0.83002,0,1.5-0.66998,1.5-1.5V2z" style="fill: inherit;"/><path d="M2,31.5h10.84998c0.83002,0,1.5-0.67004,1.5-1.5V19.14996c0-0.82996-0.66998-1.5-1.5-1.5H2c-0.83002,0-1.5,0.67004-1.5,1.5 V30C0.5,30.82996,1.16998,31.5,2,31.5z" style="fill: inherit;"/><path d="M24.57001,17.64996c-3.82001,0-6.91998,3.10004-6.91998,6.92004S20.75,31.5,24.57001,31.5S31.5,28.39001,31.5,24.57001 S28.39001,17.64996,24.57001,17.64996z" style="fill: inherit;"/></g></svg>
+            To App</a>
+          </li>
+        </ul>
+      
+        <ul class="nav-links">
+          <div class="hamburger-menu" onclick="toggleHamburger(this)">
+            <div class="bar1"></div>
+            <div class="bar2"></div>
+            <div class="bar3"></div>
+          </div>
+          <li class="active nav-item index-banner"><a href="/start">Home</a></li>
+          <li class="nav-item index-about"><a href="#index-about">About</a></li>
+          <li class="nav-item index-features"><a href="#index-features">Features</a></li>
+          <li class="nav-item index-get-started"><a href="#index-get-started">Get Started</a></li>
+        </ul>
+      </nav>
+    </header>
+    <main style="flex: 1">
+      <section id="index-banner">
+        <figure id="logo"><a href="/"><img src="/static/images/PodManagerLogo.png" alt="PodManager Logo"></a></figure>
+        <div id="product-review-1" class="product-review">
+          <div class="product-rating">
+            <svg width="30px" height="30px" viewBox="0.5 0 23.00 23.00" fill="none" xmlns="http://www.w3.org/2000/svg" stroke="#2b2b2b" stroke-width="1.9200000000000004" transform="matrix(1, 0, 0, 1, 0, 0)rotate(0)"><g id="SVGRepo_bgCarrier" stroke-width="0"></g><g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round" stroke="#CCCCCC" stroke-width="0.4800000000000001"></g><g id="SVGRepo_iconCarrier"> <path d="M11.5245 3.46353C11.6741 3.00287 12.3259 3.00287 12.4755 3.46353L14.1329 8.56434C14.1998 8.77035 14.3918 8.90983 14.6084 8.90983H19.9717C20.4561 8.90983 20.6575 9.52964 20.2656 9.81434L15.9266 12.9668C15.7514 13.0941 15.678 13.3198 15.745 13.5258L17.4023 18.6266C17.552 19.0873 17.0248 19.4704 16.6329 19.1857L12.2939 16.0332C12.1186 15.9059 11.8814 15.9059 11.7061 16.0332L7.3671 19.1857C6.97524 19.4704 6.448 19.0873 6.59768 18.6266L8.25503 13.5258C8.32197 13.3198 8.24864 13.0941 8.07339 12.9668L3.73438 9.81434C3.34253 9.52964 3.54392 8.90983 4.02828 8.90983H9.39159C9.6082 8.90983 9.80018 8.77035 9.86712 8.56434L11.5245 3.46353Z" fill="#2b2b2b"></path> </g></svg>
+            <svg width="30px" height="30px" viewBox="0.5 0 23.00 23.00" fill="none" xmlns="http://www.w3.org/2000/svg" stroke="#2b2b2b" stroke-width="1.9200000000000004" transform="matrix(1, 0, 0, 1, 0, 0)rotate(0)"><g id="SVGRepo_bgCarrier" stroke-width="0"></g><g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round" stroke="#CCCCCC" stroke-width="0.4800000000000001"></g><g id="SVGRepo_iconCarrier"> <path d="M11.5245 3.46353C11.6741 3.00287 12.3259 3.00287 12.4755 3.46353L14.1329 8.56434C14.1998 8.77035 14.3918 8.90983 14.6084 8.90983H19.9717C20.4561 8.90983 20.6575 9.52964 20.2656 9.81434L15.9266 12.9668C15.7514 13.0941 15.678 13.3198 15.745 13.5258L17.4023 18.6266C17.552 19.0873 17.0248 19.4704 16.6329 19.1857L12.2939 16.0332C12.1186 15.9059 11.8814 15.9059 11.7061 16.0332L7.3671 19.1857C6.97524 19.4704 6.448 19.0873 6.59768 18.6266L8.25503 13.5258C8.32197 13.3198 8.24864 13.0941 8.07339 12.9668L3.73438 9.81434C3.34253 9.52964 3.54392 8.90983 4.02828 8.90983H9.39159C9.6082 8.90983 9.80018 8.77035 9.86712 8.56434L11.5245 3.46353Z" fill="#2b2b2b"></path> </g></svg>
+            <svg width="30px" height="30px" viewBox="0.5 0 23.00 23.00" fill="none" xmlns="http://www.w3.org/2000/svg" stroke="#2b2b2b" stroke-width="1.9200000000000004" transform="matrix(1, 0, 0, 1, 0, 0)rotate(0)"><g id="SVGRepo_bgCarrier" stroke-width="0"></g><g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round" stroke="#CCCCCC" stroke-width="0.4800000000000001"></g><g id="SVGRepo_iconCarrier"> <path d="M11.5245 3.46353C11.6741 3.00287 12.3259 3.00287 12.4755 3.46353L14.1329 8.56434C14.1998 8.77035 14.3918 8.90983 14.6084 8.90983H19.9717C20.4561 8.90983 20.6575 9.52964 20.2656 9.81434L15.9266 12.9668C15.7514 13.0941 15.678 13.3198 15.745 13.5258L17.4023 18.6266C17.552 19.0873 17.0248 19.4704 16.6329 19.1857L12.2939 16.0332C12.1186 15.9059 11.8814 15.9059 11.7061 16.0332L7.3671 19.1857C6.97524 19.4704 6.448 19.0873 6.59768 18.6266L8.25503 13.5258C8.32197 13.3198 8.24864 13.0941 8.07339 12.9668L3.73438 9.81434C3.34253 9.52964 3.54392 8.90983 4.02828 8.90983H9.39159C9.6082 8.90983 9.80018 8.77035 9.86712 8.56434L11.5245 3.46353Z" fill="#2b2b2b"></path> </g></svg>
+            <svg width="30px" height="30px" viewBox="0.5 0 23.00 23.00" fill="none" xmlns="http://www.w3.org/2000/svg" stroke="#2b2b2b" stroke-width="1.9200000000000004" transform="matrix(1, 0, 0, 1, 0, 0)rotate(0)"><g id="SVGRepo_bgCarrier" stroke-width="0"></g><g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round" stroke="#CCCCCC" stroke-width="0.4800000000000001"></g><g id="SVGRepo_iconCarrier"> <path d="M11.5245 3.46353C11.6741 3.00287 12.3259 3.00287 12.4755 3.46353L14.1329 8.56434C14.1998 8.77035 14.3918 8.90983 14.6084 8.90983H19.9717C20.4561 8.90983 20.6575 9.52964 20.2656 9.81434L15.9266 12.9668C15.7514 13.0941 15.678 13.3198 15.745 13.5258L17.4023 18.6266C17.552 19.0873 17.0248 19.4704 16.6329 19.1857L12.2939 16.0332C12.1186 15.9059 11.8814 15.9059 11.7061 16.0332L7.3671 19.1857C6.97524 19.4704 6.448 19.0873 6.59768 18.6266L8.25503 13.5258C8.32197 13.3198 8.24864 13.0941 8.07339 12.9668L3.73438 9.81434C3.34253 9.52964 3.54392 8.90983 4.02828 8.90983H9.39159C9.6082 8.90983 9.80018 8.77035 9.86712 8.56434L11.5245 3.46353Z" fill="rgba(255,255,255,0)"></path> </g></svg>
+          </div>
+          <p class="product-quote">
+            Thanks to Pod Manager,
+            we’ve grown our audience
+            while spending less time
+            on admin.</p>
+          <span class="product-review-author">– James P. The Other Side</span>
+        </div>
+        <div id="product-review-2" class="product-review">
+          <div class="product-rating">
+            <svg width="30px" height="30px" viewBox="0.5 0 23.00 23.00" fill="none" xmlns="http://www.w3.org/2000/svg" stroke="#2b2b2b" stroke-width="1.9200000000000004" transform="matrix(1, 0, 0, 1, 0, 0)rotate(0)"><g id="SVGRepo_bgCarrier" stroke-width="0"></g><g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round" stroke="#CCCCCC" stroke-width="0.4800000000000001"></g><g id="SVGRepo_iconCarrier"> <path d="M11.5245 3.46353C11.6741 3.00287 12.3259 3.00287 12.4755 3.46353L14.1329 8.56434C14.1998 8.77035 14.3918 8.90983 14.6084 8.90983H19.9717C20.4561 8.90983 20.6575 9.52964 20.2656 9.81434L15.9266 12.9668C15.7514 13.0941 15.678 13.3198 15.745 13.5258L17.4023 18.6266C17.552 19.0873 17.0248 19.4704 16.6329 19.1857L12.2939 16.0332C12.1186 15.9059 11.8814 15.9059 11.7061 16.0332L7.3671 19.1857C6.97524 19.4704 6.448 19.0873 6.59768 18.6266L8.25503 13.5258C8.32197 13.3198 8.24864 13.0941 8.07339 12.9668L3.73438 9.81434C3.34253 9.52964 3.54392 8.90983 4.02828 8.90983H9.39159C9.6082 8.90983 9.80018 8.77035 9.86712 8.56434L11.5245 3.46353Z" fill="#2b2b2b"></path> </g></svg>
+            <svg width="30px" height="30px" viewBox="0.5 0 23.00 23.00" fill="none" xmlns="http://www.w3.org/2000/svg" stroke="#2b2b2b" stroke-width="1.9200000000000004" transform="matrix(1, 0, 0, 1, 0, 0)rotate(0)"><g id="SVGRepo_bgCarrier" stroke-width="0"></g><g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round" stroke="#CCCCCC" stroke-width="0.4800000000000001"></g><g id="SVGRepo_iconCarrier"> <path d="M11.5245 3.46353C11.6741 3.00287 12.3259 3.00287 12.4755 3.46353L14.1329 8.56434C14.1998 8.77035 14.3918 8.90983 14.6084 8.90983H19.9717C20.4561 8.90983 20.6575 9.52964 20.2656 9.81434L15.9266 12.9668C15.7514 13.0941 15.678 13.3198 15.745 13.5258L17.4023 18.6266C17.552 19.0873 17.0248 19.4704 16.6329 19.1857L12.2939 16.0332C12.1186 15.9059 11.8814 15.9059 11.7061 16.0332L7.3671 19.1857C6.97524 19.4704 6.448 19.0873 6.59768 18.6266L8.25503 13.5258C8.32197 13.3198 8.24864 13.0941 8.07339 12.9668L3.73438 9.81434C3.34253 9.52964 3.54392 8.90983 4.02828 8.90983H9.39159C9.6082 8.90983 9.80018 8.77035 9.86712 8.56434L11.5245 3.46353Z" fill="#2b2b2b"></path> </g></svg>
+            <svg width="30px" height="30px" viewBox="0.5 0 23.00 23.00" fill="none" xmlns="http://www.w3.org/2000/svg" stroke="#2b2b2b" stroke-width="1.9200000000000004" transform="matrix(1, 0, 0, 1, 0, 0)rotate(0)"><g id="SVGRepo_bgCarrier" stroke-width="0"></g><g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round" stroke="#CCCCCC" stroke-width="0.4800000000000001"></g><g id="SVGRepo_iconCarrier"> <path d="M11.5245 3.46353C11.6741 3.00287 12.3259 3.00287 12.4755 3.46353L14.1329 8.56434C14.1998 8.77035 14.3918 8.90983 14.6084 8.90983H19.9717C20.4561 8.90983 20.6575 9.52964 20.2656 9.81434L15.9266 12.9668C15.7514 13.0941 15.678 13.3198 15.745 13.5258L17.4023 18.6266C17.552 19.0873 17.0248 19.4704 16.6329 19.1857L12.2939 16.0332C12.1186 15.9059 11.8814 15.9059 11.7061 16.0332L7.3671 19.1857C6.97524 19.4704 6.448 19.0873 6.59768 18.6266L8.25503 13.5258C8.32197 13.3198 8.24864 13.0941 8.07339 12.9668L3.73438 9.81434C3.34253 9.52964 3.54392 8.90983 4.02828 8.90983H9.39159C9.6082 8.90983 9.80018 8.77035 9.86712 8.56434L11.5245 3.46353Z" fill="#2b2b2b"></path> </g></svg>
+            <svg width="30px" height="30px" viewBox="0.5 0 23.00 23.00" fill="none" xmlns="http://www.w3.org/2000/svg" stroke="#2b2b2b" stroke-width="1.9200000000000004" transform="matrix(1, 0, 0, 1, 0, 0)rotate(0)"><g id="SVGRepo_bgCarrier" stroke-width="0"></g><g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round" stroke="#CCCCCC" stroke-width="0.4800000000000001"></g><g id="SVGRepo_iconCarrier"> <path d="M11.5245 3.46353C11.6741 3.00287 12.3259 3.00287 12.4755 3.46353L14.1329 8.56434C14.1998 8.77035 14.3918 8.90983 14.6084 8.90983H19.9717C20.4561 8.90983 20.6575 9.52964 20.2656 9.81434L15.9266 12.9668C15.7514 13.0941 15.678 13.3198 15.745 13.5258L17.4023 18.6266C17.552 19.0873 17.0248 19.4704 16.6329 19.1857L12.2939 16.0332C12.1186 15.9059 11.8814 15.9059 11.7061 16.0332L7.3671 19.1857C6.97524 19.4704 6.448 19.0873 6.59768 18.6266L8.25503 13.5258C8.32197 13.3198 8.24864 13.0941 8.07339 12.9668L3.73438 9.81434C3.34253 9.52964 3.54392 8.90983 4.02828 8.90983H9.39159C9.6082 8.90983 9.80018 8.77035 9.86712 8.56434L11.5245 3.46353Z" fill="#2b2b2b"></path> </g></svg>
+            <svg width="30px" height="30px" viewBox="0.5 0 23.00 23.00" fill="none" xmlns="http://www.w3.org/2000/svg" stroke="#2b2b2b" stroke-width="1.9200000000000004" transform="matrix(1, 0, 0, 1, 0, 0)rotate(0)"><g id="SVGRepo_bgCarrier" stroke-width="0"></g><g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round" stroke="#CCCCCC" stroke-width="0.4800000000000001"></g><g id="SVGRepo_iconCarrier"> <path d="M11.5245 3.46353C11.6741 3.00287 12.3259 3.00287 12.4755 3.46353L14.1329 8.56434C14.1998 8.77035 14.3918 8.90983 14.6084 8.90983H19.9717C20.4561 8.90983 20.6575 9.52964 20.2656 9.81434L15.9266 12.9668C15.7514 13.0941 15.678 13.3198 15.745 13.5258L17.4023 18.6266C17.552 19.0873 17.0248 19.4704 16.6329 19.1857L12.2939 16.0332C12.1186 15.9059 11.8814 15.9059 11.7061 16.0332L7.3671 19.1857C6.97524 19.4704 6.448 19.0873 6.59768 18.6266L8.25503 13.5258C8.32197 13.3198 8.24864 13.0941 8.07339 12.9668L3.73438 9.81434C3.34253 9.52964 3.54392 8.90983 4.02828 8.90983H9.39159C9.6082 8.90983 9.80018 8.77035 9.86712 8.56434L11.5245 3.46353Z" fill="rgba(255,255,255,0)"></path> </g></svg>
+          </div>
+          <p class="product-quote">
+            We’ve doubled our output and
+            halved our stress with Pod
+            Manager—the automation is
+            pure genius!</p>
+          <span class="product-review-author">– Alex R. The CMO</span>
+        </div>
+        <div id="product-review-3" class="product-review">
+          <div class="product-rating">
+            <svg width="30px" height="30px" viewBox="0.5 0 23.00 23.00" fill="none" xmlns="http://www.w3.org/2000/svg" stroke="#2b2b2b" stroke-width="1.9200000000000004" transform="matrix(1, 0, 0, 1, 0, 0)rotate(0)"><g id="SVGRepo_bgCarrier" stroke-width="0"></g><g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round" stroke="#CCCCCC" stroke-width="0.4800000000000001"></g><g id="SVGRepo_iconCarrier"> <path d="M11.5245 3.46353C11.6741 3.00287 12.3259 3.00287 12.4755 3.46353L14.1329 8.56434C14.1998 8.77035 14.3918 8.90983 14.6084 8.90983H19.9717C20.4561 8.90983 20.6575 9.52964 20.2656 9.81434L15.9266 12.9668C15.7514 13.0941 15.678 13.3198 15.745 13.5258L17.4023 18.6266C17.552 19.0873 17.0248 19.4704 16.6329 19.1857L12.2939 16.0332C12.1186 15.9059 11.8814 15.9059 11.7061 16.0332L7.3671 19.1857C6.97524 19.4704 6.448 19.0873 6.59768 18.6266L8.25503 13.5258C8.32197 13.3198 8.24864 13.0941 8.07339 12.9668L3.73438 9.81434C3.34253 9.52964 3.54392 8.90983 4.02828 8.90983H9.39159C9.6082 8.90983 9.80018 8.77035 9.86712 8.56434L11.5245 3.46353Z" fill="#2b2b2b"></path> </g></svg>
+            <svg width="30px" height="30px" viewBox="0.5 0 23.00 23.00" fill="none" xmlns="http://www.w3.org/2000/svg" stroke="#2b2b2b" stroke-width="1.9200000000000004" transform="matrix(1, 0, 0, 1, 0, 0)rotate(0)"><g id="SVGRepo_bgCarrier" stroke-width="0"></g><g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round" stroke="#CCCCCC" stroke-width="0.4800000000000001"></g><g id="SVGRepo_iconCarrier"> <path d="M11.5245 3.46353C11.6741 3.00287 12.3259 3.00287 12.4755 3.46353L14.1329 8.56434C14.1998 8.77035 14.3918 8.90983 14.6084 8.90983H19.9717C20.4561 8.90983 20.6575 9.52964 20.2656 9.81434L15.9266 12.9668C15.7514 13.0941 15.678 13.3198 15.745 13.5258L17.4023 18.6266C17.552 19.0873 17.0248 19.4704 16.6329 19.1857L12.2939 16.0332C12.1186 15.9059 11.8814 15.9059 11.7061 16.0332L7.3671 19.1857C6.97524 19.4704 6.448 19.0873 6.59768 18.6266L8.25503 13.5258C8.32197 13.3198 8.24864 13.0941 8.07339 12.9668L3.73438 9.81434C3.34253 9.52964 3.54392 8.90983 4.02828 8.90983H9.39159C9.6082 8.90983 9.80018 8.77035 9.86712 8.56434L11.5245 3.46353Z" fill="#2b2b2b"></path> </g></svg>
+            <svg width="30px" height="30px" viewBox="0.5 0 23.00 23.00" fill="none" xmlns="http://www.w3.org/2000/svg" stroke="#2b2b2b" stroke-width="1.9200000000000004" transform="matrix(1, 0, 0, 1, 0, 0)rotate(0)"><g id="SVGRepo_bgCarrier" stroke-width="0"></g><g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round" stroke="#CCCCCC" stroke-width="0.4800000000000001"></g><g id="SVGRepo_iconCarrier"> <path d="M11.5245 3.46353C11.6741 3.00287 12.3259 3.00287 12.4755 3.46353L14.1329 8.56434C14.1998 8.77035 14.3918 8.90983 14.6084 8.90983H19.9717C20.4561 8.90983 20.6575 9.52964 20.2656 9.81434L15.9266 12.9668C15.7514 13.0941 15.678 13.3198 15.745 13.5258L17.4023 18.6266C17.552 19.0873 17.0248 19.4704 16.6329 19.1857L12.2939 16.0332C12.1186 15.9059 11.8814 15.9059 11.7061 16.0332L7.3671 19.1857C6.97524 19.4704 6.448 19.0873 6.59768 18.6266L8.25503 13.5258C8.32197 13.3198 8.24864 13.0941 8.07339 12.9668L3.73438 9.81434C3.34253 9.52964 3.54392 8.90983 4.02828 8.90983H9.39159C9.6082 8.90983 9.80018 8.77035 9.86712 8.56434L11.5245 3.46353Z" fill="#2b2b2b"></path> </g></svg>
+            <svg width="30px" height="30px" viewBox="0.5 0 23.00 23.00" fill="none" xmlns="http://www.w3.org/2000/svg" stroke="#2b2b2b" stroke-width="1.9200000000000004" transform="matrix(1, 0, 0, 1, 0, 0)rotate(0)"><g id="SVGRepo_bgCarrier" stroke-width="0"></g><g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round" stroke="#CCCCCC" stroke-width="0.4800000000000001"></g><g id="SVGRepo_iconCarrier"> <path d="M11.5245 3.46353C11.6741 3.00287 12.3259 3.00287 12.4755 3.46353L14.1329 8.56434C14.1998 8.77035 14.3918 8.90983 14.6084 8.90983H19.9717C20.4561 8.90983 20.6575 9.52964 20.2656 9.81434L15.9266 12.9668C15.7514 13.0941 15.678 13.3198 15.745 13.5258L17.4023 18.6266C17.552 19.0873 17.0248 19.4704 16.6329 19.1857L12.2939 16.0332C12.1186 15.9059 11.8814 15.9059 11.7061 16.0332L7.3671 19.1857C6.97524 19.4704 6.448 19.0873 6.59768 18.6266L8.25503 13.5258C8.32197 13.3198 8.24864 13.0941 8.07339 12.9668L3.73438 9.81434C3.34253 9.52964 3.54392 8.90983 4.02828 8.90983H9.39159C9.6082 8.90983 9.80018 8.77035 9.86712 8.56434L11.5245 3.46353Z" fill="#2b2b2b"></path> </g></svg>
+            <svg width="30px" height="30px" viewBox="0.5 0 23.00 23.00" fill="none" xmlns="http://www.w3.org/2000/svg" stroke="#2b2b2b" stroke-width="1.9200000000000004" transform="matrix(1, 0, 0, 1, 0, 0)rotate(0)"><g id="SVGRepo_bgCarrier" stroke-width="0"></g><g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round" stroke="#CCCCCC" stroke-width="0.4800000000000001"></g><g id="SVGRepo_iconCarrier"> <path d="M11.5245 3.46353C11.6741 3.00287 12.3259 3.00287 12.4755 3.46353L14.1329 8.56434C14.1998 8.77035 14.3918 8.90983 14.6084 8.90983H19.9717C20.4561 8.90983 20.6575 9.52964 20.2656 9.81434L15.9266 12.9668C15.7514 13.0941 15.678 13.3198 15.745 13.5258L17.4023 18.6266C17.552 19.0873 17.0248 19.4704 16.6329 19.1857L12.2939 16.0332C12.1186 15.9059 11.8814 15.9059 11.7061 16.0332L7.3671 19.1857C6.97524 19.4704 6.448 19.0873 6.59768 18.6266L8.25503 13.5258C8.32197 13.3198 8.24864 13.0941 8.07339 12.9668L3.73438 9.81434C3.34253 9.52964 3.54392 8.90983 4.02828 8.90983H9.39159C9.6082 8.90983 9.80018 8.77035 9.86712 8.56434L11.5245 3.46353Z" fill="rgba(255,255,255,0)"></path> </g></svg>
+          </div>
+          <p class="product-quote">
+            Pod Manager is like
+            having a production
+            assistant that never
+            sleeps. Highly
+            recommended!</p>
+          <span class="product-review-author">– Samantha T. The Leadership Institute</span>
+        </div>
+      </section>
+
+      <section id="index-about">
+        <article>
+          <div class="container">
+            <h1>What is PodManager?</h1>
+            <p>PodManager is a powerful podcast management platform designed to
+              streamline the podcasting experience for creators. With features that assist in
+              guest management, episode organization, team collaboration, task
+              management, and audio enhancement, it's the all-in-one solution for
+              podcasters looking to elevate their production workflow. </p>
+            <p>PodManager simplifies podcast creation and management. Whether you're a
+              solo creator or leading a team, this platform brings all the essential tools
+              together in one place. </p>
+            <p>It's designed to help you manage every aspect of your podcast from start to
+              finish, ensuring efficiency and high-quality production at every step.</p>
+              <div class="benefits-container">
+                <ul>
+                  <li>
+                    <svg style="stroke: rgb(246, 146, 41);fill: rgb(246, 146, 41); width: 16px; height: 3px; overflow: visible;"><path d="M7.105427357601002e-15,1.5L15.119831534867437,1.5" stroke-linecap="butt" stroke-width="3" fill="none" pointer-events="auto" opacity="0" class="_682gpw" style="touch-action: pan-x pan-y pinch-zoom;"></path><g><path d="M7.105427357601002e-15,1.5L15.119831534867437,1.5" stroke-linecap="butt" stroke-width="3" fill="none" pointer-events="none"></path><path fill="none" stroke-linejoin="round" stroke-linecap="round" stroke-width="3" d="M9.119831534867437,-3L15.119831534867437,1.5L9.119831534867437,6" pointer-events="auto" class="_682gpw" style="touch-action: pan-x pan-y pinch-zoom;"></path></g></svg>
+                    Save time with streamlined workflows
+                  </li>
+                  <li>
+                    <svg style="stroke: rgb(246, 146, 41);fill: rgb(246, 146, 41); width: 16px; height: 3px; overflow: visible;"><path d="M7.105427357601002e-15,1.5L15.119831534867437,1.5" stroke-linecap="butt" stroke-width="3" fill="none" pointer-events="auto" opacity="0" class="_682gpw" style="touch-action: pan-x pan-y pinch-zoom;"></path><g><path d="M7.105427357601002e-15,1.5L15.119831534867437,1.5" stroke-linecap="butt" stroke-width="3" fill="none" pointer-events="none"></path><path fill="none" stroke-linejoin="round" stroke-linecap="round" stroke-width="3" d="M9.119831534867437,-3L15.119831534867437,1.5L9.119831534867437,6" pointer-events="auto" class="_682gpw" style="touch-action: pan-x pan-y pinch-zoom;"></path></g></svg>
+                    Improve audio quality with AI-powered tools
+                  </li>
+                  <li>
+                    <svg style="stroke: rgb(246, 146, 41);fill: rgb(246, 146, 41); width: 16px; height: 3px; overflow: visible;"><path d="M7.105427357601002e-15,1.5L15.119831534867437,1.5" stroke-linecap="butt" stroke-width="3" fill="none" pointer-events="auto" opacity="0" class="_682gpw" style="touch-action: pan-x pan-y pinch-zoom;"></path><g><path d="M7.105427357601002e-15,1.5L15.119831534867437,1.5" stroke-linecap="butt" stroke-width="3" fill="none" pointer-events="none"></path><path fill="none" stroke-linejoin="round" stroke-linecap="round" stroke-width="3" d="M9.119831534867437,-3L15.119831534867437,1.5L9.119831534867437,6" pointer-events="auto" class="_682gpw" style="touch-action: pan-x pan-y pinch-zoom;"></path></g></svg>
+                    Enhance team collaboration and communication
+                  </li>
+                  <li>
+                    <svg style="stroke: rgb(246, 146, 41);fill: rgb(246, 146, 41); width: 16px; height: 3px; overflow: visible;"><path d="M7.105427357601002e-15,1.5L15.119831534867437,1.5" stroke-linecap="butt" stroke-width="3" fill="none" pointer-events="auto" opacity="0" class="_682gpw" style="touch-action: pan-x pan-y pinch-zoom;"></path><g><path d="M7.105427357601002e-15,1.5L15.119831534867437,1.5" stroke-linecap="butt" stroke-width="3" fill="none" pointer-events="none"></path><path fill="none" stroke-linejoin="round" stroke-linecap="round" stroke-width="3" d="M9.119831534867437,-3L15.119831534867437,1.5L9.119831534867437,6" pointer-events="auto" class="_682gpw" style="touch-action: pan-x pan-y pinch-zoom;"></path></g></svg>
+                    Simplify guest booking and management
+                  </li>
+                  <li>
+                    <svg style="stroke: rgb(246, 146, 41);fill: rgb(246, 146, 41); width: 16px; height: 3px; overflow: visible;"><path d="M7.105427357601002e-15,1.5L15.119831534867437,1.5" stroke-linecap="butt" stroke-width="3" fill="none" pointer-events="auto" opacity="0" class="_682gpw" style="touch-action: pan-x pan-y pinch-zoom;"></path><g><path d="M7.105427357601002e-15,1.5L15.119831534867437,1.5" stroke-linecap="butt" stroke-width="3" fill="none" pointer-events="none"></path><path fill="none" stroke-linejoin="round" stroke-linecap="round" stroke-width="3" d="M9.119831534867437,-3L15.119831534867437,1.5L9.119831534867437,6" pointer-events="auto" class="_682gpw" style="touch-action: pan-x pan-y pinch-zoom;"></path></g></svg>
+                    Scale your podcast production efficiently
+                  </li>
+                </ul>
+              </div>
+          </div>
+          <div class="container">
+            <figure id="about-figure-1"><img src="/static/images/index/podmanager-screen-1.PNG" alt="Podcast Management Application"></figure>
+            <figure id="about-figure-2"><img src="/static/images/index/karl-portrait.png" alt="Karl Lillrud: CEO"></figure>
+          </div>
+        </article>
+      </section>
+  
+      <section id="index-features">
+        <article>
+          <div class="container">
+            <figure id="feature-figure-1"><img src="/static/images/index/podmanager-screen-2.PNG" alt="Podmanager Dashboard"></figure>
+          </div>
+          <div class="container">
+            <h2>Feature: Podcast Dashboard</h2>
+            <p>Track your podcast performance with detailed analytics. Understand your
+              audience better, see which episodes perform best, and make data-driven
+              decisions to grow your podcast.</p>
+          </div>
+        </article>
+        <article>
+          <div class="container">
+            <h2>Feature: Episode To-Do</h2>
+            <p>Stay organized and efficient with <b>Episode To-Do</b>, the customizable task flow that
+              integrates all your AI editing features. Whether you need AI tasks or default
+              actions, each task comes with built-in dependencies and easy-to-follow
+              instructions to ensure a smooth process every time. Your workflow, your way –
+              powered by <b>PodManager's</b> intuitive tools.</p>
+          </div>
+          <div class="container">
+            <figure id="feature-figure-2"><img src="/static/images/index/podmanager-screen-3.PNG" alt="Podmanager Episode To-Do"></figure>
+          </div>
+        </article>
+        <article>
+          <div class="container">
+            <figure id="feature-figure-3"><img src="/static/images/index/podmanager-screen-4.PNG" alt="Podmanager Guest Management"></figure>
+          </div>
+          <div class="container">
+            <h2>Feature: Guest Management</h2>
+            <p>Invite and manage guests with ease. The platform integrates with your calendar
+              to allow guests to select available times, fill out necessary information, and
+              confirm their participation.</p>
+          </div>
+        </article>
+        <article>
+          <div class="container">
+            <h2>Feature: Team Collaboration</h2>
+            <p>Create a team for your podcast and assign specific roles to each team member. 
+              Whether you need help with editing, social media management, or content creation, 
+              team collaboration is made simple</p>
+          </div>
+          <div class="container">
+            <figure id="feature-figure-4"><img src="/static/images/index/podmanager-screen-5.PNG" alt="Podmanager Team Collaboration"></figure>
+          </div>
+        </article>
+        <article>
+          <div class="container">
+            <figure id="feature-figure-5"><img src="/static/images/index/podmanager-screen-6.PNG" alt="Dynamic Storage with Azure"></figure>
+          </div>
+          <div class="container">
+            <h2>Feature: Dynamic Storage with Azure</h2>
+            <p>We’ve upgraded our infrastructure for <b>dynamic storage and resource
+              management</b> with Azure Blob Storage. This ensures faster, more reliable access
+              to your podcast files, organized into easy-to-navigate folders. No more worrying
+              about file storage limitations – just smooth, scalable podcast management.</p>
+          </div>
+        </article>
+        <article>
+          <h2>Future Features</h2>
+          <p class="future-features-description">Here are some features we’re planning to make for future releases.</p>
+          <div class="future-features-container">
+            <div class="future-feature-item">
+              <div class="future-item-icon">
+                <svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" preserveAspectRatio="xMidYMid meet" version="1.0" viewBox="0.0 0.0 77.7 72.0" zoomAndPan="magnify" style="fill: rgb(255, 255, 255);" original_string_length="685"><g id="__id1_sdtf114zsq"><path d="M40.865 61.688L48.765 70.682 49.045 71 91.695 33.529 83.512 24.217 50.039 53.627 38.365 40.344 29.188 48.405z" transform="translate(-14 -14)" style="fill: inherit;"/></g><g id="__id2_sdtf114zsq"><path d="m77 77h-54v-54h54v1.541l7.47-6.547c-1.614-2.408-4.354-3.994-7.47-3.994h-54c-4.97 0-9 4.03-9 9v54c0 4.969 4.03 9 9 9h54c4.971 0 9-4.031 9-9v-33.143l-9 7.907v25.236z" transform="translate(-14 -14)" style="fill: inherit;"/></g></svg>
+              </div>
+              <h3>Quotes AI</h3>
+              <p>Generate quote ads automatically
+                that quotes your recorded episode,
+                made for direct marketing!</p>
+            </div>
+            <div class="future-feature-item">
+              <div class="future-item-icon">
+                <svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" preserveAspectRatio="xMidYMid meet" version="1.0" viewBox="0.0 0.0 77.7 72.0" zoomAndPan="magnify" style="fill: rgb(255, 255, 255);" original_string_length="685"><g id="__id1_sdtf114zsq"><path d="M40.865 61.688L48.765 70.682 49.045 71 91.695 33.529 83.512 24.217 50.039 53.627 38.365 40.344 29.188 48.405z" transform="translate(-14 -14)" style="fill: inherit;"/></g><g id="__id2_sdtf114zsq"><path d="m77 77h-54v-54h54v1.541l7.47-6.547c-1.614-2.408-4.354-3.994-7.47-3.994h-54c-4.97 0-9 4.03-9 9v54c0 4.969 4.03 9 9 9h54c4.971 0 9-4.031 9-9v-33.143l-9 7.907v25.236z" transform="translate(-14 -14)" style="fill: inherit;"/></g></svg>
+              </div>
+              <h3>Thumbnails AI</h3>
+              <p>Auto- generation of Thumbnails for
+                your social media channels!</p>
+            </div>
+            <div class="future-feature-item">
+              <div class="future-item-icon">
+                <svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" preserveAspectRatio="xMidYMid meet" version="1.0" viewBox="0.0 0.0 77.7 72.0" zoomAndPan="magnify" style="fill: rgb(255, 255, 255);" original_string_length="685"><g id="__id1_sdtf114zsq"><path d="M40.865 61.688L48.765 70.682 49.045 71 91.695 33.529 83.512 24.217 50.039 53.627 38.365 40.344 29.188 48.405z" transform="translate(-14 -14)" style="fill: inherit;"/></g><g id="__id2_sdtf114zsq"><path d="m77 77h-54v-54h54v1.541l7.47-6.547c-1.614-2.408-4.354-3.994-7.47-3.994h-54c-4.97 0-9 4.03-9 9v54c0 4.969 4.03 9 9 9h54c4.971 0 9-4.031 9-9v-33.143l-9 7.907v25.236z" transform="translate(-14 -14)" style="fill: inherit;"/></g></svg>
+              </div>
+              <h3>Recording Studio</h3>
+              <p>PodManager's own recording
+                solution for you and your guests to
+                record your episodes!</p>
+            </div>
+          </div>
+        </article>
+      </section>
+
+      <section id="index-get-started">
+        <h1>Get Started</h1>
+        <p>Visit <b>app.podmanager.ai</b> to get started.</p>
+        <p>It's completely <span style="font-weight:bold; color: var(--index-highlight-color)">FREE!</span></p>
+        <a href="/signin" class="button">Try It Out</a>
+        <div id="get-started-animated-lottie-1" class="get-started-lottie">
+          <!--276,275 to 708,707-->
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512" preserveAspectRatio="xMidYMid meet" style="width: 100%; height: 100%;"><g transform="matrix(0,1,-1,0,276,276)" opacity="1" style="display: block;"><path fill="rgb(246,146,41)" fill-opacity="1" d=" M-235.343994140625,235.99200439453125 C-235.343994140625,235.99200439453125 -246.58200073242188,245.02200317382812 -269.572998046875,250.26400756835938 C-298.8900146484375,256.947998046875 -346.5419921875,246.9550018310547 -354.2330017089844,261.83099365234375 C-360.0159912109375,273.0159912109375 -340.47900390625,344.79998779296875 -376.74700927734375,381.6579895019531 C-413.0150146484375,418.5159912109375 -509.0159912109375,394.0159912109375 -516.3519897460938,415.2969970703125 C-522.6799926757812,433.65301513671875 -504.1159973144531,515.8140258789062 -542.0659790039062,552.9149780273438 C-580.0159912109375,590.0159912109375 -668.0159912109375,563.0159912109375 -674.0159912109375,582.0159912109375 C-680.0159912109375,601.0159912109375 -670.2659912109375,629.0159912109375 -680.7449951171875,668.2009887695312 C-688.6300048828125,697.6840209960938 -707.0159912109375,708.218994140625 -707.0159912109375,708.218994140625 C-707.0159912109375,708.218994140625 -707.0159912109375,236.01600646972656 -707.0159912109375,236.01600646972656 C-707.0159912109375,236.01600646972656 -235.343994140625,235.99200439453125 -235.343994140625,235.99200439453125z M235.6719970703125,-236.0229949951172 C235.6719970703125,-236.0229949951172 224.4340057373047,-226.99400329589844 201.4429931640625,-221.7519989013672 C172.1269989013672,-215.0679931640625 124.4729995727539,-225.06100463867188 116.78199768066406,-210.18499755859375 C111,-199 130.53599548339844,-127.21600341796875 94.26799774169922,-90.35800170898438 C58,-53.5 -38,-78 -45.33700180053711,-56.71900177001953 C-51.665000915527344,-38.362998962402344 -33.099998474121094,43.79800033569336 -71.05000305175781,80.89900207519531 C-109,118 -197,91 -203,110 C-209,129 -199.25,157 -209.72900390625,196.18499755859375 C-217.61399841308594,225.66799926757812 -236,236.2030029296875 -236,236.2030029296875 C-236,236.2030029296875 -787,239 -787,239 C-787,239 -822,-236 -822,-236 C-822,-236 235.6719970703125,-236.0229949951172 235.6719970703125,-236.0229949951172z"></path></g></svg>
+        </div>
+        <div id="get-started-animated-lottie-2" class="get-started-lottie">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512" preserveAspectRatio="xMidYMid meet" style="width: 100%; height: 100%;"><g transform="matrix(0,1,-1,0,276,276)" opacity="1" style="display: block;"><path fill="rgb(246,146,41)" fill-opacity="1" d=" M-235.343994140625,235.99200439453125 C-235.343994140625,235.99200439453125 -246.58200073242188,245.02200317382812 -269.572998046875,250.26400756835938 C-298.8900146484375,256.947998046875 -346.5419921875,246.9550018310547 -354.2330017089844,261.83099365234375 C-360.0159912109375,273.0159912109375 -340.47900390625,344.79998779296875 -376.74700927734375,381.6579895019531 C-413.0150146484375,418.5159912109375 -509.0159912109375,394.0159912109375 -516.3519897460938,415.2969970703125 C-522.6799926757812,433.65301513671875 -504.1159973144531,515.8140258789062 -542.0659790039062,552.9149780273438 C-580.0159912109375,590.0159912109375 -668.0159912109375,563.0159912109375 -674.0159912109375,582.0159912109375 C-680.0159912109375,601.0159912109375 -670.2659912109375,629.0159912109375 -680.7449951171875,668.2009887695312 C-688.6300048828125,697.6840209960938 -707.0159912109375,708.218994140625 -707.0159912109375,708.218994140625 C-707.0159912109375,708.218994140625 -707.0159912109375,236.01600646972656 -707.0159912109375,236.01600646972656 C-707.0159912109375,236.01600646972656 -235.343994140625,235.99200439453125 -235.343994140625,235.99200439453125z M235.6719970703125,-236.0229949951172 C235.6719970703125,-236.0229949951172 224.4340057373047,-226.99400329589844 201.4429931640625,-221.7519989013672 C172.1269989013672,-215.0679931640625 124.4729995727539,-225.06100463867188 116.78199768066406,-210.18499755859375 C111,-199 130.53599548339844,-127.21600341796875 94.26799774169922,-90.35800170898438 C58,-53.5 -38,-78 -45.33700180053711,-56.71900177001953 C-51.665000915527344,-38.362998962402344 -33.099998474121094,43.79800033569336 -71.05000305175781,80.89900207519531 C-109,118 -197,91 -203,110 C-209,129 -199.25,157 -209.72900390625,196.18499755859375 C-217.61399841308594,225.66799926757812 -236,236.2030029296875 -236,236.2030029296875 C-236,236.2030029296875 -787,239 -787,239 C-787,239 -822,-236 -822,-236 C-822,-236 235.6719970703125,-236.0229949951172 235.6719970703125,-236.0229949951172z"></path></g></svg>
+        </div>
+      </section>
+    </main>
+    {% include 'components/footer.html' %}
+  </body>
+</html>

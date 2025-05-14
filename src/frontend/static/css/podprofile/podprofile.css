@@ -622,8 +622,6 @@ body.dark-mode .podcast-container {
   flex: 1;
   padding: 24px;
   border-right: 1px solid rgba(0, 0, 0, 0.1);
-  overflow-y: auto;
-  max-height: 600px;
 }
 
 body.dark-mode .podcast-details {
@@ -1126,4 +1124,63 @@ body.dark-mode .error-container {
 #get-started-btn:hover {
   box-shadow: 0 0 10px var(--highlight-color);
   opacity: 0.9;
+}
+
+.podcast-owner {
+  margin-top: var(--spacing-md);
+  padding: var(--spacing-md);
+  background-color: var(--background-light);
+  border-radius: var(--border-radius-md);
+}
+
+.owner-details {
+  margin-top: var(--spacing-sm);
+}
+
+.owner-info {
+  margin-bottom: var(--spacing-sm);
+}
+
+.owner-info h4 {
+  color: var(--text-color-light);
+  font-size: 1rem;
+  margin-bottom: var(--spacing-xs);
+  font-weight: 600;
+}
+
+.owner-name, .owner-email {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+  color: var(--text-color-light);
+  font-size: 0.95rem;
+}
+
+.owner-name i, .owner-email i {
+  color: var(--highlight-color);
+  width: 20px;
+}
+
+body.dark-mode .podcast-owner {
+  background-color: var(--background-dark);
+}
+body.dark-mode .owner-info h4,
+body.dark-mode .owner-name,
+body.dark-mode .owner-email {
+  color: var(--text-color-dark);
+}
+
+
+.form-group-buttons {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+#createPodcast {
+  width: auto;
+}
+
+#createPodcast, #goToEmailSection {
+  min-height: 34px; 
 }

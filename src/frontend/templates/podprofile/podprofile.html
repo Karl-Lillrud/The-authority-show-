@@ -100,18 +100,24 @@
                 paste that URL here.
               </span>
             </div>
-            <input type="url" id="podRss" name="podRss" />
+            <input
+              type="text"
+              id="podRss"
+              name="podRss"
+              data-prefill="{{ pod_rss }}"
+              placeholder="Enter your RSS feed URL"
+            />
           </div>
           <div class="form-group">
             <label for="podName">Podcast's Name</label>
             <input type="text" id="podName" name="podName" required />
           </div>
-          <div class="form-group">
+          <div class="form-group-buttons">
             <button type="button" class="button-primary" id="goToEmailSection">
               Next
             </button>
-            <button type="button" class="button-secondary" id="skipButton" onclick="window.location.href='/podcastmanagement'">
-              Skip
+            <button type="button" class="button-primary" id="createPodcast">
+              Create Your Podcast
             </button>
           </div>
         </form>
@@ -130,7 +136,7 @@
         <h2 id="welcome-title">Welcome to PodManagerAI!</h2>
         <div class="popup-body">
           <p>You’ve just secured your spot in our Beta Program—thank you for joining early.</p>
-          <p>💰 As a special welcome gift, we’ve credited your account with <strong>{{credits}} credits</strong>!</p>
+          <p>💰 As a special welcome gift, we’ve credited your account with <strong>3500 credits</strong>!</p>
           <p>
             PodManagerAI will supercharge your podcast workflow with:
             <div class="feature">

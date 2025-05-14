@@ -61,7 +61,6 @@ class CreditService:
             "subCredits", 0
         ) + credits_doc.get("storeCredits", 0)
 
-        # Convert ObjectId to string for frontend compatibility if needed
         if "_id" in credits_doc:
             credits_doc["_id"] = str(credits_doc["_id"])
 

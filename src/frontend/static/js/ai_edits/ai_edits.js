@@ -41,15 +41,16 @@ if (episodeIdFromUrl) {
 console.log("Using episode ID:", sessionStorage.getItem("selected_episode_id"));
 
 const CREDIT_COSTS = {
-    ai_audio_analysis: 800,
+    ai_audio_analysis: 300,
     ai_audio_cutting: 800,
-    ai_quotes: 800,
-    ai_quote_images: 800,
+    ai_quotes: 200,
+    ai_quote_images: 1000,
     ai_suggestions: 800,
     audio_cutting: 500,
-    audio_enhancment: 500,
+    audio_enhancement: 500,
     show_notes: 500,
-    transcription: 500,
+    transcription: 600,
+    clean_transcript: 500,
     translation: 500,
     video_cutting: 500,
     video_enhancement: 500,
@@ -91,12 +92,14 @@ function showTab(tabName) {
                 <pre id="transcriptionResult"></pre>
             </div>
     
-            <div id="enhancementTools" style="display:none;">
+            <div id="enhancementTools";">
                 <hr/>
                 <h3>Enhancement Tools</h3>
     
                 <div class="result-group">
-                    <button class="btn ai-edit-button" onclick="generateCleanTranscript()">Clean Transcript</button>
+                    <button class="btn ai-edit-button" onclick="generateCleanTranscript()">
+                        ${labelWithCredits("Clean Transcript", "clean_transcript")}
+                    </button>
                     <div class="result-field">
                         <pre id="cleanTranscriptResult"></pre>
                     </div>
@@ -173,14 +176,15 @@ function showTab(tabName) {
     
                 <div class="result-group">
                     <button class="btn ai-edit-button" onclick="generatePodcastIntroOutro()">
-                      ${labelWithCredits("Generate Intro/Outro", "ai_intro_outro")}
+                    ${labelWithCredits("Generate Intro/Outro", "ai_intro_outro")}
                     </button>
                     <div class="result-field">
-                        <pre id="introOutroResult"></pre>
+                        <pre id="introOutroScriptResult"></pre> 
                     </div>
                     <button class="btn ai-edit-button" onclick="convertIntroOutroToSpeech()">
-                      ${labelWithCredits("Convert to Speech", "ai_intro_outro_audio")}
+                    ${labelWithCredits("Convert to Speech", "ai_intro_outro_audio")}
                     </button>
+                    <div class="result-field" id="introOutroAudioResult" style="margin-top: 1rem;"></div>
                 </div>
             </div>
         `;
@@ -214,58 +218,94 @@ function showTab(tabName) {
                 <div id="audioEnhancementSection">
                     <h4><strong>Audio Enhancement (Noise Reduction & Normalization)</strong></h4>
                     <button class="btn ai-edit-button" onclick="enhanceAudio()">
-                      ${labelWithCredits("Enhance Audio", "audio_enhancment")}
+                      ${labelWithCredits("Enhance Audio", "audio_enhancement")}
                     </button>
                     <div id="audioControls" style="margin-top: 1rem;"></div>
                 </div>
             </div>
     
-            <div id="audioAnalysisSection" style="display: none;">
+            <div id="audioAnalysisSection">
                 <hr/>
                 <h3>AI Analysis</h3>
+
+                <label for="audioSourceSelectAnalysis"><strong>Audio Source:</strong></label>
+                <select id="audioSourceSelectAnalysis" class="input-field" style="margin-bottom: 1rem;">
+                    <option value="enhanced">Enhanced</option>
+                    <option value="isolated">Isolated</option>
+                    <option value="original">Original</option>
+                </select>
+
                 <button class="btn ai-edit-button" onclick="analyzeEnhancedAudio()">
-                  ${labelWithCredits("Analyze", "ai_audio_analysis")}
+                    ${labelWithCredits("Analyze", "ai_audio_analysis")}
                 </button>
+
                 <pre id="analysisResults"></pre>
-    
+
                 <button id="mixBackgroundBtn"
                         class="btn ai-edit-button"
                         style="display: none; margin-top: 1rem;"
                         onclick="displayBackgroundAndMix()">
-                  Mix Background & Preview
+                    Mix Background & Preview
                 </button>
-    
+
                 <div id="backgroundPreview" style="margin-top: 1rem;"></div>
                 <div id="soundEffectTimeline" style="margin-top: 1rem;"></div>
-    
+
                 <a id="downloadEnhanced"
-                   class="btn ai-edit-button"
-                   download="processed_audio.wav"
-                   style="display: none;">
-                   Download Processed Audio
+                class="btn ai-edit-button"
+                download="processed_audio.wav"
+                style="display: none;">
+                Download Processed Audio
                 </a>
             </div>
     
-            <div id="audioCuttingSection" style="display: none;">
+            <div id="audioCuttingSection">
                 <hr/>
                 <h3>Audio Cutting</h3>
-                <label>Start: <input type="number" id="startTime" min="0" step="0.1"></label>
-                <label>End: <input type="number" id="endTime" min="0" step="0.1"></label>
+                <label for="audioSourceSelectCutting"><strong>Audio Source:</strong></label>
+                <select id="audioSourceSelectCutting" class="input-field" style="margin-bottom: 1rem;">
+                    <option value="enhanced">Enhanced</option>
+                    <option value="isolated">Isolated</option>
+                    <option value="original">Original</option>
+                </select>
+                <br/>
+
+                <label>Start:
+                    <input type="number" id="startTime" min="0" step="0.1" class="input-field">
+                </label>
+
+                <label>End:
+                    <input type="number" id="endTime" min="0" step="0.1" class="input-field">
+                </label>
+
                 <button class="btn ai-edit-button" onclick="cutAudio()">
-                  ${labelWithCredits("Cut", "audio_cutting")}
+                    ${labelWithCredits("Cut", "audio_cutting")}
                 </button>
-                <div id="cutResult"></div>
-                <a id="downloadCut" class="btn ai-edit-button" download="cut_audio.wav">
-                  Download Cut
+
+                <div id="cutResult" style="margin-top: 1rem;"></div>
+
+                <a id="downloadCut"
+                class="btn ai-edit-button"
+                download="cut_audio.wav"
+                style="display: none; margin-top: 1rem;">
+                    Download Cut
                 </a>
             </div>
-    
-            <div id="aiCuttingSection" style="display: none;">
+            <div id="aiCuttingSection">
                 <hr/>
                 <h3>AI Cutting + Transcript</h3>
+
+                <label for="audioSourceSelectAICut"><strong>Audio Source:</strong></label>
+                <select id="audioSourceSelectAICut" class="input-field" style="margin-bottom: 1rem;">
+                    <option value="enhanced">Enhanced</option>
+                    <option value="isolated">Isolated</option>
+                    <option value="original">Original</option>
+                </select>
+
                 <button class="btn ai-edit-button" onclick="aiCutAudio()">
-                  ${labelWithCredits("Run AI Cut", "ai_audio_cutting")}
+                    ${labelWithCredits("Run AI Cut", "ai_audio_cutting")}
                 </button>
+
                 <div class="result-field">
                     <h4>Transcript</h4>
                     <pre id="aiTranscript"></pre>
@@ -275,24 +315,27 @@ function showTab(tabName) {
                     <pre id="aiSuggestedCuts"></pre>
                 </div>
             </div>
+
         `;
     } else if (tabName === 'video') {
         content.innerHTML = `
             <h2>AI Video Enhancement</h2>
-            <h2>AI Video Enhancement</h2>
             <input type="file" id="videoUploader" accept="video/*" onchange="previewOriginalVideo()">
             <div id="originalVideoContainer" style="display: none; margin-bottom: 1rem;">
                 <p><strong>Original Video</strong></p>
-                <p><strong>Original Video</strong></p>
                 <video id="originalVideoPlayer" controls style="width: 100%"></video>
             </div>
-            <button class="btn ai-edit-button" onclick="enhanceVideo()">
-            ${labelWithCredits("Enhance Video", "video_enhancement")}
-            ${labelWithCredits("Enhance Video", "video_enhancement")}
-            </button>
+            <div class="button-group" style="margin-bottom: 1rem;">
+                <button class="btn ai-edit-button" id="enhanceVideoBtn" onclick="enhanceVideo()">
+                    ${labelWithCredits("Enhance Video", "video_enhancement")}
+                </button>
+                <button class="btn ai-edit-button" id="resetVideoBtn" onclick="resetVideo()" style="display: none;">
+                    Reset
+                </button>
+            </div>
             <div id="videoResult"></div>
             <a id="downloadVideo" class="btn ai-edit-button" download="enhanced_video.mp4" style="display: none;">
-            Download Enhanced Video
+                Download Enhanced Video
             </a>
         `;
     }
@@ -334,7 +377,7 @@ async function transcribe() {
     showSpinner("transcriptionResult");
     const formData = new FormData();
     formData.append('file', file);
-    formData.append('episode_id', episodeId);  // 🟢 Lägg till episode ID här!
+    formData.append('episode_id', episodeId);  // Include episode ID
 
     try {
         const response = await fetch('/transcription/transcribe', {
@@ -344,22 +387,30 @@ async function transcribe() {
 
         hideSpinner("transcriptionResult");
 
+        if (response.status === 403) {
+            const errorData = await response.json();
+            resultContainer.innerHTML = `
+                <p style="color: red;">${errorData.error || "You don't have enough credits."}</p>
+                ${errorData.redirect ? `<a href="${errorData.redirect}" class="btn ai-edit-button">Go to Store</a>` : ""}
+            `;
+            return;
+        }
+
         if (response.ok) {
             const result = await response.json();
             rawTranscript = result.raw_transcription || "";
             fullTranscript = result.full_transcript || "";
-
+        
             resultContainer.innerText = rawTranscript;
             document.getElementById("enhancementTools").style.display = "block";
-
-            await consumeStoreCredits("transcription");
-        } else {
-            const errorData = await response.json();
-            resultContainer.innerText = `Error: ${errorData.error || response.statusText}`;
-            resultContainer.innerText = `Error: ${errorData.error || response.statusText}`;
+        
+            if (result.credit_warning) {
+                alert("Transcription completed, but your credits are too low. Please visit the store.");
+            }
+        
         }
     } catch (error) {
-        resultContainer.innerText = `Transcription failed: ${error.message}`;
+        hideSpinner("transcriptionResult");
         resultContainer.innerText = `Transcription failed: ${error.message}`;
     }
 }
@@ -414,11 +465,19 @@ async function generateCleanTranscript() {
             body: JSON.stringify({ transcript: fullTranscript })
         });
 
+        if (res.status === 403) {
+            const errorData = await res.json();
+            container.innerHTML = `
+                <p style="color: red;">${errorData.error || "You don't have enough credits."}</p>
+                ${errorData.redirect ? `<a href="${errorData.redirect}" class="btn ai-edit-button">Go to Store</a>` : ""}
+            `;
+            return;
+        }
+
         const data = await res.json();
         container.innerText = data.clean_transcript || "No clean result.";
     } catch (err) {
-        document.getElementById("cleanTranscriptResult").innerText =
-            "Failed to clean transcript. Server says: " + err.message;
+        container.innerText = "Failed to clean transcript. Server says: " + err.message;
     }
 }
 
@@ -435,17 +494,19 @@ async function generateAISuggestions() {
             body: JSON.stringify({ transcript: rawTranscript })
         });
 
-        const data = await res.json();
-        if (res.ok) {
-            const primary = data.primary_suggestions || "";
-            const additional = (data.additional_suggestions || []).join("\n");
-            container.innerText = [primary, additional].filter(Boolean).join("\n\n") || "No suggestions.";
-
-            // ✅ Consume credits only after success
-            await consumeStoreCredits("ai_suggestions");
-        } else {
-            container.innerText = `Error: ${res.status} - ${res.statusText}`;
+        if (res.status === 403) {
+            const data = await res.json();
+            container.innerHTML = `
+                <p style="color: red;">${data.error || "You don't have enough credits."}</p>
+                ${data.redirect ? `<a href="${data.redirect}" class="btn ai-edit-button">Go to Store</a>` : ""}
+            `;
+            return;
         }
+
+        const data = await res.json();
+        const primary = data.primary_suggestions || "";
+        const additional = (data.additional_suggestions || []).join("\n");
+        container.innerText = [primary, additional].filter(Boolean).join("\n\n") || "No suggestions.";
     } catch (err) {
         container.innerText = "Failed to generate suggestions: " + err.message;
     }
@@ -464,15 +525,17 @@ async function generateShowNotes() {
             body: JSON.stringify({ transcript: rawTranscript })
         });
 
-        const data = await res.json();
-        if (res.ok) {
-            container.innerText = data.show_notes || "No notes.";
-
-            // ✅ Consume credits only after success
-            await consumeStoreCredits("show_notes");
-        } else {
-            container.innerText = `Error: ${res.status} - ${res.statusText}`;
+        if (res.status === 403) {
+            const data = await res.json();
+            container.innerHTML = `
+                <p style="color: red;">${data.error || "You don't have enough credits."}</p>
+                ${data.redirect ? `<a href="${data.redirect}" class="btn ai-edit-button">Go to Store</a>` : ""}
+            `;
+            return;
         }
+
+        const data = await res.json();
+        container.innerText = data.show_notes || "No notes.";
     } catch (err) {
         container.innerText = "Failed to generate show notes: " + err.message;
     }
@@ -491,15 +554,16 @@ async function generateQuotes() {
             body: JSON.stringify({ transcript: rawTranscript })
         });
 
-        const data = await res.json();
-        if (res.ok) {
-            container.innerText = data.quotes || "No quotes.";
-
-            // ✅ Consume credits only after success
-            await consumeStoreCredits("ai_quotes");
-        } else {
-            container.innerText = `Error: ${res.status} - ${res.statusText}`;
+        if (res.status === 403) {
+            const data = await res.json();
+            container.innerHTML = `
+                <p style="color: red;">${data.error || "You don't have enough credits."}</p>
+                ${data.redirect ? `<a href="${data.redirect}" class="btn ai-edit-button">Go to Store</a>` : ""}
+            `;
+            return;
         }
+        const data = await res.json();
+        container.innerText = data.quotes || "No quotes.";
     } catch (err) {
         container.innerText = "Failed to generate quotes: " + err.message;
     }
@@ -509,7 +573,7 @@ async function generateQuoteImages() {
     const containerId = "quoteImagesResult";
     const container = document.getElementById(containerId);
 
-    const quotes = document.getElementById("quotesResult").innerText;
+    const quotes = document.getElementById("quotesResult").innerText.trim();
     if (!quotes) {
         alert("Generate quotes first.");
         return;
@@ -524,23 +588,25 @@ async function generateQuoteImages() {
             body: JSON.stringify({ quotes })
         });
 
-        const data = await res.json();
-        if (res.ok) {
-            container.innerHTML = "";
-
-            (data.quote_images || []).forEach(url => {
-                const img = document.createElement("img");
-                img.src = url;
-                img.style.maxWidth = "100%";
-                img.style.margin = "10px 0";
-                container.appendChild(img);
-            });
-
-            // ✅ Consume credits only after success
-            await consumeStoreCredits("ai_quote_images");
-        } else {
-            container.innerText = `Error: ${res.status} - ${res.statusText}`;
+        if (res.status === 403) {
+            const data = await res.json();
+            container.innerHTML = `
+                <p style="color: red;">${data.error || "You don't have enough credits."}</p>
+                ${data.redirect ? `<a href="${data.redirect}" class="btn ai-edit-button">Go to Store</a>` : ""}
+            `;
+            return;
         }
+
+        const data = await res.json();
+        container.innerHTML = "";
+
+        (data.quote_images || []).forEach(url => {
+            const img = document.createElement("img");
+            img.src = url;
+            img.style.maxWidth = "100%";
+            img.style.margin = "10px 0";
+            container.appendChild(img);
+        });
     } catch (err) {
         container.innerText = "Failed to generate quote images: " + err.message;
     }
@@ -577,19 +643,24 @@ async function runOsintSearch() {
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ guest_name: guestName })
         });
-
+        if (response.status === 403) {
+            const data = await response.json();
+            container.innerHTML = `
+                <p style="color: red;">${data.error || "You don't have enough credits."}</p>
+                ${data.redirect ? `<a href="${data.redirect}" class="btn ai-edit-button">Go to Store</a>` : ""}
+            `;
+            return;
+        }
         const data = await response.json();
         container.innerText = data.osint_info || "No info found.";
 
-        // ✅ Consume credits only after success
-        await consumeStoreCredits("ai_osint");
     } catch (err) {
         container.innerText = `Failed: ${err.message}`;
     }
 }
 
 async function generatePodcastIntroOutro() {
-    const containerId = "introOutroResult";
+    const containerId = "introOutroScriptResult";
     const container = document.getElementById(containerId);
 
     const guestName = document.getElementById("guestNameInput").value;
@@ -607,25 +678,30 @@ async function generatePodcastIntroOutro() {
                 transcript: rawTranscript
             })
         });
-
+        if (res.status === 403) {
+            const data = await res.json();
+            container.innerHTML = `
+                <p style="color: red;">${data.error || "You don't have enough credits."}</p>
+                ${data.redirect ? `<a href="${data.redirect}" class="btn ai-edit-button">Go to Store</a>` : ""}
+            `;
+            return;
+        }
         const data = await res.json();
         container.innerText = data.script || "No result.";
-
-        // ✅ Consume credits only after success
-        await consumeStoreCredits("ai_intro_outro");
     } catch (err) {
         container.innerText = `Failed: ${err.message}`;
     }
 }
 
 async function convertIntroOutroToSpeech() {
-    const containerId = "introOutroResult";
+    const containerId = "introOutroAudioResult";
     const container = document.getElementById(containerId);
 
-    const script = container.innerText;
-    if (!script.trim()) return alert("No script to convert.");
+    const scriptContainer = document.getElementById("introOutroScriptResult");
+    const script = scriptContainer ? scriptContainer.innerText.trim() : "";
+    if (!script) return alert("No script to convert.");
 
-    container.innerText += "\n\nGenerating voice...";
+    showSpinner(containerId);
 
     try {
         const res = await fetch("/transcription/intro_outro_audio", {
@@ -635,28 +711,28 @@ async function convertIntroOutroToSpeech() {
         });
 
         const data = await res.json();
+
+        if (res.status === 403) {
+            container.innerHTML = `
+                <p style="color: red;">${data.error || "You don't have enough credits."}</p>
+                ${data.redirect ? `<a href="${data.redirect}" class="btn ai-edit-button">Go to Store</a>` : ""}
+            `;
+            return;
+        }
+
         if (data.audio_base64) {
-            const audio = document.createElement("audio");
-            audio.controls = true;
-            audio.src = data.audio_base64;
-
-            const download = document.createElement("a");
-            download.href = data.audio_base64;
-            download.download = "intro_outro.mp3";
-            download.className = "btn ai-edit-button";
-            download.innerText = "Download Intro/Outro Audio";
-
-            container.appendChild(document.createElement("hr"));
-            container.appendChild(audio);
-            container.appendChild(download);
-
-            // ✅ Consume credits only after success
-            await consumeStoreCredits("ai_intro_outro_audio");
+            container.innerHTML = `
+                <hr/>
+                <audio controls src="${data.audio_base64}"></audio>
+                <a href="${data.audio_base64}" download="intro_outro.mp3" class="btn ai-edit-button">
+                    Download Intro/Outro Audio
+                </a>
+            `;
         } else {
-            throw new Error(data.error || "Unknown error");
+            container.innerText = data.error || "Unknown error occurred.";
         }
     } catch (err) {
-        container.innerText += `\nFailed to convert to audio: ${err.message}`;
+        container.innerText = `Failed to convert to audio: ${err.message}`;
     }
 }
 
@@ -685,6 +761,13 @@ async function enhanceAudio() {
 
         const result = await response.json();
 
+        if (response.status === 403) {
+            container.innerHTML = `
+                <p style="color: red;">${result.error || "You don't have enough credits."}</p>
+                ${result.redirect ? `<a href="${result.redirect}" class="btn ai-edit-button">Go to Store</a>` : ""}
+            `;
+            return;
+        }
         if (!response.ok) {
             container.innerHTML = `Error: ${result.error || response.statusText}`;
             return;
@@ -713,8 +796,6 @@ async function enhanceAudio() {
         dl.href = url;
         dl.style.display = "inline-block";
 
-        // ✅ Consume credits only after success
-        await consumeStoreCredits("audio_enhancment");
     } catch (err) {
         container.innerHTML = `Error: ${err.message}`;
     }
@@ -743,13 +824,18 @@ async function runVoiceIsolation() {
             body: formData
         });
 
+        if (response.status === 403) {
+            const data = await response.json();
+            container.innerHTML = `
+                <p style="color: red;">${data.error || "You don't have enough credits."}</p>
+                ${data.redirect ? `<a href="${data.redirect}" class="btn ai-edit-button">Go to Store</a>` : ""}
+            `;
+            return;
+        }
+
         const data = await response.json();
-        if (!response.ok) throw new Error(data.error || "Voice isolation failed.");
-
-        // ✅ Only now consume credits, since we know it worked
-        await consumeStoreCredits("voice_isolation");
-
         const blobUrl = data.isolated_blob_url;
+
         const audioRes = await fetch(`/transcription/get_isolated_audio?url=${encodeURIComponent(blobUrl)}`);
         const blob = await audioRes.blob();
         const url = URL.createObjectURL(blob);
@@ -786,17 +872,38 @@ async function analyzeEnhancedAudio() {
     const timeline = document.getElementById("soundEffectTimeline");
     const mixBtn = document.getElementById("mixBackgroundBtn");
 
-    if (!activeAudioBlob) {
-        return alert("No audio loaded. Enhance or Isolate first.");
+    const selectedSource = document.getElementById("audioSourceSelectAnalysis").value;
+
+    let blobToUse;
+    if (selectedSource === "enhanced") {
+        blobToUse = enhancedAudioBlob;
+    } else if (selectedSource === "isolated") {
+        blobToUse = isolatedAudioBlob;
+    } else if (selectedSource === "original") {
+        blobToUse = rawAudioBlob;
+    }
+
+    if (!blobToUse) {
+        return alert("No audio available for selected source.");
     }
 
     showSpinner(containerId);
 
     try {
         const fd = new FormData();
-        fd.append("audio", activeAudioBlob, "processed_audio.wav");
+        fd.append("audio", new File([blobToUse], "analyze.wav", { type: "audio/wav" }));
 
         const res = await fetch("/audio_analysis", { method: "POST", body: fd });
+
+        if (res.status === 403) {
+            const errorData = await res.json();
+            container.innerHTML = `
+                <p style="color: red;">${errorData.error || "You don't have enough credits."}</p>
+                ${errorData.redirect ? `<a href="${errorData.redirect}" class="btn ai-edit-button">Go to Store</a>` : ""}
+            `;
+            return;
+        }
+
         const data = await res.json();
         if (!res.ok) throw new Error(data.error || res.statusText);
 
@@ -812,17 +919,16 @@ async function analyzeEnhancedAudio() {
 
         window.analysisData = {
             emotion: data.dominant_emotion,
-            audioBlob: activeAudioBlob
+            audioBlob: blobToUse
         };
 
         mixBtn.style.display = "inline-block";
 
-        // ✅ Consume credits only after success
-        await consumeStoreCredits("ai_audio_analysis");
     } catch (err) {
         container.innerText = `Analysis failed: ${err.message}`;
     }
 }
+
 
 /* Hjälper att rendera suggestion-listan */
 function renderSoundSuggestions(data, timeline) {
@@ -880,7 +986,6 @@ async function displayBackgroundAndMix() {
         dl.style.display = "inline-block";
       }
 
-      // ✅ Consume credits only after success
       await consumeStoreCredits("ai_audio_analysis");
     } catch (err) {
       preview.innerText = `Error: ${err.message}`;
@@ -891,7 +996,7 @@ async function displayBackgroundAndMix() {
     }
   }
 
-async function cutAudio() {
+  async function cutAudio() {
     const startInput = document.getElementById("startTime");
     const endInput = document.getElementById("endTime");
     const cutResult = document.getElementById("cutResult");
@@ -901,11 +1006,24 @@ async function cutAudio() {
     const end = parseFloat(endInput.value);
 
     const episodeId = sessionStorage.getItem("selected_episode_id");
-    if (!episodeId || !activeAudioBlob) return alert("No audio or episode selected.");
+    if (!episodeId) return alert("No episode selected.");
+
+    const selectedSource = document.getElementById("audioSourceSelectCutting").value;
+
+    let blobToUse;
+    if (selectedSource === "enhanced") {
+        blobToUse = enhancedAudioBlob;
+    } else if (selectedSource === "isolated") {
+        blobToUse = isolatedAudioBlob;
+    } else if (selectedSource === "original") {
+        blobToUse = rawAudioBlob;
+    }
+
+    if (!blobToUse) return alert("No audio selected or loaded.");
     if (isNaN(start) || isNaN(end) || start >= end) return alert("Invalid timestamps.");
 
     const formData = new FormData();
-    formData.append("audio", new File([activeAudioBlob], "clip.wav", { type: "audio/wav" }));
+    formData.append("audio", new File([blobToUse], "clip.wav", { type: "audio/wav" }));
     formData.append("episode_id", episodeId);
     formData.append("start", start);
     formData.append("end", end);
@@ -917,6 +1035,15 @@ async function cutAudio() {
         });
 
         const result = await response.json();
+
+        if (response.status === 403) {
+            cutResult.innerHTML = `
+                <p style="color: red;">${result.error || "You don't have enough credits."}</p>
+                ${result.redirect ? `<a href="${result.redirect}" class="btn ai-edit-button">Go to Store</a>` : ""}
+            `;
+            return;
+        }
+
         if (!response.ok || !result.clipped_audio_url) {
             throw new Error(result.error || "Clipping failed.");
         }
@@ -934,9 +1061,6 @@ async function cutAudio() {
 
         activeAudioBlob = blob;
         activeAudioId = "external";
-
-        // ✅ Consume credits only after success
-        await consumeStoreCredits("audio_cutting");
     } catch (err) {
         alert(`Cut failed: ${err.message}`);
     }
@@ -950,10 +1074,26 @@ async function aiCutAudio() {
         return;
     }
 
-    if (!activeAudioBlob && !activeAudioId) {
-        alert("No audio loaded.");
+    const selectedSource = document.getElementById("audioSourceSelectAICut").value;
+
+    let blobToUse;
+    if (selectedSource === "enhanced") {
+        blobToUse = enhancedAudioBlob;
+        activeAudioId = "external";
+    } else if (selectedSource === "isolated") {
+        blobToUse = isolatedAudioBlob;
+        activeAudioId = "external";
+    } else if (selectedSource === "original") {
+        blobToUse = rawAudioBlob;
+        activeAudioId = "external";
+    }
+
+    if (!blobToUse) {
+        alert("No audio selected or loaded.");
         return;
     }
+
+    activeAudioBlob = blobToUse;
 
     const containerIdTranscript = "aiTranscript";
     const containerTranscript = document.getElementById(containerIdTranscript);
@@ -964,11 +1104,10 @@ async function aiCutAudio() {
     containerCuts.innerHTML = "";
 
     try {
-        let response, data;
-
-        if (activeAudioId === "external") {
+        let response;
+        if (!activeAudioId || activeAudioId === "external") {
             const formData = new FormData();
-            formData.append("audio", new File([activeAudioBlob], "ai_cut.wav", { type: "audio/wav" }));
+            formData.append("audio", new File([blobToUse], "ai_cut.wav", { type: "audio/wav" }));
             formData.append("episode_id", episodeId);
 
             response = await fetch("/ai_cut_from_blob", {
@@ -986,8 +1125,19 @@ async function aiCutAudio() {
             });
         }
 
-        data = await response.json();
-        if (!response.ok) throw new Error(data.error || "AI Cut failed");
+        const data = await response.json();
+
+        if (response.status === 403) {
+            containerTranscript.innerHTML = `
+                <p style="color: red;">${data.error || "You don't have enough credits."}</p>
+                ${data.redirect ? `<a href="${data.redirect}" class="btn ai-edit-button">Go to Store</a>` : ""}
+            `;
+            return;
+        }
+
+        if (!response.ok) {
+            throw new Error(data.error || "AI Cut failed");
+        }
 
         containerTranscript.innerText = data.cleaned_transcript || "No transcript available.";
 
@@ -1027,11 +1177,7 @@ async function aiCutAudio() {
         applyBtn.className = "btn ai-edit-button";
         applyBtn.innerText = "Apply AI Cuts";
         applyBtn.onclick = applySelectedCuts;
-
         containerCuts.appendChild(applyBtn);
-
-        // ✅ Consume credits only after success
-        await consumeStoreCredits("ai_audio_cutting");
     } catch (err) {
         containerTranscript.innerText = "Failed to process audio.";
         alert(`AI Cut failed: ${err.message}`);
@@ -1153,7 +1299,6 @@ async function cutAudioFromBlob() {
         activeAudioBlob = blob;
         activeAudioId = "external";
 
-        // ✅ Consume credits only after success
         await consumeStoreCredits("audio_cutting");
     } catch (err) {
         alert(`Cut failed: ${err.message}`);
@@ -1231,14 +1376,21 @@ async function enhanceVideo() {
             body: JSON.stringify({ video_id }),
         });
 
-        if (!enhanceResponse.ok) {
-            throw new Error(`Enhancement failed: ${enhanceResponse.statusText}`);
+        const enhanceResult = await enhanceResponse.json();
+
+        if (enhanceResponse.status === 403) {
+            container.innerHTML = `
+                <p style="color: red;">${enhanceResult.error || "You don't have enough credits."}</p>
+                ${enhanceResult.redirect ? `<a href="${enhanceResult.redirect}" class="btn ai-edit-button">Go to Store</a>` : ""}
+            `;
+            return;
         }
 
-        const enhanceResult = await enhanceResponse.json();
-        const processed_id = enhanceResult.processed_video_id;
-        if (!processed_id) throw new Error("No processed_video_id returned from enhancement.");
+        if (!enhanceResponse.ok || !enhanceResult.processed_video_id) {
+            throw new Error(enhanceResult.error || "Enhancement failed.");
+        }
 
+        const processed_id = enhanceResult.processed_video_id;
         const videoURL = `/get_video/${processed_id}`;
         container.innerHTML = `
             <video controls src="${videoURL}" style="width: 100%; margin-top: 1rem;"></video>
@@ -1248,28 +1400,30 @@ async function enhanceVideo() {
         dl.href = videoURL;
         dl.style.display = "inline-block";
 
-        // ✅ Consume credits only after success
         await consumeStoreCredits("video_enhancement");
     } catch (err) {
         container.innerText = `Error: ${err.message}`;
     }
 }
 
+let rawAudioBlob = null;
+
 function previewOriginalAudio() {
     const fileInput = document.getElementById('audioUploader');
     const file = fileInput.files[0];
     if (!file) return;
+
     const audioURL = URL.createObjectURL(file);
-    
-    // Use the correct ID from your audio tab markup
     const audioPlayer = document.getElementById("originalAudioPlayer");
+
     if (audioPlayer) {
         audioPlayer.src = audioURL;
         audioPlayer.load();
         document.getElementById("originalAudioContainer").style.display = "block";
-    } else {
-        console.error("Audio player element not found");
     }
+
+    // Store raw audio
+    rawAudioBlob = file;
 }
 
 function previewOriginalVideo() {
@@ -1316,7 +1470,6 @@ async function consumeStoreCredits(featureKey) {
         throw new Error(result.error || "Failed to consume credits");
     }
 
-    // ✅ Update header credits
     if (window.populateStoreCredits) {
         await window.populateStoreCredits();
     }
@@ -1352,6 +1505,23 @@ function hideSpinner(containerId) {
         container.innerHTML = '';
     }
 }
+
+// prevent doubleclikc/spamclicking on the functions to loose credits
+document.addEventListener("DOMContentLoaded", () => {
+    document.body.addEventListener("click", function (event) {
+        const button = event.target.closest("button.ai-edit-button");
+        if (!button || button.disabled) return;
+
+        button.disabled = true;
+        button.classList.add("disabled");
+
+        // Re-enable after 3k milliseconds (3seconds)
+        setTimeout(() => {
+            button.disabled = false;
+            button.classList.remove("disabled");
+        }, 3000);
+    }, true);  
+});
 
 async function generateAudioClip() {
   const container = document.getElementById("audioClipResult");
