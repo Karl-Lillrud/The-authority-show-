@@ -514,8 +514,8 @@ async function generateQuoteImages() {
     const container = document.getElementById(containerId);
 
     const quotes = document.getElementById("quotesResult").innerText.trim();
-    if (!quotes) {
-        alert("Generate quotes first.");
+    if (!quotes || quotes === "No quotes." || quotes === "No suggestions.") {
+        alert("No quotes to generate");
         return;
     }
 
