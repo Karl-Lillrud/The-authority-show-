@@ -1,0 +1,270 @@
+:root {
+    --primary-color: #ff7a22;
+    --primary-hover: #e86b15;
+    --text-color: #333;
+    --light-gray: #f5f5f7;
+    --medium-gray: #e0e0e0;
+    --dark-gray: #666;
+    --white: #fff;
+    --success-color: #4CAF50;
+    --border-radius: 8px;
+    --box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Inter', sans-serif;
+    color: var(--text-color);
+    background-color: var(--light-gray);
+    line-height: 1.6;
+}
+
+.container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 20px;
+}
+
+/* Header Styles */
+header {
+    background-color: var(--white);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+    padding: 15px 0;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+}
+
+.header-container {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.logo-container {
+    display: flex;
+    align-items: center;
+}
+
+.logo {
+    height: 40px;
+    width: auto;
+}
+
+.logo-text {
+    font-size: 24px;
+    font-weight: 700;
+    margin-left: 10px;
+}
+
+.accent {
+    color: var(--primary-color);
+}
+
+.beta-badge {
+    background-color: var(--primary-color);
+    color: white;
+    font-size: 10px;
+    padding: 2px 6px;
+    border-radius: 4px;
+    margin-left: 8px;
+    font-weight: 600;
+}
+
+nav {
+    display: flex;
+    align-items: center;
+}
+
+.credits-btn {
+    background-color: var(--primary-color);
+    color: white;
+    border: none;
+    border-radius: 20px;
+    padding: 8px 16px;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    margin-right: 20px;
+    transition: background-color 0.2s;
+}
+
+.credits-btn:hover {
+    background-color: var(--primary-hover);
+}
+
+.btn-text {
+    margin-left: 8px;
+}
+
+.menu-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    height: 20px;
+    width: 30px;
+}
+
+.menu-line {
+    height: 2px;
+    width: 100%;
+    background-color: var(--text-color);
+}
+
+/* Main Content Styles */
+main {
+    padding: 40px 0;
+}
+
+.enterprise-card {
+    background-color: var(--white);
+    border-radius: var(--border-radius);
+    box-shadow: var(--box-shadow);
+    overflow: hidden;
+    max-width: 800px;
+    margin: 0 auto;
+}
+
+.card-content {
+    padding: 40px;
+}
+
+h1 {
+    color: var(--text-color);
+    font-size: 28px;
+    margin-bottom: 20px;
+    position: relative;
+    padding-bottom: 15px;
+}
+
+h1::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 60px;
+    height: 3px;
+    background-color: var(--primary-color);
+}
+
+p {
+    margin-bottom: 20px;
+    color: var(--dark-gray);
+}
+
+/* Form Styles */
+.form-group {
+    margin-bottom: 20px;
+}
+
+label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: 500;
+}
+
+input {
+    width: 100%;
+    padding: 12px 15px;
+    border: 1px solid var(--medium-gray);
+    border-radius: var(--border-radius);
+    font-size: 16px;
+    transition: border-color 0.2s;
+}
+
+input:focus {
+    outline: none;
+    border-color: var(--primary-color);
+}
+
+.form-footer {
+    font-weight: 500;
+    color: var(--text-color);
+    margin: 25px 0;
+}
+
+.submit-btn {
+    background-color: var(--primary-color);
+    color: white;
+    border: none;
+    border-radius: var(--border-radius);
+    padding: 14px 28px;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color 0.2s;
+    display: block;
+    width: 100%;
+}
+
+.submit-btn:hover {
+    background-color: var(--primary-hover);
+}
+
+/* Success Message */
+.success-message {
+    text-align: center;
+    padding: 30px 20px;
+}
+
+.success-icon {
+    background-color: var(--success-color);
+    color: white;
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 30px;
+    margin: 0 auto 20px;
+}
+
+.hidden {
+    display: none;
+}
+
+/* Footer Styles */
+footer {
+    background-color: var(--white);
+    padding: 20px 0;
+    text-align: center;
+    color: var(--dark-gray);
+    font-size: 14px;
+    margin-top: 40px;
+}
+
+/* Responsive Styles */
+@media (max-width: 768px) {
+    .card-content {
+        padding: 30px 20px;
+    }
+    
+    h1 {
+        font-size: 24px;
+    }
+}
+
+@media (max-width: 480px) {
+    .credits-btn {
+        font-size: 14px;
+        padding: 6px 12px;
+    }
+    
+    .logo-text {
+        font-size: 20px;
+    }
+    
+    .beta-badge {
+        font-size: 8px;
+    }
+}

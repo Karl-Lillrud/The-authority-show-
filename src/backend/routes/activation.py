@@ -42,7 +42,7 @@ def send_activation_email(email, activation_link, podcast_name, rss_url):
     if status_code == 200 and rss_data:
         artwork_url = rss_data.get("imageUrl")
     if not artwork_url or not artwork_url.startswith("http"):
-        artwork_url = "https://podmanager.app/static/images/default-artwork.png"
+        artwork_url = "https://podmanager.app/static/images/default.png"
 
     try:
         html_body = render_template(
@@ -159,7 +159,7 @@ def get_initial_podprofile_data():
     initial_podcast_title = None
 
     if user_id:
-        # Find accounts owned by this user
+        # Always use str(account["_id"]) for account IDs
         user_accounts = list(db["Accounts"].find({"ownerId": str(user_id)}, {"_id": 1}))
         if user_accounts:
             account_ids = [str(acc["_id"]) for acc in user_accounts]

@@ -1786,35 +1786,23 @@ select:invalid {
 
 /* Delete Button */
 .delete-btn {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: none;
-  border: none;
-  cursor: pointer;
-  padding: 8px;
-  border-radius: 50%; /* Circular container */
-  transition: all 0.2s ease;
-  position: relative; /* For tooltip positioning */
-  width: 40px; /* Ensure consistent width */
-  height: 40px; /* Ensure consistent height */
+    background-color: var(--highlight-color);
+    color: white;
+    border: none;
+    border-radius: var(--radius-small);
+    padding: 6px 12px;
+    cursor: pointer;
+    font-weight: 600;
+    font-size: 0.75rem;
+    transition: all var(--transition-normal);
+    align-self: center;
+    box-shadow: var(--podcastmanagement-button-shadow);
 }
 
 .delete-btn:hover {
-  transform: translateY(-2px); /* Slight lift on hover */
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* Add shadow on hover */
-  background-color: #f5f5f5; /* Light gray background on hover */
-}
-
-.delete-btn svg {
-  width: 18px;
-  height: 18px;
-  stroke: #ff4d4f; /* Red color for the trashcan icon */
-  fill: none;
-}
-
-.delete-btn:hover svg {
-  stroke: #d32f2f; /* Darker red on hover */
+  background-color: var(--highlight-hover); /* Slightly darker hover color */
+  transform: translateY(-2px); /* Lift effect on hover */
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15); /* Enhanced shadow on hover */
 }
 
 /* Tooltip for the Delete Button */

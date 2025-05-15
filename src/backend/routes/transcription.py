@@ -1,9 +1,11 @@
 # src/backend/routes/transcript/transcription.py
 import os
+import base64
 import logging
+import base64
 import subprocess
 from datetime import datetime
-from flask import Blueprint, request, jsonify, render_template, session,Response
+from flask import Blueprint, request, jsonify, render_template, session,Response, g
 import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
@@ -17,9 +19,13 @@ from backend.services.transcriptionService import TranscriptionService
 from backend.services.subscriptionService import SubscriptionService
 from backend.services.audioService import AudioService
 from backend.services.videoService import VideoService
+from backend.services.creditService import consume_credits
+from backend.repository.edit_repository import save_transcription_edit
 from backend.repository.ai_models import fetch_file, save_file, get_file_by_id
 from backend.utils.transcription_utils import check_audio_duration
 from backend.utils.subscription_access import get_max_duration_limit
+from backend.utils.text_utils import get_osint_info, create_podcast_scripts_paid, text_to_speech_with_elevenlabs
+
 
 transcription_bp = Blueprint("transcription", __name__)
 logger = logging.getLogger(__name__)
@@ -42,8 +48,21 @@ def transcribe():
     filename = file.filename
     file_ext = os.path.splitext(filename)[-1].lower()
     is_video = file_ext in ["mp4", "mov", "avi", "mkv", "webm"]
-
+    
     try:
+        user_id = session.get("user_id")
+
+        # Check and enforce credit limit BEFORE doing any processing
+        try:
+            consume_credits(user_id, "transcription")
+
+        except ValueError as e:
+            logger.warning(f"User {user_id} has insufficient credits for transcription.")
+            return jsonify({
+                "error": str(e),
+                "redirect": "/store"
+            }), 403
+
         # Extract audio if needed
         if is_video:
             temp_video_path = f"/tmp/{filename}"
@@ -61,33 +80,28 @@ def transcribe():
         else:
             audio_bytes = file.read()
 
-         #Get subscription plan
-        user_id = session.get("user_id")
+        # Subscribe plan and duration validation
         subscription = subscription_service.get_user_subscription(user_id)
         subscription_plan = subscription["plan"] if subscription else "FREE"
         logger.info(f"User {user_id} subscription plan: {subscription_plan}")
 
-        # 🛡️ Get max allowed duration from subscription utils
         max_duration = get_max_duration_limit(subscription_plan)
         logger.info(f"Max transcription duration allowed: {max_duration} seconds")
 
-        # ⏱️ Check audio duration
+        # Check audio duration
         logger.info("Checking uploaded audio duration...")
         check_audio_duration(audio_bytes, max_duration_seconds=max_duration)
         logger.info("Audio duration is within the allowed limit.")
 
-        # 🧠 Transcription process
-        logger.info(f"🧠 Starting transcription for file: {filename}")
+        # Transcription process
+        logger.info(f"Starting transcription for file: {filename}")
         result = transcription_service.transcribe_audio(audio_bytes, filename)
         logger.info("Transcription completed successfully.")
 
-        # ⏺️ Save as transcription edit
-        user_id = session.get("user_id")
+        # Save as transcription edit
         episode_id = request.form.get("episode_id") or request.args.get("episode_id")
         transcription_text = result["full_transcript"]
         sentiment_result = transcription_service.get_sentiment_and_sfx(transcription_text)
-
-        from backend.repository.edit_repository import save_transcription_edit  # skapa denna funktion om den inte finns
 
         save_transcription_edit(
             user_id=user_id,
@@ -98,7 +112,6 @@ def transcribe():
             emotion=sentiment_result["emotions"],
             filename=filename
         )
-
         return jsonify(result)
 
     except ValueError as e:
@@ -110,68 +123,138 @@ def transcribe():
 
 @transcription_bp.route("/clean", methods=["POST"])
 def clean_transcript():
+    user_id = g.get("user_id")
+    if not user_id:
+        return jsonify({"error": "Authentication required"}), 401
+
     data = request.json
     transcript = data.get("transcript", "")
     if not transcript:
         return jsonify({"error": "No transcript provided"}), 400
+    try:
+        consume_credits(user_id, "clean_transcript")
+
+    except ValueError as e:
+        logger.warning(f"User {user_id} has insufficient credits for cleaning.")
+        return jsonify({
+            "error": str(e),
+            "redirect": "/store"
+        }), 403
+
     clean = transcription_service.get_clean_transcript(transcript)
     return jsonify({"clean_transcript": clean})
 
 @transcription_bp.route("/ai_suggestions", methods=["POST"])
 def ai_suggestions():
+    user_id = g.get("user_id")
+    if not user_id:
+        return jsonify({"error": "Authentication required"}), 401
+
     data = request.json
     transcript = data.get("transcript", "")
     if not transcript:
         return jsonify({"error": "No transcript provided"}), 400
+
+    try:
+        consume_credits(user_id, "ai_suggestions")
+
+    except ValueError as e:
+        return jsonify({
+            "error": str(e),
+            "redirect": "/store"
+        }), 403
+
     suggestions = transcription_service.get_ai_suggestions(transcript)
-    return jsonify({"ai_suggestions": suggestions})
+    return jsonify(suggestions)
 
 @transcription_bp.route("/show_notes", methods=["POST"])
 def show_notes():
+    user_id = g.get("user_id")
+    if not user_id:
+        return jsonify({"error": "Authentication required"}), 401
+
     data = request.json
     transcript = data.get("transcript", "")
     if not transcript:
         return jsonify({"error": "No transcript provided"}), 400
+
+    try:
+        consume_credits(user_id, "show_notes")
+
+    except ValueError as e:
+        return jsonify({
+            "error": str(e),
+            "redirect": "/store"
+        }), 403
+
     notes = transcription_service.get_show_notes(transcript)
     return jsonify({"show_notes": notes})
 
 @transcription_bp.route("/quotes", methods=["POST"])
 def quotes():
+    user_id = g.get("user_id")
+    if not user_id:
+        return jsonify({"error": "Authentication required"}), 401
+
     data = request.json
     transcript = data.get("transcript", "")
     if not transcript:
         return jsonify({"error": "No transcript provided"}), 400
+
+    try:
+        consume_credits(user_id, "ai_quotes")
+
+    except ValueError as e:
+        return jsonify({
+            "error": str(e),
+            "redirect": "/store"
+        }), 403
+
     quotes_text = transcription_service.get_quotes(transcript)
     return jsonify({"quotes": quotes_text})
 
 @transcription_bp.route("/quote_images", methods=["POST"])
 def quote_images():
+    user_id = g.get("user_id")
+    if not user_id:
+        return jsonify({"error": "Authentication required"}), 401
+
     data = request.json
     quotes_text = data.get("quotes", "")
-    if not quotes_text:
+    if not quotes_text.strip():
         return jsonify({"error": "No quotes provided"}), 400
-    # Split the quotes text into a list; adjust the delimiter as needed.
-    quotes_list = quotes_text.split("\n\n")
+
+    try:
+        consume_credits(user_id, "ai_quote_images")
+    except ValueError as e:
+        return jsonify({
+            "error": str(e),
+            "redirect": "/store"
+        }), 403
+
+    quotes_list = [q.strip() for q in quotes_text.split("\n\n") if q.strip()]
     image_urls = transcription_service.get_quote_images(quotes_list)
     return jsonify({"quote_images": image_urls})
-
 
 @transcription_bp.route("/translate", methods=["POST"])
 def translate():
     data = request.json
-    text = data.get("text", "")
+    raw = data.get("raw_transcription", "")
     language = data.get("language", "English")
 
+    if not raw:
+        return jsonify({"error": "No transcription provided"}), 400
+
     try:
-        translated = transcription_service.translate_text(text, language)
-        return jsonify({"translated_text": translated})
+        translated = transcription_service.translate_transcript(raw, language)
+        return jsonify({"translated_transcription": translated})
     except Exception as e:
+        logger.error(f"Translation error: {e}")
         return jsonify({"error": str(e)}), 500
 
 @transcription_bp.route("/get_file/<file_id>", methods=["GET"])
 def get_file(file_id):
     return fetch_file(file_id)
-
 
 @transcription_bp.route("/ai_cut_audio", methods=["POST"])
 def ai_cut_audio():
@@ -194,13 +277,6 @@ def ai_cut_audio():
     except Exception as e:
         logger.error(f"AI cut failed: {e}")
         return jsonify({"error": str(e)}), 500
-    
-    
-# Function to check if a file already exists in MongoDB GridFS
-def file_exists(filename):
-    existing_file = fs.find_one({"filename": filename})
-    return existing_file if existing_file else None
-
 
 # get audio info
 @transcription_bp.route("/get_audio_info", methods=["POST"])
@@ -270,11 +346,7 @@ def get_audio_info():
                     "type": "transcription",
                 },  # Add type
             )
-
         logger.info(f"Waveform saved to MongoDB GridFS with ID: {waveform_file_id}")
-
-        logger.info(f"Waveform saved to MongoDB GridFS with ID: {waveform_file_id}")
-
         # Cleanup temp files
         os.remove(temp_file_path)
         os.remove(waveform_path)
@@ -286,7 +358,6 @@ def get_audio_info():
                 "waveform": str(waveform_file_id),  # Send waveform file ID
             }
         )
-
     except Exception as e:
         logger.error(f"ERROR: Failed to process audio - {str(e)}")
         return jsonify({"error": f"Failed to process audio: {str(e)}"}), 500
@@ -296,6 +367,20 @@ def isolate_voice():
     if "audio" not in request.files or "episode_id" not in request.form:
         return jsonify({"error": "Audio file and episode_id are required"}), 400
 
+    user_id = session.get("user_id")
+    if not user_id:
+        return jsonify({"error": "Authentication required"}), 401
+
+    # Consume credits BEFORE processing
+    try:
+        consume_credits(user_id, "voice_isolation")
+    except ValueError as e:
+        logger.warning(f"User {user_id} has insufficient credits for voice isolation.")
+        return jsonify({
+            "error": str(e),
+            "redirect": "/store"
+        }), 403
+
     audio_file = request.files["audio"]
     episode_id = request.form["episode_id"]
     filename = audio_file.filename
@@ -303,19 +388,22 @@ def isolate_voice():
 
     try:
         blob_url = audio_service.isolate_voice(audio_bytes, filename, episode_id)
-        return jsonify({"isolated_blob_url": blob_url})  # ✅ return blob_url instead of file_id
+        return jsonify({"isolated_blob_url": blob_url})  
     except Exception as e:
         logger.error(f"Error during voice isolation: {str(e)}")
         return jsonify({"error": str(e)}), 500
+
     
 @transcription_bp.route("/get_isolated_audio", methods=["GET"])
 def get_isolated_audio():
     url = request.args.get("url")
     if not url:
         return jsonify({"error": "Missing URL"}), 400
+    
     try:
         response = requests.get(url)
         return Response(response.content, content_type="audio/wav")
+    
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
@@ -328,7 +416,9 @@ def render_ai_edits():
 
     logger.info(f"Rendering AI Edits page for episode ID: {episode_id}")
     try:
-        return render_template("ai_edits/ai_edits.html", episode_id=episode_id, user_id=session.get("user_id"))
+        return render_template("ai_edits/ai_edits.html", 
+                               episode_id=episode_id, 
+                               user_id=session.get("user_id"))
     except Exception as e:
         logger.error(f"Error rendering ai_edits.html: {e}")
         return jsonify({"error": "Failed to render AI Edits page"}), 500
@@ -353,9 +443,16 @@ def osint_lookup():
     guest_name = data.get("guest_name")
     if not guest_name:
         return jsonify({"error": "Missing guest name"}), 400
+    user_id = session.get("user_id")
+    if not user_id:
+        return jsonify({"error": "Authentication required"}), 401
 
     try:
-        from backend.utils.text_utils import get_osint_info
+        consume_credits(user_id, "ai_osint")
+    except ValueError as e:
+        return jsonify({"error": str(e), "redirect": "/store"}), 403
+
+    try:
         osint_info = get_osint_info(guest_name)
         return jsonify({"osint_info": osint_info})
     except Exception as e:
@@ -372,10 +469,18 @@ def generate_intro_outro():
         return jsonify({"error": "Missing guest name or transcript"}), 400
 
     try:
-        from backend.utils.text_utils import get_osint_info, create_podcast_scripts_paid
+        user_id = session.get("user_id")
+
+        try:
+            consume_credits(user_id, "ai_intro_outro")
+        except ValueError as e:
+            return jsonify({
+                "error": str(e),
+                "redirect": "/store"
+            }), 403
 
         osint_info = get_osint_info(guest_name)
-        script = create_podcast_scripts_paid(osint_info, guest_name, transcript)  # ✅ Pass transcript here
+        script = create_podcast_scripts_paid(osint_info, guest_name, transcript)
 
         return jsonify({"script": script})
     except Exception as e:
@@ -391,13 +496,59 @@ def generate_intro_outro_audio():
         return jsonify({"error": "Missing script"}), 400
 
     try:
-        from backend.utils.text_utils import text_to_speech_with_elevenlabs
-        audio_bytes = text_to_speech_with_elevenlabs(script)
+        user_id = session.get("user_id")
 
-        import base64
+        try:
+            consume_credits(user_id, "ai_intro_outro_audio")
+        
+        except ValueError as e:
+            return jsonify({
+                "error": str(e),
+                "redirect": "/store"
+            }), 403
+
+        audio_bytes = text_to_speech_with_elevenlabs(script)
         b64_audio = base64.b64encode(audio_bytes).decode("utf-8")
         return jsonify({"audio_base64": f"data:audio/mp3;base64,{b64_audio}"})
+    
     except Exception as e:
         logger.error(f"ElevenLabs TTS failed: {str(e)}")
         return jsonify({"error": str(e)}), 500
 
+@transcription_bp.route("/translate_audio", methods=["POST"])
+def translate_audio():
+    """
+    Tar emot det översatta rå-transkriptet (med timestamps + speakers)
+    och returnerar en mp3-bytestring med TTS per segment.
+    """
+    data = request.get_json()
+    raw = data.get("raw_transcription", "")
+    language = data.get("language", "English")
+    if not raw:
+        return jsonify({"error": "No transcript provided"}), 400
+
+    try:
+        audio_bytes = transcription_service.generate_audio_from_translated(raw, language)
+        import base64
+        b64 = base64.b64encode(audio_bytes).decode("utf-8")
+        return jsonify({"audio_base64": f"data:audio/mp3;base64,{b64}"})
+    except Exception as e:
+        logger.error(f"Error generating translated audio: {e}")
+        return jsonify({"error": str(e)}), 500
+
+@transcription_bp.route("/audio_clip", methods=["POST"])
+def audio_clip():
+    data = request.get_json() or {}
+    raw = data.get("translated_transcription", "").strip()
+    language = data.get("language", "English")
+    if not raw:
+        return jsonify({"error": "No transcript provided"}), 400
+
+    try:
+        # 1) Bygg segment-lista från raw
+        audio_bytes = transcription_service.generate_audio_from_translated(raw, language)
+        b64 = base64.b64encode(audio_bytes).decode("utf-8")
+        return jsonify({"audio_base64": f"data:audio/mp3;base64,{b64}"})
+    except Exception as e:
+        logger.error(f"audio_clip error: {e}", exc_info=True)
+        return jsonify({"error": str(e)}), 500
