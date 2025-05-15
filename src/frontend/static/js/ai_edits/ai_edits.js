@@ -46,6 +46,7 @@ const CREDIT_COSTS = {
     ai_quotes: 200,
     ai_quote_images: 1000,
     ai_suggestions: 800,
+    audio_clip: 1000,
     audio_cutting: 500,
     audio_enhancement: 500,
     show_notes: 500,
@@ -114,7 +115,7 @@ function showTab(tabName) {
                         <!-- lägg till fler språk här -->
                     </select>
                     <button class="btn ai-edit-button" onclick="translateTranscript()">
-                        Translate
+                        ${labelWithCredits("Translate", "translation")}
                     </button>
                     <div class="result-field">
                         <pre id="translateResult"></pre>
@@ -123,7 +124,7 @@ function showTab(tabName) {
 
                 <div class="result-group">
                     <button class="btn ai-edit-button" onclick="generateAudioClip()">
-                        Generate Audio Clip
+                        ${labelWithCredits("Generate Translated Podcast", "audio_clip")}
                     </button>
                     <div class="result-field" id="audioClipResult"></div>
                 </div>
@@ -418,7 +419,7 @@ async function transcribe() {
 async function translateTranscript() {
     const resultContainer = document.getElementById("translateResult");
     const lang = document.getElementById("languageSelect").value;
-    if (!rawTranscript) return alert("Ingen transkription tillgänglig ännu.");
+    if (!rawTranscript) return alert("You need to transcribe first.");
   
     showSpinner("translateResult");
     try {
@@ -1524,7 +1525,7 @@ document.addEventListener("DOMContentLoaded", () => {
 async function generateAudioClip() {
   const container = document.getElementById("audioClipResult");
   const translated = document.getElementById("translateResult").innerText;
-  if (!translated.trim()) return alert("Inget översatt transcript att göra ljudklipp av.");
+  if (!translated.trim()) return alert("Ingen översatt transcript att göra ljudklipp av.");
 
   showSpinner("audioClipResult");
   try {
@@ -1542,6 +1543,9 @@ async function generateAudioClip() {
     audio.src = data.audio_base64;
     container.innerHTML = "";
     container.appendChild(audio);
+
+    // ◀ consume the credit:
+    await consumeStoreCredits("audio_clip");
   } catch (err) {
     hideSpinner("audioClipResult");
     container.innerText = `Failed to generate audio clip: ${err.message}`;
