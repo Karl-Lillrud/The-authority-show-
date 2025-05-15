@@ -110,7 +110,7 @@ class EpisodeRepository:
     def get_episodes(self, user_id):
         """Get all episodes created by the user."""
         try:
-            results = list(self.collection.find({"userid": str(user_id)}).sort("created_at", -1))
+            results = list(self.collection.find({"userid": str(user_id)}))
             for ep in results:
                 ep["_id"] = str(ep["_id"])
             return {"episodes": results}, 200
