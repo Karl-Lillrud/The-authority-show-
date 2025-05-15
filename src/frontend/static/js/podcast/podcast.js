@@ -37,10 +37,18 @@ document.addEventListener("DOMContentLoaded", async () => {
     `;
 
     // Fetch episodes and display with Transcript button
-    const episodesData = await fetchEpisodesByPodcast(podcastId).catch(error => {
+    let episodesData = await fetchEpisodesByPodcast(podcastId).catch(error => {
       console.error("Failed to fetch episodes:", error);
       return [];
     });
+
+    // Sort episodes by publishDate or recordingDate descending (newest first)
+    episodesData = (episodesData || []).sort((a, b) => {
+      const dateA = new Date(a.publishDate || a.recordingDate || a.recordingAt || 0);
+      const dateB = new Date(b.publishDate || b.recordingDate || b.recordingAt || 0);
+      return dateB - dateA;
+    });
+
     const episodesDiv = document.getElementById("episodes-container");
 
     // Update episode template

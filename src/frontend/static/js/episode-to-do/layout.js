@@ -235,9 +235,15 @@ export async function selectPodcast(podcast, state, updateUI) {
 
   try {
     // Fetch episodes for the selected podcast
-    const episodesData = await fetchEpisodesByPodcast(podcast._id)
+    let episodesData = await fetchEpisodesByPodcast(podcast._id)
     console.log("Episodes for selected podcast:", episodesData)
-    state.episodes = episodesData || []
+    // Sort episodes by publishDate or recordingDate descending (newest first)
+    episodesData = (episodesData || []).sort((a, b) => {
+      const dateA = new Date(a.publishDate || a.recordingDate || a.recordingAt || 0)
+      const dateB = new Date(b.publishDate || b.recordingDate || b.recordingAt || 0)
+      return dateB - dateA
+    })
+    state.episodes = episodesData
 
     // Find the first episode of this podcast
     if (state.episodes.length > 0) {
@@ -278,9 +284,16 @@ export function populateEpisodesList(state, updateUI) {
   }
 
   // Filter episodes for the active podcast
-  const podcastEpisodes = state.episodes.filter(
+  let podcastEpisodes = state.episodes.filter(
     (ep) => ep.podcastId === state.activePodcast._id || ep.podcast_id === state.activePodcast._id,
   )
+
+  // Sort episodes by publishDate or recordingDate descending (newest first)
+  podcastEpisodes = podcastEpisodes.sort((a, b) => {
+    const dateA = new Date(a.publishDate || a.recordingDate || a.recordingAt || 0)
+    const dateB = new Date(b.publishDate || b.recordingDate || b.recordingAt || 0)
+    return dateB - dateA
+  })
 
   if (podcastEpisodes.length === 0) {
     episodesList.innerHTML = `<div class="empty-state">No episodes for this podcast</div>`
@@ -314,9 +327,16 @@ export function populateEpisodeDropdown(state, updateUI) {
   }
 
   // Filter episodes for the active podcast
-  const podcastEpisodes = state.episodes.filter(
+  let podcastEpisodes = state.episodes.filter(
     (ep) => ep.podcastId === state.activePodcast._id || ep.podcast_id === state.activePodcast._id,
   )
+
+  // Sort episodes by publishDate or recordingDate descending (newest first)
+  podcastEpisodes = podcastEpisodes.sort((a, b) => {
+    const dateA = new Date(a.publishDate || a.recordingDate || a.recordingAt || 0)
+    const dateB = new Date(b.publishDate || b.recordingDate || b.recordingAt || 0)
+    return dateB - dateA
+  })
 
   if (podcastEpisodes.length === 0) {
     dropdown.innerHTML = `<div class="dropdown-item">No episodes for this podcast</div>`

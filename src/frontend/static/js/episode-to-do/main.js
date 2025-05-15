@@ -64,9 +64,15 @@ document.addEventListener("DOMContentLoaded", async () => {
         state.activePodcast = state.podcasts[0]
 
         // Fetch episodes for the active podcast
-        const episodesData = await fetchEpisodesByPodcast(state.activePodcast._id) // Note: using _id instead of id based on your other files
+        let episodesData = await fetchEpisodesByPodcast(state.activePodcast._id) // Note: using _id instead of id based on your other files
         console.log("Episodes data:", episodesData)
-        state.episodes = episodesData || []
+        // Sort episodes by publishDate or recordingDate descending (newest first)
+        episodesData = (episodesData || []).sort((a, b) => {
+          const dateA = new Date(a.publishDate || a.recordingDate || a.recordingAt || 0)
+          const dateB = new Date(b.publishDate || b.recordingDate || b.recordingAt || 0)
+          return dateB - dateA
+        })
+        state.episodes = episodesData
 
         if (state.episodes.length > 0) {
           state.selectedEpisode = state.episodes[0]
@@ -101,7 +107,12 @@ document.addEventListener("DOMContentLoaded", async () => {
         // If no podcasts, try to fetch all episodes
         const allEpisodes = await fetchAllEpisodes()
         console.log("All episodes data:", allEpisodes)
-        state.episodes = allEpisodes || []
+        // Sort episodes by publishDate or recordingDate descending (newest first)
+        state.episodes = (allEpisodes || []).sort((a, b) => {
+          const dateA = new Date(a.publishDate || a.recordingDate || a.recordingAt || 0)
+          const dateB = new Date(b.publishDate || b.recordingDate || b.recordingAt || 0)
+          return dateB - dateA
+        })
 
         if (state.episodes.length > 0) {
           state.selectedEpisode = state.episodes[0]
