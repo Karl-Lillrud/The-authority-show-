@@ -438,14 +438,7 @@ async function translateTranscript() {
       resultContainer.innerText = data.translated_transcription;
       await consumeStoreCredits("translation");
 
-      if (!document.getElementById("generateAudioBtn")) {
-            const btn = document.createElement("button");
-            btn.id = "generateAudioBtn";
-            btn.className = "btn ai-edit-button";
-            btn.innerText = "Generate Audio Clip";
-            btn.onclick = generateAudioClip;
-            resultContainer.parentNode.insertBefore(btn, resultContainer.nextSibling);
-       }
+      
     } catch (err) {
       hideSpinner("translateResult");
       resultContainer.innerText = `Error: ${err.message}`;
