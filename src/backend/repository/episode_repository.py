@@ -115,7 +115,7 @@ class EpisodeRepository:
                 ep["_id"] = str(ep["_id"])
             return {"episodes": results}, 200
         except Exception as e:
-            return {"error": f"Failed to fetch episodes: {str(e)}"}, 50
+            return {"error": f"Failed to fetch episodes: {str(e)}"}, 500
 
     def delete_episode(self, episode_id, user_id):
         """Delete an episode if it belongs to the user."""
