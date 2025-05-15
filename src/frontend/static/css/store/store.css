@@ -837,16 +837,17 @@
   .shopping-cart-sidebar {
     /* Previous styles for centering modal are removed/changed for slide-in */
     position: fixed; /* Ensure fixed positioning for stacking context and viewport relation */
-    top: 0;
+    top: 50%; /* Position the top of the element at 50% of the viewport height */
     right: 0;
-    height: 100vh; /* Full viewport height */
+    height: auto; /* Let content dictate height */
+    max-height: 90vh; /* Max height, with some viewport margin, content will scroll if taller */
     width: 90%; /* As before */
     max-width: 400px; /* As before */
     z-index: 1000; /* Above overlay (999) and arrow (998) */
     background-color: white; /* Ensure background is solid */
     box-shadow: -5px 0px 15px rgba(0, 0, 0, 0.15); /* Shadow on the left edge */
     
-    transform: translateX(100%); /* Start off-screen to the right */
+    transform: translate(100%, -50%); /* Start off-screen to the right & vertically centered */
     transition: transform 0.3s ease-in-out;
     
     display: flex; /* Keep for internal layout */
@@ -866,7 +867,7 @@
 
   .shopping-cart-sidebar.is-open {
     /* display: flex; <- Removed, transform handles visibility */
-    transform: translateX(0%); /* Slide in */
+    transform: translate(0%, -50%); /* Slide in & vertically centered */
   }
 
   .shopping-cart-sidebar.hidden {
@@ -885,9 +886,9 @@
   }
 
   .cart-content {
-    max-height: calc(
-      80vh - 120px
-    ); /* Adjust based on header/footer height in modal */
+    /* max-height is removed; flex:1 and overflow:auto on .cart-content (base styles) 
+       will handle scrolling within the parent's auto/max-height. 
+       The parent .shopping-cart-sidebar is display:flex, flex-direction:column. */
   }
 
   .open-cart-arrow-btn {
