@@ -554,3 +554,13 @@ function formatActivityType(type) {
     .toLowerCase()
     .replace(/\b\w/g, (char) => char.toUpperCase());
 }
+
+export async function refreshDashboardStats() {
+  await Promise.all([
+    fetchAndDisplayPodcastCount(),
+    fetchAndDisplayEpisodeCount(),
+    fetchAndDisplayGuestCount(),
+    // Add more stat refreshers if needed
+  ]);
+  updateStatCounts();
+}
