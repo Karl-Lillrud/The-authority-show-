@@ -1525,7 +1525,7 @@ document.addEventListener("DOMContentLoaded", () => {
 async function generateAudioClip() {
   const container = document.getElementById("audioClipResult");
   const translated = document.getElementById("translateResult").innerText;
-  if (!translated.trim()) return alert("Ingen översatt transcript att göra ljudklipp av.");
+  if (!translated.trim()) return alert("No translated transcript available to generate an podcast.");
 
   showSpinner("audioClipResult");
   try {
