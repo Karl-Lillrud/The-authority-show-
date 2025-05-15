@@ -146,7 +146,9 @@ def connect_calendar():
             "client_id": getenv("GOOGLE_CLIENT_ID"),  # Fetch from .env
             "redirect_uri": getenv("GOOGLE_REDIRECT_URI"),  # Fetch from .env
             "response_type": "code",
-            "scope": "https://www.googleapis.com/calendar",
+            "scope": "https://www.googleapis.com/auth/calendar.events",
+            #https://www.googleapis.com/auth/calendar Main scope for Google Calendar API
+        #Can take multiple weeks for access to be granted
             "access_type": "offline",
         }
         auth_url = f"{calendar_auth_url}?{requests.compat.urlencode(params)}"

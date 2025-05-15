@@ -46,6 +46,7 @@ const CREDIT_COSTS = {
     ai_quotes: 200,
     ai_quote_images: 1000,
     ai_suggestions: 800,
+    audio_clip: 1000,
     audio_cutting: 500,
     audio_enhancement: 500,
     show_notes: 500,
@@ -103,6 +104,29 @@ function showTab(tabName) {
                     <div class="result-field">
                         <pre id="cleanTranscriptResult"></pre>
                     </div>
+                </div>
+
+                <div class="result-group">
+                    <label for="languageSelect">Language:</label>
+                    <select id="languageSelect" class="input-field">
+                        <option value="English">English</option>
+                        <option value="Swedish">Swedish</option>
+                        <option value="Spanish">Spanish</option>
+                        <!-- lägg till fler språk här -->
+                    </select>
+                    <button class="btn ai-edit-button" onclick="translateTranscript()">
+                        ${labelWithCredits("Translate", "translation")}
+                    </button>
+                    <div class="result-field">
+                        <pre id="translateResult"></pre>
+                    </div>
+                </div>
+
+                <div class="result-group">
+                    <button class="btn ai-edit-button" onclick="generateAudioClip()">
+                        ${labelWithCredits("Generate Translated Podcast", "audio_clip")}
+                    </button>
+                    <div class="result-field" id="audioClipResult"></div>
                 </div>
     
                 <div class="result-group">
@@ -345,7 +369,7 @@ async function transcribe() {
         return;
     }
 
-    const episodeId = sessionStorage.getItem("selected_episode_id");
+    const episodeId = getSelectedEpisodeId();
     if (!episodeId) {
         alert("No episode selected.");
         return;
@@ -391,6 +415,36 @@ async function transcribe() {
         resultContainer.innerText = `Transcription failed: ${error.message}`;
     }
 }
+
+async function translateTranscript() {
+    const resultContainer = document.getElementById("translateResult");
+    const lang = document.getElementById("languageSelect").value;
+    if (!rawTranscript) return alert("You need to transcribe first.");
+  
+    showSpinner("translateResult");
+    try {
+      const res = await fetch("/transcription/translate", {
+        method: "POST",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify({
+          raw_transcription: rawTranscript,
+          language: lang
+        })
+      });
+      hideSpinner("translateResult");
+  
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || res.statusText);
+  
+      resultContainer.innerText = data.translated_transcription;
+      await consumeStoreCredits("translation");
+
+      
+    } catch (err) {
+      hideSpinner("translateResult");
+      resultContainer.innerText = `Error: ${err.message}`;
+    }
+  }
 
 async function generateCleanTranscript() {
     const containerId = "cleanTranscriptResult";
@@ -684,7 +738,7 @@ async function enhanceAudio() {
     const file = input.files[0];
     if (!file) return alert("Upload an audio file first.");
 
-    const episodeId = sessionStorage.getItem("selected_episode_id");
+    const episodeId = getSelectedEpisodeId(); // Use the utility function
     if (!episodeId) return alert("No episode selected.");
 
     showSpinner(containerId);
@@ -692,7 +746,7 @@ async function enhanceAudio() {
     try {
         const formData = new FormData();
         formData.append("audio", file);
-        formData.append("episode_id", episodeId);
+        formData.append("episode_id", episodeId); // Pass the episode ID
 
         const response = await fetch("/audio/enhancement", {
             method: "POST",
@@ -713,7 +767,8 @@ async function enhanceAudio() {
             return;
         }
 
-        const blobUrl = result.enhanced_audio_url;
+        const blobUrl = result.enhanced_audio_url; // Ensure this is returned by the backend
+        if (!blobUrl) throw new Error("No enhanced audio URL returned.");
 
         const audioRes = await fetch(`/get_enhanced_audio?url=${encodeURIComponent(blobUrl)}`);
         const blob = await audioRes.blob();
@@ -749,7 +804,7 @@ async function runVoiceIsolation() {
     const file = input.files[0];
     if (!file) return alert("Upload an audio file first.");
 
-    const episodeId = sessionStorage.getItem("selected_episode_id");
+    const episodeId = getSelectedEpisodeId();
     if (!episodeId) return alert("No episode selected.");
 
     showSpinner(containerId);
@@ -807,134 +862,204 @@ async function runVoiceIsolation() {
 }
 
 async function analyzeEnhancedAudio() {
-    const containerId = "analysisResults";
-    const container = document.getElementById(containerId);
-    const timeline = document.getElementById("soundEffectTimeline");
-    const mixBtn = document.getElementById("mixBackgroundBtn");
+  const containerId = "analysisResults"
+  const container = document.getElementById(containerId)
+  const timeline = document.getElementById("soundEffectTimeline")
+  const mixBtn = document.getElementById("mixBackgroundBtn")
 
-    const selectedSource = document.getElementById("audioSourceSelectAnalysis").value;
+  if (!activeAudioBlob) {
+    return alert("No audio loaded. Enhance or Isolate first.")
+  }
 
-    let blobToUse;
-    if (selectedSource === "enhanced") {
-        blobToUse = enhancedAudioBlob;
-    } else if (selectedSource === "isolated") {
-        blobToUse = isolatedAudioBlob;
-    } else if (selectedSource === "original") {
-        blobToUse = rawAudioBlob;
-    }
+  showSpinner(containerId)
 
-    if (!blobToUse) {
-        return alert("No audio available for selected source.");
-    }
+  try {
+    const fd = new FormData()
+    fd.append("audio", activeAudioBlob, "processed_audio.wav")
 
-    showSpinner(containerId);
+    const res = await fetch("/audio_analysis", { method: "POST", body: fd })
+    const data = await res.json()
+    if (!res.ok) throw new Error(data.error || res.statusText)
 
-    try {
-        const fd = new FormData();
-        fd.append("audio", new File([blobToUse], "analyze.wav", { type: "audio/wav" }));
-
-        const res = await fetch("/audio_analysis", { method: "POST", body: fd });
-
-        if (res.status === 403) {
-            const errorData = await res.json();
-            container.innerHTML = `
-                <p style="color: red;">${errorData.error || "You don't have enough credits."}</p>
-                ${errorData.redirect ? `<a href="${errorData.redirect}" class="btn ai-edit-button">Go to Store</a>` : ""}
-            `;
-            return;
-        }
-
-        const data = await res.json();
-        if (!res.ok) throw new Error(data.error || res.statusText);
-
-        container.innerText = `
+    container.innerText = `
             Sentiment:     ${data.sentiment ?? "–"}
             Clarity Score: ${data.clarity_score ?? "–"}
             Noise Level:   ${data.background_noise ?? "–"}
             Dominant Emo:  ${data.dominant_emotion}
-        `;
+        `
 
-        timeline.innerHTML = "";
-        renderSoundSuggestions(data, timeline);
+    timeline.innerHTML = ""
+    renderSoundSuggestions(data, timeline)
 
-        window.analysisData = {
-            emotion: data.dominant_emotion,
-            audioBlob: blobToUse
-        };
-
-        mixBtn.style.display = "inline-block";
-
-    } catch (err) {
-        container.innerText = `Analysis failed: ${err.message}`;
+    window.analysisData = {
+      emotion: data.dominant_emotion,
+      audioBlob: activeAudioBlob,
     }
+
+    mixBtn.style.display = "inline-block"
+
+    // ✅ Consume credits only after success
+    await consumeStoreCredits("ai_audio_analysis")
+  } catch (err) {
+    container.innerText = `Analysis failed: ${err.message}`
+  }
 }
 
-
 /* Hjälper att rendera suggestion-listan */
+let selectedSoundFX = {}
 function renderSoundSuggestions(data, timeline) {
-    timeline.innerHTML = "<h4>AI-Driven Sound Suggestions</h4>";
-    window.selectedSoundFX = {};
-
-    (data.sound_effect_suggestions || []).forEach((entry, i) => {
-        const sfxList = entry.sfx_options || [];
-        const container = document.createElement("div");
-        container.className = "sound-suggestion";
-        container.innerHTML = `
+  timeline.innerHTML = "<h4>AI-Driven Sound Suggestions</h4>"
+  selectedSoundFX = {}
+  ;(data.sound_effect_suggestions || []).forEach((entry, i) => {
+    const sfxList = entry.sfx_options || []
+    const container = document.createElement("div")
+    container.className = "sound-suggestion"
+    container.innerHTML = `
             <p><strong>Text:</strong> ${entry.timestamp_text}</p>
             <p><strong>Emotion:</strong> ${entry.emotion}</p>
             ${sfxList.length ? `<audio controls src="${sfxList[0]}" class="sfx-preview"></audio>` : "<em>No preview.</em>"}
-        `;
-        timeline.appendChild(container);
-        if (sfxList.length) {
-            window.selectedSoundFX[i] = { emotion: entry.emotion, sfxUrl: sfxList[0] };
-        }
-    });
+        `
+    timeline.appendChild(container)
+    if (sfxList.length) {
+      selectedSoundFX[i] = { emotion: entry.emotion, sfxUrl: sfxList[0] }
+    }
+  })
 }
 
 async function displayBackgroundAndMix() {
-    const preview = document.getElementById("backgroundPreview");
-    const mixBtn  = document.getElementById("mixBackgroundBtn");
-    const dl      = document.getElementById("downloadEnhanced");
-    const { emotion, audioBlob } = window.analysisData || {};
-  
-    if (!emotion || !audioBlob) {
-      return alert("Run analysis first!");
-    }
-  
-    // Disable button & show spinner text
-    mixBtn.disabled  = true;
-    mixBtn.innerText = "Generating…";
-    preview.innerHTML = "";
-  
-    const fd = new FormData();
-    fd.append("audio",   audioBlob, "processed_audio.wav");
-    fd.append("emotion", emotion);
-  
-    try {
-      const res  = await fetch("/audio_background_mix", { method: "POST", body: fd });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || res.statusText);
-  
-      // ONLY render the mixed overlay:
-      if (data.merged_audio) {
-        preview.innerHTML = `
-          <h4>Mixed Preview</h4>
-          <audio controls src="${data.merged_audio}" style="width:100%;"></audio>
-        `;
-        // Update download link
-        dl.href          = data.merged_audio;
-        dl.style.display = "inline-block";
-      }
+  const preview = document.getElementById("backgroundPreview")
+  const mixBtn = document.getElementById("mixBackgroundBtn")
+  const dl = document.getElementById("downloadEnhanced")
+  const timeline = document.getElementById("soundEffectTimeline")
+  const { audioBlob } = window.analysisData || {}
 
-      await consumeStoreCredits("ai_audio_analysis");
-    } catch (err) {
-      preview.innerText = `Error: ${err.message}`;
-    } finally {
-      // Restore button
-      mixBtn.disabled  = false;
-      mixBtn.innerText = "Mix Background & Preview";
-    }
+  console.log("Starting displayBackgroundAndMix function")
+
+  if (!audioBlob) {
+    console.error("No audioBlob available in window.analysisData")
+    return alert("Run analysis first!")
   }
+
+  console.log(`Audio blob size: ${audioBlob.size} bytes, type: ${audioBlob.type}`)
+
+  // Disable button & show spinner text
+  mixBtn.disabled = true
+  mixBtn.innerText = "Generating…"
+  preview.innerHTML = ""
+
+  const fd = new FormData()
+  fd.append("audio", audioBlob, "processed_audio.wav")
+  console.log("FormData created with audio blob")
+
+  try {
+    console.log("Sending request to /plan_and_mix_sfx endpoint")
+    // Call our new endpoint that uses the GPT-based SFX plan
+    const res = await fetch("/plan_and_mix_sfx", { method: "POST", body: fd })
+    console.log(`Response status: ${res.status}`)
+
+    const data = await res.json()
+    console.log("Response data received:", data)
+
+    if (!res.ok) {
+      console.error(`Error response: ${data.error || res.statusText}`)
+      throw new Error(data.error || res.statusText)
+    }
+
+    // Check if we have a valid SFX plan
+    if (!data.sfx_plan || data.sfx_plan.length === 0) {
+      console.warn("No SFX plan returned from server")
+      preview.innerHTML = `
+        <div class="alert alert-warning">
+          <p>No sound effects were generated for this audio.</p>
+          <p>This might be because:</p>
+          <ul>
+            <li>The content doesn't have clear opportunities for sound effects</li>
+            <li>The GPT model couldn't identify suitable moments</li>
+            <li>There was an issue with the SFX generation process</li>
+          </ul>
+        </div>
+      `
+    } else {
+      console.log(`Received SFX plan with ${data.sfx_plan.length} effects`)
+
+      // Render the SFX plan
+      timeline.innerHTML = "<h4>AI-Generated Sound Effects Plan</h4>"
+      renderSfxPlan(data.sfx_plan, timeline)
+    }
+
+    // Check if we have mixed audio
+    if (data.merged_audio) {
+      console.log(`Received merged audio (${data.merged_audio.length} characters)`)
+      preview.innerHTML = `
+        <h4>Mixed Preview</h4>
+        <audio controls src="${data.merged_audio}" style="width:100%;"></audio>
+      `
+      // Update download link
+      dl.href = data.merged_audio
+      dl.style.display = "inline-block"
+    } else {
+      console.warn("No merged audio in response")
+      preview.innerHTML += `<p class="text-warning">No mixed audio was returned from the server.</p>`
+    }
+
+    // ✅ Consume credits only after success
+    await consumeStoreCredits("ai_audio_analysis")
+    console.log("Credits consumed successfully")
+  } catch (err) {
+    console.error("Error in displayBackgroundAndMix:", err)
+    preview.innerText = `Error: ${err.message}`
+  } finally {
+    // Restore button
+    mixBtn.disabled = false
+    mixBtn.innerText = "Mix Background & Preview"
+    console.log("displayBackgroundAndMix function completed")
+  }
+}
+
+/* Renders the GPT-generated SFX plan */
+function renderSfxPlan(sfxPlan, timeline) {
+  console.log(`Rendering SFX plan with ${sfxPlan.length} effects`)
+  selectedSoundFX = {}
+  ;(sfxPlan || []).forEach((entry, i) => {
+    console.log(`Rendering SFX ${i}: ${entry.description} [${entry.start}s - ${entry.end}s]`)
+
+    const container = document.createElement("div")
+    container.className = "sound-suggestion"
+
+    // Check if we have a valid sfxUrl
+    const hasAudio = entry.sfxUrl && entry.sfxUrl.startsWith("data:")
+    console.log(`SFX ${i} has audio: ${hasAudio}`)
+
+    container.innerHTML = `
+    <p><strong>Description:</strong> ${entry.description}</p>
+    <p><strong>Timing:</strong> ${entry.start.toFixed(2)}s - ${entry.end.toFixed(2)}s</p>
+    ${
+        hasAudio
+        ? `<audio controls src="${entry.sfxUrl}" class="sfx-preview"></audio>`
+        : "<em>No audio preview available.</em>"
+    }
+    <!-- SFX interaction controls (disabled for now) -->
+    <!--
+    <div class="sfx-controls">
+        <button class="btn btn-sm" onclick="acceptSfx(${i}, '${entry.description}', '${entry.sfxUrl || ""}')">Accept</button>
+        <button class="btn btn-sm" onclick="rejectSfx(${i})">Reject</button>
+    </div>
+    -->
+    `
+    timeline.appendChild(container)
+
+    if (hasAudio) {
+      selectedSoundFX[i] = {
+        description: entry.description,
+        sfxUrl: entry.sfxUrl,
+        start: entry.start,
+        end: entry.end,
+      }
+    }
+  })
+
+  console.log("SFX plan rendering complete")
+}
 
   async function cutAudio() {
     const startInput = document.getElementById("startTime");
@@ -945,7 +1070,7 @@ async function displayBackgroundAndMix() {
     const start = parseFloat(startInput.value);
     const end = parseFloat(endInput.value);
 
-    const episodeId = sessionStorage.getItem("selected_episode_id");
+    const episodeId = getSelectedEpisodeId();
     if (!episodeId) return alert("No episode selected.");
 
     const selectedSource = document.getElementById("audioSourceSelectCutting").value;
@@ -1208,7 +1333,7 @@ async function cutAudioFromBlob() {
     const start = parseFloat(startInput.value);
     const end = parseFloat(endInput.value);
 
-    const episodeId = sessionStorage.getItem("selected_episode_id");
+    const episodeId = getSelectedEpisodeId();
     if (!episodeId || !activeAudioBlob) return alert("No audio or episode selected.");
     if (isNaN(start) || isNaN(end) || start >= end) return alert("Invalid timestamps.");
 
@@ -1446,6 +1571,10 @@ function hideSpinner(containerId) {
     }
 }
 
+function getSelectedEpisodeId() {
+    return sessionStorage.getItem("selected_episode_id") || localStorage.getItem("selected_episode_id");
+}
+
 // prevent doubleclikc/spamclicking on the functions to loose credits
 document.addEventListener("DOMContentLoaded", () => {
     document.body.addEventListener("click", function (event) {
@@ -1462,3 +1591,33 @@ document.addEventListener("DOMContentLoaded", () => {
         }, 3000);
     }, true);  
 });
+
+async function generateAudioClip() {
+  const container = document.getElementById("audioClipResult");
+  const translated = document.getElementById("translateResult").innerText;
+  if (!translated.trim()) return alert("No translated transcript available to generate an podcast.");
+
+  showSpinner("audioClipResult");
+  try {
+    const res = await fetch("/transcription/audio_clip", {
+      method: "POST",
+      headers: {"Content-Type":"application/json"},
+      body: JSON.stringify({ translated_transcription: translated })
+    });
+    hideSpinner("audioClipResult");
+
+    if (!res.ok) throw new Error(`Server svarade ${res.status}`);
+    const data = await res.json();
+    const audio = document.createElement("audio");
+    audio.controls = true;
+    audio.src = data.audio_base64;
+    container.innerHTML = "";
+    container.appendChild(audio);
+
+    // ◀ consume the credit:
+    await consumeStoreCredits("audio_clip");
+  } catch (err) {
+    hideSpinner("audioClipResult");
+    container.innerText = `Failed to generate audio clip: ${err.message}`;
+  }
+}

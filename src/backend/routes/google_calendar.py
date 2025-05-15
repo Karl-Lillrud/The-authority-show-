@@ -32,9 +32,10 @@ flow = Flow.from_client_config(
             "token_uri": GOOGLE_TOKEN_URL,
         }
     },
-    scopes=["https://www.googleapis.com/calendar"],
+    scopes=["https://www.googleapis.com/auth/calendar.events"],
     redirect_uri=GOOGLE_REDIRECT_URI,
-)
+)       #https://www.googleapis.com/auth/calendar Main scope for Google Calendar API
+        #Can take multiple weeks for access to be granted
 
 @google_calendar_bp.route('/connect_google_calendar')
 def connect_google_calendar():

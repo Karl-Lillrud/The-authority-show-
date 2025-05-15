@@ -1,5 +1,6 @@
 # src/backend/routes/transcript/transcription.py
 import os
+import base64
 import logging
 import base64
 import subprocess
@@ -238,14 +239,17 @@ def quote_images():
 @transcription_bp.route("/translate", methods=["POST"])
 def translate():
     data = request.json
-    text = data.get("text", "")
+    raw = data.get("raw_transcription", "")
     language = data.get("language", "English")
 
+    if not raw:
+        return jsonify({"error": "No transcription provided"}), 400
+
     try:
-        translated = transcription_service.translate_text(text, language)
-        return jsonify({"translated_text": translated})
-    
+        translated = transcription_service.translate_transcript(raw, language)
+        return jsonify({"translated_transcription": translated})
     except Exception as e:
+        logger.error(f"Translation error: {e}")
         return jsonify({"error": str(e)}), 500
 
 @transcription_bp.route("/get_file/<file_id>", methods=["GET"])
@@ -511,3 +515,40 @@ def generate_intro_outro_audio():
         logger.error(f"ElevenLabs TTS failed: {str(e)}")
         return jsonify({"error": str(e)}), 500
 
+@transcription_bp.route("/translate_audio", methods=["POST"])
+def translate_audio():
+    """
+    Tar emot det översatta rå-transkriptet (med timestamps + speakers)
+    och returnerar en mp3-bytestring med TTS per segment.
+    """
+    data = request.get_json()
+    raw = data.get("raw_transcription", "")
+    language = data.get("language", "English")
+    if not raw:
+        return jsonify({"error": "No transcript provided"}), 400
+
+    try:
+        audio_bytes = transcription_service.generate_audio_from_translated(raw, language)
+        import base64
+        b64 = base64.b64encode(audio_bytes).decode("utf-8")
+        return jsonify({"audio_base64": f"data:audio/mp3;base64,{b64}"})
+    except Exception as e:
+        logger.error(f"Error generating translated audio: {e}")
+        return jsonify({"error": str(e)}), 500
+
+@transcription_bp.route("/audio_clip", methods=["POST"])
+def audio_clip():
+    data = request.get_json() or {}
+    raw = data.get("translated_transcription", "").strip()
+    language = data.get("language", "English")
+    if not raw:
+        return jsonify({"error": "No transcript provided"}), 400
+
+    try:
+        # 1) Bygg segment-lista från raw
+        audio_bytes = transcription_service.generate_audio_from_translated(raw, language)
+        b64 = base64.b64encode(audio_bytes).decode("utf-8")
+        return jsonify({"audio_base64": f"data:audio/mp3;base64,{b64}"})
+    except Exception as e:
+        logger.error(f"audio_clip error: {e}", exc_info=True)
+        return jsonify({"error": str(e)}), 500

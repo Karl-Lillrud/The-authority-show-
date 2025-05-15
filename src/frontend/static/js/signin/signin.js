@@ -17,6 +17,13 @@ document.addEventListener("DOMContentLoaded", function () {
   function toggleSlidingContainer() {
     slidingContainer.classList.toggle("active");
     overlay.classList.toggle("active");
+    
+    // Add/remove body scroll lock when popup is active
+    if (slidingContainer.classList.contains("active")) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "";
+    }
   }
 
   // Add click event listener only to the About PodManager link
@@ -43,11 +50,18 @@ document.addEventListener("DOMContentLoaded", function () {
     });
   }
 
+  // Add escape key listener to close popup
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && slidingContainer.classList.contains('active')) {
+      toggleSlidingContainer();
+    }
+  });
+
   // Handle "Get Log-In Link" button click
   if (sendLoginLinkButton) {
     sendLoginLinkButton.addEventListener("click", async function () {
       const email = emailInput.value.trim();
-      const originalButtonText = sendLoginLinkButton.textContent;
+      const originalButtonText = sendLoginLinkButton.innerHTML;
 
       if (!email) {
         errorMessage.textContent = "Please enter your email address.";
@@ -58,7 +72,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
       try {
         // Change button text to "Sending..."
-        sendLoginLinkButton.textContent = "Sending... Check your inbox!";
+        sendLoginLinkButton.innerHTML = `<span>Sending...</span><div class="button-loader"></div>`;
         sendLoginLinkButton.disabled = true;
 
         const response = await fetch("/send-login-link", {
@@ -88,7 +102,7 @@ document.addEventListener("DOMContentLoaded", function () {
         successMessage.style.display = "none";
       } finally {
         // Restore button text and enable it
-        sendLoginLinkButton.textContent = originalButtonText;
+        sendLoginLinkButton.innerHTML = originalButtonText;
         sendLoginLinkButton.disabled = false;
       }
     });
@@ -100,10 +114,8 @@ document.addEventListener("DOMContentLoaded", function () {
   const urlParams = new URLSearchParams(window.location.search);
   const token = urlParams.get("token");
 
-  // --- Log the extracted token ---
   if (token) {
-    console.log("SIGNIN.JS: Token found in URL:", token); // Log the token
-    // -----------------------------
+    console.log("SIGNIN.JS: Token found in URL:", token);
 
     // Automatically log in the user using the token
     fetch("/verify-login-token", {
@@ -115,7 +127,7 @@ document.addEventListener("DOMContentLoaded", function () {
         console.log(
           "SIGNIN.JS: Received response from /verify-login-token:",
           response.status
-        ); // Log status
+        );
         if (!response.ok) {
           const result = await response.json();
           throw new Error(
@@ -127,7 +139,7 @@ document.addEventListener("DOMContentLoaded", function () {
         return response.json();
       })
       .then((data) => {
-        console.log("SIGNIN.JS: Parsed response data:", data); // Log parsed data
+        console.log("SIGNIN.JS: Parsed response data:", data);
         if (data.redirect_url) {
           window.location.href = data.redirect_url;
         } else {
@@ -141,7 +153,7 @@ document.addEventListener("DOMContentLoaded", function () {
         console.error(
           "SIGNIN.JS: Error during token verification fetch:",
           error
-        ); // Log fetch error
+        );
         const errorMsg = error.message.toLowerCase();
         if (errorMsg.includes("failed to create account")) {
           errorMessage.textContent =
@@ -160,6 +172,6 @@ document.addEventListener("DOMContentLoaded", function () {
         successMessage.style.display = "none";
       });
   } else {
-    console.log("SIGNIN.JS: No token found in URL parameters."); // Log if no token
+    console.log("SIGNIN.JS: No token found in URL parameters.");
   }
 });

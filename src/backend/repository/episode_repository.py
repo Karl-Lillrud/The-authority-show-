@@ -22,42 +22,24 @@ class EpisodeRepository:
         return list(collection.Episodes.find({"ownerId": user_id}))
 
     def register_episode(self, data, user_id):
-        """Register a new episode for the given user."""
         try:
             user_account = self.accounts_collection.find_one({"ownerId": user_id})
             if not user_account:
                 return {"error": "No account associated with this user"}, 403
 
-            # Check subscription limit only for non-imported (manually created) episodes
             is_imported = data.get("isImported", False)
             if not is_imported:
-                can_create, reason = self.subscription_service.can_create_episode(
-                    user_id
-                )
+                can_create, reason = self.subscription_service.can_create_episode(user_id)
                 if not can_create:
                     return {"error": "Episode limit reached", "reason": reason}, 403
 
             account_id = user_account.get("id", str(user_account["_id"]))
-            
-            # Ensure accountId is in data for schema validation if EpisodeSchema expects it
-            if 'accountId' not in data and 'accountId' in EpisodeSchema().fields:
+            if 'accountId' not in data:
                 data['accountId'] = account_id
 
-            # Handle potential None for duration before validation if schema is strict
-            if "duration" in data and data["duration"] is None:
-                # If schema expects an int and cannot be None, you might remove it or set a default
-                # However, EpisodeSchema is now fields.Int(allow_none=True)
-                pass # allow_none=True in schema should handle this
+            validated = data  
 
-            schema = EpisodeSchema()
-            errors = schema.validate(data)
-            if errors:
-                logger.error("Schema validation errors: %s", errors)
-                return {"error": "Invalid data", "details": errors}, 400
-
-            validated = schema.load(data)
             episode_id = str(uuid.uuid4())
-
             episode_doc = {
                 "_id": episode_id,
                 "podcast_id": validated.get("podcastId"),
@@ -105,14 +87,9 @@ class EpisodeRepository:
                     },
                 )
             except Exception as act_err:
-                logger.error(
-                    f"Failed to log episode_created activity: {act_err}", exc_info=True
-                )
+                logger.error(f"Failed to log activity: {act_err}", exc_info=True)
 
-            return {
-                "message": "Episode registered successfully",
-                "episode_id": episode_id,
-            }, 201
+            return {"message": "Episode registered successfully", "episode_id": episode_id}, 201
 
         except Exception as e:
             logger.error("❌ ERROR registering episode: %s", str(e))
@@ -184,15 +161,11 @@ class EpisodeRepository:
             if ep["userid"] != str(user_id):
                 return {"error": "Permission denied"}, 403
 
-            # Use partial schema validation for updates
+
             schema = EpisodeSchema(partial=True)
 
-            # Prepare data for validation: Copy original data
             validation_data = data.copy()
 
-            # Temporarily remove fields related to file upload before validation
-            # because the placeholder audioUrl might not pass fields.Url validation.
-            # We'll add these fields back directly to update_fields later.
             file_related_fields = ["audioUrl", "fileSize", "fileType"]
             for field in file_related_fields:
                 if field in validation_data:

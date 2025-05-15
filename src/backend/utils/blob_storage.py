@@ -130,4 +130,3 @@ def download_blob_to_tempfile(container_name, blob_path):
         if temp_db_file and os.path.exists(temp_db_file.name):
              os.remove(temp_db_file.name)
         return None
-
