@@ -110,12 +110,12 @@ class EpisodeRepository:
     def get_episodes(self, user_id):
         """Get all episodes created by the user."""
         try:
-            results = list(self.collection.find({"userid": str(user_id)}).sort("created_at", -1))
+            results = list(self.collection.find({"userid": str(user_id)}))
             for ep in results:
                 ep["_id"] = str(ep["_id"])
             return {"episodes": results}, 200
         except Exception as e:
-            return {"error": f"Failed to fetch episodes: {str(e)}"}, 500
+            return {"error": f"Failed to fetch episodes: {str(e)}"}, 50
 
     def delete_episode(self, episode_id, user_id):
         """Delete an episode if it belongs to the user."""
