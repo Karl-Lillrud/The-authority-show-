@@ -17,6 +17,7 @@ import { createPlayButton, playAudio } from "./episode-functions.js";
 import { renderEpisodeDetail } from "./episode-functions.js";
 import { showNotification } from "../components/notifications.js";
 import { openEmailConfigPopup } from "./emailconfig-functions.js";
+import { refreshDashboardStats } from "/static/js/dashboard/dashboard.js";
 
 // Function to set image source with fallback
 function setImageSource(imgElement, customSrc, mockSrc) {
@@ -423,6 +424,7 @@ try {
             if (document.querySelectorAll(".podcast-card").length === 0) {
               renderPodcastList(); // This will show the empty state
             }
+            await refreshDashboardStats();
           } catch (error) {
             showNotification("Error", "Failed to delete podcast.", "error");
           }
@@ -448,6 +450,7 @@ try {
               if (document.querySelectorAll(".podcast-card").length === 0) {
                 renderPodcastList();
               }
+              await refreshDashboardStats();
             } catch (error) {
               showNotification("Error", "Failed to delete podcast.", "error");
             }
@@ -676,7 +679,8 @@ export function renderPodcastDetail(podcast) {
             document.getElementById("podcast-detail").style.display = "none";
             renderPodcastList();
             document.getElementById("podcast-list").style.display = "flex";
-          } catch (err) {
+            await refreshDashboardStats();
+        } catch (err) {
             showNotification("Error", "Failed to delete podcast.", "error");
           }
         }
@@ -864,6 +868,7 @@ function handlePodcastFormSubmission() {
             await renderPodcastList();
             document.getElementById("form-popup").style.display = "none";
             document.getElementById("podcast-detail").style.display = "block";
+            await refreshDashboardStats();
           }
         } else {
           responseData = await addPodcast(updatedData);
@@ -876,6 +881,7 @@ function handlePodcastFormSubmission() {
             await renderPodcastList();
             document.getElementById("form-popup").style.display = "none";
             document.getElementById("podcast-list").style.display = "flex";
+            await refreshDashboardStats();
           }
         }
 
@@ -1052,6 +1058,7 @@ document.querySelectorAll(".delete-btn-home").forEach((button) => {
           if (document.querySelectorAll(".podcast-card").length === 0) {
             renderPodcastList();
           }
+          await refreshDashboardStats();
         } catch (error) {
           showNotification("Error", "Failed to delete podcast.", "error");
         }
