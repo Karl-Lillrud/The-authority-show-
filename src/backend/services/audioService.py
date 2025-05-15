@@ -583,3 +583,34 @@ class AudioService:
             for path in [tmp_path, cleaned_path]:
                 if os.path.exists(path):
                     os.remove(path)
+
+def upload_podcast_audio(self, user_id, file):
+        """Upload Podcast episode audio to Azure Blob Storage."""
+        try:
+            if not file or not file.filename:
+                return {"error": "Invalid file provided"}, 400
+
+            filename = secure_filename(file.filename)
+            container_name = "podmanagerfiles"
+            blob_path = f"users/{g.user_id}/prdcasts/{podcast_id}/episodes/{episode_id}"
+
+            file_url = upload_file_to_blob(container_name, blob_path, file)
+
+            if not file_url:
+                return {"error": "Failed to upload Podcast episode"}, 500
+
+            upload_data = {"PodcastEpisodeUrl": file_url}
+            response, status_code = self.edit_account(user_id, upload_data)
+
+            if status_code == 200:
+                return {
+                    "message": "Podcast episode Uploaded successfully",
+                    "PodcastEpisodeUrl": file_url
+                }, 200
+            else:
+                logger.error(f"DB Upload failed after uploading Podcast for user {user_id}. Blob URL: {file_url}")
+                return response, status_code
+
+        except Exception as e:
+            logger.error(f"Error uploading Podcast for user {user_id}: {e}", exc_info=True)
+            return {"error": f"Internal server error during upload: {str(e)}"}, 500
