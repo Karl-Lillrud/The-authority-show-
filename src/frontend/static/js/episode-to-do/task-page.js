@@ -98,7 +98,7 @@ export function renderTaskList(state, updateUI) {
       taskItem.innerHTML = `
         <div class="task-header ${isCompleted ? "completed" : ""}">
           <div class="task-checkbox ${isCompleted ? "checked" : ""} ${hasDependencyWarning && !isCompleted ? "disabled" : ""}" data-task-id="${task.id || task._id}">
-            ${isCompleted ? '<i class="fas fa-check"></i>' : ""}
+${isCompleted ? '<i class="fas fa-check" style="position:absolute; top:50%; left:50%; transform:translate(-50%, -50%); font-size:0.75rem; pointer-events:none;"></i>' : ""}
           </div>
           <button class="task-expand" data-task-id="${task.id || task._id}">
             <i class="fas fa-chevron-${isExpanded ? "down" : "right"}"></i>
